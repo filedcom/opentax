@@ -52,6 +52,7 @@ Deno.test("nominee distributions are excluded from sourced 1099-DIV minimum", ()
         nominee_distribution: { box1a: 300, box1b: 100 },
       }],
     },
+    agi_aggregator: { line3b_ordinary_dividends: 200 },
   };
   assertDividendIncomeSources(
     { line3b_ordinary_dividends: 200, line3a_qualified_dividends: 100 },
@@ -95,6 +96,7 @@ Deno.test("three K-1 issuer families add to the 1099-DIV minimum without box 6c"
         box2b_qualified_dividends: 160,
       }],
     },
+    agi_aggregator: { line3b_ordinary_dividends: [100, 200, 300, 400] },
   };
   assertDividendIncomeSources(
     { line3b_ordinary_dividends: 1_000, line3a_qualified_dividends: 400 },
@@ -155,6 +157,13 @@ Deno.test("partnership K-1 dividends survive both final exporters", async () => 
     ...pending,
     f1040: { ...pending.f1040, line3a_qualified_dividends: 39 },
   };
+  const retained = {
+    ...pending,
+    agi_aggregator: {
+      ...pending.agi_aggregator,
+      line3b_ordinary_dividends: 99,
+    },
+  };
   assertThrows(
     () => buildMefXml(ordinary, fixture.filer),
     Error,
@@ -164,5 +173,15 @@ Deno.test("partnership K-1 dividends survive both final exporters", async () => 
     () => buildPdfBytes(qualified, fixture.filer),
     Error,
     "line 3a omits sourced K-1 qualified dividends",
+  );
+  assertThrows(
+    () => buildMefXml(retained, fixture.filer),
+    Error,
+    "Retained AGI ordinary dividends must equal Form 1040 line 3b",
+  );
+  await assertRejects(
+    () => buildPdfBytes(retained, fixture.filer),
+    Error,
+    "Retained AGI ordinary dividends must equal Form 1040 line 3b",
   );
 });

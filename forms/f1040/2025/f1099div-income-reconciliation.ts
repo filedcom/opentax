@@ -76,4 +76,25 @@ export function assertDividendIncomeSources(
   if (line3a + 0.01 < qualified + k1Qualified) {
     throw new Error("Form 1040 line 3a omits sourced K-1 qualified dividends");
   }
+  const retained =
+    (pending.agi_aggregator as Record<string, unknown> | undefined)
+      ?.line3b_ordinary_dividends;
+  const amounts = retained === undefined
+    ? []
+    : Array.isArray(retained)
+    ? retained
+    : [retained];
+  if (
+    !amounts.every((amount) =>
+      typeof amount === "number" && Number.isFinite(amount) && amount >= 0
+    ) ||
+    Math.abs(
+        line3b -
+          amounts.reduce((sum: number, amount: number) => sum + amount, 0),
+      ) >= 0.01
+  ) {
+    throw new Error(
+      "Retained AGI ordinary dividends must equal Form 1040 line 3b",
+    );
+  }
 }
