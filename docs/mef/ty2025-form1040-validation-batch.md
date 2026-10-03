@@ -1541,3 +1541,13 @@ child forms. The partial log is the ignored local file
 This is **not** a passing full batch. The source replay gap was repaired, and
 focused Form 8814 and 167-exportable-fixture calculated-field mutation checks
 passed. Rerun the full command after implementation freezes on the new head.
+
+At `a935ec37`, the same full command was started with Deno 2.9.4 and Poppler
+`pdftotext` 26.09.0. It reached the Schedule H XSD cases without a reported
+failure, then was deliberately interrupted with SIGINT (exit 130) to add the
+new [issue #60](https://github.com/filedcom/opentax/issues/60) CLI regression
+before continuing the bulk gate. The partial ignored local log is
+`.state/research/ty2025-full-test-a935ec37.log`, SHA-256
+`8ec6e20040c58cd4ecefab9583db91920e0ec263eb37732300b3d4eaa82cdefb`.
+This is **not** a passing full batch. The focused issue cases passed 56/56 with
+no failures; rerun the full command at the next frozen implementation head.
