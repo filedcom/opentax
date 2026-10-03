@@ -17,15 +17,25 @@ identify filer name and SSN, tax year, payer, substitute amounts, how those
 amounts were determined, and efforts to obtain the original or corrected
 statement; the form says to attach it to the return.
 [IRS Publication 1345](https://www.irs.gov/pub/irs-pdf/p1345.pdf) permits
-electronic filing after a taxpayer completes Form 4852 when a correct W-2, W-2G,
-or 1099-R cannot be secured. The exact TY2025 MeF representation or permitted
-attachment method still needs confirmation from the effective IRS package.
+electronic filing after a taxpayer completes Form 4852 when a correct W-2,
+W-2G, or 1099-R cannot be secured. It specifically requires the nonstandard
+W-2 indicator in the electronic record and ERO retention of Form 4852. The
+locally cached TY2025 v5.4 W-2 and 1099-R schemas have an `N`/`S`
+`StandardOrNonStandardCd`, but the current serializers always emit `S`, and
+the Form 4852 input produces neither source document. The [IRS TY2025
+accepted-form and attachment listings](https://www.irs.gov/tax-professionals/tax-year-2025-modernized-e-file-schema-and-business-rules-for-individual-tax-returns-and-extensions)
+do not list a separate Form 4852 MeF root or recommended PDF name. That
+absence suggests a retained-form workflow, but does not by itself establish
+the allowed electronic representation. Confirm the effective version's
+business rules and ERO process before opening a positive route.
 
 To open a positive route, retain a complete substitute form for each owner and
 payer, authenticate the source workpaper or available incorrect issued copy,
 reconcile original-versus-substitute amounts without double counting, bind the
-recipient to the taxpayer or joint spouse, and implement the required MeF and
-printable packet path. Verify source-to-Form-1040, withholding, FICA, XML, PDF,
+recipient to the taxpayer or joint spouse, and emit the required nonstandard
+W-2 indicator and any applicable 1099-R coding with a reviewed retained Form
+4852 and printable copy.
+Verify source-to-Form-1040, withholding, FICA, XML, PDF, any required
 attachment/reference, local XSD, IRS business rules, and ATS cases. The current
 guard has focused native/PDF rejection cases for both substitute types; it is
 not a filing-ready positive route.
