@@ -1,5 +1,5 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
-import type { W2Item } from "../../../nodes/inputs/w2/index.ts";
+import { type W2Item, w2ItemSchema } from "../../../nodes/inputs/w2/index.ts";
 import { type FilerIdentity, FilingStatus } from "../types.ts";
 import { w2 } from "./w2.ts";
 
@@ -83,6 +83,48 @@ Deno.test("w2 emits required identity, address, wage, and withholding fields in 
   assertStringIncludes(
     result,
     "<StandardOrNonStandardCd>S</StandardOrNonStandardCd>",
+  );
+});
+
+Deno.test("reviewed nonstandard W-2 emits code N only for its identified copy", () => {
+  const review = {
+    kind: "handwritten" as const,
+    source_document_reference: "2025 handwritten W-2 copy",
+    reviewer_confirmed_nonstandard: true as const,
+  };
+  const nonstandard = item({
+    source_document_reference: review.source_document_reference,
+    nonstandard_document_review: review,
+  });
+  const [xml] = w2.build({ w2s: [nonstandard] }, { filer: filer() });
+  assertStringIncludes(
+    xml,
+    "<StandardOrNonStandardCd>N</StandardOrNonStandardCd>",
+  );
+  assertEquals(
+    w2ItemSchema.safeParse({
+      ...nonstandard,
+      source_document_reference: "different copy",
+    }).success,
+    false,
+  );
+  assertEquals(
+    w2ItemSchema.safeParse({
+      ...nonstandard,
+      source_document_reference: undefined,
+    }).success,
+    false,
+  );
+  assertThrows(
+    () =>
+      w2.build({
+        w2s: [item({
+          ...nonstandard,
+          source_document_reference: "different copy",
+        })],
+      }, { filer: filer() }),
+    Error,
+    "Nonstandard W-2 review must match the retained issued-copy reference",
   );
 });
 

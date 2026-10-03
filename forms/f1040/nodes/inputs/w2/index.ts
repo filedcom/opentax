@@ -122,6 +122,13 @@ export const w2ItemSchema = z.object({
   source_document_reference: z.string().trim().min(1).optional().describe(
     "Issued W-2 copy reference for reviewed cross-form income inclusions",
   ),
+  nonstandard_document_review: z.object({
+    kind: z.enum(["altered", "handwritten", "typed"]),
+    source_document_reference: z.string().trim().min(1),
+    reviewer_confirmed_nonstandard: z.literal(true),
+  }).strict().optional().describe(
+    "Reviewed altered, handwritten, or typed W-2 copy requiring MeF nonstandard code N",
+  ),
   schedule_c_business_reference: z.string().trim().min(1).optional().describe(
     "Schedule C activity for statutory-employee box 1 wages",
   ),
@@ -237,6 +244,19 @@ export const w2ItemSchema = z.object({
   taxpayer_age: z.number().nonnegative().optional().describe(
     "Taxpayer age — used for retirement contribution limit (catch-up)",
   ),
+}).superRefine((item, ctx) => {
+  const review = item.nonstandard_document_review;
+  if (
+    review &&
+    item.source_document_reference !== review.source_document_reference
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["nonstandard_document_review", "source_document_reference"],
+      message:
+        "Nonstandard W-2 review must match the retained issued-copy reference",
+    });
+  }
 });
 
 // Node inputSchema — receives all W-2s for this return as a single array.

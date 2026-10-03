@@ -21,8 +21,10 @@ electronic filing after a taxpayer completes Form 4852 when a correct W-2,
 W-2G, or 1099-R cannot be secured. It specifically requires the nonstandard
 W-2 indicator in the electronic record and ERO retention of Form 4852. The
 locally cached TY2025 v5.4 W-2 and 1099-R schemas have an `N`/`S`
-`StandardOrNonStandardCd`, but the current serializers always emit `S`, and
-the Form 4852 input produces neither source document. The [IRS TY2025
+`StandardOrNonStandardCd`. An ordinary issued W-2 now emits `N` when its
+altered, handwritten, or typed status has a matching reviewed source-copy
+reference; the Form 4852 input still produces neither source document, and
+the 1099-R serializer still emits `S`. The [IRS TY2025
 accepted-form and attachment listings](https://www.irs.gov/tax-professionals/tax-year-2025-modernized-e-file-schema-and-business-rules-for-individual-tax-returns-and-extensions)
 do not list a separate Form 4852 MeF root or recommended PDF name. That
 absence suggests a retained-form workflow, but does not by itself establish
@@ -39,3 +41,10 @@ Verify source-to-Form-1040, withholding, FICA, XML, PDF, any required
 attachment/reference, local XSD, IRS business rules, and ATS cases. The current
 guard has focused native/PDF rejection cases for both substitute types; it is
 not a filing-ready positive route.
+
+The separate issued-W-2 nonstandard branch has a complete synthetic
+source-to-Form-1040/native/PDF case: a reviewed handwritten copy emits `N`,
+the TY2025 v5.4 XML passes local XSD validation, and the filled Form 1040
+prints its $75,000 wages. Native and PDF export reject a changed copy
+reference. This does not establish authentic issuer bytes or open the
+substitute Form 4852 route.

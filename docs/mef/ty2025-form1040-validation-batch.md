@@ -63,6 +63,13 @@ including both native/PDF substitute rejection cases. This code change is
 newer than the frozen-head full run above; the bulk gate must be rerun after
 the remaining nonnamed implementation reaches its phase boundary.
 
+A later issued-W-2 nonstandard-code slice passed nine focused tests and a
+complete synthetic Form 1040 return against the local TY2025 v5.4 XSD. The
+reviewed handwritten W-2 emitted `StandardOrNonStandardCd` `N`; the filled PDF
+printed its $75,000 wages. Native and PDF export rejected a changed retained
+copy reference. This is newer than the frozen-head full run and does not
+unblock the separate Form 4852 substitute route.
+
 The 2026-10-03 diagnostic `deno task test` at `8c53a6a3` finished in 49m30s
 with 10,889 passed, two failed, and no ignored tests reported. Both failures
 tried to fill the Form 1040 line 16 Form 8814 checkbox from a numeric tax
