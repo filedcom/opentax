@@ -1,6 +1,7 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { DistributionCode } from "../../nodes/inputs/f1099r/index.ts";
 import { schedule_f } from "../../nodes/intermediate/forms/schedule_f/index.ts";
+import { schedule_se } from "../../nodes/intermediate/forms/schedule_se/index.ts";
 import {
   scenario104003Input,
   SCENARIO_1040_03_RECONCILIATION,
@@ -97,6 +98,21 @@ Deno.test("ATS 1040 Scenario 3 printed farm entries route to Schedule 1 and the 
     SCENARIO_1040_03_RECONCILIATION.printedSource.scheduleFGrossSales,
   );
   assertEquals(fields("schedule_se")?.farm_optional_method_elected, true);
+
+  // The packet elects Part II but leaves Schedule SE's calculated lines blank.
+  // Its Schedule F source therefore supplies a computed, not printed, target:
+  // line 15/4b/6 derives from 2/3 × 8,111, filed as 5,407;
+  // whole-dollar tax = 670 + 157 = 827.
+  const seInput = schedule_se.inputSchema.parse(fields("schedule_se"));
+  const seResult = schedule_se.compute(
+    { taxYear: 2025, formType: "f1040" },
+    seInput,
+  );
+  const seFields = (nodeType: string) =>
+    seResult.outputs.find((item) => item.nodeType === nodeType)?.fields;
+  assertEquals(seFields("schedule2")?.line4_se_tax, 827);
+  assertEquals(seFields("schedule1")?.line15_se_deduction, 414);
+  assertEquals(seFields("form8959")?.se_income, 8_111 * 2 / 3);
 });
 
 Deno.test("ATS 1040 Scenario 3 preserves optional-method eligibility and missing targets", () => {

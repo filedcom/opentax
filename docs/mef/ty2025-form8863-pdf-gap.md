@@ -1,5 +1,21 @@
 # TY2025 Form 8863 positive PDF boundary
 
+## Current checkpoint (2026-10-04)
+
+The registered two-page TY2025 descriptor now emits a positive, source-guarded
+Form 8863 PDF. The earlier preflight-only status below is historical. A selected
+five-page Form 1040/Schedule 3/Form 8863 lifetime-learning packet has been
+visually reviewed with source and native XML parity; see the
+[validation batch](ty2025-form1040-validation-batch.md). The latest field audit
+also makes Part III lines 28 and 29 print numeric zero for an American
+Opportunity Credit student with $2,000 first-tier expenses, as directed by the
+[official form](https://www.irs.gov/pub/irs-prior/f8863--2025.pdf); four
+focused PDF tests and three route tests pass. Remaining education-credit
+eligibility, evidence, multiple-student, and full-packet branches stay open
+under the named-form board item.
+
+## Original preflight assessment
+
 Status: bounded audit, written but unrun. A positive Form 8863 PDF descriptor was not added. The existing PDF attachment preflight rejects every nonempty `f8863.f8863s` source collection; native MeF remains separate and is not suppressed by this PDF-only boundary.
 
 The official [2025 Form 8863](https://www.irs.gov/pub/irs-prior/f8863--2025.pdf) has two pages: page 1 Parts I and II, and a separate page-2 Part III for each student, with an extra page 2 limited to institution line 22 when a student has more than two institutions. The [2025 instructions](https://www.irs.gov/instructions/i8863) require the student's name/TIN, institution identity and Form 1098-T answers, AOTC lines 23–30 or LLC line 31, then aggregate lines 1–19. Line 19 comes from the Credit Limit Worksheet and Schedule 3 line 3; refundable line 8 flows to Form 1040 line 29.

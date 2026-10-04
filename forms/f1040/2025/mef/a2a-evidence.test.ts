@@ -12,6 +12,14 @@ import {
 const submissionId = "1234562026269abcdefg";
 const messageId = "00123202626900000001";
 const encoder = new TextEncoder();
+const serviceNamespace = "http://www.irs.gov/a2a/mef/MeFTransmitterService.xsd";
+function sendBody(ids: readonly string[]): string {
+  return `<SendSubmissionsRequest xmlns="${serviceNamespace}"><SubmissionDataList>${
+    ids.map((id) =>
+      `<SubmissionData><SubmissionId>${id}</SubmissionId></SubmissionData>`
+    ).join("")
+  }</SubmissionDataList></SendSubmissionsRequest>`;
+}
 
 async function digest(bytes: Uint8Array): Promise<string> {
   return Array.from(
@@ -35,8 +43,7 @@ function packageFor(id = submissionId) {
     ),
   });
   return {
-    sendSubmissionsRequestXml:
-      `<SendSubmissionsRequest><SubmissionData><SubmissionId>${id}</SubmissionId></SubmissionData></SendSubmissionsRequest>`,
+    sendSubmissionsRequestXml: sendBody([id]),
     containerZipBytes: zipSync({ [`${id}.zip`]: archive }),
   };
 }
@@ -211,12 +218,8 @@ Deno.test("A2A Send evidence preserves request and container submission order", 
       [`${secondId}.zip`]:
         unzipSync(second.containerZipBytes)[`${secondId}.zip`],
     });
-    const orderedBody =
-      `<SendSubmissionsRequest><SubmissionData><SubmissionId>${submissionId}</SubmissionId></SubmissionData>` +
-      `<SubmissionData><SubmissionId>${secondId}</SubmissionId></SubmissionData></SendSubmissionsRequest>`;
-    const swappedBody =
-      `<SendSubmissionsRequest><SubmissionData><SubmissionId>${secondId}</SubmissionId></SubmissionData>` +
-      `<SubmissionData><SubmissionId>${submissionId}</SubmissionId></SubmissionData></SendSubmissionsRequest>`;
+    const orderedBody = sendBody([submissionId, secondId]);
+    const swappedBody = sendBody([secondId, submissionId]);
     const recorded = await recordA2aSendPackage(root, {
       messageId,
       submissionIds: [submissionId, secondId],
@@ -273,11 +276,26 @@ Deno.test("A2A Send evidence rejects a false request root or commented Submissio
         [
           1,
           `<SendSubmissionsRequest><!-- <SubmissionId>${submissionId}</SubmissionId> --></SendSubmissionsRequest>`,
-          "body and container Submission IDs differ",
+          "valid SendSubmissionsRequest",
         ],
         [
           2,
           `<SendSubmissionsRequest><SubmissionId>${submissionId}</SendSubmissionsRequest>`,
+          "valid SendSubmissionsRequest",
+        ],
+        [
+          3,
+          `<SendSubmissionsRequest xmlns="${serviceNamespace}"><SubmissionId>${submissionId}</SubmissionId></SendSubmissionsRequest>`,
+          "valid SendSubmissionsRequest",
+        ],
+        [
+          4,
+          `<SendSubmissionsRequest xmlns="${serviceNamespace}"><SubmissionDataList><SubmissionData><SubmissionId>${submissionId}</SubmissionId><Unexpected>ignored</Unexpected></SubmissionData></SubmissionDataList></SendSubmissionsRequest>`,
+          "valid SendSubmissionsRequest",
+        ],
+        [
+          5,
+          `<SendSubmissionsRequest xmlns="urn:wrong"><SubmissionDataList><SubmissionData><SubmissionId>${submissionId}</SubmissionId></SubmissionData></SubmissionDataList></SendSubmissionsRequest>`,
           "valid SendSubmissionsRequest",
         ],
       ] as const
@@ -489,8 +507,7 @@ Deno.test("A2A outbound evidence binds one archived Submission ID to exact XML a
       messageId,
       submissionIds: [submissionId],
       package: {
-        sendSubmissionsRequestXml:
-          `<SendSubmissionsRequest><SubmissionId>${submissionId}</SubmissionId></SendSubmissionsRequest>`,
+        sendSubmissionsRequestXml: sendBody([submissionId]),
         containerZipBytes: zipSync({ [`${submissionId}.zip`]: archive }),
       },
       recordedAt: new Date("2026-09-26T10:00:00Z"),
@@ -629,8 +646,7 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
             messageId: sendId,
             submissionIds: [submissionId],
             package: {
-              sendSubmissionsRequestXml:
-                `<SendSubmissionsRequest><SubmissionId>${submissionId}</SubmissionId></SendSubmissionsRequest>`,
+              sendSubmissionsRequestXml: sendBody([submissionId]),
               containerZipBytes: zipSync({ [`${submissionId}.zip`]: archived }),
             },
             recordedAt: new Date("2026-09-26T10:00:00Z"),
@@ -648,8 +664,7 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
           messageId: `${messageId}-non-pdf`,
           submissionIds: [submissionId],
           package: {
-            sendSubmissionsRequestXml:
-              `<SendSubmissionsRequest><SubmissionId>${submissionId}</SubmissionId></SendSubmissionsRequest>`,
+            sendSubmissionsRequestXml: sendBody([submissionId]),
             containerZipBytes: zipSync({
               [`${submissionId}.zip`]: zipSync({
                 "manifest/manifest.xml": manifest,
@@ -675,8 +690,7 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
             messageId: `${messageId}-incomplete-pdf-${index}`,
             submissionIds: [submissionId],
             package: {
-              sendSubmissionsRequestXml:
-                `<SendSubmissionsRequest><SubmissionId>${submissionId}</SubmissionId></SendSubmissionsRequest>`,
+              sendSubmissionsRequestXml: sendBody([submissionId]),
               containerZipBytes: zipSync({
                 [`${submissionId}.zip`]: zipSync({
                   "manifest/manifest.xml": manifest,
@@ -729,8 +743,7 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
           messageId: `${messageId}-duplicate-physical-pdf`,
           submissionIds: [submissionId],
           package: {
-            sendSubmissionsRequestXml:
-              `<SendSubmissionsRequest><SubmissionId>${submissionId}</SubmissionId></SendSubmissionsRequest>`,
+            sendSubmissionsRequestXml: sendBody([submissionId]),
             containerZipBytes: zipSync({
               [`${submissionId}.zip`]: duplicateZip,
             }),
@@ -745,8 +758,7 @@ Deno.test("A2A archived outbound evidence rejects broken document and PDF ZIP pa
       messageId: validSendId,
       submissionIds: [submissionId],
       package: {
-        sendSubmissionsRequestXml:
-          `<SendSubmissionsRequest><SubmissionId>${submissionId}</SubmissionId></SendSubmissionsRequest>`,
+        sendSubmissionsRequestXml: sendBody([submissionId]),
         containerZipBytes: zipSync({
           [`${submissionId}.zip`]: zipSync({
             "manifest/manifest.xml": manifest,

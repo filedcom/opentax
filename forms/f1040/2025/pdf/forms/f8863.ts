@@ -106,7 +106,11 @@ const fields: readonly PdfFieldEntry[] = [
     )
   ),
   ...[27, 28, 29, 30, 31].map((line, index) =>
-    text(`pdf_line${line}`, `${p2}.f2_${31 + index}[0]`)
+    text(
+      `pdf_line${line}`,
+      `${p2}.f2_${31 + index}[0]`,
+      line === 28 || line === 29,
+    )
   ),
 ];
 
@@ -178,7 +182,9 @@ export const form8863Pdf: PdfFormDescriptor = {
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
     const source = inputSchema.parse(raw);
-    if (!nativeForm8863.build(source, { filer, pending: allPending })) return [];
+    if (!nativeForm8863.build(source, { filer, pending: allPending })) {
+      return [];
+    }
     const lines = calculateForm8863Lines(source);
     if (!lines) return [];
     if (!filer) throw new Error("Form 8863 PDF needs filer identity");

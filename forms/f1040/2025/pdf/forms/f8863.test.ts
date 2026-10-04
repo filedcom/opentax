@@ -134,6 +134,41 @@ Deno.test("Form 8863 PDF adds only a Part III page for a second student", () => 
   assertEquals(instances[1].line19, undefined);
 });
 
+Deno.test("Form 8863 PDF prints zero on AOC lines 28 and 29 below the first tier", () => {
+  const firstTierStudent = {
+    ...student,
+    aoc_adjusted_expenses: 2_000,
+    education_expense_workpaper: {
+      ...student.education_expense_workpaper,
+      form1098t_box1_payments: 2_000,
+      paid_tuition_required_fees: 2_000,
+    },
+  };
+  const [projected] = form8863Pdf.instances?.(
+    { ...source, f8863s: [firstTierStudent] },
+    filer,
+    {
+      ...final,
+      f1040: { ...final.f1040, line29_refundable_aoc: 800 },
+      schedule3: { line3_education_credit: 1_200 },
+    },
+  ) ?? [];
+  assertEquals(projected.pdf_line27, 2_000);
+  assertEquals(projected.pdf_line28, 0);
+  assertEquals(projected.pdf_line29, 0);
+  assertEquals(projected.pdf_line30, 2_000);
+  for (const line of [28, 29]) {
+    const field = form8863Pdf.fields.find((entry) =>
+      entry.domainKey === `pdf_line${line}`
+    );
+    assertEquals(
+      field?.pdfField,
+      `topmostSubform[0].Page2[0].f2_${line + 4}[0]`,
+    );
+    assertEquals(field?.kind === "text" && field.printZero, true);
+  }
+});
+
 Deno.test("Form 8863 PDF closes ambiguous institution and unreconciled return paths", () => {
   assertThrows(
     () => form8863Pdf.instances?.(source, filer, {}),

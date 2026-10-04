@@ -207,6 +207,17 @@ export const itemSchema = z.object({
   }
   if (
     (item.box3_other_income ?? 0) > 0 &&
+    item.box3_other_income_routing === "excluded"
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box3_other_income_routing"],
+      message:
+        "1099-MISC box 3 exclusion needs reviewed payment and prior-deduction facts",
+    });
+  }
+  if (
+    (item.box3_other_income ?? 0) > 0 &&
     item.box3_other_income_routing === "schedule_f" && !item.farm_id
   ) {
     ctx.addIssue({

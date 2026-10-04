@@ -93,26 +93,41 @@ function requestSubmissionIds(requestBody: string): string[] {
   if (roots.length !== 1 || roots[0] !== "SendSubmissionsRequest") {
     throw new Error(invalid);
   }
-  const ids: string[] = [];
-  const visit = (value: unknown): void => {
-    if (Array.isArray(value)) {
-      value.forEach(visit);
-    } else if (value !== null && typeof value === "object") {
-      for (const [name, child] of Object.entries(value)) {
-        if (name === "SubmissionId") {
-          if (typeof child === "string") ids.push(child);
-          else if (
-            Array.isArray(child) && child.every((id) => typeof id === "string")
-          ) ids.push(...child);
-          else throw new Error(invalid);
-        } else if (!name.startsWith("@_") && !name.startsWith("#")) {
-          visit(child);
-        }
-      }
+  const object = (value: unknown): Record<string, unknown> => {
+    if (value === null || Array.isArray(value) || typeof value !== "object") {
+      throw new Error(invalid);
     }
+    return value as Record<string, unknown>;
   };
-  visit(parsed.SendSubmissionsRequest);
-  return ids;
+  const root = object(parsed.SendSubmissionsRequest);
+  if (
+    root["@_xmlns"] !==
+      "http://www.irs.gov/a2a/mef/MeFTransmitterService.xsd" ||
+    Object.keys(root).some((key) =>
+      key !== "@_xmlns" && key !== "SubmissionDataList"
+    )
+  ) throw new Error(invalid);
+  const list = object(root.SubmissionDataList);
+  if (Object.keys(list).some((key) => key !== "SubmissionData")) {
+    throw new Error(invalid);
+  }
+  const data = Array.isArray(list.SubmissionData)
+    ? list.SubmissionData
+    : [list.SubmissionData];
+  if (data.length === 0) throw new Error(invalid);
+  return data.map((entry) => {
+    const fields = object(entry);
+    if (
+      typeof fields.SubmissionId !== "string" ||
+      Object.keys(fields).some((key) =>
+        key !== "SubmissionId" && key !== "ElectronicPostmarkTs"
+      ) ||
+      (fields.ElectronicPostmarkTs !== undefined &&
+        (typeof fields.ElectronicPostmarkTs !== "string" ||
+          Number.isNaN(Date.parse(fields.ElectronicPostmarkTs))))
+    ) throw new Error(invalid);
+    return fields.SubmissionId as string;
+  });
 }
 
 function manifestValues(

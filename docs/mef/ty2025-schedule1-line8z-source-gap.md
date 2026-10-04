@@ -353,6 +353,13 @@ The Form 1099-MISC box 3 non-prize other-income route now requires a reviewed
 payment description and carries payer, recipient, amount, and description rows
 through Schedule 1. AGI receives their summed amount, and the MeF
 `OtherIncomeTypeStatement` receives one type-and-amount row per payment.
+The former bare `excluded` classification for positive box 3 amounts now
+rejects at input calculation and final export. It previously dropped the
+payment from Schedule 1 and AGI without reviewed settlement character,
+physical-injury or sickness facts, punitive components, or prior medical
+expense deductions. The [IRS settlement guidance](https://www.irs.gov/government-entities/tax-implications-of-settlements-and-judgments)
+and [Publication 4345](https://www.irs.gov/pub/irs-pdf/p4345.pdf) require
+those facts to determine taxability. A positive exclusion path remains open.
 Native and PDF exports reject a recipient TIN outside the filer/spouse pair.
 A two-payer $5,000 case reaches Form 1040 line 8, validates against local
 TY2025 v5.4 XSD, and builds a filled PDF packet. Separate bounded Schedule C
