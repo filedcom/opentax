@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1222 bounded completed slices are recorded in the
+inside** that section. The 1223 bounded completed slices are recorded in the
 [completed ledger](ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -81,6 +81,9 @@ completed page flags. The broader full suite and IRS acceptance are still open.
 A further first-joint-year Form 2210-F packet passed three visually reviewed
 pages and source/XML/XSD checks. The distinct completed inventory is now
 156 fixture IDs and 906 pages, leaving 29 fixture IDs without page flags.
+The foreign-interest excess-credit packet adds eight reviewed pages, including
+Form 1116 and its carryover Schedule B; the inventory reaches 157 fixture IDs
+and 914 pages, with 28 fixture IDs lacking completed page flags.
 A separate current-head two-page direct pension rollover packet passed a
 completed source/XML/visual checklist; the all-page review gate remains open.
 Two current-head Form 1098 purchase and construction-refinance points packets

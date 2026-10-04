@@ -3762,3 +3762,25 @@ The distinct completed inventory is **156 fixture IDs / 906 pages**, leaving
 29 fixture IDs without completed page flags. Authentic prior returns and
 payment records, other penalty paths, whole-batch review, IRS rules, and
 ATS acceptance remain open.
+
+## Foreign-interest excess-credit selected PDF packet (2026-10-04)
+
+The `single-foreign-interest-current-excess` packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-foreign-interest/` has
+eight pages. Schedule B and Form 1040 report $50,000 Canadian Bank interest.
+Form 1116 allocates the $15,750 standard deduction to its sole passive
+foreign source, leaving $34,250 foreign taxable income. Its $9,000 reported
+U.S.-dollar foreign tax is limited to a $3,875 current credit, which reaches
+Schedule 3 and Form 1040 once. The attached Form 1116 Schedule B carries the
+$5,125 excess in the current-year column. Both parent and carryover pages
+show the passive category and same taxpayer identity; all eight pages were
+visually checked for amounts, marks, order, and legibility. The read-only
+checker passed **1 case / 8 pages** with source replay, artifact hashes,
+page origins, and local TY2025v5.4 XSD. Manifest SHA-256 is
+`59cf89bb03caf52122772e56a0f2fb7acf26f8d5667ab0212f9e300f33f9ee9a`;
+checker log `.state/research/ty2025-foreign-interest-check-2026-10-04.log`
+has SHA-256 `05ecc0766b5f27593cf7a552b5348215760b5535bf57c02a04d70a286804899b`.
+The distinct completed inventory is **157 fixture IDs / 914 pages**, with 28
+fixture IDs lacking completed page flags. Authenticated foreign tax and prior
+return records, wider category/carryover routes, all-case page review, IRS
+business rules, and ATS acceptance remain open.
