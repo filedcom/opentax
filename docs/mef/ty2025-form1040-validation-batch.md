@@ -1780,3 +1780,22 @@ current-head local automated pass for tested routes, including issue #60 and
 the mixed Schedule 1 line 8z return. The 52 board parent gates, complete
 source and business-rule coverage, all-page visual review, issued evidence,
 and IRS ATS acceptance remain open.
+
+## Mixed Schedule 1 line 8z filled-PDF review (2026-10-04)
+
+A new source-backed `single-mixed-box8-rtaa-taxable-grant-line8z` fixture
+exercises two 1099-MISC substitute payments ($300 and $450), one $400 RTAA
+payment, and one $600 taxable grant in the printable packet. The planner now
+reports 180 fixtures and 85/113 unique PDF keys. Its selected packet is in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-mixed-line8z/`.
+All five physical pages were rendered and visually inspected: Form 1040
+pages 1–2, Schedule 1 pages 1–2, and the separate line 8z statement. Form
+1040 and Schedule 1 each carry the $1,750 other-income total once; the
+statement preserves four distinct payer/TIN rows and the same total. The
+per-page checklist records owner, amounts and native XML, checkbox state,
+order, continuation, and legibility. The read-only selected-scope checker
+passed **one case and five pages**, replaying source, native XML, PDF bytes,
+page origins, hashes, and local TY2025 v5.4 XSD validation. This is a bounded
+visual result; the complete all-page review, issued payer records, business
+rules, and IRS ATS acceptance remain open. The earlier 11,059-test bulk pass
+predates this added fixture.

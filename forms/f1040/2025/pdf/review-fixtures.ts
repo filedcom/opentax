@@ -8461,6 +8461,47 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-mixed-box8-rtaa-taxable-grant-line8z",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(50_000, 5_000, "Example Employer", "12-3456789")],
+      f1099m: [{
+        payer_name: "Broker One",
+        payer_tin: "123456789",
+        recipient_tin: "111223333",
+        source_document_reference: "synthetic issued box 8 copy A",
+        box8_substitute_payments: 300,
+      }, {
+        payer_name: "Broker Two",
+        payer_tin: "234567890",
+        recipient_tin: "111223333",
+        source_document_reference: "synthetic issued box 8 copy B",
+        box8_substitute_payments: 450,
+      }],
+      f1099g: [{
+        payer_name: "RTAA Agency",
+        payer_tin: "345678901",
+        recipient_tin: "111223333",
+        source_document_reference: "synthetic issued RTAA copy",
+        box_5_rtaa: 400,
+      }, {
+        payer_name: "Grant Agency",
+        payer_tin: "456789012",
+        recipient_tin: "111223333",
+        source_document_reference: "synthetic issued taxable grant copy",
+        box_6_taxable_grants: 600,
+        box_6_schedule1_nonbusiness_reviewed: true,
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1"],
+    reviewFocus: [
+      "Form 1040 line 8 and Schedule 1 line 8z each include the 1,750 mixed-source total once",
+      "The Schedule 1 line 8z continuation prints separate 300 and 450 substitute-payment payer rows",
+      "The same continuation prints 400 RTAA and 600 taxable-grant payer rows with distinct TINs",
+    ],
+  },
+  {
     id: "single-excess-social-security-plus-fuel-credit",
     inputs: {
       general: singleGeneral,
