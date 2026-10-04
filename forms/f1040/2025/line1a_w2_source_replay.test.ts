@@ -137,6 +137,51 @@ Deno.test("the graph rejects a repeated identified W-2 issued copy before totali
   );
 });
 
+Deno.test("same employer and employee need distinct issued W-2 references", async () => {
+  const [first] = base.inputs.w2 as Record<string, unknown>[];
+  const duplicate = { ...first, source_document_reference: undefined };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...base.inputs,
+    w2: [duplicate, { ...duplicate }],
+  }, { taxYear: 2025, formType: "f1040" });
+  const message =
+    "W-2 multiple employer/employee copies need distinct issued references";
+  assertEquals(
+    result.diagnostics.some((entry) => entry.message.includes(message)),
+    true,
+  );
+
+  const once = execute(buildExecutionPlan(registry), registry, base.inputs, {
+    taxYear: 2025,
+    formType: "f1040",
+  });
+  assertEquals(once.diagnostics, []);
+  const pending = buildPending(once.pending);
+  (pending.w2 as unknown as { w2s: Record<string, unknown>[] }).w2s.push(
+    { ...duplicate },
+  );
+  assertThrows(() => buildMefXml(pending, base.filer), Error, message);
+  await assertRejects(() => buildPdfBytes(pending, base.filer), Error, message);
+
+  const distinct = execute(buildExecutionPlan(registry), registry, {
+    ...base.inputs,
+    w2: [
+      { ...first, source_document_reference: "issued-copy-A" },
+      { ...first, source_document_reference: "issued-copy-B" },
+    ],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(distinct.diagnostics, []);
+  const distinctPending = buildPending(distinct.pending);
+  assertStringIncludes(
+    buildMefXml(distinctPending, base.filer),
+    "<WagesAmt>150000</WagesAmt>",
+  );
+  assertEquals(
+    (await buildPdfBytes(distinctPending, base.filer)).length > 0,
+    true,
+  );
+});
+
 Deno.test("one W-2 issued reference cannot replay under a changed employer", async () => {
   const [first] = base.inputs.w2 as Record<string, unknown>[];
   const firstIssued = { ...first, source_document_reference: "issued-copy-A" };

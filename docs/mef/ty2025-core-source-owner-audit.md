@@ -6,6 +6,14 @@ nodes and export preflights must be assessed together: a calculated amount can
 be present even when the final return lacks enough information to prove whose
 document supplied it.
 
+On 2026-10-04, a red source-to-final-return case showed that two W-2 rows
+with the same employer EIN and employee SSN but no distinct issued-copy
+references doubled wages in the graph. The shared W-2 duplicate review now
+requires distinct references for that repeated pair before calculation and
+again at native/PDF export. Two same-pair copies with separate references
+remain valid and reach both outputs. The focused graph/export case and 116
+nearby W-2 tests pass; corrected-copy lineage and issuer bytes remain open.
+
 ## Bounded corrections staged in this batch
 
 - `mef/forms/w2.ts` now rejects an explicit W-2 employee SSN outside the
