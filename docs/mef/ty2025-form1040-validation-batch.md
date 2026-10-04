@@ -2196,3 +2196,16 @@ input and attachment-coverage files passed **15/15**; format and lint passed
 for changed code. Both final exporters still reject every entered Form 4547
 request pending authority, eligibility, separate signature, native/PDF, and
 ATS evidence. This is not a full post-change bulk run.
+
+## HOH nondependent child identity on Form 1040 (2026-10-04)
+
+The general source's head-of-household qualifying-child name previously
+disappeared before both final packets. A bounded positive case now ties it to
+one reviewed custodial Form 8332 release child, SSN, residence, and home-cost
+record. The complete synthetic W-2 return emits `QualifyingHOHNm` and
+`QualifyingHOHSSN` in native Form 1040 and passed local TY2025v5.4 XSD;
+its filled PDF prints the same child name in the canonical `f1_29` field.
+Changing the retained Form 1040 child SSN stops both exports. The five nearby
+Form 1040 files passed **236/236** after an older dividend fixture received
+its required payer name. Other HOH/QSS routes, custody proof, page review,
+current-head bulk testing, IRS business rules, and ATS acceptance remain open.

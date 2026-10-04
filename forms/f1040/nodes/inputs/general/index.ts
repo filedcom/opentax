@@ -396,6 +396,60 @@ export const inputSchema = z.object({
 // ─── Type aliases ─────────────────────────────────────────────────────────────
 
 type GeneralInput = z.infer<typeof inputSchema>;
+
+export interface HohQualifyingChild {
+  first_name: string;
+  last_name: string;
+  ssn: string;
+}
+
+/** The named HOH child is omitted from dependent rows after a reviewed release. */
+export function hohQualifyingChildFromGeneral(
+  input: GeneralInput,
+): HohQualifyingChild | undefined {
+  const named = input.hoh_qualifying_person_name?.trim();
+  if (!named) {
+    if (
+      input.hoh_qualifying_person_name !== undefined ||
+      input.hoh_qualifying_person_relationship !== undefined
+    ) {
+      throw new Error("HOH qualifying child needs a nonblank name");
+    }
+    return undefined;
+  }
+  if (input.filing_status !== FilingStatus.HOH) {
+    throw new Error("HOH qualifying child name needs head-of-household status");
+  }
+  const matches = (input.dependents ?? []).filter((child) =>
+    child.dependent_on_another_return === true &&
+    child.custodial_eitc_release_review !== undefined &&
+    `${child.first_name} ${child.last_name}` === named &&
+    (input.hoh_qualifying_person_relationship === undefined ||
+      input.hoh_qualifying_person_relationship === child.relationship)
+  );
+  const child = matches[0];
+  const irsName = /^([A-Za-z0-9'\-] ?)*[A-Za-z0-9'\-]$/;
+  if (
+    matches.length !== 1 || !child ||
+    input.hoh_paid_more_than_half_home_costs !== true ||
+    !child.ssn || !/^\d{3}-?\d{2}-?\d{4}$/.test(child.ssn) ||
+    child.months_in_home <= 6 ||
+    !passesRelationshipTest(child) || !passesEitcAgeTest(child) ||
+    !passesJointReturnTest(child) ||
+    child.us_citizen_national_or_resident !== true ||
+    named.length > 35 || !irsName.test(named) ||
+    child.provided_over_half_own_support !== false
+  ) {
+    throw new Error(
+      "HOH nondependent child needs matching reviewed custody, SSN, residency, and home-cost source",
+    );
+  }
+  return {
+    first_name: child.first_name,
+    last_name: child.last_name,
+    ssn: child.ssn.replaceAll("-", ""),
+  };
+}
 type DependentItem = z.infer<typeof dependentSchema>;
 
 export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
@@ -1026,6 +1080,11 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
     qualifying_child_tax_credit_count: counts.qualifying_child_tax_credit_count,
     other_dependent_count: counts.other_dependent_count,
   };
+  addIfDefined(
+    fields,
+    "hoh_qualifying_child",
+    hohQualifyingChildFromGeneral(input),
+  );
   addIfDefined(
     fields,
     "spouse_has_business_credit",

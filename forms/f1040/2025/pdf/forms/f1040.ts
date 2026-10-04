@@ -24,6 +24,7 @@ import { assertPositive1099NecOwner } from "../../f1099nec-owner-reconciliation.
 import { assertPositive1099PatrOwner } from "../../f1099patr-owner-reconciliation.ts";
 import { assertDirectCapitalGainDistributionSource } from "../../line7a-source-reconciliation.ts";
 import { assertNoUnsupportedDeceasedReturn } from "../../filer-source-reconciliation.ts";
+import { assertHohQualifyingChildSource } from "../../hoh-qualifying-child-source.ts";
 import { assertJointDependentRefundSource } from "../../line12a-dependent-source.ts";
 import { assertLine36EstimatedTaxSource } from "../../line36-estimated-tax-source.ts";
 import { nativeFecInputSchema } from "../../../nodes/inputs/fec/index.ts";
@@ -150,6 +151,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "print_resident_election_name",
     pdfField: "topmostSubform[0].Page1[0].f1_30[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_hoh_qualifying_child_name",
+    pdfField: "topmostSubform[0].Page1[0].f1_29[0]",
   },
 
   // ── Page 1: Digital assets question (Yes = c1_10[0], No = c1_10[1]) ───────
@@ -773,6 +779,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
   // season; this module is the 2025 form and must always fetch the 2025 PDF.
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
+    assertHohQualifyingChildSource(fields, allPending);
     const hasForm8888 = allPending.f8888 !== undefined;
     if (
       hasForm8888 &&
@@ -989,6 +996,9 @@ export const irs1040Pdf: PdfFormDescriptor = {
         typeof fields.spouse_last_name === "string"
       ? `${fields.spouse_first_name} ${fields.spouse_last_name}`
       : undefined;
+    const hohChild = fields.hoh_qualifying_child as
+      | { first_name: string; last_name: string }
+      | undefined;
     return {
       ...fields,
       ...printedDependents,
@@ -1009,6 +1019,9 @@ export const irs1040Pdf: PdfFormDescriptor = {
       print_pension_pso: printPensionPso,
       print_resident_election: residentElection !== undefined,
       print_resident_election_name: residentElection,
+      print_hoh_qualifying_child_name: hohChild === undefined
+        ? undefined
+        : `${hohChild.first_name} ${hohChild.last_name}`,
       print_mfs_spouse_full_name: printMfsSpouseName,
       print_mfs_lived_apart_entire_year: fields.filing_status === "mfs" &&
         fields.mfs_spouse_lived_with_taxpayer === false,

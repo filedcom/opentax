@@ -1069,6 +1069,7 @@ Deno.test("age boxes follow AGI when rollover and MFS indicators add XML fields"
       f1099r: source,
       f1099div: {
         f1099divs: [{
+          payerName: "Example Fund",
           isNominee: false,
           box11: false,
           box1a: 0,
