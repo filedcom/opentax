@@ -1957,6 +1957,23 @@ The runner used Deno 2.9.4 (V8 15.0.245.2-rusty, TypeScript 6.0.3),
 This local pass does not establish complete source evidence, every-page visual
 review, IRS business-rule acceptance, or ATS transmission.
 
+## Form 1098-E repeated-account source guard (2026-10-04)
+
+A red input-schema regression showed that two positive Form 1098-E copies
+from the same lender, borrower, and loan account could both count interest
+when their issued-copy references differed. The source schema now rejects
+that combination, including payer-name capitalization/spacing variants when
+lender TINs are absent, while retaining distinct accounts. A second red
+regression showed that an unreported-interest payment ledger could claim the
+same lender, borrower, and loan account as a positive issued Form 1098-E;
+that combination now rejects at intake. The native and PDF final exporters
+also bind masked and full borrower TINs to the resolved filer, rejecting a
+repeated account under different source references. The two-file focused run
+passed **35/35** tests; formatting, lint, and diff checks passed. The preceding
+11,064-test full run is older than this source change, so a current-head bulk
+rerun remains due after the other implementation work. Issuer authentication,
+all positive source routes, and ATS acceptance remain open.
+
 ## Two-employer W-2 excess deferral filled-PDF review (2026-10-04)
 
 On `c458142c`, the selected `single-w2-code-d-excess-line1h` fixture was

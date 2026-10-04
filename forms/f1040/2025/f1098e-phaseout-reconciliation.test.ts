@@ -122,6 +122,30 @@ Deno.test("positive 1098-E needs an issued lender and the filed borrower in both
   }
 });
 
+Deno.test("same-account 1098-E copies with different references reject both exports", async () => {
+  const pending = withStudentInterest(single, [90_000]);
+  const issued = {
+    ...pending.f1098e!.f1098es![0],
+    account_number: "loan-1",
+  };
+  const duplicate = {
+    ...pending,
+    f1098e: {
+      f1098es: [issued, {
+        ...issued,
+        source_document_reference: "another-issued-reference",
+      }],
+    },
+  };
+  const message = "repeats the same lender, borrower, and loan account";
+  assertThrows(() => buildMefXml(duplicate, single.filer), Error, message);
+  await assertRejects(
+    () => buildPdfBytes(duplicate, single.filer),
+    Error,
+    message,
+  );
+});
+
 Deno.test("1098-E box 1 and retained AGI source cannot drift at final export", async () => {
   const pending = withStudentInterest(single, [90_000]);
   const changed = {
@@ -224,6 +248,32 @@ Deno.test("1098-E rejects one issued copy entered with both masked and full borr
     () => buildPdfBytes(pending, single.filer),
     Error,
     "repeats the same issued lender statement",
+  );
+});
+
+Deno.test("1098-E rejects same loan with masked and full owner under different references", async () => {
+  const masked = {
+    box1_student_loan_interest: 1_250,
+    lender_name: "Example Loan Servicer",
+    lender_tin: "12-3456789",
+    borrower_tin: "XXX-XX-3333",
+    borrower_name: "Alex Example",
+    borrower_owner_review_reference: "reviewed-2025-loan-account",
+    account_number: "loan-1",
+    source_document_reference: "issued-masked-1098e",
+  };
+  const full = {
+    ...masked,
+    borrower_tin: "111-22-3333",
+    source_document_reference: "issued-full-1098e",
+  };
+  const pending = withStudentInterest(single, [90_000], [masked, full]);
+  const message = "repeats the same lender, borrower, and loan account";
+  assertThrows(() => buildMefXml(pending, single.filer), Error, message);
+  await assertRejects(
+    () => buildPdfBytes(pending, single.filer),
+    Error,
+    message,
   );
 });
 

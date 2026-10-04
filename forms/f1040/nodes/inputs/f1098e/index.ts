@@ -161,8 +161,10 @@ export const inputSchema = z.object({
       if (prior.box1_student_loan_interest <= 0) continue;
       const lender = item.lender_tin?.replace(/\D/g, "");
       const priorLender = prior.lender_tin?.replace(/\D/g, "");
-      const lenderName = item.lender_name?.trim().toLowerCase();
-      const priorLenderName = prior.lender_name?.trim().toLowerCase();
+      const lenderName = item.lender_name?.trim().replace(/\s+/g, " ")
+        .toUpperCase();
+      const priorLenderName = prior.lender_name?.trim().replace(/\s+/g, " ")
+        .toUpperCase();
       const borrower = item.borrower_tin?.replace(/\D/g, "");
       const priorBorrower = prior.borrower_tin?.replace(/\D/g, "");
       if (
@@ -182,6 +184,18 @@ export const inputSchema = z.object({
         });
       }
       if (
+        item.account_number && prior.account_number &&
+        item.account_number.toUpperCase() ===
+          prior.account_number.toUpperCase()
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["f1098es", index, "account_number"],
+          message:
+            "1098-E repeats the same lender, borrower, and loan account; corrected copies need one reviewed current row",
+        });
+      }
+      if (
         (!item.account_number && !item.source_document_reference) ||
         (!prior.account_number && !prior.source_document_reference)
       ) {
@@ -195,6 +209,24 @@ export const inputSchema = z.object({
     }
   }
   for (const [index, record] of unreported_interest_records.entries()) {
+    if (
+      f1098es.some((item) =>
+        item.box1_student_loan_interest > 0 &&
+        item.account_number?.toUpperCase() ===
+          record.loan_account_number.toUpperCase() &&
+        item.borrower_tin?.replace(/\D/g, "") ===
+          record.borrower_tin.replace(/\D/g, "") &&
+        item.lender_name?.trim().replace(/\s+/g, " ").toUpperCase() ===
+          record.lender_name.trim().replace(/\s+/g, " ").toUpperCase()
+      )
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["unreported_interest_records", index],
+        message:
+          "Student-loan payment ledger cannot claim the same lender, borrower, and account as a current 1098-E",
+      });
+    }
     for (const prior of unreported_interest_records.slice(0, index)) {
       if (
         prior.loan_account_number === record.loan_account_number &&

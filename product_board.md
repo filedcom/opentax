@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1135 bounded completed slices are recorded in the
+inside** that section. The 1136 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -54,6 +54,9 @@ descriptors, and 211 TY2025 schema roots. These counts are inventories, not posi
 Scenario 8 synthetic-EIN correction. The earlier diagnostic stopped on that
 case and was not a full pass. This clean run also includes the Form 1040-ES
 payment-year, Form 1099-K recipient-identity, and direct Form 8949 withholding guards.
+The newer Form 1098-E duplicate-account/ledger guard passed 35 focused
+source and native/PDF export tests; its full bulk rerun remains due after
+further implementation.
 The separate 116-descriptor PDF field audit also passed. CLI type
 check, native compilation, and a synthetic W-2 → MeF → PDF smoke passed at
 earlier checkpoints.

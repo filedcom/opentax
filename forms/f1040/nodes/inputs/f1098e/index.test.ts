@@ -188,6 +188,51 @@ Deno.test("1098-E identified lender statements reject repeated issued copies", (
   );
 });
 
+Deno.test("1098-E rejects two current copies for one lender, borrower, and loan account", () => {
+  const issued = {
+    box1_student_loan_interest: 800,
+    lender_name: "Example Loan Servicer",
+    lender_tin: "12-3456789",
+    borrower_tin: "111-22-3333",
+    account_number: "loan-1",
+    source_document_reference: "issued-1098e-1",
+  };
+  assertEquals(
+    inputSchema.safeParse({
+      f1098es: [issued, {
+        ...issued,
+        box1_student_loan_interest: 900,
+        source_document_reference: "issued-1098e-2",
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      f1098es: [issued, {
+        ...issued,
+        account_number: "loan-2",
+        source_document_reference: "issued-1098e-2",
+      }],
+    }).success,
+    true,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      f1098es: [
+        { ...issued, lender_tin: undefined },
+        {
+          ...issued,
+          lender_tin: undefined,
+          lender_name: " example  LOAN servicer ",
+          source_document_reference: "issued-1098e-2",
+        },
+      ],
+    }).success,
+    false,
+  );
+});
+
 Deno.test("sub-threshold student-loan ledger needs dated, reconciled payments and loan review", () => {
   const record = {
     lender_name: "Example Loan Servicer",
@@ -263,5 +308,55 @@ Deno.test("corrected 1098-E replaces rather than adds its original", () => {
       f1098es: [{ ...corrected, correction_review_reference: undefined }],
     }).success,
     false,
+  );
+});
+
+Deno.test("1098-E and unreported-interest ledger cannot claim the same loan", () => {
+  const issued = {
+    box1_student_loan_interest: 800,
+    lender_name: "Example Loan Servicer",
+    lender_tin: "12-3456789",
+    borrower_tin: "111-22-3333",
+    account_number: "loan-1",
+    source_document_reference: "issued-1098e",
+  };
+  const ledger = {
+    lender_name: " example  LOAN servicer ",
+    loan_account_number: "loan-1",
+    borrower_tin: "111-22-3333",
+    student_tin: "111-22-3333",
+    interest_paid: 450,
+    payment_rows: [{
+      paid_date: "2025-06-01",
+      interest_amount: 450,
+      source_reference: "2025-payment-1",
+    }],
+    loan_agreement_reference: "reviewed-loan-agreement",
+    qualified_education_review_reference: "reviewed-education-costs",
+    expense_timing_review_reference: "reviewed-expense-timing",
+    eligible_institution_review_reference: "reviewed-eligible-school",
+    no_double_benefit_review_reference: "reviewed-no-double-benefit",
+    lender_no_form_review_reference: "reviewed-no-form",
+    legal_obligation_reviewed: true,
+    half_time_enrollment_at_loan_reviewed: true,
+    unrelated_lender_reviewed: true,
+    not_employer_plan_reviewed: true,
+  } as const;
+  assertEquals(
+    inputSchema.safeParse({
+      f1098es: [issued],
+      unreported_interest_records: [ledger],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      f1098es: [issued],
+      unreported_interest_records: [{
+        ...ledger,
+        loan_account_number: "loan-2",
+      }],
+    }).success,
+    true,
   );
 });

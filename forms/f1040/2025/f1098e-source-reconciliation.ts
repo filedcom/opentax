@@ -84,6 +84,7 @@ export function assert1098EInterestSource(
   }
   let total = 0;
   const issuedCopies = new Set<string>();
+  const issuedAccounts = new Set<string>();
   const copyLenders = new Set<string>();
   for (const row of rows) {
     if (row.box1_student_loan_interest <= 0) continue;
@@ -109,6 +110,17 @@ export function assert1098EInterestSource(
       throw new Error("Form 1098-E repeats the same issued lender statement");
     }
     issuedCopies.add(copyIdentity);
+    if (row.account_number) {
+      const accountIdentity = `${
+        row.lender_tin.replace(/\D/g, "")
+      }|${ownerTin}|${row.account_number.toUpperCase()}`;
+      if (issuedAccounts.has(accountIdentity)) {
+        throw new Error(
+          "Form 1098-E repeats the same lender, borrower, and loan account; corrected copies need one reviewed current row",
+        );
+      }
+      issuedAccounts.add(accountIdentity);
+    }
     copyLenders.add(`${normalizedName(row.lender_name)}|${ownerTin}`);
   }
   const paymentReferences = new Set<string>();
