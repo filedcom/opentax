@@ -3,7 +3,7 @@
 Status: 2026-10-04. This maps all **32 open checklist rows outside the
 "Named tax-form gaps" section** of [`product_board.md`](../../product_board.md):
 29 top-level rows and three nested rows. The board has 52 open rows in all;
-the other 20 are deferred named-form parents. Its completed ledger records 1239
+the other 20 are deferred named-form parents. Its completed ledger records 1240
 bounded items, without closing these parents. This is a work queue, not a
 filing-readiness claim. A read-only recount of `ALL_MEF_FORMS`,
 `ALL_PDF_FORMS`, and `pdfReviewFixtures` on 2026-10-04 (the same inputs used by

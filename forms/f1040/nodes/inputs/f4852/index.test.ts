@@ -213,6 +213,20 @@ Deno.test("f4852: Part II taxable amount includes basis once", () => {
   );
 });
 
+Deno.test("f4852: undetermined 1099-R taxable amount cannot enter a calculated return", () => {
+  const item = r1099Item({
+    gross_distribution: 20_000,
+    employee_contributions: 2_000,
+    taxable_amount_not_determined: true,
+  });
+  assertEquals(itemSchema.safeParse(item).success, true);
+  assertThrows(
+    () => compute([item]),
+    Error,
+    "Form 4852 taxable amount is undetermined",
+  );
+});
+
 Deno.test("f4852: Part II 1099-R IRA distribution → line4a/4b, withheld to line25b", () => {
   const result = compute([
     r1099Item({

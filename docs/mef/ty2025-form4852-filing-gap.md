@@ -75,3 +75,18 @@ taxable, and contribution amounts. These references
 are typed identifiers, not authenticated retained bytes. The projector is not
 registered in final packet export; the existing Form 4852 native/PDF guards
 remain in force pending the source record, retention, basis, and MeF route.
+
+## October 4 undetermined-taxable-amount correction
+
+The [official Form 4852 instructions](https://www.irs.gov/pub/irs-pdf/f4852.pdf)
+say line 8c is checked when the taxpayer cannot compute the taxable
+distribution and line 8b must then be blank. The calculation node previously
+estimated gross less employee contributions and deposited that amount into
+Form 1040 and AGI even when line 8c was checked. A focused regression first
+proved that mismatch. The shared taxable-amount projector now throws before
+any return output for an undetermined item. The typed source and unregistered
+retained-copy projector still allow the marked, blank-line-8b paper record;
+they do not create a calculated filing route. The 24 node tests, one retained
+projection guard test, and both native/PDF final-export guard tests pass. A
+positive substitute route remains closed pending the source, packet, MeF
+business-rule, and ATS evidence above.

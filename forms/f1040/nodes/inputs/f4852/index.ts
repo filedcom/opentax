@@ -188,10 +188,16 @@ function pensionItems(items: F4852Items): F4852Items {
   return r1099Items(items).filter((item) => item.is_ira !== true);
 }
 
-// Line 8b is already the taxable amount when supplied. When the filer must
+// Line 8b is already the taxable amount when supplied. When the filer can
 // estimate it from gross, subtract previously taxed employee contributions
-// once. Both the calculation and retained copy use this projection.
+// once. A checked line 8c means the taxpayer cannot compute line 8b; retain
+// that source for the paper copy, but do not calculate a return from it.
 export function effectiveTaxable(item: F4852Item): number {
+  if (item.taxable_amount_not_determined) {
+    throw new Error(
+      "Form 4852 taxable amount is undetermined; reconcile the distribution before calculation",
+    );
+  }
   if (item.taxable_amount !== undefined) return item.taxable_amount;
   return Math.max(
     0,
