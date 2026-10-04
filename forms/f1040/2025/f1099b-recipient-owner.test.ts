@@ -24,8 +24,8 @@ const row = {
   payer_tin: "123456789",
   part: "A" as const,
   description: "10 shares ABC",
-  date_acquired: "01012024",
-  date_sold: "01022025",
+  date_acquired: "2024-01-01",
+  date_sold: "2025-01-02",
   proceeds: 1_000,
   cost_basis: 800,
 };

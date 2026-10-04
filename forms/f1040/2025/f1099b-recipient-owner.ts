@@ -33,5 +33,17 @@ export function assert1099BRecipientOwner(
         "1099-B filing needs broker TIN or issued-copy reference",
       );
     }
+    if (!row.description.trim()) {
+      throw new Error("1099-B sale needs a property description");
+    }
+    const sold = /^2025-\d{2}-\d{2}$/.test(row.date_sold)
+      ? new Date(`${row.date_sold}T00:00:00.000Z`)
+      : new Date(Number.NaN);
+    if (
+      Number.isNaN(sold.getTime()) ||
+      sold.toISOString().slice(0, 10) !== row.date_sold
+    ) {
+      throw new Error("TY2025 1099-B sale date must be a real 2025 date");
+    }
   }
 }

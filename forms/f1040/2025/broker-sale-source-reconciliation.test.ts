@@ -126,6 +126,28 @@ Deno.test("broker sale without payer TIN or issued-copy reference rejects both f
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
+Deno.test("identified broker sale needs a property description in both final exports", async () => {
+  const sale = { ...brokerRows[0], description: "   " };
+  const result = f1040_2025.executeReturn({ general, f1099b: [sale] });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const message = "1099-B sale needs a property description";
+  assertThrows(() => buildMefXml(pending, filer), Error, message);
+  await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
+});
+
+Deno.test("TY2025 broker sale needs a real 2025 sale date in both final exports", async () => {
+  for (const date_sold of ["2025-02-30", "2024-12-31"]) {
+    const sale = { ...brokerRows[0], date_sold };
+    const result = f1040_2025.executeReturn({ general, f1099b: [sale] });
+    assertEquals(result.diagnostics, []);
+    const pending = buildPending(result.pending);
+    const message = "TY2025 1099-B sale date must be a real 2025 date";
+    assertThrows(() => buildMefXml(pending, filer), Error, message);
+    await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
+  }
+});
+
 Deno.test("broker wash-sale box and other adjustment reach Form 1040 and both exports", async () => {
   const sale = {
     ...brokerRows[0],

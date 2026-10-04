@@ -2055,6 +2055,20 @@ passed. The current-head bulk rerun remains due after implementation; issuer
 authentication, transaction-level correction lineage, and ATS acceptance
 remain open.
 
+## Form 1099-B description and TY2025 sale date (2026-10-04)
+
+Red full-return regressions showed that an identified broker sale with a
+whitespace-only property description or a nonexistent/prior-year sale date
+could reach TY2025 native export; the direct Schedule D path did not print a
+Form 8949 detail row that would catch the date in PDF projection. The shared
+final broker-source check now requires a nonblank description and a real
+calendar-2025 sale date. Both native and PDF exports reject the malformed
+sources before packet assembly. The two-file broker run passed **25/25**
+tests, and three related withholding, Schedule B, and attachment files passed
+**36/36** tests; formatting, lint, and diff checks passed. The current-head
+bulk rerun remains due after implementation; acquired-date variants, issuer
+authentication, wider transaction combinations, and ATS acceptance remain open.
+
 ## Two-employer W-2 excess deferral filled-PDF review (2026-10-04)
 
 On `c458142c`, the selected `single-w2-code-d-excess-line1h` fixture was

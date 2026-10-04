@@ -3,7 +3,7 @@
 Status: 2026-10-04. This maps all **32 open checklist rows outside the
 "Named tax-form gaps" section** of [`product_board.md`](../../product_board.md):
 29 top-level rows and three nested rows. The board has 52 open rows in all;
-the other 20 are deferred named-form parents. Its completed ledger records 1143
+the other 20 are deferred named-form parents. Its completed ledger records 1144
 bounded items, without closing these parents. This is a work queue, not a
 filing-readiness claim. A read-only recount of `ALL_MEF_FORMS`,
 `ALL_PDF_FORMS`, and `pdfReviewFixtures` on 2026-10-04 (the same inputs used by
@@ -31,6 +31,8 @@ The Form 1099-PATR positive-payer guard passed 22 focused graph, owner, and
 withholding-exporter tests.
 The final Form 1099-B broker-identity guard passed 23 broker tests and 36
 related withholding, interest, and attachment tests.
+The later Form 1099-B description and real TY2025 sale-date guard passed 25
+broker tests and the same 36 related tests.
 
 **Key.** `I` = work that can advance without a new product decision or IRS ATS
 credentials; `D` = the user's workflow/evidence/scope decision is needed before
