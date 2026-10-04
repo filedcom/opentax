@@ -71,11 +71,13 @@ function kRecipientMatches(
   filer: FilerIdentity,
 ): boolean {
   const recipient = tin(item.recipient_tin, "1099-K recipient");
-  const recipients = [tin(filer.primarySSN, "taxpayer")];
-  if (filer.filingStatus === FilingStatus.MarriedFilingJointly) {
-    recipients.push(tin(filer.spouse?.ssn, "spouse"));
-  }
-  const tinMatches = Boolean(recipient && recipients.includes(recipient));
+  const taxpayerTin = tin(filer.primarySSN, "taxpayer");
+  const spouseTin = filer.filingStatus === FilingStatus.MarriedFilingJointly
+    ? tin(filer.spouse?.ssn, "spouse")
+    : undefined;
+  const tinMatches = Boolean(
+    recipient && (recipient === taxpayerTin || recipient === spouseTin),
+  );
   if (recipient && !tinMatches) return false;
   const review = item.recipient_identity_review as
     | Record<string, unknown>
@@ -85,15 +87,21 @@ function kRecipientMatches(
     typeof value === "string"
       ? value.trim().replace(/\s+/g, " ").toUpperCase()
       : "";
-  const names = [
+  const taxpayerNames = [
     filer.fullName,
     filer.firstName && filer.lastName
       ? `${filer.firstName} ${filer.lastName}`
       : undefined,
-    filer.filingStatus === FilingStatus.MarriedFilingJointly && filer.spouse
-      ? `${filer.spouse.firstName} ${filer.spouse.lastName}`
-      : undefined,
-  ].map(normalize).filter(Boolean);
+  ];
+  const spouseNames =
+    filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+      filer.spouse
+      ? [`${filer.spouse.firstName} ${filer.spouse.lastName}`]
+      : [];
+  const names =
+    (recipient
+      ? recipient === taxpayerTin ? taxpayerNames : spouseNames
+      : [...taxpayerNames, ...spouseNames]).map(normalize).filter(Boolean);
   return names.includes(normalize(review.recipient_name)) &&
     normalize(review.address_line1) === normalize(filer.address.line1) &&
     normalize(review.address_line2) === normalize(filer.address.line2) &&

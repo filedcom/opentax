@@ -1946,3 +1946,15 @@ both native and PDF exporters. All **nine** selected `single-k-` full-return
 fixture/XSD routes then passed. Issuer-copy authentication, corrected-copy
 lineage, wider owner ambiguity, the full post-change batch, and ATS remain
 open.
+
+## Form 1099-K joint recipient name and TIN alignment (2026-10-04)
+
+The final 1099-K owner check previously allowed a payer row to name the
+spouse in its reviewed identity while carrying the taxpayer’s recipient TIN,
+or the reverse, on an MFJ return. A direct joint-owner regression was red
+before the fix. When a recipient TIN is present, the shared native/PDF check
+now accepts only that person’s reviewed name; a missing TIN still permits a
+reviewed taxpayer or spouse name/address match. The direct owner case passed,
+and all nine `single-k-` full-return/XSD fixture routes passed again. Payer
+copy authenticity, wider corrected-source combinations, the full post-change
+batch, and ATS remain open.
