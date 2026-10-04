@@ -3526,7 +3526,17 @@ calculation, native, PDF, and Schedule 2 reconciliation files. It passed
 **77/77** with zero failed in 3 seconds. The retained log is
 `.state/research/ty2025-schedule-se-rounding-focused-2026-10-04.log`
 (SHA-256 `17ad95c13209e760e8166d5a675f54371c77bcb65548be29d3a3a15455afb8d0`).
-The earlier corrected-source full run was deliberately stopped when the
-filed-line mismatch was found; the new full `PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test`
-run is underway. The other Scenario 12 source conflicts and ATS acceptance
-remain open.
+The Form 7206 source fixture was updated to the same half-tax amount and
+regenerated as a complete XML/PDF return against the local TY2025v5.4 XSD.
+Another focused command over four full-return and ATS-source files passed
+**59/59** with zero failed. Its retained log is
+`.state/research/ty2025-schedule-se-rounding-e2e-2026-10-04.log`
+(SHA-256 `34c664a66ac97e7217c9bc0c4305297458cc055a21ed80e10f35549bc5143b7e`).
+An adjacent batch over 11 income, QBI, health-plan, Schedule J, and Schedule 1
+test files passed **225/225** with zero failed. Its retained log is
+`.state/research/ty2025-schedule-se-rounding-adjacent-2026-10-04.log`
+(SHA-256 `4c1ef288e86ae2c1d6fdf94d2906b9539e68882e05ec57fb78ec456e729c27c7`).
+The prior full runs were stopped while reconciling the affected source fixture
+and expectations; a clean full `PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test`
+result remains pending. The other Scenario 12 source conflicts and ATS
+acceptance remain open.

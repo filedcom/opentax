@@ -557,7 +557,7 @@ Deno.test("1040 Scenario 12 W-2 routes sourced wages and withholding to 1040", (
   assertEquals(fieldsOf(result.outputs, f1040)?.line25a_w2_withheld, 14_444);
 });
 
-Deno.test("1040 Scenario 12 Schedule SE reconciles cents and printed whole-dollar conventions", () => {
+Deno.test("1040 Scenario 12 Schedule SE adds filed whole-dollar tax components", () => {
   const facts = SCENARIO_1040_12_FACTS;
   const result = schedule_se.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -566,23 +566,22 @@ Deno.test("1040 Scenario 12 Schedule SE reconciles cents and printed whole-dolla
       w2_ss_wages: facts.w2.box3SocialSecurityWages,
     },
   );
-  const netEarnings = facts.scheduleC.printedNetProfit * 0.9235;
-  const ssTax = netEarnings * 0.124;
-  const medicareTax = netEarnings * 0.029;
-  const centsTotal = ssTax + medicareTax;
+  const filedNetEarnings = Math.round(
+    facts.scheduleC.printedNetProfit * 0.9235,
+  );
+  const ssTax = Math.round(filedNetEarnings * 0.124);
+  const medicareTax = Math.round(filedNetEarnings * 0.029);
+  const filedTotal = ssTax + medicareTax;
 
-  // IRS permits a consistent cents or whole-dollar convention. This node keeps
-  // cents through line 12; the published fixture rounds lines 10 and 11 first.
-  assertEquals(fieldsOf(result.outputs, schedule2)?.line4_se_tax, centsTotal);
+  assertEquals(fieldsOf(result.outputs, schedule2)?.line4_se_tax, filedTotal);
   assertEquals(
     fieldsOf(result.outputs, schedule1)?.line15_se_deduction,
-    centsTotal * 0.5,
+    filedTotal * 0.5,
   );
-  assertEquals(Math.round(centsTotal), 3_437);
-  assertEquals(Math.round(ssTax), facts.scheduleSE.printedSocialSecurityTax);
-  assertEquals(Math.round(medicareTax), facts.scheduleSE.printedMedicareTax);
+  assertEquals(ssTax, facts.scheduleSE.printedSocialSecurityTax);
+  assertEquals(medicareTax, facts.scheduleSE.printedMedicareTax);
   assertEquals(
-    Math.round(ssTax) + Math.round(medicareTax),
+    filedTotal,
     facts.scheduleSE.printedTotalTax,
   );
   assertEquals(

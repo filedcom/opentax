@@ -123,7 +123,7 @@ Deno.test("one Schedule C health plan reaches Form 7206 and the full return", as
   );
   assertStringIncludes(
     xml,
-    "<DeductibleSelfEmploymentTaxAmt>3532</DeductibleSelfEmploymentTaxAmt>",
+    "<DeductibleSelfEmploymentTaxAmt>3533</DeductibleSelfEmploymentTaxAmt>",
   );
   assertStringIncludes(
     xml,
