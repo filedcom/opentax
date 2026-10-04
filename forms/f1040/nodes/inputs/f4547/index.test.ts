@@ -11,7 +11,7 @@ const request = {
   child_ssn: "444556666",
   initial_account_requested: true,
   pilot_contribution_requested: true,
-  request_confirmed_by_authorized_person: true,
+  request_confirmed_by_authorized_person: true as const,
   request_record_reference: "Reviewed child election intent",
 };
 
@@ -51,8 +51,40 @@ Deno.test("Form 4547 intake rejects empty, duplicate, and unconfirmed child requ
       requests: [{ ...request, request_confirmed_by_authorized_person: false }],
     },
     { requests: [{ ...request, request_record_reference: " " }] },
+    {
+      requests: [{
+        ...request,
+        initial_account_requested: false,
+      }],
+    },
+    {
+      requests: [{
+        ...request,
+        initial_account_requested: false,
+        existing_account_reference: " ",
+      }],
+    },
   ];
   for (const source of invalid) {
     assertEquals(inputSchema.safeParse(source).success, false);
   }
+});
+
+Deno.test("Form 4547 retains an existing account reference for a pilot-only election", () => {
+  const pilotOnly = {
+    ...request,
+    initial_account_requested: false,
+    existing_account_reference: "Reviewed existing child account statement",
+  };
+  assertEquals(inputSchema.parse({ requests: [pilotOnly] }).requests, [
+    pilotOnly,
+  ]);
+  const result = f1040_2025.executeReturn({
+    ...base.inputs,
+    f4547: { requests: [pilotOnly] },
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(buildPending(result.pending).f4547, {
+    requests: [pilotOnly],
+  });
 });

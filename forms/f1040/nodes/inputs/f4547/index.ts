@@ -14,6 +14,7 @@ export const inputSchema = z.object({
       child_ssn: z.string().regex(/^\d{9}$/),
       initial_account_requested: z.boolean(),
       pilot_contribution_requested: z.boolean(),
+      existing_account_reference: z.string().trim().min(1).optional(),
       request_confirmed_by_authorized_person: z.literal(true),
       request_record_reference: z.string().trim().min(1),
     }).strict().refine(
@@ -21,6 +22,15 @@ export const inputSchema = z.object({
         request.initial_account_requested ||
         request.pilot_contribution_requested,
       { message: "Form 4547 needs an account or pilot election" },
+    ).refine(
+      (request) =>
+        !request.pilot_contribution_requested ||
+        request.initial_account_requested ||
+        request.existing_account_reference !== undefined,
+      {
+        message:
+          "Form 4547 pilot-only election needs an existing child account reference",
+      },
     ),
   ).min(1).max(100),
 }).strict().refine(

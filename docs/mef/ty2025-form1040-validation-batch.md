@@ -2185,3 +2185,14 @@ At `f072629e`, the two focused PDF files that previously failed when
 Calling the package-cache binary directly does not load its linked libraries;
 the existing launcher is the working test environment. This focused result
 does not replace a full `deno task test` run on the final implementation head.
+
+## Form 4547 pilot-only existing-account reference (2026-10-04)
+
+The Form 4547 request schema now rejects a pilot-contribution election without
+an initial-account election unless a nonblank existing-child-account reference
+is retained. The [IRS instructions](https://www.irs.gov/instructions/i4547)
+permit pilot-only election for a child who already has an account. The focused
+input and attachment-coverage files passed **15/15**; format and lint passed
+for changed code. Both final exporters still reject every entered Form 4547
+request pending authority, eligibility, separate signature, native/PDF, and
+ATS evidence. This is not a full post-change bulk run.
