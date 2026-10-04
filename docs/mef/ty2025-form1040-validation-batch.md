@@ -2007,6 +2007,18 @@ changing valid filed text. The four-file focused graph/exporter run passed
 bulk rerun remains due after implementation, and issued-copy authentication
 and wider source combinations remain open.
 
+## Form 1099-DIV positive-payer identity guard (2026-10-04)
+
+A red Form 1040 exporter regression showed that a positive ordinary-dividend
+row could reach native and PDF projection with neither a payer TIN nor a
+nonblank payer name. The shared final owner check now requires at least one
+identified payer field after validating the recipient; rows with valid payer
+identity retain their prior behavior. The focused graph/exporter run passed
+**90/90** tests, and five nearby dividend-reconciliation tests passed,
+including final native/PDF export. Formatting, lint, and diff checks passed.
+The current-head bulk rerun remains due after implementation; issuer-copy
+authentication and wider source combinations remain open.
+
 ## Two-employer W-2 excess deferral filled-PDF review (2026-10-04)
 
 On `c458142c`, the selected `single-w2-code-d-excess-line1h` fixture was

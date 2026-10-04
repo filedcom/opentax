@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1139 bounded completed slices are recorded in the
+inside** that section. The 1140 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -63,6 +63,8 @@ The subsequent Form 1099-MISC payer-name guard passed 99 focused source and
 native/PDF Form 1040 exporter tests.
 The later Form 1099-INT/OID payer-name guards passed 102 focused source and
 native/PDF Form 1040 exporter tests.
+The Form 1099-DIV positive-payer guard passed 90 focused and five nearby
+dividend-reconciliation tests.
 The separate 116-descriptor PDF field audit also passed. CLI type
 check, native compilation, and a synthetic W-2 → MeF → PDF smoke passed at
 earlier checkpoints.
