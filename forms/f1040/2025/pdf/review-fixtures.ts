@@ -496,6 +496,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       w2: [wage(75_000, 11_000, "Example Employer", "12-3456789")],
       f1099g: [{
         recipient_tin: singleFiler.primarySSN,
+        payer_name: "Example State Unemployment Agency",
         box_1_unemployment: 5_000,
         box_1_repaid: 5_000,
       }],

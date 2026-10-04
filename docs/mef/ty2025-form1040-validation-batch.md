@@ -2209,3 +2209,21 @@ Changing the retained Form 1040 child SSN stops both exports. The five nearby
 Form 1040 files passed **236/236** after an older dividend fixture received
 its required payer name. Other HOH/QSS routes, custody proof, page review,
 current-head bulk testing, IRS business rules, and ATS acceptance remain open.
+
+## Post-QSS bulk failure and source-fixture repair (2026-10-04)
+
+The first full `PATH=/tmp/opentax-tools:$PATH deno task test` on `3e72e410`
+finished in 52m20s with **11,099 passed and 7 failed**. All seven failures
+were older fixtures missing payer identity under the existing positive
+1099-DIV/1099-G export guards. Two synthetic dividend replay rows and one
+synthetic unemployment source now identify their payers. ATS Scenario 8's
+amount-only 1099-DIV cover-sheet fact still has no issued payer copy: its
+calculation test now expects PDF export rejection, while its separate 1099-R
+schema fixture labels the added payer name as synthetic test metadata rather
+than ATS evidence. The seven formerly failing cases then passed **7/7** with
+202 other tests filtered out; format and lint passed. The failed full-run log
+is `/tmp/opentax-pr62-current-head-test.log` (SHA-256
+`59ff9ef48a0b5a53ae704cae3e9287f635077368f04d48a72443e87ec5774a56`);
+the focused rerun log is `/tmp/opentax-pr62-failures-rerun.log` (SHA-256
+`45a0b749b242c73b254e875008cc7623e68ded9a3a17f2c8fb05145dce650e09`).
+A full run on the corrected head remains due.
