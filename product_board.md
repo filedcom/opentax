@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1152 bounded completed slices are recorded in the
+inside** that section. The 1153 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -93,6 +93,9 @@ transmission remain open; 15 focused tests passed.
 Form 1040-X amendment intent now retains its affected year and prior-return
 reference and stops original-return exports; 18 focused amendment,
 payment, and coverage tests passed. The amendment filing workflow remains open.
+SSA/RRB-1042-S issued-copy intake now retains distinct source identities and
+amounts and stops both exporters until resident status, withholding, and
+attachment requirements are resolved; 15 focused tests passed.
 The separate 116-descriptor PDF field audit also passed. CLI type
 check, native compilation, and a synthetic W-2 → MeF → PDF smoke passed at
 earlier checkpoints.

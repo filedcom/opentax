@@ -196,6 +196,10 @@ import {
   inputSchema as amendmentRequestInputSchema,
 } from "../nodes/inputs/amendment_request/index.ts";
 import {
+  benefit_1042s,
+  inputSchema as benefit1042sInputSchema,
+} from "../nodes/inputs/benefit_1042s/index.ts";
+import {
   f2210,
   inputSchema as f2210InputSchema,
 } from "../nodes/inputs/f2210/index.ts";
@@ -857,6 +861,11 @@ export const inputNodes: readonly InputNodeEntry[] = [
   {
     node: amendment_request,
     inputSchema: amendmentRequestInputSchema,
+    isArray: false,
+  },
+  {
+    node: benefit_1042s,
+    inputSchema: benefit1042sInputSchema,
     isArray: false,
   },
   { node: f2210, inputSchema: f2210InputSchema, isArray: false },

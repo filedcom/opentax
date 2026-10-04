@@ -24,6 +24,7 @@ import type { inputSchema as f1095aInputSchema } from "../../nodes/inputs/f1095a
 import type { inputSchema as f4547InputSchema } from "../../nodes/inputs/f4547/index.ts";
 import type { inputSchema as paymentRequestInputSchema } from "../../nodes/inputs/payment_request/index.ts";
 import type { inputSchema as amendmentRequestInputSchema } from "../../nodes/inputs/amendment_request/index.ts";
+import type { inputSchema as benefit1042sInputSchema } from "../../nodes/inputs/benefit_1042s/index.ts";
 import type { inputSchema as f1099intInputSchema } from "../../nodes/inputs/f1099int/index.ts";
 import type { inputSchema as f1099divInputSchema } from "../../nodes/inputs/f1099div/index.ts";
 import type { inputSchema as f1099oidInputSchema } from "../../nodes/inputs/f1099oid/index.ts";
@@ -74,6 +75,8 @@ export type MefFormsPending =
     payment_request?: z.infer<typeof paymentRequestInputSchema>;
     // Form 1040-X needs its own accepted-prior and corrected-year filing graph.
     amendment_request?: z.infer<typeof amendmentRequestInputSchema>;
+    // Issued nonresident benefit copies need a distinct Form 1040 review path.
+    benefit_1042s?: z.infer<typeof benefit1042sInputSchema>;
     // Form 1116 line 1b needs the source compensation record for a filing check.
     // This is a source node in executor pending, not a second native document.
     fec?: z.infer<typeof fecInputSchema>;

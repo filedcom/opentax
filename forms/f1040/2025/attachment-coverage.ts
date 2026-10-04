@@ -451,6 +451,11 @@ export function assertAttachmentCoverage(
   exportKind: ExportKind,
 ): void {
   const byKey = pending as Readonly<Record<string, unknown>>;
+  if (byKey.benefit_1042s !== undefined) {
+    throw new Error(
+      `[${exportKind.toUpperCase()}] SSA/RRB-1042-S benefit copy needs recipient status, income and withholding reconciliation, and required issued-copy attachments before Form 1040 export; export blocked`,
+    );
+  }
   if (byKey.amendment_request !== undefined) {
     throw new Error(
       `[${exportKind.toUpperCase()}] Amendment request needs an accepted prior return, corrected-year calculation, and separate Form 1040-X filing workflow; export blocked`,
