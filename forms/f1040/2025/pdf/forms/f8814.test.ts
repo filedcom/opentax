@@ -237,7 +237,14 @@ Deno.test("2025 parent PDF marks Form 8814 dividends and direct child gain", () 
       line3b_ordinary_dividends: 120,
       line7_capital_gain: 200,
     },
-    { ...pending, schedule_d: { print_line13_cap_gain_distrib: 200 } },
+    {
+      ...pending,
+      schedule_d: {
+        print_line13_cap_gain_distrib: 200,
+        line13_form8814: 200,
+        print_line16_combined: 200,
+      },
+    },
   ) ?? {};
   assertEquals(withScheduleD.print_form8814_line7a_note, undefined);
   assertEquals(withScheduleD.print_form8814_line7a_included, true);
@@ -250,7 +257,7 @@ Deno.test("2025 parent PDF marks Form 8814 dividends and direct child gain", () 
         line7_capital_gain: 200,
       }, pending),
     Error,
-    "needs the Form 8814 amount",
+    "omits sourced capital-gain distributions",
   );
   assertThrows(
     () =>

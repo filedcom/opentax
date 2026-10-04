@@ -1750,3 +1750,18 @@ $1,750 on Schedule 1 line 8z and Form 1040 line 8. Native XML and extracted
 filled-PDF text retain all four distinct payer rows; the local TY2025 v5.4 XSD
 validates the complete return. The full suite remains due at implementation
 freeze.
+
+## PR #62 bulk diagnostic and Form 8814 fixture repair (2026-10-04)
+
+The exact `PATH=/tmp/opentax-tools:$PATH deno task test` command at
+`3e353bc7` finished in 52m47s with **11,057 passed and two failed**. Its log is
+`.state/research/ty2025-pr62-full-test-3e353bc7.log` (SHA-256
+`47ba6164f949b2a880bac95569ae181d8d17c7d633540e9fa62346b286df77c5`).
+Both failures were pre-existing Form 8814 fixtures that omitted a calculated
+child capital-gain destination from the finalized Form 1040 or Schedule D;
+the newer source guard correctly rejected them. The native/XSD fixture now
+files the calculated child amount on direct line 7a. The parent-PDF fixture
+provides a finalized Schedule D with its child line-13 amount and expects the
+early omission guard for the intentionally unsourced negative. All ten tests
+in the two corrected files pass. No production guard changed. The bulk test
+must be rerun on the fixed head before claiming a current-head pass.

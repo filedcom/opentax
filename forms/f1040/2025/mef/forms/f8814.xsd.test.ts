@@ -188,7 +188,11 @@ Deno.test({
     ...pending,
     schedule_b: { ...scheduleBSource, ...scheduleBProjection },
     schedule1: { line8z_form8814: line8z },
-    f1040: { ...pending.f1040!, line8_additional_income: line8z },
+    f1040: {
+      ...pending.f1040!,
+      line7a_cap_gain_distrib: pending.form8814!.items![1].line10,
+      line8_additional_income: line8z,
+    },
   }, filer);
   assertStringIncludes(xml, "<ChildTaxableInterestStmt documentId=");
   assertStringIncludes(
