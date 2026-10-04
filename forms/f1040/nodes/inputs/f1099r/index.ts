@@ -517,6 +517,8 @@ type R1099Items = R1099Item[];
 export function assertDistinct1099RCopies(
   items: readonly R1099Item[],
 ): void {
+  const normalizedPayerName = (name: string) =>
+    name.replace(/[.,]/g, " ").trim().replace(/\s+/g, " ").toUpperCase();
   const seenReferences = new Set<string>();
   const seenOwners = new Set<string>();
   const unidentifiedOwners = new Set<string>();
@@ -528,9 +530,9 @@ export function assertDistinct1099RCopies(
     const recipient = item.recipient_ssn?.replace(/\D/g, "");
     const account = item.account_number?.trim() || null;
     // The ATS packet uses one synthetic EIN for differently named payers.
-    // Collapse presentation-only name differences while retaining that
-    // distinction; same-name distributions need an account or issued reference.
-    const payerName = item.payer_name.trim().replace(/\s+/g, " ").toUpperCase();
+    // Collapse spacing, case, and punctuation-only variants while retaining
+    // distinct plan names that share the synthetic ATS EIN.
+    const payerName = normalizedPayerName(item.payer_name);
     const owner = JSON.stringify([payer, payerName, recipient ?? null]);
     // The retained source reference identifies the issued copy. Altering a
     // box value cannot turn that same identified copy into a second payment.

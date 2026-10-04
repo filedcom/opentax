@@ -987,6 +987,33 @@ Deno.test("unidentified repeated 1099-R copies reject native and PDF export", as
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
+Deno.test("1099-R punctuation-only payer variant cannot bypass native and PDF copy guard", async () => {
+  const issued = {
+    payer_name: "Plan Trust, Inc.",
+    payer_ein: "123456789",
+    recipient_ssn: filer.primarySSN,
+    account_number: "PENSION-1",
+    box1_gross_distribution: 1_000,
+    box7_distribution_code: "7",
+  };
+  const pending = {
+    f1099r: {
+      f1099rs: [issued, {
+        ...issued,
+        payer_name: "PLAN TRUST INC",
+        box1_gross_distribution: 1_200,
+      }],
+    },
+  };
+  const message = "one account without issued source references";
+  assertThrows(
+    () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    message,
+  );
+  await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
+});
+
 Deno.test("an unsupported bare line 25b amount cannot be filed without retained payer rows", () => {
   assertThrows(
     () =>

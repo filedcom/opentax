@@ -580,6 +580,35 @@ Deno.test("final exports replay a direct Form 8949 sale into Schedule D", async 
   );
 });
 
+Deno.test("final exports reject corrected direct Form 8949 rows on one identified statement", async () => {
+  const sale = {
+    part: Form8949Part.A,
+    description: "100 shares",
+    source_transaction_id: "sale-42",
+    broker_statement_reference: "broker-2025-statement",
+    date_acquired: "2025-01-10",
+    date_sold: "2025-06-20",
+    proceeds: 1_000,
+    cost_basis: 700,
+  };
+  const result = f1040_2025.executeReturn({ general, f8949: [sale] });
+  assertEquals(result.diagnostics, []);
+  const pending = {
+    ...buildPending(result.pending),
+    f8949: { f8949s: [sale, { ...sale, proceeds: 1_100 }] },
+  };
+  assertThrows(
+    () => buildMefXml(pending, filer),
+    Error,
+    "repeats the same identified statement transaction",
+  );
+  await assertRejects(
+    () => buildPdfBytes(pending, filer),
+    Error,
+    "repeats the same identified statement transaction",
+  );
+});
+
 Deno.test("identified sale cannot be counted through both 1099-B and direct 8949", async () => {
   const direct = {
     part: Form8949Part.A,

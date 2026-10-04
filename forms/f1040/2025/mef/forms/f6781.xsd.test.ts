@@ -48,10 +48,16 @@ Deno.test({
       accounts: [
         { account_identification: "Broker A Form 1099-B", gain_loss: 12_000 },
         { account_identification: "Broker B Form 1099-B", gain_loss: -2_000 },
+        { account_identification: "Broker C Form 1099-B", gain_loss: 500 },
+        { account_identification: "Broker D Form 1099-B", gain_loss: -500 },
       ],
     },
   }, filer);
   assertStringIncludes(xml, "<Section1256CntrctsAcctInfoGrp>");
+  assertEquals(
+    xml.match(/<Section1256CntrctsAcctInfoGrp>/g)?.length,
+    4,
+  );
   assertStringIncludes(
     xml,
     "<ShortTermCapitalGainAmt>4000</ShortTermCapitalGainAmt>",
@@ -98,10 +104,18 @@ Deno.test({
       accounts: [
         { account_identification: "Broker A Form 1099-B", gain_loss: 12_000 },
         { account_identification: "Broker B Form 1099-B", gain_loss: -2_000 },
+        { account_identification: "Broker C Form 1099-B", gain_loss: 500 },
+        { account_identification: "Broker D Form 1099-B", gain_loss: -500 },
       ],
     },
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
+  assertEquals(
+    Array.isArray(result.pending.form6781.accounts)
+      ? result.pending.form6781.accounts.length
+      : 0,
+    4,
+  );
   const xml = buildMefXml(result.pending, {
     ...filer,
     primarySSN: "111223333",

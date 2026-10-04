@@ -53,6 +53,26 @@ Deno.test("direct Form 8949 input deposits an identified transaction for MeF bef
   assertEquals(transaction.source_transaction_id, "deemed-sale-1");
 });
 
+Deno.test("direct Form 8949 rejects a repeated identified sale on one statement", () => {
+  const sale = minimalItem({
+    source_transaction_id: "sale-42",
+    broker_statement_reference: "broker-2025-statement",
+  });
+  assertThrows(
+    () => compute([sale, { ...sale, proceeds: 5_100 }]),
+    Error,
+    "repeats the same identified statement transaction",
+  );
+  assertEquals(
+    compute([sale, {
+      ...sale,
+      broker_statement_reference: "other-broker-2025-statement",
+      proceeds: 5_100,
+    }]).outputs.filter((row) => row.nodeType === "schedule_d").length,
+    2,
+  );
+});
+
 Deno.test("Form 8949 market discount prints code D and reaches taxable interest", () => {
   const source = f8949.compute(
     { taxYear: 2025, formType: "f1040" },

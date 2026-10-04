@@ -734,6 +734,11 @@ export const SCENARIO_1040_02_FACTS = {
     commutingMiles: 710,
     otherMiles: 15_151,
     allMileageBeforeJuly1: true,
+    vehiclePlacedInService: "2023-08-22",
+    vehicleAvailableForPersonalUse: true,
+    anotherVehicleAvailable: true,
+    mileageEvidence: true,
+    mileageEvidenceWritten: true,
   },
   form8283: {
     donee: "Goodwill",
@@ -834,6 +839,13 @@ export const SCENARIO_1040_04_FACTS = {
     placedInService: "2023-09-22",
     solarKilowattHoursProducedAndSold: 440_000,
     printedSolarRate: 0.006,
+    solarDcNameplateKw: 10_000,
+    solarAcNameplateKw: 765,
+    maximumNetOutputUnderOneMwChecked: true,
+    constructionBefore2023Checked: true,
+    prevailingWageApprenticeshipChecked: true,
+    ownerIsTaxpayer: false,
+    computedLine15Blank: true,
   },
   form8936ScheduleA: {
     vehicleYear: 2024,
@@ -843,6 +855,7 @@ export const SCENARIO_1040_04_FACTS = {
     placedInService: "2025-01-25",
     creditTransferredToDealer: false,
     newCleanVehicle: true,
+    businessUseCreditLines9Through11Blank: true,
   },
   requiredBinaryAttachmentDescription: "Transfer Election Statement",
 } as const;

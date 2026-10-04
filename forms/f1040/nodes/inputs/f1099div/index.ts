@@ -163,11 +163,13 @@ export function assertDistinct1099DIVCopies(items: readonly DIVItem[]): void {
   const seenAccounts = new Set<string>();
   const seenOwners = new Set<string>();
   const unidentifiedCopies = new Set<string>();
+  const seenItems: DIVItem[] = [];
   for (const item of items) {
     const payer = item.payerTin ??
       item.payerName?.trim().replace(/\s+/g, " ").toUpperCase() ?? null;
     const owner = JSON.stringify([payer, item.recipient_tin ?? null]);
     const identifiedAccount = !!(item.account_number && payer);
+    const positive = nomineeFields.some((key) => (item[key] ?? 0) > 0);
     if (item.source_document_reference) {
       if (seenReferences.has(item.source_document_reference)) {
         throw new Error(
@@ -185,7 +187,36 @@ export function assertDistinct1099DIVCopies(items: readonly DIVItem[]): void {
       }
       seenAccounts.add(key);
     }
-    if (!nomineeFields.some((key) => (item[key] ?? 0) > 0)) continue;
+    const payerName = item.payerName?.trim().replace(/\s+/g, " ")
+      .toUpperCase() ?? null;
+    for (const earlier of seenItems) {
+      // A missing payer TIN must not separate two otherwise matching copies.
+      if (
+        earlier.recipient_tin !== item.recipient_tin ||
+        (earlier.payerName?.trim().replace(/\s+/g, " ").toUpperCase() ??
+            null) !== payerName ||
+        Boolean(earlier.payerTin) === Boolean(item.payerTin)
+      ) continue;
+      if (
+        earlier.account_number && item.account_number &&
+        earlier.account_number === item.account_number
+      ) {
+        throw new Error(
+          "1099-DIV repeats the same payer, recipient, and account; corrected copies need a reviewed single current row",
+        );
+      }
+      if (
+        positive && nomineeFields.some((key) => (earlier[key] ?? 0) > 0) &&
+        ((!earlier.account_number && !earlier.source_document_reference) ||
+          (!item.account_number && !item.source_document_reference))
+      ) {
+        throw new Error(
+          "1099-DIV has multiple positive issued copies without account or source_document_reference; identify each distinct copy",
+        );
+      }
+    }
+    seenItems.push(item);
+    if (!positive) continue;
     if (!identifiedAccount && !item.source_document_reference) {
       if (seenOwners.has(owner)) {
         throw new Error(

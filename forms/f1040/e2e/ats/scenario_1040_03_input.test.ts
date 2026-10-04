@@ -2,6 +2,14 @@ import { assertEquals, assertStringIncludes } from "@std/assert";
 import { DistributionCode } from "../../nodes/inputs/f1099r/index.ts";
 import { schedule_f } from "../../nodes/intermediate/forms/schedule_f/index.ts";
 import { schedule_se } from "../../nodes/intermediate/forms/schedule_se/index.ts";
+import { scheduleF } from "../../2025/mef/forms/schedule_f.ts";
+import { scheduleSE as scheduleSeMef } from "../../2025/mef/forms/schedule_se.ts";
+import { scheduleFPdf } from "../../2025/pdf/forms/schedule_f.ts";
+import { scheduleSePdf } from "../../2025/pdf/forms/schedule_se.ts";
+import { testFiler } from "../../2025/mef/test-filer.ts";
+import { SCENARIO_1040_03_FACTS } from "./ty2025_cases.ts";
+import { fillFormPdf } from "../../2025/pdf/builder.ts";
+import { PDFDocument } from "pdf-lib";
 import {
   scenario104003Input,
   SCENARIO_1040_03_RECONCILIATION,
@@ -113,6 +121,79 @@ Deno.test("ATS 1040 Scenario 3 printed farm entries route to Schedule 1 and the 
   assertEquals(seFields("schedule2")?.line4_se_tax, 827);
   assertEquals(seFields("schedule1")?.line15_se_deduction, 414);
   assertEquals(seFields("form8959")?.se_income, 8_111 * 2 / 3);
+});
+
+Deno.test("ATS 1040 Scenario 3 farm source matches native and printable Schedule F and SE", async () => {
+  const input = scenario104003Input();
+  const farmInput = schedule_f.inputSchema.parse(input.schedule_f);
+  const farmResult = schedule_f.compute(
+    { taxYear: 2025, formType: "f1040" },
+    farmInput,
+  );
+  const seFields = farmResult.outputs.find((item) =>
+    item.nodeType === "schedule_se"
+  )?.fields;
+  const parsedSe = schedule_se.inputSchema.parse(seFields);
+  const filer = {
+    ...testFiler(),
+    primarySSN: SCENARIO_1040_03_FACTS.taxpayer.ssn,
+    fullName:
+      `${SCENARIO_1040_03_FACTS.taxpayer.firstName} ${SCENARIO_1040_03_FACTS.taxpayer.lastName}`,
+  };
+
+  const [farmXml] = scheduleF.build(farmInput, { filer });
+  assertStringIncludes(
+    farmXml,
+    "<SalesOfLvstckBghtForResaleAmt>8111</SalesOfLvstckBghtForResaleAmt>",
+  );
+  assertStringIncludes(farmXml, "<TotalExpensesAmt>4860</TotalExpensesAmt>");
+  assertStringIncludes(
+    farmXml,
+    "<NetFarmProfitLossAmt>3251</NetFarmProfitLossAmt>",
+  );
+  const [farmPdf] = scheduleFPdf.instances!(farmInput, filer);
+  assertEquals(farmPdf.line9_gross_income, 8_111);
+  assertEquals(farmPdf.line33_total_expenses, 4_860);
+  assertEquals(farmPdf.line34_net_profit, 3_251);
+  assertEquals(farmPdf.line_f_made_1099_payments, false);
+  const farmPdfBytes = await fillFormPdf(
+    scheduleFPdf,
+    farmPdf,
+    filer,
+    ".pdf-cache",
+  );
+  const filledFarm = await PDFDocument.load(farmPdfBytes!);
+  assertEquals(filledFarm.getPageCount(), 2);
+
+  const seXml = scheduleSeMef.build(parsedSe, { filer });
+  assertStringIncludes(seXml, "<OptionalMethodAmt>5407</OptionalMethodAmt>");
+  assertStringIncludes(
+    seXml,
+    "<SelfEmploymentTaxAmt>827</SelfEmploymentTaxAmt>",
+  );
+  assertStringIncludes(
+    seXml,
+    "<DeductibleSelfEmploymentTaxAmt>414</DeductibleSelfEmploymentTaxAmt>",
+  );
+  const identity = input.general as Record<string, unknown>;
+  const sePdf = scheduleSePdf.projectFields!(parsedSe, {
+    general: identity,
+    f1040: identity,
+    schedule_f: farmInput,
+  });
+  assertEquals(sePdf.owner_ssn, SCENARIO_1040_03_FACTS.taxpayer.ssn);
+  // The shared projector retains precision; both output builders file dollars.
+  assertEquals(Math.round(sePdf.line15 as number), 5_407);
+  assertEquals(sePdf.line12, 827);
+  const sePdfBytes = await fillFormPdf(
+    scheduleSePdf,
+    sePdf,
+    filer,
+    ".pdf-cache",
+    { schedule2: { line4_se_tax: 827 } },
+  );
+  const filledSe = await PDFDocument.load(sePdfBytes!);
+  assertEquals(filledSe.getPageCount(), 2);
 });
 
 Deno.test("ATS 1040 Scenario 3 preserves optional-method eligibility and missing targets", () => {

@@ -72,6 +72,26 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   f8949s: z.array(itemSchema).min(1),
+}).superRefine(({ f8949s }, ctx) => {
+  const seen = new Set<string>();
+  for (const [index, sale] of f8949s.entries()) {
+    if (!sale.broker_statement_reference || !sale.source_transaction_id) {
+      continue;
+    }
+    const key = JSON.stringify([
+      sale.broker_statement_reference,
+      sale.source_transaction_id,
+    ]);
+    if (seen.has(key)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["f8949s", index],
+        message:
+          "Direct Form 8949 repeats the same identified statement transaction; corrected copies need one reviewed current row",
+      });
+    }
+    seen.add(key);
+  }
 });
 
 type F8949Item = z.infer<typeof itemSchema>;

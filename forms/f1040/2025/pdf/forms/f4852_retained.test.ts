@@ -44,6 +44,7 @@ Deno.test("retained Form 4852 projects each reviewed owner and payer onto the of
     f4852s: [source, {
       ...source,
       form_type: "R_1099",
+      wages: undefined,
       subject_ts: "T",
       recipient_ssn: "123456789",
       payer_name: "Example Pension",
@@ -99,13 +100,20 @@ Deno.test("retained Form 4852 refuses mismatched owner and incomplete evidence",
     "recipient must match",
   );
   assertThrows(
-    () => project({ ...source, form_type: "R_1099", gross_distribution: 1000 }),
+    () =>
+      project({
+        ...source,
+        form_type: "R_1099",
+        wages: undefined,
+        gross_distribution: 1000,
+      }),
     Error,
     "distribution code",
   );
   const basis = {
     ...source,
     form_type: "R_1099",
+    wages: undefined,
     gross_distribution: 1000,
     distribution_code: "7",
     employee_contributions: 100,
@@ -178,6 +186,7 @@ Deno.test("retained Form 4852 prints the 1099-R taxable amount without a second 
       f4852s: [{
         ...source,
         form_type: "R_1099",
+        wages: undefined,
         subject_ts: "T",
         recipient_ssn: "123456789",
         payer_name: "Example Pension",

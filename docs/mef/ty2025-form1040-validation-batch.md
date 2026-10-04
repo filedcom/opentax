@@ -4098,3 +4098,44 @@ XML, PDF, template-cache, page-checklist, and XSD replay; see
 earlier **174 fixture IDs / 1,088 pages** remains a historical cross-packet
 inventory rather than a single current-head full-inventory checker result.
 IRS business-rule and ATS acceptance gates remain separate.
+
+## Current 186-fixture native eligibility probe (2026-10-05)
+
+The current checked-in planner has **186** source fixtures, including a new
+four-account Form 6781 case. A read-only probe
+executed each source through the return graph and prepared native MeF bundle:
+**175** reached a native return and **11** stopped at explicit guards. The
+blocked set comprises one Form 8862 prior-notice proof case, two W-2G payer-copy
+cases, seven direct Form 8874 New Markets credit cases requiring authenticated
+CDE/recapture history, and one Form 8995 loss case needing a sourced QBI
+carryforward. The exact IDs and errors are retained in
+`.state/research/ty2025-fixture-probe-after-6781.log`, with the 175-case
+generation selection in `.state/research/ty2025-exportable-175-selection.json`.
+This is native eligibility evidence, not a 186-case PDF or visual-review pass;
+the guarded cases remain on their existing checklist routes.
+
+## Current 175-case filled-PDF review replay (2026-10-05)
+
+The selected current-source packet at
+`.state/research/ty2025-filled-pdf-review/2026-10-05-exportable-175-final/`
+contains **175** source JSON, native XML, and filled-PDF trios totaling
+**1,091 pages**. All 175 native returns passed the locally cached TY2025
+v5.4 XSD. The 11 explicitly guarded fixtures are listed as exclusions in its
+manifest. The final manifest SHA-256 is
+`6b1c6635e516488b3c8ca274d787c2fad9bb35f0c84d6a707209811bde08d820`.
+
+Every current PDF and page-origin list matched a previously completed visual
+review byte for byte. The provenance map at
+`.state/research/ty2025-exportable-175-review-provenance.json` records the
+prior reviewed manifest selected for each case. Sources matched exactly for
+173 cases. The other two source differences were a signed-payment evidence
+byte/digest and a review-focus wording correction; their PDF bytes were
+unchanged. Native XML bytes matched for 125 cases; the remaining XML changes
+removed empty Schedule 1 documents or shifted document IDs, with no changed
+tax-field leaf values. Current-source page flags retain the exact-PDF visual
+observations, and the read-only checker passed **175 cases / 1,091 pages**,
+replaying source, XML, PDF, template cache, page origins, artifact hashes, and
+local XSD. Its log is
+`.state/research/ty2025-exportable-175-final-check.log`.
+This completes the selected eligible packet review, not the frozen board's
+all-route PDF requirement or IRS business-rule and ATS acceptance gates.

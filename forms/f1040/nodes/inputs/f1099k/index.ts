@@ -389,9 +389,17 @@ function processorIdentity(item: K99Item): string {
     : `name:${item.pse_name.trim().toLowerCase()}`;
 }
 
-function recipientIdentity(item: K99Item): string {
-  return item.recipient_tin?.replace(/\D/g, "") ||
-    item.recipient_identity_review?.recipient_name.trim().toLowerCase() || "";
+function sameRecipient(a: K99Item, b: K99Item): boolean {
+  const aTin = a.recipient_tin?.replace(/\D/g, "");
+  const bTin = b.recipient_tin?.replace(/\D/g, "");
+  if (aTin && bTin) return aTin === bTin;
+  // A reviewed name cannot prove that a missing-TIN copy belongs to a
+  // different owner of the same processor account. Keep that pair ambiguous.
+  if (Boolean(aTin) !== Boolean(bTin)) return true;
+  const name = (item: K99Item) =>
+    item.recipient_identity_review?.recipient_name.trim().replace(/\s+/g, " ")
+      .toUpperCase() ?? "";
+  return name(a) === name(b);
 }
 
 function positiveCopy(item: K99Item): boolean {
@@ -420,7 +428,7 @@ function repeatedIssuedCopyIndex(items: readonly K99Item[]): number {
       items.slice(0, index).some((prior) =>
         positiveCopy(prior) && prior.account_number?.trim() === account &&
         processorIdentity(prior) === processorIdentity(item) &&
-        recipientIdentity(prior) === recipientIdentity(item) &&
+        sameRecipient(prior, item) &&
         !distinctTransactionClass(prior, item)
       )
     ) return index;
@@ -440,7 +448,7 @@ function ambiguousUnidentifiedCopyIndex(items: readonly K99Item[]): number {
           (!prior.account_number?.trim() &&
             !prior.source_document_reference)) &&
         processorIdentity(prior) === processorIdentity(item) &&
-        recipientIdentity(prior) === recipientIdentity(item) &&
+        sameRecipient(prior, item) &&
         !distinctTransactionClass(prior, item)
       )
     ) return index;

@@ -7203,6 +7203,28 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-form6781-four-section1256-accounts",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(75_000, 11_000, "Example Employer", "12-3456789")],
+      form6781: {
+        accounts: [
+          { account_identification: "Broker A Form 1099-B", gain_loss: 12_000 },
+          { account_identification: "Broker B Form 1099-B", gain_loss: -2_000 },
+          { account_identification: "Broker C Form 1099-B", gain_loss: 500 },
+          { account_identification: "Broker D Form 1099-B", gain_loss: -500 },
+        ],
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form6781", "schedule_d"],
+    reviewFocus: [
+      "Form 6781 names Alex Example and SSN 111223333, prints Brokers A-C on line 1, and places Broker D's 500 loss on a labeled line-1 continuation page",
+      "Form 6781 line 2 includes all four accounts: 2,500 loss and 12,500 gain, net 10,000 on lines 3, 5, and 7",
+      "Form 6781 lines 8 and 9 report 4,000 short-term and 6,000 long-term gain, matching Schedule D, native XML, and Form 1040 line 7a",
+    ],
+  },
+  {
     id: "single-form8863-lifetime-learning-scholarship",
     inputs: {
       general: singleGeneral,

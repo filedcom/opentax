@@ -282,6 +282,28 @@ Deno.test("f1099r.compute: positive pension copies need account or issued-copy i
   assertEquals(f1040Input(differentPayers).line5b_pension_taxable, 20_000);
 });
 
+Deno.test("f1099r.compute: punctuation-only payer name change cannot bypass copy identity", () => {
+  const issued = minimalPensionItem({
+    payer_name: "Plan Trust, Inc.",
+    payer_ein: "123456789",
+    recipient_ssn: "111223333",
+    account_number: "PENSION-1",
+    source_document_reference: undefined,
+  });
+  const changed = {
+    ...issued,
+    payer_name: "PLAN TRUST INC",
+    box1_gross_distribution: 12_000,
+  };
+  for (const rows of [[issued, changed], [changed, issued]]) {
+    assertThrows(
+      () => compute(rows),
+      Error,
+      "one account without issued source references",
+    );
+  }
+});
+
 Deno.test("f1099r.compute: separate identified 1099-R accounts retain both amounts", () => {
   const first = minimalPensionItem({
     recipient_ssn: "111223333",
