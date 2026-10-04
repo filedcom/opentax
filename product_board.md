@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1148 bounded completed slices are recorded in the
+inside** that section. The 1149 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -82,6 +82,9 @@ The Form 1099-R final payer-identity guard passed a native/PDF regression and
 environment because `pdftotext` is unavailable.
 The Schedule 1 line 8z bare disallowed-business-interest guard passed 62
 focused source, native, and PDF tests; positive Form 8990 filing remains open.
+The exact `INHERITED` acquired-date code now reaches long-term broker Form
+8949 XML and PDF; 64 focused tests, including local TY2025 XSD, passed.
+Other inherited-basis evidence and `INH-2010` election paths remain open.
 The separate 116-descriptor PDF field audit also passed. CLI type
 check, native compilation, and a synthetic W-2 → MeF → PDF smoke passed at
 earlier checkpoints.

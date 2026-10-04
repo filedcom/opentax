@@ -50,7 +50,14 @@ export function assert1099BRecipientOwner(
       throw new Error("TY2025 1099-B sale date must be a real 2025 date");
     }
     if (
+      row.date_acquired === "INHERITED" &&
+      !["D", "E"].includes(row.part)
+    ) {
+      throw new Error("1099-B inherited sale needs a long-term Form 8949 box");
+    }
+    if (
       row.date_acquired !== "VARIOUS" &&
+      row.date_acquired !== "INHERITED" &&
       !validIsoCalendarDate(row.date_acquired)
     ) {
       throw new Error("1099-B acquired date must be a real ISO calendar date");

@@ -91,8 +91,8 @@ function buildAssetGrp(tx: F8949Transaction): string {
   const qofZ = isQofCodeZRow(tx);
   const children: string[] = [
     qofZ ? element("EIN", tx.description) : element("PropertyDesc", tx.description),
-    from4797 ? "" : tx.date_acquired === "VARIOUS"
-      ? element("DateAcquiredInheritedCd", "VARIOUS")
+    from4797 ? "" : ["VARIOUS", "INHERITED"].includes(tx.date_acquired)
+      ? element("DateAcquiredInheritedCd", tx.date_acquired)
       : element("AcquiredDt", tx.date_acquired),
     from4797 || qofZ ? "" : element("SoldOrDisposedDt", tx.date_sold),
     qofZ ? "" : element("ProceedsSalesPriceAmt", tx.proceeds),
@@ -198,6 +198,9 @@ function buildIRS8949(
       throw new Error(
         `Form 8949 box ${tx.part} conflicts with its holding-period flag`,
       );
+    }
+    if (tx.date_acquired === "INHERITED" && !tx.is_long_term) {
+      throw new Error("Form 8949 inherited sale needs a long-term box");
     }
     const existing = grouped.get(tx.part);
     if (existing !== undefined) {

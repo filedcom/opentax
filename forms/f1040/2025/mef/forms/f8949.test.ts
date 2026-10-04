@@ -35,6 +35,28 @@ Deno.test("various acquired dates use the TY2025 Form 8949 code element", () => 
   assertNotIncludes(xml, "<AcquiredDt>");
 });
 
+Deno.test("inherited acquisition uses the Form 8949 code only in Part II", () => {
+  const sale = {
+    part: "D",
+    description: "Inherited shares",
+    date_acquired: "INHERITED",
+    date_sold: "2025-06-20",
+    proceeds: 500,
+    cost_basis: 300,
+    gain_loss: 200,
+    is_long_term: true,
+  };
+  assertStringIncludes(
+    form8949.build([sale]),
+    "<DateAcquiredInheritedCd>INHERITED</DateAcquiredInheritedCd>",
+  );
+  assertThrows(
+    () => form8949.build([{ ...sale, part: "A", is_long_term: false }]),
+    Error,
+    "inherited sale needs a long-term box",
+  );
+});
+
 Deno.test("native Form 8949 rejects a gain that does not include column (g)", () => {
   assertThrows(() => form8949.build([{
     part: "A",

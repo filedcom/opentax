@@ -116,7 +116,7 @@ function assertNoSection1202Rows(rows: readonly unknown[]): void {
 }
 
 function checkedDate(value: string): string {
-  if (value === "VARIOUS") return value;
+  if (value === "VARIOUS" || value === "INHERITED") return value;
   const match = /^\d{4}-\d{2}-\d{2}$/.test(value)
     ? [value.slice(0, 4), value.slice(5, 7), value.slice(8, 10)]
     : /^\d{8}$/.test(value)
@@ -200,6 +200,9 @@ function validateTransactions(rows: readonly unknown[]): Transaction[] {
       throw new Error(
         `Form 8949 PDF box ${tx.part} conflicts with its holding-period flag`,
       );
+    }
+    if (tx.date_acquired === "INHERITED" && !tx.is_long_term) {
+      throw new Error("Form 8949 inherited sale needs a long-term box");
     }
     const qofZ = isQofCodeZRow(tx);
     if (!tx.from_form4797_investment_1245) {

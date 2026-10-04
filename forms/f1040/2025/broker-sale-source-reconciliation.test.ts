@@ -149,7 +149,7 @@ Deno.test("TY2025 broker sale needs a real 2025 sale date in both final exports"
 });
 
 Deno.test("filed broker sale needs a real ISO acquired date in both final exports", async () => {
-  for (const date_acquired of ["2025-02-30", "01012025"]) {
+  for (const date_acquired of ["2025-02-30", "01012025", "INHERIT"]) {
     const sale = { ...brokerRows[0], date_acquired };
     const result = f1040_2025.executeReturn({ general, f1099b: [sale] });
     assertEquals(result.diagnostics, []);
@@ -176,6 +176,34 @@ Deno.test("broker VARIOUS acquisition reaches native and PDF final returns", asy
   );
   const pdf = await buildPdfBytes(pending, filer);
   assertEquals(pdf.length > 0, true);
+});
+
+Deno.test("inherited broker acquisition reaches long-term native and PDF returns", async () => {
+  const sale = {
+    ...brokerRows[1],
+    date_acquired: "INHERITED",
+    noncovered_security: true,
+  };
+  const result = f1040_2025.executeReturn({ general, f1099b: [sale] });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const xml = buildMefXml(pending, filer);
+  assertStringIncludes(
+    xml,
+    "<DateAcquiredInheritedCd>INHERITED</DateAcquiredInheritedCd>",
+  );
+  const pdf = await buildPdfBytes(pending, filer);
+  assertEquals(pdf.length > 0, true);
+});
+
+Deno.test("inherited broker acquisition cannot be filed as short term", async () => {
+  const sale = { ...brokerRows[0], date_acquired: "INHERITED" };
+  const result = f1040_2025.executeReturn({ general, f1099b: [sale] });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const message = "1099-B inherited sale needs a long-term Form 8949 box";
+  assertThrows(() => buildMefXml(pending, filer), Error, message);
+  await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
 Deno.test("broker wash-sale box and other adjustment reach Form 1040 and both exports", async () => {

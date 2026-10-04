@@ -38,7 +38,9 @@ Deno.test({
   const transactions = parts.map((part, index) => ({
     part,
     description: `Asset ${part}`,
-    date_acquired: index === 1
+    date_acquired: index === 7
+      ? "INHERITED"
+      : index === 1
       ? "VARIOUS"
       : index < 6
       ? "2025-01-01"
@@ -73,6 +75,10 @@ Deno.test({
   assertStringIncludes(
     xml,
     "<DateAcquiredInheritedCd>VARIOUS</DateAcquiredInheritedCd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<DateAcquiredInheritedCd>INHERITED</DateAcquiredInheritedCd>",
   );
   const tmpPath = await Deno.makeTempFile({ suffix: ".xml" });
   try {

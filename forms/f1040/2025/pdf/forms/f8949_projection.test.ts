@@ -73,6 +73,20 @@ Deno.test("Form 8949 PDF prints various acquired dates", () => {
   assertEquals(instances[0]?.pdf_page1_row1_date_acquired, "VARIOUS");
 });
 
+Deno.test("Form 8949 PDF prints inherited acquisition only in Part II", () => {
+  const sale = { ...longTerm, date_acquired: "INHERITED" };
+  const instances = form8949Pdf.instances?.({ transaction: sale }) ?? [];
+  assertEquals(instances[0]?.pdf_page2_row1_date_acquired, "INHERITED");
+  assertThrows(
+    () =>
+      form8949Pdf.instances?.({
+        transaction: { ...shortTerm, date_acquired: "INHERITED" },
+      }),
+    Error,
+    "inherited sale needs a long-term box",
+  );
+});
+
 Deno.test("Form 8949 PDF requires canonical sale rows for every source category", () => {
   assertThrows(
     () =>
