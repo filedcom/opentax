@@ -22,6 +22,7 @@ import type { z } from "zod";
 import type { inputSchema as fecInputSchema } from "../../nodes/inputs/fec/index.ts";
 import type { inputSchema as f1095aInputSchema } from "../../nodes/inputs/f1095a/index.ts";
 import type { inputSchema as f4547InputSchema } from "../../nodes/inputs/f4547/index.ts";
+import type { inputSchema as paymentRequestInputSchema } from "../../nodes/inputs/payment_request/index.ts";
 import type { inputSchema as f1099intInputSchema } from "../../nodes/inputs/f1099int/index.ts";
 import type { inputSchema as f1099divInputSchema } from "../../nodes/inputs/f1099div/index.ts";
 import type { inputSchema as f1099oidInputSchema } from "../../nodes/inputs/f1099oid/index.ts";
@@ -67,6 +68,9 @@ export type MefFormsPending =
     // An affirmative Form 4547 request stays in pending until its separately
     // signed election route is implemented; attachment coverage rejects it.
     f4547?: z.infer<typeof f4547InputSchema>;
+    // A payment request is separate from a tax result or an already-paid
+    // estimate. Preserve intent for a reviewed handoff; never emit a debit.
+    payment_request?: z.infer<typeof paymentRequestInputSchema>;
     // Form 1116 line 1b needs the source compensation record for a filing check.
     // This is a source node in executor pending, not a second native document.
     fec?: z.infer<typeof fecInputSchema>;

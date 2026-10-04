@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1150 bounded completed slices are recorded in the
+inside** that section. The 1151 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -87,6 +87,9 @@ The exact `INHERITED` acquired-date code now reaches long-term broker Form
 Other inherited-basis evidence and `INH-2010` election paths remain open.
 The W-2 same-employer/employee repeated-copy guard passed a graph-to-native/PDF
 case and 116 nearby W-2 tests; correction lineage remains open.
+All four payment-request root families now retain typed intent and stop native
+and PDF export with an explicit separate-workflow message. Debit authority and
+transmission remain open; 15 focused tests passed.
 The separate 116-descriptor PDF field audit also passed. CLI type
 check, native compilation, and a synthetic W-2 → MeF → PDF smoke passed at
 earlier checkpoints.

@@ -451,6 +451,11 @@ export function assertAttachmentCoverage(
   exportKind: ExportKind,
 ): void {
   const byKey = pending as Readonly<Record<string, unknown>>;
+  if (byKey.payment_request !== undefined) {
+    throw new Error(
+      `[${exportKind.toUpperCase()}] Payment request needs a separate authorized withdrawal workflow; this Form 1040 packet does not include a debit request; export blocked`,
+    );
+  }
   if (hasForm8839Claim(byKey)) {
     try {
       reconcilePublicForm8839Pending(byKey);

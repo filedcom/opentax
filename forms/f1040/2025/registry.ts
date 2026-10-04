@@ -47,6 +47,7 @@ import { schedule_r } from "../nodes/inputs/schedule_r/index.ts";
 import { schedule_lep } from "../nodes/inputs/schedule_lep/index.ts";
 import { f9000 } from "../nodes/inputs/f9000/index.ts";
 import { f4547 } from "../nodes/inputs/f4547/index.ts";
+import { payment_request } from "../nodes/inputs/payment_request/index.ts";
 import { f2210 } from "../nodes/inputs/f2210/index.ts";
 import { f2210f } from "../nodes/inputs/f2210f/index.ts";
 import { f3903 } from "../nodes/inputs/f3903/index.ts";
@@ -276,6 +277,7 @@ export const registry: NodeRegistry = {
   schedule_lep,
   f9000,
   f4547,
+  payment_request,
   f2210,
   f2210f,
   f3903,
