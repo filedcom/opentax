@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1134 bounded completed slices are recorded in the
+inside** that section. The 1135 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -20,7 +20,7 @@ until their full routes or approved rejection boundaries are established.
 | Core return and source paths | 8 | Broader joins, ownership, and source classification remain open. |
 | Named tax-form gaps | 20 | Listed parent forms remain open despite completed bounded slices. |
 | Native MeF and PDF parity | 3 | Complete descriptor, attachment, and print parity remain open. |
-| Automated and artifact validation | 5 | The previous full suite passed 11,063/11,063; 378 focused 1099 checks and 140 Scenario 8 correction checks passed, with a clean full rerun open. |
+| Automated and artifact validation | 5 | The current post-correction full suite passed 11,064/11,064; route completeness, every-page review, and IRS acceptance remain open. |
 | IRS ATS and delivery | 5 | Credentials, accepted scenarios, and a filing-ready release remain open. |
 
 **Implemented coverage.** Retained routes include source and owner checks for
@@ -49,13 +49,11 @@ or template errors; field values, page layouts, and unused template fields still
 need route review. The live inventory has 149 native MeF descriptors, 116 PDF
 descriptors, and 211 TY2025 schema roots. These counts are inventories, not positive filing claims.
 
-**Validation and release.** `deno task test` passed 11,063/11,063 on
-`f2b2b545` on 2026-10-04 before the payer-name duplicate guard; its 378
-focused tests and the later 140-test Scenario 8 correction run passed. The
-first bulk diagnostic stopped on the Scenario 8 shared synthetic-EIN case;
-a clean current-head full rerun remains due. The prior
-full pass included the Form 1040-ES payment-year,
-Form 1099-K recipient-identity, and direct Form 8949 withholding guards.
+**Validation and release.** `deno task test` passed 11,064/11,064 on
+`4efaf107` on 2026-10-04 after the 1099 payer-name duplicate guard and
+Scenario 8 synthetic-EIN correction. The earlier diagnostic stopped on that
+case and was not a full pass. This clean run also includes the Form 1040-ES
+payment-year, Form 1099-K recipient-identity, and direct Form 8949 withholding guards.
 The separate 116-descriptor PDF field audit also passed. CLI type
 check, native compilation, and a synthetic W-2 → MeF → PDF smoke passed at
 earlier checkpoints.

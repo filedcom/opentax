@@ -1929,8 +1929,8 @@ payer text and amounts remain unchanged in the filed output. Six negative
 cases reject through native and PDF export. An older test's alleged second
 1099-R payer actually reused the first EIN; its fixture now uses a distinct
 EIN. The seven-file focused input/reconciliation run passed **378/378**;
-format, lint, and diff checks passed. The preceding 11,063-test full run is
-older than this code change, so the next bulk gate must rerun. This guard
+format, lint, and diff checks passed. The preceding 11,063-test full run was
+older than this code change; the post-correction bulk gate below passed. This guard
 compares reviewed structured payer facts; issuer-copy authentication and
 broader correction lineage remain open.
 
@@ -1941,8 +1941,21 @@ them. That diagnostic was stopped after the failure; it is not a full pass.
 The 1099-R key now includes the normalized payer name with the EIN and
 recipient: case/spacing-only variants still reject, while the two genuinely
 different Scenario 8 names remain separate. The focused 1099-R, exporter, and
-Scenario 8 rerun passed **140/140**; format and lint passed. A clean full
-rerun remains due after this correction.
+Scenario 8 rerun passed **140/140**; format and lint passed. The clean full
+rerun below passed after this correction.
+
+## PR #62 post-correction full automated pass (2026-10-04)
+
+The exact `PATH=/tmp/opentax-tools:$PATH deno task test` command ran on frozen
+code head `4efaf107` from 04:33:08 to 05:25:59 UTC and passed **11,064 tests,
+zero failed** in 52m23s, with no ignored tests reported. This includes the
+1099 payer-name duplicate guard and the Scenario 8 synthetic-EIN correction.
+The retained log is `.state/research/ty2025-pr62-full-test-4efaf107.log`
+(SHA-256 `682c4db19c2447a1e0575e5111e9009be480fb052d8bb7a2888ec88dbc09f966`).
+The runner used Deno 2.9.4 (V8 15.0.245.2-rusty, TypeScript 6.0.3),
+`xmllint` libxml 2.9.13, and Poppler 26.09.0 through the local launcher.
+This local pass does not establish complete source evidence, every-page visual
+review, IRS business-rule acceptance, or ATS transmission.
 
 ## Two-employer W-2 excess deferral filled-PDF review (2026-10-04)
 
