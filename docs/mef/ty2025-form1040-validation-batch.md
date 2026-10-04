@@ -1932,3 +1932,17 @@ source packet cases passed **37 focused tests**; the agreed-joint native return
 passed the local TY2025 v5.4 XSD (**38 checks total**). These are synthetic
 reviewed facts; IRS-account confirmation, agreement signature authentication,
 other payment channels, the full post-change test run, and ATS remain open.
+
+## Form 1099-K conflicting recipient TIN guard (2026-10-04)
+
+A retained 1099-K source with no recipient TIN can use a reviewed filer
+name/address match. The shared native/PDF check previously accepted the same
+review even after the payer row was changed to carry a different recipient
+TIN. A regression against `single-k-blank-tin-withholding` reproduced this as
+an unexpected native-export success. The final check now rejects any present
+recipient TIN that differs from the taxpayer or joint spouse; a matching
+name/address review cannot override it. The changed-source case rejects in
+both native and PDF exporters. All **nine** selected `single-k-` full-return
+fixture/XSD routes then passed. Issuer-copy authentication, corrected-copy
+lineage, wider owner ambiguity, the full post-change batch, and ATS remain
+open.

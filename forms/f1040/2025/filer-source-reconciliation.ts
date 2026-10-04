@@ -76,6 +76,7 @@ function kRecipientMatches(
     recipients.push(tin(filer.spouse?.ssn, "spouse"));
   }
   const tinMatches = Boolean(recipient && recipients.includes(recipient));
+  if (recipient && !tinMatches) return false;
   const review = item.recipient_identity_review as
     | Record<string, unknown>
     | undefined;

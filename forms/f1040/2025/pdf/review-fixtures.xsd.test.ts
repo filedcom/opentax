@@ -1,4 +1,9 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
@@ -6,6 +11,7 @@ import { registry } from "../registry.ts";
 import { buildMefBundle, buildMefXml } from "../mef/builder.ts";
 import { buildPending } from "../mef/pending.ts";
 import { sha256Hex } from "../prepared-source.ts";
+import { buildPdfBytes } from "./builder.ts";
 import { inputSchema as w2gInputSchema } from "../../nodes/inputs/w2g/index.ts";
 import { pdfReviewFixtures } from "./review-fixtures.ts";
 import { irs1040Pdf } from "./forms/f1040.ts";
@@ -555,6 +561,27 @@ for (const fixture of pdfReviewFixtures) {
         assertStringIncludes(
           xml,
           "<Form1099WithheldTaxAmt>480</Form1099WithheldTaxAmt>",
+        );
+        const wrongRecipientPending = buildPending({
+          ...result.pending,
+          f1099k: {
+            f1099ks: (result.pending.f1099k.f1099ks as Array<
+              Record<string, unknown>
+            >).map((row) => ({
+              ...row,
+              recipient_tin: "999-88-7777",
+            })),
+          },
+        });
+        assertThrows(
+          () => buildMefXml(wrongRecipientPending, fixture.filer),
+          Error,
+          "identified payer, recipient",
+        );
+        await assertRejects(
+          () => buildPdfBytes(wrongRecipientPending, fixture.filer),
+          Error,
+          "identified payer, recipient",
         );
         assertThrows(
           () =>

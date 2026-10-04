@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1128 bounded completed slices are recorded in the
+inside** that section. The 1129 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -50,7 +50,8 @@ descriptors, and 211 TY2025 schema roots. These counts are inventories, not posi
 **Validation and release.** `deno task test` passed 11,060/11,060 after
 `3fa9c6fe` on 2026-10-04; the later PDF field audit was checked separately,
 and the newer Form 1040-ES payment-year guard has 38 focused native/PDF/XSD
-passes but awaits a full rerun. CLI type
+passes. A Form 1099-K conflicting-TIN guard passed nine route checks; the full
+post-change rerun remains open. CLI type
 check, native compilation, and a synthetic W-2 → MeF → PDF smoke passed at
 earlier checkpoints.
 The attachment-aware TY2025 fixture/XML/XSD file passed 178/178 again at
