@@ -17,6 +17,15 @@ export function assertHohQualifyingChildSource(
 ): void {
   const filed = fields.hoh_qualifying_child;
   const raw = pending.general;
+  if (
+    raw !== null && typeof raw === "object" &&
+    "qss_qualifying_child_ssn" in raw &&
+    raw.qss_qualifying_child_ssn !== undefined
+  ) {
+    throw new Error(
+      "QSS qualifying child SSN needs a reviewed nondependent child route before Form 1040 export",
+    );
+  }
   const sourceNamesChild = raw !== null && typeof raw === "object" &&
     ("hoh_qualifying_person_name" in raw ||
       "hoh_qualifying_person_relationship" in raw);

@@ -124,6 +124,25 @@ Deno.test("both exporters reject a changed HOH child identity after source revie
   );
 });
 
+Deno.test("both exporters reject a retained QSS child SSN that intake would block", async () => {
+  const result = f1040_2025.executeReturn(inputs);
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const changed = structuredClone(pending);
+  (changed.general as Record<string, unknown>).qss_qualifying_child_ssn =
+    "444-55-6666";
+  assertThrows(
+    () => f1040_2025.buildMefXml(changed, filer),
+    Error,
+    "QSS qualifying child SSN needs a reviewed nondependent child route",
+  );
+  await assertRejects(
+    () => f1040_2025.buildPdfBytes(changed, filer),
+    Error,
+    "QSS qualifying child SSN needs a reviewed nondependent child route",
+  );
+});
+
 Deno.test("HOH nondependent child rejects missing custody, home cost, and mismatched name", () => {
   const source = inputs.general;
   const variants = [
