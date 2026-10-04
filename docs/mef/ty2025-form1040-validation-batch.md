@@ -4139,3 +4139,33 @@ local XSD. Its log is
 `.state/research/ty2025-exportable-175-final-check.log`.
 This completes the selected eligible packet review, not the frozen board's
 all-route PDF requirement or IRS business-rule and ATS acceptance gates.
+
+## Source/PDF full regression checkpoint (2026-10-05)
+
+After the source-copy, Form 6781, and Form 4852 fixture corrections, the full
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test` command passed
+**11,170/11,170**, zero failures, zero ignored, in 33m47s. The code commit was
+`a7666ae0`; the subsequent `fd3813f2` commit changed only ATS documentation
+during the run. The retained log is
+`.state/research/ty2025-full-test-2026-10-05-after-source-pdf.log` with
+SHA-256 `336eeb4c3edde047cb261659d8b0ffa077065507717d77cd70570e61d03ea4b8`.
+Tool versions: Deno 2.9.4, TypeScript 6.0.3, libxml 2.9.13, and Poppler
+`pdftotext` 26.09.0. This checkpoint predates the later Form 8888/8853 and
+Form 8880/8839 edits.
+
+## Bounded refund, MSA, adoption, Saver's Credit, and ATS review (2026-10-05)
+
+The Form 8888 spouse-account guard and bounded Form 8853 PDF correction passed
+25 focused native/PDF tests. The filed Archer MSA PDF at
+`.state/research/ty2025-filled-pdf-review/2026-10-05-form8853-bounded/`
+has one visually inspected page; PDF SHA-256 is
+`51629ead08afa21309bcf7cce4c5dae33647671ebae6ceec353bda5c6ad82436`.
+Form 8839 now selects only its applicable page 1. The reviewed one-child
+packet at `.state/research/ty2025-filled-pdf-review/2026-10-05-form8839-page/`
+has four pages total and one visually inspected Form 8839 page; PDF SHA-256 is
+`41498d4497f6462c838eb7ec2de9e7c0f6db5f7922b346f6a86159506521a8ca`.
+The new Form 8880 W-2 source guard passed 22 focused native/PDF tests; the
+wider related batch covering Form 8880, Form 8839, and ATS cases passed
+**139/139**. Deno check, lint, formatting, and `git diff --check` passed on the
+edited code. A full `deno task test` rerun after the final code edits is in
+progress; no full-batch pass is claimed for that head yet.

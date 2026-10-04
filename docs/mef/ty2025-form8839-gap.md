@@ -511,5 +511,8 @@ prepared Form 8839 PDF now retains page 1 only; the unused Part III on page 2
 no longer enters the filing packet. The positive prepared-bundle test confirms
 one Form 8839 page origin and reconciles all packet origins to the page count.
 The focused route passed and its filled Form 8839 page was rendered and visually
-checked for identity, child facts, amounts, and answers. Wider adoption routes,
+checked for identity, child facts, amounts, and answers. The retained PDF and
+page image are under
+`.state/research/ty2025-filled-pdf-review/2026-10-05-form8839-page/`.
+Wider adoption routes,
 source authenticity, full-batch validation, and ATS remain open.
