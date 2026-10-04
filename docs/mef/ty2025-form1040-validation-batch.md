@@ -3990,3 +3990,27 @@ credit fixture failed closed on its existing authenticated CDE-status and
 recapture-history guard; no review flag was claimed for it. Issued source
 bytes, other business-credit routes, complete all-page review, IRS business
 rules, and ATS acceptance remain open.
+
+## Empowerment-zone employment-credit filled-page review (2026-10-04)
+
+The `single-empowerment-zone-employment-credit` packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-empowerment-zone-credit/`
+contains 17 filled pages. Form 8844 uses its March 2020 revision and
+calculates 20% of $10,000 qualified wages for a $2,000 credit. Schedule C
+prints $8,000 of wages after the matching $2,000 reduction against $8,000
+receipts, leaving zero net profit. Form 3800 Part III line 3 and Section B
+allow the $2,000 credit; Schedule 3 line 6a and Form 1040 line 20 each carry
+it once. Total tax is $15,867 against $20,000 withholding, yielding a
+$4,133 refund. All 17 pages, including two Schedule C pages, nine Form
+3800 pages, two Form 6251 pages, and Form 8844, were rendered and visually
+checked for form/revision, filer, source amounts, marks, page order, blank
+continuation rows, and legibility. The read-only checker passed **1 case /
+17 pages** with source replay, artifact hashes, page origins, and local
+TY2025v5.4 XSD. Manifest SHA-256 is
+`b078ee71dfa7167a74ba08a09020b4d6d76d7ca20ed1055a2689f981290bae91`;
+checker log `.state/research/ty2025-empowerment-zone-check-2026-10-04.log`
+has SHA-256 `6e446273def30c24af0e0436519ccdae1377579228b6363f9c256b63a02aaeb1`.
+The distinct completed inventory reaches **171 fixture IDs / 1036 pages**,
+with 14 fixture IDs lacking completed page flags. Issued payroll and zone
+evidence, other business-credit routes, complete all-page review, IRS
+business rules, and ATS acceptance remain open.
