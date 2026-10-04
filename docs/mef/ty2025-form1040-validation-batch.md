@@ -2285,3 +2285,14 @@ page origins; manifest SHA-256 is
 The planner now has 182 fixtures and 85/113 distinct registered PDF keys.
 Remaining fixture pages, uncovered keys, source authenticity, current-head
 bulk testing, and IRS ATS remain open.
+
+## PR-ready current-code regression gate (2026-10-04)
+
+`PATH=/tmp/opentax-tools:$PATH deno task test` passed **11,111/11,111** with
+zero failures on code commit `8f8ced89` in 53m4s. The run included both new
+QSS and HOH child source-to-native-XML/PDF fixtures. Its log is
+`/tmp/opentax-pr62-hoh-qss-final-test.log` (SHA-256
+`6c0a96b774dac03c9bf9eab2e4d0fe66cba9bb3e98b80c1cceee480c3a2b32e5`).
+The selected packet reviews passed separately. This local regression result
+does not establish complete form coverage, every-page PDF review, or IRS ATS
+acceptance.
