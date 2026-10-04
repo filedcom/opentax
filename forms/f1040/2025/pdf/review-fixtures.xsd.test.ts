@@ -383,7 +383,7 @@ for (const fixture of pdfReviewFixtures) {
           "childless EIC needs reviewed general source facts",
         );
         const expected = Math.min(12_000, 10_000 - Math.round(line15));
-        assertEquals(expected, 9_294);
+        assertEquals(expected, 9_293);
         assertEquals(
           result.pending.f1040.line13b_additional_deductions,
           expected,
@@ -428,10 +428,10 @@ for (const fixture of pdfReviewFixtures) {
           reports.reduce((sum, row) => sum + Number(row.amount), 0),
           13_000,
         );
-        assertEquals(result.pending.f1040.line13b_additional_deductions, 9_294);
+        assertEquals(result.pending.f1040.line13b_additional_deductions, 9_293);
         assertStringIncludes(
           xml,
-          "<QualifiedTipsTradeOrBusAmt>9294</QualifiedTipsTradeOrBusAmt>",
+          "<QualifiedTipsTradeOrBusAmt>9293</QualifiedTipsTradeOrBusAmt>",
         );
         assertThrows(
           () =>
@@ -467,10 +467,10 @@ for (const fixture of pdfReviewFixtures) {
           >)[0].line_1_gross_receipts,
           18_000,
         );
-        assertEquals(result.pending.f1040.line13b_additional_deductions, 9_294);
+        assertEquals(result.pending.f1040.line13b_additional_deductions, 9_293);
         assertStringIncludes(
           xml,
-          "<QualifiedTipsTradeOrBusAmt>9294</QualifiedTipsTradeOrBusAmt>",
+          "<QualifiedTipsTradeOrBusAmt>9293</QualifiedTipsTradeOrBusAmt>",
         );
         assertThrows(
           () =>

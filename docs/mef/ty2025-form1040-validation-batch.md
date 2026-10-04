@@ -3569,3 +3569,47 @@ the checker log is `.state/research/ty2025-current-se-replay-check-2026-10-04.lo
 This refreshes 15 members of the earlier 149-fixture, 842-page completed
 checklist inventory; it does not add distinct fixtures or pages. Complete PDF
 review, IRS business rules, and ATS acceptance remain open.
+
+## Form 4972 Part II selected PDF packet (2026-10-04)
+
+The current selected packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-4972-part-ii/`
+contains the existing Form 4972 Part-II-only fixture and five rendered pages.
+The reviewed 1099-R has $100,000 gross/taxable distribution and $30,000 box 3
+capital gain. Form 4972 lines 6 and 7 print $30,000 and $6,000; Part III stays
+blank. Form 1040 lines 5a/5b carry the $70,000 ordinary share once, line 16
+checks Form 4972 and includes its tax, and Schedule 1-A's $6,000 senior
+deduction reaches line 13b. All five pages were visually checked for owner,
+form/year, amounts and marks, page order, and clipping against current source
+and XML.
+
+The read-only checker passed **1 case / 5 pages** with artifact hashes,
+source replay, page origins, and local TY2025v5.4 XSD. Manifest SHA-256 is
+`bcf80c7e77c851ec4c6fecd95e0e3a50be7a86bb5ceb025699e4d726026ee39f`;
+the checker log is `.state/research/ty2025-4972-check-2026-10-04.log`
+(SHA-256 `5948f6f2ac9b0f0d0f72de5885faf61d471c63229ad1762295017d8d8c2b7a56`).
+The distinct completed inventory becomes **150 fixture IDs / 847 pages**,
+with 35 fixture IDs still without completed page flags. Other Form 4972
+elections and authentic plan/source eligibility, complete PDF review, IRS
+business rules, and ATS acceptance remain open.
+
+A separate selected attempt including the existing Form 461 excess-business-loss
+fixture stopped before XML/PDF output at its already tested Form 8995 net-QBI-
+loss carryforward guard. No Form 461 page review or XSD result is claimed.
+
+## Schedule 1-A rounded-tip expectation reconciliation (2026-10-04)
+
+The first broad run after the Schedule SE change reached the Schedule 1-A PDF
+test and reported a stale $9,294 expectation for a $10,000 net-profit trade.
+The current filed half-SE deduction is $707, so the qualified trade tips are
+$9,293. The same old amount appeared in three source/XML fixture assertions.
+Those four assertions now match the filed-line calculation and the visually
+rechecked current PDFs. Each affected test passed directly: one Schedule 1-A
+PDF case and three complete source-to-native-XML/XSD cases, each with zero
+failures. The focused logs are
+`.state/research/ty2025-se-tips-{nec,tip1,tip2,tip3}-2026-10-04.log`.
+The first broad run was deliberately stopped after this failure so a clean
+run could start with the corrected expectations; its interrupted log is
+`.state/research/ty2025-full-test-df354df5-2026-10-04.log` (SHA-256
+`891a5943a9a2501a41b869f089e716a93372eaff78e6802816722fd918fe4316`).
+A clean full suite remains pending.

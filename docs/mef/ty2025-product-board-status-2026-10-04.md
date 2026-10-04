@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1212 bounded completed slices are recorded in the
+inside** that section. The 1215 bounded completed slices are recorded in the
 [completed ledger](ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -40,9 +40,15 @@ A two-page excess W-2 code D deferral packet also passed page review,
 source/XML/PDF replay, and local TY2025 XSD validation.
 These bounded selections do not cover all 185
 current fixtures.
-The retained manifest inventory now marks 149 distinct fixture IDs and 842
+Before the current Form 4972 review, the retained manifest inventory marked
+149 distinct fixture IDs and 842
 pages complete, with 36 fixture IDs still lacking completed page flags; this
 counts manifest checklists rather than rechecking older packets.
+The current Form 4972 Part-II-only packet adds five visually reviewed pages
+with a passing source/XML/artifact/XSD checker, bringing the distinct completed
+inventory to 150 fixture IDs and 847 pages; 35 fixture IDs remain without
+completed page flags. The separate Form 461 packet remains guarded on its
+already tested net-QBI-loss carryforward boundary.
 The Schedule SE rounding change was replayed through all 15 previously
 reviewed selected fixtures containing that form. Six current PDF/XML pairs
 were byte-identical; 39 changed pages across nine pairs were visually
