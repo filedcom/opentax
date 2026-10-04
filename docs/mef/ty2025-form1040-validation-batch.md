@@ -1799,3 +1799,19 @@ page origins, hashes, and local TY2025 v5.4 XSD validation. This is a bounded
 visual result; the complete all-page review, issued payer records, business
 rules, and IRS ATS acceptance remain open. The earlier 11,059-test bulk pass
 predates this added fixture.
+
+## Registered PDF AcroForm field-name audit (2026-10-04)
+
+`scripts/inspect-pdf-fields.ts` now reads the current `fields`, `filerFields`,
+`extraPdfFields`, and expanded `rows` descriptors rather than the removed
+`PDF_FIELD_MAP` property. It uses a URL-specific IRS template cache and writes
+per-descriptor dumps under ignored `.state/research/ty2025-pdf-field-audit/`;
+any template error, missing mapped field, or field-type mismatch makes the command fail. The current
+run inspected **116 registered descriptors** against IRS AcroForms: **zero
+fetch/parse errors**, **zero descriptors with missing mapped field names**,
+and **zero field-type mismatches**.
+Ninety-seven descriptors have template fields outside their mapped set; this
+is an inventory, not a finding that every such field is needed. This static
+check does not verify domain values, form-page retention, row overflow, owner,
+layout, source/MeF parity, or the still-uncovered PDF keys. The exact run log
+is `.state/research/ty2025-pdf-field-audit/run-2026-10-04.log`.
