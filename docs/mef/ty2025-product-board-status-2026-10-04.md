@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1230 bounded completed slices are recorded in the
+inside** that section. The 1231 bounded completed slices are recorded in the
 [completed ledger](ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -110,6 +110,12 @@ The geothermal production-credit packet adds 17 reviewed pages: Form 8835
 line 15 carries $600 into Form 3800 Part III specified-credit line 4e,
 Schedule 3, and Form 1040 once. The inventory reaches 169 fixture IDs /
 1003 pages, with 16 fixture IDs lacking completed page flags.
+The orphan-drug credit packet adds 16 reviewed pages: a $10,000 testing
+expense and reduced section 280C election yield $1,975 on Form 8820,
+Form 3800, Schedule 3, and Form 1040. The inventory reaches 170 fixture
+IDs / 1019 pages, with 15 fixture IDs lacking completed page flags.
+The new-markets fixture remains guarded on authenticated CDE status and
+recapture history; the guard was preserved during this review.
 A separate current-head two-page direct pension rollover packet passed a
 completed source/XML/visual checklist; the all-page review gate remains open.
 Two current-head Form 1098 purchase and construction-refinance points packets

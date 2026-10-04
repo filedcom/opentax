@@ -3964,3 +3964,29 @@ The distinct completed inventory reaches **169 fixture IDs / 1003 pages**,
 with 16 fixture IDs lacking completed page flags. Issued source bytes, other
 business-credit routes, complete all-page review, IRS business rules, and
 ATS acceptance remain open.
+
+## Orphan-drug clinical-testing credit filled-page review (2026-10-04)
+
+The `single-orphan-drug-clinical-testing-credit` packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-orphan-drug-credit/`
+contains 16 filled pages. Form 8820 uses its September 2018 revision and
+prints one FDA-designated drug, the application number and designation date,
+$10,000 qualified clinical testing expenses, and the reduced section 280C
+election. Its 19.75% calculation yields $1,975 on line 4. Form 3800 Part
+III line 1h and line 38, Schedule 3 line 6a, and Form 1040 line 20 carry
+$1,975 once. Total tax is $23,092 against $30,000 withholding, yielding a
+$6,908 refund. All 16 pages, including nine Form 3800 pages, two Form 6251
+pages, and two Form 8820 pages, were rendered and visually checked for
+form/revision, filer, source amounts, marks, page order, blank continuation
+rows, and legibility. The read-only checker passed **1 case / 16 pages**
+with source replay, artifact hashes, page origins, and local TY2025v5.4 XSD.
+Manifest SHA-256 is
+`02cf1d73c0c557acd9e029ee6bda4ae8987d374cdad04427e6df7a5400329279`;
+checker log `.state/research/ty2025-orphan-drug-check-2026-10-04.log` has
+SHA-256 `468671a473943deef8fe25c6c99cad44e0cff856f622e5ec8a1fc8797f0e7937`.
+The distinct completed inventory reaches **170 fixture IDs / 1019 pages**,
+with 15 fixture IDs lacking completed page flags. The separate new-markets
+credit fixture failed closed on its existing authenticated CDE-status and
+recapture-history guard; no review flag was claimed for it. Issued source
+bytes, other business-credit routes, complete all-page review, IRS business
+rules, and ATS acceptance remain open.
