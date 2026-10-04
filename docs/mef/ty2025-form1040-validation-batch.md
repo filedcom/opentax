@@ -2266,3 +2266,22 @@ page origins; manifest SHA-256 is
 The planner now has 181 fixtures and 85/113 distinct registered PDF keys.
 Remaining fixture pages, uncovered keys, source authenticity, current-head
 bulk testing, and IRS ATS remain open.
+
+## HOH two-page selected packet review (2026-10-04)
+
+The `hoh-w2-nonclaimed-custodial-release-child` fixture passed local
+TY2025v5.4 XML/XSD and was generated through the real graph, native MeF, and
+filled-PDF builder. The selected artifact is at
+`.state/research/ty2025-filled-pdf-review/2026-10-04-hoh-custodial-release-child-5c22a5b9/`.
+Both rendered Form 1040 pages were inspected: page 1 checks HOH, prints Avery
+Child in the shared HOH/QSS line, leaves dependent rows empty, and shows
+$75,000 W-2 wages; page 2 checks the EIC opt-out and shows a $23,625 deduction,
+$5,825 tax, $11,000 withholding, and $5,175 refund. These values and the
+qualifying-child name/SSN match source, pending Form 1040, and local XSD-valid
+native XML. The completed selected-scope manifest passed the read-only
+checker for **1 case and 2 pages**, including exact source/PDF/XML hashes and
+page origins; manifest SHA-256 is
+`2d81b4815e773e59abd057ee28918fd5f0269c86a82fc0f52066305f013a0c73`.
+The planner now has 182 fixtures and 85/113 distinct registered PDF keys.
+Remaining fixture pages, uncovered keys, source authenticity, current-head
+bulk testing, and IRS ATS remain open.
