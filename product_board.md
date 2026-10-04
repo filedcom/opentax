@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1144 bounded completed slices are recorded in the
+inside** that section. The 1145 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -73,6 +73,8 @@ The final Form 1099-B broker-identity guard passed 23 broker tests and 36
 related withholding, interest, and attachment tests.
 The later Form 1099-B description and real TY2025 sale-date guard passed 25
 broker tests and the same 36 related tests.
+The Form 1099-B acquired-date final guard passed 26 broker and 36 related
+tests; other acquired-date representations remain open.
 The separate 116-descriptor PDF field audit also passed. CLI type
 check, native compilation, and a synthetic W-2 → MeF → PDF smoke passed at
 earlier checkpoints.

@@ -148,6 +148,18 @@ Deno.test("TY2025 broker sale needs a real 2025 sale date in both final exports"
   }
 });
 
+Deno.test("filed broker sale needs a real ISO acquired date in both final exports", async () => {
+  for (const date_acquired of ["2025-02-30", "01012025"]) {
+    const sale = { ...brokerRows[0], date_acquired };
+    const result = f1040_2025.executeReturn({ general, f1099b: [sale] });
+    assertEquals(result.diagnostics, []);
+    const pending = buildPending(result.pending);
+    const message = "1099-B acquired date must be a real ISO calendar date";
+    assertThrows(() => buildMefXml(pending, filer), Error, message);
+    await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
+  }
+});
+
 Deno.test("broker wash-sale box and other adjustment reach Form 1040 and both exports", async () => {
   const sale = {
     ...brokerRows[0],

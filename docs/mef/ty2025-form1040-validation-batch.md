@@ -2069,6 +2069,19 @@ tests, and three related withholding, Schedule B, and attachment files passed
 bulk rerun remains due after implementation; acquired-date variants, issuer
 authentication, wider transaction combinations, and ATS acceptance remain open.
 
+## Form 1099-B acquired-date final guard (2026-10-04)
+
+A red full-return regression showed that a direct Schedule D broker sale could
+reach native export with a nonexistent acquired date or an eight-digit date
+string, while the native detail serializer expects a calendar date value.
+The shared final broker check now requires an exact real ISO acquired date for
+the currently supported route, before either native or PDF packet assembly.
+The two-file broker run passed **26/26** tests and the three related
+withholding, Schedule B, and attachment files passed **36/36** tests;
+formatting, lint, and diff checks passed. Other legitimate acquired-date
+representations need an explicit native/PDF route before filing. The
+current-head bulk rerun, issuer authentication, and ATS acceptance remain open.
+
 ## Two-employer W-2 excess deferral filled-PDF review (2026-10-04)
 
 On `c458142c`, the selected `single-w2-code-d-excess-line1h` fixture was

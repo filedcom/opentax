@@ -1,6 +1,13 @@
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 import { inputSchema } from "../nodes/inputs/f1099b/index.ts";
 
+function validIsoCalendarDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value;
+}
+
 /** A broker-reported sale must belong to a filer on this return. */
 export function assert1099BRecipientOwner(
   source: unknown,
@@ -36,14 +43,14 @@ export function assert1099BRecipientOwner(
     if (!row.description.trim()) {
       throw new Error("1099-B sale needs a property description");
     }
-    const sold = /^2025-\d{2}-\d{2}$/.test(row.date_sold)
-      ? new Date(`${row.date_sold}T00:00:00.000Z`)
-      : new Date(Number.NaN);
     if (
-      Number.isNaN(sold.getTime()) ||
-      sold.toISOString().slice(0, 10) !== row.date_sold
+      !row.date_sold.startsWith("2025-") ||
+      !validIsoCalendarDate(row.date_sold)
     ) {
       throw new Error("TY2025 1099-B sale date must be a real 2025 date");
+    }
+    if (!validIsoCalendarDate(row.date_acquired)) {
+      throw new Error("1099-B acquired date must be a real ISO calendar date");
     }
   }
 }
