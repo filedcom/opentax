@@ -3544,3 +3544,28 @@ The prior full runs were stopped while reconciling the affected source fixture
 and expectations; a clean full `PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test`
 result remains pending. The other Scenario 12 source conflicts and ATS
 acceptance remain open.
+
+## Schedule SE affected-packet replay (2026-10-04)
+
+The filed-line change was replayed against all 15 previously reviewed selected
+fixtures that include Schedule SE. The current packet is
+`.state/research/ty2025-filled-pdf-review/2026-10-04-current-se-replay/`.
+Six regenerated PDF/XML pairs are byte-identical to their reviewed packets.
+Nine pairs changed; page-by-page 90-dpi raster comparison found 39 changed
+pages among the packet's 192 pages. Those 39 pages were visually rechecked for
+form/year, owner, filed amounts, marks, order, and legibility, including the
+three qualified-tip deductions, two 1099-K tax/refund totals, the mixed-K
+half-tax, simplified-home-office half-tax, Form 7206 health-plan deduction,
+and Form 8829/Form 8995 QBI limit. Previously checked pages with identical
+rasters retained their visual evidence. The raster comparison and contact
+sheets are retained under `.state/research/ty2025-current-se-raster-compare/`.
+
+The read-only checker passed **15 cases / 192 pages**, with current source
+replay, PDF/XML/source hashes, page origins, and local TY2025v5.4 XSD. The
+manifest SHA-256 is
+`7558ea7fced1ea768f26a9a65e74efa065568b8299e76087962c1eab515e7cdd`;
+the checker log is `.state/research/ty2025-current-se-replay-check-2026-10-04.log`
+(SHA-256 `57400da22b11613c7ead8b9fde07c899499940967060f27f260cc9c0a8bdacf9`).
+This refreshes 15 members of the earlier 149-fixture, 842-page completed
+checklist inventory; it does not add distinct fixtures or pages. Complete PDF
+review, IRS business rules, and ATS acceptance remain open.

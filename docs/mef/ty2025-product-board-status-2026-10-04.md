@@ -43,6 +43,11 @@ current fixtures.
 The retained manifest inventory now marks 149 distinct fixture IDs and 842
 pages complete, with 36 fixture IDs still lacking completed page flags; this
 counts manifest checklists rather than rechecking older packets.
+The Schedule SE rounding change was replayed through all 15 previously
+reviewed selected fixtures containing that form. Six current PDF/XML pairs
+were byte-identical; 39 changed pages across nine pairs were visually
+rechecked, and the current 15-case/192-page hash, source, page-origin, and XSD
+checker passed. This refresh does not change the distinct-fixture count.
 A separate current-head two-page direct pension rollover packet passed a
 completed source/XML/visual checklist; the all-page review gate remains open.
 Two current-head Form 1098 purchase and construction-refinance points packets
