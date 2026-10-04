@@ -87,6 +87,33 @@ Deno.test("positive 1099-NEC withholding cannot belong to another recipient", ()
   );
 });
 
+Deno.test("1099-NEC box 4 needs an identified issued payer in both Form 1040 exports", () => {
+  const issued = {
+    payer_name: "Payer",
+    payer_tin: "123456789",
+    recipient_ssn: "111223333",
+    box4_federal_withheld: 20,
+  };
+  for (
+    const changed of [
+      { ...issued, payer_name: " " },
+      { ...issued, payer_tin: "unknown" },
+    ]
+  ) {
+    const pending = { f1099nec: { f1099necs: [changed] } };
+    assertThrows(
+      () => irs1040.build(filed, { pending }),
+      Error,
+      "1099-NEC positive amounts need an identified payer",
+    );
+    assertThrows(
+      () => irs1040Pdf.projectFields?.(filed, pending),
+      Error,
+      "1099-NEC positive amounts need an identified payer",
+    );
+  }
+});
+
 Deno.test("one identified 1099-NEC issued copy cannot replay changed income at native or PDF export", () => {
   const issued = {
     payer_name: "Payer",

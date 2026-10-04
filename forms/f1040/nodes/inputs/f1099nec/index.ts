@@ -68,6 +68,19 @@ export const itemSchema = z.object({
       message: "1099-NEC box 4 withholding needs the issued recipient SSN",
     });
   }
+  if (
+    ((item.box1_nec ?? 0) > 0 || (item.box3_golden_parachute ?? 0) > 0 ||
+      (item.box4_federal_withheld ?? 0) > 0) &&
+    (!item.payer_name.trim() ||
+      !/^\d{9}$/.test(item.payer_tin.replaceAll("-", "")))
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["payer_tin"],
+      message:
+        "1099-NEC positive amounts need an identified payer name and TIN",
+    });
+  }
   if ((item.box1_nec ?? 0) <= 0) return;
   if (!item.for_routing) {
     ctx.addIssue({

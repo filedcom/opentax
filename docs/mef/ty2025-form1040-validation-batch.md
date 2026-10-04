@@ -1974,6 +1974,18 @@ passed **35/35** tests; formatting, lint, and diff checks passed. The preceding
 rerun remains due after the other implementation work. Issuer authentication,
 all positive source routes, and ATS acceptance remain open.
 
+## Form 1099-NEC positive-payer identity guard (2026-10-04)
+
+A red Form 1040 exporter regression showed that a box 4 only Form 1099-NEC
+withholding row could pass with an empty payer name or invalid payer TIN.
+The shared input schema now requires a nonblank payer name and nine-digit TIN
+for positive box 1, box 3, or box 4 amounts. Informational zero-amount rows
+retain their prior behavior. Both native and PDF Form 1040 projection reject
+the malformed withholding source; the two-file graph/exporter run passed
+**76/76** tests, and formatting, lint, and diff checks passed. The current-head
+bulk rerun remains due after implementation. Issued-copy authentication and
+other source variants remain open.
+
 ## Two-employer W-2 excess deferral filled-PDF review (2026-10-04)
 
 On `c458142c`, the selected `single-w2-code-d-excess-line1h` fixture was
