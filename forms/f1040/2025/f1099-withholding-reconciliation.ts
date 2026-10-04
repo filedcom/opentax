@@ -107,12 +107,6 @@ const sources: readonly Source[] = [
     include: (row) => row.form_type === FormType.R_1099,
   },
   {
-    key: "f8949",
-    rows: "f8949s",
-    fields: ["federal_withheld"],
-    schema: transactionSchema,
-  },
-  {
     key: "rrb1099r",
     rows: "rrb1099rs",
     fields: ["box9_federal_withheld"],
@@ -200,6 +194,11 @@ export function assert1099WithholdingSource(
     ) {
       throw new Error(
         "1099-B and Form 8949 source rows repeat withholding for one broker transaction",
+      );
+    }
+    if (transactions.some((row) => (row.federal_withheld ?? 0) > 0)) {
+      throw new Error(
+        "Form 8949 withholding needs an issued Form 1099-B source; enter it on the broker copy",
       );
     }
   }

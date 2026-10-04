@@ -1,8 +1,13 @@
 import { assertRejects, assertThrows } from "@std/assert";
+import { execute } from "../../../core/runtime/executor.ts";
+import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 import { assert1099WithholdingSource } from "./f1099-withholding-reconciliation.ts";
 import { buildMefXml } from "./mef/builder.ts";
+import { buildPending } from "./mef/pending.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
+import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
+import { registry } from "./registry.ts";
 import { FormType } from "../nodes/inputs/f4852/index.ts";
 import { inputSchema as brokerSchema } from "../nodes/inputs/f1099b/index.ts";
 
@@ -580,6 +585,45 @@ Deno.test("1099-B and Form 8949 cannot claim the same identified broker withhold
       }, filer),
     Error,
     "repeat withholding",
+  );
+});
+
+Deno.test("direct Form 8949 cannot create Form 1040 withholding without an issued broker source", async () => {
+  const fixture = pdfReviewFixtures.find((row) =>
+    row.id === "single-short-and-long-form8949-sales"
+  );
+  if (!fixture) throw new Error("Missing direct Form 8949 sale fixture");
+  const result = execute(buildExecutionPlan(registry), registry, {
+    ...fixture.inputs,
+  }, { taxYear: 2025, formType: "f1040" });
+  if (result.diagnostics.length) throw new Error("Invalid sale fixture");
+  const source = result.pending.f8949 as {
+    f8949s: Array<Record<string, unknown>>;
+  };
+  const pending = buildPending({
+    ...result.pending,
+    f8949: {
+      ...source,
+      f8949s: [
+        { ...source.f8949s[0], federal_withheld: 50 },
+        ...source.f8949s.slice(1),
+      ],
+    },
+  });
+  assertThrows(
+    () => assert1099WithholdingSource(pending, fixture.filer),
+    Error,
+    "Form 8949 withholding needs an issued Form 1099-B source",
+  );
+  assertThrows(
+    () => buildMefXml(pending, fixture.filer),
+    Error,
+    "Form 8949 withholding needs an issued Form 1099-B source",
+  );
+  await assertRejects(
+    () => buildPdfBytes(pending, fixture.filer),
+    Error,
+    "Form 8949 withholding needs an issued Form 1099-B source",
   );
 });
 

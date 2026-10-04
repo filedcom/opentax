@@ -1958,3 +1958,18 @@ reviewed taxpayer or spouse name/address match. The direct owner case passed,
 and all nine `single-k-` full-return/XSD fixture routes passed again. Payer
 copy authenticity, wider corrected-source combinations, the full post-change
 batch, and ATS remain open.
+
+## Direct Form 8949 withholding source boundary (2026-10-04)
+
+A direct Form 8949 transaction could formerly set `federal_withheld` and
+create Form 1040 line 25b without a payer-issued record or recipient owner. A
+red regression demonstrated that the shared withholding reconciliation
+accepted the source. Final native/PDF export now refuses a positive amount on
+that direct row and points to the issued Form 1099-B source route. The
+[2025 Form 1099-B](https://www.irs.gov/pub/irs-pdf/f1099b--2025.pdf) places
+federal withholding in box 4; [Form 8949 instructions](https://www.irs.gov/instructions/i8949)
+describe capital-sale reconciliation, not an independent withholding source.
+The direct-source negative reached both exporters and **79** focused
+withholding/Form 8949 tests passed. The 1099-B payer-copy path remains
+available for sourced withholding; issuer authenticity, wider corrected
+copies, the full post-change batch, and IRS ATS remain open.
