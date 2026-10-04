@@ -16,6 +16,42 @@ const fixture = pdfReviewFixtures.find((item) =>
   item.id === "single-direct-pension-rollover"
 )!;
 
+Deno.test("positive 1099-R payer identity rejects blank name and malformed EIN in both exports", async () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    fixture.inputs,
+    {
+      taxYear: 2025,
+      formType: "f1040",
+    },
+  );
+  assertEquals(result.diagnostics, []);
+  for (
+    const change of [
+      { payer_name: "   " },
+      { payer_ein: "unknown" },
+    ]
+  ) {
+    const pending = buildPending(result.pending);
+    Object.assign(
+      (pending.f1099r as unknown as { f1099rs: Record<string, unknown>[] })
+        .f1099rs[0],
+      change,
+    );
+    assertThrows(
+      () => buildMefXml(pending, fixture.filer),
+      Error,
+      "1099-R 1 needs a payer name and nine-digit EIN",
+    );
+    await assertRejects(
+      () => buildPdfBytes(pending, fixture.filer),
+      Error,
+      "1099-R 1 needs a payer name and nine-digit EIN",
+    );
+  }
+});
+
 Deno.test("altered 1099-R source reaches nonstandard TY2025 native and PDF return", async () => {
   const [original] = fixture.inputs.f1099r as Record<string, unknown>[];
   const result = execute(buildExecutionPlan(registry), registry, {
