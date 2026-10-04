@@ -23,6 +23,15 @@ in the [validation batch](ty2025-form1040-validation-batch.md). This is one
 synthetic route; source authenticity, other branches, IRS business rules, and
 ATS acceptance remain open.
 
+On 2026-10-05, native MeF and PDF export gained a shared replay of positive
+Form 8880 W-2 deferral entries against retained W-2 box 12 copies. It compares
+employee SSN, deferral code, amount, and the reviewed code G employee split as
+a multiset; a missing, changed, or duplicated W-2 now rejects instead of
+allowing a self-contained Form 8880 claim. Sourced MFJ D/E and governmental
+457(b) code G examples still pass. The focused native/PDF cases passed 22/22,
+and a wider related batch passed 139/139. Issuer authenticity and other
+contribution sources remain separate gates.
+
 The TY2025 line 9 AGI bands now match the printed 2025 Form 8880 table:
 single/MFS/QSS ceilings of $23,750/$25,500/$39,500, HOH ceilings of
 $35,625/$38,250/$59,250, and MFJ ceilings of $47,500/$51,000/$79,000. Qualifying

@@ -919,6 +919,10 @@ export const SCENARIO_1040_05_FACTS = {
     box6MedicareWithholding: 453,
   },
   form2441: {
+    // The dependent-care-benefits Yes/No answer and credit lines are blank.
+    dependentCareBenefitsAnswer: null,
+    printedTaxLiabilityLimit: null,
+    printedCredit: null,
     providers: [
       {
         name: "Kid Korner",

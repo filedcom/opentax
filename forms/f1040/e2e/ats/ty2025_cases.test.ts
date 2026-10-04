@@ -452,6 +452,64 @@ Deno.test("1040 Scenario 5 preserves dependent, care, education, and opt-out inp
   assertEquals(facts.optOutOfAdditionalChildTaxCredit, true);
 });
 
+Deno.test("1040 Scenario 5 Form 2441 preserves provider/person rows and pre-credit amounts", () => {
+  const facts = SCENARIO_1040_05_FACTS;
+  assertEquals(facts.form2441.providers, [
+    {
+      name: "Kid Korner",
+      ein: "000000041",
+      amountPaid: 1_300,
+      address: "227 Maze Street, Seattle, WA 98104",
+      householdEmployee: false,
+    },
+    {
+      name: "Little Genius",
+      ein: "000000042",
+      amountPaid: 520,
+      address: "7311 Apple Road, Seattle, WA 98104",
+      householdEmployee: false,
+    },
+  ]);
+  assertEquals(
+    facts.dependents.map((child) => ({
+      name: `${child.firstName} ${child.lastName}`,
+      ssn: child.ssn,
+      form2441Line2d: child.careExpenses,
+    })),
+    [
+      { name: "Skylar Barker", ssn: "400001057", form2441Line2d: 1_300 },
+      { name: "Kaylee Barker", ssn: "400001058", form2441Line2d: 520 },
+    ],
+  );
+
+  // These are Part II worksheet targets if no dependent-care benefits apply.
+  // The packet does not mark the benefits Yes/No answer or fill lines 3-11.
+  const paidExpenses = facts.dependents.reduce(
+    (sum, child) => sum + child.careExpenses,
+    0,
+  );
+  const line3WithoutBenefits = Math.min(paidExpenses, 6_000);
+  const line4EarnedIncome = facts.w2.box1Wages;
+  const line5EarnedIncome = line4EarnedIncome; // Head of household.
+  const line6WithoutBenefits = Math.min(
+    line3WithoutBenefits,
+    line4EarnedIncome,
+    line5EarnedIncome,
+  );
+  assertEquals(
+    [
+      line3WithoutBenefits,
+      line4EarnedIncome,
+      line5EarnedIncome,
+      line6WithoutBenefits,
+    ],
+    [1_820, 31_232, 31_232, 1_820],
+  );
+  assertEquals(facts.form2441.dependentCareBenefitsAnswer, null);
+  assertEquals(facts.form2441.printedTaxLiabilityLimit, null);
+  assertEquals(facts.form2441.printedCredit, null);
+});
+
 Deno.test("1040 Scenario 5 W-2 routes sourced wages and withholding to 1040", () => {
   const form = SCENARIO_1040_05_FACTS.w2;
   assertEquals(form.employeeSsn, SCENARIO_1040_05_FACTS.taxpayer.ssn);
