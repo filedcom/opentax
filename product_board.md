@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1132 bounded completed slices are recorded in the
+inside** that section. The 1133 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -36,6 +36,8 @@ home-office packet passed source/XML/PDF replay and visual review. An additional
 Two six-page personal-sale 1099-K gain/loss and selling-fee packets, plus
 fourteen pages for blank-TIN withholding and business refund/fee routes, passed
 visual and source/XML/PDF replay checks.
+A current-head two-page excess W-2 code D deferral packet also passed page review,
+source/XML/PDF replay, and local TY2025 XSD validation.
 These bounded selections do not cover all 180
 current fixtures.
 A separate current-head two-page direct pension rollover packet passed a

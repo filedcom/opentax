@@ -1914,6 +1914,26 @@ The runner used Deno 2.9.4 (V8 15.0.245.2-rusty, TypeScript 6.0.3),
 This local pass does not establish complete source evidence, every-page visual
 review, IRS business-rule acceptance, or ATS transmission.
 
+## Two-employer W-2 excess deferral filled-PDF review (2026-10-04)
+
+On `c458142c`, the selected `single-w2-code-d-excess-line1h` fixture was
+regenerated through the real return graph, native MeF builder, and PDF builder
+under `.state/research/ty2025-filled-pdf-review/2026-10-04-w2-code-d-current/`.
+Its source, XML, and PDF hashes are respectively
+`bd6fe4a6ffc8b9f0231ddcfdc4c4079e64df8a9dedef0d4b83716468cb631e9f`,
+`28b3e11019b4735ba873903f85efef1d82ae23571caa54ddfad5457026901154`,
+and `6cae047c7665916a1750d1371b245429cdf21f52c7a41f756048edcc781fda65`.
+Both Form 1040 pages were rendered and inspected for year, filer, checkbox,
+amount, page order, and clipping. Two distinct employer W-2s each report
+$13,000 box 12 code D: the $26,000 combined deferral exceeds the
+[2025 $23,500 limit](https://www.irs.gov/instructions/i1040gi) by $2,500.
+The PDF and native XML retain $100,000 line 1a wages, $2,500 line 1h excess,
+$102,500 line 1z/AGI, $10,000 W-2 withholding, and $4,005 owed. The selected
+read-only review checker passed **1 case, 2 pages**, including source/XML/PDF
+hash replay and local TY2025 v5.4 XSD validation. Issued W-2 authenticity,
+other deferral plan types and corrections, all-page review, business rules,
+and ATS acceptance remain open.
+
 ## Form 1099-K withholding and business refund/fee filled-PDF review (2026-10-04)
 
 The selected `single-k-blank-tin-withholding` four-page packet and
