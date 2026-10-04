@@ -3536,6 +3536,10 @@ An adjacent batch over 11 income, QBI, health-plan, Schedule J, and Schedule 1
 test files passed **225/225** with zero failed. Its retained log is
 `.state/research/ty2025-schedule-se-rounding-adjacent-2026-10-04.log`
 (SHA-256 `4c1ef288e86ae2c1d6fdf94d2906b9539e68882e05ec57fb78ec456e729c27c7`).
+The CLI's above-threshold Schedule C/QBI return now expects the recalculated
+filed-line totals; its return and health-plan command cases passed **10/10**.
+That log is `.state/research/ty2025-cli-se-rounding-batch-2026-10-04.log`
+(SHA-256 `9f2d86707a8475406d2ea416e11898b63a44bbd14f9d30c06564dfcc2bd7e8b7`).
 The prior full runs were stopped while reconciling the affected source fixture
 and expectations; a clean full `PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test`
 result remains pending. The other Scenario 12 source conflicts and ATS
