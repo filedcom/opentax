@@ -3940,3 +3940,27 @@ The distinct completed inventory reaches **168 fixture IDs / 986 pages**,
 with 17 fixture IDs lacking completed page flags. Issued K-1 and property
 statement bytes, other business-credit routes, complete all-page review,
 IRS business rules, and ATS acceptance remain open.
+
+## Geothermal production-credit filled-page review (2026-10-04)
+
+The `single-geothermal-general-business-credit` packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-geothermal-credit/`
+contains 17 filled pages. Form 8835 identifies the geothermal facility,
+construction and service dates, coordinates, and 1,500 kW nameplate capacity.
+Its 100,000 kWh production at $0.006 yields a $600 specified credit on line
+15. Form 3800 Part III line 4e records $600, its $8,973
+regular-tax-over-TMT limit permits the full credit, and Schedule 3 line 6a
+and Form 1040 line 20 each carry $600 once. Total tax is $24,467 against
+$30,000 withholding, yielding a $5,533 refund. All 17 pages, including nine
+Form 3800 pages, two Form 6251 pages, and three Form 8835 pages, were
+rendered and visually checked for 2025 form/year, filer, source amounts,
+marks, page order, blank continuation rows, and legibility. The read-only
+checker passed **1 case / 17 pages** with source replay, artifact hashes,
+page origins, and local TY2025v5.4 XSD. Manifest SHA-256 is
+`47f7c8c36f2ba6ae31fc2ec326d101c327cd27e3a81b3f2133671c31a835846c`;
+checker log `.state/research/ty2025-geothermal-check-2026-10-04.log` has
+SHA-256 `a058a56b23112db02c64309b945bb37ef04a8a7efd74461840737b16bd48e1a2`.
+The distinct completed inventory reaches **169 fixture IDs / 1003 pages**,
+with 16 fixture IDs lacking completed page flags. Issued source bytes, other
+business-credit routes, complete all-page review, IRS business rules, and
+ATS acceptance remain open.
