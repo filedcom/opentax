@@ -7402,7 +7402,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
             public_safety_officer_excluded_amount: 0,
           })),
           schedule_c_line31_net_profit: 50_000,
-          schedule1_line15_se_tax_deduction: 3_532.5,
+          schedule1_line15_se_tax_deduction: 3_533,
           schedule1_line16_retirement_deduction: 0,
           plan_established_under_business: true,
           sole_positive_business_verified: true,

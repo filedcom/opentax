@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1218 bounded completed slices are recorded in the
+inside** that section. The 1221 bounded completed slices are recorded in the
 [completed ledger](ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -62,11 +62,22 @@ Schedule E retains the $5,000 pre-limitation loss, Form 8582 disallows it,
 and Form 1040 carries no current deduction. The source/XML/XSD checker passed.
 The distinct completed inventory is now 153 fixture IDs and 872 pages, with
 32 fixture IDs lacking completed page flags.
+The reported tax-credit-bond packet adds seven visually reviewed pages with
+Form 8912's $100 issuer-identified credit flowing once through Schedule 3
+and Form 1040; its source/XML/XSD checker passed. The distinct completed
+inventory is now 154 fixture IDs and 879 pages, with 31 fixture IDs lacking
+completed page flags.
 The Schedule SE rounding change was replayed through all 15 previously
 reviewed selected fixtures containing that form. Six current PDF/XML pairs
 were byte-identical; 39 changed pages across nine pairs were visually
 rechecked, and the current 15-case/192-page hash, source, page-origin, and XSD
 checker passed. This refresh does not change the distinct-fixture count.
+The subsequent whole-dollar correction to Schedule SE line 13 was replayed
+through those 15 fixtures plus the Schedule J and Form 8881 cases. The
+17-case/229-page checker passed; 29 changed pages were visually rechecked.
+The Form 8881 review adds 24 pages to the distinct completed inventory,
+bringing it to 155 fixture IDs and 903 pages; 30 fixture IDs remain without
+completed page flags. The broader full suite and IRS acceptance are still open.
 A separate current-head two-page direct pension rollover packet passed a
 completed source/XML/visual checklist; the all-page review gate remains open.
 Two current-head Form 1098 purchase and construction-refinance points packets

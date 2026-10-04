@@ -115,7 +115,7 @@ export function reconcileBoundedForm8990FinalReturn(args: {
     }
   }
   const seTax = numberAt(result, "schedule2", "line4_se_tax");
-  const seDeduction = seTax / 2;
+  const seDeduction = Math.round(seTax / 2);
   equal(
     numberAt(result, "schedule1", "line15_se_deduction"),
     seDeduction,

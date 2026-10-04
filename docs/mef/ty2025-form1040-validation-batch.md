@@ -3681,3 +3681,64 @@ The distinct completed inventory becomes **153 fixture IDs / 872 pages**,
 with 32 fixture IDs without completed page flags. Authentic rental activity
 and carryover records, other Form 8582 branches, complete PDF review, IRS
 business rules, and ATS acceptance remain open.
+
+## Form 8912 reported bond selected PDF packet (2026-10-04)
+
+The `single-reported-tax-credit-bond` packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-bond-credit/` has seven
+pages. Form 8912 Part III identifies a 2017 Town Energy Authority bond,
+issuer EIN, and identifier `BOND1097` with $100 reported credit. Part I and
+Part II allow $100 against $3,887 regular tax; the attached Form 6251 pages
+show zero AMT. Schedule 3 line 6k and Form 1040 line 20 each carry the $100
+once, leading to a $3,213 refund after $7,000 W-2 withholding.
+
+All seven pages were visually checked for owner, form/year, issuer identity,
+amounts, marks, page order, and clipping against source and native XML. The
+read-only checker passed **1 case / 7 pages** with source replay, artifact
+hashes, page origins, and local TY2025v5.4 XSD. Manifest SHA-256 is
+`b0538b361f9f8e7a8844a55be36692b47f01c79561d6833f3349b4fa350aeead`;
+checker log `.state/research/ty2025-bond-check-2026-10-04.log` has SHA-256
+`e0d026db6d7f7c6624f1e1806791915948d88234d55150b86d2e2df5f93edc90`.
+The distinct completed inventory becomes **154 fixture IDs / 879 pages**,
+with 31 fixture IDs without completed page flags. Issued Form 1097-BTC and
+bond authenticity, other Form 8912 routes, complete PDF review, IRS business
+rules, and ATS acceptance remain open.
+
+## Schedule SE whole-dollar deduction and Form 8881 review (2026-10-04)
+
+The prepared Form 8881 packet exposed a filed-line mismatch: a $1,413
+Schedule SE tax produced a $707 printed half-tax deduction, but Form 1040
+subtracted the unrounded $706.50 and printed $129,294 AGI from $130,000
+income. The [2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi)
+require consistent whole-dollar rounding when that convention is used. The
+shared Schedule SE calculation now rounds line 13 before routing the amount
+to Schedule 1, AGI, QBI, and Form 8990's final reconciliation. The corrected
+Form 8881 return prints $130,000 − $707 = $129,293 AGI; the farm-income
+averaging return prints $100,000 − $7,065 = $92,935 AGI. Focused Schedule SE
+node/PDF tests passed 50/50 and CLI/Form 8990 tests passed 13/13. The first
+broader rerun was stopped after stale CLI expectations and an unrounded
+Form 8990 reconciliation were found; a clean corrected-source rerun is in
+progress and is not yet a passing gate.
+
+The current selected packet is
+`.state/research/ty2025-filled-pdf-review/2026-10-04-rounded-se-replay/`.
+It includes the 15 previously reviewed Schedule SE cases, the 13-page
+Schedule J case, and the 24-page Form 8881 case. Seven of the older 15
+packets changed on 21 text-bearing pages; Schedule J changed on four pages,
+and Form 8881 changed on four pages. All 29 changed pages were rendered and
+visually rechecked for current amounts, owner, form/year, marks, order, and
+legibility. The unchanged pages retain their prior visual checks. The read-only
+checker passed **17 cases / 229 pages** with source replay, artifact hashes,
+page origins, and local TY2025v5.4 XSD. Manifest SHA-256 is
+`39a65059ecd610f5e23ea59ec1a39fe524adb740aa11a16df08239c2ac08d8a1`;
+checker log `.state/research/ty2025-rounded-se-replay-check-2026-10-04.log`
+has SHA-256 `99e8e948d547d17b52492e49c6a93e4a3e066efd8903668d5ad564e9288462bf`.
+
+The Form 8881 packet shows $750 startup and $500 auto-enrollment credits on
+Form 8881 and Form 3800, $1,250 on Schedule 3 and Form 1040 once, and a
+$186 refund after $20,000 withholding. Its 24 pages include nine Form 3800
+continuation pages in correct order; all were inspected in the initial packet,
+with changed pages rechecked after the deduction correction. The distinct
+completed inventory is **155 fixture IDs / 903 pages**, leaving 30 fixture IDs
+without completed page flags. Source authenticity, wider credit combinations,
+full filled-page coverage, IRS business rules, and ATS acceptance remain open.

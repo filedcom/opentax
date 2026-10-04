@@ -29,7 +29,9 @@ export function scheduleSELines(input: {
   const line10 = Math.round(Math.min(filedLine6, Math.round(line9)) * 0.124);
   const line11 = Math.round(filedLine6 * 0.029);
   const line12 = line10 + line11;
-  const line13 = line12 * 0.5;
+  // Line 13 is entered as whole dollars on the filed Schedule SE. Downstream
+  // adjustments and QBI must use that entered amount so Form 1040 reconciles.
+  const line13 = Math.round(line12 * 0.5);
   return {
     line3,
     line4a,

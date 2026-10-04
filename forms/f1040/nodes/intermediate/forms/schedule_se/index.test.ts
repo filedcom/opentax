@@ -12,7 +12,6 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
-// Retain cents in comparisons for lines such as the one-half deduction.
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
@@ -44,7 +43,7 @@ function computeExpectedSeTax(
   const line10 = Math.round(Math.min(filedLine6, line9) * SS_RATE);
   const line11 = Math.round(filedLine6 * MEDICARE_RATE);
   const line12 = line10 + line11;
-  const line13 = line12 * SE_DEDUCTION_RATE;
+  const line13 = Math.round(line12 * SE_DEDUCTION_RATE);
   return { seTax: line12, seDeduction: line13 };
 }
 
@@ -187,7 +186,15 @@ Deno.test("calc_se_deduction_is_half: deduction = SE tax × 0.50", () => {
 
   const seTax = s2!.fields.line4_se_tax as number;
   const seDeduction = s1!.fields.line15_se_deduction as number;
-  assertEquals(round2(seDeduction), round2(seTax * SE_DEDUCTION_RATE));
+  assertEquals(seDeduction, Math.round(seTax * SE_DEDUCTION_RATE));
+  assertEquals(
+    findOutput(result, "agi_aggregator")?.fields.line15_se_deduction,
+    seDeduction,
+  );
+  assertEquals(
+    findOutput(result, "form8995")?.fields.se_tax_deduction,
+    seDeduction,
+  );
 });
 
 // ── SS wage base threshold ────────────────────────────────────────────────────
@@ -462,7 +469,7 @@ Deno.test("farm_optional_loss_election: line15 replaces farm loss on line1a", ()
     round2(
       findOutput(result, "schedule1")!.fields.line15_se_deduction as number,
     ),
-    45.5,
+    46,
   );
   assertEquals(findOutput(result, "form8959")!.fields.se_income, 600);
 });
