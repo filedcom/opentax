@@ -3510,3 +3510,23 @@ without, and 842 pages**. This counts manifest completion rather than a
 recheck of older packets. Marketplace and payment authenticity, other policy
 combinations, complete PDF review, IRS business rules, and ATS acceptance
 remain open.
+
+## Schedule SE filed-line rounding reconciliation (2026-10-04)
+
+The shared Schedule SE calculation now rounds the filed line 6 earnings for
+lines 10 and 11, rounds each tax component to whole dollars, and adds those
+filed components for line 12. The sourced ATS Scenario 12 $24,328 Schedule C
+profit yields $2,786 Social Security tax and $652 Medicare tax, $3,438 on
+Schedule SE line 12 and Schedule 2 line 4, and $1,719 on Schedule 1 line 15.
+This follows the [2025 Schedule SE line 12 instruction](https://www.irs.gov/pub/irs-prior/f1040sse--2025.pdf)
+and the [Form 1040 whole-dollar rounding rule](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf).
+
+The focused Deno command used the full suite permissions and four Schedule SE
+calculation, native, PDF, and Schedule 2 reconciliation files. It passed
+**77/77** with zero failed in 3 seconds. The retained log is
+`.state/research/ty2025-schedule-se-rounding-focused-2026-10-04.log`
+(SHA-256 `17ad95c13209e760e8166d5a675f54371c77bcb65548be29d3a3a15455afb8d0`).
+The earlier corrected-source full run was deliberately stopped when the
+filed-line mismatch was found; the new full `PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test`
+run is underway. The other Scenario 12 source conflicts and ATS acceptance
+remain open.

@@ -76,7 +76,17 @@ Deno.test("schedule_se: regular computed lines reach native tax and deduction", 
   );
   assertStringIncludes(
     result,
-    "<DeductibleSelfEmploymentTaxAmt>3532</DeductibleSelfEmploymentTaxAmt>",
+    "<DeductibleSelfEmploymentTaxAmt>3533</DeductibleSelfEmploymentTaxAmt>",
+  );
+});
+
+Deno.test("schedule_se: filed component taxes add to the filed total", () => {
+  const result = scheduleSE.build({ net_profit_schedule_c: 24_328 });
+  assertStringIncludes(result, "<TaxBaseAmt>2786</TaxBaseAmt>");
+  assertStringIncludes(result, "<SEBaseAmt>652</SEBaseAmt>");
+  assertStringIncludes(
+    result,
+    "<SelfEmploymentTaxAmt>3438</SelfEmploymentTaxAmt>",
   );
 });
 

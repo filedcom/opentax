@@ -23,8 +23,11 @@ export function scheduleSELines(input: {
   const line8d = (input.w2_ss_wages ?? 0) +
     (input.unreported_tips_4137 ?? 0) + (input.wages_8919 ?? 0);
   const line9 = Math.max(0, ssWageBase - line8d);
-  const line10 = Math.min(line6, line9) * 0.124;
-  const line11 = line6 * 0.029;
+  // The filed Schedule SE uses whole-dollar lines. Line 12 must add the
+  // amounts actually entered on lines 10 and 11, not round their raw sum.
+  const filedLine6 = Math.round(line6);
+  const line10 = Math.round(Math.min(filedLine6, Math.round(line9)) * 0.124);
+  const line11 = Math.round(filedLine6 * 0.029);
   const line12 = line10 + line11;
   const line13 = line12 * 0.5;
   return {
