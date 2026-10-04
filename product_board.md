@@ -6,7 +6,7 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1242 bounded completed slices. A completed slice does not close its
+records 1243 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are

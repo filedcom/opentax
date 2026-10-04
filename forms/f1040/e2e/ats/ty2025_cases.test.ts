@@ -444,6 +444,11 @@ Deno.test("1040 Scenario 5 preserves dependent, care, education, and opt-out inp
   assertEquals(facts.form8863.adjustedQualifiedEducationExpenses, 980);
   assertEquals(facts.form8862.child1DaysInUnitedStates, 365);
   assertEquals(facts.form8862.child2DaysInUnitedStates, 365);
+  assertEquals(facts.form8862.taxYearOnLine1, null);
+  assertEquals(facts.form8862.creditBoxesMarkedOnLine2, []);
+  assertEquals(facts.form8862.qualifyingChildAnswerOnLine6, null);
+  assertEquals(facts.form8862.aotcStudentNameOnLine18a, null);
+  assertEquals(facts.form8863.studentName, "Bobby Barker");
   assertEquals(facts.optOutOfAdditionalChildTaxCredit, true);
 });
 
