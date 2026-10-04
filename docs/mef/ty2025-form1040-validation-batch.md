@@ -2019,6 +2019,17 @@ including final native/PDF export. Formatting, lint, and diff checks passed.
 The current-head bulk rerun remains due after implementation; issuer-copy
 authentication and wider source combinations remain open.
 
+## Form 1099-G positive-payer identity guard (2026-10-04)
+
+A red Form 1040 exporter regression showed that positive unemployment could
+reach native and PDF projection with neither a nonblank payer name nor a valid
+nine-digit payer TIN. The shared final owner check now requires one of those
+identifiers after validating the recipient. The focused graph/exporter run
+passed **62/62** tests, and four nearby unemployment replay tests passed,
+including a two-copy native/PDF return. Formatting, lint, and diff checks
+passed. The current-head bulk rerun remains due after implementation; issuer
+authentication and wider source combinations remain open.
+
 ## Two-employer W-2 excess deferral filled-PDF review (2026-10-04)
 
 On `c458142c`, the selected `single-w2-code-d-excess-line1h` fixture was
