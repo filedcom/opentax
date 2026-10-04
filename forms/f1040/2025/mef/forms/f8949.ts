@@ -91,7 +91,9 @@ function buildAssetGrp(tx: F8949Transaction): string {
   const qofZ = isQofCodeZRow(tx);
   const children: string[] = [
     qofZ ? element("EIN", tx.description) : element("PropertyDesc", tx.description),
-    from4797 ? "" : element("AcquiredDt", tx.date_acquired),
+    from4797 ? "" : tx.date_acquired === "VARIOUS"
+      ? element("DateAcquiredInheritedCd", "VARIOUS")
+      : element("AcquiredDt", tx.date_acquired),
     from4797 || qofZ ? "" : element("SoldOrDisposedDt", tx.date_sold),
     qofZ ? "" : element("ProceedsSalesPriceAmt", tx.proceeds),
     from4797 || qofZ ? "" : element("CostOrOtherBasisAmt", tx.cost_basis),

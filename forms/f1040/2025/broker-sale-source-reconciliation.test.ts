@@ -160,6 +160,24 @@ Deno.test("filed broker sale needs a real ISO acquired date in both final export
   }
 });
 
+Deno.test("broker VARIOUS acquisition reaches native and PDF final returns", async () => {
+  const sale = {
+    ...brokerRows[0],
+    date_acquired: "VARIOUS",
+    noncovered_security: true,
+  };
+  const result = f1040_2025.executeReturn({ general, f1099b: [sale] });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const xml = buildMefXml(pending, filer);
+  assertStringIncludes(
+    xml,
+    "<DateAcquiredInheritedCd>VARIOUS</DateAcquiredInheritedCd>",
+  );
+  const pdf = await buildPdfBytes(pending, filer);
+  assertEquals(pdf.length > 0, true);
+});
+
 Deno.test("broker wash-sale box and other adjustment reach Form 1040 and both exports", async () => {
   const sale = {
     ...brokerRows[0],

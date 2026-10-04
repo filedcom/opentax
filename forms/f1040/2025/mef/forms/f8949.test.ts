@@ -17,6 +17,24 @@ Deno.test("empty transactions array returns empty string", () => {
   assertEquals(form8949.build([]), "");
 });
 
+Deno.test("various acquired dates use the TY2025 Form 8949 code element", () => {
+  const xml = form8949.build([{
+    part: "A",
+    description: "Broker statement lots",
+    date_acquired: "VARIOUS",
+    date_sold: "2025-06-20",
+    proceeds: 500,
+    cost_basis: 300,
+    gain_loss: 200,
+    is_long_term: false,
+  }]);
+  assertStringIncludes(
+    xml,
+    "<DateAcquiredInheritedCd>VARIOUS</DateAcquiredInheritedCd>",
+  );
+  assertNotIncludes(xml, "<AcquiredDt>");
+});
+
 Deno.test("native Form 8949 rejects a gain that does not include column (g)", () => {
   assertThrows(() => form8949.build([{
     part: "A",
