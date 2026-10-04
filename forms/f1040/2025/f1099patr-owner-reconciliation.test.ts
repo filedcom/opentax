@@ -121,3 +121,22 @@ Deno.test("positive PATR withholding and cooperative deduction need a filed owne
     );
   }
 });
+
+Deno.test("positive 1099-PATR withholding needs an identified payer in both Form 1040 exports", () => {
+  const pending = {
+    f1099patr: {
+      f1099patrs: [{
+        recipient_tin: "111223333",
+        box4_federal_withheld: 20,
+        payer_name: "   ",
+      }],
+    },
+  };
+  const message = "Positive Form 1099-PATR needs an identified payer";
+  assertThrows(() => irs1040.build(filed, { pending }), Error, message);
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(filed, pending),
+    Error,
+    message,
+  );
+});

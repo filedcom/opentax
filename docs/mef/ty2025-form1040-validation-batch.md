@@ -2030,6 +2030,17 @@ including a two-copy native/PDF return. Formatting, lint, and diff checks
 passed. The current-head bulk rerun remains due after implementation; issuer
 authentication and wider source combinations remain open.
 
+## Form 1099-PATR positive-payer identity guard (2026-10-04)
+
+A red Form 1040 exporter regression showed that positive box 4 cooperative
+withholding could reach native and PDF projection with a valid recipient but
+neither a nonblank payer name nor a valid nine-digit payer TIN. The shared
+final owner check now requires one of those payer identifiers. The three-file
+graph, owner, and withholding-exporter run passed **22/22** tests; formatting,
+lint, and diff checks passed. The current-head bulk rerun remains due after
+implementation, and issued-copy authentication and wider source combinations
+remain open.
+
 ## Two-employer W-2 excess deferral filled-PDF review (2026-10-04)
 
 On `c458142c`, the selected `single-w2-code-d-excess-line1h` fixture was
