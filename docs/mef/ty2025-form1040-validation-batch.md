@@ -1864,3 +1864,24 @@ sale as a $500 long-term gain. The read-only selected-scope checker passed
 origins, and local TY2025 v5.4 XSD. The source/transaction records remain
 synthetic; authenticated issuer bytes, wider corrected copies, complete visual
 review, business rules, and ATS remain open.
+
+## Personal-sale Form 1099-K gain/loss and selling-fee review (2026-10-04)
+
+Two selected fixtures, `single-k-personal-gain-loss` and
+`single-k-personal-selling-fees`, were generated under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-k-personal-sales/`.
+Each six-page PDF contains Form 1040 pages 1–2, Schedule D pages 1–2,
+short-term Form 8949 box C copy 1, and long-term Form 8949 box F copy 2.
+All twelve rendered pages were visually checked for 2025 form/year, owner,
+amounts, checkboxes, order, and legibility. The $1,500 gross K source splits
+into an $800 ticket sale and $700 chair sale in the first case. Form 8949 and
+Schedule D carry a $550 short-term gain, while code L adds $300 to cancel the
+non-deductible personal chair loss; Form 1040 line 7a and AGI are $550. In
+the selling-fee case, $50 documented expense on each sale reduces proceeds
+to $750 and $650: the ticket gain is $500, and code L adds $350 to zero the
+chair loss. Form 1040 line 7a and AGI are $500. Both returns have zero tax
+and payments. The read-only selected-scope checker passed **2 cases and 12
+pages**, including source/XML/PDF replay, hashes, page origins, and local
+TY2025 v5.4 XSD. These are synthetic bounded reviews; issuer and transaction
+records, other classifications, the complete all-page review, business rules,
+and IRS ATS acceptance remain open.
