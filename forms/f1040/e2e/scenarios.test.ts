@@ -919,13 +919,13 @@ Deno.test("Scenario 15: MFJ, Schedule C $150K + interest — QBI reduced by the 
 // the limit binds well below 20% of QBI.
 //
 // SE earnings: $100,000 × 0.9235 = $92,350
-// Filed SE tax: $11,451 + $2,678 = $14,129  |  half-tax deduction: $7,064.50
+// Filed SE tax: $11,451 + $2,678 = $14,129  |  filed half-tax deduction: $7,065
 //
-// QBI: $100,000 − $7,064.50 = $92,935.50  |  20% = $18,587.10
-// AGI: $100,000 + $100,000 − $7,064.50 = $192,935.50
-// Pre-QBI taxable: $192,935.50 − $31,500 = $161,435.50
-// Income limit: 20% × ($161,435.50 − $100,000) = $12,287.10 — binds
-// QBI deduction: $12,287.10  |  Taxable income: $149,148.40
+// QBI: $100,000 − $7,065 = $92,935  |  20% = $18,587
+// AGI: $100,000 + $100,000 − $7,065 = $192,935
+// Pre-QBI taxable: $192,935 − $31,500 = $161,435
+// Income limit: 20% × ($161,435 − $100,000) = $12,287 — binds
+// QBI deduction: $12,287  |  Taxable income: $149,148
 
 Deno.test("Scenario 16: MFJ, Schedule C + qualified dividends — income limit binds net of cap gain", () => {
   const result = runReturn({
@@ -961,13 +961,13 @@ Deno.test("Scenario 16: MFJ, Schedule C + qualified dividends — income limit b
   );
   assertEquals(
     r2(result.pending["standard_deduction"]?.["qbi_deduction"] as number),
-    12_287.1,
-    "QBI deduction = 20% × ($161,435.50 − $100,000)",
+    12_287,
+    "QBI deduction = 20% × ($161,435 − $100,000)",
   );
   assertEquals(
     r2(result.pending["income_tax_calculation"]?.["taxable_income"] as number),
-    149_148.4,
-    "taxable income = $161,435.50 pre-QBI − $12,287.10",
+    149_148,
+    "taxable income = $161,435 pre-QBI − $12,287",
   );
 });
 

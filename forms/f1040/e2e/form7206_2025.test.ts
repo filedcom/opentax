@@ -113,7 +113,7 @@ Deno.test("one Schedule C health plan reaches Form 7206 and the full return", as
     result.pending.form8995?.line1_qbi,
     Math.round(50_000 - seDeduction - 12_000),
   );
-  assertEquals(result.pending.f1040?.line13_qbi_deduction, 3_744);
+  assertEquals(result.pending.f1040?.line13_qbi_deduction, 3_743);
   const filer = extractFilerIdentity(result.pending.f1040);
   const xml = buildMefXml(result.pending, filer);
   assertStringIncludes(xml, "<IRS7206 documentId=");
@@ -131,7 +131,7 @@ Deno.test("one Schedule C health plan reaches Form 7206 and the full return", as
   );
   assertStringIncludes(
     xml,
-    "<QlfyBusinessIncomeOrLossAmt>34468</QlfyBusinessIncomeOrLossAmt>",
+    "<QlfyBusinessIncomeOrLossAmt>34467</QlfyBusinessIncomeOrLossAmt>",
   );
   await validateXml(xml);
   const pdf = await buildPdfBytes(result.pending, filer);
@@ -402,7 +402,7 @@ Deno.test("one Schedule C policy with taxpayer and spouse months reaches the joi
   assertEquals(result.pending.form7206?.line14, 12_000);
   assertEquals(result.pending.schedule1?.line17_se_health_insurance, 12_000);
   assertEquals(result.pending.f1040?.line10_adjustments, seDeduction + 12_000);
-  assertEquals(result.pending.form8995?.line1_qbi, 34_468);
+  assertEquals(result.pending.form8995?.line1_qbi, 34_467);
   const filer = extractFilerIdentity(result.pending.f1040);
   assertStringIncludes(
     buildMefXml(result.pending, filer),
