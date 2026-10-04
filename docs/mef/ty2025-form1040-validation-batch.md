@@ -3848,3 +3848,25 @@ SHA-256 `d7ce83371e3775d81f8b8b2568cfee7f11a7c761a243e046d1474cbfcadecc5d`.
 The later documentation-only commit does not change tested code or fixtures.
 This local batch does not establish every-route completeness, every-page
 visual parity, IRS business-rule approval, or ATS acceptance.
+
+## Sequential-policy Form 8962 filled-page review (2026-10-04)
+
+The two-case packet at
+`.state/research/ty2025-filled-pdf-review/2026-10-04-coverage-gaps/`
+contains ten filled pages. The four-policy case leaves March, June,
+September, and December blank on Form 8962, prints eight covered monthly rows,
+and carries $5,600 net PTC through Schedule 3 line 9 and Form 1040 line 31 to
+a $7,113 refund. The five-policy case covers all twelve months with five
+separate sequential source policies; its $8,200 net PTC reaches those return
+lines once and produces a $9,713 refund. Both page sets were rendered and
+visually checked for 2025 form/year, filer, amounts, checkboxes, all monthly
+rows, page order, continuation, and legibility. The read-only checker passed
+**2 cases / 10 pages** with source replay, artifact hashes, page origins, and
+local TY2025v5.4 XSD. The manifest SHA-256 is
+`d4c148b79edee95905f45ab4095bb8ed55581b4f2fa56a1848008749cd4d052d`;
+checker log `.state/research/ty2025-coverage-gap-check-2026-10-04.log`
+has SHA-256 `393465b70fc560fe3eb4866115469fb80a7e9dc16229bafaa70af0040460fbd9`.
+The distinct completed inventory reaches **161 fixture IDs / 935 pages**,
+with 24 fixture IDs lacking completed page flags. Marketplace source
+authenticity, other policy combinations, the complete all-page review, IRS
+business rules, and ATS acceptance remain open.
