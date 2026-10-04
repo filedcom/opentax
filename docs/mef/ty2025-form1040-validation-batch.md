@@ -1846,3 +1846,21 @@ selected-scope checker passed **one case and eleven pages**, including exact
 source/XML/PDF replay, hashes, page origins, and local TY2025 v5.4 XSD. This
 is synthetic bounded evidence; external business records, wider Schedule C
 expense routes, complete visual review, business rules, and ATS remain open.
+
+## Mixed Form 1099-K error, duplicate, and personal-sale review (2026-10-04)
+
+The selected `single-k-mixed-error-duplicate-personal` packet under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-k-mixed-error/`
+contains thirteen pages: Form 1040, Schedules 1/2/C/D/SE, and Form 8949.
+All were rendered and visually checked for form/year, owner association,
+amounts, checkbox state, page order, and legibility. The $4,000 reported K
+amount comprises $2,000 unique business receipts, $1,000 duplicated 1099-NEC
+already counted once, $800 personal-sale proceeds, and a $200 reported error.
+Schedule 1 prints the $200 error above its income lines without including it
+in line 10; Schedule C and Form 1040 carry $3,000 business profit once. Form
+8949 box F, Schedule D, and Form 1040 line 7a carry the $800 less $300 camera
+sale as a $500 long-term gain. The read-only selected-scope checker passed
+**one case and thirteen pages**, including source/XML/PDF replay, hashes, page
+origins, and local TY2025 v5.4 XSD. The source/transaction records remain
+synthetic; authenticated issuer bytes, wider corrected copies, complete visual
+review, business rules, and ATS remain open.
