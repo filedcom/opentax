@@ -366,6 +366,51 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "qss-w2-nonclaimed-joint-return-child",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        filing_status: SourceFilingStatus.QSS,
+        qss_spouse_death_year: 2024,
+        qss_qualifying_child_ssn: "444-55-6666",
+        qss_nonclaimed_child_review: {
+          child_first_name: "Avery",
+          child_last_name: "Child",
+          child_ssn: "444-55-6666",
+          child_relationship: "daughter",
+          child_lived_in_home_all_year: true,
+          child_filed_nonrefund_joint_return: true,
+          taxpayer_paid_more_than_half_home_costs: true,
+          no_remarriage_through_2025: true,
+          entitled_to_joint_return_in_death_year: true,
+          spouse_death_record_reference: "Synthetic 2024 death record review",
+          child_joint_return_reference:
+            "Synthetic 2025 child joint return review",
+          child_residency_record_reference:
+            "Synthetic 2025 child residence ledger",
+          home_cost_record_reference: "Synthetic 2025 home-cost ledger",
+          prior_joint_eligibility_reference:
+            "Synthetic 2024 joint eligibility review",
+        },
+      },
+      w2: [{
+        ...wage(75_000, 11_000, "Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
+      }],
+    },
+    filer: {
+      ...singleFiler,
+      filingStatus: FilingStatus.QualifyingSurvivingSpouse,
+    },
+    expectedPdfForms: ["f1040"],
+    reviewFocus: [
+      "Form 1040 prints the QSS box and Avery Child in the shared HOH/QSS filing-status name line",
+      "Avery Child does not appear in the dependent rows after the reviewed nonrefund joint-return exception",
+      "Both Form 1040 pages retain Alex Example and the 75,000 W-2 wages, 11,000 withholding, and calculated refund",
+      "Native QualifyingPersonName and QualifyingPersonSSN match the reviewed child while the PDF shows the name",
+    ],
+  },
+  {
     id: "single-divorced-agreed-joint-estimated-payment",
     inputs: {
       general: singleGeneral,

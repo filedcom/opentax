@@ -2247,3 +2247,22 @@ omitted child identity. The five nearby Form 1040/general files passed
 183/183, and the three QSS tests passed again after the final status assertion;
 format and lint passed. Source authenticity, other QSS exceptions, current-head bulk
 testing, IRS business rules, and ATS acceptance remain open.
+
+## QSS two-page selected packet review (2026-10-04)
+
+The new `qss-w2-nonclaimed-joint-return-child` fixture passed its local
+TY2025v5.4 XML/XSD test and was generated through the real graph, native MeF,
+and filled-PDF builder. The selected artifact is at
+`.state/research/ty2025-filled-pdf-review/2026-10-04-qss-joint-return-child-0454714c/`.
+Both rendered Form 1040 pages were inspected: page 1 checks QSS, prints Avery
+Child in the shared HOH/QSS name line, leaves dependent rows empty, and shows
+$75,000 W-2 wages; page 2 shows a $31,500 deduction, $4,746 tax, $11,000
+withholding, and $6,254 refund. These values and the qualifying-person
+name/SSN match the retained source, pending Form 1040, and local XSD-valid
+native XML. The completed selected-scope manifest passed the read-only
+checker for **1 case and 2 pages**, including exact source/PDF/XML hashes and
+page origins; manifest SHA-256 is
+`162b0a9666b53391d0e1f8ffc341997f4c65a144ca659bca5df83667c85b1c0e`.
+The planner now has 181 fixtures and 85/113 distinct registered PDF keys.
+Remaining fixture pages, uncovered keys, source authenticity, current-head
+bulk testing, and IRS ATS remain open.
