@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1210 bounded completed slices are recorded in the
+inside** that section. The 1211 bounded completed slices are recorded in the
 [completed ledger](ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -40,8 +40,8 @@ A two-page excess W-2 code D deferral packet also passed page review,
 source/XML/PDF replay, and local TY2025 XSD validation.
 These bounded selections do not cover all 185
 current fixtures.
-The retained manifest inventory now marks 145 distinct fixture IDs and 822
-pages complete, with 40 fixture IDs still lacking completed page flags; this
+The retained manifest inventory now marks 149 distinct fixture IDs and 842
+pages complete, with 36 fixture IDs still lacking completed page flags; this
 counts manifest checklists rather than rechecking older packets.
 A separate current-head two-page direct pension rollover packet passed a
 completed source/XML/visual checklist; the all-page review gate remains open.

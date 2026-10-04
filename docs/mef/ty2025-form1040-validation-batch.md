@@ -3487,3 +3487,26 @@ without, and 822 pages**. This counts manifest completion rather than a
 recheck of older packets. Marketplace and payment authenticity, other policy
 combinations, complete PDF review, IRS business rules, and ATS acceptance
 remain open.
+
+## Form 8962 successive and uncovered policy selected PDF packet (2026-10-04)
+
+The selected packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-policy-next-four/`
+contains four existing fixtures and 20 rendered pages. Three successive
+four-month policies print $600, $700, and $800 monthly SLCSP and total $7,800
+PTC. A separate case leaves September blank and totals $7,050. Four uncovered
+months leave April, July, August, and December blank, totaling $5,200. The
+sparse case prints only January, June, and December and totals $1,950. Each
+credit appears on Form 8962 line 26, Schedule 3 line 9, and Form 1040 line 31
+once.
+
+All 20 pages were rendered and checked against source and XML for owner,
+form/year, monthly rows, marks, page order, and clipping. The manifest SHA-256
+is `672398c1d018b3f726f9dc560dc7ab4a2476abc0851da130923ce217bcfe294c`.
+The read-only checker passed **4 cases / 20 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. The retained-artifact
+inventory is now **149 distinct fixture IDs with completed page flags, 36
+without, and 842 pages**. This counts manifest completion rather than a
+recheck of older packets. Marketplace and payment authenticity, other policy
+combinations, complete PDF review, IRS business rules, and ATS acceptance
+remain open.
