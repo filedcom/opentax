@@ -200,6 +200,43 @@ Deno.test("1099-G positive copies need account or issued-copy identity", () => {
   assertEquals(fieldsOf(distinct.outputs, schedule1)?.line7_unemployment, 1200);
 });
 
+Deno.test("1099-G keeps one payer identity when only one copy has its TIN", () => {
+  const withTin = minimalItem({
+    payer_name: "State Agency",
+    payer_tin: "123456789",
+    recipient_tin: "111223333",
+    box_1_unemployment: 500,
+  });
+  const withoutTin = minimalItem({
+    payer_name: " state   AGENCY ",
+    recipient_tin: "111223333",
+    box_1_unemployment: 600,
+  });
+  const ambiguous =
+    "1099-G has multiple positive payer copies without account or issued source reference";
+  assertThrows(() => compute([withTin, withoutTin]), Error, ambiguous);
+  assertThrows(() => compute([withoutTin, withTin]), Error, ambiguous);
+  assertThrows(
+    () =>
+      compute([
+        { ...withTin, account_number: "BEN-1" },
+        { ...withoutTin, account_number: "BEN-1" },
+      ]),
+    Error,
+    "repeats the same identified payer, recipient, and account",
+  );
+  assertEquals(
+    fieldsOf(
+      compute([
+        { ...withTin, account_number: "BEN-1" },
+        { ...withoutTin, account_number: "BEN-2" },
+      ]).outputs,
+      schedule1,
+    )?.line7_unemployment,
+    1100,
+  );
+});
+
 // =============================================================================
 // 1. Input Schema Validation
 // =============================================================================

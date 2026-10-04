@@ -1284,11 +1284,49 @@ Deno.test("info_line_i_1099_payments_no_output_change: line_i_made_1099_payments
 });
 
 Deno.test("info_line_j_filed_1099s_no_output_change: line_j_filed_1099s does not change output count", () => {
-  const base = compute([minimalItem({ line_1_gross_receipts: 10000 })]);
+  const base = compute([minimalItem({
+    line_1_gross_receipts: 10000,
+    line_i_made_1099_payments: true,
+  })]);
   const withJ = compute([
-    minimalItem({ line_1_gross_receipts: 10000, line_j_filed_1099s: true }),
+    minimalItem({
+      line_1_gross_receipts: 10000,
+      line_i_made_1099_payments: true,
+      line_j_filed_1099s: true,
+    }),
   ]);
   assertEquals(base.outputs.length, withJ.outputs.length);
+});
+
+Deno.test("Schedule C source rejects answers to inapplicable follow-up boxes", () => {
+  for (const trigger of [false, undefined]) {
+    for (const answer of [true, false]) {
+      assertThrows(
+        () =>
+          compute([minimalItem({
+            line_i_made_1099_payments: trigger,
+            line_j_filed_1099s: answer,
+          })]),
+        Error,
+        "line J applies only when line I is yes",
+      );
+      assertThrows(
+        () =>
+          compute([minimalItem({
+            line_47a_evidence: trigger,
+            line_47b_written_evidence: answer,
+          })]),
+        Error,
+        "line 47b applies only when line 47a is yes",
+      );
+    }
+  }
+  compute([minimalItem({
+    line_i_made_1099_payments: true,
+    line_j_filed_1099s: false,
+    line_47a_evidence: true,
+    line_47b_written_evidence: false,
+  })]);
 });
 
 Deno.test("info_multi_form_code_no_output_change: multi_form_code does not change output count", () => {

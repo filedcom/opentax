@@ -4074,3 +4074,27 @@ and byte-identical return XML inside the local submission ZIP. On 2026-10-04,
 **3/3** after correcting the test Submission ID to the processing date's
 Julian day. This is local source-to-package evidence for one two-business
 shape, not the remaining repeated-owner or IRS acceptance gate.
+
+## Schedule C conditional-answer review invalidation (2026-10-04)
+
+The current source/native/PDF guard leaves Schedule C line J unanswered when
+line I is No, and line 47b unanswered when line 47a is No, following the
+[2025 form](https://www.irs.gov/pub/irs-prior/f1040sc--2025.pdf). Twelve
+checked-in synthetic fixtures formerly supplied the inapplicable J = No answer.
+All 12 had completed page flags in older selected review manifests, covering
+**170 pages**. A direct replay of all 12 corrected fixtures through the
+return graph, prepared native bundle, and full printable PDF passed with
+unchanged 10–24-page counts. The current-source selected packet is at
+`.state/research/ty2025-filled-pdf-review/2026-10-04-schedule-c-conditional-12/`.
+All 12 native returns passed the local TY2025 v5.4 XSD. A rendered comparison
+against the SHA-verified prior packets found 130 pixel-identical pages and 40
+changed pages: 12 Schedule C line J checkbox corrections and 28 pages with
+current whole-dollar calculations. The changed areas were visually checked;
+the unchanged page areas retained their prior visual review. The current
+selected-scope checker then passed **12 cases / 170 pages**, including source,
+XML, PDF, template-cache, page-checklist, and XSD replay; see
+`.state/research/ty2025-schedule-c-conditional-check-complete.log` and
+`.state/research/schedule-c-conditional-visual-diff/comparison.json`. The
+earlier **174 fixture IDs / 1,088 pages** remains a historical cross-packet
+inventory rather than a single current-head full-inventory checker result.
+IRS business-rule and ATS acceptance gates remain separate.

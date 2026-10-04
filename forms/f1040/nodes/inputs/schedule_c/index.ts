@@ -25,6 +25,7 @@ import { longTermContractAdjustment } from "./long_term_contract.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
 import {
+  assertScheduleCConditionalAnswers,
   assertScheduleCInterestExempt,
   calculateScheduleCAtRiskNet,
   computeCOGS,
@@ -45,6 +46,7 @@ import {
 } from "./model.ts";
 
 export {
+  assertScheduleCConditionalAnswers,
   assertScheduleCInterestExempt,
   calculateScheduleCAtRiskNet,
   computeCOGS,
@@ -284,6 +286,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
       );
     }
     const items = projectScheduleCItems(input);
+    items.forEach(assertScheduleCConditionalAnswers);
     const form8990Pass = internalForm8990ScheduleCPass(ctx);
     if (form8990Pass === undefined) {
       items.forEach((item) =>

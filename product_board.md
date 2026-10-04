@@ -6,7 +6,7 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1251 bounded completed slices. A completed slice does not close its
+records 1254 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are
@@ -15,9 +15,11 @@ identifies independent work, product decisions, named-form prerequisites,
 validation, and IRS ATS needs. Current local evidence includes an 11,121/11,121
 full-batch pass on `a5e0c448` after the Schedule SE rounding and PDF repairs,
 and 167 exportable synthetic cases with
-1,052 filled PDF pages and local TY2025 XSD validation, and selected manual
-packet reviews. Those checks do not prove every route, every PDF page, IRS
-business-rule compliance, or ATS acceptance. The [validation batch](docs/mef/ty2025-form1040-validation-batch.md)
+1,052 filled PDF pages and local TY2025 XSD validation, plus selected manual
+packet reviews. Twelve corrected Schedule C fixtures (170 pages) have fresh
+current-source page review and checker replay. Those checks do not prove every
+route, every PDF page, IRS business-rule compliance, or ATS acceptance. The
+[validation batch](docs/mef/ty2025-form1040-validation-batch.md)
 holds commands and artifact details.
 
 The near-term goal is to finish existing filing work and prepare for MeF ATS

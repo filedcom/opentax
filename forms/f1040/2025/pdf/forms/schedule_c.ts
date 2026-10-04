@@ -3,6 +3,7 @@ import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
 import { FilingStatus, filingStatusSchema, TS } from "../../../nodes/types.ts";
 import { FilingStatus as MefFilingStatus } from "../../../mef/header.ts";
 import {
+  assertScheduleCConditionalAnswers,
   assertScheduleCInterestExempt,
   computeCOGS,
   computeGrossIncome,
@@ -138,6 +139,7 @@ function requirePrintable(
   item: ScheduleCItem,
   filingStatus: unknown,
 ): void {
+  assertScheduleCConditionalAnswers(item);
   if (
     item.proprietor_recipient === undefined &&
     (!filingStatusSchema.safeParse(filingStatus).success ||

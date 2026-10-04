@@ -2,6 +2,7 @@ import { element, elements } from "../../../mef/xml.ts";
 import { z } from "zod";
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
 import {
+  assertScheduleCConditionalAnswers,
   assertScheduleCInterestExempt,
   calculateScheduleCAtRiskNet,
   computeCOGS,
@@ -141,6 +142,7 @@ function buildScheduleC(
   index: number,
   wotcReduction = 0,
 ): string {
+  assertScheduleCConditionalAnswers(item);
   const filer = context.filer;
   if (!filer) throw new Error(`Schedule C ${index + 1} needs filer identity`);
   if (

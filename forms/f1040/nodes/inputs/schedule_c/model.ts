@@ -316,6 +316,26 @@ export const inputSchema = z.object({
 
 export type ScheduleCItem = z.infer<typeof itemSchema>;
 
+/** Keep conditional Schedule C answers consistent across calculation, MeF, and PDF. */
+export function assertScheduleCConditionalAnswers(item: ScheduleCItem): void {
+  if (
+    item.line_j_filed_1099s !== undefined &&
+    item.line_i_made_1099_payments !== true
+  ) {
+    throw new Error(
+      "Schedule C line J applies only when line I is yes",
+    );
+  }
+  if (
+    item.line_47b_written_evidence !== undefined &&
+    item.line_47a_evidence !== true
+  ) {
+    throw new Error(
+      "Schedule C line 47b applies only when line 47a is yes",
+    );
+  }
+}
+
 /** Apply Form 3115's business-bound current-year adjustment before all tax calculations and projections. */
 export function projectSection481aScheduleCItems(
   input: z.infer<typeof inputSchema>,

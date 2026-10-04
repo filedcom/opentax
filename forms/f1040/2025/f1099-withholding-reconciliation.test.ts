@@ -194,6 +194,39 @@ Deno.test("changed identified INT, DIV, and OID copies reject direct native and 
   }
 });
 
+Deno.test("mixed payer TIN OID copies cannot double interest in native or PDF export", async () => {
+  const pending = {
+    f1099oid: {
+      f1099oids: [
+        {
+          payer_name: "Bond Fund",
+          payer_tin: "123456789",
+          recipient_tin: filer.primarySSN,
+          account_number: "BROKER-1",
+          box7_description: "Bond A",
+          box1_oid: 200,
+        },
+        {
+          payer_name: "  bond   FUND ",
+          recipient_tin: filer.primarySSN,
+          account_number: "BROKER-1",
+          box7_description: "Bond A",
+          box1_oid: 250,
+        },
+      ],
+    },
+  };
+  const message =
+    "1099-OID repeats the same payer, recipient, account, and obligation";
+  assertThrows(
+    () => assert1099WithholdingSource(pending, filer),
+    Error,
+    message,
+  );
+  assertThrows(() => buildMefXml(pending, filer), Error, message);
+  await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
+});
+
 Deno.test("1099 payer-name variants cannot double an unidentified copy", async () => {
   const cases = [
     {

@@ -430,6 +430,54 @@ Deno.test("2025 Schedule C PDF maps required business and vehicle boxes to print
   assertEquals(result.vehicle_business_miles, 8_000);
 });
 
+Deno.test("2025 Schedule C PDF rejects answers to inapplicable follow-up boxes", () => {
+  for (const trigger of [false, undefined]) {
+    for (const filed of [true, false]) {
+      assertThrows(
+        () =>
+          copies({
+            schedule_cs: [business({
+              line_i_made_1099_payments: trigger,
+              line_j_filed_1099s: filed,
+            })],
+          }),
+        Error,
+        "line J applies only when line I is yes",
+      );
+    }
+  }
+  const vehicle = {
+    line_9_car_truck_expenses: 2_000,
+    line_43_date_in_service: "2025-01-15",
+    line_44a_total_miles: 12_000,
+    line_44b_business_miles: 8_000,
+    line_44c_commuting_miles: 3_000,
+    line_44d_other_miles: 1_000,
+    line_45_personal_use: true,
+    line_46_another_vehicle: false,
+    line_47a_evidence: false,
+  };
+  for (const trigger of [false, undefined]) {
+    for (const written of [true, false]) {
+      assertThrows(
+        () =>
+          copies({
+            schedule_cs: [business({
+              ...vehicle,
+              line_47a_evidence: trigger,
+              line_47b_written_evidence: written,
+            })],
+          }),
+        Error,
+        "line 47b applies only when line 47a is yes",
+      );
+    }
+  }
+  const [copy] = copies({ schedule_cs: [business(vehicle)] });
+  assertEquals(copy.line_47a_evidence, false);
+  assertEquals(copy.line_47b_written_evidence, undefined);
+});
+
 Deno.test("2025 Schedule C PDF refuses source details that cannot be printed faithfully", () => {
   const unsupported = [
     business({ line_f_accounting_method: "other" }),
