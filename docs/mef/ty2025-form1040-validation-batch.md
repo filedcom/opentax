@@ -1922,8 +1922,9 @@ only the capitalization or spacing of its payer name. Form 1099-R could do
 the same with a fixed payer EIN because its key also included a varying plan
 name. Shared native/PDF export regressions were red before the changes.
 Payer names now trim, collapse whitespace, and compare case-insensitively
-where a TIN is missing; the Form 1099-R key uses the EIN and recipient, so
-distinct same-EIN distributions need an account or issued reference. Reported
+where a TIN is missing; the Form 1099-R key uses the EIN, normalized payer
+name, and recipient, so distinct copies of one named payer need an account
+or issued reference. Reported
 payer text and amounts remain unchanged in the filed output. Six negative
 cases reject through native and PDF export. An older test's alleged second
 1099-R payer actually reused the first EIN; its fixture now uses a distinct
@@ -1932,6 +1933,16 @@ format, lint, and diff checks passed. The preceding 11,063-test full run is
 older than this code change, so the next bulk gate must rerun. This guard
 compares reviewed structured payer facts; issuer-copy authentication and
 broader correction lineage remain open.
+
+The first post-guard bulk diagnostic on `3a551e4f` found a Scenario 8
+1099-R fixture failure. Its two different payers share the IRS packet's
+synthetic `000000009` EIN, so an EIN-only duplicate key incorrectly rejected
+them. That diagnostic was stopped after the failure; it is not a full pass.
+The 1099-R key now includes the normalized payer name with the EIN and
+recipient: case/spacing-only variants still reject, while the two genuinely
+different Scenario 8 names remain separate. The focused 1099-R, exporter, and
+Scenario 8 rerun passed **140/140**; format and lint passed. A clean full
+rerun remains due after this correction.
 
 ## Two-employer W-2 excess deferral filled-PDF review (2026-10-04)
 

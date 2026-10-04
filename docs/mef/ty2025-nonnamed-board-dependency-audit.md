@@ -13,7 +13,8 @@ other 28 keys map to deferred named
 families. Those are inventory and preparation counts, not end-to-end passes.
 The latest recorded full `deno task test` passed 11,063/11,063 on `f2b2b545`
 on 2026-10-04. The newer 1099 payer-name duplicate guard passed 378 focused
-checks and awaits a full rerun. The prior full pass establishes local stability for its tested routes, while
+checks; a 140-test Scenario 8 correction run passed after an EIN-only
+diagnostic failure. A clean full rerun remains due. The prior full pass establishes local stability for its tested routes, while
 scope decisions, visual review, complete route evidence, and ATS remain open.
 
 **Key.** `I` = work that can advance without a new product decision or IRS ATS

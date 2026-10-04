@@ -527,9 +527,11 @@ export function assertDistinct1099RCopies(
     const payer = item.payer_ein.replace(/\D/g, "") || item.payer_ein.trim();
     const recipient = item.recipient_ssn?.replace(/\D/g, "");
     const account = item.account_number?.trim() || null;
-    // An EIN identifies the payer even when two copies spell its plan name
-    // differently; distinct distributions need an account or issued reference.
-    const owner = JSON.stringify([payer, recipient ?? null]);
+    // The ATS packet uses one synthetic EIN for differently named payers.
+    // Collapse presentation-only name differences while retaining that
+    // distinction; same-name distributions need an account or issued reference.
+    const payerName = item.payer_name.trim().replace(/\s+/g, " ").toUpperCase();
+    const owner = JSON.stringify([payer, payerName, recipient ?? null]);
     // The retained source reference identifies the issued copy. Altering a
     // box value cannot turn that same identified copy into a second payment.
     if (reference) {

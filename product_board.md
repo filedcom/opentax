@@ -20,7 +20,7 @@ until their full routes or approved rejection boundaries are established.
 | Core return and source paths | 8 | Broader joins, ownership, and source classification remain open. |
 | Named tax-form gaps | 20 | Listed parent forms remain open despite completed bounded slices. |
 | Native MeF and PDF parity | 3 | Complete descriptor, attachment, and print parity remain open. |
-| Automated and artifact validation | 5 | The previous full suite passed 11,063/11,063; 378 focused 1099 checks passed after the latest payer-identity change, with its full rerun open. |
+| Automated and artifact validation | 5 | The previous full suite passed 11,063/11,063; 378 focused 1099 checks and 140 Scenario 8 correction checks passed, with a clean full rerun open. |
 | IRS ATS and delivery | 5 | Credentials, accepted scenarios, and a filing-ready release remain open. |
 
 **Implemented coverage.** Retained routes include source and owner checks for
@@ -51,7 +51,9 @@ descriptors, and 211 TY2025 schema roots. These counts are inventories, not posi
 
 **Validation and release.** `deno task test` passed 11,063/11,063 on
 `f2b2b545` on 2026-10-04 before the payer-name duplicate guard; its 378
-focused tests passed, and a current-head full rerun remains due. The prior
+focused tests and the later 140-test Scenario 8 correction run passed. The
+first bulk diagnostic stopped on the Scenario 8 shared synthetic-EIN case;
+a clean current-head full rerun remains due. The prior
 full pass included the Form 1040-ES payment-year,
 Form 1099-K recipient-identity, and direct Form 8949 withholding guards.
 The separate 116-descriptor PDF field audit also passed. CLI type
