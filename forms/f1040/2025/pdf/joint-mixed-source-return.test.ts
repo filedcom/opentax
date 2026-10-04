@@ -66,6 +66,7 @@ Deno.test("joint mixed sources reconcile through Form 1040, Schedule B, MeF, and
       f1040es: {
         payment_q1: 1_000,
         quarter_payment_records: [{
+          tax_year: 2025,
           quarter: "q1",
           amount: 1_000,
           payer_tin: "444556666",

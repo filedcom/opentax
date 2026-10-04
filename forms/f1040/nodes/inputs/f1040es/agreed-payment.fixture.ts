@@ -21,6 +21,7 @@ export const agreedJointPayment = {
     signed_agreement_pdf_sha256: agreementPdfSha256,
     signed_agreement_pdf_base64: agreementPdfBase64,
     payments: [{
+      tax_year: 2025 as const,
       quarter: "q1" as const,
       joint_payment_amount: 500,
       taxpayer_allocated_amount: 300,
@@ -45,6 +46,7 @@ export const agreedMfsJointPayment = {
     signed_agreement_pdf_sha256: agreementPdfSha256,
     signed_agreement_pdf_base64: agreementPdfBase64,
     payments: [{
+      tax_year: 2025 as const,
       quarter: "q1" as const,
       joint_payment_amount: 500,
       taxpayer_allocated_amount: 300,

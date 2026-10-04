@@ -1918,3 +1918,17 @@ Form 1040 shows $355 owed. The read-only selected-scope checker passed
 and local TY2025 v5.4 XSD. These synthetic packets do not authenticate
 processor records or settle wider classifications, business rules, complete
 visual review, or IRS ATS acceptance.
+
+## Form 1040-ES retained payment-year designation (2026-10-04)
+
+The `f1040es` source now requires `tax_year: 2025` on ordinary quarter-payment
+records and on each signed joint allocation payment. Previously, a record
+marked only with quarter, payment date, payer, and reference could be counted
+on TY2025 line 26 even if the payment belonged to another tax year. IRS Direct
+Pay identifies the tax year separately for [estimated tax payments](https://www.irs.gov/payments/types-of-payments-available-to-individuals-through-direct-pay).
+Wrong-year ordinary and signed joint rows reject in both native and PDF final
+export. Positive quarterly, divorced-joint, MFS-joint, return arithmetic, and
+source packet cases passed **37 focused tests**; the agreed-joint native return
+passed the local TY2025 v5.4 XSD (**38 checks total**). These are synthetic
+reviewed facts; IRS-account confirmation, agreement signature authentication,
+other payment channels, the full post-change test run, and ATS remain open.

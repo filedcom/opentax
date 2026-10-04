@@ -14,6 +14,7 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 const ssn = z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/);
 const reference = z.string().trim().min(1);
 const quarterPaymentSchema = z.object({
+  tax_year: z.literal(2025),
   quarter: z.enum(["q1", "q2", "q3", "q4"]),
   amount: z.number().positive(),
   payer_tin: ssn,
@@ -21,6 +22,7 @@ const quarterPaymentSchema = z.object({
   payment_record_reference: reference,
 }).strict();
 const jointPaymentRowSchema = z.object({
+  tax_year: z.literal(2025),
   quarter: z.enum(["q1", "q2", "q3", "q4"]),
   joint_payment_amount: z.number().int().positive(),
   taxpayer_allocated_amount: z.number().int().positive(),

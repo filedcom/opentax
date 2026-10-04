@@ -402,6 +402,7 @@ Deno.test("Form 1040 native and PDF replay final tax and payment totals", () => 
     f1040es: {
       payment_q1: 100,
       quarter_payment_records: [{
+        tax_year: 2025,
         quarter: "q1",
         amount: 100,
         payer_tin: "111223333",

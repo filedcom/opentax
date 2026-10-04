@@ -14,6 +14,7 @@ const source = {
   payment_q4: 100,
   quarter_payment_records: [
     {
+      tax_year: 2025,
       quarter: "q1",
       amount: 400,
       payer_tin: "111223333",
@@ -21,6 +22,7 @@ const source = {
       payment_record_reference: "2025 Q1 payment",
     },
     {
+      tax_year: 2025,
       quarter: "q2",
       amount: 300,
       payer_tin: "111223333",
@@ -28,6 +30,7 @@ const source = {
       payment_record_reference: "2025 Q2 payment",
     },
     {
+      tax_year: 2025,
       quarter: "q3",
       amount: 200,
       payer_tin: "111223333",
@@ -35,6 +38,7 @@ const source = {
       payment_record_reference: "2025 Q3 payment",
     },
     {
+      tax_year: 2025,
       quarter: "q4",
       amount: 100,
       payer_tin: "111223333",
@@ -143,6 +147,38 @@ Deno.test("2025 sourced quarterly payments reach filed line 26", () => {
   );
 });
 
+Deno.test("signed joint allocations reject a payment designated for another tax year", () => {
+  const changed = {
+    ...agreedJointPayment,
+    joint_estimated_payment_allocation: {
+      ...agreedJointPayment.joint_estimated_payment_allocation,
+      payments: [{
+        ...agreedJointPayment.joint_estimated_payment_allocation.payments[0],
+        tax_year: 2024,
+      }],
+    },
+  };
+  const fields = {
+    filing_status: "single",
+    taxpayer_ssn: "111223333",
+    line26_estimated_tax: 300,
+  };
+  const attached = {
+    general: { filing_status: "single", taxpayer_ssn: "111-22-3333" },
+    f1040es: changed,
+  };
+  assertThrows(
+    () => irs1040.build(fields, { pending: attached }),
+    Error,
+    "tax_year",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(fields, attached),
+    Error,
+    "tax_year",
+  );
+});
+
 Deno.test("prior-year applied credit stays guarded without accepted filing and account evidence", () => {
   const attached = {
     f1040es: { ...source, applied_from_prior_year: 250 },
@@ -207,6 +243,15 @@ Deno.test("line 26 requires distinct filer-owned quarter payment records", () =>
         { f1040es: { payment_q1: 400 } },
         "needs retained quarter payment records",
       ],
+      [{
+        f1040es: {
+          payment_q1: 400,
+          quarter_payment_records: [{
+            ...source.quarter_payment_records[0],
+            tax_year: 2024,
+          }],
+        },
+      }, "tax_year"],
       [{
         f1040es: {
           payment_q1: 401,
