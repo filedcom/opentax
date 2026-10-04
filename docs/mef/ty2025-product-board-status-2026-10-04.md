@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1226 bounded completed slices are recorded in the
+inside** that section. The 1227 bounded completed slices are recorded in the
 [completed ledger](ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -94,6 +94,10 @@ Two sequential-policy Form 8962 packets add ten reviewed pages. Four uncovered
 months stay blank in the first; five distinct policies cover the full year in
 the second. The inventory reaches 161 fixture IDs / 935 pages, with 24
 fixture IDs lacking completed page flags.
+Three corrected-SLCSP Form 8962 packets add 18 reviewed pages, with repayments
+of $1,096, $1,046, and $1,346 carried once through Schedule 2 and Form 1040.
+The inventory reaches 164 fixture IDs / 953 pages, with 21 fixture IDs lacking
+completed page flags.
 A separate current-head two-page direct pension rollover packet passed a
 completed source/XML/visual checklist; the all-page review gate remains open.
 Two current-head Form 1098 purchase and construction-refinance points packets

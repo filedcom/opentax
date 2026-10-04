@@ -3870,3 +3870,26 @@ The distinct completed inventory reaches **161 fixture IDs / 935 pages**,
 with 24 fixture IDs lacking completed page flags. Marketplace source
 authenticity, other policy combinations, the complete all-page review, IRS
 business rules, and ATS acceptance remain open.
+
+## Corrected-SLCSP Form 8962 filled-page review (2026-10-04)
+
+The three-case packet at
+`.state/research/ty2025-filled-pdf-review/2026-10-04-corrected-slcsp/`
+contains 18 filled pages. Two alternating-policy cases preserve their source
+Form 1095-A column B totals while applying dated corrected SLCSP amounts only
+to covered months. Their Form 8962 lines 24/25 show $1,304/$2,400 and
+$1,354/$2,400, respectively, producing $1,096 and $1,046 repayments on
+Schedule 2 line 1a and Form 1040 line 17. The five sequential-policy case
+applies five separate $650 determinations in their own months and carries
+$1,346 excess APTC once. All 18 pages were rendered and visually checked for
+2025 form/year, filer, monthly amounts and marks, page order, continuation,
+and legibility. The read-only checker passed **3 cases / 18 pages** with
+source replay, artifact hashes, page origins, and local TY2025v5.4 XSD.
+Manifest SHA-256 is
+`a6a31bc5991094bc324fdbb7c01313ae39f306b9ad5409831b28b2d8d70d9075`;
+checker log `.state/research/ty2025-corrected-slcsp-check-2026-10-04.log`
+has SHA-256 `050b0d27f2d818512901e8b401c0984ece08966dcb982101cfa5af6ed6004d55`.
+The distinct completed inventory reaches **164 fixture IDs / 953 pages**,
+with 21 fixture IDs lacking completed page flags. Authenticated marketplace
+correction notices, other policy combinations, complete all-page review, IRS
+business rules, and ATS acceptance remain open.
