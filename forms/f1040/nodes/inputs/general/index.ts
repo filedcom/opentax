@@ -1292,6 +1292,11 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     if (parsed.dual_status_return_2025 === true) {
       throw new Error("TY2025 dual-status return cannot use Form 1040 e-file");
     }
+    if (parsed.qss_qualifying_child_ssn !== undefined) {
+      throw new Error(
+        "QSS qualifying child SSN needs a reviewed nondependent child route before Form 1040 export",
+      );
+    }
     const jointDependent = parsed.filing_status === FilingStatus.MFJ &&
       (parsed.taxpayer_can_be_claimed_as_dependent === true ||
         parsed.spouse_can_be_claimed_as_dependent === true);
