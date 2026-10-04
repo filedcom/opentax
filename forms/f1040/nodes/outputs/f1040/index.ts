@@ -62,6 +62,11 @@ const inputSchema = z.object({
     last_name: z.string().trim().min(1),
     ssn: z.string().regex(/^\d{9}$/),
   }).strict().optional(),
+  qss_nonclaimed_child: z.object({
+    first_name: z.string().trim().min(1),
+    last_name: z.string().trim().min(1),
+    ssn: z.string().regex(/^\d{9}$/),
+  }).strict().optional(),
   presidential_campaign_fund_taxpayer: z.boolean().optional(),
   presidential_campaign_fund_spouse: z.boolean().optional(),
   bank_routing_number: z.string().regex(/^(0[1-9]|1[0-2]|2[1-9]|3[0-2])\d{7}$/)
@@ -1258,6 +1263,9 @@ class F1040Node extends TaxNode<typeof inputSchema> {
       ...numericLines,
       ...(effectiveInput.hoh_qualifying_child === undefined ? {} : {
         hoh_qualifying_child: effectiveInput.hoh_qualifying_child,
+      }),
+      ...(effectiveInput.qss_nonclaimed_child === undefined ? {} : {
+        qss_nonclaimed_child: effectiveInput.qss_nonclaimed_child,
       }),
       ...(effectiveInput.presidential_campaign_fund_taxpayer === undefined
         ? {}

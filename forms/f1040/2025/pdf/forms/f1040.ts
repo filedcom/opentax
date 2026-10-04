@@ -25,6 +25,7 @@ import { assertPositive1099PatrOwner } from "../../f1099patr-owner-reconciliatio
 import { assertDirectCapitalGainDistributionSource } from "../../line7a-source-reconciliation.ts";
 import { assertNoUnsupportedDeceasedReturn } from "../../filer-source-reconciliation.ts";
 import { assertHohQualifyingChildSource } from "../../hoh-qualifying-child-source.ts";
+import { assertQssNonclaimedChildSource } from "../../qss-nonclaimed-child-source.ts";
 import { assertJointDependentRefundSource } from "../../line12a-dependent-source.ts";
 import { assertLine36EstimatedTaxSource } from "../../line36-estimated-tax-source.ts";
 import { nativeFecInputSchema } from "../../../nodes/inputs/fec/index.ts";
@@ -154,7 +155,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
-    domainKey: "print_hoh_qualifying_child_name",
+    domainKey: "print_filing_status_qualifying_child_name",
     pdfField: "topmostSubform[0].Page1[0].f1_29[0]",
   },
 
@@ -780,6 +781,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   projectFields(fields, allPending) {
     assertHohQualifyingChildSource(fields, allPending);
+    assertQssNonclaimedChildSource(fields, allPending);
     const hasForm8888 = allPending.f8888 !== undefined;
     if (
       hasForm8888 &&
@@ -999,6 +1001,10 @@ export const irs1040Pdf: PdfFormDescriptor = {
     const hohChild = fields.hoh_qualifying_child as
       | { first_name: string; last_name: string }
       | undefined;
+    const qssChild = fields.qss_nonclaimed_child as
+      | { first_name: string; last_name: string }
+      | undefined;
+    const filingStatusChild = hohChild ?? qssChild;
     return {
       ...fields,
       ...printedDependents,
@@ -1019,9 +1025,9 @@ export const irs1040Pdf: PdfFormDescriptor = {
       print_pension_pso: printPensionPso,
       print_resident_election: residentElection !== undefined,
       print_resident_election_name: residentElection,
-      print_hoh_qualifying_child_name: hohChild === undefined
+      print_filing_status_qualifying_child_name: filingStatusChild === undefined
         ? undefined
-        : `${hohChild.first_name} ${hohChild.last_name}`,
+        : `${filingStatusChild.first_name} ${filingStatusChild.last_name}`,
       print_mfs_spouse_full_name: printMfsSpouseName,
       print_mfs_lived_apart_entire_year: fields.filing_status === "mfs" &&
         fields.mfs_spouse_lived_with_taxpayer === false,

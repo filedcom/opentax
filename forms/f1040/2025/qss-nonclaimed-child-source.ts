@@ -1,7 +1,7 @@
 import { z } from "zod";
 import {
-  hohQualifyingChildFromGeneral,
   inputSchema as generalInputSchema,
+  qssNonclaimedChildFromGeneral,
 } from "../nodes/inputs/general/index.ts";
 
 const filedChildSchema = z.object({
@@ -10,34 +10,36 @@ const filedChildSchema = z.object({
   ssn: z.string(),
 }).strict();
 
-/** Bind the nondependent HOH child printed on Form 1040 to the reviewed source. */
-export function assertHohQualifyingChildSource(
+/** Bind the printed QSS child to the retained nondependent-child review. */
+export function assertQssNonclaimedChildSource(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>>,
 ): void {
-  const filed = fields.hoh_qualifying_child;
+  const filed = fields.qss_nonclaimed_child;
   const raw = pending.general;
   const sourceNamesChild = raw !== null && typeof raw === "object" &&
-    ("hoh_qualifying_person_name" in raw ||
-      "hoh_qualifying_person_relationship" in raw);
+    (("qss_qualifying_child_ssn" in raw &&
+      raw.qss_qualifying_child_ssn !== undefined) ||
+      ("qss_nonclaimed_child_review" in raw &&
+        raw.qss_nonclaimed_child_review !== undefined));
   if (!sourceNamesChild && filed === undefined) return;
   if (raw === undefined) {
     throw new Error(
-      "Form 1040 HOH qualifying child needs retained general source",
+      "Form 1040 QSS nonclaimed child needs retained general source",
     );
   }
   const source = generalInputSchema.parse(raw);
-  const expected = hohQualifyingChildFromGeneral(source);
-  if (expected === undefined && filed === undefined) return;
+  const expected = qssNonclaimedChildFromGeneral(source);
   const parsed = filedChildSchema.safeParse(filed);
   if (
-    !parsed.success || expected === undefined ||
+    fields.filing_status !== "qss" || !parsed.success ||
+    expected === undefined ||
     parsed.data.first_name !== expected.first_name ||
     parsed.data.last_name !== expected.last_name ||
     parsed.data.ssn !== expected.ssn
   ) {
     throw new Error(
-      "Form 1040 HOH qualifying child differs from the reviewed custody source",
+      "Form 1040 QSS nonclaimed child differs from the reviewed source",
     );
   }
 }

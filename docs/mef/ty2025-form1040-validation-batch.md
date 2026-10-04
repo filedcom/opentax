@@ -2232,3 +2232,18 @@ failing cases. Its log is `/tmp/opentax-pr62-final-head-test.log` (SHA-256
 `99f0c4816df34c30cc9b04b9bbbfe13782c70f59c1c5f538c4cf907f1b2c9b74`).
 This is a local regression gate; complete route evidence, every-page visual
 review, current IRS ATS effectiveness, transmission, and acceptance remain open.
+
+## QSS nonclaimed child joint-return exception (2026-10-04)
+
+A bounded QSS source review now carries one child or stepchild who filed a
+nonrefund joint return and is not listed as a dependent to the 2025 Form 1040
+MeF qualifying-person fields and shared HOH/QSS PDF name field. It requires a
+2023/2024 spouse death year, confirmed no remarriage, prior joint-return
+eligibility, full-year home, more-than-half home cost, and retained record
+references. The entered child SSN must match the review and differ from filer,
+spouse, and dependent-row SSNs. A synthetic W-2 return passed local TY2025v5.4
+XSD and filled-PDF text checks; native and PDF builds reject changed or
+omitted child identity. The five nearby Form 1040/general files passed
+183/183, and the three QSS tests passed again after the final status assertion;
+format and lint passed. Source authenticity, other QSS exceptions, current-head bulk
+testing, IRS business rules, and ATS acceptance remain open.

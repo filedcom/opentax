@@ -3,7 +3,7 @@
 Status: 2026-10-04. This maps all **32 open checklist rows outside the
 "Named tax-form gaps" section** of [`product_board.md`](../../product_board.md):
 29 top-level rows and three nested rows. The board has 52 open rows in all;
-the other 20 are deferred named-form parents. Its completed ledger records 1156
+the other 20 are deferred named-form parents. Its completed ledger records 1157
 bounded items, without closing these parents. This is a work queue, not a
 filing-readiness claim. A read-only recount of `ALL_MEF_FORMS`,
 `ALL_PDF_FORMS`, and `pdfReviewFixtures` on 2026-10-04 (the same inputs used by
@@ -82,10 +82,11 @@ close during the nonnamed phase.
 
 ## Immediate independent queue
 
-The later R1 filing-status slice now carries a reviewed, nonclaimed HOH child
-to native Form 1040 and the filled PDF, with local XSD and changed-source
-checks. Other HOH/QSS qualifying-person situations and authenticated custody
-records remain open under R1 and C8.
+The later R1 filing-status slices now carry a reviewed, nonclaimed HOH child
+and a bounded QSS child with the nonrefund joint-return exception to native
+Form 1040 and the filled PDF, with local XSD and changed-source checks. Other
+HOH/QSS qualifying-person situations and authenticated custody, death,
+residence, and joint-return records remain open under R1 and C8.
 
 1. Before implementation freeze, finish a bounded audit of **retained
    nonnamed** source joins under R1/R2/R3/R4: positive, zero, conflict,

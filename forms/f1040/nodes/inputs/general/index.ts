@@ -381,6 +381,22 @@ export const inputSchema = z.object({
   // QSS-specific
   qss_spouse_death_year: z.number().int().optional(),
   qss_qualifying_child_ssn: z.string().optional(),
+  qss_nonclaimed_child_review: z.object({
+    child_first_name: z.string().max(20).regex(/^([A-Za-z-] ?)*[A-Za-z-]$/),
+    child_last_name: z.string().max(20).regex(/^([A-Za-z-] ?)*[A-Za-z-]$/),
+    child_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+    child_relationship: z.enum(["son", "daughter", "stepchild"]),
+    child_lived_in_home_all_year: z.literal(true),
+    child_filed_nonrefund_joint_return: z.literal(true),
+    taxpayer_paid_more_than_half_home_costs: z.literal(true),
+    no_remarriage_through_2025: z.literal(true),
+    entitled_to_joint_return_in_death_year: z.literal(true),
+    spouse_death_record_reference: z.string().trim().min(1),
+    child_joint_return_reference: z.string().trim().min(1),
+    child_residency_record_reference: z.string().trim().min(1),
+    home_cost_record_reference: z.string().trim().min(1),
+    prior_joint_eligibility_reference: z.string().trim().min(1),
+  }).strict().optional(),
   // Refund direct deposit
   bank_routing_number: z.string().regex(/^(0[1-9]|1[0-2]|2[1-9]|3[0-2])\d{7}$/)
     .optional(),
@@ -401,6 +417,42 @@ export interface HohQualifyingChild {
   first_name: string;
   last_name: string;
   ssn: string;
+}
+
+export function qssNonclaimedChildFromGeneral(
+  input: GeneralInput,
+): HohQualifyingChild | undefined {
+  const review = input.qss_nonclaimed_child_review;
+  if (!review) {
+    if (input.qss_qualifying_child_ssn !== undefined) {
+      throw new Error(
+        "QSS qualifying child SSN needs a reviewed nondependent child route before Form 1040 export",
+      );
+    }
+    return undefined;
+  }
+  const ssn = input.qss_qualifying_child_ssn?.replaceAll("-", "");
+  if (
+    input.filing_status !== FilingStatus.QSS ||
+    ![2023, 2024].includes(input.qss_spouse_death_year ?? 0) ||
+    !ssn || !/^\d{9}$/.test(ssn) ||
+    ssn !== review.child_ssn.replaceAll("-", "") ||
+    `${review.child_first_name} ${review.child_last_name}`.length > 35 ||
+    ssn === input.taxpayer_ssn?.replaceAll("-", "") ||
+    ssn === input.spouse_ssn?.replaceAll("-", "") ||
+    (input.dependents ?? []).some((child) =>
+      child.ssn?.replaceAll("-", "") === ssn
+    )
+  ) {
+    throw new Error(
+      "QSS nonclaimed child needs matching status, death year, distinct SSN, and reviewed joint-return exception",
+    );
+  }
+  return {
+    first_name: review.child_first_name,
+    last_name: review.child_last_name,
+    ssn,
+  };
 }
 
 /** The named HOH child is omitted from dependent rows after a reviewed release. */
@@ -1087,6 +1139,11 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
   );
   addIfDefined(
     fields,
+    "qss_nonclaimed_child",
+    qssNonclaimedChildFromGeneral(input),
+  );
+  addIfDefined(
+    fields,
     "spouse_has_business_credit",
     input.spouse_has_business_credit,
   );
@@ -1291,11 +1348,6 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     }
     if (parsed.dual_status_return_2025 === true) {
       throw new Error("TY2025 dual-status return cannot use Form 1040 e-file");
-    }
-    if (parsed.qss_qualifying_child_ssn !== undefined) {
-      throw new Error(
-        "QSS qualifying child SSN needs a reviewed nondependent child route before Form 1040 export",
-      );
     }
     const jointDependent = parsed.filing_status === FilingStatus.MFJ &&
       (parsed.taxpayer_can_be_claimed_as_dependent === true ||

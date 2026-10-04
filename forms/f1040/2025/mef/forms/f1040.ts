@@ -14,6 +14,7 @@ import { assertJointDependentRefundSource } from "../../line12a-dependent-source
 import { assertLine36EstimatedTaxSource } from "../../line36-estimated-tax-source.ts";
 import { assertNoUnsupportedDeceasedReturn } from "../../filer-source-reconciliation.ts";
 import { assertHohQualifyingChildSource } from "../../hoh-qualifying-child-source.ts";
+import { assertQssNonclaimedChildSource } from "../../qss-nonclaimed-child-source.ts";
 import {
   DependentCreditCategory,
   dependentCreditCategory,
@@ -57,6 +58,11 @@ export interface Fields {
   presidential_campaign_fund_spouse?: boolean;
   filing_status?: string;
   hoh_qualifying_child?: {
+    first_name: string;
+    last_name: string;
+    ssn: string;
+  };
+  qss_nonclaimed_child?: {
     first_name: string;
     last_name: string;
     ssn: string;
@@ -469,6 +475,7 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
 
 function buildIRS1040(fields: Input, context?: MefBuildContext): string {
   assertHohQualifyingChildSource(fields, context?.pending ?? {});
+  assertQssNonclaimedChildSource(fields, context?.pending ?? {});
   assertIdentified1099IntOwner(
     fields as Record<string, unknown>,
     context?.pending,
@@ -746,6 +753,15 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
           `${fields.hoh_qualifying_child.first_name} ${fields.hoh_qualifying_child.last_name}`,
         ),
         element("QualifyingHOHSSN", fields.hoh_qualifying_child.ssn),
+      ]
+      : []),
+    ...(fields.qss_nonclaimed_child
+      ? [
+        elements("QualifyingPersonName", [
+          element("PersonFirstNm", fields.qss_nonclaimed_child.first_name),
+          element("PersonLastNm", fields.qss_nonclaimed_child.last_name),
+        ]),
+        element("QualifyingPersonSSN", fields.qss_nonclaimed_child.ssn),
       ]
       : []),
     ...(residentElection
