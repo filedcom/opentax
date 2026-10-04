@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1215 bounded completed slices are recorded in the
+inside** that section. The 1218 bounded completed slices are recorded in the
 [completed ledger](ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -49,6 +49,19 @@ with a passing source/XML/artifact/XSD checker, bringing the distinct completed
 inventory to 150 fixture IDs and 847 pages; 35 fixture IDs remain without
 completed page flags. The separate Form 461 packet remains guarded on its
 already tested net-QBI-loss carryforward boundary.
+The ISO AMT packet adds six visually reviewed pages, with the Form 3921 spread
+reaching Form 6251, Schedule 2, and Form 1040 and a passing source/XML/XSD
+checker. The distinct completed inventory is now 151 fixture IDs and 853
+pages, with 34 fixture IDs lacking completed page flags.
+The Schedule J farm-income-averaging packet adds 13 visually reviewed pages
+with source/XML/XSD checks across Schedule F, Schedule SE, Form 8995, and
+Form 1040. The distinct completed inventory is now 152 fixture IDs and 866
+pages, with 33 fixture IDs lacking completed page flags.
+The nonparticipating rental-loss packet adds six visually reviewed pages:
+Schedule E retains the $5,000 pre-limitation loss, Form 8582 disallows it,
+and Form 1040 carries no current deduction. The source/XML/XSD checker passed.
+The distinct completed inventory is now 153 fixture IDs and 872 pages, with
+32 fixture IDs lacking completed page flags.
 The Schedule SE rounding change was replayed through all 15 previously
 reviewed selected fixtures containing that form. Six current PDF/XML pairs
 were byte-identical; 39 changed pages across nine pairs were visually

@@ -3613,3 +3613,71 @@ run could start with the corrected expectations; its interrupted log is
 `.state/research/ty2025-full-test-df354df5-2026-10-04.log` (SHA-256
 `891a5943a9a2501a41b869f089e716a93372eaff78e6802816722fd918fe4316`).
 A clean full suite remains pending.
+
+## Form 6251 ISO AMT selected PDF packet (2026-10-04)
+
+The selected `single-iso-amt` packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-iso-amt/` has six
+rendered pages. Its Form 3921 source gives a $240,000 exercise-date spread,
+printed on Form 6251 line 2i. Part I totals $440,000 AMTI; Part II applies the
+$88,100 exemption, prints $93,750 tentative tax and $37,067 regular tax, and
+returns $56,683 AMT. Schedule 2 lines 2/3 and Form 1040 line 17 each carry
+that amount once, leading to $93,750 total tax and $58,750 owed after $35,000
+W-2 withholding. Form 6251 Part III stays blank without preferential income.
+
+All six pages were visually checked against source and native XML for owner,
+form/year, amounts, signs and marks, right-hand computation, page order, and
+clipping. The read-only checker passed **1 case / 6 pages** with source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Manifest SHA-256 is
+`d64f14f3d43cc38a7f77ddb598f51aa95c766ca921583cc9ef16a2aa9a658b16`;
+checker log `.state/research/ty2025-iso-amt-check-2026-10-04.log` has SHA-256
+`1bd559545ef85586bbb1be3062e719d1143f8f6832b663de36e910feb302f012`.
+The distinct completed inventory becomes **151 fixture IDs / 853 pages**,
+with 34 fixture IDs still without completed page flags. Authentic Form 3921
+and exercise evidence, other AMT adjustments, complete PDF review, IRS
+business rules, and ATS acceptance remain open.
+
+## Schedule J farm averaging selected PDF packet (2026-10-04)
+
+The selected `single-schedule-j-farm-income-averaging` packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-schedule-j-farm/`
+contains 13 rendered pages. Schedule F's $100,000 raised-product sales reach
+Schedule 1 once; Schedule SE adds its $11,451 Social Security and $2,678
+Medicare components to $14,129 and deducts $7,065 on Schedule 1. Form 8995
+limits the QBI deduction to $15,437. Schedule J elects $15,000 of farm income,
+uses three synthetic $10,000 taxable-income/$1,000 section 1 tax base-year
+records, and prints $7,112 on line 23 and Form 1040 line 16.
+
+All 13 pages were rendered and visually checked for owner, form/year,
+amounts, signs and marks, page order, and clipping against current source and
+native XML. The read-only checker passed **1 case / 13 pages** with source
+replay, hashes, page origins, and local TY2025v5.4 XSD. Manifest SHA-256 is
+`ce6c6fcf5de42395a7eaf6bf6705c85e74fc38d318b054771973e8a19416884b`;
+checker log `.state/research/ty2025-schedule-j-check-2026-10-04.log` has
+SHA-256 `bbcd7cca0469542df8c9e790a03870dad89270b768e6c78edd6e20639ad69cd9`.
+The distinct completed inventory becomes **152 fixture IDs / 866 pages**,
+with 33 fixture IDs without completed page flags. Verified prior filed
+returns, other Schedule J elections, complete PDF review, IRS business rules,
+and ATS acceptance remain open.
+
+## Form 8582 nonparticipating rental-loss selected PDF packet (2026-10-04)
+
+The `single-nonparticipating-rental-loss` packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-rental-loss/` contains
+six pages. Schedule E prints $5,000 rent and $10,000 repairs for Example
+rental, with a $5,000 pre-limitation loss and no current deductible loss.
+Form 8582 Part I carries the $5,000 passive loss, Part V identifies the
+activity, and Parts VII/VIII leave the full $5,000 disallowed with zero
+allowed. Form 1040 retains $90,000 W-2 income/AGI and a $745 refund.
+
+All six pages were visually checked for owner, form/year, amounts, blank
+current-loss lines, activity identity, page order, and clipping against source
+and XML. The read-only checker passed **1 case / 6 pages** with source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Manifest SHA-256 is
+`1483e1a3e62c9e83c451e1de2c7cb785c586cacae435043b11c1911f2ea05f03`;
+checker log `.state/research/ty2025-rental-loss-check-2026-10-04.log` has
+SHA-256 `1bd559545ef85586bbb1be3062e719d1143f8f6832b663de36e910feb302f012`.
+The distinct completed inventory becomes **153 fixture IDs / 872 pages**,
+with 32 fixture IDs without completed page flags. Authentic rental activity
+and carryover records, other Form 8582 branches, complete PDF review, IRS
+business rules, and ATS acceptance remain open.
