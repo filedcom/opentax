@@ -3893,3 +3893,27 @@ The distinct completed inventory reaches **164 fixture IDs / 953 pages**,
 with 21 fixture IDs lacking completed page flags. Authenticated marketplace
 correction notices, other policy combinations, complete all-page review, IRS
 business rules, and ATS acceptance remain open.
+
+## Remaining shared-policy Form 8962 filled-page review (2026-10-04)
+
+The three-case packet at
+`.state/research/ty2025-filled-pdf-review/2026-10-04-shared-policy-remaining/`
+contains 16 filled pages. The single-filer Situation 4 case prints two
+nonoverlapping Part IV allocation rows for the same policy: 20% in January–June
+and 80% in July–December. Form 8962 line 24 shows $7,200 PTC, line 25 shows
+$4,800 allocated APTC, and $2,400 reaches Schedule 3 and Form 1040. The MFS
+repayment case prints 50% APTC allocation with blank premium/SLCSP percentages;
+$4,800 allocated APTC is limited to a $750 repayment on Schedule 2 and Form
+1040. The MFS exception case marks box A and prints 50% premium/APTC
+allocation; $2,400 net PTC reaches Schedule 3 and Form 1040 once. All 16 pages
+were rendered and visually checked for filer and spouse identity, 2025
+form/year, monthly amounts, Part IV percentages, checkboxes, page order, and
+legibility. The read-only checker passed **3 cases / 16 pages** with source
+replay, artifact hashes, page origins, and local TY2025v5.4 XSD. Manifest
+SHA-256 is `71ee1acdec58bafecf66ee102aa458f2f2e95eb565431ae703719121fda74063`;
+checker log `.state/research/ty2025-shared-policy-check-2026-10-04.log`
+has SHA-256 `3fa501432b89fa15592b7a94c699fba0f23f3dcf8a5145ebf7d8ccd30f7a7838`.
+The distinct completed inventory reaches **167 fixture IDs / 969 pages**,
+with 18 fixture IDs lacking completed page flags. Authenticated policy and
+agreement records, complete all-page review, IRS business rules, and ATS
+acceptance remain open.
