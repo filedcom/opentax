@@ -4066,3 +4066,11 @@ with 11 fixture IDs lacking completed page flags. The separate Form 461
 fixture failed closed on its existing sourced net-QBI-loss carryforward
 requirement. Issued business source records, other QBI branches, complete
 all-page review, IRS business rules, and ATS acceptance remain open.
+
+An additional repeated-instance archive check reuses this source fixture. It
+asserts two distinct native Schedule C document IDs, two two-page PDF origins,
+and byte-identical return XML inside the local submission ZIP. On 2026-10-04,
+`deno test -A forms/f1040/2025/pdf/joint-mixed-source-return.test.ts` passed
+**3/3** after correcting the test Submission ID to the processing date's
+Julian day. This is local source-to-package evidence for one two-business
+shape, not the remaining repeated-owner or IRS acceptance gate.

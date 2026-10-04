@@ -265,3 +265,67 @@ Deno.test("1099-K personal and 1099-B broker sales retain three sale instances t
     '<?xml version="1.0" encoding="UTF-8"?>\n' + bundle.xml,
   );
 });
+
+Deno.test("two Schedule C businesses retain separate native and printable instances in the submission archive", async () => {
+  const fixture = pdfReviewFixtures.find((item) =>
+    item.id === "single-form8995a-two-business-loss-netting"
+  )!;
+  const filer = {
+    ...fixture.filer,
+    softwareId: "12345678",
+    originator: { efin: "123456", originatorType: "ERO" as const },
+  };
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    fixture.inputs,
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+  const documents = returnDataDocuments(bundle.xml)!;
+  const scheduleC = documents.filter((item) => item.tag === "IRS1040ScheduleC");
+  assertEquals(scheduleC.length, 2);
+  assertEquals(new Set(scheduleC.map((item) => item.id)).size, 2);
+  assertStringIncludes(bundle.xml, "North Works");
+  assertStringIncludes(bundle.xml, "South Shop");
+
+  const pageOrigins: PdfPageOrigin[] = [];
+  const pdf = await buildPdfBytes(
+    pending,
+    filer,
+    ".pdf-cache",
+    bundle,
+    pageOrigins,
+  );
+  assertEquals(
+    pageOrigins.length,
+    (await PDFDocument.load(pdf)).getPageCount(),
+  );
+  assertEquals(
+    pageOrigins.filter((page) => page.formKey === "schedule_c").map((page) =>
+      page.formCopy
+    ),
+    [1, 1, 2, 2],
+  );
+  const archive = await buildMefSubmissionArchive(bundle, {
+    filer,
+    submissionId: "1234562026277twocbus",
+    processingDate: new Date("2026-10-04T10:00:00Z"),
+    residencyReview: {
+      tax_year: 2025,
+      taxpayer: {
+        tin: filer.primarySSN.replaceAll("-", ""),
+        tax_status: "full_year_us_citizen",
+        status_source_reference: "reviewed-two-business-citizenship",
+        reviewer_reference: "reviewer-2026-10-04",
+        reviewed_on: "2026-10-04",
+      },
+    },
+  });
+  assertEquals(
+    new TextDecoder().decode(unzipSync(archive.bytes)["xml/submission.xml"]),
+    '<?xml version="1.0" encoding="UTF-8"?>\n' + bundle.xml,
+  );
+});
