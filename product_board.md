@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1125 bounded completed slices are recorded in the
+inside** that section. The 1126 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -20,7 +20,7 @@ until their full routes or approved rejection boundaries are established.
 | Core return and source paths | 8 | Broader joins, ownership, and source classification remain open. |
 | Named tax-form gaps | 20 | Listed parent forms remain open despite completed bounded slices. |
 | Native MeF and PDF parity | 3 | Complete descriptor, attachment, and print parity remain open. |
-| Automated and artifact validation | 5 | The current-head 11,059-test local suite passed; wider route evidence and human page review remain open. |
+| Automated and artifact validation | 5 | The latest 11,060-test local suite passed; wider route evidence and human page review remain open. |
 | IRS ATS and delivery | 5 | Credentials, accepted scenarios, and a filing-ready release remain open. |
 
 **Implemented coverage.** Retained routes include source and owner checks for
@@ -45,8 +45,8 @@ or template errors; field values, page layouts, and unused template fields still
 need route review. The live inventory has 149 native MeF descriptors, 116 PDF
 descriptors, and 211 TY2025 schema roots. These counts are inventories, not positive filing claims.
 
-**Validation and release.** `deno task test` passed 11,059/11,059 at
-`78d11d95` on 2026-10-04. CLI type
+**Validation and release.** `deno task test` passed 11,060/11,060 after
+`3fa9c6fe` on 2026-10-04; later PDF field-audit changes were checked separately. CLI type
 check, native compilation, and a synthetic W-2 → MeF → PDF smoke passed at
 earlier checkpoints.
 The attachment-aware TY2025 fixture/XML/XSD file passed 178/178 again at

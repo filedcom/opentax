@@ -1885,3 +1885,17 @@ pages**, including source/XML/PDF replay, hashes, page origins, and local
 TY2025 v5.4 XSD. These are synthetic bounded reviews; issuer and transaction
 records, other classifications, the complete all-page review, business rules,
 and IRS ATS acceptance remain open.
+
+## PR #62 post-fixture full automated pass (2026-10-04)
+
+After the `3fa9c6fe` mixed line 8z review fixture landed, the exact
+`PATH=/tmp/opentax-tools:$PATH deno task test` command passed **11,060 tests,
+zero failed** in 52m58s, with no ignored tests reported. The retained log is
+`.state/research/ty2025-pr62-full-test-3fa9c6fe.log` (SHA-256
+`c2885c449bca9b1fc039eaca773dabf3114b24425c74a64c581de87d2c7f408b`).
+The two new personal-sale Form 1099-K fixtures passed within its 181-case
+filled-PDF/XSD file. The later PDF descriptor audit script was also exercised
+separately against all 116 registered official templates; subsequent branch
+commits changed validation documentation only. This local automated result
+does not establish complete source evidence, all-page human review, IRS
+business-rule acceptance, or ATS transmission.
