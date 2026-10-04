@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1228 bounded completed slices are recorded in the
+inside** that section. The 1229 bounded completed slices are recorded in the
 [completed ledger](ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -101,6 +101,10 @@ completed page flags.
 Three shared-policy Form 8962 packets add 16 reviewed pages. One uses separate
 20%/80% agreements; the MFS cases exercise capped repayment and a qualifying
 PTC exception. The inventory reaches 167 fixture IDs / 969 pages, with 18
+fixture IDs lacking completed page flags.
+The trust clean-electricity investment-credit packet adds 17 reviewed pages:
+Form 3468 Part V's $3,000 source credit reaches Form 3800, Schedule 3, and
+Form 1040 once. The inventory reaches 168 fixture IDs / 986 pages, with 17
 fixture IDs lacking completed page flags.
 A separate current-head two-page direct pension rollover packet passed a
 completed source/XML/visual checklist; the all-page review gate remains open.

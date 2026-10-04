@@ -3917,3 +3917,26 @@ The distinct completed inventory reaches **167 fixture IDs / 969 pages**,
 with 18 fixture IDs lacking completed page flags. Authenticated policy and
 agreement records, complete all-page review, IRS business rules, and ATS
 acceptance remain open.
+
+## Trust clean-electricity investment-credit filled-page review (2026-10-04)
+
+The `single-trust-clean-electricity-investment-credit` packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-clean-electricity-credit/`
+contains 17 filled pages. The selected Form 3468 pages print Solar Trust,
+its EIN and facility, the 2024 construction and 2025 service dates, and
+$10,000 qualified basis at 30%, yielding a $3,000 Part V credit. Form 3800
+Part III line 1v records the trust EIN and $3,000 nonpassive source credit;
+its $8,973 regular-tax-over-TMT limit allows the full $3,000 on line 38.
+Schedule 3 line 6a and Form 1040 line 20 each carry $3,000 once, producing
+a $7,933 refund. All 17 pages, including all nine Form 3800 pages and two
+Form 6251 pages, were rendered and visually checked for 2025 form/year,
+filer, source amounts, marks, page order, blank continuation rows, and
+legibility. The read-only checker passed **1 case / 17 pages** with source
+replay, artifact hashes, page origins, and local TY2025v5.4 XSD. Manifest
+SHA-256 is `2581e3ea295c15ceb76b379e0face57adb50935597271afd2076d695dab8ad3f`;
+checker log `.state/research/ty2025-clean-electricity-credit-check-2026-10-04.log`
+has SHA-256 `a058a56b23112db02c64309b945bb37ef04a8a7efd74461840737b16bd48e1a2`.
+The distinct completed inventory reaches **168 fixture IDs / 986 pages**,
+with 17 fixture IDs lacking completed page flags. Issued K-1 and property
+statement bytes, other business-credit routes, complete all-page review,
+IRS business rules, and ATS acceptance remain open.
