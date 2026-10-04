@@ -1,9 +1,21 @@
 # TY2025 Form 8815: source-to-return gap
 
-Status: bounded TY2025 implementation written, not validated. No test, XSD,
-filled-PDF, IRS business-rule, or ATS acceptance is claimed here. The old
-calculation and MeF tags described below were the starting point; they have been
-replaced in the current working tree.
+Status: a bounded TY2025 Series EE exclusion route has current-source local
+XSD and filled-PDF evidence. The old calculation and MeF tags described below
+were the starting point and have been replaced. Wider source, IRS business-rule,
+and ATS acceptance remain open.
+
+## Current selected evidence (2026-10-04)
+
+The checked-in `single-form8815-series-ee-bond-exclusion` fixture generated a
+four-page Form 1040, Schedule B, and Form 8815 packet. Each page was visually
+checked against source and native XML: $2,000 bond interest is excluded in full
+against $15,000 qualified expenses and $12,000 proceeds, leaving $70,000
+Form 1040 wages/AGI. The selected-scope checker passed exact source replay,
+PDF/XML hashes, page origins, and local TY2025v5.4 XSD. The packet location
+and manifest digest are in the
+[validation batch](ty2025-form1040-validation-batch.md). Issued bond/tuition
+records, other phaseout and ownership cases, IRS rules, and ATS remain open.
 
 ## Evidence and current behavior
 

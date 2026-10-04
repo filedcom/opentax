@@ -88,6 +88,12 @@ const filer: FilerIdentity = {
 Deno.test("synthetic student minor Schedule H PDF reconciles FUTA without FICA", () => {
   const projected = scheduleHPdf.projectFields!(sourcedStudentMinor, {});
   assertEquals(projected.cash_wages_over_2025_limit, false);
+  assertEquals(projected.box_b_federal_withheld, false);
+  assertEquals(projected.box_c_quarter_limit, true);
+  assertEquals(projected.line9_quarter_limit, undefined);
+  assertEquals(scheduleHPdf.pageIndices?.(projected), [0, 1]);
+  assertEquals(projected.line6_additional_medicare_tax, undefined);
+  assertEquals(projected.federal_income_tax_withheld, undefined);
   assertEquals(projected.line8_fica_and_withholding, 0);
   assertEquals(projected.section_a_taxable_wages, 4_000);
   assertEquals(projected.section_a_futa_tax, 24);
@@ -121,7 +127,10 @@ Deno.test("ATS Scenario 1 Schedule H PDF prints sourced Part I on the 2025 widge
   const filerMap = new Map(
     scheduleHPdf.filerFields?.map((entry) => [entry.domainKey, entry.pdfField]),
   );
-  assertEquals(filerMap.get("nameShownOnForm1040"), "topmostSubform[0].Page1[0].f1_1[0]");
+  assertEquals(
+    filerMap.get("nameShownOnForm1040"),
+    "topmostSubform[0].Page1[0].f1_1[0]",
+  );
   assertEquals(
     filerMap.get("primarySSN"),
     "topmostSubform[0].Page1[0].f1_2[0]",
@@ -145,10 +154,10 @@ Deno.test("ATS Scenario 1 Schedule H PDF prints sourced Part I on the 2025 widge
   );
   assertEquals(
     scheduleHPdf.fields.find((entry) =>
-      entry.domainKey === "cash_wages_over_quarter_limit" &&
+      entry.domainKey === "line9_quarter_limit" &&
       entry.kind === "checkboxWhen" && entry.whenValue === "false"
     )?.pdfField,
-    "topmostSubform[0].Page1[0].c1_4[0]",
+    "topmostSubform[0].Page1[0].c1_4[1]",
   );
   const pending = {
     schedule_h: source,
@@ -178,6 +187,10 @@ Deno.test("synthetic sourced FICA-only Schedule H PDF reconciles its worker and 
   const projected = scheduleHPdf.projectFields!(sourcedFicaOnly, {});
   assertEquals(projected.line8_fica_and_withholding, 474);
   assertEquals(projected.cash_wages_over_quarter_limit, false);
+  assertEquals(projected.box_b_federal_withheld, undefined);
+  assertEquals(projected.box_c_quarter_limit, undefined);
+  assertEquals(projected.line9_quarter_limit, false);
+  assertEquals(scheduleHPdf.pageIndices?.(projected), [0]);
   assertEquals(
     scheduleHPdf.instances?.(projected, filer, {
       schedule_h: sourcedFicaOnly,
@@ -221,6 +234,7 @@ Deno.test("Schedule H PDF requires W-4 review for unrelated-worker withholding",
   };
   const projected = scheduleHPdf.projectFields!(withheld, {});
   assertEquals(projected.federal_income_tax_withheld, 100);
+  assertEquals(projected.line6_additional_medicare_tax, 0);
   assertEquals(projected.line8_fica_and_withholding, 574);
   assertEquals(
     scheduleHPdf.instances?.(projected, filer, {
@@ -281,6 +295,7 @@ Deno.test("Schedule H PDF maps Section A FUTA and Part III to the 2025 widgets",
   assertEquals(projected.section_a_contributions, 100);
   assertEquals(projected.section_a_taxable_wages, 3_100);
   assertEquals(projected.section_a_futa_tax, 19);
+  assertEquals(projected.line9_quarter_limit, true);
   assertEquals(projected.line25_fica_and_withholding, 474);
   assertEquals(projected.line26_total_tax, 493);
   const map = new Map(
@@ -297,6 +312,13 @@ Deno.test("Schedule H PDF maps Section A FUTA and Part III to the 2025 widgets",
   assertEquals(
     map.get("line26_total_tax"),
     "topmostSubform[0].Page2[0].f2_32[0]",
+  );
+  assertEquals(
+    scheduleHPdf.fields.find((entry) =>
+      entry.domainKey === "line9_quarter_limit" &&
+      entry.kind === "checkboxWhen" && entry.whenValue === "true"
+    )?.pdfField,
+    "topmostSubform[0].Page1[0].c1_4[0]",
   );
   assertEquals(
     scheduleHPdf.instances?.(projected, filer, {

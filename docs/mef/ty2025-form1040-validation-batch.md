@@ -123,6 +123,8 @@ PDF builder files passed **184/184**. Separate pension-copy fixtures now carry
 distinct references; broader issued-copy authentication and the full batch
 remain open.
 
+
+
 The subsequent 1099-G and 1099-MISC source-reference replay passed **149/149**
 input-node cases, **11/11** shared withholding/export cases, and **184/184**
 native/PDF builder cases on 2026-10-03. A repeated G source with no payer TIN
@@ -1015,7 +1017,40 @@ Form 8995-A source-versus-print projection, a sourced Form 8826 Schedule C
 Part V description and print gate, and the Schedule E page identity attached
 to Form 7203. A two-case manifest for the Form 8826 and Form 7203 routes
 contains **31 generated pages** with XML/XSD checks; its per-page visual
-checklist remains blank. Other selected runs remain partial diagnostics.
+checklist was blank at that checkpoint. Other selected runs remain partial
+diagnostics.
+
+On 2026-10-04, the checked-in Form 8826 direct-interpreter-credit and Form
+7203 capital-plus-debt-basis fixtures were regenerated at `a75f0bca` and all
+**31 filled pages** were visually checked against retained source, pending
+values, and native XML. The Form 8826 packet prints the separately reduced
+Schedule C expense of $2,625, the $2,375 credit on Form 8826 lines 6/8,
+Form 3800, Schedule 3, and Form 1040. Its line 7 is blank; the TY2025 XSD
+documents `PrtshpandSCorpReportAmt` as line 8 despite that element name. The
+Form 7203 packet reconciles the $4,000 K-1 loss to $1,500 stock basis,
+$2,000 debt basis, $3,500 Schedule E/1/1040 loss, and $500 carryover. The
+read-only checker passed: selected scope, two cases, 31 pages, artifact
+hashes, page origins, source replay, and local TY2025 XSD. The private
+manifest is `.state/research/ty2025-filled-pdf-review/2026-10-04-8826-7203/review-manifest.json`
+with SHA-256 `cf6a7cedd5e4b579cbaa395a305fae25184d03dffc1b7853a47f86d0f8f1d22d`.
+This selected review does not complete the 182-case all-page gate or IRS
+business-rule/ATS acceptance.
+
+Three further checked-in fixtures were generated and reviewed at `a75f0bca`
+on 2026-10-04: Form 7217 nonliquidating property distribution (four pages),
+Form 8606 post-year contribution and IRA distribution (four pages), and Form
+5695 door/central-air credit (six pages). All **14 pages** were rendered and
+compared to their source, pending graph, native XML, and Form 1040 totals.
+Form 7217 allocates $400 post-distribution property basis across $100/$150/$150
+rows; Form 8606 carries $4,000 nontaxable and $16,000 taxable IRA amounts;
+Form 5695 joins its $150 door and $600 central-air credits through Schedule 3
+to a $750 Form 1040 credit. The read-only selected-scope checker passed three
+cases and 14 pages, replaying source, page origins, artifact hashes, and local
+TY2025 XSD. The private manifest is
+`.state/research/ty2025-filled-pdf-review/2026-10-04-mef-3/review-manifest.json`
+with SHA-256 `00a8059c8949cc8b3423be55de84d183ddbec604c8e685b6b8a441e9882b6af8`.
+These synthetic packets do not resolve wider Form 7217/8606/5695 source
+branches, the full-page gate, IRS business rules, or ATS acceptance.
 
 After the source-backed packet fixes, the declared **167-case exportable
 selection** completed on 2026-10-03 at `bd9387a4`. The manifest at
@@ -2296,3 +2331,1159 @@ QSS and HOH child source-to-native-XML/PDF fixtures. Its log is
 The selected packet reviews passed separately. This local regression result
 does not establish complete form coverage, every-page PDF review, or IRS ATS
 acceptance.
+
+## Form 8880 filing-page correction and selected review (2026-10-04)
+
+The existing `single-form8880-w2-deferral` fixture initially produced five
+filled pages: two Form 1040 pages, Schedule 3, Form 8880, and the IRS Form
+8880 instructions page. The Form 8880 PDF descriptor now selects only its
+filing page. A regenerated packet has four pages, and rendered pages 1–4 are
+pixel-identical to the corresponding pages before the correction. All four
+retained pages were visually inspected for owner, year, amounts, checkboxes,
+order, clipping, and legibility. The W-2 code D $2,000 deferral yields a
+$1,000 tentative credit limited to $428 on Form 8880 line 11; line 12,
+Schedule 3 line 4, and Form 1040 line 20 each show $428. Form 1040 reports
+$20,000 wages, $500 withholding, and a $500 refund.
+
+The completed selected-scope packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-form8880-fixed/`;
+its manifest SHA-256 is
+`74e7e393bb2265d06b9243a32c0367aed900e547d755128e475272370525655e`.
+The read-only checker passed **1 case / 4 pages**, including source replay,
+exact PDF/XML artifact hashes, page origins, and local TY2025v5.4 XSD.
+Sixty-six focused Form 8880 and PDF-builder tests passed. The earlier full
+suite was stopped after this PDF issue was identified; a post-fix full run
+was started separately. This review covers the selected synthetic route, not
+issuer authenticity, the remaining Form 8880 branches, IRS business rules,
+or ATS acceptance.
+
+## Form 8863 lifetime-learning selected packet (2026-10-04)
+
+The existing `single-form8863-lifetime-learning-scholarship` source fixture
+generated a five-page Form 1040, Schedule 3, and Form 8863 packet. All pages
+were rendered and visually checked for owner, year, amounts, checkboxes,
+continuation, order, and clipping. The workpaper's $8,000 tuition plus $500
+required institution materials less a $1,000 scholarship yields $7,500
+adjusted LLC expenses. Form 8863 Parts II/III show the $1,500 nonrefundable
+credit, Student Test, Test University, EIN, and current-year Form 1098-T answer;
+Schedule 3 line 3 and Form 1040 line 20 each show $1,500. Form 1040 also
+reconciles $75,000 wages, $7,955 tax before credit, $11,000 withholding, and
+the $4,545 refund.
+
+The selected packet and completed manifest are under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-form8863/`; manifest
+SHA-256 is
+`7c9a0a85d3193a90994d00604abe7177bc5b83bf45018adcd5f0fe2e925d72f0`.
+The read-only checker passed **1 case / 5 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Other education-credit
+variants, issuer authenticity, IRS business rules, and ATS acceptance remain
+open.
+
+## Form 6198 two-activity selected packet (2026-10-04)
+
+The existing `single-two-at-risk-business-losses` fixture generated 16 filled
+pages: Form 1040, Schedules 1/2/SE, three Schedule C copies, and two Form
+6198 copies. Every page was rendered and visually checked for identity,
+amounts, marks, copy and page order, and clipping. North and South Schedule C
+copies show $2,000 and $3,000 losses; their separate Form 6198 copies show
+$500 and $900 at-risk amounts and deductible losses. A third Schedule C has
+$3,000 profit, leaving $1,600 on Schedule 1 line 3. Schedule SE and Schedule
+2 show $226 self-employment tax, Schedule 1 deducts $113, and Form 1040
+reports $6,487 AGI and $226 due. These values agree with the retained source,
+pending graph, and native XML.
+
+The completed selected packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-form6198/`; its manifest
+SHA-256 is
+`90abdb94a5a80b84bc38d6e814c3e511cb5ee31bac828b486af1c46786817469`.
+The read-only checker passed **1 case / 16 pages**, including source replay,
+artifact hashes, exact page origins, and local TY2025v5.4 XSD. Other Form
+6198 activity types, detailed basis, carryforwards, issuer authenticity,
+IRS business rules, and ATS acceptance remain open.
+
+## Form 7206 health-plan selected packet (2026-10-04)
+
+The existing `single-form7206-schedule-c-health-plan` fixture generated 12
+filled pages: Form 1040, Schedules 1/2/C/SE, Form 7206, and Form 8995. Every
+page was rendered and visually checked for identity, amounts, boxes, page
+order, and clipping. Twelve sourced $1,000 premium months produce Form 7206
+line 14 and Schedule 1 line 17 of $12,000. Schedule C has $50,000 profit;
+Schedule SE shows $7,065 tax and a $3,532 deduction. Form 8995 uses $34,468
+QBI after the health-plan and half-SE-tax deductions, and its $3,744 deduction
+agrees with Form 1040 line 13a. Form 1040 reports $34,468 AGI and $8,624 due.
+The retained source, pending graph, and native XML agree with the filled pages.
+
+The completed selected packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-form7206/`; its manifest
+SHA-256 is
+`fde7162119a14e5ea21e4158e3a2641bf831f310f008614debde79ff156ac902`.
+The read-only checker passed **1 case / 12 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Other Form 7206
+plans, owner combinations, source authenticity, IRS business rules, and ATS
+acceptance remain open.
+
+## Form 4136 fuel-credit and excess-SS selected packet (2026-10-04)
+
+The existing `single-excess-social-security-plus-fuel-credit` fixture
+generated seven pages: Form 1040, Schedule 3, and the four-page Form 4136.
+Every page was rendered and visually checked for identity, amounts, marks,
+order, and clipping. Two distinct employers produce $1,482 excess Social
+Security withholding on Schedule 3 line 11. The farm source has 1,000
+off-highway gasoline gallons at $0.183 and 1,000 farm-use undyed-diesel
+gallons at $0.243, producing Form 4136 credits of $183 and $243 and a $426
+line-17 total. Schedule 3 lines 12/15 carry $426/$1,908; Form 1040 line 31
+shows $1,908 and line 37 shows $35,159 owed against $37,067 tax. The retained
+sources, native XML, and packet agree.
+
+The completed selected packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-form4136/`; manifest
+SHA-256 is
+`35cd30ffa3d07ff2fd989be904997afa741829efaae311cec2a5b11397af8763`.
+The read-only checker passed **1 case / 7 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Fuel purchase/usage
+and employer-copy authenticity, other fuel categories, IRS business rules,
+and ATS acceptance remain open.
+
+## Paired HSA current-excess selected packet (2026-10-04)
+
+The new retained `joint-other-coverage-hsa-current-excess` fixture extends the
+PDF review inventory to **183** cases. Its eleven-page packet contains Form
+1040, Schedules 1/2, taxpayer Form 5329, and two owner-specific Forms 8889.
+Every page was rendered and visually checked for owner, year, amounts, marks,
+copy/order, and clipping. Alex's Form 8889 deducts $2,000 and Sam's deducts
+$6,000; Schedule 1 and Form 1040 line 10 each show $8,000. Alex's Form 5329
+Part VII lines 47/48 each print $1,000 current excess and line 49 prints $60;
+Schedule 2 line 8 and Form 1040 line 23 show $60. Form 1040 reports $82,000
+AGI, $5,646 total tax, $12,000 withholding, and a $6,354 refund. The retained
+source and native XML agree.
+
+The completed selected packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-form5329-hsa-retained/`;
+manifest SHA-256 is
+`817562eaf49f9d3342aef2e078e39fd0af31a1d6ac34716aa782bcda9d1bf86b`.
+The read-only checker passed **1 case / 11 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD; its focused
+review-fixture XSD test passed. The full suite already in progress began with
+the preceding 182-case inventory. Insurance/allocation and account-value
+source authentication, other HSA routes, IRS business rules, and ATS acceptance
+remain open.
+
+## Form 8815 savings-bond selected packet (2026-10-04)
+
+The existing `single-form8815-series-ee-bond-exclusion` fixture generated four
+filled pages: Form 1040, Schedule B, and Form 8815. Every page was rendered and
+visually checked for owner, amounts, answers, page order, and clipping. The
+synthetic 1099-INT reports $2,000 Series EE interest; Form 8815 shows $15,000
+qualified expenses, $12,000 bond proceeds, $72,000 modified AGI, and the full
+$2,000 exclusion. Schedule B shows $2,000 gross interest and its $2,000
+exclusion, leaving zero taxable interest. Form 1040 retains $70,000 wages and
+AGI, $7,000 withholding, and a $145 refund. These values agree with retained
+source, pending data, and native XML.
+
+The completed selected packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-form8815/`; its manifest
+SHA-256 is
+`46a9ff20644fc4dc74976eeb8d02c98f354ac225b38a61e81c660b4caa16da67`.
+The read-only checker passed **1 case / 4 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Other bond and
+expense combinations, issuer authenticity, IRS business rules, and ATS
+acceptance remain open.
+
+## Form 5329 early-distribution PDF repair (2026-10-04)
+
+The existing `single-form5329-two-early-ira-distributions` fixture exposed
+stale PDF field positions: its $10,000 distribution appeared in the stand-alone
+address area while Part I was blank, although native XML, Schedule 2, and Form
+1040 carried the $1,000 additional tax. The 2025 IRS AcroForm field positions
+were checked against the rendered template. The PDF descriptor now places Part
+I lines 1–4, Part II lines 5–8, and HSA Part VII lines 42–49 in their actual
+fields, with calculated Part I/II lines printed. Positive excess-contribution
+Parts III–VI/VIII now stop PDF export until their prior/current-year worksheet
+sources can support complete printed lines.
+
+The corrected seven-page packet was rendered and visually checked for year,
+owner, amounts, marks, page order, and clipping. Form 5329 Part I lines 1 and
+3 each show $10,000, line 4 shows $1,000, and its stand-alone address remains
+blank. Schedule 2 line 8 and Form 1040 line 23 each show $1,000; the retained
+source has two $4,000/$6,000 owner-matched 1099-R distributions. The selected
+packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-form5329-fixed/`;
+manifest SHA-256 is
+`55e40f033edf63f495fb1266bf52ca6672ef2001a51a472ade389a26e7901fbf`.
+The read-only checker passed **1 case / 7 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. After the additional
+excess-IRA worksheet guard regression, 19 focused PDF/MeF/XSD tests passed
+with read, write, and `xmllint` run permissions and none were ignored. Other Form 5329 source shapes, excess
+contribution worksheets, full visual review, IRS rules, and ATS remain open.
+
+## Form 2106 fee-basis employee selected packet (2026-10-04)
+
+The existing `single-fee-basis-employee-expenses` fixture generated six pages:
+Form 1040, Schedule 1, and the two-page Form 2106. All pages were rendered and
+visually checked for year, owner, amounts, marks, order, and clipping. Form 2106
+identifies one county hearing officer and prints $1,200 unreimbursed business
+expense on lines 4, 6, 8, 9, and 10. Schedule 1 line 12/26 and Form 1040 line
+10 each show $1,200; $50,000 W-2 wages yield $48,800 AGI, $3,731 tax, and a
+$3,269 refund after $7,000 withholding. Source, native XML, and the packet
+agree.
+
+The completed selected packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-form2106/`; manifest
+SHA-256 is
+`2976a6be11a01c273b1f2d66c3a419ecf27f75cd74fdde2e9dfe8c43d781b4e9`.
+The read-only checker passed **1 case / 6 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Other Form 2106 job,
+expense, reimbursement, and vehicle branches, source authenticity, IRS business
+rules, and ATS acceptance remain open.
+
+## Form 8936 new clean-vehicle selected packet (2026-10-04)
+
+The existing `single-new-clean-vehicle-personal-credit` fixture generated
+seven pages: Form 1040, Schedule 3, one Form 8936 parent, and one three-page
+Schedule A copy. Every page was rendered and visually checked for owner,
+year, amounts, marks, copy/order, and clipping. The Schedule A identifies the
+2025 Example EV and source VIN, September 30 service date, no dealer transfer,
+and the new-vehicle eligibility answers. Its $7,500 tentative personal credit
+reaches Form 8936 line 9, where $3,875 Form 1040 tax limits the filed credit
+on line 13. Schedule 3 line 6f and Form 1040 line 20 each show $3,875; the
+$7,000 W-2 withholding is refunded against zero net tax. Source, native XML,
+and the packet agree.
+
+The completed selected packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-form8936/`; manifest
+SHA-256 is
+`97ebfe94fc7e8836742f6308bb435bc2253272c3c2cbdaf83bbdd5cf7560dc54`.
+The read-only checker passed **1 case / 7 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Seller-report/VIN
+authenticity, other vehicle and transfer routes, IRS business rules, and ATS
+acceptance remain open.
+
+## Form 8911 home-charger selected packet (2026-10-04)
+
+The existing `single-personal-home-charger-credit` fixture generated seven
+pages: Form 1040, Schedule 3, Form 6251, Form 8911, and its Schedule A. Every
+page was rendered and visually checked for owner, form revision, amounts,
+marks, order, and clipping. The one main-home charger has a $1,000 cost,
+May 2025 construction date, June 2025 placed-in-service date, eligible-census-
+tract answer, and 11-digit GEOID. Schedule A line 21 and Form 8911 lines 4/10
+show a $300 personal credit; Schedule 3 line 6j and Form 1040 line 20 agree.
+Form 1040 reports $50,000 wages, $3,875 tax before credit, $7,000 withholding,
+and a $3,425 refund. Retained source, native XML, and the packet agree.
+
+The completed selected packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-form8911/`; manifest
+SHA-256 is
+`1a8c98bb480d2343bb8caf3df003c0487ebcb100f96d6e32f445099f7d2b353b`.
+The read-only checker passed **1 case / 7 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Address/tract and
+purchase evidence, other ownership or business-use branches, IRS business
+rules, and ATS acceptance remain open.
+
+## Form 8882 childcare-credit selected packet (2026-10-04)
+
+The existing `single-employer-childcare-facility-and-referral-credit` fixture
+generated 17 pages: Form 1040, Schedule 3, Schedule C, all nine Form 3800
+pages, two Form 6251 pages, and the single filing page of Form 8882. Every
+page was rendered and visually checked for identity, amounts, marks, order,
+and clipping. Form 8882 shows $40,000 qualified facility expense at 25% and
+$10,000 referral expense at 10%, yielding an $11,000 tentative credit. Form
+3800 Part III line 1k limits the current-year amount to $9,573; Schedule 3
+line 6a and Form 1040 line 20 each show $9,573. Schedule C prints $30,000
+facility and $9,000 referral expenses after the $11,000 credit reduction,
+against $39,000 receipts, leaving zero profit. Native XML and retained source
+agree with the packet.
+
+The completed selected packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-form8882/`; manifest
+SHA-256 is
+`eb0233d809671519c9f9fdfb058f8d6a57ce8636631bbf164b4793a17ecefa58`.
+The read-only checker passed **1 case / 17 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Facility and
+contract evidence, other credit-source combinations, IRS business rules, and
+ATS acceptance remain open.
+
+## Form 5884 work-opportunity-credit selected packet (2026-10-04)
+
+The existing `single-certified-work-opportunity-credit` fixture generated 17
+pages: Form 1040, Schedule 3, Schedule C, all nine Form 3800 pages, Form 5884,
+and Form 6251. Every page was rendered and visually checked for identity,
+amounts, marks, order, and clipping. A certified employee's $6,000 qualifying
+first-year wages at 40% produce $2,400 on Form 5884 lines 1b/2/4 and Form
+3800 Part III line 4b. Schedule C line 26 prints $3,600 wages after the
+$2,400 credit reduction, against $3,600 gross receipts, leaving zero business
+profit. Form 3800 allows the full $2,400 credit under its $9,573 limitation;
+Schedule 3 line 6a and Form 1040 line 20 show $2,400. Form 6251 shows $8,294
+tentative minimum tax below $17,867 regular tax, with zero AMT. Retained
+source, native XML, and the packet agree.
+
+The completed selected packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-form5884/`; manifest
+SHA-256 is
+`b23f2b5bb0ec6b7084e08e570673fea219436444922b3bd5c3d251c87ecc18c5`.
+The read-only checker passed **1 case / 17 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. State certification
+and payroll bytes, other WOTC target groups and business combinations, IRS
+business rules, and ATS acceptance remain open.
+
+## Form 8834 passive electric-vehicle credit selected packet (2026-10-04)
+
+The existing `single-passive-electric-vehicle-credit` fixture generated six
+pages: Form 1040, Schedule 3, Form 6251, and Form 8834. All pages were rendered
+and visually checked for owner, year or form revision, amounts, marks, order,
+and clipping. Form 8834's retained $450 passive-activity credit is below the
+$3,875 regular-tax limit with zero tentative minimum tax; line 7, Schedule 3
+line 6i, and Form 1040 line 20 each show $450. Form 1040 reports $50,000 wages,
+$7,000 withholding, $3,425 net tax, and a $3,575 refund. The retained source,
+native XML, and packet agree.
+
+The completed selected packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-form8834/`; manifest
+SHA-256 is
+`d5bae97961498eaddc8d832a96d60276babbdb49a6d52888626cd42f5838afdb`.
+The read-only checker passed **1 case / 6 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Prior passive-credit
+source authenticity, wider Form 8582-CR combinations and credit ordering, IRS
+business rules, and ATS acceptance remain open.
+
+## Form 8859 DC homebuyer credit selected packet (2026-10-04)
+
+The existing `single-dc-homebuyer-credit-carryforward` fixture generated four
+pages: Form 1040, Schedule 3, and Form 8859. Every page was rendered and
+visually checked for owner, year, amounts, marks, order, and clipping. Form
+8859 shows a $1,200 prior-year carryforward, $3,875 tax-liability limit, and
+$1,200 current credit; zero remains for 2026. Schedule 3 line 6h and Form
+1040 line 20 each show $1,200. The $50,000 W-2 income, $7,000 withholding,
+$2,675 net tax, and $4,325 refund reconcile to the retained source and native
+XML.
+
+The completed selected packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-form8859/`; manifest
+SHA-256 is
+`a08e51ec790e7287a2125c3b5444f6117ef22d3ffe6a294731680a62bf1a83eb`.
+The read-only checker passed **1 case / 4 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Prior filed-return
+authenticity, other carryforward amounts and credit ordering, IRS business
+rules, and ATS acceptance remain open.
+
+## Fully repaid unemployment selected packet (2026-10-04)
+
+The existing `single-fully-repaid-unemployment` source has a $5,000 2025
+Form 1099-G unemployment payment and an equal current-year repayment. Its
+four-page packet prints Form 1040 and both Schedule 1 pages. Schedule 1 line 7
+marks the repayment checkbox and prints $5,000 beside the repayment prompt;
+the net line 7 and total additional income are zero in pending data and native
+XML and are blank in the filled PDF. Form 1040 carries $75,000 W-2 wages and
+AGI, $7,955 tax, $11,000 withholding, and a $3,045 refund. All four pages
+were rendered and inspected for identity, year, amounts, checkbox, order, and
+clipping against the retained source and native XML.
+
+The selected packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-fully-repaid-unemployment/`;
+manifest SHA-256 is
+`79710eecc8071a9543170b21450b07617da0143f70ec88801fd57362a8f4c0d0`.
+The read-only checker passed **1 case / 4 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Issued 1099-G and
+repayment-record authenticity, other repayment amounts and tax interactions,
+IRS business rules, and ATS acceptance remain open.
+
+## Full test baseline after Form 5329 PDF repair (2026-10-04)
+
+At `a75f0bca`, `PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test`
+completed with **11,112 passed, 0 failed, 0 ignored** in 53m24s (log created
+15:11:09 and modified 16:04:59 CEST). Deno was 2.9.4, V8
+15.0.245.2-rusty, and TypeScript 6.0.3. The retained log is
+`.state/research/ty2025-full-test-a75f0bca-form5329-2026-10-04.log`, SHA-256
+`484d171751027fc1832b88db4768916eb6e4a2a5855024ae7cab1a0692a357b3`.
+No failed or ignored summary was reported. The run started before the
+`joint-other-coverage-hsa-current-excess` fixture and the additional Form 5329
+excess-IRA guard regression were added. Those passed separately in the focused
+fixture and 19-test Form 5329 PDF/MeF/XSD checks. This local
+baseline does not close visual-route, IRS business-rule, or ATS gates.
+
+## Five-dependent continuation selected packet (2026-10-04)
+
+The existing `single-five-dependent-continuation` source generated five
+pages: Form 1040 pages 1–2, one dependent-continuation statement, and Schedule
+8812 pages 1–2. Alex's U.S. main-home and more-than-four-dependents boxes are
+marked. Jamie, Casey, Riley, and Morgan print in the four Form 1040 columns;
+Taylor's full name, TIN, daughter relationship, residence and other-dependent
+credit designation print on the continuation. The native XML has five matching
+dependent records and the overflow indicator. Schedule 8812 shows five other
+dependents and a $2,500 line 14 credit, matching Form 1040 line 19. The
+remaining Form 1040 totals are $80,000 wages/AGI, $9,055 tax before credits,
+$6,555 final tax, $12,000 withholding, and a $5,445 refund. All five pages
+were rendered and inspected for year, owner, amounts, marks, order, and
+clipping against source and XML.
+
+The selected packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-five-dependent/`;
+manifest SHA-256 is
+`d3e688e4a38549108cea52f89045e44566792dc0fdc7790c0085e711c3715836`.
+The read-only checker passed **1 case / 5 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Dependent identity,
+residence, and support evidence, wider credit combinations, IRS business
+rules, complete PDF review, and ATS acceptance remain open.
+
+## Form 2439 undistributed gain selected packet (2026-10-04)
+
+The existing `single-form2439-undistributed-gain-and-tax-credit` source
+generated six pages: Form 1040, Schedule 3, both Schedule D pages, and payer
+Form 2439 Copy B. The Copy B prints Example Growth Fund's EIN/address and Alex
+Example's SSN/address, $10,000 undistributed long-term gain in box 1a, and
+$1,500 tax paid in box 2. Schedule D lines 11/15/16 carry the $10,000 gain;
+Schedule 3 lines 13a/14/15, Form 1040 line 31, and the native XML carry the
+$1,500 payment once. With zero taxable income, Form 1040 refunds $1,500. All
+six pages were rendered and checked for identity, amounts, marks, page order,
+and clipping against source and XML.
+
+The selected packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-form2439/`; manifest
+SHA-256 is
+`ac7f535dc85879d132f249f971b2e2d28edbdd6afb37f17bae84b4b0fd3f192b`.
+The read-only checker passed **1 case / 6 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Payer-issued Copy B
+authenticity, other Form 2439 fields and duplicate/corrected records, IRS
+business rules, complete PDF review, and ATS acceptance remain open.
+
+## Withheld W-2G fixture evidence boundary (2026-10-04)
+
+The existing `single-withheld-w2g` fixture has $10,000 reported winnings and
+$2,400 withholding but does not provide the exact issuer Copy B PDF bytes.
+A selected generator attempt stopped at `buildMefBundle` with `W-2G payer copy
+content needs its exact attached PDF`, before XML/PDF output or a review
+manifest was produced. The incomplete empty output directory was removed.
+The existing `assertW2GPayerCopyContents` gate compares every modeled readable
+Copy B field against the attached bytes; passing a synthetic projection in its
+place would not establish issued-copy evidence. This fixture remains outside
+the exportable selected review set, and no page or XSD pass is claimed for it.
+
+## Schedule H three-state FUTA selected packet (2026-10-04)
+
+The existing `single-schedule-h-three-state-futa` fixture exposed a filled-PDF
+checkbox error: its initial packet printed line 9 No despite a true quarterly
+threshold, and omitted the applicable Box B/C answers. The TY2025 AcroForm
+places Box C Yes at `c1_3[1]` and line 9 No at `c1_4[1]`. The descriptor now
+prints Box A No, Box B No, Box C Yes, and leaves Part I lines 1–9 blank when
+Box C directs the filer to line 10. Seven focused Schedule H PDF tests pass.
+
+The corrected seven-page packet prints $1,000 state wages and $30 contributions
+for OH and NY on Schedule H line 17, with PA on the attached continuation.
+Line 18 totals $90 contributions; lines 20/21/22/23/24 print
+$3,000/$180/$162/$90/$90. Line 25 is zero, line 26 is $90, Schedule 2 line 9
+is $90, and Form 1040 shows $90 tax and amount owed. Native XML includes all
+three state rows and the same amounts. All pages were rendered and checked for
+identity, amount, marks, page order, and clipping against source and XML.
+
+The reviewed packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-schedule-h-three-state-final/`;
+manifest SHA-256 is
+`c07d5ba6c70d97e928f060467e0f3c8f86cf29486f1d0a11c8ea8c69befa83ae`.
+The read-only checker passed **1 case / 7 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. The earlier packets
+remain private discrepancy evidence and are not counted as reviewed. State
+source bytes, wider payroll and state/rate combinations, complete PDF review,
+IRS business rules, and ATS acceptance remain open.
+
+## Schedule H FICA plus FUTA selected packet (2026-10-04)
+
+The new `single-schedule-h-fica-and-futa` fixture raises the filled-PDF
+inventory to **184** sources, still covering 85 of 113 unique PDF keys. It
+retains one unrelated adult employee's $3,100 cash payroll and matching W-2
+box 3/5 references. The six-page full return prints Schedule H Box A Yes,
+leaves Boxes B/C blank, computes $384 Social Security plus $90 Medicare on
+Part I lines 2/4, and marks line 9 Yes. Ohio Section A shows $3,100 FUTA wages
+and $19 line 16 FUTA. Schedule H lines 25/26 are $474/$493; Schedule 2 line 9
+and Form 1040 tax/amount owed are $493. All six pages were rendered and checked
+for identity, amount, marks, page order, and clipping against source and XML.
+
+The reviewed packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-schedule-h-fica-futa/`;
+manifest SHA-256 is
+`5babf0015fdf08357035ddb10bd2a8b07175ed027ffc8b4c2a1501c78643cf49`.
+The read-only checker passed **1 case / 6 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Payroll/W-2 and state
+source bytes, wider household cases, IRS business rules, complete PDF review,
+and ATS acceptance remain open.
+
+## Schedule H spouse withholding selected packet (2026-10-04)
+
+The new `joint-schedule-h-spouse-withholding-only` fixture raises the current
+filled-PDF inventory to **185** sources, still covering 85 of 113 PDF keys. It
+retains reviewed marriage, W-4, payroll, and W-2 references for Sam, the joint
+filer's spouse, with $5,000 wages and $250 withholding. The initial six-page
+packet exposed a printed zero on Schedule H line 6 even though Box B Yes says
+to skip to line 7, and it retained a blank second page after line 9 No says
+to stop. The corrected five-page packet prints Box A No/B Yes/C blank, lines
+1–6 blank, lines 7/8 $250, and line 9 No on its sole Schedule H page. Form
+1040 lines 1a/25a carry Sam's $5,000/$250 once; Schedule 2 line 9 and Form
+1040 tax are $250, offset by the same withholding. All five pages were
+rendered and checked against source and native XML for identity, amounts,
+marks, page order, and clipping.
+
+The reviewed packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-schedule-h-spouse-withholding-fixed/`;
+manifest SHA-256 is
+`3c316b8ca52e61ea204c7aa29f9cb4b23b50896df11a0cf23b7dd33b6bb3d9cb`.
+The read-only checker passed **1 case / 5 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Nine focused
+Schedule H tests passed. Marriage, W-4/W-2, and payroll source bytes, wider
+family cases, IRS business rules, complete PDF review, and ATS remain open.
+
+## Three-child Schedule EIC selected packet (2026-10-04)
+
+The existing `single-w2-three-eic-children-with-reviewed-birth` fixture
+generated a three-page Form 1040 and Schedule EIC packet. Ada, Ben, and Cora
+print in distinct dependent and Schedule EIC columns with matching names,
+SSNs, relationships, and 2017/2020/2025 birth years. Schedule EIC line 6
+prints 12/8/12 U.S. months; Cora's source records one actual December month
+plus a reviewed from-birth U.S. home, which the native XML projects as 12 under
+the birth-year instruction. The native XML has three matching child groups.
+Form 1040 carries $15,000 wages, $6,761 EIC, $1,500 W-2 withholding, and an
+$8,261 refund. All three pages were rendered and checked for identity,
+amounts, marks, page order, and clipping against source and XML.
+
+The reviewed packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-three-eic-children/`;
+manifest SHA-256 is
+`8994558565e550ad3d188a5efaa157994d30529e273471f795131af51cb7830f`.
+The read-only checker passed **1 case / 3 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. External birth and
+residence evidence, wider EIC eligibility, complete PDF review, IRS business
+rules, and ATS acceptance remain open.
+
+## Joint Schedule LEP selected packet (2026-10-04)
+
+The existing `joint-two-w2s-schedule-lep` fixture generated four filled pages:
+Form 1040 and separate Schedule LEP copies for Alex and Sam. The first LEP
+page prints Alex Example/111223333 and marks Spanish code 001; the second
+prints Sam Example/444556666 and marks French code 011, without copying the
+other owner's identity or language selection. Two owner-specific W-2s produce
+$70,000 Form 1040 wages, $6,500 withholding, $4,146 tax, and a $2,354 refund.
+Native XML carries two LEP documents with the same owner and code pairing.
+All four pages were rendered and checked for identity, marks, amounts, page
+order, and clipping against source and XML.
+
+The reviewed packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-joint-lep/`; manifest
+SHA-256 is
+`9f86033a99d9bd7a58e8935ac5d640e4e434448794fe4cec343f5573f63a7cb3`.
+The read-only checker passed **1 case / 4 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Prior language
+elections and authenticated request records, other owner combinations, IRS
+business rules, complete PDF review, and ATS acceptance remain open.
+
+## Intermediate full batch after HSA and Form 5329 additions (2026-10-04)
+
+At `a75f0bca` with local changes, the exact
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test` command passed
+**11,114 tests, zero failed and zero ignored** in 53m43s (log created 16:06:48
+and modified 17:00:35 CEST). Deno was 2.9.4 (V8 15.0.245.2-rusty,
+TypeScript 6.0.3), `xmllint` used libxml 2.9.13, and Poppler `pdftotext` was
+26.09.0. The private log is
+`.state/research/ty2025-full-test-a75f0bca-hsa-f5329-current-2026-10-04.log`,
+SHA-256 `c795e1c25ea87acc702cdd31a5433fed1968e1e489915ae657c62c4074565ae4`.
+This run included the paired HSA fixture and Form 5329 excess-IRA regression,
+but it began before the subsequent Schedule H checkbox/page-routing edits and
+two new Schedule H filled-PDF fixtures. It is an intermediate local pass, not a
+current-worktree gate result. A new exact full command is running against the
+185-fixture code state; its result will be recorded separately. Complete route
+coverage, IRS business rules, manual PDF review, and ATS acceptance remain open.
+
+## Joint Form 9000 selected packet (2026-10-04)
+
+The existing `joint-two-w2s-form9000` fixture generated four filled pages:
+Form 1040 and separate Form 9000 copies for Alex and Sam. The first Form 9000
+prints Alex Example/111223333 and marks Large Print code 01; the second
+prints Sam Example/444556666 and marks Braille Ready File code 05, without
+copying the other owner's identity or choice. Both attached copies correctly
+leave address and signature fields reserved for a standalone Form 9000 blank.
+Two owner-specific W-2s produce $70,000 Form 1040 wages, $6,500 withholding,
+$4,146 tax, and a $2,354 refund. Native XML carries two Form 9000 documents
+with the same owner and code pairing. All four pages were rendered and checked
+for identity, marks, amounts, page order, and clipping against source and XML.
+
+The reviewed packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-joint-form9000/`;
+manifest SHA-256 is
+`ae32289f758d206d48169f62ab57a39d1406f63f6fbc5cb64575f250422381e7`.
+The read-only checker passed **1 case / 4 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Prior alternative-
+media elections and authenticated request records, other owner combinations,
+IRS business rules, complete PDF review, and ATS acceptance remain open.
+
+## Restored HOH and QSS nonclaimed-child selected packet (2026-10-04)
+
+The earlier HOH/QSS review was documented against private artifact directories
+that are not present in the current workspace. A fresh selected packet now
+retains both fixtures under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-hoh-qss-restored/`.
+Each two-page Form 1040 prints Avery Child in the nonclaimed HOH/QSS
+qualifying-person name field while leaving dependent rows blank. The native
+XML carries the matching qualifying-person SSN 444556666 and filing-status
+codes 4/5. Both returns have $75,000 W-2 wages and $11,000 withholding; HOH
+prints $23,625 standard deduction, $5,825 tax, and $5,175 refund, while QSS
+prints $31,500, $4,746, and $6,254. All four pages were rendered and checked
+for identity, status marks, amounts, page order, and clipping against source
+and XML.
+
+Manifest SHA-256 is
+`e8088c66a20bbb38a4464e2afdbd0e5a078d8473dfdf501e08722a4baa1a1057`.
+The read-only checker passed **2 cases / 4 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Custody, residence,
+death and prior-return source authenticity, wider filing-status cases, IRS
+business rules, complete PDF review, and ATS acceptance remain open.
+
+## Restored Schedule R disabled-worker selected packet (2026-10-04)
+
+The earlier Schedule R review referenced a private artifact directory that is
+not present in the current workspace. A fresh five-page selected packet is
+under `.state/research/ty2025-filled-pdf-review/2026-10-04-schedule-r-restored/`.
+Form 1040 has $17,000 W-2 disability wages, $126 regular tax before credits,
+a $38 Schedule 3 line 6d credit, $88 final tax, $1,700 withholding, and a
+$1,612 refund. Schedule R page 1 checks the under-65 permanent-and-total-
+disability box 2; page 2 prints $17,000 taxable disability income, the
+$7,500 AGI threshold, $9,500 excess, $4,750 half-excess, $250 remaining
+amount, and a $38 credit under the $126 tax limit. Native XML and Schedule 3
+carry the same $38. All pages were rendered and checked for identity, marks,
+amounts, page order, and clipping against source and XML.
+
+Manifest SHA-256 is
+`692208e957acd7c0bfea78bced50c1854aeb32c6dcc061e4761cd236cb726b4d`.
+The read-only checker passed **1 case / 5 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Signed physician,
+income, and eligibility source authenticity, other Schedule R paths, IRS
+business rules, complete PDF review, and ATS acceptance remain open.
+
+## Form 2441 child-care selected packet (2026-10-04)
+
+The existing `single-form2441-child-care-credit` fixture generated four
+pages: Form 1040, Schedule 3, and Form 2441. Care Center's EIN 123456789 and
+Austin address print with $3,000 paid. Ada Example's qualifying-person row
+shows SSN 111223334 and $3,000 expenses, matching her dependent identity.
+Form 2441's $600 tentative credit is limited by $500 tax-liability input on
+line 10, so line 11, Schedule 3 lines 2/8, and Form 1040 line 20 each show
+$500. Form 1040 has $50,000 wages/AGI, $3,375 final tax, $5,000 withholding,
+and a $1,625 refund. All pages were rendered and checked for identity,
+amounts, marks, page order, and clipping against source and XML.
+
+The reviewed packet is under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-form2441-care/`;
+manifest SHA-256 is
+`44135d383b7ccdfd5368544efdf8650eb701f3163d999b2aeb2ffc319596a351`.
+The read-only checker passed **1 case / 4 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. Provider/payment
+source authenticity, dependent-care benefits and multiple-person branches,
+IRS business rules, complete PDF review, and ATS acceptance remain open.
+
+## Retained PDF review artifact inventory checkpoint (2026-10-04)
+
+A read-only comparison of the current 185-fixture planner with private
+`review-manifest.json` files under
+`.state/research/ty2025-filled-pdf-review/` found **90 distinct fixture IDs**
+with every page-check flag completed and **95 without** such a current
+manifest. Selecting one completed manifest per ID accounts for 428 reviewed
+pages. This is a manifest-completion inventory, not an independent recheck of
+all 90 packets: older completed manifests were not all rerun through the
+read-only checker during this checkpoint. The fresh HOH/QSS, Schedule R, and
+Form 2441 packets above did pass that checker. Some historically documented
+review directories are absent from the current workspace, which is why their
+fixtures were regenerated before counting them. Do not infer full-page review
+or current artifact availability from an old prose claim alone.
+
+## Core broker and tips selected packets (2026-10-04)
+
+Three existing fixtures generated 24 pages under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-core-three/`.
+The direct/adjusted broker packet has five pages: Schedule D line 1a carries
+the direct $1,000 gain, Form 8949 Box A and Schedule D line 1b carry the
+adjusted ($200) result, and Form 1040 line 7a has the $800 net gain. The
+seven-page employee-tips packet has Form 4137's $6,500 received/$5,000
+reported/$1,500 unreported amounts, $115 tip tax on Schedule 2, and the
+$6,500 deduction on Schedule 1-A and Form 1040. The twelve-page 1099-NEC
+business packet has $18,000 receipts, $8,000 expenses, $10,000 Schedule C
+profit, $1,413 Schedule SE tax, and a $9,294 Schedule 1-A deduction after
+the $706 half-SE-tax adjustment. All 24 pages were rendered and checked
+against the source and XML for owner, form/year, amounts, marks, order, and
+clipping.
+
+The manifest SHA-256 is
+`9932fdf547f45703817f7b5c84ac0f0917145dcffcd345fa139881641ccdad8b`.
+The read-only checker passed **3 cases / 24 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. The retained-artifact
+inventory checkpoint above becomes **93 distinct fixture IDs with completed
+page flags, 92 without, and 452 pages** when these three fresh packets are
+included; that remains a manifest-completion count, not a recheck of older
+packets. Issued source authenticity, broader routes, complete PDF review,
+IRS business rules, and ATS acceptance remain open.
+
+## Two Form 8814 selected packets (2026-10-04)
+
+The existing child-interest/dividend fixture generated seven pages under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-form8814-dividends/`.
+Jamie Example's Form 8814 has $1,850 adjusted interest, $1,850 qualified and
+ordinary dividends, $500 included dividends, $500 Schedule 1 line 8z income,
+and $135 election tax. Its retained interest-adjustment statement lists
+$120 nominee distribution, $30 accrued interest, $15 ABP, and $5 OID
+adjustment. Form 1040 has $81,000 AGI and a $2,625 refund. The manifest
+SHA-256 is
+`e082ffd121d12ba7c636fd3d96fa187ed227e1ffe5414bd2671878530c78743f`.
+
+The existing child-gain fixture generated nine pages under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-form8814-gain/`.
+The parent's Form 8949 Box E $1,000 gain and Jamie's Form 8814 $179
+capital-gain distribution join Schedule D and Form 1040 line 7a as $1,179;
+line 7b marks and identifies the child amount. Form 8814 line 12 and Schedule
+1 line 8z/statement carry $1,321 other income once. Form 1040 has $82,500 AGI
+and a $2,347 refund. The manifest SHA-256 is
+`9f97f3bc37ec50bee9343b54d980dfb93441ad69a0f3d8c8ea15ba86545e842d`.
+
+All 16 pages were rendered and checked against source and XML for owner,
+form/year, amounts, marks, order, and clipping. The read-only checker passed
+both selected scopes, including source replay, artifact hashes, page origins,
+and local TY2025v5.4 XSD. Adding these to the prior retained-artifact
+inventory yields **95 distinct fixture IDs with completed page flags, 90
+without, and 468 pages**. This is a manifest-completion count, not an
+independent recheck of all older packets. Issuer/election source authenticity,
+broader Form 8814 combinations, complete PDF review, IRS business rules,
+and ATS acceptance remain open.
+
+The same review attempt left two other existing fixtures guarded. The
+`single-8862-ctc-reinstatement` packet cannot export without executor-owned
+authentication of the prior IRS notice issuance and contents. The
+`single-withheld-w2g` packet cannot export without the exact attached W-2G
+payer-copy PDF. No source facts or attachment bytes were invented to bypass
+these guards; both needs already sit in the existing source/statement task.
+
+## Collectibles and trust K-1 selected packets (2026-10-04)
+
+Three existing fixtures generated 15 pages under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-capital-trust-three/`.
+The collectible sale prints $5,000 proceeds, $2,000 basis, code C, and a
+$3,000 gain on Form 8949 Box E; Schedule D lines 9/15/16/18 and Form 1040
+line 7a carry the $3,000 once, with $1,835 tax and a $1,165 refund.
+Family Trust EIN 123456789's box 5 $750 prints in Schedule E Part III
+nonpassive column (f), lines 34a/35/37/41, Schedule 1 line 5, and Form 1040
+line 8; that return has $30,750 AGI and a $1,435 refund. A separate trust
+fixture has positive box 6/7/8 activity records of $300/$200/$100, totaling
+$600 in Schedule E Part III passive column (d), lines 34a/35/37/41, Schedule
+1 line 5, and Form 1040 line 8; that return has $30,600 AGI and a $1,453
+refund.
+
+All 15 pages were rendered and checked against source and XML for owner,
+form/year, amounts, marks, page order, and clipping. The manifest SHA-256 is
+`84104744e55066524d4d7ffc8af9009338892c97b6656b1a720429a2df35745e`.
+The read-only checker passed **3 cases / 15 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. The retained-artifact
+inventory is now **98 distinct fixture IDs with completed page flags, 87
+without, and 483 pages**. This remains a manifest-completion count rather
+than a recheck of older packets. Issued K-1 and sale proof, broader passive
+and capital-gain cases, complete PDF review, IRS business rules, and ATS
+acceptance remain open.
+
+## HSA code 2 and paired-owner selected packets (2026-10-04)
+
+Two existing fixtures generated 12 pages under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-hsa-two/`.
+The code 2 packet prints Alex Example's $5,200 contribution, $4,300
+deduction, and $1,000 timely excess withdrawal on Form 8889 lines 14a/14b;
+line 14c stays zero/blank. The 1099-SA box 2 $100 earnings print on Schedule
+1 line 8z and its statement, then Form 1040 line 8 once. Form 1040 has
+$70,800 AGI and a $3,969 refund. The joint packet prints Alex's $4,000 HSA
+deduction with SSN 111223333 and Sam's $5,000 with SSN 444556666 on
+separate self-only Form 8889 copies in that order. Schedule 1 line 13/26 and
+Form 1040 line 10 carry the combined $9,000; Form 1040 has $81,000 AGI and
+a $6,534 refund.
+
+All 12 pages were rendered and checked against source and XML for owner,
+form/year, amounts, marks, order, and clipping. The manifest SHA-256 is
+`d2a7d91929baa1b0ee49b32eda9c2d063e42c3b08c44e65f2e9724748b0c4ab2`.
+The read-only checker passed **2 cases / 12 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. The retained-artifact
+inventory is now **100 distinct fixture IDs with completed page flags, 85
+without, and 495 pages**. This remains a manifest-completion count rather
+than a recheck of older packets. Issued 1099-SA, contribution and coverage
+proof, wider paired-owner paths, complete PDF review, IRS business rules,
+and ATS acceptance remain open.
+
+## Form 8283 Section A noncash gift selected packets (2026-10-04)
+
+Four existing fixtures generated 19 pages under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-noncash-gifts-four/`.
+The ordinary used-books gift prints $1,800 basis, $1,200 FMV and claim,
+$1,200 on Schedule A line 12, $37,200 itemized deductions, $8,736 tax,
+and a $7,264 refund. The collectible coin prints $4,500 original FMV
+less $1,500 appreciation under the 50% AGI election, leaving $3,000
+basis and claim; Schedule A line 12 is $3,000, Form 1040 itemizes
+$39,000, and the refund is $7,660. The donor-prepared manuscript prints
+$1,000 FMV less $700 ordinary gain, a $300 basis/claim, $36,300 itemized
+deductions, and a $7,066 refund. Two art-print rows A/B each print $1,000
+FMV less $300 short-term appreciation and a $700 basis/claim; their
+separate explanations link to the correct items, while Schedule A line 12
+is $1,400, Form 1040 itemizes $37,400, and the refund is $7,308.
+
+All 19 pages were rendered and checked against source and XML for owner,
+form/year, amounts, marks, order, and clipping. The manifest SHA-256 is
+`c18394f7b5a2a0d2976ff1c323edf4501402c0d20153340cc5c41723e8486a57`.
+The read-only checker passed **4 cases / 19 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. The retained-artifact
+inventory is now **104 distinct fixture IDs with completed page flags, 81
+without, and 514 pages**. This remains a manifest-completion count rather
+than a recheck of older packets. Donee/property source authenticity, wider
+charitable-gift cases, complete PDF review, IRS business rules, and ATS
+acceptance remain open.
+
+## Form 8396, Form 4835, Form 4136, and line 8z selected packets (2026-10-04)
+
+Four existing fixtures generated 23 pages under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-mixed-four/`.
+Form 8396 prints Austin Housing Finance Corporation certificate
+MCC-2025-101: $7,500 interest paid on a $125,000 mortgage, $100,000
+certified principal, $6,000 allocable interest, and a 20%/$1,200 credit.
+Schedule 3 line 6g and Form 1040 line 20 agree; the return has $3,875
+final tax and a $1,125 refund. Form 4835 prints $8,000 crop-share income
+and $1,000 feed expense; its $7,000 profit joins Schedule E lines 40/41,
+Schedule 1 line 5/10, and Form 1040 line 8 once. Form 4136 prints Example
+Farm's two separate 1,000-gallon claims, $183 and $243, totaling $426
+on line 17, Schedule 3 line 12/15, and Form 1040 line 31; the refund is
+$426. The mixed line 8z packet prints two substitute payments ($300 and
+$450), RTAA ($400), and a taxable grant ($600) with distinct payer TINs
+on a continuation statement; Schedule 1 line 8z and Form 1040 line 8
+include $1,750 once, with $51,750 AGI and a $915 refund.
+
+All 23 pages were rendered and checked against source and XML for owner,
+form/year, amounts, marks, order, and clipping. The manifest SHA-256 is
+`32c87336a1e184b1fb20a736bf338bc5dc806c89117695cecee9052443f5a1bf`.
+The read-only checker passed **4 cases / 23 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. The retained-artifact
+inventory is now **108 distinct fixture IDs with completed page flags, 77
+without, and 537 pages**. This remains a manifest-completion count rather
+than a recheck of older packets. Source authenticity and wider branches,
+complete PDF review, IRS business rules, and ATS acceptance remain open.
+
+## Form 2555, 4562, 4952, and 6781 selected packets (2026-10-04)
+
+Four existing fixtures generated 26 pages under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-income-deduction-four/`.
+Form 2555 identifies a Toronto employer and 365 physical-presence days;
+$100,000 foreign wages on Form 1040 line 1h with FEC type are offset by
+Schedule 1 line 8d's $100,000 exclusion, leaving zero AGI. Form 4562
+prints a $30,000 computer-server Section 179 deduction under a $40,000
+business-income limit; Schedule C's $30,000 receipts less $30,000 line 13
+expense leave no business profit, and the return refunds $1,525. Form 4952
+prints $900 investment interest expense, $900 investment income including
+$100 qualified dividends, an $800 allowed deduction and $100 carryforward.
+Schedule A adds $800 to $18,000 mortgage interest; Form 1040 selects the
+$18,800 itemized amount, with $7,475 tax and a $3,525 refund. Form 6781
+prints Broker A's $12,000 gain and Broker B's $2,000 loss, splitting the
+$10,000 net into $4,000 short-term and $6,000 long-term Schedule D gains;
+Form 1040 line 7a carries $10,000 once, with $9,735 tax and a $1,265
+refund.
+
+All 26 pages were rendered and checked against source and XML for owner,
+form/year, amounts, marks, order, and clipping. The manifest SHA-256 is
+`235c820a1b3000f2df9c1b9e42ab7ac47fb41ae6bea8380b73b0e687333d21e4`.
+The read-only checker passed **4 cases / 26 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. The retained-artifact
+inventory is now **112 distinct fixture IDs with completed page flags, 73
+without, and 563 pages**. This remains a manifest-completion count rather
+than a recheck of older packets. Source authenticity and wider branches,
+complete PDF review, IRS business rules, and ATS acceptance remain open.
+
+## Form 4684 Section B PDF repair and selected packet (2026-10-04)
+
+A three-case exploratory generator stopped at `single-form461-schedule-c-excess-business-loss`
+because the existing Form 8995 gate requires a sourced net-QBI-loss carryforward
+route. That generated directory is partial and is not counted. The existing
+Forms 8995/8995-A board parent retains that filing gap; the guard was not bypassed.
+
+A separate seven-page repaired case is retained under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-4684-repair/`.
+The initial exploratory print had placed the business casualty's values in
+Form 4684 personal-use Section A. The corrected PDF leaves Section A blank,
+prints Workshop equipment in Section B with $50,000 basis, $80,000 FMV before,
+$50,000 after, and $30,000 loss on lines 27/28/34/35/37, then ($30,000)
+on line 38a. Form 4797 lines 14/17/18b, Schedule 1 line 4/10, and Form 1040
+line 8 carry the loss once; Form 1040 has $20,000 AGI, $428 tax, and a $7,572
+refund. Unused Ponzi and prior-year disaster pages are omitted. A changed
+Form 4797 join rejects before PDF export; five focused descriptor tests pass.
+
+All seven pages were rendered and checked for owner, form/year, amounts, marks,
+order, and clipping. The manifest SHA-256 is
+`c63f935f1003b34d408cd9c878c08b22e031ef197696968e8c0d4b3672700734`.
+The read-only checker passed **1 case / 7 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD.
+
+## Form 982 and Form 8919 selected packets (2026-10-04)
+
+Two existing fixtures generated 12 pages under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-982-8919-fixed/`.
+Form 982 checks qualified-principal-residence exclusion and prints $750,000
+excluded from $900,000 discharged debt; Schedule 1 line 8c and Form 1040
+line 8 include $150,000, with $25,067 tax owed. Form 8919 prints Employer
+Inc reason G, its 1099-NEC mark and $210,000 wages, $26,100 remaining
+Social Security wage base, and $4,663 tax on Schedule 2 line 6. Form 8959
+adds $1,440 Additional Medicare Tax on line 11; Schedule 2 totals $6,103,
+Form 1040 reports $360,000 AGI, $96,138 total tax, $20,000 withholding,
+and $76,138 owed. Form 8960 has zero investment income and zero NIIT.
+
+All 12 pages were rendered and checked against source and XML for owner,
+form/year, amounts, marks, order, and clipping. The manifest SHA-256 is
+`38414441e910b826e62b30dda4f38c1c003e0dc4aa5f50d997b0726c676a66f0`.
+The read-only checker passed **2 cases / 12 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. The retained-artifact
+inventory is now **115 distinct fixture IDs with completed page flags, 70
+without, and 582 pages**. This remains a manifest-completion count rather
+than a recheck of older packets. Lender, employer, and casualty source
+authenticity, wider branches, complete PDF review, IRS business rules, and
+ATS acceptance remain open.
+
+## Full batch before Form 4684 PDF repair (2026-10-04)
+
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test` on `a75f0bca`
+with local worktree changes finished at approximately 2026-10-04 15:57:37
+UTC: **11,116 passed, zero failed, zero ignored**, in 53m19s. Deno was 2.9.4
+(aarch64-apple-darwin), V8 15.0.245.2-rusty, TypeScript 6.0.3, and Poppler
+`pdftoppm` 26.09.0. The log is
+`.state/research/ty2025-full-test-a75f0bca-schedule-h-185-2026-10-04.log`
+with SHA-256
+`c7d6c024a9a700be8a2ad2dd9b9ba528e213ef974978edae1119160fc592ebf0`.
+This run started before the Form 4684 PDF correction. A corrected-source
+full `deno task test` run stopped near the end amid disk pressure, with only
+114 MiB reported free and no valid final suite summary. Its retained log is
+`.state/research/ty2025-full-test-a75f0bca-form4684-repair-2026-10-04.log`
+(SHA-256 `ea451011b5afa4469b9ac34e0e7fd9b03253a1f19fbc2f67513318ca3e32eed9`).
+After restoring disk space, the same 18-case XSD file passed 18/18 with zero
+failures using the suite's Deno permissions. That focused log is
+`.state/research/ty2025-xsd-focused-pr-2026-10-04.log`
+(SHA-256 `4a2a50aaf4c7fab2343c7e4793873398c6e62263a1b1483b0225773c874a2fc9`).
+A clean corrected-source full batch remains open. Passing local tests do not establish route
+completeness, IRS business-rule approval, or ATS acceptance.
+
+## Property and distribution selected PDF packet (2026-10-04)
+
+The selected packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-property-distribution-four/`
+contains four existing fixtures and 33 rendered pages. Form 8824 shows a
+$20,000 recognized exchange gain, $60,000 deferred gain, and $40,000
+replacement-property basis; Form 4797, Schedule D, and Form 1040 carry the
+recognized amount once. Form 6252 shows an $80,000 sale, $40,000 basis,
+50% gross-profit rate, $20,000 current payment, and $10,000 recognized
+gain carried through Form 4797 and Schedule D. Form 8915-F shows $20,000
+qualified disaster distribution and $1,000 ordinary pension distribution;
+$6,667 disaster income plus $1,000 ordinary income reaches Form 1040 line
+5b. Form 8829 shows 200/1,000 square feet, $14,000 indirect expenses,
+$100 prior operating carryover, and $2,900 allowable home-office expense;
+Schedule C profit is $47,100 and the Form 8995 deduction is $5,604.
+
+All 33 pages were rendered and checked against source and XML for owner,
+form/year, amounts, marks, order, and clipping. The manifest SHA-256 is
+`585722713de97a99e4332c846b9d449386e99e4888ef321d33a4551964a34733`.
+The read-only checker passed **4 cases / 33 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. The retained-artifact
+inventory is now **119 distinct fixture IDs with completed page flags, 66
+without, and 615 pages**. This is a manifest-completion count rather than a
+recheck of older packets. Property, distribution, and prior carryover source
+authenticity, wider branches, complete PDF review, IRS business rules, and
+ATS acceptance remain open.
+
+## Partnership Form 4797 and royalty selected PDF packet (2026-10-04)
+
+The selected packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-source-three/`
+contains three existing fixtures and 18 rendered pages. The two-partnership
+fixture prints separate $400 and $600 code L/R rows on Form 4797 line 10.
+The six-partnership fixture prints its first three rows on the form and a
+$400 attached subtotal; the continuation identifies rows four through six,
+including the $50 loss. Both carry $1,000 to Form 4797 lines 17/18b,
+Schedule 1 line 4, and Form 1040 line 8, yielding $31,000 AGI. The
+royalty/personal-rental fixture prints $3,000 of royalties on Schedule E,
+$9,000 of personal-property rental income on Schedule 1 line 8l, and a $50
+expense on line 24b; Form 1040 reports $16,950 AGI and $163 EIC.
+
+All 18 pages were rendered and checked against source and XML for owner,
+form/year, amounts, marks, order, continuations, and clipping. The manifest
+SHA-256 is
+`e357687a08c64d161f567e3eb9bfae42fb93e7f7108a0b6e9a93ef02662cc97c`.
+The read-only checker passed **3 cases / 18 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. The retained-artifact
+inventory is now **122 distinct fixture IDs with completed page flags, 63
+without, and 633 pages**. This counts manifest completion rather than
+rechecking older packets. Issued K-1 and payer proof, wider source paths,
+complete PDF review, IRS business rules, and ATS acceptance remain open.
+
+A five-case attempt that also selected the existing W-2G withholding and
+partnership/W-2G fixtures stopped before manifest creation at the retained
+`W-2G payer copy content needs its exact attached PDF` guard. Those fixtures
+remain unreviewed; the generated three-case selection did not bypass the
+required payer-copy evidence.
+
+## Schedule C and F selected PDF packet (2026-10-04)
+
+The selected packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-business-three/`
+contains three existing fixtures and 33 rendered pages. The baseline
+Schedule C and raised-products Schedule F each carry $80,000 profit,
+$5,652 half-SE deduction, $11,304 SE tax, $74,348 QBI, and $11,720
+income-limited Form 8995 deduction. The Schedule C simplified-home-office
+case prints 1,200 total and 200 business square feet, deducts $1,000 on
+line 30, and carries $19,000 profit, $1,342 half-SE deduction, $2,685 SE
+tax, and $382 income-limited QBI deduction. The amounts reconcile through
+Schedules 1/2/SE and Form 1040 without duplicate business entries.
+
+All 33 pages were rendered and checked against source and XML for owner,
+form/year, amounts, marks, page order, continuations, and clipping. The
+manifest SHA-256 is
+`05d23144da6939c7bee8fd9dcaf731ae8b1540dd777e3ec7850b3ee145d6617d`.
+The read-only checker passed **3 cases / 33 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. The retained-artifact
+inventory is now **125 distinct fixture IDs with completed page flags, 60
+without, and 666 pages**. This is a manifest-completion count rather than a
+recheck of older packets. Business/farm source authenticity, wider expense
+and at-risk paths, complete PDF review, IRS business rules, and ATS
+acceptance remain open.
+
+## Schedule 1-A qualified-tips selected PDF packet (2026-10-04)
+
+The selected packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-tips-four/`
+contains four existing fixtures and 39 rendered pages. The Form 4070/
+Form 4137 employee route prints $5,000 W-2 reported tips, $1,500
+unreported tips on Form 1040 line 1c, $6,500 on Schedule 1-A lines
+4b/4c and Form 1040 line 13b, and $115 Form 4137 tax through Schedule 2.
+The two-employer route prints zero on lines 4a/4b, a $9,500 line 4c
+worksheet with both employers, $2,500 unreported tips, and $191 Form 4137
+tax. The NEC/MISC and NEC/MISC/K cash-basis routes each have $10,000
+Schedule C profit and $706 half-SE deduction, limiting one combined
+qualified-tips deduction to $9,294; their $1,413 SE tax reaches
+Schedule 2 and Form 1040 once.
+
+All 39 pages were rendered and checked against source and XML for owner,
+form/year, amounts, marks, page order, continuations, and clipping. The
+manifest SHA-256 is
+`86e2a218534488cd951fac98340b5dbd9d5c634f4824fc85856743f8243871a6`.
+The read-only checker passed **4 cases / 39 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. The retained-artifact
+inventory is now **129 distinct fixture IDs with completed page flags, 56
+without, and 705 pages**. This is a manifest-completion count rather than a
+recheck of older packets. Issued payer record authenticity, wider tips
+combinations, complete PDF review, IRS business rules, and ATS acceptance
+remain open.
+
+## Mixed Form 1099-K business and personal selected PDF packet (2026-10-04)
+
+The selected packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-mixed-k-three/`
+contains three existing fixtures and 39 rendered pages. The $2,800
+Form 1099-K allocates $2,000 to Schedule C and $800 to the personal camera
+sale. The $3,800 variant adds a $1,000 NEC duplicate but reports only
+$3,000 combined Schedule C receipts. The $4,000 variant also identifies a
+$200 payer error on Schedule 1's Form 1099-K top entry, without increasing
+Schedule 1 line 10 or Form 1040 line 8. All three print the camera's $800
+proceeds, $300 basis, and $500 long-term gain on Form 8949 and Schedule D;
+Form 1040 line 7a includes it once.
+
+All 39 pages were rendered and checked against source and XML for owner,
+form/year, amounts, marks, page order, continuations, and clipping. The
+manifest SHA-256 is
+`e14de2462ae7dfd5b4a639b785a2e04e8a5795b21fbc4cb015d68136e292d15b`.
+The read-only checker passed **3 cases / 39 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. The retained-artifact
+inventory is now **132 distinct fixture IDs with completed page flags, 53
+without, and 744 pages**. This counts manifest completion rather than
+rechecking older packets. Payer/source authenticity, wider 1099-K
+classifications, complete PDF review, IRS business rules, and ATS acceptance
+remain open.
+
+## Form 1099-K personal sales and business refunds selected PDF packet (2026-10-04)
+
+The selected packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-k-other-four/`
+contains four existing fixtures and 32 rendered pages. The personal-sale
+case retains $1,500 Form 1099-K gross payments: an $800 short-term event-ticket
+sale less $250 basis produces $550 gain, while a $700 personal-chair sale
+below $1,000 basis uses Form 8949 code L and nets to zero. With $100
+selling fees, the ticket proceeds become $750 and gain becomes $500;
+the chair proceeds become $650 and its code L adjustment is $350. The
+business-refund case keeps $3,000 gross on Schedule C line 1 and subtracts
+a $400 refund on line 2 for $2,600 profit. Its fee variant also subtracts
+$90 processing fees on line 10 for $2,510 profit. Schedules 1/2/SE,
+Schedule D, and Form 1040 receive those amounts once per case.
+
+All 32 pages were rendered and checked against source and XML for owner,
+form/year, amounts, marks, page order, continuations, and clipping. The
+manifest SHA-256 is
+`4f183bbc1feed585857a2d869ec9d409880238dcd0d472290b17b4e4ec66924e`.
+The read-only checker passed **4 cases / 32 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. The retained-artifact
+inventory is now **136 distinct fixture IDs with completed page flags, 49
+without, and 776 pages**. This is a manifest-completion count rather than a
+recheck of older packets. Payer/source authenticity, wider 1099-K
+classifications, complete PDF review, IRS business rules, and ATS acceptance
+remain open.
+
+## Short- and long-term Form 8949 selected PDF packet (2026-10-04)
+
+The selected packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-8949-short-long/`
+contains one existing fixture and six rendered pages. A $2,000 short-term
+sale with $1,000 basis prints on Form 8949 box B and Schedule D line 2;
+a $4,000 long-term sale with $2,000 basis prints on a separate Form 8949
+box F copy and Schedule D line 10. Their $3,000 total reaches Form 1040
+line 7a once and produces $33,000 AGI.
+
+All six pages were rendered and checked against source and XML for owner,
+form/year, amounts, marks, the two Form 8949 copies, order, and clipping.
+The manifest SHA-256 is
+`bea8bb3e4ff1c91459dc59f88ea357279cd02159833d3edb513655376f281c50`.
+The read-only checker passed **1 case / 6 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. The retained-artifact
+inventory is now **137 distinct fixture IDs with completed page flags, 48
+without, and 782 pages**. This counts manifest completion rather than a
+recheck of older packets. Broker/source authenticity, wider capital-gain
+paths, complete PDF review, IRS business rules, and ATS acceptance remain open.
+
+## Form 8962 no-APTC policy-month selected PDF packet (2026-10-04)
+
+The selected packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-policy-four/`
+contains four existing fixtures and 20 rendered pages. Two sequential
+policies print $600 January–June and $700 July–December monthly SLCSP,
+with a $50 monthly contribution; the resulting PTC is $7,200. Three
+alternating policies preserve A-B-A-C coverage for $7,800 PTC. Four
+sequential policies produce $8,400 PTC, and twelve separately sourced
+one-month policies produce $7,800. Each total appears on Form 8962 line
+26, Schedule 3 line 9, and Form 1040 line 31 once.
+
+All 20 pages were rendered and checked against source and XML for owner,
+form/year, amounts, marks, page order, and clipping. The manifest SHA-256 is
+`16206aa8aaf291c48dbb43e19c3cc99ebbbf761ec0290945d7c73657e8e59972`.
+The read-only checker passed **4 cases / 20 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. The retained-artifact
+inventory is now **141 distinct fixture IDs with completed page flags, 44
+without, and 802 pages**. This counts manifest completion rather than a
+recheck of older packets. Marketplace and payment authenticity, other policy
+combinations, complete PDF review, IRS business rules, and ATS acceptance
+remain open.
+
+## Form 8962 uncovered-month and protected-payment selected PDF packet (2026-10-04)
+
+The selected packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-policy-gaps-four/`
+contains four existing fixtures and 20 rendered pages. One policy leaves July
+uncovered, giving $6,550 PTC across eleven covered months. Another leaves
+April, August, and December uncovered, giving $5,850 across nine months. A
+third covers only January and December, giving $1,200. The protected partial
+payment case prints January's $400.51 paid premium as $401 and gives $7,051
+PTC. Each total appears on Form 8962 line 26, Schedule 3 line 9, and Form
+1040 line 31 once.
+
+All 20 pages were rendered and checked against source and XML for owner,
+form/year, amounts, marks, page order, and clipping. The manifest SHA-256 is
+`8994ef45af3101e500a3d0dda8330c5ab4168dbda6f908c1a6f179f1a30b23a2`.
+The read-only checker passed **4 cases / 20 pages**, including source replay,
+artifact hashes, page origins, and local TY2025v5.4 XSD. The retained-artifact
+inventory is now **145 distinct fixture IDs with completed page flags, 40
+without, and 822 pages**. This counts manifest completion rather than a
+recheck of older packets. Marketplace and payment authenticity, other policy
+combinations, complete PDF review, IRS business rules, and ATS acceptance
+remain open.

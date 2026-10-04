@@ -107,3 +107,23 @@ complete return packet. QEF and MTM need their distinct income, basis, and
 election evidence before either has a positive parent PDF route. Absence of
 current income does not by itself establish that an annual Form 8621 is not
 required.
+
+## October 4 focused verification
+
+The current [IRS December 2025 Form 8621](https://www.irs.gov/pub/irs-pdf/f8621.pdf)
+was fetched into the private source cache as a four-page XFA/AcroForm PDF
+(SHA-256 `9c063d71a970eff604d9c3f05449422f86fbe29d99407282a87d94fc6c10a2d0`).
+The staged page-1 widget names and locations for shareholder identity,
+corporation identity, share descriptions/count/value, line 5, and election
+boxes were compared with its AcroForm annotations. This is a field-position
+check, not a filled-page visual review.
+
+`deno test --allow-read --allow-write --allow-run=xmllint` over
+`f8621_parent_source.test.ts`, `f8621_excess_statement.test.ts`,
+`f8621.fx.test.ts`, and `f8621.xsd.test.ts` passed **11/11** with no ignored
+tests. It exercises the staged parent projection, distinct Part V events and
+statements, source tamper checks, foreign-currency amounts, and one local
+TY2025v5.4 XSD case. These checks do not authenticate the referenced issuer,
+historical election, prior-distribution, value, or tax records and do not
+establish a printable registered parent packet. The parent parity gap stays
+open; a current-worktree full suite is running separately.

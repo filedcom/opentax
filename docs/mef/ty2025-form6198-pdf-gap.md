@@ -54,6 +54,13 @@ $3,000, $900, and $900, respectively. Schedule 1 line 3 prints $1,600 after
 the $3,000 offsetting business profit. The reviewed PDF SHA-256 is
 `2aa20d7bd7f99bc249686074f85bd2f89e4f7587bc030c28e33a24e5abbf0a5e`.
 
+On 2026-10-04, the same checked-in two-activity fixture was regenerated from
+current source and all 16 pages were visually reviewed against its source,
+pending graph, and native XML. The selected-scope checker passed exact source
+replay, PDF/XML hashes, page origins, and local TY2025v5.4 XSD. The current
+manifest digest and packet location are in the
+[validation batch](ty2025-form1040-validation-batch.md).
+
 The full XML/PDF joint, business-rule, and ATS gates remain open. This
 focused fixture covers the simplified Schedule C route, not the other
 Schedule F/Form 4835 or detailed at-risk situations.

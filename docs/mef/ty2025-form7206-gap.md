@@ -5,6 +5,14 @@ coded and verified in a full TY2025 return with local v5.4 XSD validation and a
 12-page filled-PDF inspection, 2026-09-30. Source document bytes, the full bulk
 regression, IRS business rules, and ATS acceptance remain unverified.
 
+On 2026-10-04 the checked-in one-plan fixture was regenerated from current
+source. All 12 pages were reviewed against its source, pending graph, and
+native XML; the selected-scope checker passed exact source/PDF/XML hashes,
+page origins, and local TY2025v5.4 XSD. The current packet location and
+manifest digest are in the
+[validation batch](ty2025-form1040-validation-batch.md). This does not expand
+the supported plan or owner boundary.
+
 The [2025 Form 7206](https://www.irs.gov/pub/irs-pdf/f7206.pdf) and
 [instructions](https://www.irs.gov/instructions/i7206) require a separate form
 for each trade or business under which a different insurance plan is

@@ -1,5 +1,20 @@
 # TY2025 paired Form 8889 boundary
 
+## Current Form 5329 Part VII filled-packet review (2026-10-04)
+
+The existing paired other-coverage excess source is now a retained filled-PDF
+fixture and was replayed through the real return graph and PDF builder after
+the Form 5329 AcroForm mapping repair. The eleven-page packet has separate
+taxpayer and spouse Forms 8889 and one taxpayer Form 5329. All pages passed the
+selected visual, source, PDF replay, artifact-hash, page-origin, and local
+TY2025v5.4 XSD checks. Form 5329 page 2 visibly prints $1,000 on Part VII lines
+47 and 48 and $60 on line 49; Schedule 2 line 8 and Form 1040 line 23 show
+$60. The two Form 8889 line-13 deductions total $8,000 on Schedule 1 and
+Form 1040 line 10. The focused review-fixture XSD test also passed. The
+manifest digest is in the [validation batch](ty2025-form1040-validation-batch.md).
+External source proof, other HSA branches, IRS business rules, and ATS remain
+open.
+
 ## One spouse's other coverage leaves a current personal excess (written, unrun)
 
 The paired family-HDHP route now carries a retained current-year personal HSA

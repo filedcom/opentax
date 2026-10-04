@@ -128,3 +128,55 @@ Deno.test("Form 5329 PDF carries one owner's reviewed 2024 HSA excess and reject
     "reviewed filed 2024 owner source",
   );
 });
+
+Deno.test("Form 5329 PDF prints Part I and II taxes on their own lines", () => {
+  const owner_entries = [{
+    owner: TS.T,
+    early_distribution: [4_000, 6_000],
+    early_distribution_exception: 2_000,
+    early_distribution_exception_code: "01" as const,
+    esa_able_distribution: 500,
+    esa_able_exception: 100,
+  }];
+  const owner_forms = calculateOwnerForms({ owner_entries }).forms;
+  const [copy] = form5329Pdf.instances?.(
+    { owner_entries, owner_forms },
+    filer,
+    { schedule2: { line8_form5329_tax: 840 } },
+  ) ?? [];
+  assertEquals(copy?.print_early_line1, 10_000);
+  assertEquals(copy?.print_early_line3, 8_000);
+  assertEquals(copy?.print_early_line4, 800);
+  assertEquals(copy?.print_education_line7, 400);
+  assertEquals(copy?.print_education_line8, 40);
+  assertEquals(
+    form5329Pdf.fields?.find((field) => field.domainKey === "print_early_line4")
+      ?.pdfField,
+    "topmostSubform[0].Page1[0].f1_13[0]",
+  );
+  assertEquals(
+    form5329Pdf.fields?.find((field) => field.domainKey === "print_hsa_line49")
+      ?.pdfField,
+    "topmostSubform[0].Page2[0].f2_24[0]",
+  );
+});
+
+Deno.test("Form 5329 PDF stops an excess-IRA packet without worksheet vintages", () => {
+  const owner_entries = [{
+    owner: TS.T,
+    excess_traditional_ira: 1_000,
+    traditional_ira_value: 5_000,
+  }];
+  const owner_forms = calculateOwnerForms({ owner_entries }).forms;
+  assertEquals(owner_forms[0]?.print_total_tax, 60);
+  assertThrows(
+    () =>
+      form5329Pdf.instances?.(
+        { owner_entries, owner_forms },
+        filer,
+        { schedule2: { line8_form5329_tax: 60 } },
+      ),
+    Error,
+    "sourced excess-contribution worksheet lines",
+  );
+});

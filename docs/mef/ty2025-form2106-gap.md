@@ -1,5 +1,15 @@
 # TY2025 Form 2106: employee business expenses
 
+## Current selected-packet evidence (2026-10-04)
+
+The bounded fee-basis county-official route now has a six-page visual,
+source, native-XML, and PDF replay review. Form 2106 prints $1,200 on lines
+4/6/8/9/10, Schedule 1 lines 12/26 and Form 1040 line 10 print $1,200, and
+Form 1040 AGI is $48,800 from $50,000 wages. The retained selected manifest
+passed artifact hashes, page origins, and local TY2025v5.4 XSD; details and
+digest are in the [validation batch](ty2025-form1040-validation-batch.md).
+The remaining source and branch boundaries below are still open.
+
 ## One fee-basis official's unreimbursed line-4 expense (written, unrun)
 
 A bounded native and PDF filing route now accepts one taxpayer job as a

@@ -155,3 +155,22 @@ fixtures are authored for the deferred batch. Source references are reviewed
 assertions, not authenticated document bytes. Separate returns, multiple
 workers or W-2s, other relationship histories, and other family cases remain
 open.
+
+## Current selected PDF evidence (2026-10-04)
+
+Three full-return packets now exercise all three initial Schedule H routing
+paths. The
+three-state FUTA-only return prints Box A/B No and Box C Yes, skips Part I, and
+reconciles $90 FUTA through Schedule H, Schedule 2, and Form 1040 across seven
+reviewed pages. A separate sourced adult-worker FICA plus Ohio FUTA return
+prints Box A and line 9 Yes, $474 FICA, $19 FUTA, and $493 on Schedule H line
+26, Schedule 2 line 9, and Form 1040 across six reviewed pages. A joint
+spouse withholding-only packet prints Box A No/B Yes/C blank, skips lines
+1–6, and stops after line 9 No on its sole Schedule H page; its $250 line 8
+tax reaches Schedule 2 and Form 1040, offset by the spouse's W-2 withholding.
+Its five pages also passed review. All three packets passed source replay,
+local TY2025v5.4 XSD, artifact hashes, page-origin checks, and visual review.
+Their manifest digests and paths are in the
+[validation batch](ty2025-form1040-validation-batch.md). Referenced payroll,
+W-2, and state records remain unverified bytes, and the other worker and
+state/rate branches still require review.

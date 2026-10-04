@@ -6,8 +6,22 @@ input keys were removed. A contribution without computed native lines or a
 reviewed zero-credit outcome rejects instead of silently omitting IRS8880, and
 the calculator now uses sourced AGI, filing status and a tax-liability limit
 derived during Form 1040 finalization before a positive Saver's Credit reaches
-Schedule 3 line 4. Focused source-to-MeF and negative cases are written but
-unrun. No XSD, filled-PDF, IRS business-rule or ATS acceptance is claimed.
+Schedule 3 line 4. The initial build-first notes below retain their historical
+test status. Current evidence is recorded in the following update; IRS
+business-rule and ATS acceptance remain open.
+
+## Current selected evidence (2026-10-04)
+
+Sixty-six focused Form 8880 and PDF-builder tests pass. The existing
+`single-form8880-w2-deferral` source fixture yields a local TY2025v5.4
+XSD-valid return and a visually reviewed four-page packet. The PDF builder
+now omits the second IRS Form 8880 source page because it contains instructions
+only. The filed page reconciles a $2,000 W-2 code D deferral and a $428 credit
+to Schedule 3 line 4 and Form 1040 line 20. The selected review manifest
+passed source replay, page-origin, PDF/XML hash, and XSD checks; its digest is
+in the [validation batch](ty2025-form1040-validation-batch.md). This is one
+synthetic route; source authenticity, other branches, IRS business rules, and
+ATS acceptance remain open.
 
 The TY2025 line 9 AGI bands now match the printed 2025 Form 8880 table:
 single/MFS/QSS ceilings of $23,750/$25,500/$39,500, HOH ceilings of
