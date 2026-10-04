@@ -1900,6 +1900,20 @@ commits changed validation documentation only. This local automated result
 does not establish complete source evidence, all-page human review, IRS
 business-rule acceptance, or ATS transmission.
 
+## PR #62 post-guard full automated pass (2026-10-04)
+
+The exact `PATH=/tmp/opentax-tools:$PATH deno task test` command ran on frozen
+code head `f2b2b545` from 02:54:56 to 03:47:34 UTC and passed **11,063 tests,
+zero failed** in 52m12s, with no ignored tests reported. This includes the
+Form 1040-ES payment-year, Form 1099-K recipient identity, and direct Form 8949
+withholding guards added after the prior 11,060-test full pass. The retained
+log is `.state/research/ty2025-pr62-full-test-f2b2b545.log` (SHA-256
+`958594c9b05585de4ba2132dc433213c235a846ab8734cb641f912b82c5c7ac9`).
+The runner used Deno 2.9.4 (V8 15.0.245.2-rusty, TypeScript 6.0.3),
+`xmllint` libxml 2.9.13, and Poppler 26.09.0 through the local launcher.
+This local pass does not establish complete source evidence, every-page visual
+review, IRS business-rule acceptance, or ATS transmission.
+
 ## Form 1099-K withholding and business refund/fee filled-PDF review (2026-10-04)
 
 The selected `single-k-blank-tin-withholding` four-page packet and
@@ -1931,7 +1945,7 @@ export. Positive quarterly, divorced-joint, MFS-joint, return arithmetic, and
 source packet cases passed **37 focused tests**; the agreed-joint native return
 passed the local TY2025 v5.4 XSD (**38 checks total**). These are synthetic
 reviewed facts; IRS-account confirmation, agreement signature authentication,
-other payment channels, the full post-change test run, and ATS remain open.
+other payment channels, and ATS remain open. The full post-change run above passed.
 
 ## Form 1099-K conflicting recipient TIN guard (2026-10-04)
 
@@ -1944,8 +1958,8 @@ recipient TIN that differs from the taxpayer or joint spouse; a matching
 name/address review cannot override it. The changed-source case rejects in
 both native and PDF exporters. All **nine** selected `single-k-` full-return
 fixture/XSD routes then passed. Issuer-copy authentication, corrected-copy
-lineage, wider owner ambiguity, the full post-change batch, and ATS remain
-open.
+lineage, wider owner ambiguity, and ATS remain open. The full post-change
+run above passed.
 
 ## Form 1099-K joint recipient name and TIN alignment (2026-10-04)
 
@@ -1956,8 +1970,8 @@ before the fix. When a recipient TIN is present, the shared native/PDF check
 now accepts only that person’s reviewed name; a missing TIN still permits a
 reviewed taxpayer or spouse name/address match. The direct owner case passed,
 and all nine `single-k-` full-return/XSD fixture routes passed again. Payer
-copy authenticity, wider corrected-source combinations, the full post-change
-batch, and ATS remain open.
+copy authenticity, wider corrected-source combinations, and ATS remain open.
+The full post-change run above passed.
 
 ## Direct Form 8949 withholding source boundary (2026-10-04)
 
@@ -1972,4 +1986,4 @@ describe capital-sale reconciliation, not an independent withholding source.
 The direct-source negative reached both exporters and **79** focused
 withholding/Form 8949 tests passed. The 1099-B payer-copy path remains
 available for sourced withholding; issuer authenticity, wider corrected
-copies, the full post-change batch, and IRS ATS remain open.
+copies, and IRS ATS remain open. The full post-change run above passed.
