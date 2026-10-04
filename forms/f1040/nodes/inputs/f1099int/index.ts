@@ -90,7 +90,8 @@ export function assertDistinct1099INTCopies(items: readonly INTItem[]): void {
   const seenOwners = new Set<string>();
   const unidentifiedCopies = new Set<string>();
   for (const item of items) {
-    const payer = item.payer_tin?.replace(/\D/g, "") || item.payer_name.trim();
+    const payer = item.payer_tin?.replace(/\D/g, "") ||
+      item.payer_name.trim().replace(/\s+/g, " ").toUpperCase();
     const owner = JSON.stringify([payer, item.recipient_tin ?? null]);
     if (item.source_document_reference) {
       const reference = item.source_document_reference;

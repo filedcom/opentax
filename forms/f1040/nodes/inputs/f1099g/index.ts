@@ -183,7 +183,7 @@ export function assertDistinct1099GCopies(items: G99Items): void {
   const unidentifiedCopies = new Set<string>();
   for (const item of items) {
     const payer = item.payer_tin?.replace(/\D/g, "") ||
-      item.payer_name?.trim() || null;
+      item.payer_name?.trim().replace(/\s+/g, " ").toUpperCase() || null;
     const account = item.account_number?.trim() || null;
     const identifiedAccount = !!(account && payer && item.recipient_tin);
     const owner = JSON.stringify([payer, item.recipient_tin ?? null]);

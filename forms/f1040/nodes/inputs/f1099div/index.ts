@@ -164,7 +164,8 @@ export function assertDistinct1099DIVCopies(items: readonly DIVItem[]): void {
   const seenOwners = new Set<string>();
   const unidentifiedCopies = new Set<string>();
   for (const item of items) {
-    const payer = item.payerTin ?? item.payerName?.trim() ?? null;
+    const payer = item.payerTin ??
+      item.payerName?.trim().replace(/\s+/g, " ").toUpperCase() ?? null;
     const owner = JSON.stringify([payer, item.recipient_tin ?? null]);
     const identifiedAccount = !!(item.account_number && payer);
     if (item.source_document_reference) {

@@ -194,6 +194,116 @@ Deno.test("changed identified INT, DIV, and OID copies reject direct native and 
   }
 });
 
+Deno.test("1099 payer-name variants cannot double an unidentified copy", async () => {
+  const cases = [
+    {
+      pending: {
+        f1099int: {
+          f1099ints: [
+            { payer_name: "Example Bank", box1: 200 },
+            { payer_name: "  example   BANK ", box1: 250 },
+          ],
+        },
+      },
+      message:
+        "1099-INT has multiple positive payer copies without account or issued source reference",
+    },
+    {
+      pending: {
+        f1099div: {
+          f1099divs: [
+            {
+              payerName: "Example Broker",
+              isNominee: false,
+              box11: false,
+              box1a: 200,
+            },
+            {
+              payerName: " example   BROKER ",
+              isNominee: false,
+              box11: false,
+              box1a: 250,
+            },
+          ],
+        },
+      },
+      message:
+        "1099-DIV has multiple positive issued copies without account or source_document_reference",
+    },
+    {
+      pending: {
+        f1099oid: {
+          f1099oids: [
+            { payer_name: "Example Bond Fund", box1_oid: 200 },
+            { payer_name: " example   BOND   FUND ", box1_oid: 250 },
+          ],
+        },
+      },
+      message:
+        "1099-OID has multiple positive payer copies without account or issued source reference",
+    },
+    {
+      pending: {
+        f1099g: {
+          f1099gs: [
+            {
+              payer_name: "State Agency",
+              recipient_tin: filer.primarySSN,
+              box_1_unemployment: 200,
+            },
+            {
+              payer_name: " state   AGENCY ",
+              recipient_tin: filer.primarySSN,
+              box_1_unemployment: 250,
+            },
+          ],
+        },
+      },
+      message:
+        "1099-G has multiple positive payer copies without account or issued source reference",
+    },
+    {
+      pending: {
+        f1099r: {
+          f1099rs: [
+            {
+              payer_name: "Example Plan",
+              payer_ein: "123456789",
+              recipient_ssn: filer.primarySSN,
+              box1_gross_distribution: 200,
+              box7_distribution_code: "7",
+            },
+            {
+              payer_name: " example   PLAN ",
+              payer_ein: "123456789",
+              recipient_ssn: filer.primarySSN,
+              box1_gross_distribution: 250,
+              box7_distribution_code: "7",
+            },
+          ],
+        },
+      },
+      message:
+        "Form 1099-R has multiple positive payer copies without account or issued source reference",
+    },
+  ];
+  for (const { pending, message } of cases) {
+    if (!("f1099r" in pending)) {
+      assertThrows(
+        () => assert1099WithholdingSource(pending, filer),
+        Error,
+        message,
+      );
+    }
+    assertThrows(
+      () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
+      Error,
+      message,
+    );
+    await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
+  }
+});
+
 Deno.test("unidentified repeated 1099-MISC copies reject native and PDF export", async () => {
   const issued = {
     payer_name: "Payer",

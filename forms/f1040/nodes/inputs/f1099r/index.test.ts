@@ -273,7 +273,11 @@ Deno.test("f1099r.compute: positive pension copies need account or issued-copy i
   assertEquals(f1040Input(distinct).line5b_pension_taxable, 20_000);
   const differentPayers = compute([
     unidentified,
-    { ...unidentified, payer_name: "Another Pension" },
+    {
+      ...unidentified,
+      payer_name: "Another Pension",
+      payer_ein: "123456789",
+    },
   ]);
   assertEquals(f1040Input(differentPayers).line5b_pension_taxable, 20_000);
 });

@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1133 bounded completed slices are recorded in the
+inside** that section. The 1134 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -20,7 +20,7 @@ until their full routes or approved rejection boundaries are established.
 | Core return and source paths | 8 | Broader joins, ownership, and source classification remain open. |
 | Named tax-form gaps | 20 | Listed parent forms remain open despite completed bounded slices. |
 | Native MeF and PDF parity | 3 | Complete descriptor, attachment, and print parity remain open. |
-| Automated and artifact validation | 5 | The post-change full suite passed 11,063/11,063; route completeness, all-page review, and IRS acceptance remain open. |
+| Automated and artifact validation | 5 | The previous full suite passed 11,063/11,063; 365 focused 1099 checks passed after the latest payer-identity change, with its full rerun open. |
 | IRS ATS and delivery | 5 | Credentials, accepted scenarios, and a filing-ready release remain open. |
 
 **Implemented coverage.** Retained routes include source and owner checks for
@@ -36,7 +36,7 @@ home-office packet passed source/XML/PDF replay and visual review. An additional
 Two six-page personal-sale 1099-K gain/loss and selling-fee packets, plus
 fourteen pages for blank-TIN withholding and business refund/fee routes, passed
 visual and source/XML/PDF replay checks.
-A current-head two-page excess W-2 code D deferral packet also passed page review,
+A two-page excess W-2 code D deferral packet also passed page review,
 source/XML/PDF replay, and local TY2025 XSD validation.
 These bounded selections do not cover all 180
 current fixtures.
@@ -50,7 +50,9 @@ need route review. The live inventory has 149 native MeF descriptors, 116 PDF
 descriptors, and 211 TY2025 schema roots. These counts are inventories, not positive filing claims.
 
 **Validation and release.** `deno task test` passed 11,063/11,063 on
-`f2b2b545` on 2026-10-04 after the Form 1040-ES payment-year,
+`f2b2b545` on 2026-10-04 before the payer-name duplicate guard; its 365
+focused tests passed, and a current-head full rerun remains due. The prior
+full pass included the Form 1040-ES payment-year,
 Form 1099-K recipient-identity, and direct Form 8949 withholding guards.
 The separate 116-descriptor PDF field audit also passed. CLI type
 check, native compilation, and a synthetic W-2 → MeF → PDF smoke passed at
