@@ -1986,6 +1986,17 @@ the malformed withholding source; the two-file graph/exporter run passed
 bulk rerun remains due after implementation. Issued-copy authentication and
 other source variants remain open.
 
+## Form 1099-MISC payer-name identity guard (2026-10-04)
+
+A red Form 1040 exporter regression showed that a positive box 4 Form
+1099-MISC row could retain a whitespace-only payer name while contributing
+withholding. The input schema now requires nonblank payer-name text, preserving
+the supplied text for filing. Native and PDF Form 1040 projection both reject
+the malformed row. The two-file source/exporter run passed **99/99** tests;
+formatting, lint, and diff checks passed. The current-head bulk rerun remains
+due after implementation, and issued-copy authentication and wider source
+variants remain open.
+
 ## Two-employer W-2 excess deferral filled-PDF review (2026-10-04)
 
 On `c458142c`, the selected `single-w2-code-d-excess-line1h` fixture was

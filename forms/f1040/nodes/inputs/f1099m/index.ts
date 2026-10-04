@@ -54,7 +54,12 @@ const tinSchema = z.string()
 
 export const itemSchema = z.object({
   // Required identifiers
-  payer_name: z.string().min(1).max(40),
+  payer_name: z.string().min(1).max(40).refine(
+    (name) => name.trim().length > 0,
+    {
+      message: "1099-MISC needs an identified payer name",
+    },
+  ),
   payer_tin: tinSchema,
   recipient_tin: tinSchema,
   // Optional identifiers

@@ -3,7 +3,7 @@
 Status: 2026-10-04. This maps all **32 open checklist rows outside the
 "Named tax-form gaps" section** of [`product_board.md`](../../product_board.md):
 29 top-level rows and three nested rows. The board has 52 open rows in all;
-the other 20 are deferred named-form parents. Its completed ledger records 1137
+the other 20 are deferred named-form parents. Its completed ledger records 1138
 bounded items, without closing these parents. This is a work queue, not a
 filing-readiness claim. A read-only recount of `ALL_MEF_FORMS`,
 `ALL_PDF_FORMS`, and `pdfReviewFixtures` on 2026-10-04 (the same inputs used by
@@ -19,6 +19,8 @@ The subsequent Form 1098-E duplicate-account/ledger guard passed 35 focused
 source and native/PDF export tests; the current-head bulk gate is pending.
 The later Form 1099-NEC positive-payer identity guard passed 76 focused graph
 and native/PDF Form 1040 exporter tests.
+The subsequent Form 1099-MISC payer-name guard passed 99 focused source and
+native/PDF Form 1040 exporter tests.
 
 **Key.** `I` = work that can advance without a new product decision or IRS ATS
 credentials; `D` = the user's workflow/evidence/scope decision is needed before
