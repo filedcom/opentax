@@ -4014,3 +4014,55 @@ The distinct completed inventory reaches **171 fixture IDs / 1036 pages**,
 with 14 fixture IDs lacking completed page flags. Issued payroll and zone
 evidence, other business-credit routes, complete all-page review, IRS
 business rules, and ATS acceptance remain open.
+
+## Two-facility Form 8835 filled-page reviews (2026-10-04)
+
+The `single-two-geothermal-business-credits` and
+`single-wind-and-geothermal-business-credits` packets in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-two-geothermal-credit/`
+and `.state/research/ty2025-filled-pdf-review/2026-10-04-wind-geothermal-credit/`
+contain 20 filled pages each. Both print two distinct 2025 Form 8835 copies,
+each with 100,000 kWh at $0.006 and a $600 source credit. The first packet
+has separate 10 and 20 Plant Rd geothermal sites. The second has a 30 Wind
+Farm Rd wind site on Form 8835 line 1a and a 10 Plant Rd geothermal site on
+line 1c. Form 3800 Part III line 4e and two Part V line 4e rows carry
+$1,200; Schedule 3 line 6a and Form 1040 line 20 carry it once. The
+$25,067 regular tax and $16,094 TMT permit the full credit, yielding
+$23,867 total tax and a $6,133 refund against $30,000 withholding. Every
+page in the first packet was rendered and visually reviewed. For the second,
+17 pages were pixel-identical to the first packet and all three changed
+pages were visually reviewed. Both read-only checkers passed **1 case /
+20 pages** with source replay, artifact hashes, page origins, and local
+TY2025v5.4 XSD. The first manifest SHA-256 is
+`f0c4e16fbc6a8e1b40b98a6a8a42bfb7b5cce75c6df3c14a3340c624f416857b`;
+its checker log `.state/research/ty2025-two-geothermal-check-2026-10-04.log`
+has SHA-256 `3af40e3d3da643db93c766915d3c50a7f94ed1af38d242aedcd523c341f0c652`.
+The second manifest SHA-256 is
+`3ff06e324b39be2e9fcf34359071baaff948e88d8a8a86922eb83d547bbdd6e6`;
+its checker log `.state/research/ty2025-wind-geothermal-check-2026-10-04.log`
+has the same SHA-256 as the first log because the selected-scope output was
+identical. The distinct inventory reaches **173 fixture IDs / 1076 pages**,
+with 12 fixture IDs lacking completed page flags.
+
+## Two-business Form 8995-A loss-netting filled-page review (2026-10-04)
+
+The `single-form8995a-two-business-loss-netting` packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-form8995a-loss/`
+contains 12 filled pages. Two Schedule C copies print North Works' $1,300
+profit and South Shop's $1,000 loss; Schedule 1 carries their $300 net
+income. Schedule C (Form 8995-A) nets those source businesses to $300
+qualified business income. Parent Form 8995-A applies its $50 W-2-wage
+limit and carries $50 to Form 1040 line 13a. Form 8960 prints zero net
+investment income tax. All 12 pages were rendered and visually checked for
+form/revision, filer, source amounts, marks, page order, blank continuation
+rows, and legibility. The read-only checker passed **1 case / 12 pages**
+with source replay, artifact hashes, page origins, and local TY2025v5.4
+XSD. Manifest SHA-256 is
+`05b13979c27a01ecb9d90b1dc7119a3078ce3f96e387ddb38bec90b37dee5fa4`;
+checker log `.state/research/ty2025-form8995a-check-2026-10-04.log` has
+SHA-256 `5076c7d89f7c49c2e1e4c310b30bb9697b2127b056feb0cec8b8d5c081e5c637`.
+The distinct completed inventory reaches **174 fixture IDs / 1088 pages**,
+with 11 fixture IDs lacking completed page flags. The separate Form 461
+fixture failed closed on its existing sourced net-QBI-loss carryforward
+requirement. Issued business source records, other QBI branches, complete
+all-page review, IRS business rules, and ATS acceptance remain open.

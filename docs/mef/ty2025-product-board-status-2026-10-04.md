@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1232 bounded completed slices are recorded in the
+inside** that section. The 1235 bounded completed slices are recorded in the
 [completed ledger](ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -119,6 +119,15 @@ Form 8844 calculates $2,000 from $10,000 wages, matching the Schedule C
 wage reduction and flowing through Form 3800, Schedule 3, and Form 1040.
 The inventory reaches 171 fixture IDs / 1036 pages, with 14 fixture IDs
 lacking completed page flags.
+The two-geothermal and wind/geothermal credit packets add 40 reviewed
+pages. Each has two distinct Form 8835 copies and two $600 Part V rows in
+Form 3800, with $1,200 carried once to Schedule 3 and Form 1040. The
+two-business Form 8995-A packet adds 12 reviewed pages: North Works'
+$1,300 profit and South Shop's $1,000 loss net to $300 QBI; the $100 W-2
+wage source limits the deduction to $50 on Form 1040. The inventory reaches
+174 fixture IDs / 1088 pages, with 11 fixture IDs lacking completed page
+flags. The Form 461 fixture remains guarded on a sourced net-QBI-loss
+carryforward filing route.
 The new-markets fixture remains guarded on authenticated CDE status and
 recapture history; the guard was preserved during this review.
 A separate current-head two-page direct pension rollover packet passed a
