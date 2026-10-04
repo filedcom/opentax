@@ -655,12 +655,15 @@ export const SCENARIO_1040_02_FACTS = {
     dateOfBirth: "1966-03-19",
     dateOfDeath: "2025-09-11",
     identityProtectionPin: "876543",
+    nonresidentSpouseChoiceStatementAssumed: true,
   },
+  formerSpouseSsn: "400001037",
   dependent: {
     firstName: "Jacob",
     lastName: "Jones",
     ssn: "400001070",
     dateOfBirth: "2006-07-20",
+    fullTimeHighSchoolStudent: true,
   },
   w2: [
     {
@@ -730,6 +733,7 @@ export const SCENARIO_1040_02_FACTS = {
     businessMiles: 665,
     commutingMiles: 710,
     otherMiles: 15_151,
+    allMileageBeforeJuly1: true,
   },
   form8283: {
     donee: "Goodwill",

@@ -308,8 +308,12 @@ Deno.test("1040 Scenario 2 source entries remain distinct from computed totals",
   assertEquals(facts.scheduleC.businessAddress.zip, "07757");
   assertEquals(facts.scheduleC.printedLine1GrossReceiptsProvided, false);
   assertEquals(facts.scheduleC.businessMiles, 665);
+  assertEquals(facts.scheduleC.allMileageBeforeJuly1, true);
   assertEquals(facts.form8283.fairMarketValue, 700);
   assertEquals(facts.qualifiedBusinessIncomeDeductionEligible, false);
+  assertEquals(facts.formerSpouseSsn, "400001037");
+  assertEquals(facts.spouse.nonresidentSpouseChoiceStatementAssumed, true);
+  assertEquals(facts.dependent.fullTimeHighSchoolStudent, true);
 });
 
 Deno.test("1040 Scenario 2 statutory W-2 goes to Schedule C, not 1040 wages", () => {
