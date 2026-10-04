@@ -32,16 +32,16 @@ schema census, intersects them with unique `IRS[A-Za-z0-9]+` matches from
 non-test MeF form source files, and subtracts the intersection from 211. It does
 not count a staged source as registered.
 
-Current static reconciliation (2026-10-02): `ALL_MEF_FORMS` has **148** entries
-and `ALL_PDF_FORMS` has **115**. The 211-root census has **122** exact MeF form
-source literals and **89** roots with no such literal. Of the 122, **116** have
+Current static reconciliation (2026-10-04): `ALL_MEF_FORMS` has **149** entries
+and `ALL_PDF_FORMS` has **116**. The 211-root census has **123** exact MeF form
+source literals and **88** roots with no such literal. Of the 123, **117** have
 a literal in a registered descriptor file and **six** have literals only in
 unregistered files (`IRS2210`, `IRS8828`, `IRS8908`, `IRS8938`, `IRS8997`,
-`IRS9465`). The 116 are a file-level measure, not 116 supported filing routes:
+`IRS9465`). The 117 are a file-level measure, not 117 supported filing routes:
 for example, the unregistered `IRS1116ScheduleC` projection is mentioned by a
 registered parent file. There are **seven identifiable unregistered root
 builders**: those six plus `IRS1116ScheduleC`. This staged-builder count is
-separate from the 89 literal-free roots and does not establish that every
+separate from the 88 literal-free roots and does not establish that every
 other literal root has a complete route. The number of **whole-form verified routes remains
 zero established by this inventory**. No exact supported-route count can be
 derived from registry or literal counts; the per-row trigger/source/output
@@ -49,21 +49,22 @@ review and final validation are still open.
 
 Reproduce the live registry counts with
 `deno eval 'import {ALL_MEF_FORMS} from "./forms/f1040/2025/mef/forms/index.ts"; import {ALL_PDF_FORMS} from "./forms/f1040/2025/pdf/forms/index.ts"; console.log(ALL_MEF_FORMS.length, ALL_PDF_FORMS.length)'`.
-The census table independently has 211 IRS-root rows: 122 marked `Yes`
-and 89 marked `No`. The 116/six split is a source-file classification, not a
+The census table independently has 211 IRS-root rows: 123 marked `Yes`
+and 88 marked `No`. The 117/six split is a source-file classification, not a
 registry or taxpayer-claim count. Recheck those file classes whenever a staged
 builder is registered or a root token moves between files.
 
 The earlier registered-document matrix omitted Form 2106 and the six newly
 registered Forms 8844, 8864, 8881, 8882, 8941 and 8994; those seven rows
 accounted for the earlier 145-entry registry. Three later Schedule A supporting
-statements bring the current audit to 148/148 entries. The root census had ten stale `No` flags:
+statements brought that checkpoint's audit to 148/148 entries. The current
+audit has 149/149 entries after the later registration. The root census had ten stale `No` flags:
 `IRS2210`, `IRS8828`, `IRS8844`, `IRS8864`, `IRS8881`, `IRS8882`,
 `IRS8908`, `IRS8938`, `IRS8941`, `IRS8994`. Updating a literal flag does not
 approve or activate an unregistered form. The conditional-schedule audit
 still identifies four bounded Form 8995-A companions and one unregistered
 Form 1116 Schedule C. The crosswalk retains historical rows for roots since
-registered; its current introduction distinguishes those rows from the 89
+registered; its current introduction distinguishes those rows from the 88
 literal-free roots.
 
 The Form 3800 carryforward computation descriptor was registered on

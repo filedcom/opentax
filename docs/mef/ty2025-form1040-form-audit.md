@@ -498,8 +498,8 @@ user-approved exclusion or a fail-closed boundary.
 
 ### Outstanding INV-01 decisions and evidence
 
-The [211-root census](ty2025-xsd-document-root-census.md) records 122 `IRS...`
-source literals and 89 without a literal. Its `No` rows identify absent source
+The [211-root census](ty2025-xsd-document-root-census.md) records 123 `IRS...`
+source literals and 88 without a literal. Its `No` rows identify absent source
 literals, **not** an unsupported-form verdict, an exclusion, or proof that a
 document must accompany every return. The
 [unregistered-root crosswalk](ty2025-unregistered-root-applicability.md) is a
@@ -510,7 +510,7 @@ triage queue. The ordered reviews for
 [76–100](ty2025-unregistered-roots-76-100.md), and
 [101–128](ty2025-unregistered-roots-101-128.md) record per-root schema,
 official-rule and local evidence for the historical 128-root review. After new
-source files, 89 roots still lack a source literal. This completes the
+source files, 88 roots still lack a source literal. This completes the
 **per-root census review**, not INV-01's product disposition or acceptance work:
 many individual applicability, source-owner, attachment/workflow, calculation
 and support decisions remain open, and no form is excluded by inventory silence.
@@ -520,7 +520,7 @@ builder rejects positive claims.
 
 | Decision still required                                                   | Current concrete boundary                                                                                                                                                                                                                                                                           | Evidence needed before a disposition                                                                                                                                                                                                                       |
 | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Which of the 89 current nonliteral roots applies to a Form 1040 taxpayer | The historical 128 have ordered per-root reviews; thirty-nine now have a source literal, including the staged but unregistered Form 9465 builder. This is evidence-gathering, not an approved disposition. No root is silently excluded.                                                               | Resolve **each current row's** 2025 filing trigger, source owner, native attachment versus source-only record versus separate workflow, and approved support/fail-closed decision. Then verify implementation and acceptance evidence per applicable form. |
+| Which of the 88 current nonliteral roots applies to a Form 1040 taxpayer | The historical 128 have ordered per-root reviews; forty now have a source literal, including the staged but unregistered Form 9465 builder. This is evidence-gathering, not an approved disposition. No root is silently excluded.                                                               | Resolve **each current row's** 2025 filing trigger, source owner, native attachment versus source-only record versus separate workflow, and approved support/fail-closed decision. Then verify implementation and acceptance evidence per applicable form. |
 | Conditional companion schedules                                           | Form 8995-A Schedules A/B/C/D have bounded native routes; Form 1116 Schedule C still lacks a registered filing route and has a staged source/XML projection only. The [conditional-schedule audit](ty2025-conditional-schedule-applicability.md) names positive triggers and current parent guards. | Source each remaining business/category and event, attach the native schedule and reconcile it to the parent, or reject the triggered route. An absent input does not prove no obligation.                                                                 |
 | Known public inputs without complete native/PDF paths                     | Form 7203 has one bounded stock-only loss route with focused XSD/PDF checks; its other shareholder-basis paths remain guarded. Form 9465 has staged native/PDF projections but no live output document. Forms 8888 and Schedule R also have focused XSD/PDF checks for bounded routes; Schedule J and 2210-F remain unvalidated.                | Confirm each trigger against filed 1040 values, complete required document/PDF paths or a reviewed separate workflow, and check rejection from start node through export. See the [source-only audit](ty2025-source-only-and-sparse-map-gap.md).           |
 | Registered but bounded or blocked calculations                            | The matrix names limited routes; Form 7206 has a narrow sole-Schedule-C/non-Marketplace route, Form 8839 has a strict reviewed one-child prepared-bundle route, and nonexempt Form 8990 remains blocked. | Enumerate supported and rejected branches per form against 2025 instructions, preserve source identity and cross-form amounts, and verify neither a required form nor statement is silently omitted. |
