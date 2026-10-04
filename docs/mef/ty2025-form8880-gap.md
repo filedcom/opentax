@@ -32,6 +32,16 @@ allowing a self-contained Form 8880 claim. Sourced MFJ D/E and governmental
 and a wider related batch passed 139/139. Issuer authenticity and other
 contribution sources remain separate gates.
 
+The same native/PDF finalization check now also replays positive contributors'
+birth dates, five-month student answers, dependent-claim answers, filing
+status, and present SSNs against the retained general source when that source
+is part of the return. Direct tests first showed that a retained five-month
+student could be contradicted by a positive Form 8880 claim; they now reject
+that drift for taxpayer and spouse, while matching single and joint claims
+pass. The focused 35-test batch and wider 145-test batch pass. Standalone
+reviewed Form 8880 inputs without a retained general record remain a separate
+supported source route; independent fact authentication is still open.
+
 The TY2025 line 9 AGI bands now match the printed 2025 Form 8880 table:
 single/MFS/QSS ceilings of $23,750/$25,500/$39,500, HOH ceilings of
 $35,625/$38,250/$59,250, and MFJ ceilings of $47,500/$51,000/$79,000. Qualifying

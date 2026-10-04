@@ -213,6 +213,19 @@ Deno.test("1040-SS Scenario 6 preserves Puerto Rico wages, children, and busines
   );
 });
 
+Deno.test("1040-SS Scenario 6 W-2PR withholding supplies Part II line 13a only", () => {
+  const facts = SCENARIO_1040_SS_06_FACTS;
+  const line13aWithheldSocialSecurityAndMedicare =
+    facts.form499R2W2PR.socialSecurityTaxWithheld +
+    facts.form499R2W2PR.medicareTaxWithheld;
+  assertEquals(line13aWithheldSocialSecurityAndMedicare, 3_288);
+
+  // Schedule C receipts and its net profit are unprinted, so this source
+  // amount does not establish self-employment tax or the final ACTC.
+  assertEquals(facts.scheduleC.grossReceiptsProvided, false);
+  assertEquals("printedNetProfit" in facts.scheduleC, false);
+});
+
 Deno.test("4868 Scenario 7 keeps payment instructions distinct from blank form lines", () => {
   const facts = SCENARIO_4868_07_FACTS;
   const form = facts.printedForm4868;

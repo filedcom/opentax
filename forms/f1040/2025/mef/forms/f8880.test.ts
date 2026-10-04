@@ -74,21 +74,54 @@ Deno.test("Form 8880 positive serializer needs matching contribution sources", (
 });
 
 Deno.test("Form 8880 canonical calculated lines map to TY2025 MeF line tags", () => {
-  const xml = form8880.build({
+  const fields = {
     ...calculated,
     taxpayer_dob: "1980-01-01",
     taxpayer_student_five_months: false,
     taxpayer_claimed_as_dependent: false,
-  }, {
-    pending: {
-      f1040: {
-        filing_status: FilingStatus.Single,
-        line11_agi: 20_000,
-        line18_total_tax_before_credits: 800,
-      },
-      schedule3: { line4_retirement_savings_credit: 800 },
+  };
+  const pending = {
+    general: {
+      filing_status: FilingStatus.Single,
+      taxpayer_dob: "1980-01-01",
+      taxpayer_form8880_student_five_months: false,
+      taxpayer_form8880_claimed_as_dependent: false,
     },
+    f1040: {
+      filing_status: FilingStatus.Single,
+      line11_agi: 20_000,
+      line18_total_tax_before_credits: 800,
+    },
+    schedule3: { line4_retirement_savings_credit: 800 },
+  };
+  const xml = form8880.build(fields, {
+    pending,
   });
+  assertThrows(
+    () =>
+      form8880.build(fields, {
+        pending: {
+          ...pending,
+          general: {
+            ...pending.general,
+            taxpayer_form8880_student_five_months: true,
+          },
+        },
+      }),
+    Error,
+    "retained general eligibility",
+  );
+  assertThrows(
+    () =>
+      form8880.build(fields, {
+        pending: {
+          ...pending,
+          general: { ...pending.general, taxpayer_dob: "2010-01-01" },
+        },
+      }),
+    Error,
+    "retained general eligibility",
+  );
   assertStringIncludes(
     xml,
     "<PrimaryRothIRAForCurrentYrAmt>1000</PrimaryRothIRAForCurrentYrAmt>",
@@ -495,8 +528,20 @@ Deno.test("Form 8880 native spouse deferral line agrees with W-2 SSN ownership",
       },
     ],
   };
+  const general = {
+    filing_status: FilingStatus.MFJ,
+    taxpayer_ssn: "123456789",
+    spouse_ssn: "987654321",
+    taxpayer_dob: "1980-01-01",
+    spouse_dob: "1981-01-01",
+    taxpayer_form8880_student_five_months: false,
+    spouse_form8880_student_five_months: false,
+    taxpayer_form8880_claimed_as_dependent: false,
+    spouse_form8880_claimed_as_dependent: false,
+  };
   const xml = form8880.build(fields, {
     pending: {
+      general,
       f1040: {
         filing_status: FilingStatus.MFJ,
         line11_agi: 30_000,
@@ -515,6 +560,7 @@ Deno.test("Form 8880 native spouse deferral line agrees with W-2 SSN ownership",
     "<SpouseContributionsAmt>800</SpouseContributionsAmt>",
   );
   const finalized = {
+    general,
     f1040: {
       filing_status: FilingStatus.MFJ,
       line11_agi: 30_000,
@@ -522,6 +568,30 @@ Deno.test("Form 8880 native spouse deferral line agrees with W-2 SSN ownership",
     },
     schedule3: { line4_retirement_savings_credit: 650 },
   };
+  assertThrows(
+    () =>
+      form8880.build(fields, {
+        pending: {
+          ...finalized,
+          w2,
+          general: { ...general, spouse_ssn: "999887777" },
+        },
+      }),
+    Error,
+    "retained general eligibility",
+  );
+  assertThrows(
+    () =>
+      form8880.build(fields, {
+        pending: {
+          ...finalized,
+          w2,
+          general: { ...general, spouse_form8880_student_five_months: true },
+        },
+      }),
+    Error,
+    "retained general eligibility",
+  );
   assertThrows(
     () => form8880.build(fields, { pending: finalized }),
     Error,

@@ -50,6 +50,17 @@ Deno.test("Form 8880 PDF replays retained W-2 box 12 deferrals", () => {
     ],
   };
   const pending = {
+    general: {
+      filing_status: FilingStatus.MFJ,
+      taxpayer_ssn: "123456789",
+      spouse_ssn: "987654321",
+      taxpayer_dob: "1980-01-01",
+      spouse_dob: "1981-01-01",
+      taxpayer_form8880_student_five_months: false,
+      spouse_form8880_student_five_months: false,
+      taxpayer_form8880_claimed_as_dependent: false,
+      spouse_form8880_claimed_as_dependent: false,
+    },
     f1040: {
       filing_status: FilingStatus.MFJ,
       line11_agi: 30_000,
@@ -61,6 +72,27 @@ Deno.test("Form 8880 PDF replays retained W-2 box 12 deferrals", () => {
   assertEquals(
     form8880Pdf.projectFields!(fields, pending).print_line2b_deferrals,
     800,
+  );
+  assertThrows(
+    () =>
+      form8880Pdf.projectFields!(fields, {
+        ...pending,
+        general: { ...pending.general, spouse_ssn: "999887777" },
+      }),
+    Error,
+    "retained general eligibility",
+  );
+  assertThrows(
+    () =>
+      form8880Pdf.projectFields!(fields, {
+        ...pending,
+        general: {
+          ...pending.general,
+          spouse_form8880_student_five_months: true,
+        },
+      }),
+    Error,
+    "retained general eligibility",
   );
   assertThrows(
     () =>
@@ -119,6 +151,12 @@ Deno.test("Form 8880 PDF line 11 agrees with finalized credit-limit worksheet", 
     taxpayer_claimed_as_dependent: false,
   };
   const pending = {
+    general: {
+      filing_status: FilingStatus.Single,
+      taxpayer_dob: "1980-01-01",
+      taxpayer_form8880_student_five_months: false,
+      taxpayer_form8880_claimed_as_dependent: false,
+    },
     f1040: {
       filing_status: FilingStatus.Single,
       line11_agi: 20_000,
@@ -133,6 +171,30 @@ Deno.test("Form 8880 PDF line 11 agrees with finalized credit-limit worksheet", 
     ...fields,
     print_line9_rate: "5",
   });
+  assertThrows(
+    () =>
+      form8880Pdf.projectFields!(fields, {
+        ...pending,
+        general: {
+          ...pending.general,
+          taxpayer_form8880_student_five_months: true,
+        },
+      }),
+    Error,
+    "retained general eligibility",
+  );
+  assertThrows(
+    () =>
+      form8880Pdf.projectFields!(fields, {
+        ...pending,
+        general: {
+          ...pending.general,
+          taxpayer_form8880_claimed_as_dependent: true,
+        },
+      }),
+    Error,
+    "retained general eligibility",
+  );
   assertThrows(
     () =>
       form8880Pdf.projectFields!(fields, {
