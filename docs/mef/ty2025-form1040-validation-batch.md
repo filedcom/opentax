@@ -2175,3 +2175,13 @@ The direct-source negative reached both exporters and **79** focused
 withholding/Form 8949 tests passed. The 1099-B payer-copy path remains
 available for sourced withholding; issuer authenticity, wider corrected
 copies, and IRS ATS remain open. The full post-change run above passed.
+
+## PDF test launcher check after later source guards (2026-10-04)
+
+At `f072629e`, the two focused PDF files that previously failed when
+`pdftotext` was absent from the shell `PATH` passed **8/8** with
+`PATH=/tmp/opentax-tools:$PATH` and the test permissions for `xmllint`, Deno,
+`pdftotext`, and `pdftoppm`. The local launcher reports Poppler 26.09.0.
+Calling the package-cache binary directly does not load its linked libraries;
+the existing launcher is the working test environment. This focused result
+does not replace a full `deno task test` run on the final implementation head.
