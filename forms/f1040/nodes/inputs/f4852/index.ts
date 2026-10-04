@@ -93,6 +93,26 @@ export const itemSchema = z.object({
   subject_ts: tsSchema.optional(),
 }).superRefine((val, ctx) => {
   if (val.form_type === FormType.W2) {
+    for (
+      const field of [
+        "gross_distribution",
+        "taxable_amount",
+        "taxable_amount_not_determined",
+        "total_distribution",
+        "is_ira",
+        "capital_gain",
+        "employee_contributions",
+        "distribution_code",
+      ] as const
+    ) {
+      if (val[field] !== undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Substitute W-2 cannot contain 1099-R field ${field}`,
+          path: [field],
+        });
+      }
+    }
     const hasWages = (val.wages ?? 0) > 0;
     const hasWithheld = (val.federal_withheld ?? 0) > 0;
     if (!hasWages && !hasWithheld) {
@@ -111,6 +131,24 @@ export const itemSchema = z.object({
     }
   }
   if (val.form_type === FormType.R_1099) {
+    for (
+      const field of [
+        "wages",
+        "social_security_wages",
+        "social_security_withheld",
+        "social_security_tips",
+        "medicare_wages",
+        "medicare_withheld",
+      ] as const
+    ) {
+      if (val[field] !== undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Substitute 1099-R cannot contain W-2 field ${field}`,
+          path: [field],
+        });
+      }
+    }
     if (val.gross_distribution === undefined) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

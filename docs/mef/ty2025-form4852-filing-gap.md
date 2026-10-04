@@ -90,3 +90,18 @@ they do not create a calculated filing route. The 24 node tests, one retained
 projection guard test, and both native/PDF final-export guard tests pass. A
 positive substitute route remains closed pending the source, packet, MeF
 business-rule, and ATS evidence above.
+
+## October 4 substitute-type field correction
+
+The official form separates substitute W-2 amounts on line 7 from substitute
+1099-R amounts on line 8. The typed input previously accepted both groups in
+one item, while calculation and the retained-copy projector selected only the
+declared `form_type` and silently discarded the other group's fields. The
+shared item schema now rejects every W-2-only field on a 1099-R item and every
+1099-R-only field on a W-2 item, including false checkbox values and zero
+amounts. Shared withholding and state/local fields remain available to either
+type. A red regression preceded the fix; all 25 node tests and the 28 focused
+native withholding/export tests pass. This guards classification but does not
+open the retained Form 4852 export route. A wider seven-file run passed 93
+tests and could not run one PDF text-extraction case because this host lacks
+`pdftotext`; it did not provide a full green PDF-source replay result.
