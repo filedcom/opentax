@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1224 bounded completed slices are recorded in the
+inside** that section. The 1225 bounded completed slices are recorded in the
 [completed ledger](ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -87,6 +87,9 @@ and 914 pages, with 28 fixture IDs lacking completed page flags.
 The annual-method marketplace APTC repayment packet adds six reviewed pages;
 the distinct inventory is 158 fixture IDs / 920 pages, leaving 27 fixture IDs
 without completed page flags.
+The shared-policy Situation 4 packet adds five reviewed pages with a single
+80% allocation to the filer and $2,880 net PTC; the inventory reaches 159
+fixture IDs / 925 pages, with 26 fixture IDs lacking completed page flags.
 A separate current-head two-page direct pension rollover packet passed a
 completed source/XML/visual checklist; the all-page review gate remains open.
 Two current-head Form 1098 purchase and construction-refinance points packets

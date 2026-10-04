@@ -3807,3 +3807,28 @@ The distinct completed inventory is **158 fixture IDs / 920 pages**, leaving
 27 fixture IDs without completed page flags. Authenticated policy and
 household records, other PTC allocation routes, complete page review, IRS
 business rules, and ATS acceptance remain open.
+
+## Situation 4 shared-policy selected PDF packet (2026-10-04)
+
+The `single-situation4-nonenrolled-other-taxpayer` packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-situation4-nonenrolled/`
+has five pages. Form 8962 Part IV prints one allocation to the other taxpayer
+for months 01–12, with 0.80 in each premium, SLCSP, and APTC percentage
+column. Its monthly rows carry $400 premium, $480 SLCSP, and $160 APTC after
+allocation; $4,800 allowed PTC minus $1,920 advance credit yields $2,880
+net PTC on Form 8962 line 26, Schedule 3 line 9, and Form 1040 line 31 once.
+The printed and native `JOE-JANE-SHARED` policy number is the required last
+15 characters of the `TX-JOE-JANE-SHARED` Form 1095-A source; the
+[2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962)
+explicitly require that suffix for longer policy numbers. All five pages
+were visually checked for the filer, other taxpayer SSN, amounts, marks,
+order, and legibility. The read-only checker passed **1 case / 5 pages**
+with source replay, artifact hashes, page origins, and local TY2025v5.4 XSD.
+Manifest SHA-256 is
+`b9d0f8fa5da6f7ce6421d89d767f989c25f43605ce8fefa6905293ab610e1101`;
+checker log `.state/research/ty2025-situation4-check-2026-10-04.log`
+has SHA-256 `5948f6f2ac9b0f0d0f72de5885faf61d471c63229ad1762295017d8d8c2b7a56`.
+The distinct completed inventory is **159 fixture IDs / 925 pages**, with 26
+fixture IDs lacking completed page flags. The synthetic allocation and family
+references are not authenticated source bytes; other shared-policy cases,
+complete page review, IRS business rules, and ATS acceptance remain open.
