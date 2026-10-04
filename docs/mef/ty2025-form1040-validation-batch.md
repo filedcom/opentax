@@ -3742,3 +3742,23 @@ with changed pages rechecked after the deduction correction. The distinct
 completed inventory is **155 fixture IDs / 903 pages**, leaving 30 fixture IDs
 without completed page flags. Source authenticity, wider credit combinations,
 full filled-page coverage, IRS business rules, and ATS acceptance remain open.
+
+## First-joint-year Form 2210-F selected PDF packet (2026-10-04)
+
+The `mfj-form2210f-first-joint-filing` packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-2210f-joint/` has three
+pages. Form 1040 prints $200,000 W-2 income, $26,898 current tax, and $1,000
+withholding. Form 2210-F checks Box B because the taxpayers filed separate
+2024 returns before their joint 2025 return; the two prior tax amounts total
+$9,000. Its $8,000 underpayment over 45 days yields a $69 penalty, which
+matches Form 1040 line 38 and a $25,967 amount owed. All pages were visually
+checked for taxpayer identity, filing status, amounts, marks, page order,
+and legibility. The read-only checker passed **1 case / 3 pages** with source
+replay, artifact hashes, page origins, and local TY2025v5.4 XSD. Manifest
+SHA-256 is `ff10b530d1d65fa97604f915e96586ebbbfeccbdba69f32d17f20e2d346137f6`;
+checker log `.state/research/ty2025-2210f-joint-check-2026-10-04.log`
+has SHA-256 `2f089b45a5f2b7205a7300eb8bc598e05f2e855216d2bca710d97f7dd5748a82`.
+The distinct completed inventory is **156 fixture IDs / 906 pages**, leaving
+29 fixture IDs without completed page flags. Authentic prior returns and
+payment records, other penalty paths, whole-batch review, IRS rules, and
+ATS acceptance remain open.
