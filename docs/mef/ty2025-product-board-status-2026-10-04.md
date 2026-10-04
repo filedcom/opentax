@@ -20,7 +20,7 @@ until their full routes or approved rejection boundaries are established.
 | Core return and source paths | 8 | Broader joins, ownership, and source classification remain open. |
 | Named tax-form gaps | 20 | Listed parent forms remain open despite completed bounded slices. |
 | Native MeF and PDF parity | 3 | Complete descriptor, attachment, and print parity remain open. |
-| Automated and artifact validation | 5 | A full batch passed 11,116/11,116 before the Form 4684 PDF repair. A corrected-source rerun stopped amid disk pressure; its 18-case XSD group passed when rerun with disk space restored. A clean corrected-source full result, route completeness, every-page review, and IRS acceptance remain open. |
+| Automated and artifact validation | 5 | A corrected-source full batch passed 11,121/11,121 on `a5e0c448`; route completeness, every-page review, and IRS acceptance remain open. |
 | IRS ATS and delivery | 5 | Credentials, accepted scenarios, and a filing-ready release remain open. |
 
 **Implemented coverage.** Retained routes include source and owner checks for
@@ -77,7 +77,7 @@ through those 15 fixtures plus the Schedule J and Form 8881 cases. The
 17-case/229-page checker passed; 29 changed pages were visually rechecked.
 The Form 8881 review adds 24 pages to the distinct completed inventory,
 bringing it to 155 fixture IDs and 903 pages; 30 fixture IDs remain without
-completed page flags. The broader full suite and IRS acceptance are still open.
+completed page flags. IRS acceptance is still open.
 A further first-joint-year Form 2210-F packet passed three visually reviewed
 pages and source/XML/XSD checks. The distinct completed inventory is now
 156 fixture IDs and 906 pages, leaving 29 fixture IDs without page flags.
@@ -99,11 +99,9 @@ or template errors; field values, page layouts, and unused template fields still
 need route review. The live inventory has 149 native MeF descriptors, 116 PDF
 descriptors, and 211 TY2025 schema roots. These counts are inventories, not positive filing claims.
 
-**Validation and release.** `deno task test` passed 11,116/11,116 on
-`a75f0bca` with local changes on 2026-10-04 and no ignored tests. It started
-before the Form 4684 PDF repair. A corrected-source rerun stopped near the
-end amid disk pressure; the affected 18-case XSD group passed after disk
-space was restored. A clean corrected-source full run remains open. The exact
+**Validation and release.** `deno task test` passed 11,121/11,121 on
+`a5e0c448` after the Form 4684 PDF and Schedule SE rounding repairs, with
+zero failures on 2026-10-04. The exact
 commands, log digests, and
 open source/visual/ATS
 limits are recorded in the

@@ -12,9 +12,9 @@ parent form or release gate.
 Work the existing non-named queue first where scope and source evidence are
 settled. The [dependency audit](docs/mef/ty2025-nonnamed-board-dependency-audit.md)
 identifies independent work, product decisions, named-form prerequisites,
-validation, and IRS ATS needs. Current local evidence includes an 11,116/11,116
-full-batch pass on `a75f0bca` before the Form 4684 PDF repair, followed by a
-passing 18-case focused XSD rerun, and 167 exportable synthetic cases with
+validation, and IRS ATS needs. Current local evidence includes an 11,121/11,121
+full-batch pass on `a5e0c448` after the Schedule SE rounding and PDF repairs,
+and 167 exportable synthetic cases with
 1,052 filled PDF pages and local TY2025 XSD validation, and selected manual
 packet reviews. Those checks do not prove every route, every PDF page, IRS
 business-rule compliance, or ATS acceptance. The [validation batch](docs/mef/ty2025-form1040-validation-batch.md)

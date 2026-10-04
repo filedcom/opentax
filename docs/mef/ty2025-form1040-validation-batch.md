@@ -3832,3 +3832,19 @@ The distinct completed inventory is **159 fixture IDs / 925 pages**, with 26
 fixture IDs lacking completed page flags. The synthetic allocation and family
 references are not authenticated source bytes; other shared-policy cases,
 complete page review, IRS business rules, and ATS acceptance remain open.
+
+## Full regression after Schedule SE rounding (2026-10-04)
+
+The diagnostic full run found three old full-return assertions that still
+expected fractional half-SE deductions: two Form 7206 cases and one
+Schedule C/qualified-dividend case. Their filed-dollar expectations were
+corrected and each affected focused case passed. The subsequent clean
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test` run on `a5e0c448`
+passed **11,121 tests, zero failed**, in 33m33s. Deno was 2.9.4
+(aarch64-apple-darwin), with V8 15.0.245.2-rusty and TypeScript 6.0.3.
+The log is
+`.state/research/ty2025-full-test-rounded-se-green-2026-10-04.log` with
+SHA-256 `d7ce83371e3775d81f8b8b2568cfee7f11a7c761a243e046d1474cbfcadecc5d`.
+The later documentation-only commit does not change tested code or fixtures.
+This local batch does not establish every-route completeness, every-page
+visual parity, IRS business-rule approval, or ATS acceptance.
