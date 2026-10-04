@@ -1,9 +1,14 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import {
+  calculateArcherMsaDistribution,
+  inputSchema,
+} from "../../../nodes/intermediate/forms/form8853/index.ts";
+import { form8853 as nativeForm8853 } from "../../mef/forms/f8853.ts";
 
 // IRS Form 8853 (2025) AcroForm field names.
 // Archer MSAs and Long-Term Care Insurance Contracts.
-// Name/SSN header fields skipped. These are source fields only, not a
-// complete calculated Form 8853.
+// The retained filing route is one taxpayer-owned, fully qualified Archer MSA
+// distribution. Reuse the native route guard before printing computed lines.
 // Section A: Archer MSA contributions and distributions.
 // Section B: Medicare Advantage MSA distributions.
 // Section C: Long-term care insurance contracts.
@@ -52,11 +57,23 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "archer_msa_rollover",
     pdfField: "topmostSubform[0].Page1[0].f1_9[0]",
+    printZero: true,
+  },
+  {
+    kind: "text",
+    domainKey: "line6c_archer_msa_net_distribution",
+    pdfField: "topmostSubform[0].Page1[0].f1_10[0]",
   },
   {
     kind: "text",
     domainKey: "archer_msa_qualified_expenses",
     pdfField: "topmostSubform[0].Page1[0].f1_11[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line8_taxable_archer_msa_distribution",
+    pdfField: "topmostSubform[0].Page1[0].f1_12[0]",
+    printZero: true,
   },
   {
     kind: "text",
@@ -98,5 +115,29 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 export const form8853Pdf: PdfFormDescriptor = {
   pendingKey: "form8853",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8853--2025.pdf",
+  pageIndices: () => [0],
+  filerFields: [
+    {
+      kind: "text",
+      domainKey: "nameLine1",
+      pdfField: "topmostSubform[0].Page1[0].f1_1[0]",
+    },
+    {
+      kind: "text",
+      domainKey: "primarySSN",
+      pdfField: "topmostSubform[0].Page1[0].f1_2[0]",
+    },
+  ],
+  instances(raw, filer, allPending) {
+    if (Object.keys(raw).length === 0) return [];
+    const source = inputSchema.parse(raw);
+    nativeForm8853.build(source, { filer, pending: allPending ?? {} });
+    const lines = calculateArcherMsaDistribution(source);
+    return [{
+      ...source,
+      line6c_archer_msa_net_distribution: lines.line6c,
+      line8_taxable_archer_msa_distribution: lines.line8,
+    }];
+  },
   fields,
 };

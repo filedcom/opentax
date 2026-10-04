@@ -12,17 +12,20 @@ MSA, and LTC source amounts on unrelated form lines, including the name/SSN
 header. Its source-field positions now match the 2025 AcroForm: Archer lines 6a,
 6b, and 7; Medicare lines 10 and 11; and LTC lines 17, 18, 19, 22, and 24. Raw
 `ltc_period_days` was removed from the PDF map because printed line 21 is **$420
-times the days**, not a day count. Focused mapping cases are written but unrun.
-The filled PDF has not been visually inspected.
-
-This is only a field-placement correction. The remaining calculated lines,
-identity, elections, and native XML are not filing-ready.
+times the days**, not a day count. The bounded taxpayer-owned, fully qualified
+Archer route now validates against the native source guard before printing,
+fills the holder name/SSN and calculated lines 6a/6b/6c/7/8 (including zero
+on 6b/8), and retains only the applicable first page. The one-page filled PDF
+was rendered and visually inspected on 2026-10-05; its PDF and image are in
+`.state/research/ty2025-filled-pdf-review/2026-10-05-form8853-bounded/`.
+The focused native/PDF cases passed 25/25. Other Section A/B/C paths remain
+guarded.
 
 ## End-to-end blockers
 
 ### Bounded native Archer MSA path now written
 
-One narrow source-to-filing route is now implemented but unrun: a single
+One narrow source-to-filing route is implemented: a single
 taxpayer-owned Archer MSA distribution whose whole-dollar gross amount is
 confirmed from Form 1099-SA and is fully matched by unreimbursed qualified
 medical expenses. The source must explicitly confirm no rollover, no tax
@@ -33,8 +36,9 @@ calculated lines 6a, 6b, 6c, 7, and 8 in XSD order. It rejects spouse/joint
 ambiguity and Schedule 1/2 conflicts. It does not emit flat legacy tags.
 
 This does not establish general Form 8853 support. The remaining paths below
-are still blocked, and neither the new XML nor the filled PDF has been run
-through the agreed full batch, local XSD validation, visual review, or ATS.
+are still blocked. The bounded filled PDF has visual review, but the new code
+awaits the current full batch; complete return XSD, business-rule, and ATS
+evidence remain open.
 
 - Other taxable Archer, Medicare, LTC, and contribution paths still lack a
   complete node print record and source model. The v5.4 XSD nests Section

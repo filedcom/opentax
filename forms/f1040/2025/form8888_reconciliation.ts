@@ -1,6 +1,6 @@
-import { z } from "zod";
+import type { z } from "zod";
 import { inputSchema } from "../nodes/inputs/f8888/index.ts";
-import type { FilerIdentity } from "../mef/header.ts";
+import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 
 export type Form8888Source = z.infer<typeof inputSchema>;
 
@@ -17,7 +17,7 @@ function assertAccountOwnership(
     filer.firstName && filer.lastName
       ? `${filer.firstName} ${filer.lastName}`
       : undefined,
-    filer.spouse
+    filer.filingStatus === FilingStatus.MarriedFilingJointly && filer.spouse
       ? `${filer.spouse.firstName} ${filer.spouse.lastName}`
       : undefined,
   ].filter((name): name is string => typeof name === "string" && name !== "")
@@ -30,7 +30,7 @@ function assertAccountOwnership(
   for (const account of accounts) {
     if (!allowedNames.includes(normalizedName(account.owner_name))) {
       throw new Error(
-        "Form 8888 account owner must match the taxpayer or spouse",
+        "Form 8888 account owner must match the taxpayer or a joint-return spouse",
       );
     }
   }
