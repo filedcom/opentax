@@ -1815,3 +1815,18 @@ is an inventory, not a finding that every such field is needed. This static
 check does not verify domain values, form-page retention, row overflow, owner,
 layout, source/MeF parity, or the still-uncovered PDF keys. The exact run log
 is `.state/research/ty2025-pdf-field-audit/run-2026-10-04.log`.
+
+## Short/long Form 8949 filled-PDF review (2026-10-04)
+
+The selected `single-short-and-long-form8949-sales` packet was generated under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-form8949-two-sales/`.
+All six pages were rendered and visually reviewed: Form 1040 pages 1–2,
+Schedule D pages 1–2, a short-term box B Form 8949 copy, and a long-term box F
+Form 8949 copy. The $2,000/$1,000 short sale yields $1,000 on Schedule D line
+2; the $4,000/$2,000 long sale yields $2,000 on line 10. Schedule D line 16
+and Form 1040 line 7a each show $3,000; AGI is $33,000. Owner association,
+checkboxes, page order, and legibility were checked on every page. The
+read-only selected-scope checker passed **one case and six pages**, replaying
+source, XML, PDF, artifact hashes, page origins, and local TY2025 v5.4 XSD.
+This remains a synthetic bounded packet; broker/issuer evidence, other sales
+and gains, the complete all-page review, business rules, and ATS are open.

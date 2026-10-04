@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1121 bounded completed slices are recorded in the
+inside** that section. The 1122 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -29,7 +29,8 @@ PDF field, checkbox, retained-page, and filer-name checks; and prepared
 attachment/archive/A2A integrity checks. Selected 21-case/70-page and
 55-case/185-page synthetic packets passed their completed visual checklists
 and read-only replay checks. A five-page mixed box 8/RTAA/grant packet also
-passed visual and source/XML/PDF replay review. These bounded selections do not cover all 180
+passed visual and source/XML/PDF replay review. A six-page short/long Form 8949
+and Schedule D packet passed the same checks. These bounded selections do not cover all 180
 current fixtures.
 A separate current-head two-page direct pension rollover packet passed a
 completed source/XML/visual checklist; the all-page review gate remains open.
