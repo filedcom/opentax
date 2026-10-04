@@ -2041,6 +2041,20 @@ lint, and diff checks passed. The current-head bulk rerun remains due after
 implementation, and issued-copy authentication and wider source combinations
 remain open.
 
+## Form 1099-B broker identity at final export (2026-10-04)
+
+A red full-return regression showed that a broker sale with a matching
+recipient could reach both native and PDF export with neither a payer TIN nor
+an issued-copy source reference. Calculation still accepts incomplete broker
+facts, but the shared final recipient check now requires at least one of those
+broker identifiers for every filed Form 1099-B row. An identified payer TIN
+and a separately identified issued-copy reference remain valid. The two-file
+broker run passed **23/23** tests, and three related withholding, Schedule B,
+and attachment files passed **36/36** tests. Formatting, lint, and diff checks
+passed. The current-head bulk rerun remains due after implementation; issuer
+authentication, transaction-level correction lineage, and ATS acceptance
+remain open.
+
 ## Two-employer W-2 excess deferral filled-PDF review (2026-10-04)
 
 On `c458142c`, the selected `single-w2-code-d-excess-line1h` fixture was

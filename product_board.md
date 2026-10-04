@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1142 bounded completed slices are recorded in the
+inside** that section. The 1143 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -69,6 +69,8 @@ The Form 1099-G positive-payer guard passed 62 focused and four nearby
 unemployment-replay tests.
 The Form 1099-PATR positive-payer guard passed 22 focused graph, owner, and
 withholding-exporter tests.
+The final Form 1099-B broker-identity guard passed 23 broker tests and 36
+related withholding, interest, and attachment tests.
 The separate 116-descriptor PDF field audit also passed. CLI type
 check, native compilation, and a synthetic W-2 → MeF → PDF smoke passed at
 earlier checkpoints.

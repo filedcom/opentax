@@ -28,5 +28,10 @@ export function assert1099BRecipientOwner(
         "1099-B recipient must match the taxpayer or joint-filing spouse",
       );
     }
+    if (!row.payer_tin && !row.source_document_reference) {
+      throw new Error(
+        "1099-B filing needs broker TIN or issued-copy reference",
+      );
+    }
   }
 }

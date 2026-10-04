@@ -116,6 +116,16 @@ Deno.test("joint return joins two broker copies through gains, withholding, nati
   assert(pdf.length > 100_000);
 });
 
+Deno.test("broker sale without payer TIN or issued-copy reference rejects both final exports", async () => {
+  const sale = { ...brokerRows[0], payer_tin: undefined };
+  const result = f1040_2025.executeReturn({ general, f1099b: [sale] });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const message = "1099-B filing needs broker TIN or issued-copy reference";
+  assertThrows(() => buildMefXml(pending, filer), Error, message);
+  await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
+});
+
 Deno.test("broker wash-sale box and other adjustment reach Form 1040 and both exports", async () => {
   const sale = {
     ...brokerRows[0],
