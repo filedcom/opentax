@@ -324,6 +324,30 @@ Deno.test("1099 payer-name variants cannot double an unidentified copy", async (
   }
 });
 
+Deno.test("final exports reject a 1099-INT duplicate with only one payer TIN", async () => {
+  const pending = {
+    f1099int: {
+      f1099ints: [
+        { payer_name: "Example Bank", payer_tin: "123456789", box1: 200 },
+        { payer_name: " example   BANK ", box1: 250 },
+      ],
+    },
+  };
+  const reason =
+    "1099-INT has multiple positive payer copies without account or issued source reference";
+  assertThrows(
+    () => assert1099WithholdingSource(pending, filer),
+    Error,
+    reason,
+  );
+  assertThrows(
+    () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    reason,
+  );
+  await assertRejects(() => buildPdfBytes(pending, filer), Error, reason);
+});
+
 Deno.test("unidentified repeated 1099-MISC copies reject native and PDF export", async () => {
   const issued = {
     payer_name: "Payer",

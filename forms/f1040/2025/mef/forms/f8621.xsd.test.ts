@@ -68,6 +68,11 @@ Deno.test({
   const interest = Math.round(
     calculateSection1291Interest(2024, 5_006.84 * 0.37),
   );
+  const excessEvents = calculateExcessEvents(event);
+  const section1291Income = excessEvents.reduce(
+    (sum, result) => sum + result.line16b_current_and_pre_pfic_income,
+    0,
+  );
   const xml = buildMefXml({
     f1040: {
       filing_status: "single",
@@ -80,9 +85,10 @@ Deno.test({
       line23_other_taxes: interest,
       line24_total_tax: 1_853 + interest,
     },
+    schedule1: { line8z_form8621_section1291: section1291Income },
     schedule2: { line17p_form8621_interest: interest },
     form8621: {
-      items: [{ item, excessEvents: calculateExcessEvents(event) }],
+      items: [{ item, excessEvents }],
     },
   }, filer);
   assertStringIncludes(xml, "<IRS8621 documentId=");

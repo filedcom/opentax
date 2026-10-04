@@ -287,3 +287,10 @@ current-year-taxable 1099-G crop-disaster full return also passes the local
 TY2025 v5.4 XSD in its focused e2e fixture. These synthetic tests do not
 authenticate issued copies, taxability workpapers, filled-PDF appearance, IRS
 business rules, or ATS acceptance.
+
+The 1099-PATR intake now rejects positive box 6 or box 7 without the box 13
+specified-cooperative mark, and rejects a box 6 deduction above 9% of box 7
+qualified payments. These are the issuer-box constraints in the
+[2025 IRS instructions](https://www.irs.gov/instructions/i1099ptr). Focused
+graph and native/PDF exporter checks pass. The written section 199A(g) notice,
+issued-copy authenticity, and wider QBI/source review remain open.

@@ -86,11 +86,30 @@ export const inputSchema = z.object({
 type INTItem = z.infer<typeof itemSchema>;
 type INTInput = z.infer<typeof inputSchema>;
 
+function hasPositive1099INTBox(item: INTItem): boolean {
+  return [
+    item.box1,
+    item.box2,
+    item.box3,
+    item.box4,
+    item.box5,
+    item.box6,
+    item.box8,
+    item.box9,
+    item.box10,
+    item.box11,
+    item.box12,
+    item.box13,
+    item.box17,
+  ].some((amount) => (amount ?? 0) > 0);
+}
+
 export function assertDistinct1099INTCopies(items: readonly INTItem[]): void {
   const issuedAccounts = new Set<string>();
   const issuedReferences = new Set<string>();
   const seenOwners = new Set<string>();
   const unidentifiedCopies = new Set<string>();
+  const seenItems: INTItem[] = [];
   for (const item of items) {
     const payer = item.payer_tin?.replace(/\D/g, "") ||
       item.payer_name.trim().replace(/\s+/g, " ").toUpperCase();
@@ -113,21 +132,36 @@ export function assertDistinct1099INTCopies(items: readonly INTItem[]): void {
       }
       issuedAccounts.add(key);
     }
-    const positive = [
-      item.box1,
-      item.box2,
-      item.box3,
-      item.box4,
-      item.box5,
-      item.box6,
-      item.box8,
-      item.box9,
-      item.box10,
-      item.box11,
-      item.box12,
-      item.box13,
-      item.box17,
-    ].some((amount) => (amount ?? 0) > 0);
+    const positive = hasPositive1099INTBox(item);
+    const payerName = item.payer_name.trim().replace(/\s+/g, " ").toUpperCase();
+    for (const earlier of seenItems) {
+      if (
+        earlier.recipient_tin !== item.recipient_tin ||
+        earlier.payer_name.trim().replace(/\s+/g, " ").toUpperCase() !==
+          payerName ||
+        (earlier.payer_tin?.replace(/\D/g, "") &&
+          item.payer_tin?.replace(/\D/g, ""))
+      ) continue;
+      if (
+        earlier.account_number && item.account_number &&
+        earlier.account_number.trim() === item.account_number.trim()
+      ) {
+        throw new Error(
+          "1099-INT repeats the same payer and account; corrected copies need a reviewed single current row",
+        );
+      }
+      const earlierPositive = hasPositive1099INTBox(earlier);
+      if (
+        positive && earlierPositive &&
+        ((!earlier.account_number && !earlier.source_document_reference) ||
+          (!item.account_number && !item.source_document_reference))
+      ) {
+        throw new Error(
+          "1099-INT has multiple positive payer copies without account or issued source reference",
+        );
+      }
+    }
+    seenItems.push(item);
     if (!positive) continue;
     if (!item.account_number && !item.source_document_reference) {
       if (seenOwners.has(owner)) {

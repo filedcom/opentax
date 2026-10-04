@@ -133,3 +133,13 @@ Both final exporters now separately replay QEF, mark-to-market, and section
 The three regime examples and no-source export guards passed with 79 nearby
 tests on October 4. This guards the line 8z join; the parent PDF, issuer
 authentication, historical records, and ATS gates above remain open.
+
+The staged section 1291 parent projection now omits a zero-excess distribution
+from Part V pages and their line 16a statements while retaining all original
+source events for the return reconciliation. A mixed holding with a nonexcess
+distribution followed by an excess distribution prints only the latter Part V
+and preserves its source event number in the statement. The Form 8621 local
+PDF/MeF/XSD group passed 12 tests on October 4. The XSD fixture also now
+supplies the source-replayed Schedule 1 line 8z amount required by the final
+export guard. The parent form remains unregistered pending authenticated issuer
+and historical evidence and a complete printable-return review.

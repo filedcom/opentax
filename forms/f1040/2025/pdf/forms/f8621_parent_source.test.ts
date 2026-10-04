@@ -264,6 +264,69 @@ Deno.test("Form 8621 staged parent creates a distinct Part V and statement for e
   );
 });
 
+Deno.test("Form 8621 prints Part V only for excess distributions in a mixed block", () => {
+  const mixedSource = {
+    kind: ExcessEventKind.Distribution as const,
+    holding_period_start: "2024-01-01",
+    first_pfic_tax_year: 2024,
+    shares_in_block: 100,
+    prior_year_distributions: [{ tax_year: 2024, amount_usd: 8_000 }],
+    current_year_distributions: [
+      { date: "2025-06-30", amount_usd: 0.01, year_charges: [] },
+      { date: "2025-12-31", amount_usd: 11_000, year_charges: [] },
+    ],
+    taxable_nonexcess_dividend_usd: 0,
+  };
+  const mixedItem = itemSchema.parse({
+    ...item,
+    parent_source: {
+      ...parentSource,
+      shares_acquired_during_2025: false,
+      acquisition_date: undefined,
+      section1291_prior_distribution_records: [{
+        source_event_index: 0,
+        tax_year: 2024,
+        currency_code: "USD",
+        amount: 8_000,
+        document_id: "issuer-2024-distributions",
+        sha256: "b".repeat(64),
+      }],
+    },
+    excess_events: [mixedSource],
+  });
+  const results = calculateExcessEvents(mixedSource);
+  assertEquals(results.length, 2);
+  assertEquals(results[0].amount_usd, 0);
+  const line = { item: mixedItem, excessEvents: results };
+  const pages = projectForm8621ParentPages(line, filer);
+  assertEquals(pages.partV.length, 1);
+  assertEquals(pages.holdingPeriodStatements.length, 1);
+  assertStringIncludes(pages.holdingPeriodStatements[0], "distribution 2,");
+  assertEquals(
+    pages.partV[0]["topmostSubform[0].Page3[0].f3_7[0]"],
+    String(Math.round(results[1].amount_usd)),
+  );
+  const income = results.reduce(
+    (sum, event) => sum + event.line16b_current_and_pre_pfic_income,
+    0,
+  );
+  const tax = results.reduce(
+    (sum, event) => sum + event.line16e_additional_tax,
+    0,
+  );
+  const interest = results.reduce(
+    (sum, event) => sum + event.line16f_interest,
+    0,
+  );
+  const packet = projectForm8621Section1291Packet({
+    form8621: { items: [line] },
+    schedule1: { line8z_form8621_section1291: income },
+    schedule2: { line17p_form8621_interest: interest },
+    f1040: { form8621_tax: tax, line16_income_tax: tax + 500 },
+  }, filer);
+  assertEquals(packet.forms[0].partV.length, 1);
+});
+
 Deno.test("Form 8621 parent source rejects changed shares, election, and acquisition facts", () => {
   assertThrows(
     () => projectForm8621ParentSource({ ...item, shares_owned: 101 }),

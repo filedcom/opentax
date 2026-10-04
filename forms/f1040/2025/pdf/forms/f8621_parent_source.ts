@@ -130,35 +130,36 @@ export function projectForm8621PartV(line: Form8621Lines): Fields[] {
   }
   explainForm8621ExcessStatement(line);
   const page = "topmostSubform[0].Page3[0].";
-  return line.excessEvents.map((event) => {
-    if (event.amount_usd <= 0) {
-      throw new Error(
-        "Form 8621 nonexcess Part V needs a separate printable route",
-      );
-    }
-    const fields: Fields = {
-      [`${page}f3_1[0]`]: event.currency_code,
-      [`${page}f3_9[0]`]: dollars(event.line16b_current_and_pre_pfic_income),
-      [`${page}f3_10[0]`]: dollars(event.line16c_prior_year_tax_before_credit),
-      [`${page}f3_11[0]`]: dollars(event.line16d_prior_year_foreign_tax_credit),
-      [`${page}f3_12[0]`]: dollars(event.line16e_additional_tax),
-      [`${page}f3_13[0]`]: dollars(event.line16f_interest),
-    };
-    if (event.kind === ExcessEventKind.Distribution) {
-      fields[`${page}f3_2[0]`] = dollars(event.line15a_current_distributions);
-      fields[`${page}f3_3[0]`] = dollars(event.line15b_prior_distributions);
-      fields[`${page}f3_4[0]`] = dollars(event.line15c_prior_average);
-      fields[`${page}f3_5[0]`] = dollars(event.line15d_threshold);
-      fields[`${page}f3_6[0]`] = dollars(event.amount_form_currency);
-      fields[`${page}f3_7[0]`] = dollars(event.amount_usd);
-    } else {
-      fields[`${page}f3_8[0]`] = dollars(event.amount_usd);
-    }
-    return fields;
-  });
+  return line.excessEvents.filter((event) => event.amount_usd > 0).map(
+    (event) => {
+      const fields: Fields = {
+        [`${page}f3_1[0]`]: event.currency_code,
+        [`${page}f3_9[0]`]: dollars(event.line16b_current_and_pre_pfic_income),
+        [`${page}f3_10[0]`]: dollars(
+          event.line16c_prior_year_tax_before_credit,
+        ),
+        [`${page}f3_11[0]`]: dollars(
+          event.line16d_prior_year_foreign_tax_credit,
+        ),
+        [`${page}f3_12[0]`]: dollars(event.line16e_additional_tax),
+        [`${page}f3_13[0]`]: dollars(event.line16f_interest),
+      };
+      if (event.kind === ExcessEventKind.Distribution) {
+        fields[`${page}f3_2[0]`] = dollars(event.line15a_current_distributions);
+        fields[`${page}f3_3[0]`] = dollars(event.line15b_prior_distributions);
+        fields[`${page}f3_4[0]`] = dollars(event.line15c_prior_average);
+        fields[`${page}f3_5[0]`] = dollars(event.line15d_threshold);
+        fields[`${page}f3_6[0]`] = dollars(event.amount_form_currency);
+        fields[`${page}f3_7[0]`] = dollars(event.amount_usd);
+      } else {
+        fields[`${page}f3_8[0]`] = dollars(event.amount_usd);
+      }
+      return fields;
+    },
+  );
 }
 
-/** One page-1 and one Part V field set per event; Part VI is empty only on a declared absence. */
+/** One page 1 and one Part V set per positive event; Part VI stays empty on a declared absence. */
 export function projectForm8621ParentPages(
   line: Form8621Lines,
   filer: FilerIdentity,
@@ -169,11 +170,14 @@ export function projectForm8621ParentPages(
   }
   const page1 = projectForm8621Page1(line, filer);
   const partV = projectForm8621PartV(line);
+  const positiveEventIndices = line.excessEvents.flatMap((event, index) =>
+    event.amount_usd > 0 ? [index] : []
+  );
   return {
     page1,
     partV,
     partVI: {} as Fields,
-    holdingPeriodStatements: partV.map((_, index) =>
+    holdingPeriodStatements: positiveEventIndices.map((index) =>
       explainForm8621ExcessEvent(line, index)
     ),
   };

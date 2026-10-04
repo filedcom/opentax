@@ -106,6 +106,8 @@ Deno.test("positive PATR withholding and cooperative deduction need a filed owne
   for (
     const box of [{ box4_federal_withheld: 20 }, {
       box6_section199ag_deduction: 40,
+      box7_qualified_payments: 500,
+      box13_specified_cooperative: true,
     }]
   ) {
     const source = { f1099patr: { f1099patrs: [box] } };
@@ -133,6 +135,28 @@ Deno.test("positive 1099-PATR withholding needs an identified payer in both Form
     },
   };
   const message = "Positive Form 1099-PATR needs an identified payer";
+  assertThrows(() => irs1040.build(filed, { pending }), Error, message);
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(filed, pending),
+    Error,
+    message,
+  );
+});
+
+Deno.test("invalid specified-cooperative deduction rejects native and PDF export", () => {
+  const pending = {
+    f1099patr: {
+      f1099patrs: [{
+        payer_name: "Cooperative",
+        payer_tin: "123456789",
+        recipient_tin: "111223333",
+        box6_section199ag_deduction: 100,
+        box7_qualified_payments: 1_000,
+        box13_specified_cooperative: true,
+      }],
+    },
+  };
+  const message = "box 6 deduction cannot exceed 9%";
   assertThrows(() => irs1040.build(filed, { pending }), Error, message);
   assertThrows(
     () => irs1040Pdf.projectFields?.(filed, pending),

@@ -39,6 +39,25 @@ export const itemSchema = z.object({
 }).superRefine((item, ctx) => {
   const gross = distributionTotal(item);
   const treatment = item.distribution_treatment;
+  const qualifiedPayments = item.box7_qualified_payments ?? 0;
+  const passedDeduction = item.box6_section199ag_deduction ?? 0;
+  if (
+    (qualifiedPayments > 0 || passedDeduction > 0) &&
+    item.box13_specified_cooperative !== true
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "1099-PATR boxes 6 and 7 require a specified cooperative in box 13",
+    });
+  }
+  if (passedDeduction > qualifiedPayments * 0.09) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "1099-PATR box 6 deduction cannot exceed 9% of box 7 qualified payments",
+    });
+  }
   if (gross > 0 && !treatment) {
     ctx.addIssue({
       code: "custom",

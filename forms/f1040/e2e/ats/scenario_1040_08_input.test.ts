@@ -77,3 +77,31 @@ Deno.test("ATS 1040 Scenario 8: code G and printed mark confirm rollover but cod
   assertEquals(forms[1].direct_rollover_confirmed, true);
   assertEquals(forms[1].box2a_taxable_amount, 10_300);
 });
+
+Deno.test("ATS 1040 Scenario 8: source-backed PDF QCD state conflicts with printed packet", () => {
+  const result = execute(plan, registry, scenario104008Input(), {
+    taxYear: 2025,
+    formType: "f1040",
+  });
+  assertEquals(result.diagnostics, []);
+  const form = result.pending.f1040;
+  assertEquals(form?.line4a_ira_gross, 35_800);
+  assertEquals(form?.line4b_ira_taxable, 0);
+
+  // Project only the IRA source here. The packet's 1099-DIV amount has no
+  // identified payer, so the complete return correctly fails PDF export.
+  const projected = irs1040Pdf.projectFields?.(
+    {
+      line4a_ira_gross: form?.line4a_ira_gross,
+      line4b_ira_taxable: form?.line4b_ira_taxable,
+      line5a_pension_gross: form?.line5a_pension_gross,
+      line5b_pension_taxable: form?.line5b_pension_taxable,
+      line5c_pension_rollover: form?.line5c_pension_rollover,
+    },
+    { f1099r: result.pending.f1099r },
+  );
+  assertEquals(projected?.line4a_ira_gross, 35_800);
+  assertEquals(projected?.print_ira_qcd, false);
+  assertEquals(SCENARIO_1040_08_FACTS.form1040.line4aBlank, true);
+  assertEquals(SCENARIO_1040_08_FACTS.form1040.line4cQcdChecked, true);
+});
