@@ -1,5 +1,17 @@
 # TY2025 Schedule 1 line 8z source ledger gap
 
+## 2026-10-04 disallowed business interest source boundary
+
+The Schedule 1 and AGI calculators can still stage
+`biz_interest_disallowed_add_back`, but the Form 8990 filing route remains
+closed. A bare positive scalar previously produced a native line 8z type
+statement and a PDF Schedule 1 instance with no retained Form 8990 source.
+The shared native/PDF line 8z row builder now rejects it. Two red export
+regressions passed after the guard, along with 60 nearby Schedule 1 cases.
+The positive route needs the complete traced interest, return-wide limit,
+carryforward, and finalized Form 8990 attachment described in the
+[Form 8990 gap](ty2025-form8990-gap.md).
+
 ## 2026-10-02 at-risk recapture source boundary
 
 The direct `at_risk_recapture` amount had a printable line 8z label but no

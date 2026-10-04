@@ -17,7 +17,6 @@ const SOURCED_COMPONENTS = [
   ["line8z_f1098_interest_recovery", "Form 1098 mortgage interest refund"],
   ["line8z_hsa_excess_earnings", "HSA excess earnings"],
   ["line8z_hsa_excess_employer", "HSA excess employer contributions"],
-  ["biz_interest_disallowed_add_back", "Disallowed business interest"],
 ] as const;
 
 /**
@@ -71,6 +70,15 @@ export function schedule1OtherIncomeRows(
   ) {
     throw new Error(
       "Schedule 1 at-risk loss add-back needs activity-level source facts",
+    );
+  }
+  if (
+    source.biz_interest_disallowed_add_back !== undefined &&
+    source.biz_interest_disallowed_add_back !== null &&
+    source.biz_interest_disallowed_add_back !== 0
+  ) {
+    throw new Error(
+      "Schedule 1 disallowed business interest needs a retained Form 8990 source",
     );
   }
   const componentRows: Schedule1OtherIncomeRow[] = SOURCED_COMPONENTS.flatMap(
