@@ -5931,7 +5931,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     filer: singleFiler,
     expectedPdfForms: ["f1040", "form8962", "schedule2"],
     reviewFocus: [
-      "Form 8962 prints one named policy across its monthly rows, not a second or blank copy",
+      "Form 8962 uses annual line 11 for one full-year policy; monthly rows and allocation page remain blank, with no duplicate form copy",
       "Household income, federal-poverty percentage, applicable figure and repayment limitation agree with the source calculation",
       "Excess APTC carries once to Schedule 2 line 1a and Form 1040 line 17",
       "Both Form 8962 pages and the Schedule 2 page have legible fields and no clipped monthly amount",

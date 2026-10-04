@@ -3784,3 +3784,26 @@ The distinct completed inventory is **157 fixture IDs / 914 pages**, with 28
 fixture IDs lacking completed page flags. Authenticated foreign tax and prior
 return records, wider category/carryover routes, all-case page review, IRS
 business rules, and ATS acceptance remain open.
+
+## Annual-method APTC repayment selected PDF packet (2026-10-04)
+
+The `single-marketplace-aptc-repayment` packet in
+`.state/research/ty2025-filled-pdf-review/2026-10-04-aptc-repayment-reviewed/`
+has six pages. Its Form 8962 review focus was corrected to describe the
+annual line 11 calculation for one full-year policy; monthly rows and the
+allocation page are blank as printed. The source Form 1095-A has $9,600
+premiums, $7,200 SLCSP, and $8,400 APTC. Form 8962 shows $45,180 household
+income at 300% of FPL, a 0.0600 applicable figure, $4,489 allowed PTC,
+and $3,911 excess advance credit limited to a $1,625 repayment. Schedule 2
+line 1a and Form 1040 line 17 carry the $1,625 once, leaving an $82 refund
+after $5,000 withholding. All six pages were visually checked for owner,
+form/year, amounts, marks, page order, and clipping. The read-only checker
+passed **1 case / 6 pages** with source replay, artifact hashes, page origins,
+and local TY2025v5.4 XSD. Manifest SHA-256 is
+`63edd39122912209986bd8e678bdd18a772ac1b68d094817ceb39f67cc3c0276`;
+checker log `.state/research/ty2025-aptc-repayment-check-2026-10-04.log`
+has SHA-256 `1bd559545ef85586bbb1be3062e719d1143f8f6832b663de36e910feb302f012`.
+The distinct completed inventory is **158 fixture IDs / 920 pages**, leaving
+27 fixture IDs without completed page flags. Authenticated policy and
+household records, other PTC allocation routes, complete page review, IRS
+business rules, and ATS acceptance remain open.
