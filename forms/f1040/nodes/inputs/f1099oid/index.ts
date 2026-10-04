@@ -18,7 +18,9 @@ import { pabAllocableDeductionWorkpaperSchema } from "../pab_allocable_deduction
 // IRS Form 1099-OID TY2025: Original Issue Discount
 export const itemSchema = z.object({
   // Payer identification
-  payer_name: z.string().min(1),
+  payer_name: z.string().min(1).refine((name) => name.trim().length > 0, {
+    message: "1099-OID needs an identified payer name",
+  }),
   payer_tin: z.string().optional(),
   source_document_reference: z.string().trim().min(1).optional(),
   recipient_tin: z.string().regex(/^\d{9}$/).optional(),

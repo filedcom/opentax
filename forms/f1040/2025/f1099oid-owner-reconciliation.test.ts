@@ -70,6 +70,18 @@ Deno.test("joint spouse 1099-OID belongs on MFJ return only", () => {
   );
 });
 
+Deno.test("positive 1099-OID needs a nonblank payer name in both Form 1040 exports", () => {
+  const pending = retained("111223333");
+  pending.f1099oid.f1099oids[0].payer_name = "   ";
+  const message = "1099-OID needs an identified payer name";
+  assertThrows(() => irs1040.build(filed, { pending }), Error, message);
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(filed, pending),
+    Error,
+    message,
+  );
+});
+
 Deno.test("tax-exempt OID still requires owner at export", () => {
   const pending = {
     f1099oid: {

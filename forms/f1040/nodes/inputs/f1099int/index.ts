@@ -26,7 +26,9 @@ import { sellerFinancedBuyerSchema } from "../../../seller_financed_buyer.ts";
 import { pabAllocableDeductionWorkpaperSchema } from "../pab_allocable_deduction.ts";
 
 export const itemSchema = z.object({
-  payer_name: z.string().min(1),
+  payer_name: z.string().min(1).refine((name) => name.trim().length > 0, {
+    message: "1099-INT needs an identified payer name",
+  }),
   source_document_reference: z.string().trim().min(1).optional(),
   payer_tin: z.string().optional(),
   recipient_tin: z.string().regex(/^\d{9}$/).optional(),

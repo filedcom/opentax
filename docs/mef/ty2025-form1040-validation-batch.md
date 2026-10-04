@@ -1997,6 +1997,16 @@ formatting, lint, and diff checks passed. The current-head bulk rerun remains
 due after implementation, and issued-copy authentication and wider source
 variants remain open.
 
+## Forms 1099-INT/OID payer-name identity guards (2026-10-04)
+
+Red Form 1040 exporter regressions showed that positive taxable interest and
+OID source rows with whitespace-only payer names passed both native and PDF
+projection. Their source schemas now require nonblank payer-name text without
+changing valid filed text. The four-file focused graph/exporter run passed
+**102/102** tests; formatting, lint, and diff checks passed. The current-head
+bulk rerun remains due after implementation, and issued-copy authentication
+and wider source combinations remain open.
+
 ## Two-employer W-2 excess deferral filled-PDF review (2026-10-04)
 
 On `c458142c`, the selected `single-w2-code-d-excess-line1h` fixture was
