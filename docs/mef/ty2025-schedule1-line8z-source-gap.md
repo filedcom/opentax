@@ -163,8 +163,11 @@ PDF packet builders reject an altered statement amount or source recipient.
 The three focused tests pass. A mixed-family replay also combines two box 8 copies with separate RTAA and
 taxable-grant 1099-G copies: all four native and filled-PDF statement rows
 appear, $1,750 reaches Form 1040 once, and the XML passes local TY2025 v5.4
-XSD validation. The four focused cases pass. Issued payer-copy bytes, payment
-character beyond the reported box, raster appearance, IRS business rules, and
+XSD validation. The four focused cases pass. A selected five-page packet was
+then rendered and visually checked for Form 1040/Schedule 1 totals, all four
+statement rows, owner, page order, and legibility; source, XML, and PDF replay
+passed the local XSD review checker. Issued payer-copy bytes, payment
+character beyond the reported box, wider page review, IRS business rules, and
 ATS acceptance remain open. The
 [2025 Form 1099-MISC recipient instructions](https://www.irs.gov/pub/irs-prior/f1099msc--2025.pdf)
 and [2025 Publication 550](https://www.irs.gov/publications/p550) direct box 8
