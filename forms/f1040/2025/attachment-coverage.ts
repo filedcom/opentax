@@ -451,6 +451,11 @@ export function assertAttachmentCoverage(
   exportKind: ExportKind,
 ): void {
   const byKey = pending as Readonly<Record<string, unknown>>;
+  if (byKey.amendment_request !== undefined) {
+    throw new Error(
+      `[${exportKind.toUpperCase()}] Amendment request needs an accepted prior return, corrected-year calculation, and separate Form 1040-X filing workflow; export blocked`,
+    );
+  }
   if (byKey.payment_request !== undefined) {
     throw new Error(
       `[${exportKind.toUpperCase()}] Payment request needs a separate authorized withdrawal workflow; this Form 1040 packet does not include a debit request; export blocked`,

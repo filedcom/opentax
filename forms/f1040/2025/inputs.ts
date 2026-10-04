@@ -192,6 +192,10 @@ import {
   payment_request,
 } from "../nodes/inputs/payment_request/index.ts";
 import {
+  amendment_request,
+  inputSchema as amendmentRequestInputSchema,
+} from "../nodes/inputs/amendment_request/index.ts";
+import {
   f2210,
   inputSchema as f2210InputSchema,
 } from "../nodes/inputs/f2210/index.ts";
@@ -848,6 +852,11 @@ export const inputNodes: readonly InputNodeEntry[] = [
   {
     node: payment_request,
     inputSchema: paymentRequestInputSchema,
+    isArray: false,
+  },
+  {
+    node: amendment_request,
+    inputSchema: amendmentRequestInputSchema,
     isArray: false,
   },
   { node: f2210, inputSchema: f2210InputSchema, isArray: false },
