@@ -33,6 +33,7 @@ import {
   assertScheduleFFarmSourceIdentity,
 } from "../filer-source-reconciliation.ts";
 import { assertBox11CodeJSources } from "../../nodes/inputs/k1_partnership/box11_code_j.ts";
+import { assertSchedule1Form8621Source } from "../schedule1-form8621-source.ts";
 import { assertBox11CodeESources } from "../../nodes/inputs/k1_partnership/box11_code_e.ts";
 import { assertBox11CodeKSources } from "../../nodes/inputs/k1_partnership/box11_code_k.ts";
 import { assertBox11CodeSSources } from "../../nodes/inputs/k1_partnership/box11_code_s.ts";
@@ -307,6 +308,7 @@ function buildReturnXml(
   assertSchedule1Box3SourceIdentity(pending, filer);
   assertSchedule1Box8SourceIdentity(pending, filer);
   assertSchedule1Form8814Source(pending);
+  assertSchedule1Form8621Source(pending);
   assertSchedule1NecSourceIdentity(pending, filer);
   assertSchedule1KSourceIdentity(pending, filer);
   assertScheduleFFarmSourceIdentity(pending, filer);

@@ -127,3 +127,9 @@ TY2025v5.4 XSD case. These checks do not authenticate the referenced issuer,
 historical election, prior-distribution, value, or tax records and do not
 establish a printable registered parent packet. The parent parity gap stays
 open; a current-worktree full suite is running separately.
+
+Both final exporters now separately replay QEF, mark-to-market, and section
+1291 Schedule 1 income from retained holding inputs before return assembly.
+The three regime examples and no-source export guards passed with 79 nearby
+tests on October 4. This guards the line 8z join; the parent PDF, issuer
+authentication, historical records, and ATS gates above remain open.

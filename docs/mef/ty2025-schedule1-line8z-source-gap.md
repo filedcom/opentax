@@ -1,5 +1,20 @@
 # TY2025 Schedule 1 line 8z source ledger gap
 
+## 2026-10-04 Form 8621 income replay
+
+Both final exporters now replay retained PFIC holding inputs through the Form
+8621 calculator and require Schedule 1's separate QEF, mark-to-market, and
+section 1291 line 8z amounts to match. A direct $100 scalar in any one of
+these slots previously reached the Schedule 1 statement-row builder; the
+return-wide arithmetic check then rejected an unchanged return total without
+establishing a source-specific Form 8621 boundary. The new check rejects the
+unsupported amount before either exporter assembles a return and catches a
+changed source-backed amount. The three calculated regime examples and both
+final-export guards pass with 79 selected Schedule 1/Form 8621 tests. This is
+a source-replay guard, not issuer or prior-year evidence. The parent Form 8621
+PDF remains unregistered, so no positive filing route or ATS acceptance is
+claimed.
+
 ## 2026-10-04 disallowed business interest source boundary
 
 The Schedule 1 and AGI calculators can still stage

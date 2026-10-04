@@ -36,6 +36,7 @@ import { assertScheduleDSalesMatchPrepared } from "../mef/forms/schedule_d.ts";
 import { assertPreparedVehicleAcknowledgments } from "../mef/forms/f8283_vehicle_sale_evidence.ts";
 import { inputSchema as form8283SourceSchema } from "../../nodes/inputs/f8283/index.ts";
 import { assertBox11CodeJSources } from "../../nodes/inputs/k1_partnership/box11_code_j.ts";
+import { assertSchedule1Form8621Source } from "../schedule1-form8621-source.ts";
 import { assertBox11CodeESources } from "../../nodes/inputs/k1_partnership/box11_code_e.ts";
 import { assertBox11CodeKSources } from "../../nodes/inputs/k1_partnership/box11_code_k.ts";
 import { assertBox11CodeSSources } from "../../nodes/inputs/k1_partnership/box11_code_s.ts";
@@ -603,6 +604,7 @@ export async function buildPdfBytes(
     assertSchedule1Box3SourceIdentity(normalized, filer);
     assertSchedule1Box8SourceIdentity(normalized, filer);
     assertSchedule1Form8814Source(normalized);
+    assertSchedule1Form8621Source(normalized);
     assertSchedule1NecSourceIdentity(normalized, filer);
     assertSchedule1KSourceIdentity(normalized, filer);
     assertScheduleFFarmSourceIdentity(normalized, filer);
