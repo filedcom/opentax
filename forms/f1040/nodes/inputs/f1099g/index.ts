@@ -179,14 +179,19 @@ type G99Items = z.infer<typeof itemSchema>[];
 export function assertDistinct1099GCopies(items: G99Items): void {
   const seenAccounts = new Set<string>();
   const seenReferences = new Set<string>();
+  const seenOwners = new Set<string>();
+  const unidentifiedCopies = new Set<string>();
   for (const item of items) {
-    if (!item.payer_tin || !item.recipient_tin) continue;
-    const payer = item.payer_tin.replace(/\D/g, "");
-    if (item.account_number) {
+    const payer = item.payer_tin?.replace(/\D/g, "") ||
+      item.payer_name?.trim().replace(/\s+/g, " ").toUpperCase() || null;
+    const account = item.account_number?.trim() || null;
+    const identifiedAccount = !!(account && payer && item.recipient_tin);
+    const owner = JSON.stringify([payer, item.recipient_tin ?? null]);
+    if (identifiedAccount) {
       const key = JSON.stringify([
         payer,
         item.recipient_tin,
-        item.account_number.trim(),
+        account,
       ]);
       if (seenAccounts.has(key)) {
         throw new Error(
@@ -196,18 +201,39 @@ export function assertDistinct1099GCopies(items: G99Items): void {
       seenAccounts.add(key);
     }
     if (item.source_document_reference) {
-      const key = JSON.stringify([
-        payer,
-        item.recipient_tin,
-        item.source_document_reference,
-      ]);
+      const key = item.source_document_reference;
       if (seenReferences.has(key)) {
         throw new Error(
-          "1099-G repeats the same identified payer, recipient, and issued source reference; corrected copies need a reviewed single current row",
+          "1099-G repeats the same issued-copy source reference; corrected copies need a reviewed single current row",
         );
       }
       seenReferences.add(key);
     }
+    const positive = [
+      item.box_1_unemployment,
+      item.box_1_repaid,
+      item.box_2_state_refund,
+      item.box_4_federal_withheld,
+      item.box_5_rtaa,
+      item.box_6_taxable_grants,
+      item.box_7_agriculture,
+      item.box_9_market_gain,
+      item.box_11_state_withheld,
+    ].some((amount) => (amount ?? 0) > 0);
+    if (!positive) continue;
+    if (!identifiedAccount && !item.source_document_reference) {
+      if (seenOwners.has(owner)) {
+        throw new Error(
+          "1099-G has multiple positive payer copies without account or issued source reference",
+        );
+      }
+      unidentifiedCopies.add(owner);
+    } else if (unidentifiedCopies.has(owner)) {
+      throw new Error(
+        "1099-G has multiple positive payer copies without account or issued source reference",
+      );
+    }
+    seenOwners.add(owner);
   }
 }
 

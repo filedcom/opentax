@@ -71,11 +71,14 @@ function kRecipientMatches(
   filer: FilerIdentity,
 ): boolean {
   const recipient = tin(item.recipient_tin, "1099-K recipient");
-  const recipients = [tin(filer.primarySSN, "taxpayer")];
-  if (filer.filingStatus === FilingStatus.MarriedFilingJointly) {
-    recipients.push(tin(filer.spouse?.ssn, "spouse"));
-  }
-  const tinMatches = Boolean(recipient && recipients.includes(recipient));
+  const taxpayerTin = tin(filer.primarySSN, "taxpayer");
+  const spouseTin = filer.filingStatus === FilingStatus.MarriedFilingJointly
+    ? tin(filer.spouse?.ssn, "spouse")
+    : undefined;
+  const tinMatches = Boolean(
+    recipient && (recipient === taxpayerTin || recipient === spouseTin),
+  );
+  if (recipient && !tinMatches) return false;
   const review = item.recipient_identity_review as
     | Record<string, unknown>
     | undefined;
@@ -84,15 +87,21 @@ function kRecipientMatches(
     typeof value === "string"
       ? value.trim().replace(/\s+/g, " ").toUpperCase()
       : "";
-  const names = [
+  const taxpayerNames = [
     filer.fullName,
     filer.firstName && filer.lastName
       ? `${filer.firstName} ${filer.lastName}`
       : undefined,
-    filer.filingStatus === FilingStatus.MarriedFilingJointly && filer.spouse
-      ? `${filer.spouse.firstName} ${filer.spouse.lastName}`
-      : undefined,
-  ].map(normalize).filter(Boolean);
+  ];
+  const spouseNames =
+    filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+      filer.spouse
+      ? [`${filer.spouse.firstName} ${filer.spouse.lastName}`]
+      : [];
+  const names =
+    (recipient
+      ? recipient === taxpayerTin ? taxpayerNames : spouseNames
+      : [...taxpayerNames, ...spouseNames]).map(normalize).filter(Boolean);
   return names.includes(normalize(review.recipient_name)) &&
     normalize(review.address_line1) === normalize(filer.address.line1) &&
     normalize(review.address_line2) === normalize(filer.address.line2) &&
@@ -1101,15 +1110,27 @@ export function assertSchedule1Form8814Source(
   if (!Array.isArray(items)) {
     throw new Error("Form 8814 retained child elections must be rows");
   }
+  let sourceTax = 0;
   const sourceTotal = items.reduce((sum, line) => {
+    const calculated = line?.item ? calculateForm8814(line.item) : undefined;
     if (
       !line || typeof line !== "object" || !line.item ||
       typeof line.line12 !== "number" ||
       !Number.isSafeInteger(line.line12) ||
-      line.line12 !== calculateForm8814(line.item).line12
+      line.line12 !== calculated?.line12
     ) {
       throw new Error("Form 8814 line 12 differs from reviewed child election");
     }
+    if (
+      typeof line.line15 !== "number" ||
+      !Number.isSafeInteger(line.line15) ||
+      line.line15 !== calculated?.line15
+    ) {
+      throw new Error(
+        "Form 8814 line 15 tax differs from reviewed child election",
+      );
+    }
+    sourceTax += line.line15;
     return sum + line.line12;
   }, 0);
   const schedule1 = pending.schedule1 as Record<string, unknown> | undefined;
@@ -1121,6 +1142,17 @@ export function assertSchedule1Form8814Source(
   ) {
     throw new Error(
       "Schedule 1 Form 8814 line 8z differs from retained child elections",
+    );
+  }
+  const filedTax = (pending.f1040 as Record<string, unknown> | undefined)
+    ?.form8814_tax;
+  if (
+    (sourceTax > 0 || filedTax !== undefined) &&
+    (typeof filedTax !== "number" || !Number.isSafeInteger(filedTax) ||
+      filedTax !== sourceTax)
+  ) {
+    throw new Error(
+      "Form 1040 child-election tax differs from retained Form 8814 lines 15",
     );
   }
 }

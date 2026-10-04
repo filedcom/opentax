@@ -18,10 +18,13 @@ import { pabAllocableDeductionWorkpaperSchema } from "../pab_allocable_deduction
 // IRS Form 1099-OID TY2025: Original Issue Discount
 export const itemSchema = z.object({
   // Payer identification
-  payer_name: z.string().min(1),
+  payer_name: z.string().min(1).refine((name) => name.trim().length > 0, {
+    message: "1099-OID needs an identified payer name",
+  }),
   payer_tin: z.string().optional(),
   source_document_reference: z.string().trim().min(1).optional(),
   recipient_tin: z.string().regex(/^\d{9}$/).optional(),
+  account_number: z.string().trim().min(1).max(40).optional(),
 
   // Box 1: Original issue discount for 2025
   box1_oid: z.number().nonnegative().optional(),
@@ -91,19 +94,65 @@ type OIDItem = z.infer<typeof itemSchema>;
 type OIDItems = OIDItem[];
 
 export function assertDistinct1099OIDCopies(items: OIDItems): void {
-  const seen = new Set<string>();
+  const seenReferences = new Set<string>();
+  const seenAccounts = new Set<string>();
+  const seenOwners = new Set<string>();
+  const unidentifiedCopies = new Set<string>();
   for (const item of items) {
-    if (!item.source_document_reference || !item.payer_tin) continue;
-    const key = JSON.stringify([
-      item.source_document_reference,
-      item.payer_tin.replace(/\D/g, ""),
-    ]);
-    if (seen.has(key)) {
+    const payer = item.payer_tin?.replace(/\D/g, "") ||
+      item.payer_name.trim().replace(/\s+/g, " ").toUpperCase();
+    const owner = JSON.stringify([payer, item.recipient_tin ?? null]);
+    if (item.source_document_reference) {
+      const key = item.source_document_reference;
+      if (seenReferences.has(key)) {
+        throw new Error(
+          "1099-OID repeats the same issued-copy source reference; corrected copies need a reviewed single current row",
+        );
+      }
+      seenReferences.add(key);
+    }
+    if (item.account_number) {
+      // One account can hold multiple obligations reported on separate OID
+      // copies; box 7 distinguishes those obligations within the account.
+      const key = JSON.stringify([
+        owner,
+        item.account_number,
+        item.box7_description?.trim().toUpperCase() ?? null,
+      ]);
+      if (seenAccounts.has(key)) {
+        throw new Error(
+          "1099-OID repeats the same payer, recipient, account, and obligation; corrected copies need a reviewed single current row",
+        );
+      }
+      seenAccounts.add(key);
+    }
+    const positive = [
+      item.box1_oid,
+      item.box2_other_interest,
+      item.box3_early_withdrawal_penalty,
+      item.box4_federal_withheld,
+      item.box5_market_discount,
+      item.box6_acquisition_premium,
+      item.box8_oid_treasury,
+      item.box9_investment_expenses,
+      item.box10_bond_premium,
+      item.box11_tax_exempt_oid,
+      item.box12_state_tax,
+    ].some((amount) => (amount ?? 0) > 0);
+    if (!positive) continue;
+    if (!item.account_number && !item.source_document_reference) {
+      if (seenOwners.has(owner)) {
+        throw new Error(
+          "1099-OID has multiple positive payer copies without account or issued source reference",
+        );
+      }
+      unidentifiedCopies.add(owner);
+    } else if (unidentifiedCopies.has(owner)) {
       throw new Error(
-        "1099-OID repeats the same identified payer and source reference; corrected copies need a reviewed single current row",
+        "1099-OID has multiple positive payer copies without account or issued source reference",
       );
     }
-    seen.add(key);
+    seenOwners.add(owner);
   }
 }
 

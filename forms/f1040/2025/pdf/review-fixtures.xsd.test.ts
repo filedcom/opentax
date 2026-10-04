@@ -1,4 +1,9 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
@@ -6,6 +11,7 @@ import { registry } from "../registry.ts";
 import { buildMefBundle, buildMefXml } from "../mef/builder.ts";
 import { buildPending } from "../mef/pending.ts";
 import { sha256Hex } from "../prepared-source.ts";
+import { buildPdfBytes } from "./builder.ts";
 import { inputSchema as w2gInputSchema } from "../../nodes/inputs/w2g/index.ts";
 import { pdfReviewFixtures } from "./review-fixtures.ts";
 import { irs1040Pdf } from "./forms/f1040.ts";
@@ -555,6 +561,27 @@ for (const fixture of pdfReviewFixtures) {
         assertStringIncludes(
           xml,
           "<Form1099WithheldTaxAmt>480</Form1099WithheldTaxAmt>",
+        );
+        const wrongRecipientPending = buildPending({
+          ...result.pending,
+          f1099k: {
+            f1099ks: (result.pending.f1099k.f1099ks as Array<
+              Record<string, unknown>
+            >).map((row) => ({
+              ...row,
+              recipient_tin: "999-88-7777",
+            })),
+          },
+        });
+        assertThrows(
+          () => buildMefXml(wrongRecipientPending, fixture.filer),
+          Error,
+          "identified payer, recipient",
+        );
+        await assertRejects(
+          () => buildPdfBytes(wrongRecipientPending, fixture.filer),
+          Error,
+          "identified payer, recipient",
         );
         assertThrows(
           () =>
@@ -1196,6 +1223,10 @@ for (const fixture of pdfReviewFixtures) {
         assertEquals(projected?.print_form8814_line7b_amount, 179);
         assertStringIncludes(xml, "<IRS8814 ");
         assertStringIncludes(xml, "<IRS1040ScheduleD ");
+        assertStringIncludes(
+          xml,
+          "<CapitalGainDistributionsAmt>179</CapitalGainDistributionsAmt>",
+        );
       }
       if (fixture.id === "single-1098-prior-year-recovery") {
         assertEquals(
@@ -1515,3 +1546,53 @@ for (const fixture of pdfReviewFixtures) {
     },
   });
 }
+
+Deno.test({
+  name:
+    "two Form 8814 child gains retain two native copies and one TY2025 Schedule D total",
+  ignore: !xsdAvailable,
+  async fn() {
+    const fixture = pdfReviewFixtures.find((item) =>
+      item.id === "single-form8814-child-gain-with-schedule-d"
+    );
+    if (!fixture) throw new Error("Missing Form 8814 Schedule D fixture");
+    const [first] = (fixture.inputs as Record<string, unknown>).f8814 as Record<
+      string,
+      unknown
+    >[];
+    const second = {
+      ...first,
+      child_name: "Morgan Example",
+      child_ssn: "333-44-5555",
+      source_review: {
+        ...(first.source_review as Record<string, unknown>),
+        child_ssn: "333-44-5555",
+        source_document_reference: "reviewed-morgan-interest-gain-packet",
+      },
+    };
+    const result = execute(plan, registry, {
+      ...fixture.inputs,
+      f8814: [first, second],
+    }, { taxYear: 2025, formType: "f1040" });
+    assertEquals(result.diagnostics, []);
+    const pending = buildPending(result.pending);
+    const xml = buildMefXml(pending, fixture.filer);
+    assertEquals((xml.match(/<IRS8814 /g) ?? []).length, 2);
+    assertStringIncludes(
+      xml,
+      "<CapitalGainDistributionsAmt>358</CapitalGainDistributionsAmt>",
+    );
+    const path = await Deno.makeTempFile({ suffix: ".xml" });
+    try {
+      await Deno.writeTextFile(path, xml);
+      const checked = await new Deno.Command("xmllint", {
+        args: ["--noout", "--schema", xsd, path],
+        stdout: "piped",
+        stderr: "piped",
+      }).output();
+      assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+    } finally {
+      await Deno.remove(path);
+    }
+  },
+});

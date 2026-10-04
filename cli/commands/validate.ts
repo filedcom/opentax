@@ -9,6 +9,7 @@ import { join } from "@std/path";
 import type { ExecutorDiagnosticEntry } from "../../core/runtime/executor.ts";
 import { catalog } from "../../catalog.ts";
 import { buildEngineInputs, loadReturn } from "../store/store.ts";
+import { singletonPublicInputKeys } from "../store/public-input-keys.ts";
 import { extractFilerIdentity } from "../../forms/f1040/mef/filer.ts";
 import { createReturnContext } from "../../core/validation/context.ts";
 import { evaluateRules } from "../../core/validation/engine.ts";
@@ -55,10 +56,7 @@ export async function validateReturnCommand(
   const returnPath = join(args.baseDir, args.returnId);
   const { meta, inputs } = await loadReturn(returnPath);
   const def = getCatalogEntry(meta.formType ?? "f1040", meta.year);
-  const singletonNodeTypes = new Set(
-    def.inputNodes.filter((e) => !e.isArray).map((e) => e.node.nodeType),
-  );
-  const engineInputs = buildEngineInputs(inputs, singletonNodeTypes);
+  const engineInputs = buildEngineInputs(inputs, singletonPublicInputKeys(def));
   const result = def.executeReturn(engineInputs);
   const pending = normalizeAllPending(result.pending);
 

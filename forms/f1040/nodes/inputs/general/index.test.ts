@@ -515,6 +515,19 @@ Deno.test("routing: QSS filing_status routes to f1040", () => {
   );
 });
 
+Deno.test("QSS qualifying child SSN cannot be silently dropped from Form 1040", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.QSS,
+        qss_spouse_death_year: 2024,
+        qss_qualifying_child_ssn: "444-55-6666",
+      }),
+    Error,
+    "QSS qualifying child SSN needs a reviewed nondependent child route",
+  );
+});
+
 // ============================================================
 // 3. No Dependents
 // ============================================================

@@ -70,3 +70,15 @@ Deno.test("joint spouse 1099-INT belongs on MFJ return only", () => {
     "recipient TIN must match",
   );
 });
+
+Deno.test("positive 1099-INT needs a nonblank payer name in both Form 1040 exports", () => {
+  const pending = retained("111223333");
+  pending.f1099int.f1099ints[0].payer_name = "   ";
+  const message = "1099-INT needs an identified payer name";
+  assertThrows(() => irs1040.build(filed, { pending }), Error, message);
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(filed, pending),
+    Error,
+    message,
+  );
+});

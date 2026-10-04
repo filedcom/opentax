@@ -366,6 +366,101 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "qss-w2-nonclaimed-joint-return-child",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        filing_status: SourceFilingStatus.QSS,
+        qss_spouse_death_year: 2024,
+        qss_qualifying_child_ssn: "444-55-6666",
+        qss_nonclaimed_child_review: {
+          child_first_name: "Avery",
+          child_last_name: "Child",
+          child_ssn: "444-55-6666",
+          child_relationship: "daughter",
+          child_lived_in_home_all_year: true,
+          child_filed_nonrefund_joint_return: true,
+          taxpayer_paid_more_than_half_home_costs: true,
+          no_remarriage_through_2025: true,
+          entitled_to_joint_return_in_death_year: true,
+          spouse_death_record_reference: "Synthetic 2024 death record review",
+          child_joint_return_reference:
+            "Synthetic 2025 child joint return review",
+          child_residency_record_reference:
+            "Synthetic 2025 child residence ledger",
+          home_cost_record_reference: "Synthetic 2025 home-cost ledger",
+          prior_joint_eligibility_reference:
+            "Synthetic 2024 joint eligibility review",
+        },
+      },
+      w2: [{
+        ...wage(75_000, 11_000, "Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
+      }],
+    },
+    filer: {
+      ...singleFiler,
+      filingStatus: FilingStatus.QualifyingSurvivingSpouse,
+    },
+    expectedPdfForms: ["f1040"],
+    reviewFocus: [
+      "Form 1040 prints the QSS box and Avery Child in the shared HOH/QSS filing-status name line",
+      "Avery Child does not appear in the dependent rows after the reviewed nonrefund joint-return exception",
+      "Both Form 1040 pages retain Alex Example and the 75,000 W-2 wages, 11,000 withholding, and calculated refund",
+      "Native QualifyingPersonName and QualifyingPersonSSN match the reviewed child while the PDF shows the name",
+    ],
+  },
+  {
+    id: "hoh-w2-nonclaimed-custodial-release-child",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        filing_status: SourceFilingStatus.HOH,
+        do_not_claim_eic: true,
+        hoh_qualifying_person_name: "Avery Child",
+        hoh_qualifying_person_relationship: "daughter",
+        hoh_paid_more_than_half_home_costs: true,
+        dependents: [{
+          first_name: "Avery",
+          last_name: "Child",
+          name_control: "CHIL",
+          ssn: "444-55-6666",
+          dob: "2015-04-02",
+          relationship: "daughter",
+          irs_relationship_code: "DAUGHTER",
+          months_in_home: 12,
+          months_lived_with_you_in_us: 12,
+          lived_in_us_over_half_year: true,
+          us_citizen_national_or_resident: true,
+          provided_over_half_own_support: false,
+          filed_joint_return_except_refund_only: false,
+          ssn_valid_for_employment: true,
+          tin_issued_by_due_date: true,
+          dependent_on_another_return: true,
+          custodial_eitc_release_review: {
+            form8332_source_reference: "Synthetic signed 2025 Form 8332",
+            custody_record_reference: "Synthetic 2025 residence ledger",
+            custodial_parent_for_2025: true,
+            valid_2025_release_to_noncustodial_parent: true,
+            no_competing_eitc_claim_verified: true,
+          },
+        }],
+      },
+      w2: [{
+        ...wage(75_000, 11_000, "Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
+      }],
+    },
+    filer: { ...singleFiler, filingStatus: FilingStatus.HeadOfHousehold },
+    expectedPdfForms: ["f1040"],
+    reviewFocus: [
+      "Form 1040 checks HOH and prints Avery Child in the shared HOH/QSS line after the reviewed custodial release",
+      "The dependent rows and child credit stay blank while the EIC opt-out box is checked and no Schedule EIC page is attached",
+      "Both Form 1040 pages retain Alex Example, 75,000 W-2 wages, 11,000 withholding, and the calculated refund",
+      "Native QualifyingHOHNm and QualifyingHOHSSN match the retained child while the PDF shows the name",
+    ],
+  },
+  {
     id: "single-divorced-agreed-joint-estimated-payment",
     inputs: {
       general: singleGeneral,
@@ -496,6 +591,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       w2: [wage(75_000, 11_000, "Example Employer", "12-3456789")],
       f1099g: [{
         recipient_tin: singleFiler.primarySSN,
+        payer_name: "Example State Unemployment Agency",
         box_1_unemployment: 5_000,
         box_1_repaid: 5_000,
       }],
@@ -2182,6 +2278,46 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "joint-two-w2s-form9000",
+    inputs: {
+      general: jointGeneral,
+      w2: [
+        {
+          ...wage(42_000, 4_000, "First Example Employer", "12-3456789"),
+          employee_ssn: "111223333",
+        },
+        {
+          ...wage(28_000, 2_500, "Second Example Employer", "98-7654321"),
+          employee_ssn: "444556666",
+        },
+      ],
+      f9000: {
+        requests: [
+          {
+            person: "taxpayer",
+            alternative_media_code: "01",
+            request_confirmed_by_person: true,
+            request_record_reference: "Alex accessible notice request",
+          },
+          {
+            person: "spouse",
+            alternative_media_code: "05",
+            request_confirmed_by_person: true,
+            request_record_reference: "Sam accessible notice request",
+          },
+        ],
+      },
+    },
+    filer: jointFiler,
+    expectedPdfForms: ["f1040", "f9000", "f9000"],
+    reviewFocus: [
+      "Two W-2s give $70,000 wages and $6,500 withholding on the joint return",
+      "The taxpayer's Form 9000 page checks large print and matches Alex Example/111223333",
+      "The spouse's Form 9000 page checks Braille ready file and matches Sam Example/444556666",
+      "Standalone-only address and signature fields remain blank on both attached copies",
+    ],
+  },
+  {
     id: "single-mixed-final-trust-and-partnership-capital",
     inputs: {
       general: singleGeneral,
@@ -2539,7 +2675,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       }],
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule_d", "form8949"],
+    expectedPdfForms: ["f1040", "schedule_d", "form8949", "form8949"],
     reviewFocus: [
       "The short-term sale prints on Form 8949 box B and Schedule D line 2",
       "The long-term sale prints on Form 8949 box F and Schedule D line 10",
@@ -2990,7 +3126,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     reviewFocus: [
       "Two reviewed FLSA premiums in W-2 box 14 add to Schedule 1-A Part III line 14a",
       "Schedule 1-A Part III lines 14a/14c/15/21 and line 38 print 4,000",
-      "Form 1040 line 13b prints the same 4,000 with correct tax and refund",
+      "Form 1040 line 13b prints the same 4,000 with correct tax and amount owed",
     ],
   },
   {
@@ -3773,7 +3909,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "schedule_se",
       "schedule1",
       "schedule2",
-      "form8995",
       "schedule1a",
     ],
     reviewFocus: [
@@ -3865,7 +4000,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "schedule_se",
       "schedule1",
       "schedule2",
-      "form8995",
       "schedule1a",
     ],
     reviewFocus: [
@@ -3990,7 +4124,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "schedule_se",
       "schedule1",
       "schedule2",
-      "form8995",
       "schedule1a",
     ],
     reviewFocus: [
@@ -4110,7 +4243,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       }],
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule_d", "form8949"],
+    expectedPdfForms: ["f1040", "schedule_d", "form8949", "form8949"],
     reviewFocus: [
       "K box 1a $1,500 reconciles to $800 gain sale and $700 loss sale",
       "Form 8949 box C has $550 short-term gain; box F code L cancels $300 personal loss",
@@ -4169,7 +4302,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       }],
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule_d", "form8949"],
+    expectedPdfForms: ["f1040", "schedule_d", "form8949", "form8949"],
     reviewFocus: [
       "K box 1a remains $1,500 gross while $100 documented selling fees reduce Form 8949 proceeds",
       "Form 8949 box C shows $750/$250 and $500 gain; box F shows $650/$1,000, code L $350, and zero loss",
@@ -4404,7 +4537,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "schedule_se",
       "schedule1",
       "schedule2",
-      "form8995",
       "schedule_d",
       "form8949",
     ],
@@ -4487,7 +4619,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "schedule_se",
       "schedule1",
       "schedule2",
-      "form8995",
       "schedule_d",
       "form8949",
     ],
@@ -4583,7 +4714,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "schedule_se",
       "schedule1",
       "schedule2",
-      "form8995",
       "schedule_d",
       "form8949",
     ],
@@ -4721,9 +4851,12 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     expectedPdfForms: [
       "f1040",
       "schedule_c",
+      "schedule_c",
+      "schedule_c",
       "schedule1",
       "schedule2",
       "schedule_se",
+      "form6198",
       "form6198",
     ],
     reviewFocus: [
@@ -5162,7 +5295,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       },
     },
     filer: jointFiler,
-    expectedPdfForms: ["f1040", "form8889", "schedule1"],
+    expectedPdfForms: ["f1040", "form8889", "form8889", "schedule1"],
     reviewFocus: [
       "Two separate Form 8889 pages print in primary-then-spouse order",
       "Each owner name, SSN, self-only box, contribution and deduction stay on that owner's page",
@@ -6104,7 +6237,8 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       schedule1a: {
         senior_zero_exclusions_review: {
           no_section933_puerto_rico_excluded_income: true,
-          section933_review_source_reference: "2025 residency and income review",
+          section933_review_source_reference:
+            "2025 residency and income review",
           no_form2555_filed: true,
           form2555_review_source_reference: "2025 foreign-income return review",
           no_form4563_filed: true,
@@ -6205,6 +6339,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     filer: singleFiler,
     expectedPdfForms: [
       "f1040",
+      "schedule_b",
       "form_1116",
       "form1116_schedule_b",
       "schedule3",
@@ -6388,7 +6523,18 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       }],
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule_c", "schedule3", "f3800", "f8826"],
+    expectedPdfForms: [
+      "f1040",
+      "schedule_c",
+      "schedule1",
+      "schedule2",
+      "schedule3",
+      "schedule_se",
+      "f3800",
+      "form6251",
+      "form8995",
+      "f8826",
+    ],
     reviewFocus: [
       "Form 8826 line 7 and the prepared Form 3800 source row carry the same 2,375 credit",
       "Schedule C line 27b prints the separately reduced 2,625 expense, not the unreduced invoice",
@@ -6653,12 +6799,12 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       },
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "form2441", "schedule3", "f8812", "eitc"],
+    expectedPdfForms: ["f1040", "schedule3", "form2441"],
     reviewFocus: [
       "Form 2441 provider and Ada Example's identity agree with the dependent source",
       "The 3,000 paid care expense yields a 500 credit on Form 2441 and Schedule 3",
-      "Schedule 8812 and Form 1040 retain the separate child credit and both native joins",
-      "Any resulting EIC and Schedule EIC page reconcile to Ada's reviewed residence and valid SSN",
+      "Form 1040 line 20 carries the sourced Schedule 3 credit once",
+      "No unclaimed child tax credit or EIC page is inserted into this packet",
     ],
   },
   {
@@ -6824,7 +6970,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       },
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule_c", "schedule1", "form4562"],
+    expectedPdfForms: ["f1040", "schedule_c", "form4562"],
     reviewFocus: [
       "Form 4562 prints the 30,000 section 179 deduction and its W-2-supported income limit",
       "Schedule C has 30,000 receipts and 30,000 depreciation, leaving no business profit on Schedule 1",
@@ -7338,6 +7484,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         business_reference: "north-2025",
         line_f_accounting_method: "cash",
         line_g_material_participation: true,
+        line_i_made_1099_payments: false,
         line_1_gross_receipts: 1_400,
         line_26_wages: 100,
         qbi_w2_wages: 100,
@@ -7351,9 +7498,13 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         business_reference: "south-2025",
         line_f_accounting_method: "cash",
         line_g_material_participation: true,
+        line_i_made_1099_payments: false,
         line_32_at_risk: "a",
         line_1_gross_receipts: 0,
-        line_27b_other_expenses: 1_000,
+        part_v_other_expenses: [{
+          description: "Shop operating costs",
+          amount: 1_000,
+        }],
         qbi_w2_wages: 0,
         qbi_unadjusted_basis: 0,
         qbi_no_other_adjustments_confirmed: true,
@@ -7367,6 +7518,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "schedule1",
       "form8995a",
       "form8995a_schedule_c",
+      "form8960",
     ],
     reviewFocus: [
       "Two Schedule C copies retain distinct North Works and South Shop business identities",
@@ -7541,13 +7693,13 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "f1040",
       "form8919",
       "schedule2",
-      "schedule_se",
       "form8959",
+      "form8960",
     ],
     reviewFocus: [
       "Form 8919 identifies the 210,000 Form 1099-NEC wages and reason G employer",
       "Form 1040 line 1g and Schedule 2 uncollected tax agree with Form 8919",
-      "Schedule SE wage-base coordination and Form 8959 additional Medicare wages match the source W-2 and Form 1099-NEC",
+      "Social Security wage-base coordination and Form 8959 additional Medicare wages match the source W-2 and Form 1099-NEC",
     ],
   },
   {
@@ -7770,6 +7922,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "schedule_se",
       "schedule2",
       "schedule_j",
+      "form8995",
     ],
     reviewFocus: [
       "Schedule J elected farm income is 15,000 and its three base years agree with the filed-return references",
@@ -7826,7 +7979,18 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       },
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule_c", "schedule3", "f3800", "f8881"],
+    expectedPdfForms: [
+      "f1040",
+      "schedule1",
+      "schedule2",
+      "schedule3",
+      "schedule_c",
+      "schedule_se",
+      "f3800",
+      "form6251",
+      "f8881",
+      "form8995",
+    ],
     reviewFocus: [
       "Form 8881 Part I shows a 750 startup credit and Part II shows a 500 enrollment credit",
       "The separate Form 3800 source rows total 1,250",
@@ -7979,7 +8143,13 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       },
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "f8911", "f8911_schedule_a", "schedule3"],
+    expectedPdfForms: [
+      "f1040",
+      "f8911",
+      "f8911_schedule_a",
+      "schedule3",
+      "form6251",
+    ],
     reviewFocus: [
       "Form 8911 and its Schedule A identify one 2025 main-home electric charger and census tract",
       "The 1,000 cost produces a 300 personal credit on Schedule 3 line 6j and Form 1040 line 20",
@@ -8109,7 +8279,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       }],
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "f8834", "schedule3"],
+    expectedPdfForms: ["f1040", "f8834", "schedule3", "form6251"],
     reviewFocus: [
       "Form 8834 reports 450 allowed prior-year passive activity credit from an identified activity",
       "The 3,875 W-2-backed tax limit permits all 450 on Schedule 3 line 6i and Form 1040 line 20",
@@ -8210,7 +8380,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       }],
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "f8912", "schedule3", "form6251"],
+    expectedPdfForms: ["f1040", "f8912", "f8912", "schedule3", "form6251"],
     reviewFocus: [
       "Form 8912 reports one identified 2017 qualified energy conservation bond and its 100 December credit",
       "The allowed 100 joins Schedule 3 line 6k and Form 1040 line 20 against the W-2-backed tax limit",
@@ -8384,6 +8554,47 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     reviewFocus: [
       "Two distinct employer W-2 sources each report 100,000 of wages and 6,200 Social Security withheld",
       "The 1,482 excess Social Security withholding reaches Schedule 3 line 11 and Form 1040 line 31 once",
+    ],
+  },
+  {
+    id: "single-mixed-box8-rtaa-taxable-grant-line8z",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(50_000, 5_000, "Example Employer", "12-3456789")],
+      f1099m: [{
+        payer_name: "Broker One",
+        payer_tin: "123456789",
+        recipient_tin: "111223333",
+        source_document_reference: "synthetic issued box 8 copy A",
+        box8_substitute_payments: 300,
+      }, {
+        payer_name: "Broker Two",
+        payer_tin: "234567890",
+        recipient_tin: "111223333",
+        source_document_reference: "synthetic issued box 8 copy B",
+        box8_substitute_payments: 450,
+      }],
+      f1099g: [{
+        payer_name: "RTAA Agency",
+        payer_tin: "345678901",
+        recipient_tin: "111223333",
+        source_document_reference: "synthetic issued RTAA copy",
+        box_5_rtaa: 400,
+      }, {
+        payer_name: "Grant Agency",
+        payer_tin: "456789012",
+        recipient_tin: "111223333",
+        source_document_reference: "synthetic issued taxable grant copy",
+        box_6_taxable_grants: 600,
+        box_6_schedule1_nonbusiness_reviewed: true,
+      }],
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule1"],
+    reviewFocus: [
+      "Form 1040 line 8 and Schedule 1 line 8z each include the 1,750 mixed-source total once",
+      "The Schedule 1 line 8z continuation prints separate 300 and 450 substitute-payment payer rows",
+      "The same continuation prints 400 RTAA and 600 taxable-grant payer rows with distinct TINs",
     ],
   },
   {

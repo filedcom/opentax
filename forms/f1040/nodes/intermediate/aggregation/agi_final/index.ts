@@ -8,6 +8,7 @@ import {
   inputSchema as agiInputSchema,
 } from "../agi_aggregator/index.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
+import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { scheduleA } from "../../../inputs/schedule_a/index.ts";
 import { standard_deduction } from "../../worksheets/standard_deduction/index.ts";
 import { eitc } from "../../forms/eitc/index.ts";
@@ -38,6 +39,7 @@ class AgiFinalNode extends TaxNode<typeof inputSchema> {
   get outputNodes() {
     return new OutputNodes([
       f1040,
+      schedule1,
       standard_deduction,
       scheduleA,
       eitc,

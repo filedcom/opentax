@@ -21,6 +21,7 @@ export interface Fields {
   line_11_qef_lt?: number | null;
   line_12_k1_lt?: number | null;
   line13_cap_gain_distrib?: number | null;
+  line13_form8814?: number | null;
   line_12_cap_gain_dist?: number | null;
   line_14_carryover?: number | null;
   line19_unrecaptured_1250?: number | null;
@@ -41,11 +42,11 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
 ];
 
 // Aggregated mappings: multiple inputSchema fields summed into single XSD element.
-// Both line13_cap_gain_distrib (from f1099div) and line_12_cap_gain_dist (from d_screen)
-// represent Schedule D Line 13 from different input sources — they are not additive fields
-// but alternative sources that may both be present and should be summed.
+// Schedule D line 13 combines retained parent distributions, Form 8814 child
+// gain, and any separately entered d_screen distribution.
 const AGGREGATED_CAP_GAIN_DIST: ReadonlyArray<keyof Fields> = [
   "line13_cap_gain_distrib",
+  "line13_form8814",
   "line_12_cap_gain_dist",
 ];
 
@@ -106,6 +107,9 @@ function saleKey(sale: PreparedSale): string {
     sale.adjustment_amount ?? null,
     sale.gain_loss,
     sale.is_long_term,
+    sale.collectibles ?? false,
+    sale.qsbs_code ?? null,
+    sale.qsbs_amount ?? null,
     sale.from_form4797_investment_1245 ?? false,
     sale.form4797_property_id ?? null,
   ]);
@@ -168,6 +172,7 @@ function buildIRS1040ScheduleD(
   // actually filed, so raw line-13 input alone must not create an attachment.
   if (
     ((f.line13_cap_gain_distrib ?? 0) > 0 ||
+      (f.line13_form8814 ?? 0) > 0 ||
       (f.line_12_cap_gain_dist ?? 0) > 0) &&
     typeof fields["print_line16_combined"] !== "number"
   ) return "";
@@ -220,7 +225,7 @@ function buildIRS1040ScheduleD(
   children.push(mapped("LTGainOrLossFromFormsAmt"));
   children.push(mapped("NetLTGainOrLossFromSchK1Amt"));
 
-  // Aggregated capital gain distributions (line 13 from two possible sources)
+  // Aggregated capital gain distributions from all retained line-13 sources.
   const capGainValues = AGGREGATED_CAP_GAIN_DIST
     .map((k) => f[k])
     .filter((v): v is number => typeof v === "number");

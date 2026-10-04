@@ -1,6 +1,6 @@
 # TY2025 Form 1040 coverage disposition queue
 
-Build-stage disposition queue updated 2026-10-01. This is the decision layer
+Build-stage disposition queue updated 2026-10-03. This is the decision layer
 over the [registered-descriptor audit](ty2025-form1040-form-audit.md) and the
 [211-root schema census](ty2025-xsd-document-root-census.md); it does not
 certify any filing route. The current descriptor and source-literal counts are
@@ -16,8 +16,14 @@ execution or acceptance evidence.
 
 The [external-evidence matrix](ty2025-external-evidence-standard-audit.md)
 compares reviewed facts, submitted bytes, signed documents, prior accepted
-returns, and ATS fixtures across complex routes. It records current gates and
-inconsistencies without choosing a new evidence policy or changing export.
+returns, and ATS fixtures across complex routes. The working direction is to
+continue the route-specific checks already used in this project. Reviewed
+structured facts can support ordinary source calculations; a required filed
+copy or attachment needs the actual retained bytes and a verified digest;
+claims that a prior return was filed or accepted need evidence of that event,
+not only a transcription or PDF. Signed and issuer-origin claims still need
+the review or verification applicable to that route. This direction does not
+open a guarded export or waive a required attachment.
 
 The descriptor counts in the linked inventories include each identifier entry
 in `ALL_MEF_FORMS` and `ALL_PDF_FORMS`.
@@ -71,7 +77,7 @@ statuses have since been reconciled with the current tree.
 | Disposition                                 | Exact boundary                                                                                                                                                                                                                                                                                                                                                  | What remains                                                                                                                                                                                               |
 | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Agreed product exclusion                    | Standalone 1040-NR, 1040-SS, Form 4868, and dual-status 1040 e-file.                                                                                                                                                                                                                                                                                            | No other Form 1040-family route has been approved for exclusion.                                                                                                                                           |
-| Registered, bounded route                   | The [form-by-form audit](ty2025-form1040-form-audit.md) identifies a source/calculation slice, serializer, PDF status, and known unsupported branches for each currently registered descriptor. | A bounded route is not whole-form support. The historical `11d5047d` snapshot passed 8,897/8,897; the latest completed PR #59 bulk run at `d22ab027` passed 10,432 and failed 99 named-form route or fixture cases. The current worktree has newer implementation changes and has no full-batch result. Per-row XSD, filled-PDF, IRS-rule, and ATS evidence is incomplete. |
+| Registered, bounded route                   | The [form-by-form audit](ty2025-form1040-form-audit.md) identifies a source/calculation slice, serializer, PDF status, and known unsupported branches for each currently registered descriptor. | A bounded route is not whole-form support. `deno task test` passed 10,891/10,891 at `637dace9` on 2026-10-03; the 178-case XML/XSD file passed at `8149198a`. Both predate later source-join implementation, so the full command must be rerun after implementation freeze. Per-row XSD, filled-PDF, IRS-rule, and ATS evidence is incomplete. |
 | Registered, active claim blocked            | Form 8839 has a bounded reviewed one-child prepared-bundle route through programmatic and strict stored-input CLI entrypoints; sync XML/standalone PDF without attachment bytes remain blocked. Nonexempt Form 8990 interest has bounded projections but export remains blocked pending durable carryforward persistence. | Complete the other adoption and interest carryforward branches or retain explicit fail-closed behavior; registration alone cannot turn either into whole-form support. |
 | Public source, positive filing route absent | The [root crosswalk](ty2025-unregistered-root-applicability.md) lists public-input and graph paths, including Forms 9465, 8997, 8958, 5471 and 172; Form 5471 has a bounded incomplete Category 5a packet, with positive export still closed. Schedule J has a bounded registered Schedule F-only election, while wider claims reject. Form 7203 has a bounded registered stock-only loss route, while other shareholder-basis situations remain blocked. | A guard or staged descriptor is a current safety boundary, not a permanent product exclusion. Each conditional filing trigger, source owner and required native document still needs a decision.           |
 | Conditional companion incomplete            | Form 8995-A Schedules A, B, C and D have bounded registered native routes. Schedule B's route covers only one group of two sourced Schedule C businesses. Form 1116 Schedule C retains a positive trigger without a registered filing route; it has a staged source/XML projection only.                                                                        | The [conditional-schedule audit](ty2025-conditional-schedule-applicability.md) names trigger and guard status. Complete the remaining attachments or explicitly approve fail-closed unsupported scenarios. |
@@ -124,7 +130,27 @@ These are missing source facts, not proposed silent exclusions. The user must
 either provide a supported evidence path or explicitly approve a named release
 boundary while retaining fail-closed behavior for entered unsupported claims.
 
-## Exact proposed decisions for user review, not applied
+## Workflow boundaries and still-open implementation
+
+On 2026-10-03 the user directed us to follow the existing project pattern for
+the workflow and evidence questions. Apply that direction per entered claim:
+the current builder prepares an original TY2025 Form 1040; an amendment needs
+its own prior-versus-corrected return workflow. A tax result, prior payment or
+refund account does not authorize an electronic withdrawal. Payer-issued
+records remain source evidence unless the recipient's claim requires a copy in
+the packet. An optional election or preference may use another documented
+submission channel, but an entered request cannot silently disappear. These
+are implementation boundaries for the present builder, not a blanket
+exclusion of the schema roots in the [separate-workflow matrix](ty2025-separate-workflow-decision-matrix.md).
+The matrix still requires per-root intake or handoff behavior, and any current
+Form 1040 income, withholding, election, or amendment consequence remains open
+until its source-to-packet route is verified. See the IRS [Form 1040-X
+instructions](https://www.irs.gov/instructions/i1040x), [electronic funds
+withdrawal guidance](https://www.irs.gov/payments/pay-taxes-by-electronic-funds-withdrawal),
+and [Form 9000 submission guidance](https://www.irs.gov/newsroom/irs-alternative-media-center-provides-tax-info-in-multiple-formats)
+for the distinct filing channels.
+
+### Exact proposed root dispositions, not applied
 
 For TY2025 current-return inputs, two additional named exclusions are under
 review. The [Form 8873 instructions](https://www.irs.gov/instructions/i8873)
@@ -163,8 +189,12 @@ cache, so reproducible provenance remains open.
 4. Decide whether the optional current-return attachments `IRS4547` (child
    account election) and `IRS9000` (alternative-media preference) are offered
    through this product or assigned to their documented separate submission
-   channels. These are two named workflow choices, not a waiver of an entered
-   election or preference; neither currently has a public input.
+   channels. Form 9000 now has a bounded return-attached taxpayer/joint-spouse
+   route with explicit requests; Form 4547 now retains a typed per-child
+   election intent. An entered claim fails native and PDF export until responsible-party
+   authority, child eligibility, and separate electronic-signature evidence
+   support a positive attachment route. Neither choice
+   waives an entered election or preference.
 5. For entity-associated roots, decide ownership per filing situation rather
    than as a family-wide exclusion. In particular, an individual can have a
    direct `IRS8858`/`IRS8858ScheduleM` or section 962 `IRS1118` obligation; an

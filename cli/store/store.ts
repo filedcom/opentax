@@ -12,7 +12,7 @@ import type {
  * Builds the engine input map from stored inputs.
  *
  * @param inputs - The stored inputs from return.json
- * @param singletonNodeTypes - Set of node types that are singletons (isArray: false).
+ * @param singletonNodeTypes - Set of public input keys that are singletons (isArray: false).
  *   Singleton nodes are passed as a single object to the start node, not as an array.
  *   Array nodes are passed as an array of objects.
  */
@@ -26,16 +26,38 @@ export function buildEngineInputs(
       // Start entries contain start-node input fields directly (e.g. { general: {...} }).
       // Merge them all into the top-level so the start node can find each field by key.
       for (const entry of entries) {
+        for (const key of Object.keys(entry.fields)) {
+          if (Object.hasOwn(result, key)) {
+            throw new Error(
+              `Duplicate start input ${key} cannot replace an earlier claim`,
+            );
+          }
+        }
         Object.assign(result, entry.fields);
       }
     } else if (singletonNodeTypes.has(nodeType)) {
       // Singleton inputs: the start node expects a single object, not an array.
-      // Use the first (and only) entry's fields.
+      // Reject ambiguous copies instead of silently dropping all but the first.
+      if (entries.length > 1) {
+        throw new Error(
+          `Singleton input ${nodeType} has ${entries.length} entries`,
+        );
+      }
       if (entries.length > 0) {
+        if (Object.hasOwn(result, nodeType)) {
+          throw new Error(
+            `Duplicate input ${nodeType} cannot replace an earlier claim`,
+          );
+        }
         result[nodeType] = entries[0].fields;
       }
     } else {
       // Array inputs: the start node collects them by nodeType key as an array.
+      if (Object.hasOwn(result, nodeType)) {
+        throw new Error(
+          `Duplicate input ${nodeType} cannot replace an earlier claim`,
+        );
+      }
       result[nodeType] = entries.map((e) => e.fields);
     }
   }

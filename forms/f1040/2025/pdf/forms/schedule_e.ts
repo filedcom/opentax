@@ -196,22 +196,36 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   text("farm_line42", `${page2}.Line42_ReadOrder[0].f2_79[0]`),
 ];
 
+function retainedScheduleEPages(projected: Record<string, unknown>): number[] {
+  const partI = projected.line26 !== undefined;
+  const partII = projected.trust_line37 !== undefined ||
+    projected.k1_line32 !== undefined ||
+    projected.farm_line40 !== undefined;
+  return partI && partII ? [0, 1] : partII ? [1] : [0];
+}
+
 export const scheduleEPdf: PdfFormDescriptor = {
   pendingKey: "schedule_e",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040se--2025.pdf",
-  pageIndices: (projected) => {
-    const partI = projected.line26 !== undefined;
-    const partII = projected.trust_line37 !== undefined ||
-      projected.k1_line32 !== undefined ||
-      projected.farm_line40 !== undefined;
-    return partI && partII ? [0, 1] : partII ? [1] : [0];
-  },
+  pageIndices: retainedScheduleEPages,
   fields,
   filerFields: [
-    text("nameShownOnForm1040", `${page}.f1_1[0]`),
-    text("primarySSN", `${page}.f1_2[0]`),
-    text("nameShownOnForm1040", `${page2}.f2_1[0]`),
-    text("primarySSN", `${page2}.f2_2[0]`),
+    {
+      ...text("nameShownOnForm1040", `${page}.f1_1[0]`),
+      includeWhen: (fields) => retainedScheduleEPages(fields).includes(0),
+    },
+    {
+      ...text("primarySSN", `${page}.f1_2[0]`),
+      includeWhen: (fields) => retainedScheduleEPages(fields).includes(0),
+    },
+    {
+      ...text("nameShownOnForm1040", `${page2}.f2_1[0]`),
+      includeWhen: (fields) => retainedScheduleEPages(fields).includes(1),
+    },
+    {
+      ...text("primarySSN", `${page2}.f2_2[0]`),
+      includeWhen: (fields) => retainedScheduleEPages(fields).includes(1),
+    },
   ],
   projectFields(raw, allPending) {
     const k1Rows = scheduleEK1Part2Rows(allPending);

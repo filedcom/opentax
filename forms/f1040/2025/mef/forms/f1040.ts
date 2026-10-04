@@ -13,6 +13,8 @@ import { assertDirectCapitalGainDistributionSource } from "../../line7a-source-r
 import { assertJointDependentRefundSource } from "../../line12a-dependent-source.ts";
 import { assertLine36EstimatedTaxSource } from "../../line36-estimated-tax-source.ts";
 import { assertNoUnsupportedDeceasedReturn } from "../../filer-source-reconciliation.ts";
+import { assertHohQualifyingChildSource } from "../../hoh-qualifying-child-source.ts";
+import { assertQssNonclaimedChildSource } from "../../qss-nonclaimed-child-source.ts";
 import {
   DependentCreditCategory,
   dependentCreditCategory,
@@ -55,6 +57,16 @@ export interface Fields {
   presidential_campaign_fund_taxpayer?: boolean;
   presidential_campaign_fund_spouse?: boolean;
   filing_status?: string;
+  hoh_qualifying_child?: {
+    first_name: string;
+    last_name: string;
+    ssn: string;
+  };
+  qss_nonclaimed_child?: {
+    first_name: string;
+    last_name: string;
+    ssn: string;
+  };
   taxpayer_ssn?: string;
   taxpayer_ssn_valid_for_employment?: boolean;
   taxpayer_ssn_issued_before_due_date?: boolean;
@@ -462,6 +474,8 @@ function dependentXml(fields: Input, context?: MefBuildContext): string[] {
 }
 
 function buildIRS1040(fields: Input, context?: MefBuildContext): string {
+  assertHohQualifyingChildSource(fields, context?.pending ?? {});
+  assertQssNonclaimedChildSource(fields, context?.pending ?? {});
   assertIdentified1099IntOwner(
     fields as Record<string, unknown>,
     context?.pending,
@@ -732,6 +746,24 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
       ? [element("PECFSpouseInd", "X")]
       : []),
     element("IndividualReturnFilingStatusCd", statusCode),
+    ...(fields.hoh_qualifying_child
+      ? [
+        element(
+          "QualifyingHOHNm",
+          `${fields.hoh_qualifying_child.first_name} ${fields.hoh_qualifying_child.last_name}`,
+        ),
+        element("QualifyingHOHSSN", fields.hoh_qualifying_child.ssn),
+      ]
+      : []),
+    ...(fields.qss_nonclaimed_child
+      ? [
+        elements("QualifyingPersonName", [
+          element("PersonFirstNm", fields.qss_nonclaimed_child.first_name),
+          element("PersonLastNm", fields.qss_nonclaimed_child.last_name),
+        ]),
+        element("QualifyingPersonSSN", fields.qss_nonclaimed_child.ssn),
+      ]
+      : []),
     ...(residentElection
       ? [elements("NRASpouseTreatedAsResidentGrp", [
         element("NRASpouseTreatedAsResidentInd", "X"),

@@ -11,6 +11,7 @@ import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { scheduleA } from "../schedule_a/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { purchasePointsCrossLoanFixture } from "./purchase_points_cross_loan.fixture.ts";
+import { FilingStatus } from "../../../mef/header.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -162,6 +163,46 @@ Deno.test("2025 purchase points and existing acquisition loan share the $750,000
   assertEquals(
     inputSchema.safeParse({
       f1098s: fixture.f1098,
+      purchase_points_cross_loan_review: {
+        ...review,
+        existing_property_reference: review.purchase_property_reference,
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      f1098s: fixture.f1098,
+      purchase_points_cross_loan_review: {
+        ...review,
+        existing_second_home_review: {
+          ...review.existing_second_home_review,
+          held_out_for_rent_or_resale: true,
+          fair_rental_days: 100,
+          personal_use_days: 14,
+        },
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      f1098s: fixture.f1098,
+      purchase_points_cross_loan_review: {
+        ...review,
+        existing_second_home_review: {
+          ...review.existing_second_home_review,
+          held_out_for_rent_or_resale: true,
+          fair_rental_days: 100,
+          personal_use_days: 15,
+        },
+      },
+    }).success,
+    true,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      f1098s: fixture.f1098,
       purchase_points_cross_loan_review: review,
       mortgage_limit_review: { loans: [] },
     }).success,
@@ -177,12 +218,14 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
         recipient_tin: "111-22-3333",
         source_document_reference: "2025 first Form 1098",
         box3_origination_date: "01/15/2020",
+        box2_outstanding_principal: 500_000,
       }),
       reviewedInterest(16_000, 13_328, {
         lender_name: "Second Lender",
         recipient_tin: "111-22-3333",
         source_document_reference: "2025 second Form 1098",
         box3_origination_date: "02/15/2021",
+        box2_outstanding_principal: 400_000,
       }),
     ],
     mortgage_limit_review: {
@@ -217,8 +260,88 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
   assertForm1098MortgageLimitSources(
     source,
     ["111223333"],
-    true,
+    FilingStatus.Single,
     29_988,
+    0,
+    0,
+    false,
+    false,
+  );
+  assertThrows(
+    () =>
+      assertForm1098MortgageLimitSources(
+        { f1098s: source.f1098s },
+        ["111223333"],
+        FilingStatus.Single,
+        29_988,
+        0,
+        0,
+        false,
+        false,
+      ),
+    Error,
+    "post-2017 mortgage debt over $750,000",
+  );
+  assertThrows(
+    () =>
+      assertForm1098MortgageLimitSources(
+        { f1098s: source.f1098s },
+        ["111223333"],
+        FilingStatus.MarriedFilingJointly,
+        29_988,
+        0,
+        0,
+        false,
+        false,
+      ),
+    Error,
+    "post-2017 mortgage debt over $750,000",
+  );
+  assertThrows(
+    () =>
+      assertForm1098MortgageLimitSources(
+        { f1098s: source.f1098s },
+        ["111223333"],
+        FilingStatus.MarriedFilingSeparately,
+        29_988,
+        0,
+        0,
+        false,
+        false,
+      ),
+    Error,
+    "post-2017 mortgage debt over $375,000",
+  );
+  assertThrows(
+    () =>
+      assertForm1098MortgageLimitSources(
+        {
+          f1098s: [
+            source.f1098s[0],
+            { ...source.f1098s[1], box1_current_year_deductible_interest: 0 },
+          ],
+        },
+        ["111223333"],
+        FilingStatus.Single,
+        16_660,
+        0,
+        0,
+        false,
+        false,
+      ),
+    Error,
+    "post-2017 mortgage debt over $750,000",
+  );
+  assertForm1098MortgageLimitSources(
+    {
+      f1098s: source.f1098s.map((item) => ({
+        ...item,
+        box1_current_year_deductible_interest: 0,
+      })),
+    },
+    ["111223333"],
+    FilingStatus.Single,
+    0,
     0,
     0,
     false,
@@ -239,7 +362,7 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
       assertForm1098MortgageLimitSources(
         source,
         ["111223333"],
-        false,
+        FilingStatus.MarriedFilingJointly,
         29_988,
         0,
         0,
@@ -247,14 +370,14 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
         false,
       ),
     Error,
-    "same single filer",
+    "verified filing status",
   );
   assertThrows(
     () =>
       assertForm1098MortgageLimitSources(
         source,
         ["111223333"],
-        true,
+        FilingStatus.Single,
         29_988,
         0,
         1,
@@ -269,7 +392,7 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
       assertForm1098MortgageLimitSources(
         source,
         ["111223333"],
-        true,
+        FilingStatus.Single,
         29_988,
         0,
         0,
@@ -278,6 +401,253 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
       ),
     Error,
     "no other mortgage-interest",
+  );
+});
+
+Deno.test("2025 purchase mortgage needs closing and month-by-month limit evidence", () => {
+  const source = {
+    f1098s: [reviewedInterest(1_000, 833, {
+      lender_name: "Purchase Lender",
+      recipient_tin: "111-22-3333",
+      source_document_reference: "2025 purchase Form 1098",
+      box2_outstanding_principal: 900_000,
+      box3_origination_date: "07/15/2025",
+    })],
+    mortgage_limit_review: {
+      table1_workpaper_reference: "2025 Pub. 936 purchase Table 1",
+      all_qualified_home_mortgages_included_verified: true,
+      all_post_2017_acquisition_debt_verified: true,
+      single_filing_status_verified: true,
+      loans: [{
+        source_document_reference: "2025 purchase Form 1098",
+        property_reference: "new-principal-residence",
+        purchase_closing_disclosure_reference:
+          "2025 purchase closing disclosure",
+        principal_residence_purchase_verified: true,
+        no_additional_advances_verified: true,
+        monthly_balance_records: Array.from({ length: 12 }, (_, index) => ({
+          month: index + 1,
+          closing_balance: index < 6 ? 0 : 900_000,
+          lender_statement_reference: `purchase month ${index + 1}`,
+        })),
+      }],
+    },
+  };
+  assertEquals(inputSchema.safeParse(source).success, true);
+  assertForm1098MortgageLimitSources(
+    source,
+    ["111223333"],
+    FilingStatus.Single,
+    833,
+    0,
+    0,
+    false,
+    false,
+  );
+  assertThrows(
+    () =>
+      assertForm1098MortgageLimitSources(
+        {
+          f1098s: [{
+            ...source.f1098s[0],
+            box2_outstanding_principal: undefined,
+          }],
+        },
+        ["111223333"],
+        FilingStatus.Single,
+        833,
+        0,
+        0,
+        false,
+        false,
+      ),
+    Error,
+    "needs its issued box 2 principal",
+  );
+  assertForm1098MortgageLimitSources(
+    {
+      f1098s: [{
+        ...source.f1098s[0],
+        box2_outstanding_principal: undefined,
+        box1_current_year_deductible_interest: 0,
+      }, reviewedInterest(500, 500)],
+    },
+    ["111223333"],
+    FilingStatus.Single,
+    500,
+    0,
+    0,
+    false,
+    false,
+  );
+  const loan = source.mortgage_limit_review.loans[0];
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      mortgage_limit_review: {
+        ...source.mortgage_limit_review,
+        loans: [{ ...loan, purchase_closing_disclosure_reference: undefined }],
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      mortgage_limit_review: {
+        ...source.mortgage_limit_review,
+        loans: [{
+          ...loan,
+          monthly_balance_records: [
+            { ...loan.monthly_balance_records[0], closing_balance: 900_000 },
+            ...loan.monthly_balance_records.slice(1),
+          ],
+        }],
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      f1098s: [{
+        ...source.f1098s[0],
+        box1_current_year_deductible_interest: 1_000,
+      }],
+    }).success,
+    false,
+  );
+});
+
+Deno.test("2025 purchase plus existing mortgage needs one qualified second home", () => {
+  const purchaseRef = "2025 principal residence Form 1098";
+  const secondRef = "2025 prior home Form 1098";
+  const balances = (reference: string, firstMonth: number) =>
+    Array.from({ length: 12 }, (_, index) => ({
+      month: index + 1,
+      closing_balance: index + 1 < firstMonth ? 0 : 500_000,
+      lender_statement_reference: `${reference} month ${index + 1}`,
+    }));
+  const secondHomeReview = {
+    occupancy_record_reference: "2025 second-home occupancy ledger",
+    qualified_second_home_election_verified: true,
+    held_out_for_rent_or_resale: true,
+    fair_rental_days: 100,
+    personal_use_days: 15,
+  };
+  const source = {
+    f1098s: [
+      reviewedInterest(1_000, 750, {
+        lender_name: "Purchase Lender",
+        recipient_tin: "111-22-3333",
+        source_document_reference: purchaseRef,
+        box2_outstanding_principal: 500_000,
+        box3_origination_date: "07/15/2025",
+      }),
+      reviewedInterest(1_000, 750, {
+        lender_name: "Prior Home Lender",
+        recipient_tin: "111-22-3333",
+        source_document_reference: secondRef,
+        box2_outstanding_principal: 500_000,
+        box3_origination_date: "01/15/2020",
+      }),
+    ],
+    mortgage_limit_review: {
+      table1_workpaper_reference: "2025 both homes Pub. 936 Table 1",
+      all_qualified_home_mortgages_included_verified: true,
+      all_post_2017_acquisition_debt_verified: true,
+      single_filing_status_verified: true,
+      loans: [{
+        source_document_reference: purchaseRef,
+        property_reference: "new-principal-residence",
+        purchase_closing_disclosure_reference: "2025 purchase closing",
+        principal_residence_purchase_verified: true,
+        no_additional_advances_verified: true,
+        monthly_balance_records: balances(purchaseRef, 7),
+      }, {
+        source_document_reference: secondRef,
+        property_reference: "former-main-home",
+        second_home_review: secondHomeReview,
+        monthly_balance_records: balances(secondRef, 1),
+      }],
+    },
+  };
+  assertThrows(
+    () =>
+      assertForm1098MortgageLimitSources(
+        {
+          f1098s: source.f1098s.map((item) => ({
+            ...item,
+            box2_outstanding_principal: 300_000,
+          })),
+        },
+        ["111223333"],
+        FilingStatus.Single,
+        1_500,
+        0,
+        0,
+        false,
+        false,
+      ),
+    Error,
+    "purchase plus existing mortgage needs one qualified-home",
+  );
+  assertEquals(inputSchema.safeParse(source).success, true);
+  assertForm1098MortgageLimitSources(
+    source,
+    ["111223333"],
+    FilingStatus.Single,
+    1_500,
+    0,
+    0,
+    false,
+    false,
+  );
+  const [purchase, second] = source.mortgage_limit_review.loans;
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      mortgage_limit_review: {
+        ...source.mortgage_limit_review,
+        loans: [purchase, {
+          ...second,
+          second_home_review: {
+            ...secondHomeReview,
+            personal_use_days: 14,
+          },
+        }],
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      mortgage_limit_review: {
+        ...source.mortgage_limit_review,
+        loans: [purchase, {
+          ...second,
+          second_home_review: {
+            ...secondHomeReview,
+            personal_use_days: 300,
+          },
+        }],
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      mortgage_limit_review: {
+        ...source.mortgage_limit_review,
+        loans: [purchase, {
+          ...second,
+          property_reference: purchase.property_reference,
+        }],
+      },
+    }).success,
+    false,
   );
 });
 

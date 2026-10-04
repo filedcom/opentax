@@ -1,7 +1,7 @@
 # TY2025 external-evidence boundary across complex Form 1040 routes
 
-Static audit, 2026-10-02. This describes current export gates; it does **not**
-set a new product evidence policy or establish filing readiness. “Reviewed”
+Static audit, updated 2026-10-03. This describes current export gates and the
+route-specific working rule; it does **not** establish filing readiness. “Reviewed”
 means the input asserts a human-reviewed fact. A supplied SHA-256 string alone
 does not prove that the application saw the document. Exact-byte binding proves
 that the submitted/retained bytes match the recorded digest; it does not prove
@@ -59,10 +59,12 @@ whether a particular source document is legally required as an attachment.
    artifacts authenticates a customer's payer, Marketplace, K-1 or prior
    filing record.
 
-**Decision for the user, still open:** define the minimum retained source and
-review proof by document class (issuer record, prior accepted return, signed
-form, optional supporting statement), identify which original bytes must
-accompany the MeF packet, and identify who can attest to origin/content when
-the software can only check a hash or PDF fields. Then apply that standard
-per trigger without treating unmodeled obligations as excluded. No export
-guard or source schema changes are authorized by this audit.
+**Working rule from the 2026-10-03 direction to follow existing practice:**
+keep reviewed structured facts for ordinary source calculations; require
+retained, digest-verified bytes when the route requires an issued copy, signed
+document, or other attachment; and require trusted filed/accepted-year
+evidence before asserting that a prior return was accepted. A digest does not
+authenticate an issuer, signature, or IRS acceptance. Apply the appropriate
+human or external review to those claims, and keep a route closed when its
+required evidence cannot yet be checked. The table above identifies the
+implementation gaps; this working rule does not open any guarded route.

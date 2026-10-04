@@ -225,6 +225,7 @@ export function verifyCurrentYearDistributionSource(
       source.simplified_method_flag !== true &&
       source.disability_as_wages !== true &&
       source.altered_or_handwritten !== true &&
+      source.nonstandard_document_review === undefined &&
       source.no_distribution_received !== true
     )
     : [];
@@ -256,6 +257,7 @@ export function verifyCurrentYearDistributionSource(
       source.simplified_method_flag === true ||
       source.disability_as_wages === true ||
       source.altered_or_handwritten === true ||
+      source.nonstandard_document_review !== undefined ||
       source.no_distribution_received === true
     )
   ) {

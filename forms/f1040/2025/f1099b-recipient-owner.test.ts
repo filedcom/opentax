@@ -21,13 +21,29 @@ const filer: FilerIdentity = {
 
 const row = {
   recipient_ssn: "111223333",
+  payer_tin: "123456789",
   part: "A" as const,
   description: "10 shares ABC",
-  date_acquired: "01012024",
-  date_sold: "01022025",
+  date_acquired: "2024-01-01",
+  date_sold: "2025-01-02",
   proceeds: 1_000,
   cost_basis: 800,
 };
+
+Deno.test("1099-B broker sale needs payer identity at final export", () => {
+  const missing = { ...row, payer_tin: undefined };
+  const message = "1099-B filing needs broker TIN or issued-copy reference";
+  assertThrows(
+    () => assert1099BRecipientOwner({ f1099bs: [missing] }, filer),
+    Error,
+    message,
+  );
+  assert1099BRecipientOwner({
+    f1099bs: [
+      { ...missing, source_document_reference: "issued-broker-statement" },
+    ],
+  }, filer);
+});
 
 Deno.test("1099-B recipient belongs to taxpayer or joint spouse", () => {
   assert1099BRecipientOwner({ f1099bs: [row] }, filer);

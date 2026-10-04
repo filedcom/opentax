@@ -66,6 +66,27 @@ Deno.test("Form 8949 PDF projects canonical Part I and Part II into separate che
   );
 });
 
+Deno.test("Form 8949 PDF prints various acquired dates", () => {
+  const instances = form8949Pdf.instances?.({
+    transaction: { ...shortTerm, date_acquired: "VARIOUS" },
+  }) ?? [];
+  assertEquals(instances[0]?.pdf_page1_row1_date_acquired, "VARIOUS");
+});
+
+Deno.test("Form 8949 PDF prints inherited acquisition only in Part II", () => {
+  const sale = { ...longTerm, date_acquired: "INHERITED" };
+  const instances = form8949Pdf.instances?.({ transaction: sale }) ?? [];
+  assertEquals(instances[0]?.pdf_page2_row1_date_acquired, "INHERITED");
+  assertThrows(
+    () =>
+      form8949Pdf.instances?.({
+        transaction: { ...shortTerm, date_acquired: "INHERITED" },
+      }),
+    Error,
+    "inherited sale needs a long-term box",
+  );
+});
+
 Deno.test("Form 8949 PDF requires canonical sale rows for every source category", () => {
   assertThrows(
     () =>
@@ -211,7 +232,7 @@ Deno.test("Form 8949 PDF stops mismatched holding period and unsupported dates",
   assertThrows(
     () =>
       form8949Pdf.instances?.({
-        transaction: { ...shortTerm, date_acquired: "VARIOUS" },
+        transaction: { ...shortTerm, date_acquired: "UNKNOWN" },
       }),
     Error,
     "supported calendar date",

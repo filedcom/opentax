@@ -1,25 +1,26 @@
 /**
  * inspect-pdf-fields.ts
  *
- * One-time script to download real IRS PDFs and enumerate actual AcroForm
- * field names. Compares real field names against the mapped names in each
- * PdfFormDescriptor and writes a JSON dump per form.
+ * Audit real IRS AcroForm fields against every registered PDF descriptor.
  *
  * Usage:
  *   deno run --allow-net=www.irs.gov --allow-read --allow-write scripts/inspect-pdf-fields.ts
  *
  * Output:
- *   .state/field-dumps/<pendingKey>.json  — per-form dump
- *   .state/field-dumps/cache/<filename>   — cached PDFs (avoid re-downloading)
+ *   .state/research/ty2025-pdf-field-audit/<pendingKey>-<index>.json
+ *   .state/research/ty2025-pdf-field-audit/cache/<URL key>.pdf
  */
 
 import { PDFDocument } from "pdf-lib";
 import { ensureDir } from "@std/fs";
-import { join, basename } from "@std/path";
+import { join } from "@std/path";
 import { ALL_PDF_FORMS } from "../forms/f1040/2025/pdf/forms/index.ts";
+import type { PdfFormDescriptor } from "../forms/f1040/2025/pdf/form-descriptor.ts";
 
-const CACHE_DIR = new URL("../.state/field-dumps/cache/", import.meta.url).pathname;
-const DUMP_DIR = new URL("../.state/field-dumps/", import.meta.url).pathname;
+const DUMP_DIR =
+  new URL("../.state/research/ty2025-pdf-field-audit/", import.meta.url)
+    .pathname;
+const CACHE_DIR = join(DUMP_DIR, "cache");
 
 interface FieldInfo {
   name: string;
@@ -32,11 +33,12 @@ interface FormDump {
   realFields: FieldInfo[];
   matched: string[];
   missing: string[];
+  wrongType: Array<{ name: string; expected: string; actual: string }>;
   unmapped: FieldInfo[];
 }
 
 async function downloadWithCache(url: string): Promise<Uint8Array> {
-  const filename = basename(url);
+  const filename = url.replace(/[^a-z0-9]/gi, "_") + ".pdf";
   const cachePath = join(CACHE_DIR, filename);
 
   try {
@@ -58,23 +60,77 @@ async function downloadWithCache(url: string): Promise<Uint8Array> {
   return bytes;
 }
 
-async function inspectForm(descriptor: {
-  pendingKey: string;
-  pdfUrl: string;
-  PDF_FIELD_MAP: ReadonlyArray<readonly [string, string]>;
-}): Promise<FormDump & { error?: string }> {
+function mappedFieldTypes(descriptor: PdfFormDescriptor): Map<string, string> {
+  const types = new Map<string, string>();
+  const add = (
+    name: string,
+    kind: "text" | "checkbox" | "checkboxWhen" | "radio",
+  ) => {
+    const type = kind === "text"
+      ? "PDFTextField"
+      : kind === "radio"
+      ? "PDFRadioGroup"
+      : "PDFCheckBox";
+    const previous = types.get(name);
+    if (previous !== undefined && previous !== type) {
+      throw new Error(
+        `${descriptor.pendingKey}: conflicting mapped field type for ${name}`,
+      );
+    }
+    types.set(name, type);
+  };
+  for (
+    const entry of [
+      ...descriptor.fields,
+      ...(descriptor.filerFields ?? []),
+    ]
+  ) {
+    add(entry.pdfField, entry.kind);
+    for (
+      const name of "extraPdfFields" in entry ? entry.extraPdfFields ?? [] : []
+    ) {
+      add(name, entry.kind);
+    }
+  }
+  if (descriptor.rows) {
+    for (let row = 0; row < descriptor.rows.maxRows; row++) {
+      for (const field of descriptor.rows.rowFields) {
+        let name = field.pdfFieldPattern.replace("{row}", String(row + 1));
+        if (field.fieldNumBase !== undefined) {
+          if (descriptor.rows.rowStride === undefined) {
+            throw new Error(`${descriptor.pendingKey}: row stride is missing`);
+          }
+          name = name.replace(
+            "{field_num}",
+            String(field.fieldNumBase + row * descriptor.rows.rowStride)
+              .padStart(2, "0"),
+          );
+        }
+        add(name, field.kind);
+      }
+    }
+  }
+  return types;
+}
+
+async function inspectForm(
+  descriptor: PdfFormDescriptor,
+): Promise<FormDump & { error?: string }> {
   let bytes: Uint8Array;
   try {
     bytes = await downloadWithCache(descriptor.pdfUrl);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error(`  [ERROR] failed to download ${descriptor.pendingKey}: ${message}`);
+    console.error(
+      `  [ERROR] failed to download ${descriptor.pendingKey}: ${message}`,
+    );
     return {
       pendingKey: descriptor.pendingKey,
       pdfUrl: descriptor.pdfUrl,
       realFields: [],
       matched: [],
       missing: [],
+      wrongType: [],
       unmapped: [],
       error: `download failed: ${message}`,
     };
@@ -85,13 +141,16 @@ async function inspectForm(descriptor: {
     doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error(`  [ERROR] failed to parse ${descriptor.pendingKey}: ${message}`);
+    console.error(
+      `  [ERROR] failed to parse ${descriptor.pendingKey}: ${message}`,
+    );
     return {
       pendingKey: descriptor.pendingKey,
       pdfUrl: descriptor.pdfUrl,
       realFields: [],
       matched: [],
       missing: [],
+      wrongType: [],
       unmapped: [],
       error: `parse failed: ${message}`,
     };
@@ -103,15 +162,17 @@ async function inspectForm(descriptor: {
     type: f.constructor.name,
   }));
 
-  const realFieldNames = new Set(realFields.map((f) => f.name));
+  const realFieldTypes = new Map(realFields.map((f) => [f.name, f.type]));
+  const mappedTypes = mappedFieldTypes(descriptor);
+  const uniqueMappedNames = [...mappedTypes.keys()];
 
-  // IRS AcroForm names from the descriptor (right-hand side of map tuples)
-  const mappedIrsNames = descriptor.PDF_FIELD_MAP.map(([, irs]) => irs);
-  // De-duplicate in case multiple domain keys map to the same IRS field
-  const uniqueMappedNames = [...new Set(mappedIrsNames)];
-
-  const matched = uniqueMappedNames.filter((n) => realFieldNames.has(n));
-  const missing = uniqueMappedNames.filter((n) => !realFieldNames.has(n));
+  const matched = uniqueMappedNames.filter((n) => realFieldTypes.has(n));
+  const missing = uniqueMappedNames.filter((n) => !realFieldTypes.has(n));
+  const wrongType = matched.flatMap((name) => {
+    const expected = mappedTypes.get(name)!;
+    const actual = realFieldTypes.get(name)!;
+    return expected === actual ? [] : [{ name, expected, actual }];
+  });
 
   const mappedNamesSet = new Set(uniqueMappedNames);
   const unmapped = realFields.filter((f) => !mappedNamesSet.has(f.name));
@@ -122,6 +183,7 @@ async function inspectForm(descriptor: {
     realFields,
     matched,
     missing,
+    wrongType,
     unmapped,
   };
 }
@@ -132,12 +194,13 @@ async function main() {
 
   const results: Array<FormDump & { error?: string }> = [];
   let formsWithMissing = 0;
+  let formsWithWrongType = 0;
   let formsWithUnmapped = 0;
   let formsWithErrors = 0;
 
   console.log(`\nInspecting ${ALL_PDF_FORMS.length} IRS PDF forms...\n`);
 
-  for (const descriptor of ALL_PDF_FORMS) {
+  for (const [index, descriptor] of ALL_PDF_FORMS.entries()) {
     console.log(`\n[${descriptor.pendingKey}] ${descriptor.pdfUrl}`);
     const dump = await inspectForm(descriptor);
     results.push(dump);
@@ -151,10 +214,11 @@ async function main() {
     const mappedCount = dump.matched.length + dump.missing.length;
     console.log(
       `  real fields: ${dump.realFields.length}  ` +
-      `mapped: ${mappedCount}  ` +
-      `✓ matched: ${dump.matched.length}  ` +
-      `✗ missing: ${dump.missing.length}  ` +
-      `? unmapped: ${dump.unmapped.length}`
+        `mapped: ${mappedCount}  ` +
+        `✓ matched: ${dump.matched.length}  ` +
+        `✗ missing: ${dump.missing.length}  ` +
+        `! wrong type: ${dump.wrongType.length}  ` +
+        `? unmapped: ${dump.unmapped.length}`,
     );
 
     if (dump.missing.length > 0) {
@@ -164,14 +228,22 @@ async function main() {
         console.log(`    - ${name}`);
       }
     }
+    if (dump.wrongType.length > 0) {
+      formsWithWrongType++;
+      for (const field of dump.wrongType) {
+        console.log(
+          `  WRONG TYPE ${field.name}: expected ${field.expected}, found ${field.actual}`,
+        );
+      }
+    }
 
     // Write per-form dump
-    const dumpPath = join(DUMP_DIR, `${descriptor.pendingKey}.json`);
+    const dumpPath = join(DUMP_DIR, `${descriptor.pendingKey}-${index}.json`);
     await Deno.writeTextFile(dumpPath, JSON.stringify(dump, null, 2));
   }
 
   formsWithUnmapped = results.filter(
-    (r) => !r.error && r.unmapped.length > 0
+    (r) => !r.error && r.unmapped.length > 0,
   ).length;
 
   console.log("\n" + "=".repeat(70));
@@ -179,8 +251,13 @@ async function main() {
   console.log("=".repeat(70));
   console.log(`Total forms inspected : ${ALL_PDF_FORMS.length}`);
   console.log(`Forms with errors     : ${formsWithErrors}`);
-  console.log(`Forms with missing    : ${formsWithMissing}  (descriptor names not in PDF)`);
-  console.log(`Forms with unmapped   : ${formsWithUnmapped}  (PDF fields not in descriptor)`);
+  console.log(
+    `Forms with missing    : ${formsWithMissing}  (descriptor names not in PDF)`,
+  );
+  console.log(`Forms with wrong type : ${formsWithWrongType}`);
+  console.log(
+    `Forms with unmapped   : ${formsWithUnmapped}  (PDF fields not in descriptor)`,
+  );
   console.log("");
 
   // Print f1040 personal info fields
@@ -192,7 +269,12 @@ async function main() {
     }
   }
 
-  console.log("\nDumps written to scripts/field-dumps/\n");
+  console.log(`\nDumps written to ${DUMP_DIR}\n`);
+  if (formsWithErrors > 0 || formsWithMissing > 0 || formsWithWrongType > 0) {
+    throw new Error(
+      `IRS PDF field audit failed: ${formsWithErrors} template errors, ${formsWithMissing} descriptors with missing fields, ${formsWithWrongType} with wrong field types`,
+    );
+  }
 }
 
 await main();

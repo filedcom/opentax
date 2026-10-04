@@ -146,12 +146,16 @@ for (
     assertThrows(
       () => buildMefXml(buildPending(tampered), filer),
       Error,
-      "Form 1040 line 9 differs from its income lines",
+      qualifiedKind === "plan"
+        ? "Form 1040 lines 5a and 5b or AGI differ from retained pension sources"
+        : "Form 1040 line 4b and AGI differ from retained IRA sources",
     );
     await assertRejects(
       () => buildPdfBytes(tampered, filer),
       Error,
-      "Form 1040 line 9 differs from its income lines",
+      qualifiedKind === "plan"
+        ? "Form 1040 lines 5a and 5b or AGI differ from retained pension sources"
+        : "Form 1040 line 4b and AGI differ from retained IRA sources",
     );
   });
 }
@@ -253,7 +257,9 @@ for (const sourceKind of ["plan", "traditional_ira"] as const) {
     await assertRejects(
       () => buildMefBundle(buildPending(changed), { filer, attachments: [] }),
       Error,
-      "matching fully taxable Form 1099-R",
+      sourceKind === "plan"
+        ? "Form 1040 lines 5a and 5b or AGI differ from retained pension sources"
+        : "Form 1040 line 4b and AGI differ from retained IRA sources",
     );
   });
 }
@@ -521,12 +527,12 @@ for (
       assertThrows(
         () => buildMefXml(buildPending(changed), filer),
         Error,
-        "Form 1040 line 9 differs from its income lines",
+        "Form 1040 line 4b and AGI differ from retained IRA sources",
       );
       await assertRejects(
         () => buildPdfBytes(changed, filer),
         Error,
-        "Form 1040 line 9 differs from its income lines",
+        "Form 1040 line 4b and AGI differ from retained IRA sources",
       );
     }
   });

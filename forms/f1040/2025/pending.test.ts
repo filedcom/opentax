@@ -77,6 +77,34 @@ Deno.test("normalizePendingDict: AGI line 1h sums distinct retained wage sources
   );
 });
 
+Deno.test("normalizePendingDict: AGI tax-exempt interest sums independent issued sources", () => {
+  assertEquals(
+    normalizePendingDict(
+      { tax_exempt_interest: [150_000, 150_000] },
+      "agi_aggregator",
+    ),
+    { tax_exempt_interest: 300_000 },
+  );
+  assertEquals(
+    normalizePendingDict({ tax_exempt_interest: [150_000, 300_000] }, "f1040"),
+    { tax_exempt_interest: 300_000 },
+  );
+});
+
+Deno.test("normalizePendingDict: AGI ordinary dividends sum independent child and issuer sources", () => {
+  assertEquals(
+    normalizePendingDict(
+      { line3b_ordinary_dividends: [100, 200] },
+      "agi_aggregator",
+    ),
+    { line3b_ordinary_dividends: 300 },
+  );
+  assertEquals(
+    normalizePendingDict({ line3b_ordinary_dividends: [100, 300] }, "f1040"),
+    { line3b_ordinary_dividends: 300 },
+  );
+});
+
 Deno.test("normalizePendingDict: mixed-type array is left as-is", () => {
   const input = { items: [1, "two", 3] };
   assertEquals(normalizePendingDict(input, "f1040"), { items: [1, "two", 3] });

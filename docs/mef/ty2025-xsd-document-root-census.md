@@ -19,19 +19,19 @@ likewise does not prove a form is required. The
 registered-descriptor `INV-01` evidence inventory. The five
 [ordered unregistered-root reviews](ty2025-unregistered-roots-01-25.md) cover
 the former 128-`No` snapshot; thirty-nine roots have since gained source literals,
-leaving 89 current `No` rows. Their ordinal labels are historical, not current
+leaving 88 current `No` rows. Their ordinal labels are historical, not current
 missing-root counts. A per-root review is not approval to exclude a filing
 situation, and product applicability decisions for these roots remain open
 separately from `INV-01`.
 
-Counts: 211 schema roots; 122 with a MeF source literal; 89 without one.
-Of the 122 literal roots, 116 occur in files imported by `ALL_MEF_FORMS`; six
+Counts: 211 schema roots; 123 with a MeF source literal; 88 without one.
+Of the 123 literal roots, 117 occur in files imported by `ALL_MEF_FORMS`; six
 (`IRS2210`, `IRS8828`, `IRS8908`, `IRS8938`, `IRS8997`, `IRS9465`) occur only in
 unregistered MeF form files. A registered-file literal is not proof that its
 descriptor can file every branch. `IRS1116ScheduleC` is a seventh unregistered
 root builder whose token is also quoted in the registered Form 1116 file.
 
-The current descriptor inventory is **148 native** and **115 PDF** entries;
+The current descriptor inventory is **149 native** and **116 PDF** entries;
 the native set includes **32 wage/supporting descriptors**. These are not
 211-root coverage counts. The [root applicability crosswalk](ty2025-unregistered-root-applicability.md#registry-to-root-reconciliation)
 records owner classes and unresolved product decisions, while the
@@ -241,7 +241,7 @@ the linked evidence, not an inference from this flag.
 | `IRS8995AScheduleC`   | Yes            | Registered bounded two-distinct-Schedule-C-business current-loss netting route with parent and PDF reconciliation; prior carryforwards and wider loss patterns remain open. Cases and acceptance are unrun.                                                                                                                                              |
 | `IRS8995AScheduleD`   | Yes            | Bounded native patron route and PDF descriptor registered; broader source, filled-PDF inspection, executed XSD/business-rule, and ATS evidence remain open.                                                                                                                                                                                              |
 | `IRS8997` | Yes | Source literal exists in a staged builder; registration, complete filing route, PDF, business rules and ATS remain open. |
-| `IRS9000`             | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
+| `IRS9000`             | Yes            | Per-person alternative-media request now has a registered native/PDF route and focused local XML/XSD and page evidence; wider business-rule and ATS acceptance remain open.                                                                                                                                                                                                                      |
 | `IRS926`              | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS9465`             | Yes            | Conditional native attachment for a balance-due 1040, with online/later separate alternatives. A source literal exists in the staged attached-return builder, but that descriptor is unregistered; both exports still reject the request pending signature and filled-PDF reconciliation. Not excluded; [decision detail](ty2025-form9465-filing-boundary.md). |
 | `IRS965A`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |

@@ -5,7 +5,10 @@ import {
   assertThrows,
 } from "@std/assert";
 import { SCENARIO_1040_08_FACTS } from "../../../e2e/ats/ty2025_cases.ts";
-import { DistributionCode } from "../../../nodes/inputs/f1099r/index.ts";
+import {
+  DistributionCode,
+  itemSchema,
+} from "../../../nodes/inputs/f1099r/index.ts";
 import { TS } from "../../../nodes/types.ts";
 import { type FilerIdentity, FilingStatus } from "../types.ts";
 import { f1099r } from "./f1099r.ts";
@@ -81,6 +84,69 @@ Deno.test("Scenario 8 builds two source-faithful 1099-R MeF documents", () => {
   }
 });
 
+Deno.test("altered 1099-R uses nonstandard code N with a retained payer copy", () => {
+  const source = {
+    ...items()[0],
+    altered_or_handwritten: true,
+    source_document_reference: "2025 altered pension copy",
+  };
+  const [xml] = f1099r.build({ f1099rs: [source] }, { filer });
+  assertStringIncludes(
+    xml,
+    "<StandardOrNonStandardCd>N</StandardOrNonStandardCd>",
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...source,
+      source_document_reference: undefined,
+    }).success,
+    false,
+  );
+  assertThrows(
+    () =>
+      f1099r.build({
+        f1099rs: [{ ...source, source_document_reference: undefined }],
+      }, { filer }),
+    Error,
+    "1099-R owner review needs valid payer source rows",
+  );
+});
+
+Deno.test("reviewed typed 1099-R emits code N only for its matching payer copy", () => {
+  const source = {
+    ...items()[0],
+    source_document_reference: "2025 typed pension copy",
+    nonstandard_document_review: {
+      kind: "typed" as const,
+      source_document_reference: "2025 typed pension copy",
+      reviewer_confirmed_nonstandard: true as const,
+    },
+  };
+  const [xml] = f1099r.build({ f1099rs: [source] }, { filer });
+  assertStringIncludes(
+    xml,
+    "<StandardOrNonStandardCd>N</StandardOrNonStandardCd>",
+  );
+  assertEquals(
+    itemSchema.safeParse({
+      ...source,
+      nonstandard_document_review: {
+        ...source.nonstandard_document_review,
+        source_document_reference: "different copy",
+      },
+    }).success,
+    false,
+  );
+  assertThrows(
+    () =>
+      f1099r.build({
+        f1099rs: [{ ...source, source_document_reference: "different copy" }],
+      }, { filer }),
+    Error,
+    "1099-R owner review needs valid payer source rows",
+  );
+});
+
 Deno.test("1099-R MeF export rejects incomplete source addresses", () => {
   const [first] = items();
   assertThrows(
@@ -115,11 +181,15 @@ Deno.test("1099-R native export rejects an exact repeated identified source copy
   assertThrows(
     () => f1099r.build({ f1099rs: [copy, { ...copy }] }, { filer }),
     Error,
-    "repeats the same payer, recipient, account, and issued source copy",
+    "repeats the same issued-copy source reference",
   );
   assertEquals(
     f1099r.build({
-      f1099rs: [copy, { ...copy, account_number: "PENSION-2" }],
+      f1099rs: [copy, {
+        ...copy,
+        account_number: "PENSION-2",
+        source_document_reference: "2025 issued second pension 1099-R",
+      }],
     }, { filer }).length,
     2,
   );
@@ -140,12 +210,12 @@ Deno.test("one identified 1099-R copy cannot replay changed withholding in eithe
   assertThrows(
     () => buildMefXml(pending, filer),
     Error,
-    "repeats the same payer, recipient, account, and issued source copy",
+    "repeats the same issued-copy source reference",
   );
   await assertRejects(
     () => buildPdfBytes(pending, filer),
     Error,
-    "repeats the same payer, recipient, account, and issued source copy",
+    "repeats the same issued-copy source reference",
   );
   assertEquals(
     f1099r.build({

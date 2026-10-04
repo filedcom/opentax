@@ -3,7 +3,9 @@ import { f1099k, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 
-function minimalItem(overrides: Record<string, unknown> = {}) {
+function minimalItem(
+  overrides: Record<string, unknown> = {},
+): { pse_name: string; [key: string]: unknown } {
   return {
     pse_name: "TestPSE",
     ...overrides,
@@ -762,6 +764,101 @@ Deno.test("1099-K identified payer copy cannot replay changed boxes or classific
   );
 });
 
+Deno.test("1099-K issued reference rejects changed boxes without an account", () => {
+  const issued = hobbyItem(100, {
+    source_document_reference: "processor-issued-copy",
+  });
+  const changed = hobbyItem(150, {
+    source_document_reference: "processor-issued-copy",
+  });
+  assertThrows(
+    () => compute([issued, changed]),
+    Error,
+    "repeats the same issued source reference",
+  );
+  assertThrows(
+    () =>
+      compute([
+        issued,
+        hobbyItem(150, {
+          pse_name: "Other processor",
+          pse_tin: "234567890",
+          account_number: "merchant-2",
+          source_document_reference: "processor-issued-copy",
+        }),
+      ]),
+    Error,
+    "repeats the same issued source reference",
+  );
+  compute([
+    issued,
+    hobbyItem(150, { source_document_reference: "second-processor-copy" }),
+  ]);
+});
+
+Deno.test("1099-K rejects ambiguous same-processor copies without copy identity", () => {
+  const issued = hobbyItem(100);
+  const changed = hobbyItem(150);
+  for (
+    const copies of [
+      [issued, changed],
+      [issued, { ...changed, account_number: "merchant-2" }],
+      [issued, {
+        ...changed,
+        source_document_reference: "issued-copy-2",
+      }],
+    ]
+  ) {
+    assertThrows(
+      () => compute(copies),
+      Error,
+      "need distinct account, issued reference, transaction type, or merchant category identity",
+    );
+  }
+  compute([issued, { ...changed, pse_tin: "23-4567890" }]);
+  compute([
+    { ...issued, source_document_reference: "issued-copy-1" },
+    { ...changed, source_document_reference: "issued-copy-2" },
+  ]);
+});
+
+Deno.test("1099-K separates card, network, and card merchant-category copies", () => {
+  const card = hobbyItem(100, {
+    account_number: "merchant-1",
+    transaction_type_payment_card: true,
+    box2_merchant_category_code: "1234",
+  });
+  const network = hobbyItem(150, {
+    account_number: "merchant-1",
+    transaction_type_tpso: true,
+  });
+  const otherCategory = hobbyItem(200, {
+    account_number: "merchant-1",
+    transaction_type_payment_card: true,
+    box2_merchant_category_code: "5678",
+  });
+  compute([card, network, otherCategory]);
+  assertThrows(
+    () => compute([card, { ...card, box1a_gross_payments: 150 }]),
+    Error,
+    "repeats the same identified payer, recipient, and account",
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      f1099ks: [{
+        ...card,
+        transaction_type_tpso: true,
+      }],
+    }).success,
+    false,
+  );
+  compute([
+    { ...card, account_number: undefined },
+    { ...network, account_number: undefined },
+    { ...otherCategory, account_number: undefined },
+  ]);
+});
+
 Deno.test("for_routing=schedule_c: $5,000 gross routes despite issuer threshold", () => {
   const result = compute([businessItem(5_000)]);
   const schedCOut = findOutput(result, "schedule_c");
@@ -1206,8 +1303,8 @@ Deno.test("for_routing=schedule_1_line_8j: zero gross creates neither Schedule 1
 
 Deno.test("for_routing=schedule_1_line_8j: sourced items aggregate once for Schedule 1 and AGI", () => {
   const result = compute([
-    hobbyItem(1),
-    hobbyItem(4_999),
+    hobbyItem(1, { source_document_reference: "small issued copy" }),
+    hobbyItem(4_999, { source_document_reference: "large issued copy" }),
   ]);
   const schedule1Amounts = result.outputs.filter((o) =>
     o.nodeType === "schedule1"

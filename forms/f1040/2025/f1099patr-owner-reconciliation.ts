@@ -33,6 +33,14 @@ export function assertPositive1099PatrOwner(
         "Positive Form 1099-PATR needs a recipient TIN at export",
       );
     }
+    if (
+      !row.payer_name?.trim() &&
+      !/^(?:\d{9}|\d{2}-\d{7}|\d{3}-\d{2}-\d{4})$/.test(
+        row.payer_tin ?? "",
+      )
+    ) {
+      throw new Error("Positive Form 1099-PATR needs an identified payer");
+    }
     if (row.recipient_tin !== primary && row.recipient_tin !== spouse) {
       throw new Error(
         "Form 1099-PATR recipient TIN must match the taxpayer or joint spouse",

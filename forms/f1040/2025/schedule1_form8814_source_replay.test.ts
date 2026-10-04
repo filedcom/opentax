@@ -34,6 +34,11 @@ Deno.test("Schedule 1 line 8z Form 8814 amount replays retained child election a
   assertEquals(Number.isSafeInteger(sourceAmount) && sourceAmount > 0, true);
   const pending = buildPending(result.pending);
   assertSchedule1Form8814Source(pending);
+  const sourceTax = pending.form8814!.items!.reduce(
+    (sum, line) => sum + line.line15,
+    0,
+  );
+  assertEquals(pending.f1040?.form8814_tax, sourceTax);
   const positive = await buildMefBundle(pending, {
     filer: fixture.filer,
     attachments: [],
@@ -109,5 +114,36 @@ Deno.test("Schedule 1 line 8z Form 8814 amount replays retained child election a
     () => buildPdfBytes(mismatchedCalculation, fixture.filer),
     Error,
     "Form 8814 line 12 differs from reviewed child election",
+  );
+  const alteredTax = {
+    ...pending,
+    f1040: { ...pending.f1040!, form8814_tax: sourceTax + 1 },
+  };
+  await assertRejects(
+    () => buildMefBundle(alteredTax, { filer: fixture.filer, attachments: [] }),
+    Error,
+    "Form 1040 child-election tax differs from retained Form 8814 lines 15",
+  );
+  await assertRejects(
+    () => buildPdfBytes(alteredTax, fixture.filer),
+    Error,
+    "Form 1040 child-election tax differs from retained Form 8814 lines 15",
+  );
+  const alteredLine15 = {
+    ...pending,
+    form8814: {
+      items: [{ ...lines[0], line15: lines[0].line15 + 1 }],
+    },
+  };
+  await assertRejects(
+    () =>
+      buildMefBundle(alteredLine15, { filer: fixture.filer, attachments: [] }),
+    Error,
+    "Form 8814 line 15 tax differs from reviewed child election",
+  );
+  await assertRejects(
+    () => buildPdfBytes(alteredLine15, fixture.filer),
+    Error,
+    "Form 8814 line 15 tax differs from reviewed child election",
   );
 });

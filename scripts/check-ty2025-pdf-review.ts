@@ -30,6 +30,7 @@ import {
   assertReviewSchemaDigest,
   assertReviewSchemaTree,
 } from "./ty2025-pdf-review-schema.ts";
+import { assertReviewScope } from "./ty2025-pdf-review-scope.ts";
 
 const [directoryArg, xsdArg] = Deno.args;
 if (!directoryArg || !xsdArg || Deno.args.length !== 2) {
@@ -128,16 +129,17 @@ const cases = items(manifest.cases, "review cases");
 if (integer(manifest.fixtureCount, "fixtureCount") !== cases.length) {
   throw new Error("Manifest fixture count differs from its case list");
 }
-if (cases.length !== pdfReviewFixtures.length) {
-  throw new Error("Review batch does not contain every checked-in fixture");
-}
 const fixtures = new Map(
   pdfReviewFixtures.map((fixture) => [fixture.id, fixture]),
 );
 if (fixtures.size !== pdfReviewFixtures.length) {
   throw new Error("Checked-in review fixture IDs are not unique");
 }
-await assertReviewArtifactInventory(directory, [...fixtures.keys()]);
+const scope = assertReviewScope(manifest.scope, [...fixtures.keys()]);
+if (cases.length !== scope.includedFixtureIds.length) {
+  throw new Error("Review batch does not contain its declared fixtures");
+}
+await assertReviewArtifactInventory(directory, scope.includedFixtureIds);
 const templateCache = join(directory, "irs-pdf-cache");
 const templateCacheInfo = await Deno.stat(templateCache).catch(() => undefined);
 if (!templateCacheInfo?.isDirectory) {
@@ -155,6 +157,9 @@ let reviewedPages = 0;
 for (const [index, rawCase] of cases.entries()) {
   const entry = object(rawCase, `case ${index + 1}`);
   const id = string(entry.id, `case ${index + 1} ID`);
+  if (id !== scope.includedFixtureIds[index]) {
+    throw new Error(`Review case ${index + 1} differs from declared scope`);
+  }
   const fixture = fixtures.get(id);
   if (!fixture) throw new Error(`Unknown review case ${id}`);
   const filer = reviewFiler(fixture.filer);
@@ -335,11 +340,11 @@ for (const [index, rawCase] of cases.entries()) {
   }
 }
 
-if (seen.size !== fixtures.size) {
+if (seen.size !== scope.includedFixtureIds.length) {
   throw new Error(
-    "One or more checked-in fixtures are absent from the review batch",
+    "One or more declared fixtures are absent from the review batch",
   );
 }
 console.log(
-  `Review checklist complete: ${seen.size} cases, ${reviewedPages} pages; artifact hashes and TY2025 XSD validation confirmed.`,
+  `Review checklist complete (${scope.kind} scope): ${seen.size} cases, ${reviewedPages} pages; artifact hashes and TY2025 XSD validation confirmed.`,
 );

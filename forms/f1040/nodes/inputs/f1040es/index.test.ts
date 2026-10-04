@@ -1,6 +1,9 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { estimatedPaymentTotal, f1040es } from "./index.ts";
-import { agreedJointPayment } from "./agreed-payment.fixture.ts";
+import {
+  agreedJointPayment,
+  agreedMfsJointPayment,
+} from "./agreed-payment.fixture.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 
@@ -71,6 +74,36 @@ Deno.test("signed 2025 joint payment allocation routes only the taxpayer share",
     }).success,
     false,
   );
+});
+
+Deno.test("signed joint allocations bind retained agreement PDF bytes", () => {
+  for (const source of [agreedJointPayment, agreedMfsJointPayment]) {
+    assertEquals(estimatedPaymentTotal(source), 300);
+    assertThrows(
+      () =>
+        estimatedPaymentTotal({
+          ...source,
+          joint_estimated_payment_allocation: {
+            ...source.joint_estimated_payment_allocation,
+            signed_agreement_pdf_sha256: "0".repeat(64),
+          },
+        }),
+      Error,
+      "PDF differs from its retained digest",
+    );
+    assertThrows(
+      () =>
+        estimatedPaymentTotal({
+          ...source,
+          joint_estimated_payment_allocation: {
+            ...source.joint_estimated_payment_allocation,
+            signed_agreement_pdf_base64: "JVBERi0xLjQKJSVFT0YK",
+          },
+        }),
+      Error,
+      "PDF differs from its retained digest",
+    );
+  }
 });
 
 // =============================================================================

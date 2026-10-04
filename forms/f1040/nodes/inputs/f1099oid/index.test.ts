@@ -40,7 +40,7 @@ Deno.test("1099-OID changed issued copy cannot double interest or withholding", 
         box4_federal_withheld: 20,
       }]),
     Error,
-    "repeats the same identified payer and source reference",
+    "repeats the same issued-copy source reference",
   );
   const separate = compute([
     issued,
@@ -53,6 +53,87 @@ Deno.test("1099-OID changed issued copy cannot double interest or withholding", 
   assertEquals(
     findOutput(separate, "f1040")?.fields.line25b_withheld_1099,
     30,
+  );
+});
+
+Deno.test("1099-OID rejects a repeated source without payer TIN", () => {
+  const issued = {
+    payer_name: "Bond Fund",
+    source_document_reference: "issued-oid-copy-1",
+    box1_oid: 200,
+  };
+  assertThrows(
+    () => compute([issued, { ...issued, box1_oid: 250 }]),
+    Error,
+    "repeats the same issued-copy source reference",
+  );
+  const distinct = compute([
+    issued,
+    { ...issued, source_document_reference: "issued-oid-copy-2" },
+  ]);
+  assertEquals(
+    distinct.outputs.filter((row) => row.nodeType === "schedule_b").length,
+    2,
+  );
+});
+
+Deno.test("1099-OID cannot reuse one issued-copy reference across payers", () => {
+  const issued = {
+    payer_name: "Bond Fund A",
+    payer_tin: "123456789",
+    source_document_reference: "one-issued-oid-copy",
+    box1_oid: 200,
+  };
+  assertThrows(
+    () =>
+      compute([issued, {
+        ...issued,
+        payer_name: "Bond Fund B",
+        payer_tin: "987654321",
+      }]),
+    Error,
+    "repeats the same issued-copy source reference",
+  );
+  const distinct = compute([issued, {
+    ...issued,
+    payer_name: "Bond Fund B",
+    payer_tin: "987654321",
+    source_document_reference: "second-issued-oid-copy",
+  }]);
+  assertEquals(
+    distinct.outputs.filter((row) => row.nodeType === "schedule_b").length,
+    2,
+  );
+});
+
+Deno.test("1099-OID distinguishes obligations and rejects unidentified repeated copies", () => {
+  const unidentified = { payer_name: "Bond Fund", box1_oid: 200 };
+  const identified = {
+    ...unidentified,
+    account_number: "BROKER-1",
+    box7_description: "Bond A",
+  };
+  const message =
+    "1099-OID has multiple positive payer copies without account or issued source reference";
+  assertThrows(
+    () => compute([unidentified, { ...unidentified, box1_oid: 250 }]),
+    Error,
+    message,
+  );
+  assertThrows(() => compute([unidentified, identified]), Error, message);
+  assertThrows(() => compute([identified, unidentified]), Error, message);
+  assertThrows(
+    () => compute([identified, { ...identified, box1_oid: 250 }]),
+    Error,
+    "repeats the same payer, recipient, account, and obligation",
+  );
+  const distinct = compute([
+    identified,
+    { ...identified, box7_description: "Bond B" },
+  ]);
+  assertEquals(
+    distinct.outputs.filter((row) => row.nodeType === "schedule_b").length,
+    2,
   );
 });
 

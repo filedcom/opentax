@@ -184,6 +184,35 @@ Deno.test("f4852: Part II 1099-R pension, taxable_amount omitted → defaults to
   assertEquals(fields["line25b_withheld_1099"], 1500);
 });
 
+Deno.test("f4852: Part II taxable amount includes basis once", () => {
+  const stated = f1040Fields(compute([r1099Item({
+    gross_distribution: 20_000,
+    taxable_amount: 18_000,
+    employee_contributions: 2_000,
+  })]));
+  assertEquals(stated["line5a_pension_gross"], 20_000);
+  assertEquals(stated["line5b_pension_taxable"], 18_000);
+  const estimated = f1040Fields(compute([r1099Item({
+    gross_distribution: 20_000,
+    employee_contributions: 2_000,
+  })]));
+  assertEquals(estimated["line5b_pension_taxable"], 18_000);
+  assertEquals(
+    itemSchema.safeParse(r1099Item({
+      gross_distribution: 20_000,
+      taxable_amount: 21_000,
+    })).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse(r1099Item({
+      gross_distribution: 20_000,
+      employee_contributions: 21_000,
+    })).success,
+    false,
+  );
+});
+
 Deno.test("f4852: Part II 1099-R IRA distribution → line4a/4b, withheld to line25b", () => {
   const result = compute([
     r1099Item({

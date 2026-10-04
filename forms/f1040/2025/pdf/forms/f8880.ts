@@ -30,24 +30,97 @@ import {
 // mapped raw pending inputs one row off (elective deferrals printed on line 3).
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
-  { kind: "text", domainKey: "print_line1a_ira", pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow1[0].f1_3[0]" },
-  { kind: "text", domainKey: "print_line1b_ira", pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow1[0].f1_4[0]" },
-  { kind: "text", domainKey: "print_line2a_deferrals", pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow2[0].f1_5[0]" },
-  { kind: "text", domainKey: "print_line2b_deferrals", pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow2[0].f1_6[0]" },
-  { kind: "text", domainKey: "print_line3a_total", pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow3[0].f1_7[0]" },
-  { kind: "text", domainKey: "print_line3b_total", pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow3[0].f1_8[0]" },
-  { kind: "text", domainKey: "print_line4a_distributions", pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow4[0].f1_9[0]", printZero: true },
-  { kind: "text", domainKey: "print_line4b_distributions", pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow4[0].f1_10[0]" },
-  { kind: "text", domainKey: "print_line5a", pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow5[0].f1_11[0]" },
-  { kind: "text", domainKey: "print_line5b", pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow5[0].f1_12[0]" },
-  { kind: "text", domainKey: "print_line6a_eligible", pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow6[0].f1_13[0]" },
-  { kind: "text", domainKey: "print_line6b_eligible", pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow6[0].f1_14[0]" },
-  { kind: "text", domainKey: "print_line7_total_eligible", pdfField: "topmostSubform[0].Page1[0].f1_15[0]" },
-  { kind: "text", domainKey: "print_line8_agi", pdfField: "topmostSubform[0].Page1[0].f1_16[0]" },
-  { kind: "text", domainKey: "print_line9_rate", pdfField: "topmostSubform[0].Page1[0].f1_17[0]" },
-  { kind: "text", domainKey: "print_line10_raw_credit", pdfField: "topmostSubform[0].Page1[0].f1_18[0]" },
-  { kind: "text", domainKey: "print_line11_tax_liability", pdfField: "topmostSubform[0].Page1[0].f1_19[0]" },
-  { kind: "text", domainKey: "print_line12_credit", pdfField: "topmostSubform[0].Page1[0].f1_20[0]" },
+  {
+    kind: "text",
+    domainKey: "print_line1a_ira",
+    pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow1[0].f1_3[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line1b_ira",
+    pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow1[0].f1_4[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line2a_deferrals",
+    pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow2[0].f1_5[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line2b_deferrals",
+    pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow2[0].f1_6[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line3a_total",
+    pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow3[0].f1_7[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line3b_total",
+    pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow3[0].f1_8[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line4a_distributions",
+    pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow4[0].f1_9[0]",
+    printZero: true,
+  },
+  {
+    kind: "text",
+    domainKey: "print_line4b_distributions",
+    pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow4[0].f1_10[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line5a",
+    pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow5[0].f1_11[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line5b",
+    pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow5[0].f1_12[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line6a_eligible",
+    pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow6[0].f1_13[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line6b_eligible",
+    pdfField: "topmostSubform[0].Page1[0].Table_Ln1-6[0].BodyRow6[0].f1_14[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line7_total_eligible",
+    pdfField: "topmostSubform[0].Page1[0].f1_15[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line8_agi",
+    pdfField: "topmostSubform[0].Page1[0].f1_16[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line9_rate",
+    pdfField: "topmostSubform[0].Page1[0].f1_17[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line10_raw_credit",
+    pdfField: "topmostSubform[0].Page1[0].f1_18[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line11_tax_liability",
+    pdfField: "topmostSubform[0].Page1[0].f1_19[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line12_credit",
+    pdfField: "topmostSubform[0].Page1[0].f1_20[0]",
+  },
 ];
 
 export const form8880Pdf: PdfFormDescriptor = {
@@ -75,13 +148,17 @@ export const form8880Pdf: PdfFormDescriptor = {
       raw.print_line2a_deferrals !== owned.taxpayer ||
       (raw.print_line2b_deferrals ?? 0) !== owned.spouse ||
       (source.ira_contributions_taxpayer ?? 0) +
-          (source.ira_contributions_spouse ?? 0) + owned.taxpayer +
-          owned.spouse <= 0
+            (source.ira_contributions_spouse ?? 0) + owned.taxpayer +
+            owned.spouse <= 0
     ) {
-      throw new Error("Form 8880 PDF contribution lines differ from owner source facts");
+      throw new Error(
+        "Form 8880 PDF contribution lines differ from owner source facts",
+      );
     }
-    if (typeof raw.print_line6a_eligible === "number" &&
-      raw.print_line6a_eligible > 0) {
+    if (
+      typeof raw.print_line6a_eligible === "number" &&
+      raw.print_line6a_eligible > 0
+    ) {
       assertEligibleContributor(
         "taxpayer",
         source.taxpayer_dob,
@@ -89,8 +166,10 @@ export const form8880Pdf: PdfFormDescriptor = {
         source.taxpayer_claimed_as_dependent,
       );
     }
-    if (typeof raw.print_line6b_eligible === "number" &&
-      raw.print_line6b_eligible > 0) {
+    if (
+      typeof raw.print_line6b_eligible === "number" &&
+      raw.print_line6b_eligible > 0
+    ) {
       assertEligibleContributor(
         "spouse",
         source.spouse_dob,
@@ -100,11 +179,24 @@ export const form8880Pdf: PdfFormDescriptor = {
     }
     assertForm8880TaxLimit(line11, credit, allPending);
     assertForm8880FiledCalculation(raw, allPending);
-    return raw;
+    // The official line 9 field is one character wide; "x 0." is printed
+    // beside it on the template.
+    return {
+      ...raw,
+      print_line9_rate: String(raw.print_line9_rate).slice(-1),
+    };
   },
   filerFields: [
-    { kind: "text", domainKey: "fullName", pdfField: "topmostSubform[0].Page1[0].f1_1[0]" },
-    { kind: "text", domainKey: "primarySSN", pdfField: "topmostSubform[0].Page1[0].f1_2[0]" },
+    {
+      kind: "text",
+      domainKey: "fullName",
+      pdfField: "topmostSubform[0].Page1[0].f1_1[0]",
+    },
+    {
+      kind: "text",
+      domainKey: "primarySSN",
+      pdfField: "topmostSubform[0].Page1[0].f1_2[0]",
+    },
   ],
   includeWhen: (fields) =>
     ((fields["print_line12_credit"] as number | undefined) ?? 0) > 0,

@@ -1,5 +1,18 @@
 import { assertThrows } from "@std/assert";
 import { assertAttachmentCoverage } from "./attachment-coverage.ts";
+
+Deno.test("entered Form 4547 election cannot disappear from either export", () => {
+  for (const kind of ["mef", "pdf"] as const) {
+    assertThrows(
+      () =>
+        assertAttachmentCoverage({
+          f4547: { child_ssn: "111223333", pilot_contribution_requested: true },
+        }, kind),
+      Error,
+      "Form 4547 child-account election needs verified responsible-party authority",
+    );
+  }
+});
 import { form8992Pending } from "./form8992.fixture.ts";
 import { form8882Fixture } from "../nodes/inputs/f8882/fixture.ts";
 import { form8941FiledFixture } from "../nodes/inputs/f8941/fixture.ts";

@@ -6,7 +6,12 @@ const filer = {
   primarySSN: "123456789",
   nameLine1: "Alex Taxpayer",
   nameControl: "TAXP",
-  address: { line1: "1 Main St", city: "Wilmington", state: "DE", zip: "19801" },
+  address: {
+    line1: "1 Main St",
+    city: "Wilmington",
+    state: "DE",
+    zip: "19801",
+  },
   filingStatus: FilingStatus.Single,
 };
 const raw = { stock_basis_beginning: 3_000, ordinary_loss: 4_000 };
@@ -29,18 +34,24 @@ const ledger = {
   no_at_risk_or_passive_limitation: true,
 };
 const pending = {
-  k1_s_corp: { k1_s_corps: [{
-    corporation_name: "Test S Corp",
-    corporation_ein: "987654321",
-    source_document_reference: "2025 S-corporation K-1",
-    box1_ordinary_business: -4_000,
-    form7203_stock_loss_ledger: ledger,
-  }] },
-  schedule1: { line5_schedule_e: -3_000, line10_total_additional_income: -3_000 },
+  k1_s_corp: {
+    k1_s_corps: [{
+      corporation_name: "Test S Corp",
+      corporation_ein: "987654321",
+      source_document_reference: "2025 S-corporation K-1",
+      box1_ordinary_business: -4_000,
+      form7203_stock_loss_ledger: ledger,
+    }],
+  },
+  schedule1: {
+    line5_schedule_e: -3_000,
+    line10_total_additional_income: -3_000,
+  },
   f1040: { line8_additional_income: -3_000 },
 };
 
 Deno.test("stock-only Schedule E PDF maps official TY2025 page 2 row and totals", () => {
+  assertEquals(scheduleEStockLossPdf.printedFormKey, "schedule_e");
   const instance = scheduleEStockLossPdf.instances?.(raw, filer, pending)?.[0];
   assertEquals(scheduleEStockLossPdf.pageIndices?.(instance ?? {}), [1]);
   assertEquals(instance?.corporation_name, "Test S Corp");
@@ -52,15 +63,26 @@ Deno.test("stock-only Schedule E PDF maps official TY2025 page 2 row and totals"
   assertEquals(instance?.line31, 3_000);
   assertEquals(instance?.line32, -3_000);
   assertEquals(instance?.line41, -3_000);
-  const field = (key: string) => scheduleEStockLossPdf.fields.find((entry) => entry.domainKey === key)?.pdfField;
-  assertEquals(field("line28i"), "topmostSubform[0].Page2[0].Table_Line28g-k[0].RowA[0].f2_17[0]");
+  const field = (key: string) =>
+    scheduleEStockLossPdf.fields.find((entry) => entry.domainKey === key)
+      ?.pdfField;
+  assertEquals(
+    field("line28i"),
+    "topmostSubform[0].Page2[0].Table_Line28g-k[0].RowA[0].f2_17[0]",
+  );
   assertEquals(field("line41"), "topmostSubform[0].Page2[0].f2_78[0]");
 });
 
 Deno.test("stock-only Schedule E PDF rejects another Schedule E activity", () => {
-  assertThrows(() => scheduleEStockLossPdf.instances?.(raw, filer, {
-    ...pending, schedule_e: { schedule_es: [{}] },
-  }), Error, "cannot combine");
+  assertThrows(
+    () =>
+      scheduleEStockLossPdf.instances?.(raw, filer, {
+        ...pending,
+        schedule_e: { schedule_es: [{}] },
+      }),
+    Error,
+    "cannot combine",
+  );
 });
 
 Deno.test("stock-only Schedule E PDF emits no instance without Form 7203", () => {

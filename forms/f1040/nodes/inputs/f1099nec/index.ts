@@ -19,6 +19,7 @@ export const itemSchema = z.object({
   payer_name: z.string(),
   payer_tin: z.string(),
   recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
+  account_number: z.string().trim().min(1).optional(),
   source_document_reference: z.string().trim().min(1).optional(),
   box1_nec: z.number().nonnegative().optional(),
   box2_direct_sales: z.boolean().optional(),
@@ -65,6 +66,19 @@ export const itemSchema = z.object({
       code: "custom",
       path: ["recipient_ssn"],
       message: "1099-NEC box 4 withholding needs the issued recipient SSN",
+    });
+  }
+  if (
+    ((item.box1_nec ?? 0) > 0 || (item.box3_golden_parachute ?? 0) > 0 ||
+      (item.box4_federal_withheld ?? 0) > 0) &&
+    (!item.payer_name.trim() ||
+      !/^\d{9}$/.test(item.payer_tin.replaceAll("-", "")))
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["payer_tin"],
+      message:
+        "1099-NEC positive amounts need an identified payer name and TIN",
     });
   }
   if ((item.box1_nec ?? 0) <= 0) return;
@@ -132,20 +146,51 @@ type NECItem = z.infer<typeof itemSchema>;
 
 /** One issued payer copy may contribute to the return only once. */
 export function assertDistinct1099NecCopies(items: readonly NECItem[]): void {
-  const seen = new Set<string>();
+  const seenReferences = new Set<string>();
+  const seenAccounts = new Set<string>();
+  const seenOwners = new Set<string>();
+  const unidentifiedCopies = new Set<string>();
   for (const item of items) {
-    if (!item.source_document_reference) continue;
-    const key = JSON.stringify([
-      item.payer_tin.replaceAll("-", ""),
-      item.recipient_ssn?.replaceAll("-", "") ?? null,
-      item.source_document_reference,
-    ]);
-    if (seen.has(key)) {
+    const payer = item.payer_tin.replace(/\D/g, "");
+    const recipient = item.recipient_ssn?.replace(/\D/g, "") ?? null;
+    const account = item.account_number?.trim() ?? null;
+    const owner = JSON.stringify([payer, recipient]);
+    if (account) {
+      const key = JSON.stringify([payer, recipient, account]);
+      if (seenAccounts.has(key)) {
+        throw new Error(
+          "1099-NEC repeats the same payer, recipient, and account; corrected copies need one reviewed current row",
+        );
+      }
+      seenAccounts.add(key);
+    }
+    if (item.source_document_reference) {
+      const key = item.source_document_reference;
+      if (seenReferences.has(key)) {
+        throw new Error(
+          "1099-NEC repeats the same issued-copy source reference; corrected copies need one reviewed current row",
+        );
+      }
+      seenReferences.add(key);
+    }
+    if (
+      (item.box1_nec ?? 0) <= 0 &&
+      (item.box3_golden_parachute ?? 0) <= 0 &&
+      (item.box4_federal_withheld ?? 0) <= 0
+    ) continue;
+    if (!account && !item.source_document_reference) {
+      if (seenOwners.has(owner)) {
+        throw new Error(
+          "1099-NEC has multiple positive payer copies without account or issued source reference",
+        );
+      }
+      unidentifiedCopies.add(owner);
+    } else if (unidentifiedCopies.has(owner)) {
       throw new Error(
-        "1099-NEC repeats the same payer, recipient, and issued source reference; corrected copies need one reviewed current row",
+        "1099-NEC has multiple positive payer copies without account or issued source reference",
       );
     }
-    seen.add(key);
+    seenOwners.add(owner);
   }
 }
 
@@ -249,6 +294,7 @@ class F1099necNode extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
+    assertDistinct1099NecCopies(parsed.f1099necs);
     const nonbusinessIncome = nonbusinessOtherIncome(parsed.f1099necs);
     const nonbusinessSources = parsed.f1099necs.flatMap((item) =>
       item.for_routing === "schedule_1_line_8j" &&

@@ -118,7 +118,7 @@ function buildIRS1040ScheduleA(
     assertForm1098MortgageLimitSources(
       context.pending.f1098,
       recipients,
-      filer.filingStatus === FilingStatus.Single,
+      filer.filingStatus,
       fields.line_8a_mortgage_interest_1098 ?? 0,
       fields.line_8b_mortgage_interest_no_1098 ?? 0,
       fields.line_8c_points_no_1098 ?? 0,

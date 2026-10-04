@@ -1,5 +1,7 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { appendInput, buildEngineInputs, loadInputs } from "../store/store.ts";
+import { singletonPublicInputKeys } from "../store/public-input-keys.ts";
+import { f1040_2025 } from "../../forms/f1040/2025/index.ts";
 import {
   formAddCommand,
   formDeleteCommand,
@@ -92,6 +94,66 @@ Deno.test("formAddCommand valid W-2 appends entry with id w2_01", async () => {
     assertEquals(inputs["w2"].length, 1);
     assertEquals(inputs["w2"][0].id, "w2_01");
     assertEquals(inputs["w2"][0].fields["box1_wages"], 85000);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("CLI retains a registered alias as a singleton start input", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    const sale = {
+      property_id: "investment-1245-1",
+      property_description: "Investment tool",
+      acquired_on: "2022-05-01",
+      sold_on: "2025-06-01",
+      gross_sales_price: 10_000,
+      cost_or_other_basis_plus_sale_expense: 12_000,
+      depreciation_allowed_or_allowable: 5_000,
+      property_held_for_investment_not_business: true,
+      section_1245_classification_reviewed: true,
+      direct_cash_sale_no_special_recapture_exception: true,
+      sale_document_reference: "SALE-2025",
+      basis_document_reference: "BASIS-2022",
+      depreciation_schedule_reference: "DEPR-2025",
+    };
+    const added = await formAddCommand({
+      returnId,
+      nodeType: "form4797_investment_1245",
+      dataJson: JSON.stringify({ investment_1245_dispositions: [sale] }),
+      baseDir: tmpDir,
+    });
+    assertEquals(added.id, "form4797_investment_1245_01");
+    await assertRejects(
+      () =>
+        formAddCommand({
+          returnId,
+          nodeType: "form4797_investment_1245",
+          dataJson: JSON.stringify({ investment_1245_dispositions: [sale] }),
+          baseDir: tmpDir,
+        }),
+      Error,
+      "Singleton input form4797_investment_1245 already exists",
+    );
+    await formUpdateCommand({
+      returnId,
+      entryId: added.id,
+      dataJson: JSON.stringify({ investment_1245_dispositions: [sale] }),
+      baseDir: tmpDir,
+    });
+    const inputs = await loadInputs(`${tmpDir}/${returnId}`);
+    const engineInputs = buildEngineInputs(
+      inputs,
+      singletonPublicInputKeys(f1040_2025),
+    );
+    assertEquals(engineInputs.form4797_investment_1245, {
+      investment_1245_dispositions: [sale],
+    });
+    assertEquals(
+      f1040_2025.registry.start.inputSchema.safeParse(engineInputs).success,
+      true,
+    );
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }

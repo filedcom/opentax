@@ -95,3 +95,26 @@ Deno.test("positive other-income and federal-withholding copies also need filed 
     );
   }
 });
+
+Deno.test("positive 1099-MISC withholding needs a nonblank payer name in both Form 1040 exports", () => {
+  const pending = {
+    f1099m: {
+      f1099ms: [{
+        payer_name: "   ",
+        payer_tin: "123456789",
+        recipient_tin: "111223333",
+        box4_federal_withheld: 25,
+      }],
+    },
+  };
+  assertThrows(
+    () => irs1040.build(filed, { pending }),
+    Error,
+    "1099-MISC needs an identified payer name",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(filed, pending),
+    Error,
+    "1099-MISC needs an identified payer name",
+  );
+});

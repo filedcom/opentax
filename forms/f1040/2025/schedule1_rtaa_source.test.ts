@@ -15,6 +15,11 @@ import { buildPdfBytes } from "./pdf/builder.ts";
 import { schedule1Pdf } from "./pdf/forms/schedule1.ts";
 import { schedule1OtherIncomeRows } from "./mef/forms/schedule1_other_income_rows.ts";
 
+const xsd = new URL(
+  "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+  import.meta.url,
+).pathname;
+
 const general = {
   filing_status: "single",
   taxpayer_first_name: "Alex",
@@ -89,7 +94,37 @@ Deno.test("two issued RTAA copies reach Schedule 1 line 8z, Form 1040, native st
       { label: "RTAA payments 987654321", amount: 600 },
     ],
   );
-  await buildPdfBytes(pending, filer, ".pdf-cache", bundle);
+  const pdf = await buildPdfBytes(pending, filer, ".pdf-cache", bundle);
+  const extraction = new Deno.Command("pdftotext", {
+    args: ["-", "-"],
+    stdin: "piped",
+    stdout: "piped",
+    stderr: "piped",
+  }).spawn();
+  const pdfWriter = extraction.stdin.getWriter();
+  await pdfWriter.write(pdf);
+  await pdfWriter.close();
+  const printed = await extraction.output();
+  assertEquals(printed.code, 0, new TextDecoder().decode(printed.stderr));
+  const text = new TextDecoder().decode(printed.stdout);
+  assertStringIncludes(text, "RTAA payments 123456789");
+  assertStringIncludes(text, "RTAA payments 987654321");
+  try {
+    Deno.statSync(xsd);
+  } catch {
+    return;
+  }
+  const validator = new Deno.Command("xmllint", {
+    args: ["--noout", "--schema", xsd, "-"],
+    stdin: "piped",
+    stdout: "piped",
+    stderr: "piped",
+  }).spawn();
+  const xmlWriter = validator.stdin.getWriter();
+  await xmlWriter.write(new TextEncoder().encode(bundle.xml));
+  await xmlWriter.close();
+  const checked = await validator.output();
+  assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
 });
 
 Deno.test("RTAA export rejects changed rows, source copies, line total and recipient", async () => {

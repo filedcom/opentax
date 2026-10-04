@@ -141,7 +141,7 @@ $3,000 charged less $1,000 of service fees. The fixture remains unrun until
 the combined batch. This route does not prove the payoff statement's bytes,
 historical amortization, or multiple-debt limit allocation.
 
-## Bounded two-loan mortgage limit (implementation written; untested)
+## Original bounded two-loan mortgage limit
 
 For a single filer with exactly two full-year Form 1098 acquisition loans
 originated after December 15, 2017, the public
@@ -159,11 +159,97 @@ An active Form 8396 mortgage-interest credit also rejects in both exporters.
 
 A synthetic pair of $500,000 and $400,000 monthly balances with $20,000 and
 $16,000 of reported interest yields a .833 ratio and $29,988 on Schedule A
-line 8a. Source and full-return XSD fixtures are written but unrun under the
-implementation-first workflow. These structured records do not authenticate
+line 8a. Source and full-return XSD fixtures passed locally. These structured records do not authenticate
 the lender statements, and this slice does not cover grandfathered debt,
 mixed-use debt, second homes, part-year loans, joint/MFS limits, points,
 Form 8396 interaction, or other mortgage sources.
+
+## Multiple full-year post-2017 mortgages (2026-10-03)
+
+The original single-filer Table 1 review accepts two or more full-year
+post-2017 acquisition loans. Its source list must match every Form 1098, with
+twelve distinct monthly lender balances for each loan; one whole-return
+average-balance ratio determines the exact sum of deductible box 1 interest.
+When the combined monthly average is at or below $750,000, the ratio is one
+and full reported interest may be claimed. Two or more eligible lender copies
+whose box 2 principal snapshots total above $750,000 cannot reach native or
+PDF Schedule A without that review, including when one copy's current
+deduction is zero. The box 2 sum only triggers review; it is
+not substituted for the Publication 936 average-balance calculation.
+
+The focused case verifies three $300,000 loans with $3,000 interest produce
+$2,499 at the three-decimal Table 1 ratio, including local TY2025 XSD-valid
+XML and filled PDF. A second case verifies three $300,000 box 2 snapshots
+with $200,000 monthly average balances permit the full $3,000; unreviewed
+over-limit full and partial claims reject in both exporters. This remains a
+bounded full-year route. Mixed debt ages, part-year balances,
+points, other mortgage sources, authentic workpaper bytes, and IRS acceptance
+remain open. [Publication 936 (2025)](https://www.irs.gov/publications/p936)
+
+On 2026-10-04, the whole-return review also gained a verified filing-status
+field for MFJ, HOH, and qualifying surviving spouse while retaining the
+original Single field. A joint fixture places the third lender copy with the
+spouse and checks $2,499 across native XML, locally validated TY2025 XSD, and
+filled PDF. Two or more full-year post-2017 lender copies above the box 2
+snapshot sum now trigger a review for every filing status: $750,000 for Single,
+MFJ, HOH, and qualifying surviving spouse, and $375,000 for MFS. The supported
+positive review remains full-year acquisition debt; MFS above its limit stays
+guarded until its separate allocation is modeled. Status and recipient
+identity must match the final return in both exporters.
+
+The 2026-10-04 single-loan audit found that a full-year post-2017 loan with
+box 2 principal above the applicable limit could otherwise claim all box 1
+interest using only an individual workpaper reference. The same Table 1
+review now accepts one lender source and its twelve monthly statements.
+One $900,000 loan with $1,000 reported interest yields $833 at the .833
+ratio in local XSD-valid native XML and filled PDF; a documented $600,000
+monthly average permits the full $1,000 despite the box 2 snapshot. Native
+and PDF export reject the $900,000 unreviewed claim. An entry with zero
+Schedule A line 8a claim does not trigger that filing review.
+
+## 2025 purchase mortgage without points (2026-10-04)
+
+A new post-2017 acquisition loan originated in 2025 can now use the same
+whole-return Table 1 review when no reported points need allocation. A
+principal-residence purchase needs a closing-disclosure reference, verified
+acquisition and no additional advances, its issued Form 1098 box 2 principal,
+and twelve distinct monthly lender statement references. Months before the
+July purchase carry zero; each subsequent month carries a positive balance
+no greater than the origination principal. Its average divides those closing
+balances by the six months the home was secured as a qualified home; a
+preexisting full-year mortgage in the same review continues to divide by
+twelve. Missing issued box 2 on a positive current-year claim rejects before
+the debt-limit check.
+
+A July $900,000 purchase with $1,000 interest yields a .833 Table 1 ratio and
+$833 Schedule A line 8a interest. The source-backed case passed native XML,
+local TY2025 XSD, and filled-PDF text inspection; the unreviewed version
+rejects in both exporters. A $500,000 July purchase plus a $500,000 existing
+loan yields $1,500 deductible from $2,000 reported, and its MeF bundle and
+three-page PDF build. Positive points, mixed-use or refinance debt, part-year
+ownership beyond this purchase pattern, authentic closing/statement bytes,
+and ATS remain open. [2025 Publication 936](https://www.irs.gov/publications/p936)
+describes lender monthly balances and Table 1, and the
+[2025 Form 1098 instructions](https://www.irs.gov/pub/irs-prior/i1098--2025.pdf)
+define box 2 for a current-year origination.
+
+For a 2025 purchase combined with a preexisting mortgage, the retained review
+now identifies two different properties and the prior home's second-home
+election and occupancy record. A nonrented second home must not have been
+held out for rent or resale. If rented, documented personal-use days must
+exceed both 14 and 10% of fair-rental days; the two day counts cannot total
+more than 365. A synthetic rented-home case with 100 rental and 15 personal
+days passes source validation; 14 personal days, an impossible 400-day total,
+or a repeated property reference rejects. The native/PDF combined-loan
+fixture uses an unrented former main home. This review is also required for a
+positive 2025 purchase plus preexisting mortgage when box 2 snapshots total
+below $750,000; that case cannot bypass the second-home classification merely
+because debt is under the limit. A reviewed $300,000 plus $300,000 pair carries
+the full $2,000 interest to native MeF and filled PDF, while the unreviewed
+pair rejects. Ownership, property-use, and
+occupancy documents remain reviewed references rather than authenticated
+bytes. [2025 Publication 936](https://www.irs.gov/publications/p936)
+provides the second-home rules.
 
 ## One 2025 purchase loan with points and one existing mortgage (implementation written; untested)
 
@@ -193,6 +279,16 @@ The [2025 Publication 936](https://www.irs.gov/publications/p936) combines
 mortgages under the acquisition-debt limit, and the
 [2025 Schedule A instructions](https://www.irs.gov/instructions/i1040sca)
 place deductible Form 1098 interest and points on line 8a.
+
+The purchase-points cross-loan review now also identifies distinct purchase
+and prior-home properties and applies the same qualified second-home
+occupancy test as the no-points combined review. Its former-home occupancy
+record is required even while the two lender-certified maxima stay below
+$750,000. A rented second home with 100 fair-rental and 15 personal-use days
+passes source validation; 14 personal days or the same property reference
+rejects. The structured occupancy record is not yet authenticated to source
+bytes. [2025 Publication 936](https://www.irs.gov/publications/p936)
+provides the second-home criteria.
 
 ## Lender Copy B proof for bounded cross-loan reviews
 

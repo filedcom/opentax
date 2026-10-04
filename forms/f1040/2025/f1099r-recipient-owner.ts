@@ -23,6 +23,14 @@ export function assert1099RRecipientOwner(
   assertIraRolloverEvidence(parsed.data.f1099rs);
   for (const [index, item] of parsed.data.f1099rs.entries()) {
     if (
+      !item.payer_name.trim() ||
+      !/^(?:\d{9}|\d{2}-\d{7})$/.test(item.payer_ein)
+    ) {
+      throw new Error(
+        `1099-R ${index + 1} needs a payer name and nine-digit EIN`,
+      );
+    }
+    if (
       (item.box1_gross_distribution > 0 ||
         (item.box2a_taxable_amount ?? 0) > 0 ||
         (item.box4_federal_withheld ?? 0) > 0) &&

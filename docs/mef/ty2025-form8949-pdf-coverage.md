@@ -48,5 +48,9 @@ visually inspected yet, as the shared full validation batch has not started.
 This route remains bounded: a direct raw `f8949s` PDF request with no computed
 transaction is rejected, and section 1202/code-Q rows remain closed until
 their Schedule D and Form 6251 treatment is modeled. Actual IRS widget
-appearances, final assembled-page visibility, and date special terms such as
-`VARIOUS` still need validation or further implementation.
+appearances and final assembled-page visibility still need wider validation.
+The exact broker `VARIOUS` and long-term `INHERITED` acquisition codes now
+reach native `DateAcquiredInheritedCd` and PDF column (b), with full-return
+regressions and local TY2025 XSD checks. An inherited short-term broker sale
+rejects both exporters. Inherited-basis evidence, `INH-2010`, and other date
+formats still need source and output review.

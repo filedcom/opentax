@@ -68,6 +68,25 @@ Deno.test("joint spouse 1099-DIV belongs on MFJ return only", () => {
   );
 });
 
+Deno.test("positive 1099-DIV needs an identified payer in both Form 1040 exports", () => {
+  const pending = {
+    f1099div: {
+      f1099divs: [{
+        ...retained("111223333").f1099div.f1099divs[0],
+        payerName: "   ",
+        payerTin: undefined,
+      }],
+    },
+  };
+  const message = "Positive Form 1099-DIV needs an identified payer";
+  assertThrows(() => irs1040.build(filed, { pending }), Error, message);
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(filed, pending),
+    Error,
+    message,
+  );
+});
+
 Deno.test("capital-gain-only and tax-exempt 1099-DIV copies require owners", () => {
   for (const box of [{ box2a: 75 }, { box12: 50 }]) {
     const pending = {

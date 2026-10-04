@@ -90,14 +90,40 @@ export const itemSchema = z.object({
 export const inputSchema = z.object({
   f1099patrs: z.array(itemSchema).min(1),
 }).superRefine(({ f1099patrs }, ctx) => {
-  const issuedAccounts = new Set<string>();
-  const issuedReferences = new Set<string>();
+  const seenReferences = new Set<string>();
+  const positive = (item: PATRItem) =>
+    distributionTotal(item) > 0 || (item.box4_federal_withheld ?? 0) > 0 ||
+    (item.box6_section199ag_deduction ?? 0) > 0 ||
+    (item.box7_qualified_payments ?? 0) > 0;
+  const samePayer = (left: PATRItem, right: PATRItem) => {
+    const leftTin = left.payer_tin?.replace(/\D/g, "");
+    const rightTin = right.payer_tin?.replace(/\D/g, "");
+    if (leftTin && rightTin) return leftTin === rightTin;
+    return (left.payer_name?.trim().replace(/\s+/g, " ").toUpperCase() ||
+      "") ===
+      (right.payer_name?.trim().replace(/\s+/g, " ").toUpperCase() || "");
+  };
   for (const [index, item] of f1099patrs.entries()) {
-    if (!item.payer_tin || !item.recipient_tin) continue;
-    const identity = [item.payer_tin.replace(/\D/g, ""), item.recipient_tin];
-    if (item.account_number) {
-      const key = JSON.stringify([...identity, item.account_number.trim()]);
-      if (issuedAccounts.has(key)) {
+    if (item.source_document_reference) {
+      if (seenReferences.has(item.source_document_reference)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["f1099patrs", index],
+          message:
+            "1099-PATR repeats the same issued-copy source reference; corrected copies need a reviewed single current row",
+        });
+      }
+      seenReferences.add(item.source_document_reference);
+    }
+    if (!positive(item)) continue;
+    for (const prior of f1099patrs.slice(0, index)) {
+      if (
+        !positive(prior) || prior.recipient_tin !== item.recipient_tin ||
+        !samePayer(prior, item)
+      ) continue;
+      const priorAccount = prior.account_number?.trim();
+      const account = item.account_number?.trim();
+      if (account && priorAccount === account) {
         ctx.addIssue({
           code: "custom",
           path: ["f1099patrs", index],
@@ -105,19 +131,17 @@ export const inputSchema = z.object({
             "1099-PATR repeats the same payer, recipient, and account; corrected copies need a reviewed single current row",
         });
       }
-      issuedAccounts.add(key);
-    }
-    if (item.source_document_reference) {
-      const key = JSON.stringify([...identity, item.source_document_reference]);
-      if (issuedReferences.has(key)) {
+      if (
+        (!account && !item.source_document_reference) ||
+        (!priorAccount && !prior.source_document_reference)
+      ) {
         ctx.addIssue({
           code: "custom",
           path: ["f1099patrs", index],
           message:
-            "1099-PATR repeats the same payer, recipient, and issued source reference; corrected copies need a reviewed single current row",
+            "1099-PATR copies from one payer and recipient need distinct accounts or issued source references",
         });
       }
-      issuedReferences.add(key);
     }
   }
 });

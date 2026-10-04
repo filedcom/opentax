@@ -10,6 +10,7 @@ import { printFieldsSchema as form8959PrintSchema } from "../nodes/intermediate/
 export function assertOtherFormsWithholding(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
+  requireExact = false,
 ): void {
   const propertyWithheld = pending?.f8288 === undefined
     ? 0
@@ -43,11 +44,12 @@ export function assertOtherFormsWithholding(
     );
   const total = propertyWithheld + gamblingWithheld + partnershipWithheld +
     medicareWithheld;
-  if (total === 0) return;
+  if (total === 0 && !requireExact) return;
   const filed = fields.line25c_total;
   if (
-    typeof filed !== "number" || !Number.isFinite(filed) ||
-    filed + 0.01 < total
+    total > 0 &&
+    (typeof filed !== "number" || !Number.isFinite(filed) ||
+      filed + 0.01 < total)
   ) {
     throw new Error(
       partnershipWithheld + medicareWithheld > 0 || propertyWithheld === 0
@@ -55,6 +57,16 @@ export function assertOtherFormsWithholding(
         : gamblingWithheld > 0
         ? "Form 1040 line 25c is less than combined sourced Form 8288-A and W-2G withholding"
         : "Form 1040 line 25c is less than sourced Form 8288-A withholding",
+    );
+  }
+  const actual = filed ?? 0;
+  if (
+    requireExact &&
+    (typeof actual !== "number" || !Number.isFinite(actual) ||
+      Math.abs(actual - total) >= 0.01)
+  ) {
+    throw new Error(
+      "Form 1040 line 25c differs from retained other-form withholding",
     );
   }
 }

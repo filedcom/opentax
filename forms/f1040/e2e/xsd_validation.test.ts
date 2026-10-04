@@ -800,6 +800,8 @@ Deno.test({
     form,
   ) => ({
     ...form,
+    // Schema-only metadata: the ATS cover sheet has no issued payer copy.
+    payerName: "Synthetic ATS REIT",
     recipient_tin: (input.general as Record<string, unknown>).taxpayer_ssn,
   }));
   input.schedule1a = {

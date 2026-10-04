@@ -56,8 +56,11 @@ Deno.test("Form 8936 Schedule A PDF: one personal-use vehicle fills its Part II 
   assertEquals(instances[0].vin, vehicle.vin);
   assertEquals(instances[0].service_date, "09/30/2025");
   assertEquals(instances[0].new_tentative_credit, 7_500);
+  assertEquals(instances[0].new_business_use_pct, "0.00");
+  assertEquals(instances[0].new_business_credit, 0);
   assertEquals(instances[0].new_personal_credit, 7_500);
   assertEquals(instances[0].new_current_magi_over_limit, false);
+  assertEquals(form8936ScheduleAPdf.includeWhen?.(instances[0], {}), true);
 });
 
 Deno.test("Form 8936 Schedule A PDF: fully business-use vehicle retains Part II fields", () => {
@@ -76,7 +79,7 @@ Deno.test("Form 8936 Schedule A PDF: fully business-use vehicle retains Part II 
   };
   const instances = form8936ScheduleAPdf.instances!(business);
   assertEquals(instances.length, 1);
-  assertEquals(instances[0].new_business_use_pct, "100.00%");
+  assertEquals(instances[0].new_business_use_pct, "100.00");
   assertEquals(instances[0].new_business_credit, 7_500);
   assertEquals(instances[0].new_personal_credit, undefined);
 });

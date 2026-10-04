@@ -26,7 +26,9 @@ import { sellerFinancedBuyerSchema } from "../../../seller_financed_buyer.ts";
 import { pabAllocableDeductionWorkpaperSchema } from "../pab_allocable_deduction.ts";
 
 export const itemSchema = z.object({
-  payer_name: z.string().min(1),
+  payer_name: z.string().min(1).refine((name) => name.trim().length > 0, {
+    message: "1099-INT needs an identified payer name",
+  }),
   source_document_reference: z.string().trim().min(1).optional(),
   payer_tin: z.string().optional(),
   recipient_tin: z.string().regex(/^\d{9}$/).optional(),
@@ -86,18 +88,60 @@ type INTInput = z.infer<typeof inputSchema>;
 
 export function assertDistinct1099INTCopies(items: readonly INTItem[]): void {
   const issuedAccounts = new Set<string>();
+  const issuedReferences = new Set<string>();
+  const seenOwners = new Set<string>();
+  const unidentifiedCopies = new Set<string>();
   for (const item of items) {
-    if (!item.payer_tin || !item.account_number) continue;
-    const key = JSON.stringify([
-      item.payer_tin.replace(/\D/g, ""),
-      item.account_number.trim(),
-    ]);
-    if (issuedAccounts.has(key)) {
+    const payer = item.payer_tin?.replace(/\D/g, "") ||
+      item.payer_name.trim().replace(/\s+/g, " ").toUpperCase();
+    const owner = JSON.stringify([payer, item.recipient_tin ?? null]);
+    if (item.source_document_reference) {
+      const reference = item.source_document_reference;
+      if (issuedReferences.has(reference)) {
+        throw new Error(
+          "1099-INT repeats the same issued-copy source reference; corrected copies need a reviewed single current row",
+        );
+      }
+      issuedReferences.add(reference);
+    }
+    if (item.account_number) {
+      const key = JSON.stringify([owner, item.account_number.trim()]);
+      if (issuedAccounts.has(key)) {
+        throw new Error(
+          "1099-INT repeats the same payer and account; corrected copies need a reviewed single current row",
+        );
+      }
+      issuedAccounts.add(key);
+    }
+    const positive = [
+      item.box1,
+      item.box2,
+      item.box3,
+      item.box4,
+      item.box5,
+      item.box6,
+      item.box8,
+      item.box9,
+      item.box10,
+      item.box11,
+      item.box12,
+      item.box13,
+      item.box17,
+    ].some((amount) => (amount ?? 0) > 0);
+    if (!positive) continue;
+    if (!item.account_number && !item.source_document_reference) {
+      if (seenOwners.has(owner)) {
+        throw new Error(
+          "1099-INT has multiple positive payer copies without account or issued source reference",
+        );
+      }
+      unidentifiedCopies.add(owner);
+    } else if (unidentifiedCopies.has(owner)) {
       throw new Error(
-        "1099-INT repeats the same payer and account; corrected copies need a reviewed single current row",
+        "1099-INT has multiple positive payer copies without account or issued source reference",
       );
     }
-    issuedAccounts.add(key);
+    seenOwners.add(owner);
   }
 }
 

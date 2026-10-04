@@ -35,6 +35,13 @@ const positive = (value: unknown): boolean =>
 
 const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
   {
+    pendingKey: "f4547",
+    exportKinds: ["mef", "pdf"],
+    reason:
+      "Form 4547 child-account election needs verified responsible-party authority, child eligibility, and a separately authorized electronic signature before attachment",
+    isActive: (fields) => Object.keys(fields).length > 0,
+  },
+  {
     pendingKey: "clergy",
     exportKinds: ["mef", "pdf"],
     reason:
@@ -444,6 +451,21 @@ export function assertAttachmentCoverage(
   exportKind: ExportKind,
 ): void {
   const byKey = pending as Readonly<Record<string, unknown>>;
+  if (byKey.benefit_1042s !== undefined) {
+    throw new Error(
+      `[${exportKind.toUpperCase()}] SSA/RRB-1042-S benefit copy needs recipient status, income and withholding reconciliation, and required issued-copy attachments before Form 1040 export; export blocked`,
+    );
+  }
+  if (byKey.amendment_request !== undefined) {
+    throw new Error(
+      `[${exportKind.toUpperCase()}] Amendment request needs an accepted prior return, corrected-year calculation, and separate Form 1040-X filing workflow; export blocked`,
+    );
+  }
+  if (byKey.payment_request !== undefined) {
+    throw new Error(
+      `[${exportKind.toUpperCase()}] Payment request needs a separate authorized withdrawal workflow; this Form 1040 packet does not include a debit request; export blocked`,
+    );
+  }
   if (hasForm8839Claim(byKey)) {
     try {
       reconcilePublicForm8839Pending(byKey);

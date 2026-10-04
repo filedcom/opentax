@@ -477,7 +477,32 @@ export const itemSchema = z.object({
 
   // Miscellaneous flags
   altered_or_handwritten: z.boolean().optional(),
+  nonstandard_document_review: z.object({
+    kind: z.enum(["altered", "handwritten", "typed"]),
+    source_document_reference: z.string().trim().min(1),
+    reviewer_confirmed_nonstandard: z.literal(true),
+  }).strict().optional(),
   no_distribution_received: z.boolean().optional(),
+}).superRefine((item, ctx) => {
+  if (item.altered_or_handwritten === true && !item.source_document_reference) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["source_document_reference"],
+      message: "Nonstandard 1099-R needs a retained payer-copy reference",
+    });
+  }
+  if (
+    item.nonstandard_document_review &&
+    item.nonstandard_document_review.source_document_reference !==
+      item.source_document_reference
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["nonstandard_document_review", "source_document_reference"],
+      message:
+        "Nonstandard 1099-R review must match the retained payer-copy reference",
+    });
+  }
 });
 
 // Node inputSchema — receives all 1099-Rs for this return as a single array
@@ -492,22 +517,64 @@ type R1099Items = R1099Item[];
 export function assertDistinct1099RCopies(
   items: readonly R1099Item[],
 ): void {
-  const seen = new Set<string>();
+  const seenReferences = new Set<string>();
+  const seenOwners = new Set<string>();
+  const unidentifiedOwners = new Set<string>();
+  const seenAccounts = new Set<string>();
+  const unreferencedAccounts = new Set<string>();
   for (const item of items) {
     const reference = item.source_document_reference?.trim();
-    const payer = item.payer_ein.replace(/\D/g, "");
+    const payer = item.payer_ein.replace(/\D/g, "") || item.payer_ein.trim();
     const recipient = item.recipient_ssn?.replace(/\D/g, "");
-    const account = item.account_number?.trim();
-    if (!reference || !payer || !recipient || !account) continue;
+    const account = item.account_number?.trim() || null;
+    // The ATS packet uses one synthetic EIN for differently named payers.
+    // Collapse presentation-only name differences while retaining that
+    // distinction; same-name distributions need an account or issued reference.
+    const payerName = item.payer_name.trim().replace(/\s+/g, " ").toUpperCase();
+    const owner = JSON.stringify([payer, payerName, recipient ?? null]);
     // The retained source reference identifies the issued copy. Altering a
     // box value cannot turn that same identified copy into a second payment.
-    const key = JSON.stringify([reference, payer, recipient, account]);
-    if (seen.has(key)) {
+    if (reference) {
+      if (seenReferences.has(reference)) {
+        throw new Error(
+          "Form 1099-R repeats the same issued-copy source reference",
+        );
+      }
+      seenReferences.add(reference);
+    }
+    const positive = item.box1_gross_distribution > 0 ||
+      (item.box2a_taxable_amount ?? 0) > 0 ||
+      (item.box4_federal_withheld ?? 0) > 0;
+    if (!positive) continue;
+    if (!account && !reference) {
+      if (seenOwners.has(owner)) {
+        throw new Error(
+          "Form 1099-R has multiple positive payer copies without account or issued source reference",
+        );
+      }
+      unidentifiedOwners.add(owner);
+    } else if (unidentifiedOwners.has(owner)) {
       throw new Error(
-        "Form 1099-R repeats the same payer, recipient, account, and issued source copy",
+        "Form 1099-R has multiple positive payer copies without account or issued source reference",
       );
     }
-    seen.add(key);
+    if (account) {
+      const accountKey = JSON.stringify([owner, account]);
+      if (!reference) {
+        if (seenAccounts.has(accountKey)) {
+          throw new Error(
+            "Form 1099-R has multiple positive payer copies for one account without issued source references",
+          );
+        }
+        unreferencedAccounts.add(accountKey);
+      } else if (unreferencedAccounts.has(accountKey)) {
+        throw new Error(
+          "Form 1099-R has multiple positive payer copies for one account without issued source references",
+        );
+      }
+      seenAccounts.add(accountKey);
+    }
+    seenOwners.add(owner);
   }
 }
 

@@ -42,6 +42,9 @@ export function assertPositive1099DivOwner(
     if (row.recipient_tin === undefined) {
       throw new Error("Positive Form 1099-DIV needs a recipient TIN at export");
     }
+    if (!row.payerTin && !row.payerName?.trim()) {
+      throw new Error("Positive Form 1099-DIV needs an identified payer");
+    }
     if (row.recipient_tin !== primary && row.recipient_tin !== spouse) {
       throw new Error(
         "Form 1099-DIV recipient TIN must match the taxpayer or joint spouse",

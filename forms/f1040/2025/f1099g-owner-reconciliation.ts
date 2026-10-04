@@ -36,6 +36,14 @@ export function assertPositive1099GOwner(
     if (row.recipient_tin === undefined) {
       throw new Error("Positive Form 1099-G needs a recipient TIN at export");
     }
+    if (
+      !row.payer_name?.trim() &&
+      !/^(?:\d{9}|\d{2}-\d{7}|\d{3}-\d{2}-\d{4})$/.test(
+        row.payer_tin ?? "",
+      )
+    ) {
+      throw new Error("Positive Form 1099-G needs an identified payer");
+    }
     if (row.recipient_tin !== primary && row.recipient_tin !== spouse) {
       throw new Error(
         "Form 1099-G recipient TIN must match the taxpayer or joint spouse",

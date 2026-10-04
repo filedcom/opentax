@@ -2,11 +2,21 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { f1099b, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
-import { form8949 } from "../../intermediate/forms/form8949/index.ts";
 
 // ─── helpers ───────────────────────────────────────────────────────────────
 
-function minimalItem(overrides: Record<string, unknown> = {}) {
+function minimalItem(
+  overrides: Record<string, unknown> = {},
+): {
+  recipient_ssn: string;
+  part: string;
+  description: string;
+  date_acquired: string;
+  date_sold: string;
+  proceeds: number;
+  cost_basis: number;
+  [key: string]: unknown;
+} {
   return {
     recipient_ssn: "111223333",
     part: "A",
@@ -108,6 +118,25 @@ Deno.test("1099-B rejects an identified transaction repeated with altered tax ad
         minimalItem(issued),
         minimalItem({ ...issued, transaction_id: "sale-43" }),
       ]),
+      "form8949",
+    ).length,
+    2,
+  );
+});
+
+Deno.test("1099-B rejects a repeated source transaction without payer or account", () => {
+  const issued = minimalItem({
+    source_document_reference: "broker-2025-statement",
+    transaction_id: "sale-42",
+  });
+  assertThrows(
+    () => compute([issued, { ...issued, proceeds: 1_200 }]),
+    Error,
+    "repeats the same identified broker transaction",
+  );
+  assertEquals(
+    findAllOutputs(
+      compute([issued, minimalItem({ ...issued, transaction_id: "sale-43" })]),
       "form8949",
     ).length,
     2,
@@ -604,6 +633,53 @@ Deno.test("edge: wash sale (code W) — disallowed amount is positive adjustment
     adjustment_amount: 1000,
   })]);
   assertEquals(getTx(result)!.gain_loss, -2000);
+});
+
+Deno.test("1099-B box 1g adds to a separate Form 8949 adjustment", () => {
+  const result = compute([minimalItem({
+    proceeds: 500,
+    cost_basis: 700,
+    box1g_wash_sale_loss_disallowed: 100,
+    adjustment_codes: "E",
+    adjustment_amount: -20,
+  })]);
+  assertEquals(getTx(result)?.adjustment_codes, "EW");
+  assertEquals(getTx(result)?.adjustment_amount, 80);
+  assertEquals(getTx(result)?.gain_loss, -120);
+});
+
+Deno.test("1099-B box 1g rejects an inconsistent manual wash-sale adjustment", () => {
+  const issued = minimalItem({
+    proceeds: 500,
+    cost_basis: 700,
+    box1g_wash_sale_loss_disallowed: 100,
+  });
+  assertEquals(getTx(compute([issued]))?.adjustment_codes, "W");
+  assertEquals(getTx(compute([issued]))?.gain_loss, -100);
+  assertEquals(
+    getTx(
+      compute([{ ...issued, adjustment_codes: "W", adjustment_amount: 100 }]),
+    )
+      ?.gain_loss,
+    -100,
+  );
+  for (
+    const manual of [
+      { adjustment_codes: "W", adjustment_amount: 90 },
+      { adjustment_codes: "WE", adjustment_amount: 80 },
+    ]
+  ) {
+    assertThrows(
+      () => compute([{ ...issued, ...manual }]),
+      Error,
+      "box 1g conflicts with the manual wash-sale adjustment",
+    );
+  }
+  assertThrows(
+    () => compute([{ ...issued, adjustment_amount: -20 }]),
+    Error,
+    "needs a code and amount",
+  );
 });
 
 Deno.test("edge: QSBS exclusion (code Q) — negative adjustment reduces recognized gain", () => {

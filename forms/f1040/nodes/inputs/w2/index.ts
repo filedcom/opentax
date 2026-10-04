@@ -122,6 +122,13 @@ export const w2ItemSchema = z.object({
   source_document_reference: z.string().trim().min(1).optional().describe(
     "Issued W-2 copy reference for reviewed cross-form income inclusions",
   ),
+  nonstandard_document_review: z.object({
+    kind: z.enum(["altered", "handwritten", "typed"]),
+    source_document_reference: z.string().trim().min(1),
+    reviewer_confirmed_nonstandard: z.literal(true),
+  }).strict().optional().describe(
+    "Reviewed altered, handwritten, or typed W-2 copy requiring MeF nonstandard code N",
+  ),
   schedule_c_business_reference: z.string().trim().min(1).optional().describe(
     "Schedule C activity for statutory-employee box 1 wages",
   ),
@@ -237,6 +244,19 @@ export const w2ItemSchema = z.object({
   taxpayer_age: z.number().nonnegative().optional().describe(
     "Taxpayer age — used for retirement contribution limit (catch-up)",
   ),
+}).superRefine((item, ctx) => {
+  const review = item.nonstandard_document_review;
+  if (
+    review &&
+    item.source_document_reference !== review.source_document_reference
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["nonstandard_document_review", "source_document_reference"],
+      message:
+        "Nonstandard W-2 review must match the retained issued-copy reference",
+    });
+  }
 });
 
 // Node inputSchema — receives all W-2s for this return as a single array.
@@ -251,22 +271,28 @@ export type W2Item = z.infer<typeof w2ItemSchema>;
 /** One identified issued W-2 copy may enter the return only once. */
 export function assertDistinctW2IssuedCopies(items: readonly W2Item[]): void {
   const issued = new Set<string>();
+  const employerEmployee = new Map<string, string | null>();
   for (const item of items) {
-    if (
-      !item.employer_ein || !item.employee_ssn ||
-      !item.source_document_reference
-    ) continue;
-    const key = JSON.stringify([
-      item.employer_ein.replace(/\D/g, ""),
-      item.employee_ssn.replace(/\D/g, ""),
-      item.source_document_reference.trim(),
-    ]);
-    if (issued.has(key)) {
+    const reference = item.source_document_reference?.trim();
+    if (reference) {
+      if (issued.has(reference)) {
+        throw new Error(
+          "W-2 repeats the same issued-copy source reference",
+        );
+      }
+      issued.add(reference);
+    }
+    const ein = item.employer_ein?.replace(/\D/g, "");
+    const ssn = item.employee_ssn?.replace(/\D/g, "");
+    if (ein?.length !== 9 || ssn?.length !== 9) continue;
+    const pair = `${ein}:${ssn}`;
+    const previous = employerEmployee.get(pair);
+    if (previous !== undefined && (!previous || !reference)) {
       throw new Error(
-        "W-2 repeats the same identified employer, employee, and issued-copy reference",
+        "W-2 multiple employer/employee copies need distinct issued references",
       );
     }
-    issued.add(key);
+    employerEmployee.set(pair, reference ?? null);
   }
 }
 type W2Items = W2Item[];

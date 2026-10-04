@@ -54,6 +54,23 @@ Deno.test("TY2025 Schedule 1 line 8z rejects missing type and link", () => {
   assertEquals(schedule1OtherIncomeStatement.build({}, { pending: {} }), "");
 });
 
+Deno.test("TY2025 Schedule 1 rejects bare disallowed business interest income", () => {
+  const fields = { biz_interest_disallowed_add_back: 300 };
+  assertThrows(
+    () =>
+      schedule1OtherIncomeStatement.build({}, {
+        pending: { schedule1: fields },
+      }),
+    Error,
+    "disallowed business interest needs a retained Form 8990 source",
+  );
+  assertThrows(
+    () => schedule1.build(fields),
+    Error,
+    "disallowed business interest needs a retained Form 8990 source",
+  );
+});
+
 Deno.test("TY2025 Schedule 1 gives each 1099-MISC box 8 payer a statement row", () => {
   const fields = {
     line8z_substitute_payments: 750,

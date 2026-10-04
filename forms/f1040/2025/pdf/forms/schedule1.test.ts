@@ -13,6 +13,14 @@ Deno.test("Schedule 1 PDF includes filer identity on page 1", () => {
   ]);
 });
 
+Deno.test("Schedule 1 PDF rejects bare disallowed business interest income", () => {
+  assertThrows(
+    () => schedule1Pdf.instances?.({ biz_interest_disallowed_add_back: 300 }),
+    Error,
+    "disallowed business interest needs a retained Form 8990 source",
+  );
+});
+
 Deno.test("Schedule 1 PDF marks only sourced Form 4797 on line 4", () => {
   // 2025 Schedule 1: https://www.irs.gov/pub/irs-prior/f1040s1--2025.pdf
   // 2025 Form 4684 instructions: https://www.irs.gov/instructions/i4684

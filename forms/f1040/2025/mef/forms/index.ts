@@ -125,6 +125,7 @@ import { form8995aScheduleA } from "./f8995a_schedule_a.ts";
 import { form8995aScheduleB } from "./f8995a_schedule_b.ts";
 import { form8995aScheduleC } from "./f8995a_schedule_c.ts";
 import { form8995aScheduleD } from "./f8995a_schedule_d.ts";
+import { form9000 } from "./f9000.ts";
 import { form982 } from "./f982.ts";
 import { schedule1 } from "./schedule1.ts";
 import { schedule1a } from "./schedule1a.ts";
@@ -344,6 +345,8 @@ export const ALL_MEF_FORMS = [
   form8995aScheduleB,
   form8995aScheduleC,
   form8995aScheduleD,
+  // Form 9000 follows Form 8995-A Schedule D in ReturnData1040.xsd.
+  form9000,
   // Form W-2 wage statements (one document per employer)
   w2,
   // Form W-2G withholding statements follow W-2 in ReturnData1040.xsd.

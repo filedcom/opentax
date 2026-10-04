@@ -41,6 +41,25 @@ Deno.test("positive 1099-G unemployment owner is checked by native and PDF Form 
   }
 });
 
+Deno.test("positive 1099-G needs an identified payer in both Form 1040 exports", () => {
+  const pending = {
+    f1099g: {
+      f1099gs: [{
+        ...unemployment("111223333").f1099g.f1099gs[0],
+        payer_name: "   ",
+        payer_tin: undefined,
+      }],
+    },
+  };
+  const message = "Positive Form 1099-G needs an identified payer";
+  assertThrows(() => irs1040.build(filed, { pending }), Error, message);
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(filed, pending),
+    Error,
+    message,
+  );
+});
+
 Deno.test("one issued 1099-G reference without an account cannot replay changed income in native or PDF", () => {
   const [issued] = unemployment("111223333").f1099g.f1099gs;
   const pending = {
@@ -57,7 +76,7 @@ Deno.test("one issued 1099-G reference without an account cannot replay changed 
     assertThrows(
       build,
       Error,
-      "repeats the same identified payer, recipient, and issued source reference",
+      "repeats the same issued-copy source reference",
     );
   }
 });

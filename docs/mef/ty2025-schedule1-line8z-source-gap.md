@@ -1,5 +1,17 @@
 # TY2025 Schedule 1 line 8z source ledger gap
 
+## 2026-10-04 disallowed business interest source boundary
+
+The Schedule 1 and AGI calculators can still stage
+`biz_interest_disallowed_add_back`, but the Form 8990 filing route remains
+closed. A bare positive scalar previously produced a native line 8z type
+statement and a PDF Schedule 1 instance with no retained Form 8990 source.
+The shared native/PDF line 8z row builder now rejects it. Two red export
+regressions passed after the guard, along with 60 nearby Schedule 1 cases.
+The positive route needs the complete traced interest, return-wide limit,
+carryforward, and finalized Form 8990 attachment described in the
+[Form 8990 gap](ty2025-form8990-gap.md).
+
 ## 2026-10-02 at-risk recapture source boundary
 
 The direct `at_risk_recapture` amount had a printable line 8z label but no
@@ -54,6 +66,16 @@ that verified pair and still rejects arbitrary names. The entered child income
 record and election review are still not
 authenticated against original issued income documents or the parent signature.
 
+The same retained child election now also replays each calculated Form 8814
+line 15 and their sum against the Form 1040 `Form8814Ind` tax amount. A
+read-only mutation of that amount previously changed native XML while the
+retained child forms stayed fixed; both native and PDF final export now reject
+it. Tampering a retained line 15 also rejects. A 167-exportable-fixture replay
+test probes numeric Form 1040 and Schedules 1–3 fields, excluding 12 declared
+guarded fixtures; it normalizes only the assembly timestamp and passed after
+this repair. These tests verify source replay, not child income authenticity
+or IRS ATS acceptance.
+
 ## 2026-10-02 Form 1099-MISC box 3 final source replay
 
 Native and PDF final export now match every Schedule 1 box 3 other-income
@@ -68,7 +90,7 @@ changed description was accepted by final export before this replay guard.
 The entered payer data and description still do not authenticate issued copy
 bytes or establish that the payment has the stated tax character.
 
-## 2026-10-02 Form 1099-G box 6 grant total replay (unrun)
+## 2026-10-02 Form 1099-G box 6 grant total replay
 
 The existing taxable-grant route now replays the aggregate of retained Form
 1099-G box 6 entries at both native and PDF Schedule 1 export. A changed or
@@ -87,10 +109,13 @@ direct agricultural program payments to Schedule F. Form 1099-G box 8 only
 classifies certain box 2 business-tax refunds and cannot classify box 6.
 This narrow review flag does not independently establish each grant's tax
 character, payer-copy authenticity, or a business/farm route.
-Those source reviews and the filled PDF, XSD, and IRS
-acceptance checks remain open.
+On 2026-10-04, the two-copy positive and changed-row/copy/total/owner cases
+passed 2/2 focused tests. The positive packet's payer rows appeared in
+extracted filled-PDF text and its native return passed the local TY2025 v5.4
+XSD. The narrow review does not authenticate payer bytes or settle other
+grant character, broader PDF, business-rule, or IRS acceptance checks.
 
-## 2026-10-02 S corporation K-1 box 10 code J source rows (unrun)
+## 2026-10-02 S corporation K-1 box 10 code J source rows
 
 The existing tax-benefit recovery calculation now retains a separate row for
 each issued S corporation K-1 code J source: corporation EIN, source-document
@@ -105,10 +130,13 @@ wrong-owner, and missing-identity fixtures are authored for the deferred bulk
 gate. The [2025 shareholder K-1 instructions](https://www.irs.gov/pub/irs-prior/i1120ssk--2025.pdf)
 direct box 10 code J recoveries to Schedule 1 line 8z to the extent the
 earlier deduction reduced tax. The entered workpaper reference and review flag
-do not authenticate the prior filed return or issued K-1 bytes. Those checks,
-filled-PDF review, XSD validation, and IRS acceptance remain open.
+do not authenticate the prior filed return or issued K-1 bytes. On
+2026-10-04, the two-corporation positive and changed-row/copy/total/owner
+cases passed 2/2 focused tests; extracted filled-PDF text retains both EINs.
+Source bytes, complete filled-PDF review, XSD validation, and IRS acceptance
+remain open.
 
-## 2026-10-02 Form 1099-G box 5 RTAA source rows (unrun)
+## 2026-10-02 Form 1099-G box 5 RTAA source rows
 
 The bounded RTAA route now requires payer name/TIN, recipient TIN, and an
 issued-copy reference for every positive Form 1099-G box 5 entry. It retains
@@ -122,10 +150,14 @@ fixtures are authored for the deferred implementation gate. The
 [TY2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
 explicitly direct box 5 RTAA to Schedule 1 line 8z and require a type and
 amount; [2025 Publication 525](https://www.irs.gov/publications/p525) also
-states that state RTAA payments are included in income. Exact payer-copy PDF
-bytes, tax-program eligibility, visual parity, and IRS acceptance remain open.
+states that state RTAA payments are included in income. On 2026-10-04, the
+two-payer positive and changed-row/copy/total/owner cases passed 2/2 focused
+tests. Both payer identifiers appeared in extracted filled-PDF statement
+text, and the native full return passed the local TY2025 v5.4 XSD. Exact
+payer-copy bytes, tax-program eligibility, complete visual review, other
+business rules, and IRS acceptance remain open.
 
-## 2026-10-01 Form 1099-MISC box 8 source rows (unrun)
+## 2026-10-01 Form 1099-MISC box 8 source rows
 
 The box 8 substitute-payment route now carries one payer, recipient, and amount
 row from each positive Form 1099-MISC into Schedule 1. The Schedule 1 line 8z
@@ -134,8 +166,21 @@ row per source. MeF and PDF export compare the row multiset and total to the
 original source copies and require each recipient to be the taxpayer or an MFJ
 spouse. Positive two-payer and missing, changed-payer, changed-total, and
 wrong-recipient fixtures are authored for the deferred implementation batch.
-Issued payer-copy bytes, payment character beyond the reported box, filled-PDF
-appearance, IRS business rules, and ATS acceptance remain open. The
+The two-payer source-row helper and its changed-total/payer/recipient/missing-
+row cases passed one focused test on 2026-10-04. A separate full-return case
+now carries two $300/$450 issued-copy records through Schedule 1 line 8z and
+Form 1040 line 8, emits two native statement rows, validates against the local
+TY2025 v5.4 XSD, and finds both payer TINs in the filled PDF text. Native and
+PDF packet builders reject an altered statement amount or source recipient.
+The three focused tests pass. A mixed-family replay also combines two box 8 copies with separate RTAA and
+taxable-grant 1099-G copies: all four native and filled-PDF statement rows
+appear, $1,750 reaches Form 1040 once, and the XML passes local TY2025 v5.4
+XSD validation. The four focused cases pass. A selected five-page packet was
+then rendered and visually checked for Form 1040/Schedule 1 totals, all four
+statement rows, owner, page order, and legibility; source, XML, and PDF replay
+passed the local XSD review checker. Issued payer-copy bytes, payment
+character beyond the reported box, wider page review, IRS business rules, and
+ATS acceptance remain open. The
 [2025 Form 1099-MISC recipient instructions](https://www.irs.gov/pub/irs-prior/f1099msc--2025.pdf)
 and [2025 Publication 550](https://www.irs.gov/publications/p550) direct box 8
 substitute payments to Schedule 1 line 8z whether they replace dividends or

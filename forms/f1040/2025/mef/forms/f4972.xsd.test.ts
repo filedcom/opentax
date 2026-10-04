@@ -234,6 +234,7 @@ Deno.test({
     f1040: {
       filing_status: "single",
       line5b_pension_taxable: 84_000,
+      line5b_form4972_ordinary: 84_000,
       line16_income_tax: 7_200,
       form4972_tax: 7_200,
     },

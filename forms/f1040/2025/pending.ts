@@ -30,7 +30,9 @@ export function normalizePendingDict(
       result[key] = nodeType === "form4952" && key.startsWith("source_")
         ? value
         : additiveNumericKeys.has(key) ||
-            (nodeType === "agi_aggregator" && key === "line1h_other_earned")
+            (nodeType === "agi_aggregator" &&
+              (key === "line1h_other_earned" || key === "tax_exempt_interest" ||
+                key === "line3b_ordinary_dividends"))
         ? value.reduce((sum, amount) => sum + amount, 0)
         : value[value.length - 1];
     } else {

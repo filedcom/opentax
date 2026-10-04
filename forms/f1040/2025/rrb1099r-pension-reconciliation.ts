@@ -3,13 +3,14 @@ import { f1099r } from "../nodes/inputs/f1099r/index.ts";
 import { f4852 } from "../nodes/inputs/f4852/index.ts";
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 
-/** Retain the filed pension amounts from correctly numbered RRB-1099-R boxes. */
+/** Replay issued, substitute, and railroad pensions into filed lines 5a/5b. */
 export function assertRrb1099rPensionSource(
   pending: Record<string, unknown>,
   filer: FilerIdentity | undefined,
 ): void {
-  if (pending.rrb1099r === undefined) return;
-  const rows = inputSchema.parse(pending.rrb1099r).rrb1099rs;
+  const rows = pending.rrb1099r === undefined
+    ? []
+    : inputSchema.parse(pending.rrb1099r).rrb1099rs;
   const recipients = new Set<string>();
   if (filer) {
     recipients.add(filer.primarySSN.replace(/\D/g, ""));
@@ -93,11 +94,27 @@ export function assertRrb1099rPensionSource(
   const expectedGross = rrbGross + issued.gross + substitute.gross + ordinary;
   const expectedTaxable = rrbGross + issued.taxable + substitute.taxable +
     ordinary;
+  // A fully taxable nonrailroad pension may omit line 5a under the 2025
+  // Form 1040 instructions; line 5b still needs its retained payer source.
+  const omittedFullyTaxableGross = rows.length === 0 && line5a === 0 &&
+    expectedGross === expectedTaxable;
+  const agiRaw = (pending.agi_aggregator as
+    | Record<string, unknown>
+    | undefined)?.line5b_pension_taxable;
+  const agiTaxable = typeof agiRaw === "number"
+    ? agiRaw
+    : Array.isArray(agiRaw) &&
+        agiRaw.every((value) => typeof value === "number")
+    ? agiRaw.reduce((sum, value) => sum + value, 0)
+    : undefined;
   if (
-    line5a !== expectedGross || line5b !== expectedTaxable
+    (!omittedFullyTaxableGross && line5a !== expectedGross) ||
+    line5b !== expectedTaxable ||
+    (ordinary === 0 && agiRaw !== undefined &&
+      agiTaxable !== expectedTaxable)
   ) {
     throw new Error(
-      "Form 1040 lines 5a and 5b differ from retained RRB-1099-R pension sources",
+      "Form 1040 lines 5a and 5b or AGI differ from retained pension sources",
     );
   }
 }

@@ -37,6 +37,7 @@ import { assertBox11CodeESources } from "../../nodes/inputs/k1_partnership/box11
 import { assertBox11CodeKSources } from "../../nodes/inputs/k1_partnership/box11_code_k.ts";
 import { assertBox11CodeSSources } from "../../nodes/inputs/k1_partnership/box11_code_s.ts";
 import { assertScheduleDK1Source } from "../schedule-d-k1-source.ts";
+import { assertScheduleD1040Join } from "../schedule-d-1040-join.ts";
 import { assertForm8858FilingSource } from "../../nodes/inputs/f8858/index.ts";
 import { assertBox11Line10Sources } from "../../nodes/inputs/k1_partnership/box11_line10.ts";
 import { assertForm8915FSourceLinks } from "../../nodes/inputs/f8915f/index.ts";
@@ -52,12 +53,16 @@ import { assertExtensionPaymentSource } from "../extension-payment-reconciliatio
 import { assert1099RRecipientOwner } from "../f1099r-recipient-owner.ts";
 import { assertNecWithholdingRecipient } from "../f1099nec-withholding-owner.ts";
 import { assert1099BRecipientOwner } from "../f1099b-recipient-owner.ts";
-import { assertNoRepeatedBrokerSaleSources } from "../broker-sale-source-reconciliation.ts";
+import {
+  assertCapitalSaleSourceRows,
+  assertNoRepeatedBrokerSaleSources,
+} from "../broker-sale-source-reconciliation.ts";
 import {
   assertPatrIssuedCopies,
   assertPatrWithholdingRecipient,
 } from "../f1099patr-withholding-owner.ts";
 import {
+  assertForm4852FilingRoute,
   assertLine1aWageSource,
   assertLine1iCombatPayElectionSource,
   assertW2WithholdingSource,
@@ -86,12 +91,25 @@ import {
 } from "../schedule2-w2-source-reconciliation.ts";
 import { assert1099WithholdingSource } from "../f1099-withholding-reconciliation.ts";
 import { assert1099GUnemploymentSource } from "../f1099g-unemployment-reconciliation.ts";
+import { assert1098EInterestSource } from "../f1098e-source-reconciliation.ts";
 import { assertF8288WithholdingOwner } from "../f8288-withholding-owner.ts";
+import { assertOtherFormsWithholding } from "../f8288-withholding-reconciliation.ts";
+import {
+  assertFinalBalanceProjection,
+  assertQualifiedDividendSubset,
+} from "../return-wide-arithmetic.ts";
+import { assertDividendIncomeSources } from "../f1099div-income-reconciliation.ts";
+import {
+  assertScheduleBInterestJoin,
+  assertScheduleBPreparedProjection,
+} from "../schedule-b-interest-reconciliation.ts";
+import { assertTaxExemptInterestSource } from "../tax-exempt-interest-reconciliation.ts";
 import {
   assertBenefitStatementOwner,
   assertSocialSecurityBenefitSource,
 } from "../ssa-benefits-reconciliation.ts";
 import { assertRrb1099rPensionSource } from "../rrb1099r-pension-reconciliation.ts";
+import { assertIra1099rIncomeSource } from "../ira1099r-income-reconciliation.ts";
 import {
   hasForm8994Claim,
   reconcileForm8994EvidenceBytes,
@@ -232,16 +250,27 @@ function buildReturnXml(
   assertDigitalAssetDispositionAnswer(pending);
   assertGeneral1040DependentSource(pending);
   assertGeneral1040DepositSource(pending, filer);
+  assert1098EInterestSource(pending, filer);
   assert1099RRecipientOwner(pending.f1099r, filer);
   assertPositiveW2GRecipient(pending.w2g, filer);
   assertNecWithholdingRecipient(pending.f1099nec, filer);
   assert1099BRecipientOwner(pending.f1099b, filer);
   assertNoRepeatedBrokerSaleSources(pending.f1099b, pending.f8949);
+  assertCapitalSaleSourceRows(pending);
   assertPatrIssuedCopies(pending.f1099patr);
   assertPatrWithholdingRecipient(pending.f1099patr, filer);
-  assertW2WithholdingSource(pending, filer);
-  assertLine1aWageSource(pending);
   assertLine1bHouseholdWageSource(pending);
+  assertForm4852FilingRoute(pending);
+  assertW2WithholdingSource(pending, filer);
+  assert1099WithholdingSource(pending, filer);
+  assertOtherFormsWithholding(pending.f1040 ?? {}, pending, true);
+  assertLine1aWageSource(pending);
+  assertQualifiedDividendSubset(pending.f1040 ?? {});
+  assertFinalBalanceProjection(pending.f1040 ?? {});
+  assertDividendIncomeSources(pending.f1040 ?? {}, pending);
+  assertScheduleBInterestJoin(pending);
+  assertScheduleBPreparedProjection(pending);
+  assertTaxExemptInterestSource(pending);
   assertBusinessSchedule1Amounts(pending);
   assertLine1iCombatPayElectionSource(pending);
   assertSchedule2W2Line13Sources(pending);
@@ -260,12 +289,12 @@ function buildReturnXml(
   assertSchedule3Form8834Credit(pending);
   assertSchedule3Form8912Credit(pending);
   assertSchedule3Form8396Credit(pending);
-  assert1099WithholdingSource(pending, filer);
   assert1099GUnemploymentSource(pending);
   assertF8288WithholdingOwner(pending.f8288, filer);
   assertSocialSecurityBenefitSource(pending);
   assertBenefitStatementOwner(pending, filer);
   assertRrb1099rPensionSource(pending, filer);
+  assertIra1099rIncomeSource(pending);
   assertExtensionPaymentSource(pending, filer);
   assertForm8915FSourceLinks(pending);
   assertKIncomeClassification(pending);
@@ -293,6 +322,7 @@ function buildReturnXml(
   assertBox11CodeKSources(pending, k1Recipients);
   assertBox11CodeSSources(pending, k1Recipients);
   assertScheduleDK1Source(pending.schedule_d ?? {}, pending);
+  assertScheduleD1040Join(pending);
   assertBox11Line10Sources(pending, k1Recipients);
   if (
     Array.isArray(pending.form8949) && pending.form8949.length > 0 &&
@@ -430,6 +460,14 @@ export function assertPreparedBundleProjection(
   if (projected.xml !== bundle.xml) {
     throw new Error(
       "Prepared MeF XML differs from its retained source projection",
+    );
+  }
+  if (
+    JSON.stringify(projected.form3800Parts) !==
+      JSON.stringify(bundle.form3800Parts)
+  ) {
+    throw new Error(
+      "Prepared Form 3800 PDF parts differ from the retained source projection",
     );
   }
 }

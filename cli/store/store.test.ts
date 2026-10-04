@@ -1,6 +1,12 @@
-import { assertEquals, assertMatch, assertRejects } from "@std/assert";
+import {
+  assertEquals,
+  assertMatch,
+  assertRejects,
+  assertThrows,
+} from "@std/assert";
 import {
   appendInput,
+  buildEngineInputs,
   createReturn,
   loadInputs,
   loadMeta,
@@ -31,6 +37,52 @@ Deno.test("nextId: two existing w2 entries returns w2_03", () => {
 
 Deno.test("nextId: nodeType with no existing entries returns nodeType_01", () => {
   assertEquals(nextId([], "1099int"), "1099int_01");
+});
+
+Deno.test("buildEngineInputs rejects repeated singleton and overlapping start claims", () => {
+  assertThrows(
+    () =>
+      buildEngineInputs({
+        general: [
+          { id: "general_01", fields: { filing_status: "single" } },
+          { id: "general_02", fields: { filing_status: "mfj" } },
+        ],
+      }, new Set(["general"])),
+    Error,
+    "Singleton input general has 2 entries",
+  );
+  assertThrows(
+    () =>
+      buildEngineInputs({
+        start: [
+          { id: "start_01", fields: { general: { filing_status: "single" } } },
+          { id: "start_02", fields: { general: { filing_status: "mfj" } } },
+        ],
+      }),
+    Error,
+    "Duplicate start input general",
+  );
+  assertThrows(
+    () =>
+      buildEngineInputs({
+        start: [{
+          id: "start_01",
+          fields: { w2: [{ box1_wages: 100 }] },
+        }],
+        w2: [{ id: "w2_01", fields: { box1_wages: 200 } }],
+      }),
+    Error,
+    "Duplicate input w2",
+  );
+  assertEquals(
+    buildEngineInputs({
+      start: [
+        { id: "start_01", fields: { general: { filing_status: "single" } } },
+        { id: "start_02", fields: { w2: [{ box1_wages: 100 }] } },
+      ],
+    }),
+    { general: { filing_status: "single" }, w2: [{ box1_wages: 100 }] },
+  );
 });
 
 // ---- createReturn ----

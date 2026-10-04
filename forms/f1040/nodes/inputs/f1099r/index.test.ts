@@ -174,12 +174,12 @@ Deno.test("f1099r.compute: an exact identified 1099-R copy cannot double income 
   assertThrows(
     () => compute([copy, { ...copy, simplified_method_flag: true }]),
     Error,
-    "repeats the same payer, recipient, account, and issued source copy",
+    "repeats the same issued-copy source reference",
   );
   assertThrows(
     () => compute([copy, { ...copy, box4_federal_withheld: 600 }]),
     Error,
-    "repeats the same payer, recipient, account, and issued source copy",
+    "repeats the same issued-copy source reference",
   );
   const iraCopy = minimalIraItem({
     recipient_ssn: "111223333",
@@ -190,8 +190,96 @@ Deno.test("f1099r.compute: an exact identified 1099-R copy cannot double income 
   assertThrows(
     () => compute([iraCopy, iraCopy]),
     Error,
-    "repeats the same payer, recipient, account, and issued source copy",
+    "repeats the same issued-copy source reference",
   );
+});
+
+Deno.test("f1099r.compute: repeated issued copy without account number cannot double income", () => {
+  const copy = minimalPensionItem({
+    recipient_ssn: "111223333",
+    account_number: undefined,
+    box2a_taxable_amount: 1_000,
+  });
+  assertThrows(
+    () => compute([copy, { ...copy, box2a_taxable_amount: 1_200 }]),
+    Error,
+    "repeats the same issued-copy source reference",
+  );
+  const separate = compute([
+    copy,
+    { ...copy, source_document_reference: "another-issued-copy" },
+  ]);
+  assertEquals(f1040Input(separate).line5b_pension_taxable, 2_000);
+});
+
+Deno.test("f1099r.compute: one issued-copy reference cannot move to another payer or account", () => {
+  const copy = minimalPensionItem({
+    recipient_ssn: "111223333",
+    account_number: "PENSION-1",
+  });
+  const changed = {
+    ...copy,
+    payer_name: "Second Plan",
+    payer_ein: "987654321",
+    account_number: "PENSION-2",
+  };
+  assertThrows(
+    () => compute([copy, changed]),
+    Error,
+    "repeats the same issued-copy source reference",
+  );
+  const distinct = compute([copy, {
+    ...changed,
+    source_document_reference: "second-plan-issued-copy",
+  }]);
+  assertEquals(f1040Input(distinct).line5b_pension_taxable, 20_000);
+});
+
+Deno.test("f1099r.compute: positive pension copies need account or issued-copy identity", () => {
+  const unidentified = minimalPensionItem({
+    recipient_ssn: "111223333",
+    account_number: undefined,
+    source_document_reference: undefined,
+  });
+  const identified = {
+    ...unidentified,
+    account_number: "PENSION-1",
+    source_document_reference: "issued-copy-1",
+  };
+  const message =
+    "multiple positive payer copies without account or issued source reference";
+  assertThrows(
+    () => compute([unidentified, { ...unidentified }]),
+    Error,
+    message,
+  );
+  assertThrows(() => compute([unidentified, identified]), Error, message);
+  assertThrows(() => compute([identified, unidentified]), Error, message);
+  const accountOnly = { ...unidentified, account_number: "PENSION-1" };
+  assertThrows(
+    () => compute([accountOnly, identified]),
+    Error,
+    "one account without issued source references",
+  );
+  assertThrows(
+    () => compute([identified, accountOnly]),
+    Error,
+    "one account without issued source references",
+  );
+  const distinct = compute([
+    accountOnly,
+    { ...accountOnly, account_number: "PENSION-2" },
+  ]);
+  assertEquals(f1040Input(distinct).line5b_pension_taxable, 20_000);
+  const differentPayers = compute([
+    unidentified,
+    {
+      ...unidentified,
+      payer_name: "Another Pension",
+      payer_ein: "123456789",
+    },
+  ]);
+  assertEquals(f1040Input(differentPayers).line5b_pension_taxable, 20_000);
 });
 
 Deno.test("f1099r.compute: separate identified 1099-R accounts retain both amounts", () => {
@@ -204,6 +292,7 @@ Deno.test("f1099r.compute: separate identified 1099-R accounts retain both amoun
   const result = compute([first, {
     ...first,
     account_number: "PENSION-2",
+    source_document_reference: "second-pension-issued-copy",
   }]);
   const fields = f1040Input(result);
   assertEquals(fields.line5b_pension_taxable, 2_000);
@@ -413,7 +502,6 @@ Deno.test("f1099r.compute: explicit Form 4972 choice carries boxes 2a, 3, and 6"
     exclude_4972: true,
     ts: TS.T,
   })]);
-  const form4972Out = result.outputs.find((o) => o.nodeType === "form4972");
   const fields = firstForm4972Source(result)!;
   assertEquals(fields.lump_sum_amount, 80_000);
   assertEquals(fields.capital_gain_amount, 10_000);
@@ -429,7 +517,6 @@ Deno.test("f1099r.compute: Form 4972 retains a partial box 9a share", () => {
     exclude_4972: true,
     ts: TS.T,
   })]);
-  const form4972Out = result.outputs.find((o) => o.nodeType === "form4972");
   assertEquals(firstForm4972Source(result)?.recipient_share_pct, 50);
 });
 
@@ -457,7 +544,6 @@ Deno.test("f1099r.compute: Form 4972 accepts an explicit full distribution share
     exclude_4972: true,
     ts: TS.T,
   })]);
-  const form4972Out = result.outputs.find((o) => o.nodeType === "form4972");
   assertEquals(firstForm4972Source(result)?.lump_sum_amount, 80_000);
 });
 
@@ -475,6 +561,7 @@ Deno.test("f1099r.compute: multiple elected Form 4972 distributions need partici
           ...elected,
           payer_name: "Second Plan",
           payer_ein: "11-2233445",
+          source_document_reference: "second-plan-issued-copy",
           ts: secondRecipient,
         }]),
       Error,
@@ -534,7 +621,7 @@ Deno.test("f1099r.compute: two same-plan full-share 4972 sources aggregate", () 
     () =>
       compute([first, { ...second, source_document_reference: "1099-R-A" }]),
     Error,
-    "distinct full-share source copies",
+    "repeats the same issued-copy source reference",
   );
 });
 
@@ -701,6 +788,7 @@ Deno.test("f1099r.compute: multiple pension items aggregate line5a correctly", (
     minimalPensionItem({
       box1_gross_distribution: 9000,
       box2a_taxable_amount: 8000,
+      source_document_reference: "second-pension-copy",
     }),
   ]);
   const input = f1040Input(result);
@@ -716,6 +804,7 @@ Deno.test("f1099r.compute: multiple pension items aggregate line5b correctly", (
     minimalPensionItem({
       box1_gross_distribution: 9000,
       box2a_taxable_amount: 6000,
+      source_document_reference: "second-pension-copy",
     }),
   ]);
   const input = f1040Input(result);
@@ -1027,6 +1116,7 @@ Deno.test("f1099r.compute: altered_or_handwritten does not affect income routing
     minimalIraItem({
       box1_gross_distribution: 10000,
       altered_or_handwritten: true,
+      source_document_reference: "2025 altered payer copy",
     }),
   ]);
   const input = f1040Input(result);
