@@ -3,7 +3,7 @@
 ## Compacted status (2026-10-04)
 
 The board has **52 open TODOs**: **32 outside** Named tax-form gaps and **20
-inside** that section. The 1126 bounded completed slices are recorded in the
+inside** that section. The 1127 bounded completed slices are recorded in the
 [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md).
 A completed slice does not close its parent form or release gate.
 
@@ -33,7 +33,9 @@ passed visual and source/XML/PDF replay review. A six-page short/long Form 8949
 and Schedule D packet passed the same checks. An 11-page Schedule C simplified
 home-office packet passed source/XML/PDF replay and visual review. An additional
 13-page mixed 1099-K/1099-NEC/personal-sale packet passed the same checks.
-Two six-page personal-sale 1099-K gain/loss and selling-fee packets also passed visual and source/XML/PDF replay checks.
+Two six-page personal-sale 1099-K gain/loss and selling-fee packets, plus
+fourteen pages for blank-TIN withholding and business refund/fee routes, passed
+visual and source/XML/PDF replay checks.
 These bounded selections do not cover all 180
 current fixtures.
 A separate current-head two-page direct pension rollover packet passed a

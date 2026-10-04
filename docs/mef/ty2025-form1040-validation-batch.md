@@ -1899,3 +1899,22 @@ separately against all 116 registered official templates; subsequent branch
 commits changed validation documentation only. This local automated result
 does not establish complete source evidence, all-page human review, IRS
 business-rule acceptance, or ATS transmission.
+
+## Form 1099-K withholding and business refund/fee filled-PDF review (2026-10-04)
+
+The selected `single-k-blank-tin-withholding` four-page packet and
+`single-k-business-refund-and-fee` ten-page packet were generated under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-k-business-source/`.
+All fourteen physical pages were rendered and inspected for form/year, owner
+association, amounts, checkbox state, page order, continuation, and
+legibility. The blank-TIN source relies on retained name/address owner review;
+Schedule 1 line 8j and Form 1040 line 8 show $5,000, while Form 1040 lines
+25b/25d and 35a show $480 withheld and refunded with zero tax. In the
+business case, the $3,000 Form 1099-K gross source stays on Schedule C line 1;
+$400 of customer returns and $90 of processor fees reach lines 2 and 10,
+leaving $2,510 profit. Schedule SE shows $355 tax and $177 half-tax deduction;
+Form 1040 shows $355 owed. The read-only selected-scope checker passed
+**2 cases and 14 pages**, replaying source/XML/PDF bytes, hashes, page origins,
+and local TY2025 v5.4 XSD. These synthetic packets do not authenticate
+processor records or settle wider classifications, business rules, complete
+visual review, or IRS ATS acceptance.
