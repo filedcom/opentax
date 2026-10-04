@@ -1765,3 +1765,18 @@ provides a finalized Schedule D with its child line-13 amount and expects the
 early omission guard for the intentionally unsourced negative. All ten tests
 in the two corrected files pass. No production guard changed. The bulk test
 must be rerun on the fixed head before claiming a current-head pass.
+
+## PR #62 fixed-head full automated pass (2026-10-04)
+
+The exact `PATH=/tmp/opentax-tools:$PATH deno task test` rerun at
+`78d11d95` completed in 52m53s with **11,059 passed, zero failed** and no
+ignored tests reported. The retained local log is
+`.state/research/ty2025-pr62-full-test-78d11d95.log` (SHA-256
+`723b113c8f83495bec686bc437e4e104d3aeee3a0071b263e152a227c8b1233f`).
+It used Deno 2.9.4, TypeScript 6.0.3, `xmllint` libxml 2.9.13, and Poppler
+26.09.0 through the local launcher; the cached TY2025 v5.4 XSD was present.
+Both repaired Form 8814 tests passed in the full run. This establishes a
+current-head local automated pass for tested routes, including issue #60 and
+the mixed Schedule 1 line 8z return. The 52 board parent gates, complete
+source and business-rule coverage, all-page visual review, issued evidence,
+and IRS ATS acceptance remain open.
