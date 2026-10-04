@@ -1830,3 +1830,19 @@ read-only selected-scope checker passed **one case and six pages**, replaying
 source, XML, PDF, artifact hashes, page origins, and local TY2025 v5.4 XSD.
 This remains a synthetic bounded packet; broker/issuer evidence, other sales
 and gains, the complete all-page review, business rules, and ATS are open.
+
+## Simplified home-office Schedule C filled-PDF review (2026-10-04)
+
+The selected `single-schedule-c-simplified-home-office` packet under
+`.state/research/ty2025-filled-pdf-review/2026-10-04-schedule-c-home-office/`
+contains eleven pages: Form 1040, Schedules 1/2/C/SE, and Form 8995. Every
+page was rendered and visually checked for form/year, owner association,
+amounts, checkbox state, page order, continuation, and legibility. Schedule C
+line 30 prints **1,200 total and 200 business square feet** and a $1,000
+simplified expense; line 31 prints $19,000 profit from $20,000 receipts. The
+packet and native XML agree on $1,342 half-SE-tax deduction, $2,685 SE tax,
+$382 limited QBI deduction, and $2,839 Form 1040 amount owed. The read-only
+selected-scope checker passed **one case and eleven pages**, including exact
+source/XML/PDF replay, hashes, page origins, and local TY2025 v5.4 XSD. This
+is synthetic bounded evidence; external business records, wider Schedule C
+expense routes, complete visual review, business rules, and ATS remain open.
