@@ -1916,7 +1916,7 @@ review, IRS business-rule acceptance, or ATS transmission.
 
 ## Unidentified 1099 payer-name duplicate guard (2026-10-04)
 
-A repeated positive 1099-INT, DIV, OID, or G payer copy without an issued
+A repeated positive 1099-INT, DIV, OID, G, or PATR payer copy without an issued
 reference, payer TIN, or account could bypass duplicate detection by changing
 only the capitalization or spacing of its payer name. Form 1099-R could do
 the same with a fixed payer EIN because its key also included a varying plan
@@ -1924,10 +1924,10 @@ name. Shared native/PDF export regressions were red before the changes.
 Payer names now trim, collapse whitespace, and compare case-insensitively
 where a TIN is missing; the Form 1099-R key uses the EIN and recipient, so
 distinct same-EIN distributions need an account or issued reference. Reported
-payer text and amounts remain unchanged in the filed output. Five negative
+payer text and amounts remain unchanged in the filed output. Six negative
 cases reject through native and PDF export. An older test's alleged second
 1099-R payer actually reused the first EIN; its fixture now uses a distinct
-EIN. The six-file focused input/reconciliation run passed **365/365**;
+EIN. The seven-file focused input/reconciliation run passed **378/378**;
 format, lint, and diff checks passed. The preceding 11,063-test full run is
 older than this code change, so the next bulk gate must rerun. This guard
 compares reviewed structured payer facts; issuer-copy authentication and

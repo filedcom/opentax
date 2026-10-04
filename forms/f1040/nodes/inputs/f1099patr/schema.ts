@@ -99,8 +99,9 @@ export const inputSchema = z.object({
     const leftTin = left.payer_tin?.replace(/\D/g, "");
     const rightTin = right.payer_tin?.replace(/\D/g, "");
     if (leftTin && rightTin) return leftTin === rightTin;
-    return (left.payer_name?.trim().toLowerCase() || "") ===
-      (right.payer_name?.trim().toLowerCase() || "");
+    return (left.payer_name?.trim().replace(/\s+/g, " ").toUpperCase() ||
+      "") ===
+      (right.payer_name?.trim().replace(/\s+/g, " ").toUpperCase() || "");
   };
   for (const [index, item] of f1099patrs.entries()) {
     if (item.source_document_reference) {

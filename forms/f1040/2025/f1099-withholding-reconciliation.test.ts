@@ -286,6 +286,26 @@ Deno.test("1099 payer-name variants cannot double an unidentified copy", async (
       message:
         "Form 1099-R has multiple positive payer copies without account or issued source reference",
     },
+    {
+      pending: {
+        f1099patr: {
+          f1099patrs: [
+            {
+              payer_name: "Farm Cooperative",
+              recipient_tin: filer.primarySSN,
+              box4_federal_withheld: 20,
+            },
+            {
+              payer_name: " farm   COOPERATIVE ",
+              recipient_tin: filer.primarySSN,
+              box4_federal_withheld: 30,
+            },
+          ],
+        },
+      },
+      message:
+        "1099-PATR copies from one payer and recipient need distinct accounts or issued source references",
+    },
   ];
   for (const { pending, message } of cases) {
     if (!("f1099r" in pending)) {
