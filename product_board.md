@@ -20,7 +20,7 @@ until their full routes or approved rejection boundaries are established.
 | Core return and source paths | 8 | Broader joins, ownership, and source classification remain open. |
 | Named tax-form gaps | 20 | Listed parent forms remain open despite completed bounded slices. |
 | Native MeF and PDF parity | 3 | Complete descriptor, attachment, and print parity remain open. |
-| Automated and artifact validation | 5 | The current post-correction full suite passed 11,064/11,064; route completeness, every-page review, and IRS acceptance remain open. |
+| Automated and artifact validation | 5 | The corrected full suite passed 11,106/11,106 on `0bbf1fb0`; route completeness, every-page review, and IRS acceptance remain open. |
 | IRS ATS and delivery | 5 | Credentials, accepted scenarios, and a filing-ready release remain open. |
 
 **Implemented coverage.** Retained routes include source and owner checks for
@@ -49,14 +49,12 @@ or template errors; field values, page layouts, and unused template fields still
 need route review. The live inventory has 149 native MeF descriptors, 116 PDF
 descriptors, and 211 TY2025 schema roots. These counts are inventories, not positive filing claims.
 
-**Validation and release.** `deno task test` passed 11,064/11,064 on
-`4efaf107` on 2026-10-04 after the 1099 payer-name duplicate guard and
-Scenario 8 synthetic-EIN correction. The earlier diagnostic stopped on that
-case and was not a full pass. This clean run also includes the Form 1040-ES
-payment-year, Form 1099-K recipient-identity, and direct Form 8949 withholding guards.
-The newer Form 1098-E duplicate-account/ledger guard passed 35 focused
-source and native/PDF export tests; its full bulk rerun remains due after
-further implementation.
+**Validation and release.** `deno task test` passed 11,106/11,106 on
+`0bbf1fb0` on 2026-10-04 after the QSS packet guard and payer-identity
+fixture corrections. The first current-head run found seven fixture failures;
+all seven passed in the corrected full run. The exact command, log digest,
+and open source/visual/ATS limits are recorded in the
+[validation batch](docs/mef/ty2025-form1040-validation-batch.md).
 The later Form 1099-NEC positive-payer identity guard passed 76 focused graph
 and native/PDF Form 1040 export tests.
 The subsequent Form 1099-MISC payer-name guard passed 99 focused source and

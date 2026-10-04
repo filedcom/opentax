@@ -2226,4 +2226,9 @@ is `/tmp/opentax-pr62-current-head-test.log` (SHA-256
 `59ff9ef48a0b5a53ae704cae3e9287f635077368f04d48a72443e87ec5774a56`);
 the focused rerun log is `/tmp/opentax-pr62-failures-rerun.log` (SHA-256
 `45a0b749b242c73b254e875008cc7623e68ded9a3a17f2c8fb05145dce650e09`).
-A full run on the corrected head remains due.
+The corrected full `PATH=/tmp/opentax-tools:$PATH deno task test` on
+`0bbf1fb0` passed **11,106/11,106** in 52m48s, including all seven formerly
+failing cases. Its log is `/tmp/opentax-pr62-final-head-test.log` (SHA-256
+`99f0c4816df34c30cc9b04b9bbbfe13782c70f59c1c5f538c4cf907f1b2c9b74`).
+This is a local regression gate; complete route evidence, every-page visual
+review, current IRS ATS effectiveness, transmission, and acceptance remain open.
