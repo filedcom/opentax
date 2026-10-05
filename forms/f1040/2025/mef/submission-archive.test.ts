@@ -946,9 +946,11 @@ Deno.test("Form 3800 PDF and submission ZIP consume one prepared native return",
   assertEquals(submission.bundle, prepared.bundle);
   assertEquals(prepared.bundle.form3800Parts?.lines.line38, 600);
   assertEquals(xml.includes("<IRS3800 "), true);
+  // Form 6251's blank Part III continuation page is omitted by the TY2025
+  // selector; this fixture still includes its populated Form 6251 page.
   assertEquals(
     (await PDFDocument.load(await prepared.renderPdf())).getPageCount(),
-    17,
+    16,
   );
 });
 
