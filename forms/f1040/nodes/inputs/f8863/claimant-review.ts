@@ -1,7 +1,9 @@
 import {
   assertReviewedBusinessIncome,
   businessReviewSchema,
+  evidenceCents,
   reviewedBusinessIncome,
+  supportMoney,
 } from "./business-review.ts";
 import { z } from "zod";
 import type { F8863Input, F8863Item } from "./index.ts";
@@ -44,7 +46,7 @@ export const claimantReviewSchema = z.discriminatedUnion("kind", [
         source_document_reference: reference,
         beneficiary_ssn: ssnSchema,
         kind: z.enum(["ordinary_support", "scholarship_support"]),
-        amount: z.number().int().nonnegative(),
+        amount: supportMoney,
       }).strict(),
     ).min(1),
   }).strict(),
@@ -115,7 +117,9 @@ export function claimantRefundRestriction(
   const fullTime = review.full_time_student_months.length >= 5;
   const support = review.support_sources.reduce((sum, source) =>
     sum +
-    (fullTime && source.kind === "scholarship_support" ? 0 : source.amount), 0);
+    (fullTime && source.kind === "scholarship_support"
+      ? 0
+      : evidenceCents(source.amount)), 0);
   const earned = reviewedBusinessIncome(
     review.earned_income_business_sources ?? [],
     review.earned_income_w2_sources,
@@ -123,7 +127,9 @@ export function claimantRefundRestriction(
   ).earned;
   const under18 = review.claimant_dob >= "2008-01-02";
   const age18 = review.claimant_dob >= "2007-01-02" && !under18;
-  const ageTest = under18 || ((age18 || fullTime) && earned < support / 2);
+  const ageTest = under18 ||
+    ((age18 || fullTime) &&
+      (earned < 0 || evidenceCents(earned) * 2 < support));
   return ageTest && review.at_least_one_parent_alive_at_year_end &&
     filingStatus !== "mfj";
 }

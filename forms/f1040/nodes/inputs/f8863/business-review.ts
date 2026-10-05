@@ -37,14 +37,11 @@ export const businessCostFields = [
   "line_27a_energy_efficient",
   "line_27b_other_expenses",
 ] as const;
-export const businessReviewSchema = z.object({
+const businessReviewBase = z.object({
   tax_year: z.literal(2025),
   owner_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
   business_reference: reference,
   ownership_record_reference: reference,
-  income_producing_factors: z.literal(
-    "personal_services_without_material_capital",
-  ),
   personal_services_record_reference: reference,
   capital_review_record_reference: reference,
   schedule_c_source: scheduleCItemSchema,
@@ -70,6 +67,71 @@ export const businessReviewSchema = z.object({
     }).strict(),
   ),
 }).strict();
+// Support evidence retains cents; filed business and SE amounts remain whole dollars.
+export const supportMoney = z.number().nonnegative().refine(
+  (amount) =>
+    Number.isSafeInteger(Math.round(amount * 100)) &&
+    Math.abs(amount * 100 - Math.round(amount * 100)) < 1e-7,
+  "Support evidence must have no fractional cents",
+);
+export const evidenceCents = (amount: number): number => {
+  supportMoney.parse(amount);
+  return Math.round(amount * 100);
+};
+export const businessReviewSchema = z.discriminatedUnion(
+  "income_producing_factors",
+  [
+    businessReviewBase.extend({
+      income_producing_factors: z.literal(
+        "personal_services_without_material_capital",
+      ),
+    }).strict(),
+    businessReviewBase.extend({
+      income_producing_factors: z.literal(
+        "personal_services_and_material_capital",
+      ),
+      material_capital_review: z.object({
+        reasonableness_record_reference: reference,
+        capital_sources: z.array(
+          z.object({
+            source_document_reference: reference,
+            owner_ssn: reference,
+            business_reference: reference,
+            asset_reference: reference,
+            deployment_record_reference: reference,
+            cost_source_reference: reference,
+            capital_usage_cost_field: z.enum([
+              "line_20a_rent_vehicles",
+              "line_20b_rent_other",
+              "line_13_depreciation",
+            ]),
+            receipt_source_references: z.array(reference).min(1),
+            income_producing_use: z.literal(true),
+          }).strict(),
+        ).min(1),
+        compensation_benchmarks: z.array(
+          z.object({
+            source_document_reference: reference,
+            tax_year: z.literal(2025),
+            service_description: reference,
+            hourly_rate: supportMoney.refine((amount) => amount > 0),
+          }).strict(),
+        ).min(1),
+        personal_service_sources: z.array(
+          z.object({
+            source_document_reference: reference,
+            owner_ssn: reference,
+            business_reference: reference,
+            receipt_source_references: z.array(reference).min(1),
+            compensation_benchmark_reference: reference,
+            service_description: reference,
+            hours_performed: z.number().int().positive(),
+          }).strict(),
+        ).min(1),
+      }).strict(),
+    }).strict(),
+  ],
+);
 export type BusinessReview = z.infer<typeof businessReviewSchema>;
 export interface WageReview {
   box1_wages: number;
@@ -77,6 +139,105 @@ export interface WageReview {
   box7_ss_tips?: number;
 }
 const tin = (value: string) => value.replaceAll("-", "");
+function reviewedCompensationCents(review: BusinessReview): number | undefined {
+  if (
+    review.income_producing_factors !== "personal_services_and_material_capital"
+  ) return;
+  const capital = review.material_capital_review;
+  const receipts = new Set(
+    review.receipt_sources.map((r) => r.source_document_reference),
+  );
+  const costs = new Set(
+    review.cost_sources.map((r) => r.source_document_reference),
+  );
+  const usedCapital = new Set<string>();
+  const usedServices = new Set<string>();
+  const records = new Set([...receipts, ...costs]);
+  const assets = new Set<string>();
+  const identity = (
+    record: { owner_ssn: string; business_reference: string },
+  ) => {
+    if (
+      tin(record.owner_ssn) !== tin(review.owner_ssn) ||
+      record.business_reference !== review.business_reference
+    ) {
+      throw new Error(
+        "Form 8863 capital/service evidence must belong to the claimant and reviewed business",
+      );
+    }
+  };
+  const distinct = (reference: string) => {
+    if (records.has(reference)) {
+      throw new Error(
+        "Form 8863 capital/service/benchmark evidence needs distinct source references",
+      );
+    }
+    records.add(reference);
+  };
+  const joinedReceipts = (references: string[], used: Set<string>) => {
+    if (
+      new Set(references).size !== references.length ||
+      references.some((ref) => !receipts.has(ref))
+    ) {
+      throw new Error(
+        "Form 8863 capital and personal services must join actual reviewed business receipt sources",
+      );
+    }
+    references.forEach((ref) => used.add(ref));
+  };
+  for (const record of capital.capital_sources) {
+    identity(record);
+    distinct(record.source_document_reference);
+    distinct(record.deployment_record_reference);
+    if (
+      assets.has(record.asset_reference) ||
+      !costs.has(record.cost_source_reference) ||
+      review.cost_sources.find((cost) =>
+          cost.source_document_reference === record.cost_source_reference
+        )?.schedule_c_field !== record.capital_usage_cost_field
+    ) {
+      throw new Error(
+        "Form 8863 material capital requires distinct deployed assets joined to actual business costs",
+      );
+    }
+    assets.add(record.asset_reference);
+    joinedReceipts(record.receipt_source_references, usedCapital);
+  }
+  const benchmarks = new Map(
+    capital.compensation_benchmarks.map((
+      b,
+    ) => [b.source_document_reference, b]),
+  );
+  for (const benchmark of capital.compensation_benchmarks) {
+    distinct(benchmark.source_document_reference);
+  }
+  const usedBenchmarks = new Set<string>();
+  let allowance = 0;
+  for (const record of capital.personal_service_sources) {
+    identity(record);
+    distinct(record.source_document_reference);
+    joinedReceipts(record.receipt_source_references, usedServices);
+    const benchmark = benchmarks.get(record.compensation_benchmark_reference);
+    if (
+      !benchmark || benchmark.service_description !== record.service_description
+    ) {
+      throw new Error(
+        "Form 8863 performed-service compensation must join the matching reviewed pay benchmark",
+      );
+    }
+    usedBenchmarks.add(record.compensation_benchmark_reference);
+    allowance += record.hours_performed * evidenceCents(benchmark.hourly_rate);
+  }
+  if (
+    usedCapital.size !== receipts.size || usedServices.size !== receipts.size ||
+    usedBenchmarks.size !== benchmarks.size || !Number.isSafeInteger(allowance)
+  ) {
+    throw new Error(
+      "Form 8863 material capital and performed services must inventory all receipt and compensation sources",
+    );
+  }
+  return allowance;
+}
 export function reviewedBusinessIncome(
   businesses: readonly BusinessReview[],
   wages: readonly WageReview[],
@@ -87,6 +248,7 @@ export function reviewedBusinessIncome(
   let profit = 0;
   let nonSstb = 0;
   let sstb = 0;
+  let reasonableCompensationCents: number | undefined;
   for (const review of businesses) {
     const source = scheduleCItemSchema.parse(review.schedule_c_source);
     if (
@@ -106,6 +268,16 @@ export function reviewedBusinessIncome(
         "Form 8863 earned-support business needs distinct claimant-owned personal-service Schedule C sources and reviewed ordinary costs",
       );
     }
+    if (
+      review.income_producing_factors ===
+        "personal_services_and_material_capital" && businesses.length !== 1
+    ) {
+      throw new Error(
+        "Form 8863 material-capital review needs a single business for the retained half-SE-tax attribution",
+      );
+    }
+    reasonableCompensationCents = reviewedCompensationCents(review) ??
+      reasonableCompensationCents;
     identities.add(review.business_reference);
     const totals = new Map<string, number>();
     for (const record of [...review.receipt_sources, ...review.cost_sources]) {
@@ -160,6 +332,13 @@ export function reviewedBusinessIncome(
     )
     : undefined;
   const deduction = se?.line13 ?? 0;
+  const businessNetAfterDeduction = profit - deduction;
+  const businessEarnedCents = reasonableCompensationCents === undefined
+    ? businessNetAfterDeduction * 100
+    : Math.min(
+      reasonableCompensationCents,
+      Math.max(0, businessNetAfterDeduction * 30),
+    );
   return {
     profit,
     seTax: se?.line12 ?? 0,
@@ -167,8 +346,13 @@ export function reviewedBusinessIncome(
     ssWages,
     nonSstb,
     sstb,
-    earned: wages.reduce((sum, wage) => sum + wage.box1_wages, 0) + profit -
-      deduction,
+    businessNetAfterDeduction,
+    reasonableCompensation: reasonableCompensationCents === undefined
+      ? undefined
+      : reasonableCompensationCents / 100,
+    businessEarned: businessEarnedCents / 100,
+    earned: wages.reduce((sum, wage) => sum + wage.box1_wages, 0) +
+      businessEarnedCents / 100,
   };
 }
 const sum = (value: unknown): number =>

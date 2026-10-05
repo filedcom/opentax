@@ -1,5 +1,16 @@
 # TY2025 Form 8863 positive PDF boundary
 
+## Material-capital claimant support checkpoint (2026-10-06)
+
+The
+[material-capital support proof](ty2025-form8863-material-capital-support-review.md)
+adds performed-service/pay-benchmark and deployed-capital source joins, the
+reasonable-compensation allowance and 30% ceiling after filed half-SE tax.
+Integer and fractional exact-half/below-half support boundaries have actual
+public native/XSD and filled PDF packet proof, including education/CTC ordering.
+The earlier personal-services-only limit is historical for these reviewed cases;
+multiple-business allocation and outside source authentication remain open.
+
 ## Self-employed claimant support checkpoint (2026-10-06)
 
 The
