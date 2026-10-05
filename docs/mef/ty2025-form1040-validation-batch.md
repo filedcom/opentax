@@ -4169,3 +4169,24 @@ wider related batch covering Form 8880, Form 8839, and ATS cases passed
 **139/139**. Deno check, lint, formatting, and `git diff --check` passed on the
 edited code. A full `deno task test` rerun after the final code edits is in
 progress; no full-batch pass is claimed for that head yet.
+
+## Form 8396 corrected selected packet (2026-10-05)
+
+The new selected packet at
+`.state/research/ty2025-filled-pdf-review/2026-10-05-exportable-175-after-8396-8880/`
+was generated from the 175-case selection and passed local TY2025 v5.4 XSD
+validation for every native return. It has **1,090 filled pages**. All 175
+source JSON and native XML files match the prior reviewed packet byte for
+byte. Among PDFs, 174 match byte for byte; only the existing Form 8396 case
+changed from five pages to four by removing its IRS instructions and
+record-only worksheet. The four retained pages are pixel-identical to their
+previously reviewed pages at 120 dpi. The corrected Form 8396 page was also
+rendered and visually inspected; its certificate, $6,000 eligible interest,
+20% rate, $5,075 line-8 limit, and $1,200 credit remain legible. Comparison
+provenance is in
+`.state/research/ty2025-exportable-175-after-8396-8880-provenance.json`.
+The regenerated manifest SHA-256 is
+`7f1e13e1f20fa48f203a0f667a9bbbc1071bc44a17155646f1c0a29f57e4bf89`.
+Review flags were transferred only after those exact-byte/pixel checks; the
+read-only checker is running. This selected packet does not close the frozen
+all-route PDF, IRS business-rule, or ATS gates.
