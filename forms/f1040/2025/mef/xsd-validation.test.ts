@@ -54,6 +54,7 @@ import { purchasePointsCrossLoanFixture } from "../../nodes/inputs/f1098/purchas
 import { twoObligation453aFixture } from "../../nodes/inputs/f453a_interest/fixture.ts";
 import { priorIsoSaleFixture } from "../form6251_prior_iso_sale.fixture.ts";
 import { form6251Form4952Fixture } from "../form6251_4952.fixture.ts";
+import { Form7217PropertyTreatment } from "../../nodes/inputs/f7217/index.ts";
 import {
   SCENARIO_1040_01_FACTS,
   SCENARIO_1040_02_FACTS,
@@ -8461,6 +8462,85 @@ Deno.test({
   );
   assertEquals(xml.includes("QlfyEnergyPropCostsUSHomeInd"), false);
   await validateXsd(xml, "Form 5695 audit only");
+});
+
+Deno.test({
+  name:
+    "XSD: Form 7217 section 731 cash gain reconciles through Form 8949, Schedule D, and Form 1040",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const ssn = general.taxpayer_ssn;
+  const distributionDate = "2025-03-01";
+  const form7217 = {
+    partnership_name: "Orchid Partnership",
+    partnership_ein: "98-7654321",
+    distribution_date: distributionDate,
+    complete_liquidation: false,
+    section_751b_sale_or_exchange: false,
+    partner_adjusted_basis_before_distribution: 10_000,
+    cash_received: 15_000,
+    us_tax_required_on_gain: true,
+    distributed_properties: [{
+      description: "EQUIPMENT",
+      property_treatment: Form7217PropertyTreatment.Section732Property,
+      partnership_basis_before_distribution: 32_507,
+      fair_market_value: 9_000,
+      partner_basis_after_section_732: 0,
+    }],
+    section_731_capital_gain_source: {
+      k1_document_reference: "2025-orchid-k1",
+      k1_box19_statement_reference: "2025-orchid-k1-march-01",
+      k1_box19_statement_distribution_date: distributionDate,
+      k1_partner_ssn: ssn,
+      k1_partnership_ein: "98-7654321",
+      k1_box19_code_a_cash: 14_000,
+      k1_box19_code_d_deemed_cash: 1_000,
+      k1_box19_code_c_property_basis: 32_507,
+      k1_box19_code_c_property_fmv: 9_000,
+      k1_box19_code_b_section737_property: 0,
+      k1_box19_code_f_service_cash: 0,
+      k1_box19_code_g_service_property: 0,
+      outside_basis_workpaper_reference: "2025-orchid-outside-basis",
+      outside_basis_workpaper_as_of_date: distributionDate,
+      opening_outside_basis: 8_000,
+      increases_before_distribution: 4_000,
+      decreases_before_distribution: 2_000,
+      partnership_interest_acquired_date: "2020-01-01",
+      entire_interest_has_one_holding_period: true,
+      not_section707_disguised_sale: true,
+    },
+  };
+  const result = runReturn({ general, f7217: { form7217s: [form7217] } });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending) as MefFormsPending;
+  assertEquals(pending.form8949?.length, 1);
+  assertEquals(pending.form8949?.[0]?.gain_loss, 5_000);
+  assertEquals(
+    pending.form8949?.[0]?.source_transaction_id,
+    "f7217:987654321:2025-03-01",
+  );
+  assertEquals(pending.schedule_d?.print_line16_combined, 5_000);
+  assertEquals(pending.f1040?.line7_capital_gain, 5_000);
+
+  const xml = buildMefXml(pending, extractFilerIdentity(general));
+  assertStringIncludes(xml, "<RecognizedGainAmt>5000</RecognizedGainAmt>");
+  assertStringIncludes(xml, "<CapitalGainLossAmt>5000</CapitalGainLossAmt>");
+  assertStringIncludes(xml, "<TotalGainOrLossAmt>5000</TotalGainOrLossAmt>");
+  assertStringIncludes(xml, "<LongTermCapitalGainAndLossGrp>");
+  await validateXsd(xml, "Form 7217 section 731 gain full return");
+
+  const tampered = {
+    ...pending,
+    form8949: [{ ...pending.form8949![0]!, gain_loss: 4_999 }],
+  };
+  assertThrows(
+    () => buildMefXml(tampered, extractFilerIdentity(general)),
+    Error,
+    "Form 8949 gain or loss does not reconcile to proceeds, basis, and column (g)",
+  );
 });
 
 function runReturn(inputs: Record<string, unknown>) {
