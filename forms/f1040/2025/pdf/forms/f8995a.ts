@@ -254,7 +254,7 @@ export function projectOneBusiness8995A(
         line21: 197300,
         line22: lines.line33 - 197300,
         line23: 50000,
-        line24: (lines.phaseIn! * 100).toFixed(3).replace(/\.?0+$/, ""),
+        line24: qbiPercentageForPdf(lines.phaseIn!),
       }
       : Object.fromEntries([17, 18, 19, 20, 21, 22, 23, 24, 25, 26].map(
         (line) => [`line${line}`, undefined],
