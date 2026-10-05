@@ -13,6 +13,7 @@ import { buildPending } from "./mef/pending.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "./pdf/builder.ts";
 import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
 import { FilingStatus } from "../nodes/types.ts";
+import { inputSchema as f1099intInputSchema } from "../nodes/inputs/f1099int/index.ts";
 
 const XSD_PATH = new URL(
   "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
@@ -257,22 +258,39 @@ Deno.test("three-country interest retains both Form 1116 and Schedule B pages in
   }
 });
 
-Deno.test("three-country Germany source refuses ISO DE in native and PDF projections", () => {
-  const result = filedReturn("DE");
+Deno.test("three-country Germany source and final exports refuse ISO DE", () => {
+  assertThrows(
+    () =>
+      f1099intInputSchema.parse({
+        f1099ints: [{ ...germany, foreign_tax_irs_country_code: "DE" }],
+      }),
+    Error,
+    "TY2025 Form 1116 requires an IRS MeF country code",
+  );
+  const result = filedReturn();
   const parent = result.pending.form_1116;
   assert(parent);
+  const pending = {
+    ...result.pending,
+    f1099int: {
+      f1099ints: [canada, france, {
+        ...germany,
+        foreign_tax_irs_country_code: "DE",
+      }],
+    },
+  };
   assertThrows(
     () =>
       form1116.build(parent as Parameters<typeof form1116.build>[0], {
-        pending: result.pending,
+        pending,
       }),
     Error,
-    "Germany requires IRS MeF country code GM",
+    "Form 1116 three-country interest needs three separately reviewed 1099-INT sources",
   );
   assertThrows(
-    () => form1116Pdf.projectFields!(parent, result.pending),
+    () => form1116Pdf.projectFields!(parent, pending),
     Error,
-    "Germany requires IRS MeF country code GM",
+    "Form 1116 three-country interest needs three separately reviewed 1099-INT sources",
   );
 });
 
