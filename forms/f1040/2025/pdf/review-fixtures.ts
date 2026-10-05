@@ -1,3 +1,4 @@
+import { twoSchoolEducationFixture } from "./review-8863-two-schools.fixture.ts";
 import {
   directAgriBiodieselPending,
   directAgriBiodieselSource,
@@ -268,7 +269,7 @@ function noAptcPolicyForMonths(
   };
 }
 
-export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
+const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
   {
     id: "single-reviewed-adoption-credit",
     inputs: {
@@ -9013,4 +9014,13 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "Schedule 3 line 15 and Form 1040 line 31 sum these payments to 1,908",
     ],
   },
+];
+
+const educationBase = basePdfReviewFixtures.find((fixture) =>
+  fixture.id === "single-form8863-lifetime-learning-scholarship"
+)!;
+export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
+  ...basePdfReviewFixtures,
+  twoSchoolEducationFixture(educationBase, "llc"),
+  twoSchoolEducationFixture(educationBase, "aoc"),
 ];

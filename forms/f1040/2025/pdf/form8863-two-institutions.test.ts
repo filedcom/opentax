@@ -47,17 +47,11 @@ const student = {
 };
 
 Deno.test("two school American Opportunity expenses share the student cap", async () => {
-  const aoc = {
-    ...student,
-    credit_type: "aoc",
-    llc_adjusted_expenses: undefined,
-    aoc_adjusted_expenses: 10_000,
-    enrolled_half_time: true,
-    completed_4_years_postsec: false,
-    felony_drug_conviction: false,
-    taxpayer_under_24_no_refundable_aoc: false,
-  };
-  const result = f1040_2025.executeReturn({ ...base.inputs, f8863: [aoc] });
+  const result = f1040_2025.executeReturn(
+    pdfReviewFixtures.find((fixture) =>
+      fixture.id === "single-form8863-two-school-aoc"
+    )!.inputs,
+  );
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule3.line3_education_credit, 1_500);
   assertEquals(result.pending.f1040.line29_refundable_aoc, 1_000);
@@ -101,7 +95,11 @@ Deno.test("two school American Opportunity expenses share the student cap", asyn
 });
 
 Deno.test("two school expense workpapers reach Form 8863, final tax, XSD and filled PDF", async () => {
-  const result = f1040_2025.executeReturn({ ...base.inputs, f8863: [student] });
+  const result = f1040_2025.executeReturn(
+    pdfReviewFixtures.find((fixture) =>
+      fixture.id === "single-form8863-two-school-llc"
+    )!.inputs,
+  );
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule3.line3_education_credit, 2_000);
   assertEquals(result.pending.f1040.line20_nonrefundable_credits, 2_000);
