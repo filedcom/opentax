@@ -1,4 +1,9 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { f1040_2025 } from "./index.ts";
 import { FilingStatus as HeaderFilingStatus } from "../mef/header.ts";
 import { normalizeAllPending } from "./pending.ts";
@@ -6,6 +11,7 @@ import { form8995a } from "./mef/forms/f8995a.ts";
 import { form8995aScheduleC } from "./mef/forms/f8995a_schedule_c.ts";
 import { form8995aPdf } from "./pdf/forms/f8995a.ts";
 import { form8995aScheduleCPdf } from "./pdf/forms/f8995a_schedule_c.ts";
+import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
 import { inputSchema as form8995aInputSchema } from "../nodes/intermediate/forms/form8995a/index.ts";
 
 const gain = {
@@ -39,6 +45,8 @@ const loss = {
 };
 const filer = {
   primarySSN: "111223333",
+  firstNameWithInitial: "Alex",
+  lastName: "Owner",
   fullName: "Alex Owner",
   nameLine1: "OWNER ALEX",
   nameControl: "OWNE",
@@ -54,6 +62,7 @@ function preparedReturn() {
       taxpayer_last_name: "Owner",
       taxpayer_ssn: "111-22-3333",
       taxpayer_dob: "1985-06-15",
+      digital_assets: false,
       address_line1: "1 Main St",
       address_city: "Austin",
       address_state: "TX",
@@ -166,3 +175,151 @@ Deno.test("positive Schedule C loss-netting packet rejects extra Schedule B and 
     );
   }
 });
+
+Deno.test("cent-valued Schedule C gain and loss reach whole-dollar Form 8995-A, XSD and filled PDF", async () => {
+  const base = pdfReviewFixtures.find((fixture) =>
+    fixture.id === "single-form8995a-two-business-loss-netting"
+  )!;
+  const original = base.inputs.schedule_c as Record<string, unknown>[];
+  const inputs = {
+    ...base.inputs,
+    schedule_c: [
+      { ...original[0], line_1_gross_receipts: 400.25 },
+      {
+        ...original[1],
+        part_v_other_expenses: [{
+          description: "Shop operating costs",
+          amount: 100.10,
+        }],
+      },
+    ],
+  };
+  const result = f1040_2025.executeReturn(inputs);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule1.line3_schedule_c, 200.15);
+  assertEquals(result.pending.f1040.line13_qbi_deduction, 40);
+  const pending = normalizeAllPending(result.pending);
+  const parent = form8995aInputSchema.parse(pending.form8995a);
+  const companion = form8995aInputSchema.parse(pending.form8995a_schedule_c);
+  assertEquals(parent.schedule_c_qbi_businesses?.map((row) => row.qbi), [
+    300.25,
+    -100.10,
+  ]);
+  assertEquals(parent.qbi, 200.15);
+  assertEquals(form8995aPdf.projectFields!(parent, pending).line39, 40);
+  const projected = form8995aScheduleCPdf.projectFields!(companion, pending);
+  assertEquals([
+    projected.row1_a,
+    projected.row2_a,
+    projected.line3,
+    projected.line4,
+  ], [300, -100, 100, 300]);
+  const sourceRows = pending.schedule_c.schedule_cs as Record<
+    string,
+    unknown
+  >[];
+  const changedSource = {
+    ...pending,
+    schedule_c: {
+      ...pending.schedule_c,
+      schedule_cs: [
+        { ...sourceRows[0], line_1_gross_receipts: 400.26 },
+        sourceRows[1],
+      ],
+    },
+  };
+  assertThrows(() =>
+    form8995a.build(parent, { filer: base.filer, pending: changedSource })
+  );
+  assertThrows(() =>
+    form8995aScheduleCPdf.projectFields!(companion, changedSource)
+  );
+  const prepared = await f1040_2025.prepareReturn(result.pending, base.filer);
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<QualifiedBusinessIncomeDedAmt>40</QualifiedBusinessIncomeDedAmt>",
+  );
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<TotalTradeOrBusinessLossAmt>100</TotalTradeOrBusinessLossAmt>",
+  );
+  const xsd = new URL(
+    "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const validator = new Deno.Command("xmllint", {
+    args: ["--noout", "--schema", xsd, "-"],
+    stdin: "piped",
+    stdout: "piped",
+    stderr: "piped",
+  }).spawn();
+  const writer = validator.stdin.getWriter();
+  await writer.write(new TextEncoder().encode(prepared.bundle.xml));
+  await writer.close();
+  const validated = await validator.output();
+  assertEquals(validated.code, 0, new TextDecoder().decode(validated.stderr));
+  const pdf = await prepared.renderPdf();
+  assert(pdf.length > 0);
+  if (Deno.args.includes("--write-review-artifacts")) {
+    const directory = new URL(
+      "../../../.state/research/ty2025-filled-pdf-review/2026-10-06-form8995a-cent-loss/",
+      import.meta.url,
+    ).pathname;
+    await Deno.mkdir(directory, { recursive: true });
+    await Deno.writeFile(`${directory}filled-return.pdf`, pdf);
+    await Deno.writeTextFile(`${directory}return.xml`, prepared.bundle.xml);
+  }
+});
+
+for (
+  const [gainQbi, lossQbi, gainFiled, lossFiled, netFiled, deduction] of [
+    [300.50, -100.50, 301, -101, 200, 40],
+    [304.51, -100.49, 305, -100, 205, 41],
+  ] as const
+) {
+  Deno.test(`Form 8995-A Schedule C rounds signed business cents ${gainQbi}/${lossQbi} before line totals`, () => {
+    const base = pdfReviewFixtures.find((fixture) =>
+      fixture.id === "single-form8995a-two-business-loss-netting"
+    )!;
+    const original = base.inputs.schedule_c as Record<string, unknown>[];
+    const result = f1040_2025.executeReturn({
+      ...base.inputs,
+      schedule_c: [
+        { ...original[0], line_1_gross_receipts: gainQbi + 100 },
+        {
+          ...original[1],
+          part_v_other_expenses: [{
+            description: "Shop operating costs",
+            amount: -lossQbi,
+          }],
+        },
+      ],
+    });
+    assertEquals(result.diagnostics, []);
+    assertEquals(result.pending.f1040.line13_qbi_deduction, deduction);
+    const pending = normalizeAllPending(result.pending);
+    const parent = form8995aInputSchema.parse(pending.form8995a);
+    const companion = form8995aInputSchema.parse(pending.form8995a_schedule_c);
+    const projected = form8995aScheduleCPdf.projectFields!(companion, pending);
+    assertEquals([
+      projected.row1_a,
+      projected.row2_a,
+      projected.line3,
+      projected.line4,
+    ], [
+      gainFiled,
+      lossFiled,
+      -lossFiled,
+      gainFiled,
+    ]);
+    assertEquals(gainFiled + lossFiled, netFiled);
+    assertEquals(
+      form8995aPdf.projectFields!(parent, pending).line39,
+      deduction,
+    );
+    assertStringIncludes(
+      form8995aScheduleC.build(companion, { filer: base.filer, pending }),
+      `<TotalTradeOrBusinessIncomeAmt>${gainFiled}</TotalTradeOrBusinessIncomeAmt>`,
+    );
+  });
+}
