@@ -114,6 +114,34 @@ Deno.test("three sequential same-state corrected policies reach Form 1040, MeF a
     .slcsp_corrections[0].determination_record_sha256 = "";
   assertThrows(() => buildMefXml(missingEvidence, filer));
 
+  const reusedEvidence = structuredClone(result.pending);
+  const reusedPolicies = (reusedEvidence.f1095a as {
+    f1095as: typeof policies;
+  }).f1095as;
+  reusedPolicies[2].slcsp_corrections[0].determination_reference =
+    reusedPolicies[0].slcsp_corrections[0].determination_reference;
+  assertThrows(() => buildMefXml(reusedEvidence, filer));
+  assertThrows(() =>
+    form8962Pdf.instances?.(fields, filer, reusedEvidence)
+  );
+
+  const sharedDetermination = structuredClone(result.pending);
+  const sharedPolicies = (sharedDetermination.f1095a as {
+    f1095as: typeof policies;
+  }).f1095as;
+  sharedPolicies[2].slcsp_corrections[0].determination_reference =
+    sharedPolicies[0].slcsp_corrections[0].determination_reference;
+  sharedPolicies[2].slcsp_corrections[0].determination_record_sha256 =
+    sharedPolicies[0].slcsp_corrections[0].determination_record_sha256;
+  assertStringIncludes(
+    buildMefXml(sharedDetermination, filer),
+    "<PremiumTaxCreditTaxLiabAmt>1446</PremiumTaxCreditTaxLiabAmt>",
+  );
+  assertEquals(
+    form8962Pdf.instances?.(fields, filer, sharedDetermination)?.length,
+    1,
+  );
+
   const changedReturn = structuredClone(result.pending);
   (changedReturn.f1040 as { line17_additional_taxes: number })
     .line17_additional_taxes = 1_445;

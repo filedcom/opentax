@@ -1,5 +1,17 @@
 # TY2025 Form 8962 policy-month MeF boundary
 
+## Consistent Marketplace correction record identity across policies (2026-10-05)
+
+The same-state monthly export allows one Marketplace determination record to
+support corrected SLCSP amounts on multiple policies. It rejects a repeated
+determination reference only when the two policies claim different SHA-256
+digests for that reference. The three-policy positive/shared-record/conflict
+case and four adjacent corrected-policy cases pass through MeF and PDF. This
+preserves the [TY2025 instruction](https://www.irs.gov/instructions/i8962)
+that one same-state coverage-family SLCSP may apply across policies. The
+record identifiers remain reviewed assertions, not authenticated Marketplace
+bytes.
+
 ## One-person, one-month same-state policy transition (staged, unrun)
 
 The [2025 Form 8962 monthly instructions](https://www.irs.gov/instructions/i8962)

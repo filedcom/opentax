@@ -2143,9 +2143,26 @@ function reconcileSimplePolicyMonths(
       policy.slcsp_corrections !== undefined
     );
     if (correctedPolicies.length > 0) {
+      const evidence = correctedPolicies.flatMap((policy, policyIndex) =>
+        (policy.slcsp_corrections ?? []).map((correction) => ({
+          policyIndex,
+          reference: correction.determination_reference,
+          digest: correction.determination_record_sha256,
+        }))
+      );
+      // One determination may cover multiple policies; the same record ID
+      // cannot identify different retained bytes.
+      const conflictingRecordIdentity = evidence.some((item, index) =>
+        evidence.slice(index + 1).some((other) =>
+          item.policyIndex !== other.policyIndex &&
+          item.reference !== undefined &&
+          item.reference === other.reference && item.digest !== other.digest
+        )
+      );
       if (
         fields.household_size !== 1 || policies.length < 1 ||
         policies.length > 12 ||
+        conflictingRecordIdentity ||
         correctedPolicies.some((policy) => {
           const corrections = policy.slcsp_corrections ?? [];
           return corrections.length < 1 ||
