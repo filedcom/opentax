@@ -4306,3 +4306,35 @@ The run used Deno 2.9.4, TypeScript 6.0.3, libxml 2.9.13, and Poppler
 `pdftotext` 26.09.0. No ignored-test reason applies. The selected 1,087-page
 packet passed separately above. These local checks do not close the 52 open
 board TODOs, IRS business-rule review, current ATS schema date, or acceptance.
+
+## Current-source Form 6251 page replay (2026-10-05)
+
+The selected packet at
+`.state/research/ty2025-filled-pdf-review/2026-10-05-exportable-175-after-f6251/`
+contains 175 source/native XML/filled-PDF trios and 1,073 pages. All source JSON
+and native XML artifacts are byte-identical to the preceding checked packet.
+Fourteen PDFs change: each omits its blank Form 6251 Part III page 2. The 14
+removed pages pixel-match the blank official Form 6251 template at 120 dpi;
+all 201 retained pages across those returns pixel-match the prior inspected
+packet. The remaining 161 PDFs are byte-identical. Page-origin replay and
+review notes are retained in the new manifest.
+
+The read-only checker passed all 175 cases and 1,073 pages, including source
+replay, PDF/XML hashes, page flags/origins, and local TY2025 v5.4 XSD. Its log
+is `.state/research/ty2025-exportable-175-after-f6251-check.log`, SHA-256
+`4fdfb30922622dbddf7167a04456d8ffdd26e751f7d769c893b8dd5d713c8a9d`; the
+Form 6251 pixel comparison log is `.state/research/ty2025-f6251-page-replay.log`,
+SHA-256 `37a4237882d037ad48064d6cb7dfdc9a54a63ff04ec2b78d08a85119c2b6f204`.
+The manifest SHA-256 is
+`1b2584447d6fb72b1f2a843668ba5ff2c61dad592d9d74d52e387394ed1d19d8`.
+The 11 guarded cases, wider filing routes, business rules, ATS-effective schema,
+and IRS acceptance remain open.
+
+## Focused follow-up checks (2026-10-05)
+
+After the prior clean integrated 11,188-test run, the Form 6251 page selector
+passed 14/14 focused tests. Manual Form 4835 at-risk inputs now fail closed;
+the related Form 6198 suite passed 10/10 and `deno check` passed. ATS Scenario 3
+Form 4835 source facts passed 6/6 focused tests. ATS Scenario 5 education-source
+distinctions passed 32/32 focused source tests. These focused results do not
+replace a full regression or establish complete ATS scenario acceptance.

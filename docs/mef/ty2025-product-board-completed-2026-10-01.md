@@ -1657,3 +1657,10 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 - [x] Replay the current-source selected PDF packet after the bounded Form 5329 page trim. All 175 source/XML artifacts are byte-identical to the prior packet; 173 PDFs are also identical, while two PDFs drop three verified blank pages. Their 15 retained pages are pixel-identical at 120 dpi, and the read-only checker passes all 175 cases/1,087 pages with local TY2025 v5.4 XSD. The 11 guarded fixtures and full filing/ATS gates remain open. See the [validation batch](ty2025-form1040-validation-batch.md).
 
 - [x] Complete a clean full `deno task test` rerun on the integrated Form 1098/Form 5329/ATS code snapshot: 11,188 passed, 0 failed, 0 ignored in 33m46s, with log digest and tool versions retained. This is a local regression checkpoint, not a completed all-route, IRS business-rule, or ATS gate. See the [validation batch](ty2025-form1040-validation-batch.md).
+
+## 2026-10-05 focused follow-up slices
+
+- [x] Omit official Form 6251 Part III page 2 when every mapped field rounds blank, retaining it whenever a mapped value prints. Fourteen focused tests pass; the new filled-PDF page-count check covers blank and populated Part III. Wider AMT source and tax reconciliation remain open.
+- [x] Reject manually supplied Form 4835 at-risk fields because the registered descriptor derives them from the Form 4835 route and otherwise could silently omit the manual assertion. Ten focused Form 6198 PDF/at-risk tests pass; broader farm/rental source work remains open.
+- [x] Pin the issued Form 1040 ATS Scenario 3 Form 4835 line 1 income and five expense rows while preserving blank total, net, participation, and Schedule E fields. Six focused ATS source tests pass; no derived rental result is asserted.
+- [x] Distinguish Scenario 5's $980 education-expense cover-sheet fact from blank Form 8863 credit fields and absent Form 1098-T. Thirty-two focused ATS source tests pass; no education credit is inferred.
