@@ -97,3 +97,18 @@ Earlier isolated improvements and detailed learnings are archived in the [Octobe
 
 IRS ATS was reported unavailable through October 13 at 9 a.m. Eastern, with R10.A WSDL scheduled that day. Recheck before transmission. Credentials, Scenarios 1/8/13 source conflicts, source authenticity, business rules and IRS acceptance remain release gates.
 
+
+## Before next verified route integration
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,359 bounded slices**; eleven remain outside main code while their assembled regression runs. Broader parents remain open. New work belongs only in `future_todo`, outside this execution queue.
+
+Two real-Poppler full regressions are confirmed live: stable main-code snapshot `8aa4beeec` (PID 44462, start 22:02:12 UTC) and assembled isolated `17462812a` (PID 59904, start 22:33:26 UTC). Neither has a terminal result. The assembled code's affected full-return suites pass 15/15. Latest completed full baseline: `a268f60c`, 11,233 passed, zero failed/ignored. See the [validation batch](docs/mef/ty2025-form1040-validation-batch.md).
+
+The isolated review planner has 191 fixtures, 87 of 113 PDF keys covered and 26 uncovered. The two-school education packet passes exact source/native/PDF/XSD replay with ten reviewed pages. Other verified isolated paths and detailed limitations are preserved in the [October 6 checkpoint](docs/mef/ty2025-product-board-status-2026-10-06.md) and route notes; none prove source authenticity or IRS acceptance.
+
+Parallel work continues on sourced MSA exception allocations, missing-1098-T education exceptions and Form 8995-A/WOTC ordering. Main code stays stable until its live regression ends. IRS ATS was reported unavailable through October 13 at 9 a.m. Eastern; credentials, Scenarios 1/8/13 source conflicts, source authenticity, business rules and IRS acceptance remain release gates.
+
