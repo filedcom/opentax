@@ -4636,3 +4636,9 @@ At isolated integration commit `a195fc374`, real-Poppler `deno test -A` of the F
 The main `8aa4beeec` full regression remains running under launchd PID 44462; no restart occurred. New code remains isolated pending its terminal result.
 
 The two-school LLC/AOC selected reusable review packet at isolated `eb58acd69` passes the read-only checker: **2 cases, 10 visually inspected pages**. Planner: 191 fixtures, 116 descriptors, 113 keys, 87 covered/26 uncovered. Retained directory: `.state/research/ty2025-filled-pdf-review/2026-10-06-two-school-credits/`; manifest SHA-256 `8137b9d0adf452950b5fc19bdc2da9160c5dd41e644c97c9fec3a537a2218093`. Log `/tmp/opentax-two-schools-selected-check.log`. No full-inventory or source-authentication claim.
+
+## Assembled release regression started October 5, 22:33 UTC
+
+The eleven isolated completed slices were merged with main's documentation in `/tmp/opentax-release-integration-oct6` at `17462812a8dc47c30e50cbd0e0d8c1f2d701a222`. Only documentation conflicted; frozen checklist, ledger and current checkpoint were retained, and both validation evidence sections were preserved. Five concrete affected full-return suites passed **15/15**, zero failed, in 39 seconds (`/tmp/opentax-release-integration-oct6.log`).
+
+A new real-Poppler `deno task test` started on that stable isolated snapshot at **2026-10-05T22:33:26Z**, one-shot launchd job `opentax-full-regression-17462812a`, wrapper PID 59904, Deno test PID 59911 confirmed live. Tool versions remain Deno 2.9.4 / TypeScript 6.0.3 / libxml 2.9.13 / Poppler 26.09.0. Log: `/tmp/opentax-deno-task-test-17462812a.log`; terminal status and digest will be in `/tmp/opentax-full-regression-17462812a.status`. No completion claim yet. The original main-snapshot `8aa4beeec` run remains live under PID 44462 and was not restarted. Later agent work stays outside both stable code snapshots.
