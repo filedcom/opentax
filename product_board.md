@@ -6,7 +6,7 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1329 bounded completed slices. A completed slice does not close its
+records 1332 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are
@@ -88,6 +88,12 @@ country rows print names, and the corrected eight-page three-country packet
 was visually reviewed against its source and native XML. The next integrated
 focused batch passes 178/178; full regression on these later changes is pending.
 Other country/source and visual review remain open.
+Three more bounded source checks reject a conflicting Section B donee receipt
+date for the reviewed Form 8283 unrelated-use route, duplicate Form 59E
+circulation workpaper references and unreviewed zero-net records at Form 6251
+export, and duplicate claimed-dependent SSNs before Form 8962 MAGI sums.
+Their integrated focused tests pass 25/25; broader evidence and full regression
+on these latest checks remain open.
 Scenario 8's code-Q distribution and blank Form 1040 line 4a still need
 reconciliation, as do the other open ATS source conflicts.
 An October 5 official Scenario 1 packet recheck confirms its Form 5695

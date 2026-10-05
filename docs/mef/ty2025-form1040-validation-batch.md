@@ -4501,3 +4501,10 @@ three-country Form 1116 packet was rendered and reviewed on all eight pages;
 its hashes, source/native/PDF reconciliation, and local XSD result are recorded
 in the [Form 1116 gap note](ty2025-form1116-main-pdf-gap.md). The complete
 repository-wide run on this later code has not yet been performed.
+
+The following isolated Form 8283, Form 6251/Form 59E, and Form 8962 source
+guards passed **25/25** combined focused tests after cherry-pick into one
+integration worktree at `96f9267d`. The command was
+`deno test -A forms/f1040/2025/pdf/form8283-unrelated-use-equipment.test.ts forms/f1040/2025/form6251_circulation_source.test.ts forms/f1040/nodes/inputs/f59e/index.test.ts forms/f1040/2025/form8962_two_dependent_magi.test.ts`.
+The full repository command is running separately at the preceding PR head
+`9d700e2d`; these later guards require a new current-head full rerun.
