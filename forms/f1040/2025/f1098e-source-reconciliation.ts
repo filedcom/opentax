@@ -27,7 +27,9 @@ function borrowerOwner(
   const digits = tin.replace(/\D/g, "");
   if (digits.length === 9) {
     const owner = owners.find((candidate) => candidate.tin === digits);
-    if (owner) return owner.tin;
+    if (owner && (!name || owner.names.includes(normalizedName(name)))) {
+      return owner.tin;
+    }
   } else if (digits.length === 4 && name && reviewReference) {
     const candidateName = normalizedName(name);
     const matches = owners.filter((owner) =>
