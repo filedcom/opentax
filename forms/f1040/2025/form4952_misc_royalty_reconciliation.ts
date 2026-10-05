@@ -84,22 +84,31 @@ export function reconcileForm4952MiscRoyaltyPath(
   const interestItems = interestSource.success
     ? interestSource.data.f1099ints
     : [];
-  const interestItem = interestItems[0];
-  const interest = (interestItem?.box1 ?? 0) + (interestItem?.box3 ?? 0);
+  const interestAmounts = interestItems.map((item) =>
+    (item.box1 ?? 0) + (item.box3 ?? 0)
+  );
+  const interest = interestAmounts.reduce((total, amount) => total + amount, 0);
   if (
     (pending.f1099int !== undefined &&
-      (!interestSource.success || interestItems.length !== 1 ||
-        !interestItem || !plainInvestmentBox1Or3(interestItem) ||
-        (interestItem.box6 ?? 0) !== 0 ||
-        (interestItem.foreign_source_interest_usd ?? 0) !== 0 ||
-        !!interestItem.box7?.trim() ||
-        interestItem.foreign_tax_irs_country_code !== undefined ||
-        !interestItem.recipient_tin ||
-        interestItem.recipient_tin !== source?.recipient_tin)) ||
+      (!interestSource.success || interestItems.length === 0 ||
+        !interestItems.every((item) =>
+          plainInvestmentBox1Or3(item) &&
+          (item.box6 ?? 0) === 0 &&
+          (item.foreign_source_interest_usd ?? 0) === 0 &&
+          !item.box7?.trim() &&
+          item.foreign_tax_irs_country_code === undefined &&
+          !!item.recipient_tin && item.recipient_tin === source?.recipient_tin
+        ) ||
+        (interestItems.length > 1 &&
+          (!interestItems.every((item) =>
+            !!item.source_document_reference?.trim()
+          ) ||
+            new Set(interestItems.map((item) => item.source_document_reference))
+                .size !== interestItems.length)))) ||
     pending.f1099oid !== undefined
   ) {
     throw new Error(
-      "Form 4952 royalty and interest need one owned, unadjusted 1099-INT investment payer",
+      "Form 4952 royalty and interest need owned, separately identified unadjusted 1099-INT investment payers",
     );
   }
   if (
@@ -138,7 +147,7 @@ export function reconcileForm4952MiscRoyaltyPath(
     (form.data.elected_capital_gain_portion ?? 0) !== 0 ||
     (form.data.investment_expenses ?? 0) !== 0 ||
     (interest > 0
-      ? !sourceAmountsMatch(form.data.source_1099_interest, [interest])
+      ? !sourceAmountsMatch(form.data.source_1099_interest, interestAmounts)
       : (form.data.source_1099_interest ?? 0) !== 0) ||
     (form.data.source_1099_dividends ?? 0) !== 0 ||
     (form.data.source_1099_qualified_dividends ?? 0) !== 0 ||
@@ -157,7 +166,7 @@ export function reconcileForm4952MiscRoyaltyPath(
     Object.values(form.data.amt_refigure).some((amount) => amount !== 0)
   ) {
     throw new Error(
-      "Form 4952 royalty path supports one sourced box 2, one plain 1099-INT payer, and separately traced nonroyalty interest",
+      "Form 4952 royalty path supports one sourced box 2, plain source-matched 1099-INT payers, and separately traced nonroyalty interest",
     );
   }
   const lines = calculateForm4952(form.data);

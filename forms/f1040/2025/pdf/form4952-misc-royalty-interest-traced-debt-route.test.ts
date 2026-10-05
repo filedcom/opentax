@@ -1,5 +1,10 @@
 import { normalizeAllPending } from "../pending.ts";
-import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
+import {
+  assertEquals,
+  assertMatch,
+  assertRejects,
+  assertStringIncludes,
+} from "@std/assert";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { registry } from "../registry.ts";
@@ -47,7 +52,14 @@ const trace = {
   }],
 };
 
-async function filing() {
+async function filing(interestPayers = [{
+  payer_name: "Taxable Securities Bank",
+  payer_tin: "222334444",
+  recipient_tin: "111223333",
+  source_document_reference: "issued-2025-interest-copy",
+  box1: 500,
+  investment_property_for_form4952: true,
+}]) {
   return execute(buildExecutionPlan(registry), registry, {
     ...base.inputs,
     f1098: [
@@ -62,14 +74,11 @@ async function filing() {
       }),
     ],
     f1099m: [royalty],
-    f1099int: [{
-      payer_name: "Taxable Securities Bank",
-      payer_tin: "222334444",
-      recipient_tin: "111223333",
-      source_document_reference: "issued-2025-interest-copy",
-      box1: 500,
-      investment_property_for_form4952: true,
-    }],
+    f1099int: interestPayers,
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
     schedule_e: [{
       tsj: "T",
       property_description: "Patent royalty property",
@@ -159,7 +168,10 @@ Deno.test("traced loan, royalty, and taxable interest reach the full native and 
     await Deno.mkdir(directory, { recursive: true });
     await Deno.writeFile(`${directory}/filled-return.pdf`, pdf);
     await Deno.writeTextFile(`${directory}/return.xml`, bundle.xml);
-    await Deno.writeTextFile(`${directory}/pending.json`, JSON.stringify(pending, null, 2));
+    await Deno.writeTextFile(
+      `${directory}/pending.json`,
+      JSON.stringify(pending, null, 2),
+    );
   }
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 7, true);
   const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
@@ -237,5 +249,103 @@ Deno.test("traced loan, royalty, and taxable interest reach the full native and 
       })
     );
     await assertRejects(() => buildPdfBytes(altered, base.filer, ".pdf-cache"));
+  }
+});
+
+Deno.test("royalty and multiple owned interest payers reconcile individually through Schedule B and full return", async () => {
+  const payers = [500, 750, 600].map((box1, i) => ({
+    payer_name: `Investment Bank ${i + 1}`,
+    payer_tin: `22233444${i}`,
+    recipient_tin: "111223333",
+    source_document_reference: `2025-INT-${i + 1}`,
+    box1,
+    investment_property_for_form4952: true,
+  }));
+  const result = await filing(payers);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form4952.source_1099_interest, [500, 750, 600]);
+  assertEquals(result.pending.form4952.line4a, 2650);
+  assertEquals(result.pending.form4952.line8, 300);
+  assertEquals(result.pending.f1040.line2b_taxable_interest, 1850);
+  assertEquals(result.pending.f1040.line8_additional_income, 800);
+  assertEquals(result.pending.f1040.line12e_itemized_deductions, 18300);
+  const { f1040_2025 } = await import("../index.ts");
+  const prepared = await f1040_2025.prepareReturn(result.pending, base.filer);
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<InvestmentPropGrossIncomeAmt>2650</InvestmentPropGrossIncomeAmt>",
+  );
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<TaxableInterestAmt>1850</TaxableInterestAmt>",
+  );
+  assertStringIncludes(prepared.bundle.xml, "<IRS1040ScheduleB");
+  const xsd = new URL(
+    "../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, prepared.bundle.xml);
+    const checked = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, xmlPath],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+  const pdf = await prepared.renderPdf();
+  if (Deno.args.includes("--write-review-artifacts")) {
+    const dir = "/tmp/opentax-form4952-royalty-multi-interest-review";
+    await Deno.mkdir(dir, { recursive: true });
+    await Deno.writeFile(`${dir}/filled-return.pdf`, pdf);
+    await Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml);
+    await Deno.writeTextFile(
+      `${dir}/pending.json`,
+      JSON.stringify(result.pending, null, 2),
+    );
+  }
+  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  try {
+    await Deno.writeFile(pdfPath, pdf);
+    const extracted = await new Deno.Command("pdftotext", {
+      args: ["-layout", pdfPath, "-"],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(extracted.code, 0);
+    const text = new TextDecoder().decode(extracted.stdout);
+    for (const payer of payers) assertStringIncludes(text, payer.payer_name);
+    const formText = text.split("\f").find((page) =>
+      page.includes("Investment Interest Expense Deduction")
+    )!;
+    assertStringIncludes(formText, "2650");
+    assertMatch(formText, /\b7\s+0\b/);
+  } finally {
+    await Deno.remove(pdfPath);
+  }
+  const raw = normalizeAllPending(result.pending);
+  for (
+    const alteredPayers of [
+      payers.map((p, i) => ({
+        ...p,
+        box1: p.box1 + (i === 0 ? 1 : i === 1 ? -1 : 0),
+      })),
+      payers.map((p, i) => ({
+        ...p,
+        recipient_tin: i === 2 ? "999999999" : p.recipient_tin,
+      })),
+      payers.map((p, i) => ({
+        ...p,
+        source_document_reference: i === 2
+          ? payers[0].source_document_reference
+          : p.source_document_reference,
+      })),
+    ]
+  ) {
+    const altered = { ...raw, f1099int: { f1099ints: alteredPayers } };
+    await assertRejects(() => f1040_2025.prepareReturn(altered, base.filer));
   }
 });

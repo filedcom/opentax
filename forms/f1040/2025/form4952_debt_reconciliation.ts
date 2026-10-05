@@ -1,3 +1,4 @@
+import { sourceAmountsMatch } from "./form4952_combined_reconciliation.ts";
 import { inputSchema as interestSourceSchema } from "../nodes/inputs/f1099int/index.ts";
 import { inputSchema as dividendSourceSchema } from "../nodes/inputs/f1099div/index.ts";
 import { inputSchema as oidSourceSchema } from "../nodes/inputs/f1099oid/index.ts";
@@ -93,7 +94,7 @@ export function reconcileForm4952DirectDebtExport(
     pending.f1099int === undefined && pending.f1099div === undefined &&
     pending.f1099oid === undefined;
   const royaltyAndInterest = misc.success && interest.success &&
-    misc.data.f1099ms.length === 1 && interest.data.f1099ints.length === 1 &&
+    misc.data.f1099ms.length === 1 && interest.data.f1099ints.length > 0 &&
     pending.f1099div === undefined && pending.f1099oid === undefined;
   const oneInterest = interest.success &&
     interest.data.f1099ints.length === 1 &&
@@ -396,10 +397,12 @@ export function reconcileForm4952DirectDebtExport(
         printed.data.source_1099_dividends !==
           retained.data.source_1099_dividends
       : royaltyAndInterest
-      ? typeof printed.data.source_1099_interest !== "number" ||
-        typeof retained.data.source_1099_interest !== "number" ||
-        printed.data.source_1099_interest !==
-          retained.data.source_1099_interest ||
+      ? !sourceAmountsMatch(
+        printed.data.source_1099_interest,
+        Array.isArray(retained.data.source_1099_interest)
+          ? retained.data.source_1099_interest
+          : [retained.data.source_1099_interest ?? NaN],
+      ) ||
         typeof printed.data.source_1099_royalties !== "number" ||
         typeof retained.data.source_1099_royalties !== "number" ||
         printed.data.source_1099_royalties !==
