@@ -4390,3 +4390,24 @@ file had loaded in this full run and passed its own focused local-XSD test
 later focused evidence is recorded separately. Neither result proves every
 retained filing route, IRS business rules, the ATS-effective package, or IRS
 acceptance.
+
+## Focused two-loan purchase-points limit after full regression (2026-10-05)
+
+At integrated commit `cebb61cb`, the bounded purchase-points route applies
+the 2025 Publication 936 Table 1 ratio to both reported interest and points.
+A $300,000 July principal-home mortgage plus a $650,000 full-year elected
+second-home mortgage produces a $950,000 combined average and 0.789 ratio.
+The $18,000 interest claim becomes $14,202 and $3,000 points become $2,367,
+for $16,569 on Schedule A and Form 1040. Wrong points, interest, and filed
+PDF-projection totals reject. A three-page filled PDF was generated and the
+Schedule A projection was checked against that amount; this does not replace
+per-page visual inspection or issuer-byte authentication.
+
+The integrated source/native/PDF focused set passed 82/82, log
+`/tmp/opentax-f1098-points-integrated-focused.log`, SHA-256
+`95471d1bbb80552744aed37332ef82d5a80df89fe41c50fe0380c2b2e991e5d1`.
+The original under-limit and new over-limit full-return XSD cases passed 2/2,
+log `/tmp/opentax-f1098-points-integrated-xsd.log`, SHA-256
+`87c042be1696d75a3a357c49a68a37a017cde8d150e62dbab2756eb76010f8e7`.
+The 11,197-test full run above predates this code change; current-head full
+regression, other mortgage combinations, business rules, and ATS remain open.
