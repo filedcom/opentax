@@ -9587,6 +9587,102 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: MFS two-loan interest uses the $375,000 mortgage limit",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = {
+    ...singleGeneral(),
+    filing_status: FilingStatus.MFS,
+    spouse_first_name: "Other",
+    spouse_last_name: "Taxpayer",
+    spouse_ssn: "222-33-4444",
+    mfs_spouse_itemizing: true,
+  };
+  const f1098 = await Promise.all([
+    {
+      lender_name: "First Lender",
+      recipient_tin: general.taxpayer_ssn,
+      source_document_reference: "2025 MFS first Form 1098",
+      box3_origination_date: "01/15/2020",
+      box1_mortgage_interest: 20_000,
+      box1_current_year_deductible_interest: 8_340,
+      box1_deduction_workpaper_reference: "2025 MFS Pub. 936 Table 1",
+      for_routing: "A",
+    },
+    {
+      lender_name: "Second Lender",
+      recipient_tin: general.taxpayer_ssn,
+      source_document_reference: "2025 MFS second Form 1098",
+      box3_origination_date: "02/15/2021",
+      box1_mortgage_interest: 16_000,
+      box1_current_year_deductible_interest: 6_672,
+      box1_deduction_workpaper_reference: "2025 MFS Pub. 936 Table 1",
+      for_routing: "A",
+    },
+  ].map((source, index) =>
+    withSyntheticForm1098Copy(`xsd-mfs-1098-${index}`, source)
+  ));
+  const review = {
+    mortgage_limit_review: {
+      table1_workpaper_reference: "2025 MFS Pub. 936 Table 1",
+      all_qualified_home_mortgages_included_verified: true,
+      all_post_2017_acquisition_debt_verified: true,
+      filing_status_verified: "mfs",
+      mfs_noncommunity_property_verified: true,
+      mfs_sole_paid_interest_verified: true,
+      mfs_payment_workpaper_reference: "2025 separate-funds payment ledger",
+      loans: ([
+        ["2025 MFS first Form 1098", 500_000],
+        ["2025 MFS second Form 1098", 400_000],
+      ] as const).map(([source_document_reference, balance]) => ({
+        source_document_reference,
+        monthly_balance_records: Array.from({ length: 12 }, (_, index) => ({
+          month: index + 1,
+          closing_balance: balance,
+          lender_statement_reference: `${source_document_reference}-month-${
+            index + 1
+          }`,
+        })),
+      })),
+    },
+  };
+  const result = runReturn({
+    general,
+    f1098,
+    f1098_mortgage_limit_review: review,
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    result.pending.schedule_a?.line_8a_mortgage_interest_1098,
+    15_012,
+  );
+  assertEquals(result.pending.f1040?.line12e_itemized_deductions, 15_012);
+  const pending = buildPending(result.pending) as MefFormsPending;
+  const xml = buildMefXml(pending, extractFilerIdentity(general));
+  assertStringIncludes(
+    xml,
+    "<RptHomeMortgIntAndPointsAmt>15012</RptHomeMortgIntAndPointsAmt>",
+  );
+  await validateXsd(xml, "MFS two-loan mortgage-limit full return");
+  const pdf = await buildPdfBytes(pending, extractFilerIdentity(general));
+  assertEquals((await PDFDocument.load(pdf)).getPageCount(), 3);
+
+  const missingPaymentEvidence = runReturn({
+    general,
+    f1098,
+    f1098_mortgage_limit_review: {
+      mortgage_limit_review: {
+        ...review.mortgage_limit_review,
+        mfs_payment_workpaper_reference: undefined,
+      },
+    },
+  });
+  assertEquals(missingPaymentEvidence.diagnostics.length > 0, true);
+});
+
+Deno.test({
   name:
     "XSD: 1099-NEC Form 8919 firm reaches 1040, Schedule 2, Schedule SE and Form 8959",
   sanitizeOps: false,

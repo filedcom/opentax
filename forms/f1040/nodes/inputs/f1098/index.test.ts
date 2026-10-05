@@ -472,6 +472,120 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
   );
 });
 
+Deno.test("MFS two-loan mortgage limit needs solely paid noncommunity interest", () => {
+  const source = {
+    f1098s: [
+      reviewedInterest(20_000, 8_340, {
+        lender_name: "First Lender",
+        recipient_tin: "111-22-3333",
+        source_document_reference: "2025 MFS first Form 1098",
+        box3_origination_date: "01/15/2020",
+        box2_outstanding_principal: 500_000,
+      }),
+      reviewedInterest(16_000, 6_672, {
+        lender_name: "Second Lender",
+        recipient_tin: "111-22-3333",
+        source_document_reference: "2025 MFS second Form 1098",
+        box3_origination_date: "02/15/2021",
+        box2_outstanding_principal: 400_000,
+      }),
+    ],
+    mortgage_limit_review: {
+      table1_workpaper_reference: "2025 MFS Pub. 936 Table 1",
+      all_qualified_home_mortgages_included_verified: true,
+      all_post_2017_acquisition_debt_verified: true,
+      filing_status_verified: "mfs",
+      mfs_noncommunity_property_verified: true,
+      mfs_sole_paid_interest_verified: true,
+      mfs_payment_workpaper_reference: "2025 separate-funds payment ledger",
+      loans: ([
+        ["2025 MFS first Form 1098", 500_000],
+        ["2025 MFS second Form 1098", 400_000],
+      ] as const).map(([source_document_reference, balance]) => ({
+        source_document_reference,
+        monthly_balance_records: Array.from({ length: 12 }, (_, index) => ({
+          month: index + 1,
+          closing_balance: balance,
+          lender_statement_reference: `${source_document_reference}-month-${
+            index + 1
+          }`,
+        })),
+      })),
+    },
+  };
+  const parsed = inputSchema.parse(source);
+  const result = f1098.compute({ taxYear: 2025, formType: "f1040" }, parsed);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleA)?.line_8a_mortgage_interest_1098,
+    15_012,
+  );
+  assertForm1098MortgageLimitSources(
+    source,
+    ["111223333"],
+    FilingStatus.MarriedFilingSeparately,
+    15_012,
+    0,
+    0,
+    false,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      mortgage_limit_review: {
+        ...source.mortgage_limit_review,
+        mfs_sole_paid_interest_verified: undefined,
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      mortgage_limit_review: {
+        ...source.mortgage_limit_review,
+        mfs_noncommunity_property_verified: undefined,
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      mortgage_limit_review: {
+        ...source.mortgage_limit_review,
+        mfs_payment_workpaper_reference: "",
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      f1098s: [source.f1098s[0], {
+        ...source.f1098s[1],
+        box1_current_year_deductible_interest: 6_673,
+      }],
+    }).success,
+    false,
+  );
+  assertThrows(
+    () =>
+      assertForm1098MortgageLimitSources(
+        source,
+        ["111223333"],
+        FilingStatus.Single,
+        15_012,
+        0,
+        0,
+        false,
+        false,
+      ),
+    Error,
+    "verified filing status",
+  );
+});
+
 Deno.test("2025 purchase mortgage needs closing and month-by-month limit evidence", () => {
   const source = {
     f1098s: [reviewedInterest(1_000, 833, {

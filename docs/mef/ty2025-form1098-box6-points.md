@@ -1,5 +1,28 @@
 # TY2025 Form 1098 box 6 points
 
+## MFS two-loan acquisition-debt limit (bounded 2026-10-05)
+
+The [2025 Publication 936 Table 1](https://www.irs.gov/publications/p936)
+sets a $375,000 post-2017 acquisition-debt limit for married filing
+separately and rounds the deductible-interest ratio to three places. The
+[2025 Publication 504](https://www.irs.gov/publications/p504) limits a
+separate filer's mortgage-interest deduction to interest that filer paid;
+community-property rules need separate review. The existing two-full-year-loan
+review now permits MFS only with affirmative reviewed noncommunity-property
+and solely paid-interest findings plus an identified payment workpaper. It
+continues to require one whole-return Pub. 936 loan and monthly-balance review.
+
+In the synthetic case, two post-2017 loans average $500,000 and $400,000 for
+the year. The $375,000 / $900,000 ratio rounds to 0.417, so $36,000 reported
+interest yields $15,012 on Schedule A line 8a and Form 1040 line 12e.
+Omitting either MFS finding or its payment-workpaper reference, changing the
+asserted interest, or using the wrong filing status rejects. The Form 1098
+source suite passes 59/59; the full-return local TY2025 v5.4 XSD and
+three-page filled-PDF build pass 1/1. The PDF pages have not had a separate
+visual review. This structured review does not authenticate payment records,
+issuer Copy B provenance, or property-law facts; community-property,
+mixed-year, points, and other MFS mortgage combinations remain open.
+
 ## Issuer Copy B byte/content gate (implemented, unrun)
 
 A strict 2025 Form 1098 Copy B verifier now accepts one identified source item,

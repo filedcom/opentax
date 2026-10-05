@@ -60,7 +60,11 @@ export const mortgageLimitReviewSchema = z.object({
   all_qualified_home_mortgages_included_verified: z.literal(true),
   all_post_2017_acquisition_debt_verified: z.literal(true),
   single_filing_status_verified: z.literal(true).optional(),
-  filing_status_verified: z.enum(["single", "mfj", "hoh", "qss"]).optional(),
+  filing_status_verified: z.enum(["single", "mfs", "mfj", "hoh", "qss"])
+    .optional(),
+  mfs_noncommunity_property_verified: z.literal(true).optional(),
+  mfs_sole_paid_interest_verified: z.literal(true).optional(),
+  mfs_payment_workpaper_reference: z.string().trim().min(1).optional(),
   loans: z.array(
     z.object({
       source_document_reference: z.string().trim().min(1),
@@ -86,6 +90,19 @@ export const mortgageLimitReviewSchema = z.object({
         review.filing_status_verified === "single"
       : review.filing_status_verified !== undefined,
   { message: "Mortgage limit review needs one verified filing status" },
+).refine(
+  (review) =>
+    review.filing_status_verified === "mfs"
+      ? review.mfs_noncommunity_property_verified === true &&
+        review.mfs_sole_paid_interest_verified === true &&
+        !!review.mfs_payment_workpaper_reference
+      : review.mfs_noncommunity_property_verified === undefined &&
+        review.mfs_sole_paid_interest_verified === undefined &&
+        review.mfs_payment_workpaper_reference === undefined,
+  {
+    message:
+      "MFS mortgage limit review needs a noncommunity-property, solely paid-interest workpaper",
+  },
 );
 
 const crossLoanBalanceSchema = z.object({
@@ -649,9 +666,12 @@ export const inputSchema = z.object({
       },
       0,
     );
-    const ratio = averageTotal <= 750_000
+    const debtLimit = mortgage_limit_review.filing_status_verified === "mfs"
+      ? 375_000
+      : 750_000;
+    const ratio = averageTotal <= debtLimit
       ? 1
-      : Math.round(750_000 / averageTotal * 1_000) / 1_000;
+      : Math.round(debtLimit / averageTotal * 1_000) / 1_000;
     const expectedInterest = Math.round(
       f1098s.reduce((sum, item) => sum + item.box1_mortgage_interest, 0) *
         ratio,

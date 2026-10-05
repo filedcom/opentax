@@ -4422,3 +4422,15 @@ Schedule A page visibly prints **16,569** on lines 8a, 8e, 10, and 17; Form
 confirms those line amounts, and the prepared native XML contains the matching
 `RptHomeMortgIntAndPointsAmt`. The source is synthetic; lender-issued bytes and
 IRS business-rule/ATS acceptance are still unverified.
+
+## Focused MFS two-loan mortgage-limit route (2026-10-05)
+
+`deno test -A forms/f1040/nodes/inputs/f1098/index.test.ts` passed 59/59.
+`deno test -A --filter 'MFS two-loan interest uses' forms/f1040/2025/mef/xsd-validation.test.ts`
+passed 1/1 against the local TY2025 v5.4 XSD and built a three-page filled
+PDF. `deno check` passed for both changed tests. The $900,000 average debt,
+$375,000 MFS limit, 0.417 ratio, and $36,000 reported interest produce
+$15,012 on Schedule A and Form 1040. Missing workpaper evidence rejects.
+This focused evidence follows the 11,197-test full run above; no current-head
+full regression, visual PDF review, source-byte authentication, IRS business
+rules, or ATS acceptance is claimed.

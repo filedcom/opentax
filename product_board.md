@@ -6,7 +6,7 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1309 bounded completed slices. A completed slice does not close its
+records 1310 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are
@@ -44,7 +44,11 @@ route now applies the same Pub. 936 ratio to interest and points above the
 $750,000 average-balance limit: $16,569 reaches Schedule A and Form 1040,
 with 82 focused source/native/PDF tests and two XSD cases passing on the
 integrated branch. Its three-page filled packet visibly reconciles Schedule A
-line 8a and Form 1040 line 12e. A current-head full rerun is pending. Form 1098's
+line 8a and Form 1040 line 12e. A current-head full rerun is pending. A bounded
+MFS two-loan route uses the $375,000 debt limit only with reviewed
+noncommunity-property and solely paid-interest evidence; 59 source tests and
+one full-return XSD/PDF-build case pass at $15,012. Its payment-workpaper
+reference is not authenticated. Form 1098's
 documented boundaries leave issuer-byte
 authenticity, broader mortgage limits and points variants, business rules,
 and ATS open. The retained Copy B parser now rejects malformed amount text,
