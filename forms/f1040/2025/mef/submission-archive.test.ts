@@ -1069,6 +1069,44 @@ Deno.test("A2A request entries match both ZIP attachments in order", async () =>
   }
 });
 
+Deno.test("A2A request omits an absent electronic postmark per Publication 5830", async () => {
+  const ids = ["1234562026269abcdefg", "1234562026269abcdefh"];
+  const archives = await Promise.all(ids.map((id) =>
+    makeSubmissionArchive({
+      f1040: { filing_status: "single", digital_assets: false },
+    }, {
+      filer: filer(),
+      submissionId: id,
+      processingDate,
+      attachments: [],
+    })
+  ));
+  const transmission = buildMefTransmissionPackage([
+    { archive: archives[0] },
+    {
+      archive: archives[1],
+      electronicPostmark: new Date("2026-09-26T09:00:00.123Z"),
+    },
+  ]);
+  assertEquals(
+    transmission.sendSubmissionsRequestXml,
+    '<?xml version="1.0" encoding="UTF-8"?>\n' +
+      '<SendSubmissionsRequest xmlns="http://www.irs.gov/a2a/mef/MeFTransmitterService.xsd">' +
+      "<SubmissionDataList>" +
+      `<SubmissionData><SubmissionId>${
+        ids[0]
+      }</SubmissionId></SubmissionData>` +
+      `<SubmissionData><SubmissionId>${ids[1]}</SubmissionId>` +
+      "<ElectronicPostmarkTs>2026-09-26T09:00:00.123Z</ElectronicPostmarkTs>" +
+      "</SubmissionData></SubmissionDataList></SendSubmissionsRequest>",
+  );
+  const container = unzipSync(transmission.containerZipBytes);
+  assertEquals(Object.keys(container), ids.map((id) => `${id}.zip`));
+  for (const archive of archives) {
+    assertEquals(container[archive.fileName], archive.bytes);
+  }
+});
+
 Deno.test("A2A transmission rejects a submission ZIP changed after preparation", async () => {
   const pdf = await PDFDocument.create();
   pdf.addPage();
@@ -1213,6 +1251,15 @@ Deno.test("MeF A2A package rejects an empty or duplicate submission set", async 
       buildMefTransmissionPackage([{
         archive: submission,
         electronicPostmark: new Date("invalid"),
+      }]),
+    Error,
+    "valid electronic postmark",
+  );
+  assertThrows(
+    () =>
+      buildMefTransmissionPackage([{
+        archive: submission,
+        electronicPostmark: "2026-09-26T09:00:00Z" as unknown as Date,
       }]),
     Error,
     "valid electronic postmark",
