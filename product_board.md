@@ -6,7 +6,7 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1295 bounded completed slices. A completed slice does not close its
+records 1296 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are
@@ -30,7 +30,10 @@ existing mortgage; focused source/PDF and full-return XSD checks passed, and
 the ordinary refinance and construction cases each produced a visually
 reviewed three-page packet. Their documented boundaries leave issuer-byte
 authenticity, broader mortgage limits and points variants, business rules,
-and ATS open.
+and ATS open. The retained Copy B parser now rejects malformed amount text,
+invalid comma grouping, and negative values while still allowing a blank
+optional box; the issuer's provenance and scanned-PDF appearance remain
+unchecked.
 Scenario 8's code-Q distribution and blank Form 1040 line 4a still need
 reconciliation, as do the other open ATS source conflicts.
 The remaining
