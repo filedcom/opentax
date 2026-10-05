@@ -4508,3 +4508,12 @@ integration worktree at `96f9267d`. The command was
 `deno test -A forms/f1040/2025/pdf/form8283-unrelated-use-equipment.test.ts forms/f1040/2025/form6251_circulation_source.test.ts forms/f1040/nodes/inputs/f59e/index.test.ts forms/f1040/2025/form8962_two_dependent_magi.test.ts`.
 The full repository command is running separately at the preceding PR head
 `9d700e2d`; these later guards require a new current-head full rerun.
+
+The Form 2210-F return-reference, first-year Roth Form 8606 owner, and Form
+8995 zero-deduction business-loss guards passed **147/147** integrated focused
+tests at `07252bcf`, using the calculator/source/native/PDF suites plus local
+Form 8995 full-return XSD checks. The first run had four fixture XSD failures
+solely because this isolated worktree lacked the ignored local schema cache;
+linking the existing read-only cache and rerunning the same command passed.
+The log is `/tmp/opentax-integration-next-focused-b.log`. The full repository
+run on these latest guards is still pending.
