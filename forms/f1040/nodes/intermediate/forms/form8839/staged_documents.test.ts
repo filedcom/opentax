@@ -161,7 +161,7 @@ function project(pending: unknown = finalPending) {
 
 Deno.test("Form 8839 staged native and PDF values use one reconciled credit", () => {
   const result = project();
-  assertStringIncludes(result.xml, "<AdoptionFinalInd>true</AdoptionFinalInd>");
+  assertStringIncludes(result.xml, "<AdoptionFinalInd>X</AdoptionFinalInd>");
   assertStringIncludes(
     result.xml,
     "<RefundableAdoptionCreditAmt>5000</RefundableAdoptionCreditAmt>",
@@ -211,6 +211,10 @@ Deno.test("Form 8839 staged income phaseout settles credit before native/PDF pro
   assertStringIncludes(
     projected.xml,
     "<AdoptionCreditModifAGILimitAmt>10000</AdoptionCreditModifAGILimitAmt>",
+  );
+  assertStringIncludes(
+    projected.xml,
+    "<AdoptionCrModifAGIGrtrAmtInd>X</AdoptionCrModifAGIGrtrAmtInd>",
   );
   assertStringIncludes(
     projected.xml,

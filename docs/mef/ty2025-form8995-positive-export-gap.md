@@ -1,5 +1,40 @@
 # TY2025 Form 8995 positive export boundary
 
+## One Schedule C with certified WOTC wages (validated October 6, 2026)
+
+The existing single-business Form 8995 route now accepts one nonpassive Form
+5884 employer credit allocated entirely to that retained Schedule C. Export
+recalculates Form 5884 from the certified employee and payroll records,
+requires its sole Schedule C deduction allocation and Form 3800 source credit
+to agree, and recomputes QBI from net profit after the full line 2 reduction.
+Both native MeF and PDF use this same source reconciliation. The existing graph
+already applies the reduction to Schedule C, Schedule SE, and QBI; this change
+allows the correctly sourced calculation to file through Form 8995.
+
+[Form 5884 line 2 instructions](https://www.irs.gov/instructions/i5884)
+require the wage deduction reduction even when the taxpayer cannot use the
+entire credit this year. [Schedule C line 26 instructions](https://www.irs.gov/instructions/i1040sc)
+explicitly require wages less the Work Opportunity Credit. Accordingly, a
+$6,000 payroll and $2,400 credit produce a $3,600 wage deduction. The positive
+full-return fixture has $66,400 Schedule C profit, $62,033 QBI after the half-SE
+deduction, $12,407 QBI deduction, and $2,400 allowed Form 3800 credit. A
+$25,000 receipts case preserves the entire $2,400 wage reduction while the
+$828 QBI deduction lowers income tax to $333 and limits current-year credit
+to $333. A zero-income-tax case also preserves the full wage reduction and
+uses none of the credit; it omits the zero-deduction Form 8995.
+
+The focused regression set passes 31 tests. All three WOTC return shapes pass
+the full local TY2025 v5.4 Return1040 XSD. The positive case generates a filled
+23-page PDF; rendered Schedule C, Form 5884, Form 8995, and Form 1040 pages
+show the reconciled values. Employee-hours, wage-allocation, and Form 3800
+source-credit tampering reject both Form 8995 projections.
+
+This remains a synthetic source-backed route. It does not authenticate SWA or
+payroll documents, prove IRS acceptance, or emit a new unused-credit carryover
+ledger. Form 8995-A, multiple Schedule C businesses, multiple deduction
+locations, mixed pass-through credit, and passive activity credit coexistence
+remain outside this extension.
+
 ## REIT-only two or three issued payers (implementation authored; bulk validation pending)
 
 The positive Form 8995 route without trade or business QBI now accepts up to

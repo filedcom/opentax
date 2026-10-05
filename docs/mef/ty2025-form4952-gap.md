@@ -717,3 +717,40 @@ The issued OID copies and lender records are entered references rather than
 authenticated bytes. OID acquisition premium, bond premium, market discount,
 Treasury box 8 OID, tax-exempt OID, foreign-source/tax facts, mixed-use debt,
 carryovers, and additional payer combinations remain outside this route.
+
+## Portfolio royalty plus taxable interest (2026-10-06, verified locally)
+
+The [TY2025 Form 4952 instructions](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+include nonbusiness interest and royalties in investment gross income on line
+4a. The existing expense-free portfolio royalty route now accepts one plain,
+owner-matched Form 1099-INT alongside one verified Form 1099-MISC royalty and
+a separately traced taxable-securities purchase loan. Both retained source
+components reconcile at native and PDF export, including the finalized Form
+1040 lines 2b and 8, Schedule E/1, Schedule A and the direct-debt workpaper.
+
+The positive fixture has $500 interest, $800 royalties and $300 deductible
+investment interest. Line 4a is $1,300, line 8 is $300, and itemization is
+$18,300 including a $18,000 retained synthetic mortgage source. The full
+return validates against the local TY2025 v5.4 XSD and its seven PDF pages
+were rendered and inspected for amounts, owner, checkboxes and order. Changed
+source amounts/owners and loan purchase/lender/payment records reject at both
+exports. The final isolated focused rerun passed 1/1.
+
+Artifacts are retained under
+`.state/research/ty2025-filled-pdf-review/2026-10-06-form4952-royalty-interest/`.
+XML SHA-256: `82cee6356fbd858657f6d539ecbdfbe9d5caa5f639856b294395750e0d027be6`.
+PDF SHA-256: `c994f9f1a40023154a7cd3e8fa98fa13a86eecf95e50772195188ba9acad9ccc`.
+
+This verifies a synthetic, entered-source route. Independent issuer and loan
+record authentication, expenses, OID/dividend/foreign combinations, additional
+payers, carryovers, differing AMT amounts, IRS business rules and ATS acceptance
+remain open. The current full regression covers the earlier stable snapshot;
+these isolated changes require integration and a later full regression.
+
+## Multiple separately identified interest sources with portfolio royalty (2026-10-06)
+
+The expense-free portfolio royalty route now accepts multiple plain owned Form 1099-INT box 1/3 sources, retaining one component per source rather than comparing only a summed amount. Every source must affirm investment property, match the royalty recipient, lack unsupported adjustments/foreign amounts, and have a distinct document reference when more than one is present. The traced-loan export compares the retained component inventory as well as the royalty amount. This remains one royalty property and one reviewed taxable-securities loan; other royalty properties, ownership, source authentication and wider combinations remain open.
+
+The three-interest-source positive uses $500/$750/$600 taxable interest plus $800 portfolio royalty: Form 4952 line 4a $2,650, deduction $300, Schedule B/1040 interest $1,850, Schedule E/1 royalty $800 and itemization $18,300. Public return preparation passes full local TY2025 v5.4 XSD. Eight packet pages were rendered and visually inspected; Form 1040 tax/refund $7,977/$3,023 and Schedule B's three named payer rows reconcile. Offsetting source changes preserving the aggregate, a changed recipient, and duplicate document references reject. The final legacy royalty-only, one-interest and new multiple-interest suite passes 3/3 with real Poppler.
+
+The visual review exposed omitted required zero on Form 4952 line 7; PDF lines 6/7 now print zero as directed by the [2025 form and instructions](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf). Actual filled-PDF text asserts line 7's zero, and the corrected final page was rerendered and inspected. Final retained temporary packet `/tmp/opentax-form4952-royalty-multi-interest-review/`; PDF SHA-256 `9cc2a419479b8ece10a2642d263a25450b761775c8b98aff293be0ecf01c3fc3`, XML SHA-256 `bdea6a9fdc07b72cda7f30be7153b9a326a29daca7c07304a61ab269ff64a498`; test log `/tmp/opentax-4952-multi-interest-zero.log`. Synthetic facts do not prove issuer or loan-byte authenticity, wider PDF overflow, business rules or IRS acceptance.

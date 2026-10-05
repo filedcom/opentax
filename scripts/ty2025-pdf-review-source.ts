@@ -21,6 +21,16 @@ export function reviewSourceFileContents(
       filer,
       expectedPdfForms: fixture.expectedPdfForms,
       reviewFocus: fixture.reviewFocus,
+      ...(fixture.attachments === undefined ? {} : {
+        attachments: fixture.attachments.map((attachment) => ({
+          fileName: attachment.fileName,
+          description: attachment.description,
+          bytesBase64: btoa(
+            Array.from(attachment.bytes, (byte) => String.fromCharCode(byte))
+              .join(""),
+          ),
+        })),
+      }),
       pending,
     },
     null,

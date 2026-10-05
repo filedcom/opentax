@@ -103,6 +103,10 @@ export const itemSchema = z.object({
   // into identity or institution addresses for filing.
   filing_details: studentFilingSchema.optional(),
   education_expense_workpaper: educationExpenseWorkpaperSchema.optional(),
+  institution_expense_workpapers: z.array(z.object({
+    institution_ein: z.string().regex(/^\d{2}-?\d{7}$/),
+    workpaper: educationExpenseWorkpaperSchema,
+  })).length(2).optional(),
 });
 
 // 2025 Form 8863 Credit Limit Worksheet, lines 4 and 5. These amounts must
@@ -126,14 +130,77 @@ export type F8863Item = z.infer<typeof itemSchema>;
 type F8863Items = F8863Item[];
 export type F8863Input = z.infer<typeof inputSchema>;
 
-// The bounded filing route is one U.S. institution that supplied the 2025
-// Form 1098-T. Other IRS-permitted 1098-T exceptions need their own evidence.
+// Each supported U.S. institution supplied a 2025 Form 1098-T. Two schools
+// require separately identified expense workpapers. Other IRS-permitted
+// 1098-T exceptions need their own evidence.
 export function validateForm8863FilingSource(
   item: F8863Item,
   credit: "aoc" | "llc",
 ): void {
   const institutions = item.filing_details?.institutions;
   const workpaper = item.education_expense_workpaper;
+  const perInstitution = item.institution_expense_workpapers;
+  if (perInstitution !== undefined) {
+    if (institutions?.length !== 2 || workpaper !== undefined) {
+      throw new Error(
+        "Form 8863 two-school sources need two institutions and separate workpapers without an aggregate workpaper",
+      );
+    }
+    const schoolIds = institutions.map((institution) =>
+      institution.ein?.replaceAll("-", "")
+    );
+    const sourceIds = perInstitution.map((source) =>
+      source.institution_ein.replaceAll("-", "")
+    );
+    if (
+      schoolIds.some((id) => !id) || new Set(schoolIds).size !== 2 ||
+      new Set(sourceIds).size !== 2 || sourceIds.some((id) =>
+        !schoolIds.includes(id)
+      )
+    ) {
+      throw new Error(
+        "Form 8863 school workpapers must match two distinct institution EINs",
+      );
+    }
+    assertDistinctEducationSourceReferences([item]);
+    let combinedExpenses = 0;
+    for (const institution of institutions) {
+      const source = perInstitution.find((entry) =>
+        entry.institution_ein.replaceAll("-", "") ===
+          institution.ein!.replaceAll("-", "")
+      )!.workpaper;
+      const adjusted = source.paid_tuition_required_fees +
+        source.paid_course_materials_to_institution +
+        source.paid_course_materials_elsewhere -
+        source.tax_free_assistance_applied_to_expenses -
+        source.qualified_expense_refunds -
+        source.expenses_used_for_other_tax_benefits;
+      validateForm8863FilingSource({
+        ...item,
+        institution_expense_workpapers: undefined,
+        education_expense_workpaper: source,
+        filing_details: {
+          ...item.filing_details!,
+          institutions: [institution],
+        },
+        ...(credit === "aoc"
+          ? { aoc_adjusted_expenses: adjusted }
+          : { llc_adjusted_expenses: adjusted }),
+      }, credit);
+      combinedExpenses += adjusted;
+    }
+    const claimed = credit === "aoc"
+      ? item.aoc_adjusted_expenses
+      : item.llc_adjusted_expenses;
+    if (
+      claimed === undefined || Math.abs(claimed - combinedExpenses) > 0.000001
+    ) {
+      throw new Error(
+        "Form 8863 combined adjusted expenses must equal both school workpapers",
+      );
+    }
+    return;
+  }
   if (
     institutions?.length !== 1 || !institutions[0].us_address ||
     institutions[0].current_year_1098t_received !== true || !workpaper
@@ -207,23 +274,29 @@ function assertDistinctEducationSourceReferences(items: F8863Items): void {
   const documentIds = new Set<string>();
   const paymentIds = new Set<string>();
   for (const item of items) {
-    const workpaper = item.education_expense_workpaper;
-    if (!workpaper) continue;
-    const documentId = workpaper.form1098t_document_id.trim();
-    if (documentIds.has(documentId)) {
-      throw new Error(
-        "Form 8863 students cannot reuse a Form 1098-T document reference",
-      );
-    }
-    documentIds.add(documentId);
-    for (const rawPaymentId of workpaper.payment_record_ids) {
-      const paymentId = rawPaymentId.trim();
-      if (paymentIds.has(paymentId)) {
+    const workpapers = item.institution_expense_workpapers?.map((source) =>
+      source.workpaper
+    ) ??
+      (item.education_expense_workpaper
+        ? [item.education_expense_workpaper]
+        : []);
+    for (const workpaper of workpapers) {
+      const documentId = workpaper.form1098t_document_id.trim();
+      if (documentIds.has(documentId)) {
         throw new Error(
-          "Form 8863 students cannot reuse an education payment reference",
+          "Form 8863 students cannot reuse a Form 1098-T document reference",
         );
       }
-      paymentIds.add(paymentId);
+      documentIds.add(documentId);
+      for (const rawPaymentId of workpaper.payment_record_ids) {
+        const paymentId = rawPaymentId.trim();
+        if (paymentIds.has(paymentId)) {
+          throw new Error(
+            "Form 8863 students cannot reuse an education payment reference",
+          );
+        }
+        paymentIds.add(paymentId);
+      }
     }
   }
 }

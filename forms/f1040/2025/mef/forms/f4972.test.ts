@@ -990,7 +990,7 @@ Deno.test("Form 4972 MeF reconciles full-share beneficiary NUA, death benefit, a
         },
       }),
     Error,
-    "partial-share beneficiary allocation needs a single death-benefit or estate adjustment",
+    "NUA requires a sourced Part II or III",
   );
 });
 

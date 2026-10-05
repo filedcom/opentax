@@ -443,6 +443,9 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
           business_name: item.line_c_business_name,
           ein: item.line_d_ein?.replace(/\D/g, ""),
           qbi: netProfits[index],
+          ...((reductions.get(item.business_reference ?? "") ?? 0) > 0 && {
+            wotc_wage_reduction: reductions.get(item.business_reference ?? ""),
+          }),
           w2_wages: item.qbi_w2_wages ?? 0,
           ubia: item.qbi_unadjusted_basis ?? 0,
           no_other_adjustments_confirmed:

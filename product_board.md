@@ -2,9 +2,9 @@
 
 ## Compacted status (2026-10-06)
 
-The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,362 bounded slices**; fourteen verified slices await main-code integration. Broader parents remain open. Newly discovered work belongs only in `future_todo`, outside this execution queue.
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,362 bounded slices**; fourteen verified slices are integrated in main code. Broader parents remain open. Newly discovered work belongs only in `future_todo`, outside this execution queue.
 
-Stable main snapshot `8aa4beeec` completed real-Poppler `deno task test`: **11,245 passed, zero failed or ignored**, at 22:47:12 UTC. The isolated `17462812a` full run remains live with five observed failures; separate repairs and newer source routes pass restricted task-mode integration **19/19**. Main can now integrate those verified changes, which still require their own complete regression. See the [validation batch](docs/mef/ty2025-form1040-validation-batch.md).
+Stable main snapshot `8aa4beeec` completed real-Poppler `deno task test`: **11,245 passed, zero failed or ignored**, at 22:47:12 UTC. The isolated `17462812a` full run remains live with five observed failures; separate repairs and newer source routes pass restricted task-mode integration **19/19**. The integrated changes still require their own complete regression. See the [validation batch](docs/mef/ty2025-form1040-validation-batch.md).
 
 Verified routes and detailed limitations are archived in the [October 6 checkpoint](docs/mef/ty2025-product-board-status-2026-10-06.md). Isolated planner: 191 fixtures, 87 of 113 PDF keys covered, 26 uncovered. Current work completes Medicare MSA distribution worksheets, multiple-business QBI and missing-1098-T education income joins. Local XSD and synthetic packet reviews do not prove source authenticity, IRS business rules or acceptance.
 

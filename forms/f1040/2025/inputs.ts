@@ -1,5 +1,9 @@
 import type { InputNodeEntry } from "../../../core/types/form-definition.ts";
 import { z } from "zod";
+import {
+  form8853,
+  inputSchema as form8853InputSchema,
+} from "../nodes/intermediate/forms/form8853/index.ts";
 import { form6251 } from "../nodes/intermediate/forms/form6251/index.ts";
 import { priorIsoSaleReviewSchema } from "./form6251_prior_iso_sale.ts";
 import { form4797 } from "../nodes/intermediate/forms/form4797/index.ts";
@@ -1000,6 +1004,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   },
   { node: preparer, inputSchema: preparerInputSchema, isArray: false },
   { node: form8889, inputSchema: form8889InputSchema, isArray: false },
+  { node: form8853, inputSchema: form8853InputSchema, isArray: false },
   {
     node: ira_deduction_worksheet,
     inputSchema: iraDeductionWorksheetInputSchema,

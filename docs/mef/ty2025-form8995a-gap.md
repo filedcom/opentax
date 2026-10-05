@@ -1,6 +1,9 @@
 # TY2025 Form 8995-A coverage gap
 
-Status: bounded one-business parent with one sourced REIT dividend, one-SSTB Schedule A, two-business
+Status: the one-Schedule-C WOTC route below passed local tests, full XSD, and
+filled-PDF review on 2026-10-06. IRS business rules and ATS remain open.
+Historical build notes for the bounded one-business parent with one sourced
+REIT dividend, one-SSTB Schedule A, two-business
 aggregation Schedule B, two-business current-loss Schedule C, and
 one-cooperative Schedule D native/PDF routes written but unrun. Local tests, XSD
 validation, filled-PDF rendering, and IRS ATS remain outstanding.
@@ -442,3 +445,63 @@ coverage**. The bounded parent and Schedule D PDF projections are registered,
 but no filled page has been rendered or visually inspected. Full tests, TY2025
 XSD validation, filled-PDF visual review, IRS business rules, and ATS acceptance
 are not done. Broader Schedule B/A/C and the broader patron routes remain open.
+
+
+## One sourced Schedule C with WOTC (2026-10-06, locally validated)
+
+This bounded route now carries one positive, non-SSTB taxpayer Schedule C into
+Form 8995-A for a single filer above the full phase-in range. It retains the
+business identity, certified employee payroll, employer W-2 wage review, full
+Form 5884 line 2 wage deduction reduction, and deductible SE tax. Native and PDF
+export replay those sources against Schedule C, Schedule SE, Schedule 1,
+Form 3800, and Form 1040. Missing or changed source amounts fail both exports.
+The employer W-2 review explicitly names its reviewer and source references;
+these are supplied assertions, not authenticated document bytes.
+
+[Form 5884 instructions](https://www.irs.gov/instructions/i5884) require the full
+line 2 wage deduction reduction even when credit use is limited.
+[Section 280C(a)](https://www.govinfo.gov/content/pkg/USCODE-2024-title26/pdf/USCODE-2024-title26-subtitleA-chap1-subchapB-partIX-sec280C.pdf)
+links that reduction to the credit determined under section 51(a).
+[Form 8995-A instructions](https://www.irs.gov/instructions/i8995a) require
+attributable deductible SE tax in QBI; the
+[properly allocable wage rule](https://www.ecfr.gov/current/title-26/section-1.199A-2)
+requires the associated wage deduction to be included in QBI. The bounded
+unmodified-box wage review therefore preserves gross W-2 payroll and subtracts
+the full credit from the allocable wage limitation amount. Credit use never
+replaces the wage reduction or reduces the retained qualified payroll source.
+
+The actual whole-dollar Form 3800 production path now rounds percentage lines
+13 and 18 before using those entered amounts in subsequent calculations, as
+required by the [Form 1040 rounding instructions](https://www.irs.gov/instructions/i1040gi).
+Raw calculation callers can still retain cents. In the original partial-use
+fixture, income tax is $49,038: line 13's raw $6,009.50 becomes $6,010 and the
+allowed credit is consequently $43,028. Rounding the final raw $43,028.50 credit
+would give a different result. The full sourced credit remains $192,000;
+Schedule C deductible and QBI-limit wages remain $288,000; profit is $312,000;
+deductible SE tax is $15,096; QBI is $296,904; and Form 8995-A/1040 deduction is
+$56,231. An independent full-use fixture has $2,400 credit, $3,600 deductible
+wages, $306,400 profit, $291,379 QBI, and a wage-limited $1,800 deduction.
+
+Validation in the isolated worktree passed 587 existing focused tests plus
+8 final integration/projection tests. The new positive full and partial returns
+and three fractional tax-use edges passed the full local TY2025 v5.4 XSD.
+Tampering cases reject changes to payroll, credit, wage reduction, SE tax,
+Schedule 1, AGI, QBI deduction, and final taxable income in both exports.
+Both 26-page filled PDFs were rendered with Poppler and reviewed for the
+Schedule C, Form 3800, Form 5884, Form 8995-A, and Form 1040 amounts and layout.
+Artifacts are under
+`.state/research/ty2025-filled-pdf-review/2026-10-06-form8995a-wotc/`, in
+`full-credit` and `partial-credit`, each with `return.xml` and
+`filled-return.pdf`. These checks do not supersede older unrun route notes.
+
+Remaining scope: other filing statuses or phase-in ranges; SSTBs, aggregation,
+cooperatives, pass-throughs, farms, other income or businesses, mixed payroll,
+other wage deduction locations, UBIA, attributable health or retirement
+adjustments, and prior losses. This route requires equal reviewed W-2 boxes 1
+and 5 matching all certified payroll, no qualified property, and nonpassive
+self-earned WOTC. Authentication of SWA certifications, payroll, W-2/SSA filing,
+and workpaper bytes remains open, as do IRS business-rule and ATS acceptance.
+The $148,972 unused current credit is calculated but this slice does not add a
+durable carryover ledger. Broader fractional credit source amounts retain their
+existing export boundaries; this percentage-line repair does not claim every
+Form 3800 fractional-input route is supported.

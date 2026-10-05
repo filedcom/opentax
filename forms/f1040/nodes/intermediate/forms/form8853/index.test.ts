@@ -100,20 +100,16 @@ Deno.test("archer_msa_20pct_tax_on_taxable_distribution: 20% additional tax rout
   );
 });
 
-Deno.test("archer_msa_no_20pct_tax_when_exception: exception waives 20% tax", () => {
-  const result = compute({
-    archer_msa_distributions: 5_000,
-    archer_msa_qualified_expenses: 2_000,
-    archer_msa_exception: true,
-  });
-  // Taxable income still flows to schedule1 but no penalty tax
-  assertEquals(
-    fieldsOf(result.outputs, schedule2)?.line17e_archer_msa_tax ?? 0,
-    0,
-  );
-  assertEquals(
-    fieldsOf(result.outputs, schedule1)!.line8e_archer_msa_dist,
-    3_000,
+Deno.test("archer_msa_exception needs distribution-level source rather than blanket waiver", () => {
+  assertThrows(
+    () =>
+      compute({
+        archer_msa_distributions: 5000,
+        archer_msa_qualified_expenses: 2000,
+        archer_msa_exception: true,
+      }),
+    Error,
+    "distribution-level ledger",
   );
 });
 

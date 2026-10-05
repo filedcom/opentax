@@ -1,5 +1,56 @@
 # TY2025 Form 4972 remaining coverage
 
+## Two spouses each elect NUA, Part II, and Part III (2026-10-06, verified)
+
+The existing `elections[]` calculation and collection export also support a
+joint return on which **both** spouses independently elect to include net
+unrealized appreciation (NUA), 20% capital-gain tax, and ten-year tax. This
+positive route has one full-share Form 1099-R and one complete-balance plan
+statement per spouse, with distinct participants, plans, and source references;
+it excludes annuity, beneficiary/death-benefit, estate-tax, and partial-share
+amounts. The [2025 Form 4972 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
+require a separate Form 4972 for each spouse on a joint return and a combined
+tax on Form 1040 line 16. Their NUA Worksheet allocates each spouse's box 6
+between the Part II capital amount and Part III ordinary amount.
+
+The new source-backed positive and tamper fixtures prove taxpayer/spouse
+lines 6 of $7,000/$9,600, lines 8 of $28,000/$38,400, and lines 30 of
+$3,630/$5,840; Form 1040 line 16 is $9,470. Native MeF emits two identified
+`IRS4972` documents, and the filled six-page PDF renders two separately named
+Form 4972 pages. The assembled full-return XML validates against the local
+TY2025 v5.4 `Return1040.xsd`; the filled Form 1040 and Form 4972 pages were
+rendered and visually reviewed. Changed box 6, changed box 3, and changed
+combined Form 1040 tax are rejected by both native and PDF projection.
+Source-statement bytes, IRS business rules, ATS acceptance, and the excluded
+combinations above remain outside this bound.
+
+## Partial-share NUA, death benefit, and federal estate tax (2026-10-06, verified)
+
+A beneficiary with one 50% Form 1099-R share can now elect both Parts II and
+III while including box 6 net unrealized appreciation (NUA), a pre-August-21-
+1996 death-benefit exclusion, and federal estate tax. The route requires a
+wholly taxable distribution including elected NUA; a complete participant-
+wide death-benefit allocation; distinct plan-administrator, estate-return,
+and death-allocation references; exact whole-dollar recipient shares; and no
+annuity. The [2025 Form 4972 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
+specifically direct the NUA Worksheet into the Death Benefit Worksheet, then
+require both the death-benefit and federal estate-tax capital portions to
+reduce line 6. The full ordinary remainders reduce the grossed-up Part III
+amounts before line 29 applies the recipient percentage.
+
+For boxes 2a/3/6 of $20,000/$4,000/$4,000, a $5,000 full death benefit,
+and $2,000 full federal estate tax, the recipient's NUA capital share is
+$800, death-benefit capital share $500, and estate-tax capital share $200.
+Lines 6/7/8/9/18/29/30 are $4,100/$820/$38,400/$4,000/$1,600/$1,510/$2,330.
+The $2,330 special tax flows to Form 1040 line 16; native MeF and filled PDF
+reconcile to the issued Form 1099-R and final return. The full-return XML
+validates the local TY2025 v5.4 XSD, and the filled Form 4972 page was
+rendered and visually reviewed. Changed recipient estate allocation, reused
+administrator source reference, changed box 6, and changed return tax are
+rejected. This bound does not authenticate issuer or estate-return bytes;
+annuities, other share percentages, IRS business rules, and ATS acceptance
+remain open.
+
 ## Form 6251 line 10 and Schedule J tax refigure (2026-10-01, unrun)
 
 The direct Form 4972 collection already sends its summed special tax to Form

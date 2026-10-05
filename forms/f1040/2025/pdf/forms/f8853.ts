@@ -1,13 +1,15 @@
+import { StandardFonts } from "pdf-lib";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
   calculateArcherMsaDistribution,
   inputSchema,
+  normalizeArcherSource,
 } from "../../../nodes/intermediate/forms/form8853/index.ts";
 import { form8853 as nativeForm8853 } from "../../mef/forms/f8853.ts";
 
 // IRS Form 8853 (2025) AcroForm field names.
 // Archer MSAs and Long-Term Care Insurance Contracts.
-// The retained filing route is one taxpayer-owned, fully qualified Archer MSA
+// The retained filing route is one taxpayer-owned, normal Archer MSA
 // distribution. Reuse the native route guard before printing computed lines.
 // Section A: Archer MSA contributions and distributions.
 // Section B: Medicare Advantage MSA distributions.
@@ -76,6 +78,17 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     printZero: true,
   },
   {
+    kind: "checkbox",
+    domainKey: "line9a_archer_msa_exception",
+    pdfField: "topmostSubform[0].Page1[0].Line9a_ReadOrder[0].c1_1[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line9b_archer_msa_additional_tax",
+    pdfField: "topmostSubform[0].Page1[0].f1_13[0]",
+    printZero: true,
+  },
+  {
     kind: "text",
     domainKey: "medicare_advantage_distributions",
     pdfField: "topmostSubform[0].Page1[0].f1_14[0]",
@@ -130,14 +143,30 @@ export const form8853Pdf: PdfFormDescriptor = {
   ],
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
-    const source = inputSchema.parse(raw);
+    const source = normalizeArcherSource(inputSchema.parse(raw));
     nativeForm8853.build(source, { filer, pending: allPending ?? {} });
     const lines = calculateArcherMsaDistribution(source);
     return [{
       ...source,
+      archer_msa_distributions: lines.line6a,
+      archer_msa_qualified_expenses: lines.line7,
       line6c_archer_msa_net_distribution: lines.line6c,
       line8_taxable_archer_msa_distribution: lines.line8,
+      line9b_archer_msa_additional_tax: lines.line9b,
+      line9a_archer_msa_exception: lines.line9a,
+      death_transfer: lines.deathTransfer,
     }];
   },
   fields,
+  async decoratePages(document, pages, fields) {
+    if (fields.death_transfer === true) {
+      const font = await document.embedFont(StandardFonts.Helvetica);
+      pages[0].drawText("Death of Archer MSA account holder", {
+        x: 180,
+        y: 775,
+        size: 9,
+        font,
+      });
+    }
+  },
 };

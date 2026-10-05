@@ -38,8 +38,18 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   { kind: "text", domainKey: "line4g", pdfField: `${page}f1_12[0]` },
   { kind: "text", domainKey: "line4h", pdfField: `${page}f1_13[0]` },
   { kind: "text", domainKey: "line5", pdfField: `${page}f1_14[0]` },
-  { kind: "text", domainKey: "line6", pdfField: `${page}f1_15[0]` },
-  { kind: "text", domainKey: "line7", pdfField: `${page}f1_16[0]` },
+  {
+    kind: "text",
+    domainKey: "line6",
+    pdfField: `${page}f1_15[0]`,
+    printZero: true,
+  },
+  {
+    kind: "text",
+    domainKey: "line7",
+    pdfField: `${page}f1_16[0]`,
+    printZero: true,
+  },
   { kind: "text", domainKey: "line8", pdfField: `${page}f1_17[0]` },
 ];
 

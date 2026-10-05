@@ -4650,3 +4650,13 @@ At isolated combined code `60ee0c1b8`, restricted task-mode integration of the p
 ## Completed stable main regression, October 5 22:47 UTC
 
 Snapshot `8aa4beeec` completed `deno task test` with real Poppler: **11,245 passed, 0 failed, 0 ignored**, reported duration 44m34s. Wrapper start `2026-10-05T22:02:12Z`, end `2026-10-05T22:47:12Z`, exit 0; launchd confirms not running and last exit code 0. Log `/tmp/opentax-deno-task-test-8aa4beeec.log`, SHA-256 `adf8354651854ec9ce9c3f8ca6d1594ea463107aaea19366a0027245786ff06c`. Versions: Deno 2.9.4, TypeScript 6.0.3, libxml 2.9.13, Poppler 26.09.0. No code changed in its checkout during the run. Later isolated code is not covered by this pass; its complete rerun remains required. The separate `17462812a` process remains live under PID 59904 and was not restarted.
+The QBI visual review also exposed required zero amounts omitted on Form
+8995-A Schedule C column (c)/line 6 and the parent's unmapped line 40. At
+`c246f53f1`, the supported loss-netting route prints these zeros using the
+canonical cached AcroForm fields. The same five-test suite passed again,
+including actual full-PDF text assertions for the loss-business adjusted
+income and both carryforward fields. Root rendered and inspected the
+corrected parent page 2 and Schedule C; the other ten pages were unchanged.
+This correction is part of the already recorded bounded QBI slice, not a
+new parent completion. Integration into main and its full regression remain
+pending while the stable full run is live.

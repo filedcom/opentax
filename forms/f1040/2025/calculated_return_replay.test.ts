@@ -1,10 +1,8 @@
 import { assertEquals } from "@std/assert";
-import { execute } from "../../../core/runtime/executor.ts";
-import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
-import { buildMefXml } from "./mef/builder.ts";
+import { buildMefBundle, buildMefXml } from "./mef/builder.ts";
+import { f1040_2025 } from "./index.ts";
 import { buildPending } from "./mef/pending.ts";
 import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
-import { registry } from "./registry.ts";
 
 // These source/attachment cases are intentionally guarded before standalone
 // XML export. Keep exclusions explicit so a newly guarded fixture cannot
@@ -40,18 +38,14 @@ function stableXml(xml: string): string {
   );
 }
 
-Deno.test("calculated Form 1040 and Schedule 1-3 amounts cannot change native XML without source replay", () => {
-  const plan = buildExecutionPlan(registry);
+Deno.test("calculated Form 1040 and Schedule 1-3 amounts cannot change native XML without source replay", async () => {
   const seen = new Set<string>();
   let checkedFixtures = 0;
   let checkedAmounts = 0;
   for (const fixture of pdfReviewFixtures) {
     if (seen.has(fixture.id)) throw new Error(`Repeated fixture ${fixture.id}`);
     seen.add(fixture.id);
-    const result = execute(plan, registry, fixture.inputs, {
-      taxYear: 2025,
-      formType: "f1040",
-    });
+    const result = f1040_2025.executeReturn(fixture.inputs);
     if (result.diagnostics.length > 0) {
       if (!guardedFixtureIds.has(fixture.id)) {
         throw new Error(`${fixture.id} has unexpected graph diagnostics`);
@@ -59,9 +53,18 @@ Deno.test("calculated Form 1040 and Schedule 1-3 amounts cannot change native XM
       continue;
     }
     const pending = buildPending(result.pending);
+    // Reviewed attachment claims must use their retained bytes, just like the
+    // held source review generator. Keep every numerical tamper probe active.
+    const fixtureXml = async (data: typeof pending) =>
+      fixture.attachments?.length
+        ? (await buildMefBundle(data, {
+          filer: fixture.filer,
+          attachments: fixture.attachments,
+        })).xml
+        : buildMefXml(data, fixture.filer);
     let baseline: string;
     try {
-      baseline = stableXml(buildMefXml(pending, fixture.filer));
+      baseline = stableXml(await fixtureXml(pending));
     } catch (error) {
       if (!guardedFixtureIds.has(fixture.id)) {
         throw new Error(`${fixture.id} unexpectedly cannot export XML`, {
@@ -84,7 +87,7 @@ Deno.test("calculated Form 1040 and Schedule 1-3 amounts cannot change native XM
         (changed[formKey] as Record<string, unknown>)[fieldKey] = value + 1;
         let alteredXml: string;
         try {
-          alteredXml = stableXml(buildMefXml(changed, fixture.filer));
+          alteredXml = stableXml(await fixtureXml(changed));
         } catch {
           // Rejection by a source, calculation, or filing guard is expected.
           continue;

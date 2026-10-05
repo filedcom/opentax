@@ -43,3 +43,42 @@ Deno.test("source replay rejects extra unsupported fields despite matching manif
     expected,
   );
 });
+
+Deno.test("source replay binds exact optional reviewed attachment bytes", () => {
+  const filer = { primarySSN: "111223333" } as FilerIdentity;
+  const fixture = {
+    id: "adoption-case",
+    inputs: { general: { filing_status: "single" } },
+    filer,
+    expectedPdfForms: ["f1040", "form8839"],
+    reviewFocus: ["adoption credit"],
+    attachments: [{
+      fileName: "decree.pdf",
+      description: "Synthetic decree",
+      bytes: new Uint8Array([37, 80, 68, 70]),
+    }],
+  } satisfies PdfReviewFixture;
+  const expected = reviewSourceFileContents(fixture, filer, {});
+  assertEquals(JSON.parse(expected).attachments[0].bytesBase64, "JVBERg==");
+  const changed = reviewSourceFileContents(
+    {
+      ...fixture,
+      attachments: [{
+        ...fixture.attachments[0],
+        bytes: new Uint8Array([37, 80, 68, 71]),
+      }],
+    },
+    filer,
+    {},
+  );
+  assertThrows(
+    () =>
+      assertReviewSourceFileContents(
+        fixture.id,
+        new TextEncoder().encode(changed),
+        expected,
+      ),
+    Error,
+    "source JSON differs",
+  );
+});
