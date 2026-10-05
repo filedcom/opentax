@@ -13,8 +13,13 @@ Work the existing non-named queue first where scope and source evidence are
 settled. The [dependency audit](docs/mef/ty2025-nonnamed-board-dependency-audit.md)
 identifies independent work, product decisions, named-form prerequisites,
 validation, and IRS ATS needs. The latest complete local full batch passed
-11,188/11,188 at historical commit `632d3a46`; focused and packet checks below
-cover later slices, but no full rerun includes them yet. The current-source selected packet
+11,188/11,188 at historical commit `632d3a46`. A current full rerun on
+`35e6df45` reached 11,186 passed and 10 failed: four direct Form 8863 PDF
+fixtures omit student identities required by the filer/dependent guard, and
+six extracted-text/raster assertions differ under the temporary PDFKit tools
+used because Poppler is unavailable. The run log is in
+`/tmp/opentax-deno-task-test-2026-10-05.log`; focused and packet checks below
+cover later slices, but the full batch has not passed at current head. The current-source selected packet
 has 175 exportable synthetic cases with 1,073 filled PDF pages; the latest
 read-only source/hash/page/XSD replay also omits 14 blank Form 6251 pages and
 passes with the corrected Form 8863 student identity. Additional bounded
