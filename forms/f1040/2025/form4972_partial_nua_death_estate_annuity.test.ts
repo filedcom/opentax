@@ -198,7 +198,13 @@ Deno.test("partial beneficiary combines NUA, death, estate tax, and annuity", as
   } finally {
     await Deno.remove(pdfPath);
   }
-  const evidenceDir = Deno.env.get("FORM4972_EVIDENCE_DIR");
+  const evidencePermission = await Deno.permissions.query({
+    name: "env",
+    variable: "FORM4972_EVIDENCE_DIR",
+  });
+  const evidenceDir = evidencePermission.state === "granted"
+    ? Deno.env.get("FORM4972_EVIDENCE_DIR")
+    : undefined;
   if (evidenceDir) {
     await Deno.mkdir(evidenceDir, { recursive: true });
     await Deno.writeTextFile(
@@ -367,7 +373,13 @@ Deno.test("beneficiary annuity preserves box 8 cents and rounds filed lines", as
   if (xsdAvailable) await validateXml(prepared.bundle.xml);
   const pdf = await prepared.renderPdf();
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), 3);
-  const evidenceDir = Deno.env.get("FORM4972_EVIDENCE_DIR");
+  const evidencePermission = await Deno.permissions.query({
+    name: "env",
+    variable: "FORM4972_EVIDENCE_DIR",
+  });
+  const evidenceDir = evidencePermission.state === "granted"
+    ? Deno.env.get("FORM4972_EVIDENCE_DIR")
+    : undefined;
   if (evidenceDir) {
     await Deno.writeTextFile(
       `${evidenceDir}/cents-full-return.xml`,
