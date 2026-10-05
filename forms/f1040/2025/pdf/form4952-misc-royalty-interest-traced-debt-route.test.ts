@@ -154,6 +154,13 @@ Deno.test("traced loan, royalty, and taxable interest reach the full native and 
     await Deno.remove(xmlPath);
   }
   const pdf = await buildPdfBytes(pending, base.filer, ".pdf-cache", bundle);
+  if (Deno.args.includes("--write-review-artifacts")) {
+    const directory = "/tmp/opentax-form4952-royalty-interest-review";
+    await Deno.mkdir(directory, { recursive: true });
+    await Deno.writeFile(`${directory}/filled-return.pdf`, pdf);
+    await Deno.writeTextFile(`${directory}/return.xml`, bundle.xml);
+    await Deno.writeTextFile(`${directory}/pending.json`, JSON.stringify(pending, null, 2));
+  }
   assertEquals((await PDFDocument.load(pdf)).getPageCount() >= 7, true);
   const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
   try {

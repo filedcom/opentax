@@ -139,7 +139,7 @@ export function reconcileForm4952MiscRoyaltyPath(
     (form.data.investment_expenses ?? 0) !== 0 ||
     (interest > 0
       ? !sourceAmountsMatch(form.data.source_1099_interest, [interest])
-      : form.data.source_1099_interest !== undefined) ||
+      : (form.data.source_1099_interest ?? 0) !== 0) ||
     (form.data.source_1099_dividends ?? 0) !== 0 ||
     (form.data.source_1099_qualified_dividends ?? 0) !== 0 ||
     (form.data.source_1099_capital_gain_distributions ?? 0) !== 0 ||
