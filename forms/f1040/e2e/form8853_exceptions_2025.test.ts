@@ -429,3 +429,52 @@ Deno.test("Form8853 estate FMV source calculates on final return; full packet re
     true,
   );
 });
+
+Deno.test("Form8853 archer rejects reused medical expense references through native and PDF export", async () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    fixture(ageLedger),
+    { taxYear: 2025, formType: "f1040" },
+  );
+  const filer = extractFilerIdentity(result.pending.f1040)!;
+  for (const acrossRows of [false, true]) {
+    const invalid = structuredClone(ageLedger);
+    if (invalid.source.kind !== "normal") throw new Error("fixture source");
+    const first = invalid.source.distributions[0];
+    if (acrossRows) {
+      invalid.source.distributions[1].qualified_expense_source_references = [
+        ...first.qualified_expense_source_references,
+      ];
+    } else {first.qualified_expense_source_references.push(
+        first.qualified_expense_source_references[0],
+      );}
+    const pending = {
+      ...result.pending,
+      form8853: {
+        ...result.pending.form8853,
+        archer_distribution_ledger: invalid,
+      },
+    };
+    assertThrows(
+      () => buildMefXml(buildPending(pending), filer),
+      Error,
+      "qualified expense reference cannot be reused",
+    );
+    await assertRejects(
+      () => buildPdfBytes(pending, filer),
+      Error,
+      "qualified expense reference cannot be reused",
+    );
+  }
+  const invalidDeath = structuredClone(deathLedger);
+  if (invalidDeath.source.kind !== "death_transfer") {
+    throw new Error("fixture source");
+  }
+  invalidDeath.source.expenses.push({ ...invalidDeath.source.expenses[0] });
+  assertThrows(
+    () => calculateArcherLedger(invalidDeath),
+    Error,
+    "qualified expense reference cannot be reused",
+  );
+});

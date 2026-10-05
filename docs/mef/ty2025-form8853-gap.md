@@ -189,6 +189,16 @@ pending source, worksheet results, rendered pages and test logs are at
 are synthetic local integration evidence, not authentic taxpayer source
 records or IRS acceptance, ATS, or business-rule certification.
 
+Expense-reference review repair: sourced Archer and Medicare normal ledgers
+require distinct medical expense references within and across distribution rows;
+the shared death-transfer source also requires distinct expense references.
+Reuse is rejected until a bounded split-allocation model exists. Export negatives
+exercise both complete native XML building and actual PDF building for duplicate
+references within a row and across rows in each ledger. Positive packets above
+are unchanged. The final focused rerun passed 81 tests with zero failures,
+including the estate blocker and both duplicate-reference export negatives;
+`expense-review-test.log` records this rerun.
+
 Limits remain: both spouses' Medicare distributions and controlling statements;
 multiple inherited MSAs or inherited plus owned MSA; surviving-spouse Medicare
 inheritance (which becomes Archer); combined Archer/Medicare/LTC activity;

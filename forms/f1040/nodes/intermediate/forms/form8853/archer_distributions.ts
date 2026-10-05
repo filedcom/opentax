@@ -110,6 +110,7 @@ export function calculateArcherLedger(
       throw new Error("Form 8853 disability onset precedes holder birth");
     }
     const references = new Set<string>();
+    const expenseReferences = new Set<string>();
     for (const row of source.distributions) {
       if (references.has(row.distribution_reference)) {
         throw new Error("Form 8853 duplicate distribution reference");
@@ -136,6 +137,14 @@ export function calculateArcherLedger(
         throw new Error(
           "Form 8853 disability distribution code needs sourced disability facts",
         );
+      }
+      for (const reference of row.qualified_expense_source_references) {
+        if (expenseReferences.has(reference)) {
+          throw new Error(
+            "Form8853 qualified expense reference cannot be reused without bounded split allocations",
+          );
+        }
+        expenseReferences.add(reference);
       }
       gross += row.gross_amount;
       qualified += row.unreimbursed_qualified_expenses;
@@ -175,7 +184,14 @@ export function calculateArcherLedger(
       source.death_date.slice(4)
     }`;
     gross = source.fair_market_value_at_death;
+    const expenseReferences = new Set<string>();
     for (const expense of source.expenses) {
+      if (expenseReferences.has(expense.source_reference)) {
+        throw new Error(
+          "Form8853 qualified expense reference cannot be reused without bounded split allocations",
+        );
+      }
+      expenseReferences.add(expense.source_reference);
       if (
         expense.incurred_date >= source.death_date ||
         expense.paid_date < source.death_date || expense.paid_date > anniversary

@@ -90,6 +90,7 @@ export function calculateMedicareLedger(
     excepted = gross - qualified;
   } else {
     const seen = new Set<string>();
+    const expenseReferences = new Set<string>();
     for (const row of source.distributions) {
       if (seen.has(row.distribution_reference)) {
         throw new Error("Form8853 duplicate Medicare distribution reference");
@@ -113,6 +114,14 @@ export function calculateMedicareLedger(
         throw new Error(
           "Form8853 Medicare disability code needs sourced disability facts",
         );
+      }
+      for (const reference of row.qualified_expense_source_references) {
+        if (expenseReferences.has(reference)) {
+          throw new Error(
+            "Form8853 qualified expense reference cannot be reused without bounded split allocations",
+          );
+        }
+        expenseReferences.add(reference);
       }
       gross += row.gross_amount;
       qualified += row.unreimbursed_holder_qualified_expenses;
