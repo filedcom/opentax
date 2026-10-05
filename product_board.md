@@ -2,13 +2,13 @@
 
 ## Compacted status (2026-10-06)
 
-The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,372 bounded slices**. Broader parents remain open; newly discovered work belongs only in `future_todo` and is outside this execution queue.
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,373 bounded slices**. Broader parents remain open; newly discovered work belongs only in `future_todo` and is outside this execution queue.
 
 Stable snapshot `8aa4beeec` passed the full real-Poppler `deno task test`: **11,245 passed, zero failed or ignored**. Full runs at isolated snapshots `17462812a` and `762db9012` remain confirmed live; the former has five observed failures repaired in the latter. Neither covers subsequent main changes. Exact evidence and limits are in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md).
 
-Main now includes both-holder Medicare MSA controlling statements and source-owned investment income for multiple-business QBI; their combined restricted integration passes **25/25**. Mixed-school education integration passes **16/16**. Planner has 195 fixtures, **88 of 113 PDF keys covered**, 25 uncovered. Selected QBI, scholarship and Medicare packets have complete replay and all-page visual evidence, archived in the [October 6 checkpoint](docs/mef/ty2025-product-board-status-2026-10-06.md).
+Main now includes both-holder Medicare MSA controlling statements and source-owned investment income for multiple-business QBI; their combined restricted integration passes **25/25**. Mixed-school education integration passes **16/16**. Planner has 196 fixtures, **89 of 113 PDF keys covered**, 24 uncovered. Selected QBI, scholarship and Medicare packets have complete replay and all-page visual evidence, archived in the [October 6 checkpoint](docs/mef/ty2025-product-board-status-2026-10-06.md).
 
-Three agents continue existing Archer contribution eligibility, dependent/claimant education ownership and generic QBI contribution ordering tasks. Source authenticity, wider filing branches, business rules, ATS credentials and Scenarios 1/8/13 source conflicts remain open. Local XSD does not prove IRS acceptance; ATS was reported unavailable through October 13 at 9 a.m. Eastern.
+Reviewed two-business aggregation now passes 39 checks, full local XSD and complete 17-page visual/replay review. Two agents continue Archer contribution eligibility and dependent/claimant education ownership; generic QBI contribution ordering is ready for integration. Source authenticity, wider filing branches, business rules, ATS credentials and Scenarios 1/8/13 source conflicts remain open. Local XSD does not prove IRS acceptance; ATS was reported unavailable through October 13 at 9 a.m. Eastern.
 
 ## Scope and completion rules
 
