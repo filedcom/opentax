@@ -1,5 +1,9 @@
 import { claimantReviewSchema } from "../nodes/inputs/f8863/claimant-review.ts";
 import {
+  inputSchema as qbiPatronInputSchema,
+  qbiPatron,
+} from "../nodes/inputs/qbi_patron/index.ts";
+import {
   education_income,
   itemSchema as educationIncomeItemSchema,
 } from "../nodes/inputs/education_income/index.ts";
@@ -1006,6 +1010,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
     inputSchema: qbiAggregationInputSchema,
     isArray: false,
   },
+  { node: qbiPatron, inputSchema: qbiPatronInputSchema, isArray: false },
   { node: f843, inputSchema: f843InputSchema, isArray: false },
   { node: f2120, inputSchema: f2120InputSchema, isArray: false },
   { node: f8275, inputSchema: f8275InputSchema, isArray: false },

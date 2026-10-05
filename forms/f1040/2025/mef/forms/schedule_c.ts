@@ -1,3 +1,4 @@
+import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
 import { roundSignedQbiDollars } from "../../../nodes/inputs/schedule_c/qbi-multiple.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import { z } from "zod";
@@ -422,7 +423,10 @@ export const scheduleC: MefFormDescriptor<
     }
     return items.map((item, index) =>
       buildScheduleC(
-        item,
+        input.patron_filing_review
+          ? patronFiledBusinessLines("schedule_c", item)
+            .filed_source as typeof item
+          : item,
         context,
         index,
         reductions.get(item.business_reference ?? "") ?? 0,

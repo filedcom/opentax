@@ -1,4 +1,5 @@
 import { assertSstbScheduleCSource } from "../../mef/forms/f8995a-sstb-source.ts";
+import { assertForm8995APatronReturn } from "../../form8995a_patron_reconciliation.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import type { FilerIdentity } from "../../../mef/header.ts";
 import {
@@ -113,6 +114,7 @@ export function projectOneBusiness8995A(
   if (Object.keys(raw).length === 0) return {};
   const input = inputSchema.strict().parse(raw);
   assertForm8995AWotcReturn(input, allPending);
+  assertForm8995APatronReturn(input, allPending);
   if (
     input.aggregation_filing_details ||
     (input.aggregation_groups ?? []).length > 0
@@ -243,6 +245,11 @@ export function projectOneBusiness8995A(
     business_ein: details.ein,
     patron: input.patron_of_specified_cooperative === true,
     ...lines,
+    ...(input.patron_business_source && input.taxable_income <= 197300
+      ? Object.fromEntries(
+        [4, 5, 6, 7, 8, 9, 10, 11].map((line) => [`line${line}`, undefined]),
+      )
+      : {}),
     line27: lines.line16,
     line28: lines.line28,
     line29: lines.line29,

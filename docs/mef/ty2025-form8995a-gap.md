@@ -1,12 +1,99 @@
 # TY2025 Form 8995-A coverage gap
 
-Status: the one-Schedule-C WOTC route below passed local tests, full XSD, and
-filled-PDF review on 2026-10-06. IRS business rules and ATS remain open.
-Historical build notes for the bounded one-business parent with one sourced
-REIT dividend, one-SSTB Schedule A, two-business
-aggregation Schedule B, two-business current-loss Schedule C, and
-one-cooperative Schedule D native/PDF routes written but unrun. Local tests, XSD
-validation, filled-PDF rendering, and IRS ATS remain outstanding.
+Status: the source-reconciled patron Schedule D route below passed local public
+return tests, full TY2025 v5.4 XSD, and filled-PDF review on 2026-10-06. The
+previously recorded WOTC route remains locally proven. Historical sections below
+retain their original staging status. Broader Form 8995-A coverage, IRS business
+rules and ATS remain open.
+
+## Owned cooperative patron source route (2026-10-06, locally proven)
+
+Public `qbi_patron` input joins one actual owned cash Schedule C or Schedule F
+to one issued Form 1099-PATR, including boxes 6, 7 and 13. The retained review
+identifies the business, payer, issued-copy reference, employee W-2 records and
+SSA filing references, payroll records, allocation workpaper and reviewer. A
+positive box 6 requires a matching written-notice review identifying the owner,
+amount and notice. Export replays the issued copy, included taxable cooperative
+income, business books, actual adjustments and final return amounts.
+
+The reviewed qualified-receipts proportion allocates both adjusted business QBI
+and eligible wages. It is accepted only with the facts-and-circumstances,
+consistent-books and complete-qualified-payment assertions: it is not an
+unconditional allocation prescribed for every patron. See the
+[section 199A cooperative regulations](https://www.irs.gov/irb/2021-06_IRB).
+Actual Schedule SE deductions reduce QBI; the Schedule C health case also
+replays the owned policy and monthly premium records through Form 7206. There is
+no invented deduction used to produce the fixture's QBI.
+
+The [Form 8995-A instructions](https://www.irs.gov/instructions/i8995a) require
+patrons to use Form 8995-A, including below the threshold. Schedule D uses the
+lesser of 9% of allocable QBI and 50% of allocable W-2 wages; its line 6 reduces
+parent line 14. The
+[Form 1099-PATR instructions](https://www.irs.gov/instructions/i1099ptr) require
+the cooperative's written notice for the box 6 pass-through and explain the
+9%-of-qualified-payments limit. The retained source checks that limit; the filed
+parent also limits line 38 to line 33 minus line 37, as required by the
+[2025 form](https://www.irs.gov/pub/irs-prior/f8995a--2025.pdf).
+
+### Filed arithmetic and retained cents
+
+The original issued copies and books remain cent-valued. The patron filing
+projection rounds monetary leaf lines and derives business income, expenses and
+profit from those filed operands. That profit flows unchanged into Schedule 1,
+Schedule SE, the owned Form 7206 plan, QBI, native XML and printed forms.
+[Form 1040 rounding instructions](https://www.irs.gov/instructions/i1040gi)
+require consistent whole-dollar rounding and adding sources before rounding a
+single line;
+[Schedule F line 34 instructions](https://www.irs.gov/instructions/i1040sf)
+require line 9 minus line 33 and carrying that profit to Schedule 1 and Schedule
+SE. Independently rounding raw profit previously produced a one-dollar filed
+subtraction mismatch for these actual cent-valued books. This bounded projection
+repairs that chain without replacing the source amounts. The broader return-wide
+rounding and reconciliation audit remains open.
+
+| Source case                | Raw book profit | Filed gross | Filed expenses | Filed profit | SE deduction | Health deduction | QBI deduction | Total tax |
+| -------------------------- | --------------: | ----------: | -------------: | -----------: | -----------: | ---------------: | ------------: | --------: |
+| Farm                       |      399,999.99 |     500,000 |        100,001 |      399,999 |       16,275 |                0 |        46,187 |   116,247 |
+| Owned C health             |      349,999.99 |     500,000 |        150,001 |      349,999 |       15,605 |            6,000 |        42,268 |    96,497 |
+| Below-threshold income cap |       50,000.49 |     500,000 |        450,001 |       49,999 |        3,533 |                0 |        30,716 |     7,065 |
+
+The cap case retains box 6 of 45,000 but claims 25,605 after the ordinary QBI
+component of 5,111, leaving taxable income zero. Above-threshold fixtures retain
+box 6 of 10,000.49 and file 10,000. The original books' receipts proportion
+remains retained; percentage filing lines use finalized whole-dollar amounts.
+
+### Evidence and remaining scope
+
+`form8995a_patron_positive.test.ts` passes two tests covering three complete
+public source returns, three full-schema validations and complete PDFs. Its 35
+source/return mutations each reject in native and PDF export, including detached
+copies and identities, payroll, allocation/notice reviews, SE, health, Schedule
+1, parent/Schedule D, AGI, deductions and final tax. The related 16-file
+regression run passes 311 tests. The focus test is type checked; extracting
+Schedule F's pure model removes an import cycle while retaining its existing
+public exports.
+
+Three held-review fixtures are registered: `single-form8995a-patron-farm`,
+`single-form8995a-patron-c-health`, and `single-form8995a-patron-income-cap`.
+They are explicit synthetic reviewed source examples, not evidence of
+issued-copy byte authentication. All 44 packet pages were rendered and visually
+checked, including business arithmetic, Schedule SE, applicable Medicare fields,
+Form 7206, parent and Schedule D, owner identity, page order and legibility.
+Ignored proof packet:
+`.state/research/ty2025-filled-pdf-review/2026-10-06-qbi-patron-final-v2`;
+rendered pages are in the adjacent `-rendered` directory. Logs:
+`/tmp/opentax-patron-focus-final-v2-oct6.log`,
+`/tmp/opentax-patron-regression-v2-oct6.log`, and
+`/tmp/opentax-patron-selected-final-oct6.log`. The source-only held plan now has
+199 fixtures covering 90 of 113 registered PDF keys; Schedule D is covered.
+
+This route supports one positive, active, primary-owned cash business and one
+specified cooperative, a single filer below the threshold or fully above the
+phase-in range, eligible reviewed wages and zero UBIA. Patron phase-in, multiple
+businesses/cooperatives or owners, losses/carryforwards, SSTB, property limits,
+employment credits/home office, additional income/capital combinations, owned
+retirement plans and a farm health-policy allocation remain open. IRS business
+rules, ATS and source-byte authentication remain acceptance gates.
 
 ## One above-phase-in business plus one REIT dividend (2026-10-01, unrun)
 

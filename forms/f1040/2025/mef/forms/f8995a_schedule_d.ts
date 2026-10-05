@@ -1,3 +1,4 @@
+import { assertForm8995APatronReturn } from "../../form8995a_patron_reconciliation.ts";
 import {
   assertPatron1099PATRSource,
   calculateOneBusiness8995ALines,
@@ -26,6 +27,7 @@ function buildScheduleD(rawFields: Input, context?: MefBuildContext): string {
   }
   assertPatron1099PATRSource(fields, context?.pending?.f1099patr);
   validateOneBusiness(fields);
+  assertForm8995APatronReturn(fields, context?.pending);
   const source = fields.patron_filing_details;
   const business = fields.business_filing_details;
   if (!source || !business) {

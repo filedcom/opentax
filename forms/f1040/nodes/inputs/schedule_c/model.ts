@@ -1,3 +1,5 @@
+import { inputSchema as patronReviewSchema } from "../qbi_patron/schema.ts";
+import { itemSchema as patrItemSchema } from "../f1099patr/schema.ts";
 import { z } from "zod";
 import {
   type AtRiskNet,
@@ -272,6 +274,8 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   schedule_cs: z.array(itemSchema),
+  patron_filing_review: patronReviewSchema.optional(),
+  patron_distribution_sources: z.array(patrItemSchema).optional(),
   section481a_adjustments: z.array(
     z.object({
       business_reference: z.string().trim().min(1),

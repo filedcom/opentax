@@ -1,4 +1,5 @@
 import { assertSstbScheduleCSource } from "./f8995a-sstb-source.ts";
+import { assertForm8995APatronReturn } from "../../form8995a_patron_reconciliation.ts";
 import { inputSchema as w2InputSchema } from "../../../nodes/inputs/w2/index.ts";
 import {
   assertMultiBusinessInvestmentSources,
@@ -99,9 +100,9 @@ export function validateOneBusiness(fields: Form8995AInput) {
   }
   if (
     fields.filing_status !== NodeFilingStatus.Single ||
-    fields.taxable_income <=
-      CONFIG_BY_YEAR[2025].qbiThresholdSingle +
-        CONFIG_BY_YEAR[2025].qbiPhaseInRange / 2
+    !fields.patron_business_source && fields.taxable_income <=
+        CONFIG_BY_YEAR[2025].qbiThresholdSingle +
+          CONFIG_BY_YEAR[2025].qbiPhaseInRange / 2
   ) {
     throw new Error(
       "Form 8995-A MeF currently supports only single filers fully above the wage-limit phase-in range",
@@ -426,6 +427,7 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
   }
   const fields = inputSchema.strict().parse(rawFields);
   assertForm8995AWotcReturn(fields, context?.pending);
+  assertForm8995APatronReturn(fields, context?.pending);
   if (
     fields.aggregation_filing_details ||
     (fields.aggregation_groups ?? []).length > 0
@@ -557,14 +559,18 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
         : []),
       element("QualifiedBusinessIncomeAmt", lines.line2),
       element("QlfyBusinessIncome20PctAmt", lines.line3),
-      element("AllocableShareW2WagesAmt", lines.line4),
-      element("AllocableShareW2Wages50PctAmt", lines.line5),
-      element("AllocableShareW2Wages25PctAmt", lines.line6),
-      element("AllocableShareUBIAQlfyPropAmt", lines.line7),
-      element("AllcblShrUBIAQlfyProp025PctAmt", lines.line8),
-      element("TotalAllcblW2WgsQlfyPropPctAmt", lines.line9),
-      element("GrtrAllcblShrW2WageQlfyPropAmt", lines.line10),
-      element("W2WageQlfyPropLimitationAmt", lines.line11),
+      ...(fields.patron_business_source && fields.taxable_income <= 197300
+        ? []
+        : [
+          element("AllocableShareW2WagesAmt", lines.line4),
+          element("AllocableShareW2Wages50PctAmt", lines.line5),
+          element("AllocableShareW2Wages25PctAmt", lines.line6),
+          element("AllocableShareUBIAQlfyPropAmt", lines.line7),
+          element("AllcblShrUBIAQlfyProp025PctAmt", lines.line8),
+          element("TotalAllcblW2WgsQlfyPropPctAmt", lines.line9),
+          element("GrtrAllcblShrW2WageQlfyPropAmt", lines.line10),
+          element("W2WageQlfyPropLimitationAmt", lines.line11),
+        ]),
       element("QBIDedBeforePatronReductionAmt", lines.line13),
       ...(fields.patron_of_specified_cooperative === true
         ? [element("PatronReductionAmt", lines.line14)]

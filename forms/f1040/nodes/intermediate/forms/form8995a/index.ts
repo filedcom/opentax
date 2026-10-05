@@ -1,3 +1,5 @@
+import { sourceSchema as patronBusinessSourceSchema } from "../../../inputs/qbi_patron/schema.ts";
+import { patronSourceAmounts } from "../../../inputs/qbi_patron/calculation.ts";
 import {
   qbiCapitalSourcesSchema,
   qbiCapitalTotal,
@@ -148,7 +150,7 @@ export const patronFilingDetailsSchema = z.object({
   box6_written_notice_review: z.object({
     notice_reference: z.string().trim().min(1),
     recipient_tin: z.string().regex(/^\d{9}$/),
-    designated_199ag_amount: z.number().int().positive(),
+    designated_199ag_amount: z.number().finite().positive(),
     reviewed_by: z.string().trim().min(1),
     reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     recipient_and_amount_match_confirmed: z.literal(true),
@@ -169,6 +171,7 @@ export const scheduleCQbiBusinessSchema = z.object({
 }).strict();
 
 export const inputSchema = z.object({
+  patron_business_source: patronBusinessSourceSchema.optional(),
   // Filing status — determines income threshold for wage limitation phase-in
   filing_status: filingStatusSchema,
   // Taxable income before QBI deduction (Form 8995-A line 33)
@@ -784,6 +787,36 @@ export function calculatePatronScheduleDLines(input: Form8995AInput) {
       "Form 8995-A Schedule D needs identified business filing details",
     );
   }
+  if (input.patron_business_source) {
+    const amounts = patronSourceAmounts(input.patron_business_source);
+    const review = input.patron_business_source.review;
+    const details = input.business_filing_details;
+    if (
+      input.filing_status !== FilingStatus.Single ||
+      (input.taxable_income > 197300 && input.taxable_income <= 247300) ||
+      amounts.qbi !== input.qbi || amounts.wages !== input.w2_wages ||
+      input.unadjusted_basis !== 0 ||
+      details.business_name !== amounts.name || details.ein !== amounts.ein ||
+      details.business_qbi !== amounts.qbi ||
+      details.business_w2_wages !== amounts.wages ||
+      details.business_ubia !== 0 ||
+      source.qbi_allocable_to_qualified_payments !== amounts.qualified_qbi ||
+      source.w2_wages_allocable_to_qualified_payments !==
+        amounts.qualified_wages ||
+      JSON.stringify(source.source_1099patr) !==
+        JSON.stringify(review.source_1099patr) ||
+      JSON.stringify(source.box6_written_notice_review) !==
+        JSON.stringify(review.box6_written_notice_review) ||
+      source.allocation_worksheet_reference !==
+        review.allocation_worksheet_reference ||
+      source.allocation_worksheet_reviewed_by !== review.reviewed_by ||
+      source.allocation_worksheet_review_date !== review.reviewed_on
+    ) {
+      throw new Error(
+        "Patron QBI, wages, reviewed allocation and notice differ from the actual business source",
+      );
+    }
+  }
   const patr = source.source_1099patr;
   if (
     (patr.box6_section199ag_deduction ?? 0) * 100 >
@@ -798,10 +831,12 @@ export function calculatePatronScheduleDLines(input: Form8995AInput) {
     patr.box13_specified_cooperative !== true ||
     !patr.payer_name ||
     !/^\d{9}$/.test(patr.payer_tin ?? "") ||
-    !Number.isInteger(patr.box7_qualified_payments) ||
+    (!input.patron_business_source &&
+      !Number.isInteger(patr.box7_qualified_payments)) ||
     (patr.box7_qualified_payments ?? 0) <= 0 ||
     typeof patr.box6_section199ag_deduction !== "number" ||
-    !Number.isInteger(patr.box6_section199ag_deduction) ||
+    (!input.patron_business_source &&
+      !Number.isInteger(patr.box6_section199ag_deduction)) ||
     ((patr.box6_section199ag_deduction ?? 0) > 0 &&
       (!/^\d{9}$/.test(patr.recipient_tin ?? "") ||
         !source.box6_written_notice_review ||
@@ -828,9 +863,13 @@ export function calculatePatronScheduleDLines(input: Form8995AInput) {
     );
   }
   const line2 = source.qbi_allocable_to_qualified_payments;
-  const line3 = line2 * 0.09;
+  const line3 = input.patron_business_source
+    ? Math.round(line2 * 0.09)
+    : line2 * 0.09;
   const line4 = source.w2_wages_allocable_to_qualified_payments;
-  const line5 = line4 * 0.50;
+  const line5 = input.patron_business_source
+    ? Math.round(line4 * 0.50)
+    : line4 * 0.50;
   const line6 = Math.min(line3, line5);
   if (line6 <= 0 || ![line3, line5, line6].every(Number.isInteger)) {
     throw new Error(
@@ -846,7 +885,8 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
     ? calculatePatronScheduleDLines(input).line6
     : 0;
   const filedAmount = (value: number) =>
-    input.single_schedule_c_source || input.aggregation_filing_details
+    input.single_schedule_c_source || input.aggregation_filing_details ||
+      input.patron_business_source
       ? Math.round(value)
       : value;
   const line2 = input.qbi ?? 0;
@@ -859,7 +899,9 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   const line9 = line6 + line8;
   const line10 = Math.max(line5, line9);
   const line11 = Math.min(line3, line10);
-  const line13 = line11;
+  const line13 = input.patron_business_source && input.taxable_income <= 197300
+    ? line3
+    : line11;
   const line14 = patronReduction;
   const line15 = Math.max(0, line13 - line14);
   const line16 = line15;
@@ -873,10 +915,13 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   const line35 = Math.max(0, line33 - line34);
   const line36 = filedAmount(line35 * QBI_RATE);
   const line37 = Math.min(line32, line36);
-  const line38 = input.patron_of_specified_cooperative === true
+  const passed199ag = input.patron_of_specified_cooperative === true
     ? input.patron_filing_details?.source_1099patr
       .box6_section199ag_deduction ?? 0
     : 0;
+  const line38 = input.patron_business_source
+    ? Math.min(filedAmount(passed199ag), Math.max(0, line33 - line37))
+    : passed199ag;
   if (line38 > line33 - line37) {
     throw new Error(
       "Form 8995-A cooperative box 6 exceeds the line 38 taxable-income limit",
@@ -1101,7 +1146,7 @@ function assertSupportedSchedulePath(input: Form8995AInput): void {
     }
     if (
       input.filing_status !== FilingStatus.Single ||
-      input.taxable_income <= 247_300 ||
+      (!input.patron_business_source && input.taxable_income <= 247_300) ||
       (input.qbi ?? 0) !== details.business_qbi ||
       (input.w2_wages ?? 0) !== details.business_w2_wages ||
       (input.unadjusted_basis ?? 0) !== details.business_ubia ||

@@ -26,6 +26,11 @@ export const itemSchema = z.object({
   trade_or_business: z.boolean().optional(),
   distribution_treatment: z.discriminatedUnion("kind", [
     z.object({
+      kind: z.literal("schedule_c"),
+      business_reference: z.string().min(1),
+      verified_taxable_amount: z.number().nonnegative(),
+    }).strict(),
+    z.object({
       kind: z.literal("farm"),
       farm_id: z.string().min(1),
       verified_taxable_amount: z.number().nonnegative(),
@@ -65,7 +70,7 @@ export const itemSchema = z.object({
         "1099-PATR distributions require a verified farm or personal-purchase treatment",
     });
   }
-  if (treatment?.kind === "farm") {
+  if ((treatment?.kind === "farm" || treatment?.kind === "schedule_c")) {
     if (
       item.trade_or_business === false ||
       treatment.verified_taxable_amount > gross

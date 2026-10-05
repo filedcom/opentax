@@ -1,3 +1,4 @@
+import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { appendExpenseStatement } from "./expense-statement.ts";
 import { type FilerIdentity, FilingStatus } from "../../../mef/header.ts";
@@ -208,7 +209,11 @@ export const scheduleFPdf: PdfFormDescriptor = {
         );
       }
     }
-    return input.schedule_fs.map((item, index) => {
+    return input.schedule_fs.map((rawItem, index) => {
+      const item = input.patron_filing_review
+        ? patronFiledBusinessLines("schedule_f", rawItem)
+          .filed_source as typeof rawItem
+        : rawItem;
       assertScheduleF1099Answers(item);
       const other = item.line32_other_expenses ?? [];
       const continuation = other.length > 6 ? other.slice(5) : [];

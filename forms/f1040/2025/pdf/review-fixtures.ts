@@ -2,6 +2,7 @@ import {
   accountingSstbFixture,
   accountingSstbNoPayrollFixture,
 } from "./review-8995a-sstb.fixture.ts";
+import { patronFixture } from "./review-8995a-patron.fixture.ts";
 import { twoBusinessAggregationFixture } from "./review-8995a-aggregation.fixture.ts";
 import { medicareMsaReviewFixture } from "./review-8853-medicare.fixture.ts";
 import educationScholarshipSource from "./review-8863-scholarship-source.json" with {
@@ -9042,6 +9043,23 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       fixture.id === "single-schedule-c"
     )!,
     basePdfReviewFixtures.find((fixture) => fixture.id === "single-w2-refund")!,
+  ),
+  patronFixture(
+    basePdfReviewFixtures.find((fixture) =>
+      fixture.id === "single-schedule-c"
+    )!,
+  ),
+  patronFixture(
+    basePdfReviewFixtures.find((fixture) =>
+      fixture.id === "single-schedule-c"
+    )!,
+    "c-health",
+  ),
+  patronFixture(
+    basePdfReviewFixtures.find((fixture) =>
+      fixture.id === "single-schedule-c"
+    )!,
+    "income-cap",
   ),
   twoBusinessAggregationFixture(
     basePdfReviewFixtures.find((fixture) =>

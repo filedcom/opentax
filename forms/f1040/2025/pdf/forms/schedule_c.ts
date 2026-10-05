@@ -1,3 +1,4 @@
+import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
 import { roundSignedQbiDollars } from "../../../nodes/inputs/schedule_c/qbi-multiple.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
@@ -483,7 +484,13 @@ export const scheduleCPdf: PdfFormDescriptor = {
     return {
       schedule_c_instances: items.map((item, index) => ({
         ...projectBusiness(
-          printableBusiness(item, allPending),
+          printableBusiness(
+            input.patron_filing_review
+              ? patronFiledBusinessLines("schedule_c", item)
+                .filed_source as typeof item
+              : item,
+            allPending,
+          ),
           wotc.get(item.business_reference ?? "") ?? 0,
           allPending.general?.filing_status,
         ),

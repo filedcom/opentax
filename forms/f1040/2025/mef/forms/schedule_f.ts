@@ -1,3 +1,4 @@
+import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import {
   assertScheduleF1099Answers,
@@ -352,7 +353,10 @@ export const scheduleF: MefFormDescriptor<
     let accrualLoanIndex = 0;
     return input.schedule_fs.map((item, index) =>
       buildFarm(
-        item,
+        input.patron_filing_review
+          ? patronFiledBusinessLines("schedule_f", item)
+            .filed_source as typeof item
+          : item,
         context,
         index,
         (item.line5a_ccc_loans_election ?? 0) > 0

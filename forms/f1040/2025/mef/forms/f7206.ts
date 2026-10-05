@@ -1,3 +1,4 @@
+import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
 import {
   calculateSingleScheduleCForm7206,
   type Form7206Lines,
@@ -123,7 +124,8 @@ function buildIRS7206(fields: Input, context?: MefBuildContext): string {
     scheduleC.form8829_line30 !== undefined ||
     (scheduleC.wotc_wage_reductions?.length ?? 0) > 0 ||
     Object.keys(scheduleC).some((key) =>
-      key !== "schedule_cs" && key !== "filing_status"
+      key !== "schedule_cs" && key !== "filing_status" &&
+      key !== "patron_distribution_sources" && key !== "patron_filing_review"
     )
   ) {
     throw new Error("Form 7206 needs one unadjusted Schedule C source");
@@ -133,7 +135,9 @@ function buildIRS7206(fields: Input, context?: MefBuildContext): string {
     business.business_reference !== source.business_reference ||
     business.proprietor_recipient !== source.recipient ||
     business.at_risk_simplified !== undefined ||
-    computeNetProfit(business) !== lines.line4
+    (scheduleC.patron_filing_review
+        ? patronFiledBusinessLines("schedule_c", business).profit
+        : computeNetProfit(business)) !== lines.line4
   ) {
     throw new Error("Form 7206 Schedule C owner or line 31 differs");
   }

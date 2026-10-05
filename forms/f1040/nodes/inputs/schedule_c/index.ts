@@ -1,3 +1,5 @@
+import { patronFiledBusinessLines } from "../qbi_patron/calculation.ts";
+import { assertPatrScheduleCIncome } from "../f1099patr/schedule-c-source.ts";
 import type { z } from "zod";
 import type {
   NodeOutput,
@@ -194,6 +196,10 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
         "Schedule C top-level gross receipts need business-linked source rows",
       );
     }
+    assertPatrScheduleCIncome(
+      input.patron_distribution_sources ?? [],
+      input.schedule_cs,
+    );
     const receiptsByBusiness = new Map<string, number>();
     for (
       const source of [
@@ -319,7 +325,11 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
         reductions.get(item.business_reference ?? "") ?? 0,
       )
     );
-    const netProfits = atRisk.map((result) => result.atRiskNet);
+    const netProfits = atRisk.map((result, index) =>
+      input.patron_filing_review
+        ? patronFiledBusinessLines("schedule_c", items[index]).profit
+        : result.atRiskNet
+    );
     const fishingEvidenceItems = items.filter((item) =>
       item.schedule_j_fishing_evidence !== undefined
     );
@@ -358,7 +368,8 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     outputs.push(this.outputNodes.output(form7206, {
       schedule_c_source: {
         unadjusted_source: Object.keys(input).every((key) =>
-          key === "schedule_cs" || key === "filing_status"
+          key === "schedule_cs" || key === "patron_distribution_sources" ||
+          key === "patron_filing_review" || key === "filing_status"
         ) && items.every((item) =>
           item.at_risk_simplified === undefined &&
           item.line_32_at_risk !== "b"

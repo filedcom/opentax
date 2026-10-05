@@ -1,3 +1,4 @@
+import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
   calculateSingleScheduleCForm7206,
@@ -98,7 +99,8 @@ function projectFields(
     scheduleC.form8829_line30 !== undefined ||
     (scheduleC.wotc_wage_reductions?.length ?? 0) > 0 ||
     Object.keys(scheduleC).some((key) =>
-      key !== "schedule_cs" && key !== "filing_status"
+      key !== "schedule_cs" && key !== "filing_status" &&
+      key !== "patron_distribution_sources" && key !== "patron_filing_review"
     )
   ) {
     throw new Error("Form 7206 PDF needs one unadjusted Schedule C");
@@ -131,7 +133,9 @@ function projectFields(
     business.business_reference !== source.business_reference ||
     business.proprietor_recipient !== source.recipient ||
     business.at_risk_simplified !== undefined ||
-    computeNetProfit(business) !== lines.line4 ||
+    (scheduleC.patron_filing_review
+        ? patronFiledBusinessLines("schedule_c", business).profit
+        : computeNetProfit(business)) !== lines.line4 ||
     schedule1.line3_schedule_c !== lines.line4 ||
     (schedule1.line15_se_deduction ?? 0) !== lines.line7 ||
     computedSELine13 !== lines.line7 ||

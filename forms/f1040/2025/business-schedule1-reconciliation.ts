@@ -1,3 +1,4 @@
+import { patronFiledBusinessLines } from "../nodes/inputs/qbi_patron/calculation.ts";
 import {
   calculateScheduleCAtRiskNet,
   inputSchema as scheduleCSchema,
@@ -33,10 +34,13 @@ export function assertBusinessSchedule1Amounts(
       });
       const expected = items.reduce(
         (sum, item) =>
-          sum + calculateScheduleCAtRiskNet(
-            item,
-            reductions.get(item.business_reference ?? "") ?? 0,
-          ).atRiskNet,
+          sum +
+          (source.patron_filing_review
+            ? patronFiledBusinessLines("schedule_c", item).profit
+            : calculateScheduleCAtRiskNet(
+              item,
+              reductions.get(item.business_reference ?? "") ?? 0,
+            ).atRiskNet),
         0,
       );
       if (Math.abs(filed("line3_schedule_c") - expected) >= 0.01) {
@@ -52,10 +56,13 @@ export function assertBusinessSchedule1Amounts(
       const reductions = wotcReductionsByFarm(source);
       const expected = source.schedule_fs.reduce(
         (sum, farm) =>
-          sum + calculateScheduleFAtRiskNet(
-            farm,
-            reductions.get(farm.farm_id ?? "") ?? 0,
-          ).atRiskNet,
+          sum +
+          (source.patron_filing_review
+            ? patronFiledBusinessLines("schedule_f", farm).profit
+            : calculateScheduleFAtRiskNet(
+              farm,
+              reductions.get(farm.farm_id ?? "") ?? 0,
+            ).atRiskNet),
         0,
       );
       if (Math.abs(filed("line6_schedule_f") - expected) >= 0.01) {

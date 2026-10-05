@@ -1,3 +1,4 @@
+import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import type { z } from "zod";
 import type {
   NodeOutput,
@@ -48,7 +49,7 @@ function f1040Output(items: PATRItems): NodeOutput[] {
 class F1099PATRNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1099patr";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule_f, f1040]);
+  readonly outputNodes = new OutputNodes([schedule_f, schedule_c, f1040]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
@@ -56,9 +57,32 @@ class F1099PATRNode extends TaxNode<typeof inputSchema> {
 
     const outputs: NodeOutput[] = [
       ...farmOutputs(f1099patrs),
+      ...(f1099patrs.some((item) =>
+          item.distribution_treatment?.kind === "schedule_c"
+        )
+        ? [
+          output(schedule_c, {
+            patron_distribution_sources: f1099patrs.filter((item) =>
+              item.distribution_treatment?.kind === "schedule_c"
+            ),
+          }),
+        ]
+        : []),
       ...f1040Output(f1099patrs),
     ];
 
+    if (
+      f1099patrs.some((item) =>
+        item.distribution_treatment?.kind === "schedule_c"
+      ) &&
+      !f1099patrs.some((item) =>
+        item.trade_or_business === true &&
+        item.box13_specified_cooperative === true &&
+        (item.box7_qualified_payments ?? 0) > 0
+      )
+    ) {
+      outputs.push({ nodeType: this.nodeType, fields: parsed });
+    }
     // Preserve specified-cooperative source for the Form 8995-A/Schedule D
     // filing cross-check. This does not create a second tax or MeF document.
     if (

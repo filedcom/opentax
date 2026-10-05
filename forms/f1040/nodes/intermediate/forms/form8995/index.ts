@@ -1,3 +1,5 @@
+import { inputSchema as patronReviewSchema } from "../../../inputs/qbi_patron/schema.ts";
+import { patronSourceAmounts } from "../../../inputs/qbi_patron/calculation.ts";
 import {
   qbiCapitalSourcesSchema,
   qbiCapitalTotal,
@@ -35,6 +37,8 @@ export const scheduleFQbiBusinessSchema = z.object({
   business_name: z.string().optional(),
   ein: z.string().optional(),
   qbi: z.number(),
+  w2_wages: z.number().nonnegative().optional(),
+  ubia: z.number().nonnegative().optional(),
   no_other_adjustments_confirmed: z.boolean(),
   source_schedule_f: z.unknown(),
 }).strict();
@@ -43,6 +47,8 @@ export const scheduleFQbiBusinessSchema = z.object({
 // Form 8995-A retains its own whole-dollar business schema.
 const scheduleCQbiBusinessWithCentsSchema = scheduleCQbiBusinessSchema.extend({
   qbi: z.number().finite(),
+  w2_wages: z.number().finite().nonnegative(),
+  ubia: z.number().finite().nonnegative(),
 });
 
 function sumField(value: number | number[] | undefined): number {
@@ -56,6 +62,7 @@ function sumField(value: number | number[] | undefined): number {
 // ── Schemas ──────────────────────────────────────────────────────────────────
 
 export const inputSchema = z.object({
+  patron_source_review: patronReviewSchema.optional(),
   // Net QBI or (loss) from sole proprietorships (Schedule C), netted across businesses
   qbi_from_schedule_c: accumulable(z.number()).optional(),
   // Net QBI or (loss) from farming (Schedule F)
@@ -446,9 +453,90 @@ function advancedFormOutput(
     };
   }
 
+  if (input.patron_source_review) {
+    const review = input.patron_source_review;
+    const rows = review.business.kind === "schedule_c"
+      ? input.schedule_c_qbi_businesses
+      : input.schedule_f_qbi_businesses;
+    const row = rows?.[0];
+    if (
+      !row || rows?.length !== 1 ||
+      input.filing_status !== FilingStatus.Single ||
+      (taxableIncome > 197300 && taxableIncome <= 247300) ||
+      input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+      input.qbi_not_patron_of_specified_cooperative_confirmed === true ||
+      sumField(input.qbi) !== 0 || sstbQbi !== 0 ||
+      qbiCapitalTotal(input) !== 0 ||
+      sumField(input.line6_sec199a_dividends) !== 0 ||
+      (input.qbi_loss_carryforward ?? 0) !== 0 ||
+      (input.reit_loss_carryforward ?? 0) !== 0 ||
+      (review.business.kind === "schedule_c"
+        ? sumField(input.qbi_from_schedule_f) !== 0
+        : sumField(input.qbi_from_schedule_c) !== 0)
+    ) {
+      throw new Error(
+        "Patron public source needs one business below threshold or fully above phase-in, no other QBI activity and an explicit loss review",
+      );
+    }
+    const source = {
+      review,
+      business_source: review.business.kind === "schedule_c"
+        ? input.schedule_c_qbi_businesses![0].source_schedule_c
+        : input.schedule_f_qbi_businesses![0].source_schedule_f,
+      se_tax_deduction: sumField(input.se_tax_deduction),
+      health_insurance_deduction: sumField(input.se_health_insurance_deduction),
+      retirement_plan_deduction: sumField(input.retirement_plan_deduction),
+    };
+    const amounts = patronSourceAmounts(source);
+    if (
+      row.qbi !== amounts.profit || (review.business.kind === "schedule_c"
+          ? sumField(input.qbi_from_schedule_c)
+          : sumField(input.qbi_from_schedule_f)) !== amounts.profit ||
+      Math.round(sumField(input.w2_wages)) !== amounts.wages ||
+      sumField(input.unadjusted_basis) !== 0
+    ) {
+      throw new Error(
+        "Patron business calculation differs from its retained Schedule C/F source",
+      );
+    }
+    sourcedBusiness = {
+      qbi: amounts.qbi,
+      w2_wages: amounts.wages,
+      unadjusted_basis: 0,
+      patron_of_specified_cooperative: true,
+      patron_business_source: source,
+      qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+      business_filing_details: {
+        business_name: amounts.name,
+        ein: amounts.ein,
+        business_qbi: amounts.qbi,
+        business_w2_wages: amounts.wages,
+        business_ubia: 0,
+        one_non_sstb_business_confirmed: true,
+        no_aggregation_confirmed: true,
+        no_ptp_or_loss_carryforward_confirmed: true,
+        qualified_dividends_zero_confirmed: true,
+        qbi_wages_ubia_sources_confirmed: true,
+        taxable_income_before_qbi_confirmed: true,
+      },
+      patron_filing_details: {
+        source_1099patr: review.source_1099patr,
+        qbi_allocable_to_qualified_payments: amounts.qualified_qbi,
+        w2_wages_allocable_to_qualified_payments: amounts.qualified_wages,
+        one_cooperative_confirmed: true,
+        allocation_worksheet_reference: review.allocation_worksheet_reference,
+        allocation_worksheet_reviewed_by: review.reviewed_by,
+        allocation_worksheet_review_date: review.reviewed_on,
+        box6_written_notice_review: review.box6_written_notice_review,
+      },
+    };
+  }
+
   return output(form8995a, {
     filing_status: input.filing_status,
-    taxable_income: taxableIncome,
+    taxable_income: input.patron_source_review
+      ? Math.round(taxableIncome)
+      : taxableIncome,
     net_capital_gain: qbiCapitalTotal(input, true),
     qbi_capital_sources: input.qbi_capital_sources,
     investment_interest_sources: input.investment_interest_sources,
@@ -852,10 +940,14 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
         (input.schedule_c_qbi_businesses?.length === 1 &&
           input.investment_dividend_totals !== undefined))
     ) return { outputs: [] };
+    if (input.patron_source_review && input.agi === undefined) {
+      return { outputs: [] };
+    }
     const taxableIncome = taxableIncomeBeforeQbi(input, cfg);
     if (
       taxableIncome !== undefined && input.filing_status !== undefined &&
-      taxableIncome > qbiThreshold(input.filing_status, cfg)
+      (taxableIncome > qbiThreshold(input.filing_status, cfg) ||
+        input.patron_source_review !== undefined)
     ) {
       return {
         outputs: [advancedFormOutput(input, taxableIncome), {
