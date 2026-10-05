@@ -600,6 +600,16 @@ allow HSA funds for qualified expenses of dependents. These cases are unrun;
 special deemed-dependent exceptions, multiple patient receipts, receipt-byte
 authentication, and wider HSA combinations remain open.
 
+## Form 8889 PDF owner identity replay (2026-10-05)
+
+The Form 8889 PDF descriptor now checks each projected beneficiary SSN and
+name against the selected filer, as the MeF descriptor already does. It also
+rejects a page without computed lines, unsupported line-1 coverage or line-17a
+values, and negative or nonfinite printed amounts. A direct one-owner PDF call
+previously could print a valid-looking HSA page for a different taxpayer. This
+guard verifies output identity and shape; it does not authenticate the HDHP,
+Medicare, trustee, or receipt source records or complete other monthly routes.
+
 ## Bounded Form 5329 PDF page selection (2026-10-05)
 
 The registered Form 5329 PDF now keeps official page 1 for its supported

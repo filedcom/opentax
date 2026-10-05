@@ -219,6 +219,43 @@ export const form8889Pdf: PdfFormDescriptor = {
     reconcileRolloverForm8889(forms, allPending, filer);
     reconcilePairedForm8889(forms, allPending, filer);
     reconcilePrimaryMixedMedicalForm8889(forms, allPending, filer);
+    const numericKeys = new Set(fields.filter((entry) =>
+      entry.domainKey.startsWith("print_line") &&
+      entry.domainKey !== "print_line1_coverage" &&
+      entry.domainKey !== "print_line17a_exception"
+    ).map((entry) => entry.domainKey));
+    for (const form of forms) {
+      const expectedSsn = form.owner === "primary"
+        ? filer?.primarySSN
+        : filer?.spouse?.ssn;
+      const expectedName = form.owner === "primary"
+        ? filer?.fullName
+        : filer?.spouse
+        ? `${filer.spouse.firstName} ${filer.spouse.lastName}`
+        : undefined;
+      if (
+        !expectedSsn ||
+        form.beneficiary_ssn !== expectedSsn.replace(/\D/g, "") ||
+        (expectedName && form.beneficiary_name.trim().toUpperCase() !==
+          expectedName.trim().toUpperCase())
+      ) {
+        throw new Error("Form 8889 PDF beneficiary identity must match the filer");
+      }
+      if (
+        !Object.keys(form).some((key) => key.startsWith("print_line")) ||
+        (form.print_line1_coverage !== undefined &&
+          form.print_line1_coverage !== "self_only" &&
+          form.print_line1_coverage !== "family") ||
+        (form.print_line17a_exception !== undefined &&
+          typeof form.print_line17a_exception !== "boolean") ||
+        Object.entries(form).some(([key, value]) =>
+          numericKeys.has(key) &&
+          (typeof value !== "number" || !Number.isFinite(value) || value < 0)
+        )
+      ) {
+        throw new Error("Form 8889 PDF needs valid computed nonnegative lines");
+      }
+    }
     return forms;
   },
   fields,
