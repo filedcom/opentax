@@ -9,6 +9,7 @@ import { f1040 } from "../../../outputs/f1040/index.ts";
 import { standard_deduction } from "../../worksheets/standard_deduction/index.ts";
 import { form8995a, type Form8995AInput } from "../form8995a/index.ts";
 import { scheduleCQbiBusinessSchema } from "../form8995a/index.ts";
+import { reviewedMultipleScheduleCQbi } from "../../../inputs/schedule_c/qbi-multiple.ts";
 import { reviewedWotcQbiWages } from "../../../inputs/schedule_c/qbi-wotc.ts";
 import { FilingStatus } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
@@ -94,6 +95,16 @@ export const inputSchema = z.object({
   retirement_plan_deduction: accumulable(z.number().nonnegative()).optional(),
   // Prior-year QBI net loss carryforward (must be zero or negative)
   qbi_loss_carryforward: z.number().nonpositive().optional(),
+  multi_business_filing_rows: z.array(
+    z.object({
+      business_reference: z.string(),
+      business_name: z.string(),
+      tin: z.object({ kind: z.enum(["ein", "ssn"]), value: z.string() }),
+      qbi: z.number().int(),
+      raw_qbi: z.number().finite(),
+      se_tax_deduction: z.number().nonnegative(),
+    }).strict(),
+  ).optional(),
   schedule_c_qbi_businesses: z.array(scheduleCQbiBusinessWithCentsSchema)
     .optional(),
   schedule_f_qbi_businesses: z.array(scheduleFQbiBusinessSchema).optional(),
@@ -467,6 +478,89 @@ function oneScheduleCLines(
   };
 }
 
+// Reviewed source route for any number of taxpayer Schedule C businesses.
+function multipleScheduleCLines(
+  input: Form8995Input,
+  cfg: F1040Config,
+): (Record<string, unknown> & { line15: number }) | undefined {
+  const businesses = input.schedule_c_qbi_businesses;
+  if (
+    !businesses || businesses.length < 2 ||
+    !businesses.some((row) =>
+      row.source_schedule_c.qbi_se_tax_allocation_review
+    )
+  ) return undefined;
+  if (
+    input.se_tax_deduction === undefined &&
+    businesses.reduce((sum, row) => sum + row.qbi, 0) * .9235 >= 400
+  ) return undefined;
+  const source = reviewedMultipleScheduleCQbi(
+    businesses.map((row) => row.source_schedule_c),
+    sumField(input.se_tax_deduction),
+  );
+  const totalProfit = source.profits.reduce((sum, value) => sum + value, 0);
+  if (
+    input.filing_status !== FilingStatus.Single ||
+    input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+    sumField(input.qbi_from_schedule_c) + sumField(input.sstb_qbi) !==
+      totalProfit ||
+    sumField(input.qbi_from_schedule_f) !== 0 || sumField(input.qbi) !== 0 ||
+    sumField(input.se_health_insurance_deduction) !== 0 ||
+    sumField(input.retirement_plan_deduction) !== 0 ||
+    sumField(input.line6_sec199a_dividends) !== 0 ||
+    sumField(input.net_capital_gain) !== 0 ||
+    (input.qbi_loss_carryforward ?? 0) !== 0 ||
+    (input.reit_loss_carryforward ?? 0) !== 0 ||
+    input.agi === undefined || !input.taxpayer_ssn ||
+    businesses.some((row, index) =>
+      !row.business_reference || !row.business_name ||
+      row.qbi !== source.profits[index] || row.wotc_wage_reduction
+    )
+  ) {
+    throw new Error(
+      "Multiple Schedule C Form 8995 needs its identified sources and no other QBI components",
+    );
+  }
+  const rows = businesses.map((row, index) => ({
+    business_reference: row.business_reference!,
+    business_name: row.business_name!,
+    tin: {
+      kind: row.ein ? "ein" as const : "ssn" as const,
+      value: row.ein ?? input.taxpayer_ssn!.replace(/\D/g, ""),
+    },
+    qbi: source.filedQbi[index],
+    raw_qbi: source.qbi[index],
+    se_tax_deduction: source.allocations[index],
+  }));
+  const line2 = rows.reduce((sum, row) => sum + row.qbi, 0);
+  const line4 = Math.max(0, line2);
+  const line5 = Math.round(line4 * QBI_RATE);
+  const line11 = Math.round(
+    Math.max(0, input.agi - standardDeductionAmount(input, cfg)),
+  );
+  const line14 = Math.round(line11 * QBI_RATE);
+  return {
+    multi_business_filing_rows: rows,
+    line2,
+    line3: 0,
+    line4,
+    line5,
+    line6: 0,
+    line7: 0,
+    line8: 0,
+    line9: 0,
+    line10: line5,
+    line11,
+    line12: 0,
+    line13: line11,
+    line14,
+    line15: Math.min(line5, line14),
+    line16: Math.max(0, -line2),
+    line17: 0,
+  };
+}
+
 // Two small, independently identified Schedule C businesses can use the two
 // printed rows without an attributable SE-tax deduction when their combined
 // profit is below the Schedule SE filing threshold.
@@ -679,6 +773,11 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       );
     }
 
+    if (
+      input.agi === undefined && input.schedule_c_qbi_businesses?.some(
+        (row) => row.source_schedule_c.qbi_se_tax_allocation_review,
+      )
+    ) return { outputs: [] };
     const taxableIncome = taxableIncomeBeforeQbi(input, cfg);
     if (
       taxableIncome !== undefined && input.filing_status !== undefined &&
@@ -687,7 +786,8 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       return { outputs: [advancedFormOutput(input, taxableIncome)] };
     }
 
-    if (netQbi(input) < 0) {
+    const multipleLines = multipleScheduleCLines(input, cfg);
+    if (netQbi(input) < 0 && multipleLines === undefined) {
       throw new Error(
         "Form 8995 net QBI loss needs a sourced carryforward filing route",
       );
@@ -696,14 +796,15 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
     const simplifiedLines = input.schedule_f_qbi_businesses !== undefined
       ? oneScheduleFLines(input, cfg)
       : input.schedule_c_qbi_businesses !== undefined
-      ? twoSmallScheduleCLines(input, cfg) ?? oneScheduleCLines(input, cfg)
+      ? multipleLines ?? twoSmallScheduleCLines(input, cfg) ??
+        oneScheduleCLines(input, cfg)
       : reitOnlyLines(input, cfg);
     // The bounded filed routes carry whole-dollar line 15 exactly
     // into Form 1040. Other QBI routes retain their existing calculation.
     const deduction = simplifiedLines === undefined
       ? qbiDeduction(input, cfg)
       : simplifiedLines.line15;
-    if (deduction <= 0) {
+    if (deduction <= 0 && multipleLines === undefined) {
       return { outputs: [] };
     }
 

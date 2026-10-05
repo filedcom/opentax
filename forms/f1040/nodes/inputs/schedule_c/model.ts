@@ -99,6 +99,20 @@ export const itemSchema = z.object({
   // Required for the bounded Form 8995-A Schedule C path: the Schedule C net
   // amount has no separately attributable section 199A adjustments.
   qbi_no_other_adjustments_confirmed: z.boolean().optional(),
+  // Reviewed allocation of the combined Schedule SE deduction across businesses.
+  qbi_se_tax_allocation_review: z.object({
+    deduction_amount: z.number().finite().nonnegative(),
+    allocation_method: z.literal(
+      "positive_profit_proportion_with_cent_residual",
+    ),
+    reasonable_for_business_facts_confirmed: z.literal(true),
+    consistently_applied_and_books_agree_confirmed: z.literal(true),
+    all_businesses_included_confirmed: z.literal(true),
+    no_aggregation_confirmed: z.literal(true),
+    workpaper_reference: z.string().min(1),
+    reviewed_by: z.string().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  }).strict().optional(),
 
   // Part I: Income
   line_1_gross_receipts: z.number().nonnegative(),

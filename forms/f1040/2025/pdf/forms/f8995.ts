@@ -1,3 +1,4 @@
+import { appendQbiBusinessContinuation } from "./f8995_continuation.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
   assertNoUnfiled8995Loss,
@@ -19,6 +20,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   {
     kind: "text",
     domainKey: "line1_qbi",
+    printZero: true,
     pdfField: `${page1}Table[0].Row1i[0].f1_05[0]`,
   },
   {
@@ -34,8 +36,19 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   {
     kind: "text",
     domainKey: "line1ii_qbi",
+    printZero: true,
     pdfField: `${page1}Table[0].Row1ii[0].f1_08[0]`,
   },
+  ...["iii", "iv", "v"].flatMap((suffix, index): PdfFieldEntry[] =>
+    ["business_name", "ein", "qbi"].map((key, column) => ({
+      kind: "text",
+      domainKey: `line1${suffix}_${key}`,
+      ...(key === "qbi" ? { printZero: true } : {}),
+      pdfField: `${page1}Table[0].Row1${suffix}[0].f1_${
+        String(9 + index * 3 + column).padStart(2, "0")
+      }[0]`,
+    }))
+  ),
   ...Array.from({ length: 16 }, (_, index): PdfFieldEntry => {
     const line = index + 2;
     const field = `f1_${String(index + 18).padStart(2, "0")}[0]`;
@@ -61,9 +74,19 @@ export const form8995Pdf: PdfFormDescriptor = {
     { kind: "text", domainKey: "primarySSN", pdfField: `${page1}f1_02[0]` },
   ],
   fields,
+  appendSupplementalPages(document, fields, filer) {
+    return appendQbiBusinessContinuation(
+      document,
+      fields.pdf_overflow_businesses,
+      filer,
+    );
+  },
   projectFields(fields, allPending) {
     const deduction = fields.qbi_deduction;
-    if (deduction === undefined || deduction === null || deduction === 0) {
+    if (
+      (deduction === undefined || deduction === null || deduction === 0) &&
+      fields.multi_business_filing_rows === undefined
+    ) {
       assertNoUnfiled8995Loss(fields);
       return {};
     }
@@ -78,20 +101,17 @@ export const form8995Pdf: PdfFormDescriptor = {
       allPending,
     );
     return {
-      ...(businesses[0]
-        ? {
-          line1_business_name: businesses[0].businessName,
-          line1_ein: businesses[0].tin.value,
-          line1_qbi: businesses[0].qbi,
-        }
-        : {}),
-      ...(businesses[1]
-        ? {
-          line1ii_business_name: businesses[1].businessName,
-          line1ii_ein: businesses[1].tin.value,
-          line1ii_qbi: businesses[1].qbi,
-        }
-        : {}),
+      ...Object.fromEntries(
+        businesses.slice(0, 5).flatMap((row, index) => {
+          const prefix =
+            ["line1", "line1ii", "line1iii", "line1iv", "line1v"][index];
+          return [[`${prefix}_business_name`, row.businessName], [
+            `${prefix}_ein`,
+            row.tin.value,
+          ], [`${prefix}_qbi`, row.qbi]];
+        }),
+      ),
+      pdf_overflow_businesses: businesses.slice(5),
       ...Object.fromEntries(
         Object.entries(lines).map(([line, amount]) => [`line${line}`, amount]),
       ),

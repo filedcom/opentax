@@ -1,3 +1,4 @@
+import { roundSignedQbiDollars } from "../../../nodes/inputs/schedule_c/qbi-multiple.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import { z } from "zod";
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
@@ -275,7 +276,12 @@ function buildScheduleC(
     ),
     amount("EnergyEffcntCmrclBldgDedAmt", item.line_27a_energy_efficient),
     element("TotalExpensesAmt", expenses),
-    element("TentativeProfitOrLossAmt", tentativeProfit),
+    element(
+      "TentativeProfitOrLossAmt",
+      item.qbi_se_tax_allocation_review
+        ? roundSignedQbiDollars(tentativeProfit)
+        : tentativeProfit,
+    ),
     homeOfficeDeduction(item, tentativeProfit) === 0 ? "" : element(
       "HomeBusinessExpenseAmt",
       homeOfficeDeduction(item, tentativeProfit),
@@ -286,7 +292,12 @@ function buildScheduleC(
     item.home_office_method === "simplified"
       ? element("HomeBusinessUseSquareFeetCnt", item.home_office_sq_ft)
       : "",
-    element("NetProfitOrLossAmt", netProfit),
+    element(
+      "NetProfitOrLossAmt",
+      item.qbi_se_tax_allocation_review
+        ? roundSignedQbiDollars(netProfit)
+        : netProfit,
+    ),
     checkbox("AllInvestmentIsAtRiskInd", item.line_32_at_risk === "a"),
     checkbox("SomeInvestmentIsNotAtRiskInd", item.line_32_at_risk === "b"),
     ...inventory(item),

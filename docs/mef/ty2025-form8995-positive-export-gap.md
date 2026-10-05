@@ -1,5 +1,89 @@
 # TY2025 Form 8995 positive export boundary
 
+## Multiple reviewed Schedule C businesses (locally validated October 6, 2026)
+
+The simplified Form 8995 route now supports two or more separately identified
+Schedule C businesses for one single taxpayer below the threshold. Profitable
+businesses, current losses, below-threshold SSTBs, and a current combined net
+loss are included. Each retained Schedule C carries a supplied SE allocation
+review with its method, amount, workpaper reference, reviewer/date, reasonable
+business-facts confirmation, consistency/books confirmation, all-businesses
+confirmation, and no aggregation. No review or source authentication is invented.
+
+[Schedule SE instructions](https://www.irs.gov/instructions/i1040sse) require
+combined business earnings, with losses reducing positive profits, on one
+Schedule SE. The source join recalculates that SE tax using retained personal
+W-2 Social Security wages, checks Schedule 1's half-SE deduction, and checks
+Form 7206's retained business/SE records. Its reviewed allocation method divides
+the combined deductible SE tax among positive Schedule C profits in proportion
+to those profits, retaining cents and assigning the cent residual to the largest
+positive business (source order breaks ties). Loss businesses get zero of that
+shared deduction. This is an explicitly reviewed method, not an IRS-mandated
+formula: [26 CFR 1.199A-3(b)(5)](https://www.ecfr.gov/current/title-26/section-1.199A-3)
+requires a reasonable method reflecting the facts, consistent application, and
+agreement with the books. Authenticating those conclusions remains open.
+
+Raw profit, allocated deduction, and adjusted QBI remain in the source rows.
+Only the entered Form 8995 row is rounded. Line 2 combines all entered signed
+rows; line 4 is clamped to zero; a current net loss appears on line 16 even when
+line 15 is zero. Native XML emits every identified business group; PDF prints
+rows 1i–1v and appends a paginated statement with every remaining business name,
+EIN/owner SSN, and signed QBI amount. The
+[Form 8995 instructions](https://www.irs.gov/instructions/i8995) require the
+additional-business statement beyond five rows and current net-loss carryforward.
+A zero deduction no longer discards this sourced multi-business loss form.
+Both exports reject missing or changed business, review, payroll, shared SE,
+Schedule 1, prepared row, and final Form 1040 amounts.
+
+| Local full-return fixture | Raw Schedule C total | Half-SE deduction | Entered Form 8995 line 2 | Line 15 | Line 16 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Two profitable businesses with cents | 100,000.98 | 7,065 | 92,936 | 15,437 | 0 |
+| Three businesses including a loss, with W-2 | 85,000.50 | 6,005 | 78,996 | 15,799 | 0 |
+| Six businesses including overflow loss | 76,000 | 5,369 | 70,631 | 10,976 | 0 |
+| Two businesses with combined net loss, with W-2 | -10,000.01 | 0 | -10,001 | 0 | 10,001 |
+
+The last fixture retains +10,000.49 and -20,000.50 raw business profits. Its
+Schedule C loss and Form 8995 loss row both enter -20,001, using signed rounding
+at the half-dollar boundary. The other QBI row is +10,000, giving Form 8995
+line 2 -10,001 and line 16 10,001. Schedule 1 combines the raw profits first,
+then enters -10,000; Form 1040 line 8 is -10,000, lines 9/11a are 40,000 after
+50,000 wages, line 13a is zero, and line 15 is 24,250. The exact raw graph
+income/AGI is 39,999.99, and taxable income is 24,249.99. This source-to-total
+rounding is intentional: the [IRS rounding instructions](https://www.irs.gov/instructions/i1040gi)
+require cents to be retained while adding amounts for a line, then rounding its
+total. Separately rounded business rows can therefore differ by $1 from the
+rounded raw Schedule 1 total. Native assertions and filled-PDF review record
+both representations. IRS business rules/ATS may impose further equations;
+acceptance remains an explicit gate. Other generic negative half-dollar export
+boundaries remain in the existing return-wide rounding audit scope.
+
+A fifth full native return verifies the W-2 wage-base interaction: 150,000
+combined profits and 50,000 Social Security wages produce 19,653 SE tax and a
+9,827 deduction, allocated 5,896.20/3,930.80. Entered QBI rows are 84,104/56,069,
+line 2 is 140,173, and line 15 is 28,035.
+
+Validation passed 221 existing focused regressions and 32 final tests including
+the four new multi-business cases and Schedule C exporters. All five native
+full returns passed the complete local TY2025 v5.4 Return1040 XSD. Seventeen
+tamper variants rejected both native/PDF export. The continuation pagination
+case retains all 41 additional businesses across three pages. Four filled
+packets (13, 16, 22, and 10 pages) were rendered with real Poppler; the Form 8995
+rows/totals, overflow statement, and net-loss Schedule C/Schedule 1/1040 pages
+were visually reviewed. Local artifacts, each with `return.xml` and
+`filled-return.pdf`, are under
+`.state/research/ty2025-filled-pdf-review/2026-10-06-form8995-multiple/` in
+`profitable-cents`, `mixed-loss`, `overflow`, and `net-loss`.
+
+Remaining scope includes other filing statuses or spouse/community/QJV
+ownership, other reasonable allocation methods, attributable health/retirement
+adjustments, prior or suspended losses, at-risk/passive limits, aggregation,
+farms/pass-throughs, REIT/PTP/capital-gain combinations, multi-business WOTC, and
+Form 8995-A coexistence. The current net-loss fixture supplies the existing
+Form 461 scope review and has no excess-business-loss adjustment. Imported
+future-year carryover provenance and a durable carryover ledger are not added.
+Workpaper/document byte authentication, IRS business rules, and ATS remain open.
+The older narrow route notes below describe their historical boundaries.
+
 ## One Schedule C with certified WOTC wages (validated October 6, 2026)
 
 The existing single-business Form 8995 route now accepts one nonpassive Form

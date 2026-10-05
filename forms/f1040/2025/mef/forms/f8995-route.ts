@@ -1,3 +1,4 @@
+import { assertMultipleScheduleC8995 } from "./f8995-multiple.ts";
 import { normalizeAllPending } from "../../pending.ts";
 import {
   calculateSingleScheduleCForm7206,
@@ -1045,6 +1046,9 @@ export function assertPositive8995(
   fields: Record<string, unknown>,
   pending: Readonly<Record<string, unknown>> | undefined,
 ): Filed8995 {
+  if (fields.multi_business_filing_rows !== undefined) {
+    return assertMultipleScheduleC8995(fields, pending);
+  }
   if (fields.schedule_f_qbi_businesses !== undefined) {
     return assertOneScheduleF8995(fields, pending);
   }

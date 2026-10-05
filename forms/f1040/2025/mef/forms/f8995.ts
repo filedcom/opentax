@@ -13,7 +13,10 @@ export const form8995: MefFormDescriptor<"form8995", Input> = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8995--2025.pdf",
   build(fields, context) {
     const deduction = fields.qbi_deduction;
-    if (deduction === undefined || deduction === null || deduction === 0) {
+    if (
+      (deduction === undefined || deduction === null || deduction === 0) &&
+      fields.multi_business_filing_rows === undefined
+    ) {
       assertNoUnfiled8995Loss(fields as Record<string, unknown>);
       return "";
     }

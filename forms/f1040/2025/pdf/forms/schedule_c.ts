@@ -1,3 +1,4 @@
+import { roundSignedQbiDollars } from "../../../nodes/inputs/schedule_c/qbi-multiple.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
 import { FilingStatus, filingStatusSchema, TS } from "../../../nodes/types.ts";
@@ -306,7 +307,9 @@ function projectBusiness(
     line_26_wages: wagesLessEmploymentCredits(item, wotcReduction),
     line27b: line48,
     line28,
-    line29,
+    line29: item.qbi_se_tax_allocation_review
+      ? roundSignedQbiDollars(line29)
+      : line29,
     line30_total_home_sq_ft: item.home_office_method === "simplified"
       ? item.home_total_sq_ft
       : undefined,
@@ -314,7 +317,9 @@ function projectBusiness(
       ? item.home_office_sq_ft
       : undefined,
     line30,
-    line31,
+    line31: item.qbi_se_tax_allocation_review
+      ? roundSignedQbiDollars(line31)
+      : line31,
     line35: item.line_35_cogs_beginning_inventory,
     line36: item.line_36_purchases,
     line37: item.line_37_cost_of_labor,
