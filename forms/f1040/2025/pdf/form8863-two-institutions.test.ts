@@ -72,6 +72,32 @@ Deno.test("two school American Opportunity expenses share the student cap", asyn
   );
   const pdf = await prepared.renderPdf();
   assertEquals(new TextDecoder().decode(pdf.slice(0, 5)), "%PDF-");
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, prepared.bundle.xml);
+    const checked = await new Deno.Command("xmllint", {
+      args: [
+        "--noout",
+        "--schema",
+        new URL(
+          "../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+          import.meta.url,
+        ).pathname,
+        xmlPath,
+      ],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+    if (Deno.args.includes("--write-review-artifacts")) {
+      const dir = "/tmp/opentax-form8863-two-schools-aoc-review";
+      await Deno.mkdir(dir, { recursive: true });
+      await Deno.writeFile(`${dir}/filled-return.pdf`, pdf);
+      await Deno.writeTextFile(`${dir}/return.xml`, prepared.bundle.xml);
+    }
+  } finally {
+    await Deno.remove(xmlPath);
+  }
 });
 
 Deno.test("two school expense workpapers reach Form 8863, final tax, XSD and filled PDF", async () => {
