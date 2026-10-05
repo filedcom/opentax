@@ -4523,3 +4523,9 @@ Form 4255 staged-row uniqueness and Form 8889 PDF owner/value projection pass
 `/tmp/opentax-integration-next-focused-c.log`. The Form 8889 agent also ran
 74 wider HSA route cases successfully. The main full regression still targets
 the preceding `9d700e2d` commit, not these later isolated guards.
+
+The revised shared-record Form 8962 corrected-SLCSP guard passed **3/3**
+integrated three- and four-policy end-to-end tests at `fb29e07e`; the log is
+`/tmp/opentax-integration-next-focused-d.log`. A broader adjacent agent run
+passed 5/5. The rejected first proposal would have barred a legitimate shared
+record and was never integrated.
