@@ -4660,3 +4660,7 @@ corrected parent page 2 and Schedule C; the other ten pages were unchanged.
 This correction is part of the already recorded bounded QBI slice, not a
 new parent completion. Integration into main and its full regression remain
 pending while the stable full run is live.
+
+## Integrated repair regression started October 5 22:50 UTC
+
+Main merge `762db9012b0e273f7cd72595a2ef067d9da4b367` incorporates the fourteen recorded source/PDF slices and task-permission replay repairs. The board was compacted before integration. The merge preserved both unique validation sections and the frozen checklist. A separate stable checkout `/tmp/opentax-fixed-regression-oct6` started the same real-Poppler `deno task test` at `2026-10-05T22:50:51Z`; launchd job `opentax-full-regression-762db9012`, wrapper PID 66092 confirmed running. Log `/tmp/opentax-deno-task-test-762db9012.log`, terminal record `/tmp/opentax-full-regression-762db9012.status`. Earlier isolated `17462812a` continues unchanged; its known five failures have focused repairs in this newer snapshot. No new full-pass claim. Later Medicare, multi-business QBI and missing-1098-T work remains outside both stable running snapshots.
