@@ -124,9 +124,12 @@ export function calculateForm2210FBoxB(raw: unknown): Form2210FBoxBLines {
     input.prior_separate_returns[0].owner !== "taxpayer" ||
     input.prior_separate_returns[1].owner !== "spouse" ||
     input.prior_separate_returns[0].filed_return_reference ===
-      input.prior_separate_returns[1].filed_return_reference
+      input.prior_separate_returns[1].filed_return_reference ||
+    input.prior_separate_returns.some((prior) =>
+      prior.filed_return_reference === input.current_return_reference
+    )
   ) {
-    throw new Error("Form 2210-F box B needs distinct filed 2024 taxpayer and spouse returns");
+    throw new Error("Form 2210-F box B needs distinct filed 2024 taxpayer, spouse, and 2025 joint returns");
   }
   const line1 = input.current_line22_tax_after_credits;
   const line2 = input.current_included_schedule2_taxes;

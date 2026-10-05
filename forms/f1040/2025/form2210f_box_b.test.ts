@@ -167,6 +167,13 @@ Deno.test("Form 2210-F box B rejects unproven farmer status and duplicate prior 
       ],
     })
   );
+  assertThrows(() =>
+    calculateForm2210FBoxB({
+      ...source,
+      current_return_reference:
+        source.prior_separate_returns[0].filed_return_reference,
+    }), Error, "distinct filed 2024 taxpayer, spouse, and 2025 joint returns"
+  );
 });
 
 Deno.test("Form 2210-F box B rejects when its filing reason or settlement is absent", () => {
