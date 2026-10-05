@@ -54,7 +54,7 @@ under the agreed implementation-first workflow. The lender-issued copy, payment
 and debt records, full Pub. 936 mortgage-limit review, PDF packet, business
 rules, and ATS remain open.
 
-## Ordinary refinance points outside box 6 (implementation written; untested)
+## Ordinary refinance points outside box 6 (bounded 2025 route verified)
 
 The separate public `mortgage_refinance_points` source records the linked
 payer-issued Form 1098, closing disclosure, Pub. 936 workpaper, borrower,
@@ -68,15 +68,32 @@ and the filed line 8c amount to equal the source calculation. The associated
 Form 1098 box 1 interest continues separately to line 8a.
 
 A synthetic $3,000 charge with $1,000 of service fees and six payments on a
-180-month loan is written to expect $67 on line 8c, $18,000 on line 8a, and
-$18,067 on Form 1040 line 12e. The focused cases, full-return XSD fixture,
-and filled-PDF fixture have not run under the agreed implementation-first
-workflow. This bounded route does not resolve mixed acquisition/cash-out
+180-month loan produces $67 on line 8c, $18,000 on line 8a, and $18,067 on
+Form 1040 line 12e in the verified bounded route. This bounded route does not
+resolve mixed acquisition/cash-out
 allocation beyond the qualified improvement case below, later-year amortization
 beyond the 2024-origin slice below,
 multiple-source mortgage-limit allocation beyond the bounded two-loan route,
 payer-issued bytes, business rules,
 or ATS acceptance.
+
+The bounded 2025 route was run on 2026-10-05. The input-node suite passed
+7/7; the Form 1098 Copy B, Schedule A native, and Schedule A PDF suites passed
+24/24; and the focused full-return test passed local TY2025 v5.4 XSD 1/1.
+The selected packet generator produced a three-page PDF and matching XML for
+`single-unreported-refinance-points`; PDF text extraction confirms Schedule A
+line 8a $18,000, line 8c $67, line 8e $18,067, and Form 1040 line 12e
+$18,067. Artifacts are under
+`.state/research/ty2025-filled-pdf-review/2026-10-05-ordinary-refinance-points/`.
+Manifest SHA-256 is
+`d0944e5fd16fd1dbe7ca197071a74950a56d9f5df09e12609807c1b7f2160259`;
+the XML and PDF SHA-256 values are `0201100810cc7408b36d1f4c8344a4897cbd587c48b7a58f10357c7a3f69404c`
+and `3c5bc677bd8b199f80d2856a3bf83f3e4b6fbad0d0ba5601ec3926a9fb74a608`.
+This is source-fixture, XSD, and text-projection evidence, not visual
+signoff or proof of the lender/payment records. The 2024- and 2023-origin
+ledgers and mixed-improvement extension below remain unrun. Issuer/source-byte
+authentication, full mortgage-limit interaction, business rules, and ATS
+remain open.
 
 The ordinary line 8c source now uses one `refinance_close_year` and
 `refinance_close_month` pair. For a 2024 closing, it requires a referenced
