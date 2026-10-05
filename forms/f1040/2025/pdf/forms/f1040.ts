@@ -1,3 +1,4 @@
+import { assertW2ArcherContributionSources } from "../../form8853_contributions_reconciliation.ts";
 import { assertEducationIncomeSource } from "../../../nodes/inputs/education_income/index.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { rgb, StandardFonts } from "pdf-lib";
@@ -1061,6 +1062,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
   },
   fields,
   instances(fields, filer, all) {
+    assertW2ArcherContributionSources({ filer, pending: all ?? {} });
     assertEducationIncomeSource(
       all,
       [filer?.primarySSN, filer?.spouse?.ssn].filter((s): s is string => !!s),

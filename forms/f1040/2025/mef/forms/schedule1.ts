@@ -1,3 +1,4 @@
+import { assertArcherEmployerExcessIncomeSource } from "../../form8853_contributions_reconciliation.ts";
 import { assertEducationIncomeSource } from "../../../nodes/inputs/education_income/index.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import { FilingStatus } from "../../../mef/header.ts";
@@ -49,6 +50,7 @@ export interface Fields {
   line8z_form8814?: number | null;
   line8z_hsa_excess_earnings?: number | null;
   line8z_hsa_excess_employer?: number | null;
+  line8z_archer_excess_employer?: number | null;
   line8z_golden_parachute?: number | null;
   at_risk_disallowed_add_back?: number | null;
   at_risk_recapture?: number | null;
@@ -235,6 +237,10 @@ export const schedule1: MefFormDescriptor<"schedule1", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040s1.pdf",
   build(fields, context) {
+    assertArcherEmployerExcessIncomeSource(
+      fields as Record<string, unknown>,
+      context,
+    );
     assertEducationIncomeSource(
       context?.pending,
       [context?.filer?.primarySSN, context?.filer?.spouse?.ssn].filter((

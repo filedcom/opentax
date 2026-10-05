@@ -1,3 +1,4 @@
+import { assertW2ArcherContributionSources } from "../../form8853_contributions_reconciliation.ts";
 import { assertEducationIncomeSource } from "../../../nodes/inputs/education_income/index.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import { retainedActcOptOut } from "../../actc-opt-out-source.ts";
@@ -1127,6 +1128,7 @@ export const irs1040: MefFormDescriptor<"f1040", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040.pdf",
   build(fields, context) {
+    assertW2ArcherContributionSources(context);
     assertEducationIncomeSource(
       context?.pending,
       [context?.filer?.primarySSN, context?.filer?.spouse?.ssn].filter((

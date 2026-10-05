@@ -77,6 +77,7 @@ const inputSchema = z.object({
   line8z_form8814: z.number().nonnegative().optional(),
   line8z_hsa_excess_earnings: z.number().nonnegative().optional(),
   line8z_hsa_excess_employer: z.number().nonnegative().optional(),
+  line8z_archer_excess_employer: z.number().nonnegative().optional(),
   line8z_other: z.never().optional(),
   line8z_form8621_qef: z.number().optional(),
   line8z_form8621_mtm: z.number().optional(),
@@ -209,6 +210,7 @@ function otherIncome(input: Schedule1Input): number {
     (input.line8z_form8814 ?? 0) +
     (input.line8z_hsa_excess_earnings ?? 0) +
     (input.line8z_hsa_excess_employer ?? 0) +
+    (input.line8z_archer_excess_employer ?? 0) +
     (input.line8z_form8621_qef ?? 0) +
     (input.line8z_form8621_mtm ?? 0) +
     (input.line8z_form8621_section1291 ?? 0) +
@@ -369,6 +371,7 @@ function assembleSchedule1(input: Schedule1Input): Record<string, unknown> {
     "line8z_form8814",
     "line8z_hsa_excess_earnings",
     "line8z_hsa_excess_employer",
+    "line8z_archer_excess_employer",
     "line8z_other",
     "line8z_form8621_qef",
     "line8z_form8621_mtm",

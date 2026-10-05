@@ -1,3 +1,4 @@
+import { reconcileArcherPartVI } from "../../form8853_contributions_reconciliation.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import {
   calculateOwnerForms,
@@ -74,6 +75,7 @@ function buildIRS5329One(
     input.excess_roth_ira,
     input.excess_coverdell_esa,
     input.excess_archer_msa,
+    input.archer_part_vi?.line39_current_year_excess,
     hsaTotal,
     input.excess_able,
   ].some((amount) => (amount ?? 0) > 0);
@@ -112,7 +114,13 @@ function buildIRS5329One(
     "excess_coverdell_esa",
     "coverdell_esa_value",
   );
-  const archerTax = excessTax(input, "excess_archer_msa", "archer_msa_value");
+  const archer = input.archer_part_vi;
+  const archerTax = archer
+    ? Math.round(
+      .06 *
+        Math.min(archer.line39_current_year_excess, archer.december_31_value),
+    )
+    : excessTax(input, "excess_archer_msa", "archer_msa_value");
   const hsaTax = hsa ? Math.min(hsaTotal, hsa.december_31_value) * 0.06 : 0;
   const ableTax = excessTax(input, "excess_able", "able_value");
   const subjectToEarlyTax = early - exception;
@@ -155,6 +163,20 @@ function buildIRS5329One(
     input.excess_coverdell_esa
       ? element("EducIRAExcessContribTaxAmt", coverdellTax)
       : "",
+    ...(archer
+      ? [
+        element("ArcherMSAExcessContriPrYrAmt", 0),
+        element(
+          "ArcherMSAExcessContriCYAmt",
+          archer.line39_current_year_excess,
+        ),
+        element(
+          "ArcherMSAExcessContriTotalAmt",
+          archer.line39_current_year_excess,
+        ),
+        element("MSAExcessContribTaxAmt", archerTax),
+      ]
+      : []),
     input.excess_archer_msa
       ? element("ArcherMSAExcessContriTotalAmt", input.excess_archer_msa)
       : "",
@@ -168,13 +190,18 @@ function buildIRS5329One(
   ]);
 }
 
-function buildIRS5329(raw: Input, context?: MefBuildContext): readonly string[] {
+function buildIRS5329(
+  raw: Input,
+  context?: MefBuildContext,
+): readonly string[] {
   if (Array.isArray(raw) && raw.length === 0) return [];
   const unexpected = Object.keys(raw).filter((key) =>
     key !== "owner_entries" && key !== "owner_forms"
   );
   if (unexpected.length > 0) {
-    throw new Error(`Form 5329 MeF requires owner entries: ${unexpected.join(", ")}`);
+    throw new Error(
+      `Form 5329 MeF requires owner entries: ${unexpected.join(", ")}`,
+    );
   }
   const parsed = inputSchema.parse({ owner_entries: raw.owner_entries });
   const calculated = calculateOwnerForms(parsed);
@@ -185,27 +212,33 @@ function buildIRS5329(raw: Input, context?: MefBuildContext): readonly string[] 
     return [];
   }
   if (JSON.stringify(raw.owner_forms) !== JSON.stringify(calculated.forms)) {
-    throw new Error("Form 5329 MeF owner forms do not match source calculation");
+    throw new Error(
+      "Form 5329 MeF owner forms do not match source calculation",
+    );
   }
   reconcileHsaOwnerForms(
     calculated.forms,
     context?.pending?.form8889,
     context?.filer,
   );
+  reconcileArcherPartVI(calculated.forms, context?.pending?.form8853, context);
   const schedule2 = context?.pending?.schedule2;
   const line8 = schedule2 !== null && typeof schedule2 === "object"
     ? (schedule2 as Record<string, unknown>).line8_form5329_tax
     : undefined;
   if (calculated.total > 0 && line8 !== calculated.total) {
-    throw new Error("Form 5329 owner taxes do not reconcile to Schedule 2 line 8");
+    throw new Error(
+      "Form 5329 owner taxes do not reconcile to Schedule 2 line 8",
+    );
   }
   return calculated.forms.map((form) => buildIRS5329One(form, context))
     .filter((xml) => xml !== "");
 }
 
-export const form5329: MefFormDescriptor<"form5329", Input, readonly string[]> = {
-  pendingKey: "form5329",
-  FIELD_MAP,
-  pdfUrl: "https://www.irs.gov/pub/irs-prior/f5329--2025.pdf",
-  build: buildIRS5329,
-};
+export const form5329: MefFormDescriptor<"form5329", Input, readonly string[]> =
+  {
+    pendingKey: "form5329",
+    FIELD_MAP,
+    pdfUrl: "https://www.irs.gov/pub/irs-prior/f5329--2025.pdf",
+    build: buildIRS5329,
+  };

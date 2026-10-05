@@ -98,6 +98,13 @@ export const ownerEntrySchema = z.object({
 
   // ── Part VI: Excess Contributions to Archer MSAs (line 34–41) ───────────
   // Line 40: Total excess contributions to Archer MSAs
+  archer_part_vi: z.object({
+    line34_prior_excess: z.literal(0),
+    line35_unused_contribution_room: z.number().nonnegative(),
+    line36_taxable_distributions: z.literal(0),
+    line39_current_year_excess: z.number().nonnegative(),
+    december_31_value: z.number().nonnegative(),
+  }).strict().optional(),
   excess_archer_msa: z.number().nonnegative().optional(),
   // FMV of Archer MSAs on Dec 31, 2025 (caps the 6% tax base)
   archer_msa_value: z.number().nonnegative().optional(),
@@ -150,9 +157,11 @@ function mergeOwnerEntries(entries: Form5329Input[]): Form5329Input[] {
         const existing = merged[key];
         if (existing === undefined) {
           merged[key] = value;
-        } else if (key === "early_distribution" ||
+        } else if (
+          key === "early_distribution" ||
           key === "simple_ira_early_distribution" ||
-          key === "distribution_code") {
+          key === "distribution_code"
+        ) {
           merged[key] = [
             ...(Array.isArray(existing) ? existing : [existing]),
             ...(Array.isArray(value) ? value : [value]),
@@ -178,6 +187,7 @@ function hasFilingActivity(input: Form5329Input): boolean {
     (input.excess_roth_ira ?? 0) > 0 ||
     (input.excess_coverdell_esa ?? 0) > 0 ||
     (input.excess_archer_msa ?? 0) > 0 ||
+    (input.archer_part_vi?.line39_current_year_excess ?? 0) > 0 ||
     (input.hsa_part_vii?.line42_prior_excess ?? 0) > 0 ||
     (input.hsa_part_vii?.line47_current_year_excess ?? 0) > 0 ||
     (input.excess_able ?? 0) > 0;
@@ -252,6 +262,14 @@ function partV_tax(input: Form5329Input): number {
 // Part VI, Line 41: 6% excise on excess Archer MSA contributions
 // IRC §4973(d); Form 5329 line 41 → Schedule 2 line 8
 function partVI_tax(input: Form5329Input): number {
+  if (input.archer_part_vi) {
+    return Math.round(
+      excessContribTax(
+        input.archer_part_vi.line39_current_year_excess,
+        input.archer_part_vi.december_31_value,
+      ),
+    );
+  }
   return excessContribTax(input.excess_archer_msa ?? 0, input.archer_msa_value);
 }
 
@@ -348,6 +366,15 @@ export function calculateOwnerForms(rawInput: Form5329Collection) {
         "Form 5329 education-account exception exceeds distributions",
       );
     }
+    if (
+      ownerInput.archer_part_vi &&
+      (ownerInput.excess_archer_msa !== undefined ||
+        ownerInput.archer_msa_value !== undefined)
+    ) {
+      throw new Error(
+        "Form5329 sourced Archer worksheet conflicts with legacy flat excess/value",
+      );
+    }
     const regular = sumAmounts(ownerInput.early_distribution);
     const simple = sumAmounts(ownerInput.simple_ira_early_distribution);
     const hsa = ownerInput.hsa_part_vii;
@@ -362,6 +389,16 @@ export function calculateOwnerForms(rawInput: Form5329Collection) {
       ...ownerInput,
       ...(regular > 0 ? { early_distribution: regular } : {}),
       ...(simple > 0 ? { simple_ira_early_distribution: simple } : {}),
+      ...(ownerInput.archer_part_vi
+        ? {
+          print_archer_line34: 0,
+          print_archer_line39:
+            ownerInput.archer_part_vi.line39_current_year_excess,
+          print_archer_line40:
+            ownerInput.archer_part_vi.line39_current_year_excess,
+          print_archer_line41: partVI_tax(ownerInput),
+        }
+        : {}),
       ...(hsa
         ? {
           print_hsa_line42: hsa.line42_prior_excess,
@@ -396,14 +433,16 @@ export function reconcileHsaOwnerForms(
 ): void {
   if (!forms.some((form) => form.hsa_part_vii !== undefined)) return;
   const hsaForms = z.object({
-    forms: z.array(z.object({
-      owner: z.enum(["primary", "spouse"]),
-      print_line2_taxpayer_contributions: z.number().nonnegative().optional(),
-      print_line12: z.number().nonnegative().optional(),
-      print_line13_deduction: z.number().nonnegative().optional(),
-      print_line16_taxable: z.number().nonnegative().optional(),
-      beneficiary_ssn: z.string().optional(),
-    }).passthrough()).min(1).max(2),
+    forms: z.array(
+      z.object({
+        owner: z.enum(["primary", "spouse"]),
+        print_line2_taxpayer_contributions: z.number().nonnegative().optional(),
+        print_line12: z.number().nonnegative().optional(),
+        print_line13_deduction: z.number().nonnegative().optional(),
+        print_line16_taxable: z.number().nonnegative().optional(),
+        beneficiary_ssn: z.string().optional(),
+      }).passthrough(),
+    ).min(1).max(2),
   }).passthrough().parse(raw8889).forms;
   for (const form of forms) {
     const hsa = form.hsa_part_vii;
@@ -415,20 +454,24 @@ export function reconcileHsaOwnerForms(
     }
     if (
       hsa.line43_unused_contribution_room !== Math.max(
-        0,
-        source.print_line12 -
-          (source.print_line2_taxpayer_contributions ?? 0),
-      ) ||
+          0,
+          source.print_line12 -
+            (source.print_line2_taxpayer_contributions ?? 0),
+        ) ||
       hsa.line44_taxable_distributions !==
         (source.print_line16_taxable ?? 0)
     ) {
-      throw new Error(`Form 5329 ${owner} HSA source does not reconcile to Form 8889`);
+      throw new Error(
+        `Form 5329 ${owner} HSA source does not reconcile to Form 8889`,
+      );
     }
     const prior = hsa.prior_year_source;
     if (hsa.line42_prior_excess > 0) {
       const line12 = source.print_line12;
       if (typeof line12 !== "number" || !Number.isFinite(line12)) {
-        throw new Error(`Form 5329 ${owner} prior HSA excess needs Form 8889 line 12`);
+        throw new Error(
+          `Form 5329 ${owner} prior HSA excess needs Form 8889 line 12`,
+        );
       }
       const expectedSsn = owner === "primary"
         ? filer?.primarySSN
@@ -445,22 +488,24 @@ export function reconcileHsaOwnerForms(
           expectedSsn.replaceAll("-", "") ||
         (source.print_line13_deduction ?? 0) !==
           Math.min(
-            source.print_line2_taxpayer_contributions ?? 0,
-            line12,
-          ) + Math.min(
-            hsa.line43_unused_contribution_room,
-            Math.max(
-              0,
-              hsa.line42_prior_excess - hsa.line44_taxable_distributions,
-            ),
-          )
+              source.print_line2_taxpayer_contributions ?? 0,
+              line12,
+            ) + Math.min(
+              hsa.line43_unused_contribution_room,
+              Math.max(
+                0,
+                hsa.line42_prior_excess - hsa.line44_taxable_distributions,
+              ),
+            )
       ) {
         throw new Error(
           `Form 5329 ${owner} prior HSA excess needs its reviewed filed 2024 owner source`,
         );
       }
     } else if (prior) {
-      throw new Error(`Form 5329 ${owner} has a prior HSA source without line 42`);
+      throw new Error(
+        `Form 5329 ${owner} has a prior HSA source without line 42`,
+      );
     }
   }
 }

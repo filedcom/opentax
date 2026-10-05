@@ -1017,8 +1017,29 @@ function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
     outputs.push(output(form8889, { w2_code_w_entries: codeW }));
   }
 
-  const r = sum(Box12Code.R);
-  if (r > 0) outputs.push(output(form8853, { employer_archer_msa: r }));
+  const codeR = regularItems(w2s).flatMap((item) =>
+    (item.box12_entries ?? []).filter((entry) =>
+      entry.code === Box12Code.R && entry.amount > 0
+    ).map((entry) => {
+      if (
+        !item.employee_ssn || !item.employer_ein ||
+        !item.source_document_reference
+      ) {
+        throw new Error(
+          "W-2 code R requires employee SSN, employer EIN and issued source reference",
+        );
+      }
+      return {
+        employee_ssn: item.employee_ssn,
+        employer_ein: item.employer_ein,
+        source_document_reference: item.source_document_reference,
+        amount: entry.amount,
+      };
+    })
+  );
+  if (codeR.length) {
+    outputs.push(output(form8853, { w2_code_r_entries: codeR }));
+  }
 
   const t = sum(Box12Code.T);
   if (t > 0) outputs.push(output(form8839, { adoption_benefits: t }));

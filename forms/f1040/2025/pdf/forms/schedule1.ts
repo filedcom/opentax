@@ -1,3 +1,4 @@
+import { assertArcherEmployerExcessIncomeSource } from "../../form8853_contributions_reconciliation.ts";
 import { assertEducationIncomeSource } from "../../../nodes/inputs/education_income/index.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { FilingStatus } from "../../../mef/header.ts";
@@ -291,6 +292,10 @@ export const schedule1Pdf: PdfFormDescriptor = {
     },
   ],
   instances(fields, filer, all) {
+    assertArcherEmployerExcessIncomeSource(fields, {
+      filer,
+      pending: all ?? {},
+    });
     assertEducationIncomeSource(
       all,
       [filer?.primarySSN, filer?.spouse?.ssn].filter((s): s is string => !!s),

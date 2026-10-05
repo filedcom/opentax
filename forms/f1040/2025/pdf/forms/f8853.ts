@@ -1,8 +1,10 @@
+import { calculateArcherContributions } from "../../../nodes/intermediate/forms/form8853/archer_contributions.ts";
 import { StandardFonts } from "pdf-lib";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
   calculateArcherMsaDistribution,
   inputSchema,
+  normalizeArcherContributionSource,
   normalizeArcherSource,
   normalizeMedicareSource,
 } from "../../../nodes/intermediate/forms/form8853/index.ts";
@@ -48,22 +50,32 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   {
     kind: "text",
     domainKey: "employer_archer_msa",
+    printZero: true,
     pdfField: "topmostSubform[0].Page1[0].f1_3[0]",
   },
   {
     kind: "text",
     domainKey: "taxpayer_archer_msa_contributions",
+    printZero: true,
     pdfField: "topmostSubform[0].Page1[0].f1_4[0]",
   },
   {
     kind: "text",
     domainKey: "line3_limitation_amount",
+    printZero: true,
     pdfField: "topmostSubform[0].Page1[0].f1_5[0]",
   },
   {
     kind: "text",
     domainKey: "compensation",
+    printZero: true,
     pdfField: "topmostSubform[0].Page1[0].f1_6[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line5_archer_deduction",
+    pdfField: "topmostSubform[0].Page1[0].f1_7[0]",
+    printZero: true,
   },
   {
     kind: "text",
@@ -177,10 +189,38 @@ export const form8853Pdf: PdfFormDescriptor = {
   ],
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
-    const source = normalizeMedicareSource(
+    const source = normalizeArcherContributionSource(normalizeMedicareSource(
       normalizeArcherSource(inputSchema.parse(raw)),
-    );
+    ));
     nativeForm8853.build(source, { filer, pending: allPending ?? {} });
+    if (source.archer_contribution_ledger) {
+      const ledger = source.archer_contribution_ledger;
+      const lines = calculateArcherContributions(
+        ledger,
+        source.w2_code_r_entries,
+      );
+      return [{
+        ...source,
+        msa_reporting_ssn: ledger.holder_ssn,
+        msa_reporting_name: ledger.filing_status === "mfj"
+          ? `${filer?.fullName} & ${
+            [
+              filer?.spouse?.firstName,
+              filer?.spouse?.middleInitial,
+              filer?.spouse?.lastName,
+              filer?.spouse?.suffix,
+            ].filter(Boolean).join(" ")
+          }`
+          : filer?.fullName,
+        employer_archer_msa: lines.line1,
+        taxpayer_archer_msa_contributions: lines.line2,
+        line3_limitation_amount: lines.rawEmployer > 0
+          ? undefined
+          : lines.line3,
+        compensation: lines.rawEmployer > 0 ? undefined : lines.line4,
+        line5_archer_deduction: lines.line5,
+      }];
+    }
     if (source.medicare_joint_distribution_ledgers) {
       const parts = buildMedicareJointDocumentParts(source, {
         filer,

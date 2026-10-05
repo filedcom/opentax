@@ -294,7 +294,7 @@ The broader code awaits the current full batch; general complete return XSD,
 business-rule, and ATS evidence remain open.
 
 - Archer paths beyond the sourced taxpayer ledger and death transfer, Medicare paths beyond the sourced sole-holder ledger below, LTC, and
-  contribution paths still lack a
+  contribution paths beyond the sourced small-employer single-holder route below still lack a
   complete node print record and source model. The v5.4 XSD nests Section
   A/B in `ArcherMSAAndMedcrAdvntgMSAGrp` with required `MSAHolderSSN`, and
   Section C in `SectCLTCInsuranceCntrctGrp` with required policyholder/insured
@@ -312,13 +312,11 @@ business-rule, and ATS evidence remain open.
   multiple LTC periods and a multiple-payee statement when line 15 is Yes. A
   single undifferentiated days/expenses/reimbursements tuple cannot safely
   represent those paths.
-- Archer contributions need an account-holder and monthly eligibility/HDHP
-  coverage worksheet. The current precomputed line 3 can support a bounded
-  manually substantiated case, but it does not validate the 2025 chart, Medicare
-  eligibility, married coverage allocation, or excess contribution reporting.
-  The node defaults missing compensation to infinity, whereas the printed line 5
-  is the smallest of lines 2, 3, and 4. Until compensation is known, a positive
-  deduction is not source-complete.
+- The sourced employee Archer contribution route below now calculates the monthly
+  HDHP worksheet and actual current-service compensation. Missing compensation
+  no longer defaults to infinity for a positive legacy deduction. Self-employed
+  compensation, two-holder Part I statements, prior excess, timely excess
+  withdrawals and coordinated Archer/HSA funding remain open.
 - Joint Archer contributions and multiple Section C copies still require their
   own repeatable source/attachment structures. The sourced both-holder Medicare
   normal-distribution route below now represents its two owner statements and
@@ -341,3 +339,92 @@ business-rule, and ATS evidence remain open.
 No compatibility layer or provisional fallback is proposed. The PDF change is
 bounded; the rest remains an explicit gap until its source model, calculation,
 native XML, and validation gates are complete.
+
+
+## October 6, 2026: sourced Archer contribution and current-excess route
+
+Primary sources: [TY2025 Form 8853 instructions](https://www.irs.gov/pub/irs-prior/i8853--2025.pdf),
+[TY2025 Form 5329 instructions](https://www.irs.gov/pub/irs-prior/i5329--2025.pdf),
+[TY2025 Form 8889 instructions](https://www.irs.gov/pub/irs-prior/i8889--2025.pdf), and
+[Form 8889](https://www.irs.gov/pub/irs-prior/f8889--2025.pdf).
+
+`archer_contribution_ledger` supports one taxpayer or one joint-return spouse
+using an eligible small employer's HDHP and actual current-service W-2 payroll
+compensation. Its post-2007 participation source is either documented active
+participation before 2008 or coverage under an Archer-participating employer.
+The workforce record identifies one of 2023/2024 with average employees at most
+50; each of twelve distinct month records identifies all holder/spouse HDHPs on
+the first day and the household other-coverage review. The policy deductible
+and out-of-pocket limits are validated against the 2025 self/family thresholds.
+Family coverage takes precedence over self-only coverage and uses the lower
+family deductible when multiple family policies are present. The worksheet
+sums 65% of self-only or 75% of family annual deductibles across eligible months
+and divides by twelve. MFS family coverage uses the ordinary 37.5% share;
+a different agreed MFS allocation is outside this route.
+
+Medicare months contribute zero to the worksheet, including the enrollment
+month. A dated enrollment source also prevents a deduction for cash deposited
+after enrollment. Another person's dependent is ineligible for the year. The
+source retains direct personal cash deposit/payment references, holder payer
+identity, designation for 2025 and actual dates through April 15, 2026; it
+excludes employer deposits, rollovers and transfers. Duplicate deposit/payment
+sources reject. Other Form 8853 activity and prior excess/withdrawals are
+reviewed absent for this contribution route.
+
+The actual W-2 code R entries retain employee SSN, employer EIN, issued source
+reference and raw amount. Filing binds those entries and compensation to the
+retained issued W-2, the declared holder and the employer maintaining the HDHP.
+The payroll review establishes current-service wages, excluding pension,
+annuity and deferred compensation. In this bounded route, W-2 box 1 consists
+of those wages plus any identified employer MSA excess already included in
+box 1. An employer/custodian review excludes employer funding for 2025 made in 2026;
+this route binds the sole actual issued 2025 W-2 from the holder’s HDHP employer
+on the return. Additional same-employer payroll records require a complete
+multiple-source compensation model and reject in this bounded route. It is not a general reconstruction
+of gross compensation from cafeteria
+plans, retirement deferrals or other pay adjustments.
+
+Any employer contribution prevents the personal deduction; filed lines 3/4
+are omitted as instructed while the underlying limit remains in the source
+worksheet to calculate employer excess. Employer excess over the smaller
+HDHP/pay limit is Schedule 1 line 8z income unless identified as already
+included in W-2 box 1. Personal contributions less the deduction, plus employer
+excess, flow to source-owned Form 5329 Part VI lines 34–41. Prior excess and
+Archer distributions are zero for this route. Its actual sourced December 31
+all-account value plus the actual personal contributions for 2025 deposited
+in 2026 caps the 6% tax, as the printed Form 5329 requires. A positive excess with
+zero year-end value still prints the required Form 5329 and zero line 41.
+
+Raw deposit, payroll, code R and value cents are retained. The filed line 1/2
+amounts round the respective sums, line 3 rounds the final annual worksheet,
+and line 4 rounds actual compensation. Line 5 and excess consequences use
+those same filed amounts; the filed 6% tax rounds to whole dollars. Native
+Form 8853 and PDF Part I share that projection and print required zero lines.
+Form 5329 retains its owner and full source workpaper. With prior excess zero,
+line 34 directs the filer to skip to line 39; native/PDF leave lines 35–38 blank
+and print lines 34/39/40/41, including when its tax is zero. Schedule 1/2 joins and the Form 1040
+additional-income/adjustment/other-tax totals are reconciled at actual export.
+
+The no-HSA-funding review is checked against actual W-2 code W and retained
+HSA contribution fields. This is a bounded coordination gate, not a claim that
+having both accounts is illegal: Form 8889 reduces the HSA contribution limit
+by Archer MSA contributions. Simultaneous funding needs its complete
+coordinated worksheet and remains open.
+
+Evidence: `forms/f1040/e2e/form8853_contributions_2025.test.ts` uses synthetic
+source records, not authenticated taxpayer documents. Full local TY2025 v5.4
+Return1040 XSD and actual filled packets cover personal cents, changing
+self/family coverage, pre-2008 participation, MFS family default share, pay cap,
+employer funding, taxable employer excess,
+mutual funding exclusion, employer excess already in wages, Medicare timing,
+spouse ownership, zero-value excess, a following-year cash deposit, dependent ineligibility and partial other
+coverage. Actual XML/PDF export negatives cover missing/wrong owner, invalid
+HDHP/month/enrollment/payment sources, compensation/code R/HSA conflicts and
+Schedule 1/Form 5329/Form 1040 tampering. Known W-2 code R activity is checked
+at the native/PDF Form 1040 entry points so removing a required contribution
+form cannot silently omit its reporting, including a zero-income/zero-tax
+employer funding return. A malformed public schema source rejects the whole
+input before an identified filer/return source is created. Ignored source/worksheet/XML/PDF/PNG
+and focused logs are under `.state/research/2026-10-06-form8853-contributions/`.
+These are local schema and rendering checks, not IRS business-rule or ATS
+acceptance. Broad Archer/MSA support remains open.

@@ -366,3 +366,32 @@ Deno.test("validation: negative ltc_gross_payments throws", () => {
 Deno.test("validation: negative ltc_period_days throws", () => {
   assertThrows(() => compute({ ltc_period_days: -1 }));
 });
+
+Deno.test("positive Archer deduction cannot replace missing actual compensation with infinity", () => {
+  assertThrows(
+    () =>
+      compute({
+        taxpayer_archer_msa_contributions: 2000,
+        line3_limitation_amount: 2600,
+      }),
+    Error,
+    "actual compensation",
+  );
+});
+
+Deno.test("Archer compensation and monthly limitation cannot be explicitly infinite", () => {
+  assertThrows(() =>
+    compute({
+      taxpayer_archer_msa_contributions: 2000,
+      line3_limitation_amount: 2600,
+      compensation: Infinity,
+    })
+  );
+  assertThrows(() =>
+    compute({
+      taxpayer_archer_msa_contributions: 2000,
+      line3_limitation_amount: Infinity,
+      compensation: 50000,
+    })
+  );
+});

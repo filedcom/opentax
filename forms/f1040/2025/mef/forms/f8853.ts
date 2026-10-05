@@ -1,3 +1,7 @@
+import {
+  reconcileArcherContributions,
+  reconcileArcherPartVI,
+} from "../../form8853_contributions_reconciliation.ts";
 import { schedule1 as nativeSchedule1 } from "./schedule1.ts";
 import { schedule2 as nativeSchedule2 } from "./schedule2.ts";
 import { z } from "zod";
@@ -8,6 +12,7 @@ import {
   type Form8853Input,
   inputSchema,
   MsaOwner,
+  normalizeArcherContributionSource,
   normalizeArcherSource,
   normalizeMedicareSource,
 } from "../../../nodes/intermediate/forms/form8853/index.ts";
@@ -320,9 +325,12 @@ function buildIRS8853(rawFields: Input, context?: MefBuildContext): string {
   if (Object.keys(rawFields).length === 0) {
     throw new Error("Form 8853 MeF cannot file an empty pending record");
   }
-  const fields = normalizeMedicareSource(
+  const fields = normalizeArcherContributionSource(normalizeMedicareSource(
     normalizeArcherSource(inputSchema.parse(rawFields)),
-  );
+  ));
+  if (fields.archer_contribution_ledger) {
+    return buildArcherContributionIRS8853(fields, context);
+  }
   if (fields.medicare_joint_distribution_ledgers) {
     return buildMedicareJointDocumentParts(fields, context).control;
   }
@@ -400,3 +408,55 @@ export const form8853: MefFormDescriptor<"form8853", Input> = {
     return buildIRS8853(fields, context);
   },
 };
+
+function buildArcherContributionIRS8853(
+  fields: Form8853Input,
+  context?: MefBuildContext,
+): string {
+  const { lines, ssn } = reconcileArcherContributions(fields, context);
+  const entries = z.object({
+    owner_entries: z.array(
+      z.object({ owner: z.string(), archer_part_vi: z.unknown().optional() })
+        .passthrough(),
+    ).optional(),
+  }).parse(context?.pending?.form5329 ?? {});
+  reconcileArcherPartVI(entries.owner_entries ?? [], fields, context);
+  const read = (xml: string, tag: string) =>
+    Number(new RegExp(`<${tag}>(-?[0-9]+)</${tag}>`).exec(xml)?.[1] ?? 0);
+  const s1 = nativeSchedule1.build(
+    (context?.pending?.schedule1 ?? {}) as never,
+    context,
+  );
+  const s2 = nativeSchedule2.build(
+    (context?.pending?.schedule2 ?? {}) as never,
+    context,
+  );
+  const f1040 = z.object({
+    line8_additional_income: z.number().optional(),
+    line10_adjustments: z.number().optional(),
+    line23_other_taxes: z.number().optional(),
+  }).parse(context?.pending?.f1040 ?? {});
+  if (
+    Math.round(f1040.line8_additional_income ?? 0) !==
+      read(s1, "TotalAdditionalIncomeAmt") ||
+    Math.round(f1040.line10_adjustments ?? 0) !==
+      read(s1, "TotalAdjustmentsAmt") ||
+    Math.round(f1040.line23_other_taxes ?? 0) !== read(s2, "TotalOtherTaxesAmt")
+  ) {
+    throw new Error(
+      "Archer contribution Schedule1/2 totals conflict with Form1040",
+    );
+  }
+  return elements("IRS8853", [
+    elements("ArcherMSAAndMedcrAdvntgMSAGrp", [
+      element("MSAHolderSSN", ssn),
+      element("ArcherMSAEmployerContriAmt", lines.line1),
+      element("ArcherMSAContributionAmt", lines.line2),
+      ...(lines.rawEmployer > 0 ? [] : [
+        element("ArcherMSAContriLimitationAmt", lines.line3),
+        element("HDHPEmployerCompensationAmt", lines.line4),
+      ]),
+      element("ArcherMSADeductionAmt", lines.line5),
+    ]),
+  ]);
+}

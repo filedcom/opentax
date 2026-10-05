@@ -1,3 +1,4 @@
+import { reconcileArcherPartVI } from "../../form8853_contributions_reconciliation.ts";
 import {
   calculateOwnerForms,
   inputSchema,
@@ -9,9 +10,18 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 // Verified against the canonical 2025 Form 5329 AcroForm. Page 1 fields
 // f1_3–f1_8 are the stand-alone filing address, not Part I amounts.
 // Parts I and II start at f1_9 and f1_14; HSA Part VII starts at f2_17.
-// Other excess-contribution parts need source vintage/workpaper lines before
-// their PDF copies can be complete, so those positive shapes are guarded below.
+// Sourced Archer Part VI retains its page even when line41 is zero. With
+// line34 zero, IRS instructions skip lines35–38. Other unsourced parts are guarded.
 const fields: ReadonlyArray<PdfFieldEntry> = [
+  ...Array.from(
+    { length: 8 },
+    (_, index) => ({
+      kind: "text" as const,
+      domainKey: `print_archer_line${index + 34}`,
+      pdfField: `topmostSubform[0].Page2[0].f2_${index + 9}[0]`,
+      printZero: true,
+    }),
+  ),
   {
     kind: "text",
     domainKey: "owner_name",
@@ -113,13 +123,12 @@ export const form5329Pdf: PdfFormDescriptor = {
   pendingKey: "form5329",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f5329--2025.pdf",
   pageIndices(fields) {
-    // Page 2 has only Part VII HSA fields in supported packets. The source
-    // guard below rejects positive Parts V, VI, and VIII worksheet routes.
+    // Retain page2 for sourced Archer current excess even when its tax is zero.
     const printsPartVII = Array.from(
       { length: 8 },
       (_, index) => fields[`print_hsa_line${index + 42}`],
     ).some((value) => typeof value === "number" && Math.round(value) !== 0);
-    return printsPartVII ? [0, 1] : [0];
+    return printsPartVII || fields.archer_part_vi !== undefined ? [0, 1] : [0];
   },
   instances(pending, filer, allPending) {
     const unexpected = Object.keys(pending).filter((key) =>
@@ -146,6 +155,10 @@ export const form5329Pdf: PdfFormDescriptor = {
       );
     }
     reconcileHsaOwnerForms(calculated.forms, allPending?.form8889, filer);
+    reconcileArcherPartVI(calculated.forms, allPending?.form8853, {
+      filer,
+      pending: allPending ?? {},
+    });
     if (
       calculated.total > 0 &&
       allPending?.schedule2?.line8_form5329_tax !== calculated.total

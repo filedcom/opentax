@@ -841,14 +841,22 @@ Deno.test("box12_code_t_routes_to_form8839: Code T = $5,000 → adoption_benefit
   assertEquals(fieldsOf(result.outputs, form8839)!.adoption_benefits, 5000);
 });
 
-Deno.test("box12_code_r_routes_to_form8853: Code R = $1,500 → employer_archer_msa = 1500", () => {
+Deno.test("box12_code_r_routes_to_form8853: source-owned code R entries", () => {
   const result = compute([
     minimalItem({
       box1_wages: 50000,
+      employee_ssn: "123456789",
+      employer_ein: "123456789",
+      source_document_reference: "issued W2 R",
       box12_entries: [{ code: Box12Code.R, amount: 1500 }],
     }),
   ]);
-  assertEquals(fieldsOf(result.outputs, form8853)!.employer_archer_msa, 1500);
+  assertEquals(fieldsOf(result.outputs, form8853)!.w2_code_r_entries, [{
+    employee_ssn: "123456789",
+    employer_ein: "123456789",
+    source_document_reference: "issued W2 R",
+    amount: 1500,
+  }]);
 });
 
 Deno.test("box12_code_d_routes_to_form8880 with employee ownership", () => {
@@ -1723,6 +1731,8 @@ Deno.test("comprehensive_w2_full_workflow: two W-2s with all major boxes populat
   const result = compute([
     minimalItem({
       employee_ssn: "123456789",
+      employer_ein: "123456789",
+      source_document_reference: "issued smoke W2 R",
       box1_wages: 75000,
       box2_fed_withheld: 8000,
       box5_medicare_wages: 75000,
@@ -1781,7 +1791,12 @@ Deno.test("comprehensive_w2_full_workflow: two W-2s with all major boxes populat
   // form8839 adoption
   assertEquals(fieldsOf(result.outputs, form8839)!.adoption_benefits, 3000);
   // form8853 archer MSA
-  assertEquals(fieldsOf(result.outputs, form8853)!.employer_archer_msa, 1200);
+  assertEquals(fieldsOf(result.outputs, form8853)!.w2_code_r_entries, [{
+    employee_ssn: "123456789",
+    employer_ein: "123456789",
+    source_document_reference: "issued smoke W2 R",
+    amount: 1200,
+  }]);
   // form8880 elective deferrals
   assertEquals(fieldsOf(result.outputs, form8880)!.w2_deferral_entries, [{
     employee_ssn: "123456789",
