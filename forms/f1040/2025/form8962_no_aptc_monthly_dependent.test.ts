@@ -86,6 +86,17 @@ const policy = {
     },
   })),
 };
+const positiveAptcPolicy = {
+  ...policy,
+  monthly_slcsps: Array.from({ length: 12 }, (_, index) =>
+    index < 6 ? 700 : 800
+  ),
+  monthly_aptcs: Array(12).fill(900),
+  annual_slcsp: 9_000,
+  annual_aptc: 10_800,
+  slcsp_corrections: undefined,
+  no_aptc_monthly_evidence: undefined,
+};
 
 const filer = {
   primarySSN: "123456789",
@@ -102,7 +113,10 @@ const xsdPath = new URL(
   import.meta.url,
 ).pathname;
 
-function filedReturn(marketplacePolicy: Record<string, unknown> = policy) {
+function filedReturn(
+  marketplacePolicy: Record<string, unknown> = policy,
+  parentWages = 24_880,
+) {
   return f1040_2025.executeReturn({
     general: {
       filing_status: InputFilingStatus.Single,
@@ -126,7 +140,7 @@ function filedReturn(marketplacePolicy: Record<string, unknown> = policy) {
       employer_address_state: "TX",
       employer_address_zip: "78701",
       employee_ssn: "123-45-6789",
-      box1_wages: 24_880,
+      box1_wages: parentWages,
       box2_fed_withheld: 3_000,
     }],
     f1095a: [marketplacePolicy],
@@ -159,17 +173,7 @@ Deno.test("Form 8962 monthly no-APTC policy with a required-filing dependent rea
 });
 
 Deno.test("Form 8962 one family policy caps excess APTC for a single filer with one dependent", async () => {
-  const aptcPolicy = {
-    ...policy,
-    monthly_slcsps: Array.from({ length: 12 }, (_, index) =>
-      index < 6 ? 700 : 800
-    ),
-    monthly_aptcs: Array(12).fill(900),
-    annual_slcsp: 9_000,
-    annual_aptc: 10_800,
-    slcsp_corrections: undefined,
-    no_aptc_monthly_evidence: undefined,
-  };
+  const aptcPolicy = positiveAptcPolicy;
   const result = filedReturn(aptcPolicy);
   assertEquals(result.diagnostics, []);
   const pending = normalizeAllPending(result.pending);
@@ -229,6 +233,66 @@ Deno.test("Form 8962 one family policy caps excess APTC for a single filer with 
     }, filer)
   );
 });
+
+for (
+  const tier of [
+    { label: "below 200%", parentWages: 20_000, income: 36_000, pct: 176, cap: 375 },
+    { label: "300% to 399%", parentWages: 50_000, income: 66_000, pct: 322, cap: 1_625 },
+    { label: "exactly 400%", parentWages: 65_760, income: 81_760, pct: 400, cap: undefined },
+  ] as const
+) {
+  Deno.test(`Form 8962 two-person family policy applies Single Table 5 at ${tier.label}`, async () => {
+    const result = filedReturn(positiveAptcPolicy, tier.parentWages);
+    assertEquals(result.diagnostics, []);
+    const pending = normalizeAllPending(result.pending);
+    const fields = pending.form8962;
+    assertEquals(fields.household_income, tier.income);
+    assertEquals(fields.federal_poverty_pct, tier.pct);
+    assertEquals(fields.total_advance_ptc, 10_800);
+    assertEquals(fields.repayment_limitation, tier.cap);
+    const repayment = tier.cap === undefined
+      ? fields.excess_advance_payment
+      : tier.cap;
+    assertEquals(fields.excess_advance_premium, repayment);
+    assertEquals(pending.schedule2.line1a_excess_advance_premium, repayment);
+    assertEquals(pending.f1040.line17_additional_taxes, repayment);
+    const projected = form8962Pdf.projectFields?.(fields, pending) ?? {};
+    assertEquals(projected.repayment_limitation, tier.cap);
+    assertEquals(projected.excess_advance_premium, repayment);
+    assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
+    const prepared = await f1040_2025.prepareReturn(result.pending, filer);
+    assertEquals(
+      prepared.bundle.xml.includes("<AdditionalTaxLimitationAmt>"),
+      tier.cap !== undefined,
+    );
+    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+    try {
+      await Deno.writeTextFile(xmlPath, prepared.bundle.xml);
+      const validated = await new Deno.Command("xmllint", {
+        args: ["--noout", "--schema", xsdPath, xmlPath],
+        stdout: "piped",
+        stderr: "piped",
+      }).output();
+      assertEquals(
+        validated.code,
+        0,
+        new TextDecoder().decode(validated.stderr),
+      );
+    } finally {
+      await Deno.remove(xmlPath);
+    }
+    await prepared.renderPdf();
+    await assertRejects(() =>
+      f1040_2025.prepareReturn({
+        ...result.pending,
+        form8962: {
+          ...fields,
+          repayment_limitation: tier.cap === undefined ? 975 : tier.cap + 1,
+        },
+      }, filer)
+    );
+  });
+}
 
 Deno.test("Form 8962 dependent no-APTC monthly filing rejects source identity, SLCSP and final credit tampering", async () => {
   const result = filedReturn();

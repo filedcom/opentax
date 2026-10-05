@@ -16,6 +16,15 @@ instructions](https://www.irs.gov/instructions/i8962). Multiple policies,
 shared allocation, uncovered family members, source-byte authentication, and
 IRS acceptance remain outside this route.
 
+The same two-person policy fixture now exercises the remaining Single filing
+status Table 5 brackets: $36,000 household income (176% FPL) limits repayment
+to $375; $66,000 (322% FPL) limits it to $1,625; and exactly $81,760
+(400% FPL) has no limitation. Each case recomputes the credit and excess APTC
+from the same twelve sourced policy months, checks Schedule 2 and Form 1040,
+passes native MeF with the TY2025 v5.4 XSD and filled PDF, and rejects an
+altered line 28 cap. These caps follow the *Single* filing-status column even
+though the household contains a dependent.
+
 ## Consistent Marketplace correction record identity across policies (2026-10-05)
 
 The same-state monthly export allows one Marketplace determination record to
