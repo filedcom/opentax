@@ -10,7 +10,8 @@ import {
 // Part III annuity. A sourced partial-share Part-II-only estate allocation
 // and Part-III-only estate allocations are also supported. A separate
 // partial-share beneficiary route combines NUA with sourced death benefit
-// and estate tax when both Parts II and III are elected without an annuity.
+// and estate tax when both Parts II and III are elected, optionally with a
+// sourced annuity amount and its separate box 8 percentage.
 export function reconcileForm4972Nua(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
@@ -55,6 +56,13 @@ export function reconcileForm4972Nua(
     typeof fields.capital_gain_amount === "number" &&
     fields.capital_gain_amount > 0 &&
     (item?.box8_other ?? 0) === 0;
+  const partialNuaDeathAnnuityEstatePartIII = partialDeath && partialEstate &&
+    fields.elect_capital_gain === true &&
+    fields.elect_10yr_averaging === true &&
+    typeof fields.capital_gain_amount === "number" &&
+    fields.capital_gain_amount > 0 &&
+    (item?.box8_other ?? 0) > 0 &&
+    typeof item?.box8_pct_total === "number";
   const partialNuaAnnuityEstatePartIII = partialEstate && !partialDeath &&
     (item?.box8_other ?? 0) > 0 &&
     fields.elect_10yr_averaging === true &&
@@ -78,10 +86,12 @@ export function reconcileForm4972Nua(
       (fields.beneficiary_distribution !== true ||
         (sharePct !== 100 &&
           (((partialDeath && partialEstate) &&
-            !partialNuaDeathEstatePartIII) ||
+            !partialNuaDeathEstatePartIII &&
+            !partialNuaDeathAnnuityEstatePartIII) ||
             (!partialDeath && !partialEstate) ||
             ((item.box8_other ?? 0) > 0 &&
-              !partialNuaAnnuityEstatePartIII) ||
+              !partialNuaAnnuityEstatePartIII &&
+              !partialNuaDeathAnnuityEstatePartIII) ||
             (partialEstate && fields.elect_capital_gain === true &&
               fields.elect_10yr_averaging === true &&
               (typeof fields.capital_gain_amount !== "number" ||
@@ -95,7 +105,7 @@ export function reconcileForm4972Nua(
       fields.elect_10yr_averaging !== true)
   ) {
     throw new Error(
-      "Form 4972 NUA requires a sourced Part II or III; combined partial-share death-benefit and estate adjustments require both elections without an annuity",
+      "Form 4972 NUA requires a sourced Part II or III; combined partial-share death-benefit, estate, and annuity adjustments require both elections and a sourced box 8 percentage",
     );
   }
   if (
@@ -138,10 +148,14 @@ export function reconcileForm4972Nua(
   const averaging = fields.elect_10yr_averaging === true;
   if (hasAllocation) {
     const annuitySource = item.box8_other ?? 0;
+    // This route retains raw box 8 cents; the calculator rounds its grossed-up
+    // line 11 before the official annuity worksheet. Cash allocations stay exact.
     if (
       annuitySource > 0 &&
       (!Number.isInteger(taxable) || !Number.isInteger(gain) ||
-        !Number.isInteger(nua) || !Number.isInteger(annuitySource) ||
+        !Number.isInteger(nua) ||
+        (!partialNuaDeathAnnuityEstatePartIII &&
+          !Number.isInteger(annuitySource)) ||
         (capitalElection && roundedNua * roundedGain % roundedTaxable !== 0))
     ) {
       throw new Error(
