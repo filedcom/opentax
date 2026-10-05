@@ -20,10 +20,13 @@ function digits(value: string): string {
 
 function amount(value: string): number | undefined {
   if (!value.trim()) return undefined;
-  const normalized = value.trim().replace(/^\$\s*/, "").replace(/,/g, "");
-  if (!/^\d+(?:\.\d{1,2})?$/.test(normalized)) {
+  const trimmed = value.trim();
+  if (
+    !/^\$?\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?$/.test(trimmed)
+  ) {
     throw new Error("Form 1098 issuer Copy B has an invalid amount field");
   }
+  const normalized = trimmed.replace(/[$,\s]/g, "");
   const parsed = Number(normalized);
   if (!Number.isFinite(parsed)) {
     throw new Error("Form 1098 issuer Copy B has an invalid amount field");

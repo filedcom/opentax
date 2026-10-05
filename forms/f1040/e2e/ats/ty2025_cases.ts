@@ -643,6 +643,10 @@ export const SCENARIO_1040_01_FACTS = {
     federalWithholding: 0,
   },
   form5695: {
+    qualifiedEnergyEfficiencyImprovementsInstalledInUS: true,
+    originalUserOfImprovements: true,
+    improvementsExpectedToRemainInUseFiveYears: true,
+    improvementsRelatedToHomeConstruction: false,
     exteriorDoors: [
       { cost: 1_020, qmid: "A1B2" },
       { cost: 920, qmid: "A1B3" },
@@ -653,6 +657,8 @@ export const SCENARIO_1040_01_FACTS = {
     // Keep the source discrepancy visible until IRS guidance resolves it.
     line19eOtherDoorsCost: 2_740,
     windows: [{ cost: 600, qmid: "A1B5" }],
+    residentialEnergyPropertyCostsIncurred: true,
+    residentialEnergyPropertyOriginallyPlacedInServiceByTaxpayer: true,
     centralAirConditioners: [{ cost: 2_100, qmid: "A1B6" }, { cost: 400 }],
   },
 } as const;

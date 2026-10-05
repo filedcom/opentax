@@ -292,6 +292,18 @@ Deno.test("1040 Scenario 1 source amounts and test SSN stay intact", () => {
   assertEquals(facts.scheduleH.cashWagesOverQuarterLimit, false);
   assertEquals(facts.taxpayer.filingStatus, "single");
   assertEquals(facts.taxpayer.digitalAssets, false);
+  assertEquals(
+    facts.form5695.qualifiedEnergyEfficiencyImprovementsInstalledInUS,
+    true,
+  );
+  assertEquals(facts.form5695.originalUserOfImprovements, true);
+  assertEquals(facts.form5695.improvementsExpectedToRemainInUseFiveYears, true);
+  assertEquals(facts.form5695.improvementsRelatedToHomeConstruction, false);
+  assertEquals(facts.form5695.residentialEnergyPropertyCostsIncurred, true);
+  assertEquals(
+    facts.form5695.residentialEnergyPropertyOriginallyPlacedInServiceByTaxpayer,
+    true,
+  );
   assertEquals(facts.w2[0].employerName, "The Green Ladies");
   assertEquals(facts.w2[1].employerName, "C&R");
   assertEquals(facts.w2[0].employerEin, facts.w2[1].employerEin);

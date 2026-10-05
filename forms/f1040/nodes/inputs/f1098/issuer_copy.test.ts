@@ -125,6 +125,19 @@ Deno.test("Form 1098 official Copy B fields bind reviewed bytes and tax boxes", 
     Error,
     "invalid amount field",
   );
+  const malformedGroupingBox = await copy("18000", true, "1,00");
+  const malformedGroupingBoxReview = await review(malformedGroupingBox);
+  await assertRejects(
+    () =>
+      verifyForm1098IssuerCopy(
+        { ...item, box2_outstanding_principal: undefined },
+        malformedGroupingBoxReview,
+        malformedGroupingBox,
+        "Lender1098.pdf",
+      ),
+    Error,
+    "invalid amount field",
+  );
   const negativeBlankBox = await copy("18000", true, "-1");
   const negativeBlankBoxReview = await review(negativeBlankBox);
   await assertRejects(
