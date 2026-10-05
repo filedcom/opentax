@@ -1141,6 +1141,10 @@ export const SCENARIO_1040_13_FACTS = {
     lastName: "Birch",
     ssn: "400001234",
   },
+  form1040: {
+    // Page 1's main-home-in-the-U.S. box is visibly unmarked in the issued PDF.
+    mainHomeInUsOverHalfYearCheckboxChecked: false,
+  },
   w2: {
     employerName: "OAK SUPPLY CO",
     employerEin: "000000014",

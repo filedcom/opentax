@@ -20,6 +20,11 @@ Deno.test("ATS 1040 Scenario 13 maps every printed source form into one input", 
   const refueling = input.f8911 as Record<string, unknown>;
   assertEquals(general.taxpayer_ssn, facts.taxpayer.ssn);
   assertEquals(general.spouse_ssn, facts.spouse.ssn);
+  assertEquals(
+    facts.form1040.mainHomeInUsOverHalfYearCheckboxChecked,
+    false,
+  );
+  assertEquals(general.main_home_in_us_over_half_year, false);
   assertEquals(w2.employer_ein, facts.w2.employerEin);
   assertEquals(w2.employee_ssn, facts.taxpayer.ssn);
   assertEquals(w2.box1_wages, facts.w2.box1Wages);
@@ -84,7 +89,10 @@ Deno.test("ATS 1040 Scenario 13 routes W-2 facts but stops before a current-law 
   assertEquals(form?.line25a_w2_withheld, 609);
   assertEquals(form?.line12a_standard_deduction, 31_500);
   assertEquals(form?.line15_taxable_income, 120);
-  assertEquals(result.pending.schedule3?.line6j_alt_fuel_vehicle_refueling, undefined);
+  assertEquals(
+    result.pending.schedule3?.line6j_alt_fuel_vehicle_refueling,
+    undefined,
+  );
   assertEquals(
     result.diagnostics.some((diagnostic) =>
       String(diagnostic.message).includes(
