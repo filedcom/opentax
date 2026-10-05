@@ -268,8 +268,19 @@ deduction must exactly equal their reported amounts. Native and PDF Schedule A
 replay the two source identities and exact line 8a total and reject competing
 line 8b/8c, refinance points, and Form 8396 claims. The synthetic $6,000 and
 $12,000 interest plus $3,000 purchase points reaches $21,000 on Schedule A
-and Form 1040; positive and tamper source/export fixtures are authored but
-unrun under the implementation-first workflow.
+and Form 1040.
+
+On 2026-10-05, the authored positive full-return case passed local TY2025
+v5.4 XSD validation: the source calculation carries $21,000 to Schedule A
+line 8a and Form 1040 itemized deductions. The direct Schedule A PDF projection
+case also passed, checking the same $21,000 amount and rejecting a changed
+filed total or a second-loan recipient that is not the filer. Focused commands:
+`deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov --filter='2025 purchase points and an existing mortgage' forms/f1040/2025/mef/xsd-validation.test.ts`
+(1 passed) and
+`deno test --filter='Schedule A PDF replays purchase points and the second mortgage' forms/f1040/2025/pdf/forms/schedule_a.test.ts`
+(1 passed). This exercises native XML and descriptor projection, not a rendered
+filled packet. Issuer provenance, loan and points records, other loan counts,
+and full mortgage-limit scope remain open.
 
 This structured review does not authenticate lender-issued Form 1098 copies,
 closing disclosure, lender maximum-balance certificates, or proof of direct
