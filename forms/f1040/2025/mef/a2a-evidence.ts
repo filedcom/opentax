@@ -281,6 +281,12 @@ function assertArchivedDocumentInventory(
   const referenceGroups = [...xml.matchAll(
     /\breferenceDocumentId="([^"]+)"/g,
   )].map((match) => match[1].trim().split(/\s+/));
+  // The return builder emits double-quoted references. A valid XML attribute
+  // using single quotes or whitespace around '=' must not disappear from the
+  // inventory check and leave a dangling reference undetected.
+  const referenceAttributeCount = [...xml.matchAll(
+    /\breferenceDocumentId\s*=/g,
+  )].length;
   const references = referenceGroups.flat();
   const binaries = [...xml.matchAll(
     /<BinaryAttachment\b[^>]*>([\s\S]*?)<\/BinaryAttachment>/g,
@@ -308,6 +314,7 @@ function assertArchivedDocumentInventory(
     documents.some((document, index) =>
       document.id !== documentId(document.tag, index)
     ) ||
+    referenceAttributeCount !== referenceGroups.length ||
     referenceGroups.some((group) => new Set(group).size !== group.length) ||
     references.some((id) => !ids.includes(id)) ||
     hasMismatchedSingleReferenceName(xml, tagsById) ||
