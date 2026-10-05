@@ -12,8 +12,9 @@ parent form or release gate.
 Work the existing non-named queue first where scope and source evidence are
 settled. The [dependency audit](docs/mef/ty2025-nonnamed-board-dependency-audit.md)
 identifies independent work, product decisions, named-form prerequisites,
-validation, and IRS ATS needs. The integrated local full batch passed
-11,188/11,188 after the latest source and PDF fixes. The current-source selected packet
+validation, and IRS ATS needs. The latest complete local full batch passed
+11,188/11,188 at historical commit `632d3a46`; focused and packet checks below
+cover later slices, but no full rerun includes them yet. The current-source selected packet
 has 175 exportable synthetic cases with 1,073 filled PDF pages; the latest
 read-only source/hash/page/XSD replay also omits 14 blank Form 6251 pages and
 passes with the corrected Form 8863 student identity. Additional bounded
