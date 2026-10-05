@@ -5,6 +5,7 @@ import {
   calculateForm8863Lines,
   type F8863Input,
   type F8863Item,
+  form8863InstitutionWorkpapers,
   validateForm8863FilingSource,
 } from "../../../nodes/inputs/f8863/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
@@ -51,45 +52,56 @@ export function assertForm8863FinalizedReturn(
       ?.line8r_taxable_scholarships,
   );
   const claimedIncomeRefs = new Set<string>();
+  const qualifiedPaymentRefs = new Set(
+    fields.f8863s.flatMap((student) =>
+      form8863InstitutionWorkpapers(student).flatMap(({ workpaper }) =>
+        workpaper.payment_record_ids
+      )
+    ),
+  );
   for (const student of fields.f8863s) {
-    const exception = student.education_expense_workpaper
-      ?.missing_1098t_exception;
-    if (exception?.reason !== "institution_not_required") continue;
-    const basis = exception.furnishing_basis;
-    if (
-      basis.kind !== "formal_billing_arrangement" &&
-      basis.kind !== "expenses_waived_or_paid_entirely_with_scholarships"
-    ) continue;
-    const amount = basis.kind === "formal_billing_arrangement"
-      ? basis.taxable_payment_amount
-      : basis.taxable_scholarship_payment_amount;
-    if (!amount) continue;
-    const source = incomeRows.find((row) =>
-      row.source_document_reference === basis.student_gross_income_record_id
-    );
-    if (
-      !source ||
-      source.student_ssn.replaceAll("-", "") !==
-        student.student_ssn?.replaceAll("-", "") ||
-      source.taxable_amount !== amount ||
-      claimedIncomeRefs.has(source.source_document_reference) ||
-      (basis.kind === "formal_billing_arrangement" &&
-        (source.kind !== "w2_education_payment" ||
-          source.payroll_allocation_record_id !==
-            basis.payment_tax_treatment_record_id)) ||
-      (basis.kind === "expenses_waived_or_paid_entirely_with_scholarships" &&
-        (source.kind !== "scholarship_not_on_w2" ||
-          source.payer_name !== exception.institution_name ||
-          source.scholarship_terms_record_id !==
-            basis.scholarship_terms_record_id ||
-          source.taxable_allocation_record_id !==
-            basis.taxable_allocation_record_id))
-    ) {
-      throw new Error(
-        "Form 8863 taxable assistance allocation must match the student's retained taxable income source and finalized income route",
+    for (const { workpaper } of form8863InstitutionWorkpapers(student)) {
+      const exception = workpaper.missing_1098t_exception;
+      if (exception?.reason !== "institution_not_required") continue;
+      const basis = exception.furnishing_basis;
+      if (
+        basis.kind !== "formal_billing_arrangement" &&
+        basis.kind !== "expenses_waived_or_paid_entirely_with_scholarships"
+      ) continue;
+      const amount = basis.kind === "formal_billing_arrangement"
+        ? basis.taxable_payment_amount
+        : basis.taxable_scholarship_payment_amount;
+      if (!amount) continue;
+      const source = incomeRows.find((row) =>
+        row.source_document_reference === basis.student_gross_income_record_id
       );
+      if (
+        !source ||
+        source.student_ssn.replaceAll("-", "") !==
+          student.student_ssn?.replaceAll("-", "") ||
+        source.taxable_amount !== amount ||
+        claimedIncomeRefs.has(source.source_document_reference) ||
+        (basis.kind === "formal_billing_arrangement" &&
+          (source.kind !== "w2_education_payment" ||
+            source.payroll_allocation_record_id !==
+              basis.payment_tax_treatment_record_id)) ||
+        (basis.kind === "expenses_waived_or_paid_entirely_with_scholarships" &&
+          (source.kind !== "scholarship_not_on_w2" ||
+            source.payer_name !== exception.institution_name ||
+            source.scholarship_terms_record_id !==
+              basis.scholarship_terms_record_id ||
+            source.taxable_allocation_record_id !==
+              basis.taxable_allocation_record_id ||
+            source.nonqualified_expense_payment_record_ids.some((reference) =>
+              qualifiedPaymentRefs.has(reference)
+            )))
+      ) {
+        throw new Error(
+          "Form 8863 taxable assistance allocation must match the student's retained taxable income source and finalized income route",
+        );
+      }
+      claimedIncomeRefs.add(source.source_document_reference);
     }
-    claimedIncomeRefs.add(source.source_document_reference);
   }
   if (fields.f8863s.some((student) => student.filing_status !== filingStatus)) {
     throw new Error("Form 8863 filing status must match the finalized return");
