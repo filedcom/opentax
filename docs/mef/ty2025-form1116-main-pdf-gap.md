@@ -26,6 +26,51 @@ The seven focused cases passed. This verifies those synthetic shapes and their
 page presence; country-code coverage for every other possible source, issued
 copy authentication, visual page review, IRS business rules, and ATS remain open.
 
+## Three-country passive-interest prepared packet visual review (2026-10-05)
+
+Built the bounded Canada/France/Germany interest return from the focused
+`three-country passive interest` fixture, assembled its native MeF bundle and
+filled PDF, then rendered all pages with Poppler `pdftoppm` 26.09.0 at 150 dpi.
+The reviewed packet has eight letter-size pages in this order: Form 1040 pages
+1–2, Schedule 3, Form 1040 Schedule B, Form 1116 pages 1–2, and Schedule B
+(Form 1116) pages 1–2. The owner is Alex Example, SSN `111223333`, consistently
+printed on each document's identity header.
+
+The printed amounts agree with the fixture and generated native XML: Form 1040
+line 2b and worldwide interest are $60,000; Form 1116 columns A/B/C show
+Canada `CA` $20,000/$4,000, France `FR` $30,000/$5,000, and Germany `GM`
+$10,000/$2,000. The apportioned standard deduction is $5,250/$7,875/$2,625;
+Form 1116 allows $5,075, matching Form 1040 line 16, Schedule 3 lines 1 and 8,
+and Form 1040 line 20. Schedule B (Form 1116) reports $5,925 of current-year
+excess carried forward. Form 1040 Schedule B lists the three matching payer
+names and interest amounts. The reviewed page layouts showed no clipping,
+overlap, missing pages, or page-order issue.
+
+Review-only source references map Canadian Bank to `2025 Canadian Bank
+1099-INT`, French Bank to `2025 French Bank 1099-INT`, and German Bank to
+`2025 German Bank 1099-INT`; the country and amounts match the corresponding
+Form 1116 columns and Schedule B payer rows. These are synthetic reviewed
+references: no issued 1099-INT bytes were attached or authenticated, and the
+PDF does not print those reference strings. The assembled XML validates against
+the locally retained TY2025 v5.4 `Return1040.xsd`.
+
+Generated artifacts remain untracked in `.pdf-cache/` for this worktree:
+
+- PDF: `.pdf-cache/three-country-form1116-interest.pdf`, SHA-256
+  `9618e8a5949d4d9118aeed01831ed25b6ed7e523ca181e3aa12c6fc673e1301b`.
+- Native XML: `.pdf-cache/three-country-form1116-interest.xml`, SHA-256
+  `65185d00aed765fb1982e843af37a8dc24390e8ca5809093a2d6796607ed05f6`.
+- The eight 150-dpi page PNG hashes are listed in
+  `.pdf-cache/three-country-form1116-interest-render-manifest.txt`, whose SHA-256
+  is `a544f961ce5cc9f206b53ee04c89dc8b0761c1e6fdec93e702cc199a0780ab09`.
+
+The focused source test file passed (4/4), including the local XSD check;
+manual `xmllint` also passed. Source-byte authentication, broader combinations,
+IRS business rules, and ATS acceptance remain open; the review establishes only
+this prepared synthetic route and its printed PDF output. The PDF builder
+reported removing XFA form data, and `pdfinfo` reports no AcroForm; this review
+verifies the visible rendering, not interactive field behavior.
+
 ## Two ordinary foreign dividend payers in separate countries (implementation authored; bulk validation pending)
 
 Two separately identified Forms 1099-DIV with ordinary, entirely foreign-source
