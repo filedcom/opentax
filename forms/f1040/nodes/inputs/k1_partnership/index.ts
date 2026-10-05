@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ty2025IrsCountryCodeSchema } from "../../irs_country_code.ts";
 import type {
   NodeOutput,
   NodeResult,
@@ -204,7 +205,7 @@ export const itemSchema = z.object({
   box16_foreign_deductions: z.number().nonnegative().optional(),
   box16_foreign_deductions_explanation: z.string().trim().min(1).optional(),
   // Use the country, tax type, and payment details from Schedule K-3 Part III.
-  box16_foreign_tax_irs_country_code: z.string().length(2).optional(),
+  box16_foreign_tax_irs_country_code: ty2025IrsCountryCodeSchema.optional(),
   box16_foreign_tax_paid_or_accrued_date: z.string().regex(
     /^\d{4}-\d{2}-\d{2}$/,
   ).optional(),

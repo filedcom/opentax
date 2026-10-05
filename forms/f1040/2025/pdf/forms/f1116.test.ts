@@ -446,7 +446,7 @@ function reviewedSingleSource() {
       foreign_income_source_document_reference:
         "German bank interest statement and tax assessment",
       income_category: IncomeCategory.Passive,
-      irs_country_code: "DE",
+      irs_country_code: "GM",
       tax_kind: ForeignTaxKind.Interest,
       tax_credit_method: ForeignTaxCreditMethod.Paid,
       tax_paid_or_accrued_date: "2025-06-15",
@@ -534,7 +534,7 @@ Deno.test("Form 1116 PDF prints a source-joined 1065 K-3 line 12 reduction", () 
     part_ii_section_1_line_24_passive_total: 1_000,
     part_iii_section_4_line_1_foreign_tax: 50,
     part_iii_section_4_line_2_tax_reduction: 10,
-    irs_country_code: "DE",
+    irs_country_code: "GM",
     tax_paid_date: "2025-06-15",
     foreign_tax_currency: {
       currency_code: "EUR",
@@ -552,7 +552,7 @@ Deno.test("Form 1116 PDF prints a source-joined 1065 K-3 line 12 reduction", () 
     box16_foreign_income: 1_000,
     box16_foreign_tax: 50,
     box16_foreign_income_category: IncomeCategory.Passive,
-    box16_foreign_tax_irs_country_code: "DE",
+    box16_foreign_tax_irs_country_code: "GM",
     box16_foreign_tax_paid_or_accrued_date: "2025-06-15",
     box16_foreign_tax_kind: ForeignTaxKind.Interest,
     box16_foreign_tax_credit_method: ForeignTaxCreditMethod.Paid,
@@ -668,7 +668,7 @@ Deno.test("Form 1116 MeF and PDF join one 1120-S K-3 passive-interest reduction"
     part_ii_section_1_line_24_passive_total: 1_000,
     part_iii_section_3_line_1_foreign_tax: 50,
     part_iii_section_3_line_2_tax_reduction: 10,
-    irs_country_code: "DE",
+    irs_country_code: "GM",
     tax_paid_date: "2025-06-15",
     foreign_tax_currency: {
       currency_code: "EUR",
@@ -686,7 +686,7 @@ Deno.test("Form 1116 MeF and PDF join one 1120-S K-3 passive-interest reduction"
     box14_foreign_income: 1_000,
     box14_foreign_tax: 50,
     box14_foreign_income_category: IncomeCategory.Passive,
-    box14_foreign_tax_irs_country_code: "DE",
+    box14_foreign_tax_irs_country_code: "GM",
     box14_foreign_tax_paid_or_accrued_date: "2025-06-15",
     box14_foreign_tax_kind: ForeignTaxKind.Interest,
     box14_foreign_tax_credit_method: ForeignTaxCreditMethod.Paid,
@@ -783,7 +783,7 @@ Deno.test("Form 1116 MeF and PDF join one 1120-S K-3 passive-interest reduction"
 Deno.test("Form 1116 PDF projects a complete one-country paid passive category", () => {
   const { fields, pending } = reviewedSingleSource();
   const projected = form1116Pdf.projectFields?.(fields, pending) ?? {};
-  assertEquals(projected.pdf_country_a, "DE");
+  assertEquals(projected.pdf_country_a, "GM");
   assertEquals(projected.pdf_line1a_a, 1_000);
   assertEquals(projected.pdf_line3e_a, 1_000);
   assertEquals(projected.pdf_part2_foreign_interest_a, 40);
@@ -893,7 +893,7 @@ Deno.test("Form 1116 PDF prints a reviewed one-source current-year excess with S
       foreign_income_source_document_reference:
         singleSourceReview.source_document_reference,
       income_category: IncomeCategory.Passive,
-      irs_country_code: "DE",
+      irs_country_code: "GM",
       tax_kind: ForeignTaxKind.Interest,
       tax_credit_method: ForeignTaxCreditMethod.Paid,
       tax_paid_or_accrued_date: "2025-06-15",
@@ -1013,7 +1013,7 @@ Deno.test("Form 1116 PDF projects one identified 1099-INT tax in U.S. dollars", 
       box1: 1_000,
       box6: 50,
       foreign_source_interest_usd: 1_000,
-      foreign_tax_irs_country_code: "DE",
+      foreign_tax_irs_country_code: "GM",
       foreign_tax_source_document_reference:
         singleSourceReview.source_document_reference,
     }],
@@ -1144,7 +1144,7 @@ Deno.test("Form 1116 PDF keeps a fully identified 1099-INT passive category clos
       foreign_tax_paid: 50,
       foreign_gross_income: 1_000,
       income_category: IncomeCategory.Passive,
-      irs_country_code: "DE",
+      irs_country_code: "GM",
       tax_kind: ForeignTaxKind.Interest,
       tax_credit_method: ForeignTaxCreditMethod.Paid,
       tax_reported_on_1099: true,
@@ -1167,7 +1167,7 @@ Deno.test("Form 1116 PDF keeps a dated non-1099 category closed without foreign-
       foreign_tax_paid: 50,
       foreign_gross_income: 1_000,
       income_category: IncomeCategory.General,
-      irs_country_code: "DE",
+      irs_country_code: "GM",
       tax_kind: ForeignTaxKind.Other,
       tax_credit_method: ForeignTaxCreditMethod.Paid,
       tax_paid_or_accrued_date: "2025-06-15",

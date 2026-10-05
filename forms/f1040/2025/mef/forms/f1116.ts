@@ -1,4 +1,5 @@
 import { element, elements } from "../../../mef/xml.ts";
+import { assertTy2025IrsCountryCode } from "../../../nodes/irs_country_code.ts";
 import {
   type CategorySummary,
   categorySummarySchema,
@@ -94,6 +95,9 @@ function sourceXml(
     throw new Error(
       "Form 1116 MeF needs the source country, tax kind, and paid/accrued method for every foreign-tax item",
     );
+  }
+  for (const item of items) {
+    assertTy2025IrsCountryCode(item.irs_country_code!);
   }
   if (
     items.some((item) =>

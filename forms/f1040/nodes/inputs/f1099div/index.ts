@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ty2025IrsCountryCodeSchema } from "../../irs_country_code.ts";
 import type {
   NodeOutput,
   NodeResult,
@@ -81,7 +82,7 @@ export const itemSchema = z.object({
   box8: z.string().optional(),
   foreign_source_dividends_usd: z.number().nonnegative().optional(),
   foreign_source_qualified_dividends_usd: z.number().nonnegative().optional(),
-  foreign_tax_irs_country_code: z.string().length(2).optional(),
+  foreign_tax_irs_country_code: ty2025IrsCountryCodeSchema.optional(),
   box9: z.number().nonnegative().optional(),
   box10: z.number().nonnegative().optional(),
   box12: z.number().nonnegative().optional(),
