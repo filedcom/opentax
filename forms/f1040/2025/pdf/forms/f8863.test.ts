@@ -234,6 +234,6 @@ Deno.test("Form 8863 PDF closes ambiguous institution and unreconciled return pa
         final,
       ),
     Error,
-    "needs one U.S. institution, received 2025 Form 1098-T",
+    "needs one U.S. institution and an education expense workpaper",
   );
 });

@@ -275,7 +275,7 @@ Deno.test("Form 8863 filing reconciles paid expenses, scholarships, and 1098-T r
       credit_limit_worksheet: worksheet,
     }),
     Error,
-    "received 2025 Form 1098-T",
+    "missing 1098-T needs a statutory exception",
   );
 });
 

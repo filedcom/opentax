@@ -48,12 +48,67 @@ const studentFilingSchema = z.object({
   institutions: z.array(institutionFilingSchema).min(1),
 });
 
+// IRS 2025 instructions, page 1: both permitted nonreceipt paths still need
+// eligible enrollment and substantiated payments. No nonexistent 1098-T is
+// synthesized from those records.
+const missing1098tCommonSchema = z.object({
+  student_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+  institution_name: z.string().trim().min(1),
+  eligible_educational_institution: z.literal(true),
+  eligible_institution_record_id: z.string().trim().min(1),
+  student_enrolled: z.literal(true),
+  enrolled_in_degree_or_credential_program: z.boolean(),
+  enrollment_record_id: z.string().trim().min(1),
+  academic_period_start_date: z.string().date(),
+  payment_tax_year: z.literal(2025),
+  assistance_record_id: z.string().trim().min(1),
+  nonreceipt_basis_record_id: z.string().trim().min(1),
+});
+const missing1098tExceptionSchema = z.discriminatedUnion("reason", [
+  missing1098tCommonSchema.extend({
+    reason: z.literal("institution_not_required"),
+    institution_required_to_furnish_1098t: z.literal(false),
+    furnishing_basis: z.discriminatedUnion("kind", [
+      z.object({
+        kind: z.literal("qualified_nonresident_alien"),
+        student_nonresident_alien: z.literal(true),
+        student_requested_1098t: z.literal(false),
+      }).strict(),
+      z.object({
+        kind: z.literal("expenses_waived_or_paid_entirely_with_scholarships"),
+        qualified_tuition_entirely_waived_or_scholarship_paid: z.literal(true),
+      }).strict(),
+      z.object({
+        kind: z.literal("formal_billing_arrangement"),
+        separate_student_financial_account: z.literal(false),
+        billing_counterparty: z.enum(["employer", "governmental_entity"]),
+        qualified_tuition_covered_by_formal_billing: z.literal(true),
+        billing_arrangement_record_id: z.string().trim().min(1),
+      }).strict(),
+      z.object({
+        kind: z.literal("noncredit_courses_only"),
+        all_courses_noncredit: z.literal(true),
+      }).strict(),
+    ]),
+  }).strict(),
+  missing1098tCommonSchema.extend({
+    reason: z.literal("required_but_not_received"),
+    institution_required_to_furnish_1098t: z.literal(true),
+    requested_1098t_date: z.string().date(),
+    request_record_id: z.string().trim().min(1),
+    fully_cooperated: z.literal(true),
+    cooperation_record_id: z.string().trim().min(1),
+    return_filing_date: z.string().date(),
+  }).strict(),
+]);
+
 // Actual 2025 payments may differ from Form 1098-T box 1. Keep the
 // substantiating document amounts separate from the credit workpaper.
 const educationExpenseWorkpaperSchema = z.object({
-  form1098t_box1_payments: z.number().finite().nonnegative(),
-  form1098t_box5_scholarships: z.number().finite().nonnegative(),
-  form1098t_document_id: z.string().trim().min(1),
+  form1098t_box1_payments: z.number().finite().nonnegative().optional(),
+  form1098t_box5_scholarships: z.number().finite().nonnegative().optional(),
+  form1098t_document_id: z.string().trim().min(1).optional(),
+  missing_1098t_exception: missing1098tExceptionSchema.optional(),
   payment_record_ids: z.array(z.string().trim().min(1)).min(1),
   paid_tuition_required_fees: z.number().finite().nonnegative(),
   paid_course_materials_to_institution: z.number().finite().nonnegative(),
@@ -130,9 +185,8 @@ export type F8863Item = z.infer<typeof itemSchema>;
 type F8863Items = F8863Item[];
 export type F8863Input = z.infer<typeof inputSchema>;
 
-// Each supported U.S. institution supplied a 2025 Form 1098-T. Two schools
-// require separately identified expense workpapers. Other IRS-permitted
-// 1098-T exceptions need their own evidence.
+// Each U.S. institution needs its received Form 1098-T or the documented
+// statutory nonreceipt exception. Two schools retain separate workpapers.
 export function validateForm8863FilingSource(
   item: F8863Item,
   credit: "aoc" | "llc",
@@ -203,11 +257,66 @@ export function validateForm8863FilingSource(
   }
   if (
     institutions?.length !== 1 || !institutions[0].us_address ||
-    institutions[0].current_year_1098t_received !== true || !workpaper
+    !workpaper
   ) {
     throw new Error(
-      "Form 8863 filing needs one U.S. institution, received 2025 Form 1098-T, and an education expense workpaper",
+      "Form 8863 filing needs one U.S. institution and an education expense workpaper",
     );
+  }
+  const institution = institutions[0];
+  const exception = workpaper.missing_1098t_exception;
+  if (institution.current_year_1098t_received) {
+    if (
+      exception || workpaper.form1098t_document_id === undefined ||
+      workpaper.form1098t_box1_payments === undefined ||
+      workpaper.form1098t_box5_scholarships === undefined
+    ) {
+      throw new Error(
+        "Form 8863 received 1098-T needs its document and box amounts without a nonreceipt exception",
+      );
+    }
+  } else {
+    if (
+      !exception || workpaper.form1098t_document_id !== undefined ||
+      workpaper.form1098t_box1_payments !== undefined ||
+      workpaper.form1098t_box5_scholarships !== undefined
+    ) {
+      throw new Error(
+        "Form 8863 missing 1098-T needs a statutory exception with enrollment and payment evidence, without invented 1098-T amounts",
+      );
+    }
+    if (
+      exception.student_ssn.replaceAll("-", "") !==
+        item.student_ssn?.replaceAll("-", "") ||
+      exception.institution_name !== institution.name ||
+      exception.academic_period_start_date < "2025-01-01" ||
+      exception.academic_period_start_date > "2026-03-31" ||
+      (credit === "aoc" &&
+        (!institution.ein ||
+          !exception.enrolled_in_degree_or_credential_program))
+    ) {
+      throw new Error(
+        "Form 8863 missing 1098-T evidence must match the student, eligible institution, academic period, and AOC degree program/EIN",
+      );
+    }
+    if (
+      exception.reason === "required_but_not_received" &&
+      (exception.requested_1098t_date <= "2026-01-31" ||
+        exception.requested_1098t_date >= exception.return_filing_date)
+    ) {
+      throw new Error(
+        "Form 8863 required missing 1098-T must be requested after January 31, 2026 and before filing",
+      );
+    }
+    if (
+      exception.reason === "institution_not_required" &&
+      exception.furnishing_basis.kind === "noncredit_courses_only" &&
+      credit === "aoc"
+    ) {
+      throw new Error(
+        "Form 8863 noncredit-only courses cannot establish AOC degree or credential eligibility",
+      );
+    }
   }
   if (
     workpaper.paid_course_materials_elsewhere > 0 &&
@@ -243,7 +352,7 @@ export function validateForm8863FilingSource(
   }
   if (
     workpaper.tax_free_assistance_applied_to_expenses <
-      workpaper.form1098t_box5_scholarships
+      (workpaper.form1098t_box5_scholarships ?? 0)
   ) {
     throw new Error(
       "Form 8863 bounded filing route must reduce expenses by all Form 1098-T box 5 scholarships",
@@ -281,13 +390,13 @@ function assertDistinctEducationSourceReferences(items: F8863Items): void {
         ? [item.education_expense_workpaper]
         : []);
     for (const workpaper of workpapers) {
-      const documentId = workpaper.form1098t_document_id.trim();
-      if (documentIds.has(documentId)) {
+      const documentId = workpaper.form1098t_document_id?.trim();
+      if (documentId && documentIds.has(documentId)) {
         throw new Error(
           "Form 8863 students cannot reuse a Form 1098-T document reference",
         );
       }
-      documentIds.add(documentId);
+      if (documentId) documentIds.add(documentId);
       for (const rawPaymentId of workpaper.payment_record_ids) {
         const paymentId = rawPaymentId.trim();
         if (paymentIds.has(paymentId)) {
