@@ -31,8 +31,8 @@ unregistered MeF form files. A registered-file literal is not proof that its
 descriptor can file every branch. `IRS1116ScheduleC` is a seventh unregistered
 root builder whose token is also quoted in the registered Form 1116 file.
 
-The current descriptor inventory is **149 native** and **116 PDF** entries;
-the native set includes **32 wage/supporting descriptors**. These are not
+The current descriptor inventory is **150 native** and **116 PDF** entries;
+the native set includes **33 wage/supporting descriptors**. These are not
 211-root coverage counts. The [root applicability crosswalk](ty2025-unregistered-root-applicability.md#registry-to-root-reconciliation)
 records owner classes and unresolved product decisions, while the
 [supporting-descriptor audit](ty2025-form1040-form-audit.md#supporting-descriptor-case-and-packet-disposition)
@@ -172,7 +172,7 @@ the linked evidence, not an inference from this flag.
 | `IRS8844`             | Yes             | Bounded direct-employer native/PDF descriptor is registered; payroll/zone source authenticity, wider branches, and final validation remain open. |
 | `IRS8845`             | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS8846`             | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
-| `IRS8853`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
+| `IRS8853` | Yes | Sourced Archer/Medicare distributions, including both-holder MFJ Medicare controlling form and dedicated taxpayer/spouse statement roots, have bounded local full XSD/PDF evidence. Broader contributions/LTC/inheritance, source authenticity, IRS business rules and ATS remain open; see [gap](ty2025-form8853-gap.md). |
 | `IRS8854`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS8858`             | No             | Strict category-1 direct FDE/foreign-branch source now survives graph execution and blocks both final exports. Parent form, income/credit joins, native/PDF and validation remain open; [decision detail](ty2025-unregistered-root-applicability.md#individual-and-business-roots-audited-in-this-pass). |
 | `IRS8858ScheduleM`    | No             | Category-1 per-activity related-transaction fact is retained; both exports block until the required parent/conditional companion is assembled. Category-5 Form 5471 filers do not complete Schedule M. Native/PDF and no-transaction treatment remain open; [decision detail](ty2025-unregistered-root-applicability.md#individual-and-business-roots-audited-in-this-pass). |
@@ -268,3 +268,9 @@ PDF projections but no live export route. `IRS8839` has a registered descriptor
 and a bounded byte-bound prepared-bundle route, while wider claims remain
 guarded. These are why a source-literal check is
 deliberately weaker than support.
+
+The 2026-10-06 both-holder Medicare extension adds one registered supporting
+descriptor for `PrimaryTaxpayerMedicareMSAStmt` and `SpouseTaxpayerMedicareMSAStmt`.
+These two non-`IRS...` statement roots do not change the 211-root IRS census.
+They are filed with the controlling `IRS8853` and project through its existing
+PDF descriptor; see the [Form 8853 gap](ty2025-form8853-gap.md).

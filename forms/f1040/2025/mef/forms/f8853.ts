@@ -1,3 +1,5 @@
+import { schedule1 as nativeSchedule1 } from "./schedule1.ts";
+import { schedule2 as nativeSchedule2 } from "./schedule2.ts";
 import { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
 import { FilingStatus } from "../../../mef/header.ts";
@@ -9,7 +11,11 @@ import {
   normalizeArcherSource,
   normalizeMedicareSource,
 } from "../../../nodes/intermediate/forms/form8853/index.ts";
-import { calculateMedicareLedger } from "../../../nodes/intermediate/forms/form8853/medicare_distributions.ts";
+import {
+  calculateMedicareJointLedgers,
+  calculateMedicareLedger,
+  type MedicareHolderLedger,
+} from "../../../nodes/intermediate/forms/form8853/medicare_distributions.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 type Input = Form8853Input | readonly [];
@@ -131,11 +137,7 @@ function validateReturnContext(
   return filer.primarySSN;
 }
 
-function buildMedicareIRS8853(
-  fields: Form8853Input,
-  context?: MefBuildContext,
-): string {
-  const ledger = fields.medicare_distribution_ledger!;
+function validateMedicareOtherActivity(fields: Form8853Input) {
   if (
     fields.archer_distribution_ledger ||
     fields.archer_distribution_filing_details ||
@@ -160,13 +162,13 @@ function buildMedicareIRS8853(
       "Form8853 Medicare ledger conflicts with reviewed absence of other Archer/LTC activity",
     );
   }
-  const lines = calculateMedicareLedger(ledger);
-  const primarySSN = validateReturnContext(
-    context,
-    { line8: lines.line12, line9b: 0 },
-    lines.line13b,
-    true,
-  );
+}
+
+function bindMedicareHolder(
+  ledger: MedicareHolderLedger,
+  primarySSN: string,
+  context?: MefBuildContext,
+) {
   const holderSSN = ledger.owner === "taxpayer"
     ? primarySSN
     : context?.filer?.spouse?.ssn;
@@ -201,14 +203,115 @@ function buildMedicareIRS8853(
       );
     }
   }
-  return elements("IRS8853", [elements("ArcherMSAAndMedcrAdvntgMSAGrp", [
-    element("MSAHolderSSN", holderSSN),
-    ...(lines.deathTransfer ? [element("MSAHolderDeathInd", "X")] : []),
+  return holderSSN;
+}
+
+export function medicareNativeLines(
+  lines: Pick<
+    ReturnType<typeof calculateMedicareLedger>,
+    "line10" | "line11" | "line12" | "line13a" | "line13b"
+  >,
+): string[] {
+  return [
     element("TotalMedicareMSADistriAmt", lines.line10),
     element("MedicareMSAUnrmbQualMedExpAmt", lines.line11),
     element("TaxableMedicareMSADistriAmt", lines.line12),
     ...(lines.line13a ? [element("MedicareMSADistriMeetTaxExcInd", "X")] : []),
     element("MedicareMSAAddnlDistriTaxAmt", lines.line13b),
+  ];
+}
+
+export function buildMedicareJointDocumentParts(
+  raw: Form8853Input,
+  context?: MefBuildContext,
+) {
+  const fields = normalizeMedicareSource(
+    normalizeArcherSource(inputSchema.parse(raw)),
+  );
+  const ledgers = fields.medicare_joint_distribution_ledgers;
+  if (!ledgers) {
+    throw new Error("Form8853 joint Medicare source ledgers required");
+  }
+  validateMedicareOtherActivity(fields);
+  if (
+    context?.filer?.filingStatus !== FilingStatus.MarriedFilingJointly ||
+    !context.filer.spouse
+  ) {
+    throw new Error(
+      "Form8853 joint Medicare holders require MFJ with spouse identity",
+    );
+  }
+  const computed = calculateMedicareJointLedgers(ledgers);
+  const primarySSN = validateReturnContext(
+    context,
+    { line8: computed.line12, line9b: 0 },
+    computed.line13b,
+    true,
+  );
+  const f1040 = z.object({
+    line8_additional_income: z.number().optional(),
+    line23_other_taxes: z.number().optional(),
+  }).parse(context.pending?.f1040 ?? {});
+  const readTotal = (xml: string, tag: string) =>
+    Number(new RegExp(`<${tag}>([0-9]+)</${tag}>`).exec(xml)?.[1] ?? 0);
+  const additionalIncome = readTotal(
+    nativeSchedule1.build((context.pending?.schedule1 ?? {}) as never, context),
+    "TotalAdditionalIncomeAmt",
+  );
+  const otherTaxes = readTotal(
+    nativeSchedule2.build((context.pending?.schedule2 ?? {}) as never, context),
+    "TotalOtherTaxesAmt",
+  );
+  if (
+    Math.round(f1040.line8_additional_income ?? 0) !== additionalIncome ||
+    Math.round(f1040.line23_other_taxes ?? 0) !== otherTaxes
+  ) {
+    throw new Error(
+      "Form8853 joint Medicare Schedule totals conflict with Form1040",
+    );
+  }
+  const owners = computed.holders.map((holder) => ({
+    ...holder,
+    ssn: bindMedicareHolder(holder.ledger, primarySSN, context),
+  }));
+  // The v5.4 schema requires one controlling IRS8853 and separate owner-specific statement roots.
+  const control = elements("IRS8853", [
+    elements("ArcherMSAAndMedcrAdvntgMSAGrp", [
+      element("MSAHolderSSN", primarySSN),
+      ...medicareNativeLines(computed),
+    ]),
+  ]);
+  const statements = owners.map((holder) =>
+    elements(
+      holder.ledger.owner === "taxpayer"
+        ? "PrimaryTaxpayerMedicareMSAStmt"
+        : "SpouseTaxpayerMedicareMSAStmt",
+      medicareNativeLines(holder.lines),
+    )
+  );
+  return { computed, owners, control, statements };
+}
+
+function buildMedicareIRS8853(
+  fields: Form8853Input,
+  context?: MefBuildContext,
+): string {
+  const ledger = fields.medicare_distribution_ledger!;
+  validateMedicareOtherActivity(fields);
+  const lines = calculateMedicareLedger(ledger);
+  const primarySSN = validateReturnContext(
+    context,
+    { line8: lines.line12, line9b: 0 },
+    lines.line13b,
+    true,
+  );
+  const { sole_medicare_msa_holder_on_return_confirmed: _sole, ...holder } =
+    ledger;
+  const holderSSN = bindMedicareHolder(holder, primarySSN, context);
+  return elements("IRS8853", [elements("ArcherMSAAndMedcrAdvntgMSAGrp", [
+    element("MSAHolderSSN", holderSSN),
+    ...(lines.deathTransfer ? [element("MSAHolderDeathInd", "X")] : []),
+    ...medicareNativeLines(lines),
   ])]);
 }
 
@@ -220,6 +323,9 @@ function buildIRS8853(rawFields: Input, context?: MefBuildContext): string {
   const fields = normalizeMedicareSource(
     normalizeArcherSource(inputSchema.parse(rawFields)),
   );
+  if (fields.medicare_joint_distribution_ledgers) {
+    return buildMedicareJointDocumentParts(fields, context).control;
+  }
   if (fields.medicare_distribution_ledger) {
     return buildMedicareIRS8853(fields, context);
   }

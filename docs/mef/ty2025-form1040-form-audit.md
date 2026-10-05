@@ -21,7 +21,7 @@ run proves each row's positive source route, filled PDF, IRS business rule,
 or ATS acceptance.
 A written case is not a passing case.
 
-The registered-descriptor evidence census is now **149/149 statically accounted
+The registered-descriptor evidence census is now **150/150 statically accounted
 for** in this matrix against the current MeF registry. The linked
 [main inventory](coverage-inventory.md),
 [attachment tranche A](coverage-inventory-attachments-a.md),
@@ -144,7 +144,7 @@ bounded route and its remaining evidence.
 | --- | ---: | --- |
 | Main-return and schedule rows | 19 | Check each active trigger and all return-wide amount/owner joins. |
 | Numbered forms and distinct-schedule rows | 98 | Includes the seven supplemental rows below; confirm each bounded branch and explicit rejection of other branches. |
-| Wage and supporting rows | 32 | Each needs source-owner, parent-document reference, repetition and attachment/print disposition; this table has no per-row case-status column for them. |
+| Wage and supporting rows | 33 | Each needs source-owner, parent-document reference, repetition and attachment/print disposition; this table has no per-row case-status column for them. |
 | Main/numbered rows marked `P` (bounded calculation/source coded) | 116 of 117 | `P` is code evidence, not a complete or passing positive filing route. |
 | Main/numbered rows marked `U` | 1 of 117: Form 8990 | Nonexempt positive export remains blocked pending durable accepted-year carryforward history. |
 | Main/numbered rows with focused cases marked `W` | 117 of 117 | A written case may be a rejection or a narrow synthetic route; current full-suite, XSD, PDF, IRS-rule and ATS results are not established per row. |
@@ -293,7 +293,7 @@ combinations, and IRS acceptance remain open.
 | 8834                  | Plug-in electric vehicle facts; P                                                                                                                                                                                                  | `f8834.ts` R             | Y   | W     | Open: legacy eligibility, recapture and PDF.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | 8835                  | Renewable facility/credit-transfer facts; P                                                                                                                                                                                        | `f8835.ts` R             | Y   | W     | Bounded wind and geothermal PDFs print one or two fully used facility copies; one- and two-geothermal, mixed wind/geothermal, and geothermal-plus-New-Markets filled routes have local native/PDF/XSD evidence. Other energy sources, fiscal years, statements, transfers, and other mixed credits remain open.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | 8839 | One reviewed single-filer, one-child domestic adoption with fully used nonrefundable credit; P | `f8839.ts` R | Y | W | One strict public source reaches programmatic and CLI prepared-bundle MeF/PDF with exact attachment bytes and final Schedule 3/Form 1040 replay. Sync XML/standalone PDF, unused nonrefundable carryforward, other children, exclusion, Form 2555/4563 and unauthenticated review remain closed; final bulk XSD/PDF/ATS gates remain open. See [gap](ty2025-form8839-gap.md). |
-| 8853                  | One fully qualified Archer MSA distribution; P                                                                                                                                                                                     | `f8853.ts` R             | Y   | W     | Bounded taxpayer-owned Section A native route and one-page PDF now print holder identity and calculated Archer lines; the focused 25-test batch and visual page check pass. Contributions, Medicare MSA, LTC, complete-return validation, and ATS remain open; see [gap audit](ty2025-form8853-gap.md).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 8853 | Sourced Archer and Medicare distributions, including both-holder MFJ Medicare; P | `f8853.ts` R | Y | W | Owner-specific ledgers/worksheets, controlling native form plus taxpayer/spouse Medicare statement roots and ordered PDF copies; local full XSD/PDF evidence. Broader contributions, LTC, inheritance and IRS acceptance remain open; see [gap audit](ty2025-form8853-gap.md). |
 | 8854 initial | Expatriation identity, tax and asset facts; P | `f8854.ts` R | Y | W | Guarded official five-page PDF maps one noncovered former-citizen cash-only filing, five prior-return net-tax amounts, Section A answers and Section B totals to native Form 8854 and finalized pending input. Positive/tamper fixtures are authored but unrun. Prior returns, compliance, and cash valuation remain unauthenticated, so positive print stays closed; covered, noncash and deferral variants remain open. See [PDF gap](ty2025-form8854-pdf-gap.md). |
 | 8854 annual | Annual deferred-tax/payment facts; P | `f8854_annual.ts` R | Y | W | Guarded five-page PDF prints shared Part I and up to seven Part III prior deferred-property rows for a former-citizen no-event carryforward, tied to the checked prior obligation ledger and finalized annual input. Positive/tamper fixtures are authored but unrun; positive print remains closed pending authenticated prior Form 8854 bytes and acceptance. Dispositions, distributions, and wider annual histories remain open; see [PDF gap](ty2025-form8854-pdf-gap.md). |
 | 8859                  | DC first-time homebuyer credit facts; P                                                                                                                                                                                            | `f8859.ts` R             | Y   | W     | Open: recapture and source/date audit.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -348,9 +348,9 @@ evidence still govern positive export.
 | 8941 | One bounded direct Schedule C small employer; P | `f8941.ts` R | Y | W | Reviewed SHOP area/premium and employer contribution facts join Form 3800. Other rating areas, employers, external source authentication, and final validation remain open; see [gap](ty2025-form8941-gap.md). |
 | 8994 | One direct Schedule C paid-family-leave employer; P | `f8994.ts` R | Y | W | Positive export requires reviewed evidence bound to prepared bundle attachment bytes; wider sources and stand-alone export remain guarded. Final validation and ATS remain open; see [gap](ty2025-form8994-gap.md). |
 
-### Registered wage and supporting descriptors (32)
+### Registered wage and supporting descriptors (33)
 
-These are included in the 149 MeF registry entries, but are not 32 additional
+These are included in the 150 MeF registry entries, but are not 33 additional
 tax forms. `R` still means registered, not validated; `P` means a bounded
 parent-source route is coded. Every row's current-run XSD, source-to-document,
 attachment/reference, business-rule, and ATS status is **open**. The file named
@@ -389,6 +389,7 @@ in each row is under `forms/f1040/2025/mef/forms/`. Binary PDFs are separate.
 | `form8621_excess_statement`                   | Form 8621 Part V holding period                                     | `f8621_excess_statement.ts` R                    | P: holding-period computation; verify gain/tax/interest source and parent reference.                                                                                                                                                                                                     |
 | `child_taxable_interest_statement`            | Form 8814 child interest                                            | `child_taxable_interest_statement.ts` R          | P: child/parent election amount; verify 8814/1040 Schedule B reconciliation.                                                                                                                                                                                                             |
 | `f8820_controlled_group_statement`            | Form 8820 controlled group                                          | `f8820_controlled_group_statement.ts` R          | P: group/credit allocation; verify source drug expenditures and parent reference.                                                                                                                                                                                                        |
+| `f8853_medicare_statements` | Both-holder Medicare Advantage MSA | `f8853_medicare_statements.ts` R | P: owner-specific worksheets and native taxpayer/spouse statement roots, reconciled controlling Form 8853 and three ordered PDF copies; see [gap audit](ty2025-form8853-gap.md). |
 | `f8854_native_statements`                     | Form 8854 initial/annual attachments                                | `f8854_native_statements.ts` R                   | P: applicable native statement roots; verify each election, property/payment source, and parent link.                                                                                                                                                                                    |
 
 The exact registration order remains in `ALL_MEF_FORMS`. A row can move beyond
@@ -401,7 +402,7 @@ This is a static inventory, not a passing-test claim. A **native copy** below
 means a separate XML document in `ReturnData1040`; it does not mean that the
 underlying payer-issued paper/PDF was authenticated. A **native statement** is
 structured XML rather than a PDF attachment. The only dedicated PDF descriptor
-among these 32 is W-2G Copy B. “No direct case located” means an exact pending
+among these 33 is W-2G Copy B. “No direct case located” means an exact pending
 key or descriptor reference was not found in the Form 1040 test sources; it
 does not prove that no parent-level test reaches the route. Parent guards still
 apply to every row.
@@ -439,6 +440,7 @@ apply to every row.
 | `form8621_excess_statement` | PFIC holding-period computation → Form 8621 Part V. | `f8621_excess_statement.test.ts`. | Native statement; no dedicated PDF. Underlying gain/tax/interest source and parent route remain open. |
 | `child_taxable_interest_statement` | Parent election for child interest → Form 8814 and Schedule B. | No direct case located; Form 8814 parent cases exist. | Native statement; no dedicated PDF. Child-issued interest source and parent election join need a direct case. |
 | `f8820_controlled_group_statement` | Controlled-group credit allocation → Form 8820. | `f8820.test.ts`, `f8820.xsd.test.ts`. | Native statement; no dedicated PDF. Group and expenditure source remain open. |
+| `f8853_medicare_statements` | Both-holder MFJ Medicare distributions → controlling Form 8853. | `form8853_joint_medicare_2025.test.ts`: full source/calc/1040/XSD/PDF and export negatives. | Native owner roots and ordered control/taxpayer/spouse PDF copies; broader inheritance/LTC/contribution branches remain open. |
 | `f8854_native_statements` | Initial/annual expatriation facts → Form 8854. | `f8854.xsd.test.ts` covers native roots; no exact descriptor-reference case located. | Native statement roots; positive Form 8854 export remains guarded pending election, property and payment source/attachment review. |
 
 The nine rows without a direct named case are FEC record, Schedule 2 other
@@ -532,7 +534,7 @@ builder rejects positive claims.
 
 | Static measure                               |                                      Count | What it means                                                                                                                                 |
 | -------------------------------------------- | -----------------------------------------: | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| MeF descriptors in `ALL_MEF_FORMS`           |                                        149 | Registration only: 117 main-return/numbered/schedule entries plus 32 wage/supporting entries.                                                 |
+| MeF descriptors in `ALL_MEF_FORMS`           |                                        150 | Registration only: 117 main-return/numbered/schedule entries plus 33 wage/supporting entries.                                                 |
 | Main-return/numbered/schedule descriptors    |                                        117 | Includes bounded Form 2106 and Form 5471 parent and separate E/H/I-1/J/M/P/Q/R registrations.                                                           |
 | Registered PDF descriptors                   |                                        116 | Registration only, including bounded Form 2106, Forms 3468 and 5471 parent/E/H/I-1/J/M/P/Q/R, 8992 and Schedule A; this is not a filled-field or visual pass.         |
 | Forms excluded from the agreed product scope | 1040-NR, 1040-SS, 4868; dual-status e-file | Not counted as open Form 1040-family serializers.                                                                                             |
@@ -634,3 +636,14 @@ the filed filer and claimed dependents. Missing, duplicate, and other-family
 covered-person SSNs stop the unallocated route; a tax-family dependent need not
 have Marketplace coverage. This does not promote the row to verified coverage;
 see the [dependent-MAGI gap](ty2025-form8962-dependent-magi-gap.md).
+
+## Both-holder Medicare supporting registration (2026-10-06)
+
+The current registry replay is 150 native / 116 PDF descriptors. Added
+`f8853_medicare_statements.ts` shares the parent `form8853` source slot and emits
+`PrimaryTaxpayerMedicareMSAStmt` and `SpouseTaxpayerMedicareMSAStmt` in schema
+order. Their amounts reconcile each owner and sum to the controlling `IRS8853`;
+the parent PDF expands to three ordered Form 8853 copies with owner identities.
+This supporting descriptor is included in the 33 wage/supporting entries and
+adds no PDF key or independent taxpayer form. See [bounded packet evidence and
+limits](ty2025-form8853-gap.md).

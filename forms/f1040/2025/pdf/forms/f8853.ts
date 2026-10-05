@@ -7,7 +7,10 @@ import {
   normalizeMedicareSource,
 } from "../../../nodes/intermediate/forms/form8853/index.ts";
 import { calculateMedicareLedger } from "../../../nodes/intermediate/forms/form8853/medicare_distributions.ts";
-import { form8853 as nativeForm8853 } from "../../mef/forms/f8853.ts";
+import {
+  buildMedicareJointDocumentParts,
+  form8853 as nativeForm8853,
+} from "../../mef/forms/f8853.ts";
 
 // IRS Form 8853 (2025) AcroForm field names.
 // Archer MSAs and Long-Term Care Insurance Contracts.
@@ -32,6 +35,11 @@ import { form8853 as nativeForm8853 } from "../../mef/forms/f8853.ts";
 // ltc_reimbursements                   → line 24 (reimbursements)
 // Raw ltc_period_days cannot go on line 21: that line is $420 times days.
 const fields: ReadonlyArray<PdfFieldEntry> = [
+  {
+    kind: "text",
+    domainKey: "msa_reporting_name",
+    pdfField: "topmostSubform[0].Page1[0].f1_1[0]",
+  },
   {
     kind: "text",
     domainKey: "msa_reporting_ssn",
@@ -158,6 +166,7 @@ export const form8853Pdf: PdfFormDescriptor = {
       kind: "text",
       domainKey: "nameLine1",
       pdfField: "topmostSubform[0].Page1[0].f1_1[0]",
+      includeWhen: (fields) => fields.msa_reporting_name === undefined,
     },
     {
       kind: "text",
@@ -172,6 +181,61 @@ export const form8853Pdf: PdfFormDescriptor = {
       normalizeArcherSource(inputSchema.parse(raw)),
     );
     nativeForm8853.build(source, { filer, pending: allPending ?? {} });
+    if (source.medicare_joint_distribution_ledgers) {
+      const parts = buildMedicareJointDocumentParts(source, {
+        filer,
+        pending: allPending ?? {},
+      });
+      const project = (
+        lines: typeof parts.computed | typeof parts.owners[number]["lines"],
+        ssn: string,
+        name: string,
+        statement: boolean,
+        death = false,
+      ) => ({
+        ...source,
+        msa_reporting_ssn: ssn,
+        msa_reporting_name: name,
+        medicare_statement: statement,
+        medicare_advantage_distributions: lines.line10,
+        medicare_advantage_qualified_expenses: lines.line11,
+        line12_taxable_medicare_msa_distribution: lines.line12,
+        line13a_medicare_msa_exception: lines.line13a,
+        line13b_medicare_msa_additional_tax: lines.line13b,
+        medicare_death_transfer: death,
+      });
+      return [
+        project(
+          parts.computed,
+          filer!.primarySSN,
+          (filer!.fullName ?? filer!.nameLine1) + " & " +
+            [
+              filer!.spouse!.firstName,
+              filer!.spouse!.middleInitial,
+              filer!.spouse!.lastName,
+              filer!.spouse!.suffix,
+            ].filter(Boolean).join(" "),
+          false,
+        ),
+        ...parts.owners.map((holder) => {
+          const name = holder.ledger.owner === "taxpayer"
+            ? filer!.fullName ?? filer!.nameLine1
+            : [
+              filer!.spouse!.firstName,
+              filer!.spouse!.middleInitial,
+              filer!.spouse!.lastName,
+              filer!.spouse!.suffix,
+            ].filter(Boolean).join(" ");
+          return project(
+            holder.lines,
+            holder.ssn,
+            name,
+            true,
+            holder.lines.deathTransfer,
+          );
+        }),
+      ];
+    }
     if (source.medicare_distribution_ledger) {
       const ledger = source.medicare_distribution_ledger;
       const lines = calculateMedicareLedger(ledger);
@@ -202,6 +266,10 @@ export const form8853Pdf: PdfFormDescriptor = {
   },
   fields,
   async decoratePages(document, pages, fields) {
+    if (fields.medicare_statement === true) {
+      const font = await document.embedFont(StandardFonts.Helvetica);
+      pages[0].drawText("statement", { x: 260, y: 760, size: 10, font });
+    }
     if (
       fields.death_transfer === true || fields.medicare_death_transfer === true
     ) {

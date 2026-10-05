@@ -1,7 +1,9 @@
 import { z } from "zod";
 import {
+  calculateMedicareJointLedgers,
   calculateMedicareLedger,
   medicareDistributionLedgerSchema,
+  medicareJointLedgersSchema,
 } from "./medicare_distributions.ts";
 import {
   archerDistributionLedgerSchema,
@@ -50,6 +52,7 @@ export const archerDistributionFilingDetailsSchema = z.object({
 export const inputSchema = z.object({
   archer_distribution_ledger: archerDistributionLedgerSchema.optional(),
   medicare_distribution_ledger: medicareDistributionLedgerSchema.optional(),
+  medicare_joint_distribution_ledgers: medicareJointLedgersSchema.optional(),
   // ── Section A Part I: Archer MSA Contributions and Deductions ───────────
   // Line 1: Employer contributions (from W-2 Box 12 code R, routed by w2 node)
   // IRC §220(b); Form 8853 Part I line 1
@@ -199,6 +202,11 @@ export function calculateArcherMsaDistribution(input: Form8853Input) {
 // Line 12: Taxable Medicare Advantage MSA distributions = max(0, line10 - line11)
 // IRC §138(c)(2); Form 8853 Section B line 12 → Schedule 1 line 8e
 function medicareAdvantaxableDist(input: Form8853Input): number {
+  if (input.medicare_joint_distribution_ledgers) {
+    return calculateMedicareJointLedgers(
+      input.medicare_joint_distribution_ledgers,
+    ).line12;
+  }
   if (input.medicare_distribution_ledger) {
     return calculateMedicareLedger(input.medicare_distribution_ledger).line12;
   }
@@ -211,6 +219,11 @@ function medicareAdvantaxableDist(input: Form8853Input): number {
 // Line 13b: 50% additional tax on taxable Medicare Advantage MSA distributions
 // IRC §138(c)(2); Form 8853 Section B line 13b → Schedule 2 line 17f
 function medicareAdvantagePenaltyTax(input: Form8853Input): number {
+  if (input.medicare_joint_distribution_ledgers) {
+    return calculateMedicareJointLedgers(
+      input.medicare_joint_distribution_ledgers,
+    ).line13b;
+  }
   if (input.medicare_distribution_ledger) {
     return calculateMedicareLedger(input.medicare_distribution_ledger).line13b;
   }
@@ -398,11 +411,24 @@ export function normalizeMedicareSource(
   input: Form8853Input,
   taxYear = 2025,
 ): Form8853Input {
-  if (!input.medicare_distribution_ledger) return input;
-  const lines = calculateMedicareLedger(
-    input.medicare_distribution_ledger,
-    taxYear,
-  );
+  if (
+    input.medicare_distribution_ledger &&
+    input.medicare_joint_distribution_ledgers
+  ) {
+    throw new Error(
+      "Form8853 cannot combine sole and joint Medicare source ledgers",
+    );
+  }
+  if (
+    !input.medicare_distribution_ledger &&
+    !input.medicare_joint_distribution_ledgers
+  ) return input;
+  const lines = input.medicare_joint_distribution_ledgers
+    ? calculateMedicareJointLedgers(
+      input.medicare_joint_distribution_ledgers,
+      taxYear,
+    )
+    : calculateMedicareLedger(input.medicare_distribution_ledger!, taxYear);
   const expected = {
     medicare_advantage_distributions: lines.rawGross,
     medicare_advantage_qualified_expenses: lines.rawQualified,

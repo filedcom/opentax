@@ -102,8 +102,8 @@ business-rule, or ATS claim is made.
 
 Joint/spouse aggregation, surviving-spouse inherited account handling,
 multiple inherited/owned account statements, predeath normal distributions
-combined with estate FMV transfer, rollovers/excess withdrawals, contributions,
-The sourced sole-holder Medicare distribution route below is now covered; LTC remains a separate gap. The ledger requires
+combined with estate FMV transfer, rollovers/excess withdrawals and contributions
+remain gaps. The sourced sole-holder Medicare distribution route below is now covered; LTC remains a separate gap. The ledger requires
 reviewed absence of those other activities for its retained filing route.
 
 ## Raw cents review and reporting identity (2026-10-06)
@@ -199,13 +199,80 @@ are unchanged. The final focused rerun passed 81 tests with zero failures,
 including the estate blocker and both duplicate-reference export negatives;
 `expense-review-test.log` records this rerun.
 
-Limits remain: both spouses' Medicare distributions and controlling statements;
-multiple inherited MSAs or inherited plus owned MSA; surviving-spouse Medicare
+The both-holder normal Medicare distribution route below resolves the joint
+statement/control case. Limits remain: multiple inherited MSAs or inherited plus owned MSA; surviving-spouse Medicare
 inheritance (which becomes Archer); combined Archer/Medicare/LTC activity;
 deemed distributions and erroneous contribution/earnings reporting. Estate FMV
 source calculation/native projection is available, but full deceased-return
 filing remains subject to the existing representative/signing/refund blocker.
 No estate full-return acceptance is claimed. General Form 8853 stays open.
+
+## Both-holder Medicare distributions on MFJ (2026-10-06)
+
+Public `form8853.medicare_joint_distribution_ledgers` now holds exactly one
+normal-distribution ledger for the taxpayer and one for the spouse. Each retains
+its own identity, Medicare/HDHP evidence, account/distribution references, raw
+cents, medical sources, disability facts and applicable prior-year account
+review/balance/deductible. The sole-holder confirmation belongs only to the
+existing sole-holder field; joint holder records do not assert it. Review
+confirmations apply to each holder's complete source activity. Other Archer/LTC
+activity and combining sole/joint source modes are rejected.
+
+The [2025 IRS Section B instructions](https://www.irs.gov/pub/irs-prior/i8853--2025.pdf)
+require separate taxpayer/spouse statement Forms 8853 and a controlling form
+that sums filed lines 10, 11, 12 and 13b, checking 13a if either statement does.
+The local v5.4 XSD permits one `IRS8853` and one Section A/B group; the dedicated
+`PrimaryTaxpayerMedicareMSAStmt` and `SpouseTaxpayerMedicareMSAStmt` roots carry
+the owner computations. Their schemas identify ownership through the root and
+return header, without an additional SSN field.
+
+The native builder binds both source holder SSNs to MFJ return identities,
+computes each worksheet separately, emits the controlling group with primary
+SSN, and registers the two actual statement roots in ReturnData schema order.
+It sums each owner's filed whole-dollar lines, retaining raw cents in source.
+Schedule 1 line 8e and Schedule 2 line 17f must agree with the combined income
+and tax, and their native totals reconcile to Form 1040 lines 8/23 before both
+exports. The PDF produces controlling, taxpayer statement, then spouse
+statement. Each copy has the correct name/SSN; statements print the required
+annotation and owner lines/checkbox. The control shows both return names and
+primary SSN. No Section A or Section C activity is inferred.
+
+Cross-holder review rejects reused distribution or medical-expense references,
+an account source assigned to both holders, duplicate owners/SSNs, incomplete
+applicable worksheet facts, wrong owner identity, conflicting legacy totals,
+and tampered Schedule 1/2 or Form 1040 totals. Existing Archer and sole-holder
+Medicare proofs are retained. Split medical allocations remain unmodeled.
+
+Four synthetic complete return packets pass local v5.4 XSD and actual PDF
+extraction with the control and both owner statements:
+
+| Joint case | Combined line 12 | Combined line 13b |
+| --- | ---: | ---: |
+| Taxpayer prior balance/deductible; spouse no prior account and raw cents | 9,499 | 2,150 |
+| Taxpayer partial disability and own worksheet; spouse no prior account | 13,000 | 2,100 |
+| Both holders' raw cents, separately rounded filed lines | 1,798 | 900 |
+| Both holders fully qualified | 0 | 0 |
+
+The final focused node/native/PDF/start/Archer/sole-holder/joint batch passed
+86 tests with zero failures. All twelve Form 8853 copies were rendered with
+real Poppler and visually inspected, along with the partial-exception Form
+1040 and populated Schedule 1/2 pages.
+
+The both-cents case retains each owner's raw gross 1,000.49 / medical 100.51
+but files each statement as 1,000 / 101 / 899 / 450. The controlling form sums
+those filed lines to 2,000 / 202 / 1,798 / 900; it does not reround combined raw
+source or recompute a joint worksheet. Ignored full XML/PDF/pending/worksheet,
+rendered pages and logs are at `.state/research/2026-10-06-form8853-joint/`
+in the isolated worktree. These are synthetic local integration artifacts,
+not authentic taxpayer records, IRS acceptance, business-rule or ATS evidence.
+
+Broader branches remain open: joint Archer contributions, inherited Medicare
+and multiple inherited/owned-account statements, surviving-spouse Medicare
+inheritance, combined Archer/Medicare/LTC, deemed distributions, and erroneous
+contribution reporting. The existing sole-holder nonspouse death route remains
+supported; the joint source mode covers normal holder distributions and
+applicable disability exceptions. Full deceased-return filing retains its
+existing signer/representative/refund source blocker.
 
 ## End-to-end blockers
 
@@ -252,10 +319,10 @@ business-rule, and ATS evidence remain open.
   The node defaults missing compensation to infinity, whereas the printed line 5
   is the smallest of lines 2, 3, and 4. Until compensation is known, a positive
   deduction is not source-complete.
-- Joint returns can require separate statement forms for each spouse's self-only
-  Archer MSA or Medicare Advantage MSA, followed by a controlling form. Multiple
-  Section C copies can also be required. One pending `form8853` object cannot
-  represent that repeatable attachment structure.
+- Joint Archer contributions and multiple Section C copies still require their
+  own repeatable source/attachment structures. The sourced both-holder Medicare
+  normal-distribution route below now represents its two owner statements and
+  controlling form within the pending `form8853` record.
 
 ## Acceptance cases before enabling a filing claim
 

@@ -4,7 +4,7 @@ Static comparison replayed 2026-10-05 of the descriptors actually registered in
 `forms/f1040/2025/mef/forms/index.ts` and `forms/f1040/2025/pdf/forms/index.ts`,
 checked against `forms/f1040/2025/attachment-coverage.ts`. This is a
 printable-return coverage audit, not an IRS rule, passed test, or new product
-exclusion. The indexes currently hold **149 native descriptors and 116 PDF
+exclusion. The indexes currently hold **150 native descriptors and 116 PDF
 descriptors**. The newly registered Form 9000 has focused local XML/XSD and filled-page
 evidence; that does not establish the remaining route, business-rule, or ATS
 coverage.
@@ -208,3 +208,15 @@ Schedule A also gained bounded PDF descriptors after this audit began. Their tes
 review should compare each accepted native positive variant with its required
 printed parent, schedules, statements, and source attachments, then join the
 agreed full test/XSD/filled-PDF/business-rule/ATS gates.
+
+## Both-holder Medicare statement parity (2026-10-06)
+
+The registry replay now counts 150 native and 116 PDF descriptors. The added
+`form8853MedicareStatements` emits the actual taxpayer/spouse Medicare MSA
+statement roots after numbered forms and before Form 8854 supporting roots.
+The existing `f8853` PDF descriptor produces the controlling form followed by
+the two owner/SSN statement Form 8853 copies. No separate PDF key is needed;
+this supporting descriptor shares the existing `form8853` source slot. Local
+joint packet evidence and broader limits are recorded in the
+[Form 8853 gap](ty2025-form8853-gap.md). Historical October 5 counts above remain
+historical execution snapshots.

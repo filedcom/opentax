@@ -19,10 +19,22 @@ form-by-form coverage inventory. Neither a root's presence in the schema nor a
 public input proves that it must be attached to every return. Conversely,
 absence of a public input is not a user-approved exclusion.
 
+### Medicare joint statements (2026-10-06)
+
+`form8853MedicareStatements` is now registered on the existing public `form8853`
+source slot. Its two actual native roots, `PrimaryTaxpayerMedicareMSAStmt` and
+`SpouseTaxpayerMedicareMSAStmt`, accompany the controlling `IRS8853` for the
+bounded both-holder MFJ ledger route. Owner tags bind to reconciled return
+identities; the statement schemas do not provide a separate SSN field. The
+parent PDF descriptor expands to controlling form then both owner/SSN statement
+copies. This is one supporting descriptor, not two extra taxpayer forms. The
+211-root census counts only `IRS...` roots and is unchanged. See the
+[Form 8853 evidence and limits](ty2025-form8853-gap.md).
+
 ### Registry-to-root reconciliation
 
-The current native registry has **149 descriptor entries**: 19 return/schedule
-entries, 98 numbered-form entries and 32 wage/supporting entries. The filled
+The current native registry has **150 descriptor entries**: 19 return/schedule
+entries, 98 numbered-form entries and 33 wage/supporting entries. The filled
 PDF registry has **116 entries**. These counts are descriptor counts, not
 distinct schema-root counts and not a measure of accepted filing scenarios.
 The 211-root census divides by exact source token into 123 `Yes` and 88 `No`:

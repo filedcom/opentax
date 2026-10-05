@@ -71,11 +71,103 @@ export type MedicareDistributionLedger = z.infer<
   typeof medicareDistributionLedgerSchema
 >;
 
+export const medicareHolderLedgerSchema = medicareDistributionLedgerSchema.omit(
+  {
+    sole_medicare_msa_holder_on_return_confirmed: true,
+  },
+).strict();
+export type MedicareHolderLedger = z.infer<typeof medicareHolderLedgerSchema>;
+export const medicareJointLedgersSchema = z.array(
+  medicareHolderLedgerSchema.extend({ source: normal }),
+)
+  .length(2);
+
 export function calculateMedicareLedger(
   raw: MedicareDistributionLedger,
   taxYear = 2025,
 ) {
-  const ledger = medicareDistributionLedgerSchema.parse(raw);
+  const { sole_medicare_msa_holder_on_return_confirmed: _sole, ...holder } =
+    medicareDistributionLedgerSchema.parse(raw);
+  return calculateMedicareHolderLedger(holder, taxYear);
+}
+
+export function calculateMedicareJointLedgers(
+  raw: MedicareHolderLedger[],
+  taxYear = 2025,
+) {
+  const ledgers = medicareJointLedgersSchema.parse(raw);
+  if (new Set(ledgers.map((ledger) => ledger.owner)).size !== 2) {
+    throw new Error(
+      "Form8853 joint Medicare ledger needs one taxpayer and one spouse owner",
+    );
+  }
+  const refs = new Set<string>();
+  const expenseRefs = new Set<string>();
+  const accountOwners = new Map<string, string>();
+  const ssns = new Set<string>();
+  for (const ledger of ledgers) {
+    const source = ledger.source;
+    const ssn = source.holder_ssn;
+    if (ssns.has(ssn)) {
+      throw new Error("Form8853 joint Medicare holders need distinct SSNs");
+    }
+    ssns.add(ssn);
+    if (source.kind === "normal") {
+      for (const row of source.distributions) {
+        if (refs.has(row.distribution_reference)) {
+          throw new Error(
+            "Form8853 duplicate joint Medicare distribution reference",
+          );
+        }
+        refs.add(row.distribution_reference);
+        const previousOwner = accountOwners.get(row.account_source_reference);
+        if (previousOwner && previousOwner !== ledger.owner) {
+          throw new Error(
+            "Form8853 joint Medicare account source cannot belong to both holders",
+          );
+        }
+        accountOwners.set(row.account_source_reference, ledger.owner);
+        for (const ref of row.qualified_expense_source_references) {
+          if (expenseRefs.has(ref)) {
+            throw new Error(
+              "Form8853 joint qualified expense reference cannot be reused",
+            );
+          }
+          expenseRefs.add(ref);
+        }
+      }
+    }
+  }
+  const holders = ["taxpayer", "spouse"].map((owner) => {
+    const ledger = ledgers.find((ledger) => ledger.owner === owner)!;
+    return { ledger, lines: calculateMedicareHolderLedger(ledger, taxYear) };
+  });
+  const sum = (
+    key:
+      | "rawGross"
+      | "rawQualified"
+      | "line10"
+      | "line11"
+      | "line12"
+      | "line13b",
+  ) => holders.reduce((sum, holder) => sum + holder.lines[key], 0);
+  return {
+    holders,
+    rawGross: sum("rawGross"),
+    rawQualified: sum("rawQualified"),
+    line10: sum("line10"),
+    line11: sum("line11"),
+    line12: sum("line12"),
+    line13b: sum("line13b"),
+    line13a: holders.some((holder) => holder.lines.line13a),
+  };
+}
+
+export function calculateMedicareHolderLedger(
+  raw: MedicareHolderLedger,
+  taxYear = 2025,
+) {
+  const ledger = medicareHolderLedgerSchema.parse(raw);
   const source = ledger.source;
   let gross = 0, qualified = 0, excepted = 0;
   if (source.kind === "death_transfer") {

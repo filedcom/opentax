@@ -1,3 +1,4 @@
+import { form8853MedicareStatements } from "./f8853_medicare_statements.ts";
 import { eitc } from "./eitc.ts";
 import { cccLoanStatement } from "./ccc_loan_statement.ts";
 import { cccLoanAccrualStatement } from "./ccc_loan_accrual_statement.ts";
@@ -396,6 +397,8 @@ export const ALL_MEF_FORMS = [
   childTaxableInterestStatement,
   // Form 8820 controlled-group allocation follows Form 8814 statements.
   form8820ControlledGroupStatement,
+  // Form 8853 owner statements precede Form 8854 supporting roots in ReturnData.
+  form8853MedicareStatements,
   // Form 8854 native roots follow Form 8820 controlled-group statements.
   form8854NativeStatements,
 ] as const;
