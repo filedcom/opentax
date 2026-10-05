@@ -6,6 +6,7 @@ import {
   type Form8853Input,
   inputSchema,
   MsaOwner,
+  normalizeArcherSource,
 } from "../../../nodes/intermediate/forms/form8853/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
@@ -15,12 +16,12 @@ export const FIELD_MAP: ReadonlyArray<readonly [string, string]> = [];
 
 function validateBoundedArcherDistribution(fields: Form8853Input) {
   const details = fields.archer_distribution_filing_details;
-  if (!details) {
+  if (!details && !fields.archer_distribution_ledger) {
     throw new Error(
       "Form 8853 MeF needs Archer MSA owner and source confirmations",
     );
   }
-  if (details.owner !== MsaOwner.Taxpayer) {
+  if (details && details.owner !== MsaOwner.Taxpayer) {
     throw new Error(
       "Form 8853 spouse-owned MSA needs a separate owner-specific filing route",
     );
@@ -47,11 +48,13 @@ function validateBoundedArcherDistribution(fields: Form8853Input) {
   const lines = calculateArcherMsaDistribution(fields);
   if (
     ![lines.line6a, lines.line6b, lines.line6c, lines.line7].every(
-      Number.isInteger,
+      fields.archer_distribution_ledger ? Number.isFinite : Number.isInteger,
     ) ||
     lines.line6a <= 0 || fields.archer_msa_qualified_expenses === undefined ||
     fields.archer_msa_rollover !== 0 ||
-    fields.archer_msa_exception !== false || lines.line7 > lines.line6a ||
+    (!fields.archer_distribution_ledger &&
+      fields.archer_msa_exception !== false) ||
+    lines.line7 > lines.line6a ||
     lines.line6c !== lines.line6a
   ) {
     throw new Error(
@@ -59,7 +62,8 @@ function validateBoundedArcherDistribution(fields: Form8853Input) {
     );
   }
   if (
-    lines.line8 > 0 && details.normal_distribution_code_1_confirmed !== true
+    !fields.archer_distribution_ledger && lines.line8 > 0 &&
+    details?.normal_distribution_code_1_confirmed !== true
   ) {
     throw new Error(
       "Form 8853 taxable Archer route needs Form 1099-SA normal distribution code 1 confirmation",
@@ -126,17 +130,63 @@ function buildIRS8853(rawFields: Input, context?: MefBuildContext): string {
   if (Object.keys(rawFields).length === 0) {
     throw new Error("Form 8853 MeF cannot file an empty pending record");
   }
-  const fields = inputSchema.parse(rawFields);
+  const fields = normalizeArcherSource(inputSchema.parse(rawFields));
   const lines = validateBoundedArcherDistribution(fields);
   const holderSSN = validateReturnContext(context, lines);
+  const ledgerSource = fields.archer_distribution_ledger?.source;
+  if (ledgerSource) {
+    const recipient = ledgerSource.kind === "normal"
+      ? ledgerSource.holder_ssn
+      : ledgerSource.recipient_ssn;
+    const birth = z.object({ taxpayer_dob: z.string().optional() }).safeParse(
+      context?.pending?.f1040 ?? {},
+    );
+    if (
+      ledgerSource.kind === "normal" && birth.success &&
+      birth.data.taxpayer_dob !== undefined &&
+      birth.data.taxpayer_dob !== ledgerSource.holder_date_of_birth
+    ) {
+      throw new Error(
+        "Form 8853 holder birth date must match return taxpayer source",
+      );
+    }
+    if (recipient !== holderSSN) {
+      throw new Error(
+        "Form 8853 source recipient must match return taxpayer SSN",
+      );
+    }
+    if (
+      ledgerSource.kind === "death_transfer" &&
+      ledgerSource.beneficiary_kind === "estate_final_return" &&
+      (context?.filer?.deceased !== true ||
+        context.filer.deathDate !== ledgerSource.death_date)
+    ) {
+      throw new Error(
+        "Form 8853 estate death transfer needs matching deceased final-return header",
+      );
+    }
+    if (
+      ledgerSource.kind === "death_transfer" &&
+      ledgerSource.beneficiary_kind === "estate_final_return" &&
+      context?.filer?.fullName &&
+      ledgerSource.deceased_holder_name.toUpperCase() !==
+        context.filer.fullName.toUpperCase()
+    ) {
+      throw new Error(
+        "Form 8853 estate deceased holder name must match final return",
+      );
+    }
+  }
   return elements("IRS8853", [
     elements("ArcherMSAAndMedcrAdvntgMSAGrp", [
       element("MSAHolderSSN", holderSSN),
+      ...(lines.deathTransfer ? [element("MSAHolderDeathInd", "X")] : []),
       element("TotalArcherMSADistributionAmt", lines.line6a),
       element("ArcherMSADistriRollOverAmt", lines.line6b),
       element("ArcherMSANetDistributionAmt", lines.line6c),
       element("ArcherMSAUnreimbQualMedExpAmt", lines.line7),
       element("TaxableArcherMSADistriAmt", lines.line8),
+      ...(lines.line9a ? [element("ArcherMSADistriMeetTaxExcInd", "X")] : []),
       ...(lines.line9b > 0
         ? [element("ArcherMSAAddnlDistriTaxAmt", Math.round(lines.line9b))]
         : []),

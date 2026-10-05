@@ -51,6 +51,61 @@ Ignored evidence is in the isolated worktree at
 not authentic taxpayer source documents or IRS acceptance/ATS/business-rule
 certification. General Form 8853 support remains open.
 
+## Sourced Archer distribution exceptions (2026-10-06)
+
+The public `form8853.archer_distribution_ledger` source now retains each normal
+Archer distribution's date, gross amount, allocated unreimbursed qualified
+expenses, Form 1099-SA code/source, distribution-date source, medical sources,
+and the holder's SSN and date of birth. Disability requires an onset date and
+source plus confirmation of the IRS substantial-gainful-activity and duration
+criteria. This accepts multiple distributions for the same taxpayer, including
+partially excepted taxable distributions. Source amounts are retained rather
+than replaced by a single inferred exception amount. Supplied legacy totals or
+exception indicators must agree with the ledger.
+
+Under the 2025 instructions, the age/disability exception applies **after** the
+event date. A distribution on the event date remains subject to additional tax.
+Line 9a checks only when some taxable amount qualifies; line 9b is 20% of the
+remaining taxable amount. A bare `archer_msa_exception: true` now requires the
+sourced ledger and cannot waive every distribution's tax. Normal birth dates
+establish the 65th birthday; a leap-day birth with no calendar 65th birthday
+requires a sourced age-attainment date. Holder SSN and retained return birth
+facts reconcile before filing. Native line 9a is emitted in XSD order, and the
+PDF fills the real line 9a checkbox alongside calculated line 9b.
+
+Death has a separate FMV-transfer source, not an ordinary distribution code.
+It records deceased holder identity, date/death evidence, beneficiary identity
+and designation, date-of-death valuation, and exclusion of postdeath earnings.
+For a nonspouse individual beneficiary, the ledger deducts only unreimbursed
+qualified expenses incurred before death and paid within one year. The native
+form uses the beneficiary SSN, `MSAHolderDeathInd`, and the additional-tax
+exception; the PDF prints the required "Death of Archer MSA account holder"
+annotation above its title. Estate-beneficiary FMV is calculated on the
+matching deceased final return with no medical offset. That estate case has
+node/native Form 8853 and PDF projection evidence, **but full native/PDF return
+export remains blocked** by the existing deceased-Form-1040 signer,
+representative, and refund source guard. This extension does not bypass it.
+
+Four synthetic full return cases pass local TY2025 v5.4 `Return1040.xsd` and
+filled PDF extraction: mixed age65, mixed disability, fully excepted age65, and
+nonspouse death transfer. Each mixed case has $6,000 gross, $1,500 qualified
+medical use, $4,500 taxable income, $1,500 excepted taxable income, and $600
+additional tax. The death-beneficiary case has $6,000 FMV, $2,000 medical offset,
+$4,000 income, and zero additional tax. The complete focused batch passes
+66 checks, including the original partial-use route and public start routing.
+All four filled Form 8853 pages were rendered using real Poppler and visually
+inspected; the death annotation was positioned in the top margin to avoid
+colliding with the IRS title. Ignored XML/PDF/PNG/pending/test evidence is in
+`.state/research/2026-10-06-form8853-exceptions/` in the isolated worktree.
+This is synthetic local evidence; no authentic-source or IRS acceptance,
+business-rule, or ATS claim is made.
+
+Joint/spouse aggregation, surviving-spouse inherited account handling,
+multiple inherited/owned account statements, predeath normal distributions
+combined with estate FMV transfer, rollovers/excess withdrawals, contributions,
+Medicare Advantage MSA and LTC routes remain separate gaps. The ledger requires
+reviewed absence of those other activities for its retained filing route.
+
 ## End-to-end blockers
 
 ### Bounded native Archer MSA path now written
@@ -70,7 +125,7 @@ are still blocked. The bounded partial-use route above has full local return XSD
 The broader code awaits the current full batch; general complete return XSD,
 business-rule, and ATS evidence remain open.
 
-- Archer paths beyond the bounded normal distribution, Medicare, LTC, and
+- Archer paths beyond the sourced taxpayer ledger and death transfer, Medicare, LTC, and
   contribution paths still lack a
   complete node print record and source model. The v5.4 XSD nests Section
   A/B in `ArcherMSAAndMedcrAdvntgMSAGrp` with required `MSAHolderSSN`, and
@@ -78,14 +133,12 @@ business-rule, and ATS evidence remain open.
   identity and line 15/16 answers. Section C remains unsupported; for example,
   raw `ltc_period_days` is not the XSD's computed
   `LTCDaysMultiplyByPerDiemAmt`. Focused native XML cases are written but unrun.
-- One boolean `archer_msa_exception` or `medicare_advantage_exception` currently
-  removes the additional tax from **all** taxable distributions. IRS
-  instructions say to check line 9a or 13a if **any** distribution qualifies,
-  but calculate the additional tax on the remaining nonexcepted amount. For
-  Medicare Advantage MSAs, line 13b also has a worksheet that can reduce the
-  taxable penalty base when an MSA existed at the end of 2024. The source model
-  lacks distribution-level exempt amounts and the prior-year balance/HDHP
-  deductible facts.
+- The Archer exception ledger above resolves per-distribution age/disability
+  tax for its sourced taxpayer route and the single nonspouse death transfer.
+  Medicare's boolean `medicare_advantage_exception` still removes the additional
+  tax from all taxable distributions. Medicare Advantage line 13b needs its
+  prior-year balance/HDHP deductible worksheet and distribution-level exception
+  facts; general Medicare support remains open.
 - The Section C source model lacks policyholder and insured identities,
   terminally ill status, line 15 other-payee answer, LTC period method, and
   separate periods. IRS instructions require separate Section C calculations for

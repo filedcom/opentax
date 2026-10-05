@@ -110,7 +110,7 @@ Deno.test("Form 8853: unconfirmed taxable medical use, rollover, and exception p
   assertThrows(
     () => form8853.build({ ...source, archer_msa_exception: true }, context),
     Error,
-    "no rollover or tax exception",
+    "distribution-level ledger",
   );
 });
 
