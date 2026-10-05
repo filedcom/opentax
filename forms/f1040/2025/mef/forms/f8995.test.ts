@@ -784,6 +784,27 @@ Deno.test("Form 8995 zero deduction cannot discard a REIT/PTP loss carryforward"
   );
 });
 
+Deno.test("Form 8995 zero deduction cannot discard a business QBI loss carryforward", () => {
+  const unfiled = {
+    qbi_deduction: 0,
+    qbi_from_schedule_c: [-4_000, 1_000],
+    qbi_loss_carryforward: -500,
+  };
+  assertThrows(
+    () => form8995.build(unfiled),
+    Error,
+    "cannot omit an unfiled",
+  );
+  assertThrows(
+    () => form8995Pdf.projectFields?.(unfiled, {}),
+    Error,
+    "cannot omit an unfiled",
+  );
+  const absorbed = { ...unfiled, qbi_from_schedule_c: [4_000, 1_000] };
+  assertEquals(form8995.build(absorbed), "");
+  assertEquals(form8995Pdf.projectFields?.(absorbed, {}), {});
+});
+
 Deno.test("Form 8995 rejects a positive aggregate-only QBI claim in both exports", () => {
   const fields = {
     qbi_from_schedule_c: 50_000,

@@ -43,6 +43,22 @@ const lineNumbers = [
 export function assertNoUnfiled8995Loss(
   fields: Readonly<Record<string, unknown>>,
 ): void {
+  const sum = (name: string): number => {
+    const value = fields[name];
+    if (value === undefined) return 0;
+    const values = Array.isArray(value) ? value : [value];
+    if (!values.every((amount) =>
+      typeof amount === "number" && Number.isFinite(amount)
+    )) {
+      throw new Error("Form 8995 loss carryforward source must be numeric");
+    }
+    return values.reduce((total: number, amount: number) => total + amount, 0);
+  };
+  const priorQbi = sum("qbi_loss_carryforward");
+  const netQbi = sum("qbi_from_schedule_c") + sum("qbi_from_schedule_f") +
+    sum("qbi") + sum("sstb_qbi") - sum("se_tax_deduction") -
+    sum("se_health_insurance_deduction") - sum("retirement_plan_deduction") +
+    priorQbi;
   const currentReit = fields.line6_sec199a_dividends;
   const prior = fields.reit_loss_carryforward;
   if (
@@ -63,6 +79,8 @@ export function assertNoUnfiled8995Loss(
     ? currentReit.reduce((sum: number, value: number) => sum + value, 0)
     : currentReit as number;
   if (
+    priorQbi > 0 ||
+    netQbi < 0 ||
     (typeof prior === "number" && current + prior < 0) ||
     (typeof fields.line17 === "number" && fields.line17 > 0) ||
     (typeof fields.line16 === "number" && fields.line16 > 0)

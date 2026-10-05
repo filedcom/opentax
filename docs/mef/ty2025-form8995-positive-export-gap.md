@@ -315,3 +315,10 @@ needs a $2,000 ending loss record; the current source and export contract does
 not support that filing route. Focused node and direct native/PDF rejection
 cases are written but unrun. Source-backed line 17 filing, prior-loss
 provenance, and the wider zero-deduction audit remain open.
+
+The same direct MeF/PDF zero-deduction guard now sums current Schedule C/F,
+other QBI, and attributable deduction inputs with the prior QBI loss. A net
+business loss cannot disappear without Form 8995 line 16 and a sourced
+carryforward route. A prior loss fully absorbed by current positive QBI can
+still leave a zero-deduction no-claim return when the income limit is zero.
+This guard does not implement line 16 filing or prove prior-year loss history.
