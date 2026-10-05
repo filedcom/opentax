@@ -4574,3 +4574,12 @@ Deno 2.9.4, TypeScript 6.0.3, libxml 2.9.13, and real Poppler 26.09.0 were
 used. The corrected EIC negative assertion passed in the full batch. This
 regression pass does not close the remaining source-proof, visual-review,
 IRS business-rule, or ATS acceptance gates.
+
+
+## October 6 positive-route integration
+
+Code at `a3c048f82` integrates Form 8962 one-policy family cap tiers, the MFS Form 6251 basis crossover (including spouse identity), the above-$5,000 Section A patent route, and the full-return Form 8864 discovery/allocation repairs. Source, native, XSD and filled-PDF verification across the four route suites passed 19/19; `/tmp/opentax-positive-integration-oct5.log` records the command and output. The final Form 8864/review-source/scope check passed 4/4 in `/tmp/opentax-8864-final-oct6.log`, including wrong allocation and AMT negatives. The earlier broader Form 8864 affected suites passed 27/27 in `/tmp/opentax-8864-focused.log`. Each full-return case validates XML against the local TY2025 v5.4 schema; the patent test performs that step when the ignored cache is present, as it was for this replay.
+
+Root visually inspected all 23 Form 8864 pages, all five patent packet pages, and the eight-page MFS packet, then rechecked its corrected spouse identity on page 1. Artifact hashes and source limits are in the matching gap notes. The Form 8962 cap fixtures generated filled PDFs and tested their line 28/29 projections; that is not a complete manual page-review claim.
+
+The planner reports 188 source fixtures, 116 descriptors, 113 distinct PDF keys, 86 fixture-covered keys and 27 uncovered keys. Neither these counts nor focused passes close parent TODOs or IRS gates. The latest whole-repository green baseline remains `a268f60c`; the new integrated code needs its own full regression.
