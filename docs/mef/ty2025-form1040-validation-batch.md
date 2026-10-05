@@ -4730,3 +4730,9 @@ At3d8ab750e, typed restricted real-Poppler tests for material-capital, personal-
 ## Patron phase-in main integration (October6)
 
 At5abcfba2b, typed restricted real-Poppler patron phase-in, prior patron sources and SSTB tests passed8/8 in1m24s. Log `/tmp/opentax-patron-phase-main-integration.log`. Detailed12 full-XSD/PDF returns,71 dual-export mutations,53 isolated regressions and61-page review are in the Form8995A gap. Current main still requires a new full regression; the prior11271 checkpoint is an older snapshot.
+
+## Combined joint SSTB/SHOP/patron/education main proof and full regression
+
+Code snapshot `ea23fbb91` passes54/54 typed restricted real-Poppler builder, joint SSTB, patron phase-in, owned Form8941 and material-capital education checks in1m52s. Log `/tmp/opentax-joint-shop-patron-main-integration.log`. SHOP integration conflicts were two first-line imports; both patron filed-business and8941 source-reconciliation imports were retained. No tests ran during mutation. Joint source visual/replay proof is retained in `.state/research/ty2025-filled-pdf-review/2026-10-06-qbi-sstb-joint`; SHOP and material-capital packets also copied into main ignored research directories. Planner207 fixtures/116 descriptors/113 keys/92 covered/21 uncovered. Frozen main checklist remains52 open parents.
+
+Exact full `deno task test` launched from detached `/tmp/opentax-full-regression-current-oct6` at `ea23fbb91`, real-Poppler PATH, using launchd job `opentax-full-regression-ea23fbb91`. Status `/tmp/opentax-full-regression-ea23fbb91.status`, log `/tmp/opentax-deno-task-test-ea23fbb91.log`; wrapper records exact commit/start/end/exit/logSHA256. Running is not a pass. Previous11271 clean batch is a distinct older snapshot. No IRS business-rule or acceptance claim is made.
