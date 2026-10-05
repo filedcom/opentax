@@ -29,3 +29,20 @@ The [dependency audit](docs/mef/ty2025-nonnamed-board-dependency-audit.md) ident
 
 IRS ATS was reported unavailable through October 13 at 9 a.m. Eastern, with R10.A WSDL scheduled that day. Recheck service/version status before transmission. Credentials, source conflicts in Scenarios 1/8/13, source authenticity, business rules and IRS acceptance remain release gates. Keep parents open until their full requirements are verified.
 
+
+## Before four additional route integrations
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,354 bounded slices**, including six verified in the isolated integration checkout; broader parent requirements remain open. New work belongs only in `future_todo`, outside this execution queue.
+
+The latest completed full regression at `a268f60c` passed **11,233/11,233**, zero failed or ignored. The real-Poppler regression of stable `8aa4beeec`, started October 5 at 22:02:12 UTC, remains live. Later code is held in an isolated integration checkout until this run finishes; it needs its own full regression. See the [validation batch](docs/mef/ty2025-form1040-validation-batch.md).
+
+The isolated changes cover Form 4952 royalty plus interest, Form 4972 separate spouse elections and combined beneficiary allocations, cent-valued Form 8995-A losses, required zero amounts on Form 1040, and Form 8839 attachment replay/XSD indicators. Integration checks pass 34/34, 6/6 and 4/4; the selected adoption replay checker passes one case/four reviewed pages. The planner has 189 fixtures covering 87 of 113 PDF keys, with 26 uncovered. This does not prove complete route, source authenticity or visual coverage.
+
+The [dependency audit](docs/mef/ty2025-nonnamed-board-dependency-audit.md) identifies existing work. [October 6](docs/mef/ty2025-product-board-status-2026-10-06.md) and earlier checkpoints preserve accumulated learnings. Parallel work continues on Form 4972 annuity combinations, WOTC/QBI ordering and Form 8853 partial medical use.
+
+IRS ATS was reported unavailable through October 13 at 9 a.m. Eastern, with R10.A WSDL scheduled that day. Recheck service/version status before transmission. Credentials, Scenarios 1/8/13 source conflicts, source authenticity, business rules and IRS acceptance remain release gates.
+
