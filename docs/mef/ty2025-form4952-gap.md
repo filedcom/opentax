@@ -717,3 +717,32 @@ The issued OID copies and lender records are entered references rather than
 authenticated bytes. OID acquisition premium, bond premium, market discount,
 Treasury box 8 OID, tax-exempt OID, foreign-source/tax facts, mixed-use debt,
 carryovers, and additional payer combinations remain outside this route.
+
+## Portfolio royalty plus taxable interest (2026-10-06, verified locally)
+
+The [TY2025 Form 4952 instructions](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+include nonbusiness interest and royalties in investment gross income on line
+4a. The existing expense-free portfolio royalty route now accepts one plain,
+owner-matched Form 1099-INT alongside one verified Form 1099-MISC royalty and
+a separately traced taxable-securities purchase loan. Both retained source
+components reconcile at native and PDF export, including the finalized Form
+1040 lines 2b and 8, Schedule E/1, Schedule A and the direct-debt workpaper.
+
+The positive fixture has $500 interest, $800 royalties and $300 deductible
+investment interest. Line 4a is $1,300, line 8 is $300, and itemization is
+$18,300 including a $18,000 retained synthetic mortgage source. The full
+return validates against the local TY2025 v5.4 XSD and its seven PDF pages
+were rendered and inspected for amounts, owner, checkboxes and order. Changed
+source amounts/owners and loan purchase/lender/payment records reject at both
+exports. The final isolated focused rerun passed 1/1.
+
+Artifacts are retained under
+`.state/research/ty2025-filled-pdf-review/2026-10-06-form4952-royalty-interest/`.
+XML SHA-256: `82cee6356fbd858657f6d539ecbdfbe9d5caa5f639856b294395750e0d027be6`.
+PDF SHA-256: `c994f9f1a40023154a7cd3e8fa98fa13a86eecf95e50772195188ba9acad9ccc`.
+
+This verifies a synthetic, entered-source route. Independent issuer and loan
+record authentication, expenses, OID/dividend/foreign combinations, additional
+payers, carryovers, differing AMT amounts, IRS business rules and ATS acceptance
+remain open. The current full regression covers the earlier stable snapshot;
+these isolated changes require integration and a later full regression.
