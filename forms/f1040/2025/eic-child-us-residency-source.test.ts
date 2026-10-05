@@ -278,7 +278,7 @@ Deno.test("Schedule EIC rejects repeated identity and unsupported birth residenc
   const duplicated = run([deps[0], { ...deps[1], ssn: deps[0].ssn }, deps[2]]);
   assertStringIncludes(
     JSON.stringify(duplicated.diagnostics),
-    "Schedule EIC qualifying children need unique SSNs",
+    "Form 8962 claimed dependents need distinct SSNs",
   );
   const fabricated = run([deps[0], deps[1], {
     ...deps[2],

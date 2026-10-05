@@ -4543,3 +4543,23 @@ TY2025 v5.4 schema cache after a Form 7206 ambient Schedule SE interaction
 was fixed. The exact command and output are in
 `/tmp/opentax-integration-next-focused-f.log`. The full run on this combined
 branch remains pending; the live full run still targets `9d700e2d`.
+
+The real-Poppler repository-wide `PATH=/tmp/opentax-poppler-env/bin:$PATH deno
+task test` run at `9d700e2d` began `2026-10-05T19:48:03Z` and ended
+`2026-10-05T20:29:49Z`: **11,225 passed, 0 failed, 0 ignored** in 41m26s.
+The log is `/tmp/opentax-deno-task-test-9d700e2d.log`, SHA-256
+`f5f726c6a7c69b823ae44b7d07b36deaffb7adc0b19cc1cb876714112c2fbbf0`.
+The one-shot launchd job exited 0 without restarting.
+
+The subsequent exact-commit run at `615809a4` began
+`2026-10-05T20:15:39Z` and ended `2026-10-05T20:57:33Z`: **11,220 passed,
+1 failed** in 41m27s. Its log is
+`/tmp/opentax-deno-task-test-615809a4.log`, SHA-256
+`ae08f24ecf1d361d607e07618bd17cc680a62ad38e5631ef9d6ef1c3272c8571`.
+The sole failure was the EIC duplicate-dependent negative test expecting its
+later EIC diagnostic after the new Form 8962 duplicate-SSN source guard had
+already rejected the input. The test now asserts the source-stage diagnostic;
+its EIC and Form 8962 focused suites pass **10/10** in
+`/tmp/opentax-eic-8962-regression-fix.log`. A new full run is required.
+Both runs used Deno 2.9.4, TypeScript 6.0.3, libxml 2.9.13, and Poppler
+26.09.0.
