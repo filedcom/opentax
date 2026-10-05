@@ -793,7 +793,6 @@ export function calculatePatronScheduleDLines(input: Form8995AInput) {
     const details = input.business_filing_details;
     if (
       input.filing_status !== FilingStatus.Single ||
-      (input.taxable_income > 197300 && input.taxable_income <= 247300) ||
       amounts.qbi !== input.qbi || amounts.wages !== input.w2_wages ||
       input.unadjusted_basis !== 0 ||
       details.business_name !== amounts.name || details.ein !== amounts.ein ||
@@ -899,8 +898,18 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   const line9 = line6 + line8;
   const line10 = Math.max(line5, line9);
   const line11 = Math.min(line3, line10);
+  // Part III applies only in the middle band when the wage/property limit binds.
+  const phaseInRequired = Boolean(input.patron_business_source) &&
+    input.taxable_income > 197300 && input.taxable_income <= 247300 &&
+    line10 < line3;
+  const phaseIn = phaseInRequired ? (input.taxable_income - 197300) / 50000 : 0;
+  const line19 = phaseInRequired ? line3 - line10 : 0;
+  const line25 = phaseInRequired ? filedAmount(line19 * phaseIn) : 0;
+  const line26 = phaseInRequired ? line3 - line25 : 0;
   const line13 = input.patron_business_source && input.taxable_income <= 197300
     ? line3
+    : phaseInRequired
+    ? Math.max(line11, line26)
     : line11;
   const line14 = patronReduction;
   const line15 = Math.max(0, line13 - line14);
@@ -929,6 +938,16 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   }
   const line39 = line37 + line38;
   return {
+    ...(input.patron_business_source
+      ? {
+        phaseInRequired,
+        phaseIn,
+        line12: phaseInRequired ? line26 : undefined,
+        line19,
+        line25,
+        line26,
+      }
+      : {}),
     line2,
     line3,
     line4,
@@ -1159,7 +1178,11 @@ function assertSupportedSchedulePath(input: Form8995AInput): void {
       );
     }
     const lines = calculateOneBusiness8995ALines(input);
-    if (!Object.values(lines).every(Number.isInteger) || lines.line39 <= 0) {
+    if (
+      !Object.entries(lines).filter(([key, value]) =>
+        /^line\d+$/.test(key) && value !== undefined
+      ).every(([, value]) => Number.isInteger(value)) || lines.line39 <= 0
+    ) {
       throw new Error(
         "Form 8995-A Schedule D needs a positive whole-dollar reconciled deduction",
       );

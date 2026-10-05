@@ -6,12 +6,33 @@ import { CONFIG_BY_YEAR } from "../../nodes/config/index.ts";
 /** Synthetic issued-copy and books facts; no taxpayer authorization is implied. */
 export function patronFixture(
   base: PdfReviewFixture,
-  kind: "farm" | "c-health" | "income-cap" = "farm",
+  kind:
+    | "farm"
+    | "c-health"
+    | "income-cap"
+    | "phase-farm"
+    | "phase-c-health"
+    | "phase-income-cap"
+    | "phase-unbound" = "farm",
 ): PdfReviewFixture {
-  const capped = kind === "income-cap";
-  const farm = kind !== "c-health";
-  const payroll = capped ? 10000.50 : 100000.50;
-  const distributions = capped ? 500000.49 : farm ? 200000.49 : 300000.49;
+  const phase = kind.startsWith("phase-");
+  const capped = kind.endsWith("income-cap");
+  const farm = !kind.endsWith("c-health");
+  const unbound = kind === "phase-unbound";
+  const payroll = capped
+    ? 10000.50
+    : unbound
+    ? 110000.50
+    : phase
+    ? 60000.50
+    : 100000.50;
+  const distributions = capped
+    ? phase ? 3000000.49 : 500000.49
+    : farm
+    ? 200000.49
+    : phase
+    ? 250000.49
+    : 300000.49;
 
   const coop = {
     payer_name: "Example Specified Cooperative",
@@ -25,7 +46,7 @@ export function patronFixture(
     box3_per_unit_retain:
       Math.round((distributions - Math.floor(distributions * 50) / 100) * 100) /
       100,
-    box6_section199ag_deduction: capped ? 45000 : 10000.49,
+    box6_section199ag_deduction: capped ? phase ? 270000 : 45000 : 10000.49,
     box7_qualified_payments: distributions,
     box8_section199aa_qualified_items: distributions,
     distribution_treatment: farm
@@ -57,11 +78,17 @@ export function patronFixture(
       accounting_method: "cash",
       line_f_made_1099_payments: false,
       line1_sales_livestock_resale: 0,
-      line2_sales_products_raised: capped ? 0 : 300000,
+      line2_sales_products_raised: capped
+        ? 0
+        : unbound
+        ? 160000
+        : phase
+        ? 100000
+        : 300000,
       line3a_cooperative_distributions: distributions,
       line3b_cooperative_distributions_taxable: distributions,
       line22_labor_hired: payroll,
-      ...(capped ? { line16_feed: 440000 - .50 } : {}),
+      ...(capped ? { line16_feed: phase ? 2735000.50 : 440000 - .50 } : {}),
       ccc_loan_election_in_effect: false,
       qbi_w2_wages: payroll,
       qbi_unadjusted_basis: 0,
@@ -76,10 +103,10 @@ export function patronFixture(
       line_f_accounting_method: "cash",
       line_g_material_participation: true,
       line_i_made_1099_payments: false,
-      line_1_gross_receipts: 200000,
+      line_1_gross_receipts: phase ? 100000 : 200000,
       line_6_other_income: distributions,
       line_26_wages: payroll,
-      line_18_office_expense: 50000,
+      line_18_office_expense: phase ? 25000.50 : 50000,
       qbi_specified_service: false,
       qbi_w2_wages: payroll,
       qbi_unadjusted_basis: 0,
@@ -184,7 +211,7 @@ export function patronFixture(
       "schedule2",
       "form8995a",
       "form8995a_schedule_d",
-      ...(!capped ? ["form8959", "form8960"] : []),
+      ...(!capped || phase ? ["form8959", "form8960"] : []),
       ...(!farm ? ["form7206"] : []),
     ],
     reviewFocus: [

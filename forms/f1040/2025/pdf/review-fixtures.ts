@@ -9061,6 +9061,19 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     )!,
     "income-cap",
   ),
+  ...([
+    "phase-farm",
+    "phase-c-health",
+    "phase-income-cap",
+    "phase-unbound",
+  ] as const).map((kind) =>
+    patronFixture(
+      basePdfReviewFixtures.find((fixture) =>
+        fixture.id === "single-schedule-c"
+      )!,
+      kind,
+    )
+  ),
   twoBusinessAggregationFixture(
     basePdfReviewFixtures.find((fixture) =>
       fixture.id === "single-schedule-c"

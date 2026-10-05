@@ -462,7 +462,6 @@ function advancedFormOutput(
     if (
       !row || rows?.length !== 1 ||
       input.filing_status !== FilingStatus.Single ||
-      (taxableIncome > 197300 && taxableIncome <= 247300) ||
       input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
       input.qbi_not_patron_of_specified_cooperative_confirmed === true ||
       sumField(input.qbi) !== 0 || sstbQbi !== 0 ||
@@ -475,7 +474,7 @@ function advancedFormOutput(
         : sumField(input.qbi_from_schedule_c) !== 0)
     ) {
       throw new Error(
-        "Patron public source needs one business below threshold or fully above phase-in, no other QBI activity and an explicit loss review",
+        "Patron public source needs one single-filer business, no other QBI activity and an explicit loss review",
       );
     }
     const source = {

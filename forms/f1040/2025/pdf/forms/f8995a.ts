@@ -245,6 +245,19 @@ export function projectOneBusiness8995A(
     business_ein: details.ein,
     patron: input.patron_of_specified_cooperative === true,
     ...lines,
+    ...(lines.phaseInRequired
+      ? {
+        line17: lines.line3,
+        line18: lines.line10,
+        line20: lines.line33,
+        line21: 197300,
+        line22: lines.line33 - 197300,
+        line23: 50000,
+        line24: (lines.phaseIn! * 100).toFixed(3).replace(/\.?0+$/, ""),
+      }
+      : Object.fromEntries([17, 18, 19, 20, 21, 22, 23, 24, 25, 26].map(
+        (line) => [`line${line}`, undefined],
+      ))),
     ...(input.patron_business_source && input.taxable_income <= 197300
       ? Object.fromEntries(
         [4, 5, 6, 7, 8, 9, 10, 11].map((line) => [`line${line}`, undefined]),

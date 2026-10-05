@@ -6,6 +6,69 @@ previously recorded WOTC route remains locally proven. Historical sections below
 retain their original staging status. Broader Form 8995-A coverage, IRS business
 rules and ATS remain open.
 
+## Patron wage-limit phase-in (2026-10-06, locally proven)
+
+The actual public patron source route now includes the Single 197,300–247,300
+middle band. The [2025 IRS instructions](https://www.irs.gov/instructions/i8995a)
+require Part III only when taxable income is more than 197,300 but not more
+than 247,300 and line 10 is less than line 3. The retained C/F profit,
+Schedule SE deduction and actual owned C health plan determine the finalized
+pre-QBI taxable income. The calculator computes the wage-limit difference,
+multiplies it by the exact excess-income/50,000 ratio, rounds the dollar
+reduction, and transfers the result through line 12 to line 13. Schedule D's
+qualified-payment reduction then reduces line 14/15; the cooperative box 6
+pass-through is separately capped on line 38 after line 37.
+
+Four registered source fixtures retain actual cent-valued issued copies and
+books. Their complete calculation, native parent/companion XML and filled PDF
+share the same finalized dollar amounts. The PDF percentage uses a text
+projection to preserve fractional digits instead of the monetary formatter's
+whole-dollar rounding. Native `PhaseInPct` retains the ratio to five decimal
+places. Part III is absent from native XML and blank in the PDF when wages do
+not bind, even inside the income band.
+
+| Source case | Filed profit | Half-SE deduction | Health | Pre-QBI taxable income | Phase-in percentage | Part III reduction | Schedule D reduction | Filed box 6 claim | QBI deduction | Total tax |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Phase farm | 239,999 | 14,132 | 0 | 210,117 | 25.634% | 3,889 | 13,552 | 10,000 | 37,732 | 62,678 |
+| Phase C health | 264,998 | 14,467 | 6,000 | 228,781 | 62.962% | 11,903 | 15,720 | 10,000 | 31,283 | 69,598 |
+| Phase income cap | 254,998 | 14,333 | 0 | 224,915 | 55.23% | 23,822 | 5,001 | 205,605 | 224,915 | 28,984 |
+| Phase nonbinding wages | 249,999 | 14,266 | 0 | 219,983 | Inapplicable | Inapplicable | 11,787 | 10,000 | 45,360 | 63,566 |
+
+The cap fixture retains box 6 of 270,000 and qualified payments of
+3,000,000.49; its filed claim is 205,605 and taxable income is zero. It proves
+the 50%-of-qualified-wages Schedule D branch; the other phase-in cases prove
+the 9%-of-qualified-QBI branch. The original raw receipt proportions and
+source cents remain retained, with the prior leaf/subtotal filing chain intact.
+
+`form8995a_patron_phasein.test.ts` adds four source-positive full returns and
+five public-source boundary returns at 197,300, 197,301, 247,299, 247,300 and
+247,301. It covers a reduction rounding to zero immediately above the lower
+threshold and a ratio of one at the upper boundary. Each return passes full
+TY2025 v5.4 XSD and complete PDF export. Thirty-six phase-in source/return
+mutations reject in both native and PDF export, covering detached percentage
+operands, wage/QBI allocations, notices, identities, SE deductions, companion
+sources and final AGI/deduction/tax joins. Together with the original patron
+suite, five typed tests pass; the six-file related regression suite passes 53
+tests, including aggregation and SSTB source routes.
+
+The four reusable held-review fixtures have `phase-farm`, `phase-c-health`,
+`phase-income-cap` and `phase-unbound` suffixes. All 61 pages were rendered,
+visually reviewed and passed the selected read-only checklist/hash/full-XSD
+replay. Ignored artifacts are at
+`.state/research/ty2025-filled-pdf-review/2026-10-06-qbi-patron-phasein`, with
+rendered pages in the adjacent `-rendered` directory. Logs:
+`/tmp/opentax-patron-phase-focus-final-oct6.log`,
+`/tmp/opentax-patron-phase-regression-final-oct6.log`, and
+`/tmp/opentax-patron-phase-selected-oct6.log`.
+
+This completes the missing middle band for this same one-owned-positive-cash-
+business, one-cooperative, zero-UBIA Single patron source route. Multiple
+businesses/cooperatives or owners, other filing statuses, loss/carryforward,
+SSTB/property/credit combinations, additional capital/investment income,
+retirement plans and farm health-policy allocation remain open. Broader parent
+coverage, return-wide rounding audit, source-byte authentication, IRS business
+rules and ATS remain open.
+
 ## Owned cooperative patron source route (2026-10-06, locally proven)
 
 Public `qbi_patron` input joins one actual owned cash Schedule C or Schedule F
@@ -88,8 +151,8 @@ rendered pages are in the adjacent `-rendered` directory. Logs:
 199 fixtures covering 90 of 113 registered PDF keys; Schedule D is covered.
 
 This route supports one positive, active, primary-owned cash business and one
-specified cooperative, a single filer below the threshold or fully above the
-phase-in range, eligible reviewed wages and zero UBIA. Patron phase-in, multiple
+specified cooperative, a single filer across the threshold and phase-in
+range, eligible reviewed wages and zero UBIA. Multiple
 businesses/cooperatives or owners, losses/carryforwards, SSTB, property limits,
 employment credits/home office, additional income/capital combinations, owned
 retirement plans and a farm health-policy allocation remain open. IRS business

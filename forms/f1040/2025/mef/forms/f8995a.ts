@@ -156,7 +156,11 @@ export function validateOneBusiness(fields: Form8995AInput) {
     );
   }
   const lines = calculateOneBusiness8995ALines(fields);
-  if (!Object.values(lines).every(Number.isInteger) || lines.line39 <= 0) {
+  if (
+    !Object.entries(lines).filter(([key, value]) =>
+      /^line\d+$/.test(key) && value !== undefined
+    ).every(([, value]) => Number.isInteger(value)) || lines.line39 <= 0
+  ) {
     throw new Error(
       "Form 8995-A MeF needs a positive whole-dollar calculated QBI deduction",
     );
@@ -576,8 +580,23 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
         ? [element("PatronReductionAmt", lines.line14)]
         : []),
       element("QBIComponentAmt", lines.line15),
+      ...(lines.phaseInRequired
+        ? [
+          element("QBI20PctLessGrtrAllcblShareAmt", lines.line19),
+          element("TotalPhaseInReductionAmt", lines.line25),
+          element("QBIAfterPhaseInReductionAmt", lines.line26),
+        ]
+        : []),
     ]),
     element("TotalQBIComponentAmt", lines.line16),
+    ...(lines.phaseInRequired
+      ? [
+        element("FilingStatusThresholdCd", 197300),
+        element("TXIBfrQBIDedLessThresholdAmt", lines.line33 - 197300),
+        element("FilingStatusPhaseInRangeCd", 50000),
+        element("PhaseInPct", lines.phaseIn!.toFixed(5)),
+      ]
+      : []),
     element("QlfyREITDivPTPIncomeLossAmt", lines.line28),
     element("PYQlfyREITDivPTPLossCfwdAmt", lines.line29),
     element("TotQlfyREITDivPTPIncomeAmt", lines.line30),
