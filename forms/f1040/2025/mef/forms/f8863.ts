@@ -19,9 +19,37 @@ export function assertForm8863FinalizedReturn(
   const final1040 = pending?.f1040 as Record<string, unknown> | undefined;
   const finalSchedule3 = pending?.schedule3 as Record<string, unknown> | undefined;
   const worksheet = fields.credit_limit_worksheet;
+  const dependentDetails = Array.isArray(final1040?.dependent_details)
+    ? final1040.dependent_details as Array<Record<string, unknown>>
+    : [];
+  const eligibleStudentTins = new Set([
+    filer?.primarySSN,
+    filer?.spouse?.ssn,
+    ...dependentDetails.flatMap((dependent) => [
+      dependent.ssn,
+      dependent.itin,
+      dependent.atin,
+    ]),
+  ].filter((tin): tin is string => typeof tin === "string").map((tin) =>
+    tin.replaceAll("-", "")
+  ));
+  if (!filer || !final1040 || !worksheet) {
+    throw new Error(
+      "Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile",
+    );
+  }
+  if (fields.f8863s.some((student) => student.filing_status !== filingStatus)) {
+    throw new Error("Form 8863 filing status must match the finalized return");
+  }
+  if (fields.f8863s.some((student) =>
+    !student.student_ssn ||
+    !eligibleStudentTins.has(student.student_ssn.replaceAll("-", ""))
+  )) {
+    throw new Error(
+      "Form 8863 student SSN must match the primary filer, spouse, or a dependent on Form 1040",
+    );
+  }
   if (
-    !filer || !final1040 || !worksheet ||
-    fields.f8863s.some((student) => student.filing_status !== filingStatus) ||
     final1040.filing_status !== filingStatus ||
     final1040.line11_agi !== lines.line3 ||
     final1040.line18_total_tax_before_credits !== worksheet.form1040_line18_tax ||

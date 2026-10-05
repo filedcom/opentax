@@ -96,6 +96,7 @@ function finalizedContext(fields: F8863Input) {
         line11_agi: lines.line3,
         line18_total_tax_before_credits: fields.credit_limit_worksheet.form1040_line18_tax,
         line29_refundable_aoc: lines.line8,
+        dependent_details: [{ ssn: "222-33-4444" }],
       },
       schedule3: { line3_education_credit: lines.line19 },
     },
@@ -135,6 +136,26 @@ Deno.test("Form 8863 XML uses capped line 19 and real student detail", () => {
   );
   assert(xml.includes("<StudentSSN>222334444</StudentSSN>"));
   assert(xml.includes("<EIN>123456789</EIN>"));
+});
+
+Deno.test("Form 8863 student identity must match a return filer or dependent", () => {
+  const fields = { f8863s: [aocStudent], credit_limit_worksheet: worksheet };
+  const context = finalizedContext(fields);
+  assert(form8863.build(fields, context).includes("<StudentSSN>222334444</StudentSSN>"));
+  assertThrows(
+    () => form8863.build(fields, {
+      ...context,
+      pending: {
+        ...context.pending,
+        f1040: {
+          ...context.pending.f1040,
+          dependent_details: [{ ssn: "555-66-7777" }],
+        },
+      },
+    }),
+    Error,
+    "must match the primary filer, spouse, or a dependent",
+  );
 });
 
 Deno.test("Form 8863 native filing requires the finalized return credit lines", () => {
