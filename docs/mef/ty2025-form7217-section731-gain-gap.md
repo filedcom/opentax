@@ -22,9 +22,9 @@ long-term Form 8949 transaction with no adjustment. MeF and PDF export require
 exactly one matching finalized Form 8949 row and a K-1 partner SSN matching
 the filer. Missing or conflicting evidence rejects; there is no manually
 entered gain amount or routing fallback. Focused node, MeF, PDF-projection,
-and rejection tests pass within the 25-test Form 7217 batch; one partial ATS
-Scenario 12 full-return slice separately passes TY2025 v5.4 XSD but does not
-cover the recognized-gain route.
+and rejection tests pass within the 25-test Form 7217 batch. A separate
+$5,000 recognized-gain full return passes TY2025 v5.4 XSD through Form 8949,
+Schedule D, and Form 1040; the partial ATS Scenario 12 case does not cover gain.
 
 This does not authenticate the referenced K-1 or outside-basis workpaper, or
 reconcile their amounts to an independently parsed K-1 attachment. The
@@ -50,10 +50,10 @@ Part I line 10. The IRS instruction's $750 outside basis, $100 cash,
 $100 inventory, $50 asset X, and $100 asset Y basis example gives $100, $440,
 and $110 of property basis. Source, native, and PDF projection fixtures, plus
 an offsetting $1 row tamper, are covered by the passing 25-test Form 7217
-batch. This does not provide a graph-generated full-return XSD case for the
-section 732(c) basis route.
+batch. The same published allocation now passes a graph-generated full-return
+TY2025 v5.4 XSD case; its offsetting $1 tamper rejects through the graph.
 
 The bounded calculation excludes basis decreases, section 731(c) securities
 within liquidating multi-property distributions, and distributions needing
 other section 732(c) class rules. The workpaper reference remains unauthenticated;
-full-return native XSD, filled-PDF, business-rule, and ATS checks remain open.
+broader full-return native XSD, filled-PDF, business-rule, and ATS checks remain open.

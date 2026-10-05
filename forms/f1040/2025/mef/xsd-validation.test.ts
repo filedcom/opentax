@@ -8543,6 +8543,90 @@ Deno.test({
   );
 });
 
+Deno.test({
+  name:
+    "XSD: Form 7217 liquidating section 732(c) basis allocation reaches a full return",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const distributedProperties = [
+    {
+      description: "Inventory",
+      property_treatment: Form7217PropertyTreatment.Section732Property,
+      section_732c_class: "inventory_or_receivable" as const,
+      partnership_basis_before_distribution: 100,
+      fair_market_value: 200,
+      partner_basis_after_section_732: 100,
+    },
+    {
+      description: "Asset X",
+      property_treatment: Form7217PropertyTreatment.Section732Property,
+      section_732c_class: "other_property" as const,
+      partnership_basis_before_distribution: 50,
+      fair_market_value: 400,
+      partner_basis_after_section_732: 440,
+    },
+    {
+      description: "Asset Y",
+      property_treatment: Form7217PropertyTreatment.Section732Property,
+      section_732c_class: "other_property" as const,
+      partnership_basis_before_distribution: 100,
+      fair_market_value: 100,
+      partner_basis_after_section_732: 110,
+    },
+  ];
+  const form7217 = {
+    partnership_name: "PRS Partnership",
+    partnership_ein: "12-3456789",
+    distribution_date: "2025-08-01",
+    complete_liquidation: true,
+    section_751b_sale_or_exchange: false,
+    partner_adjusted_basis_before_distribution: 750,
+    cash_received: 100,
+    section_732c_allocation_workpaper_reference:
+      "2025 PRS section 732(c) allocation",
+    distributed_properties: distributedProperties,
+  };
+  const result = runReturn({ general, f7217: { form7217s: [form7217] } });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending) as MefFormsPending;
+  assertEquals(pending.form8949?.length ?? 0, 0);
+  const xml = buildMefXml(pending, extractFilerIdentity(general));
+  assertStringIncludes(
+    xml,
+    "<TotPrtnrBssAllocDistriPropAmt>650</TotPrtnrBssAllocDistriPropAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PrtnrBssPropAftrSect732Amt>440</PrtnrBssPropAftrSect732Amt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PrtnrBssPropAftrSect732Amt>110</PrtnrBssPropAftrSect732Amt>",
+  );
+  await validateXsd(
+    xml,
+    "Form 7217 section 732(c) liquidating basis full return",
+  );
+
+  const invalid = runReturn({
+    general,
+    f7217: {
+      form7217s: [{
+        ...form7217,
+        distributed_properties: [
+          distributedProperties[0],
+          { ...distributedProperties[1], partner_basis_after_section_732: 439 },
+          { ...distributedProperties[2], partner_basis_after_section_732: 111 },
+        ],
+      }],
+    },
+  });
+  assertEquals(invalid.diagnostics.length > 0, true);
+});
+
 function runReturn(inputs: Record<string, unknown>) {
   return execute(plan, registry, inputs, { taxYear: 2025, formType: "f1040" });
 }

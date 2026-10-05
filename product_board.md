@@ -6,7 +6,7 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1304 bounded completed slices. A completed slice does not close its
+records 1305 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are
@@ -40,7 +40,9 @@ passed 16 focused native/PDF/XSD tests; underlying source-byte authentication
 and wider benefit/status cases remain open. Form 7217 source, native, and PDF
 tests pass 25/25, plus one partial ATS Scenario 12 XSD case. A bounded
 recognized-gain full-return XSD case passes with $5,000 through Form 8949,
-Schedule D, and Form 1040; wider source/basis routes remain open. A three-loan,
+Schedule D, and Form 1040. The published $650 liquidating basis allocation
+also passes full-return XSD with an offsetting $1 tamper rejection; wider
+source/basis routes remain open. A three-loan,
 two-qualified-home Form 1098 case also passes native, XSD, and filled-PDF
 checks at $2,499 deductible interest. Form 1098's
 documented boundaries leave issuer-byte
