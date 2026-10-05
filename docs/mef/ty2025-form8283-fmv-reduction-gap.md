@@ -651,6 +651,13 @@ carryovers remain unsupported.
 
 ## Purchased long-term Section B equipment put to unrelated use (2026-10-01, unrun)
 
+The signed donee receipt date must now equal the contribution date on the
+Section B item for this bounded route. A changed receipt date is rejected at
+source parsing and again by the native bundle preflight, so the same gift cannot
+be represented with conflicting dates across the reviewed donee evidence and
+Form 8283. The focused source-to-PDF/native fixture passed on 2026-10-05;
+underlying document authenticity and IRS acceptance remain open.
+
 The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283)
 and [Publication 526 (2025)](https://www.irs.gov/publications/p526) reduce the
 deduction for appreciated tangible personal property put to a donee use

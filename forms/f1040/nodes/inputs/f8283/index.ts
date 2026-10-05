@@ -1176,6 +1176,7 @@ const sectionBItemSchema = z.object({
       item.is_capital_gain_property !== true ||
       item.charitable_limit_category !== "noncash_50" ||
       item.donee_acknowledgment?.unrelated_use !== true ||
+      item.donee_acknowledgment?.received_date !== item.date_contributed ||
       item.capital_gain_reduction_election_confirmed === true ||
       ordinaryReduction !== undefined ||
       item.cost_or_adjusted_basis === undefined ||
