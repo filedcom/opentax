@@ -710,6 +710,22 @@ export function assertForm1098Line8aSourcePresence(
   }
 }
 
+/** Replay the node's deductible Form 1098 box 1 and box 6 total at export. */
+export function assertForm1098Line8aAmount(
+  source: unknown,
+  filedLine8a: number,
+): void {
+  if (source === undefined) return;
+  const items = inputSchema.parse(source).f1098s;
+  const expected = aggregateScheduleAInterest(items) +
+    aggregateScheduleAPoints(items);
+  if (filedLine8a !== expected) {
+    throw new Error(
+      "Schedule A line 8a differs from retained Form 1098 deductible interest and points",
+    );
+  }
+}
+
 export function assertForm1098MortgageLimitSources(
   source: unknown,
   recipientTins: readonly string[],

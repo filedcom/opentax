@@ -22,6 +22,35 @@ Deno.test("Schedule A native line 8a requires a retained Form 1098", () => {
   );
 });
 
+Deno.test("Schedule A native line 8a equals retained Form 1098 box 1 interest", () => {
+  const source = {
+    f1098s: [{
+      lender_name: "Home Lender",
+      recipient_tin: "111-22-3333",
+      source_document_reference: "2025 issued Form 1098",
+      box1_mortgage_interest: 20_000,
+      box1_current_year_deductible_interest: 20_000,
+      box1_deduction_workpaper_reference: "2025 Pub. 936 workpaper",
+      issuer_copy: descriptorCopy,
+    }],
+  };
+  const context = {
+    filer: pointsFiler,
+    pending: { f1098: source, f1040: { line12e_itemized_deductions: 20_000 } },
+  };
+  assertStringIncludes(
+    scheduleA.build({ line_8a_mortgage_interest_1098: 20_000 }, context),
+    "<RptHomeMortgIntAndPointsAmt>20000</RptHomeMortgIntAndPointsAmt>",
+  );
+  for (const filed of [19_000, 21_000]) {
+    assertThrows(
+      () => scheduleA.build({ line_8a_mortgage_interest_1098: filed }, context),
+      Error,
+      "line 8a differs from retained Form 1098 deductible interest and points",
+    );
+  }
+});
+
 Deno.test("Schedule A native replays purchase points and the second mortgage", () => {
   const fixture = purchasePointsCrossLoanFixture();
   const source = {

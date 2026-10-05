@@ -3,6 +3,7 @@ import { FilingStatus } from "../../../mef/header.ts";
 import {
   assertForm1098Box1Sources,
   assertForm1098Box6Sources,
+  assertForm1098Line8aAmount,
   assertForm1098Line8aSourcePresence,
   assertForm1098MortgageLimitSources,
   assertPurchasePointsCrossLoanSources,
@@ -270,6 +271,10 @@ export const scheduleAPdf: PdfFormDescriptor = {
         all.form8396 !== undefined,
       );
       assertForm1098Box1Sources(all.f1098, recipients);
+      assertForm1098Line8aAmount(
+        all.f1098,
+        Number(input.line_8a_mortgage_interest_1098 ?? 0),
+      );
     }
     if (all?.mortgage_refinance_points !== undefined) {
       if (!filer) {

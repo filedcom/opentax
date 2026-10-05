@@ -3,6 +3,7 @@ import { FilingStatus } from "../../../mef/header.ts";
 import {
   assertForm1098Box1Sources,
   assertForm1098Box6Sources,
+  assertForm1098Line8aAmount,
   assertForm1098Line8aSourcePresence,
   assertForm1098MortgageLimitSources,
   assertPurchasePointsCrossLoanSources,
@@ -141,6 +142,10 @@ function buildIRS1040ScheduleA(
       context.pending.form8396 !== undefined,
     );
     assertForm1098Box1Sources(context.pending.f1098, recipients);
+    assertForm1098Line8aAmount(
+      context.pending.f1098,
+      fields.line_8a_mortgage_interest_1098 ?? 0,
+    );
   }
   if (context?.pending?.mortgage_refinance_points !== undefined) {
     const filer = context.filer;
