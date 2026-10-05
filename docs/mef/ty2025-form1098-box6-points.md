@@ -354,8 +354,9 @@ filed total or a second-loan recipient that is not the filer. Focused commands:
 `deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov --filter='2025 purchase points and an existing mortgage' forms/f1040/2025/mef/xsd-validation.test.ts`
 (1 passed) and
 `deno test --filter='Schedule A PDF replays purchase points and the second mortgage' forms/f1040/2025/pdf/forms/schedule_a.test.ts`
-(1 passed). This exercises native XML and descriptor projection, not a rendered
-filled packet. Issuer provenance, loan and points records, other loan counts,
+(1 passed). The later capped-ratio case also generated a three-page packet;
+all pages were visually inspected and its Schedule A/Form 1040 amounts match
+native XML. Issuer provenance, loan and points records, other loan counts,
 and full mortgage-limit scope remain open.
 
 A bounded over-limit case adds a $650,000 full-year second-home loan to the

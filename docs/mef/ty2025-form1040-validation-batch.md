@@ -4411,3 +4411,14 @@ log `/tmp/opentax-f1098-points-integrated-xsd.log`, SHA-256
 `87c042be1696d75a3a357c49a68a37a017cde8d150e62dbab2756eb76010f8e7`.
 The 11,197-test full run above predates this code change; current-head full
 regression, other mortgage combinations, business rules, and ATS remain open.
+
+The same capped-points source was regenerated through the actual prepared
+return and PDF builder. The resulting three-page packet at
+`/tmp/opentax-f1098-capped-points.pdf` has SHA-256
+`d1ec58951419c720351d791526b33f2959117d79e7a498f6005e05957b4359eb`.
+All three rendered pages were inspected at 1200-pixel scale: the filled
+Schedule A page visibly prints **16,569** on lines 8a, 8e, 10, and 17; Form
+1040 page 2 visibly prints **16,569** on line 12e. Poppler text extraction
+confirms those line amounts, and the prepared native XML contains the matching
+`RptHomeMortgIntAndPointsAmt`. The source is synthetic; lender-issued bytes and
+IRS business-rule/ATS acceptance are still unverified.
