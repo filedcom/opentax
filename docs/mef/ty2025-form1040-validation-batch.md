@@ -4214,3 +4214,41 @@ Form 4255 retained its EP rows and line 3 totals; Form 8854 retained its
 annual identity, deferred-property row, and no-distribution answers. These
 checks do not establish an authenticated full-return export or XSD validation
 for either gated route, and they do not alter the 175-case selected manifest.
+
+## Current-source Schedule A line 8a replay (2026-10-05)
+
+The Schedule A export guard now requires retained Form 1098 for a positive
+line 8a. Four unrelated Form 8283 selected fixtures had supplied an artificial
+$12,000 line 8a with no Form 1098; their current sources omit that claim. The
+historical gift-packet amounts above refer to the older source and are
+superseded for these four cases by this review:
+
+| Selected case | Noncash gift | Itemized deduction | Form 1040 tax | Refund |
+| --- | ---: | ---: | ---: | ---: |
+| Ordinary noncash gift | $1,200 | $25,200 | $11,376 | $4,624 |
+| Capital-gain reduction gift | $3,000 | $27,000 | $10,980 | $5,020 |
+| Donor-prepared manuscript reduction | $300 | $24,300 | $11,574 | $4,426 |
+| Two short-term reduced gifts | $1,400 | $25,400 | $11,332 | $4,668 |
+
+The selected packet at
+`.state/research/ty2025-filled-pdf-review/2026-10-05-exportable-175-after-line8a/`
+contains 175 current-source JSON/native XML/filled-PDF trios and 1,090 pages.
+Compared with the prior checked packet, 171 trios are byte-identical. Only the
+four listed source/XML/PDF trios changed. Their page counts, origins, and
+owners are unchanged; eight changed Form 1040 page 2/Schedule A pages were
+rendered and visually inspected, and their other 11 pages are pixel-identical
+at 120 dpi. The changed pages show blank line 8a, the sourced state tax and
+noncash gift, and the corrected Form 1040 tax/refund; source pending values and
+native XML reconcile. Comparison and page hashes are retained in
+`.state/research/ty2025-line8a-packet-provenance.json` (SHA-256
+`32aed4ef7e0333ae8a8c71b782e33e0489398407bdf02b80a073b98222904faf`).
+
+The selected manifest is SHA-256
+`2fe95f99e128772497bd86294e422ecd402df0dbb2a217ae7153e15abb3aa186`.
+The read-only checker passed for all 175 cases and 1,090 pages, including
+source replay, artifact hashes, page flags/origins, and local TY2025 v5.4 XSD;
+its log is `.state/research/ty2025-exportable-175-after-line8a-check.log`
+with SHA-256
+`2f6cc311fee74671e57271edd2a209a6e934987a808bdeb099b5e24ac2fe2de7`.
+This selected review does not complete the 11 guarded fixtures, all-route
+business-rule review, IRS ATS-effective schema validation, or IRS acceptance.

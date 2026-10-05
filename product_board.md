@@ -6,7 +6,7 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1270 bounded completed slices. A completed slice does not close its
+records 1271 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are
@@ -14,10 +14,10 @@ settled. The [dependency audit](docs/mef/ty2025-nonnamed-board-dependency-audit.
 identifies independent work, product decisions, named-form prerequisites,
 validation, and IRS ATS needs. Current local evidence includes an 11,170/11,170
 full-batch pass after the source-copy and Form 6781 fixes; a clean rerun on the
-latest source and PDF edits is in progress. The last checked packet had 175
-exportable synthetic cases with 1,090 filled PDF pages and local TY2025 v5.4
-XSD validation. Four source fixtures changed after that check, so a fresh
-packet and read-only check are in progress. The remaining
+latest source and PDF edits is in progress. The current-source selected packet
+has 175 exportable synthetic cases with 1,090 filled PDF pages and a passing
+read-only source/hash/page/XSD check after four gift fixtures removed unsourced
+mortgage claims. The remaining
 11 of 186 fixtures have explicit source or attachment guards. Those checks do
 not prove every route, every PDF page, IRS business-rule compliance, or ATS
 acceptance. The
