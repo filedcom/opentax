@@ -2,6 +2,11 @@ import { assert, assertEquals, assertThrows } from "@std/assert";
 import { buildMefXml } from "../builder.ts";
 import { type FilerIdentity, FilingStatus } from "../types.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../nodes/types.ts";
+import {
+  DependentCreditCategory,
+  DependentRelationship,
+  IRSDependentRelationshipCode,
+} from "../../../nodes/inputs/general/index.ts";
 import { calculateForm8863Lines, type F8863Input } from "../../../nodes/inputs/f8863/index.ts";
 import { form8863 } from "./f8863.ts";
 
@@ -350,10 +355,32 @@ Deno.test({
     },
     f1040: {
       filing_status: "single",
+      taxpayer_ssn: "123-45-6789",
+      taxpayer_ssn_valid_for_employment: true,
+      taxpayer_ssn_issued_before_due_date: true,
+      taxpayer_tin_issued_by_due_date: true,
       line11_agi: 70_000,
       line18_total_tax_before_credits: 10_000,
       line20_nonrefundable_credits: 2_500,
       line29_refundable_aoc: 1_000,
+      dependent_count: 2,
+      other_dependent_count: 2,
+      dependent_details: ["222-33-4444", "333-44-5555"].map((ssn) => ({
+        first_name: "Student",
+        last_name: "Test",
+        name_control: "TEST",
+        ssn,
+        tin_issued_by_due_date: true,
+        dob: "2005-01-01",
+        relationship: DependentRelationship.Other,
+        irs_relationship_code: IRSDependentRelationshipCode.Other,
+        months_in_home: 12,
+        us_citizen_national_or_resident: true,
+        filed_joint_return_except_refund_only: false,
+        taxpayer_provided_over_half_support: true,
+        gross_income: 0,
+        credit_category: DependentCreditCategory.OtherDependentCredit,
+      })),
     },
     schedule3: { line3_education_credit: 2_500, line8_total: 2_500 },
   }, filer);

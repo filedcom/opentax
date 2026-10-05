@@ -4338,3 +4338,5 @@ the related Form 6198 suite passed 10/10 and `deno check` passed. ATS Scenario 3
 Form 4835 source facts passed 6/6 focused tests. ATS Scenario 5 education-source
 distinctions passed 32/32 focused source tests. These focused results do not
 replace a full regression or establish complete ATS scenario acceptance.
+The new Form 8863 dependent-identity guard and updated positive-return fixture
+passed all 8 focused tests, including TY2025 v5.4 `Return1040.xsd` validation.
