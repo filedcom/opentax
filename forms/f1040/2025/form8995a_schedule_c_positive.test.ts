@@ -260,6 +260,27 @@ Deno.test("cent-valued Schedule C gain and loss reach whole-dollar Form 8995-A, 
   assertEquals(validated.code, 0, new TextDecoder().decode(validated.stderr));
   const pdf = await prepared.renderPdf();
   assert(pdf.length > 0);
+  const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  try {
+    await Deno.writeFile(pdfPath, pdf);
+    const extracted = await new Deno.Command("pdftotext", {
+      args: ["-layout", pdfPath, "-"],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(extracted.code, 0, new TextDecoder().decode(extracted.stderr));
+    const text = new TextDecoder().decode(extracted.stdout);
+    assert(text.includes("South Shop"));
+    assert(/South Shop\s+-100\s*\([^\n]*\)\s+0/.test(text));
+    assert(
+      /carryforward\. Subtract line 5 from line 3[^\n]*6\s*\(\s*0\s*\)/.test(
+        text,
+      ),
+    );
+    assert(/40\s*\(\s*0\s*\)/.test(text));
+  } finally {
+    await Deno.remove(pdfPath);
+  }
   if (Deno.args.includes("--write-review-artifacts")) {
     const directory = new URL(
       "../../../.state/research/ty2025-filled-pdf-review/2026-10-06-form8995a-cent-loss/",

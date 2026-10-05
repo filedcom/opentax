@@ -74,11 +74,12 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
       ).padStart(2, "0")
     }[0]`,
   })),
-  ...([27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39] as const).map(
+  ...([27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40] as const).map(
     (line): PdfFieldEntry => ({
       kind: "text",
       domainKey: `line${line}`,
       pdfField: `${page2}f2_${String(line + 9).padStart(2, "0")}[0]`,
+      printZero: line === 40,
     }),
   ),
 ];
@@ -158,6 +159,8 @@ export function projectOneBusiness8995A(
           .map((line) => [`line${line}_b`, 0]),
       ),
       line27: lines.parent.line16,
+      // This validated Schedule C route excludes REIT/PTP income and losses.
+      line40: 0,
     };
   }
   if (
