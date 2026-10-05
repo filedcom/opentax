@@ -6,15 +6,14 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1276 bounded completed slices. A completed slice does not close its
+records 1277 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are
 settled. The [dependency audit](docs/mef/ty2025-nonnamed-board-dependency-audit.md)
 identifies independent work, product decisions, named-form prerequisites,
-validation, and IRS ATS needs. Current local evidence includes an 11,170/11,170
-full-batch pass after the source-copy and Form 6781 fixes; a clean rerun on the
-latest source and PDF edits is in progress. The current-source selected packet
+validation, and IRS ATS needs. The integrated local full batch passed
+11,188/11,188 after the latest source and PDF fixes. The current-source selected packet
 has 175 exportable synthetic cases with 1,087 filled PDF pages and a passing
 read-only source/hash/page/XSD check after Form 5329 omitted three blank pages.
 The remaining

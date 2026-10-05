@@ -4292,3 +4292,17 @@ is `.state/research/ty2025-exportable-175-after-f5329-check.log`, SHA-256
 `162abbb33324c314c43db3642a0b1ccc87317b8ec144c4ae7f4c57211fdc2051`.
 The 11 guarded cases, wider filing routes, business rules, ATS-effective schema,
 and IRS acceptance remain open.
+
+## Integrated full regression (2026-10-05)
+
+After sourcing the two rejected Schedule A fixtures and integrating exact Form
+1098 line 8a parity, Form 5329 page selection, and the partial NR2 ATS source
+correction, `PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test` passed
+**11,188 tests, 0 failed, 0 ignored** in 33m46s. The code snapshot was committed
+as `632d3a46`; subsequent commits through `c51194ea` changed only documentation.
+The log is `.state/research/ty2025-full-test-2026-10-05-integrated.log`,
+SHA-256 `73562b8c5ac74b2048632db29e1bde55be8fba2652776b3083f89cbeef607c9a`.
+The run used Deno 2.9.4, TypeScript 6.0.3, libxml 2.9.13, and Poppler
+`pdftotext` 26.09.0. No ignored-test reason applies. The selected 1,087-page
+packet passed separately above. These local checks do not close the 52 open
+board TODOs, IRS business-rule review, current ATS schema date, or acceptance.
