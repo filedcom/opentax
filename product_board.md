@@ -6,7 +6,7 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1300 bounded completed slices. A completed slice does not close its
+records 1303 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are
@@ -38,8 +38,11 @@ the ordinary refinance and construction cases each produced a visually
 reviewed three-page packet. Schedule R age-only and disability routes also
 passed 16 focused native/PDF/XSD tests; underlying source-byte authentication
 and wider benefit/status cases remain open. Form 7217 source, native, and PDF
-tests pass 25/25, plus one partial ATS Scenario 12 XSD case; recognized-gain
-full-return XSD and wider source/basis routes remain open. Form 1098's
+tests pass 25/25, plus one partial ATS Scenario 12 XSD case. A bounded
+recognized-gain full-return XSD case passes with $5,000 through Form 8949,
+Schedule D, and Form 1040; wider source/basis routes remain open. A three-loan,
+two-qualified-home Form 1098 case also passes native, XSD, and filled-PDF
+checks at $2,499 deductible interest. Form 1098's
 documented boundaries leave issuer-byte
 authenticity, broader mortgage limits and points variants, business rules,
 and ATS open. The retained Copy B parser now rejects malformed amount text,
@@ -48,6 +51,9 @@ optional box; the issuer's provenance and scanned-PDF appearance remain
 unchecked. Form 8862 focused source/calculation/export-boundary tests pass
 40/40, but native and PDF export still reject without authenticated prior IRS
 notice contents; a positive ODC/AOTC export remains unverified.
+With real Poppler, the Form 8888, Form 8853, and Schedule D PDF assertions pass.
+Three Form 3800 packet-count expectations were updated for the verified blank
+Form 6251 page trim; its focused suite passes 14/14.
 Scenario 8's code-Q distribution and blank Form 1040 line 4a still need
 reconciliation, as do the other open ATS source conflicts.
 The remaining

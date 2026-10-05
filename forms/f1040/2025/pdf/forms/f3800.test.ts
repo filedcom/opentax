@@ -259,7 +259,7 @@ Deno.test("prepared return prints the graph's geothermal credit on all nine Form
     "<TotalGeneralBusCreditsAppTxAmt>600</TotalGeneralBusCreditsAppTxAmt>",
   );
   const pdf = await prepared.renderPdf();
-  assertEquals((await PDFDocument.load(pdf)).getPageCount(), 17);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount(), 16);
 });
 
 Deno.test("two geothermal facilities print two Form 8835 copies and distinct Form 3800 Part V sources", async () => {
@@ -302,7 +302,7 @@ Deno.test("two geothermal facilities print two Form 8835 copies and distinct For
   assertEquals(copies.map((copy) => copy.line15), [600, 600]);
   assertEquals(
     (await PDFDocument.load(await prepared.renderPdf())).getPageCount(),
-    20,
+    19,
   );
 });
 
@@ -345,7 +345,7 @@ Deno.test("wind and geothermal facilities keep separate Form 8835 lines and Form
   assertEquals(copies[1].line1c_credit, 600);
   assertEquals(
     (await PDFDocument.load(await prepared.renderPdf())).getPageCount(),
-    20,
+    19,
   );
 });
 
