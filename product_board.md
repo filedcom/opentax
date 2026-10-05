@@ -6,7 +6,7 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1303 bounded completed slices. A completed slice does not close its
+records 1304 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are
@@ -64,7 +64,10 @@ acceptance. The
 holds commands and artifact details.
 
 The near-term goal is to finish existing filing work and prepare for MeF ATS
-testing. Keep named-form parents and release gates open until their full
+testing. The IRS currently marks ATS unavailable through October 13, 2026,
+9:00 a.m. Eastern; its R10.A WSDL is scheduled for installation that day.
+Recheck operational status and accepted TY2025 versions before transmission.
+Keep named-form parents and release gates open until their full
 requirements are verified.
 
 ## Scope and completion rules
