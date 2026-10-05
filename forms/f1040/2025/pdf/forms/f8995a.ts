@@ -1,3 +1,4 @@
+import { qbiPercentageForPdf } from "../qbi-percentage.ts";
 import { assertSstbScheduleCSource } from "../../mef/forms/f8995a-sstb-source.ts";
 import { assertForm8995APatronReturn } from "../../form8995a_patron_reconciliation.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
@@ -210,7 +211,7 @@ export function projectOneBusiness8995A(
       line21: lines.threshold,
       line22: lines.line33 - lines.threshold,
       line23: lines.phaseInRange,
-      line24: lines.phaseIn * 100,
+      line24: qbiPercentageForPdf(lines.phaseIn),
       line27: lines.line16,
       line40: 0,
     };

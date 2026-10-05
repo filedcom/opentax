@@ -111,3 +111,31 @@ export function accountingSstbNoPayrollFixture(
     ],
   };
 }
+
+/** Joint return, one primary-owner business and issued primary-owner wages. */
+export function jointPrimaryAccountingSstbFixture(
+  base: PdfReviewFixture,
+  joint: PdfReviewFixture,
+): PdfReviewFixture {
+  const inputs = structuredClone(base.inputs) as Record<string, unknown>;
+  inputs.general = {
+    ...inputs.general as Record<string, unknown>,
+    ...joint.inputs.general as Record<string, unknown>,
+  };
+  const wage = (inputs.w2 as Record<string, unknown>[])[0];
+  wage.box1_wages = 420000;
+  wage.box2_fed_withheld = 90000;
+  wage.box5_medicare_wages = 420000;
+  wage.box6_medicare_withheld = 6090;
+  return {
+    ...base,
+    id: "joint-primary-form8995a-accounting-sstb-phasein",
+    inputs,
+    filer: joint.filer,
+    reviewFocus: [
+      "Joint filer contains both spouse identities, with one primary-owned accounting business and primary-owned issuedW2; no spouse business/payroll mixed",
+      "Actual SE761/half381 and adjustedQBI28050 join joint pre-QBI taxable416550, joint threshold394600/range100000 and applicable78.05percent",
+      "Filed phase-in QBI21893/potential4379/wage limit3903/reduction104/deduction4275 reconcile to actual joint1040 tax and all native/PDF pages",
+    ],
+  };
+}

@@ -48,6 +48,7 @@ export function assertSstbScheduleCSource(
     (filerSSN !== undefined && filerSSN.replaceAll("-", "") !== ssn) ||
     g.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     g.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+    g.filing_status !== input.filing_status ||
     review.owner_ssn !== ssn || source.proprietor_recipient !== "T" ||
     source.qbi_specified_service !== true ||
     source.line_b_business_code !== "541211" ||

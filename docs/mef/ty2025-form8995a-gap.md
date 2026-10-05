@@ -740,3 +740,11 @@ manifest SHA-256
 Broader SSTB sources, owners/statuses, property and external authentication
 remain open. Historical selected manifests capture their generation inventory;
 they are not evidence that every later added fixture has been reviewed.
+
+## Joint primary-owned accounting SSTB and printed percentages — October6
+
+The public accounting SSTB route now accepts MFJ with one primary-owned accounting business and one primary-owned issued W2. The retained spouse identity is joined to the actual joint header; this packet does not prove spouse business/payroll or mixed-owner business combinations. Source wages420000 plus ScheduleC profit28431, SE761/half381 yield AGI448050 and pre-QBI taxable416550. Joint threshold394600/range100000 yields21.95% phase-in and78.05% applicable percentage. Filed QBI21893 and wages7805 produce potential4379, wage limit3903, reduction104 and final deduction4275. Taxable412275, ordinary tax86054 and other tax2527 produce total88581 and refund1419.
+
+Native export rejects a mismatched filing status or spouse-owned retained business. The complete15-page source packet passes local v5.4 XSD and exact selected replay. All15 rendered pages were visually inspected. This review found two actual PDF discrepancies: numeric percentage fields were rounded to monetary integers, and Schedule1/2 plus Forms8959/8960 omitted the spouse from shared headers. Percentage projection now preserves three percentage decimals; shared headers derive both actual names for MFJ and reject missing spouse identity, while C/SE remain individual-owned. Corrected pages retain21.95/78.05 and both shared names.
+
+Typed restricted real-Poppler builder,8959/8960 native, Schedule2 replay and SSTB tests pass80/80 in19s; log `/tmp/opentax-joint-header-regression3.log`. Initial runs exposed a missing test fixture nameControl and an empty-data test skip; both fixture defects were corrected before the passing run. Exact replay log `/tmp/opentax-joint-review4-check.log`. Artifacts: `.state/research/ty2025-filled-pdf-review/2026-10-06-qbi-sstb-joint` plus sibling rendered directory. Manifest SHA256 `b243b9ae30ddda882e6bbdee443823893530cc8c80d9309fcdf200b85bc9ce27`. Inventory is a generation-time isolated-base snapshot. Broader SSTB categories, spouse sources, workpaper authenticity and IRS acceptance remain open.

@@ -214,3 +214,59 @@ Deno.test("owner-only SSTB has a positive phase-in deduction with no employee wa
     );
   }
 });
+
+Deno.test("joint primary-owner SSTB uses joint threshold, source SE and fractional applicability", async () => {
+  const joint = pdfReviewFixtures.find((f) =>
+    f.id === "joint-primary-form8995a-accounting-sstb-phasein"
+  )!;
+  const result = f1040_2025.executeReturn({ ...joint.inputs });
+  assertEquals(result.diagnostics, []);
+  const p = buildPending(result.pending) as Pending;
+  assertEquals(p.schedule1.line15_se_deduction, 381);
+  assertEquals(p.f1040.line11_agi, 448050);
+  assertEquals(p.f1040.line12a_standard_deduction, 31500);
+  assertEquals(p.f1040.line13_qbi_deduction, 4275);
+  assertEquals(p.f1040.line15_taxable_income, 412275);
+  assertEquals(p.f1040.line16_income_tax, 86054);
+  assertEquals(p.f1040.line24_total_tax, 88581);
+  const l = calculateOneSstb8995ALines(inputSchema.parse(p.form8995a));
+  assertEquals([l.threshold, l.phaseInRange, l.phaseIn, l.applicable], [
+    394600,
+    100000,
+    0.2195,
+    0.7805,
+  ]);
+  assertEquals([
+    l.line2,
+    l.line4,
+    l.line3,
+    l.line10,
+    l.line19,
+    l.line25,
+    l.line39,
+  ], [21893, 7805, 4379, 3903, 476, 104, 4275]);
+  const b = await bundle(p, joint.filer);
+  assertStringIncludes(b.xml, "<ApplicablePct>0.78050</ApplicablePct>");
+  assertEquals(
+    (await buildPdfBytes(p, joint.filer, ".pdf-cache", b)).length > 1000,
+    true,
+  );
+  const wrongFiler = {
+    ...joint.filer,
+    filingStatus: fixture.filer.filingStatus,
+    spouse: undefined,
+  };
+  await assertRejects(() => bundle(p, wrongFiler));
+  await assertRejects(() => buildPdfBytes(p, wrongFiler, ".pdf-cache"));
+  const changed = structuredClone(p);
+  const c = (changed.schedule_c.schedule_cs as Record<string, unknown>[])[0];
+  c.proprietor_recipient = "S";
+  for (const key of ["form8995a", "form8995a_schedule_a"]) {
+    ((changed[key].single_sstb_schedule_c_source as Record<string, unknown>)
+      .business as Record<string, unknown>).source_schedule_c = structuredClone(
+        c,
+      );
+  }
+  await assertRejects(() => bundle(changed, joint.filer));
+  await assertRejects(() => buildPdfBytes(changed, joint.filer, ".pdf-cache"));
+});

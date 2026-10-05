@@ -408,7 +408,9 @@ function advancedFormOutput(
     if (
       !business || businesses.length !== 1 || !review || !owner ||
       review.owner_ssn !== owner ||
-      input.filing_status !== FilingStatus.Single || !business.business_name ||
+      (input.filing_status !== FilingStatus.Single &&
+        input.filing_status !== FilingStatus.MFJ) ||
+      !business.business_name ||
       !business.ein || !business.business_reference ||
       business.source_schedule_c.proprietor_recipient !== "T" ||
       business.source_schedule_c.qbi_specified_service !== true ||

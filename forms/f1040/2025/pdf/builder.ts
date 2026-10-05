@@ -432,6 +432,22 @@ export async function fillFormPdf(
         );
       }
       nameShownOnForm1040 = `${first} ${last}`;
+      if (filer.filingStatus === FilingStatus.MarriedFilingJointly) {
+        const spouseFirst = filer.spouse?.firstName?.trim();
+        const spouseLast = filer.spouse?.lastName?.trim();
+        if (!spouseFirst || !spouseLast) {
+          throw new Error(
+            `[PDF] ${descriptor.pendingKey}: joint name shown on Form 1040 needs the identified spouse first and last names`,
+          );
+        }
+        const spouseName = [
+          spouseFirst,
+          filer.spouse?.middleInitial?.trim(),
+          spouseLast,
+        ]
+          .filter(Boolean).join(" ");
+        nameShownOnForm1040 += ` and ${spouseName}`;
+      }
     }
     for (const entry of activeFilerFields) {
       const value = entry.domainKey === "nameShownOnForm1040"

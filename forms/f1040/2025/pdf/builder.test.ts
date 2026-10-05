@@ -1201,3 +1201,70 @@ Deno.test("buildPdfBytes: rejects incomplete multi-category Form 1116 PDF source
     await Deno.remove(tmpDir, { recursive: true });
   }
 });
+
+Deno.test("shared PDF headers retain both joint names and require spouse identity", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const doc = await PDFDocument.create();
+    const page = doc.addPage();
+    doc.getForm().createTextField("shared_name").addToPage(page, {
+      x: 20,
+      y: 700,
+      width: 400,
+      height: 25,
+    });
+    await seedCache(tmpDir, F1040_PDF_URL, await doc.save());
+    const descriptor = {
+      pendingKey: "shared_header",
+      pdfUrl: F1040_PDF_URL,
+      fields: [{
+        kind: "text" as const,
+        domainKey: "amount",
+        pdfField: "shared_name",
+      }],
+      filerFields: [{
+        kind: "text" as const,
+        domainKey: "nameShownOnForm1040",
+        pdfField: "shared_name",
+      }],
+    };
+    const joint: FilerIdentity = {
+      ...mockFiler,
+      filingStatus: FilingStatus.MarriedFilingJointly,
+      spouse: {
+        firstName: "Jane",
+        middleInitial: "Q",
+        lastName: "Smith",
+        nameControl: "SMIT",
+        ssn: "987654321",
+      },
+    };
+    const bytes = await fillFormPdf(descriptor, { amount: 1 }, joint, tmpDir);
+    const output = join(tmpDir, "joint.pdf");
+    await Deno.writeFile(output, bytes!);
+    const extracted = await new Deno.Command("pdftotext", {
+      args: [output, "-"],
+      stdout: "piped",
+    }).output();
+    assertEquals(extracted.success, true);
+    assertEquals(
+      new TextDecoder().decode(extracted.stdout).includes(
+        "John Doe and Jane Q Smith",
+      ),
+      true,
+    );
+    await assertRejects(
+      () =>
+        fillFormPdf(
+          descriptor,
+          { amount: 1 },
+          { ...joint, spouse: undefined },
+          tmpDir,
+        ),
+      Error,
+      "needs the identified spouse first and last names",
+    );
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});

@@ -129,7 +129,7 @@ export const form8960Pdf: PdfFormDescriptor = {
   filerFields: [
     {
       kind: "text",
-      domainKey: "fullName",
+      domainKey: "nameShownOnForm1040",
       pdfField: "topmostSubform[0].Page1[0].f1_1[0]",
     },
     {
