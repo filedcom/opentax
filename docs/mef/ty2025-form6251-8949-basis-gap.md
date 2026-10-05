@@ -33,7 +33,20 @@ This slice remains limited to one single- or MFS-filer short-term lot with no
 other capital activity, qualified dividends, Form 4952 election, special-rate
 gain, or capital-loss carryover. Other statuses, wider sign-changing lots, Part
 III, and broker byte authentication remain open. Focused graph, calculation,
-native, and PDF cases pass; XSD, filled-PDF and ATS evidence remain open.
+native, and PDF cases pass. The MFS prepared return also validates against the
+local TY2025 v5.4 `Return1040.xsd` and renders as an eight-page filled PDF.
+Visual review of its Form 6251 page 7 confirms line 2k `$1,000`, line 5 MFS
+exemption `$68,500`, and line 11 AMT `$64,822`, with no clipped entries; the
+packet's Schedule D line 21 prints the regular `$500` loss and Form 1040 line
+17 prints `$64,822`. The focused render/XSD test passes 3/3. Ignored review
+artifacts are in `.pdf-cache/review/mfs-short-loss-amt-gain/`. XML SHA-256 is
+`d8b7cac792e6061971b9d8c4df08eab241aed23a724cc9f677e10eac350a5092`;
+the filled PDF is
+`6233feea29cec1adfbd0d0b1cec3e578d046e03fbc06a95f0fcb25be550b15af`;
+the rendered page image is
+`1f6443a384555fe1714b70deb291e136c2addc007b8981f1d1ab0b20f75edd52`.
+Issued broker-copy authentication, IRS business rules, and ATS acceptance
+remain open.
 
 The native and PDF Form 6251 exporters now replay every line 2k basis row
 against the retained raw Form 8949 input. The row set must be exact, with

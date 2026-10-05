@@ -78,3 +78,38 @@ Deno.test("MFS short-term crossover rejects changed source and filed totals", ()
     assertThrows(() => form6251Pdf.projectFields?.(filed, pending));
   }
 });
+
+Deno.test("MFS short-term crossover validates prepared XML and filled Form 6251 PDF", async () => {
+  const { result, filer } = filedReturn();
+  const prepared = await f1040_2025.prepareReturn(result.pending, filer);
+  const tempDir = await Deno.makeTempDir({ prefix: "opentax-6251-mfs-" });
+  try {
+    const xmlPath = `${tempDir}/return.xml`;
+    const pdfPath = `${tempDir}/return.pdf`;
+    await Deno.writeTextFile(xmlPath, prepared.bundle.xml);
+    await Deno.writeFile(pdfPath, await prepared.renderPdf());
+    const schema = new URL(
+      "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      import.meta.url,
+    ).pathname;
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", schema, xmlPath],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(validation.code, 0, new TextDecoder().decode(validation.stderr));
+    const extraction = await new Deno.Command("pdftotext", {
+      args: ["-layout", pdfPath, "-"],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(extraction.code, 0, new TextDecoder().decode(extraction.stderr));
+    const pages = new TextDecoder().decode(extraction.stdout).split("\f");
+    const form6251 = pages.find((page) => page.includes("Alternative Minimum Tax—Individuals"));
+    if (!form6251) throw new Error("Filled packet lacks Form 6251");
+    assertEquals(/Disposition of property[^\n]*2k\s+1000/.test(form6251), true);
+    assertEquals(/11\s+64822/.test(form6251), true);
+  } finally {
+    await Deno.remove(tempDir, { recursive: true });
+  }
+});
