@@ -143,3 +143,10 @@ bulk pass. The [Schedule B instructions](https://www.irs.gov/instructions/i1116s
 derive current-year excess and its carryover from the same Form 1116 category;
 this check does not establish foreign-source document authenticity or extend
 the one-category PDF route.
+
+Both export paths now compare Schedule 3 line 1 with the sum of all parent Form
+1116 category credits when a finalized Form 1040 is present. A second parent
+category can no longer bypass that comparison while the Schedule B attachment
+still matches its own category. The focused full-return tamper case and the
+affected native/PDF suites passed 28/28 on 2026-10-05. Multiple category
+Schedule B attachments and authenticated prior filed bytes remain open.
