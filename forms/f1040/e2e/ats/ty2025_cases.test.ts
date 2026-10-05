@@ -711,6 +711,13 @@ Deno.test("1040 Scenario 13 preserves the charger credit limit and printed retur
   const printed = facts.printedForm1040;
   assertEquals(facts.taxpayer.ssn, "400001313");
   assertEquals(facts.spouse.ssn, "400001234");
+  assertEquals(facts.form6251.line6ExcessOverExemption, 0);
+  assertEquals(facts.form6251.line7TentativeMinimumTaxBeforeCredits, 0);
+  assertEquals(facts.form6251.line8AlternativeMinimumTaxForeignTaxCredit, 0);
+  assertEquals(facts.form6251.line9TentativeMinimumTax, 0);
+  assertEquals(facts.form6251.line10RegularTaxBeforeCredits, 162);
+  assertEquals(facts.form6251.line11AlternativeMinimumTax, 0);
+  assertEquals(facts.form6251.partIIILines12Through40Blank, true);
   assertEquals(facts.form8911ScheduleA.censusTractGeoid, "48201100000");
   assertEquals(facts.form8911ScheduleA.censusTractGeoid.length, 11);
   assertEquals(

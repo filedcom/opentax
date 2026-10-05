@@ -1154,7 +1154,13 @@ export const SCENARIO_1040_13_FACTS = {
     line2aScheduleATaxesOrStandardDeduction: 30_000,
     line4AlternativeMinimumTaxableIncome: 31_620,
     line5Exemption: 137_000,
+    line6ExcessOverExemption: 0,
+    line7TentativeMinimumTaxBeforeCredits: 0,
+    line8AlternativeMinimumTaxForeignTaxCredit: 0,
+    line9TentativeMinimumTax: 0,
+    line10RegularTaxBeforeCredits: 162,
     line11AlternativeMinimumTax: 0,
+    partIIILines12Through40Blank: true,
   },
   form8911ScheduleA: {
     propertyDescription: "ELECTRIC CHARGER",
