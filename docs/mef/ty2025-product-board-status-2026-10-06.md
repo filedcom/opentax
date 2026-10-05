@@ -154,3 +154,17 @@ Verified routes and detailed limitations are archived in the [October 6 checkpoi
 
 IRS ATS was reported unavailable through October 13 at 9 a.m. Eastern. Credentials, Scenarios 1/8/13 source conflicts, source authenticity, business rules and accepted IRS acknowledgments remain release gates.
 
+
+
+## Before existing uncovered Medicare packet work
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,367 bounded slices**; the previously isolated routes and three newer source routes are integrated in main code. Broader parents remain open. Newly discovered work belongs only in `future_todo`, outside this execution queue.
+
+Stable main snapshot `8aa4beeec` completed real-Poppler `deno task test`: **11,245 passed, zero failed or ignored**, at 22:47:12 UTC. The isolated `17462812a` full run remains live with five observed failures; separate repairs and newer source routes pass restricted task-mode integration **19/19**. Integrated snapshot `762db9012` is now running the same full command in a stable isolated checkout (PID 66092); its public calculated-return replay audit has passed. No terminal result is claimed. See the [validation batch](docs/mef/ty2025-form1040-validation-batch.md).
+
+Verified routes and detailed limitations are archived in the [October 6 checkpoint](docs/mef/ty2025-product-board-status-2026-10-06.md). Current planner: 193 fixtures, 87 of 113 PDF keys covered, 26 uncovered. The newer Medicare, multiple-business QBI and missing-1098-T education income routes pass combined restricted integration 26/26. Current work completes both-holder MSA statements, mixed institution education sources and additional QBI investment income. The two new QBI fixtures pass complete selected replay and 32-page visual review. Local XSD and synthetic packet reviews do not prove source authenticity, IRS business rules or acceptance.
+
+IRS ATS was reported unavailable through October 13 at 9 a.m. Eastern. Credentials, Scenarios 1/8/13 source conflicts, source authenticity, business rules and accepted IRS acknowledgments remain release gates.
+
