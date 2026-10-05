@@ -15,9 +15,9 @@ identifies independent work, product decisions, named-form prerequisites,
 validation, and IRS ATS needs. Current local evidence includes an 11,170/11,170
 full-batch pass after the source-copy and Form 6781 fixes; a clean rerun on the
 latest Form 8888/8853/8880/8839/8396 edits is in progress. The selected
-current-source packet has regenerated 175 exportable synthetic cases with
-1,090 filled PDF pages and local TY2025 v5.4 XSD validation; its read-only
-checker is running after the Form 8396 page correction. The remaining
+current-source packet has 175 exportable synthetic cases with 1,090 filled
+PDF pages, local TY2025 v5.4 XSD validation, and a passing read-only checker
+after the Form 8396 page correction. The remaining
 11 of 186 fixtures have explicit source or attachment guards. Those checks do
 not prove every route, every PDF page, IRS business-rule compliance, or ATS
 acceptance. The

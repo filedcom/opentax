@@ -4187,6 +4187,10 @@ provenance is in
 `.state/research/ty2025-exportable-175-after-8396-8880-provenance.json`.
 The regenerated manifest SHA-256 is
 `7f1e13e1f20fa48f203a0f667a9bbbc1071bc44a17155646f1c0a29f57e4bf89`.
-Review flags were transferred only after those exact-byte/pixel checks; the
-read-only checker is running. This selected packet does not close the frozen
+Review flags were transferred only after those exact-byte/pixel checks. The
+read-only checker passed **175 cases / 1,090 pages**, including source replay,
+artifact hashes, page origins, template cache, and local XSD. Its log is
+`.state/research/ty2025-exportable-175-after-8396-8880-check.log` with
+SHA-256 `2f6cc311fee74671e57271edd2a209a6e934987a808bdeb099b5e24ac2fe2de7`.
+This selected packet does not close the frozen
 all-route PDF, IRS business-rule, or ATS gates.
