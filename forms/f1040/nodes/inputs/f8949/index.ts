@@ -195,11 +195,13 @@ function processItem(item: F8949Item): NodeOutput[] {
       !Number.isInteger(item.amt_cost_basis) ||
       !(
         (regularGain > 0 && amtGain > 0) ||
-        (regularGain < 0 && amtGain < 0)
+        (regularGain < 0 && amtGain < 0) ||
+        (["A", "B", "C"].includes(item.part) &&
+          regularGain < 0 && amtGain > 0)
       )
     ) {
       throw new Error(
-        "Form 8949 AMT basis difference needs an identified, unadjusted, whole-dollar Part I or Part II gain or loss under both bases; other Schedule D refigures are not yet supported",
+        "Form 8949 AMT basis difference needs identified, unadjusted, whole-dollar Part I or Part II gains or losses, or a short-term regular loss becoming an AMT gain; other Schedule D refigures are not yet supported",
       );
     }
     outputs.push(

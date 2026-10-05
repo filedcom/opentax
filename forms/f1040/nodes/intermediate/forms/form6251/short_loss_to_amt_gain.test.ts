@@ -13,9 +13,9 @@ const lot = {
   amt_gain: 500,
 };
 
-function filedCase() {
+function filedCase(filingStatus: "single" | "mfs" = "single") {
   const source = inputSchema.parse({
-    filing_status: "single",
+    filing_status: filingStatus,
     regular_tax_income: 200_000,
     regular_taxable_income: 200_000,
     regular_tax: 0,
@@ -81,6 +81,30 @@ Deno.test("one short-term regular loss becomes AMT gain after a sourced basis re
   );
 });
 
+Deno.test("MFS short-term regular loss becomes AMT gain within its $1,500 limit", () => {
+  const { filed, pending } = filedCase("mfs");
+  assertEquals(filed.line2k_disposition, 1_000);
+  assertEquals(filed.filing_status, "mfs");
+  assertEquals(filed.net_capital_gain, 0);
+  assertEquals(filed.line13, undefined);
+  assertStringIncludes(
+    mef6251.build(filed, { pending }),
+    "<PropertyDispositionAmt>1000</PropertyDispositionAmt>",
+  );
+  assertEquals(
+    form6251Pdf.projectFields?.(filed, pending)?.line2k_disposition,
+    1_000,
+  );
+  for (const changed of [
+    { ...pending, f8949: { f8949s: [{ ...pending.f8949.f8949s[0], amt_cost_basis: 501 }] } },
+    { ...pending, f1040: { ...pending.f1040, line7_capital_gain: -499 } },
+    { ...pending, schedule2: { line2_amt: 0 } },
+  ]) {
+    assertThrows(() => mef6251.build(filed, { pending: changed }));
+    assertThrows(() => form6251Pdf.projectFields?.(filed, changed));
+  }
+});
+
 Deno.test("short-term loss-to-AMT-gain rejects changed Form 8949 basis, printed line, and final return", () => {
   const { filed, pending } = filedCase();
   const altered = [
@@ -111,14 +135,18 @@ Deno.test("short-term loss-to-AMT-gain rejects changed Form 8949 basis, printed 
         regular_taxable_income: 200_000,
         regular_tax: 0,
         net_capital_gain: 0,
-        line2k_8949_basis_dispositions: [lot],
+        line2k_8949_basis_dispositions: [{
+          ...lot,
+          regular_basis: 3_000,
+          regular_gain: -2_000,
+        }],
         line2k_8949_capital_audit: {
           transactions: [{
             source_transaction_id: lot.source_transaction_id,
             part: lot.part,
             proceeds: lot.proceeds,
-            cost_basis: lot.regular_basis,
-            gain_loss: lot.regular_gain,
+            cost_basis: 3_000,
+            gain_loss: -2_000,
           }],
           has_other_capital_activity: false,
         },

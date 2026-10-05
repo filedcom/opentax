@@ -721,6 +721,28 @@ Deno.test("amt_cost_basis: identified short-term loss routes signed bases to For
   );
 });
 
+Deno.test("amt_cost_basis: short-term regular loss can become an AMT gain", () => {
+  const result = compute([minimalItem({
+    part: "A",
+    source_transaction_id: "broker-st-mfs-crossover",
+    proceeds: 1_000,
+    cost_basis: 1_500,
+    amt_cost_basis: 500,
+  })]);
+  assertEquals(
+    fieldsOf(result.outputs, form6251)!.line2k_8949_basis_dispositions,
+    {
+      source_transaction_id: "broker-st-mfs-crossover",
+      part: "A",
+      proceeds: 1_000,
+      regular_basis: 1_500,
+      amt_basis: 500,
+      regular_gain: -500,
+      amt_gain: 500,
+    },
+  );
+});
+
 Deno.test("amt_cost_basis: identified long-term loss routes signed bases to Form 6251", () => {
   const result = compute([minimalItem({
     part: "D",

@@ -19,11 +19,21 @@ created. Its $500 regular loss and $500 AMT gain yield a positive $1,000 Form
 transaction and require the regular loss on Form 1040 line 7, the computed AMT
 on Schedule 2, and matching Form 1040 tax and taxable income.
 
-This slice remains limited to one single-filer short-term lot with no other
-capital activity, qualified dividends, Form 4952 election, special-rate gain, or
-capital-loss carryover. MFS, wider sign-changing lots, Part III and broker byte
-authentication remain open. Positive and tamper fixtures are authored for the
-deferred bulk validation.
+The same one-lot route now accepts married filing separately when the regular
+loss is within its $1,500 current-year limit. The Form 8949 input node routes
+that sign-changing short-term lot to Form 6251; the Form 6251 calculator checks
+the filing-status limit and complete Schedule D audit. A full-return MFS case
+reconciles the $500 Form 1040 line 7 loss, $1,000 line 2k adjustment, positive
+AMT on Schedule 2 and Form 1040 line 17, and the same native/PDF Form 6251
+line. Changed broker basis, Schedule 2 AMT, and final return amounts reject.
+This follows the [2025 Schedule D instructions](https://www.irs.gov/pub/irs-prior/i1040sd--2025.pdf)
+and [2025 Form 6251 instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf).
+
+This slice remains limited to one single- or MFS-filer short-term lot with no
+other capital activity, qualified dividends, Form 4952 election, special-rate
+gain, or capital-loss carryover. Other statuses, wider sign-changing lots, Part
+III, and broker byte authentication remain open. Focused graph, calculation,
+native, and PDF cases pass; XSD, filled-PDF and ATS evidence remain open.
 
 The native and PDF Form 6251 exporters now replay every line 2k basis row
 against the retained raw Form 8949 input. The row set must be exact, with

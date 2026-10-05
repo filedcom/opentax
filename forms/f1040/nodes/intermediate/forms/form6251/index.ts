@@ -688,7 +688,8 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       amtBasisNet >= lossLimit;
     const singleShortLossToAmtGain = basisRows.length === 1 &&
       shortTermBasisRows.length === 1 &&
-      input.filing_status === FilingStatus.Single &&
+      (input.filing_status === FilingStatus.Single ||
+        input.filing_status === FilingStatus.MFS) &&
       regularBasisNet < 0 && regularBasisNet >= lossLimit &&
       amtBasisNet > 0;
     const twoShortLotsLossToGain = basisRows.length === 2 &&

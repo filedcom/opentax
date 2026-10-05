@@ -140,8 +140,9 @@ export function assertForm6251Form8949Source(
     longRows.every((row) => row.regular_gain > 0 && row.amt_gain > 0) &&
     regularNet > 0 && amtNet < 0;
   const singleShortLossToAmtGain = rows.length === 1 &&
-    shortLosses.length === 1 && fields.filing_status === "single" &&
-    regularNet < 0 && regularNet >= -3_000 && amtNet > 0;
+    shortLosses.length === 1 &&
+    (fields.filing_status === "single" || fields.filing_status === "mfs") &&
+    regularNet < 0 && regularNet >= lossLimit && amtNet > 0;
   const twoShortLotsLossToGain = rows.length === 2 &&
     shortLosses.length === 2 && fields.filing_status === "single" &&
     rows.filter((row) => row.regular_gain < 0 && row.amt_gain > 0).length ===
@@ -162,7 +163,7 @@ export function assertForm6251Form8949Source(
     !singleShortLossToAmtGain && !twoShortLotsLossToGain
   ) {
     throw new Error(
-      "Form 6251 regular-loss-to-AMT-gain basis sale needs one identified single-filer short-term lot within the regular loss limit",
+      "Form 6251 regular-loss-to-AMT-gain basis sale needs one identified short-term lot within the filing-status loss limit",
     );
   }
   if (
