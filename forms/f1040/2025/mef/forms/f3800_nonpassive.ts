@@ -606,6 +606,7 @@ export function buildForm3800NonpassiveParts(
   const lines = calculateForm3800Nonpassive(
     input.tax,
     input.passiveActivity,
+    { roundPercentageLinesToWholeDollars: true },
   );
   if (
     cents(input.passiveApplied.standard, "Form 3800 passive standard use") <

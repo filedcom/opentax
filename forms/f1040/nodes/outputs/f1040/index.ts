@@ -679,6 +679,7 @@ function businessCreditAllowance(
   const lines = calculateForm3800Nonpassive(
     tax,
     credits.passiveLines,
+    { roundPercentageLinesToWholeDollars: true },
   );
   const originalSchedule3Credits = homebuyer?.schedule3Credits ??
     mortgage?.schedule3Credits ?? cleanVehicles?.schedule3Credits ??

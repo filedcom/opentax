@@ -7,8 +7,9 @@ import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { standard_deduction } from "../../worksheets/standard_deduction/index.ts";
-import { form8995a } from "../form8995a/index.ts";
+import { form8995a, type Form8995AInput } from "../form8995a/index.ts";
 import { scheduleCQbiBusinessSchema } from "../form8995a/index.ts";
+import { reviewedWotcQbiWages } from "../../../inputs/schedule_c/qbi-wotc.ts";
 import { FilingStatus } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR, type F1040Config } from "../../../config/index.ts";
@@ -309,6 +310,68 @@ function advancedFormOutput(
     ? Math.max(0, sstbQbi) / positiveTotal
     : 0;
 
+  const businesses = input.schedule_c_qbi_businesses;
+  const business = businesses?.[0];
+  let sourcedBusiness: Partial<Form8995AInput> = {};
+  if (businesses?.some((row) => row.source_schedule_c.qbi_wotc_filing_review)) {
+    const review = business?.source_schedule_c.qbi_wotc_filing_review;
+    if (
+      businesses.length !== 1 || !business || !review ||
+      !business.business_reference || !business.business_name ||
+      !business.ein ||
+      business.qbi <= 0 || !business.wotc_wage_reduction ||
+      input.filing_status !== FilingStatus.Single || taxableIncome <= 247_300 ||
+      input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+      input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+      sumField(input.qbi_from_schedule_c) !== business.qbi ||
+      sumField(input.qbi_from_schedule_f) !== 0 || sumField(input.qbi) !== 0 ||
+      sstbQbi !== 0 || sumField(input.net_capital_gain) !== 0 ||
+      sumField(input.line6_sec199a_dividends) !== 0 ||
+      (input.qbi_loss_carryforward ?? 0) !== 0 ||
+      (input.reit_loss_carryforward ?? 0) !== 0 ||
+      input.agi !==
+        Math.round(business.qbi - sumField(input.se_tax_deduction)) ||
+      sumField(input.se_health_insurance_deduction) !== 0 ||
+      sumField(input.retirement_plan_deduction) !== 0
+    ) {
+      throw new Error(
+        "Form 8995-A WOTC needs one reviewed positive Schedule C fully above phase-in with its half-SE deduction",
+      );
+    }
+    const wages = reviewedWotcQbiWages(
+      business.source_schedule_c,
+      business.wotc_wage_reduction,
+    );
+    const qbi = Math.round(business.qbi - sumField(input.se_tax_deduction));
+    sourcedBusiness = {
+      qbi,
+      business_filing_details: {
+        business_name: business.business_name,
+        ein: business.ein,
+        business_qbi: qbi,
+        business_w2_wages: wages,
+        business_ubia: 0,
+        one_non_sstb_business_confirmed:
+          review.no_other_business_or_aggregation_confirmed,
+        no_aggregation_confirmed:
+          review.no_other_business_or_aggregation_confirmed,
+        no_ptp_or_loss_carryforward_confirmed:
+          review.no_ptp_or_loss_carryforward_confirmed,
+        qualified_dividends_zero_confirmed:
+          review.qualified_dividends_zero_confirmed,
+        qbi_wages_ubia_sources_confirmed:
+          review.all_business_payroll_included_confirmed,
+        taxable_income_before_qbi_confirmed: true,
+      },
+      single_schedule_c_source: {
+        business,
+        se_tax_deduction: sumField(input.se_tax_deduction),
+      },
+      qbi_no_prior_loss_or_suspended_loss_confirmed:
+        input.qbi_no_prior_loss_or_suspended_loss_confirmed,
+    };
+  }
+
   return output(form8995a, {
     filing_status: input.filing_status,
     taxable_income: taxableIncome,
@@ -328,6 +391,7 @@ function advancedFormOutput(
         qbi_no_prior_loss_or_suspended_loss_confirmed:
           input.qbi_no_prior_loss_or_suspended_loss_confirmed,
       }),
+    ...sourcedBusiness,
   });
 }
 

@@ -15,6 +15,7 @@ import {
 } from "../../mef/forms/f8995a.ts";
 import { assertScheduleBAggregationJoin } from "../../mef/forms/f8995a_schedule_b.ts";
 import { assertZeroReductionScheduleAReturn } from "../../mef/forms/f8995a_schedule_a.ts";
+import { assertForm8995AWotcReturn } from "../../form8995a_wotc_reconciliation.ts";
 import { FilingStatus as HeaderFilingStatus } from "../../../mef/header.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../nodes/types.ts";
 
@@ -109,6 +110,7 @@ export function projectOneBusiness8995A(
 ): Record<string, unknown> {
   if (Object.keys(raw).length === 0) return {};
   const input = inputSchema.strict().parse(raw);
+  assertForm8995AWotcReturn(input, allPending);
   if (
     input.aggregation_filing_details ||
     (input.aggregation_groups ?? []).length > 0
@@ -242,6 +244,7 @@ export function projectOneBusiness8995A(
     line29: lines.line29,
     line30: lines.line30,
     line31: lines.line31,
+    line40: 0,
   };
 }
 

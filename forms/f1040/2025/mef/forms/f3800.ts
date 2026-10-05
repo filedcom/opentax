@@ -755,7 +755,9 @@ function prepareForm3800Base(fields: PendingForm3800) {
   const passiveActivity = classifyForm3800PassiveCredits(
     parsed.passive_source_allocations ?? [],
   );
-  const lines = calculateForm3800Nonpassive(tax, passiveActivity);
+  const lines = calculateForm3800Nonpassive(tax, passiveActivity, {
+    roundPercentageLinesToWholeDollars: true,
+  });
   if (!sameMoney(fields.allowed_credit, lines.line38)) {
     throw new Error(
       "Form 3800 allowed credit does not reconcile to finalized Part II",

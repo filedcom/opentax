@@ -74,6 +74,28 @@ export const itemSchema = z.object({
   qbi_specified_service: z.boolean().optional(),
   qbi_w2_wages: z.number().nonnegative().optional(),
   qbi_unadjusted_basis: z.number().nonnegative().optional(),
+  // Reviewed employer W-2 copies for the single-business WOTC filing route.
+  // qbi_w2_wages is the allocable amount AFTER the section 280C reduction.
+  qbi_wotc_filing_review: z.object({
+    employee_w2_records: z.array(
+      z.object({
+        employee_reference: z.string().trim().min(1),
+        source_document_reference: z.string().trim().min(1),
+        box1_wages: z.number().int().positive(),
+        box5_wages: z.number().int().positive(),
+        ssa_filing_record_reference: z.string().trim().min(1),
+        filed_within_60_days_of_due_date_confirmed: z.literal(true),
+      }).strict(),
+    ).min(1),
+    all_business_payroll_included_confirmed: z.literal(true),
+    no_other_business_or_aggregation_confirmed: z.literal(true),
+    no_ptp_or_loss_carryforward_confirmed: z.literal(true),
+    qualified_dividends_zero_confirmed: z.literal(true),
+    no_qualified_property_confirmed: z.literal(true),
+    review_reference: z.string().trim().min(1),
+    reviewed_by: z.string().trim().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  }).strict().optional(),
   // Required for the bounded Form 8995-A Schedule C path: the Schedule C net
   // amount has no separately attributable section 199A adjustments.
   qbi_no_other_adjustments_confirmed: z.boolean().optional(),

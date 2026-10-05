@@ -20,6 +20,7 @@ import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { assertScheduleBAggregationJoin } from "./f8995a_schedule_b.ts";
 import { assertZeroReductionScheduleAReturn } from "./f8995a_schedule_a.ts";
 import { qualifiedReitDividends } from "./f8995-route.ts";
+import { assertForm8995AWotcReturn } from "../../form8995a_wotc_reconciliation.ts";
 
 type Input = Form8995AInput | readonly [];
 
@@ -365,6 +366,7 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
     throw new Error("Form 8995-A MeF cannot file an empty pending record");
   }
   const fields = inputSchema.strict().parse(rawFields);
+  assertForm8995AWotcReturn(fields, context?.pending);
   if (
     fields.aggregation_filing_details ||
     (fields.aggregation_groups ?? []).length > 0
