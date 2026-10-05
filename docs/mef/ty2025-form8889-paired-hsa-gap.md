@@ -599,3 +599,16 @@ patient cases are authored to reject. The [2025 Form 8889 line-15 instructions](
 allow HSA funds for qualified expenses of dependents. These cases are unrun;
 special deemed-dependent exceptions, multiple patient receipts, receipt-byte
 authentication, and wider HSA combinations remain open.
+
+## Bounded Form 5329 PDF page selection (2026-10-05)
+
+The registered Form 5329 PDF now keeps official page 1 for its supported
+early-distribution Part I rows. It keeps page 2 only when at least one
+projected Part VII HSA line 42–49 prints a nonzero rounded amount. Page 3 is
+omitted because the current source route has no Part IX accumulation facts.
+The existing source guard still rejects unsupported positive excess amounts
+in Parts V, VI, and VIII. Six focused PDF tests passed, including a real
+filled-form page-copy check and a line-43-only selection. The selected packet
+review is recorded separately in the [validation batch](ty2025-form1040-validation-batch.md).
+This page selection does not authenticate prior HSA records or complete the
+owner-specific funding and distribution paths described above.

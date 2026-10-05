@@ -4252,3 +4252,17 @@ with SHA-256
 `2f6cc311fee74671e57271edd2a209a6e934987a808bdeb099b5e24ac2fe2de7`.
 This selected review does not complete the 11 guarded fixtures, all-route
 business-rule review, IRS ATS-effective schema validation, or IRS acceptance.
+
+## Full regression after Schedule A source-presence guard (2026-10-05)
+
+The same `PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test` command ran
+against the Schedule A source-presence code later committed as `430dc5aa`.
+It finished with **11,181 passed, 2 failed, 0 ignored** in 33m47s. Its log is
+`.state/research/ty2025-full-test-2026-10-05-after-line8a-pages.log`, SHA-256
+`90b8b53b53a669f5a828de75138a7a83a3b3101ec3650233536f8df05bbac595`.
+Both failures were older artificial line 8a fixtures with no Form 1098: the
+Form 4952 investment-interest case and the single $33,000 itemized XSD case.
+Each now retains a matching $20,000 or $18,000 deductible Form 1098 box 1
+source and passes its focused test. No production guard was loosened. The
+combined parity, Form 5329 page, and ATS corrections require a fresh full run;
+that run is tracked separately below.

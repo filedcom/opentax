@@ -304,11 +304,23 @@ full-return Schedule A XSD case, and the affected gift-route regressions pass.
 Unrelated Form 8283 examples no longer use unsupported mortgage interest to
 raise their itemized deduction totals.
 
-This check proves source presence, not by itself the exact line 8a amount or
-the authenticity of an issuer copy. The bounded cross-loan and mortgage-limit
+The presence guard alone does not prove the exact line 8a amount or the
+authenticity of an issuer copy. The bounded cross-loan and mortgage-limit
 reviews compare their own calculated totals; final bundle review separately
 checks readable Copy B bytes where required. Other mortgage source routes,
 Pub. 936 calculations, and IRS acceptance remain open.
+
+## Positive line 8a amount replay
+
+Both exporters now also compare the gross line 8a claim with the same retained
+Form 1098 deductible box 1 interest plus deductible box 6 points aggregate
+used by the source node. The check runs after owner and source review, before
+the Form 8396 credit-interest reduction is printed. Direct native/PDF tests
+reject a $19,000 or $21,000 claim against a $20,000 source and accept the
+matching claim. Focused Schedule A and Form 1098 tests passed 27/27, and all
+seven selected current-source Form 1098 packet cases remain exportable. This
+is structured amount parity; independent issuer-byte proof, wider mortgage
+limits, and IRS business-rule/ATS review remain open.
 
 ## Lender Copy B proof for bounded cross-loan reviews
 
