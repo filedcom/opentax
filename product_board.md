@@ -6,7 +6,7 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1315 bounded completed slices. A completed slice does not close its
+records 1319 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are
@@ -68,13 +68,20 @@ Three Form 3800 packet-count expectations were updated for the verified blank
 Form 6251 page trim; its focused suite passes 14/14.
 The bounded Form 1116 three-country Germany routes now use the IRS `GM`
 code; two prepared packets pass local XSD and the interest route rejects
-`DE` at both exports. Other country/source and visual review remain open.
+`DE` at both exports. The shared IRS country-code allowlist now checks retained
+foreign-source paths. Form 1098-E checks a supplied borrower name against its
+filer owner, and A2A submission may omit the optional electronic postmark.
+The W-2G end-to-end fixture now supplies its required 2025 source year.
+The integrated focused follow-up passes 163/163; a full rerun is pending after
+one yearless legacy fixture caused the previous 11,210-pass run to fail.
+Other country/source and visual review remain open.
 Scenario 8's code-Q distribution and blank Form 1040 line 4a still need
 reconciliation, as do the other open ATS source conflicts.
 An October 5 official Scenario 1 packet recheck confirms its Form 5695
 door-cost and line 22b source conflicts remain.
 The remaining
-11 of 186 fixtures have explicit source or attachment guards. Those checks do
+11 of the prior 186 fixtures have explicit source or attachment guards; the
+new 187th MFS fixture passes separately. Those checks do
 not prove every route, every PDF page, IRS business-rule compliance, or ATS
 acceptance. The
 [validation batch](docs/mef/ty2025-form1040-validation-batch.md)

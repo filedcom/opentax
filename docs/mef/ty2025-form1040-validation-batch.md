@@ -4459,3 +4459,22 @@ returns pass local TY2025 v5.4 XSD and build PDFs with two Form 1116 parent
 and two Schedule B pages. A Germany+`DE` source rejects in the interest
 native/PDF path. Seven focused tests pass; page presence does not substitute
 for visual inspection or other country-code coverage.
+
+## Integrated follow-up and full-regression failure (2026-10-05)
+
+The full `PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test` run at
+`45f51899` passed 11,210 tests and failed one in 34m24s. The only failure
+was an older positive W-2G end-to-end source fixture with no calendar year;
+the strengthened production guard correctly requires 2025. Its log is
+`/tmp/opentax-deno-task-test-45f51899.log`, SHA-256
+`143b2cbb20f8f5123169d4358a9b2e351076a975519242747086bd092014380e`.
+The fixture now supplies 2025, and its focused test passes 1/1.
+
+The integrated W-2G, A2A archive, Form 1098-E, Form 1116 XSD/PDF, and K-1
+country-code suites pass 163/163 with real Poppler. The log is
+`/tmp/opentax-integrated-followup-focused.log`. The A2A archive suite passes
+28/28 and the Form 1098-E phaseout/reconciliation suite passes 14/14. The
+central country-code allowlist comes from the local TY2025 `efileTypes.xsd`;
+German `GM` passes while ISO `DE` and `ZZ` reject. A new full regression on
+the integrated head is pending; local XSD does not establish IRS business-rule
+or ATS acceptance.
