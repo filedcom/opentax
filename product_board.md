@@ -6,7 +6,7 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1338 bounded completed slices. A completed slice does not close its
+records 1341 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are
@@ -107,6 +107,12 @@ The corrected-SLCSP Form 8962 route now allows one Marketplace record across
 same-state policies but rejects a reused reference with conflicting retained
 digests. Its integrated three- and four-policy focused cases pass 3/3;
 Marketplace byte authenticity and wider policy paths remain open.
+Form 7206 rejects retained plan/identity claims without computed lines while
+allowing ambient Schedule C/SE context on returns with no Form 7206. Form 1116
+Schedule B checks Schedule 3 against all parent category credits, and a 2025
+refinance checks reviewed Form 1098 box 2 against its new-loan principal. Their
+integrated source/native/PDF/XSD cases pass 42/42; wider source and ATS gates
+remain open.
 Scenario 8's code-Q distribution and blank Form 1040 line 4a still need
 reconciliation, as do the other open ATS source conflicts.
 An October 5 official Scenario 1 packet recheck confirms its Form 5695

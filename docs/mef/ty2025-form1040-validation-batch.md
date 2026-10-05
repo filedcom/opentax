@@ -4536,3 +4536,10 @@ isolated integration worktree: **207 passed, 0 failed**. The command output is
 `/tmp/opentax-integration-next-focused-all.log`; the local TY2025 v5.4 XSD
 cache was linked read-only from the main checkout. This combined focused
 result does not replace the pending repository-wide regression.
+
+The next Form 7206, Form 1116 Schedule B, and 2025 refinance Form 1098
+integration passed **42/42** focused tests with real Poppler and the read-only
+TY2025 v5.4 schema cache after a Form 7206 ambient Schedule SE interaction
+was fixed. The exact command and output are in
+`/tmp/opentax-integration-next-focused-f.log`. The full run on this combined
+branch remains pending; the live full run still targets `9d700e2d`.
