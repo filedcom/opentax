@@ -41,6 +41,7 @@ Deno.test("PDF final export rejects non-withheld W-2G winnings for another winne
       buildPdfBytes({
         w2g: {
           w2gs: [{
+            calendar_year: 2025,
             box1_winnings: 1_000,
             box4_federal_withheld: 0,
             payer_name: "Casino Inc",
@@ -54,6 +55,28 @@ Deno.test("PDF final export rejects non-withheld W-2G winnings for another winne
       }, mockFiler),
     Error,
     "W-2G winnings or withholding needs",
+  );
+});
+
+Deno.test("PDF final export rejects non-withheld W-2G without TY2025 source year", async () => {
+  await assertRejects(
+    () =>
+      buildPdfBytes({
+        w2g: {
+          w2gs: [{
+            box1_winnings: 1_000,
+            box4_federal_withheld: 0,
+            payer_name: "Casino Inc",
+            payer_ein: "12-3456789",
+            source_document_reference: "issued-yearless-w2g",
+            winner_name: "John Doe",
+            box9_winner_tin: mockFiler.primarySSN,
+            winner_us_address: mockFiler.address,
+          }],
+        },
+      }, mockFiler),
+    Error,
+    "issued 2025 tax year",
   );
 });
 

@@ -346,6 +346,7 @@ Deno.test("MeF final export rejects non-withheld W-2G winnings for another winne
       buildMefXml({
         w2g: {
           w2gs: [{
+            calendar_year: 2025,
             box1_winnings: 1_000,
             box4_federal_withheld: 0,
             payer_name: "Casino Inc",
@@ -359,6 +360,29 @@ Deno.test("MeF final export rejects non-withheld W-2G winnings for another winne
       }),
     Error,
     "W-2G winnings or withholding needs",
+  );
+});
+
+Deno.test("MeF final export rejects non-withheld W-2G without TY2025 source year", () => {
+  const identity = sampleFiler();
+  assertThrows(
+    () =>
+      buildMefXml({
+        w2g: {
+          w2gs: [{
+            box1_winnings: 1_000,
+            box4_federal_withheld: 0,
+            payer_name: "Casino Inc",
+            payer_ein: "12-3456789",
+            source_document_reference: "issued-yearless-w2g",
+            winner_name: identity.fullName,
+            box9_winner_tin: identity.primarySSN,
+            winner_us_address: identity.address,
+          }],
+        },
+      }, identity),
+    Error,
+    "issued 2025 tax year",
   );
 });
 

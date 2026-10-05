@@ -6,7 +6,7 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1310 bounded completed slices. A completed slice does not close its
+records 1315 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are
@@ -47,7 +47,8 @@ integrated branch. Its three-page filled packet visibly reconciles Schedule A
 line 8a and Form 1040 line 12e. A current-head full rerun is pending. A bounded
 MFS two-loan route uses the $375,000 debt limit only with reviewed
 noncommunity-property and solely paid-interest evidence; 59 source tests and
-one full-return XSD/PDF-build case pass at $15,012. Its payment-workpaper
+one full-return XSD/PDF-build case pass at $15,012; all three filled pages
+were visually reviewed. Its payment-workpaper
 reference is not authenticated. Form 1098's
 documented boundaries leave issuer-byte
 authenticity, broader mortgage limits and points variants, business rules,
@@ -57,11 +58,21 @@ optional box; the issuer's provenance and scanned-PDF appearance remain
 unchecked. Form 8862 focused source/calculation/export-boundary tests pass
 40/40, but native and PDF export still reject without authenticated prior IRS
 notice contents; a positive ODC/AOTC export remains unverified.
+The MFS route now has a separate selected three-page source/XML/PDF packet
+with a complete visual checklist. Final export also rejects yearless or
+wrong-owner positive W-2G sources, and malformed attached Schedule totals
+can no longer bypass the Form 1040 join. Focused W-2G and return-wide suites
+pass 194/194 and 13/13 respectively.
 With real Poppler, the Form 8888, Form 8853, and Schedule D PDF assertions pass.
 Three Form 3800 packet-count expectations were updated for the verified blank
 Form 6251 page trim; its focused suite passes 14/14.
+The bounded Form 1116 three-country Germany routes now use the IRS `GM`
+code; two prepared packets pass local XSD and the interest route rejects
+`DE` at both exports. Other country/source and visual review remain open.
 Scenario 8's code-Q distribution and blank Form 1040 line 4a still need
 reconciliation, as do the other open ATS source conflicts.
+An October 5 official Scenario 1 packet recheck confirms its Form 5695
+door-cost and line 22b source conflicts remain.
 The remaining
 11 of 186 fixtures have explicit source or attachment guards. Those checks do
 not prove every route, every PDF page, IRS business-rule compliance, or ATS

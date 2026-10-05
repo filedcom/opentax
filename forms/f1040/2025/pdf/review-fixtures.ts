@@ -938,6 +938,89 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "mfs-two-loan-mortgage-limit",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        filing_status: SourceFilingStatus.MFS,
+        spouse_first_name: "Other",
+        spouse_last_name: "Taxpayer",
+        spouse_ssn: "222-33-4444",
+        mfs_spouse_itemizing: true,
+      },
+      w2: [{
+        ...wage(80_000, 12_000, "Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
+      }],
+      f1098: await Promise.all(([
+        [
+          "First Lender",
+          "2025 MFS first Form 1098",
+          "01/15/2020",
+          20_000,
+          8_340,
+        ],
+        [
+          "Second Lender",
+          "2025 MFS second Form 1098",
+          "02/15/2021",
+          16_000,
+          6_672,
+        ],
+      ] as const).map(([
+        lender_name,
+        source_document_reference,
+        box3_origination_date,
+        box1_mortgage_interest,
+        box1_current_year_deductible_interest,
+      ], index) =>
+        withSyntheticForm1098Copy(`mfs-two-loan-${index}`, {
+          lender_name,
+          recipient_tin: singleGeneral.taxpayer_ssn,
+          source_document_reference,
+          box3_origination_date,
+          box1_mortgage_interest,
+          box1_current_year_deductible_interest,
+          box1_deduction_workpaper_reference: "2025 MFS Pub. 936 Table 1",
+          for_routing: "A",
+        })
+      )),
+      f1098_mortgage_limit_review: {
+        mortgage_limit_review: {
+          table1_workpaper_reference: "2025 MFS Pub. 936 Table 1",
+          all_qualified_home_mortgages_included_verified: true,
+          all_post_2017_acquisition_debt_verified: true,
+          filing_status_verified: "mfs",
+          mfs_noncommunity_property_verified: true,
+          mfs_sole_paid_interest_verified: true,
+          mfs_payment_workpaper_reference: "2025 separate-funds payment ledger",
+          loans: ([
+            ["2025 MFS first Form 1098", 500_000],
+            ["2025 MFS second Form 1098", 400_000],
+          ] as const).map(([source_document_reference, balance]) => ({
+            source_document_reference,
+            monthly_balance_records: Array.from(
+              { length: 12 },
+              (_, index) => ({
+                month: index + 1,
+                closing_balance: balance,
+                lender_statement_reference:
+                  `${source_document_reference}-month-${index + 1}`,
+              }),
+            ),
+          })),
+        },
+      },
+    },
+    filer: mfsFiler,
+    expectedPdfForms: ["f1040", "schedule_a"],
+    reviewFocus: [
+      "MFS status and spouse-itemizing marks print on Form 1040",
+      "Schedule A line 8a prints 15,012 after the three-decimal MFS debt ratio",
+      "Form 1040 line 12e matches the 15,012 itemized deduction",
+    ],
+  },
+  {
     id: "single-1098-construction-refinance-points",
     inputs: {
       general: singleGeneral,

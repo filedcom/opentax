@@ -1,5 +1,19 @@
 # TY2025 Form 1116 main PDF category boundary
 
+## Three-country Germany code correction (2026-10-05)
+
+The assembled three-country interest return exposed an invalid Germany
+`ForeignCountryCd`: its source and PDF fixtures used ISO `DE`, but the TY2025
+MeF schema enumerates IRS country code `GM`. The interest fixture now uses
+`GM`, and its shared native/PDF reconciliation rejects a Germany Form 1099-INT
+with `DE`. The mixed interest/dividend route's source check, native item match,
+and printable country C also use `GM`. Both bounded examples built prepared
+native returns and filled PDF packets with two Form 1116 parent pages and two
+Schedule B pages; both assembled XML returns passed the local TY2025 v5.4 XSD.
+The seven focused cases passed. This verifies those synthetic shapes and their
+page presence; country-code coverage for every other possible source, issued
+copy authentication, visual page review, IRS business rules, and ATS remain open.
+
 ## Two ordinary foreign dividend payers in separate countries (implementation authored; bulk validation pending)
 
 Two separately identified Forms 1099-DIV with ordinary, entirely foreign-source

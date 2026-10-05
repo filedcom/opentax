@@ -98,6 +98,14 @@ export function reconcileForm1116ThreeCountryInterest(
     !hasThreeCountryItems && !hasThreeCountrySources &&
     fields.three_country_interest_pdf_review === undefined
   ) return undefined;
+  if (
+    rows.some((row) =>
+      row.box7?.trim().toLowerCase() === "germany" &&
+      row.foreign_tax_irs_country_code !== "GM"
+    )
+  ) {
+    throw new Error("Form 1116 Germany requires IRS MeF country code GM");
+  }
   const review = threeCountryInterestPdfReviewSchema.safeParse(
     fields.three_country_interest_pdf_review,
   );

@@ -4431,6 +4431,31 @@ passed 1/1 against the local TY2025 v5.4 XSD and built a three-page filled
 PDF. `deno check` passed for both changed tests. The $900,000 average debt,
 $375,000 MFS limit, 0.417 ratio, and $36,000 reported interest produce
 $15,012 on Schedule A and Form 1040. Missing workpaper evidence rejects.
+The actual prepared packet `/tmp/opentax-f1098-mfs.pdf` has SHA-256
+`8a5403a8a9fcf63ede5879a64d96708921e888c5b09fa22122574b0a7459ffbd`.
+All three pages were rendered and visually reviewed at 1,200-pixel scale;
+the MFS and spouse-itemizing marks, Schedule A lines 8a/8e/10/17, and Form
+1040 line 12e match the prepared native amount. Poppler text confirms them.
 This focused evidence follows the 11,197-test full run above; no current-head
-full regression, visual PDF review, source-byte authentication, IRS business
+full regression, source-byte authentication, IRS business
 rules, or ATS acceptance is claimed.
+
+The reusable MFS fixture `mfs-two-loan-mortgage-limit` increases the planner
+to 187 synthetic cases while keeping 116 registered PDF descriptors and 85
+covered PDF keys. Its selected packet under
+`/tmp/opentax-mfs-review-20261005/` passed the read-only checker for one
+case and three pages, including source/PDF/XML hashes, page origins, complete
+visual checklist, and local TY2025 v5.4 XSD. The completed manifest SHA-256
+is `3525619e478c9f2a05d6d6364a0737687dbea658345085e81e9614926dda2bd7`;
+the PDF SHA-256 is
+`e648b0a02b021f6b3ccb63662ef71683dc4fbc598fbd030ceacb51edee6ecafc`.
+An independent regeneration after fixture formatting produced identical
+source, XML, and PDF hashes. The selected packet has not been merged into the
+earlier 175-case manifest; the 11 guarded cases and other route gaps remain.
+
+The bounded three-country Form 1116 interest and mixed interest/dividend
+tests correct Germany's IRS country code from `DE` to `GM`. Both assembled
+returns pass local TY2025 v5.4 XSD and build PDFs with two Form 1116 parent
+and two Schedule B pages. A Germany+`DE` source rejects in the interest
+native/PDF path. Seven focused tests pass; page presence does not substitute
+for visual inspection or other country-code coverage.

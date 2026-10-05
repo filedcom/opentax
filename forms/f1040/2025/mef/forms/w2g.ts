@@ -65,7 +65,7 @@ function assertRecipient(
   }
 }
 
-/** Source every positive W-2G amount to the return's taxpayer or joint spouse. */
+/** Source every positive W-2G amount to TY2025 and this return's owner. */
 export function assertPositiveW2GRecipient(
   source: unknown,
   filer: FilerIdentity | undefined,
@@ -73,7 +73,15 @@ export function assertPositiveW2GRecipient(
   if (source === undefined) return;
   const parsed = inputSchema.parse(source);
   for (const item of parsed.w2gs) {
-    if ((item.box1_winnings ?? 0) > 0) assertRecipient(item, filer);
+    if (
+      (item.box1_winnings ?? 0) > 0 ||
+      (item.box4_federal_withheld ?? 0) > 0
+    ) {
+      if (item.calendar_year !== 2025) {
+        throw new Error("Positive W-2G needs an issued 2025 tax year");
+      }
+      assertRecipient(item, filer);
+    }
   }
 }
 

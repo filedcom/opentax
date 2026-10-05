@@ -18,8 +18,10 @@ interest yields $15,012 on Schedule A line 8a and Form 1040 line 12e.
 Omitting either MFS finding or its payment-workpaper reference, changing the
 asserted interest, or using the wrong filing status rejects. The Form 1098
 source suite passes 59/59; the full-return local TY2025 v5.4 XSD and
-three-page filled-PDF build pass 1/1. The PDF pages have not had a separate
-visual review. This structured review does not authenticate payment records,
+three-page filled-PDF build pass 1/1. All three pages were rendered and
+visually reviewed: the MFS status and spouse-itemizing boxes are checked,
+Schedule A lines 8a/8e/10/17 print $15,012, and Form 1040 line 12e prints
+the same amount. This structured review does not authenticate payment records,
 issuer Copy B provenance, or property-law facts; community-property,
 mixed-year, points, and other MFS mortgage combinations remain open.
 

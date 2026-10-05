@@ -80,3 +80,10 @@ withheld W-2G. This prevents an unsupported free-form `N` claim but does not
 authenticate the payer or open scanned/flattened copies. Forty-two focused
 W-2G source, native, and payer-copy tests passed; the current full suite and
 ATS remain open.
+
+The final MeF and filled-PDF preflight now also requires an explicit
+`calendar_year: 2025` and a winner matching the filer for every W-2G row with
+positive winnings **or withholding**. This closes a withholding-only owner
+gap and prevents a yearless typed row from borrowing the 2025 filing route.
+The focused source, MeF-builder, and PDF-builder suites pass 194/194; a
+payer-issued copy still needs independent provenance and signature review.
