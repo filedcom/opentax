@@ -1,3 +1,4 @@
+import { medicareMsaReviewFixture } from "./review-8853-medicare.fixture.ts";
 import educationScholarshipSource from "./review-8863-scholarship-source.json" with {
   type: "json",
 };
@@ -9024,6 +9025,7 @@ const educationBase = basePdfReviewFixtures.find((fixture) =>
   fixture.id === "single-form8863-lifetime-learning-scholarship"
 )!;
 export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
+  medicareMsaReviewFixture(),
   {
     id: "single-form8863-missing-tuition-form-taxable-scholarship-phaseout",
     inputs: educationScholarshipSource.inputs,
