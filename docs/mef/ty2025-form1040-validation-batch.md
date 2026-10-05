@@ -4706,3 +4706,7 @@ At `f644a8cc0`, the restricted real-Poppler owner, missing-1098-T, mixed-school 
 ## Public accounting SSTB main integration — October 6
 
 At `1af9977fb`, typed restricted real-Poppler tests for public accounting SSTB, sourced aggregation, distinct capital contributions and calculated-return replay passed **8 tests, zero failed**, in29seconds (`/tmp/opentax-sstb-main-integration.log`). The isolated SSTB node/native/PDF suite passed49/49 and existing QBI regressions59/59. Complete selected replay and all15 rendered pages pass; retained manifest `.state/research/ty2025-filled-pdf-review/2026-10-06-qbi-sstb/review-manifest.json` SHA-256 `eacd450cbafc7358525fd3dced19080fe4fe02b2e6ed69cf03a7c580a9febc4e`. Details and boundaries are in the [advanced-QBI gap](ty2025-form8995a-gap.md). This does not prove current-head full regression or IRS acceptance.
+
+## Owner-only SSTB main integration — October 6
+
+At `b2c465c1a`, restricted typed real-Poppler SSTB, education owner and calculated-return replay suites pass **12 tests, zero failed**, in27seconds (`/tmp/opentax-sstb-zero-main-integration.log`). Isolated ScheduleC/SSTB tests pass107/107. Full v5.4 XSD and all15 rendered pages pass exact selected replay; manifest `.state/research/ty2025-filled-pdf-review/2026-10-06-qbi-sstb-no-payroll/review-manifest.json` SHA-256 `261041c4b2dd6cb9735d57000452d843b59cc2bcd5dc4b79bf80964cba4d4b46`. Planner198 fixtures/90 covered of113 keys/23uncovered. Earlier selected inventories remain generation snapshots. No complete current-head regression or IRS acceptance is claimed.
