@@ -32,5 +32,9 @@ that native Form 8911/Schedule A values match both registered PDF projections,
 checks the allowed credit on the parent and property schedule, rejects a
 changed Schedule 3 amount at PDF projection, and validates the complete native
 return against the local TY2025 v5.4 XSD. The four direct Form 8911 PDF cases
-and three Schedule 3 line 6j cases also pass. Actual filled-page visual review,
-other property shapes, and the full batch remain deferred.
+and three Schedule 3 line 6j cases also pass. In the six-page selected return,
+the filled Form 8911 page was visually checked at line 4 = $300, line 5 =
+$3,875, and line 10 = $300; its Schedule A page was checked at lines 8/19/21 =
+$1,000/$300/$300. The amounts match the native values and PDF projections, and
+both pages render without clipping. Other property shapes and the full batch
+remain deferred.
