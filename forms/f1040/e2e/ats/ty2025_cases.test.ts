@@ -333,6 +333,8 @@ Deno.test("1040 Scenario 1 W-2s route sourced wages and withholding to 1040", ()
 
 Deno.test("1040 Scenario 2 source entries remain distinct from computed totals", () => {
   const facts = SCENARIO_1040_02_FACTS;
+  assertEquals(facts.printedFilingStatus.marriedFilingJointlyChecked, true);
+  assertEquals(facts.printedFilingStatus.qualifyingSurvivingSpouseChecked, false);
   assertMatch(facts.taxpayer.ssn, /^\d{3}00\d{4}$/);
   assertMatch(facts.spouse.ssn, /^\d{3}00\d{4}$/);
   assertEquals(facts.w2.reduce((sum, form) => sum + form.box1Wages, 0), 38_026);

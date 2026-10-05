@@ -680,6 +680,10 @@ export const SCENARIO_1040_02_FACTS = {
     identityProtectionPin: "876543",
     nonresidentSpouseChoiceStatementAssumed: true,
   },
+  printedFilingStatus: {
+    marriedFilingJointlyChecked: true,
+    qualifyingSurvivingSpouseChecked: false,
+  },
   formerSpouseSsn: "400001037",
   dependent: {
     firstName: "Jacob",
