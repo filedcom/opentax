@@ -2,13 +2,13 @@
 
 ## Compacted status (2026-10-06)
 
-The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,358 bounded slices**, including ten verified in isolated checkouts pending integration and a new full regression. Broader parents remain open. New work belongs only in `future_todo`, outside this execution queue.
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,359 bounded slices**, including eleven verified in isolated checkouts pending integration and a new full regression. Broader parents remain open. New work belongs only in `future_todo`, outside this execution queue.
 
 The last completed full regression at `a268f60c` passed **11,233/11,233**, zero failed or ignored. The stable `8aa4beeec` real-Poppler run remains live, with PID 44462 confirmed October 6. Main code stays unchanged until it finishes. See the [validation batch](docs/mef/ty2025-form1040-validation-batch.md).
 
 The isolated routes now include two-school education credits, partially taxable Archer MSA distributions, Schedule C WOTC/QBI ordering, and beneficiary NUA/death/estate/annuity combinations with source cents preserved. Combined isolated route checks pass 10/10. Two-school AOC now also passes full local XSD and five-page visual review. Focused checks pass 79/79 plus final education 2/2, Archer MSA 59/59, WOTC 31/31 plus final 2/2, and annuity 127/127 plus final 5/5. Full-return local XSD and filled-PDF evidence are recorded in each route note. These are synthetic bounded routes, not source authentication or IRS acceptance.
 
-Earlier isolated improvements and detailed learnings are archived in the [October 6 checkpoint](docs/mef/ty2025-product-board-status-2026-10-06.md). The planner has 189 fixtures covering 87 of 113 PDF keys, with 26 uncovered; added standalone route tests do not increase that inventory.
+Earlier isolated improvements and detailed learnings are archived in the [October 6 checkpoint](docs/mef/ty2025-product-board-status-2026-10-06.md). Two reusable education packets passed source/XML/PDF/XSD replay and ten-page visual review. The isolated planner has 191 fixtures covering 87 of 113 PDF keys, with 26 uncovered; added standalone route tests do not increase that inventory.
 
 IRS ATS was reported unavailable through October 13 at 9 a.m. Eastern, with R10.A WSDL scheduled that day. Recheck before transmission. Credentials, Scenarios 1/8/13 source conflicts, source authenticity, business rules and IRS acceptance remain release gates.
 
