@@ -4563,3 +4563,14 @@ its EIC and Form 8962 focused suites pass **10/10** in
 `/tmp/opentax-eic-8962-regression-fix.log`. A new full run is required.
 Both runs used Deno 2.9.4, TypeScript 6.0.3, libxml 2.9.13, and Poppler
 26.09.0.
+
+The exact-code-head rerun of `PATH=/tmp/opentax-poppler-env/bin:$PATH deno task
+test` at `a268f60c` began `2026-10-05T21:00:46Z` and ended
+`2026-10-05T21:41:29Z`: **11,233 passed, 0 failed, 0 ignored** in 40m17s.
+The one-shot job exited 0. Its log is
+`/tmp/opentax-deno-task-test-a268f60c.log`, SHA-256
+`31aef7bcbf30ed92b677897f7b8d85775a213f0a9021c7cad5b3bedda4d49890`.
+Deno 2.9.4, TypeScript 6.0.3, libxml 2.9.13, and real Poppler 26.09.0 were
+used. The corrected EIC negative assertion passed in the full batch. This
+regression pass does not close the remaining source-proof, visual-review,
+IRS business-rule, or ATS acceptance gates.

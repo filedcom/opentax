@@ -6,7 +6,7 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1343 bounded completed slices. A completed slice does not close its
+records 1344 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are
@@ -116,7 +116,9 @@ remain open.
 The real-Poppler full regression at `9d700e2d` passed 11,225/11,225. The
 next full run at `615809a4` exposed one obsolete EIC duplicate-identity test
 expectation after the earlier Form 8962 source guard; its corrected EIC/Form
-8962 focused suites pass 10/10. A current-head full rerun is pending.
+8962 focused suites pass 10/10. The corrected code at `a268f60c` passed the
+real-Poppler full regression: 11,233/11,233 in 40m17s, with no failed tests.
+The broader filing and IRS ATS gates remain open.
 Scenario 8's code-Q distribution and blank Form 1040 line 4a still need
 reconciliation, as do the other open ATS source conflicts.
 An October 5 official Scenario 1 packet recheck confirms its Form 5695
