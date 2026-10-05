@@ -92,7 +92,7 @@ Deno.test("Form 8853: missing source attestations and owner reject", () => {
   );
 });
 
-Deno.test("Form 8853: partial medical use, rollover, and exception paths reject", () => {
+Deno.test("Form 8853: unconfirmed taxable medical use, rollover, and exception paths reject", () => {
   assertThrows(
     () =>
       form8853.build(
@@ -100,7 +100,7 @@ Deno.test("Form 8853: partial medical use, rollover, and exception paths reject"
         context,
       ),
     Error,
-    "fully matched",
+    "normal distribution code 1",
   );
   assertThrows(
     () => form8853.build({ ...source, archer_msa_rollover: 500 }, context),
@@ -164,4 +164,45 @@ Deno.test("Form 8853: joint header and conflicting schedules reject", () => {
     Error,
     "pending return reconciliation context",
   );
+});
+
+Deno.test("Form 8853: normal partial medical use emits taxable distribution and additional tax", () => {
+  const partial = {
+    ...source,
+    archer_msa_qualified_expenses: 2_000,
+    archer_distribution_filing_details: {
+      ...source.archer_distribution_filing_details,
+      normal_distribution_code_1_confirmed: true as const,
+    },
+  };
+  const reconciled = {
+    filer,
+    pending: {
+      schedule1: { line8e_archer_msa_dist: 1_000 },
+      schedule2: { line17e_archer_msa_tax: 200 },
+    },
+  };
+  const xml = form8853.build(partial, reconciled);
+  assertStringIncludes(
+    xml,
+    "<TaxableArcherMSADistriAmt>1000</TaxableArcherMSADistriAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ArcherMSAAddnlDistriTaxAmt>200</ArcherMSAAddnlDistriTaxAmt>",
+  );
+  assertEquals(xml.includes("ArcherMSADistriMeetTaxExcInd"), false);
+  for (
+    const changes of [
+      { archer_msa_qualified_expenses: undefined },
+      { archer_msa_qualified_expenses: 3001 },
+      { archer_msa_distributions: 3000.25 },
+    ]
+  ) {
+    assertThrows(
+      () => form8853.build({ ...partial, ...changes }, reconciled),
+      Error,
+      "whole-dollar Archer distribution",
+    );
+  }
 });

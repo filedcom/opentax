@@ -31,6 +31,8 @@ export enum MsaOwner {
 
 export const archerDistributionFilingDetailsSchema = z.object({
   owner: z.nativeEnum(MsaOwner),
+  // Box 3 code 1 establishes the normal distribution route for taxable use.
+  normal_distribution_code_1_confirmed: z.literal(true).optional(),
   single_archer_msa_distribution_confirmed: z.literal(true),
   gross_amount_confirmed_from_1099sa: z.literal(true),
   qualified_expenses_unreimbursed_confirmed: z.literal(true),

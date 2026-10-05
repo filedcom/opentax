@@ -92,6 +92,9 @@ export function reconcileForm4952DirectDebtExport(
   const oneRoyalty = misc.success && misc.data.f1099ms.length === 1 &&
     pending.f1099int === undefined && pending.f1099div === undefined &&
     pending.f1099oid === undefined;
+  const royaltyAndInterest = misc.success && interest.success &&
+    misc.data.f1099ms.length === 1 && interest.data.f1099ints.length === 1 &&
+    pending.f1099div === undefined && pending.f1099oid === undefined;
   const oneInterest = interest.success &&
     interest.data.f1099ints.length === 1 &&
     pending.f1099div === undefined && pending.f1099oid === undefined;
@@ -242,7 +245,7 @@ export function reconcileForm4952DirectDebtExport(
       !treasuryOidAndDividend &&
       !oneInterestAndDividend && !oneOidAndDividend &&
       !twoInterestAndDividend && !interestAndTwoDividends &&
-      !twoInterestTwoDividends && !oneRoyalty) ||
+      !twoInterestTwoDividends && !oneRoyalty && !royaltyAndInterest) ||
     !sameTrace(printed.data.direct_debt_trace, retained.data.direct_debt_trace)
   ) {
     throw new Error(
@@ -392,6 +395,17 @@ export function reconcileForm4952DirectDebtExport(
         typeof retained.data.source_1099_dividends !== "number" ||
         printed.data.source_1099_dividends !==
           retained.data.source_1099_dividends
+      : royaltyAndInterest
+      ? typeof printed.data.source_1099_interest !== "number" ||
+        typeof retained.data.source_1099_interest !== "number" ||
+        printed.data.source_1099_interest !==
+          retained.data.source_1099_interest ||
+        typeof printed.data.source_1099_royalties !== "number" ||
+        typeof retained.data.source_1099_royalties !== "number" ||
+        printed.data.source_1099_royalties !==
+          retained.data.source_1099_royalties ||
+        printed.data.source_1099_dividends !== undefined ||
+        retained.data.source_1099_dividends !== undefined
       : oneInterest || oneOid
       ? typeof printed.data.source_1099_interest !== "number" ||
         typeof retained.data.source_1099_interest !== "number" ||

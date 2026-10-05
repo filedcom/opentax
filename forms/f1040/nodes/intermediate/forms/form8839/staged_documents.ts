@@ -174,7 +174,7 @@ export function projectStagedForm8839Documents(
       element("PersonLastNm", child.last_name),
       element("ChildBirthYr", child.birth_year),
       element("ChildSSN", child.ssn),
-      element("AdoptionFinalInd", "true"),
+      element("AdoptionFinalInd", "X"),
       element("AdoptionCreditMaxPerChildAmt", perChild.line2),
       element("AdoptionCreditPriorYearAmt", perChild.line3),
       element("AdoptionNetAllowedTaxCreditAmt", perChild.line4),
@@ -188,7 +188,7 @@ export function projectStagedForm8839Documents(
     ...(phased
       ? [
         element("AdoptionCreditModifAGILimitAmt", line8),
-        element("AdoptionCrModifAGIGrtrAmtInd", "true"),
+        element("AdoptionCrModifAGIGrtrAmtInd", "X"),
         element("AdoptionCreditAdjModifAGIPct", fraction),
       ]
       : []),

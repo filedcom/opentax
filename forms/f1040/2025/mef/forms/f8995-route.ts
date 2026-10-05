@@ -9,7 +9,12 @@ import {
   inputSchema as scheduleCInputSchema,
   itemSchema as scheduleCItemSchema,
   projectScheduleCItems,
+  wotcReductionsByBusiness,
 } from "../../../nodes/inputs/schedule_c/index.ts";
+import {
+  calculateForm5884,
+  inputSchema as form5884InputSchema,
+} from "../../../nodes/inputs/f5884/index.ts";
 import {
   computeNetProfit as computeFarmNetProfit,
   inputSchema as scheduleFInputSchema,
@@ -47,9 +52,11 @@ export function assertNoUnfiled8995Loss(
     const value = fields[name];
     if (value === undefined) return 0;
     const values = Array.isArray(value) ? value : [value];
-    if (!values.every((amount) =>
-      typeof amount === "number" && Number.isFinite(amount)
-    )) {
+    if (
+      !values.every((amount) =>
+        typeof amount === "number" && Number.isFinite(amount)
+      )
+    ) {
       throw new Error("Form 8995 loss carryforward source must be numeric");
     }
     return values.reduce((total: number, amount: number) => total + amount, 0);
@@ -415,7 +422,34 @@ export function assertOneScheduleC8995(
       seDeduction,
     );
   }
-  const rawQbi = sourceBusiness ? computeNetProfit(sourceBusiness) : 0;
+  // Form 5884 line 2 reduces the wage deduction even when Form 3800 limits
+  // the current-year credit. Recompute QBI from that allocation, never from
+  // the allowed credit posted to Schedule 3.
+  const wotcSource = form5884InputSchema.safeParse(pending.f5884);
+  const wotcReduction = sourceInput && sourceBusiness
+    ? wotcReductionsByBusiness(sourceInput).get(
+      sourceBusiness.business_reference ?? "",
+    ) ?? 0
+    : 0;
+  const wotcLines = wotcSource.success
+    ? calculateForm5884(wotcSource.data)
+    : undefined;
+  const wotcAllocations = wotcLines?.wageDeductionAllocations ?? [];
+  const form3800Wotc = (pending.f3800 as Record<string, unknown> | undefined)
+    ?.f5884_credit as Record<string, unknown> | undefined;
+  const sourcedWotc = wotcSource.success && wotcReduction > 0 &&
+    wotcLines?.line2 === wotcReduction &&
+    wotcLines.line3 === 0 && wotcAllocations.length === 1 &&
+    wotcAllocations[0].location.kind === "schedule_c" &&
+    wotcAllocations[0].location.business_reference ===
+      sourceBusiness?.business_reference &&
+    wotcAllocations[0].credit_amount === wotcReduction &&
+    form3800Wotc?.credit_amount === wotcLines.line4 &&
+    form3800Wotc.subject_to_passive_activity_limit === false &&
+    wotcSource.data.subject_to_passive_activity_limit !== true;
+  const rawQbi = sourceBusiness
+    ? computeNetProfit(sourceBusiness, wotcReduction)
+    : 0;
   const hasSeDeduction = typeof seDeduction === "number" && seDeduction > 0;
   const ein = typeof fields.line1_ein === "string"
     ? fields.line1_ein.replace(/\D/g, "")
@@ -483,7 +517,8 @@ export function assertOneScheduleC8995(
     fields.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
     sourceBusiness.qbi_no_other_adjustments_confirmed !== true ||
     sourceBusiness.line_g_material_participation !== true ||
-    (sourceInput?.wotc_wage_reductions?.length ?? 0) !== 0 ||
+    (((sourceInput?.wotc_wage_reductions?.length ?? 0) > 0 ||
+      pending.f5884 !== undefined) && !sourcedWotc) ||
     row.no_other_adjustments_confirmed !== true ||
     !rowSource.success ||
     JSON.stringify(rowSource.data) !== JSON.stringify(sourceBusiness) ||

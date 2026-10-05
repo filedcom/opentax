@@ -1,4 +1,8 @@
-import { directAgriBiodieselPending, directAgriBiodieselSource } from "../../nodes/inputs/f8864/fixture.ts";
+import { twoSchoolEducationFixture } from "./review-8863-two-schools.fixture.ts";
+import {
+  directAgriBiodieselPending,
+  directAgriBiodieselSource,
+} from "../../nodes/inputs/f8864/fixture.ts";
 import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
 import { withReviewedForm8874A } from "../../nodes/inputs/f8874/issuance_fixture.ts";
 import {
@@ -21,6 +25,11 @@ import {
   form8882ScheduleCFixture,
 } from "../../nodes/inputs/f8882/fixture.ts";
 import { withSyntheticForm1098Copy } from "./review-1098-copy.fixture.ts";
+import type { MefPdfAttachment } from "../mef/form-descriptor.ts";
+import {
+  adoptionReviewAttachments,
+  adoptionReviewSource,
+} from "./review-8839.fixture.ts";
 
 /** Synthetic source returns for the held TY2025 filled-PDF review. */
 export interface PdfReviewFixture {
@@ -29,6 +38,7 @@ export interface PdfReviewFixture {
   readonly filer: FilerIdentity;
   readonly expectedPdfForms: readonly string[];
   readonly reviewFocus: readonly string[];
+  readonly attachments?: readonly MefPdfAttachment[];
 }
 
 const singleFiler: FilerIdentity = {
@@ -259,7 +269,23 @@ function noAptcPolicyForMonths(
   };
 }
 
-export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
+const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
+  {
+    id: "single-reviewed-adoption-credit",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(100_000, 15_000, "Example Employer", "12-3456789")],
+      form8839: adoptionReviewSource,
+    },
+    filer: singleFiler,
+    attachments: adoptionReviewAttachments,
+    expectedPdfForms: ["f1040", "form8839", "schedule3"],
+    reviewFocus: [
+      "Synthetic decree and birth record identify Ada Example and Alex Example as the adoptive parent",
+      "Form 8839 shows 11,000 of reviewed adoption expense, 6,000 nonrefundable and 5,000 refundable credit",
+      "Schedule 3 line 6c and Form 1040 line 30 carry the separate adoption credit parts",
+    ],
+  },
   {
     id: "mfj-spouse-dependent-refund-only",
     inputs: {
@@ -351,13 +377,40 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
   {
     id: "single-agri-biodiesel-producer-credit",
     inputs: {
-      general: { ...singleGeneral, qbi_no_prior_loss_or_suspended_loss_confirmed: true, qbi_not_patron_of_specified_cooperative_confirmed: true },
-      w2: [{ ...wage(75_000, 11_000, "Example Employer", "12-3456789"), employee_ssn: singleGeneral.taxpayer_ssn }],
-      f8864: { ...directAgriBiodieselSource, proprietor_ssn: singleFiler.primarySSN },
-      schedule_c: directAgriBiodieselPending.schedule_c.schedule_cs.map(business => ({ ...business, qbi_no_other_adjustments_confirmed: true, line_i_made_1099_payments: false })),
+      general: {
+        ...singleGeneral,
+        qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+        qbi_not_patron_of_specified_cooperative_confirmed: true,
+      },
+      w2: [{
+        ...wage(75_000, 11_000, "Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
+      }],
+      f8864: {
+        ...directAgriBiodieselSource,
+        proprietor_ssn: singleFiler.primarySSN,
+      },
+      schedule_c: directAgriBiodieselPending.schedule_c.schedule_cs.map(
+        (business) => ({
+          ...business,
+          qbi_no_other_adjustments_confirmed: true,
+          line_i_made_1099_payments: false,
+        }),
+      ),
     },
     filer: singleFiler,
-    expectedPdfForms: ["f1040", "schedule_c", "schedule1", "schedule2", "schedule_se", "schedule3", "f3800", "form6251", "form8995", "f8864"],
+    expectedPdfForms: [
+      "f1040",
+      "schedule_c",
+      "schedule1",
+      "schedule2",
+      "schedule_se",
+      "schedule3",
+      "f3800",
+      "form6251",
+      "form8995",
+      "f8864",
+    ],
     reviewFocus: [
       "Form 8864 line 8 shows 2,500 post-June gallons at $0.20, with $500 on lines 8, 9 and 11",
       "Schedule C includes $500 credit income; Form 6251 line 3 subtracts the same amount",
@@ -8961,4 +9014,13 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "Schedule 3 line 15 and Form 1040 line 31 sum these payments to 1,908",
     ],
   },
+];
+
+const educationBase = basePdfReviewFixtures.find((fixture) =>
+  fixture.id === "single-form8863-lifetime-learning-scholarship"
+)!;
+export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
+  ...basePdfReviewFixtures,
+  twoSchoolEducationFixture(educationBase, "llc"),
+  twoSchoolEducationFixture(educationBase, "aoc"),
 ];

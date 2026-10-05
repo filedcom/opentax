@@ -153,7 +153,8 @@ export const scheduleCQbiBusinessSchema = z.object({
   business_reference: z.string().trim().min(1).optional(),
   business_name: z.string().trim().min(1).max(75).optional(),
   ein: z.string().regex(/^\d{9}$/).optional(),
-  qbi: z.number().int(),
+  // Retain Schedule C cents until the whole-dollar Schedule C filing lines.
+  qbi: z.number().finite(),
   w2_wages: z.number().int().nonnegative(),
   ubia: z.number().int().nonnegative(),
   no_other_adjustments_confirmed: z.boolean(),
@@ -385,7 +386,6 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
   if (
     input.filing_status !== FilingStatus.Single ||
     input.taxable_income <= 247_300 ||
-    !Number.isInteger(input.taxable_income) ||
     input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     (input.qbi_loss_carryforward ?? 0) !== 0 ||
     (input.reit_loss_carryforward ?? 0) !== 0 ||
@@ -430,14 +430,27 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
   }
   const positive = businesses.find((business) => business.qbi > 0);
   const negative = businesses.find((business) => business.qbi < 0)!;
-  const line3 = -negative.qbi;
-  const line4 = positive?.qbi ?? 0;
+  // The source graph and Schedule 1 keep cents. Schedule C of Form 8995-A
+  // files whole-dollar amounts for each identified trade or business.
+  const roundedDollar = (amount: number): number =>
+    Math.sign(amount) * Math.round(Math.abs(amount));
+  const sourceQbi = businesses.reduce((sum, business) => sum + business.qbi, 0);
+  if (
+    Math.abs((input.qbi ?? 0) - sourceQbi) > 0.000001 ||
+    roundedDollar(negative.qbi) >= 0 ||
+    (positive !== undefined && roundedDollar(positive.qbi) <= 0)
+  ) {
+    throw new Error(
+      "Form 8995-A Schedule C needs sourced net QBI and nonzero whole-dollar business rows",
+    );
+  }
+  const line3 = -roundedDollar(negative.qbi);
+  const line4 = positive ? roundedDollar(positive.qbi) : 0;
   const line5 = Math.min(line3, line4);
   const line6 = Math.max(0, line3 - line5);
   const adjustedQbi = line4 - line5;
   if (
     adjustedQbi >= 400 ||
-    (input.qbi ?? 0) !== line4 + negative.qbi ||
     (input.w2_wages ?? 0) !== (positive?.w2_wages ?? 0) + negative.w2_wages ||
     (input.unadjusted_basis ?? 0) !== (positive?.ubia ?? 0) + negative.ubia ||
     negative.w2_wages !== 0 ||
@@ -490,7 +503,7 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
       line6,
       rows: businesses.map((business) => ({
         name: business.business_name!,
-        line1a: business.qbi,
+        line1a: roundedDollar(business.qbi),
         line1b: business.qbi > 0 ? line5 : 0,
         line1c: business.qbi > 0 ? adjustedQbi : 0,
       })),
@@ -510,9 +523,9 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
       line15: line11Parent,
       line16: line11Parent,
       line32: line11Parent,
-      line33: input.taxable_income,
+      line33: Math.round(input.taxable_income),
       line34: 0,
-      line35: input.taxable_income,
+      line35: Math.round(input.taxable_income),
       line36,
       line37: line39,
       line39,

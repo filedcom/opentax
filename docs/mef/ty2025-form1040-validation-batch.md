@@ -4636,3 +4636,14 @@ At isolated integration commit `a195fc374`, real-Poppler `deno test -A` of the F
 The main `8aa4beeec` full regression remains running under launchd PID 44462; no restart occurred. New code remains isolated pending its terminal result.
 
 The two-school LLC/AOC selected reusable review packet at isolated `eb58acd69` passes the read-only checker: **2 cases, 10 visually inspected pages**. Planner: 191 fixtures, 116 descriptors, 113 keys, 87 covered/26 uncovered. Retained directory: `.state/research/ty2025-filled-pdf-review/2026-10-06-two-school-credits/`; manifest SHA-256 `8137b9d0adf452950b5fc19bdc2da9160c5dd41e644c97c9fec3a537a2218093`. Log `/tmp/opentax-two-schools-selected-check.log`. No full-inventory or source-authentication claim.
+
+The QBI visual review also exposed required zero amounts omitted on Form
+8995-A Schedule C column (c)/line 6 and the parent's unmapped line 40. At
+`c246f53f1`, the supported loss-netting route prints these zeros using the
+canonical cached AcroForm fields. The same five-test suite passed again,
+including actual full-PDF text assertions for the loss-business adjusted
+income and both carryforward fields. Root rendered and inspected the
+corrected parent page 2 and Schedule C; the other ten pages were unchanged.
+This correction is part of the already recorded bounded QBI slice, not a
+new parent completion. Integration into main and its full regression remain
+pending while the stable full run is live.

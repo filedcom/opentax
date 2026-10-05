@@ -35,6 +35,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
         kind: "text",
         domainKey: `row${index}_c`,
         pdfField: row(index, start + 3),
+        printZero: true,
       },
     ];
   }),
@@ -42,6 +43,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: `line${line}`,
     pdfField: `${page}f1_${String(line + 13).padStart(2, "0")}[0]`,
+    printZero: line === 6,
   })),
 ];
 
