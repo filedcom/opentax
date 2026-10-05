@@ -482,6 +482,15 @@ Deno.test("1040 Scenario 5 preserves dependent, care, education, and opt-out inp
   );
   assertEquals(facts.schedule1.movingExpenses, 1_475);
   assertEquals(facts.form8863.adjustedQualifiedEducationExpenses, 980);
+  assertEquals(
+    facts.form8863.institutionAddress,
+    "1234 Blue Street, Austin, Texas 78701",
+  );
+  assertEquals(facts.form8863.printedLine27Expenses, null);
+  assertEquals(facts.form8863.printedLine30AmericanOpportunityCredit, null);
+  assertEquals(facts.form8863.printedPartILine8RefundableCredit, null);
+  assertEquals(facts.form8863.printedPartIILine19NonrefundableCredit, null);
+  assertEquals(facts.form8863.form1098TIncludedInPacket, false);
   assertEquals(facts.form8862.child1DaysInUnitedStates, 365);
   assertEquals(facts.form8862.child2DaysInUnitedStates, 365);
   assertEquals(facts.form8862.taxYearOnLine1, null);

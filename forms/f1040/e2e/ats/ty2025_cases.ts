@@ -984,8 +984,15 @@ export const SCENARIO_1040_05_FACTS = {
   form8863: {
     studentName: "Bobby Barker",
     institutionName: "University of Texas",
+    institutionAddress: "1234 Blue Street, Austin, Texas 78701",
     institutionEin: "000000004",
+    // The $980 is stated on the cover sheet, not entered on Form 8863.
     adjustedQualifiedEducationExpenses: 980,
+    printedLine27Expenses: null,
+    printedLine30AmericanOpportunityCredit: null,
+    printedPartILine8RefundableCredit: null,
+    printedPartIILine19NonrefundableCredit: null,
+    form1098TIncludedInPacket: false,
     received1098TFor2025: false,
     received1098TFor2024: false,
     enrolledAtLeastHalfTime: true,
