@@ -96,6 +96,37 @@ export const itemSchema = z.object({
     reviewed_by: z.string().trim().min(1),
     reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   }).strict().optional(),
+  // Reviewed payroll and classification for one owner-operated SSTB.
+  qbi_sstb_filing_review: z.object({
+    owner_ssn: z.string().regex(/^\d{9}$/),
+    classification_source_reference: z.string().trim().min(1),
+    business_activity_description: z.string().trim().min(1),
+    accounting_sstb_confirmed: z.literal(true),
+    employee_w2_records: z.array(
+      z.object({
+        employee_ssn: z.string().regex(/^\d{9}$/),
+        employer_ein: z.string().regex(/^\d{9}$/),
+        source_document_reference: z.string().trim().min(1),
+        box1_wages: z.number().int().positive(),
+        box5_wages: z.number().int().positive(),
+        ssa_filing_record_reference: z.string().trim().min(1),
+        filed_within_60_days_of_due_date_confirmed: z.literal(true),
+      }).strict(),
+    ).min(1),
+    all_business_payroll_included_confirmed: z.literal(true),
+    no_other_business_or_aggregation_confirmed: z.literal(true),
+    no_ptp_or_loss_carryforward_confirmed: z.literal(true),
+    qualified_dividends_zero_confirmed: z.literal(true),
+    no_qualified_property_confirmed: z.literal(true),
+    no_adjustments_beyond_filed_half_se_tax_confirmed: z.literal(true),
+    review_reference: z.string().trim().min(1),
+    reviewed_by: z.string().trim().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((date) => {
+      const parsed = new Date(`${date}T00:00:00Z`);
+      return Number.isFinite(parsed.valueOf()) &&
+        parsed.toISOString().slice(0, 10) === date && date >= "2025-12-31";
+    }, "Expected a real post-year-end review date"),
+  }).strict().optional(),
   // Required for the bounded Form 8995-A Schedule C path: the Schedule C net
   // amount has no separately attributable section 199A adjustments.
   qbi_no_other_adjustments_confirmed: z.boolean().optional(),

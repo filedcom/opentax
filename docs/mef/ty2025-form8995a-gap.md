@@ -119,7 +119,7 @@ it remains separately unsupported by the bounded native route.
 
 | Schedule | Source-local guard                                                                                     | Needed for a supported filing route                                                                                                                                                                                                                                                                                                                                                                                                     |
 | -------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A        | SSTB outside the bounded one-business single-filer phase-in source                                     | Other identified SSTB or PTP rows, MFJ phase-in, source authentication, and filled-PDF verification.                                                                                                                                                                                                                                                                                                                                    |
+| A        | SSTB outside the bounded one-business single-filer phase-in source                                     | Public accounting source now has complete local XSD and 15-page visual/replay proof. Other SSTB/PTP rows, wider owners and source authentication remain open.                                                                                                                                                                                                                                                                                                                                    |
 | B        | Aggregation outside one group of two sourced Schedule C businesses                                     | The bounded route requires ownership, tax-year, operational-factor, election-continuity, reviewed QBI-allocation, member tax ID, source and parent joins. Broader groups and RPE statements remain unsupported. The BAN input alone retains only names and a boolean.                                                                                                                                                                   |
 | C        | Current qualified business loss outside the bounded two-business route, or prior QBI loss carryforward | One positive and one negative identified Schedule C business can now net a small positive current QBI with no unused loss, but wider activities, zero/negative net, and prior carryforward still reject. The scalar prior loss lacks filed-return and suspended-loss provenance. Preserve each business, proportionally allocate losses, and carry remaining line 6 forward. Even a zero parent deduction does not excuse the schedule. |
 | D        | Affirmative `patron_of_specified_cooperative` without the bounded source                               | Multi-cooperative allocations and nonzero section 199A(g) DPAD remain open; the bounded PDF descriptor still needs filled-page verification.                                                                                                                                                                                                                                                                                            |
@@ -142,7 +142,7 @@ The bounded route must pass the agreed single full calculation/test batch,
 TY2025 local XSD and PDF checks, IRS business rules, and ATS acceptance before
 coverage is claimed.
 
-## Build-first Schedule A SSTB route (written, unrun)
+## Historical build-first Schedule A SSTB route (staged evidence)
 
 One identified SSTB for a single filer inside the 2025 taxable-income phase-in
 range now produces a separate registered `IRS8995AScheduleA` native document.
@@ -515,3 +515,50 @@ Full graph execution, parent/ScheduleB native documents, and the actual 17-page 
 Every page was visually reviewed. The review corrected parent line40 carryforward zero, ScheduleSE zero Social Security limit/tax, and applicable Form8959 zero reduced threshold/withholding. Inapplicable RRTA parts now remain blank. Source/amounts/native XML, deterministic PDF, page origins, hashes and local XSD all pass the read-only selected checker: one case, 17 pages. Retained `.state/research/ty2025-filled-pdf-review/2026-10-06-qbi-aggregation/`; logs `/tmp/opentax-aggregation-final-integration4.log` and `/tmp/opentax-aggregation-selected-check.log`. Planner:196 fixtures,116 descriptors,113 keys,89 covered,24 uncovered.
 
 This is a reviewed synthetic new-2025 election for one taxpayer and two positive non-SSTB ScheduleC businesses above phase-in. Genuine workpaper/ownership authentication, continued accepted elections, RPE statements, other groups/owners, losses, phase-in variants, business rules and ATS acceptance remain open. Earlier historical staging paragraphs do not describe this later positive proof.
+
+## Public accounting SSTB source and complete Schedule A packet — October 6
+
+The public Schedule C input now accepts a reviewed accounting SSTB source with
+owner, business/EIN/classification workpaper, issued employee W-2 payroll,
+timely SSA filing references, no qualified property, and explicit absence of
+other businesses, aggregation, PTP, prior losses and other QBI adjustments. The
+graph derives business QBI after the actual filed half-SE deduction; it retains
+the source Schedule C and payroll evidence through parent and Schedule A. Native
+and PDF preparation join those copies to actual owner wages, Schedule SE,
+Schedule 1 and final Form 1040, and require matching parent/companion documents.
+The existing direct staged sources remain separate from this public proof.
+
+The retained synthetic Single accounting source has receipts 38,431 and employee
+wages 10,000, yielding profit 28,431. Owner W-2 wages of 210,000 already exhaust
+the Social Security wage base. Actual Schedule SE files tax 761 and half-SE
+deduction 381; AGI is 238,050 and taxable income before QBI is 222,300. Adjusted
+QBI 28,050 and wages 10,000 become applicable QBI 14,025 and wages 5,000 at 50%.
+Parent potential deduction 2,805 exceeds the wage limit 2,500 by 305; the
+half-dollar phase-in reduction 152.5 files as 153, producing deduction
+**2,652**. Final taxable income is 219,648, ordinary tax 47,350, Additional
+Medicare tax 326, total tax 48,437 and refund 1,563 on withholding 50,000. This
+follows the
+[2025 Form 8995-A instructions](https://www.irs.gov/pub/irs-prior/i8995a--2025.pdf)
+for accounting SSTBs, applicable QBI/payroll and phased wage limitation.
+
+The reusable fixture `single-form8995a-accounting-sstb-phasein` exports a full
+TY2025 v5.4 return and **15-page** flattened packet. Root visually inspected all
+pages, including actual employer/proprietor IDs, SSTB mark, 50% entries, 153
+reduction, 2,652 deduction, Schedule SE required zeros and no optional
+method/RRTA entries. Complete selected source/calculation/native/PDF/hash/
+page-origin/XSD replay passes (`/tmp/opentax-sstb-selected-check.log`). The
+Schedule A PDF instance now reads canonical pending source for owner/status
+validation because the builder passes already projected print fields to it; this
+repairs actual full-packet assembly rather than a direct-projector check.
+
+This proves one positive owned accounting business with current payroll and
+half-SE adjustment. Other SSTB categories, owners/statuses, multiple activities,
+RPE sources, combined investment income, other adjustments, prior-loss
+provenance, external source authenticity, IRS business rules and ATS acceptance
+remain open. No broad Schedule A or Form 8995-A completion is claimed.
+
+Verification: the typed restricted SSTB node/native/PDF/source suite passes **49/49** (`/tmp/opentax-sstb-focused2.log`), including 36 dual native/PDF source-conflict checks. The retained selected packet is `.state/research/ty2025-filled-pdf-review/2026-10-06-qbi-sstb/`, manifest SHA-256 `eacd450cbafc7358525fd3dced19080fe4fe02b2e6ed69cf03a7c580a9febc4e`. Source fixture planning has 197 cases, 116 PDF descriptors, 113 keys, 90 covered keys and 23 uncovered keys. Planner coverage alone does not prove all-route packet review.
+
+Existing simplified-QBI node, advanced native/PDF parent, sourced aggregation
+and distinct-capital regressions additionally pass **59/59** in the same
+restricted tool mode (`/tmp/opentax-sstb-existing-regression.log`).

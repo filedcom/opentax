@@ -1,3 +1,4 @@
+import { assertSstbScheduleCSource } from "./f8995a-sstb-source.ts";
 import { inputSchema as w2InputSchema } from "../../../nodes/inputs/w2/index.ts";
 import {
   assertMultiBusinessInvestmentSources,
@@ -364,6 +365,11 @@ function reconcileReturn(
   const aggregationCompanion = context.pending.form8995a_schedule_b;
   const lossCompanion = context.pending.form8995a_schedule_c;
   if (fields.sstb_filing_details) {
+    assertSstbScheduleCSource(
+      fields,
+      context.pending,
+      context.filer.primarySSN,
+    );
     const parsed = inputSchema.strict().safeParse(sstbCompanion);
     if (
       !parsed.success || JSON.stringify(parsed.data) !== JSON.stringify(fields)

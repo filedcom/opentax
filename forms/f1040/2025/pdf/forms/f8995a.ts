@@ -1,3 +1,4 @@
+import { assertSstbScheduleCSource } from "../../mef/forms/f8995a-sstb-source.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import type { FilerIdentity } from "../../../mef/header.ts";
 import {
@@ -188,6 +189,7 @@ export function projectOneBusiness8995A(
       );
     }
     assertNoFiledForm8995(allPending);
+    assertSstbScheduleCSource(input, allPending);
     const lines = calculateOneSstb8995ALines(input);
     assertZeroReductionScheduleAReturn(input, lines, allPending);
     if (allPending.f1040?.line13_qbi_deduction !== lines.line39) {
@@ -208,6 +210,7 @@ export function projectOneBusiness8995A(
       line23: lines.phaseInRange,
       line24: lines.phaseIn * 100,
       line27: lines.line16,
+      line40: 0,
     };
   }
   const { details, lines } = validateOneBusiness(input);

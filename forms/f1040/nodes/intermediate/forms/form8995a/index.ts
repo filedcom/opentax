@@ -234,6 +234,11 @@ export const inputSchema = z.object({
   // Business identity and source attestations for the bounded native filing route.
   business_filing_details: businessFilingDetailsSchema.optional(),
   // Internally retained Schedule C net profit and attributable half-SE deduction.
+  single_sstb_schedule_c_source: z.object({
+    business: scheduleCQbiBusinessSchema,
+    owner_ssn: z.string().regex(/^\d{9}$/),
+    se_tax_deduction: z.number().int().nonnegative(),
+  }).strict().optional(),
   single_schedule_c_source: z.object({
     business: scheduleCQbiBusinessSchema,
     se_tax_deduction: z.number().nonnegative(),
@@ -655,22 +660,24 @@ export function calculateOneSstb8995ALines(input: Form8995AInput) {
   }
   const phaseIn = (input.taxable_income - threshold) / phaseInRange;
   const applicable = 1 - phaseIn;
-  const line2 = source.business_qbi * applicable;
-  const line4 = source.business_w2_wages * applicable;
-  const line7 = source.business_ubia * applicable;
-  const line3 = line2 * QBI_RATE;
-  const line5 = line4 * W2_LIMIT_A_RATE;
-  const line6 = line4 * W2_LIMIT_B_WAGE_RATE;
-  const line8 = line7 * UBIA_RATE;
+  const filed = (value: number) =>
+    input.single_sstb_schedule_c_source ? Math.round(value) : value;
+  const line2 = filed(source.business_qbi * applicable);
+  const line4 = filed(source.business_w2_wages * applicable);
+  const line7 = filed(source.business_ubia * applicable);
+  const line3 = filed(line2 * QBI_RATE);
+  const line5 = filed(line4 * W2_LIMIT_A_RATE);
+  const line6 = filed(line4 * W2_LIMIT_B_WAGE_RATE);
+  const line8 = filed(line7 * UBIA_RATE);
   const line9 = line6 + line8;
   const line10 = Math.max(line5, line9);
   const line11 = Math.min(line3, line10);
   const line19 = Math.max(0, line3 - line10);
-  const line25 = line19 * phaseIn;
+  const line25 = filed(line19 * phaseIn);
   const line26 = line3 - line25;
   const line13 = Math.max(line11, line26);
   const line33 = input.taxable_income;
-  const line36 = line33 * QBI_RATE;
+  const line36 = filed(line33 * QBI_RATE);
   const line39 = Math.min(line13, line36);
   const amounts = [
     line2,

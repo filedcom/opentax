@@ -395,6 +395,57 @@ function advancedFormOutput(
     };
   }
 
+  if (businesses?.some((row) => row.source_schedule_c.qbi_sstb_filing_review)) {
+    const review = business?.source_schedule_c.qbi_sstb_filing_review;
+    const owner = input.taxpayer_ssn?.replaceAll("-", "");
+    if (
+      !business || businesses.length !== 1 || !review || !owner ||
+      review.owner_ssn !== owner ||
+      input.filing_status !== FilingStatus.Single || !business.business_name ||
+      !business.ein || !business.business_reference ||
+      business.source_schedule_c.proprietor_recipient !== "T" ||
+      business.source_schedule_c.qbi_specified_service !== true ||
+      nonSstbQbi !== 0 || sstbQbi !== business.qbi || business.qbi <= 0 ||
+      business.wotc_wage_reduction !== undefined ||
+      sumField(input.qbi_from_schedule_f) !== 0 || sumField(input.qbi) !== 0 ||
+      sumField(input.se_health_insurance_deduction) !== 0 ||
+      sumField(input.retirement_plan_deduction) !== 0 ||
+      input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+      input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+      qbiCapitalTotal(input) !== 0 ||
+      sumField(input.line6_sec199a_dividends) !== 0 ||
+      (input.qbi_loss_carryforward ?? 0) !== 0 ||
+      (input.reit_loss_carryforward ?? 0) !== 0
+    ) {
+      throw new Error(
+        "SSTB Schedule C needs one identified taxpayer accounting business with only its filed half-SE adjustment",
+      );
+    }
+    const qbi = business.qbi - sumField(input.se_tax_deduction);
+    sourcedBusiness = {
+      sstb_qbi: qbi,
+      sstb_filing_details: {
+        business_name: business.business_name,
+        ein: business.ein,
+        business_qbi: qbi,
+        business_w2_wages: business.w2_wages,
+        business_ubia: business.ubia,
+        one_non_ptp_sstb_confirmed: true,
+        no_other_business_or_aggregation_confirmed: true,
+        no_reit_ptp_or_loss_carryforward_confirmed: true,
+        qualified_dividends_zero_confirmed: true,
+        qbi_wages_ubia_source_reference: review.review_reference,
+        taxable_income_before_qbi_confirmed: true,
+      },
+      single_sstb_schedule_c_source: {
+        business,
+        owner_ssn: owner,
+        se_tax_deduction: sumField(input.se_tax_deduction),
+      },
+      qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+    };
+  }
+
   return output(form8995a, {
     filing_status: input.filing_status,
     taxable_income: taxableIncome,
