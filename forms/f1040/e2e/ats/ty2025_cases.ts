@@ -372,7 +372,18 @@ export const SCENARIO_1040_NR_02_FACTS = {
     priorYearUSPresenceDays: { year2023: 110, year2024: 110 },
     currentYearUSPresenceDays: 110,
   },
-  schedule1: { printedLine5RentalAndRoyaltyIncome: 500 },
+  scheduleE: {
+    partnershipRowA: {
+      name: "Sarah's Vegan Bakery",
+      entityType: "P",
+      ein: "001234567",
+      printedLine28hPassiveIncome: 500,
+    },
+    printedLine32Provided: false,
+    printedLine41Provided: false,
+    scheduleK1IncludedInPacket: false,
+  },
+  schedule1: { printedLine5SupplementalIncome: 500 },
 } as const;
 
 /** Scenario 1's cover-sheet IRA amount differs from its printed 1040-NR line 4a. */

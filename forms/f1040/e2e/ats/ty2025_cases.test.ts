@@ -151,7 +151,24 @@ Deno.test("1040-NR Scenario 2 retains W-2, NEC, OI, and Schedule 1 entries", () 
   assertEquals(facts.scheduleOI.appliedForGreenCard, true);
   assertEquals(facts.scheduleOI.previouslyCitizenOrGreenCardHolder, false);
   assertEquals(facts.scheduleOI.currentYearUSPresenceDays, 110);
-  assertEquals(facts.schedule1.printedLine5RentalAndRoyaltyIncome, 500);
+  assertEquals(facts.schedule1.printedLine5SupplementalIncome, 500);
+});
+
+Deno.test("1040-NR Scenario 2 traces printed partnership passive income to Schedule 1", () => {
+  const facts = SCENARIO_1040_NR_02_FACTS;
+  assertEquals(facts.scheduleE.partnershipRowA, {
+    name: "Sarah's Vegan Bakery",
+    entityType: "P",
+    ein: "001234567",
+    printedLine28hPassiveIncome: 500,
+  });
+  assertEquals(
+    facts.scheduleE.partnershipRowA.printedLine28hPassiveIncome,
+    facts.schedule1.printedLine5SupplementalIncome,
+  );
+  assertEquals(facts.scheduleE.printedLine32Provided, false);
+  assertEquals(facts.scheduleE.printedLine41Provided, false);
+  assertEquals(facts.scheduleE.scheduleK1IncludedInPacket, false);
 });
 
 Deno.test("1040-NR Scenario 1 keeps conflicting IRA values separate", () => {
