@@ -34,7 +34,7 @@ const normal = z.object({
       z.literal(true),
   })).min(1),
 }).strict();
-const death = z.object({
+export const deathTransferSourceSchema = z.object({
   kind: z.literal("death_transfer"),
   beneficiary_kind: z.enum(["nonspouse_individual", "estate_final_return"]),
   recipient_ssn: ssn,
@@ -57,7 +57,7 @@ const death = z.object({
 }).strict();
 
 export const archerDistributionLedgerSchema = z.object({
-  source: z.discriminatedUnion("kind", [normal, death]),
+  source: z.discriminatedUnion("kind", [normal, deathTransferSourceSchema]),
   all_distributions_identified_confirmed: z.literal(true),
   no_rollover_or_excess_contribution_withdrawal_confirmed: z.literal(true),
   no_other_form8853_activity_confirmed: z.literal(true),

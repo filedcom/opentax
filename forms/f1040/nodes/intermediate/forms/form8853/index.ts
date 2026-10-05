@@ -1,5 +1,9 @@
 import { z } from "zod";
 import {
+  calculateMedicareLedger,
+  medicareDistributionLedgerSchema,
+} from "./medicare_distributions.ts";
+import {
   archerDistributionLedgerSchema,
   calculateArcherLedger,
 } from "./archer_distributions.ts";
@@ -45,6 +49,7 @@ export const archerDistributionFilingDetailsSchema = z.object({
 
 export const inputSchema = z.object({
   archer_distribution_ledger: archerDistributionLedgerSchema.optional(),
+  medicare_distribution_ledger: medicareDistributionLedgerSchema.optional(),
   // ── Section A Part I: Archer MSA Contributions and Deductions ───────────
   // Line 1: Employer contributions (from W-2 Box 12 code R, routed by w2 node)
   // IRC §220(b); Form 8853 Part I line 1
@@ -194,6 +199,9 @@ export function calculateArcherMsaDistribution(input: Form8853Input) {
 // Line 12: Taxable Medicare Advantage MSA distributions = max(0, line10 - line11)
 // IRC §138(c)(2); Form 8853 Section B line 12 → Schedule 1 line 8e
 function medicareAdvantaxableDist(input: Form8853Input): number {
+  if (input.medicare_distribution_ledger) {
+    return calculateMedicareLedger(input.medicare_distribution_ledger).line12;
+  }
   const gross = input.medicare_advantage_distributions ?? 0;
   if (gross <= 0) return 0;
   const qualified = input.medicare_advantage_qualified_expenses ?? 0;
@@ -203,7 +211,14 @@ function medicareAdvantaxableDist(input: Form8853Input): number {
 // Line 13b: 50% additional tax on taxable Medicare Advantage MSA distributions
 // IRC §138(c)(2); Form 8853 Section B line 13b → Schedule 2 line 17f
 function medicareAdvantagePenaltyTax(input: Form8853Input): number {
-  if (input.medicare_advantage_exception === true) return 0;
+  if (input.medicare_distribution_ledger) {
+    return calculateMedicareLedger(input.medicare_distribution_ledger).line13b;
+  }
+  if (input.medicare_advantage_exception === true) {
+    throw new Error(
+      "Form8853 Medicare exception needs sourced distribution-level ledger",
+    );
+  }
   const taxable = medicareAdvantaxableDist(input);
   return taxable * MEDICARE_ADVANTAGE_PENALTY_RATE;
 }
@@ -339,8 +354,8 @@ class Form8853Node extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, rawInput: Form8853Input): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
-    const input = normalizeArcherSource(
-      inputSchema.parse(rawInput),
+    const input = normalizeMedicareSource(
+      normalizeArcherSource(inputSchema.parse(rawInput), ctx.taxYear),
       ctx.taxYear,
     );
     return {
@@ -374,6 +389,31 @@ export function normalizeArcherSource(
     const supplied = input[key as keyof Form8853Input];
     if (supplied !== undefined && supplied !== value) {
       throw new Error(`Form 8853 source ledger conflicts with ${key}`);
+    }
+  }
+  return { ...input, ...expected };
+}
+
+export function normalizeMedicareSource(
+  input: Form8853Input,
+  taxYear = 2025,
+): Form8853Input {
+  if (!input.medicare_distribution_ledger) return input;
+  const lines = calculateMedicareLedger(
+    input.medicare_distribution_ledger,
+    taxYear,
+  );
+  const expected = {
+    medicare_advantage_distributions: lines.rawGross,
+    medicare_advantage_qualified_expenses: lines.rawQualified,
+    medicare_advantage_exception: lines.line13a,
+  };
+  for (const [key, value] of Object.entries(expected)) {
+    if (
+      input[key as keyof Form8853Input] !== undefined &&
+      input[key as keyof Form8853Input] !== value
+    ) {
+      throw new Error(`Form8853 Medicare ledger conflicts with ${key}`);
     }
   }
   return { ...input, ...expected };

@@ -103,7 +103,7 @@ business-rule, or ATS claim is made.
 Joint/spouse aggregation, surviving-spouse inherited account handling,
 multiple inherited/owned account statements, predeath normal distributions
 combined with estate FMV transfer, rollovers/excess withdrawals, contributions,
-Medicare Advantage MSA and LTC routes remain separate gaps. The ledger requires
+The sourced sole-holder Medicare distribution route below is now covered; LTC remains a separate gap. The ledger requires
 reviewed absence of those other activities for its retained filing route.
 
 ## Raw cents review and reporting identity (2026-10-06)
@@ -139,6 +139,64 @@ SSN `111223333` and rejects deceased SSN `222334444` as that native reporting
 identity. An estate beneficiary's transfer remains assigned to the deceased
 holder's final return, subject to the existing final-return export blocker.
 
+## Sourced Medicare Advantage MSA distributions (2026-10-06)
+
+The public `form8853.medicare_distribution_ledger` retains owner, holder identity,
+account/distribution references and dates, raw gross cents, holder medical
+allocations and bills, enrollment/HDHP review, disability evidence, and complete
+account/distribution review confirmations. The native route binds the declared
+sole taxpayer or sole spouse holder to the return SSN; a spouse requires MFJ.
+It rejects conflicting legacy amounts/indicators and other Form 8853 activity.
+
+The [2025 IRS instructions](https://www.irs.gov/pub/irs-prior/i8853--2025.pdf),
+Section B, provide holder-only medical expenses and disability/death exceptions
+**on or after** the event date, without an age-65 exception. Worksheet line 1
+excludes excepted taxable distributions. Without a 2024 account, tax is 50% of
+line 1. Otherwise subtract 60% of the January 1, 2025 annual deductible from the
+December 31, 2024 balance (floor zero), subtract that amount from line 1 (floor
+zero), and apply 50%. Nonspouse death transfers use death-date FMV, eligible
+predeath expenses paid within one year, beneficiary reporting identity and a
+required death annotation.
+
+The calculator implements those lines, requires the applicable 2024 balance and
+2025 policy source, and retains the computed worksheet. It sums raw cents before
+rounding filed line totals; line 12 subtracts filed lines 10 and 11 and feeds
+Schedule 1 line 8e. The worksheet tax feeds Schedule 2 line 17f and Form 1040
+line 23. Native Section B emits required holder SSN, computed lines 10–13b,
+exception/death indicators in full-schema order. PDF Section B fills those same
+lines, checkbox and the sole holder's SSN; zero taxable/tax amounts still print.
+
+Eight synthetic source-to-calculation-to-full-return packets pass local TY2025
+v5.4 `Return1040.xsd` and real filled PDF extraction:
+
+| Case | Line 12 income | Line 13b tax |
+| --- | ---: | ---: |
+| No account at end 2024 | 4,000 | 2,000 |
+| Balance 10,000; deductible 8,000 | 8,000 | 1,400 |
+| Partial disability, including event-date exception; balance 10,000, deductible 12,000 | 9,000 | 100 |
+| Raw gross 2,000.40 / medical 500.60; filed 2,000 minus 501 | 1,499 | 750 |
+| Sole spouse holder on MFJ, prior-year worksheet | 8,000 | 1,400 |
+| Fully qualified expenses | 0 | 0 |
+| Fully excepted disability, no prior-year worksheet required | 4,000 | 0 |
+| Nonspouse death transfer, FMV 6,000 / medical 2,000 | 4,000 | 0 |
+
+The focused node/native/PDF/start/Archer/Medicare batch passed 78 tests; the
+subsequent estate-blocker check passed separately (1 test). All eight Form 8853
+pages plus the partial-exception Form 1040 and populated Schedule 1/2 pages
+were visually inspected with real Poppler. Ignored full XML, PDFs, retained
+pending source, worksheet results, rendered pages and test logs are at
+`.state/research/2026-10-06-form8853-medicare/` in the isolated worktree. These
+are synthetic local integration evidence, not authentic taxpayer source
+records or IRS acceptance, ATS, or business-rule certification.
+
+Limits remain: both spouses' Medicare distributions and controlling statements;
+multiple inherited MSAs or inherited plus owned MSA; surviving-spouse Medicare
+inheritance (which becomes Archer); combined Archer/Medicare/LTC activity;
+deemed distributions and erroneous contribution/earnings reporting. Estate FMV
+source calculation/native projection is available, but full deceased-return
+filing remains subject to the existing representative/signing/refund blocker.
+No estate full-return acceptance is claimed. General Form 8853 stays open.
+
 ## End-to-end blockers
 
 ### Bounded native Archer MSA path now written
@@ -158,7 +216,7 @@ are still blocked. The bounded partial-use route above has full local return XSD
 The broader code awaits the current full batch; general complete return XSD,
 business-rule, and ATS evidence remain open.
 
-- Archer paths beyond the sourced taxpayer ledger and death transfer, Medicare, LTC, and
+- Archer paths beyond the sourced taxpayer ledger and death transfer, Medicare paths beyond the sourced sole-holder ledger below, LTC, and
   contribution paths still lack a
   complete node print record and source model. The v5.4 XSD nests Section
   A/B in `ArcherMSAAndMedcrAdvntgMSAGrp` with required `MSAHolderSSN`, and
@@ -168,10 +226,9 @@ business-rule, and ATS evidence remain open.
   `LTCDaysMultiplyByPerDiemAmt`. Focused native XML cases are written but unrun.
 - The Archer exception ledger above resolves per-distribution age/disability
   tax for its sourced taxpayer route and the single nonspouse death transfer.
-  Medicare's boolean `medicare_advantage_exception` still removes the additional
-  tax from all taxable distributions. Medicare Advantage line 13b needs its
-  prior-year balance/HDHP deductible worksheet and distribution-level exception
-  facts; general Medicare support remains open.
+  The Medicare ledger below resolves its distribution-level exceptions and
+  prior-year balance/HDHP deductible worksheet. A bare Medicare exception
+  boolean now requires that ledger. General Medicare support remains open.
 - The Section C source model lacks policyholder and insured identities,
   terminally ill status, line 15 other-payee answer, LTC period method, and
   separate periods. IRS instructions require separate Section C calculations for

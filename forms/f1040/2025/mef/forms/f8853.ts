@@ -7,7 +7,9 @@ import {
   inputSchema,
   MsaOwner,
   normalizeArcherSource,
+  normalizeMedicareSource,
 } from "../../../nodes/intermediate/forms/form8853/index.ts";
+import { calculateMedicareLedger } from "../../../nodes/intermediate/forms/form8853/medicare_distributions.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 type Input = Form8853Input | readonly [];
@@ -74,7 +76,9 @@ function validateBoundedArcherDistribution(fields: Form8853Input) {
 
 function validateReturnContext(
   context: MefBuildContext | undefined,
-  lines: ReturnType<typeof calculateArcherMsaDistribution>,
+  lines: { line8: number; line9b: number },
+  medicareTax = 0,
+  allowSoleJointHolder = false,
 ): string {
   const filer = context?.filer;
   if (!filer || !/^\d{9}$/.test(filer.primarySSN)) {
@@ -83,7 +87,8 @@ function validateReturnContext(
     );
   }
   if (
-    filer.spouse || filer.filingStatus === FilingStatus.MarriedFilingJointly
+    !allowSoleJointHolder &&
+    (filer.spouse || filer.filingStatus === FilingStatus.MarriedFilingJointly)
   ) {
     throw new Error(
       "Form 8853 MeF does not yet support joint returns with spouse MSA ambiguity",
@@ -116,13 +121,95 @@ function validateReturnContext(
         (schedule1.data.line23_archer_msa_deduction ?? 0) !== 0)) ||
     (schedule2.success &&
       ((schedule2.data.line17e_archer_msa_tax ?? 0) !== lines.line9b ||
-        (schedule2.data.line17f_medicare_advantage_msa_tax ?? 0) !== 0))
+        (schedule2.data.line17f_medicare_advantage_msa_tax ?? 0) !==
+          medicareTax))
   ) {
     throw new Error(
-      "Form 8853 Archer route conflicts with Schedule 1 or 2",
+      "Form 8853 distribution route conflicts with Schedule 1 or 2",
     );
   }
   return filer.primarySSN;
+}
+
+function buildMedicareIRS8853(
+  fields: Form8853Input,
+  context?: MefBuildContext,
+): string {
+  const ledger = fields.medicare_distribution_ledger!;
+  if (
+    fields.archer_distribution_ledger ||
+    fields.archer_distribution_filing_details ||
+    fields.archer_msa_exception === true ||
+    [
+      fields.employer_archer_msa,
+      fields.taxpayer_archer_msa_contributions,
+      fields.line3_limitation_amount,
+      fields.compensation,
+      fields.archer_msa_distributions,
+      fields.archer_msa_rollover,
+      fields.archer_msa_qualified_expenses,
+      fields.ltc_gross_payments,
+      fields.ltc_qualified_contract_amount,
+      fields.ltc_accelerated_death_benefits,
+      fields.ltc_period_days,
+      fields.ltc_actual_costs,
+      fields.ltc_reimbursements,
+    ].some((value) => (value ?? 0) > 0)
+  ) {
+    throw new Error(
+      "Form8853 Medicare ledger conflicts with reviewed absence of other Archer/LTC activity",
+    );
+  }
+  const lines = calculateMedicareLedger(ledger);
+  const primarySSN = validateReturnContext(
+    context,
+    { line8: lines.line12, line9b: 0 },
+    lines.line13b,
+    true,
+  );
+  const holderSSN = ledger.owner === "taxpayer"
+    ? primarySSN
+    : context?.filer?.spouse?.ssn;
+  if (
+    !holderSSN ||
+    (ledger.owner === "spouse" &&
+      context?.filer?.filingStatus !== FilingStatus.MarriedFilingJointly)
+  ) {
+    throw new Error(
+      "Form8853 spouse Medicare holder requires joint return spouse identity",
+    );
+  }
+  const source = ledger.source;
+  const reportedSSN = source.kind === "normal"
+    ? source.holder_ssn
+    : source.recipient_ssn;
+  if (reportedSSN !== holderSSN) {
+    throw new Error(
+      "Form8853 Medicare source holder/recipient SSN must match declared return owner",
+    );
+  }
+  if (
+    source.kind === "death_transfer" &&
+    source.beneficiary_kind === "estate_final_return"
+  ) {
+    const owner = ledger.owner === "taxpayer"
+      ? context?.filer
+      : context?.filer?.spouse;
+    if (owner?.deceased !== true || owner.deathDate !== source.death_date) {
+      throw new Error(
+        "Form8853 Medicare estate transfer needs matching deceased final-return owner",
+      );
+    }
+  }
+  return elements("IRS8853", [elements("ArcherMSAAndMedcrAdvntgMSAGrp", [
+    element("MSAHolderSSN", holderSSN),
+    ...(lines.deathTransfer ? [element("MSAHolderDeathInd", "X")] : []),
+    element("TotalMedicareMSADistriAmt", lines.line10),
+    element("MedicareMSAUnrmbQualMedExpAmt", lines.line11),
+    element("TaxableMedicareMSADistriAmt", lines.line12),
+    ...(lines.line13a ? [element("MedicareMSADistriMeetTaxExcInd", "X")] : []),
+    element("MedicareMSAAddnlDistriTaxAmt", lines.line13b),
+  ])]);
 }
 
 function buildIRS8853(rawFields: Input, context?: MefBuildContext): string {
@@ -130,7 +217,12 @@ function buildIRS8853(rawFields: Input, context?: MefBuildContext): string {
   if (Object.keys(rawFields).length === 0) {
     throw new Error("Form 8853 MeF cannot file an empty pending record");
   }
-  const fields = normalizeArcherSource(inputSchema.parse(rawFields));
+  const fields = normalizeMedicareSource(
+    normalizeArcherSource(inputSchema.parse(rawFields)),
+  );
+  if (fields.medicare_distribution_ledger) {
+    return buildMedicareIRS8853(fields, context);
+  }
   const lines = validateBoundedArcherDistribution(fields);
   const holderSSN = validateReturnContext(context, lines);
   const ledgerSource = fields.archer_distribution_ledger?.source;

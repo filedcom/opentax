@@ -4,13 +4,15 @@ import {
   calculateArcherMsaDistribution,
   inputSchema,
   normalizeArcherSource,
+  normalizeMedicareSource,
 } from "../../../nodes/intermediate/forms/form8853/index.ts";
+import { calculateMedicareLedger } from "../../../nodes/intermediate/forms/form8853/medicare_distributions.ts";
 import { form8853 as nativeForm8853 } from "../../mef/forms/f8853.ts";
 
 // IRS Form 8853 (2025) AcroForm field names.
 // Archer MSAs and Long-Term Care Insurance Contracts.
-// The retained filing route is one taxpayer-owned, normal Archer MSA
-// distribution. Reuse the native route guard before printing computed lines.
+// Sourced Archer and sole-holder Medicare distribution routes reuse the
+// native reconciliation guard before printing the computed filing lines.
 // Section A: Archer MSA contributions and distributions.
 // Section B: Medicare Advantage MSA distributions.
 // Section C: Long-term care insurance contracts.
@@ -30,6 +32,11 @@ import { form8853 as nativeForm8853 } from "../../mef/forms/f8853.ts";
 // ltc_reimbursements                   → line 24 (reimbursements)
 // Raw ltc_period_days cannot go on line 21: that line is $420 times days.
 const fields: ReadonlyArray<PdfFieldEntry> = [
+  {
+    kind: "text",
+    domainKey: "msa_reporting_ssn",
+    pdfField: "topmostSubform[0].Page1[0].f1_2[0]",
+  },
   {
     kind: "text",
     domainKey: "employer_archer_msa",
@@ -100,6 +107,23 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "line12_taxable_medicare_msa_distribution",
+    pdfField: "topmostSubform[0].Page1[0].f1_16[0]",
+    printZero: true,
+  },
+  {
+    kind: "checkbox",
+    domainKey: "line13a_medicare_msa_exception",
+    pdfField: "topmostSubform[0].Page1[0].Line13a_ReadOrder[0].c1_2[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line13b_medicare_msa_additional_tax",
+    pdfField: "topmostSubform[0].Page1[0].f1_17[0]",
+    printZero: true,
+  },
+  {
+    kind: "text",
     domainKey: "ltc_gross_payments",
     pdfField: "topmostSubform[0].Page2[0].f2_5[0]",
   },
@@ -139,12 +163,31 @@ export const form8853Pdf: PdfFormDescriptor = {
       kind: "text",
       domainKey: "primarySSN",
       pdfField: "topmostSubform[0].Page1[0].f1_2[0]",
+      includeWhen: (fields) => fields.msa_reporting_ssn === undefined,
     },
   ],
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
-    const source = normalizeArcherSource(inputSchema.parse(raw));
+    const source = normalizeMedicareSource(
+      normalizeArcherSource(inputSchema.parse(raw)),
+    );
     nativeForm8853.build(source, { filer, pending: allPending ?? {} });
+    if (source.medicare_distribution_ledger) {
+      const ledger = source.medicare_distribution_ledger;
+      const lines = calculateMedicareLedger(ledger);
+      return [{
+        ...source,
+        msa_reporting_ssn: ledger.source.kind === "normal"
+          ? ledger.source.holder_ssn
+          : ledger.source.recipient_ssn,
+        medicare_advantage_distributions: lines.line10,
+        medicare_advantage_qualified_expenses: lines.line11,
+        line12_taxable_medicare_msa_distribution: lines.line12,
+        line13a_medicare_msa_exception: lines.line13a,
+        line13b_medicare_msa_additional_tax: lines.line13b,
+        medicare_death_transfer: lines.deathTransfer,
+      }];
+    }
     const lines = calculateArcherMsaDistribution(source);
     return [{
       ...source,
@@ -159,14 +202,21 @@ export const form8853Pdf: PdfFormDescriptor = {
   },
   fields,
   async decoratePages(document, pages, fields) {
-    if (fields.death_transfer === true) {
+    if (
+      fields.death_transfer === true || fields.medicare_death_transfer === true
+    ) {
       const font = await document.embedFont(StandardFonts.Helvetica);
-      pages[0].drawText("Death of Archer MSA account holder", {
-        x: 180,
-        y: 775,
-        size: 9,
-        font,
-      });
+      pages[0].drawText(
+        fields.medicare_death_transfer === true
+          ? "Death of Medicare Advantage MSA account holder"
+          : "Death of Archer MSA account holder",
+        {
+          x: 180,
+          y: 775,
+          size: 9,
+          font,
+        },
+      );
     }
   },
 };

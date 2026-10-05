@@ -194,16 +194,16 @@ Deno.test("medicare_advantage_msa_50pct_tax: 50% penalty routes to schedule2 lin
   );
 });
 
-Deno.test("medicare_advantage_msa_no_50pct_tax_when_exception: exception waives 50% tax", () => {
-  const result = compute({
-    medicare_advantage_distributions: 4_000,
-    medicare_advantage_qualified_expenses: 1_000,
-    medicare_advantage_exception: true,
-  });
-  assertEquals(
-    fieldsOf(result.outputs, schedule2)?.line17f_medicare_advantage_msa_tax ??
-      0,
-    0,
+Deno.test("medicare_advantage exception needs sourced distribution-level ledger", () => {
+  assertThrows(
+    () =>
+      compute({
+        medicare_advantage_distributions: 4000,
+        medicare_advantage_qualified_expenses: 1000,
+        medicare_advantage_exception: true,
+      }),
+    Error,
+    "sourced distribution-level ledger",
   );
 });
 
