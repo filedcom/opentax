@@ -1,6 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 import { AccountType } from "../../../mef/header.ts";
+import { ty2025IrsCountryName } from "./irs_country_name.ts";
 import { form8814ParentPrintAmounts } from "./f8814.ts";
 import { appendIraDistributionStatement } from "./ira_distribution_statement.ts";
 import { appendDependentContinuation } from "./dependent_continuation.ts";
@@ -1011,9 +1012,7 @@ export const irs1040Pdf: PdfFormDescriptor = {
       print_former_spouse_estimated_tax_ssn: printFormerSpouseEstimatedTaxSsn,
       print_foreign_country_name: typeof fields.address_foreign_country ===
             "string" && fields.address_foreign_country.length > 0
-        ? new Intl.DisplayNames(["en"], { type: "region" }).of(
-          fields.address_foreign_country,
-        )
+        ? ty2025IrsCountryName(fields.address_foreign_country)
         : undefined,
       print_line1h_type: printLine1hType,
       print_do_not_claim_actc: retainedActcOptOut(

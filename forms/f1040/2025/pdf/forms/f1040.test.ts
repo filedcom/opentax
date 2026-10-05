@@ -1,5 +1,5 @@
 import { assertEquals, assertMatch, assertThrows } from "@std/assert";
-import { AccountType } from "../../../mef/header.ts";
+import { AccountType, buildReturnHeader } from "../../../mef/header.ts";
 import { irs1040Pdf } from "./f1040.ts";
 import { pdfReviewFixtures } from "../review-fixtures.ts";
 import { extractFilerIdentity } from "../../../mef/filer.ts";
@@ -143,6 +143,42 @@ Deno.test("Form 1040 PDF maps retained IP PIN, contact, and address source to ex
     irs1040Pdf.projectFields?.({ address_foreign_country: "CA" }, {})
       ?.print_foreign_country_name,
     "Canada",
+  );
+  assertEquals(
+    irs1040Pdf.projectFields?.({ address_foreign_country: "GM" }, {})
+      ?.print_foreign_country_name,
+    "Germany",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.({ address_foreign_country: "DE" }, {}),
+    Error,
+    "needs a TY2025 IRS country code",
+  );
+  assertThrows(
+    () =>
+      irs1040Pdf.projectFields?.({ address_foreign_country: "toString" }, {}),
+    Error,
+    "needs a TY2025 IRS country code",
+  );
+});
+
+Deno.test("Form 1040 German foreign address keeps the IRS GM code in MeF and Germany on paper", () => {
+  const source = {
+    filing_status: "single",
+    taxpayer_ssn: "111223333",
+    taxpayer_first_name: "Ada",
+    taxpayer_last_name: "Example",
+    address_line1: "10 Gartenstrasse",
+    address_city: "Berlin",
+    address_foreign_country: "GM",
+    address_foreign_postal_code: "10115",
+  };
+  const filer = extractFilerIdentity(source)!;
+  assertMatch(buildReturnHeader(filer), /<CountryCd>GM<\/CountryCd>/);
+  assertEquals(
+    irs1040Pdf.projectFields?.(source, { general: source })
+      ?.print_foreign_country_name,
+    "Germany",
   );
 });
 
