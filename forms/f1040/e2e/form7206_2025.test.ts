@@ -9,7 +9,24 @@ import { schedule_se } from "../nodes/intermediate/forms/schedule_se/index.ts";
 import { TS } from "../nodes/types.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
 import { form7206Pdf } from "../2025/pdf/forms/f7206.ts";
+import { form7206 as form7206Mef } from "../2025/mef/forms/f7206.ts";
 import { scheduleSePdf } from "../2025/pdf/forms/schedule_se.ts";
+
+Deno.test("Form 7206 export rejects retained identity without computed lines", () => {
+  assertEquals(form7206Mef.build({}), "");
+  assertEquals(form7206Pdf.projectFields?.({}, {}), {});
+  const partial = { recipient_name: "Alex Example", recipient_ssn: "111223333" };
+  assertThrows(
+    () => form7206Mef.build(partial),
+    Error,
+    "needs computed lines",
+  );
+  assertThrows(
+    () => form7206Pdf.projectFields?.(partial, {}),
+    Error,
+    "needs computed lines",
+  );
+});
 
 const seDeduction = schedule_se.compute(
   { taxYear: 2025, formType: "f1040" },
