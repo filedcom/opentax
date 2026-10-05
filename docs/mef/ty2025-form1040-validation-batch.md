@@ -4493,3 +4493,11 @@ archive/submission suites pass **108/108** in
 `/tmp/opentax-integrated-oct5-focused-b.log`. These runs cover the newly
 integrated code paths but not the repository-wide gate. A fresh full command
 is pending after integration.
+
+The next isolated integration of SSA/RRB issued-copy identity, Schedule B IRS
+country codes, and Form 1116 printable country names passed **178/178** focused
+tests in `/tmp/opentax-integration-oct5-focused.log`. The corrected
+three-country Form 1116 packet was rendered and reviewed on all eight pages;
+its hashes, source/native/PDF reconciliation, and local XSD result are recorded
+in the [Form 1116 gap note](ty2025-form1116-main-pdf-gap.md). The complete
+repository-wide run on this later code has not yet been performed.

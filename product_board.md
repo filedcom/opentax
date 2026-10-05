@@ -6,7 +6,7 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1324 bounded completed slices. A completed slice does not close its
+records 1329 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are
@@ -81,6 +81,12 @@ IRS country name for foreign addresses; A2A evidence rejects unseen document
 references; Scenario 13 records its unmarked U.S.-home checkbox. Two integrated
 focused batches pass 112/112 and 108/108. A clean full rerun of these changes
 is pending.
+Further source guards reject case-variant SSA/RRB issued-copy references and
+RRB pension duplicates with payer-spelling or recipient variants. Schedule B
+now validates IRS country codes at intake and native export. Form 1116 PDF
+country rows print names, and the corrected eight-page three-country packet
+was visually reviewed against its source and native XML. The next integrated
+focused batch passes 178/178; full regression on these later changes is pending.
 Other country/source and visual review remain open.
 Scenario 8's code-Q distribution and blank Form 1040 line 4a still need
 reconciliation, as do the other open ATS source conflicts.
