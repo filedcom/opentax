@@ -21,11 +21,41 @@ was rendered and visually inspected on 2026-10-05; its PDF and image are in
 The focused native/PDF cases passed 25/25. Other Section A/B/C paths remain
 guarded.
 
+## Bounded taxable Archer extension (2026-10-06)
+
+The TY2025 public input list now accepts `form8853` and routes its source record
+through the existing calculator. Filing additionally supports a single
+taxpayer-owned normal Form 1099-SA distribution (box 3 code 1 explicitly
+confirmed) with partial or no medical use. Gross distributions and unreimbursed
+qualified expenses must be explicit whole-dollar amounts, with expenses no
+greater than the distribution, zero rollover, no additional-tax exception, and
+no contribution, Medicare Advantage MSA, or LTC activity. Joint and spouse-owned
+routes remain rejected. The earlier fully qualified route remains supported.
+
+Form 8853 line 8 is reconciled against Schedule 1 line 8e and line 9b against
+Schedule 2 line 17e, including rejection of absent or mismatched positive totals.
+The native group emits `ArcherMSAAddnlDistriTaxAmt` after the taxable distribution
+in XSD order. The PDF now fills calculated line 9b at `Page1.f1_13` and leaves the
+line 9a exception checkbox unchecked.
+
+The synthetic acceptance fixture uses $3,000 gross, $2,000 unreimbursed qualified
+expenses, $1,000 taxable income, and $200 additional tax. It verifies retained
+owner/source confirmations, both schedules, Form 1040 income/AGI and tax,
+complete native return validation against local TY2025 v5.4 `Return1040.xsd`,
+and filled PDF extraction. On 2026-10-06, 59 focused node/native/PDF/start/e2e
+checks passed. The generated seven-page return was rendered with real Poppler;
+Form 1040, both schedules' populated pages, and Form 8853 were visually inspected.
+Ignored evidence is in the isolated worktree at
+`.state/research/2026-10-06-form8853-partial/` (`return.xml`, `return.pdf`, PNGs,
+`pending.json`, and `test.log`). These are synthetic local integration evidence,
+not authentic taxpayer source documents or IRS acceptance/ATS/business-rule
+certification. General Form 8853 support remains open.
+
 ## End-to-end blockers
 
 ### Bounded native Archer MSA path now written
 
-One narrow source-to-filing route is implemented: a single
+The original narrow source-to-filing route is implemented: a single
 taxpayer-owned Archer MSA distribution whose whole-dollar gross amount is
 confirmed from Form 1099-SA and is fully matched by unreimbursed qualified
 medical expenses. The source must explicitly confirm no rollover, no tax
@@ -36,11 +66,12 @@ calculated lines 6a, 6b, 6c, 7, and 8 in XSD order. It rejects spouse/joint
 ambiguity and Schedule 1/2 conflicts. It does not emit flat legacy tags.
 
 This does not establish general Form 8853 support. The remaining paths below
-are still blocked. The bounded filled PDF has visual review, but the new code
-awaits the current full batch; complete return XSD, business-rule, and ATS
-evidence remain open.
+are still blocked. The bounded partial-use route above has full local return XSD and PDF evidence.
+The broader code awaits the current full batch; general complete return XSD,
+business-rule, and ATS evidence remain open.
 
-- Other taxable Archer, Medicare, LTC, and contribution paths still lack a
+- Archer paths beyond the bounded normal distribution, Medicare, LTC, and
+  contribution paths still lack a
   complete node print record and source model. The v5.4 XSD nests Section
   A/B in `ArcherMSAAndMedcrAdvntgMSAGrp` with required `MSAHolderSSN`, and
   Section C in `SectCLTCInsuranceCntrctGrp` with required policyholder/insured

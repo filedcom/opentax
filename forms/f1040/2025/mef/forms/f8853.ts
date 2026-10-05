@@ -49,18 +49,29 @@ function validateBoundedArcherDistribution(fields: Form8853Input) {
     ![lines.line6a, lines.line6b, lines.line6c, lines.line7].every(
       Number.isInteger,
     ) ||
-    lines.line6a <= 0 || fields.archer_msa_rollover !== 0 ||
-    fields.archer_msa_exception !== false || lines.line7 !== lines.line6a ||
-    lines.line6c !== lines.line6a || lines.line8 !== 0 || lines.line9b !== 0
+    lines.line6a <= 0 || fields.archer_msa_qualified_expenses === undefined ||
+    fields.archer_msa_rollover !== 0 ||
+    fields.archer_msa_exception !== false || lines.line7 > lines.line6a ||
+    lines.line6c !== lines.line6a
   ) {
     throw new Error(
-      "Form 8853 MeF needs a whole-dollar Archer distribution fully matched by unreimbursed qualified expenses, with no rollover or tax exception",
+      "Form 8853 MeF needs a whole-dollar Archer distribution with unreimbursed qualified expenses no greater than the distribution, with no rollover or tax exception",
+    );
+  }
+  if (
+    lines.line8 > 0 && details.normal_distribution_code_1_confirmed !== true
+  ) {
+    throw new Error(
+      "Form 8853 taxable Archer route needs Form 1099-SA normal distribution code 1 confirmation",
     );
   }
   return lines;
 }
 
-function validateReturnContext(context: MefBuildContext | undefined): string {
+function validateReturnContext(
+  context: MefBuildContext | undefined,
+  lines: ReturnType<typeof calculateArcherMsaDistribution>,
+): string {
   const filer = context?.filer;
   if (!filer || !/^\d{9}$/.test(filer.primarySSN)) {
     throw new Error(
@@ -82,11 +93,11 @@ function validateReturnContext(context: MefBuildContext | undefined): string {
   const schedule1 = z.object({
     line8e_archer_msa_dist: z.number().optional(),
     line23_archer_msa_deduction: z.number().optional(),
-  }).safeParse(context.pending.schedule1);
+  }).safeParse(context.pending.schedule1 ?? {});
   const schedule2 = z.object({
     line17e_archer_msa_tax: z.number().optional(),
     line17f_medicare_advantage_msa_tax: z.number().optional(),
-  }).safeParse(context.pending.schedule2);
+  }).safeParse(context.pending.schedule2 ?? {});
   if (
     (context.pending.schedule1 !== undefined && !schedule1.success) ||
     (context.pending.schedule2 !== undefined && !schedule2.success)
@@ -97,14 +108,14 @@ function validateReturnContext(context: MefBuildContext | undefined): string {
   }
   if (
     (schedule1.success &&
-      ((schedule1.data.line8e_archer_msa_dist ?? 0) !== 0 ||
+      ((schedule1.data.line8e_archer_msa_dist ?? 0) !== lines.line8 ||
         (schedule1.data.line23_archer_msa_deduction ?? 0) !== 0)) ||
     (schedule2.success &&
-      ((schedule2.data.line17e_archer_msa_tax ?? 0) !== 0 ||
+      ((schedule2.data.line17e_archer_msa_tax ?? 0) !== lines.line9b ||
         (schedule2.data.line17f_medicare_advantage_msa_tax ?? 0) !== 0))
   ) {
     throw new Error(
-      "Form 8853 zero-tax Archer route conflicts with Schedule 1 or 2",
+      "Form 8853 Archer route conflicts with Schedule 1 or 2",
     );
   }
   return filer.primarySSN;
@@ -117,7 +128,7 @@ function buildIRS8853(rawFields: Input, context?: MefBuildContext): string {
   }
   const fields = inputSchema.parse(rawFields);
   const lines = validateBoundedArcherDistribution(fields);
-  const holderSSN = validateReturnContext(context);
+  const holderSSN = validateReturnContext(context, lines);
   return elements("IRS8853", [
     elements("ArcherMSAAndMedcrAdvntgMSAGrp", [
       element("MSAHolderSSN", holderSSN),
@@ -126,6 +137,9 @@ function buildIRS8853(rawFields: Input, context?: MefBuildContext): string {
       element("ArcherMSANetDistributionAmt", lines.line6c),
       element("ArcherMSAUnreimbQualMedExpAmt", lines.line7),
       element("TaxableArcherMSADistriAmt", lines.line8),
+      ...(lines.line9b > 0
+        ? [element("ArcherMSAAddnlDistriTaxAmt", Math.round(lines.line9b))]
+        : []),
     ]),
   ]);
 }

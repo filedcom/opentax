@@ -7,7 +7,7 @@ import { form8853 as nativeForm8853 } from "../../mef/forms/f8853.ts";
 
 // IRS Form 8853 (2025) AcroForm field names.
 // Archer MSAs and Long-Term Care Insurance Contracts.
-// The retained filing route is one taxpayer-owned, fully qualified Archer MSA
+// The retained filing route is one taxpayer-owned, normal Archer MSA
 // distribution. Reuse the native route guard before printing computed lines.
 // Section A: Archer MSA contributions and distributions.
 // Section B: Medicare Advantage MSA distributions.
@@ -77,6 +77,12 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "line9b_archer_msa_additional_tax",
+    pdfField: "topmostSubform[0].Page1[0].f1_13[0]",
+    printZero: true,
+  },
+  {
+    kind: "text",
     domainKey: "medicare_advantage_distributions",
     pdfField: "topmostSubform[0].Page1[0].f1_14[0]",
   },
@@ -137,6 +143,7 @@ export const form8853Pdf: PdfFormDescriptor = {
       ...source,
       line6c_archer_msa_net_distribution: lines.line6c,
       line8_taxable_archer_msa_distribution: lines.line8,
+      line9b_archer_msa_additional_tax: lines.line9b,
     }];
   },
   fields,
