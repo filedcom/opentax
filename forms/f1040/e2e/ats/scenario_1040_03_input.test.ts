@@ -80,6 +80,40 @@ Deno.test("ATS 1040 Scenario 3 reconciles filled source lines, not blank printed
   );
 });
 
+Deno.test("ATS 1040 Scenario 3 retains issued Form 4835 entries without filling blank totals", () => {
+  const rental = SCENARIO_1040_03_SOURCE.form4835;
+  assertEquals(rental, {
+    activelyParticipated: null,
+    line1ProductionIncome: 17_035,
+    line2aCooperativeDistributionsGross: 0,
+    line3aAgriculturalProgramPaymentsGross: 0,
+    line4aCccLoansElection: 0,
+    line4bCccLoansForfeitedGross: 0,
+    line5aCropInsuranceReceived: 0,
+    line6OtherIncome: 0,
+    line9Chemicals: 879,
+    line14Feed: 350,
+    line17Gasoline: 690,
+    line23Repairs: 1_355,
+    line26Supplies: 2_700,
+  });
+  assertEquals(Object.hasOwn(rental, "line7GrossFarmRentalIncome"), false);
+  assertEquals(Object.hasOwn(rental, "line31TotalExpenses"), false);
+  assertEquals(Object.hasOwn(rental, "line32NetFarmRentalIncome"), false);
+  assertEquals(
+    Object.hasOwn(SCENARIO_1040_03_SOURCE.scheduleE, "line40"),
+    false,
+  );
+  assertEquals(
+    Object.hasOwn(SCENARIO_1040_03_SOURCE.scheduleE, "line41"),
+    false,
+  );
+  assertEquals(
+    Object.hasOwn(SCENARIO_1040_03_SOURCE.scheduleE, "line42"),
+    false,
+  );
+});
+
 Deno.test("ATS 1040 Scenario 3 printed farm entries route to Schedule 1 and the farm optional method", () => {
   const input = scenario104003Input();
   const farmInput = input.schedule_f as {
