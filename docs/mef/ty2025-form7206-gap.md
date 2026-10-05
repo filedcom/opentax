@@ -169,7 +169,9 @@ would establish complete filing support. The broader route remains open in the
 inventory until the remaining sources and execution gates are satisfied.
 
 A retained Form 7206 export record now requires computed filing lines in both
-MeF and PDF. An identity-only or source-only record fails at export instead of
-being silently omitted in MeF or passed to the PDF field writer. The truly
-empty no-form case still emits no document. This guard does not expand the
-one-plan source route or authenticate plan and payment records.
+MeF and PDF. A record with Form 7206-specific identity or plan facts fails at
+export instead of being silently omitted in MeF or passed to the PDF writer.
+Schedule C/SE context alone may remain for other calculations without filing
+Form 7206; the truly empty no-form case also emits no document. This guard
+does not expand the one-plan source route or authenticate plan and payment
+records.

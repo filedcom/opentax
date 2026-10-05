@@ -15,7 +15,13 @@ import { scheduleSePdf } from "../2025/pdf/forms/schedule_se.ts";
 Deno.test("Form 7206 export rejects retained identity without computed lines", () => {
   assertEquals(form7206Mef.build({}), "");
   assertEquals(form7206Pdf.projectFields?.({}, {}), {});
-  const partial = { recipient_name: "Alex Example", recipient_ssn: "111223333" };
+  const ambient = { schedule_se_source: { line13_deduction: 0 } };
+  assertEquals(form7206Mef.build(ambient), "");
+  assertEquals(form7206Pdf.projectFields?.(ambient, {}), {});
+  const partial = {
+    recipient_name: "Alex Example",
+    recipient_ssn: "111223333",
+  };
   assertThrows(
     () => form7206Mef.build(partial),
     Error,

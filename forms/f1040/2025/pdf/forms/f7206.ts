@@ -49,8 +49,14 @@ function projectFields(
   if (
     !nativeForm7206.FIELD_MAP.some(([key]) => fields[key] !== undefined)
   ) {
-    if (Object.keys(fields).length > 0) {
-      throw new Error("Form 7206 PDF needs computed lines for a retained filing record");
+    if (
+      Object.keys(fields).some((key) =>
+        key !== "schedule_c_source" && key !== "schedule_se_source"
+      )
+    ) {
+      throw new Error(
+        "Form 7206 PDF needs computed lines for a retained filing record",
+      );
     }
     return {};
   }

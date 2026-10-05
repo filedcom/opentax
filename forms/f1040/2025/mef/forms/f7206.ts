@@ -52,8 +52,14 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Form7206Lines, string]> =
 
 function buildIRS7206(fields: Input, context?: MefBuildContext): string {
   if (!FIELD_MAP.some(([key]) => fields[key] !== undefined)) {
-    if (Object.keys(fields).length > 0) {
-      throw new Error("Form 7206 needs computed lines for a retained filing record");
+    if (
+      Object.keys(fields).some((key) =>
+        key !== "schedule_c_source" && key !== "schedule_se_source"
+      )
+    ) {
+      throw new Error(
+        "Form 7206 needs computed lines for a retained filing record",
+      );
     }
     return "";
   }
