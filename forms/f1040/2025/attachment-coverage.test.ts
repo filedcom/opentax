@@ -9,7 +9,7 @@ Deno.test("entered Form 4547 election cannot disappear from either export", () =
           f4547: { child_ssn: "111223333", pilot_contribution_requested: true },
         }, kind),
       Error,
-      "Form 4547 child-account election needs verified responsible-party authority",
+      "Form 4547 election needs verified authorized-individual authority",
     );
   }
 });

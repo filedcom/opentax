@@ -38,7 +38,7 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     pendingKey: "f4547",
     exportKinds: ["mef", "pdf"],
     reason:
-      "Form 4547 child-account election needs verified responsible-party authority, child eligibility, and a separately authorized electronic signature before attachment",
+      "Form 4547 election needs verified authorized-individual authority, child eligibility, consent, and a valid Form 4547 electronic signature before attachment",
     isActive: (fields) => Object.keys(fields).length > 0,
   },
   {

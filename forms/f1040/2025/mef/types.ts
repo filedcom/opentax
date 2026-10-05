@@ -67,8 +67,8 @@ export type MefFormsPending =
     [F in AnyForm as F["pendingKey"]]?: Parameters<F["build"]>[0];
   }
   & {
-    // An affirmative Form 4547 request stays in pending until its separately
-    // signed election route is implemented; attachment coverage rejects it.
+    // An affirmative Form 4547 request stays in pending until its required
+    // election signature route is implemented; attachment coverage rejects it.
     f4547?: z.infer<typeof f4547InputSchema>;
     // A payment request is separate from a tax result or an already-paid
     // estimate. Preserve intent for a reviewed handoff; never emit a debit.
