@@ -112,6 +112,15 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 export const form5329Pdf: PdfFormDescriptor = {
   pendingKey: "form5329",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f5329--2025.pdf",
+  pageIndices(fields) {
+    // Page 2 has only Part VII HSA fields in supported packets. The source
+    // guard below rejects positive Parts V, VI, and VIII worksheet routes.
+    const printsPartVII = Array.from(
+      { length: 8 },
+      (_, index) => fields[`print_hsa_line${index + 42}`],
+    ).some((value) => typeof value === "number" && Math.round(value) !== 0);
+    return printsPartVII ? [0, 1] : [0];
+  },
   instances(pending, filer, allPending) {
     const unexpected = Object.keys(pending).filter((key) =>
       key !== "owner_entries" && key !== "owner_forms"
