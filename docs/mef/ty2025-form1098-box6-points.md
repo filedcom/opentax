@@ -121,6 +121,16 @@ does not close the Form 1098 gap.
 
 ## Ordinary refinance points outside box 6 (bounded 2025 route verified)
 
+For a 2025 refinance whose linked Form 1098 identifies a 2025 origination and
+reports box 2, Schedule A's shared native/PDF source replay now requires box 2
+to equal the reviewed new-loan principal. The [2025 Form 1098 instructions](https://www.irs.gov/pub/irs-prior/i1098--2025.pdf)
+put principal at origination in box 2 for a loan originated during the year.
+The source unit suite passed 8/8; the full-return lender Copy B fixture passed
+native XML, local TY2025 XSD, and filled PDF with the matching amount, then
+rejected a changed box 2 at native and PDF export. If box 2 or a 2025 box 3
+origination is absent, this narrow parity check does not infer it. The retained
+Copy B verifier still handles the bytes separately.
+
 The separate public `mortgage_refinance_points` source records the linked
 payer-issued Form 1098, closing disclosure, Pub. 936 workpaper, borrower,
 qualified-home debt, loan term, service-fee exclusion, and consecutive 2025

@@ -285,6 +285,18 @@ export function assertRefinancePointsSource(
         "Schedule A refinance points need one matching Form 1098 source with no box 6 points",
       );
     }
+    const originatedThisYear = /^\d{2}\/\d{2}\/2025$/.test(
+      matches[0].box3_origination_date ?? "",
+    );
+    if (
+      item.refinance_close_year === 2025 && originatedThisYear &&
+      matches[0].box2_outstanding_principal !== undefined &&
+      matches[0].box2_outstanding_principal !== item.refinanced_principal
+    ) {
+      throw new Error(
+        "Schedule A refinance points principal differs from the linked 2025 Form 1098 box 2",
+      );
+    }
     if (!matches[0].issuer_copy) {
       throw new Error(
         "Schedule A refinance points need the reviewed Form 1098 issuer Copy B",

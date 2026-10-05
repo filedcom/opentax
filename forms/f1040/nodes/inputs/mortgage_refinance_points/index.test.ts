@@ -68,6 +68,31 @@ Deno.test("ordinary refinance points amortize once and reconcile to line 8c", ()
   );
 });
 
+Deno.test("2025 refinance principal agrees with the linked current-year Form 1098 box 2", () => {
+  const reported = {
+    ...form1098.f1098s[0],
+    box3_origination_date: "06/15/2025",
+    box2_outstanding_principal: refinance.refinanced_principal,
+  };
+  assertRefinancePointsSource(
+    source,
+    { f1098s: [reported] },
+    [refinance.recipient_tin],
+    67,
+  );
+  assertThrows(
+    () =>
+      assertRefinancePointsSource(
+        source,
+        { f1098s: [{ ...reported, box2_outstanding_principal: 90_000 }] },
+        [refinance.recipient_tin],
+        67,
+      ),
+    Error,
+    "principal differs from the linked 2025 Form 1098 box 2",
+  );
+});
+
 Deno.test("ordinary refinance points paid off in 2025 deduct remaining balance on line 8c", () => {
   const paidOff = {
     ...refinance,

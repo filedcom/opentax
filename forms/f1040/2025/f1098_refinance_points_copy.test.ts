@@ -24,8 +24,8 @@ async function issuerCopy(): Promise<Uint8Array> {
       [`${copy}.LeftCol[0].f2_2[0]`]: "Refinance Lender",
       [`${copy}.LeftCol[0].f2_4[0]`]: "***-**-3333",
       [`${copy}.RightCol[0].f2_11[0]`]: "0",
-      [`${copy}.RightCol[0].f2_12[0]`]: "",
-      [`${copy}.RightCol[0].f2_13[0]`]: "",
+      [`${copy}.RightCol[0].f2_12[0]`]: "100000",
+      [`${copy}.RightCol[0].f2_13[0]`]: "06/15/2025",
       [`${copy}.RightCol[0].f2_14[0]`]: "",
       [`${copy}.RightCol[0].f2_15[0]`]: "",
       [`${copy}.RightCol[0].f2_16[0]`]: "",
@@ -34,7 +34,7 @@ async function issuerCopy(): Promise<Uint8Array> {
   return doc.save();
 }
 
-Deno.test("Schedule A refinance points with zero Form 1098 boxes still bind exact lender Copy B", async () => {
+Deno.test("Schedule A refinance points bind lender Copy B principal and origination", async () => {
   const bytes = await issuerCopy();
   const hash = Array.from(
     new Uint8Array(
@@ -47,6 +47,8 @@ Deno.test("Schedule A refinance points with zero Form 1098 boxes still bind exac
     recipient_tin: "111-22-3333",
     source_document_reference: "2025 refinance lender Copy B",
     box1_mortgage_interest: 0,
+    box2_outstanding_principal: 100_000,
+    box3_origination_date: "06/15/2025",
     issuer_copy: {
       file_name: "Refinance1098.pdf",
       pdf_sha256: hash,
@@ -147,5 +149,20 @@ Deno.test("Schedule A refinance points with zero Form 1098 boxes still bind exac
     () => buildPdfBytes(withoutCopy, filer, ".pdf-cache"),
     Error,
     "reviewed issuer Copy B bytes",
+  );
+  const changedPrincipal = {
+    ...pending,
+    f1098: {
+      f1098s: [{ ...mortgage, box2_outstanding_principal: 90_000 }],
+    },
+  };
+  assertThrows(
+    () => buildMefXml(changedPrincipal, filer),
+    Error,
+    "principal differs from the linked 2025 Form 1098 box 2",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changedPrincipal, filer, ".pdf-cache"),
+    Error,
   );
 });
