@@ -700,6 +700,16 @@ export function assertPurchasePointsCrossLoanSources(
   }
 }
 
+/** Schedule A line 8a is reserved for interest and points reported on Form 1098. */
+export function assertForm1098Line8aSourcePresence(
+  source: unknown,
+  filedLine8a: number,
+): void {
+  if (filedLine8a > 0 && source === undefined) {
+    throw new Error("Schedule A line 8a needs retained Form 1098 source");
+  }
+}
+
 export function assertForm1098MortgageLimitSources(
   source: unknown,
   recipientTins: readonly string[],

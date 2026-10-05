@@ -1,4 +1,5 @@
 import { assertEquals, assertThrows } from "@std/assert";
+import { PDFDocument } from "pdf-lib";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import {
   calculateForm4255Routes,
@@ -10,6 +11,7 @@ import { form4255Row } from "../../form4255.fixture.ts";
 import { form8992Filer } from "../../form8992.fixture.ts";
 import { form4255 } from "../../mef/forms/f4255.ts";
 import { form4255Pdf } from "./f4255.ts";
+import { fillFormPdf } from "../builder.ts";
 
 const row2a = {
   ...form4255Row,
@@ -57,7 +59,7 @@ Deno.test("Form 4255 EP-only rows route through Schedule 2 and project to matchi
   assertEquals(schedule2Fields?.line1f_form4255_20_percent_ep, 100);
   assertEquals(calculateForm4255Routes(parsed).line19, 0);
   const [pdf] = form4255Pdf.instances!(source, form8992Filer, pending);
-  assertEquals(form4255Pdf.pageIndices!(pdf), [0, 1, 2, 3, 4]);
+  assertEquals(form4255Pdf.pageIndices!(pdf), [0, 1, 2]);
   assertEquals(pdf["1d_a"], 10_000);
   assertEquals(pdf["1d_d"], 5_000);
   assertEquals(pdf["1d_f"], 1_000);
@@ -78,6 +80,28 @@ Deno.test("Form 4255 EP-only rows route through Schedule 2 and project to matchi
     Error,
     "authenticated prior-credit and IRS determination source bytes",
   );
+});
+
+Deno.test("Form 4255 EP-only PDF retains its three populated Part I pages", async () => {
+  const [fields] = form4255Pdf.instances!(source, form8992Filer, pending);
+  const pdf = await fillFormPdf(
+    form4255Pdf,
+    fields,
+    form8992Filer,
+    ".pdf-cache",
+    pending,
+  );
+  if (!pdf) throw new Error("Missing Form 4255 PDF");
+  const filled = await PDFDocument.load(pdf);
+  assertEquals(filled.getPageCount(), 5);
+  const packet = await PDFDocument.create();
+  for (
+    const page of await packet.copyPages(
+      filled,
+      [...form4255Pdf.pageIndices!(fields)],
+    )
+  ) packet.addPage(page);
+  assertEquals(packet.getPageCount(), 3);
 });
 
 Deno.test("Form 4255 PDF rejects source, return, and unsupported recapture changes", () => {

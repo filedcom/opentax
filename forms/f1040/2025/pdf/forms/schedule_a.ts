@@ -3,6 +3,7 @@ import { FilingStatus } from "../../../mef/header.ts";
 import {
   assertForm1098Box1Sources,
   assertForm1098Box6Sources,
+  assertForm1098Line8aSourcePresence,
   assertForm1098MortgageLimitSources,
   assertPurchasePointsCrossLoanSources,
 } from "../../../nodes/inputs/f1098/index.ts";
@@ -228,6 +229,10 @@ export const scheduleAPdf: PdfFormDescriptor = {
     ) {
       return [];
     }
+    assertForm1098Line8aSourcePresence(
+      all?.f1098,
+      Number(input.line_8a_mortgage_interest_1098 ?? 0),
+    );
     if (all?.f1098 !== undefined) {
       if (!filer) {
         throw new Error("Schedule A PDF Form 1098 box 6 needs filer identity");

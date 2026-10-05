@@ -131,6 +131,16 @@ Deno.test("1040-NR Scenario 3 retains wages, donation attachments, and refund sp
   assertEquals(facts.refundAllocation.remainderToChecking, true);
 });
 
+Deno.test("1040-NR Scenario 3 keeps printed Form 8283 vehicle value distinct from basis", () => {
+  const vehicle = SCENARIO_1040_NR_03_FACTS.form8283;
+  assertEquals(vehicle.sectionBVehicleChecked, true);
+  assertEquals(vehicle.rowA.description, "2005 Mercedes Benz");
+  assertEquals(vehicle.rowA.condition, "Good");
+  assertEquals(vehicle.rowA.appraisedFairMarketValue, 5_005);
+  assertEquals(vehicle.rowA.donorCostOrAdjustedBasis, 53_470);
+  assertEquals(vehicle.rowA.claimedDeduction, null);
+});
+
 Deno.test("1040-NR Scenario 2 retains W-2, NEC, OI, and Schedule 1 entries", () => {
   const facts = SCENARIO_1040_NR_02_FACTS;
   assertEquals(facts.taxpayer.ssn, "123003333");

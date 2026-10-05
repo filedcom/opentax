@@ -84,6 +84,13 @@ reconciliation as native MeF. A direct PDF projection is a staged candidate; the
 PDF coverage gate still refuses filing because the ledger's source bytes are not
 authenticated.
 
+The annual PDF now retains page 1 and pages 4–5 of the official five-page form.
+Page 1 contains shared Part I identity and the annual-statement selection;
+pages 4–5 contain the Part III deferred-property and no-distribution fields.
+Pages 2–3 are initial-statement Sections B and C and contain no mapped annual
+fields. The no-2025-event guard remains in force, and this page trim does not
+relax the source-authentication gate.
+
 To open either PDF route, authenticate the five initial filed-return source
 documents and substantiate tax compliance and Section B valuations/completeness.
 For annual filings, authenticate the prior Form 8854/carryforward history, then
@@ -93,5 +100,11 @@ them with native MeF and the final Form 1040, and retain the separate signature
 and mailing obligations described in the IRS instructions.
 
 Initial cash-only and annual no-event PDF descriptors, registrations, and
-focused positive/tamper fixtures were added. No tests, typecheck, XSD validation
-or filled-PDF rendering was run in this implementation batch.
+focused positive/tamper fixtures were added before this page trim. In the
+2026-10-05 page audit, the three focused annual PDF tests passed; `deno check`,
+lint, and diff checks passed on the two annual PDF files. A bounded annual PDF
+was rendered and all three retained pages were visually inspected: Part I
+identity and annual selection, one prior deferred-property row, and both
+no-distribution answers. This staged direct descriptor review does not
+authenticate the prior Form 8854 bytes or establish a filed full-return/XSD
+case.

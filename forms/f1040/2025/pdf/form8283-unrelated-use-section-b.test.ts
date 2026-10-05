@@ -142,7 +142,6 @@ Deno.test("Section B unrelated-use art joins reviewed source, Schedule A, native
     ...base.inputs,
     schedule_a: {
       line_5a_state_income_tax: 24_000,
-      line_8a_mortgage_interest_1098: 12_000,
       current_noncash_gift_inventory_complete_confirmed: true,
       other_prior_charitable_carryovers_absent_confirmed: true,
       capital_gain_property_carryovers: [],
@@ -151,7 +150,7 @@ Deno.test("Section B unrelated-use art joins reviewed source, Schedule A, native
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule_a.line_12_noncash_contributions, 12_000);
-  assertEquals(result.pending.f1040.line12e_itemized_deductions, 48_000);
+  assertEquals(result.pending.f1040.line12e_itemized_deductions, 36_000);
   const pending = buildPending(result.pending);
   const attachments = [
     {
@@ -266,7 +265,7 @@ Deno.test("Section B unrelated-use art joins reviewed source, Schedule A, native
     () =>
       buildMefBundle({
         ...pending,
-        f1040: { ...pending.f1040, line12e_itemized_deductions: 47_999 },
+        f1040: { ...pending.f1040, line12e_itemized_deductions: 35_999 },
       }, { filer: base.filer, attachments }),
     Error,
     "itemized total",

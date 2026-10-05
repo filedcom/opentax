@@ -194,7 +194,6 @@ for (const reduced of [false, true]) {
       ...base.inputs,
       schedule_a: {
         line_5a_state_income_tax: 24_000,
-        line_8a_mortgage_interest_1098: 12_000,
         current_noncash_gift_inventory_complete_confirmed: true,
         other_prior_charitable_carryovers_absent_confirmed: true,
         capital_gain_property_carryovers: [],
@@ -206,7 +205,7 @@ for (const reduced of [false, true]) {
       result.pending.schedule_a.line_12_noncash_contributions,
       46_000,
     );
-    assertEquals(result.pending.f1040.line12e_itemized_deductions, 82_000);
+    assertEquals(result.pending.f1040.line12e_itemized_deductions, 70_000);
     const pending = buildPending(result.pending);
     const bundle = await buildMefBundle(pending, {
       filer: base.filer,
@@ -283,7 +282,7 @@ for (const reduced of [false, true]) {
       () =>
         buildMefBundle({
           ...pending,
-          f1040: { ...pending.f1040, line12e_itemized_deductions: 81_999 },
+          f1040: { ...pending.f1040, line12e_itemized_deductions: 69_999 },
         }, { filer: base.filer, attachments }),
       Error,
       "itemized total",

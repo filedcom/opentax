@@ -205,14 +205,14 @@ for (const fixture of pdfReviewFixtures) {
           result.pending.schedule_a.line_12_noncash_contributions,
           3_000,
         );
-        assertEquals(result.pending.f1040.line12e_itemized_deductions, 39_000);
+        assertEquals(result.pending.f1040.line12e_itemized_deductions, 27_000);
         assertStringIncludes(
           xml,
           "<OtherThanByCashOrCheckAmt>3000</OtherThanByCashOrCheckAmt>",
         );
         assertStringIncludes(
           xml,
-          "<TotalItemizedOrStandardDedAmt>39000</TotalItemizedOrStandardDedAmt>",
+          "<TotalItemizedOrStandardDedAmt>27000</TotalItemizedOrStandardDedAmt>",
         );
         assertStringIncludes(
           xml,
@@ -227,7 +227,7 @@ for (const fixture of pdfReviewFixtures) {
           result.pending.schedule_a.line_12_noncash_contributions,
           1_400,
         );
-        assertEquals(result.pending.f1040.line12e_itemized_deductions, 37_400);
+        assertEquals(result.pending.f1040.line12e_itemized_deductions, 25_400);
         assertEquals(
           (xml.match(/<FairMarketValueStatement documentId=/g) ?? []).length,
           2,
@@ -242,7 +242,7 @@ for (const fixture of pdfReviewFixtures) {
         );
         assertStringIncludes(
           xml,
-          "<TotalItemizedOrStandardDedAmt>37400</TotalItemizedOrStandardDedAmt>",
+          "<TotalItemizedOrStandardDedAmt>25400</TotalItemizedOrStandardDedAmt>",
         );
         assertStringIncludes(
           xml,

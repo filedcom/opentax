@@ -290,6 +290,26 @@ rejects. The structured occupancy record is not yet authenticated to source
 bytes. [2025 Publication 936](https://www.irs.gov/publications/p936)
 provides the second-home criteria.
 
+## Positive Schedule A line 8a source presence
+
+The [2025 Schedule A instructions](https://www.irs.gov/pub/irs-pdf/i1040sca.pdf)
+place deductible interest and points reported on Form 1098 on line 8a;
+unreported interest belongs on line 8b under its own rules. Native MeF and
+PDF Schedule A exporters now reject a positive line 8a when the retained
+`f1098` source is absent. They call one shared presence guard before the
+existing Form 1098 owner, box 1, box 6, and mortgage-limit checks. The guard
+does not change zero line 8a or the supported seller-financed line 8b route.
+Direct native and PDF rejection tests, sourced Form 1098 descriptor cases, a
+full-return Schedule A XSD case, and the affected gift-route regressions pass.
+Unrelated Form 8283 examples no longer use unsupported mortgage interest to
+raise their itemized deduction totals.
+
+This check proves source presence, not by itself the exact line 8a amount or
+the authenticity of an issuer copy. The bounded cross-loan and mortgage-limit
+reviews compare their own calculated totals; final bundle review separately
+checks readable Copy B bytes where required. Other mortgage source routes,
+Pub. 936 calculations, and IRS acceptance remain open.
+
 ## Lender Copy B proof for bounded cross-loan reviews
 
 Both the bounded purchase-points cross-loan review and the bounded two-loan

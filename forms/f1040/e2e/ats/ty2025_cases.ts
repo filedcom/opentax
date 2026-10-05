@@ -311,6 +311,18 @@ export const SCENARIO_1040_NR_03_FACTS = {
     line1aStateAndLocalIncomeTax: 18_860,
     line1bAllowedProvided: false,
   },
+  form8283: {
+    sectionBVehicleChecked: true,
+    rowA: {
+      description: "2005 Mercedes Benz",
+      condition: "Good",
+      appraisedFairMarketValue: 5_005,
+      dateAcquired: "Various",
+      acquisitionMethod: "Purchase",
+      donorCostOrAdjustedBasis: 53_470,
+      claimedDeduction: null,
+    },
+  },
   attachmentsRequiredByCoverSheet: [
     "1098-C",
     "Motor Vehicles Boats and Airplanes Statement",

@@ -62,7 +62,7 @@ function values(row: F4255Row): Record<string, number> {
 export const form4255Pdf: PdfFormDescriptor = {
   pendingKey: "f4255",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f4255--2025.pdf",
-  pageIndices: () => [0, 1, 2, 3, 4],
+  pageIndices: () => [0, 1, 2],
   fields: [
     text("filer_name", `${root}Page1[0].f1_01[0]`),
     text("filer_tin", `${root}Page1[0].f1_02[0]`),

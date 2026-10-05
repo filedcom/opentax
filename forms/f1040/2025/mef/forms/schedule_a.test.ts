@@ -10,6 +10,18 @@ const descriptorCopy = {
   bytes: new Uint8Array(),
 };
 
+Deno.test("Schedule A native line 8a requires a retained Form 1098", () => {
+  assertThrows(
+    () =>
+      scheduleA.build(
+        { line_8a_mortgage_interest_1098: 20_000 },
+        { pending: { f1040: { line12e_itemized_deductions: 20_000 } } },
+      ),
+    Error,
+    "line 8a needs retained Form 1098",
+  );
+});
+
 Deno.test("Schedule A native replays purchase points and the second mortgage", () => {
   const fixture = purchasePointsCrossLoanFixture();
   const source = {
@@ -186,8 +198,19 @@ Deno.test("Schedule A deducts the full Form 8396 line 3 even when the allowed cr
   const pending = {
     f1040: { line12e_itemized_deductions: 13_000 },
     form8396: { line3: 2_000, line9: 1_100, interest_reporting_line: "8a" },
+    f1098: {
+      f1098s: [{
+        lender_name: "Example Home Lender",
+        recipient_tin: pointsFiler.primarySSN,
+        source_document_reference: "2025 lender copy",
+        box1_mortgage_interest: 15_000,
+        box1_current_year_deductible_interest: 15_000,
+        box1_deduction_workpaper_reference: "2025 Pub. 936 workpaper",
+        issuer_copy: descriptorCopy,
+      }],
+    },
   };
-  const xml = scheduleA.build(fields, { pending });
+  const xml = scheduleA.build(fields, { pending, filer: pointsFiler });
   assertStringIncludes(
     xml,
     "<RptHomeMortgIntAndPointsAmt>13000</RptHomeMortgIntAndPointsAmt>",
@@ -195,6 +218,7 @@ Deno.test("Schedule A deducts the full Form 8396 line 3 even when the allowed cr
   assertThrows(
     () =>
       scheduleA.build(fields, {
+        filer: pointsFiler,
         pending: { ...pending, form8396: { line3: 1_100 } },
       }),
     Error,

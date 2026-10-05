@@ -1,4 +1,5 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { PDFDocument } from "pdf-lib";
 import { annualInputSchema } from "../../../nodes/inputs/f8854/annual.ts";
 import { f8854Annual } from "../../../nodes/inputs/f8854/annual_node.ts";
 import { ReportedFormCode } from "../../../nodes/inputs/f8854/section-c.ts";
@@ -6,6 +7,7 @@ import { form8854AnnualNoEvent } from "../../form8854_annual.fixture.ts";
 import { form8992Filer } from "../../form8992.fixture.ts";
 import { form8854Annual } from "../../mef/forms/f8854_annual.ts";
 import { form8854AnnualPdf } from "./f8854_annual.ts";
+import { fillFormPdf } from "../builder.ts";
 
 const source = form8854AnnualNoEvent;
 const pending = { f8854_annual: source };
@@ -21,7 +23,7 @@ Deno.test("annual Form 8854 prior-property source reaches native and matching PD
   assertStringIncludes(native, "<PropertyDesc>Stock holding</PropertyDesc>");
   assertStringIncludes(native, "<DeferredTaxAmt>50000</DeferredTaxAmt>");
   const [pdf] = form8854AnnualPdf.instances!(source, form8992Filer, pending);
-  assertEquals(form8854AnnualPdf.pageIndices!(pdf), [0, 1, 2, 3, 4]);
+  assertEquals(form8854AnnualPdf.pageIndices!(pdf), [0, 3, 4]);
   assertEquals(pdf.annual_statement, true);
   assertEquals(pdf.mailing_address, "1 Main St, Wilmington, DE 19801");
   assertEquals(pdf.property1_description, "Stock holding");
@@ -35,6 +37,32 @@ Deno.test("annual Form 8854 prior-property source reaches native and matching PD
     )?.pdfField,
     "topmostSubform[0].Page4[0].Table_Part3Ln1[0].BodyRow1[0].f4_7[0]",
   );
+});
+
+Deno.test("annual Form 8854 PDF retains Part I and its two Part III pages", async () => {
+  const [fields] = form8854AnnualPdf.instances!(
+    source,
+    form8992Filer,
+    pending,
+  );
+  const pdf = await fillFormPdf(
+    form8854AnnualPdf,
+    fields,
+    form8992Filer,
+    ".pdf-cache",
+    pending,
+  );
+  if (!pdf) throw new Error("Missing annual Form 8854 PDF");
+  const filled = await PDFDocument.load(pdf);
+  assertEquals(filled.getPageCount(), 5);
+  const packet = await PDFDocument.create();
+  for (
+    const page of await packet.copyPages(
+      filled,
+      [...form8854AnnualPdf.pageIndices!(fields)],
+    )
+  ) packet.addPage(page);
+  assertEquals(packet.getPageCount(), 3);
 });
 
 Deno.test("annual Form 8854 PDF rejects prior-ledger tampering and 2025 events", () => {

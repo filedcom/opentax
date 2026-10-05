@@ -1676,7 +1676,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       w2: [wage(100_000, 16_000, "Example Employer", "12-3456789")],
       schedule_a: {
         line_5a_state_income_tax: 24_000,
-        line_8a_mortgage_interest_1098: 12_000,
         current_noncash_gift_inventory_complete_confirmed: true,
         other_prior_charitable_carryovers_absent_confirmed: true,
         capital_gain_property_carryovers: [],
@@ -1718,7 +1717,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       w2: [wage(100_000, 16_000, "Example Employer", "12-3456789")],
       schedule_a: {
         line_5a_state_income_tax: 24_000,
-        line_8a_mortgage_interest_1098: 12_000,
         capital_gain_50_percent_election_confirmed: true,
         current_noncash_gift_inventory_complete_confirmed: true,
         other_prior_charitable_carryovers_absent_confirmed: true,
@@ -1762,7 +1760,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       w2: [wage(100_000, 16_000, "Example Employer", "12-3456789")],
       schedule_a: {
         line_5a_state_income_tax: 24_000,
-        line_8a_mortgage_interest_1098: 12_000,
         current_noncash_gift_inventory_complete_confirmed: true,
         other_prior_charitable_carryovers_absent_confirmed: true,
         capital_gain_property_carryovers: [],
@@ -1814,7 +1811,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       w2: [wage(100_000, 16_000, "Example Employer", "12-3456789")],
       schedule_a: {
         line_5a_state_income_tax: 24_000,
-        line_8a_mortgage_interest_1098: 12_000,
         current_noncash_gift_inventory_complete_confirmed: true,
         other_prior_charitable_carryovers_absent_confirmed: true,
         capital_gain_property_carryovers: [],
@@ -1848,7 +1844,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     reviewFocus: [
       "Form 8283 prints both $700 Section A claims and two separate reduction explanations",
       "Each native reduced amount links to its own FMV statement; item B remains item B",
-      "Schedule A line 12 is $1,400 and Form 1040 itemized deductions are $37,400",
+      "Schedule A line 12 is $1,400 and Form 1040 itemized deductions are $25,400",
     ],
   },
   {

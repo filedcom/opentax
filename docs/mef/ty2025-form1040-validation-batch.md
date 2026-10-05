@@ -4194,3 +4194,23 @@ artifact hashes, page origins, template cache, and local XSD. Its log is
 SHA-256 `2f6cc311fee74671e57271edd2a209a6e934987a808bdeb099b5e24ac2fe2de7`.
 This selected packet does not close the frozen
 all-route PDF, IRS business-rule, or ATS gates.
+
+## Form 4255 and annual Form 8854 bounded page audit (2026-10-05)
+
+Two registered but source-gated PDF descriptors now retain only their populated
+official form pages. Form 4255's EP-only candidate keeps Part I pages 1–3 and
+excludes the recapture-only Parts II and III on pages 4–5; the guard rejects
+nonzero recapture amounts. Annual Form 8854 keeps shared Part I page 1 and
+Part III pages 4–5, excluding initial-statement Sections B/C on pages 2–3.
+Neither edit changes source, native MeF, or the positive-export gates described
+in the [Form 4255](ty2025-form4255-pdf-gap.md) and
+[Form 8854](ty2025-form8854-pdf-gap.md) gap notes.
+
+The two focused test files passed **6/6** tests. `deno check`, `deno lint`, and
+`git diff --check` passed on their four descriptor/test files. Direct staged
+descriptor PDFs were assembled with the same page selection used by the packet
+builder. Each has three pages; all six were rendered and visually inspected.
+Form 4255 retained its EP rows and line 3 totals; Form 8854 retained its
+annual identity, deferred-property row, and no-distribution answers. These
+checks do not establish an authenticated full-return export or XSD validation
+for either gated route, and they do not alter the 175-case selected manifest.
