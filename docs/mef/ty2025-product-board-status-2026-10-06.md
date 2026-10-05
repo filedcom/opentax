@@ -308,3 +308,17 @@ Main now includes both-holder Medicare MSA controlling statements and source-own
 Reviewed two-business aggregation now passes 39 checks, full local XSD and complete 17-page visual/replay review. Distinct QBI investment contributions are integrated with 13/13 combined checks. Dependent/claimant education ownership passes main integration **24/24**, with five complete XSD/PDF packets and 30 reviewed pages. Three agents continue Archer contribution eligibility, self-employed education support and patron ScheduleD filing. Public SSTB source/phase-in integration passes **8/8**; isolated checks pass 49/49 plus 59/59 regressions, with full local XSD and complete 15-page visual/replay proof. Owner-only SSTB without payroll is ready for main integration:107/107 isolated checks and full local XSD/15-page visual/replay proof pass. Source authenticity, wider filing branches, business rules, ATS credentials and Scenarios 1/8/13 source conflicts remain open. Local XSD does not prove IRS acceptance; ATS was reported unavailable through October 13 at 9 a.m. Eastern.
 
 
+
+## Before joint-primary SSTB source completion
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,377 bounded slices**. Broader parents remain open; newly discovered work belongs only in `future_todo` and is outside this execution queue.
+
+Stable snapshot `8aa4beeec` passed the full real-Poppler `deno task test`: **11,245 passed, zero failed or ignored**. Isolated `17462812a` completed with 11,252 passed and five failures, all already repaired in the newer `762db9012` full run, which remains confirmed live. Neither covers subsequent main changes. Exact evidence and limits are in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md).
+
+Main now includes both-holder Medicare MSA controlling statements and source-owned investment income for multiple-business QBI; their combined restricted integration passes **25/25**. Mixed-school education integration passes **16/16**. Planner has 198 fixtures, **90 of 113 PDF keys covered**, 23 uncovered. Selected QBI, scholarship and Medicare packets have complete replay and all-page visual evidence, archived in the [October 6 checkpoint](docs/mef/ty2025-product-board-status-2026-10-06.md).
+
+Reviewed two-business aggregation now passes 39 checks, full local XSD and complete 17-page visual/replay review. Distinct QBI investment contributions are integrated with 13/13 combined checks. Dependent/claimant education ownership passes main integration **24/24**, with five complete XSD/PDF packets and 30 reviewed pages. Three agents continue Archer all-page proof/Form8941, education earned-support sources and patron ScheduleD filing. Public SSTB source/phase-in integration passes **8/8**; isolated checks pass 49/49 plus 59/59 regressions, with full local XSD and complete 15-page visual/replay proof. Owner-only SSTB without payroll passes main combined integration12/12, isolated107/107 and full local XSD/15-page visual/replay proof. Archer contribution and self-employed education source commits are next for integration; Archer all-page review is being completed. Source authenticity, wider filing branches, business rules, ATS credentials and Scenarios 1/8/13 source conflicts remain open. Local XSD does not prove IRS acceptance; ATS was reported unavailable through October 13 at 9 a.m. Eastern.
+
+
