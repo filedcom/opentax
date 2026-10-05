@@ -30,9 +30,12 @@ conditions. AOTC still requires the school EIN.
 - For `institution_not_required`, an explicit furnishing basis and its facts.
   Formal billing requires employer/governmental counterparty, covered qualified
   tuition, no separate student financial account, and a billing-arrangement
-  record. The schema also describes noncredit-only courses, the nonresident
-  student without a form request, and fully waived/scholarship-paid tuition.
-  Noncredit-only sources cannot establish AOTC eligibility.
+  record. The payment ledger separately retains taxable and section 127/other
+  tax-free portions, the payroll tax-treatment record, student income inclusion,
+  and any positive section 127 exclusion record. The schema also describes
+  noncredit-only courses, the nonresident student without a form request, and
+  fully waived/scholarship-paid tuition. Noncredit-only sources cannot establish
+  AOTC eligibility.
 
 No nonexistent form ID or box 1/5 amount is required or synthesized. Supplying
 those fields together with a nonreceipt exception rejects. Received-form
@@ -45,9 +48,18 @@ qualification and disjoint payment-reference checks apply.
 
 Four source fixtures cover required/nonreceived and exempt/formal-billing
 institutions for both credits. These are synthetic structured evidence; the
-formal-billing paid amounts are declared qualifying payments and their
-financial-aid review supplies the tax-free reduction, rather than inferring an
-employer benefit's tax treatment from the billing arrangement.
+formal-billing paid amounts are declared qualifying payments and their payment
+tax treatment and student income records distinguish taxable payments from
+section 127 and other tax-free assistance. Furnishing exemption alone cannot
+establish deductible/creditable tuition. The AOTC allocation is $4,000 of
+taxable employer payments with no section 127 exclusion; the LLC allocation is
+$7,500 taxable plus $500 of section 127 benefits, with a separate qualified
+program/exclusion record. Both refer to the retained W-2 source copy with
+$75,000 of box 1 wages, and the respective taxable education portions are
+asserted included in that figure, not added again. The workpaper must reduce
+expenses by every recorded tax-free amount. Covered payments must match the
+workpaper's tuition and materials required to be paid to the institution, and
+identify payment records from its inventory.
 
 | Credit |           Adjusted expense | Form 8863 line 8 / Form 1040 line 29 | Form 8863 line 19 / Schedule 3 line 3 | Form 1040 line 24 | Refund |
 | ------ | -------------------------: | -----------------------------------: | ------------------------------------: | ----------------: | -----: |
@@ -71,8 +83,8 @@ bytes and identical page PNGs, so all four printed packets are covered by that
 review.
 
 The Form 8863 node, native/XSD, PDF, prior-disallowance, one-school, two-school,
-and missing-form focused regression passed **95 tests, 0 failures**. The final
-missing-form source/artifact run passed **5 tests, 0 failures**. Invalid
+and missing-form focused regression passed **96 tests, 0 failures**. The final
+missing-form source/artifact run passed **6 tests, 0 failures**. Invalid
 school/student/degree/enrollment facts, out-of-period enrollment, wrong paid
 year, missing aid/nonreceipt/payment proof, incomplete or mistimed request,
 noncooperation, contradictory furnishing conditions, fake Form 1098-T amounts,
@@ -107,3 +119,34 @@ review. Foreign institutions, three-school overflow, wider
 scholarship/taxable-assistance allocation, IRS business rules, and ATS
 acceptance remain open. This does not establish general education-credit or
 filing readiness.
+
+## Employer and scholarship economic correction
+
+The
+[2025 Publication 970, chapters 2, 3, and 10](https://www.irs.gov/pub/irs-prior/p970--2025.pdf)
+requires tax-free assistance to reduce qualified expenses and distinguishes
+wages/taxable payments from excluded educational benefits. The formal-billing
+fixtures now retain their explicit taxable/section 127 split, covered payment
+inventory, payment tax-treatment record, and student income record described
+above. Zero or understated tax-free reductions, inconsistent sums, unmatched
+payments, missing income/treatment records, and a government counterparty
+claiming an employer section 127 exclusion reject. Their four packets and credit
+amounts remain unchanged and pass full-return XSD.
+
+For the fully waived/scholarship furnishing basis, the source now separately
+records waived tuition and actually scholarship-paid tuition, its taxable and
+tax-free portions, and the scholarship terms. Waived amounts cannot enter the
+paid workpaper. Tax-free scholarship payments must be fully reduced. A claimed
+taxable portion must reconcile to declared student gross income and have
+permitted terms plus allocation and income records. Negative source cases cover
+invented waived payments, omitted tax-free reductions, missing terms or
+allocation/income records, and inconsistent amounts. A fully tax-free $4,000
+tuition payment correctly produces zero education credit. The conditional $4,000
+taxable scholarship source contract has a validation test only, not a
+full-return, source-income-join, XSD, or filled-packet positive; wider taxable
+scholarship allocation remains open.
+
+The monetary allocations and inclusion in student income are explicit retained
+synthetic assertions. Matching a W-2 reference and wage amount does not
+authenticate the payroll allocation or prove the legal exclusion/taxable
+classification from outside documents. No such source authenticity is claimed.

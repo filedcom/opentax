@@ -77,6 +77,17 @@ const missing1098tExceptionSchema = z.discriminatedUnion("reason", [
       z.object({
         kind: z.literal("expenses_waived_or_paid_entirely_with_scholarships"),
         qualified_tuition_entirely_waived_or_scholarship_paid: z.literal(true),
+        waived_qualified_tuition_amount: z.number().finite().nonnegative(),
+        scholarship_paid_qualified_tuition_amount: z.number().finite()
+          .nonnegative(),
+        tax_free_scholarship_payment_amount: z.number().finite().nonnegative(),
+        taxable_scholarship_payment_amount: z.number().finite().nonnegative(),
+        scholarship_terms_record_id: z.string().trim().min(1),
+        scholarship_terms_allow_taxable_allocation: z.boolean(),
+        taxable_allocation_record_id: z.string().trim().min(1).optional(),
+        taxable_amount_in_student_gross_income: z.number().finite()
+          .nonnegative(),
+        student_gross_income_record_id: z.string().trim().min(1).optional(),
       }).strict(),
       z.object({
         kind: z.literal("formal_billing_arrangement"),
@@ -84,6 +95,17 @@ const missing1098tExceptionSchema = z.discriminatedUnion("reason", [
         billing_counterparty: z.enum(["employer", "governmental_entity"]),
         qualified_tuition_covered_by_formal_billing: z.literal(true),
         billing_arrangement_record_id: z.string().trim().min(1),
+        covered_qualified_tuition_payment_amount: z.number().finite()
+          .nonnegative(),
+        covered_payment_record_ids: z.array(z.string().trim().min(1)).min(1),
+        taxable_payment_amount: z.number().finite().nonnegative(),
+        tax_free_section127_payment_amount: z.number().finite().nonnegative(),
+        section127_exclusion_record_id: z.string().trim().min(1).optional(),
+        other_tax_free_payment_amount: z.number().finite().nonnegative(),
+        payment_tax_treatment_record_id: z.string().trim().min(1),
+        taxable_amount_in_student_gross_income: z.number().finite()
+          .nonnegative(),
+        student_gross_income_record_id: z.string().trim().min(1).optional(),
       }).strict(),
       z.object({
         kind: z.literal("noncredit_courses_only"),
@@ -316,6 +338,60 @@ export function validateForm8863FilingSource(
       throw new Error(
         "Form 8863 noncredit-only courses cannot establish AOC degree or credential eligibility",
       );
+    }
+    if (exception.reason === "institution_not_required") {
+      const basis = exception.furnishing_basis;
+      // Furnishing exceptions cover the institution's reportable qualified
+      // tuition/fees, including materials required to be paid to the school.
+      // AOC materials bought optionally from its bookstore are separate.
+      const institutionPaid = workpaper.paid_tuition_required_fees +
+        (workpaper.institution_materials_required_for_enrollment
+          ? workpaper.paid_course_materials_to_institution
+          : 0);
+      if (basis.kind === "formal_billing_arrangement") {
+        const taxFree = basis.tax_free_section127_payment_amount +
+          basis.other_tax_free_payment_amount;
+        if (
+          basis.covered_qualified_tuition_payment_amount !== institutionPaid ||
+          basis.taxable_payment_amount + taxFree !== institutionPaid ||
+          basis.taxable_amount_in_student_gross_income !==
+            basis.taxable_payment_amount ||
+          (basis.taxable_payment_amount > 0 &&
+            !basis.student_gross_income_record_id) ||
+          (basis.tax_free_section127_payment_amount > 0 &&
+            (basis.billing_counterparty !== "employer" ||
+              !basis.section127_exclusion_record_id)) ||
+          new Set(basis.covered_payment_record_ids).size !==
+            basis.covered_payment_record_ids.length ||
+          basis.covered_payment_record_ids.some((id) =>
+            !workpaper.payment_record_ids.includes(id)
+          ) ||
+          workpaper.tax_free_assistance_applied_to_expenses < taxFree
+        ) {
+          throw new Error(
+            "Form 8863 formal billing payments need reconciled taxable student income and fully reduced section 127/other tax-free assistance",
+          );
+        }
+      }
+      if (basis.kind === "expenses_waived_or_paid_entirely_with_scholarships") {
+        if (
+          basis.scholarship_paid_qualified_tuition_amount !== institutionPaid ||
+          basis.tax_free_scholarship_payment_amount +
+                basis.taxable_scholarship_payment_amount !== institutionPaid ||
+          basis.taxable_amount_in_student_gross_income !==
+            basis.taxable_scholarship_payment_amount ||
+          (basis.taxable_scholarship_payment_amount > 0 &&
+            (!basis.scholarship_terms_allow_taxable_allocation ||
+              !basis.taxable_allocation_record_id ||
+              !basis.student_gross_income_record_id)) ||
+          workpaper.tax_free_assistance_applied_to_expenses <
+            basis.tax_free_scholarship_payment_amount
+        ) {
+          throw new Error(
+            "Form 8863 waived/scholarship tuition needs actual paid amounts, full tax-free reduction, and documented permitted taxable allocation in student income",
+          );
+        }
+      }
     }
   }
   if (

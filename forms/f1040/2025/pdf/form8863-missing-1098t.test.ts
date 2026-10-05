@@ -7,6 +7,7 @@ import {
   type F8863Item,
   inputSchema,
   itemSchema,
+  validateForm8863FilingSource,
 } from "../../nodes/inputs/f8863/index.ts";
 import { registry } from "../registry.ts";
 import { f1040_2025 } from "../index.ts";
@@ -18,6 +19,14 @@ import { pdfReviewFixtures } from "./review-fixtures.ts";
 const base = pdfReviewFixtures.find((fixture) =>
   fixture.id === "single-w2-refund"
 )!;
+const incomeSourceReference = "2025-Alex-issued-W2-employer-tuition";
+const reviewedInputs = {
+  ...base.inputs,
+  w2: (base.inputs.w2 as Record<string, unknown>[]).map((source) => ({
+    ...source,
+    source_document_reference: incomeSourceReference,
+  })),
+};
 const common = {
   student_ssn: base.filer.primarySSN,
   institution_name: "Test University",
@@ -51,6 +60,15 @@ const exempt = {
     billing_counterparty: "employer",
     qualified_tuition_covered_by_formal_billing: true,
     billing_arrangement_record_id: "2025-employer-school-formal-billing",
+    covered_qualified_tuition_payment_amount: 4_000,
+    covered_payment_record_ids: ["2025-Alex-tuition-payment"],
+    taxable_payment_amount: 4_000,
+    tax_free_section127_payment_amount: 0,
+    other_tax_free_payment_amount: 0,
+    payment_tax_treatment_record_id:
+      "2025-employer-education-payroll-tax-treatment",
+    taxable_amount_in_student_gross_income: 4_000,
+    student_gross_income_record_id: incomeSourceReference,
   },
 };
 function student(
@@ -104,7 +122,7 @@ function student(
 }
 function returnCase(item: F8863Item) {
   const result = execute(buildExecutionPlan(registry), registry, {
-    ...base.inputs,
+    ...reviewedInputs,
     f8863: [item],
     f8863_credit_limit_worksheet: {
       credit_limit_worksheet: {
@@ -148,7 +166,19 @@ for (const credit of ["aoc", "llc"] as const) {
     Deno.test(`missing 1098-T ${reason} ${credit} sources calculate and file with truthful No indicators`, async () => {
       const item = student(
         credit,
-        reason === "required" ? required : exempt,
+        reason === "required" ? required : credit === "aoc" ? exempt : {
+          ...exempt,
+          furnishing_basis: {
+            ...exempt.furnishing_basis,
+            covered_qualified_tuition_payment_amount: 8_000,
+            taxable_payment_amount: 7_500,
+            tax_free_section127_payment_amount: 500,
+            section127_exclusion_record_id:
+              "2025-employer-qualified-127-program-500-benefit",
+            taxable_amount_in_student_gross_income: 7_500,
+            student_gross_income_record_id: incomeSourceReference,
+          },
+        },
       );
       const pending = returnCase(item);
       assertEquals(pending.f1040!.line18_total_tax_before_credits, 7_955);
@@ -223,7 +253,7 @@ for (const credit of ["aoc", "llc"] as const) {
           JSON.stringify(
             {
               inputs: {
-                ...base.inputs,
+                ...reviewedInputs,
                 f8863: [item],
                 f8863_credit_limit_worksheet: {
                   credit_limit_worksheet: pending.f8863!.credit_limit_worksheet,
@@ -320,6 +350,22 @@ Deno.test("missing 1098-T source conditions and return joins reject incomplete o
       { qualified_tuition_covered_by_formal_billing: false },
       { billing_counterparty: "family" },
       { billing_arrangement_record_id: "" },
+      { covered_qualified_tuition_payment_amount: 3_999 },
+      { taxable_payment_amount: 3_999 },
+      { taxable_amount_in_student_gross_income: 0 },
+      { student_gross_income_record_id: undefined },
+      { payment_tax_treatment_record_id: "" },
+      { covered_payment_record_ids: ["wrong-payment"] },
+      {
+        taxable_payment_amount: 0,
+        taxable_amount_in_student_gross_income: 0,
+        tax_free_section127_payment_amount: 4_000,
+      },
+      {
+        taxable_payment_amount: 0,
+        taxable_amount_in_student_gross_income: 0,
+        other_tax_free_payment_amount: 4_000,
+      },
     ]
   ) {
     rejected({
@@ -336,6 +382,26 @@ Deno.test("missing 1098-T source conditions and return joins reject incomplete o
       },
     });
   }
+  // All monetary facts reconcile here; absence of the exclusion record alone
+  // must still reject the alleged section 127 treatment.
+  rejected({
+    ...original,
+    aoc_adjusted_expenses: 3_500,
+    education_expense_workpaper: {
+      ...wp,
+      tax_free_assistance_applied_to_expenses: 500,
+      missing_1098t_exception: {
+        ...exempt,
+        furnishing_basis: {
+          ...exempt.furnishing_basis,
+          taxable_payment_amount: 3_500,
+          taxable_amount_in_student_gross_income: 3_500,
+          tax_free_section127_payment_amount: 500,
+          section127_exclusion_record_id: undefined,
+        },
+      },
+    },
+  });
   rejected({
     ...original,
     education_expense_workpaper: {
@@ -409,4 +475,83 @@ Deno.test("missing 1098-T source conditions and return joins reject incomplete o
       })
     );
   }
+});
+
+Deno.test("waived and scholarship missing-form basis cannot invent paid or untaxed credit expenses", () => {
+  const original = student("aoc");
+  const wp = original.education_expense_workpaper!;
+  const taxableBasis = {
+    kind: "expenses_waived_or_paid_entirely_with_scholarships",
+    qualified_tuition_entirely_waived_or_scholarship_paid: true,
+    waived_qualified_tuition_amount: 0,
+    scholarship_paid_qualified_tuition_amount: 4_000,
+    tax_free_scholarship_payment_amount: 0,
+    taxable_scholarship_payment_amount: 4_000,
+    scholarship_terms_record_id:
+      "2025-scholarship-terms-permit-nonqualified-use",
+    scholarship_terms_allow_taxable_allocation: true,
+    taxable_allocation_record_id:
+      "2025-student-scholarship-allocation-workpaper",
+    taxable_amount_in_student_gross_income: 4_000,
+    student_gross_income_record_id:
+      "2025-student-income-includes-4000-scholarship",
+  };
+  const changed = (basis: unknown, sourceChanges = {}, itemChanges = {}) =>
+    itemSchema.parse({
+      ...original,
+      ...itemChanges,
+      education_expense_workpaper: {
+        ...wp,
+        ...sourceChanges,
+        missing_1098t_exception: { ...exempt, furnishing_basis: basis },
+      },
+    });
+  // Admission of the source contract is conditional on all three economic
+  // records; this is not a full-return or authenticated scholarship packet.
+  validateForm8863FilingSource(changed(taxableBasis), "aoc");
+  for (
+    const changes of [
+      { scholarship_terms_allow_taxable_allocation: false },
+      { scholarship_terms_record_id: "" },
+      { taxable_allocation_record_id: undefined },
+      { student_gross_income_record_id: undefined },
+      { taxable_amount_in_student_gross_income: 0 },
+      { scholarship_paid_qualified_tuition_amount: 3_999 },
+      {
+        waived_qualified_tuition_amount: 4_000,
+        scholarship_paid_qualified_tuition_amount: 0,
+        taxable_scholarship_payment_amount: 0,
+        taxable_amount_in_student_gross_income: 0,
+      },
+      {
+        tax_free_scholarship_payment_amount: 4_000,
+        taxable_scholarship_payment_amount: 0,
+        taxable_amount_in_student_gross_income: 0,
+      },
+    ]
+  ) {
+    assertThrows(() =>
+      validateForm8863FilingSource(
+        changed({ ...taxableBasis, ...changes }),
+        "aoc",
+      )
+    );
+  }
+  const fullyTaxFree = changed(
+    {
+      ...taxableBasis,
+      tax_free_scholarship_payment_amount: 4_000,
+      taxable_scholarship_payment_amount: 0,
+      taxable_amount_in_student_gross_income: 0,
+      scholarship_terms_allow_taxable_allocation: false,
+      taxable_allocation_record_id: undefined,
+      student_gross_income_record_id: undefined,
+    },
+    { tax_free_assistance_applied_to_expenses: 4_000 },
+    { aoc_adjusted_expenses: 0 },
+  );
+  validateForm8863FilingSource(fullyTaxFree, "aoc");
+  const pending = returnCase(fullyTaxFree);
+  assertEquals(pending.schedule3?.line3_education_credit ?? 0, 0);
+  assertEquals(pending.f1040!.line29_refundable_aoc ?? 0, 0);
 });
