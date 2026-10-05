@@ -8,6 +8,7 @@ import { registry } from "../registry.ts";
 import { buildMefXml } from "./builder.ts";
 import { buildPending } from "./pending.ts";
 import type { MefFormsPending } from "./types.ts";
+import { scheduleBPdf } from "../pdf/forms/schedule_b.ts";
 
 const general = {
   filing_status: FilingStatus.Single,
@@ -50,6 +51,36 @@ Deno.test("Schedule B Part III taxpayer input reaches the filed return", () => {
   assertStringIncludes(xml, "<IRS1040ScheduleB ");
   assertStringIncludes(xml, "<FinCENForm114Ind>true</FinCENForm114Ind>");
   assertStringIncludes(xml, "<ForeignCountryCd>CA</ForeignCountryCd>");
+});
+
+Deno.test("Schedule B IRS Germany code reaches MeF while country name reaches PDF", () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    {
+      general,
+      schedule_b_part_iii: {
+        foreign_accounts_question: true,
+        fincen_form114_required: true,
+        foreign_countries: [{ irs_code: "GM", name: "Germany" }],
+        foreign_trust_question: false,
+      },
+    },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule_b?.foreign_country_codes, ["GM"]);
+  assertEquals(result.pending.schedule_b?.foreign_country_names, ["Germany"]);
+  const xml = buildMefXml(
+    buildPending(result.pending),
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(xml, "<ForeignCountryCd>GM</ForeignCountryCd>");
+  assertEquals(
+    scheduleBPdf.projectFields?.(result.pending.schedule_b ?? {}, {})
+      ?.print_foreign_country_line1,
+    "Germany",
+  );
 });
 
 Deno.test("Form 8814 child facts force Schedule B foreign answers and literals", () => {

@@ -56,3 +56,26 @@ Deno.test("Schedule B Part III input routes explicit answers without tax", () =>
     },
   }]);
 });
+
+Deno.test("Schedule B Part III requires TY2025 IRS country codes", () => {
+  const base = {
+    foreign_accounts_question: true,
+    fincen_form114_required: true,
+    foreign_trust_question: false,
+  };
+  for (
+    const [irs_code, accepted] of [
+      ["GM", true],
+      ["DE", false],
+      ["ZZ", false],
+    ] as const
+  ) {
+    assertEquals(
+      inputSchema.safeParse({
+        ...base,
+        foreign_countries: [{ irs_code, name: "Germany" }],
+      }).success,
+      accepted,
+    );
+  }
+});

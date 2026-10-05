@@ -65,6 +65,31 @@ Deno.test("Schedule B requires an explicit FBAR decision and country codes", () 
   );
 });
 
+Deno.test("Schedule B aggregation accepts IRS GM and rejects ISO DE", () => {
+  const facts = {
+    foreign_accounts_question: true,
+    fincen_form114_required: true,
+    foreign_trust_question: false,
+  };
+  assertEquals(
+    findOutput(
+      compute({
+        ...facts,
+        foreign_countries: [{ irs_code: "GM", name: "Germany" }],
+      }),
+      "schedule_b",
+    )?.fields.foreign_country_codes,
+    ["GM"],
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...facts,
+      foreign_countries: [{ irs_code: "DE", name: "Germany" }],
+    }).success,
+    false,
+  );
+});
+
 Deno.test("single interest entry routes taxable_interest_net to f1040 line2b", () => {
   const result = compute({ payer_name: "Big Bank", taxable_interest_net: 500 });
   const f1040 = findOutput(result, "f1040");

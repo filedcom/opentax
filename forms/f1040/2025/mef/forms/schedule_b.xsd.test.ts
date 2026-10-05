@@ -55,12 +55,13 @@ Deno.test({
   const xml = buildScheduleBXml({
     foreign_accounts_question: true,
     fincen_form114_required: true,
-    foreign_country_codes: ["CA", "FR"],
+    foreign_country_codes: ["CA", "GM"],
     foreign_trust_question: false,
   });
   assertStringIncludes(xml, "<IRS1040ScheduleB");
   assertStringIncludes(xml, "<FinCENForm114Ind>true</FinCENForm114Ind>");
   assertStringIncludes(xml, "<ForeignCountryCd>CA</ForeignCountryCd>");
+  assertStringIncludes(xml, "<ForeignCountryCd>GM</ForeignCountryCd>");
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {
     await Deno.writeTextFile(path, xml);
