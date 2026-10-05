@@ -6,7 +6,7 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1290 bounded completed slices. A completed slice does not close its
+records 1293 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are
@@ -21,7 +21,14 @@ passes with the corrected Form 8863 student identity. Additional bounded
 slices verify Form 8911 native/PDF parity, cover joint taxpayer/spouse 1099-G
 reconciliation, require exactly one primary IRS1040 document in the prepared
 packet, clarify Form 4547's signature rule, pin the exact Form 8880 age cutoff,
-and capture the checked QCD mark in ATS Scenario 8.
+and capture the checked QCD mark in ATS Scenario 8. Three additional bounded
+Form 1098 slices verify ordinary 2025 refinance-point allocation, the
+construction-refinance amortization route, and purchase points with an
+existing mortgage; focused source/PDF and full-return XSD checks passed, and
+the ordinary refinance and construction cases each produced a visually
+reviewed three-page packet. Their documented boundaries leave issuer-byte
+authenticity, broader mortgage limits and points variants, business rules,
+and ATS open.
 Scenario 8's code-Q distribution and blank Form 1040 line 4a still need
 reconciliation, as do the other open ATS source conflicts.
 The remaining
