@@ -502,6 +502,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line15_taxable_income",
     pdfField: "topmostSubform[0].Page2[0].f2_06[0]",
+    printZero: true,
   },
 
   // ── Page 2: Tax and Credits (Lines 16–24) ────────────────────────────────
@@ -552,6 +553,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line22_tax_after_credits",
     pdfField: "topmostSubform[0].Page2[0].f2_14[0]",
+    printZero: true,
   },
   {
     kind: "text",
