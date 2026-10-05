@@ -4726,3 +4726,7 @@ At code snapshot `86d448902`, restricted typed real-Poppler patron, SSTB, aggreg
 ## Material-capital education main integration (October6)
 
 At3d8ab750e, typed restricted real-Poppler tests for material-capital, personal-service education and patron QBI passed16/16 in1m5s. Log `/tmp/opentax-material-capital-main-integration2.log`. The first invocation referenced a nonexistent patron test filename and executed no tests; the corrected invocation above is the proof. Source proof, seven full local v5.4 XSD/PDF packets and100-page review are documented in `ty2025-form8863-material-capital-support-review.md`. Broader parents and IRS acceptance remain open.
+
+## Patron phase-in main integration (October6)
+
+At5abcfba2b, typed restricted real-Poppler patron phase-in, prior patron sources and SSTB tests passed8/8 in1m24s. Log `/tmp/opentax-patron-phase-main-integration.log`. Detailed12 full-XSD/PDF returns,71 dual-export mutations,53 isolated regressions and61-page review are in the Form8995A gap. Current main still requires a new full regression; the prior11271 checkpoint is an older snapshot.
