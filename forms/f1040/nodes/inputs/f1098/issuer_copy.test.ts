@@ -29,7 +29,11 @@ const item = {
   box6_deduction_workpaper_reference: "Pub 936 points workpaper",
 };
 
-async function copy(box1 = "18000", includeBox6 = true): Promise<Uint8Array> {
+async function copy(
+  box1 = "18000",
+  includeBox6 = true,
+  box2 = "",
+): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   pdf.addPage([612, 792]);
   const form = pdf.getForm();
@@ -39,7 +43,7 @@ async function copy(box1 = "18000", includeBox6 = true): Promise<Uint8Array> {
     [`${prefix}.LeftCol[0].f2_2[0]`]: "Test Mortgage Bank\n1 Bank St",
     [`${prefix}.LeftCol[0].f2_4[0]`]: "***-**-3333",
     [`${prefix}.RightCol[0].f2_11[0]`]: box1,
-    [`${prefix}.RightCol[0].f2_12[0]`]: "",
+    [`${prefix}.RightCol[0].f2_12[0]`]: box2,
     [`${prefix}.RightCol[0].f2_13[0]`]: "",
     [`${prefix}.RightCol[0].f2_14[0]`]: "2000",
     [`${prefix}.RightCol[0].f2_15[0]`]: "",
@@ -107,6 +111,32 @@ Deno.test("Form 1098 official Copy B fields bind reviewed bytes and tax boxes", 
       ),
     Error,
     "lacks readable Copy B field",
+  );
+  const malformedBlankBox = await copy("18000", true, "not reported");
+  const malformedBlankBoxReview = await review(malformedBlankBox);
+  await assertRejects(
+    () =>
+      verifyForm1098IssuerCopy(
+        { ...item, box2_outstanding_principal: undefined },
+        malformedBlankBoxReview,
+        malformedBlankBox,
+        "Lender1098.pdf",
+      ),
+    Error,
+    "invalid amount field",
+  );
+  const negativeBlankBox = await copy("18000", true, "-1");
+  const negativeBlankBoxReview = await review(negativeBlankBox);
+  await assertRejects(
+    () =>
+      verifyForm1098IssuerCopy(
+        { ...item, box2_outstanding_principal: undefined },
+        negativeBlankBoxReview,
+        negativeBlankBox,
+        "Lender1098.pdf",
+      ),
+    Error,
+    "invalid amount field",
   );
 });
 

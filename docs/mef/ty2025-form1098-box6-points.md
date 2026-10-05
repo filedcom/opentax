@@ -24,6 +24,13 @@ bundle path. The verifier is limited to readable official Copy B AcroForm values
 flattened copies, rendered-appearance differences, issuer provenance,
 signature, and independently verified Pub. 936/Pub. 525 workpapers remain open.
 
+The Copy B amount-field reader distinguishes a truly blank box from an
+unreadable nonblank value: blank is accepted only when the typed source omits
+that amount, while malformed or negative amount text rejects. A focused
+tamper test covers malformed text in an otherwise blank box 2. This closes a
+parser ambiguity only; it does not authenticate the lender as the issuer or
+verify the appearance/signature of the supplied PDF.
+
 The [2025 Schedule A instructions](https://www.irs.gov/instructions/i1040sca) put deductible mortgage interest **and points reported on Form 1098** on line 8a. Line 8c is for points **not** reported on Form 1098. The [2025 Form 1098 instructions](https://www.irs.gov/pub/irs-prior/i1098--2025.pdf) say box 6 reports points paid on the purchase of a principal residence, but the lender reports the points in the closing year regardless of the taxpayer's accounting method. The box 6 source amount alone therefore does not establish the current-year deduction; Pub. 936 and the Schedule A mortgage limits still matter.
 
 The Form 1098 input keeps `box6_points_paid` as the information-return amount. A positive box 6 requires an identified lender, recipient TIN, distinct payer-copy reference, reviewed Pub. 936 workpaper reference, and `box6_current_year_deductible_points` between zero and box 6. Duplicate payer-copy references reject. Only the approved amount is added to Schedule A line 8a; it cannot flow to line 8c. Native and PDF Schedule A export check that claimed points are present in line 8a and belong to the taxpayer or joint-filing spouse. A zero current-year deduction is an explicit reviewed determination, not an implicit drop. If the reviewed current-year amount is less than box 6, any later-year amortization remains an external workpaper obligation; this node does not create a future-year carryforward.

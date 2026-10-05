@@ -20,8 +20,15 @@ function digits(value: string): string {
 
 function amount(value: string): number | undefined {
   if (!value.trim()) return undefined;
-  const parsed = Number(value.replace(/[$,\s]/g, ""));
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+  const normalized = value.trim().replace(/^\$\s*/, "").replace(/,/g, "");
+  if (!/^\d+(?:\.\d{1,2})?$/.test(normalized)) {
+    throw new Error("Form 1098 issuer Copy B has an invalid amount field");
+  }
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed)) {
+    throw new Error("Form 1098 issuer Copy B has an invalid amount field");
+  }
+  return parsed;
 }
 
 /**
