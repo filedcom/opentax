@@ -1,3 +1,4 @@
+import { multipleScheduleCFixture } from "./review-8995-multiple.fixture.ts";
 import { twoSchoolEducationFixture } from "./review-8863-two-schools.fixture.ts";
 import {
   directAgriBiodieselPending,
@@ -9023,4 +9024,15 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
   ...basePdfReviewFixtures,
   twoSchoolEducationFixture(educationBase, "llc"),
   twoSchoolEducationFixture(educationBase, "aoc"),
+  ...(["overflow", "net-loss"] as const).map((kind) =>
+    multipleScheduleCFixture(
+      basePdfReviewFixtures.find((fixture) =>
+        fixture.id === "single-schedule-c"
+      )!,
+      basePdfReviewFixtures.find((fixture) =>
+        fixture.id === "single-w2-refund"
+      )!,
+      kind,
+    )
+  ),
 ];
