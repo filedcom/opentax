@@ -1,5 +1,7 @@
 # TY2025 Form 1040 registered-document audit
 
+October 5 replay: live registry imports still contain 149 native and 116 PDF descriptors. The latest full regression at `a268f60c` passed 11,233 tests, with no failures or ignored tests. This supersedes historical “unrun” and “focused checks only” descriptions below; the older counts remain a registration history. Execution does not settle any row's source authenticity, unsupported positive variants, full packet review, business rules, or ATS acceptance. The [registry replay](ty2025-native-pdf-registry-parity.md#october-5-inventory-and-regression-replay) records current PDF fixture/key counts.
+
 Updated inventory: 2026-10-03. This is an implementation inventory, not a
 filing-readiness claim. The authoritative registration order is
 [`forms/f1040/2025/mef/forms/index.ts`](../../forms/f1040/2025/mef/forms/index.ts);
@@ -86,7 +88,7 @@ six-page parent PDF and XSD fixtures await execution. Schedule R all-zero
 business-rule treatment and applicable conditional attachments remain.
 
 The [unregistered-root crosswalk](ty2025-unregistered-root-applicability.md)
-groups the historical review, now 89 roots without a MeF source literal, into
+groups the historical review, now 88 roots without a MeF source literal, into
 applicable candidates, undecided individual paths, and possible separate-entity
 or payment workflows. Those groupings are triage, not user-approved exclusions
 or completed form-by-form coverage decisions.
