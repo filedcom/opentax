@@ -4478,3 +4478,18 @@ central country-code allowlist comes from the local TY2025 `efileTypes.xsd`;
 German `GM` passes while ISO `DE` and `ZZ` reject. A new full regression on
 the integrated head is pending; local XSD does not establish IRS business-rule
 or ATS acceptance.
+
+The next full command at `536d8b7c` exposed an obsolete Form 1116 negative
+test that expected a final-export error after the shared validator had already
+rejected ISO `DE` at source intake. The test now asserts both intake rejection
+and final rejection of a tampered retained source; its four-case suite passes.
+The long run was stopped after code integration began, so its partial output
+is diagnostic only and has no full-pass claim.
+
+On the integrated follow-up branch, the Form 1116, RRB pension/withholding,
+Form 1040 PDF, and ATS Scenario 13 suites pass **112/112** in
+`/tmp/opentax-integrated-oct5-focused-a.log`. The SSA/lump-sum and A2A
+archive/submission suites pass **108/108** in
+`/tmp/opentax-integrated-oct5-focused-b.log`. These runs cover the newly
+integrated code paths but not the repository-wide gate. A fresh full command
+is pending after integration.

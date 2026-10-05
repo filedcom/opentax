@@ -6,7 +6,7 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1319 bounded completed slices. A completed slice does not close its
+records 1324 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are
@@ -74,6 +74,13 @@ filer owner, and A2A submission may omit the optional electronic postmark.
 The W-2G end-to-end fixture now supplies its required 2025 source year.
 The integrated focused follow-up passes 163/163; a full rerun is pending after
 one yearless legacy fixture caused the previous 11,210-pass run to fail.
+The later IRS-code negative test now asserts source-intake rejection. Repeated
+RRB-1099-R copies require distinct issued references, and SSA/RRB box 5 is
+counted once when a lump-sum worksheet is present. Form 1040 prints the TY2025
+IRS country name for foreign addresses; A2A evidence rejects unseen document
+references; Scenario 13 records its unmarked U.S.-home checkbox. Two integrated
+focused batches pass 112/112 and 108/108. A clean full rerun of these changes
+is pending.
 Other country/source and visual review remain open.
 Scenario 8's code-Q distribution and blank Form 1040 line 4a still need
 reconciliation, as do the other open ATS source conflicts.
