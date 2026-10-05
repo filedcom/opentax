@@ -34,7 +34,7 @@ const yesNo = (domainKey: string, yesField: string, noField: string) => [
 
 const fields: readonly PdfFieldEntry[] = [
   ...["a", "b", "c"].map((part, index) =>
-    text(`pdf_return_ssn_${part}`, `${p1}.SocialSecurity[0].f1_${index + 2}[0]`)
+    text(`pdf_totals_ssn_${part}`, `${p1}.SocialSecurity[0].f1_${index + 2}[0]`)
   ),
   ...[
     ["line1", "f1_5"],
@@ -175,7 +175,10 @@ export const form8863Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8863--2025.pdf",
   fields,
   filerFields: [
-    text("nameLine1", `${p1}.f1_1[0]`),
+    {
+      ...text("nameLine1", `${p1}.f1_1[0]`),
+      includeWhen: (instance) => instance.pdf_first_student === true,
+    },
     text("nameLine1", `${p2}.f2_1[0]`),
   ],
   pageIndices: (instance) => instance.pdf_first_student === true ? [0, 1] : [1],
@@ -239,6 +242,9 @@ export const form8863Pdf: PdfFormDescriptor = {
           : { pdf_line31: item.llc_adjusted_expenses }),
         ...(index === 0
           ? {
+            pdf_totals_ssn_a: taxpayerA,
+            pdf_totals_ssn_b: taxpayerB,
+            pdf_totals_ssn_c: taxpayerC,
             ...(lines.aocStudents.length > 0
               ? {
                 line1: lines.line1,

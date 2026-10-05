@@ -1,3 +1,4 @@
+import { claimantReviewSchema } from "../nodes/inputs/f8863/claimant-review.ts";
 import {
   education_income,
   itemSchema as educationIncomeItemSchema,
@@ -756,6 +757,12 @@ export const inputNodes: readonly InputNodeEntry[] = [
     node: education_income,
     itemSchema: educationIncomeItemSchema,
     isArray: true,
+  },
+  {
+    node: f8863,
+    inputKey: "f8863_claimant_review",
+    inputSchema: z.object({ claimant_review: claimantReviewSchema }),
+    isArray: false,
   },
   { node: f8863, itemSchema: f8863ItemSchema, isArray: true },
   {

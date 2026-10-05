@@ -1,3 +1,9 @@
+import {
+  adultEducationReview,
+  educationDependentReview,
+  educationGeneralReview,
+  educationOwnershipReview,
+} from "../form8863-owner-review.fixture.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../mef/header.ts";
 import { FilingStatus as SourceFilingStatus } from "../../../nodes/types.ts";
@@ -14,6 +20,7 @@ const student = {
   credit_type: "aoc" as const,
   student_name: "Student Test",
   student_ssn: "222-33-4444",
+  ownership_review: educationOwnershipReview("222-33-4444"),
   filer_magi: 70_000,
   filing_status: SourceFilingStatus.Single,
   aoc_adjusted_expenses: 4_000,
@@ -61,13 +68,18 @@ const worksheet = {
   schedule3_line6d: 0,
   schedule3_line6l: 0,
 };
-const source = { f8863s: [student], credit_limit_worksheet: worksheet };
+const source = {
+  claimant_review: adultEducationReview,
+  f8863s: [student],
+  credit_limit_worksheet: worksheet,
+};
 const final = {
+  general: educationGeneralReview,
   f1040: {
     filing_status: "single",
     dependent_details: [
-      { ssn: "222-33-4444" },
-      { ssn: "333-44-5555" },
+      educationDependentReview("222-33-4444"),
+      educationDependentReview("333-44-5555"),
     ],
     line11_agi: 70_000,
     line18_total_tax_before_credits: 10_000,
@@ -109,6 +121,7 @@ Deno.test("Form 8863 PDF adds only a Part III page for a second student", () => 
     credit_type: "llc" as const,
     student_name: "Scholar Test",
     student_ssn: "333-44-5555",
+    ownership_review: educationOwnershipReview("333-44-5555"),
     aoc_adjusted_expenses: undefined,
     llc_adjusted_expenses: 5_000,
     education_expense_workpaper: {
@@ -122,6 +135,7 @@ Deno.test("Form 8863 PDF adds only a Part III page for a second student", () => 
   };
   const instances = form8863Pdf.instances?.(
     {
+      claimant_review: adultEducationReview,
       f8863s: [student, llc],
       credit_limit_worksheet: worksheet,
     },
@@ -149,7 +163,11 @@ Deno.test("Form 8863 PDF prints zero on AOC lines 28 and 29 below the first tier
     },
   };
   const [projected] = form8863Pdf.instances?.(
-    { ...source, f8863s: [firstTierStudent] },
+    {
+      ...source,
+      claimant_review: adultEducationReview,
+      f8863s: [firstTierStudent],
+    },
     filer,
     {
       ...final,
@@ -193,6 +211,7 @@ Deno.test("Form 8863 PDF closes ambiguous institution and unreconciled return pa
       form8863Pdf.instances?.(
         {
           ...source,
+          claimant_review: adultEducationReview,
           f8863s: [{
             ...student,
             filing_details: {
@@ -215,6 +234,7 @@ Deno.test("Form 8863 PDF closes ambiguous institution and unreconciled return pa
       form8863Pdf.instances?.(
         {
           ...source,
+          claimant_review: adultEducationReview,
           f8863s: [{
             ...student,
             filing_details: {

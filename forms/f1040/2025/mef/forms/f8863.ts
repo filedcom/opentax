@@ -1,3 +1,8 @@
+import {
+  dependentSchema,
+  educationDependentSourceEligible,
+} from "../../../nodes/inputs/general/index.ts";
+import { assertEducationClaimantSources } from "../../../nodes/inputs/f8863/claimant-review.ts";
 import { assertEducationIncomeSource } from "../../../nodes/inputs/education_income/index.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import {
@@ -138,6 +143,35 @@ export function assertForm8863FinalizedReturn(
       "Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile",
     );
   }
+  const dependentCredit = pending?.f8812 as Record<string, unknown> | undefined;
+  const items = (dependentCredit?.f8812s ?? []) as Record<string, unknown>[];
+  const dependentWorksheet = (dependentCredit?.credit_limit_worksheet ??
+    items.find((item) => item.credit_limit_worksheet)
+      ?.credit_limit_worksheet) as Record<string, unknown> | undefined;
+  if (
+    fields.claimant_review &&
+    ((Number(final1040.line19_child_tax_credit ?? 0)) > 0 ||
+      (Number(final1040.line28_actc ?? 0)) > 0) &&
+    !dependentWorksheet
+  ) {
+    throw new Error(
+      "Reviewed education claimant's dependent credit needs its retained Schedule 8812 credit-limit worksheet",
+    );
+  }
+  if (
+    dependentWorksheet && dependentWorksheet.schedule3_line3 !== lines.line19
+  ) {
+    throw new Error(
+      "Form 8863 education credit must match Schedule 8812's preceding-credit worksheet",
+    );
+  }
+  assertEducationClaimantSources(
+    fields,
+    pending,
+    filer.primarySSN,
+    (source) => educationDependentSourceEligible(dependentSchema.parse(source)),
+    filer.spouse?.ssn,
+  );
 }
 
 function boolElement(tag: string, value: boolean): string {

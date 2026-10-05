@@ -1,5 +1,13 @@
 # TY2025 Form 8863 positive PDF boundary
 
+## Dependent ownership and claimant refund evidence (2026-10-06)
+
+The [dependent/claimant proof](ty2025-form8863-dependent-claimant-review.md)
+adds adult-parent and student-own-return packets, actual two-student PDF copies,
+claimant age/support computation and source joins, and Schedule 8812 education
+credit ordering. Its evidence and limits supersede the historical PDF-only
+blocker below for those reviewed cases.
+
 ## Mixed school checkpoint (2026-10-06)
 
 One student’s two U.S. institutions now have mixed received/missing Form 1098-T

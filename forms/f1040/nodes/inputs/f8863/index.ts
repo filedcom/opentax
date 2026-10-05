@@ -1,3 +1,8 @@
+import {
+  claimantReviewSchema,
+  reviewedEducationStudents,
+  studentOwnershipReviewSchema,
+} from "./claimant-review.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -211,6 +216,7 @@ export const itemSchema = z.object({
   // Required by TY2025 MeF. The older display strings above are not parsed
   // into identity or institution addresses for filing.
   filing_details: studentFilingSchema.optional(),
+  ownership_review: studentOwnershipReviewSchema.optional(),
   education_expense_workpaper: educationExpenseWorkpaperSchema.optional(),
   institution_expense_workpapers: z.array(z.object({
     institution_ein: z.string().regex(/^\d{2}-?\d{7}$/).optional(),
@@ -231,6 +237,7 @@ export const creditLimitWorksheetSchema = z.object({
 
 export const inputSchema = z.object({
   f8863s: z.array(itemSchema).min(1),
+  claimant_review: claimantReviewSchema.optional(),
   // Set by Form 8862 when prior-year AOTC disallowance has been cleared
   form8862_filed: z.boolean().optional(),
   credit_limit_worksheet: creditLimitWorksheetSchema.optional(),
@@ -931,7 +938,7 @@ function llcOutputs(
 
 export function calculateForm8863Lines(rawInput: F8863Input) {
   const input = inputSchema.parse(rawInput);
-  const items = input.f8863s;
+  const items = reviewedEducationStudents(input);
   validateReturnContext(items);
   const aocStudents = eligibleAocStudents(items);
   const llcStudents = eligibleLlcStudents(items);

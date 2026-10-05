@@ -240,6 +240,7 @@ export const dependentSchema = z.object({
     no_competing_eitc_claim_verified: z.literal(true),
   }).strict().optional(),
   child_care_months: z.number().int().min(0).max(12).optional(), // For Form 2441
+  education_dependency_record_reference: z.string().trim().min(1).optional(),
   education_credit_eligible: z.boolean().optional(), // For Form 8863
   ip_pin: z.string().length(6).optional(), // Dependent's IP PIN
 });
@@ -299,6 +300,7 @@ export const inputSchema = z.object({
   taxpayer_form8880_claimed_as_dependent: z.boolean().optional(),
   taxpayer_blind: z.boolean().optional(),
   taxpayer_age_65_or_older: z.boolean().optional(),
+  taxpayer_claimed_as_dependent: z.boolean().optional(),
   taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
   spouse_can_be_claimed_as_dependent: z.boolean().optional(),
   mfj_dependent_refund_only_review: z.object({
@@ -940,6 +942,14 @@ function isQualifyingRelativeForODC(dep: DependentItem): boolean {
   if (dep.taxpayer_provided_over_half_support !== true) return false;
   // The 2025 gross-income limit is $5,200. Zero is a valid explicit answer.
   return dep.gross_income !== undefined && dep.gross_income < 5200;
+}
+
+/** Ordinary dependency facts reused by education ownership reconciliation. */
+export function educationDependentSourceEligible(dep: DependentItem): boolean {
+  return dep.us_citizen_national_or_resident === true &&
+    dep.provided_over_half_own_support !== true &&
+    dep.dependent_on_another_return !== true &&
+    (isQualifyingChildForODC(dep) || isQualifyingRelativeForODC(dep));
 }
 
 export function dependentCreditCategory(
