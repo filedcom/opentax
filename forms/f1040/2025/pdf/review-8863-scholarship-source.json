@@ -1,0 +1,165 @@
+{
+  "inputs": {
+    "general": {
+      "filing_status": "single",
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Example",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_dob": "1985-06-15",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "address_line1": "1 Example Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false
+    },
+    "w2": [
+      {
+        "box1_wages": 75000,
+        "box2_fed_withheld": 11000,
+        "employee_ssn": "111-22-3333",
+        "box3_ss_wages": 75000,
+        "box4_ss_withheld": 4650,
+        "box5_medicare_wages": 75000,
+        "box6_medicare_withheld": 1087.5,
+        "employer_ein": "12-3456789",
+        "employer_name": "Example Employer",
+        "employer_address_line1": "10 Employer Road",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "box12_entries": [],
+        "source_document_reference": "2025-Alex-issued-W2-employer-tuition"
+      }
+    ],
+    "education_income": [
+      {
+        "kind": "scholarship_not_on_w2",
+        "student_ssn": "111223333",
+        "source_document_reference": "2025-student-income-includes-6000-scholarship",
+        "tax_year": 2025,
+        "taxable_amount": 6000,
+        "payer_name": "Test University",
+        "nonqualified_expenses_paid": 6000,
+        "nonqualified_expense_payment_record_ids": [
+          "2025-Alex-room-board-payment"
+        ],
+        "scholarship_terms_record_id": "2025-scholarship-terms-permit-nonqualified-use",
+        "taxable_allocation_record_id": "2025-student-scholarship-allocation-workpaper"
+      }
+    ],
+    "f8863": [
+      {
+        "credit_type": "aoc",
+        "student_name": "Alex Example",
+        "student_ssn": "111223333",
+        "aoc_claimed_4_prior_years": false,
+        "enrolled_half_time": true,
+        "completed_4_years_postsec": false,
+        "felony_drug_conviction": false,
+        "aoc_adjusted_expenses": 6000,
+        "filer_magi": 81000,
+        "filing_status": "single",
+        "taxpayer_under_24_no_refundable_aoc": false,
+        "filing_details": {
+          "first_name": "Alex",
+          "last_name": "Example",
+          "name_control": "EXAM",
+          "institutions": [
+            {
+              "name": "Test University",
+              "us_address": {
+                "line1": "1 College Way",
+                "city": "Austin",
+                "state": "TX",
+                "zip": "78701"
+              },
+              "current_year_1098t_received": false,
+              "prior_year_1098t_received": false,
+              "ein": "12-3456789"
+            }
+          ]
+        },
+        "education_expense_workpaper": {
+          "missing_1098t_exception": {
+            "student_ssn": "111223333",
+            "institution_name": "Test University",
+            "eligible_educational_institution": true,
+            "eligible_institution_record_id": "2025-school-Title-IV-eligibility-review",
+            "student_enrolled": true,
+            "enrolled_in_degree_or_credential_program": true,
+            "enrollment_record_id": "2025-Alex-school-enrollment",
+            "academic_period_start_date": "2025-09-01",
+            "payment_tax_year": 2025,
+            "assistance_record_id": "2025-Alex-school-financial-aid-review",
+            "nonreceipt_basis_record_id": "2025-Alex-school-nonreceipt-review",
+            "reason": "institution_not_required",
+            "institution_required_to_furnish_1098t": false,
+            "furnishing_basis": {
+              "kind": "expenses_waived_or_paid_entirely_with_scholarships",
+              "qualified_tuition_entirely_waived_or_scholarship_paid": true,
+              "waived_qualified_tuition_amount": 0,
+              "scholarship_paid_qualified_tuition_amount": 6000,
+              "tax_free_scholarship_payment_amount": 0,
+              "taxable_scholarship_payment_amount": 6000,
+              "scholarship_terms_record_id": "2025-scholarship-terms-permit-nonqualified-use",
+              "scholarship_terms_allow_taxable_allocation": true,
+              "taxable_allocation_record_id": "2025-student-scholarship-allocation-workpaper",
+              "taxable_amount_in_student_gross_income": 6000,
+              "student_gross_income_record_id": "2025-student-income-includes-6000-scholarship"
+            }
+          },
+          "payment_record_ids": [
+            "2025-Alex-tuition-payment"
+          ],
+          "paid_tuition_required_fees": 6000,
+          "paid_course_materials_to_institution": 0,
+          "paid_course_materials_elsewhere": 0,
+          "outside_materials_needed_for_course": false,
+          "institution_materials_required_for_enrollment": false,
+          "tax_free_assistance_applied_to_expenses": 0,
+          "qualified_expense_refunds": 0,
+          "expenses_used_for_other_tax_benefits": 0
+        }
+      }
+    ],
+    "f8863_credit_limit_worksheet": {
+      "credit_limit_worksheet": {
+        "form1040_line18_tax": 9275,
+        "schedule3_line1_foreign_tax_credit": 0,
+        "schedule3_line2_dependent_care_credit": 0,
+        "schedule3_line6d": 0,
+        "schedule3_line6l": 0
+      }
+    }
+  },
+  "filer": {
+    "primarySSN": "111223333",
+    "firstName": "Alex",
+    "lastName": "Example",
+    "firstNameWithInitial": "Alex",
+    "fullName": "Alex Example",
+    "nameLine1": "ALEX EXAMPLE",
+    "nameControl": "EXAM",
+    "address": {
+      "line1": "1 Example Way",
+      "city": "Austin",
+      "state": "TX",
+      "zip": "78701"
+    },
+    "filingStatus": 1
+  }
+}

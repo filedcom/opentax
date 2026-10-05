@@ -1,3 +1,6 @@
+import educationScholarshipSource from "./review-8863-scholarship-source.json" with {
+  type: "json",
+};
 import { multipleScheduleCFixture } from "./review-8995-multiple.fixture.ts";
 import { twoSchoolEducationFixture } from "./review-8863-two-schools.fixture.ts";
 import {
@@ -9021,6 +9024,17 @@ const educationBase = basePdfReviewFixtures.find((fixture) =>
   fixture.id === "single-form8863-lifetime-learning-scholarship"
 )!;
 export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
+  {
+    id: "single-form8863-missing-tuition-form-taxable-scholarship-phaseout",
+    inputs: educationScholarshipSource.inputs,
+    filer: educationScholarshipSource.filer as FilerIdentity,
+    expectedPdfForms: ["f1040", "schedule1", "schedule3", "f8863"],
+    reviewFocus: [
+      "Retained 6000 taxable scholarship reaches Schedule 1 line 8r and 81000 MAGI without changing issued W2 wages75000",
+      "AOC phaseout yields 1350 nonrefundable and900 refundable credit from paid tuition after taxable assistance allocation",
+      "School 1098T No/No indicators and truthful issued-copy exemption match sourced institution identity and Form8863 rows",
+    ],
+  },
   ...basePdfReviewFixtures,
   twoSchoolEducationFixture(educationBase, "llc"),
   twoSchoolEducationFixture(educationBase, "aoc"),
