@@ -6,22 +6,17 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1305 bounded completed slices. A completed slice does not close its
+records 1306 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are
 settled. The [dependency audit](docs/mef/ty2025-nonnamed-board-dependency-audit.md)
 identifies independent work, product decisions, named-form prerequisites,
-validation, and IRS ATS needs. The latest complete local full batch passed
-11,188/11,188 at historical commit `632d3a46`. A current full rerun on
-`35e6df45` reached 11,186 passed and 10 failed: four direct Form 8863 PDF
-fixtures omitted student identities required by the filer/dependent guard;
-their setup is corrected and focused Form 8863 PDF, route, and XSD tests pass
-15/15. Six extracted-text/raster assertions differ under the temporary PDFKit
-tools used for that run. The original Poppler 26.09.0 binaries have since been
-located and run successfully; a current full rerun remains pending. The run log is in
-`/tmp/opentax-deno-task-test-2026-10-05.log`; focused and packet checks below
-cover later slices, but the full batch has not passed at current head. The current-source selected packet
+validation, and IRS ATS needs. A full local rerun started at `8c0cb4e2`
+with real Poppler 26.09.0 passed **11,197/11,197**, 0 failed, 0 ignored in
+34m04s. Its log is `/tmp/opentax-deno-task-test-poppler-2026-10-05.log`.
+The later Form 7217 liquidating full-return XSD case passes 1/1 separately;
+the all-route and ATS gates remain open. The current-source selected packet
 has 175 exportable synthetic cases with 1,073 filled PDF pages; the latest
 read-only source/hash/page/XSD replay also omits 14 blank Form 6251 pages and
 passes with the corrected Form 8863 student identity. Additional bounded

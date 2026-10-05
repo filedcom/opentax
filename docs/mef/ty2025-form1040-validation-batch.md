@@ -4371,3 +4371,22 @@ spouse copy's recipient TIN rejects in native and PDF export. The focused
 `joint-mixed-source-return.test.ts` case passed 1/1 with `xmllint` and
 `pdftotext`; this bounded synthetic joint-owner check does not complete the
 broader source/duplicate/correction matrix or visual review.
+
+## Integrated real-Poppler full regression (2026-10-05)
+
+The full `PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test` run started
+at code commit `8c0cb4e2` on October 5 at 16:42 UTC and completed at 17:16
+UTC. It passed **11,197 tests, 0 failed, 0 ignored** in 34m04s. Tool versions:
+Deno 2.9.4, TypeScript 6.0.3, libxml 2.9.13, and Poppler 26.09.0. The
+complete log is `/tmp/opentax-deno-task-test-poppler-2026-10-05.log`, SHA-256
+`9ecc6822ecd5a89944baa03af3bed2d3acc0ec2f65c105fd33714b8d898b6da3`.
+No ignored-test reason applies. The four Form 8863 fixtures corrected after
+the previous run and the three Form 3800 page counts now pass with the real
+Poppler tools; the temporary PDFKit extraction differences also disappear.
+
+The later Form 7217 liquidating section 732(c) case was added after the XSD
+file had loaded in this full run and passed its own focused local-XSD test
+1/1. The full result therefore covers the `8c0cb4e2` code snapshot, while
+later focused evidence is recorded separately. Neither result proves every
+retained filing route, IRS business rules, the ATS-effective package, or IRS
+acceptance.
