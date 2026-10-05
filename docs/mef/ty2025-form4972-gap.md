@@ -1,5 +1,29 @@
 # TY2025 Form 4972 remaining coverage
 
+## Two spouses each elect NUA, Part II, and Part III (2026-10-06, verified)
+
+The existing `elections[]` calculation and collection export also support a
+joint return on which **both** spouses independently elect to include net
+unrealized appreciation (NUA), 20% capital-gain tax, and ten-year tax. This
+positive route has one full-share Form 1099-R and one complete-balance plan
+statement per spouse, with distinct participants, plans, and source references;
+it excludes annuity, beneficiary/death-benefit, estate-tax, and partial-share
+amounts. The [2025 Form 4972 instructions](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
+require a separate Form 4972 for each spouse on a joint return and a combined
+tax on Form 1040 line 16. Their NUA Worksheet allocates each spouse's box 6
+between the Part II capital amount and Part III ordinary amount.
+
+The new source-backed positive and tamper fixtures prove taxpayer/spouse
+lines 6 of $7,000/$9,600, lines 8 of $28,000/$38,400, and lines 30 of
+$3,630/$5,840; Form 1040 line 16 is $9,470. Native MeF emits two identified
+`IRS4972` documents, and the filled six-page PDF renders two separately named
+Form 4972 pages. The assembled full-return XML validates against the local
+TY2025 v5.4 `Return1040.xsd`; the filled Form 1040 and Form 4972 pages were
+rendered and visually reviewed. Changed box 6, changed box 3, and changed
+combined Form 1040 tax are rejected by both native and PDF projection.
+Source-statement bytes, IRS business rules, ATS acceptance, and the excluded
+combinations above remain outside this bound.
+
 ## Form 6251 line 10 and Schedule J tax refigure (2026-10-01, unrun)
 
 The direct Form 4972 collection already sends its summed special tax to Form
