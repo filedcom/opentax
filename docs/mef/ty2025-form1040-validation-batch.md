@@ -4628,3 +4628,14 @@ The planner now reports 189 fixtures, 116 descriptors, 113 unique keys,
 87 covered keys and 26 uncovered keys. Source attachments are visibly
 synthetic and do not prove independent issuer authenticity. These isolated
 passes do not replace full regression, IRS business rules or ATS acceptance.
+
+The QBI visual review also exposed required zero amounts omitted on Form
+8995-A Schedule C column (c)/line 6 and the parent's unmapped line 40. At
+`c246f53f1`, the supported loss-netting route prints these zeros using the
+canonical cached AcroForm fields. The same five-test suite passed again,
+including actual full-PDF text assertions for the loss-business adjusted
+income and both carryforward fields. Root rendered and inspected the
+corrected parent page 2 and Schedule C; the other ten pages were unchanged.
+This correction is part of the already recorded bounded QBI slice, not a
+new parent completion. Integration into main and its full regression remain
+pending while the stable full run is live.
