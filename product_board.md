@@ -2,9 +2,9 @@
 
 ## Compacted status (2026-10-06)
 
-The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,377 bounded slices**. Broader parents remain open; newly discovered work belongs only in `future_todo` and is outside this execution queue.
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,378 bounded slices**. Broader parents remain open; newly discovered work belongs only in `future_todo` and is outside this execution queue.
 
-Stable snapshot `8aa4beeec` passed the full real-Poppler `deno task test`: **11,245 passed, zero failed or ignored**. Isolated `17462812a` completed with 11,252 passed and five failures, all already repaired in the newer `762db9012` full run, which remains confirmed live. Neither covers subsequent main changes. Exact evidence and limits are in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md).
+Stable snapshot `762db9012` passed the full real-Poppler `deno task test`: **11,271 passed, zero failed or ignored**, at23:39:27 UTC. This confirms repair of all five failures from older `17462812a`. It does not cover later main source changes. Exact evidence and limits are in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md).
 
 Main now includes both-holder Medicare MSA controlling statements and source-owned investment income for multiple-business QBI; their combined restricted integration passes **25/25**. Mixed-school education integration passes **16/16**. Planner has 198 fixtures, **90 of 113 PDF keys covered**, 23 uncovered. Selected QBI, scholarship and Medicare packets have complete replay and all-page visual evidence, archived in the [October 6 checkpoint](docs/mef/ty2025-product-board-status-2026-10-06.md).
 
