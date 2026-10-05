@@ -1,7 +1,5 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { lump_sum_ss } from "./index.ts";
-import { fieldsOf } from "../../../../../core/test-utils/output.ts";
-import { f1040 } from "../../outputs/f1040/index.ts";
 
 function minimalItem(overrides: Record<string, unknown> = {}) {
   return {
@@ -15,10 +13,6 @@ function compute(items: ReturnType<typeof minimalItem>[]) {
   return lump_sum_ss.compute({ taxYear: 2025, formType: "f1040" }, {
     lump_sum_sss: items,
   });
-}
-
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
 // =============================================================================
@@ -64,16 +58,15 @@ Deno.test("lump_sum_ss.compute: zero total_ss_benefits → no output", () => {
 });
 
 // =============================================================================
-// 3. No Lump Sum — Routes Total Directly
+// 3. The issued benefit statement owns line 6a
 // =============================================================================
 
-Deno.test("lump_sum_ss.compute: no lump sum → routes total_ss_benefits to f1040 line6a", () => {
+Deno.test("lump_sum_ss.compute: no lump sum does not duplicate issued box 5", () => {
   const result = compute([minimalItem({
     total_ss_benefits_this_year: 24_000,
     lump_sum_amount: 0,
   })]);
-  const fields = fieldsOf(result.outputs, f1040)!;
-  assertEquals(fields.line6a_ss_gross, 24_000);
+  assertEquals(result.outputs, []);
 });
 
 // =============================================================================
@@ -97,28 +90,25 @@ Deno.test("lump_sum_ss.compute: election flag alone cannot reduce line 6a", () =
 // 5. Lump Sum Election — Not Beneficial
 // =============================================================================
 
-Deno.test("lump_sum_ss.compute: election not beneficial → routes full total_ss_benefits", () => {
+Deno.test("lump_sum_ss.compute: election not beneficial leaves issued box 5 as the source", () => {
   const result = compute([minimalItem({
     total_ss_benefits_this_year: 30_000,
     lump_sum_amount: 18_000,
     is_lump_sum_election_beneficial: false,
   })]);
-  const fields = fieldsOf(result.outputs, f1040)!;
-  assertEquals(fields.line6a_ss_gross, 30_000);
+  assertEquals(result.outputs, []);
 });
 
 // =============================================================================
 // 6. Lump Sum Without Election Override
 // =============================================================================
 
-Deno.test("lump_sum_ss.compute: lump sum present without override → total routed (conservative default)", () => {
-  // Without explicit election flag, default is to include total (no retroactive adjustment without flag)
+Deno.test("lump_sum_ss.compute: lump sum without election does not deposit box 5 twice", () => {
   const result = compute([minimalItem({
     total_ss_benefits_this_year: 24_000,
     lump_sum_amount: 12_000,
   })]);
-  const fields = fieldsOf(result.outputs, f1040)!;
-  assertEquals(fields.line6a_ss_gross, 24_000);
+  assertEquals(result.outputs, []);
 });
 
 // =============================================================================
@@ -158,32 +148,30 @@ Deno.test("lump_sum_ss.compute: prior-year payment splits alone cannot support e
 });
 
 // =============================================================================
-// 9. Output Routing
+// 9. Worksheet cannot create a second return source
 // =============================================================================
 
-Deno.test("lump_sum_ss.compute: output routes to f1040.line6a_ss_gross", () => {
+Deno.test("lump_sum_ss.compute: has no separate f1040 output", () => {
   const result = compute([minimalItem({
     total_ss_benefits_this_year: 18_000,
     lump_sum_amount: 0,
   })]);
-  const out = findOutput(result, "f1040");
-  assertEquals(out !== undefined, true);
+  assertEquals(result.outputs, []);
 });
 
-Deno.test("lump_sum_ss.compute: does not route to any other nodeType", () => {
+Deno.test("lump_sum_ss.compute: does not route to any nodeType", () => {
   const result = compute([minimalItem({
     total_ss_benefits_this_year: 18_000,
     lump_sum_amount: 0,
   })]);
-  assertEquals(result.outputs.length, 1);
-  assertEquals(result.outputs[0].nodeType, "f1040");
+  assertEquals(result.outputs, []);
 });
 
 // =============================================================================
 // 10. Aggregation — Multiple Items
 // =============================================================================
 
-Deno.test("lump_sum_ss.compute: multiple reported items retain the full line 6a total", () => {
+Deno.test("lump_sum_ss.compute: multiple worksheet items do not duplicate line 6a", () => {
   const result = compute([
     minimalItem({
       total_ss_benefits_this_year: 12_000,
@@ -195,8 +183,7 @@ Deno.test("lump_sum_ss.compute: multiple reported items retain the full line 6a 
       is_lump_sum_election_beneficial: false,
     }),
   ]);
-  const fields = fieldsOf(result.outputs, f1040)!;
-  assertEquals(fields.line6a_ss_gross, 30_000);
+  assertEquals(result.outputs, []);
 });
 
 // =============================================================================

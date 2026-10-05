@@ -1,15 +1,7 @@
 import { z } from "zod";
-import type {
-  NodeOutput,
-  NodeResult,
-} from "../../../../../core/types/tax-node.ts";
-import {
-  type AtLeastOne,
-  output,
-  TaxNode,
-} from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { f1040 } from "../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Lump-Sum Social Security Benefits Worksheet
@@ -51,7 +43,6 @@ export const inputSchema = z.object({
 });
 
 type LumpSumSSItem = z.infer<typeof itemSchema>;
-type LumpSumSSItems = LumpSumSSItem[];
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 
@@ -64,31 +55,12 @@ function validateItem(item: LumpSumSSItem): void {
   }
 }
 
-// ─── Pure helpers ─────────────────────────────────────────────────────────────
-
-function totalReportedBenefits(items: LumpSumSSItems): number {
-  return items.reduce((sum, item) => sum + item.total_ss_benefits_this_year, 0);
-}
-
-function f1040Output(items: LumpSumSSItems): NodeOutput[] {
-  const total = totalReportedBenefits(items);
-  if (total === 0) return [];
-  return [
-    output(
-      f1040,
-      { line6a_ss_gross: total } as AtLeastOne<
-        z.infer<typeof f1040["inputSchema"]>
-      >,
-    ),
-  ];
-}
-
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class LumpSumSSNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "lump_sum_ss";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040]);
+  readonly outputNodes = new OutputNodes([]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
@@ -106,8 +78,10 @@ class LumpSumSSNode extends TaxNode<typeof inputSchema> {
       );
     }
 
-    const outputs: NodeOutput[] = f1040Output(lump_sum_sss);
-    return { outputs };
+    // The total already appears in issued SSA-1099/RRB-1099 box 5. Final
+    // return preflight matches this worksheet to those copies; depositing it
+    // again would double Form 1040 line 6a and taxable-benefit calculations.
+    return { outputs: [] };
   }
 }
 
