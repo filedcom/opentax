@@ -21,8 +21,8 @@ function lifetimeLearningReturn() {
     ...base.inputs,
     f8863: [{
       credit_type: "llc",
-      student_name: "Student Test",
-      student_ssn: "222-33-4444",
+      student_name: "Alex Example",
+      student_ssn: base.filer.primarySSN,
       filer_magi: 75_000,
       filing_status: FilingStatus.Single,
       llc_adjusted_expenses: 7_500,
@@ -45,9 +45,9 @@ function lifetimeLearningReturn() {
         expenses_used_for_other_tax_benefits: 0,
       },
       filing_details: {
-        first_name: "Student",
-        last_name: "Test",
-        name_control: "TEST",
+        first_name: "Alex",
+        last_name: "Example",
+        name_control: "EXAM",
         institutions: [{
           name: "Test University",
           us_address: {

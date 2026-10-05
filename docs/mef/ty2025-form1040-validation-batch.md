@@ -4351,3 +4351,14 @@ finalized Schedule 3 credit changes. The focused graph/XSD command was
 `deno test forms/f1040/2025/pdf/forms/f8911.test.ts forms/f1040/2025/pdf/forms/schedule3_line6d.test.ts`
 passed 7/7. Filled-page visual review, other Form 8911 shapes, the full batch,
 and ATS acceptance remain open.
+
+After adding the Form 8863 student-identity guard, the selected LLC fixture was
+corrected to identify the primary filer as its student. The regenerated Form
+8863 page was visually inspected; its four companion pages are text-identical
+to the previously reviewed PDF. The read-only selected-packet checker then
+passed all 175 cases and 1,073 pages, including regenerated source/XML/PDF hash
+replay and local TY2025 v5.4 XSD. Log:
+`.state/research/ty2025-exportable-175-after-f8863-identity-check.log`,
+SHA-256 `4fdfb30922622dbddf7167a04456d8ffdd26e751f7d769c893b8dd5d713c8a9d`;
+updated manifest SHA-256
+`590c79d23d81f155440ed030510a4ed961bcc956a1f1c2da05ae25a80936765d`.

@@ -6,7 +6,7 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1283 bounded completed slices. A completed slice does not close its
+records 1287 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are
@@ -15,7 +15,11 @@ identifies independent work, product decisions, named-form prerequisites,
 validation, and IRS ATS needs. The integrated local full batch passed
 11,188/11,188 after the latest source and PDF fixes. The current-source selected packet
 has 175 exportable synthetic cases with 1,073 filled PDF pages; the latest
-read-only source/hash/page/XSD replay also omits 14 blank Form 6251 pages.
+read-only source/hash/page/XSD replay also omits 14 blank Form 6251 pages and
+passes with the corrected Form 8863 student identity. Additional bounded
+slices verify Form 8911 native/PDF parity, clarify Form 4547's signature rule,
+pin the exact Form 8880 age cutoff, and record ATS Scenario 2's printed
+MFJ/QSS marks.
 The remaining
 11 of 186 fixtures have explicit source or attachment guards. Those checks do
 not prove every route, every PDF page, IRS business-rule compliance, or ATS

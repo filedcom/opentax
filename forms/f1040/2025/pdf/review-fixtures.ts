@@ -7227,8 +7227,8 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       w2: [wage(75_000, 11_000, "Example Employer", "12-3456789")],
       f8863: [{
         credit_type: "llc",
-        student_name: "Student Test",
-        student_ssn: "222-33-4444",
+        student_name: "Alex Example",
+        student_ssn: singleGeneral.taxpayer_ssn,
         filer_magi: 75_000,
         filing_status: SourceFilingStatus.Single,
         llc_adjusted_expenses: 7_500,
@@ -7251,9 +7251,9 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
           expenses_used_for_other_tax_benefits: 0,
         },
         filing_details: {
-          first_name: "Student",
-          last_name: "Test",
-          name_control: "TEST",
+          first_name: singleGeneral.taxpayer_first_name,
+          last_name: singleGeneral.taxpayer_last_name,
+          name_control: "EXAM",
           institutions: [{
             name: "Test University",
             us_address: {
