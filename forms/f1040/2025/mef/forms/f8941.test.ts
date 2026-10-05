@@ -9,7 +9,11 @@ import { buildForm3800NonpassiveParts } from "./f3800_nonpassive.ts";
 
 Deno.test("staged IRS8941 and official PDF project the same direct credit", () => {
   const filed = form8941FiledFixture();
-  const filer = { ...testFiler(), primarySSN: filed.f8941.owner_ssn };
+  const filer = {
+    ...testFiler(),
+    primarySSN: filed.f8941.owner_ssn,
+    fullName: filed.f8941.owner_name,
+  };
   const xml = form8941.build(filed.f8941, {
     pending: filed,
     filer,
@@ -169,7 +173,11 @@ Deno.test("Form 8941 printable copy binds Form 3800 line 4h document and final c
 
 Deno.test("staged Form 8941 rejects Schedule C payroll, deduction, owner and source tampering", () => {
   const filed = form8941FiledFixture();
-  const filer = { ...testFiler(), primarySSN: filed.f8941.owner_ssn };
+  const filer = {
+    ...testFiler(),
+    primarySSN: filed.f8941.owner_ssn,
+    fullName: filed.f8941.owner_name,
+  };
   assertThrows(
     () =>
       form8941.build(filed.f8941, {
@@ -186,7 +194,7 @@ Deno.test("staged Form 8941 rejects Schedule C payroll, deduction, owner and sou
         documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
       }),
     Error,
-    "premium deduction differs from Form 3800 allowed credit",
+    "payroll or premium deduction differs from Schedule C",
   );
   assertThrows(
     () =>
@@ -221,12 +229,13 @@ Deno.test("staged Form 8941 rejects Schedule C payroll, deduction, owner and sou
           f3800: {
             ...filed.f3800,
             form8941_applied_credit: 11_697,
+            tax_context: { specifiedCredit: 11_698 },
           },
         },
         filer,
         documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
       }),
     Error,
-    "premium deduction differs from Form 3800 allowed credit",
+    "tax-use allocation differs",
   );
 });

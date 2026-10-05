@@ -1,3 +1,4 @@
+import { form8941OwnedReviewFixture } from "./review-8941-owned.fixture.ts";
 import {
   accountingSstbFixture,
   accountingSstbNoPayrollFixture,
@@ -9032,6 +9033,7 @@ const educationBase = basePdfReviewFixtures.find((fixture) =>
   fixture.id === "single-form8863-lifetime-learning-scholarship"
 )!;
 export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
+  form8941OwnedReviewFixture(),
   medicareMsaReviewFixture(),
   jointPrimaryAccountingSstbFixture(
     accountingSstbFixture(

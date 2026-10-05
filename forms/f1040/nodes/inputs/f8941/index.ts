@@ -4,11 +4,14 @@ import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { TS } from "../../types.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
+import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import { f3800 } from "../f3800/index.ts";
 import { shopReviewSchema, verifyForm8941ShopReview } from "./shop_evidence.ts";
 
 const amount = z.number().int().finite().nonnegative();
 const employeeSchema = z.object({
+  employee_ssn: z.string().regex(/^\d{9}$/),
   employee_reference: z.string().trim().min(1),
   hours_of_service: z.number().int().min(1).max(2080),
   social_security_medicare_wages: z.number().int().positive(),
@@ -182,19 +185,29 @@ export function calculateForm8941(raw: unknown): Form8941Lines {
 class F8941Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8941";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f3800]);
+  readonly outputNodes = new OutputNodes([f3800, schedule_c, f1040]);
 
   compute(_ctx: NodeContext, rawInput: F8941Input): NodeResult {
     const lines = calculateForm8941(rawInput);
     return {
-      outputs: [output(f3800, {
-        f8941_direct_employer_credit: {
-          credit_amount: lines.line16,
-          schedule_c_business_reference: rawInput.schedule_c_business_reference,
-          shop_plan_reference: rawInput.shop_plan_reference,
-          subject_to_passive_activity_limit: false,
-        },
-      })],
+      outputs: [
+        output(f3800, {
+          f8941_direct_employer_credit: {
+            credit_amount: lines.line16,
+            schedule_c_business_reference:
+              rawInput.schedule_c_business_reference,
+            shop_plan_reference: rawInput.shop_plan_reference,
+            subject_to_passive_activity_limit: false,
+          },
+        }),
+        output(f1040, { form8941_determined_credit: lines.line16 }),
+        output(schedule_c, {
+          form8941_premium_reductions: [{
+            business_reference: rawInput.schedule_c_business_reference,
+            credit_amount: lines.line16,
+          }],
+        }),
+      ],
     };
   }
 }

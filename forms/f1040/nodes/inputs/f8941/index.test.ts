@@ -19,27 +19,7 @@ Deno.test("Form 8941 derives the Albany SHOP credit from employee hours, wages a
 });
 
 Deno.test("Form 8941 applies both printed FTE and wage phaseouts", () => {
-  const source = form8941DirectFixture();
-  source.employees = Array.from({ length: 11 }, (_, index) => ({
-    ...source.employees[0],
-    employee_reference: `EMP-${index + 1}`,
-    enrollment_and_payroll_record_reference: `SHOP-PAYROLL-${index + 1}`,
-    social_security_medicare_wages: 34_000,
-  }));
-  source.shop_review.employee_premium_reviews = Array.from(
-    { length: 11 },
-    (_, index) => ({
-      ...source.shop_review.employee_premium_reviews[0],
-      employee_reference: `EMP-${index + 1}`,
-      enrollment_and_payroll_record_reference: `SHOP-PAYROLL-${index + 1}`,
-      monthly_premiums: source.shop_review.employee_premium_reviews[0]
-        .monthly_premiums.map((month) => ({
-          ...month,
-          shop_invoice_reference: `SHOP-INV-${index + 1}-${month.month}`,
-          employer_payment_reference: `SHOP-PAID-${index + 1}-${month.month}`,
-        })),
-    }),
-  );
+  const source = form8941DirectFixture(11, 34_000);
   const lines = calculateForm8941(source);
   assertEquals(lines.line2, 11);
   assertEquals(lines.line3, 34_000);
@@ -89,11 +69,11 @@ Deno.test("Form 8941 rejects altered SHOP contributions, rating area, history an
 Deno.test("Form 8941 review binds the IRS table, monthly coverage and paid premiums", () => {
   const table = form8941DirectFixture();
   table.shop_review.irs_table_employee_only_average_premium = 10_000;
-  assertThrows(() => calculateForm8941(table), Error, "not authenticated");
+  assertThrows(() => calculateForm8941(table), Error, "not supported");
 
   const area = form8941DirectFixture();
   area.shop_review.irs_table_county = "Albany County";
-  assertThrows(() => calculateForm8941(area), Error, "not authenticated");
+  assertThrows(() => calculateForm8941(area), Error, "not supported");
 
   const omitted = form8941DirectFixture();
   omitted.shop_review.employee_premium_reviews.pop();

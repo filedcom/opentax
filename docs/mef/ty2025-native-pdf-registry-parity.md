@@ -220,3 +220,7 @@ this supporting descriptor shares the existing `form8853` source slot. Local
 joint packet evidence and broader limits are recorded in the
 [Form 8853 gap](ty2025-form8853-gap.md). Historical October 5 counts above remain
 historical execution snapshots.
+
+## October 6 Form8941 owned packet review
+
+The existing Form8941 descriptor now has public owned SHOP/payroll full/partial/zero tax-use packets, full local2025v5.4XSD proof and all67pages visually reviewed. The held fixture `single-shop-health-premium-credit` covers `f8941`; no descriptor was added (150native/116PDF). The source planner now reports199fixtures,113unique registered PDF keys,91expected keys and22uncovered keys. See [the precise route, deduction rule and limits](ty2025-form8941-gap.md). Broader employer health credit and acceptance claims remain open.

@@ -293,6 +293,12 @@ export const inputSchema = z.object({
     schedule_c_line29_tentative_profit: z.number().int().finite(),
     line36: z.number().int().positive(),
   }).strict().optional(),
+  form8941_premium_reductions: z.array(
+    z.object({
+      business_reference: z.string().trim().min(1),
+      credit_amount: z.number().int().finite().positive(),
+    }).strict(),
+  ).optional(),
   wotc_wage_reductions: z.array(z.object({
     business_reference: z.string().trim().min(1),
     credit_amount: z.number().nonnegative(),
@@ -500,10 +506,41 @@ export function projectSection481aScheduleCItems(
 export function projectScheduleCItems(
   input: z.infer<typeof inputSchema>,
 ): ScheduleCItem[] {
-  return projectForm8829ScheduleCItems({
-    ...input,
-    schedule_cs: projectSection481aScheduleCItems(input),
+  const items = projectSection481aScheduleCItems(input);
+  const reductions = input.form8941_premium_reductions ?? [];
+  const seen = new Set<string>();
+  for (const reduction of reductions) {
+    if (
+      seen.has(reduction.business_reference) ||
+      items.filter((item) =>
+          item.business_reference === reduction.business_reference
+        ).length !== 1
+    ) {
+      throw new Error(
+        "Form8941 premium reduction needs one distinct ScheduleC business",
+      );
+    }
+    seen.add(reduction.business_reference);
+  }
+  const reducedItems = items.map((item) => {
+    const reduction = reductions.find((entry) =>
+      entry.business_reference === item.business_reference
+    );
+    if (!reduction) return item;
+    if (reduction.credit_amount > (item.line_14_employee_benefits ?? 0)) {
+      throw new Error(
+        "Form8941 premium credit exceeds gross employee benefit expense",
+      );
+    }
+    // IRC280C(h): credit determined under45R(a), before section38 tax use.
+    return {
+      ...item,
+      line_14_employee_benefits: (item.line_14_employee_benefits ?? 0) -
+        reduction.credit_amount,
+    };
   });
+  // The full premium reduction increases tentative profit before the home-office limit.
+  return projectForm8829ScheduleCItems({ ...input, schedule_cs: reducedItems });
 }
 
 export function projectForm8829ScheduleCItems(

@@ -1,4 +1,5 @@
 import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
+import { reconcileForm8941DocumentSource } from "../../mef/forms/f8941_source.ts";
 import { roundSignedQbiDollars } from "../../../nodes/inputs/schedule_c/qbi-multiple.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
@@ -448,6 +449,9 @@ export const scheduleCPdf: PdfFormDescriptor = {
       throw new Error(
         "Schedule C PDF line 30 needs a linked Form 8829 calculation",
       );
+    }
+    if (input.form8941_premium_reductions?.length) {
+      reconcileForm8941DocumentSource(allPending.f8941, allPending);
     }
     const items = projectScheduleCItems(input);
     items.forEach((item) =>

@@ -30,21 +30,31 @@ export function reconcileForm8941ScheduleC(
     business.proprietor_recipient !== source.proprietor_recipient ||
     business.line_g_material_participation !== true ||
     business.line_d_ein?.replace(/\D/g, "") !== source.employment_ein ||
-    business.line_26_wages !== wages
+    business.line_26_wages !== wages ||
+    business.line_14_employee_benefits !==
+      source.other_schedule_c_employee_benefits + lines.line4
   ) {
     throw new Error(
       "Form 8941 payroll or premium deduction differs from Schedule C",
     );
   }
+  const reductions = scheduleC.form8941_premium_reductions;
+  if (
+    !reductions || reductions.length !== 1 ||
+    reductions[0].business_reference !== source.schedule_c_business_reference ||
+    reductions[0].credit_amount !== lines.line16
+  ) {
+    throw new Error(
+      "Form8941 premium reduction differs from determined source credit",
+    );
+  }
   if (appliedCredit !== undefined) {
     if (
       !Number.isInteger(appliedCredit) || appliedCredit < 0 ||
-      appliedCredit > lines.line16 ||
-      business.line_14_employee_benefits !==
-        source.other_schedule_c_employee_benefits + lines.line4 - appliedCredit
+      appliedCredit > lines.line16
     ) {
       throw new Error(
-        "Form 8941 premium deduction differs from Form 3800 allowed credit",
+        "Form 8941 tax-use allocation exceeds determined credit",
       );
     }
   }
@@ -52,6 +62,14 @@ export function reconcileForm8941ScheduleC(
     const ownerSSN = source.proprietor_recipient === TS.T
       ? filer.primarySSN
       : filer.spouse?.ssn;
+    if (
+      source.proprietor_recipient === TS.T && filer.fullName &&
+      source.owner_name !== filer.fullName
+    ) {
+      throw new Error(
+        "Form 8941 owner name differs from Schedule C proprietor",
+      );
+    }
     if (ownerSSN !== source.owner_ssn) {
       throw new Error("Form 8941 owner SSN differs from Schedule C proprietor");
     }
@@ -84,6 +102,20 @@ export function reconcileForm8941DocumentSource(
     filer,
     form3800.form8941_applied_credit,
   );
+  // The sole-source public route finalizes the actual section38 tax use.
+  // Mixed-source allocations are independently reconciled by Form3800 preparation.
+  if (
+    "tax_context" in form3800 && form3800.tax_context &&
+    typeof form3800.tax_context === "object" &&
+    "specifiedCredit" in form3800.tax_context &&
+    form3800.tax_context.specifiedCredit === reconciled.lines.line16 &&
+    "specified_credit_allowed" in form3800 &&
+    form3800.specified_credit_allowed !== form3800.form8941_applied_credit
+  ) {
+    throw new Error(
+      "Form 8941 tax-use allocation differs from finalized Form3800",
+    );
+  }
   const credit = form3800.f8941_direct_employer_credit;
   if (
     !credit || typeof credit !== "object" ||

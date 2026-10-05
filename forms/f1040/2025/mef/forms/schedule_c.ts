@@ -1,4 +1,5 @@
 import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
+import { reconcileForm8941DocumentSource } from "./f8941_source.ts";
 import { roundSignedQbiDollars } from "../../../nodes/inputs/schedule_c/qbi-multiple.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import { z } from "zod";
@@ -377,6 +378,13 @@ export const scheduleC: MefFormDescriptor<
       ) {
         throw new Error("Schedule C home-office claim differs from Form 8829");
       }
+    }
+    if (input.form8941_premium_reductions?.length) {
+      reconcileForm8941DocumentSource(
+        context.pending?.f8941,
+        context.pending ?? {},
+        context.filer,
+      );
     }
     const items = projectScheduleCItems(input);
     if (items.length > 8) {

@@ -87,10 +87,20 @@ const paths = new Set<string>([
     (_, index) => Object.values(form3800PartVIFields(index + 1)),
   ).flat(),
 ]);
+const requiredZeroPaths = new Set<string>([
+  form3800PartIAndIIFields.line11,
+  form3800PartIAndIIFields.line16,
+  form3800PartIAndIIFields.line27,
+  form3800PartIAndIIFields.line29,
+  form3800PartIAndIIFields.line37,
+  form3800PartIAndIIFields.line38,
+  form3800PartIIIFields("4h").i,
+]);
 const fields: readonly PdfFieldEntry[] = [...paths].map((path) => ({
   kind: checkboxPaths.has(path) ? "checkbox" : "text",
   domainKey: path,
   pdfField: path,
+  ...(requiredZeroPaths.has(path) ? { printZero: true } : {}),
 }));
 
 export const form3800Pdf: PdfFormDescriptor = {
@@ -99,7 +109,10 @@ export const form3800Pdf: PdfFormDescriptor = {
   fields,
   instances(raw, filer, all, prepared) {
     if (Object.keys(raw).length === 0) return [];
-    if (!prepared || !filer || !all?.schedule3) {
+    if (
+      !prepared || !filer || !all ||
+      (prepared.lines.line38 > 0 && !all.schedule3)
+    ) {
       throw new Error(
         "Form 3800 PDF needs the same prepared MeF return, filer, and Schedule 3",
       );
@@ -120,7 +133,8 @@ export const form3800Pdf: PdfFormDescriptor = {
         "Form 3800 PDF pending allowed credit differs from prepared MeF line 38",
       );
     }
-    const line6a = all.schedule3.line6a_total;
+    const line6a = all.schedule3?.line6a_total ??
+      (prepared.lines.line38 === 0 ? 0 : undefined);
     if (typeof line6a !== "number") {
       throw new Error("Form 3800 PDF needs finalized Schedule 3 line 6a");
     }

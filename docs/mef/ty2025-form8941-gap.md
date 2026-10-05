@@ -1,51 +1,37 @@
-# TY2025 Form 8941 direct employer route and filing boundary
+# TY2025 Form 8941 owned direct employer route
 
-The [2025 IRS instructions](https://www.irs.gov/instructions/i8941) require
-qualifying SHOP coverage, fewer than 25 FTEs, average annual wages below
-$67,000, a two-consecutive-year credit period, and an employee/rating-area
-premium calculation. A direct individual employer reports Form 8941 line 16 on
-Form 3800 Part III line 4h. A K-1-only recipient generally reports on Form 3800
-without a personal Form 8941; a tax-exempt employer uses Form 990-T. Those are
-separate paths.
+## Source and deduction rule
 
-The old public input accepted asserted FTEs, average wages and total premiums.
-It could not prove the credit. It has been replaced with one direct Schedule C
-employer source: one owner and employment EIN, one full-year employee-only SHOP
-plan that covers all nonexcluded employees, a uniform contribution of at least 50%, 1–24 identified nonseasonal
-employees, hours, Medicare/Social Security wages, paid premiums, rating-area
-average premiums, payroll/plan references, no state subsidies, no other
-business/common control, and explicit 2024/2025 credit-period history. The
-calculator builds Worksheets 1–7 and Form 8941 lines 1–16. It floors FTEs,
-rounds average wages down to $1,000, caps employer premiums by the rating-area
-average, and applies both FTE and wage phaseouts. Worksheet 6's printed formula
-uses $33,300 even though the eligibility prose describes the reduction as
-beginning above $33,000. The
-[2025 average-premium table](https://www.irs.gov/instructions/i8941) lists
-$9,358 for employee-only coverage in Albany County, NY, used in the authored
-positive fixture. Other table values are not accepted by this staged source.
+The [2025 IRS instructions](https://www.irs.gov/pub/irs-prior/i8941--2025.pdf) require qualifying SHOP coverage, fewer than25 FTEs, average annual wages below$67,000, a two-consecutive-year credit period and employee/rating-area worksheets. The modeled ordinary employer rate is50%. Worksheets 1–7 floor FTEs at2080hours and average wages to$1,000, cap premiums by the rating-area average and subtract both phaseouts from the original credit. Worksheet 6 uses$33,300 despite the rounded$33,000 threshold in the prose. Table 2025 lists$9,358 for employee-only coverage in Albany County, NY.
 
-The staged SHOP review now checks the official Albany County row at $9,358 and
-binds the Marketplace, plan, employer EIN, and exact employee set. Each employee
-has 12 distinct coverage months with invoice and employer-payment references.
-The monthly amounts must match the annual Worksheet 4 inputs and the uniform
-employer contribution. Duplicated references, missing coverage months, changed
-amounts, and another rating-area row are rejected. This deliberately narrows
-the current staged source to Albany County, NY; other 2025 table rows need
-authenticated entries. Document references are assertions until issuer/plan
-and payment records are independently reviewed, so they do not open filing.
+[26 USC 280C(h)](https://www.govinfo.gov/content/pkg/USCODE-2024-title26/html/USCODE-2024-title26-subtitleA-chap1-subchapB-partIX-sec280C.htm) and [26 CFR 1.45R-5(c)](https://www.ecfr.gov/current/title-26/section-1.45R-5) reduce the premium deduction by the credit **determined under 45R(a)**, before section 38 tax-use limitation. Section 45R(e)(1) instead excludes owners and family from eligible employee expenses. This repairs the earlier staged implementation, which incorrectly netted premiums only by the Form 3800 allowed amount.
 
-The native IRS8941 serializer follows the locally available TY2025 v5.4
-IRS8941 schema. The official one-page PDF descriptor maps the same calculated
-lines and SHOP/credit-period marks. The bounded node sends line 16 to Form 3800
-Part III line 4h, a specified credit. The Form 3800 tax-use allocation carries
-the amount allowed to Schedule 3 and Form 1040, and the source join requires
-Schedule C wages, employment EIN, proprietor, and line 14 employee benefits to
-reflect that allowed amount. The native/PDF registries include Form 8941.
-Positive and tamper fixtures are authored but unrun.
+The public graph retains gross Schedule C employee benefits and produces a business-bound reduction equal to Form 8941 line 16. That projection reaches Schedule C profit, Schedule 1, SE tax/deduction, QBI and Form 1040. A separate sole-source Form 3800 allocation is finalized from actual return tax; no caller supplies the allowed amount for this public route. Native/PDF preflight reconciles gross premiums, wages, business/EIN/proprietor and the full reduction. It also rejects orphan reductions and incompatible credit/allocation/final-return totals.
 
-**Filing remains closed by the attachment guard until the bounded route is
-reviewed.** Payroll and SHOP document references, prior filed returns, local
-XSD, rendered PDF, full-batch tests, IRS business rules, and ATS have not been
-validated. Nonemployee, seasonal, dependent/family
-coverage, multiple plans or businesses, county SHOP exception, tax-exempt, and
-pass-through routes need separate source models.
+## Retained employer records
+
+The bounded source covers one materially participating Schedule C proprietor, employment EIN and full-year employee-only SHOP plan in Albany County, with all nonexcluded employees enrolled and uniform employer contributions of at least50%. Each employee has a distinct SSN and payroll/enrollment reference. Owned payroll records retain tax year, employer EIN, hours and wages. Twelve distinct monthly records bind employee SSN, payer EIN and plan to paid/billed amounts and unique invoice/payment references. Monthly sums and contribution percentages reconcile to annual worksheets. Owner SSNs, reused payroll/invoice/payment records, wrong employer/plan, missing months and changed amounts reject. Exclusion, no-common-control, no-subsidy and credit-period review facts remain explicit source assertions.
+
+The source records and first-year 2025 fixtures are synthetic; they demonstrate source retention and joins, not independent issuer authentication or prior IRS acceptance. The modeled2024 first-year history still needs separate external authentication evidence.
+
+## Executed filing evidence
+
+`forms/f1040/e2e/form8941_owned_2025.test.ts` executes public input through the calculator, native return, prepared bundle and actual filled PDF. Three packets validate against the **complete local TY2025 v5.4 Return1040.xsd** and retain original input, pending graph, calculated form lines, prepared Form 3800 allocation, XML, PDF and extracted text.
+
+| Current tax use | Form 8941 line 16 | Gross Schedule C benefits | Deductible benefits | Schedule C profit | SE tax | Form 1040 AGI | QBI deduction | Form 1040 total tax |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Full 11698 | 11698 | 26000 | 14302 | 135698 | 19173 | 126111 | 22072 | 21810 |
+| Partial 3221 | 11698 | 26000 | 14302 | 55698 | 7870 | 51763 | 7203 | 7870 |
+| Zero 0 | 11698 | 26000 | 14302 | 5698 | 805 | 5295 | 0 | 805 |
+
+The partial and zero cases retain unused current credit 8477/11698 in prepared source allocations. They do not assert an authenticated future carryover or a carryback claim. The credit reaches Form 3800 Part III4h and Parts I/II; the positive allowed amounts reach Schedule 3/1040. Zero use correctly has no Schedule 3 credit document. Form 6251 retains the tentative-minimum-tax calculation. Internal source allocation details reconcile native preparation; printed Part V remains blank for the single source, as the [2025 Form 3800 instructions](https://www.irs.gov/pub/irs-prior/i3800--2025.pdf) require breakdowns for aggregated multiple-source amounts.
+
+Focused evidence: 141 source/Schedule C/native/PDF tests passed; 103 shared Form 3800/F1040 tests passed; the final source packet suite passed 5 tests. Actual native/PDF negatives cover 13 retained-source/allocation/return mutations, and public negatives cover conflicting employee/payroll/invoice ownership. Full and partial packets each have23 pages; zero has21: **all67 pages** were rendered with real Poppler and visually inspected. Review repaired attachment ordering (Form 8995 before Form 8941), required Form 8941 zero lines 10/15 and Form 3800 zero tax-use lines. No clipping, overlap, missing ownership fields or remaining route-specific page defects were observed.
+
+Artifacts: `/tmp/opentax-f8941-owned/.state/research/2026-10-06-form8941-owned/`, including `PROOF.md`, focused logs, the three packets and `all-page-review/`.
+
+The reusable held fixture `single-shop-health-premium-credit` now covers `f8941`. Descriptors remain150 native/116 PDF; the source planner reports199 fixtures,113 unique PDF keys,91 expected keys and22 uncovered keys. This is focused synthetic local evidence, not a full regression, IRS business-rule pass or ATS acceptance.
+
+## Remaining boundaries
+
+Other rating areas, part-year/family/multiple plans, excluded or unenrolled workers, state subsidies, common control/multiple businesses, tax-exempt employers and pass-through credits need their applicable sources and packet evidence. Automatic tax-use allocation here is the sole direct credit with no competing credit/carryover/passive sources; broader mixed-source allocation remains subject to existing source-specific Form 3800 reconciliation. Raw modeled payroll/premium amounts are whole dollars. Independent source authentication, prior/future credit-period and carryover evidence, full-return regression, business rules and ATS remain open. The broader employer health credit parent is not closed by this slice.

@@ -8,6 +8,7 @@ const text = (domainKey: string, number: number): PdfFieldEntry => ({
   kind: "text",
   domainKey,
   pdfField: `${page}.f1_${number}[0]`,
+  ...(domainKey.startsWith("line") ? { printZero: true } : {}),
 });
 
 /** Official PDF projection for the bounded direct employer route. */
@@ -43,7 +44,7 @@ export const form8941Pdf: PdfFormDescriptor = {
       employment_ein: source.employment_ein,
     };
   },
-  instances(fields, _filer, allPending, prepared) {
+  instances(fields, filer, allPending, prepared) {
     if (Object.keys(fields).length === 0) return [];
     if (!allPending || !prepared) {
       throw new Error("Form 8941 PDF needs the prepared Form 3800 document");
@@ -51,6 +52,7 @@ export const form8941Pdf: PdfFormDescriptor = {
     const { lines } = reconcileForm8941DocumentSource(
       allPending.f8941,
       allPending,
+      filer,
     );
     const rows = prepared.currentRows.filter((row) => row.line === "4h");
     const amounts = prepared.currentAmounts.filter((row) => row.line === "4h");

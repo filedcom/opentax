@@ -3,6 +3,9 @@ import { z } from "zod";
 const sourceUrl = "https://www.irs.gov/instructions/i8941";
 
 const monthlyPremiumSchema = z.object({
+  employee_ssn: z.string().regex(/^\d{9}$/),
+  payer_employment_ein: z.string().regex(/^\d{9}$/),
+  shop_plan_reference: z.string().trim().min(1),
   month: z.number().int().min(1).max(12),
   employee_only_coverage_verified: z.literal(true),
   billed_premium: z.number().int().positive(),
@@ -21,8 +24,14 @@ export const shopReviewSchema = z.object({
   shop_marketplace_identifier: z.string().trim().min(1),
   shop_plan_reference: z.string().trim().min(1),
   employment_ein: z.string().regex(/^\d{9}$/),
+  payroll_ledger_reference: z.string().trim().min(1),
   employee_premium_reviews: z.array(
     z.object({
+      employee_ssn: z.string().regex(/^\d{9}$/),
+      payroll_tax_year: z.literal(2025),
+      payroll_employment_ein: z.string().regex(/^\d{9}$/),
+      payroll_hours_of_service: z.number().int().min(1).max(2080),
+      payroll_social_security_medicare_wages: z.number().int().positive(),
       employee_reference: z.string().trim().min(1),
       enrollment_and_payroll_record_reference: z.string().trim().min(1),
       monthly_premiums: z.array(monthlyPremiumSchema).length(12),
@@ -33,6 +42,9 @@ export const shopReviewSchema = z.object({
 type ShopReview = z.infer<typeof shopReviewSchema>;
 
 interface EmployeeWorksheetSource {
+  readonly employee_ssn: string;
+  readonly hours_of_service: number;
+  readonly social_security_medicare_wages: number;
   readonly employee_reference: string;
   readonly enrollment_and_payroll_record_reference: string;
   readonly rating_area_state: string;
@@ -43,6 +55,8 @@ interface EmployeeWorksheetSource {
 }
 
 interface ReviewSource {
+  readonly owner_ssn: string;
+  readonly payroll_ledger_reference: string;
   readonly shop_marketplace_identifier: string;
   readonly shop_plan_reference: string;
   readonly employment_ein: string;
@@ -55,18 +69,19 @@ interface ReviewSource {
 export function verifyForm8941ShopReview(source: ReviewSource): void {
   const review = source.shop_review;
   // The official 2025 table identifies Albany County, NY at $9,358 for
-  // employee-only coverage. Other rows need their own authenticated values.
+  // employee-only coverage. Other rows need their own reviewed source values.
   if (
     review.irs_table_state !== "NY" ||
     review.irs_table_county !== "Albany" ||
     review.irs_table_employee_only_average_premium !== 9358
   ) {
-    throw new Error("Form 8941 rating-area table row is not authenticated");
+    throw new Error("Form 8941 rating-area table row is not supported");
   }
   if (
     review.shop_marketplace_identifier !== source.shop_marketplace_identifier ||
     review.shop_plan_reference !== source.shop_plan_reference ||
-    review.employment_ein !== source.employment_ein
+    review.employment_ein !== source.employment_ein ||
+    review.payroll_ledger_reference !== source.payroll_ledger_reference
   ) {
     throw new Error("Form 8941 SHOP review differs from employer or plan");
   }
@@ -77,6 +92,7 @@ export function verifyForm8941ShopReview(source: ReviewSource): void {
     throw new Error("Form 8941 SHOP review employee set is incomplete");
   }
   const seenEmployees = new Set<string>();
+  const seenSSNs = new Set<string>();
   const seenDocuments = new Set<string>();
   for (const item of review.employee_premium_reviews) {
     const employee = employees.get(item.employee_reference);
@@ -86,6 +102,22 @@ export function verifyForm8941ShopReview(source: ReviewSource): void {
       );
     }
     seenEmployees.add(item.employee_reference);
+    if (
+      item.employee_ssn !== employee.employee_ssn ||
+      item.employee_ssn === source.owner_ssn ||
+      seenSSNs.has(item.employee_ssn) ||
+      item.payroll_employment_ein !== source.employment_ein ||
+      item.payroll_hours_of_service !== employee.hours_of_service ||
+      item.payroll_social_security_medicare_wages !==
+        employee.social_security_medicare_wages
+    ) {
+      throw new Error("Form 8941 employee payroll ownership or amounts differ");
+    }
+    seenSSNs.add(item.employee_ssn);
+    if (seenDocuments.has(item.enrollment_and_payroll_record_reference)) {
+      throw new Error("Form 8941 payroll record is reused");
+    }
+    seenDocuments.add(item.enrollment_and_payroll_record_reference);
     if (
       item.enrollment_and_payroll_record_reference !==
         employee.enrollment_and_payroll_record_reference
@@ -104,6 +136,15 @@ export function verifyForm8941ShopReview(source: ReviewSource): void {
     let billed = 0;
     let paid = 0;
     for (const month of item.monthly_premiums) {
+      if (
+        month.employee_ssn !== employee.employee_ssn ||
+        month.payer_employment_ein !== source.employment_ein ||
+        month.shop_plan_reference !== source.shop_plan_reference
+      ) {
+        throw new Error(
+          "Form 8941 monthly invoice or payment ownership differs",
+        );
+      }
       if (months.has(month.month)) {
         throw new Error("Form 8941 SHOP coverage month is duplicated");
       }
