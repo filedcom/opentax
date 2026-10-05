@@ -146,7 +146,7 @@ Deno.test("Form 4255 PDF rejects source, return, and unsupported recapture chang
         },
       ),
     Error,
-    "EP-only row",
+    "one staged row per credit line",
   );
   assertThrows(
     () =>

@@ -22,6 +22,10 @@ net-EPE amount, and a reasonable-cause decision. The row's column (n)(1) and 20%
 column (n)(3) must reconcile to that notice. An EP-only candidate without Part
 II recapture can be calculated and routed to Schedule 2. The existing row
 arithmetic and zero limits on columns (j), (k), and (n)(2) remain.
+The staged input now permits at most one row per supported credit line, matching
+the bounded PDF projection; duplicate rows are rejected before their amounts
+can be summed into Schedule 2. Focused source, native-gate, and PDF tests passed
+10/10 on 2026-10-05.
 
 The December 2025 PDF descriptor projects at most one EP-only row on each of
 line 1d and line 2a. It fills columns (a) through (f), (n)(1), (n)(3), (q), (s),
