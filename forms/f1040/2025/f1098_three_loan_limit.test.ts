@@ -450,6 +450,68 @@ Deno.test("one or more sourced mortgages apply one reviewed Pub. 936 limit in na
     3,
   );
 
+  const purchaseWithTwoSecondHomeLoans = await resultFor(
+    300_000,
+    833,
+    300_000,
+    false,
+    3,
+    true,
+  );
+  assertEquals(
+    purchaseWithTwoSecondHomeLoans.pending.schedule_a
+      ?.line_8a_mortgage_interest_1098,
+    2_499,
+  );
+  const multiPropertyBundle = await buildMefBundle(
+    purchaseWithTwoSecondHomeLoans.pending,
+    {
+      filer: purchaseWithTwoSecondHomeLoans.filer,
+      attachments: [],
+    },
+  );
+  assertEquals(
+    multiPropertyBundle.xml.includes(
+      "<RptHomeMortgIntAndPointsAmt>2499</RptHomeMortgIntAndPointsAmt>",
+    ),
+    true,
+  );
+  const multiPropertyXmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(multiPropertyXmlPath, multiPropertyBundle.xml);
+    const checked = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsdPath, multiPropertyXmlPath],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+  } finally {
+    await Deno.remove(multiPropertyXmlPath);
+  }
+  const multiPropertyPdf = await buildPdfBytes(
+    multiPropertyBundle.pending,
+    purchaseWithTwoSecondHomeLoans.filer,
+    ".pdf-cache",
+    multiPropertyBundle,
+  );
+  assertEquals((await PDFDocument.load(multiPropertyPdf)).getPageCount(), 3);
+  const multiPropertyPdfPath = await Deno.makeTempFile({ suffix: ".pdf" });
+  try {
+    await Deno.writeFile(multiPropertyPdfPath, multiPropertyPdf);
+    const extracted = await new Deno.Command("pdftotext", {
+      args: ["-layout", multiPropertyPdfPath, "-"],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(extracted.code, 0, new TextDecoder().decode(extracted.stderr));
+    assertEquals(
+      new TextDecoder().decode(extracted.stdout).includes("2499"),
+      true,
+    );
+  } finally {
+    await Deno.remove(multiPropertyPdfPath);
+  }
+
   const underLimitPurchaseUnreviewed = await resultFor(
     300_000,
     1_000,

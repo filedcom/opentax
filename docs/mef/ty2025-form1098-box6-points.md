@@ -290,6 +290,23 @@ describes lender monthly balances and Table 1, and the
 [2025 Form 1098 instructions](https://www.irs.gov/pub/irs-prior/i1098--2025.pdf)
 define box 2 for a current-year origination.
 
+The three-loan follow-up covers the same Table 1 across two qualified homes:
+one $300,000 July purchase of the principal residence plus two $300,000
+full-year acquisition loans on the elected former-main-home second residence.
+Their reviewed average balances total $900,000, so the .833 Table 1 ratio
+reduces $3,000 of reported interest to $2,499 on Schedule A line 8a. The
+synthetic three-copy case passes final native export, local TY2025 v5.4 XSD,
+and a three-page filled-PDF text check. The exact test is
+`one or more sourced mortgages apply one reviewed Pub. 936 limit in native and PDF exports`
+in `forms/f1040/2025/f1098_three_loan_limit.test.ts`, run with
+`PATH=/tmp/opentax-pdf-tools:$PATH deno test --allow-read --allow-write --allow-run=xmllint,pdftotext --allow-net=www.irs.gov forms/f1040/2025/f1098_three_loan_limit.test.ts`
+(1 passed). Pub. 936 says to complete one Table 1 for both main and second
+homes regardless of mortgage count, and its lender-statement method includes
+zero balances for months a mortgage did not secure a qualified home.
+This does not authenticate the lender statements, election/occupancy evidence,
+or issuer provenance, and it does not extend the route to another second
+property, MFS, grandfathered or mixed-use debt, points, or ATS acceptance.
+
 For a 2025 purchase combined with a preexisting mortgage, the retained review
 now identifies two different properties and the prior home's second-home
 election and occupancy record. A nonrented second home must not have been
