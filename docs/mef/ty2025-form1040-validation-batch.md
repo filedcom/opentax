@@ -4340,3 +4340,14 @@ distinctions passed 32/32 focused source tests. These focused results do not
 replace a full regression or establish complete ATS scenario acceptance.
 The new Form 8863 dependent-identity guard and updated positive-return fixture
 passed all 8 focused tests, including TY2025 v5.4 `Return1040.xsd` validation.
+
+The bounded Form 8911 personal-use charger route passed four direct PDF
+projection cases and three Schedule 3 line 6j cases. Its selected graph fixture
+passed the local TY2025 v5.4 XSD and now checks the native parent/Schedule A
+amounts against both registered PDF projections, including rejection when the
+finalized Schedule 3 credit changes. The focused graph/XSD command was
+`deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov --filter='single-personal-home-charger-credit' forms/f1040/2025/pdf/review-fixtures.xsd.test.ts`
+(1 passed, 0 failed, 186 filtered out); the direct command
+`deno test forms/f1040/2025/pdf/forms/f8911.test.ts forms/f1040/2025/pdf/forms/schedule3_line6d.test.ts`
+passed 7/7. Filled-page visual review, other Form 8911 shapes, the full batch,
+and ATS acceptance remain open.

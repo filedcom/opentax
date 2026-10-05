@@ -15,6 +15,8 @@ import { buildPdfBytes } from "./builder.ts";
 import { inputSchema as w2gInputSchema } from "../../nodes/inputs/w2g/index.ts";
 import { pdfReviewFixtures } from "./review-fixtures.ts";
 import { irs1040Pdf } from "./forms/f1040.ts";
+import { form8911Pdf } from "./forms/f8911.ts";
+import { form8911ScheduleAPdf } from "./forms/f8911_schedule_a.ts";
 import { w2gPdf } from "./forms/w2g.ts";
 
 const xsd = new URL(
@@ -197,6 +199,57 @@ for (const fixture of pdfReviewFixtures) {
         : fixture.id === "single-form8824-section1231-exchange"
         ? await section1231ExchangeXml(pending, fixture.filer)
         : buildMefXml(pending, fixture.filer);
+      if (fixture.id === "single-personal-home-charger-credit") {
+        const projectedPending = pending as unknown as Record<
+          string,
+          Record<string, unknown>
+        >;
+        const parent = form8911Pdf.instances?.(
+          {},
+          fixture.filer,
+          projectedPending,
+        )?.[0];
+        const scheduleA = form8911ScheduleAPdf.instances?.(
+          {},
+          fixture.filer,
+          projectedPending,
+        )?.[0];
+        assertEquals(parent?.line4, 300);
+        assertEquals(parent?.line5, 3_875);
+        assertEquals(parent?.line10, 300);
+        assertEquals(scheduleA?.line8, 1_000);
+        assertEquals(scheduleA?.line19, 300);
+        assertEquals(scheduleA?.line21, parent?.line4);
+        assertStringIncludes(
+          xml,
+          "<PrsnlUseRefuelingPropCrAmt>300</PrsnlUseRefuelingPropCrAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<TotQlfyPropertyCostCreditAmt>1000</TotQlfyPropertyCostCreditAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<AdjustedPersonalUsePartAmt>300</AdjustedPersonalUsePartAmt>",
+        );
+        const mismatched = {
+          ...pending,
+          schedule3: {
+            ...pending.schedule3,
+            line6j_alt_fuel_vehicle_refueling: 299,
+          },
+        };
+        assertThrows(
+          () =>
+            form8911Pdf.instances?.(
+              {},
+              fixture.filer,
+              mismatched as unknown as Record<string, Record<string, unknown>>,
+            ),
+          Error,
+          "disagrees with finalized Form 1040",
+        );
+      }
       if (fixture.id === "single-w2-overpayment-applied-2026") {
         assertStringIncludes(xml, "<AppliedToEsTaxAmt>500</AppliedToEsTaxAmt>");
       }
