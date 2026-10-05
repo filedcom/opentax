@@ -1,4 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
+import { PDFDocument } from "pdf-lib";
+import { form8992Filer } from "../../form8992.fixture.ts";
+import { fillFormPdf } from "../builder.ts";
 import { form6251Pdf } from "./f6251.ts";
 
 const seniorSource = {
@@ -106,6 +109,50 @@ Deno.test("Form 6251 PDF maps signed line 1b, Part II, Part III, and filer heade
     form6251Pdf.filerFields?.[1]?.pdfField,
     "topmostSubform[0].Page1[0].f1_2[0]",
   );
+});
+
+Deno.test("Form 6251 PDF retains Part III exactly when a mapped Page 2 field prints", () => {
+  const pageOne = { tentative_tax: 1_000, regular_tax: 0, line11_amt: 1_000 };
+  assertEquals(form6251Pdf.pageIndices?.(pageOne), [0]);
+  assertEquals(form6251Pdf.pageIndices?.({ ...pageOne, line12: 0 }), [0]);
+  assertEquals(form6251Pdf.pageIndices?.({ ...pageOne, line12: 0.49 }), [0]);
+  for (let line = 12; line <= 40; line++) {
+    assertEquals(
+      form6251Pdf.pageIndices?.({
+        ...pageOne,
+        [`line${line}`]: 1,
+      }),
+      [0, 1],
+    );
+  }
+});
+
+Deno.test("Form 6251 filled PDF drops blank Part III and keeps populated Part III", async () => {
+  const pageOne = { tentative_tax: 1_000, regular_tax: 0, line11_amt: 1_000 };
+  for (
+    const [projected, expectedPages] of [
+      [pageOne, 1],
+      [{ ...pageOne, line13: 250 }, 2],
+    ] as const
+  ) {
+    const bytes = await fillFormPdf(
+      form6251Pdf,
+      projected,
+      form8992Filer,
+      ".pdf-cache",
+    );
+    if (!bytes) throw new Error("Missing Form 6251 PDF bytes");
+    const filled = await PDFDocument.load(bytes);
+    assertEquals(filled.getPageCount(), 2);
+    const packet = await PDFDocument.create();
+    for (
+      const page of await packet.copyPages(
+        filled,
+        [...form6251Pdf.pageIndices!(projected)],
+      )
+    ) packet.addPage(page);
+    assertEquals(packet.getPageCount(), expectedPages);
+  }
 });
 
 Deno.test("Form 6251 PDF derives line 1a and rejects unsourced ATNOLD", () => {

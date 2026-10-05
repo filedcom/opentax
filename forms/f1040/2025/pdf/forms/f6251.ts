@@ -72,10 +72,26 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   ),
 ];
 
+const partIIIFields = fields.filter((entry) =>
+  entry.pdfField.includes(".Page2[0].")
+);
+
 export const form6251Pdf: PdfFormDescriptor = {
   pendingKey: "form6251",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f6251--2025.pdf",
   fields,
+  pageIndices(projected) {
+    // Official page 2 contains only Part III. Retain it whenever one of its
+    // mapped values prints under the same rules as the PDF filler.
+    const printsPartIII = partIIIFields.some((entry) => {
+      const value = projected[entry.domainKey];
+      return typeof value === "number"
+        ? Math.round(value) !== 0 ||
+          ("printZero" in entry && entry.printZero === true)
+        : typeof value === "string" && value.length > 0;
+    });
+    return printsPartIII ? [0, 1] : [0];
+  },
   includeWhenNoMappedData: true,
   filerFields: [
     textField("fullName", 1, 1),
