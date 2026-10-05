@@ -404,7 +404,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "checkbox",
-    domainKey: "line7a_cap_gain_distrib",
+    domainKey: "print_schedule_d_not_required",
     pdfField: "topmostSubform[0].Page1[0].c1_43[0]",
   },
   {
@@ -1012,6 +1012,9 @@ export const irs1040Pdf: PdfFormDescriptor = {
     return {
       ...fields,
       ...printedDependents,
+      print_schedule_d_not_required:
+        typeof fields.line7a_cap_gain_distrib === "number" &&
+        fields.line7a_cap_gain_distrib > 0,
       print_former_spouse_estimated_tax_ssn: printFormerSpouseEstimatedTaxSsn,
       print_foreign_country_name: typeof fields.address_foreign_country ===
             "string" && fields.address_foreign_country.length > 0

@@ -67,6 +67,16 @@ export const itemSchema = z.object({
   // Affirm this payer's dividends and capital-gain distributions come from
   // investment property and are excluded from Form 4952 manual "other" facts.
   investment_property_for_form4952: z.boolean().optional(),
+  qualified_dividend_filing_review: z.object({
+    ex_dividend_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+    qualified_held_days_in_121_day_window: z.number().int().min(61).max(121),
+    diminished_risk_days_excluded: z.number().int().min(0).max(121),
+    ordinary_stock_rule_confirmed: z.literal(true),
+    eligible_issuer_and_no_disqualified_dividend_confirmed: z.literal(true),
+    no_related_payment_obligation_confirmed: z.literal(true),
+    review_reference: z.string().trim().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  }).strict().optional(),
   box1b: z.number().nonnegative().optional(),
   box2a: z.number().nonnegative().optional(),
   box2b: z.number().nonnegative().optional(),
@@ -522,7 +532,22 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
     // Aggregate every Form 8995 field into one output.
     // Line 12 is Form 1040 line 3a plus net capital gain (i8995, Line 12), so the
     // qualified dividends reduce the 20%-of-taxable-income limit on line 13.
-    const form8995Fields: Partial<z.infer<typeof form8995["inputSchema"]>> = {};
+    const form8995Fields: Partial<z.infer<typeof form8995["inputSchema"]>> = {
+      ...(parsed.f1099divs.length > 0 &&
+          parsed.f1099divs.every((item) =>
+            item.payerTin && item.recipient_tin && item.account_number &&
+            item.source_document_reference
+          )
+        ? {
+          investment_dividend_sources: parsed.f1099divs,
+          investment_dividend_totals: {
+            ordinary: div1099s.reduce((sum, item) => sum + item.box1a, 0),
+            qualified: totalQualDiv,
+            capital_gain_distributions: totalBox2a,
+          },
+        }
+        : {}),
+    };
     if (totalQualDiv > 0) form8995Fields.net_capital_gain = totalQualDiv;
 
     // NII: ordinary dividends subject to NIIT (IRC §1411(c)(1)(A)) → form8960 line 2

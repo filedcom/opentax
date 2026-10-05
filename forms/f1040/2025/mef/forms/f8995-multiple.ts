@@ -1,3 +1,7 @@
+import {
+  assertMultiBusinessInvestmentSources,
+  assertMultiBusinessInvestmentTax,
+} from "./f8995-investment.ts";
 import { normalizeAllPending } from "../../pending.ts";
 import { inputSchema as cSchema } from "../../../nodes/inputs/schedule_c/model.ts";
 import { reviewedMultipleScheduleCQbi } from "../../../nodes/inputs/schedule_c/qbi-multiple.ts";
@@ -20,6 +24,7 @@ export function assertMultipleScheduleC8995(
   }
   const pending = normalizeAllPending(rawPending as Record<string, unknown>);
   const parsed = qbiSchema.parse(fields);
+  const investment = assertMultiBusinessInvestmentSources(parsed, pending);
   const c = cSchema.parse(pending.schedule_c);
   const items = c.schedule_cs;
   const rows = parsed.multi_business_filing_rows;
@@ -62,9 +67,7 @@ export function assertMultipleScheduleC8995(
     "schedule_e",
     "k1_partnership",
     "k1_s_corp",
-    "f1099div",
     "f1099patr",
-    "schedule_d",
     "f1099b",
     "sep_retirement",
     "f5884",
@@ -76,10 +79,12 @@ export function assertMultipleScheduleC8995(
     "se_health_insurance_deduction",
     "retirement_plan_deduction",
     "line6_sec199a_dividends",
-    "net_capital_gain",
     "qbi_loss_carryforward",
     "reit_loss_carryforward",
   ];
+  const sameAmount = (actual: unknown, expected: number): actual is number =>
+    typeof actual === "number" && Number.isFinite(actual) &&
+    Math.abs(actual - expected) < 1e-8;
   const same = (a: unknown, b: unknown) =>
     JSON.stringify(a) === JSON.stringify(b);
   if (
@@ -125,7 +130,10 @@ export function assertMultipleScheduleC8995(
         business.w2_wages !== (item.qbi_w2_wages ?? 0) ||
         business.ubia !== (item.qbi_unadjusted_basis ?? 0);
     }) ||
-    sum(parsed.qbi_from_schedule_c) + sum(parsed.sstb_qbi) !== profit ||
+    !sameAmount(
+      sum(parsed.qbi_from_schedule_c) + sum(parsed.sstb_qbi),
+      profit,
+    ) ||
     deduction !== (seExpected?.line13 ?? 0) || !same(seExpected, seActual) ||
     (seExpected &&
       (se?.net_profit_schedule_c !== profit ||
@@ -163,16 +171,25 @@ export function assertMultipleScheduleC8995(
     number(f1040.line1a_wages) !== wages ||
     number(f1040.line1z_total_wages) !== wages ||
     f1040.line8_additional_income !== profit ||
-    f1040.line9_total_income !== wages + profit ||
+    !sameAmount(
+      f1040.line9_total_income,
+      wages + profit + investment.interest + investment.ordinary +
+        investment.capital,
+    ) ||
     number(f1040.line10_adjustments) !== deduction ||
-    f1040.line11_agi !== wages + profit - deduction ||
+    !sameAmount(
+      f1040.line11_agi,
+      wages + profit + investment.interest + investment.ordinary +
+        investment.capital - deduction,
+    ) ||
     [
-      "line3a_qualified_dividends",
-      "line3b_ordinary_dividends",
       "line7_capital_gain",
-      "line7a_cap_gain_distrib",
       "line13b_additional_deductions",
     ].some((key) => number(f1040[key]) !== 0) ||
+    number(f1040.line2b_taxable_interest) !== investment.interest ||
+    number(f1040.line3a_qualified_dividends) !== investment.qualified ||
+    number(f1040.line3b_ordinary_dividends) !== investment.ordinary ||
+    number(f1040.line7a_cap_gain_distrib) !== investment.capital ||
     typeof f1040.line12c_deduction_total !== "number"
   ) {
     throw new Error(
@@ -190,7 +207,9 @@ export function assertMultipleScheduleC8995(
       "Multiple Schedule C simplified QBI must remain below the Form 8995 threshold",
     );
   }
-  const line14 = Math.round(line11 * .2);
+  const line12 = investment.filedQbiCapitalLimit;
+  const line13 = Math.max(0, line11 - line12);
+  const line14 = Math.round(line13 * .2);
   const expected = {
     2: line2,
     3: 0,
@@ -202,8 +221,8 @@ export function assertMultipleScheduleC8995(
     9: 0,
     10: line5,
     11: line11,
-    12: 0,
-    13: line11,
+    12: line12,
+    13: line13,
     14: line14,
     15: Math.min(line5, line14),
     16: Math.max(0, -line2),
@@ -223,6 +242,7 @@ export function assertMultipleScheduleC8995(
       "Multiple Schedule C Form 8995 signed rows, loss offset and filed lines differ from Form 1040",
     );
   }
+  assertMultiBusinessInvestmentTax(pending, investment);
   return {
     businesses: rows.map((row) => ({
       businessName: row.business_name,

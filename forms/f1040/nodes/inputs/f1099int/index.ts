@@ -10,6 +10,7 @@ import {
   TaxNode,
 } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
@@ -272,6 +273,7 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
     schedule_b,
+    form8995,
     schedule1,
     f1040,
     form6251,
@@ -308,7 +310,12 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
       0,
     );
 
-    const outputs: NodeOutput[] = int1099s.map(scheduleBOutput);
+    const outputs: NodeOutput[] = [
+      ...int1099s.map(scheduleBOutput),
+      this.outputNodes.output(form8995, {
+        investment_interest_sources: int1099s,
+      }),
+    ];
 
     for (const item of int1099s) {
       if (item.investment_property_for_form4952 !== true) continue;

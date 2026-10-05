@@ -95,6 +95,13 @@ export const inputSchema = z.object({
   retirement_plan_deduction: accumulable(z.number().nonnegative()).optional(),
   // Prior-year QBI net loss carryforward (must be zero or negative)
   qbi_loss_carryforward: z.number().nonpositive().optional(),
+  investment_interest_sources: z.array(z.unknown()).optional(),
+  investment_dividend_sources: z.array(z.unknown()).optional(),
+  investment_dividend_totals: z.object({
+    ordinary: z.number().nonnegative(),
+    qualified: z.number().nonnegative(),
+    capital_gain_distributions: z.number().nonnegative(),
+  }).strict().optional(),
   multi_business_filing_rows: z.array(
     z.object({
       business_reference: z.string(),
@@ -126,7 +133,7 @@ export const inputSchema = z.object({
   spouse_blind: z.boolean().optional(),
 });
 
-type Form8995Input = z.infer<typeof inputSchema>;
+export type Form8995Input = z.infer<typeof inputSchema>;
 
 // ── Pure helpers ──────────────────────────────────────────────────────────────
 
@@ -503,13 +510,14 @@ function multipleScheduleCLines(
     input.filing_status !== FilingStatus.Single ||
     input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
-    sumField(input.qbi_from_schedule_c) + sumField(input.sstb_qbi) !==
-      totalProfit ||
+    Math.abs(
+        sumField(input.qbi_from_schedule_c) + sumField(input.sstb_qbi) -
+          totalProfit,
+      ) >= 1e-8 ||
     sumField(input.qbi_from_schedule_f) !== 0 || sumField(input.qbi) !== 0 ||
     sumField(input.se_health_insurance_deduction) !== 0 ||
     sumField(input.retirement_plan_deduction) !== 0 ||
     sumField(input.line6_sec199a_dividends) !== 0 ||
-    sumField(input.net_capital_gain) !== 0 ||
     (input.qbi_loss_carryforward ?? 0) !== 0 ||
     (input.reit_loss_carryforward ?? 0) !== 0 ||
     input.agi === undefined || !input.taxpayer_ssn ||
@@ -539,7 +547,13 @@ function multipleScheduleCLines(
   const line11 = Math.round(
     Math.max(0, input.agi - standardDeductionAmount(input, cfg)),
   );
-  const line14 = Math.round(line11 * QBI_RATE);
+  const dividends = input.investment_dividend_totals;
+  if (!dividends && sumField(input.net_capital_gain) !== 0) return undefined;
+  // Line 12 reuses the entered Form 1040 qualified dividend and capital gain lines.
+  const line12 = Math.round(dividends?.qualified ?? 0) +
+    Math.round(dividends?.capital_gain_distributions ?? 0);
+  const line13 = Math.max(0, line11 - line12);
+  const line14 = Math.round(line13 * QBI_RATE);
   return {
     multi_business_filing_rows: rows,
     line2,
@@ -552,8 +566,8 @@ function multipleScheduleCLines(
     line9: 0,
     line10: line5,
     line11,
-    line12: 0,
-    line13: line11,
+    line12,
+    line13,
     line14,
     line15: Math.min(line5, line14),
     line16: Math.max(0, -line2),
