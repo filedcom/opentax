@@ -59,6 +59,7 @@ function filedReturn() {
     f1099r: [{
       payer_name: "IRA Custodian",
       payer_ein: "123456789",
+      recipient_ssn: "999-88-7777",
       source_document_reference: evidence.form1099r_source_document_reference,
       box1_gross_distribution: 7_000,
       box2b_not_determined: true,
@@ -111,6 +112,8 @@ Deno.test("spouse Roth Form 8606 rejects changed owner, source, early tax, and f
   const item = (pending.f1099r.f1099rs as Record<string, unknown>[])[0];
   const altered = [
     { f1099r: { f1099rs: [{ ...item, ts: "T" }] } },
+    { f1099r: { f1099rs: [{ ...item, recipient_ssn: "111-22-3333" }] } },
+    { f1099r: { f1099rs: [{ ...item, recipient_ssn: undefined }] } },
     {
       f1099r: {
         f1099rs: [{

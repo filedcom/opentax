@@ -118,8 +118,11 @@ taxpayer and spouse Form 8606 claims remain closed.
    spouse owns the opening statement, Form 5498, contribution receipt, issued
    Form 1099-R, and sole Form 5329 early-distribution entry. The native and PDF
    Form 8606 print the spouse's name and SSN; the return's IRA totals remain
-   joint. Taxpayer and spouse positives and source/owner/tax tamper fixtures are
-   authored but unrun. The generic Part III calculation remains unsupported for
+   joint. The issued Form 1099-R recipient SSN is now required to match the
+   reviewed Roth owner's SSN for both taxpayer and spouse routes; the native
+   and PDF replay rejects changed or missing recipients. The focused taxpayer
+   and spouse tests passed on 2026-10-05, including a source mismatch and
+   export tamper cases. The generic Part III calculation remains unsupported for
    export because it does not model qualifying distributions,
    first-time-homebuyer expense, prior contribution or conversion basis, and
    taxable earnings ordering.

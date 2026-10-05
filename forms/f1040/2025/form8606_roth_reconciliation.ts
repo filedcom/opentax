@@ -74,6 +74,7 @@ export function reconcileForm8606Roth(
     item.box13_date_of_payment > "2025-12-31" ||
     item.source_document_reference !==
       evidence.form1099r_source_document_reference ||
+    item.recipient_ssn?.replace(/\D/g, "") !== ownerSsn ||
     item.payer_ein.replace(/\D/g, "") !== evidence.form5498.custodian_ein ||
     evidence.opening_statement.owner_ssn !== ownerSsn ||
     evidence.form5498.owner_ssn !== ownerSsn ||

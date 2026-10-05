@@ -1146,6 +1146,8 @@ function validateItem(item: R1099Item): void {
       !item.box13_date_of_payment.startsWith("2025-") ||
       item.source_document_reference !==
         evidence.form1099r_source_document_reference ||
+      item.recipient_ssn?.replace(/\D/g, "") !==
+        evidence.form5498.owner_ssn ||
       item.payer_ein.replace(/\D/g, "") !== evidence.form5498.custodian_ein ||
       item.rollover_code !== undefined ||
       item.prior_ira_basis !== undefined ||

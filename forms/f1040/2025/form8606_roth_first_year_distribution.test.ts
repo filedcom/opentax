@@ -55,6 +55,7 @@ function filedReturn() {
     f1099r: [{
       payer_name: "IRA Custodian",
       payer_ein: "123456789",
+      recipient_ssn: "111-22-3333",
       source_document_reference: evidence.form1099r_source_document_reference,
       box1_gross_distribution: 7_000,
       box2b_not_determined: true,
@@ -109,6 +110,11 @@ Deno.test("first-year Roth Part III rejects source, owner, Form 5329, and finali
   const pending = filedReturn();
   const filer = extractFilerIdentity(general);
   const item = (pending.f1099r.f1099rs as Record<string, unknown>[])[0];
+  const mismatchedSource = f1040_2025.executeReturn({
+    general,
+    f1099r: [{ ...item, recipient_ssn: "999-88-7777" }],
+  });
+  assertEquals(mismatchedSource.diagnostics.length > 0, true);
   const altered = [
     {
       form8606: {
@@ -119,6 +125,8 @@ Deno.test("first-year Roth Part III rejects source, owner, Form 5329, and finali
     { form8606: { ...pending.form8606, print_roth_line25c_taxable: 1_999 } },
     { f1040: { ...pending.f1040, line4b_ira_taxable: 1_999 } },
     { f1099r: { f1099rs: [{ ...item, ts: "S" }] } },
+    { f1099r: { f1099rs: [{ ...item, recipient_ssn: "999-88-7777" }] } },
+    { f1099r: { f1099rs: [{ ...item, recipient_ssn: undefined }] } },
     { f1099r: { f1099rs: [{ ...item, box1_gross_distribution: 7_001 }] } },
     {
       form5329: {
