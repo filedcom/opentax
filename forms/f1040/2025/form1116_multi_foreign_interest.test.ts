@@ -101,7 +101,7 @@ Deno.test("three same-country foreign interest payers aggregate through Form 111
   assertEquals(result.pending.f1040.line2b_taxable_interest, 50_000);
   assertEquals(result.pending.f1040.line11_agi, 50_000);
   const pdf = form1116Pdf.projectFields!(parent, result.pending);
-  assertEquals(pdf.pdf_country_a, "CA");
+  assertEquals(pdf.pdf_country_a, "Canada");
   assertEquals(pdf.pdf_line1a_a, 50_000);
   assertEquals(pdf.pdf_line3g_a, 15_750);
   assertEquals(pdf.pdf_line7, 34_250);

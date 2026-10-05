@@ -142,9 +142,9 @@ Deno.test("three countries' passive interest reconciles Form 1116 A/B/C, Schedul
     result.pending.schedule3.line8_total,
   );
   const pdf = form1116Pdf.projectFields!(parent, result.pending);
-  assertEquals(pdf.pdf_country_a, "CA");
-  assertEquals(pdf.pdf_country_b, "FR");
-  assertEquals(pdf.pdf_country_c, "GM");
+  assertEquals(pdf.pdf_country_a, "Canada");
+  assertEquals(pdf.pdf_country_b, "France");
+  assertEquals(pdf.pdf_country_c, "Germany");
   assertEquals(pdf.pdf_line1a_a, 20_000);
   assertEquals(pdf.pdf_line1a_b, 30_000);
   assertEquals(pdf.pdf_line1a_c, 10_000);

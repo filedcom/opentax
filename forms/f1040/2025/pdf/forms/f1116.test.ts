@@ -314,6 +314,7 @@ Deno.test("Form 1116 PDF projects reviewed one-employer general wages", () => {
   };
   const projected = form1116Pdf.projectFields?.(fields, pending) ?? {};
   assertEquals(projected.income_category, IncomeCategory.General);
+  assertEquals(projected.pdf_country_a, "Germany");
   assertEquals(projected.alternative_compensation_source, true);
   assertEquals(projected.pdf_line1a_a, 140_000);
   assertEquals(projected.pdf_line3e_a, 300_000);
@@ -783,7 +784,7 @@ Deno.test("Form 1116 MeF and PDF join one 1120-S K-3 passive-interest reduction"
 Deno.test("Form 1116 PDF projects a complete one-country paid passive category", () => {
   const { fields, pending } = reviewedSingleSource();
   const projected = form1116Pdf.projectFields?.(fields, pending) ?? {};
-  assertEquals(projected.pdf_country_a, "GM");
+  assertEquals(projected.pdf_country_a, "Germany");
   assertEquals(projected.pdf_line1a_a, 1_000);
   assertEquals(projected.pdf_line3e_a, 1_000);
   assertEquals(projected.pdf_part2_foreign_interest_a, 40);

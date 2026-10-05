@@ -30,6 +30,7 @@ import { reconcileForm1116ThreeCountryInterest } from "../../form1116_three_coun
 import { reconcileForm1116ThreeCountryMixed } from "../../form1116_three_country_mixed.ts";
 import { reconcileForm1116TwoCountryTreasury } from "../../form1116_two_country_treasury.ts";
 import { reconcileForm1116TwoCountryMixed } from "../../form1116_two_country_mixed.ts";
+import { ty2025IrsCountryName } from "./irs_country_name.ts";
 
 type Pending = Record<string, Record<string, unknown>>;
 
@@ -653,9 +654,15 @@ export function projectSingleSourceForm1116Pdf(
   return {
     ...fields,
     income_category: summary.category,
-    pdf_country_a: twoCountry?.a.country ?? item.irs_country_code,
-    pdf_country_b: twoCountry?.b.country,
-    pdf_country_c: threeCountry?.c.country,
+    pdf_country_a: ty2025IrsCountryName(
+      twoCountry?.a.country ?? item.irs_country_code,
+    ),
+    pdf_country_b: twoCountry?.b.country
+      ? ty2025IrsCountryName(twoCountry.b.country)
+      : undefined,
+    pdf_country_c: threeCountry?.c.country
+      ? ty2025IrsCountryName(threeCountry.c.country)
+      : undefined,
     pdf_income_description: mixed || twoCountryMixed || threeCountryMixed
       ? "Interest and dividend income"
       : dividend || twoDividend || twoCountryDividend

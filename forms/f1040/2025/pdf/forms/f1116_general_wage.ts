@@ -10,6 +10,7 @@ import {
   inputSchema as fecInputSchema,
 } from "../../../nodes/inputs/fec/index.ts";
 import { assertAlternativeCompensationSources } from "../../mef/forms/f1116_alternative_compensation_source.ts";
+import { ty2025IrsCountryName } from "./irs_country_name.ts";
 
 type Pending = Record<string, Record<string, unknown>>;
 
@@ -251,7 +252,7 @@ export function projectGeneralWageForm1116Pdf(
     ...fields,
     income_category: IncomeCategory.General,
     alternative_compensation_source: true,
-    pdf_country_a: item.irs_country_code,
+    pdf_country_a: ty2025IrsCountryName(item.irs_country_code),
     pdf_income_description: "Employee compensation",
     pdf_line1a_a: foreign,
     pdf_line1a_total: foreign,
