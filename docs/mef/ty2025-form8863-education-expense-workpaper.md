@@ -31,3 +31,35 @@ requirement reference, and changed Schedule 3 fixtures are authored for
 deferred validation. The record references and Form 1098-T amounts are
 structured assertions, not authenticated school or payment bytes. Other
 scholarship allocation and LLC material purchase paths remain open.
+
+## Two U.S. institutions for one student (2026-10-06, verified locally)
+
+The [2025 instructions](https://www.irs.gov/instructions/i8863) require the
+student's institution information and adjusted paid expenses; two schools
+share the student's AOC limit or the return's LLC limit. A positive route
+now retains `institution_expense_workpapers`, exactly two separately keyed
+school EINs with complete workpapers, instead of a single aggregate
+`education_expense_workpaper`. Both institutions must be U.S. schools that
+provided current-year Forms 1098-T. Each expense source follows the existing
+material, scholarship, refund and other-benefit rules. The per-school adjusted
+amounts must sum to the student's claimed amount. School, payment and Form
+1098-T references cannot be duplicated within or across students.
+
+The two-school LLC fixture combines $7,500 and $2,500 adjusted expenses,
+producing $2,000 on Schedule 3/Form 1040, tax $5,955 and refund $5,045. Its
+full XML validates the local TY2025 v5.4 XSD, with two native institution
+groups and both schools/EINs on the same printed Part III. Root rendered and
+inspected all five packet pages. The adjacent source/PDF/LLC suites passed
+79/79; a final two-test run also proves the combined AOC expenses use one
+$4,000 expense cap with $1,000 refundable/$1,500 nonrefundable credit. Only
+the LLC packet has full XSD and manual page-review evidence in this slice.
+Changed claims, duplicate school/document/payment records and ambiguous
+aggregate-plus-school workpapers reject at prepared export.
+
+Retained LLC packet: `.state/research/ty2025-filled-pdf-review/2026-10-06-form8863-two-schools/`.
+XML SHA-256 `ae8545760506c5a83a949b9884532e86baa354f4c2f6544c2c86352ce12a950f`;
+PDF SHA-256 `c5826722de49c2fb21f3f24dc5cc32d4341e48c2749ad2ad9eef5a78985e211e`.
+The source records are synthetic structured facts, not independently
+issued school/payment bytes. Three-school overflow, foreign institutions,
+missing-1098-T exceptions, other scholarship allocations, issuer/enrollment
+proof, IRS business rules and ATS acceptance remain open.
