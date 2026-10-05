@@ -4628,3 +4628,9 @@ The planner now reports 189 fixtures, 116 descriptors, 113 unique keys,
 87 covered keys and 26 uncovered keys. Source attachments are visibly
 synthetic and do not prove independent issuer authenticity. These isolated
 passes do not replace full regression, IRS business rules or ATS acceptance.
+
+## October 6 combined isolated positive routes
+
+At isolated integration commit `a195fc374`, real-Poppler `deno test -A` of the Form 8853 partial-medical, Form 8995 WOTC, Form 4972 combined annuity, and two-school Form 8863 full-return tests passed **10/10**, zero failed, in 25 seconds. Log: `/tmp/opentax-four-route-integration-oct6.log`. These tests execute public return preparation, complete local TY2025 v5.4 XSD and PDF generation; the AOC case at this checkpoint had preparation evidence only, while the LLC case had full XSD. Agent rendered-packet reviews are recorded in the individual route notes; root additionally inspected the final cents Form 4972 and Archer MSA pages. This does not validate main code, source authenticity or IRS acceptance.
+
+The main `8aa4beeec` full regression remains running under launchd PID 44462; no restart occurred. New code remains isolated pending its terminal result.
