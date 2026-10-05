@@ -1,3 +1,8 @@
+import {
+  assertReviewedBusinessIncome,
+  businessReviewSchema,
+  reviewedBusinessIncome,
+} from "./business-review.ts";
 import { z } from "zod";
 import type { F8863Input, F8863Item } from "./index.ts";
 import { inputSchema as w2Schema } from "../w2/index.ts";
@@ -28,8 +33,12 @@ export const claimantReviewSchema = z.discriminatedUnion("kind", [
         employee_ssn: ssnSchema,
         employer_ein: z.string().regex(/^\d{2}-?\d{7}$/),
         box1_wages: z.number().int().nonnegative(),
+        box3_ss_wages: z.number().int().nonnegative().optional(),
+        box7_ss_tips: z.number().int().nonnegative().optional(),
       }).strict(),
     ),
+    earned_income_business_sources: z.array(businessReviewSchema).min(1)
+      .optional(),
     support_sources: z.array(
       z.object({
         source_document_reference: reference,
@@ -107,10 +116,11 @@ export function claimantRefundRestriction(
   const support = review.support_sources.reduce((sum, source) =>
     sum +
     (fullTime && source.kind === "scholarship_support" ? 0 : source.amount), 0);
-  const earned = review.earned_income_w2_sources.reduce(
-    (sum, source) => sum + source.box1_wages,
-    0,
-  );
+  const earned = reviewedBusinessIncome(
+    review.earned_income_business_sources ?? [],
+    review.earned_income_w2_sources,
+    review.claimant_ssn,
+  ).earned;
   const under18 = review.claimant_dob >= "2008-01-02";
   const age18 = review.claimant_dob >= "2007-01-02" && !under18;
   const ageTest = under18 || ((age18 || fullTime) && earned < support / 2);
@@ -276,6 +286,9 @@ export function assertEducationClaimantSources(
         copies.length !== 1 || copies[0].box1_wages !== source.box1_wages ||
         copies[0].employee_ssn?.replaceAll("-", "") !==
           tin(review.claimant_ssn) ||
+        (review.earned_income_business_sources &&
+          (copies[0].box3_ss_wages !== source.box3_ss_wages ||
+            (copies[0].box7_ss_tips ?? 0) !== source.box7_ss_tips)) ||
         copies[0].employer_ein?.replaceAll("-", "") !==
           source.employer_ein.replaceAll("-", "")
       ) {
@@ -284,18 +297,26 @@ export function assertEducationClaimantSources(
         );
       }
     }
+    assertReviewedBusinessIncome(
+      review.earned_income_business_sources ?? [],
+      review.earned_income_w2_sources,
+      review.claimant_ssn,
+      pending,
+    );
     const earned = review.earned_income_w2_sources.reduce(
       (sum, source) => sum + source.box1_wages,
       0,
     );
     if (
-      final.line1a_wages !== earned ||
+      (final.line1a_wages ?? 0) !== earned ||
       wages.some((wage) =>
         (wage.box12_entries ?? []).some((entry) =>
           ["D", "E", "F", "G", "H", "S", "Q"].includes(entry.code) &&
           entry.amount > 0
         )
-      ) || pending?.schedule_c !== undefined ||
+      ) ||
+      (pending?.schedule_c !== undefined &&
+        !review.earned_income_business_sources) ||
       pending?.k1_partnership !== undefined ||
       [
         "line1b_household_wages",
@@ -309,7 +330,7 @@ export function assertEducationClaimantSources(
       ].some((key) => Number(final[key] ?? 0) !== 0)
     ) {
       throw new Error(
-        "Form 8863 wage-only claimant support review needs all earned-income sources and finalized wage reconciliation",
+        "Form 8863 claimant support review needs all earned-income sources and finalized wage reconciliation",
       );
     }
   }

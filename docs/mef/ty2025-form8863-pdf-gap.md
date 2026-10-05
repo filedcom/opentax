@@ -1,5 +1,16 @@
 # TY2025 Form 8863 positive PDF boundary
 
+## Self-employed claimant support checkpoint (2026-10-06)
+
+The
+[self-employed support proof](ty2025-form8863-self-employed-support-review.md)
+adds actual claimant-owned personal-service Schedule C receipts and costs,
+Schedule SE deductions, W-2/business mixtures, and exact-half support
+boundaries. Five complete native/XSD and filled PDF packets include taxable
+scholarship income, QBI and education/child-credit ordering. The earlier
+wage-only limit is historical for these reviewed cases; broader ownership and
+source authenticity remain open.
+
 ## Dependent ownership and claimant refund evidence (2026-10-06)
 
 The [dependent/claimant proof](ty2025-form8863-dependent-claimant-review.md)
