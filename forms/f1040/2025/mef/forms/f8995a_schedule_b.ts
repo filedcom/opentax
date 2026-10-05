@@ -26,6 +26,13 @@ export function assertScheduleBAggregationJoin(
   const retainedCompanion = inputSchema.strict().safeParse(
     pending?.form8995a_schedule_b,
   );
+  const simplified = z.object({
+    qbi_deduction: z.unknown().optional(),
+    line15: z.unknown().optional(),
+  }).passthrough().safeParse(pending?.form8995);
+  const general = z.object({
+    qbi_no_prior_loss_or_suspended_loss_confirmed: z.literal(true),
+  }).passthrough().safeParse(pending?.general);
   if (
     !filer || !pending || filer.filingStatus !== FilingStatus.Single ||
     filer.primarySSN.replaceAll("-", "") !==
@@ -33,12 +40,17 @@ export function assertScheduleBAggregationJoin(
     !retainedParent.success || !retainedCompanion.success ||
     JSON.stringify(retainedParent.data) !== JSON.stringify(input) ||
     JSON.stringify(retainedCompanion.data) !== JSON.stringify(input) ||
-    pending.form8995 !== undefined ||
+    // The graph retains Form8995's upstream QBI inputs when it delegates to
+    // the advanced form. Only a second finalized simplified deduction conflicts.
+    (pending.form8995 !== undefined && (!simplified.success ||
+      simplified.data.qbi_deduction !== undefined ||
+      simplified.data.line15 !== undefined)) ||
     pending.form8995a_schedule_a !== undefined ||
     pending.form8995a_schedule_c !== undefined ||
     pending.form8995a_schedule_d !== undefined ||
     !source.success || source.data.schedule_cs.length !== 2 ||
-    source.data.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    (source.data.qbi_no_prior_loss_or_suspended_loss_confirmed !== true &&
+      !general.success) ||
     source.data.form8829_line30 !== undefined ||
     (source.data.wotc_wage_reductions?.length ?? 0) > 0 ||
     pending.form8829 !== undefined || pending.form5884 !== undefined

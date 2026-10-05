@@ -341,7 +341,7 @@ node had box 6/8/9 incorrectly labeled; the TY2025 source schema, focused cases,
 and research notes were corrected directly. Business income itself still needs
 its Schedule F/C source routing.
 
-## Schedule B aggregation source contract (wired, unverified)
+## Schedule B aggregation source contract (historical staging checkpoint; later proof below)
 
 The
 [TY2025 Form 8995-A instructions](https://www.irs.gov/pub/irs-prior/i8995a--2025.pdf)
@@ -505,3 +505,13 @@ The $148,972 unused current credit is calculated but this slice does not add a
 durable carryover ledger. Broader fractional credit source amounts retain their
 existing export boundaries; this percentage-line repair does not claim every
 Form 3800 fractional-input route is supported.
+
+## Two-business aggregation full-return proof, October 6
+
+The public `qbi_aggregation` input now retains the strict reviewed member/election ledger and no-prior-loss assertion. Two source Schedule C businesses produce $100,000/$80,000 profit alongside an issued $300,000 W-2 with $176,100 Social Security wages and $4,350 Medicare withholding. Filed SE tax is $4,821 and half-SE is $2,411; reviewed proportional allocations $1,339/$1,072 leave QBI $98,661/$78,928. The group totals $177,589 QBI, $30,000 wages and $200,000 UBIA. Percentage lines use filed rounding ($35,518 potential deduction), and the grouped wage limit yields $15,000 on Form1040. AGI $477,589, taxable income $446,839, ordinary tax $125,941, other taxes $7,217 and total tax $133,158 reconcile.
+
+Full graph execution, parent/ScheduleB native documents, and the actual 17-page filled packet pass local TY2025 v5.4 XSD. Restricted integration passes **39/39**, zero failed, including the all-196-fixture calculation tamper audit. Sixteen native/PDF rejection checks cover detached/changed source members, owner, missing companion, second finalized simplified deduction, changed adjustments/credit and dividend conflicts. A retained upstream Form8995 source is accepted when it delegates; a second finalized simplified deduction is rejected. The actual retained general source supplies the prior-loss confirmation.
+
+Every page was visually reviewed. The review corrected parent line40 carryforward zero, ScheduleSE zero Social Security limit/tax, and applicable Form8959 zero reduced threshold/withholding. Inapplicable RRTA parts now remain blank. Source/amounts/native XML, deterministic PDF, page origins, hashes and local XSD all pass the read-only selected checker: one case, 17 pages. Retained `.state/research/ty2025-filled-pdf-review/2026-10-06-qbi-aggregation/`; logs `/tmp/opentax-aggregation-final-integration4.log` and `/tmp/opentax-aggregation-selected-check.log`. Planner:196 fixtures,116 descriptors,113 keys,89 covered,24 uncovered.
+
+This is a reviewed synthetic new-2025 election for one taxpayer and two positive non-SSTB ScheduleC businesses above phase-in. Genuine workpaper/ownership authentication, continued accepted elections, RPE statements, other groups/owners, losses, phase-in variants, business rules and ATS acceptance remain open. Earlier historical staging paragraphs do not describe this later positive proof.

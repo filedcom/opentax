@@ -1,3 +1,4 @@
+import { twoBusinessAggregationFixture } from "./review-8995a-aggregation.fixture.ts";
 import { medicareMsaReviewFixture } from "./review-8853-medicare.fixture.ts";
 import educationScholarshipSource from "./review-8863-scholarship-source.json" with {
   type: "json",
@@ -9026,6 +9027,10 @@ const educationBase = basePdfReviewFixtures.find((fixture) =>
 )!;
 export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
   medicareMsaReviewFixture(),
+  twoBusinessAggregationFixture(
+    basePdfReviewFixtures.find((fixture) => fixture.id === "single-schedule-c")!,
+    basePdfReviewFixtures.find((fixture) => fixture.id === "single-w2-refund")!,
+  ),
   {
     id: "single-form8863-missing-tuition-form-taxable-scholarship-phaseout",
     inputs: educationScholarshipSource.inputs,

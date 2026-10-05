@@ -101,6 +101,7 @@ export function projectStagedAggregatedParentPdf(
     aggregated: true,
     ...parent,
     line27: parent.line16,
+    line40: 0,
   };
 }
 

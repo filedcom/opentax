@@ -824,7 +824,9 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
     ? calculatePatronScheduleDLines(input).line6
     : 0;
   const filedAmount = (value: number) =>
-    input.single_schedule_c_source ? Math.round(value) : value;
+    input.single_schedule_c_source || input.aggregation_filing_details
+      ? Math.round(value)
+      : value;
   const line2 = input.qbi ?? 0;
   const line3 = filedAmount(line2 * QBI_RATE);
   const line4 = input.w2_wages ?? 0;
