@@ -9,7 +9,8 @@ import {
 // allocations are supported for a full-share beneficiary, including a
 // Part III annuity. A sourced partial-share Part-II-only estate allocation
 // and Part-III-only estate allocations are also supported. A separate
-// partial-share beneficiary route combines NUA with a sourced death benefit.
+// partial-share beneficiary route combines NUA with sourced death benefit
+// and estate tax when both Parts II and III are elected without an annuity.
 export function reconcileForm4972Nua(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
@@ -48,6 +49,12 @@ export function reconcileForm4972Nua(
   const partialEstate = sharePct < 100 &&
     typeof fields.federal_estate_tax === "number" &&
     fields.federal_estate_tax > 0;
+  const partialNuaDeathEstatePartIII = partialDeath && partialEstate &&
+    fields.elect_capital_gain === true &&
+    fields.elect_10yr_averaging === true &&
+    typeof fields.capital_gain_amount === "number" &&
+    fields.capital_gain_amount > 0 &&
+    (item?.box8_other ?? 0) === 0;
   const partialNuaAnnuityEstatePartIII = partialEstate && !partialDeath &&
     (item?.box8_other ?? 0) > 0 &&
     fields.elect_10yr_averaging === true &&
@@ -70,7 +77,8 @@ export function reconcileForm4972Nua(
     (hasAllocation &&
       (fields.beneficiary_distribution !== true ||
         (sharePct !== 100 &&
-          ((partialDeath && partialEstate) ||
+          (((partialDeath && partialEstate) &&
+            !partialNuaDeathEstatePartIII) ||
             (!partialDeath && !partialEstate) ||
             ((item.box8_other ?? 0) > 0 &&
               !partialNuaAnnuityEstatePartIII) ||
@@ -87,7 +95,7 @@ export function reconcileForm4972Nua(
       fields.elect_10yr_averaging !== true)
   ) {
     throw new Error(
-      "Form 4972 NUA requires a sourced Part II or III; partial-share beneficiary allocation needs a single death-benefit or estate adjustment without an annuity",
+      "Form 4972 NUA requires a sourced Part II or III; combined partial-share death-benefit and estate adjustments require both elections without an annuity",
     );
   }
   if (
