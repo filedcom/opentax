@@ -639,7 +639,9 @@ limits that initial deduction to the lesser of FMV and basis. A $18,000 FMV,
 $12,000 unamortized-basis gift now reaches the completed Schedule A, itemized
 Form 1040, native Section A with its separate reduction statement, and the PDF
 projection. Focused source-to-full-return/native/PDF tests passed on
-2026-10-05. The route remains one purchased long-term patent with zero 2025
+2026-10-05. The full XML passed local TY2025 v5.4 XSD validation; the filled
+five-page PDF's Form 8283 Section A row and reduction-statement page were
+rendered and visually inspected. The route remains one purchased long-term patent with zero 2025
 donee net income; document references are reviewed facts, not authenticated
 bytes.
 

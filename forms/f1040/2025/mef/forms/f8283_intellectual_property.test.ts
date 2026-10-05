@@ -19,6 +19,13 @@ import { registry } from "../../registry.ts";
 import { pdfReviewFixtures } from "../../pdf/review-fixtures.ts";
 import { buildPending } from "../pending.ts";
 import { buildMefBundle } from "../builder.ts";
+import { buildPdfBytes } from "../../pdf/builder.ts";
+import { PDFDocument } from "pdf-lib";
+
+const xsdPath = new URL(
+  "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+  import.meta.url,
+).pathname;
 
 const gift = {
   property_description: "Purchased patent US 1234567 for water filter",
@@ -201,6 +208,33 @@ Deno.test("Form 8283 reports a purchased patent above $5,000 in Section A", asyn
     "<OtherThanByCashOrCheckAmt>12000</OtherThanByCashOrCheckAmt>",
   );
   assertStringIncludes(bundle.xml, ">12000</FairMarketValueAmt>");
+  if (await Deno.stat(xsdPath).then(() => true).catch(() => false)) {
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsdPath, "-"],
+      stdin: "piped",
+      stdout: "piped",
+      stderr: "piped",
+    }).spawn();
+    const writer = validation.stdin.getWriter();
+    await writer.write(new TextEncoder().encode(bundle.xml));
+    await writer.close();
+    const checked = await validation.output();
+    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+  }
+  const filled = await buildPdfBytes(
+    buildPending(result.pending),
+    base.filer,
+    ".state/pdf-cache",
+    bundle,
+  );
+  assertEquals((await PDFDocument.load(filled)).getPageCount() >= 4, true);
+  const reviewDir = ".state/pdf-cache/review";
+  await Deno.mkdir(reviewDir, { recursive: true });
+  await Deno.writeFile(`${reviewDir}/form8283-high-value-patent.pdf`, filled);
+  await Deno.writeTextFile(
+    `${reviewDir}/form8283-high-value-patent.xml`,
+    bundle.xml,
+  );
 });
 
 Deno.test("Form 8283 patent rejects altered basis, rights, donee income and final return", () => {
