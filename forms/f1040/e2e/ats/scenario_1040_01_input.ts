@@ -57,6 +57,7 @@ export const SCENARIO_1040_01_RECONCILIATION = {
   form5695: {
     individuallyListedDoorCosts: SCENARIO_1040_01_FACTS.form5695.exteriorDoors
       .map((door) => door.cost),
+    printedLine19dNextTwoDoorsCost: 1_720,
     printedLine19eOtherDoorsCost: SCENARIO_1040_01_FACTS.form5695
       .line19eOtherDoorsCost,
     otherDoorItemsProvided: false,

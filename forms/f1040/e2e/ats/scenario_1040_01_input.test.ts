@@ -90,6 +90,13 @@ Deno.test("ATS 1040 Scenario 1 keeps Form 5695 packet conflicts outside filing i
   assertEquals("form5695" in input, false);
   assertEquals(source.individuallyListedDoorCosts, [1_020, 920, 800]);
   assertEquals(
+    source.individuallyListedDoorCosts.slice(1).reduce(
+      (sum, cost) => sum + cost,
+      0,
+    ),
+    source.printedLine19dNextTwoDoorsCost,
+  );
+  assertEquals(
     source.individuallyListedDoorCosts.reduce((sum, cost) => sum + cost, 0),
     source.printedLine19eOtherDoorsCost,
   );
