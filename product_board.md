@@ -6,7 +6,7 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1299 bounded completed slices. A completed slice does not close its
+records 1300 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are
@@ -18,7 +18,8 @@ validation, and IRS ATS needs. The latest complete local full batch passed
 fixtures omitted student identities required by the filer/dependent guard;
 their setup is corrected and focused Form 8863 PDF, route, and XSD tests pass
 15/15. Six extracted-text/raster assertions differ under the temporary PDFKit
-tools used because Poppler is unavailable. The run log is in
+tools used for that run. The original Poppler 26.09.0 binaries have since been
+located and run successfully; a current full rerun remains pending. The run log is in
 `/tmp/opentax-deno-task-test-2026-10-05.log`; focused and packet checks below
 cover later slices, but the full batch has not passed at current head. The current-source selected packet
 has 175 exportable synthetic cases with 1,073 filled PDF pages; the latest
@@ -44,7 +45,9 @@ authenticity, broader mortgage limits and points variants, business rules,
 and ATS open. The retained Copy B parser now rejects malformed amount text,
 invalid comma grouping, and negative values while still allowing a blank
 optional box; the issuer's provenance and scanned-PDF appearance remain
-unchecked.
+unchecked. Form 8862 focused source/calculation/export-boundary tests pass
+40/40, but native and PDF export still reject without authenticated prior IRS
+notice contents; a positive ODC/AOTC export remains unverified.
 Scenario 8's code-Q distribution and blank Form 1040 line 4a still need
 reconciliation, as do the other open ATS source conflicts.
 The remaining
