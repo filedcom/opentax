@@ -75,7 +75,8 @@ export const form8864Pdf: PdfFormDescriptor = {
       amount.totalCredit !== lines.line11 ||
       amount.transferOutCredit !== 0 ||
       amount.appliedCredit !== detail.appliedCredit ||
-      amount.appliedCredit !== allPending.f3800.form8864_applied_credit
+      (allPending.f3800.form8864_applied_credit !== undefined &&
+        amount.appliedCredit !== allPending.f3800.form8864_applied_credit)
     ) {
       throw new Error(
         "Form 8864 PDF differs from sourced Form 3800 document ID",

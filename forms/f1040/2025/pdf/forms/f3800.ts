@@ -152,7 +152,8 @@ export const form3800Pdf: PdfFormDescriptor = {
         amount.totalCredit !== lines.line11 ||
         amount.transferOutCredit !== 0 || amount.passiveBeforeLimit !== 0 ||
         amount.passiveAfterLimit !== 0 ||
-        amount.appliedCredit !== source.form8864_applied_credit ||
+        (source.form8864_applied_credit !== undefined &&
+          amount.appliedCredit !== source.form8864_applied_credit) ||
         amount.appliedCredit !== detail.appliedCredit ||
         detail.credit !== lines.line11 ||
         detail.sourceDocumentId !== row.metadata.referenceDocumentId ||

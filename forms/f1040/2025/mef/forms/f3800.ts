@@ -1144,9 +1144,6 @@ export function prepareForm3800DocumentParts(
     "nonpassive:8864",
     parsed.form8864_applied_credit,
   );
-  if (form8864 && parsed.form8864_applied_credit === undefined) {
-    throw new Error("Form 8864 needs explicit Form 3800 tax-use allocation");
-  }
   const form8882Applied = applied("nonpassive:8882");
   const form3468PartVApplied = sourceApplied(
     form3468PartVCredit > 0,

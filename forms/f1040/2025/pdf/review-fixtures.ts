@@ -1,3 +1,4 @@
+import { directAgriBiodieselPending, directAgriBiodieselSource } from "../../nodes/inputs/f8864/fixture.ts";
 import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
 import { withReviewedForm8874A } from "../../nodes/inputs/f8874/issuance_fixture.ts";
 import {
@@ -345,6 +346,23 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "Form 8960 prints 220,000 MAGI above the 200,000 filing threshold despite zero NII and NIIT",
       "Form 8959 and Schedule 2 carry Additional Medicare Tax without a Schedule 2 NIIT amount",
       "Form 1040 tax and payments reconcile with the 220,000 W-2 wages and withholding",
+    ],
+  },
+  {
+    id: "single-agri-biodiesel-producer-credit",
+    inputs: {
+      general: { ...singleGeneral, qbi_no_prior_loss_or_suspended_loss_confirmed: true, qbi_not_patron_of_specified_cooperative_confirmed: true },
+      w2: [{ ...wage(75_000, 11_000, "Example Employer", "12-3456789"), employee_ssn: singleGeneral.taxpayer_ssn }],
+      f8864: { ...directAgriBiodieselSource, proprietor_ssn: singleFiler.primarySSN },
+      schedule_c: directAgriBiodieselPending.schedule_c.schedule_cs.map(business => ({ ...business, qbi_no_other_adjustments_confirmed: true, line_i_made_1099_payments: false })),
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule_c", "schedule1", "schedule2", "schedule_se", "schedule3", "f3800", "form6251", "form8995", "f8864"],
+    reviewFocus: [
+      "Form 8864 line 8 shows 2,500 post-June gallons at $0.20, with $500 on lines 8, 9 and 11",
+      "Schedule C includes $500 credit income; Form 6251 line 3 subtracts the same amount",
+      "Form 3800 line 1l and Schedule 3 carry the $500 allowed credit to Form 1040 line 20",
+      "Owner identity and source amounts agree across all packet pages",
     ],
   },
   {
