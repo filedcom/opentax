@@ -65,6 +65,7 @@ const inputSchema = z.object({
   line8p_excess_business_loss: z.number().nonnegative().optional(),
   line8z_rtaa: z.number().optional(),
   f1099g_rtaa_sources: z.array(rtaaSourceSchema).optional(),
+  line8r_taxable_scholarships: z.number().int().nonnegative().optional(),
   line8z_taxable_grants: z.number().optional(),
   f1099g_taxable_grant_sources: z.array(taxableGrantSourceSchema).optional(),
   line8z_substitute_payments: z.number().optional(),
@@ -199,6 +200,7 @@ function otherIncome(input: Schedule1Input): number {
     (input.line8o_section951aa_inclusion ?? 0) +
     (input.line8p_excess_business_loss ?? 0) +
     (input.line8z_rtaa ?? 0) +
+    (input.line8r_taxable_scholarships ?? 0) +
     (input.line8z_taxable_grants ?? 0) +
     (input.line8z_substitute_payments ?? 0) +
     (input.line8z_attorney_proceeds ?? 0) +
@@ -356,6 +358,7 @@ function assembleSchedule1(input: Schedule1Input): Record<string, unknown> {
     "line8n_section951a_inclusion",
     "line8o_section951aa_inclusion",
     "line8p_excess_business_loss",
+    "line8r_taxable_scholarships",
     "line8z_rtaa",
     "line8z_taxable_grants",
     "line8z_substitute_payments",

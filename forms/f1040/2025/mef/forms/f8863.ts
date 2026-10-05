@@ -1,10 +1,11 @@
+import { assertEducationIncomeSource } from "../../../nodes/inputs/education_income/index.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import {
   calculateAocStudentLines,
   calculateForm8863Lines,
-  validateForm8863FilingSource,
   type F8863Input,
   type F8863Item,
+  validateForm8863FilingSource,
 } from "../../../nodes/inputs/f8863/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
@@ -15,36 +16,90 @@ export function assertForm8863FinalizedReturn(
 ): void {
   const pending = context?.pending;
   const filer = context?.filer;
-  const filingStatus = ["single", "mfj", "mfs", "hoh", "qss"][(filer?.filingStatus ?? 0) - 1];
+  const filingStatus =
+    ["single", "mfj", "mfs", "hoh", "qss"][(filer?.filingStatus ?? 0) - 1];
   const final1040 = pending?.f1040 as Record<string, unknown> | undefined;
-  const finalSchedule3 = pending?.schedule3 as Record<string, unknown> | undefined;
+  const finalSchedule3 = pending?.schedule3 as
+    | Record<string, unknown>
+    | undefined;
   const worksheet = fields.credit_limit_worksheet;
   const dependentDetails = Array.isArray(final1040?.dependent_details)
     ? final1040.dependent_details as Array<Record<string, unknown>>
     : [];
-  const eligibleStudentTins = new Set([
-    filer?.primarySSN,
-    filer?.spouse?.ssn,
-    ...dependentDetails.flatMap((dependent) => [
-      dependent.ssn,
-      dependent.itin,
-      dependent.atin,
-    ]),
-  ].filter((tin): tin is string => typeof tin === "string").map((tin) =>
-    tin.replaceAll("-", "")
-  ));
+  const eligibleStudentTins = new Set(
+    [
+      filer?.primarySSN,
+      filer?.spouse?.ssn,
+      ...dependentDetails.flatMap((dependent) => [
+        dependent.ssn,
+        dependent.itin,
+        dependent.atin,
+      ]),
+    ].filter((tin): tin is string => typeof tin === "string").map((tin) =>
+      tin.replaceAll("-", "")
+    ),
+  );
   if (!filer || !final1040 || !worksheet) {
     throw new Error(
       "Form 8863 filing needs source MAGI, Credit Limit Worksheet, and finalized Form 1040/Schedule 3 credit lines to reconcile",
     );
   }
+  const incomeRows = assertEducationIncomeSource(
+    pending,
+    [filer.primarySSN, ...(filer.spouse?.ssn ? [filer.spouse.ssn] : [])],
+    (pending?.schedule1 as Record<string, unknown> | undefined)
+      ?.line8r_taxable_scholarships,
+  );
+  const claimedIncomeRefs = new Set<string>();
+  for (const student of fields.f8863s) {
+    const exception = student.education_expense_workpaper
+      ?.missing_1098t_exception;
+    if (exception?.reason !== "institution_not_required") continue;
+    const basis = exception.furnishing_basis;
+    if (
+      basis.kind !== "formal_billing_arrangement" &&
+      basis.kind !== "expenses_waived_or_paid_entirely_with_scholarships"
+    ) continue;
+    const amount = basis.kind === "formal_billing_arrangement"
+      ? basis.taxable_payment_amount
+      : basis.taxable_scholarship_payment_amount;
+    if (!amount) continue;
+    const source = incomeRows.find((row) =>
+      row.source_document_reference === basis.student_gross_income_record_id
+    );
+    if (
+      !source ||
+      source.student_ssn.replaceAll("-", "") !==
+        student.student_ssn?.replaceAll("-", "") ||
+      source.taxable_amount !== amount ||
+      claimedIncomeRefs.has(source.source_document_reference) ||
+      (basis.kind === "formal_billing_arrangement" &&
+        (source.kind !== "w2_education_payment" ||
+          source.payroll_allocation_record_id !==
+            basis.payment_tax_treatment_record_id)) ||
+      (basis.kind === "expenses_waived_or_paid_entirely_with_scholarships" &&
+        (source.kind !== "scholarship_not_on_w2" ||
+          source.payer_name !== exception.institution_name ||
+          source.scholarship_terms_record_id !==
+            basis.scholarship_terms_record_id ||
+          source.taxable_allocation_record_id !==
+            basis.taxable_allocation_record_id))
+    ) {
+      throw new Error(
+        "Form 8863 taxable assistance allocation must match the student's retained taxable income source and finalized income route",
+      );
+    }
+    claimedIncomeRefs.add(source.source_document_reference);
+  }
   if (fields.f8863s.some((student) => student.filing_status !== filingStatus)) {
     throw new Error("Form 8863 filing status must match the finalized return");
   }
-  if (fields.f8863s.some((student) =>
-    !student.student_ssn ||
-    !eligibleStudentTins.has(student.student_ssn.replaceAll("-", ""))
-  )) {
+  if (
+    fields.f8863s.some((student) =>
+      !student.student_ssn ||
+      !eligibleStudentTins.has(student.student_ssn.replaceAll("-", ""))
+    )
+  ) {
     throw new Error(
       "Form 8863 student SSN must match the primary filer, spouse, or a dependent on Form 1040",
     );
@@ -52,14 +107,19 @@ export function assertForm8863FinalizedReturn(
   if (
     final1040.filing_status !== filingStatus ||
     final1040.line11_agi !== lines.line3 ||
-    final1040.line18_total_tax_before_credits !== worksheet.form1040_line18_tax ||
+    final1040.line18_total_tax_before_credits !==
+      worksheet.form1040_line18_tax ||
     (final1040.line29_refundable_aoc ?? 0) !== lines.line8 ||
     (finalSchedule3?.line3_education_credit ?? 0) !== lines.line19 ||
-    (finalSchedule3?.line1_foreign_tax_credit ?? 0) !== worksheet.schedule3_line1_foreign_tax_credit ||
+    (finalSchedule3?.line1_foreign_tax_credit ?? 0) !==
+      worksheet.schedule3_line1_foreign_tax_credit ||
     (finalSchedule3?.line1_foreign_tax_1099 ?? 0) !== 0 ||
-    (finalSchedule3?.line2_childcare_credit ?? 0) !== worksheet.schedule3_line2_dependent_care_credit ||
-    (finalSchedule3?.line6d_elderly_disabled_credit ?? 0) !== worksheet.schedule3_line6d ||
-    (finalSchedule3?.line6l_form8978_credit ?? 0) !== worksheet.schedule3_line6l ||
+    (finalSchedule3?.line2_childcare_credit ?? 0) !==
+      worksheet.schedule3_line2_dependent_care_credit ||
+    (finalSchedule3?.line6d_elderly_disabled_credit ?? 0) !==
+      worksheet.schedule3_line6d ||
+    (finalSchedule3?.line6l_form8978_credit ?? 0) !==
+      worksheet.schedule3_line6l ||
     pending?.form2555 !== undefined || pending?.form4563 !== undefined
   ) {
     throw new Error(

@@ -1,3 +1,4 @@
+import { assertEducationIncomeSource } from "../../../nodes/inputs/education_income/index.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import { retainedActcOptOut } from "../../actc-opt-out-source.ts";
 import { retainedEicOptOut } from "../../eic-opt-out-source.ts";
@@ -1126,6 +1127,14 @@ export const irs1040: MefFormDescriptor<"f1040", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040.pdf",
   build(fields, context) {
+    assertEducationIncomeSource(
+      context?.pending,
+      [context?.filer?.primarySSN, context?.filer?.spouse?.ssn].filter((
+        s,
+      ): s is string => !!s),
+      (context?.pending?.schedule1 as Record<string, unknown> | undefined)
+        ?.line8r_taxable_scholarships,
+    );
     return buildIRS1040(fields, context);
   },
 };

@@ -113,12 +113,12 @@ facts do not authenticate school or payment bytes. The declared filing date must
 reflect the actual filing, and nonreceipt/cooperation must still be true when
 filed. Eligibility, prior AOTC years, TIN timing, other benefit allocation, and
 economic treatment of assistance remain source facts under the existing return
-model. Only the formal-billing exempt basis has positive full-packet proof in
-this slice; the other exempt bases need their own positive economic fixtures and
-review. Foreign institutions, three-school overflow, wider
-scholarship/taxable-assistance allocation, IRS business rules, and ATS
-acceptance remain open. This does not establish general education-credit or
-filing readiness.
+model. The formal-billing employer and scholarship-paid furnishing bases have
+positive full-packet proof in this slice; the other exempt bases need their own
+positive economic fixtures and review. Foreign institutions, three-school
+overflow, wider scholarship/taxable-assistance allocation, IRS business rules,
+and ATS acceptance remain open. This does not establish general education-credit
+or filing readiness.
 
 ## Employer and scholarship economic correction
 
@@ -141,12 +141,80 @@ taxable portion must reconcile to declared student gross income and have
 permitted terms plus allocation and income records. Negative source cases cover
 invented waived payments, omitted tax-free reductions, missing terms or
 allocation/income records, and inconsistent amounts. A fully tax-free $4,000
-tuition payment correctly produces zero education credit. The conditional $4,000
-taxable scholarship source contract has a validation test only, not a
-full-return, source-income-join, XSD, or filled-packet positive; wider taxable
-scholarship allocation remains open.
+tuition payment correctly produces zero education credit. The taxable
+scholarship source contract now has full-return source-income-join, XSD, and
+filled-packet positives described below; wider taxable scholarship allocation
+remains open.
 
 The monetary allocations and inclusion in student income are explicit retained
 synthetic assertions. Matching a W-2 reference and wage amount does not
 authenticate the payroll allocation or prove the legal exclusion/taxable
 classification from outside documents. No such source authenticity is claimed.
+
+## Taxable education source and income route
+
+The public `education_income` input preserves one distinct income source per
+retained gross-income reference. A taxable employer education payment records
+student SSN, issued W-2 document reference, employer EIN, raw box 1 wages,
+taxable education amount, and payroll allocation record. Form 8863's income and
+payment-tax-treatment references must match that source. The issued W-2 copy
+must match the reference, SSN, EIN, and box 1 amount; its wages must reconcile
+to final Form 1040 line 1a. The $4,000 AOTC and $7,500 LLC taxable employer
+portions remain included in the existing $75,000 W-2, without a second income
+addition.
+
+A scholarship source records student SSN, source reference, payer, taxable
+amount, terms and allocation references, and separately paid nonqualified
+expenses with distinct payment records sufficient for the allocation. The new
+income node sends scholarships not reported on W-2 to Schedule 1 line 8r and the
+AGI aggregator before tax and credit calculation. The official
+[2025 Schedule 1](https://www.irs.gov/pub/irs-prior/f1040s1--2025.pdf), line 8r,
+and
+[2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+specify this reporting location. Native XML uses `GrantsOrScholarshipsAmt`; the
+PDF fills page 1 `f1_30`. Schedule 1 lines 9/10, Form 1040 line 8, total income,
+AGI, Form 8863 MAGI, and the Credit Limit Worksheet reconcile at export.
+
+Two scholarship AOTC positives keep the issued $75,000 W-2 wages:
+
+| Scholarship | AGI/MAGI | Tax before credits | Nonrefundable AOTC | Refundable AOTC | Total tax |
+| ----------- | -------- | ------------------ | ------------------ | --------------- | --------- |
+| $4,000      | $79,000  | $8,835             | $1,500             | $1,000          | $7,335    |
+| $6,000      | $81,000  | $9,275             | $1,350             | $900            | $7,925    |
+
+The second case enters the single-filer $80,000–$90,000 phaseout and reduces the
+$2,500 AOTC to $2,250. Both carry actual Schedule 1 income through their public
+input calculation graph and seven-page flattened return packets. Artifact
+prefixes are `scholarship-aoc` and `scholarship-aoc-phaseout` in the evidence
+directory above. The existing employer packets are regenerated with the new
+income inputs retained in their source JSON.
+
+Negative exports cover removed or detached income sources; changed student,
+amount, terms, allocation, and nonqualified-expense records; missing or changed
+issued W-2 references, identities, EINs, and box 1 wages; omitted Schedule 1;
+changed line 8r/9, income aggregator, Form 1040 income totals, and filed wages.
+Both direct Form 8863 native/PDF projection and complete prepared returns reject
+these inconsistencies. This is source consistency proof, not authentication of
+school, payroll, scholarship, or payment bytes.
+
+The income route proven here is for the student as primary filer or joint
+spouse, with whole-dollar reviewed education amounts. A dependent student's
+separate income return, non-W-2 taxable government assistance, scholarship
+reported on W-2, cents across every income join, and wider scholarship
+allocations do not have positive proof here. Their assertions cannot substitute
+for a matched supported income source at export. Required-but-not-received Form
+1098-T and fully tax-free scholarship credit calculations retain their existing
+treatment.
+
+Income-route review verification: **128 passed, 0 failed** across the Form 8863
+node/native/PDF route suites, return arithmetic, and public start routing; **9
+passed, 0 failed** in the missing-form focused suite. The six positive packets
+used the available full IRS XSD bundle. Both scholarship packets were rendered
+with Poppler and all seven pages inspected, including line 8r and the AOTC
+phaseout amounts. Scholarship PDF SHA-256 values:
+
+- $4,000: `de7a54d837f90cc8c4b59bf626538443986eba7c37242281e70db0e8227bd589`
+- $6,000: `5b36f72ff35547bd270785b61182ed89747e041a966a196397cba8ddadc8e362`
+
+Logs: `/tmp/opentax-education-income-finalregression.log` and
+`/tmp/opentax-education-income-finalfocused2.log`.

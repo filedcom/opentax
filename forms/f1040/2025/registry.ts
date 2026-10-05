@@ -1,3 +1,4 @@
+import { education_income } from "../nodes/inputs/education_income/index.ts";
 import type { NodeRegistry } from "../../../core/types/node-registry.ts";
 import { buildStartNode, inputNodes } from "./start.ts";
 
@@ -252,6 +253,7 @@ export const registry: NodeRegistry = {
   f2441,
   f8812,
   f8863,
+  education_income,
   f8949: f8949InputNode,
   general,
   form1116_review,

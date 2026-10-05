@@ -1,3 +1,7 @@
+import {
+  education_income,
+  itemSchema as educationIncomeItemSchema,
+} from "../nodes/inputs/education_income/index.ts";
 import type { InputNodeEntry } from "../../../core/types/form-definition.ts";
 import { z } from "zod";
 import {
@@ -748,6 +752,11 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: form6252, itemSchema: form6252ItemSchema, isArray: true },
   { node: f2441, itemSchema: f2441ItemSchema, isArray: true },
   { node: f8812, itemSchema: f8812ItemSchema, isArray: true },
+  {
+    node: education_income,
+    itemSchema: educationIncomeItemSchema,
+    isArray: true,
+  },
   { node: f8863, itemSchema: f8863ItemSchema, isArray: true },
   {
     node: f8863,

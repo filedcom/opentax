@@ -1,4 +1,9 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
@@ -121,8 +126,27 @@ function student(
   });
 }
 function returnCase(item: F8863Item) {
+  const exception = item.education_expense_workpaper?.missing_1098t_exception;
+  const basis = exception?.reason === "institution_not_required"
+    ? exception.furnishing_basis
+    : undefined;
   const result = execute(buildExecutionPlan(registry), registry, {
     ...reviewedInputs,
+    ...(basis?.kind === "formal_billing_arrangement" &&
+        basis.taxable_payment_amount
+      ? {
+        education_income: [{
+          kind: "w2_education_payment",
+          student_ssn: base.filer.primarySSN,
+          source_document_reference: incomeSourceReference,
+          tax_year: 2025,
+          taxable_amount: basis.taxable_payment_amount,
+          employer_ein: "12-3456789",
+          w2_box1_wages: 75_000,
+          payroll_allocation_record_id: basis.payment_tax_treatment_record_id,
+        }],
+      }
+      : {}),
     f8863: [item],
     f8863_credit_limit_worksheet: {
       credit_limit_worksheet: {
@@ -206,7 +230,7 @@ for (const credit of ["aoc", "llc"] as const) {
       const [projected] = form8863Pdf.instances!(
         pending.f8863!,
         base.filer,
-        { f1040: pending.f1040!, schedule3: pending.schedule3! },
+        pending as Record<string, Record<string, unknown>>,
       );
       assertEquals(projected.pdf_institution_0_current_1098t, "no");
       assertEquals(projected.pdf_institution_0_prior_box7, "no");
@@ -254,6 +278,7 @@ for (const credit of ["aoc", "llc"] as const) {
             {
               inputs: {
                 ...reviewedInputs,
+                education_income: pending.education_income?.education_incomes,
                 f8863: [item],
                 f8863_credit_limit_worksheet: {
                   credit_limit_worksheet: pending.f8863!.credit_limit_worksheet,
@@ -294,7 +319,7 @@ Deno.test("missing 1098-T source conditions and return joins reject incomplete o
       form8863Pdf.instances!(
         inputSchema.parse({ ...pending.f8863, f8863s: [item] }),
         base.filer,
-        { f1040: pending.f1040!, schedule3: pending.schedule3! },
+        pending as Record<string, Record<string, unknown>>,
       )
     );
   };
@@ -554,4 +579,284 @@ Deno.test("waived and scholarship missing-form basis cannot invent paid or untax
   const pending = returnCase(fullyTaxFree);
   assertEquals(pending.schedule3?.line3_education_credit ?? 0, 0);
   assertEquals(pending.f1040!.line29_refundable_aoc ?? 0, 0);
+});
+
+for (
+  const scenario of [
+    {
+      amount: 4_000,
+      magi: 79_000,
+      tax: 8_835,
+      totalTax: 7_335,
+      nonrefundable: 1_500,
+      refundable: 1_000,
+      prefix: "scholarship-aoc",
+    },
+    {
+      amount: 6_000,
+      magi: 81_000,
+      tax: 9_275,
+      totalTax: 7_925,
+      nonrefundable: 1_350,
+      refundable: 900,
+      prefix: "scholarship-aoc-phaseout",
+    },
+  ]
+) {
+  Deno.test(`taxable scholarship ${scenario.amount} missing-form credit routes through Schedule 1, AGI, native XML and filled packet`, async () => {
+    const amount = scenario.amount;
+    const source = {
+      kind: "scholarship_not_on_w2",
+      student_ssn: base.filer.primarySSN,
+      source_document_reference:
+        `2025-student-income-includes-${amount}-scholarship`,
+      tax_year: 2025,
+      taxable_amount: amount,
+      payer_name: "Test University",
+      nonqualified_expenses_paid: amount,
+      nonqualified_expense_payment_record_ids: ["2025-Alex-room-board-payment"],
+      scholarship_terms_record_id:
+        "2025-scholarship-terms-permit-nonqualified-use",
+      taxable_allocation_record_id:
+        "2025-student-scholarship-allocation-workpaper",
+    };
+    const item = itemSchema.parse({
+      ...student("aoc"),
+      filer_magi: scenario.magi,
+      aoc_adjusted_expenses: amount,
+      education_expense_workpaper: {
+        ...student("aoc").education_expense_workpaper,
+        paid_tuition_required_fees: amount,
+        missing_1098t_exception: {
+          ...exempt,
+          furnishing_basis: {
+            kind: "expenses_waived_or_paid_entirely_with_scholarships",
+            qualified_tuition_entirely_waived_or_scholarship_paid: true,
+            waived_qualified_tuition_amount: 0,
+            scholarship_paid_qualified_tuition_amount: amount,
+            tax_free_scholarship_payment_amount: 0,
+            taxable_scholarship_payment_amount: amount,
+            scholarship_terms_record_id: source.scholarship_terms_record_id,
+            scholarship_terms_allow_taxable_allocation: true,
+            taxable_allocation_record_id: source.taxable_allocation_record_id,
+            taxable_amount_in_student_gross_income: amount,
+            student_gross_income_record_id: source.source_document_reference,
+          },
+        },
+      },
+    });
+    const inputs = {
+      ...reviewedInputs,
+      education_income: [source],
+      f8863: [item],
+      f8863_credit_limit_worksheet: {
+        credit_limit_worksheet: {
+          form1040_line18_tax: scenario.tax,
+          schedule3_line1_foreign_tax_credit: 0,
+          schedule3_line2_dependent_care_credit: 0,
+          schedule3_line6d: 0,
+          schedule3_line6l: 0,
+        },
+      },
+    };
+    const result = execute(buildExecutionPlan(registry), registry, inputs, {
+      taxYear: 2025,
+      formType: "f1040",
+    });
+    assertEquals(result.diagnostics, []);
+    const pending = buildPending(result.pending);
+    assertEquals(pending.f1040!.line1a_wages, 75_000);
+    assertEquals(pending.schedule1!.line8r_taxable_scholarships, amount);
+    assertEquals(pending.schedule1!.line9_total_other_income, amount);
+    assertEquals(pending.schedule1!.line10_total_additional_income, amount);
+    assertEquals(pending.f1040!.line8_additional_income, amount);
+    assertEquals(pending.f1040!.line11_agi, scenario.magi);
+    assertEquals(pending.f1040!.line18_total_tax_before_credits, scenario.tax);
+    assertEquals(pending.f1040!.line24_total_tax, scenario.totalTax);
+    assertEquals(
+      pending.schedule3!.line3_education_credit,
+      scenario.nonrefundable,
+    );
+    assertEquals(pending.f1040!.line29_refundable_aoc, scenario.refundable);
+    const prepared = await f1040_2025.prepareReturn(pending, base.filer);
+    assertStringIncludes(
+      prepared.bundle.xml,
+      `<GrantsOrScholarshipsAmt>${amount}</GrantsOrScholarshipsAmt>`,
+    );
+    if (xsdAvailable) await validateXml(prepared.bundle.xml);
+    const pdf = await prepared.renderPdf();
+    const doc = await PDFDocument.load(pdf);
+    assertEquals(doc.getPageCount(), 7);
+    assertEquals(doc.getForm().getFields().length, 0);
+    const path = await Deno.makeTempFile({ suffix: ".pdf" });
+    try {
+      await Deno.writeFile(path, pdf);
+      const output = await new Deno.Command("pdftotext", {
+        args: ["-layout", path, "-"],
+        stdout: "piped",
+        stderr: "piped",
+      }).output();
+      assertEquals(output.code, 0);
+      const text = new TextDecoder().decode(output.stdout);
+      assertEquals(new RegExp(`8r\\s+${amount}`).test(text), true);
+      assertEquals(new RegExp(`24\\s+${scenario.totalTax}`).test(text), true);
+    } finally {
+      await Deno.remove(path);
+    }
+    const permission = await Deno.permissions.query({
+      name: "env",
+      variable: "FORM8863_EVIDENCE_DIR",
+    });
+    const dir = permission.state === "granted"
+      ? Deno.env.get("FORM8863_EVIDENCE_DIR")
+      : undefined;
+    if (dir) {
+      await Deno.mkdir(dir, { recursive: true });
+      await Deno.writeTextFile(
+        `${dir}/${scenario.prefix}-source-input.json`,
+        JSON.stringify({ inputs, filer: base.filer }, null, 2),
+      );
+      await Deno.writeTextFile(
+        `${dir}/${scenario.prefix}-full-return.xml`,
+        prepared.bundle.xml,
+      );
+      await Deno.writeFile(`${dir}/${scenario.prefix}-filled-return.pdf`, pdf);
+    }
+    for (
+      const changed of [
+        {
+          ...pending,
+          f8863: {
+            ...pending.f8863!,
+            f8863s: [{ ...item, filer_magi: 75_000 }],
+          },
+        },
+        { ...pending, education_income: undefined },
+        {
+          ...pending,
+          education_income: {
+            education_incomes: [{
+              ...source,
+              source_document_reference: "detached-income-record",
+            }],
+          },
+        },
+        {
+          ...pending,
+          education_income: {
+            education_incomes: [{ ...source, taxable_amount: amount - 1 }],
+          },
+        },
+        {
+          ...pending,
+          education_income: {
+            education_incomes: [{ ...source, student_ssn: "999887777" }],
+          },
+        },
+        {
+          ...pending,
+          education_income: {
+            education_incomes: [{
+              ...source,
+              taxable_allocation_record_id: "changed-allocation",
+            }],
+          },
+        },
+        {
+          ...pending,
+          education_income: {
+            education_incomes: [{
+              ...source,
+              scholarship_terms_record_id: "changed-terms",
+            }],
+          },
+        },
+        {
+          ...pending,
+          education_income: {
+            education_incomes: [{
+              ...source,
+              nonqualified_expenses_paid: amount - 1,
+            }],
+          },
+        },
+        {
+          ...pending,
+          agi_aggregator: {
+            ...pending.agi_aggregator,
+            line8r_taxable_scholarships: 0,
+          },
+        },
+        { ...pending, schedule1: undefined },
+        {
+          ...pending,
+          schedule1: { ...pending.schedule1, line9_total_other_income: 0 },
+        },
+        { ...pending, f1040: { ...pending.f1040, line9_total_income: 75_000 } },
+        {
+          ...pending,
+          schedule1: { ...pending.schedule1, line8r_taxable_scholarships: 0 },
+        },
+        { ...pending, f1040: { ...pending.f1040, line8_additional_income: 0 } },
+      ]
+    ) {
+      assertThrows(() =>
+        native.build(changed.f8863!, { pending: changed, filer: base.filer })
+      );
+      assertThrows(() =>
+        form8863Pdf.instances!(
+          changed.f8863!,
+          base.filer,
+          changed as unknown as Record<string, Record<string, unknown>>,
+        )
+      );
+      await assertRejects(() => f1040_2025.prepareReturn(changed, base.filer));
+    }
+  });
+}
+
+Deno.test("taxable employer education joins reject detached and changed issued income copies", async () => {
+  const pending = returnCase(student("aoc", exempt));
+  const originalW2 = pending.w2!.w2s![0];
+  const originalIncome = pending.education_income!.education_incomes[0];
+  for (
+    const changed of [
+      { ...pending, education_income: undefined },
+      {
+        ...pending,
+        education_income: {
+          education_incomes: [{ ...originalIncome, taxable_amount: 3_999 }],
+        },
+      },
+      {
+        ...pending,
+        education_income: {
+          education_incomes: [{ ...originalIncome, w2_box1_wages: 74_999 }],
+        },
+      },
+      { ...pending, w2: undefined },
+      ...[
+        { source_document_reference: "detached-issued-copy" },
+        { box1_wages: 74_999 },
+        { employee_ssn: "999887777" },
+        { employer_ein: "98-7654321" },
+      ].map((change) => ({
+        ...pending,
+        w2: { w2s: [{ ...originalW2, ...change }] },
+      })),
+      { ...pending, f1040: { ...pending.f1040, line1a_wages: 74_999 } },
+    ]
+  ) {
+    assertThrows(() =>
+      native.build(pending.f8863!, { pending: changed, filer: base.filer })
+    );
+    assertThrows(() =>
+      form8863Pdf.instances!(
+        pending.f8863!,
+        base.filer,
+        changed as unknown as Record<string, Record<string, unknown>>,
+      )
+    );
+    await assertRejects(() => f1040_2025.prepareReturn(changed, base.filer));
+  }
 });

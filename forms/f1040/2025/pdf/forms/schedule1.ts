@@ -1,3 +1,4 @@
+import { assertEducationIncomeSource } from "../../../nodes/inputs/education_income/index.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import { assertForm1098Box4Sources } from "../../../nodes/inputs/f1098/index.ts";
@@ -44,6 +45,11 @@ import { assertTaxableAlimonySchedule1 } from "../../../nodes/inputs/alimony_rec
 //     f2_30 = Line 26
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
+  {
+    kind: "text",
+    domainKey: "line8r_taxable_scholarships",
+    pdfField: "topmostSubform[0].Page1[0].f1_30[0]",
+  },
   {
     kind: "text",
     domainKey: "form1099k_reported_error_or_loss",
@@ -285,6 +291,11 @@ export const schedule1Pdf: PdfFormDescriptor = {
     },
   ],
   instances(fields, filer, all) {
+    assertEducationIncomeSource(
+      all,
+      [filer?.primarySSN, filer?.spouse?.ssn].filter((s): s is string => !!s),
+      fields.line8r_taxable_scholarships,
+    );
     const line4 = fields.line4_other_gains;
     const hasLine4 = typeof line4 === "number" && line4 !== 0;
     if (hasLine4 && !all?.form4797) {

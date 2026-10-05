@@ -1,3 +1,4 @@
+import type { inputSchema as educationIncomeSchema } from "../../nodes/inputs/education_income/index.ts";
 export { FilingStatus } from "../../mef/header.ts";
 export type { FilerIdentity } from "../../mef/header.ts";
 
@@ -82,6 +83,7 @@ export type MefFormsPending =
     fec?: z.infer<typeof fecInputSchema>;
     // Form 1040 line 1h reconciles retained earned-income sources to finalized AGI.
     agi_aggregator?: {
+      line8r_taxable_scholarships?: number;
       line1a_wages?: number;
       line1b_household_wages?: number;
       line1c_unreported_tips?: number;
@@ -116,6 +118,7 @@ export type MefFormsPending =
     f8812?: z.infer<typeof f8812InputSchema>;
     // Education source rows remain available to reconcile Form 8862 and 8863.
     f8863?: z.infer<typeof f8863InputSchema>;
+    education_income?: z.infer<typeof educationIncomeSchema>;
     // Retained 1099-PATR source for the Form 8995-A Schedule D filing check.
     f1099patr?: z.infer<typeof patrInputSchema>;
     // K-1 source records are retained for downstream credit reconciliation.

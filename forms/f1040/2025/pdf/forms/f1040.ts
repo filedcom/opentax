@@ -1,3 +1,4 @@
+import { assertEducationIncomeSource } from "../../../nodes/inputs/education_income/index.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 import { AccountType } from "../../../mef/header.ts";
@@ -1056,7 +1057,13 @@ export const irs1040Pdf: PdfFormDescriptor = {
     };
   },
   fields,
-  instances(fields, filer) {
+  instances(fields, filer, all) {
+    assertEducationIncomeSource(
+      all,
+      [filer?.primarySSN, filer?.spouse?.ssn].filter((s): s is string => !!s),
+      (all?.schedule1 as Record<string, unknown> | undefined)
+        ?.line8r_taxable_scholarships,
+    );
     const spouse = filer?.spouse;
     return [{
       ...fields,

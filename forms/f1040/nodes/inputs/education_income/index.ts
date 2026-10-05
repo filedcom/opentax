@@ -1,0 +1,195 @@
+import { z } from "zod";
+import {
+  type NodeResult,
+  TaxNode,
+} from "../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
+import { inputSchema as w2Schema } from "../w2/index.ts";
+
+const common = {
+  student_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+  source_document_reference: z.string().trim().min(1),
+  tax_year: z.literal(2025),
+  taxable_amount: z.number().int().positive(),
+};
+export const itemSchema = z.discriminatedUnion("kind", [
+  z.object({
+    ...common,
+    kind: z.literal("w2_education_payment"),
+    employer_ein: z.string().regex(/^\d{2}-?\d{7}$/),
+    w2_box1_wages: z.number().int().positive(),
+    payroll_allocation_record_id: z.string().trim().min(1),
+  }).strict(),
+  z.object({
+    ...common,
+    kind: z.literal("scholarship_not_on_w2"),
+    payer_name: z.string().trim().min(1),
+    scholarship_terms_record_id: z.string().trim().min(1),
+    taxable_allocation_record_id: z.string().trim().min(1),
+    nonqualified_expenses_paid: z.number().int().positive(),
+    nonqualified_expense_payment_record_ids: z.array(z.string().trim().min(1))
+      .min(1),
+  }).strict(),
+]);
+export const inputSchema = z.object({ education_incomes: z.array(itemSchema) });
+export type EducationIncome = z.infer<typeof itemSchema>;
+export function educationIncomeSources(raw: unknown): EducationIncome[] {
+  if (raw === undefined) return [];
+  const rows = inputSchema.parse(raw).education_incomes;
+  if (
+    new Set(rows.map((row) => row.source_document_reference)).size !==
+      rows.length
+  ) {
+    throw new Error("Taxable education income needs distinct source records");
+  }
+  for (const row of rows) {
+    if (
+      row.kind === "scholarship_not_on_w2" &&
+      (row.nonqualified_expenses_paid < row.taxable_amount ||
+        new Set(row.nonqualified_expense_payment_record_ids).size !==
+          row.nonqualified_expense_payment_record_ids.length)
+    ) {
+      throw new Error(
+        "Taxable scholarship allocation requires sufficient separately paid nonqualified expenses and distinct payment records",
+      );
+    }
+    if (
+      row.kind === "w2_education_payment" &&
+      row.taxable_amount > row.w2_box1_wages
+    ) {
+      throw new Error(
+        "Taxable education benefit exceeds issued W-2 box 1 wages",
+      );
+    }
+  }
+  return rows;
+}
+export function scholarshipIncomeTotal(raw: unknown): number {
+  return educationIncomeSources(raw).reduce(
+    (sum, row) =>
+      sum + (row.kind === "scholarship_not_on_w2" ? row.taxable_amount : 0),
+    0,
+  );
+}
+export function assertEducationIncomeSource(
+  pending: Readonly<Record<string, unknown>> | undefined,
+  owners: readonly string[],
+  filedScholarship?: unknown,
+): EducationIncome[] {
+  const rows = educationIncomeSources(pending?.education_income);
+  const ownerSet = new Set(owners.map((ssn) => ssn.replaceAll("-", "")));
+  if (rows.some((row) => !ownerSet.has(row.student_ssn.replaceAll("-", "")))) {
+    throw new Error(
+      "Taxable education income source recipient must match this return's filer or joint spouse",
+    );
+  }
+  const scholarship = scholarshipIncomeTotal(pending?.education_income);
+  if (scholarship !== (filedScholarship ?? 0)) {
+    throw new Error(
+      "Schedule 1 line 8r differs from retained taxable scholarship sources",
+    );
+  }
+  const wages = pending?.w2 === undefined ? [] : w2Schema.parse(pending.w2).w2s;
+  for (const row of rows) {
+    if (row.kind !== "w2_education_payment") continue;
+    const copies = wages.filter((wage) =>
+      wage.source_document_reference === row.source_document_reference
+    );
+    if (
+      copies.length !== 1 ||
+      copies[0].employee_ssn?.replaceAll("-", "") !==
+        row.student_ssn.replaceAll("-", "") ||
+      copies[0].employer_ein?.replaceAll("-", "") !==
+        row.employer_ein.replaceAll("-", "") ||
+      copies[0].box1_wages !== row.w2_box1_wages
+    ) {
+      throw new Error(
+        "Taxable education payroll allocation differs from the student's retained issued W-2 copy",
+      );
+    }
+  }
+  const final1040 = pending?.f1040 as Record<string, unknown> | undefined;
+  const schedule = pending?.schedule1 as Record<string, unknown> | undefined;
+  if (
+    rows.length && (!final1040 ||
+      (schedule?.line10_total_additional_income ?? 0) !==
+        (final1040.line8_additional_income ?? 0))
+  ) {
+    throw new Error(
+      "Taxable education income needs finalized Schedule 1/Form 1040 additional income reconciliation",
+    );
+  }
+  if (rows.length && final1040) {
+    const agi = pending?.agi_aggregator as Record<string, unknown> | undefined;
+    const totalIncome = [
+      "line1z_total_wages",
+      "line2b_taxable_interest",
+      "line3b_ordinary_dividends",
+      "line4b_ira_taxable",
+      "line5b_pension_taxable",
+      "line6b_ss_taxable",
+      "line7_capital_gain",
+      "line7a_cap_gain_distrib",
+      "line8_additional_income",
+    ].reduce((sum, key) => sum + Number(final1040[key] ?? 0), 0);
+    if (
+      !agi || (agi.line8r_taxable_scholarships ?? 0) !== scholarship ||
+      final1040.line9_total_income !== totalIncome ||
+      final1040.line11_agi !==
+        totalIncome - Number(final1040.line10_adjustments ?? 0)
+    ) {
+      throw new Error(
+        "Taxable education income must reconcile through the income aggregator and finalized total income/AGI",
+      );
+    }
+    if (schedule) {
+      const rebuilt = schedule1.compute(
+        { taxYear: 2025, formType: "f1040" },
+        schedule1.inputSchema.parse(schedule),
+      ).outputs[0].fields;
+      if (
+        (rebuilt.line9_total_other_income ?? 0) !==
+          (schedule.line9_total_other_income ?? 0) ||
+        rebuilt.line10_total_additional_income !==
+          schedule.line10_total_additional_income
+      ) {
+        throw new Error(
+          "Taxable education income needs Schedule 1 lines 9 and 10 to include all retained income lines",
+        );
+      }
+    }
+  }
+  if (rows.some((row) => row.kind === "w2_education_payment")) {
+    const wageTotal = wages.reduce((sum, row) => sum + row.box1_wages, 0);
+    if (final1040?.line1a_wages !== wageTotal) {
+      throw new Error(
+        "Taxable education benefit's issued W-2 wages differ from finalized Form 1040 line 1a",
+      );
+    }
+  }
+  return rows;
+}
+class EducationIncomeNode extends TaxNode<typeof inputSchema> {
+  readonly nodeType = "education_income";
+  readonly inputSchema = inputSchema;
+  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+    const amount = scholarshipIncomeTotal(input);
+    return {
+      outputs: amount
+        ? [
+          this.outputNodes.output(schedule1, {
+            line8r_taxable_scholarships: amount,
+          }),
+          this.outputNodes.output(agi_aggregator, {
+            line8r_taxable_scholarships: amount,
+          }),
+        ]
+        : [],
+    };
+  }
+}
+export const education_income = new EducationIncomeNode();
