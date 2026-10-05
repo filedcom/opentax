@@ -1,5 +1,15 @@
 # TY2025 nonnamed product-board dependency audit
 
+Latest replay: October 5 at `f36c2aac` (documentation over tested code
+`a268f60c`). The board has 52 open rows and 1,344 completed slices. Live imports
+still contain 149 native and 116 PDF descriptors; the planner now has 187
+fixtures, 85 of 113 unique PDF keys, and 28 uncovered keys. The latest
+real-Poppler full regression passed 11,233/11,233 with no failed or ignored
+tests. This supersedes historical inventory and pending-run statements below;
+the dependency classifications and open gate requirements remain in force. See
+the
+[registry replay](ty2025-native-pdf-registry-parity.md#october-5-inventory-and-regression-replay).
+
 Status: 2026-10-04. This maps all **32 open checklist rows outside the
 "Named tax-form gaps" section** of [`product_board.md`](../../product_board.md):
 29 top-level rows and three nested rows. The board has 52 open rows in all;

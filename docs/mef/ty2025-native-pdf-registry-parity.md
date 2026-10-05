@@ -1,6 +1,6 @@
 # TY2025 Form 1040 native/PDF registry parity audit
 
-Static comparison updated 2026-10-03 of the descriptors actually registered in
+Static comparison replayed 2026-10-05 of the descriptors actually registered in
 `forms/f1040/2025/mef/forms/index.ts` and `forms/f1040/2025/pdf/forms/index.ts`,
 checked against `forms/f1040/2025/attachment-coverage.ts`. This is a
 printable-return coverage audit, not an IRS rule, passed test, or new product
@@ -52,8 +52,25 @@ registry URL check now expects these exact current URLs and checks all mapped
 
 Form 2106 now has one bounded registered native/PDF pair for a sourced
 taxpayer fee-basis state/local official job. Other Form 2106 shapes remain
-blocked by attachment coverage; this registration has authored but unrun
-source and tamper fixtures.
+blocked by attachment coverage; its source and tamper fixtures passed in the full regression at `a268f60c`.
+
+## October 5 inventory and regression replay
+
+At code `a268f60c` (unchanged by the subsequent board compaction), live imports
+contain 149 native and 116 PDF descriptors. The source-only review planner
+reports 187 fixtures, 113 unique registered PDF keys, 85 expected keys, and 28
+uncovered keys. The additional fixture is the MFS mortgage case. These figures
+describe inventory, not support or inspected pages.
+
+Commands: `deno run --allow-read scripts/plan-ty2025-pdf-review.ts` and a
+`deno eval` import of `ALL_MEF_FORMS`. The full regression log
+`/tmp/opentax-deno-task-test-a268f60c.log` records the native/PDF suites for
+Forms 5471 and companions, 8992, 8611, 965-A, 8911, 8978, 982, and 8582-CR,
+among others; its final result is 11,233 passed, zero failed or ignored. The
+[validation batch](ty2025-form1040-validation-batch.md) retains its digest and
+scope. Historical “unrun” statements below have been updated; authentication,
+full positive-route, visual, business-rule and ATS limitations continue to
+apply.
 
 ## Priority 1: native taxpayer forms with no PDF descriptor
 
@@ -90,14 +107,13 @@ gates. This does not change the parent taxpayer-form priority-1 list.
 Form 8611 now has a registered, bounded one-page-per-building PDF descriptor
 that reconciles native recapture totals with Schedule 2 line 16. Positive
 printable export stays closed until the historical Forms 8586/8609/8609-A/8611
-or issuer K-1 credit and interest records can be verified. Its authored
-source/native/PDF fixtures await the implementation-first bulk gate.
+or issuer K-1 credit and interest records can be verified. Its source/native/PDF fixtures ran in the passing full regression at `a268f60c`; positive export remains guarded.
 
 Form 965-A now has a registered PDF projection for one original installment
 liability, its eight historical payments, and the current Schedule 2 line 20
 amount. Positive printable export stays closed until prior filed liability and
 payment records are independently verified; transfers and adjustments remain
-open. Its source/native/PDF fixtures await the bulk gate.
+open. Its source/native/PDF fixtures ran in the passing full regression at `a268f60c`; historical filings remain unauthenticated.
 
 Form 4255 now has a registered five-page PDF descriptor for one
 excessive-payment-only Part I row on line 1d and/or 2a. Its native/PDF
@@ -119,17 +135,16 @@ so positive print stays closed. Covered and noncash variants remain open.
 Form 3468's bounded trust-owned Part V route now has both registered
 descriptors. Form 8992, its Schedule A, and Form 5471 page 1/A/B/C/F/G/I plus
 separate Schedules E/E-1, H, I-1, J, M, P, Q and R also have native and PDF descriptors for
-one wholly owned Category 5a CFC. Their source/return checks and fixtures are
-written but unrun. The Schedule H route requires explicit zero book-to-tax
+one wholly owned Category 5a CFC. Their source/return checks and fixtures ran in the passing full regression at `a268f60c`. The Schedule H route requires explicit zero book-to-tax
 adjustments and general-category E&P only; Schedule J has a bounded reviewed
 opening E&P/PTEP history; Schedule P has the sole shareholder's functional
 PTEP and U.S.-dollar basis. Schedule R has a reviewed empty distribution
 ledger and a header-only projection; its all-zero instruction/business-rule
 status remains unverified. Schedule Q has reviewed general-category sales and
-tested income groups, with authored native/PDF fixtures unrun. The parent now
+tested income groups, with native/PDF fixtures included in the passing full regression. The parent now
 includes Category 4, Schedule A, B Part I, and GAAP Schedules C/F. Schedule M has
 reviewed $11,000 related-party inventory sale proceeds, $1,000 cost of goods
-sold on C, and a two-page PDF, unrun. Applicable conditional attachments and
+sold on C, and a two-page PDF exercised by the full regression. Applicable conditional attachments and
 Schedule R business-rule treatment remain, so the
 attachment-coverage and Schedule 1 export guards continue to reject positive
 filing. Registry parity for these documents does not imply a complete
@@ -142,7 +157,7 @@ passive, carryover, and other mixed credit-source routes remain coverage gates.
 See `ty2025-form3800-pdf-gap.md`.
 Form 8911 and Schedule A were on the initial parity list. They now have
 registered, bounded PDF descriptors for one personal-use charger. Their fields
-and cross-return checks are written but unrun, and broader business or
+and cross-return checks ran in the passing full regression, and broader business or
 multi-property situations remain unsupported. See `ty2025-form8911-pdf-gap.md`.
 Form 8835 now has a bounded three-page PDF per fully used wind or geothermal
 facility; one- and two-facility packets have local rendered evidence. Transfer,
@@ -166,8 +181,7 @@ partnership K-1 box 15 code AD, or a credit-only S corporation K-1 box 13
 code AD, plus one separately sourced Schedule E
 rental income activity with an ordinary-tax line 6 worksheet. Other native-only
 source, category, carryover, and tax-method branches reject PDF export; the
-precise list is in `ty2025-form8582cr-pdf-gap.md`. Full-return fixtures are
-authored but unrun.
+precise list is in `ty2025-form8582cr-pdf-gap.md`. Source/native/PDF fixtures ran in the passing full regression; broader positive export remains open.
 
 ## Priority 2: conditional roots with no complete trigger-to-attachment route
 
@@ -190,8 +204,7 @@ These distinctions do not waive Form 3800 or another required parent attachment.
 The older seventh conditional-root tranche is stale for three PDF-presence
 claims: current registries include parent/Schedule A Form 8978 PDFs, a bounded
 Form 982 QPRI PDF, and a bounded one-business Form 8995 PDF. Form 8911 and its
-Schedule A also gained bounded PDF descriptors after this audit began. These
-remain unrun and do not establish full-form or visual coverage. Complete parity
+Schedule A also gained bounded PDF descriptors after this audit began. Their tests ran in the passing full regression; this does not establish full-form or visual coverage. Complete parity
 review should compare each accepted native positive variant with its required
 printed parent, schedules, statements, and source attachments, then join the
 agreed full test/XSD/filled-PDF/business-rule/ATS gates.
