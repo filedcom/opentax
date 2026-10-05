@@ -146,3 +146,71 @@ Deno.test("SSTB native and PDF exports reject detached payroll, source classific
   await assertRejects(() => bundle(base, wrongFiler));
   await assertRejects(() => buildPdfBytes(base, wrongFiler, ".pdf-cache"));
 });
+
+Deno.test("owner-only SSTB has a positive phase-in deduction with no employee wages", async () => {
+  const noPayroll = pdfReviewFixtures.find((f) =>
+    f.id === "single-form8995a-accounting-sstb-no-payroll"
+  )!;
+  const result = f1040_2025.executeReturn({ ...noPayroll.inputs });
+  assertEquals(result.diagnostics, []);
+  const p = buildPending(result.pending) as Pending;
+  assertEquals(p.f1040.line11_agi, 238050);
+  assertEquals(p.f1040.line13_qbi_deduction, 1402);
+  assertEquals(p.f1040.line15_taxable_income, 220898);
+  const l = calculateOneSstb8995ALines(inputSchema.parse(p.form8995a));
+  assertEquals([
+    l.line2,
+    l.line4,
+    l.line3,
+    l.line10,
+    l.line19,
+    l.line25,
+    l.line39,
+  ], [14025, 0, 2805, 0, 2805, 1403, 1402]);
+  const b = await bundle(p);
+  assertStringIncludes(
+    b.xml,
+    "<AllocableShareW2WagesAmt>0</AllocableShareW2WagesAmt>",
+  );
+  assertEquals(
+    (await buildPdfBytes(p, noPayroll.filer, ".pdf-cache", b)).length > 1000,
+    true,
+  );
+  for (
+    const mutation of [
+      "missing-ledger",
+      "claimed-wages",
+      "claimed-expense",
+      "both-workforces",
+    ]
+  ) {
+    const changed = structuredClone(p);
+    const c = (changed.schedule_c.schedule_cs as Record<string, unknown>[])[0];
+    const review = c.qbi_sstb_filing_review as Record<string, unknown>;
+    if (mutation === "missing-ledger") {
+      delete review.no_business_employees_review;
+    }
+    if (mutation === "claimed-wages") c.qbi_w2_wages = 1;
+    if (mutation === "claimed-expense") c.line_26_wages = 1;
+    if (mutation === "both-workforces") {
+      review.employee_w2_records = [{
+        employee_ssn: "222334444",
+        employer_ein: "123456789",
+        source_document_reference: "Synthetic conflicting employee W2",
+        box1_wages: 1,
+        box5_wages: 1,
+        ssa_filing_record_reference: "Synthetic submission",
+        filed_within_60_days_of_due_date_confirmed: true,
+      }];
+    }
+    for (const key of ["form8995a", "form8995a_schedule_a"]) {
+      ((changed[key].single_sstb_schedule_c_source as Record<string, unknown>)
+        .business as Record<string, unknown>).source_schedule_c =
+          structuredClone(c);
+    }
+    await assertRejects(() => bundle(changed));
+    await assertRejects(() =>
+      buildPdfBytes(changed, noPayroll.filer, ".pdf-cache")
+    );
+  }
+});

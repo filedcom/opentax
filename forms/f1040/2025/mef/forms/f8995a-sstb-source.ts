@@ -56,6 +56,10 @@ export function assertSstbScheduleCSource(
     retained.business.qbi !== profit ||
     retained.business.wotc_wage_reduction !== undefined ||
     (source.qbi_unadjusted_basis ?? 0) !== 0 ||
+    (payroll.length === 0 && (
+      !review.no_business_employees_review ||
+      (source.line_26_wages ?? 0) !== 0 || source.qbi_w2_wages !== 0
+    )) ||
     payroll.some((row) =>
       row.employee_ssn === ssn || row.employer_ein !== source.line_d_ein ||
       row.box1_wages > row.box5_wages

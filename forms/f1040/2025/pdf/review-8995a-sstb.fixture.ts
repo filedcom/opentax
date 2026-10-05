@@ -82,3 +82,32 @@ export function accountingSstbFixture(
     ],
   };
 }
+
+/** Reviewed owner-only workforce; no W-2 payroll is asserted for the business. */
+export function accountingSstbNoPayrollFixture(
+  base: PdfReviewFixture,
+): PdfReviewFixture {
+  const inputs = structuredClone(base.inputs);
+  const business = (inputs.schedule_c as Record<string, unknown>[])[0];
+  business.line_1_gross_receipts = 28431;
+  business.line_26_wages = 0;
+  business.qbi_w2_wages = 0;
+  const review = business.qbi_sstb_filing_review as Record<string, unknown>;
+  review.employee_w2_records = [];
+  review.no_business_employees_review = {
+    payroll_and_expense_ledger_reference:
+      "Synthetic owner-only workforce and zero-payroll expense ledger",
+    sole_proprietor_only_workforce_confirmed: true,
+    no_employee_w2_or_business_payroll_confirmed: true,
+  };
+  return {
+    ...base,
+    id: "single-form8995a-accounting-sstb-no-payroll",
+    inputs,
+    reviewFocus: [
+      "Reviewed sole proprietor has no employees or payroll; actual business profit28431 and half-SE381 yield QBI28050",
+      "Applicable QBI14025 and zero wage/property limit produce filed half-dollar reduction1403 and positive deduction1402",
+      "Native and PDF ScheduleA/parent retain zero payroll and actual Form1040 income/tax/SE totals",
+    ],
+  };
+}

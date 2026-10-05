@@ -1,4 +1,7 @@
-import { accountingSstbFixture } from "./review-8995a-sstb.fixture.ts";
+import {
+  accountingSstbFixture,
+  accountingSstbNoPayrollFixture,
+} from "./review-8995a-sstb.fixture.ts";
 import { twoBusinessAggregationFixture } from "./review-8995a-aggregation.fixture.ts";
 import { medicareMsaReviewFixture } from "./review-8853-medicare.fixture.ts";
 import educationScholarshipSource from "./review-8863-scholarship-source.json" with {
@@ -9028,12 +9031,22 @@ const educationBase = basePdfReviewFixtures.find((fixture) =>
 )!;
 export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
   medicareMsaReviewFixture(),
+  accountingSstbNoPayrollFixture(accountingSstbFixture(
+    basePdfReviewFixtures.find((fixture) =>
+      fixture.id === "single-schedule-c"
+    )!,
+    basePdfReviewFixtures.find((fixture) => fixture.id === "single-w2-refund")!,
+  )),
   accountingSstbFixture(
-    basePdfReviewFixtures.find((fixture) => fixture.id === "single-schedule-c")!,
+    basePdfReviewFixtures.find((fixture) =>
+      fixture.id === "single-schedule-c"
+    )!,
     basePdfReviewFixtures.find((fixture) => fixture.id === "single-w2-refund")!,
   ),
   twoBusinessAggregationFixture(
-    basePdfReviewFixtures.find((fixture) => fixture.id === "single-schedule-c")!,
+    basePdfReviewFixtures.find((fixture) =>
+      fixture.id === "single-schedule-c"
+    )!,
     basePdfReviewFixtures.find((fixture) => fixture.id === "single-w2-refund")!,
   ),
   {

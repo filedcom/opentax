@@ -562,3 +562,31 @@ Verification: the typed restricted SSTB node/native/PDF/source suite passes **49
 Existing simplified-QBI node, advanced native/PDF parent, sourced aggregation
 and distinct-capital regressions additionally pass **59/59** in the same
 restricted tool mode (`/tmp/opentax-sstb-existing-regression.log`).
+
+## Owner-only accounting SSTB without employee payroll — October 6
+
+The same public source now admits an explicitly reviewed owner-only workforce
+with no employee W-2 records, zero Schedule C wages and zero QBI payroll. A
+payroll/expense ledger reference and both no-employee/payroll confirmations are
+required; a reviewed employee payroll list cannot also claim no employees.
+No nonzero wages or wage expense may be asserted through this source.
+
+The source retains profit28,431 and half-SE381, so adjusted QBI remains28,050
+and pre-QBI taxable income222,300. Applicable QBI14,025 produces potential2,805;
+the zero wage/property limitation and50% phase-in yield rounded reduction1,403
+and positive deduction**1,402**. Filed taxable income220,898, ordinary tax47,750,
+other tax1,087, total48,837 and refund1,163 reconcile throughout the full packet.
+This is the actual no-payroll phase-in branch, with no invented employee wages.
+
+Typed restricted Schedule C and both SSTB route tests pass **107/107**
+(`/tmp/opentax-sstb-zero-focused2.log`). The full v5.4 native return and15-page
+PDF packet pass selected exact source/calculation/native/PDF/hash/page-origin
+replay (`/tmp/opentax-sstb-zero-check.log`), and root inspected all15 rendered
+pages. Reusable fixture: `single-form8995a-accounting-sstb-no-payroll`.
+Retained directory:
+`.state/research/ty2025-filled-pdf-review/2026-10-06-qbi-sstb-no-payroll/`;
+manifest SHA-256
+`261041c4b2dd6cb9735d57000452d843b59cc2bcd5dc4b79bf80964cba4d4b46`.
+Broader SSTB sources, owners/statuses, property and external authentication
+remain open. Historical selected manifests capture their generation inventory;
+they are not evidence that every later added fixture has been reviewed.
