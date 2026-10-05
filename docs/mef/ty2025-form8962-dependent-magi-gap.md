@@ -1,5 +1,15 @@
 # TY2025 Form 8962 dependent modified AGI: bounded filing path
 
+## Distinct claimed-dependent SSNs before MAGI aggregation (2026-10-05)
+
+The shared Worksheet 1-2 dependent-income calculation now rejects two claimed
+dependent rows with the same normalized SSN before adding either return's MAGI.
+The focused regression uses separate filed-return and Form 1099 source IDs with
+matching recipient identities, so duplicate-person detection does not depend
+on a source mismatch or policy coverage check. The four focused two-dependent
+tests pass. This guard does not authenticate dependent claims or expand the
+supported income and policy combinations below.
+
 ## One required-filing wage dependent and one reviewed nonfiling interest dependent (2026-10-01, unrun)
 
 A three-person single-filer household may now combine one dependent whose

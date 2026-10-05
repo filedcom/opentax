@@ -505,6 +505,12 @@ export function hohQualifyingChildFromGeneral(
 type DependentItem = z.infer<typeof dependentSchema>;
 
 export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
+  const claimedSsns = dependents.map((dependent) =>
+    dependent.ssn?.replaceAll("-", "")
+  ).filter((ssn): ssn is string => ssn !== undefined);
+  if (new Set(claimedSsns).size !== claimedSsns.length) {
+    throw new Error("Form 8962 claimed dependents need distinct SSNs");
+  }
   return dependents.reduce((total, dep) => {
     const taxReturn = dep.ptc_tax_return;
     if (taxReturn?.filing === "not_required") {
