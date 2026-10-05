@@ -428,3 +428,16 @@ input before an identified filer/return source is created. Ignored source/worksh
 and focused logs are under `.state/research/2026-10-06-form8853-contributions/`.
 These are local schema and rendering checks, not IRS business-rule or ATS
 acceptance. Broad Archer/MSA support remains open.
+
+### Complete Archer contribution packet visual review
+
+All 15 retained positive packets for the sourced Archer contribution slice were
+rendered using real Poppler and inspected page by page, including all Form1040,
+Schedule1/2, supporting statement, Form5329 and Form8853 pages: 110 pages total.
+Individual page renders and review sheets are retained in the ignored
+`.state/research/2026-10-06-form8853-contributions/all-page-review/` proof folder.
+Counts by packet: personal cents5, grandfather5, MFS family9, zero account value7,
+following-year deposit9, dependent7, partial other coverage9, monthly family9,
+compensation cap9, employer3, employer excess10, employer+personal7, excess
+already in wages7, Medicare cutoff9, spouse personal5. No visual fixes or
+regression reruns were required. Source/test limitations above remain unchanged.
