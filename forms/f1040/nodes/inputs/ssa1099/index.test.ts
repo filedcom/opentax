@@ -88,6 +88,21 @@ Deno.test("SSA and RRB benefit statements reject a repeated issued-copy referenc
     Error,
     "repeats an issued-copy reference",
   );
+  for (const is_rrb of [false, true]) {
+    assertThrows(
+      () =>
+        compute([
+          minimalItem({ ...first, is_rrb }),
+          minimalItem({
+            ...first,
+            is_rrb,
+            source_document_reference: "ISSUED-COPY-2025",
+          }),
+        ]),
+      Error,
+      "repeats an issued-copy reference",
+    );
+  }
   compute([
     first,
     minimalItem({

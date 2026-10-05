@@ -164,6 +164,36 @@ Deno.test("native and PDF export reject a benefit statement owned by another per
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
+Deno.test("native and PDF export reject a repeated SSA issued copy despite reference casing", async () => {
+  const row = {
+    box3_gross_benefits: 4_000,
+    recipient_tin: filer.primarySSN,
+    source_document_reference: "SSA-2025-A",
+  };
+  const duplicated = {
+    ssa1099: {
+      ssas: [row, { ...row, source_document_reference: "ssa-2025-a" }],
+    },
+    f1040: filed(8_000),
+  };
+  const message = "Benefit statement repeats an issued-copy reference";
+  assertThrows(
+    () => buildMefXml(duplicated as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    message,
+  );
+  await assertRejects(() => buildPdfBytes(duplicated, filer), Error, message);
+
+  const distinct = {
+    ...duplicated,
+    ssa1099: {
+      ssas: [row, { ...row, source_document_reference: "SSA-2025-B" }],
+    },
+  };
+  buildMefXml(distinct as Parameters<typeof buildMefXml>[0], filer);
+  await buildPdfBytes(distinct, filer);
+});
+
 Deno.test("native and PDF export reject inflated SSA line 6a", async () => {
   const pending = {
     ssa1099,
