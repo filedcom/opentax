@@ -68,7 +68,6 @@ export function assertMultipleScheduleC8995(
     "k1_partnership",
     "k1_s_corp",
     "f1099patr",
-    "f1099b",
     "sep_retirement",
     "f5884",
     "form8995a",
@@ -174,22 +173,24 @@ export function assertMultipleScheduleC8995(
     !sameAmount(
       f1040.line9_total_income,
       wages + profit + investment.interest + investment.ordinary +
-        investment.capital,
+        investment.returnCapital,
     ) ||
     number(f1040.line10_adjustments) !== deduction ||
     !sameAmount(
       f1040.line11_agi,
       wages + profit + investment.interest + investment.ordinary +
-        investment.capital - deduction,
+        investment.returnCapital - deduction,
     ) ||
     [
-      "line7_capital_gain",
       "line13b_additional_deductions",
     ].some((key) => number(f1040[key]) !== 0) ||
     number(f1040.line2b_taxable_interest) !== investment.interest ||
     number(f1040.line3a_qualified_dividends) !== investment.qualified ||
     number(f1040.line3b_ordinary_dividends) !== investment.ordinary ||
-    number(f1040.line7a_cap_gain_distrib) !== investment.capital ||
+    number(f1040.line7a_cap_gain_distrib) !==
+      (pending.f1099b === undefined ? investment.capital : 0) ||
+    number(f1040.line7_capital_gain) !==
+      (pending.f1099b === undefined ? 0 : investment.returnCapital) ||
     typeof f1040.line12c_deduction_total !== "number"
   ) {
     throw new Error(

@@ -1,5 +1,101 @@
 # TY2025 Form 8995 positive export boundary
 
+## Distinct qualified-dividend and capital-gain contributions (October 6, 2026)
+
+The contribution issue discovered in the investment slice is now repaired at QBI
+source routing and finalization. The executor retains both numeric deposits;
+export normalization selects the last element of ordinary numeric arrays. That
+could leave the retained `net_capital_gain` showing only one contribution even
+when calculation used both. No global merge or normalization rule is changed.
+1099-DIV and Schedule D now supply distinct `qbi_capital_sources` records named
+`f1099div.qualified_dividends` and `schedule_d.net_capital_gain`. Duplicate
+semantic source identities fail validation. Form 8995 derives its calculation
+and entered limitation from those records and finalizes the retained raw total
+as a scalar, including delegation to Form 8995-A and an income-limited zero
+claim. Form 8995-A retains the same records and owned investment-copy snapshots.
+
+The general source contribution representation replaces the prior multiple-C
+workaround using only dividend-copy totals. Each source amount retains cents;
+entered Form 8995 line 12 / Form 8995-A line 34 combines the separately rounded
+qualified-dividend and Schedule D net-gain amounts. This follows
+[Form 8995 line 12](https://www.irs.gov/instructions/i8995) and
+[Form 8995-A line 34](https://www.irs.gov/instructions/i8995a): qualified
+dividends increase net capital gain, and actual Schedule D gains use the smaller
+positive line 15 or 16. The same capital limitation reaches Form 1040's final
+QBI subtraction and preferential tax calculation.
+
+Owned investment source replay now also supports identified ordinary broker
+sales. It rebuilds each Form 8949 transaction from the retained 1099-B copy,
+checks owner/payer/reference and distinct transaction IDs, matches the retained
+Schedule D transaction rows, replays Schedule D, and compares its final lines
+and Form 1040 capital gain. Final Schedule D retains direct-sale aggregates
+alongside transaction rows; replay strips only those four calculated aggregate
+inputs, recomputes the transactions once, and compares the aggregate output.
+This avoids counting the same owned sale twice. Other Schedule D sources,
+special-rate transactions, market discount, adjustments and withholding are
+outside this proven broker route. Existing final-return Form 8949/Schedule D
+checks continue to apply.
+
+A single taxpayer Schedule C with investment income now uses the same sourced
+filed-row replay as multiple businesses. A sole business receives its entire
+sourced deductible SE tax; no shared-business allocation review is needed for
+that sole-business allocation. Multiple businesses still require their supplied
+reasonable shared-SE allocation reviews. The existing above-threshold current
+loss route also accepts these owned investment contributions, reconciles wages,
+business and investment income with Form 1040, computes line 34/35/36, and
+prints line 34 in native XML rather than the previous hardcoded zero. Its
+existing net-business-income-below-SE-threshold boundary remains open for larger
+losses and profits requiring shared deductions.
+
+The supplied qualified-dividend review's `ex_dividend_date` and `reviewed_on`
+now require actual calendar dates. Impossible month/day combinations fail
+public-input validation and native/PDF source replay; the proof includes a
+non-leap February 29, April 31, February 30, and month 13. No holding review or
+source authentication is invented.
+
+| Case                   | Retained qualified / net capital contributions | Entered QBI capital limitation | Entered limitation base / 20% limit | QBI deduction | Raw AGI / taxable income | Income tax | PDF pages |
+| ---------------------- | ---------------------------------------------- | -----------------------------: | ----------------------------------- | ------------: | ------------------------ | ---------: | --------: |
+| single-business        | 1,800.49 / 1,800.49                            |                          3,600 | 80,088 / 16,018                     |        16,018 | 99,438.45 / 67,670.45    |      9,551 |        12 |
+| multiple-business      | 1,800.49 / 1,800.49                            |                          3,600 | 80,088 / 16,018                     |        16,018 | 99,438.45 / 67,670.45    |      9,551 |        14 |
+| broker-net-gain        | 1,800.49 / 1,800.49                            |                          3,600 | 80,088 / 16,018                     |        16,018 | 99,438.45 / 67,670.45    |      9,551 |        16 |
+| advanced-business-loss | 1,800.49 / 1,800.49                            |                          3,600 | 287,452 / 57,490                    |            50 | 306,802.47 / 291,002.47  |     70,678 |        16 |
+
+The broker case combines sourced long-term proceeds $3,500.25/basis $2,000,
+short-term proceeds $1,000/basis $1,200, and two distributions $300.12/$200.12.
+Schedule D entered lines 7/15/16 are -$200/$2,000/$1,800. The advanced case has
+$300,000 personal W-2 wages, $1,300 positive business income, a $1,000 current
+business loss, $100 sourced business W-2 wages, and $0 shared SE adjustment:
+adjusted QBI $300, wage-limited component $50. Both QBI forms retain two equal
+raw $1,800.49 source contributions; the retained raw sum is $3,600.98, while the
+entered limitation is $3,600. Complete native/PDF return proof preserves the
+source cents and the finalized line equations.
+
+The advanced W-2 retains Social Security wages $176,100/tax $10,918.20 and
+Medicare wages $300,000/withholding $4,350. Its full return includes $900
+Additional Medicare Tax and $247.09 net investment income tax, with entered
+total tax $71,825.
+
+Evidence: four additional complete public-input native/PDF return cases pass
+full local TY2025 v5.4 XSD validation. All four PDFs are flattened
+(`Form: none`) and visually checked with real Poppler on QBI pages, Schedule D
+sales, and the Form 1040 investment/tax pages. The typed final focused run has
+six passing tests, including the previous investment proof (nine XSD positives
+across the two files). The new proof rejects 52
+source/identity/reference/total/date/line mutations in both native and PDF
+projection, plus four impossible public-input dates. Review artifacts with
+`return.xml`, `calculation.json`, and `filled-return.pdf` are under
+`.state/research/ty2025-filled-pdf-review/2026-10-06-qbi-distinct/` in the
+isolated checkout. The relevant existing regression passed 391 tests; the final
+retained-zero-claim unit run passed 43 tests. Local XSD validation does not
+prove IRS business-rule/ATS acceptance.
+
+The generic retained-contribution issue above is resolved for these QBI paths.
+Broader parent scope remains open: additional capital sources and special-rate
+tax worksheets, larger Form 8995-A loss/SE allocations, other statuses,
+aggregation/SSTB/REIT/PTP combinations, authenticated
+source/holding/carryforward records, complete business-rule acceptance, and
+other return-wide rounding or income normalization fields.
+
 ## Owned investment income with multiple Schedule C businesses (October 6, 2026)
 
 The below-threshold single-taxpayer route now replays actual retained 1099-INT
@@ -32,11 +128,9 @@ aggregation within each source line, following the
 
 The source replay accepts only floating addition-order differences smaller than
 $0.00000001 in category/profit and return-income joins; this does not round or
-alter retained source cents. The graph's generic numeric accumulation can
-collapse equal qualified-dividend and capital-distribution contributions. This
-route derives Form 8995's limitation from distinct retained dividend-copy
-totals, including an equal-contribution positive case. Correcting that generic
-aggregate for wider routes remains within the existing return-wide parent scope.
+alter retained source cents. The original slice used distinct retained dividend-copy totals to avoid losing a
+contribution during export normalization. That discovery and workaround are
+superseded by the distinct source contribution repair described above.
 
 The final income tax is replayed from sourced qualified dividends,
 distributions, and final taxable income using the existing Qualified Dividends

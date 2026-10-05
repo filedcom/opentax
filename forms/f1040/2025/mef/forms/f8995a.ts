@@ -1,3 +1,8 @@
+import { inputSchema as w2InputSchema } from "../../../nodes/inputs/w2/index.ts";
+import {
+  assertMultiBusinessInvestmentSources,
+  assertMultiBusinessInvestmentTax,
+} from "./f8995-investment.ts";
 import { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
 import { FilingStatus as HeaderFilingStatus } from "../../../mef/header.ts";
@@ -197,6 +202,54 @@ export function assertScheduleCLossSources(
   pending: Readonly<Record<string, unknown>> | undefined,
 ): void {
   const lines = calculateScheduleCLossLines(fields);
+  if (
+    fields.qbi_capital_sources !== undefined ||
+    pending?.f1099div !== undefined || pending?.f1099int !== undefined ||
+    pending?.f1099b !== undefined
+  ) {
+    const retained = pending as Record<string, Record<string, unknown>>;
+    const investment = assertMultiBusinessInvestmentSources(
+      {
+        ...fields,
+        taxpayer_ssn: String(retained.general.taxpayer_ssn).replace(/\D/g, ""),
+      },
+      retained,
+      true,
+    );
+    if (fields.net_capital_gain !== investment.filedQbiCapitalLimit) {
+      throw new Error(
+        "Form 8995-A capital limitation differs from entered source contributions",
+      );
+    }
+    const wages = retained.w2 === undefined
+      ? 0
+      : w2InputSchema.parse(retained.w2).w2s.reduce(
+        (sum, row) => sum + row.box1_wages,
+        0,
+      );
+    const profit = lines.businesses.reduce(
+      (sum, business) => sum + business.qbi,
+      0,
+    );
+    const expectedIncome = wages + profit + investment.interest +
+      investment.ordinary + investment.returnCapital;
+    if (
+      !Number.isFinite(retained.f1040.line9_total_income) ||
+      !Number.isFinite(retained.f1040.line11_agi) ||
+      Math.abs(Number(retained.f1040.line9_total_income) - expectedIncome) >=
+        1e-8 ||
+      Math.abs(Number(retained.f1040.line11_agi) - expectedIncome) >= 1e-8 ||
+      (retained.f1040.line10_adjustments ?? 0) !== 0 ||
+      (retained.f1040.line1a_wages ?? 0) !== wages ||
+      (retained.f1040.line1z_total_wages ?? 0) !== wages
+    ) {
+      throw new Error(
+        "Form 8995-A investment taxable income differs from retained wage, business and investment sources",
+      );
+    }
+    assertMultiBusinessInvestmentTax(retained, investment);
+  }
+
   const source = scheduleCInputSchema.safeParse(pending?.schedule_c);
   if (
     !source.success || !source.data.schedule_cs ||
@@ -418,7 +471,7 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
       element("REITPTPComponentAmt", 0),
       element("QBIDedBfrIncomeLimitationAmt", parent.line32),
       element("TaxableIncomeBeforeQBIDedAmt", parent.line33),
-      element("NetCapitalGainAmt", 0),
+      element("NetCapitalGainAmt", parent.line34),
       element("AdjustedTaxableIncomeAmt", parent.line35),
       element("IncomeLimitationAmt", parent.line36),
       element("QBIDedBeforeDPADSect199AgAmt", parent.line37),

@@ -1,3 +1,7 @@
+import {
+  qbiCapitalSourcesSchema,
+  qbiCapitalTotal,
+} from "../qbi-capital-sources.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -84,6 +88,7 @@ export const inputSchema = z.object({
   taxable_income: z.number().nonnegative().optional(),
   // Net capital gain (Form 1040 line 3a plus Schedule D) — reduces income limitation base
   net_capital_gain: accumulable(z.number().nonnegative()).optional(),
+  qbi_capital_sources: qbiCapitalSourcesSchema.optional(),
   // Deductible part of self-employment tax (Schedule SE line 13) attributable to the
   // trade or business — reduces QBI on Line 1(c)
   se_tax_deduction: accumulable(z.number().nonnegative()).optional(),
@@ -212,7 +217,7 @@ function incomeLimitBase(
   input: Form8995Input,
   cfg: F1040Config,
 ): number {
-  const capGain = sumField(input.net_capital_gain);
+  const capGain = qbiCapitalTotal(input);
 
   // Preferred: use explicit taxable_income (pre-QBI) when available
   if (input.taxable_income !== undefined) {
@@ -343,7 +348,7 @@ function advancedFormOutput(
       input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
       sumField(input.qbi_from_schedule_c) !== business.qbi ||
       sumField(input.qbi_from_schedule_f) !== 0 || sumField(input.qbi) !== 0 ||
-      sstbQbi !== 0 || sumField(input.net_capital_gain) !== 0 ||
+      sstbQbi !== 0 || qbiCapitalTotal(input) !== 0 ||
       sumField(input.line6_sec199a_dividends) !== 0 ||
       (input.qbi_loss_carryforward ?? 0) !== 0 ||
       (input.reit_loss_carryforward ?? 0) !== 0 ||
@@ -393,7 +398,11 @@ function advancedFormOutput(
   return output(form8995a, {
     filing_status: input.filing_status,
     taxable_income: taxableIncome,
-    net_capital_gain: sumField(input.net_capital_gain),
+    net_capital_gain: qbiCapitalTotal(input, true),
+    qbi_capital_sources: input.qbi_capital_sources,
+    investment_interest_sources: input.investment_interest_sources,
+    investment_dividend_sources: input.investment_dividend_sources,
+    investment_dividend_totals: input.investment_dividend_totals,
     qbi: nonSstbQbi - deductions * nonSstbShare,
     w2_wages: sumField(input.w2_wages),
     unadjusted_basis: sumField(input.unadjusted_basis),
@@ -439,7 +448,7 @@ function oneScheduleCLines(
     typeof seDeduction !== "number" || seDeduction < 0 ||
     sumField(input.retirement_plan_deduction) !== 0 ||
     !Number.isSafeInteger(sumField(input.line6_sec199a_dividends)) ||
-    !Number.isSafeInteger(sumField(input.net_capital_gain)) ||
+    !Number.isSafeInteger(qbiCapitalTotal(input)) ||
     (input.qbi_loss_carryforward ?? 0) !== 0 ||
     (input.reit_loss_carryforward ?? 0) !== 0 ||
     input.agi === undefined || !Number.isFinite(input.agi) ||
@@ -456,7 +465,7 @@ function oneScheduleCLines(
   const line5 = Math.round(qbi * QBI_RATE);
   const reit = sumField(input.line6_sec199a_dividends);
   const line9 = Math.round(reit * QBI_RATE);
-  const line12 = sumField(input.net_capital_gain);
+  const line12 = qbiCapitalTotal(input, true);
   const line13 = Math.max(0, line11 - line12);
   const line14 = Math.round(line13 * QBI_RATE);
   return {
@@ -492,10 +501,12 @@ function multipleScheduleCLines(
 ): (Record<string, unknown> & { line15: number }) | undefined {
   const businesses = input.schedule_c_qbi_businesses;
   if (
-    !businesses || businesses.length < 2 ||
-    !businesses.some((row) =>
+    !businesses || businesses.length < 1 ||
+    !(businesses.some((row) =>
       row.source_schedule_c.qbi_se_tax_allocation_review
-    )
+    ) ||
+      (businesses.length === 1 &&
+        input.investment_dividend_totals !== undefined))
   ) return undefined;
   if (
     input.se_tax_deduction === undefined &&
@@ -547,11 +558,7 @@ function multipleScheduleCLines(
   const line11 = Math.round(
     Math.max(0, input.agi - standardDeductionAmount(input, cfg)),
   );
-  const dividends = input.investment_dividend_totals;
-  if (!dividends && sumField(input.net_capital_gain) !== 0) return undefined;
-  // Line 12 reuses the entered Form 1040 qualified dividend and capital gain lines.
-  const line12 = Math.round(dividends?.qualified ?? 0) +
-    Math.round(dividends?.capital_gain_distributions ?? 0);
+  const line12 = qbiCapitalTotal(input, true);
   const line13 = Math.max(0, line11 - line12);
   const line14 = Math.round(line13 * QBI_RATE);
   return {
@@ -606,7 +613,7 @@ function twoSmallScheduleCLines(
     sumField(input.se_health_insurance_deduction) !== 0 ||
     sumField(input.retirement_plan_deduction) !== 0 ||
     sumField(input.line6_sec199a_dividends) !== 0 ||
-    sumField(input.net_capital_gain) !== 0 ||
+    qbiCapitalTotal(input) !== 0 ||
     (input.qbi_loss_carryforward ?? 0) !== 0 ||
     (input.reit_loss_carryforward ?? 0) !== 0 ||
     input.agi === undefined || !Number.isFinite(input.agi)
@@ -669,7 +676,7 @@ function oneScheduleFLines(
     sumField(input.se_health_insurance_deduction) !== 0 ||
     sumField(input.retirement_plan_deduction) !== 0 ||
     sumField(input.line6_sec199a_dividends) !== 0 ||
-    !Number.isSafeInteger(sumField(input.net_capital_gain)) ||
+    !Number.isSafeInteger(qbiCapitalTotal(input)) ||
     (input.qbi_loss_carryforward ?? 0) !== 0 ||
     (input.reit_loss_carryforward ?? 0) !== 0 ||
     input.agi === undefined || !Number.isFinite(input.agi) ||
@@ -681,7 +688,7 @@ function oneScheduleFLines(
     Math.max(0, input.agi - standardDeductionAmount(input, cfg)),
   );
   const line5 = Math.round(qbi * QBI_RATE);
-  const line12 = sumField(input.net_capital_gain);
+  const line12 = qbiCapitalTotal(input, true);
   const line13 = Math.max(0, line11 - line12);
   const line14 = Math.round(line13 * QBI_RATE);
   return {
@@ -727,7 +734,7 @@ function reitOnlyLines(
     sumField(input.qbi_from_schedule_f) !== 0 ||
     sumField(input.qbi) !== 0 || sumField(input.sstb_qbi) !== 0 ||
     businessDeductions(input) !== 0 ||
-    sumField(input.net_capital_gain) !== 0 ||
+    qbiCapitalTotal(input) !== 0 ||
     (input.qbi_loss_carryforward ?? 0) !== 0 ||
     (input.reit_loss_carryforward ?? 0) !== 0 ||
     input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
@@ -788,16 +795,23 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
     }
 
     if (
-      input.agi === undefined && input.schedule_c_qbi_businesses?.some(
+      input.agi === undefined && (input.schedule_c_qbi_businesses?.some(
         (row) => row.source_schedule_c.qbi_se_tax_allocation_review,
-      )
+      ) ||
+        (input.schedule_c_qbi_businesses?.length === 1 &&
+          input.investment_dividend_totals !== undefined))
     ) return { outputs: [] };
     const taxableIncome = taxableIncomeBeforeQbi(input, cfg);
     if (
       taxableIncome !== undefined && input.filing_status !== undefined &&
       taxableIncome > qbiThreshold(input.filing_status, cfg)
     ) {
-      return { outputs: [advancedFormOutput(input, taxableIncome)] };
+      return {
+        outputs: [advancedFormOutput(input, taxableIncome), {
+          nodeType: this.nodeType,
+          fields: { net_capital_gain: qbiCapitalTotal(input) },
+        }],
+      };
     }
 
     const multipleLines = multipleScheduleCLines(input, cfg);
@@ -819,7 +833,14 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       ? qbiDeduction(input, cfg)
       : simplifiedLines.line15;
     if (deduction <= 0 && multipleLines === undefined) {
-      return { outputs: [] };
+      return {
+        outputs: qbiCapitalTotal(input) > 0
+          ? [{
+            nodeType: this.nodeType,
+            fields: { net_capital_gain: qbiCapitalTotal(input) },
+          }]
+          : [],
+      };
     }
 
     const outputs: NodeOutput[] = [
@@ -831,6 +852,7 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
         nodeType: this.nodeType,
         fields: {
           qbi_deduction: deduction,
+          net_capital_gain: qbiCapitalTotal(input),
           ...simplifiedLines,
         },
       },

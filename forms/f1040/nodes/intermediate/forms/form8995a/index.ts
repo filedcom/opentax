@@ -1,3 +1,7 @@
+import {
+  qbiCapitalSourcesSchema,
+  qbiCapitalTotal,
+} from "../qbi-capital-sources.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -171,6 +175,14 @@ export const inputSchema = z.object({
   taxable_income: z.number().nonnegative(),
   // Net capital gain — reduces income limitation base
   net_capital_gain: z.number().nonnegative().optional(),
+  qbi_capital_sources: qbiCapitalSourcesSchema.optional(),
+  investment_interest_sources: z.array(z.unknown()).optional(),
+  investment_dividend_sources: z.array(z.unknown()).optional(),
+  investment_dividend_totals: z.object({
+    ordinary: z.number().nonnegative(),
+    qualified: z.number().nonnegative(),
+    capital_gain_distributions: z.number().nonnegative(),
+  }).strict().optional(),
 
   // Non-SSTB qualified business income
   qbi: z.number().optional(),
@@ -447,7 +459,8 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
     (input.reit_loss_carryforward ?? 0) !== 0 ||
     (input.sstb_qbi ?? 0) !== 0 ||
     (input.line6_sec199a_dividends ?? 0) !== 0 ||
-    (input.net_capital_gain ?? 0) !== 0 ||
+    ((input.net_capital_gain ?? 0) !== 0 &&
+      input.qbi_capital_sources === undefined) ||
     (input.aggregation_groups ?? []).length !== 0 ||
     input.patron_of_specified_cooperative === true ||
     input.business_filing_details || input.sstb_filing_details ||
@@ -528,7 +541,9 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
   const line9Parent = line6Parent + line8Parent;
   const line10Parent = Math.max(line5Parent, line9Parent);
   const line11Parent = Math.min(line3Parent, line10Parent);
-  const line36 = Math.round(input.taxable_income * QBI_RATE);
+  const line34 = qbiCapitalTotal(input, true);
+  const line35 = Math.max(0, Math.round(input.taxable_income) - line34);
+  const line36 = Math.round(line35 * QBI_RATE);
   const line39 = Math.min(line11Parent, line36);
   if (
     ![
@@ -580,8 +595,8 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
       line16: line11Parent,
       line32: line11Parent,
       line33: Math.round(input.taxable_income),
-      line34: 0,
-      line35: Math.round(input.taxable_income),
+      line34,
+      line35,
       line36,
       line37: line39,
       line39,
@@ -847,7 +862,7 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   const line31 = filedAmount(line30 * QBI_RATE);
   const line32 = line16 + line31;
   const line33 = input.taxable_income;
-  const line34 = input.net_capital_gain ?? 0;
+  const line34 = qbiCapitalTotal(input, true);
   const line35 = Math.max(0, line33 - line34);
   const line36 = filedAmount(line35 * QBI_RATE);
   const line37 = Math.min(line32, line36);

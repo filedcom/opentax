@@ -1,4 +1,10 @@
 import {
+  inputSchema as scheduleDSchema,
+  schedule_d,
+} from "../../../nodes/intermediate/aggregation/schedule_d/index.ts";
+import { f1099b } from "../../../nodes/inputs/f1099b/index.ts";
+import { qbiCapitalTotal } from "../../../nodes/intermediate/forms/qbi-capital-sources.ts";
+import {
   assertDistinct1099INTCopies,
   inputSchema as intSchema,
 } from "../../../nodes/inputs/f1099int/index.ts";
@@ -15,8 +21,17 @@ import { FilingStatus } from "../../../nodes/types.ts";
 
 /** Owned issued-copy replay for ordinary interest, dividends and capital distributions. */
 export function assertMultiBusinessInvestmentSources(
-  input: Form8995Input,
+  input: Pick<
+    Form8995Input,
+    | "investment_interest_sources"
+    | "investment_dividend_sources"
+    | "investment_dividend_totals"
+    | "taxpayer_ssn"
+    | "qbi_capital_sources"
+    | "net_capital_gain"
+  >,
   pending: Record<string, Record<string, unknown>>,
+  enteredTotal = false,
 ) {
   const interest = pending.f1099int === undefined
     ? []
@@ -143,44 +158,161 @@ export function assertMultiBusinessInvestmentSources(
       );
     }
   }
-  const d = pending.schedule_d;
   if (
-    totals.capital > 0
-      ? !d || d.line13_cap_gain_distrib !== totals.capital ||
-        Object.keys(d).some((key) =>
-          ![
-            "line13_cap_gain_distrib",
-            "filing_status",
-            "taxable_income",
-            "income_tax",
-            "qualified_dividends",
-          ].includes(key)
+    (pending.f1040?.line2b_taxable_interest ?? 0) !== totals.interest ||
+    (pending.f1040?.line3a_qualified_dividends ?? 0) !== totals.qualified ||
+    (pending.f1040?.line3b_ordinary_dividends ?? 0) !== totals.ordinary
+  ) {
+    throw new Error("QBI Form 1040 investment lines differ from owned copies");
+  }
+  const d = pending.schedule_d;
+  let capitalGain = totals.capital;
+  if (pending.f1099b !== undefined) {
+    const brokerInput = f1099b.inputSchema.parse(pending.f1099b);
+    const brokerRows = brokerInput.f1099bs;
+    if (
+      new Set(brokerRows.map((row) => row.transaction_id)).size !==
+        brokerRows.length ||
+      brokerRows.some((row) =>
+        row.recipient_ssn !== owner || !row.payer_tin ||
+        !row.source_document_reference || !row.transaction_id ||
+        row.box3_transaction_type ||
+        row.adjustment_codes || row.adjustment_amount ||
+        row.box1f_accrued_market_discount ||
+        row.box1g_wash_sale_loss_disallowed || row.federal_withheld
+      )
+    ) {
+      throw new Error(
+        "QBI broker capital sources need owned identified ordinary sales without special-rate or interest adjustments",
+      );
+    }
+    const broker = f1099b.compute(
+      { taxYear: 2025, formType: "f1040" },
+      brokerInput,
+    );
+    const expectedSales = broker.outputs.filter((row) =>
+      row.nodeType === "form8949"
+    ).map((row) => row.fields.transaction);
+    const actualSales = d?.transaction === undefined
+      ? []
+      : Array.isArray(d.transaction)
+      ? d.transaction
+      : [d.transaction];
+    if (!same(expectedSales, actualSales)) {
+      throw new Error(
+        "QBI Schedule D sales differ from retained broker copies",
+      );
+    }
+  } else if (d?.transaction !== undefined) {
+    throw new Error("QBI actual Schedule D sales need retained broker copies");
+  }
+  if (d !== undefined) {
+    const parsedD = scheduleDSchema.parse(d);
+    // Final Schedule D retains direct-sale aggregates alongside its transaction rows.
+    // Replay the owned transactions once, then compare those aggregate lines below.
+    for (
+      const key of [
+        "line_1a_proceeds",
+        "line_1a_cost",
+        "line_8a_proceeds",
+        "line_8a_cost",
+      ] as const
+    ) delete parsedD[key];
+    if (
+      Object.keys(parsedD).some((key) =>
+        !["transaction", "line13_cap_gain_distrib", "filing_status"].includes(
+          key,
         )
-      : d && Object.keys(d).some((key) => key !== "filing_status")
+      ) ||
+      (parsedD.line13_cap_gain_distrib ?? 0) !== totals.capital
+    ) {
+      throw new Error(
+        `QBI capital sources need owned distributions and broker sales without other Schedule D sources (${
+          Object.keys(parsedD).join(", ")
+        }; distributions ${
+          parsedD.line13_cap_gain_distrib ?? 0
+        } vs ${totals.capital})`,
+      );
+    }
+    const replay = schedule_d.compute(
+      { taxYear: 2025, formType: "f1040" },
+      parsedD,
+    );
+    const output = replay.outputs.find((row) => row.nodeType === "form8995");
+    capitalGain = output?.fields.net_capital_gain as number ?? 0;
+    const filed = replay.outputs.find((row) => row.nodeType === "f1040");
+    if (
+      filed !== undefined &&
+      Object.entries(filed.fields).some(([key, value]) =>
+        pending.f1040?.[key] !== value
+      )
+    ) {
+      throw new Error(
+        "QBI capital gain differs from replayed Schedule D and Form 1040",
+      );
+    }
+    const finalized = replay.outputs.find((row) =>
+      row.nodeType === "schedule_d"
+    );
+    if (
+      finalized &&
+      Object.entries(finalized.fields).some(([key, value]) =>
+        !same(d[key], value)
+      )
+    ) {
+      throw new Error(
+        "QBI Schedule D computed totals differ from source replay",
+      );
+    }
+  } else if (totals.capital !== 0) {
+    throw new Error("QBI capital distributions need retained Schedule D input");
+  }
+  const expectedSources = [
+    ...(totals.qualified > 0
+      ? [{ source: "f1099div.qualified_dividends", amount: totals.qualified }]
+      : []),
+    ...(capitalGain > 0
+      ? [{ source: "schedule_d.net_capital_gain", amount: capitalGain }]
+      : []),
+  ].sort((a, b) => a.source.localeCompare(b.source));
+  const actualSources = [...(input.qbi_capital_sources ?? [])].sort((a, b) =>
+    a.source.localeCompare(b.source)
+  );
+  if (
+    !same(expectedSources, actualSources) ||
+    (expectedSources.length > 0 &&
+      typeof input.net_capital_gain !== "number") ||
+    (input.net_capital_gain !== undefined &&
+      input.net_capital_gain !== qbiCapitalTotal(input, enteredTotal))
   ) {
     throw new Error(
-      "Multi-business QBI capital gain needs only its issued capital-gain distributions",
+      "QBI capital contribution identities or totals differ from retained sources",
     );
   }
   return {
     ...totals,
+    capitalGain,
+    returnCapital: pending.f1099b === undefined
+      ? totals.capital
+      : Number(pending.f1040?.line7_capital_gain ?? 0),
     filedQbiCapitalLimit: Math.round(totals.qualified) +
-      Math.round(totals.capital),
+      Math.round(capitalGain),
   };
 }
 
 /** Recompute the ordinary or QDCGT worksheet from the final return and owned copies. */
 export function assertMultiBusinessInvestmentTax(
   pending: Record<string, Record<string, unknown>>,
-  totals: { qualified: number; capital: number },
+  totals: { qualified: number; capital: number; capitalGain?: number },
 ) {
   const f1040 = pending.f1040;
   const taxable = f1040.line15_taxable_income as number;
-  const expected = totals.qualified > 0 || totals.capital > 0
+  const capital = totals.capitalGain ?? totals.capital;
+  const expected = totals.qualified > 0 || capital > 0
     ? qualifiedDividendTax2025(
       taxable,
       totals.qualified,
-      totals.capital,
+      capital,
       FilingStatus.Single,
     )
     : ordinaryTax2025(taxable, FilingStatus.Single);
@@ -194,7 +326,7 @@ export function assertMultiBusinessInvestmentTax(
   if (
     !worksheet || worksheet.taxable_income !== taxable ||
     sum(worksheet.qualified_dividends) !== totals.qualified ||
-    sum(worksheet.net_capital_gain) !== totals.capital ||
+    sum(worksheet.net_capital_gain) !== capital ||
     f1040.line16_income_tax !== expected
   ) {
     throw new Error(

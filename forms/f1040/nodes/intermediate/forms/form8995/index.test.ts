@@ -540,3 +540,17 @@ Deno.test("above-threshold Schedule C QBI is handed to Form 8995-A after busines
   assertEquals(advanced?.fields.w2_wages, 0);
   assertEquals(advanced?.fields.unadjusted_basis, 0);
 });
+
+Deno.test("equal capital contributions finalize a retained scalar even when the income limit zeros QBI", () => {
+  const result = compute({
+    qbi_from_schedule_c: 10000,
+    taxable_income: 1000,
+    net_capital_gain: [1000, 1000],
+    qbi_capital_sources: [
+      { source: "f1099div.qualified_dividends", amount: 1000 },
+      { source: "schedule_d.net_capital_gain", amount: 1000 },
+    ],
+  });
+  assertEquals(findOutput(result, "f1040"), undefined);
+  assertEquals(findOutput(result, "form8995")?.fields.net_capital_gain, 2000);
+});

@@ -54,6 +54,12 @@ const nomineeDistributionSchema = z.object({
   foreign_source_qualified_dividends_usd: z.number().nonnegative().optional(),
 });
 
+function realCalendarDate(value: string): boolean {
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return Number.isFinite(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === value;
+}
+
 export const itemSchema = z.object({
   payerName: z.string().optional(),
   payerTin: z.string().regex(/^\d{9}$/).optional(),
@@ -68,14 +74,20 @@ export const itemSchema = z.object({
   // investment property and are excluded from Form 4952 manual "other" facts.
   investment_property_for_form4952: z.boolean().optional(),
   qualified_dividend_filing_review: z.object({
-    ex_dividend_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+    ex_dividend_date: z.string().regex(/^2025-\d{2}-\d{2}$/).refine(
+      realCalendarDate,
+      "Expected a real calendar date",
+    ),
     qualified_held_days_in_121_day_window: z.number().int().min(61).max(121),
     diminished_risk_days_excluded: z.number().int().min(0).max(121),
     ordinary_stock_rule_confirmed: z.literal(true),
     eligible_issuer_and_no_disqualified_dividend_confirmed: z.literal(true),
     no_related_payment_obligation_confirmed: z.literal(true),
     review_reference: z.string().trim().min(1),
-    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(
+      realCalendarDate,
+      "Expected a real calendar date",
+    ),
   }).strict().optional(),
   box1b: z.number().nonnegative().optional(),
   box2a: z.number().nonnegative().optional(),
@@ -548,7 +560,13 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
         }
         : {}),
     };
-    if (totalQualDiv > 0) form8995Fields.net_capital_gain = totalQualDiv;
+    if (totalQualDiv > 0) {
+      form8995Fields.net_capital_gain = totalQualDiv;
+      form8995Fields.qbi_capital_sources = [{
+        source: "f1099div.qualified_dividends",
+        amount: totalQualDiv,
+      }];
+    }
 
     // NII: ordinary dividends subject to NIIT (IRC §1411(c)(1)(A)) → form8960 line 2
     const totalOrdinaryForNiit = div1099s.reduce(

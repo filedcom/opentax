@@ -33,15 +33,18 @@ export function reviewedMultipleScheduleCQbi(
   items: readonly ScheduleCItem[],
   deduction: number,
 ) {
-  if (items.length < 2) {
-    throw new Error("Multiple Schedule C QBI needs at least two sources");
+  if (items.length < 1) {
+    throw new Error("Multiple Schedule C QBI needs at least one source");
   }
   const profits = items.map((item) => computeNetProfit(item));
   const allocations = allocateSharedSeDeduction(profits, deduction);
   for (const [index, item] of items.entries()) {
     const review = item.qbi_se_tax_allocation_review;
     if (
-      !review || review.deduction_amount !== allocations[index] ||
+      (items.length > 1 &&
+        (!review || review.deduction_amount !== allocations[index])) ||
+      (review !== undefined &&
+        review.deduction_amount !== allocations[index]) ||
       item.qbi_no_other_adjustments_confirmed !== true ||
       item.proprietor_recipient === "S" || item.statutory_employee === true ||
       item.line_g_material_participation !== true ||
