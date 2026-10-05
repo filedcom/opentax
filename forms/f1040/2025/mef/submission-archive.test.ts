@@ -3,11 +3,12 @@ import { unzipSync, Zip, ZipPassThrough, zipSync } from "fflate";
 import { PDFDocument } from "pdf-lib";
 import { type FilerIdentity, FilingStatus } from "./types.ts";
 import type { MefFormsPending } from "./types.ts";
-import { buildMefBundle } from "./builder.ts";
+import { buildMefBundle, type MefBundle } from "./builder.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import type { MefPdfAttachment } from "./form-descriptor.ts";
 import { f1040_2025 } from "../index.ts";
 import { pdfReviewFixtures } from "../pdf/review-fixtures.ts";
+import { assertPreparedDocumentInventory } from "./prepared-attachment-manifest.ts";
 import {
   buildMefSubmissionArchive,
   buildMefTransmissionPackage,
@@ -136,6 +137,20 @@ function filer(): FilerIdentity {
     originator: { efin: "123456", originatorType: "ERO" },
   };
 }
+
+Deno.test("prepared ReturnData rejects a second IRS1040 document", () => {
+  const bundle = {
+    xml:
+      `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"></IRS1040><IRS1040 documentId="IRS10401"></IRS1040></ReturnData></Return>`,
+    attachments: [],
+    attachmentSha256ByFileName: {},
+  } as unknown as MefBundle;
+  assertThrows(
+    () => assertPreparedDocumentInventory(bundle),
+    Error,
+    "Prepared MeF document count, order, IDs, references, or attachment count differs from its return",
+  );
+});
 
 async function makeSubmissionArchive(
   pending: MefFormsPending,
