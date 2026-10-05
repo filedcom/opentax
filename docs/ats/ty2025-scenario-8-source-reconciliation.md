@@ -28,6 +28,14 @@ pages 1, 2, 4, and 5.
 The current IRS download and the retained five-page local packet were compared
 byte for byte on 2026-10-02. Both have SHA-256
 `3016890611382ee3ae9876b7cd8c81260bcf8e1b611920aac82611fd52e02fae`.
+I rechecked the checked-box source directly for this slice: a visual render of
+PDF page 2 (the first Form 1040 page) shows the check mark in line 4c's box 2,
+“QCD,” while line 4a has no printed amount. The retained packet and the local
+Scenario 8 copy have the same hash, so this is the issued packet mark rather
+than a local fixture-only annotation. The source-fact record already stores
+`line4cQcdChecked: true`, and the focused source test asserts that value; this
+capture preserves the mark as printed and does not resolve its conflict with
+the supplied distribution facts.
 The source fixture explicitly records the printed blank line 4a and checked
 line 4c separately from the calculated $35,800 line 4a and unchecked QCD
 output. No version difference explains the mismatch.
