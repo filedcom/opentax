@@ -1,9 +1,7 @@
 /** Read-only audit of a human-completed TY2025 filled-PDF review manifest. */
 import { join, resolve } from "@std/path";
 import { PDFDocument } from "pdf-lib";
-import { buildExecutionPlan } from "../core/runtime/planner.ts";
-import { execute } from "../core/runtime/executor.ts";
-import { registry } from "../forms/f1040/2025/registry.ts";
+import { f1040_2025 } from "../forms/f1040/2025/index.ts";
 import { buildMefBundle } from "../forms/f1040/2025/mef/builder.ts";
 import { buildPending } from "../forms/f1040/2025/mef/pending.ts";
 import { pdfReviewFixtures } from "../forms/f1040/2025/pdf/review-fixtures.ts";
@@ -151,7 +149,6 @@ await assertReviewTemplateCacheEvidence(
   manifest.templateCache,
 );
 const seen = new Set<string>();
-const executionPlan = buildExecutionPlan(registry);
 let reviewedPages = 0;
 
 for (const [index, rawCase] of cases.entries()) {
@@ -224,10 +221,7 @@ for (const [index, rawCase] of cases.entries()) {
       `${id}: source identity or inputs differ from the checked-in fixture`,
     );
   }
-  const result = execute(executionPlan, registry, { ...fixture.inputs }, {
-    taxYear: 2025,
-    formType: "f1040",
-  });
+  const result = f1040_2025.executeReturn({ ...fixture.inputs });
   if (result.diagnostics.length > 0) {
     throw new Error(`${id}: current source calculation has diagnostics`);
   }
@@ -243,7 +237,7 @@ for (const [index, rawCase] of cases.entries()) {
   );
   const rebuilt = await buildMefBundle(buildPending(result.pending), {
     filer,
-    attachments: [],
+    attachments: [...(fixture.attachments ?? [])],
   });
   if (new TextDecoder().decode(xml) !== rebuilt.xml + "\n") {
     throw new Error(`${id}: saved XML differs from current source calculation`);

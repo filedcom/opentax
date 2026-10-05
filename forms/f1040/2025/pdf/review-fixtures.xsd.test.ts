@@ -12,6 +12,7 @@ import { buildMefBundle, buildMefXml } from "../mef/builder.ts";
 import { buildPending } from "../mef/pending.ts";
 import { sha256Hex } from "../prepared-source.ts";
 import { buildPdfBytes } from "./builder.ts";
+import { f1040_2025 } from "../index.ts";
 import { inputSchema as w2gInputSchema } from "../../nodes/inputs/w2g/index.ts";
 import { pdfReviewFixtures } from "./review-fixtures.ts";
 import { irs1040Pdf } from "./forms/f1040.ts";
@@ -126,10 +127,12 @@ for (const fixture of pdfReviewFixtures) {
       : `filled-PDF source ${fixture.id} also exports TY2025 v5.4 XML`,
     ignore: !xsdAvailable,
     async fn() {
-      const result = execute(plan, registry, { ...fixture.inputs }, {
-        taxYear: 2025,
-        formType: "f1040",
-      });
+      const result = fixture.attachments
+        ? f1040_2025.executeReturn({ ...fixture.inputs })
+        : execute(plan, registry, { ...fixture.inputs }, {
+          taxYear: 2025,
+          formType: "f1040",
+        });
       if (fixture.id === "single-form461-schedule-c-excess-business-loss") {
         assertEquals(result.diagnostics.length, 1);
         assertStringIncludes(
@@ -193,12 +196,36 @@ for (const fixture of pdfReviewFixtures) {
           500,
         );
       }
-      const xml = fixture.id === "single-withheld-w2g" ||
-          fixture.id === "single-partnership-code-k-and-w2g"
+      const xml = fixture.attachments
+        ? (await buildMefBundle(pending, {
+          filer: fixture.filer,
+          attachments: [...fixture.attachments],
+        })).xml
+        : fixture.id === "single-withheld-w2g" ||
+            fixture.id === "single-partnership-code-k-and-w2g"
         ? await withheldW2GXml(pending, fixture.filer)
         : fixture.id === "single-form8824-section1231-exchange"
         ? await section1231ExchangeXml(pending, fixture.filer)
         : buildMefXml(pending, fixture.filer);
+      if (fixture.id === "single-reviewed-adoption-credit") {
+        assertEquals(pending.schedule3?.line6c_adoption_credit, 6_000);
+        assertEquals(pending.f1040?.line30_refundable_adoption, 5_000);
+        assertStringIncludes(xml, "<AdoptionFinalInd>X</AdoptionFinalInd>");
+        assertStringIncludes(xml, "<IRS8839");
+        assertStringIncludes(xml, "<BinaryAttachment");
+        await assertRejects(
+          () =>
+            buildMefBundle(pending, {
+              filer: fixture.filer,
+              attachments: [{
+                ...fixture.attachments![0],
+                bytes: fixture.attachments![1].bytes,
+              }, ...fixture.attachments!.slice(1)],
+            }),
+          Error,
+          "bytes differ",
+        );
+      }
       if (fixture.id === "single-personal-home-charger-credit") {
         const projectedPending = pending as unknown as Record<
           string,

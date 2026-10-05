@@ -1,9 +1,7 @@
 /** Generate only synthetic filled PDFs for the held, single full validation batch. */
 import { join, resolve } from "@std/path";
 import { PDFDocument } from "pdf-lib";
-import { buildExecutionPlan } from "../core/runtime/planner.ts";
-import { execute } from "../core/runtime/executor.ts";
-import { registry } from "../forms/f1040/2025/registry.ts";
+import { f1040_2025 } from "../forms/f1040/2025/index.ts";
 import {
   buildPdfBytes,
   type PdfPageOrigin,
@@ -89,7 +87,6 @@ async function validateXmlAgainstXsd(xml: string, fixtureId: string) {
 
 // Deliberately refuse an existing directory so a prior review is never replaced.
 await createPrivateReviewDirectory(outputDir);
-const plan = buildExecutionPlan(registry);
 const cacheDir = join(outputDir, "irs-pdf-cache");
 await createPrivateReviewDirectory(cacheDir);
 const registered = new Set(ALL_PDF_FORMS.map((form) => form.pendingKey));
@@ -115,10 +112,7 @@ for (const fixture of pdfReviewFixtures) {
       throw new Error(`${fixture.id}: unregistered expected PDF form ${key}`);
     }
   }
-  const result = execute(plan, registry, { ...fixture.inputs }, {
-    taxYear: 2025,
-    formType: "f1040",
-  });
+  const result = f1040_2025.executeReturn({ ...fixture.inputs });
   if (result.diagnostics.length > 0) {
     throw new Error(
       `${fixture.id}: executor diagnostics: ${
@@ -128,7 +122,7 @@ for (const fixture of pdfReviewFixtures) {
   }
   const bundle = await buildMefBundle(buildPending(result.pending), {
     filer,
-    attachments: [],
+    attachments: [...(fixture.attachments ?? [])],
   });
   await validateXmlAgainstXsd(bundle.xml, fixture.id);
   const pageOrigins: PdfPageOrigin[] = [];
