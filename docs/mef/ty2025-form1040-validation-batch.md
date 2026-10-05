@@ -4266,3 +4266,29 @@ Each now retains a matching $20,000 or $18,000 deductible Form 1098 box 1
 source and passes its focused test. No production guard was loosened. The
 combined parity, Form 5329 page, and ATS corrections require a fresh full run;
 that run is tracked separately below.
+
+## Current-source Form 5329 page replay (2026-10-05)
+
+The selected packet at
+`.state/research/ty2025-filled-pdf-review/2026-10-05-exportable-175-after-f5329/`
+has **175 source/native XML/filled-PDF trios and 1,087 pages**. All source JSON
+and native XML artifacts are byte-identical to the preceding 1,090-page
+packet. The PDFs are byte-identical for 173 cases. Only the early-IRA Form 5329
+case and the paired-HSA current-excess case changed: the former drops blank
+Form 5329 pages 2–3 and retains its populated Part I page; the latter drops
+blank Form 5329 page 3 and retains the Part VII HSA page before two Form 8889
+owner copies. All 15 retained pages across these two cases are pixel-identical
+to their previously inspected pages at 120 dpi. The three dropped pages were
+also visually inspected as blank; the current Form 5329 and following Form
+8889 order was checked. Page mapping and hashes are in
+`.state/research/ty2025-f5329-packet-provenance.json` (SHA-256
+`5e61c895cdafc3dcf02b6ea480d2264d7a29c15487c7a8fdf98562cc72b60d83`).
+
+The selected manifest is SHA-256
+`1e66007c0a44861da4e3003aebd3817cfc8c2da51faca0a04a66f6680a44d57a`.
+The read-only checker passed all 175 cases and 1,087 pages, including source
+replay, PDF/XML hashes, page flags/origins, and local TY2025 v5.4 XSD. Its log
+is `.state/research/ty2025-exportable-175-after-f5329-check.log`, SHA-256
+`162abbb33324c314c43db3642a0b1ccc87317b8ec144c4ae7f4c57211fdc2051`.
+The 11 guarded cases, wider filing routes, business rules, ATS-effective schema,
+and IRS acceptance remain open.
