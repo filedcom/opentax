@@ -191,15 +191,27 @@ export function calculateArcherLedger(
     }
     exceptedTaxable = gross - qualified;
   }
+  // Sum source cents before rounding each entered form line. Line 8 then
+  // subtracts the filed line 7 from filed line 6c, preserving form arithmetic.
+  const line6a = Math.round(gross);
+  const line7 = Math.round(qualified);
+  const line8 = Math.max(0, line6a - line7);
+  const subjectTaxable = exceptedTaxable === 0 ? line8 : Math.min(
+    line8,
+    Math.max(0, Math.round(gross - qualified - exceptedTaxable)),
+  );
   return {
-    line6a: gross,
+    rawGross: gross,
+    rawQualified: qualified,
+    rawExceptedTaxable: exceptedTaxable,
+    line6a,
     line6b: 0,
-    line6c: gross,
-    line7: qualified,
-    line8: gross - qualified,
-    line9a: exceptedTaxable > 0,
-    line9b: (gross - qualified - exceptedTaxable) * 0.2,
-    exceptedTaxable,
+    line6c: line6a,
+    line7,
+    line8,
+    line9a: exceptedTaxable > 0 && line8 > 0,
+    line9b: Math.round(subjectTaxable * 0.2),
+    exceptedTaxable: line8 - subjectTaxable,
     deathTransfer: source.kind === "death_transfer",
   };
 }

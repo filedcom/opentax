@@ -148,6 +148,8 @@ export const form8853Pdf: PdfFormDescriptor = {
     const lines = calculateArcherMsaDistribution(source);
     return [{
       ...source,
+      archer_msa_distributions: lines.line6a,
+      archer_msa_qualified_expenses: lines.line7,
       line6c_archer_msa_net_distribution: lines.line6c,
       line8_taxable_archer_msa_distribution: lines.line8,
       line9b_archer_msa_additional_tax: lines.line9b,

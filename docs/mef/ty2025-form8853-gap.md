@@ -106,6 +106,39 @@ combined with estate FMV transfer, rollovers/excess withdrawals, contributions,
 Medicare Advantage MSA and LTC routes remain separate gaps. The ledger requires
 reviewed absence of those other activities for its retained filing route.
 
+## Raw cents review and reporting identity (2026-10-06)
+
+The numeric XML writer already rounds to whole dollars; it did not emit raw
+fractional `USAmountType` values. Review did find a form-arithmetic mismatch:
+$2,000.40 gross and $500.60 medical use could print $2,000 and $501 while independently
+rounding taxable income to $1,500. The ledger now sums raw source amounts before
+rounding entered lines 6a and 7, subtracts those filed values for line 8, and
+computes a whole-dollar line 9b from the remaining taxable distribution amount.
+Schedule 1 line 8e, Schedule 2 line 17e, Form 1040 and the native/PDF Form 8853
+consume those filed values. Raw ledger amounts and aggregate source values retain
+cents; the PDF instance projects computed filed amounts. This follows the
+[2025 Form 1040 rounding instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf):
+add amounts with cents and round the total entered on each line.
+
+Two new positive cents fixtures pass complete local v5.4 return XSD and filled
+PDF checks. The ordinary distribution packet files gross $2,000, medical $501,
+taxable income $1,499 and tax $300 from raw $2,000.40/$500.60. The mixed age65
+packet files gross $6,000, medical $1,501, taxable income $4,499 and tax $600
+from raw $6,000.40/$1,500.60. The focused batch passes 68 checks, preserving
+raw source, native whole-dollar types, all populated PDF lines and schedule
+joins. Both Form 8853 pages were rendered with real Poppler and visually
+inspected. Ignored evidence is under
+`.state/research/2026-10-06-form8853-cents/` in the isolated worktree.
+
+For death transfers, the 2025 Form 8853 instructions' "Death of Account Holder"
+section on page 2 explicitly places the nonspouse beneficiary's name and SSN
+in the top form spaces. Therefore the native `MSAHolderSSN` reporting field uses
+the beneficiary SSN with `MSAHolderDeathInd`; the deceased holder's identity
+remains in the raw source. The death fixture now explicitly verifies reporting
+SSN `111223333` and rejects deceased SSN `222334444` as that native reporting
+identity. An estate beneficiary's transfer remains assigned to the deceased
+holder's final return, subject to the existing final-return export blocker.
+
 ## End-to-end blockers
 
 ### Bounded native Archer MSA path now written

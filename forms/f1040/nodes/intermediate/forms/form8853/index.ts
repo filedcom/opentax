@@ -142,6 +142,9 @@ function archerMsaNetDistributions(input: Form8853Input): number {
 // Line 8: Taxable Archer MSA distributions = max(0, line6c - line7)
 // IRC §220(f)(1); Form 8853 Part II line 8 → Schedule 1 line 8e
 function archerMsaTaxableDist(input: Form8853Input): number {
+  if (input.archer_distribution_ledger) {
+    return calculateArcherLedger(input.archer_distribution_ledger).line8;
+  }
   const net = archerMsaNetDistributions(input);
   if (net <= 0) return 0;
   const qualified = input.archer_msa_qualified_expenses ?? 0;
@@ -362,9 +365,9 @@ export function normalizeArcherSource(
     taxYear,
   );
   const expected = {
-    archer_msa_distributions: lines.line6a,
+    archer_msa_distributions: lines.rawGross,
     archer_msa_rollover: 0,
-    archer_msa_qualified_expenses: lines.line7,
+    archer_msa_qualified_expenses: lines.rawQualified,
     archer_msa_exception: lines.line9a,
   };
   for (const [key, value] of Object.entries(expected)) {

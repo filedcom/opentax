@@ -116,6 +116,41 @@ export const fullyExceptedAgeLedger: ArcherDistributionLedger = {
     distributions: [row("2025-06-16", "after")],
   },
 };
+export const centsNormalLedger: ArcherDistributionLedger = {
+  ...disabilityLedger,
+  source: {
+    ...disabilityLedger.source as Extract<
+      ArcherDistributionLedger["source"],
+      { kind: "normal" }
+    >,
+    disability: undefined,
+    distributions: [row("2025-06-14", "before"), row("2025-06-15", "on")].map(
+      (item) => ({
+        ...item,
+        gross_amount: 1000.2,
+        unreimbursed_qualified_expenses: 250.3,
+      }),
+    ),
+  },
+};
+export const centsMixedLedger: ArcherDistributionLedger = {
+  ...ageLedger,
+  source: {
+    ...ageLedger.source as Extract<
+      ArcherDistributionLedger["source"],
+      { kind: "normal" }
+    >,
+    distributions: [
+      row("2025-06-14", "before"),
+      row("2025-06-15", "on"),
+      row("2025-06-16", "after"),
+    ].map((item, index) => ({
+      ...item,
+      gross_amount: index === 0 ? 2000.2 : 2000.1,
+      unreimbursed_qualified_expenses: 500.2,
+    })),
+  },
+};
 export function fixture(ledger: ArcherDistributionLedger) {
   const source = ledger.source;
   return {
@@ -161,6 +196,9 @@ export function fixture(ledger: ArcherDistributionLedger) {
 Deno.test("Form8853 sourced mixed age65 and disability distributions retain on-event taxable penalty", () => {
   for (const ledger of [ageLedger, disabilityLedger]) {
     assertEquals(calculateArcherLedger(ledger), {
+      rawGross: 6000,
+      rawQualified: 1500,
+      rawExceptedTaxable: 1500,
       line6a: 6000,
       line6b: 0,
       line6c: 6000,
@@ -213,6 +251,8 @@ for (
     ["mixed disability", disabilityLedger, 4500, 600],
     ["nonspouse death transfer", deathLedger, 4000, 0],
     ["fully excepted age65", fullyExceptedAgeLedger, 1500, 0],
+    ["cents normal distributions", centsNormalLedger, 1499, 300],
+    ["cents mixed age65", centsMixedLedger, 4499, 600],
   ] as const
 ) {
   Deno.test(`Form8853 ${name}: public source through full1040, native XSD and PDF`, async () => {
@@ -234,12 +274,32 @@ for (
     const filer = extractFilerIdentity(result.pending.f1040);
     assertExists(filer);
     const xml = buildMefXml(buildPending(result.pending), filer);
+    const lines = calculateArcherLedger(ledger);
+    assertEquals(
+      xml.includes(
+        "<ArcherMSADistriMeetTaxExcInd>X</ArcherMSADistriMeetTaxExcInd>",
+      ),
+      lines.line9a,
+    );
     assertStringIncludes(
       xml,
-      "<ArcherMSADistriMeetTaxExcInd>X</ArcherMSADistriMeetTaxExcInd>",
+      `<TotalArcherMSADistributionAmt>${lines.line6a}</TotalArcherMSADistributionAmt>`,
+    );
+    assertStringIncludes(
+      xml,
+      `<ArcherMSAUnreimbQualMedExpAmt>${lines.line7}</ArcherMSAUnreimbQualMedExpAmt>`,
+    );
+    assertStringIncludes(
+      xml,
+      `<TaxableArcherMSADistriAmt>${income}</TaxableArcherMSADistriAmt>`,
     );
     if (ledger.source.kind === "death_transfer") {
       assertStringIncludes(xml, "<MSAHolderDeathInd>X</MSAHolderDeathInd>");
+      assertStringIncludes(xml, "<MSAHolderSSN>111223333</MSAHolderSSN>");
+      assertEquals(
+        xml.includes("<MSAHolderSSN>222334444</MSAHolderSSN>"),
+        false,
+      );
     }
     const xsd = new URL(
       "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
@@ -266,7 +326,25 @@ for (
       }).output();
       assertEquals(text.code, 0, new TextDecoder().decode(text.stderr));
       const printed = new TextDecoder().decode(text.stdout);
-      assertEquals(new RegExp(`\\b9b\\s+${penalty}\\b`).test(printed), true);
+      const formStart = printed.lastIndexOf("Archer MSAs and");
+      assertEquals(formStart >= 0, true);
+      const formText = printed.slice(formStart);
+      for (
+        const [line, amount] of [
+          ["6a", lines.line6a],
+          ["6b", 0],
+          ["6c", lines.line6c],
+          ["7", lines.line7],
+          ["8", income],
+          ["9b", penalty],
+        ] as const
+      ) {
+        assertEquals(
+          new RegExp(`\\b${line}\\s+${amount}\\b`).test(formText),
+          true,
+          `${name}: ${line} ${amount}`,
+        );
+      }
       if (ledger.source.kind === "death_transfer") {
         assertStringIncludes(printed, "Death of Archer MSA account holder");
       }
@@ -279,7 +357,7 @@ for (
       filer,
       result.pending,
     ) ?? [];
-    assertEquals(projected[0].line9a_archer_msa_exception, true);
+    assertEquals(projected[0].line9a_archer_msa_exception, lines.line9a);
     const wrongOwner = structuredClone(ledger);
     if (wrongOwner.source.kind === "normal") {
       wrongOwner.source.holder_ssn = "999887777";
@@ -297,7 +375,7 @@ for (
       () =>
         native.build({
           ...result.pending.form8853,
-          archer_msa_exception: false,
+          archer_msa_exception: !lines.line9a,
         }, { filer, pending: result.pending }),
       Error,
       "source ledger conflicts",
