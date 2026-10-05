@@ -1,5 +1,17 @@
 # TY2025 Form 1116 main PDF category boundary
 
+## Shared IRS country-code validation (2026-10-05)
+
+Retained Form 1116 and related foreign-source paths now use a shared exact
+258-code allowlist extracted from the local TY2025 `Common/efileTypes.xsd`.
+The source, intermediate calculation, native export, and PDF export reject
+unlisted codes; Germany `GM` passes a full-return local XSD case while ISO
+`DE` and unknown `ZZ` reject. The foreign-employer country field remains a
+separate ISO-coded field. This checks code membership, not whether every
+issuer's stated country matches the economic source of income. The integrated
+affected test suites passed 163/163; broader source authentication, visual
+page review, IRS business rules, and ATS acceptance remain open.
+
 ## Three-country Germany code correction (2026-10-05)
 
 The assembled three-country interest return exposed an invalid Germany
