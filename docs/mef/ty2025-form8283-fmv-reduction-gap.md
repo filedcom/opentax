@@ -631,6 +631,18 @@ authenticate underlying preparation invoices or property photographs.
 
 ## Purchased Section A patent (implementation staged 2026-10-01)
 
+The purchased-patent route now also accepts an initial deduction above $5,000
+in Section A. The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283)
+explicitly list intellectual property among the Section A exceptions regardless
+of claimed value; [Publication 526 (2025)](https://www.irs.gov/publications/p526)
+limits that initial deduction to the lesser of FMV and basis. A $18,000 FMV,
+$12,000 unamortized-basis gift now reaches the completed Schedule A, itemized
+Form 1040, native Section A with its separate reduction statement, and the PDF
+projection. Focused source-to-full-return/native/PDF tests passed on
+2026-10-05. The route remains one purchased long-term patent with zero 2025
+donee net income; document references are reviewed facts, not authenticated
+bytes.
+
 [Publication 526 (2025)](https://www.irs.gov/publications/p526) and the
 [2025 Form 8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
 limit the initial intellectual-property deduction to the lesser of FMV and
@@ -639,12 +651,13 @@ when the donee reports qualifying net income on Form 8899. The bounded new
 route accepts one purchased patent held more than a year, given outright to a
 50%-limit public charity in 2025. Reviewed registration, purchase, full-rights
 transfer, and unamortized basis records must support a basis claim below original
-FMV of no more than $5,000. A distinct reviewed donee statement must confirm
+FMV. A distinct reviewed donee statement must confirm
 zero 2025 net income, so no same-year income-based addition is claimed. The
 basis claim runs through Schedule A and itemized Form 1040; native Form 8283
 links an FMV statement and the official PDF preview explains the reduction.
 Positive and altered-basis, ownership, donee-income, Schedule A, native, and
-PDF fixtures are authored for the deferred bulk pass. The record references do
+PDF fixtures are covered by focused tests; the full regression remains pending.
+The record references do
 not authenticate the underlying documents or a filed Form 8899. Other
 intellectual property, nonzero donee income, Section B, multiple gifts, and
 carryovers remain unsupported.

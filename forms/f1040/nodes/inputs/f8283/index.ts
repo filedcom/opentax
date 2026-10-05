@@ -821,7 +821,7 @@ const sectionAItemSchema = z.object({
           "purchase" ||
         item.is_vehicle === true || item.is_capital_gain_property !== true ||
         item.charitable_limit_category !== "noncash_50" ||
-        item.fmv > 5_000 || item.cost_or_adjusted_basis === undefined ||
+        item.cost_or_adjusted_basis === undefined ||
         Math.round(basis * 100) !==
           Math.round(item.cost_or_adjusted_basis * 100) ||
         Math.round(basis * 100) !==
@@ -1580,7 +1580,10 @@ export const inputSchema = z.object({
       ? groupTotals.get(normalizeSimilarItemGroup(item.similar_item_group)) ??
         amount
       : amount;
-    if (groupTotal > 5_000 && !item.vehicle_sale_acknowledgment) {
+    if (
+      groupTotal > 5_000 && !item.vehicle_sale_acknowledgment &&
+      !item.intellectual_property_capital_gain_reduction
+    ) {
       ctx.addIssue({
         code: "custom",
         path: ["section_a_items", index, "similar_item_group"],
