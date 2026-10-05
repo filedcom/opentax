@@ -466,6 +466,25 @@ export const inputSchema = z.object({
         review.existing_loan.monthly_balance_records.every((row) =>
           row.closing_balance > 0
         );
+      const averageBalance = [review.purchase_loan, review.existing_loan]
+        .reduce((sum, loan) => {
+          const securedMonths = loan.monthly_balance_records.filter((row) =>
+            row.closing_balance > 0
+          );
+          if (securedMonths.length === 0) return sum;
+          return sum + securedMonths.reduce(
+                (loanSum, row) => loanSum + row.closing_balance,
+                0,
+              ) / securedMonths.length;
+        }, 0);
+      const table1Ratio = averageBalance <= 750_000
+        ? 1
+        : Math.round(750_000 / averageBalance * 1_000) / 1_000;
+      // Pub. 936 applies line 14 once to combined line 13 interest, then points.
+      const expectedInterest = Math.round(
+        f1098s.reduce((sum, item) => sum + item.box1_mortgage_interest, 0) *
+          table1Ratio,
+      );
       if (
         f1098s.length !== 2 || !purchase || !existing ||
         purchase === existing ||
@@ -484,20 +503,23 @@ export const inputSchema = z.object({
             ) < new Date("2017-12-16T00:00:00Z")) ||
         Number(existingDate?.[3]) >= 2025 ||
         !recordsValid ||
-        review.purchase_loan.maximum_2025_balance +
-              review.existing_loan.maximum_2025_balance > 750_000 ||
         purchase.box2_outstanding_principal !==
           review.purchase_loan.maximum_2025_balance ||
         !purchase.box6_points_paid || purchase.box6_points_paid <= 0 ||
         purchase.box6_current_year_deductible_points !==
-          purchase.box6_points_paid ||
+          Math.round(purchase.box6_points_paid * table1Ratio) ||
+        f1098s.reduce(
+            (sum, item) =>
+              sum + (item.box1_current_year_deductible_interest ?? 0),
+            0,
+          ) !== expectedInterest ||
         purchase.box6_deduction_workpaper_reference !==
           review.pub936_points_workpaper_reference ||
         (existing.box6_points_paid ?? 0) !== 0 ||
         [purchase, existing].some((item) =>
           (item.for_routing ?? ForRouting.A) !== ForRouting.A ||
           item.box1_mortgage_interest <= 0 ||
-          item.box1_current_year_deductible_interest !==
+          (item.box1_current_year_deductible_interest ?? 0) >
             item.box1_mortgage_interest ||
           !item.box1_deduction_workpaper_reference ||
           !item.lender_name?.trim() ||
@@ -510,7 +532,7 @@ export const inputSchema = z.object({
           code: z.ZodIssueCode.custom,
           path: ["purchase_points_cross_loan_review"],
           message:
-            "Purchase points with a second acquisition loan need distinct 2025 and full-year lender sources, complete balances below the combined debt limit, and exact deductible interest and points",
+            "Purchase points with a second acquisition loan need distinct 2025 and full-year lender sources, complete balances, and the same Pub. 936 Table 1 ratio for interest and points",
         });
       }
     }
@@ -799,7 +821,8 @@ export function assertForm1098MortgageLimitSources(
         (sum, item) => sum + (item.box2_outstanding_principal ?? 0),
         0,
       ) > debtLimit &&
-    !parsed.mortgage_limit_review
+    !parsed.mortgage_limit_review &&
+    !parsed.purchase_points_cross_loan_review
   ) {
     throw new Error(
       `Schedule A post-2017 mortgage debt over $${

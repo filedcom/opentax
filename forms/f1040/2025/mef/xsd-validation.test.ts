@@ -9447,6 +9447,71 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: over-limit purchase points share the two-loan Pub. 936 ratio",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const fixture = purchasePointsCrossLoanFixture(general.taxpayer_ssn);
+  const sources = fixture.f1098.map((item, index) =>
+    index === 0
+      ? {
+        ...item,
+        box1_current_year_deductible_interest: 4_734,
+        box6_current_year_deductible_points: 2_367,
+      }
+      : {
+        ...item,
+        box2_outstanding_principal: 650_000,
+        box1_current_year_deductible_interest: 9_468,
+      }
+  );
+  const review = fixture.f1098_purchase_points_cross_loan_review;
+  review.purchase_points_cross_loan_review.existing_loan.maximum_2025_balance =
+    650_000;
+  review.purchase_points_cross_loan_review.existing_loan
+    .monthly_balance_records = review.purchase_points_cross_loan_review
+      .existing_loan.monthly_balance_records
+      .map((row) => ({ ...row, closing_balance: 650_000 }));
+  const f1098 = await Promise.all(
+    sources.map((source, index) =>
+      withSyntheticForm1098Copy(`xsd-capped-points-${index}`, source)
+    ),
+  );
+  const result = runReturn({
+    general,
+    f1098,
+    f1098_purchase_points_cross_loan_review: review,
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    result.pending.schedule_a?.line_8a_mortgage_interest_1098,
+    16_569,
+  );
+  assertEquals(result.pending.f1040?.line12e_itemized_deductions, 16_569);
+  const pending = buildPending(result.pending) as MefFormsPending;
+  const xml = buildMefXml(pending, extractFilerIdentity(general));
+  assertStringIncludes(
+    xml,
+    "<RptHomeMortgIntAndPointsAmt>16569</RptHomeMortgIntAndPointsAmt>",
+  );
+  await validateXsd(xml, "over-limit purchase points and existing mortgage");
+  const pdf = await buildPdfBytes(pending, extractFilerIdentity(general));
+  assertEquals((await PDFDocument.load(pdf)).getPageCount(), 3);
+
+  const wrongPoints = runReturn({
+    general,
+    f1098: [
+      { ...f1098[0], box6_current_year_deductible_points: 2_368 },
+      f1098[1],
+    ],
+    f1098_purchase_points_cross_loan_review: review,
+  });
+  assertEquals(wrongPoints.diagnostics.length > 0, true);
+});
+
+Deno.test({
   name: "XSD: two post-2017 Form 1098 loans share one mortgage interest limit",
   sanitizeOps: false,
   sanitizeResources: false,

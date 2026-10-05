@@ -821,6 +821,83 @@ Deno.test("Schedule A PDF replays purchase points and the second mortgage", () =
   );
 });
 
+Deno.test("Schedule A PDF replays the capped two-loan points and interest total", () => {
+  const fixture = purchasePointsCrossLoanFixture();
+  const review = fixture.f1098_purchase_points_cross_loan_review;
+  review.purchase_points_cross_loan_review.existing_loan.maximum_2025_balance =
+    650_000;
+  review.purchase_points_cross_loan_review.existing_loan
+    .monthly_balance_records = review.purchase_points_cross_loan_review
+      .existing_loan.monthly_balance_records
+      .map((row) => ({ ...row, closing_balance: 650_000 }));
+  const f1098s = fixture.f1098.map((item, index) => ({
+    ...item,
+    ...(index === 0
+      ? {
+        box1_current_year_deductible_interest: 4_734,
+        box6_current_year_deductible_points: 2_367,
+      }
+      : {
+        box2_outstanding_principal: 650_000,
+        box1_current_year_deductible_interest: 9_468,
+      }),
+    issuer_copy: {
+      file_name: "Test1098.pdf",
+      pdf_sha256: "0".repeat(64),
+      bytes: new Uint8Array(),
+    },
+  }));
+  const filer = {
+    primarySSN: "111223333",
+    nameLine1: "Test Taxpayer",
+    firstNameWithInitial: "Test",
+    lastName: "Taxpayer",
+    nameControl: "TAXP",
+    address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
+    filingStatus: FilingStatus.Single,
+  };
+  const source = { f1098s, ...review };
+  const pending = {
+    f1040: { line12e_itemized_deductions: 16_569 },
+    f1098: source,
+  };
+  const [instance] = scheduleAPdf.instances?.(
+    { line_8a_mortgage_interest_1098: 16_569 },
+    filer,
+    pending,
+  ) ?? [];
+  assertEquals(instance?.line_8a_mortgage_interest_1098, 16_569);
+  assertThrows(
+    () =>
+      scheduleAPdf.instances?.(
+        { line_8a_mortgage_interest_1098: 16_570 },
+        filer,
+        pending,
+      ),
+    Error,
+    "exact sourced line 8a",
+  );
+  assertThrows(
+    () =>
+      scheduleAPdf.instances?.(
+        { line_8a_mortgage_interest_1098: 16_569 },
+        filer,
+        {
+          ...pending,
+          f1098: {
+            ...source,
+            f1098s: [{
+              ...f1098s[0],
+              box6_current_year_deductible_points: 2_368,
+            }, f1098s[1]],
+          },
+        },
+      ),
+    Error,
+    "same Pub. 936 Table 1 ratio",
+  );
+});
+
 Deno.test("Schedule A PDF box 6 points reject a wrong recipient or missing filed amount", () => {
   const filer = {
     primarySSN: "111223333",

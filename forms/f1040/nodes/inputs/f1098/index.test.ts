@@ -154,7 +154,7 @@ Deno.test("2025 purchase points and existing acquisition loan share the $750,000
         ...review,
         existing_loan: {
           ...review.existing_loan,
-          maximum_2025_balance: 500_001,
+          maximum_2025_balance: 399_999,
         },
       },
     }).success,
@@ -205,6 +205,74 @@ Deno.test("2025 purchase points and existing acquisition loan share the $750,000
       f1098s: fixture.f1098,
       purchase_points_cross_loan_review: review,
       mortgage_limit_review: { loans: [] },
+    }).success,
+    false,
+  );
+});
+
+Deno.test("purchase points and two-loan interest use one over-limit Pub. 936 ratio", () => {
+  const fixture = purchasePointsCrossLoanFixture();
+  const review = fixture.f1098_purchase_points_cross_loan_review
+    .purchase_points_cross_loan_review;
+  const cappedReview = {
+    ...review,
+    existing_loan: {
+      ...review.existing_loan,
+      maximum_2025_balance: 650_000,
+      monthly_balance_records: review.existing_loan.monthly_balance_records.map(
+        (row) => ({ ...row, closing_balance: 650_000 }),
+      ),
+    },
+  };
+  const f1098s = fixture.f1098.map((item, index) =>
+    index === 0
+      ? {
+        ...item,
+        box1_current_year_deductible_interest: 4_734,
+        box6_current_year_deductible_points: 2_367,
+      }
+      : {
+        ...item,
+        box2_outstanding_principal: 650_000,
+        box1_current_year_deductible_interest: 9_468,
+      }
+  );
+  const source = inputSchema.parse({
+    f1098s,
+    purchase_points_cross_loan_review: cappedReview,
+  });
+  const result = f1098.compute({ taxYear: 2025, formType: "f1040" }, source);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleA)?.line_8a_mortgage_interest_1098,
+    16_569,
+  );
+  assertPurchasePointsCrossLoanSources(
+    source,
+    ["111223333"],
+    true,
+    16_569,
+    0,
+    0,
+    false,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      f1098s: [
+        { ...f1098s[0], box6_current_year_deductible_points: 2_368 },
+        f1098s[1],
+      ],
+      purchase_points_cross_loan_review: cappedReview,
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      f1098s: [f1098s[0], {
+        ...f1098s[1],
+        box1_current_year_deductible_interest: 9_469,
+      }],
+      purchase_points_cross_loan_review: cappedReview,
     }).success,
     false,
   );

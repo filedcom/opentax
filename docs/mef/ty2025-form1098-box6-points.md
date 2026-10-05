@@ -325,7 +325,7 @@ occupancy documents remain reviewed references rather than authenticated
 bytes. [2025 Publication 936](https://www.irs.gov/publications/p936)
 provides the second-home rules.
 
-## One 2025 purchase loan with points and one existing mortgage (implementation written; untested)
+## One 2025 purchase loan with points and one existing mortgage
 
 The public `f1098_purchase_points_cross_loan_review` joins one 2025
 principal-residence purchase Form 1098 with box 6 points and one full-year
@@ -334,11 +334,13 @@ copies, the purchase closing disclosure, a Publication 936 points workpaper,
 12 monthly lender statements for each loan, and a lender-certified maximum
 balance covering every day of 2025 for each loan. The purchase loan has zero
 balance before its origination month; its Form 1098 box 2 must match the
-reviewed maximum original principal. The sum of the two daily maxima must not
-exceed $750,000. Reviewed facts affirm that these are all qualified home
+reviewed maximum original principal. The 12 closing balances establish each
+loan's average for its secured months; one Publication 936 Table 1 ratio uses
+the $750,000 limit over the combined average, rounded to three decimals, or
+one when the average is below the limit. Reviewed facts affirm that these are all qualified home
 mortgages, that the purchase is a principal residence, and that the points
-meet the immediate-deduction conditions. The two box 1 deductions and box 6
-deduction must exactly equal their reported amounts. Native and PDF Schedule A
+meet the immediate-deduction conditions. The combined box 1 deduction and box
+6 points deduction must match that ratio. Native and PDF Schedule A
 replay the two source identities and exact line 8a total and reject competing
 line 8b/8c, refinance points, and Form 8396 claims. The synthetic $6,000 and
 $12,000 interest plus $3,000 purchase points reaches $21,000 on Schedule A
@@ -356,10 +358,20 @@ filed total or a second-loan recipient that is not the filer. Focused commands:
 filled packet. Issuer provenance, loan and points records, other loan counts,
 and full mortgage-limit scope remain open.
 
+A bounded over-limit case adds a $650,000 full-year second-home loan to the
+$300,000 July purchase loan. Their $950,000 combined average gives a 0.789
+Table 1 ratio. The $18,000 combined box 1 interest becomes $14,202, and the
+$3,000 reported purchase points become $2,367, totaling $16,569 on Schedule A
+line 8a and Form 1040 line 12e. The source node, native full-return XML,
+local TY2025 v5.4 XSD, three-page filled PDF, and Schedule A PDF projection
+pass focused checks; changed points, interest, or filed totals reject. The
+[2025 Publication 936 Table 1 instructions](https://www.irs.gov/publications/p936)
+apply line 14's ratio to deductible points as well as interest.
+
 This structured review does not authenticate lender-issued Form 1098 copies,
 closing disclosure, lender maximum-balance certificates, or proof of direct
-points payment. Cash-out debt, daily balances above $750,000, additional
-mortgages, MFJ/MFS, and partial points deductions remain outside this route.
+points payment. Cash-out debt, additional mortgages, MFJ/MFS, and other partial
+points deduction routes remain outside this bounded review.
 The [2025 Publication 936](https://www.irs.gov/publications/p936) combines
 mortgages under the acquisition-debt limit, and the
 [2025 Schedule A instructions](https://www.irs.gov/instructions/i1040sca)
@@ -368,8 +380,8 @@ place deductible Form 1098 interest and points on line 8a.
 The purchase-points cross-loan review now also identifies distinct purchase
 and prior-home properties and applies the same qualified second-home
 occupancy test as the no-points combined review. Its former-home occupancy
-record is required even while the two lender-certified maxima stay below
-$750,000. A rented second home with 100 fair-rental and 15 personal-use days
+record is required across the combined debt-limit calculation. A rented
+second home with 100 fair-rental and 15 personal-use days
 passes source validation; 14 personal days or the same property reference
 rejects. The structured occupancy record is not yet authenticated to source
 bytes. [2025 Publication 936](https://www.irs.gov/publications/p936)
