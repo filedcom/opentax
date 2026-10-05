@@ -4362,3 +4362,12 @@ replay and local TY2025 v5.4 XSD. Log:
 SHA-256 `4fdfb30922622dbddf7167a04456d8ffdd26e751f7d769c893b8dd5d713c8a9d`;
 updated manifest SHA-256
 `590c79d23d81f155440ed030510a4ed961bcc956a1f1c2da05ae25a80936765d`.
+
+A new joint-owner unemployment replay uses separate taxpayer and spouse 1099-G
+copies: $7,000 gross less $600 repaid reaches Schedule 1 and Form 1040 as
+$6,400, and $400 withholding reaches line 25b. Native XML validates against
+local TY2025 v5.4 XSD; the filled PDF text contains both amounts. Changing the
+spouse copy's recipient TIN rejects in native and PDF export. The focused
+`joint-mixed-source-return.test.ts` case passed 1/1 with `xmllint` and
+`pdftotext`; this bounded synthetic joint-owner check does not complete the
+broader source/duplicate/correction matrix or visual review.
