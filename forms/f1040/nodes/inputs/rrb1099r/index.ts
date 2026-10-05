@@ -77,21 +77,22 @@ export const inputSchema = z.object({
   rrb1099rs: z.array(itemSchema).min(1),
 }).superRefine(({ rrb1099rs }, ctx) => {
   const seen = new Set<string>();
-  const payerRecipientCounts = new Map<string, number>();
+  const recipientCounts = new Map<string, number>();
   for (const [index, item] of rrb1099rs.entries()) {
-    const payerRecipient = `${item.payer_name.trim().toUpperCase()}|${
-      item.recipient_tin ?? ""
-    }`;
+    // The form itself identifies the Railroad Retirement Board as issuer;
+    // free-text payer spelling must not distinguish two copies for one owner.
+    const recipient = item.recipient_tin ?? "";
     const positive = (item.box7_total_gross_paid ?? 0) > 0 ||
       (item.box9_federal_withheld ?? 0) > 0;
     if (!positive) continue;
-    payerRecipientCounts.set(
-      payerRecipient,
-      (payerRecipientCounts.get(payerRecipient) ?? 0) + 1,
+    recipientCounts.set(
+      recipient,
+      (recipientCounts.get(recipient) ?? 0) + 1,
     );
     if (item.source_document_reference) {
-      const sourceKey =
-        `${payerRecipient}|${item.source_document_reference.toUpperCase()}`;
+      // One retained issued-copy reference cannot identify two different
+      // recipients, even when both belong to the same joint return.
+      const sourceKey = item.source_document_reference.toUpperCase();
       if (seen.has(sourceKey)) {
         ctx.addIssue({
           code: "custom",
@@ -103,14 +104,12 @@ export const inputSchema = z.object({
     }
   }
   for (const [index, item] of rrb1099rs.entries()) {
-    const payerRecipient = `${item.payer_name.trim().toUpperCase()}|${
-      item.recipient_tin ?? ""
-    }`;
+    const recipient = item.recipient_tin ?? "";
     const positive = (item.box7_total_gross_paid ?? 0) > 0 ||
       (item.box9_federal_withheld ?? 0) > 0;
     if (
       positive &&
-      (payerRecipientCounts.get(payerRecipient) ?? 0) > 1 &&
+      (recipientCounts.get(recipient) ?? 0) > 1 &&
       !item.source_document_reference
     ) {
       ctx.addIssue({

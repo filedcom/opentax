@@ -400,3 +400,88 @@ Deno.test("repeated RRB-1099-R copies need distinct issued references", async ()
     ],
   });
 });
+
+Deno.test("RRB-1099-R payer spelling cannot bypass repeated-copy guard", async () => {
+  const copy = rrb1099r.rrb1099rs[0];
+  const variant = { ...copy, payer_name: "Railroad  Retirement Board." };
+  const totals = {
+    f1040: { ...filed(11_000), line25b_withheld_1099: 1_100 },
+  };
+  for (
+    const { rrb1099rs, message } of [
+      {
+        rrb1099rs: [copy, variant],
+        message:
+          "RRB-1099-R has multiple positive payer copies without issued source references",
+      },
+      {
+        rrb1099rs: [
+          { ...copy, source_document_reference: "RRB-original-1" },
+          { ...variant, source_document_reference: "rrb-original-1" },
+        ],
+        message: "RRB-1099-R repeats the same issued-copy source reference",
+      },
+    ]
+  ) {
+    const pending = { rrb1099r: { rrb1099rs }, ...totals };
+    assertThrows(
+      () => railroadSourceSchema.parse(pending.rrb1099r),
+      Error,
+      message,
+    );
+    assertThrows(
+      () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
+      Error,
+      message,
+    );
+    await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
+  }
+
+  const distinct = {
+    rrb1099r: {
+      rrb1099rs: [
+        { ...copy, source_document_reference: "RRB-original-1" },
+        { ...variant, source_document_reference: "RRB-original-2" },
+      ],
+    },
+    ...totals,
+  };
+  railroadSourceSchema.parse(distinct.rrb1099r);
+  buildMefXml(distinct as Parameters<typeof buildMefXml>[0], filer);
+  await buildPdfBytes(distinct, filer);
+
+  const conflictingOwner = {
+    rrb1099r: {
+      rrb1099rs: [
+        { ...copy, source_document_reference: "RRB-original-1" },
+        {
+          ...variant,
+          recipient_tin: "222334444",
+          source_document_reference: "RRB-original-1",
+        },
+      ],
+    },
+    ...totals,
+  };
+  const duplicateReference =
+    "RRB-1099-R repeats the same issued-copy source reference";
+  assertThrows(
+    () => railroadSourceSchema.parse(conflictingOwner.rrb1099r),
+    Error,
+    duplicateReference,
+  );
+  assertThrows(
+    () =>
+      buildMefXml(
+        conflictingOwner as Parameters<typeof buildMefXml>[0],
+        filer,
+      ),
+    Error,
+    duplicateReference,
+  );
+  await assertRejects(
+    () => buildPdfBytes(conflictingOwner, filer),
+    Error,
+    duplicateReference,
+  );
+});
