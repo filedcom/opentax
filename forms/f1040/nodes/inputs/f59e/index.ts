@@ -43,6 +43,7 @@ type F59eItem = z.infer<typeof itemSchema>;
 type F59eItems = F59eItem[];
 
 function circulationAdjustment(items: F59eItems): number {
+  const references = new Set<string>();
   return items.reduce((sum, item) => {
     if (item.expenditure_type !== ExpenditureType.Circulation) return sum;
     if (
@@ -65,6 +66,13 @@ function circulationAdjustment(items: F59eItems): number {
         "Form 6251 line 2o circulation workpaper deductions and remaining balance cannot exceed the original expenditure",
       );
     }
+    const reference = item.circulation_reviewed_workpaper_reference;
+    if (references.has(reference)) {
+      throw new Error(
+        "Form 6251 line 2o circulation costs need distinct reviewed workpaper references",
+      );
+    }
+    references.add(reference);
     const difference = item.regular_tax_deduction - item.amt_deduction;
     if (item.regular_three_year_writeoff_elected && difference !== 0) {
       throw new Error(

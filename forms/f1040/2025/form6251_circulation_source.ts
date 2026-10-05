@@ -21,7 +21,8 @@ export function assertForm6251CirculationSource(
   );
   if (
     (amount === undefined || amount === null || amount === 0) &&
-    difference === 0
+    difference === 0 && circulation.length === 0 &&
+    (parsed.success || pending?.f59e === undefined)
   ) return;
   if (
     !parsed.success || circulation.length === 0 ||
@@ -43,7 +44,7 @@ export function assertForm6251CirculationSource(
           item.circulation_reviewed_workpaper_reference
         ),
       ).size !== circulation.length ||
-    difference !== amount
+    difference !== (amount ?? 0)
   ) {
     throw new Error(
       "Form 6251 line 2o needs matching retained, reviewed circulation-cost deductions",

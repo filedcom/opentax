@@ -23,6 +23,13 @@ Native and PDF export now replays any nonzero line 2o against the retained Form
 deduction, or conflicting election. The focused replay fixture is authored and
 will run with the agreed later bulk pass.
 
+A zero-net circulation adjustment also replays every retained pool when Form
+6251 is exported. Opposite signed differences cannot hide a duplicate reviewed
+workpaper reference or an invalid election/loss fact. The input node rejects
+duplicate references before calculating even if the differences offset; a
+missing Form 59E source remains valid when no line 2o is claimed. This does not
+establish the underlying workpaper or regular-tax deduction independently.
+
 This route relies on reviewed deduction figures; it does not calculate the
 three-year amortization schedule, a property-loss limitation, or establish that
 the regular deduction was included elsewhere in the return. Non-circulation
