@@ -6,7 +6,7 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1296 bounded completed slices. A completed slice does not close its
+records 1297 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are
@@ -15,9 +15,10 @@ identifies independent work, product decisions, named-form prerequisites,
 validation, and IRS ATS needs. The latest complete local full batch passed
 11,188/11,188 at historical commit `632d3a46`. A current full rerun on
 `35e6df45` reached 11,186 passed and 10 failed: four direct Form 8863 PDF
-fixtures omit student identities required by the filer/dependent guard, and
-six extracted-text/raster assertions differ under the temporary PDFKit tools
-used because Poppler is unavailable. The run log is in
+fixtures omitted student identities required by the filer/dependent guard;
+their setup is corrected and focused Form 8863 PDF, route, and XSD tests pass
+15/15. Six extracted-text/raster assertions differ under the temporary PDFKit
+tools used because Poppler is unavailable. The run log is in
 `/tmp/opentax-deno-task-test-2026-10-05.log`; focused and packet checks below
 cover later slices, but the full batch has not passed at current head. The current-source selected packet
 has 175 exportable synthetic cases with 1,073 filled PDF pages; the latest
