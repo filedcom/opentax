@@ -4529,3 +4529,10 @@ integrated three- and four-policy end-to-end tests at `fb29e07e`; the log is
 `/tmp/opentax-integration-next-focused-d.log`. A broader adjacent agent run
 passed 5/5. The rejected first proposal would have barred a legitimate shared
 record and was never integrated.
+
+All 17 affected source, calculation, native, PDF, and full-return XSD test
+files for the nine later guards were then run together at `797300ba` in the
+isolated integration worktree: **207 passed, 0 failed**. The command output is
+`/tmp/opentax-integration-next-focused-all.log`; the local TY2025 v5.4 XSD
+cache was linked read-only from the main checkout. This combined focused
+result does not replace the pending repository-wide regression.
