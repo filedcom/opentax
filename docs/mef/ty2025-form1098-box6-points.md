@@ -30,7 +30,7 @@ The Form 1098 input keeps `box6_points_paid` as the information-return amount. A
 
 Business/rental routing, ordinary refinancing, and DEDM override with positive box 6 reject. These cases cannot be silently ignored or treated as fully deductible purchase points. A full return with $18,000 of box 1 interest and $2,400 of box 6 points reaches Schedule A line 8a and Form 1040 itemized deductions and passes local TY2025 v5.4 XSD. Sixty focused source/native/PDF descriptor tests pass. All three pages of a filled PDF from that synthetic source were inspected and reconcile to the native return; see the [v57 review](ty2025-filled-pdf-review-2026-09-29.md). The actual payer-issued copy, Pub. 936 calculation evidence, cross-source mortgage allocation, IRS business rules, and ATS acceptance remain open; the final bulk regression is deferred until implementation is complete.
 
-## Construction-debt refinance exception (implementation written; untested)
+## Construction-debt refinance exception (bounded route verified 2026-10-05)
 
 The [2025 Form 1098 instructions](https://www.irs.gov/pub/irs-prior/i1098--2025.pdf)
 exclude ordinary refinancing points from box 6, but allow qualifying points on
@@ -39,7 +39,23 @@ a loan that refinances debt incurred to construct a principal residence. The
 refinancing points over the loan term. Ordinary refinancing points therefore
 need a separate, unreported-points Schedule A line 8c source route.
 
-The new box 6 construction-refinance input requires the original construction
+This box 6 exception is narrow: the points must be clearly designated and
+computed as a percentage of principal, fit local established point-charging
+practice, be for debt incurred by the payer to construct a residence intended
+as the payer's principal home, be paid directly by the payer, and stay within
+the $750,000 acquisition-debt limit. Refinance points allocable to debt above
+the original construction debt do not qualify. The typed review records
+affirmative reviewed findings for principal-residence intent, direct payment,
+and the acquisition limit, plus original construction debt and refinanced
+principal; this bounded route expects that reviewed evidence and does not
+itself calculate a partial eligible share. The [Form 1098
+instructions](https://www.irs.gov/pub/irs-prior/i1098--2025.pdf) also require
+the lender to report qualifying points for the year of closing regardless of
+the borrower's accounting method. For the taxpayer's deduction, Pub. 936's
+general rule is ratable amortization over the loan term; its example uses the
+number of 2025 monthly payments divided by total loan months.
+
+The box 6 construction-refinance input requires the original construction
 loan and closing-disclosure references, original debt covering the refinanced
 principal, loan term, a distinct month-identified record for every consecutive
 monthly payment through December 2025, and explicit review of principal-residence,
@@ -48,11 +64,28 @@ deduction as reported points times 2025 payment months divided by loan-term
 months, rounded to whole dollars. An asserted current-year amount is rejected
 for this route. The computed amount joins box 1 interest on Schedule A line 8a;
 the remaining points need a durable later-year amortization ledger. A synthetic
-$2,000 box 6 / 180-month / six-payment example is written to expect $67 on
-line 8a, or $18,067 with $18,000 of box 1 interest. These fixtures have not run
-under the agreed implementation-first workflow. The lender-issued copy, payment
-and debt records, full Pub. 936 mortgage-limit review, PDF packet, business
-rules, and ATS remain open.
+$2,000 box 6 / 180-month / six-payment example produces $67 of current-year
+points and $18,067 of line 8a with $18,000 of box 1 interest. The focused run
+passed **57/57** cases in `forms/f1040/nodes/inputs/f1098/index.test.ts`,
+including invalid payment-month and caller-deduction rejection. The full-return
+`XSD: Form 1098 construction-refinance points amortize on Schedule A` case
+passed against the cached TY2025 v5.4 XSD; it emitted $18,067 on Schedule A
+line 8a and Form 1040 line 12e.
+
+The selected filled packet was generated and visually inspected on 2026-10-05:
+three pages in Form 1040 / Form 1040 continuation / Schedule A order. Schedule A
+line 8a and line 8e show $18,067, line 8b and line 8c are blank, and Form 1040
+line 12e shows $18,067. Form labels/year, taxpayer identity, page order, and
+legibility were checked. The local review artifact is
+`.state/research/ty2025-1098-construction-review/`; its PDF SHA-256 is
+`18b1fcd876d231c36bb9b443f6d7f9e5477a4f11974abe3bc9d93ccdfa1caa34`, XML
+SHA-256 `9fe6eb0401144441c0303c3fc310ffe4f9ddae4fa42353d9c5edbf725f560219`,
+and the schema digest is `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+
+This verifies one synthetic route only. The lender-issued copy, authenticated
+payment/debt records, full Pub. 936 mortgage-limit review, other refinance and
+points combinations, IRS business rules, and ATS acceptance remain open; it
+does not close the Form 1098 gap.
 
 ## Ordinary refinance points outside box 6 (bounded 2025 route verified)
 
