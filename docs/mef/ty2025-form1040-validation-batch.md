@@ -4583,3 +4583,48 @@ Code at `a3c048f82` integrates Form 8962 one-policy family cap tiers, the MFS Fo
 Root visually inspected all 23 Form 8864 pages, all five patent packet pages, and the eight-page MFS packet, then rechecked its corrected spouse identity on page 1. Artifact hashes and source limits are in the matching gap notes. The Form 8962 cap fixtures generated filled PDFs and tested their line 28/29 projections; that is not a complete manual page-review claim.
 
 The planner reports 188 source fixtures, 116 descriptors, 113 distinct PDF keys, 86 fixture-covered keys and 27 uncovered keys. Neither these counts nor focused passes close parent TODOs or IRS gates. The latest whole-repository green baseline remains `a268f60c`; the new integrated code needs its own full regression.
+
+## October 6 isolated filing and review checkpoint
+
+The stable full regression of `8aa4beeec` remains live under the one-shot
+launchd job `opentax-full-regression-8aa4beeec`, PID 44462, started
+`2026-10-05T22:02:12Z`. Root revalidated the live process at 22:17 UTC;
+its log `/tmp/opentax-deno-task-test-8aa4beeec.log` was progressing through
+full-return XSD cases. No terminal result is asserted for that run.
+
+Later changes are committed in `/tmp/opentax-root-integration-oct6`, through
+code snapshot `2347f6ce0`. They have not changed the running main-checkout
+code. With real Poppler on PATH, these exact focused commands passed:
+
+- `deno test -A forms/f1040/2025/form4972_two_spouse_nua_capital.test.ts forms/f1040/2025/pdf/form4952-misc-royalty-interest-traced-debt-route.test.ts forms/f1040/2025/pdf/form4952-misc-royalty-traced-debt-route.test.ts`: 4 passed, 0 failed.
+- `deno test -A forms/f1040/2025/form8995a_schedule_c_positive.test.ts forms/f1040/2025/pdf/form1040-required-zero-lines.test.ts forms/f1040/2025/pdf/forms/f1040.test.ts`: 34 passed, 0 failed.
+- `deno test -A forms/f1040/2025/form4972_partial_nua_death_estate.test.ts forms/f1040/2025/form8839_public.test.ts scripts/ty2025-pdf-review-source.test.ts`: 6 passed, 0 failed.
+
+The Form 8995-A cents tests include negative half-dollar rounding and a valid
+$1 difference between individually rounded business rows and the rounded raw
+aggregate. Raw Schedule C/Schedule 1 QBI is retained separately. Root reviewed
+all twelve pages of that packet, all seven royalty/interest pages, all six
+separate-spouse Form 4972 pages, and all three combined beneficiary pages.
+The beneficiary and spouse artifacts predate the separately verified Form
+1040 line 15 zero-print repair; their blank zero line is superseded by that
+repair. The corrected two-page Form 1040 fixture was rendered and its page 2
+visually inspected with zero on both lines 15 and 22.
+
+The held review generator/checker now use the public return execution path
+and replay exact optional attachment bytes. Form 8839's native adoption-final
+and phaseout indicators were corrected to `X`, as required by the local IRS
+schema. The selected adoption fixture generated identical source/XML/PDF
+hashes on two runs and passed complete source/XML/PDF/XSD replay after root
+inspected all four pages and completed its visual checklist. Retained packet:
+`.state/research/ty2025-filled-pdf-review/2026-10-06-reviewed-adoption/`;
+manifest SHA-256 `7594aee8e6a51487d98a994bb0afb70dcd466f2b76284729cbac5028c010531b`.
+The checker command was `deno run --allow-read --allow-run=xmllint
+scripts/check-ty2025-pdf-review.ts /tmp/opentax-8839-selected-review
+/Users/atul/projects/opentax/.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd`;
+result: selected scope, 1 case, 4 pages, hashes and XSD confirmed. Altered
+attachment bytes reject even with an updated manifest source hash.
+
+The planner now reports 189 fixtures, 116 descriptors, 113 unique keys,
+87 covered keys and 26 uncovered keys. Source attachments are visibly
+synthetic and do not prove independent issuer authenticity. These isolated
+passes do not replace full regression, IRS business rules or ATS acceptance.
