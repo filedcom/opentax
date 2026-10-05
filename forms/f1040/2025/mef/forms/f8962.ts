@@ -1856,6 +1856,8 @@ function reconcileSimplePolicyMonths(
     : undefined;
   const onePolicyThreePerson = fields.household_size === 3 &&
     policies.length === 1;
+  const onePolicyTwoPerson = fields.household_size === 2 &&
+    policies.length === 1;
   const twoStateFamilyPolicies = twoPersonPolicies &&
     new Set(policies.map((policy) => policy.coverage_state)).size === 2;
   const dependentMagi = reconcileDependentMagi(
@@ -1866,7 +1868,7 @@ function reconcileSimplePolicyMonths(
   const householdIncome = form1040.data.line11_agi + dependentMagi;
   const povertyLine = reconcilePovertyTable(fields, context);
   if (
-    (policies.length > 1 || onePolicyThreePerson) &&
+    (policies.length > 1 || onePolicyThreePerson || onePolicyTwoPerson) &&
     householdIncome < 4 * povertyLine &&
     (!general.success ||
       general.data.filing_status !== SourceFilingStatus.Single ||
@@ -1889,7 +1891,8 @@ function reconcileSimplePolicyMonths(
       general.data.ptc_below_100_fpl_status?.basis ===
         "marketplace_estimate" &&
       (fields.total_advance_ptc ?? 0) > 0,
-    twoPersonPolicies || threePersonPolicies || onePolicyThreePerson,
+    twoPersonPolicies || threePersonPolicies || onePolicyThreePerson ||
+      onePolicyTwoPerson,
   );
   if (
     context.filer.filingStatus !== FilingStatus.Single ||

@@ -1,5 +1,21 @@
 # TY2025 Form 8962 policy-month MeF boundary
 
+## One two-person policy with excess APTC below 400% FPL (2026-10-05)
+
+The monthly filing boundary now accepts one unchanged, same-state policy
+covering a single filer and one claimed dependent at 100%–399% FPL when the
+dependent's identified filed return and W-2 establish Worksheet 1-2 MAGI.
+The existing source replay checks both covered SSNs, all twelve Form 1095-A
+columns and annual totals, household income, the single-status Table 5 cap,
+Schedule 2 line 1a, and Form 1040 line 17 before native MeF or PDF output.
+At 200% FPL, a $40,880 household with $8,184 PTC and $10,800 APTC has
+$2,616 excess before the $975 repayment cap. The full-return case verifies
+native XML, local TY2025 v5.4 XSD, and filled PDF; changed cap and policy APTC
+are rejected. This follows the [2025 Form 8962 monthly and Table 5
+instructions](https://www.irs.gov/instructions/i8962). Multiple policies,
+shared allocation, uncovered family members, source-byte authentication, and
+IRS acceptance remain outside this route.
+
 ## Consistent Marketplace correction record identity across policies (2026-10-05)
 
 The same-state monthly export allows one Marketplace determination record to

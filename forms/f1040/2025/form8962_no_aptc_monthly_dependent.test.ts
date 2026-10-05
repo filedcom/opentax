@@ -97,8 +97,12 @@ const filer = {
   filingStatus: MefFilingStatus.Single,
   address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
 };
+const xsdPath = new URL(
+  "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+  import.meta.url,
+).pathname;
 
-function filedReturn() {
+function filedReturn(marketplacePolicy: Record<string, unknown> = policy) {
   return f1040_2025.executeReturn({
     general: {
       filing_status: InputFilingStatus.Single,
@@ -125,7 +129,7 @@ function filedReturn() {
       box1_wages: 24_880,
       box2_fed_withheld: 3_000,
     }],
-    f1095a: [policy],
+    f1095a: [marketplacePolicy],
   });
 }
 
@@ -152,6 +156,78 @@ Deno.test("Form 8962 monthly no-APTC policy with a required-filing dependent rea
     "<ReconciledPremiumTaxCreditAmt>8184</ReconciledPremiumTaxCreditAmt>",
   );
   await prepared.renderPdf();
+});
+
+Deno.test("Form 8962 one family policy caps excess APTC for a single filer with one dependent", async () => {
+  const aptcPolicy = {
+    ...policy,
+    monthly_slcsps: Array.from({ length: 12 }, (_, index) =>
+      index < 6 ? 700 : 800
+    ),
+    monthly_aptcs: Array(12).fill(900),
+    annual_slcsp: 9_000,
+    annual_aptc: 10_800,
+    slcsp_corrections: undefined,
+    no_aptc_monthly_evidence: undefined,
+  };
+  const result = filedReturn(aptcPolicy);
+  assertEquals(result.diagnostics, []);
+  const pending = normalizeAllPending(result.pending);
+  assertEquals(pending.form8962.household_income, 40_880);
+  assertEquals(pending.form8962.federal_poverty_pct, 200);
+  assertEquals(pending.form8962.total_premium_tax_credit, 8_184);
+  assertEquals(pending.form8962.total_advance_ptc, 10_800);
+  assertEquals(pending.form8962.excess_advance_payment, 2_616);
+  assertEquals(pending.form8962.repayment_limitation, 975);
+  assertEquals(pending.form8962.excess_advance_premium, 975);
+  assertEquals(pending.schedule2.line1a_excess_advance_premium, 975);
+  assertEquals(pending.f1040.line17_additional_taxes, 975);
+  const projected = form8962Pdf.projectFields?.(pending.form8962, pending) ??
+    {};
+  assertEquals(projected.pdf_month_1_slcsp, "700");
+  assertEquals(projected.pdf_month_7_slcsp, "800");
+  assertEquals(form8962Pdf.instances?.(projected, filer, pending)?.length, 1);
+  const prepared = await f1040_2025.prepareReturn(result.pending, filer);
+  assertStringIncludes(
+    prepared.bundle.xml,
+    "<AdditionalTaxLimitationAmt>975</AdditionalTaxLimitationAmt>",
+  );
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, prepared.bundle.xml);
+    const validated = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsdPath, xmlPath],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validated.code,
+      0,
+      new TextDecoder().decode(validated.stderr),
+    );
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+  await prepared.renderPdf();
+
+  await assertRejects(() =>
+    f1040_2025.prepareReturn({
+      ...result.pending,
+      form8962: { ...pending.form8962, repayment_limitation: 1_625 },
+    }, filer)
+  );
+  await assertRejects(() =>
+    f1040_2025.prepareReturn({
+      ...result.pending,
+      schedule2: { ...pending.schedule2, line1a_excess_advance_premium: 974 },
+    }, filer)
+  );
+  await assertRejects(() =>
+    f1040_2025.prepareReturn({
+      ...result.pending,
+      f1095a: { f1095as: [{ ...aptcPolicy, monthly_aptcs: Array(12).fill(899), annual_aptc: 10_788 }] },
+    }, filer)
+  );
 });
 
 Deno.test("Form 8962 dependent no-APTC monthly filing rejects source identity, SLCSP and final credit tampering", async () => {
