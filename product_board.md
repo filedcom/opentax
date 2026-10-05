@@ -6,7 +6,7 @@ The board has 52 open TODOs: 32 outside the named tax-form gaps and 20
 inside. The open checklist below is authoritative. The [status checkpoint](docs/mef/ty2025-product-board-status-2026-10-04.md)
 preserves the route, fixture, PDF, schema, and release learnings removed from
 this summary; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md)
-records 1335 bounded completed slices. A completed slice does not close its
+records 1337 bounded completed slices. A completed slice does not close its
 parent form or release gate.
 
 Work the existing non-named queue first where scope and source evidence are
@@ -99,6 +99,10 @@ references distinct, bind first-year Roth Form 1099-R recipients to Form 8606
 owners, and reject an unfiled zero-deduction Form 8995 business loss. Their
 integrated calculator/source/native/PDF/XSD focused tests pass 147/147; filed
 return and issuer provenance plus the latest full regression remain open.
+Form 4255 now rejects repeated staged credit-line rows before Schedule 2
+summation, and Form 8889 PDF instances check HSA owner identity and valid
+computed line values. Their combined source/native/PDF focused tests pass
+32/32; positive Form 4255 export and wider HSA evidence remain guarded.
 Scenario 8's code-Q distribution and blank Form 1040 line 4a still need
 reconciliation, as do the other open ATS source conflicts.
 An October 5 official Scenario 1 packet recheck confirms its Form 5695

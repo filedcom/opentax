@@ -4517,3 +4517,9 @@ solely because this isolated worktree lacked the ignored local schema cache;
 linking the existing read-only cache and rerunning the same command passed.
 The log is `/tmp/opentax-integration-next-focused-b.log`. The full repository
 run on these latest guards is still pending.
+
+Form 4255 staged-row uniqueness and Form 8889 PDF owner/value projection pass
+**32/32** combined focused source/native/PDF tests at `a9019231`; the log is
+`/tmp/opentax-integration-next-focused-c.log`. The Form 8889 agent also ran
+74 wider HSA route cases successfully. The main full regression still targets
+the preceding `9d700e2d` commit, not these later isolated guards.
