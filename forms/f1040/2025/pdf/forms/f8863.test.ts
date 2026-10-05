@@ -65,6 +65,10 @@ const source = { f8863s: [student], credit_limit_worksheet: worksheet };
 const final = {
   f1040: {
     filing_status: "single",
+    dependent_details: [
+      { ssn: "222-33-4444" },
+      { ssn: "333-44-5555" },
+    ],
     line11_agi: 70_000,
     line18_total_tax_before_credits: 10_000,
     line29_refundable_aoc: 1_000,
