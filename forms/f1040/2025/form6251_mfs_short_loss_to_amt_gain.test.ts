@@ -14,6 +14,10 @@ const general = {
   taxpayer_last_name: "Taxpayer",
   taxpayer_ssn: "111-22-3333",
   taxpayer_dob: "1985-06-15",
+  spouse_first_name: "Sam",
+  spouse_last_name: "Taxpayer",
+  spouse_ssn: "444-55-6666",
+  spouse_dob: "1987-03-10",
   address_line1: "1 Test Way",
   address_city: "Austin",
   address_state: "TX",
@@ -60,6 +64,7 @@ Deno.test("MFS short-term loss-to-AMT-gain lot reaches Form 6251 and final retur
   );
   const prepared = await f1040_2025.prepareReturn(result.pending, filer);
   assertStringIncludes(prepared.bundle.xml, "<PropertyDispositionAmt>1000</PropertyDispositionAmt>");
+  assertStringIncludes(prepared.bundle.xml, "<SpouseSSN>444556666</SpouseSSN>");
   assertEquals(
     form6251Pdf.projectFields?.(filed, result.pending)?.line2k_disposition,
     1_000,
@@ -98,6 +103,7 @@ Deno.test("MFS short-term crossover validates prepared XML and filled Form 6251 
       stderr: "piped",
     }).output();
     assertEquals(validation.code, 0, new TextDecoder().decode(validation.stderr));
+    assertStringIncludes(prepared.bundle.xml, "<SpouseSSN>444556666</SpouseSSN>");
     const extraction = await new Deno.Command("pdftotext", {
       args: ["-layout", pdfPath, "-"],
       stdout: "piped",
@@ -105,6 +111,8 @@ Deno.test("MFS short-term crossover validates prepared XML and filled Form 6251 
     }).output();
     assertEquals(extraction.code, 0, new TextDecoder().decode(extraction.stderr));
     const pages = new TextDecoder().decode(extraction.stdout).split("\f");
+    assertEquals(/and full name here:\s+Sam Taxpayer/.test(pages[0] ?? ""), true);
+    assertEquals((pages[0] ?? "").includes("4 4 4 5 5 6 6 6 6"), true);
     const form6251 = pages.find((page) => page.includes("Alternative Minimum Tax—Individuals"));
     if (!form6251) throw new Error("Filled packet lacks Form 6251");
     assertEquals(/Disposition of property[^\n]*2k\s+1000/.test(form6251), true);

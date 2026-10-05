@@ -36,14 +36,18 @@ III, and broker byte authentication remain open. Focused graph, calculation,
 native, and PDF cases pass. The MFS prepared return also validates against the
 local TY2025 v5.4 `Return1040.xsd` and renders as an eight-page filled PDF.
 Visual review of its Form 6251 page 7 confirms line 2k `$1,000`, line 5 MFS
-exemption `$68,500`, and line 11 AMT `$64,822`, with no clipped entries; the
-packet's Schedule D line 21 prints the regular `$500` loss and Form 1040 line
-17 prints `$64,822`. The focused render/XSD test passes 3/3. Ignored review
+exemption `$68,500`, and line 11 AMT `$64,822`, with no clipped entries. The
+corrected Form 1040 page 1 visibly carries spouse Sam Taxpayer, SSN
+`444556666`, and the MFS full-name entry; the native return has the spouse SSN.
+The packet's Schedule D line 21 prints the regular `$500` loss and Form 1040
+line 17 prints `$64,822`. The focused render/XSD test passes 3/3. Ignored review
 artifacts are in `.pdf-cache/review/mfs-short-loss-amt-gain/`. XML SHA-256 is
-`d8b7cac792e6061971b9d8c4df08eab241aed23a724cc9f677e10eac350a5092`;
+`3ba3ccaeb7139e08afa4f58ba9e2c9a632313995878306655c136d29dd721bd7`;
 the filled PDF is
-`6233feea29cec1adfbd0d0b1cec3e578d046e03fbc06a95f0fcb25be550b15af`;
-the rendered page image is
+`c0c04adc27cef3b05d8930f1dc2233d7d860f9285e8d5f9d93a85b1d912facaf`;
+the rendered Form 1040 page-1 image is
+`1e47804b660b7ed8925e6f6426a2daef8f5f212b50ad63454896f5a107c5d344`,
+and Form 6251 page-7 image is
 `1f6443a384555fe1714b70deb291e136c2addc007b8981f1d1ab0b20f75edd52`.
 Issued broker-copy authentication, IRS business rules, and ATS acceptance
 remain open.
