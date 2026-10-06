@@ -36,7 +36,12 @@ export const form5471ScheduleM: MefFormDescriptor<
       element("ExchangeRt", cfc.schedule_i1.average_exchange_rate),
       elements("USPersonControlFrgnCorpGrp", [
         element("InventorySalesAmt", m.inventory_sales_to_filer_usd),
-        element("TotalTransactionsReceivedAmt", m.inventory_sales_to_filer_usd),
+        element("InterestReceivedAmt", m.interest_received_from_filer_usd),
+        element(
+          "TotalTransactionsReceivedAmt",
+          m.inventory_sales_to_filer_usd +
+            (m.interest_received_from_filer_usd ?? 0),
+        ),
         element(
           "AccountsPayableAmt",
           m.maximum_related_party_accounts_payable_usd,

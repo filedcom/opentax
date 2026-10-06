@@ -1,3 +1,7 @@
+import {
+  buildOwned5471Schedule,
+  owned5471AdditionalSchedules,
+} from "./f5471-owned-schedules.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import { projectForm8992Source } from "../../form8992_source.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
@@ -19,6 +23,14 @@ export const form5471ScheduleJ: MefFormDescriptor<
       context.pending,
       context.filer,
     );
+    if (cfc.owned_worksheet_source) {
+      return buildOwned5471Schedule(
+        cfc,
+        shareholderName,
+        "IRS5471ScheduleJ",
+        "GEN",
+      );
+    }
     const j = cfc.schedule_j;
     const opening = j.opening_post2017_untaxed_ep_functional;
     const current = cfc.schedule_h.book_net_income_functional;
@@ -83,5 +95,20 @@ export const form5471ScheduleJ: MefFormDescriptor<
       ),
       element("EndYearBalanceAmt", 0),
     ]);
+  },
+  buildAdditionalDocuments(_fields, context) {
+    if (!context?.pending?.f5471) return [];
+    if (!context.filer) {
+      throw Error("Owned category schedules need final filer identity");
+    }
+    const { cfc, shareholderName } = projectForm8992Source(
+      context.pending,
+      context.filer,
+    );
+    return owned5471AdditionalSchedules(
+      cfc,
+      shareholderName,
+      "IRS5471ScheduleJ",
+    );
   },
 };

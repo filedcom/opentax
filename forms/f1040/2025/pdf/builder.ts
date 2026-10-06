@@ -343,6 +343,20 @@ export async function fillFormPdf(
   cacheDir: string,
   allPending?: Record<string, Record<string, unknown>>,
 ): Promise<Uint8Array | undefined> {
+  // Keep retained projection bytes immutable while resolving an explicitly
+  // declared former operand name at this form's rendering boundary.
+  for (const entry of descriptor.fields) {
+    if (
+      entry.kind === "text" && entry.fallbackDomainKey &&
+      fields[entry.domainKey] === undefined &&
+      fields[entry.fallbackDomainKey] !== undefined
+    ) {
+      fields = {
+        ...fields,
+        [entry.domainKey]: fields[entry.fallbackDomainKey],
+      };
+    }
+  }
   if (descriptor.presenceKey !== undefined) {
     const gate = fields[descriptor.presenceKey];
     if (gate === undefined || gate === null) return undefined;

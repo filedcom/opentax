@@ -44,6 +44,28 @@ export function projectForm8992Source(
       throw new Error("Form 8992 shareholder TIN differs from return filer");
     }
     if (
+      cfc.owned_worksheet_source &&
+      cfc.owned_worksheet_source.shareholder_name !== shareholderName
+    ) {
+      throw Error(
+        "Owned CFC stock/source shareholder legal name differs from return filer",
+      );
+    }
+    if (cfc.owned_worksheet_source) {
+      const address =
+        cfc.owned_worksheet_source.interest_apportionment_election_prerequisite
+          .controlling_shareholder_address;
+      if (
+        Object.entries(address).some(([key, value]) =>
+          filer.address[key as keyof typeof address] !== value
+        )
+      ) {
+        throw Error(
+          "Constructed controlling-shareholder election address differs from return filer; consent and timely filing remain unverified",
+        );
+      }
+    }
+    if (
       !shareholderName || shareholderName.length > 35 ||
       !/^([A-Za-z0-9'-] ?)*[A-Za-z0-9'-]$/.test(shareholderName)
     ) {

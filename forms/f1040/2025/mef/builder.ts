@@ -220,7 +220,11 @@ function buildFragments(
       (source ?? []) as never,
       context,
     );
-    const fragments = typeof built === "string" ? [built] : built;
+    const fragments = [
+      ...(typeof built === "string" ? [built] : built),
+      ...(form.buildAdditionalDocuments?.((source ?? []) as never, context) ??
+        []),
+    ];
     return fragments.filter((xml) => xml !== "").map((xml) => {
       const tag = /^<([A-Za-z0-9]+)(?:\s[^>]*)?>/.exec(xml)?.[1];
       if (!tag) throw new Error(`Invalid MeF document from ${form.pendingKey}`);

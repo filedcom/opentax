@@ -13,6 +13,7 @@ export function documentId(tag: string, index: number): string {
 
 // TY2025 MeF statement reference names can differ from shortened XML roots.
 const IRS_REFERENCE_NAME_BY_ROOT: Readonly<Record<string, string>> = {
+  ItemizedOtherInvestmentsSch: "ItemizedOtherInvestmentsSchedule",
   AltBasisCompSourceStmt: "AltBasisCompensationSourceStatement",
   AltBasisCompensationSourceStmt: "AltBasisCompensationSourceStatement",
   ChildTaxableInterestStmt: "ChildTaxableInterestStatement",

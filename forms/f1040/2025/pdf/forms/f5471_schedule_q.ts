@@ -1,7 +1,12 @@
+import { owned5471PdfValues } from "./f5471-owned-values.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { projectForm8992Source } from "../../form8992_source.ts";
 
-const text = (key: string, page: number, path: string): PdfFieldEntry => ({
+const text = (
+  key: string,
+  page: number,
+  path: string,
+): Extract<PdfFieldEntry, { kind: "text" }> => ({
   kind: "text",
   domainKey: key,
   pdfField: `topmostSubform[0].Page${page}[0].${path}`,
@@ -31,6 +36,59 @@ export const form5471ScheduleQPdf: PdfFormDescriptor = {
     text("cfc_ein", 1, "f1_04[0]"),
     text("cfc_reference_id", 1, "f1_05[0]"),
     text("category", 1, "f1_06[0]"),
+    text("passive_group", 1, "f1_07[0]"),
+    {
+      kind: "checkboxWhen",
+      domainKey: "us_source",
+      pdfField: "topmostSubform[0].Page1[0].c1_1[0]",
+      whenValue: "true",
+    },
+    text(
+      "passive_gross",
+      1,
+      "Table_ColsI-VII_Ln1-1g2[0].BodyRow1a[0].f1_10[0]",
+    ),
+    text(
+      "passive_unit_name",
+      1,
+      "Table_ColsI-VII_Ln1-1g2[0].BodyRow1a1[0].f1_16[0]",
+    ),
+    text(
+      "passive_country",
+      1,
+      "Table_ColsI-VII_Ln1-1g2[0].BodyRow1a1[0].f1_17[0]",
+    ),
+    text(
+      "passive_gross",
+      1,
+      "Table_ColsI-VII_Ln1-1g2[0].BodyRow1a1[0].f1_18[0]",
+    ),
+    text(
+      "passive_interest",
+      1,
+      "Table_ColsI-VII_Ln1-1g2[0].BodyRow1a[0].f1_13[0]",
+    ),
+    text(
+      "passive_interest",
+      1,
+      "Table_ColsI-VII_Ln1-1g2[0].BodyRow1a1[0].f1_21[0]",
+    ),
+    ...[
+      ["passive_tax", "1a", "03"],
+      ["passive_net", "1a", "04"],
+      ["passive_assets", "1a", "06"],
+      ["passive_net", "1a", "08"],
+      ["passive_tax", "1a1", "11"],
+      ["passive_net", "1a1", "12"],
+      ["passive_assets", "1a1", "14"],
+      ["passive_net", "1a1", "16"],
+    ].map(([key, line, n]) =>
+      text(
+        key,
+        2,
+        `Table_ColsVIII-XVI_Ln1a-1g2[0].BodyRow${line}[0].f2_${n}[0]`,
+      )
+    ),
     {
       kind: "checkboxWhen",
       domainKey: "foreign_source",
@@ -41,6 +99,8 @@ export const form5471ScheduleQPdf: PdfFormDescriptor = {
     row("unit_name", 3, "1g1", "08"),
     row("country", 3, "1g1", "09"),
     row("sales_gross", 3, "1g1", "10"),
+    row("sales_interest", 3, "1g", "05"),
+    row("sales_interest", 3, "1g1", "13"),
     row("sales_net", 4, "1g", "04"),
     row("sales_net", 4, "1g", "08"),
     row("sales_net", 4, "1g1", "12"),
@@ -64,12 +124,18 @@ export const form5471ScheduleQPdf: PdfFormDescriptor = {
     row("tested_assets", 4, "3\\.1", "150"),
     row("tested_net", 4, "3\\.1", "152"),
     row("total_gross", 3, "5", "168"),
-    row("tested_interest", 3, "5", "171"),
+    {
+      ...row("total_interest", 3, "5", "171"),
+      fallbackDomainKey: "tested_interest",
+    },
     row("tested_other_expenses", 3, "5", "173"),
-    row("tested_tax", 4, "5", "187"),
+    { ...row("total_tax", 4, "5", "187"), fallbackDomainKey: "tested_tax" },
     row("total_net", 4, "5", "188"),
     row("creditable_tax", 4, "5", "189"),
-    row("tested_assets", 4, "5", "190"),
+    {
+      ...row("total_assets", 4, "5", "190"),
+      fallbackDomainKey: "tested_assets",
+    },
     row("total_net", 4, "5", "192"),
   ],
   instances(_fields, filer, allPending) {
@@ -81,6 +147,9 @@ export const form5471ScheduleQPdf: PdfFormDescriptor = {
       allPending,
       filer,
     );
+    if (cfc.owned_worksheet_source) {
+      return owned5471PdfValues(cfc, shareholderName, "Q");
+    }
     const q = cfc.schedule_q;
     const testedNet = q.tested_gross_income_functional -
       q.tested_other_interest_expense_functional -
@@ -100,11 +169,14 @@ export const form5471ScheduleQPdf: PdfFormDescriptor = {
       sales_net: q.sales_gross_income_functional,
       tested_gross: q.tested_gross_income_functional,
       tested_interest: q.tested_other_interest_expense_functional,
+      total_interest: q.tested_other_interest_expense_functional,
       tested_other_expenses: q.tested_other_expenses_functional,
       tested_tax: q.tested_other_current_year_tax_functional,
       tested_net: testedNet,
       creditable_tax: q.foreign_taxes_credit_allowed_usd,
       tested_assets: q.tested_average_asset_value_functional,
+      total_tax: q.tested_other_current_year_tax_functional,
+      total_assets: q.tested_average_asset_value_functional,
       total_gross: q.sales_gross_income_functional +
         q.tested_gross_income_functional,
       total_net: q.sales_gross_income_functional + testedNet,

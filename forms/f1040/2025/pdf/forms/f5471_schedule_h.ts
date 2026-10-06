@@ -48,6 +48,7 @@ export const form5471ScheduleHPdf: PdfFormDescriptor = {
     simple("line5a", 27, true),
     simple("line5c", 29, true),
     simple("line5c_general", 30, true),
+    simple("line5c_passive", 31),
     simple("line5d", 40, true),
     simple("line5e_rate", 41),
   ],
@@ -90,7 +91,8 @@ export const form5471ScheduleHPdf: PdfFormDescriptor = {
       line4: 0,
       line5a: h.book_net_income_functional,
       line5c: h.book_net_income_functional,
-      line5c_general: h.book_net_income_functional,
+      line5c_general: h.book_net_income_functional - h.passive_category_ep,
+      line5c_passive: h.passive_category_ep,
       line5d: h.current_ep_usd,
       line5e_rate: h.average_exchange_rate,
     }];

@@ -8,6 +8,8 @@ export type PdfFieldEntry =
   | {
     readonly kind: "text";
     readonly domainKey: string;
+    /** Retained legacy projection alias, used only when the current key is absent. */
+    readonly fallbackDomainKey?: string;
     readonly pdfField: string;
     readonly extraPdfFields?: readonly string[];
     readonly printZero?: boolean;

@@ -1,3 +1,5 @@
+import type { F5471Item } from "../../../nodes/inputs/f5471/index.ts";
+import { owned5471Categories } from "../../form5471-owned-source.ts";
 import type { MefBuildContext } from "../form-descriptor.ts";
 import type { MefDocumentFragment } from "../document-identity.ts";
 
@@ -17,7 +19,16 @@ export const form5471RequiredScheduleKeys = [
   ["f5471_schedule_r", "IRS5471ScheduleR"],
 ] as const;
 
-export function requiredScheduleReferences(context: MefBuildContext) {
+const categoryScheduleTags: ReadonlySet<string> = new Set([
+  "IRS5471ScheduleE",
+  "IRS5471ScheduleJ",
+  "IRS5471ScheduleP",
+  "IRS5471ScheduleQ",
+]);
+export function requiredScheduleReferences(
+  context: MefBuildContext,
+  cfc?: F5471Item,
+) {
   // Discovery and standalone source projection do not yet own document IDs.
   if (
     context.phase !== "final" && !context.documentIdsByTag &&
@@ -26,16 +37,21 @@ export function requiredScheduleReferences(context: MefBuildContext) {
   if (!context.documentIdsByTag || !context.documentIdsByPendingKey) {
     throw new Error("Form 5471 final linkage needs both document inventories");
   }
-  const ids = form5471RequiredScheduleKeys.map(([key, tag]) => {
+  const ids = form5471RequiredScheduleKeys.flatMap(([key, tag]) => {
+    const count = cfc?.owned_worksheet_source && categoryScheduleTags.has(tag)
+      ? owned5471Categories(cfc).length
+      : 1;
     const byKey = context.documentIdsByPendingKey![key] ?? [];
     const byTag = context.documentIdsByTag![tag] ?? [];
     if (
-      byKey.length !== 1 || byTag.length !== 1 ||
-      byKey[0] !== byTag[0] || !byKey[0].trim()
+      byKey.length !== count || byTag.length !== count ||
+      byKey.some((id, i) => id !== byTag[i] || !id.trim())
     ) {
-      throw new Error(`Form 5471 needs exactly one owned ${tag} document`);
+      throw new Error(
+        `Form 5471 needs exactly ${count} owned ${tag} documents`,
+      );
     }
-    return byKey[0];
+    return byKey;
   });
   if (new Set(ids).size !== ids.length) {
     throw new Error("Form 5471 required schedules cannot share a document ID");
@@ -66,12 +82,20 @@ export function validateForm5471ScheduleReferences(
     const refs = /\breferenceDocumentId="([^"]+)"/.exec(root)?.[1]
       .trim().split(/\s+/) ?? [];
     const names = /\breferenceDocumentName="([^"]+)"/.exec(root)?.[1];
+    const categories = Number(text(parent.xml, "SubpartFPHCIncomeAmt")) > 0
+      ? ["GEN", "PAS", "TOTAL"]
+      : ["GEN"];
+    const requiredCount = form5471RequiredScheduleKeys.reduce(
+      (n, [, tag]) =>
+        n + (categoryScheduleTags.has(tag) ? categories.length : 1),
+      0,
+    );
     if (
-      refs.length !== form5471RequiredScheduleKeys.length ||
+      refs.length !== requiredCount ||
       names !== form5471ReferenceNames
     ) {
       throw new Error(
-        "Form 5471 Category4/5a needs all eight required schedule references",
+        "Form 5471 Category4/5a needs all required source-category schedule references",
       );
     }
     const parentSSN = text(parent.xml, "SSN");
@@ -85,21 +109,34 @@ export function validateForm5471ScheduleReferences(
     for (const [, tag] of form5471RequiredScheduleKeys) {
       const matches = fragments.map((f, index) => ({ f, index }))
         .filter(({ f }) => f.tag === tag);
+      const count = categoryScheduleTags.has(tag) ? categories.length : 1;
       if (
-        matches.length !== 1 ||
-        !refs.includes(documentIds[matches[0].index])
-      ) {
-        throw new Error(`Form 5471 must reference exactly one owned ${tag}`);
-      }
-      const child = matches[0].f.xml;
-      if (
-        text(child, "SSN") !== parentSSN ||
-        text(child, "ForeignCorporationEIN") !== parentEIN ||
-        text(child, "ForeignEntityReferenceIdNum") !== parentRef
+        matches.length !== count ||
+        matches.some(({ index }) => !refs.includes(documentIds[index]))
       ) {
         throw new Error(
-          `Form 5471 ${tag} differs from source owner/corporation`,
+          `Form 5471 must reference exactly ${count} owned ${tag} documents`,
         );
+      }
+      if (
+        categoryScheduleTags.has(tag) &&
+        (new Set(matches.map(({ f }) => text(f.xml, "SeparateCategoryCd")))
+              .size !== count ||
+          matches.some(({ f }) =>
+            !categories.includes(text(f.xml, "SeparateCategoryCd") ?? "")
+          ))
+      ) throw new Error(`Form 5471 ${tag} category inventory conflicts`);
+      for (const { f } of matches) {
+        const child = f.xml;
+        if (
+          text(child, "SSN") !== parentSSN ||
+          text(child, "ForeignCorporationEIN") !== parentEIN ||
+          text(child, "ForeignEntityReferenceIdNum") !== parentRef
+        ) {
+          throw new Error(
+            `Form 5471 ${tag} differs from source owner/corporation`,
+          );
+        }
       }
     }
   }

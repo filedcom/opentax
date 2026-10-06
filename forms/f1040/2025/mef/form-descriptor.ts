@@ -30,6 +30,11 @@ export interface MefFormDescriptor<
     fields: TFields,
     context?: MefBuildContext,
   ): TResult;
+  /** Additional required category copies from the same validated source. */
+  buildAdditionalDocuments?(
+    fields: TFields,
+    context?: MefBuildContext,
+  ): readonly string[];
   /** Create any PDF files this form requires in the return bundle. */
   buildBinaryAttachments?(
     fields: TFields,

@@ -40,7 +40,13 @@ export const form5471ScheduleH: MefFormDescriptor<
       element("TotalNetSubtractionsAmt", 0),
       element("CurrentEarningsAndProfitsAmt", h.book_net_income_functional),
       element("EarningAndPrftPlusDASTMGainAmt", h.book_net_income_functional),
-      element("EPDASTMGeneralCatIncmAmt", h.book_net_income_functional),
+      element(
+        "EPDASTMGeneralCatIncmAmt",
+        h.book_net_income_functional - h.passive_category_ep,
+      ),
+      h.passive_category_ep
+        ? element("EPDASTMPassiveCatIncmAmt", h.passive_category_ep)
+        : "",
       element("CurrEarnAndPrftInUSDollarsAmt", h.current_ep_usd),
       element("ExchangeRt", h.average_exchange_rate),
     ]);

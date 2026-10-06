@@ -263,6 +263,19 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     pendingKey: "f5471",
     exportKinds: ["mef", "pdf"],
     reason:
+      "Form 5471 constructed worksheet/election/consent and prior-year books remain unverified; source calculation and paper projections do not authorize full foreign export",
+    isActive: (fields) =>
+      Array.isArray(fields.f5471s) &&
+      fields.f5471s.some((cfc: unknown) =>
+        cfc !== null && typeof cfc === "object" &&
+        "owned_worksheet_source" in cfc &&
+        (cfc as Record<string, unknown>).owned_worksheet_source !== undefined
+      ),
+  },
+  {
+    pendingKey: "f5471",
+    exportKinds: ["mef", "pdf"],
+    reason:
       "Form 5471 Schedule R all-zero treatment and parent reference linkage need current MeF evidence",
     isActive: (fields) => nonempty(fields.f5471s),
   },
