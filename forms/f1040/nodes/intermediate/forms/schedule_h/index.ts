@@ -106,11 +106,41 @@ const familyWithholdingEmployeeSchema = z.discriminatedUnion("relationship", [
   }).strict(),
 ]);
 
+// The complete payroll inventory retains actual family relationships rather
+// than treating excluded wages as unrelated-worker wages.
+const familyPayrollBaseSchema = familyWithholdingEmployeeBaseSchema.omit({
+  federal_income_tax_withholding_requested_and_agreed: true,
+  w4_source_reference: true,
+  w2: true,
+}).extend({
+  w2: familyWithholdingEmployeeBaseSchema.shape.w2.extend({
+    box2_federal_income_tax_withheld: z.number().nonnegative(),
+  }).strict().optional(),
+  federal_withholding_agreement:
+    futaEmployeeSchema.shape.federal_withholding_agreement,
+});
+const payrollEmployeeSchema = z.union([
+  futaEmployeeSchema,
+  familyPayrollBaseSchema.extend({
+    relationship: z.literal("child"),
+    birth_date: calendarDate,
+    birth_date_source_reference: z.string().trim().min(1),
+  }).strict(),
+  familyPayrollBaseSchema.extend({
+    relationship: z.literal("spouse"),
+    marriage_date: calendarDate,
+    marriage_source_reference: z.string().trim().min(1),
+    marriage_continuity_source_reference: z.string().trim().min(1),
+    married_through_2025_verified: z.literal(true),
+  }).strict(),
+]);
+
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 export const inputSchema = z.object({
   // MeF identity and per-employee line A answer cannot be inferred from payroll.
   employer_ein: z.string().regex(/^\d{9}$/).optional(),
+  family_employer_ssn: z.string().regex(/^\d{9}$/).optional(),
   cash_wages_over_2025_limit: z.boolean().optional(),
   cash_wages_over_quarter_limit: z.boolean().optional(),
   // Social Security wages (may differ if wages exceed SS wage base)
@@ -127,7 +157,7 @@ export const inputSchema = z.object({
   // Must withhold only if employee requests it (Form W-4)
   federal_income_tax_withheld: z.number().nonnegative().optional(),
 
-  // Complete unrelated-worker inventory, including minor classifications.
+  // Complete worker inventory, retaining family and minor classifications.
   // Aggregate quarters in both years establish the absence of FUTA.
   fica_only_payroll: z.object({
     all_household_employees_included: z.literal(true),
@@ -138,7 +168,7 @@ export const inputSchema = z.object({
       z.number().nonnegative(),
       z.number().nonnegative(),
     ]),
-    employee_wages: z.array(futaEmployeeSchema).min(1),
+    employee_wages: z.array(payrollEmployeeSchema).min(1),
   }).strict().optional(),
 
   // One sourced child or spouse. Family wages are excluded from FICA and FUTA,
@@ -162,7 +192,7 @@ export const inputSchema = z.object({
       all_household_employees_included: z.literal(true),
       prior_year_quarter_threshold_met: z.boolean(),
       prior_year_quarter_source_reference: z.string().trim().min(1).optional(),
-      employee_wages: z.array(futaEmployeeSchema).min(1),
+      employee_wages: z.array(payrollEmployeeSchema).min(1),
     }).strict(),
     z.object({
       paid_only_one_state: z.boolean(),
@@ -172,7 +202,7 @@ export const inputSchema = z.object({
       all_household_employees_included: z.literal(true),
       prior_year_quarter_threshold_met: z.boolean(),
       prior_year_quarter_source_reference: z.string().trim().min(1).optional(),
-      employee_wages: z.array(futaEmployeeSchema).min(1),
+      employee_wages: z.array(payrollEmployeeSchema).min(1),
       state_rows: z.array(
         z.object({
           state: z.string().regex(/^[A-Z]{2}$/),
@@ -194,7 +224,7 @@ export const inputSchema = z.object({
   ]).optional(),
 }).strict();
 
-type ScheduleHInput = z.infer<typeof inputSchema>;
+export type ScheduleHInput = z.infer<typeof inputSchema>;
 
 // ─── Pure Helpers ─────────────────────────────────────────────────────────────
 
@@ -233,6 +263,23 @@ export function computeScheduleHAmounts(
   const unemployment = input.federal_unemployment;
   const ficaOnly = input.fica_only_payroll;
   const family = input.family_withholding_only_payroll;
+  if (unemployment && ficaOnly) {
+    throw new Error(
+      "Schedule H requires one complete household payroll inventory",
+    );
+  }
+  const familyWorkers = (unemployment ?? ficaOnly)?.employee_wages.filter(
+    (employee) => employee.relationship !== "unrelated",
+  ) ?? [];
+  if (input.family_employer_ssn && familyWorkers.length === 0) {
+    throw new Error(
+      "Schedule H family employer identity requires family payroll",
+    );
+  }
+  const familySsns = familyWorkers.map((employee) => employee.employee_ssn);
+  if (new Set(familySsns).size !== familySsns.length) {
+    throw new Error("Schedule H family employee identities must be unique");
+  }
   if (family) {
     const employee = family.employee;
     const relationshipRecord = employee.relationship === "child"
@@ -259,7 +306,6 @@ export function computeScheduleHAmounts(
       new Set(references).size !== references.length ||
       employee.quarterly_cash_wages.reduce((sum, wages) => sum + wages, 0) !==
         employee.annual_cash_wages ||
-      employee.quarterly_cash_wages.every((wages) => wages < 1_000) ||
       employee.w2.employee_ssn !== employee.employee_ssn ||
       employee.w2.box1_wages !== employee.annual_cash_wages ||
       employee.w2.box2_federal_income_tax_withheld >
@@ -304,6 +350,12 @@ export function computeScheduleHAmounts(
     if (new Set(ids).size !== ids.length) {
       throw new Error("Schedule H FUTA employee payroll IDs must be unique");
     }
+    const payrollReferences = payroll.employee_wages.map(
+      (employee) => employee.payroll_source_reference,
+    );
+    if (new Set(payrollReferences).size !== payrollReferences.length) {
+      throw new Error("Schedule H employee payroll sources must be unique");
+    }
     const w2References = payroll.employee_wages.flatMap((employee) =>
       employee.w2 ? [employee.w2.source_reference] : []
     );
@@ -318,6 +370,50 @@ export function computeScheduleHAmounts(
     let sourcedFederalWithholding = 0;
     let sourcedAdditionalMedicareWages = 0;
     for (const employee of payroll.employee_wages) {
+      if (employee.relationship !== "unrelated") {
+        const references = [
+          employee.relationship_source_reference,
+          employee.payroll_source_reference,
+          ...(employee.relationship === "child"
+            ? [employee.birth_date_source_reference]
+            : [
+              employee.marriage_source_reference,
+              employee.marriage_continuity_source_reference,
+            ]),
+          ...(employee.w2 ? [employee.w2.source_reference] : []),
+          ...(employee.federal_withholding_agreement
+            ? [employee.federal_withholding_agreement.w4_source_reference]
+            : []),
+          ...(ficaOnly ? [ficaOnly.prior_year_payroll_source_reference] : []),
+        ];
+        const withholding = employee.w2?.box2_federal_income_tax_withheld ?? 0;
+        if (
+          taxYear !== 2025 || !input.family_employer_ssn || family ||
+          employee.employee_ssn === input.family_employer_ssn ||
+          (employee.relationship === "child" &&
+            (employee.birth_date < "2005-01-01" ||
+              employee.birth_date > "2024-12-31")) ||
+          (employee.relationship === "spouse" &&
+            employee.marriage_date > "2024-12-31") ||
+          new Set(references).size !== references.length ||
+          employee.quarterly_cash_wages.reduce(
+              (sum, wages) => sum + wages,
+              0,
+            ) !== employee.annual_cash_wages ||
+          (employee.w2 && (employee.w2.employee_ssn !== employee.employee_ssn ||
+            employee.w2.box1_wages !== employee.annual_cash_wages)) ||
+          withholding > employee.annual_cash_wages ||
+          (withholding > 0 && !employee.federal_withholding_agreement)
+        ) {
+          throw new Error(
+            "Schedule H mixed family payroll must reconcile relationship, employer, dates, payroll, W-2 and agreed withholding",
+          );
+        }
+        sourcedFederalWithholding += withholding;
+        // Family wages do not contribute to FICA, the FUTA quarterly test,
+        // or the per-employee FUTA wage cap.
+        continue;
+      }
       const minor = employee.student_minor_fica_exclusion;
       const workingMinor = employee.nonstudent_minor_fica_inclusion;
       if (employee.age_18_or_older_for_fica) {
@@ -446,6 +542,7 @@ export function computeScheduleHAmounts(
       input.cash_wages_over_2025_limit !== undefined &&
       input.cash_wages_over_2025_limit !== payroll.employee_wages.some(
           (employee) =>
+            employee.relationship === "unrelated" &&
             (employee.age_18_or_older_for_fica ||
               employee.nonstudent_minor_fica_inclusion !== undefined) &&
             employee.annual_cash_wages >= TY2025_FICA_CASH_WAGE_THRESHOLD,
@@ -467,7 +564,10 @@ export function computeScheduleHAmounts(
     if (unemployment) {
       const sourcedFutaWages = payroll.employee_wages.reduce(
         (total, employee) =>
-          total + Math.min(employee.annual_cash_wages, 7_000),
+          total +
+          (employee.relationship === "unrelated"
+            ? Math.min(employee.annual_cash_wages, 7_000)
+            : 0),
         0,
       );
       const filedFutaWages = "taxable_wages" in unemployment

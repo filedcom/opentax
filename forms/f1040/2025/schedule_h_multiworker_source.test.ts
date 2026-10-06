@@ -244,8 +244,11 @@ Deno.test("Schedule H multiworker payroll rejects aggregate qualifying quarters 
   const missing = altered();
   missing.fica_only_payroll!.employee_wages.pop();
   const misclassified = source("working-minor");
-  misclassified.fica_only_payroll!.employee_wages[0]
-    .nonstudent_minor_fica_inclusion = undefined;
+  const workingMinor = misclassified.fica_only_payroll!.employee_wages[0];
+  if (workingMinor.relationship !== "unrelated") {
+    throw new Error("Expected unrelated principal-occupation worker");
+  }
+  workingMinor.nonstudent_minor_fica_inclusion = undefined;
   assertThrows(
     () => computeScheduleHAmounts(misclassified, 2025),
     Error,
