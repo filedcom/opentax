@@ -26,6 +26,8 @@ const dependentSchema = coveredDependentSchema.extend({
       plan_dependent_eligibility_source_reference: reference,
       eligible_plan_dependent_confirmed: z.literal(true),
       eligibility_period: period.optional(),
+      eligibility_effective_date: z.string().regex(/^2025-\d{2}-\d{2}$/)
+        .optional(),
     }).strict(),
   ).min(1).max(12),
 }).strict();
@@ -85,6 +87,22 @@ const invoiceSchema = z.object({
   reference_contribution_source_reference: reference.optional(),
   shop_invoice_reference: reference,
   employer_payment_reference: reference,
+  carrier_daily_proration_rule_source_reference: reference.optional(),
+  coverage_segments: z.array(
+    z.object({
+      coverage_start_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+      coverage_end_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+      invoice_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+      payment_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+      coverage_tier: coverageTierSchema,
+      covered_dependent_references: z.array(reference).max(10),
+      billed_premium: premiumMoney.refine((n) => n > 0),
+      employer_payment: premiumMoney,
+      insured_quote_reference: reference,
+      shop_invoice_reference: reference,
+      employer_payment_reference: reference,
+    }).strict(),
+  ).length(2).optional(),
 }).strict();
 const serviceDaySchema = z.string().regex(/^2025-\d{2}-\d{2}$/);
 const seasonalSchema = z.object({
@@ -233,6 +251,15 @@ function dated(value: string) {
   const d = new Date(value);
   return /^2025-\d{2}-\d{2}$/.test(value) && Number.isFinite(d.getTime()) &&
     d.toISOString().slice(0, 10) === value;
+}
+function coveredDays(start: string, end: string): number {
+  if (!dated(start) || !dated(end) || start > end) {
+    fail("partial-month coverage dates differ");
+  }
+  return (Date.parse(end) - Date.parse(start)) / 86400000 + 1;
+}
+function proratedPremium(fullMonth: number, days: number, monthDays: number) {
+  return Math.round(cents(fullMonth) * days / monthDays) / 100;
 }
 /** Source-owned plan eligibility determines quote denominators, not enrollment. */
 export function multiplePlanWorksheet(raw: unknown) {
@@ -402,6 +429,17 @@ export function multiplePlanWorksheet(raw: unknown) {
         if (record.eligibility_period) {
           add(record.eligibility_period.enrollment_source_reference);
           monthSet(record.eligibility_period);
+        }
+        if (
+          record.eligibility_effective_date &&
+          (!record.eligibility_period ||
+            !dated(record.eligibility_effective_date) ||
+            record.eligibility_effective_date.slice(5, 7) !==
+              String(record.eligibility_period.first_month).padStart(2, "0") ||
+            record.eligibility_effective_date <
+              record.eligibility_period.coverage_start_date)
+        ) {
+          fail("dependent plan eligibility effective date differs");
         }
       }
     }
@@ -769,6 +807,141 @@ export function multiplePlanWorksheet(raw: unknown) {
       const monthCoverage = coverage.get(e.employee_reference)!.get(
         invoice.month,
       )!;
+      if (invoice.coverage_segments) {
+        if (
+          !e.coverage_periods || referenceMethod ||
+          !invoice.carrier_daily_proration_rule_source_reference ||
+          invoice.reference_policy_reference !== undefined ||
+          invoice.reference_contribution_source_reference !== undefined ||
+          invoice.insured_quote_reference !== q.quote_source_reference ||
+          invoice.employer_policy_reference !== p.employer_policy_reference ||
+          invoice.coverage_tier !== monthCoverage.tier ||
+          JSON.stringify([...invoice.covered_dependent_references].sort()) !==
+            JSON.stringify(monthCoverage.dependents)
+        ) fail("partial-month insurer rule or monthly source differs");
+        const next = e.coverage_periods.find((period) =>
+          period.first_month === invoice.month + 1
+        );
+        const event = next?.change_event;
+        const segments = invoice.coverage_segments;
+        const [before, after] = segments;
+        const monthDays = coveredDays(dates.start, dates.end);
+        if (
+          !event || !next ||
+          event.effective_date.slice(5, 7) !==
+            String(invoice.month).padStart(2, "0") ||
+          before.coverage_start_date !== dates.start ||
+          after.coverage_end_date !== dates.end ||
+          after.coverage_start_date !== event.effective_date ||
+          coveredDays(before.coverage_start_date, before.coverage_end_date) +
+                coveredDays(
+                  after.coverage_start_date,
+                  after.coverage_end_date,
+                ) !==
+            monthDays ||
+          Date.parse(after.coverage_start_date) -
+                Date.parse(before.coverage_end_date) !== 86400000 ||
+          before.coverage_tier !== monthCoverage.tier ||
+          JSON.stringify([...before.covered_dependent_references].sort()) !==
+            JSON.stringify(monthCoverage.dependents) ||
+          after.coverage_tier !== next.coverage_tier ||
+          JSON.stringify([...after.covered_dependent_references].sort()) !==
+            JSON.stringify([...next.covered_dependent_references].sort())
+        ) fail("partial-month transition is not the dated enrollment event");
+        if (
+          event.event_type !== "divorce" &&
+          !e.covered_dependents.find((d) =>
+            d.dependent_reference === event.dependent_reference
+          )?.plan_eligibility_records.some((record) =>
+            record.shop_plan_reference === plan &&
+            record.eligibility_effective_date === event.effective_date
+          )
+        ) {
+          fail("new dependent eligibility date differs from event");
+        }
+        add(invoice.carrier_daily_proration_rule_source_reference);
+        for (const segment of segments) {
+          const segmentDays = coveredDays(
+            segment.coverage_start_date,
+            segment.coverage_end_date,
+          );
+          const quote = segment.coverage_tier === "family"
+            ? q.family_premium
+            : q.employee_only_premium;
+          if (quote === undefined) fail("partial-month quoted tier is missing");
+          const contribution = arrangementQuoteContribution(
+            { ...p, employee_only_rule: p.employee_only_rule! },
+            q,
+            segment.coverage_tier,
+          );
+          const fullContribution = contribution.employerPayment;
+          if (
+            segment.insured_quote_reference !== q.quote_source_reference ||
+            cents(segment.billed_premium) !==
+              cents(proratedPremium(quote, segmentDays, monthDays)) ||
+            cents(segment.employer_payment) !==
+              cents(
+                proratedPremium(fullContribution, segmentDays, monthDays),
+              ) ||
+            cents(segment.employer_payment) > cents(segment.billed_premium) ||
+            !dated(segment.invoice_date) ||
+            !dated(segment.payment_date) ||
+            segment.invoice_date < segment.coverage_start_date ||
+            segment.payment_date < segment.invoice_date ||
+            segment.invoice_date !== invoice.invoice_date ||
+            segment.payment_date !== invoice.payment_date ||
+            segment.covered_dependent_references.some((ref) =>
+              !e.covered_dependents.some((d) =>
+                d.dependent_reference === ref &&
+                d.plan_eligibility_records.some((record) =>
+                  record.shop_plan_reference === plan &&
+                  record.eligibility_period &&
+                  monthSet(record.eligibility_period).has(invoice.month) &&
+                  record.eligibility_effective_date &&
+                  record.eligibility_effective_date <=
+                    segment.coverage_start_date
+                )
+              )
+            )
+          ) {
+            fail(
+              "partial-month rate, payment or dependent eligibility differs",
+            );
+          }
+          add(segment.shop_invoice_reference);
+          add(segment.employer_payment_reference);
+          const pct = contribution.adjustmentPercentage;
+          rows.push({
+            employee_reference: e.employee_reference,
+            month: invoice.month,
+            shop_plan_reference: plan,
+            coverage_tier: segment.coverage_tier,
+            employer_policy_reference: p.employer_policy_reference,
+            insured_quote_reference: q.quote_source_reference,
+            reference_contribution_source_reference: undefined,
+            reference_entitlement: undefined,
+            unused_reference_entitlement: undefined,
+            billed_premium: segment.billed_premium,
+            employer_payment: segment.employer_payment,
+            adjusted_average_percentage: pct,
+            adjusted_average_premium:
+              (segment.coverage_tier === "family" ? 24527 : 9358) / 12 *
+              segmentDays / monthDays * pct,
+          });
+        }
+        if (
+          cents(segments[0].billed_premium + segments[1].billed_premium) !==
+            cents(invoice.billed_premium) ||
+          cents(segments[0].employer_payment + segments[1].employer_payment) !==
+            cents(invoice.employer_payment)
+        ) fail("partial-month invoice and payment total differs");
+        billed += invoice.billed_premium;
+        paid += invoice.employer_payment;
+        continue;
+      }
+      if (invoice.carrier_daily_proration_rule_source_reference) {
+        fail("daily proration source requires split coverage");
+      }
       const premium = monthCoverage.tier === "family"
         ? q.family_premium
         : q.employee_only_premium;

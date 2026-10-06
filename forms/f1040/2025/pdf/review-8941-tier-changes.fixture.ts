@@ -3,6 +3,7 @@ import {
   inputSchema,
 } from "../../nodes/inputs/f8941/index.ts";
 import { monthCoverageDates } from "../../nodes/inputs/f8941/shop_evidence.ts";
+import { arrangementQuoteContribution } from "../../nodes/inputs/f8941/arrangements.ts";
 import {
   form8941MultiplePlanInputs,
   form8941MultiplePlanSource,
@@ -18,9 +19,11 @@ const period = (ref: string, first: number, last: number) => ({
 });
 
 /** Actual dated marriage, birth and divorce facts across two owned QHPs. */
-export function form8941TierChangeSource() {
+export function form8941TierChangeSource(
+  kind: "reference-list" | "independent-mixed" = "reference-list",
+) {
   const source: any = structuredClone(
-    form8941MultiplePlanSource("reference-list"),
+    form8941MultiplePlanSource(kind),
   );
   const template = source.employees[0].covered_dependents;
   const changes = [
@@ -228,11 +231,13 @@ export function form8941TierChangeSource() {
       const quote = policy.eligible_employee_quotes.find((q: any) =>
         q.employee_reference === e.employee_reference
       );
-      const reference = source.monthly_plan_arrangements.find((p: any) =>
-        p.shop_plan_reference === source.reference_shop_plan_reference &&
-        p.month === invoice.month
-      );
-      const contribution = reference.reference_contributions.find((c: any) =>
+      const reference = kind === "reference-list"
+        ? source.monthly_plan_arrangements.find((p: any) =>
+          p.shop_plan_reference === source.reference_shop_plan_reference &&
+          p.month === invoice.month
+        )
+        : undefined;
+      const contribution = reference?.reference_contributions.find((c: any) =>
         c.employee_reference === e.employee_reference
       );
       invoice.coverage_tier = p.coverage_tier;
@@ -242,19 +247,28 @@ export function form8941TierChangeSource() {
       invoice.billed_premium = p.coverage_tier === "family"
         ? quote.family_premium
         : quote.employee_only_premium;
-      invoice.employer_payment = money(
-        Math.min(
-          invoice.billed_premium,
-          p.coverage_tier === "family"
-            ? contribution.family_contribution
-            : contribution.employee_only_contribution,
-        ),
-      );
+      invoice.employer_payment = kind === "reference-list"
+        ? money(
+          Math.min(
+            invoice.billed_premium,
+            p.coverage_tier === "family"
+              ? contribution.family_contribution
+              : contribution.employee_only_contribution,
+          ),
+        )
+        : arrangementQuoteContribution(policy, quote, p.coverage_tier)
+          .employerPayment;
       invoice.insured_quote_reference = quote.quote_source_reference;
       invoice.employer_policy_reference = policy.employer_policy_reference;
-      invoice.reference_policy_reference = reference.employer_policy_reference;
-      invoice.reference_contribution_source_reference =
-        contribution.contribution_source_reference;
+      if (reference) {
+        invoice.reference_policy_reference =
+          reference.employer_policy_reference;
+        invoice.reference_contribution_source_reference =
+          contribution.contribution_source_reference;
+      } else {
+        delete invoice.reference_policy_reference;
+        delete invoice.reference_contribution_source_reference;
+      }
     }
     e.tax_year_shop_premium = money(
       invoices.reduce((n: number, x: any) => n + x.billed_premium, 0),
