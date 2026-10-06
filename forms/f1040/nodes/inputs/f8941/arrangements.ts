@@ -144,65 +144,7 @@ export function arrangementWorksheet(source: ArrangementSource) {
     if (quoted.size !== employees.size) {
       fail("eligible reference quote roster is incomplete");
     }
-    if (policy.billing_method === "composite") {
-      if (
-        policy.employee_only_rule.method !== "uniform_percentage" ||
-        (policy.family_rule &&
-          !["uniform_percentage", "uniform_employer_amount"].includes(
-            policy.family_rule.method,
-          ))
-      ) {
-        fail(
-          "composite billing needs percentage or uniform higher-tier employer amount",
-        );
-      }
-      const first = policy.eligible_employee_quotes[0];
-      if (
-        policy.eligible_employee_quotes.some((q) =>
-          q.employee_only_premium !== first.employee_only_premium ||
-          q.family_premium !== first.family_premium
-        )
-      ) {
-        fail("composite reference premiums differ by employee");
-      }
-    } else if (policy.family_rule?.method === "uniform_employer_amount") {
-      fail(
-        "list higher-tier dollar payments need employee-specific employee-only floors",
-      );
-    }
-    for (
-      const [tier, rule] of [
-        ["employee_only", policy.employee_only_rule],
-        ["family", policy.family_rule],
-      ] as const
-    ) {
-      if (rule?.method === "uniform_employee_contribution") {
-        if (
-          policy.eligible_employee_quotes.some((q) =>
-            rule.employee_monthly_contribution >
-              (tier === "employee_only"
-                ? q.employee_only_premium
-                : q.family_premium!)
-          )
-        ) {
-          fail(
-            "uniform employee contribution exceeds an eligible reference premium",
-          );
-        }
-        const average = policy.eligible_employee_quotes.reduce((sum, q) =>
-          sum + (tier === "employee_only"
-            ? q.employee_only_premium
-            : q.family_premium!), 0) /
-          policy.eligible_employee_quotes.length;
-        // (b)(3)(ii): the employee contribution, rather than the employer's
-        // dollar payment, is uniform and cannot exceed half the computed rate.
-        if (rule.employee_monthly_contribution > average / 2 + 0.000001) {
-          fail(
-            "uniform employee contribution exceeds half the computed composite rate",
-          );
-        }
-      }
-    }
+    validateArrangementRules(policy);
     policies.set(policy.month, policy);
   }
   const usedMonths = new Set<number>();
@@ -224,67 +166,22 @@ export function arrangementWorksheet(source: ArrangementSource) {
       ) {
         fail("invoice policy or insured quote join differs");
       }
-      const selfRule = policy.employee_only_rule;
-      const selfPaid = selfRule.method === "uniform_percentage"
-        ? dollars(
-          quote.employee_only_premium * selfRule.employer_basis_points / 10000,
-        )
-        : dollars(
-          quote.employee_only_premium - selfRule.employee_monthly_contribution,
-        );
-      if (selfPaid < 0) {
-        fail(
-          "uniform employee contribution exceeds employee-only reference premium",
-        );
-      }
+      const result = arrangementQuoteContribution(
+        policy,
+        quote,
+        employee.coverage_tier,
+        invoice.employer_payment,
+      );
       const billed = employee.coverage_tier === "family"
         ? quote.family_premium
         : quote.employee_only_premium;
-      const rule = employee.coverage_tier === "family"
-        ? policy.family_rule
-        : selfRule;
       if (
-        !rule || billed === undefined ||
-        cents(billed) !== cents(invoice.billed_premium)
+        billed === undefined || cents(billed) !== cents(invoice.billed_premium)
       ) {
         fail("invoice tier premium differs from eligible quote");
       }
-      let expected: number;
-      switch (rule.method) {
-        case "uniform_percentage":
-          expected = dollars(billed * rule.employer_basis_points / 10000);
-          break;
-        case "uniform_employee_contribution":
-          expected = dollars(billed - rule.employee_monthly_contribution);
-          break;
-        case "uniform_employer_amount":
-          expected = rule.employer_monthly_contribution;
-          if (expected + 0.000001 < selfPaid) {
-            fail(
-              "higher-tier amount is below hypothetical employee-only contribution",
-            );
-          }
-          break;
-        case "employee_only_floor":
-          expected = invoice.employer_payment;
-          if (expected + 0.000001 < selfPaid) {
-            fail(
-              "list higher-tier payment is below hypothetical employee-only contribution",
-            );
-          }
-          break;
-      }
-      if (
-        expected < 0 || expected > billed ||
-        cents(expected) !== cents(invoice.employer_payment)
-      ) {
-        fail("employer payment differs from the qualifying monthly rule");
-      }
-      // Instructions Worksheet4(c), Example4: use the actual contribution
-      // percentage for each enrolled period, including dollar-payment exceptions.
-      const adjustmentPercentage = rule.method === "uniform_percentage"
-        ? rule.employer_basis_points / 10000
-        : invoice.employer_payment / billed;
+      const selfPaid = result.selfPaid;
+      const adjustmentPercentage = result.adjustmentPercentage;
       rows.push({
         employee_reference: employee.employee_reference,
         month: invoice.month,
@@ -306,4 +203,128 @@ export function arrangementWorksheet(source: ArrangementSource) {
     fail("policy month has no enrolled invoices");
   }
   return rows;
+}
+
+/** The same one-QHP rules also apply independently or to the designated reference QHP. */
+export function validateArrangementRules(policy: MonthlyArrangement): void {
+  if (policy.billing_method === "composite") {
+    if (
+      policy.employee_only_rule.method !== "uniform_percentage" ||
+      (policy.family_rule &&
+        !["uniform_percentage", "uniform_employer_amount"].includes(
+          policy.family_rule.method,
+        ))
+    ) {
+      fail(
+        "composite billing needs percentage or uniform higher-tier employer amount",
+      );
+    }
+    const first = policy.eligible_employee_quotes[0];
+    if (
+      policy.eligible_employee_quotes.some((q) =>
+        q.employee_only_premium !== first.employee_only_premium ||
+        q.family_premium !== first.family_premium
+      )
+    ) {
+      fail("composite reference premiums differ by employee");
+    }
+  } else if (policy.family_rule?.method === "uniform_employer_amount") {
+    fail(
+      "list higher-tier dollar payments need employee-specific employee-only floors",
+    );
+  }
+  for (
+    const [tier, rule] of [
+      ["employee_only", policy.employee_only_rule],
+      ["family", policy.family_rule],
+    ] as const
+  ) {
+    if (rule?.method === "uniform_employee_contribution") {
+      if (
+        policy.eligible_employee_quotes.some((q) =>
+          rule.employee_monthly_contribution >
+            (tier === "employee_only"
+              ? q.employee_only_premium
+              : q.family_premium!)
+        )
+      ) {
+        fail(
+          "uniform employee contribution exceeds an eligible reference premium",
+        );
+      }
+      const average = policy.eligible_employee_quotes.reduce((sum, q) =>
+        sum + (tier === "employee_only"
+          ? q.employee_only_premium
+          : q.family_premium!), 0) /
+        policy.eligible_employee_quotes.length;
+      // (b)(3)(ii): the employee contribution, rather than the employer's
+      // dollar payment, is uniform and cannot exceed half the computed rate.
+      if (rule.employee_monthly_contribution > average / 2 + 0.000001) {
+        fail(
+          "uniform employee contribution exceeds half the computed composite rate",
+        );
+      }
+    }
+  }
+}
+
+export function arrangementQuoteContribution(
+  policy: MonthlyArrangement,
+  quote: MonthlyArrangement["eligible_employee_quotes"][number],
+  tier: "employee_only" | "family",
+  payment?: number,
+) {
+  const selfRule = policy.employee_only_rule;
+  const selfPaid = selfRule.method === "uniform_percentage"
+    ? dollars(
+      quote.employee_only_premium * selfRule.employer_basis_points / 10000,
+    )
+    : dollars(
+      quote.employee_only_premium - selfRule.employee_monthly_contribution,
+    );
+  const billed = tier === "family"
+    ? quote.family_premium
+    : quote.employee_only_premium;
+  const rule = tier === "family" ? policy.family_rule : selfRule;
+  if (!rule || billed === undefined || selfPaid < 0) {
+    fail("offered tier or contribution differs");
+  }
+  let expected: number;
+  switch (rule.method) {
+    case "uniform_percentage":
+      expected = dollars(billed * rule.employer_basis_points / 10000);
+      break;
+    case "uniform_employee_contribution":
+      expected = dollars(billed - rule.employee_monthly_contribution);
+      break;
+    case "uniform_employer_amount":
+      expected = rule.employer_monthly_contribution;
+      if (expected + .000001 < selfPaid) {
+        fail(
+          "higher-tier amount is below hypothetical employee-only contribution",
+        );
+      }
+      break;
+    case "employee_only_floor":
+      expected = payment ?? selfPaid;
+      if (expected + .000001 < selfPaid) {
+        fail(
+          "list higher-tier payment is below hypothetical employee-only contribution",
+        );
+      }
+      break;
+  }
+  if (
+    expected < 0 || expected > billed ||
+    (payment !== undefined && cents(expected) !== cents(payment))
+  ) {
+    fail("employer payment differs from the qualifying monthly rule");
+  }
+  return {
+    selfPaid,
+    employerPayment: expected,
+    adjustmentPercentage: rule.method === "uniform_percentage"
+      ? rule.employer_basis_points / 10000
+      : expected / billed,
+  };
 }

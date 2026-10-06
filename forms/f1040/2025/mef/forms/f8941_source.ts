@@ -74,7 +74,10 @@ export function reconcileForm8941ScheduleC(
       throw new Error("Form 8941 owner SSN differs from Schedule C proprietor");
     }
   }
-  return { source, lines };
+  const planReferences = "offered_qhps" in source
+    ? source.offered_qhps.map((p) => p.shop_plan_reference)
+    : undefined;
+  return { source, lines, planReferences };
 }
 
 /** Native/PDF preparation must use the same direct source as the pending graph. */
@@ -127,7 +130,12 @@ export function reconcileForm8941DocumentSource(
     credit.schedule_c_business_reference !==
       reconciled.source.schedule_c_business_reference ||
     credit.shop_plan_reference !== reconciled.source.shop_plan_reference ||
-    credit.subject_to_passive_activity_limit !== false
+    credit.subject_to_passive_activity_limit !== false ||
+    JSON.stringify(
+        "shop_plan_references" in credit
+          ? credit.shop_plan_references
+          : undefined,
+      ) !== JSON.stringify(reconciled.planReferences)
   ) {
     throw new Error(
       "Form 8941 Form 3800 source credit differs from filed form",

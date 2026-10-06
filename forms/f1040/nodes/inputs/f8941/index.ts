@@ -19,9 +19,12 @@ import {
 
 import {
   arrangementWorksheet,
+  cents,
   monthlyArrangementSchema,
   premiumMoney,
 } from "./arrangements.ts";
+
+import { multiplePlanFields, multiplePlanWorksheet } from "./multiple_plans.ts";
 
 const amount = z.number().int().finite().nonnegative();
 const employeeSchema = z.object({
@@ -142,6 +145,10 @@ export const inputSchema = z.union([
       }).strict(),
     ).min(1).max(24),
   }).strict(),
+  sourceSchema.omit({
+    all_nonexcluded_employees_enrolled_verified: true,
+    shop_review: true,
+  }).extend(multiplePlanFields).strict(),
 ]);
 
 export type F8941Input = z.infer<typeof inputSchema>;
@@ -168,7 +175,12 @@ export interface Form8941Lines {
 /** TY2025 Form 8941 lines 1–16 and Worksheets 1–7 for the bounded source. */
 export function calculateForm8941(raw: unknown): Form8941Lines {
   const source = inputSchema.parse(raw);
-  verifyForm8941ShopReview(source);
+  const multi = "monthly_plan_arrangements" in source
+    ? multiplePlanWorksheet(source)
+    : undefined;
+  if (!("monthly_plan_arrangements" in source)) {
+    verifyForm8941ShopReview(source);
+  }
   if (
     (source.credit_period_first_year === 2024) !==
       Boolean(source.first_year_filed_form8941)
@@ -179,9 +191,10 @@ export function calculateForm8941(raw: unknown): Form8941Lines {
   }
   const references = new Set<string>();
   const enrollmentRecords = new Set<string>();
-  const contribution = "monthly_arrangements" in source
-    ? undefined
-    : source.uniform_employer_contribution_basis_points / 10000;
+  const contribution =
+    "monthly_arrangements" in source || "monthly_plan_arrangements" in source
+      ? undefined
+      : source.uniform_employer_contribution_basis_points / 10000;
   const ratingArea = source.employees[0];
   for (const employee of source.employees) {
     if (
@@ -221,13 +234,19 @@ export function calculateForm8941(raw: unknown): Form8941Lines {
   if (line2 >= 25 || line3 >= 67_000) {
     throw new Error("Form 8941 FTE or wage ceiling bars the direct credit");
   }
-  const line4 = Math.round(source.employees.reduce(
-    (sum, employee) => sum + employee.employer_premium_paid,
-    0,
-  ));
+  const line4 = Math.round(
+    source.employees.reduce(
+      (sum, employee) => sum + cents(employee.employer_premium_paid),
+      0,
+    ) / 100,
+  );
   // Worksheet4(c): prorate the annual table premium only for enrolled periods.
   // Preserve the fractional row amounts and round their sum for the filed line.
-  const line5 = "monthly_arrangements" in source
+  const line5 = "monthly_plan_arrangements" in source
+    ? Math.round(
+      multi!.rows.reduce((sum, row) => sum + row.adjusted_average_premium, 0),
+    )
+    : "monthly_arrangements" in source
     ? Math.round(
       arrangementWorksheet(source).reduce(
         (sum, row) => sum + row.adjusted_average_premium,
@@ -260,8 +279,16 @@ export function calculateForm8941(raw: unknown): Form8941Lines {
   if (line12 <= 0) {
     throw new Error("Form 8941 direct source has no positive allowed credit");
   }
-  const line13 = line1;
-  const line14 = line2;
+  const enrolled = multi
+    ? source.employees.filter((e) =>
+      multi.enrolledEmployeeReferences.includes(e.employee_reference)
+    )
+    : source.employees;
+  const line13 = enrolled.length;
+  const line14 = Math.max(
+    1,
+    Math.floor(enrolled.reduce((sum, e) => sum + e.hours_of_service, 0) / 2080),
+  );
   const line15 = 0 as const;
   return {
     line1,
@@ -298,6 +325,13 @@ class F8941Node extends TaxNode<typeof inputSchema> {
             schedule_c_business_reference:
               rawInput.schedule_c_business_reference,
             shop_plan_reference: rawInput.shop_plan_reference,
+            ...("offered_qhps" in rawInput
+              ? {
+                shop_plan_references: rawInput.offered_qhps.map((p) =>
+                  p.shop_plan_reference
+                ),
+              }
+              : {}),
             subject_to_passive_activity_limit: false,
           },
         }),

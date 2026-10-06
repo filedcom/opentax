@@ -149,6 +149,9 @@ const f8941DirectEmployerCreditSchema = z.object({
   schedule_c_business_reference: z.string().trim().min(1),
   shop_plan_reference: z.string().trim().min(1),
   subject_to_passive_activity_limit: z.literal(false),
+  shop_plan_references: z.array(z.string().trim().min(1)).min(2).max(12).refine(
+    (refs) => new Set(refs).size === refs.length,
+  ).optional(),
 }).strict();
 
 const f8994DirectEmployerCreditSchema = z.object({
