@@ -1917,3 +1917,21 @@ Full `deno task test` at fbacc539c ended11,577/14/0ignored, exit1(82m15s). All14
 ## Current-main senior/independent-health source ordering proof
 
 Exactsource2d3638ca33ca3e18bd3bc31f5137b4592f2536ac: focused6/0 `/tmp/opentax-owner-health-senior-main-focused.log`; retained-input replay5/0 `/tmp/opentax-owner-health-senior-main-replay.log`; six-file general/health/tip/mixedCF/newloss/Pub974 compatibility111/0(2m36s) `/tmp/opentax-owner-health-senior-main-compat.log`. Freshmanifest `/tmp/opentax-owner-health-senior-main-evidence-2d3638ca3/current-main-replay-manifest.json` SHAad85f55b7a44aa54521256dc2555fc6cdcccfa46b3a4e6a86358588073615c70 confirms all5 sourceJSON/PDFbytes identical (95pages), source/pending unchanged, XML onlyReturnTs and0fields/widgets; original15hashes unchanged. This closes actualsenior+independenthealthsourceordering slice, notwholeparent or externalproof. FullV4 wrapper44964/Deno44970 verifiedlive21m30s; unchangedimmutable181575242 excludeslatestphases, latestfullgate stillrequired.
+
+## Before existing Form4972 fractional-share source completion
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,441 bounded slices**. Learnings and exact proof remain in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Newly discovered work goes only in `future_todo` and is not executed.
+
+Actual inventory: **150 native / 116 PDF descriptors**, **365 fixtures**, **113 PDF keys / 96 covered / 17 uncovered**. Recent main proof: reviewed catalog24/0 (375 preserved pages), C/F loss-owner health28/0 (6/182), beneficiary death/estate3/0+15/0 (26/78), senior/independent-health6/0+111/0 and retained5/0 (5/95). Source/PDF bytes match reviewed originals; timestamp-only XML differences are recorded. These close their stated slices; broader parents remain open.
+
+Full `deno task test` at fbacc539c failed11,577/14/0ignored, exit1(82m15s); all14 have focused repaired-main proof. Immutable181575242 rerun started03:53:35UTC; wrapper44964/Deno44970 verified live at21m30s. Its terminal result and a passing full run of latest source remain required. Last verified published draft [PR63](https://github.com/filedcom/opentax/pull/63) head: **f48e23115**.
+
+Existing ordinary-refund inventory and Form8621 parent source/PDF work continue in isolated checkouts. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+
+
+Read-only current-source audit: issuedbox9a/box8 permitsfractionalpercentages but threevalidation layers requireintegralgrossed-up cash/NUA/annuity and death/estate allocations. Existing50%/25% packets donotprovenonintegral shares. OfficialForm4972p3Steps2–3 usecashbox9a andseparateannuitybox8; Step5 usescashshare againstfull residualtax; line20 ratio at least3decimals. ExistingForm4972parent explicitlyrequiresbeneficiarypartial-share combinations; root authorizes full synchronizedsource/calculator/export rounding route, preservingrawissuedcents and prescribed filedline rounding. Differentsharepercentages acrosscopies retainexistingguard pendingactualfull-pool allocation interpretation; donotinventweightedshare. Newdiscoveries remainfutureonly; currentfuturePartIID–Hnotexecuted.
+Published draftPR63 verified c4d0ff580 title/body/head. Attachmentcell1625stillhanging, no successclaimed. Ordinaryrefundowner-qualifiedgate116/0 and20pages underartifactreplay; zero-taxableissuedcopy source-detailwithinexistinginventorywork ongoing. FullV4immutablelive44964/44970 at22m39s, no reportedfailuresyet.
