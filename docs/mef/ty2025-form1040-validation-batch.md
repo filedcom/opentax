@@ -4990,3 +4990,7 @@ Main247/0(1m13s);mainheld7/all38pages,oldNUAheld5/all27pages;allreviewed source/
 ## October6 independent C/F health plans
 
 Main22/0(2m13s); fresh held7/all212reviewedpages; all seven main PDFs match reviewed outputs. Actual catalog316. [Source review and boundaries](ty2025-form7206-independent-spouse-plans-review.md).
+
+## Integrated source verification checkpoint (2026-10-06)
+
+Current main42cccdf15/f0d852496 integrates explicit tip-health plan sources and two-farm health. Actual catalog347/347 unique. Nine current tip-health PDFs equal149 previously reviewed pages, with27 fresh source/XML/PDF hashes retained. Combined eight-file source/conflict gate running. Corrected observed fullV3 failure replay passes2/0(42s), calculated-return and NEC source native/PDF replay, log `/tmp/opentax-v3-observed-source-failures-current-main-v2.log`; preceding zero-selected invocation is not proof. Six exact public-source XML cases are running in their actual `review-fixtures.xsd.test.ts`. Full immutable V3 remains live at01h15m. No full-suite success claimed.
