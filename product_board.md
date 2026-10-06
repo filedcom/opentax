@@ -4,11 +4,11 @@
 
 The frozen checklist retains **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,530 bounded slices**; broader parents remain open. Learnings are compacted in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries belong only in `future_todo` and are not executed.
 
-Parent payroll (56/0, saved 24 returns/125 pages) and midmonth mortgage (98/0, saved 26 returns/81 pages) retain sealed root evidence. Draft [PR63](https://github.com/filedcom/opentax/pull/63) is externally verified at **ffb978f1e**; its latest attachment completion is unconfirmed. Earlier sealed work and census qualifications are in the archive.
+Parent payroll (56/0, saved 24 returns/125 pages) and midmonth mortgage (98/0, saved 26 returns/81 pages) retain sealed root evidence. Draft [PR63](https://github.com/filedcom/opentax/pull/63) is externally verified at **ee63eaedf**; its latest attachment completion is unconfirmed. Earlier sealed work and census qualifications are in the archive.
 
 Direct property and turning-21 payroll have sealed root evidence. Property final owner/source correction at **fd40c1aec** passed its typed focused gate and actual saved **8-return/99-page** exact/full-XSD replay; earlier broad 681/0, post-duplicate149/0 and50/473 evidence is version-qualified. Turning-21 payroll passed **58/0** and **26-return/137-page** replay (23 newer exact,3 historical qualified), with all12 new pages reviewed. All174property+90payroll+3before-transfer diagnostic source/private hashes are unchanged. State/rate payroll continues within the existing parent.
 
-Full regression V17–V22 processes were verified live this phase; V22 at immutable **0d153ed24** predates later work. A passing latest-production full batch, remaining filing routes, ATS credentials/scenario conflicts, IRS acknowledgments and release review are still required. Local XSD370/0 and source hashes do not prove external authenticity, business-rule compliance or IRS acceptance.
+Full regression **V23** is running at sealed production **ee63eaedf**, with24,807private files and619verified packet hashes; actual testPID97539 was inspected live. Earlier V17–V22 remain version-qualified. A passing latest-production full batch, remaining filing routes, ATS credentials/scenario conflicts, IRS acknowledgments and release review are still required. Local XSD370/0 and source hashes do not prove external authenticity, business-rule compliance or IRS acceptance.
 
 ## Scope and completion rules
 

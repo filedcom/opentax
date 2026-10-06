@@ -4075,3 +4075,8 @@ Full regression V17–V22 processes were verified live this phase; V22 at immuta
 
 
 Final productionfd40c1aec saved8/99 replay passed all exact pending/prepared/carry/origins/source/PDF/nativeonlyTs/fullXSD checks. Both original known-owner transfer counterexamples reject public/native/directPDF on main. Final main typed focus is still live; no seal asserted yet. All174property+90payroll+3diagnostic source/private hashes rechecked unchanged. Earlier50/473 and149/0 apply4e before final owner refinement; the42older source originals contain no current property source and do not enter that new guard.
+
+
+## Property/payroll publication checkpoint
+
+Ledger1530; frozen52/future unchanged. Sealee63eaedf pushed and draftPR63 exacthead/title/body externallyverified. Immutable V23 fullcommand started15:59:36Z and actualtestPID97539 live;24,807privatefiles/619packetdiagnostichashes verified. No latestfullpass claimed; attachment completion unconfirmed after nonreturning toolcall. State/rate candidate remains under final independent audit.
