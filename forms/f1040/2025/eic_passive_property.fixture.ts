@@ -61,8 +61,7 @@ export function passivePropertyInputs(gain = 3000, wages = 5000) {
     retained_interest_record: {
       remaining_parcel_ids: ["land-retained"],
       ownership_record_reference: `${reference} retained parcel title`,
-      retained_lease_reference:
-        `${reference} continuing commercial parcel lease`,
+      retained_lease_reference: `${reference} current commercial land leases`,
     },
     lease_records: [{
       parcel_id: "land-sold",

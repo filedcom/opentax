@@ -1,4 +1,5 @@
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
+import { currentPropertySourceSchema } from "../nodes/inputs/schedule_e/current-property-source.ts";
 import { f1040_2025 } from "./index.ts";
 import {
   passivePropertyCases,
@@ -114,6 +115,53 @@ Deno.test("current property gain owner, asset, sale, activity, PAL and QBI expor
   assertEquals(r.diagnostics, []);
   await buildMefBundle(buildPending(r.pending), { filer, attachments: [] });
   const mutations: Array<[string, (p: any) => void]> = [
+    ["unjoined-retained-lease", (g) => {
+      g.schedule_e.schedule_es[0].current_property_source
+        .retained_interest_record
+        .retained_lease_reference = "unsupported continuing lease";
+    }],
+    ["duplicated-rent-deposit-and-matched-economics", (g) => {
+      const item = g.schedule_e.schedule_es[0];
+      item.current_property_source.rent_payments.push(
+        structuredClone(item.current_property_source.rent_payments[0]),
+      );
+      item.rent_income *= 2;
+    }],
+    ["duplicated-tax-payment-and-matched-economics", (g) => {
+      const item = g.schedule_e.schedule_es[0];
+      item.current_property_source.property_tax_payments.push(
+        structuredClone(item.current_property_source.property_tax_payments[0]),
+      );
+      item.expense_taxes *= 2;
+    }],
+    ["duplicated-assessment-new-payment-id", (g) => {
+      const item = g.schedule_e.schedule_es[0];
+      const row = structuredClone(
+        item.current_property_source.property_tax_payments[0],
+      );
+      row.payment_reference += " other payment";
+      item.current_property_source.property_tax_payments.push(row);
+      item.expense_taxes *= 2;
+    }],
+    ["duplicated-parcel-lease", (g) => {
+      const s = g.schedule_e.schedule_es[0].current_property_source;
+      s.lease_records.push(structuredClone(s.lease_records[0]));
+    }],
+    ["overlapping-parcel-lease", (g) => {
+      const s = g.schedule_e.schedule_es[0].current_property_source;
+      const row = structuredClone(s.lease_records[1]);
+      row.lease_reference += " second instrument";
+      row.started_on = "2025-06-01";
+      s.lease_records.push(row);
+    }],
+    ["multiparcel-lease-conflicting-tenant", (g) => {
+      g.schedule_e.schedule_es[0].current_property_source.lease_records[1]
+        .tenant_tin = "999887777";
+    }],
+    ["rent-outside-lease-period", (g) => {
+      g.schedule_e.schedule_es[0].current_property_source.rent_payments[0]
+        .paid_on = "2025-12-01";
+    }],
     [
       "detached-property-source",
       (g) => delete g.schedule_e.schedule_es[0].current_property_source,
@@ -248,4 +296,56 @@ Deno.test("current property gain owner, asset, sale, activity, PAL and QBI expor
   const wrong = passivePropertyInputs();
   wrong.schedule_e[0].current_property_source.recipient_tin = "999887777";
   assertEquals(f1040_2025.executeReturn(wrong).diagnostics.length > 0, true);
+});
+
+Deno.test("current property source rejects repeated economic records and requires an owned retained lease", () => {
+  const valid = passivePropertyInputs();
+  const source = valid.schedule_e[0].current_property_source;
+  // Same actual instrument legitimately covers two distinct parcels.
+  currentPropertySourceSchema.parse(source);
+  const edits: Array<[string, (s: any) => void]> = [
+    [
+      "rent deposit",
+      (s) => s.rent_payments.push(structuredClone(s.rent_payments[0])),
+    ],
+    ["tax payment", (s) => {
+      const r = structuredClone(s.property_tax_payments[0]);
+      r.assessment_reference += " different assessment";
+      s.property_tax_payments.push(r);
+    }],
+    ["tax assessment", (s) => {
+      const r = structuredClone(s.property_tax_payments[0]);
+      r.payment_reference += " different payment";
+      s.property_tax_payments.push(r);
+    }],
+    [
+      "parcel period",
+      (s) => s.lease_records.push(structuredClone(s.lease_records[0])),
+    ],
+    [
+      "retained lease",
+      (s) =>
+        s.retained_interest_record.retained_lease_reference = "unjoined lease",
+    ],
+    ["retained lease starts after sale", (s) => {
+      s.lease_records[1].started_on = "2025-06-02";
+    }],
+    ["lease tenant", (s) => s.lease_records[1].tenant_tin = "999887777"],
+    ["rent outside period", (s) => s.rent_payments[0].paid_on = "2025-12-01"],
+  ];
+  for (const [label, edit] of edits) {
+    const inputs = structuredClone(valid);
+    const row = inputs.schedule_e[0].current_property_source;
+    edit(row);
+    assertEquals(
+      currentPropertySourceSchema.safeParse(row).success,
+      false,
+      label,
+    );
+    assertEquals(
+      f1040_2025.executeReturn(inputs).diagnostics.length > 0,
+      true,
+      label,
+    );
+  }
 });

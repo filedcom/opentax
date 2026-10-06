@@ -86,6 +86,67 @@ export const currentPropertySourceSchema = z.object({
 }).strict().superRefine((s, c) => {
   const ids = s.acquisition_record.parcels.map((p) => p.parcel_id),
     remaining = s.retained_interest_record.remaining_parcel_ids;
+  // One multiparcel lease may have rows for distinct parcels. Repeating or
+  // overlapping a parcel period, or changing the tenant of that reference,
+  // does not establish another independent lease.
+  const leaseConflict = s.lease_records.some((row, i) =>
+    s.lease_records.slice(0, i).some((prior) =>
+      (prior.lease_reference === row.lease_reference &&
+        prior.tenant_tin !== row.tenant_tin) ||
+      (prior.parcel_id === row.parcel_id &&
+        prior.started_on <= row.ended_on && row.started_on <= prior.ended_on)
+    )
+  );
+  const deposits = [
+    s.closing_record.deposit_reference,
+    ...s.rent_payments.map((row) => row.deposit_reference),
+  ];
+  const payments = [
+    s.acquisition_record.payment_reference,
+    ...s.property_tax_payments.map((row) => row.payment_reference),
+  ];
+  const assessments = s.property_tax_payments.map((row) =>
+    row.assessment_reference
+  );
+  const retainedLeaseJoined = remaining.every((parcel) =>
+    s.lease_records.some((row) =>
+      row.parcel_id === parcel &&
+      row.lease_reference ===
+        s.retained_interest_record.retained_lease_reference &&
+      row.started_on <= s.closing_record.sold_on &&
+      row.ended_on >= s.closing_record.sold_on
+    )
+  );
+  const sourceIssues: Array<[boolean, string[], string]> = [
+    [
+      leaseConflict,
+      ["lease_records"],
+      "Lease parcel periods must not overlap and a multiparcel lease must retain one tenant",
+    ],
+    [
+      !retainedLeaseJoined,
+      ["retained_interest_record", "retained_lease_reference"],
+      "Retained lease reference must join every remaining owned parcel through the sale date",
+    ],
+    [
+      new Set(deposits).size !== deposits.length,
+      ["rent_payments"],
+      "Closing and rent deposit references must identify distinct receipts",
+    ],
+    [
+      new Set(payments).size !== payments.length,
+      ["property_tax_payments"],
+      "Acquisition and tax payment references must identify distinct payments",
+    ],
+    [
+      new Set(assessments).size !== assessments.length,
+      ["property_tax_payments"],
+      "Current tax assessment references must be distinct; installment allocation evidence is not supplied by this contract",
+    ],
+  ];
+  for (const [invalid, path, message] of sourceIssues) {
+    if (invalid) c.addIssue({ code: z.ZodIssueCode.custom, path, message });
+  }
   if (
     new Set(ids).size !== ids.length ||
     new Set(remaining).size !== remaining.length ||
@@ -107,7 +168,9 @@ export const currentPropertySourceSchema = z.object({
     s.rent_payments.some((r) =>
       r.paid_on < s.acquisition_record.acquired_on ||
       !s.lease_records.some((l) =>
-        l.tenant_tin === r.tenant_tin && l.lease_reference === r.lease_reference
+        l.tenant_tin === r.tenant_tin &&
+        l.lease_reference === r.lease_reference &&
+        l.started_on <= r.paid_on && r.paid_on <= l.ended_on
       )
     ) ||
     s.property_tax_payments.some((r) =>
