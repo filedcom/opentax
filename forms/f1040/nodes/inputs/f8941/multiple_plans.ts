@@ -75,6 +75,57 @@ const invoiceSchema = z.object({
   shop_invoice_reference: reference,
   employer_payment_reference: reference,
 }).strict();
+const serviceDaySchema = z.string().regex(/^2025-\d{2}-\d{2}$/);
+const seasonalSchema = z.object({
+  seasonal_basis: z.enum(["summer_only", "holiday_only"]),
+  seasonal_nature_source_reference: reference,
+  dated_service_record_reference: reference,
+  service_dates: z.array(serviceDaySchema).min(1).max(365),
+}).strict();
+const excludedWorkerSchema = z.object({
+  employee_reference: reference,
+  employee_ssn: id,
+  exclusion: z.enum([
+    "proprietor",
+    "owner_spouse",
+    "owner_child",
+    "owner_grandchild",
+    "owner_parent",
+    "owner_grandparent",
+    "owner_sibling",
+    "owner_step_sibling",
+    "owner_step_parent",
+    "owner_niece_nephew",
+    "owner_aunt_uncle",
+    "owner_child_in_law",
+    "owner_parent_in_law",
+    "owner_sibling_in_law",
+    "owner_household_dependent",
+  ]),
+  related_owner_ssn: id,
+  relationship_source_reference: reference,
+  relationship_verified: z.literal(true),
+  dependent_qualifies_on_owner_2025_return_confirmed: z.literal(true)
+    .optional(),
+  dependent_qualification_source_reference: reference.optional(),
+  payroll_record_reference: reference,
+  actual_hours_of_service: z.number().int().nonnegative().max(2080),
+  actual_social_security_medicare_wages: z.number().int().nonnegative(),
+  coverage_records: z.array(
+    z.object({
+      shop_plan_reference: reference,
+      month: z.number().int().min(1).max(12),
+      coverage_start_date: z.string(),
+      coverage_end_date: z.string(),
+      invoice_date: z.string(),
+      payment_date: z.string(),
+      billed_premium: premiumMoney.refine((n) => n > 0),
+      employer_payment: premiumMoney,
+      shop_invoice_reference: reference,
+      employer_payment_reference: reference,
+    }).strict(),
+  ).max(12),
+}).strict();
 export const multiplePlanEmployeeSchema = z.object({
   employee_reference: reference,
   employee_ssn: id,
@@ -91,6 +142,7 @@ export const multiplePlanEmployeeSchema = z.object({
   irs_2025_rating_area_average_premium: z.number().int().positive(),
   rating_area_state: z.string().regex(/^[A-Z]{2}$/),
   rating_area_county: reference,
+  seasonal_service: seasonalSchema.optional(),
 }).strict();
 export const multiplePlanReviewSchema = z.object({
   irs_table_tax_year: z.literal(2025),
@@ -118,6 +170,7 @@ export const multiplePlanReviewSchema = z.object({
       coverage_tier: coverageTierSchema,
       covered_dependents: z.array(dependentSchema).max(10),
       monthly_premiums: z.array(invoiceSchema).max(12),
+      seasonal_service: seasonalSchema.optional(),
     }).strict(),
   ).min(1).max(24),
 }).strict();
@@ -135,6 +188,8 @@ export const multiplePlanFields = {
   offered_qhps: z.array(planSchema).min(2).max(12),
   monthly_plan_arrangements: z.array(policySchema).min(2).max(144),
   employees: z.array(multiplePlanEmployeeSchema).min(1).max(24),
+  excluded_workers: z.array(excludedWorkerSchema).max(24).optional(),
+  excluded_worker_reviews: z.array(excludedWorkerSchema).max(24).optional(),
   shop_review: multiplePlanReviewSchema,
 };
 const contractSchema = z.object({
@@ -144,6 +199,9 @@ const contractSchema = z.object({
   shop_plan_reference: reference,
   payroll_ledger_reference: reference,
   shop_marketplace_identifier: reference,
+  other_schedule_c_employee_benefits: z.number().int().nonnegative(),
+  excluded_owner_family_seasonal_and_nonbusiness_workers_none_verified: z
+    .boolean(),
 }).passthrough();
 type Contract = z.infer<typeof contractSchema>;
 function fail(message: string): never {
@@ -205,6 +263,65 @@ export function multiplePlanWorksheet(raw: unknown) {
   const eligibility = new Map<string, Set<number>>();
   const selections = new Map<string, Map<number, string>>();
   const dependents = new Set<string>();
+  const excluded = s.excluded_workers ?? [];
+  const excludedReviews = s.excluded_worker_reviews ?? [];
+  const hasSeasonal = s.employees.some((employee) =>
+    employee.seasonal_service !== undefined
+  );
+  const claimedNone =
+    s.excluded_owner_family_seasonal_and_nonbusiness_workers_none_verified;
+  if (
+    claimedNone === (excluded.length > 0 || hasSeasonal) ||
+    excluded.length !== excludedReviews.length ||
+    new Set(excluded.map((worker) => worker.employee_reference)).size !==
+      excluded.length
+  ) fail("excluded payroll roster conflicts with none-verified declaration");
+  for (const [index, worker] of excluded.entries()) {
+    if (JSON.stringify(worker) !== JSON.stringify(excludedReviews[index])) {
+      fail("excluded worker review differs from payroll and coverage source");
+    }
+    if (
+      worker.related_owner_ssn !== s.owner_ssn ||
+      (worker.exclusion === "proprietor") !==
+        (worker.employee_ssn === s.owner_ssn) ||
+      (worker.exclusion === "proprietor" &&
+        (worker.actual_hours_of_service !== 0 ||
+          worker.actual_social_security_medicare_wages !== 0)) ||
+      (worker.exclusion !== "proprietor" &&
+        worker.actual_social_security_medicare_wages === 0) ||
+      (worker.exclusion === "owner_household_dependent") !==
+        (worker.dependent_qualifies_on_owner_2025_return_confirmed === true &&
+          worker.dependent_qualification_source_reference !== undefined)
+    ) fail("excluded worker relationship or actual payroll differs");
+    add(worker.relationship_source_reference);
+    add(worker.payroll_record_reference);
+    if (worker.dependent_qualification_source_reference) {
+      add(worker.dependent_qualification_source_reference);
+    }
+    const months = new Set<number>();
+    for (const coverage of worker.coverage_records) {
+      if (
+        months.has(coverage.month) ||
+        !plans.get(coverage.shop_plan_reference) ||
+        !monthSet(plans.get(coverage.shop_plan_reference)!.offering_period)
+          .has(coverage.month) ||
+        coverage.coverage_start_date !==
+          monthCoverageDates(coverage.month).start ||
+        coverage.coverage_end_date !==
+          monthCoverageDates(coverage.month).end ||
+        !dated(coverage.invoice_date) || !dated(coverage.payment_date) ||
+        cents(coverage.employer_payment) > cents(coverage.billed_premium)
+      ) fail("excluded worker coverage, month or premium differs");
+      months.add(coverage.month);
+      add(coverage.shop_invoice_reference);
+      add(coverage.employer_payment_reference);
+    }
+  }
+  if (
+    excluded.some((worker) =>
+      worker.coverage_records.some((coverage) => coverage.employer_payment > 0)
+    ) && s.other_schedule_c_employee_benefits !== 0
+  ) fail("excluded paid coverage cannot be ordinary Schedule C benefits");
   for (const e of employees.values()) {
     if (ssns.has(e.employee_ssn)) {
       fail("payroll employee SSN is duplicated or proprietor-owned");
@@ -213,6 +330,23 @@ export function multiplePlanWorksheet(raw: unknown) {
     add(e.enrollment_and_payroll_record_reference);
     add(e.employment_period.enrollment_source_reference);
     const employed = monthSet(e.employment_period);
+    if (e.seasonal_service) {
+      const service = e.seasonal_service;
+      add(service.seasonal_nature_source_reference);
+      add(service.dated_service_record_reference);
+      const dates = new Set(service.service_dates);
+      if (
+        dates.size !== service.service_dates.length ||
+        e.hours_of_service > dates.size * 24 ||
+        service.service_dates.some((day) =>
+          !dated(day) || !employed.has(Number(day.slice(5, 7))) ||
+          (service.seasonal_basis === "summer_only" &&
+            (day.slice(5, 7) < "06" || day.slice(5, 7) > "09")) ||
+          (service.seasonal_basis === "holiday_only" &&
+            (day.slice(5, 7) < "11" || day.slice(5, 7) > "12"))
+        )
+      ) fail("seasonal service dates or hours differ from retained records");
+    }
     if (
       e.rating_area_state !== "NY" || e.rating_area_county !== "Albany" ||
       e.irs_2025_rating_area_average_premium !==
@@ -272,6 +406,13 @@ export function multiplePlanWorksheet(raw: unknown) {
       }
     }
     selections.set(e.employee_reference, selected);
+  }
+  for (const worker of excluded) {
+    if (
+      (worker.exclusion !== "proprietor" && ssns.has(worker.employee_ssn)) ||
+      employees.has(worker.employee_reference)
+    ) fail("excluded worker identity overlaps a credited worker or dependent");
+    ssns.add(worker.employee_ssn);
   }
   if (referenceMethod) {
     for (const e of employees.values()) {
@@ -446,6 +587,12 @@ export function multiplePlanWorksheet(raw: unknown) {
       if (JSON.stringify(r[field]) !== JSON.stringify(e[field])) {
         fail("review eligibility or enrollment record differs");
       }
+    }
+    if (
+      JSON.stringify(r.seasonal_service) !==
+        JSON.stringify(e.seasonal_service)
+    ) {
+      fail("review seasonal service record differs");
     }
     const selected = selections.get(e.employee_reference)!;
     const billedMonths = new Set<number>();

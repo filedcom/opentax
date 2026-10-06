@@ -5,6 +5,7 @@ import {
 import { inputSchema as scheduleCInputSchema } from "../../../nodes/inputs/schedule_c/model.ts";
 import { TS } from "../../../nodes/types.ts";
 import type { FilerIdentity } from "../../../mef/header.ts";
+import { inputSchema as generalInputSchema } from "../../../nodes/inputs/general/index.ts";
 
 /** Compare the one direct employer's wages and reduced premium deduction. */
 export function reconcileForm8941ScheduleC(
@@ -24,13 +25,48 @@ export function reconcileForm8941ScheduleC(
   const wages = source.employees.reduce(
     (sum, employee) => sum + employee.social_security_medicare_wages,
     0,
-  );
+  ) + ("excluded_workers" in source
+    ? (source.excluded_workers ?? []).reduce(
+      (sum, worker) => sum + worker.actual_social_security_medicare_wages,
+      0,
+    )
+    : 0);
+  const excludedPaid = "excluded_workers" in source
+    ? (source.excluded_workers ?? []).reduce(
+      (sum, worker) =>
+        sum + worker.coverage_records.reduce(
+          (premium, record) => premium + record.employer_payment,
+          0,
+        ),
+      0,
+    )
+    : 0;
+  const ownerPaid = "excluded_workers" in source
+    ? (source.excluded_workers ?? []).filter((worker) =>
+      worker.exclusion === "proprietor"
+    ).reduce((sum, worker) =>
+      sum + worker.coverage_records.reduce(
+        (premium, record) => premium + record.employer_payment,
+        0,
+      ), 0)
+    : 0;
+  const healthSource = pending.form7206;
+  if (
+    ownerPaid > 0 && healthSource && typeof healthSource === "object" &&
+    "single_schedule_c_plan" in healthSource &&
+    healthSource.single_schedule_c_plan !== undefined
+  ) {
+    throw new Error(
+      "Form 8941 excluded proprietor coverage needs a separately reconciled Form 7206 source",
+    );
+  }
   if (
     business.business_reference !== source.schedule_c_business_reference ||
     business.proprietor_recipient !== source.proprietor_recipient ||
     business.line_g_material_participation !== true ||
     business.line_d_ein?.replace(/\D/g, "") !== source.employment_ein ||
     business.line_26_wages !== wages ||
+    (excludedPaid > 0 && source.other_schedule_c_employee_benefits !== 0) ||
     business.line_14_employee_benefits !==
       source.other_schedule_c_employee_benefits + lines.line4
   ) {
@@ -72,6 +108,44 @@ export function reconcileForm8941ScheduleC(
     }
     if (ownerSSN !== source.owner_ssn) {
       throw new Error("Form 8941 owner SSN differs from Schedule C proprietor");
+    }
+    if (
+      "excluded_workers" in source &&
+      (source.excluded_workers ?? []).some((worker) =>
+        worker.exclusion === "owner_spouse" &&
+        worker.employee_ssn !== filer.spouse?.ssn
+      )
+    ) {
+      throw new Error(
+        "Form 8941 excluded spouse differs from the filed spouse identity",
+      );
+    }
+    if ("excluded_workers" in source) {
+      const household = (source.excluded_workers ?? []).filter((worker) =>
+        worker.exclusion === "owner_household_dependent"
+      );
+      if (household.length > 0) {
+        const general = generalInputSchema.parse(pending.general);
+        if (
+          household.some((worker) =>
+            !general.dependents?.some((dependent) =>
+              dependent.ssn?.replaceAll("-", "") === worker.employee_ssn &&
+              dependent.relationship === "other" &&
+              dependent.months_in_home === 12 &&
+              dependent.gross_income !== undefined &&
+              dependent.gross_income < 5200 &&
+              dependent.provided_over_half_own_support === false &&
+              dependent.filed_joint_return_except_refund_only === false &&
+              dependent.us_citizen_national_or_resident === true &&
+              dependent.dependent_on_another_return !== true
+            )
+          )
+        ) {
+          throw new Error(
+            "Form 8941 excluded household dependent differs from filed dependent evidence",
+          );
+        }
+      }
     }
   }
   const planReferences = "offered_qhps" in source

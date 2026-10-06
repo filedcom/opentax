@@ -147,8 +147,13 @@ export const inputSchema = z.union([
   }).strict(),
   sourceSchema.omit({
     all_nonexcluded_employees_enrolled_verified: true,
+    excluded_owner_family_seasonal_and_nonbusiness_workers_none_verified: true,
     shop_review: true,
-  }).extend(multiplePlanFields).strict(),
+  }).extend({
+    ...multiplePlanFields,
+    excluded_owner_family_seasonal_and_nonbusiness_workers_none_verified: z
+      .boolean(),
+  }).strict(),
 ]);
 
 export type F8941Input = z.infer<typeof inputSchema>;
@@ -220,12 +225,21 @@ export function calculateForm8941(raw: unknown): Form8941Lines {
       );
     }
   }
+  const creditedHours = (employee: typeof source.employees[number]) =>
+    "seasonal_service" in employee && employee.seasonal_service &&
+      employee.seasonal_service.service_dates.length <= 120
+      ? 0
+      : employee.hours_of_service;
   const totalHours = source.employees.reduce(
-    (sum, employee) => sum + employee.hours_of_service,
+    (sum, employee) => sum + creditedHours(employee),
     0,
   );
   const totalWages = source.employees.reduce(
-    (sum, employee) => sum + employee.social_security_medicare_wages,
+    (sum, employee) =>
+      sum +
+      (creditedHours(employee) === 0
+        ? 0
+        : employee.social_security_medicare_wages),
     0,
   );
   const line1 = source.employees.length;
@@ -287,7 +301,7 @@ export function calculateForm8941(raw: unknown): Form8941Lines {
   const line13 = enrolled.length;
   const line14 = Math.max(
     1,
-    Math.floor(enrolled.reduce((sum, e) => sum + e.hours_of_service, 0) / 2080),
+    Math.floor(enrolled.reduce((sum, e) => sum + creditedHours(e), 0) / 2080),
   );
   const line15 = 0 as const;
   return {
