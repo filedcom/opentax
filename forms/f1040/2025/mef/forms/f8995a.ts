@@ -2,6 +2,7 @@ import { assertProducingMiningZeroQbi } from "../../../nodes/intermediate/forms/
 import { assertProducingMiningZeroQbiReturn } from "../../form8995a_producing_mining_source.ts";
 import { assertQualifiedTipQbiSource } from "../../form8995_qualified_tip_source.ts";
 import { assertFarmWotcReturn } from "../../form8995_farm_wotc_reconciliation.ts";
+import { assertMixedFishingQbiReturn } from "../../form8995a_mixed_fishing_source.ts";
 import { calculateFarmWotcLines } from "../../../nodes/intermediate/forms/form8995a/farm-wotc.ts";
 import { assertSstbScheduleCSource } from "./f8995a-sstb-source.ts";
 import { assertForm8995APatronReturn } from "../../form8995a_patron_reconciliation.ts";
@@ -667,23 +668,36 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
       element("TotQlfyREITDivPTPLossCfwdAmt", 0),
     ]);
   }
-  const multi = fields.farm_wotc_filing_source
+  const mixed = assertMixedFishingQbiReturn(fields, context?.pending);
+  const oldMulti = fields.farm_wotc_filing_source
     ? calculateFarmWotcLines(fields)
     : fields.wotc_business_sources
     ? calculateOwnedWotcBusinesses(fields)
     : undefined;
+  const multi = mixed ?? oldMulti;
+  const multiRows = mixed
+    ? mixed.rows.map((row) => ({
+      input: { ...fields, business_filing_details: row.details },
+      details: row.details,
+      lines: row.lines,
+    }))
+    : oldMulti?.rows.map((row) => ({
+      input: row.input,
+      details: row.input.business_filing_details!,
+      lines: row.lines,
+    }));
   const { details, lines } = multi
     ? {
-      details: multi.rows[0].input.business_filing_details!,
+      details: multiRows![0].details,
       lines: multi.parent,
     }
     : validateOneBusiness(fields);
   if (!multi) assertOneBusinessReitSource(fields, context?.pending);
   reconcileReturn(context, lines.line39, fields);
   return elements("IRS8995A", [
-    ...(multi
-      ? multi.rows.map((row) =>
-        ownedWotcGroup(row.input, row.input.business_filing_details!, row.lines)
+    ...(multiRows
+      ? multiRows.map((row) =>
+        ownedWotcGroup(row.input, row.details, row.lines)
       )
       : [ownedWotcGroup(fields, details, lines)]),
     element("TotalQBIComponentAmt", lines.line16),

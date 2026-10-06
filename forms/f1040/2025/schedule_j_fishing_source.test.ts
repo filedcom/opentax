@@ -10,8 +10,12 @@ import {
   scheduleJFishingCases,
   scheduleJFishingFullPhaseoutInputs,
   scheduleJFishingInputs,
+  scheduleJFishingPhaseInInputs,
 } from "./schedule_j_fishing_source.fixture.ts";
 import { assertScheduleJSourceReturn } from "./schedule_j_source_return.ts";
+import { calculateMixedFishingQbi } from "../nodes/intermediate/forms/form8995a/mixed-fishing.ts";
+import { form8995a } from "./mef/forms/f8995a.ts";
+import { form8995aPdf } from "./pdf/forms/f8995a.ts";
 
 const evidenceDir = Deno.env.get("SCHEDULE_J_FISHING_EVIDENCE_DIR") ??
   ".state/research/schedulej-fishing-preferential-source";
@@ -124,6 +128,53 @@ Deno.test("actual single-filer QBI phase-out at $247,300 leaves smaller mixed ca
   assertEquals(noJ.pending.form6251.regular_tax, 62_451);
   assertScheduleJSourceReturn(elected.result.pending);
   assertEquals(elected.xml.includes("<IRS8995A "), false);
+});
+
+Deno.test("actual mixed fishing and farm phase-in derives separate advanced QBI", async () => {
+  const input = scheduleJFishingPhaseInInputs();
+  const noElection = structuredClone(input) as any;
+  delete noElection.schedule_j;
+  const noJ = await packet("mixed-phasein-without-j", noElection);
+  const result = await packet("mixed-phasein", input);
+  const q = calculateMixedFishingQbi(result.pending.form8995a);
+  assertEquals(q.profits, [30_000, 200_000]);
+  assertEquals(q.allocations, [1_825.83, 12_172.17]);
+  assertEquals(q.rows.map((row) => row.lines.line2), [28_174, 187_828]);
+  assertEquals(q.rows.map((row) => row.lines.line25), [4_052, 27_011]);
+  assertEquals(q.parent.line39, 12_138);
+  assertEquals(result.pending.f1040.line13_qbi_deduction, 12_138);
+  assertEquals(result.pending.f1040.line15_taxable_income, 221_114);
+  assertEquals(result.pending.f1040.line16_income_tax, 42_187);
+  assertEquals(noJ.pending.f1040.line13_qbi_deduction, 12_138);
+  assertEquals(
+    (result.xml.match(/<QBIDeductionInformationGrp>/g) ?? []).length,
+    2,
+  );
+  assertEquals(
+    result.xml.includes("<NetCapitalGainAmt>30000</NetCapitalGainAmt>"),
+    true,
+  );
+  assertScheduleJSourceReturn(result.result.pending);
+  const filer = extractFilerIdentity(result.pending.f1040)!;
+  for (
+    const mutate of [
+      (p: any) =>
+        p.form8995a.mixed_fishing_qbi_source.schedule_c
+          .qbi_se_tax_allocation_review.deduction_amount++,
+      (p: any) =>
+        p.form8995a.mixed_fishing_qbi_source.schedule_f
+          .line2_sales_products_raised++,
+      (p: any) => p.form8995a.net_capital_gain++,
+      (p: any) => p.f1040.line13_qbi_deduction++,
+    ]
+  ) {
+    const changed = structuredClone(result.pending);
+    mutate(changed);
+    assertThrows(() =>
+      form8995a.build(changed.form8995a, { pending: changed, filer })
+    );
+    assertThrows(() => form8995aPdf.projectFields!(changed.form8995a, changed));
+  }
 });
 
 Deno.test("fishing attribution rejects absent, mutated and mismatched source bytes", async () => {

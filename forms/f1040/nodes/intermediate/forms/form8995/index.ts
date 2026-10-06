@@ -409,6 +409,50 @@ function advancedFormOutput(
   const farmWotc = farmWotcAdvancedFields(input, taxableIncome);
   if (farmWotc) return output(form8995a, farmWotc);
 
+  const c = input.schedule_c_qbi_businesses?.[0];
+  const f = input.schedule_f_qbi_businesses?.[0];
+  if (
+    input.schedule_c_qbi_businesses?.length === 1 &&
+    input.schedule_f_qbi_businesses?.length === 1 && c && f &&
+    c.source_schedule_c.schedule_j_fishing_evidence &&
+    taxableIncome > 197_300 && taxableIncome < 247_300 &&
+    c.source_schedule_c.qbi_se_tax_allocation_review &&
+    farmItemSchema.parse(f.source_schedule_f).qbi_se_tax_allocation_review
+  ) {
+    const reviewed = mixedScheduleCFLines(input, CONFIG_BY_YEAR[2025]);
+    const rows = reviewed?.multi_business_filing_rows as
+      | { qbi: number }[]
+      | undefined;
+    if (
+      !rows || rows.length !== 2 || !input.taxpayer_ssn ||
+      sumField(input.w2_wages) !== 0 ||
+      sumField(input.unadjusted_basis) !== 0
+    ) {
+      throw new Error(
+        "Mixed fishing advanced QBI needs reviewed separate business source rows",
+      );
+    }
+    return output(form8995a, {
+      filing_status: input.filing_status,
+      taxable_income: Math.round(taxableIncome),
+      net_capital_gain: qbiCapitalTotal(input, true),
+      qbi_capital_sources: input.qbi_capital_sources,
+      investment_dividend_sources: input.investment_dividend_sources,
+      investment_dividend_totals: input.investment_dividend_totals,
+      qbi: rows.reduce((sum, row) => sum + row.qbi, 0),
+      w2_wages: 0,
+      unadjusted_basis: 0,
+      patron_of_specified_cooperative: false,
+      qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+      mixed_fishing_qbi_source: {
+        owner_ssn: input.taxpayer_ssn.replaceAll("-", ""),
+        schedule_c: c.source_schedule_c,
+        schedule_f: farmItemSchema.parse(f.source_schedule_f),
+        se_tax_deduction: sumField(input.se_tax_deduction),
+      },
+    });
+  }
+
   if (
     input.schedule_c_qbi_businesses?.length === 2 &&
     input.schedule_c_qbi_businesses.every((b) =>
@@ -1103,7 +1147,6 @@ function mixedScheduleCFLines(
     sumField(input.se_health_insurance_deduction) !== 0 ||
     sumField(input.retirement_plan_deduction) !== 0 ||
     sumField(input.line6_sec199a_dividends) !== 0 ||
-    qbiCapitalTotal(input) !== 0 ||
     (input.qbi_loss_carryforward ?? 0) !== 0 ||
     (input.reit_loss_carryforward ?? 0) !== 0
   ) {
@@ -1122,7 +1165,9 @@ function mixedScheduleCFLines(
         (input.additional_deductions ?? 0),
     ),
   );
-  const line14 = Math.round(line11 * QBI_RATE);
+  const line12 = qbiCapitalTotal(input, true);
+  const line13 = Math.max(0, line11 - line12);
+  const line14 = Math.round(line13 * QBI_RATE);
   return {
     multi_business_filing_rows: businesses.map((row, index) => ({
       business_reference: row.business_reference!,
@@ -1142,8 +1187,8 @@ function mixedScheduleCFLines(
     line9: 0,
     line10: line5,
     line11,
-    line12: 0,
-    line13: line11,
+    line12,
+    line13,
     line14,
     line15: Math.min(line5, line14),
     line16: 0,

@@ -9,6 +9,10 @@ import {
   reviewedQualifiedTipExclusions,
 } from "../form8995/qualified-tips.ts";
 import { farmWotcSourceSchema } from "./farm-wotc-source.ts";
+import {
+  calculateMixedFishingQbi,
+  mixedFishingQbiSourceSchema,
+} from "./mixed-fishing.ts";
 import { calculateFarmWotcLines } from "./farm-wotc.ts";
 import {
   ownedScheduleSE,
@@ -187,6 +191,7 @@ export const scheduleCQbiBusinessSchema = z.object({
 }).strict();
 
 export const inputSchema = z.object({
+  mixed_fishing_qbi_source: mixedFishingQbiSourceSchema.optional(),
   single_schedule_f_source: singleFarmSourceSchema.optional(),
   qualified_tip_qbi_source: qualifiedTipQbiSourceSchema.optional(),
   farm_wotc_filing_source: farmWotcSourceSchema.optional(),
@@ -1085,6 +1090,7 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   const filedAmount = (value: number) =>
     input.single_schedule_c_source || input.single_schedule_f_source ||
       input.farm_wotc_filing_source ||
+      input.mixed_fishing_qbi_source ||
       input.producing_mining_zero_qbi_source ||
       input.aggregation_filing_details ||
       input.patron_business_source
@@ -1110,7 +1116,8 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   const phaseInRequired = Boolean(
     input.patron_business_source || input.single_schedule_c_source ||
       input.single_schedule_f_source ||
-      input.farm_wotc_filing_source,
+      input.farm_wotc_filing_source ||
+      input.mixed_fishing_qbi_source,
   ) &&
     input.taxable_income > patronThreshold &&
     input.taxable_income <= patronThreshold + patronPhaseInRange &&
@@ -1156,7 +1163,8 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   return {
     ...((input.patron_business_source || input.single_schedule_c_source ||
         input.single_schedule_f_source ||
-        input.farm_wotc_filing_source)
+        input.farm_wotc_filing_source ||
+        input.mixed_fishing_qbi_source)
       ? {
         patronThreshold,
         patronPhaseInRange,
@@ -1502,7 +1510,10 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
     assertSupportedSchedulePath(input);
     assertSingleScheduleCWotcAmounts(input);
 
-    if (!hasQbiActivity(input) && !input.farm_wotc_filing_source) {
+    if (
+      !hasQbiActivity(input) && !input.farm_wotc_filing_source &&
+      !input.mixed_fishing_qbi_source
+    ) {
       return { outputs: [] };
     }
 
@@ -1593,6 +1604,18 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
             },
           }
           : {}),
+      };
+    }
+    if (input.mixed_fishing_qbi_source) {
+      const deduction = calculateMixedFishingQbi(input).parent.line39;
+      return {
+        outputs: [
+          this.outputNodes.output(f1040, { line13_qbi_deduction: deduction }),
+          this.outputNodes.output(standard_deduction, {
+            qbi_deduction: deduction,
+          }),
+          { nodeType: this.nodeType, fields: input },
+        ],
       };
     }
     if (input.wotc_business_sources) {

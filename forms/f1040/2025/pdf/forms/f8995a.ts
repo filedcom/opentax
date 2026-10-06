@@ -1,5 +1,6 @@
 import { assertProducingMiningZeroQbiReturn } from "../../form8995a_producing_mining_source.ts";
 import { assertFarmWotcReturn } from "../../form8995_farm_wotc_reconciliation.ts";
+import { assertMixedFishingQbiReturn } from "../../form8995a_mixed_fishing_source.ts";
 import { calculateFarmWotcLines } from "../../../nodes/intermediate/forms/form8995a/farm-wotc.ts";
 import { qbiPercentageForPdf } from "../qbi-percentage.ts";
 import { assertSstbScheduleCSource } from "../../mef/forms/f8995a-sstb-source.ts";
@@ -168,26 +169,40 @@ export function projectOneBusiness8995A(
   ) {
     throw new Error("Form 8995-A PDF needs matching parent pending source");
   }
-  if (input.wotc_business_sources || input.farm_wotc_filing_source) {
+  if (
+    input.wotc_business_sources || input.farm_wotc_filing_source ||
+    input.mixed_fishing_qbi_source
+  ) {
     assertNoFiledForm8995(allPending);
-    const { rows, parent } = input.farm_wotc_filing_source
+    const mixed = assertMixedFishingQbiReturn(input, allPending);
+    const oldMulti = input.farm_wotc_filing_source
       ? calculateFarmWotcLines(input)
+      : mixed
+      ? undefined
       : calculateOwnedWotcBusinesses(input);
+    const parent = mixed?.parent ?? oldMulti!.parent;
+    const rows = mixed
+      ? mixed.rows.map((row) => ({ details: row.details, lines: row.lines }))
+      : oldMulti!.rows.map((row) => ({
+        details: row.input.business_filing_details!,
+        lines: row.lines,
+      }));
     if (allPending.f1040?.line13_qbi_deduction !== parent.line39) {
       throw new Error("Owned WOTC PDF differs from actual1040 deduction");
     }
     const projection: Record<string, unknown> = { ...parent, ...rows[0].lines };
     rows.forEach((row, index) => {
       const suffix = ["", "_b", "_c"][index],
-        details = row.input.business_filing_details!;
+        details = row.details;
       projection[`business_name${suffix}`] = details.business_name;
       projection[`business_ein${suffix}`] = details.ein;
       for (const line of [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]) {
-        projection[`line${line}${suffix}`] = (row.lines as any)[`line${line}`];
+        projection[`line${line}${suffix}`] =
+          (row.lines as Record<string, unknown>)[`line${line}`];
       }
       for (const line of [19, 25, 26]) {
         projection[`line${line}${suffix}`] = row.lines.phaseInRequired
-          ? (row.lines as any)[`line${line}`]
+          ? (row.lines as Record<string, unknown>)[`line${line}`]
           : undefined;
       }
       projection[`line17${suffix}`] = row.lines.phaseInRequired
@@ -198,7 +213,8 @@ export function projectOneBusiness8995A(
         : undefined;
     });
     for (const line of [16, 32, 37, 39]) {
-      projection[`line${line}`] = (parent as any)[`line${line}`];
+      projection[`line${line}`] =
+        (parent as Record<string, unknown>)[`line${line}`];
     }
     return {
       ...projection,

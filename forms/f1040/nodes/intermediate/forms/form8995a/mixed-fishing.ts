@@ -1,0 +1,135 @@
+import { z } from "zod";
+import {
+  computeNetProfit as scheduleCProfit,
+  itemSchema as scheduleCItemSchema,
+} from "../../../inputs/schedule_c/model.ts";
+import {
+  allocateSharedSeDeduction,
+  roundSignedQbiDollars,
+} from "../../../inputs/schedule_c/qbi-multiple.ts";
+import {
+  computeNetProfit as scheduleFProfit,
+  itemSchema as scheduleFItemSchema,
+} from "../schedule_f/model.ts";
+import { scheduleSELines } from "../schedule_se/calculation.ts";
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
+import {
+  calculateOneBusiness8995ALines,
+  type Form8995AInput,
+} from "./index.ts";
+
+export const mixedFishingQbiSourceSchema = z.object({
+  owner_ssn: z.string().regex(/^\d{9}$/),
+  schedule_c: scheduleCItemSchema,
+  schedule_f: scheduleFItemSchema,
+  se_tax_deduction: z.number().int().nonnegative(),
+}).strict();
+
+/** Two separate owned businesses; neither an aggregation election nor a wage source. */
+export function calculateMixedFishingQbi(input: Form8995AInput) {
+  const source = mixedFishingQbiSourceSchema.parse(
+    input.mixed_fishing_qbi_source,
+  );
+  const c = source.schedule_c, f = source.schedule_f;
+  const profits = [scheduleCProfit(c), scheduleFProfit(f)];
+  const se = scheduleSELines({
+    net_profit_schedule_c: profits[0],
+    net_profit_schedule_f: profits[1],
+  }, CONFIG_BY_YEAR[2025].ssWageBase);
+  const allocations = allocateSharedSeDeduction(
+    profits,
+    source.se_tax_deduction,
+  );
+  const reviews = [
+    c.qbi_se_tax_allocation_review,
+    f.qbi_se_tax_allocation_review,
+  ];
+  const names = [c.line_c_business_name, f.line_c_farm_name];
+  const eins = [
+    c.line_d_ein?.replace(/\D/g, ""),
+    f.line_d_ein?.replace(/\D/g, ""),
+  ];
+  if (
+    input.filing_status !== "single" ||
+    input.taxable_income <= 197_300 || input.taxable_income >= 247_300 ||
+    !Number.isInteger(input.taxable_income) || !se ||
+    se.line13 !== source.se_tax_deduction ||
+    profits.some((p) => !Number.isSafeInteger(p) || p <= 0) ||
+    !c.business_reference || !f.farm_id || c.business_reference === f.farm_id ||
+    names.some((name) => !name) ||
+    eins.some((ein) => !/^\d{9}$/.test(ein ?? "")) ||
+    eins[0] === eins[1] || c.proprietor_recipient !== "T" ||
+    f.proprietor_recipient !== "T" ||
+    c.line_b_business_code !== "114110" ||
+    c.line_g_material_participation !== true ||
+    f.line_e_material_participation !== true ||
+    c.line_f_accounting_method !== "cash" || f.accounting_method !== "cash" ||
+    c.qbi_no_other_adjustments_confirmed !== true ||
+    f.qbi_no_other_adjustments_confirmed !== true ||
+    (c.qbi_w2_wages ?? 0) !== 0 || (f.qbi_w2_wages ?? 0) !== 0 ||
+    (c.qbi_unadjusted_basis ?? 0) !== 0 ||
+    (f.qbi_unadjusted_basis ?? 0) !== 0 ||
+    reviews.some((review, i) =>
+      !review ||
+      review.deduction_amount !== allocations[i] ||
+      review.allocation_method !==
+        "positive_profit_proportion_with_cent_residual" ||
+      review.reasonable_for_business_facts_confirmed !== true ||
+      review.consistently_applied_and_books_agree_confirmed !== true ||
+      review.all_businesses_included_confirmed !== true ||
+      review.no_aggregation_confirmed !== true
+    ) ||
+    input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    input.patron_of_specified_cooperative !== false ||
+    input.business_filing_details || input.single_schedule_c_source ||
+    input.single_schedule_f_source || input.farm_wotc_filing_source ||
+    input.aggregation_filing_details || input.aggregation_groups?.length ||
+    (input.sstb_qbi ?? 0) !== 0 || (input.line6_sec199a_dividends ?? 0) !== 0 ||
+    (input.qbi_loss_carryforward ?? 0) !== 0 ||
+    (input.reit_loss_carryforward ?? 0) !== 0 ||
+    input.w2_wages !== 0 || input.unadjusted_basis !== 0
+  ) {
+    throw new Error(
+      "Mixed fishing Form 8995-A needs two actual owned businesses and reviewed SE allocation",
+    );
+  }
+  const qbi = profits.map((profit, i) =>
+    roundSignedQbiDollars(profit - allocations[i])
+  );
+  if (input.qbi !== qbi[0] + qbi[1]) {
+    throw new Error(
+      "Mixed fishing Form 8995-A QBI differs from actual business sources",
+    );
+  }
+  const rows = qbi.map((amount, i) => {
+    const details = {
+      business_name: names[i]!,
+      ein: eins[i]!,
+      business_qbi: amount,
+      business_w2_wages: 0,
+      business_ubia: 0,
+      one_non_sstb_business_confirmed: true as const,
+      no_aggregation_confirmed: true as const,
+      no_ptp_or_loss_carryforward_confirmed: true as const,
+      qualified_dividends_zero_confirmed: false,
+      qbi_wages_ubia_sources_confirmed: true as const,
+      taxable_income_before_qbi_confirmed: true as const,
+    };
+    const child: Form8995AInput = {
+      ...input,
+      qbi: amount,
+      business_filing_details: details,
+    };
+    return { details, lines: calculateOneBusiness8995ALines(child) };
+  });
+  const line16 = rows.reduce((sum, row) => sum + row.lines.line15, 0);
+  const line36 = rows[0].lines.line36;
+  const parent = {
+    ...rows[0].lines,
+    line16,
+    line32: line16,
+    line37: Math.min(line16, line36),
+    line39: Math.min(line16, line36),
+  };
+  return { source, rows, parent, profits, allocations };
+}

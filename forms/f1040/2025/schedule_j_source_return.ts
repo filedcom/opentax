@@ -54,7 +54,7 @@ const fishingLedgerSchema = z.object({
   ),
 }).strict();
 
-function retainedFishingProfit(inputs: Record<string, unknown>): number {
+export function retainedFishingProfit(inputs: Record<string, unknown>): number {
   const schedules = inputs.schedule_c;
   if (!Array.isArray(schedules) || schedules.length !== 1) {
     throw new Error(

@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { createHash } from "node:crypto";
 import { scheduleJNonfarmW2Inputs } from "./schedule_j_nonfarm_w2.fixture.ts";
+import { allocateSharedSeDeduction } from "../nodes/inputs/schedule_c/qbi-multiple.ts";
 
 export const scheduleJFishingCases = [
   "fishing",
@@ -95,5 +96,33 @@ export function scheduleJFishingFullPhaseoutInputs(): Record<string, unknown> {
   const bytes = new TextEncoder().encode(JSON.stringify(ledger));
   proof.bytes_base64 = btoa(String.fromCharCode(...bytes));
   proof.sha256 = createHash("sha256").update(bytes).digest("hex");
+  return input;
+}
+
+/** Distinct C/F owner workpaper allocates the actual combined half-SE by profit. */
+export function scheduleJFishingPhaseInInputs(): Record<string, unknown> {
+  const input = scheduleJFishingInputs("mixed-one-farm") as any;
+  const c = input.schedule_c[0], f = input.schedule_f.schedule_fs[0];
+  const proof = c.schedule_j_fishing_evidence.retained_catch_ledger;
+  const ledger = JSON.parse(atob(proof.bytes_base64));
+  ledger.sales[0].amount = 50_000;
+  c.line_1_gross_receipts = 50_000;
+  const bytes = new TextEncoder().encode(JSON.stringify(ledger));
+  proof.bytes_base64 = btoa(String.fromCharCode(...bytes));
+  proof.sha256 = createHash("sha256").update(bytes).digest("hex");
+  const allocations = allocateSharedSeDeduction([30_000, 200_000], 13_998);
+  for (const [index, business] of [c, f].entries()) {
+    business.qbi_se_tax_allocation_review = {
+      deduction_amount: allocations[index],
+      allocation_method: "positive_profit_proportion_with_cent_residual",
+      reasonable_for_business_facts_confirmed: true,
+      consistently_applied_and_books_agree_confirmed: true,
+      all_businesses_included_confirmed: true,
+      no_aggregation_confirmed: true,
+      workpaper_reference: `ADA-2025-CF-HALFSE-${index + 1}`,
+      reviewed_by: "taxpayer books review",
+      reviewed_on: "2026-03-15",
+    };
+  }
   return input;
 }
