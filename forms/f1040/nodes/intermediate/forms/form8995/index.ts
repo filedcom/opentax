@@ -23,9 +23,14 @@ import { f1040 } from "../../../outputs/f1040/index.ts";
 import { standard_deduction } from "../../worksheets/standard_deduction/index.ts";
 import { form8995a, type Form8995AInput } from "../form8995a/index.ts";
 import { scheduleCQbiBusinessSchema } from "../form8995a/index.ts";
-import { reviewedMultipleScheduleCQbi } from "../../../inputs/schedule_c/qbi-multiple.ts";
+import {
+  allocateSharedSeDeduction,
+  reviewedMultipleScheduleCQbi,
+  roundSignedQbiDollars,
+} from "../../../inputs/schedule_c/qbi-multiple.ts";
 import { reviewedWotcQbiWages } from "../../../inputs/schedule_c/qbi-wotc.ts";
 import { FilingStatus } from "../../../types.ts";
+import { itemSchema as farmItemSchema } from "../schedule_f/model.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR, type F1040Config } from "../../../config/index.ts";
 
@@ -854,6 +859,98 @@ function multipleScheduleCLines(
   };
 }
 
+/** One same-owner Schedule C and owned cash Schedule F with reviewed shared SE allocation. */
+function mixedScheduleCFLines(
+  input: Form8995Input,
+  cfg: F1040Config,
+): (Record<string, unknown> & { line15: number }) | undefined {
+  const c = input.schedule_c_qbi_businesses?.[0];
+  const f = input.schedule_f_qbi_businesses?.[0];
+  if (
+    input.schedule_c_qbi_businesses?.length !== 1 ||
+    input.schedule_f_qbi_businesses?.length !== 1 || !c || !f ||
+    !c.source_schedule_c.qbi_se_tax_allocation_review
+  ) return undefined;
+  const farmSource = farmItemSchema.parse(f.source_schedule_f);
+  if (!farmSource.qbi_se_tax_allocation_review) return undefined;
+  const profits = [c.qbi, f.qbi];
+  const seDeduction = sumField(input.se_tax_deduction);
+  const allocations = allocateSharedSeDeduction(profits, seDeduction);
+  const reviews = [
+    c.source_schedule_c.qbi_se_tax_allocation_review,
+    farmSource.qbi_se_tax_allocation_review,
+  ];
+  if (
+    input.filing_status !== FilingStatus.Single ||
+    input.agi === undefined || !input.taxpayer_ssn ||
+    c.source_schedule_c.proprietor_recipient !== "T" ||
+    farmSource.proprietor_recipient !== "T" ||
+    farmSource.accounting_method !== "cash" ||
+    c.source_schedule_c.line_g_material_participation !== true ||
+    farmSource.line_e_material_participation !== true ||
+    c.no_other_adjustments_confirmed !== true ||
+    f.no_other_adjustments_confirmed !== true ||
+    input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+    !c.business_reference || !f.business_reference ||
+    c.business_reference === f.business_reference ||
+    !c.business_name || !f.business_name || !c.ein || !f.ein ||
+    c.ein === f.ein || profits.some((profit) => profit <= 0) ||
+    reviews.some((review, index) =>
+      review?.deduction_amount !== allocations[index] ||
+      review?.all_businesses_included_confirmed !== true ||
+      review?.no_aggregation_confirmed !== true
+    ) ||
+    sumField(input.qbi_from_schedule_c) !== c.qbi ||
+    sumField(input.qbi_from_schedule_f) !== f.qbi ||
+    sumField(input.qbi) !== 0 || sumField(input.sstb_qbi) !== 0 ||
+    sumField(input.se_health_insurance_deduction) !== 0 ||
+    sumField(input.retirement_plan_deduction) !== 0 ||
+    sumField(input.line6_sec199a_dividends) !== 0 ||
+    qbiCapitalTotal(input) !== 0 ||
+    (input.qbi_loss_carryforward ?? 0) !== 0 ||
+    (input.reit_loss_carryforward ?? 0) !== 0
+  ) {
+    throw new Error(
+      "Mixed C/F QBI needs exact reviewed owner and SE allocation sources",
+    );
+  }
+  const raw = profits.map((profit, index) => profit - allocations[index]);
+  const filed = raw.map(roundSignedQbiDollars);
+  const line2 = filed[0] + filed[1];
+  const line5 = Math.round(Math.max(0, line2) * QBI_RATE);
+  const line11 = Math.round(
+    Math.max(0, input.agi - standardDeductionAmount(input, cfg)),
+  );
+  const line14 = Math.round(line11 * QBI_RATE);
+  return {
+    multi_business_filing_rows: [c, f].map((row, index) => ({
+      business_reference: row.business_reference!,
+      business_name: row.business_name!,
+      tin: { kind: "ein" as const, value: row.ein! },
+      qbi: filed[index],
+      raw_qbi: raw[index],
+      se_tax_deduction: allocations[index],
+    })),
+    line2,
+    line3: 0,
+    line4: Math.max(0, line2),
+    line5,
+    line6: 0,
+    line7: 0,
+    line8: 0,
+    line9: 0,
+    line10: line5,
+    line11,
+    line12: 0,
+    line13: line11,
+    line14,
+    line15: Math.min(line5, line14),
+    line16: 0,
+    line17: 0,
+  };
+}
+
 // Two small, independently identified Schedule C businesses can use the two
 // printed rows without an attributable SE-tax deduction when their combined
 // profit is below the Schedule SE filing threshold.
@@ -1136,14 +1233,16 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
         );
       })()
       : undefined;
-    const multipleLines = ownedLines ?? multipleScheduleCLines(input, cfg);
+    const mixedLines = mixedScheduleCFLines(input, cfg);
+    const multipleLines = ownedLines ?? mixedLines ??
+      multipleScheduleCLines(input, cfg);
     if (netQbi(input) < 0 && multipleLines === undefined) {
       throw new Error(
         "Form 8995 net QBI loss needs a sourced carryforward filing route",
       );
     }
 
-    const simplifiedLines = ownedLines ??
+    const simplifiedLines = ownedLines ?? mixedLines ??
       (input.schedule_f_qbi_businesses !== undefined
         ? oneScheduleFLines(input, cfg)
         : input.schedule_c_qbi_businesses !== undefined

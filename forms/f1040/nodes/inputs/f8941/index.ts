@@ -98,6 +98,9 @@ const farmPlanSourceSchema = multiplePlanSourceSchema.omit({
 const commonControlMemberSchema = multiplePlanSourceSchema.extend({
   no_other_trades_or_common_control_verified: z.literal(false),
 });
+const mixedFarmControlMemberSchema = farmPlanSourceSchema.extend({
+  no_other_trades_or_common_control_verified: z.literal(false),
+});
 const groupReference = z.string().trim().min(1);
 const controlRecordSchema = z.object({
   business_reference: groupReference,
@@ -138,6 +141,16 @@ const commonControlSchema = z.object({
   member_control_records: z.array(controlRecordSchema).min(2).max(12),
   group_members: z.array(commonControlMemberSchema).min(2).max(12),
 }).strict();
+const mixedCommonControlSchema = commonControlSchema.extend({
+  qualifying_arrangement: z.literal("same_proprietor_mixed_c_f_common_control"),
+  group_members: z.tuple([
+    commonControlMemberSchema,
+    mixedFarmControlMemberSchema,
+  ]),
+});
+export type FarmShopSource =
+  | z.infer<typeof farmPlanSourceSchema>
+  | z.infer<typeof mixedFarmControlMemberSchema>;
 
 const independentSpouseMemberSchema = multiplePlanSourceSchema.extend({
   no_other_trades_or_common_control_verified: z.literal(false),
@@ -264,6 +277,7 @@ export const inputSchema = z.union([
   multiplePlanSourceSchema,
   farmPlanSourceSchema,
   commonControlSchema,
+  mixedCommonControlSchema,
   independentSpouseSchema,
 ]);
 
@@ -336,7 +350,18 @@ function finishForm8941Lines(
   };
 }
 
-function commonControlWorksheet(source: z.infer<typeof commonControlSchema>) {
+type CommonControlSource =
+  | z.infer<typeof commonControlSchema>
+  | z.infer<typeof mixedCommonControlSchema>;
+function groupMemberReference(
+  member: CommonControlSource["group_members"][number],
+): string {
+  return "schedule_f_farm_id" in member
+    ? member.schedule_f_farm_id
+    : member.schedule_c_business_reference;
+}
+
+function commonControlWorksheet(source: CommonControlSource) {
   const first = source.group_members[0];
   const members = source.group_members;
   if (
@@ -359,7 +384,7 @@ function commonControlWorksheet(source: z.infer<typeof commonControlSchema>) {
     source.employment_ein !== first.employment_ein ||
     source.shop_marketplace_identifier !== first.shop_marketplace_identifier ||
     source.shop_plan_reference !== first.shop_plan_reference ||
-    new Set(members.map((member) => member.schedule_c_business_reference))
+    new Set(members.map(groupMemberReference))
         .size !== members.length ||
     new Set(members.map((member) => member.employment_ein)).size !==
       members.length
@@ -383,7 +408,7 @@ function commonControlWorksheet(source: z.infer<typeof commonControlSchema>) {
       source.group_review.group_contribution_schedule_record_reference,
     ]
   ) addReference(reference);
-  const policyPattern = (member: typeof first) => {
+  const policyPattern = (member: typeof members[number]) => {
     const plans = member.offered_qhps.map((plan) => plan.shop_plan_reference);
     return member.monthly_plan_arrangements.map((policy) => ({
       plan: plans.indexOf(policy.shop_plan_reference),
@@ -407,8 +432,7 @@ function commonControlWorksheet(source: z.infer<typeof commonControlSchema>) {
   }
   source.member_control_records.forEach((record, index) => {
     if (
-      record.business_reference !==
-        members[index].schedule_c_business_reference ||
+      record.business_reference !== groupMemberReference(members[index]) ||
       record.proprietor_ssn !== source.owner_ssn
     ) {
       throw new Error("Form 8941 common-control ownership record differs");
@@ -567,7 +591,9 @@ function commonControlWorksheet(source: z.infer<typeof commonControlSchema>) {
 }
 
 export function commonControlForm8941Shares(raw: unknown) {
-  const source = commonControlSchema.parse(raw);
+  const source = z.union([commonControlSchema, mixedCommonControlSchema]).parse(
+    raw,
+  );
   return commonControlWorksheet(source);
 }
 
@@ -791,25 +817,38 @@ export function calculateForm8941(raw: unknown): Form8941Lines {
 class F8941Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8941";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f3800, schedule_c, schedule_f, f1040]);
+  readonly outputNodes = new OutputNodes([
+    f3800,
+    schedule_c,
+    schedule_f,
+    f1040,
+  ]);
 
   compute(_ctx: NodeContext, rawInput: F8941Input): NodeResult {
     if ("schedule_f_farm_id" in rawInput) {
       const lines = calculateForm8941(rawInput);
-      return { outputs: [
-        output(f3800, { f8941_direct_employer_credit: {
-          credit_amount: lines.line16,
-          schedule_f_farm_id: rawInput.schedule_f_farm_id,
-          shop_plan_reference: rawInput.shop_plan_reference,
-          shop_plan_references: rawInput.offered_qhps.map((p) => p.shop_plan_reference),
-          subject_to_passive_activity_limit: false,
-        } }),
-        output(f1040, { form8941_determined_credit: lines.line16 }),
-        output(schedule_f, { form8941_premium_reductions: [{
-          farm_id: rawInput.schedule_f_farm_id,
-          credit_amount: lines.line16,
-        }] }),
-      ] };
+      return {
+        outputs: [
+          output(f3800, {
+            f8941_direct_employer_credit: {
+              credit_amount: lines.line16,
+              schedule_f_farm_id: rawInput.schedule_f_farm_id,
+              shop_plan_reference: rawInput.shop_plan_reference,
+              shop_plan_references: rawInput.offered_qhps.map((p) =>
+                p.shop_plan_reference
+              ),
+              subject_to_passive_activity_limit: false,
+            },
+          }),
+          output(f1040, { form8941_determined_credit: lines.line16 }),
+          output(schedule_f, {
+            form8941_premium_reductions: [{
+              farm_id: rawInput.schedule_f_farm_id,
+              credit_amount: lines.line16,
+            }],
+          }),
+        ],
+      };
     }
     if ("independent_members" in rawInput) {
       const joint = independentSpouseForm8941(rawInput);
@@ -858,7 +897,7 @@ class F8941Node extends TaxNode<typeof inputSchema> {
               ? {
                 group_business_references: rawInput.group_members.map((
                   member,
-                ) => member.schedule_c_business_reference),
+                ) => groupMemberReference(member)),
               }
               : {}),
             ...("offered_qhps" in rawInput
@@ -874,16 +913,39 @@ class F8941Node extends TaxNode<typeof inputSchema> {
         output(f1040, { form8941_determined_credit: lines.line16 }),
         output(schedule_c, {
           form8941_premium_reductions: "group_members" in rawInput
-            ? rawInput.group_members.map((member, index) => ({
-              business_reference: member.schedule_c_business_reference,
-              credit_amount:
-                commonControlForm8941Shares(rawInput).shares[index],
-            }))
+            ? rawInput.group_members.flatMap((member, index) =>
+              "schedule_c_business_reference" in member
+                ? [{
+                  business_reference: member.schedule_c_business_reference,
+                  credit_amount:
+                    commonControlForm8941Shares(rawInput).shares[index],
+                }]
+                : []
+            )
             : [{
               business_reference: rawInput.schedule_c_business_reference,
               credit_amount: lines.line16,
             }],
         }),
+        ...("group_members" in rawInput &&
+            rawInput.group_members.some((member) =>
+              "schedule_f_farm_id" in member
+            )
+          ? [output(schedule_f, {
+            form8941_premium_reductions: rawInput.group_members.flatMap((
+              member,
+              index,
+            ) =>
+              "schedule_f_farm_id" in member
+                ? [{
+                  farm_id: member.schedule_f_farm_id,
+                  credit_amount:
+                    commonControlForm8941Shares(rawInput).shares[index],
+                }]
+                : []
+            ),
+          })]
+          : []),
       ],
     };
   }

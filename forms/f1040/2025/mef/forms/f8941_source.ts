@@ -1,6 +1,7 @@
 import {
   calculateForm8941,
   commonControlForm8941Shares,
+  type FarmShopSource,
   independentSpouseForm8941,
   inputSchema,
 } from "../../../nodes/inputs/f8941/index.ts";
@@ -19,18 +20,16 @@ import {
 import { inputSchema as gInputSchema } from "../../../nodes/inputs/f1099g/index.ts";
 import { inputSchema as necInputSchema } from "../../../nodes/inputs/f1099nec/index.ts";
 
-function reconcileForm8941ScheduleF(
-  source: Extract<
-    ReturnType<typeof inputSchema.parse>,
-    { schedule_f_farm_id: string }
-  >,
+function reconcileFarmShopEmployer(
+  source: FarmShopSource,
   pending: Readonly<Record<string, unknown>>,
+  grossPremium: number,
+  reduction: number,
   filer?: FilerIdentity,
   appliedCredit?: number,
-) {
+): void {
   const scheduleF = scheduleFInputSchema.parse(pending.schedule_f);
   reconcileFarmSources(scheduleF);
-  const lines = calculateForm8941(source);
   const farm = scheduleF.schedule_fs.find((item) =>
     item.farm_id === source.schedule_f_farm_id
   );
@@ -69,11 +68,11 @@ function reconcileForm8941ScheduleF(
     (source.excluded_worker_reviews?.length ?? 0) !== 0 ||
     reductions?.length !== 1 ||
     reductions[0].farm_id !== source.schedule_f_farm_id ||
-    reductions[0].credit_amount !== lines.line16 ||
+    reductions[0].credit_amount !== reduction ||
     farm.line15_employee_benefits !==
-      source.other_schedule_f_employee_benefits + lines.line4 ||
+      source.other_schedule_f_employee_benefits + grossPremium ||
     projectScheduleFItems(scheduleF)[0].line15_employee_benefits !==
-      source.other_schedule_f_employee_benefits + lines.line4 - lines.line16 ||
+      source.other_schedule_f_employee_benefits + grossPremium - reduction ||
     w2.length !== payroll.length ||
     new Set(w2.map((row) => row.employee_ssn)).size !== w2.length ||
     new Set(w2.map((row) => row.payroll_record_reference)).size !== w2.length ||
@@ -132,7 +131,7 @@ function reconcileForm8941ScheduleF(
     farm.line4b_ag_program_payments_taxable !== g.amount ||
     farm.line8_other_income !== nec.amount ||
     (appliedCredit !== undefined && (!Number.isInteger(appliedCredit) ||
-      appliedCredit < 0 || appliedCredit > lines.line16)) ||
+      appliedCredit < 0 || appliedCredit > reduction)) ||
     (filer && (ownerSSN !== source.owner_ssn ||
       (source.proprietor_recipient === TS.T && filer.fullName &&
         filer.fullName !== source.owner_name)))
@@ -141,6 +140,26 @@ function reconcileForm8941ScheduleF(
       "Form 8941 farm payroll, SHOP or Schedule F source differs",
     );
   }
+}
+
+function reconcileForm8941ScheduleF(
+  source: Extract<
+    ReturnType<typeof inputSchema.parse>,
+    { schedule_f_farm_id: string }
+  >,
+  pending: Readonly<Record<string, unknown>>,
+  filer?: FilerIdentity,
+  appliedCredit?: number,
+) {
+  const lines = calculateForm8941(source);
+  reconcileFarmShopEmployer(
+    source,
+    pending,
+    lines.line4,
+    lines.line16,
+    filer,
+    appliedCredit,
+  );
   return {
     kind: "farm" as const,
     source,
@@ -266,9 +285,12 @@ export function reconcileForm8941ScheduleC(
   if ("group_members" in source) {
     const group = commonControlForm8941Shares(source);
     const reductions = scheduleC.form8941_premium_reductions;
+    const cMembers = source.group_members.filter((member) =>
+      "schedule_c_business_reference" in member
+    );
     if (
-      scheduleC.schedule_cs.length !== source.group_members.length ||
-      reductions?.length !== source.group_members.length ||
+      scheduleC.schedule_cs.length !== cMembers.length ||
+      reductions?.length !== cMembers.length ||
       group.shares.some((share) => share <= 0) ||
       (appliedCredit !== undefined &&
         (!Number.isInteger(appliedCredit) || appliedCredit < 0 ||
@@ -284,6 +306,16 @@ export function reconcileForm8941ScheduleC(
       throw new Error("Form 8941 common-control owner differs from filer");
     }
     source.group_members.forEach((member, index) => {
+      if ("schedule_f_farm_id" in member) {
+        reconcileFarmShopEmployer(
+          member,
+          pending,
+          group.memberPremiums[index],
+          group.shares[index],
+          filer,
+        );
+        return;
+      }
       const business = scheduleC.schedule_cs.find((item) =>
         item.business_reference === member.schedule_c_business_reference
       );
@@ -337,7 +369,9 @@ export function reconcileForm8941ScheduleC(
       lines,
       planReferences: undefined,
       groupBusinessReferences: source.group_members.map((member) =>
-        member.schedule_c_business_reference
+        "schedule_f_farm_id" in member
+          ? member.schedule_f_farm_id
+          : member.schedule_c_business_reference
       ),
       independentSpouseBusinessReferences: undefined,
       independentSpouseCredits: undefined,

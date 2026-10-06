@@ -133,7 +133,10 @@ export function form8941CommonControlInputs() {
       { ...second, no_other_trades_or_common_control_verified: false },
     ],
   });
-  if (!("group_members" in source)) {
+  if (
+    !("group_members" in source) ||
+    !("schedule_c_business_reference" in source.group_members[1])
+  ) {
     throw new Error("Expected common-control Form 8941 source");
   }
   const lines = calculateForm8941(source);
