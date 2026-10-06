@@ -79,6 +79,7 @@ export function reconcileForm4972Collection(
       ) ||
       !Object.entries(sourceForm).every(([key, value]) =>
         key === "source_document_references" || key === "form4972_plan" ||
+        key === "recipient_ssn" ||
         sameValue(form[key], value)
       )
     ) {
@@ -92,6 +93,10 @@ export function reconcileForm4972Collection(
     );
     if (
       items.length !== refs.length ||
+      (sourceForm.recipient_ssn !== undefined &&
+        items.some((item) =>
+          item.recipient_ssn !== sourceForm.recipient_ssn
+        )) ||
       items.some((item) =>
         !item.source_document_reference ||
         used.has(item.source_document_reference)

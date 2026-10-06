@@ -33,6 +33,14 @@ export function reconcileForm4972Multiple1099R(
     (sum, item) => sum + (item.box2a_taxable_amount ?? 0),
     0,
   );
+  const death = form.death_benefit_allocation;
+  const estate = form.partial_estate_tax_source;
+  const hasDeath = (form.death_benefit_exclusion ?? 0) > 0;
+  const hasEstate = (form.federal_estate_tax ?? 0) > 0;
+  const electedRecipient =
+    death?.recipients.filter((row) =>
+      row.recipient_ssn === owner?.ssn.replaceAll("-", "")
+    ) ?? [];
   if (
     !owner ||
     (partialBeneficiary
@@ -106,9 +114,31 @@ export function reconcileForm4972Multiple1099R(
         (annuityShare ?? null)) ||
     (nua > 0 &&
       (form.elect_include_nua !== true ||
-        form.elect_capital_gain !== true || gain <= 0 ||
         !Number.isSafeInteger(nua * gain / taxable))) ||
     (nua === 0 && form.elect_include_nua === true) ||
+    ((hasDeath || hasEstate) && !partialBeneficiary) ||
+    (hasDeath &&
+      (!death ||
+        death.participant_ssn !== plan.participant_ssn ||
+        death.elected_recipient_ssn !== owner?.ssn.replaceAll("-", "") ||
+        electedRecipient.length !== 1 ||
+        electedRecipient[0].share_pct !== share ||
+        electedRecipient[0].excluded_amount !==
+          form.death_benefit_recipient_allocated_amount ||
+        !form.death_benefit_exclusion_source_reference ||
+        refs.includes(form.death_benefit_exclusion_source_reference))) ||
+    (hasEstate &&
+      (!estate ||
+        estate.full_distribution_taxable_amount !==
+          (taxable + nua) * 100 / share ||
+        estate.full_distribution_federal_estate_tax !==
+          form.federal_estate_tax ||
+        estate.recipient_allocated_federal_estate_tax !==
+          form.federal_estate_tax! * share / 100 ||
+        [
+          estate.administrator_statement_reference,
+          estate.estate_tax_return_reference,
+        ].some((reference) => !reference || refs.includes(reference)))) ||
     source.success &&
       source.data.f1099rs.some((item) =>
         item.exclude_4972 !== true &&

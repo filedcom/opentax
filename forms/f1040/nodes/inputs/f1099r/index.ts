@@ -1711,6 +1711,7 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         source_document_references: refs,
         form4972_plan: plan,
         recipient: first.ts,
+        ...(partialBeneficiary ? { recipient_ssn: first.recipient_ssn } : {}),
         ...(partialBeneficiary ? { recipient_share_pct: share } : {}),
         lump_sum_amount: lumpItems.reduce(
           (sum, item) => sum + item.box2a_taxable_amount!,

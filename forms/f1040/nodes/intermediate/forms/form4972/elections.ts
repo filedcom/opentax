@@ -74,6 +74,21 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
       }
       used.add(matching);
       const source = sources[matching];
+      if (source.multiple_1099r && election.death_benefit_allocation) {
+        const plan = source.form4972_plan as
+          | Record<string, unknown>
+          | undefined;
+        if (
+          election.death_benefit_allocation.participant_ssn !==
+            plan?.participant_ssn ||
+          election.death_benefit_allocation.elected_recipient_ssn !==
+            source.recipient_ssn
+        ) {
+          throw new Error(
+            "Form 4972 multiple-copy death allocation must identify the issued plan participant and recipient",
+          );
+        }
+      }
       const owner = source.recipient;
       if (owner !== "T" && owner !== "S") {
         throw new Error("Form 4972 source needs a taxpayer or spouse owner");
