@@ -2,6 +2,16 @@ import { z } from "zod";
 
 const sourceUrl = "https://www.irs.gov/instructions/i8941";
 
+export const coveredDependentSchema = z.object({
+  dependent_reference: z.string().trim().min(1),
+  dependent_ssn: z.string().regex(/^\d{9}$/),
+  relationship_to_employee: z.enum(["spouse", "child"]),
+  eligible_plan_dependent_confirmed: z.literal(true),
+  enrollment_source_reference: z.string().trim().min(1),
+}).strict();
+type CoveredDependent = z.infer<typeof coveredDependentSchema>;
+export const coverageTierSchema = z.enum(["employee_only", "family"]);
+
 export const enrollmentPeriodSchema = z.object({
   first_month: z.number().int().min(1).max(12),
   last_month: z.number().int().min(1).max(12),
@@ -45,8 +55,10 @@ export function enrollmentMonthCount(
 export function employeeTaxYearPremium(employee: {
   readonly full_year_employee_only_shop_premium?: number;
   readonly tax_year_employee_only_shop_premium?: number;
+  readonly tax_year_shop_premium?: number;
 }): number {
-  return employee.tax_year_employee_only_shop_premium ??
+  return employee.tax_year_shop_premium ??
+    employee.tax_year_employee_only_shop_premium ??
     employee.full_year_employee_only_shop_premium!;
 }
 
@@ -59,7 +71,9 @@ const monthlyPremiumSchema = z.object({
   invoice_date: z.string().optional(),
   payment_date: z.string().optional(),
   month: z.number().int().min(1).max(12),
-  employee_only_coverage_verified: z.literal(true),
+  employee_only_coverage_verified: z.literal(true).optional(),
+  coverage_tier: coverageTierSchema.optional(),
+  covered_dependent_references: z.array(z.string().trim().min(1)).optional(),
   billed_premium: z.number().int().positive(),
   employer_payment: z.number().int().positive(),
   shop_invoice_reference: z.string().trim().min(1),
@@ -72,6 +86,7 @@ export const shopReviewSchema = z.object({
   irs_table_state: z.string().regex(/^[A-Z]{2}$/),
   irs_table_county: z.string().trim().min(1),
   irs_table_employee_only_average_premium: z.number().int().positive(),
+  irs_table_family_average_premium: z.number().int().positive().optional(),
   table_review_reference: z.string().trim().min(1),
   shop_marketplace_identifier: z.string().trim().min(1),
   shop_plan_reference: z.string().trim().min(1),
@@ -87,6 +102,8 @@ export const shopReviewSchema = z.object({
       employee_reference: z.string().trim().min(1),
       enrollment_and_payroll_record_reference: z.string().trim().min(1),
       enrollment_period: enrollmentPeriodSchema.optional(),
+      coverage_tier: coverageTierSchema.optional(),
+      covered_dependents: z.array(coveredDependentSchema).max(10).optional(),
       monthly_premiums: z.array(monthlyPremiumSchema).min(1).max(12),
     }).strict(),
   ).min(1).max(24),
@@ -105,6 +122,9 @@ interface EmployeeWorksheetSource {
   readonly irs_2025_rating_area_average_premium: number;
   readonly full_year_employee_only_shop_premium?: number;
   readonly tax_year_employee_only_shop_premium?: number;
+  readonly tax_year_shop_premium?: number;
+  readonly coverage_tier?: "employee_only" | "family";
+  readonly covered_dependents?: readonly CoveredDependent[];
   readonly enrollment_period?: EnrollmentPeriod;
   readonly employer_premium_paid: number;
 }
@@ -124,11 +144,14 @@ interface ReviewSource {
 export function verifyForm8941ShopReview(source: ReviewSource): void {
   const review = source.shop_review;
   // The official 2025 table identifies Albany County, NY at $9,358 for
-  // employee-only coverage. Other rows need their own reviewed source values.
+  // employee-only coverage and $24,527 for family coverage. Other rows need
+  // their own reviewed source values.
   if (
     review.irs_table_state !== "NY" ||
     review.irs_table_county !== "Albany" ||
-    review.irs_table_employee_only_average_premium !== 9358
+    review.irs_table_employee_only_average_premium !== 9358 ||
+    (review.irs_table_family_average_premium !== undefined &&
+      review.irs_table_family_average_premium !== 24527)
   ) {
     throw new Error("Form 8941 rating-area table row is not supported");
   }
@@ -149,6 +172,10 @@ export function verifyForm8941ShopReview(source: ReviewSource): void {
   const seenEmployees = new Set<string>();
   const seenSSNs = new Set<string>();
   const seenDocuments = new Set<string>();
+  const seenDependents = new Set<string>();
+  const coveredSSNs = new Set(source.employees.map((e) => e.employee_ssn));
+  coveredSSNs.add(source.owner_ssn);
+  const tierMonthPremiums = new Map<string, number>();
   for (const item of review.employee_premium_reviews) {
     const employee = employees.get(item.employee_reference);
     if (!employee || seenEmployees.has(item.employee_reference)) {
@@ -184,9 +211,44 @@ export function verifyForm8941ShopReview(source: ReviewSource): void {
       employee.rating_area_state !== review.irs_table_state ||
       employee.rating_area_county !== review.irs_table_county ||
       employee.irs_2025_rating_area_average_premium !==
-        review.irs_table_employee_only_average_premium
+        (employee.coverage_tier === "family"
+          ? review.irs_table_family_average_premium
+          : review.irs_table_employee_only_average_premium)
     ) {
       throw new Error("Form 8941 employee rating area differs from IRS table");
+    }
+    const dependents = employee.covered_dependents ?? [];
+    if (employee.coverage_tier) {
+      if (
+        item.coverage_tier !== employee.coverage_tier ||
+        JSON.stringify(item.covered_dependents) !==
+          JSON.stringify(employee.covered_dependents) ||
+        (employee.coverage_tier === "family"
+          ? dependents.length === 0
+          : dependents.length !== 0)
+      ) {
+        throw new Error(
+          "Form 8941 family enrollment tier or dependent ownership differs",
+        );
+      }
+      for (const dependent of dependents) {
+        if (
+          seenDependents.has(dependent.dependent_reference) ||
+          coveredSSNs.has(dependent.dependent_ssn) ||
+          seenDocuments.has(dependent.enrollment_source_reference)
+        ) {
+          throw new Error(
+            "Form 8941 dependent enrollment identity or source is reused",
+          );
+        }
+        seenDependents.add(dependent.dependent_reference);
+        coveredSSNs.add(dependent.dependent_ssn);
+        seenDocuments.add(dependent.enrollment_source_reference);
+      }
+    } else if (
+      item.coverage_tier !== undefined || item.covered_dependents !== undefined
+    ) {
+      throw new Error("Form 8941 family evidence needs identified tier source");
     }
     const monthCount = enrollmentMonthCount(employee);
     if (
@@ -208,6 +270,36 @@ export function verifyForm8941ShopReview(source: ReviewSource): void {
       ) {
         throw new Error(
           "Form 8941 monthly invoice or payment ownership differs",
+        );
+      }
+      if (employee.coverage_tier) {
+        const expected = dependents.map((d) => d.dependent_reference).sort();
+        const actual = [...(month.covered_dependent_references ?? [])].sort();
+        if (
+          month.coverage_tier !== employee.coverage_tier ||
+          month.covered_dependent_references === undefined ||
+          JSON.stringify(actual) !== JSON.stringify(expected) ||
+          month.employee_only_coverage_verified !== undefined
+        ) {
+          throw new Error(
+            "Form 8941 monthly covered tier or dependents differ from enrollment",
+          );
+        }
+        const key = `${employee.coverage_tier}:${month.month}`;
+        const existing = tierMonthPremiums.get(key);
+        if (existing !== undefined && existing !== month.billed_premium) {
+          throw new Error(
+            "Form 8941 composite tier monthly premium differs across employees",
+          );
+        }
+        tierMonthPremiums.set(key, month.billed_premium);
+      } else if (
+        month.employee_only_coverage_verified !== true ||
+        month.coverage_tier !== undefined ||
+        month.covered_dependent_references !== undefined
+      ) {
+        throw new Error(
+          "Form 8941 employee-only monthly coverage evidence differs",
         );
       }
       if (employee.enrollment_period) {

@@ -8,6 +8,8 @@ import { f1040 } from "../../outputs/f1040/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import { f3800 } from "../f3800/index.ts";
 import {
+  coverageTierSchema,
+  coveredDependentSchema,
   employeeTaxYearPremium,
   enrollmentMonthCount,
   enrollmentPeriodSchema,
@@ -78,6 +80,29 @@ export const inputSchema = z.union([
       }).strict(),
     ).min(1).max(24),
   }).strict(),
+  sourceSchema.extend({
+    identified_shop_tier_calendar_month_coverage_confirmed: z.literal(true),
+    qualified_shop_health_plan_confirmed: z.literal(true),
+    qualified_shop_plan_source_reference: z.string().trim().min(1),
+    no_wellness_or_state_law_contribution_adjustment_confirmed: z.literal(true),
+    qualifying_arrangement: z.literal("uniform_percentage_each_tier"),
+    insurer_billing_method: z.literal("composite_tier_rate"),
+    no_salary_reduction_or_tobacco_surcharge_in_employer_premiums_confirmed: z
+      .literal(true),
+    all_enrollment_invoice_payment_records_identified_confirmed: z.literal(
+      true,
+    ),
+    employees: z.array(
+      employeeSchema.extend({
+        enrollment_period: enrollmentPeriodSchema,
+        tax_year_shop_premium: z.number().int().positive(),
+        coverage_tier: coverageTierSchema,
+        covered_dependents_all_enrolled_for_employee_period_confirmed: z
+          .literal(true),
+        covered_dependents: z.array(coveredDependentSchema).max(10),
+      }).strict(),
+    ).min(1).max(24),
+  }).strict(),
 ]);
 
 export type F8941Input = z.infer<typeof inputSchema>;
@@ -129,9 +154,7 @@ export function calculateForm8941(raw: unknown): Form8941Lines {
     enrollmentRecords.add(employee.enrollment_and_payroll_record_reference);
     if (
       employee.rating_area_county !== ratingArea.rating_area_county ||
-      employee.rating_area_state !== ratingArea.rating_area_state ||
-      employee.irs_2025_rating_area_average_premium !==
-        ratingArea.irs_2025_rating_area_average_premium
+      employee.rating_area_state !== ratingArea.rating_area_state
     ) {
       throw new Error("Form 8941 bounded SHOP plan needs one rating area");
     }

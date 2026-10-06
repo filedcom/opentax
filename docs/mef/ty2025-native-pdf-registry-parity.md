@@ -228,3 +228,7 @@ The existing Form8941 descriptor now has public owned SHOP/payroll full/partial/
 ## October 6 Form8941 part-year packet review
 
 The additional held fixture `single-shop-part-year-enrollment` retains annual owned payroll and dated enrollment/invoice/payment months. Full/partial/zero tax-use packets have complete local2025v5.4XSD proof and all67 additional pages reviewed. Descriptors remain150 native/116 PDF. The actual planner at this base reports208 fixtures,113 unique registered PDF keys,92 expected keys and21 uncovered keys. See [the sourced month/rounding rule and precise limits](ty2025-form8941-gap.md). No family/common-control or authentication/acceptance branch is opened by this evidence.
+
+## October 6 Form8941 family packet review
+
+`single-shop-mixed-family-tiers` retains employee/dependent ownership and dated monthly composite-tier invoices/payments. Five actual family/mixed full-year/part-year packets have complete local TY2025 v5.4 XSD proof and all 113 additional pages reviewed. Descriptors remain 150 native/116 PDF. The planner reports 212 fixtures, 113 unique registered PDF keys, 92 expected keys and 21 uncovered keys. [The gap record](ty2025-form8941-gap.md) bounds this to one uniform-percentage composite plan with unchanged spouse/child membership; other family arrangements, common control, subsidies and acceptance remain open.

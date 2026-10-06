@@ -1,3 +1,4 @@
+import { form8941FamilyReviewFixture } from "./review-8941-family.fixture.ts";
 import { form8941PartYearReviewFixture } from "./review-8941-partyear.fixture.ts";
 import { form8941OwnedReviewFixture } from "./review-8941-owned.fixture.ts";
 import { jointPatronFixture } from "./review-8995a-patron-joint.fixture.ts";
@@ -9038,6 +9039,7 @@ const educationBase = basePdfReviewFixtures.find((fixture) =>
 export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
   form8941OwnedReviewFixture(),
   form8941PartYearReviewFixture(),
+  form8941FamilyReviewFixture(),
   medicareMsaReviewFixture(),
   mfsPrimaryAccountingSstbFixture(accountingSstbFixture(
     basePdfReviewFixtures.find((fixture) =>

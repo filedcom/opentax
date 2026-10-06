@@ -227,3 +227,69 @@ Deno.test("Form8941 actual annual wages trigger the wage ceiling despite short e
   });
   assertThrows(() => calculateForm8941(source), Error, "wage ceiling");
 });
+
+Deno.test("Form8941 sourced Albany family and mixed tier premiums use their own table columns", async () => {
+  const { form8941FamilySource } = await import(
+    "../../../2025/pdf/review-8941-family.fixture.ts"
+  );
+  const family = calculateForm8941(form8941FamilySource(true));
+  assertEquals(family.line1, 5);
+  assertEquals(family.line2, 5);
+  assertEquals(family.line3, 20000);
+  assertEquals(family.line4, 72000);
+  assertEquals(family.line5, 61318);
+  assertEquals(family.line16, 30659);
+  const mixed = calculateForm8941(form8941FamilySource());
+  assertEquals(mixed.line4, 55200);
+  assertEquals(mixed.line5, 46149);
+  assertEquals(mixed.line16, 23075);
+  const months = calculateForm8941(form8941FamilySource(false, true));
+  assertEquals(months.line2, 3);
+  assertEquals(months.line3, 25000);
+  assertEquals(months.line4, 32400);
+  assertEquals(months.line5, 27162);
+  assertEquals(months.line16, 13581);
+});
+Deno.test("Form8941 family rejects mismatched tier table and dependent enrollment allocations", async () => {
+  const { form8941FamilySource } = await import(
+    "../../../2025/pdf/review-8941-family.fixture.ts"
+  );
+  const table = form8941FamilySource();
+  table.shop_review.irs_table_family_average_premium = 9358;
+  assertThrows(() => calculateForm8941(table), Error, "table row");
+  const membership = form8941FamilySource();
+  membership.shop_review.employee_premium_reviews[0].monthly_premiums[0]
+    .covered_dependent_references.push("other-employee-dependent");
+  assertThrows(() => calculateForm8941(membership), Error, "dependents differ");
+  const reused = form8941FamilySource();
+  reused.employees[2].covered_dependents[0].dependent_ssn =
+    reused.employees[0].covered_dependents[0].dependent_ssn;
+  reused.shop_review.employee_premium_reviews[2].covered_dependents[0]
+    .dependent_ssn = reused.employees[0].covered_dependents[0].dependent_ssn;
+  assertThrows(() => calculateForm8941(reused), Error, "source is reused");
+});
+Deno.test("Form8941 composite tier billing reconciles equal tier/month premiums and uniform employer share", async () => {
+  const { form8941FamilySource } = await import(
+    "../../../2025/pdf/review-8941-family.fixture.ts"
+  );
+  const source = form8941FamilySource();
+  const invoice =
+    source.shop_review.employee_premium_reviews[2].monthly_premiums[0];
+  invoice.billed_premium += 20;
+  invoice.employer_payment += 10;
+  source.employees[2].tax_year_shop_premium += 20;
+  source.employees[2].employer_premium_paid += 10;
+  assertThrows(
+    () => calculateForm8941(source),
+    Error,
+    "composite tier monthly premium",
+  );
+  const payment = form8941FamilySource();
+  payment.shop_review.employee_premium_reviews[0].monthly_premiums[0]
+    .employer_payment = 500;
+  assertThrows(
+    () => calculateForm8941(payment),
+    Error,
+    "monthly employer contribution",
+  );
+});
