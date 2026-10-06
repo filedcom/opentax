@@ -4877,3 +4877,14 @@ Main `15d49d055a287f74e442d7b0affa52c0c61d94d3`: exact typed Deno test command w
 ## Actual controlled-group WOTC main integration
 
 Main1f42620dd:19 typed checks passed,0 failed (1m46s), with real Poppler; actual controlled-group, independent spouse/both-owner and primary-owner WOTC plus generic owner-SE sources. Log `/tmp/opentax-controlled-main-integration.log`, SHA256 `84e97048d5206cc754a58393136edff72866b3797eb58f83156ab2b1342da663`. Three full XSD/replayed packets/all93 reviewed pages copied into ignored main research. This bounded completion does not close wider group source authentication or credit/owner parents. Running fullbc6cafec6 predates these production changes.
+
+
+## Optional farm, remarried MFJ and seasonal SHOP main integration
+
+Main `173d3739b`:48 typed checks passed,0 failed (2m22s), with real Poppler. Exact command:
+
+```sh
+deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/2025/schedule-se-owned-farm-optional.test.ts forms/f1040/2025/pdf/form8863-remarried-mfj-parent.test.ts forms/f1040/e2e/form8941_workers_2025.test.ts forms/f1040/2025/form8995a_controlled_wotc.test.ts forms/f1040/2025/form8995a_joint_owner_wotc.test.ts forms/f1040/2025/mef/forms/schedule_se.test.ts scripts/ty2025-pdf-review-scope.test.ts
+```
+
+Log `/tmp/opentax-farm-family-shop-controlled-main.log`, SHA256 `e4d991f371a8237bbe3e53a149fb1c6efb1155c9310fb48bba1162e984c81267`. Optional-farm nine full-XSD/replayed packets/all123 reviewed pages, remarried MFJ six full-XSD packets/all36 reviewed pages and seasonal SHOP three full-XSD packets/all69 reviewed pages are retained in ignored main research. Actual planner253 fixtures/116 descriptors/113 keys/95 covered/18 uncovered. This combined check includes controlled and independent joint-owner WOTC compatibility. The still-running full `bc6cafec6` batch predates these production/source repairs; latest-head full regression, broader parent completion and IRS acceptance remain unproven.
