@@ -6,6 +6,7 @@ import {
   retainedFishingProfit,
 } from "./schedule_j_source_return.ts";
 import { assertMultiBusinessInvestmentSources } from "./mef/forms/f8995-investment.ts";
+import { assertOwnedScheduleSE } from "./schedule-se-owner-source.ts";
 
 /** Final source check shared by native and PDF for two distinct Part II rows. */
 export function assertMixedFishingQbiReturn(
@@ -23,9 +24,15 @@ export function assertMixedFishingQbiReturn(
   const s1 = pending.schedule1 as Record<string, unknown> | undefined;
   const filed = pending.f1040 as Record<string, unknown> | undefined;
   const owner = String(filed?.taxpayer_ssn ?? "").replace(/\D/g, "");
+  const joint = source.joint_se_source !== undefined;
+  const owned = joint
+    ? assertOwnedScheduleSE(pending as Record<string, Record<string, unknown>>)
+    : undefined;
   if (
     retainedFishingProfit({
-      general: { taxpayer_ssn: owner },
+      general: joint
+        ? pending.general
+        : { taxpayer_ssn: owner, filing_status: "single" },
       schedule_c: [source.schedule_c],
     }) !== calculated.profits[0]
   ) {
@@ -34,7 +41,13 @@ export function assertMixedFishingQbiReturn(
     );
   }
   if (
-    owner !== source.owner_ssn || c?.length !== 1 || f?.length !== 1 ||
+    (joint
+      ? !owned || JSON.stringify(owned.source) !==
+          JSON.stringify(source.joint_se_source) ||
+        owned.deduction !== source.se_tax_deduction ||
+        filed?.filing_status !== "mfj"
+      : owner !== source.owner_ssn || filed?.filing_status !== "single") ||
+    c?.length !== 1 || f?.length !== 1 ||
     !isDeepStrictEqual(c[0], source.schedule_c) ||
     !isDeepStrictEqual(f[0], source.schedule_f) ||
     s1?.line3_schedule_c !== calculated.profits[0] ||
@@ -66,7 +79,7 @@ export function assertMixedFishingQbiReturn(
     investment.interest !== 0 || investment.capital !== 0 ||
     filed?.line9_total_income !== businessIncome + investment.ordinary ||
     filed?.line11_agi !== businessIncome + investment.ordinary -
-      source.se_tax_deduction ||
+        source.se_tax_deduction ||
     (filed?.line1a_wages ?? 0) !== 0
   ) {
     throw new Error(

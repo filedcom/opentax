@@ -12,6 +12,10 @@ import {
   itemSchema as scheduleFItemSchema,
 } from "../schedule_f/model.ts";
 import { scheduleSELines } from "../schedule_se/calculation.ts";
+import {
+  ownedScheduleSE,
+  ownerSourcesSchema,
+} from "../schedule_se/owner-calculation.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import {
   calculateOneBusiness8995ALines,
@@ -19,7 +23,8 @@ import {
 } from "./index.ts";
 
 export const mixedFishingQbiSourceSchema = z.object({
-  owner_ssn: z.string().regex(/^\d{9}$/),
+  owner_ssn: z.string().regex(/^\d{9}$/).optional(),
+  joint_se_source: ownerSourcesSchema.optional(),
   schedule_c: scheduleCItemSchema,
   schedule_f: scheduleFItemSchema,
   se_tax_deduction: z.number().int().nonnegative(),
@@ -32,14 +37,19 @@ export function calculateMixedFishingQbi(input: Form8995AInput) {
   );
   const c = source.schedule_c, f = source.schedule_f;
   const profits = [scheduleCProfit(c), scheduleFProfit(f)];
-  const se = scheduleSELines({
+  const joint = source.joint_se_source !== undefined;
+  const se = joint ? undefined : scheduleSELines({
     net_profit_schedule_c: profits[0],
     net_profit_schedule_f: profits[1],
   }, CONFIG_BY_YEAR[2025].ssWageBase);
-  const allocations = allocateSharedSeDeduction(
-    profits,
-    source.se_tax_deduction,
-  );
+  const owned = joint
+    ? ownedScheduleSE(source.joint_se_source!, CONFIG_BY_YEAR[2025].ssWageBase)
+    : undefined;
+  const allocations = owned
+    ? [c.proprietor_recipient, f.proprietor_recipient].map((recipient) =>
+      owned.instances.find((row) => row.recipient === recipient)?.line13 ?? -1
+    )
+    : allocateSharedSeDeduction(profits, source.se_tax_deduction);
   const reviews = [
     c.qbi_se_tax_allocation_review,
     f.qbi_se_tax_allocation_review,
@@ -50,16 +60,36 @@ export function calculateMixedFishingQbi(input: Form8995AInput) {
     f.line_d_ein?.replace(/\D/g, ""),
   ];
   if (
-    input.filing_status !== "single" ||
-    input.taxable_income <= 197_300 || input.taxable_income >= 247_300 ||
-    !Number.isInteger(input.taxable_income) || !se ||
-    se.line13 !== source.se_tax_deduction ||
+    (joint
+      ? input.filing_status !== "mfj" ||
+        input.taxable_income <= 394_600 || input.taxable_income >= 494_600 ||
+        source.owner_ssn !== undefined || !owned ||
+        owned.source.businesses.length !== 2 ||
+        owned.instances.length !== 2 ||
+        owned.deduction !== source.se_tax_deduction ||
+        c.proprietor_recipient === f.proprietor_recipient ||
+        !["T", "S"].includes(c.proprietor_recipient ?? "") ||
+        !["T", "S"].includes(f.proprietor_recipient ?? "") ||
+        [c.business_reference, f.farm_id].some((reference, index) => {
+          const business = owned.source.businesses.find((row) =>
+            row.source_reference === reference
+          );
+          return !business || business.recipient !==
+              [c.proprietor_recipient, f.proprietor_recipient][index] ||
+            business.kind !== ["schedule_c", "schedule_f"][index] ||
+            business.net_profit !== profits[index];
+        }) || allocations.some((value) => value < 0)
+      : input.filing_status !== "single" ||
+        input.taxable_income <= 197_300 || input.taxable_income >= 247_300 ||
+        source.owner_ssn === undefined || !se ||
+        se.line13 !== source.se_tax_deduction) ||
+    !Number.isInteger(input.taxable_income) ||
     profits.some((p) => !Number.isSafeInteger(p) || p <= 0) ||
     !c.business_reference || !f.farm_id || c.business_reference === f.farm_id ||
     names.some((name) => !name) ||
     eins.some((ein) => !/^\d{9}$/.test(ein ?? "")) ||
-    eins[0] === eins[1] || c.proprietor_recipient !== "T" ||
-    f.proprietor_recipient !== "T" ||
+    eins[0] === eins[1] || (!joint &&
+      (c.proprietor_recipient !== "T" || f.proprietor_recipient !== "T")) ||
     c.line_b_business_code !== "114110" ||
     c.line_g_material_participation !== true ||
     f.line_e_material_participation !== true ||
@@ -69,7 +99,7 @@ export function calculateMixedFishingQbi(input: Form8995AInput) {
     (c.qbi_w2_wages ?? 0) !== 0 || (f.qbi_w2_wages ?? 0) !== 0 ||
     (c.qbi_unadjusted_basis ?? 0) !== 0 ||
     (f.qbi_unadjusted_basis ?? 0) !== 0 ||
-    reviews.some((review, i) =>
+    (!joint && reviews.some((review, i) =>
       !review ||
       review.deduction_amount !== allocations[i] ||
       review.allocation_method !==
@@ -78,7 +108,7 @@ export function calculateMixedFishingQbi(input: Form8995AInput) {
       review.consistently_applied_and_books_agree_confirmed !== true ||
       review.all_businesses_included_confirmed !== true ||
       review.no_aggregation_confirmed !== true
-    ) ||
+    )) ||
     input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     input.patron_of_specified_cooperative !== false ||
     input.business_filing_details || input.single_schedule_c_source ||
@@ -111,7 +141,7 @@ export function calculateMixedFishingQbi(input: Form8995AInput) {
       one_non_sstb_business_confirmed: true as const,
       no_aggregation_confirmed: true as const,
       no_ptp_or_loss_carryforward_confirmed: true as const,
-      qualified_dividends_zero_confirmed: false,
+      qualified_dividends_zero_confirmed: joint,
       qbi_wages_ubia_sources_confirmed: true as const,
       taxable_income_before_qbi_confirmed: true as const,
     };

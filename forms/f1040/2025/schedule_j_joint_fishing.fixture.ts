@@ -62,3 +62,23 @@ export function scheduleJJointFishingInputs(
   input.schedule_j.tax_treatment.year2025.has_qualified_dividends = false;
   return input;
 }
+
+/** Above the MFJ §199A threshold, retaining both actual owner businesses. */
+export function scheduleJJointFishingAdvancedInputs(
+  fishingOwner: "T" | "S" = "S",
+): Record<string, unknown> {
+  const input = scheduleJJointFishingInputs(fishingOwner) as Record<
+    string,
+    any
+  >;
+  const c = input.schedule_c[0];
+  const proof = c.schedule_j_fishing_evidence.retained_catch_ledger;
+  const ledger = JSON.parse(atob(proof.bytes_base64));
+  ledger.sales[0].amount = 220_000;
+  c.line_1_gross_receipts = 220_000;
+  const bytes = new TextEncoder().encode(JSON.stringify(ledger));
+  proof.bytes_base64 = btoa(String.fromCharCode(...bytes));
+  proof.sha256 = createHash("sha256").update(bytes).digest("hex");
+  input.schedule_f.schedule_fs[0].line2_sales_products_raised = 300_000;
+  return input;
+}

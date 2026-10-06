@@ -278,6 +278,25 @@ function jointFishingFarmOwners(
       );
     }
   }
+  if (pending.form8995a !== undefined) {
+    const advanced = record(pending.form8995a);
+    const source = record(advanced.mixed_fishing_qbi_source);
+    if (
+      advanced.filing_status !== "mfj" ||
+      source.se_tax_deduction !==
+        instances.reduce((sum, v) => sum + total(record(v).line13), 0) ||
+      total(advanced.qbi) !==
+        businesses.reduce((sum, v) => sum + total(record(v).net_profit), 0) -
+          total(source.se_tax_deduction) ||
+      JSON.stringify(source.joint_se_source) !==
+        JSON.stringify(record(pending.form8995).joint_se_source)
+    ) {
+      throw new Error(
+        "Schedule J advanced joint QBI differs from actual owned C/F and half-SE",
+      );
+    }
+    return;
+  }
   const qbi = record(pending.form8995);
   const rows = qbi.joint_owner_filing_rows;
   if (

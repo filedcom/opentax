@@ -384,7 +384,8 @@ function reconcileReturn(
       !fields.sstb_filing_details &&
       !(fields.filing_status === NodeFilingStatus.MFJ &&
         (fields.patron_business_source || fields.single_schedule_c_source ||
-          fields.wotc_business_sources || fields.farm_wotc_filing_source)))
+          fields.wotc_business_sources || fields.farm_wotc_filing_source ||
+          fields.mixed_fishing_qbi_source?.joint_se_source)))
   ) {
     throw new Error("Form 8995-A filing status differs from the return header");
   }

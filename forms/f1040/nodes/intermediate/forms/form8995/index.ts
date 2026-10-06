@@ -411,22 +411,69 @@ function advancedFormOutput(
 
   const c = input.schedule_c_qbi_businesses?.[0];
   const f = input.schedule_f_qbi_businesses?.[0];
+  const jointFishing = input.filing_status === FilingStatus.MFJ &&
+    taxableIncome > CONFIG_BY_YEAR[2025].qbiThresholdMfj &&
+    taxableIncome < CONFIG_BY_YEAR[2025].qbiThresholdMfj +
+        CONFIG_BY_YEAR[2025].qbiPhaseInRange &&
+    input.joint_se_source !== undefined;
   if (
     input.schedule_c_qbi_businesses?.length === 1 &&
     input.schedule_f_qbi_businesses?.length === 1 && c && f &&
     c.source_schedule_c.schedule_j_fishing_evidence &&
-    taxableIncome > 197_300 && taxableIncome < 247_300 &&
-    c.source_schedule_c.qbi_se_tax_allocation_review &&
-    farmItemSchema.parse(f.source_schedule_f).qbi_se_tax_allocation_review
+    (jointFishing ||
+      (taxableIncome > 197_300 && taxableIncome < 247_300 &&
+        c.source_schedule_c.qbi_se_tax_allocation_review &&
+        farmItemSchema.parse(f.source_schedule_f).qbi_se_tax_allocation_review))
   ) {
-    const reviewed = mixedScheduleCFLines(input, CONFIG_BY_YEAR[2025]);
-    const rows = reviewed?.multi_business_filing_rows as
-      | { qbi: number }[]
-      | undefined;
+    const owned = jointFishing
+      ? ownedScheduleSE(
+        input.joint_se_source!,
+        CONFIG_BY_YEAR[2025].ssWageBase,
+      )
+      : undefined;
+    const reviewed = jointFishing ? undefined : mixedScheduleCFLines(
+      input,
+      CONFIG_BY_YEAR[2025],
+    );
+    const rows = jointFishing
+      ? [c, f].map((business) => {
+        const recipient = business === c
+          ? c.source_schedule_c.proprietor_recipient
+          : farmItemSchema.parse(f.source_schedule_f).proprietor_recipient;
+        const half = owned?.instances.find((row) => row.recipient === recipient)
+          ?.line13;
+        if (half === undefined) {
+          throw new Error(
+            "Joint fishing advanced QBI needs both actual owner half-SE amounts",
+          );
+        }
+        return { qbi: roundSignedQbiDollars(business.qbi - half) };
+      })
+      : reviewed?.multi_business_filing_rows as
+        | { qbi: number }[]
+        | undefined;
     if (
       !rows || rows.length !== 2 || !input.taxpayer_ssn ||
       sumField(input.w2_wages) !== 0 ||
-      sumField(input.unadjusted_basis) !== 0
+      sumField(input.unadjusted_basis) !== 0 ||
+      (jointFishing &&
+        (!input.spouse_ssn || !owned ||
+          owned.deduction !== sumField(input.se_tax_deduction) ||
+          input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+          input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+          sumField(input.qbi_from_schedule_c) !== c.qbi ||
+          sumField(input.qbi_from_schedule_f) !== f.qbi ||
+          sumField(input.qbi) !== 0 || sumField(input.sstb_qbi) !== 0 ||
+          qbiCapitalTotal(input) !== 0 ||
+          sumField(input.se_health_insurance_deduction) !== 0 ||
+          sumField(input.retirement_plan_deduction) !== 0 ||
+          sumField(input.line6_sec199a_dividends) !== 0 ||
+          (input.qbi_loss_carryforward ?? 0) !== 0 ||
+          (input.reit_loss_carryforward ?? 0) !== 0 ||
+          c.w2_wages !== 0 || c.ubia !== 0 || f.w2_wages !== 0 ||
+          f.ubia !== 0 ||
+          c.source_schedule_c.proprietor_recipient ===
+            farmItemSchema.parse(f.source_schedule_f).proprietor_recipient))
     ) {
       throw new Error(
         "Mixed fishing advanced QBI needs reviewed separate business source rows",
@@ -445,7 +492,9 @@ function advancedFormOutput(
       patron_of_specified_cooperative: false,
       qbi_no_prior_loss_or_suspended_loss_confirmed: true,
       mixed_fishing_qbi_source: {
-        owner_ssn: input.taxpayer_ssn.replaceAll("-", ""),
+        ...(jointFishing
+          ? { joint_se_source: input.joint_se_source }
+          : { owner_ssn: input.taxpayer_ssn.replaceAll("-", "") }),
         schedule_c: c.source_schedule_c,
         schedule_f: farmItemSchema.parse(f.source_schedule_f),
         se_tax_deduction: sumField(input.se_tax_deduction),
