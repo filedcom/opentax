@@ -239,7 +239,12 @@ Deno.test("cash-out refinance uses full Pub 936 Table 1 ratio and each loan's se
       bundle,
     );
     assertEquals((await PDFDocument.load(filled)).getPageCount(), 3);
-    const evidenceDir = Deno.env.get("FORM1098_CASHOUT_EVIDENCE_DIR");
+    let evidenceDir: string | undefined;
+    try {
+      evidenceDir = Deno.env.get("FORM1098_CASHOUT_EVIDENCE_DIR");
+    } catch (error) {
+      if (!(error instanceof Deno.errors.NotCapable)) throw error;
+    }
     if (evidenceDir) {
       const packetDir = `${evidenceDir}/month-${month}`;
       await Deno.mkdir(packetDir, { recursive: true });
