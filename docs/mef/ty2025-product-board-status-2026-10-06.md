@@ -1758,3 +1758,18 @@ Full `deno task test` at fbacc539c ended11,577/14/0ignored, exit1(82m15s). All14
 
 
 Existing Form1040 source/returnwide and Form6251 parent tasks include the two-1099G refund route identified in the dependency audit. Current refund export guard requires positive AMT; the calculation can suppress its final6251 output when no attachment trigger applies, leaving source-only line2b. Root will probe actual ordinary low-income public sources in isolation before changing any export/omission contract. No future tasks begun and no support claim from inspection. FullV4 wrapper44964/Deno44970 live11m52s.
+
+## Before multiple-copy beneficiary death/estate integration
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,438 bounded slices**. Prior learnings and evidence are preserved in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). New discoveries belong only in `future_todo`.
+
+Actual planner: **365 fixtures**, 116 PDF descriptors, 113 keys, 96 covered and 17 uncovered. Published PR63 head is **dc65dc952**. Verified main gates cover mixed C/F SHOP (52/0, 52 reviewed pages), three-member SHOP (15/0, 80 pages), mixed-owner WOTC/tip QBI (62/0 plus prior12/0, 122/147 pages), complete-source annuity (247/0, held7/38) and independent C/F health (22/0, held7/212). Regenerated PDFs match reviewed bytes; old NUA held5/27 remains unchanged. These prove their stated routes; broader parents remain open.
+
+Full `deno task test` at fbacc539c ended11,577/14/0ignored, exit1(82m15s). All14 have focused repaired-main passing evidence, including final two modulefiles44/0. Latest immutable181575242 rerun started03:53:35UTC; wrapper44964/Deno44970 verified live. Its terminal result and a passing full run remain required. Root registered24 reviewed catalog cases after fixing reverse fixture initialization (main22/0 plus metadata8/0); tip-health explicit plan sources and two-farm owner health are integrated with combined51/0 and reviewed artifact replay149/217pages. Partial-beneficiary4972 and mixedC/Ftips are integrated locally at9a7da5a78 with combined33/0 and source/PDF replay6/220pages verified. Eighteen more previously reviewed packets are registered at f188dacf8 with main24/0 and375 preserved pages/77 owner copies. Wider filing/source combinations, authentication, ATS conflicts/credentials, business rules, IRS acceptance and release readiness remain incomplete.
+
+
+Reviewed fc430bdb5 actual participant/beneficiary plan joins, death allocation identity and estate-source whole/allocated amount reconciliation. Isolated26complete packets/78reviewed pages, focused3/0 and36-filepreservation298/0, old6PDFpages byteequal. No main proof claimed before integration. C/F loss-health current-main6/182checker terminal0 and allsource/XML/PDFbytes exact; compatibility stilllive. Ordinary refund actual publicsource probe v2 has no graph diagnostics, AGI76000/refundincome1000, source-only6251 retained and finalguardrejects; v1wrong publicarray harness error retained, nottaxproof. FullV4live44964/44970.
