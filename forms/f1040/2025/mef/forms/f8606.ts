@@ -48,7 +48,10 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
         "NetBasisInRothIRAContriAmt",
         fields.print_roth_line23_after_contribution_basis,
       ),
-      element("BasisInCnvrtQlfyRtrPlanAmt", 0),
+      element(
+        "BasisInCnvrtQlfyRtrPlanAmt",
+        fields.print_roth_line24_conversion_basis,
+      ),
       element(
         "DistriRothIRALessBasisCnvrtAmt",
         fields.print_roth_line25a_earnings,
@@ -235,18 +238,37 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
   ]);
 }
 
-export const form8606: MefFormDescriptor<"form8606", Input, string | readonly string[]> = {
+export const form8606: MefFormDescriptor<
+  "form8606",
+  Input,
+  string | readonly string[]
+> = {
   pendingKey: "form8606",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8606.pdf",
   build(fields, context) {
     if (!Array.isArray(fields) && "owner_forms" in fields) {
-      if (!context?.pending) throw new Error("Separate Roth owner copies require actual source graph");
-      const inventory = reconcileForm8606RothInventories(context.pending, context.filer);
-      if (!inventory || JSON.stringify(printSchema.parse(fields)) !== JSON.stringify(printSchema.parse(context.pending.form8606))) {
-        throw new Error("Form8606 collection differs from finalized complete source");
+      if (!context?.pending) {
+        throw new Error(
+          "Separate Roth owner copies require actual source graph",
+        );
       }
-      return inventory.owners.filter((owner) => owner.requires8606).map((owner) => buildIRS8606(owner.fields!, context));
+      const inventory = reconcileForm8606RothInventories(
+        context.pending,
+        context.filer,
+      );
+      if (
+        !inventory ||
+        JSON.stringify(printSchema.parse(fields)) !==
+          JSON.stringify(printSchema.parse(context.pending.form8606))
+      ) {
+        throw new Error(
+          "Form8606 collection differs from finalized complete source",
+        );
+      }
+      return inventory.owners.filter((owner) => owner.requires8606).map((
+        owner,
+      ) => buildIRS8606(owner.fields!, context));
     }
     return buildIRS8606(fields, context);
   },

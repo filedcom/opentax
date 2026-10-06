@@ -1,4 +1,7 @@
-import { reviewedRothOwnerInventory, rothOwnerInventoryDocuments } from "../nodes/intermediate/forms/form8606/roth-inventory.ts";
+import {
+  reviewedRothOwnerInventory,
+  rothOwnerInventoryDocuments,
+} from "../nodes/intermediate/forms/form8606/roth-inventory.ts";
 import {
   reviewedRothActivity,
   rothActivityDocuments,
@@ -102,7 +105,8 @@ export async function assertForm4852RetainedEvidence(
     if (
       item.form_type === "R_1099" &&
       /[JT]/.test(item.distribution_code ?? "") &&
-      !item.retirement_source?.roth_activity_review && !item.retirement_source?.roth_owner_inventory_review
+      !item.retirement_source?.roth_activity_review &&
+      !item.retirement_source?.roth_owner_inventory_review
     ) {
       throw new Error(
         "Form 4852 nonqualified Roth IRA needs supported Form8606 PartIII ordering and five-year source evidence before filing",
@@ -143,6 +147,7 @@ export async function assertForm4852RetainedEvidence(
       reference: string;
       facts: unknown;
       prior8606?: true;
+      priorRothConversion?: true;
     }[] = [];
     const amounts = [
       "wages",
@@ -282,17 +287,40 @@ export async function assertForm4852RetainedEvidence(
       }
     }
     if (item.retirement_source?.roth_owner_inventory_review) {
-      const facts = reviewedRothOwnerInventory(item.retirement_source.roth_owner_inventory_review);
-      const payment = facts.review.payments.find((row) => row.form1099r_source_document_reference === item.completed_form_review_reference);
-      if (!payment || facts.review.owner !== item.subject_ts ||
+      const facts = reviewedRothOwnerInventory(
+        item.retirement_source.roth_owner_inventory_review,
+      );
+      const payment = facts.review.payments.find((row) =>
+        row.form1099r_source_document_reference ===
+          item.completed_form_review_reference
+      );
+      if (
+        !payment || facts.review.owner !== item.subject_ts ||
         payment.owner_ssn !== item.recipient_ssn?.replace(/\D/g, "") ||
         payment.custodian_ein !== item.payer_tin?.replace(/\D/g, "") ||
-        payment.account_number !== item.account_number || payment.distribution_reference !== item.distribution_reference ||
-        payment.distributed_on !== item.distribution_source?.paid_on || payment.gross_distribution !== item.gross_distribution ||
-        payment.distribution_code !== item.distribution_code) {
-        throw new Error("Form4852 complete Roth inventory payment/account/owner differs from actual completed source");
+        payment.account_number !== item.account_number ||
+        payment.distribution_reference !== item.distribution_reference ||
+        payment.distributed_on !== item.distribution_source?.paid_on ||
+        payment.gross_distribution !== item.gross_distribution ||
+        payment.distribution_code !== item.distribution_code
+      ) {
+        throw new Error(
+          "Form4852 complete Roth inventory payment/account/owner differs from actual completed source",
+        );
       }
-      for (const documentFacts of rothOwnerInventoryDocuments(facts.review)) requiredTreatmentRecords.push({ reference: documentFacts.source_document_reference, facts: documentFacts });
+      for (const year of facts.review.conversions ?? []) {
+        requiredTreatmentRecords.push({
+          reference: year.prior_form8606.source_document_reference,
+          facts: year.prior_form8606,
+          priorRothConversion: true,
+        });
+      }
+      for (const documentFacts of rothOwnerInventoryDocuments(facts.review)) {
+        requiredTreatmentRecords.push({
+          reference: documentFacts.source_document_reference,
+          facts: documentFacts,
+        });
+      }
     }
     if (item.retirement_source?.roth_activity_review) {
       const facts = reviewedRothActivity(
@@ -368,7 +396,47 @@ export async function assertForm4852RetainedEvidence(
         );
       }
       const bytes = bytesFor(treatment.reference);
-      if (treatment.prior8606) {
+      if (treatment.priorRothConversion) {
+        const prior = treatment.facts as {
+          tax_year: number;
+          owner_ssn: string;
+          owner_name: string;
+          filed_line16_converted: number;
+          filed_line17_nontaxable: number;
+          filed_line18_taxable: number;
+        };
+        // These actual prior IRS layouts were inspected against their printed Part II.
+        // Earlier revisions require a verified year-specific source parser before filing.
+        if (prior.tax_year < 2020 || prior.tax_year > 2024) {
+          throw new Error(
+            "Roth prior conversion8606 PDF layout needs year-specific retained-source review",
+          );
+        }
+        const pdf = await PDFDocument.load(bytes), form = pdf.getForm();
+        if (
+          pdf.getTitle() !== `${prior.tax_year} Form 8606` ||
+          pdf.getPageCount() !== 2 ||
+          form.getTextField("topmostSubform[0].Page1[0].f1_1[0]").getText()
+              ?.trim() !== prior.owner_name ||
+          form.getTextField("topmostSubform[0].Page1[0].f1_2[0]").getText()
+              ?.replace(/\D/g, "") !== prior.owner_ssn ||
+          [
+            prior.filed_line16_converted,
+            prior.filed_line17_nontaxable,
+            prior.filed_line18_taxable,
+          ].some((amount, index) =>
+            Number(
+              form.getTextField(
+                `topmostSubform[0].Page2[0].f2_${index + 1}[0]`,
+              ).getText()?.replaceAll(",", ""),
+            ) !== amount
+          )
+        ) {
+          throw new Error(
+            "Roth prior filed conversion8606 actual PDF year/owner/PartII facts differ",
+          );
+        }
+      } else if (treatment.prior8606) {
         const prior = treatment.facts as NonNullable<
           typeof basisEvidence
         >["prior_form8606"];

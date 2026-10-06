@@ -1,3 +1,6 @@
+import { isDeepStrictEqual } from "node:util";
+import { reconcileForm8606RothInventories } from "../../form8606_roth_inventory_reconciliation.ts";
+import { roundWholeDollars } from "../../../whole-dollars.ts";
 import { reconcileArcherPartVI } from "../../form8853_contributions_reconciliation.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import {
@@ -54,6 +57,23 @@ function buildIRS5329One(
   context?: MefBuildContext,
 ): string {
   const input = ownerEntrySchema.strip().parse(raw);
+  if (input.roth_owner_inventory_review) {
+    const source = context?.pending
+      ? reconcileForm8606RothInventories(context.pending, context.filer)
+      : undefined;
+    const owner = source?.owners.find((row) =>
+      row.review.owner === input.owner
+    );
+    if (
+      !owner ||
+      !isDeepStrictEqual(owner.review, input.roth_owner_inventory_review) ||
+      total(input.early_distribution) !== owner.earlyTaxable
+    ) {
+      throw new Error(
+        "Form5329 Roth recapture descriptor differs from actual retained owner/source inventory",
+      );
+    }
+  }
   const regular = total(input.early_distribution);
   const simple = total(input.simple_ira_early_distribution);
   const early = regular + simple;
@@ -124,7 +144,10 @@ function buildIRS5329One(
   const hsaTax = hsa ? Math.min(hsaTotal, hsa.december_31_value) * 0.06 : 0;
   const ableTax = excessTax(input, "excess_able", "able_value");
   const subjectToEarlyTax = early - exception;
-  const earlyTax = (regular - exception) * 0.1 + simple * 0.25;
+  const rawEarlyTax = (regular - exception) * 0.1 + simple * 0.25;
+  const earlyTax = input.roth_owner_inventory_review
+    ? roundWholeDollars(rawEarlyTax)
+    : rawEarlyTax;
   const educationTax = (education - educationException) * 0.1;
   return elements("IRS5329", [
     element("PersonNm", personName),

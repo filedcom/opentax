@@ -164,31 +164,14 @@ export function reviewedRothActivity(raw: unknown) {
       "Roth activity requires distinct reviewed documents, one actual owner and a contribution before payment",
     );
   }
-  const born = new Date(`${owner.date_of_birth}T00:00:00Z`);
-  const ageMonth = new Date(
-    Date.UTC(born.getUTCFullYear() + 59, born.getUTCMonth() + 6, 1),
-  );
-  const lastDay = new Date(
-    Date.UTC(ageMonth.getUTCFullYear(), ageMonth.getUTCMonth() + 1, 0),
-  ).getUTCDate();
-  const ageDate = new Date(
-    Date.UTC(
-      ageMonth.getUTCFullYear(),
-      ageMonth.getUTCMonth(),
-      Math.min(born.getUTCDate(), lastDay),
-    ),
-  );
-  const ageException =
-    payment.distributed_on >= ageDate.toISOString().slice(0, 10);
-  if ((payment.distribution_code === "T") !== ageException) {
-    throw new Error(
-      "Reviewed Roth J/T age-based code conflicts with actual owner birth and distribution dates",
-    );
-  }
   const firstContributionTaxYear = Math.min(
     ...review.contributions.map((row) => row.form5498.tax_year),
   );
-  const qualified = ageException && firstContributionTaxYear <= 2020;
+  const { ageException, qualified } = rothPaymentAgeFacts(
+    owner,
+    payment,
+    firstContributionTaxYear,
+  );
   const rawBasis = sumMoney(
     review.contributions.map((row) => row.form5498.box10_roth_contributions),
   );
@@ -227,4 +210,36 @@ export function rothActivityDocuments(review: RothActivityReview) {
     ...review.contributions.flatMap((row) => [row.form5498, ...row.receipts]),
     review.payment,
   ];
+}
+
+export function rothPaymentAgeFacts(
+  owner: { date_of_birth: string },
+  payment: { distributed_on: string; distribution_code: string },
+  firstContributionTaxYear: number,
+) {
+  const born = new Date(`${owner.date_of_birth}T00:00:00Z`);
+  const ageMonth = new Date(
+    Date.UTC(born.getUTCFullYear() + 59, born.getUTCMonth() + 6, 1),
+  );
+  const lastDay = new Date(
+    Date.UTC(ageMonth.getUTCFullYear(), ageMonth.getUTCMonth() + 1, 0),
+  ).getUTCDate();
+  const ageDate = new Date(
+    Date.UTC(
+      ageMonth.getUTCFullYear(),
+      ageMonth.getUTCMonth(),
+      Math.min(born.getUTCDate(), lastDay),
+    ),
+  );
+  const ageException =
+    payment.distributed_on >= ageDate.toISOString().slice(0, 10);
+  if ((payment.distribution_code === "T") !== ageException) {
+    throw new Error(
+      "Reviewed Roth J/T age-based code conflicts with actual owner birth and distribution dates",
+    );
+  }
+  return {
+    ageException,
+    qualified: ageException && firstContributionTaxYear <= 2020,
+  };
 }

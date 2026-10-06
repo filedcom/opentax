@@ -1,3 +1,8 @@
+import {
+  reviewedRothOwnerInventory,
+  rothOwnerInventorySchema,
+} from "../form8606/roth-inventory.ts";
+import { roundWholeDollars } from "../../../../whole-dollars.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -34,6 +39,7 @@ function sumAmounts(value: number | number[] | undefined): number {
 
 export const ownerEntrySchema = z.object({
   owner: tsSchema,
+  roth_owner_inventory_review: rothOwnerInventorySchema.optional(),
   // ── Part I: Early Distributions (line 1–4) ──────────────────────────────
   // Distribution code from 1099-R Box 7 (informational, passed through from f1099r)
   distribution_code: accumulable(z.string()).optional(),
@@ -202,6 +208,18 @@ function partI_regularTax(input: Form5329Input): number {
   if (dist <= 0) return 0;
   const exception = input.early_distribution_exception ?? 0;
   const netSubjectToTax = Math.max(0, dist - exception);
+  if (input.roth_owner_inventory_review) {
+    const facts = reviewedRothOwnerInventory(input.roth_owner_inventory_review);
+    if (
+      !facts.review.conversions?.length || facts.review.owner !== input.owner ||
+      facts.earlyTaxable !== dist || exception !== 0
+    ) {
+      throw new Error(
+        "Form5329 converted Roth owner/early source differs from complete retained inventory",
+      );
+    }
+    return roundWholeDollars(netSubjectToTax * EARLY_DIST_RATE);
+  }
   return netSubjectToTax * EARLY_DIST_RATE;
 }
 

@@ -1572,7 +1572,7 @@ function form5329Outputs(items: R1099Items): NodeOutput[] {
     });
   });
   return [...ordinary, ...inventories.filter((facts) => facts.earlyTaxable > 0).map((facts) => output(form5329, {
-    owner_entries: [{ owner: tsSchema.parse(facts.review.owner), distribution_code: "J", early_distribution: facts.earlyTaxable }],
+    owner_entries: [{ owner: tsSchema.parse(facts.review.owner), distribution_code: "J", early_distribution: facts.earlyTaxable, ...(facts.review.conversions?.length ? { roth_owner_inventory_review: facts.review } : {}) }],
   }))];
 }
 

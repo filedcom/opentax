@@ -1,9 +1,15 @@
+import {
+  reviewedRothConversions,
+  rothConversionDocuments,
+  rothConversionYearSchema,
+  rothSourceMoney,
+} from "./roth-conversion.ts";
 import { z } from "zod";
 import { isDeepStrictEqual } from "node:util";
 import { roundWholeDollars } from "../../../../whole-dollars.ts";
 import {
-  reviewedRothActivity,
   rothActivityReviewSchema,
+  rothPaymentAgeFacts,
 } from "./roth-activity.ts";
 
 const paymentSchema = rothActivityReviewSchema.shape.payment.extend({
@@ -27,8 +33,19 @@ export const rothOwnerInventorySchema = rothActivityReviewSchema.omit({
   owner: z.enum(["T", "S"]),
   inventory: rothActivityReviewSchema.shape.inventory.omit({
     no_other_current_roth_distribution: true,
+    no_conversions_or_qualified_plan_rollovers: true,
   })
-    .extend({ all_current_roth_payments_included: z.literal(true) }).strict(),
+    .extend({
+      all_current_roth_payments_included: z.literal(true),
+      no_conversions_or_qualified_plan_rollovers: z.boolean(),
+      all_prior_roth_conversion_records_included: z.literal(true).optional(),
+      no_qualified_plan_rollovers_confirmed: z.literal(true).optional(),
+    }).strict(),
+  contributions: rothActivityReviewSchema.shape.contributions.element.extend({
+    form5498: rothActivityReviewSchema.shape.contributions.element.shape
+      .form5498.extend({ box3_roth_conversion_amount: rothSourceMoney }),
+  }).array(),
+  conversions: z.array(rothConversionYearSchema).min(1).optional(),
   payments: z.array(paymentSchema).min(1),
 }).strict();
 export type RothOwnerInventory = z.infer<typeof rothOwnerInventorySchema>;
@@ -38,37 +55,150 @@ const sumMoney = (values: readonly number[]) =>
 /** Calculate the annual owner basis once; each payment keeps its actual lineage. */
 export function reviewedRothOwnerInventory(raw: unknown) {
   const review = rothOwnerInventorySchema.parse(raw);
-  const { all_current_roth_payments_included: _complete, ...inventory } =
-    review.inventory;
-  const payments = review.payments.map(
-    (
-      {
-        form1099r_source_document_reference,
-        issuer: _issuer,
-        federal_withheld: _federal,
-        state_tax_withheld: _state,
-        local_tax_withheld: _local,
-        ...payment
-      },
-    ) => {
-      // This is a single-payment calculation view of an already complete listed
-      // inventory. The collection binder below proves every actual current copy.
-      const facts = reviewedRothActivity({
-        owner_identity: review.owner_identity,
-        inventory: { ...inventory, no_other_current_roth_distribution: true },
-        contributions: review.contributions,
-        payment,
-        form1099r_source_document_reference,
-      });
-      return { ...facts, payment, form1099r_source_document_reference };
-    },
+  const converted = reviewedRothConversions(
+    review.conversions ?? [],
+    review.owner_identity.owner_ssn,
+    review.inventory.accounts,
+    review.owner_identity.date_of_birth,
   );
-  const references = review.payments.flatMap((
-    row,
-  ) => [
-    row.source_document_reference,
-    row.form1099r_source_document_reference,
-  ]);
+  if (
+    converted.length
+      ? review.inventory.no_conversions_or_qualified_plan_rollovers !== false ||
+        review.inventory.all_prior_roth_conversion_records_included !== true ||
+        review.inventory.no_qualified_plan_rollovers_confirmed !== true
+      : review.inventory.no_conversions_or_qualified_plan_rollovers !== true ||
+        review.contributions.length === 0
+  ) {
+    throw new Error(
+      "Roth complete conversion inventory needs actual listed prior records or regular-only history",
+    );
+  }
+  const owned = review.inventory.accounts.map((row) =>
+    JSON.stringify([row.custodian_ein, row.account_number])
+  );
+  if (
+    new Set(owned).size !== owned.length ||
+    review.inventory.owner_ssn !== review.owner_identity.owner_ssn
+  ) throw new Error("Roth complete inventory owner/accounts differ");
+  const years = new Set<string>();
+  const dates = (review.conversions ?? []).flatMap((row) =>
+    row.accounts.flatMap((account) =>
+      account.transfers.map((row) => row.receipt.received_on)
+    )
+  );
+  for (const row of review.contributions) {
+    const form = row.form5498,
+      key = JSON.stringify([
+        form.tax_year,
+        form.custodian_ein,
+        form.account_number,
+      ]);
+    if (
+      years.has(key) ||
+      !owned.includes(
+        JSON.stringify([form.custodian_ein, form.account_number]),
+      ) || form.owner_ssn !== review.owner_identity.owner_ssn ||
+      sumMoney(row.receipts.map((row) => row.amount)) !==
+        form.box10_roth_contributions
+    ) {
+      throw new Error(
+        "Roth complete regular5498/receipt owner/account/annual amounts differ",
+      );
+    }
+    years.add(key);
+    for (const receipt of row.receipts) {
+      if (
+        receipt.owner_ssn !== form.owner_ssn ||
+        receipt.custodian_ein !== form.custodian_ein ||
+        receipt.account_number !== form.account_number ||
+        receipt.designated_tax_year !== form.tax_year ||
+        receipt.received_on < review.owner_identity.date_of_birth ||
+        receipt.received_on < `${form.tax_year}-01-01` ||
+        receipt.received_on > `${form.tax_year + 1}-04-15`
+      ) {
+        throw new Error(
+          "Roth complete regular contribution receipt facts differ",
+        );
+      }
+      dates.push(receipt.received_on);
+    }
+  }
+  for (const regular of review.contributions) {
+    const convertedForm = (review.conversions ?? []).flatMap((year) =>
+      year.accounts.map((account) => account.form5498)
+    ).find((form) =>
+      form.tax_year === regular.form5498.tax_year &&
+      form.custodian_ein === regular.form5498.custodian_ein &&
+      form.account_number === regular.form5498.account_number
+    );
+    if (
+      convertedForm
+        ? !isDeepStrictEqual(convertedForm, regular.form5498)
+        : regular.form5498.box3_roth_conversion_amount !== 0
+    ) {
+      throw new Error(
+        "Roth regular/conversion activity must join one actual annual issued5498 with both source boxes",
+      );
+    }
+  }
+  for (
+    const form of (review.conversions ?? []).flatMap((year) =>
+      year.accounts.map((account) => account.form5498)
+    )
+  ) {
+    const regular = review.contributions.find((row) =>
+      row.form5498.tax_year === form.tax_year &&
+      row.form5498.custodian_ein === form.custodian_ein &&
+      row.form5498.account_number === form.account_number
+    );
+    if (form.box10_roth_contributions > 0 && !regular) {
+      throw new Error(
+        "Roth conversion annual5498 includes undisclosed regular contributions",
+      );
+    }
+  }
+  const firstContributionTaxYear = Math.min(
+    ...review.contributions.map((row) => row.form5498.tax_year),
+    ...converted.map((row) => row.year),
+  );
+  const rawBasis = sumMoney(
+    review.contributions.map((row) => row.form5498.box10_roth_contributions),
+  );
+  const basis = roundWholeDollars(rawBasis);
+  const payments = review.payments.map((payment) => {
+    if (
+      payment.owner_ssn !== review.owner_identity.owner_ssn ||
+      !owned.includes(
+        JSON.stringify([payment.custodian_ein, payment.account_number]),
+      ) || !payment.distributed_on.startsWith("2025-") ||
+      payment.distributed_on < review.owner_identity.date_of_birth ||
+      dates.every((date) => date > payment.distributed_on)
+    ) {
+      throw new Error(
+        "Roth complete payment owner/account/date has no actual historical source join",
+      );
+    }
+    return {
+      payment,
+      rawBasis,
+      basis,
+      firstContributionTaxYear,
+      ...rothPaymentAgeFacts(
+        review.owner_identity,
+        payment,
+        firstContributionTaxYear,
+      ),
+    };
+  });
+  const references = [
+    ...rothOwnerInventoryDocuments(review).map((row) =>
+      row.source_document_reference
+    ),
+    ...(review.conversions ?? []).map((row) =>
+      row.prior_form8606.source_document_reference
+    ),
+    ...review.payments.map((row) => row.form1099r_source_document_reference),
+  ];
   const lineage = review.payments.map((row) =>
     JSON.stringify([
       row.custodian_ein,
@@ -91,10 +221,11 @@ export function reviewedRothOwnerInventory(raw: unknown) {
   const rawNonqualifiedGross = sumMoney(
     nonqualified.map((row) => row.payment.gross_distribution),
   );
-  const basis = payments[0].basis;
   const gross = roundWholeDollars(rawGross);
   const nonqualifiedGross = roundWholeDollars(rawNonqualifiedGross);
-  const taxable = Math.max(0, nonqualifiedGross - basis);
+  const afterRegular = Math.max(0, nonqualifiedGross - basis);
+  const conversionBasis = converted.reduce((sum, row) => sum + row.gross, 0);
+  const taxable = Math.max(0, afterRegular - conversionBasis);
   // Age-based J payments necessarily precede this owner's age-exempt T
   // payments. Regular contributions are consumed first across every account.
   const earlyGross = roundWholeDollars(
@@ -104,7 +235,18 @@ export function reviewedRothOwnerInventory(raw: unknown) {
       ),
     ),
   );
-  const earlyTaxable = Math.min(taxable, Math.max(0, earlyGross - basis));
+  let earlyRemainder = Math.max(0, earlyGross - basis);
+  let recapture = 0;
+  const conversionAllocations = converted.map((row) => {
+    const allocatedTaxable = Math.min(earlyRemainder, row.taxable);
+    earlyRemainder -= allocatedTaxable;
+    const allocatedNontaxable = Math.min(earlyRemainder, row.nontaxable);
+    earlyRemainder -= allocatedNontaxable;
+    if (row.year >= 2021) recapture += allocatedTaxable;
+    return { ...row, allocatedTaxable, allocatedNontaxable };
+  });
+  const earlyEarnings = Math.min(taxable, earlyRemainder);
+  const earlyTaxable = recapture + earlyEarnings;
   return {
     review,
     payments,
@@ -115,6 +257,10 @@ export function reviewedRothOwnerInventory(raw: unknown) {
     basis,
     taxable,
     earlyTaxable,
+    earlyEarnings,
+    recapture,
+    conversionBasis,
+    conversionAllocations,
     requires8606: nonqualified.length > 0,
     rawRemainingContributionBasis: Math.max(
       0,
@@ -125,8 +271,8 @@ export function reviewedRothOwnerInventory(raw: unknown) {
       print_roth_line20_homebuyer: 0,
       print_roth_line21_after_homebuyer: nonqualifiedGross,
       print_roth_line22_contribution_basis: basis,
-      print_roth_line23_after_contribution_basis: taxable,
-      print_roth_line24_conversion_basis: 0,
+      print_roth_line23_after_contribution_basis: afterRegular,
+      print_roth_line24_conversion_basis: conversionBasis,
       print_roth_line25a_earnings: taxable,
       print_roth_line25b_disaster: 0,
       print_roth_line25c_taxable: taxable,
@@ -140,6 +286,20 @@ export function rothOwnerInventoryDocuments(review: RothOwnerInventory) {
     review.inventory,
     ...review.contributions.flatMap((row) => [row.form5498, ...row.receipts]),
     ...review.payments,
+    ...rothConversionDocuments(review.conversions ?? []).filter((document) => {
+      if (!("box3_roth_conversion_amount" in document)) return true;
+      const regular = review.contributions.find((row) =>
+        row.form5498.source_document_reference ===
+          document.source_document_reference
+      );
+      if (!regular) return true;
+      if (!isDeepStrictEqual(regular.form5498, document)) {
+        throw new Error(
+          "Shared issued5498 source reference has conflicting annual boxes",
+        );
+      }
+      return false;
+    }),
   ];
 }
 
@@ -259,7 +419,7 @@ export function rothOwnerPrintFields(
     source_roth_conversion: 0,
     source_roth_distribution: facts.nonqualifiedGross,
     source_roth_basis_contributions: facts.basis,
-    source_roth_basis_conversions: 0,
+    source_roth_basis_conversions: facts.conversionBasis,
     roth_owner_inventory_review: facts.review,
     ...facts.print,
   };

@@ -224,13 +224,37 @@ export const form8606Pdf: PdfFormDescriptor = {
     });
     const inventory = reconcileForm8606RothInventories(allPending, filer);
     if (inventory) {
-      return inventory.owners.filter((owner) => owner.requires8606).map((owner) => ({ ...owner.fields,
-        print_line1_nondeductible: undefined, print_line2_prior_basis: undefined,
-        print_line3_total_basis: undefined, print_line14_remaining_basis: undefined,
-        ...(owner.taxable === 0 ? { print_roth_line23_after_contribution_basis: "0",
-          print_roth_line24_conversion_basis: undefined, print_roth_line25a_earnings: undefined,
-          print_roth_line25b_disaster: undefined, print_roth_line25c_taxable: undefined } : {}),
-        print_owner_name: owner.ownerName, print_owner_ssn: owner.ownerSsn }));
+      return inventory.owners.filter((owner) => owner.requires8606).map((
+        owner,
+      ) => ({
+        ...owner.fields,
+        ...(owner.basis === 0
+          ? { print_roth_line22_contribution_basis: "0" }
+          : {}),
+        print_line1_nondeductible: undefined,
+        print_line2_prior_basis: undefined,
+        print_line3_total_basis: undefined,
+        print_line14_remaining_basis: undefined,
+        ...(owner.print.print_roth_line23_after_contribution_basis === 0
+          ? {
+            print_roth_line23_after_contribution_basis: "0",
+            print_roth_line24_conversion_basis: undefined,
+            print_roth_line25a_earnings: undefined,
+            print_roth_line25b_disaster: undefined,
+            print_roth_line25c_taxable: undefined,
+          }
+          : {}),
+        ...(owner.print.print_roth_line23_after_contribution_basis > 0 &&
+            owner.taxable === 0
+          ? {
+            print_roth_line25a_earnings: "0",
+            print_roth_line25b_disaster: undefined,
+            print_roth_line25c_taxable: undefined,
+          }
+          : {}),
+        print_owner_name: owner.ownerName,
+        print_owner_ssn: owner.ownerSsn,
+      }));
     }
     const roth = reconcileForm8606Roth(raw, allPending, filer);
     if (roth) {

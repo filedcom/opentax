@@ -480,3 +480,70 @@ Final held replay log: `/tmp/opentax-roth-inventory-replay-final6.log`; manifest
 `595ea6feb5b508e53a429df1ae7932b0f0fb168c31fc4470cdf8500764a8068f`;
 visual-reviewSHA256 `17b2bbbbf5c6ead2b3bde7ae48596bdbe6720c5f7dcc28472787a6ce0fdda549`.
 Replay command from the isolated checkout: `PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run --allow-all .state/research/form4852-roth-inventory/replay.ts`.
+
+
+## October6 retained conversion FIFO/recapture proof
+
+The complete current owner/payment inventory now accepts actual historical
+traditional-IRA conversion source records: annual issued5498 box3, actual
+issued1099R debit and Roth custodian receipt, owner/account/date/distribution
+lineage, and retained prior-filed8606 PartII16/17/18 PDF bytes. Regular and
+conversion entries for the same account/year must join one actual issued5498
+with both boxes; conflicting duplicate source references are rejected. This
+extends the existing Roth source parent and does not close it.
+
+[2025 instructions5329](https://www.irs.gov/pub/irs-prior/i5329--2025.pdf) and
+[Pub590B](https://www.irs.gov/publications/p590b) prescribe owner-wide regular
+basis first, conversion years FIFO with taxable portions first, earnings last,
+and separate five-year recapture clocks. The source replay implements that
+ordering without inserting prior-year native copies into current calculation.
+Prior-filed tax treatment is a retained record, not an invented earlier-year
+engine recomputation. Actual raw5498/payment cents remain retained; current
+filed lines use original annual aggregation and prior filed conversion totals.
+
+Eight public whole-return cases cover two conversion years/22000 recapture,
+expired2020 before2021, conversion-plus-earnings, conversion-only zero regular
+basis, separate MFJ histories/copies, cent residuals, age-exempt T with2024
+conversion and taxable earnings, and separately rounded owner5329 taxes.
+The cent case keeps raw gross9000.50 and regular1000.50, filed9001/1001,
+prior filed conversion basis10002 and recapture2999/tax300. MFJ recapture2994
+and2494 yields separate filed taxes299 and249, Schedule2/1040 tax548,
+not rounding raw aggregate548.8 to549. Final tax is11294.
+
+Visual review caught and repaired a prior-template mapping mistake before
+commit: historical2020–2024 PartII16/17/18 use f2_1/2/3, while f2_4/5/6
+are PartIII19/20/21. The parser and actual retained fixture bytes now match
+printed PartII cells; a rehashed changed line18 fails. All79 current packet
+pages and34 retained historical pages were inspected. Corrected source bytes
+leave every current packet PDF byte unchanged; prior original10/70,9/52 and
+6/57 artifact sets remain unchanged and replay exactly against this code.
+
+Terminal evidence: final checked public2/0 (33s), log
+`/tmp/opentax-roth-conversion-final20.log`; includes actual shared5498 rejection
+1/0, `/tmp/opentax-roth-conversion-annual18.log`; related23-module259/0
+(1m25s), `/tmp/opentax-roth-conversion-related10.log`. Exact8-packet79-page
+full2025v5.4XSD/source/XML timestamp-normalized/PDF/origin/retained-byte replay:
+`/tmp/opentax-roth-conversion-replay21.log`. Preservation logs:
+`/tmp/opentax-roth-conversion-old4852-preserve14.log`,
+`/tmp/opentax-roth-conversion-oldroth-preserve14.log`,
+`/tmp/opentax-roth-conversion-oldinventory-preserve14.log`.
+Ignored artifact root `.state/research/form4852-roth-conversion`, manifestSHA256
+`e4f6450ae54f3644ca6256a59064f05c4842e5a6f67b56836bf97cebef7fe903`,
+visual-reviewSHA256
+`184f5f59b1b047223f9eb6f71d1c5888e2d21ae580f79d26c3fffb8565a1670b`.
+Replay from the isolated checkout:
+`PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run --allow-all .state/research/form4852-roth-conversion/replay.ts`.
+
+### Learning checkpoint and remaining existing parent
+
+The actual prior PDF parser is verified for2020–2024 layouts. Earlier revisions
+require year-specific inspected field/line mapping and remain guarded at
+filing; schema admission is not a filing-proof claim. Prior consumed basis,
+returned contributions, inherited/transferred interests, qualified-plan
+rollovers, current2025 conversion coexistence and other exception/source
+histories still require their actual complete source contracts. Next work
+must derive historical consumption from actual prior filings plus account
+payment records, not opening basis scalars, while preserving original25/179
+and current8/79 artifacts. Synthetic retained fixtures prove byte/parsed-fact
+joins only; external authenticity, business rules and IRS acceptance remain
+open. No catalog registration, main, board or future task was changed.

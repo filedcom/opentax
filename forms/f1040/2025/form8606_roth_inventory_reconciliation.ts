@@ -110,7 +110,11 @@ export function reconcileForm8606RothInventories(
         row.review.owner_identity.date_of_birth ||
       (row.earlyTaxable > 0
         ? earlyForms.length !== 1 ||
-          earlyForms[0].early_distribution !== row.earlyTaxable
+          earlyForms[0].early_distribution !== row.earlyTaxable ||
+          !isDeepStrictEqual(
+            earlyForms[0].roth_owner_inventory_review,
+            row.review.conversions?.length ? row.review : undefined,
+          )
         : earlyForms.length !== 0)
     ) {
       throw new Error(

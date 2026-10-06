@@ -158,3 +158,15 @@ admits neither scalar opening basis nor unreviewed historical conversions or
 consumed-basis claims. One actual current owner payment is proven; simultaneous
 owner/current-payment aggregation and conversion/prior-history source gates
 remain open, as do external authentication and IRS acceptance.
+
+
+## October6 complete current inventory and historical conversion extension
+
+The retained Form4852 source proof now includes owner-wide multiple current
+payments/accounts and separate taxpayer/spouse8606 copies (6 packets57 pages),
+and historical conversion FIFO/recapture with actual retained prior-filed
+PartII PDF joins (8 packets79 current pages plus34 historical pages). See
+`ty2025-form4852-filing-gap.md` for authoritative source amounts, terminal
+commands, digests, prior179-page preservation and remaining consumed-history
+contracts. Earlier one-payment-only descriptions are historical. Prior source
+authentication and broader existing8606 parent remain open.
