@@ -183,3 +183,18 @@ files from the earlier independent patron final manifest were reverified
 unchanged. No main, board or PR mutation was performed.
 
 Independent math script/report `/tmp/opentax-patron-health-independent-math-oct6.py` / `.json` calculates separate filed SE/halfSE, owned health capacity, each receipts allocation/patron reduction/phase component and shared limits from printed2025 formulas, independently of production functions. All seven literal test tables agree. Tools: Deno2.9.4/V8 15.0.245.2/TypeScript6.0.3, xmllint/libxml2.9.13; full cached root XSD SHA256:e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c.
+
+## Independent final review
+
+The read-only reviewer inspected all145 pageinstances in28contactparts separately,
+and a source-derived Decimal oracle matched all7 owner halfSE/health/QBI,
+qualified source wages, patron reductions/components, native groups by EIN and
+final1040 tax. All21 final original files and8 final held hashes remain unchanged.
+Independent236-file physical review and manifest:
+`/tmp/opentax-patron-health-independent-final-review-oct6/`, manifest SHA256
+4370e181b6ff6b6b3bad59ed51a8a64550f0a026a1866c6a76e5cc18e3dc3474.
+The first independent oracle failed because its MFJ bracket threshold was mistyped
+96750; the corrected primaryIRS96950 oracle v2/v3 passed. Both versions are
+retained with qualifications. The independent review did not launch a duplicate
+private executor gate. This236-file review supplements the immutable283-file
+final preservation manifest; it does not rewrite or subsume it.
