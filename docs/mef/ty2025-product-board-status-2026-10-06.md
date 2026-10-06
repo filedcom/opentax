@@ -4057,3 +4057,21 @@ Full regression V17–V22 processes were verified live this phase; V22 at immuta
 
 
 Candidate7a582d451 typed focused gate passed1/0/3filtered (423ms). Saved buyer/seller inputs and whole pending independently reject public/native/direct4797PDF/direct1040PDF; original bytes unchanged. Known-owner transfer evidence and physical parcel uniqueness across owners are verified for integration.
+
+
+## Before property and turning-21 evidence seal
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist retains **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,528 bounded slices**; broader parents remain open. Learnings are compacted in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries belong only in `future_todo` and are not executed.
+
+Parent payroll (56/0, saved 24 returns/125 pages) and midmonth mortgage (98/0, saved 26 returns/81 pages) retain sealed root evidence. Draft [PR63](https://github.com/filedcom/opentax/pull/63) is externally verified at **ffb978f1e**; its latest attachment completion is unconfirmed. Earlier sealed work and census qualifications are in the archive.
+
+Direct property is integrated at **4e46a6a07**; root gates passed 681/0 before the duplicate repair and 149/0 afterward, with saved 50-return/473-page replays. All corrected 99 PDF pages match reviewed originals; 174 current/prior files are privately hash-preserved. Known joint-owner buyer/seller contradictions and parcel uniqueness across owners are being corrected before sealing. Turning-21 payroll root tests passed **58/0**, and its saved **26-return/137-page** replay passed (23 newer exact, 3 historical qualified); all 12 new pages are root-reviewed. State/rate payroll continues within the existing parent.
+
+Full regression V17–V22 processes were verified live this phase; V22 at immutable **0d153ed24** predates later work. A passing latest-production full batch, remaining filing routes, ATS credentials/scenario conflicts, IRS acknowledgments and release review are still required. Local XSD370/0 and source hashes do not prove external authenticity, business-rule compliance or IRS acceptance.
+
+
+Final productionfd40c1aec saved8/99 replay passed all exact pending/prepared/carry/origins/source/PDF/nativeonlyTs/fullXSD checks. Both original known-owner transfer counterexamples reject public/native/directPDF on main. Final main typed focus is still live; no seal asserted yet. All174property+90payroll+3diagnostic source/private hashes rechecked unchanged. Earlier50/473 and149/0 apply4e before final owner refinement; the42older source originals contain no current property source and do not enter that new guard.
