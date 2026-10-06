@@ -141,7 +141,7 @@ Deno.test({
     assertEquals(expected.shares, [11361, 7687, 7687]);
     assertEquals(form3800.form8941_applied_credit, 13301);
     const unique = structuredClone(input.f8941);
-    const repeated = unique.group_members[2].employees[0].employee_ssn;
+    const repeated = unique.group_members[2]!.employees[0].employee_ssn;
     unique.group_members[2] = JSON.parse(
       JSON.stringify(unique.group_members[2])
         .replaceAll(repeated, "999991111"),

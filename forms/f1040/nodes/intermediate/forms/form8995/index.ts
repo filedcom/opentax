@@ -864,44 +864,51 @@ function mixedScheduleCFLines(
   input: Form8995Input,
   cfg: F1040Config,
 ): (Record<string, unknown> & { line15: number }) | undefined {
-  const c = input.schedule_c_qbi_businesses?.[0];
+  const cs = input.schedule_c_qbi_businesses ?? [];
   const f = input.schedule_f_qbi_businesses?.[0];
   if (
-    input.schedule_c_qbi_businesses?.length !== 1 ||
-    input.schedule_f_qbi_businesses?.length !== 1 || !c || !f ||
-    !c.source_schedule_c.qbi_se_tax_allocation_review
+    (cs.length !== 1 && cs.length !== 2) ||
+    input.schedule_f_qbi_businesses?.length !== 1 || !f ||
+    cs.some((c) => !c.source_schedule_c.qbi_se_tax_allocation_review)
   ) return undefined;
   const farmSource = farmItemSchema.parse(f.source_schedule_f);
   if (!farmSource.qbi_se_tax_allocation_review) return undefined;
-  const profits = [c.qbi, f.qbi];
+  const businesses = [...cs, f];
+  const profits = businesses.map((row) => row.qbi);
   const seDeduction = sumField(input.se_tax_deduction);
   const allocations = allocateSharedSeDeduction(profits, seDeduction);
   const reviews = [
-    c.source_schedule_c.qbi_se_tax_allocation_review,
+    ...cs.map((c) => c.source_schedule_c.qbi_se_tax_allocation_review),
     farmSource.qbi_se_tax_allocation_review,
   ];
   if (
     input.filing_status !== FilingStatus.Single ||
     input.agi === undefined || !input.taxpayer_ssn ||
-    c.source_schedule_c.proprietor_recipient !== "T" ||
+    cs.some((c) =>
+      c.source_schedule_c.proprietor_recipient !== "T" ||
+      c.source_schedule_c.line_g_material_participation !== true ||
+      c.no_other_adjustments_confirmed !== true
+    ) ||
     farmSource.proprietor_recipient !== "T" ||
     farmSource.accounting_method !== "cash" ||
-    c.source_schedule_c.line_g_material_participation !== true ||
     farmSource.line_e_material_participation !== true ||
-    c.no_other_adjustments_confirmed !== true ||
     f.no_other_adjustments_confirmed !== true ||
     input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
-    !c.business_reference || !f.business_reference ||
-    c.business_reference === f.business_reference ||
-    !c.business_name || !f.business_name || !c.ein || !f.ein ||
-    c.ein === f.ein || profits.some((profit) => profit <= 0) ||
+    businesses.some((row) =>
+      !row.business_reference || !row.business_name || !row.ein
+    ) ||
+    new Set(businesses.map((row) => row.business_reference)).size !==
+      businesses.length ||
+    new Set(businesses.map((row) => row.ein)).size !== businesses.length ||
+    profits.some((profit) => profit <= 0) ||
     reviews.some((review, index) =>
       review?.deduction_amount !== allocations[index] ||
       review?.all_businesses_included_confirmed !== true ||
       review?.no_aggregation_confirmed !== true
     ) ||
-    sumField(input.qbi_from_schedule_c) !== c.qbi ||
+    sumField(input.qbi_from_schedule_c) !==
+      cs.reduce((sum, c) => sum + c.qbi, 0) ||
     sumField(input.qbi_from_schedule_f) !== f.qbi ||
     sumField(input.qbi) !== 0 || sumField(input.sstb_qbi) !== 0 ||
     sumField(input.se_health_insurance_deduction) !== 0 ||
@@ -917,7 +924,7 @@ function mixedScheduleCFLines(
   }
   const raw = profits.map((profit, index) => profit - allocations[index]);
   const filed = raw.map(roundSignedQbiDollars);
-  const line2 = filed[0] + filed[1];
+  const line2 = filed.reduce((sum, value) => sum + value, 0);
   const line5 = Math.round(Math.max(0, line2) * QBI_RATE);
   const line11 = Math.round(
     Math.max(
@@ -928,7 +935,7 @@ function mixedScheduleCFLines(
   );
   const line14 = Math.round(line11 * QBI_RATE);
   return {
-    multi_business_filing_rows: [c, f].map((row, index) => ({
+    multi_business_filing_rows: businesses.map((row, index) => ({
       business_reference: row.business_reference!,
       business_name: row.business_name!,
       tin: { kind: "ein" as const, value: row.ein! },

@@ -1194,7 +1194,7 @@ function assertMixedScheduleCF8995(
   reconcileFarmSources(fSource);
   const cItems = projectScheduleCItems(cSource);
   const fItems = projectScheduleFItems(fSource);
-  const c = cItems[0], f = fItems[0];
+  const f = fItems[0];
   const source = reconcileForm8941DocumentSource(pending.f8941, pending);
   const rows = Array.isArray(fields.multi_business_filing_rows)
     ? fields.multi_business_filing_rows as Array<Record<string, unknown>>
@@ -1219,31 +1219,37 @@ function assertMixedScheduleCF8995(
   const seSource = form7206?.schedule_se_source as
     | Record<string, unknown>
     | undefined;
-  const cProfit = c ? computeNetProfit(c) : 0;
+  const cProfits = cItems.map((item) => computeNetProfit(item));
+  const cProfit = cProfits.reduce((sum, profit) => sum + profit, 0);
   const fProfit = f ? computeFarmNetProfit(f) : 0;
+  const profits = [...cProfits, fProfit];
   const seLines = scheduleSELines({
     net_profit_schedule_c: cProfit,
     net_profit_schedule_f: fProfit,
     w2_ss_wages: 0,
   }, CONFIG_BY_YEAR[2025].ssWageBase);
   const half = seLines?.line13 ?? 0;
-  const allocations = allocateSharedSeDeduction([cProfit, fProfit], half);
-  const qbi = [cProfit, fProfit].map((profit, index) =>
+  const allocations = allocateSharedSeDeduction(profits, half);
+  const qbi = profits.map((profit, index) =>
     roundSignedQbiDollars(profit - allocations[index])
   );
-  const sources = [c, f],
-    names = [c?.line_c_business_name, f?.line_c_farm_name];
-  const references = [c?.business_reference, f?.farm_id];
+  const sources = [...cItems, f];
+  const names = [
+    ...cItems.map((c) => c.line_c_business_name),
+    f?.line_c_farm_name,
+  ];
+  const references = [...cItems.map((c) => c.business_reference), f?.farm_id];
   const eins = [
-    c?.line_d_ein?.replace(/\D/g, ""),
+    ...cItems.map((c) => c.line_d_ein?.replace(/\D/g, "")),
     f?.line_d_ein?.replace(/\D/g, ""),
   ];
   const reviews = [
-    c?.qbi_se_tax_allocation_review,
+    ...cItems.map((c) => c.qbi_se_tax_allocation_review),
     f?.qbi_se_tax_allocation_review,
   ];
   const businessRows = [
-    (fields.schedule_c_qbi_businesses as Array<Record<string, unknown>>)?.[0],
+    ...((fields.schedule_c_qbi_businesses as Array<Record<string, unknown>>) ??
+      []),
     (fields.schedule_f_qbi_businesses as Array<Record<string, unknown>>)?.[0],
   ];
   if (
@@ -1251,20 +1257,25 @@ function assertMixedScheduleCF8995(
     !("group_members" in source.source) ||
     source.source.qualifying_arrangement !==
       "same_proprietor_mixed_c_f_common_control" ||
-    cItems.length !== 1 || fItems.length !== 1 || rows.length !== 2 ||
-    !c || !f || !general || !f1040 || !schedule1 || !seLines ||
+    (cItems.length !== 1 && cItems.length !== 2) ||
+    fItems.length !== 1 || rows.length !== cItems.length + 1 ||
+    businessRows.length !== rows.length ||
+    !f || !general || !f1040 || !schedule1 || !seLines ||
     general.filing_status !== "single" ||
     f1040.filing_status !== "single" ||
     String(general.taxpayer_ssn ?? "").replace(/\D/g, "") !==
       source.source.owner_ssn ||
     String(f1040.taxpayer_ssn ?? "").replace(/\D/g, "") !==
       source.source.owner_ssn ||
-    c.proprietor_recipient !== "T" || f.proprietor_recipient !== "T" ||
-    c.line_g_material_participation !== true ||
+    cItems.some((c) =>
+      c.proprietor_recipient !== "T" || c.line_g_material_participation !== true
+    ) || f.proprietor_recipient !== "T" ||
     f.line_e_material_participation !== true ||
     f.accounting_method !== "cash" ||
-    references.some((ref) => !ref) || references[0] === references[1] ||
-    eins.some((ein) => !ein || ein.length !== 9) || eins[0] === eins[1] ||
+    references.some((ref) => !ref) ||
+    new Set(references).size !== references.length ||
+    eins.some((ein) => !ein || ein.length !== 9) ||
+    new Set(eins).size !== eins.length ||
     reviews.some((review, index) =>
       !review || review.deduction_amount !== allocations[index] ||
       review.all_businesses_included_confirmed !== true ||
@@ -1284,7 +1295,7 @@ function assertMixedScheduleCF8995(
     fields.se_tax_deduction !== half ||
     fields.qbi_from_schedule_c !== cProfit ||
     fields.qbi_from_schedule_f !== fProfit ||
-    fields.line2 !== qbi[0] + qbi[1] ||
+    fields.line2 !== qbi.reduce((sum, value) => sum + value, 0) ||
     fields.line11 !==
       Math.round(
         Math.max(
@@ -1309,24 +1320,25 @@ function assertMixedScheduleCF8995(
     rows.some((row, index) => {
       const expected = sources[index];
       const business = businessRows[index];
-      const sourceKey = index === 0 ? "source_schedule_c" : "source_schedule_f";
-      const parsed = index === 0
+      const isC = index < cItems.length;
+      const sourceKey = isC ? "source_schedule_c" : "source_schedule_f";
+      const parsed = isC
         ? scheduleCItemSchema.safeParse(business?.[sourceKey])
         : scheduleFItemSchema.safeParse(business?.[sourceKey]);
       return row.business_reference !== references[index] ||
         row.business_name !== names[index] ||
         !isDeepStrictEqual(row.tin, { kind: "ein", value: eins[index] }) ||
         row.qbi !== qbi[index] ||
-        row.raw_qbi !== [cProfit, fProfit][index] - allocations[index] ||
+        row.raw_qbi !== profits[index] - allocations[index] ||
         row.se_tax_deduction !== allocations[index] ||
         business?.business_reference !== references[index] ||
         business?.ein !== eins[index] ||
-        business?.qbi !== [cProfit, fProfit][index] ||
+        business?.qbi !== profits[index] ||
         !parsed.success || !isDeepStrictEqual(parsed.data, expected);
     })
   ) {
     throw new Error(
-      "Mixed C/F Form8995 needs exact two-business SHOP, SE and filed QBI sources",
+      "Mixed C/F Form8995 needs exact SHOP, SE and filed QBI sources",
     );
   }
   return {
@@ -1335,7 +1347,13 @@ function assertMixedScheduleCF8995(
       tin: { kind: "ein" as const, value: eins[index]! },
       qbi: qbi[index],
     })),
-    lines: assertFiledLines(fields, f1040, 0, 0, qbi[0] + qbi[1]),
+    lines: assertFiledLines(
+      fields,
+      f1040,
+      0,
+      0,
+      qbi.reduce((sum, value) => sum + value, 0),
+    ),
   };
 }
 

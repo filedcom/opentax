@@ -143,9 +143,13 @@ const commonControlSchema = z.object({
 }).strict();
 const mixedCommonControlSchema = commonControlSchema.extend({
   qualifying_arrangement: z.literal("same_proprietor_mixed_c_f_common_control"),
-  group_members: z.tuple([
-    commonControlMemberSchema,
-    mixedFarmControlMemberSchema,
+  group_members: z.union([
+    z.tuple([commonControlMemberSchema, mixedFarmControlMemberSchema]),
+    z.tuple([
+      commonControlMemberSchema,
+      commonControlMemberSchema,
+      mixedFarmControlMemberSchema,
+    ]),
   ]),
 });
 export type FarmShopSource =
