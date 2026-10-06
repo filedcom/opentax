@@ -1,3 +1,9 @@
+import { currentK1Qbi, currentK1QbiSourceSchema } from "../k1_qbi_source.ts";
+import { form8582 } from "../../intermediate/forms/form8582/index.ts";
+import {
+  k1PassiveIncomeSourceSchema,
+  passiveK1Activities,
+} from "../k1_passive_source.ts";
 import {
   ownedDebtFamily,
   ownedDebtFamilyQbiLines,
@@ -35,12 +41,12 @@ import {
 import { form7203 } from "../../intermediate/forms/form7203/index.ts";
 import { reviewedStockLossLedgerSchema } from "../../intermediate/forms/form7203/stock-ledger.ts";
 import {
+  actualCurrentDebtRepayments,
   reconcileCashCapitalAndNewNote,
   reconcileNewFormalNotes,
-  actualCurrentDebtRepayments,
-  totalCurrentDebtAdvances,
   reviewedForm7203DebtEvidenceSchema,
   sumPrincipalRepayments,
+  totalCurrentDebtAdvances,
 } from "../../intermediate/forms/form7203/debt-note.ts";
 import { form4797 } from "../../intermediate/forms/form4797/index.ts";
 import { rate_28_gain_worksheet } from "../../intermediate/worksheets/rate_28_gain_worksheet/index.ts";
@@ -99,6 +105,8 @@ export const itemSchema = z.object({
   // Box 3 — Other net rental income/loss → Schedule E
   box3_other_rental: z.number().optional(),
   eic_passive_activity_review: k1PassiveEicReviewSchema.optional(),
+  passive_income_source: k1PassiveIncomeSourceSchema.optional(),
+  qualified_business_income_source: currentK1QbiSourceSchema.optional(),
 
   // Box 4 — Interest income → Schedule B
   box4_interest: z.number().nonnegative().optional(),
@@ -393,6 +401,11 @@ type K1SCorpItems = K1SCorpItem[];
 
 // Aggregate Schedule E income (Box 1 + 2 + 3 + 6) → schedule1 line5_schedule_e
 function schedule1Output(items: K1SCorpItems): NodeOutput[] {
+  const activities = passiveK1Activities(items, "k1_s_corp");
+  const passiveIncome = activities.reduce(
+    (sum, row) => sum + row.current_net,
+    0,
+  );
   const total = items.reduce(
     (sum, item) =>
       sum +
@@ -408,7 +421,18 @@ function schedule1Output(items: K1SCorpItems): NodeOutput[] {
     output(agi_aggregator, {
       line5_schedule_e: total,
       eic_passive_k1_income: reviewedK1PassiveIncome(items),
+      ...(passiveIncome > 0
+        ? { pal_current_income: passiveIncome, pal_rental_income: 0 }
+        : {}),
     }),
+    ...(activities.length
+      ? [output(form8582, {
+        current_income: passiveIncome,
+        rental_current_income: 0,
+        has_other_passive: true,
+        activities,
+      })]
+      : []),
   ];
 }
 
@@ -546,12 +570,27 @@ function form8995Output(items: K1SCorpItems): NodeOutput[] {
   const totalSstbW2 = sstb.reduce((sum, item) => sum + resolveW2Wages(item), 0);
   const totalSstbUbia = sstb.reduce((sum, item) => sum + resolveUbia(item), 0);
 
+  const incomeSources = items.flatMap((item) =>
+    item.passive_income_source ? [item.passive_income_source] : []
+  );
   if (
     totalQbi <= 0 && totalW2 <= 0 && totalUbia <= 0 &&
     totalSstbQbi <= 0 && totalSstbW2 <= 0 && totalSstbUbia <= 0
-  ) return [];
+  ) {
+    return incomeSources.length
+      ? [output(form8995, { current_passive_k1_income_sources: incomeSources })]
+      : [];
+  }
 
   const fields: Partial<z.infer<typeof form8995["inputSchema"]>> = {};
+  const sources = items.flatMap((item) => {
+    const source = currentK1Qbi(item);
+    return source ? [source] : [];
+  });
+  if (sources.length) fields.current_k1_qbi_sources = sources;
+  if (incomeSources.length) {
+    fields.current_passive_k1_income_sources = incomeSources;
+  }
   if (totalQbi > 0) fields.qbi = totalQbi;
   if (totalW2 > 0) fields.w2_wages = totalW2;
   if (totalUbia > 0) fields.unadjusted_basis = totalUbia;
@@ -879,6 +918,7 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
     form4952,
     f3800,
     form8582cr,
+    form8582,
     disabledAccessLimit,
   ]);
 

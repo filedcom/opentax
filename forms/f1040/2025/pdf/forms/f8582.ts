@@ -381,7 +381,7 @@ export const form8582Pdf: PdfFormDescriptor = {
     if (!hasActivity) return {};
     const xml = nativeForm8582.build(fields, { pending: allPending });
     if (typeof xml !== "string" || xml.length === 0) {
-      throw new Error("Form 8582 PDF needs a native reconciled worksheet");
+      return {};
     }
     return projectWorksheet(xml);
   },

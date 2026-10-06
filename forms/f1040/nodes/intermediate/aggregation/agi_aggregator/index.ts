@@ -139,7 +139,14 @@ export const inputSchema = z.object({
   // Current-year passive loss withheld from line5_schedule_e (positive amount)
   pal_current_loss: z.number().nonnegative().optional(),
   // Current-year net income from passive activities
-  pal_current_income: z.number().nonnegative().optional(),
+  pal_current_income: z.union([
+    z.number().nonnegative(),
+    z.array(z.number().nonnegative()),
+  ]).transform((value) =>
+    Array.isArray(value)
+      ? value.reduce((sum, amount) => sum + amount, 0)
+      : value
+  ).optional(),
   // Gross current Form 4797 passive sale gain, before any prior PAL netted on
   // Form 4797. It is income available for the §469 limitation.
   pal_current_4797_gain: z.number().nonnegative().optional(),
@@ -152,7 +159,14 @@ export const inputSchema = z.object({
   // The finalized Form 8582 allowance is carried into the second AGI pass.
   pal_final_allowed_loss: z.number().nonnegative().optional(),
   // Current income from actively participated rental real estate, for Form 8582 line 1a.
-  pal_rental_income: z.number().nonnegative().optional(),
+  pal_rental_income: z.union([
+    z.number().nonnegative(),
+    z.array(z.number().nonnegative()),
+  ]).transform((value) =>
+    Array.isArray(value)
+      ? value.reduce((sum, amount) => sum + amount, 0)
+      : value
+  ).optional(),
   // Prior-year unallowed passive loss carryforward
   pal_prior_unallowed: z.number().nonnegative().optional(),
   // Current-year loss from active rental real estate only (§469(i) allowance)

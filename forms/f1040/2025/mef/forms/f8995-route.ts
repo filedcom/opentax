@@ -1,3 +1,4 @@
+import { assertCurrentK1Qbi } from "./f8995-current-k1.ts";
 import { assertOwnedSCorpLoss8995 } from "./f8995-owned-s-corp-loss.ts";
 import { assertQualifiedTipQbiSource } from "../../form8995_qualified_tip_source.ts";
 import { assertCapitalSaleSourceRows } from "../../broker-sale-source-reconciliation.ts";
@@ -1380,6 +1381,7 @@ export function assertPositive8995(
   fields: Record<string, unknown>,
   pending: Readonly<Record<string, unknown>> | undefined,
 ): Filed8995 {
+  if (fields.current_k1_qbi_sources !== undefined) return assertCurrentK1Qbi(fields, pending);
   if (
     fields.owned_s_corp_loss_source !== undefined ||
     fields.owned_s_corp_loss_sources !== undefined

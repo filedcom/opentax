@@ -98,6 +98,7 @@ export const form8995Pdf: PdfFormDescriptor = {
       (deduction === undefined || deduction === null || deduction === 0) &&
       fields.multi_business_filing_rows === undefined &&
       fields.joint_owner_filing_rows === undefined &&
+      fields.current_k1_qbi_sources === undefined &&
       fields.owned_s_corp_loss_source === undefined &&
       fields.owned_s_corp_loss_sources === undefined &&
       !(typeof fields.line1_qbi === "number" && fields.line1_qbi > 0 &&

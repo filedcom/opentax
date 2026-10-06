@@ -1,3 +1,12 @@
+import { assertCurrentK1Qbi } from "./f8995-current-k1.ts";
+import { inputSchema as partnershipSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
+import { inputSchema as sCorpSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
+import { passiveK1Activities } from "../../../nodes/inputs/k1_passive_source.ts";
+import {
+  agi_aggregator,
+  inputSchema as agiInputSchema,
+  remainingAllowedPassiveLoss,
+} from "../../../nodes/intermediate/aggregation/agi_aggregator/index.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import {
   allocateOtherPassivePrior4797,
@@ -62,12 +71,189 @@ function partVIIIRowKey(
   return row ? `${row.reporting_form}:${row.filed_unallowed_loss}` : "";
 }
 
+function linkedK1Activities(context: MefBuildContext) {
+  const pending = context.pending;
+  const partnerships = pending?.k1_partnership === undefined
+    ? []
+    : partnershipSchema.parse(pending.k1_partnership).k1_partnerships;
+  const corporations = pending?.k1_s_corp === undefined
+    ? []
+    : sCorpSchema.parse(pending.k1_s_corp).k1_s_corps;
+  const general = pending?.general as Record<string, unknown> | undefined;
+  const digits = (value: unknown) =>
+    typeof value === "string" ? value.replace(/\D/g, "") : "";
+  const owners = [digits(general?.taxpayer_ssn)];
+  if (general?.filing_status === "mfj") owners.push(digits(general.spouse_ssn));
+  for (const item of [...partnerships, ...corporations]) {
+    if (
+      item.passive_income_source && !owners.includes(item.recipient_tin ?? "")
+    ) {
+      throw new Error("Form 8582 K-1 owner differs from actual return filer");
+    }
+  }
+  return [
+    ...passiveK1Activities(partnerships, "k1_partnership", true),
+    ...passiveK1Activities(corporations, "k1_s_corp", true),
+  ];
+}
+
+/** Reconcile the same current pool before the AGI limit and at filing. K-1
+ * positive rows never become fictional Schedule E properties or farm income. */
+function assertK1PoolReturn(
+  input: ReturnType<typeof inputSchema.parse>,
+  context: MefBuildContext,
+) {
+  const activities = input.activities ?? [];
+  if (!linkedK1Activities(context).length) return;
+  assertLinkedActivities(activities, context);
+  assertLinkedSales(input, context);
+  const agi = agiInputSchema.parse(context.pending?.agi_aggregator ?? {});
+  const sum = (value: number | readonly number[] | undefined) =>
+    Array.isArray(value)
+      ? value.reduce((total, row) => total + row, 0)
+      : (value ?? 0) as number;
+  const income = activities.reduce(
+    (total, row) => total + Math.max(0, row.current_net),
+    0,
+  );
+  const loss = activities.reduce(
+    (total, row) => total + Math.max(0, -row.current_net),
+    0,
+  );
+  const prior = activities.reduce(
+    (total, row) =>
+      total + row.prior_unallowed_operating + row.prior_unallowed_4797_part1 +
+      row.prior_unallowed_4797_part2,
+    0,
+  );
+  const rentalIncome = activities.filter((row) => row.activity_type === "A")
+    .reduce((total, row) => total + Math.max(0, row.current_net), 0);
+  const rentalLoss = activities.filter((row) => row.activity_type === "A")
+    .reduce(
+      (total, row) =>
+        total + Math.max(0, -row.current_net) +
+        (row.prior_active_participation === true
+          ? row.prior_unallowed_operating
+          : 0),
+      0,
+    );
+  const gains = (input.current_4797_sale_gains ?? []).reduce(
+    (total, row) => total + row.gain,
+    0,
+  );
+  if (
+    (agi.pal_current_income ?? 0) !== income ||
+    (agi.pal_current_loss ?? 0) !== loss ||
+    (agi.pal_prior_unallowed ?? 0) !== prior ||
+    (agi.pal_current_4797_gain ?? 0) !== gains ||
+    (agi.pal_rental_loss ?? 0) !== rentalLoss ||
+    (rentalLoss > 0 && (agi.pal_rental_income ?? 0) !== rentalIncome)
+  ) {
+    throw new Error(
+      "Form 8582 K-1 pool differs from independently joined AGI passive sources",
+    );
+  }
+  const sourceE = scheduleEInputSchema.parse(context.pending?.schedule_e ?? {});
+  const farms = context.pending?.f4835 === undefined
+    ? []
+    : form4835InputSchema.parse(context.pending.f4835).f4835s;
+  const partnerships = context.pending?.k1_partnership === undefined
+    ? []
+    : partnershipSchema.parse(context.pending.k1_partnership).k1_partnerships;
+  const corporations = context.pending?.k1_s_corp === undefined
+    ? []
+    : sCorpSchema.parse(context.pending.k1_s_corp).k1_s_corps;
+  if (
+    [...partnerships, ...corporations].some((row) =>
+      row.qualified_business_income_source
+    )
+  ) {
+    const qbi = context.pending?.form8995;
+    if (!qbi || typeof qbi !== "object" || Array.isArray(qbi)) {
+      throw new Error(
+        "Form 8582 ordinary K-1 income needs its actual required Form 8995",
+      );
+    }
+    assertCurrentK1Qbi(qbi as Record<string, unknown>, context.pending);
+  }
+  const gross = sourceE.schedule_es.reduce((total, row) => {
+    const net = computePropertyNet(row);
+    return total +
+      ((row.activity_type === "A" || row.activity_type === "B")
+        ? Math.max(0, net)
+        : net);
+  }, 0) +
+    farms.reduce(
+      (total, row) =>
+        total + Math.max(0, calculateForm4835AtRiskNet(row).atRiskNet),
+      0,
+    ) +
+    partnerships.reduce(
+      (total, row) =>
+        total + (row.box1_ordinary_business ?? 0) + (row.box2_rental_re ?? 0) +
+        (row.box3_other_rental ?? 0) + (row.box4a_guaranteed_services ?? 0) +
+        (row.box4b_guaranteed_capital ?? 0),
+      0,
+    ) +
+    corporations.reduce(
+      (total, row) =>
+        total + (row.box1_ordinary_business ?? 0) + (row.box2_rental_re ?? 0) +
+        (row.box3_other_rental ?? 0) + (row.box6_royalties ?? 0),
+      0,
+    ) +
+    (sourceE.rental_income ?? 0) + (sourceE.royalty_income ?? 0) +
+    (sourceE.estate_trust_rows ?? []).reduce(
+      (total, row) =>
+        total + (row.other_income ?? 0) + (row.passive_income ?? 0),
+      0,
+    );
+  if (sum(agi.line5_schedule_e) !== gross) {
+    throw new Error(
+      "Form 8582 K-1 gross Schedule E income differs from actual current owners/sources",
+    );
+  }
+  const finalAgi = context.pending?.agi_final as
+    | Record<string, number>
+    | undefined;
+  const finalized = finalAgi
+    ? agiInputSchema.parse({
+      ...agi,
+      pal_pending_active_4797: false,
+      pal_4797_preapplied_loss: (finalAgi.allowed_part_i ?? 0) +
+        (finalAgi.allowed_part_ii ?? 0),
+      pal_final_allowed_loss: finalAgi.allowed_total,
+    })
+    : agi;
+  const allowed = remainingAllowedPassiveLoss(finalized);
+  const schedule1 = context.pending?.schedule1 as
+    | Record<string, number>
+    | undefined;
+  if ((schedule1?.line5_schedule_e ?? 0) !== gross - allowed) {
+    throw new Error(
+      "Form 8582 K-1 allowed losses differ from finalized Schedule 1",
+    );
+  }
+  const expected =
+    agi_aggregator.compute({ taxYear: 2025, formType: "f1040" }, finalized)
+      .outputs.find((row) => row.nodeType === "f1040")!.fields;
+  const f1040 = context.pending?.f1040 as Record<string, unknown> | undefined;
+  for (
+    const key of ["line8_additional_income", "line10_adjustments", "line11_agi"]
+  ) {
+    if ((f1040?.[key] ?? 0) !== (expected[key] ?? 0)) {
+      throw new Error(
+        `Form 8582 K-1 passive allowance differs from finalized ${key}`,
+      );
+    }
+  }
+}
+
 function linkedActivities(context: MefBuildContext): Array<{
   activity_id?: string;
   name: string;
   activity_type: "A" | "B";
   property_type: number;
-  reporting_source: "schedule_e" | "form4835";
+  reporting_source: "schedule_e" | "form4835" | "k1_partnership" | "k1_s_corp";
   current_net: number;
   prior_unallowed_operating: number;
   prior_year_8582_source?: z.infer<typeof priorYear8582SourceSchema>;
@@ -174,7 +360,16 @@ function linkedActivities(context: MefBuildContext): Array<{
           item.prior_passive_losses_active_when_incurred,
         reporting_form: "4835, line 34c",
       }));
-  return [...properties, ...farms];
+  const k1s = linkedK1Activities(context);
+  return [
+    ...properties,
+    ...farms,
+    ...k1s.map((row) => ({
+      ...row,
+      reporting_source: row.reporting_form,
+      reporting_form: "Sch E, line 28",
+    })),
+  ];
 }
 
 function assertLinkedActivities(
@@ -1117,6 +1312,7 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
       reconcileFiled2024Form8582Record(filed2024, input);
     }
     const activities = input.activities ?? [];
+    assertK1PoolReturn(input, context);
     if (
       activities.length > 0 &&
       activities.every((activity) => activity.activity_type === "B")

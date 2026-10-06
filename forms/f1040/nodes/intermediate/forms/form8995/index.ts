@@ -1,3 +1,10 @@
+import { currentFarmRentalQbiSourceSchema } from "../../../inputs/f4835/qbi-source.ts";
+import { k1PassiveIncomeSourceSchema } from "../../../inputs/k1_passive_source.ts";
+import {
+  currentK1QbiFarmRows,
+  currentK1QbiLines,
+  currentK1QbiSourceSchema,
+} from "../../../inputs/k1_qbi_source.ts";
 import { ownedDebtFamilyQbiLines } from "../form7203/owned-family.ts";
 import { ownedSCorpLossLines } from "./owned-s-corp-loss.ts";
 import {
@@ -103,6 +110,11 @@ export const inputSchema = z.object({
   qbi_from_schedule_f: accumulable(z.number()).optional(),
   // QBI from pass-through rentals/partnerships (Schedule E)
   qbi: accumulable(z.number()).optional(),
+  current_passive_farm_qbi_sources: z.array(currentFarmRentalQbiSourceSchema)
+    .min(1).optional(),
+  current_passive_k1_income_sources: z.array(k1PassiveIncomeSourceSchema).min(1)
+    .optional(),
+  current_k1_qbi_sources: z.array(currentK1QbiSourceSchema).min(1).optional(),
   owned_s_corp_loss_source: z.unknown().optional(),
   owned_s_corp_loss_sources: z.array(z.unknown()).min(2).max(4).optional(),
   // W-2 wages and UBIA are carried forward when Form 8995-A is required.
@@ -1617,7 +1629,40 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       );
     }
 
-    const simplifiedLines = ownedSCorp ?? ownedLines ?? mixedLines ??
+    const currentK1Lines = input.current_k1_qbi_sources === undefined
+      ? undefined
+      : (() => {
+        if (input.agi === undefined) return undefined;
+        if (
+          sumField(input.qbi) !==
+            input.current_k1_qbi_sources.reduce(
+              (sum, s) => sum + s.statement_qbi,
+              0,
+            ) ||
+          sumField(input.qbi_from_schedule_c) !== 0 ||
+          sumField(input.qbi_from_schedule_f) !== 0 ||
+          sumField(input.sstb_qbi) !== 0 ||
+          sumField(input.line6_sec199a_dividends) !== 0 ||
+          (input.qbi_loss_carryforward ?? 0) !== 0 ||
+          (input.reit_loss_carryforward ?? 0) !== 0 ||
+          qbiCapitalTotal(input) !== 0 ||
+          sumField(input.se_tax_deduction) !== 0 ||
+          sumField(input.se_health_insurance_deduction) !== 0 ||
+          sumField(input.retirement_plan_deduction) !== 0
+        ) {
+          throw new Error(
+            "Current K-1 QBI needs complete ordinary statement/no-other-component sources",
+          );
+        }
+        return currentK1QbiLines(
+          input.current_k1_qbi_sources,
+          taxableIncome ?? 0,
+          input.current_passive_farm_qbi_sources,
+          input.current_passive_k1_income_sources,
+        );
+      })();
+    const simplifiedLines = currentK1Lines ?? ownedSCorp ?? ownedLines ??
+      mixedLines ??
       (input.schedule_f_qbi_businesses !== undefined
         ? oneScheduleFLines(input, cfg)
         : input.schedule_c_qbi_businesses !== undefined
@@ -1631,6 +1676,7 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       : simplifiedLines.line15;
     if (
       deduction <= 0 && multipleLines === undefined &&
+      currentK1Lines === undefined &&
       !(simplifiedLines && "line1_qbi" in simplifiedLines &&
         typeof simplifiedLines.line1_qbi === "number" &&
         simplifiedLines.line1_qbi > 0)
@@ -1662,10 +1708,29 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
 
     return {
       outputs,
-      ...((ownedSCorp ?? ownedLines)?.line16
+      ...((currentK1Lines ?? ownedSCorp ?? ownedLines)?.line16 ||
+          (currentK1Lines && input.current_passive_farm_qbi_sources?.length)
         ? {
           carryforwards: {
-            qbi_loss_carryforward: (ownedSCorp ?? ownedLines)!.line16,
+            ...((currentK1Lines ?? ownedSCorp ?? ownedLines)!.line16
+              ? {
+                qbi_loss_carryforward:
+                  (currentK1Lines ?? ownedSCorp ?? ownedLines)!.line16,
+              }
+              : {}),
+            ...(currentK1Lines
+              ? Object.fromEntries(
+                currentK1QbiFarmRows(
+                  input.current_passive_farm_qbi_sources ?? [],
+                  input.current_passive_k1_income_sources ?? [],
+                ).filter((r) => r.suspended_loss > 0).map(
+                  (r) => [
+                    `qualified_passive_loss_199a:${r.tin.value}:${r.activity_id}`,
+                    r.suspended_loss,
+                  ],
+                ),
+              )
+              : {}),
             ...(input.owned_s_corp_loss_sources
               ? Object.fromEntries(
                 ownedDebtFamilyQbiLines(input.owned_s_corp_loss_sources, 0)

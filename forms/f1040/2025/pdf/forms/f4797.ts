@@ -468,8 +468,11 @@ export const form4797Pdf: PdfFormDescriptor = {
         !qualifiedFirstYearRetainedPropertySale(activity) ||
         !activity.passive_property_sales?.[0] ||
         !samePassiveSale(activity.passive_property_sales[0], sale) ||
-        !ledger.success || ledger.data.activities?.length !== 1 ||
-        ledger.data.activities[0].activity_id !== sale.activity_id ||
+        !ledger.success ||
+        !ledger.data.activities?.some((row) =>
+          row.activity_id === sale.activity_id &&
+          row.reporting_form === "schedule_e"
+        ) ||
         ledger.data.current_4797_sale_gains?.length !== 1 ||
         ledger.data.current_4797_sale_gains[0].part !== "II" ||
         ledger.data.current_4797_sale_gains[0].gain !==
@@ -515,8 +518,11 @@ export const form4797Pdf: PdfFormDescriptor = {
         !qualifiedRetainedPropertySale(activity) ||
         !activity.passive_property_sales?.[0] ||
         !samePassiveSale(activity.passive_property_sales[0], sale) ||
-        !ledger.success || ledger.data.activities?.length !== 1 ||
-        ledger.data.activities[0].activity_id !== sale.activity_id ||
+        !ledger.success ||
+        !ledger.data.activities?.some((row) =>
+          row.activity_id === sale.activity_id &&
+          row.reporting_form === "schedule_e"
+        ) ||
         ledger.data.current_4797_sale_gains?.length !== 1 ||
         ledger.data.current_4797_sale_gains[0].part !== "I" ||
         ledger.data.current_4797_sale_gains[0].gain !==

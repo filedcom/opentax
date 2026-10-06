@@ -431,16 +431,19 @@ export function validatePassiveActivityLink(
   const input = form8582InputSchema.parse(linked);
   if (
     activityItems.length > (input.activities?.length ?? 0) ||
-    activityItems.some(({ item }, index) =>
-      input.activities?.[index].name !== item.property_description ||
-      input.activities[index].activity_type !== item.activity_type ||
-      input.activities[index].property_type !== item.property_type ||
-      input.activities[index].current_net !== computePropertyNet(item) ||
-      input.activities[index].prior_unallowed_operating !==
-        (item.prior_unallowed_passive_operating ?? 0) ||
-      input.activities[index].prior_active_participation !==
-        item.prior_passive_losses_active_when_incurred
-    )
+    activityItems.some(({ item }) => {
+      const activity = input.activities?.find((row) =>
+        row.activity_id === item.activity_id
+      );
+      return !activity || activity.name !== item.property_description ||
+        activity.activity_type !== item.activity_type ||
+        activity.property_type !== item.property_type ||
+        activity.current_net !== computePropertyNet(item) ||
+        activity.prior_unallowed_operating !==
+          (item.prior_unallowed_passive_operating ?? 0) ||
+        activity.prior_active_participation !==
+          item.prior_passive_losses_active_when_incurred;
+    })
   ) {
     throw new Error(
       "Schedule E passive loss does not match Form 8582 activity",
@@ -468,7 +471,16 @@ export function validatePassiveActivityLink(
     allowed,
   ).allowed;
   return new Map(
-    activityItems.map(({ index }, position) => [index, allocations[position]]),
+    activityItems.map((
+      { item, index },
+    ) => [
+      index,
+      allocations[
+        (input.activities ?? []).findIndex((row) =>
+          row.activity_id === item.activity_id
+        )
+      ],
+    ]),
   );
 }
 

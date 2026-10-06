@@ -1,3 +1,4 @@
+import { form8582 as nativeForm8582 } from "./mef/forms/f8582.ts";
 import {
   filerCreditEligibility,
   inputSchema as generalInputSchema,
@@ -181,6 +182,25 @@ export function assertEicSource(
       ownedLosses.includes(item) ? { ...item, box1_ordinary_business: 0 } : item
     ),
   );
+  if (
+    reviewedK1PassiveIncome(partnershipItems) +
+        reviewedK1PassiveIncome(sCorpItems) > 0
+  ) {
+    if (
+      (agiInput.pal_current_loss ?? 0) + (agiInput.pal_prior_unallowed ?? 0) >
+        0 &&
+      pending?.form8582 === undefined
+    ) {
+      throw new Error(
+        "Form 1040 EIC K-1 passive losses need their actual Form 8582",
+      );
+    }
+    if (pending?.form8582 !== undefined) {
+      nativeForm8582.build(pending.form8582 as Record<string, unknown>, {
+        pending,
+      });
+    }
+  }
   const k1PassiveIncome = reviewedK1PassiveIncome(partnershipItems) +
     reviewedK1PassiveIncome(sCorpItems);
   const reportedK1PassiveIncome = Array.isArray(agiInput.eic_passive_k1_income)

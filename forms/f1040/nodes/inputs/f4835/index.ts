@@ -1,3 +1,8 @@
+import {
+  currentFarmRentalQbiSourceSchema,
+  reconcileCurrentFarmRentalQbi,
+} from "./qbi-source.ts";
+import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
@@ -26,6 +31,7 @@ const otherExpenseSchema = z.object({
 }).strict();
 
 export const itemSchema = z.object({
+  current_qbi_source: currentFarmRentalQbiSourceSchema.optional(),
   activity_id: z.string().trim().min(1).max(64).optional(),
   activity_name: z.string().min(1),
   ein: z.string().regex(/^\d{9}$/).optional(),
@@ -229,33 +235,43 @@ export function calculateForm4835AtRiskNet(item: F4835Item): {
 class F4835Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f4835";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([scheduleE]);
+  readonly outputNodes = new OutputNodes([scheduleE, form8995]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { f4835s } = inputSchema.parse(input);
+    const qbiSources = f4835s.flatMap((item) => {
+      const s = reconcileCurrentFarmRentalQbi(item);
+      return s ? [s] : [];
+    });
     const lines = f4835s.map(calculateForm4835Lines);
     const atRisk = f4835s.map(calculateForm4835AtRiskNet);
     const farmRentalNet = atRisk.reduce((sum, farm) => sum + farm.atRiskNet, 0);
     const farmRentalGross = lines.reduce((sum, line) => sum + line.gross, 0);
     return {
-      outputs: [output(scheduleE, {
-        farm_rental_net: farmRentalNet,
-        farm_rental_gross: farmRentalGross,
-        farm_rental_activities: f4835s.map((item, index) => ({
-          activity_id: item.activity_id,
-          name: item.activity_name,
-          current_net: atRisk[index].atRiskNet,
-          actively_participated: item.actively_participated === true,
-          ...((item.prior_unallowed_passive_operating ?? 0) > 0
-            ? {
-              prior_unallowed_operating: item.prior_unallowed_passive_operating,
-              prior_year_8582_source: item.prior_year_8582_source,
-              prior_active_participation:
-                item.prior_passive_losses_active_when_incurred,
-            }
-            : {}),
-        })),
-      })],
+      outputs: [
+        output(scheduleE, {
+          farm_rental_net: farmRentalNet,
+          farm_rental_gross: farmRentalGross,
+          farm_rental_activities: f4835s.map((item, index) => ({
+            activity_id: item.activity_id,
+            name: item.activity_name,
+            current_net: atRisk[index].atRiskNet,
+            actively_participated: item.actively_participated === true,
+            ...((item.prior_unallowed_passive_operating ?? 0) > 0
+              ? {
+                prior_unallowed_operating:
+                  item.prior_unallowed_passive_operating,
+                prior_year_8582_source: item.prior_year_8582_source,
+                prior_active_participation:
+                  item.prior_passive_losses_active_when_incurred,
+              }
+              : {}),
+          })),
+        }),
+        ...(qbiSources.length
+          ? [output(form8995, { current_passive_farm_qbi_sources: qbiSources })]
+          : []),
+      ],
       carryforwards: Object.fromEntries(
         atRisk.flatMap((farm, index) =>
           farm.suspended > 0
