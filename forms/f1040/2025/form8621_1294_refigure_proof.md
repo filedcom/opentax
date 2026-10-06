@@ -8,8 +8,8 @@ line 24. Subtracting the earnings only from taxable income misses deductions and
 credits that change with AGI or MAGI.
 
 `executeReturn` now runs a second complete graph from the same public source
-inputs, reducing only the elected holding's QEF ordinary earnings and capital
-gain by its source-checked undistributed amounts. The second graph retains every
+inputs, reducing the elected holdings' QEF ordinary earnings and capital
+gain by their source-checked undistributed amounts. The second graph retains every
 other source, including prior section 1294 tax. Its Form 1040 line 24 is line
 9b; the original complete return's tax before deferral is line 9a. The Form 1040
 sink then recomputes its filed line 24, balance or refund, and Form 8621 line 9c
@@ -51,8 +51,9 @@ preservation gate passed 56/0 in
 The new tests use synthetic source and acceptance copies, not authenticated IRS
 records. The Schedule A medical expense is the currently supported public line-1
 amount; this test proves the refigure, not independent invoice authentication.
-One elected QEF holding is supported; multiple simultaneous Election B holdings
-need a sourced tax-difference allocation. Form 8990 remains guarded until its
+Multiple simultaneous Election B holdings now require the separately sourced
+per-fund and aggregate tax-difference allocation described below. Form 8990
+remains guarded until its
 source-limited two-pass route can compose with a QEF return. Existing Form 8615,
 Schedule J, and AMT gates remain. Newly
 discovered Part II D–H, qualifying-insurance, and atypical indirect-owner
@@ -173,3 +174,59 @@ all 10 prior PFIC PDFs into
 `/tmp/opentax-form8621-qef-adoption-preserved-oct6/`; every SHA-256 still
 matches its reviewed counterpart across the earlier 91 pages. The original
 nine-page adoption PDF also remains byte-identical.
+
+## Simultaneous Election B holdings with additive tax effects
+
+The [2025 Form 8621 instructions](https://www.irs.gov/instructions/i8621)
+require a separate copy per PFIC. Each copy's line 9b excludes that QEF's
+own undistributed earnings, while [section 1294](https://uscode.house.gov/view.xhtml?edition=prelim&req=granuleid%3AUSC-prelim-title26-section1294)
+and [Treasury regulation 1.1294-1T(f)](https://www.govinfo.gov/content/pkg/CFR-2024-title26-vol13/pdf/CFR-2024-title26-vol13-sec1-1294-1T.pdf)
+define the deferred tax by comparing whole-return tax with and without those
+earnings. For each elected source identity, the engine now recomputes the
+complete return without only that fund's undistributed amount. It also
+recomputes tax without all elected amounts. Filing proceeds only if the sum
+of the per-fund differences equals the aggregate difference exactly; native
+and PDF copies read the resulting independently replayed 9a/9b/9c values.
+The exporter independently reruns all source returns and rejects a changed
+per-fund allocation.
+
+The reviewed two-QEF source packet has separate 2025 issuer, annual statement,
+and activity records for both funds. With the reviewed W-2 and adoption
+documents, the complete return has $8,335 tax before deferral and $7,455
+after. Each Form 8621 reports 9a/9b/9c **$8,335/$7,895/$440**; their $880
+sum agrees with the whole-return tax decrease. The packet has 11 pages:
+Form 1040 (2), Schedule 1 and statement (3), Schedule 3 (1), two Form 8621
+copies (4), and Form 8839 (1). All 11 were rendered and visually reviewed in
+`/tmp/opentax-form8621-qef-multi-rendered-oct6/`. The full native packet
+validates against local MeF v5.4 `Return1040.xsd`; PDF SHA-256 is
+`b2196e058d58e6a68fcc6d9ed524c9b4ced8060f49307c791d3e35aec53ea92d`.
+Source inputs, pending, XML, PDF, and page origins are retained under
+`/tmp/opentax-form8621-qef-multi-oct6/multi/`.
+
+A third separately identified 2025 QEF source also reconciles: each of its
+three Form 8621 copies has 9a/9b/9c **$8,775/$8,335/$440**, summing to the
+$1,320 reduction from $8,775 to $7,455 on Form 1040. The 13-page native
+packet validates against the same full XSD, all pages were visually reviewed
+in `/tmp/opentax-form8621-qef-triple-rendered-oct6/`, and the PDF SHA-256 is
+`a96ca1f7614fab82998888c59361b1befa2d927634eec4e3abae29bd6e0cf5e8`.
+Its source, pending, XML, PDF, and origins are under
+`/tmp/opentax-form8621-qef-multi-oct6/triple/`.
+
+The additivity guard is material. At $64,500 of wages, the full return's tax
+after adoption credit but before deferral is $525. Removing either fund alone
+leaves $85 of tax, so two independently computed line 9c amounts would total
+$880. Removing both funds leaves $0, making the aggregate deferrable tax only
+$525. The route rejects this source packet as nonadditive. The cited IRS
+instructions, statute, and regulation do not specify an allocation method
+for that interaction; a supplied scalar or arbitrary ordering would not
+establish it. Nonadditive simultaneous elections remain guarded pending a
+defensible allocation rule and source evidence. The additive route is a
+bounded supported case, not completion of every simultaneous-holding case.
+
+The combined six-module gate passed 73/0 in
+`/tmp/opentax-form8621-qef-multi-focused-oct6.log`. It regenerated the prior
+10 reviewed PFIC PDFs (91 pages) and all three earlier adoption PDFs (27
+pages) with unchanged SHA-256 values. The strengthened nonadditivity source
+boundary passed 1/0 on a final focused rerun.
+The final six source/native/PDF/XSD packet and conflict cases passed 6/0 in
+`/tmp/opentax-form8621-qef-multi-final-oct6.log`.

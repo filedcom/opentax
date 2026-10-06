@@ -412,11 +412,6 @@ class F8621Node extends TaxNode<typeof inputSchema> {
     const { f8621s } = inputSchema.parse(input);
     validateHoldings(f8621s);
     const elected = f8621s.filter((item) => item.qef_1294_election);
-    if (elected.length > 1) {
-      throw new Error(
-        "Form 8621 multiple section 1294 elections need separate tax-difference allocation",
-      );
-    }
     const lines = calculatedLines(f8621s);
     const currentAndPrePficIncome = totalEventLine(
       lines,
@@ -433,7 +428,17 @@ class F8621Node extends TaxNode<typeof inputSchema> {
 
     const mtmIncome = totalMtmGainLoss(f8621s);
     const qefOrdinaryIncome = totalQefOrdinaryIncome(f8621s);
-    const qef1294 = elected[0]?.qef_1294_election;
+    const qef1294Ordinary = elected.reduce(
+      (sum, item) =>
+        sum +
+        (item.qef_1294_election?.undistributed_ordinary_earnings_usd ?? 0),
+      0,
+    );
+    const qef1294Capital = elected.reduce(
+      (sum, item) =>
+        sum + (item.qef_1294_election?.undistributed_capital_gain_usd ?? 0),
+      0,
+    );
     const prior1294 = f8621s.flatMap((item) =>
       item.parent_source?.section1294_prior_status
         ? calculateSection1294PriorStatus(
@@ -519,12 +524,10 @@ class F8621Node extends TaxNode<typeof inputSchema> {
         ...(additionalTax > 0
           ? [output(income_tax_calculation, { form8621_tax: additionalTax })]
           : []),
-        ...(qef1294
+        ...(elected.length > 0
           ? [output(income_tax_calculation, {
-            form8621_1294_undistributed_ordinary:
-              qef1294.undistributed_ordinary_earnings_usd,
-            form8621_1294_undistributed_capital:
-              qef1294.undistributed_capital_gain_usd,
+            form8621_1294_undistributed_ordinary: qef1294Ordinary,
+            form8621_1294_undistributed_capital: qef1294Capital,
           })]
           : []),
         ...(interest > 0

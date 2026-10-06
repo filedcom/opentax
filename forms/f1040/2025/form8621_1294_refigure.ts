@@ -30,78 +30,118 @@ export function applyForm8621QefRefigure(
 ): ExecuteResult {
   const elected = deferredHoldings(inputs);
   if (elected.length === 0) return full;
-  if (
-    elected.length !== 1 || inputs.form8990 !== undefined
-  ) {
+  if (inputs.form8990 !== undefined) {
     throw new Error(
-      "Form 8621 Election B needs one elected holding and a settled full-return counterfactual",
+      "Form 8621 Election B needs a settled full-return counterfactual before Form 8990",
     );
   }
   if (full.diagnostics.length > 0) return full;
-  const withoutInputs = structuredClone(inputs);
-  withoutInputs.f8621 = (withoutInputs.f8621 as Record<string, unknown>[])
-    .map((item) => {
-      const election = record(item.qef_1294_election);
-      if (!election) return item;
-      const ordinary = Number(item.qef_ordinary_income) -
-        Number(election.undistributed_ordinary_earnings_usd);
-      const capital = Number(item.qef_capital_gain) -
-        Number(election.undistributed_capital_gain_usd);
-      if (
-        !Number.isFinite(ordinary) || !Number.isFinite(capital) ||
-        ordinary < 0 || capital < 0
-      ) {
-        throw new Error(
-          "Form 8621 Election B counterfactual exceeds actual QEF earnings",
-        );
-      }
-      const { qef_1294_election: _election, ...rest } = item;
-      return {
-        ...rest,
-        qef_ordinary_income: ordinary,
-        qef_capital_gain: capital,
-      };
-    });
-  const childSource = record(withoutInputs.f8615);
-  if (childSource) {
-    const election = record(record(elected[0])?.qef_1294_election);
-    const removed = Number(election?.undistributed_ordinary_earnings_usd) +
-      Number(election?.undistributed_capital_gain_usd);
-    const childUnearned = Number(childSource.child_unearned_income);
-    if (
-      !Number.isFinite(removed) || !Number.isFinite(childUnearned) ||
-      childUnearned < removed
-    ) {
-      throw new Error(
-        "Form 8621 Election B child unearned income cannot exclude the QEF earnings",
-      );
-    }
-    withoutInputs.f8615 = {
-      ...childSource,
-      child_unearned_income: childUnearned - removed,
-    };
-  }
-  const without = inputs.form8839 === undefined
-    ? execute(buildExecutionPlan(registry), registry, withoutInputs, context)
-    : executeForm8839TwoPass(withoutInputs, true);
-  if (without.diagnostics.length > 0) {
+  const identifiers = elected.map((value) =>
+    String(record(value)?.company_ein_or_ref)
+  );
+  if (new Set(identifiers).size !== identifiers.length) {
     throw new Error(
-      "Form 8621 Election B needs a settled without-QEF return: " +
-        without.diagnostics.map((row) => row.message).join("; "),
+      "Form 8621 Election B needs distinct QEF source identities",
     );
   }
   const full1040 = record(buildPending(full.pending).f1040);
-  const without1040 = record(buildPending(without.pending).f1040);
   const line9a = Number(full1040?.line22_tax_after_credits) +
     Number(full1040?.line23_other_taxes ?? 0);
-  const line9b = Number(without1040?.line24_total_tax);
-  if (
-    !Number.isFinite(line9a) || !Number.isFinite(line9b) ||
-    line9b > line9a
-  ) {
-    throw new Error(
-      "Form 8621 Election B cannot defer more than the full-return tax from undistributed earnings",
+  if (!Number.isFinite(line9a)) {
+    throw new Error("Form 8621 Election B needs computed full-return tax");
+  }
+  function withoutTax(removedIdentifiers: ReadonlySet<string>): number {
+    const withoutInputs = structuredClone(inputs);
+    let removedUnearned = 0;
+    withoutInputs.f8621 = (withoutInputs.f8621 as Record<string, unknown>[])
+      .map((item) => {
+        const election = record(item.qef_1294_election);
+        if (!election) return item;
+        const { qef_1294_election: _election, ...rest } = item;
+        if (!removedIdentifiers.has(String(item.company_ein_or_ref))) {
+          return rest;
+        }
+        const undistributedOrdinary = Number(
+          election.undistributed_ordinary_earnings_usd,
+        );
+        const undistributedCapital = Number(
+          election.undistributed_capital_gain_usd,
+        );
+        const ordinary = Number(item.qef_ordinary_income ?? 0) -
+          undistributedOrdinary;
+        const capital = Number(item.qef_capital_gain ?? 0) -
+          undistributedCapital;
+        if (
+          !Number.isFinite(ordinary) || !Number.isFinite(capital) ||
+          ordinary < 0 || capital < 0
+        ) {
+          throw new Error(
+            "Form 8621 Election B counterfactual exceeds actual QEF earnings",
+          );
+        }
+        removedUnearned += undistributedOrdinary + undistributedCapital;
+        return {
+          ...rest,
+          qef_ordinary_income: ordinary,
+          qef_capital_gain: capital,
+        };
+      });
+    const childSource = record(withoutInputs.f8615);
+    if (childSource) {
+      const childUnearned = Number(childSource.child_unearned_income);
+      if (!Number.isFinite(childUnearned) || childUnearned < removedUnearned) {
+        throw new Error(
+          "Form 8621 Election B child unearned income cannot exclude the QEF earnings",
+        );
+      }
+      withoutInputs.f8615 = {
+        ...childSource,
+        child_unearned_income: childUnearned - removedUnearned,
+      };
+    }
+    const without = inputs.form8839 === undefined
+      ? execute(buildExecutionPlan(registry), registry, withoutInputs, context)
+      : executeForm8839TwoPass(withoutInputs, true);
+    if (without.diagnostics.length > 0) {
+      throw new Error(
+        "Form 8621 Election B needs a settled without-QEF return: " +
+          without.diagnostics.map((row) => row.message).join("; "),
+      );
+    }
+    const tax = Number(
+      record(buildPending(without.pending).f1040)?.line24_total_tax,
     );
+    if (!Number.isFinite(tax) || tax > line9a) {
+      throw new Error(
+        "Form 8621 Election B cannot defer more than the full-return tax from undistributed earnings",
+      );
+    }
+    return tax;
+  }
+  const line9b = withoutTax(new Set(identifiers));
+  const allocations: Record<string, {
+    line9a: number;
+    line9b: number;
+    line9c: number;
+  }> = {};
+  if (identifiers.length > 1) {
+    for (const identifier of identifiers) {
+      const individual9b = withoutTax(new Set([identifier]));
+      allocations[identifier] = {
+        line9a,
+        line9b: individual9b,
+        line9c: line9a - individual9b,
+      };
+    }
+    const allocated = Object.values(allocations).reduce(
+      (sum, row) => sum + row.line9c,
+      0,
+    );
+    if (allocated !== line9a - line9b) {
+      throw new Error(
+        "Form 8621 multiple Election B tax differences are nonadditive; per-QEF allocation needs independent support",
+      );
+    }
   }
   const sinkInput = {
     ...record(full.pending.f1040),
@@ -138,6 +178,7 @@ export function applyForm8621QefRefigure(
       },
       form8621_1294_refigure: {
         source_inputs: structuredClone(inputs),
+        ...(identifiers.length > 1 ? { allocations } : {}),
       },
     },
   };

@@ -70,7 +70,7 @@ const holding = {
   },
 };
 async function retainAndValidatePacket(
-  kind: "full" | "shadow-carryforward" | "zero",
+  kind: "full" | "shadow-carryforward" | "zero" | "multi" | "triple",
   input: Record<string, unknown>,
   pending: Record<string, unknown>,
   xml: string,
@@ -296,6 +296,245 @@ Deno.test("Form 8621 Election B records zero deferred tax when the full-return t
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), 9);
   await retainAndValidatePacket(
     "zero",
+    inputs,
+    pending,
+    bundle.xml,
+    pdf,
+    origins,
+  );
+});
+
+const secondHolding = {
+  ...holding,
+  company_name: "QEF Second Adoption Fund",
+  company_ein_or_ref: "QEFADOPT2",
+  parent_source: {
+    ...holding.parent_source,
+    issuer_record: cp("issuer-second", "Issuer 2025 second QEF report"),
+    qef_annual_statement: {
+      ...cp("qef-second", "Second QEF annual 2000 ordinary"),
+      ordinary_earnings_usd: 2_000,
+      net_capital_gain_usd: 0,
+    },
+    qef_1294_activity_record: {
+      ...cp(
+        "activity-second",
+        "Second broker ledger with no distributions or transfers",
+      ),
+      distributions_cash_and_property_usd: 0,
+      transferred_share_earnings_usd: 0,
+    },
+  },
+};
+
+Deno.test("two independent Election B holdings reconcile per-fund tax to the full adoption return", async () => {
+  const inputs = { ...base.inputs, f8621: [holding, secondHolding] };
+  const result = f1040_2025.executeReturn(inputs);
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  assertForm8621QefRefigureSource(pending);
+  const filed = pending.f1040! as Record<string, number>;
+  assertEquals(filed.form8621_1294_total_tax_before_deferral, 8_335);
+  assertEquals(filed.form8621_1294_counterfactual_total_tax, 7_455);
+  assertEquals(filed.form8621_1294_deferred_tax, 880);
+  assertEquals(filed.line24_total_tax, 7_455);
+  const allocations =
+    ((pending as unknown as Record<string, unknown>).form8621_1294_refigure as {
+      allocations: Record<
+        string,
+        { line9a: number; line9b: number; line9c: number }
+      >;
+    }).allocations;
+  assertEquals(allocations.QEFADOPT1, {
+    line9a: 8_335,
+    line9b: 7_895,
+    line9c: 440,
+  });
+  assertEquals(allocations.QEFADOPT2, {
+    line9a: 8_335,
+    line9b: 7_895,
+    line9c: 440,
+  });
+  const bundle = await buildMefBundle(pending, {
+    filer: base.filer,
+    attachments: base.attachments!,
+  });
+  assertEquals((bundle.xml.match(/<IRS8621/g) ?? []).length, 2);
+  const origins: PdfPageOrigin[] = [];
+  const pdf = await buildPdfBytes(
+    pending,
+    base.filer,
+    ".pdf-cache",
+    bundle,
+    origins,
+  );
+  assertEquals((await PDFDocument.load(pdf)).getPageCount(), 11);
+  assertEquals(
+    origins.filter((x) => x.formKey === "form8621").map((x) => x.formCopy),
+    [1, 1, 2, 2],
+  );
+  await retainAndValidatePacket(
+    "multi",
+    inputs,
+    pending,
+    bundle.xml,
+    pdf,
+    origins,
+  );
+  const changed = structuredClone(pending) as Record<string, unknown>;
+  (changed.form8621_1294_refigure as {
+    allocations: Record<string, { line9c: number }>;
+  }).allocations.QEFADOPT2.line9c++;
+  await assertRejects(
+    () =>
+      buildMefBundle(changed, {
+        filer: base.filer,
+        attachments: base.attachments!,
+      }),
+    Error,
+    "Form 8621 section 1294",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changed, base.filer),
+    Error,
+    "Form 8621 section 1294",
+  );
+});
+
+Deno.test("nonadditive simultaneous Election B differences stay guarded", () => {
+  const originalW2 = (base.inputs.w2 as Record<string, unknown>[])[0];
+  const wage = {
+    ...originalW2,
+    box1_wages: 64_500,
+    box2_fed_withheld: 8_000,
+    box3_ss_wages: 64_500,
+    box4_ss_withheld: 3_999,
+    box5_medicare_wages: 64_500,
+    box6_medicare_withheld: 935.25,
+  };
+  const source = { ...base.inputs, w2: [wage] };
+  const undistributedRemoved = (item: typeof holding) => ({
+    ...item,
+    qef_ordinary_income: 0,
+    qef_1294_election: undefined,
+  });
+  const withoutElection = (item: typeof holding) => ({
+    ...item,
+    qef_1294_election: undefined,
+  });
+  const full = buildPending(
+    executeForm8839TwoPass({
+      ...source,
+      f8621: [holding, secondHolding],
+    }).pending,
+  ).f1040!;
+  const withoutFirst = buildPending(
+    executeForm8839TwoPass({
+      ...source,
+      f8621: [undistributedRemoved(holding), withoutElection(secondHolding)],
+    }).pending,
+  ).f1040!;
+  const withoutSecond = buildPending(
+    executeForm8839TwoPass({
+      ...source,
+      f8621: [withoutElection(holding), undistributedRemoved(secondHolding)],
+    }).pending,
+  ).f1040!;
+  const withoutBoth = buildPending(
+    executeForm8839TwoPass({
+      ...source,
+      f8621: [
+        undistributedRemoved(holding),
+        undistributedRemoved(secondHolding),
+      ],
+    }, true).pending,
+  ).f1040!;
+  assertEquals(full.line22_tax_after_credits, 525);
+  assertEquals(withoutFirst.line24_total_tax, 85);
+  assertEquals(withoutSecond.line24_total_tax, 85);
+  assertEquals(withoutBoth.line24_total_tax, 0);
+  assertThrows(
+    () =>
+      f1040_2025.executeReturn({
+        ...base.inputs,
+        w2: [wage],
+        f8621: [holding, secondHolding],
+      }),
+    Error,
+    "nonadditive",
+  );
+});
+
+const thirdHolding = {
+  ...holding,
+  company_name: "QEF Third Adoption Fund",
+  company_ein_or_ref: "QEFADOPT3",
+  parent_source: {
+    ...holding.parent_source,
+    issuer_record: cp("issuer-third", "Issuer 2025 third QEF report"),
+    qef_annual_statement: {
+      ...cp("qef-third", "Third QEF annual 2000 ordinary"),
+      ordinary_earnings_usd: 2_000,
+      net_capital_gain_usd: 0,
+    },
+    qef_1294_activity_record: {
+      ...cp(
+        "activity-third",
+        "Third broker ledger with no distributions or transfers",
+      ),
+      distributions_cash_and_property_usd: 0,
+      transferred_share_earnings_usd: 0,
+    },
+  },
+};
+
+Deno.test("three independent Election B holdings retain separate sourced copies", async () => {
+  const inputs = {
+    ...base.inputs,
+    f8621: [holding, secondHolding, thirdHolding],
+  };
+  const result = f1040_2025.executeReturn(inputs);
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  assertForm8621QefRefigureSource(pending);
+  const filed = pending.f1040! as Record<string, number>;
+  assertEquals(filed.form8621_1294_total_tax_before_deferral, 8_775);
+  assertEquals(filed.form8621_1294_counterfactual_total_tax, 7_455);
+  assertEquals(filed.form8621_1294_deferred_tax, 1_320);
+  const allocations =
+    ((pending as unknown as Record<string, unknown>).form8621_1294_refigure as {
+      allocations: Record<
+        string,
+        { line9a: number; line9b: number; line9c: number }
+      >;
+    }).allocations;
+  for (const id of ["QEFADOPT1", "QEFADOPT2", "QEFADOPT3"]) {
+    assertEquals(allocations[id], {
+      line9a: 8_775,
+      line9b: 8_335,
+      line9c: 440,
+    });
+  }
+  const bundle = await buildMefBundle(pending, {
+    filer: base.filer,
+    attachments: base.attachments!,
+  });
+  assertEquals((bundle.xml.match(/<IRS8621/g) ?? []).length, 3);
+  const origins: PdfPageOrigin[] = [];
+  const pdf = await buildPdfBytes(
+    pending,
+    base.filer,
+    ".pdf-cache",
+    bundle,
+    origins,
+  );
+  assertEquals((await PDFDocument.load(pdf)).getPageCount(), 13);
+  assertEquals(
+    origins.filter((x) => x.formKey === "form8621").map((x) => x.formCopy),
+    [1, 1, 2, 2, 3, 3],
+  );
+  await retainAndValidatePacket(
+    "triple",
     inputs,
     pending,
     bundle.xml,

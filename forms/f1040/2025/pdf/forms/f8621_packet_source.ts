@@ -9,6 +9,7 @@ import {
 } from "../../form8621_parent_source.ts";
 import { projectForm8621ParentPages } from "./f8621_parent_source.ts";
 import { section1294DueFromCalculatedForm } from "../../../nodes/inputs/f8621/section1294.ts";
+import { form8621ElectionBTaxForHolding } from "../../form8621_1294_allocation.ts";
 
 function object(value: unknown): Record<string, unknown> | undefined {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -91,22 +92,15 @@ export function projectForm8621Packet(
   if (!f1040) throw new Error("Form 8621 PDF needs finalized Form 1040");
   const electionCount =
     lines.filter((line) => line.item.qef_1294_election !== undefined).length;
-  if (electionCount > 1) {
-    throw new Error(
-      "Form 8621 PDF needs separate tax allocation for multiple Election B holdings",
-    );
-  }
   const forms = lines.map((line) => {
     assertForm8621PrintableSource(line.item);
+    const tax = line.item.qef_1294_election
+      ? form8621ElectionBTaxForHolding(pending, line.item)
+      : undefined;
     return projectForm8621ParentPages(
       line,
       filer,
-      line.item.qef_1294_election
-        ? {
-          current: amount(f1040.line24_total_tax),
-          deferred: amount(f1040.form8621_1294_deferred_tax),
-        }
-        : undefined,
+      tax ? { current: tax.line9b, deferred: tax.line9c } : undefined,
     );
   });
   const events = lines.flatMap((line) => line.excessEvents);

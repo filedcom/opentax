@@ -10,6 +10,7 @@ import {
 } from "../../form8621_parent_source.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { explainForm8621ExcessStatement } from "./f8621_excess_statement.ts";
+import { form8621ElectionBTaxForHolding } from "../../form8621_1294_allocation.ts";
 
 type Input = { items?: readonly Form8621Lines[] };
 
@@ -92,16 +93,9 @@ function buildItem(
   const qefIncome = qefOrdinary - qefOrdinaryReduction + qefGain -
     qefCapitalReduction;
   const qef1294 = item.qef_1294_election;
-  const f1040 = context?.pending?.f1040 as Record<string, unknown> | undefined;
-  const currentTax = f1040?.line24_total_tax;
-  const deferredValue = f1040?.form8621_1294_deferred_tax;
-  const deferredTax = deferredValue === undefined ? 0 : deferredValue;
-  if (
-    qef1294 &&
-    (typeof currentTax !== "number" || typeof deferredTax !== "number")
-  ) {
-    throw new Error("Form 8621 election B needs finalized Form 1040 tax");
-  }
+  const electionTax = qef1294
+    ? form8621ElectionBTaxForHolding(context?.pending ?? {}, item)
+    : undefined;
   const yearEndMtm = item.mtm_adjusted_basis_at_year_end === undefined
     ? 0
     : Math.max(0, item.fmv_at_year_end - item.mtm_adjusted_basis_at_year_end) -
@@ -244,10 +238,10 @@ function buildItem(
             ),
             element(
               "TotalTaxForTaxYearAmt",
-              (currentTax as number) + (deferredTax as number),
+              electionTax?.line9a,
             ),
-            element("TotTxWithoutProRataLessCashAmt", currentTax as number),
-            element("DeferredTaxAmt", deferredTax as number),
+            element("TotTxWithoutProRataLessCashAmt", electionTax?.line9b),
+            element("DeferredTaxAmt", electionTax?.line9c),
           ]
           : []),
       ].join("")
