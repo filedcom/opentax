@@ -197,3 +197,6 @@ distributions and other unsupported source histories remain guarded; external
 authentication and IRS acceptance remain open. This checkpoint supersedes
 earlier descriptions that prior consumed basis was wholly unimplemented, and
 does not close the broader existing parent.
+
+
+Current-main7a75f732f verified source2/0+related264/0 and held12/107 exact with696artifactfiles preserved, prior33/258 unchanged/exact. Exact logs and limitations are archived in the October6 status/validation record.

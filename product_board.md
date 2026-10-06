@@ -2,17 +2,17 @@
 
 ## Compacted status (2026-10-06)
 
-The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,462 completed slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,463 completed slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
 
 Inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF keys / 96 covered / 18 uncovered**.
 
-Latest verified work: QEF Election B refigures actual education/dependent credits and tax-limited business credits (**8/0 + 41/0**). Four full-XSD packets / 54 reviewed pages preserve all 16 source/pending/PDF/origin files exactly, with XML only timestamp changes. Earlier Roth conversion, donated-asset and simultaneous-QEF proofs remain archived. Wider parents remain open.
+Latest verified work: complete retained Roth consumption histories (**2/0 + 264/0**), twelve full-XSD packets / 107 reviewed current pages plus 91 retained historical pages, with all 696 reviewed files exact. Earlier 33 Roth/substitute packets / 258 pages are preserved. QEF credit and donation proof remains archived. Wider parents remain open.
 
-Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at89m56s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
+Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at96m10s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
 
 Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **0feee220b**, verified published with the new credit changes.
 
-Roth consumed-history and natural-resource donation changes are ready in isolated checkouts; a fresh-main natural-resource rehearsal is running. Root preferential ScheduleJ/AMT source work has an isolated checkout and a retained guard audit. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+Roth consumed-history is verified on main; the natural-resource donation rehearsal passed 15/0 + 578/0 and held13/432, ready for main integration. Root preferential ScheduleJ/AMT source work has an isolated checkout and a retained guard audit. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
 
 ## Scope and completion rules
 

@@ -625,3 +625,6 @@ absent. This is not a historical whole-return engine recomputation. Synthetic
 retained fixtures prove byte/hash/parsed-fact joins, not external authentication
 or IRS business-rule/ATS acceptance. Broader parent remains open; no main,
 board, catalog, PR or future task was changed.
+
+
+Current-main7a75f732f verified source2/0+related264/0 and held12/107 exact with696artifactfiles preserved, prior33/258 unchanged/exact. Exact logs and limitations are archived in the October6 status/validation record.

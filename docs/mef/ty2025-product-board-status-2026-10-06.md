@@ -2756,3 +2756,25 @@ Roth consumed-history and natural-resource donation changes are ready in isolate
 
 
 Previousgoalturn progress: maincredit a31/41ded sealed49checks/54reviewedpages andpublishedPR63 e1af772d7. CurrentV5 live89m56s wrapper65945/Deno65949. Naturalresource current-mainrehearsal source15/0 terminal; compat36725 live. Regenerated219filebytecompare fails active_idc_oil attachmentPDF; preservefailedcomparison and use originalimmutable v20 source/retainedbytes for heldreplay before supportclaim. Readyhistoryc9eb6ad777 actual12/107+91priorpages,2/0+264/0,original33/258preserved; integrate then freshmainchecks and actualimmutableheldreplay before ledger. Frozen52/future unchanged,ledger1462.
+
+
+## Verified main Roth history and before donation integration
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,462 completed slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
+
+Inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF keys / 96 covered / 18 uncovered**.
+
+Latest verified work: QEF Election B refigures actual education/dependent credits and tax-limited business credits (**8/0 + 41/0**). Four full-XSD packets / 54 reviewed pages preserve all 16 source/pending/PDF/origin files exactly, with XML only timestamp changes. Earlier Roth conversion, donated-asset and simultaneous-QEF proofs remain archived. Wider parents remain open.
+
+Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at89m56s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
+
+Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **0feee220b**, verified published with the new credit changes.
+
+Roth consumed-history and natural-resource donation changes are ready in isolated checkouts; a fresh-main natural-resource rehearsal is running. Root preferential ScheduleJ/AMT source work has an isolated checkout and a retained guard audit. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+
+
+Currentmain7a75f732f source2/0(1m22s), /tmp/opentax-roth-history-current-main-source-oct6.log;25modulecompat264/0(3m6s), /tmp/opentax-roth-history-current-main-related-oct6.log. Immutablemainheld12/107exact fullXSDsource/pending/PDF/origins/retainedbytes andXMLonlyReturnTs, /tmp/opentax-roth-history-current-main-held-oct6.log; all696reviewedfiles exact /tmp/opentax-roth-history-current-main-reviewed-comparison-oct6.json;91retainedhistoricalpages previouslyreviewed. Four earliermainheldgates10/70+9/52+6/57+8/79 allterminalpass /tmp/opentax-roth-history-current-main-prior-{substitutes,regular,inventory,conversions}-oct6.log;33/258exact. EarlierQEF13/118 independentlyfresh16/0 and allPDFsource/XML/origins preserved /tmp/opentax-qef-prior-main-replay-oct6.log and ...-compare-oct6.log. Naturalresource current-mainrehearsal1aec01675 source15/0(1m53s)+compat578/0(6m29s), actualretainedv20held13packets219files/432reviewedpageoccurrences exact; metadataregenerationdifference traced only ModDate in firstattachment andnotdescribed asbyteequal. Retainedsource inputs andoriginalattachmentbytes ratherthan factory regeneration prove fullgraphmath/carry/native/PDF/XSD, /tmp/opentax-resource-main-held-v20-v2-oct6.log, held-proof-manifestSHA706c66d511a2387798f2cf880c34fa373aa42de8c204ab7b3c2a3ceda26cc2f0. Original669/971unchanged. Integratef258 onlythen freshactualmain source/held; no donationledgercredityet. V5verifiedlive96m10s wrappers65945/65949, no terminal. Previous/currentgoalturnprogress; frozen52/futureunchanged.
