@@ -140,7 +140,7 @@ Deno.test("Form 8995-A REIT source, holding review, and return totals reject tam
   assertThrows(
     () => build({ ...fields, line6_sec199a_dividends: 999 }),
     Error,
-    "positive whole-dollar calculated QBI deduction",
+    "sourced whole-dollar calculated QBI deduction",
   );
   assertThrows(
     () =>
