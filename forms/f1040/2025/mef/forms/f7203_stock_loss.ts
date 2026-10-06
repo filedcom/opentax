@@ -27,7 +27,8 @@ export function buildReviewedStockLoss7203(
   );
   const repayment = sumPrincipalRepayments(note?.principal_repayments);
   const debtAfterRepayment = (note?.cash_advance_amount ?? 0) - repayment;
-  const secondAdvance = note?.second_formal_note?.cash_advance_amount ?? 0;
+  const secondAdvance = note?.open_account_net_advance_amount ??
+    note?.second_formal_note?.cash_advance_amount ?? 0;
   const secondRepayment =
     note?.second_formal_note?.principal_repayment?.amount ?? 0;
   const secondDebtAfterRepayment = secondAdvance - secondRepayment;
@@ -84,9 +85,12 @@ export function buildReviewedStockLoss7203(
         element("DebtBasisEndTaxYrAmt", debtAfterRepayment - allowedDebt1),
       ])
       : "",
-    note?.second_formal_note
+    (note?.second_formal_note ||
+        note?.kind === "owned_2025_formal_and_open_account")
       ? elements("ShareholderDebtBasisGrp", [
-        element("FormalNoteInd", "X"),
+        note?.kind === "owned_2025_formal_and_open_account"
+          ? element("OpenAccountDebtInd", "X")
+          : element("FormalNoteInd", "X"),
         element("LoanBalanceBeginTaxYrAmt", 0),
         element("AdditionalLoansAmt", secondAdvance),
         element("LoanedBeginningBalAmt", secondAdvance),
@@ -96,7 +100,7 @@ export function buildReviewedStockLoss7203(
         element("LoanBalanceEndTaxYrAmt", secondDebtAfterRepayment),
         element("DebtBasisBeginTaxYrAmt", 0),
         element("DebtBasisBfrRepaymentAmt", secondAdvance),
-        element("DebtLoanRepaymentPct", "1.0000"),
+        secondAdvance > 0 ? element("DebtLoanRepaymentPct", "1.0000") : "",
         secondRepayment > 0
           ? element("NontaxableDebtRepaymentAmt", secondRepayment)
           : "",

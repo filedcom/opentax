@@ -1,4 +1,8 @@
-import { ownedOpenAccountRecordsSchema } from "./owned-current-source.ts";
+import { allocateTwoDebtReductions } from "./debt-allocation.ts";
+import {
+  ownedMixedDebtRecordsSchema,
+  ownedOpenAccountRecordsSchema,
+} from "./owned-current-source.ts";
 import { replayOpenAccount } from "./open-account.ts";
 import { z } from "zod";
 import {
@@ -34,6 +38,7 @@ export function sumPrincipalRepayments(
 // one repayment in its separately bounded source route.
 const newFormalNotesBaseSchema = z.object({
   kind: z.enum(["new_2025_formal_notes", "owned_2025_formal_notes"]),
+  open_account_net_advance_amount: z.never().optional(),
   owned_current_records: ownedCurrentDebtRecordsSchema.optional(),
   shareholder_ssn: z.string().regex(/^\d{9}$/),
   corporation_ein: z.string().regex(/^\d{9}$/),
@@ -192,9 +197,33 @@ export const reviewedOpenAccountSchema = newFormalNotesBaseSchema.omit({
     ctx.addIssue({ code: "custom", message: String(error) });
   }
 });
+export const reviewedMixedCurrentDebtSchema = newFormalNotesBaseSchema.extend({
+  kind: z.literal("owned_2025_formal_and_open_account"),
+  owned_current_records: ownedMixedDebtRecordsSchema,
+  second_formal_note: z.never().optional(),
+  open_account_net_advance_amount: z.number().int().nonnegative().refine(
+    Number.isSafeInteger,
+  ),
+}).superRefine((note, ctx) => {
+  try {
+    const r = reconcileOwnedCurrentDebt(note.owned_current_records, note);
+    if (
+      note.shareholder_lender_ssn !== note.shareholder_ssn ||
+      note.corporate_borrower_ein !== note.corporation_ein ||
+      note.no_2025_repayments_confirmed === (r.repayments > 0)
+    ) {
+      throw Error(
+        "Mixed direct-debt instrument owner/borrower/complete repayment facts conflict",
+      );
+    }
+  } catch (error) {
+    ctx.addIssue({ code: "custom", message: String(error) });
+  }
+});
 const reviewedCurrentDebtSchema = z.union([
   reviewedNewFormalNotesSchema,
   reviewedOpenAccountSchema,
+  reviewedMixedCurrentDebtSchema,
 ]);
 export const reviewedForm7203DebtEvidenceSchema = z.union([
   reviewedCurrentDebtSchema,
@@ -275,7 +304,8 @@ export function reconcileNewFormalNotes(
     note.cash_advance_amount -
       sumPrincipalRepayments(note.principal_repayments) +
       (note.second_formal_note?.cash_advance_amount ?? 0) -
-      (note.second_formal_note?.principal_repayment?.amount ?? 0),
+      (note.second_formal_note?.principal_repayment?.amount ?? 0) +
+      (note.open_account_net_advance_amount ?? 0),
   );
   if (
     note.second_formal_note &&
@@ -294,7 +324,9 @@ export function reconcileNewFormalNotes(
     );
   }
   if (
-    debtSupportedLossCandidate <= 0 && note.kind !== "owned_2025_open_account"
+    debtSupportedLossCandidate <= 0 &&
+    note.kind !== "owned_2025_open_account" &&
+    note.kind !== "owned_2025_formal_and_open_account"
   ) {
     throw new Error(
       "Form 7203 one-note debt candidate needs a current loss beyond reviewed stock basis",
@@ -303,7 +335,15 @@ export function reconcileNewFormalNotes(
   return { note, stockSupportedLoss, debtSupportedLossCandidate };
 }
 
+export { totalCurrentDebtAdvances } from "./debt-allocation.ts";
 export function actualCurrentDebtRepayments(note: ReviewedNewFormalNotes) {
+  if (note.kind === "owned_2025_formal_and_open_account") {
+    return sumPrincipalRepayments(note.principal_repayments) +
+      replayOpenAccount(
+        note.owned_current_records
+          .complete_current_shareholder_debt_inventory[1],
+      ).repayments;
+  }
   return note.kind === "owned_2025_open_account"
     ? replayOpenAccount(
       note.owned_current_records.complete_current_shareholder_debt_inventory[0],
@@ -317,14 +357,50 @@ export function currentOpenAccountCarry(
   note: ReviewedNewFormalNotes | undefined,
   allowedDebt: number,
 ): Record<string, number> {
-  if (note?.kind !== "owned_2025_open_account") return {};
+  if (
+    note?.kind !== "owned_2025_open_account" &&
+    note?.kind !== "owned_2025_formal_and_open_account"
+  ) return {};
+  const mixed = note.kind === "owned_2025_formal_and_open_account";
   const r = replayOpenAccount(
-    note.owned_current_records.complete_current_shareholder_debt_inventory[0],
+    note.owned_current_records
+      .complete_current_shareholder_debt_inventory[mixed ? 1 : 0],
   );
+  const formalCapacity = mixed
+    ? note.cash_advance_amount -
+      sumPrincipalRepayments(note.principal_repayments)
+    : 0;
+  const allocation = mixed
+    ? allocateTwoDebtReductions(allowedDebt, formalCapacity, r.endingPrincipal)
+    : undefined;
+  const openLoss = allocation?.second ?? allowedDebt;
   const key = `${note.shareholder_ssn}_${note.corporation_ein}`;
   return {
+    ...(allocation
+      ? {
+        [`formal_note_principal_7203_${key}`]: formalCapacity,
+        [`formal_note_debt_basis_7203_${key}`]: allocation.firstBasis,
+        [`formal_note_exact_basis_numerator_7203_${key}`]: Number(
+          BigInt(formalCapacity) * BigInt(allocation.exact[0].denominator) -
+            BigInt(allocation.exact[0].numerator),
+        ),
+        [`open_account_exact_basis_numerator_7203_${key}`]: Number(
+          BigInt(r.endingPrincipal) * BigInt(allocation.exact[1].denominator) -
+            BigInt(allocation.exact[1].numerator),
+        ),
+        [`formal_note_exact_loss_numerator_7203_${key}`]: Number(
+          allocation.exact[0].numerator,
+        ),
+        [`open_account_exact_loss_numerator_7203_${key}`]: Number(
+          allocation.exact[1].numerator,
+        ),
+        [`mixed_debt_exact_loss_denominator_7203_${key}`]: Number(
+          allocation.exact[0].denominator,
+        ),
+      }
+      : {}),
     [`open_account_principal_7203_${key}`]: r.endingPrincipal,
-    [`open_account_debt_basis_7203_${key}`]: r.endingPrincipal - allowedDebt,
+    [`open_account_debt_basis_7203_${key}`]: r.endingPrincipal - openLoss,
     [`open_account_next_year_separate_debt_7203_${key}`]:
       r.endingPrincipal > 25000 ? 1 : 0,
   };

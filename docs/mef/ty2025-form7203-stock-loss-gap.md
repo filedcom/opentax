@@ -429,3 +429,7 @@ annual netting and year-end $25,000 next-year treatment, and independently limit
 owned single/MFJ losses and QBI/copies. Prior reduced/open debt and accepted-history
 requirements remain guarded; constructed bank/oral-term records do not prove
 outside authenticity. Other debt combinations and larger inventories remain open.
+
+## Current same-owner formal-note plus open-account source slice
+
+The strict current source now joins one formal note and one genuine annually netted open account for the same owner/corporation in two PartII columns of one Form7203. Complete independently traced corporate bank borrowing funds paid ordinary costs but is excluded from shareholder basis/QBI. Full repayment, basis limitation, raw fractional pro-rata basis and primary/spouse placements are retained; independent MFJ owner capacities are limited before aggregation. See [mixed-debt proof](ty2025-form7203-mixed-debt-source-proof.md). This does not establish outside bank/issuer authenticity, accepted prior history, reduced-debt restoration/gains, additional formal-note/open combinations or overflow, or mixed shared-issuer funding beyond the proved independent-corporation route.

@@ -11,6 +11,7 @@ import {
   reconcileCashCapitalAndNewNote,
   reviewedForm7203DebtEvidenceSchema,
   sumPrincipalRepayments,
+  totalCurrentDebtAdvances,
 } from "./debt-note.ts";
 import { reviewedStockLossLedgerSchema } from "./stock-ledger.ts";
 
@@ -132,7 +133,9 @@ function tentativeDebtBasis(input: Form7203Input): number {
   const note =
     (input.reviewed_debt_evidence?.kind === "new_2025_formal_notes" ||
         input.reviewed_debt_evidence?.kind === "owned_2025_formal_notes" ||
-        input.reviewed_debt_evidence?.kind === "owned_2025_open_account")
+        input.reviewed_debt_evidence?.kind === "owned_2025_open_account" ||
+        input.reviewed_debt_evidence?.kind ===
+          "owned_2025_formal_and_open_account")
       ? input.reviewed_debt_evidence
       : undefined;
   return (input.debt_basis_beginning ?? 0) + (input.new_loans ?? 0) -
@@ -235,7 +238,8 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
     if (
       (note?.kind === "new_2025_formal_notes" ||
         note?.kind === "owned_2025_formal_notes" ||
-        note?.kind === "owned_2025_open_account") &&
+        note?.kind === "owned_2025_open_account" ||
+        note?.kind === "owned_2025_formal_and_open_account") &&
       (input.additional_contributions ?? 0) > 0
     ) {
       const ledger = input.reviewed_stock_loss_ledger;
@@ -260,8 +264,7 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
       ((input.debt_basis_beginning ?? 0) > 0 || (input.new_loans ?? 0) > 0 ||
         note) &&
       (!note || input.debt_basis_beginning !== undefined ||
-        input.new_loans !== note.cash_advance_amount +
-            (note.second_formal_note?.cash_advance_amount ?? 0) ||
+        input.new_loans !== totalCurrentDebtAdvances(note) ||
         input.stock_basis_beginning !== note.beginning_stock_basis ||
         input.ordinary_loss !== note.current_box1_ordinary_loss ||
         ((input.additional_contributions ?? 0) !== 0 &&

@@ -50,6 +50,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "checkbox",
+    domainKey: "open_account_debt2",
+    pdfField: `${debtA}Header[0].bDebt2[0].c1_8[1]`,
+  },
+  {
+    kind: "checkbox",
     domainKey: "formal_note_debt2",
     pdfField: `${debtA}Header[0].bDebt2[0].c1_8[0]`,
   },
@@ -165,7 +170,8 @@ export const form7203StockLossPdf: PdfFormDescriptor = {
     } = projectReviewedStockLoss7203(raw, allPending ?? {}, filer);
     const repayment = sumPrincipalRepayments(note?.principal_repayments);
     const debtAfterRepayment = (note?.cash_advance_amount ?? 0) - repayment;
-    const secondAdvance = note?.second_formal_note?.cash_advance_amount ?? 0;
+    const secondAdvance = note?.open_account_net_advance_amount ??
+      note?.second_formal_note?.cash_advance_amount ?? 0;
     const secondRepayment =
       note?.second_formal_note?.principal_repayment?.amount ?? 0;
     const secondDebtAfterRepayment = secondAdvance - secondRepayment;
@@ -225,9 +231,12 @@ export const form7203StockLossPdf: PdfFormDescriptor = {
           line30_total: allowedDebt,
           line31_debt1: debtAfterRepayment - allowedDebt1,
           line31_total: totalDebtAfterRepayment - allowedDebt,
-          ...(secondAdvance > 0
+          ...(secondAdvance > 0 ||
+              note.kind === "owned_2025_formal_and_open_account"
             ? {
-              formal_note_debt2: true,
+              ...(note.kind === "owned_2025_formal_and_open_account"
+                ? { open_account_debt2: true }
+                : { formal_note_debt2: true }),
               line16_debt2: 0,
               line17_debt2: secondAdvance,
               line18_debt2: secondAdvance,
@@ -236,7 +245,7 @@ export const form7203StockLossPdf: PdfFormDescriptor = {
               line21_debt2: 0,
               line22_debt2: secondAdvance,
               line24_debt2: secondAdvance,
-              line25_debt2: "1.0000",
+              ...(secondAdvance > 0 ? { line25_debt2: "1.0000" } : {}),
               ...(secondRepayment > 0 ? { line26_debt2: secondRepayment } : {}),
               line27_debt2: secondDebtAfterRepayment,
               line29_debt2: secondDebtAfterRepayment,

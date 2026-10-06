@@ -1,3 +1,4 @@
+import { totalCurrentDebtAdvances } from "./debt-allocation.ts";
 import { isDeepStrictEqual } from "node:util";
 import { ownedSCorpLossLines } from "../form8995/owned-s-corp-loss.ts";
 import { reconcileOwnedCurrentDebt } from "./owned-current-source.ts";
@@ -22,8 +23,7 @@ export function ownedDebtFamily(raw: unknown) {
           reviewed_stock_loss_ledger: ledger,
         }
         : {}),
-      new_loans: note.cash_advance_amount +
-        (note.second_formal_note?.cash_advance_amount ?? 0),
+      new_loans: totalCurrentDebtAdvances(note),
       reviewed_debt_evidence: note,
       ordinary_loss: -source.box1_ordinary_business,
     };

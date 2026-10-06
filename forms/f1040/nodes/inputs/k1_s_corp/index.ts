@@ -38,6 +38,7 @@ import {
   reconcileCashCapitalAndNewNote,
   reconcileNewFormalNotes,
   actualCurrentDebtRepayments,
+  totalCurrentDebtAdvances,
   reviewedForm7203DebtEvidenceSchema,
   sumPrincipalRepayments,
 } from "../../intermediate/forms/form7203/debt-note.ts";
@@ -711,9 +712,7 @@ function buildForm7203Fields(
       : {}),
     ...(item.form7203_debt_evidence
       ? {
-        new_loans: item.form7203_debt_evidence.cash_advance_amount +
-          (item.form7203_debt_evidence.second_formal_note
-            ?.cash_advance_amount ?? 0),
+        new_loans: totalCurrentDebtAdvances(item.form7203_debt_evidence),
         reviewed_debt_evidence: item.form7203_debt_evidence,
       }
       : {}),

@@ -1,3 +1,9 @@
+import {
+  assertMixedCorporateCashSource,
+  corporateBankLedgerSchema,
+  unrelatedCorporateCreditSchema,
+} from "./corporate-bank.ts";
+import { allocateTwoDebtReductions } from "./debt-allocation.ts";
 import { openAccountRecordSchema, replayOpenAccount } from "./open-account.ts";
 import {
   assertCoOwnedCorporateRecord,
@@ -13,7 +19,7 @@ const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((s) => {
   return !Number.isNaN(n) && new Date(n).toISOString().slice(0, 10) === s;
 }, "Owned loan source needs an actual calendar date");
 const identity = { shareholder_ssn: tin, corporation_ein: tin };
-const noteRecord = z.object({
+export const noteRecord = z.object({
   ...identity,
   formal_note_id: ref,
   instrument_reference: ref,
@@ -196,9 +202,23 @@ export const ownedOpenAccountRecordsSchema = ownedCurrentDebtRecordsBaseSchema
       openAccountRecordSchema,
     ).length(1),
   });
+export const ownedMixedDebtRecordsSchema = ownedCurrentDebtRecordsBaseSchema
+  .extend({
+    no_other_guaranteed_corporate_or_passthrough_debt: z.never().optional(),
+    no_other_shareholder_guarantees_or_basis_claimed_debt: z.literal(true),
+    complete_current_corporate_bank_ledger: corporateBankLedgerSchema,
+    complete_unrelated_corporate_credit_inventory: z.array(
+      unrelatedCorporateCreditSchema,
+    ).min(1).max(2),
+    complete_current_shareholder_debt_inventory: z.tuple([
+      noteRecord,
+      openAccountRecordSchema,
+    ]),
+  });
 export const ownedCurrentDebtRecordsSchema = z.union([
   ownedCurrentDebtRecordsBaseSchema,
   ownedOpenAccountRecordsSchema,
+  ownedMixedDebtRecordsSchema,
 ]);
 export type OwnedCurrentDebtRecords = z.infer<
   typeof ownedCurrentDebtRecordsSchema
@@ -217,6 +237,7 @@ interface NewNote {
   note_execution_date?: string;
   bank_transfer_reference?: string;
   cash_advance_amount: number;
+  open_account_net_advance_amount?: number;
   principal_repayments?: readonly {
     formal_note_id: string;
     date: string;
@@ -431,10 +452,16 @@ export function reconcileOwnedCurrentDebt(raw: unknown, note: NewNote) {
       openAccount: r,
     };
   }
-  if (!ownedCurrentDebtRecordsBaseSchema.safeParse(s).success) {
-    fail("formal notes cannot use open-account records");
-  }
-  const formalSource = ownedCurrentDebtRecordsBaseSchema.parse(s);
+  const mixed = note.kind === "owned_2025_formal_and_open_account"
+    ? ownedMixedDebtRecordsSchema.parse(s)
+    : undefined;
+  if (mixed) assertMixedCorporateCashSource(mixed);
+  const formalSource = mixed
+    ? {
+      complete_current_shareholder_debt_inventory: z.array(noteRecord).length(1)
+        .parse([mixed.complete_current_shareholder_debt_inventory[0]]),
+    }
+    : ownedCurrentDebtRecordsBaseSchema.parse(s);
   const expected = [
     { ...note, payments: note.principal_repayments ?? [] },
     ...(note.second_formal_note
@@ -447,7 +474,8 @@ export function reconcileOwnedCurrentDebt(raw: unknown, note: NewNote) {
       : []),
   ];
   if (
-    s.complete_current_shareholder_debt_inventory.length !== expected.length
+    formalSource.complete_current_shareholder_debt_inventory.length !==
+      expected.length
   ) fail("complete debt inventory does not match formal notes");
   const refs = [
     ...(capital
@@ -552,12 +580,37 @@ export function reconcileOwnedCurrentDebt(raw: unknown, note: NewNote) {
       face -= p.principal_amount;
       repaid += p.principal_amount;
     }
-    if (face <= 0) {
+    if (face < 0 || (face === 0 && !mixed)) {
       fail(
         "existing partial-repayment route requires a remaining positive note",
       );
     }
     capacity += face;
+  }
+  const formalCapacity = capacity;
+  const open = mixed
+    ? replayOpenAccount(mixed.complete_current_shareholder_debt_inventory[1])
+    : undefined;
+  if (open) {
+    if (
+      open.source.shareholder_ssn !== s.shareholder_ssn ||
+      open.source.corporation_ein !== s.corporation_ein ||
+      open.netAdvance !== note.open_account_net_advance_amount
+    ) fail("same-pair open-account owner/net advance conflicts");
+    refs.push(
+      open.source.account_reference,
+      open.source.principal_ledger_reference,
+      open.source.oral_creditor_terms_record.record_reference,
+      ...open.source.transactions.flatMap(
+        (t) => [
+          t.transaction_reference,
+          t.shareholder_bank_reference,
+          t.corporate_bank_reference,
+        ],
+      ),
+    );
+    capacity += open.endingPrincipal;
+    repaid += open.repayments;
   }
   if (new Set(refs).size !== refs.length) {
     fail("distinct source records overlap");
@@ -571,6 +624,16 @@ export function reconcileOwnedCurrentDebt(raw: unknown, note: NewNote) {
   );
   const allowedDebt = Math.min(k.box1_ordinary_loss - allowedStock, capacity);
   return {
+    ...(open
+      ? {
+        openAccount: open,
+        mixedDebtAllocation: allocateTwoDebtReductions(
+          allowedDebt,
+          formalCapacity,
+          open.endingPrincipal,
+        ),
+      }
+      : {}),
     source: s,
     beginningStock: stock.original_paid_cash,
     currentCashCapital: capital?.paid_cash ?? 0,

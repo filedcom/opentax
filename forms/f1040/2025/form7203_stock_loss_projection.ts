@@ -1,3 +1,4 @@
+import { allocateTwoDebtReductions } from "../nodes/intermediate/forms/form7203/debt-allocation.ts";
 import { isDeepStrictEqual } from "node:util";
 import { FilingStatus } from "../mef/header.ts";
 import {
@@ -14,6 +15,7 @@ import {
   reconcileCashCapitalAndNewNote,
   reconcileNewFormalNotes,
   sumPrincipalRepayments,
+  totalCurrentDebtAdvances,
 } from "../nodes/intermediate/forms/form7203/debt-note.ts";
 
 const pendingRecordSchema = z.record(z.string(), z.unknown());
@@ -99,8 +101,7 @@ function projectSingleReviewedStockLoss7203(
           note.beginning_stock_basis_workpaper_reference ||
         ledger.shareholder_ssn !== note.shareholder_ssn ||
         ledger.corporation_ein !== note.corporation_ein ||
-        fields.new_loans !== note.cash_advance_amount +
-            (note.second_formal_note?.cash_advance_amount ?? 0) ||
+        fields.new_loans !== totalCurrentDebtAdvances(note) ||
         JSON.stringify(fields.reviewed_debt_evidence) !== JSON.stringify(note)
       : !ledger.no_shareholder_debt_or_repayments ||
         fields.new_loans !== undefined ||
@@ -167,7 +168,8 @@ function projectSingleReviewedStockLoss7203(
     ? note.cash_advance_amount -
       sumPrincipalRepayments(note.principal_repayments)
     : 0;
-  const secondDebtBasis = (note?.second_formal_note?.cash_advance_amount ?? 0) -
+  const secondDebtBasis = (note?.open_account_net_advance_amount ??
+    note?.second_formal_note?.cash_advance_amount ?? 0) -
     (note?.second_formal_note?.principal_repayment?.amount ?? 0);
   const allowedDebt = note
     ? Math.min(
@@ -175,7 +177,10 @@ function projectSingleReviewedStockLoss7203(
       firstDebtBasis + secondDebtBasis,
     )
     : 0;
-  const allowedDebt1 = secondDebtBasis > 0
+  const allowedDebt1 = note?.kind === "owned_2025_formal_and_open_account"
+    ? allocateTwoDebtReductions(allowedDebt, firstDebtBasis, secondDebtBasis)
+      .first
+    : secondDebtBasis > 0
     ? allowedDebt * firstDebtBasis / (firstDebtBasis + secondDebtBasis)
     : allowedDebt;
   if (!Number.isSafeInteger(allowedDebt1)) {
