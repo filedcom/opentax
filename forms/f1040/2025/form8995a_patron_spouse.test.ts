@@ -1,4 +1,9 @@
-import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+} from "@std/assert";
 import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
 import {
   patronSpouseW2,
@@ -9,7 +14,9 @@ import { buildPending } from "./mef/pending.ts";
 import { buildMefBundle } from "./mef/builder.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
 Deno.test("spouse-owned patron farm and C health return retains owner SE and source joins", async () => {
-  const archive = await Deno.makeTempDir({ prefix: "opentax-spouse-patron-source-" });
+  const archive = await Deno.makeTempDir({
+    prefix: "opentax-spouse-patron-source-",
+  });
   console.info(`Spouse patron source archive: ${archive}`);
   for (const kind of ["farm", "c-health", "income-cap"]) {
     const base = pdfReviewFixtures.find((f) =>
@@ -142,7 +149,9 @@ Deno.test("spouse patron owner and nonowner wage conflicts reject native and dir
         ? row[key] + 1
         : key === "proprietor_recipient" || key === "recipient"
         ? "T"
-        : key === "employee_ssn" ? "444556666" : "111223333";
+        : key === "employee_ssn"
+        ? "444556666"
+        : "111223333";
       await assertRejects(
         () =>
           buildMefBundle(pending, { filer: fixture.filer, attachments: [] }),
@@ -162,18 +171,16 @@ Deno.test("spouse patron owner and nonowner wage conflicts reject native and dir
       conflicting.qbi_patron.primary_w2_sources,
     );
     const bad = f1040_2025.executeReturn(conflicting);
-    if (bad.diagnostics.length === 0) {
-      const pending = buildPending(bad.pending);
-      await assertRejects(
-        () =>
-          buildMefBundle(pending, { filer: fixture.filer, attachments: [] }),
-        Error,
-      );
-      await assertRejects(
-        () => buildPdfBytes(pending, fixture.filer, ".pdf-cache"),
-        Error,
-      );
-    }
+    const collectionError = bad.diagnostics.some((diagnostic) =>
+      diagnostic.severity === "error" &&
+      diagnostic.nodeType === "qbi_patron" &&
+      diagnostic.message.includes("both proprietor-side wage copy collections")
+    );
+    assert(
+      collectionError,
+      "Both wage copy collections must reject at the patron public node",
+    );
+
   }
 });
 
@@ -205,7 +212,9 @@ Deno.test("spouse patron primary wages cross both joint phase-in boundaries", as
       bundle,
       origins,
     );
-    const folder = await Deno.makeTempDir({ prefix: "opentax-spouse-patron-boundary-" });
+    const folder = await Deno.makeTempDir({
+      prefix: "opentax-spouse-patron-boundary-",
+    });
     console.info(`Spouse patron boundary ${target} archive: ${folder}`);
     await Deno.mkdir(folder, { recursive: true });
     await Deno.writeTextFile(
@@ -240,5 +249,41 @@ Deno.test("spouse patron primary wages cross both joint phase-in boundaries", as
     });
     const v = await child.output();
     assertEquals(v.code, 0, new TextDecoder().decode(v.stderr));
+  }
+});
+
+Deno.test("spouse patron nonowner wage copies require actual joint status at public or native and direct PDF gates", async () => {
+  const fixture = spouseOwnedPatronFixture(
+    pdfReviewFixtures.find((f) => f.id === "joint-form8995a-patron-farm")!,
+  );
+  for (const status of ["single", "mfs"]) {
+    const inputs = structuredClone(fixture.inputs) as any;
+    inputs.general.filing_status = status;
+    const result = f1040_2025.executeReturn(inputs);
+    const errors = result.diagnostics.filter((d) => d.severity === "error");
+    if (errors.length) {
+      assert(
+        errors.some((d) =>
+          d.nodeType === "form8995" &&
+          d.message.includes("Patron public source")
+        ),
+        status + ": require the actual patron status guard",
+      );
+    } else {
+      const pending = buildPending(result.pending);
+      const filer = {
+        ...fixture.filer,
+        filingStatus: status === "single" ? 1 : 3,
+        spouse: undefined,
+      };
+      await assertRejects(
+        () => buildMefBundle(pending, { filer, attachments: [] }),
+        Error,
+      );
+      await assertRejects(
+        () => buildPdfBytes(pending, filer, ".pdf-cache"),
+        Error,
+      );
+    }
   }
 });
