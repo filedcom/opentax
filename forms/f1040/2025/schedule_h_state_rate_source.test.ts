@@ -747,3 +747,251 @@ Deno.test("Schedule H legacy Section B native ratio matches its printed rate", a
   raw.federal_unemployment.state_rows[0].experience_rate = .030245;
   assertThrows(() => computeScheduleHAmounts(inputSchema.parse(raw), 2025));
 });
+
+Deno.test("Schedule H accepts accrued quarterly state receipts within one rate period", async () => {
+  const raw: any = source();
+  const receipts = raw.federal_unemployment.state_payroll_review
+    .contribution_payments;
+  receipts[1] = {
+    rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+    assessment_quarter: 2,
+    paid_date: "2025-07-15",
+    amount: 100,
+    payment_reference: "CA-Q2-SUTA-receipt",
+  };
+  receipts.push({
+    rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+    assessment_quarter: 3,
+    paid_date: "2025-10-15",
+    amount: 100,
+    payment_reference: "CA-Q3-SUTA-receipt",
+  });
+  raw.federal_unemployment.state_payroll_review.quarterly_assessments = [
+    {
+      rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+      quarter: 2,
+      taxable_state_wages: 2_000,
+      assessed_contribution: 100,
+      source_reference: "CA-Q2-DE9-assessment",
+    },
+    {
+      rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+      quarter: 3,
+      taxable_state_wages: 2_000,
+      assessed_contribution: 100,
+      source_reference: "CA-Q3-DE9-assessment",
+    },
+  ];
+  const amounts = computeScheduleHAmounts(inputSchema.parse(raw), 2025);
+  assertEquals(amounts.sectionB?.rows[1].contributions_paid_by_due_date, 200);
+  assertEquals(amounts.sectionB?.contributions, 314);
+  assertEquals(amounts.totalTax, 1_338);
+  const { schedule, result, bundle } = await verifyAdditionalPacket(
+    raw,
+    "changed-rate-quarterly-receipts",
+    1_338,
+  );
+  const filer = extractFilerIdentity(result.pending.f1040)!;
+  const pending = buildPending(result.pending);
+  const bad = (edit: (review: any) => void) => {
+    const altered: any = structuredClone(schedule);
+    edit(altered.federal_unemployment.state_payroll_review);
+    assertThrows(() =>
+      computeScheduleHAmounts(inputSchema.parse(altered), 2025)
+    );
+    assertThrows(() => scheduleH.build(altered, { filer, pending }));
+    return assertRejects(() =>
+      buildPdfBytes(
+        { ...bundle.pending, schedule_h: altered },
+        filer,
+        ".pdf-cache",
+      )
+    );
+  };
+  await bad((review) =>
+    review.contribution_payments[1].paid_date = "2025-05-31"
+  );
+  await bad((review) => {
+    review.contribution_payments[1].amount = 101;
+    review.contribution_payments[3].amount = 99;
+  });
+  await bad((review) => review.quarterly_assessments.pop());
+  await bad((review) =>
+    review.quarterly_assessments[0].taxable_state_wages = 1_999
+  );
+  await bad((review) => review.contribution_payments[3].assessment_quarter = 2);
+  const publicBad = structuredClone(raw);
+  publicBad.federal_unemployment.state_payroll_review
+    .contribution_payments[1].paid_date = "2025-05-31";
+  const resultBad = f1040_2025.executeReturn({
+    ...structuredClone(base.inputs),
+    schedule_h: inputSchema.parse(publicBad),
+  });
+  assertEquals(
+    resultBad.diagnostics.some((d) => d.nodeType === "schedule_h"),
+    true,
+  );
+});
+
+Deno.test("Schedule H reconciles separately rounded quarter assessments on cent wages", async () => {
+  const raw: any = source();
+  const unemployment = raw.federal_unemployment;
+  const employee = unemployment.employee_wages[0];
+  employee.quarterly_cash_wages = [2_000, 2_000.11, 2_000.11, 1_999.78];
+  unemployment.state_payroll_review.wage_payments[1].cash_wages = 2_000.11;
+  unemployment.state_payroll_review.wage_payments[2].cash_wages = 2_000.11;
+  unemployment.state_payroll_review.wage_payments[3].cash_wages = 1_999.78;
+  unemployment.state_rows[1].taxable_state_wages = 4_000.22;
+  unemployment.state_rows[1].contributions_paid_by_due_date = 200.02;
+  unemployment.state_rows[2].taxable_state_wages = 1_999.78;
+  unemployment.state_rows[2].contributions_paid_by_due_date = 53.99;
+  unemployment.credit_reduction_wages[0].taxable_futa_wages = 6_000.22;
+  const receipts = unemployment.state_payroll_review.contribution_payments;
+  receipts[1] = {
+    rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+    assessment_quarter: 2,
+    paid_date: "2025-07-15",
+    amount: 100.01,
+    payment_reference: "CA-Q2-cent-receipt",
+  };
+  receipts[2].amount = 53.99;
+  receipts.push({
+    rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+    assessment_quarter: 3,
+    paid_date: "2025-10-15",
+    amount: 100.01,
+    payment_reference: "CA-Q3-cent-receipt",
+  });
+  unemployment.state_payroll_review.quarterly_assessments = [
+    {
+      rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+      quarter: 2,
+      taxable_state_wages: 2_000.11,
+      assessed_contribution: 100.01,
+      source_reference: "CA-Q2-cent-DE9-assessment",
+    },
+    {
+      rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+      quarter: 3,
+      taxable_state_wages: 2_000.11,
+      assessed_contribution: 100.01,
+      source_reference: "CA-Q3-cent-DE9-assessment",
+    },
+  ];
+  const amounts = computeScheduleHAmounts(inputSchema.parse(raw), 2025);
+  assertEquals(amounts.sectionB?.rows[1].contributions_paid_by_due_date, 200);
+  assertEquals(amounts.sectionB?.contributions, 314);
+  assertEquals(amounts.totalTax, 1_338);
+  await verifyAdditionalPacket(
+    raw,
+    "changed-rate-quarterly-cent-assessments",
+    1_338,
+  );
+  const missing = structuredClone(raw);
+  delete missing.federal_unemployment.state_payroll_review
+    .quarterly_assessments;
+  delete missing.federal_unemployment.state_payroll_review
+    .contribution_payments[1].assessment_quarter;
+  delete missing.federal_unemployment.state_payroll_review
+    .contribution_payments[3].assessment_quarter;
+  assertThrows(() => computeScheduleHAmounts(inputSchema.parse(missing), 2025));
+  const wrong = structuredClone(raw);
+  wrong.federal_unemployment.state_payroll_review.quarterly_assessments[1]
+    .assessed_contribution = 100;
+  assertThrows(() => computeScheduleHAmounts(inputSchema.parse(wrong), 2025));
+});
+
+Deno.test("Schedule H retains a zero-taxable quarter after the state wage base", async () => {
+  const raw: any = source();
+  const unemployment = raw.federal_unemployment;
+  unemployment.employee_wages[0].annual_cash_wages = 9_000;
+  unemployment.employee_wages[0].quarterly_cash_wages = [
+    2_000,
+    5_000,
+    1_000,
+    1_000,
+  ];
+  unemployment.employee_wages[0].w2.box3_social_security_wages = 9_000;
+  unemployment.employee_wages[0].w2.box5_medicare_wages = 9_000;
+  raw.ss_wages = 9_000;
+  raw.medicare_wages = 9_000;
+  const wages = unemployment.state_payroll_review.wage_payments;
+  wages[1].cash_wages = 5_000;
+  wages[2].cash_wages = 1_000;
+  wages[3].cash_wages = 1_000;
+  unemployment.state_rows[1].taxable_state_wages = 5_000;
+  unemployment.state_rows[1].contributions_paid_by_due_date = 250;
+  unemployment.state_rows[2].taxable_state_wages = 1_000;
+  unemployment.state_rows[2].contributions_paid_by_due_date = 27;
+  unemployment.credit_reduction_wages[0].taxable_futa_wages = 7_000;
+  const receipts = unemployment.state_payroll_review.contribution_payments;
+  receipts[1] = {
+    rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+    assessment_quarter: 2,
+    paid_date: "2025-07-15",
+    amount: 250,
+    payment_reference: "CA-Q2-base-limit-receipt",
+  };
+  receipts[2].amount = 27;
+  unemployment.state_payroll_review.quarterly_assessments = [
+    {
+      rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+      quarter: 2,
+      taxable_state_wages: 5_000,
+      assessed_contribution: 250,
+      source_reference: "CA-Q2-base-limit-assessment",
+    },
+    {
+      rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+      quarter: 3,
+      taxable_state_wages: 0,
+      assessed_contribution: 0,
+      source_reference: "CA-Q3-zero-taxable-assessment",
+    },
+  ];
+  const amounts = computeScheduleHAmounts(inputSchema.parse(raw), 2025);
+  assertEquals(amounts.sectionB?.additionalCredit, 95);
+  assertEquals(amounts.sectionB?.allowedCredit, 294);
+  assertEquals(amounts.futaTax, 126);
+  assertEquals(amounts.totalTax, 1_503);
+  const { schedule, result, bundle } = await verifyAdditionalPacket(
+    raw,
+    "changed-rate-base-exhausted-quarter",
+    1_503,
+  );
+  const filer = extractFilerIdentity(result.pending.f1040)!;
+  const pending = buildPending(result.pending);
+  const badAssessment = (edit: (review: any) => void) => {
+    const altered: any = structuredClone(schedule);
+    edit(altered.federal_unemployment.state_payroll_review);
+    assertThrows(() =>
+      computeScheduleHAmounts(inputSchema.parse(altered), 2025)
+    );
+    assertThrows(() => scheduleH.build(altered, { filer, pending }));
+    return assertRejects(() =>
+      buildPdfBytes(
+        { ...bundle.pending, schedule_h: altered },
+        filer,
+        ".pdf-cache",
+      )
+    );
+  };
+  await badAssessment((review) => review.quarterly_assessments[1].quarter = 4);
+  await badAssessment((review) =>
+    review.quarterly_assessments[1].taxable_state_wages = 1
+  );
+  await badAssessment((review) =>
+    review.quarterly_assessments[1].assessed_contribution = 1
+  );
+  const phantom = structuredClone(raw);
+  phantom.federal_unemployment.state_payroll_review.quarterly_assessments[1]
+    .quarter = 4;
+  const rejected = f1040_2025.executeReturn({
+    ...structuredClone(base.inputs),
+    schedule_h: inputSchema.parse(phantom),
+  });
+  assertEquals(
+    rejected.diagnostics.some((d) => d.nodeType === "schedule_h"),
+    true,
+  );
+});

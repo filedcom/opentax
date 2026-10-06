@@ -21,6 +21,18 @@ const MEDICARE_RATE_EMPLOYER = 0.0145;
 const MEDICARE_RATE_EMPLOYEE = 0.0145;
 const TY2025_FICA_CASH_WAGE_THRESHOLD = 2_800;
 const TY2025_SOCIAL_SECURITY_WAGE_BASE = 176_100;
+function cashCents(amount: number): number {
+  const value = Math.round(amount * 100);
+  if (!Number.isFinite(amount) || Math.abs(amount * 100 - value) > 1e-7) {
+    throw new Error(
+      "Schedule H sourced cash amounts must have at most two decimal places",
+    );
+  }
+  return value;
+}
+function quarterlyCashCents(quarters: readonly number[]): number {
+  return quarters.reduce((sum, amount) => sum + cashCents(amount), 0);
+}
 const FUTA_STATE_CODES = new Set(
   "AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA PR RI SC SD TN TX UT VT VA WA WV WI WY VI"
     .split(" "),
@@ -288,25 +300,26 @@ function childPost21Wages(employee: ChildPayrollEmployee) {
         "Schedule H child transition needs distinct dated services split at the 21st birthday and paid in 2025",
       );
     }
-    total += payment.cash_wages;
-    allPaidQuarters[quarter(payment.paid_date)] += payment.cash_wages;
+    const paymentCents = cashCents(payment.cash_wages);
+    total += paymentCents;
+    allPaidQuarters[quarter(payment.paid_date)] += paymentCents;
     if (payment.service_from >= birthday) {
       after = true;
-      wages += payment.cash_wages;
-      paidQuarters[quarter(payment.paid_date)] += payment.cash_wages;
+      wages += paymentCents;
+      paidQuarters[quarter(payment.paid_date)] += paymentCents;
     } else before = true;
   }
   if (
-    !before || !after || total !== employee.annual_cash_wages ||
+    !before || !after || total !== cashCents(employee.annual_cash_wages) ||
     allPaidQuarters.some((amount, index) =>
-      amount !== employee.quarterly_cash_wages[index]
+      amount !== cashCents(employee.quarterly_cash_wages[index])
     )
   ) {
     throw new Error(
       "Schedule H child transition payment ledger must reconcile both ages and every paid quarter",
     );
   }
-  return { wages, paidQuarters };
+  return { wages: wages / 100, paidQuarters: paidQuarters.map((c) => c / 100) };
 }
 
 function parentTaxableCashWages(
@@ -393,8 +406,9 @@ function parentTaxableCashWages(
         "Schedule H parent cash payments need dated 2025 services within one sourced quarter",
       );
     }
-    paidQuarters[quarter(payment.paid_date) - 1] += payment.cash_wages;
-    total += payment.cash_wages;
+    const paymentCents = cashCents(payment.cash_wages);
+    paidQuarters[quarter(payment.paid_date) - 1] += paymentCents;
+    total += paymentCents;
     const row = quarters.find((q) =>
       q.quarter === quarter(payment.service_from)
     )!;
@@ -420,17 +434,19 @@ function parentTaxableCashWages(
       "widowed_not_remarried",
       "spouse_incapable",
     ].includes(status.kind);
-    if (childQualifies && employerQualifies) eligible += payment.cash_wages;
+    if (childQualifies && employerQualifies) eligible += paymentCents;
   }
   if (
-    total !== employee.annual_cash_wages ||
-    paidQuarters.some((v, i) => v !== employee.quarterly_cash_wages[i])
+    total !== cashCents(employee.annual_cash_wages) ||
+    paidQuarters.some((v, i) =>
+      v !== cashCents(employee.quarterly_cash_wages[i])
+    )
   ) {
     throw new Error(
       "Schedule H parent payment ledger must reconcile annual and payment-quarter cash wages",
     );
   }
-  return eligible >= TY2025_FICA_CASH_WAGE_THRESHOLD ? eligible : 0;
+  return eligible >= TY2025_FICA_CASH_WAGE_THRESHOLD * 100 ? eligible / 100 : 0;
 }
 
 const payrollEmployeeSchema = z.union([
@@ -470,11 +486,21 @@ const statePayrollReviewSchema = z.object({
   contribution_payments: z.array(
     z.object({
       rate_notice_source_reference: sourceReference,
+      assessment_quarter: z.number().int().min(1).max(4).optional(),
       paid_date: calendarDate,
       amount: z.number().positive(),
       payment_reference: sourceReference,
     }).strict(),
   ),
+  quarterly_assessments: z.array(
+    z.object({
+      rate_notice_source_reference: sourceReference,
+      quarter: z.number().int().min(1).max(4),
+      taxable_state_wages: z.number().nonnegative(),
+      assessed_contribution: z.number().nonnegative(),
+      source_reference: sourceReference,
+    }).strict(),
+  ).optional(),
 }).strict();
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -610,6 +636,9 @@ function validateStatePayrollReview(input: SectionBSource) {
     ...review.rate_notices.map((notice) => notice.source_reference),
     ...review.wage_payments.map((payment) => payment.payment_reference),
     ...review.contribution_payments.map((payment) => payment.payment_reference),
+    ...(review.quarterly_assessments ?? []).map((assessment) =>
+      assessment.source_reference
+    ),
     ...input.employee_wages.map((employee) =>
       employee.payroll_source_reference
     ),
@@ -644,18 +673,12 @@ function validateStatePayrollReview(input: SectionBSource) {
       );
     }
   }
-  const cents = (amount: number) => {
-    const value = Math.round(amount * 100);
-    if (Math.abs(amount * 100 - value) > 1e-7) {
-      throw new Error(
-        "Schedule H state wage and contribution amounts must have at most two decimal places",
-      );
-    }
-    return value;
-  };
+  const cents = cashCents;
   const rowWages = notices.map(() => 0),
     rowContributionCents = notices.map(() => 0);
-  const lastWageDate = notices.map(() => "");
+  const accruedWages = notices.map(() =>
+    [] as { date: string; cents: number }[]
+  );
   const reductionWages = new Map<string, number>();
   const workers = new Map(
     input.employee_wages.map((employee) => [employee.employee_id, employee]),
@@ -701,9 +724,6 @@ function validateStatePayrollReview(input: SectionBSource) {
     const index = matches[0], notice = notices[index];
     const paymentCents = cents(payment.cash_wages);
     const stateBaseCents = cents(notice.annual_taxable_wage_base);
-    if (payment.paid_date > lastWageDate[index]) {
-      lastWageDate[index] = payment.paid_date;
-    }
     const previousFuta = workerFuta.get(payment.employee_id) ?? 0;
     const futa = Math.min(
       paymentCents,
@@ -726,6 +746,7 @@ function validateStatePayrollReview(input: SectionBSource) {
     );
     workerState.set(key, previousState + paymentCents);
     rowWages[index] += stateWages;
+    accruedWages[index].push({ date: payment.paid_date, cents: stateWages });
     futaWages += futa;
     const covered = Math.min(futa, stateWages);
     stateCoveredFutaWages += covered;
@@ -754,20 +775,110 @@ function validateStatePayrollReview(input: SectionBSource) {
       );
     }
   }
+  const quarterOf = (date: string) => Math.ceil(Number(date.slice(5, 7)) / 3);
+  const quarterEnds = ["2025-03-31", "2025-06-30", "2025-09-30", "2025-12-31"];
+  const assessedByNotice = notices.map(() =>
+    [] as NonNullable<
+      typeof review.quarterly_assessments
+    >
+  );
+  for (const assessment of review.quarterly_assessments ?? []) {
+    const index = notices.findIndex((notice) =>
+      notice.source_reference === assessment.rate_notice_source_reference
+    );
+    const quarterHasCash = index >= 0 &&
+      accruedWages[index].some((wage) =>
+        quarterOf(wage.date) === assessment.quarter
+      );
+    const quarterWages = index < 0 ? 0 : accruedWages[index].reduce(
+      (sum, wage) =>
+        sum + (quarterOf(wage.date) === assessment.quarter ? wage.cents : 0),
+      0,
+    );
+    if (
+      index < 0 || !quarterHasCash ||
+      assessedByNotice[index].some((row) =>
+        row.quarter === assessment.quarter
+      ) ||
+      cents(assessment.taxable_state_wages) !== quarterWages ||
+      cents(assessment.assessed_contribution) !==
+        Math.round(quarterWages * notices[index].experience_rate)
+    ) {
+      throw new Error(
+        "Schedule H quarterly state assessment must match one notice and dated taxable wages",
+      );
+    }
+    assessedByNotice[index].push(assessment);
+  }
+  for (const [index, assessments] of assessedByNotice.entries()) {
+    if (
+      assessments.length > 0 &&
+      new Set(accruedWages[index].map((wage) => quarterOf(wage.date))).size !==
+        assessments.length
+    ) {
+      throw new Error(
+        "Schedule H assessed notice needs every wage quarter's state assessment",
+      );
+    }
+  }
   let lateCents = 0;
-  for (const payment of review.contribution_payments) {
+  const paidByNotice = notices.map(() => 0);
+  const paidByAssessment = new Map<string, number>();
+  const contributionPayments = [...review.contribution_payments].sort((a, b) =>
+    a.paid_date.localeCompare(b.paid_date) ||
+    a.payment_reference.localeCompare(b.payment_reference)
+  );
+  for (const payment of contributionPayments) {
     const index = notices.findIndex((notice) =>
       notice.source_reference === payment.rate_notice_source_reference
     );
-    if (
-      index < 0 || !lastWageDate[index] ||
-      payment.paid_date < lastWageDate[index] ||
-      payment.paid_date > "2026-12-31"
-    ) {
+    if (index < 0 || payment.paid_date > "2026-12-31") {
       throw new Error(
         "Schedule H state contribution needs a matching rate notice and actual payment date",
       );
     }
+    const amountCents = cents(payment.amount);
+    const assessments = assessedByNotice[index];
+    if (assessments.length > 0) {
+      const assessment = assessments.find((row) =>
+        row.quarter === payment.assessment_quarter
+      );
+      if (
+        !assessment ||
+        payment.paid_date < quarterEnds[assessment.quarter - 1]
+      ) {
+        throw new Error(
+          "Schedule H quarterly contribution needs a completed sourced assessment",
+        );
+      }
+      const key = `${index}:${assessment.quarter}`;
+      const paid = (paidByAssessment.get(key) ?? 0) + amountCents;
+      if (paid > cents(assessment.assessed_contribution)) {
+        throw new Error(
+          "Schedule H quarterly contribution exceeds its assessed liability",
+        );
+      }
+      paidByAssessment.set(key, paid);
+    } else {
+      if (payment.assessment_quarter !== undefined) {
+        throw new Error(
+          "Schedule H quarterly contribution needs a retained assessment",
+        );
+      }
+      const wagesByPaymentDate = accruedWages[index].reduce(
+        (sum, wage) => sum + (wage.date <= payment.paid_date ? wage.cents : 0),
+        0,
+      );
+      if (
+        paidByNotice[index] + amountCents >
+          Math.round(wagesByPaymentDate * notices[index].experience_rate)
+      ) {
+        throw new Error(
+          "Schedule H state contribution cannot exceed tax accrued on dated state wages",
+        );
+      }
+    }
+    paidByNotice[index] += amountCents;
     if (payment.paid_date <= "2026-04-15") {
       rowContributionCents[index] += cents(payment.amount);
     } else lateCents += cents(payment.amount);
@@ -786,7 +897,13 @@ function validateStatePayrollReview(input: SectionBSource) {
       review.contribution_payments.filter((p) =>
           p.rate_notice_source_reference === notices[index].source_reference
         ).reduce((total, p) => total + cents(p.amount), 0) !==
-        Math.round(rowWages[index] * notices[index].experience_rate)
+        (assessedByNotice[index].length > 0
+          ? assessedByNotice[index].reduce(
+            (total, assessment) =>
+              total + cents(assessment.assessed_contribution),
+            0,
+          )
+          : Math.round(rowWages[index] * notices[index].experience_rate))
     ) || cents(input.taxable_futa_wages) !== futaWages ||
     input.paid_only_one_state !==
       (new Set(payments.map((payment) => payment.state)).size === 1) ||
@@ -891,19 +1008,20 @@ export function computeScheduleHAmounts(
         employee.marriage_date > "2024-12-31") ||
       employee.employee_ssn === family.employer_ssn ||
       new Set(references).size !== references.length ||
-      employee.quarterly_cash_wages.reduce((sum, wages) => sum + wages, 0) !==
-        employee.annual_cash_wages ||
+      quarterlyCashCents(employee.quarterly_cash_wages) !==
+        cashCents(employee.annual_cash_wages) ||
       employee.w2.employee_ssn !== employee.employee_ssn ||
-      employee.w2.box1_wages !== employee.annual_cash_wages ||
-      employee.w2.box2_federal_income_tax_withheld >
-        employee.annual_cash_wages ||
+      cashCents(employee.w2.box1_wages) !==
+        cashCents(employee.annual_cash_wages) ||
+      cashCents(employee.w2.box2_federal_income_tax_withheld) >
+        cashCents(employee.annual_cash_wages) ||
       input.cash_wages_over_2025_limit !== false ||
       input.cash_wages_over_quarter_limit !== false ||
       (input.ss_wages ?? 0) !== 0 ||
       (input.medicare_wages ?? 0) !== 0 ||
       (input.additional_medicare_wages ?? 0) !== 0 ||
-      input.federal_income_tax_withheld !==
-        employee.w2.box2_federal_income_tax_withheld
+      cashCents(input.federal_income_tax_withheld ?? 0) !==
+        cashCents(employee.w2.box2_federal_income_tax_withheld)
     ) {
       throw new Error(
         "Schedule H family withholding source must reconcile relationship, payroll, Form W-4, Form W-2, and FICA/FUTA exclusions",
@@ -914,7 +1032,9 @@ export function computeScheduleHAmounts(
     ficaOnly && (
       unemployment || taxYear !== 2025 ||
       input.cash_wages_over_quarter_limit !== false ||
-      ficaOnly.prior_year_quarter_cash_wages.some((wages) => wages >= 1_000)
+      ficaOnly.prior_year_quarter_cash_wages.some((wages) =>
+        cashCents(wages) >= 100_000
+      )
     )
   ) {
     throw new Error(
@@ -927,7 +1047,7 @@ export function computeScheduleHAmounts(
         (unemployment.prior_year_quarter_source_reference !== undefined) ||
       unemployment.prior_year_eligible_quarter_cash_wages !== undefined &&
         unemployment.prior_year_eligible_quarter_cash_wages.some((w) =>
-            w >= 1_000
+            cashCents(w) >= 100_000
           ) !==
           unemployment.prior_year_quarter_threshold_met
     )
@@ -1037,9 +1157,11 @@ export function computeScheduleHAmounts(
               "Schedule H parent W-2 FICA wages must match the sourced statutory exception",
             );
           }
-          sourcedSocialSecurityWages += expectedSS;
-          sourcedMedicareWages += parentWages;
-          sourcedAdditionalMedicareWages += Math.max(0, parentWages - 200_000);
+          sourcedSocialSecurityWages += cashCents(expectedSS);
+          sourcedMedicareWages += cashCents(parentWages);
+          sourcedAdditionalMedicareWages += cashCents(
+            Math.max(0, parentWages - 200_000),
+          );
           sourcedFicaThresholdMet ||= parentWages > 0;
         }
         if (childTransition) {
@@ -1060,12 +1182,14 @@ export function computeScheduleHAmounts(
               "Schedule H child transition W-2 must match taxable post-21 service wages",
             );
           }
-          sourcedSocialSecurityWages += expectedSS;
-          sourcedMedicareWages += ficaWages;
-          sourcedAdditionalMedicareWages += Math.max(0, ficaWages - 200_000);
+          sourcedSocialSecurityWages += cashCents(expectedSS);
+          sourcedMedicareWages += cashCents(ficaWages);
+          sourcedAdditionalMedicareWages += cashCents(
+            Math.max(0, ficaWages - 200_000),
+          );
           sourcedFicaThresholdMet ||= ficaWages > 0;
           childTransition.paidQuarters.forEach((wages, index) => {
-            quarterlyWages[index] += wages;
+            quarterlyWages[index] += cashCents(wages);
           });
         } else if (
           employee.relationship === "child" &&
@@ -1086,20 +1210,19 @@ export function computeScheduleHAmounts(
           (employee.relationship === "spouse" &&
             employee.marriage_date > "2024-12-31") ||
           new Set(references).size !== references.length ||
-          employee.quarterly_cash_wages.reduce(
-              (sum, wages) => sum + wages,
-              0,
-            ) !== employee.annual_cash_wages ||
+          quarterlyCashCents(employee.quarterly_cash_wages) !==
+            cashCents(employee.annual_cash_wages) ||
           (employee.w2 && (employee.w2.employee_ssn !== employee.employee_ssn ||
-            employee.w2.box1_wages !== employee.annual_cash_wages)) ||
-          withholding > employee.annual_cash_wages ||
+            cashCents(employee.w2.box1_wages) !==
+              cashCents(employee.annual_cash_wages))) ||
+          cashCents(withholding) > cashCents(employee.annual_cash_wages) ||
           (withholding > 0 && !employee.federal_withholding_agreement)
         ) {
           throw new Error(
             "Schedule H mixed family payroll must reconcile relationship, employer, dates, payroll, W-2 and agreed withholding",
           );
         }
-        sourcedFederalWithholding += withholding;
+        sourcedFederalWithholding += cashCents(withholding);
         // Parent and spouse wages remain excluded. Child services performed
         // on or after the 21st birthday enter the paid-quarter FUTA test.
         continue;
@@ -1141,18 +1264,15 @@ export function computeScheduleHAmounts(
         }
       }
       if (
-        employee.quarterly_cash_wages.reduce(
-          (total, wages) => total + wages,
-          0,
-        ) !==
-          employee.annual_cash_wages
+        quarterlyCashCents(employee.quarterly_cash_wages) !==
+          cashCents(employee.annual_cash_wages)
       ) {
         throw new Error(
           "Schedule H employee quarterly cash wages differ from annual payroll",
         );
       }
       employee.quarterly_cash_wages.forEach((wages, index) => {
-        quarterlyWages[index] += wages;
+        quarterlyWages[index] += cashCents(wages);
       });
       const ficaWages = (employee.age_18_or_older_for_fica ||
           workingMinor !== undefined) &&
@@ -1210,21 +1330,24 @@ export function computeScheduleHAmounts(
           "Schedule H federal withholding needs a distinct reviewed Form W-4 request and employer agreement",
         );
       }
-      sourcedSocialSecurityWages += expectedSS;
-      sourcedMedicareWages += ficaWages;
-      sourcedAdditionalMedicareWages += Math.max(0, ficaWages - 200_000);
-      sourcedFederalWithholding +=
-        employee.w2?.box2_federal_income_tax_withheld ?? 0;
+      sourcedSocialSecurityWages += cashCents(expectedSS);
+      sourcedMedicareWages += cashCents(ficaWages);
+      sourcedAdditionalMedicareWages += cashCents(
+        Math.max(0, ficaWages - 200_000),
+      );
+      sourcedFederalWithholding += cashCents(
+        employee.w2?.box2_federal_income_tax_withheld ?? 0,
+      );
     }
     if (
       unemployment && !unemployment.prior_year_quarter_threshold_met &&
-      quarterlyWages.every((wages) => wages < 1_000)
+      quarterlyWages.every((wages) => wages < 100_000)
     ) {
       throw new Error(
         "Schedule H FUTA needs a $1,000 current- or prior-year quarter",
       );
     }
-    if (ficaOnly && quarterlyWages.some((wages) => wages >= 1_000)) {
+    if (ficaOnly && quarterlyWages.some((wages) => wages >= 100_000)) {
       throw new Error(
         "Schedule H FICA-only aggregate employee wages must stay below the FUTA quarter threshold",
       );
@@ -1236,11 +1359,12 @@ export function computeScheduleHAmounts(
       throw new Error("Schedule H line A differs from per-employee cash wages");
     }
     if (
-      (input.ss_wages ?? 0) !== sourcedSocialSecurityWages ||
-      (input.medicare_wages ?? 0) !== sourcedMedicareWages ||
-      (input.additional_medicare_wages ?? 0) !==
+      cashCents(input.ss_wages ?? 0) !== sourcedSocialSecurityWages ||
+      cashCents(input.medicare_wages ?? 0) !== sourcedMedicareWages ||
+      cashCents(input.additional_medicare_wages ?? 0) !==
         sourcedAdditionalMedicareWages ||
-      (input.federal_income_tax_withheld ?? 0) !== sourcedFederalWithholding
+      cashCents(input.federal_income_tax_withheld ?? 0) !==
+        sourcedFederalWithholding
     ) {
       throw new Error(
         "Schedule H FICA and withholding differ from employee Forms W-2",
@@ -1251,17 +1375,17 @@ export function computeScheduleHAmounts(
         (total, employee) =>
           total +
           (employee.relationship === "unrelated"
-            ? Math.min(employee.annual_cash_wages, 7_000)
+            ? cashCents(Math.min(employee.annual_cash_wages, 7_000))
             : employee.relationship === "child" &&
                 employee.age_21_transition_review
-            ? Math.min(childPost21Wages(employee).wages, 7_000)
+            ? cashCents(Math.min(childPost21Wages(employee).wages, 7_000))
             : 0),
         0,
       );
       const filedFutaWages = "taxable_wages" in unemployment
         ? unemployment.taxable_wages
         : unemployment.taxable_futa_wages;
-      if (sourcedFutaWages !== filedFutaWages) {
+      if (sourcedFutaWages !== cashCents(filedFutaWages)) {
         throw new Error(
           "Schedule H FUTA wages differ from per-employee payroll after the $7,000 cap",
         );
