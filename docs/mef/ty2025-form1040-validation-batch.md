@@ -4836,3 +4836,8 @@ commit=04dba771bc909c83325da70e64086dcfd3e1b66c start=2026-10-06T01:04:29Z
 ```
 
 Result and final log hash remain pending. The earlier ea23fbb91 process is terminal with exit1; this is its required fresh full rerun, not a duplicated live batch. The stable tree must remain untouched during execution.
+
+
+## Pending source/visual repairs discovered after the full launch
+
+The sibling family audit found Form8615 fractional ratios incorrectly rounded/blanked by the shared PDF numeric filler. An isolated descriptor-specific repair and all-page proof are running. The spouse/both-employer WOTC audit found the inherited joint fixture used the same EIN for an external W2 employer and the reviewed ScheduleC employer. Distinct employer identity plus actual source conflict rejection and business-specific common-control ownership attribution facts are being implemented. The published primary-MFJ WOTC synthetic proof and current stable full batch predate these corrections. No whole-parent support or IRS acceptance is claimed from either result.
