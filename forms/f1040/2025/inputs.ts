@@ -51,6 +51,7 @@ import {
   mortgageLimitReviewSchema,
   purchasePointsCrossLoanReviewSchema,
 } from "../nodes/inputs/f1098/index.ts";
+import { cashoutRefinanceReviewSchema } from "../nodes/inputs/f1098/cashout_refinance.ts";
 import {
   inputSchema as mortgageRefinancePointsInputSchema,
   mortgage_refinance_points,
@@ -740,6 +741,14 @@ export const inputNodes: readonly InputNodeEntry[] = [
     inputKey: "f1098_purchase_points_cross_loan_review",
     inputSchema: z.object({
       purchase_points_cross_loan_review: purchasePointsCrossLoanReviewSchema,
+    }),
+    isArray: false,
+  },
+  {
+    node: f1098,
+    inputKey: "f1098_cashout_refinance_review",
+    inputSchema: z.object({
+      cashout_refinance_review: cashoutRefinanceReviewSchema,
     }),
     isArray: false,
   },

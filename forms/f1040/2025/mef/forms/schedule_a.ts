@@ -45,6 +45,7 @@ export interface Fields {
   line_5c_personal_property_tax?: number | null;
   line_6_other_taxes?: number | null;
   line_8a_mortgage_interest_1098?: number | null;
+  home_mortgage_nonqualifying_use_review?: unknown;
   line_8b_mortgage_interest_no_1098?: number | null;
   line_8c_points_no_1098?: number | null;
   form8396_interest_credit_reduction?: number | null;
@@ -133,6 +134,7 @@ function buildIRS1040ScheduleA(
       fields.line_8c_points_no_1098 ?? 0,
       context.pending.mortgage_refinance_points !== undefined,
       context.pending.form8396 !== undefined,
+      fields.home_mortgage_nonqualifying_use_review,
     );
     assertPurchasePointsCrossLoanSources(
       context.pending.f1098,

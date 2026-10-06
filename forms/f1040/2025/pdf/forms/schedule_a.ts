@@ -260,6 +260,7 @@ export const scheduleAPdf: PdfFormDescriptor = {
         Number(input.line_8c_points_no_1098 ?? 0),
         all.mortgage_refinance_points !== undefined,
         all.form8396 !== undefined,
+        input.home_mortgage_nonqualifying_use_review,
       );
       assertPurchasePointsCrossLoanSources(
         all.f1098,

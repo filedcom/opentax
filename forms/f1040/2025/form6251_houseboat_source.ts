@@ -34,6 +34,7 @@ export function assertForm6251HouseboatInterestSource(
     (item.box6_current_year_deductible_points ?? 0) !== 0 ||
     source.data.mortgage_limit_review !== undefined ||
     source.data.purchase_points_cross_loan_review !== undefined ||
+    source.data.cashout_refinance_review !== undefined ||
     fields.filing_status !== "single" ||
     fields.taking_standard_deduction !== false ||
     fields.line3_form8864_income_exclusion !== undefined ||

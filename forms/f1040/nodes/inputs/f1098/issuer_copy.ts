@@ -154,6 +154,7 @@ export async function assertForm1098IssuerCopies(
     f1098s,
     mortgage_limit_review,
     purchase_points_cross_loan_review,
+    cashout_refinance_review,
   } = inputSchema.parse(raw);
   const reviewedLoans = new Set([
     ...(mortgage_limit_review?.loans.map((loan) =>
@@ -165,6 +166,12 @@ export async function assertForm1098IssuerCopies(
           .source_document_reference,
         purchase_points_cross_loan_review.existing_loan
           .source_document_reference,
+      ]
+      : []),
+    ...(cashout_refinance_review
+      ? [
+        cashout_refinance_review.old_source_document_reference,
+        cashout_refinance_review.new_source_document_reference,
       ]
       : []),
   ]);

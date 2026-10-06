@@ -11,6 +11,10 @@ import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/in
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { FilingStatus } from "../../../mef/header.ts";
+import {
+  cashoutRefinanceReviewSchema,
+  validateCashoutRefinanceReview,
+} from "./cashout_refinance.ts";
 
 // FOR dropdown: destination schedule/form
 // A = Schedule A, C = Schedule C, E = Schedule E. Positive C/E box 1 and
@@ -412,9 +416,15 @@ export const inputSchema = z.object({
   mortgage_limit_review: mortgageLimitReviewSchema.optional(),
   purchase_points_cross_loan_review: purchasePointsCrossLoanReviewSchema
     .optional(),
+  cashout_refinance_review: cashoutRefinanceReviewSchema.optional(),
 }).superRefine(
   (
-    { f1098s, mortgage_limit_review, purchase_points_cross_loan_review },
+    {
+      f1098s,
+      mortgage_limit_review,
+      purchase_points_cross_loan_review,
+      cashout_refinance_review,
+    },
     ctx,
   ) => {
     const sources = new Set<string>();
@@ -430,11 +440,42 @@ export const inputSchema = z.object({
       }
       sources.add(reference);
     });
-    if (mortgage_limit_review && purchase_points_cross_loan_review) {
+    if (
+      [
+        mortgage_limit_review,
+        purchase_points_cross_loan_review,
+        cashout_refinance_review,
+      ].filter(Boolean).length > 1
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["purchase_points_cross_loan_review"],
+        path: ["cashout_refinance_review"],
         message: "Only one whole-return mortgage review may apply",
+      });
+    }
+    if (
+      cashout_refinance_review &&
+      !validateCashoutRefinanceReview(cashout_refinance_review, f1098s)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["cashout_refinance_review"],
+        message:
+          "Cash-out refinance needs joined old/new Form 1098, closing and payoff use, complete lender balances and interest, and the Pub. 936 whole-mortgage allocation",
+      });
+    }
+    if (
+      !cashout_refinance_review &&
+      f1098s.some((item) =>
+        item.refinance === true && item.box1_mortgage_interest > 0 &&
+        item.box6_construction_refinance_review === undefined
+      )
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["cashout_refinance_review"],
+        message:
+          "Positive ordinary refinance interest needs reviewed old/new loan use and Pub. 936 allocation",
       });
     }
     if (purchase_points_cross_loan_review) {
@@ -777,6 +818,7 @@ export function assertForm1098MortgageLimitSources(
   filedLine8c: number,
   hasUnreportedRefinancePoints: boolean,
   hasMortgageInterestCredit: boolean,
+  filedMortgageUseReview?: unknown,
 ): void {
   if (source === undefined) return;
   const parsed = inputSchema.parse(source);
@@ -825,7 +867,8 @@ export function assertForm1098MortgageLimitSources(
   if (
     filedLine8a > 0 && has2025Purchase && hasPre2025Mortgage &&
     !parsed.mortgage_limit_review &&
-    !parsed.purchase_points_cross_loan_review
+    !parsed.purchase_points_cross_loan_review &&
+    !parsed.cashout_refinance_review
   ) {
     throw new Error(
       "Schedule A 2025 purchase plus existing mortgage needs one qualified-home Pub. 936 review",
@@ -842,13 +885,63 @@ export function assertForm1098MortgageLimitSources(
         0,
       ) > debtLimit &&
     !parsed.mortgage_limit_review &&
-    !parsed.purchase_points_cross_loan_review
+    !parsed.purchase_points_cross_loan_review &&
+    !parsed.cashout_refinance_review
   ) {
     throw new Error(
       `Schedule A post-2017 mortgage debt over $${
         debtLimit.toLocaleString("en-US")
       } need a supported whole-return Pub. 936 limit review`,
     );
+  }
+  if (parsed.cashout_refinance_review) {
+    const review = parsed.cashout_refinance_review;
+    const filedUse = filedMortgageUseReview as
+      | Record<string, unknown>
+      | undefined;
+    const newLoan = parsed.f1098s.find((item) =>
+      item.source_document_reference === review.new_source_document_reference
+    );
+    const oldLoan = parsed.f1098s.find((item) =>
+      item.source_document_reference === review.old_source_document_reference
+    );
+    const expectedStatus = {
+      [FilingStatus.Single]: "single",
+      [FilingStatus.MarriedFilingJointly]: "mfj",
+      [FilingStatus.MarriedFilingSeparately]: "mfs",
+      [FilingStatus.HeadOfHousehold]: "hoh",
+      [FilingStatus.QualifyingSurvivingSpouse]: "qss",
+    }[filingStatus];
+    const allowed = new Set(
+      recipientTins.map((tin) => tin.replaceAll("-", "")),
+    );
+    const expected = parsed.f1098s.reduce(
+      (sum, item) => sum + (item.box1_current_year_deductible_interest ?? 0),
+      0,
+    );
+    if (
+      parsed.cashout_refinance_review.filing_status_verified !==
+        expectedStatus ||
+      filedUse?.loan_document_reference !==
+        review.new_source_document_reference ||
+      filedUse?.outstanding_balance_2025 !==
+        newLoan?.box2_outstanding_principal ||
+      filedUse?.nonqualifying_proceeds_amount !==
+        review.new_loan_proceeds_to_personal_cashout ||
+      filedUse?.interest_allocation_workpaper_reference !==
+        oldLoan?.box1_deduction_workpaper_reference ||
+      filedUse?.deductible_home_interest_reviewed !== true ||
+      parsed.f1098s.some((item) =>
+        !item.recipient_tin ||
+        !allowed.has(item.recipient_tin.replaceAll("-", ""))
+      ) || filedLine8a !== expected || filedLine8b !== 0 ||
+      filedLine8c !== 0 || hasUnreportedRefinancePoints ||
+      hasMortgageInterestCredit
+    ) {
+      throw new Error(
+        "Cash-out refinance requires filer-owned Form 1098 interest and no other mortgage-interest or points route",
+      );
+    }
   }
   if (!parsed.mortgage_limit_review) return;
   const verifiedStatus = parsed.mortgage_limit_review.filing_status_verified ??
@@ -1055,6 +1148,26 @@ class F1098Node extends TaxNode<typeof inputSchema> {
       ...scheduleAOutput(f1098s),
       ...schedule1Output(f1098s),
     ];
+    if (parsed.cashout_refinance_review) {
+      const review = parsed.cashout_refinance_review;
+      const oldLoan = f1098s.find((item) =>
+        item.source_document_reference === review.old_source_document_reference
+      )!;
+      const newLoan = f1098s.find((item) =>
+        item.source_document_reference === review.new_source_document_reference
+      )!;
+      outputs.push(output(schedule_a, {
+        home_mortgage_nonqualifying_use_review: {
+          loan_document_reference: review.new_source_document_reference,
+          outstanding_balance_2025: newLoan.box2_outstanding_principal!,
+          nonqualifying_proceeds_amount:
+            review.new_loan_proceeds_to_personal_cashout,
+          interest_allocation_workpaper_reference: oldLoan
+            .box1_deduction_workpaper_reference!,
+          deductible_home_interest_reviewed: true,
+        },
+      }));
+    }
     const houseboatRows = f1098s.filter((item) =>
       item.amt_houseboat_second_home_review !== undefined
     );
@@ -1071,7 +1184,8 @@ class F1098Node extends TaxNode<typeof inputSchema> {
         (item.box6_points_paid ?? 0) !== 0 ||
         (item.box6_current_year_deductible_points ?? 0) !== 0 ||
         parsed.mortgage_limit_review !== undefined ||
-        parsed.purchase_points_cross_loan_review !== undefined
+        parsed.purchase_points_cross_loan_review !== undefined ||
+        parsed.cashout_refinance_review !== undefined
       ) {
         throw new Error(
           "AMT houseboat interest needs one fully deductible, identified Schedule A Form 1098 with no other mortgage source",
