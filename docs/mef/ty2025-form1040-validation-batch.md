@@ -4957,3 +4957,6 @@ Main source integration83b74af8f: Form8611 gate97/0 (10s), held replay2 cases/12
 - `/tmp/opentax-controlled-farm-main-held.log` SHA256 `364abce19b76d15051c7d2a53072491fd9b231c3b6b18e76421eb5b55a7f7a53`
 
 Independent spouse health plans current mainfa0e3272e:57/0(31s), exact owned-source/zeroMedicare/native8995/Pub974 gate. Six complete packets/all101 reviewed pages and18 hashes retained under `.state/research/2026-10-06-independent-spouse-health-plans-reviewed`. Log `/tmp/opentax-independent-health-main.log` SHA256 `942422b5c8c7914ab414879b5ff571d8060dc9f7717874b863af43b089cd3aed`. IRS acceptance and broader parent scope remain unproven.
+
+
+FarmSHOP8c9a77447 currentmain gate16/0(1m29s); log `/tmp/opentax-farm-shop-current-main.log` SHA256 `fee152e078cb70db6e5f04de3c6606140198ca012282ca558960f5dd4057fad2`. Four complete packets/all92 reviewed pages, fullXSD and byte-identical mainPDFs; [source proof](ty2025-form8941-owned-farm-shop-review.md). Broader source branches/IRS businessrules/ATS remain open.
