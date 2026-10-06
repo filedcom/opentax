@@ -127,12 +127,7 @@ for (const fixture of pdfReviewFixtures) {
       : `filled-PDF source ${fixture.id} also exports TY2025 v5.4 XML`,
     ignore: !xsdAvailable,
     async fn() {
-      const result = fixture.attachments
-        ? f1040_2025.executeReturn({ ...fixture.inputs })
-        : execute(plan, registry, { ...fixture.inputs }, {
-          taxYear: 2025,
-          formType: "f1040",
-        });
+      const result = f1040_2025.executeReturn({ ...fixture.inputs });
       if (fixture.id === "single-form461-schedule-c-excess-business-loss") {
         assertEquals(result.diagnostics.length, 1);
         assertStringIncludes(
@@ -196,10 +191,12 @@ for (const fixture of pdfReviewFixtures) {
           500,
         );
       }
-      const xml = fixture.attachments
+      const xml = fixture.attachments?.length ||
+          fixture.retainedSourceDocuments?.length
         ? (await buildMefBundle(pending, {
           filer: fixture.filer,
-          attachments: [...fixture.attachments],
+          attachments: fixture.attachments ?? [],
+          retainedSourceDocuments: fixture.retainedSourceDocuments,
         })).xml
         : fixture.id === "single-withheld-w2g" ||
             fixture.id === "single-partnership-code-k-and-w2g"
