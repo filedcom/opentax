@@ -10,7 +10,7 @@ Latest verified work: source-based preferential ScheduleJ with farm QBI, no-elec
 
 Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The first immutable **4a45410da** rerun exited **1**; KeepAlive restarted it and overwrote its terminal log. The second run (wrapper91417/Deno91420, start07:44:10UTC) is live, and a startup guard will archive its result before preventing another launch. First-run totals are unavailable. A passing latest-source full run remains required.
 
-Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **fe3d19e23**, published with exact Form4952 cents; newer ScheduleJ and Roth source changes await publication.
+Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **c70af78a3**, published with exact Form4952 cents, sourced ScheduleJ staged returns and corrected ordinary-Roth classification; saved title/body and remote head verified.
 
 Donation source and Section B printing proofs are sealed. Ordinary-Roth classification is verified only for the separately corrected35-source proof; original checked source copies remain superseded. Original10 paper margin and codeN recharacterization source/statement consequences remain qualified. Root preferential ScheduleJ/AMT source work has an isolated checkout and a retained guard audit. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
 
