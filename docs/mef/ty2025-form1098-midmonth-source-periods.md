@@ -71,3 +71,27 @@ passed **98/0 (4m28s)** on the held final source at
 prepared-native and direct-filled-PDF negatives include missing partial rows,
 wire-date conflicts, unsourced payment records, corrupted or rehashed lender,
 closing, payoff, original-points and schedule records, and wrong filed points.
+
+## Root integration verification
+
+Integrated at c4c597887. Root seven-module standard passed **98/0, zero ignored
+(6m37s)**, `/tmp/opentax-1098-midmonth-main-standard-oct6.log`, session79313
+terminal0. The independent original-source reader passed **26/26 returns,
+81 pages,24/24 comparable pending**, exact PDFs/retained source bytes,
+native XML except ReturnTs and full XSD at
+`/tmp/opentax-1098-midmonth-main-retained26-oct6/comparison.json`, session5100
+terminal0. Historical no-points archives lack pending/carry/origins; equality
+is not inferred. Root reviewed all nine new return pages and four changed
+Copy B pages plus full-size Schedule A totals,
+`/tmp/opentax-1098-midmonth-root-review-oct6.json`. All80 new and268 prior
+original/private files were hash-checked after the final gates,
+`/tmp/opentax-1098-midmonth-all348-preservation-oct6.json`.
+
+Disk pressure was measured at99% with3.2GiB available. Forty-two generated
+comparison pending JSON files from the completed19/23 root replay directories
+were losslessly compressed to sibling `.json.gz` files, preserving exact
+decompressed hashes in `/tmp/opentax-generated-mortgage-replay-compression-oct6.json`
+and reclaiming1,988,654,286bytes. Those are generated comparison outputs;
+original source archives, private copies, reviewed PDFs/XML and reports
+remain unchanged. Use gzip decompression when reading those comparison copies.
+Latest-production full regression and IRS acceptance remain required.
