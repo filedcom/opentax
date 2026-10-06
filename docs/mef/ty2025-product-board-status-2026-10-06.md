@@ -3974,3 +3974,20 @@ Draft [PR63](https://github.com/filedcom/opentax/pull/63) was externally verifie
 
 [Parent household payroll](docs/mef/ty2025-schedule-h-parent-source.md) is integrated at **2032da57c**: root56/0, actual saved24returns/125pages (21 newer exact/3 historically qualified), all41newpages reviewed and84new/prior originals hash-verified. Parent FICA derives service-quarter household/care/marital facts; all parent wages remain excluded from FUTA. Wider split-year/state/authentication requirements stay open. [Midmonth mortgage](docs/mef/ty2025-form1098-midmonth-source-periods.md) is integrated at **c4c597887** with root98/0 and actual saved26returns/81pages/24comparablepending exact, all9newreturn+4CopyBpages reviewed and348new/prior originals hash-verified. Direct-property **5f38939ab + 8d4df02e5** is ready after a retained-lease/payment source guard repair; root integration gates remain pending.
 
+
+
+## Before cross-activity property source correction and child payroll integration
+
+## Compacted status (2026-10-06)
+
+The frozen checklist retains **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,528 bounded slices**; broader parent tasks remain open. Detailed learnings and historical evidence are compacted into the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
+
+Recent root-verified production includes [parent household payroll](docs/mef/ty2025-schedule-h-parent-source.md) at2032da57c (56/0; saved24returns/125pages,21exact/3historically qualified;41newpages reviewed;84originals preserved) and [midmonth mortgage](docs/mef/ty2025-form1098-midmonth-source-periods.md) atc4c597887 (98/0; saved26returns/81pages/24comparablepending;9newreturn+4CopyBpages reviewed;348originals preserved). Prior mortgage inventory/payoff, passive K-1 ordinary gains, mixed-family payroll and other sealed slices retain their evidence in the archive and linked proofs.
+
+Direct-property candidates **5f38939ab + 8d4df02e5** correct nondepreciable-land income recharacterization and require actual retained-lease joins plus unique payments/deposits. Corrected eight packets preserve all99previously reviewed PDF pages exactly. Integration and root tests/replay are next; no broader parent is complete.
+
+Draft [PR63](https://github.com/filedcom/opentax/pull/63) was externally verified at **ffb978f1e** with exact title/body/head/draft. The latest attachment call did not return before termination; its completion is unconfirmed. Full regression V22 covers immutable0d153ed24 and predates later integrations; a passing latest-production full batch remains required. Process liveness must be rechecked before reporting it. Complete fixture XSD370/0 does not establish IRS business-rule or ATS acceptance.
+
+Coverage census remains152native/118PDFdescriptors,369fixtures,115PDFkeys/99covered/16uncovered and128source literals/83absent; counts alone do not prove filing support. Source contracts/hashes do not authenticate issuers, signatures or prior acceptance. Wider filing routes, ATS credentials/scenario conflicts, IRS acknowledgments and release review remain unfinished.
+
+Root saved duplicate-activity reproducer at `/tmp/opentax-eic-property-duplicate-activity-before-inputs-oct6.json`: same underlying parcel/payment records relabeled with a second activity ID produce no diagnostics, AGI9000 and doubled gain6000 at0298758b2. This is an existing duplicate-source requirement; correction is pending. Main55-module and retained50 gates still run on fixed production before this correction. Child-turn21 candidatea72625d2c has root12page review and preserved six files; integration remains pending.
