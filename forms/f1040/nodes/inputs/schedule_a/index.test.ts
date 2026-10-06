@@ -867,7 +867,11 @@ Deno.test("scheduleA.compute: smoke — all major boxes populate total and AMT t
   const deduction = findOutput(result, "standard_deduction");
   assertEquals(deduction?.fields.itemized_taxes, 11_500);
 
-  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs.length, 2);
+  assertEquals(
+    findOutput(result, "form8995")?.fields.itemized_deductions,
+    61_250,
+  );
 });
 
 // ── MFS SALT cap ─────────────────────────────────────────────────────────────

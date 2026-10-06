@@ -1,3 +1,4 @@
+import { calculateCharitableDepreciation } from "../../../nodes/inputs/f8283/depreciation-source.ts";
 import { assertReviewedForm8283Return } from "./f8283_return.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import {
@@ -360,6 +361,27 @@ export function fmvReductionExplanation(
     ? `Purchased long-term tangible personal property is put to a use unrelated to the donee's exempt purpose. Purchase record ${item.unrelated_use_capital_gain_reduction.purchase_record_reference} and donee-use statement ${item.unrelated_use_capital_gain_reduction.donee_unrelated_use_statement_reference} support the section 170(e)(1)(B)(i) reduction of long-term appreciation ${
       usd(fmv - item.cost_or_adjusted_basis)
     }, leaving adjusted basis ${usd(item.cost_or_adjusted_basis)}.`
+    : item.depreciation_ordinary_income_reduction !== undefined
+    ? (() => {
+      const result = calculateCharitableDepreciation(
+        item.depreciation_ordinary_income_reduction,
+      );
+      return `Hypothetical FMV sale only, no actual donor sale: section170(e)(1)(A) removes section1245/1250 ordinary gain ${
+        usd(result.ordinary_gain)
+      } from FMV ${usd(result.fmv)}, leaving pre-AGI claim ${
+        usd(result.deduction_claimed)
+      }. Adjusted basis ${
+        usd(result.adjusted_basis)
+      } is derived from owned annual depreciation records. Current-year business depreciation ${
+        usd(result.current_year_depreciation)
+      } remains a ScheduleC expense; no Form4797 sale income is reported. ${
+        result.rows.map((row) =>
+          `${row.component_reference}: ordinary ${
+            usd(row.ordinary_gain)
+          }, residual long-term ${usd(row.residual_long_term_gain)}`
+        ).join("; ")
+      }.`;
+    })()
     : item.contribution_year_disposition_reduction !== undefined &&
         item.cost_or_adjusted_basis !== undefined
     ? `Original donee ${item.contribution_year_disposition_reduction.donee_name} (EIN ${item.contribution_year_disposition_reduction.donee_ein}) sold the property on ${item.contribution_year_disposition_reduction.disposition_date}, during the contribution year, for ${
@@ -1510,7 +1532,7 @@ export const form8283: MefFormDescriptor<
       .filter(needsSectionBVehicleStatement)
       .map((item) => requiredVehicleAttachment(item, context, "B"));
     const dispositionSourceIds = sectionA.flatMap((item) =>
-      item.contribution_year_disposition_reduction?.retained_source_documents
+      (item.depreciation_ordinary_income_reduction ?? item.contribution_year_disposition_reduction)?.retained_source_documents
         .map((record) => {
           if (!context.documentIdsByPendingKey) return undefined;
           const id = context.documentIdsByAttachmentFileName

@@ -1602,6 +1602,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       // the same standard deduction amount as the standard_deduction worksheet.
       this.outputNodes.output(form8995, {
         filing_status: parsed.filing_status,
+        mfs_spouse_itemizing: parsed.mfs_spouse_itemizing,
         ...(parsed.taxpayer_ssn !== undefined && {
           taxpayer_ssn: parsed.taxpayer_ssn,
         }),

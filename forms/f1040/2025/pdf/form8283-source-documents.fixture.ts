@@ -77,7 +77,11 @@ export async function giftSourceRecord(
         "Report date2025-05-28; purpose is substantiation of the noncash charitable contribution, not computation of the AGI limitation.",
         "Full owned interest transferred outright with no use/disposition restrictions, retained rights, consideration or goods/services.",
         "Jane Smith, EIN123456789,1 Main St,Austin,TX78701, is the independent regular paid appraiser signing this test report.",
-        "Simulated qualification record APPRAISER-2025: recognized personal-property appraisal designation, valuation coursework and20 years of relevant experience.",
+        `Simulated qualification record APPRAISER-2025: recognized ${
+          facts.propertyType === "other_real_estate"
+            ? "real-estate"
+            : "personal-property"
+        } appraisal designation, valuation coursework and20 years of relevant experience.`,
         "The appraiser is unrelated to donor/donee and the acquisition transaction; the fee is a fixed$600 and is not tied to FMV or the deduction.",
         `Comparable-sale test records COMP-A,COMP-B,COMP-C dated2025-05-01/10/20 show matched condition/category prices$${
           (facts.fmv * .95).toFixed(2)
@@ -206,6 +210,7 @@ export async function completed8283Source(
     art_under_20000: `${p1}.Lines2a-c[0].c1_6[2]`,
     art_at_least_20000: `${p1}.Lines2a-c[0].c1_6[0]`,
     equipment: `${p1}.Lines2d-h[0].c1_6[1]`,
+    other_real_estate: `${p1}.Lines2d-h[0].c1_6[0]`,
     collectibles: `${p1}.Lines2d-h[0].c1_6[3]`,
     other: `${p1}.Lines2i-l[0].c1_6[3]`,
   };

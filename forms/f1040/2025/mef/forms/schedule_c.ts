@@ -1,3 +1,4 @@
+import { assertCharitableDepreciationReturn } from "./f8283_depreciation_return.ts";
 import { assertFarmWotcReturn } from "../../form8995_farm_wotc_reconciliation.ts";
 import { filedOwnedScheduleC } from "../../../nodes/owned-business-filing.ts";
 import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
@@ -328,6 +329,16 @@ export const scheduleC: MefFormDescriptor<
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sc.pdf",
   build(fields, context = {}) {
+    if (
+      fields?.schedule_cs?.some((row) =>
+        row.donated_depreciable_property_source
+      )
+    ) {
+      assertCharitableDepreciationReturn({
+        ...context,
+        pending: { ...context.pending, schedule_c: fields },
+      });
+    }
     if (context.pending?.schedule_f) {
       assertFarmWotcReturn(
         context.pending.form8995a ?? context.pending.form8995,

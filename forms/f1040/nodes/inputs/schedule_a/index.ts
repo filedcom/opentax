@@ -1,3 +1,4 @@
+import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -577,7 +578,7 @@ function computeElectedCapitalGainCarryovers(
 class ScheduleANode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_a";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([standard_deduction]);
+  readonly outputNodes = new OutputNodes([standard_deduction, form8995]);
 
   compute(ctx: NodeContext, input: ScheduleAInput): NodeResult {
     inputSchema.parse(input);
@@ -639,6 +640,10 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
         itemized_taxes: taxesTotal,
         itemized_investment_interest: input.line_9_investment_interest ?? 0,
         niit_allocable_state_local_tax: niitAllocatedTax,
+      }),
+      this.outputNodes.output(form8995, {
+        itemized_deductions: totalItemized,
+        force_itemized: input.force_itemized,
       }),
     ];
     return {

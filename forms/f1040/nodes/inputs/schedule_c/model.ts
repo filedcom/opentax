@@ -1,3 +1,7 @@
+import {
+  calculateCharitableDepreciation,
+  charitableDepreciationSourceSchema,
+} from "../f8283/depreciation-source.ts";
 import { mfsSstbFilingReviewSchema } from "./mfs-sstb-review.ts";
 import { inputSchema as patronReviewSchema } from "../qbi_patron/schema.ts";
 import { itemSchema as patrItemSchema } from "../f1099patr/schema.ts";
@@ -204,6 +208,8 @@ export const itemSchema = z.object({
     ).min(1),
   }).strict().optional(),
   line_13_depreciation: z.number().nonnegative().optional(),
+  donated_depreciable_property_source: charitableDepreciationSourceSchema
+    .optional(),
   line_14_employee_benefits: z.number().nonnegative().optional(),
   line_15_insurance: z.number().nonnegative().optional(),
   line_16a_interest_mortgage: z.number().nonnegative().optional(),
@@ -527,7 +533,14 @@ export function projectSection481aScheduleCItems(
 export function projectScheduleCItems(
   input: z.infer<typeof inputSchema>,
 ): ScheduleCItem[] {
-  const rawItems = projectSection481aScheduleCItems(input);
+  const rawItems = projectSection481aScheduleCItems(input).map((item) =>
+    item.donated_depreciable_property_source
+      ? itemSchema.parse({
+        ...item,
+        line_13_depreciation: charitableDepreciationExpense(item),
+      })
+      : item
+  );
   const wageReductions = input.form8994_wage_reductions ?? [];
   const wageSeen = new Set<string>();
   for (const reduction of wageReductions) {
@@ -774,6 +787,42 @@ export function wotcReductionsByBusiness(
   return reductions;
 }
 
+export function charitableDepreciationExpense(item: ScheduleCItem): number {
+  const raw = item.donated_depreciable_property_source;
+  if (!raw) return item.line_13_depreciation ?? 0;
+  const calculated = calculateCharitableDepreciation(raw);
+  const records = raw.current_year_business_records;
+  if (
+    calculated.current_year_depreciation > 0 &&
+    (!records || item.line_1_gross_receipts !== records.gross_receipts ||
+      (item.line_10_commissions_fees ?? 0) !== records.fees_paid ||
+      Object.entries(item).some(([key, value]) =>
+        /^line_\d/.test(key) && typeof value === "number" && value !== 0 &&
+        ![
+          "line_1_gross_receipts",
+          "line_10_commissions_fees",
+          "line_13_depreciation",
+        ].includes(key)
+      ) ||
+      (item.part_v_other_expenses?.length ?? 0) > 0)
+  ) {
+    throw new Error(
+      "Donated-asset ScheduleC receipts/paid fees differ from current business records",
+    );
+  }
+  if (
+    item.business_reference !== raw.business_reference ||
+    (item.proprietor_recipient ?? "T") !== raw.proprietor_recipient ||
+    (item.line_13_depreciation !== undefined &&
+      item.line_13_depreciation !== calculated.current_year_depreciation)
+  ) {
+    throw new Error(
+      "ScheduleC donated-asset owner/business or depreciation conflicts with annual source ledger",
+    );
+  }
+  return calculated.current_year_depreciation;
+}
+
 export function computeTotalExpenses(
   item: ScheduleCItem,
   wotcReduction = 0,
@@ -788,7 +837,7 @@ export function computeTotalExpenses(
     (item.line_10_commissions_fees ?? 0) +
     (item.line_11_contract_labor ?? 0) +
     (item.line_12_depletion ?? 0) +
-    (item.line_13_depreciation ?? 0) +
+    charitableDepreciationExpense(item) +
     (item.line_14_employee_benefits ?? 0) +
     (item.line_15_insurance ?? 0) +
     (item.line_16a_interest_mortgage ?? 0) +

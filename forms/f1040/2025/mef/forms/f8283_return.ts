@@ -1,3 +1,4 @@
+import { assertCharitableDepreciationReturn } from "./f8283_depreciation_return.ts";
 import { qdcgtw } from "../../../nodes/intermediate/worksheets/qdcgtw/index.ts";
 import { f4852 } from "../../../nodes/inputs/f4852/index.ts";
 import { household_wages } from "../../../nodes/inputs/household_wages/index.ts";
@@ -17,6 +18,7 @@ import type { MefBuildContext } from "../form-descriptor.ts";
 export function assertReviewedForm8283Return(
   context: MefBuildContext | undefined,
 ): void {
+  assertCharitableDepreciationReturn(context);
   const pending = context?.pending;
   if (!pending?.f8283) return;
   const gifts = giftSchema.parse(pending.f8283);

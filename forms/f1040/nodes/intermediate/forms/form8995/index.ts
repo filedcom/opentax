@@ -161,6 +161,9 @@ export const inputSchema = z.object({
   agi: z.number().optional(),
   // Schedule 1-A reduces taxable income before the section 199A income cap.
   additional_deductions: z.number().nonnegative().optional(),
+  itemized_deductions: z.number().nonnegative().optional(),
+  force_itemized: z.boolean().optional(),
+  mfs_spouse_itemizing: z.boolean().optional(),
   qualified_tip_qbi_source: qualifiedTipQbiSourceSchema.optional(),
   // Filing status — used to look up the standard deduction base for income limit
   filing_status: z.nativeEnum(FilingStatus).optional(),
@@ -248,6 +251,13 @@ function standardDeductionAmount(
   return base + factors * additionalPerFactor;
 }
 
+function sourceDeductionAmount(input: Form8995Input, cfg: F1040Config): number {
+  const itemized = input.itemized_deductions ?? 0;
+  return input.force_itemized === true || input.mfs_spouse_itemizing === true
+    ? itemized
+    : Math.max(itemized, standardDeductionAmount(input, cfg));
+}
+
 function incomeLimitBase(
   input: Form8995Input,
   cfg: F1040Config,
@@ -264,7 +274,7 @@ function incomeLimitBase(
   // (taxable income before QBI deduction). Using the full standard deduction amount
   // matches what the standard_deduction worksheet will compute.
   if (input.agi !== undefined) {
-    const stdDed = standardDeductionAmount(input, cfg);
+    const stdDed = sourceDeductionAmount(input, cfg);
     return Math.max(
       0,
       input.agi - stdDed - (input.additional_deductions ?? 0) - capGain,
@@ -320,7 +330,7 @@ function taxableIncomeBeforeQbi(
   }
   return Math.max(
     0,
-    input.agi - standardDeductionAmount(input, cfg) -
+    input.agi - sourceDeductionAmount(input, cfg) -
       (input.additional_deductions ?? 0),
   );
 }
@@ -751,7 +761,7 @@ function oneScheduleCLines(
   const line11 = Math.round(
     Math.max(
       0,
-      input.agi - standardDeductionAmount(input, cfg) -
+      input.agi - sourceDeductionAmount(input, cfg) -
         (input.additional_deductions ?? 0),
     ),
   );
@@ -851,7 +861,7 @@ function multipleScheduleCLines(
   const line11 = Math.round(
     Math.max(
       0,
-      input.agi - standardDeductionAmount(input, cfg) -
+      input.agi - sourceDeductionAmount(input, cfg) -
         (input.additional_deductions ?? 0),
     ),
   );
@@ -949,7 +959,7 @@ function mixedScheduleCFLines(
   const line11 = Math.round(
     Math.max(
       0,
-      input.agi - standardDeductionAmount(input, cfg) -
+      input.agi - sourceDeductionAmount(input, cfg) -
         (input.additional_deductions ?? 0),
     ),
   );
@@ -1021,7 +1031,7 @@ function twoSmallScheduleCLines(
   const line11 = Math.round(
     Math.max(
       0,
-      input.agi - standardDeductionAmount(input, cfg) -
+      input.agi - sourceDeductionAmount(input, cfg) -
         (input.additional_deductions ?? 0),
     ),
   );
@@ -1091,7 +1101,7 @@ function oneScheduleFLines(
   const line11 = Math.round(
     Math.max(
       0,
-      input.agi - standardDeductionAmount(input, cfg) -
+      input.agi - sourceDeductionAmount(input, cfg) -
         (input.additional_deductions ?? 0),
     ),
   );
@@ -1153,7 +1163,7 @@ function reitOnlyLines(
   const line11 = Math.round(
     Math.max(
       0,
-      input.agi - standardDeductionAmount(input, cfg) -
+      input.agi - sourceDeductionAmount(input, cfg) -
         (input.additional_deductions ?? 0),
     ),
   );
@@ -1255,7 +1265,7 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
         }
         return jointOwnerQbi(
           input.joint_se_source,
-          input.agi - standardDeductionAmount(input, cfg) -
+          input.agi - sourceDeductionAmount(input, cfg) -
             (input.additional_deductions ?? 0),
           cfg.ssWageBase,
           input.joint_owner_health_plan_source,

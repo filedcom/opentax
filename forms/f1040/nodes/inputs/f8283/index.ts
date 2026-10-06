@@ -1,3 +1,7 @@
+import {
+  calculateCharitableDepreciation,
+  charitableDepreciationSourceSchema,
+} from "./depreciation-source.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -251,6 +255,8 @@ const sectionAItemSchema = z.object({
     hypothetical_fmv_sale_gain_entirely_long_term_verified: z.literal(true),
     no_other_reduction_reason_verified: z.literal(true),
   }).strict().optional(),
+  depreciation_ordinary_income_reduction: charitableDepreciationSourceSchema
+    .optional(),
   contribution_year_disposition_reduction: z.object({
     purchase_record_reference: z.string().trim().min(1),
     donee_disposition_record_reference: z.string().trim().min(1),
@@ -446,6 +452,8 @@ const sectionAItemSchema = z.object({
       true;
     const disposition =
       item.contribution_year_disposition_reduction !== undefined;
+    const depreciation =
+      item.depreciation_ordinary_income_reduction !== undefined;
     const inventory = item.inventory_ordinary_income_reduction !== undefined;
     const creator = item.creator_ordinary_income_reduction !== undefined;
     const manuscript = item.manuscript_ordinary_income_reduction !== undefined;
@@ -486,7 +494,7 @@ const sectionAItemSchema = z.object({
       reductionCents > 0 && !certifiedSaleReduction && !shortTerm &&
       !inventory && !creator && !manuscript && !unrelatedUse &&
       !privateFoundation && !taxidermy && !intellectualProperty &&
-      !disposition &&
+      !disposition && !depreciation &&
       !capitalGainElection
     ) {
       ctx.addIssue({
@@ -495,6 +503,53 @@ const sectionAItemSchema = z.object({
         message:
           "Form 8283 reduced Section A claim needs certified sale proceeds or a sourced ordinary-income or capital-gain reduction",
       });
+    }
+    if (depreciation) {
+      try {
+        const result = calculateCharitableDepreciation(
+          item.depreciation_ordinary_income_reduction,
+        );
+        const source = result.source;
+        if (
+          item.date_acquired !== source.date_acquired ||
+          item.date_contributed !== source.date_contributed ||
+          item.donor_acquisition_description?.trim().toLowerCase() !==
+            "purchase" ||
+          item.is_vehicle === true ||
+          item.fmv !== result.fmv ||
+          item.cost_or_adjusted_basis !== result.adjusted_basis ||
+          item.deduction_claimed !== result.deduction_claimed ||
+          item.is_capital_gain_property !== result.is_capital_gain_property ||
+          item.charitable_limit_category !== result.charitable_limit_category ||
+          item.donor_ownership_review?.donor_name !== source.donor_name ||
+          item.donor_ownership_review?.donor_ssn !== source.donor_ssn ||
+          item.donor_ownership_review?.ownership_record_reference !==
+            source.purchase_record_reference ||
+          [
+            shortTerm,
+            inventory,
+            creator,
+            manuscript,
+            unrelatedUse,
+            privateFoundation,
+            taxidermy,
+            intellectualProperty,
+            disposition,
+            capitalGainElection,
+            certifiedSaleReduction,
+          ].some(Boolean)
+        ) {
+          throw new Error(
+            "Owned donation, appraisal, adjusted basis and ordinary reduction must equal source ledger",
+          );
+        }
+      } catch (error) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["depreciation_ordinary_income_reduction"],
+          message: String(error),
+        });
+      }
     }
     if (capitalGainElection && reductionCents > 0) {
       const acquired = item.date_acquired
@@ -1143,6 +1198,10 @@ const specialReductionBase = z.object({
 const sectionASourceFields = sectionAItemSchema.innerType().shape;
 const specialSectionBReductionSchema = z.discriminatedUnion("reason", [
   specialReductionBase.extend({
+    reason: z.literal("depreciation_ordinary_income"),
+    source: charitableDepreciationSourceSchema,
+  }).strict(),
+  specialReductionBase.extend({
     reason: z.literal("contribution_year_disposition"),
     source: sectionASourceFields.contribution_year_disposition_reduction
       .unwrap(),
@@ -1395,7 +1454,9 @@ const sectionBItemSchema = z.object({
   }
   const special = item.special_fmv_reduction;
   if (special) {
-    const expectedType = special.reason === "contribution_year_disposition"
+    const expectedType = special.reason === "depreciation_ordinary_income"
+      ? [SectionBPropertyType.Equipment, SectionBPropertyType.OtherRealEstate]
+      : special.reason === "contribution_year_disposition"
       ? [
         SectionBPropertyType.ArtUnder20000,
         SectionBPropertyType.ArtAtLeast20000,
@@ -1420,15 +1481,29 @@ const sectionBItemSchema = z.object({
       ];
     const sourceProperty = specialSectionBAsSectionA(item);
     const valid = sectionAItemSchema.safeParse(sourceProperty);
-    const references = Object.entries(special.source).filter(([key]) =>
-      key.endsWith("_reference")
-    ).map(([, value]) => value);
+    const references = special.reason === "depreciation_ordinary_income"
+      ? [
+        special.source.purchase_record_reference,
+        special.source.annual_depreciation_ledger_reference,
+        special.source.business_use_and_retirement_record_reference,
+      ]
+      : Object.entries(special.source).filter(([key]) =>
+        key.endsWith("_reference")
+      ).map(([, value]) => value);
     if (
       !valid.success || !item.property_type ||
+      (special.reason === "depreciation_ordinary_income" &&
+        JSON.stringify(special.source.retained_source_documents) !==
+          JSON.stringify(special.source_documents)) ||
       (special.reason === "contribution_year_disposition" &&
         (special.source.donee_ein !== item.donee_acknowledgment?.ein ||
           JSON.stringify(special.source.retained_source_documents) !==
             JSON.stringify(special.source_documents))) ||
+      (special.reason === "depreciation_ordinary_income" &&
+        ((item.property_type === SectionBPropertyType.Equipment) !==
+          (special.source.components.length === 1 &&
+            special.source.components[0].method ===
+              "ads_5_year_sl_hy_computer"))) ||
       !expectedType.includes(item.property_type) ||
       item.ordinary_income_reduction ||
       item.unrelated_use_capital_gain_reduction ||
@@ -2215,6 +2290,7 @@ type ClassifiedItem = {
   is_capital_gain_property?: boolean;
   capital_gain_reduction_election_confirmed?: true;
   contribution_year_disposition_reduction?: unknown;
+  depreciation_ordinary_income_reduction?: unknown;
   unrelated_use_capital_gain_reduction?: unknown;
   taxidermy_capital_gain_reduction?: unknown;
   intellectual_property_capital_gain_reduction?: unknown;
@@ -2363,7 +2439,9 @@ export const f8283 = new F8283Node();
 
 export function specialSectionBAsSectionA(item: SectionBItem): SectionAItem {
   const review = item.special_fmv_reduction;
-  const sources = review?.reason === "contribution_year_disposition"
+  const sources = review?.reason === "depreciation_ordinary_income"
+    ? { depreciation_ordinary_income_reduction: review.source }
+    : review?.reason === "contribution_year_disposition"
     ? { contribution_year_disposition_reduction: review.source }
     : review?.reason === "donor_created_artwork"
     ? { creator_ordinary_income_reduction: review.source }

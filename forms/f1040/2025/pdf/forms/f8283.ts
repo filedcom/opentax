@@ -839,7 +839,9 @@ export const form8283Pdf: PdfFormDescriptor = {
           ...(sectionB[0].special_fmv_reduction
             ? [SectionBPropertyType.Other]
             : []),
-          ...(sectionB[0].ordinary_income_reduction !== undefined
+          ...(sectionB[0].ordinary_income_reduction !== undefined ||
+              sectionB[0].special_fmv_reduction?.reason ===
+                "depreciation_ordinary_income"
             ? [SectionBPropertyType.OtherRealEstate]
             : []),
         ]).has(ordinaryType)
@@ -909,6 +911,10 @@ export const form8283Pdf: PdfFormDescriptor = {
       item.unrelated_use_capital_gain_reduction !== undefined &&
       needsFmvReductionStatement(item)
     );
+    const depreciationReduction = sectionA.some((item) =>
+      item.depreciation_ordinary_income_reduction !== undefined &&
+      needsFmvReductionStatement(item)
+    );
     const dispositionReduction = sectionA.some((item) =>
       item.contribution_year_disposition_reduction !== undefined &&
       needsFmvReductionStatement(item)
@@ -931,6 +937,7 @@ export const form8283Pdf: PdfFormDescriptor = {
       !unrelatedUseReduction && !soldVehicle && !exceptionVehicle &&
       !privateFoundationReduction && !taxidermyReduction &&
       !intellectualPropertyReduction && !dispositionReduction &&
+      !depreciationReduction &&
       sectionA.some((item) => needsFmvReductionStatement(item))
     ) {
       throw new Error(
@@ -943,6 +950,7 @@ export const form8283Pdf: PdfFormDescriptor = {
       !creatorReduction && !manuscriptReduction && !unrelatedUseReduction &&
       !privateFoundationReduction && !taxidermyReduction &&
       !intellectualPropertyReduction && !dispositionReduction &&
+      !depreciationReduction &&
       !soldVehicle &&
       !exceptionVehicle
     ) {

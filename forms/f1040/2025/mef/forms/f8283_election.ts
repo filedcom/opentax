@@ -395,18 +395,31 @@ export function assertOrdinarySectionBReconciled(
   filedScheduleA?: Readonly<Record<string, unknown>>,
 ): void {
   if (propertyType === SectionBPropertyType.OtherRealEstate) {
-    const item = form8283InputSchema.parse(context?.pending?.f8283)
-      .section_b_items?.[0];
-    if (
-      item?.ordinary_income_reduction?.reason !==
-        "purchased_short_term_capital_asset" ||
-      item.investment_land_unimproved_confirmed !== true
+    const items =
+      form8283InputSchema.parse(context?.pending?.f8283).section_b_items ?? [];
+    for (
+      const item of items.filter((row) =>
+        row.property_type === SectionBPropertyType.OtherRealEstate
+      )
     ) {
-      throw new Error(
-        "Form 8283 ordinary Section B real estate needs purchased short-term unimproved investment land",
-      );
+      if (
+        item.special_fmv_reduction?.reason === "depreciation_ordinary_income" &&
+        isReviewedSectionBReductionInventory(
+          form8283InputSchema.parse(context?.pending?.f8283),
+        )
+      ) continue;
+      if (
+        item.ordinary_income_reduction?.reason !==
+          "purchased_short_term_capital_asset" ||
+        item.investment_land_unimproved_confirmed !== true
+      ) {
+        throw new Error(
+          "Form8283 real estate requires complete owned depreciation sources or purchased short-term unimproved investment land",
+        );
+      }
     }
   }
+
   if (
     !new Set<SectionBPropertyType>([
       SectionBPropertyType.ArtUnder20000,
