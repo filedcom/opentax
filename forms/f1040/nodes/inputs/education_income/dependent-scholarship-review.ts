@@ -15,6 +15,24 @@ export const settledParentTaxReturnSchema = z.object({
 }).strict();
 const parentSelectionSchema = z.discriminatedUnion("kind", [
   z.object({
+    kind: z.literal("divorced_custodial_remarried_mfj"),
+    source_document_reference: reference,
+    divorce_decree_record_reference: reference,
+    remarriage_certificate_record_reference: reference,
+    remarriage_date: z.string().date(),
+    residence_calendar_record_reference: reference,
+    joint_filing_record_reference: reference,
+    competing_dependency_claim_record_reference: reference,
+    student_ssn: ssn,
+    custodial_parent_ssn: ssn,
+    stepparent_ssn: ssn,
+    noncustodial_parent_ssn: ssn,
+    custodial_parent_nights: z.number().int().min(0).max(365),
+    noncustodial_parent_nights: z.number().int().min(0).max(365),
+    custodial_parent_remarried: z.literal(true),
+    custodial_parent_and_stepparent_filed_joint: z.literal(true),
+  }).strict(),
+  z.object({
     kind: z.literal("divorced_custodial_unremarried"),
     divorce_decree_record_reference: reference,
     residence_calendar_record_reference: reference,

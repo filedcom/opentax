@@ -145,12 +145,33 @@ function parentIncomeFacts(record: ParentReturn) {
     taxInput = object(pending.income_tax_calculation);
   const filer = record.filer;
   const owner = tin(general.taxpayer_ssn);
+  const joint = general.filing_status === "mfj";
+  const spouse = object(filer.spouse);
+  const owners = joint ? [owner, tin(general.spouse_ssn)] : [owner];
+  const filingStatus = joint ? FilingStatus.MFJ : FilingStatus.Single;
+  const deductionAmount = joint ? 31500 : 15750;
+  if (
+    joint &&
+    (!owners[1] || owners[1] === owner || tin(spouse.ssn) !== owners[1] ||
+      general.spouse_first_name !== spouse.firstName ||
+      general.spouse_last_name !== spouse.lastName ||
+      final.spouse_first_name !== spouse.firstName ||
+      final.spouse_last_name !== spouse.lastName ||
+      general.spouse_can_be_claimed_as_dependent === true ||
+      general.spouse_blind === true ||
+      typeof general.spouse_dob !== "string" ||
+      general.spouse_dob < "1961-01-02")
+  ) {
+    throw new Error(
+      "Joint selected parent return must bind its actual distinct spouse identity and ordinary deduction facts",
+    );
+  }
   const rawWages = object(pending.w2).w2s;
   const wages = Array.isArray(rawWages) ? rawWages.map(object) : [];
   if (
     !wages.length ||
     wages.some((w) =>
-      !w.source_document_reference || tin(w.employee_ssn) !== owner ||
+      !w.source_document_reference || !owners.includes(tin(w.employee_ssn)) ||
       !Number.isInteger(w.box1_wages) || Number(w.box1_wages) < 0
     ) ||
     new Set(wages.map((w) => w.source_document_reference)).size !== wages.length
@@ -160,8 +181,8 @@ function parentIncomeFacts(record: ParentReturn) {
     );
   }
   const income = wages.reduce((s, w) => s + Number(w.box1_wages), 0);
-  const taxable = Math.max(0, income - 15750),
-    tax = ordinaryTax2025(taxable, FilingStatus.Single);
+  const taxable = Math.max(0, income - deductionAmount),
+    tax = ordinaryTax2025(taxable, filingStatus);
   const name = [filer.firstName, filer.middleInitial, filer.lastName].filter(
     Boolean,
   ).join(" ");
@@ -172,29 +193,41 @@ function parentIncomeFacts(record: ParentReturn) {
     general.taxpayer_last_name !== filer.lastName ||
     final.taxpayer_first_name !== filer.firstName ||
     final.taxpayer_last_name !== filer.lastName ||
-    general.filing_status !== "single" ||
+    !["single", "mfj"].includes(String(general.filing_status)) ||
     general.taxpayer_can_be_claimed_as_dependent === true ||
     general.taxpayer_blind === true ||
     typeof general.taxpayer_dob !== "string" ||
     general.taxpayer_dob < "1961-01-02" || final.line1a_wages !== income ||
     final.line9_total_income !== income || final.line11_agi !== income ||
     Number(final.line8_additional_income ?? 0) !== 0 ||
-    final.line12a_standard_deduction !== 15750 ||
-    final.line14_deductions_qbi_total !== 15750 ||
+    final.line12a_standard_deduction !== deductionAmount ||
+    final.line14_deductions_qbi_total !== deductionAmount ||
     final.line15_taxable_income !== taxable ||
     final.line16_income_tax !== tax || deduction.agi !== income ||
-    deduction.filing_status !== "single" ||
+    deduction.filing_status !== filingStatus ||
     taxInput.form8615_source !== undefined ||
     taxInput.form8615_reviewed_source !== undefined ||
     taxInput.taxable_income !== taxable ||
-    taxInput.filing_status !== "single" ||
+    taxInput.filing_status !== filingStatus ||
     taxInput.taking_standard_deduction !== true
   ) {
     throw new Error(
       "Form 8615 must reconcile the actual selected parent's ordinary-income return",
     );
   }
-  return { record, owner, general, final, filer, income, taxable, tax, name };
+  return {
+    record,
+    owner,
+    owners,
+    filingStatus,
+    general,
+    final,
+    filer,
+    income,
+    taxable,
+    tax,
+    name,
+  };
 }
 function familySourceIds(review: DependentScholarshipReview) {
   const ids = new Set<string>();
@@ -241,7 +274,7 @@ function ordinarySource(
     parent_name_control: String(parent.filer.lastName).slice(0, 4)
       .toUpperCase(),
     parent_ssn: parent.general.taxpayer_ssn,
-    parent_filing_status: "single",
+    parent_filing_status: parent.filingStatus,
     parent_taxable_income: parent.taxable,
     parent_income_tax: parent.tax,
     parent_tax_method: "ordinary",
@@ -361,6 +394,7 @@ export function dependentKiddieTaxFacts(
   let parents: ReturnType<typeof parentIncomeFacts>[];
   if (selection.kind === "divorced_custodial_unremarried") {
     if (
+      parent.filingStatus !== FilingStatus.Single ||
       tin(selection.student_ssn) !== tin(review.student_ssn) ||
       tin(selection.custodial_parent_ssn) !== parent.owner ||
       parent.owner !== tin(review.education_claimant_ssn) ||
@@ -375,14 +409,18 @@ export function dependentKiddieTaxFacts(
       );
     }
     parents = [parent];
-  } else {
+  } else if (
+    selection.kind === "never_married_cohabiting_greater_taxable_income"
+  ) {
     parents = selection.eligible_parent_returns.map(parentIncomeFacts);
     if (
       tin(selection.student_ssn) !== tin(review.student_ssn) ||
       new Set(parents.map((p) => p.owner)).size !== 2 || parents.some((p) =>
-        familyTins.includes(p.owner)
+        p.filingStatus !== FilingStatus.Single || familyTins.includes(p.owner)
       ) ||
-      !parents.some((p) => p.owner === tin(review.education_claimant_ssn)) ||
+      !parents.some((p) =>
+        p.owner === tin(review.education_claimant_ssn)
+      ) ||
       !parents.some((p) => same(p.record, r.settled_parent_return))
     ) {
       throw new Error(
@@ -398,6 +436,31 @@ export function dependentKiddieTaxFacts(
         "Form 8615 must use the actual cohabiting parent's greater taxable income, independently of education ownership",
       );
     }
+  } else {
+    const members = [
+      tin(selection.custodial_parent_ssn),
+      tin(selection.stepparent_ssn),
+    ];
+    if (
+      parent.filingStatus !== FilingStatus.MFJ ||
+      !same([...parent.owners].sort(), members.sort()) ||
+      tin(selection.student_ssn) !== tin(review.student_ssn) ||
+      tin(review.education_claimant_ssn) !==
+        tin(selection.custodial_parent_ssn) ||
+      members.includes(tin(selection.noncustodial_parent_ssn)) ||
+      familyTins.includes(tin(selection.noncustodial_parent_ssn)) ||
+      members.some((m) => familyTins.includes(m)) ||
+      selection.custodial_parent_nights +
+            selection.noncustodial_parent_nights !== 365 ||
+      selection.custodial_parent_nights <=
+        selection.noncustodial_parent_nights ||
+      selection.remarriage_date > "2025-12-31"
+    ) {
+      throw new Error(
+        "Remarried custodial Form8615 must select the actual custodian/stepparent joint return and first-listed identity, excluding the noncustodial parent",
+      );
+    }
+    parents = [parent];
   }
   const extended = siblings.length > 0 ||
     selection.kind !== "divorced_custodial_unremarried";
@@ -412,7 +475,7 @@ export function dependentKiddieTaxFacts(
       );
     }
     const owned = family.filter((c) =>
-      tin(c.education_claimant_ssn) === candidate.owner
+      candidate.owners.includes(tin(c.education_claimant_ssn))
     );
     const deps = Array.isArray(candidate.general.dependents)
       ? candidate.general.dependents.map(object)
@@ -519,13 +582,12 @@ export function assertSettledParentTaxSource(
 ) {
   const r = review.kiddie_tax_review;
   if (!r) return;
-  const candidates =
-    r.parent_selection.kind === "divorced_custodial_unremarried"
-      ? [r.settled_parent_return]
-      : r.parent_selection.eligible_parent_returns;
+  const candidates = r.parent_selection.kind ===
+      "never_married_cohabiting_greater_taxable_income"
+    ? r.parent_selection.eligible_parent_returns
+    : [r.settled_parent_return];
   const claimant = candidates.find((p) =>
-    tin(object(p.pending.general).taxpayer_ssn) ===
-      tin(review.education_claimant_ssn)
+    parentIncomeFacts(p).owners.includes(tin(review.education_claimant_ssn))
   );
   if (
     !claimant || !same(claimant.pending, parentTaxProjection(parent)) ||
@@ -564,7 +626,8 @@ export function assertDependentKiddieTaxFamilyReturn(
   if (
     !own || !same(own.record.pending, parentTaxProjection(pending!)) ||
     !same(own.filer, filer) ||
-    new Set(parents.map((p) => p.owner)).size !== parents.length
+    new Set(parents.flatMap((p) => p.owners)).size !==
+      parents.reduce((n, p) => n + p.owners.length, 0)
   ) {
     throw new Error(
       "Family review must bind this actual exported parent return and identity",
@@ -618,10 +681,10 @@ export function assertDependentKiddieTaxFamilyReturn(
         "Family child returns must retain reciprocal exact sibling source projections",
       );
     }
-    const candidates =
-      r.parent_selection.kind === "divorced_custodial_unremarried"
-        ? [r.settled_parent_return]
-        : r.parent_selection.eligible_parent_returns;
+    const candidates = r.parent_selection.kind ===
+        "never_married_cohabiting_greater_taxable_income"
+      ? r.parent_selection.eligible_parent_returns
+      : [r.settled_parent_return];
     if (
       candidates.length !== parents.length ||
       candidates.some((c) => !family.parent_returns.some((p) => same(p, c)))

@@ -96,8 +96,14 @@ export function assertForm8863FinalizedReturn(
         owner.dependency_claim_state !== "claimed_on_this_return" ||
         review.student_ssn.replaceAll("-", "") !==
           student.student_ssn?.replaceAll("-", "") ||
-        review.education_claimant_ssn.replaceAll("-", "") !==
-          filer.primarySSN.replaceAll("-", "") ||
+        ![
+          filer.primarySSN,
+          ...(filingStatus === "mfj" && filer.spouse?.ssn
+            ? [filer.spouse.ssn]
+            : []),
+        ].map((s) => s.replaceAll("-", "")).includes(
+          review.education_claimant_ssn.replaceAll("-", ""),
+        ) ||
         owner.dependency_record_reference !==
           review.dependency_record_reference ||
         owner.competing_claim_review_reference !==
