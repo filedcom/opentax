@@ -48,15 +48,31 @@ final result is recorded separately. Log
 `/tmp/opentax-7203-prior-history-runtime-oct6.log`. The final metadata-compatible runtime control is terminal **1passed/0failed/
 8filtered**, log `/tmp/opentax-7203-prior-history-runtime-final-oct6.log`. It
 explicitly verifies that standard schema-instance acknowledgment metadata is
-accepted while issuer authentication remains false. Original typed focused and
-two-module checks were superseded and canceled after this production correction;
-no pass is claimed for them. The final ordinary two-module typed gate remains
-running and has no terminal claim.
+accepted while issuer authentication remains false. The initial typed focused check completed **1passed/0failed/8filtered** on the
+first production version (SHAed1999). Its result is preserved as older evidence.
+The initial two-module check was superseded and canceled after the metadata
+production correction (exit143), with no pass claim. The final production ordinary two-module typed gate is terminal **14passed/
+0failed** (28seconds), log `/tmp/opentax-7203-prior-history-final-broad-oct6.log`,
+with production SHAc5e68cf207e2b2bf2c6056714f90d17efb0d45ca10af43c0e691e347788288fb
+held. A separate latest test-source typecheck remains running for the optional
+exporter added after that broad gate began. An optional `--write-prior7203-evidence`
+argument retains actual final plain and schema-metadata inputs, ten source bytes
+per case, verified manifests, pending/diagnostics/carry, staged gain and inspected
+filing results as new files; creation fails rather than overwriting an archive.
 
 Trusted acquisition of the actual submitted return and acknowledgment, exact
 submission linkage, prior basis/election activity, signed loan and principal
 records, holding-period/character proof, restoration, broader owners/debts and
 final source-to-Form1040/native/PDF/XSD/IRS validation remain open. Neither
 matching local XML nor caller-uploaded Accepted text or digests supplies those
-facts. No original current debt source/PDF/XML archive is rewritten, and this
+facts. Actual final two source bundles retain ten documents each at
+`/tmp/opentax-7203-prior-history-final-source-oct6/{plain,schema-metadata}`.
+Export control is terminal1/0; saved-byte replay v2 is terminal0 with exact
+JSON-archived pending/diagnostics/carry/staged gain/inspected results, unchanged
+input and source bytes, and recomputed-digest altered-copy rejection. The first
+replay comparison retained undefined object properties absent from JSON; that
+runner failure is preserved and v2 normalizes only JSON serialization. No
+source is rewritten by that adjustment.
+
+No original current debt source/PDF/XML archive is rewritten, and this
 work does not create a positive prior-history filing packet.

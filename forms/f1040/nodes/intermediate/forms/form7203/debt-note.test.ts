@@ -1379,4 +1379,88 @@ Deno.test("Form 7203 prior reduced formal note reads matching 2024 MeF XML but r
   );
   assertThrows(() => buildReviewedStockLoss7203(fields, { filer, pending }));
   assertThrows(() => form7203StockLossPdf.instances?.(fields, filer, pending));
+  const evidenceFlag = Deno.args.indexOf("--write-prior7203-evidence");
+  const evidenceRoot = evidenceFlag >= 0
+    ? Deno.args[evidenceFlag + 1]
+    : undefined;
+  if (evidenceRoot) {
+    for (
+      const [id, actualInputs, actualRecords, actualResult] of [
+        ["plain", inputs, records, bound],
+        [
+          "schema-metadata",
+          {
+            ...inputs,
+            k1_s_corp: [{
+              ...source,
+              form7203_debt_evidence: {
+                ...prior,
+                prior_accepted_acknowledgement_sha256: metadataAckDigest,
+              },
+            }],
+          },
+          records.map((document, index) =>
+            index === 6 ? { ...document, bytes: metadataAckBytes } : document
+          ),
+          metadataBound,
+        ],
+      ] as const
+    ) {
+      const directory = `${evidenceRoot}/${id}`;
+      await Deno.mkdir(directory, { recursive: true });
+      const documents = [];
+      for (const [index, document] of actualRecords.entries()) {
+        const filename = `document-${index}.bin`;
+        const file = await Deno.open(`${directory}/${filename}`, {
+          write: true,
+          createNew: true,
+        });
+        try {
+          let offset = 0;
+          while (offset < document.bytes.length) {
+            offset += await file.write(document.bytes.subarray(offset));
+          }
+        } finally {
+          file.close();
+        }
+        documents.push({
+          reference: document.reference,
+          filename,
+          sha256: actualResult.verifiedSourceDocuments.manifest.find((claim) =>
+            claim.reference === document.reference
+          )!.sha256,
+        });
+      }
+      const file = await Deno.open(`${directory}/source.json`, {
+        write: true,
+        createNew: true,
+      });
+      try {
+        const bytes = new TextEncoder().encode(
+          JSON.stringify(
+            {
+              classification:
+                "constructed prior-history prerequisite; no authenticated filing",
+              inputs: actualInputs,
+              documents,
+              pending: actualResult.pending,
+              diagnostics: actualResult.diagnostics,
+              carryforwards: actualResult.carryforwards,
+              stagedPriorReducedNoteGain:
+                actualResult.stagedPriorReducedNoteGain,
+              inspectedPriorFiling: actualResult.inspectedPriorFiling,
+            },
+            null,
+            2,
+          ) + "\n",
+        );
+        let offset = 0;
+        while (offset < bytes.length) {
+          offset += await file.write(bytes.subarray(offset));
+        }
+      } finally {
+        file.close();
+      }
+    }
+  }
 });
