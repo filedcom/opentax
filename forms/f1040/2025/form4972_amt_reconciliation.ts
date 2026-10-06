@@ -1,3 +1,7 @@
+import {
+  AMT_EXEMPTION_2025,
+  AMT_PHASE_OUT_START_2025,
+} from "../nodes/config/2025.ts";
 import { scheduleJLinesSchema } from "../nodes/intermediate/forms/schedule_j/calculation.ts";
 import { ordinaryTax2025 } from "../nodes/intermediate/worksheets/tax_table_2025.ts";
 import { filingStatusSchema } from "../nodes/types.ts";
@@ -44,6 +48,27 @@ export function assertForm4972AmtJoin(
   // The execution graph also retains the Form 6251 input when the node returns
   // no filed document. Only a filed output carries the calculated line 11.
   if (form6251.line11_amt === undefined) return;
+  const status = filingStatusSchema.parse(form1040.filing_status);
+  if (form6251.filing_status !== status) {
+    throw new Error("Form 6251 filing status differs from Form 1040");
+  }
+  const amti = form6251.amti;
+  if (typeof amti !== "number" || !Number.isFinite(amti)) {
+    throw new Error("Form 4972 AMT join needs calculated Form 6251 line 4");
+  }
+  const exemption = Math.max(
+    0,
+    AMT_EXEMPTION_2025[status] -
+      Math.floor(Math.max(0, amti - AMT_PHASE_OUT_START_2025[status]) * 0.25),
+  );
+  if (
+    form6251.exemption !== exemption ||
+    form6251.taxable_excess !== Math.max(0, amti - exemption)
+  ) {
+    throw new Error(
+      "Form 6251 exemption and taxable excess differ from calculated 2025 lines 4–6",
+    );
+  }
   const line10 = dollars(form6251.regular_tax, "Form 6251 line 10");
   if (form6251.form4972_tax !== specialTax) {
     throw new Error("Form 6251 omits the Form 4972 special tax source");

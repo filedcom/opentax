@@ -40,11 +40,23 @@ export function assertForm6251QualifiedDividendSource(
   const amtNetCapitalGain = longNet > 0
     ? Math.max(0, longNet + Math.min(0, shortNet))
     : 0;
-  const expectedPartThreeGain = qualified + amtNetCapitalGain;
+  const distributions = payers.reduce(
+    (sum, payer) => sum + (payer.box2a ?? 0),
+    0,
+  );
+  const issuedIsoCapital = iso && !basis ? distributions : 0;
+  const expectedPartThreeGain = qualified + amtNetCapitalGain +
+    issuedIsoCapital;
   const regularCapitalGain = basisRows.reduce(
     (sum, row) => sum + row.regular_gain,
     0,
   );
+  const capitalLine = (key: string): number =>
+    form1040?.[key] === undefined
+      ? 0
+      : typeof form1040[key] === "number"
+      ? form1040[key] as number
+      : NaN;
   if (
     payers.length === 0 || !form1040 ||
     (payers.length > 1 &&
@@ -55,7 +67,7 @@ export function assertForm6251QualifiedDividendSource(
       payer.isNominee !== false || payer.box11 !== false ||
       (payer.box1b ?? 0) > payer.box1a ||
       [
-        payer.box2a,
+        ...(iso && !basis ? [] : [payer.box2a]),
         payer.box2b,
         payer.box2c,
         payer.box2d,
@@ -86,8 +98,17 @@ export function assertForm6251QualifiedDividendSource(
     pending?.f8814 !== undefined ||
     pending?.form4952 !== undefined ||
     pending?.form2555 !== undefined ||
-    iso && fields.net_capital_gain !== 0 &&
-      fields.net_capital_gain !== undefined ||
+    iso && (fields.net_capital_gain ?? 0) !== issuedIsoCapital ||
+    iso &&
+      (capitalLine("line7_capital_gain") +
+          capitalLine("line7a_cap_gain_distrib")) !== issuedIsoCapital ||
+    iso && issuedIsoCapital > 0 &&
+      ((pending?.schedule_d as Record<string, unknown> | undefined)
+            ?.line13_cap_gain_distrib !== issuedIsoCapital ||
+        (pending?.schedule_d as Record<string, unknown> | undefined)
+                ?.print_line16_combined !== undefined &&
+          (pending?.schedule_d as Record<string, unknown> | undefined)
+              ?.print_line16_combined !== issuedIsoCapital) ||
     fields.unrecaptured_1250_gain !== 0 &&
       fields.unrecaptured_1250_gain !== undefined ||
     fields.rate_28_gain !== 0 && fields.rate_28_gain !== undefined ||
