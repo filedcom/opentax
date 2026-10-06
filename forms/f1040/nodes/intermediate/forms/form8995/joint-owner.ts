@@ -6,7 +6,7 @@ import { ownedScheduleSE } from "../schedule_se/owner-calculation.ts";
 import {
   calculateSingleScheduleCForm7206,
   singleScheduleCPlanSchema,
-} from "../form7206/index.ts";
+} from "../form7206/single-source.ts";
 
 /** Attribute each proprietor's own SE deduction before joint-return QBI netting. */
 export function jointOwnerQbi(

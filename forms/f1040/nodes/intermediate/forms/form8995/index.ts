@@ -1,6 +1,6 @@
 import { farmWotcAdvancedFields } from "../form8995a/farm-wotc.ts";
 import { jointOwnerQbi } from "./joint-owner.ts";
-import { singleScheduleCPlanSchema } from "../form7206/index.ts";
+import { singleScheduleCPlanSchema } from "../form7206/single-source.ts";
 import {
   ownedScheduleSE,
   ownerSourcesSchema,
