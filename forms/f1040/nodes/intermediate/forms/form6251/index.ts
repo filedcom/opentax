@@ -290,25 +290,31 @@ function amtiWithoutKnownLine2cThrough3(input: Form6251Input): number {
 // AMTI = regular_tax_income + all adjustments and preference items
 // IRC §55(b)(2); Form 6251 Lines 1–4
 function computeAmtiBeforeMfsAddition(input: Form6251Input): number {
-  return input.regular_tax_income +
-    (input.line2a_taxes_paid ?? 0) +
-    -(input.line2b_tax_refund ?? 0) +
-    (input.taking_standard_deduction === true
+  // Whole-dollar filed Form6251 lines use the same operands printed in XML/PDF;
+  // raw owned source cents remain on their original records.
+  const filed = (amount: number) =>
+    Math.sign(amount) * Math.round(Math.abs(amount));
+  return [
+    input.regular_tax_income,
+    input.line2a_taxes_paid ?? 0,
+    -(input.line2b_tax_refund ?? 0),
+    input.taking_standard_deduction === true
       ? 0
-      : (input.form4952_amt_line2c_difference ?? 0)) +
-    (input.iso_adjustment ?? 0) +
-    (input.line2d_depletion ?? 0) +
-    estatesAndTrustsAdjustment(input) +
-    line2kBasisDispositionAdjustment(input) +
-    (input.line2o_circulation_costs ?? 0) +
-    (input.line2p_long_term_contracts ?? 0) +
-    (input.line2q_mining_costs ?? 0) +
+      : (input.form4952_amt_line2c_difference ?? 0),
+    input.iso_adjustment ?? 0,
+    input.line2d_depletion ?? 0,
+    estatesAndTrustsAdjustment(input),
+    line2kBasisDispositionAdjustment(input),
+    input.line2o_circulation_costs ?? 0,
+    input.line2p_long_term_contracts ?? 0,
+    input.line2q_mining_costs ?? 0,
     (input.line3_form8864_income_exclusion ?? 0) +
-    (input.line3_houseboat_interest_addback ?? 0) +
-    (input.depreciation_adjustment ?? 0) +
-    (input.nol_adjustment ?? 0) +
-    privateActivityBondInterest(input) +
-    (input.qsbs_adjustment ?? 0);
+    (input.line3_houseboat_interest_addback ?? 0),
+    input.depreciation_adjustment ?? 0,
+    input.nol_adjustment ?? 0,
+    privateActivityBondInterest(input),
+    input.qsbs_adjustment ?? 0,
+  ].reduce((sum, amount) => sum + filed(amount), 0);
 }
 
 function computeAmti(input: Form6251Input): number {
@@ -334,8 +340,10 @@ function computeExemption(
   const fullExemption = exemption[status];
   const start = phaseOutStart[status];
   const excess = Math.max(0, amti - start);
-  const reduction = Math.floor(excess * PHASE_OUT_RATE);
-  return Math.max(0, fullExemption - reduction);
+  // Retain the unpublished worksheet multiplication through subtraction;
+  // settle only the resulting exemption entered on filed line5.
+  const reduction = excess * PHASE_OUT_RATE;
+  return Math.round(Math.max(0, fullExemption - reduction));
 }
 
 // Form 6251 Line 6: Taxable excess (AMTI minus exemption)
@@ -365,9 +373,9 @@ function computeTentativeMinimumTax(
     ? adjustmentMfs
     : adjustmentStandard;
   if (taxableExcess <= threshold) {
-    return Math.floor(taxableExcess * 0.26);
+    return Math.round(Math.round(taxableExcess) * 0.26);
   }
-  return Math.floor(taxableExcess * 0.28 - adjustment);
+  return Math.round(Math.round(taxableExcess) * 0.28 - adjustment);
 }
 
 // 2025 Form 6251 Foreign Earned Income Tax Worksheet, ordinary-income branch.
@@ -514,13 +522,13 @@ function computePartThree(
   const line28 = line26 + line27;
   const line29 = Math.max(0, line25 - line28);
   const line30 = Math.min(line24, line29);
-  const line31 = Math.floor(line30 * 0.15);
+  const line31 = Math.round(line30 * 0.15);
   const line32 = line23 + line30;
   const line33 = line22 - line32;
-  const line34 = Math.floor(line33 * 0.20);
+  const line34 = Math.round(line33 * 0.20);
   const line35 = line17 + line32 + line33;
   const line36 = line12 - line35;
-  const line37 = Math.floor(line36 * 0.25);
+  const line37 = Math.round(line36 * 0.25);
   const line38 = line18 + line31 + line34 + (line14 > 0 ? line37 : 0);
   const line39 = amtOrdinaryTax(line12);
   const line40 = Math.min(line38, line39);

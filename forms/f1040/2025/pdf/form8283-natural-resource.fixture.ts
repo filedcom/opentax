@@ -17,6 +17,8 @@ export type ResourceCase =
   | "active_soil_water_limited"
   | "legacy_exploration"
   | "legacy_oil"
+  | "producing_exploration"
+  | "producing_recovered"
   | "oil"
   | "small_oil"
   | "active_oil"
@@ -26,6 +28,116 @@ export type ResourceCase =
   | "gold_development"
   | "gold_exploration";
 export function naturalResourceSource(kind: ResourceCase): Record<string, any> {
+  if (kind === "producing_recovered") {
+    const source = JSON.parse(
+      JSON.stringify(naturalResourceSource("producing_exploration")).replaceAll(
+        "producing_exploration",
+        kind,
+      ),
+    );
+    source.annual_records[0].expenses[0].amount = 50000;
+    source.annual_records[0].deduction_claimed = 50000;
+    source.annual_records.find((r: { tax_year: number }) => r.tax_year === 2025)
+      .depletion_claimed = 10000;
+    return source;
+  }
+  if (kind === "producing_exploration") {
+    const source = JSON.parse(
+      JSON.stringify(naturalResourceSource("legacy_exploration")).replaceAll(
+        "legacy_exploration",
+        kind,
+      ),
+    );
+    for (
+      const key of [
+        "mineral",
+        "never_reached_producing_stage_or_received_bonus_royalties",
+        "no_percentage_depletion_offset_or_recaptured_exploration",
+      ]
+    ) delete source[key];
+    Object.assign(source, {
+      kind: "producing_mining_617",
+      resource: "gold",
+      original_owned_cost: 200000,
+      appraised_fmv: 350000,
+      development_stage_began_on: "2022-01-01",
+      producing_stage_reached_on: "2023-01-01",
+      producing_stage_basis: "principal_activity_developed_ore_production",
+      mine_identifier: "Owned gold mine TX-617",
+      mine_inventory: [{
+        mine_identifier: "Owned gold mine TX-617",
+        property_reference: source.property_reference,
+        donor_ssn: source.donor_ssn,
+        development_stage_began_on: "2022-01-01",
+        producing_stage_reached_on: "2023-01-01",
+        operation_record_reference:
+          "Owned gold mine developed ore operation2023",
+        default_disallowance_return_record_reference:
+          "Owned617 production-stage2023 return depletion disallowance",
+      }],
+      producing_stage_geological_and_operation_record_reference:
+        "Owned gold mine developed ore operation2023",
+      producing_stage_treatment: "depletion_disallowance",
+      mineral_cost_allocation_record: {
+        record_reference: "Owned1985 purchase mineral-interest cost allocation",
+        property_reference: source.property_reference,
+        donor_ssn: source.donor_ssn,
+        original_purchase_cost: 200000,
+        depletable_mineral_cost: 200000,
+        residual_nonmineral_land_cost: 0,
+        separate_depreciable_asset_cost: 0,
+      },
+      complete_mine_and_property_inventory_reference:
+        "Owned single domestic gold mine entire inventory",
+      sole_owned_mine_no_aggregation_bonus_royalty_or_prior_recapture: true,
+      development_election_reference:
+        "Owned616 current development election2025",
+      regular_ten_year_writeoff_not_elected: true,
+      no_other_regular_or_amt_property_basis_adjustments: true,
+    });
+    const invoice = source.annual_records[0].expenses[0];
+    invoice.amount = 100000;
+    source.annual_records[0].deduction_claimed = 100000;
+    for (const row of source.annual_records) {
+      if (row.tax_year >= 2023) {
+        Object.assign(row, {
+          gross_property_income: row.tax_year === 2025 ? 140000 : 50000,
+          units_sold: row.tax_year === 2023
+            ? 100
+            : row.tax_year === 2024
+            ? 90
+            : 81,
+          recoverable_units_before_sales: row.tax_year === 2023
+            ? 1000
+            : row.tax_year === 2024
+            ? 900
+            : 810,
+        });
+      }
+      if (row.tax_year === 2025) {
+        Object.assign(row, {
+          expenses: [{
+            ...invoice,
+            paid_on: "2025-03-01",
+            invoice_reference: "Owned616 development invoice2025",
+            payment_reference: "Owned616 bank payment2025",
+            nature: "development_616",
+            eligibility_record_reference:
+              "Owned616 developed mineral reserves work2025",
+          }],
+          deduction_claimed: 100000,
+        });
+      }
+    }
+    source.current_year_paid_receipts = [{
+      received_on: "2025-04-30",
+      buyer_name: "Independent gold ore buyer",
+      sale_invoice_reference: "Owned gold ore sale invoice2025",
+      bank_payment_record_reference: "Owned gold receipt deposit2025",
+      amount: 140000,
+    }];
+    return source;
+  }
   const small = kind === "small_oil";
   const legacyOil = kind === "legacy_oil";
   const active = kind === "active_oil" || kind === "active_idc_oil" ||
@@ -251,6 +363,8 @@ export async function reviewedNaturalResourceGift(kind: ResourceCase) {
         `${r.tax_year}: paid eligible costs${r.paid_costs}; actual allowed deduction${r.deduction}; depletion${r.depletion}; closing adjusted basis${r.adjusted_basis}; conservation carry${r.conservation_carry}.${
           kind === "legacy_oil"
             ? ` Hypothetical capitalized basis${r.hypothetical_capitalized_basis}; hypothetical depletion${r.hypothetical_depletion}; cumulative IDC depletion offset${r.cumulative_hypothetical_depletion_offset}.`
+            : kind.startsWith("producing_")
+            ? ` Otherwise allowable cost depletion${r.otherwise_allowable_depletion}; disallowed617 depletion${r.disallowed_exploration_depletion}; remaining exploration account${r.remaining_exploration_account}; AMT unamortized mining costs${r.amt_unamortized_mining_costs}.`
             : ""
         } Annual source ${
           source.annual_records.find((a: any) => a.tax_year === r.tax_year)
@@ -389,6 +503,8 @@ Current account has no other receipts, expenses or sold units. Property remains 
           "active_oil",
           "active_idc_oil",
           "legacy_oil",
+          "producing_exploration",
+          "producing_recovered",
           "active_soil_water",
           "active_soil_water_limited",
         ].includes(kind)
@@ -400,12 +516,19 @@ Current account has no other receipts, expenses or sold units. Property remains 
           },
         }
         : {}),
-      ...(["legacy_exploration", "legacy_oil"].includes(kind)
+      ...([
+          "legacy_exploration",
+          "legacy_oil",
+          "producing_exploration",
+          "producing_recovered",
+        ]
+          .includes(kind)
         ? {
           general: {
             ...base.inputs.general,
             taxpayer_dob: "1965-06-15",
-            ...(kind === "legacy_oil"
+            ...(["legacy_oil", "producing_exploration", "producing_recovered"]
+                .includes(kind)
               ? {
                 qbi_no_prior_loss_or_suspended_loss_confirmed: true,
                 qbi_not_patron_of_specified_cooperative_confirmed: true,
@@ -414,20 +537,34 @@ Current account has no other receipts, expenses or sold units. Property remains 
           },
         }
         : {}),
-      ...(["active_oil", "active_idc_oil", "legacy_oil"].includes(kind)
+      ...([
+          "active_oil",
+          "active_idc_oil",
+          "legacy_oil",
+          "producing_exploration",
+          "producing_recovered",
+        ].includes(kind)
         ? {
           schedule_c: [{
-            line_a_principal_business: "Operating oil production",
-            line_c_business_name: "Owned oil production",
+            line_a_principal_business: kind.startsWith("producing_")
+              ? "Operating gold mining"
+              : "Operating oil production",
+            line_c_business_name: kind.startsWith("producing_")
+              ? "Owned gold mining"
+              : "Owned oil production",
             business_reference: source.business_reference,
             proprietor_recipient: "T",
             qbi_no_other_adjustments_confirmed: true,
-            line_b_business_code: "211120",
+            line_b_business_code: kind.startsWith("producing_")
+              ? "212220"
+              : "211120",
             line_f_accounting_method: "cash",
             line_g_material_participation: true,
             line_32_at_risk: "a",
             line_i_made_1099_payments: false,
-            line_1_gross_receipts: 60000,
+            line_1_gross_receipts: kind.startsWith("producing_")
+              ? 140000
+              : 60000,
             donated_natural_resource_property_source: source,
           }],
         }

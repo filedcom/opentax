@@ -431,9 +431,10 @@ function sectionBOrdinaryTangibleInstance(
       section_b_securities:
         item.property_type === SectionBPropertyType.Securities,
       section_b_other: item.property_type === SectionBPropertyType.Other,
-      reduction_statements: [
-        fmvReductionExplanation(specialSectionBAsSectionA(item), 0, "B"),
-      ],
+      reduction_statements:
+        needsFmvReductionStatement(specialSectionBAsSectionA(item))
+          ? [fmvReductionExplanation(specialSectionBAsSectionA(item), 0, "B")]
+          : [],
     };
   }
   const appraisal = item.qualified_appraisal;

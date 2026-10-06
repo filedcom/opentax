@@ -545,9 +545,15 @@ export function projectScheduleCItems(
         ...item,
         line_12_depletion: charitableNaturalResourceDepletion(item),
         amt_depletion_worksheet: charitableNaturalResourceAmt(item),
+        amt_mining_cost_workpaper: charitableNaturalResourceMiningWorkpaper(
+          item,
+        ),
         part_v_other_expenses: naturalResourceCurrentCosts(item) > 0
           ? [{
-            description: "Intangible drilling costs section263c",
+            description: item.donated_natural_resource_property_source?.kind ===
+                "producing_mining_617"
+              ? "Mining development costs section616"
+              : "Intangible drilling costs section263c",
             amount: naturalResourceCurrentCosts(item),
           }]
           : item.part_v_other_expenses,
@@ -850,7 +856,8 @@ export function charitableNaturalResourceDepletion(
   const current = raw.annual_records[raw.annual_records.length - 1];
   if (
     (raw.kind !== "natural_resource_1254" &&
-      raw.kind !== "legacy_oil_gas_geothermal_1254") ||
+      raw.kind !== "legacy_oil_gas_geothermal_1254" &&
+      raw.kind !== "producing_mining_617") ||
     item.business_reference !== raw.business_reference ||
     (item.proprietor_recipient ?? "T") !== raw.proprietor_recipient ||
     item.line_1_gross_receipts !== current.gross_property_income ||
@@ -866,7 +873,9 @@ export function charitableNaturalResourceDepletion(
         JSON.stringify(
           calc.current_year.deduction > 0
             ? [{
-              description: "Intangible drilling costs section263c",
+              description: raw.kind === "producing_mining_617"
+                ? "Mining development costs section616"
+                : "Intangible drilling costs section263c",
               amount: calc.current_year.deduction,
             }]
             : [],
@@ -887,7 +896,7 @@ export function naturalResourceCurrentCosts(item: ScheduleCItem): number {
   const calc = calculateCharitableNaturalResource(raw),
     current = raw.annual_records.at(-1)!;
   if (
-    calc.current_year.deduction > 0 &&
+    calc.current_year.deduction > 0 && raw.kind !== "producing_mining_617" &&
     ((raw.kind !== "natural_resource_1254" &&
       raw.kind !== "legacy_oil_gas_geothermal_1254") ||
       raw.resource === "gold" ||
@@ -916,8 +925,9 @@ export function charitableNaturalResourceAmt(item: ScheduleCItem) {
   if (
     !raw ||
     (raw.kind !== "natural_resource_1254" &&
-      raw.kind !== "legacy_oil_gas_geothermal_1254") ||
-    raw.resource === "gold"
+      raw.kind !== "legacy_oil_gas_geothermal_1254" &&
+      raw.kind !== "producing_mining_617") ||
+    (raw.resource === "gold" && raw.kind !== "producing_mining_617")
   ) {
     return item.amt_depletion_worksheet;
   }
@@ -929,7 +939,9 @@ export function charitableNaturalResourceAmt(item: ScheduleCItem) {
     properties: [{
       property_reference: raw.property_reference,
       regular_allowed_depletion: calc.current_year.depletion,
-      amt_allowed_depletion: calc.current_year.depletion,
+      amt_allowed_depletion: raw.kind === "producing_mining_617"
+        ? calc.current_year.amt_allowed_depletion!
+        : calc.current_year.depletion,
     }],
   };
   if (
@@ -938,6 +950,50 @@ export function charitableNaturalResourceAmt(item: ScheduleCItem) {
   ) {
     throw new Error(
       "Owned cost-depletion AMT source differs from actual purchase/annual unit ledger",
+    );
+  }
+  return result;
+}
+
+/** Derive the filed mining-AMT workpaper from actual owned paid invoices. */
+export function charitableNaturalResourceMiningWorkpaper(item: ScheduleCItem) {
+  const raw = item.donated_natural_resource_property_source;
+  if (!raw || raw.kind !== "producing_mining_617") {
+    return item.amt_mining_cost_workpaper;
+  }
+  const calc = calculateCharitableNaturalResource(raw),
+    current = raw.annual_records.at(-1)!;
+  if (calc.current_year.deduction === 0) {
+    if (item.amt_mining_cost_workpaper) {
+      throw new Error(
+        "Owned mining zero current deduction conflicts with supplied workpaper",
+      );
+    }
+    return undefined;
+  }
+  if (
+    current.expenses.length !== 1 ||
+    current.expenses[0].nature !== "development_616"
+  ) {
+    throw new Error(
+      "Current producing617 AMT workpaper requires actual identified development invoice",
+    );
+  }
+  const result = {
+    property_reference: raw.property_reference,
+    reviewed_workpaper_reference: raw.annual_account_ledger_reference,
+    expense_description: "Mining development costs section616",
+    paid_or_incurred_date: current.expenses[0].paid_on,
+    mining_exploration_or_development_verified: true as const,
+    regular_ten_year_writeoff_not_elected: true as const,
+    no_unamortized_property_loss: true as const,
+  };
+  if (
+    item.amt_mining_cost_workpaper &&
+    JSON.stringify(item.amt_mining_cost_workpaper) !== JSON.stringify(result)
+  ) {
+    throw new Error(
+      "Owned producing617 mining workpaper differs from retained annual payments",
     );
   }
   return result;

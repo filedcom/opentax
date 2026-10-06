@@ -22,6 +22,8 @@ import {
 } from "./form8283-natural-resource.fixture.ts";
 const expected = {
   legacy_oil: [140000, 7000, 1, 7000, 293000],
+  producing_exploration: [200000, 40000, 1, 40000, 310000],
+  producing_recovered: [190000, 0, 1, 0, 350000],
   active_soil_water_limited: [20000, 27000, .8, 21600, 28400],
   active_soil_water: [20000, 24000, .8, 19200, 30800],
   soil_water: [20000, 12000, .8, 9600, 40400],
@@ -55,23 +57,23 @@ for (const kind of Object.keys(expected) as ResourceCase[]) {
     assertEquals(result.diagnostics, []);
     assertEquals(
       [
-        result.pending.f1040.line11_agi,
+        result.pending.f1040!.line11_agi,
         Math.round(
-          Number(result.pending.f1040.line12e_itemized_deductions) * 100,
+          Number(result.pending.f1040!.line12e_itemized_deductions) * 100,
         ) / 100,
-        Math.round(Number(result.pending.f1040.line15_taxable_income) * 100) /
+        Math.round(Number(result.pending.f1040!.line15_taxable_income) * 100) /
         100,
-        result.pending.f1040.line16_income_tax,
+        result.pending.f1040!.line16_income_tax,
       ],
       kind === "small_oil"
         ? [100000, 27600, 72400, 10848]
         : kind === "active_soil_water_limited"
         ? [141821, 52400, 81057, 12751]
-        : kind === "active_idc_oil"
+        : ["active_idc_oil", "producing_recovered"].includes(kind)
         ? [127881, 62364.3, 59940.7, 8098]
         : kind === "active_soil_water"
         ? [144608, 54800, 80886, 12707]
-        : ["active_oil", "legacy_oil"].includes(kind)
+        : ["active_oil", "legacy_oil", "producing_exploration"].includes(kind)
         ? [137174, 65152.2, 64586.8, 9121]
         : [100000, 54000, 46000, 5285],
     );
@@ -82,9 +84,11 @@ for (const kind of Object.keys(expected) as ResourceCase[]) {
       Math.round(
         (kind === "small_oil" || kind.startsWith("active_soil_water")
           ? 0
-          : want[4] - (kind === "active_idc_oil"
+          : want[4] - (["active_idc_oil", "producing_recovered"].includes(kind)
             ? 38364.3
-            : ["active_oil", "legacy_oil"].includes(kind)
+            : ["active_oil", "legacy_oil", "producing_exploration"].includes(
+                kind,
+              )
             ? 41152.2
             : 30000)) * 100,
       ) / 100,
@@ -162,15 +166,23 @@ for (const kind of Object.keys(expected) as ResourceCase[]) {
         stderr: "piped",
       }).output();
       assertEquals(printed.code, 0);
-      assertStringIncludes(
-        new TextDecoder().decode(printed.stdout),
-        `Section ${kind === "small_oil" ? "A" : "B"} item A: unreduced FMV`,
-      );
+      const text = new TextDecoder().decode(printed.stdout);
+      if (kind === "producing_recovered") {
+        assertEquals(text.includes("Section B item A: unreduced FMV"), false);
+      } else {
+        assertStringIncludes(
+          text,
+          `Section ${kind === "small_oil" ? "A" : "B"} item A: unreduced FMV`,
+        );
+      }
     } finally {
       await Deno.remove(printedPath);
     }
 
-    if ((kind.startsWith("active_") || kind === "legacy_oil")) {
+    if (
+      (kind.startsWith("active_") || kind === "legacy_oil" ||
+        kind.startsWith("producing_"))
+    ) {
       const farm = kind.startsWith("active_soil_water");
       const business = (p: any) =>
         farm ? p.schedule_f.schedule_fs[0] : p.schedule_c.schedule_cs[0];
@@ -192,7 +204,7 @@ for (const kind of Object.keys(expected) as ResourceCase[]) {
             "changed-filed-deduction",
             (p: any) =>
               business(p)[farm ? "line12_conservation" : "line_12_depletion"] =
-                0,
+                kind.startsWith("producing_") ? 1 : 0,
           ],
           [
             "detached-account",
@@ -312,6 +324,143 @@ for (const kind of Object.keys(expected) as ResourceCase[]) {
         Error,
       );
     }
+    if (kind === "producing_exploration") {
+      assertEquals(
+        source.calc.rows.filter((r) => r.tax_year >= 2023).map(
+          (r) => [
+            r.otherwise_allowable_depletion,
+            r.disallowed_exploration_depletion,
+            r.remaining_exploration_account,
+            r.adjusted_basis,
+          ],
+        ),
+        [[20000, 20000, 80000, 200000], [20000, 20000, 60000, 200000], [
+          20000,
+          20000,
+          40000,
+          200000,
+        ]],
+      );
+      assertEquals([
+        source.calc.amt_adjusted_basis,
+        source.calc.amt_ordinary_gain,
+        source.calc.amt_deduction_claimed,
+        source.calc.amt_mining_cost_adjustment,
+      ], [290000, 39000, 311000, 90000]);
+      assertEquals([
+        pending.form6251!.line2q_mining_costs,
+        pending.form6251!.amti,
+        pending.form6251!.line11_amt,
+      ], [90000, 178587, 14406]);
+      assertEquals([
+        pending.f1040!.line23_other_taxes,
+        pending.f1040!.line24_total_tax,
+        pending.f1040!.line37_amount_owed,
+      ], [5652, 29179, 13179]);
+    }
+    if (kind === "producing_recovered") {
+      assertEquals(
+        source.calc.rows.filter((r) => r.tax_year >= 2023).map(
+          (r) => [
+            r.otherwise_allowable_depletion,
+            r.disallowed_exploration_depletion,
+            r.remaining_exploration_account,
+            r.depletion,
+            r.adjusted_basis,
+          ],
+        ),
+        [[20000, 20000, 30000, 0, 200000], [20000, 20000, 10000, 0, 200000], [
+          20000,
+          10000,
+          0,
+          10000,
+          190000,
+        ]],
+      );
+      assertEquals([
+        source.calc.amt_adjusted_basis,
+        source.calc.amt_ordinary_gain,
+        source.calc.amt_deduction_claimed,
+        source.calc.amt_mining_cost_adjustment,
+      ], [279000, 0, 350000, 90000]);
+      assertEquals([
+        pending.form6251!.amti,
+        pending.form6251!.tentative_tax,
+        pending.form6251!.line11_amt,
+      ], [172941, 22059, 13961]);
+      assertEquals([
+        pending.f1040!.line24_total_tax,
+        pending.f1040!.line37_amount_owed,
+      ], [26297, 10297]);
+    }
+    if (kind.startsWith("producing_")) {
+      assertEquals(
+        source.calc.rows.filter((r) => r.tax_year >= 2023).map(
+          (r) => [
+            r.amt_otherwise_allowable_depletion,
+            r.amt_disallowed_exploration_depletion,
+            r.amt_remaining_exploration_account,
+            r.amt_allowed_depletion,
+            r.amt_depletion_basis,
+          ],
+        ),
+        kind === "producing_exploration"
+          ? [
+            [20000, 20000, 80000, 0, 200000],
+            [20000, 20000, 60000, 0, 200000],
+            [21000, 21000, 39000, 0, 200000],
+          ]
+          : [
+            [20000, 20000, 30000, 0, 200000],
+            [20000, 20000, 10000, 0, 200000],
+            [21000, 10000, 0, 11000, 189000],
+          ],
+      );
+      assertEquals(
+        pending.form6251!.line2d_depletion ?? 0,
+        kind === "producing_recovered" ? -1000 : 0,
+      );
+    }
+    if (kind.startsWith("producing_")) {
+      for (
+        const [label, mutate] of [
+          [
+            "changed-mining-AMT",
+            (p: any) => p.form6251.line2q_mining_costs = 90001,
+          ],
+          [
+            "changed-depletion-AMT",
+            (p: any) =>
+              p.form6251.line2d_depletion = kind === "producing_recovered"
+                ? 0
+                : -1,
+          ],
+          [
+            "changed-current-charity-cap",
+            (p: any) => p.schedule_a.line_12_noncash_contributions += 1,
+          ],
+        ] as const
+      ) {
+        const changed = structuredClone(pending);
+        mutate(changed);
+        await assertRejects(
+          () =>
+            buildMefBundle(changed, {
+              filer: source.filer,
+              attachments: source.attachments,
+            }),
+          Error,
+          undefined,
+          label,
+        );
+        await assertRejects(
+          () => buildPdfBytes(changed, source.filer, ".pdf-cache", bundle),
+          Error,
+          undefined,
+          label,
+        );
+      }
+    }
     const root = Deno.env.get("FORM8283_EVIDENCE_DIR");
     if (root) {
       const dir = `${root}/${kind}`;
@@ -345,6 +494,23 @@ for (const kind of Object.keys(expected) as ResourceCase[]) {
 Deno.test("Natural-resource original owned annual-account calculation conflicts", () => {
   for (const kind of Object.keys(expected) as ResourceCase[]) {
     const source = naturalResourceSource(kind);
+    if (kind.startsWith("producing_")) {
+      for (
+        const mutate of [
+          (s: any) => s.mine_inventory[0].donor_ssn = "444556666",
+          (s: any) =>
+            s.mineral_cost_allocation_record.residual_nonmineral_land_cost = 1,
+          (s: any) => s.development_stage_began_on = "1985-01-15",
+          (s: any) => s.annual_records.at(-1).depletion_claimed += 1,
+          (s: any) =>
+            s.annual_records.at(-1).recoverable_units_before_sales += 1,
+        ]
+      ) {
+        const conflict = structuredClone(source);
+        mutate(conflict);
+        assertThrows(() => calculateCharitableNaturalResource(conflict));
+      }
+    }
     const changed = structuredClone(source);
     changed.annual_records.pop();
     assertThrows(() => calculateCharitableNaturalResource(changed));
@@ -441,7 +607,7 @@ Deno.test("Owned1252/legacy617/current1254 real-estate inventory preserves curre
     formType: "f1040",
   });
   assertEquals(result.diagnostics, []);
-  assertEquals(result.pending.f1040.line11_agi, 127881);
+  assertEquals(result.pending.f1040!.line11_agi, 127881);
   assertEquals(
     Math.round(
       Number(result.pending.schedule_a.line_12_noncash_contributions) * 100,
@@ -454,7 +620,7 @@ Deno.test("Owned1252/legacy617/current1254 real-estate inventory preserves curre
     ) / 100,
     272035.7,
   );
-  assertEquals(result.pending.f1040.line16_income_tax, 8098);
+  assertEquals(result.pending.f1040!.line16_income_tax, 8098);
   const pending = buildPending(result.pending),
     bundle = await buildMefBundle(pending, { filer, attachments });
   assertEquals((bundle.xml.match(/<IRS8283\b/g) ?? []).length, 3);

@@ -252,3 +252,135 @@ This supported source portion does not close the entire Form8283 parent.
 ## Main legacy1254 verification
 
 Productione5db4222a: standard main task17/0 in1m22s, `/tmp/opentax-resource-legacy-current-main-source-oct6.log`. Immutable original-source replay14packets/235files exact exceptXMLReturnTs, fullXSD/native/PDF/pending/carry/math/origins and original attachments, `/tmp/opentax-resource-legacy-current-main-held-oct6.log`; new outputs `/tmp/opentax-resource-legacy-current-main-held-oct6`. The original490page visual proof manifest SHA25648c99f7d744e1ee00d488ef1d77dfbce047c41933041cebf230292bffdd58091 remains unchanged. Isolated33modulecompat578/0 applies to same production; no fresh main compatibility claim. FullV5 wrapper65945/Deno65949 live115m20s; no terminal/fullpass claim. Frozen52/future unchanged; Rothsource correction ongoing and qualifications preserved.
+
+## Producing617 depletion coordination and current mining AMT
+
+The `producing_mining_617` owned-source contract derives the default producing-mine
+exploration recapture through depletion disallowance. It binds a pre1987 gold
+mineral interest, sole-mine inventory, operation/stage dates, paid annual costs,
+unit/reserve continuity and mineral/nonmineral cost allocation. Section617(e)
+keeps disallowed depletion out of basis reduction; CFR1.617-3 Example2 reduces
+the adjusted exploration account by the disallowed amount. Actual paid2025
+Section616 development costs independently derive the regular deduction and
+Section56 ten-year AMT deduction. CFR1.612-1(b)(1)(i) excludes the unamortized
+cost from depletion basis while the AMT disposition basis retains it. No manual
+hypothetical pool, AMT offset, depletion or tax scalar is accepted.
+
+Authorities: [2025 CFR1.617-3](https://www.govinfo.gov/content/pkg/CFR-2025-title26-vol9/pdf/CFR-2025-title26-vol9-sec1-617-3.pdf),
+[IRC617](https://www.govinfo.gov/content/pkg/USCODE-2024-title26/html/USCODE-2024-title26-subtitleA-chap1-subchapI-partI-sec617.htm),
+[CFR1.612-1](https://www.ecfr.gov/current/title-26/section-1.612-1),
+[2025 Form6251 instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf).
+
+Two public-source returns retain original mineral cost200000, FMV350000,
+actual2023/2024 cost depletion20000 each and paid2025 development100000.
+Regular2025 cost depletion20000 exceeds/equal the gold percentage limitation;
+AMT percentage depletion21000 is independently computed using AMT cost
+amortization10000. They retain source invoices/accounts, three canonical-field
+financial PDFs, a full appraisal and completed official source Form8283.
+Simulated signatures and annual returns prove the source contract; they do not
+establish external authentication or IRS acceptance.
+
+| Derived source/return amount | producing_exploration | producing_recovered |
+| --- | ---: | ---: |
+| Original deducted exploration | 100000 | 50000 |
+| Regular remaining exploration / allowed depletion | 40000 / 0 | 0 / 10000 |
+| AMT remaining exploration / allowed depletion | 39000 / 0 | 0 / 11000 |
+| Regular basis / AMT disposition basis | 200000 / 290000 | 190000 / 279000 |
+| Regular pre-AGI gift / AMT pre-AGI gift | 310000 / 311000 | 350000 / 350000 |
+| Current regular and AMT noncash deduction | 41152.20 | 38364.30 |
+| ScheduleC / SE / halfSE | 40000 / 5652 / 2826 | 30000 / 4238 / 2119 |
+| AGI / itemized / QBI deduction | 137174 / 65152.20 / 7435 | 127881 / 62364.30 / 5576 |
+| Form6251 AMTI / TMT / AMT | 178587 / 23527 / 14406 | 172941 / 22059 / 13961 |
+| Form1040 total tax / owed | 29179 / 13179 | 26297 / 10297 |
+
+The source guard replays actual classified ScheduleA gifts and finalized AGI,
+checks the regular filed allowance, and independently derives the AMT allowance.
+Both positives have the same current allowance because the actual regular-AGI
+cap binds. Their source pre-AGI values remain distinct. A genuinely differing
+current AMT allowance is still rejected pending the existing Form6251 line3 and
+separate AMT carryforward route; this portion does not close that requirement.
+An exhausted617 pool produces full-FMV source deduction and no inapplicable FMV
+reduction explanation, while the retained source calculation remains present.
+Ownership, dates, stages, paid costs, reserves, mineral allocation, detached
+workpapers, regular/AMT basis, rehashed financial PDF fields and final deduction,
+depletion, tax and carry mutations reject before XML/PDF filing.
+
+### Filed Form6251 rounding and retained-source comparison
+
+[2025 Form1040 whole-dollar instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+and the [filed Form6251](https://www.irs.gov/pub/irs-prior/f6251--2025.pdf)
+support settling each filed monetary line before the subsequent filed sum.
+Source cents stay unchanged. The unpublished exemption worksheet retains the
+raw25% phaseout multiplication through subtraction, then rounds the resulting
+filed exemption. Thus64200 minus18412.50 yields45787.50, filed45788; rounding
+the reduction first would be wrong. Form6251 line6 times26%, and actual PartIII
+percentage-tax lines, settle to nearest whole dollar. Existing adjustments that
+share filed line3 are combined before rounding. This is not a claim that every
+signed-cent/native route has been audited.
+
+Expected new filed differences from prior flooring are independently asserted:
+23526.62 becomes23527,22058.66 becomes22059; no fixture source amount changes.
+Exemption quarter-dollar unit boundaries are independently tested. The final
+recovered TMT is22059; an earlier handwritten22060 expectation was corrected,
+and the red diagnostic logs remain preserved.
+
+Independent baseline33081/current audits read retained raw input bytes, not
+regenerated fixture metadata. Sixteen source records (eight pension preferential
+and eight QEF records, with four QEF reviewed/default duplicates) produce184
+return-page occurrences: pending/carry/origins/PDF bytes exact, fullXSD both
+sides, XMLReturnTs only. No changed retained tax/PDF pages were found in this
+inventory. Snapshot inputs: `/tmp/opentax-producing617-retained-amt-inputs`;
+packet comparison: `/tmp/opentax-producing617-retained-amt-packet-comparison.json`,
+SHA256 `8ad550953c80637b7e657ab524a56c4f7536880aad4f14f6bfc42656392956d6`.
+This comparison does not authenticate previously mutable research output bytes.
+
+### Exact proof, original preservation and test diagnostics
+
+Public source gate19/0: `/tmp/opentax-form8283-producing617-source-v13.log`.
+Final Form6251 unit98/0: `/tmp/opentax-producing617-6251-unit-v6.log`.
+Source-node compatibility203/0:
+`/tmp/opentax-producing617-source-compat-v3.log`.
+The76-module compatibility run remains accurately recorded348/1 in
+`/tmp/opentax-producing617-amt-compat-v4.log`: its sole failure was missing
+`three.xml` during removal of a shared research symlink, not an amount assertion.
+The stable-local focused module repair is terminal2/0 in54s:
+`/tmp/opentax-producing617-preferential-stable-v5.log`.
+The earlier347/1 premature-rounding diagnostic also remains preserved; neither
+historical log is called green.
+
+Original14/235 archive strict replay remains authoritative and separate:
+`/tmp/opentax-producing617-legacy-held-v1`, fullXSD,221 nonXML files exact,
+14XMLReturnTs only. The composed reviewed source snapshot is
+`/tmp/opentax-form8283-producing617-evidence-reviewed-v14`:16packets/267files,
+611pages comprising prior490 and new121(31return+90source). Strict retained-source
+replay `/tmp/opentax-producing617-all-held-v14.log` verifies all267 files with
+only XMLReturnTs permitted. Run the outside-checkout replayer with:
+
+```
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run -A --config deno.json \
+ /tmp/opentax-producing617-held-source-replay.ts <checkout> \
+ /tmp/opentax-form8283-producing617-evidence-reviewed-v14 <fresh-output-dir>
+```
+
+All121 new page occurrences,116 distinct rasters,18PDFs were visually reviewed
+in13 sheets. Independent source-derived copy/owner/form inventory and source
+canonical fields are retained. Manifest:
+`/tmp/opentax-form8283-producing617-review-v13/proof-manifest.json`, SHA256
+`a3b97b85be91d2dbfdfc99a91b7744026affd6f95c2669f7b1bd895300bb9009`.
+The original14/490 and older forty-packet label evidence are unchanged.
+
+The supplied research symlink initially targeted main's ignored research output
+root. Default evidence writers in13 directories could overwrite mutable test
+outputs before discovery. The exact copied filenames/hash/mtime/writer references
+are preserved in `/tmp/opentax-producing617-shared-research-write-diagnostics/manifest.json`
+(SHA256 `6e4c961017525c2b4a6078a5590f3de9247cf304d3ed43a72c729c3705819ac8`;
+415 diagnostic copies). Copies include preexisting ancillary files; without
+before hashes they are not each asserted changed solely by this run. No silent
+restoration/normalization occurred. CorrectedRoth main-reviewed roots, ScheduleJ
+reviewed/raw immutable archives, the original14/490 and forty-packet label
+sources were not writer targets. All review override environments were unset.
+Research output is now local; only the schema/docs cache link remains shared.
+
+Broader actual differing AMT charity/line3/separate carryforward, percentage
+preferences, other deduction vintages and aggregation/elections remain existing
+source obligations. No blanket Form8283 parent closure is claimed.

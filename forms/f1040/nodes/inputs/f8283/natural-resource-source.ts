@@ -102,6 +102,48 @@ export const charitableNaturalResourceSourceSchema = z.discriminatedUnion(
       no_binding_contract_transition_to_1254: z.literal(true),
     }).strict(),
     common.extend({
+      kind: z.literal("producing_mining_617"),
+      resource: z.literal("gold"),
+      exploration_election_reference: ref,
+      domestic_predevelopment_exploration_record_reference: ref,
+      development_stage_began_on: date,
+      producing_stage_reached_on: date,
+      producing_stage_basis: z.enum([
+        "major_portion_from_nondevelopment_workings",
+        "principal_activity_developed_ore_production",
+      ]),
+      mine_identifier: ref,
+      mine_inventory: z.array(
+        z.object({
+          mine_identifier: ref,
+          property_reference: ref,
+          donor_ssn: z.string().regex(/^\d{9}$/),
+          development_stage_began_on: date,
+          producing_stage_reached_on: date,
+          operation_record_reference: ref,
+          default_disallowance_return_record_reference: ref,
+        }).strict(),
+      ).length(1),
+      producing_stage_geological_and_operation_record_reference: ref,
+      producing_stage_treatment: z.literal("depletion_disallowance"),
+      mineral_cost_allocation_record: z.object({
+        record_reference: ref,
+        property_reference: ref,
+        donor_ssn: z.string().regex(/^\d{9}$/),
+        original_purchase_cost: money,
+        depletable_mineral_cost: money,
+        residual_nonmineral_land_cost: money,
+        separate_depreciable_asset_cost: money,
+      }).strict(),
+      complete_mine_and_property_inventory_reference: ref,
+      sole_owned_mine_no_aggregation_bonus_royalty_or_prior_recapture: z
+        .literal(true),
+      no_binding_contract_transition_to_1254: z.literal(true),
+      development_election_reference: ref,
+      regular_ten_year_writeoff_not_elected: z.literal(true),
+      no_other_regular_or_amt_property_basis_adjustments: z.literal(true),
+    }).strict(),
+    common.extend({
       kind: z.literal("natural_resource_1254"),
       resource: z.enum(["oil", "gas", "geothermal", "gold"]),
       operating_interest_and_economic_interest_record_reference: ref,
@@ -157,7 +199,8 @@ export function calculateCharitableNaturalResource(raw: unknown) {
       `${Number(source.date_acquired.slice(0, 4)) + 1}${
         source.date_acquired.slice(4)
       }` ||
-    (source.kind === "legacy_mining_617" && placedYear > 1986) ||
+    (["legacy_mining_617", "producing_mining_617"].includes(source.kind) &&
+      placedYear > 1986) ||
     (source.kind === "natural_resource_1254" && placedYear < 1987) ||
     (source.kind === "legacy_oil_gas_geothermal_1254" &&
       (placedYear > 1986 ||
@@ -228,6 +271,49 @@ export function calculateCharitableNaturalResource(raw: unknown) {
   let hypotheticalBasis = source.original_owned_cost,
     hypotheticalDepletionOffset = 0;
   const legacyOil = source.kind === "legacy_oil_gas_geothermal_1254";
+  const producing = source.kind === "producing_mining_617";
+  let miningAmtUnamortized = 0, miningAmtAdjustment = 0;
+  let amtDepletionBasis = source.original_owned_cost, amtExplorationAccount = 0;
+  if (
+    producing &&
+    (source.development_stage_began_on < source.placed_in_service ||
+      source.development_stage_began_on > source.producing_stage_reached_on ||
+      source.producing_stage_reached_on < source.placed_in_service ||
+      source.producing_stage_reached_on > source.date_contributed)
+  ) {
+    throw new Error(
+      "Owned producing mine stage dates disagree with service/gift",
+    );
+  }
+  if (producing) {
+    const mine = source.mine_inventory[0];
+    const allocation = source.mineral_cost_allocation_record;
+    if (
+      allocation.property_reference !== source.property_reference ||
+      allocation.donor_ssn !== source.donor_ssn ||
+      allocation.original_purchase_cost !== source.original_owned_cost ||
+      allocation.depletable_mineral_cost !== source.original_owned_cost ||
+      allocation.residual_nonmineral_land_cost !== 0 ||
+      allocation.separate_depreciable_asset_cost !== 0
+    ) {
+      throw new Error(
+        "Producing617 depletion basis needs owned purchase mineral allocation excluding land/residual/depreciable costs",
+      );
+    }
+    if (
+      mine.mine_identifier !== source.mine_identifier ||
+      mine.property_reference !== source.property_reference ||
+      mine.donor_ssn !== source.donor_ssn ||
+      mine.development_stage_began_on !== source.development_stage_began_on ||
+      mine.producing_stage_reached_on !== source.producing_stage_reached_on ||
+      mine.operation_record_reference !==
+        source.producing_stage_geological_and_operation_record_reference
+    ) {
+      throw new Error(
+        "Owned617 mine inventory/owner/stage joins differ from actual operating property",
+      );
+    }
+  }
   const rows = source.annual_records.map((row) => {
     if (
       row.tax_year < placedYear &&
@@ -276,7 +362,152 @@ export function calculateCharitableNaturalResource(raw: unknown) {
       );
     }
     let depletion = 0, hypotheticalDepletion = 0;
-    if (source.kind !== "natural_resource_1254" && !legacyOil) {
+    let otherwiseAllowableDepletion = 0, disallowedExplorationDepletion = 0;
+    let amtOtherwiseDepletion = 0,
+      amtDisallowedDepletion = 0,
+      amtAllowedDepletion = 0;
+    if (producing) {
+      for (const cost of row.expenses) {
+        if (
+          cost.nature === "exploration_617" &&
+            cost.paid_on >= source.development_stage_began_on ||
+          cost.nature === "development_616" &&
+            cost.paid_on < source.development_stage_began_on
+        ) {
+          throw new Error(
+            "Owned mining exploration/development cost differs from actual stage record",
+          );
+        }
+        if (row.tax_year > 1986 && row.tax_year !== 2025) {
+          throw new Error(
+            "Prior post1986 mining AMT vintages need their complete amortization source route",
+          );
+        }
+      }
+      ordinaryCosts = cents(
+        ordinaryCosts +
+          row.expenses.filter((cost) => cost.nature === "exploration_617")
+            .reduce((sum, cost) => sum + cost.amount, 0),
+      );
+      const stageYear = Number(source.producing_stage_reached_on.slice(0, 4));
+      if (
+        row.tax_year < stageYear &&
+        (row.gross_property_income || row.units_sold ||
+          row.recoverable_units_before_sales)
+      ) {
+        throw new Error(
+          "Owned mine production precedes geological producing stage",
+        );
+      }
+      if (
+        row.units_sold > row.recoverable_units_before_sales ||
+        row.units_sold > 0 &&
+          (!row.gross_property_income || !row.recoverable_units_before_sales)
+      ) {
+        throw new Error(
+          "Owned mining units differ from actual production receipts/reserves",
+        );
+      }
+      if (row.recoverable_units_before_sales > 0) {
+        if (
+          remainingUnits !== undefined &&
+          row.recoverable_units_before_sales !== remainingUnits
+        ) {
+          throw new Error(
+            "Owned mining reserve inventory does not reconcile previous sales",
+          );
+        }
+        remainingUnits = cents(
+          row.recoverable_units_before_sales - row.units_sold,
+        );
+        otherwiseAllowableDepletion = cents(
+          Math.min(
+            basis,
+            basis * row.units_sold / row.recoverable_units_before_sales,
+          ),
+        );
+      }
+      const percentageDepletion = cents(
+        Math.min(
+          row.gross_property_income * .15,
+          Math.max(
+            0,
+            row.gross_property_income - row.other_deductible_property_expenses -
+              allowed,
+          ) * .5,
+        ),
+      );
+      if (otherwiseAllowableDepletion < percentageDepletion) {
+        throw new Error(
+          "Producing617 requires actual percentage-depletion source method beyond this owned cost route",
+        );
+      }
+      disallowedExplorationDepletion = cents(
+        Math.min(ordinaryCosts, otherwiseAllowableDepletion),
+      );
+      ordinaryCosts = cents(ordinaryCosts - disallowedExplorationDepletion);
+      depletion = cents(
+        otherwiseAllowableDepletion - disallowedExplorationDepletion,
+      );
+      if (row.depletion_claimed !== depletion) {
+        throw new Error(
+          "Producing617 filed depletion differs from source-derived adjusted exploration disallowance",
+        );
+      }
+      // Independent AMT pool and greater-of cost/percentage depletion. Deferred
+      // ten-year mining costs are excluded from depletion basis (1.612-1(b)(1)).
+      amtExplorationAccount = cents(
+        amtExplorationAccount +
+          row.expenses.filter((cost) => cost.nature === "exploration_617")
+            .reduce((sum, cost) => sum + cost.amount, 0),
+      );
+      const amtCurrentCostDeduction = row.tax_year > 1986
+        ? allowed * .1
+        : allowed;
+      const amtCostDepletion = row.recoverable_units_before_sales > 0
+        ? cents(
+          Math.min(
+            amtDepletionBasis,
+            amtDepletionBasis * row.units_sold /
+              row.recoverable_units_before_sales,
+          ),
+        )
+        : 0;
+      const amtPercentageDepletion = cents(
+        Math.min(
+          row.gross_property_income * .15,
+          Math.max(
+            0,
+            row.gross_property_income - row.other_deductible_property_expenses -
+              amtCurrentCostDeduction,
+          ) * .5,
+        ),
+      );
+      amtOtherwiseDepletion = Math.max(
+        amtCostDepletion,
+        amtPercentageDepletion,
+      );
+      amtDisallowedDepletion = Math.min(
+        amtExplorationAccount,
+        amtOtherwiseDepletion,
+      );
+      amtExplorationAccount = cents(
+        amtExplorationAccount - amtDisallowedDepletion,
+      );
+      amtAllowedDepletion = cents(
+        amtOtherwiseDepletion - amtDisallowedDepletion,
+      );
+      if (amtAllowedDepletion > amtDepletionBasis) {
+        throw new Error(
+          "Producing617 percentage depletion beyond basis needs its actual section57 preference route",
+        );
+      }
+      amtDepletionBasis = cents(amtDepletionBasis - amtAllowedDepletion);
+      basis = cents(basis - depletion);
+      const amortizable = row.tax_year > 1986 ? allowed : 0;
+      miningAmtUnamortized = cents(miningAmtUnamortized + amortizable * .9);
+      if (row.tax_year === 2025) miningAmtAdjustment = cents(amortizable * .9);
+    } else if (source.kind !== "natural_resource_1254" && !legacyOil) {
       if (
         row.depletion_claimed !== 0 || row.units_sold !== 0 ||
         row.recoverable_units_before_sales !== 0 ||
@@ -376,7 +607,7 @@ export function calculateCharitableNaturalResource(raw: unknown) {
       basis = cents(basis - depletion);
     }
     ordinaryCosts = cents(
-      ordinaryCosts + allowed + (legacyOil ? 0 : depletion),
+      ordinaryCosts + (producing ? 0 : allowed + (legacyOil ? 0 : depletion)),
     );
     return {
       tax_year: row.tax_year,
@@ -385,6 +616,19 @@ export function calculateCharitableNaturalResource(raw: unknown) {
       depletion,
       adjusted_basis: basis,
       conservation_carry: carry,
+      ...(producing
+        ? {
+          otherwise_allowable_depletion: otherwiseAllowableDepletion,
+          disallowed_exploration_depletion: disallowedExplorationDepletion,
+          remaining_exploration_account: ordinaryCosts,
+          amt_unamortized_mining_costs: miningAmtUnamortized,
+          amt_otherwise_allowable_depletion: amtOtherwiseDepletion,
+          amt_disallowed_exploration_depletion: amtDisallowedDepletion,
+          amt_allowed_depletion: amtAllowedDepletion,
+          amt_remaining_exploration_account: amtExplorationAccount,
+          amt_depletion_basis: amtDepletionBasis,
+        }
+        : {}),
       ...(legacyOil
         ? {
           hypothetical_capitalized_basis: hypotheticalBasis,
@@ -442,6 +686,31 @@ export function calculateCharitableNaturalResource(raw: unknown) {
       ? "capital_gain_30" as const
       : "ordinary_noncash_50" as const,
     current_year: rows[rows.length - 1],
+    ...(producing
+      ? {
+        amt_adjusted_basis: cents(amtDepletionBasis + miningAmtUnamortized),
+        amt_ordinary_gain: cents(
+          Math.min(
+            Math.max(
+              0,
+              source.appraised_fmv - amtDepletionBasis - miningAmtUnamortized,
+            ),
+            amtExplorationAccount,
+          ),
+        ),
+        amt_deduction_claimed: cents(
+          source.appraised_fmv -
+            Math.min(
+              Math.max(
+                0,
+                source.appraised_fmv - amtDepletionBasis - miningAmtUnamortized,
+              ),
+              amtExplorationAccount,
+            ),
+        ),
+        amt_mining_cost_adjustment: miningAmtAdjustment,
+      }
+      : {}),
     ...(legacyOil
       ? { hypothetical_depletion_offset: hypotheticalDepletionOffset }
       : {}),
