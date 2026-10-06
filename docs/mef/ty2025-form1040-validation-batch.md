@@ -4960,3 +4960,8 @@ Independent spouse health plans current mainfa0e3272e:57/0(31s), exact owned-sou
 
 
 FarmSHOP8c9a77447 currentmain gate16/0(1m29s); log `/tmp/opentax-farm-shop-current-main.log` SHA256 `fee152e078cb70db6e5f04de3c6606140198ca012282ca558960f5dd4057fad2`. Four complete packets/all92 reviewed pages, fullXSD and byte-identical mainPDFs; [source proof](ty2025-form8941-owned-farm-shop-review.md). Broader source branches/IRS businessrules/ATS remain open.
+
+
+## 2026-10-06 complete-source Form4972 NUA integration
+
+Main747ec258c:14-file source/preservation gate233/0(31s), five complete2025v5.4XSDreturns and80native/PDFtamper rejections. Held checker5cases/all27reviewedpages; all main PDFs byte-identical to reviewed isolated/held outputs. Actual planner298fixtures/116descriptors/113keys/96covered/17uncovered. Evidence and digests: [review](ty2025-form4972-multiple-nua-source-review.md). Earlier isolatedpreservation231/1 was a supersededfive-copyrejection assertion; correctedpreservation232/0. Mainlog `/tmp/opentax-form4972-multiple-nua-current-main.log`; heldlog `/tmp/opentax-form4972-multiple-nua-main-held-check.log`. No full-suitepass or IRSacceptance inferred.

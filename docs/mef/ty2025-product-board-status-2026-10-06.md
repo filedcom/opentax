@@ -1415,3 +1415,19 @@ Full `deno task test` at bc6cafec6 ended 11,494/8, exit 1. The immutable rerun a
 
 
 Isolated0996c2057 proves five complete4972returns,232/0 preservation,80native/PDFconflict rejections and held5/all27pages. Integration proof is pending.
+
+
+## After complete-source NUA integration
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,425 bounded slices**. Detailed learnings and earlier evidence are preserved in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). New discoveries belong only in `future_todo`.
+
+Actual planner remains **293 fixtures**, 116 PDF descriptors, 113 keys, 96 covered and 17 uncovered. Published PR63 head is ba70498d8; local head f941ed9a0 includes farm SHOP: main 16/0, four full-XSD packets and all 92 pages reviewed, with regenerated PDFs equal to reviewed bytes. These results prove their stated routes; broader parents remain open.
+
+Full `deno task test` at bc6cafec6 ended 11,494/8, exit 1. The immutable rerun at fbacc539c started 02:29:48 UTC; its wrapper and Deno process are verified live at 03:00 UTC. Five observed failures have focused repairs on current main; terminal totals and a passing latest-head full run remain required. Root integrates verified Form 4972 multiple-source NUA and paired elections (isolated232/0; held5/all27pages); current-main proof is pending. Three agents continue mixed C/F SHOP, mixed-owner WOTC and deductible-tip QBI exclusion. The earlier tip income-cap proof does not establish correct business QBI: deductible tips must also be excluded, and that repair is underway. Authentication, broader filing paths, ATS conflicts, credentials, business rules, IRS acceptance and release readiness remain incomplete.
+
+
+Main233/0/held5/all27pages; all5PDFs equal reviewed bytes; planner298 and ledger1426 verified.

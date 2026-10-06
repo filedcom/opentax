@@ -70,3 +70,13 @@ All five cases are now registered in the source review catalog; the actual plann
 - Held `review-manifest.json`: `91bf433c8f159c93102dd41825be37cf915857202bd15a167c2cb8fbdacb6a8b`
 
 Read-only held checker passed **5 fixtures/all27 pages**, including current source replay, native XML/XSD, all frozen artifact digests, template cache evidence and every completed page slot. Log: `/tmp/opentax-form4972-multiple-nua-held-check.log`.
+
+## Current-main integration proof
+
+Integrated as747ec258c after mandatory board compaction. Main14-file source/preservation gate passes **233/0 (31s)**; `/tmp/opentax-form4972-multiple-nua-current-main.log`. Main retained checker passes **five cases/all27 pages**; `/tmp/opentax-form4972-multiple-nua-main-held-check.log`. All five main regenerated PDFs equal the isolated reviewed and held bytes. Main artifacts live in `.state/research/2026-10-06-form4972-multiple-nua-source` and held review in `.state/research/2026-10-06-form4972-multiple-nua-held`. Actual main planner confirms298fixtures/116descriptors/113keys/96covered/17uncovered. Full-suite rerun and IRS acceptance remain outstanding.
+
+- Main XML `primary-2-spouse-3.xml`: `9089f5855dcf5f00c097fef4ef99b127df40690802de4ff48b69f14656bf8312`
+- Main XML `primary-3-spouse-0.xml`: `5d38ff638cfb012a374fc6343863fc39f4c6115333af838d33185fda657d0850`
+- Main XML `primary-4-spouse-5.xml`: `850f5a9d10b2cd999ce2adfc77c9d97d7bf5aa21a5e78b20b1314b01bcddf0e9`
+- Main XML `primary-5-spouse-0.xml`: `5b761571dcb6565c92b2f8b0f3ea2735c8e70adae5ebfed132e34f4dd916cf95`
+- Main XML `primary-7-spouse-0.xml`: `4d6aa72594aa5efbc2c8c7399f700ffc0700b5cdaddb9bf9de08f277345df849`
