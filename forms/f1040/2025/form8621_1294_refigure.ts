@@ -161,13 +161,36 @@ export function applyForm8621QefRefigure(
       );
     }
   }
+  const rawSinkInput = record(full.pending.f1040);
+  const businessCredit = rawSinkInput?.form3800_source_credits === undefined
+    ? 0
+    : Number(record(buildPending(full.pending).schedule3)?.line6a_total ?? 0);
+  const priorNonrefundable = Number(
+    rawSinkInput?.line20_nonrefundable_credits ?? 0,
+  ) - businessCredit;
+  if (
+    !Number.isFinite(businessCredit) || businessCredit < 0 ||
+    !Number.isFinite(priorNonrefundable) || priorNonrefundable < 0
+  ) {
+    throw new Error(
+      "Form 8621 Election B needs reconciled preceding and business credits",
+    );
+  }
+  const sourceSinkInput = {
+    ...rawSinkInput,
+    ...(rawSinkInput?.form3800_source_credits === undefined ? {} : {
+      // The settled graph deposited the allowed Form 3800 amount on line 20.
+      // Reapplying the sink must start with only the preceding credits.
+      line20_nonrefundable_credits: priorNonrefundable,
+    }),
+  };
   const sinkInput = {
-    ...record(full.pending.f1040),
+    ...sourceSinkInput,
     form8621_1294_counterfactual_total_tax: line9b,
   };
   const oldSink = f1040.compute(
     context,
-    f1040.inputSchema.parse(record(full.pending.f1040)),
+    f1040.inputSchema.parse(sourceSinkInput),
   );
   const oldFiled = record(
     oldSink.outputs.find((output) => output.nodeType === "f1040")?.fields,

@@ -429,3 +429,89 @@ Deno.test("dependent education and Schedule 8812 worksheets refigure together", 
     "Schedule 8812 filed AGI",
   );
 });
+
+Deno.test("QEF Election B replays sourced Form 3800 tax-limited business credit", async () => {
+  const base = pdfReviewFixtures.find((row) =>
+    row.id === "single-employer-childcare-facility-and-referral-credit"
+  )!;
+  const input = { ...base.inputs, f8621: [holding] };
+  const result = f1040_2025.executeReturn(input);
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  assertForm8621QefRefigureSource(pending);
+  assertEquals(pending.f1040?.line18_total_tax_before_credits, 18_347);
+  assertEquals(pending.schedule3?.line6a_total, 9_533);
+  assertEquals(pending.f1040?.form8621_1294_total_tax_before_deferral, 8_814);
+  assertEquals(pending.f1040?.form8621_1294_counterfactual_total_tax, 8_294);
+  assertEquals(pending.f1040?.form8621_1294_deferred_tax, 520);
+  assertEquals(pending.f1040?.line24_total_tax, 8_294);
+  const without = f1040_2025.executeReturn({
+    ...base.inputs,
+    f8621: [{
+      ...holding,
+      qef_ordinary_income: 0,
+      qef_1294_election: undefined,
+    }],
+  });
+  assertEquals(without.diagnostics, []);
+  const withoutPending = buildPending(without.pending);
+  assertEquals(withoutPending.f1040?.line18_total_tax_before_credits, 17_867);
+  assertEquals(withoutPending.schedule3?.line6a_total, 9_573);
+  assertEquals(withoutPending.f1040?.line24_total_tax, 8_294);
+  const packet = await f1040_2025.prepareReturn(pending, base.filer);
+  const origins: PdfPageOrigin[] = [];
+  const pdf = await buildPdfBytes(
+    pending,
+    base.filer,
+    ".pdf-cache",
+    packet.bundle,
+    origins,
+  );
+  const out = Deno.env.get("FORM8621_BUSINESS_EVIDENCE_DIR") ??
+    ".state/research/form8621-qef-business-credit";
+  await Deno.mkdir(out, { recursive: true });
+  await Deno.writeTextFile(
+    `${out}/source-pending.json`,
+    JSON.stringify({ input, pending }, null, 2),
+  );
+  await Deno.writeTextFile(`${out}/return.xml`, packet.bundle.xml);
+  await Deno.writeFile(`${out}/return.pdf`, pdf);
+  await Deno.writeTextFile(
+    `${out}/origins.json`,
+    JSON.stringify(origins, null, 2),
+  );
+  const xsd = await new Deno.Command("xmllint", {
+    args: [
+      "--noout",
+      "--schema",
+      ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      `${out}/return.xml`,
+    ],
+    stderr: "piped",
+  }).output();
+  assertEquals(xsd.code, 0, new TextDecoder().decode(xsd.stderr));
+  assertEquals((await PDFDocument.load(pdf)).getPageCount(), origins.length);
+});
+
+Deno.test("native and PDF business-credit copies reject a changed allowed credit", async () => {
+  const base = pdfReviewFixtures.find((row) =>
+    row.id === "single-employer-childcare-facility-and-referral-credit"
+  )!;
+  const result = f1040_2025.executeReturn({
+    ...base.inputs,
+    f8621: [holding],
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = structuredClone(buildPending(result.pending));
+  pending.schedule3!.line6a_total = 9_532;
+  await assertRejects(
+    () => f1040_2025.prepareReturn(pending, base.filer),
+    Error,
+    "differs from full source",
+  );
+  await assertRejects(
+    () => buildPdfBytes(pending, base.filer),
+    Error,
+    "differs from full source",
+  );
+});

@@ -291,3 +291,28 @@ on independent source replay. The six focused new packet/conflict cases passed
 Form 8621, adoption, AMT, education owner/scholarship, and Schedule 1 source
 gate passed 32/0 in
 `/tmp/opentax-form8621-qef-education-focused-oct6.log`.
+
+## Election B with a tax-limited general business credit
+
+The reviewed employer childcare and referral source packet supplies the
+Form 8882 and Form 3800 credit facts. Adding the independently sourced QEF
+holding produces $18,347 of income tax before credits and $9,533 of allowed
+Form 3800 credit. Without the undistributed QEF earnings, the re-executed
+return has $17,867 of income tax and $9,573 of allowed business credit.
+Form 8621 lines 9a/9b/9c are **$8,814/$8,294/$520**; the filed Form 1040
+line 24 is $8,294. The Form 1040 sink replay now removes the settled
+Schedule 3 line 6a credit from its already deposited line 20 input before
+recomputing the Form 3800 allowance. This preserves the other preceding
+credits and prevents counting the business credit twice.
+
+The actual 21-page native packet validates against the full local MeF v5.4
+XSD. All pages were rendered and reviewed in
+`/tmp/opentax-form8621-qef-business-contact-1.png` and
+`/tmp/opentax-form8621-qef-business-contact-2.png`; PDF SHA-256 is
+`da0c3c7d9899a6939a3d91768ffdbc61b03594e0e299f7bae3b6a89294cd29ed`.
+Its source, pending, XML, PDF, and page origins are under
+`.state/research/form8621-qef-business-credit/` in the isolated tree.
+Changing Schedule 3 line 6a by one dollar makes both native and PDF export
+reject the packet on independent full source replay. The eight focused
+education/business packet and conflict cases passed 8/0 in
+`/tmp/opentax-form8621-qef-business-final-oct6.log`.
