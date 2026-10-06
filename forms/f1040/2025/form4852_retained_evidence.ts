@@ -1,3 +1,10 @@
+import { qualifiedRothDocuments } from "../nodes/inputs/f4852/qualified-roth.ts";
+import {
+  iraRecharacterizationDocuments,
+  reviewedIraRecharacterization,
+} from "../nodes/intermediate/forms/form8606/recharacterization.ts";
+import { form4852IraMarginLabel } from "../nodes/inputs/f4852/retirement-account.ts";
+import { assertForm4852IraMargin } from "./form4852_ira_margin.ts";
 import {
   reviewedRothOwnerInventory,
   rothOwnerInventoryDocuments,
@@ -381,6 +388,26 @@ export async function assertForm4852RetainedEvidence(
         facts: basisEvidence.year_end_statement,
       });
     }
+    if (item.retirement_source?.ira_recharacterization_review) {
+      for (
+        const facts of iraRecharacterizationDocuments(
+          item.retirement_source.ira_recharacterization_review,
+        )
+      ) {
+        requiredTreatmentRecords.push({
+          reference: facts.source_document_reference,
+          facts,
+        });
+      }
+    }
+    if (item.qualified_roth_review) {
+      for (const facts of qualifiedRothDocuments(item.qualified_roth_review)) {
+        requiredTreatmentRecords.push({
+          reference: facts.source_document_reference,
+          facts,
+        });
+      }
+    }
     const plan = item.retirement_source?.form4972_plan;
     if (plan) {
       requiredTreatmentRecords.push({
@@ -495,6 +522,42 @@ export async function assertForm4852RetainedEvidence(
         );
       }
     }
+    if (item.retirement_source?.ira_recharacterization_review) {
+      if (
+        item.distribution_source?.paid_on !==
+          item.retirement_source.ira_recharacterization_review.transfer
+            .transferred_on ||
+        item.distribution_source.account_type !==
+          item.retirement_source.ira_recharacterization_review
+            .original_contribution.account_type
+      ) {
+        throw new Error(
+          "IRA recharacterization custodian account type/date differs from actual completed payment source",
+        );
+      }
+      const r = reviewedIraRecharacterization({
+        ...item.retirement_source,
+        recipient_ssn: item.recipient_ssn,
+        account_number: item.account_number,
+        source_document_reference: item.completed_form_review_reference,
+      });
+      for (const facts of iraRecharacterizationDocuments(r)) {
+        if (
+          !isDeepStrictEqual(
+            JSON.parse(
+              new TextDecoder().decode(
+                bytesFor(facts.source_document_reference),
+              ),
+            ),
+            JSON.parse(JSON.stringify(facts)),
+          )
+        ) {
+          throw new Error(
+            "IRA recharacterization retained parsed source facts differ from actual annual records",
+          );
+        }
+      }
+    }
     const completed = await PDFDocument.load(
       bytesFor(record.completed_form.document_reference),
     );
@@ -503,6 +566,10 @@ export async function assertForm4852RetainedEvidence(
         "Retained completed Form 4852 must include the official form and instructions pages",
       );
     }
+    assertForm4852IraMargin(
+      completed,
+      item.form_type === "R_1099" ? form4852IraMarginLabel(item) : undefined,
+    );
     const form = completed.getForm();
     for (const entry of form4852RetainedPdf.fields) {
       const expected = instances[index][entry.domainKey];

@@ -6,7 +6,10 @@ import { rgb, StandardFonts } from "pdf-lib";
 import { AccountType } from "../../../mef/header.ts";
 import { ty2025IrsCountryName } from "./irs_country_name.ts";
 import { form8814ParentPrintAmounts } from "./f8814.ts";
-import { appendIraDistributionStatement } from "./ira_distribution_statement.ts";
+import {
+  appendIraDistributionStatement,
+  appendIraRecharacterizationStatements,
+} from "./ira_distribution_statement.ts";
 import { appendDependentContinuation } from "./dependent_continuation.ts";
 import { schedule1aPdf } from "./schedule1a.ts";
 import { assertMfsEitcSource } from "../../mfs-eitc-source.ts";
@@ -1149,6 +1152,11 @@ export const irs1040Pdf: PdfFormDescriptor = {
       filer,
     );
     await appendIraDistributionStatement(document, allPending?.f1099r, filer);
+    await appendIraRecharacterizationStatements(
+      document,
+      allPending ?? {},
+      filer,
+    );
   },
   filerFields: [
     // domainKey uses dot-notation to traverse FilerIdentity (resolved in builder).

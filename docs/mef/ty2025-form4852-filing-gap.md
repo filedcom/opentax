@@ -719,3 +719,131 @@ Integrated production0616cea72 verified on current main acfea8ca9: standard sour
 Copied immutable corrected source roots in main `.state/research/form4852-roth-{source,inventory,conversion,history}-checkbox-corrected-main-reviewed` execute the public graph from actual archived inputs and retained document bytes; they compare whole pending, source hashes, PDF/origins and timestamp-onlyXML and validate full localXSD. All four terminal logs `/tmp/opentax-roth-checkbox-current-main-{regular,inventory,conversion,history}-held-oct6.log` pass9/52,6/57,8/79,12/107. All873 corrected archivedfiles remain byte-exact in `/tmp/opentax-roth-checkbox-current-main-original-comparison-oct6.json`.
 
 The corrected35/295 proof seals ordinary checkbox classification only. Earlier original checked ordinary sources are superseded and preserved, not issuer-authenticated corrections. Original10/70 mathematical reproduction does not establish paper compliance: traditional/SEP/SIMPLE right-margin labeling and codeN actual annual recharacterization, destination/contribution/earnings and required statement remain unresolved. Current2025 conversion coexistence and broader source/authentication/IRS parent remain open. Ledger1468; frozen52 and future section unchanged.
+
+## 2026-10-06 — retained account margin and whole current recharacterizations
+
+Separate isolated follow-on from ordinary-checkbox prerequisite `c7b50f6b6`.
+The original 45/365 artifacts and all 997 archived file hashes remain unchanged.
+In particular the original 10/70 are **not** complete source-paper proof: their
+traditional/SEP/SIMPLE margin labels are missing, their opaque Code N amount
+lacks annual contribution/recharacterization facts, and their Code Q classification
+alone does not establish qualified-payment eligibility. These are superseded
+only by separately named constructed reviewed regression records below, not by
+silently altering or authenticating the originals.
+
+The retained custodian account classification now distinguishes traditional IRA,
+SEP, SIMPLE, ordinary Roth, Roth SIMPLE, Roth SEP and non-IRA. Ordinary Roth and
+N/R recharacterizations remain unmarked in the native IRA/SEP/SIMPLE indicator;
+traditional/SEP/SIMPLE and Roth SIMPLE use their actual marker. Form4852 line8j
+also requires the actual IRA/SEP/SIMPLE **right-margin** label for applicable
+accounts. Its paper form has no invented IRA checkbox or invented label widget.
+A printable physical annotation beside line8j is independently checked in actual
+completed source PDF bytes: visible page rectangle, printed flags, canonical
+normal appearance glyph stream and actual Helvetica font. Hidden/moved/missing
+or metadata-only labels are rejected. The current source parser covers that
+verified appearance encoding; handwritten/flattened or other encodings need
+actual parser/layout review rather than a metadata declaration.
+
+Code Q substitute filings require distinct retained account registration,
+original-owner account linkage, earliest owned Roth contribution receipt and
+issued5498 facts, complete original-owner Roth account inventory, and sourced
+age59½ or inherited-account death eligibility. The 2020 first account is an
+ordinary Roth; the actual Roth SIMPLE/SEP accounts begin2024. No pre2023 Roth
+SIMPLE/SEP is fabricated. Younger living filer's constructed inherited account
+records do not imply disability and do not erase the separate genuine SIMPLE
+25% early-distribution tax. Qualification/source owner/type/date/first-year
+conflicts reject public calculation, native preparation and direct PDF changes;
+rehashing retained issuer facts still reaches exact parsed-source-fact rejection.
+Disability or other qualification regimes without their complete evidence and
+other affected source consequences remain guarded. These constructed issuer
+records establish contract/byte/parsed-fact behavior, **not external authenticity**.
+
+Genuine entire regular2025 traditional→ordinary Roth recharacterizations now
+bind actual owned contribution receipts, original and receiving5498 records,
+trustee transfer principal and related positive/negative earnings, receiving
+payment, and complete annual owner contribution inventory. The whole current
+transfer is reported on1040 line4a, zero taxable recharacterization income; no
+unnecessary contribution Form8606 is invented. Each owned payment receives its
+required native IRARecharacterizationStmt and printed statement, including
+actual name/SSN, accounts, dates, principal and earnings. Multiple same-payer
+accounts and both spouses are reconciled per complete annual inventory; principal
+is counted once per actual receipt. Actual compensation, date of birth, annual
+contribution limit and Roth MAGI phaseout are checked from the current return.
+The corrected former opaque N8000 fixture now separately supplies principal7000
+and earnings1000: its total IRA gross is17000, not the original9000; tax remains
+11155 because that transfer is nontaxable. Loss5999.50, phased-limit2682.49 and
+joint four-account gross14199.99 retain raw cents with filed line equations.
+
+Boundaries in this existing parent remain explicit: partial or reverse
+recharacterizations, prior-year transfers, nondeductible residual/PartI joins,
+spousal compensation and annual Roth payment-basis/history coexistence need
+complete corresponding source joins. Below the Saver's Credit ceiling, an
+actual annual contribution/distribution-lookback Form8880 join is required;
+the current source does not silently omit a potentially available credit.
+The source-derived30000-AGI negative reaches that precise native guard; a
+changed direct-PDF source also rejects the mismatched prepared bundle. Roth
+SEP employer matching/nonelective contribution codes2/7 and unsupported
+qualification/history facts retain their actual-source gates. Unknown payer
+TIN cannot be invented to satisfy native EmployerEIN. IRS business-rule/ATS
+acceptance and external source authentication remain external gates.
+
+Terminal proof before sealing: focused source modules9/0; qualification/annual
+source follow-on3/0; related28-module compatibility274/0 in3m28s, logs
+`/tmp/opentax-ira-margin-qualified16.log`,
+`/tmp/opentax-ira-margin-qualified18.log`,
+`/tmp/opentax-ira-margin-related17.log`. Corrected paper10/71, explicit margin2/16
+and annual owner/account3/18: **15 packets105 pages**, full public graph with
+independent expected tax/deduction/penalty joins, full local2025v5.4XSD, no
+transmitted ERO evidence attachments, native/directPDF conflicts. Held source,
+pending, XML(timestamp only), PDF bytes, origin and actual retained bytes replay
+terminal15/105 (`/tmp/opentax-ira-margin-held17.log`). All105 packet pages were
+rendered and visually reviewed; all34 completed source first pages exactly equal
+their packet-copy pixels, and all34 actual instruction pages equal the reviewed
+common official page (68 retained pages total;
+`/tmp/opentax-ira-margin-source-pixels17.log`). The corrected ordinary Roth held
+35/295 also replay exactly against current source from frozen copies; terminal
+logs `/tmp/opentax-ira-margin-old35-{source,inventory,conversion,history}19.log`.
+Broader parent remains open. Current conversion coexistence remains a separate
+unsealed phase. No main, board, catalog, PR or future scope was changed.
+
+Artifact replay (isolated checkout, real Poppler and Deno on PATH):
+
+```
+deno run --allow-all .state/research/ira-margin-paper-audit/replay.ts
+```
+
+The audit root retains verified manifest, source pixel comparison, all-page
+contact index/renders, original immutable-byte verification, preserved PDF cache
+and prior35 frozen copies. New tax artifacts remain ignored.
+
+The final immutable15/105 replay is `/tmp/opentax-ira-margin-held-final22.log`.
+Use the frozen source root for integration replay:
+
+```
+deno run --allow-all .state/research/ira-margin-paper-audit/replay.ts .state/research/ira-margin-paper-audit/held15-preserved
+```
+
+Frozen manifest SHA256
+`a066bda7456c27951bcc0ac28a30537f0703bdcfdbd3ecdef03191775fa5e911`;
+source-pixel comparison
+`236b44b4f6718812df7501a4293ca4dab07e4c4afad5e424350a7fb0f7aa81a0`;
+visual review
+`97d133b5984256dbee0325074cbf7a767aff3191a493d5b9386708b4a8f055db`;
+original immutable-byte verification
+`3fcb63e3c7421958ce476f996fe5f264a7640cf912436afcf6ababe3db2662f6`.
+Aggregate proof index SHA256
+`5c8fe7b1ba51111dbff860d0963ca0e06d004fa1dee9bf9adba0b9a787d6689f`.
+
+Primary sources: [official Form4852 Rev9-2020 line8j instructions](https://www.irs.gov/pub/irs-pdf/f4852.pdf),
+[2025 i1099r Box7 and CodeQ/5498 recharacterizations](https://www.irs.gov/pub/irs-prior/i1099r--2025.pdf),
+[2025 i8606 Recharacterizations](https://www.irs.gov/instructions/i8606),
+[2025 Pub590-B qualified Roth payments/inherited accounts](https://www.irs.gov/publications/p590b).
+
+Authoritative final four-source-module gate:
+`/tmp/opentax-ira-margin-final-source23.log` terminal10/0 in58s, including the
+inherited original-owner/death/first-year negatives and the actual low-income
+Form8880 source boundary. Printable-appearance review additionally rejects
+optional-content visibility, rotation and invalid normal XObject subtype
+(`/tmp/opentax-ira-margin-appearance24.log`, terminal2/0 in8s). These source
+checks preserve the reviewed positive PDF/source bytes. Frozen15 replay against
+that final appearance gate is `/tmp/opentax-ira-margin-held-final25.log`.

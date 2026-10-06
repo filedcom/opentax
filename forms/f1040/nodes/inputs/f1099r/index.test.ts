@@ -2412,19 +2412,23 @@ Deno.test("f1099r.compute: code T qualified Roth produces zero taxable", () => {
   assertEquals(input.line4b_ira_taxable, 0);
 });
 
-Deno.test("f1099r.compute: code N recharacterization produces no income routing", () => {
+Deno.test("f1099r.compute: code N current recharacterization reports IRA gross with zero taxable income", () => {
   const result = compute([minimalIraItem({
     box7_distribution_code: DistributionCode.CodeN,
+    box7_ira_simple_indicator: false,
     box2a_taxable_amount: 0,
   })]);
   const input = f1040Input(result);
   const taxable = (input.line4b_ira_taxable ?? 0) as number;
   assertEquals(taxable, 0);
+  assertEquals(input.line4a_ira_gross, 10000);
+  assertEquals(input.line5a_pension_gross, undefined);
 });
 
 Deno.test("f1099r.compute: code R recharacterization prior year produces no income", () => {
   const result = compute([minimalIraItem({
     box7_distribution_code: DistributionCode.CodeR,
+    box7_ira_simple_indicator: false,
     box2a_taxable_amount: 0,
   })]);
   const input = f1040Input(result);

@@ -1,3 +1,5 @@
+import { qualifiedRothSource } from "./form4852_qualified_roth.fixture.ts";
+import { annualRecharacterizationSource } from "./form4852_recharacterization.fixture.ts";
 import { assertForm4852RetainedEvidence } from "./form4852_retained_evidence.ts";
 import { multipleNuaInputs } from "./pdf/review-4972-multiple-nua.fixture.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
@@ -19,7 +21,7 @@ import { buildPdfBytes, type PdfPageOrigin } from "./pdf/builder.ts";
 import { w2 } from "../nodes/inputs/w2/index.ts";
 import { f1099r } from "../nodes/inputs/f1099r/index.ts";
 
-const root = ".state/research/form4852-source";
+const root = ".state/research/form4852-source-margin-corrected";
 const schema =
   ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 const ordinaryW2 = {
@@ -40,6 +42,7 @@ const ordinaryW2 = {
 };
 const pension = (n: number, facts: Record<string, unknown>) =>
   substitute(FormType.R_1099, n, {
+    retirement_account_type: "non_ira",
     gross_distribution: 30000,
     taxable_amount: 20000,
     distribution_code: "7",
@@ -64,6 +67,7 @@ Deno.test("Form4852 actual public completed-PDF sources reconcile multiple owner
     taxable_amount: 10000,
     distribution_code: "1",
     is_ira: true,
+    retirement_account_type: "traditional_ira",
     federal_withheld: 1500,
   });
   const rolled = pension(13, {
@@ -75,6 +79,7 @@ Deno.test("Form4852 actual public completed-PDF sources reconcile multiple owner
     gross_distribution: 50000,
     taxable_amount: 50000,
     is_ira: true,
+    retirement_account_type: "traditional_ira",
     retirement_source: {
       payer_name: "Reviewed Retirement Custodian",
       payer_ein: "123456790",
@@ -109,6 +114,7 @@ Deno.test("Form4852 actual public completed-PDF sources reconcile multiple owner
   const lumpInputs = multipleNuaInputs(1, 0);
   const lumpOriginal = lumpInputs.f1099r[0];
   const lumpItem = substitute(FormType.R_1099, 21, {
+    retirement_account_type: "non_ira",
     payer_name: lumpOriginal.payer_name,
     payer_tin: lumpOriginal.payer_ein,
     recipient_ssn: "123456789",
@@ -137,6 +143,7 @@ Deno.test("Form4852 actual public completed-PDF sources reconcile multiple owner
   const multipleLumpInputs = multipleNuaInputs(2, 0);
   const multipleLumpItems = multipleLumpInputs.f1099r.map((original, index) =>
     substitute(FormType.R_1099, 22 + index, {
+      retirement_account_type: "non_ira",
       payer_name: original.payer_name,
       payer_tin: original.payer_ein,
       recipient_ssn: "123456789",
@@ -368,6 +375,7 @@ Deno.test("Form4852 actual public completed-PDF sources reconcile multiple owner
       },
       items: [
         pension(24, {
+          retirement_account_type: "non_ira",
           gross_distribution: 20000,
           taxable_amount: 20000,
           distribution_code: "2",
@@ -443,6 +451,7 @@ Deno.test("Form4852 actual public completed-PDF sources reconcile multiple owner
         gross_distribution: 30000,
         taxable_amount: 30000,
         is_ira: true,
+        retirement_account_type: "traditional_ira",
         retirement_source: {
           payer_name: "Reviewed Retirement Custodian",
           payer_ein: "123456790",
@@ -484,6 +493,7 @@ Deno.test("Form4852 actual public completed-PDF sources reconcile multiple owner
           taxable_amount: 4000,
           distribution_code: "S",
           is_ira: true,
+          retirement_account_type: "simple_ira",
         }),
         pension(17, {
           gross_distribution: 6000,
@@ -491,20 +501,37 @@ Deno.test("Form4852 actual public completed-PDF sources reconcile multiple owner
           distribution_code: "2",
         }),
         pension(18, {
+          qualified_roth_review: qualifiedRothSource(
+            18,
+            "roth_simple_ira",
+            true,
+          ),
           gross_distribution: 5000,
           taxable_amount: 0,
           distribution_code: "Q",
           is_ira: true,
+          retirement_account_type: "roth_simple_ira",
         }),
         pension(19, {
           gross_distribution: 8000,
           taxable_amount: 0,
           distribution_code: "N",
-          is_ira: true,
+          is_ira: false,
+          retirement_account_type: "traditional_ira",
+          retirement_source: {
+            payer_name: "Reviewed Retirement Custodian",
+            payer_ein: "123456790",
+            box1_gross_distribution: 8000,
+            box2a_taxable_amount: 0,
+            box7_distribution_code: "N",
+            box7_ira_simple_indicator: false,
+            ts: "T",
+            ira_recharacterization_review: annualRecharacterizationSource(19),
+          },
         }),
       ],
       expected: {
-        line4a_ira_gross: 9000,
+        line4a_ira_gross: 17000,
         line4b_ira_taxable: 4000,
         line5a_pension_gross: 6000,
         line5b_pension_taxable: 6000,
@@ -537,6 +564,7 @@ Deno.test("Form4852 actual public completed-PDF sources reconcile multiple owner
       },
     },
   ];
+  await Deno.mkdir(root, { recursive: true });
   for (const row of rows) {
     const retained = await retainedForm4852Sources(
       row.items,
@@ -986,6 +1014,7 @@ Deno.test("Form4852 retained source cannot also enter income as an ordinary W2 o
           medicare_withheld: 1087.5,
         }
         : {
+          retirement_account_type: "non_ira",
           gross_distribution: 20000,
           taxable_amount: 20000,
           distribution_code: "2",

@@ -1,4 +1,6 @@
 import { sourceDistributionFraction } from "../../../nodes/intermediate/forms/form4972/source-rounding.ts";
+
+import { reconcileIraRecharacterizations } from "../../form8606_recharacterization_source.ts";
 import { form4852NativeSources } from "../../form4852_native_source.ts";
 import type { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
@@ -190,6 +192,17 @@ export const f1099r: MefFormDescriptor<"f1099r", Fields, readonly string[]> = {
       form4852NativeSources(context?.pending, context?.filer).f1099rs;
     const allSources = [...(fields.f1099rs ?? []), ...substitutes];
     if (allSources.length === 0) return [];
+    if (
+      allSources.some((item) =>
+        ["N", "R"].includes(item.box7_distribution_code ?? "") ||
+        item.ira_recharacterization_review
+      )
+    ) {
+      reconcileIraRecharacterizations(
+        { ...context?.pending, f1099r: { f1099rs: allSources } },
+        context?.filer,
+      );
+    }
     assertDistinct1099RCopies(allSources);
     assert1099RRecipientOwner({ f1099rs: allSources }, context?.filer);
     return allSources.map((item, index) =>

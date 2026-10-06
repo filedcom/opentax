@@ -1,3 +1,5 @@
+import { assertQualifiedRothSource } from "../nodes/inputs/f4852/qualified-roth.ts";
+import { reviewedForm4852AccountType } from "../nodes/inputs/f4852/retirement-account.ts";
 import { reconcileForm8606RothInventories } from "./form8606_roth_inventory_reconciliation.ts";
 import { reconcileForm8606RothActivity } from "./form8606_roth_activity_reconciliation.ts";
 import { isDeepStrictEqual } from "node:util";
@@ -93,6 +95,12 @@ export function reconcileForm4852Source(
         "Form 4852 reviewed facts differ from entered substitute",
       );
     }
+    reviewedForm4852AccountType(item, true);
+    assertQualifiedRothSource(
+      item,
+      pending.general as Record<string, unknown> | undefined,
+      item.subject_ts === "S",
+    );
     const recipient = normalize(item.recipient_ssn ?? "");
     if (
       !recipient || (recipient !== primary && recipient !== spouse) ||

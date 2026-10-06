@@ -1,4 +1,9 @@
 import {
+  form4852IraMarginLabel,
+  reviewedForm4852AccountType,
+} from "../../../nodes/inputs/f4852/retirement-account.ts";
+import { addForm4852IraMargin } from "../../form4852_ira_margin.ts";
+import {
   effectiveTaxable,
   FormType,
   itemSchema,
@@ -84,6 +89,15 @@ export const form4852RetainedPdf: PdfFormDescriptor = {
     field("amount_determination_explanation", "f1_29[0]"),
     field("payer_form_efforts_explanation", "f1_30[0]"),
   ],
+  decoratePages(document, pages, instance) {
+    if (instance.ira_margin_label) {
+      addForm4852IraMargin(
+        document,
+        pages[0],
+        String(instance.ira_margin_label),
+      );
+    }
+  },
   instances(raw, filer) {
     if (!Array.isArray(raw.f4852s)) return [];
     if (!filer) throw new Error("Form 4852 retained PDF needs filed identity");
@@ -202,6 +216,9 @@ export const form4852RetainedPdf: PdfFormDescriptor = {
           r1099_locality_name: item.locality_name,
           employee_contributions: item.employee_contributions,
           distribution_code: item.distribution_code,
+          ira_margin_label: reviewedForm4852AccountType(item)
+            ? form4852IraMarginLabel(item)
+            : undefined,
         };
     });
   },

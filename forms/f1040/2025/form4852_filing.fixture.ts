@@ -1,3 +1,6 @@
+import { qualifiedRothDocuments } from "../nodes/inputs/f4852/qualified-roth.ts";
+import { iraRecharacterizationDocuments } from "../nodes/intermediate/forms/form8606/recharacterization.ts";
+import { addForm4852IraMargin } from "./form4852_ira_margin.ts";
 import { PDFCheckBox, PDFDocument, PDFTextField, StandardFonts } from "pdf-lib";
 import { createHash } from "node:crypto";
 import {
@@ -139,6 +142,9 @@ export function substitute(
           ...(item.locality_name !== undefined
             ? { locality_name: item.locality_name }
             : {}),
+          ...(facts.retirement_account_type
+            ? { account_type: facts.retirement_account_type }
+            : {}),
           distribution_code: item.distribution_code!,
           is_ira: item.is_ira ?? false,
         },
@@ -153,6 +159,23 @@ export async function retainedForm4852Sources(
   const documents: Form4852RetainedDocument[] = [];
   const records = [];
   const add = (document_reference: string, bytes: Uint8Array) => {
+    const prior = documents.find((d) =>
+      d.document_reference === document_reference
+    );
+    if (prior) {
+      if (
+        createHash("sha256").update(prior.bytes).digest("hex") !==
+          createHash("sha256").update(bytes).digest("hex")
+      ) {
+        throw new Error(
+          "Shared retained source reference has conflicting actual bytes",
+        );
+      }
+      return {
+        document_reference,
+        sha256: createHash("sha256").update(bytes).digest("hex"),
+      };
+    }
     documents.push({ document_reference, bytes });
     return {
       document_reference,
@@ -182,6 +205,13 @@ export async function retainedForm4852Sources(
       }
     }
     form.updateFieldAppearances(await pdf.embedFont(StandardFonts.Helvetica));
+    if (copies[index].ira_margin_label) {
+      addForm4852IraMargin(
+        pdf,
+        pdf.getPage(0),
+        String(copies[index].ira_margin_label),
+      );
+    }
     const completed_form = add(
       item.completed_form_review_reference!,
       await pdf.save(),
@@ -203,7 +233,27 @@ export async function retainedForm4852Sources(
       reviewed_substitute: item,
       completed_form,
       source_workpaper,
-      treatment_documents,
+      treatment_documents: [
+        ...treatment_documents,
+        ...(item.qualified_roth_review
+          ? qualifiedRothDocuments(item.qualified_roth_review).map((facts) =>
+            add(
+              facts.source_document_reference,
+              new TextEncoder().encode(JSON.stringify(facts)),
+            )
+          )
+          : []),
+        ...(item.retirement_source?.ira_recharacterization_review
+          ? iraRecharacterizationDocuments(
+            item.retirement_source.ira_recharacterization_review,
+          ).map((facts) =>
+            add(
+              facts.source_document_reference,
+              new TextEncoder().encode(JSON.stringify(facts)),
+            )
+          )
+          : []),
+      ],
       taxpayer_completed_form_confirmed: true as const,
       original_excluded_from_current_income_confirmed: true as const,
     });

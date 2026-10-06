@@ -1,3 +1,4 @@
+import { iraRecharacterizationStatement } from "./ira_recharacterization_statement.ts";
 import { form8853MedicareStatements } from "./f8853_medicare_statements.ts";
 import { eitc } from "./eitc.ts";
 import { cccLoanStatement } from "./ccc_loan_statement.ts";
@@ -394,6 +395,8 @@ export const ALL_MEF_FORMS = [
   form8283FmvReductionStatement,
   // Form 8621 mark-to-market sale statements precede Part V statements in MeF.
   form8621MtmDispositionsStatement,
+
+  iraRecharacterizationStatement,
   // Form 8621 Part V holding-period computation statements follow numbered forms.
   form8621ExcessStatement,
   // Form 8814 line 1a nominee and interest-adjustment statement.

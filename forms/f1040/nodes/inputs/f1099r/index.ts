@@ -7,6 +7,11 @@ import {
   isSourceMoney,
   sameSourceMoney,
 } from "../../intermediate/forms/form4972/source-rounding.ts";
+
+import {
+  iraRecharacterizationReviewSchema,
+  reviewedIraRecharacterization,
+} from "../../intermediate/forms/form8606/recharacterization.ts";
 import { reconcileRothOwnerInventoryCopies, rothOwnerInventorySchema } from "../../intermediate/forms/form8606/roth-inventory.ts";
 import {
   reviewedRothActivity,
@@ -482,6 +487,8 @@ export const itemSchema = z.object({
   joint_annuity: z.boolean().optional(),
   combined_ages_at_start: z.number().nonnegative().optional(),
   prior_excludable_recovered: z.number().nonnegative().optional(),
+
+  ira_recharacterization_review: iraRecharacterizationReviewSchema.optional(),
 
   // Form 8606 — traditional IRA prior basis (nondeductible contributions carried forward).
   // When set, this item's gross distribution is routed through Form 8606 Part I to compute
@@ -1133,6 +1140,7 @@ function validateIraRolloverEvidence(item: R1099Item): void {
 
 // Cross-field validation for a single item
 function validateItem(item: R1099Item): void {
+  if (item.ira_recharacterization_review) reviewedIraRecharacterization(item);
   if (
     item.box7_distribution_code === DistributionCode.Code8 &&
     item.box7_ira_simple_indicator !== true &&
@@ -1295,7 +1303,7 @@ function activeItems(items: R1099Items): R1099Items {
 function iraItems(items: R1099Items): R1099Items {
   return items.filter((item) =>
     item.box7_ira_simple_indicator === true ||
-    [DistributionCode.CodeJ, DistributionCode.CodeT, DistributionCode.CodeQ].includes(item.box7_distribution_code!)
+    [DistributionCode.CodeJ, DistributionCode.CodeT, DistributionCode.CodeQ, DistributionCode.CodeN].includes(item.box7_distribution_code!)
   );
 }
 
@@ -1303,7 +1311,7 @@ function iraItems(items: R1099Items): R1099Items {
 function pensionItems(items: R1099Items): R1099Items {
   return items.filter((item) =>
     item.box7_ira_simple_indicator !== true &&
-    ![DistributionCode.CodeJ, DistributionCode.CodeT, DistributionCode.CodeQ].includes(item.box7_distribution_code!) &&
+    ![DistributionCode.CodeJ, DistributionCode.CodeT, DistributionCode.CodeQ, DistributionCode.CodeN].includes(item.box7_distribution_code!) &&
     item.box7_distribution_code !== DistributionCode.Code8
   );
 }
@@ -1337,6 +1345,7 @@ function isExcludedFromGross(item: R1099Item): boolean {
   // Form 1040 line 4a under the 2025 line 4a/4b Exception 2 instructions.
   if (
     item.box7_distribution_code !== DistributionCode.CodeQ &&
+    item.box7_distribution_code !== DistributionCode.CodeN &&
     ZERO_TAXABLE_CODES.has(item.box7_distribution_code)
   ) return true;
   return false;
