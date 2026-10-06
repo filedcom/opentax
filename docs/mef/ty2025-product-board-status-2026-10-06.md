@@ -4214,3 +4214,8 @@ Previous goal turn made authoritative progress: settled production118c279a7 inte
 
 
 Before mixed-family/state source work, existingparent scope reviewed against2025IRS ScheduleH instructions, CA2025EDD householdguide and2025CFR31.3302(a)/(b). FederalfamilyFUTA exclusions differ from CAUI coverage: childunder18/spouse/parent CAexcluded, child18–20 CAcovered but federalFUTAexcluded. Statecontribution credit cannot blanket omit all federallyexcludedwages; reduction requiresFUTA/state intersection. Actual merged rejected before source SHA d87cf202ff88ac3f65af8674df124b19da234f9b961c1820fb8aa82dad5aebea and script privately preserved; no rewrite of prior archives. This is the existing mixed-worker/family/state parent, not futurework.
+
+
+## Before verified unpaid state evidence seal
+
+Fullboard reread before seal; previous work integrated118c279a7 and verified externalPR63 at9a58033c2. Mainordinary14module gate session11127 terminal74/0 (6m35s), noignoredsummary. Actualsaved46returns/272pages session56640 terminal0:43fresh exactwholegraph/prepared/carry/origins/PDF/nativeonlyReturnTs plus3historicallyqualified; allsourceunchanged/fullXSD, productionbytes unchanged throughout. Root5distinct unpaid source packets/34pages reviewed, zeroWidgets/Acrofields and mainPDFsexact. Allunpaid original/private source/gate hashes reverified. Frozen52/future exact; ledger1534 before boundedseal. Broaderfamily/state/sourceauthentication/fullcurrentbatch/IRS parents remainopen; isolated mixedstate candidate not integrated.

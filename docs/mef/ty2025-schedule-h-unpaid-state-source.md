@@ -78,3 +78,10 @@ seven, and is preserved separately. Existing all-paid and paid-late routes
 remain active; broader
 state-account crediting, historical external acceptance, and the wider
 Schedule H parent remain open.
+
+
+## Main integration evidence
+
+Production118c279a7 passed the ordinary14module payroll task **74/0** (6m35s), terminalsession11127, `/tmp/opentax-scheduleh-unpaid-main-standard-oct6.log`; command retained in samebasename.zsh. Actual saved main replay terminalsession56640 covers **46returns/272pages**:43fresh exactwhole pending/prepared/carry/origins/PDF/nativeexceptReturnTs and3historicallyqualified archives, every source unchanged/fullTY2025v5.4XSD. `/tmp/opentax-scheduleh-unpaid-main-final46-oct6/report.json` records results. Candidate prior41 replay independently passed41/238; isolatedbroad73/0 loaded the earlier three-positive testversion, finalfocus3/0 separately covers allfive shapes. Root reviewedall34newpages and zeroWidget/Acrofields; mainPDFs preserve those exact bytes.
+
+Root preservation manifests `/tmp/opentax-scheduleh-unpaid-{root-review,root-extra2,candidate-gates,main-final-gates}-preservation-oct6.json` contain28+10+88+97 original/private entries, all rehashed afterterminalgates. Original before sources without accountreview remain rejected; firsttwo positives add only those explicit status facts. Fullcurrentproduction regression, state/family histories, sourceauthentication and IRSacceptance remainopen.
