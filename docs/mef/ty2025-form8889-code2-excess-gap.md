@@ -247,3 +247,5 @@ pending graphs, PDFs, and page origins exactly; XML differs only in
 (`/tmp/opentax-hsa-postyear-raw-replay-oct6.log`). The earlier two owner-paid
 and two employer-recoup packets retain exact PDF, page-origin, and document
 bytes, with source/pending JSON differing only in generated filer timestamps.
+
+Main integration passes the standard157-case combined gate (149 HSA and eight shareholder-source checks). Actual retained postyear records reproduce both seven-page packets, whole pending, PDF and origins exactly, with native timestamp variation only and full v5.4 XSD validation. Prior owner-paid fourteen pages and employer-recoup twelve pages also replay exactly from their original saved inputs and source bytes. All fourteen new pages were visually reviewed. Main logs and manifests are retained in the October6 archive; broader source authenticity, single-owner corrections, extensions and IRS gates remain open.
