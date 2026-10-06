@@ -115,3 +115,8 @@ gates remain preserved with their actual outcomes. Final116-pass gate is the
 ordinary typed result after the plan-identity and own-date-control corrections.
 No parent-completion credit, issuer authentication, prior accepted election,
 IRS acceptance, or authorized overflow filing route is claimed here.
+
+
+## Final main integration verification
+
+Production5b498099c/b03b6ec26 andtest551c3a19f retain allsevenheldproductionhashes. Main ordinary ten-module typed `deno task test` terminal exit0, **116 passed /0 failed (6m30s)**; `/tmp/opentax-4972-participant-main-standard-oct6.log`. Its six generated packets match reviewed36pages byte-for-byte. Independent main actualsix-source replay terminal0 checks graph normalization and both native prepared representations separately, carry/origins/PDF/nativeonlyReturnTs/freshfullv5.4XSD and18originalJSON/PDF/XMLhashesunchanged; `/tmp/opentax-4972-participant-main6-held-oct6/report.json`. Main actual95legacy replay terminal0, `/tmp/opentax-4972-participant-main95-replay-oct6.json`, exactwholepending/PDF/nativeexceptReturnTs andall293JSON/PDF/XMLhashes unchanged before/after. Older95wrappers lackcarry; no95carrycomparison orfresh95XSD result is claimed. Sevenproductionhashes remained held throughout. Main95preservation297files, ordinary23files, worker122 andcorrection20files are retained separately in private research. Ledger1540 records this bounded distinctparticipant/sharedemployerplan source route. Three/fiveparticipant paper/native overflow, widerAMT/authentication/IRSacceptance remain existingopen requirements.
