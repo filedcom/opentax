@@ -30,7 +30,7 @@ export const reviewedStockLossLedgerSchema = z.object({
   no_current_year_stock_transactions: z.literal(true),
   no_section_1367_1_g_election: z.literal(true),
   no_other_2025_stock_basis_changes: z.literal(true),
-  no_other_schedule_e_activity: z.literal(true),
+  no_other_schedule_e_activity: z.boolean(),
   materially_participated_in_s_corporation: z.literal(true),
   material_participation_workpaper_reference: z.string().trim().min(1),
   no_shareholder_debt_or_repayments: z.boolean(),

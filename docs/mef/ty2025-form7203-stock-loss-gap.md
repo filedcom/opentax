@@ -410,3 +410,13 @@ shareholders' 7203 copies and joint E/8995 rows are required. Original loss
 economics and prior accepted-history guard are retained. This is a bounded
 current source/copy route, not closure of the full
 stock/debt/repayment/authentication parent.
+
+## Shared-issuer and multiple current owned-corporation sources (2026-10-06)
+
+[Detailed current source proof](ty2025-form7203-multi-owned-debt-source-proof.md)
+scopes issuer identity to shareholder/EIN, reconciles actual unchanged ownership
+and shared corporate books/banks, and binds complete per-owner issued business
+inventories before independently limiting each source's stock/debt loss. MFJ
+copies and QBI trade grouping remain source-derived. This retains prior
+accepted-history and wider source/filing boundaries; it does not close the
+parent.

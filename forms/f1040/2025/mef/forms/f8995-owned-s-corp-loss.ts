@@ -46,11 +46,12 @@ export function assertOwnedSCorpLoss8995(
       );
     }
     return {
-      businesses: expected.owned_s_corp_loss_filing_rows.map((r) => ({
-        businessName: r.business_name,
-        tin: { kind: "ein" as const, value: r.corporation_ein },
-        qbi: r.qbi,
-      })),
+      businesses: (expected.owned_s_corp_qbi_business_rows ??
+        expected.owned_s_corp_loss_filing_rows).map((r) => ({
+          businessName: r.business_name,
+          tin: { kind: "ein" as const, value: r.corporation_ein },
+          qbi: r.qbi,
+        })),
       lines: Object.fromEntries(
         Array.from(
           { length: 16 },

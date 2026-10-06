@@ -219,6 +219,20 @@ export const itemSchema = z.object({
   // At-risk suspended losses from pre-2018 years (K1S > "Pre-2018 At-Risk" tab)
   pre2018_at_risk_suspended: z.number().nonnegative().optional(),
 }).superRefine((item, ctx) => {
+  if (
+    item.form7203_stock_loss_ledger?.no_other_schedule_e_activity === false &&
+    !(item.form7203_debt_evidence?.kind !==
+        "prior_reduced_formal_note_repayment" &&
+      item.form7203_debt_evidence?.owned_current_records
+        ?.complete_current_shareholder_source_inventory)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Additional shareholder corporations need complete owned source inventory",
+    });
+  }
+
   if (item.eic_passive_activity_review) {
     for (
       const key of ["corporation_ein", "source_document_reference"] as const
@@ -479,7 +493,7 @@ function form8995Output(items: K1SCorpItems): NodeOutput[] {
     item.form7203_debt_evidence?.owned_current_records !== undefined
   );
   if (owned.length > 0) {
-    if (owned.length === 2 && items.length === 2) {
+    if (owned.length >= 2 && owned.length === items.length) {
       const lines = ownedDebtFamilyQbiLines(owned, 0);
       return [
         output(form8995, {
@@ -491,6 +505,20 @@ function form8995Output(items: K1SCorpItems): NodeOutput[] {
     if (owned.length !== 1 || items.length !== 1) {
       throw Error(
         "Owned7203/QBI loss needs its independently sourced single corporation",
+      );
+    }
+    const ownedNote = owned[0].form7203_debt_evidence;
+    if (
+      !ownedNote || ownedNote.kind === "prior_reduced_formal_note_repayment"
+    ) throw Error("Owned current note needed");
+    if (
+      ownedNote.owned_current_records!
+        .co_owned_corporate_inventory ||
+      (ownedNote.owned_current_records!
+          .complete_current_shareholder_source_inventory?.length ?? 1) > 1
+    ) {
+      throw Error(
+        "Complete co-owned/multi-corporation source family cannot omit its required return K1s",
       );
     }
     const lines = ownedSCorpLossLines(owned[0], 0);
@@ -694,7 +722,7 @@ function buildForm7203Fields(
 
 function form7203Outputs(items: K1SCorpItems): NodeOutput[] {
   if (
-    items.length === 2 &&
+    items.length >= 2 &&
     items.every((item) =>
       item.form7203_debt_evidence?.kind !==
         "prior_reduced_formal_note_repayment" &&
@@ -932,7 +960,7 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
     }
     if (
       k1_s_corps.length !== 1 &&
-      !(k1_s_corps.length === 2 &&
+      !(k1_s_corps.length >= 2 &&
         k1_s_corps.every((item) =>
           item.form7203_debt_evidence?.kind !==
             "prior_reduced_formal_note_repayment" &&

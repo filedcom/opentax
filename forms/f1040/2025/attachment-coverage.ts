@@ -289,7 +289,8 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
       if (
         keys.length === 1 && keys[0] === "owned_debt_loss_sources" &&
         Array.isArray(fields.owned_debt_loss_sources) &&
-        fields.owned_debt_loss_sources.length === 2
+        fields.owned_debt_loss_sources.length >= 2 &&
+        fields.owned_debt_loss_sources.length <= 4
       ) return false;
       const allowedKeys = new Set([
         "stock_basis_beginning",

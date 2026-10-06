@@ -56,6 +56,29 @@ export const scheduleEStockLossPdf: PdfFormDescriptor = {
       pdfField: `${page}Table_Line28a-f[0].RowB[0].c2_6[0]`,
     },
     text("line28i_b", `${page}Table_Line28g-k[0].RowB[0].f2_22[0]`),
+    ...["C", "D"].flatMap((row, i): PdfFieldEntry[] => [
+      text(
+        `corporation_name_${row.toLowerCase()}`,
+        `${page}Table_Line28a-f[0].Row${row}[0].f2_${9 + i * 3}[0]`,
+      ),
+      text(
+        `corporation_code_${row.toLowerCase()}`,
+        `${page}Table_Line28a-f[0].Row${row}[0].f2_${10 + i * 3}[0]`,
+      ),
+      text(
+        `corporation_ein_${row.toLowerCase()}`,
+        `${page}Table_Line28a-f[0].Row${row}[0].f2_${11 + i * 3}[0]`,
+      ),
+      {
+        kind: "checkbox",
+        domainKey: `basis_required_${row.toLowerCase()}`,
+        pdfField: `${page}Table_Line28a-f[0].Row${row}[0].c2_${9 + i * 3}[0]`,
+      },
+      text(
+        `line28i_${row.toLowerCase()}`,
+        `${page}Table_Line28g-k[0].Row${row}[0].f2_${27 + i * 5}[0]`,
+      ),
+    ]),
     text("line29b_i", `${page}f2_42[0]`),
     text("line31", `${page}f2_46[0]`),
     text("line32", `${page}f2_47[0]`),
@@ -75,16 +98,16 @@ export const scheduleEStockLossPdf: PdfFormDescriptor = {
       return [{
         joint_header: true,
         no_prior_losses: true,
-        corporation_name: rows[0].source.corporation_name,
-        corporation_code: "S",
-        corporation_ein: rows[0].source.corporation_ein,
-        basis_required: true,
-        line28i: rows[0].allowed,
-        corporation_name_b: rows[1].source.corporation_name,
-        corporation_code_b: "S",
-        corporation_ein_b: rows[1].source.corporation_ein,
-        basis_required_b: true,
-        line28i_b: rows[1].allowed,
+        ...Object.fromEntries(rows.flatMap((r, i) => {
+          const suffix = ["", "_b", "_c", "_d"][i];
+          return [
+            [`corporation_name${suffix}`, r.source.corporation_name],
+            [`corporation_code${suffix}`, "S"],
+            [`corporation_ein${suffix}`, r.source.corporation_ein],
+            [`basis_required${suffix}`, true],
+            [`line28i${suffix}`, r.allowed],
+          ];
+        })),
         line29b_i: total,
         line31: total,
         line32: -total,

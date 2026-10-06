@@ -293,7 +293,11 @@ export function projectOwned7203Family(
   }
   const family = ownedDebtFamily(sources);
   const owners = new Set(family.rows.map((r) => r.source.recipient_tin));
-  if (!owners.has(filer.primarySSN) || !owners.has(filer.spouse.ssn)) {
+  if (
+    [...owners].some((ssn) =>
+      ssn !== filer.primarySSN && ssn !== filer.spouse!.ssn
+    )
+  ) {
     throw Error(
       "Owned MFJ debt sources must belong separately to primary and spouse",
     );

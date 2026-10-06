@@ -68,7 +68,10 @@ export function ownedSCorpLossLines(
     stock.beginning_basis_workpaper_reference !==
       r.source.opening_stock_record.workpaper_reference ||
     stock.no_prior_year_suspended_losses !== true ||
-    stock.no_other_schedule_e_activity !== true ||
+    stock.no_other_schedule_e_activity !==
+      (r.source.complete_current_shareholder_source_inventory?.length
+        ? r.source.complete_current_shareholder_source_inventory.length === 1
+        : true) ||
     stock.material_participation_workpaper_reference !==
       r.source.shareholder_participation_records.log_reference ||
     stock.materially_participated_in_s_corporation !== true ||

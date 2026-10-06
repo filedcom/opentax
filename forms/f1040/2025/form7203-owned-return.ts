@@ -14,7 +14,7 @@ export function assertOwned7203RequiredCopies(
         ?.owned_current_records !== undefined
     ) ?? [];
   if (!owned.length) return;
-  if (owned.length === 2 && k!.k1_s_corps!.length === 2) {
+  if (owned.length >= 2 && k!.k1_s_corps!.length === owned.length) {
     const b = pending.form7203 as any, q = pending.form8995 as any;
     if (
       !b || !q || !isDeepStrictEqual(b.owned_debt_loss_sources, owned) ||

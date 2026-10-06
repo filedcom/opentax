@@ -1,3 +1,8 @@
+import {
+  assertCoOwnedCorporateRecord,
+  coOwnedCorporateInventorySchema,
+  shareholderSourceInventorySchema,
+} from "./owned-corporation.ts";
 import { z } from "zod";
 const ref = z.string().trim().min(1);
 const tin = z.string().regex(/^\d{9}$/);
@@ -78,6 +83,9 @@ export const ownedCurrentDebtRecordsSchema = z.object({
   complete_current_shareholder_debt_inventory: z.array(noteRecord).min(1).max(
     2,
   ),
+  complete_current_shareholder_source_inventory:
+    shareholderSourceInventorySchema.optional(),
+  co_owned_corporate_inventory: coOwnedCorporateInventorySchema.optional(),
   no_other_guaranteed_corporate_or_passthrough_debt: z.literal(true),
   opening_stock_record: z.object({
     ...identity,
@@ -150,8 +158,8 @@ export const ownedCurrentDebtRecordsSchema = z.object({
         purpose: z.literal("ordinary_service_business_operating_cost"),
       }).strict(),
     ).min(1),
-    shareholder_ownership_numerator: z.literal(1),
-    shareholder_ownership_denominator: z.literal(1),
+    shareholder_ownership_numerator: amount.refine((n) => n > 0),
+    shareholder_ownership_denominator: amount.refine((n) => n > 0),
     no_other_ordinary_book_tax_adjustments: z.literal(true),
   }).strict(),
   shareholder_participation_records: z.object({
@@ -177,7 +185,7 @@ export const ownedCurrentDebtRecordsSchema = z.object({
     qualified_business_ordinary_loss_before_basis: amount.refine((n) => n > 0),
     no_other_qbi_items_or_adjustments: z.literal(true),
     no_prior_qbi_or_reit_ptp_loss_carryforward: z.literal(true),
-    no_other_shareholder_trades_or_businesses: z.literal(true),
+    no_other_shareholder_trades_or_businesses: z.boolean(),
     not_a_specified_service_or_cooperative_business: z.literal(true),
   }).strict(),
 }).strict();
@@ -251,9 +259,10 @@ export function reconcileOwnedCurrentDebt(raw: unknown, note: NewNote) {
     account.corporation_ein !== s.corporation_ein ||
     account.paid_ordinary_costs.some((r) => !r.date.startsWith("2025-")) ||
     account.receipts.some((r) => !r.date.startsWith("2025-")) ||
-    account.paid_ordinary_costs.reduce((n, r) => n + r.amount, 0) -
-          account.receipts.reduce((n, r) => n + r.amount, 0) !==
-      k.box1_ordinary_loss ||
+    (account.paid_ordinary_costs.reduce((n, r) => n + r.amount, 0) -
+            account.receipts.reduce((n, r) => n + r.amount, 0)) *
+          account.shareholder_ownership_numerator !== k.box1_ordinary_loss *
+        account.shareholder_ownership_denominator ||
     participation.shareholder_ssn !== s.shareholder_ssn ||
     participation.corporation_ein !== s.corporation_ein ||
     participation.monthly_service_hours.some((r, i) => r.month !== i + 1) ||
@@ -261,6 +270,34 @@ export function reconcileOwnedCurrentDebt(raw: unknown, note: NewNote) {
   ) {
     fail(
       "current corporate ordinary accounts/complete shareholder service logs do not support issued loss and nonpassive treatment",
+    );
+  }
+  if (
+    account.shareholder_ownership_numerator >
+      account.shareholder_ownership_denominator ||
+    (!s.co_owned_corporate_inventory &&
+      account.shareholder_ownership_numerator !==
+        account.shareholder_ownership_denominator)
+  ) fail("partial ownership needs complete co-owned corporate source");
+  if (s.co_owned_corporate_inventory) assertCoOwnedCorporateRecord(s);
+  const inventory = s.complete_current_shareholder_source_inventory;
+  if (
+    inventory &&
+    (inventory.some((r) => r.shareholder_ssn !== s.shareholder_ssn) ||
+      !inventory.some((r) =>
+        r.corporation_ein === s.corporation_ein &&
+        r.document_reference === k.document_reference &&
+        r.section199a_statement_reference ===
+          k.section199a_statement_reference &&
+        r.ordinary_loss === k.box1_ordinary_loss
+      ) ||
+      new Set(inventory.map((r) => r.corporation_ein)).size !==
+        inventory.length ||
+      k.no_other_shareholder_trades_or_businesses !== (inventory.length === 1))
+  ) fail("complete owner issued business inventory conflicts");
+  if (!inventory && !k.no_other_shareholder_trades_or_businesses) {
+    fail(
+      "other owned corporations require complete current issued-source inventory",
     );
   }
   const capital = s.current_cash_capital_record;

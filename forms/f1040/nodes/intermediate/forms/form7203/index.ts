@@ -37,7 +37,7 @@ import { reviewedStockLossLedgerSchema } from "./stock-ledger.ts";
 // IRC §1366(d) — limitation on losses; IRC §1367 — adjustments to basis
 
 export const inputSchema = z.object({
-  owned_debt_loss_sources: z.array(z.unknown()).length(2).optional(),
+  owned_debt_loss_sources: z.array(z.unknown()).min(2).max(4).optional(),
   // ── Part I: Stock Basis ───────────────────────────────────────────────────
   // Line 1 — Beginning stock basis at start of tax year
   stock_basis_beginning: z.number().nonnegative().optional(),

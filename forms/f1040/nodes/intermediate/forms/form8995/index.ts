@@ -104,7 +104,7 @@ export const inputSchema = z.object({
   // QBI from pass-through rentals/partnerships (Schedule E)
   qbi: accumulable(z.number()).optional(),
   owned_s_corp_loss_source: z.unknown().optional(),
-  owned_s_corp_loss_sources: z.array(z.unknown()).length(2).optional(),
+  owned_s_corp_loss_sources: z.array(z.unknown()).min(2).max(4).optional(),
   // W-2 wages and UBIA are carried forward when Form 8995-A is required.
   w2_wages: accumulable(z.number().nonnegative()).optional(),
   unadjusted_basis: accumulable(z.number().nonnegative()).optional(),
@@ -1550,8 +1550,7 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
           !input.taxpayer_ssn ||
           sourceOwners.some((v) => !actualOwners.includes(v)) ||
           (input.owned_s_corp_loss_sources &&
-            JSON.stringify([...sourceOwners].sort()) !==
-              JSON.stringify([...actualOwners].sort()))
+            sourceOwners.some((v) => !actualOwners.includes(v)))
         ) {
           throw Error(
             "Owned S corporation loss must belong to the actual finalized return claimant(s)",
