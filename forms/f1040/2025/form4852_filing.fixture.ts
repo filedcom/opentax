@@ -223,7 +223,7 @@ export async function officialForm4852EvidenceTemplate(
     if (!(error instanceof Deno.errors.NotFound)) throw error;
   }
   const response = await fetch(
-    `https://www.irs.gov/pub/irs-pdf/${
+    `https://www.irs.gov/pub/${name === "f8606-2024" ? "irs-prior" : "irs-pdf"}/${
       name === "f8606-2024" ? "f8606--2024" : name
     }.pdf`,
   );

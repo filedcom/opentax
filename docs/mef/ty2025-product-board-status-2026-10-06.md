@@ -2297,3 +2297,8 @@ Complete ordinary-refund inventory is verified on main; Form4852, remaining Form
 
 
 Ready isolated3dcc3c89c: public34/0, compatibility364/0; held10/70 exact, both source/visual manifests rehashed and verified. All70 pages individually reviewed in isolated proof; current-main replay remains required. Preserve current8621 PDF registration and all4972 source group branches. Frozen52 checklist matchesadf3612ee; future section untouched.
+
+
+## Before official prior-year fixture URL repair
+
+Main488d0d288 retained4852 replay is terminal10/70 exact, all fullXSD. Main focused33/1 failed solely because official prior-year8606 template fetch used current irs-pdf directory; fixture must use IRS irs-prior for2024, retaining current templates unchanged. Compatibility PID64790 still live; no production mutation during that gate. Exact-cent isolated38module gate terminal311/0;42page snapshot sealed. Frozen checklist/future untouched.
