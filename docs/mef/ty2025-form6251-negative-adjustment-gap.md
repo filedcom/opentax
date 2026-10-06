@@ -434,3 +434,9 @@ PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run -A .state
 Digest inventory is ignored `.state/research/state-refund-final-digest-report.json`.
 Generator scripts/logs and every original packet remain retained; actual
 source/XML/PDF bytes were not replaced when inventory coverage expanded.
+
+## Current-main complete ordinary state-refund source proof
+
+Exact source b4187c06a: six-module source gate119/0(47s), log `/tmp/opentax-state-refund-current-main-source-proof.log`, SHA2565d94087c33de0803ac6f5e93d5d955ecc0916790aa59af026ad8b501f4d2576d. Immutable main replay `/tmp/opentax-state-refund-current-main-replay-oct6` regenerated8/all30 reviewedpages with exact source/pending/XML/PDF bytes and full2025v5.4 XSD. Checker terminal0 `/tmp/opentax-state-refund-current-main-artifact-check-v2.log`, SHA256dc6a6599abe036a39936c38768a09fe26732cd40448947d8669ac2d426bcdfc2. Initial checker stopped before validation on a dangling cache symlink; replaced only that replay cache with a real copy and reran the same checker. Original retained packets unchanged.
+
+Source inventory has no count cap, separates samepayer MFJ recipients, retains issuedzero-taxable copies and separately sourced unemployment; zero-taxable refund-only packet prints1040alone. Positive taxable refunds retain completed AMT computation at zeroAMT without inventing a6251 attachment. Broader tax-benefit workpapers, recovery years/corrections/business classifications, authenticity, IRS business rules and acceptance remain open. Form4852 derivednative26/0 isolated593f1cc34 remains guarded; fullroute delegated after compactfe9765617. FullV4 same44964/44970 confirmedlive33m27s; latestfull stillrequired.
