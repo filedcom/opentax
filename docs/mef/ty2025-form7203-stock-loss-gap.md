@@ -456,3 +456,13 @@ basis, whole-dollar filing projection and independent spouse limits remain
 separate. Original current40packet source/pending/carry/origins/PDF archives are
 preserved. Prior reduced basis, accepted-history/source authenticity and wider
 parent requirements remain guarded and open.
+
+## Complete retained prior-copy consistency prerequisite
+
+[Prior-copy linkage proof](ty2025-form7203-prior-copy-linkage.md) corrects the
+existing byte/XML inspector: the separate filed Form7203 must match the complete
+embedded form, and foreign namespace rebinding is rejected before an Accepted
+acknowledgment value is interpreted. Before/after runtime controls synchronize
+digests and leave the real prior-reduced filing route rejected. This is an
+archive-consistency prerequisite; accepted-history authenticity, prior basis and
+restoration, gain character and the final full-return filing route remain open.

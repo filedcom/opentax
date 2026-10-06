@@ -1097,25 +1097,29 @@ Deno.test("Form 7203 prior reduced formal note reads matching 2024 MeF XML but r
     index: number,
     altered: string,
     digestField: string,
+    expectedMessage?: string,
   ) => {
     const bytes = new TextEncoder().encode(altered);
     const digest = Array.from(
       new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
       (byte) => byte.toString(16).padStart(2, "0"),
     ).join("");
-    await assertRejects(() =>
-      executePriorReduced7203WithSourceDocuments(
-        {
-          ...inputs,
-          k1_s_corp: [{
-            ...source,
-            form7203_debt_evidence: { ...prior, [digestField]: digest },
-          }],
-        },
-        records.map((document, documentIndex) =>
-          documentIndex === index ? { ...document, bytes } : document
+    await assertRejects(
+      () =>
+        executePriorReduced7203WithSourceDocuments(
+          {
+            ...inputs,
+            k1_s_corp: [{
+              ...source,
+              form7203_debt_evidence: { ...prior, [digestField]: digest },
+            }],
+          },
+          records.map((document, documentIndex) =>
+            documentIndex === index ? { ...document, bytes } : document
+          ),
         ),
-      )
+      Error,
+      expectedMessage,
     );
   };
   await rejectReadableXmlChange(
@@ -1147,6 +1151,33 @@ Deno.test("Form 7203 prior reduced formal note reads matching 2024 MeF XML but r
       )
     }</IRS7203>`,
     "prior_filed_form7203_sha256",
+  );
+  // Closing balances alone do not establish that this is the filed copy.
+  // Rehash the changed source, so a digest mismatch cannot explain rejection.
+  await rejectReadableXmlChange(
+    7,
+    `<IRS7203 ${ns}>${formBody}<StockBasisBegTaxYrAmt>999</StockBasisBegTaxYrAmt></IRS7203>`,
+    "prior_filed_form7203_sha256",
+    "separate filed copy differs",
+  );
+  await rejectReadableXmlChange(
+    7,
+    `<IRS7203 ${ns}>${
+      formBody.replace("<FormalNoteInd>", '<FormalNoteInd xmlns="urn:foreign">')
+    }</IRS7203>`,
+    "prior_filed_form7203_sha256",
+  );
+  // Namespace correctness also applies to the acknowledgment, independently of
+  // complete Form7203 copy matching.
+  await rejectReadableXmlChange(
+    6,
+    ack.replace("<AcceptanceStatus>", '<AcceptanceStatus xmlns="urn:foreign">'),
+    "prior_accepted_acknowledgement_sha256",
+    "foreign XML namespace",
+  );
+  assertEquals(
+    bound.inspectedPriorFiling.separateFormMatchesEmbeddedContent,
+    true,
   );
   const manifestWithoutReturnDigest = manifest.replace(
     `<SubmissionXmlSha256>${priorReturnDigest}</SubmissionXmlSha256>`,
