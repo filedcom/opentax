@@ -6,11 +6,14 @@ TY2025 v5.4 `ReturnData1040.xsd` document-root census in
 compared with public inputs in `forms/f1040/2025/inputs.ts`, the node registry,
 and `ALL_MEF_FORMS`. The IRS schema files are not tracked in Git;
 reproducible artifact provenance remains open. The historical unregistered-root review is grouped below;
-the current census has 88 `No` rows. Of the 123 `Yes` rows, 117 have a literal in
-a file imported by `ALL_MEF_FORMS`; `IRS2210`, `IRS8828`, `IRS8908`,
-`IRS8938`, `IRS8997`, and `IRS9465` have literals only in unregistered files.
-`IRS1116ScheduleC` is a seventh unregistered root builder, although its token
-also occurs in the registered Form 1116 parent file as a quoted reference.
+the current census has 83 `No` rows. Of the 128 `Yes` rows, 117 have a literal
+in a directly registered descriptor file. Six (`IRS2210`, `IRS8828`,
+`IRS8908`, `IRS8938`, `IRS8997`, `IRS9465`) occur only in staged descriptor
+files. Five (`IRS3115`, `IRS5471ScheduleO`, `IRS8594`, `IRS8833`, `IRS8883`)
+occur only as permitted Form 5471 reference names in the linkage helper;
+they are not new builders or verified filing routes. `IRS1116ScheduleC` is
+still a seventh staged root builder, with its token also quoted in the
+registered Form 1116 parent. Source-literal flags do not resolve applicability.
 This file also retains historical review rows for roots registered after that
 review. Schedules 1-A, J, LEP and R, Forms 2210-F, 8915-F,
 2439/8888, W-2G, and Form 8995-A Schedules C/D are now-registered status notes,
@@ -33,20 +36,20 @@ copies. This is one supporting descriptor, not two extra taxpayer forms. The
 
 ### Registry-to-root reconciliation
 
-The current native registry has **150 descriptor entries**: 19 return/schedule
-entries, 98 numbered-form entries and 33 wage/supporting entries. The filled
-PDF registry has **116 entries**. These counts are descriptor counts, not
-distinct schema-root counts and not a measure of accepted filing scenarios.
-The 211-root census divides by exact source token into 123 `Yes` and 88 `No`:
-117 of the `Yes` roots appear in registered descriptor files, six appear only
-in unregistered files (`IRS2210`, `IRS8828`, `IRS8908`, `IRS8938`, `IRS8997`,
-`IRS9465`), and the quoted `IRS1116ScheduleC` token is a separate staged,
-unregistered builder. A registered file can mention a root it does not emit.
-The [32-row supporting-descriptor review](ty2025-form1040-form-audit.md#supporting-descriptor-case-and-packet-disposition)
-records each source/parent trigger, written case and packet role. A payer copy,
-native supporting statement, PDF BinaryAttachment and taxpayer-authored form
-are different artifacts; no root is supported just because its descriptor is
-registered or its name appears in the schema.
+The current native registry has **152 descriptor entries**, including 35
+entries in its wage/supporting sequence segment. The PDF registry has **118
+entries**. The distinct native/PDF pending-key counts are 148/115. These are
+descriptor counts, not distinct schema-root counts or accepted filing scenarios.
+The 211-root census has 128 `Yes` and 83 `No`: 117 literal roots occur directly
+in registered descriptor files, six in staged-only files and five only as
+permitted Form5471 reference names in its linkage helper. The separately staged
+`IRS1116ScheduleC` builder is also quoted by its registered parent. See the
+[census classifications](ty2025-xsd-document-root-census.md) for exact names.
+A registered file or helper can mention a root it does not emit.
+The [supporting-descriptor review](ty2025-form1040-form-audit.md#supporting-descriptor-case-and-packet-disposition)
+records source/parent triggers, written cases and packet roles. Payer copies,
+native supporting statements, PDF BinaryAttachments and taxpayer forms are
+different artifacts; registration or a schema name does not establish support.
 
 The evidence resolves **owner class**, not every optional filing trigger:
 `IRSW2` and `IRSW2G` are payer-issued records, the farm/foreign-wage and

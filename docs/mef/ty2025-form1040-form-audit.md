@@ -21,8 +21,9 @@ run proves each row's positive source route, filled PDF, IRS business rule,
 or ATS acceptance.
 A written case is not a passing case.
 
-The registered-descriptor evidence census is now **150/150 statically accounted
-for** in this matrix against the current MeF registry. The linked
+The current MeF registry has **152 descriptors**. The earlier 150/150 static
+inventory checkpoint is followed by the later descriptor evidence and IRA
+recharacterization supporting row. The linked
 [main inventory](coverage-inventory.md),
 [attachment tranche A](coverage-inventory-attachments-a.md),
 [tranche B](coverage-inventory-attachments-b.md),
@@ -88,7 +89,7 @@ six-page parent PDF and XSD fixtures await execution. Schedule R all-zero
 business-rule treatment and applicable conditional attachments remain.
 
 The [unregistered-root crosswalk](ty2025-unregistered-root-applicability.md)
-groups the historical review, now 88 roots without a MeF source literal, into
+groups the historical review, now 83 roots without a MeF source literal, into
 applicable candidates, undecided individual paths, and possible separate-entity
 or payment workflows. Those groupings are triage, not user-approved exclusions
 or completed form-by-form coverage decisions.
