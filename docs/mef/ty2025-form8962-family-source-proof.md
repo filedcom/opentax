@@ -46,3 +46,8 @@ Author personally reviewed all12 contact sheets/all36 pages (5/6/10/10/5) from o
 Earlier V4 checked gate exited1 with TS2345 in test edit-array inference and ran no positive loop; ten held files/log/qualification remain in `/tmp/opentax-form8962-family-source-qualified-v4-oct7`. V5 checked gate exited1,98/1, on wrong expected tax worksheet constants; ten held files/log plus original TX4 packet remain in `/tmp/opentax-form8962-family-source-qualified-v5-oct7`. V6 only corrected those test expectations after full preservation; runtime and V5 source fixture facts were unchanged. Earlier five missing-review literal sources remain negative originals under `/tmp/opentax-form8962-family-before-v3-oct7`; no silent eligibility facts were added to them.
 
 The wider Form8962 parent remains open beyond this guarded complete reviewed family route.
+
+
+## Main family integration — October7
+
+Private3140e5281/cf1dc1fd5 integrated withoutconflict as e2c4eb36f/0d2980527. Privateordinarychecked99/0 andliteral5/36source/fullnormalizedJSONprepared/carry/origins/PDF/nativeonlyReturnTs/freshXSD remain complete; rootsourceDecimal/native/person-month/fresh36pageapproval retained. Finalauthor206+root104=310physicalintegrationfiles copied/rehashed mainresearch. Alltenprivate runtime/test hashes matchmain. Union77 /tmp/opentax-family-main-union-held-oct7.json binds0d2980527; onlygeneralindex/dependentMAGIhelper changedamongprevious70, old68exact. Mainordinarychecked6module, actualfamily5/36 andprior8962three/15 plusPABnine/147 literalchecks delegatedtoexistingarchiveagent. No mainfamilycompletion beforeterminal/parity/preservation. Nextprivatejointpositive-spouseincomeinventory will completeexistingparentrequirement beyondzero-income source limitation, notfuturequeuework.
