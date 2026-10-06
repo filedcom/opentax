@@ -2041,3 +2041,20 @@ Complete ordinary-refund inventory is verified on main; Form4852, fractional For
 
 
 Main51223187d fresh focused proof terminal15/0(1m9s), same public17packets generated in a separate immutable replay checkout. Exact comparison to retained51reviewedpages and previous-source preservation remain required before ledger credit. Full181575242 test wrapper44964/Deno44970 confirmed live43m54s. Form8283 agent identified an invalid SectionB inventory exception under actual2025instructions and is correcting the complete existing parent with official completed-form evidence; no source-label-only authenticity claim. Form4852 actual completed official bytes now produce first fullpacket but fullmultiple-owner/source proof remains isolated/incomplete. No main checklist edits or future execution.
+
+## Before remaining existing Form4972 parent completion
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,442 bounded slices**. Learnings and exact proof remain in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Newly discovered work goes only in `future_todo` and is not executed.
+
+Actual inventory: **150 native / 116 PDF descriptors**, **365 fixtures**, **113 PDF keys / 96 covered / 17 uncovered**. Recent main proof: reviewed catalog24/0 (375 preserved pages), C/F loss-owner health28/0 (6/182), beneficiary death/estate3/0+15/0 (26/78), senior/independent-health6/0+111/0 and retained5/0 (5/95), complete refund inventory119/0 (8/30). Source/PDF bytes match reviewed originals; timestamp-only XML differences are recorded. These close their stated slices; broader parents remain open.
+
+Full `deno task test` at fbacc539c failed11,577/14/0ignored, exit1(82m15s); all14 have focused repaired-main proof. Immutable181575242 rerun started03:53:35UTC; wrapper44964/Deno44970 verified live at33m27s. Its terminal result and a passing full run of latest source remain required. Publication checkpoint for draft [PR63](https://github.com/filedcom/opentax/pull/63): **c4d0ff580**; newer verified work is awaiting publication.
+
+Complete ordinary-refund inventory is verified on main; Form4852, fractional Form4972 and Form8621 parent work continue in isolated checkouts. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+
+
+Fresh main fractional source gate15/0 and exact17source/PDF/XML packet comparison preserved51pages/32copies; preservation PID55231 confirmedlive, no terminalclaim. Current code audit: paired elections in elections.ts and collection reconciliation still require nonbeneficiary/full-share/distinct owner-participants and whole-dollar NUA/annuity despite independently verified single beneficiary contracts. Existing board requires separate spouse elections and combinations, broader eligibility evidence and ScheduleJ AMT beyondordinary. Root will implement those remaining known parent requirements in an isolated checkout, retaining sourcecopy ownership/participant facts and shared administrator allocation consistency. Same-decedent paired beneficiaries need factual source joins rather than a blanket participant-distinct rule. Eligibility/source authenticity and prior-election evidence must be honest retained-source contracts; missing real external records cannot be fabricated. ScheduleJ preferential and other named guarded interactions require separate source/math review. No future task execution or main checklist mutation.
