@@ -1328,7 +1328,14 @@ Deno.test("form6251: line 2b refund alone does not activate the lines 2c-through
     line2b_tax_refund: 20_000,
     regular_tax: 2_000,
   });
-  assertEquals(result.outputs, []);
+  const retained = result.outputs.find((output) =>
+    output.nodeType === "form6251"
+  );
+  assertEquals(retained?.fields.line2b_tax_refund, 20_000);
+  assertEquals(retained?.fields.amti, 80_000);
+  assertEquals(retained?.fields.line11_amt, 0);
+  assertEquals(retained?.fields.must_file_for_negative_adjustments, false);
+  assertEquals(fieldsOf(result.outputs, schedule2), undefined);
 });
 
 Deno.test("form6251: Form 8911 claim files the form with zero AMT", () => {

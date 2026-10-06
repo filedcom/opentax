@@ -1301,7 +1301,11 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       tmt <= adjustedRegularTax && input.must_file_for_credit !== true &&
       input.must_file_for_gbc !== true &&
       input.must_compute_for_bond_credit !== true &&
-      !mustFileForNegativeAdjustments
+      !mustFileForNegativeAdjustments &&
+      // Keep the completed refund computation for final source replay even
+      // when no Form 6251 attachment is required. Native/PDF applicability
+      // still uses the calculated filing triggers below.
+      (input.line2b_tax_refund ?? 0) <= 0
     ) {
       return { outputs: [] };
     }
