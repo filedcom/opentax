@@ -70,6 +70,71 @@ const legacySourceSchema = sourceSchema.extend({
   ),
 });
 
+const multiplePlanSourceSchema = sourceSchema.omit({
+  all_nonexcluded_employees_enrolled_verified: true,
+  excluded_owner_family_seasonal_and_nonbusiness_workers_none_verified: true,
+  shop_review: true,
+}).extend({
+  ...multiplePlanFields,
+  excluded_owner_family_seasonal_and_nonbusiness_workers_none_verified: z
+    .boolean(),
+}).strict();
+
+const commonControlMemberSchema = multiplePlanSourceSchema.extend({
+  no_other_trades_or_common_control_verified: z.literal(false),
+});
+const groupReference = z.string().trim().min(1);
+const commonControlSchema = z.object({
+  qualifying_arrangement: z.literal("same_proprietor_common_control"),
+  owner_name: sourceSchema.shape.owner_name,
+  owner_ssn: sourceSchema.shape.owner_ssn,
+  proprietor_recipient: z.literal(TS.T),
+  schedule_c_business_reference: groupReference,
+  employment_ein: sourceSchema.shape.employment_ein,
+  shop_marketplace_identifier: sourceSchema.shape.shop_marketplace_identifier,
+  shop_plan_reference: groupReference,
+  group_review: z.object({
+    tax_year: z.literal(2025),
+    common_owner_100_percent_verified: z.literal(true),
+    both_businesses_under_common_management_verified: z.literal(true),
+    all_controlled_trades_and_workers_identified_verified: z.literal(true),
+    all_group_members_follow_same_shop_contribution_schedule_verified: z
+      .literal(
+        true,
+      ),
+    ownership_record_reference: groupReference,
+    management_record_reference: groupReference,
+    complete_group_roster_record_reference: groupReference,
+    group_contribution_schedule_record_reference: groupReference,
+  }).strict(),
+  member_control_records: z.tuple([
+    z.object({
+      business_reference: groupReference,
+      proprietor_ssn: sourceSchema.shape.owner_ssn,
+      ownership_percentage: z.literal(100),
+      ownership_from_date: z.literal("2025-01-01"),
+      ownership_through_date: z.literal("2025-12-31"),
+      management_role: z.literal("sole_proprietor_manager"),
+      ownership_record_reference: groupReference,
+      management_record_reference: groupReference,
+    }).strict(),
+    z.object({
+      business_reference: groupReference,
+      proprietor_ssn: sourceSchema.shape.owner_ssn,
+      ownership_percentage: z.literal(100),
+      ownership_from_date: z.literal("2025-01-01"),
+      ownership_through_date: z.literal("2025-12-31"),
+      management_role: z.literal("sole_proprietor_manager"),
+      ownership_record_reference: groupReference,
+      management_record_reference: groupReference,
+    }).strict(),
+  ]),
+  group_members: z.tuple([
+    commonControlMemberSchema,
+    commonControlMemberSchema,
+  ]),
+}).strict();
+
 /** Full-year compatibility and explicitly sourced whole-month enrollment. */
 export const inputSchema = z.union([
   legacySourceSchema.extend({
@@ -145,15 +210,8 @@ export const inputSchema = z.union([
       }).strict(),
     ).min(1).max(24),
   }).strict(),
-  sourceSchema.omit({
-    all_nonexcluded_employees_enrolled_verified: true,
-    excluded_owner_family_seasonal_and_nonbusiness_workers_none_verified: true,
-    shop_review: true,
-  }).extend({
-    ...multiplePlanFields,
-    excluded_owner_family_seasonal_and_nonbusiness_workers_none_verified: z
-      .boolean(),
-  }).strict(),
+  multiplePlanSourceSchema,
+  commonControlSchema,
 ]);
 
 export type F8941Input = z.infer<typeof inputSchema>;
@@ -177,9 +235,262 @@ export interface Form8941Lines {
   readonly line16: number;
 }
 
+function finishForm8941Lines(
+  line1: number,
+  line2: number,
+  line3: number,
+  line4: number,
+  line5: number,
+  line13: number,
+  line14: number,
+): Form8941Lines {
+  if (line2 >= 25 || line3 >= 67_000) {
+    throw new Error("Form 8941 FTE or wage ceiling bars the direct credit");
+  }
+  const line6 = Math.min(line4, line5);
+  const line7 = Math.round(line6 * 0.5);
+  const line8 = line2 <= 10
+    ? line7
+    : Math.max(0, Math.round(line7 * (1 - (line2 - 10) / 15)));
+  const line9 = line3 <= 33_000 ? line8 : Math.max(
+    0,
+    Math.round(line8 - line7 * ((line3 - 33_300) / 33_300)),
+  );
+  const line10 = 0 as const;
+  const line11 = line4;
+  const line12 = Math.min(line9, line11);
+  if (line12 <= 0) {
+    throw new Error("Form 8941 direct source has no positive allowed credit");
+  }
+  const line15 = 0 as const;
+  return {
+    line1,
+    line2,
+    line3,
+    line4,
+    line5,
+    line6,
+    line7,
+    line8,
+    line9,
+    line10,
+    line11,
+    line12,
+    line13,
+    line14,
+    line15,
+    line16: line12,
+  };
+}
+
+function commonControlWorksheet(source: z.infer<typeof commonControlSchema>) {
+  const [first, second] = source.group_members;
+  if (
+    source.schedule_c_business_reference !==
+      first.schedule_c_business_reference ||
+    source.employment_ein !== first.employment_ein ||
+    source.shop_marketplace_identifier !== first.shop_marketplace_identifier ||
+    source.shop_plan_reference !== first.shop_plan_reference ||
+    first.schedule_c_business_reference ===
+      second.schedule_c_business_reference ||
+    first.employment_ein === second.employment_ein
+  ) {
+    throw new Error(
+      "Form 8941 common-control member or filing identity differs",
+    );
+  }
+  const references = new Set<string>();
+  const addReference = (value: string) => {
+    if (references.has(value)) {
+      throw new Error("Form 8941 common-control source reference is reused");
+    }
+    references.add(value);
+  };
+  for (
+    const reference of [
+      source.group_review.ownership_record_reference,
+      source.group_review.management_record_reference,
+      source.group_review.complete_group_roster_record_reference,
+      source.group_review.group_contribution_schedule_record_reference,
+    ]
+  ) addReference(reference);
+  const policyPattern = (member: typeof first) => {
+    const plans = member.offered_qhps.map((plan) => plan.shop_plan_reference);
+    return member.monthly_plan_arrangements.map((policy) => ({
+      plan: plans.indexOf(policy.shop_plan_reference),
+      month: policy.month,
+      billing_method: policy.billing_method,
+      contribution_application: policy.contribution_application,
+      family_coverage_offered: policy.family_coverage_offered,
+      employee_only_rule: policy.employee_only_rule,
+      family_rule: policy.family_rule,
+    })).sort((a, b) => a.plan - b.plan || a.month - b.month);
+  };
+  if (
+    JSON.stringify(policyPattern(first)) !==
+      JSON.stringify(policyPattern(second))
+  ) {
+    throw new Error(
+      "Form 8941 common-control group contribution schedule differs",
+    );
+  }
+  source.member_control_records.forEach((record, index) => {
+    if (
+      record.business_reference !==
+        source.group_members[index].schedule_c_business_reference ||
+      record.proprietor_ssn !== source.owner_ssn
+    ) {
+      throw new Error("Form 8941 common-control ownership record differs");
+    }
+    addReference(record.ownership_record_reference);
+    addReference(record.management_record_reference);
+  });
+  const people = new Map<string, {
+    hours: number;
+    wages: number;
+    premium: number;
+    enrolled: boolean;
+    seasonal: boolean;
+    dates: Set<string>;
+  }>();
+  const excludedPeople = new Set<string>();
+  let adjustedAveragePremium = 0;
+  const memberPremiums: number[] = [];
+  const memberPaidCents: number[] = [];
+  for (const member of source.group_members) {
+    if (
+      member.owner_name !== source.owner_name ||
+      member.owner_ssn !== source.owner_ssn ||
+      member.proprietor_recipient !== source.proprietor_recipient ||
+      member.no_state_premium_subsidy_or_credit_verified !== true ||
+      member.credit_period_first_year !== first.credit_period_first_year ||
+      JSON.stringify(member.first_year_filed_form8941) !==
+        JSON.stringify(first.first_year_filed_form8941)
+    ) {
+      throw new Error(
+        "Form 8941 common-control owner or credit period differs",
+      );
+    }
+    // The complete owned QHP, quote, payroll and dated payment contract is
+    // checked for each member before its rows enter the one employer worksheet.
+    const worksheet = multiplePlanWorksheet(member);
+    adjustedAveragePremium += worksheet.rows.reduce(
+      (sum, row) => sum + row.adjusted_average_premium,
+      0,
+    );
+    const paidCents = member.employees.reduce(
+      (sum, employee) => sum + cents(employee.employer_premium_paid),
+      0,
+    );
+    memberPaidCents.push(paidCents);
+    memberPremiums.push(Math.round(paidCents / 100));
+    const memberReferences = new Set<string>();
+    const collect = (value: unknown): void => {
+      if (!value || typeof value !== "object") return;
+      for (const [key, child] of Object.entries(value)) {
+        if (
+          typeof child === "string" &&
+          /_reference$/.test(key) &&
+          key !== "filed_2024_return_reference"
+        ) memberReferences.add(child);
+        else if (typeof child === "object") {
+          if (Array.isArray(child)) child.forEach(collect);
+          else collect(child);
+        }
+      }
+    };
+    collect(member);
+    memberReferences.forEach(addReference);
+    for (const worker of member.excluded_workers ?? []) {
+      excludedPeople.add(worker.employee_ssn);
+    }
+    const enrolled = new Set(worksheet.enrolledEmployeeReferences);
+    for (const employee of member.employees) {
+      const previous = people.get(employee.employee_ssn);
+      const seasonal = employee.seasonal_service !== undefined;
+      if (
+        previous && previous.premium > 0 &&
+        employee.employer_premium_paid > 0
+      ) {
+        throw new Error(
+          "Form 8941 common-control repeated worker has paid coverage in both members",
+        );
+      }
+      if (previous && previous.seasonal !== seasonal) {
+        throw new Error(
+          "Form 8941 common-control repeated worker seasonal status differs",
+        );
+      }
+      const person = previous ?? {
+        hours: 0,
+        wages: 0,
+        premium: 0,
+        enrolled: false,
+        seasonal,
+        dates: new Set<string>(),
+      };
+      person.hours += employee.hours_of_service;
+      person.wages += employee.social_security_medicare_wages;
+      person.premium += employee.employer_premium_paid;
+      person.enrolled ||= enrolled.has(employee.employee_reference);
+      for (const date of employee.seasonal_service?.service_dates ?? []) {
+        person.dates.add(date);
+      }
+      people.set(employee.employee_ssn, person);
+    }
+  }
+  if ([...excludedPeople].some((ssn) => people.has(ssn))) {
+    throw new Error(
+      "Form 8941 common-control excluded owner or family worker appears as credited employee",
+    );
+  }
+  let totalHours = 0;
+  let totalWages = 0;
+  let enrolledHours = 0;
+  let enrolledCount = 0;
+  for (const person of people.values()) {
+    const credited = person.seasonal && person.dates.size <= 120
+      ? 0
+      : Math.min(2080, person.hours);
+    totalHours += credited;
+    if (credited > 0) totalWages += person.wages;
+    if (person.enrolled) {
+      enrolledCount++;
+      enrolledHours += credited;
+    }
+  }
+  const line2 = Math.max(1, Math.floor(totalHours / 2080));
+  const lines = finishForm8941Lines(
+    people.size,
+    line2,
+    Math.floor(totalWages / line2 / 1000) * 1000,
+    Math.round(
+      memberPaidCents.reduce((sum, premium) => sum + premium, 0) / 100,
+    ),
+    Math.round(adjustedAveragePremium),
+    enrolledCount,
+    Math.max(1, Math.floor(enrolledHours / 2080)),
+  );
+  const firstShare = Math.round(
+    lines.line16 * memberPaidCents[0] /
+      memberPaidCents.reduce((sum, premium) => sum + premium, 0),
+  );
+  return {
+    lines,
+    shares: [firstShare, lines.line16 - firstShare] as const,
+    memberPremiums,
+  };
+}
+
+export function commonControlForm8941Shares(raw: unknown) {
+  const source = commonControlSchema.parse(raw);
+  return commonControlWorksheet(source);
+}
+
 /** TY2025 Form 8941 lines 1–16 and Worksheets 1–7 for the bounded source. */
 export function calculateForm8941(raw: unknown): Form8941Lines {
   const source = inputSchema.parse(raw);
+  if ("group_members" in source) return commonControlWorksheet(source).lines;
   const multi = "monthly_plan_arrangements" in source
     ? multiplePlanWorksheet(source)
     : undefined;
@@ -245,9 +556,6 @@ export function calculateForm8941(raw: unknown): Form8941Lines {
   const line1 = source.employees.length;
   const line2 = Math.max(1, Math.floor(totalHours / 2080));
   const line3 = Math.floor(totalWages / line2 / 1000) * 1000;
-  if (line2 >= 25 || line3 >= 67_000) {
-    throw new Error("Form 8941 FTE or wage ceiling bars the direct credit");
-  }
   const line4 = Math.round(
     source.employees.reduce(
       (sum, employee) => sum + cents(employee.employer_premium_paid),
@@ -276,23 +584,6 @@ export function calculateForm8941(raw: unknown): Form8941Lines {
         0,
       ) / 120000,
     );
-  const line6 = Math.min(line4, line5);
-  const line7 = Math.round(line6 * 0.5);
-  const line8 = line2 <= 10
-    ? line7
-    : Math.max(0, Math.round(line7 * (1 - (line2 - 10) / 15)));
-  // Worksheet 6 uses $33,300 in its numerator and denominator; the eligibility
-  // discussion rounds its threshold to $33,000.
-  const line9 = line3 <= 33_000 ? line8 : Math.max(
-    0,
-    Math.round(line8 - line7 * ((line3 - 33_300) / 33_300)),
-  );
-  const line10 = 0 as const;
-  const line11 = line4;
-  const line12 = Math.min(line9, line11);
-  if (line12 <= 0) {
-    throw new Error("Form 8941 direct source has no positive allowed credit");
-  }
   const enrolled = multi
     ? source.employees.filter((e) =>
       multi.enrolledEmployeeReferences.includes(e.employee_reference)
@@ -303,25 +594,15 @@ export function calculateForm8941(raw: unknown): Form8941Lines {
     1,
     Math.floor(enrolled.reduce((sum, e) => sum + creditedHours(e), 0) / 2080),
   );
-  const line15 = 0 as const;
-  return {
+  return finishForm8941Lines(
     line1,
     line2,
     line3,
     line4,
     line5,
-    line6,
-    line7,
-    line8,
-    line9,
-    line10,
-    line11,
-    line12,
     line13,
     line14,
-    line15,
-    line16: line12,
-  };
+  );
 }
 
 class F8941Node extends TaxNode<typeof inputSchema> {
@@ -339,6 +620,14 @@ class F8941Node extends TaxNode<typeof inputSchema> {
             schedule_c_business_reference:
               rawInput.schedule_c_business_reference,
             shop_plan_reference: rawInput.shop_plan_reference,
+            ...("group_members" in rawInput
+              ? {
+                group_business_references: [
+                  rawInput.group_members[0].schedule_c_business_reference,
+                  rawInput.group_members[1].schedule_c_business_reference,
+                ],
+              }
+              : {}),
             ...("offered_qhps" in rawInput
               ? {
                 shop_plan_references: rawInput.offered_qhps.map((p) =>
@@ -351,10 +640,16 @@ class F8941Node extends TaxNode<typeof inputSchema> {
         }),
         output(f1040, { form8941_determined_credit: lines.line16 }),
         output(schedule_c, {
-          form8941_premium_reductions: [{
-            business_reference: rawInput.schedule_c_business_reference,
-            credit_amount: lines.line16,
-          }],
+          form8941_premium_reductions: "group_members" in rawInput
+            ? rawInput.group_members.map((member, index) => ({
+              business_reference: member.schedule_c_business_reference,
+              credit_amount:
+                commonControlForm8941Shares(rawInput).shares[index],
+            }))
+            : [{
+              business_reference: rawInput.schedule_c_business_reference,
+              credit_amount: lines.line16,
+            }],
         }),
       ],
     };

@@ -859,7 +859,10 @@ export function prepareForm3800DocumentParts(
         form8941.source.shop_plan_reference ||
       JSON.stringify(
           parsed.f8941_direct_employer_credit?.shop_plan_references,
-        ) !== JSON.stringify(form8941.planReferences)
+        ) !== JSON.stringify(form8941.planReferences) ||
+      JSON.stringify(
+          parsed.f8941_direct_employer_credit?.group_business_references,
+        ) !== JSON.stringify(form8941.groupBusinessReferences)
     )
   ) {
     throw new Error("Form 3800 line 4h differs from filed Form 8941 source");

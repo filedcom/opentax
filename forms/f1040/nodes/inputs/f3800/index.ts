@@ -147,6 +147,10 @@ const f8908CreditSchema = z.object({
 const f8941DirectEmployerCreditSchema = z.object({
   credit_amount: z.number().int().positive(),
   schedule_c_business_reference: z.string().trim().min(1),
+  group_business_references: z.tuple([
+    z.string().trim().min(1),
+    z.string().trim().min(1),
+  ]).optional(),
   shop_plan_reference: z.string().trim().min(1),
   subject_to_passive_activity_limit: z.literal(false),
   shop_plan_references: z.array(z.string().trim().min(1)).min(2).max(12).refine(

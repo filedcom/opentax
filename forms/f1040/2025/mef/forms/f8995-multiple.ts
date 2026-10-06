@@ -3,7 +3,10 @@ import {
   assertMultiBusinessInvestmentTax,
 } from "./f8995-investment.ts";
 import { normalizeAllPending } from "../../pending.ts";
-import { inputSchema as cSchema } from "../../../nodes/inputs/schedule_c/model.ts";
+import {
+  inputSchema as cSchema,
+  projectScheduleCItems,
+} from "../../../nodes/inputs/schedule_c/model.ts";
 import { reviewedMultipleScheduleCQbi } from "../../../nodes/inputs/schedule_c/qbi-multiple.ts";
 import { inputSchema as qbiSchema } from "../../../nodes/intermediate/forms/form8995/index.ts";
 import { inputSchema as seSchema } from "../../../nodes/intermediate/forms/schedule_se/index.ts";
@@ -26,7 +29,7 @@ export function assertMultipleScheduleC8995(
   const parsed = qbiSchema.parse(fields);
   const investment = assertMultiBusinessInvestmentSources(parsed, pending);
   const c = cSchema.parse(pending.schedule_c);
-  const items = c.schedule_cs;
+  const items = projectScheduleCItems(c);
   const rows = parsed.multi_business_filing_rows;
   const retained = parsed.schedule_c_qbi_businesses;
   const general = pending.general;
@@ -143,7 +146,9 @@ export function assertMultipleScheduleC8995(
         number(se.wages_8919) !== 0)) ||
     (!seExpected && se &&
       Object.keys(se).some((key) => key !== "w2_ss_wages")) ||
-    !healthSource || healthSource.unadjusted_source !== true ||
+    !healthSource ||
+    healthSource.unadjusted_source !==
+      ((c.form8941_premium_reductions?.length ?? 0) === 0) ||
     healthSource.businesses?.length !== items.length ||
     healthSource.businesses.some((business, index) =>
       business.business_reference !== items[index].business_reference ||

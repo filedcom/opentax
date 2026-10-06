@@ -326,6 +326,9 @@ export function form8941MultiplePlanInputs(
   const input = form8941OwnedInputs(receipts),
     source = form8941MultiplePlanSource(kind),
     lines = calculateForm8941(source);
+  if (!("monthly_plan_arrangements" in source)) {
+    throw new Error("Expected owned multiple-QHP source");
+  }
   return {
     ...input,
     f8941: source,

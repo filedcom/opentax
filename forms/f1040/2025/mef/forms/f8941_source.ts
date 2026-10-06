@@ -1,5 +1,6 @@
 import {
   calculateForm8941,
+  commonControlForm8941Shares,
   inputSchema,
 } from "../../../nodes/inputs/f8941/index.ts";
 import { inputSchema as scheduleCInputSchema } from "../../../nodes/inputs/schedule_c/model.ts";
@@ -16,6 +17,82 @@ export function reconcileForm8941ScheduleC(
   const source = inputSchema.parse(pending.f8941);
   const lines = calculateForm8941(source);
   const scheduleC = scheduleCInputSchema.parse(pending.schedule_c);
+  if ("group_members" in source) {
+    const group = commonControlForm8941Shares(source);
+    const reductions = scheduleC.form8941_premium_reductions;
+    if (
+      scheduleC.schedule_cs.length !== 2 || reductions?.length !== 2 ||
+      group.shares.some((share) => share <= 0) ||
+      (appliedCredit !== undefined &&
+        (!Number.isInteger(appliedCredit) || appliedCredit < 0 ||
+          appliedCredit > lines.line16))
+    ) {
+      throw new Error("Form 8941 common-control two-business return differs");
+    }
+    if (
+      filer &&
+      (filer.primarySSN !== source.owner_ssn ||
+        (filer.fullName && filer.fullName !== source.owner_name))
+    ) {
+      throw new Error("Form 8941 common-control owner differs from filer");
+    }
+    source.group_members.forEach((member, index) => {
+      const business = scheduleC.schedule_cs.find((item) =>
+        item.business_reference === member.schedule_c_business_reference
+      );
+      const reduction = reductions.find((item) =>
+        item.business_reference === member.schedule_c_business_reference
+      );
+      const wages = member.employees.reduce(
+        (sum, employee) => sum + employee.social_security_medicare_wages,
+        0,
+      ) + (member.excluded_workers ?? []).reduce(
+        (sum, worker) => sum + worker.actual_social_security_medicare_wages,
+        0,
+      );
+      const paidExcluded = (member.excluded_workers ?? []).some((worker) =>
+        worker.coverage_records.some((record) => record.employer_payment > 0)
+      );
+      if (
+        !business || !reduction ||
+        business.proprietor_recipient !== TS.T ||
+        business.line_g_material_participation !== true ||
+        business.line_d_ein?.replace(/\D/g, "") !== member.employment_ein ||
+        business.line_26_wages !== wages ||
+        (paidExcluded && member.other_schedule_c_employee_benefits !== 0) ||
+        business.line_14_employee_benefits !==
+          member.other_schedule_c_employee_benefits +
+            group.memberPremiums[index] ||
+        reduction.credit_amount !== group.shares[index]
+      ) {
+        throw new Error(
+          "Form 8941 common-control payroll or full credit deduction differs from filed Schedule C",
+        );
+      }
+    });
+    if (
+      source.group_members.some((member) =>
+        (member.excluded_workers ?? []).some((worker) =>
+          worker.exclusion === "proprietor" &&
+          worker.coverage_records.some((record) => record.employer_payment > 0)
+        )
+      ) && pending.form7206 && typeof pending.form7206 === "object" &&
+      "single_schedule_c_plan" in pending.form7206 &&
+      pending.form7206.single_schedule_c_plan !== undefined
+    ) {
+      throw new Error(
+        "Form 8941 common-control owner coverage needs separately reconciled Form 7206 source",
+      );
+    }
+    return {
+      source,
+      lines,
+      planReferences: undefined,
+      groupBusinessReferences: source.group_members.map((member) =>
+        member.schedule_c_business_reference
+      ),
+    };
+  }
   if (scheduleC.schedule_cs.length !== 1) {
     throw new Error(
       "Form 8941 bounded route needs exactly one Schedule C business",
@@ -151,7 +228,7 @@ export function reconcileForm8941ScheduleC(
   const planReferences = "offered_qhps" in source
     ? source.offered_qhps.map((p) => p.shop_plan_reference)
     : undefined;
-  return { source, lines, planReferences };
+  return { source, lines, planReferences, groupBusinessReferences: undefined };
 }
 
 /** Native/PDF preparation must use the same direct source as the pending graph. */
@@ -209,7 +286,12 @@ export function reconcileForm8941DocumentSource(
         "shop_plan_references" in credit
           ? credit.shop_plan_references
           : undefined,
-      ) !== JSON.stringify(reconciled.planReferences)
+      ) !== JSON.stringify(reconciled.planReferences) ||
+    JSON.stringify(
+        "group_business_references" in credit
+          ? credit.group_business_references
+          : undefined,
+      ) !== JSON.stringify(reconciled.groupBusinessReferences)
   ) {
     throw new Error(
       "Form 8941 Form 3800 source credit differs from filed form",
