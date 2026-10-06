@@ -234,7 +234,7 @@ const parentFicaReviewSchema = z.union([
       paid_date: calendarDate,
       service_from: calendarDate,
       service_to: calendarDate,
-      service_hours: z.number().positive(),
+      service_hours: z.number().finite().positive(),
       cash_wages: z.number().positive(),
       ordinary_pay_period: z.object({
         kind: z.enum(["within_31_days", "over_31_days", "no_ordinary_period"]),
@@ -598,6 +598,10 @@ function parentDatedCashWages(
       p.period_source_reference === review.complete_service_payment_ledger_source_reference ||
       p.service_time_source_reference === review.complete_service_payment_ledger_source_reference) {
       throw new Error("Schedule H parent dated cash needs distinct actual service, payment and pay-period records");
+    }
+    const serviceDays = (Date.parse(payment.service_to) - Date.parse(payment.service_from)) / 86_400_000 + 1;
+    if (payment.service_hours > serviceDays * 24) {
+      throw new Error("Schedule H parent service hours exceed the retained service dates");
     }
     const row = quarters.find((q) => q.quarter === quarter(payment.service_from) + 1)!;
     const child = row.child, status = row.employer_circumstances;

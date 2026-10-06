@@ -742,6 +742,8 @@ Deno.test("Schedule H parent dated sources reject omitted periods, false medical
   await rejects("birthday-majority", (p) => p.parent_fica_review.wage_payments[2].service_allocation_reference = p.parent_fica_review.wage_payments[1].service_allocation_reference);
   await rejects("birthday-majority", (p) => p.parent_fica_review.wage_payments[2].ordinary_pay_period.service_time_source_reference = p.parent_fica_review.wage_payments[1].ordinary_pay_period.service_time_source_reference);
   await rejects("birthday-majority", (p) => p.parent_fica_review.wage_payments[2].service_hours = 0);
+  await rejects("birthday-majority", (p) => p.parent_fica_review.wage_payments[2].service_hours = Number.POSITIVE_INFINITY);
+  await rejects("birthday-majority", (p) => p.parent_fica_review.wage_payments[2].service_hours = 10_000);
   await rejects("midquarter-divorce", (p) => p.parent_fica_review.quarterly_circumstances[1].employer_circumstances.divorce_date = "2025-05-20");
   await rejects("cross-quarter-care", (p) => p.parent_fica_review.quarterly_circumstances[1].employer_circumstances.incapable_care_period.to = "2025-04-27");
   await rejects("cross-quarter-care", (p) => p.parent_fica_review.wage_payments[3].service_to = "2025-07-01");

@@ -38,6 +38,13 @@ Two cash installments for one service allocation count its hours once.
 Separate period identities cannot overlap or silently reuse payment, time,
 allocation, or ledger references. A genuinely irregular payroll practice also
 requires its complete period ledger and independent employer-practice record.
+Each retained service-hour operand must be finite and at most 24 hours per
+inclusive calendar day in its dated allocation; installments reusing one
+allocation count those hours once. An impossible 10,000-hour allocation over
+May 1–14 is rejected by the public calculation, native exporter, and direct
+filled PDF guard, as is a nonfinite hour operand. The original v7 packets
+predate this guard; final held-code validation and saved-source replay are
+recorded below.
 The older quarter-only intake rejects a paid age-18 transition quarter when it
 lacks qualifying quarter-wide medical care; splitting payments no longer
 bypasses the required ordinary-period evidence.
@@ -53,9 +60,12 @@ added, so v7 is the settled-code run.
 
 ## Actual packet evidence
 
-The final saved source packet directory is
+The original reviewed source packet directory is
 `/tmp/opentax-scheduleh-parent-period-final-v7-oct6`; its focused run is
-`/tmp/opentax-scheduleh-parent-period-final-v7-oct6.log` (terminal 4/0).
+`/tmp/opentax-scheduleh-parent-period-final-v7-oct6.log` (terminal 4/0,
+before the finite/calendar-cap hours guard). A fresh final-code v8 run and
+archive use `/tmp/opentax-scheduleh-parent-period-final-v8-oct6.log` and
+`/tmp/opentax-scheduleh-parent-period-final-v8-oct6`, respectively.
 The ten new cases total 50 filled pages:
 
 | Source circumstance | Parent FICA wages | Schedule H / Schedule 2 / 1040 other tax |
