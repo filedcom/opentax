@@ -3834,3 +3834,31 @@ Latest full `deno task test` **V22** is live at immutable **0d153ed24** (wrapper
 
 Draft [PR63](https://github.com/filedcom/opentax/pull/63) was externally verified at **5d4ab8705**, with exact title/body/head/draft and successful attachment. The ordinary-gain and mortgage payoff/advance integrations are published with completed root gates. Source contracts and hashes do not authenticate issuers, signatures or prior acceptance. Wider filing routes, ATS credentials/scenario conflicts, IRS acknowledgments and release review remain unfinished.
 
+
+## Compaction before remaining household-family and candidate review
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,526 bounded slices**; those do not close the broader parent tasks. Exact calculations, failures, source qualifications and publication history are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). New discoveries belong only in `future_todo` and are not executed.
+
+The recorded coverage census is **152 native / 118 PDF descriptors**, **369 fixtures**, **115 PDF keys / 99 covered / 16 uncovered**, and **128 source literals / 83 absent**. These counts do not establish filing support. Complete fixture XSD replay passed **370/0**; local XSD does not establish IRS business-rule or ATS acceptance.
+
+Recent verified existing-parent work:
+
+- [Mortgage inventory](docs/mef/ty2025-form1098-general-inventory.md): complete sourced main/second-home liens, grandfathered/pre-2017/post-2017 limits and mixed refinance points; main95/0, actual saved19returns/60pages exactPDF/nativeonlyReturnTs/fullXSD,17comparablepending. All12newpages reviewed and130archivefiles plusmanifest privately preserved. Earlier no-points sources lack historicalpending/carry/origins; their equality is not inferred.
+- [Owned passive K-1 income](docs/mef/ty2025-eic-passive-k1-source-proof.md): actual8582/PAL/ScheduleE/AGI/EIC and qualified farm-loss QBI joins; main621/0, actualsaved33returns/271pages exactpending/preparedpending/carry/origins/source/PDF/nativeonlyTs/fullXSD. All141newpages reviewed and99originalfiles preserved.
+- [Household payroll](docs/mef/ty2025-schedule-h-mixed-family-payroll.md): complete family/unrelated inventories, correct FICA/FUTA exclusions, aggregate withholding and spouse W-2 coexistence; main54/0, actual saved16returns/84pages with13newer exact and3 historically qualified prior archives. All31newpages reviewed and60new/prior originals privately hash-preserved. Wider parent and split-year exceptions remain open.
+- [Shareholder debt overflow](docs/mef/ty2025-form7203-overflow-debt-source-proof.md), [EIC basis-loss](docs/mef/ty2025-eic-owned-basis-loss.md), [QBI rounding](docs/mef/ty2025-form8995a-fractional-parent.md) and [mixed child elections](docs/mef/ty2025-form8814-source-review.md) retain their sealed source, calculation, native/PDF and original-replay evidence in the linked proofs and archive.
+
+[Ordinary passive K-1 gains](docs/mef/ty2025-eic-passive-line10-source-proof.md) join the actual PAL pool and qualified RPE/farm QBI: main690/0, actualsaved42returns/374pages exact source/pending/carry/origins/PDF/nativeonlyTs/fullXSD; all103newpages reviewed,126final/prior originals privately preserved. Wider losses, dispositions and history remain open.
+
+[Mortgage payoff and advances](docs/mef/ty2025-form1098-additional-lien-payoff-advances.md) are integrated at **548b5e7d3**: root standard96/0, actual saved23returns/72pages exactPDF/nativeonlyTs/fullXSD/21comparablepending, all12newreturn and3changedCopyBpages reviewed,137originalfiles privately preserved. Root gates are sealed and published in draft PR63. Midmonth mortgage and direct-property gain work continues in isolates; mixed family household payroll is sealed locally at **e515b261a** with completed root gates and awaits PR publication.
+
+Latest full `deno task test` **V22** is live at immutable **0d153ed24** (wrapper86975/task86982/test86983), including the earlier mortgage inventory, payroll and passive-gain integrations; it predates payoff548b5e7d3 and mixed payroll e515b261a. Private research/cache copies have zero symlinks, distinct inodes and verified preserved-packet hashes. V17–V21 remain live at older snapshots. Superseded V8–V16 were deliberately cancelled with retained evidence; elapsed time never triggers a restart. Earlier terminal full batches had failures with recorded repairs; **a passing latest-production full batch remains required**.
+
+Draft [PR63](https://github.com/filedcom/opentax/pull/63) was externally verified at **5d4ab8705**, with exact title/body/head/draft and successful attachment. The ordinary-gain and mortgage payoff/advance integrations are published with completed root gates. Source contracts and hashes do not authenticate issuers, signatures or prior acceptance. Wider filing routes, ATS credentials/scenario conflicts, IRS acknowledgments and release review remain unfinished.
+
+
+Previous goal turn: authoritative progress. Mortgagepayoff548b5e7d3/root96/0 and actual23/72 sealed; mixedfamily e515b261a/root54/0 and actual16/84 sealed85b489a72, externallyverifieddraftPR63 head/title/body/draft andattached. All31newpayrollpages reviewed/60newpriorhashesexact. Current V17–V22 actualtestPIDs49982/59733/66717/70213/75031/86983 remainlive; midmonthraw90840/propertypriorraw91018/propertysource91132/propertystandard91163 live. No latestfullpass. Root next existingScheduleH parent andsplit-year evidence requirements, without futureexecution/broadclosure.
