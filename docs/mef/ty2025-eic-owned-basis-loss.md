@@ -28,3 +28,7 @@ Original final archive `/tmp/opentax-eic-owned-loss-final-oct6` retains actual p
 The first typed run stopped on four type errors; the second reached three positive packets but failed the joint expected649 because the new fixture omitted required spouse resident-status evidence. Their logs and partial `/tmp/opentax-eic-owned-loss-review-oct6` archive remain diagnostic-only and untouched. Final fixture supplies that evidence; production residency guards were not relaxed. Earlier shareholder packet archives remain untouched and no new exact prior-packet replay is claimed here.
 
 Wider passive loss allocation, mixed source families, external issuer/eligibility proof, IRS business rules, accepted acknowledgments and the broader board parents remain open.
+
+## Three-column current-debt coexistence
+
+The next existing7203 phase adds an actual two-written-note/open-account positive EIC packet. Wages5000 remain earnedincome; tax-exempt11950 remains investmentincome, despite allowed4000nonpassive loss and AGI1000. EIC/refund384. Focus1/0(25s) validates all five complete returns and missingbasis/QBI/alteredloss/passive-conflict exports. Actual retained originalfour plus newfive replay9/76pages exactsource/pending/preparedpending/carry/origins/PDF/nativeonlyReturnTs/fullXSD, `/tmp/opentax-eic-three-column-main-raw-oct6/report.json`. New8pages visuallyreviewed;15archivefiles privatelypreserved, four prior original packets untouched. Main debt compatibility remains separately gated; broader passive and external authentication requirements remain open.

@@ -142,3 +142,13 @@ authentication, current interest payments/other terms and broader K1 source
 branches remain open. Existing one-formal/open, standalone formal/open,
 shared-issuer and multicorporation routes are preserved. No full parent closure
 or outside acceptance claim follows from these constructed current contracts.
+
+## Main integration review
+
+Root read the entire board and compacted learnings at ecb8269fd before integrating candidate713cb186 as f9cffd3a5. Positive EIC coexistence was added at0cf6e27da: actual three-debt source with wages5000 and tax-exempt investment11950 yields allowedloss4000, AGI1000, EIC/refund384 and currentQBI loss4000. Typed public/native/PDF/fullXSD focus1/0(25s) includes this new packet and the four sealed EIC cases. All eight new pages reviewed,15files privately hash-preserved; actual retained original4 plus new5 EIC packets (9/76pages) replay exact wholepending/preparedpending/carry/origins/source/PDF/nativeonlyReturnTs/fullXSD in `/tmp/opentax-eic-three-column-main-raw-oct6/report.json`. No fixture factory was used for replay.
+
+Root independently viewed all66 new debt pages, plus full-size fractional1053/526/921, fully-repaid open blank ratio, spouse833/417/1250 and independent-owner second copy. Review `/tmp/opentax-three-column-root-page-review-oct6.json`; all64 original files copied/hash-compared in `.state/research/form7203-two-notes-open-oct6-preserved`, manifest `/tmp/opentax-three-column-root-preservation-oct6.json`. Main standard compatibility and debt40/354 retained replays remain pending. First isolated checks were missing the private schema because the parent directory was copied one level too deep: focused0/1 and rawexit1 retain explicit missing-schema errors, initial standard batch interrupted after identifying setup error. Corrected private schema is physically copied, same command reruns with separatev2 logs. No diagnostic run establishes a production failure or pass.
+
+## Main terminal seal
+
+Integrated0cf6e27da passes standard eighteen-module `deno task test`263/0/0ignored(4m2s), `/tmp/opentax-three-column-main-standard-v2-oct6.log`. Actual saved debt40packets/354pages replay is terminalexit0, `/tmp/opentax-three-column-main-raw-v2-oct6.log` and `/tmp/opentax-form7203-two-notes-open-current-main-replay.Ro13ho/combined-summary.json`: six archived source groups, exactwholepending/carry/origins/source/PDF/nativeonlyReturnTs/fullXSD. The independently retained EIC9/76 seal covers both priorfour and newfive packets. All broad parent/authentication/IRS gates remain open.
