@@ -165,6 +165,8 @@ export const itemSchema = z.object({
     tip_records_reference: z.string().trim().min(1),
     included_in_box1a: z.literal(true),
     no_other_allocable_deductions: z.literal(true),
+    allocable_health_plan_identifiers: z.array(z.string().trim().min(1)).max(1)
+      .optional(),
     no_other_allocable_deductions_review_reference: z.string().trim().min(1),
   }).strict().optional(),
 
@@ -767,6 +769,14 @@ class F1099kNode extends TaxNode<typeof inputSchema> {
             item.qualified_tips_box1a_review.included_in_box1a,
           no_other_allocable_deductions:
             item.qualified_tips_box1a_review.no_other_allocable_deductions,
+          ...(item.qualified_tips_box1a_review
+              .allocable_health_plan_identifiers !== undefined
+            ? {
+              allocable_health_plan_identifiers:
+                item.qualified_tips_box1a_review
+                  .allocable_health_plan_identifiers,
+            }
+            : {}),
           no_other_allocable_deductions_review_reference:
             item.qualified_tips_box1a_review
               .no_other_allocable_deductions_review_reference,

@@ -25,6 +25,7 @@ import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
+import { schedule1a } from "../schedule1a/index.ts";
 import { form8995 } from "../form8995/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
@@ -122,6 +123,9 @@ function buildOutput(
     // This deduction is attributable to the trade or business, so it reduces QBI.
     // i8995, Determining Your Qualified Business Income: the items to consider include
     // the "self-employment health insurance deduction".
+    ...(source
+      ? [output(schedule1a, { qualified_tips_health_plan_source: source })]
+      : []),
     output(form8995, {
       se_health_insurance_deduction: deduction,
       ...(source ? { joint_owner_health_plan_source: source } : {}),
@@ -140,6 +144,7 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
       agi_aggregator,
       form8995,
       form8962,
+      schedule1a,
     ]);
   }
 
@@ -167,6 +172,9 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
           output(schedule1, { line17_se_health_insurance: family.deduction }),
           output(agi_aggregator, {
             line17_se_health_insurance: family.deduction,
+          }),
+          output(schedule1a, {
+            qualified_tips_health_plans_source: family.source,
           }),
           output(form8995, {
             se_health_insurance_deduction: family.deduction,

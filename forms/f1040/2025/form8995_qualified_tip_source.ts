@@ -20,7 +20,7 @@ export function assertQualifiedTipQbiSource(
     ? undefined
     : qualifiedBusinessTipQbiSource(inputSchema.parse(p.schedule1a));
   if (
-    (actual?.tips_deduction ?? 0) > 0 ||
+    actual !== undefined ||
     Number(p?.f1040?.line13b_additional_deductions ?? 0) > 0
   ) {
     if (!p?.schedule1a) {
@@ -29,7 +29,11 @@ export function assertQualifiedTipQbiSource(
       );
     }
     const xml = schedule1a.build(p.schedule1a, { pending: p });
-    if (!xml.includes("IRS1040Schedule1A")) {
+    if (
+      ((actual?.tips_deduction ?? 0) > 0 ||
+        Number(p.f1040?.line13b_additional_deductions ?? 0) > 0) &&
+      !xml.includes("IRS1040Schedule1A")
+    ) {
       throw new Error("QBI tip exclusion needs its actual filed Schedule1A");
     }
   }

@@ -1,3 +1,7 @@
+import { extractFilerIdentity } from "../../../mef/filer.ts";
+import { form7206 } from "./f7206.ts";
+import { assertIndependentOwnerHealthSource } from "../../form7206_independent_owner_source.ts";
+import { calculateSingleScheduleCForm7206 } from "../../../nodes/intermediate/forms/form7206/single-source.ts";
 import { normalizeAllPending } from "../../pending.ts";
 import { assertOwnedScheduleSE } from "../../schedule-se-owner-source.ts";
 import { tipSourceCanonical } from "../../../nodes/intermediate/forms/form8995/qualified-tips.ts";
@@ -392,6 +396,13 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
                 item.qualified_tips_review.included_in_box1,
               no_other_allocable_deductions:
                 item.qualified_tips_review.no_other_allocable_deductions,
+              ...(item.qualified_tips_review
+                  .allocable_health_plan_identifiers !== undefined
+                ? {
+                  allocable_health_plan_identifiers: item.qualified_tips_review
+                    .allocable_health_plan_identifiers,
+                }
+                : {}),
               no_other_allocable_deductions_review_reference:
                 item.qualified_tips_review
                   .no_other_allocable_deductions_review_reference,
@@ -417,6 +428,14 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
                 item.qualified_tips_box3_review.included_in_box3,
               no_other_allocable_deductions:
                 item.qualified_tips_box3_review.no_other_allocable_deductions,
+              ...(item.qualified_tips_box3_review
+                  .allocable_health_plan_identifiers !== undefined
+                ? {
+                  allocable_health_plan_identifiers:
+                    item.qualified_tips_box3_review
+                      .allocable_health_plan_identifiers,
+                }
+                : {}),
               no_other_allocable_deductions_review_reference:
                 item.qualified_tips_box3_review
                   .no_other_allocable_deductions_review_reference,
@@ -442,6 +461,14 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
                 item.qualified_tips_box1a_review.included_in_box1a,
               no_other_allocable_deductions:
                 item.qualified_tips_box1a_review.no_other_allocable_deductions,
+              ...(item.qualified_tips_box1a_review
+                  .allocable_health_plan_identifiers !== undefined
+                ? {
+                  allocable_health_plan_identifiers:
+                    item.qualified_tips_box1a_review
+                      .allocable_health_plan_identifiers,
+                }
+                : {}),
               no_other_allocable_deductions_review_reference:
                 item.qualified_tips_box1a_review
                   .no_other_allocable_deductions_review_reference,
@@ -480,6 +507,34 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
         line17_se_health_insurance: z.number().optional(),
       })
         .passthrough().parse(context?.pending?.schedule1);
+      const actualPending = normalizeAllPending(
+        context?.pending as Record<string, unknown>,
+      );
+      const actualHealth = actualPending.form7206;
+      if (
+        tipSourceCanonical(input.qualified_tips_health_plan_source) !==
+          tipSourceCanonical(actualHealth?.single_schedule_c_plan) ||
+        tipSourceCanonical(input.qualified_tips_health_plans_source) !==
+          tipSourceCanonical(actualHealth?.independent_schedule_c_plans)
+      ) {
+        throw new Error(
+          "Schedule1A business-tip health source must match actual established Form7206 plans",
+        );
+      }
+      let healthDeduction = 0;
+      if (input.qualified_tips_health_plan_source) {
+        form7206.build(actualHealth!, {
+          pending: actualPending,
+          filer: context?.filer ?? extractFilerIdentity(actualPending.f1040),
+        });
+        healthDeduction = calculateSingleScheduleCForm7206(
+          input.qualified_tips_health_plan_source,
+        ).line14;
+      } else if (input.qualified_tips_health_plans_source) {
+        healthDeduction =
+          assertIndependentOwnerHealthSource(actualPending, context?.filer)
+            .deduction;
+      }
       const line15 = scheduleOne.line15_se_deduction ?? 0;
       const owned = input.qualified_tips_owner_se_source === undefined
         ? undefined
@@ -508,7 +563,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
           ) ||
         (scheduleOne.line6_schedule_f ?? 0) !== 0 ||
         (scheduleOne.line16_sep_simple ?? 0) !== 0 ||
-        (scheduleOne.line17_se_health_insurance ?? 0) !== 0 ||
+        (scheduleOne.line17_se_health_insurance ?? 0) !== healthDeduction ||
         !reports.every((report) => {
           const ssn = report.recipient_ssn.replaceAll("-", "");
           return matchesRecipient(
@@ -875,6 +930,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       "Schedule 1-A total and senior deduction do not reconcile to Form 1040",
     );
   }
+  if (total === 0) return "";
   return elements("IRS1040Schedule1A", [
     element("AdjustedGrossIncomeAmt", part1.line1_agi),
     form2555Line45 > 0

@@ -1,4 +1,12 @@
 import { z } from "zod";
+import {
+  calculateSingleScheduleCForm7206,
+  singleScheduleCPlanSchema,
+} from "../form7206/single-source.ts";
+import {
+  calculateIndependentOwnerHealth,
+  independentOwnerHealthSourceSchema,
+} from "../form7206/independent-owner.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { FilingStatus } from "../../../types.ts";
 import {
@@ -187,6 +195,9 @@ export const inputSchema = claimInputSchema.extend({
       tip_records_reference: z.string().trim().min(1),
       included_in_source_amount: z.literal(true),
       no_other_allocable_deductions: z.literal(true),
+      allocable_health_plan_identifiers: z.array(z.string().trim().min(1)).max(
+        1,
+      ).optional(),
       no_other_allocable_deductions_review_reference: z.string().trim().min(1),
     }).strict(),
   ).optional(),
@@ -200,6 +211,9 @@ export const inputSchema = claimInputSchema.extend({
   ).optional(),
   qualified_tips_se_deduction: z.number().nonnegative().optional(),
   qualified_tips_owner_se_source: ownerSourcesSchema.optional(),
+  qualified_tips_health_plan_source: singleScheduleCPlanSchema.optional(),
+  qualified_tips_health_plans_source: independentOwnerHealthSourceSchema
+    .optional(),
   qualified_tips_schedule_f_profit: z.number().optional(),
   qualified_tips_farm_optional_method: z.boolean().optional(),
   magi: z.number().optional(),
@@ -238,14 +252,14 @@ export const qualifiedTipsLinesSchema = z.object({
   line4b_form4137_tips: z.number().int().nonnegative(),
   line4c_employee_tips: z.number().int().nonnegative(),
   line5_trade_business_tips: z.number().int().nonnegative(),
-  line6_total_tips: z.number().int().positive(),
-  line7_capped_tips: z.number().int().positive(),
+  line6_total_tips: z.number().int().nonnegative(),
+  line7_capped_tips: z.number().int().nonnegative(),
   line9_threshold: z.number().int().positive(),
   line10_excess_magi: z.number().int().nonnegative(),
   line11_thousands: z.number().int().nonnegative(),
   line12_reduction: z.number().int().nonnegative(),
-  line13_tips: z.number().int().positive(),
-  line38_total: z.number().int().positive(),
+  line13_tips: z.number().int().nonnegative(),
+  line38_total: z.number().int().nonnegative(),
 }).strict();
 
 export type QualifiedTipsLines = z.infer<
@@ -554,6 +568,65 @@ export function qualifiedTradeBusinessTipRows(input: Schedule1AInput) {
       indices.forEach((i, j) => half[i] = shares[j]);
     }
   } else half[0] = Math.round(input.qualified_tips_se_deduction ?? 0);
+  const health = new Map<string, number>();
+  const healthPlans = new Map<string, string[]>();
+  const hasHealth = input.qualified_tips_health_plan_source !== undefined ||
+    input.qualified_tips_health_plans_source !== undefined;
+  if (
+    input.qualified_tips_health_plan_source &&
+    input.qualified_tips_health_plans_source
+  ) throw new Error("Business tips need one actual health source family");
+  if (input.qualified_tips_health_plan_source) {
+    const plan = input.qualified_tips_health_plan_source;
+    const index = businesses.findIndex((b) =>
+      b.business_reference === plan.business_reference &&
+      b.proprietor_recipient === plan.recipient
+    );
+    if (
+      index < 0 ||
+      plan.schedule_c_line31_net_profit !==
+        businesses[index].line31_net_profit ||
+      plan.schedule1_line15_se_tax_deduction !== half[index] ||
+      plan.schedule1_line16_retirement_deduction !== 0
+    ) {
+      throw new Error(
+        "Business tip health plan must match its actual business profit and owner halfSE",
+      );
+    }
+    healthPlans.set(plan.business_reference, [plan.plan_identifier]);
+    health.set(
+      plan.business_reference,
+      calculateSingleScheduleCForm7206(plan).line14,
+    );
+  }
+  if (input.qualified_tips_health_plans_source) {
+    if (!owned) {
+      throw new Error(
+        "Independent tip health plans need actual owned SE sources",
+      );
+    }
+    const family = calculateIndependentOwnerHealth(
+      input.qualified_tips_health_plans_source,
+      owned.source,
+      CONFIG_BY_YEAR[2025].ssWageBase,
+    );
+    for (const row of family.rows) {
+      const index = businesses.findIndex((b) =>
+        b.business_reference === row.business_reference &&
+        b.proprietor_recipient === row.recipient
+      );
+      if (
+        index < 0 || row.line4 !== businesses[index].line31_net_profit ||
+        row.line7 !== half[index]
+      ) {
+        throw new Error(
+          "Business tip health family is detached from the establishing owner",
+        );
+      }
+      healthPlans.set(row.business_reference, [row.plan_identifier]);
+      health.set(row.business_reference, row.line14);
+    }
+  }
   const seen = new Set<string>();
   const totals = businesses.map(() => 0);
   for (const report of reports) {
@@ -584,6 +657,16 @@ export function qualifiedTradeBusinessTipRows(input: Schedule1AInput) {
         "Schedule1A trade tips repeat or detach the actual proprietor, payer or occupation",
       );
     }
+    const reviewedPlans = report.allocable_health_plan_identifiers;
+    const actualPlans = healthPlans.get(report.business_reference) ?? [];
+    if (
+      (hasHealth && reviewedPlans === undefined) ||
+      JSON.stringify(reviewedPlans ?? []) !== JSON.stringify(actualPlans)
+    ) {
+      throw new Error(
+        "Business tip allocable deduction review must identify its actual established health plan",
+      );
+    }
     seen.add(key);
     totals[index] += report.amount;
   }
@@ -599,7 +682,16 @@ export function qualifiedTradeBusinessTipRows(input: Schedule1AInput) {
       reported_tips: totals[i],
       net_profit: profit,
       se_tax_deduction: half[i],
-      eligible_tips: Math.min(totals[i], Math.max(0, profit - half[i])),
+      ...(hasHealth
+        ? { se_health_deduction: health.get(business.business_reference!) ?? 0 }
+        : {}),
+      eligible_tips: Math.min(
+        totals[i],
+        Math.max(
+          0,
+          profit - half[i] - (health.get(business.business_reference!) ?? 0),
+        ),
+      ),
     }];
   });
 }
@@ -857,7 +949,10 @@ export function calculateQualifiedTipsSchedule1A(
   }
   const rows = qualifiedEmployeeTipRows(input);
   const businessTips = qualifiedTradeBusinessTips(input);
-  if (rows.length === 0 && businessTips === 0) {
+  if (
+    rows.length === 0 &&
+    (input.qualified_trade_business_tips?.length ?? 0) === 0
+  ) {
     throw new Error("Schedule 1-A tips filing needs qualified tips");
   }
   if (
@@ -931,7 +1026,7 @@ export function calculateQualifiedTipsSchedule1A(
   const reduction = thousands * 100;
   const capped = Math.min(tips, QUALIFIED_TIPS_CAP);
   const deduction = Math.max(0, capped - reduction);
-  if (deduction <= 0 || deduction !== qualifiedTipsDeduction(input)) {
+  if (deduction !== qualifiedTipsDeduction(input)) {
     throw new Error(
       "Schedule 1-A tips deduction does not reconcile to the source graph",
     );

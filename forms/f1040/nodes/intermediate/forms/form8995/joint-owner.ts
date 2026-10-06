@@ -115,7 +115,8 @@ export function jointOwnerQbi(
       ownTips &&
       (ownTips.recipient !== row.recipient ||
         ownTips.net_profit !== Math.round(row.net_profit) ||
-        ownTips.se_tax_deduction !== allocations[index])
+        ownTips.se_tax_deduction !== allocations[index] ||
+        (ownTips.se_health_deduction ?? 0) !== ownHealth)
     ) {
       throw new Error(
         "Joint QBI tips must join the actual business owner's profit and halfSE",

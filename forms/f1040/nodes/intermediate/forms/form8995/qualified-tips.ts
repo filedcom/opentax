@@ -17,6 +17,7 @@ export const qualifiedTipQbiSourceSchema = z.object({
       reported_tips: dollars.positive(),
       net_profit: z.number().int(),
       se_tax_deduction: dollars,
+      se_health_deduction: dollars.optional(),
       eligible_tips: dollars,
       qbi_tip_exclusion: dollars,
     }).strict(),

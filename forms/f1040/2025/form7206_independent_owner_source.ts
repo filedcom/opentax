@@ -5,6 +5,11 @@ import {
 import { inputSchema as necSchema } from "../nodes/inputs/f1099nec/index.ts";
 import { inputSchema as gSchema } from "../nodes/inputs/f1099g/index.ts";
 import { assertFarmWotcReturn } from "./form8995_farm_wotc_reconciliation.ts";
+import { schedule1a } from "./mef/forms/schedule1a.ts";
+import {
+  inputSchema as tipInputSchema,
+  qualifiedBusinessTipQbiSource,
+} from "../nodes/intermediate/forms/schedule1a/calculation.ts";
 import { normalizeAllPending } from "./pending.ts";
 import { assertOwnedScheduleSE } from "./schedule-se-owner-source.ts";
 import { assertScheduleCReceiptSourceIdentity } from "./filer-source-reconciliation.ts";
@@ -25,7 +30,7 @@ export const independentHealthCanonical = (value: unknown) =>
         : v,
   );
 const name = (v: string) => v.trim().replace(/\s+/g, " ").toUpperCase();
-export function assertIndependentOwnerHealth(
+export function assertIndependentOwnerHealthSource(
   raw: Readonly<Record<string, unknown>> | undefined,
   filer?: FilerIdentity,
   providedFields?: unknown,
@@ -193,7 +198,6 @@ export function assertIndependentOwnerHealth(
       "line3b_ordinary_dividends",
       "line7_capital_gain",
       "line7a_cap_gain_distrib",
-      "line13b_additional_deductions",
     ].some((k) => Number(f[k] ?? 0) !== 0) ||
     (p.form8995a && !p.form8995a.farm_wotc_filing_source) ||
     (p.schedule_c?.wotc_wage_reductions !== undefined &&
@@ -289,6 +293,37 @@ export function assertIndependentOwnerHealth(
     throw new Error(
       "Independent ordinary health plans exclude Marketplace/PTC sources",
     );
+  }
+  return result;
+}
+
+/** The public health guard also reconciles any claimed business-tip deduction. */
+export function assertIndependentOwnerHealth(
+  raw: Readonly<Record<string, unknown>> | undefined,
+  filer?: FilerIdentity,
+  providedFields?: unknown,
+) {
+  const result = assertIndependentOwnerHealthSource(raw, filer, providedFields);
+  const p = normalizeAllPending(raw as Record<string, unknown>);
+  if (
+    Number(p.f1040?.line13b_additional_deductions ?? 0) !== 0 ||
+    (p.schedule1a?.qualified_trade_business_tips as unknown[] | undefined)
+      ?.length
+  ) {
+    const tips = tipInputSchema.parse(p.schedule1a);
+    const expected = qualifiedBusinessTipQbiSource(tips);
+    if (
+      !expected ||
+      independentHealthCanonical(tips.qualified_tips_health_plans_source) !==
+        independentHealthCanonical(result.source) ||
+      independentHealthCanonical(p.form8995?.qualified_tip_qbi_source) !==
+        independentHealthCanonical(expected)
+    ) {
+      throw new Error(
+        "Independent health additional deduction needs its actual owned business-tip source",
+      );
+    }
+    schedule1a.build(tips, { pending: p, filer });
   }
   return result;
 }
