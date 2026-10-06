@@ -39,3 +39,8 @@ The earlier five-packet NUA held directory was copied to `/tmp/opentax-form4972-
 ## Boundary
 
 This is a synthetic, full-share, nonbeneficiary, one-qualified-plan-per-owner proof with exact whole-dollar source allocations and separate spouse elections. It does not authenticate issuer or plan-administrator bytes, prior-election history, beneficiary/partial-share, estate/death combinations, nonintegral allocations, Schedule J/AMT interactions, IRS business rules or ATS acceptance. Those remain in the existing Form 4972 board scope.
+
+
+## Current-main proof
+
+Source013f16549 passes exact18-file source/preservation gate247/0(1m13s), `/tmp/opentax-form4972-multiple-annuity-current-main-v2.log` SHA256 `762f728de4776fc790ebf301ea642cc81b016c3b0f1f51185c9d926afacc0e13`. An initial invocation referenced nonexistent test paths and executed no tests; the corrected invocation uses the actual17 preservation files plus the new source proof. Main held7/all38pages passes at `/tmp/opentax-form4972-multiple-annuity-held-main-oct6`, log `/tmp/opentax-form4972-multiple-annuity-held-main-check.log`, manifestSHA256 `5af877f6a356ddd04c6d2e5eb9f617e5df5aeee6f8ae067ee674887c1f0f6c5d`. OldNUAheld5/all27pages also passes at `/tmp/opentax-form4972-multiple-nua-held-main-annuity-oct6`, log `/tmp/opentax-form4972-multiple-nua-held-main-annuity-check.log`, manifestSHA256 `04d2036c7f8d6c67e7ed3c21950820ebfa17a73f34b05a21eaafc2088d6fb3e3`. Only copied manifests fixture scope exclusions changed for actualcatalog309; all36held JSON/XML/PDF bytes remain identical to the reviewed isolated batches.

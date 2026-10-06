@@ -4980,3 +4980,8 @@ Main15/0(1m27s);3full-XSD packets/all80reviewedpages; allmainPDFs match reviewed
 ## October6 mixed-owner WOTC and deducted tips
 
 Combined currentmain62/0(3m2s);priorWOTC12/0(1m13s). RefreshedWOTCheld4/all122pages and ninecurrenttipsPDFs/all147reviewedpages preserve reviewedPDFbytes. [WOTC source review](ty2025-form8995a-gap.md), [tip source review](ty2025-qualified-business-tips-qbi-source-review.md). Actualcatalog302 includesfournewWOTCfixtures.
+
+
+## October6 complete-source Form4972 annuity combinations
+
+Main247/0(1m13s);mainheld7/all38pages,oldNUAheld5/all27pages;allreviewed source/XML/PDFbytes retained. Actualcatalog309. [Full proof](ty2025-form4972-multiple-annuity-source-review.md).
