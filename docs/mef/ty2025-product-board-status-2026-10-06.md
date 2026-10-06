@@ -3109,3 +3109,8 @@ Failed sharedv1 wrongform3800key, v2 missingexpected6251, v3 actualmissing8582CR
 ## Passive-credit publication checkpoint
 
 PR63 remote b219aad8cc318fd6e9e890902cdd6e545b9493fd verified after push; wholebranch805files144207+/5450− log/stat inspected, saveddiagram+5bullet body reflects requiredpassive pages and appattachment succeeded. Final typed check terminal0. Maintrackedclean except preserved.pdf-cache. V6wrapper801 confirmedlive7m35s, oldV5wrapper91417/Deno91420/91421 confirmedlive52m21s; no terminal totals inferred. Parallel existing fishing/mixed, differingAMTcharity/carry and IRAqualification work continues. Frozen52/future unchanged.
+
+
+## Before catalog-wide inclusion audit
+
+Previous turn made production progress: repaired actual8582CR packet omission,26/0 typed and shared2/36 reviewed, planner369/99/16, publishedb219aad8c. Mainb193f2839 trackedclean; V6wrapper801 confirmedlive8m09s, oldV5wrapper91417/91420/91421 live52m55s. StaticincludeWhen review finds no second rawcredit_sources-pattern match. Inspect every current shared fixture against actual native bundle, descriptorprojection/instance and inclusion predicates to identify concrete expected-form omissions without fetching/rendering everyPDF. This is diagnostic evidence for existing registeredPDF audit, not all-page/sourcebranch proof. Frozen52/future unchanged.
