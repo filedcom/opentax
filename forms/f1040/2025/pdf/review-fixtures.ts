@@ -1,3 +1,4 @@
+import { tipHealthCfBeneficiaryReviewFixtures } from "./review-tip-health-cf-beneficiary.fixture.ts";
 import { businessTipSourceInputs } from "./business-tip-source.fixture.ts";
 import { multipleAnnuityReviewFixtures } from "./review-4972-multiple-annuity.fixture.ts";
 import { multipleNuaReviewFixtures } from "./review-4972-multiple-nua.fixture.ts";
@@ -9208,6 +9209,7 @@ const mutablePdfReviewFixtures: PdfReviewFixture[] = [...existingPdfReviewFixtur
 export const pdfReviewFixtures: readonly PdfReviewFixture[] = mutablePdfReviewFixtures;
 mutablePdfReviewFixtures.push(
   ...qualifiedTipReviewFixtures(),
+  ...tipHealthCfBeneficiaryReviewFixtures(),
   ...form8941MixedThreeReviewFixtures(),
   ...ownedFarmShopReviewFixtures(existingPdfReviewFixtures.find((row) => row.id === "owned-farm-wotc-single-below")!),
   ...carrierDailyBilledShopReviewFixtures(),

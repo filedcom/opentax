@@ -1,0 +1,3370 @@
+[
+  {
+    "id": "tip-health-advanced-wotc-fully-phased-out",
+    "originalSourceSha256": "4ad019c7efda0e0c16ea890f442c0ff94fd1969fb008091a405bc01c727bcfa2",
+    "originalPdfSha256": "4bffb3ee47475a845df6e994d45c930231b1394792ac762f79b57bf9f7d1e8f7",
+    "inputsSha256": "51e10ff32685a89a6cbb900c47519bf1354583b7fd4303aaccbd860f35fe09d3",
+    "pageOrigins": [
+      {
+        "pageNumber": 1,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 2,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 3,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 4,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 5,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 6,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 7,
+        "formKey": "schedule3",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 8,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 9,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 12,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 13,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 14,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 15,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 16,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 17,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 18,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 19,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 20,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 21,
+        "formKey": "f5884",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 22,
+        "formKey": "form6251",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 23,
+        "formKey": "form8959",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 24,
+        "formKey": "form8960",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 25,
+        "formKey": "form8995a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 26,
+        "formKey": "form8995a",
+        "formCopy": 1
+      }
+    ],
+    "expectedPdfForms": [
+      "f1040",
+      "schedule1",
+      "schedule2",
+      "schedule3",
+      "schedule_c",
+      "schedule_se",
+      "f3800",
+      "f5884",
+      "form6251",
+      "form8959",
+      "form8960",
+      "form8995a"
+    ],
+    "filer": {
+      "primarySSN": "111223333",
+      "nameLine1": "EXAMPLE ALEX",
+      "nameControl": "EXAM",
+      "firstName": "Alex",
+      "lastName": "Example",
+      "firstNameWithInitial": "Alex",
+      "fullName": "Alex Example",
+      "address": {
+        "line1": "1 Example Way",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78701"
+      },
+      "filingStatus": 1,
+      "pinEnteredBy": "Taxpayer"
+    },
+    "pageCount": 26,
+    "ownerCopies": [
+      {
+        "pageNumber": 8,
+        "formKey": "schedule_c",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_se",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      }
+    ],
+    "originalSourceName": "advanced-wotc-fully-phased-out-source-input.json",
+    "originalPdfName": "advanced-wotc-fully-phased-out-filled-return.pdf",
+    "artifactGroup": "tip-health",
+    "pendingReconciliation": [
+      {
+        "path": "f1040.form5884_determined_credit",
+        "original": "absent",
+        "current": 2400,
+        "basis": "Unchanged issued 6000 qualified wages and400 employee hours at40percent; retained specified credit2400"
+      }
+    ]
+  },
+  {
+    "id": "tip-health-mfj-fully-phased-out",
+    "originalSourceSha256": "5b5aab3031528af6ba7d888ae40e6d3accb5ab3a303619944ee9aa15f5b89e22",
+    "originalPdfSha256": "3320c73ee945c6e9cd4a766cb65f5a3173e8058d218997936e8d987a6d7b11ee",
+    "inputsSha256": "2182a39a9e4af61efcac7d778688ff568f618ec89944576ad8b20ea4814660f5",
+    "pageOrigins": [
+      {
+        "pageNumber": 1,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 2,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 3,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 4,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 5,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 6,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 7,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 8,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 9,
+        "formKey": "schedule_c",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_c",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 12,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 13,
+        "formKey": "schedule_se",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 14,
+        "formKey": "schedule_se",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 15,
+        "formKey": "form7206",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 16,
+        "formKey": "form7206",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 17,
+        "formKey": "form8995",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 18,
+        "formKey": "form8959",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 19,
+        "formKey": "form8960",
+        "formCopy": 1
+      }
+    ],
+    "expectedPdfForms": [
+      "f1040",
+      "schedule1",
+      "schedule2",
+      "schedule_c",
+      "schedule_c",
+      "schedule_se",
+      "schedule_se",
+      "form7206",
+      "form7206",
+      "form8995",
+      "form8959",
+      "form8960"
+    ],
+    "filer": {
+      "primarySSN": "111223333",
+      "nameLine1": "EXAMPLE ALEX",
+      "nameControl": "EXAM",
+      "firstName": "Alex",
+      "lastName": "Example",
+      "firstNameWithInitial": "Alex",
+      "fullName": "Alex Example",
+      "address": {
+        "line1": "1 Example Way",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78701"
+      },
+      "filingStatus": 2,
+      "spouse": {
+        "ssn": "222334444",
+        "firstName": "Casey",
+        "lastName": "Example",
+        "nameControl": "EXAM"
+      },
+      "pinEnteredBy": "Taxpayer"
+    },
+    "pageCount": 19,
+    "ownerCopies": [
+      {
+        "pageNumber": 7,
+        "formKey": "schedule_c",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 9,
+        "formKey": "schedule_c",
+        "formCopy": 2,
+        "recipient": "S",
+        "name": "Casey Example",
+        "ssn": "222334444"
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "schedule_se",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 13,
+        "formKey": "schedule_se",
+        "formCopy": 2,
+        "recipient": "S",
+        "name": "Casey Example",
+        "ssn": "222334444"
+      },
+      {
+        "pageNumber": 15,
+        "formKey": "form7206",
+        "formCopy": 1,
+        "recipient": "S",
+        "name": "Casey Example",
+        "ssn": "222334444"
+      },
+      {
+        "pageNumber": 16,
+        "formKey": "form7206",
+        "formCopy": 2,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      }
+    ],
+    "originalSourceName": "mfj-fully-phased-out-source-input.json",
+    "originalPdfName": "mfj-fully-phased-out-filled-return.pdf",
+    "artifactGroup": "tip-health",
+    "pendingReconciliation": []
+  },
+  {
+    "id": "tip-health-mfj-owned-cap-phaseout",
+    "originalSourceSha256": "a6975e821549767a43c56f24fd2b705c0b4246f4faf495a67adea52029196203",
+    "originalPdfSha256": "da74499346483bfef17b1de210dfcefc02334c36801a05966f7617b4b2f3261f",
+    "inputsSha256": "1b46f2805df1ad7674435167d3430c93c6ee07fbf87f2c0d0d90f5b7b7cc7f28",
+    "pageOrigins": [
+      {
+        "pageNumber": 1,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 2,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 3,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 4,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 5,
+        "formKey": "schedule1a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 6,
+        "formKey": "schedule1a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 7,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 8,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 9,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "schedule_c",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 12,
+        "formKey": "schedule_c",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 13,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 14,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 15,
+        "formKey": "schedule_se",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 16,
+        "formKey": "schedule_se",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 17,
+        "formKey": "form7206",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 18,
+        "formKey": "form7206",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 19,
+        "formKey": "form8995",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 20,
+        "formKey": "form8959",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 21,
+        "formKey": "form8960",
+        "formCopy": 1
+      }
+    ],
+    "expectedPdfForms": [
+      "f1040",
+      "schedule1",
+      "schedule1a",
+      "schedule2",
+      "schedule_c",
+      "schedule_c",
+      "schedule_se",
+      "schedule_se",
+      "form7206",
+      "form7206",
+      "form8995",
+      "form8959",
+      "form8960"
+    ],
+    "filer": {
+      "primarySSN": "111223333",
+      "nameLine1": "EXAMPLE ALEX",
+      "nameControl": "EXAM",
+      "firstName": "Alex",
+      "lastName": "Example",
+      "firstNameWithInitial": "Alex",
+      "fullName": "Alex Example",
+      "address": {
+        "line1": "1 Example Way",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78701"
+      },
+      "filingStatus": 2,
+      "spouse": {
+        "ssn": "222334444",
+        "firstName": "Casey",
+        "lastName": "Example",
+        "nameControl": "EXAM"
+      },
+      "pinEnteredBy": "Taxpayer"
+    },
+    "pageCount": 21,
+    "ownerCopies": [
+      {
+        "pageNumber": 9,
+        "formKey": "schedule_c",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "schedule_c",
+        "formCopy": 2,
+        "recipient": "S",
+        "name": "Casey Example",
+        "ssn": "222334444"
+      },
+      {
+        "pageNumber": 13,
+        "formKey": "schedule_se",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 15,
+        "formKey": "schedule_se",
+        "formCopy": 2,
+        "recipient": "S",
+        "name": "Casey Example",
+        "ssn": "222334444"
+      },
+      {
+        "pageNumber": 17,
+        "formKey": "form7206",
+        "formCopy": 1,
+        "recipient": "S",
+        "name": "Casey Example",
+        "ssn": "222334444"
+      },
+      {
+        "pageNumber": 18,
+        "formKey": "form7206",
+        "formCopy": 2,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      }
+    ],
+    "originalSourceName": "mfj-owned-cap-phaseout-source-input.json",
+    "originalPdfName": "mfj-owned-cap-phaseout-filled-return.pdf",
+    "artifactGroup": "tip-health",
+    "pendingReconciliation": []
+  },
+  {
+    "id": "tip-health-mfj-primary-health-limited",
+    "originalSourceSha256": "f947202e1ca9abbea3cd174e39bd60893db6f42259bbcfd7362b6b6655fa6a57",
+    "originalPdfSha256": "bcdf0e3891ed79cfef24a00551ddb25b4dab414de177acdce9b424f55917f751",
+    "inputsSha256": "7b5c09b19922cd4b72a1f5067e8faf29d93c94f2cd116713560a06fc03f25767",
+    "pageOrigins": [
+      {
+        "pageNumber": 1,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 2,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 3,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 4,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 5,
+        "formKey": "schedule1a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 6,
+        "formKey": "schedule1a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 7,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 8,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 9,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "schedule_c",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 12,
+        "formKey": "schedule_c",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 13,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 14,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 15,
+        "formKey": "schedule_se",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 16,
+        "formKey": "schedule_se",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 17,
+        "formKey": "form7206",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 18,
+        "formKey": "form7206",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 19,
+        "formKey": "form8995",
+        "formCopy": 1
+      }
+    ],
+    "expectedPdfForms": [
+      "f1040",
+      "schedule1",
+      "schedule1a",
+      "schedule2",
+      "schedule_c",
+      "schedule_c",
+      "schedule_se",
+      "schedule_se",
+      "form7206",
+      "form7206",
+      "form8995"
+    ],
+    "filer": {
+      "primarySSN": "111223333",
+      "nameLine1": "EXAMPLE ALEX",
+      "nameControl": "EXAM",
+      "firstName": "Alex",
+      "lastName": "Example",
+      "firstNameWithInitial": "Alex",
+      "fullName": "Alex Example",
+      "address": {
+        "line1": "1 Example Way",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78701"
+      },
+      "filingStatus": 2,
+      "spouse": {
+        "ssn": "222334444",
+        "firstName": "Casey",
+        "lastName": "Example",
+        "nameControl": "EXAM"
+      },
+      "pinEnteredBy": "Taxpayer"
+    },
+    "pageCount": 19,
+    "ownerCopies": [
+      {
+        "pageNumber": 9,
+        "formKey": "schedule_c",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "schedule_c",
+        "formCopy": 2,
+        "recipient": "S",
+        "name": "Casey Example",
+        "ssn": "222334444"
+      },
+      {
+        "pageNumber": 13,
+        "formKey": "schedule_se",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 15,
+        "formKey": "schedule_se",
+        "formCopy": 2,
+        "recipient": "S",
+        "name": "Casey Example",
+        "ssn": "222334444"
+      },
+      {
+        "pageNumber": 17,
+        "formKey": "form7206",
+        "formCopy": 1,
+        "recipient": "S",
+        "name": "Casey Example",
+        "ssn": "222334444"
+      },
+      {
+        "pageNumber": 18,
+        "formKey": "form7206",
+        "formCopy": 2,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      }
+    ],
+    "originalSourceName": "mfj-primary-health-limited-source-input.json",
+    "originalPdfName": "mfj-primary-health-limited-filled-return.pdf",
+    "artifactGroup": "tip-health",
+    "pendingReconciliation": []
+  },
+  {
+    "id": "tip-health-single-fully-phased-out",
+    "originalSourceSha256": "359533a8671f264c3b9cc5590181a1aafa4e806ee9bedc9a3a2a8330b760134f",
+    "originalPdfSha256": "0312c719000d69dc78b1ccaecb63a4ad7d802a9cecb492b9071e1a0d855c3ef6",
+    "inputsSha256": "af5884742993df0254897972e2b164427afc875d48a63884f94678360beb5e74",
+    "pageOrigins": [
+      {
+        "pageNumber": 1,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 2,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 3,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 4,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 5,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 6,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 7,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 8,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 9,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "form7206",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 12,
+        "formKey": "form8995",
+        "formCopy": 1
+      }
+    ],
+    "expectedPdfForms": [
+      "f1040",
+      "schedule1",
+      "schedule2",
+      "schedule_c",
+      "schedule_se",
+      "form7206",
+      "form8995"
+    ],
+    "filer": {
+      "primarySSN": "111223333",
+      "nameLine1": "EXAMPLE ALEX",
+      "nameControl": "EXAM",
+      "firstName": "Alex",
+      "lastName": "Example",
+      "firstNameWithInitial": "Alex",
+      "fullName": "Alex Example",
+      "address": {
+        "line1": "1 Example Way",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78701"
+      },
+      "filingStatus": 1,
+      "pinEnteredBy": "Taxpayer"
+    },
+    "pageCount": 12,
+    "ownerCopies": [
+      {
+        "pageNumber": 7,
+        "formKey": "schedule_c",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 9,
+        "formKey": "schedule_se",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "form7206",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      }
+    ],
+    "originalSourceName": "single-fully-phased-out-source-input.json",
+    "originalPdfName": "single-fully-phased-out-filled-return.pdf",
+    "artifactGroup": "tip-health",
+    "pendingReconciliation": []
+  },
+  {
+    "id": "tip-health-single-health-income-limited",
+    "originalSourceSha256": "1ea9003c6cefa2512b8d3efd7f7740c66d720a382968859edc0a258e1b0c03e1",
+    "originalPdfSha256": "b288709745ab8bb586c48aa939942a8273e1f0199fce157541e69ad92903cc98",
+    "inputsSha256": "152501f2bdb01d8bbf20cd8da8ebcf846bbf62beae8633a8077c03c42dd089bb",
+    "pageOrigins": [
+      {
+        "pageNumber": 1,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 2,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 3,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 4,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 5,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 6,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 7,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 8,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 9,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "form7206",
+        "formCopy": 1
+      }
+    ],
+    "expectedPdfForms": [
+      "f1040",
+      "schedule1",
+      "schedule2",
+      "schedule_c",
+      "schedule_se",
+      "form7206"
+    ],
+    "filer": {
+      "primarySSN": "111223333",
+      "nameLine1": "EXAMPLE ALEX",
+      "nameControl": "EXAM",
+      "firstName": "Alex",
+      "lastName": "Example",
+      "firstNameWithInitial": "Alex",
+      "fullName": "Alex Example",
+      "address": {
+        "line1": "1 Example Way",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78701"
+      },
+      "filingStatus": 1,
+      "pinEnteredBy": "Taxpayer"
+    },
+    "pageCount": 11,
+    "ownerCopies": [
+      {
+        "pageNumber": 7,
+        "formKey": "schedule_c",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 9,
+        "formKey": "schedule_se",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "form7206",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      }
+    ],
+    "originalSourceName": "single-health-income-limited-source-input.json",
+    "originalPdfName": "single-health-income-limited-filled-return.pdf",
+    "artifactGroup": "tip-health",
+    "pendingReconciliation": []
+  },
+  {
+    "id": "tip-health-single-positive-health",
+    "originalSourceSha256": "75731a0d059cd4cbbca917d2d3cf971cfc401473463ef9f6ce35ab4c67675a67",
+    "originalPdfSha256": "eb0e22bbd8106f610030b02d55069a1bd1203d568c98495ed6753663c0344b36",
+    "inputsSha256": "a314e8de541be4a04ff597e9c0839d731c56739dde474472f48e10c237396657",
+    "pageOrigins": [
+      {
+        "pageNumber": 1,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 2,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 3,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 4,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 5,
+        "formKey": "schedule1a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 6,
+        "formKey": "schedule1a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 7,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 8,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 9,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 12,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 13,
+        "formKey": "form7206",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 14,
+        "formKey": "form8995",
+        "formCopy": 1
+      }
+    ],
+    "expectedPdfForms": [
+      "f1040",
+      "schedule1",
+      "schedule1a",
+      "schedule2",
+      "schedule_c",
+      "schedule_se",
+      "form7206",
+      "form8995"
+    ],
+    "filer": {
+      "primarySSN": "111223333",
+      "nameLine1": "EXAMPLE ALEX",
+      "nameControl": "EXAM",
+      "firstName": "Alex",
+      "lastName": "Example",
+      "firstNameWithInitial": "Alex",
+      "fullName": "Alex Example",
+      "address": {
+        "line1": "1 Example Way",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78701"
+      },
+      "filingStatus": 1,
+      "pinEnteredBy": "Taxpayer"
+    },
+    "pageCount": 14,
+    "ownerCopies": [
+      {
+        "pageNumber": 9,
+        "formKey": "schedule_c",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "schedule_se",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 13,
+        "formKey": "form7206",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      }
+    ],
+    "originalSourceName": "single-positive-health-source-input.json",
+    "originalPdfName": "single-positive-health-filled-return.pdf",
+    "artifactGroup": "tip-health",
+    "pendingReconciliation": []
+  },
+  {
+    "id": "tip-health-single-tip-netincome-limited",
+    "originalSourceSha256": "ddf41233a51d9126787a5a6ad774601d71830c3781d7fe1a28e1b8a2293f9f67",
+    "originalPdfSha256": "deceb17521f34a81901fdf66e1169524ebc2225144cee6df15c5f5129113f92e",
+    "inputsSha256": "3fd637691c3f37c28156c66005a363d078fc23fe181c6176d81f630b1e8fa621",
+    "pageOrigins": [
+      {
+        "pageNumber": 1,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 2,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 3,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 4,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 5,
+        "formKey": "schedule1a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 6,
+        "formKey": "schedule1a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 7,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 8,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 9,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 12,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 13,
+        "formKey": "form7206",
+        "formCopy": 1
+      }
+    ],
+    "expectedPdfForms": [
+      "f1040",
+      "schedule1",
+      "schedule1a",
+      "schedule2",
+      "schedule_c",
+      "schedule_se",
+      "form7206"
+    ],
+    "filer": {
+      "primarySSN": "111223333",
+      "nameLine1": "EXAMPLE ALEX",
+      "nameControl": "EXAM",
+      "firstName": "Alex",
+      "lastName": "Example",
+      "firstNameWithInitial": "Alex",
+      "fullName": "Alex Example",
+      "address": {
+        "line1": "1 Example Way",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78701"
+      },
+      "filingStatus": 1,
+      "pinEnteredBy": "Taxpayer"
+    },
+    "pageCount": 13,
+    "ownerCopies": [
+      {
+        "pageNumber": 9,
+        "formKey": "schedule_c",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "schedule_se",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 13,
+        "formKey": "form7206",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      }
+    ],
+    "originalSourceName": "single-tip-netincome-limited-source-input.json",
+    "originalPdfName": "single-tip-netincome-limited-filled-return.pdf",
+    "artifactGroup": "tip-health",
+    "pendingReconciliation": []
+  },
+  {
+    "id": "tip-health-single-w2-qbi-binding",
+    "originalSourceSha256": "8753f911f892884d203f5d30e9e9565eaa39e9a83390a05c6c78f9223f6eaff3",
+    "originalPdfSha256": "f81415a1ec7efaa483cab14d4673752aa98db4204910f20036e868779d1e85cb",
+    "inputsSha256": "995072f6b6545c801f884703052af9e3b28ddc5ba5e909a0e9fe4d89942593bf",
+    "pageOrigins": [
+      {
+        "pageNumber": 1,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 2,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 3,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 4,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 5,
+        "formKey": "schedule1a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 6,
+        "formKey": "schedule1a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 7,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 8,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 9,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 12,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 13,
+        "formKey": "form7206",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 14,
+        "formKey": "form8995",
+        "formCopy": 1
+      }
+    ],
+    "expectedPdfForms": [
+      "f1040",
+      "schedule1",
+      "schedule1a",
+      "schedule2",
+      "schedule_c",
+      "schedule_se",
+      "form7206",
+      "form8995"
+    ],
+    "filer": {
+      "primarySSN": "111223333",
+      "nameLine1": "EXAMPLE ALEX",
+      "nameControl": "EXAM",
+      "firstName": "Alex",
+      "lastName": "Example",
+      "firstNameWithInitial": "Alex",
+      "fullName": "Alex Example",
+      "address": {
+        "line1": "1 Example Way",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78701"
+      },
+      "filingStatus": 1,
+      "pinEnteredBy": "Taxpayer"
+    },
+    "pageCount": 14,
+    "ownerCopies": [
+      {
+        "pageNumber": 9,
+        "formKey": "schedule_c",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "schedule_se",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 13,
+        "formKey": "form7206",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      }
+    ],
+    "originalSourceName": "single-w2-qbi-binding-source-input.json",
+    "originalPdfName": "single-w2-qbi-binding-filled-return.pdf",
+    "artifactGroup": "tip-health",
+    "pendingReconciliation": []
+  },
+  {
+    "id": "mixed-cf-tip-above-zero-wotc",
+    "originalSourceSha256": "8325289ef9db7446340fd3d2f6018ed06042b2009b56b450d3bf81d798980a32",
+    "originalPdfSha256": "cdc9dd7cba65344a9c68d93508f8c7a75c06dbe214019e22040930cf17f3bd5a",
+    "inputsSha256": "86616bf4d12ad50c5b01e0f5dd6d199041d358eb0cd8d518f7beb0b3a5f4f4cf",
+    "pageOrigins": [
+      {
+        "pageNumber": 1,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 2,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 3,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 4,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 5,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 6,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 7,
+        "formKey": "schedule3",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 8,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 9,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_f",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "schedule_f",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 12,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 13,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 14,
+        "formKey": "schedule_se",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 15,
+        "formKey": "schedule_se",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 16,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 17,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 18,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 19,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 20,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 21,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 22,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 23,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 24,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 25,
+        "formKey": "f5884",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 26,
+        "formKey": "f5884",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 27,
+        "formKey": "form6251",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 28,
+        "formKey": "form7206",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 29,
+        "formKey": "form7206",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 30,
+        "formKey": "form8959",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 31,
+        "formKey": "form8960",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 32,
+        "formKey": "form8995a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 33,
+        "formKey": "form8995a",
+        "formCopy": 1
+      }
+    ],
+    "expectedPdfForms": [
+      "f1040",
+      "schedule1",
+      "schedule2",
+      "schedule3",
+      "schedule_c",
+      "schedule_f",
+      "schedule_se",
+      "schedule_se",
+      "f3800",
+      "f5884",
+      "form6251",
+      "form7206",
+      "form7206",
+      "form8959",
+      "form8960",
+      "form8995a"
+    ],
+    "filer": {
+      "primarySSN": "111223333",
+      "nameLine1": "EXAMPLE ALEX",
+      "nameControl": "EXAM",
+      "firstName": "Alex",
+      "lastName": "Example",
+      "firstNameWithInitial": "Alex",
+      "fullName": "Alex Example",
+      "address": {
+        "line1": "1 Example Way",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78701"
+      },
+      "filingStatus": 2,
+      "spouse": {
+        "ssn": "444556666",
+        "firstName": "Sam",
+        "lastName": "Example",
+        "nameControl": "EXAM"
+      },
+      "pinEnteredBy": "Taxpayer"
+    },
+    "pageCount": 33,
+    "ownerCopies": [
+      {
+        "pageNumber": 8,
+        "formKey": "schedule_c",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_f",
+        "formCopy": 1,
+        "recipient": "S",
+        "name": "Sam Example",
+        "ssn": "444556666"
+      },
+      {
+        "pageNumber": 12,
+        "formKey": "schedule_se",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 14,
+        "formKey": "schedule_se",
+        "formCopy": 2,
+        "recipient": "S",
+        "name": "Sam Example",
+        "ssn": "444556666"
+      },
+      {
+        "pageNumber": 28,
+        "formKey": "form7206",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 29,
+        "formKey": "form7206",
+        "formCopy": 2,
+        "recipient": "S",
+        "name": "Sam Example",
+        "ssn": "444556666"
+      }
+    ],
+    "originalSourceName": "mixed-cf-tip-above-zero-wotc-source-input.json",
+    "originalPdfName": "mixed-cf-tip-above-zero-wotc-filled-return.pdf",
+    "artifactGroup": "mixed-cf-tip",
+    "pendingReconciliation": []
+  },
+  {
+    "id": "mixed-cf-tip-health-income-limited",
+    "originalSourceSha256": "92e1b1c9b992ffcf7afdee11b3914e40afa30177329d5d5e436c4d033688327b",
+    "originalPdfSha256": "0e89027c87b189eee17c1f95670f610d64fba0c3e7ae00acf55e20670f974ac8",
+    "inputsSha256": "ae22dcc23c32391ca46008e1b641ce25e0e09121336706ffb6b4eec55d93bdcf",
+    "pageOrigins": [
+      {
+        "pageNumber": 1,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 2,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 3,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 4,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 5,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 6,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 7,
+        "formKey": "schedule3",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 8,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 9,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_f",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "schedule_f",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 12,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 13,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 14,
+        "formKey": "schedule_se",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 15,
+        "formKey": "schedule_se",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 16,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 17,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 18,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 19,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 20,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 21,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 22,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 23,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 24,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 25,
+        "formKey": "f5884",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 26,
+        "formKey": "f5884",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 27,
+        "formKey": "form6251",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 28,
+        "formKey": "form7206",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 29,
+        "formKey": "form7206",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 30,
+        "formKey": "form8995",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 31,
+        "formKey": "form8959",
+        "formCopy": 1
+      }
+    ],
+    "expectedPdfForms": [
+      "f1040",
+      "schedule1",
+      "schedule2",
+      "schedule3",
+      "schedule_c",
+      "schedule_f",
+      "schedule_se",
+      "schedule_se",
+      "f3800",
+      "f5884",
+      "form6251",
+      "form7206",
+      "form7206",
+      "form8995",
+      "form8959"
+    ],
+    "filer": {
+      "primarySSN": "111223333",
+      "nameLine1": "EXAMPLE ALEX",
+      "nameControl": "EXAM",
+      "firstName": "Alex",
+      "lastName": "Example",
+      "firstNameWithInitial": "Alex",
+      "fullName": "Alex Example",
+      "address": {
+        "line1": "1 Example Way",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78701"
+      },
+      "filingStatus": 2,
+      "spouse": {
+        "ssn": "444556666",
+        "firstName": "Sam",
+        "lastName": "Example",
+        "nameControl": "EXAM"
+      },
+      "pinEnteredBy": "Taxpayer"
+    },
+    "pageCount": 31,
+    "ownerCopies": [
+      {
+        "pageNumber": 8,
+        "formKey": "schedule_c",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_f",
+        "formCopy": 1,
+        "recipient": "S",
+        "name": "Sam Example",
+        "ssn": "444556666"
+      },
+      {
+        "pageNumber": 12,
+        "formKey": "schedule_se",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 14,
+        "formKey": "schedule_se",
+        "formCopy": 2,
+        "recipient": "S",
+        "name": "Sam Example",
+        "ssn": "444556666"
+      },
+      {
+        "pageNumber": 28,
+        "formKey": "form7206",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 29,
+        "formKey": "form7206",
+        "formCopy": 2,
+        "recipient": "S",
+        "name": "Sam Example",
+        "ssn": "444556666"
+      }
+    ],
+    "originalSourceName": "mixed-cf-tip-health-income-limited-source-input.json",
+    "originalPdfName": "mixed-cf-tip-health-income-limited-filled-return.pdf",
+    "artifactGroup": "mixed-cf-tip",
+    "pendingReconciliation": []
+  },
+  {
+    "id": "mixed-cf-tip-health-netincome-limited",
+    "originalSourceSha256": "5bfeb262afce7b3587762808f6152d56195d03cf5a0f3543d7eba206f8c5c13b",
+    "originalPdfSha256": "8d468835bf93f7fb72db02e22c5f34ac638b07e3e0dd54306b0c52261ebe53a1",
+    "inputsSha256": "28236f46d54dcbf666bd7303acea8993ca1035d3933651f2d33b8eb3873714fe",
+    "pageOrigins": [
+      {
+        "pageNumber": 1,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 2,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 3,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 4,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 5,
+        "formKey": "schedule1a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 6,
+        "formKey": "schedule1a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 7,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 8,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 9,
+        "formKey": "schedule3",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 12,
+        "formKey": "schedule_f",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 13,
+        "formKey": "schedule_f",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 14,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 15,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 16,
+        "formKey": "schedule_se",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 17,
+        "formKey": "schedule_se",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 18,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 19,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 20,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 21,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 22,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 23,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 24,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 25,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 26,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 27,
+        "formKey": "f5884",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 28,
+        "formKey": "f5884",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 29,
+        "formKey": "form6251",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 30,
+        "formKey": "form7206",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 31,
+        "formKey": "form7206",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 32,
+        "formKey": "form8995",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 33,
+        "formKey": "form8959",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 34,
+        "formKey": "form8960",
+        "formCopy": 1
+      }
+    ],
+    "expectedPdfForms": [
+      "f1040",
+      "schedule1",
+      "schedule1a",
+      "schedule2",
+      "schedule3",
+      "schedule_c",
+      "schedule_f",
+      "schedule_se",
+      "schedule_se",
+      "f3800",
+      "f5884",
+      "form6251",
+      "form7206",
+      "form7206",
+      "form8995",
+      "form8959",
+      "form8960"
+    ],
+    "filer": {
+      "primarySSN": "111223333",
+      "nameLine1": "EXAMPLE ALEX",
+      "nameControl": "EXAM",
+      "firstName": "Alex",
+      "lastName": "Example",
+      "firstNameWithInitial": "Alex",
+      "fullName": "Alex Example",
+      "address": {
+        "line1": "1 Example Way",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78701"
+      },
+      "filingStatus": 2,
+      "spouse": {
+        "ssn": "444556666",
+        "firstName": "Sam",
+        "lastName": "Example",
+        "nameControl": "EXAM"
+      },
+      "pinEnteredBy": "Taxpayer"
+    },
+    "pageCount": 34,
+    "ownerCopies": [
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_c",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 12,
+        "formKey": "schedule_f",
+        "formCopy": 1,
+        "recipient": "S",
+        "name": "Sam Example",
+        "ssn": "444556666"
+      },
+      {
+        "pageNumber": 14,
+        "formKey": "schedule_se",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 16,
+        "formKey": "schedule_se",
+        "formCopy": 2,
+        "recipient": "S",
+        "name": "Sam Example",
+        "ssn": "444556666"
+      },
+      {
+        "pageNumber": 30,
+        "formKey": "form7206",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 31,
+        "formKey": "form7206",
+        "formCopy": 2,
+        "recipient": "S",
+        "name": "Sam Example",
+        "ssn": "444556666"
+      }
+    ],
+    "originalSourceName": "mixed-cf-tip-health-netincome-limited-source-input.json",
+    "originalPdfName": "mixed-cf-tip-health-netincome-limited-filled-return.pdf",
+    "artifactGroup": "mixed-cf-tip",
+    "pendingReconciliation": []
+  },
+  {
+    "id": "mixed-cf-tip-no-health",
+    "originalSourceSha256": "b18b7b9967d2d7835cf82692cc54640ab23ed74a4d17457af6527f84b7fb8a14",
+    "originalPdfSha256": "50917946eeb5a48b253055658ae7e0fdf4e9f4b980fc6a04ed79c30a174cce7e",
+    "inputsSha256": "e8df8361ad59286d6ef37d46754271103cf95b4ce5f6a180152eb3ca1fc32dc9",
+    "pageOrigins": [
+      {
+        "pageNumber": 1,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 2,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 3,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 4,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 5,
+        "formKey": "schedule1a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 6,
+        "formKey": "schedule1a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 7,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 8,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 9,
+        "formKey": "schedule3",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 12,
+        "formKey": "schedule_f",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 13,
+        "formKey": "schedule_f",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 14,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 15,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 16,
+        "formKey": "schedule_se",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 17,
+        "formKey": "schedule_se",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 18,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 19,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 20,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 21,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 22,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 23,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 24,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 25,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 26,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 27,
+        "formKey": "f5884",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 28,
+        "formKey": "f5884",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 29,
+        "formKey": "form6251",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 30,
+        "formKey": "form8995",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 31,
+        "formKey": "form8959",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 32,
+        "formKey": "form8960",
+        "formCopy": 1
+      }
+    ],
+    "expectedPdfForms": [
+      "f1040",
+      "schedule1",
+      "schedule1a",
+      "schedule2",
+      "schedule3",
+      "schedule_c",
+      "schedule_f",
+      "schedule_se",
+      "schedule_se",
+      "f3800",
+      "f5884",
+      "form6251",
+      "form8995",
+      "form8959",
+      "form8960"
+    ],
+    "filer": {
+      "primarySSN": "111223333",
+      "nameLine1": "EXAMPLE ALEX",
+      "nameControl": "EXAM",
+      "firstName": "Alex",
+      "lastName": "Example",
+      "firstNameWithInitial": "Alex",
+      "fullName": "Alex Example",
+      "address": {
+        "line1": "1 Example Way",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78701"
+      },
+      "filingStatus": 2,
+      "spouse": {
+        "ssn": "444556666",
+        "firstName": "Sam",
+        "lastName": "Example",
+        "nameControl": "EXAM"
+      },
+      "pinEnteredBy": "Taxpayer"
+    },
+    "pageCount": 32,
+    "ownerCopies": [
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_c",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 12,
+        "formKey": "schedule_f",
+        "formCopy": 1,
+        "recipient": "S",
+        "name": "Sam Example",
+        "ssn": "444556666"
+      },
+      {
+        "pageNumber": 14,
+        "formKey": "schedule_se",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 16,
+        "formKey": "schedule_se",
+        "formCopy": 2,
+        "recipient": "S",
+        "name": "Sam Example",
+        "ssn": "444556666"
+      }
+    ],
+    "originalSourceName": "mixed-cf-tip-no-health-source-input.json",
+    "originalPdfName": "mixed-cf-tip-no-health-filled-return.pdf",
+    "artifactGroup": "mixed-cf-tip",
+    "pendingReconciliation": []
+  },
+  {
+    "id": "mixed-cf-tip-ordinary-no-credit",
+    "originalSourceSha256": "e5975ad6e114e36569a2f16ac17a5a932523a7dca5ab651b624f5f27e5ca2944",
+    "originalPdfSha256": "f17611df69553873a9636fb479f641cd89cf5b883a7bd6e6f7d67c32da8c6628",
+    "inputsSha256": "9bf1eecfee8efe3d3d19fc7e8e45649f3338ac72836061a1d3d1d78411c409f8",
+    "pageOrigins": [
+      {
+        "pageNumber": 1,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 2,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 3,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 4,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 5,
+        "formKey": "schedule1a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 6,
+        "formKey": "schedule1a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 7,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 8,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 9,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "schedule_f",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 12,
+        "formKey": "schedule_f",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 13,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 14,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 15,
+        "formKey": "schedule_se",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 16,
+        "formKey": "schedule_se",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 17,
+        "formKey": "form7206",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 18,
+        "formKey": "form7206",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 19,
+        "formKey": "form8995",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 20,
+        "formKey": "form8959",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 21,
+        "formKey": "form8960",
+        "formCopy": 1
+      }
+    ],
+    "expectedPdfForms": [
+      "f1040",
+      "schedule1",
+      "schedule1a",
+      "schedule2",
+      "schedule_c",
+      "schedule_f",
+      "schedule_se",
+      "schedule_se",
+      "form7206",
+      "form7206",
+      "form8995",
+      "form8959",
+      "form8960"
+    ],
+    "filer": {
+      "primarySSN": "111223333",
+      "nameLine1": "EXAMPLE ALEX",
+      "nameControl": "EXAM",
+      "firstName": "Alex",
+      "lastName": "Example",
+      "firstNameWithInitial": "Alex",
+      "fullName": "Alex Example",
+      "address": {
+        "line1": "1 Example Way",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78701"
+      },
+      "filingStatus": 2,
+      "spouse": {
+        "ssn": "444556666",
+        "firstName": "Sam",
+        "lastName": "Example",
+        "nameControl": "EXAM"
+      },
+      "pinEnteredBy": "Taxpayer"
+    },
+    "pageCount": 21,
+    "ownerCopies": [
+      {
+        "pageNumber": 9,
+        "formKey": "schedule_c",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "schedule_f",
+        "formCopy": 1,
+        "recipient": "S",
+        "name": "Sam Example",
+        "ssn": "444556666"
+      },
+      {
+        "pageNumber": 13,
+        "formKey": "schedule_se",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 15,
+        "formKey": "schedule_se",
+        "formCopy": 2,
+        "recipient": "S",
+        "name": "Sam Example",
+        "ssn": "444556666"
+      },
+      {
+        "pageNumber": 17,
+        "formKey": "form7206",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 18,
+        "formKey": "form7206",
+        "formCopy": 2,
+        "recipient": "S",
+        "name": "Sam Example",
+        "ssn": "444556666"
+      }
+    ],
+    "originalSourceName": "mixed-cf-tip-ordinary-no-credit-source-input.json",
+    "originalPdfName": "mixed-cf-tip-ordinary-no-credit-filled-return.pdf",
+    "artifactGroup": "mixed-cf-tip",
+    "pendingReconciliation": []
+  },
+  {
+    "id": "mixed-cf-tip-owned-health",
+    "originalSourceSha256": "eb554e8a86f7eec67f7ff1b84fc525ec1dcebafca68e450f1a61a04e24a18657",
+    "originalPdfSha256": "b2ad5fd464fea680bb947b4925eb599d2a14dafaf5f1ecc209ffe7a0f6782ea3",
+    "inputsSha256": "0131c42005255f17f9b3b637bf65c3ed81b7482b868eca5dd3597528cad1f2d5",
+    "pageOrigins": [
+      {
+        "pageNumber": 1,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 2,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 3,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 4,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 5,
+        "formKey": "schedule1a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 6,
+        "formKey": "schedule1a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 7,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 8,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 9,
+        "formKey": "schedule3",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 12,
+        "formKey": "schedule_f",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 13,
+        "formKey": "schedule_f",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 14,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 15,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 16,
+        "formKey": "schedule_se",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 17,
+        "formKey": "schedule_se",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 18,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 19,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 20,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 21,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 22,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 23,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 24,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 25,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 26,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 27,
+        "formKey": "f5884",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 28,
+        "formKey": "f5884",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 29,
+        "formKey": "form6251",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 30,
+        "formKey": "form7206",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 31,
+        "formKey": "form7206",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 32,
+        "formKey": "form8995",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 33,
+        "formKey": "form8959",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 34,
+        "formKey": "form8960",
+        "formCopy": 1
+      }
+    ],
+    "expectedPdfForms": [
+      "f1040",
+      "schedule1",
+      "schedule1a",
+      "schedule2",
+      "schedule3",
+      "schedule_c",
+      "schedule_f",
+      "schedule_se",
+      "schedule_se",
+      "f3800",
+      "f5884",
+      "form6251",
+      "form7206",
+      "form7206",
+      "form8995",
+      "form8959",
+      "form8960"
+    ],
+    "filer": {
+      "primarySSN": "111223333",
+      "nameLine1": "EXAMPLE ALEX",
+      "nameControl": "EXAM",
+      "firstName": "Alex",
+      "lastName": "Example",
+      "firstNameWithInitial": "Alex",
+      "fullName": "Alex Example",
+      "address": {
+        "line1": "1 Example Way",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78701"
+      },
+      "filingStatus": 2,
+      "spouse": {
+        "ssn": "444556666",
+        "firstName": "Sam",
+        "lastName": "Example",
+        "nameControl": "EXAM"
+      },
+      "pinEnteredBy": "Taxpayer"
+    },
+    "pageCount": 34,
+    "ownerCopies": [
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_c",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 12,
+        "formKey": "schedule_f",
+        "formCopy": 1,
+        "recipient": "S",
+        "name": "Sam Example",
+        "ssn": "444556666"
+      },
+      {
+        "pageNumber": 14,
+        "formKey": "schedule_se",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 16,
+        "formKey": "schedule_se",
+        "formCopy": 2,
+        "recipient": "S",
+        "name": "Sam Example",
+        "ssn": "444556666"
+      },
+      {
+        "pageNumber": 30,
+        "formKey": "form7206",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 31,
+        "formKey": "form7206",
+        "formCopy": 2,
+        "recipient": "S",
+        "name": "Sam Example",
+        "ssn": "444556666"
+      }
+    ],
+    "originalSourceName": "mixed-cf-tip-owned-health-source-input.json",
+    "originalPdfName": "mixed-cf-tip-owned-health-filled-return.pdf",
+    "artifactGroup": "mixed-cf-tip",
+    "pendingReconciliation": []
+  },
+  {
+    "id": "mixed-cf-tip-phase-wotc",
+    "originalSourceSha256": "584308e64cb650e8d7948fefb3946872e6df428380fc540a364dc4131b7d5391",
+    "originalPdfSha256": "f3b6ca3bae48fb0b7f73231bd29725efb6d0398e7e9d64c1efd20eace9921659",
+    "inputsSha256": "42f5fdcd6f3c307dbf93dfc6bf21ecb23514d0a33b282c749324a234c7bd0407",
+    "pageOrigins": [
+      {
+        "pageNumber": 1,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 2,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 3,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 4,
+        "formKey": "schedule1",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 5,
+        "formKey": "schedule1a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 6,
+        "formKey": "schedule1a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 7,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 8,
+        "formKey": "schedule2",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 9,
+        "formKey": "schedule3",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 11,
+        "formKey": "schedule_c",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 12,
+        "formKey": "schedule_f",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 13,
+        "formKey": "schedule_f",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 14,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 15,
+        "formKey": "schedule_se",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 16,
+        "formKey": "schedule_se",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 17,
+        "formKey": "schedule_se",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 18,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 19,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 20,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 21,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 22,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 23,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 24,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 25,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 26,
+        "formKey": "f3800",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 27,
+        "formKey": "f5884",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 28,
+        "formKey": "f5884",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 29,
+        "formKey": "form6251",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 30,
+        "formKey": "form7206",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 31,
+        "formKey": "form7206",
+        "formCopy": 2
+      },
+      {
+        "pageNumber": 32,
+        "formKey": "form8959",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 33,
+        "formKey": "form8960",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 34,
+        "formKey": "form8995a",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 35,
+        "formKey": "form8995a",
+        "formCopy": 1
+      }
+    ],
+    "expectedPdfForms": [
+      "f1040",
+      "schedule1",
+      "schedule1a",
+      "schedule2",
+      "schedule3",
+      "schedule_c",
+      "schedule_f",
+      "schedule_se",
+      "schedule_se",
+      "f3800",
+      "f5884",
+      "form6251",
+      "form7206",
+      "form7206",
+      "form8959",
+      "form8960",
+      "form8995a"
+    ],
+    "filer": {
+      "primarySSN": "111223333",
+      "nameLine1": "EXAMPLE ALEX",
+      "nameControl": "EXAM",
+      "firstName": "Alex",
+      "lastName": "Example",
+      "firstNameWithInitial": "Alex",
+      "fullName": "Alex Example",
+      "address": {
+        "line1": "1 Example Way",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78701"
+      },
+      "filingStatus": 2,
+      "spouse": {
+        "ssn": "444556666",
+        "firstName": "Sam",
+        "lastName": "Example",
+        "nameControl": "EXAM"
+      },
+      "pinEnteredBy": "Taxpayer"
+    },
+    "pageCount": 35,
+    "ownerCopies": [
+      {
+        "pageNumber": 10,
+        "formKey": "schedule_c",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 12,
+        "formKey": "schedule_f",
+        "formCopy": 1,
+        "recipient": "S",
+        "name": "Sam Example",
+        "ssn": "444556666"
+      },
+      {
+        "pageNumber": 14,
+        "formKey": "schedule_se",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 16,
+        "formKey": "schedule_se",
+        "formCopy": 2,
+        "recipient": "S",
+        "name": "Sam Example",
+        "ssn": "444556666"
+      },
+      {
+        "pageNumber": 30,
+        "formKey": "form7206",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      {
+        "pageNumber": 31,
+        "formKey": "form7206",
+        "formCopy": 2,
+        "recipient": "S",
+        "name": "Sam Example",
+        "ssn": "444556666"
+      }
+    ],
+    "originalSourceName": "mixed-cf-tip-phase-wotc-source-input.json",
+    "originalPdfName": "mixed-cf-tip-phase-wotc-filled-return.pdf",
+    "artifactGroup": "mixed-cf-tip",
+    "pendingReconciliation": []
+  },
+  {
+    "id": "partial-4972-beneficiary-2-copies",
+    "originalSourceSha256": "7e9b7cf6d985fedad147e6bca05974eb915fc6cdd59451345297b1e8c0ac9792",
+    "originalPdfSha256": "cbd76317c9c4170c40a79a5b2c1fa234200bf4ef24a78bcb4e20c6e37c995b49",
+    "inputsSha256": "835da848e3940fd379c5eaa4fba7893884c54de78ca156d9e5f10fbd6870088d",
+    "pageOrigins": [
+      {
+        "pageNumber": 1,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 2,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 3,
+        "formKey": "form4972",
+        "formCopy": 1
+      }
+    ],
+    "expectedPdfForms": [
+      "f1040",
+      "form4972"
+    ],
+    "filer": {
+      "primarySSN": "123456789",
+      "nameLine1": "TAXPAYER ALEX",
+      "nameControl": "TAXP",
+      "firstName": "Alex",
+      "lastName": "Taxpayer",
+      "firstNameWithInitial": "Alex",
+      "fullName": "Alex Taxpayer",
+      "address": {
+        "line1": "1 Main St",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78701"
+      },
+      "filingStatus": 1,
+      "pinEnteredBy": "Taxpayer"
+    },
+    "pageCount": 3,
+    "ownerCopies": [
+      {
+        "pageNumber": 3,
+        "formKey": "form4972",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Taxpayer",
+        "ssn": "123456789"
+      }
+    ],
+    "originalSourceName": "beneficiary-2-copies.json",
+    "originalPdfName": "beneficiary-2-copies.pdf",
+    "artifactGroup": "partial-beneficiary",
+    "pendingReconciliation": []
+  },
+  {
+    "id": "partial-4972-beneficiary-3-copies",
+    "originalSourceSha256": "cf765e0ed2c7fb2e6032485f9a18f692d0af6e8143240f30aa241b59c4a01699",
+    "originalPdfSha256": "5a7534a1a45456b272a5b2e1051dd6087fc2cc05e53c3f805294fdef867ae7c1",
+    "inputsSha256": "6f50e12a79ba6af9071dbdb05631f353033cb922976198cfd37eca1566a24f99",
+    "pageOrigins": [
+      {
+        "pageNumber": 1,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 2,
+        "formKey": "f1040",
+        "formCopy": 1
+      },
+      {
+        "pageNumber": 3,
+        "formKey": "form4972",
+        "formCopy": 1
+      }
+    ],
+    "expectedPdfForms": [
+      "f1040",
+      "form4972"
+    ],
+    "filer": {
+      "primarySSN": "123456789",
+      "nameLine1": "TAXPAYER ALEX",
+      "nameControl": "TAXP",
+      "firstName": "Alex",
+      "lastName": "Taxpayer",
+      "firstNameWithInitial": "Alex",
+      "fullName": "Alex Taxpayer",
+      "address": {
+        "line1": "1 Main St",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78701"
+      },
+      "filingStatus": 1,
+      "pinEnteredBy": "Taxpayer"
+    },
+    "pageCount": 3,
+    "ownerCopies": [
+      {
+        "pageNumber": 3,
+        "formKey": "form4972",
+        "formCopy": 1,
+        "recipient": "T",
+        "name": "Alex Taxpayer",
+        "ssn": "123456789"
+      }
+    ],
+    "originalSourceName": "beneficiary-3-copies.json",
+    "originalPdfName": "beneficiary-3-copies.pdf",
+    "artifactGroup": "partial-beneficiary",
+    "pendingReconciliation": []
+  }
+]
