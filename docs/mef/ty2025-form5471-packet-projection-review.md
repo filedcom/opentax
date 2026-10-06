@@ -1,0 +1,15 @@
+# TY2025 Form5471/8992 authored packet projection review
+
+The existing individual Category4/5a wholly owned CFC source, native standalone XSD and PDF projection cases now execute: **42 passed / 0 failed / 0 ignored**, `/tmp/opentax-5471-8992-main-bulk-source-native-pdf-oct6.log`. This validates authored source/calculation joins and individual document structures; it does not validate a complete exported Form1040 return. Positive native/PDF export remains guarded.
+
+Actual production PDF fill against canonical IRS templates generated eleven standalone diagnostic documents, **27 pages**, all rendered and reviewed. Parent6, E/E1three, Hone, I1one, Jthree, Mtwo, Pfour, Qfour, Rone, 8992one andScheduleAone. Artifact root `/tmp/opentax-5471-8992-template-audit-final-v2-oct6`; final `review-manifest.json` records hashes, reviewed occurrences and exact raster comparisons. Twenty-six pages preserve the original review pixels, while the corrected R page was independently reviewed. Diagnostic selected-page wrapper metadata prevents whole-PDF byte transfer; exact decoded pixels govern. No source/filer amounts were changed.
+
+Checked totals: C65000 total income/60000 net; F110000/170000 balanced assets/equity; E500 tested tax; H60000 E&P; I1tested50000/QBAI100000/interest3000/1000; J17000 untaxed/53000PTEP/70000 total; P53000 functional/USD closing; M11000 inventory sales; Q10000 sales plus55000 tested gross,60000 net; 8992GILTI42000 andDTIR8000. These structured prior-year references remain reviewer locators, not authenticated filed history.
+
+## Required paper zeros
+
+The [December2025 IRS instructions](https://www.irs.gov/instructions/i5471) require one or more zero amounts when a required schedule has only zeros. The reviewed empty ScheduleR ledger previously produced identity alone with all monetary cells blank. The descriptor now prints an empty-ledger explanation and both functional-currency distribution amounts as0, with `printZero`, leaving the date blank. It does not create a dated native distribution. NativeScheduleR's optional distribution group requires description/date if present; current business-rule compatibility remains unresolved. Final typed native/PDF R tests **4/0**, `/tmp/opentax-5471-schedule-r-zero-final-main-oct6.log`; actual rendered amount cells and blank date independently checked. Initial patch without `printZero` left zero cells blank and is superseded by final-v2 artifacts.
+
+## Remaining filing requirements
+
+Parent-to-child native references, zero-R business-rule evidence, source-backed prior balances and required worksheet records remain incomplete. The canonical TY2025 December2025 parent PDF and checked-inv5.4 XSD stop at ScheduleG21, while the current instructions discuss22a/b; reviewed No source facts do not justify inventing nonexistent fields or claiming version reconciliation. No full-return packet, business-rule acceptance, external authentication, ATS acceptance or parent completion is asserted by these standalone proofs. Shared planner remains369 fixtures/99 covered/16 uncovered; standalone diagnostics are not new catalog coverage.

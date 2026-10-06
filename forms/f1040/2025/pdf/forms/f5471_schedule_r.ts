@@ -17,6 +17,23 @@ export const form5471ScheduleRPdf: PdfFormDescriptor = {
       domainKey: "cfc_reference_id",
       pdfField: `${page}f1_5[0]`,
     },
+    {
+      kind: "text",
+      domainKey: "no_distribution_description",
+      pdfField: `${page}Table_Lines1-24[0].Line1[0].f1_6[0]`,
+    },
+    {
+      kind: "text",
+      domainKey: "distribution_total_functional",
+      pdfField: `${page}Table_Lines1-24[0].Line1[0].f1_8[0]`,
+      printZero: true,
+    },
+    {
+      kind: "text",
+      domainKey: "ep_distribution_total_functional",
+      pdfField: `${page}Table_Lines1-24[0].Line1[0].f1_9[0]`,
+      printZero: true,
+    },
   ],
   instances(_fields, filer, allPending) {
     if (!allPending?.f5471) return [];
@@ -33,6 +50,11 @@ export const form5471ScheduleRPdf: PdfFormDescriptor = {
       cfc_name: cfc.foreign_corp_name,
       cfc_ein: cfc.foreign_corp_ein,
       cfc_reference_id: cfc.foreign_corp_reference_id,
+      // Required all-zero schedules still print zero amounts. This is an
+      // explanation of the reviewed empty ledger, not a dated distribution.
+      no_distribution_description: "No distributions during the tax year",
+      distribution_total_functional: 0,
+      ep_distribution_total_functional: 0,
     }];
   },
 };

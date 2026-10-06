@@ -11,10 +11,21 @@ Deno.test("Schedule R PDF has reviewed identity and no invented distribution", (
   assertEquals(form5471ScheduleRPdf.pageIndices?.(fields ?? {}), [0]);
   assertEquals(fields?.filer_name, "Alex Taxpayer");
   assertEquals(fields?.cfc_reference_id, "FC001");
-  assertEquals(Object.values(fields ?? {}).includes("0"), false);
+  assertEquals(
+    fields?.no_distribution_description,
+    "No distributions during the tax year",
+  );
+  assertEquals(fields?.distribution_total_functional, 0);
+  assertEquals(fields?.ep_distribution_total_functional, 0);
+  assertEquals(
+    form5471ScheduleRPdf.fields.filter((entry) =>
+      entry.kind === "text" && entry.printZero
+    ).map((entry) => entry.domainKey),
+    ["distribution_total_functional", "ep_distribution_total_functional"],
+  );
   assertEquals(
     form5471ScheduleRPdf.fields.some((entry) =>
-      entry.pdfField.includes("Table_Lines1-24")
+      entry.pdfField.endsWith("Line1[0].f1_7[0]")
     ),
     false,
   );
