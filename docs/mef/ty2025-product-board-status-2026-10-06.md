@@ -634,3 +634,19 @@ Source planner: **220 fixtures**,116 PDF descriptors,113 unique keys,93 covered 
 
 Three agents continue broader SHOP qualifying arrangements, positive child tax/Form8615 and Form8978 source/year/overflow evidence. Root owner-specific ScheduleSE and ordinary joint QBI remain isolated and uncounted:79 focused checks passed, then broader compatibility exposed two incomplete MFJ ScheduleC test sources (337 passed,2 failed). Repair the source ownership facts before final packet review/integration. Wider branches, source authenticity, ATS Scenarios1/8/13 conflicts, issued credentials, business rules and IRS acceptance remain open. ATS was reported unavailable through October13 at9a.m. Eastern. The checklist and future section remain frozen.
 
+
+
+## Before reviewed Form8978 integration
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,395 bounded slices**; broader parents remain open. New discoveries belong only in `future_todo`, outside the work queue. Prior learnings are preserved in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md).
+
+Stable `762db9012` passed real-Poppler `deno task test`: **11,271 passed, zero failed or ignored**. Isolated `ea23fbb91`, started October 5 at 23:57:45 UTC, remains live by actual PIDs86079/86085 at00:36 UTC; later integrated routes are outside that snapshot. Commands, hashes and limits are in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md).
+
+Source planner: **222 fixtures**,116 PDF descriptors,113 unique keys,93 covered and20 uncovered. Family SHOP/noncommunity MFS integration passes36/36; public direct Form8994 integration20/20; paired parent/child education integration24/24. SHOP composite/list arrangements are integrated at `35afc890a`:25 main checks pass, ten full packets and242 reviewed pages are retained. Their source-bound packets and all-page reviews are recorded; local XSD does not prove IRS acceptance.
+
+Three agents continue broader SHOP qualifying arrangements, positive child tax/Form8615 and Form8978 source/year/overflow evidence. Root owner-specific ScheduleSE and ordinary joint QBI remain isolated and uncounted:79 focused checks passed, then broader compatibility exposed two incomplete MFJ ScheduleC test sources (337 passed,2 failed). Source facts are repaired with104/104 ScheduleC checks; final owner/source/held checks pass13/13 and all52 packet pages are inspected with matching hashes. Owner-SE is integrated at `0cc6c8389`;28 main checks pass with four complete packets and52 reviewed pages. The bounded ledger entry does not close broader owner/farm/QBI requirements. Wider branches, source authenticity, ATS Scenarios1/8/13 conflicts, issued credentials, business rules and IRS acceptance remain open. ATS was reported unavailable through October13 at9a.m. Eastern. The checklist and future section remain frozen.
+
