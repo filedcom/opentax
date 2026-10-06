@@ -1990,3 +1990,20 @@ Existing ordinary-refund inventory and Form8621 parent source/PDF work continue 
 Exact source b4187c06a: six-module source gate119/0(47s), log `/tmp/opentax-state-refund-current-main-source-proof.log`, SHA2565d94087c33de0803ac6f5e93d5d955ecc0916790aa59af026ad8b501f4d2576d. Immutable main replay `/tmp/opentax-state-refund-current-main-replay-oct6` regenerated8/all30 reviewedpages with exact source/pending/XML/PDF bytes and full2025v5.4 XSD. Checker terminal0 `/tmp/opentax-state-refund-current-main-artifact-check-v2.log`, SHA256dc6a6599abe036a39936c38768a09fe26732cd40448947d8669ac2d426bcdfc2. Initial checker stopped before validation on a dangling cache symlink; replaced only that replay cache with a real copy and reran the same checker. Original retained packets unchanged.
 
 Source inventory has no count cap, separates samepayer MFJ recipients, retains issuedzero-taxable copies and separately sourced unemployment; zero-taxable refund-only packet prints1040alone. Positive taxable refunds retain completed AMT computation at zeroAMT without inventing a6251 attachment. Broader tax-benefit workpapers, recovery years/corrections/business classifications, authenticity, IRS business rules and acceptance remain open. Form4852 derivednative26/0 isolated593f1cc34 remains guarded; fullroute delegated after compactfe9765617. FullV4 same44964/44970 confirmedlive33m27s; latestfull stillrequired.
+
+## Before existing Form8283 complete SectionB gift inventory work
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,442 bounded slices**. Learnings and exact proof remain in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Newly discovered work goes only in `future_todo` and is not executed.
+
+Actual inventory: **150 native / 116 PDF descriptors**, **365 fixtures**, **113 PDF keys / 96 covered / 17 uncovered**. Recent main proof: reviewed catalog24/0 (375 preserved pages), C/F loss-owner health28/0 (6/182), beneficiary death/estate3/0+15/0 (26/78), senior/independent-health6/0+111/0 and retained5/0 (5/95), complete refund inventory119/0 (8/30). Source/PDF bytes match reviewed originals; timestamp-only XML differences are recorded. These close their stated slices; broader parents remain open.
+
+Full `deno task test` at fbacc539c failed11,577/14/0ignored, exit1(82m15s); all14 have focused repaired-main proof. Immutable181575242 rerun started03:53:35UTC; wrapper44964/Deno44970 verified live at33m27s. Its terminal result and a passing full run of latest source remain required. Publication checkpoint for draft [PR63](https://github.com/filedcom/opentax/pull/63): **c4d0ff580**; newer verified work is awaiting publication.
+
+Complete ordinary-refund inventory is verified on main; Form4852, fractional Form4972 and Form8621 parent work continue in isolated checkouts. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+
+
+Previous goalturn progress: mainrefundb4187c06a119/0+8/30exactpublicsource/native/PDF/fullXSD replay, ledger1442 andverifiedpublishedPR63e30f3680e. Form4852wholeexistingparentdelegated afterisolatedsource/native26/0 compactionfe9765617. FullV4same44964/44970confirmedlive35m04s. Read-only8283audit: typedSectionBarrayunbounded butnative/PDFkeepers acceptone standalone or exacttwo qualifiedequipment/similarart; source-groupguards alsoartatmostone reduction/globaldifferentdonee. ExistingboardexplicitSectionBgrouping/fullsourceworkflow remainsincomplete. Rootbegins complete reviewedinventory reconciliation and independent wholegraph/native/PDF/XSD/group/sourceconflictproof; actualsigned/appraisal issuercontent review andprioracceptedcarryovers remainrequired, notfabricated. No newmainTODO or futureexecution.
