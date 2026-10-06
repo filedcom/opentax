@@ -5197,3 +5197,12 @@ execution. Logs `/tmp/opentax-schedulej-main-held-{qef,pension}-oct6.log` and
 `...-{qef,pension}-compare-oct6.log`. Broader source allocations, authentication,
 full latest regression and IRS gates remain open. Ledger1467/frozen52/future
 unchanged.
+
+
+## Fresh main corrected ordinary Roth evidence — October 6
+
+Integrated production0616cea72 verified on current main acfea8ca9: standard source gate11/0 (2m21s) and eight related source/native modules209/0 (3s). Terminal logs `/tmp/opentax-roth-checkbox-current-main-source-oct6.log` and `/tmp/opentax-roth-checkbox-current-main-related-oct6.log`. Isolated274/0 is separate and is not a main result.
+
+Copied immutable corrected source roots in main `.state/research/form4852-roth-{source,inventory,conversion,history}-checkbox-corrected-main-reviewed` execute the public graph from actual archived inputs and retained document bytes; they compare whole pending, source hashes, PDF/origins and timestamp-onlyXML and validate full localXSD. All four terminal logs `/tmp/opentax-roth-checkbox-current-main-{regular,inventory,conversion,history}-held-oct6.log` pass9/52,6/57,8/79,12/107. All873 corrected archivedfiles remain byte-exact in `/tmp/opentax-roth-checkbox-current-main-original-comparison-oct6.json`.
+
+The corrected35/295 proof seals ordinary checkbox classification only. Earlier original checked ordinary sources are superseded and preserved, not issuer-authenticated corrections. Original10/70 mathematical reproduction does not establish paper compliance: traditional/SEP/SIMPLE right-margin labeling and codeN actual annual recharacterization, destination/contribution/earnings and required statement remain unresolved. Current2025 conversion coexistence and broader source/authentication/IRS parent remain open. Ledger1468; frozen52 and future section unchanged.
