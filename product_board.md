@@ -17,7 +17,7 @@ The [ordinary passive K-1 gain](docs/mef/ty2025-eic-passive-line10-source-proof.
 
 Latest full `deno task test` **V22** is live at immutable **0d153ed24** (wrapper86975/task86982/test86983), including the current mortgage, payroll and passive-gain integrations. Private research/cache copies have zero symlinks, distinct inodes and verified preserved-packet hashes. V17–V21 remain live at older snapshots. Superseded V8–V16 were deliberately cancelled with retained evidence; elapsed time never triggers a restart. Earlier terminal full batches had failures with recorded repairs; **a passing latest-production full batch remains required**.
 
-Draft [PR63](https://github.com/filedcom/opentax/pull/63) was externally verified at **d911b951c**, with exact title/body/head/draft and successful attachment. The subsequent ordinary-gain integration has passed root gates and awaits publication. Source contracts and hashes do not authenticate issuers, signatures or prior acceptance. Wider filing routes, ATS credentials/scenario conflicts, IRS acknowledgments and release review remain unfinished.
+Draft [PR63](https://github.com/filedcom/opentax/pull/63) was externally verified at **c09d07c83**, with exact title/body/head/draft and successful attachment. The ordinary-gain integration is published with its completed root gates. Source contracts and hashes do not authenticate issuers, signatures or prior acceptance. Wider filing routes, ATS credentials/scenario conflicts, IRS acknowledgments and release review remain unfinished.
 
 ## Scope and completion rules
 
