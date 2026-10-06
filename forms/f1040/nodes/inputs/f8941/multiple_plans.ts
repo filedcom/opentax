@@ -25,8 +25,19 @@ const dependentSchema = coveredDependentSchema.extend({
       shop_plan_reference: reference,
       plan_dependent_eligibility_source_reference: reference,
       eligible_plan_dependent_confirmed: z.literal(true),
+      eligibility_period: period.optional(),
     }).strict(),
   ).min(1).max(12),
+}).strict();
+const coveragePeriodSchema = period.extend({
+  coverage_tier: coverageTierSchema,
+  covered_dependent_references: z.array(reference).max(10),
+  change_event: z.object({
+    event_type: z.enum(["marriage", "birth", "divorce"]),
+    dependent_reference: reference,
+    effective_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+    relationship_source_reference: reference,
+  }).strict().optional(),
 }).strict();
 const planSchema = z.object({
   payer_employment_ein: id,
@@ -137,6 +148,7 @@ export const multiplePlanEmployeeSchema = z.object({
   enrollment_selections: z.array(eligibilityPeriod).max(12),
   coverage_tier: coverageTierSchema,
   covered_dependents: z.array(dependentSchema).max(10),
+  coverage_periods: z.array(coveragePeriodSchema).min(2).max(12).optional(),
   employer_premium_paid: premiumMoney,
   tax_year_shop_premium: premiumMoney,
   irs_2025_rating_area_average_premium: z.number().int().positive(),
@@ -169,6 +181,7 @@ export const multiplePlanReviewSchema = z.object({
       enrollment_selections: z.array(eligibilityPeriod).max(12),
       coverage_tier: coverageTierSchema,
       covered_dependents: z.array(dependentSchema).max(10),
+      coverage_periods: z.array(coveragePeriodSchema).min(2).max(12).optional(),
       monthly_premiums: z.array(invoiceSchema).max(12),
       seasonal_service: seasonalSchema.optional(),
     }).strict(),
@@ -262,6 +275,13 @@ export function multiplePlanWorksheet(raw: unknown) {
   }
   const eligibility = new Map<string, Set<number>>();
   const selections = new Map<string, Map<number, string>>();
+  const coverage = new Map<
+    string,
+    Map<number, {
+      tier: "employee_only" | "family";
+      dependents: string[];
+    }>
+  >();
   const dependents = new Set<string>();
   const excluded = s.excluded_workers ?? [];
   const excludedReviews = s.excluded_worker_reviews ?? [];
@@ -352,7 +372,10 @@ export function multiplePlanWorksheet(raw: unknown) {
       e.irs_2025_rating_area_average_premium !==
         (e.coverage_tier === "family" ? 24527 : 9358)
     ) fail("employee IRS table differs");
-    if ((e.coverage_tier === "family") !== (e.covered_dependents.length > 0)) {
+    if (
+      !e.coverage_periods &&
+      (e.coverage_tier === "family") !== (e.covered_dependents.length > 0)
+    ) {
       fail("covered family membership differs");
     }
     for (const d of e.covered_dependents) {
@@ -372,11 +395,15 @@ export function multiplePlanWorksheet(raw: unknown) {
         seenPlans.add(eligibility.shop_plan_reference);
         add(eligibility.plan_dependent_eligibility_source_reference);
       }
-      if (
-        e.enrollment_selections.some((p) =>
-          !seenPlans.has(p.shop_plan_reference)
-        )
-      ) fail("dependent is not eligible in a selected QHP");
+      for (const record of d.plan_eligibility_records) {
+        if (e.coverage_periods && !record.eligibility_period) {
+          fail("changing dependent needs dated plan eligibility");
+        }
+        if (record.eligibility_period) {
+          add(record.eligibility_period.enrollment_source_reference);
+          monthSet(record.eligibility_period);
+        }
+      }
     }
     for (const p of e.plan_eligibility_periods) {
       add(p.enrollment_source_reference);
@@ -406,6 +433,125 @@ export function multiplePlanWorksheet(raw: unknown) {
       }
     }
     selections.set(e.employee_reference, selected);
+    const monthly = new Map<number, {
+      tier: "employee_only" | "family";
+      dependents: string[];
+    }>();
+    if (e.coverage_periods) {
+      const periods = [...e.coverage_periods].sort((a, b) =>
+        a.first_month - b.first_month
+      );
+      const known = new Map(
+        e.covered_dependents.map((d) => [d.dependent_reference, d]),
+      );
+      if (
+        known.size !== e.covered_dependents.length ||
+        periods[0].coverage_tier !== e.coverage_tier
+      ) {
+        fail("changing coverage initial tier or dependent roster differs");
+      }
+      const used = new Set<string>();
+      for (const [index, p] of periods.entries()) {
+        add(p.enrollment_source_reference);
+        const members = new Set(p.covered_dependent_references);
+        if (
+          members.size !== p.covered_dependent_references.length ||
+          [...members].some((ref) => !known.has(ref)) ||
+          (p.coverage_tier === "family") !== (members.size > 0)
+        ) {
+          fail("changing coverage tier or member roster differs");
+        }
+        if (
+          index === 0 && p.change_event ||
+          index > 0 && !p.change_event
+        ) {
+          fail("changing coverage event is missing or premature");
+        }
+        if (index > 0) {
+          const previous = periods[index - 1];
+          const previousMembers = new Set(
+            previous.covered_dependent_references,
+          );
+          const added = [...members].filter((ref) => !previousMembers.has(ref));
+          const removed = [...previousMembers].filter((ref) =>
+            !members.has(ref)
+          );
+          const event = p.change_event!;
+          const eventMonth = Number(event.effective_date.slice(5, 7));
+          if (
+            !dated(event.effective_date) ||
+            (eventMonth !== p.first_month &&
+              eventMonth !== p.first_month - 1) ||
+            previous.last_month + 1 !== p.first_month ||
+            (event.event_type === "divorce"
+              ? event.dependent_reference !== removed[0]
+              : event.dependent_reference !== added[0]) ||
+            (event.event_type === "marriage" &&
+              (added.length !== 1 || removed.length ||
+                known.get(added[0])?.relationship_to_employee !== "spouse")) ||
+            (event.event_type === "birth" &&
+              (added.length !== 1 || removed.length ||
+                known.get(added[0])?.relationship_to_employee !== "child")) ||
+            (event.event_type === "divorce" &&
+              (removed.length !== 1 || added.length ||
+                known.get(removed[0])?.relationship_to_employee !== "spouse"))
+          ) {
+            fail("changing coverage event, date or relationship differs");
+          }
+          add(event.relationship_source_reference);
+          if (event.event_type !== "divorce") {
+            const dependent = known.get(event.dependent_reference)!;
+            if (
+              dependent.plan_eligibility_records.some((record) =>
+                !record.eligibility_period ||
+                record.eligibility_period.first_month < eventMonth ||
+                record.eligibility_period.first_month > p.first_month
+              )
+            ) fail("new dependent eligibility predates relationship event");
+          }
+        }
+        for (const m of monthSet(p)) {
+          if (!selected.has(m) || monthly.has(m)) {
+            fail("changing coverage month is not uniquely enrolled");
+          }
+          monthly.set(m, {
+            tier: p.coverage_tier,
+            dependents: [...members].sort(),
+          });
+          for (const ref of members) {
+            used.add(ref);
+            const dependent = known.get(ref)!;
+            const plan = selected.get(m)!;
+            if (
+              !dependent.plan_eligibility_records.some((r) =>
+                r.shop_plan_reference === plan &&
+                r.eligibility_period && monthSet(r.eligibility_period).has(m)
+              )
+            ) fail("dependent lacks dated selected-QHP eligibility");
+          }
+        }
+      }
+      if (monthly.size !== selected.size || used.size !== known.size) {
+        fail("changing coverage misses enrolled month or retained dependent");
+      }
+    } else {
+      for (const [m, plan] of selected) {
+        if (
+          e.covered_dependents.some((d) =>
+            !d.plan_eligibility_records.some((r) =>
+              r.shop_plan_reference === plan &&
+              (!r.eligibility_period || monthSet(r.eligibility_period).has(m))
+            )
+          )
+        ) fail("dependent is not eligible in a selected QHP");
+        monthly.set(m, {
+          tier: e.coverage_tier,
+          dependents: e.covered_dependents.map((d) => d.dependent_reference)
+            .sort(),
+        });
+      }
+    }
+    coverage.set(e.employee_reference, monthly);
   }
   for (const worker of excluded) {
     if (
@@ -582,6 +728,7 @@ export function multiplePlanWorksheet(raw: unknown) {
         "enrollment_selections",
         "coverage_tier",
         "covered_dependents",
+        "coverage_periods",
       ] as const
     ) {
       if (JSON.stringify(r[field]) !== JSON.stringify(e[field])) {
@@ -619,7 +766,10 @@ export function multiplePlanWorksheet(raw: unknown) {
       const q = p.eligible_employee_quotes.find((q) =>
         q.employee_reference === e.employee_reference
       )!;
-      const premium = e.coverage_tier === "family"
+      const monthCoverage = coverage.get(e.employee_reference)!.get(
+        invoice.month,
+      )!;
+      const premium = monthCoverage.tier === "family"
         ? q.family_premium
         : q.employee_only_premium;
       if (
@@ -627,11 +777,9 @@ export function multiplePlanWorksheet(raw: unknown) {
         cents(premium) !== cents(invoice.billed_premium) ||
         invoice.insured_quote_reference !== q.quote_source_reference ||
         invoice.employer_policy_reference !== p.employer_policy_reference ||
-        invoice.coverage_tier !== e.coverage_tier ||
+        invoice.coverage_tier !== monthCoverage.tier ||
         JSON.stringify([...invoice.covered_dependent_references].sort()) !==
-          JSON.stringify(
-            e.covered_dependents.map((d) => d.dependent_reference).sort(),
-          )
+          JSON.stringify(monthCoverage.dependents)
       ) fail("invoice premium, policy, quote or family join differs");
       let pct: number;
       let refContribution: string | undefined;
@@ -649,7 +797,7 @@ export function multiplePlanWorksheet(raw: unknown) {
             e.employee_reference + ":" + s.reference_shop_plan_reference,
           )?.has(invoice.month)
         ) fail("selected employee is not reference-plan eligible");
-        const entitlement = e.coverage_tier === "family"
+        const entitlement = monthCoverage.tier === "family"
           ? c.family_contribution
           : c.employee_only_contribution;
         if (
@@ -672,7 +820,7 @@ export function multiplePlanWorksheet(raw: unknown) {
         pct = arrangementQuoteContribution(
           { ...p, employee_only_rule: p.employee_only_rule! },
           q,
-          e.coverage_tier,
+          monthCoverage.tier,
           invoice.employer_payment,
         ).adjustmentPercentage;
       }
@@ -682,7 +830,7 @@ export function multiplePlanWorksheet(raw: unknown) {
         employee_reference: e.employee_reference,
         month: invoice.month,
         shop_plan_reference: plan,
-        coverage_tier: e.coverage_tier,
+        coverage_tier: monthCoverage.tier,
         employer_policy_reference: p.employer_policy_reference,
         insured_quote_reference: q.quote_source_reference,
         reference_contribution_source_reference: refContribution,
@@ -694,8 +842,8 @@ export function multiplePlanWorksheet(raw: unknown) {
         billed_premium: invoice.billed_premium,
         employer_payment: invoice.employer_payment,
         adjusted_average_percentage: pct,
-        adjusted_average_premium: e.irs_2025_rating_area_average_premium / 12 *
-          pct,
+        adjusted_average_premium:
+          (monthCoverage.tier === "family" ? 24527 : 9358) / 12 * pct,
       });
     }
     if (
