@@ -2895,7 +2895,5 @@ not a passing or still-running original result. Current run2 remains live.
 Original wrapper and launchctl evidence retained in
 `/tmp/opentax-full-regression-v5-original-wrapper-oct6.zsh` and
 `/tmp/opentax-full-regression-v5-restart-audit-oct6.txt`.
-The next service invocation is overridden to archive terminal run2 log/status
-and remove the KeepAlive service before another regression launch. This does
-not interrupt currentrun2; its explicit terminal result remains required.
+The launchctl debug override was rejected because it requires root privileges; no override was installed. Instead, the wrapper path was atomically replaced with a startup guard that archives terminal run2 log/status and removes the submitted KeepAlive service before another test launch. Currentrun2 retains its original open script inode and continues; its explicit terminal result remains required.
 Latest-source full run must use a one-shot launcher and unique immutable paths.

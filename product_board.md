@@ -8,7 +8,7 @@ Inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF key
 
 Latest verified work: legacy1254 depletion-offset source accounts (**17/0**) and fourteen full-XSD retained packets / 235 files exact, with 490 reviewed page occurrences; natural-resource donation source reductions and corrected Section B explanation labels. Main source **15/0**, rehearsal compatibility **578/0**, and main label checks **43/0**; forty retained full-XSD packets cover 472 return pages. All 47 changed explanation pages were reviewed; 425 other pages and all 888 original files are exact. Earlier Roth proofs remain retained, but ordinary-Roth Box 7 classification is under correction. Wider parents remain open.
 
-Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at115m20s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
+Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The first immutable **4a45410da** rerun exited **1**; KeepAlive restarted it and overwrote its terminal log. The second run (wrapper91417/Deno91420, start07:44:10UTC) is live, and a startup guard will archive its result before preventing another launch. First-run totals are unavailable. A passing latest-source full run remains required.
 
 Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **ca8c02d4e**, published with donation proof; verified legacy-depletion changes are ready for publication.
 
