@@ -1,3 +1,4 @@
+import { isSourceMoney } from "./source-rounding.ts";
 import { reconcileSharedParticipantElections } from "./participant-inventory.ts";
 import { z } from "zod";
 import type {
@@ -212,16 +213,13 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
                 form.capital_gain_amount <= 0 ||
                 typeof form.lump_sum_amount !== "number" ||
                 typeof form.box6_nua !== "number" ||
-                !Number.isSafeInteger(form.lump_sum_amount) ||
-                !Number.isSafeInteger(form.capital_gain_amount) ||
-                !Number.isSafeInteger(form.box6_nua) ||
-                !Number.isSafeInteger(
-                  form.box6_nua * form.capital_gain_amount /
-                    form.lump_sum_amount,
-                ))))
+                ![form.lump_sum_amount, form.capital_gain_amount, form.box6_nua]
+                  .every((amount) =>
+                    typeof amount === "number" && isSourceMoney(amount)
+                  ))))
         ) ||
         forms.some((form, index) =>
-          !Number.isSafeInteger(form.annuity_actuarial_value ?? 0) ||
+          !isSourceMoney(Number(form.annuity_actuarial_value ?? 0)) ||
           ((form.annuity_actuarial_value ?? 0) !== 0 &&
             (sourceByElection[index].annuity_actuarial_value !==
                 form.annuity_actuarial_value ||

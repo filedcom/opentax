@@ -94,11 +94,13 @@ export function reconcileForm4972Multiple1099R(
       typeof item.box2a_taxable_amount !== "number" ||
       item.box2a_taxable_amount <= 0 ||
       (item.box3_capital_gain ?? 0) > item.box2a_taxable_amount ||
-      (!partialBeneficiary && nua > 0 &&
-        (!Number.isSafeInteger(item.box2a_taxable_amount ?? 0) ||
-          !Number.isSafeInteger(item.box3_capital_gain ?? 0) ||
-          !Number.isSafeInteger(item.box6_nua ?? 0))) ||
-      (!partialBeneficiary && !Number.isSafeInteger(item.box8_other ?? 0)) ||
+      (!partialBeneficiary &&
+        [
+          item.box2a_taxable_amount ?? 0,
+          item.box3_capital_gain ?? 0,
+          item.box6_nua ?? 0,
+          item.box8_other ?? 0,
+        ].some((amount) => !isSourceMoney(amount))) ||
       (!partialBeneficiary && item.box8_pct_total !== undefined &&
         item.box8_pct_total !== 100)
     ) ||
@@ -116,8 +118,7 @@ export function reconcileForm4972Multiple1099R(
         (annuityShare ?? null)) ||
     (nua > 0 &&
       (form.elect_include_nua !== true ||
-        (!partialBeneficiary &&
-          !Number.isSafeInteger(nua * gain / taxable)))) ||
+        [nua, gain, taxable].some((amount) => !isSourceMoney(amount)))) ||
     (nua === 0 && form.elect_include_nua === true) ||
     ((hasDeath || hasEstate) && !partialBeneficiary) ||
     (hasDeath &&

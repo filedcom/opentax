@@ -1,3 +1,4 @@
+import { isSourceMoney } from "../nodes/intermediate/forms/form4972/source-rounding.ts";
 import {
   reconcileParticipantIssuedInventory,
   reconcileSharedParticipantElections,
@@ -240,13 +241,12 @@ export function reconcileForm4972Collection(
               (typeof fields.capital_gain_amount !== "number" ||
                 fields.capital_gain_amount <= 0 ||
                 typeof fields.lump_sum_amount !== "number" ||
-                !Number.isSafeInteger(fields.lump_sum_amount) ||
-                !Number.isSafeInteger(fields.capital_gain_amount) ||
-                typeof fields.box6_nua !== "number" ||
-                !Number.isSafeInteger(fields.box6_nua) ||
-                !Number.isSafeInteger(
-                  fields.box6_nua * fields.capital_gain_amount /
-                    fields.lump_sum_amount,
+                ![
+                  fields.lump_sum_amount,
+                  fields.capital_gain_amount,
+                  fields.box6_nua,
+                ].every((amount) =>
+                  typeof amount === "number" && isSourceMoney(amount)
                 ))) ||
             sources.reduce((sum, source) => sum + (source.box6_nua ?? 0), 0) !==
               fields.box6_nua)) ||

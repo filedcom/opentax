@@ -1562,11 +1562,12 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
       item.box2a_taxable_amount > 0 &&
       (item.box3_capital_gain ?? 0) >= 0 &&
       (item.box3_capital_gain ?? 0) <= item.box2a_taxable_amount &&
-      Number.isSafeInteger(item.box6_nua ?? 0) &&
-      ((item.box6_nua ?? 0) === 0 ||
-        (Number.isSafeInteger(item.box2a_taxable_amount) &&
-          Number.isSafeInteger(item.box3_capital_gain ?? 0))) &&
-      Number.isSafeInteger(item.box8_other ?? 0) &&
+      [
+        item.box2a_taxable_amount,
+        item.box3_capital_gain ?? 0,
+        item.box6_nua ?? 0,
+        item.box8_other ?? 0,
+      ].every(isSourceMoney) &&
       (item.box8_pct_total === undefined || item.box8_pct_total === 100)
     );
     const samePlan = groups.every((group) =>
@@ -1755,9 +1756,13 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         item.box2a_taxable_amount === undefined ||
         item.box2a_taxable_amount <= 0 ||
         (item.box3_capital_gain ?? 0) > item.box2a_taxable_amount ||
-        (!partialBeneficiary && ((item.box6_nua ?? 0) > 0 &&
-          !Number.isSafeInteger(item.box6_nua ?? 0))) ||
-        (!partialBeneficiary && !Number.isSafeInteger(item.box8_other ?? 0)) ||
+        (!partialBeneficiary &&
+          [
+            item.box2a_taxable_amount,
+            item.box3_capital_gain ?? 0,
+            item.box6_nua ?? 0,
+            item.box8_other ?? 0,
+          ].some((amount) => !isSourceMoney(amount))) ||
         (!partialBeneficiary && item.box8_pct_total !== undefined &&
           item.box8_pct_total !== 100)
       )

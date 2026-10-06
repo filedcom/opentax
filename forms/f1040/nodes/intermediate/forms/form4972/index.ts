@@ -195,17 +195,15 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
         (input.capital_gain_amount ?? 0) <= 0) ||
       ((input.box6_nua ?? 0) > 0 &&
         (input.elect_include_nua !== true ||
-          (!partialMultiple && (!Number.isSafeInteger(input.lump_sum_amount) ||
-            !Number.isSafeInteger(input.capital_gain_amount ?? 0) ||
-            !Number.isSafeInteger(input.box6_nua ?? 0) ||
-            !Number.isSafeInteger(
-              (input.box6_nua ?? 0) * (input.capital_gain_amount ?? 0) /
-                input.lump_sum_amount,
-            ))))) ||
+          [
+            input.lump_sum_amount,
+            input.capital_gain_amount ?? 0,
+            input.box6_nua ?? 0,
+          ].some((amount) => !isSourceMoney(amount)))) ||
       ((input.box6_nua ?? 0) === 0 &&
         input.elect_include_nua === true) ||
       (!partialMultiple &&
-        !Number.isSafeInteger(input.annuity_actuarial_value ?? 0)) ||
+        !isSourceMoney(input.annuity_actuarial_value ?? 0)) ||
       (partialMultiple && (input.annuity_actuarial_value ?? 0) > 0 &&
         input.annuity_share_pct === undefined) ||
       (!partialMultiple &&

@@ -1,4 +1,7 @@
-import { sameSourceMoney } from "../nodes/intermediate/forms/form4972/source-rounding.ts";
+import {
+  isSourceMoney,
+  sameSourceMoney,
+} from "../nodes/intermediate/forms/form4972/source-rounding.ts";
 import { inputSchema as f1099rSchema } from "../nodes/inputs/f1099r/index.ts";
 import {
   form4972,
@@ -200,15 +203,12 @@ export function reconcileForm4972Nua(
     // This route retains raw box 8 cents; the calculator rounds its grossed-up
     // line 11 before the official annuity worksheet. Cash allocations stay exact.
     if (
-      annuitySource > 0 &&
-      (!Number.isInteger(taxable) || !Number.isInteger(gain) ||
-        !Number.isInteger(nua) ||
-        (!partialNuaDeathAnnuityEstatePartIII &&
-          !Number.isInteger(annuitySource)) ||
-        (capitalElection && roundedNua * roundedGain % roundedTaxable !== 0))
+      [taxable, gain, nua, annuitySource].some((amount) =>
+        !isSourceMoney(amount)
+      )
     ) {
       throw new Error(
-        "Form 4972 NUA and annuity allocation needs whole-dollar sources and exact NUA capital allocation",
+        "Form 4972 NUA and annuity allocation needs exact source cents",
       );
     }
     const computed = form4972.compute(
@@ -280,13 +280,11 @@ export function reconcileForm4972Nua(
   if (annuitySource > 0) {
     const annuitySharePct = item.box8_pct_total ?? 100;
     if (
-      !Number.isInteger(taxable) || !Number.isInteger(gain) ||
-      !Number.isInteger(nua) || !Number.isInteger(annuitySource) ||
-      (capitalElection && roundedNua * roundedGain % roundedTaxable !== 0)
+      [taxable, gain, nua, annuitySource].some((amount) =>
+        !isSourceMoney(amount)
+      )
     ) {
-      throw new Error(
-        "Form 4972 NUA and annuity bounded route needs whole-dollar sources and exact NUA capital allocation",
-      );
+      throw new Error("Form 4972 NUA and annuity needs exact source cents");
     }
     const computed = form4972.compute(
       { taxYear: 2025, formType: "f1040" },

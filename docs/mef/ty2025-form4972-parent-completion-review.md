@@ -46,3 +46,7 @@ Main4f99acaa0 shared gate4/0(17s), /tmp/opentax-form4972-shared-main-focused.log
 ## Next full-share cent-valued inventory baseline
 
 Isolated396caefbf baseline uses actual reviewed same-plan3 taxpayer/2 spouse issued-copy inventories, replacing each source’s boxes2a/3/6/8 with10000.25/1000.17/2000.49/2000.49 and gross12000.74. Public execution rejects before filing at f1099r joint multi-source guard; downstream source_forms missing is a consequence. /tmp/opentax-form4972-full-share-cents-baseline.log. This is a verified existing-parent gap, not a positive filing proof; no source/node/native guard has yet been changed. Complete cent aggregation and independent worksheet/native/PDF/XSD/all-page validation remain necessary.
+
+## Before full-share cent source implementation
+
+Board read and prior integration learnings compacted on main396caefbf. Baseline ce48f8cc0 proves the five-copy source assembly guard. Existing participant/plan/reference/owner/eligibility/annuity-share and source-to-final reconciliation checks remain required. The next change accepts cent money and rounds combined source totals for full-share worksheets; no future tasks are executed.
