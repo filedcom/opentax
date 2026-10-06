@@ -239,7 +239,7 @@ const childServicePaymentSchema = z.object({
   service_to: calendarDate,
   cash_wages: z.number().positive(),
   ordinary_pay_period: z.object({
-    kind: z.enum(["within_31_days", "over_31_days"]),
+    kind: z.enum(["within_31_days", "over_31_days", "no_ordinary_period"]),
     period_from: calendarDate,
     period_to: calendarDate,
     period_source_reference: sourceReference,
@@ -248,8 +248,14 @@ const childServicePaymentSchema = z.object({
     covered_service_hours: z.number().nonnegative().optional(),
   }).strict(),
 }).strict();
+const noOrdinaryFrequencySchema = z.object({
+  employer_pay_practice_source_reference: sourceReference,
+  complete_payment_period_ledger_source_reference: sourceReference,
+  no_ordinary_payment_period_verified: z.literal(true),
+}).strict();
 const childAgeTransitionSchema = z.object({
   service_payment_ledger_source_reference: sourceReference,
+  no_ordinary_frequency_review: noOrdinaryFrequencySchema.optional(),
   wage_payments: z.array(childServicePaymentSchema).min(2),
 }).strict();
 const childPayrollEmployeeSchema = familyPayrollBaseSchema.extend({
@@ -285,21 +291,23 @@ function coveredBirthdayService(period: BirthdayPeriod, birthday: string) {
     review.period_from > period.service_from ||
     review.period_to < period.service_to ||
     period.service_from > period.service_to || days < 1 ||
-    (review.kind === "within_31_days") !== (days <= 31) ||
+    (review.kind === "within_31_days" && days > 31) ||
+    (review.kind === "over_31_days" && days <= 31) ||
     review.period_source_reference === review.service_time_source_reference
   ) {
     throw new Error(
       "Schedule H birthday wages need a sourced ordinary pay period containing the actual services",
     );
   }
-  if (review.kind === "over_31_days") {
+  if (review.kind === "over_31_days" ||
+    review.kind === "no_ordinary_period") {
     if (
       review.excluded_service_hours !== undefined ||
       review.covered_service_hours !== undefined ||
       (period.service_from < birthday && period.service_to >= birthday)
     ) {
       throw new Error(
-        "Schedule H over-31-day pay period needs separately allocated services and wages on one birthday side",
+        "Schedule H period without the majority rule needs separately allocated services and wages on one birthday side",
       );
     }
     return period.service_from >= birthday;
@@ -329,6 +337,67 @@ function coveredBirthdayService(period: BirthdayPeriod, birthday: string) {
   return review.covered_service_hours! >= review.excluded_service_hours!;
 }
 
+function validateNoOrdinaryPayPractice(
+  periods: BirthdayPeriod[],
+  review: z.infer<typeof noOrdinaryFrequencySchema> | undefined,
+) {
+  const irregular = periods.filter((period) =>
+    period.ordinary_pay_period.kind === "no_ordinary_period"
+  );
+  if (irregular.length === 0) {
+    if (review) {
+      throw new Error(
+        "Schedule H no-ordinary payroll practice cannot override an ordinary pay period",
+      );
+    }
+    return;
+  }
+  const actual = irregular.map((period) => period.ordinary_pay_period);
+  const distinctPeriods = new Map<string, typeof actual[number]>();
+  for (const period of actual) {
+    const prior = distinctPeriods.get(period.period_source_reference);
+    if (
+      prior && (prior.period_from !== period.period_from ||
+        prior.period_to !== period.period_to || prior.kind !== period.kind)
+    ) {
+      throw new Error(
+        "Schedule H one irregular payment period must retain one dated source identity",
+      );
+    }
+    distinctPeriods.set(period.period_source_reference, period);
+  }
+  const unique = [...distinctPeriods.values()].sort((a, b) =>
+    a.period_from.localeCompare(b.period_from)
+  );
+  const lengths = unique.map((period) =>
+    (Date.parse(period.period_to) - Date.parse(period.period_from)) / 86_400_000 +
+    1
+  );
+  if (
+    !review || irregular.length !== periods.length ||
+    new Set(lengths).size < 2 ||
+    unique.some((period, index) =>
+      index > 0 && unique[index - 1].period_to >= period.period_from
+    ) ||
+    review.employer_pay_practice_source_reference ===
+      review.complete_payment_period_ledger_source_reference ||
+    actual.some((period) =>
+      period.period_source_reference ===
+        review.employer_pay_practice_source_reference ||
+      period.period_source_reference ===
+        review.complete_payment_period_ledger_source_reference ||
+      period.service_time_source_reference ===
+        review.employer_pay_practice_source_reference ||
+      period.service_time_source_reference ===
+        review.complete_payment_period_ledger_source_reference
+    )
+  ) {
+    throw new Error(
+      "Schedule H no-ordinary payroll exception needs complete varied payment periods and independent employer practice evidence",
+    );
+  }
+}
+
 function childPost21Wages(employee: ChildPayrollEmployee) {
   const review = employee.age_21_transition_review;
   if (!review) return { wages: 0, paidQuarters: [0, 0, 0, 0] };
@@ -345,6 +414,12 @@ function childPost21Wages(employee: ChildPayrollEmployee) {
     employee.birth_date_source_reference,
     employee.payroll_source_reference,
     review.service_payment_ledger_source_reference,
+    ...(review.no_ordinary_frequency_review
+      ? [
+        review.no_ordinary_frequency_review.employer_pay_practice_source_reference,
+        review.no_ordinary_frequency_review.complete_payment_period_ledger_source_reference,
+      ]
+      : []),
     ...review.wage_payments.map((p) => p.payment_reference),
     ...new Set(
       review.wage_payments.map((p) =>
@@ -367,7 +442,8 @@ function childPost21Wages(employee: ChildPayrollEmployee) {
     );
   }
   const allocatedTimeRefs = review.wage_payments.filter((payment) =>
-    payment.ordinary_pay_period.kind === "over_31_days"
+    payment.ordinary_pay_period.kind === "over_31_days" ||
+    payment.ordinary_pay_period.kind === "no_ordinary_period"
   ).map((payment) => payment.ordinary_pay_period.service_time_source_reference);
   if (new Set(allocatedTimeRefs).size !== allocatedTimeRefs.length) {
     throw new Error(
@@ -379,6 +455,7 @@ function childPost21Wages(employee: ChildPayrollEmployee) {
   const periods = [...review.wage_payments].sort((a, b) =>
     a.service_from.localeCompare(b.service_from)
   );
+  validateNoOrdinaryPayPractice(periods, review.no_ordinary_frequency_review);
   for (const [index, payment] of periods.entries()) {
     if (
       payment.paid_date < "2025-01-01" || payment.paid_date > "2025-12-31" ||
@@ -583,6 +660,10 @@ const payrollEmployeeSchema = z.union([
 
 const statePayrollReviewSchema = z.object({
   all_household_cash_payments_included: z.literal(true),
+  child_no_ordinary_frequency_reviews: z.array(z.object({
+    employee_id: sourceReference,
+    ...noOrdinaryFrequencySchema.shape,
+  }).strict()).optional(),
   rate_notices: z.array(
     z.object({
       state: z.string().regex(/^[A-Z]{2}$/),
@@ -795,6 +876,10 @@ function validateStatePayrollReview(input: SectionBSource) {
     payment.ordinary_pay_period ? [payment.ordinary_pay_period] : []
   );
   const references = [
+    ...(review.child_no_ordinary_frequency_reviews ?? []).flatMap((item) => [
+      item.employer_pay_practice_source_reference,
+      item.complete_payment_period_ledger_source_reference,
+    ]),
     ...review.rate_notices.map((notice) => notice.source_reference),
     ...review.wage_payments.map((payment) => payment.payment_reference),
     ...review.wage_payments.flatMap((payment) =>
@@ -830,7 +915,7 @@ function validateStatePayrollReview(input: SectionBSource) {
     );
   }
   const allocatedTimeRefs = reviewedPeriods.filter((period) =>
-    period.kind === "over_31_days"
+    period.kind === "over_31_days" || period.kind === "no_ordinary_period"
   ).map((period) => period.service_time_source_reference);
   if (new Set(allocatedTimeRefs).size !== allocatedTimeRefs.length) {
     throw new Error(
@@ -1101,6 +1186,22 @@ function validateStatePayrollReview(input: SectionBSource) {
       paymentCents;
     workerQuarters.set(payment.employee_id, quarters);
   }
+  if (
+    new Set(
+      (review.child_no_ordinary_frequency_reviews ?? []).map((item) =>
+        item.employee_id
+      ),
+    ).size !== (review.child_no_ordinary_frequency_reviews ?? []).length ||
+    (review.child_no_ordinary_frequency_reviews ?? []).some((item) =>
+      !input.employee_wages.some((employee) =>
+        employee.employee_id === item.employee_id
+      )
+    )
+  ) {
+    throw new Error(
+      "Schedule H child no-ordinary payroll review must join one retained worker",
+    );
+  }
   for (const employee of input.employee_wages) {
     if (
       workerAnnual.get(employee.employee_id) !==
@@ -1130,6 +1231,26 @@ function validateStatePayrollReview(input: SectionBSource) {
       }
     }
     const periods = childStateServicePeriods.get(employee.employee_id);
+    const noOrdinary = review.child_no_ordinary_frequency_reviews?.find((item) =>
+      item.employee_id === employee.employee_id
+    );
+    if (
+      employee.relationship === "child" &&
+      employee.birth_date >= "2007-01-01" &&
+      employee.birth_date <= "2007-12-31"
+    ) {
+      const age18Payments = payments.filter((payment) =>
+        payment.employee_id === employee.employee_id
+      );
+      validateNoOrdinaryPayPractice(
+        age18Payments as BirthdayPeriod[],
+        noOrdinary,
+      );
+    } else if (noOrdinary) {
+      throw new Error(
+        "Schedule H state no-ordinary payroll review requires a turning-18 child",
+      );
+    }
     if (periods) {
       periods.sort((a, b) => a.from.localeCompare(b.from));
       if (

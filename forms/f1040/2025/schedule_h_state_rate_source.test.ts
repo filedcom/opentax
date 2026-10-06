@@ -505,6 +505,136 @@ function turning18ShortPeriodSource() {
   return raw;
 }
 
+const noOrdinaryPeriod = (from: string, to: string, id: string) => ({
+  kind: "no_ordinary_period",
+  period_from: from,
+  period_to: to,
+  period_source_reference: `${id}-irregular-payment-period`,
+  service_time_source_reference: `${id}-dated-service-allocation`,
+});
+const noOrdinaryPractice = (id: string) => ({
+  employer_pay_practice_source_reference: `${id}-employer-irregular-pay-practice`,
+  complete_payment_period_ledger_source_reference:
+    `${id}-complete-2025-payment-period-ledger`,
+  no_ordinary_payment_period_verified: true,
+});
+
+function turning18NoOrdinarySource() {
+  const raw: any = turning18MixedStateSource();
+  const review = raw.federal_unemployment.state_payroll_review;
+  const child = raw.federal_unemployment.employee_wages[1];
+  review.child_no_ordinary_frequency_reviews = [{
+    employee_id: child.employee_id,
+    ...noOrdinaryPractice("child18"),
+  }];
+  const cash = (
+    id: string, from: string, to: string, paid: string, amount: number,
+    covered: boolean,
+  ) => ({
+    employee_id: child.employee_id,
+    paid_date: paid,
+    state: "CA",
+    cash_wages: amount,
+    payment_reference: `${id}-cash-payment`,
+    ...(covered
+      ? { family_state_coverage_source_reference: `${id}-CA-coverage` }
+      : { coverage_source_reference: `${id}-CA-exclusion` }),
+    service_from: from,
+    service_to: to,
+    ordinary_pay_period: noOrdinaryPeriod(from, to, id),
+  });
+  review.wage_payments = review.wage_payments.filter((payment: any) =>
+    payment.employee_id !== child.employee_id
+  );
+  review.excluded_state_wage_payments = [
+    cash("child18-Jan", "2025-01-01", "2025-01-23", "2025-01-23", 300, false),
+    cash("child18-FebMar", "2025-01-24", "2025-03-31", "2025-03-31", 950, false),
+    cash("child18-AprJun", "2025-04-01", "2025-06-14", "2025-06-30", 750, false),
+  ];
+  review.wage_payments.push(
+    cash("child18-Jun", "2025-06-15", "2025-06-30", "2025-06-30", 500, true),
+    cash("child18-JulAug", "2025-07-01", "2025-08-19", "2025-08-19", 600, true),
+    cash("child18-AugSep", "2025-08-20", "2025-09-30", "2025-09-30", 650, true),
+    cash("child18-OctNov", "2025-10-01", "2025-11-13", "2025-11-13", 600, true),
+    cash("child18-NovDec", "2025-11-14", "2025-12-31", "2025-12-31", 650, true),
+  );
+  return raw;
+}
+
+function turning21NoOrdinarySource() {
+  const raw: any = turning21MixedStateSource();
+  const unemployment = raw.federal_unemployment;
+  const child = unemployment.employee_wages[1];
+  const review = child.age_21_transition_review;
+  review.no_ordinary_frequency_review = noOrdinaryPractice("child21");
+  const service = (
+    id: string, from: string, to: string, paid: string, amount: number,
+  ) => ({
+    payment_reference: `${id}-service-payment`,
+    service_from: from,
+    service_to: to,
+    paid_date: paid,
+    cash_wages: amount,
+    ordinary_pay_period: noOrdinaryPeriod(from, to, id),
+  });
+  review.wage_payments = [
+    service("child21-Jan", "2025-01-01", "2025-01-23", "2025-01-23", 300),
+    service("child21-FebMar", "2025-01-24", "2025-03-31", "2025-03-31", 1_200),
+    service("child21-JunEarly", "2025-06-01", "2025-06-06", "2025-07-01", 600),
+    service("child21-JunBefore", "2025-06-07", "2025-06-14", "2025-07-01", 900),
+    service("child21-JunAfter", "2025-06-15", "2025-06-30", "2025-07-01", 1_000),
+    service("child21-JulAug", "2025-07-01", "2025-08-19", "2025-08-19", 2_000),
+    service("child21-AugSep", "2025-08-20", "2025-09-30", "2025-09-30", 2_000),
+    service("child21-OctDec", "2025-10-01", "2025-12-31", "2025-12-31", 3_000),
+  ];
+  child.quarterly_cash_wages = [1_500, 0, 6_500, 3_000];
+  child.w2.box3_social_security_wages = 8_000;
+  child.w2.box5_medicare_wages = 8_000;
+  raw.ss_wages = raw.medicare_wages = 16_000;
+  unemployment.credit_reduction_wages[0].taxable_futa_wages = 10_000;
+  const state = unemployment.state_payroll_review;
+  state.wage_payments = state.wage_payments.filter((payment: any) =>
+    payment.employee_id !== child.employee_id
+  );
+  for (const service of review.wage_payments) {
+    state.wage_payments.push({
+      employee_id: child.employee_id,
+      paid_date: service.paid_date,
+      state: "CA",
+      cash_wages: service.cash_wages,
+      payment_reference: `CA-${service.payment_reference}`,
+      family_state_coverage_source_reference:
+        `CA-covered-${service.payment_reference}`,
+      service_payment_reference: service.payment_reference,
+      service_from: service.service_from,
+      service_to: service.service_to,
+      ordinary_pay_period: structuredClone(service.ordinary_pay_period),
+    });
+  }
+  return raw;
+}
+
+function turning21NoOrdinarySharedPeriodSource() {
+  const raw: any = turning21NoOrdinarySource();
+  const unemployment = raw.federal_unemployment;
+  const child = unemployment.employee_wages[1];
+  const serviceRows = child.age_21_transition_review.wage_payments.filter(
+    (payment: any) => payment.service_from >= "2025-06-01" &&
+      payment.service_to <= "2025-06-30",
+  );
+  for (const payment of serviceRows) {
+    payment.ordinary_pay_period.period_from = "2025-06-01";
+    payment.ordinary_pay_period.period_to = "2025-06-30";
+    payment.ordinary_pay_period.period_source_reference =
+      "child21-June-shared-irregular-payment-period";
+    const state = unemployment.state_payroll_review.wage_payments.find(
+      (row: any) => row.service_payment_reference === payment.payment_reference,
+    );
+    state.ordinary_pay_period = structuredClone(payment.ordinary_pay_period);
+  }
+  return raw;
+}
+
 function child20PartialStateSource() {
   const raw: any = mixedFamilyStateSource(true);
   const unemployment = raw.federal_unemployment;
@@ -799,6 +929,111 @@ Deno.test("Schedule H CA child turning 18 or 21 joins dated service to state and
     "mixed-ca-child-turns21-high-prebirthday",
     2_224,
   );
+});
+
+Deno.test("Schedule H no ordinary pay period uses actual birthday-side services for federal and state wages", async () => {
+  for (const [id, raw, expectedTax, expectedFuta] of [
+    ["child18-no-ordinary-period", turning18NoOrdinarySource(), 1_588, 114],
+    ["child21-no-ordinary-period", turning21NoOrdinarySource(), 2_902, 204],
+    ["child21-shared-irregular-period", turning21NoOrdinarySharedPeriodSource(), 2_902, 204],
+  ] as const) {
+    const amount = computeScheduleHAmounts(inputSchema.parse(raw), 2025);
+    assertEquals(amount.futaTax, expectedFuta);
+    assertEquals(amount.totalTax, expectedTax);
+    await verifyAdditionalPacket(raw, id, expectedTax);
+  }
+  const rejects = async (original: any, edit: (raw: any) => void) => {
+    const packet = f1040_2025.executeReturn({
+      ...structuredClone(base.inputs), schedule_h: original,
+    });
+    assertEquals(packet.diagnostics, []);
+    const pending = buildPending(packet.pending);
+    const filer = extractFilerIdentity(packet.pending.f1040)!;
+    const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+    const altered = structuredClone(original);
+    edit(altered);
+    assertThrows(() => computeScheduleHAmounts(inputSchema.parse(altered), 2025));
+    assertEquals(f1040_2025.executeReturn({
+      ...structuredClone(base.inputs), schedule_h: altered,
+    }).diagnostics.some((item) =>
+      item.nodeType === "schedule_h" || item.nodeType === "start"
+    ), true);
+    assertThrows(() => scheduleH.build(altered, { filer, pending }));
+    await assertRejects(() => buildPdfBytes(
+      { ...bundle.pending, schedule_h: altered }, filer, ".pdf-cache",
+    ));
+  };
+  const child21 = turning21NoOrdinarySource();
+  await rejects(child21, (raw) => {
+    delete raw.federal_unemployment.employee_wages[1]
+      .age_21_transition_review.no_ordinary_frequency_review;
+  });
+  await rejects(turning21NoOrdinarySharedPeriodSource(), (raw) => {
+    const service = raw.federal_unemployment.employee_wages[1]
+      .age_21_transition_review.wage_payments[3];
+    service.ordinary_pay_period.period_to = "2025-06-29";
+    const state = raw.federal_unemployment.state_payroll_review.wage_payments
+      .find((row: any) => row.service_payment_reference === service.payment_reference);
+    state.ordinary_pay_period = structuredClone(service.ordinary_pay_period);
+  });
+  await rejects(child21, (raw) => {
+    raw.federal_unemployment.employee_wages[1]
+      .age_21_transition_review.wage_payments[2].service_from = "2025-06-14";
+  });
+  await rejects(child21, (raw) => {
+    raw.federal_unemployment.employee_wages[1]
+      .age_21_transition_review.wage_payments[2].ordinary_pay_period
+      .period_to = "2025-07-14";
+  });
+  await rejects(child21, (raw) => {
+    raw.federal_unemployment.employee_wages[1]
+      .age_21_transition_review.wage_payments[2].ordinary_pay_period.kind =
+        "within_31_days";
+  });
+  await rejects(child21, (raw) => {
+    raw.federal_unemployment.state_payroll_review.wage_payments =
+      raw.federal_unemployment.state_payroll_review.wage_payments.filter(
+        (payment: any) =>
+          payment.service_payment_reference !== "child21-JunAfter-service-payment"
+      );
+  });
+  const child18 = turning18NoOrdinarySource();
+  await rejects(child18, (raw) => {
+    delete raw.federal_unemployment.state_payroll_review
+      .child_no_ordinary_frequency_reviews;
+  });
+  await rejects(child18, (raw) => {
+    raw.federal_unemployment.state_payroll_review
+      .child_no_ordinary_frequency_reviews[0]
+      .no_ordinary_payment_period_verified = false;
+  });
+  await rejects(child18, (raw) => {
+    raw.federal_unemployment.state_payroll_review
+      .child_no_ordinary_frequency_reviews[0].employee_id =
+        "orphan-child-no-ordinary-review";
+  });
+  await rejects(child18, (raw) => {
+    raw.federal_unemployment.state_payroll_review
+      .child_no_ordinary_frequency_reviews.push({
+        employee_id: "orphan-child-no-ordinary-review",
+        employer_pay_practice_source_reference:
+          "orphan-employer-irregular-pay-practice",
+        complete_payment_period_ledger_source_reference:
+          "orphan-complete-payment-period-ledger",
+        no_ordinary_payment_period_verified: true,
+      });
+  });
+  await rejects(child18, (raw) => {
+    const row = raw.federal_unemployment.state_payroll_review
+      .excluded_state_wage_payments[0];
+    row.ordinary_pay_period.kind = "within_31_days";
+  });
+  await rejects(child18, (raw) => {
+    raw.federal_unemployment.state_payroll_review.wage_payments =
+      raw.federal_unemployment.state_payroll_review.wage_payments.filter(
+        (payment: any) => payment.payment_reference !== "child18-Jun-cash-payment"
+      );
+  });
 });
 
 Deno.test("Schedule H crossing ordinary pay period uses sourced half, covered-majority and excluded-majority service time", async () => {
