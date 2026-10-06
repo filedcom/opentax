@@ -99,3 +99,8 @@ carryovers, personal custody-fee deductibility, PAB OID/dividend coexistence
 with AMT Form 4952, other Form 4952 elections, IRS business-rule acceptance or
 ATS transport. Older line-2g-only positive workpapers remain under their
 original source contract; they do not silently claim this new debt deduction.
+
+
+## Main multiple-PAB source integration — October7
+
+Privatefe4a065c5/50d07d79d integrated without conflict as169dfcdb3/b923a30f6. Finalprivatecheckedcompatibility9/0 andfocused1/0, actualfour/36freshXSD andpriorfive/111exactliteral replay remain bounded candidate evidence. Root all36pages sourceDecimal/native/freshdecodedvisualapproval pluspaymentguardtransfer are retained; author74+root88+root11+earlieronePAB87=260physical integrationfiles. Eightprivateproductionhashes matchmain. Union70 contains12incoming TSfiles, withonlyf4952native/PDF changedamongprevious60; unchangedprevious58 verified. Main nine saved PAB returns/147pages plus three retained8962/15 compatibilityreturns andtargetedcheckedgate are pending. No main completion, broaderForm4952/6251parent closure, externalauthentication orIRSacceptanceclaim. Family8962V5 failed onlywrong expectedtax literal after98passes; V6 corrects expectedtax whileholdingruntime/sourcefacts.
