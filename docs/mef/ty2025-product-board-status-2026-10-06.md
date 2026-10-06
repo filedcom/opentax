@@ -906,3 +906,19 @@ Actual planner: **232 fixtures**, 116 PDF descriptors, 113 unique keys, 95 cover
 
 Sibling child-tax/greater-income parent selection and spouse/both-employer WOTC remain in isolated implementation and packet proof. Sibling/selected-parent proof is ready at90db426ba:10 focused and469 selected checks pass; seven complete XSD/PDF packets and all38 pages reviewed, including repaired fractional8615 ratios. Integrated at8e492a227 with47 main compatibility checks passing. WOTC source review found the synthetic external W2 employer EIN collided with the ScheduleC employer EIN. The corrected source and spouse/two-owner extension is ready atf7c9f6e51:86 related and5 final checks pass; eight full-XSD/replayed packets and all220 pages reviewed. Main integration is next, including prior primary-route revalidation before restoring its completion count. Current published WOTC proof and the running full snapshot precede these source repairs; the primary-MFJ WOTC checkpoint is withheld from the completed count until its corrected employer-source proof passes. The prior SHOP agent hit its thread limit; an existing archive agent now has the excluded/seasonal SHOP source task. Three agent slots are assigned to that work, remarried/MFJ selected-parent sources and spouse/both-employer WOTC. Existing broader farm, deduction, employer, family and source-authentication requirements remain open. ATS scenario conflicts, issued credentials, business rules and IRS acceptance are incomplete; local XSD and PDF evidence do not prove IRS acceptance. The checklist and future section remain byte-identical to the frozen checkpoint.
 
+
+
+## Before actual controlled-group WOTC integration
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,402 bounded slices**; broader parents remain open. Prior learnings are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md). Newly discovered work belongs only in `future_todo` and is outside this execution queue.
+
+Corrected spouse/two-owner WOTC is integrated at `15d49d055`: **28 main compatibility checks passed, zero failed (2m34s)**, including the corrected prior primary-owner route, ordinary C/F, sibling/selected-parent and multiple-QHP SHOP. Eight new full local-XSD/replayed packets and all220 pages were reviewed. Employer identity conflicts reject; two independent spousal businesses require reviewed attribution-exception facts. The corrected primary completion and the new owner route are recorded in the completed ledger; packet evidence is retained in ignored research storage.
+
+Ordinary mixed C/F, multiple-QHP SHOP and sibling/selected-parent routes are recorded with full packet review and main compatibility proof. Actual planner: **240 fixtures**,116 descriptors,113 keys,95 covered and18 uncovered. Full `deno task test` is live at stable `bc6cafec6` in `/tmp/opentax-full-regression-repaired-v2-oct6`; it predates sibling/PDF ratio and corrected WOTC changes. Earlier full snapshot had11,386 passes/two stale expectation failures; their repair passes28 checks. A subsequent pre-execution type failure was repaired with31 checks. Exact evidence and limitations are in the [validation record](docs/mef/ty2025-form1040-validation-batch.md).
+
+Three agents are implementing actual controlled-group WOTC, remarried/MFJ selected-parent sources and excluded/seasonal SHOP workers. Root is implementing optional-farm/C source allocation in an isolated worktree; no verified completion is claimed. Wider source authentication, named-form gaps, ATS conflicts, issued credentials, IRS business rules and acceptance remain incomplete. The frozen checklist and future section remain unchanged.
+
