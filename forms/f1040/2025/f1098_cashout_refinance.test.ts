@@ -8,6 +8,10 @@ import { buildMefBundle } from "./mef/builder.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
 import { inputSchema } from "../nodes/inputs/f1098/index.ts";
+import {
+  inputSchema as pointsInputSchema,
+  refinancePointsDeduction,
+} from "../nodes/inputs/mortgage_refinance_points/index.ts";
 
 const base = pdfReviewFixtures.find((item) => item.id === "single-w2-refund")!;
 const xsdPath = new URL(
@@ -371,4 +375,161 @@ Deno.test("cash-out refinance rejects changed closing, use, payoff, months, and 
   );
   const noReview = { f1098s: data.f1098 };
   assertThrows(() => inputSchema.parse(noReview));
+});
+
+async function sourceWithPoints(month: 4 | 7) {
+  const mortgage = await source(month);
+  const review = mortgage.f1098_cashout_refinance_review.cashout_refinance_review;
+  const term = month === 7 ? 180 : 240;
+  const points = {
+    refinances: [{
+      mortgage_id: "2025 principal residence refinance note",
+      recipient_tin: "111-22-3333",
+      lender_name: "New Home Lender",
+      form1098_source_document_reference:
+        mortgage.f1098[1].source_document_reference,
+      closing_disclosure_reference:
+        review.refinance_closing_disclosure_reference,
+      pub936_workpaper_reference: "2025 Table 1 and points amortization ledger",
+      refinance_close_year: 2025 as const,
+      refinance_close_month: month,
+      prior_qualified_home_debt: 200_000,
+      refinanced_principal: 250_000,
+      loan_term_months: term,
+      total_points_charged: 5_000,
+      points_for_nondeductible_services: 1_000,
+      monthly_payment_records: review.new_loan_months.map((row) => ({
+        month: row.month,
+        document_reference: row.lender_statement_reference,
+        paid_on: `2025-${String(row.month).padStart(2, "0")}-${
+          new Date(Date.UTC(2025, row.month, 0)).getUTCDate()
+        }`,
+      })),
+      qualified_home_secured_verified: true as const,
+      points_not_reported_in_box6_verified: true as const,
+      points_paid_directly_verified: true as const,
+      acquisition_debt_limit_verified: true as const,
+      cashout_points_payment: {
+        paid_on: `2025-${String(month).padStart(2, "0")}-01`,
+        payer_tin: "111-22-3333",
+        payer_bank_record_reference: "Owner savings closing debit for points",
+        payer_bank_debit_amount: 5_000,
+        settlement_points_charged: 5_000,
+        settlement_service_fee: 1_000,
+        promissory_note_reference: "New lender signed term note",
+        promissory_note_term_months: term,
+        cash_method_verified: true as const,
+        secured_by_principal_residence_verified: true as const,
+        loan_terms_comparable_if_over_ten_years_verified: true as const,
+        points_not_financed_verified: true as const,
+      },
+    }],
+    cashout_source: {
+      f1098s: mortgage.f1098,
+      ...mortgage.f1098_cashout_refinance_review,
+    },
+  };
+  return { mortgage, points };
+}
+
+Deno.test("cash-out refinance points use annual Table 1 ratio and actual loan-term payments", async () => {
+  for (const month of [7, 4] as const) {
+    const { mortgage, points } = await sourceWithPoints(month);
+    // The July fractional ratable points ($133.333...) must survive until
+    // the .973 Table 1 multiplication: $129.733... rounds to $130.
+    const expectedPoints = month === 7 ? 130 : 146;
+    assertEquals(refinancePointsDeduction(points), expectedPoints);
+    const result = f1040_2025.executeReturn({
+      ...base.inputs,
+      schedule_a: { force_itemized: true },
+      f1098: mortgage.f1098,
+      f1098_cashout_refinance_review:
+        mortgage.f1098_cashout_refinance_review,
+      mortgage_refinance_points: points,
+    });
+    assertEquals(result.diagnostics, []);
+    assertEquals(result.pending.schedule_a?.line_8c_points_no_1098, expectedPoints);
+    const pending = buildPending(result.pending);
+    const filer = extractFilerIdentity(result.pending.f1040)!;
+    const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+    assertEquals(bundle.xml.includes(
+      `<Form1098PointsNotReportedAmt>${expectedPoints}</Form1098PointsNotReportedAmt>`,
+    ), true);
+    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+    try {
+      await Deno.writeTextFile(xmlPath, bundle.xml);
+      const checked = await new Deno.Command("xmllint", {
+        args: ["--noout", "--schema", xsdPath, xmlPath],
+        stdout: "piped",
+        stderr: "piped",
+      }).output();
+      assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+    } finally {
+      await Deno.remove(xmlPath);
+    }
+    const filled = await buildPdfBytes(bundle.pending, filer, ".pdf-cache", bundle);
+    assertEquals((await PDFDocument.load(filled)).getPageCount(), 3);
+    let dir: string | undefined;
+    try {
+      dir = Deno.env.get("FORM1098_CASHOUT_POINTS_EVIDENCE_DIR");
+    } catch (error) {
+      if (!(error instanceof Deno.errors.NotCapable)) throw error;
+    }
+    if (dir) {
+      const packetDir = `${dir}/month-${month}`;
+      await Deno.mkdir(packetDir, { recursive: true });
+      await Deno.writeTextFile(`${packetDir}/source.json`, JSON.stringify({
+        f1098: mortgage.f1098,
+        f1098_cashout_refinance_review:
+          mortgage.f1098_cashout_refinance_review,
+        mortgage_refinance_points: points,
+      }));
+      await Deno.writeTextFile(`${packetDir}/pending.json`, JSON.stringify(bundle.pending));
+      await Deno.writeTextFile(`${packetDir}/return.xml`, bundle.xml);
+      await Deno.writeFile(`${packetDir}/return.pdf`, filled);
+      for (const [index, loan] of mortgage.f1098.entries()) {
+        await Deno.writeFile(
+          `${packetDir}/source-1098-${index + 1}.pdf`,
+          loan.issuer_copy.bytes,
+        );
+      }
+    }
+    const bad = structuredClone(bundle.pending);
+    (bad.mortgage_refinance_points as typeof points).refinances[0]
+      .cashout_points_payment.settlement_points_charged++;
+    await assertRejects(() => buildMefBundle(bad, { filer, attachments: [] }));
+    await assertRejects(() => buildPdfBytes(bad, filer, ".pdf-cache"));
+    const mismatched = structuredClone(bundle.pending);
+    (mismatched.mortgage_refinance_points as typeof points).cashout_source
+      .cashout_refinance_review.new_loan_months[0].interest_paid++;
+    await assertRejects(() => buildMefBundle(mismatched, { filer, attachments: [] }));
+    await assertRejects(() => buildPdfBytes(mismatched, filer, ".pdf-cache"));
+    const wrongFiledPoints = structuredClone(bundle.pending);
+    wrongFiledPoints.schedule_a!.line_8c_points_no_1098 = expectedPoints + 1;
+    await assertRejects(() =>
+      buildMefBundle(wrongFiledPoints, { filer, attachments: [] })
+    );
+    await assertRejects(() =>
+      buildPdfBytes(wrongFiledPoints, filer, ".pdf-cache")
+    );
+  }
+});
+
+Deno.test("cash-out points reject missing and conflicting owner, settlement, note and payment records", async () => {
+  const { points } = await sourceWithPoints(7);
+  const changed = (mutate: (value: typeof points) => void) => {
+    const value = structuredClone(points);
+    mutate(value);
+    assertThrows(() => pointsInputSchema.parse(value));
+  };
+  changed((value) => { delete (value as { cashout_source?: unknown }).cashout_source; });
+  changed((value) => { value.refinances[0].cashout_points_payment.payer_tin = "999-88-7777"; });
+  changed((value) => { value.refinances[0].cashout_points_payment.paid_on = "2025-07-02"; });
+  changed((value) => { value.refinances[0].cashout_points_payment.settlement_service_fee++; });
+  changed((value) => { value.refinances[0].cashout_points_payment.payer_bank_debit_amount++; });
+  changed((value) => { value.refinances[0].cashout_points_payment.promissory_note_term_months++; });
+  changed((value) => { value.refinances[0].monthly_payment_records[0].paid_on = "2025-07-32"; });
+  changed((value) => { value.refinances[0].monthly_payment_records[0].document_reference = "different lender statement"; });
+  changed((value) => { value.refinances[0].closing_disclosure_reference = "different property closing"; });
+  changed((value) => { value.refinances[0].refinanced_principal++; });
 });

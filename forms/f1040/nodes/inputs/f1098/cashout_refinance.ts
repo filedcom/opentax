@@ -192,6 +192,18 @@ export function validateCashoutRefinanceReview(
   // Pub. 936 repayments extinguish nonacquisition debt before acquisition
   // debt. Keep interest timing independent: lender interest is paid on the
   // month's opening balance while the worksheet uses its closing balance.
+  const ratio = cashoutRefinanceRatio(review);
+  if (ratio === undefined) return false;
+  const expectedTotal = Math.round(
+    (old.box1_mortgage_interest + fresh.box1_mortgage_interest) * ratio,
+  );
+  const expectedOld = Math.round(old.box1_mortgage_interest * ratio);
+  return old.box1_current_year_deductible_interest === expectedOld &&
+    fresh.box1_current_year_deductible_interest === expectedTotal - expectedOld;
+}
+
+/** Pub. 936 Table 1 line 14, only after the complete source review passes. */
+export function cashoutRefinanceRatio(review: Review): number | undefined {
   let personal = review.new_loan_proceeds_to_personal_cashout;
   let acquisition = review.new_loan_proceeds_to_old_payoff;
   let qualifiedNewClosing = 0;
@@ -203,7 +215,7 @@ export function validateCashoutRefinanceReview(
     personal -= personalPaid;
     acquisition -= row.principal_paid_before_month_end - personalPaid;
     if (acquisition < 0 || acquisition + personal !== row.closing_balance) {
-      return false;
+      return undefined;
     }
     qualifiedNewClosing += acquisition;
   }
@@ -224,10 +236,5 @@ export function validateCashoutRefinanceReview(
     Math.min(750_000, qualifiedOldAverage + qualifiedNewAverage) /
       (oldAverage + newAverage) * 1000,
   ) / 1000;
-  const expectedTotal = Math.round(
-    (old.box1_mortgage_interest + fresh.box1_mortgage_interest) * ratio,
-  );
-  const expectedOld = Math.round(old.box1_mortgage_interest * ratio);
-  return old.box1_current_year_deductible_interest === expectedOld &&
-    fresh.box1_current_year_deductible_interest === expectedTotal - expectedOld;
+  return ratio;
 }

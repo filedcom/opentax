@@ -261,6 +261,9 @@ export const scheduleAPdf: PdfFormDescriptor = {
         all.mortgage_refinance_points !== undefined,
         all.form8396 !== undefined,
         input.home_mortgage_nonqualifying_use_review,
+        (all.mortgage_refinance_points as
+          | { cashout_source?: unknown }
+          | undefined)?.cashout_source !== undefined,
       );
       assertPurchasePointsCrossLoanSources(
         all.f1098,

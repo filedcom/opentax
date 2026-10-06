@@ -135,6 +135,9 @@ function buildIRS1040ScheduleA(
       context.pending.mortgage_refinance_points !== undefined,
       context.pending.form8396 !== undefined,
       fields.home_mortgage_nonqualifying_use_review,
+      (context.pending.mortgage_refinance_points as
+        | { cashout_source?: unknown }
+        | undefined)?.cashout_source !== undefined,
     );
     assertPurchasePointsCrossLoanSources(
       context.pending.f1098,

@@ -819,6 +819,7 @@ export function assertForm1098MortgageLimitSources(
   hasUnreportedRefinancePoints: boolean,
   hasMortgageInterestCredit: boolean,
   filedMortgageUseReview?: unknown,
+  cashoutPointsJoined = false,
 ): void {
   if (source === undefined) return;
   const parsed = inputSchema.parse(source);
@@ -935,7 +936,9 @@ export function assertForm1098MortgageLimitSources(
         !item.recipient_tin ||
         !allowed.has(item.recipient_tin.replaceAll("-", ""))
       ) || filedLine8a !== expected || filedLine8b !== 0 ||
-      filedLine8c !== 0 || hasUnreportedRefinancePoints ||
+      (cashoutPointsJoined
+        ? (!hasUnreportedRefinancePoints || filedLine8c <= 0)
+        : filedLine8c !== 0 || hasUnreportedRefinancePoints) ||
       hasMortgageInterestCredit
     ) {
       throw new Error(
