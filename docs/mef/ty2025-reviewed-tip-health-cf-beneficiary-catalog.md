@@ -27,3 +27,49 @@ The final artifact verifier `/tmp/opentax-reviewed-18-catalog-artifact-verificat
 Historical baseline v1 rejected an unnormalized direct PDF-builder argument; using the prepared bundle's retained pending data corrected the replay harness. Initial gate v1 failed type checking; v2 rejected JavaScript `undefined` fields absent in retained JSON. The final comparison canonically serializes those objects. Gate v3 completed all PDF/native/XSD checks but failed the one newly retained determined-credit field; the final gate documents and derives that exact addition. None of these harness updates changed tax production code, source inputs or expected reviewed bytes.
 
 The originals were previously visually reviewed; byte equality preserves that page review and is not a new visual examination. Broader tax/source combinations, external issuer authentication, the 17 uncovered descriptors and parent tasks remain open. This registration does not claim all-form coverage, IRS acceptance or completion of those tasks.
+
+## Corrected 2025 Form6251 catalog replay
+
+A later filed Form6251 whole-dollar correction changes three previously
+reviewed PDF packets while their exact public inputs and original source/PDF
+archives remain immutable. The 2025 [Form6251 line7 instructions](https://www.irs.gov/instructions/i6251)
+use 26% through $239,100 taxable excess and 28% minus $4,782 above it.
+Independent calculations from the current source-backed excesses are
+$388,935×28%−$4,782=$104,119.80→$104,120;
+$928,692×28%−$4,782=$255,251.76→$255,252; and
+$139,745×26%=$36,333.70→$36,334. The old PDFs truncated those TMT
+operands by one dollar. Form3800 printed tax-limit intermediates follow the
+corrected TMT; Form1040 filed amounts do not change. No source input or tax
+production code was changed to recover the old PDF hashes.
+
+The catalog retains every original source and PDF hash and adds an explicit
+corrected hash and a complete per-packet pending-field reconciliation only for
+`tip-health-advanced-wotc-fully-phased-out`,
+`mixed-cf-tip-above-zero-wotc`, and `mixed-cf-tip-owned-health`. Their changed
+rendered pages are respectively 12/13/22, 16/17/27, and 18/19/29: the two
+Form3800 pages and the Form6251 page. The other 84 rendered pages in those
+three packets are pixel-identical to the original archives. All nine changed
+pages were reviewed visually. The remaining 15 packet PDFs remain byte-identical
+with unchanged page origins and owner inventory.
+
+The exact held-source comparison also records six pending-only updates with
+unchanged PDF bytes: four mixed C/F packets carry rounded whole-dollar AMTI and
+taxable-excess operands; two partial-beneficiary packets carry the recipient
+SSN already present in their retained first Form1099-R copy into the internal
+Form4972 source record. The replay derives each operand from the old value or
+issued source before reconciling, then compares the entire normalized pending
+graph. These changes alter neither printed return nor original source facts.
+
+Private packet/pixel proof: `/tmp/opentax-three-catalog-6251-oct6/.state/research/three-catalog-6251-oct6/`.
+The original archives under `/tmp/opentax-qualified-tip-health-evidence` and
+`/tmp/opentax-mixed-cf-qualified-tip-evidence` were read only. This remains
+local full-XSD/real-PDF evidence; it makes no IRS acceptance or external source
+authentication claim.
+
+Corrected held replay log `/tmp/opentax-three-catalog-6251-replay-v2-oct6.log`
+is terminal **20/0** (all 18 packet cases plus registration/owner metadata checks,
+375 pages), with complete local v5.4 XSD, original source/PDF hash checks,
+exact pending reconciliation, current corrected PDF hashes and 93-page
+old/current render comparison for the three corrected packets. The 15 other
+PDFs are byte-identical. Private `proof-manifest.json` SHA256:
+`c503e38226c8588173ddc3425dd5202b9cf178efcf317abe2ca91cd34ef6f9e4`.

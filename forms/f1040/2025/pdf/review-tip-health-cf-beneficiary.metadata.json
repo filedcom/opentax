@@ -195,8 +195,44 @@
         "original": "absent",
         "current": 2400,
         "basis": "Unchanged issued 6000 qualified wages and400 employee hours at40percent; retained specified credit2400"
+      },
+      {
+        "path": "f3800.tax_context.tentativeMinimumTax",
+        "original": 104119,
+        "current": 104120,
+        "basis": "2025 Form6251 whole-dollar line6/7/9 correction and Form3800 tax-context dependency"
+      },
+      {
+        "path": "f1040.credit_limit_form6251_line9",
+        "original": 104119,
+        "current": 104120,
+        "basis": "2025 Form6251 whole-dollar line6/7/9 correction and Form3800 tax-context dependency"
+      },
+      {
+        "path": "form6251.tentative_tax",
+        "original": 104119,
+        "current": 104120,
+        "basis": "2025 Form6251 whole-dollar line6/7/9 correction and Form3800 tax-context dependency"
+      },
+      {
+        "path": "form6251.net_tmt",
+        "original": 104119,
+        "current": 104120,
+        "basis": "2025 Form6251 whole-dollar line6/7/9 correction and Form3800 tax-context dependency"
       }
-    ]
+    ],
+    "corrected6251": {
+      "taxableExcess": 388935,
+      "rate": 0.28,
+      "subtract": 4782,
+      "tentativeMinimumTax": 104120,
+      "currentPdfSha256": "a3d9ad76d77ab9c3e68bcaabd168e6b5fd5ce25c715604bee9a405050a163ad0",
+      "changedPageNumbers": [
+        12,
+        13,
+        22
+      ]
+    }
   },
   {
     "id": "tip-health-mfj-fully-phased-out",
@@ -1706,7 +1742,56 @@
     "originalSourceName": "mixed-cf-tip-above-zero-wotc-source-input.json",
     "originalPdfName": "mixed-cf-tip-above-zero-wotc-filled-return.pdf",
     "artifactGroup": "mixed-cf-tip",
-    "pendingReconciliation": []
+    "pendingReconciliation": [
+      {
+        "path": "f3800.tax_context.tentativeMinimumTax",
+        "original": 255251,
+        "current": 255252,
+        "basis": "2025 Form6251 whole-dollar line6/7/9 correction and Form3800 tax-context dependency"
+      },
+      {
+        "path": "f1040.credit_limit_form6251_line9",
+        "original": 255251,
+        "current": 255252,
+        "basis": "2025 Form6251 whole-dollar line6/7/9 correction and Form3800 tax-context dependency"
+      },
+      {
+        "path": "form6251.amti",
+        "original": 1065691.8599999999,
+        "current": 1065692,
+        "basis": "2025 Form6251 whole-dollar line6/7/9 correction and Form3800 tax-context dependency"
+      },
+      {
+        "path": "form6251.taxable_excess",
+        "original": 928691.8599999999,
+        "current": 928692,
+        "basis": "2025 Form6251 whole-dollar line6/7/9 correction and Form3800 tax-context dependency"
+      },
+      {
+        "path": "form6251.tentative_tax",
+        "original": 255251,
+        "current": 255252,
+        "basis": "2025 Form6251 whole-dollar line6/7/9 correction and Form3800 tax-context dependency"
+      },
+      {
+        "path": "form6251.net_tmt",
+        "original": 255251,
+        "current": 255252,
+        "basis": "2025 Form6251 whole-dollar line6/7/9 correction and Form3800 tax-context dependency"
+      }
+    ],
+    "corrected6251": {
+      "taxableExcess": 928692,
+      "rate": 0.28,
+      "subtract": 4782,
+      "tentativeMinimumTax": 255252,
+      "currentPdfSha256": "9e1a316383f64ce348c166a95b4946b6375d4f875ad8b44077434117cf04cf04",
+      "changedPageNumbers": [
+        16,
+        17,
+        27
+      ]
+    }
   },
   {
     "id": "mixed-cf-tip-health-income-limited",
@@ -1964,7 +2049,20 @@
     "originalSourceName": "mixed-cf-tip-health-income-limited-source-input.json",
     "originalPdfName": "mixed-cf-tip-health-income-limited-filled-return.pdf",
     "artifactGroup": "mixed-cf-tip",
-    "pendingReconciliation": []
+    "pendingReconciliation": [
+      {
+        "path": "form6251.amti",
+        "original": 230000.86,
+        "current": 230001,
+        "basis": "Filed Form6251 whole-dollar AMTI operand and exemption subtraction; PDF/TMT unchanged"
+      },
+      {
+        "path": "form6251.taxable_excess",
+        "original": 93000.85999999999,
+        "current": 93001,
+        "basis": "Filed Form6251 whole-dollar AMTI operand and exemption subtraction; PDF/TMT unchanged"
+      }
+    ]
   },
   {
     "id": "mixed-cf-tip-health-netincome-limited",
@@ -2239,7 +2337,20 @@
     "originalSourceName": "mixed-cf-tip-health-netincome-limited-source-input.json",
     "originalPdfName": "mixed-cf-tip-health-netincome-limited-filled-return.pdf",
     "artifactGroup": "mixed-cf-tip",
-    "pendingReconciliation": []
+    "pendingReconciliation": [
+      {
+        "path": "form6251.amti",
+        "original": 263361.86,
+        "current": 263362,
+        "basis": "Filed Form6251 whole-dollar AMTI operand and exemption subtraction; PDF/TMT unchanged"
+      },
+      {
+        "path": "form6251.taxable_excess",
+        "original": 126361.85999999999,
+        "current": 126362,
+        "basis": "Filed Form6251 whole-dollar AMTI operand and exemption subtraction; PDF/TMT unchanged"
+      }
+    ]
   },
   {
     "id": "mixed-cf-tip-no-health",
@@ -2486,7 +2597,20 @@
     "originalSourceName": "mixed-cf-tip-no-health-source-input.json",
     "originalPdfName": "mixed-cf-tip-no-health-filled-return.pdf",
     "artifactGroup": "mixed-cf-tip",
-    "pendingReconciliation": []
+    "pendingReconciliation": [
+      {
+        "path": "form6251.amti",
+        "original": 280104.86,
+        "current": 280105,
+        "basis": "Filed Form6251 whole-dollar AMTI operand and exemption subtraction; PDF/TMT unchanged"
+      },
+      {
+        "path": "form6251.taxable_excess",
+        "original": 143104.86,
+        "current": 143105,
+        "basis": "Filed Form6251 whole-dollar AMTI operand and exemption subtraction; PDF/TMT unchanged"
+      }
+    ]
   },
   {
     "id": "mixed-cf-tip-ordinary-no-credit",
@@ -2967,7 +3091,56 @@
     "originalSourceName": "mixed-cf-tip-owned-health-source-input.json",
     "originalPdfName": "mixed-cf-tip-owned-health-filled-return.pdf",
     "artifactGroup": "mixed-cf-tip",
-    "pendingReconciliation": []
+    "pendingReconciliation": [
+      {
+        "path": "f3800.tax_context.tentativeMinimumTax",
+        "original": 36333,
+        "current": 36334,
+        "basis": "2025 Form6251 whole-dollar line6/7/9 correction and Form3800 tax-context dependency"
+      },
+      {
+        "path": "f1040.credit_limit_form6251_line9",
+        "original": 36333,
+        "current": 36334,
+        "basis": "2025 Form6251 whole-dollar line6/7/9 correction and Form3800 tax-context dependency"
+      },
+      {
+        "path": "form6251.amti",
+        "original": 276744.86,
+        "current": 276745,
+        "basis": "2025 Form6251 whole-dollar line6/7/9 correction and Form3800 tax-context dependency"
+      },
+      {
+        "path": "form6251.taxable_excess",
+        "original": 139744.86,
+        "current": 139745,
+        "basis": "2025 Form6251 whole-dollar line6/7/9 correction and Form3800 tax-context dependency"
+      },
+      {
+        "path": "form6251.tentative_tax",
+        "original": 36333,
+        "current": 36334,
+        "basis": "2025 Form6251 whole-dollar line6/7/9 correction and Form3800 tax-context dependency"
+      },
+      {
+        "path": "form6251.net_tmt",
+        "original": 36333,
+        "current": 36334,
+        "basis": "2025 Form6251 whole-dollar line6/7/9 correction and Form3800 tax-context dependency"
+      }
+    ],
+    "corrected6251": {
+      "taxableExcess": 139745,
+      "rate": 0.26,
+      "subtract": 0,
+      "tentativeMinimumTax": 36334,
+      "currentPdfSha256": "2fbea327b686fcc0a8a19b7f6eab1c77a69a493e028f0580ad744d7ca25ac952",
+      "changedPageNumbers": [
+        18,
+        19,
+        29
+      ]
+    }
   },
   {
     "id": "mixed-cf-tip-phase-wotc",
@@ -3247,7 +3420,20 @@
     "originalSourceName": "mixed-cf-tip-phase-wotc-source-input.json",
     "originalPdfName": "mixed-cf-tip-phase-wotc-filled-return.pdf",
     "artifactGroup": "mixed-cf-tip",
-    "pendingReconciliation": []
+    "pendingReconciliation": [
+      {
+        "path": "form6251.amti",
+        "original": 441765.37,
+        "current": 441765,
+        "basis": "Filed Form6251 whole-dollar AMTI operand and exemption subtraction; PDF/TMT unchanged"
+      },
+      {
+        "path": "form6251.taxable_excess",
+        "original": 304765.37,
+        "current": 304765,
+        "basis": "Filed Form6251 whole-dollar AMTI operand and exemption subtraction; PDF/TMT unchanged"
+      }
+    ]
   },
   {
     "id": "partial-4972-beneficiary-2-copies",
@@ -3306,7 +3492,14 @@
     "originalSourceName": "beneficiary-2-copies.json",
     "originalPdfName": "beneficiary-2-copies.pdf",
     "artifactGroup": "partial-beneficiary",
-    "pendingReconciliation": []
+    "pendingReconciliation": [
+      {
+        "path": "form4972.source_forms.0.recipient_ssn",
+        "original": "absent",
+        "current": "123456789",
+        "basis": "Existing retained first issued1099R recipient SSN carried into final source form; PDF/tax unchanged"
+      }
+    ]
   },
   {
     "id": "partial-4972-beneficiary-3-copies",
@@ -3365,6 +3558,13 @@
     "originalSourceName": "beneficiary-3-copies.json",
     "originalPdfName": "beneficiary-3-copies.pdf",
     "artifactGroup": "partial-beneficiary",
-    "pendingReconciliation": []
+    "pendingReconciliation": [
+      {
+        "path": "form4972.source_forms.0.recipient_ssn",
+        "original": "absent",
+        "current": "123456789",
+        "basis": "Existing retained first issued1099R recipient SSN carried into final source form; PDF/tax unchanged"
+      }
+    ]
   }
 ]

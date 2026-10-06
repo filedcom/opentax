@@ -41,6 +41,38 @@ const replay = Deno.args.includes("--replay-reviewed");
 const output = "/tmp/opentax-reviewed-18-catalog-evidence";
 const xsd =
   ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
+const correctedIds = [
+  "tip-health-advanced-wotc-fully-phased-out",
+  "mixed-cf-tip-above-zero-wotc",
+  "mixed-cf-tip-owned-health",
+];
+function atPath(value: any, path: string): any {
+  return path.split(".").reduce((part, key) => part?.[key], value);
+}
+function setPath(value: any, path: string, next: unknown): void {
+  const parts = path.split(".");
+  const parent = parts.slice(0, -1).reduce((part, key) => part[key], value);
+  parent[parts.at(-1)!] = next;
+}
+async function renderedPage(pdf: string, page: number): Promise<Uint8Array> {
+  const result = await new Deno.Command("pdftoppm", {
+    args: [
+      "-f",
+      String(page),
+      "-l",
+      String(page),
+      "-scale-to",
+      "750",
+      "-singlefile",
+      "-png",
+      pdf,
+    ],
+    stdout: "piped",
+    stderr: "piped",
+  }).output();
+  assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  return result.stdout;
+}
 async function hash(bytes: Uint8Array): Promise<string> {
   return Array.from(
     new Uint8Array(
@@ -61,6 +93,10 @@ Deno.test("catalog adds eighteen reviewed public packets with frozen copy invent
   assertEquals(fixtures.length, 18);
   assertEquals(metadata.reduce((n, r) => n + r.pageCount, 0), 375);
   assertEquals(metadata.reduce((n, r) => n + r.ownerCopies.length, 0), 77);
+  assertEquals(
+    metadata.filter((r) => r.corrected6251).map((r) => r.id),
+    correctedIds,
+  );
   for (const fixture of fixtures) {
     const registered = pdfReviewFixtures.filter((f) => f.id === fixture.id);
     assertEquals(registered.length, 1);
@@ -108,7 +144,28 @@ for (const row of metadata) {
     const doc = await PDFDocument.load(pdf);
     assertEquals(doc.getPageCount(), row.pageCount);
     assertEquals(doc.getForm().getFields().length, 0);
-    assertEquals(await hash(pdf), row.originalPdfSha256);
+    const correction = row.corrected6251;
+    if (correction) {
+      assertEquals(pending.form6251.taxable_excess, correction.taxableExcess);
+      const independentlyRounded = Math.round(
+        correction.taxableExcess * correction.rate - correction.subtract,
+      );
+      assertEquals(independentlyRounded, correction.tentativeMinimumTax);
+      assertEquals(pending.form6251.tentative_tax, independentlyRounded);
+      assertEquals(pending.form6251.net_tmt, independentlyRounded);
+      assertEquals(
+        pending.f1040.credit_limit_form6251_line9,
+        independentlyRounded,
+      );
+      assertEquals(
+        (pending.f3800.tax_context as any).tentativeMinimumTax,
+        independentlyRounded,
+      );
+    }
+    assertEquals(
+      await hash(pdf),
+      correction?.currentPdfSha256 ?? row.originalPdfSha256,
+    );
     const path = await Deno.makeTempFile({ suffix: ".pdf" });
     const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
     try {
@@ -183,7 +240,8 @@ for (const row of metadata) {
           `${root}/${row.originalPdfName}`,
         );
         assertEquals(await hash(originalSource), row.originalSourceSha256);
-        assertEquals(originalPdf, pdf);
+        assertEquals(await hash(originalPdf), row.originalPdfSha256);
+        if (!correction) assertEquals(originalPdf, pdf);
         const source = JSON.parse(new TextDecoder().decode(originalSource));
         assertEquals(source.inputs ?? source.input, fixture.inputs);
         const settledOriginal: any = normalizeAllPending(source.pending);
@@ -207,12 +265,46 @@ for (const row of metadata) {
             settledOriginal.f1040.form3800_source_credits.specifiedCredit,
             determined,
           );
-          settledOriginal.f1040.form5884_determined_credit = determined;
-          assertEquals(row.pendingReconciliation.map((r) => r.path), [
-            "f1040.form5884_determined_credit",
-          ]);
-        } else assertEquals(row.pendingReconciliation, []);
+        }
+        for (const difference of row.pendingReconciliation) {
+          const old = atPath(settledOriginal, difference.path);
+          assertEquals(old === undefined ? "absent" : old, difference.original);
+          assertEquals(atPath(pending, difference.path), difference.current);
+          if (
+            difference.path === "form6251.amti" ||
+            difference.path === "form6251.taxable_excess"
+          ) {
+            assertEquals(Math.round(Number(old)), difference.current);
+          }
+          if (difference.path === "form4972.source_forms.0.recipient_ssn") {
+            assertEquals(
+              difference.current,
+              (source.inputs ?? source.input).f1099r[0].recipient_ssn,
+            );
+          }
+          setPath(settledOriginal, difference.path, difference.current);
+        }
         assertEquals(canonical(settledOriginal), canonical(pending));
+        if (correction) {
+          const changed: number[] = [];
+          for (let page = 1; page <= row.pageCount; page++) {
+            if (
+              (await hash(
+                await renderedPage(
+                  `${root}/${row.originalPdfName}`,
+                  page,
+                ),
+              )) !==
+                (await hash(await renderedPage(path, page)))
+            ) changed.push(page);
+          }
+          assertEquals(changed, correction.changedPageNumbers);
+          assertEquals(changed.map((page) => origins[page - 1].formKey), [
+            "f3800",
+            "f3800",
+            "form6251",
+          ]);
+        }
         await Deno.mkdir(output, { recursive: true });
         await Deno.writeFile(`${output}/${row.id}.pdf`, pdf);
         await Deno.writeTextFile(
