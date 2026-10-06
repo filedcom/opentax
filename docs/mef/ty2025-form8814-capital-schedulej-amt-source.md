@@ -76,3 +76,12 @@ its rounded line 16, line 17, and line 23 components.
 The wider Form 8814, Form 6251, Schedule J and Form 4972 parents remain open.
 This bounded source review neither authenticates issuer or broker records nor
 establishes IRS acceptance.
+
+
+## Main integration verification
+
+Production `226bb645e` passed the normal ten-module `deno task test` gate: **26 passed / 0 failed (7m41s)** with the recorded 8 GB heap and normal task permissions. All fifteen ordinary PDFs match **236 reviewed pages**; source/graph/carry/origin JSON agrees with the final three-case archive or prior ordinary gate, and native XML differs only by `ReturnTs`. The current thirteen-file held manifest updates overlapping child-tax files without rewriting their earlier manifest.
+
+Main actual saved-source replay passed **three returns / 76 pages**, with exact normalized pending, carry, origins, PDF bytes and timestamp-only native changes plus fresh full local XSD. Twelve older saved-source returns passed **126 pages** with fresh XSD and unchanged reviewed PDFs. Eight AMT and two Schedule J wrappers have no saved carry values; two earlier child returns retain the separately qualified added source-derived dividend QBI provenance and exact saved carry values. All original packet hashes remain unchanged.
+
+Physical preservation records retain 82 ordinary files, 32 new-source files, 88 prior-source files and 444 integration files including final source/render/review/gate/failure artifacts and six exact final tracked code copies. Initial stale page renders are not reused as final PDF review; the fresh 76-page provenance and independent Decimal oracle qualify the final bytes. Broader parents and IRS acceptance remain open.
