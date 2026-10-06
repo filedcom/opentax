@@ -152,3 +152,7 @@ Review manifest SHA-256:
 `641177183ad25d5f3e2dabb0970748eebf007d99065240b9ac96ed290bb97666`. 48-file
 packet manifest SHA-256:
 `cb262fefb83d541aa9fe96571518a4ca3bcdc548d07412fff08b474fffac150e`.
+
+## Main integration seal (October 6)
+
+Production `0ea9152821bae956a07a60cc2c351b939d941715` passes the standard 13-module combined gate **224/0 (1m41s)**, log `/tmp/opentax-form7203-multi-main-combined-oct6.log`. Main raw replay reads actual immutable source/filer records, without factories: six new packets/66 pages in `/tmp/opentax-form7203-multi-main-retained-oct6/report.json`, prior six/54 in `/tmp/opentax-form7203-prior-six-main-retained-oct6/report.json`, and prior four/32 in `/tmp/opentax-form7203-prior-four-main-retained-oct6/report.json`. Every report verifies full XSD, whole pending, carry, origins, source and PDF equality; native XML differs only in ReturnTs. All66 new pages reviewed by root, with full-size four-row Schedule E and three-business Form8995 inspection. All48 original files independently copied and hash-compared to `.state/research/form7203-multi-owned-debt-oct6-preserved`; originals untouched. Earlier qualified historic pending/newline limitation remains. Prior-history and external-authentication boundaries and the broad parent remain open.
