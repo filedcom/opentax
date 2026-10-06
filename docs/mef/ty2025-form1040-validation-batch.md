@@ -4740,3 +4740,7 @@ Exact full `deno task test` launched from detached `/tmp/opentax-full-regression
 ## Joint patron main integration (October6)
 
 At16bc05f5a, typed restricted real-Poppler joint patron, Single patron phase-in, ownedSHOP and accountingSSTB tests pass16/16 in2m11s. Log `/tmp/opentax-patron-joint-main-integration.log`. Merge retained both joint/SHOP fixture imports and dynamic patron threshold/range plus shared percentage helper. Source/8full-XSD/PDF/46-page visual evidence and178 regressions are in the Form8995A gap. Detached full runea23fbb91 remains live and does not cover this later joint-source commit.
+
+## Part-year SHOP main integration (October6)
+
+Atad738cc0f, typed restricted real-Poppler part-year/legacySHOP and joint patron/SSTB checks pass18/18 in1m42s. Log `/tmp/opentax-shop-partyear-main-integration.log`. Three full local-XSD/PDF packets and67-page review are retained under main ignored `.state/research/2026-10-06-form8941-partyear/`; exact source/rating-period/payroll rules are in the Form8941 gap. Detachedea23 full regression remains a live older snapshot and does not cover laterpart-year/joint changes.
