@@ -1,3 +1,4 @@
+import { businessTipSourceInputs } from "./business-tip-source.fixture.ts";
 import { multipleAnnuityReviewFixtures } from "./review-4972-multiple-annuity.fixture.ts";
 import { multipleNuaReviewFixtures } from "./review-4972-multiple-nua.fixture.ts";
 import { mixedCfHealthFixtures } from "./review-mixed-cf-health.fixture.ts";
@@ -4185,67 +4186,7 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
   },
   {
     id: "single-1099nec-trade-business-tips-schedule1a",
-    inputs: {
-      general: {
-        ...singleGeneral,
-        main_home_in_us_over_half_year: true,
-        taxpayer_can_be_claimed_as_dependent: false,
-        childless_eic_review: {
-          not_qualifying_child_of_another_taxpayer_verified: true,
-          qualifying_child_status_record_reference:
-            "Synthetic 2025 family review",
-        },
-        taxpayer_ssn_valid_for_employment: true,
-        taxpayer_ssn_issued_before_due_date: true,
-        taxpayer_tin_issued_by_due_date: true,
-        qbi_no_prior_loss_or_suspended_loss_confirmed: true,
-        qbi_not_patron_of_specified_cooperative_confirmed: true,
-      },
-      f1099nec: [{
-        payer_name: "Example Events",
-        payer_tin: "98-7654321",
-        recipient_ssn: "111-22-3333",
-        box1_nec: 18_000,
-        for_routing: "schedule_c",
-        schedule_c_business_reference: "synthetic-event-service-2025",
-        qualified_tips_review: {
-          amount: 12_000,
-          occupation_code: "102",
-          occupation_review_reference:
-            "Synthetic 2025 service occupation record",
-          tip_records_reference: "Synthetic 2025 point-of-sale tip ledger",
-          included_in_box1: true,
-          no_other_allocable_deductions: true,
-          no_other_allocable_deductions_review_reference:
-            "Synthetic 2025 Schedule 1 allocation review",
-        },
-      }],
-      schedule_c: [{
-        business_reference: "synthetic-event-service-2025",
-        proprietor_recipient: "T",
-        line_a_principal_business: "Event food service",
-        line_b_business_code: "722320",
-        line_c_business_name: "Example Event Service",
-        line_f_accounting_method: "cash",
-        line_g_material_participation: true,
-        line_i_made_1099_payments: false,
-        qbi_no_other_adjustments_confirmed: true,
-        line_1_gross_receipts: 18_000,
-        line_8_advertising: 8_000,
-      }],
-      schedule1a: {
-        senior_zero_exclusions_review: {
-          no_section933_puerto_rico_excluded_income: true,
-          section933_review_source_reference: "Synthetic 2025 residency review",
-          no_form2555_filed: true,
-          form2555_review_source_reference:
-            "Synthetic 2025 foreign-income review",
-          no_form4563_filed: true,
-          form4563_review_source_reference:
-            "Synthetic 2025 Samoa-source review",
-        },
-      },
-    },
+    inputs: businessTipSourceInputs(),
     filer: singleFiler,
     expectedPdfForms: [
       "f1040",

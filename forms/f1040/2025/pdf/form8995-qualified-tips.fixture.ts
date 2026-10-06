@@ -1,4 +1,8 @@
-import { pdfReviewFixtures } from "./review-fixtures.ts";
+import {
+  businessTipSourceInputs,
+  tipWageSources,
+  tipWotcSourceInputs,
+} from "./business-tip-source.fixture.ts";
 import { independentHealthInputs } from "./form7206-independent-owner.fixture.ts";
 import { inputSchema as wotcSchema } from "../../nodes/inputs/f5884/index.ts";
 export function singleTipInputs(
@@ -6,10 +10,7 @@ export function singleTipInputs(
   tipAmount = 12000,
   wages = 0,
 ): any {
-  const base = pdfReviewFixtures.find((f) =>
-    f.id === "single-1099nec-trade-business-tips-schedule1a"
-  )!;
-  const i: any = structuredClone(base.inputs);
+  const i: any = businessTipSourceInputs();
   i.f1099nec[0].box1_nec = receipts;
   i.f1099nec[0].qualified_tips_review.amount = tipAmount;
   Object.assign(i.f1099nec[0], {
@@ -19,9 +20,7 @@ export function singleTipInputs(
   });
   i.schedule_c[0].line_1_gross_receipts = receipts;
   if (wages) {
-    i.w2 = structuredClone(
-      pdfReviewFixtures.find((f) => f.id === "single-w2-refund")!.inputs.w2,
-    );
+    i.w2 = tipWageSources();
     Object.assign(i.w2[0], {
       box1_wages: wages,
       box3_ss_wages: wages,
@@ -85,11 +84,8 @@ export function jointTipInputs(capPhase = false, employeeMix = false): any {
   return i;
 }
 export function advancedTipInputs(): any {
-  const b = pdfReviewFixtures.find((f) =>
-    f.id === "single-certified-work-opportunity-credit"
-  )!;
   const tips = singleTipInputs();
-  const i: any = structuredClone(b.inputs);
+  const i: any = tipWotcSourceInputs();
   delete i.w2;
   Object.assign(i.general, tips.general);
   i.f5884 = wotcSchema.parse(i.f5884);

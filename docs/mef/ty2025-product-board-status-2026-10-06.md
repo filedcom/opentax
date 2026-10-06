@@ -1575,3 +1575,19 @@ Full `deno task test` at bc6cafec6 ended11,494/8,exit1. Immutable rerun fbacc539
 
 
 C/F health c7c8c4d34 passes main22/0 and held7/all212pages; all seven main PDFs equal reviewedbytes. Ledger1432; actualcatalog316. Fullwrapper26565/Deno26572 verified live03:31UTC.
+
+
+## Before remaining reviewed-catalog integration
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,432 bounded slices**. Prior learnings and evidence are preserved in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). New discoveries belong only in `future_todo`.
+
+Actual planner: **316 fixtures**, 116 PDF descriptors, 113 keys, 96 covered and 17 uncovered. Published PR63 head is **5ed5a70a7**. Verified main gates cover mixed C/F SHOP (52/0, 52 reviewed pages), three-member SHOP (15/0, 80 pages), mixed-owner WOTC/tip QBI (62/0 plus prior12/0, 122/147 pages), complete-source annuity (247/0, held7/38) and independent C/F health (22/0, held7/212). Regenerated PDFs match reviewed bytes; old NUA held5/27 remains unchanged. These prove their stated routes; broader parents remain open.
+
+Full `deno task test` at bc6cafec6 ended11,494/8, exit1. Immutable rerun fbacc539c started02:29:48UTC; wrapper26565/Deno26572 were verified live03:31UTC. Five observed failures have focused repairs; terminal totals and a passing latest full run remain required. Root integrates12 reviewed catalog cases; tip-health explicit plan sources and two-farm owner health continue in parallel. Wider filing/source combinations, authentication, ATS conflicts/credentials, business rules, IRS acceptance and release readiness remain incomplete.
+
+
+First12catalog98196d87f exposed qualifiedTipCases initialization cycle at reverse test entrypoint:8/1, no tiptestsran. Pure canonical source fixture removes catalog dependency; all9publicinputs remain byte-identical. Corrected metadata+tip gate22/0(1m6s), actual328unique fixtures. Pendingsecond12catalogd5 and tiphealth259.
