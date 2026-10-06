@@ -2564,3 +2564,25 @@ Mainc069b1695 actualtwo/threeQEF source/native/PDF/XSD/conflicts plusallpriorPFI
 ## Verified publication checkpoint after depreciation and multiple QEF
 
 PR63 GitHubheadab3954e2e05b7a6528c82639ebda61bfdfad2050/title/body/draft verified; publication includesmainowneddepreciation/QBI andadditiveQEF allocations, ledger1459. Frozen52/future unchanged. FullV5 wrapper65945/Deno65949 live55m19s, terminal pending; latest-source full still required. Appartifact attempt2231 pending, no successful attachmentclaim. Rootisolated9112c4b02 pureScheduleJ current/base source worksheets14/0 remain unintegrated pendingpublicsource/finalexport/AMT joins. Agents continue actualRoth conversion/priorhistory5498 ownership/copyrounding, applicable1252/1254/legacy617 donation source reductions, and source-preserving8863 QEF tax-ordering; nonlinearQEF allocation remains guarded after no primary priority/proration rule found. Previous turn andthis turn classifiedprogress; no goalcompletion/wholeparent claim.
+
+
+## Before public preferential Schedule J source integration
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,459 completed slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
+
+Inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF keys / 96 covered / 18 uncovered**.
+
+Latest verified work: owned donated-asset depreciation and actual itemized QBI caps (**7/0 + 438/0**, refreshed **67/0**, six packets / 201 reviewed pages); separate simultaneous QEF tax allocations (**16/0 + 10/0**, two packets / 24 reviewed pages). The retained source, PDF and attachment bytes match reviewed originals; XML differs only in ReturnTs. Earlier donation packets (760 pages), Roth/substitute outputs and PFIC/adoption packets (118 pages) are preserved. Earlier no-QBI pending data adds only the actual itemized-deduction source total. These complete the stated slices; wider parents remain open.
+
+Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at55m19s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
+
+Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **ab3954e2e**, verified published with the latest source changes and evidence.
+
+Existing Roth conversion/history, donated-asset depreciation and simultaneous QEF-election work continues in isolated checkouts. Root preferential ScheduleJ/AMT source work has an isolated checkout and a retained guard audit. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+
+
+Current main872fd8029 is published. Full V5 wrapper65945/Deno65949 confirmed live at60m14s; no terminal claim or restart. Previous diagnostic turn yielded daemon/model-cache evidence but no board progress. Root next phase follows isolated9112c4b02 calculator14/0 with public source-to-J/AMT/native/PDF integration still incomplete. Roth conversion agent caught incorrect retained prior8606 PartIII cells instead of PartII16–18; correcting and regenerating before authority credit. Natural-resource source8/0 is incomplete pending current-year C/F reconciliation. QEF8863 helper and chapter1 tax-scope audit continue. Artifact2231 was terminated without successful attachment evidence. Frozen52 and future section unchanged.

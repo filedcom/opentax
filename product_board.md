@@ -8,9 +8,9 @@ Inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF key
 
 Latest verified work: owned donated-asset depreciation and actual itemized QBI caps (**7/0 + 438/0**, refreshed **67/0**, six packets / 201 reviewed pages); separate simultaneous QEF tax allocations (**16/0 + 10/0**, two packets / 24 reviewed pages). The retained source, PDF and attachment bytes match reviewed originals; XML differs only in ReturnTs. Earlier donation packets (760 pages), Roth/substitute outputs and PFIC/adoption packets (118 pages) are preserved. Earlier no-QBI pending data adds only the actual itemized-deduction source total. These complete the stated slices; wider parents remain open.
 
-Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at55m19s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
+Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at60m14s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
 
-Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **ab3954e2e**, verified published with the latest source changes and evidence.
+Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **872fd8029**, verified published with the latest source changes and evidence.
 
 Existing Roth conversion/history, donated-asset depreciation and simultaneous QEF-election work continues in isolated checkouts. Root preferential ScheduleJ/AMT source work has an isolated checkout and a retained guard audit. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
 
