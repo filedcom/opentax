@@ -3991,3 +3991,18 @@ Draft [PR63](https://github.com/filedcom/opentax/pull/63) was externally verifie
 Coverage census remains152native/118PDFdescriptors,369fixtures,115PDFkeys/99covered/16uncovered and128source literals/83absent; counts alone do not prove filing support. Source contracts/hashes do not authenticate issuers, signatures or prior acceptance. Wider filing routes, ATS credentials/scenario conflicts, IRS acknowledgments and release review remain unfinished.
 
 Root saved duplicate-activity reproducer at `/tmp/opentax-eic-property-duplicate-activity-before-inputs-oct6.json`: same underlying parcel/payment records relabeled with a second activity ID produce no diagnostics, AGI9000 and doubled gain6000 at0298758b2. This is an existing duplicate-source requirement; correction is pending. Main55-module and retained50 gates still run on fixed production before this correction. Child-turn21 candidatea72625d2c has root12page review and preserved six files; integration remains pending.
+
+
+## Before child turning-21 integration
+
+## Compacted status (2026-10-06)
+
+The frozen checklist retains **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,528 bounded slices**; broader parents remain open. Learnings are compacted in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries belong only in `future_todo` and are not executed.
+
+Parent payroll (56/0, saved 24 returns/125 pages) and midmonth mortgage (98/0, saved 26 returns/81 pages) retain sealed root evidence. Draft [PR63](https://github.com/filedcom/opentax/pull/63) is externally verified at **ffb978f1e**; its latest attachment completion is unconfirmed. Earlier sealed work and census qualifications are in the archive.
+
+Direct property is integrated at **0298758b2**; root 55-module tests and 50-return replay are running. All corrected 99 PDF pages match reviewed originals; 174 current/prior files are privately hash-preserved. Review found a second activity ID can duplicate the same parcel/payment records and double gain; this concrete source defect is next. Turning-21 child payroll **a72625d2c** has root review of all 12 pages and awaits integration. State/rate payroll work continues separately within the existing parent.
+
+Full regression V17–V22 processes were verified live this phase; V22 at immutable **0d153ed24** predates later work. A passing latest-production full batch, remaining filing routes, ATS credentials/scenario conflicts, IRS acknowledgments and release review are still required. Local XSD370/0 and source hashes do not prove external authenticity, business-rule compliance or IRS acceptance.
+
+Root property55-module gate terminal681/0/0ignored (7m44s), session87548exit0; actual source replay50/473 passed at0298758b2. Cross-activity repair is being verified in a separate snapshot; production was held fixed through those gates. Root turning-21 source/PDF review and six private hashes are complete; candidatea72625d2c integration begins next.
