@@ -108,3 +108,12 @@ older modules lacked the worktree schema directory; this is not reported as a
 passing broad run. The identical main 14-module command passed 71/0 with that
 retained schema available. Source authentication, unpaid state balances, wider
 state/family cases, the current full batch and IRS acceptance remain open.
+
+
+The six affected isolated modules subsequently passed **13/0** with the retained
+schema prerequisite restored; log
+`/tmp/opentax-scheduleh-quarterly-schema-repair-oct6.log`. The initial broad65/6,
+combined focus13/1 expectation diagnostic, correctedFICA3/0 and repaired13/0
+logs remain privately hash-preserved by
+`/tmp/opentax-scheduleh-quarterly-candidate-environment-gates-preservation-oct6.json`.
+These qualified reruns are separate from the authoritative main71/0 result.
