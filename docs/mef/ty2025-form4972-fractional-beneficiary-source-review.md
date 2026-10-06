@@ -55,3 +55,11 @@ Terminal manifest SHA-256: `4fee7ab230c79332a3940fb5cc69ae10cd34e033a9ab7358a8d1
 
 
 Historical development failures are retained: the first source test compile failure, the first full-source XSD failure caused by the binary percentage tail (`/tmp/opentax-form4972-fractional-full-source-v2.log`, 1/1), and the initial compatibility 9/1 caused by the formerly nonintegral-Nua negative (`/tmp/opentax-form4972-fractional-initial-compat.log`). Intermediate preservation attempts were stopped for known repairs and are not reported as green. The terminal logs above supersede those checkpoints.
+
+## Current-main fractional beneficiary verification (2026-10-06)
+
+Integrated source51223187d passes fresh focused15/0(1m9s) and complete36-file preservation298/0(3m7s). Logs: `/tmp/opentax-form4972-fractional-current-main-focused.log` and `/tmp/opentax-form4972-fractional-current-main-preservation-v2.log`. The first preservation run294/4 failed solely because pdftotext was absent from PATH; all four failures were inspected, and the same batch was rerun with verified Poppler tools. No production fix was required for that environment failure.
+
+Read-only main comparison `/tmp/opentax-form4972-fractional-current-main-comparison.json` proves all17 source/pending pairs and PDFs exact against the terminal reviewed snapshot, preserving51 inspected pages and32 issued native source copies. Complete XML differs only in ReturnTs; focused proof independently validates all17 complete returns against local TY2025v5.4 XSD. Original manifest digest4fee7ab230c79332a3940fb5cc69ae10cd34e033a9ab7358a8d177bcdec49b35 remains unchanged. Root additionally inspected the half-dollar Form4972 page and combined NUA/death/estate/annuity contact sheet. No issuer authenticity or IRS acceptance is claimed.
+
+Preservation log SHA256: `d4cfcc6c5c8e8b6f9f52faba17583ef3705a36199bd4b7fa0cdea264742e4316`; comparison SHA256: `a3e0edce206b5f506bd2045cab44073842260251b1088040afa047b36ee57d0c`.
