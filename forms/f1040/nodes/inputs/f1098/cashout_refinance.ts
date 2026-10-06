@@ -49,6 +49,7 @@ const additionalLoan = z.object({
   improvement_invoice_document: retainedDocument.optional(),
   improvement_payment_document: retainedDocument.optional(),
   payoff_document: retainedDocument.optional(),
+  partial_period_document: retainedDocument.optional(),
   advances: z.array(z.object({
     amount: z.number().int().positive(),
     advanced_on: z.string().regex(/^2025-(0[1-9]|1[0-2])-01$/),
@@ -80,7 +81,7 @@ export const cashoutRefinanceReviewSchema = z.object({
         "personal_cashout",
       ]),
       amount: z.number().int().positive(),
-      paid_on: z.string().regex(/^2025-(0[1-9]|1[0-2])-01$/),
+      paid_on: z.string().regex(/^2025-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/),
       payment_record_reference: z.string().trim().min(1),
       payoff_receipt_reference: z.string().trim().min(1).optional(),
     }).strict(),
@@ -119,7 +120,12 @@ export const cashoutRefinanceReviewSchema = z.object({
   new_loan_proceeds_to_old_payoff: z.number().int().positive(),
   new_loan_proceeds_to_personal_cashout: z.number().int().positive(),
   refinance_month: z.number().int().min(2).max(12),
-  closing_on_first_of_month_verified: z.literal(true),
+  closing_on_first_of_month_verified: z.literal(true).optional(),
+  refinance_on: z.string().regex(/^2025-\d{2}-\d{2}$/).optional(),
+  midmonth_lender_ledger_document: retainedDocument.optional(),
+  midmonth_closing_document: retainedDocument.optional(),
+  midmonth_old_payoff_document: retainedDocument.optional(),
+  midmonth_old_points_document: retainedDocument.optional(),
   all_qualified_home_mortgages_included_verified: z.literal(true),
   no_other_advances_or_debt_categories_verified: z.literal(true),
   filing_status_verified: z.enum(["single", "mfs", "mfj", "hoh", "qss"]),
@@ -185,6 +191,7 @@ function completeRows(
   firstMonth: number,
   lastMonth: number,
   initialBalance: number,
+  finalPayoff = false,
 ): boolean {
   if (rows.length !== lastMonth - firstMonth + 1) return false;
   let balance = initialBalance;
@@ -198,7 +205,8 @@ function completeRows(
       row.principal_paid_before_month_end > row.opening_balance ||
       row.closing_balance !==
         row.opening_balance - row.principal_paid_before_month_end ||
-      row.closing_balance <= 0 || row.interest_paid <= 0 ||
+      (row.closing_balance <= 0 && !(finalPayoff && index === rows.length - 1 &&
+        row.closing_balance === 0)) || row.interest_paid <= 0 ||
       references.has(row.lender_statement_reference)
     ) return false;
     references.add(row.lender_statement_reference);
@@ -312,9 +320,17 @@ function additionalTimelineValid(
     ? originated.getUTCMonth() + 1 : 1;
   const rows = loan.monthly_records;
   const payoff = loan.payoff_document && reviewedDocument(loan.payoff_document);
+  const partialPeriod = loan.partial_period_document &&
+    reviewedDocument(loan.partial_period_document);
   const advances = loan.advances ?? [];
+  const paidOn = typeof payoff?.paid_on === "string"
+    ? validIsoDate(payoff.paid_on) : undefined;
+  const partial = originated.getUTCFullYear() === 2025 &&
+      originated.getUTCDate() !== 1 ||
+    (paidOn !== undefined && payoff?.paid_on !==
+      new Date(Date.UTC(2025, rows.at(-1)!.month, 0))
+        .toISOString().slice(0, 10));
   if (
-    originated.getUTCFullYear() === 2025 && originated.getUTCDate() !== 1 ||
     rows[0]?.month !== firstMonth ||
     rows.some((row, index) => row.month !== firstMonth + index) ||
     rows.at(-1)!.month > 12 ||
@@ -366,8 +382,46 @@ function additionalTimelineValid(
         rows.at(-1)!.lender_statement_reference ||
       typeof payoff.paid_on !== "string" ||
       !validIsoDate(payoff.paid_on) ||
-      payoff.paid_on !== new Date(Date.UTC(2025, latestMonth, 0))
-        .toISOString().slice(0, 10))
+      paidOn?.getUTCFullYear() !== 2025 ||
+      paidOn.getUTCMonth() + 1 !== latestMonth ||
+      paidOn < originated)
+  ) return false;
+  if (
+    partial
+      ? partialPeriod?.document_type !== "partial_period_mortgage_lender_ledger" ||
+        partialPeriod.property_reference !== loan.property_reference ||
+        partialPeriod.source_document_reference !== loan.source_document_reference ||
+        partialPeriod.lender_name !== source.lender_name ||
+        partialPeriod.recipient_tin !== source.recipient_tin ||
+        partialPeriod.original_on !==
+          (originated.getUTCFullYear() === 2025
+            ? source.box3_origination_date : undefined) ||
+        partialPeriod.paid_off_on !== payoff?.paid_on ||
+        (payoff !== undefined && payoff.interest_paid !==
+          rows.at(-1)?.interest_paid) ||
+        JSON.stringify(partialPeriod.months) !== JSON.stringify(rows.map((row) => {
+          const first = `2025-${String(row.month).padStart(2, "0")}-01`;
+          const last = new Date(Date.UTC(2025, row.month, 0))
+            .toISOString().slice(0, 10);
+          return {
+            month: row.month,
+            period_start_on: row.month === firstMonth &&
+                originated.getUTCFullYear() === 2025
+              ? `2025-${String(row.month).padStart(2, "0")}-${
+                String(originated.getUTCDate()).padStart(2, "0")}`
+              : first,
+            period_end_on: row === rows.at(-1) && payoff
+              ? payoff.paid_on : last,
+            interest_paid_on: row === rows.at(-1) && payoff
+              ? payoff.paid_on : last,
+            opening_balance: row.opening_balance,
+            principal_paid_before_month_end: row.principal_paid_before_month_end,
+            closing_balance: row.closing_balance,
+            interest_paid: row.interest_paid,
+            lender_statement_reference: row.lender_statement_reference,
+          };
+        }))
+      : loan.partial_period_document !== undefined
   ) return false;
   const references = new Set<string>();
   for (const advance of advances) {
@@ -654,6 +708,83 @@ function additionalLoanCategory(
     : "post2017";
 }
 
+function validMidmonthRefinanceEvidence(
+  review: Review,
+  old: Loan,
+  fresh: Loan,
+  date: string,
+  ledger: Record<string, unknown> | undefined,
+  closing: Record<string, unknown> | undefined,
+  payoff: Record<string, unknown> | undefined,
+  oldPoints: Record<string, unknown> | undefined,
+): boolean {
+  const month = review.refinance_month;
+  const lastDay = (m: number) => new Date(Date.UTC(2025, m, 0))
+    .toISOString().slice(0, 10);
+  const expectedRows = (rows: Review["old_loan_months"], isOld: boolean) =>
+    rows.map((row) => {
+      const partial = row.month === month;
+      const start = `2025-${String(row.month).padStart(2, "0")}-01`;
+      return {
+        month: row.month,
+        period_start_on: partial && !isOld ? date : start,
+        period_end_on: partial && isOld ? date : lastDay(row.month),
+        interest_paid_on: partial ? date : lastDay(row.month),
+        opening_balance: row.opening_balance,
+        principal_paid_before_month_end: row.principal_paid_before_month_end,
+        closing_balance: row.closing_balance,
+        interest_paid: row.interest_paid,
+        lender_statement_reference: row.lender_statement_reference,
+      };
+    });
+  return ledger?.document_type === "midmonth_mortgage_payment_ledger" &&
+    ledger.property_reference === review.property_reference &&
+    ledger.closing_on === date &&
+    ledger.owner_tin === old.recipient_tin &&
+    ledger.owner_tin === fresh.recipient_tin &&
+    ledger.old_source_document_reference === old.source_document_reference &&
+    ledger.new_source_document_reference === fresh.source_document_reference &&
+    ledger.old_lender_name === old.lender_name &&
+    ledger.new_lender_name === fresh.lender_name &&
+    JSON.stringify(ledger.old_months) ===
+      JSON.stringify(expectedRows(review.old_loan_months, true)) &&
+    JSON.stringify(ledger.new_months) ===
+      JSON.stringify(expectedRows(review.new_loan_months, false)) &&
+    closing?.document_type === "refinance_closing_statement" &&
+    closing.property_reference === review.property_reference &&
+    closing.closing_reference ===
+      review.refinance_closing_disclosure_reference &&
+    closing.owner_tin === fresh.recipient_tin &&
+    closing.closed_on === date &&
+    closing.new_prepaid_interest_paid ===
+      review.new_loan_months[0]?.interest_paid &&
+    closing.new_prepaid_interest_paid_on === date &&
+    typeof closing.new_prepaid_interest_payment_reference === "string" &&
+    closing.new_prepaid_interest_payment_reference.trim().length > 0 &&
+    JSON.stringify(closing.disbursements) ===
+      JSON.stringify(review.closing_disbursements) &&
+    payoff?.document_type === "mortgage_payoff_receipt" &&
+    payoff.property_reference === review.property_reference &&
+    payoff.source_document_reference === old.source_document_reference &&
+    payoff.lender_name === old.lender_name &&
+    payoff.payer_tin === old.recipient_tin &&
+    payoff.payoff_reference === review.old_loan_payoff_reference &&
+    payoff.paid_on === date &&
+    payoff.principal_paid === review.new_loan_proceeds_to_old_payoff &&
+    payoff.interest_paid === review.old_loan_months.at(-1)?.interest_paid &&
+    payoff.lender_statement_reference ===
+      review.old_loan_months.at(-1)?.lender_statement_reference &&
+    oldPoints?.document_type === "original_loan_points_settlement_record" &&
+    oldPoints.property_reference === review.property_reference &&
+    oldPoints.closing_reference ===
+      review.original_acquisition_closing_reference &&
+    oldPoints.source_document_reference === old.source_document_reference &&
+    oldPoints.lender_name === old.lender_name &&
+    oldPoints.owner_tin === old.recipient_tin &&
+    oldPoints.settled_on === old.box3_origination_date &&
+    oldPoints.total_points_charged === 0;
+}
+
 export function validateCashoutRefinanceReview(
   review: Review,
   items: readonly Loan[],
@@ -667,7 +798,18 @@ export function validateCashoutRefinanceReview(
   const oldDate = validDate(old?.box3_origination_date);
   const newDate = validDate(fresh?.box3_origination_date);
   const month = review.refinance_month;
-  const date = `2025-${String(month).padStart(2, "0")}-01`;
+  const firstDay = `2025-${String(month).padStart(2, "0")}-01`;
+  const date = review.refinance_on ?? firstDay;
+  const midmonth = date !== firstDay;
+  const dated = validIsoDate(date);
+  const midmonthLedger = review.midmonth_lender_ledger_document &&
+    reviewedDocument(review.midmonth_lender_ledger_document);
+  const midmonthClosing = review.midmonth_closing_document &&
+    reviewedDocument(review.midmonth_closing_document);
+  const midmonthPayoff = review.midmonth_old_payoff_document &&
+    reviewedDocument(review.midmonth_old_payoff_document);
+  const midmonthOldPoints = review.midmonth_old_points_document &&
+    reviewedDocument(review.midmonth_old_points_document);
   const disbursements = review.closing_disbursements;
   const improvement = review.new_loan_proceeds_to_home_improvement ?? 0;
   const hasImprovement = improvement > 0;
@@ -845,7 +987,21 @@ export function validateCashoutRefinanceReview(
     oldDate < new Date("2017-12-16T00:00:00Z") ||
     oldDate >= new Date("2025-01-01T00:00:00Z") ||
     newDate.getUTCFullYear() !== 2025 ||
-    newDate.getUTCMonth() + 1 !== month || newDate.getUTCDate() !== 1 ||
+    !dated || dated.getUTCMonth() + 1 !== month ||
+    (midmonth
+      ? dated.getUTCDate() < 2 ||
+        review.closing_on_first_of_month_verified !== undefined ||
+        !validMidmonthRefinanceEvidence(
+          review, old, fresh, date, midmonthLedger, midmonthClosing,
+          midmonthPayoff, midmonthOldPoints,
+        )
+      : newDate.getUTCDate() !== 1 ||
+        review.closing_on_first_of_month_verified !== true ||
+        review.midmonth_lender_ledger_document !== undefined ||
+        review.midmonth_closing_document !== undefined ||
+        review.midmonth_old_payoff_document !== undefined) ||
+    (!midmonth && review.midmonth_old_points_document !== undefined) ||
+    newDate.getUTCDate() !== dated.getUTCDate() ||
     disbursements.length !== (hasImprovement ? 3 : 2) ||
     disbursements[0].purpose !== "old_acquisition_loan_payoff" ||
     disbursements[0].amount !== review.new_loan_proceeds_to_old_payoff ||
@@ -941,8 +1097,9 @@ export function validateCashoutRefinanceReview(
     !completeRows(
       review.old_loan_months,
       1,
-      month - 1,
+      midmonth ? month : month - 1,
       old.box2_outstanding_principal,
+      midmonth,
     ) ||
     !completeRows(
       review.new_loan_months,
@@ -950,8 +1107,9 @@ export function validateCashoutRefinanceReview(
       12,
       fresh.box2_outstanding_principal,
     ) ||
-    review.old_loan_months.at(-1)?.closing_balance !==
-      review.new_loan_proceeds_to_old_payoff ||
+    (midmonth ? review.old_loan_months.at(-1)?.opening_balance
+      : review.old_loan_months.at(-1)?.closing_balance) !==
+        review.new_loan_proceeds_to_old_payoff ||
     review.old_loan_months.reduce((sum, row) => sum + row.interest_paid, 0) !==
       old.box1_mortgage_interest ||
     review.new_loan_months.reduce((sum, row) => sum + row.interest_paid, 0) !==

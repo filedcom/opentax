@@ -6,6 +6,24 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { scheduleA } from "../schedule_a/index.ts";
 import { inputSchema as form1098InputSchema } from "../f1098/index.ts";
 import { cashoutRefinanceRatio } from "../f1098/cashout_refinance.ts";
+import { createHash } from "node:crypto";
+
+const retainedPaymentSchedule = z.object({
+  file_name: z.string().trim().regex(/^[^/\\]+\.json$/),
+  sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  bytes: z.instanceof(Uint8Array),
+}).strict();
+
+function reviewedPaymentSchedule(
+  document: z.infer<typeof retainedPaymentSchedule> | undefined,
+): Record<string, unknown> | undefined {
+  if (!document || createHash("sha256").update(document.bytes).digest("hex") !==
+    document.sha256) return;
+  try {
+    const value = JSON.parse(new TextDecoder().decode(document.bytes));
+    if (value && typeof value === "object" && !Array.isArray(value)) return value;
+  } catch { /* Missing or changed payment evidence does not prove points. */ }
+}
 
 const paymentSchema = z.object({
   month: z.number().int().min(1).max(12),
@@ -14,7 +32,7 @@ const paymentSchema = z.object({
 }).strict();
 
 const cashoutPointsPaymentSchema = z.object({
-  paid_on: z.string().regex(/^2025-\d{2}-01$/),
+  paid_on: z.string().regex(/^2025-\d{2}-\d{2}$/),
   payer_tin: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
   payer_bank_record_reference: z.string().trim().min(1),
   payer_bank_debit_amount: z.number().int().positive(),
@@ -26,6 +44,7 @@ const cashoutPointsPaymentSchema = z.object({
   secured_by_principal_residence_verified: z.literal(true),
   loan_terms_comparable_if_over_ten_years_verified: z.literal(true),
   points_not_financed_verified: z.literal(true),
+  payment_schedule_document: retainedPaymentSchedule.optional(),
 }).strict();
 
 const earlyPayoffSchema = z.object({
@@ -270,8 +289,12 @@ export const inputSchema = z.object({
     const newLoan = cashout_source?.f1098s.find((loan) =>
       loan.source_document_reference === review?.new_source_document_reference
     );
-    const closingDate = `2025-${String(review?.refinance_month ?? 0).padStart(2, "0")}-01`;
+    const closingDate = review?.refinance_on ??
+      `2025-${String(review?.refinance_month ?? 0).padStart(2, "0")}-01`;
+    const midmonth = review?.refinance_on !== undefined &&
+      !review.refinance_on.endsWith("-01");
     const months = review?.new_loan_months.map((row) => row.month) ?? [];
+    const schedule = reviewedPaymentSchedule(payment?.payment_schedule_document);
     const paymentDatesValid = item?.monthly_payment_records.every((row) => {
       const date = row.paid_on ? valid2025Date(row.paid_on) : undefined;
       return date !== undefined && date.getUTCMonth() + 1 === row.month &&
@@ -321,12 +344,32 @@ export const inputSchema = z.object({
           row.payment_record_reference
         ),
       ]).size !== 3 + review.closing_disbursements.length ||
-      item.monthly_payment_records.length !== months.length ||
-      item.monthly_payment_records.some((row, index) =>
-        row.month !== months[index] ||
-        row.document_reference !==
-          review.new_loan_months[index]?.lender_statement_reference
-      )
+      (midmonth
+        ? schedule?.document_type !== "mortgage_points_payment_schedule" ||
+          schedule.property_reference !== review.property_reference ||
+          schedule.owner_tin !== item.recipient_tin ||
+          schedule.lender_name !== item.lender_name ||
+          schedule.form1098_source_document_reference !==
+            item.form1098_source_document_reference ||
+          schedule.promissory_note_reference !==
+            payment.promissory_note_reference ||
+          schedule.closing_reference !== item.closing_disclosure_reference ||
+          schedule.closed_on !== closingDate ||
+          schedule.term_months !== item.loan_term_months ||
+          schedule.first_payment_due_on !==
+            item.monthly_payment_records[0]?.paid_on ||
+          JSON.stringify(schedule.payment_records) !==
+            JSON.stringify(item.monthly_payment_records) ||
+          item.monthly_payment_records.some((row) =>
+            row.paid_on !== new Date(Date.UTC(2025, row.month, 0))
+              .toISOString().slice(0, 10))
+        : payment.payment_schedule_document !== undefined ||
+          item.monthly_payment_records.length !== months.length ||
+          item.monthly_payment_records.some((row, index) =>
+            row.month !== months[index] ||
+            row.document_reference !==
+              review.new_loan_months[index]?.lender_statement_reference
+          ))
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

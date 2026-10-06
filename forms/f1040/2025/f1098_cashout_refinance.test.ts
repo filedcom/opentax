@@ -2333,3 +2333,443 @@ Deno.test("additional lien payoff and dated advances use sourced Table 1 average
     await assertRejects(() => buildPdfBytes(altered, filer, ".pdf-cache"));
   }
 });
+
+Deno.test("July 15 refinance retains both lender periods and five paid points installments", async () => {
+  const { mortgage, points } = await sourceWithPoints(7);
+  const old = mortgage.f1098[0];
+  const fresh = mortgage.f1098[1];
+  const review = mortgage.f1098_cashout_refinance_review
+    .cashout_refinance_review as Record<string, any>;
+  const item = points.refinances[0] as Record<string, any>;
+  const retained = async (name: string, value: unknown) => {
+    const bytes = new TextEncoder().encode(JSON.stringify(value));
+    const sha256 = Array.from(new Uint8Array(await crypto.subtle.digest(
+      "SHA-256", bytes,
+    )), (byte) => byte.toString(16).padStart(2, "0")).join("");
+    return { file_name: name, sha256, bytes };
+  };
+  const closingOn = "2025-07-15";
+  review.refinance_on = closingOn;
+  delete review.closing_on_first_of_month_verified;
+  for (const wire of review.closing_disbursements) wire.paid_on = closingOn;
+  review.old_loan_months.push({
+    month: 7, opening_balance: 200_000,
+    principal_paid_before_month_end: 200_000,
+    closing_balance: 0, interest_paid: 500,
+    lender_statement_reference: "Old lender July 1-15 payoff statement",
+  });
+  review.new_loan_months = review.new_loan_months.map((row: any) => ({
+    ...row,
+    opening_balance: row.month === 7 ? 250_000 :
+      250_000 - 10_000 * (row.month - 8),
+    principal_paid_before_month_end: row.month === 7 ? 0 : 10_000,
+    closing_balance: row.month === 7 ? 250_000 :
+      250_000 - 10_000 * (row.month - 7),
+    interest_paid: row.month === 7 ? 625 :
+      1_250 - 50 * (row.month - 8),
+    lender_statement_reference: row.month === 7
+      ? "New lender July 15-31 prepaid interest statement"
+      : row.lender_statement_reference,
+  }));
+  old.box1_mortgage_interest = 6_500;
+  old.issuer_copy = await copy(old.lender_name, 6_500, 200_000,
+    old.box3_origination_date);
+  fresh.box1_mortgage_interest = 6_375;
+  fresh.box3_origination_date = "07/15/2025";
+  fresh.issuer_copy = await copy(fresh.lender_name, 6_375, 250_000,
+    fresh.box3_origination_date);
+  const lastDay = (month: number) => new Date(Date.UTC(2025, month, 0))
+    .toISOString().slice(0, 10);
+  const ledgerRows = (rows: any[], isOld: boolean) => rows.map((row) => ({
+    month: row.month,
+    period_start_on: row.month === 7 && !isOld ? closingOn :
+      `2025-${String(row.month).padStart(2, "0")}-01`,
+    period_end_on: row.month === 7 && isOld ? closingOn : lastDay(row.month),
+    interest_paid_on: row.month === 7 ? closingOn : lastDay(row.month),
+    opening_balance: row.opening_balance,
+    principal_paid_before_month_end: row.principal_paid_before_month_end,
+    closing_balance: row.closing_balance, interest_paid: row.interest_paid,
+    lender_statement_reference: row.lender_statement_reference,
+  }));
+  review.midmonth_lender_ledger_document = await retained(
+    "2025-july15-both-lenders-period-ledger.json", {
+      document_type: "midmonth_mortgage_payment_ledger",
+      property_reference: review.property_reference,
+      owner_tin: old.recipient_tin, closing_on: closingOn,
+      old_source_document_reference: old.source_document_reference,
+      new_source_document_reference: fresh.source_document_reference,
+      old_lender_name: old.lender_name, new_lender_name: fresh.lender_name,
+      old_months: ledgerRows(review.old_loan_months, true),
+      new_months: ledgerRows(review.new_loan_months, false),
+    });
+  review.midmonth_closing_document = await retained(
+    "2025-july15-refinance-closing.json", {
+      document_type: "refinance_closing_statement",
+      property_reference: review.property_reference,
+      closing_reference: review.refinance_closing_disclosure_reference,
+      owner_tin: fresh.recipient_tin, closed_on: closingOn,
+      new_prepaid_interest_paid: 625,
+      new_prepaid_interest_paid_on: closingOn,
+      new_prepaid_interest_payment_reference:
+        "July 15 cash-basis prepaid lender interest bank debit",
+      disbursements: review.closing_disbursements,
+    });
+  review.midmonth_old_payoff_document = await retained(
+    "2025-july15-old-lender-payoff.json", {
+      document_type: "mortgage_payoff_receipt",
+      property_reference: review.property_reference,
+      source_document_reference: old.source_document_reference,
+      lender_name: old.lender_name, payer_tin: old.recipient_tin,
+      payoff_reference: review.old_loan_payoff_reference,
+      paid_on: closingOn, principal_paid: 200_000, interest_paid: 500,
+      lender_statement_reference:
+        review.old_loan_months.at(-1).lender_statement_reference,
+    });
+  review.midmonth_old_points_document = await retained(
+    "2020-original-home-loan-points-settlement.json", {
+      document_type: "original_loan_points_settlement_record",
+      property_reference: review.property_reference,
+      closing_reference: review.original_acquisition_closing_reference,
+      source_document_reference: old.source_document_reference,
+      lender_name: old.lender_name, owner_tin: old.recipient_tin,
+      settled_on: old.box3_origination_date, total_points_charged: 0,
+    });
+  // Independent Pub. 936 worksheet: six $200k old closes and a zero payoff
+  // close / seven secured months; new mixed closes $250k..$200k / twelve.
+  const ratio = Math.round((1_200_000 / 7 + 1_200_000 / 12) /
+    (1_200_000 / 7 + 1_350_000 / 12) * 1000) / 1000;
+  assertEquals(ratio, .956);
+  old.box1_current_year_deductible_interest = Math.round(6_500 * ratio);
+  fresh.box1_current_year_deductible_interest = Math.round(12_875 * ratio) -
+    old.box1_current_year_deductible_interest;
+  item.cashout_points_payment.paid_on = closingOn;
+  item.monthly_payment_records = [8, 9, 10, 11, 12].map((month) => ({
+    month,
+    document_reference: `New lender ${month} paid installment receipt`,
+    paid_on: lastDay(month),
+  }));
+  item.cashout_points_payment.payment_schedule_document = await retained(
+    "2025-july15-new-note-points-payment-schedule.json", {
+      document_type: "mortgage_points_payment_schedule",
+      property_reference: review.property_reference,
+      owner_tin: item.recipient_tin, lender_name: item.lender_name,
+      form1098_source_document_reference: fresh.source_document_reference,
+      promissory_note_reference:
+        item.cashout_points_payment.promissory_note_reference,
+      closing_reference: item.closing_disclosure_reference,
+      closed_on: closingOn, term_months: item.loan_term_months,
+      first_payment_due_on: "2025-08-31",
+      payment_records: item.monthly_payment_records,
+    });
+  points.cashout_source = { f1098s: mortgage.f1098,
+    ...mortgage.f1098_cashout_refinance_review };
+  const inputs = { ...base.inputs, schedule_a: { force_itemized: true },
+    f1098: mortgage.f1098,
+    f1098_cashout_refinance_review: mortgage.f1098_cashout_refinance_review,
+    mortgage_refinance_points: points };
+  assertEquals(inputSchema.parse({ f1098s: mortgage.f1098,
+    ...mortgage.f1098_cashout_refinance_review }).f1098s.length, 2);
+  assertEquals(refinancePointsDeduction(points), 106);
+  const result = f1040_2025.executeReturn(inputs);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule_a?.line_8a_mortgage_interest_1098,
+    12_309);
+  assertEquals(result.pending.schedule_a?.line_8c_points_no_1098, 106);
+  const filer = extractFilerIdentity(result.pending.f1040)!;
+  const bundle = await buildMefBundle(buildPending(result.pending),
+    { filer, attachments: [] });
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, bundle.xml);
+    const checked = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsdPath, xmlPath],
+      stdout: "piped", stderr: "piped",
+    }).output();
+    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+  } finally { await Deno.remove(xmlPath); }
+  const pdf = await buildPdfBytes(bundle.pending, filer, ".pdf-cache", bundle);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount(), 3);
+  let dir: string | undefined;
+  try { dir = Deno.env.get("FORM1098_MIDMONTH_EVIDENCE_DIR"); }
+  catch (error) { if (!(error instanceof Deno.errors.NotCapable)) throw error; }
+  if (dir) {
+    await Deno.mkdir(dir, { recursive: true });
+    await Deno.writeTextFile(`${dir}/source.json`, JSON.stringify(inputs));
+    await Deno.writeTextFile(`${dir}/pending.json`, JSON.stringify(bundle.pending));
+    await Deno.writeTextFile(`${dir}/return.xml`, bundle.xml);
+    await Deno.writeFile(`${dir}/return.pdf`, pdf);
+    for (const [index, loan] of mortgage.f1098.entries()) {
+      await Deno.writeFile(`${dir}/source-1098-${index + 1}.pdf`,
+        loan.issuer_copy.bytes);
+    }
+    for (const doc of [review.midmonth_lender_ledger_document,
+      review.midmonth_closing_document, review.midmonth_old_payoff_document,
+      review.midmonth_old_points_document,
+      item.cashout_points_payment.payment_schedule_document]) {
+      await Deno.writeFile(`${dir}/${doc.file_name}`, doc.bytes);
+    }
+  }
+  for (const mutate of [
+    (source: any) => { source.f1098_cashout_refinance_review
+      .cashout_refinance_review.old_loan_months.pop(); },
+    (source: any) => { source.f1098_cashout_refinance_review
+      .cashout_refinance_review.closing_disbursements[0].paid_on =
+        "2025-07-01"; },
+  ]) {
+    const changed = structuredClone(inputs);
+    mutate(changed);
+    assertThrows(() => inputSchema.parse({ f1098s: changed.f1098,
+      ...changed.f1098_cashout_refinance_review }));
+  }
+  const unsourcedPayment = structuredClone(points);
+  unsourcedPayment.refinances[0].monthly_payment_records.unshift({
+    month: 7, document_reference: "unsourced July payment",
+    paid_on: "2025-07-31",
+  });
+  assertThrows(() => pointsInputSchema.parse(unsourcedPayment));
+  for (const mutate of [
+    (pending: any) => { pending.f1098.cashout_refinance_review
+      .midmonth_lender_ledger_document.bytes[0] ^= 1; },
+    (pending: any) => { pending.mortgage_refinance_points.refinances[0]
+      .cashout_points_payment.payment_schedule_document.bytes[0] ^= 1; },
+    (pending: any) => { pending.schedule_a.line_8c_points_no_1098++; },
+  ]) {
+    const changed = structuredClone(bundle.pending);
+    mutate(changed);
+    await assertRejects(() => buildMefBundle(changed,
+      { filer, attachments: [] }));
+    await assertRejects(() => buildPdfBytes(changed, filer, ".pdf-cache"));
+  }
+  for (const [field, change] of [
+    ["midmonth_lender_ledger_document", (doc: any) => {
+      doc.new_months[0].period_start_on = "2025-07-14";
+    }],
+    ["midmonth_closing_document", (doc: any) => {
+      doc.closed_on = "2025-07-14";
+    }],
+    ["midmonth_old_payoff_document", (doc: any) => {
+      doc.interest_paid = 501;
+    }],
+    ["midmonth_old_points_document", (doc: any) => {
+      doc.total_points_charged = 1_000;
+    }],
+  ] as const) {
+    const changed = structuredClone(bundle.pending) as Record<string, any>;
+    for (const source of [changed.f1098,
+      changed.mortgage_refinance_points.cashout_source]) {
+      const record = source.cashout_refinance_review[field];
+      const value = JSON.parse(new TextDecoder().decode(record.bytes));
+      change(value);
+      record.bytes = new TextEncoder().encode(JSON.stringify(value));
+      record.sha256 = Array.from(new Uint8Array(await crypto.subtle.digest(
+        "SHA-256", record.bytes,
+      )), (byte) => byte.toString(16).padStart(2, "0")).join("");
+    }
+    assertThrows(() => inputSchema.parse(changed.f1098));
+    await assertRejects(() => buildMefBundle(changed,
+      { filer, attachments: [] }));
+    await assertRejects(() => buildPdfBytes(changed, filer, ".pdf-cache"));
+  }
+  const wrongSchedule = structuredClone(bundle.pending) as Record<string, any>;
+  const schedule = wrongSchedule.mortgage_refinance_points.refinances[0]
+    .cashout_points_payment.payment_schedule_document;
+  const scheduleValue = JSON.parse(new TextDecoder().decode(schedule.bytes));
+  scheduleValue.first_payment_due_on = "2025-08-30";
+  schedule.bytes = new TextEncoder().encode(JSON.stringify(scheduleValue));
+  schedule.sha256 = Array.from(new Uint8Array(await crypto.subtle.digest(
+    "SHA-256", schedule.bytes,
+  )), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  assertThrows(() => pointsInputSchema.parse(
+    wrongSchedule.mortgage_refinance_points));
+  await assertRejects(() => buildMefBundle(wrongSchedule,
+    { filer, attachments: [] }));
+  await assertRejects(() => buildPdfBytes(wrongSchedule, filer, ".pdf-cache"));
+});
+
+Deno.test("separate qualified liens retain July 15 origination and September 15 payoff periods", async () => {
+  const retained = async (name: string, value: unknown) => {
+    const bytes = new TextEncoder().encode(JSON.stringify(value));
+    const sha256 = Array.from(new Uint8Array(await crypto.subtle.digest(
+      "SHA-256", bytes,
+    )), (byte) => byte.toString(16).padStart(2, "0")).join("");
+    return { file_name: name, sha256, bytes };
+  };
+  const update = async (doc: any, change: (value: any) => void) => {
+    const value = JSON.parse(new TextDecoder().decode(doc.bytes));
+    change(value);
+    return retained(doc.file_name, value);
+  };
+  for (const caseName of ["july15-new", "september15-payoff"] as const) {
+    const sample = await historicalMultiLienSource("mfj");
+    const mortgage = sample.mortgage;
+    const review = mortgage.f1098_cashout_refinance_review
+      .cashout_refinance_review as Record<string, any>;
+    const loanIndex = caseName === "july15-new" ? 2 : 1;
+    const sourceIndex = loanIndex + 2;
+    const loan = review.additional_qualified_loans[loanIndex];
+    const source = mortgage.f1098[sourceIndex];
+    const isNew = caseName === "july15-new";
+    if (isNew) {
+      source.box3_origination_date = "07/15/2025";
+      source.box1_mortgage_interest = 5_500;
+      loan.monthly_records = loan.monthly_records.slice(6).map(
+        (row: any, index: number) => ({ ...row,
+          interest_paid: index === 0 ? 500 : 1_000 }),
+      );
+      loan.lien_document = await update(loan.lien_document, (doc) => {
+        doc.secured_on = "07/15/2025";
+        doc.incurred_on = "07/15/2025";
+      });
+      loan.improvement_invoice_document = await update(
+        loan.improvement_invoice_document,
+        (doc) => { doc.completed_on = "07/15/2025"; });
+      loan.improvement_payment_document = await update(
+        loan.improvement_payment_document,
+        (doc) => { doc.paid_on = "07/15/2025"; });
+    } else {
+      source.box1_mortgage_interest = 21_000;
+      loan.monthly_records = loan.monthly_records.slice(0, 9).map(
+        (row: any, index: number) => ({ ...row,
+          interest_paid: index === 8 ? 1_000 : 2_500,
+          principal_paid_before_month_end: index === 8 ? 500_000 : 0,
+          closing_balance: index === 8 ? 0 : 500_000 }),
+      );
+      loan.payoff_document = await retained(
+        "mfj-pre2017-september15-payoff.json", {
+          document_type: "mortgage_payoff_receipt",
+          property_reference: loan.property_reference,
+          source_document_reference: loan.source_document_reference,
+          lender_name: source.lender_name, payer_tin: sample.spouse,
+          principal_paid: 500_000, interest_paid: 1_000,
+          paid_on: "2025-09-15",
+          lender_statement_reference:
+            loan.monthly_records.at(-1).lender_statement_reference,
+        });
+    }
+    loan.interest_payment_document = await update(
+      loan.interest_payment_document, (doc) => {
+        doc.months = loan.monthly_records.map((row: any) => ({
+          month: row.month, opening_balance: row.opening_balance,
+          principal_advanced_during_month: 0,
+          principal_paid_before_month_end: row.principal_paid_before_month_end,
+          closing_balance: row.closing_balance, interest_paid: row.interest_paid,
+          lender_statement_reference: row.lender_statement_reference,
+        }));
+      });
+    const partialDate = isNew ? "2025-07-15" : "2025-09-15";
+    loan.partial_period_document = await retained(
+      `${caseName}-lender-period-ledger.json`, {
+        document_type: "partial_period_mortgage_lender_ledger",
+        property_reference: loan.property_reference,
+        source_document_reference: loan.source_document_reference,
+        lender_name: source.lender_name, recipient_tin: sample.spouse,
+        ...(isNew ? { original_on: source.box3_origination_date }
+          : { paid_off_on: partialDate }),
+        months: loan.monthly_records.map((row: any) => ({
+          month: row.month,
+          period_start_on: isNew && row.month === 7 ? partialDate :
+            `2025-${String(row.month).padStart(2, "0")}-01`,
+          period_end_on: !isNew && row.month === 9 ? partialDate :
+            new Date(Date.UTC(2025, row.month, 0))
+              .toISOString().slice(0, 10),
+          interest_paid_on: !isNew && row.month === 9 ? partialDate :
+            new Date(Date.UTC(2025, row.month, 0))
+              .toISOString().slice(0, 10),
+          opening_balance: row.opening_balance,
+          principal_paid_before_month_end: row.principal_paid_before_month_end,
+          closing_balance: row.closing_balance, interest_paid: row.interest_paid,
+          lender_statement_reference: row.lender_statement_reference,
+        })),
+      });
+    source.issuer_copy = await copy(source.lender_name,
+      source.box1_mortgage_interest, source.box2_outstanding_principal,
+      source.box3_origination_date, sample.spouse);
+    const oldAverage = isNew ? 500_000 : 4_000_000 / 9;
+    const denominator = 400_000 + 2_790_000 / 12 + 100_000 +
+      oldAverage + 200_000;
+    const expectedRatio = Math.round(750_000 / denominator * 1000) / 1000;
+    assertEquals(expectedRatio, isNew ? .524 : .545);
+    assertEquals(cashoutRefinanceRatio(cashoutRefinanceReviewSchema.parse(review)),
+      expectedRatio);
+    let interest = 0;
+    let allowed = 0;
+    for (const item of mortgage.f1098) {
+      interest += item.box1_mortgage_interest;
+      const next = Math.round(interest * expectedRatio);
+      item.box1_current_year_deductible_interest = next - allowed;
+      allowed = next;
+    }
+    const points = sample.points;
+    points.cashout_source = { f1098s: mortgage.f1098,
+      ...mortgage.f1098_cashout_refinance_review };
+    const inputs = { ...base.inputs,
+      general: { ...(base.inputs.general as Record<string, unknown>),
+        filing_status: "mfj", spouse_first_name: "Sam",
+        spouse_last_name: "Example", spouse_ssn: sample.spouse },
+      schedule_a: { force_itemized: true }, f1098: mortgage.f1098,
+      f1098_cashout_refinance_review: mortgage.f1098_cashout_refinance_review,
+      mortgage_refinance_points: points };
+    assertEquals(inputSchema.parse({ f1098s: mortgage.f1098,
+      ...mortgage.f1098_cashout_refinance_review }).f1098s.length, 5);
+    const result = f1040_2025.executeReturn(inputs);
+    assertEquals(result.diagnostics, []);
+    assertEquals(result.pending.schedule_a?.line_8a_mortgage_interest_1098,
+      allowed);
+    const filer = extractFilerIdentity(result.pending.f1040)!;
+    const bundle = await buildMefBundle(buildPending(result.pending),
+      { filer, attachments: [] });
+    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+    try {
+      await Deno.writeTextFile(xmlPath, bundle.xml);
+      const checked = await new Deno.Command("xmllint", {
+        args: ["--noout", "--schema", xsdPath, xmlPath],
+        stdout: "piped", stderr: "piped",
+      }).output();
+      assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+    } finally { await Deno.remove(xmlPath); }
+    const pdf = await buildPdfBytes(bundle.pending, filer, ".pdf-cache", bundle);
+    assertEquals((await PDFDocument.load(pdf)).getPageCount(), 3);
+    let dir: string | undefined;
+    try { dir = Deno.env.get("FORM1098_MIDMONTH_ADDITIONAL_EVIDENCE_DIR"); }
+    catch (error) { if (!(error instanceof Deno.errors.NotCapable)) throw error; }
+    if (dir) {
+      const packet = `${dir}/${caseName}`;
+      await Deno.mkdir(packet, { recursive: true });
+      await Deno.writeTextFile(`${packet}/source.json`, JSON.stringify(inputs));
+      await Deno.writeTextFile(`${packet}/pending.json`, JSON.stringify(bundle.pending));
+      await Deno.writeTextFile(`${packet}/return.xml`, bundle.xml);
+      await Deno.writeFile(`${packet}/return.pdf`, pdf);
+      for (const [index, item] of mortgage.f1098.entries()) {
+        await Deno.writeFile(`${packet}/source-1098-${index + 1}.pdf`,
+          item.issuer_copy.bytes);
+      }
+      const documents = [review.qualified_home_inventory_document,
+        ...Object.values(review.married_ownership_evidence).filter(
+          (doc: any) => doc?.bytes instanceof Uint8Array),
+        ...review.additional_qualified_loans.flatMap((item: any) =>
+          Object.values(item).filter((doc: any) =>
+            doc?.bytes instanceof Uint8Array)),
+        review.improvement_use_records[0].contractor_invoice_document,
+        review.improvement_use_records[0].contractor_payment_document];
+      for (const doc of documents) {
+        await Deno.writeFile(`${packet}/${doc.file_name}`, doc.bytes);
+      }
+    }
+    const wrong = structuredClone(bundle.pending) as Record<string, any>;
+    for (const source of [wrong.f1098,
+      wrong.mortgage_refinance_points.cashout_source]) {
+      const record = source.cashout_refinance_review
+        .additional_qualified_loans[loanIndex].partial_period_document;
+      const value = JSON.parse(new TextDecoder().decode(record.bytes));
+      value.months[0].period_start_on = "2025-01-02";
+      record.bytes = new TextEncoder().encode(JSON.stringify(value));
+      record.sha256 = Array.from(new Uint8Array(await crypto.subtle.digest(
+        "SHA-256", record.bytes,
+      )), (byte) => byte.toString(16).padStart(2, "0")).join("");
+    }
+    assertThrows(() => inputSchema.parse(wrong.f1098));
+    await assertRejects(() => buildMefBundle(wrong,
+      { filer, attachments: [] }));
+    await assertRejects(() => buildPdfBytes(wrong, filer, ".pdf-cache"));
+  }
+});
