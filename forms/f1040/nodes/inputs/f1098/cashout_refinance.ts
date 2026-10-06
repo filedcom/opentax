@@ -33,6 +33,22 @@ const monthlyRecord = z.object({
   lender_statement_reference: z.string().trim().min(1),
 }).strict();
 
+const additionalLoan = z.object({
+  source_document_reference: z.string().trim().min(1),
+  property_reference: z.string().trim().min(1),
+  closing_reference: z.string().trim().min(1),
+  original_principal: z.number().int().positive(),
+  opening_2025_principal: z.number().int().positive(),
+  monthly_records: z.array(monthlyRecord).length(12),
+  title_document: retainedDocument,
+  lien_document: retainedDocument,
+  interest_payment_document: retainedDocument,
+  occupancy_document: retainedDocument.optional(),
+  security_history_document: retainedDocument.optional(),
+  improvement_invoice_document: retainedDocument.optional(),
+  improvement_payment_document: retainedDocument.optional(),
+}).strict();
+
 /** A single first-of-month refinance of one post-2017 acquisition mortgage. */
 export const cashoutRefinanceReviewSchema = z.object({
   old_source_document_reference: z.string().trim().min(1),
@@ -117,6 +133,7 @@ export const cashoutRefinanceReviewSchema = z.object({
     occupancy_document: retainedDocument,
     interest_payment_document: retainedDocument,
   }).strict().optional(),
+  additional_qualified_loans: z.array(additionalLoan).min(1).optional(),
   old_loan_months: z.array(monthlyRecord).min(1).max(11),
   new_loan_months: z.array(monthlyRecord).min(1).max(11),
 }).strict();
@@ -185,8 +202,6 @@ function validateSecondHomeLoan(review: Review, source: Loan): boolean {
   const note = reviewedDocument(second.purchase_note_document);
   const occupancy = reviewedDocument(second.occupancy_document);
   const payment = reviewedDocument(second.interest_payment_document);
-  const inventory = review.qualified_home_inventory_document &&
-    reviewedDocument(review.qualified_home_inventory_document);
   const owned = review.married_ownership_evidence;
   const normalize = (tin: string) => tin.replaceAll("-", "");
   const eligible = review.filing_status_verified === "mfj" && owned
@@ -196,14 +211,6 @@ function validateSecondHomeLoan(review: Review, source: Loan): boolean {
   const borrowerTins = note?.borrower_tins;
   const personalDates = occupancy?.personal_use_dates;
   const secondDate = validDate(source.box3_origination_date);
-  const expectedInventory = [
-    { source_document_reference: review.old_source_document_reference,
-      property_reference: review.property_reference },
-    { source_document_reference: review.new_source_document_reference,
-      property_reference: review.property_reference },
-    { source_document_reference: second.source_document_reference,
-      property_reference: second.property_reference },
-  ];
   const isPre2017 = second.pre2017_purchase_on !== undefined;
   return second.property_reference !== review.property_reference &&
     secondDate !== undefined &&
@@ -224,10 +231,6 @@ function validateSecondHomeLoan(review: Review, source: Loan): boolean {
       second.original_acquisition_principal) &&
     second.monthly_records.reduce((sum, row) => sum + row.interest_paid, 0) ===
       source.box1_mortgage_interest &&
-    inventory?.document_type === "qualified_home_mortgage_inventory" &&
-    inventory.filing_status === review.filing_status_verified &&
-    inventory.no_other_qualified_mortgages_verified === true &&
-    JSON.stringify(inventory.loans) === JSON.stringify(expectedInventory) &&
     title?.document_type === "property_title" &&
     title.property_reference === second.property_reference &&
     Array.isArray(ownerTins) && ownerTins.length > 0 &&
@@ -279,6 +282,156 @@ function validateSecondHomeLoan(review: Review, source: Loan): boolean {
     );
 }
 
+type Additional = NonNullable<Review["additional_qualified_loans"]>[number];
+type Category = "grandfathered" | "pre2017" | "post2017";
+
+function additionalLoanCategory(
+  review: Review,
+  loan: Additional,
+  source: Loan,
+  secondProperty: string | undefined,
+  mainAcquisitionOn: string | undefined,
+  secondAcquisitionOn: string | undefined,
+): Category | undefined {
+  const title = reviewedDocument(loan.title_document);
+  const lien = reviewedDocument(loan.lien_document);
+  const payment = reviewedDocument(loan.interest_payment_document);
+  const occupancy = loan.occupancy_document &&
+    reviewedDocument(loan.occupancy_document);
+  const history = loan.security_history_document &&
+    reviewedDocument(loan.security_history_document);
+  const invoice = loan.improvement_invoice_document &&
+    reviewedDocument(loan.improvement_invoice_document);
+  const improvementPayment = loan.improvement_payment_document &&
+    reviewedDocument(loan.improvement_payment_document);
+  const date = validDate(source.box3_origination_date);
+  const normalize = (tin: string) => tin.replaceAll("-", "");
+  const ownership = review.married_ownership_evidence;
+  const eligible = review.filing_status_verified === "mfj" && ownership
+    ? [ownership.taxpayer_tin, ownership.spouse_tin].map(normalize)
+    : [ownership?.taxpayer_tin ?? source.recipient_tin ?? ""].map(normalize);
+  const secondHome = loan.property_reference !== review.property_reference;
+  const ownerTins = title?.owner_tins;
+  const borrowerTins = lien?.borrower_tins;
+  const personalDates = occupancy?.personal_use_dates;
+  if (
+    !date || date >= new Date("2025-01-01T00:00:00Z") ||
+    (secondHome && secondProperty !== loan.property_reference) ||
+    source.box2_outstanding_principal !== loan.opening_2025_principal ||
+    source.refinance === true || (source.for_routing ?? "A") !== "A" ||
+    source.binding_contract_exception === true ||
+    source.dedm_override === true || (source.box6_points_paid ?? 0) !== 0 ||
+    !source.recipient_tin || !source.lender_name?.trim() ||
+    !source.box1_deduction_workpaper_reference ||
+    !eligible.includes(normalize(source.recipient_tin)) ||
+    !completeRows(loan.monthly_records, 1, 12, loan.opening_2025_principal) ||
+    loan.monthly_records.reduce((sum, row) => sum + row.interest_paid, 0) !==
+      source.box1_mortgage_interest ||
+    title?.document_type !== "property_title" ||
+    title.property_reference !== loan.property_reference ||
+    !validDate(title.acquired_on as string) ||
+    validDate(title.acquired_on as string)! > date ||
+    (!secondHome && title.acquired_on !== mainAcquisitionOn) ||
+    (secondHome && title.acquired_on !== secondAcquisitionOn) ||
+    !Array.isArray(ownerTins) || ownerTins.length === 0 ||
+    !ownerTins.every((tin) => typeof tin === "string" &&
+      eligible.includes(normalize(tin))) ||
+    !ownerTins.some((tin) => typeof tin === "string" &&
+      normalize(tin) === normalize(source.recipient_tin ?? "")) ||
+    (review.filing_status_verified === "mfs" &&
+      (ownerTins.length !== 1 ||
+        title.noncommunity_property_verified !== true)) ||
+    lien?.document_type !== "secured_mortgage_note" ||
+    lien.property_reference !== loan.property_reference ||
+    lien.closing_reference !== loan.closing_reference ||
+    lien.source_document_reference !== loan.source_document_reference ||
+    lien.lender_name !== source.lender_name ||
+    lien.recipient_tin !== source.recipient_tin ||
+    lien.principal !== loan.original_principal ||
+    loan.opening_2025_principal > loan.original_principal ||
+    lien.secured_on !== source.box3_origination_date ||
+    !Array.isArray(borrowerTins) || borrowerTins.length === 0 ||
+    !borrowerTins.every((tin) => typeof tin === "string" &&
+      eligible.includes(normalize(tin))) ||
+    !borrowerTins.some((tin) => typeof tin === "string" &&
+      normalize(tin) === normalize(source.recipient_tin ?? "")) ||
+    payment?.document_type !== "mortgage_payment_ledger" ||
+    payment.property_reference !== loan.property_reference ||
+    payment.source_document_reference !== loan.source_document_reference ||
+    payment.payer_tin !== source.recipient_tin ||
+    JSON.stringify(payment.months) !== JSON.stringify(
+      loan.monthly_records.map((row) => ({
+        month: row.month,
+        interest_paid: row.interest_paid,
+        lender_statement_reference: row.lender_statement_reference,
+      })),
+    ) ||
+    (secondHome
+      ? occupancy?.document_type !== "second_home_occupancy_calendar" ||
+        occupancy.property_reference !== loan.property_reference ||
+        occupancy.held_out_for_rent_or_resale !== false ||
+        occupancy.fair_rental_days !== 0 ||
+        !Array.isArray(personalDates) || personalDates.length === 0 ||
+        new Set(personalDates).size !== personalDates.length ||
+        !personalDates.every((day) => typeof day === "string" &&
+          /^2025-\d{2}-\d{2}$/.test(day) &&
+          validDate(`${day.slice(5, 7)}/${day.slice(8, 10)}/2025`))
+      : loan.occupancy_document !== undefined)
+  ) return;
+
+  if (date <= new Date("1987-10-13T00:00:00Z")) {
+    const years = Array.from({ length: 39 }, (_, index) => 1987 + index);
+    if (
+      lien.incurred_on !== source.box3_origination_date ||
+      typeof lien.proceeds_use !== "string" ||
+      !lien.proceeds_use.trim() ||
+      history?.document_type !== "continuous_mortgage_security_history" ||
+      history.property_reference !== loan.property_reference ||
+      history.source_document_reference !== loan.source_document_reference ||
+      history.secured_on_1987_10_13 !== true ||
+      history.uninterrupted_security_verified !== true ||
+      history.recorded_instrument_reference !== loan.closing_reference ||
+      JSON.stringify(history.secured_years) !== JSON.stringify(years) ||
+      loan.improvement_invoice_document !== undefined ||
+      loan.improvement_payment_document !== undefined
+    ) return;
+    return "grandfathered";
+  }
+  if (
+    lien.incurred_on !== source.box3_origination_date ||
+    lien.proceeds_use !== "substantial_improvement" ||
+    invoice?.document_type !== "contractor_invoice" ||
+    invoice.property_reference !== loan.property_reference ||
+    typeof invoice.contractor_name !== "string" ||
+    !invoice.contractor_name.trim() ||
+    typeof invoice.invoice_reference !== "string" ||
+    !invoice.invoice_reference.trim() ||
+    invoice.amount !== loan.original_principal ||
+    invoice.billed_to_tin !== source.recipient_tin ||
+    invoice.closing_reference !== loan.closing_reference ||
+    typeof invoice.substantial_improvement_description !== "string" ||
+    !invoice.substantial_improvement_description.trim() ||
+    improvementPayment?.document_type !== "bank_payment" ||
+    improvementPayment.property_reference !== loan.property_reference ||
+    improvementPayment.amount !== loan.original_principal ||
+    improvementPayment.payer_tin !== source.recipient_tin ||
+    improvementPayment.payee !== invoice.contractor_name ||
+    improvementPayment.invoice_reference !== invoice.invoice_reference ||
+    typeof lien.disbursement_reference !== "string" ||
+    !lien.disbursement_reference.trim() ||
+    typeof improvementPayment.payment_reference !== "string" ||
+    !improvementPayment.payment_reference.trim() ||
+    improvementPayment.payment_reference !== lien.disbursement_reference ||
+    improvementPayment.paid_on !== invoice.completed_on ||
+    improvementPayment.paid_on !== lien.secured_on ||
+    !validDate(improvementPayment.paid_on as string) ||
+    loan.security_history_document !== undefined
+  ) return;
+  return date < new Date("2017-12-16T00:00:00Z")
+    ? "pre2017"
+    : "post2017";
+}
+
 export function validateCashoutRefinanceReview(
   review: Review,
   items: readonly Loan[],
@@ -303,11 +456,55 @@ export function validateCashoutRefinanceReview(
   const secondSource = second && items.find((item) =>
     item.source_document_reference === second.source_document_reference
   );
+  const additional = review.additional_qualified_loans ?? [];
+  const additionalSources = additional.map((loan) => items.find((item) =>
+    item.source_document_reference === loan.source_document_reference
+  ));
+  const distinctSecondProperties = new Set([
+    ...(second ? [second.property_reference] : []),
+    ...additional.filter((loan) =>
+      loan.property_reference !== review.property_reference
+    ).map((loan) => loan.property_reference),
+  ]);
+  const secondProperty = [...distinctSecondProperties][0];
+  const firstSecondTitle = additional.find((loan) =>
+    loan.property_reference === secondProperty
+  )?.title_document;
+  const secondAcquisitionOn = secondSource?.box3_origination_date ??
+    (firstSecondTitle && reviewedDocument(firstSecondTitle)?.acquired_on);
+  const inventory = review.qualified_home_inventory_document &&
+    reviewedDocument(review.qualified_home_inventory_document);
+  const expectedInventory = [
+    { source_document_reference: review.old_source_document_reference,
+      property_reference: review.property_reference },
+    { source_document_reference: review.new_source_document_reference,
+      property_reference: review.property_reference },
+    ...(second ? [{ source_document_reference: second.source_document_reference,
+      property_reference: second.property_reference }] : []),
+    ...additional.map((loan) => ({
+      source_document_reference: loan.source_document_reference,
+      property_reference: loan.property_reference,
+    })),
+  ];
   const married = review.filing_status_verified === "mfs" ||
     review.filing_status_verified === "mfj";
   const ownership = review.married_ownership_evidence;
   const title = ownership &&
     reviewedDocument(ownership.property_title_document);
+  const owners = (document: Record<string, unknown> | undefined) =>
+    Array.isArray(document?.owner_tins) &&
+      document.owner_tins.every((tin) => typeof tin === "string")
+      ? document.owner_tins.map((tin: string) =>
+        tin.replaceAll("-", "")
+      ).sort().join("|")
+      : undefined;
+  const firstMainTitle = additional.find((loan) =>
+    loan.property_reference === review.property_reference
+  )?.title_document;
+  const mainOwners = owners(title) ??
+    (firstMainTitle && owners(reviewedDocument(firstMainTitle)));
+  const secondTitle = second?.title_document ?? firstSecondTitle;
+  const secondOwners = secondTitle && owners(reviewedDocument(secondTitle));
   const oldAgreement = ownership &&
     reviewedDocument(ownership.old_loan_document);
   const newAgreement = ownership &&
@@ -344,10 +541,32 @@ export function validateCashoutRefinanceReview(
       normalizeTin(tin) === normalizeTin(source?.recipient_tin ?? "")
     );
   if (
-    items.length !== (second ? 3 : 2) || !old || !fresh || old === fresh ||
+    items.length !== 2 + (second ? 1 : 0) + additional.length ||
+    !old || !fresh || old === fresh ||
+    distinctSecondProperties.size > 1 ||
+    additional.some((loan) =>
+      owners(reviewedDocument(loan.title_document)) !==
+        (loan.property_reference === review.property_reference
+          ? mainOwners : secondOwners)
+    ) ||
+    new Set(expectedInventory.map((loan) => loan.source_document_reference))
+        .size !== expectedInventory.length ||
+    additionalSources.some((source, index) =>
+      !source || !additionalLoanCategory(
+        review, additional[index], source, secondProperty,
+        old?.box3_origination_date,
+        secondAcquisitionOn as string | undefined,
+      )
+    ) ||
     (second
       ? !secondSource || secondSource === old || secondSource === fresh ||
         !validateSecondHomeLoan(review, secondSource)
+      : false) ||
+    (second || additional.length > 0
+      ? inventory?.document_type !== "qualified_home_mortgage_inventory" ||
+        inventory.filing_status !== review.filing_status_verified ||
+        inventory.no_other_qualified_mortgages_verified !== true ||
+        JSON.stringify(inventory.loans) !== JSON.stringify(expectedInventory)
       : review.qualified_home_inventory_document !== undefined) ||
     (married
       ? !ownership || !taxpayer || !spouse || taxpayer === spouse ||
@@ -524,17 +743,33 @@ export function validateCashoutRefinanceReview(
   if (ratio === undefined) return false;
   const expectedTotal = Math.round(
     (old.box1_mortgage_interest + fresh.box1_mortgage_interest +
-      (secondSource?.box1_mortgage_interest ?? 0)) * ratio,
+      (secondSource?.box1_mortgage_interest ?? 0) +
+      additionalSources.reduce((sum, source) =>
+        sum + (source?.box1_mortgage_interest ?? 0), 0)) * ratio,
   );
   const expectedOld = Math.round(old.box1_mortgage_interest * ratio);
   const expectedMain = Math.round(
     (old.box1_mortgage_interest + fresh.box1_mortgage_interest) * ratio,
   );
+  let cumulativeInterest = old.box1_mortgage_interest +
+    fresh.box1_mortgage_interest +
+    (secondSource?.box1_mortgage_interest ?? 0);
+  let cumulativeAllowed = Math.round(cumulativeInterest * ratio);
+  const additionalAllocationsValid = additionalSources.every((source) => {
+    const priorAllowed = cumulativeAllowed;
+    cumulativeInterest += source?.box1_mortgage_interest ?? 0;
+    cumulativeAllowed = Math.round(cumulativeInterest * ratio);
+    return source?.box1_current_year_deductible_interest ===
+      cumulativeAllowed - priorAllowed;
+  });
   return old.box1_current_year_deductible_interest === expectedOld &&
     fresh.box1_current_year_deductible_interest === expectedMain - expectedOld &&
+    additionalAllocationsValid && cumulativeAllowed === expectedTotal &&
     (secondSource === undefined ||
       secondSource.box1_current_year_deductible_interest ===
-        expectedTotal - expectedMain);
+        Math.round((old.box1_mortgage_interest +
+          fresh.box1_mortgage_interest +
+          secondSource.box1_mortgage_interest) * ratio) - expectedMain);
 }
 
 /** Pub. 936 Table 1 line 14, only after the complete source review passes. */
@@ -573,17 +808,40 @@ export function cashoutRefinanceRatio(review: Review): number | undefined {
   ) ?? 0;
   const secondYearAverage = secondAverage / 12;
   const separate = review.filing_status_verified === "mfs";
-  const priorAverage = review.second_home_loan?.pre2017_purchase_on
+  let priorAverage = review.second_home_loan?.pre2017_purchase_on
     ? secondYearAverage : 0;
-  const postAverage = qualifiedOldAverage + qualifiedNewAverage +
+  let postAverage = qualifiedOldAverage + qualifiedNewAverage +
     (review.second_home_loan?.pre2017_purchase_on ? 0 : secondYearAverage);
+  let grandfatheredAverage = 0;
+  let additionalTotalAverage = 0;
+  for (const loan of review.additional_qualified_loans ?? []) {
+    const date = validDate(
+      (reviewedDocument(loan.lien_document)?.secured_on as string | undefined),
+    );
+    if (!date) return undefined;
+    const average = loan.monthly_records.reduce(
+      (sum, row) => sum + row.closing_balance, 0,
+    ) / 12;
+    additionalTotalAverage += average;
+    if (date <= new Date("1987-10-13T00:00:00Z")) {
+      grandfatheredAverage += average;
+    } else if (date < new Date("2017-12-16T00:00:00Z")) {
+      priorAverage += average;
+    } else {
+      postAverage += average;
+    }
+  }
   // Table 1 lines 6, 9, 10 and 11. A pre-2017 mortgage can preserve a
   // larger qualified limit without reclassifying the later mixed refinance.
-  const line6 = Math.min(separate ? 500_000 : 1_000_000, priorAverage);
+  const line6 = Math.min(
+    Math.max(grandfatheredAverage, separate ? 500_000 : 1_000_000),
+    grandfatheredAverage + priorAverage,
+  );
   const line9 = Math.max(line6, separate ? 375_000 : 750_000);
   const line11 = Math.min(line9, line6 + postAverage);
   const ratio = Math.round(
-    line11 / (oldAverage + newAverage + secondYearAverage) * 1000,
+    line11 / (oldAverage + newAverage + secondYearAverage +
+      additionalTotalAverage) * 1000,
   ) / 1000;
   return ratio;
 }
