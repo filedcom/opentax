@@ -2,7 +2,7 @@
 
 ## Compacted status (2026-10-06)
 
-The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,526 bounded slices**; those do not close the broader parent tasks. Exact calculations, failures, source qualifications and publication history are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). New discoveries belong only in `future_todo` and are not executed.
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,527 bounded slices**; those do not close the broader parent tasks. Exact calculations, failures, source qualifications and publication history are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). New discoveries belong only in `future_todo` and are not executed.
 
 The recorded coverage census is **152 native / 118 PDF descriptors**, **369 fixtures**, **115 PDF keys / 99 covered / 16 uncovered**, and **128 source literals / 83 absent**. These counts do not establish filing support. Complete fixture XSD replay passed **370/0**; local XSD does not establish IRS business-rule or ATS acceptance.
 
@@ -21,7 +21,7 @@ Latest full `deno task test` **V22** is live at immutable **0d153ed24** (wrapper
 
 Draft [PR63](https://github.com/filedcom/opentax/pull/63) was externally verified at **85b489a72**, with exact title/body/head/draft and successful attachment. The ordinary-gain, mortgage payoff/advance and mixed-payroll integrations are published with completed root gates. Source contracts and hashes do not authenticate issuers, signatures or prior acceptance. Wider filing routes, ATS credentials/scenario conflicts, IRS acknowledgments and release review remain unfinished.
 
-Parent payroll source verification is in progress: its first focused gate stopped on a test union-narrowing type error. Midmonth mortgage candidate **3a89e4207** has isolate98/0 and saved26returns/81pages replay; root review/integration remains pending.
+[Parent household payroll](docs/mef/ty2025-schedule-h-parent-source.md) is integrated at **2032da57c**: root56/0, actual saved24returns/125pages (21 newer exact/3 historically qualified), all41newpages reviewed and84new/prior originals hash-verified. Parent FICA derives service-quarter household/care/marital facts; all parent wages remain excluded from FUTA. Wider split-year/state/authentication requirements stay open. Midmonth mortgage **3a89e4207** and direct-property **5f38939ab** are ready in isolates; root integration gates remain pending.
 
 ## Scope and completion rules
 
