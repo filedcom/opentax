@@ -1,3 +1,4 @@
+import { inputSchema as form8615SourceSchema } from "../../../inputs/f8615/schema.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -32,6 +33,8 @@ export const inputSchema = z.object({
   taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
   dependent_earned_income: z.number().nonnegative().optional(),
   form8615_total_income: z.number().optional(),
+  form8615_reviewed_unearned_income: z.number().nonnegative().optional(),
+  form8615_reviewed_source: form8615SourceSchema.optional(),
   form8615_early_withdrawal_penalty: z.number().nonnegative().optional(),
 
   // MFS: if spouse is itemizing, taxpayer MUST itemize too (IRC §63(c)(6)(A))
@@ -238,17 +241,21 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
         form6251_line2a: form6251Line2a,
         filing_status: input.filing_status,
         taking_standard_deduction: takingStandard,
+        ...(input.form8615_reviewed_source
+          ? { form8615_reviewed_source: input.form8615_reviewed_source }
+          : {}),
         form8615_child_agi: input.agi,
         form8615_child_deduction: deduction,
         ...(input.taxpayer_can_be_claimed_as_dependent === true &&
             input.dependent_earned_income !== undefined &&
             input.form8615_total_income !== undefined
           ? {
-            form8615_computed_unearned_income: Math.max(
-              0,
-              input.form8615_total_income - input.dependent_earned_income -
-                (input.form8615_early_withdrawal_penalty ?? 0),
-            ),
+            form8615_computed_unearned_income:
+              input.form8615_reviewed_unearned_income ?? Math.max(
+                0,
+                input.form8615_total_income - input.dependent_earned_income -
+                  (input.form8615_early_withdrawal_penalty ?? 0),
+              ),
           }
           : {}),
       }),

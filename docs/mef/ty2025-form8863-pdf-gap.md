@@ -1,5 +1,14 @@
 # TY2025 Form 8863 positive PDF boundary
 
+## Positive-tax dependent scholarship checkpoint
+
+[Paired education claim and kiddie tax source review](ty2025-form8863-parent-child-kiddie-tax-review.md)
+adds required positive Form 8615 from the child's actual owned taxable grants
+and the selected parent's settled public return. Six complete native/XSD/PDF
+packets include an exact-half earned-support case and preserve parent AOC/ODC
+ordering without placing child income on the parent return. Its ordinary-parent,
+one-child and outside-authentication limits are stated in that review.
+
 ## Parent/dependent scholarship source checkpoint
 
 [Paired parent and dependent scholarship review](ty2025-form8863-parent-dependent-scholarship-review.md)

@@ -1,5 +1,9 @@
 # TY2025 Form 8863 parent/dependent scholarship source review
 
+The subsequent [positive-tax child and Form 8615 proof](ty2025-form8863-parent-child-kiddie-tax-review.md)
+extends this low-income checkpoint with a settled parent tax source and actual
+required kiddie-tax packets.
+
 ## Existing gap and official basis
 
 The previous required-service scholarship checkpoint proved a student claiming

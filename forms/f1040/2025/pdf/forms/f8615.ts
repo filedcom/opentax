@@ -1,3 +1,4 @@
+import { assertReviewedDependentForm8615 } from "../../../nodes/inputs/f8615/dependent-source-review.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 // Verified against the 2025 Form 8615 AcroForm field tree. Numeric fields
@@ -144,6 +145,12 @@ export const form8615Pdf: PdfFormDescriptor = {
   pendingKey: "form8615",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8615--2025.pdf",
   fields,
+  instances(fields, _filer, pending) {
+    assertReviewedDependentForm8615(
+      pending ? { ...pending, form8615: fields } : undefined,
+    );
+    return [fields];
+  },
   filerFields: [
     {
       kind: "text",

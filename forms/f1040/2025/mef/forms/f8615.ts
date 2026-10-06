@@ -1,3 +1,4 @@
+import { assertReviewedDependentForm8615 } from "../../../nodes/inputs/f8615/dependent-source-review.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
@@ -104,7 +105,10 @@ export const form8615: MefFormDescriptor<"form8615", Partial<Fields>> = {
   pendingKey: "form8615",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8615.pdf",
-  build(fields) {
+  build(fields, context) {
+    assertReviewedDependentForm8615(
+      context?.pending ? { ...context.pending, form8615: fields } : undefined,
+    );
     return buildIRS8615(fields);
   },
 };

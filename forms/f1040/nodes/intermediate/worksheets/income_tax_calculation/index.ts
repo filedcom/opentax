@@ -63,6 +63,7 @@ export const inputSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus),
   taking_standard_deduction: z.boolean().optional(),
   form8615_source: form8615SourceSchema.optional(),
+  form8615_reviewed_source: form8615SourceSchema.optional(),
   form8615_computed_unearned_income: z.number().nonnegative().optional(),
   form8615_child_agi: z.number().optional(),
   form8615_child_deduction: z.number().nonnegative().optional(),
@@ -241,12 +242,23 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     let regularTaxBeforeAdditionalItems = tax;
 
     let form8615Result: ReturnType<typeof calculateForm8615> | undefined;
-    if (input.form8615_source !== undefined) {
+    if (
+      input.form8615_source && input.form8615_reviewed_source &&
+      JSON.stringify(input.form8615_source) !==
+        JSON.stringify(input.form8615_reviewed_source)
+    ) {
+      throw new Error(
+        "Supplied Form 8615 facts conflict with the actual reviewed parent and child source returns",
+      );
+    }
+    const form8615Source = input.form8615_reviewed_source ??
+      input.form8615_source;
+    if (form8615Source !== undefined) {
       if (
         input.form8615_computed_unearned_income !== undefined &&
         Math.abs(
             input.form8615_computed_unearned_income -
-              input.form8615_source.child_unearned_income,
+              form8615Source.child_unearned_income,
           ) > 0.01
       ) {
         throw new Error(
@@ -256,7 +268,7 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
       if (input.taking_standard_deduction === undefined) {
         throw new Error("Form 8615 needs the selected deduction method");
       }
-      form8615Result = calculateForm8615(input.form8615_source, {
+      form8615Result = calculateForm8615(form8615Source, {
         childTaxableIncome: input.taxable_income,
         childFilingStatus: input.filing_status,
         childRegularTax: tax,

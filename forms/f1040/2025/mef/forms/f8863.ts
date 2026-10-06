@@ -1,3 +1,4 @@
+import { assertSettledParentTaxSource } from "../../../nodes/inputs/f8615/dependent-source-review.ts";
 import {
   canonicalSource,
   dependentScholarshipEarned,
@@ -111,6 +112,7 @@ export function assertForm8863FinalizedReturn(
         );
       }
       dependentScholarshipEarned(review);
+      assertSettledParentTaxSource(review, pending ?? {}, filer);
       studentIncomeRows = assertEducationIncomeSource(
         retained.pending,
         [review.student_ssn],

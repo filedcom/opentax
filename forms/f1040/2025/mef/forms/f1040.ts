@@ -1130,7 +1130,10 @@ export const irs1040: MefFormDescriptor<"f1040", Input> = {
   build(fields, context) {
     assertW2ArcherContributionSources(context);
     assertEducationIncomeSource(
-      context?.pending,
+      (context?.pending?.general as Record<string, unknown> | undefined)
+          ?.dependent_education_income_review
+        ? { ...context!.pending, f1040: fields }
+        : context?.pending,
       [context?.filer?.primarySSN, context?.filer?.spouse?.ssn].filter((
         s,
       ): s is string => !!s),

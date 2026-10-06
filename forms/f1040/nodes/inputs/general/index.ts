@@ -1,3 +1,4 @@
+import { dependentKiddieTaxFacts } from "../f8615/dependent-source-review.ts";
 import {
   dependentScholarshipEarned,
   dependentScholarshipReviewSchema,
@@ -1490,6 +1491,14 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       sdInput["dependent_earned_income"] = parsed.dependent_earned_income;
     }
 
+    if (parsed.dependent_education_income_review) {
+      const facts = dependentKiddieTaxFacts(
+        parsed.dependent_education_income_review,
+        parsed.dependent_earned_income!,
+      );
+      sdInput.form8615_reviewed_unearned_income = facts.unearned;
+      if (facts.source) sdInput.form8615_reviewed_source = facts.source;
+    }
     const deps = parsed.dependents ?? [];
     for (const dep of deps) {
       if (

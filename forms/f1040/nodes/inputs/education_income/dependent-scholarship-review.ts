@@ -1,3 +1,4 @@
+import { assertDependentKiddieTaxReturn } from "../f8615/dependent-source-review.ts";
 import { z } from "zod";
 import {
   type EducationIncome,
@@ -7,6 +8,31 @@ import {
 const reference = z.string().trim().min(1);
 const ssn = z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/);
 const record = z.record(z.string(), z.unknown());
+export const dependentKiddieTaxReviewSchema = z.object({
+  source_document_reference: reference,
+  tax_year: z.literal(2025),
+  parent_alive_record_reference: reference,
+  parent_alive_on_2025_12_31: z.boolean(),
+  parent_selection: z.object({
+    kind: z.literal("divorced_custodial_unremarried"),
+    divorce_decree_record_reference: reference,
+    residence_calendar_record_reference: reference,
+    marital_status_record_reference: reference,
+    student_ssn: ssn,
+    custodial_parent_ssn: ssn,
+    other_parent_ssn: ssn,
+    custodial_parent_nights: z.number().int().min(0).max(365),
+    other_parent_nights: z.number().int().min(0).max(365),
+    custodial_parent_remarried: z.literal(false),
+  }).strict(),
+  family_children_record_reference: reference,
+  other_children_requiring_form8615: z.array(ssn),
+  settled_parent_return: z.object({
+    source_document_reference: reference,
+    filer: record,
+    pending: record,
+  }).strict(),
+}).strict();
 export const dependentScholarshipReviewSchema = z.object({
   tax_year: z.literal(2025),
   source_document_reference: reference,
@@ -20,6 +46,7 @@ export const dependentScholarshipReviewSchema = z.object({
   full_time_student_months: z.array(z.number().int().min(1).max(12)).min(5).max(
     12,
   ),
+  kiddie_tax_review: dependentKiddieTaxReviewSchema.optional(),
   student_income_sources: z.array(itemSchema).min(1),
   student_w2_sources: z.array(
     z.object({
@@ -265,6 +292,7 @@ export function assertDependentScholarshipReturn(
     general.dependent_education_income_review,
   );
   const earned = dependentScholarshipEarned(review);
+  assertDependentKiddieTaxReturn(pending!, review, earned);
   const final = pending?.f1040 as Record<string, unknown> | undefined;
   const wages =
     ((pending?.w2 as { w2s?: Record<string, unknown>[] } | undefined)?.w2s ??

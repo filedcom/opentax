@@ -1081,7 +1081,9 @@ export const irs1040Pdf: PdfFormDescriptor = {
   instances(fields, filer, all) {
     assertW2ArcherContributionSources({ filer, pending: all ?? {} });
     assertEducationIncomeSource(
-      all,
+      all?.general?.dependent_education_income_review
+        ? { ...all, f1040: fields }
+        : all,
       [filer?.primarySSN, filer?.spouse?.ssn].filter((s): s is string => !!s),
       (all?.schedule1 as Record<string, unknown> | undefined)
         ?.line8r_taxable_scholarships,
