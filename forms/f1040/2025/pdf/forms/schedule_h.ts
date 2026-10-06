@@ -210,7 +210,7 @@ export const scheduleHPdf: PdfFormDescriptor = {
             line18_contributions: sectionB.contributions,
             line19_tentative_credit: sectionB.tentativeCredit,
             line20_futa_wages: "taxable_futa_wages" in unemployment
-              ? unemployment.taxable_futa_wages
+              ? sectionB.filedFutaWages
               : undefined,
             line21_gross_futa_tax: sectionB.grossTax,
             line22_maximum_credit: sectionB.maximumCredit,

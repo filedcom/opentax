@@ -313,7 +313,10 @@ function buildIRS1040ScheduleH(
               row.rate_period_to === undefined
                 ? ""
                 : element("UnemplStateExprncRateToDt", row.rate_period_to),
-              amount("UnemploymentStateExperienceRt", row.experience_rate),
+              row.experience_rate === undefined ? "" : element(
+                "UnemploymentStateExperienceRt",
+                String(row.experience_rate),
+              ),
               amount("UnemploymentTaxCrAt54RateAmt", row.creditAt54),
               amount("UnemploymentTaxCrAtStateRtAmt", row.creditAtStateRate),
               amount(
@@ -337,7 +340,7 @@ function buildIRS1040ScheduleH(
           element("TentativeFUTACreditAmt", amounts.sectionB!.tentativeCredit),
           element(
             "TotalCashWagesSubjFUTATaxAmt",
-            unemployment.taxable_futa_wages,
+            amounts.sectionB!.filedFutaWages,
           ),
           element("GrossFUTATaxCreditAmt", amounts.sectionB!.grossTax),
           element(

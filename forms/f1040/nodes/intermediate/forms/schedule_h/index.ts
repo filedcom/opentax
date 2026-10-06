@@ -21,6 +21,10 @@ const MEDICARE_RATE_EMPLOYER = 0.0145;
 const MEDICARE_RATE_EMPLOYEE = 0.0145;
 const TY2025_FICA_CASH_WAGE_THRESHOLD = 2_800;
 const TY2025_SOCIAL_SECURITY_WAGE_BASE = 176_100;
+const FUTA_STATE_CODES = new Set(
+  "AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA PR RI SC SD TN TX UT VT VA WA WV WI WY VI"
+    .split(" "),
+);
 const calendarDate = z.string().refine((value) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T00:00:00Z`);
@@ -442,6 +446,37 @@ const payrollEmployeeSchema = z.union([
   }).strict(),
 ]);
 
+const statePayrollReviewSchema = z.object({
+  all_household_cash_payments_included: z.literal(true),
+  rate_notices: z.array(
+    z.object({
+      state: z.string().regex(/^[A-Z]{2}$/),
+      period_from: calendarDate,
+      period_to: calendarDate,
+      experience_rate: z.number().min(0).max(1),
+      annual_taxable_wage_base: z.number().positive(),
+      source_reference: sourceReference,
+    }).strict(),
+  ).min(1),
+  wage_payments: z.array(
+    z.object({
+      employee_id: sourceReference,
+      paid_date: calendarDate,
+      state: z.string().regex(/^[A-Z]{2}$/),
+      cash_wages: z.number().positive(),
+      payment_reference: sourceReference,
+    }).strict(),
+  ).min(1),
+  contribution_payments: z.array(
+    z.object({
+      rate_notice_source_reference: sourceReference,
+      paid_date: calendarDate,
+      amount: z.number().positive(),
+      payment_reference: sourceReference,
+    }).strict(),
+  ),
+}).strict();
+
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 export const inputSchema = z.object({
@@ -541,11 +576,242 @@ export const inputSchema = z.object({
           taxable_futa_wages: z.number().nonnegative(),
         }).strict(),
       ).optional(),
+      state_payroll_review: statePayrollReviewSchema.optional(),
     }).strict(),
   ]).optional(),
 }).strict();
 
 export type ScheduleHInput = z.infer<typeof inputSchema>;
+
+type SectionBSource = Extract<
+  NonNullable<ScheduleHInput["federal_unemployment"]>,
+  {
+    state_rows: unknown;
+  }
+>;
+
+function schemaRepresentableStateRate(rate: number) {
+  return Math.abs(rate * 100_000 - Math.round(rate * 100_000)) <= 1e-7;
+}
+
+function validateStatePayrollReview(input: SectionBSource) {
+  const review = input.state_payroll_review;
+  if (!review) return;
+  if (
+    input.employee_wages.some((employee) =>
+      employee.relationship !== "unrelated"
+    )
+  ) {
+    throw new Error(
+      "Schedule H state payment review needs an unrelated-worker complete inventory",
+    );
+  }
+  const references = [
+    ...review.rate_notices.map((notice) => notice.source_reference),
+    ...review.wage_payments.map((payment) => payment.payment_reference),
+    ...review.contribution_payments.map((payment) => payment.payment_reference),
+    ...input.employee_wages.map((employee) =>
+      employee.payroll_source_reference
+    ),
+    ...input.employee_wages.flatMap((employee) =>
+      employee.w2 ? [employee.w2.source_reference] : []
+    ),
+  ];
+  if (new Set(references).size !== references.length) {
+    throw new Error(
+      "Schedule H state rate, wage and contribution sources must be distinct",
+    );
+  }
+  const notices = review.rate_notices;
+  for (const [index, notice] of notices.entries()) {
+    if (
+      !FUTA_STATE_CODES.has(notice.state) ||
+      !schemaRepresentableStateRate(notice.experience_rate) ||
+      notice.period_from < "2025-01-01" || notice.period_to > "2025-12-31" ||
+      notice.period_from > notice.period_to ||
+      notices.some((other, otherIndex) =>
+        otherIndex !== index &&
+        other.state === notice.state && other.period_from <= notice.period_to &&
+        other.period_to >= notice.period_from
+      ) ||
+      notices.some((other) =>
+        other.state === notice.state &&
+        other.annual_taxable_wage_base !== notice.annual_taxable_wage_base
+      )
+    ) {
+      throw new Error(
+        "Schedule H state rate notices need schema-representable rates, nonoverlapping 2025 periods and one state wage base",
+      );
+    }
+  }
+  const cents = (amount: number) => {
+    const value = Math.round(amount * 100);
+    if (Math.abs(amount * 100 - value) > 1e-7) {
+      throw new Error(
+        "Schedule H state wage and contribution amounts must have at most two decimal places",
+      );
+    }
+    return value;
+  };
+  const rowWages = notices.map(() => 0),
+    rowContributionCents = notices.map(() => 0);
+  const lastWageDate = notices.map(() => "");
+  const reductionWages = new Map<string, number>();
+  const workers = new Map(
+    input.employee_wages.map((employee) => [employee.employee_id, employee]),
+  );
+  const workerAnnual = new Map<string, number>(),
+    workerQuarters = new Map<string, number[]>();
+  const workerFuta = new Map<string, number>(),
+    workerState = new Map<string, number>();
+  let futaWages = 0, stateCoveredFutaWages = 0;
+  const payments = [...review.wage_payments].sort((a, b) =>
+    a.paid_date.localeCompare(b.paid_date) ||
+    a.payment_reference.localeCompare(b.payment_reference)
+  );
+  const workerPayDates = new Set<string>();
+  for (const payment of payments) {
+    const workerPayDate = `${payment.employee_id}:${payment.paid_date}`;
+    if (workerPayDates.has(workerPayDate)) {
+      throw new Error(
+        "Schedule H state FUTA wage allocation needs one ordered payment per worker and date",
+      );
+    }
+    workerPayDates.add(workerPayDate);
+    if (
+      !workers.has(payment.employee_id) || payment.paid_date < "2025-01-01" ||
+      payment.paid_date > "2025-12-31"
+    ) {
+      throw new Error(
+        "Schedule H state wages need a retained 2025 household worker and pay date",
+      );
+    }
+    const matches = notices.flatMap((notice, index) =>
+      notice.state === payment.state &&
+        notice.period_from <= payment.paid_date &&
+        payment.paid_date <= notice.period_to
+        ? [index]
+        : []
+    );
+    if (matches.length !== 1) {
+      throw new Error(
+        "Schedule H each state wage payment needs one dated rate notice",
+      );
+    }
+    const index = matches[0], notice = notices[index];
+    const paymentCents = cents(payment.cash_wages);
+    const stateBaseCents = cents(notice.annual_taxable_wage_base);
+    if (payment.paid_date > lastWageDate[index]) {
+      lastWageDate[index] = payment.paid_date;
+    }
+    const previousFuta = workerFuta.get(payment.employee_id) ?? 0;
+    const futa = Math.min(
+      paymentCents,
+      Math.max(0, 700_000 - previousFuta),
+    );
+    workerFuta.set(payment.employee_id, previousFuta + paymentCents);
+    const key = `${payment.employee_id}:${payment.state}`;
+    const previousState = workerState.get(key) ?? 0;
+    if (
+      previousFuta > previousState &&
+      previousFuta + paymentCents > stateBaseCents
+    ) {
+      throw new Error(
+        "Schedule H interstate wage-base credit needs retained state evidence",
+      );
+    }
+    const stateWages = Math.min(
+      paymentCents,
+      Math.max(0, stateBaseCents - previousState),
+    );
+    workerState.set(key, previousState + paymentCents);
+    rowWages[index] += stateWages;
+    futaWages += futa;
+    const covered = Math.min(futa, stateWages);
+    stateCoveredFutaWages += covered;
+    reductionWages.set(
+      payment.state,
+      (reductionWages.get(payment.state) ?? 0) + covered,
+    );
+    workerAnnual.set(
+      payment.employee_id,
+      (workerAnnual.get(payment.employee_id) ?? 0) + paymentCents,
+    );
+    const quarters = workerQuarters.get(payment.employee_id) ?? [0, 0, 0, 0];
+    quarters[Math.ceil(Number(payment.paid_date.slice(5, 7)) / 3) - 1] +=
+      paymentCents;
+    workerQuarters.set(payment.employee_id, quarters);
+  }
+  for (const employee of input.employee_wages) {
+    if (
+      workerAnnual.get(employee.employee_id) !==
+        cents(employee.annual_cash_wages) ||
+      JSON.stringify(workerQuarters.get(employee.employee_id)) !==
+        JSON.stringify(employee.quarterly_cash_wages.map(cents))
+    ) {
+      throw new Error(
+        "Schedule H state payment ledger must reconcile every worker's annual and quarterly payroll",
+      );
+    }
+  }
+  let lateCents = 0;
+  for (const payment of review.contribution_payments) {
+    const index = notices.findIndex((notice) =>
+      notice.source_reference === payment.rate_notice_source_reference
+    );
+    if (
+      index < 0 || !lastWageDate[index] ||
+      payment.paid_date < lastWageDate[index] ||
+      payment.paid_date > "2026-12-31"
+    ) {
+      throw new Error(
+        "Schedule H state contribution needs a matching rate notice and actual payment date",
+      );
+    }
+    if (payment.paid_date <= "2026-04-15") {
+      rowContributionCents[index] += cents(payment.amount);
+    } else lateCents += cents(payment.amount);
+  }
+  if (
+    rowWages.some((wages) => wages === 0) ||
+    input.state_rows.length !== notices.length ||
+    input.state_rows.some((row, index) =>
+      row.state !== notices[index].state ||
+      row.rate_period_from !== notices[index].period_from ||
+      row.rate_period_to !== notices[index].period_to ||
+      row.experience_rate !== notices[index].experience_rate ||
+      cents(row.taxable_state_wages) !== rowWages[index] ||
+      cents(row.contributions_paid_by_due_date) !==
+        rowContributionCents[index] ||
+      review.contribution_payments.filter((p) =>
+          p.rate_notice_source_reference === notices[index].source_reference
+        ).reduce((total, p) => total + cents(p.amount), 0) !==
+        Math.round(rowWages[index] * notices[index].experience_rate)
+    ) || cents(input.taxable_futa_wages) !== futaWages ||
+    input.paid_only_one_state !==
+      (new Set(payments.map((payment) => payment.state)).size === 1) ||
+    input.all_futa_wages_state_taxable !==
+      (stateCoveredFutaWages === futaWages) ||
+    input.all_contributions_paid_on_time !== (lateCents === 0) ||
+    cents(input.late_contributions ?? 0) !== lateCents
+  ) {
+    throw new Error(
+      "Schedule H Section B filed state rows and answers must reconcile dated wages, rates and contribution receipts",
+    );
+  }
+  for (const state of ["CA", "VI"] as const) {
+    const actual = reductionWages.get(state) ?? 0;
+    const filed = input.credit_reduction_wages?.find((entry) =>
+      entry.state === state
+    )
+      ?.taxable_futa_wages ?? 0;
+    if (actual !== cents(filed)) {
+      throw new Error(
+        "Schedule H credit reduction wages must derive from FUTA and state-taxable payments",
+      );
+    }
+  }
+}
 
 // ─── Pure Helpers ─────────────────────────────────────────────────────────────
 
@@ -1018,6 +1284,7 @@ export function computeScheduleHAmounts(
     }
   }
   if (unemployment && "state_rows" in unemployment) {
+    validateStatePayrollReview(unemployment);
     if (
       unemployment.paid_only_one_state &&
       unemployment.all_contributions_paid_on_time &&
@@ -1039,6 +1306,8 @@ export function computeScheduleHAmounts(
       if (
         (row.experience_rate === undefined &&
           row.rate_period_from !== undefined) ||
+        (row.experience_rate !== undefined &&
+          !schemaRepresentableStateRate(row.experience_rate)) ||
         (row.rate_period_from === undefined) !==
           (row.rate_period_to === undefined) ||
         (row.experience_rate !== undefined &&
@@ -1132,15 +1401,23 @@ function computeSectionB(
   }>,
 ) {
   const rows = input.state_rows.map((row) => {
+    // Schedule H is filed in whole dollars. Preserve source receipts in the
+    // review, then round each line 17(h) row before line 18 and Worksheet 1.
+    const filedWages = Math.round(row.taxable_state_wages);
+    const filedContributions = Math.round(
+      row.contributions_paid_by_due_date,
+    );
     const creditAt54 = row.experience_rate !== undefined &&
         row.experience_rate < 0.054
-      ? Math.round(row.taxable_state_wages * 0.054)
+      ? Math.round(filedWages * 0.054)
       : undefined;
     const creditAtStateRate = creditAt54 === undefined
       ? undefined
-      : Math.round(row.taxable_state_wages * row.experience_rate!);
+      : Math.round(filedWages * row.experience_rate!);
     return {
       ...row,
+      taxable_state_wages: filedWages,
+      contributions_paid_by_due_date: filedContributions,
       creditAt54,
       creditAtStateRate,
       additionalCredit: creditAt54 === undefined
@@ -1157,18 +1434,20 @@ function computeSectionB(
     0,
   );
   const tentativeCredit = additionalCredit + contributions;
-  const grossTax = Math.round(input.taxable_futa_wages * 0.06);
-  const maximumCredit = Math.round(input.taxable_futa_wages * 0.054);
+  const filedFutaWages = Math.round(input.taxable_futa_wages);
+  const grossTax = Math.round(filedFutaWages * 0.06);
+  const maximumCredit = Math.round(filedFutaWages * 0.054);
   const lateCredit = input.late_contributions === undefined ? 0 : Math.round(
     Math.min(
       Math.max(0, maximumCredit - tentativeCredit),
-      input.late_contributions,
+      Math.round(input.late_contributions),
     ) * 0.9,
   );
   const reduction = (input.credit_reduction_wages ?? []).reduce(
     (total, entry) =>
       total + Math.round(
-        entry.taxable_futa_wages * (entry.state === "CA" ? 0.012 : 0.045),
+        Math.round(entry.taxable_futa_wages) *
+          (entry.state === "CA" ? 0.012 : 0.045),
       ),
     0,
   );
@@ -1178,6 +1457,7 @@ function computeSectionB(
   );
   return {
     rows,
+    filedFutaWages,
     additionalCredit,
     contributions,
     tentativeCredit,
