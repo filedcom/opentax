@@ -116,6 +116,9 @@ export const inputSchema = z.object({
   line17z_other_additional_taxes: z.number().nonnegative().optional(),
   // Form 8621 Part V line 16f interest on prior PFIC-year tax.
   line17p_form8621_interest: z.number().nonnegative().optional(),
+  // Prior Form 8621 Part VI: terminated section 1294 deferred tax and interest.
+  line17z_form8621_1294_deferred_tax: z.number().nonnegative().optional(),
+  line17q_form8621_1294_interest: z.number().nonnegative().optional(),
   // Line 20 — Section 965 installment (Form 965-A Part II column (k)).
   // Schedule 2 line 21 expressly excludes line 20.
   line20_965_tax_installment: z.number().nonnegative().optional(),
@@ -220,7 +223,9 @@ function part2Total(input: Schedule2Input): number {
     (input.line16_lihtc_recapture ?? 0) +
     (input.line19_form4255_net_epe ?? 0) +
     (input.line17z_other_additional_taxes ?? 0) +
-    (input.line17p_form8621_interest ?? 0);
+    (input.line17p_form8621_interest ?? 0) +
+    (input.line17z_form8621_1294_deferred_tax ?? 0) +
+    (input.line17q_form8621_1294_interest ?? 0);
 }
 
 function part2Chapter1Tax(input: Schedule2Input): number {
@@ -251,7 +256,9 @@ function part2UnclassifiedTax(input: Schedule2Input): number {
   return form5329WithoutBreakdown +
     (input.line15_section453a_interest ?? 0) +
     (input.line19_form4255_net_epe ?? 0) +
-    (input.line17z_other_additional_taxes ?? 0);
+    (input.line17z_other_additional_taxes ?? 0) +
+    (input.line17z_form8621_1294_deferred_tax ?? 0) +
+    (input.line17q_form8621_1294_interest ?? 0);
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

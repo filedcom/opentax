@@ -80,6 +80,8 @@ export function assertReturnWideArithmetic(
       "line22_tax_after_credits",
       "line23_other_taxes",
       "line24_total_tax",
+      "form8621_1294_deferred_tax",
+      "form8621_1294_total_tax_before_deferral",
       "line25a_w2_withheld",
       "line25b_withheld_1099",
       "line25c_total",
@@ -226,9 +228,27 @@ export function assertReturnWideArithmetic(
     throw new Error("Form 1040 line 22 differs from lines 18 and 21");
   }
   const line24 = amount("line24_total_tax");
+  const form8621DeferredTax = amount("form8621_1294_deferred_tax") ?? 0;
+  const beforeDeferral = amount("form8621_1294_total_tax_before_deferral");
+  if (
+    form8621DeferredTax > 0 &&
+    (line22 === undefined || form8621DeferredTax > line22 ||
+      beforeDeferral === undefined ||
+      !matches(beforeDeferral, line22 + (amount("line23_other_taxes") ?? 0)))
+  ) {
+    throw new Error(
+      "Form 8621 section 1294 deferral differs from Form 1040 tax before deferral",
+    );
+  }
+  if (form8621DeferredTax === 0 && beforeDeferral !== undefined) {
+    throw new Error("Form 8621 tax before deferral needs a current deferral");
+  }
   if (
     line24 !== undefined && line22 !== undefined &&
-    !matches(line24, line22 + (amount("line23_other_taxes") ?? 0))
+    !matches(
+      line24,
+      line22 + (amount("line23_other_taxes") ?? 0) - form8621DeferredTax,
+    )
   ) {
     throw new Error("Form 1040 line 24 differs from lines 22 and 23");
   }

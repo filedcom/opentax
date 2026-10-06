@@ -69,6 +69,7 @@ import { form8582Pdf } from "./f8582.ts";
 import { form8606Pdf } from "./f8606.ts";
 import { form8611Pdf } from "./f8611.ts";
 import { form8615Pdf } from "./f8615.ts";
+import { form8621Pdf } from "./f8621.ts";
 import { form8814Pdf } from "./f8814.ts";
 import { form8815Pdf } from "./f8815.ts";
 import { form8820Pdf } from "./f8820.ts";
@@ -185,6 +186,7 @@ export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   form8606Pdf,
   form8611Pdf,
   form8615Pdf,
+  form8621Pdf,
   form8814Pdf,
   form8815Pdf,
   form8820Pdf,

@@ -624,7 +624,10 @@ export async function buildPdfBytes(
     assertSchedule1Box3SourceIdentity(normalized, filer);
     assertSchedule1Box8SourceIdentity(normalized, filer);
     assertSchedule1Form8814Source(normalized);
-    assertSchedule1Form8621Source(normalized);
+    assertSchedule1Form8621Source({
+      ...normalized,
+      form8949: pending.form8949,
+    });
     assertSchedule1NecSourceIdentity(normalized, filer);
     assertSchedule1KSourceIdentity(normalized, filer);
     assertScheduleFFarmSourceIdentity(normalized, filer);
@@ -842,6 +845,7 @@ export async function buildPdfBytes(
         filer,
         normalized,
         preparedBundle?.form3800Parts,
+        cacheDir,
       );
       for (
         let pageNumber = firstPageNumber;

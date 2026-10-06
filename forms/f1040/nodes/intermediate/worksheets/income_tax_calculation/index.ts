@@ -86,6 +86,8 @@ export const inputSchema = z.object({
   form4972_tax: accumulable(z.number().nonnegative()).optional(),
   form8978_tax: accumulable(z.number().nonnegative()).optional(),
   form8621_tax: accumulable(z.number().nonnegative()).optional(),
+  form8621_1294_undistributed_ordinary: z.number().nonnegative().optional(),
+  form8621_1294_undistributed_capital: z.number().nonnegative().optional(),
   // Net capital gain for preferential rate purposes (from schedule_d line 19).
   // Equal to min(line15, line16) when both are positive (i.e., line17 = Yes).
   net_capital_gain: z.number().nonnegative().optional(),
@@ -286,6 +288,61 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     }
     if (form8615Result) tax = form8615Result.line18Tax;
 
+    const deferredOrdinary = input.form8621_1294_undistributed_ordinary ?? 0;
+    const deferredCapital = input.form8621_1294_undistributed_capital ?? 0;
+    let form8621DeferredTaxBeforeCredits = 0;
+    if (deferredOrdinary + deferredCapital > 0) {
+      if (
+        form8615Result || input.schedule_j_election_requested ||
+        deferredOrdinary + deferredCapital > input.taxable_income ||
+        deferredCapital > netCg
+      ) {
+        throw new Error(
+          "Form 8621 section 1294 tax refigure needs a supported taxable-income and capital-gain worksheet",
+        );
+      }
+      const withoutTaxable = input.taxable_income - deferredOrdinary -
+        deferredCapital;
+      const withoutCapital = netCg - deferredCapital;
+      let without: number;
+      if (foreignExclusion > 0) {
+        without = hasPrefIncome
+          ? foreignEarnedIncomePreferentialTax({
+            taxableIncome: withoutTaxable,
+            qualifiedDividends: qualDiv,
+            netCapitalGain: withoutCapital,
+            filingStatus: input.filing_status,
+            zeroCeiling: cfg.qdcgtZeroCeiling,
+            twentyFloor: cfg.qdcgtTwentyFloor,
+            unrecaptured1250Gain: unrecaptured1250,
+            rate28Gain: rate28,
+            form4952Election,
+            electedCapitalGain,
+          }, floor)
+          : Math.max(
+            0,
+            ordinaryTax2025(withoutTaxable + floor, input.filing_status) -
+              ordinaryTax2025(floor, input.filing_status),
+          );
+      } else if (hasPrefIncome) {
+        without = preferentialTax({
+          taxableIncome: withoutTaxable,
+          qualifiedDividends: qualDiv,
+          netCapitalGain: withoutCapital,
+          filingStatus: input.filing_status,
+          zeroCeiling: cfg.qdcgtZeroCeiling,
+          twentyFloor: cfg.qdcgtTwentyFloor,
+          unrecaptured1250Gain: unrecaptured1250,
+          rate28Gain: rate28,
+          form4952Election,
+          electedCapitalGain,
+        });
+      } else {
+        without = ordinaryTax2025(withoutTaxable, input.filing_status);
+      }
+      form8621DeferredTaxBeforeCredits = Math.max(0, tax - without);
+    }
+
     const taxWithoutScheduleJ = tax;
     if (input.schedule_j_calculated_tax !== undefined) {
       if (form8615Result !== undefined) {
@@ -311,6 +368,12 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [
       this.outputNodes.output(f1040, {
         line16_income_tax: tax,
+        ...(form8621DeferredTaxBeforeCredits > 0
+          ? {
+            form8621_1294_deferred_tax_before_credits:
+              form8621DeferredTaxBeforeCredits,
+          }
+          : {}),
         ...(lumpSumTax > 0 ? { form4972_tax: lumpSumTax } : {}),
         ...(additionalReportingYearTax > 0
           ? { form8978_tax: additionalReportingYearTax }

@@ -419,17 +419,18 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     isActive: (fields) => nonempty(fields.rows),
   },
   {
-    pendingKey: "form8621",
-    exportKinds: ["pdf"],
-    reason: "Form 8621 has a native filing but no source-backed PDF",
-    isActive: (fields) => nonempty(fields.items),
-  },
-  {
     pendingKey: "f8611",
     exportKinds: ["pdf"],
     reason:
       "Form 8611 historical credit, qualified-basis, and interest records need source verification before printable filing",
-    isActive: (fields) => nonempty(fields.f8611s) && !(Array.isArray(fields.f8611s) && fields.f8611s.every((item) => item !== null && typeof item === "object" && issuerIdentitySchema.safeParse((item as Record<string, unknown>).issuer_source).success)),
+    isActive: (fields) =>
+      nonempty(fields.f8611s) &&
+      !(Array.isArray(fields.f8611s) && fields.f8611s.every((item) =>
+        item !== null && typeof item === "object" &&
+        issuerIdentitySchema.safeParse(
+          (item as Record<string, unknown>).issuer_source,
+        ).success
+      )),
   },
   {
     pendingKey: "f8854",

@@ -1113,6 +1113,22 @@ export const irs1040Pdf: PdfFormDescriptor = {
   async decoratePages(document, pages, fields) {
     const note = fields.print_form8814_line7a_note;
     const page = pages[0];
+    const deferred = fields.form8621_1294_deferred_tax;
+    if (
+      typeof deferred === "number" && Number.isFinite(deferred) &&
+      deferred > 0
+    ) {
+      const taxPage = pages[1];
+      if (!taxPage) throw new Error("Form 1040 section 1294 note needs page 2");
+      const font = await document.embedFont(StandardFonts.Helvetica);
+      // IRS instructions put Election B's deferred tax in brackets left of 24.
+      taxPage.drawText(`[${Math.round(deferred)}]`, {
+        x: 466,
+        y: 530,
+        size: 8,
+        font,
+      });
+    }
     if (!page || typeof note !== "string") return;
     const font = await document.embedFont(StandardFonts.Helvetica);
     // The 2025 source PDF places line 7a's dotted space at x312-470,

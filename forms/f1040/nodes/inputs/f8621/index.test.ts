@@ -81,6 +81,61 @@ Deno.test("Form 8621 validates one holding per item and rejects the old flat amo
   );
 });
 
+Deno.test("Form 8621 MTM sold block is separate from year-end stock and ordinary loss is capped", () => {
+  const sold = {
+    transaction_id: "sale-1",
+    disposition_date: "2025-07-15",
+    shares_disposed: 20,
+    fair_market_value_usd: 2400,
+    adjusted_basis_usd: 2000,
+    unreversed_inclusions_usd: 0,
+    broker_record_id: "broker-2025-1",
+    basis_record_id: "basis-lot-1",
+  };
+  const base = minimalItem({
+    regime: PficRegime.MTM,
+    mtm_adjusted_basis_at_year_end: 9000,
+    mtm_dispositions: [sold],
+  });
+  const gain = compute([base]);
+  assertEquals(fieldsOf(gain.outputs, schedule1)?.line8z_form8621_mtm, 1400);
+  const limitedLoss = compute([{
+    ...base,
+    mtm_dispositions: [{
+      ...sold,
+      fair_market_value_usd: 1800,
+      unreversed_inclusions_usd: 200,
+    }],
+  }]);
+  assertEquals(
+    fieldsOf(limitedLoss.outputs, schedule1)?.line8z_form8621_mtm,
+    800,
+  );
+  assertThrows(
+    () =>
+      compute([{
+        ...base,
+        mtm_dispositions: [{
+          ...sold,
+          fair_market_value_usd: 1700,
+          unreversed_inclusions_usd: 100,
+        }],
+      }]),
+    Error,
+    "line 14c needs acquisition and capital-asset source",
+  );
+  assertEquals(
+    fieldsOf(
+      compute([{
+        ...base,
+        mtm_dispositions: [sold, { ...sold, transaction_id: "sale-2" }],
+      }]).outputs,
+      schedule1,
+    )?.line8z_form8621_mtm,
+    1800,
+  );
+});
+
 Deno.test("Form 8621 Part V puts prior-year tax on line 16 and interest on Schedule 2 line 17p", () => {
   const result = compute([minimalItem({ excess_events: [excessEvent()] })]);
   assertEquals(

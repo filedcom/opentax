@@ -112,6 +112,7 @@ export interface PdfFormDescriptor {
     filer: FilerIdentity | undefined,
     allPending?: Record<string, Record<string, unknown>>,
     preparedForm3800?: Form3800DocumentParts,
+    cacheDir?: string,
   ) => Promise<void> | void;
   /**
    * Inclusion gate evaluated against the form's pending fields. When provided,

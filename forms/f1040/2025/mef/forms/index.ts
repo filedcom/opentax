@@ -76,6 +76,7 @@ import { form8611 } from "./f8611.ts";
 import { form8615 } from "./f8615.ts";
 import { form8621 } from "./f8621.ts";
 import { form8621ExcessStatement } from "./f8621_excess_statement.ts";
+import { form8621MtmDispositionsStatement } from "./f8621_mtm_dispositions_statement.ts";
 import { form8814 } from "./f8814.ts";
 import { childTaxableInterestStatement } from "./child_taxable_interest_statement.ts";
 import { form8815 } from "./f8815.ts";
@@ -391,6 +392,8 @@ export const ALL_MEF_FORMS = [
   // Form 8283 Section A column (h) FMV-reduction explanations follow the
   // vehicle statement in ReturnData1040.xsd.
   form8283FmvReductionStatement,
+  // Form 8621 mark-to-market sale statements precede Part V statements in MeF.
+  form8621MtmDispositionsStatement,
   // Form 8621 Part V holding-period computation statements follow numbered forms.
   form8621ExcessStatement,
   // Form 8814 line 1a nominee and interest-adjustment statement.

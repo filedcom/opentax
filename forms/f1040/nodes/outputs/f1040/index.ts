@@ -166,6 +166,8 @@ const inputSchema = z.object({
   form4972_tax: z.number().nonnegative().optional(),
   form8978_tax: z.number().nonnegative().optional(),
   form8621_tax: z.number().nonnegative().optional(),
+  form8621_1294_deferred_tax_before_credits: z.number().nonnegative()
+    .optional(),
   // Line 17 — AMT (Form 6251) via Schedule 2 line 1
   line17_additional_taxes: z.number().nonnegative().optional(),
   // Line 18 — Total tax before credits (16 + 17)
@@ -868,7 +870,20 @@ function assembleReturn(
       "Form 8978 reduction exceeds Form 1040 line 23 other taxes",
     );
   }
-  const computed_line24 = computed_line22 + computed_line23;
+  const deferredBeforeCredits =
+    input.form8621_1294_deferred_tax_before_credits ?? 0;
+  if (deferredBeforeCredits > 0 && (input.line17_additional_taxes ?? 0) > 0) {
+    throw new Error(
+      "Form 8621 section 1294 deferral with AMT needs a refigured alternative minimum tax",
+    );
+  }
+  const deferredTax = deferredBeforeCredits > 0
+    ? computed_line22 - Math.max(
+      0,
+      computed_line18 - deferredBeforeCredits - computed_line21,
+    )
+    : 0;
+  const computed_line24 = computed_line22 + computed_line23 - deferredTax;
   const computed_line25d = totalWithholding(input);
   const computed_line25c = (input.line25c_additional_medicare_withheld ?? 0) +
     sumField(input.line25c_other_withheld);
@@ -915,6 +930,11 @@ function assembleReturn(
     line25d_total_withholding: computed_line25d,
     line33_total_payments: computed_line33,
   };
+  if (deferredTax > 0) {
+    result.form8621_1294_deferred_tax = deferredTax;
+    result.form8621_1294_total_tax_before_deferral = computed_line22 +
+      computed_line23;
+  }
   // The sink's finalized value also gives PDF and MeF a scalar line 1h.
   if (input.line1h_other_earned !== undefined) {
     result.line1h_other_earned = sumField(input.line1h_other_earned);

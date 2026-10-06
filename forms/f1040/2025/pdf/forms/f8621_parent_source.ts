@@ -4,6 +4,9 @@ import {
   PficRegime,
 } from "../../../nodes/inputs/f8621/index.ts";
 import { ExcessEventKind } from "../../../nodes/inputs/f8621/excess_distribution.ts";
+import { calculateMtmDisposition } from "../../../nodes/inputs/f8621/mtm_disposition.ts";
+import { calculateSection1294PriorStatus } from "../../../nodes/inputs/f8621/section1294.ts";
+import { ty2025IrsCountryName } from "./irs_country_name.ts";
 import { projectForm8621ParentSource } from "../../form8621_parent_source.ts";
 import {
   explainForm8621ExcessEvent,
@@ -45,10 +48,9 @@ export function projectForm8621Page1(
   const { item } = line;
   const source = projectForm8621ParentSource(item);
   const { name, ssn } = checkedFiler(filer);
-  if (item.regime !== PficRegime.EXCESS_DISTRIBUTION) {
-    throw new Error("Form 8621 staged parent PDF supports section 1291 only");
+  if (item.regime === PficRegime.EXCESS_DISTRIBUTION) {
+    explainForm8621ExcessStatement(line);
   }
-  explainForm8621ExcessStatement(line);
   const page = "topmostSubform[0].Page1[0].";
   const calendar = source.corporation_tax_year_start === "2025-01-01" &&
     source.corporation_tax_year_end === "2025-12-31";
@@ -76,7 +78,7 @@ export function projectForm8621Page1(
       source.corporation_address.city,
       source.corporation_address.province_or_state,
       source.corporation_address.postal_code,
-      source.corporation_address.country_code,
+      ty2025IrsCountryName(source.corporation_address.country_code),
     ].filter(Boolean).join(", "),
     [`${page}f1_23[0]`]: source.share_classes.map((row) => row.description)
       .join("; "),
@@ -87,10 +89,35 @@ export function projectForm8621Page1(
     [`${page}c1_7[0]`]: source.election_status.startsWith("qef_"),
     [`${page}c1_8[0]`]: source.election_status.startsWith("mtm_"),
     [`${page}c1_9[0]`]: source.election_status === "qef_new_2025",
+    [`${page}c1_10[0]`]: item.qef_1294_election !== undefined,
     [`${page}c1_11[0]`]: source.election_status === "mtm_new_2025",
   };
   if (section1291Amount > 0) {
     fields[`${page}f1_27[0]`] = dollars(section1291Amount);
+  }
+  if (item.regime === PficRegime.QEF) {
+    fields[`${page}f1_28[0]`] = dollars(
+      (item.qef_ordinary_income ?? 0) -
+        (item.qef_ordinary_951_or_1293g_reduction ?? 0) +
+        (item.qef_capital_gain ?? 0) -
+        (item.qef_capital_951_or_1293g_reduction ?? 0),
+    );
+  }
+  if (item.regime === PficRegime.MTM) {
+    if (item.mtm_adjusted_basis_at_year_end === undefined) {
+      throw new Error("Form 8621 Part IV needs adjusted year-end basis");
+    }
+    const change = item.fmv_at_year_end - item.mtm_adjusted_basis_at_year_end;
+    fields[`${page}f1_29[0]`] = dollars(
+      (change >= 0
+        ? change
+        : -Math.min(-change, item.mtm_unreversed_inclusions ?? 0)) +
+        (item.mtm_dispositions ?? []).reduce(
+          (sum, disposition) =>
+            sum + calculateMtmDisposition(disposition).ordinary,
+          0,
+        ),
+    );
   }
   if (filer.address.line2) {
     fields[`${page}NameAddress[0].f1_3[0]`] = filer.address.line2;
@@ -121,6 +148,128 @@ export function projectForm8621Page1(
   else if (item.fmv_at_year_end <= 200_000) fields[`${page}c1_5[3]`] = true;
   else fields[`${page}f1_26[0]`] = String(item.fmv_at_year_end);
   return fields;
+}
+
+/** Page 2 Part III/IV amounts from the same inputs used by the tax graph. */
+export function projectForm8621Page2(
+  line: Form8621Lines,
+  tax?: { current: number; deferred: number },
+): Fields {
+  const { item } = line;
+  projectForm8621ParentSource(item);
+  const page = "topmostSubform[0].Page2[0].";
+  if (item.regime === PficRegime.QEF) {
+    const ordinary = item.qef_ordinary_income;
+    const capital = item.qef_capital_gain;
+    if (ordinary === undefined || capital === undefined) {
+      throw new Error("Form 8621 Part III needs both QEF income amounts");
+    }
+    const ordinaryReduction = item.qef_ordinary_951_or_1293g_reduction ?? 0;
+    const capitalReduction = item.qef_capital_951_or_1293g_reduction ?? 0;
+    if (ordinaryReduction > ordinary || capitalReduction > capital) {
+      throw new Error("Form 8621 Part III reduction exceeds QEF income");
+    }
+    const result: Fields = {
+      [`${page}f2_1[0]`]: dollars(ordinary),
+      [`${page}f2_2[0]`]: dollars(ordinaryReduction),
+      [`${page}f2_3[0]`]: dollars(ordinary - ordinaryReduction),
+      [`${page}f2_4[0]`]: dollars(capital),
+      [`${page}f2_5[0]`]: dollars(capitalReduction),
+      [`${page}f2_6[0]`]: dollars(capital - capitalReduction),
+    };
+    const election = item.qef_1294_election;
+    if (election) {
+      if (!tax) {
+        throw new Error("Form 8621 Election B PDF needs finalized return tax");
+      }
+      const undistributed = election.undistributed_ordinary_earnings_usd +
+        election.undistributed_capital_gain_usd;
+      result[`${page}f2_7[0]`] = dollars(
+        ordinary - ordinaryReduction + capital - capitalReduction,
+      );
+      result[`${page}f2_8[0]`] = dollars(
+        election.distributions_cash_and_property_usd,
+      );
+      result[`${page}f2_9[0]`] = dollars(
+        election.transferred_share_earnings_usd,
+      );
+      result[`${page}f2_10[0]`] = dollars(
+        election.distributions_cash_and_property_usd +
+          election.transferred_share_earnings_usd,
+      );
+      result[`${page}f2_11[0]`] = dollars(undistributed);
+      result[`${page}f2_12[0]`] = dollars(tax.current + tax.deferred);
+      result[`${page}f2_13[0]`] = dollars(tax.current);
+      result[`${page}f2_14[0]`] = dollars(tax.deferred);
+    }
+    return result;
+  }
+  if (item.regime === PficRegime.MTM) {
+    const basis = item.mtm_adjusted_basis_at_year_end;
+    if (basis === undefined) {
+      throw new Error("Form 8621 Part IV needs adjusted year-end basis");
+    }
+    const change = item.fmv_at_year_end - basis;
+    const result: Fields = {
+      [`${page}f2_15[0]`]: dollars(item.fmv_at_year_end),
+      [`${page}f2_16[0]`]: dollars(basis),
+      [`${page}f2_17[0]`]: dollars(change),
+    };
+    if (change < 0) {
+      if (item.mtm_unreversed_inclusions === undefined) {
+        throw new Error("Form 8621 Part IV loss needs unreversed inclusions");
+      }
+      result[`${page}f2_18[0]`] = dollars(item.mtm_unreversed_inclusions);
+      result[`${page}f2_19[0]`] = dollars(
+        -Math.min(-change, item.mtm_unreversed_inclusions),
+      );
+    }
+    if ((item.mtm_dispositions?.length ?? 0) > 1) {
+      const sales = item.mtm_dispositions ?? [];
+      result[`${page}f2_20[0]`] = "Multiple";
+      result[`${page}f2_21[0]`] = "Multiple";
+      result[`${page}f2_22[0]`] = dollars(
+        sales.reduce(
+          (sum, sale) =>
+            sum + Math.max(0, calculateMtmDisposition(sale).ordinary),
+          0,
+        ),
+      );
+      result[`${page}f2_23[0]`] = "Multiple";
+      result[`${page}f2_24[0]`] = dollars(
+        sales.reduce(
+          (sum, sale) =>
+            sum + Math.min(0, calculateMtmDisposition(sale).ordinary),
+          0,
+        ),
+      );
+      result[`${page}f2_25[0]`] = dollars(
+        sales.reduce(
+          (sum, sale) => sum + calculateMtmDisposition(sale).otherLoss,
+          0,
+        ),
+      );
+      return result;
+    }
+    const disposition = item.mtm_dispositions?.[0];
+    if (disposition) {
+      const sale = calculateMtmDisposition(disposition);
+      result[`${page}f2_20[0]`] = dollars(disposition.fair_market_value_usd);
+      result[`${page}f2_21[0]`] = dollars(disposition.adjusted_basis_usd);
+      result[`${page}f2_22[0]`] = dollars(sale.difference);
+      if (sale.difference < 0) {
+        result[`${page}f2_23[0]`] = dollars(
+          disposition.unreversed_inclusions_usd,
+        );
+        result[`${page}f2_24[0]`] = dollars(sale.ordinary);
+        if (sale.otherLoss > 0) {
+          result[`${page}f2_25[0]`] = dollars(sale.otherLoss);
+        }
+      }
+    }
+    return result;
+  }
+  return {};
 }
 
 /** The 2025 blank has one Part V per excess distribution or disposition. */
@@ -159,24 +308,87 @@ export function projectForm8621PartV(line: Form8621Lines): Fields[] {
   );
 }
 
+/** Part VI has six columns per page; retained elections continue on page 4. */
+export function projectForm8621PartVI(line: Form8621Lines): Fields[] {
+  const parent = projectForm8621ParentSource(line.item);
+  const status = parent.section1294_prior_status;
+  if (!status) return [];
+  const columns = calculateSection1294PriorStatus(
+    status,
+    line.item.company_ein_or_ref,
+  );
+  const pages: Fields[] = [];
+  const page = "topmostSubform[0].Page4[0].";
+  for (let offset = 0; offset < columns.length; offset += 6) {
+    const fields: Fields = {};
+    for (const [index, column] of columns.slice(offset, offset + 6).entries()) {
+      const put = (row: number, value: string | number | undefined) => {
+        if (value === undefined) return;
+        const table = row < 4
+          ? "Table_17-20[0]"
+          : row < 8
+          ? "Table_Lines21-24[0]"
+          : "Table_Lines25-26[0]";
+        const tableRow = row < 4 ? row + 2 : row < 8 ? row - 2 : row - 6;
+        fields[
+          `${page}${table}.Row${tableRow}[0].f4_${row * 6 + index + 1}[0]`
+        ] = String(value);
+      };
+      put(0, `12/31/${column.taxYear}`);
+      put(1, dollars(column.earnings));
+      put(2, dollars(column.deferredTax));
+      put(3, dollars(column.interestAtFiling));
+      put(4, column.terminationDescription);
+      put(
+        5,
+        column.earningsDistributed === undefined
+          ? undefined
+          : dollars(column.earningsDistributed),
+      );
+      put(6, column.taxDue === undefined ? undefined : dollars(column.taxDue));
+      put(
+        7,
+        column.interestDue === undefined
+          ? undefined
+          : dollars(column.interestDue),
+      );
+      put(
+        8,
+        column.taxRemaining === undefined
+          ? undefined
+          : dollars(column.taxRemaining),
+      );
+      put(
+        9,
+        column.interestRemaining === undefined
+          ? undefined
+          : dollars(column.interestRemaining),
+      );
+    }
+    pages.push(fields);
+  }
+  return pages;
+}
+
 /** One page 1 and one Part V set per positive event; Part VI stays empty on a declared absence. */
 export function projectForm8621ParentPages(
   line: Form8621Lines,
   filer: FilerIdentity,
+  tax?: { current: number; deferred: number },
 ) {
-  const source = projectForm8621ParentSource(line.item);
-  if (!source.no_outstanding_section1294_election) {
-    throw new Error("Form 8621 Part VI needs an outstanding election ledger");
-  }
   const page1 = projectForm8621Page1(line, filer);
-  const partV = projectForm8621PartV(line);
+  const page2 = projectForm8621Page2(line, tax);
+  const partV = line.item.regime === PficRegime.EXCESS_DISTRIBUTION
+    ? projectForm8621PartV(line)
+    : [];
   const positiveEventIndices = line.excessEvents.flatMap((event, index) =>
     event.amount_usd > 0 ? [index] : []
   );
   return {
     page1,
+    page2,
     partV,
-    partVI: {} as Fields,
+    partVI: projectForm8621PartVI(line),
     holdingPeriodStatements: positiveEventIndices.map((index) =>
       explainForm8621ExcessEvent(line, index)
     ),
