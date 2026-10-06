@@ -2,7 +2,7 @@
 
 ## Compacted status (2026-10-07 local)
 
-The frozen checklist retains **52 open TODOs**; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,552 bounded slices**. Broader parents remain open. Detailed learnings and qualifications are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed. Draft [PR63](https://github.com/filedcom/opentax/pull/63) was verified at **234fb7514**.
+The frozen checklist retains **52 open TODOs**; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,552 bounded slices**. Broader parents remain open. Detailed learnings and qualifications are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed. Draft [PR63](https://github.com/filedcom/opentax/pull/63) was verified at **2bc9eeb58**.
 
 **Aggregation completed:** Direct-owner annual aggregation disclosure passed main **66/0**, actual17returns/348pages/freshXSD and capturedordinary21/425 parity. Combined distinct inventory22returns/443pages plus3annualpages; all56 held hashes and54 originals remain exact. Final270entries+manifest physically retained. Saved buildPending/prepared/carry/origins equality is proven; complete normalized-graph equality is not claimed. See the [aggregation proof](docs/mef/ty2025-owned-aggregation-annual-disclosure.md).
 
