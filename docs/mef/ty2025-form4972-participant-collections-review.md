@@ -45,7 +45,11 @@ balance identity, recipient owner, and its own election. A dated participant
 birth/death record, entitlement record, complete source inventory and reviewed
 prior-election-history reference must agree. Positive death/estate amounts match
 reviewed allowed/attributable amounts and their source references. No external
-authentication is invented. Native and direct PDF projections repeat validation.
+authentication is invented. Native and direct PDF projections repeat validation. `plan_reference` identifies
+the employer plan; different participants may legitimately share it. Participant
+identity and the complete participant-specific source inventory remain separate.
+Shared-beneficiary reconciliation applies when the participant identity matches,
+not solely because the employer plan reference is reused.
 
 More than two computed participant forms explicitly reject in both final native
 and direct PDF routes. They remain staged with all actual source records; neither
@@ -55,9 +59,11 @@ truncation nor a manufactured overflow attachment is allowed.
 
 Independent Python Decimal worksheets are retained in
 `scripts/review-form4972-participant-oracle.py` and the checked-in expectedJSON.
-Four positive public cases exercise two inherited participants for one owner,
+Six positive public cases exercise two inherited participants for one owner,
 own PartII plus one inherited NUA/annuity/estate participant, independent spouse
-beneficiaries and pre-1996 death/estate allocations. Three larger staged cases
+beneficiaries, two different inherited participants sharing an employer plan,
+two own-plan spouse participants sharing an employer plan,
+and pre-1996 death/estate allocations. Three larger staged cases
 exercise own+parents, three joint participants and five inherited participants
 (including PartIII-only); their final filing boundary remains negative.
 

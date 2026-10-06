@@ -1608,6 +1608,14 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
   const newCollection = participantGroups.size > 2 ||
     participantGroups.size === 2 && (
         distinctOwners === 1 ||
+        (!lumpItems.some((item) => (item.box9a_pct_total ?? 100) < 100) &&
+          lumpItems.every((item) =>
+            item.recipient_ssn !== undefined &&
+            item.recipient_ssn.replaceAll("-", "") ===
+              item.form4972_plan?.participant_ssn
+          ) &&
+          new Set(lumpItems.map((item) => item.form4972_plan?.plan_reference))
+              .size === 1) ||
         !lumpItems.some((item) => (item.box9a_pct_total ?? 100) < 100) &&
           lumpItems.some((item) =>
             item.recipient_ssn !== undefined &&

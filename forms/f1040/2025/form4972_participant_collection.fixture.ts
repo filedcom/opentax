@@ -4,6 +4,8 @@ export const participantCollectionCases = [
   "own-plus-parent",
   "own-plus-parents",
   "paired-inherited",
+  "same-employer-plan",
+  "same-employer-own-spouses",
   "joint-three",
   "five-inherited",
   "death-estate-pair",
@@ -23,6 +25,13 @@ export function participantCollectionInputs(
       3,
       false,
     ]],
+    "same-employer-own-spouses": [["T", false, 2, false], [
+      "S",
+      false,
+      3,
+      false,
+    ]],
+    "same-employer-plan": [["T", true, 2, false], ["S", true, 3, false]],
     "paired-inherited": [["T", true, 2, false], ["S", true, 3, false]],
     "joint-three": [["T", false, 1, true], ["T", true, 2, false], [
       "S",
@@ -78,7 +87,9 @@ export function participantCollectionInputs(
         ? "Ada Taxpayer"
         : "Ben Taxpayer",
       participant_ssn: participant,
-      plan_reference: `${prefix}-qualified-plan`,
+      plan_reference: id.startsWith("same-employer")
+        ? "shared-employer-qualified-plan"
+        : `${prefix}-qualified-plan`,
       full_balance_statement_reference:
         `${prefix}-complete-distribution-statement`,
       all_qualified_distributions_included: true,

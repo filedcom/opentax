@@ -28,6 +28,9 @@ type Row = Readonly<Record<string, unknown>>;
 export function needsParticipantCollection(forms: readonly Row[]): boolean {
   return forms.length > 2 || forms.length === 2 && (
         forms[0].recipient === forms[1].recipient ||
+        forms.some((form) =>
+          form.participant_collection_review !== undefined
+        ) ||
         forms.some((form) => form.beneficiary_distribution === true) &&
           !forms.some((form) => Number(form.recipient_share_pct ?? 100) < 100)
       );
@@ -41,7 +44,6 @@ export function reconcileParticipantCollection(
   owners?: { taxpayer: string; spouse?: string },
 ): void {
   const groups = new Set<string>();
-  const planParticipants = new Map<string, string>();
   for (const [index, form] of forms.entries()) {
     const refs = form.source_document_references;
     const match = (row: Row) =>
@@ -127,13 +129,6 @@ export function reconcileParticipantCollection(
       );
     }
     groups.add(key);
-    const prior = planParticipants.get(plan.plan_reference);
-    if (prior !== undefined && prior !== plan.participant_ssn) {
-      throw new Error(
-        "Form4972 participant collection cannot reuse one plan identity for different participants",
-      );
-    }
-    planParticipants.set(plan.plan_reference, plan.participant_ssn);
     if (
       owners &&
       recipient !==
@@ -158,8 +153,7 @@ export function reconcileParticipantCollection(
       });
       const otherPlan = previous?.form4972_plan as Row | undefined;
       if (
-        otherPlan?.participant_ssn === plan.participant_ssn ||
-        otherPlan?.plan_reference === plan.plan_reference
+        otherPlan?.participant_ssn === plan.participant_ssn
       ) {
         if (!previous) throw new Error("Missing prior participant source");
         const priorElection = elections.find((row) => {
