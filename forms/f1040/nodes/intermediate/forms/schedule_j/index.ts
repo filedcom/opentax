@@ -40,6 +40,7 @@ const completeInputSchema = z.object({
   taxable_income_2025: finiteAmount,
   filing_status_2025: z.nativeEnum(FilingStatus),
   taking_standard_deduction: z.boolean(),
+  itemized_investment_interest_source: z.literal(true).optional(),
   qbi_deduction: finiteAmount,
   additional_deductions: finiteAmount,
   nol_deduction: finiteAmount,
@@ -143,7 +144,10 @@ function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
     throw new Error("Schedule J Schedule C profit lacks fishing attribution");
   }
   if (
-    !source.taking_standard_deduction ||
+    (!source.taking_standard_deduction &&
+      source.itemized_investment_interest_source !== true) ||
+    (source.taking_standard_deduction &&
+      source.itemized_investment_interest_source === true) ||
     source.additional_deductions !== 0 || source.nol_deduction !== 0
   ) {
     throw new Error(

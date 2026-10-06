@@ -17,6 +17,8 @@ import {
   reconcileForm4952PriorCarryforward,
 } from "../../form4952_prior_carryforward_reconciliation.ts";
 import { FilingStatus } from "../../../mef/header.ts";
+import { reconcileForm4952ScheduleJChildDividend } from "../../form4952_schedulej_child_reconciliation.ts";
+import { rgb, StandardFonts } from "pdf-lib";
 
 // TY2025 AcroForm order: f1_01/f1_02 are taxpayer name and identifying
 // number; the numbered form lines start at f1_03.
@@ -63,6 +65,33 @@ export const form4952Pdf: PdfFormDescriptor = {
     { kind: "text", domainKey: "primarySSN", pdfField: `${page}f1_02[0]` },
   ],
   fields,
+  async decoratePages(document, pages, fields) {
+    const page = pages[0];
+    const electedCapital = fields.elected_capital_gain_portion;
+    const election = fields.line4g;
+    const line4e = fields.line4e;
+    if (
+      !page || typeof electedCapital !== "number" ||
+      typeof election !== "number" || typeof line4e !== "number" ||
+      election <= 0 || electedCapital >= Math.min(election, line4e)
+    ) return;
+    // 2025 Form 4952 instructions require "Elec." and the selected portion
+    // beside line 4e when the usual capital-first election is reduced.
+    const font = await document.embedFont(StandardFonts.Helvetica);
+    page.drawRectangle({
+      x: 353,
+      y: 519,
+      width: 30,
+      height: 12,
+      color: rgb(1, 1, 1),
+    });
+    page.drawText(`Elec. ${electedCapital}`, {
+      x: 355,
+      y: 522,
+      size: 8,
+      font,
+    });
+  },
   projectFields(fields, allPending) {
     if (hasForm4952K1CodeB(fields, allPending)) {
       reconcileForm4952K1CodeBRoyaltyPath(fields, allPending);
@@ -98,6 +127,12 @@ export const form4952Pdf: PdfFormDescriptor = {
       fields.source_1099_interest !== undefined
     ) {
       reconcileForm4952CombinedPath(fields, allPending);
+    } else if (
+      fields.source_1099_dividends !== undefined &&
+      allPending.schedule_j !== undefined &&
+      allPending.form8814 !== undefined
+    ) {
+      reconcileForm4952ScheduleJChildDividend(fields, allPending);
     } else if (fields.source_1099_dividends !== undefined) {
       reconcileForm4952DividendPath(fields, allPending);
     } else if (

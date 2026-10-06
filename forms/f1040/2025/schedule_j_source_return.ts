@@ -1,5 +1,6 @@
 import { isDeepStrictEqual } from "node:util";
 import { createHash } from "node:crypto";
+import { reconcileForm4952ScheduleJChildDividend } from "./form4952_schedulej_child_reconciliation.ts";
 import { z } from "zod";
 import { execute, type ExecuteResult } from "../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
@@ -375,6 +376,15 @@ export function executeScheduleJSourceReturn(
     );
   }
   const tax = record(baseline.pending.income_tax_calculation);
+  const itemizedInvestmentInterest = tax.taking_standard_deduction === false;
+  if (itemizedInvestmentInterest) {
+    const form = record(baseline.pending.form4952);
+    reconcileForm4952ScheduleJChildDividend(
+      form,
+      baseline.pending,
+      String(record(baseline.pending.f1040).taxpayer_ssn ?? ""),
+    );
+  }
   const agi = record(baseline.pending.agi_aggregator);
   const farm = record(baseline.pending.schedule_j_calculation);
   const child =
@@ -474,6 +484,9 @@ export function executeScheduleJSourceReturn(
       current_year_tax_source: worksheet,
       nonfarm_investment_income: investment,
       ...(wages ? { nonfarm_wage_income: wages } : {}),
+      ...(itemizedInvestmentInterest
+        ? { itemized_investment_interest_source: true }
+        : {}),
     },
   };
   const result = raw(finalInputs);

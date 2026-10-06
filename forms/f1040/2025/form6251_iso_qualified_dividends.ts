@@ -6,6 +6,7 @@ import {
 } from "../nodes/inputs/f8814/index.ts";
 import { assertDirectCapitalGainDistributionSource } from "./line7a-source-reconciliation.ts";
 import { assertCapitalSaleSourceRows } from "./broker-sale-source-reconciliation.ts";
+import { reconcileForm4952ScheduleJChildDividend } from "./form4952_schedulej_child_reconciliation.ts";
 
 /** Reconcile bounded Form 6251 Part III dividends to retained 1099-DIV payers. */
 export function assertForm6251QualifiedDividendSource(
@@ -74,6 +75,11 @@ export function assertForm6251QualifiedDividendSource(
     ) &&
     form4952.form8814_line9_qualified_dividends === childQualified &&
     form4952.form8814_line12_investment_income === childInvestment;
+  const electedForm4952 = form4952 !== undefined &&
+      pending?.schedule_j !== undefined && childCapital > 0 &&
+      !childOnlyForm4952
+    ? reconcileForm4952ScheduleJChildDividend(form4952, pending!)
+    : 0;
   const childInput = (pending?.f8814 as { f8814s?: unknown[] } | undefined)
     ?.f8814s;
   const childCopiesMatch = child !== undefined &&
@@ -140,7 +146,7 @@ export function assertForm6251QualifiedDividendSource(
   );
   const issuedIsoCapital = iso && !basis ? distributions : 0;
   const expectedPartThreeGain = qualified + amtNetCapitalGain +
-    issuedIsoCapital + childCapital + ordinarySaleGain;
+    issuedIsoCapital + childCapital + ordinarySaleGain - electedForm4952;
   const regularCapitalGain = basisRows.reduce(
     (sum, row) => sum + row.regular_gain,
     0,
@@ -196,7 +202,8 @@ export function assertForm6251QualifiedDividendSource(
       (pending?.schedule_d as Record<string, unknown> | undefined)
           ?.print_line16_combined !==
         issuedIsoCapital + childCapital + ordinarySaleGain ||
-    pending?.form4952 !== undefined && !childOnlyForm4952 ||
+    pending?.form4952 !== undefined && !childOnlyForm4952 &&
+      electedForm4952 === 0 ||
     pending?.form2555 !== undefined ||
     iso && (fields.net_capital_gain ?? 0) !==
         issuedIsoCapital + childCapital + ordinarySaleGain ||
@@ -217,10 +224,12 @@ export function assertForm6251QualifiedDividendSource(
     fields.rate_28_gain !== 0 && fields.rate_28_gain !== undefined ||
     iso && (fields.line2k_disposition ?? 0) !== 0 ||
     iso && basis ||
-    (fields.form4952_regular_election ?? 0) !== 0 ||
-    (fields.form4952_amt_election ?? 0) !== 0 ||
-    (fields.form4952_regular_elected_capital_gain ?? 0) !== 0 ||
-    (fields.form4952_amt_elected_capital_gain ?? 0) !== 0 ||
+    (fields.form4952_regular_election ?? 0) !== electedForm4952 ||
+    (fields.form4952_amt_election ?? 0) !== electedForm4952 ||
+    (fields.form4952_regular_elected_capital_gain ?? 0) !==
+      (form4952?.elected_capital_gain_portion ?? 0) ||
+    (fields.form4952_amt_elected_capital_gain ?? 0) !==
+      (form4952?.elected_capital_gain_portion ?? 0) ||
     (fields.foreign_earned_income_exclusion ?? 0) !== 0 ||
     form1040.line3a_qualified_dividends !== qualified ||
     form1040.line3b_ordinary_dividends !== ordinaryTotal + childQualified ||

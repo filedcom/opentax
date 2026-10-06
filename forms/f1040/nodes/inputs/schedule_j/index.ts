@@ -34,6 +34,7 @@ export const inputSchema = publicInputSchema.extend({
     current_year_tax_source: scheduleJTaxSourceSchema,
     nonfarm_investment_income: z.number().finite(),
     nonfarm_wage_income: z.number().int().nonnegative().optional(),
+    itemized_investment_interest_source: z.literal(true).optional(),
   }).strict().optional(),
 }).strict();
 type ScheduleJInput = z.infer<typeof inputSchema>;

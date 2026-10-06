@@ -18,6 +18,7 @@ import {
 } from "../../form4952_prior_carryforward_reconciliation.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 import { FilingStatus } from "../types.ts";
+import { reconcileForm4952ScheduleJChildDividend } from "../../form4952_schedulej_child_reconciliation.ts";
 
 export interface Fields {
   line1?: number | null;
@@ -137,6 +138,16 @@ export const form4952: MefFormDescriptor<"form4952", Input> = {
       fields.source_1099_interest !== undefined
     ) {
       reconcileForm4952CombinedPath(fields, context?.pending ?? {});
+    } else if (
+      fields.source_1099_dividends !== undefined &&
+      context?.pending?.schedule_j !== undefined &&
+      context?.pending?.form8814 !== undefined
+    ) {
+      reconcileForm4952ScheduleJChildDividend(
+        fields,
+        context.pending,
+        context.filer?.primarySSN,
+      );
     } else if (fields.source_1099_dividends !== undefined) {
       reconcileForm4952DividendPath(fields, context?.pending ?? {});
     } else if (
@@ -163,7 +174,27 @@ export const form4952: MefFormDescriptor<"form4952", Input> = {
       "IRS4952",
       FIELD_MAP.map(([key, tag]) => {
         const value = fields[key];
-        return typeof value === "number" ? element(tag, value) : "";
+        if (typeof value !== "number") return "";
+        const specialElection = key === "line4e" &&
+          context?.pending?.schedule_j !== undefined &&
+          context?.pending?.form8814 !== undefined &&
+          typeof fields.elected_capital_gain_portion === "number" &&
+          typeof fields.line4g === "number" &&
+          fields.line4g > 0 &&
+          fields.elected_capital_gain_portion <
+            Math.min(fields.line4g, value);
+        return element(
+          tag,
+          value,
+          specialElection
+            ? {
+              investmentPropGainElectedCd: "ELEC",
+              investmentPropGainElectedAmt: String(
+                fields.elected_capital_gain_portion,
+              ),
+            }
+            : undefined,
+        );
       }),
     );
   },
