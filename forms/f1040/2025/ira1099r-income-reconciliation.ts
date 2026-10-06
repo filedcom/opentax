@@ -53,11 +53,11 @@ export function assertIra1099rIncomeSource(
   if (inventories.length) {
     const gross = roundWholeDollars(
       inventories.reduce(
-        (sum, row) => sum + Math.round(row.rawGross * 100),
+        (sum, row) => sum + Math.round(row.rawTotalGross * 100),
         0,
       ) / 100,
     );
-    const taxable = inventories.reduce((sum, row) => sum + row.taxable, 0);
+    const taxable = inventories.reduce((sum, row) => sum + row.totalTaxable, 0);
     const filed = pending.f1040 as Record<string, unknown> | undefined;
     if (
       issuedRows.some((row) =>

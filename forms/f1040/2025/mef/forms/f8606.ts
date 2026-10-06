@@ -22,42 +22,125 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
     throw new Error("Form 8606 MeF cannot file an empty pending record");
   }
   const fields = printSchema.parse(rawFields);
+  if (
+    (fields.print_line17_nontaxable_conversion !== undefined ||
+      (fields.print_line18_taxable_conversion ?? 0) < 0) &&
+    !fields.roth_owner_inventory_review?.current_conversion
+  ) {
+    throw new Error(
+      "Form8606 current conversion fields require actual retained current source inventory",
+    );
+  }
   const reviewedRoth = reconcileForm8606Roth(
     fields,
     context?.pending,
     context?.filer,
   );
   if (reviewedRoth) {
+    if ((fields.print_line18_taxable_conversion ?? 0) < 0) {
+      throw new Error(
+        "Current fully converted IRA basis exceeds assets: signed Form8606 line18 needs verified IRS nonnegative native filing representation",
+      );
+    }
     return elements("IRS8606", [
       element("Form8606IRANamelineTxt", reviewedRoth.ownerName),
       element("NondedIRATxpyrWithIRASSN", reviewedRoth.ownerSsn),
-      element(
-        "TotNonQlfyDistriFromRothIRAAmt",
-        fields.print_roth_line19_distributions,
-      ),
-      element("QlfyFirstTimeHmByrExpensesAmt", 0),
-      element(
-        "NetQlfyFirstTimeHmByrExpnssAmt",
-        fields.print_roth_line21_after_homebuyer,
-      ),
-      element(
-        "ROTHIRAContributionBasisAmt",
-        fields.print_roth_line22_contribution_basis,
-      ),
-      element(
-        "NetBasisInRothIRAContriAmt",
-        fields.print_roth_line23_after_contribution_basis,
-      ),
-      element(
-        "BasisInCnvrtQlfyRtrPlanAmt",
-        fields.print_roth_line24_conversion_basis,
-      ),
-      element(
-        "DistriRothIRALessBasisCnvrtAmt",
-        fields.print_roth_line25a_earnings,
-      ),
-      element("RothIRAQlfyDisasterDistriAmt", 0),
-      element("TaxableIRADistributionAmt", fields.print_roth_line25c_taxable),
+      ...(fields.roth_owner_inventory_review?.current_conversion
+        ? [
+          ...(fields.print_line2_prior_basis > 0 &&
+              fields.roth_owner_inventory_review.current_conversion
+                .year_end_statements.some((statement) =>
+                  statement.fair_market_value > 0
+                )
+            ? [
+              element("NondedIRACurrTYNondedContriAmt", 0),
+              element("NondedIRABasisForPYAmt", fields.print_line2_prior_basis),
+              element(
+                "NondedIRATotalIRAValueAmt",
+                fields.print_line3_total_basis,
+              ),
+              element("NondedIRAPostTaxYrContriAmt", 0),
+              element(
+                "NondedIRATaxYearNetBasisAmt",
+                fields.print_line5_current_basis,
+              ),
+              element(
+                "NondedIRACurrTYIRAPlusRllvrAmt",
+                fields.print_line6_year_end_value,
+              ),
+              element("NondedIRAWthdrwLessRllvrAmt", 0),
+              element(
+                "NondedIRATYCombinedIRAValueAmt",
+                fields.print_line8_conversions,
+              ),
+              element(
+                "NondedIRATotRllvrWthdrwVlAmt",
+                fields.print_line9_combined_value,
+              ),
+              element(
+                "NondedIRATaxYearBasisRt",
+                fields.print_line10_basis_ratio!.toFixed(3),
+              ),
+              element(
+                "NondedIRANontxCnvrtAmt",
+                fields.print_line11_nontaxable_conversion,
+              ),
+              element("NondedIRANontxWthdrwUncnvrtAmt", 0),
+              element(
+                "NondedIRANontxOfWthdrwAmt",
+                fields.print_line13_nontaxable,
+              ),
+              element(
+                "NondedIRATotalIRABasisAmt",
+                fields.print_line14_remaining_basis,
+              ),
+            ]
+            : []),
+          element("TotalIRAConvertedToRothAmt", fields.print_line16_converted),
+          element(
+            "TraditionalIRABasisAmt",
+            fields.print_line17_nontaxable_conversion,
+          ),
+          element(
+            "TaxableIRAConversionAmt",
+            fields.print_line18_taxable_conversion,
+          ),
+        ]
+        : []),
+      ...(fields.print_roth_line19_distributions !== undefined
+        ? [
+          element(
+            "TotNonQlfyDistriFromRothIRAAmt",
+            fields.print_roth_line19_distributions,
+          ),
+          element("QlfyFirstTimeHmByrExpensesAmt", 0),
+          element(
+            "NetQlfyFirstTimeHmByrExpnssAmt",
+            fields.print_roth_line21_after_homebuyer,
+          ),
+          element(
+            "ROTHIRAContributionBasisAmt",
+            fields.print_roth_line22_contribution_basis,
+          ),
+          element(
+            "NetBasisInRothIRAContriAmt",
+            fields.print_roth_line23_after_contribution_basis,
+          ),
+          element(
+            "BasisInCnvrtQlfyRtrPlanAmt",
+            fields.print_roth_line24_conversion_basis,
+          ),
+          element(
+            "DistriRothIRALessBasisCnvrtAmt",
+            fields.print_roth_line25a_earnings,
+          ),
+          element("RothIRAQlfyDisasterDistriAmt", 0),
+          element(
+            "TaxableIRADistributionAmt",
+            fields.print_roth_line25c_taxable,
+          ),
+        ]
+        : []),
     ]);
   }
   const details = fields.filing_details;

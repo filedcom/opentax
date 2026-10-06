@@ -1,4 +1,9 @@
 import {
+  currentRothConversionDocuments,
+  currentRothConversionSchema,
+  reviewedCurrentRothConversion,
+} from "./roth-current-conversion.ts";
+import {
   reviewedRothConversions,
   rothConversionDocuments,
   rothConversionYearSchema,
@@ -54,6 +59,7 @@ export const rothOwnerInventorySchema = rothActivityReviewSchema.omit({
       .form5498.extend({ box3_roth_conversion_amount: rothSourceMoney }),
   }).array(),
   conversions: z.array(rothConversionYearSchema).min(1).optional(),
+  current_conversion: currentRothConversionSchema.optional(),
   prior_distributions: z.array(rothDistributionYearSchema).min(1).optional(),
   payments: z.array(paymentSchema).min(1),
 }).strict();
@@ -65,6 +71,38 @@ const sumMoney = (values: readonly number[]) =>
 export function reviewedRothOwnerInventory(raw: unknown) {
   const review = rothOwnerInventorySchema.parse(raw);
   const hasHistory = !!review.prior_distributions?.length;
+  const currentConversion = review.current_conversion
+    ? reviewedCurrentRothConversion(
+      review.current_conversion,
+      review.owner_identity,
+      review.inventory.accounts,
+    )
+    : undefined;
+  if (review.current_conversion) {
+    const prior = review.current_conversion.prior_form8606;
+    const annuals = [
+      ...(review.conversions ?? []).map((r) => r.prior_form8606),
+      ...(review.prior_distributions ?? []).map((r) => r.prior_form8606),
+    ].filter((r) => r.tax_year === 2024);
+    if (
+      annuals.some((r) =>
+        ["source_document_reference", "owner_name", "owner_ssn"].some((k) =>
+          r[k as keyof typeof r] !== prior[k as keyof typeof prior]
+        )
+      ) || (review.conversions ?? []).some((r) =>
+        r.prior_form8606.tax_year === 2024 &&
+        (prior.filed_part_i.method !== "allocated" ||
+          prior.filed_part_i.line8 !==
+            r.prior_form8606.filed_line16_converted ||
+          prior.filed_part_i.line11 !==
+            r.prior_form8606.filed_line17_nontaxable)
+      )
+    ) {
+      throw new Error(
+        "Current conversion prior basis must join one actual annual filed2024 8606",
+      );
+    }
+  }
   for (const annual of review.prior_distributions ?? []) {
     const convertedYear = review.conversions?.find((row) =>
       row.prior_form8606.tax_year === annual.prior_form8606.tax_year
@@ -102,7 +140,7 @@ export function reviewedRothOwnerInventory(raw: unknown) {
     review.owner_identity.date_of_birth,
   );
   if (
-    converted.length
+    (converted.length || currentConversion)
       ? review.inventory.no_conversions_or_qualified_plan_rollovers !== false ||
         review.inventory.all_prior_roth_conversion_records_included !== true ||
         review.inventory.no_qualified_plan_rollovers_confirmed !== true
@@ -121,11 +159,16 @@ export function reviewedRothOwnerInventory(raw: unknown) {
     review.inventory.owner_ssn !== review.owner_identity.owner_ssn
   ) throw new Error("Roth complete inventory owner/accounts differ");
   const years = new Set<string>();
-  const dates = (review.conversions ?? []).flatMap((row) =>
-    row.accounts.flatMap((account) =>
-      account.transfers.map((row) => row.receipt.received_on)
-    )
-  );
+  const dates = [
+    ...(currentConversion?.review.accounts ?? []).flatMap((account) =>
+      account.transfers.map((t) => t.receipt.received_on)
+    ),
+    ...(review.conversions ?? []).flatMap((row) =>
+      row.accounts.flatMap((account) =>
+        account.transfers.map((row) => row.receipt.received_on)
+      )
+    ),
+  ];
   for (const row of review.contributions) {
     const form = row.form5498,
       key = JSON.stringify([
@@ -164,9 +207,14 @@ export function reviewedRothOwnerInventory(raw: unknown) {
     }
   }
   for (const regular of review.contributions) {
-    const convertedForm = (review.conversions ?? []).flatMap((year) =>
-      year.accounts.map((account) => account.form5498)
-    ).find((form) =>
+    const convertedForm = [
+      ...(review.conversions ?? []).flatMap((year) =>
+        year.accounts.map((account) => account.form5498)
+      ),
+      ...(review.current_conversion?.accounts ?? []).map((account) =>
+        account.form5498
+      ),
+    ].find((form) =>
       form.tax_year === regular.form5498.tax_year &&
       form.custodian_ein === regular.form5498.custodian_ein &&
       form.account_number === regular.form5498.account_number
@@ -182,9 +230,14 @@ export function reviewedRothOwnerInventory(raw: unknown) {
     }
   }
   for (
-    const form of (review.conversions ?? []).flatMap((year) =>
-      year.accounts.map((account) => account.form5498)
-    )
+    const form of [
+      ...(review.conversions ?? []).flatMap((year) =>
+        year.accounts.map((account) => account.form5498)
+      ),
+      ...(review.current_conversion?.accounts ?? []).map((account) =>
+        account.form5498
+      ),
+    ]
   ) {
     const regular = review.contributions.find((row) =>
       row.form5498.tax_year === form.tax_year &&
@@ -200,6 +253,7 @@ export function reviewedRothOwnerInventory(raw: unknown) {
   const firstContributionTaxYear = Math.min(
     ...review.contributions.map((row) => row.form5498.tax_year),
     ...converted.map((row) => row.year),
+    ...(currentConversion ? [2025] : []),
   );
   const rawBasis = sumMoney(
     review.contributions.map((row) => row.form5498.box10_roth_contributions),
@@ -214,7 +268,10 @@ export function reviewedRothOwnerInventory(raw: unknown) {
     )
     : undefined;
   const basis = history?.regularBasis ?? roundWholeDollars(rawBasis);
-  const currentConversions = history?.pools ?? converted;
+  const currentConversions = [
+    ...(history?.pools ?? converted),
+    ...(currentConversion ? [currentConversion] : []),
+  ];
   const payments = review.payments.map((payment) => {
     if (
       payment.owner_ssn !== review.owner_identity.owner_ssn ||
@@ -258,6 +315,19 @@ export function reviewedRothOwnerInventory(raw: unknown) {
         ? [row.prior_form5329.source_document_reference]
         : []),
     ]),
+    ...(review.current_conversion &&
+        ![
+          ...(review.conversions ?? []).map((r) =>
+            r.prior_form8606.source_document_reference
+          ),
+          ...(review.prior_distributions ?? []).map((r) =>
+            r.prior_form8606.source_document_reference
+          ),
+        ].includes(
+          review.current_conversion.prior_form8606.source_document_reference,
+        )
+      ? [review.current_conversion.prior_form8606.source_document_reference]
+      : []),
     ...review.payments.map((row) => row.form1099r_source_document_reference),
   ];
   const lineage = review.payments.map((row) =>
@@ -325,7 +395,10 @@ export function reviewedRothOwnerInventory(raw: unknown) {
     recapture,
     conversionBasis,
     conversionAllocations,
-    requires8606: nonqualified.length > 0,
+    requires8606: nonqualified.length > 0 || !!currentConversion,
+    currentConversion,
+    rawTotalGross: sumMoney([rawGross, currentConversion?.rawGross ?? 0]),
+    totalTaxable: taxable + (currentConversion?.taxable ?? 0),
     rawRemainingContributionBasis: Math.max(
       0,
       payments[0].rawBasis - rawNonqualifiedGross,
@@ -353,7 +426,12 @@ export function rothOwnerInventoryDocuments(review: RothOwnerInventory) {
     ...(review.prior_distributions ?? []).flatMap((row) =>
       row.payments.flatMap((payment) => [payment, payment.issued_form1099r])
     ),
-    ...rothConversionDocuments(review.conversions ?? []).filter((document) => {
+    ...[
+      ...rothConversionDocuments(review.conversions ?? []),
+      ...(review.current_conversion
+        ? currentRothConversionDocuments(review.current_conversion)
+        : []),
+    ].filter((document) => {
       if (!("box3_roth_conversion_amount" in document)) return true;
       const regular = review.contributions.find((row) =>
         row.form5498.source_document_reference ===
@@ -390,6 +468,7 @@ type SourceCopy = {
   box2b_not_determined?: boolean;
   box7_ira_simple_indicator?: boolean;
   exclude_8606_roth?: boolean;
+  rollover_code?: string;
   box4_federal_withheld?: number;
   box14_state_tax?: number;
   box17_local_tax?: number;
@@ -414,6 +493,40 @@ export function reconcileRothOwnerInventoryCopies(
       );
     }
     groups.set(facts.review.owner, facts);
+    const converted = facts.review.current_conversion?.accounts.flatMap(
+      (account) => account.transfers,
+    ).find((t) =>
+      t.issued_form1099r.source_document_reference ===
+        item.source_document_reference
+    )?.issued_form1099r;
+    if (converted) {
+      if (
+        item.ts !== facts.review.owner ||
+        item.recipient_ssn?.replace(/\D/g, "") !== converted.owner_ssn ||
+        item.payer_ein.replace(/\D/g, "") !== converted.payer_ein ||
+        item.account_number !== converted.traditional_account_number ||
+        item.box1_gross_distribution !== converted.box1_gross_distribution ||
+        item.box2a_taxable_amount !== converted.box2a_taxable_amount ||
+        item.box13_date_of_payment !== converted.distributed_on ||
+        item.box7_distribution_code !== converted.box7_distribution_code ||
+        item.box7_code2 !== undefined || item.box2b_not_determined !== true ||
+        item.box7_ira_simple_indicator !== true ||
+        item.rollover_code !== "C" || item.exclude_8606_roth !== undefined ||
+        item.payer_name !== converted.issuer.name ||
+        item.payer_address_line1 !== converted.issuer.address_line1 ||
+        item.payer_address_city !== converted.issuer.city ||
+        item.payer_address_state !== converted.issuer.state ||
+        item.payer_address_zip !== converted.issuer.zip ||
+        (item.box4_federal_withheld ?? 0) !== converted.federal_withheld ||
+        (item.box14_state_tax ?? 0) !== converted.state_tax_withheld ||
+        (item.box17_local_tax ?? 0) !== converted.local_tax_withheld
+      ) {
+        throw new Error(
+          "Current conversion issued copy differs from actual owner/account/debit source",
+        );
+      }
+      continue;
+    }
     const payment = facts.review.payments.find((row) =>
       row.form1099r_source_document_reference === item.source_document_reference
     );
@@ -445,12 +558,22 @@ export function reconcileRothOwnerInventoryCopies(
   }
   for (const facts of groups.values()) {
     const actual = current.filter((row) => row.ts === facts.review.owner);
+    const expectedCurrentReferences = [
+      ...facts.review.payments.map((payment) =>
+        payment.form1099r_source_document_reference
+      ),
+      ...(facts.review.current_conversion?.accounts ?? []).flatMap((account) =>
+        account.transfers.map((t) =>
+          t.issued_form1099r.source_document_reference
+        )
+      ),
+    ];
     if (
-      actual.length !== facts.review.payments.length ||
-      facts.review.payments.some((payment) =>
+      actual.length !== expectedCurrentReferences.length ||
+      expectedCurrentReferences.some((reference) =>
         actual.filter((row) =>
           row.source_document_reference ===
-            payment.form1099r_source_document_reference
+            reference
         ).length !== 1
       )
     ) {
@@ -485,11 +608,12 @@ export function rothOwnerPrintFields(
     print_line3_total_basis: 0,
     print_line14_remaining_basis: 0,
     source_traditional_distributions: 0,
-    source_roth_conversion: 0,
+    source_roth_conversion: facts.currentConversion?.gross ?? 0,
     source_roth_distribution: facts.nonqualifiedGross,
     source_roth_basis_contributions: facts.basis,
     source_roth_basis_conversions: facts.conversionBasis,
     roth_owner_inventory_review: facts.review,
-    ...facts.print,
+    ...(facts.nonqualifiedGross > 0 ? facts.print : {}),
+    ...(facts.currentConversion ? facts.currentConversion.print : {}),
   };
 }

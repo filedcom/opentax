@@ -211,7 +211,10 @@ function partI_regularTax(input: Form5329Input): number {
   if (input.roth_owner_inventory_review) {
     const facts = reviewedRothOwnerInventory(input.roth_owner_inventory_review);
     if (
-      !facts.review.conversions?.length || facts.review.owner !== input.owner ||
+      !(facts.review.conversions?.length ||
+        facts.review.prior_distributions?.length ||
+        facts.review.current_conversion) ||
+      facts.review.owner !== input.owner ||
       facts.earlyTaxable !== dist || exception !== 0
     ) {
       throw new Error(

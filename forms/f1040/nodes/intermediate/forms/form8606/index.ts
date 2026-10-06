@@ -197,7 +197,8 @@ const ownerPrintSchema = z.object({
   print_line15b_disaster: z.number().nonnegative().optional(),
   print_line15c_taxable: z.number().nonnegative().optional(),
   print_line16_converted: z.number().nonnegative().optional(),
-  print_line18_taxable_conversion: z.number().nonnegative().optional(),
+  print_line17_nontaxable_conversion: z.number().nonnegative().optional(),
+  print_line18_taxable_conversion: z.number().optional(),
   source_traditional_distributions: z.number().nonnegative(),
   source_roth_conversion: z.number().nonnegative(),
   source_roth_distribution: z.number().nonnegative(),
@@ -576,10 +577,10 @@ class Form8606Node extends TaxNode<typeof inputSchema> {
         throw new Error("Roth owner history repeated");
       }
       const rawGross = facts.reduce((sum, row) =>
-        sum + Math.round(row.rawGross * 100), 0) / 100;
+        sum + Math.round(row.rawTotalGross * 100), 0) / 100;
       const gross = roundWholeDollars(rawGross);
       const taxable = facts.reduce((sum, row) =>
-        sum + row.taxable, 0);
+        sum + row.totalTaxable, 0);
       return {
         outputs: [
           output(f1040, {
@@ -599,7 +600,9 @@ class Form8606Node extends TaxNode<typeof inputSchema> {
               source_roth_distribution: 0,
               source_roth_basis_contributions: 0,
               source_roth_basis_conversions: 0,
-              roth_owner_inventory_reviews: facts.map((row) => row.review),
+              roth_owner_inventory_reviews: facts.map((row) =>
+                row.review
+              ),
               owner_forms: facts.filter((row) => row.requires8606).map((
                 row,
               ) => ({ owner: row.review.owner, ...rothOwnerPrintFields(row) })),

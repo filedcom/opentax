@@ -142,6 +142,12 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "print_line17_nontaxable_conversion",
+    pdfField: "topmostSubform[0].Page2[0].f2_05[0]",
+    printZero: true,
+  },
+  {
+    kind: "text",
     domainKey: "print_line18_taxable_conversion",
     pdfField: "topmostSubform[0].Page2[0].f2_06[0]",
   },
@@ -228,13 +234,52 @@ export const form8606Pdf: PdfFormDescriptor = {
         owner,
       ) => ({
         ...owner.fields,
-        ...(owner.basis === 0
+        ...(owner.currentConversion
+          ? Object.fromEntries(
+            [
+              ...(owner.currentConversion.hasPartI
+                ? [
+                  "print_line6_year_end_value",
+                  "print_line7_distributions",
+                  "print_line11_nontaxable_conversion",
+                  "print_line12_nontaxable_distribution",
+                  "print_line13_nontaxable",
+                  "print_line14_remaining_basis",
+                ]
+                : []),
+              "print_line17_nontaxable_conversion",
+              "print_line18_taxable_conversion",
+            ].filter((key) =>
+              owner.fields?.[key as keyof typeof owner.fields] === 0
+            ).map((key) => [key, "0"]),
+          )
+          : {}),
+        ...(owner.nonqualifiedGross > 0 && owner.basis === 0
           ? { print_roth_line22_contribution_basis: "0" }
           : {}),
-        print_line1_nondeductible: undefined,
-        print_line2_prior_basis: undefined,
-        print_line3_total_basis: undefined,
-        print_line14_remaining_basis: undefined,
+        ...(owner.currentConversion?.hasPartI
+          ? {
+            print_line10_ratio_whole: Math.floor(owner.currentConversion.ratio),
+            print_line10_ratio_fraction: String(
+              Math.round(owner.currentConversion.ratio * 1000) % 1000,
+            ).padStart(3, "0"),
+          }
+          : {
+            print_line1_nondeductible: undefined,
+            print_line2_prior_basis: undefined,
+            print_line3_total_basis: undefined,
+            print_line14_remaining_basis: undefined,
+            print_line4_post_year_contributions: undefined,
+            print_line5_current_basis: undefined,
+            print_line6_year_end_value: undefined,
+            print_line7_distributions: undefined,
+            print_line8_conversions: undefined,
+            print_line9_combined_value: undefined,
+            print_line10_basis_ratio: undefined,
+            print_line11_nontaxable_conversion: undefined,
+            print_line12_nontaxable_distribution: undefined,
+            print_line13_nontaxable: undefined,
+          }),
         ...(owner.print.print_roth_line23_after_contribution_basis === 0
           ? {
             print_roth_line23_after_contribution_basis: "0",
@@ -251,6 +296,11 @@ export const form8606Pdf: PdfFormDescriptor = {
             print_roth_line25b_disaster: undefined,
             print_roth_line25c_taxable: undefined,
           }
+          : {}),
+        ...(owner.nonqualifiedGross === 0
+          ? Object.fromEntries(
+            Object.keys(owner.print).map((key) => [key, undefined]),
+          )
           : {}),
         print_owner_name: owner.ownerName,
         print_owner_ssn: owner.ownerSsn,

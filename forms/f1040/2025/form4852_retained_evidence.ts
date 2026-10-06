@@ -318,6 +318,14 @@ export async function assertForm4852RetainedEvidence(
           "Form4852 complete Roth inventory payment/account/owner differs from actual completed source",
         );
       }
+      if (facts.review.current_conversion) {
+        requiredTreatmentRecords.push({
+          reference: facts.review.current_conversion.prior_form8606
+            .source_document_reference,
+          facts: facts.review.current_conversion.prior_form8606,
+          prior8606: true,
+        });
+      }
       for (const year of facts.review.conversions ?? []) {
         requiredTreatmentRecords.push({
           reference: year.prior_form8606.source_document_reference,
@@ -421,15 +429,14 @@ export async function assertForm4852RetainedEvidence(
         facts: item.qcd_transfer_review,
       });
     }
-    const sharedAnnual8606s = requiredTreatmentRecords.filter((treatment) =>
-      treatment.priorRothConversion && requiredTreatmentRecords.some((other) =>
-        other.priorRothDistribution === "8606" &&
-        other.reference === treatment.reference
-      )
-    ).length;
+    const sharedAnnual8606s = requiredTreatmentRecords.filter((t) =>
+      t.priorRothConversion || t.priorRothDistribution === "8606" || t.prior8606
+    ).map((t) => t.reference);
+    const repeatedAnnuals = sharedAnnual8606s.length -
+      new Set(sharedAnnual8606s).size;
     if (
       (record.treatment_documents ?? []).length !==
-        requiredTreatmentRecords.length - sharedAnnual8606s
+        requiredTreatmentRecords.length - repeatedAnnuals
     ) {
       throw new Error(
         "Form 4852 treatment evidence must retain its complete source-document inventory",
@@ -495,10 +502,24 @@ export async function assertForm4852RetainedEvidence(
           );
         }
       } else if (treatment.prior8606) {
-        const prior = treatment.facts as NonNullable<
-          typeof basisEvidence
-        >["prior_form8606"];
-        const form = (await PDFDocument.load(bytes)).getForm();
+        const prior = treatment.facts as {
+          tax_year: number;
+          owner_ssn: string;
+          owner_name?: string;
+          filed_line14_basis: number;
+          filed_part_i?: Record<string, number | string>;
+        };
+        const pdf = await PDFDocument.load(bytes), form = pdf.getForm();
+        if (
+          prior.owner_name &&
+          (pdf.getTitle() !== "2024 Form 8606" || pdf.getPageCount() !== 2 ||
+            form.getTextField("topmostSubform[0].Page1[0].f1_1[0]").getText()
+                ?.trim() !== prior.owner_name)
+        ) {
+          throw new Error(
+            "Current conversion prior filed8606 actual year/owner differs",
+          );
+        }
         if (
           form.getTextField("topmostSubform[0].Page1[0].f1_2[0]").getText()
               ?.replace(/\D/g, "") !== prior.owner_ssn ||
@@ -510,6 +531,49 @@ export async function assertForm4852RetainedEvidence(
           throw new Error(
             "Form 4852 prior filed Form8606 parsed owner/basis differs from actual retained source",
           );
+        }
+        if (prior.filed_part_i) {
+          const fields: Record<string, string> = {
+            line1: "f1_9",
+            line2: "f1_10",
+            line3: "f1_11",
+            line4: "f1_12",
+            line5: "f1_13",
+            line6: "f1_14",
+            line7: "f1_15",
+            line8: "f1_16",
+            line9: "f1_17",
+            line11: "f1_20",
+            line12: "f1_21",
+            line13: "f1_22",
+          };
+          for (const [line, field] of Object.entries(fields)) {
+            const text =
+              form.getTextField(`topmostSubform[0].Page1[0].${field}[0]`)
+                .getText()?.trim() ?? "";
+            const actual = text === ""
+              ? undefined
+              : Number(text.replaceAll(",", ""));
+            if (actual !== prior.filed_part_i[line]) {
+              throw new Error(
+                "Current conversion prior filed8606 parsed PartI operands differ",
+              );
+            }
+          }
+          const integral =
+            form.getTextField("topmostSubform[0].Page1[0].f1_18[0]").getText()
+              ?.trim() ?? "";
+          const fractional =
+            form.getTextField("topmostSubform[0].Page1[0].f1_19[0]").getText()
+              ?.trim() ?? "";
+          const ratio = integral === "" && fractional === ""
+            ? undefined
+            : Number(`${integral}.${fractional}`);
+          if (ratio !== prior.filed_part_i.line10) {
+            throw new Error(
+              "Current conversion prior filed8606 parsed PartI ratio differs",
+            );
+          }
         }
       } else if (
         !isDeepStrictEqual(

@@ -855,3 +855,82 @@ Integrated0f51723d4 preserving later4972sourcegroups/cents. Freshstandardtask so
 Actualheld15/105 currentmainfullXSD/PDF/source/native/retained replay terminal `/tmp/opentax-ira-paper-current-main-held15-v2-oct6.log`, manifestSHAc8a7c3d30c0ddc4706e653630d60cd6c521831e34509643d3abf202f940c2eb0. Exactlythreegraphoperand additions fromearlierAMTintegration: unchangeditemized22000/20000/20000 suppliedto8995 forretirement-net-basis-early-rollover,samepayerissued/substituteW2,SALTincorrectW2. Independentheld+actualstandarddeduction exact; source/tax/nativeXMLexcepttimestamp/PDF/origins/retainedbytes unchanged. Do notcallwholependingbyteidentical. Actualold35/295 replays9/52+6/57+8/79+12/107 allterminal0 `/tmp/opentax-ira-paper-main-old35-{source,inventory,conversion,history}-oct6.log`; rootrehashesall997originalimmutablefiles exactly. Original10Q/N/margin proofsuperseded bytheseconstructedreviewedrecords; authenticexternalcustodian/signature/IRS gates remainopen.
 
 NativeIRAstatementregistration causedschemaorderingfailure whencombinedwithactualtwo-salePFICMTM. CorrectIRARecharacterizationStmt beforeGainOrLossMrktToMrktElectStmt (ReturnData4380vs4422). Actualcombinedsourcefixture provesbeforexmllint3,aftertyped1/0 plusfinalN+combo2/0 (13s). Combined10pagepacket/rootall-page reviewat `/tmp/opentax-ira-pfic-statement-order-main-oct6`, manifestSHA5d05c910eb6c0869b00d0c940cad54c5f3d32a2115f2f2a9b5af872b4580a567; retainedcompleted4852firstpageraster exactlypacketpage4, secondinstructionpage separatelyreviewed (12totaloccurrences). Sameowned7000 contribution/−1000.50 earnings yieldsraw5999.50 gross/filed6000/taxable0; MTM400/−200=200, AGI75200/TI59450/tax7999/refund3001. Source/copy/statement/pageorder/checkboxes amountschecked; noissuerorIRSclaim.
+
+### Current 2025 conversions and owner distributions — isolated 0f51723d4 proof
+
+The retained ordinary Roth owner inventory now admits actual listed current
+traditional-IRA conversion debits, paid Roth receipts, issued 5498 box 3 amounts,
+complete traditional/SEP/SIMPLE account and December 31 value inventory, and the
+owner's retained 2024 filed Form8606 basis. Current conversion copies remain
+issued traditional marked IRA copies; ordinary Roth J/T payments remain
+unmarked. Each current copy joins its source reference, owner, account, issuer
+address, code, date, gross, unknown-taxable indicator and withholding. Conversion
+and Roth payments enter the annual owner Form8606 exactly once, rather than
+adding generated native copies to the calculation inputs. Both owners retain
+separate Form8606 and Form5329 copies and share only the final1040 totals.
+
+PartI/II basis allocation uses filed whole-dollar operands and the prescribed
+three-decimal ratio; raw cents determine whether a real year-end account balance
+exists and aggregate before rounding. Current conversions enter the actual
+conversion-year FIFO pools after regular-contribution basis and historical
+consumption, with taxable-before-nontaxable conversion ordering and the separate
+conversion recapture clock. Qualified T payments leave PartIII blank while the
+current conversion still files PartII. The existing prior-year source contract
+remains reviewed filed tax treatment, not an earlier-year engine or a claim of
+issuer authentication.
+
+The draft current fixture's prior2024 PDFs initially populated line14 without
+complete PartI operands. Those unsealed draft artifacts are preserved and are
+superseded by new constructed source records. The corrected source requires the
+complete filed carryforward or allocated PartI operands, validates their filed
+basis equations, parses each actual retained PDF field and ratio, and joins a
+shared2024 historical PartII conversion to PartI lines8/11. The age-T prior
+record now explicitly retains filed basis2500, year-end3333, conversion5000,
+ratio.300, nontaxable1500 and remaining1000; these are constructed reviewed prior
+filing facts, not invented external acceptance or a historical recomputation.
+Both actual source bindings are updated in the rehashed prior line14/line2
+negative tests, which require the exact parsed-field rejection.
+
+Current complete direct-conversion sources require receipt equal to the full
+issued gross. Nonzero withheld conversion funds are rejected without the
+missing replacement/unconverted-distribution source records; a gross receipt
+is not silently treated as proof of replenishment. Current traditional
+contributions, other traditional withdrawals, outstanding rollovers, QCD/HSA,
+disaster/repayment/transferred-basis sources and their broader annual joins
+remain open under this parent.
+
+A genuine whole-conversion market loss retains prior basis15000, converted10000
+and paper line18=-5000, with1040 taxable0. The actual [2025 Form8606](https://www.irs.gov/pub/irs-pdf/f8606.pdf)
+and [line18 instructions](https://www.irs.gov/instructions/i8606)
+support the signed subtraction and omission of a nonpositive amount from1040
+line4b. Local2025v5.4 IRS8606 TaxableIRAConversionAmt is USAmountNNType. Native
+and direct PDF filing remain guarded pending a verified IRS representation;
+basis is not capped or discarded to force schema acceptance.
+
+Terminal proof on isolated current-main0f51723d4: checked source2/0(1m6s),
+strengthened conflict1/0(940ms), related28modules274/0(3m15s); logs
+`/tmp/opentax-roth-current-main-prior-source30.log`,
+`/tmp/opentax-roth-current-main-prior-conflicts31.log`, and
+`/tmp/opentax-roth-current-main-final-related33.log`.
+Thirteen public returns/116 packet pages passed the full local2025v5.4 XSD and
+held replay: source, raw pending, XML except ReturnTs, PDF bytes, copy origins and
+all retained document hashes. All116 pages were visually reviewed across25
+sheets. All162 retained pages (80 PDF copies,37 distinct exact rendered pages)
+were reviewed through explicit pixel groups; all28 completed4852 first pages
+match the packet pixels exactly. The prior-source repair leaves all13 packet
+PDF bytes unchanged. Frozen corrected35/295 and paper15/105 also replay;
+the latter admits only the independently derived newerAMT Form8995 itemized
+operand matching the unchanged finalized standard-deduction operand. All997
+original archived file hashes remain unchanged; original qualified10/70 claims
+are not revived by this proof.
+
+Ignored evidence is under
+`/tmp/opentax-form4852-roth-current-main-oct6/.state/research/roth-current-main-audit/`,
+with `held13-preserved`, source pixel records, visual review, preserved old
+sources and caches, and replay.ts. Replay command from that checkout:
+`PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run --allow-all .state/research/roth-current-main-audit/replay.ts`.
+Proof-index SHA256:
+`845e7e2273fc6c8c082ca08a79358fe5a00e6f3b41d8c657a7958710fad90b40`.
+This establishes the retained known-source routes and local schema/layout proof;
+external authentication, IRS Business Rules/ATS acceptance and the broader
+Form4852/8606 parent remain open.

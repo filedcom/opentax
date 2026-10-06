@@ -115,7 +115,11 @@ export function reconcileForm8606RothInventories(
           earlyForms[0].early_distribution !== row.earlyTaxable ||
           !isDeepStrictEqual(
             earlyForms[0].roth_owner_inventory_review,
-            row.review.conversions?.length ? row.review : undefined,
+            (row.review.conversions?.length ||
+                row.review.prior_distributions?.length ||
+                row.review.current_conversion)
+              ? row.review
+              : undefined,
           )
         : earlyForms.length !== 0)
     ) {
@@ -132,9 +136,10 @@ export function reconcileForm8606RothInventories(
   });
   const f1040 = pending.f1040 as Record<string, unknown> | undefined;
   const gross = roundWholeDollars(
-    facts.reduce((sum, row) => sum + Math.round(row.rawGross * 100), 0) / 100,
+    facts.reduce((sum, row) => sum + Math.round(row.rawTotalGross * 100), 0) /
+      100,
   );
-  const taxable = facts.reduce((sum, row) => sum + row.taxable, 0);
+  const taxable = facts.reduce((sum, row) => sum + row.totalTaxable, 0);
   if (
     f1040?.line4a_ira_gross !== gross ||
     (f1040?.line4b_ira_taxable ?? 0) !== taxable
