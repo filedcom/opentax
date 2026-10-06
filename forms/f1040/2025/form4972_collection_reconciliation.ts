@@ -5,7 +5,6 @@ import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 const formSchema = z.record(z.string(), z.unknown()).refine((form) =>
   Array.isArray(form.source_document_references) &&
   form.source_document_references.length >= 1 &&
-  form.source_document_references.length <= 4 &&
   form.source_document_references.every((ref: unknown) =>
     typeof ref === "string" && ref.trim().length > 0
   )
@@ -163,7 +162,7 @@ export function reconcileForm4972Collection(
       !filer || filer.filingStatus !== FilingStatus.MarriedFilingJointly ||
       !filer.spouse?.ssn ||
       scoped.some(({ fields, sources }) =>
-        (sources.length !== 1 && sources.length !== 2) ||
+        sources.length < 1 ||
         (fields.elect_10yr_averaging !== true &&
           (sources.length !== 1 || fields.elect_capital_gain !== true ||
             typeof fields.capital_gain_amount !== "number" ||
@@ -171,7 +170,7 @@ export function reconcileForm4972Collection(
         fields.beneficiary_distribution !== false ||
         fields.recipient_share_pct !== undefined ||
         (typeof fields.box6_nua === "number" && fields.box6_nua > 0 &&
-          (sources.length !== 1 || fields.elect_include_nua !== true ||
+          (fields.elect_include_nua !== true ||
             fields.elect_10yr_averaging !== true ||
             (fields.elect_capital_gain === true &&
               (typeof fields.capital_gain_amount !== "number" ||
@@ -185,7 +184,8 @@ export function reconcileForm4972Collection(
                   fields.box6_nua * fields.capital_gain_amount /
                     fields.lump_sum_amount,
                 ))) ||
-            sources[0].box6_nua !== fields.box6_nua)) ||
+            sources.reduce((sum, source) => sum + (source.box6_nua ?? 0), 0) !==
+              fields.box6_nua)) ||
         (fields.annuity_actuarial_value ?? 0) !== 0 ||
         (fields.federal_estate_tax ?? 0) !== 0 ||
         (fields.death_benefit_exclusion ?? 0) !== 0

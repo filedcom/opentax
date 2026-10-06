@@ -65,7 +65,7 @@ export function reconcileForm4972Multiple1099R(
     gain !== (form.capital_gain_amount ?? 0) ||
     nua !== (form.box6_nua ?? 0) ||
     (nua > 0 &&
-      (refs.length !== 2 || form.elect_include_nua !== true ||
+      (form.elect_include_nua !== true ||
         form.elect_capital_gain !== true || gain <= 0 ||
         !Number.isSafeInteger(nua * gain / taxable))) ||
     (nua === 0 && form.elect_include_nua === true) ||

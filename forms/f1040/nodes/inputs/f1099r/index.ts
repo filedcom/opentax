@@ -1484,13 +1484,12 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
     (item) => item.exclude_4972 === true,
   );
   if (
-    (lumpItems.length === 3 || lumpItems.length === 4) &&
+    lumpItems.length > 2 &&
     new Set(lumpItems.map((item) => item.ts)).size === 2
   ) {
     const taxpayer = lumpItems.filter((item) => item.ts === "T");
     const spouse = lumpItems.filter((item) => item.ts === "S");
     const groups = [taxpayer, spouse];
-    const pair = groups.find((group) => group.length === 2);
     const refs = lumpItems.map((item) => item.source_document_reference);
     const sourceValid = lumpItems.every((item) =>
       !!item.source_document_reference && !!item.form4972_plan &&
@@ -1500,7 +1499,11 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
       item.box2a_taxable_amount > 0 &&
       (item.box3_capital_gain ?? 0) >= 0 &&
       (item.box3_capital_gain ?? 0) <= item.box2a_taxable_amount &&
-      (item.box6_nua ?? 0) === 0 && (item.box8_other ?? 0) === 0 &&
+      Number.isSafeInteger(item.box6_nua ?? 0) &&
+      ((item.box6_nua ?? 0) === 0 ||
+        (Number.isSafeInteger(item.box2a_taxable_amount) &&
+          Number.isSafeInteger(item.box3_capital_gain ?? 0))) &&
+      (item.box8_other ?? 0) === 0 &&
       item.box8_pct_total === undefined
     );
     const samePlan = groups.every((group) =>
@@ -1519,7 +1522,7 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
       group[0].payer_name.trim().length > 0
     );
     if (
-      !pair || groups.some((group) => group.length < 1 || group.length > 2) ||
+      groups.some((group) => group.length < 1) ||
       !sourceValid || !samePlan ||
       new Set(refs).size !== lumpItems.length ||
       taxpayer[0]?.form4972_plan?.participant_ssn ===
@@ -1535,7 +1538,7 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
       )
     ) {
       throw new Error(
-        "Form 4972 joint multi-source election needs one or two complete same-plan copies per spouse and distinct full-share plans",
+        "Form 4972 joint multi-source election needs complete same-plan copies per spouse and distinct full-share plans",
       );
     }
     const sourceForms = groups.map((group) => {
@@ -1555,14 +1558,19 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
           (sum, item) => sum + (item.box3_capital_gain ?? 0),
           0,
         ),
-        ...(group.length === 2
+        ...(group.some((item) => (item.box6_nua ?? 0) > 0)
+          ? {
+            box6_nua: group.reduce(
+              (sum, item) => sum + (item.box6_nua ?? 0),
+              0,
+            ),
+          }
+          : {}),
+        ...(group.length > 1
           ? {
             multiple_1099r: {
               ...plan,
-              source_document_references: [
-                source_document_references[0],
-                source_document_references[1],
-              ],
+              source_document_references,
             },
           }
           : {}),
@@ -1639,8 +1647,7 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         item.box2a_taxable_amount <= 0 ||
         (item.box3_capital_gain ?? 0) > item.box2a_taxable_amount ||
         ((item.box6_nua ?? 0) > 0 &&
-          (!Number.isSafeInteger(item.box6_nua ?? 0) ||
-            lumpItems.length !== 2)) ||
+          (!Number.isSafeInteger(item.box6_nua ?? 0))) ||
         (item.box8_other ?? 0) !== 0 ||
         item.box8_pct_total !== undefined
       )

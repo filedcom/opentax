@@ -1,3 +1,4 @@
+import { multipleNuaReviewFixtures } from "./review-4972-multiple-nua.fixture.ts";
 import { controlledFarmWotcFixtures } from "./review-controlled-farm-wotc.fixture.ts";
 import { twoFarmWotcFixtures } from "./review-two-farm-wotc.fixture.ts";
 import { issuedRecaptureReviewFixture } from "./review-8611-issued-k1.fixture.ts";
@@ -9062,6 +9063,7 @@ const educationBase = basePdfReviewFixtures.find((fixture) =>
   fixture.id === "single-form8863-lifetime-learning-scholarship"
 )!;
 export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
+  ...multipleNuaReviewFixtures,
   ...twoFarmWotcFixtures(farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!)),
   issuedRecaptureReviewFixture(false), issuedRecaptureReviewFixture(true),
   ...controlledFarmWotcFixtures(twoFarmWotcFixtures(farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!))),

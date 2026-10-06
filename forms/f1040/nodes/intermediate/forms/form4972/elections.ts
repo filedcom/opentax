@@ -146,7 +146,6 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
         forms.some((form, index) =>
           typeof form.box6_nua === "number" && form.box6_nua > 0 &&
           (sourceByElection[index].box6_nua !== form.box6_nua ||
-            elections[index].source_document_references.length !== 1 ||
             form.elect_include_nua !== true ||
             form.elect_10yr_averaging !== true ||
             (form.elect_capital_gain === true &&
@@ -176,11 +175,10 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
         }) ||
         sources.some((source) =>
           !Array.isArray(source.source_document_references) ||
-          (source.source_document_references.length !== 1 &&
-            source.source_document_references.length !== 2) ||
+          source.source_document_references.length < 1 ||
           source.beneficiary_distribution === true ||
           source.recipient_share_pct !== undefined ||
-          (source.source_document_references.length === 2 &&
+          (source.source_document_references.length > 1 &&
             source.multiple_1099r === undefined) ||
           (source.source_document_references.length === 1 &&
             source.multiple_1099r !== undefined) ||

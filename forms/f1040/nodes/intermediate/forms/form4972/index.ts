@@ -147,7 +147,7 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
       (input.elect_capital_gain === true &&
         (input.capital_gain_amount ?? 0) <= 0) ||
       ((input.box6_nua ?? 0) > 0 &&
-        (refs.length !== 2 || input.elect_include_nua !== true ||
+        (input.elect_include_nua !== true ||
           input.elect_capital_gain !== true ||
           !Number.isSafeInteger(input.lump_sum_amount) ||
           !Number.isSafeInteger(input.capital_gain_amount ?? 0) ||

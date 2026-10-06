@@ -816,3 +816,8 @@ fixtures. These cases remain unrun pending bulk validation. Beneficiary shares,
 annuities, estate/death allocation, multi-copy NUA, source document
 authentication, filled PDF review, XSD/business-rule validation, and ATS
 acceptance remain open.
+
+
+## Complete multiple-source NUA and paired-owner review (2026-10-06)
+
+The [current source review](ty2025-form4972-multiple-nua-source-review.md) supersedes earlier copy-count and multi-copy NUA limits for the full-share nonbeneficiary, exact whole-dollar route. Three/five/seven same-plan sources and paired two/three and four/five sources now reconcile actual public inputs, independent worksheet tax, complete native/PDF packets and full XSD. Related preservation is232/0; five new packets cover all27 reviewed pages. Prior broader eligibility, beneficiary, annuity, death/estate and authentication boundaries remain open.
