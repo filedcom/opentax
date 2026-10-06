@@ -1970,3 +1970,6 @@ Audit qualification: preceding Roth entries preserve their original tests and im
 
 
 - [x] Join one byte-bound nonfarm engineering W-2 to the existing high-income farm ScheduleJ, actual SE/QBI, preferential tax and no-election AMT graph without attributing employee wages to farm income or business-paid payroll. Fresh main3/0; actual retained source2full-XSDpackets38reviewedpages exactpending/PDF/origins/XMLonlyReturnTs; priorJ5/85 rawsource preservation exact. Explicit emptyW2 preserved/orphanproof rejects. Wider fishing/mixed/farmwages/authentication/IRS parent stays open. See [source proof](ty2025-schedule-j-preferential-source-proof.md).
+
+
+- [x] Repair the dropped Form8582CR PDF pages by checking validated projected lines and verify realpacket origins; share existing owned single/mixedpassive K1 inputs in the fullgraph catalog. Finalsource26/0, typedcheck/lint, two full-XSD18page packets/all36pages reviewed, read-onlysource/native/PDF/artifactchecker2/36. Source credits500/7500 derive allowed500/4412 and1040tax17367/13455; mixedPartV issuerrows2941/1471 and unallowed3088 exact. Sharedplanner369fixtures99covered16uncovered; widerpassive/prioracceptedcarry/authentication/IRS parent open. See [packetproof](ty2025-form8582cr-pdf-gap.md).

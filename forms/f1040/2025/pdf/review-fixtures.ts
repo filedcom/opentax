@@ -1,3 +1,4 @@
+import { form8582crReviewFixtures } from "../form8582cr_k1.fixture.ts";
 import { ordinaryRothSubstituteReviewFixture } from "./review-4852-ordinary-roth.fixture.ts";
 import type { Form4852RetainedDocument } from "../form4852_source.ts";
 import { form8621QefReviewFixture } from "../form8621_qef.fixture.ts";
@@ -9193,6 +9194,7 @@ const existingPdfReviewFixtures: readonly PdfReviewFixture[] = [
   },
   form8621QefReviewFixture(basePdfReviewFixtures.find((row) => row.id === "single-w2-refund")!),
   ordinaryRothSubstituteReviewFixture(),
+  ...form8582crReviewFixtures(),
   ...basePdfReviewFixtures,
   twoSchoolEducationFixture(educationBase, "llc"),
   twoSchoolEducationFixture(educationBase, "aoc"),

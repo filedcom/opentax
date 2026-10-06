@@ -1,3 +1,8 @@
+import { buildPdfBytes, type PdfPageOrigin } from "./pdf/builder.ts";
+import {
+  form8582crMixedK1SourceInputs,
+  form8582crPartnershipSourceInputs,
+} from "./form8582cr_k1.fixture.ts";
 import {
   assert,
   assertEquals,
@@ -248,49 +253,7 @@ function filedReturn(
 }
 
 function filedPartnershipReturn() {
-  const result = f1040_2025.executeReturn({
-    general,
-    w2: [wage],
-    schedule_e: [{
-      tsj: "T",
-      activity_id: "rental-1",
-      passive_income_source_document_reference: incomeReference,
-      property_description: "Rental property",
-      street_address: "10 Rental Rd",
-      city: "Austin",
-      state: "TX",
-      zip: "78701",
-      property_type: 1,
-      activity_type: "B",
-      fair_rental_days: 365,
-      personal_use_days: 0,
-      rent_income: passiveIncome,
-      form_1099_payments_made: false,
-    }],
-    k1_partnership: [{
-      partnership_name: "Community partnership",
-      partnership_ein: "123456789",
-      source_document_reference: "2025 partnership K-1 code AD",
-      recipient_tin: "111223333",
-      box15_code_ad_new_markets_credit: 500,
-      new_markets_credit_subject_to_passive_activity_limit: true,
-    }],
-    form8582cr: {
-      credit_sources: [{
-        ...source,
-        activity_reference: "2025 partnership K-1 code AD",
-        source_document_reference: "2025 partnership K-1 code AD",
-        source_origin: {
-          kind: "partnership" as const,
-          entity_reference: "Community partnership",
-          ein: "123456789",
-        },
-      }],
-      regular_tax_all_income: taxAll,
-      regular_tax_without_passive: taxWithout,
-      line6_ordinary_worksheet: worksheet,
-    },
-  });
+  const result = f1040_2025.executeReturn(form8582crPartnershipSourceInputs());
   assertEquals(result.diagnostics, []);
   return result;
 }
@@ -347,95 +310,12 @@ function filedMixedK1Return(
   additionalPartnershipCredits: number[] = [],
   additionalSCorpCredits: number[] = [],
 ) {
-  const partnershipReference = "2025 partnership K-1 code AD mixed";
-  const sCorpReference = "2025 S corporation K-1 code AD mixed";
-  const partnerships = [
-    {
-      partnership_name: "Community partnership",
-      partnership_ein: "123456789",
-      source_document_reference: partnershipReference,
-      recipient_tin: "111223333",
-      box15_code_ad_new_markets_credit: 5_000,
-      new_markets_credit_subject_to_passive_activity_limit: true,
-    },
-    ...additionalPartnershipCredits.map((credit, index) => ({
-      partnership_name: `Community partnership ${index + 2}`,
-      partnership_ein: String(345678901 - index),
-      source_document_reference: `2025 partnership K-1 code AD ${index + 2}`,
-      recipient_tin: "111223333",
-      box15_code_ad_new_markets_credit: credit,
-      new_markets_credit_subject_to_passive_activity_limit: true,
-    })),
-  ];
-  const corporations = [
-    {
-      corporation_name: "Community S corporation",
-      corporation_ein: "234567891",
-      source_document_reference: sCorpReference,
-      recipient_tin: "111223333",
-      box13_code_ad_new_markets_credit: 2_500,
-      new_markets_credit_subject_to_passive_activity_limit: true,
-    },
-    ...additionalSCorpCredits.map((credit, index) => ({
-      corporation_name: `Community S corporation ${index + 2}`,
-      corporation_ein: String(456789012 - index),
-      source_document_reference: `2025 S corporation K-1 code AD ${index + 2}`,
-      recipient_tin: "111223333",
-      box13_code_ad_new_markets_credit: credit,
-      new_markets_credit_subject_to_passive_activity_limit: true,
-    })),
-  ];
-  const result = f1040_2025.executeReturn({
-    general,
-    w2: [wage],
-    schedule_e: [{
-      tsj: "T",
-      activity_id: "rental-1",
-      passive_income_source_document_reference: incomeReference,
-      property_description: "Rental property",
-      street_address: "10 Rental Rd",
-      city: "Austin",
-      state: "TX",
-      zip: "78701",
-      property_type: 1,
-      activity_type: "B",
-      fair_rental_days: 365,
-      personal_use_days: 0,
-      rent_income: passiveIncome,
-      form_1099_payments_made: false,
-    }],
-    k1_partnership: partnerships,
-    k1_s_corp: corporations,
-    form8582cr: {
-      credit_sources: [
-        ...partnerships.map((k1) => ({
-          ...source,
-          activity_reference: k1.source_document_reference,
-          source_document_reference: k1.source_document_reference,
-          current_year_credit: k1.box15_code_ad_new_markets_credit,
-          source_origin: {
-            kind: "partnership" as const,
-            entity_reference: k1.partnership_name,
-            ein: k1.partnership_ein,
-          },
-        })),
-        ...corporations.map((k1) => ({
-          ...source,
-          activity_reference: k1.source_document_reference,
-          source_document_reference: k1.source_document_reference,
-          current_year_credit: k1.box13_code_ad_new_markets_credit,
-          source_origin: {
-            kind: "s_corporation" as const,
-            entity_reference: k1.corporation_name,
-            ein: k1.corporation_ein,
-          },
-        })),
-      ],
-      regular_tax_all_income: taxAll,
-      regular_tax_without_passive: taxWithout,
-      line6_ordinary_worksheet: worksheet,
-    },
-  });
+  const result = f1040_2025.executeReturn(
+    form8582crMixedK1SourceInputs(
+      additionalPartnershipCredits,
+      additionalSCorpCredits,
+    ),
+  );
   assertEquals(result.diagnostics, []);
   return result;
 }
@@ -626,16 +506,24 @@ Deno.test("partnership K-1 code AD passive credit reconciles rental line 6, Form
   const pdf = form8582crPdf.projectFields!(pending.form8582cr, pending);
   assertEquals(pdf.line4a, 500);
   assertEquals(pdf.line37, 500);
-  const prepared = await f1040_2025.prepareReturn(
-    result.pending,
-    extractFilerIdentity(general),
-  );
+  const filer = extractFilerIdentity(general);
+  const prepared = await f1040_2025.prepareReturn(result.pending, filer);
   assertStringIncludes(prepared.bundle.xml, "<IRS8582CR ");
   assert(!prepared.bundle.xml.includes("<IRS8874 "));
   assertStringIncludes(
     prepared.bundle.xml,
     "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
   );
+  const origins: PdfPageOrigin[] = [];
+  const packet = await buildPdfBytes(
+    prepared.bundle.pending,
+    filer,
+    ".pdf-cache",
+    prepared.bundle,
+    origins,
+  );
+  assertEquals(origins.filter((row) => row.formKey === "form8582cr").length, 2);
+  assertEquals((await PDFDocument.load(packet)).getPageCount(), origins.length);
   assert(
     (await PDFDocument.load(await prepared.renderPdf())).getPageCount() > 2,
   );
