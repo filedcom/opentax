@@ -956,3 +956,19 @@ Actual controlled-group WOTC is integrated at1f42620dd:98 isolated related/4 fin
 
 Ready isolated work: optional farm/C QBI97bb2ac2b (95 related/3 final checks, nine complete packets/all123 pages reviewed and held replay checked); remarried MFJ selected-parent82c12560 (474 selected/5 final checks, six complete packets/all36 pages reviewed); seasonal/excluded SHOP0498d58f7 (23 checks, three complete packets/all69 pages reviewed). Main integration is next; those three completions are not yet counted. Three agents continue regular farm WOTC, remarried MFS selected-parent sources and same-proprietor aggregated SHOP. Wider source authentication, named-form gaps, ATS conflicts, issued credentials, IRS business rules and acceptance remain incomplete. The frozen checklist and future section remain unchanged.
 
+
+
+## Before continuing filed C/F whole-dollar arithmetic
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,406 bounded slices**; broader parents remain open. Prior learnings are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md). Newly discovered work belongs only in `future_todo`, outside this queue.
+
+Optional farm/C QBI, remarried MFJ selected-parent sources and seasonal/excluded SHOP are integrated at `173d3739b`: **48 combined typed checks passed, zero failed (2m22s)**, including controlled/independent joint-owner WOTC and native owner-SE compatibility. Their nine/six/three complete source-backed local-XSD packets and all123/36/69 pages were visually reviewed and retained. Isolated related checks passed95/474/23, with final allocation/family checks3/5. Only those bounded routes are recorded as completed.
+
+Earlier ordinary C/F, multiple-QHP SHOP, sibling-parent, corrected owner-WOTC and actual controlled-group WOTC routes retain their packet and integration evidence. Actual planner: **253 fixtures**,116 PDF descriptors,113 keys,95 covered and18 uncovered. Exact commands, logs, hashes and limits are in the [validation record](docs/mef/ty2025-form1040-validation-batch.md).
+
+Full `deno task test` remains live at stable `bc6cafec6` in `/tmp/opentax-full-regression-repaired-v2-oct6`; it predates later source/PDF and production changes. Latest-head full regression is unproven. Three agents continue regular farm WOTC, remarried MFS selected-parent sources and same-proprietor aggregated SHOP. Root continues existing ordinary owned C/F source/native/PDF reconciliation. Wider source authentication, named-form gaps, ATS conflicts, issued credentials, IRS business rules and acceptance remain incomplete. The frozen checklist and future section remain unchanged.
+
