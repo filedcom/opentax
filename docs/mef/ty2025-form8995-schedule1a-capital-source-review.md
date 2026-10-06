@@ -22,3 +22,10 @@ Source fixtures are synthetic reviewed facts; external issuer authentication, wi
 - `tips-zero.json`: `cf195a5628797c08188eeaee7ce8a69504bc2f382934741c3c535eeb117ec10e`
 - `tips-zero.pdf`: `6b71b4ccfc674981fcc4816fdd5960421ed04406cd49bde3e575df6c0d3f9891`
 - `tips-zero.xml`: `92572c7558aee3eb7bc33792b37104d62e1468bbb57f7412f23bbe6ea116aad9`
+
+Current main six-file QBI/paired-health/registered-return-replay/Pub974 gate passes74/0 (1m5s), `/tmp/opentax-qbi-paired-source-main.log`; SHA256 `7c08ddc7fb12914da21d75eea72f620ccd3cf8f87956c40d2a652aa0fe91b02a`. All four current-main PDFs are byte-identical to the visually reviewed outputs. Regenerated XML timestamps change their digests; current XML passes fullXSD. Current artifact hashes:
+
+- `capital-positive.xml`: `3e3b2b45f21f2ffa0919af0ef1e2ebddb2ef0900ad0c0a90497ac7d3e8866309`
+- `capital-zero.xml`: `ca3e5e46f7140a3cef0e3d989d078f95950f7a61610e2fe6358462b3433af52b`
+- `tips-positive.xml`: `f8f9cbf6fca311511a826695706e79c18857737768a2b49638be3bcfa5e52d05`
+- `tips-zero.xml`: `cb342d990063cec0d7173f9910f30bd37d676bd1ae59452e8504ff9138f81a63`
