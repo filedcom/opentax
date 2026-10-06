@@ -4929,3 +4929,7 @@ Current owner-fixture repair integrates atd53559b3f. Existing MFJ scenarios15/16
 ## Spouse Medicare current-main integration, October6
 
 At `4dc5a8fcb`, the exact combined seven-file Deno gate retained in `/tmp/opentax-medicare-farm-cf-main-integration.log` completed25 passed/0 failed in1m35s. It covers CLI issue60, five existing7206 E2Es, spouse Medicare filled-PDF sources, farmWOTC positive/conflict routes, signed C/F and native8995-A. Log SHA256: `e4c6a25cb6b9af2c4a9607c7ffa49e362c12020e3a880561e8f6598cf09e7ca9`. Three reviewed packets/nine manifest hashes copied and verified in `.state/research/2026-10-06-spouse-medicare-qbi-reviewed`. Earlier full batch11,494/8 remains the authoritative full-run result pending rerun.
+
+## Main sourced farm losses, October6
+
+At68e6312d6, `/tmp/opentax-farm-loss-main-integration.log` terminal result: ok | 22 passed | 0 failed (2m5s). Exact six-file command includes farm loss/positive/conflicts, signedC-F, spouse Medicare PDF and native8995-A. SHA256 `32a2aa4658fcd6d732fdd3c5886474339bed0693b645b316aa9f5595c03d0a0c`. Current held replay verifies6 cases/149 pages in `/tmp/opentax-farm-loss-main-held.log` SHA256 `7946a832c787878ba56a58576ebeb1bb43af39e63d93af4e64dbfb549ab7bda8`; only declared exclusion scope updated to current catalog, source/artifact hashes remain frozen.
