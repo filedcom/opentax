@@ -20,6 +20,7 @@ export const sharedParticipantCases = [
   "primary-part3",
   "spouse-part3",
   "estate-only",
+  "outside-beneficiary",
 ] as const;
 export function sharedParticipantInputs(
   variant: typeof sharedParticipantCases[number] = "combined",
@@ -109,6 +110,70 @@ export function sharedParticipantInputs(
       full_distribution_federal_estate_tax: 2000.03,
       recipient_allocated_federal_estate_tax: Math.round(2000.03 * share) / 100,
     };
+  }
+  if (variant === "outside-beneficiary") {
+    const spouse = input.f1099r.filter((r) => r.ts === "S");
+    for (const [index, c] of spouse.entries()) {
+      c.box9a_pct_total = 37.5;
+      c.box8_pct_total = 41.375;
+      c.box2a_taxable_amount = splitCents(18750, spouse.length, index);
+      c.box3_capital_gain = splitCents(3750, spouse.length, index);
+      c.box6_nua = splitCents(3750, spouse.length, index);
+      c.box8_other = splitCents(4965, spouse.length, index);
+      c.box1_gross_distribution =
+        Math.round((c.box2a_taxable_amount + c.box6_nua) * 100) / 100;
+    }
+    const other = {
+      recipient_ssn: "222334444",
+      cash_share_pct: 25,
+      annuity_share_pct: 36.125,
+      source_copies: [{
+        source_document_reference: "outside-beneficiary-issued",
+        box2a_taxable_amount: 12500,
+        box3_capital_gain: 2500,
+        box6_nua: 2500,
+        box8_other: 4335,
+      }],
+    };
+    const revised = participantInventorySchema.parse({
+      ...inventory,
+      recipients: [inventory.recipients[0], {
+        recipient_ssn: "987654321",
+        cash_share_pct: 37.5,
+        annuity_share_pct: 41.375,
+        source_copies: spouse.map((c) => ({
+          source_document_reference: c.source_document_reference,
+          box2a_taxable_amount: c.box2a_taxable_amount,
+          box3_capital_gain: c.box3_capital_gain,
+          box6_nua: c.box6_nua,
+          box8_other: c.box8_other,
+        })),
+      }, other],
+    });
+    for (const c of input.f1099r) {
+      Object.assign(c.form4972_plan, {
+        participant_distribution_inventory: structuredClone(revised),
+      });
+    }
+    for (const e of input.form4972.elections) {
+      e.death_benefit_exclusion = 4999.92;
+      e.death_benefit_recipient_allocated_amount = 1874.97;
+      e.death_benefit_allocation!.recipients = [
+        {
+          recipient_ssn: "123456789",
+          share_pct: 37.5,
+          excluded_amount: 1874.97,
+        },
+        {
+          recipient_ssn: "987654321",
+          share_pct: 37.5,
+          excluded_amount: 1874.97,
+        },
+        { recipient_ssn: "222334444", share_pct: 25, excluded_amount: 1249.98 },
+      ];
+      e.partial_estate_tax_source!.recipient_allocated_federal_estate_tax =
+        750.01;
+    }
   }
   if (variant === "primary-part3") {
     input.form4972.elections[0].elect_capital_gain = false;
