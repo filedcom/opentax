@@ -785,3 +785,8 @@ later ScheduleB-question and finalized QBI input additions; its originals are
 untouched, and no byte-preservation claim is made against that older archive.
 Wider debt use, source authentication, prior accepted carryovers, K1 codeB,
 foreign allocation and IRS parent gates remain open.
+
+
+## Main exact Form4952 paid-source cents
+
+Production738554c2a main focused6/0(17s), `/tmp/opentax-form4952-source-cents-current-main-oct6.log`; isolated final44/0 sevenmodules verifies same production. Actual main retainedsource replay regenerates7-page fullXSD/PDF/pending/origins exactly, XMLonlyReturnTs, `/tmp/opentax-form4952-source-cents-held-main-oct6.log`; output `/tmp/opentax-form4952-source-cents-held-main-oct6`. Allseven pages reviewed from v4 and confirmed PDF/pending byte-identical finalv5. OriginalolderOctober6 integerarchive untouched; graph additions to laterregeneration are recorded and no oldarchivebyteequality claim. Main6/0 andheld were terminal before sealing, ledger1466; frozen52/future unchanged. FullV5 firstexit1/logoverwritten byKeepAlive, run2 live91417/91420; nextwrapper-start guard archives and removes service. Latest-source fullpass remains required.

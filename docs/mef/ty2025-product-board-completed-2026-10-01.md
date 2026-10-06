@@ -1949,3 +1949,6 @@ Audit qualification: the preceding Roth ordinary/inventory/conversion/history en
 
 
 - [x] Derive legacy1254 productive post1975 IDC recapture from owned actual and hypothetical capitalization/depletion accounts, connecting current C/SE/AGI/itemized/QBI/1040 and donation carryforward. Main17/0; exact retained14 full-XSD packets235 files (XMLonlyReturnTs),490 previously reviewed page occurrences, isolated compatibility578/0. Actual offset3000 yields ordinarypool7000 and contribution293000; total14773/refund1227/carry251847.80. Broader producing617/AMT/percentage depletion/external authenticity and IRS parent remain open. See [source proof](ty2025-form8283-natural-resource-reduction-proof.md).
+
+
+- [x] Preserve exact cents in reviewed direct-use investment principal and paid-interest sources, reconcile in safe integer cents, reject fractional/unsafe totals and one-cent source changes before native/directPDF rounding. Main6/0, isolated44/0; seven full-XSD pages reviewed, retained source/pending/PDF/origins exact andXMLonlyReturnTs. Payments100.30+200.30 yield source300.60/filed301, itemized18301/tax7669/refund3331. Wider debt/source authentication/carryovers/IRS parent remains open. See [debt source proof](ty2025-form4952-gap.md).

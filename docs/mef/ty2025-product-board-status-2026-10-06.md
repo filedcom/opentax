@@ -2897,3 +2897,8 @@ Original wrapper and launchctl evidence retained in
 `/tmp/opentax-full-regression-v5-restart-audit-oct6.txt`.
 The launchctl debug override was rejected because it requires root privileges; no override was installed. Instead, the wrapper path was atomically replaced with a startup guard that archives terminal run2 log/status and removes the submitted KeepAlive service before another test launch. Currentrun2 retains its original open script inode and continues; its explicit terminal result remains required.
 Latest-source full run must use a one-shot launcher and unique immutable paths.
+
+
+## Main exact Form4952 paid-source cents
+
+Production738554c2a main focused6/0(17s), `/tmp/opentax-form4952-source-cents-current-main-oct6.log`; isolated final44/0 sevenmodules verifies same production. Actual main retainedsource replay regenerates7-page fullXSD/PDF/pending/origins exactly, XMLonlyReturnTs, `/tmp/opentax-form4952-source-cents-held-main-oct6.log`; output `/tmp/opentax-form4952-source-cents-held-main-oct6`. Allseven pages reviewed from v4 and confirmed PDF/pending byte-identical finalv5. OriginalolderOctober6 integerarchive untouched; graph additions to laterregeneration are recorded and no oldarchivebyteequality claim. Main6/0 andheld were terminal before sealing, ledger1466; frozen52/future unchanged. FullV5 firstexit1/logoverwritten byKeepAlive, run2 live91417/91420; nextwrapper-start guard archives and removes service. Latest-source fullpass remains required.
