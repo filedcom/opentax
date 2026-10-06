@@ -168,8 +168,11 @@ Deno.test("complete recipient/participant collections retain independent electio
       await assertRejects(() => buildPdfBytes(changed, filer));
     }
     const synchronized: any = structuredClone(result.pending);
-    const target = synchronized.form4972.forms.findIndex((f: any) =>
-      f.beneficiary_distribution
+    const target = Math.max(
+      0,
+      synchronized.form4972.forms.findIndex((f: any) =>
+        f.beneficiary_distribution
+      ),
     );
     synchronized.form4972.forms[target].participant_collection_review
       .participant_birth_date = "1936-01-02";
