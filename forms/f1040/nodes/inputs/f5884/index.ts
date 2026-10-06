@@ -3,6 +3,7 @@ import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f3800 } from "../f3800/index.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
 import { scheduleC } from "../schedule_c/index.ts";
 import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -1056,7 +1057,7 @@ export function calculateForm5884(input: z.infer<typeof inputSchema>) {
 class F5884Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f5884";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f3800, scheduleC, schedule_f]);
+  readonly outputNodes = new OutputNodes([f3800, scheduleC, schedule_f, f1040]);
 
   compute(
     _ctx: NodeContext,
@@ -1066,16 +1067,19 @@ class F5884Node extends TaxNode<typeof inputSchema> {
     const lines = calculateForm5884(input);
     const credit = lines.line4;
     if (credit <= 0) return { outputs: [] };
-    const outputs = [output(f3800, {
-      f5884_credit: {
-        credit_amount: credit,
-        subject_to_passive_activity_limit:
-          (lines.line2 > 0 && input.subject_to_passive_activity_limit) ||
-          (input.pass_through_credits ?? []).some((entry) =>
-            entry.credit_amount > 0 && entry.subject_to_passive_activity_limit
-          ),
-      },
-    })];
+    const outputs = [
+      output(f3800, {
+        f5884_credit: {
+          credit_amount: credit,
+          subject_to_passive_activity_limit:
+            (lines.line2 > 0 && input.subject_to_passive_activity_limit) ||
+            (input.pass_through_credits ?? []).some((entry) =>
+              entry.credit_amount > 0 && entry.subject_to_passive_activity_limit
+            ),
+        },
+      }),
+      output(f1040, { form5884_determined_credit: credit }),
+    ];
     for (const allocation of lines.wageDeductionAllocations) {
       if (allocation.location.kind === "schedule_c") {
         outputs.push(output(scheduleC, {

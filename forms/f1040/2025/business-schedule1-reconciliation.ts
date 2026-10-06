@@ -12,6 +12,7 @@ import {
 import {
   calculateScheduleFAtRiskNet,
   inputSchema as scheduleFSchema,
+  projectScheduleFItems,
   wotcReductionsByFarm,
 } from "../nodes/intermediate/forms/schedule_f/index.ts";
 
@@ -62,7 +63,7 @@ export function assertBusinessSchedule1Amounts(
     const source = scheduleFSchema.parse(pending.schedule_f);
     if (source.schedule_fs.length > 0) {
       const reductions = wotcReductionsByFarm(source);
-      const expected = source.schedule_fs.reduce(
+      const expected = projectScheduleFItems(source).reduce(
         (sum, farm) =>
           sum +
           (farm.qbi_wotc_filing_review

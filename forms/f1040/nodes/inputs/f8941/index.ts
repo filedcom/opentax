@@ -6,6 +6,7 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { TS } from "../../types.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
+import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
 import { f3800 } from "../f3800/index.ts";
 import {
   coverageTierSchema,
@@ -78,6 +79,20 @@ const multiplePlanSourceSchema = sourceSchema.omit({
   ...multiplePlanFields,
   excluded_owner_family_seasonal_and_nonbusiness_workers_none_verified: z
     .boolean(),
+}).strict();
+const farmPlanSourceSchema = multiplePlanSourceSchema.omit({
+  schedule_c_business_reference: true,
+  other_schedule_c_employee_benefits: true,
+}).extend({
+  schedule_f_farm_id: z.string().trim().min(1),
+  other_schedule_f_employee_benefits: amount,
+  cash_schedule_f_shop_employer_confirmed: z.literal(true),
+  farm_ownership_source_reference: z.string().trim().min(1),
+  farming_activity_source_reference: z.string().trim().min(1),
+  farm_issued_receipt_references: z.tuple([
+    z.string().trim().min(1),
+    z.string().trim().min(1),
+  ]),
 }).strict();
 
 const commonControlMemberSchema = multiplePlanSourceSchema.extend({
@@ -247,6 +262,7 @@ export const inputSchema = z.union([
     ).min(1).max(24),
   }).strict(),
   multiplePlanSourceSchema,
+  farmPlanSourceSchema,
   commonControlSchema,
   independentSpouseSchema,
 ]);
@@ -775,9 +791,26 @@ export function calculateForm8941(raw: unknown): Form8941Lines {
 class F8941Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8941";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f3800, schedule_c, f1040]);
+  readonly outputNodes = new OutputNodes([f3800, schedule_c, schedule_f, f1040]);
 
   compute(_ctx: NodeContext, rawInput: F8941Input): NodeResult {
+    if ("schedule_f_farm_id" in rawInput) {
+      const lines = calculateForm8941(rawInput);
+      return { outputs: [
+        output(f3800, { f8941_direct_employer_credit: {
+          credit_amount: lines.line16,
+          schedule_f_farm_id: rawInput.schedule_f_farm_id,
+          shop_plan_reference: rawInput.shop_plan_reference,
+          shop_plan_references: rawInput.offered_qhps.map((p) => p.shop_plan_reference),
+          subject_to_passive_activity_limit: false,
+        } }),
+        output(f1040, { form8941_determined_credit: lines.line16 }),
+        output(schedule_f, { form8941_premium_reductions: [{
+          farm_id: rawInput.schedule_f_farm_id,
+          credit_amount: lines.line16,
+        }] }),
+      ] };
+    }
     if ("independent_members" in rawInput) {
       const joint = independentSpouseForm8941(rawInput);
       return {

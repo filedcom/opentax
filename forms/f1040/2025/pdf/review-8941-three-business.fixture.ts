@@ -28,7 +28,10 @@ export function form8941ThreeBusinessInputs(thirdReceipts = 150000) {
   });
   const original = thirdReturn.f8941;
   const first = two.f8941.group_members[0];
-  if (!("monthly_plan_arrangements" in original)) {
+  if (
+    !("monthly_plan_arrangements" in original) ||
+    !("schedule_c_business_reference" in original)
+  ) {
     throw new Error("Expected owned SHOP source");
   }
   const thirdEin = "456789123";

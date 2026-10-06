@@ -196,6 +196,7 @@ const inputSchema = z.object({
   form8396_source: form8396SourceSchema.optional(),
   form8994_determined_credit: z.number().int().finite().positive().optional(),
   form8941_determined_credit: z.number().int().finite().positive().optional(),
+  form5884_determined_credit: z.number().int().finite().positive().optional(),
   form3800_source_credits: z.object({
     standardCredit: z.number().finite().nonnegative(),
     empowermentCredit: z.number().finite().nonnegative().optional(),
@@ -1399,9 +1400,35 @@ class F1040Node extends TaxNode<typeof inputSchema> {
               allowed_credit: businessCredit.lines.line38,
               standard_credit_allowed: businessCredit.lines.line17,
               specified_credit_allowed: businessCredit.lines.line37,
-              // A sole direct Form8941 credit has no competing source/FIFO split.
-              // Its determined credit already reduced ScheduleC under280C(h).
+              // For the two direct employer credits, use the earlier Form3800
+              // WOTC row first; both full determined credits reduce farm expenses.
               ...(input.form8941_determined_credit !== undefined &&
+                  input.form5884_determined_credit !== undefined &&
+                  input.form3800_source_credits?.standardCredit === 0 &&
+                  (input.form3800_source_credits?.empowermentCredit ?? 0) ===
+                    0 &&
+                  input.form3800_source_credits?.specifiedCredit ===
+                    input.form8941_determined_credit +
+                      input.form5884_determined_credit &&
+                  input.form3800_source_credits?.standardCarryforward === 0 &&
+                  input.form3800_source_credits?.specifiedCarryforward === 0 &&
+                  Object.values(
+                    input.form3800_source_credits?.passiveLines ?? {},
+                  ).every((amount) => amount === 0)
+                ? {
+                  form5884_applied_credit: Math.min(
+                    businessCredit.lines.line37,
+                    input.form5884_determined_credit,
+                  ),
+                  form8941_applied_credit: Math.max(
+                    0,
+                    businessCredit.lines.line37 -
+                      input.form5884_determined_credit,
+                  ),
+                }
+                : {}),
+              ...(input.form8941_determined_credit !== undefined &&
+                  input.form5884_determined_credit === undefined &&
                   input.form3800_source_credits?.standardCredit === 0 &&
                   (input.form3800_source_credits?.empowermentCredit ?? 0) ===
                     0 &&

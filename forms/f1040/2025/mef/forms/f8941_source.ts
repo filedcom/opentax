@@ -11,6 +11,146 @@ import {
 import { FilingStatus, TS } from "../../../nodes/types.ts";
 import type { FilerIdentity } from "../../../mef/header.ts";
 import { inputSchema as generalInputSchema } from "../../../nodes/inputs/general/index.ts";
+import {
+  inputSchema as scheduleFInputSchema,
+  projectScheduleFItems,
+  reconcileFarmSources,
+} from "../../../nodes/intermediate/forms/schedule_f/model.ts";
+import { inputSchema as gInputSchema } from "../../../nodes/inputs/f1099g/index.ts";
+import { inputSchema as necInputSchema } from "../../../nodes/inputs/f1099nec/index.ts";
+
+function reconcileForm8941ScheduleF(
+  source: Extract<
+    ReturnType<typeof inputSchema.parse>,
+    { schedule_f_farm_id: string }
+  >,
+  pending: Readonly<Record<string, unknown>>,
+  filer?: FilerIdentity,
+  appliedCredit?: number,
+) {
+  const scheduleF = scheduleFInputSchema.parse(pending.schedule_f);
+  reconcileFarmSources(scheduleF);
+  const lines = calculateForm8941(source);
+  const farm = scheduleF.schedule_fs.find((item) =>
+    item.farm_id === source.schedule_f_farm_id
+  );
+  const reductions = scheduleF.form8941_premium_reductions;
+  const w2 = farm?.shop_employee_w2_records ?? [];
+  const payroll = source.employees;
+  const receipts = (scheduleF.farm_sources ?? []).filter((item) =>
+    item.farm_id === source.schedule_f_farm_id &&
+    (item.kind === "1099g_agriculture" || item.kind === "1099nec_farm_income")
+  );
+  const [g, nec] = [
+    receipts.find((item) => item.kind === "1099g_agriculture"),
+    receipts.find((item) => item.kind === "1099nec_farm_income"),
+  ];
+  const issuedG = gInputSchema.parse(pending.f1099g).f1099gs.filter((row) =>
+    row.farm_id === source.schedule_f_farm_id &&
+    row.box_7_payment_kind === "agricultural_program"
+  );
+  const issuedNec = necInputSchema.parse(pending.f1099nec).f1099necs.filter((
+    row,
+  ) =>
+    row.farm_id === source.schedule_f_farm_id &&
+    row.for_routing === "schedule_f"
+  );
+  const ownerSSN = source.proprietor_recipient === TS.T
+    ? filer?.primarySSN
+    : filer?.spouse?.ssn;
+  const wotcReview = farm?.qbi_wotc_filing_review;
+  if (
+    scheduleF.schedule_fs.length !== 1 || !farm ||
+    farm.accounting_method !== "cash" ||
+    farm.proprietor_recipient !== source.proprietor_recipient ||
+    farm.line_e_material_participation !== true ||
+    farm.line_d_ein?.replaceAll("-", "") !== source.employment_ein ||
+    (source.excluded_workers?.length ?? 0) !== 0 ||
+    (source.excluded_worker_reviews?.length ?? 0) !== 0 ||
+    reductions?.length !== 1 ||
+    reductions[0].farm_id !== source.schedule_f_farm_id ||
+    reductions[0].credit_amount !== lines.line16 ||
+    farm.line15_employee_benefits !==
+      source.other_schedule_f_employee_benefits + lines.line4 ||
+    projectScheduleFItems(scheduleF)[0].line15_employee_benefits !==
+      source.other_schedule_f_employee_benefits + lines.line4 - lines.line16 ||
+    w2.length !== payroll.length ||
+    new Set(w2.map((row) => row.employee_ssn)).size !== w2.length ||
+    new Set(w2.map((row) => row.payroll_record_reference)).size !== w2.length ||
+    w2.some((row) => {
+      const employee = payroll.find((item) =>
+        item.employee_ssn === row.employee_ssn &&
+        item.employee_reference === row.employee_reference
+      );
+      return !employee || row.employer_ein !== source.employment_ein ||
+        row.payroll_record_reference !==
+          employee.enrollment_and_payroll_record_reference ||
+        row.social_security_medicare_wages !==
+          employee.social_security_medicare_wages ||
+        Math.min(row.hours_of_service, 2080) !== employee.hours_of_service;
+    }) ||
+    farm.line22_labor_hired !==
+      w2.reduce((sum, row) => sum + row.social_security_medicare_wages, 0) ||
+    (wotcReview && (
+      wotcReview.farm_ownership_source_reference !==
+        source.farm_ownership_source_reference ||
+      wotcReview.farming_activity_source_reference !==
+        source.farming_activity_source_reference ||
+      wotcReview.employee_w2_records.length !== w2.length ||
+      wotcReview.employee_w2_records.some((row) => {
+        const shop = w2.find((item) =>
+          item.employee_reference === row.employee_reference
+        );
+        return !shop || row.employee_ssn !== shop.employee_ssn ||
+          row.employer_ein !== shop.employer_ein ||
+          row.box3_social_security_wages !==
+            shop.social_security_medicare_wages ||
+          row.box5_wages !== shop.social_security_medicare_wages ||
+          row.payroll_record_references.length !== 1 ||
+          row.payroll_record_references[0] !== shop.payroll_record_reference;
+      })
+    )) ||
+    receipts.length !== 2 || !g || !nec ||
+    g.source_document_reference === nec.source_document_reference ||
+    issuedG.length !== 1 || issuedNec.length !== 1 ||
+    issuedG[0].source_document_reference !== g.source_document_reference ||
+    issuedG[0].box_7_agriculture !== g.amount ||
+    issuedG[0].payer_name !== g.payer_name ||
+    issuedG[0].payer_tin?.replace(/\D/g, "") !== g.payer_tin ||
+    issuedG[0].recipient_tin !== g.recipient_tin ||
+    issuedNec[0].source_document_reference !== nec.source_document_reference ||
+    issuedNec[0].box1_nec !== nec.amount ||
+    issuedNec[0].payer_name !== nec.payer_name ||
+    issuedNec[0].payer_tin?.replace(/\D/g, "") !== nec.payer_tin ||
+    issuedNec[0].recipient_ssn !== nec.recipient_tin ||
+    g.source_document_reference !== source.farm_issued_receipt_references[0] ||
+    nec.source_document_reference !==
+      source.farm_issued_receipt_references[1] ||
+    g.recipient_tin !== source.owner_ssn ||
+    nec.recipient_tin !== source.owner_ssn ||
+    farm.line4a_ag_program_payments !== g.amount ||
+    farm.line4b_ag_program_payments_taxable !== g.amount ||
+    farm.line8_other_income !== nec.amount ||
+    (appliedCredit !== undefined && (!Number.isInteger(appliedCredit) ||
+      appliedCredit < 0 || appliedCredit > lines.line16)) ||
+    (filer && (ownerSSN !== source.owner_ssn ||
+      (source.proprietor_recipient === TS.T && filer.fullName &&
+        filer.fullName !== source.owner_name)))
+  ) {
+    throw new Error(
+      "Form 8941 farm payroll, SHOP or Schedule F source differs",
+    );
+  }
+  return {
+    kind: "farm" as const,
+    source,
+    lines,
+    planReferences: source.offered_qhps.map((item) => item.shop_plan_reference),
+    groupBusinessReferences: undefined,
+    independentSpouseBusinessReferences: undefined,
+    independentSpouseCredits: undefined,
+  };
+}
 
 /** Compare the one direct employer's wages and reduced premium deduction. */
 export function reconcileForm8941ScheduleC(
@@ -19,6 +159,9 @@ export function reconcileForm8941ScheduleC(
   appliedCredit?: number,
 ) {
   const source = inputSchema.parse(pending.f8941);
+  if ("schedule_f_farm_id" in source) {
+    return reconcileForm8941ScheduleF(source, pending, filer, appliedCredit);
+  }
   const scheduleC = scheduleCInputSchema.parse(pending.schedule_c);
   if ("independent_members" in source) {
     const joint = independentSpouseForm8941(source);
@@ -389,12 +532,21 @@ export function reconcileForm8941DocumentSource(
   if (
     !credit || typeof credit !== "object" ||
     !("credit_amount" in credit) ||
-    !("schedule_c_business_reference" in credit) ||
+    (reconciled.kind !== "farm" &&
+      !("schedule_c_business_reference" in credit)) ||
     !("shop_plan_reference" in credit) ||
     !("subject_to_passive_activity_limit" in credit) ||
     credit.credit_amount !== reconciled.lines.line16 ||
-    credit.schedule_c_business_reference !==
-      reconciled.source.schedule_c_business_reference ||
+    ("schedule_c_business_reference" in credit
+        ? credit.schedule_c_business_reference
+        : undefined) !==
+      ("schedule_c_business_reference" in reconciled.source
+        ? reconciled.source.schedule_c_business_reference
+        : undefined) ||
+    ("schedule_f_farm_id" in credit ? credit.schedule_f_farm_id : undefined) !==
+      ("schedule_f_farm_id" in reconciled.source
+        ? reconciled.source.schedule_f_farm_id
+        : undefined) ||
     credit.shop_plan_reference !== reconciled.source.shop_plan_reference ||
     credit.subject_to_passive_activity_limit !== false ||
     JSON.stringify(

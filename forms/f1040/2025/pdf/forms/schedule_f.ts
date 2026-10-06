@@ -12,6 +12,7 @@ import {
   computeTotalExpenses,
   conservationDeduction,
   inputSchema,
+  projectScheduleFItems,
   laborLessEmploymentCredits,
   reconcileFarmSources,
   type ScheduleFItem,
@@ -21,6 +22,7 @@ import {
   calculateForm5884,
   inputSchema as form5884InputSchema,
 } from "../../../nodes/inputs/f5884/index.ts";
+import { reconcileForm8941DocumentSource } from "../../mef/forms/f8941_source.ts";
 
 // Field names verified against the 2025 IRS Schedule F AcroForm.
 const p1 = "topmostSubform[0].Page1[0].";
@@ -197,7 +199,15 @@ export const scheduleFPdf: PdfFormDescriptor = {
     );
     const input = inputSchema.parse(raw);
     reconcileFarmSources(input);
+    if (input.form8941_premium_reductions?.length) {
+      reconcileForm8941DocumentSource(
+        allPending?.f8941,
+        allPending ?? {},
+        filer,
+      );
+    }
     const reductions = wotcReductionsByFarm(input);
+    const filedItems = projectScheduleFItems(input);
     if (reductions.size > 0) {
       const source = form5884InputSchema.parse(allPending?.f5884);
       const expected = new Map(
@@ -217,7 +227,7 @@ export const scheduleFPdf: PdfFormDescriptor = {
         );
       }
     }
-    return input.schedule_fs.map((rawItem, index) => {
+    return filedItems.map((rawItem, index) => {
       const filing = filedOwnedScheduleF(
         rawItem,
         Boolean(input.patron_filing_review) ||

@@ -11,6 +11,7 @@ import {
   computeTotalExpenses,
   conservationDeduction,
   inputSchema,
+  projectScheduleFItems,
   laborLessEmploymentCredits,
   reconcileFarmSources,
   type ScheduleFItem,
@@ -23,6 +24,7 @@ import {
   calculateForm5884,
   inputSchema as form5884InputSchema,
 } from "../../../nodes/inputs/f5884/index.ts";
+import { reconcileForm8941DocumentSource } from "./f8941_source.ts";
 
 type Fields = Partial<ReturnType<typeof inputSchema.parse>>;
 
@@ -293,7 +295,15 @@ export const scheduleF: MefFormDescriptor<
       schedule_fs: fields?.schedule_fs ?? [],
     });
     reconcileFarmSources(input);
+    if (input.form8941_premium_reductions?.length) {
+      reconcileForm8941DocumentSource(
+        context.pending?.f8941,
+        context.pending ?? {},
+        context.filer,
+      );
+    }
     const reductions = wotcReductionsByFarm(input);
+    const filedItems = projectScheduleFItems(input);
     if (reductions.size > 0 && context.pending) {
       const source = form5884InputSchema.parse(context.pending.f5884);
       const expected = new Map(
@@ -361,7 +371,7 @@ export const scheduleF: MefFormDescriptor<
     let loanIndex = rentalLoanCount;
     let cropIndex = rentalCropCount;
     let accrualLoanIndex = 0;
-    return input.schedule_fs.map((item, index) =>
+    return filedItems.map((item, index) =>
       buildFarm(
         item.qbi_wotc_filing_review
           ? patronFiledBusinessLines(

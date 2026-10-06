@@ -230,7 +230,8 @@ const contractSchema = z.object({
   shop_plan_reference: reference,
   payroll_ledger_reference: reference,
   shop_marketplace_identifier: reference,
-  other_schedule_c_employee_benefits: z.number().int().nonnegative(),
+  other_schedule_c_employee_benefits: z.number().int().nonnegative().optional(),
+  other_schedule_f_employee_benefits: z.number().int().nonnegative().optional(),
   excluded_owner_family_seasonal_and_nonbusiness_workers_none_verified: z
     .boolean(),
 }).passthrough();
@@ -367,7 +368,8 @@ export function multiplePlanWorksheet(raw: unknown) {
   if (
     excluded.some((worker) =>
       worker.coverage_records.some((coverage) => coverage.employer_payment > 0)
-    ) && s.other_schedule_c_employee_benefits !== 0
+    ) && (s.other_schedule_c_employee_benefits ??
+      s.other_schedule_f_employee_benefits) !== 0
   ) fail("excluded paid coverage cannot be ordinary Schedule C benefits");
   for (const e of employees.values()) {
     if (ssns.has(e.employee_ssn)) {

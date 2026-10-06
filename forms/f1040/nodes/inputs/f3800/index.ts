@@ -146,7 +146,8 @@ const f8908CreditSchema = z.object({
 
 const f8941DirectEmployerCreditSchema = z.object({
   credit_amount: z.number().int().positive(),
-  schedule_c_business_reference: z.string().trim().min(1),
+  schedule_c_business_reference: z.string().trim().min(1).optional(),
+  schedule_f_farm_id: z.string().trim().min(1).optional(),
   group_business_references: z.array(z.string().trim().min(1)).min(2).max(12)
     .optional(),
   independent_spouse_business_references: z.tuple([
@@ -162,7 +163,10 @@ const f8941DirectEmployerCreditSchema = z.object({
   shop_plan_references: z.array(z.string().trim().min(1)).min(2).max(12).refine(
     (refs) => new Set(refs).size === refs.length,
   ).optional(),
-}).strict();
+}).strict().refine((credit) => Boolean(credit.schedule_c_business_reference) !==
+  Boolean(credit.schedule_f_farm_id), {
+  message: "Form 8941 direct employer needs exactly one C or F deduction owner",
+});
 
 const f8994DirectEmployerCreditSchema = z.object({
   credit_amount: z.number().int().positive(),

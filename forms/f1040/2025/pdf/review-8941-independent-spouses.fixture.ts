@@ -14,7 +14,9 @@ export function form8941IndependentSpouseInputs(receipts = 210000) {
   const original = secondReturn.f8941;
   if (
     !("monthly_plan_arrangements" in first) ||
-    !("monthly_plan_arrangements" in original)
+    !("monthly_plan_arrangements" in original) ||
+    !("schedule_c_business_reference" in first) ||
+    !("schedule_c_business_reference" in original)
   ) throw new Error("Expected owned SHOP sources");
   const spouseSsn = "222334444";
   const secondEin = "987654321";

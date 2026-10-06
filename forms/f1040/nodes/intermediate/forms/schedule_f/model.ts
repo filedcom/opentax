@@ -85,6 +85,14 @@ export const itemSchema = z.object({
   ]),
   line_c_farm_name: z.string().optional(),
   line_d_ein: z.string().optional(),
+  shop_employee_w2_records: z.array(z.object({
+    employee_reference: z.string().trim().min(1),
+    employee_ssn: z.string().regex(/^\d{9}$/),
+    employer_ein: z.string().regex(/^\d{9}$/),
+    payroll_record_reference: z.string().trim().min(1),
+    social_security_medicare_wages: z.number().int().positive(),
+    hours_of_service: z.number().int().positive(),
+  }).strict()).min(1).max(24).optional(),
   qbi_wotc_filing_review: scheduleCItemSchema.shape.qbi_wotc_filing_review
     .unwrap().extend({
       employee_w2_records: z.array(
@@ -290,9 +298,38 @@ export const inputSchema = z.object({
       credit_amount: z.number().nonnegative(),
     }).strict(),
   ).optional(),
+  form8941_premium_reductions: z.array(z.object({
+    farm_id: z.string().min(1),
+    credit_amount: z.number().int().positive(),
+  }).strict()).optional(),
 }).strict();
 
 export type ScheduleFItem = z.infer<typeof itemSchema>;
+
+/** Preserve gross paid benefits in source; file line 15 net of full credit. */
+export function projectScheduleFItems(
+  input: z.infer<typeof inputSchema>,
+): ScheduleFItem[] {
+  const reductions = input.form8941_premium_reductions ?? [];
+  const seen = new Set<string>();
+  for (const entry of reductions) {
+    if (seen.has(entry.farm_id) ||
+      input.schedule_fs.filter((item) => item.farm_id === entry.farm_id)
+          .length !== 1) {
+      throw new Error("Form8941 premium reduction needs one distinct Schedule F farm");
+    }
+    seen.add(entry.farm_id);
+  }
+  return input.schedule_fs.map((item) => {
+    const reduction = reductions.find((entry) => entry.farm_id === item.farm_id);
+    if (!reduction) return item;
+    const gross = item.line15_employee_benefits ?? 0;
+    if (reduction.credit_amount > gross) {
+      throw new Error("Form8941 premium credit exceeds gross farm employee benefits");
+    }
+    return { ...item, line15_employee_benefits: gross - reduction.credit_amount };
+  });
+}
 
 export function assertScheduleF1099Answers(item: ScheduleFItem): void {
   if (

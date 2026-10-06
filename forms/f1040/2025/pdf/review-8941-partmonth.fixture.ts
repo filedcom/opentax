@@ -128,7 +128,14 @@ export function form8941PartMonthSource() {
       invoices.reduce((n: number, x: any) => n + x.employer_payment, 0),
     );
   }
-  return inputSchema.parse(s);
+  const parsed = inputSchema.parse(s);
+  if (!("schedule_c_business_reference" in parsed)) {
+    throw new Error("Expected Schedule C part-month source");
+  }
+  return parsed as Extract<
+    ReturnType<typeof inputSchema.parse>,
+    { schedule_c_business_reference: string }
+  >;
 }
 
 export function form8941PartMonthInputs(receipts = 350000) {

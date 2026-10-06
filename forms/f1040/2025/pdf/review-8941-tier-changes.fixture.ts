@@ -277,7 +277,14 @@ export function form8941TierChangeSource(
       invoices.reduce((n: number, x: any) => n + x.employer_payment, 0),
     );
   }
-  return inputSchema.parse(source);
+  const parsed = inputSchema.parse(source);
+  if (!("schedule_c_business_reference" in parsed)) {
+    throw new Error("Expected Schedule C tier-change source");
+  }
+  return parsed as Extract<
+    ReturnType<typeof inputSchema.parse>,
+    { schedule_c_business_reference: string }
+  >;
 }
 
 export function form8941TierChangeInputs(receipts = 350000) {

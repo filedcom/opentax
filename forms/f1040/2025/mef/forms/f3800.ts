@@ -854,7 +854,13 @@ export function prepareForm3800DocumentParts(
       parsed.f8941_direct_employer_credit?.credit_amount !==
         form8941.lines.line16 ||
       parsed.f8941_direct_employer_credit?.schedule_c_business_reference !==
-        form8941.source.schedule_c_business_reference ||
+        ("schedule_c_business_reference" in form8941.source
+          ? form8941.source.schedule_c_business_reference
+          : undefined) ||
+      parsed.f8941_direct_employer_credit?.schedule_f_farm_id !==
+        ("schedule_f_farm_id" in form8941.source
+          ? form8941.source.schedule_f_farm_id
+          : undefined) ||
       parsed.f8941_direct_employer_credit?.shop_plan_reference !==
         form8941.source.shop_plan_reference ||
       JSON.stringify(

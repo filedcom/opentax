@@ -285,7 +285,7 @@ export function form8941MultiplePlanSource(kind: MultiplePlanKind) {
       monthly_premiums,
     };
   });
-  return inputSchema.parse({
+  const parsed = inputSchema.parse({
     ...common,
     qualifying_arrangement: "owned_multiple_qhp_monthly_eligibility",
     multiple_qhp_method: referenceMethod ? "reference_qhp" : "qhp_by_qhp",
@@ -318,6 +318,13 @@ export function form8941MultiplePlanSource(kind: MultiplePlanKind) {
       employee_premium_reviews,
     },
   });
+  if (!("schedule_c_business_reference" in parsed)) {
+    throw new Error("Expected Schedule C multiple-QHP source");
+  }
+  return parsed as Extract<
+    ReturnType<typeof inputSchema.parse>,
+    { schedule_c_business_reference: string }
+  >;
 }
 export function form8941MultiplePlanInputs(
   kind: MultiplePlanKind,

@@ -7,6 +7,7 @@ import { assertOwnedScheduleSE } from "./schedule-se-owner-source.ts";
 import {
   computeNetProfit,
   inputSchema as farmSchema,
+  projectScheduleFItems,
   reconcileFarmSources,
   wotcReductionsByFarm,
 } from "../nodes/intermediate/forms/schedule_f/model.ts";
@@ -47,6 +48,9 @@ export function assertFarmWotcReturn(
   const pending = normalizeAllPending(rawPending as Record<string, unknown>);
   const source = farmSchema.parse(pending.schedule_f),
     reductions = wotcReductionsByFarm(source);
+  const filedFarmById = new Map(
+    projectScheduleFItems(source).map((farm) => [farm.farm_id, farm]),
+  );
   const reviewed = source.schedule_fs.filter((f) => f.qbi_wotc_filing_review);
   const wotc = pending.f5884 ? creditSchema.parse(pending.f5884) : undefined;
   const directs = wotc?.f5884s.filter((e) =>
@@ -215,7 +219,7 @@ export function assertFarmWotcReturn(
   for (const farm of reviewed) {
     farmWotcBusinessAmounts({
       kind: "schedule_f",
-      item: farm,
+      item: filedFarmById.get(farm.farm_id) ?? farm,
       determined_wage_reduction: reductions.get(farm.farm_id ?? "") ?? 0,
     });
     const review = farm.qbi_wotc_filing_review!,
@@ -343,10 +347,11 @@ export function assertFarmWotcReturn(
     f.qbi_wotc_filing_review
       ? patronFiledBusinessLines(
         "schedule_f",
-        f,
+        filedFarmById.get(f.farm_id) ?? f,
         reductions.get(f.farm_id ?? "") ?? 0,
       ).profit
-      : filedOwnedScheduleF(f)?.profit ?? computeNetProfit(f)
+      : filedOwnedScheduleF(filedFarmById.get(f.farm_id) ?? f)?.profit ??
+        computeNetProfit(filedFarmById.get(f.farm_id) ?? f)
   );
   const farmProfit = profits.reduce((a, b) => a + b, 0);
   let half: number, tax: number;

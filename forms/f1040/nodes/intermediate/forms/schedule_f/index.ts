@@ -27,6 +27,7 @@ import {
   calculateScheduleFAtRiskNet,
   computeGrossIncome,
   inputSchema,
+  projectScheduleFItems,
   reconcileFarmSources,
   type ScheduleFItem,
   wotcReductionsByFarm,
@@ -94,25 +95,26 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
     }
 
     const reductions = wotcReductionsByFarm(input);
-    const atRisk = input.schedule_fs.map((item) =>
+    const filedItems = projectScheduleFItems(input);
+    const atRisk = filedItems.map((item) =>
       calculateScheduleFAtRiskNet(
         item,
         reductions.get(item.farm_id ?? "") ?? 0,
       )
     );
     const netProfits = atRisk.map((result, index) =>
-      input.schedule_fs[index].qbi_wotc_filing_review
+      filedItems[index].qbi_wotc_filing_review
         ? patronFiledBusinessLines(
           "schedule_f",
-          input.schedule_fs[index],
+          filedItems[index],
           reductions.get(input.schedule_fs[index].farm_id ?? "") ?? 0,
         ).profit
         : input.patron_filing_review
-        ? patronFiledBusinessLines("schedule_f", input.schedule_fs[index])
+        ? patronFiledBusinessLines("schedule_f", filedItems[index])
           .profit
         : (ctx.taxYear === 2025
           ? filedOwnedScheduleF(
-            input.schedule_fs[index],
+            filedItems[index],
             input.farm_optional_method_elected === true,
             reductions.get(input.schedule_fs[index].farm_id ?? "") ?? 0,
           )?.profit
@@ -148,7 +150,7 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
     }));
 
     // Keep the actual farm identity rows and their totals in one retained contribution.
-    const routed = input.schedule_fs.flatMap((item, index) =>
+    const routed = filedItems.flatMap((item, index) =>
       perItemOutputs(
         item,
         netProfits[index],
@@ -156,7 +158,7 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
       )
     );
     outputs.push(...routed.filter((row) => row.nodeType !== form8995.nodeType));
-    const qualified = input.schedule_fs.map((item, index) => ({
+    const qualified = filedItems.map((item, index) => ({
       item,
       profit: netProfits[index],
     })).filter((row) => row.profit > 0 || row.item.qbi_wotc_filing_review);

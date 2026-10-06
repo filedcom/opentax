@@ -33,6 +33,7 @@ import {
 import {
   computeNetProfit as computeFarmNetProfit,
   inputSchema as scheduleFInputSchema,
+  projectScheduleFItems,
   itemSchema as scheduleFItemSchema,
   reconcileFarmSources,
   wotcReductionsByFarm,
@@ -928,7 +929,7 @@ export function assertOneScheduleF8995(
   const source = scheduleFInputSchema.safeParse(pending.schedule_f);
   if (source.success) reconcileFarmSources(source.data);
   const farm = source.success && source.data.schedule_fs.length === 1
-    ? source.data.schedule_fs[0]
+    ? projectScheduleFItems(source.data)[0]
     : undefined;
   const rows = fields.schedule_f_qbi_businesses;
   const row = Array.isArray(rows) && rows.length === 1

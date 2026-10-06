@@ -22,7 +22,9 @@ export function form8941CommonControlInputs() {
   const secondOriginal = secondReturn.f8941;
   if (
     !("monthly_plan_arrangements" in first) ||
-    !("monthly_plan_arrangements" in secondOriginal)
+    !("monthly_plan_arrangements" in secondOriginal) ||
+    !("schedule_c_business_reference" in first) ||
+    !("schedule_c_business_reference" in secondOriginal)
   ) throw new Error("Expected two owned multiple-QHP payroll sources");
   const secondEin = "987654321";
   const secondSsn = new Map(
