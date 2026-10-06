@@ -1,4 +1,5 @@
 import { form8978ReviewFixtures } from "./review-8978.fixture.ts";
+import { jointWotcReviewFixtures } from "./review-joint-wotc.fixture.ts";
 import { form8994OwnedReviewFixture } from "./review-8994-owned.fixture.ts";
 import { form8941ArrangementReviewFixture } from "./review-8941-arrangements.fixture.ts";
 import { ownedScheduleSeReviewFixture } from "./review-schedule-se-owner.fixture.ts";
@@ -9043,6 +9044,7 @@ const educationBase = basePdfReviewFixtures.find((fixture) =>
 )!;
 export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
   ...form8978ReviewFixtures,
+  ...jointWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id === "single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id === "joint-two-w2s")!),
   ...(["full", "partial", "zero"] as const).map(form8994OwnedReviewFixture),
   ownedScheduleSeReviewFixture(
     basePdfReviewFixtures.find(f => f.id === "single-schedule-c")!,

@@ -1,3 +1,7 @@
+import {
+  ownedScheduleSE,
+  ownerSourcesSchema,
+} from "../schedule_se/owner-calculation.ts";
 import { sourceSchema as patronBusinessSourceSchema } from "../../../inputs/qbi_patron/schema.ts";
 import { patronSourceAmounts } from "../../../inputs/qbi_patron/calculation.ts";
 import {
@@ -245,6 +249,8 @@ export const inputSchema = z.object({
   single_schedule_c_source: z.object({
     business: scheduleCQbiBusinessSchema,
     se_tax_deduction: z.number().nonnegative(),
+    joint_se_source: ownerSourcesSchema.optional(),
+    joint_wages_total: z.number().nonnegative().optional(),
   }).strict().optional(),
   sstb_filing_details: sstbFilingDetailsSchema.optional(),
   schedule_c_qbi_businesses: z.array(scheduleCQbiBusinessSchema).optional(),
@@ -262,13 +268,30 @@ export function assertSingleScheduleCWotcAmounts(input: Form8995AInput): void {
   const reduction = business.wotc_wage_reduction ?? 0;
   const wages = reviewedWotcQbiWages(item, reduction);
   const qbi = Math.round(business.qbi - retained.se_tax_deduction);
-  const se = scheduleSELines(
-    { net_profit_schedule_c: business.qbi },
-    CONFIG_BY_YEAR[2025].ssWageBase,
-  );
+  const se = retained.joint_se_source
+    ? ownedScheduleSE(retained.joint_se_source, CONFIG_BY_YEAR[2025].ssWageBase)
+      .instances.find((row) => row.recipient === "T")
+    : scheduleSELines(
+      { net_profit_schedule_c: business.qbi },
+      CONFIG_BY_YEAR[2025].ssWageBase,
+    );
   if (
-    input.filing_status !== FilingStatus.Single ||
-    input.taxable_income <= 247_300 ||
+    (input.filing_status !== FilingStatus.Single &&
+      input.filing_status !== FilingStatus.MFJ) ||
+    input.taxable_income <=
+      (input.filing_status === FilingStatus.MFJ ? 394600 : 197300) ||
+    (input.filing_status === FilingStatus.MFJ &&
+      (!retained.joint_se_source || retained.joint_wages_total === undefined ||
+        item.proprietor_recipient !== "T" ||
+        item.qbi_wotc_filing_review?.owner_ssn !==
+          retained.joint_se_source.identity.primary_ssn ||
+        retained.joint_se_source.businesses.length !== 1 ||
+        retained.joint_se_source.businesses[0].net_profit !== business.qbi ||
+        retained.joint_se_source.businesses[0].source_reference !==
+          business.business_reference ||
+        retained.joint_se_source.businesses[0].recipient !== "T")) ||
+    (input.filing_status === FilingStatus.Single &&
+      retained.joint_se_source !== undefined) ||
     input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     !Number.isInteger(input.taxable_income) || !se ||
     se.line13 !== retained.se_tax_deduction ||
@@ -906,7 +929,8 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
     ? 100000
     : 50000;
   // Part III applies only in the middle band when the wage/property limit binds.
-  const phaseInRequired = Boolean(input.patron_business_source) &&
+  const phaseInRequired =
+    Boolean(input.patron_business_source || input.single_schedule_c_source) &&
     input.taxable_income > patronThreshold &&
     input.taxable_income <= patronThreshold + patronPhaseInRange &&
     line10 < line3;
@@ -949,7 +973,7 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   }
   const line39 = line37 + line38;
   return {
-    ...(input.patron_business_source
+    ...((input.patron_business_source || input.single_schedule_c_source)
       ? {
         patronThreshold,
         patronPhaseInRange,

@@ -78,8 +78,10 @@ export const itemSchema = z.object({
   qbi_w2_wages: z.number().nonnegative().optional(),
   qbi_unadjusted_basis: z.number().nonnegative().optional(),
   // Reviewed employer W-2 copies for the single-business WOTC filing route.
+  // Joint filings also identify the primary business owner explicitly.
   // qbi_w2_wages is the allocable amount AFTER the section 280C reduction.
   qbi_wotc_filing_review: z.object({
+    owner_ssn: z.string().regex(/^\d{9}$/).optional(),
     employee_w2_records: z.array(
       z.object({
         employee_reference: z.string().trim().min(1),

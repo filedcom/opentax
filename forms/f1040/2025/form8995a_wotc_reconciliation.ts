@@ -1,3 +1,6 @@
+import { assertOwnedScheduleSE } from "./schedule-se-owner-source.ts";
+import { inputSchema as w2Schema } from "../nodes/inputs/w2/index.ts";
+import { isDeepStrictEqual } from "node:util";
 import {
   assertSingleScheduleCWotcAmounts,
   type Form8995AInput,
@@ -98,16 +101,39 @@ export function assertForm8995AWotcReturn(
     }
   }
   const se = seInputSchema.parse(pending.schedule_se);
-  const seLines = scheduleSELines(se, CONFIG_BY_YEAR[2025].ssWageBase);
+  const joint = source.joint_se_source;
+  const owned = joint ? assertOwnedScheduleSE(pending) : undefined;
+  const seLines = owned
+    ? owned.instances.find((row) => row.recipient === "T")
+    : scheduleSELines(se, CONFIG_BY_YEAR[2025].ssWageBase);
+  const wageRows = pending.w2 ? w2Schema.parse(pending.w2).w2s : [];
+  const wagesTotal = wageRows.reduce((sum, row) => sum + row.box1_wages, 0);
+  if (
+    joint && (!owned || !isDeepStrictEqual(joint, owned.source) ||
+      Math.abs(wagesTotal - (source.joint_wages_total ?? 0)) > 1e-7 ||
+      pending.general?.filing_status !== "mfj" ||
+      pending.general.taxpayer_ssn?.toString().replaceAll("-", "") !==
+        review.owner_ssn)
+  ) {
+    throw new Error(
+      "Form8995A joint WOTC owner and actual W2 sources disagree",
+    );
+  }
   const schedule1 = pending.schedule1;
   const f1040 = pending.f1040;
   const general = pending.general;
   const noAmount = (value: unknown) => value === undefined || value === 0;
   if (
-    !seLines || se.net_profit_schedule_c !== business.qbi ||
+    !seLines ||
+    (owned
+        ? owned.instances.find((row) => row.recipient === "T")
+          ?.net_profit_schedule_c
+        : se.net_profit_schedule_c) !==
+      business.qbi ||
     !noAmount(se.net_profit_schedule_f) ||
     se.farm_optional_method_elected === true ||
-    !noAmount(se.w2_ss_wages) || !noAmount(se.unreported_tips_4137) ||
+    (!owned && !noAmount(se.w2_ss_wages)) ||
+    !noAmount(se.unreported_tips_4137) ||
     !noAmount(se.wages_8919) ||
     seLines.line13 !== source.se_tax_deduction ||
     schedule1?.line15_se_deduction !== seLines.line13 ||
@@ -117,21 +143,34 @@ export function assertForm8995AWotcReturn(
     !noAmount(schedule1?.line16_sep_simple) ||
     !noAmount(schedule1?.line17_se_health_insurance) ||
     f1040?.line8_additional_income !== business.qbi ||
-    f1040?.line9_total_income !== Math.round(business.qbi) ||
+    (joint &&
+      (f1040?.line1a_wages !== wagesTotal ||
+        f1040?.line1z_total_wages !== wagesTotal)) ||
+    f1040?.line9_total_income !==
+      (joint
+        ? business.qbi + wagesTotal
+        : Math.round(business.qbi + wagesTotal)) ||
     f1040?.line10_adjustments !== seLines.line13 ||
-    f1040?.line11_agi !== Math.round(business.qbi - seLines.line13) ||
+    f1040?.line11_agi !==
+      (joint
+        ? business.qbi + wagesTotal - seLines.line13
+        : Math.round(business.qbi + wagesTotal - seLines.line13)) ||
     !noAmount(f1040?.line13b_additional_deductions) ||
     input.taxable_income !==
       Math.max(
         0,
-        Number(f1040?.line11_agi) - Number(f1040?.line12c_deduction_total),
+        Math.round(
+          Number(f1040?.line11_agi) - Number(f1040?.line12c_deduction_total),
+        ),
       ) ||
-    Number(f1040?.line15_taxable_income) +
-          Number(f1040?.line13_qbi_deduction) !== input.taxable_income ||
+    Math.round(
+        Number(f1040?.line15_taxable_income) +
+          Number(f1040?.line13_qbi_deduction),
+      ) !== input.taxable_income ||
     general?.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     general?.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
     [
-      "w2",
+      ...(joint ? [] : ["w2"]),
       "schedule_f",
       "schedule_e",
       "k1_partnership",

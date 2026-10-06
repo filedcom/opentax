@@ -349,13 +349,18 @@ function advancedFormOutput(
   const business = businesses?.[0];
   let sourcedBusiness: Partial<Form8995AInput> = {};
   if (businesses?.some((row) => row.source_schedule_c.qbi_wotc_filing_review)) {
+    // Finalized filing lines use whole dollars; source wages and AGI retain cents.
+    taxableIncome = Math.round(taxableIncome);
     const review = business?.source_schedule_c.qbi_wotc_filing_review;
     if (
       businesses.length !== 1 || !business || !review ||
       !business.business_reference || !business.business_name ||
       !business.ein ||
       business.qbi <= 0 || !business.wotc_wage_reduction ||
-      input.filing_status !== FilingStatus.Single || taxableIncome <= 247_300 ||
+      (input.filing_status !== FilingStatus.Single &&
+        input.filing_status !== FilingStatus.MFJ) ||
+      taxableIncome <=
+        qbiThreshold(input.filing_status!, CONFIG_BY_YEAR[2025]) ||
       input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
       input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
       sumField(input.qbi_from_schedule_c) !== business.qbi ||
@@ -364,13 +369,17 @@ function advancedFormOutput(
       sumField(input.line6_sec199a_dividends) !== 0 ||
       (input.qbi_loss_carryforward ?? 0) !== 0 ||
       (input.reit_loss_carryforward ?? 0) !== 0 ||
-      input.agi !==
-        Math.round(business.qbi - sumField(input.se_tax_deduction)) ||
+      (input.filing_status === FilingStatus.Single && input.agi !==
+          Math.round(business.qbi - sumField(input.se_tax_deduction))) ||
+      (input.filing_status === FilingStatus.MFJ &&
+        (!input.joint_se_source || !review.owner_ssn ||
+          review.owner_ssn !== input.taxpayer_ssn?.replaceAll("-", "") ||
+          business.source_schedule_c.proprietor_recipient !== "T")) ||
       sumField(input.se_health_insurance_deduction) !== 0 ||
       sumField(input.retirement_plan_deduction) !== 0
     ) {
       throw new Error(
-        "Form 8995-A WOTC needs one reviewed positive Schedule C fully above phase-in with its half-SE deduction",
+        "Form 8995-A WOTC needs one reviewed positive Schedule C above threshold with its half-SE deduction",
       );
     }
     const wages = reviewedWotcQbiWages(
@@ -401,6 +410,13 @@ function advancedFormOutput(
       single_schedule_c_source: {
         business,
         se_tax_deduction: sumField(input.se_tax_deduction),
+        ...(input.filing_status === FilingStatus.MFJ
+          ? {
+            joint_se_source: input.joint_se_source,
+            joint_wages_total: input.agi! - business.qbi +
+              sumField(input.se_tax_deduction),
+          }
+          : {}),
       },
       qbi_no_prior_loss_or_suspended_loss_confirmed:
         input.qbi_no_prior_loss_or_suspended_loss_confirmed,

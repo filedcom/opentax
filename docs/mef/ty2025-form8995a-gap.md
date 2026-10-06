@@ -916,3 +916,99 @@ The public accounting SSTB route now accepts MFJ with one primary-owned accounti
 Native export rejects a mismatched filing status or spouse-owned retained business. The complete15-page source packet passes local v5.4 XSD and exact selected replay. All15 rendered pages were visually inspected. This review found two actual PDF discrepancies: numeric percentage fields were rounded to monetary integers, and Schedule1/2 plus Forms8959/8960 omitted the spouse from shared headers. Percentage projection now preserves three percentage decimals; shared headers derive both actual names for MFJ and reject missing spouse identity, while C/SE remain individual-owned. Corrected pages retain21.95/78.05 and both shared names.
 
 Typed restricted real-Poppler builder,8959/8960 native, Schedule2 replay and SSTB tests pass80/80 in19s; log `/tmp/opentax-joint-header-regression3.log`. Initial runs exposed a missing test fixture nameControl and an empty-data test skip; both fixture defects were corrected before the passing run. Exact replay log `/tmp/opentax-joint-review4-check.log`. Artifacts: `.state/research/ty2025-filled-pdf-review/2026-10-06-qbi-sstb-joint` plus sibling rendered directory. Manifest SHA256 `b243b9ae30ddda882e6bbdee443823893530cc8c80d9309fcdf200b85bc9ce27`. Inventory is a generation-time isolated-base snapshot. Broader SSTB categories, spouse sources, workpaper authenticity and IRS acceptance remain open.
+
+## Joint primary WOTC phase-in and current-tax use, October 6
+
+The existing reviewed Schedule C/WOTC route now supports MFJ primary-owned
+non-SSTB business sources above the joint threshold, including the middle band.
+[TY2025 Form 8995-A instructions](https://www.irs.gov/instructions/i8995a)
+set the joint threshold/range at $394,600–$494,600. Parent Part III calculates
+the reduction of the wage/property limit, using finalized percentage operands
+and whole-dollar monetary lines. Exact fractional percentages remain visible
+in the PDF. Above $494,600 the wage limit applies without Part III.
+
+The public payroll/certification allocation still supplies the full determined
+Form 5884 line 2 credit to Schedule C before SE and QBI, independently of the
+allowed Form 3800 tax use, following the [Form 5884 line 2 instructions](https://www.irs.gov/instructions/i5884).
+The QBI wage review retains all qualified payroll and equal employer W-2 boxes
+1/5, subtracting the full section 280C deduction reduction for allocable QBI
+wages. A reviewed primary owner SSN is required for this joint route.
+The generic owner-SE source is retained and replayed against actual Schedule C,
+W-2 owners/references/Social Security wages, general/header identities, individual
+SE calculations, and final return totals. Spouse wages do not consume the
+primary proprietor's Social Security wage cap. Actual W-2 box 1 income joins
+1040 wages, AGI, pre-QBI taxable income, and the final QBI deduction.
+
+Five reusable public fixtures keep actual cent-valued source inputs. For the
+one-employee cases, gross receipts are $350,000, original wages $6,000,
+credit $2,400, deductible wages $3,600, profit $346,400, primary SE tax $31,113,
+half-SE deduction $15,557 and QBI $330,843. The wage limit is $1,800.
+
+| Case | Raw spouse W-2 wages | Filed pre-QBI taxable income | Phase-in | QBI deduction | Total tax |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Middle band | 150,000.37 | 449,343 | 54.743% | 30,931 | 118,710 |
+| First dollar above threshold | 95,257.50 | 394,601 | 0.001% | 66,168 | 94,717 |
+| Last phase-in dollar | 195,256.50 | 494,600 | 100% | 1,800 | 142,921 |
+| First dollar above range | 195,257.50 | 494,601 | Inapplicable | 1,800 | 142,921 |
+| Limited current tax use | 300,000 | 565,404 | Inapplicable | 59,381 | 56,036 |
+
+Raw AGI is $480,843.37/$426,100.50/$526,099.50/$526,100.50 for the four
+one-employee cases; their filed AGI is $480,843/$426,101/$526,100/$526,101.
+Source records are not changed to erase cents. The parent takes finalized
+whole-dollar pre-QBI taxable income; source and final 1040 joins check both the
+raw income chain and filed deduction/taxable-income equation. At the first
+threshold dollar, rounded potential deduction $66,169 less rounded Part III
+reduction $1 gives $66,168. At the upper edge the reduction is $64,369;
+Part III is blank for the next filed dollar.
+
+The limited-use fixture retains 80 certified source employees and $480,000 of
+qualified payroll, the full $192,000 credit/deduction reduction, $288,000
+deductible wages, $312,000 profit, $30,192 primary SE tax, $15,096 half-SE,
+and $296,904 QBI. Actual joint income tax is $116,203. Form 3800 line 13's
+raw $22,800.75 is entered as $22,801, leaving $93,402 current credit use.
+The $98,598 unused credit is calculated; this extension does not add or
+prove a durable carryover ledger. Additional Medicare tax is $3,043, including
+actual spouse withholding of $900, and the final refund is $4,864.
+
+Proof checkout is `/tmp/opentax-form8978-historical-oct6`, base `e9be0ed79`.
+The historical-recomputation investigation found only TY2025 in
+`CONFIG_BY_YEAR`, only the TY2025 return/export engine, and an unconditional
+`ordinaryTax2025` call in the ordinary income-tax node. A prior-return reference
+is an amendment handoff, not an affected-year snapshot engine. The
+[Form 8978 instructions](https://www.irs.gov/instructions/i8978) require the
+actual affected-year tax/AMT and related tax-attribute calculations; ordinary
+historical replay therefore remains open. This joint WOTC proof makes no
+historical-engine claim.
+
+Held artifacts are under
+`.state/research/ty2025-filled-pdf-review/2026-10-06-joint-wotc/` and its
+`-rendered` sibling. The selected held checker completed **5 cases, 130 pages**,
+with full local TY2025 v5.4 XSD, source/XML/PDF replay, hashes and IRS template
+provenance. All 130 final pages were visually reviewed, including all nine
+Form 3800 pages, both parent/SE/Schedule C pages, Form 5884, AMT, Additional
+Medicare, NIIT and final 1040. The preserved shared joint names, fractional
+percentage helper and inapplicable RRTA omissions are visible in these packets.
+Checker log: `/tmp/opentax-joint-wotc-selected.log`.
+
+Native/PDF negatives reject altered spouse W-2 income/owner, owner review,
+proprietor allocation, certification payroll, individual half-SE, pre-QBI
+threshold operands, finalized wages/deduction, and actual filed spouse/primary
+identities. Public execution rejects missing primary-owner review, a W-2 owned
+by neither spouse, or a spouse-owned business presented as this primary route.
+
+Remaining broader scope includes spouse-owned WOTC, other statuses, multiple
+businesses, SSTBs, farms, aggregation, cooperatives, different wage methods,
+UBIA, attributable health/retirement adjustments, prior QBI losses, mixed credit
+ordering and durable carryovers. Source reviews and certification/payroll/W-2
+references are synthetic test records and supplied assertions, not authenticated
+SWA, employer, SSA or workpaper bytes. No source authentication, IRS business-rule,
+ATS or production acceptance claim is added; the broader parent remains open.
+
+Final terminal test evidence for this joint extension: **4 typed tests passed,
+0 failed**, including all five public full-XSD/PDF returns and source/owner
+negatives (`/tmp/opentax-joint-wotc-focus.log`); **92 related tests passed,
+0 failed**, covering Form 8995/8995-A calculations/PDFs, retained Single WOTC,
+generic owner-SE and patron phase-in (`/tmp/opentax-joint-wotc-final-regression.log`).
+The earlier narrower compatibility batch also passed 14/14
+(`/tmp/opentax-joint-wotc-regression.log`). Generator completed with terminal 0
+(`/tmp/opentax-joint-wotc-generate.log`).

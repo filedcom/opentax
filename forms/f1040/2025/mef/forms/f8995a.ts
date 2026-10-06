@@ -100,14 +100,15 @@ export function validateOneBusiness(fields: Form8995AInput) {
   }
   if (
     (fields.filing_status !== NodeFilingStatus.Single &&
-      !(fields.patron_business_source &&
+      !((fields.patron_business_source || fields.single_schedule_c_source) &&
         fields.filing_status === NodeFilingStatus.MFJ)) ||
-    !fields.patron_business_source && fields.taxable_income <=
+    !fields.patron_business_source && !fields.single_schedule_c_source &&
+      fields.taxable_income <=
         CONFIG_BY_YEAR[2025].qbiThresholdSingle +
           CONFIG_BY_YEAR[2025].qbiPhaseInRange / 2
   ) {
     throw new Error(
-      "Form 8995-A MeF currently supports only single filers fully above the wage-limit phase-in range",
+      "Form 8995-A MeF needs its supported filing status and retained business source above the applicable threshold",
     );
   }
   if (
@@ -353,9 +354,21 @@ function reconcileReturn(
       fields.filing_status === NodeFilingStatus.QSS) &&
       !fields.sstb_filing_details &&
       !(fields.filing_status === NodeFilingStatus.MFJ &&
-        fields.patron_business_source))
+        (fields.patron_business_source || fields.single_schedule_c_source)))
   ) {
     throw new Error("Form 8995-A filing status differs from the return header");
+  }
+  const jointWotc = fields.single_schedule_c_source?.joint_se_source;
+  if (
+    jointWotc &&
+    (jointWotc.identity.primary_ssn !==
+        context.filer.primarySSN.replaceAll("-", "") ||
+      jointWotc.identity.spouse_ssn !==
+        context.filer.spouse?.ssn.replaceAll("-", ""))
+  ) {
+    throw new Error(
+      "Form8995A joint WOTC owners differ from actual return header",
+    );
   }
   assertMfsSstbOwner(fields, context.filer.primarySSN);
   if (
