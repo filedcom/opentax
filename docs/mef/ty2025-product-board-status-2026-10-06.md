@@ -516,3 +516,17 @@ Reviewed two-business aggregation now passes 39 checks, full local XSD and compl
 
 PR63 is published at8c20e4dfc after authenticated HTTPS retry recovered from GitHub server errors. Joint patron source work is integrated and passes16 combined main checks: eight full-XSD/PDF returns,178 regressions and46-page review; the owner SE calculation excludes spouse W2 Social Security wages. Part-year SHOP source work is integrated and passes18 main checks, with three full-XSD/PDF packets and67 reviewed pages. Service-scholarship and reviewed Colorado separate-return SSTB sources are ready for integration; agents continue family SHOP coverage and wider source-owner review.
 
+
+## Before family SHOP and ordinary MFS integration (00:17 UTC)
+
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,389 bounded slices**. Broader parents remain open. New discoveries belong only in `future_todo`, which remains outside the work queue.
+
+Stable snapshot `762db9012` passed the full real-Poppler `deno task test`: **11,271 passed, zero failed or ignored**, in 48m0s. A fresh isolated full batch at `ea23fbb91`, started October 5 at 23:57:45 UTC, is still running. It does not cover later joint patron, part-year SHOP, service-scholarship or MFS changes. Exact logs, hashes and limits are in the [validation batch](docs/mef/ty2025-form1040-validation-batch.md).
+
+Current source planner has **212 fixtures**, 116 PDF descriptors and 113 unique keys: **92 covered, 21 uncovered**. Main source integration passes **31/31** across required-service scholarship, material-capital education, reviewed Colorado MFS SSTB, part-year SHOP and joint patron. Earlier combined joint/builder/SHOP checks passed 54/54, joint patron integration 16/16 and part-year SHOP integration 18/18. The frozen checklist and future section remain byte-identical to the preceding published board.
+
+Eight new ledger slices cover material-capital earned support; Single patron phase-in; joint-primary accounting SSTB; owned SHOP premium credits; joint patron with spouse W2 and correct owner SE; part-year SHOP enrollment; required-service scholarship with truthful school Box5 and income/support joins; and reviewed Colorado MFS SSTB. Full local-XSD/PDF packets, all-page visual reviews and route-specific conflict evidence are archived. This work also repairs fractional QBI PDF percentages and shared joint-return names. Prior MSA, education-owner, aggregation and investment-source evidence remains in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md).
+
+Three agents continue existing parent/child separate-income education, ordinary noncommunity MFS source ownership and family SHOP coverage. Root integrates their proofs and keeps the PR current. Wider filing branches, external source authenticity and IRS business-rule/acceptance gates remain open. ATS was reported unavailable through October 13 at 9 a.m. Eastern; issued credentials and Scenarios 1/8/13 source conflicts remain unresolved. Local XSD does not prove IRS acceptance.
+
