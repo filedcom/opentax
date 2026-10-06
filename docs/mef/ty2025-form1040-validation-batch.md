@@ -4970,3 +4970,8 @@ Main747ec258c:14-file source/preservation gate233/0(31s), five complete2025v5.4X
 ## October6 mixed C/F SHOP current-main verification
 
 Main52/0(56s), two full-XSD packets/all52 pages reviewed; actual senior deduction1,455 reduces Form8995 line11 to131,552/deduction26,310. Full evidence and hashes: [mixed SHOP review](ty2025-form8941-mixed-cf-shop-review.md). Broader parent remains open.
+
+
+## October6 three-member mixed SHOP
+
+Main15/0(1m27s);3full-XSD packets/all80reviewedpages; allmainPDFs match reviewed outputs. [Evidence and boundaries](ty2025-form8941-mixed-three-shop-review.md).
