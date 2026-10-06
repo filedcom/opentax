@@ -77,10 +77,20 @@ export function retainedFishingProfit(inputs: Record<string, unknown>): number {
   const ledger = fishingLedgerSchema.parse(
     JSON.parse(new TextDecoder().decode(bytes)),
   );
-  const owner = String(record(inputs.general).taxpayer_ssn ?? "").replaceAll(
-    "-",
-    "",
-  );
+  const general = record(inputs.general);
+  const recipient = business.proprietor_recipient ?? "T";
+  if (recipient !== "T" && recipient !== "S") {
+    throw new Error("Schedule J fishing business needs a named owner");
+  }
+  if (recipient === "S" && general.filing_status !== "mfj") {
+    throw new Error("Schedule J spouse fishing owner requires a joint return");
+  }
+  const owner = String(
+    recipient === "S" ? general.spouse_ssn ?? "" : general.taxpayer_ssn ?? "",
+  ).replaceAll("-", "");
+  if (!/^\d{9}$/.test(owner)) {
+    throw new Error("Schedule J fishing owner SSN is missing");
+  }
   const sales = ledger.sales.reduce((sum, item) => sum + item.amount, 0);
   const supplies = ledger.supplies.reduce((sum, item) => sum + item.amount, 0);
   const saleRefs = ledger.sales.map((row) => row.buyer_invoice_reference);
@@ -203,6 +213,100 @@ function raw(inputs: Record<string, unknown>): ExecuteResult {
   return execute(buildExecutionPlan(registry), registry, inputs, context);
 }
 
+function jointFishingFarmOwners(
+  inputs: Record<string, unknown>,
+  pending: Readonly<Record<string, unknown>>,
+): void {
+  const general = record(inputs.general);
+  const cs = inputs.schedule_c;
+  const fs = record(inputs.schedule_f).schedule_fs;
+  if (
+    general.filing_status !== "mfj" || !Array.isArray(cs) || cs.length !== 1 ||
+    !Array.isArray(fs) || fs.length !== 1
+  ) {
+    throw new Error(
+      "Schedule J joint fishing/farm needs one owned C and F on a joint return",
+    );
+  }
+  const c = record(cs[0]);
+  const f = record(fs[0]);
+  const cOwner = c.proprietor_recipient;
+  const fOwner = f.proprietor_recipient;
+  if (
+    (cOwner !== "T" && cOwner !== "S") ||
+    (fOwner !== "T" && fOwner !== "S") || cOwner === fOwner
+  ) {
+    throw new Error("Schedule J joint C/F owners must be distinct spouses");
+  }
+  const se = record(pending.schedule_se);
+  const instances = se.owner_instances;
+  const businesses = se.owner_business_sources;
+  if (
+    !Array.isArray(instances) || !Array.isArray(businesses) ||
+    instances.length !== 2 || businesses.length !== 2
+  ) {
+    throw new Error("Schedule J needs both actual owner Schedule SE instances");
+  }
+  const owners = ["T", "S"];
+  const ssns = [general.taxpayer_ssn, general.spouse_ssn].map((v) =>
+    String(v ?? "").replaceAll("-", "")
+  );
+  if (ssns.some((ssn) => !/^\d{9}$/.test(ssn)) || ssns[0] === ssns[1]) {
+    throw new Error("Schedule J joint owners need distinct SSNs");
+  }
+  for (const [index, recipient] of owners.entries()) {
+    const instance = instances.find((v) => record(v).recipient === recipient);
+    const source = businesses.find((v) => record(v).recipient === recipient);
+    if (!instance || !source) {
+      throw new Error("Schedule J missing owner business or SE instance");
+    }
+    const owned = recipient === cOwner ? c : f;
+    const kind = recipient === cOwner ? "schedule_c" : "schedule_f";
+    const reference = recipient === cOwner ? c.business_reference : f.farm_id;
+    if (
+      record(instance).owner_ssn !== ssns[index] ||
+      record(source).source_reference !== reference ||
+      record(source).kind !== kind ||
+      record(source).net_profit !==
+        (recipient === cOwner
+          ? total(record(pending.schedule_j_calculation).schedule_c_net_profit)
+          : total(record(pending.schedule_j_calculation).farm_net_profit)) ||
+      owned.proprietor_recipient !== recipient
+    ) {
+      throw new Error(
+        "Schedule J owner payroll, profit, and filed business differ",
+      );
+    }
+  }
+  const qbi = record(pending.form8995);
+  const rows = qbi.joint_owner_filing_rows;
+  if (
+    !Array.isArray(rows) || rows.length !== 2 ||
+    total(qbi.se_tax_deduction) !==
+      instances.reduce((sum, v) => sum + total(record(v).line13), 0)
+  ) {
+    throw new Error("Schedule J joint QBI and owner half-SE do not reconcile");
+  }
+  for (const recipient of owners) {
+    const instance = record(
+      instances.find((v) => record(v).recipient === recipient),
+    );
+    const row = rows.find((v) => record(v).recipient === recipient);
+    const source = businesses.find((v) => record(v).recipient === recipient);
+    if (
+      !row || !source ||
+      record(row).business_reference !== record(source).source_reference ||
+      total(record(row).se_tax_deduction) !== total(instance.line13) ||
+      total(record(row).raw_qbi) !==
+        total(record(source).net_profit) - total(instance.line13)
+    ) {
+      throw new Error(
+        "Schedule J owner-specific QBI row differs from business and half-SE",
+      );
+    }
+  }
+}
+
 /** Innermost graph stage, reusable in credit and QEF counterfactual passes. */
 export function executeScheduleJSourceReturn(
   inputs: Record<string, unknown>,
@@ -214,7 +318,29 @@ export function executeScheduleJSourceReturn(
     facts.has_qualified_dividends || facts.has_net_capital_gain ||
     facts.has_unrecaptured_section1250_gain || facts.has_28_percent_rate_gain
   );
-  if (!preferential) return raw(inputs);
+  const cs = inputs.schedule_c;
+  const fs = inputs.schedule_f;
+  if (
+    Array.isArray(cs) && cs.length === 1 && fs !== undefined &&
+    record(cs[0]).schedule_j_fishing_evidence !== undefined
+  ) {
+    const cOwner = record(cs[0]).proprietor_recipient ?? "T";
+    const farms = record(fs).schedule_fs;
+    if (
+      Array.isArray(farms) && farms.length === 1 &&
+      cOwner !== record(farms[0]).proprietor_recipient &&
+      record(inputs.general).filing_status !== "mfj"
+    ) {
+      throw new Error(
+        "Schedule J separate fishing/farm owners require a joint return",
+      );
+    }
+  }
+  const jointFishing = record(inputs.general).filing_status === "mfj" &&
+    Array.isArray(cs) && cs.length === 1 &&
+    record(cs[0]).schedule_j_fishing_evidence !== undefined &&
+    fs !== undefined;
+  if (!preferential && !jointFishing) return raw(inputs);
   const noElection = structuredClone(inputs);
   delete noElection.schedule_j;
   const baseline = raw(noElection);
@@ -227,6 +353,16 @@ export function executeScheduleJSourceReturn(
   const tax = record(baseline.pending.income_tax_calculation);
   const agi = record(baseline.pending.agi_aggregator);
   const farm = record(baseline.pending.schedule_j_calculation);
+  if (jointFishing) {
+    const farms = record(fs).schedule_fs;
+    if (
+      Array.isArray(farms) && farms.length === 1 &&
+      record(cs[0]).proprietor_recipient !==
+        record(farms[0]).proprietor_recipient
+    ) {
+      jointFishingFarmOwners(inputs, baseline.pending);
+    }
+  }
   const wages = nonfarmWages(inputs, source);
   // Establish the separately attributable investment income from actual graph
   // sources. Other business/adjustment allocations still need their own proof.
