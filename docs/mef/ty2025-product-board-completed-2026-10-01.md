@@ -1967,3 +1967,6 @@ Audit qualification: preceding Roth entries preserve their original tests and im
 
 
 - [x] Derive productive617 default depletion disallowance, regular/AMT remaining pools, actual616 paid development adjustment and owned gift reductions; settle filed6251 lines and tax while retaining raw exemption worksheet multiplication through subtraction. Fresh main19/0+98/0+105/0; actual held16full-XSDpackets267files exactsource/pending/carry/PDF/attachments, XMLonlyReturnTs;611reviewedpageoccurrences preserved. MainScheduleJ5/85,4952cent7pages and sharedQEF7/ordinary4852 8page packets exact. Wider differing AMT charity/line3/separatecarry/authentication/IRS parent remains open. See [productive source proof](ty2025-form8283-natural-resource-reduction-proof.md).
+
+
+- [x] Join one byte-bound nonfarm engineering W-2 to the existing high-income farm ScheduleJ, actual SE/QBI, preferential tax and no-election AMT graph without attributing employee wages to farm income or business-paid payroll. Fresh main3/0; actual retained source2full-XSDpackets38reviewedpages exactpending/PDF/origins/XMLonlyReturnTs; priorJ5/85 rawsource preservation exact. Explicit emptyW2 preserved/orphanproof rejects. Wider fishing/mixed/farmwages/authentication/IRS parent stays open. See [source proof](ty2025-schedule-j-preferential-source-proof.md).
