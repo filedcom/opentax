@@ -115,3 +115,12 @@ Final focused verification passed **55/55** with type checking, including all 47
 ## Remaining boundaries
 
 Other rating areas, partial-month or discontinuous enrollment, changing family membership, additional family tiers/relationships, separate SHOP dependent policies, excluded workers, state subsidies, common control/multiple businesses, tax-exempt employers and pass-through credits need their applicable sources and packet evidence. Automatic tax-use allocation here is the sole direct credit with no competing credit/carryover/passive sources; broader mixed-source allocation remains subject to existing source-specific Form 3800 reconciliation. Payroll remains whole-dollar source; the new monthly arrangement profile retains premium cents. Independent source authentication, prior/future credit-period and carryover evidence, full-return regression, business rules and ATS remain open. The broader employer health credit parent is not closed by this slice.
+
+
+## Verified same-proprietor two-business SHOP source route
+
+IRS [2025 Form8941 instructions](https://www.irs.gov/instructions/i8941), Employers treated as a single employer/Example1, require one Form8941 for this actual same-proprietor two-ScheduleC group. Two payroll/EIN/SHOP sources aggregate actual employee wages/hours and paid qualifying premiums; a worker employed at both businesses counts once and receives one2080-hour cap. Reused payroll/invoice references, contradictory owner/group records, included/excluded overlaps and double paid SHOP coverage reject.
+
+Filed lines1/2/3/4/5/13/14/16:11/9/22000/65800/48033/9/7/24017. Actual premium expense39245/26555 yields full determined-credit shares14324/9693, benefits24921/16862, combinedprofit118217, SE16703, QBI18823 and current3800/1040 use11475. Full determined reduction precedes current section38 use. One full native/local-XSD packet and all25 PDF pages reviewed;29 isolated compatibility/2 final checks and20 main checks pass. Exact commands/log/hash are in the validation record; source/PDF/render/proof evidence remains ignored research.
+
+This verified route covers actual full-year sole ownership of two businesses, with group roster/contribution records and no double paid coverage. Wider entity/affiliated-service/>2-member groups, independent-spouse multiple8941 copies, external authentication and IRS acceptance remain open.

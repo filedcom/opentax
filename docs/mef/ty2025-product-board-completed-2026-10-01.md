@@ -9,6 +9,8 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 
 ## Core return and source paths
 
+- [x] File one actual same-proprietor two-business SHOP credit from distinct payroll/EIN/QHP sources and sourced ownership/management records. Shared worker counts once with one paid coverage and2080-hour cap; full24017 credit splits14324/9693 premium reductions before current11475 use, ownerSE and QBI. One complete local-XSD/PDF packet/all25 pages reviewed,29 related/2 final and20 main checks pass. Wider groups, independent spouse copies, external authentication and IRS acceptance remain open.
+
 - [x] File actual remarried MFS greater-taxable-income parent selection from two independently settled NY wage returns, reciprocal child sources and owned property-tax itemization. Spouse itemization forces the other parent standard deduction to zero; required child8615 remains complete and MFS education claims reject. Eight full local-XSD/PDF packets/all33 pages reviewed,24 hashes verified;480 related/6 final and24 main compatibility checks pass. Preferential/special parent income, community allocations, broader sources and authentication remain open.
 
 - [x] File reviewed owned optional-method ScheduleF with actual ScheduleC gross income and owner-specific wage caps, negative C offsets and multiple farms. Nine complete local-XSD/PDF packets/all123 pages reviewed and held replay verified;95 related/3 final checks and48 combined main checks pass. Half-SE allocation uses actual gross income while QBI retains actual farm profit/loss. Patron, optional high-income8995-A, wider deductions, source authentication and IRS acceptance remain open.

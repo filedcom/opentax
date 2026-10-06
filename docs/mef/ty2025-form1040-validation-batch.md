@@ -4899,3 +4899,14 @@ deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm
 ```
 
 Log `/tmp/opentax-remarried-mfs-main-integration.log`, SHA256 `8d33cfe09d8d824bac34ee69743cd506503b62d1db6073890983059ebf65fbb0`. Eight complete local-XSD packets/all33 visually reviewed pages and24 matching source/XML/PDF hashes retained in ignored `.state/research/2026-10-06-remarried-mfs-parent`. Selected480/0 and final6/0 isolated checks are recorded in the route proof. Actual separate property-tax/standard-deduction returns and both parent identities are checked; prior MFJ/sibling/kiddie-tax compatibility passes. Stable fullbc6cafec6 still runs and predates this source work; two failures are now observed in CLI spouse SEHI and an older8995-A negative expectation, with final full totals and causes pending. No latest-head full pass or IRS acceptance is claimed.
+
+
+## Same-proprietor SHOP main integration
+
+Main `6b3e9cbd1`:20 typed checks passed,0 failed (1m22s), with real Poppler. Exact command:
+
+```sh
+deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/e2e/form8941_common_control_2025.test.ts forms/f1040/e2e/form8941_workers_2025.test.ts forms/f1040/e2e/form8941_multiple_plans_2025.test.ts forms/f1040/2025/form8995_multiple_schedule_c.test.ts scripts/ty2025-pdf-review-scope.test.ts
+```
+
+Log `/tmp/opentax-aggregate-shop-main-integration.log`, SHA256 `78feebe323d2be6514b60dc8dc90d53b0d8e5ab76a02ec2bd06ca44afd30d9e5`. One complete local-XSD packet/all25 visually reviewed pages plus actual source/math/limits proof retained in ignored `.state/research/2026-10-06-form8941-common-control/PROOF.md`. Group source/person/coverage and allocation mutations reject; seasonal, multiple-QHP and multiple-ScheduleC compatibility passes. Stable fullbc6cafec6 remains running, predates these changes and has two observed failures; no latest-head full pass or IRS acceptance is claimed.
