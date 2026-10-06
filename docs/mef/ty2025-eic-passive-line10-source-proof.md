@@ -146,3 +146,7 @@ PRIVATE_PDF_CACHE. Root also retained independent final review/preservation
 manifests `/tmp/opentax-eic-passive-line10-root-preservation-v6-oct6.json` and
 its prior v5 review. Candidate evidence is from base `2bd7ad887`, not a claim
 that later current-main payroll/mortgage integrations were tested here.
+
+## Current-main integration proof
+
+Root integrated at `0d153ed24` after board compaction. The 56-module standard task passed **690/0/0ignored (8m12s)**, including current mortgage and child-payroll source tests. Actual retained **42 returns / 374 pages** replayed exactly from saved public inputs; whole pending, prepared pending, carry, source bytes, page origins and PDF match, XML differs only by ReturnTs and passes the full cached TY2025v5.4 XSD. Root logs `/tmp/opentax-eic-passive-line10-main-standard-oct6.log` and `/tmp/opentax-eic-passive-line10-main-retained42-oct6/report.json`. Final27 and prior99 packet files remain privately hash-preserved; all103newpages are reviewed with the three final joint headers checked at full size. Full regression V22 is live at immutable integrated production; it has no terminal passing result yet.
