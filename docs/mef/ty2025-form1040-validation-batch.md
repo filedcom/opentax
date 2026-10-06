@@ -4933,3 +4933,7 @@ At `4dc5a8fcb`, the exact combined seven-file Deno gate retained in `/tmp/openta
 ## Main sourced farm losses, October6
 
 At68e6312d6, `/tmp/opentax-farm-loss-main-integration.log` terminal result: ok | 22 passed | 0 failed (2m5s). Exact six-file command includes farm loss/positive/conflicts, signedC-F, spouse Medicare PDF and native8995-A. SHA256 `32a2aa4658fcd6d732fdd3c5886474339bed0693b645b316aa9f5595c03d0a0c`. Current held replay verifies6 cases/149 pages in `/tmp/opentax-farm-loss-main-held.log` SHA256 `7946a832c787878ba56a58576ebeb1bb43af39e63d93af4e64dbfb549ab7bda8`; only declared exclusion scope updated to current catalog, source/artifact hashes remain frozen.
+
+## Interpreter, excluded-month and monthly-tier current-main gate
+
+At0ca0b85cc, six-file gate `/tmp/opentax-interpreter-zero-tier-main.log`:33 passed/0 failed,1m25s; source tests cover8826, zero/positive Medicare, tier-change SHOP, three-business and independent-spouse SHOP. SHA256 `f3e877526a92e8379e95d634af20b154446d54424ee07b4640b3bdf58adc14ff`. Current held8826 replay3 cases/68 reviewed pages: `/tmp/opentax-8826-main-held.log`, SHA256 `d1bc9adc9be1485cfc28300f012038324589e2e30c2b98252ac009b7eeaf96ee`. Six excluded-health hashes verified; current tier PDFs equal reviewed hashes and current fullXML passesXSD despite regenerated timestamps. Planner283 fixtures/116 descriptors/113 keys/95 covered/18 uncovered. Phase-wide full rerun and IRS acceptance remain required.
