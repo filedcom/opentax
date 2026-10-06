@@ -4206,3 +4206,11 @@ Root unpaid extra2 actual saved replay terminal0: all-notices unpaid1598/7pages 
 ## Before unpaid account source integration
 
 Complete board reread and learnings compacted before integration of settled candidate8e924543c. Final focus3/0/11filtered, independent root5saved returns/34pages fullXSD/sourceunchanged with exact native/PDF and allpages reviewed support reversible integration. First two positives add only retained account-review facts to untouched before source; no factory/source rewrite claim. Candidate broad10838 and rootprior41 replay11405 remain live; main14module and46saved-source gates are required before bounded ledger seal. Frozen52/future exact; ledger1534. FullV25 predates this new production and remains live/versionqualified.
+
+
+## Unpaid payroll final-gate continuation
+
+Previous goal turn made authoritative progress: settled production118c279a7 integrated/pushed, PR63 exacthead/title/body/draft verified and attached, finalfocus3/0 and root5saved/34reviewed pages/fullXSD verified. Full frozen board reread; ledger1534 and52parents/future unchanged. Candidate prior41 saved replay session81720 now terminal0:41returns/238pages,38fresh exact and3historicallyqualified, source unchanged/native verified rates/fullXSD, production unchanged throughout. Main14module session11127 and46saved-source session56640 polled live; no main seal yet. Existing mixed-worker/state parent source assessment is read-only in separate checkout.
+
+
+Before mixed-family/state source work, existingparent scope reviewed against2025IRS ScheduleH instructions, CA2025EDD householdguide and2025CFR31.3302(a)/(b). FederalfamilyFUTA exclusions differ from CAUI coverage: childunder18/spouse/parent CAexcluded, child18–20 CAcovered but federalFUTAexcluded. Statecontribution credit cannot blanket omit all federallyexcludedwages; reduction requiresFUTA/state intersection. Actual merged rejected before source SHA d87cf202ff88ac3f65af8674df124b19da234f9b961c1820fb8aa82dad5aebea and script privately preserved; no rewrite of prior archives. This is the existing mixed-worker/family/state parent, not futurework.
