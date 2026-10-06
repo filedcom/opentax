@@ -198,3 +198,52 @@ status archive. At that checkpoint employer-returned excess was open; the
 bounded employer-error correction above now covers the sourced 2025 recoup.
 
 Main employer-recoup integration passes the standard154-case combined gate (146 HSA and eight latest shareholder-source cases). Both actual new six-page packets replay exactly from saved inputs and eight retained byte records through full XSD, pending, PDF and origins, with only native timestamp variation. The two actual earlier owner-paid packets also preserve all fourteen pages and six source records exactly. All twelve new pages were visually reviewed. Main logs and manifests are recorded in the October6 archive. Wider corrections, source authenticity and IRS acceptance remain open.
+
+## Employer excess paid to the HSA owner in 2026 (2026-10-06)
+
+The existing 2025 Form 8889 calculator already separates a timely 2026
+withdrawal from a 2025 distribution. The source/export route now binds the
+2025 W-2 code W, a dated 2026 trustee excess-return transaction, and the
+owner's matching 2026 payment receipt as three distinct SHA-256-checked
+reviewed byte records. A $5,000 employer contribution exceeds the $4,300
+2025 self-only limit by $700. The trustee pays $700 principal plus $50
+earnings to the HSA owner on March 15, 2026, before the unextended filing
+deadline. The $700 omitted from 2025 W-2 box 1 reaches 2025 Schedule 1 line
+8z and Form 1040 line 8; the timely returned principal removes the current
+Form 5329 excess. The 2026 $50 earnings do not appear on the 2025 return.
+Neither 2025 Form 8889 line 14a/14b nor a 2025 code-2 Form 1099-SA records
+the later payment. Both owner placements retain two Form 8889 copies and the
+other spouse's $2,000 personal contribution. Form 1040 total tax is $6,390.
+
+The [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889)
+put excess employer principal omitted from W-2 wages in other income and
+earnings in the year received. They limit Part II line 14a to distributions
+made in 2025. The [2025 Form 5329 instructions](https://www.irs.gov/instructions/i5329)
+permit a timely return of the excess and attributable earnings to avoid the
+2025 excise. The future 2026 Form 1099-SA normally would not be issued by
+April 15, 2026; the 2025 filing instead requires the actual trustee payment
+and owner receipt. This packet does not claim that a 2026 information return
+has been issued or reconcile a 2026 tax return.
+
+Primary- and spouse-owner source packets each validate against the full
+TY2025 v5.4 Return1040 XSD and produce seven real PDF pages: Form 1040
+pages 1–2, Schedule 1 pages 1–2, a line-8z statement, and both Form 8889
+owner copies. All fourteen pages were rendered and visually reviewed.
+Missing, changed, late, misdirected, and contradictory W-2/trustee/receipt
+bytes reject native export; edited 2025 earnings, employer principal,
+distribution lines, return total, and owner-copy count reject native and
+direct PDF output. These are retained reviewed source transcriptions, not
+issuer authentication or IRS acceptance.
+
+The combined source/owner-preservation gate passes 149/0
+(`/tmp/opentax-hsa-postyear-final-focused-oct6.log`). The reviewed post-year
+PDFs are retained at `.state/research/hsa-postyear-owner-oct6/T.pdf`
+(SHA-256 `7157a9925a7242b5b358f1f621eeee107f65b878a028fc5b6c02b2d8de2356c9`)
+and `S.pdf`
+(SHA-256 `d4dc6cb786c169b6839b5ba8b830b2df1047e4cab0c90007adbaa8eb71d1718c`).
+Raw replay of the six separately retained source documents reproduces both
+pending graphs, PDFs, and page origins exactly; XML differs only in
+`ReturnTs` and passes the full v5.4 XSD
+(`/tmp/opentax-hsa-postyear-raw-replay-oct6.log`). The earlier two owner-paid
+and two employer-recoup packets retain exact PDF, page-origin, and document
+bytes, with source/pending JSON differing only in generated filer timestamps.

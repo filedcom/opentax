@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { employerCode2RetainedSourceSchema } from "./employer-code2-evidence-schema.ts";
 import { employerReturnEvidenceSchema } from "./employer-return-evidence-schema.ts";
+import { employerPostyearEvidenceSchema } from "./employer-postyear-evidence-schema.ts";
 import type {
   NodeOutput,
   NodeResult,
@@ -298,6 +299,8 @@ export const inputSchema = beneficiaryInputSchema.extend({
   retained_employer_code2_evidence: employerCode2RetainedSourceSchema
     .optional(),
   retained_employer_return_evidence: employerReturnEvidenceSchema.optional(),
+  retained_employer_postyear_evidence: employerPostyearEvidenceSchema
+    .optional(),
   spouse_hsa: beneficiaryInputSchema.optional(),
   // A 2024 married-family election with two HSAs can only be redetermined
   // from both filed owner forms and the spouses' actual allocation agreement.
@@ -1740,6 +1743,7 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
       w2_code_w_entries: codeW = [],
       retained_employer_code2_evidence: _retainedEmployerCode2Evidence,
       retained_employer_return_evidence: _retainedEmployerReturnEvidence,
+      retained_employer_postyear_evidence: _retainedEmployerPostyearEvidence,
       ...primary
     } = input;
     if ((primary.spouse_has_separate_hsa === true) !== (spouse !== undefined)) {
