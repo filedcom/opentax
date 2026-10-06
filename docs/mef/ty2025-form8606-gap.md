@@ -143,3 +143,18 @@ agreed full batch, TY2025 XSD check, PDF inspection, and IRS business-rule/ATS
 gates. The current Form 5498 and prior-return facts are reviewed fields, not
 authenticated source bytes; copy authentication and additional
 custodians/contributions remain open.
+
+
+## October6 retained Roth activity evidence
+
+The current Form4852 extension proves nine regular-contribution J/T public
+returns, with actual retained owner/account/Form5498/receipt/payment bytes and
+source-derived basis/five-year/age treatment. Its checked18-module gate is
+206/0; all nine full2025v5.4XSD packets/52 pages have exact held replay and
+visual review. See `ty2025-form4852-filing-gap.md` for authoritative commands,
+digests and expected source/filed amounts; earlier authored/unrun descriptions
+above are historical and do not describe this new proof. The source record
+admits neither scalar opening basis nor unreviewed historical conversions or
+consumed-basis claims. One actual current owner payment is proven; simultaneous
+owner/current-payment aggregation and conversion/prior-history source gates
+remain open, as do external authentication and IRS acceptance.

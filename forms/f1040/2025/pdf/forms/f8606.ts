@@ -229,6 +229,16 @@ export const form8606Pdf: PdfFormDescriptor = {
         print_line2_prior_basis: undefined,
         print_line3_total_basis: undefined,
         print_line14_remaining_basis: undefined,
+        ...(raw.roth_activity_review &&
+            raw.print_roth_line23_after_contribution_basis === 0
+          ? {
+            print_roth_line23_after_contribution_basis: "0",
+            print_roth_line24_conversion_basis: undefined,
+            print_roth_line25a_earnings: undefined,
+            print_roth_line25b_disaster: undefined,
+            print_roth_line25c_taxable: undefined,
+          }
+          : {}),
         print_owner_name: roth.ownerName,
         print_owner_ssn: roth.ownerSsn,
       }];

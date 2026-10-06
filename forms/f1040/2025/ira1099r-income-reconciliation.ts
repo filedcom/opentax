@@ -1,4 +1,5 @@
 import { f1099r } from "../nodes/inputs/f1099r/index.ts";
+import { reviewedRothActivity } from "../nodes/intermediate/forms/form8606/roth-activity.ts";
 import { f4852 } from "../nodes/inputs/f4852/index.ts";
 
 type IraAmounts = { gross: number; taxable: number };
@@ -50,7 +51,14 @@ export function assertIra1099rIncomeSource(
   // ordinary Form 1099-R gross output, but the issued box 1 still proves it.
   const form8606RothGross = issuedRows.filter((row) =>
     row.exclude_8606_roth === true && row.no_distribution_received !== true
-  ).reduce((sum, row) => sum + row.box1_gross_distribution, 0);
+  ).reduce(
+    (sum, row) =>
+      sum +
+      (row.roth_activity_review
+        ? reviewedRothActivity(row.roth_activity_review).gross
+        : row.box1_gross_distribution),
+    0,
+  );
   const form8606IncomeSource = issuedRows.some((row) =>
     row.no_distribution_received !== true &&
     (row.exclude_8606_roth === true || row.rollover_code === "C" ||

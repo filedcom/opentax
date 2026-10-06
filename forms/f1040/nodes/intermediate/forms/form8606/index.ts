@@ -1,3 +1,7 @@
+import {
+  reviewedRothActivity,
+  rothActivityReviewSchema,
+} from "./roth-activity.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -160,6 +164,7 @@ export const inputSchema = z.object({
   current_contribution_source: currentContributionSourceSchema.optional(),
   distribution_evidence: distributionEvidenceSchema.optional(),
   roth_distribution_evidence: rothDistributionEvidenceSchema.optional(),
+  roth_activity_review: rothActivityReviewSchema.optional(),
 });
 
 export type Form8606Input = z.infer<typeof inputSchema>;
@@ -194,6 +199,7 @@ export const printSchema = z.object({
   current_contribution_source: currentContributionSourceSchema.optional(),
   distribution_evidence: distributionEvidenceSchema.optional(),
   roth_distribution_evidence: rothDistributionEvidenceSchema.optional(),
+  roth_activity_review: rothActivityReviewSchema.optional(),
   print_roth_line19_distributions: z.number().int().nonnegative().optional(),
   print_roth_line20_homebuyer: z.number().int().nonnegative().optional(),
   print_roth_line21_after_homebuyer: z.number().int().nonnegative().optional(),
@@ -419,6 +425,28 @@ function computePartIII(input: Form8606Input): number {
 }
 
 function reviewedRothPartIII(input: Form8606Input) {
+  if (input.roth_activity_review) {
+    const facts = reviewedRothActivity(input.roth_activity_review);
+    if (
+      facts.qualified || input.roth_distribution_evidence ||
+      input.roth_distribution !== facts.gross ||
+      input.roth_basis_contributions !== facts.basis ||
+      input.nondeductible_contributions !== 0 ||
+      (input.prior_basis ?? 0) !== 0 ||
+      (input.roth_basis_conversions ?? 0) !== 0 ||
+      (input.roth_conversion ?? 0) !== 0 ||
+      (input.traditional_distributions ?? 0) !== 0 ||
+      input.distribution_evidence ||
+      input.current_contribution_source || input.zero_basis_source ||
+      input.filing_details
+    ) {
+      throw new Error(
+        "Form8606 Roth activity source and regular basis/qualified filing route conflict",
+      );
+    }
+    return { taxable: facts.taxable, print: facts.print };
+  }
+
   const evidence = rothDistributionEvidenceSchema.parse(
     input.roth_distribution_evidence,
   );
@@ -474,7 +502,7 @@ function reviewedRothPartIII(input: Form8606Input) {
 
 export function taxableRothDistribution(input: Form8606Input): number {
   const parsed = inputSchema.parse(input);
-  if (!parsed.roth_distribution_evidence) {
+  if (!parsed.roth_distribution_evidence && !parsed.roth_activity_review) {
     throw new Error("Form 8606 Roth taxable amount needs reviewed evidence");
   }
   return reviewedRothPartIII(parsed).taxable;
@@ -490,7 +518,7 @@ function buildF1040Output(
 ): NodeOutput | null {
   const totalTaxable = taxableTraditionalDist + taxableConversionAmt +
     taxableRoth;
-  if (totalTaxable <= 0) return null;
+  if (totalTaxable <= 0 && reviewedRothGross <= 0) return null;
 
   return output(f1040, {
     ...(reviewedRothGross > 0 ? { line4a_ira_gross: reviewedRothGross } : {}),
@@ -516,9 +544,10 @@ class Form8606Node extends TaxNode<typeof inputSchema> {
       taxableConversionAmt,
       line14RemainingBasis,
     } = reviewed ?? computePartI(input);
-    const reviewedRoth = input.roth_distribution_evidence
-      ? reviewedRothPartIII(input)
-      : undefined;
+    const reviewedRoth =
+      input.roth_distribution_evidence || input.roth_activity_review
+        ? reviewedRothPartIII(input)
+        : undefined;
     const taxableRoth = reviewedRoth?.taxable ?? computePartIII(input);
 
     const f1040Output = buildF1040Output(
@@ -563,6 +592,7 @@ class Form8606Node extends TaxNode<typeof inputSchema> {
       current_contribution_source: input.current_contribution_source,
       distribution_evidence: input.distribution_evidence,
       roth_distribution_evidence: input.roth_distribution_evidence,
+      roth_activity_review: input.roth_activity_review,
       ...(reviewedRoth ? reviewedRoth.print : {}),
       ...(reviewed ? reviewed.print : {}),
       ...(!reviewed && distributions + conversions > 0

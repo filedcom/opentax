@@ -1,3 +1,4 @@
+import { reconcileForm8606RothActivity } from "../form8606_roth_activity_reconciliation.ts";
 import { assertForm4852RetainedEvidence } from "../form4852_retained_evidence.ts";
 import { assertReviewedForm8283PdfFields } from "../mef/forms/f8283_signed_fields.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
@@ -589,6 +590,7 @@ export async function buildPdfBytes(
     filer,
     preparedBundle?.retainedSourceDocuments ?? [],
   );
+  reconcileForm8606RothActivity(normalized, filer);
   assertW2WithholdingSource(normalized, filer);
   assert1099WithholdingSource(normalized, filer);
   assertOtherFormsWithholding(normalized.f1040 ?? {}, normalized, true);

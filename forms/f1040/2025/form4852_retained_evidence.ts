@@ -1,3 +1,7 @@
+import {
+  reviewedRothActivity,
+  rothActivityDocuments,
+} from "../nodes/intermediate/forms/form8606/roth-activity.ts";
 import { isDeepStrictEqual } from "node:util";
 import { PDFCheckBox, PDFDocument, PDFTextField } from "pdf-lib";
 import type { FilerIdentity } from "../mef/header.ts";
@@ -95,7 +99,9 @@ export async function assertForm4852RetainedEvidence(
       );
     }
     if (
-      item.form_type === "R_1099" && /[JT]/.test(item.distribution_code ?? "")
+      item.form_type === "R_1099" &&
+      /[JT]/.test(item.distribution_code ?? "") &&
+      !item.retirement_source?.roth_activity_review
     ) {
       throw new Error(
         "Form 4852 nonqualified Roth IRA needs supported Form8606 PartIII ordering and five-year source evidence before filing",
@@ -226,7 +232,9 @@ export async function assertForm4852RetainedEvidence(
         ] as const
       ) {
         const amount = key === "taxable_amount"
-          ? effectiveTaxable(item)
+          ? item.taxable_amount_not_determined
+            ? undefined
+            : effectiveTaxable(item)
           : item[key] ??
             (key === "is_ira" ? false : key === "distribution_code" ? "" : 0);
         if (distribution[key] !== amount) {
@@ -245,6 +253,14 @@ export async function assertForm4852RetainedEvidence(
           "Form4852 actual custodian tax jurisdiction differs from completed boxes",
         );
       }
+      if (
+        (distribution.taxable_amount_not_determined ?? false) !==
+          (item.taxable_amount_not_determined ?? false)
+      ) {
+        throw new Error(
+          "Form4852 custodian unknown taxable checkbox differs from completed source",
+        );
+      }
       requiredTreatmentRecords.push({
         reference: distribution.source_document_reference,
         facts: distribution,
@@ -261,6 +277,36 @@ export async function assertForm4852RetainedEvidence(
         requiredTreatmentRecords.push({
           reference: payroll.source_document_reference,
           facts: payroll,
+        });
+      }
+    }
+    if (item.retirement_source?.roth_activity_review) {
+      const facts = reviewedRothActivity(
+        item.retirement_source.roth_activity_review,
+      );
+      const payment = facts.review.payment;
+      const general = pending.general as Record<string, unknown> | undefined;
+      if (
+        facts.review.owner_identity.date_of_birth !==
+          general?.[item.subject_ts === "S" ? "spouse_dob" : "taxpayer_dob"] ||
+        payment.owner_ssn !== item.recipient_ssn?.replace(/\D/g, "") ||
+        payment.custodian_ein !== item.payer_tin?.replace(/\D/g, "") ||
+        payment.account_number !== item.account_number ||
+        payment.distribution_reference !== item.distribution_reference ||
+        payment.distributed_on !== item.distribution_source?.paid_on ||
+        payment.gross_distribution !== item.gross_distribution ||
+        payment.distribution_code !== item.distribution_code ||
+        facts.review.form1099r_source_document_reference !==
+          item.completed_form_review_reference
+      ) {
+        throw new Error(
+          "Form4852 actual Roth owner/account/payment records differ from completed copy and return birth facts",
+        );
+      }
+      for (const documentFacts of rothActivityDocuments(facts.review)) {
+        requiredTreatmentRecords.push({
+          reference: documentFacts.source_document_reference,
+          facts: documentFacts,
         });
       }
     }

@@ -1,3 +1,4 @@
+import { reviewedRothActivity } from "../../intermediate/forms/form8606/roth-activity.ts";
 import { ownerIdentitySchema } from "../../intermediate/forms/schedule_se/owner-calculation.ts";
 import { z } from "zod";
 import type {
@@ -52,7 +53,8 @@ export const distributionSourceSchema = z.object({
   distribution_reference: z.string().trim().min(1),
   paid_on: z.string().date(),
   gross_distribution: z.number().nonnegative(),
-  taxable_amount: z.number().nonnegative(),
+  taxable_amount: z.number().nonnegative().optional(),
+  taxable_amount_not_determined: z.boolean().optional(),
   employee_contributions: z.number().nonnegative(),
   capital_gain: z.number().nonnegative(),
   federal_withheld: z.number().nonnegative(),
@@ -253,6 +255,19 @@ export const itemSchema = z.object({
         path: ["subject_ts"],
       });
     }
+    if (
+      val.retirement_source?.roth_activity_review &&
+      (val.taxable_amount_not_determined !== true ||
+        val.retirement_source.box2b_not_determined !== true ||
+        val.retirement_source.box2a_taxable_amount !== undefined)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Reviewed Roth completed Form4852 and retained distribution must agree on unknown taxable amount",
+        path: ["retirement_source"],
+      });
+    }
     if (val.taxable_amount_not_determined && val.taxable_amount !== undefined) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -352,8 +367,13 @@ function pensionItems(items: F4852Items): F4852Items {
 // Line 8b is already the taxable amount when supplied. When the filer can
 // estimate it from gross, subtract previously taxed employee contributions
 // once. A checked line 8c means the taxpayer cannot compute line 8b; retain
-// that source for the paper copy, but do not calculate a return from it.
+// that source for the paper copy; actual reviewed Roth records can separately
+// determine its taxable earnings. Other undetermined amounts remain guarded.
 export function effectiveTaxable(item: F4852Item): number {
+  if (item.retirement_source?.roth_activity_review) {
+    return reviewedRothActivity(item.retirement_source.roth_activity_review)
+      .taxable;
+  }
   if (item.taxable_amount_not_determined) {
     throw new Error(
       "Form 4852 taxable amount is undetermined; reconcile the distribution before calculation",
@@ -534,8 +554,12 @@ export function form4852CalculationSources(
         source_document_reference: reference,
         nonstandard_document_review: review,
         box1_gross_distribution: item.gross_distribution,
-        box2a_taxable_amount: item.retirement_source?.box2a_taxable_amount ??
-          effectiveTaxable(item),
+        box2a_taxable_amount: item.taxable_amount_not_determined
+          ? undefined
+          : item.retirement_source?.box2a_taxable_amount ??
+            effectiveTaxable(item),
+        box2b_not_determined: item.taxable_amount_not_determined ??
+          item.retirement_source?.box2b_not_determined,
         box2b_total_dist: item.total_distribution,
         box3_capital_gain: item.capital_gain,
         box4_federal_withheld: item.federal_withheld,

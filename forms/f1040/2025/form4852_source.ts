@@ -1,3 +1,4 @@
+import { reconcileForm8606RothActivity } from "./form8606_roth_activity_reconciliation.ts";
 import { isDeepStrictEqual } from "node:util";
 import { createHash } from "node:crypto";
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
@@ -363,6 +364,7 @@ export function reconcileForm4852Source(
       "Form4852 treatment source cannot replace an original, workpaper or completed copy",
     );
   }
+  reconcileForm8606RothActivity(pending ?? {}, filer);
   return source;
 }
 

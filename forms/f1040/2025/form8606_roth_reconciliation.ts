@@ -1,3 +1,4 @@
+import { reconcileForm8606RothActivity } from "./form8606_roth_activity_reconciliation.ts";
 import { inputSchema as f1099rSchema } from "../nodes/inputs/f1099r/index.ts";
 import {
   printSchema,
@@ -11,6 +12,32 @@ export function reconcileForm8606Roth(
   pending: Readonly<Record<string, unknown>> | undefined,
   filer: FilerIdentity | undefined,
 ) {
+  const activity = pending
+    ? reconcileForm8606RothActivity(pending, filer)
+    : undefined;
+  if (activity) {
+    if (activity.qualified || !activity.fields) {
+      throw new Error(
+        "Qualified Roth distribution cannot file Form8606 PartIII",
+      );
+    }
+    if (
+      JSON.stringify(printSchema.parse(rawFields)) !==
+        JSON.stringify(activity.fields)
+    ) {
+      throw new Error(
+        "Form8606 Roth activity descriptor fields differ from actual pending source",
+      );
+    }
+    return {
+      fields: activity.fields,
+      gross: activity.gross,
+      contribution: activity.basis,
+      taxable: activity.taxable,
+      ownerName: activity.ownerName,
+      ownerSsn: activity.ownerSsn!,
+    };
+  }
   const fields = printSchema.parse(rawFields);
   const source = f1099rSchema.safeParse(pending?.f1099r);
   const hasSource = source.success &&

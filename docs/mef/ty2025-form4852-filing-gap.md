@@ -305,3 +305,104 @@ the all-page visual review SHA256 is
 ## Current-main retained substitute proof
 
 Main488d0d288 with fixture803890382: Form4852 focused34/0(41s),15-module compatibility364/0(1m37s); held10 fullXSD packets/70 reviewed pages source/pending/XML/PDF/origin/retainedbytes exact with original manifests. Main manifest SHA25659eed07322855284a755e03b6d20d7ea6880a83d5f01e72c29e3b0fc34a8d2dd; originalvisual SHA256e4ec9bb90198147579feaf29a81a49d1d720a633c7fb164997362adb0ea41321. Logs `/tmp/opentax-form4852-current-main-focused-v2.log`, `/tmp/opentax-form4852-current-main-preservation.log`, `/tmp/opentax-form4852-current-main-held-replay.log`. Prior focused33/1 was unavailable prior-year template URL, fixed to official IRS archive; no production expectation weakened. External authenticity, broader retirement, J/T and IRS gates remain open.
+## Learning checkpoint before Roth J/T source extension (October 6)
+
+The committed ten-packet proof remains preserved in the preceding checkout.
+This fresh branch starts at3dcc3c89c. Current first-year Roth evidence supports
+one codeJ payment with2025 contribution basis and earnings above that basis;
+the retained Form4852 gate still rejects J/T. Generic codeT zero-tax treatment
+cannot establish whether five tax years have elapsed. The2025 IRS Form8606
+instructions and Pub590-B require regular contributions first, conversion/plan
+rollover contributions in year order, and earnings last; conversion recapture
+has a separate five-year clock. Age59½ alone does not make earnings qualified.
+
+The proposed extension retains complete reviewed owner/account/contribution
+and payment bytes, derives regular contribution basis and first-contribution
+tax year from those facts, and proves J taxable earnings or a basis-only
+distribution and T qualified/nonqualified age-based distributions. Historical
+conversion and prior-tax-election claims require their actual trusted records;
+no scalar basis or unconditional codeT exemption will substitute for them.
+Source authentication and IRS acceptance remain external gates. Shared main
+Form4972 group/fractional/inventory blocks are outside these edits.
+
+
+## Retained regular-contribution Roth J/T filing proof (October 6)
+
+This isolated extension starts from3dcc3c89c and preserves its original ten
+packets/70 pages. The new public `retirement_source.roth_activity_review`
+records complete owned accounts, owner birth evidence, issued Form5498 boxes
+10/2/3, dated designated-year receipts, and the actual owned payment/code/date.
+Every document is resolved to retained bytes, SHA256 and parsed facts before a
+Form4852 filing. Matching a reference or a rehashed digest alone is insufficient.
+The payer-unknown taxable box remains blank with its checkbox checked; taxable
+Roth earnings are derived separately rather than invented as a known box2a.
+Completed Form4852, workpaper and treatment records remain ERO-held, with no
+automatic binary transmission.
+
+For this regular-contribution inventory, basis comes from reconciled issued
+contributions, first contribution tax year comes from those records, and the
+age59½ date comes from the actual owner birth/payment dates. A2021 first year
+does not satisfy the2025 five-year period; a2020 first year does when the age
+condition is met. J earnings route through8606 and5329; J basis-only payments
+retain gross/zero taxable on1040 without a fabricated5329. Nonqualified age-
+exempt T earnings require8606 but no5329. Qualified T reports gross and zero
+without an inapplicable8606. These follow the [2025 Form8606 instructions](https://www.irs.gov/instructions/i8606)
+and [Publication590-B](https://www.irs.gov/publications/p590b).
+
+Nine independently expected full public returns cover first-year J, historical
+two-account J, basis-only J, first-year T,2021/2020 five-year boundaries,
+spouse-owned T on MFJ, and one day before/on the exact age59½ boundary. The
+cent case retains contribution receipts3000.25+2000.25 and payment7000.50;
+filed basis5001/gross7001 produce earnings2000/early tax200. The1040 source
+replay uses these filed operands, consuming the substitute deposit exactly once.
+Full taxable Single examples have AGI127000/tax19747 for J and tax19547 for
+age-exempt T; basis-only/qualified Single tax19067. The spouse T example has
+AGI127000/tax10986/refund10014. Every return has issued W2 wages125000 and
+actual source withholding20000+1000.
+
+Checked compatibility gate: **206 passed,0 failed (1m24s)** across18
+modules, `/tmp/opentax-4852-roth-final5.log`, including retained Form4852,
+shared R/IRA replay, native8606/1099R, old first-year primary/spouse Roth,
+traditional IRA contribution/basis, and multiple-NUA4972 preservation.
+A final impossible birth/contribution/payment chronology rejection was added
+and passed the checked public-negative test1/0 (103ms),
+`/tmp/opentax-4852-roth-chronology6.log`; final source replay remains9/52 exact
+(`/tmp/opentax-4852-roth-final-replay6.log`).
+The new two tests include finalized gross/taxable/birth/basis mutations rejected
+by native and direct prepared-PDF builders, rehashed receipt facts rejected by
+retention/native/PDF, and public owner/account/code/calendar/inventory/unknown-
+taxable conflicts. All nine returns validate against the complete local2025
+v5.4 Return1040 schema.
+
+Ignored artifact root: `.state/research/form4852-roth-source`. Exact held replay
+is terminal **9 packets/52 pages**, `/tmp/opentax-4852-roth-replay5.log`;
+only ReturnTs is normalized in XML, while PDF/source/origin/retained bytes must
+match exactly. All52 pages were visually reviewed: final sheets9–26 viewed;
+sheets1–8 match the already viewed proof4 sheet bytes exactly. Basis-only8606
+line23 prints0 and skipped24–25 remain blank. Headers, primary/spouse SSNs,
+copy order, checkboxes, arithmetic and clipping were inspected. The earlier
+proof4 artifacts are separately preserved.
+
+```sh
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno test --allow-all forms/f1040/2025/form4852_roth.test.ts
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run --allow-all .state/research/form4852-roth-source/replay.ts
+PATH=/tmp/opentax-poppler-env/bin:$PATH /usr/bin/python3 .state/research/form4852-roth-source/render.py
+```
+
+Manifest SHA256: `708a61f558ee45082015120b3c4b8f7697d8906cb883aee717a42106332c2bfa`.
+All-page review SHA256: `5a92bf1dc39413bf6ed8d9f4f699ba09f07956c441e3934043aa2007a9b0f42d`.
+
+### Learning checkpoint and retained broader source gates
+
+This proves one current owner payment with complete regular-contribution
+history, no prior distributions/returned contributions, no conversions/plan
+rollovers, no inherited/transferred basis, and reviewed eligible contributions.
+Multiple current IRA payments or simultaneous owner8606 copies, conversion
+FIFO/recapture, historical consumed basis, disaster/homebuyer/transfer claims,
+and other codeT exceptions require their actual supporting source joins;
+they remain explicit final guards. Historical deadline extensions are not
+inferred from ordinary receipt dates. The fixture issuer/birth/inventory records
+are reviewed synthetic test bytes, not external authentication. Taxpayer
+completion/source authenticity and IRS business rules/ATS remain external gates.
+The broader4852/8606 parent remains open. Current-main4972 group/inventory and
+exact-cent changes must be preserved when integrating the separate Roth blocks.

@@ -7,6 +7,10 @@ import {
   isSourceMoney,
   sameSourceMoney,
 } from "../../intermediate/forms/form4972/source-rounding.ts";
+import {
+  reviewedRothActivity,
+  rothActivityReviewSchema,
+} from "../../intermediate/forms/form8606/roth-activity.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -106,6 +110,9 @@ function effectiveTaxableAmount(
 ): number {
   // Suppressed items contribute no taxable income
   if (item.exclude_4972 === true) return 0;
+  if (item.roth_activity_review) {
+    return reviewedRothActivity(item.roth_activity_review).taxable;
+  }
   if (item.exclude_8606_roth === true) return 0;
 
   const rawTaxable = item.box2a_taxable_amount ?? item.box1_gross_distribution;
@@ -480,6 +487,7 @@ export const itemSchema = z.object({
   prior_ira_basis: z.number().nonnegative().optional(),
   form8606_distribution_evidence: distributionEvidenceSchema.optional(),
   roth_distribution_evidence: rothDistributionEvidenceSchema.optional(),
+  roth_activity_review: rothActivityReviewSchema.optional(),
 
   // Form 8606 — year-end FMV of all traditional IRAs (line 6).
   // Required when prior_ira_basis is set and there are remaining IRA assets after distribution.
@@ -1147,9 +1155,39 @@ function validateItem(item: R1099Item): void {
     );
   }
   validateIraRolloverEvidence(item);
+  if (item.roth_activity_review) {
+    const facts = reviewedRothActivity(item.roth_activity_review);
+    const payment = facts.review.payment;
+    if (
+      item.ts === undefined || item.box7_ira_simple_indicator !== true ||
+      item.box7_distribution_code !== payment.distribution_code ||
+      item.box7_code2 !== undefined ||
+      item.account_number !== payment.account_number ||
+      item.payer_ein.replace(/\D/g, "") !== payment.custodian_ein ||
+      item.recipient_ssn?.replace(/\D/g, "") !== payment.owner_ssn ||
+      item.box13_date_of_payment !== payment.distributed_on ||
+      item.box1_gross_distribution !== payment.gross_distribution ||
+      item.source_document_reference !==
+        facts.review.form1099r_source_document_reference ||
+      item.box2a_taxable_amount !== undefined ||
+      item.box2b_not_determined !== true ||
+      item.exclude_8606_roth !== !facts.qualified ||
+      item.roth_distribution_evidence !== undefined ||
+      item.rollover_code !== undefined || item.prior_ira_basis !== undefined ||
+      item.form8606_distribution_evidence !== undefined ||
+      item.exclude_4972 === true ||
+      item.qcd_full === true || (item.qcd_partial_amount ?? 0) > 0 ||
+      item.form8915f_treatment !== undefined ||
+      item.no_distribution_received === true
+    ) {
+      throw new Error(
+        "Roth activity payment must match actual owner/account J/T source and qualified/PartIII routing",
+      );
+    }
+  }
   if (
-    item.exclude_8606_roth === true ||
-    item.roth_distribution_evidence !== undefined
+    !item.roth_activity_review && (item.exclude_8606_roth === true ||
+      item.roth_distribution_evidence !== undefined)
   ) {
     const evidence = item.roth_distribution_evidence;
     if (
@@ -1282,6 +1320,9 @@ function disabilityWagesItems(items: R1099Items): R1099Items {
 // its taxable amount is separately determined for line 4b or 5b.
 function isExcludedFromGross(item: R1099Item): boolean {
   if (item.exclude_4972 === true) return true;
+  if (item.roth_activity_review) {
+    return !reviewedRothActivity(item.roth_activity_review).qualified;
+  }
   if (item.exclude_8606_roth === true) return true;
   // Code Q is zero taxable, but its gross Roth IRA distribution belongs on
   // Form 1040 line 4a under the 2025 line 4a/4b Exception 2 instructions.
@@ -1351,13 +1392,19 @@ function iraF1040Fields(
   // Direct rollovers remain in gross distributions even when line 4b is zero.
   const reportableItems = active.filter((item) => !isExcludedFromGross(item));
   const gross = reportableItems.reduce(
-    (sum, item) => sum + item.box1_gross_distribution,
+    (sum, item) =>
+      sum +
+      (item.roth_activity_review
+        ? reviewedRothActivity(item.roth_activity_review).gross
+        : item.box1_gross_distribution),
     0,
   );
   // Items routed through Form 8606 Part I are excluded here — form8606 emits line4b for them.
   const nonBasisItems = active.filter((item) =>
     !routedThrough8606PartI(item) &&
-    item.roth_distribution_evidence === undefined
+    item.roth_distribution_evidence === undefined &&
+    (!item.roth_activity_review ||
+      reviewedRothActivity(item.roth_activity_review).qualified)
   );
   const taxable = nonBasisItems.reduce(
     (sum, item) =>
@@ -1366,7 +1413,9 @@ function iraF1040Fields(
   );
   const has8606Items = active.some((item) =>
     routedThrough8606PartI(item) ||
-    item.roth_distribution_evidence !== undefined
+    item.roth_distribution_evidence !== undefined ||
+    (item.roth_activity_review !== undefined &&
+      !reviewedRothActivity(item.roth_activity_review).qualified)
   );
   const fields: Record<string, number> = {};
   if (gross > 0) fields.line4a_ira_gross = gross;
@@ -1443,6 +1492,17 @@ function withholdingF1040Fields(items: R1099Items): Record<string, number> {
 }
 
 function form8606RothInput(item: R1099Item) {
+  if (item.roth_activity_review) {
+    const facts = reviewedRothActivity(item.roth_activity_review);
+    return {
+      nondeductible_contributions: 0,
+      roth_distribution: facts.gross,
+      roth_basis_contributions: facts.basis,
+      roth_basis_conversions: 0,
+      roth_activity_review: facts.review,
+    };
+  }
+
   const evidence = rothDistributionEvidenceSchema.parse(
     item.roth_distribution_evidence,
   );
@@ -1462,7 +1522,9 @@ function form5329Outputs(items: R1099Items): NodeOutput[] {
   const earlyItems = activeItems(items).filter(
     (item) =>
       EARLY_DIST_CODES.has(item.box7_distribution_code) &&
-      item.form8915f_treatment === undefined,
+      item.form8915f_treatment === undefined &&
+      (!item.roth_activity_review ||
+        reviewedRothActivity(item.roth_activity_review).earlyTaxable > 0),
   );
   return earlyItems.map((item) => {
     if (
@@ -1475,7 +1537,9 @@ function form5329Outputs(items: R1099Items): NodeOutput[] {
     }
     // Form 5329 line 1 takes the early distribution "includible in income". With
     // nondeductible basis that is the Form 8606 line 15c taxable amount, not box 2a.
-    const taxable = item.roth_distribution_evidence
+    const taxable = item.roth_activity_review
+      ? reviewedRothActivity(item.roth_activity_review).earlyTaxable
+      : item.roth_distribution_evidence
       ? taxableRothDistribution(form8606RothInput(item))
       : routedThrough8606PartI(item)
       ? taxableTraditionalDistribution({
