@@ -48,3 +48,9 @@ One actual Form7203 per owner/EIN has formal checkbox/column1 and open checkbox/
 ## Remaining parent boundaries
 
 More than one written note alongside an open account, larger PartII overflow, mixed co-owned issuer funding beyond the proven independent-corporation family, prior reduced-debt restoration/repayment gain, nonzero prior history/accepted-source authentication, other interest terms/current interest payments, stock ownership changes and wider K1 source branches remain open. Existing formal-note, shared issuer, multiple-corporation and standalone open-account routes are preserved. This is no blanket Form7203 parent closure.
+
+## Integrated main retained-source verification
+
+Main production6519c6819 actual retained raw replay is terminal32packets/288pages at `/tmp/opentax-form7203-mixed-debt-current-main-replay.Dr7lFw/combined-summary.json`, log `/tmp/opentax-form7203-mixed-main-raw-v2-oct6.log`. All five reports independently verify wholepending/carry/origins/source/PDF equality, nativeXML onlyReturnTs and fullXSD. Root reviewed all66newpages plus full-size fractional allocation, fully repaid open column and independent spouse copies; `/tmp/opentax-form7203-mixed-root-page-review-oct6.json`. All64originalfiles independently copied/hash-compared into `.state/research/form7203-mixed-debt-oct6-preserved`, manifest `/tmp/opentax-form7203-mixed-root-preservation-oct6.json`.
+
+First main verification lacked the private schema tree: raw replay exited on missingReturn1040.xsd, and standard gate ended228passed/17failed/1ignored. Those logs remain diagnostic-only; schema was privately copied, not generated or replaced, before the corrected runs. Main standard final gate remains pending; no first-run success is claimed.
