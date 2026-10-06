@@ -62,3 +62,41 @@ workflows remain outside this original parent scope.
 ## Verified current-main integration
 
 Main4a45410da: source7/0(25s) and seven-module36/0(32s); `/tmp/opentax-form8621-qef-agi-current-main-focused.log` and `/tmp/opentax-form8621-full-refigure-current-main-focused.log`. Full-return QEF counterfactual refigures sourced medical floor473 and senior MAGI phaseout462 rather than440 regular-only difference; finalsourcegraph conflicts rejected. All7fullXSD PDFs/55reviewedpages exactly match prior5/38 plus new2/17 originals; `/tmp/opentax-form8621-full-refigure-current-main-pdf-comparison.json`. Prior related56/0 preserved isolated source proof; latestfull remains live, not a completed gate. AMT/ScheduleJ/Form8615, mixed two-pass, multiple elections, external accepted-filing authenticity and IRS gates remain open.
+## Form 6251, Schedule J, and Form 8615 continuations
+
+The full-return counterfactual now also carries the 2025 source routes for ISO
+AMT, a Schedule F-only Schedule J election with separately identified nonfarm
+QEF ordinary income, and a child's Form 8615. The first-pass regular-tax
+estimate can differ from the complete line 24 tax increase in these cases, so
+the final native and PDF replay remains mandatory. The Schedule J join subtracts
+only source-replayed QEF ordinary income from the farm activity AGI check; its
+Schedule F profit, attributable SE deduction, and QBI deduction still bound the
+elected farm income. Other nonfarm income remains under the existing Schedule J
+source guard. In the Form 8615 shadow, the child's unearned-income worksheet
+amount is reduced by exactly the QEF undistributed earnings, while the retained
+parent facts remain unchanged.
+
+| Full-return source variation                                         | Form 8621 line 9a | Line 9b | Line 9c | PDF pages |
+| -------------------------------------------------------------------- | ----------------: | ------: | ------: | --------: |
+| Issued Form 3921 ISO exercise, positive Form 6251 AMT                |           $94,310 | $93,750 |    $560 |        11 |
+| Cash Schedule F, Schedule J $15,000 elected farm income, nonfarm QEF |           $21,433 | $21,241 |    $192 |        16 |
+| Child's $5,000 bank interest and $2,000 QEF in Form 8615             |              $652 |    $412 |    $240 |         9 |
+
+All three source packets validate against the full local TY2025 MeF v5.4
+`Return1040.xsd`; all 36 pages were rendered at 85 dpi and visually reviewed
+under `/tmp/opentax-form8621-qef-amt-rendered/`. The final PDFs are
+`/tmp/opentax-form8621-qef-amt-oct6.pdf` (SHA-256
+`a7b62dd2f8b848bc88d46a3a37611cf108c0846c127f59c7fff8616f6110bc40`),
+`/tmp/opentax-form8621-qef-schedulej-oct6.pdf`
+(`dd48ecae40224e57e01b3bd3d9f993f9279cb5ec19ab9ceb9ba02d8d6096b01c`), and
+`/tmp/opentax-form8621-qef-8615-oct6.pdf`
+(`a69cd6e8ccdf3a2623757af7139f1d288c95eb7c248931829b390eb21cefa554`). The
+previous seven Form 8621 packets still match all prior PDF SHA-256 values and 55
+reviewed pages. The combined focused gate is recorded in
+`/tmp/opentax-form8621-qef-amt-focused-oct6.log`.
+
+The Form 3921, Schedule J base-year, and parent Form 8615 facts in these tests
+are the existing public synthetic review fixtures; they are computation proof,
+not authenticated issuer, parent-return, or IRS acceptance records. Wider
+Schedule J nonfarm-attribution combinations and Form 8615 source variants still
+need their own evidence before filing.

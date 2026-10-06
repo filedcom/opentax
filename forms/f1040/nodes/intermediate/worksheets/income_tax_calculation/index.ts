@@ -293,7 +293,6 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     let form8621DeferredTaxBeforeCredits = 0;
     if (deferredOrdinary + deferredCapital > 0) {
       if (
-        form8615Result || input.schedule_j_election_requested ||
         deferredOrdinary + deferredCapital > input.taxable_income ||
         deferredCapital > netCg
       ) {

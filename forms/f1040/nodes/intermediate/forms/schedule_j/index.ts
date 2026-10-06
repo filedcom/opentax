@@ -30,6 +30,7 @@ const completeInputSchema = z.object({
   mixed_farm_fishing_income_verified: z.boolean().optional(),
   mixed_farm_fishing_unsupported_source_key: z.string().optional(),
   schedule_c_net_profit: finiteAmount.optional(),
+  nonfarm_qef_ordinary: z.number().nonnegative().optional(),
   se_tax_deduction: finiteAmount,
   agi: finiteAmount,
   taxable_income_2025: finiteAmount,
@@ -136,7 +137,8 @@ function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
   }
   if (
     Math.abs(
-      source.agi - (activityProfit - source.se_tax_deduction),
+      source.agi - (source.nonfarm_qef_ordinary ?? 0) -
+        (activityProfit - source.se_tax_deduction),
     ) > 0.01
   ) {
     throw new Error(

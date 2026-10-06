@@ -62,6 +62,25 @@ export function applyForm8621QefRefigure(
         qef_capital_gain: capital,
       };
     });
+  const childSource = record(withoutInputs.f8615);
+  if (childSource) {
+    const election = record(record(elected[0])?.qef_1294_election);
+    const removed = Number(election?.undistributed_ordinary_earnings_usd) +
+      Number(election?.undistributed_capital_gain_usd);
+    const childUnearned = Number(childSource.child_unearned_income);
+    if (
+      !Number.isFinite(removed) || !Number.isFinite(childUnearned) ||
+      childUnearned < removed
+    ) {
+      throw new Error(
+        "Form 8621 Election B child unearned income cannot exclude the QEF earnings",
+      );
+    }
+    withoutInputs.f8615 = {
+      ...childSource,
+      child_unearned_income: childUnearned - removed,
+    };
+  }
   const without = execute(
     buildExecutionPlan(registry),
     registry,
@@ -141,7 +160,9 @@ export function assertForm8621QefRefigureSource(
   }
   const full = execute(buildExecutionPlan(registry), registry, inputs, context);
   if (full.diagnostics.length > 0) {
-    throw new Error("Form 8621 Election B source return has graph diagnostics");
+    throw new Error(
+      "Form 8621 section 1294 source return has graph diagnostics",
+    );
   }
   const expected = applyForm8621QefRefigure(inputs, full);
   if (

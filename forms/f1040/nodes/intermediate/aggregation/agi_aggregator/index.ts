@@ -256,6 +256,9 @@ function firstNonScheduleFIncomeSource(input: AgiInput): string | undefined {
     "filing_status",
     "line6_schedule_f",
     "line15_se_deduction",
+    // Source-replayed QEF ordinary income is investment income, not elected
+    // farm income; Schedule J reconciles it separately from Schedule F.
+    "line8z_form8621_qef",
   ]);
   return Object.entries(input).find(([key, value]) => {
     if (allowed.has(key) || value === undefined) return false;
@@ -789,6 +792,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(schedule_j_calculation, {
         farm_only_income_verified: unsupportedFarmIncome === undefined,
         farm_only_unsupported_source_key: unsupportedFarmIncome,
+        nonfarm_qef_ordinary: input.line8z_form8621_qef ?? 0,
         fishing_only_income_verified:
           firstNonFishingScheduleCIncomeSource(input) === undefined,
         fishing_only_unsupported_source_key:

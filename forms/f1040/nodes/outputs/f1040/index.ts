@@ -875,11 +875,9 @@ function assembleReturn(
   }
   const deferredBeforeCredits =
     input.form8621_1294_deferred_tax_before_credits ?? 0;
-  if (deferredBeforeCredits > 0 && (input.line17_additional_taxes ?? 0) > 0) {
-    throw new Error(
-      "Form 8621 section 1294 deferral with AMT needs a refigured alternative minimum tax",
-    );
-  }
+  // The executor's Election B route replaces this first-pass regular-tax
+  // estimate with a complete without-QEF return, including Form 6251 and
+  // Schedule 2. The exporters require that replay before filing.
   const taxBeforeDeferral = computed_line22 + computed_line23;
   const counterfactual = input.form8621_1294_counterfactual_total_tax;
   if (
