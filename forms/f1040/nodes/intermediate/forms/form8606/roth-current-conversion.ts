@@ -37,6 +37,7 @@ const priorPartI = z.discriminatedUnion("method", [
   }).strict(),
 ]);
 const date = rothActivityReviewSchema.shape.payment.shape.distributed_on;
+const calendarDate = z.string().date();
 const issuer = z.object({
   name: reference,
   address_line1: reference,
@@ -110,6 +111,7 @@ const annual = z.object({
 const transfer = historicalTransfer.extend({
   issued_form1099r: historicalTransfer.shape.issued_form1099r.extend({
     tax_year: z.literal(2025),
+    originating_account_type: z.literal("simple_ira").optional(),
     source_kind: z.literal("completed_form4852").optional(),
     completed_form4852_reference: reference.optional(),
     box2a_taxable_amount: rothSourceMoney.optional(),
@@ -141,6 +143,40 @@ export const currentRothConversionSchema = z.object({
     traditional_accounts: z.array(
       z.object({ custodian_ein: ssn, account_number: reference }).strict(),
     ).min(1),
+    simple_origins: z.array(
+      z.object({
+        source_document_reference: reference,
+        owner_ssn: ssn,
+        employer_ein: ssn,
+        plan_reference: reference,
+        custodian_ein: ssn,
+        account_number: reference,
+        account_opened_on: calendarDate,
+        plan_document: z.object({
+          source_document_reference: reference,
+          owner_ssn: ssn,
+          employer_ein: ssn,
+          plan_reference: reference,
+          custodian_ein: ssn,
+          account_number: reference,
+          plan_kind: z.literal("traditional_simple_ira"),
+          effective_on: calendarDate,
+        }).strict(),
+        first_employer_deposit_ledger_complete: z.literal(true),
+        employer_deposits: z.array(
+          z.object({
+            source_document_reference: reference,
+            owner_ssn: ssn,
+            employer_ein: ssn,
+            plan_reference: reference,
+            custodian_ein: ssn,
+            account_number: reference,
+            deposited_on: calendarDate,
+            amount: rothSourceMoney.refine((amount) => amount > 0),
+          }).strict(),
+        ).min(1),
+      }).strict(),
+    ).min(1).optional(),
     all_owned_traditional_sep_simple_iras_included: z.literal(true),
     all_current_traditional_distributions_are_listed_conversions: z.boolean(),
     no_current_traditional_contributions: z.boolean(),
@@ -186,6 +222,11 @@ export function formatForm8606BasisRatio(ratio: number) {
 export function currentRothConversionDocuments(review: CurrentRothConversion) {
   return [
     review.inventory,
+    ...(review.inventory.simple_origins ?? []).flatMap((origin) => [
+      origin,
+      origin.plan_document,
+      ...origin.employer_deposits,
+    ]),
     ...(review.annual_traditional_activity
       ? [
         review.annual_traditional_activity.nondeductible_election,
@@ -257,6 +298,36 @@ export function reviewedCurrentRothConversion(
   const key = (row: { custodian_ein: string; account_number: string }) =>
     JSON.stringify([row.custodian_ein, row.account_number]);
   const owned = review.inventory.traditional_accounts.map(key);
+  const simple = new Map<
+    string,
+    NonNullable<typeof review.inventory.simple_origins>[number]
+  >();
+  for (const origin of review.inventory.simple_origins ?? []) {
+    const account = key(origin);
+    if (
+      simple.has(account) || !owned.includes(account) ||
+      origin.owner_ssn !== owner.owner_ssn ||
+      origin.plan_document.owner_ssn !== origin.owner_ssn ||
+      origin.plan_document.employer_ein !== origin.employer_ein ||
+      origin.plan_document.plan_reference !== origin.plan_reference ||
+      key(origin.plan_document) !== account ||
+      origin.account_opened_on < origin.plan_document.effective_on ||
+      origin.employer_deposits.some((deposit) =>
+        deposit.owner_ssn !== origin.owner_ssn ||
+        deposit.employer_ein !== origin.employer_ein ||
+        deposit.plan_reference !== origin.plan_reference ||
+        key(deposit) !== account ||
+        deposit.deposited_on < origin.plan_document.effective_on ||
+        deposit.deposited_on < origin.account_opened_on ||
+        deposit.deposited_on > "2025-12-31"
+      )
+    ) {
+      throw new Error(
+        "SIMPLE origin employer/plan/account/owner deposit source differs",
+      );
+    }
+    simple.set(account, origin);
+  }
   const statementKeys = review.year_end_statements.map(key);
   if (
     review.inventory.owner_ssn !== owner.owner_ssn ||
@@ -293,6 +364,29 @@ export function reviewedCurrentRothConversion(
     incoming.add(key(f));
     for (const t of account.transfers) {
       const i = t.issued_form1099r, r = t.receipt;
+      const sourceAccount = key({
+        custodian_ein: i.payer_ein,
+        account_number: i.traditional_account_number,
+      });
+      const simpleOrigin = simple.get(sourceAccount);
+      if (!!simpleOrigin !== (i.originating_account_type === "simple_ira")) {
+        throw new Error(
+          "SIMPLE conversion origin classification differs from employer plan source",
+        );
+      }
+      if (simpleOrigin) {
+        const first = simpleOrigin.employer_deposits.reduce(
+          (earliest, deposit) =>
+            deposit.deposited_on < earliest ? deposit.deposited_on : earliest,
+          simpleOrigin.employer_deposits[0].deposited_on,
+        );
+        const anniversary = `${Number(first.slice(0, 4)) + 2}${first.slice(4)}`;
+        if (i.distributed_on < anniversary) {
+          throw new Error(
+            "SIMPLE Roth conversion precedes employer first-deposit two-year anniversary",
+          );
+        }
+      }
       if (
         !t.unconverted_disposition && (
           i.federal_withheld !== 0 || i.state_tax_withheld !== 0 ||

@@ -64,14 +64,15 @@ export function reconcileForm8606RothInventories(
             row.review,
           )
         );
+        const accountType = matched[0]?.distribution_source?.account_type;
+        const matchedType = source.originating_account_type === "simple_ira"
+          ? accountType === "simple_ira"
+          : accountType === "traditional_ira" || accountType === "sep_ira";
         if (
-          matched.length !== 1 ||
-          !["traditional_ira", "sep_ira"].includes(
-            matched[0].distribution_source?.account_type ?? "",
-          )
+          matched.length !== 1 || !matchedType
         ) {
           throw new Error(
-            "Annual traditional conversion completed-source kind requires its actual retained Form4852 copy",
+            "Current traditional/SIMPLE conversion requires its matching retained Form4852 account classification",
           );
         }
       }

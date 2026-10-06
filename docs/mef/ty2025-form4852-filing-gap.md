@@ -1045,3 +1045,43 @@ Integrated `5f8eb2f9b` after board compact/archive. The append-only gap document
 Root immutable-source replay passes new **10/91** and original current-conversion **13/116**, pending/native XML except ReturnTs/PDF/origins/retained hashes exact, with full v5.4 XSD per packet. Logs `/tmp/opentax-annual-ira-main-held10-oct6.log` and `/tmp/opentax-annual-ira-main-prior13-oct6.log`; script `/tmp/opentax-annual-ira-main-replay-oct6.ts`. New manifest SHA `fbe381c196937da1bb54b2c2254aa7d2f8028dc9d5b4027d2818dffcf4e3ef5b` exactly equals agent's immutable ten-packet manifest. All indexed evidence/log hashes were checked before integration. This transfers reviewed new91 and prior116 packet pages by exact PDF bytes; earlier source/visual review qualifications remain explicit. Original evidence directories were not modified; computed manifests are separate temporary files. Nine changed source files pass formatting; f1099r retains a formatting failure also reproduced on its pre-integration version, not a newly claimed clean gate. Wider source/authentication/IRS parents remain open.
 
 Template cache qualification: the replay builders added verified archived-URL Form4852 cache entries to the preserved template-cache directories. The current and archived revision entries both hash to `810e5e4df3022cf5421094b1d19dcf47eee020c751c47585b72d3249309cd066`. Source/packet archive files and original template bytes remain unchanged; cache directories are not claimed directory-identical. Later replays should use a separate copied template cache.
+
+## Retained SIMPLE first-participation conversion source (isolated proof)
+
+The current-year Form8606 source now accepts a distinct traditional SIMPLE IRA
+account when its owner, employer EIN, plan, custodian, account, effective plan
+record and retained employer deposit ledger join the completed Form4852 SIMPLE
+copy and Roth receipt. The reviewed ledger's earliest employer deposit, rather
+than the account opening date, starts this employer's two-year clock. The
+conversion is rejected before the exact second anniversary. This follows the
+[2025 Form8606 instructions](https://www.irs.gov/instructions/i8606), which
+include traditional SIMPLE IRAs in the traditional IRA basis pool, and
+[TD 8816 Q4](https://www.irs.gov/pub/irs-regs/td8816.pdf), which excludes
+SIMPLE-to-Roth conversions during the employer-plan participation period.
+Separate employer evidence cannot mature another employer's account clock.
+
+The source-positive packet keeps the existing regular traditional IRA's 2025
+$2,000 nondeductible contribution, withdrawal, prior $3,000 basis and $10,000
+conversion while adding a separate $2,000 employer-funded SIMPLE conversion on
+2025-04-10, exactly two years after the first retained deposit. Form8606 line9
+$27,500, line10 .145, line11 $1,740, line12 $798, line14 $2,462 and line18
+$10,260 produce Form1040 IRA gross $17,500, taxable $14,962 and total tax
+$23,128. Both completed Form4852 copies and the two-page Form8606 appear in
+the nine-page packet; the SIMPLE copy has the visible right-margin account
+label. The local 2025 full XSD and all nine rendered pages were checked.
+
+Negative source checks cover the prior-day boundary, a later actual first
+deposit despite an earlier account opening, impossible calendar date, plan,
+employer, owner and account mismatches, an unrelated earlier employer deposit,
+missing SIMPLE classification, a conflicting substitute account type, and
+changed retained first-deposit bytes. The original annual/current suites pass
+5/0 and produce 23 PDF packets matching the preexisting main copies byte for
+byte; fresh retained source PDF hashes differ, so archival source bytes are not
+claimed identical. This is reviewed source and local form/schema proof, not
+issuer authentication, IRS acceptance, or a claim for transferred SIMPLE
+accounts whose first employer deposit was held at a different custodian.
+
+Private generated proof: `/tmp/opentax-simple-roth-clock-oct6/.state/research/simple-roth-clock-oct6/`;
+focused log `/tmp/opentax-simple-roth-test-final-oct6.log`; preservation log
+`/tmp/opentax-simple-roth-preservation-oct6.log`. The new PDF SHA256 is
+`135a844da31c1c0e54090f03216a294c0704cbe6be7cf3bc6cfaceb1888b0de7`.
