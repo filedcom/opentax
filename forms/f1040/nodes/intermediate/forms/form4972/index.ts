@@ -138,11 +138,15 @@ type Form4972Input = z.infer<typeof inputSchema>;
 function validateInput(input: Form4972Input, deathBenefitMax: number): void {
   if (input.multiple_1099r) {
     const refs = input.multiple_1099r.source_document_references;
+    const partialMultiple = (input.recipient_share_pct ?? 100) < 100;
     if (
       new Set(refs).size !== refs.length ||
       (input.recipient !== "T" && input.recipient !== "S") ||
-      input.beneficiary_distribution !== false ||
-      input.participant_five_year_member !== true ||
+      (partialMultiple
+        ? input.beneficiary_distribution !== true ||
+          input.participant_five_year_member !== false
+        : input.beneficiary_distribution !== false ||
+          input.participant_five_year_member !== true) ||
       input.elect_10yr_averaging !== true ||
       (input.elect_capital_gain === true &&
         (input.capital_gain_amount ?? 0) <= 0) ||
@@ -159,12 +163,17 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
       ((input.box6_nua ?? 0) === 0 &&
         input.elect_include_nua === true) ||
       !Number.isSafeInteger(input.annuity_actuarial_value ?? 0) ||
+      (partialMultiple && (input.annuity_actuarial_value ?? 0) > 0 &&
+        input.annuity_share_pct === undefined) ||
       (input.death_benefit_exclusion ?? 0) !== 0 ||
       (input.federal_estate_tax ?? 0) !== 0 ||
-      (input.recipient_share_pct ?? 100) !== 100
+      (partialMultiple &&
+        !Number.isSafeInteger(
+          input.lump_sum_amount * 100 / input.recipient_share_pct!,
+        ))
     ) {
       throw new Error(
-        "form4972: multiple Form 1099-R sources require one identified participant and a full-share Part-III election, with matching Part II capital gain if elected",
+        "form4972: multiple Form 1099-R sources require one identified participant and a sourced Part-III recipient share, with matching Part II capital gain if elected",
       );
     }
   }

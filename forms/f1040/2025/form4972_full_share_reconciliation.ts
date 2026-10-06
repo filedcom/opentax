@@ -5,7 +5,7 @@ import {
 } from "../nodes/intermediate/forms/form4972/index.ts";
 import { reconcileForm4972Multiple1099R } from "./form4972_multiple_1099r_reconciliation.ts";
 
-/** Reconcile an ordinary full-share election without NUA or estate allocation. */
+/** Reconcile a complete source group or an ordinary single full-share election. */
 export function reconcileForm4972FullShare(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,

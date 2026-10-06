@@ -1635,8 +1635,16 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
     const [first, second] = lumpItems;
     const plan = first?.form4972_plan;
     const refs = lumpItems.map((item) => item.source_document_reference);
+    const share = first?.box9a_pct_total;
+    const partialBeneficiary = typeof share === "number" && share > 0 &&
+      share < 100;
+    const annuityCopies = lumpItems.filter((item) =>
+      (item.box8_other ?? 0) > 0
+    );
+    const annuityShare = annuityCopies[0]?.box8_pct_total;
     if (
       !first || !second || !plan ||
+      (share !== 100 && !partialBeneficiary) ||
       refs.some((ref) => !ref) || new Set(refs).size !== refs.length ||
       lumpItems.some((item) =>
         item.form4972_plan?.participant_name !== plan.participant_name ||
@@ -1656,18 +1664,46 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         item.form4972_plan?.plan_reference === plan.plan_reference
       ) ||
       lumpItems.some((item) =>
-        item.box9a_pct_total !== 100 ||
+        item.box9a_pct_total !== share ||
+        (partialBeneficiary &&
+          (item.box7_distribution_code !== DistributionCode.CodeA ||
+            !item.recipient_ssn ||
+            item.recipient_ssn === plan.participant_ssn ||
+            item.recipient_ssn !== first.recipient_ssn ||
+            item.box1_gross_distribution !==
+              (item.box2a_taxable_amount ?? 0) + (item.box6_nua ?? 0) ||
+            !Number.isSafeInteger(
+              (item.box2a_taxable_amount ?? 0) * 100 / share,
+            ) ||
+            !Number.isSafeInteger(
+              (item.box3_capital_gain ?? 0) * 100 / share,
+            ) ||
+            !Number.isSafeInteger((item.box6_nua ?? 0) * 100 / share) ||
+            ((item.box6_nua ?? 0) > 0 &&
+              !Number.isSafeInteger(
+                (item.box6_nua ?? 0) *
+                  (item.box3_capital_gain ?? 0) /
+                  (item.box2a_taxable_amount ?? 0),
+              )) ||
+            ((item.box8_other ?? 0) > 0 &&
+              (!annuityShare || item.box8_pct_total !== annuityShare ||
+                !Number.isSafeInteger(
+                  item.box8_other! * 100 / annuityShare,
+                ))) ||
+            ((item.box8_other ?? 0) === 0 &&
+              item.box8_pct_total !== undefined))) ||
         item.box2a_taxable_amount === undefined ||
         item.box2a_taxable_amount <= 0 ||
         (item.box3_capital_gain ?? 0) > item.box2a_taxable_amount ||
         ((item.box6_nua ?? 0) > 0 &&
           (!Number.isSafeInteger(item.box6_nua ?? 0))) ||
         !Number.isSafeInteger(item.box8_other ?? 0) ||
-        (item.box8_pct_total !== undefined && item.box8_pct_total !== 100)
+        (!partialBeneficiary && item.box8_pct_total !== undefined &&
+          item.box8_pct_total !== 100)
       )
     ) {
       throw new Error(
-        "Form 4972 multi-distribution election needs one fully identified participant, plan, recipient and distinct full-share source copies",
+        "Form 4972 multi-distribution election needs one fully identified participant, plan, recipient share and distinct complete source copies",
       );
     }
     return [output(form4972Elections, {
@@ -1675,6 +1711,7 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         source_document_references: refs,
         form4972_plan: plan,
         recipient: first.ts,
+        ...(partialBeneficiary ? { recipient_share_pct: share } : {}),
         lump_sum_amount: lumpItems.reduce(
           (sum, item) => sum + item.box2a_taxable_amount!,
           0,
@@ -1704,6 +1741,7 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
               (sum, item) => sum + (item.box8_other ?? 0),
               0,
             ),
+            ...(partialBeneficiary ? { annuity_share_pct: annuityShare } : {}),
           }
           : {}),
         multiple_1099r: {

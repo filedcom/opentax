@@ -4,7 +4,7 @@ import {
   inputSchema as form4972Schema,
 } from "../nodes/intermediate/forms/form4972/index.ts";
 
-/** One participant's full-share distributions from one plan. */
+/** One participant's complete same-recipient distributions from one plan. */
 export function reconcileForm4972Multiple1099R(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
@@ -20,6 +20,10 @@ export function reconcileForm4972Multiple1099R(
     )
     : [];
   const refs = plan.source_document_references;
+  const share = form.recipient_share_pct ?? 100;
+  const partialBeneficiary = share < 100;
+  const annuityCopies = elected.filter((item) => (item.box8_other ?? 0) > 0);
+  const annuityShare = annuityCopies[0]?.box8_pct_total;
   const nua = elected.reduce((sum, item) => sum + (item.box6_nua ?? 0), 0);
   const gain = elected.reduce(
     (sum, item) => sum + (item.box3_capital_gain ?? 0),
@@ -30,8 +34,14 @@ export function reconcileForm4972Multiple1099R(
     0,
   );
   if (
-    !owner || owner.ssn.replaceAll("-", "") !== plan.participant_ssn ||
-    owner.name.trim() !== plan.participant_name ||
+    !owner ||
+    (partialBeneficiary
+      ? owner.ssn.replaceAll("-", "") === plan.participant_ssn ||
+        form.beneficiary_distribution !== true ||
+        form.participant_five_year_member !== false
+      : owner.ssn.replaceAll("-", "") !== plan.participant_ssn ||
+        owner.name.trim() !== plan.participant_name ||
+        form.beneficiary_distribution !== false) ||
     (form.recipient !== "T" && form.recipient !== "S") ||
     form.elect_10yr_averaging !== true ||
     (form.elect_capital_gain === true &&
@@ -47,7 +57,31 @@ export function reconcileForm4972Multiple1099R(
       item.form4972_plan?.full_balance_statement_reference !==
         plan.full_balance_statement_reference ||
       item.form4972_plan?.all_qualified_distributions_included !== true ||
-      item.box9a_pct_total !== 100 ||
+      item.box9a_pct_total !== share ||
+      (partialBeneficiary &&
+        (item.box7_distribution_code !== "A" ||
+          item.recipient_ssn !== owner.ssn.replaceAll("-", "") ||
+          item.box1_gross_distribution !==
+            (item.box2a_taxable_amount ?? 0) + (item.box6_nua ?? 0) ||
+          !Number.isSafeInteger(
+            (item.box2a_taxable_amount ?? 0) * 100 / share,
+          ) ||
+          !Number.isSafeInteger(
+            (item.box3_capital_gain ?? 0) * 100 / share,
+          ) ||
+          !Number.isSafeInteger((item.box6_nua ?? 0) * 100 / share) ||
+          ((item.box6_nua ?? 0) > 0 &&
+            !Number.isSafeInteger(
+              (item.box6_nua ?? 0) * (item.box3_capital_gain ?? 0) /
+                (item.box2a_taxable_amount ?? 0),
+            )) ||
+          ((item.box8_other ?? 0) > 0 &&
+            (!annuityShare || item.box8_pct_total !== annuityShare ||
+              !Number.isSafeInteger(
+                item.box8_other! * 100 / annuityShare,
+              ))) ||
+          ((item.box8_other ?? 0) === 0 &&
+            item.box8_pct_total !== undefined))) ||
       typeof item.box2a_taxable_amount !== "number" ||
       item.box2a_taxable_amount <= 0 ||
       (nua > 0 &&
@@ -55,7 +89,8 @@ export function reconcileForm4972Multiple1099R(
           !Number.isSafeInteger(item.box3_capital_gain ?? 0) ||
           !Number.isSafeInteger(item.box6_nua ?? 0))) ||
       !Number.isSafeInteger(item.box8_other ?? 0) ||
-      (item.box8_pct_total !== undefined && item.box8_pct_total !== 100)
+      (!partialBeneficiary && item.box8_pct_total !== undefined &&
+        item.box8_pct_total !== 100)
     ) ||
     elected.some((item) =>
       item.payer_ein !== elected[0]?.payer_ein ||
@@ -67,6 +102,8 @@ export function reconcileForm4972Multiple1099R(
     nua !== (form.box6_nua ?? 0) ||
     elected.reduce((sum, item) => sum + (item.box8_other ?? 0), 0) !==
       (form.annuity_actuarial_value ?? 0) ||
+    (partialBeneficiary && (form.annuity_share_pct ?? null) !==
+        (annuityShare ?? null)) ||
     (nua > 0 &&
       (form.elect_include_nua !== true ||
         form.elect_capital_gain !== true || gain <= 0 ||

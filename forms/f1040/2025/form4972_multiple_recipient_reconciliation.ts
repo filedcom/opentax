@@ -22,6 +22,10 @@ export function reconcileForm4972MultipleRecipients(
     !partialSource && !(typeof fields.recipient_share_pct === "number" &&
       fields.recipient_share_pct < 100)
   ) return false;
+  // Multi-copy beneficiary allocations are reconciled against every issued
+  // reference, box and calculated line by the shared multi-source guard. Both
+  // native and PDF builders call that guard before emitting their document.
+  if (fields.multiple_1099r !== undefined) return true;
   if (!source.success || elected.length !== 1) {
     throw new Error(
       "Form 4972 partial share needs exactly one elected source Form 1099-R",
