@@ -2321,3 +2321,22 @@ Complete ordinary-refund inventory is verified on main; Form4852, remaining Form
 
 Main488d0d288 with fixture803890382: Form4852 focused34/0(41s),15-module compatibility364/0(1m37s); held10 fullXSD packets/70 reviewed pages source/pending/XML/PDF/origin/retainedbytes exact with original manifests. Main manifest SHA25659eed07322855284a755e03b6d20d7ea6880a83d5f01e72c29e3b0fc34a8d2dd; originalvisual SHA256e4ec9bb90198147579feaf29a81a49d1d720a633c7fb164997362adb0ea41321. Logs `/tmp/opentax-form4852-current-main-focused-v2.log`, `/tmp/opentax-form4852-current-main-preservation.log`, `/tmp/opentax-form4852-current-main-held-replay.log`. Prior focused33/1 was unavailable prior-year template URL, fixed to official IRS archive; no production expectation weakened. External authenticity, broader retirement, J/T and IRS gates remain open.
 Isolatede201c011b typed38-module311/0(5m29s),8fullXSDpackets/42reviewedpages/75nativecopies; immutable reviewed snapshot and Decimal oracle preserved. Main replay still required before ledger credit. Preserve4852 shared-R source/SALT deposition and all prior4972 branches.
+
+
+## Before reviewed Form8283 and QEF refigure integration
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,448 bounded slices**. Learnings and exact proof remain in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Newly discovered work goes only in `future_todo` and is not executed.
+
+Actual inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF keys / 96 covered / 18 uncovered**. Recent main proof: reviewed catalog24/0 (375 preserved pages), C/F loss-owner health28/0 (6/182), beneficiary death/estate3/0+15/0 (26/78), senior/independent-health6/0+111/0 and retained5/0 (5/95), complete refund inventory119/0 (8/30), fractional beneficiary15/0+298/0 (17/51), paired beneficiaries4/0+298/0 (17/68), shared participant and single PartIII-only4/0+1/0+303/0 (6/23), Form8621 parent36/0+56/0 (5/38), retained Form4852 main34/0+364/0 (10/70), exact-cent Form4972 main16/0 (8/42). Source/PDF bytes match reviewed originals; timestamp-only XML differences are recorded. These close their stated slices; broader parents remain open.
+
+Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**, exit1 (95m00s runner; 03:53:35–05:29:40UTC). The sole age-derived Form8995 expectation omitted the $6,000 senior deduction; corrected source arithmetic has focused **1/0** proof. A passing full run of latest source remains required. Publication checkpoint for draft [PR63](https://github.com/filedcom/opentax/pull/63): **bbbf3479e**, verified published with Form8621 parent proof.
+
+Complete ordinary-refund inventory is verified on main; Form4852, remaining Form4972, Form8283 and Form8621 parent work continue in isolated checkouts. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+
+
+Main5639ddfc0: combined exact-cent/native/shared-beneficiary gate16/0(1m57s), `/tmp/opentax-form4972-full-share-cents-current-main-focused.log`; isolated38-file source preservation311/0. Eight main fullXSD packets/42 reviewed pages/75 native copies exactly equal immutablee201 source/pending/PDF, XML onlyReturnTs; comparison `/tmp/opentax-form4972-full-share-cents-current-main-comparison.json`. Retained4852 replay after cent integration10/70 exact, `/tmp/opentax-form4852-current-main-cent-preservation-replay.log`. Originals/oracle/manifest preserved. Broader eligibility/authentication/prior history/ScheduleJ/AMT/IRS gates remain open.
+Ready8283 production00f50db82+e51f0bc66:16/0+corrected3/0,18file159/0;591allreviewedpages and manifest548130a532121f4975d51e02425bb327e3ef23a5b8d3a37e1536efe10288c796 verified. Ready8621 followup3d1ea25cc:36/0+56/0,17newreviewedpages plus5original38pages exact. Both require current-main replay before credit. Synthetic signatures/accepted records do not establish external authenticity. Frozen52/future untouched.

@@ -5064,3 +5064,8 @@ Immutable181575242 `deno task test`: 11,794 passed / 1 failed, exit1, 95m00s run
 ## Current-main retained substitute proof
 
 Main488d0d288 with fixture803890382: Form4852 focused34/0(41s),15-module compatibility364/0(1m37s); held10 fullXSD packets/70 reviewed pages source/pending/XML/PDF/origin/retainedbytes exact with original manifests. Main manifest SHA25659eed07322855284a755e03b6d20d7ea6880a83d5f01e72c29e3b0fc34a8d2dd; originalvisual SHA256e4ec9bb90198147579feaf29a81a49d1d720a633c7fb164997362adb0ea41321. Logs `/tmp/opentax-form4852-current-main-focused-v2.log`, `/tmp/opentax-form4852-current-main-preservation.log`, `/tmp/opentax-form4852-current-main-held-replay.log`. Prior focused33/1 was unavailable prior-year template URL, fixed to official IRS archive; no production expectation weakened. External authenticity, broader retirement, J/T and IRS gates remain open.
+
+
+## Main full-share exact-cent proof
+
+Main5639ddfc0: combined exact-cent/native/shared-beneficiary gate16/0(1m57s), `/tmp/opentax-form4972-full-share-cents-current-main-focused.log`; isolated38-file source preservation311/0. Eight main fullXSD packets/42 reviewed pages/75 native copies exactly equal immutablee201 source/pending/PDF, XML onlyReturnTs; comparison `/tmp/opentax-form4972-full-share-cents-current-main-comparison.json`. Retained4852 replay after cent integration10/70 exact, `/tmp/opentax-form4852-current-main-cent-preservation-replay.log`. Originals/oracle/manifest preserved. Broader eligibility/authentication/prior history/ScheduleJ/AMT/IRS gates remain open.
