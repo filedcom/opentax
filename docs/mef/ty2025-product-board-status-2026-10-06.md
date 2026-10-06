@@ -2993,3 +2993,8 @@ execution. Logs `/tmp/opentax-schedulej-main-held-{qef,pension}-oct6.log` and
 `...-{qef,pension}-compare-oct6.log`. Broader source allocations, authentication,
 full latest regression and IRS gates remain open. Ledger1467/frozen52/future
 unchanged.
+
+
+## Before sealing corrected ordinary Roth classification
+
+Main acfea8ca9 has the integrated classification correction at0616cea72. Fresh main source gates finished11/0 and related source/native gates209/0. Actual immutable corrected-source replays finished35 full-XSD packets295 current pages:9/52 regular,6/57 inventory,8/79 conversions,12/107 consumed history. All873 corrected archived files remain byte-exact. Original997 byte records remain preserved;271 retained pages transfer prior visual review by identical pixels. Only the separately corrected ordinary35 sources can support the classification claim. Original10 paper margin and codeN recharacterization source/statement consequences remain qualified; do not close the broader parent. Main checklist52 and future section match frozen baselines exactly. V5 second run91417/91420 verified live at19m31s; latest-source full regression remains required.
