@@ -233,3 +233,7 @@ reviewed issued examples demonstrate binding and arithmetic, not authentication.
 
 Single-plan calculator/actual zero-eligible Medicare source compatibility:
 `/tmp/two-farm-health-single-compat.log`, terminal0, 14/0 (7s).
+
+## Integrated two-farm held replay
+
+Detached current-main42cccdf15 passes held replay7/all217 reviewed pages (checker terminal0). Artifact root `/tmp/opentax-two-farm-health-main-replay-oct6/.state/research/ty2025-filled-pdf-review/2026-10-06-two-farm-health-main42`; logs `/tmp/two-farm-health-main42-generate.log` and `/tmp/two-farm-health-main42-check-final.log`. Every PDF/XML digest, copy, page origin and owner matches the originally inspected packets. Source snapshot differences are exactly three integrated credit/health/owner-SE fields, independently bound to retained sources; remaining JSON values, public inputs and filer agree. Reviews transferred after these comparisons, and originals remain untouched. Digest inventory `/tmp/two-farm-health-main42-digests.json` SHA256 `693918002bab87316ed172d7fe0421cead8428c10a253765837db1645a0f49c5`. Main source/compatibility gate remains live; broader parents stay open.
