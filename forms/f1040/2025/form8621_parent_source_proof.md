@@ -95,3 +95,7 @@ Official references: [Form 8621](https://www.irs.gov/pub/irs-pdf/f8621.pdf),
 [2022 return due date](https://www.irs.gov/newsroom/need-more-time-to-file-taxes-its-easy-to-get-an-extension-with-irs-free-file),
 [2023 return due date](https://www.irs.gov/newsroom/things-to-remember-when-filing-a-2023-tax-return),
 [2024 return due date](https://www.irs.gov/e-file-providers/tax-year-2024-processing-year-2025-form-1040-mef-due-dates).
+
+## Current main integration
+
+At a2ae96eba, the same seven-file focused command passes36/0(23s), /tmp/opentax-form8621-current-main-focused.log. The three-file Schedule2/Form8978 preservation passes56/0(11s), /tmp/opentax-form8621-current-main-preservation.log. All five main PDFs at /tmp/opentax-form8621-{qef,partvi,partvi-seven,mtm,14c}-main.pdf are byte-identical to the reviewed final-v6 PDF hashes above, preserving all38 reviewed pages. The tests execute actual public inputs, native joins and full localXSD. This does not close the remaining boundaries above or prove IRS acceptance.

@@ -4,7 +4,7 @@ Static comparison replayed 2026-10-05 of the descriptors actually registered in
 `forms/f1040/2025/mef/forms/index.ts` and `forms/f1040/2025/pdf/forms/index.ts`,
 checked against `forms/f1040/2025/attachment-coverage.ts`. This is a
 printable-return coverage audit, not an IRS rule, passed test, or new product
-exclusion. The indexes currently hold **150 native descriptors and 116 PDF
+exclusion. The indexes currently hold **151 native descriptors and 117 PDF
 descriptors**. The newly registered Form 9000 has focused local XML/XSD and filled-page
 evidence; that does not establish the remaining route, business-rule, or ATS
 coverage.
@@ -17,8 +17,7 @@ parent taxpayer forms. Their reviewed source rows print through the registered
 Schedule A PDF and its continuation where applicable; the wider filled-packet
 review remains open.
 
-The current registered-key comparison leaves one parent taxpayer-form PDF
-absence, `form8621`. Most other native-only keys are supporting statements or
+The current registered-key comparison includes the source-reconciled `form8621` parent PDF, with five fullXSD packets/38 reviewed pages and main36/0+56/0. Its wider source, QEF refigure and IRS boundaries remain open. Most other native-only keys are supporting statements or
 issuer records. Form 8911 Schedule A uses the `f8911` pending slot on the
 native side and its own `f8911_schedule_a` pending key on the PDF side; this
 key difference does not imply a missing attachment. The native builder
@@ -83,7 +82,7 @@ interpreter-expense and Schedule C reduction route; wider sources remain open.
 
 | Native pending key      | Native root(s)              | Current PDF gap / decision                                                                                                                                 |
 | ----------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `form8621`              | `IRS8621`                   | No PFIC parent Form 8621 PDF; a bounded Part V supporting statement can now print from checked source events.                                             |
+| `form8621`              | `IRS8621`                   | Registered source-bound PFIC parent PDF with ElectionB/PartVI continuation/MTM/14c and checked supporting statements; main36/0+56/0, five packets/38 reviewed pages; broader parent remains open.                                             |
 
 Native-only supporting statements, payer-issued documents (`w2`, `f1099r`,
 `w2g`, K-1), and `f4835_at_risk` (which shares the `IRS6198` root with a
