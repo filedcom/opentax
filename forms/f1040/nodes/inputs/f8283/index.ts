@@ -1,4 +1,8 @@
 import {
+  calculateCharitableNaturalResource,
+  charitableNaturalResourceSourceSchema,
+} from "./natural-resource-source.ts";
+import {
   calculateCharitableDepreciation,
   charitableDepreciationSourceSchema,
 } from "./depreciation-source.ts";
@@ -255,6 +259,8 @@ const sectionAItemSchema = z.object({
     hypothetical_fmv_sale_gain_entirely_long_term_verified: z.literal(true),
     no_other_reduction_reason_verified: z.literal(true),
   }).strict().optional(),
+  natural_resource_ordinary_income_reduction:
+    charitableNaturalResourceSourceSchema.optional(),
   depreciation_ordinary_income_reduction: charitableDepreciationSourceSchema
     .optional(),
   contribution_year_disposition_reduction: z.object({
@@ -452,6 +458,8 @@ const sectionAItemSchema = z.object({
       true;
     const disposition =
       item.contribution_year_disposition_reduction !== undefined;
+    const naturalResource =
+      item.natural_resource_ordinary_income_reduction !== undefined;
     const depreciation =
       item.depreciation_ordinary_income_reduction !== undefined;
     const inventory = item.inventory_ordinary_income_reduction !== undefined;
@@ -494,7 +502,7 @@ const sectionAItemSchema = z.object({
       reductionCents > 0 && !certifiedSaleReduction && !shortTerm &&
       !inventory && !creator && !manuscript && !unrelatedUse &&
       !privateFoundation && !taxidermy && !intellectualProperty &&
-      !disposition && !depreciation &&
+      !disposition && !depreciation && !naturalResource &&
       !capitalGainElection
     ) {
       ctx.addIssue({
@@ -503,6 +511,54 @@ const sectionAItemSchema = z.object({
         message:
           "Form 8283 reduced Section A claim needs certified sale proceeds or a sourced ordinary-income or capital-gain reduction",
       });
+    }
+    if (naturalResource) {
+      try {
+        const result = calculateCharitableNaturalResource(
+          item.natural_resource_ordinary_income_reduction,
+        );
+        const source = result.source;
+        if (
+          item.date_acquired !== source.date_acquired ||
+          item.date_contributed !== source.date_contributed ||
+          item.donor_acquisition_description?.trim().toLowerCase() !==
+            "purchase" ||
+          item.is_vehicle === true ||
+          item.fmv !== result.fmv ||
+          item.cost_or_adjusted_basis !== result.adjusted_basis ||
+          item.deduction_claimed !== result.deduction_claimed ||
+          item.is_capital_gain_property !== result.is_capital_gain_property ||
+          item.charitable_limit_category !== result.charitable_limit_category ||
+          item.donor_ownership_review?.donor_name !== source.donor_name ||
+          item.donor_ownership_review?.donor_ssn !== source.donor_ssn ||
+          item.donor_ownership_review?.ownership_record_reference !==
+            source.purchase_record_reference ||
+          [
+            depreciation,
+            shortTerm,
+            inventory,
+            creator,
+            manuscript,
+            unrelatedUse,
+            privateFoundation,
+            taxidermy,
+            intellectualProperty,
+            disposition,
+            capitalGainElection,
+            certifiedSaleReduction,
+          ].some(Boolean)
+        ) {
+          throw new Error(
+            "Owned donation, appraisal, adjusted basis and ordinary reduction must equal source ledger",
+          );
+        }
+      } catch (error) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["natural_resource_ordinary_income_reduction"],
+          message: String(error),
+        });
+      }
     }
     if (depreciation) {
       try {
@@ -526,6 +582,7 @@ const sectionAItemSchema = z.object({
           item.donor_ownership_review?.ownership_record_reference !==
             source.purchase_record_reference ||
           [
+            naturalResource,
             shortTerm,
             inventory,
             creator,
@@ -1198,6 +1255,10 @@ const specialReductionBase = z.object({
 const sectionASourceFields = sectionAItemSchema.innerType().shape;
 const specialSectionBReductionSchema = z.discriminatedUnion("reason", [
   specialReductionBase.extend({
+    reason: z.literal("natural_resource_ordinary_income"),
+    source: charitableNaturalResourceSourceSchema,
+  }).strict(),
+  specialReductionBase.extend({
     reason: z.literal("depreciation_ordinary_income"),
     source: charitableDepreciationSourceSchema,
   }).strict(),
@@ -1454,7 +1515,9 @@ const sectionBItemSchema = z.object({
   }
   const special = item.special_fmv_reduction;
   if (special) {
-    const expectedType = special.reason === "depreciation_ordinary_income"
+    const expectedType = special.reason === "natural_resource_ordinary_income"
+      ? [SectionBPropertyType.OtherRealEstate]
+      : special.reason === "depreciation_ordinary_income"
       ? [SectionBPropertyType.Equipment, SectionBPropertyType.OtherRealEstate]
       : special.reason === "contribution_year_disposition"
       ? [
@@ -1481,7 +1544,13 @@ const sectionBItemSchema = z.object({
       ];
     const sourceProperty = specialSectionBAsSectionA(item);
     const valid = sectionAItemSchema.safeParse(sourceProperty);
-    const references = special.reason === "depreciation_ordinary_income"
+    const references = special.reason === "natural_resource_ordinary_income"
+      ? [
+        special.source.purchase_record_reference,
+        special.source.annual_account_ledger_reference,
+        special.source.property_use_record_reference,
+      ]
+      : special.reason === "depreciation_ordinary_income"
       ? [
         special.source.purchase_record_reference,
         special.source.annual_depreciation_ledger_reference,
@@ -1492,6 +1561,9 @@ const sectionBItemSchema = z.object({
       ).map(([, value]) => value);
     if (
       !valid.success || !item.property_type ||
+      (special.reason === "natural_resource_ordinary_income" &&
+        JSON.stringify(special.source.retained_source_documents) !==
+          JSON.stringify(special.source_documents)) ||
       (special.reason === "depreciation_ordinary_income" &&
         JSON.stringify(special.source.retained_source_documents) !==
           JSON.stringify(special.source_documents)) ||
@@ -2290,6 +2362,7 @@ type ClassifiedItem = {
   is_capital_gain_property?: boolean;
   capital_gain_reduction_election_confirmed?: true;
   contribution_year_disposition_reduction?: unknown;
+  natural_resource_ordinary_income_reduction?: unknown;
   depreciation_ordinary_income_reduction?: unknown;
   unrelated_use_capital_gain_reduction?: unknown;
   taxidermy_capital_gain_reduction?: unknown;
@@ -2439,7 +2512,9 @@ export const f8283 = new F8283Node();
 
 export function specialSectionBAsSectionA(item: SectionBItem): SectionAItem {
   const review = item.special_fmv_reduction;
-  const sources = review?.reason === "depreciation_ordinary_income"
+  const sources = review?.reason === "natural_resource_ordinary_income"
+    ? { natural_resource_ordinary_income_reduction: review.source }
+    : review?.reason === "depreciation_ordinary_income"
     ? { depreciation_ordinary_income_reduction: review.source }
     : review?.reason === "contribution_year_disposition"
     ? { contribution_year_disposition_reduction: review.source }

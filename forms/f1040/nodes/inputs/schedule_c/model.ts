@@ -1,4 +1,8 @@
 import {
+  calculateCharitableNaturalResource,
+  charitableNaturalResourceSourceSchema,
+} from "../f8283/natural-resource-source.ts";
+import {
   calculateCharitableDepreciation,
   charitableDepreciationSourceSchema,
 } from "../f8283/depreciation-source.ts";
@@ -208,6 +212,8 @@ export const itemSchema = z.object({
     ).min(1),
   }).strict().optional(),
   line_13_depreciation: z.number().nonnegative().optional(),
+  donated_natural_resource_property_source:
+    charitableNaturalResourceSourceSchema.optional(),
   donated_depreciable_property_source: charitableDepreciationSourceSchema
     .optional(),
   line_14_employee_benefits: z.number().nonnegative().optional(),
@@ -534,7 +540,19 @@ export function projectScheduleCItems(
   input: z.infer<typeof inputSchema>,
 ): ScheduleCItem[] {
   const rawItems = projectSection481aScheduleCItems(input).map((item) =>
-    item.donated_depreciable_property_source
+    item.donated_natural_resource_property_source
+      ? itemSchema.parse({
+        ...item,
+        line_12_depletion: charitableNaturalResourceDepletion(item),
+        amt_depletion_worksheet: charitableNaturalResourceAmt(item),
+        part_v_other_expenses: naturalResourceCurrentCosts(item) > 0
+          ? [{
+            description: "Intangible drilling costs section263c",
+            amount: naturalResourceCurrentCosts(item),
+          }]
+          : item.part_v_other_expenses,
+      })
+      : item.donated_depreciable_property_source
       ? itemSchema.parse({
         ...item,
         line_13_depreciation: charitableDepreciationExpense(item),
@@ -823,20 +841,116 @@ export function charitableDepreciationExpense(item: ScheduleCItem): number {
   return calculated.current_year_depreciation;
 }
 
+export function charitableNaturalResourceDepletion(
+  item: ScheduleCItem,
+): number {
+  const raw = item.donated_natural_resource_property_source;
+  if (!raw) return item.line_12_depletion ?? 0;
+  const calc = calculateCharitableNaturalResource(raw);
+  const current = raw.annual_records[raw.annual_records.length - 1];
+  if (
+    raw.kind !== "natural_resource_1254" ||
+    item.business_reference !== raw.business_reference ||
+    (item.proprietor_recipient ?? "T") !== raw.proprietor_recipient ||
+    item.line_1_gross_receipts !== current.gross_property_income ||
+    (item.line_12_depletion !== undefined &&
+      item.line_12_depletion !== calc.current_year.depletion) ||
+    current.other_deductible_property_expenses !== 0 ||
+    Object.entries(item).some(([key, value]) =>
+      /^line_\d/.test(key) && typeof value === "number" && value !== 0 &&
+      !["line_1_gross_receipts", "line_12_depletion"].includes(key)
+    ) ||
+    (item.part_v_other_expenses !== undefined &&
+      JSON.stringify(item.part_v_other_expenses) !==
+        JSON.stringify(
+          calc.current_year.deduction > 0
+            ? [{
+              description: "Intangible drilling costs section263c",
+              amount: calc.current_year.deduction,
+            }]
+            : [],
+        ))
+  ) {
+    throw new Error(
+      "Owned natural-resource current ScheduleC receipts/depletion/owner differ from actual source account",
+    );
+  }
+  return calc.current_year.depletion;
+}
+
+/** Actual currentIDC invoices; a conservative upper bound proves no section57
+ * preference even before subtracting permissible normal capital recovery. */
+export function naturalResourceCurrentCosts(item: ScheduleCItem): number {
+  const raw = item.donated_natural_resource_property_source;
+  if (!raw) return 0;
+  const calc = calculateCharitableNaturalResource(raw),
+    current = raw.annual_records.at(-1)!;
+  if (
+    calc.current_year.deduction > 0 &&
+    (raw.kind !== "natural_resource_1254" || raw.resource === "gold" ||
+      current.expenses.some((row) => row.nature !== "idc_263c") ||
+      calc.current_year.deduction >
+        .65 *
+          Math.max(
+            0,
+            current.gross_property_income -
+              current.other_deductible_property_expenses -
+              calc.current_year.depletion - calc.current_year.deduction,
+          ))
+  ) {
+    throw new Error(
+      "Current natural-resource costs require independently sourced mining/positiveIDC AMT refigure",
+    );
+  }
+  return calc.current_year.deduction;
+}
+
+/** Cost depletion of an owned oil/gas/geothermal interest uses the same
+ * purchase basis and units for regular tax and AMT; no percentage depletion
+ * beyond basis or mining expense AMT adjustment is present in this source route. */
+export function charitableNaturalResourceAmt(item: ScheduleCItem) {
+  const raw = item.donated_natural_resource_property_source;
+  if (!raw || raw.kind !== "natural_resource_1254" || raw.resource === "gold") {
+    return item.amt_depletion_worksheet;
+  }
+  const calc = calculateCharitableNaturalResource(raw);
+  const result = {
+    source_reference: raw.annual_account_ledger_reference,
+    all_property_income_and_basis_limits_applied_verified: true as const,
+    no_at_risk_or_basis_limitation_verified: true as const,
+    properties: [{
+      property_reference: raw.property_reference,
+      regular_allowed_depletion: calc.current_year.depletion,
+      amt_allowed_depletion: calc.current_year.depletion,
+    }],
+  };
+  if (
+    item.amt_depletion_worksheet &&
+    JSON.stringify(item.amt_depletion_worksheet) !== JSON.stringify(result)
+  ) {
+    throw new Error(
+      "Owned cost-depletion AMT source differs from actual purchase/annual unit ledger",
+    );
+  }
+  return result;
+}
+
 export function computeTotalExpenses(
   item: ScheduleCItem,
   wotcReduction = 0,
 ): number {
   const mealsDeductible = (item.line_24b_meals ?? 0) * mealsDeductiblePct(item);
-  const partVTotal = (item.part_v_other_expenses ?? []).reduce(
-    (sum, e) => sum + e.amount,
-    0,
-  );
+  const partVTotal = item.donated_natural_resource_property_source
+    ? naturalResourceCurrentCosts(item)
+    : (item.part_v_other_expenses ?? []).reduce(
+      (sum, e) => sum + e.amount,
+      0,
+    );
   return (item.line_8_advertising ?? 0) +
     (item.line_9_car_truck_expenses ?? 0) +
     (item.line_10_commissions_fees ?? 0) +
     (item.line_11_contract_labor ?? 0) +
-    (item.line_12_depletion ?? 0) +
+    charitableNaturalResourceDepletion(item) +
     charitableDepreciationExpense(item) +
     (item.line_14_employee_benefits ?? 0) +
     (item.line_15_insurance ?? 0) +

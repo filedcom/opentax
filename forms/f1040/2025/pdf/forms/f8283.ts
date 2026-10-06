@@ -841,7 +841,9 @@ export const form8283Pdf: PdfFormDescriptor = {
             : []),
           ...(sectionB[0].ordinary_income_reduction !== undefined ||
               sectionB[0].special_fmv_reduction?.reason ===
-                "depreciation_ordinary_income"
+                "depreciation_ordinary_income" ||
+              sectionB[0].special_fmv_reduction?.reason ===
+                "natural_resource_ordinary_income"
             ? [SectionBPropertyType.OtherRealEstate]
             : []),
         ]).has(ordinaryType)
@@ -912,7 +914,8 @@ export const form8283Pdf: PdfFormDescriptor = {
       needsFmvReductionStatement(item)
     );
     const depreciationReduction = sectionA.some((item) =>
-      item.depreciation_ordinary_income_reduction !== undefined &&
+      (item.natural_resource_ordinary_income_reduction !== undefined ||
+        item.depreciation_ordinary_income_reduction !== undefined) &&
       needsFmvReductionStatement(item)
     );
     const dispositionReduction = sectionA.some((item) =>

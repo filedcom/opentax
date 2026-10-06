@@ -1,3 +1,4 @@
+import { calculateCharitableNaturalResource } from "../../../nodes/inputs/f8283/natural-resource-source.ts";
 import { calculateCharitableDepreciation } from "../../../nodes/inputs/f8283/depreciation-source.ts";
 import { assertReviewedForm8283Return } from "./f8283_return.ts";
 import { element, elements } from "../../../mef/xml.ts";
@@ -361,6 +362,27 @@ export function fmvReductionExplanation(
     ? `Purchased long-term tangible personal property is put to a use unrelated to the donee's exempt purpose. Purchase record ${item.unrelated_use_capital_gain_reduction.purchase_record_reference} and donee-use statement ${item.unrelated_use_capital_gain_reduction.donee_unrelated_use_statement_reference} support the section 170(e)(1)(B)(i) reduction of long-term appreciation ${
       usd(fmv - item.cost_or_adjusted_basis)
     }, leaving adjusted basis ${usd(item.cost_or_adjusted_basis)}.`
+    : item.natural_resource_ordinary_income_reduction !== undefined
+    ? (() => {
+      const result = calculateCharitableNaturalResource(
+        item.natural_resource_ordinary_income_reduction,
+      );
+      return `Owned ${result.source.kind} hypothetical FMV sale only: source annual paid-cost/depletion account yields adjusted basis ${
+        usd(result.adjusted_basis)
+      }, recapture costs ${
+        usd(result.recapture_costs)
+      }, applicable percentage ${
+        result.applicable_percentage * 100
+      }%, ordinary gain ${
+        usd(result.ordinary_gain)
+      } and residual long-term gain ${
+        usd(result.residual_long_term_gain)
+      }. Original FMV ${
+        usd(result.fmv)
+      } minus ordinary gain gives pre-AGI contribution ${
+        usd(result.deduction_claimed)
+      }. Outright gift reports no actual Form4797 sale income.`;
+    })()
     : item.depreciation_ordinary_income_reduction !== undefined
     ? (() => {
       const result = calculateCharitableDepreciation(
@@ -1532,7 +1554,9 @@ export const form8283: MefFormDescriptor<
       .filter(needsSectionBVehicleStatement)
       .map((item) => requiredVehicleAttachment(item, context, "B"));
     const dispositionSourceIds = sectionA.flatMap((item) =>
-      (item.depreciation_ordinary_income_reduction ?? item.contribution_year_disposition_reduction)?.retained_source_documents
+      (item.natural_resource_ordinary_income_reduction ??
+        item.depreciation_ordinary_income_reduction ??
+        item.contribution_year_disposition_reduction)?.retained_source_documents
         .map((record) => {
           if (!context.documentIdsByPendingKey) return undefined;
           const id = context.documentIdsByAttachmentFileName

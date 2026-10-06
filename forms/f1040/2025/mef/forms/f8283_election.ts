@@ -403,7 +403,10 @@ export function assertOrdinarySectionBReconciled(
       )
     ) {
       if (
-        item.special_fmv_reduction?.reason === "depreciation_ordinary_income" &&
+        (item.special_fmv_reduction?.reason ===
+            "depreciation_ordinary_income" ||
+          item.special_fmv_reduction?.reason ===
+            "natural_resource_ordinary_income") &&
         isReviewedSectionBReductionInventory(
           form8283InputSchema.parse(context?.pending?.f8283),
         )

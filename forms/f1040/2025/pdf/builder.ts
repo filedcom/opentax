@@ -715,7 +715,10 @@ export async function buildPdfBytes(
       row.signed_form_source_review?.reviewed_form_fields
     ) ||
       form8283SourceSchema.parse(normalized.f8283).section_a_items?.some(
-        (item) => item.contribution_year_disposition_reduction || item.depreciation_ordinary_income_reduction,
+        (item) =>
+          item.contribution_year_disposition_reduction ||
+          item.natural_resource_ordinary_income_reduction ||
+          item.depreciation_ordinary_income_reduction,
       ))
   ) {
     throw new Error(

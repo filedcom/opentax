@@ -1,3 +1,7 @@
+import {
+  calculateCharitableNaturalResource,
+  charitableNaturalResourceSourceSchema,
+} from "../../../inputs/f8283/natural-resource-source.ts";
 import { itemSchema as scheduleCItemSchema } from "../../../inputs/schedule_c/model.ts";
 import { z } from "zod";
 import { inputSchema as patronReviewSchema } from "../../../inputs/qbi_patron/schema.ts";
@@ -60,6 +64,8 @@ const cashIncomeKeys = [
 ] as const;
 
 export const itemSchema = z.object({
+  donated_natural_resource_property_source:
+    charitableNaturalResourceSourceSchema.optional(),
   // Header / identification
   farm_id: z.string().min(1).optional(),
   proprietor_recipient: z.enum(["T", "S"]).optional(),
@@ -330,7 +336,16 @@ export function projectScheduleFItems(
     }
     seen.add(entry.farm_id);
   }
-  return input.schedule_fs.map((item) => {
+  return input.schedule_fs.map((rawItem) => {
+    const item = rawItem.donated_natural_resource_property_source
+      ? itemSchema.parse({
+        ...rawItem,
+        line12_conservation: naturalResourceConservation(
+          rawItem,
+          computeGrossIncome(rawItem),
+        ),
+      })
+      : rawItem;
     const reduction = reductions.find((entry) =>
       entry.farm_id === item.farm_id
     );
@@ -693,9 +708,41 @@ export function conservationDeduction(
   item: ScheduleFItem,
   grossIncome: number,
 ): number {
+  if (item.donated_natural_resource_property_source) {
+    return naturalResourceConservation(item, grossIncome);
+  }
   const raw = item.line12_conservation ?? 0;
   const limit = Math.max(0, grossIncome) * CONSERVATION_LIMIT_PCT;
   return Math.min(raw, limit);
+}
+
+/** Owned annual175 invoices and carry derive the filed current deduction. */
+export function naturalResourceConservation(
+  item: ScheduleFItem,
+  grossIncome: number,
+) {
+  const raw = item.donated_natural_resource_property_source!;
+  const calc = calculateCharitableNaturalResource(raw);
+  const current = raw.annual_records.at(-1)!;
+  if (
+    raw.kind !== "farmland_1252" || item.accounting_method !== "cash" ||
+    item.farm_id !== raw.business_reference ||
+    (item.proprietor_recipient ?? "T") !== raw.proprietor_recipient ||
+    grossIncome !== current.gross_property_income ||
+    (item.line2_sales_products_raised ?? 0) !== grossIncome ||
+    current.other_deductible_property_expenses !== 0 ||
+    (item.line12_conservation !== undefined &&
+      item.line12_conservation !== calc.current_year.deduction) ||
+    Object.entries(item).some(([key, value]) =>
+      /^line\d/.test(key) && typeof value === "number" && value !== 0 &&
+      !["line2_sales_products_raised", "line12_conservation"].includes(key)
+    )
+  ) {
+    throw new Error(
+      "Owned175 current farm receipts/conservation/owner differ from actual source account",
+    );
+  }
+  return calc.current_year.deduction;
 }
 
 // Line 33: Total expenses (with conservation limit applied)

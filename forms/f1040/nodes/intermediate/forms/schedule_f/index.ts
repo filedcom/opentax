@@ -1,3 +1,4 @@
+import { calculateCharitableNaturalResource } from "../../../inputs/f8283/natural-resource-source.ts";
 import { schedule1a } from "../schedule1a/index.ts";
 import { form7206 } from "../form7206/index.ts";
 import { filedOwnedScheduleF } from "../../../owned-business-filing.ts";
@@ -279,11 +280,28 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
     return {
       outputs,
       carryforwards: Object.fromEntries(
-        atRisk.flatMap((result, index) =>
-          result.suspended > 0
-            ? [[`schedule_f_at_risk_suspended_${index + 1}`, result.suspended]]
-            : []
-        ),
+        [
+          ...input.schedule_fs.flatMap((item) => {
+            if (!item.donated_natural_resource_property_source) return [];
+            const carry = calculateCharitableNaturalResource(
+              item.donated_natural_resource_property_source,
+            ).current_year.conservation_carry;
+            return carry > 0
+              ? [[
+                `schedule_f_section175_conservation_${item.farm_id}_${ctx.taxYear}`,
+                carry,
+              ]]
+              : [];
+          }),
+          ...atRisk.flatMap((result, index) =>
+            result.suspended > 0
+              ? [[
+                `schedule_f_at_risk_suspended_${index + 1}`,
+                result.suspended,
+              ]]
+              : []
+          ),
+        ],
       ),
     };
   }

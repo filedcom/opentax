@@ -64,6 +64,7 @@ export function filedOwnedScheduleC(
   );
   const expenses = cExpenses({
     ...filed,
+    donated_natural_resource_property_source: undefined,
     line_24b_meals: 0,
     line_27b_other_expenses: 0,
     part_v_other_expenses: [],
@@ -94,7 +95,11 @@ export function filedOwnedScheduleF(
   const conservation_deduction = roundWholeDollars(
     conservationDeduction(item, gross),
   );
-  const expenses = fExpenses({ ...filed, line12_conservation: 0 }, gross) +
+  const expenses = fExpenses({
+    ...filed,
+    line12_conservation: 0,
+    donated_natural_resource_property_source: undefined,
+  }, gross) +
     conservation_deduction;
   return {
     filed_source: filed,

@@ -1,3 +1,4 @@
+import { charitableNaturalResourceDocumentFields } from "../../../nodes/inputs/f8283/natural-resource-source.ts";
 import { charitableDepreciationDocumentFields } from "../../../nodes/inputs/f8283/depreciation-source.ts";
 import { PDFDocument } from "pdf-lib";
 import {
@@ -17,6 +18,64 @@ export async function assertReviewedForm8283PdfFields(
 ): Promise<void> {
   if (!raw) return;
   const source = inputSchema.parse(raw);
+  const naturalResourceSources = [
+    ...(source.section_a_items ?? []).flatMap((item) =>
+      item.natural_resource_ordinary_income_reduction
+        ? [item.natural_resource_ordinary_income_reduction]
+        : []
+    ),
+    ...(source.section_b_items ?? []).flatMap((item) =>
+      item.special_fmv_reduction?.reason === "natural_resource_ordinary_income"
+        ? [item.special_fmv_reduction.source]
+        : []
+    ),
+  ];
+  for (const facts of naturalResourceSources) {
+    const refs = [
+      facts.purchase_record_reference,
+      facts.annual_account_ledger_reference,
+      facts.property_use_record_reference,
+    ];
+    for (let index = 0; index < 3; index++) {
+      const record = facts.retained_source_documents.find((row) =>
+        row.source_reference === refs[index]
+      );
+      const attachment = attachments.find((row) =>
+        row.fileName === record?.attachment_file_name
+      );
+      if (!record || !attachment) {
+        throw new Error(
+          "Owned charitable natural-resource source PDF is absent",
+        );
+      }
+      const digest = Array.from(
+        new Uint8Array(
+          await crypto.subtle.digest(
+            "SHA-256",
+            Uint8Array.from(attachment.bytes),
+          ),
+        ),
+        (b) => b.toString(16).padStart(2, "0"),
+      ).join("");
+      if (digest !== record.pdf_sha256) {
+        throw new Error(
+          "Owned charitable natural-resource source bytes differ from retained record",
+        );
+      }
+      const form = (await PDFDocument.load(attachment.bytes)).getForm();
+      for (
+        const [key, value] of Object.entries(
+          charitableNaturalResourceDocumentFields(facts, index),
+        )
+      ) {
+        if (form.getTextField(key).getText() !== value) {
+          throw new Error(
+            `Owned charitable natural-resource source field differs: ${key}`,
+          );
+        }
+      }
+    }
+  }
   const depreciationSources = [
     ...(source.section_a_items ?? []).flatMap((item) =>
       item.depreciation_ordinary_income_reduction

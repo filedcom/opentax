@@ -1,3 +1,4 @@
+import { assertCharitableNaturalResourceReturn } from "./f8283_natural_resource_return.ts";
 import { assertCharitableDepreciationReturn } from "./f8283_depreciation_return.ts";
 import { qdcgtw } from "../../../nodes/intermediate/worksheets/qdcgtw/index.ts";
 import { f4852 } from "../../../nodes/inputs/f4852/index.ts";
@@ -19,6 +20,7 @@ export function assertReviewedForm8283Return(
   context: MefBuildContext | undefined,
 ): void {
   assertCharitableDepreciationReturn(context);
+  assertCharitableNaturalResourceReturn(context);
   const pending = context?.pending;
   if (!pending?.f8283) return;
   const gifts = giftSchema.parse(pending.f8283);
