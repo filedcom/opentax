@@ -792,7 +792,9 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(schedule_j_calculation, {
         farm_only_income_verified: unsupportedFarmIncome === undefined,
         farm_only_unsupported_source_key: unsupportedFarmIncome,
-        nonfarm_qef_ordinary: input.line8z_form8621_qef ?? 0,
+        ...(input.line8z_form8621_qef
+          ? { nonfarm_qef_ordinary: input.line8z_form8621_qef }
+          : {}),
         fishing_only_income_verified:
           firstNonFishingScheduleCIncomeSource(input) === undefined,
         fishing_only_unsupported_source_key:
