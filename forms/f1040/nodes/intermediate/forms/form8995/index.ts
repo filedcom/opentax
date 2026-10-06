@@ -365,7 +365,7 @@ function zeroLimitedMixedScheduleCF(
   if (
     input.filing_status !== FilingStatus.Single || cs.length !== 1 ||
     fs.length > 2 ||
-    taxableIncome < cfg.qbiThresholdSingle + cfg.qbiPhaseInRange ||
+    taxableIncome < cfg.qbiThresholdSingle + cfg.qbiPhaseInRange / 2 ||
     input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
     totalQbi(input) <= 0 ||

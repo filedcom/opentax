@@ -30,18 +30,33 @@ For each of the three actual source combinations, independently checking the
 $320,000 combined business profit plus $35,000 ordinary dividends minus that
 half-SE gives AGI $339,797 and line 15 $322,047 after the $17,750 standard
 deduction. With no business W-2 wages or UBIA, this exceeds the $197,300
-single-filer QBI threshold plus the full $100,000 phase-in range, so no current
-QBI deduction or Form 8995-A is filed. The $15,000 election produces Schedule J
-lines 3/4/23 of $307,047/$71,014/$72,757; Form 1040 line 16 is $73,587 including
-the retained $830 Form 4972 tax. Form 6251 uses the separate $76,264 no-election
-regular tax. Mutation cases reject a missing or altered ledger, wrong
-owner/business, mismatched sale/expense, another Schedule C expense and changed
-final pending before native/PDF output.
+single-filer QBI threshold plus the full $50,000 single-filer phase-in range, so
+no current QBI deduction or Form 8995-A is filed. The $15,000 election produces
+Schedule J lines 3/4/23 of $307,047/$71,014/$72,757; Form 1040 line 16 is
+$73,587 including the retained $830 Form 4972 tax. Form 6251 uses the separate
+$76,264 no-election regular tax. Mutation cases reject a missing or altered
+ledger, wrong owner/business, mismatched sale/expense, another Schedule C
+expense and changed final pending before native/PDF output.
 
-Focused source tests: `/tmp/opentax-schedulej-fishing-source-test-oct6.log`
-(3/0; all six native full-v5.4-XSD and real-PDF packets). All 114 pages in the
-six packets were visually reviewed using ten contact sheets; exact copy/page
-inventory and source/pending/XML/PDF/origin SHA-256 digests are in
+The [2025 Form 8995-A instructions](https://www.irs.gov/instructions/i8995a)
+set the single-filer phase-in at $197,300–$247,300. The fourth public source
+case has $200,000 of farm profit and $80,000 of fishing profit, giving AGI
+$300,332 and taxable income before QBI $282,582. Its elected and no-election
+packets correctly omit Form 8995-A. The $15,000 election produces Schedule J
+lines 3/4/23 of $267,582/$57,589/$59,332; Form 1040 line 16 is $60,162,
+including the retained $830 Form 4972 tax. The separate no-election Form 6251
+regular tax is $62,451. A changed fishing sale puts pre-QBI taxable income at
+$233,252 inside the actual single-filer phase-in; native output rejects the
+unsupported per-business Form 8995-A source rather than silently filing it.
+
+Focused corrected source tests pass 4/0 at
+`/tmp/opentax-schedulej-fishing-corrected-source-oct6.log`; all eight packets
+pass native full-v5.4-XSD and real PDF generation. All 152 pages were visually
+reviewed, including the new 20- and 18-page packets on four contact sheets.
+The exact copy/page inventory and source/pending/XML/PDF/origin SHA-256 digests
+are in `/tmp/opentax-schedulej-fishing-corrected-rendered-oct6/visual-review-manifest.json`.
+The original six packets remain byte equal for source/pending/PDF/origins, with
+XML differing only at ReturnTs, to their prior 114-page visual review in
 `/tmp/opentax-schedulej-fishing-rendered-oct6/visual-review-manifest.json`. The
 directly rerun earlier W-2 and ordinary fishing/farm tests pass 15/0
 (`/tmp/opentax-schedulej-fishing-preservation-oct6.log`). The prior W-2 2/38
@@ -54,16 +69,16 @@ income source classes. The bounded current route continues to guard those cases.
 It is local schema and rendering proof, not IRS business-rule or accepted filing
 evidence.
 
-The final isolated source rerun passes 3/0 at
+The original isolated source rerun passed 3/0 at
 `/tmp/opentax-schedulej-fishing-source-final3-oct6.log`; four related QBI
 modules pass 52/0 at `/tmp/opentax-schedulej-fishing-qbi-preservation-oct6.log`.
 The separate checkout-independent script
-`/tmp/opentax-schedulej-fishing-raw-replay-oct6.ts` reads each of the six
+`/tmp/opentax-schedulej-fishing-corrected-raw-replay-oct6.ts` reads each of the eight
 immutable reviewed `source-pending.json` inputs rather than invoking a case
 factory, verifies each retained ledger digest, and runs the actual return,
-native XML/full XSD, PDF and page origins. Its isolated selfcheck reports 6/114
+native XML/full XSD, PDF and page origins. Its isolated selfcheck reports 8/152
 with source/pending/PDF/origins exact and XML only ReturnTs in
-`/tmp/opentax-schedulej-fishing-raw-selfcheck-oct6.log`. The prior Ada J/no-J
+`/tmp/opentax-schedulej-fishing-corrected-raw-selfcheck-oct6.log`. The prior Ada J/no-J
 2/36 source/pending/PDF/origins and prior staged QEF/adoption/education 3/49
 source/pending/PDF/origins are also byte exact against their separately retained
 reviewed originals, with XML only ReturnTs.

@@ -83,3 +83,17 @@ export function scheduleJFishingInputs(
   }];
   return input;
 }
+
+/** Same owned grain farm with a smaller, still fully phased-out catch source. */
+export function scheduleJFishingFullPhaseoutInputs(): Record<string, unknown> {
+  const input = scheduleJFishingInputs("mixed-one-farm") as any;
+  const business = input.schedule_c[0];
+  const proof = business.schedule_j_fishing_evidence.retained_catch_ledger;
+  const ledger = JSON.parse(atob(proof.bytes_base64));
+  ledger.sales[0].amount = 100_000;
+  business.line_1_gross_receipts = 100_000;
+  const bytes = new TextEncoder().encode(JSON.stringify(ledger));
+  proof.bytes_base64 = btoa(String.fromCharCode(...bytes));
+  proof.sha256 = createHash("sha256").update(bytes).digest("hex");
+  return input;
+}

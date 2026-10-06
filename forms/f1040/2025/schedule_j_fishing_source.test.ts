@@ -8,6 +8,7 @@ import { extractFilerIdentity } from "../mef/filer.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "./pdf/builder.ts";
 import {
   scheduleJFishingCases,
+  scheduleJFishingFullPhaseoutInputs,
   scheduleJFishingInputs,
 } from "./schedule_j_fishing_source.fixture.ts";
 import { assertScheduleJSourceReturn } from "./schedule_j_source_return.ts";
@@ -102,6 +103,29 @@ Deno.test("retained commercial catch, one/two farms and dividends refigure actua
   }
 });
 
+Deno.test("actual single-filer QBI phase-out at $247,300 leaves smaller mixed catch fully sourced", async () => {
+  const input = scheduleJFishingFullPhaseoutInputs();
+  const without = structuredClone(input) as any;
+  delete without.schedule_j;
+  const noJ = await packet("mixed-full-phaseout-without-j", without);
+  const elected = await packet("mixed-full-phaseout", input);
+  const p = elected.pending;
+  assertEquals(p.schedule1.line3_schedule_c, 80_000);
+  assertEquals(p.schedule1.line6_schedule_f, 200_000);
+  assertEquals(p.schedule1.line15_se_deduction, 14_668);
+  assertEquals(p.f1040.line15_taxable_income, 282_582);
+  assertEquals(p.f1040.line13_qbi_deduction, undefined);
+  assertEquals(p.form8995a, undefined);
+  assertEquals(p.schedule_j.line3, 267_582);
+  assertEquals(p.schedule_j.line4, 57_589);
+  assertEquals(p.schedule_j.line23, 59_332);
+  assertEquals(p.f1040.line16_income_tax, 60_162);
+  assertEquals(p.form6251.regular_tax, 62_451);
+  assertEquals(noJ.pending.form6251.regular_tax, 62_451);
+  assertScheduleJSourceReturn(elected.result.pending);
+  assertEquals(elected.xml.includes("<IRS8995A "), false);
+});
+
 Deno.test("fishing attribution rejects absent, mutated and mismatched source bytes", async () => {
   const good: any = scheduleJFishingInputs("mixed-one-farm");
   const bads: any[] = [];
@@ -155,14 +179,14 @@ Deno.test("mixed fishing QBI within phase-in retains its required per-business f
   const proof =
     input.schedule_c[0].schedule_j_fishing_evidence.retained_catch_ledger;
   const ledger = JSON.parse(atob(proof.bytes_base64));
-  ledger.sales[0].amount = 100_000;
-  input.schedule_c[0].line_1_gross_receipts = 100_000;
+  ledger.sales[0].amount = 50_000;
+  input.schedule_c[0].line_1_gross_receipts = 50_000;
   const bytes = new TextEncoder().encode(JSON.stringify(ledger));
   proof.bytes_base64 = btoa(String.fromCharCode(...bytes));
   proof.sha256 = createHash("sha256").update(bytes).digest("hex");
   const result = f1040_2025.executeReturn(input);
   assertEquals(result.diagnostics, []);
-  assertEquals(result.pending.f1040?.line15_taxable_income, 282_582);
+  assertEquals(result.pending.form8995a?.taxable_income, 233_252);
   assert(result.pending.form8995a !== undefined);
   const filer = extractFilerIdentity(
     normalizeAllPending(result.pending).f1040,
