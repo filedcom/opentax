@@ -1179,6 +1179,35 @@ Deno.test("Form 7203 prior reduced formal note reads matching 2024 MeF XML but r
     bound.inspectedPriorFiling.separateFormMatchesEmbeddedContent,
     true,
   );
+  // Standard XML schema-instance metadata must not become a new exclusion.
+  const metadataAckBytes = new TextEncoder().encode(ack.replace(
+    `<Acknowledgement ${ns}>`,
+    `<Acknowledgement ${ns} xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.irs.gov/efile Acknowledgement.xsd">`,
+  ));
+  const metadataAckDigest = Array.from(
+    new Uint8Array(await crypto.subtle.digest("SHA-256", metadataAckBytes)),
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
+  const metadataBound = await executePriorReduced7203WithSourceDocuments(
+    {
+      ...inputs,
+      k1_s_corp: [{
+        ...source,
+        form7203_debt_evidence: {
+          ...prior,
+          prior_accepted_acknowledgement_sha256: metadataAckDigest,
+        },
+      }],
+    },
+    records.map((document, index) =>
+      index === 6 ? { ...document, bytes: metadataAckBytes } : document
+    ),
+  );
+  assertEquals(metadataBound.inspectedPriorFiling.issuerAuthenticated, false);
+  assertEquals(
+    metadataBound.inspectedPriorFiling.parsedAcknowledgmentStatus,
+    "Accepted",
+  );
   const manifestWithoutReturnDigest = manifest.replace(
     `<SubmissionXmlSha256>${priorReturnDigest}</SubmissionXmlSha256>`,
     "",

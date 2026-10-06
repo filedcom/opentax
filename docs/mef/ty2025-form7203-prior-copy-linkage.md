@@ -23,7 +23,9 @@ inspector now compares complete parsed form content, including debt groups,
 nonclosing basis fields and attributes. Namespace declarations are excluded from
 content comparison because the separate root declares its own namespace; all
 nodes are separately checked against the supported unprefixed MeF namespace
-profile. Foreign namespace rebinding and unsupported prefixed content fail.
+profile. Foreign default-namespace rebinding and unsupported prefixed elements fail.
+Standard schema-instance metadata attributes remain accepted; the inspector
+does not interpret those attributes as proof of schema validation.
 
 Controls change a nonclosing opening-stock field while keeping closing balances
 unchanged, rebind a debt indicator to a foreign namespace, and rebind an Accepted
@@ -40,9 +42,16 @@ copy is accepted and the new rejection assertion fails0/1. This is the expected
 before failure, not a regression pass. Final candidate runtime control (`deno test --no-check` with the retained
 prior-reduced test filter) is terminal **1passed/0failed/8filtered**. It verifies
 byte retention, candidate $200 gain, the three synchronized-content controls,
-and continuing public/direct/native/PDF rejection. Log
-`/tmp/opentax-7203-prior-history-runtime-oct6.log`. Typechecked focused and
-ordinary two-module gates are still running and have no terminal claims.
+and continuing public/direct/native/PDF rejection. That runtime log predates
+the explicit standard-schema-instance metadata compatibility control, whose
+final result is recorded separately. Log
+`/tmp/opentax-7203-prior-history-runtime-oct6.log`. The final metadata-compatible runtime control is terminal **1passed/0failed/
+8filtered**, log `/tmp/opentax-7203-prior-history-runtime-final-oct6.log`. It
+explicitly verifies that standard schema-instance acknowledgment metadata is
+accepted while issuer authentication remains false. Original typed focused and
+two-module checks were superseded and canceled after this production correction;
+no pass is claimed for them. The final ordinary two-module typed gate remains
+running and has no terminal claim.
 
 Trusted acquisition of the actual submitted return and acknowledgment, exact
 submission linkage, prior basis/election activity, signed loan and principal

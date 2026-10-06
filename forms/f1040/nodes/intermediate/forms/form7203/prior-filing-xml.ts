@@ -51,7 +51,7 @@ function assertMeFNamespaceTree(value: unknown): void {
           "Form 7203 prior filing contains a foreign XML namespace",
         );
       }
-    } else if (key.includes(":")) {
+    } else if (!key.startsWith("@") && key.includes(":")) {
       throw new Error(
         "Form 7203 prior filing contains unsupported prefixed XML",
       );
