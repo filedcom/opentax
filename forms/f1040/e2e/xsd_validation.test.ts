@@ -528,7 +528,7 @@ Deno.test({
       employee_ssn: form.employeeSsn,
       source_document_reference: form.statutoryEmployee
         ? "ATS02-STATUTORY-W2"
-        : undefined,
+        : "ATS02-SPOUSE-W2",
       schedule_c_business_reference: form.statutoryEmployee
         ? "ATS02-STATUTORY-C"
         : undefined,

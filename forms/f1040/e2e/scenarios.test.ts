@@ -886,6 +886,10 @@ Deno.test("Scenario 15: MFJ, Schedule C $150K + interest — QBI reduced by the 
     },
     schedule_c: [
       {
+        business_reference: "SCENARIO15-PRIMARY-C",
+        proprietor_recipient: "T",
+        line_c_business_name: "Test Consulting",
+        line_d_ein: "123456789",
         line_a_principal_business: "Consulting",
         line_b_business_code: "541600",
         line_f_accounting_method: "cash",
@@ -895,6 +899,7 @@ Deno.test("Scenario 15: MFJ, Schedule C $150K + interest — QBI reduced by the 
     ],
   });
 
+  assertEquals(result.diagnostics, []);
   assertEquals(
     r2(result.pending["form8995"]?.["se_tax_deduction"] as number),
     10_597,
@@ -945,6 +950,10 @@ Deno.test("Scenario 16: MFJ, Schedule C + qualified dividends — income limit b
     },
     schedule_c: [
       {
+        business_reference: "SCENARIO16-PRIMARY-C",
+        proprietor_recipient: "T",
+        line_c_business_name: "Test Consulting",
+        line_d_ein: "123456789",
         line_a_principal_business: "Consulting",
         line_b_business_code: "541600",
         line_f_accounting_method: "cash",
@@ -954,6 +963,7 @@ Deno.test("Scenario 16: MFJ, Schedule C + qualified dividends — income limit b
     ],
   });
 
+  assertEquals(result.diagnostics, []);
   assertEquals(
     result.pending["form8995"]?.["net_capital_gain"],
     100_000,
