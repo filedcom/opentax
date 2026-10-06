@@ -7,7 +7,13 @@ import { TS } from "../../types.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import { f3800 } from "../f3800/index.ts";
-import { shopReviewSchema, verifyForm8941ShopReview } from "./shop_evidence.ts";
+import {
+  employeeTaxYearPremium,
+  enrollmentMonthCount,
+  enrollmentPeriodSchema,
+  shopReviewSchema,
+  verifyForm8941ShopReview,
+} from "./shop_evidence.ts";
 
 const amount = z.number().int().finite().nonnegative();
 const employeeSchema = z.object({
@@ -15,7 +21,6 @@ const employeeSchema = z.object({
   employee_reference: z.string().trim().min(1),
   hours_of_service: z.number().int().min(1).max(2080),
   social_security_medicare_wages: z.number().int().positive(),
-  full_year_employee_only_shop_premium: z.number().int().positive(),
   employer_premium_paid: z.number().int().positive(),
   irs_2025_rating_area_average_premium: z.number().int().positive(),
   rating_area_county: z.string().trim().min(1),
@@ -23,8 +28,7 @@ const employeeSchema = z.object({
   enrollment_and_payroll_record_reference: z.string().trim().min(1),
 }).strict();
 
-/** One Schedule C, one full-year employee-only SHOP plan, no group/exception. */
-export const inputSchema = z.object({
+const sourceSchema = z.object({
   owner_name: z.string().trim().min(1).max(35),
   owner_ssn: z.string().regex(/^\d{9}$/),
   proprietor_recipient: z.nativeEnum(TS),
@@ -33,7 +37,6 @@ export const inputSchema = z.object({
   payroll_ledger_reference: z.string().trim().min(1),
   shop_marketplace_identifier: z.string().trim().min(1).max(100),
   shop_plan_reference: z.string().trim().min(1),
-  full_year_employee_only_coverage_verified: z.literal(true),
   all_nonexcluded_employees_enrolled_verified: z.literal(true),
   uniform_employer_contribution_basis_points: z.number().int().min(5000).max(
     10000,
@@ -50,9 +53,32 @@ export const inputSchema = z.object({
     positive_line12_credit: z.number().int().positive(),
   }).strict().optional(),
   other_schedule_c_employee_benefits: amount,
-  employees: z.array(employeeSchema).min(1).max(24),
   shop_review: shopReviewSchema,
 }).strict();
+
+/** Full-year compatibility and explicitly sourced whole-month enrollment. */
+export const inputSchema = z.union([
+  sourceSchema.extend({
+    full_year_employee_only_coverage_verified: z.literal(true),
+    employees: z.array(
+      employeeSchema.extend({
+        full_year_employee_only_shop_premium: z.number().int().positive(),
+      }).strict(),
+    ).min(1).max(24),
+  }).strict(),
+  sourceSchema.extend({
+    employee_only_calendar_month_coverage_verified: z.literal(true),
+    all_enrollment_invoice_payment_records_identified_confirmed: z.literal(
+      true,
+    ),
+    employees: z.array(
+      employeeSchema.extend({
+        enrollment_period: enrollmentPeriodSchema,
+        tax_year_employee_only_shop_premium: z.number().int().positive(),
+      }).strict(),
+    ).min(1).max(24),
+  }).strict(),
+]);
 
 export type F8941Input = z.infer<typeof inputSchema>;
 
@@ -111,7 +137,7 @@ export function calculateForm8941(raw: unknown): Form8941Lines {
     }
     if (
       employee.employer_premium_paid !==
-        Math.round(employee.full_year_employee_only_shop_premium * contribution)
+        Math.round(employeeTaxYearPremium(employee) * contribution)
     ) {
       throw new Error(
         "Form 8941 employee premium differs from uniform SHOP contribution",
@@ -136,11 +162,16 @@ export function calculateForm8941(raw: unknown): Form8941Lines {
     (sum, employee) => sum + employee.employer_premium_paid,
     0,
   );
-  const line5 = source.employees.reduce(
-    (sum, employee) =>
-      sum +
-      Math.round(employee.irs_2025_rating_area_average_premium * contribution),
-    0,
+  // Worksheet4(c): prorate the annual table premium only for enrolled periods.
+  // Preserve the fractional row amounts and round their sum for the filed line.
+  const line5 = Math.round(
+    source.employees.reduce(
+      (sum, employee) =>
+        sum + employee.irs_2025_rating_area_average_premium *
+          source.uniform_employer_contribution_basis_points *
+          enrollmentMonthCount(employee),
+      0,
+    ) / 120000,
   );
   const line6 = Math.min(line4, line5);
   const line7 = Math.round(line6 * 0.5);

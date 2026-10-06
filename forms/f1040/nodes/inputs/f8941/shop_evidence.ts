@@ -2,10 +2,62 @@ import { z } from "zod";
 
 const sourceUrl = "https://www.irs.gov/instructions/i8941";
 
+export const enrollmentPeriodSchema = z.object({
+  first_month: z.number().int().min(1).max(12),
+  last_month: z.number().int().min(1).max(12),
+  coverage_start_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+  coverage_end_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+  enrollment_source_reference: z.string().trim().min(1),
+}).strict();
+function validCalendarDate(value: string | undefined): boolean {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value;
+}
+
+type EnrollmentPeriod = z.infer<typeof enrollmentPeriodSchema>;
+export function monthCoverageDates(month: number) {
+  const start = `2025-${String(month).padStart(2, "0")}-01`;
+  const end = new Date(Date.UTC(2025, month, 0)).toISOString().slice(0, 10);
+  return { start, end };
+}
+export function enrollmentMonthCount(
+  employee: {
+    readonly employee_reference: string;
+    readonly enrollment_period?: EnrollmentPeriod;
+  },
+): number {
+  const period = employee.enrollment_period;
+  if (!period) return 12;
+  if (
+    period.first_month > period.last_month ||
+    period.coverage_start_date !==
+      monthCoverageDates(period.first_month).start ||
+    period.coverage_end_date !== monthCoverageDates(period.last_month).end
+  ) {
+    throw new Error(
+      "Form 8941 enrollment needs exact whole calendar months in 2025",
+    );
+  }
+  return period.last_month - period.first_month + 1;
+}
+export function employeeTaxYearPremium(employee: {
+  readonly full_year_employee_only_shop_premium?: number;
+  readonly tax_year_employee_only_shop_premium?: number;
+}): number {
+  return employee.tax_year_employee_only_shop_premium ??
+    employee.full_year_employee_only_shop_premium!;
+}
+
 const monthlyPremiumSchema = z.object({
   employee_ssn: z.string().regex(/^\d{9}$/),
   payer_employment_ein: z.string().regex(/^\d{9}$/),
   shop_plan_reference: z.string().trim().min(1),
+  coverage_start_date: z.string().optional(),
+  coverage_end_date: z.string().optional(),
+  invoice_date: z.string().optional(),
+  payment_date: z.string().optional(),
   month: z.number().int().min(1).max(12),
   employee_only_coverage_verified: z.literal(true),
   billed_premium: z.number().int().positive(),
@@ -30,11 +82,12 @@ export const shopReviewSchema = z.object({
       employee_ssn: z.string().regex(/^\d{9}$/),
       payroll_tax_year: z.literal(2025),
       payroll_employment_ein: z.string().regex(/^\d{9}$/),
-      payroll_hours_of_service: z.number().int().min(1).max(2080),
+      payroll_hours_of_service: z.number().int().positive(),
       payroll_social_security_medicare_wages: z.number().int().positive(),
       employee_reference: z.string().trim().min(1),
       enrollment_and_payroll_record_reference: z.string().trim().min(1),
-      monthly_premiums: z.array(monthlyPremiumSchema).length(12),
+      enrollment_period: enrollmentPeriodSchema.optional(),
+      monthly_premiums: z.array(monthlyPremiumSchema).min(1).max(12),
     }).strict(),
   ).min(1).max(24),
 }).strict();
@@ -50,7 +103,9 @@ interface EmployeeWorksheetSource {
   readonly rating_area_state: string;
   readonly rating_area_county: string;
   readonly irs_2025_rating_area_average_premium: number;
-  readonly full_year_employee_only_shop_premium: number;
+  readonly full_year_employee_only_shop_premium?: number;
+  readonly tax_year_employee_only_shop_premium?: number;
+  readonly enrollment_period?: EnrollmentPeriod;
   readonly employer_premium_paid: number;
 }
 
@@ -107,7 +162,8 @@ export function verifyForm8941ShopReview(source: ReviewSource): void {
       item.employee_ssn === source.owner_ssn ||
       seenSSNs.has(item.employee_ssn) ||
       item.payroll_employment_ein !== source.employment_ein ||
-      item.payroll_hours_of_service !== employee.hours_of_service ||
+      Math.min(item.payroll_hours_of_service, 2080) !==
+        employee.hours_of_service ||
       item.payroll_social_security_medicare_wages !==
         employee.social_security_medicare_wages
     ) {
@@ -132,6 +188,15 @@ export function verifyForm8941ShopReview(source: ReviewSource): void {
     ) {
       throw new Error("Form 8941 employee rating area differs from IRS table");
     }
+    const monthCount = enrollmentMonthCount(employee);
+    if (
+      JSON.stringify(employee.enrollment_period) !==
+        JSON.stringify(item.enrollment_period)
+    ) {
+      throw new Error(
+        "Form 8941 enrollment record differs from employee policy period",
+      );
+    }
     const months = new Set<number>();
     let billed = 0;
     let paid = 0;
@@ -143,6 +208,31 @@ export function verifyForm8941ShopReview(source: ReviewSource): void {
       ) {
         throw new Error(
           "Form 8941 monthly invoice or payment ownership differs",
+        );
+      }
+      if (employee.enrollment_period) {
+        const dates = monthCoverageDates(month.month);
+        if (
+          month.month < employee.enrollment_period.first_month ||
+          month.month > employee.enrollment_period.last_month ||
+          month.coverage_start_date !== dates.start ||
+          month.coverage_end_date !== dates.end ||
+          !month.invoice_date || !month.payment_date ||
+          !validCalendarDate(month.invoice_date) ||
+          !validCalendarDate(month.payment_date) ||
+          !month.payment_date.startsWith("2025-")
+        ) {
+          throw new Error(
+            "Form 8941 invoice coverage or paid-tax-year dates differ from enrollment",
+          );
+        }
+      } else if (
+        month.coverage_start_date !== undefined ||
+        month.coverage_end_date !== undefined ||
+        month.invoice_date !== undefined || month.payment_date !== undefined
+      ) {
+        throw new Error(
+          "Form 8941 dated invoice evidence needs an identified enrollment period",
         );
       }
       if (months.has(month.month)) {
@@ -171,11 +261,13 @@ export function verifyForm8941ShopReview(source: ReviewSource): void {
       billed += month.billed_premium;
       paid += month.employer_payment;
     }
-    if (months.size !== 12) {
-      throw new Error("Form 8941 full-year SHOP coverage is incomplete");
+    if (months.size !== monthCount) {
+      throw new Error(
+        "Form 8941 identified SHOP enrollment coverage is incomplete",
+      );
     }
     if (
-      billed !== employee.full_year_employee_only_shop_premium ||
+      billed !== employeeTaxYearPremium(employee) ||
       paid !== employee.employer_premium_paid
     ) {
       throw new Error(

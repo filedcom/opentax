@@ -138,3 +138,92 @@ Deno.test("Form 8941 sends only its bounded direct source to Form 3800", () => {
     11_698,
   );
 });
+
+Deno.test("Form8941 part-year enrollment prorates average premiums, not annual payroll hours", async () => {
+  const { form8941PartYearSource } = await import(
+    "../../../2025/pdf/review-8941-partyear.fixture.ts"
+  );
+  const source = form8941PartYearSource();
+  const lines = calculateForm8941(source);
+  assertEquals(lines.line1, 5);
+  assertEquals(lines.line2, 3);
+  assertEquals(lines.line3, 25000);
+  assertEquals(lines.line4, 17000);
+  assertEquals(lines.line5, 13257);
+  assertEquals(lines.line16, 6629);
+  assertEquals(lines.line13, 5);
+  assertEquals(lines.line14, 3);
+  // Rounding each fractional employee cap first would incorrectly report13258.
+  const individuallyRounded = source.employees.reduce(
+    (sum, e) =>
+      sum +
+      Math.round(
+        9358 * .5 *
+          (e.enrollment_period.last_month - e.enrollment_period.first_month +
+            1) /
+          12,
+      ),
+    0,
+  );
+  assertEquals(individuallyRounded, 13258);
+});
+Deno.test("Form8941 part-year rejects missing/extra months and inconsistent dated paid evidence", async () => {
+  const { form8941PartYearSource } = await import(
+    "../../../2025/pdf/review-8941-partyear.fixture.ts"
+  );
+  const priorInvoice = form8941PartYearSource();
+  priorInvoice.shop_review.employee_premium_reviews[0].monthly_premiums[0]
+    .invoice_date = "2024-12-20";
+  assertEquals(calculateForm8941(priorInvoice).line16, 6629);
+  const invalidDate = form8941PartYearSource();
+  invalidDate.shop_review.employee_premium_reviews[0].monthly_premiums[0]
+    .payment_date = "2025-13-15";
+  assertThrows(
+    () => calculateForm8941(invalidDate),
+    Error,
+    "paid-tax-year dates",
+  );
+  const missing = form8941PartYearSource();
+  missing.shop_review.employee_premium_reviews[0].monthly_premiums.pop();
+  assertThrows(
+    () => calculateForm8941(missing),
+    Error,
+    "coverage is incomplete",
+  );
+  const outside = form8941PartYearSource();
+  outside.shop_review.employee_premium_reviews[0].monthly_premiums[0].month = 6;
+  assertThrows(
+    () => calculateForm8941(outside),
+    Error,
+    "dates differ from enrollment",
+  );
+  const period = form8941PartYearSource();
+  period.employees[0].enrollment_period.coverage_start_date = "2025-07-15";
+  assertThrows(() => calculateForm8941(period), Error, "whole calendar months");
+  const wrongYear = form8941PartYearSource();
+  wrongYear.shop_review.employee_premium_reviews[0].monthly_premiums[0]
+    .payment_date = "2024-07-15";
+  assertThrows(
+    () => calculateForm8941(wrongYear),
+    Error,
+    "paid-tax-year dates",
+  );
+  const reused = form8941PartYearSource();
+  reused.shop_review.employee_premium_reviews[1].monthly_premiums[0]
+    .employer_payment_reference =
+      reused.shop_review.employee_premium_reviews[0].monthly_premiums[0]
+        .employer_payment_reference;
+  assertThrows(() => calculateForm8941(reused), Error, "payment is reused");
+});
+Deno.test("Form8941 actual annual wages trigger the wage ceiling despite short enrollment", async () => {
+  const { form8941PartYearSource } = await import(
+    "../../../2025/pdf/review-8941-partyear.fixture.ts"
+  );
+  const source = form8941PartYearSource();
+  source.employees.forEach((e, i) => {
+    e.social_security_medicare_wages = 50000;
+    source.shop_review.employee_premium_reviews[i]
+      .payroll_social_security_medicare_wages = 50000;
+  });
+  assertThrows(() => calculateForm8941(source), Error, "wage ceiling");
+});

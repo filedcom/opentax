@@ -224,3 +224,7 @@ historical execution snapshots.
 ## October 6 Form8941 owned packet review
 
 The existing Form8941 descriptor now has public owned SHOP/payroll full/partial/zero tax-use packets, full local2025v5.4XSD proof and all67pages visually reviewed. The held fixture `single-shop-health-premium-credit` covers `f8941`; no descriptor was added (150native/116PDF). The source planner now reports199fixtures,113unique registered PDF keys,91expected keys and22uncovered keys. See [the precise route, deduction rule and limits](ty2025-form8941-gap.md). Broader employer health credit and acceptance claims remain open.
+
+## October 6 Form8941 part-year packet review
+
+The additional held fixture `single-shop-part-year-enrollment` retains annual owned payroll and dated enrollment/invoice/payment months. Full/partial/zero tax-use packets have complete local2025v5.4XSD proof and all67 additional pages reviewed. Descriptors remain150 native/116 PDF. The actual planner at this base reports208 fixtures,113 unique registered PDF keys,92 expected keys and21 uncovered keys. See [the sourced month/rounding rule and precise limits](ty2025-form8941-gap.md). No family/common-control or authentication/acceptance branch is opened by this evidence.
