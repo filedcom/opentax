@@ -4791,3 +4791,8 @@ Isolated final13/13,104/104 repaired ScheduleC checks and earlier79/79; broader3
 ## Reviewed Form8978 main integration — 2026-10-06
 
 Codea842e9599, actual typed focused command covering public8978/PDF8978/owner-SE/public8994/held scope: **17 passed,0 failed**,46s with real Poppler. Log `/tmp/opentax-form8978-main-integration.log`, SHA256 `18c3670e0d7c2ee467c1678915017358ec288cddedc054787ec2c8e2fe4e1dae`. Isolated28/28 and53/53; held3 complete localXSD/replayed returns,19 tax pages and27 exact attachment pages inspected. Reviewed prior-year computations and supplied synthetic PDF bytes are bound, not authenticated. Full batch and business-rule/acceptance gates remain open; [exact limits](ty2025-form8978-pdf-gap.md).
+
+
+## Positive child-tax/Form8615 main integration — 2026-10-06
+
+Code72bd53a19, typed real-Poppler focused command covering paired positive child tax, earlier paired education, public8978 and owner-SE: **19 passed,0 failed**,1m6s. Log `/tmp/opentax-positive-child-tax-main-integration.log`, SHA256 `4b42fd0d80e8c403ff0f1bb7b793b99b64e930daa1ec911a8f8fced4c741907e`. Final isolated454/454 across24 selected existing/new files plus6/6 source/artifact checks. Six full Return1040v5.4 XMLs and36 filled PDF pages inspected; child AGI22000/SD15750/TI6250 yields8615 tax1375 using actual selected parent TI59250/pre-credit7955. Parent income/AOC/ODC remain separate. Source/header/support/parent-choice/duplicate-credit and standalone slice conflicts reject. [Exact limits](ty2025-form8863-parent-child-kiddie-tax-review.md) retain wider sibling/parent/special-tax/authentication scope. Full batchea23 predates this code.
