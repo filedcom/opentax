@@ -2902,3 +2902,18 @@ Latest-source full run must use a one-shot launcher and unique immutable paths.
 ## Main exact Form4952 paid-source cents
 
 Production738554c2a main focused6/0(17s), `/tmp/opentax-form4952-source-cents-current-main-oct6.log`; isolated final44/0 sevenmodules verifies same production. Actual main retainedsource replay regenerates7-page fullXSD/PDF/pending/origins exactly, XMLonlyReturnTs, `/tmp/opentax-form4952-source-cents-held-main-oct6.log`; output `/tmp/opentax-form4952-source-cents-held-main-oct6`. Allseven pages reviewed from v4 and confirmed PDF/pending byte-identical finalv5. OriginalolderOctober6 integerarchive untouched; graph additions to laterregeneration are recorded and no oldarchivebyteequality claim. Main6/0 andheld were terminal before sealing, ledger1466; frozen52/future unchanged. FullV5 firstexit1/logoverwritten byKeepAlive, run2 live91417/91420; nextwrapper-start guard archives and removes service. Latest-source fullpass remains required.
+
+## Exact paid-source checkpoint published
+
+GitHub PR63 verified headfe3d19e2345358e5a5230530e3ef2472fd5970aa after push
+and title/body update. Complete branch log/stat reviewed at
+`/tmp/opentax-pr63-oct6-source-cents-full-{log,stat}.txt`. Attach2470 called but
+stalled/terminated; no successful attachment asserted. Main source-cents6/0,
+retained7-page fullXSD/PDF/pending/origins exact and isolated44/0 already sealed.
+Roth classification prerequisite isolated11/0 and274/0 terminal; corrected
+35/295 held-source/retained-page comparisons still required before integration.
+ScheduleJ freshmain rehearsal preserves new3/49, original2/36, QEF17/172 and
+pension8/76; donor overlap gate pending. Producing617 positive-AMT work exposes
+shared6251 whole-dollar TMT rounding; agent verifies original sources and will
+preserve/review affected prior packets before ready commit. No broad completion
+or release claim. Ledger1466/frozen52/future unchanged.
