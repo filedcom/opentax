@@ -1,3 +1,4 @@
+import type { FilerIdentity } from "../../../mef/header.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import {
   computeNetProfit,
@@ -16,6 +17,7 @@ export function assertSstbScheduleCSource(
   input: Form8995AInput,
   pending: Readonly<Record<string, unknown>> | undefined,
   filerSSN?: string,
+  filer?: FilerIdentity,
 ): void {
   const retained = input.single_sstb_schedule_c_source;
   if (!retained) return;
@@ -98,9 +100,12 @@ export function assertSstbScheduleCSource(
   if (input.filing_status === FilingStatus.MFS) {
     const mfs = review.mfs_filing_review;
     if (
-      !mfs || g.address_state !== mfs.domicile_state ||
+      !mfs || g.address_state !== mfs.mailing_address_state ||
       g.spouse_ssn?.toString().replaceAll("-", "") !== mfs.spouse_ssn ||
       f.spouse_ssn?.toString().replaceAll("-", "") !== mfs.spouse_ssn ||
+      (filer !== undefined &&
+        (filer.address.state !== mfs.mailing_address_state ||
+          filer.spouse?.ssn.replaceAll("-", "") !== mfs.spouse_ssn)) ||
       mfs.spouse_ssn === ssn || g.mfs_spouse_itemizing !== false ||
       f.mfs_spouse_itemizing !== false ||
       f.filing_status !== input.filing_status ||
@@ -110,7 +115,7 @@ export function assertSstbScheduleCSource(
       input.sstb_filing_details?.mfs_no_spouse_share_confirmed !== true
     ) {
       throw new Error(
-        "MFS SSTB needs matching Colorado domicile and spouse deduction review in the actual return",
+        "MFS SSTB needs reviewed noncommunity domicile/property regime and spouse deduction review in the actual return",
       );
     }
   }

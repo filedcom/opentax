@@ -82,6 +82,53 @@ loss/property/credit/capital combinations and farm health-plan allocation remain
 open. The broad parent, general owner allocation/rounding audits, source-byte
 authentication, IRS business rules and ATS are not closed.
 
+## Ordinary noncommunity MFS SSTB source extension (2026-10-06)
+
+The public MFS accounting SSTB route now replaces the initial Colorado-only
+review with `mfsSstbFilingReviewSchema`. It retains independent full-year
+permanent-home domicile records for both spouses, a marital property/trust/election
+review record, primary separate business/wage earnings records, and the actual
+spouse deduction record. Explicit confirmations establish no elected community
+property regime and no current or retained community income. Mailing state is
+recorded separately and reconciled to actual General and the native/PDF filer;
+it does not determine either spouse's domicile. Actual spouse TIN, primary
+owner, MFS status and explicit false spouse-itemizing facts remain joined.
+
+[IRS Publication 555](https://www.irs.gov/publications/p555) identifies nine
+mandatory community-property states and explains that domicile follows the
+permanent-home facts and intent, including each spouse's domicile. It excludes
+the federal treatment of elected Alaska/Tennessee/South Dakota regimes from its
+scope. Accordingly, all nine community states reject for either spouse, and
+AK/TN/SD require the same explicit no-election/property and separate-income
+review records. Elected regimes, retained community income and midyear domicile
+changes are outside this source route; no Form8958 allocation is claimed.
+
+Four registered actual public returns cover NY taxpayer/NJ spouse, AK, TN and
+SD. They retain the original issued W2/business sources and the source→SE→AGI→
+ScheduleA/parent→1040 chain: AGI238050, pre-QBI222300, applicable50%, QBI2652,
+taxable219648, total49112, refund888. A separate positive test retains reviewed
+AK domiciles while using an actual Seattle WA mailing address/header, proving
+that mail alone neither establishes nor overrides domicile.
+
+Typed focus passes8/8 and related node/native/PDF regression passes165/165.
+Thirty new synchronized source and header mutations reject native and PDF,
+covering each mandatory community state for each spouse, property/election/
+separate-income/full-year contradictions, missing records, missing no-election
+reviews in AK/TN/SD, and a conflicting actual filer mailing state. Existing MFS
+owner/status/spouse deduction and public missing-review/wrong-owner negatives
+remain. Four complete returns pass the full local2025v5.4 XSD; all60 packet pages
+were rendered and visually reviewed. Registered source replay and the read-only
+checklist/template/artifact hash/XSD checker pass.
+
+Proof base `b056c59ae`; ignored artifact directory
+`.state/research/ty2025-filled-pdf-review/2026-10-06-qbi-sstb-noncommunity`, with
+adjacent `-rendered` contacts. Logs: `/tmp/opentax-sstb-noncommunity-focus.log`,
+`/tmp/opentax-sstb-noncommunity-regression.log`,
+`/tmp/opentax-sstb-noncommunity-selected.log`. The original Colorado proof below
+is historical; its fixture now supplies the broader explicit review records.
+Community allocations, elected regimes, foreign/midyear domiciles, spouse-owned
+businesses, broader adjustments, IRS business rules and ATS remain open.
+
 ## Public MFS primary-owned accounting SSTB (2026-10-06, locally proven)
 
 The existing source-owned accounting route now permits a

@@ -346,7 +346,7 @@ Deno.test("MFS Colorado primary SSTB actual source joins status, spouse deductio
       },
       (r) => {
         (r.mfs_filing_review as Record<string, unknown>)
-          .full_year_colorado_domicile_confirmed = false;
+          .full_year_noncommunity_domiciles_confirmed = false;
       },
       (r) => {
         (r.mfs_filing_review as Record<string, unknown>)
@@ -400,4 +400,115 @@ Deno.test("public MFS SSTB input rejects an absent filing review or spouse-owned
     const result = f1040_2025.executeReturn({ ...inputs });
     assertEquals(result.diagnostics.length > 0, true);
   }
+});
+
+Deno.test("reviewed ordinary noncommunity MFS states retain actual source and return amounts", async () => {
+  for (const state of ["ny", "ak", "tn", "sd"]) {
+    const f = pdfReviewFixtures.find((f) =>
+      f.id === `mfs-${state}-primary-form8995a-accounting-sstb-phasein`
+    )!;
+    const result = f1040_2025.executeReturn({ ...f.inputs });
+    assertEquals(result.diagnostics, []);
+    const p = buildPending(result.pending) as Pending;
+    assertEquals([
+      p.f1040.line11_agi,
+      p.f1040.line13_qbi_deduction,
+      p.f1040.line15_taxable_income,
+      p.f1040.line24_total_tax,
+      p.f1040.line35a_refund,
+    ], [238050, 2652, 219648, 49112, 888]);
+    const b = await bundle(p, f.filer);
+    assertStringIncludes(b.xml, "<ApplicablePct>0.50000</ApplicablePct>");
+    assertEquals(
+      (await buildPdfBytes(p, f.filer, ".pdf-cache", b)).length > 1000,
+      true,
+    );
+  }
+});
+
+Deno.test("MFS domicile/property review rejects community states, elections and missing records independently of mail", async () => {
+  const f = pdfReviewFixtures.find((f) =>
+    f.id === "mfs-ak-primary-form8995a-accounting-sstb-phasein"
+  )!;
+  const result = f1040_2025.executeReturn({ ...f.inputs });
+  assertEquals(result.diagnostics, []);
+  const base = buildPending(result.pending) as Pending;
+  const mutations: ((r: Record<string, unknown>) => void)[] = [];
+  for (const state of ["AZ", "CA", "ID", "LA", "NV", "NM", "TX", "WA", "WI"]) {
+    for (const key of ["domicile_state", "spouse_domicile_state"]) {
+      mutations.push((r) => {
+        r[key] = state;
+      });
+    }
+  }
+  for (
+    const key of [
+      "no_elected_community_property_regime_confirmed",
+      "no_current_or_retained_community_income_confirmed",
+      "business_and_wages_are_primary_separate_income_confirmed",
+      "full_year_noncommunity_domiciles_confirmed",
+    ]
+  ) {
+    mutations.push((r) => {
+      r[key] = false;
+    });
+  }
+  for (
+    const key of [
+      "property_regime_record_reference",
+      "spouse_domicile_record_reference",
+      "primary_separate_earnings_record_reference",
+      "domicile_record_reference",
+    ]
+  ) {
+    mutations.push((r) => {
+      r[key] = "";
+    });
+  }
+  for (const state of ["AK", "TN", "SD"]) {
+    mutations.push((r) => {
+      r.domicile_state = state;
+      delete r.no_elected_community_property_regime_confirmed;
+    });
+  }
+  for (const change of mutations) {
+    const p = structuredClone(base);
+    const c = (p.schedule_c.schedule_cs as Record<string, unknown>[])[0];
+    change(
+      (c.qbi_sstb_filing_review as Record<string, unknown>)
+        .mfs_filing_review as Record<string, unknown>,
+    );
+    for (const key of ["form8995a", "form8995a_schedule_a"]) {
+      ((p[key].single_sstb_schedule_c_source as Record<string, unknown>)
+        .business as Record<string, unknown>).source_schedule_c =
+          structuredClone(c);
+    }
+    await assertRejects(() => bundle(p, f.filer));
+    await assertRejects(() => buildPdfBytes(p, f.filer, ".pdf-cache"));
+  }
+  const wrongHeader = {
+    ...f.filer,
+    address: { ...f.filer.address, state: "CA" },
+  };
+  await assertRejects(() => bundle(base, wrongHeader));
+  await assertRejects(() => buildPdfBytes(base, wrongHeader, ".pdf-cache"));
+  // A mailing address in a community state does not change reviewed AK domicile.
+  const inputs = structuredClone(f.inputs) as Record<string, unknown>;
+  Object.assign(inputs.general as Record<string, unknown>, {
+    address_state: "WA",
+    address_city: "Seattle",
+    address_zip: "98101",
+  });
+  const c = (inputs.schedule_c as Record<string, unknown>[])[0];
+  ((c.qbi_sstb_filing_review as Record<string, unknown>)
+    .mfs_filing_review as Record<string, unknown>).mailing_address_state = "WA";
+  const changed = f1040_2025.executeReturn({ ...inputs });
+  assertEquals(changed.diagnostics, []);
+  const p = buildPending(changed.pending) as Pending;
+  const header = { ...f.filer, address: { ...f.filer.address, state: "WA" } };
+  const b = await bundle(p, header);
+  assertEquals(
+    (await buildPdfBytes(p, header, ".pdf-cache", b)).length > 1000,
+    true,
+  );
 });

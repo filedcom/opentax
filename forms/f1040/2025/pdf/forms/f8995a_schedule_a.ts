@@ -108,6 +108,7 @@ export const form8995aScheduleAPdf: PdfFormDescriptor = {
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
     const input = inputSchema.strict().parse(allPending?.form8995a_schedule_a);
+    assertSstbScheduleCSource(input, allPending, filer?.primarySSN, filer);
     if (input.filing_status === NodeFilingStatus.MFS) {
       if (
         !filer ||

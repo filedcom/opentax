@@ -62,6 +62,7 @@ function buildScheduleA(rawFields: Input, context?: MefBuildContext): string {
     fields,
     context?.pending,
     context?.filer?.primarySSN,
+    context?.filer,
   );
   const lines = calculateOneSstb8995ALines(fields);
   assertZeroReductionScheduleAReturn(fields, lines, context?.pending);

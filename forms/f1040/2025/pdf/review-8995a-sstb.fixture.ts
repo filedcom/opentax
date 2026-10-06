@@ -161,7 +161,18 @@ export function mfsPrimaryAccountingSstbFixture(
   const c = (inputs.schedule_c as Record<string, unknown>[])[0];
   (c.qbi_sstb_filing_review as Record<string, unknown>).mfs_filing_review = {
     domicile_state: "CO",
-    full_year_colorado_domicile_confirmed: true,
+    spouse_domicile_state: "CO",
+    full_year_noncommunity_domiciles_confirmed: true,
+    spouse_domicile_record_reference:
+      "Synthetic spouse Colorado voting, residence and permanent-home records",
+    property_regime_record_reference:
+      "Synthetic marital property and election review: no converted or elected community property",
+    no_elected_community_property_regime_confirmed: true,
+    no_current_or_retained_community_income_confirmed: true,
+    primary_separate_earnings_record_reference:
+      "Synthetic primary separate wage and accounting contract/payment records",
+    business_and_wages_are_primary_separate_income_confirmed: true,
+    mailing_address_state: "CO",
     domicile_record_reference:
       "Synthetic full-year Colorado domicile records for both spouses",
     spouse_ssn: "444556666",
@@ -192,6 +203,56 @@ export function mfsPrimaryAccountingSstbFixture(
     reviewFocus: [
       "Separate Colorado owner source and reviewed spouse standard deduction; no community property allocation",
       "Actual MFS threshold197300/range50000 and Additional Medicare threshold125000 join SE/QBI and final1040",
+    ],
+  };
+}
+
+/** Reviewed ordinary regimes; mailing state is not used to infer either domicile. */
+export function noncommunityMfsAccountingSstbFixture(
+  base: PdfReviewFixture,
+  state: "NY" | "AK" | "TN" | "SD",
+): PdfReviewFixture {
+  const fixture = mfsPrimaryAccountingSstbFixture(base);
+  const inputs = structuredClone(fixture.inputs) as Record<string, unknown>;
+  const locations = {
+    NY: ["Albany", "12207"],
+    AK: ["Anchorage", "99501"],
+    TN: ["Nashville", "37201"],
+    SD: ["Pierre", "57501"],
+  };
+  const [city, zip] = locations[state];
+  const g = inputs.general as Record<string, unknown>;
+  Object.assign(g, {
+    address_city: city,
+    address_state: state,
+    address_zip: zip,
+  });
+  const c = (inputs.schedule_c as Record<string, unknown>[])[0];
+  const r = (c.qbi_sstb_filing_review as Record<string, unknown>)
+    .mfs_filing_review as Record<string, unknown>;
+  Object.assign(r, {
+    domicile_state: state,
+    spouse_domicile_state: state === "NY" ? "NJ" : state,
+    mailing_address_state: state,
+    domicile_record_reference:
+      `Synthetic ${state} primary permanent-home, voting and residence records for full2025`,
+    spouse_domicile_record_reference: `Synthetic ${
+      state === "NY" ? "NJ" : state
+    } spouse permanent-home and voting records for full2025`,
+    property_regime_record_reference:
+      `Synthetic ${state} marriage/property/trust/election review; no elected regime, converted property or retained community income`,
+  });
+  return {
+    ...fixture,
+    id: `mfs-${state.toLowerCase()}-primary-form8995a-accounting-sstb-phasein`,
+    inputs,
+    filer: {
+      ...fixture.filer,
+      address: { ...fixture.filer.address, city, state, zip },
+    },
+    reviewFocus: [
+      `Actual ${state} reviewed noncommunity domicile and separate primary earnings; spouse domicile ${r.spouse_domicile_state}; explicit no-election/property review independent of mailing address`,
+      ...fixture.reviewFocus.slice(1),
     ],
   };
 }

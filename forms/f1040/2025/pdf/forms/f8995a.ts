@@ -288,6 +288,7 @@ export const form8995aPdf: PdfFormDescriptor = {
     // The builder passes projected print fields here; validate owner and
     // aggregation details against the retained source instead.
     const input = inputSchema.strict().parse(allPending?.form8995a ?? raw);
+    assertSstbScheduleCSource(input, allPending, filer?.primarySSN, filer);
     if (
       (input.patron_filing_details?.source_1099patr
           .box6_section199ag_deduction ?? 0) > 0 &&

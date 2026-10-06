@@ -7,6 +7,7 @@ import {
   accountingSstbNoPayrollFixture,
   jointPrimaryAccountingSstbFixture,
   mfsPrimaryAccountingSstbFixture,
+  noncommunityMfsAccountingSstbFixture,
 } from "./review-8995a-sstb.fixture.ts";
 import { patronFixture } from "./review-8995a-patron.fixture.ts";
 import { twoBusinessAggregationFixture } from "./review-8995a-aggregation.fixture.ts";
@@ -9041,6 +9042,19 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
   form8941PartYearReviewFixture(),
   form8941FamilyReviewFixture(),
   medicareMsaReviewFixture(),
+  ...(["NY", "AK", "TN", "SD"] as const).map((state) =>
+    noncommunityMfsAccountingSstbFixture(
+      accountingSstbFixture(
+        basePdfReviewFixtures.find((fixture) =>
+          fixture.id === "single-schedule-c"
+        )!,
+        basePdfReviewFixtures.find((fixture) =>
+          fixture.id === "single-w2-refund"
+        )!,
+      ),
+      state,
+    )
+  ),
   mfsPrimaryAccountingSstbFixture(accountingSstbFixture(
     basePdfReviewFixtures.find((fixture) =>
       fixture.id === "single-schedule-c"
