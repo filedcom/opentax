@@ -1,6 +1,6 @@
 # Spouse-owned patron source — October 6, 2026
 
-Current candidate: production/test75ae18c95 plus contract-test98521c758. Final ordinary focused3/0, supplemental contract2/0, actual8new returns/121pages exact and10prior returns/151pages qualified preservation are verified below. The corrected private three-module run and main integration gates remain pending; the existing parent remains open. Earlier exploratory failures are retained as chronological, superseded evidence.
+Integrated main production/test67aef9dee/92f1c9020. Final ordinary four-module gate passed **110/0 (13m59s)**; independent actual main8/121 and prior10/151 replays are verified below. This bounded spouse-owned patron route is recorded in ledger1539; broader QBI and filing gates remain open. Earlier exploratory failures remain chronological evidence.
 
 ## Compacted learnings before implementation
 
@@ -57,3 +57,8 @@ The corrected ordinary three-module gate is terminal exit0: **10 passed /0 faile
 ## Independent main integration evidence
 
 Integrated production67aef9dee and final contract tests92f1c9020 retain all9heldproductionhashes. Root main actual8source replay29222 is terminal0:8returns/121pages, exactwholepending/prepared/carry/origins/PDF and nativeonlyReturnTs, fullv5.4XSD, sourcesunchanged. Actualmainprior10replay56184 is terminal0:10returns/151pages, all10historicalPDFs exact, currentgraph/carry equalimmutablebase2fef, native/currentPDF equalqualifiedcandidate, originalJSON/PDF/XMLunchanged. SevenhistoricalSingleXMLs differonlytimestamp/newline;3MFJretainpreviouslyestablishedScheduleSEzero/SocialSecuritymetadata. Historicalpendingstringflagsarenotclaimedwholehistoricgraphequality. Main report/qualification/scripts/logs: `/tmp/opentax-qbi-spouse-patron-main-prior10-oct6` and `...main-prior10-qualified-oct6.json`. Main8files19 andprior10files24,worker262 plusfinalcompatibility26files physicallyhashpreserved. Finalordinarymain4module73125 includesfinal4spousecontracttests andW2index; it is stilllive, so no boundedcompletion is recorded. WiderQBIparent/issuer/businessrules/IRSacceptance remainopen.
+
+
+## Final main ordinary gate
+
+`/tmp/opentax-qbi-spouse-patron-main-standard-oct6.zsh` ran normal typed `deno task test` on final spouse, joint, phase-in and W2 input modules. Terminal exit0, **110 passed /0 failed (13m59s)**, final log retained unchanged. All eight generated packets match the independently reviewed121-page PDFs exactly, with nine held production hashes unchanged. Final27 physical script/log/JSON/XML/PDF/transfer files are retained under main private research; manifest `/tmp/opentax-qbi-spouse-patron-main-final-gate-preservation-oct6.json`. The historical native metadata qualification above remains applicable. No issuer authentication, IRS business-rule or ATS acceptance claim follows.
