@@ -4910,3 +4910,7 @@ deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm
 ```
 
 Log `/tmp/opentax-aggregate-shop-main-integration.log`, SHA256 `78feebe323d2be6514b60dc8dc90d53b0d8e5ab76a02ec2bd06ca44afd30d9e5`. One complete local-XSD packet/all25 visually reviewed pages plus actual source/math/limits proof retained in ignored `.state/research/2026-10-06-form8941-common-control/PROOF.md`. Group source/person/coverage and allocation mutations reject; seasonal, multiple-QHP and multiple-ScheduleC compatibility passes. Stable fullbc6cafec6 remains running, predates these changes and has two observed failures; no latest-head full pass or IRS acceptance is claimed.
+
+## October6 owned C/F filed-operand main proof
+
+At68f876474, the exact21-case selected main integration batch passed21/0 in2m16s. Commands and logs are retained in the [whole-dollar proof](ty2025-owned-cf-whole-dollar-reconciliation.md). Ten registered source-backed full local-XSD returns produced130 flattened PDF pages; all130 current pages were rendered and reviewed,30 source/XML/PDF hashes retained, and main held replay passed. Main planner actually reports264 fixtures,116 descriptors,113 keys,95 covered keys and18 uncovered. The full regression atbc6cafec6 remains live and has two observed failures; its current result and later-head full proof are unproven. This bounded MFJ route does not close52 parent TODOs or IRS acceptance.

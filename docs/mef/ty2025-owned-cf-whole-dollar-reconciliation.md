@@ -1,14 +1,32 @@
-# Pending owned C/F whole-dollar reconciliation
+# Owned C/F whole-dollar reconciliation
 
-This work belongs to the existing ScheduleC/F, owner-SE and return-wide reconciliation TODOs. No new completed slice is recorded.
+This work belongs to the existing Schedule C/F, owner-SE, QBI and return-wide reconciliation TODOs. Broader parents remain open.
 
-The [2025 Form1040 instructions](https://www.irs.gov/instructions/i1040gi) require 50–99 cents to round to the next dollar and cents to be retained while adding inputs for a single line. Applying that convention to signed loss magnitudes exposed the shared native/PDF use of JavaScript Math.round: -10000.50 became -10000, while sourced QBI already used -10001; -.50 became zero. A shared signed formatter now preserves those loss magnitudes and canonical zero. Positive rounding remains the same.
+The [2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi) specify whole-dollar rounding and retention of cents while adding source amounts for a single line. Signed loss magnitudes now follow the same half-dollar convention: -10000.50 files as -10001 and -.50 files as -1. Original source cents remain retained.
 
-The isolated formatter passes63 native/PDF-builder checks and10 full C/F/optional-farm/multiple-business checks. Logs are `/tmp/opentax-signed-dollar-related.log` and `/tmp/opentax-owned-cf-signed-dollars-final.log`.
+Visual review exposed a second defect after the formatter repair: Schedule 1 printed C=-301 and F=800 but total=500. The graph now settles eligible ordinary proprietor C/F monetary filing operands before computing expenses, profit, Schedule 1, owner SE, QBI and AGI. Native and PDF replay use that same settlement. Actual deductible meals are calculated from original meal cost before rounding the allowance; conservation expenses use the actual source cost and filed gross-income cap before rounding the allowed amount. Source cost is never replaced with a fabricated amount to obtain the deduction.
 
-- opentax-signed-dollar-related.log: SHA256 `1bc3d7c84e9bc32c2fc07742fb3fdd0c4258eb0a030fafa57547d4284eff6837`.
-- opentax-owned-cf-signed-dollars-final.log: SHA256 `077c4cbb17e09a73b746e23da4c7bc7b7f3332025a055196895fb9c0055b1615`.
+Ten registered MFJ sources cover negative49/50/51-cent boundaries, a half-dollar farm loss, distinct raw gross/expense leaf rounding, and meal/conservation allowances. Each actual complete packet includes1040, Schedules1/2/C/F/SE and8995. The ten packets pass pinned local TY2025 XSD validation and contain130 flattened pages. All130 current pages were rendered and visually inspected in33 contacts, including identity, cash/material/all-at-risk checkboxes, signed amounts, derived allowances, totals, blank continuation pages, form year and page order.
 
-Six full source/XSD/flattened PDF packets generated78 pages. All78 pages were rendered. Initial visual review covered contacts1–4 (16 pages) and found an unresolved actual filing arithmetic discrepancy: the 50-cent ScheduleC loss case prints Schedule1 line3=-301 and line6=800 but line10=500, because the graph still sums raw -300.50+800 before output rounding. The formatter correction therefore does not establish a reconciled filing route. Full packet review is intentionally incomplete pending the calculation repair.
+The held review checker replays every source through the current graph, verifies PDF/XML/source hashes, template and XSD provenance, packet inventory and all130 completed page slots. It completed successfully for the ten selected cases. Retained evidence is under `.state/research/2026-10-06-owned-cf-filed-held`; renderings and30 artifact hashes are retained alongside it. Main planner contains264 fixtures,116 descriptors,113 keys,95 covered keys and18 uncovered keys.
 
-Next required work: reconcile actual filed C/F operands through Schedule1, owner-SE attribution, QBI, AGI and native/PDF totals while retaining original cent-valued source facts and strict source-conflict rejection; regenerate all affected packets and inspect every page. Existing generic, patron, WOTC and optional-farm routes must retain their source contracts. No whole-parent completion, filing-ready release or IRS acceptance is claimed.
+Verification:
+
+- Signed formatter/native/PDF-builder checks:63 passed,0 failed (`/tmp/opentax-signed-dollar-related.log`).
+- Filed-operand compatibility checks:25 passed,0 failed (`/tmp/opentax-owned-cf-filed-operands-related.log`).
+- Derived meal/conservation and owner/optional/multiple-C checks:16 passed,0 failed (`/tmp/opentax-owned-cf-filed-derived-final.log`).
+- Final registered fixtures/scope checks:3 passed,0 failed (`/tmp/opentax-owned-cf-registration-final.log`).
+- Five cent-boundary stale-source/Schedule1/AGI/QBI mutations reject both native and direct PDF exports:1 passed,0 failed (`/tmp/opentax-owned-cf-filed-conflicts.log`).
+- Complete held replay:10 cases,130 reviewed pages; hashes and XSD confirmed (`/tmp/opentax-owned-cf-filed-held-check.log`).
+- Main integration at68f876474:21 passed,0 failed (2m16s), including common-control SHOP, optional/ordinary farm, owner SE, multiple C, cent conflicts and review scope (`/tmp/opentax-owned-cf-filed-main-integration.log`).
+- Main held replay:10 cases,130 reviewed pages, current artifacts and XSD confirmed (`/tmp/opentax-owned-cf-filed-held-main-check.log`).
+
+Original generic, patron, WOTC and optional-method source contracts stay independently guarded. Farm WOTC source work, Single-owner filed-source replay, wider adjustments and source authentication remain under their existing parent TODOs. This evidence does not prove a whole-parent completion, IRS business-rule acceptance, ATS acceptance or filing-ready release.
+
+## Evidence digests
+
+- opentax-owned-cf-registration-final.log: SHA256 `29ce0960cff3f8d4d990b929f7d7436c313f52cb95234e5e94515256bdcec8cd`.
+- opentax-owned-cf-filed-conflicts.log: SHA256 `bedc1c09084e1904ef69c1f7e6f2258958a3c58a824e1a5b6fc965515120b749`.
+- opentax-owned-cf-filed-held-check.log: SHA256 `6ef81f64e669244448b610126fb5c2ed326a6a099c627515a59ae958b2c650d2`.
+- opentax-owned-cf-filed-main-integration.log: SHA256 `cd7f56e3b8fab398ad3e0f315038f869d346544057b081f7b268b5d81383afe7`.
+- opentax-owned-cf-filed-held-main-check.log: SHA256 `6ef81f64e669244448b610126fb5c2ed326a6a099c627515a59ae958b2c650d2`.
