@@ -1724,3 +1724,22 @@ Full `deno task test` at fbacc539c ended11,577/14/0ignored, exit1(82m15s). All14
 
 
 Main f188dacf8 completed exact two-file reviewed catalog gate: 24 passed/0 failed in1m32s, log /tmp/opentax-reviewed-18-catalog-current-main.log. Registers18 existing reviewed packets,375 pages/77 owner copies; actual365 fixtures,17 uncovered unchanged. FullV4 wrapper44964/Deno44970 verified live at09m19s. Senior-health isolate has5 positive fullXSD/PDF passes and1 source-conflict failure under investigation; not integrated or counted. Next integration is reviewed f9a07ca34 actual C/F loss-owner health, isolated2/0+26/0 and held6/182; no main proof claimed yet.
+
+## Before audit inventory reconciliation
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,438 bounded slices**. Prior learnings and evidence are preserved in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). New discoveries belong only in `future_todo`.
+
+Actual planner: **365 fixtures**, 116 PDF descriptors, 113 keys, 96 covered and 17 uncovered. Published PR63 head is **dc65dc952**. Verified main gates cover mixed C/F SHOP (52/0, 52 reviewed pages), three-member SHOP (15/0, 80 pages), mixed-owner WOTC/tip QBI (62/0 plus prior12/0, 122/147 pages), complete-source annuity (247/0, held7/38) and independent C/F health (22/0, held7/212). Regenerated PDFs match reviewed bytes; old NUA held5/27 remains unchanged. These prove their stated routes; broader parents remain open.
+
+Full `deno task test` at fbacc539c ended11,577/14/0ignored, exit1(82m15s). All14 have focused repaired-main passing evidence, including final two modulefiles44/0. Latest immutable181575242 rerun started03:53:35UTC; wrapper44964/Deno44970 verified live. Its terminal result and a passing full run remain required. Root registered24 reviewed catalog cases after fixing reverse fixture initialization (main22/0 plus metadata8/0); tip-health explicit plan sources and two-farm owner health are integrated with combined51/0 and reviewed artifact replay149/217pages. Partial-beneficiary4972 and mixedC/Ftips are integrated locally at9a7da5a78 with combined33/0 and source/PDF replay6/220pages verified. Eighteen more previously reviewed packets are registered at f188dacf8 with main24/0 and375 preserved pages/77 owner copies. Wider filing/source combinations, authentication, ATS conflicts/credentials, business rules, IRS acceptance and release readiness remain incomplete.
+
+
+## October 6 current registry and planner reconciliation
+
+At code `2899d051b`, live imports contain **150 native descriptors (146 unique pending keys)** and **116 PDF descriptors (113 unique keys)**. Exact source-only planner: **365 fixtures, 96 expected keys, 17 uncovered keys**. Commands: `deno run --allow-read scripts/plan-ty2025-pdf-review.ts` and live `ALL_MEF_FORMS`/`ALL_PDF_FORMS` imports. Planner evidence `/tmp/opentax-pdf-planner-2899.json`, SHA-256 `95d99e58c4c2ed8e1895a9c1e1d0fc941dffdc4340a5e55452e549687d34e6ad`; key comparison `/tmp/opentax-registry-parity-2899.json`, SHA-256 `5f7b509b6b5d2f4bf101d902fdb6b9fb9934d72f4558ff9e6aea781bd73356d4`.
+
+Uncovered keys: `f4255`, `f5471_parent`, `f5471_schedule_e`, `f5471_schedule_h`, `f5471_schedule_i1`, `f5471_schedule_j`, `f5471_schedule_m`, `f5471_schedule_p`, `f5471_schedule_q`, `f5471_schedule_r`, `f8854`, `f8854_annual`, `f965`, `form8582cr`, `form8990`, `form8992`, `form8992_schedule_a`. Key comparison still identifies `form8621` as a native parent without a matching PDF descriptor; statement/source keys require individual packet review. `f4835_at_risk` emits Form6198 using the existing PDF route, and native `f8911` has the separate PDF companion key `f8911_schedule_a`; key names alone are not absence/support decisions. These counts establish inventory only. Named-form parents are part of the current goal; none is deferred from execution or approved for exclusion.

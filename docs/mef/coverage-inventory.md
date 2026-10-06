@@ -172,7 +172,7 @@ validation gate remains unrun. The rows below do not add product exclusions.
 
 At this older overlay's checkpoint, `ALL_MEF_FORMS` had **124 entries** and the
 schema census had 114 roots without a MeF source literal. The current registries
-have **149 MeF** and **116 PDF** descriptors, and the 211-root census has **123**
+have **150 MeF** and **116 PDF** descriptors, and the 211-root census has **123**
 source-literal roots and **88** without one. These are descriptor and static
 literal counts, not supported filing situations. The 88 remain an
 applicability/implementation queue, including staged but unregistered Form
@@ -460,3 +460,9 @@ establish full-batch, XSD, filled-PDF, IRS-rule, or ATS acceptance.
 | Source             | Document  | Current evidence                                                                                                   |
 | ------------------ | --------- | ------------------------------------------------------------------------------------------------------------------ |
 | `f8814` input node | `IRS8814` | Listed above as `form8814`; source-to-XML/XSD and related Form 1040/8962 business rules await the full-batch test. |
+
+## October 6 current registry and planner reconciliation
+
+At code `2899d051b`, live imports contain **150 native descriptors (146 unique pending keys)** and **116 PDF descriptors (113 unique keys)**. Exact source-only planner: **365 fixtures, 96 expected keys, 17 uncovered keys**. Commands: `deno run --allow-read scripts/plan-ty2025-pdf-review.ts` and live `ALL_MEF_FORMS`/`ALL_PDF_FORMS` imports. Planner evidence `/tmp/opentax-pdf-planner-2899.json`, SHA-256 `95d99e58c4c2ed8e1895a9c1e1d0fc941dffdc4340a5e55452e549687d34e6ad`; key comparison `/tmp/opentax-registry-parity-2899.json`, SHA-256 `5f7b509b6b5d2f4bf101d902fdb6b9fb9934d72f4558ff9e6aea781bd73356d4`.
+
+Uncovered keys: `f4255`, `f5471_parent`, `f5471_schedule_e`, `f5471_schedule_h`, `f5471_schedule_i1`, `f5471_schedule_j`, `f5471_schedule_m`, `f5471_schedule_p`, `f5471_schedule_q`, `f5471_schedule_r`, `f8854`, `f8854_annual`, `f965`, `form8582cr`, `form8990`, `form8992`, `form8992_schedule_a`. Key comparison still identifies `form8621` as a native parent without a matching PDF descriptor; statement/source keys require individual packet review. `f4835_at_risk` emits Form6198 using the existing PDF route, and native `f8911` has the separate PDF companion key `f8911_schedule_a`; key names alone are not absence/support decisions. These counts establish inventory only. Named-form parents are part of the current goal; none is deferred from execution or approved for exclusion.
