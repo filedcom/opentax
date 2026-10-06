@@ -2834,3 +2834,25 @@ PR63 title/body and remote head ca8c02d4ef0f1f055d57647f0da07eb4cc0c100d verifie
 ## Main legacy1254 verification
 
 Productione5db4222a: standard main task17/0 in1m22s, `/tmp/opentax-resource-legacy-current-main-source-oct6.log`. Immutable original-source replay14packets/235files exact exceptXMLReturnTs, fullXSD/native/PDF/pending/carry/math/origins and original attachments, `/tmp/opentax-resource-legacy-current-main-held-oct6.log`; new outputs `/tmp/opentax-resource-legacy-current-main-held-oct6`. The original490page visual proof manifest SHA25648c99f7d744e1ee00d488ef1d77dfbce047c41933041cebf230292bffdd58091 remains unchanged. Isolated33modulecompat578/0 applies to same production; no fresh main compatibility claim. FullV5 wrapper65945/Deno65949 live115m20s; no terminal/fullpass claim. Frozen52/future unchanged; Rothsource correction ongoing and qualifications preserved.
+
+
+## Before next integration and publication
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,465 recorded slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
+
+Inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF keys / 96 covered / 18 uncovered**.
+
+Latest verified work: legacy1254 depletion-offset source accounts (**17/0**) and fourteen full-XSD retained packets / 235 files exact, with 490 reviewed page occurrences; natural-resource donation source reductions and corrected Section B explanation labels. Main source **15/0**, rehearsal compatibility **578/0**, and main label checks **43/0**; forty retained full-XSD packets cover 472 return pages. All 47 changed explanation pages were reviewed; 425 other pages and all 888 original files are exact. Earlier Roth proofs remain retained, but ordinary-Roth Box 7 classification is under correction. Wider parents remain open.
+
+Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at115m20s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
+
+Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **e1af772d7**, published with the credit changes; current local source changes await publication.
+
+Donation source and Section B printing proofs are sealed. The recorded Roth history slice is qualified pending correction of ordinary-Roth issued-source checkbox classification; its calculator/artifact results do not establish that classification. Root preferential ScheduleJ/AMT source work has an isolated checkout and a retained guard audit. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+
+
+Previous goal turn was progress: main legacy production e5db4222a sealed at33081ebdc with17/0 and original14/235exact fullXSD/490reviewedpages; donation checkpoint ca8c02d4e published PR63. V5 wrapper65945/Deno65949 verified live115m42s in mixed SHOP source tests. Next main changes require current-main staged ScheduleJ integration rehearsal or corrected ordinary-Roth source proof; neither ready yet. Agent naturalresource resumes existing producing617 depletion/AMT parent in isolatedcheckout. No main/future additions or closure claims.

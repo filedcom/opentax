@@ -10,7 +10,7 @@ Latest verified work: legacy1254 depletion-offset source accounts (**17/0**) and
 
 Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at115m20s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
 
-Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **e1af772d7**, published with the credit changes; current local source changes await publication.
+Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **ca8c02d4e**, published with donation proof; verified legacy-depletion changes are ready for publication.
 
 Donation source and Section B printing proofs are sealed. The recorded Roth history slice is qualified pending correction of ordinary-Roth issued-source checkbox classification; its calculator/artifact results do not establish that classification. Root preferential ScheduleJ/AMT source work has an isolated checkout and a retained guard audit. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
 
