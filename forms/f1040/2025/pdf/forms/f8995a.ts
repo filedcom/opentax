@@ -1,3 +1,4 @@
+import { patronProprietorSsn } from "../../form8995a_patron_reconciliation.ts";
 import { assertProducingMiningZeroQbiReturn } from "../../form8995a_producing_mining_source.ts";
 import { assertFarmWotcReturn } from "../../form8995_farm_wotc_reconciliation.ts";
 import { assertMixedFishingQbiReturn } from "../../form8995a_mixed_fishing_source.ts";
@@ -396,7 +397,7 @@ export const form8995aPdf: PdfFormDescriptor = {
       (input.patron_filing_details?.source_1099patr
           .box6_section199ag_deduction ?? 0) > 0 &&
       input.patron_filing_details?.source_1099patr.recipient_tin !==
-        filer?.primarySSN.replaceAll("-", "")
+        patronProprietorSsn(input, filer)
     ) {
       throw new Error(
         "Form 8995-A PDF cooperative box 6 recipient differs from the final filer",

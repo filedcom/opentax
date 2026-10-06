@@ -1,3 +1,4 @@
+import { patronProprietorSsn } from "../../form8995a_patron_reconciliation.ts";
 import { assertProducingMiningZeroQbi } from "../../../nodes/intermediate/forms/form8995a/producing-mining.ts";
 import { assertProducingMiningZeroQbiReturn } from "../../form8995a_producing_mining_source.ts";
 import { assertQualifiedTipQbiSource } from "../../form8995_qualified_tip_source.ts";
@@ -417,7 +418,7 @@ function reconcileReturn(
     (fields.patron_filing_details?.source_1099patr
         .box6_section199ag_deduction ?? 0) > 0 &&
     fields.patron_filing_details?.source_1099patr.recipient_tin !==
-      context.filer.primarySSN.replaceAll("-", "")
+      patronProprietorSsn(fields, context?.filer)
   ) {
     throw new Error(
       "Form 8995-A cooperative box 6 recipient differs from the final filer",

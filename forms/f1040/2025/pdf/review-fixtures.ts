@@ -42,7 +42,7 @@ import { ownedScheduleSeReviewFixture } from "./review-schedule-se-owner.fixture
 import { form8941FamilyReviewFixture } from "./review-8941-family.fixture.ts";
 import { form8941PartYearReviewFixture } from "./review-8941-partyear.fixture.ts";
 import { form8941OwnedReviewFixture } from "./review-8941-owned.fixture.ts";
-import { jointPatronFixture } from "./review-8995a-patron-joint.fixture.ts";
+import { jointPatronFixture, spouseOwnedPatronFixture } from "./review-8995a-patron-joint.fixture.ts";
 import {
   accountingSstbFixture,
   accountingSstbNoPayrollFixture,
@@ -9179,6 +9179,13 @@ const existingPdfReviewFixtures: readonly PdfReviewFixture[] = [
       basePdfReviewFixtures.find((fixture) => fixture.id === "joint-two-w2s")!,
       kind,
     )
+  ),
+  ...(["farm", "c-health", "income-cap"] as const).map((kind) =>
+    spouseOwnedPatronFixture(jointPatronFixture(
+      basePdfReviewFixtures.find((fixture) => fixture.id === "single-schedule-c")!,
+      basePdfReviewFixtures.find((fixture) => fixture.id === "joint-two-w2s")!,
+      kind,
+    ))
   ),
   twoBusinessAggregationFixture(
     basePdfReviewFixtures.find((fixture) =>

@@ -90,14 +90,16 @@ export function patronSourceAmounts(raw: PatronSource) {
   const correctBusiness = c
     ? review.business.kind === "schedule_c" &&
       c.business_reference === review.business.business_reference &&
-      c.proprietor_recipient === "T" && c.line_f_accounting_method === "cash" &&
+      (c.proprietor_recipient === "T" || c.proprietor_recipient === "S") &&
+      c.line_f_accounting_method === "cash" &&
       c.line_g_material_participation &&
       c.qbi_specified_service !== true && treatment?.kind === "schedule_c" &&
       treatment.business_reference === c.business_reference &&
       (c.line_6_other_income ?? 0) >= treatment.verified_taxable_amount
     : review.business.kind === "schedule_f" &&
       f!.farm_id === review.business.farm_id &&
-      f!.proprietor_recipient === "T" && f!.accounting_method === "cash" &&
+      (f!.proprietor_recipient === "T" || f!.proprietor_recipient === "S") &&
+      f!.accounting_method === "cash" &&
       f!.line_e_material_participation && treatment?.kind === "farm" &&
       treatment.farm_id === f!.farm_id &&
       (f!.line3a_cooperative_distributions ?? 0) >= distributionTotal(patr) &&

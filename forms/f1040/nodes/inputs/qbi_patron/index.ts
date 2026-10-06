@@ -12,12 +12,18 @@ class QbiPatronNode extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([form8995, scheduleC, schedule_f, w2]);
   compute(_ctx: unknown, raw: unknown) {
     const review = inputSchema.parse(raw);
-    if (review.spouse_w2_sources) {
-      w2Schema.parse({ w2s: review.spouse_w2_sources });
+    if (review.spouse_w2_sources && review.primary_w2_sources) {
+      throw new Error(
+        "Patron review cannot assert both proprietor-side wage copy collections",
+      );
+    }
+    const wages = review.spouse_w2_sources ?? review.primary_w2_sources;
+    if (wages) {
+      w2Schema.parse({ w2s: wages });
     }
     return {
       outputs: [
-        ...(review.spouse_w2_sources
+        ...(wages
           ? [this.outputNodes.output(w2, { patron_filing_review: review })]
           : []),
         this.outputNodes.output(form8995, {

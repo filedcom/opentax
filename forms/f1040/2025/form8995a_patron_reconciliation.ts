@@ -1,3 +1,7 @@
+import {
+  type FilerIdentity,
+  FilingStatus as MefFilingStatus,
+} from "../mef/header.ts";
 import { inputSchema as w2Schema } from "../nodes/inputs/w2/index.ts";
 import {
   calculateOneBusiness8995ALines,
@@ -57,14 +61,27 @@ export function assertForm8995APatronReturn(
     "",
   );
   const spouse = String(pending.general?.spouse_ssn ?? "").replaceAll("-", "");
-  const copies = review.spouse_w2_sources
-    ? w2Schema.parse({ w2s: review.spouse_w2_sources }).w2s
+  const recipient =
+    (source.business_source as { proprietor_recipient?: string })
+      .proprietor_recipient;
+  const spouseOwned = recipient === "S";
+  const owner = spouseOwned ? spouse : primary;
+  const wageOwner = spouseOwned ? primary : spouse;
+  const reviewedWages = spouseOwned
+    ? review.primary_w2_sources
+    : review.spouse_w2_sources;
+  const copies = reviewedWages
+    ? w2Schema.parse({ w2s: reviewedWages }).w2s
     : [];
   const w2Input = pending.w2 ? w2Schema.parse(pending.w2) : undefined;
   const w2s = w2Input?.w2s ?? [];
   if (
     pending.general?.filing_status !== input.filing_status ||
-    primary !== review.source_1099patr.recipient_tin ||
+    owner !== review.source_1099patr.recipient_tin ||
+    (spouseOwned && !joint) ||
+    (spouseOwned
+      ? review.spouse_w2_sources !== undefined
+      : review.primary_w2_sources !== undefined) ||
     String(pending.f1040?.taxpayer_ssn ?? "").replaceAll("-", "") !== primary ||
     (joint && (!/^\d{9}$/.test(spouse) || spouse === primary ||
       String(pending.f1040?.spouse_ssn ?? "").replaceAll("-", "") !==
@@ -75,7 +92,7 @@ export function assertForm8995APatronReturn(
         JSON.stringify(w2Input?.patron_filing_review) !==
           JSON.stringify(review))) ||
     copies.some((row) =>
-      row.employee_ssn?.replaceAll("-", "") !== spouse ||
+      row.employee_ssn?.replaceAll("-", "") !== wageOwner ||
       !row.source_document_reference || !row.employer_name ||
       !/^\d{9}$/.test((row.employer_ein ?? "").replaceAll("-", "")) ||
       !(row.box5_medicare_wages! > 0) ||
@@ -85,7 +102,7 @@ export function assertForm8995APatronReturn(
     )
   ) {
     throw new Error(
-      "Patron primary owner and reviewed spouse W-2 issued copies must match the joint source return",
+      "Patron proprietor and reviewed nonproprietor W-2 issued copies must match the joint source return",
     );
   }
   const wageIncome = copies.reduce((sum, row) => sum + row.box1_wages, 0);
@@ -119,7 +136,9 @@ export function assertForm8995APatronReturn(
       plan.schedule1_line15_se_tax_deduction !== seLines?.line13 ||
       review.business.kind !== "schedule_c" ||
       plan.business_reference !== review.business.business_reference ||
-      plan.taxpayer_identity.ssn.replace(/\D/g, "") !==
+      plan.recipient !== recipient ||
+      (spouseOwned ? plan.spouse_identity?.ssn : plan.taxpayer_identity.ssn)
+          ?.replace(/\D/g, "") !==
         review.source_1099patr.recipient_tin
     ) {
       throw new Error(
@@ -214,4 +233,24 @@ export function assertForm8995APatronReturn(
       "Patron business, attributable SE/health deductions and final Schedule 1/1040 tax do not reconcile",
     );
   }
+}
+
+/** Select the actual cooperative business owner; unsourced legacy projections stay primary. */
+export function patronProprietorSsn(
+  input: Form8995AInput,
+  filer: FilerIdentity | undefined,
+): string | undefined {
+  const recipient = input.patron_business_source
+    ? (sourceSchema.parse(input.patron_business_source).business_source as {
+      proprietor_recipient?: string;
+    }).proprietor_recipient
+    : "T";
+  if (recipient === "S") {
+    if (
+      input.filing_status !== "mfj" ||
+      filer?.filingStatus !== MefFilingStatus.MarriedFilingJointly
+    ) throw new Error("Spouse patron needs actual joint filer identity");
+    return filer?.spouse?.ssn.replaceAll("-", "");
+  }
+  return filer?.primarySSN.replaceAll("-", "");
 }

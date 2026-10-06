@@ -1,3 +1,4 @@
+import { patronProprietorSsn } from "../../form8995a_patron_reconciliation.ts";
 import { assertForm8995APatronReturn } from "../../form8995a_patron_reconciliation.ts";
 import {
   assertPatron1099PATRSource,
@@ -38,7 +39,7 @@ function buildScheduleD(rawFields: Input, context?: MefBuildContext): string {
   if (
     (source.source_1099patr.box6_section199ag_deduction ?? 0) > 0 &&
     source.source_1099patr.recipient_tin !==
-      context?.filer?.primarySSN.replaceAll("-", "")
+      patronProprietorSsn(fields, context?.filer)
   ) {
     throw new Error(
       "Form 8995-A Schedule D box 6 recipient differs from the final filer",

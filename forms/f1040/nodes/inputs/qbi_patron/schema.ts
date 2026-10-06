@@ -20,6 +20,8 @@ export const inputSchema = z.object({
   source_1099patr: patrSchema,
   spouse_w2_sources: z.array(z.record(z.string(), z.unknown())).min(1)
     .optional(),
+  primary_w2_sources: z.array(z.record(z.string(), z.unknown())).min(1)
+    .optional(),
   allocation_method: z.literal("qualified_receipts_proportion"),
   reasonable_for_business_facts_confirmed: z.literal(true),
   consistently_applied_and_books_agree_confirmed: z.literal(true),

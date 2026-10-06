@@ -70,3 +70,40 @@ export function jointPatronFixture(
     ],
   };
 }
+
+/** Spouse owns the actual business/cooperative receipt and policy; primary owns wages. */
+export function spouseOwnedPatronFixture(
+  base: PdfReviewFixture,
+): PdfReviewFixture {
+  const inputs = structuredClone(base.inputs) as any;
+  const review = inputs.qbi_patron;
+  const business = review.business.kind === "schedule_c"
+    ? (Array.isArray(inputs.schedule_c)
+      ? inputs.schedule_c[0]
+      : inputs.schedule_c.schedule_cs[0])
+    : inputs.schedule_f.schedule_fs[0];
+  business.proprietor_recipient = "S";
+  inputs.f1099patr[0].recipient_tin = "444556666";
+  review.source_1099patr.recipient_tin = "444556666";
+  review.box6_written_notice_review.recipient_tin = "444556666";
+  inputs.w2[0].employee_ssn = "111223333";
+  inputs.w2[0].source_document_reference =
+    "Synthetic primary issued 2025 W2 copy";
+  review.primary_w2_sources = structuredClone(inputs.w2);
+  delete review.spouse_w2_sources;
+  if (inputs.form7206) {
+    const plan = inputs.form7206.single_schedule_c_plan;
+    plan.recipient = "S";
+    plan.spouse_identity = { name: "Sam Example", ssn: "444556666" };
+    for (const month of plan.premium_months) month.covered_person = "spouse";
+  }
+  return {
+    ...base,
+    id: base.id.replace("joint-form", "joint-spouse-owned-form"),
+    inputs,
+    reviewFocus: [
+      ...base.reviewFocus,
+      "Spouse owns Schedule C/F, Schedule SE, cooperative source and health; primary wages never consume spouse SSA cap",
+    ],
+  };
+}

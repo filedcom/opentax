@@ -1236,7 +1236,8 @@ class W2Node extends TaxNode<typeof inputSchema> {
       JSON.stringify(input.w2s) !==
         JSON.stringify(
           inputSchema.parse({
-            w2s: input.patron_filing_review.spouse_w2_sources,
+            w2s: input.patron_filing_review.spouse_w2_sources ??
+              input.patron_filing_review.primary_w2_sources,
           }).w2s,
         )
     ) {

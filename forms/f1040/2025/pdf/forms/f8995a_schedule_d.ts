@@ -1,3 +1,4 @@
+import { patronProprietorSsn } from "../../form8995a_patron_reconciliation.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
   calculatePatronScheduleDLines,
@@ -38,7 +39,7 @@ export const form8995aScheduleDPdf: PdfFormDescriptor = {
       (input.patron_filing_details?.source_1099patr
           .box6_section199ag_deduction ?? 0) > 0 &&
       input.patron_filing_details?.source_1099patr.recipient_tin !==
-        filer?.primarySSN.replaceAll("-", "")
+        patronProprietorSsn(input, filer)
     ) {
       throw new Error(
         "Form 8995-A Schedule D PDF box 6 recipient differs from the final filer",
