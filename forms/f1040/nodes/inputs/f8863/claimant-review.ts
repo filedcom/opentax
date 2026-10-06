@@ -11,6 +11,7 @@ import {
   supportMoney,
 } from "./business-review.ts";
 import { z } from "zod";
+import { dependentScholarshipReviewSchema } from "../education_income/dependent-scholarship-review.ts";
 import type { F8863Input, F8863Item } from "./index.ts";
 import { inputSchema as w2Schema } from "../w2/index.ts";
 
@@ -75,6 +76,11 @@ export const studentOwnershipReviewSchema = z.object({
   parent_nonclaim_record_reference: reference.optional(),
   no_competing_education_claim: z.literal(true),
   competing_claim_review_reference: reference,
+  dependent_student_income_return: z.object({
+    source_document_reference: reference,
+    student_claim_review: dependentScholarshipReviewSchema,
+    pending: z.record(z.string(), z.unknown()),
+  }).strict().optional(),
 }).strict();
 export type ClaimantReview = z.infer<typeof claimantReviewSchema>;
 const tin = (value: string) => value.replaceAll("-", "");

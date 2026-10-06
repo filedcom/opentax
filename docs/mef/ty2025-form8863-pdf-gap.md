@@ -1,5 +1,15 @@
 # TY2025 Form 8863 positive PDF boundary
 
+## Parent/dependent scholarship source checkpoint
+
+[Paired parent and dependent scholarship review](ty2025-form8863-parent-dependent-scholarship-review.md)
+proves the actually claiming parent's tuition/AOC allocation alongside the
+child's separate W-2 or Schedule 1 taxable grants and source-derived dependent
+standard deduction. Both public returns retain the same owned issued school and
+aid packet; child income stays on the child return and duplicate education
+credit is rejected. This checkpoint has the review's stated synthetic-source and
+filing-scope limits.
+
 ## Required-service scholarship claimant checkpoint (2026-10-06)
 
 The

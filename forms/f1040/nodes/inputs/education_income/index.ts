@@ -1,7 +1,5 @@
 import {
-  assertDistinctRequiredServiceSources,
   requiredServiceScholarshipAmount,
-  requiredServiceScholarshipSchema,
 } from "./required-service-scholarship.ts";
 import { z } from "zod";
 import {
@@ -14,84 +12,19 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { inputSchema as w2Schema } from "../w2/index.ts";
 
-const common = {
-  student_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
-  source_document_reference: z.string().trim().min(1),
-  tax_year: z.literal(2025),
-  taxable_amount: z.number().int().positive(),
-};
-export const itemSchema = z.discriminatedUnion("kind", [
-  requiredServiceScholarshipSchema,
-  z.object({
-    ...common,
-    kind: z.literal("w2_education_payment"),
-    employer_ein: z.string().regex(/^\d{2}-?\d{7}$/),
-    w2_box1_wages: z.number().int().positive(),
-    payroll_allocation_record_id: z.string().trim().min(1),
-  }).strict(),
-  z.object({
-    ...common,
-    kind: z.literal("scholarship_not_on_w2"),
-    payer_name: z.string().trim().min(1),
-    scholarship_terms_record_id: z.string().trim().min(1),
-    taxable_allocation_record_id: z.string().trim().min(1),
-    nonqualified_expenses_paid: z.number().int().positive(),
-    nonqualified_expense_payment_record_ids: z.array(z.string().trim().min(1))
-      .min(1),
-  }).strict(),
-]);
+export {
+  educationIncomeSources,
+  itemSchema,
+  scholarshipIncomeTotal,
+} from "./sources.ts";
+import {
+  type EducationIncome,
+  educationIncomeSources,
+  itemSchema,
+  scholarshipIncomeTotal,
+} from "./sources.ts";
+import { assertDependentScholarshipReturn } from "./dependent-scholarship-review.ts";
 export const inputSchema = z.object({ education_incomes: z.array(itemSchema) });
-export type EducationIncome = z.infer<typeof itemSchema>;
-export function educationIncomeSources(raw: unknown): EducationIncome[] {
-  if (raw === undefined) return [];
-  const rows = inputSchema.parse(raw).education_incomes;
-  if (
-    new Set(rows.map((row) => row.source_document_reference)).size !==
-      rows.length
-  ) {
-    throw new Error("Taxable education income needs distinct source records");
-  }
-  assertDistinctRequiredServiceSources(
-    rows.filter((row) => row.kind === "scholarship_for_required_services"),
-  );
-  for (const row of rows) {
-    if (row.kind === "scholarship_for_required_services") {
-      requiredServiceScholarshipAmount(row);
-    }
-    if (
-      row.kind === "scholarship_not_on_w2" &&
-      (row.nonqualified_expenses_paid < row.taxable_amount ||
-        new Set(row.nonqualified_expense_payment_record_ids).size !==
-          row.nonqualified_expense_payment_record_ids.length)
-    ) {
-      throw new Error(
-        "Taxable scholarship allocation requires sufficient separately paid nonqualified expenses and distinct payment records",
-      );
-    }
-    if (
-      row.kind === "w2_education_payment" &&
-      row.taxable_amount > row.w2_box1_wages
-    ) {
-      throw new Error(
-        "Taxable education benefit exceeds issued W-2 box 1 wages",
-      );
-    }
-  }
-  return rows;
-}
-export function scholarshipIncomeTotal(raw: unknown): number {
-  return educationIncomeSources(raw).reduce(
-    (sum, row) =>
-      sum +
-      (row.kind === "scholarship_not_on_w2"
-        ? row.taxable_amount
-        : row.kind === "scholarship_for_required_services" &&
-            row.reporting.kind === "schedule1_line8r"
-        ? requiredServiceScholarshipAmount(row)
-        : 0),
-    0,
-  );
-}
 export function assertEducationIncomeSource(
   pending: Readonly<Record<string, unknown>> | undefined,
   owners: readonly string[],
@@ -213,6 +146,7 @@ export function assertEducationIncomeSource(
       );
     }
   }
+  assertDependentScholarshipReturn(pending, rows);
   return rows;
 }
 class EducationIncomeNode extends TaxNode<typeof inputSchema> {

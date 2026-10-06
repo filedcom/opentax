@@ -1,3 +1,7 @@
+import {
+  dependentScholarshipEarned,
+  dependentScholarshipReviewSchema,
+} from "../education_income/dependent-scholarship-review.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -310,6 +314,8 @@ export const inputSchema = z.object({
     ),
   }).strict().optional(),
   dependent_earned_income: z.number().nonnegative().optional(),
+  dependent_education_income_review: dependentScholarshipReviewSchema
+    .optional(),
   taxpayer_occupation: z.string().optional(),
   taxpayer_daytime_phone: z.string().optional(),
   taxpayer_email: z.string().optional(),
@@ -1356,6 +1362,28 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
 
   compute(ctx: NodeContext, input: GeneralInput): NodeResult {
     const parsed = inputSchema.parse(input);
+    if (parsed.dependent_education_income_review) {
+      const earned = dependentScholarshipEarned(
+        parsed.dependent_education_income_review,
+      );
+      if (
+        parsed.taxpayer_can_be_claimed_as_dependent !== true ||
+        parsed.taxpayer_claimed_as_dependent !== true ||
+        parsed.filing_status !== FilingStatus.Single ||
+        parsed.dependent_education_income_review.student_ssn.replaceAll(
+            "-",
+            "",
+          ) !== parsed.taxpayer_ssn?.replaceAll("-", "") ||
+        (parsed.dependent_earned_income !== undefined &&
+          parsed.dependent_earned_income !== earned)
+      ) {
+        throw new Error(
+          "Dependent education deduction must derive from its actual owned sources and claimed-dependency review",
+        );
+      }
+      parsed.dependent_earned_income = earned;
+    }
+
     const mfsLivedApartAllYear = parsed.filing_status === FilingStatus.MFS &&
       parsed.mfs_spouse_lived_with_taxpayer === false &&
       parsed.mfs_lived_apart_source !== undefined;

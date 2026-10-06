@@ -1,4 +1,9 @@
 import {
+  canonicalSource,
+  dependentScholarshipEarned,
+  dependentScholarshipReviewSchema,
+} from "../../../nodes/inputs/education_income/dependent-scholarship-review.ts";
+import {
   dependentSchema,
   educationDependentSourceEligible,
 } from "../../../nodes/inputs/general/index.ts";
@@ -65,34 +70,113 @@ export function assertForm8863FinalizedReturn(
     ),
   );
   for (const student of fields.f8863s) {
+    let studentIncomeRows = incomeRows;
+    const retained = student.ownership_review?.dependent_student_income_return;
+    if (retained) {
+      const owner = student.ownership_review!;
+      const review = dependentScholarshipReviewSchema.parse(
+        retained.student_claim_review,
+      );
+      const childGeneral = retained.pending.general as
+        | Record<string, unknown>
+        | undefined;
+      const dependencySource = (pending?.general as {
+        dependents?: {
+          ssn?: string;
+          dob?: string;
+          full_time_student?: boolean;
+        }[];
+      } | undefined)?.dependents?.find((d) =>
+        d.ssn?.replaceAll("-", "") === review.student_ssn.replaceAll("-", "")
+      );
+      if (
+        dependencySource?.dob !== review.student_dob ||
+        dependencySource?.full_time_student !== true ||
+        owner.dependency_claim_state !== "claimed_on_this_return" ||
+        review.student_ssn.replaceAll("-", "") !==
+          student.student_ssn?.replaceAll("-", "") ||
+        review.education_claimant_ssn.replaceAll("-", "") !==
+          filer.primarySSN.replaceAll("-", "") ||
+        owner.dependency_record_reference !==
+          review.dependency_record_reference ||
+        owner.competing_claim_review_reference !==
+          review.actual_parent_claim_record_reference ||
+        canonicalSource(review) !==
+          canonicalSource(childGeneral?.dependent_education_income_review) ||
+        canonicalSource(review.school_sources) !==
+          canonicalSource(form8863InstitutionWorkpapers(student))
+      ) {
+        throw new Error(
+          "Parent education claim must bind the exact student dependency, retained child return and owned school expense/aid packet",
+        );
+      }
+      dependentScholarshipEarned(review);
+      studentIncomeRows = assertEducationIncomeSource(
+        retained.pending,
+        [review.student_ssn],
+        (retained.pending.schedule1 as Record<string, unknown> | undefined)
+          ?.line8r_taxable_scholarships,
+      );
+      if (
+        studentIncomeRows.some((r) =>
+          incomeRows.some((parent) =>
+            parent.source_document_reference === r.source_document_reference
+          )
+        )
+      ) {
+        throw new Error(
+          "Dependent student income cannot also enter the parent education claimant's income sources",
+        );
+      }
+    }
     for (
       const { institution: school, workpaper } of form8863InstitutionWorkpapers(
         student,
       )
     ) {
       for (const aid of workpaper.assistance_sources ?? []) {
-        if (aid.required_service_compensation !== true) continue;
-        const source = incomeRows.find((row) =>
+        if (
+          aid.required_service_compensation !== true &&
+          aid.taxable_nonservice_scholarship !== true
+        ) continue;
+        const source = studentIncomeRows.find((row) =>
           row.source_document_reference === aid.student_income_source_reference
         );
         if (
           !school.current_year_1098t_received ||
           !workpaper.issued_form1098t_source || !source ||
-          source.kind !== "scholarship_for_required_services" ||
+          (source.kind !== "scholarship_for_required_services" &&
+            source.kind !== "scholarship_not_on_w2") ||
+          (student.student_ssn?.replaceAll("-", "") !==
+              filer.primarySSN.replaceAll("-", "") &&
+            student.student_ssn?.replaceAll("-", "") !==
+              filer.spouse?.ssn.replaceAll("-", "") &&
+            !retained) ||
           source.student_ssn.replaceAll("-", "") !==
             student.student_ssn?.replaceAll("-", "") ||
           source.payer_name !== school.name ||
-          source.payer_ein.replaceAll("-", "") !==
-            school.ein?.replaceAll("-", "") ||
+          (source.kind === "scholarship_for_required_services" &&
+            (aid.required_service_compensation !== true ||
+              source.payer_ein.replaceAll("-", "") !==
+                school.ein?.replaceAll("-", "") ||
+              source.scholarship_terms_record_reference !==
+                aid.required_service_terms_record_reference)) ||
+          (source.kind === "scholarship_not_on_w2" &&
+            (aid.taxable_nonservice_scholarship !== true ||
+              source.scholarship_terms_record_id !==
+                aid.scholarship_terms_record_reference ||
+              source.taxable_allocation_record_id !==
+                aid.taxable_allocation_record_reference ||
+              source.nonqualified_expense_payment_record_ids.some((ref) =>
+                qualifiedPaymentRefs.has(ref)
+              ))) ||
           source.taxable_amount !== aid.amount ||
-          source.scholarship_terms_record_reference !==
-            aid.required_service_terms_record_reference ||
           aid.tax_treatment !== "taxable" ||
           aid.included_in_form1098t_box5 !== true ||
           claimedIncomeRefs.has(source.source_document_reference)
         ) {
           throw new Error(
-            "Form 8863 taxable issued-school required-service aid must match its recipient, school, actual grant terms and finalized compensation income source",
+            "Form 8863 taxable issued-school aid must match its recipient, school, actual grant terms and finalized compensation income source",
           );
         }
         claimedIncomeRefs.add(source.source_document_reference);
