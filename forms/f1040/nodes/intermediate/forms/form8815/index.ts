@@ -46,6 +46,12 @@ export const inputSchema = z.object({
   line2_qualified_education_expenses: amount,
   line3_nontaxable_education_benefits: amount,
   bond_proceeds: amount.positive(),
+  // Identify eligible redeemed-bond copies separately from other interest.
+  bond_interest_source_references: z.array(z.string().trim().min(1)).min(1)
+    .refine(
+      (refs) => new Set(refs).size === refs.length,
+      "Form 8815 repeats a redeemed-bond source reference",
+    ).optional(),
   line6_worksheet: z.object({
     paper_ee_face_value: amount,
     electronic_ee_and_i_face_value: amount,
