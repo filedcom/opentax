@@ -51,3 +51,8 @@ sale sources, differing AMT refigures, prior-year interest carryovers, source
 authentication, IRS business rules, and ATS acceptance remain open under the
 existing parent tasks. No accepted-prior-return or issuer authentication is
 inferred from reviewed reference strings.
+
+
+## Main completion evidence
+
+Main production ac5fd2bde/f6cb044a1 passed the normal28-module typed gate100/0(24m44s), log `/tmp/opentax-form4952-main-standard-oct6.log`. Shared output arguments allowed the older child-tax test to overwrite the new bare packet, so the original output/mapping failure is preserved under `/tmp/opentax-form4952-main-standard-qualified-oct6`. A separate normal focused gate passed1/0 and generated the exact reviewed26-pagepacket under `/tmp/opentax-form4952-main-isolated-ordinary-oct6`. Combined sixteen PDFs match262reviewedpages; all JSON values match and XML differs only byReturnTs. Final verifier `/tmp/opentax-form4952-main-standard-verify-v2-oct6.py` terminated0 and preserved89files. All49current runtime/test hashes remain unchanged. Main actual4-source replay already passed102pages/freshfullXSD and exactgraph/carry/origins/PDF;177integration+95actual-main+89ordinary=361physicallydistinct rehashedfiles. This closes only the described bounded slice.

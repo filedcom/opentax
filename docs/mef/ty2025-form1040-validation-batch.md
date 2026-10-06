@@ -5424,3 +5424,8 @@ Main ordinary fourteen-module `deno task test` passed **84/0**, `/tmp/opentax-sc
 ## Immutable full regression V32
 
 Ordinary `deno task test` started **2026-10-06T21:47:13Z** at immutable **4ea6902e474d4f7ce82127d4ba4653f9c7124e6c**, with child-tax AMT, child-capital and owned SEP production. Snapshot `/tmp/opentax-full-regression-source-v32-oct6` contains **30,815 physically separate files**, **4,567 verified source/evidence hashes** and 42 held code hashes; normal task permissions and recorded8GBheap. Wrapper64163/task64168/test64169 verifiedlive; Deno2.9.4/V815.0.245.2-rusty/TypeScript6.0.3. Preparation script/log/preservation/hashlist/one-shotwrapper/plist physicallypreserved. V31 excludes these three main-verified production routes; ownedprocess andcommit checked before supersession, partialresults/reason andterminal143 preserved. No full-runtimepass/fail/ignoredtotals for V32. Source and IRSacceptance gates remainopen.
+
+
+### Investment-interest main seal — October6
+
+Mainac5fd2bde/f6cb044a1:normal28modules100/0(24m44s), isolated1/0; actual4/102freshXSD saved-source replay, combined16ordinaryPDFs262reviewedpages exact; all49heldhashes verified and361integration/mainfiles physically retained. Shared ordinaryoutputcollision and twoincorrect verifierpath assumptions remain qualified; nooriginalsource orproduction rewrite. Ledger1548; all52mainparents remainopen. Proof: [investment interest](ty2025-form4952-schedulej-child-source-proof.md).
