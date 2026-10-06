@@ -9,6 +9,8 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 
 ## Core return and source paths
 
+- [x] Complete seven sourced Form8941 composite/list contribution arrangements with complete monthly eligible quote rosters, hypothetical self-only/family premiums, invoice/payment joins, raw cents and part-year periods. Full determined credit reduces ScheduleC benefits before SE/QBI; retained full/partial/zero tax use produces ten full-XSD/PDF packets with all242 pages reviewed. Isolated47/47 plus final15/15 and main25/25 pass;33 prepared and27 public conflicts reject both exports. One-QHP Albany, fixed members and whole-month enrollment only; broader Form8941 parent remains open.
+
 - [x] Bind a positive Form 1098 box 6 claim to the prepared `f1098` issuer Copy B PDF bytes, reviewed filename, and SHA-256 at both MeF bundle and filled-PDF export. Recheck year, lender, borrower TIN, boxes 1–6, and optional origination date against the same Form 1098 item used by Schedule A; omit the payer copy from transmitted tax attachments. Positive, missing-copy, and changed-byte fixtures are authored for deferred validation. Issuer provenance, flattened copies, wider mortgage workpapers, and external acceptance remain open; see the [box 6 gap](ty2025-form1098-box6-points.md).
 
 - [x] Add a reviewed 2025 employer-furnished statement route for Schedule 1-A FLSA overtime when W-2 box 14 lacks the premium, with source identities and wage inclusion, finalized Form 1040 line 13b, native/PDF source reconciliation, and authored fixtures. Payroll-method calculations without an employer accounting and authenticated statement bytes remain open.
