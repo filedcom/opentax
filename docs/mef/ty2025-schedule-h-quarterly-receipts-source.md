@@ -84,3 +84,27 @@ assessment, a missing or mismatched assessment, phantom quarters, a nonzero
 assessment after the wage base is exhausted, and subcent wages. Core
 quarter/assessment conflicts are checked at public graph, native exporter,
 and direct filled-PDF boundaries.
+
+
+## Main integration gate
+
+Integrated at `c2c950cbf657181e7cd3e94510c11592799b6746`. The ordinary
+14-module payroll command in `/tmp/opentax-scheduleh-quarterly-main-standard-oct6.zsh`
+passed **71/0** (6m5s runtime), with no ignored-test summary. Its log is
+`/tmp/opentax-scheduleh-quarterly-main-standard-oct6.log`. The saved-original
+main replay in `/tmp/opentax-scheduleh-quarterly-main-final41-oct6/report.json`
+passed **41 returns / 238 pages**: 38 fresh exact graph/prepared/carry/origin/PDF
+and native matches except ReturnTs, plus three historically qualified cases.
+All sources stayed unchanged and every output passed the full retained XSD.
+Production bytes were unchanged throughout both saved-source replays.
+
+All 21 new state pages are reviewed; the three original-input variants retain
+19 pages of byte-identical previously reviewed output. Final 87 main replay/gate
+files are privately preserved by
+`/tmp/opentax-scheduleh-quarterly-main-final-gates-preservation-oct6.json`.
+Quarter diagnostic, positive, assessment, source and replay manifests were
+rehashed after terminal gates. The isolated broad result was 65/6 because six
+older modules lacked the worktree schema directory; this is not reported as a
+passing broad run. The identical main 14-module command passed 71/0 with that
+retained schema available. Source authentication, unpaid state balances, wider
+state/family cases, the current full batch and IRS acceptance remain open.

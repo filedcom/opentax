@@ -4175,3 +4175,8 @@ Root quarterly candidate prior34 replay terminal0:34returns/191pages,31freshexac
 ## Before quarterly payroll integration
 
 Fullboard reread and root learnings compacted before reversible integration. Source/code review, state11/0 and correctedFICA3/0, independent prior34/191 and new3/21 plus exactoriginal19page variants support integration; candidate14module gate remains pending and main ordinary14module gate must pass before bounded ledger seal. Frozen52/future exact to85b489a72; ledger1533. LatestfullV24/V23 remainslive/versionqualified, no release/acceptance claim.
+
+
+## Before verified quarterly payroll evidence seal
+
+Full frozen board reread; learnings compacted before seal. Mainc2c950cbf ordinary14module gate terminal71/0 (6m5s runtime), noignored summary. Actual saved41returns/238pages terminal0,38freshwholegraph/prepared/carry/origins/PDF/nativeonlyTs/source/fullXSD exact and3historicallyqualified. All21new state pages reviewed, plus19exactreviewed original-variant pages inherited; source/private quarter diagnostics and positives rehashed unchanged. Final87main replay/gate files preserved. Candidate65/6 failures were missing isolated schema prerequisite, not a passingfullgate; affectedmodules rerun separately. Main exactsame14module71/0 is authoritative. Ledger1533 before boundedseal, frozen52/future exact; fullV24predates quarter/W2G and IRS acceptance remainsopen.
