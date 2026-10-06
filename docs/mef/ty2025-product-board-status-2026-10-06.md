@@ -3167,3 +3167,7 @@ Previous goal turn verified the daemon/model-cache diagnosis but changed no boar
 ## Fishing mixed-source integration sealed
 
 Main d0f1c29d1/cccc2bd7f plus b2c90ce1d retains actual catch-ledger fishing attribution and corrected single247300 phase-out, while preserving mining's required zero8995A. Fresh combined source9/0 (1m32s), relatedQBI86/0 (1m0s), typed0/fmt/diff clean. Actual immutable raw fishing8/152 fullXSD pending/PDF/origins exact/XMLonlyTs; visualmanifest d434c7bb64fc48a23d969d5b62bcf2dd23cc53fddc12cee2b3f2c19261c5378d. Strict mining2/32 exact, nonfarmW2raw2/38 exact. Before-restriction mining failure preserved as diagnostic, notpassing gate. Ledger1478; frozen52/future exact. Genuine positive mixed phase-in remains delegated and broaderparent/issuer/prioraccepted/IRS gates open.
+
+## Fishing and IRA publication checkpoint
+
+Whole branch log581commits/stat826files148028+/5488− inspected against origin/main, including37files2940+/43− since last published536874e15. PR63 remains draft; root pushed4323e4ce197d552e5d474512e9c91a9a0048dcc0 and verified exactremotehead/title/body, saved diagram+fivebullets and appattachment succeeded. Source proofs preserve priorlimits; 52frozenTODOs/future byteexact. V6wrapper801 confirmedlive41m57s andV5wrapper91417/Deno91420/91421live86m43s; no terminaltotals inferred. Genuine mixedphasein, year-awarepriorAMTcarry with authenticationguard and correctedcurrentRothconversion remain active on reusedagents. Latestpassingfullproduction/ATSacceptance stillrequired.
