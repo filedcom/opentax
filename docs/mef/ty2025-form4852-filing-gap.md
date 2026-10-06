@@ -1037,3 +1037,9 @@ Rules/ATS acceptance remain open. The broader Form4852/8606 parent is not closed
 
 Annual proof-index SHA256: `b7b1abf2118b1f50589d9a249af4a4d05a3132c3064872ef67566a9949cdc27e`.
 Held10 manifest SHA256: `fbe381c196937da1bb54b2c2254aa7d2f8028dc9d5b4027d2818dffcf4e3ef5b`.
+
+## Annual traditional IRA main integration proof
+
+Integrated `5f8eb2f9b` after board compact/archive. The append-only gap documentation conflicted; both the prior current-conversion preservation note and new annual source proof are retained. All production changes applied without conflict. Fresh standard-task annual3/current-conversion2/combined-IRA-PFIC-order1 passes typed **6/0** (2m4s), `/tmp/opentax-annual-ira-main-source-v2-oct6.log`; first invocation named a nonexistent prior-conversion test path and executed no cases, retained at `/tmp/opentax-annual-ira-main-source-oct6.log`.
+
+Root immutable-source replay passes new **10/91** and original current-conversion **13/116**, pending/native XML except ReturnTs/PDF/origins/retained hashes exact, with full v5.4 XSD per packet. Logs `/tmp/opentax-annual-ira-main-held10-oct6.log` and `/tmp/opentax-annual-ira-main-prior13-oct6.log`; script `/tmp/opentax-annual-ira-main-replay-oct6.ts`. New manifest SHA `fbe381c196937da1bb54b2c2254aa7d2f8028dc9d5b4027d2818dffcf4e3ef5b` exactly equals agent's immutable ten-packet manifest. All indexed evidence/log hashes were checked before integration. This transfers reviewed new91 and prior116 packet pages by exact PDF bytes; earlier source/visual review qualifications remain explicit. Original evidence directories were not modified; computed manifests are separate temporary files. Nine changed source files pass formatting; f1099r retains a formatting failure also reproduced on its pre-integration version, not a newly claimed clean gate. Wider source/authentication/IRS parents remain open.
