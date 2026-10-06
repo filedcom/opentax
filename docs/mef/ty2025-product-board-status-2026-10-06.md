@@ -4188,3 +4188,13 @@ Quarterly payroll bounded evidence sealed atdb959a125, ledger1534, frozen52/futu
 ## Immutable full regression V25
 
 The full ordinary `deno task test` started **2026-10-06T17:04:59Z** in immutable `/tmp/opentax-full-regression-source-v25-oct6` at **8501326a405774c091ec500c84352d48eca4f88d**, including settled quarterly/cash-cent productionc2 and preparedW2G fixture repair961. Actual launcher9790/task9794/test9795 inspected live. Deno2.9.4/V815.0.245.2-rusty/TypeScript6.0.3. **25,083 private files** have distinct inodes/equal sizes, no symlinks/hardlinks; **882 packet/gate/diagnostic hashes** verified. Three original timing-before diagnostic files were separately copied and verified before launch, included in final preservation counts. Preparation `/tmp/opentax-prepare-full-v25-oct6.py`; manifests `/tmp/opentax-full-regression-source-v25-oct6-{preservation,packet-hashes}.json`; one-shot status `/tmp/opentax-full-regression-source-v25-oct6.status`; log `/tmp/opentax-deno-task-test-source-v25-oct6.log`. No terminal pass/fail/ignored totals. Earlier V23test97539 andV24test896 inspected live and remain version-qualified; no elapsed-time restart. Unpaid/partial contribution source work is in a separatecheckout. Frozen52/future exact, ledger1534; fullcurrentproduction and IRS acceptance remainopen.
+
+
+## Before unpaid state-contribution review
+
+Previous goal turn made authoritative progress: quarterly/general cash-cent production integratedc2c950cbf, main71/0 and actualsaved41/238 sealed, ledger1534, V25 immutable850 launched with25,083private files/882hashes, PR63 exacte11ae47b2 verified/attached; latestorigin0behind/781ahead. Full frozen board reread and learnings compacted before current review. V25actualtest9795/V24test896/V23test97539 inspectedlive, no terminal fullpass. Isolated unpaid/partial source candidate has explicit assessed liability, receipt completeness and dated account balances; public1384/1484/1343 is intermediate only, denocheck10112live. No mainproduction edits or widerparent closure. Frozen52/future exact.
+
+
+## Unpaid-source review resumed
+
+The intervening daemon diagnosis did not advance the board. Full board reread before continued review; frozen52/future scope remains unchanged and ledger1534. V25 actual9795, V24actual896 and V23actual97539 inspected live; this is a verified wait for full-batch evidence, not a passing result. Root raw3 saved status replay completed with source bytes unchanged, exact native/PDF and full XSD;21pages reviewed. Original before cases without account-review facts remain rejected. Candidate prior41 replay and extra all-unpaid/TX-only source checks are the next existing-parent actions. No main production integration yet.
