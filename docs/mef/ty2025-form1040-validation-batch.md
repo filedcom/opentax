@@ -5042,3 +5042,7 @@ Integrated source51223187d passes fresh focused15/0(1m9s) and complete36-file pr
 Read-only main comparison `/tmp/opentax-form4972-fractional-current-main-comparison.json` proves all17 source/pending pairs and PDFs exact against the terminal reviewed snapshot, preserving51 inspected pages and32 issued native source copies. Complete XML differs only in ReturnTs; focused proof independently validates all17 complete returns against local TY2025v5.4 XSD. Original manifest digest4fee7ab230c79332a3940fb5cc69ae10cd34e033a9ab7358a8d177bcdec49b35 remains unchanged. Root additionally inspected the half-dollar Form4972 page and combined NUA/death/estate/annuity contact sheet. No issuer authenticity or IRS acceptance is claimed.
 
 Preservation log SHA256: `d4cfcc6c5c8e8b6f9f52faba17583ef3705a36199bd4b7fa0cdea264742e4316`; comparison SHA256: `a3e0edce206b5f506bd2045cab44073842260251b1088040afa047b36ee57d0c`.
+
+## Separate paired beneficiary current-main gate
+
+Main df66b8386: deno test --allow-all forms/f1040/2025/form4972_paired_beneficiary_source.test.ts terminal4/0(57s). Prior36file preservation2dd06b857 terminal298/0(3m7s), exit0.17publicreturns/fulllocalv5.4XSD/68reviewedpageinstances/64issuedcopies; source/PDF exactoriginal, XMLexceptReturnTs.16finalnative/PDFconflicts reject. Logs and comparison in paired source proof. Full regression181575242 remainslive44964/44970 at61m53s; latestfullpassing suite/IRSack stillrequired.

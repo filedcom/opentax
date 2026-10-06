@@ -17,3 +17,7 @@ All68 page instances visually verified:34 distinct Form4972 pages, one identical
 ## Final-projection conflict checkpoint
 
 Eight independent pending mutations reject in both native and PDF (16 rejections): spouse source owner, issued taxable amount, duplicate source reference, election participant, computed recipient, computed tax, missing source group, and Form1040 special-tax total. Focused gate1/0(38ms), /tmp/opentax-form4972-parent-paired-conflicts-v1.log. This complements earlier wrong-recipient rejection without changing reviewed source/XML/PDF artifacts. The36-file preservation batch remains running against2dd06b857; no terminal claim. Sharedparticipant/eligibility/ScheduleJ requirements remain open.
+
+## Verified main integration
+
+Main df66b8386 publicgate4/0(57s), /tmp/opentax-form4972-parent-current-main-focused.log; isolated2dd06b857 prior36filepreservation298/0(3m7s), exit0. All17currentmain source/pendingJSON andPDFs exactly match retained reviewed originals, XMLexactexceptReturnTs; /tmp/opentax-form4972-paired-current-main-comparison.json. Original reviewmanifest SHA256 b4f68b0bf9f25a42eec4455e6ff18d10fd385e19c2b17688dbd1e2e2fae3beed; all68renderedpage hashes unchanged. No parentcompletion or externalauthenticity claim.
