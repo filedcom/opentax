@@ -136,6 +136,11 @@ const familyPayrollBaseSchema = familyWithholdingEmployeeBaseSchema.omit({
     futaEmployeeSchema.shape.federal_withholding_agreement,
 });
 const sourceReference = z.string().trim().min(1);
+const noOrdinaryFrequencySchema = z.object({
+  employer_pay_practice_source_reference: sourceReference,
+  complete_payment_period_ledger_source_reference: sourceReference,
+  no_ordinary_payment_period_verified: z.literal(true),
+}).strict();
 const fourWeekCarePeriodSchema = z.object({
   from: calendarDate,
   to: calendarDate,
@@ -218,6 +223,28 @@ const parentFicaReviewSchema = z.union([
       }).strict(),
     ).min(1),
   }).strict(),
+  z.object({
+    classification: z.literal("dated_service_periods"),
+    quarterly_circumstances: z.array(parentQuarterSchema).length(4),
+    complete_service_payment_ledger_source_reference: sourceReference,
+    no_ordinary_frequency_review: noOrdinaryFrequencySchema.optional(),
+    wage_payments: z.array(z.object({
+      payment_reference: sourceReference,
+      service_allocation_reference: sourceReference,
+      paid_date: calendarDate,
+      service_from: calendarDate,
+      service_to: calendarDate,
+      service_hours: z.number().positive(),
+      cash_wages: z.number().positive(),
+      ordinary_pay_period: z.object({
+        kind: z.enum(["within_31_days", "over_31_days", "no_ordinary_period"]),
+        period_from: calendarDate,
+        period_to: calendarDate,
+        period_source_reference: sourceReference,
+        service_time_source_reference: sourceReference,
+      }).strict(),
+    }).strict()).min(1),
+  }).strict(),
 ]);
 const parentPayrollEmployeeSchema = familyPayrollBaseSchema.extend({
   relationship: z.literal("parent"),
@@ -247,11 +274,6 @@ const childServicePaymentSchema = z.object({
     excluded_service_hours: z.number().nonnegative().optional(),
     covered_service_hours: z.number().nonnegative().optional(),
   }).strict(),
-}).strict();
-const noOrdinaryFrequencySchema = z.object({
-  employer_pay_practice_source_reference: sourceReference,
-  complete_payment_period_ledger_source_reference: sourceReference,
-  no_ordinary_payment_period_verified: z.literal(true),
 }).strict();
 const childAgeTransitionSchema = z.object({
   service_payment_ledger_source_reference: sourceReference,
@@ -518,6 +540,148 @@ function childPost21Wages(employee: ChildPayrollEmployee) {
   return { wages: wages / 100, paidQuarters: paidQuarters.map((c) => c / 100) };
 }
 
+function parentDatedCashWages(
+  employee: ParentPayrollEmployee,
+  review: Extract<z.infer<typeof parentFicaReviewSchema>, { classification: "dated_service_periods" }>,
+  quarters: z.infer<typeof parentQuarterSchema>[],
+): number {
+  const quarter = (date: string) => Math.ceil(Number(date.slice(5, 7)) / 3) - 1;
+  const payments = [...review.wage_payments].sort((a, b) =>
+    a.service_from.localeCompare(b.service_from)
+  );
+  const uniquePayments = new Set(payments.map((p) => p.payment_reference));
+  if (uniquePayments.size !== payments.length ||
+    uniquePayments.has(review.complete_service_payment_ledger_source_reference)) {
+    throw new Error("Schedule H parent dated service needs distinct payment and ledger sources");
+  }
+  const evidenceRefs = [
+    ...uniquePayments,
+    ...new Set(payments.map((p) => p.service_allocation_reference)),
+    ...new Set(payments.map((p) => p.ordinary_pay_period.period_source_reference)),
+    ...new Set(payments.map((p) => p.ordinary_pay_period.service_time_source_reference)),
+    review.complete_service_payment_ledger_source_reference,
+    ...(review.no_ordinary_frequency_review ? [
+      review.no_ordinary_frequency_review.employer_pay_practice_source_reference,
+      review.no_ordinary_frequency_review.complete_payment_period_ledger_source_reference,
+    ] : []),
+  ];
+  if (new Set(evidenceRefs).size !== evidenceRefs.length) {
+    throw new Error("Schedule H parent dated service, cash and pay-practice sources must be distinct");
+  }
+  validateNoOrdinaryPayPractice(payments, review.no_ordinary_frequency_review);
+  const periods = new Map<string, {
+    from: string;
+    to: string;
+    kind: string;
+    timeRef: string;
+    coveredHours: number;
+    excludedHours: number;
+    cashCents: number;
+    coveredCents: number;
+  }>();
+  const allocations = new Map<string, {
+    from: string; to: string; hours: number; periodRef: string;
+  }>();
+  const paidQuarters = [0, 0, 0, 0];
+  let total = 0;
+  for (const [index, payment] of payments.entries()) {
+    const p = payment.ordinary_pay_period;
+    const days = (Date.parse(p.period_to) - Date.parse(p.period_from)) / 86400000 + 1;
+    if (payment.paid_date < "2025-01-01" || payment.paid_date > "2025-12-31" ||
+      payment.service_from < "2025-01-01" || payment.service_to > "2025-12-31" ||
+      payment.service_from > payment.service_to || payment.paid_date < payment.service_to ||
+      quarter(payment.service_from) !== quarter(payment.service_to) ||
+      p.period_from > payment.service_from || p.period_to < payment.service_to ||
+      days < 1 || p.kind === "within_31_days" && days > 31 ||
+      p.kind === "over_31_days" && days <= 31 ||
+      p.period_source_reference === p.service_time_source_reference ||
+      p.period_source_reference === review.complete_service_payment_ledger_source_reference ||
+      p.service_time_source_reference === review.complete_service_payment_ledger_source_reference) {
+      throw new Error("Schedule H parent dated cash needs distinct actual service, payment and pay-period records");
+    }
+    const row = quarters.find((q) => q.quarter === quarter(payment.service_from) + 1)!;
+    const child = row.child, status = row.employer_circumstances;
+    const eligibleAt = (date: string) => {
+      const eighteenth = child.kind === "child"
+        ? `${Number(child.birth_date.slice(0, 4)) + 18}${child.birth_date.slice(4)}`
+        : "";
+      const childQualifies = child.kind === "child" &&
+        (date < eighteenth || child.adult_care_period !== undefined);
+      const employerQualifies = status.kind === "spouse_incapable" ||
+        status.kind === "divorced_not_remarried" && date >= status.divorce_date ||
+        status.kind === "widowed_not_remarried" && date >= status.spouse_death_date;
+      return childQualifies && employerQualifies;
+    };
+    if (status.kind === "divorced_not_remarried" &&
+      status.divorce_date > ["2025-03-31", "2025-06-30", "2025-09-30", "2025-12-31"][row.quarter - 1] ||
+      status.kind === "widowed_not_remarried" &&
+      status.spouse_death_date > ["2025-03-31", "2025-06-30", "2025-09-30", "2025-12-31"][row.quarter - 1]) {
+      throw new Error("Schedule H parent marital event must occur by its sourced service quarter");
+    }
+    const childBirthday = child.kind === "child" && !child.adult_care_period
+      ? `${Number(child.birth_date.slice(0, 4)) + 18}${child.birth_date.slice(4)}`
+      : undefined;
+    const maritalEvent = status.kind === "divorced_not_remarried"
+      ? status.divorce_date
+      : status.kind === "widowed_not_remarried" ? status.spouse_death_date : undefined;
+    if ([childBirthday, maritalEvent].some((date) =>
+      date !== undefined && payment.service_from < date && payment.service_to >= date
+    )) {
+      throw new Error("Schedule H parent service row crossing a status event needs separate dated wage and hour allocations");
+    }
+    const existing = periods.get(p.period_source_reference);
+    if (existing && (existing.from !== p.period_from || existing.to !== p.period_to ||
+      existing.kind !== p.kind || existing.timeRef !== p.service_time_source_reference)) {
+      throw new Error("Schedule H one parent pay period must retain one period and service-time identity");
+    }
+    if (!existing && [...periods.values()].some((other) =>
+      other.from <= p.period_to && other.to >= p.period_from)) {
+      throw new Error("Schedule H parent ordinary pay periods cannot overlap");
+    }
+    const state = existing ?? {
+      from: p.period_from, to: p.period_to, kind: p.kind,
+      timeRef: p.service_time_source_reference, coveredHours: 0,
+      excludedHours: 0, cashCents: 0, coveredCents: 0,
+    };
+    const cents = cashCents(payment.cash_wages);
+    const allocation = allocations.get(payment.service_allocation_reference);
+    if (allocation && (allocation.from !== payment.service_from ||
+      allocation.to !== payment.service_to || allocation.hours !== payment.service_hours ||
+      allocation.periodRef !== p.period_source_reference)) {
+      throw new Error("Schedule H parent cash installments must retain the same dated service allocation");
+    }
+    if (!allocation && index > 0 &&
+      [...allocations.values()].some((other) =>
+        other.from <= payment.service_to && other.to >= payment.service_from)) {
+      throw new Error("Schedule H parent distinct service allocations cannot overlap");
+    }
+    if (!allocation) {
+      allocations.set(payment.service_allocation_reference, {
+        from: payment.service_from, to: payment.service_to,
+        hours: payment.service_hours, periodRef: p.period_source_reference,
+      });
+      if (eligibleAt(payment.service_from)) state.coveredHours += payment.service_hours;
+      else state.excludedHours += payment.service_hours;
+    }
+    if (eligibleAt(payment.service_from)) state.coveredCents += cents;
+    state.cashCents += cents;
+    periods.set(p.period_source_reference, state);
+    total += cents;
+    paidQuarters[quarter(payment.paid_date)] += cents;
+  }
+  if (total !== cashCents(employee.annual_cash_wages) ||
+    paidQuarters.some((amount, index) => amount !== cashCents(employee.quarterly_cash_wages[index]))) {
+    throw new Error("Schedule H parent dated cash must reconcile every payment quarter and annual wage");
+  }
+  let coveredCents = 0;
+  for (const state of periods.values()) {
+    if (state.kind === "within_31_days") {
+      if (state.coveredHours >= state.excludedHours) coveredCents += state.cashCents;
+    } else coveredCents += state.coveredCents;
+  }
+  return coveredCents >= TY2025_FICA_CASH_WAGE_THRESHOLD * 100 ? coveredCents / 100 : 0;
+}
+
 function parentTaxableCashWages(
   employee: ParentPayrollEmployee,
   employerSsn: string,
@@ -566,14 +730,22 @@ function parentTaxableCashWages(
       }
       if (row.child.adult_care_period) {
         care(row.child.adult_care_period, row.quarter);
+      } else if (review.classification === "quarterly_circumstances") {
+        const eighteenth = `${Number(row.child.birth_date.slice(0, 4)) + 18}${row.child.birth_date.slice(4)}`;
+        if (eighteenth >= b.from && eighteenth <= b.to &&
+          review.wage_payments.some((payment) =>
+            payment.service_from <= b.to && payment.service_to >= b.from
+          )) {
+          throw new Error("Schedule H parent age-18 service quarter needs retained ordinary pay-period evidence");
+        }
       }
     }
-    if (
+    if (review.classification === "quarterly_circumstances" && (
       status.kind === "divorced_not_remarried" &&
         status.divorce_date > b.from ||
       status.kind === "widowed_not_remarried" &&
         status.spouse_death_date > b.from
-    ) {
+    )) {
       throw new Error(
         "Schedule H parent marital event must precede its complete source quarter",
       );
@@ -581,6 +753,9 @@ function parentTaxableCashWages(
     if (status.kind === "spouse_incapable") {
       care(status.incapable_care_period, row.quarter);
     }
+  }
+  if (review.classification === "dated_service_periods") {
+    return parentDatedCashWages(employee, review, quarters);
   }
   const payments = review.wage_payments, paidQuarters = [0, 0, 0, 0];
   if (

@@ -347,13 +347,19 @@ const expected = [
   ["futa", 1579, 24],
 ] as const;
 
-Deno.test("Schedule H parent source derives actual FICA exception by services quarter and retains FUTA exclusion", async () => {
-  const flag = Deno.args.indexOf("--write-review-artifacts"),
-    root = flag >= 0 ? Deno.args[flag + 1] : undefined;
-  const xsd = new URL(
+function parentXsdPath() {
+  const local = new URL(
     "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
     import.meta.url,
   ).pathname;
+  try { return Deno.env.get("SCHEDULE_H_PARENT_XSD_PATH") || local; }
+  catch { return local; }
+}
+
+Deno.test("Schedule H parent source derives actual FICA exception by services quarter and retains FUTA exclusion", async () => {
+  const flag = Deno.args.indexOf("--write-review-artifacts"),
+    root = flag >= 0 ? Deno.args[flag + 1] : undefined;
+  const xsd = parentXsdPath();
   for (const [kind, tax, futa] of expected) {
     const inputs = source(kind),
       payroll = inputSchema.parse(inputs.schedule_h),
@@ -512,9 +518,241 @@ Deno.test("Schedule H parent ledger rejects dates, unsupported circumstances, am
       "111223333"
   );
   rejects((p) => p.w2.box3_social_security_wages = 5000);
+  rejects((p) => {
+    for (const q of p.parent_fica_review.quarterly_circumstances) {
+      q.child.birth_date = "2007-05-15";
+    }
+    const q2 = p.parent_fica_review.wage_payments[1];
+    q2.service_from = "2025-05-01";
+    q2.service_to = "2025-05-14";
+    q2.cash_wages = 625;
+    p.parent_fica_review.wage_payments.splice(2, 0, {
+      ...q2, payment_reference: "parent-q2-postbirthday-bank-payment",
+      service_from: "2025-05-15", service_to: "2025-05-31", cash_wages: 625,
+    });
+  }, "divorced");
   rejects((p) => delete p.w2);
   rejects((p) => delete p.federal_withholding_agreement);
   const futa = source("futa").schedule_h;
   futa.federal_unemployment.taxable_wages = 9000;
   assertThrows(() => computeScheduleHAmounts(inputSchema.parse(futa), 2025));
+});
+
+type DatedParentKind = "birthday-majority" | "birthday-minority" | "midquarter-divorce" |
+  "midquarter-widow" |
+  "quarter-care" | "cross-quarter-care" | "long-period" | "no-ordinary" | "partial-installments" |
+  "long-mixed-birthday" | "irregular-mixed-birthday";
+function datedParentSource(kind: DatedParentKind) {
+  const inputs = source(kind === "midquarter-divorce" ? "divorced" :
+    kind === "midquarter-widow" ? "spouse" :
+    ["quarter-care", "cross-quarter-care", "long-period", "no-ordinary", "partial-installments"].includes(kind) ? "spouse" : "divorced");
+  const h = inputs.schedule_h;
+  const parent = h.fica_only_payroll.employee_wages[3];
+  const r = parent.parent_fica_review;
+  r.classification = "dated_service_periods";
+  r.complete_service_payment_ledger_source_reference = "2025-parent-complete-dated-ledger";
+  if (kind.startsWith("birthday") || kind.endsWith("mixed-birthday")) {
+    for (const q of r.quarterly_circumstances) {
+      q.child.birth_date = "2007-05-15";
+      q.child.birth_date_source_reference = "2007-child-issued-birth-record";
+    }
+    r.quarterly_circumstances[2].child.adult_care_period = {
+      from: "2025-07-01", to: "2025-07-28",
+      medical_source_reference: "2025-q3-child-doctor-care-statement",
+    };
+  }
+  if (kind === "midquarter-divorce" || kind === "midquarter-widow") {
+    r.quarterly_circumstances[0].employer_circumstances = {
+      kind: "married_capable_spouse",
+      spouse_ssn: "400001070",
+      spouse_relationship_source_reference: "2025-marriage-certificate",
+      spouse_residence_source_reference: "2025-q1-spouse-residence",
+      spouse_care_capacity_source_reference: "2025-q1-spouse-capacity",
+      living_with_capable_spouse_throughout_quarter_verified: true,
+    };
+    for (const q of r.quarterly_circumstances.slice(1)) {
+      q.employer_circumstances = kind === "midquarter-widow"
+        ? {
+          kind: "widowed_not_remarried", spouse_death_date: "2025-05-15",
+          death_source_reference: "2025-05-15-issued-spouse-death-record",
+          no_remarriage_throughout_quarter_verified: true,
+          continuity_source_reference: `2025-q${q.quarter}-widow-continuity`,
+        }
+        : {
+          kind: "divorced_not_remarried", divorce_date: "2025-05-15",
+          divorce_source_reference: "2025-05-15-issued-divorce-decree",
+          no_remarriage_throughout_quarter_verified: true,
+          continuity_source_reference: `2025-q${q.quarter}-divorce-continuity`,
+        };
+    }
+    if (kind === "midquarter-widow") {
+      inputs.general.spouse_deceased = true;
+      inputs.general.spouse_death_date = "2025-05-15";
+    }
+  }
+  const period = (q: number, from: string, to: string, kind: string, hours: number, cash: number) => ({
+    payment_reference: `parent-${kind}-${from}-cash`,
+    service_allocation_reference: `parent-${kind}-${from}-service-allocation`,
+    paid_date: ["2025-03-31", "2025-06-30", "2025-09-30", "2025-12-31"][q - 1],
+    service_from: from,
+    service_to: to,
+    service_hours: hours,
+    cash_wages: cash,
+    ordinary_pay_period: {
+      kind: "within_31_days",
+      period_from: from,
+      period_to: to,
+      period_source_reference: `parent-${kind}-${from}-period`,
+      service_time_source_reference: `parent-${kind}-${from}-timesheet`,
+    },
+  });
+  r.wage_payments = [
+    period(1, "2025-03-01", "2025-03-31", "march", 80, 1250),
+    period(2, "2025-04-01", "2025-04-30", "april", 40, 400),
+    period(2, "2025-05-01", "2025-05-14", "may-before", kind === "birthday-majority" ? 60 : 40, 425),
+    period(2, "2025-05-15", "2025-05-31", "may-after", kind === "birthday-majority" ? 40 : 60, 425),
+    period(3, "2025-09-01", "2025-09-30", "september", 80, 1250),
+    period(4, "2025-12-01", "2025-12-31", "december", 80, 1250),
+  ];
+  for (const p of r.wage_payments.slice(2, 4)) {
+    p.ordinary_pay_period.period_from = "2025-05-01";
+    p.ordinary_pay_period.period_to = "2025-05-31";
+    p.ordinary_pay_period.period_source_reference = "2025-parent-may-ordinary-period";
+    p.ordinary_pay_period.service_time_source_reference = "2025-parent-may-dated-timesheet";
+  }
+  if (kind === "cross-quarter-care") {
+    r.quarterly_circumstances[2].employer_circumstances = {
+      kind: "married_capable_spouse", spouse_ssn: "400001070",
+      spouse_relationship_source_reference: "2025-marriage-certificate",
+      spouse_residence_source_reference: "2025-q3-spouse-residence",
+      spouse_care_capacity_source_reference: "2025-q3-spouse-capacity",
+      living_with_capable_spouse_throughout_quarter_verified: true,
+    };
+    const first = period(2, "2025-06-01", "2025-06-14", "june-first", 40, 425);
+    const second = period(2, "2025-06-15", "2025-06-30", "june-second", 50, 425);
+    const third = period(3, "2025-07-01", "2025-07-14", "july-first", 50, 200);
+    const fourth = period(3, "2025-09-01", "2025-09-30", "september", 80, 1050);
+    for (const p of [second, third]) {
+      p.ordinary_pay_period.period_from = "2025-06-15";
+      p.ordinary_pay_period.period_to = "2025-07-14";
+      p.ordinary_pay_period.period_source_reference = "2025-cross-quarter-ordinary-period";
+      p.ordinary_pay_period.service_time_source_reference = "2025-cross-quarter-time-ledger";
+    }
+    r.wage_payments.splice(2, 3, first, second, third, fourth);
+  }
+  if (kind === "long-period") {
+    const p = r.wage_payments[0].ordinary_pay_period;
+    p.kind = "over_31_days";
+    p.period_from = "2025-02-01";
+  }
+  if (kind === "long-mixed-birthday") {
+    for (const p of r.wage_payments.slice(2, 4)) {
+      p.ordinary_pay_period.kind = "over_31_days";
+      p.ordinary_pay_period.period_to = "2025-06-30";
+    }
+  }
+  if (kind === "no-ordinary" || kind === "irregular-mixed-birthday") {
+    r.no_ordinary_frequency_review = {
+      employer_pay_practice_source_reference: "2025-parent-irregular-employer-practice",
+      complete_payment_period_ledger_source_reference: "2025-parent-irregular-complete-period-ledger",
+      no_ordinary_payment_period_verified: true,
+    };
+    for (const p of r.wage_payments) p.ordinary_pay_period.kind = "no_ordinary_period";
+  }
+  if (kind === "partial-installments") {
+    const first = r.wage_payments[0];
+    first.cash_wages = 500;
+    const second = structuredClone(first);
+    second.cash_wages = 750;
+    second.payment_reference = "parent-march-second-bank-installment";
+    second.paid_date = "2025-04-01";
+    r.wage_payments.splice(1, 0, second);
+    parent.quarterly_cash_wages = [500, 2000, 1250, 1250];
+  }
+  const covered = kind === "birthday-majority" ? 3750
+    : kind === "birthday-minority" ? 2900
+    : kind.endsWith("mixed-birthday") ? 3325
+    : kind === "midquarter-divorce" ? 3350
+    : kind === "midquarter-widow" ? 3350
+    : kind === "cross-quarter-care" ? 3950 : 5000;
+  // In the birthday cases the pre-birthday hours qualify; a tie also qualifies.
+  parent.w2.box3_social_security_wages = parent.w2.box5_medicare_wages =
+    covered < 2800 ? 0 : covered;
+  h.ss_wages = h.medicare_wages = 2800 + (covered < 2800 ? 0 : covered);
+  return inputs;
+}
+
+Deno.test("Schedule H parent dated status and ordinary-period majority reaches full return", async () => {
+  const flag = Deno.args.indexOf("--write-review-artifacts");
+  const root = flag >= 0 ? Deno.args[flag + 1] : undefined;
+  const xsd = parentXsdPath();
+  const cases: [DatedParentKind, number, number][] = [
+    ["birthday-majority", 1302, 3750], ["birthday-minority", 1172, 2900],
+    ["midquarter-divorce", 1241, 3350], ["quarter-care", 1493, 5000],
+    ["cross-quarter-care", 1333, 3950], ["long-period", 1493, 5000],
+    ["no-ordinary", 1493, 5000], ["partial-installments", 1493, 5000],
+    ["long-mixed-birthday", 1238, 3325],
+    ["irregular-mixed-birthday", 1238, 3325],
+  ];
+  const onlyFlag = Deno.args.indexOf("--only-parent-kind");
+  const onlyKind = onlyFlag >= 0 ? Deno.args[onlyFlag + 1] : undefined;
+  for (const [kind, tax, parentWages] of cases) {
+    if (onlyKind && kind !== onlyKind) continue;
+    const inputs = datedParentSource(kind);
+    const r = f1040_2025.executeReturn(inputs);
+    assertEquals(r.diagnostics, [], kind);
+    assertEquals(inputs.schedule_h.ss_wages, 2800 + parentWages, kind);
+    assertEquals(r.pending.schedule2.line9_household_employment, tax, kind);
+    assertEquals(r.pending.f1040.line23_other_taxes, tax, kind);
+    const pending = buildPending(r.pending), filer = extractFilerIdentity(r.pending.f1040)!;
+    const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+    assertEquals(bundle.xml.includes(`<CombinedFUTATaxPlusNetTaxesAmt>${tax}</CombinedFUTATaxPlusNetTaxesAmt>`), true, kind);
+    const origins: any[] = [];
+    const pdf = await buildPdfBytes(bundle.pending, filer, ".pdf-cache", bundle, origins);
+    const temp = await Deno.makeTempFile({ suffix: ".xml" });
+    try {
+      await Deno.writeTextFile(temp, bundle.xml);
+      const check = await new Deno.Command("xmllint", { args: ["--noout", "--schema", xsd, temp], stdout: "piped", stderr: "piped" }).output();
+      assertEquals(check.code, 0, new TextDecoder().decode(check.stderr));
+    } finally { await Deno.remove(temp); }
+    if (root) {
+      await Deno.mkdir(root, { recursive: true });
+      await Deno.writeTextFile(`${root}/${kind}.json`, JSON.stringify({ inputs, pending, preparedPending: bundle.pending, carryforwards: r.carryforwards, filer, origins }, null, 2));
+      await Deno.writeTextFile(`${root}/${kind}.xml`, bundle.xml);
+      await Deno.writeFile(`${root}/${kind}.pdf`, pdf);
+    }
+  }
+});
+
+Deno.test("Schedule H parent dated sources reject omitted periods, false medical quarters and cash conflicts", async () => {
+  const valid = datedParentSource("cross-quarter-care");
+  const result = f1040_2025.executeReturn(valid);
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const filer = extractFilerIdentity(result.pending.f1040)!;
+  const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+  const rejects = async (kind: DatedParentKind, mutate: (parent: any, h: any) => void) => {
+    const x = datedParentSource(kind);
+    const h = x.schedule_h, parent = h.fica_only_payroll.employee_wages[3];
+    mutate(parent, h);
+    assertThrows(() => computeScheduleHAmounts(inputSchema.parse(h), 2025));
+    assertThrows(() => scheduleH.build(h, { filer, pending }));
+    await assertRejects(() => buildPdfBytes({ ...bundle.pending, schedule_h: h }, filer, ".pdf-cache"));
+  };
+  await rejects("birthday-majority", (p) => p.parent_fica_review.wage_payments[2].service_allocation_reference = p.parent_fica_review.wage_payments[1].service_allocation_reference);
+  await rejects("birthday-majority", (p) => p.parent_fica_review.wage_payments[2].ordinary_pay_period.service_time_source_reference = p.parent_fica_review.wage_payments[1].ordinary_pay_period.service_time_source_reference);
+  await rejects("birthday-majority", (p) => p.parent_fica_review.wage_payments[2].service_hours = 0);
+  await rejects("midquarter-divorce", (p) => p.parent_fica_review.quarterly_circumstances[1].employer_circumstances.divorce_date = "2025-05-20");
+  await rejects("cross-quarter-care", (p) => p.parent_fica_review.quarterly_circumstances[1].employer_circumstances.incapable_care_period.to = "2025-04-27");
+  await rejects("cross-quarter-care", (p) => p.parent_fica_review.wage_payments[3].service_to = "2025-07-01");
+  await rejects("long-period", (p) => p.parent_fica_review.wage_payments[0].ordinary_pay_period.kind = "within_31_days");
+  await rejects("no-ordinary", (p) => delete p.parent_fica_review.no_ordinary_frequency_review);
+  await rejects("partial-installments", (p) => p.parent_fica_review.wage_payments[1].cash_wages = 751);
+  const widow = datedParentSource("midquarter-widow");
+  const widowResult = f1040_2025.executeReturn(widow);
+  assertEquals(widowResult.diagnostics, []);
+  const widowPending = buildPending(widowResult.pending);
+  const widowFiler = extractFilerIdentity(widowResult.pending.f1040)!;
+  await assertRejects(() => buildMefBundle(widowPending, { filer: widowFiler, attachments: [] }), Error, "deceased Form 1040");
+  await assertRejects(() => buildPdfBytes(widowPending, widowFiler, ".pdf-cache"), Error, "deceased Form 1040");
 });
