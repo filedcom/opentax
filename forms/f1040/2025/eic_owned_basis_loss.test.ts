@@ -13,6 +13,10 @@ import {
   twoNotesOpenCases,
   twoNotesOpenInputs,
 } from "./form7203_two_notes_open.fixture.ts";
+import {
+  overflowDebtCases,
+  overflowDebtInputs,
+} from "./form7203_overflow_debt.fixture.ts";
 import { buildPending } from "./mef/pending.ts";
 import { normalizeAllPending } from "./pending.ts";
 import { buildMefBundle } from "./mef/builder.ts";
@@ -67,6 +71,17 @@ function qualify(input: any, interest: number, wages: number) {
   return input;
 }
 const cases = [
+  {
+    id: "seven_columns_at_limit",
+    input: () =>
+      qualify(overflowDebtInputs(overflowDebtCases[3]).inputs, 11950, 5000),
+    allowed: 4000,
+    suspended: 0,
+    agi: 1000,
+    interest: 11950,
+    eic: 384,
+    earned: 5000,
+  },
   {
     id: "three_columns_at_limit",
     input: () =>
