@@ -1626,3 +1626,7 @@ Full `deno task test` at bc6cafec6 ended11,494/8, exit1. Immutable rerun fbacc53
 
 
 Integrated tip-health and two-farm source gate51/0(4m16s), eight files. Main9tiphealthPDFs equal149reviewedpages; twofarmheld7/217 terminal0 with PDF/XML bytes unchanged. Exact12 old fullV3 failures have targeted passing evidence; fullV3 live01h17m31. Next ready709 partialbeneficiary and21e mixedC/Ftips are existing frozen tasks, not future tasks.
+
+## Publication and next verification checkpoint
+
+PR63 updated and remote head verified03a39a422944ea64b7606a1439474d03baa7a4b1, draft retained, full scope body/title verified. Latest local source9a7da5a78 adds partialbeneficiary4972 and mixedC/Ftips; six-file main gate91228 live, detached artifact replay delegated to original reviewers. Full immutable V3 PIDs26565/26572 verified live01h18m08; no terminal/fullgreen claim. PR attachment retry1489 pending after old1408 cancellation; no attachment-success claim. Frozen52 suffix byte-identical, ledger1435 bounded slices, catalog347unique, future section untouched.
