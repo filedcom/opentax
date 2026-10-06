@@ -228,3 +228,9 @@ Private originals: `.state/research/scheduleh-multiworker-oct6-preserved`
 (nine files), `.state/research/scheduleh-prior-oct6-preserved` (21 files).
 Root reviews: `/tmp/opentax-scheduleh-multiworker-review-oct6.json` and
 `/tmp/opentax-scheduleh-joint-identity-review-oct6.json`.
+
+## Child wages throughout the under-21 age range
+
+The existing family withholding-only route rejected sourced younger children because its birth-date guard accepted only 2005–2006. The retained before-probe `/tmp/opentax-scheduleh-child-before-source-oct6.json` and `.log` show rejection of a 2008 birth with the same5000 cash wages/250 agreed withholding and zero W-2 FICA wages. [TY2025 Schedule H instructions](https://www.irs.gov/instructions/i1040sh) exclude wages paid to the employer’s child under21 from FICA and FUTA. The source guard now admits children born2005–2024 while retaining relationship/identity, complete payroll, W-2/W-4 and employer/retained-ledger/Schedule2 checks. A child who reaches21 during2025 still needs a separately sourced split-period route; future or invalid dates remain rejected. No minor student or principal-occupation exception is needed for the employer’s own under21 child.
+
+New full-return cases cover age20, turning18, age17 andage15. Each retains5000 cash wages/250 withholding and no household FICA/FUTA; the employer’s unrelated W-2 remains taxable in its own document. Source/native/direct-PDF negatives reject changed birth record, altered tax, age21 and future dates. These constructed ordinary source facts do not authenticate a birth record, employer, W-2 or signed W-4. Wider mixed-family/unrelated payroll and parent exceptions remain within the existing open parent. Final standard, replay and rendered-page results are pending; initial typed-test context errors and the overbroad whole-XML SocialSecurityTax assertion are retained as diagnostics.

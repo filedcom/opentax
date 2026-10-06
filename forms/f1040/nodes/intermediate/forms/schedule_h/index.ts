@@ -252,7 +252,7 @@ export function computeScheduleHAmounts(
       taxYear !== 2025 || unemployment || ficaOnly ||
       (employee.relationship === "child" &&
         (employee.birth_date < "2005-01-01" ||
-          employee.birth_date > "2006-12-31")) ||
+          employee.birth_date > "2024-12-31")) ||
       (employee.relationship === "spouse" &&
         employee.marriage_date > "2024-12-31") ||
       employee.employee_ssn === family.employer_ssn ||
