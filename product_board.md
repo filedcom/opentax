@@ -8,11 +8,11 @@ Inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF key
 
 Latest verified work: retained Roth conversion FIFO and per-owner five-year recapture (**2/0 + 259/0**), eight full-XSD packets / 79 reviewed current pages plus 34 reviewed retained prior pages. All 418 reviewed artifact files are exact, and earlier 25 Roth/substitute packets / 179 pages are preserved. Earlier donated-asset depreciation/itemized QBI and simultaneous QEF proof remains in the archive. These complete the stated slices; wider parents remain open.
 
-Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at78m15s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
+Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at81m59s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
 
 Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **bf6d608c2**, verified published with the latest source changes and evidence.
 
-Existing Roth consumed-history, natural-resource donation reductions and education-credit QEF ordering work continues in isolated checkouts. Root preferential ScheduleJ/AMT source work has an isolated checkout and a retained guard audit. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+Existing Roth consumed-history, natural-resource donation reductions and education/dependent and business-credit QEF work is ready for fresh main verification. Root preferential ScheduleJ/AMT source work has an isolated checkout and a retained guard audit. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
 
 ## Scope and completion rules
 
