@@ -19,8 +19,21 @@ import { finalizeStagedForm8839Sink } from "../nodes/intermediate/forms/form8839
 import { f1040 } from "../nodes/outputs/f1040/index.ts";
 import { schedule3 } from "../nodes/intermediate/aggregation/schedule3/index.ts";
 import { assertNoRepeatedBrokerSaleSources } from "./broker-sale-source-reconciliation.ts";
+import { applyForm8621QefRefigure } from "./form8621_1294_refigure.ts";
 
 function executeReturn(inputs: Record<string, unknown>): ExecuteResult {
+  if (
+    (inputs.form8839 !== undefined || inputs.form8990 !== undefined) &&
+    Array.isArray(inputs.f8621) &&
+    inputs.f8621.some((item) =>
+      item !== null && typeof item === "object" &&
+      "qef_1294_election" in item && item.qef_1294_election !== undefined
+    )
+  ) {
+    throw new Error(
+      "Form 8621 Election B needs a settled counterfactual before Form 8839 or Form 8990 two-pass filing",
+    );
+  }
   if (inputs.f1099b !== undefined && inputs.f8949 !== undefined) {
     assertNoRepeatedBrokerSaleSources(
       { f1099bs: inputs.f1099b },
@@ -118,10 +131,11 @@ function executeReturn(inputs: Record<string, unknown>): ExecuteResult {
     };
   }
   if (inputs.form8990 === undefined) {
-    return execute(buildExecutionPlan(registry), registry, inputs, {
+    const full = execute(buildExecutionPlan(registry), registry, inputs, {
       taxYear: 2025,
       formType: "f1040",
     });
+    return applyForm8621QefRefigure(inputs, full);
   }
   const source = form8990PublicInputSchema.parse(inputs.form8990);
   const returnInputs = Object.fromEntries(

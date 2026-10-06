@@ -1,5 +1,6 @@
 import { f8621, type Form8621Lines } from "../nodes/inputs/f8621/index.ts";
 import { income_tax_calculation } from "../nodes/intermediate/worksheets/income_tax_calculation/index.ts";
+import { assertForm8621QefRefigureSource } from "./form8621_1294_refigure.ts";
 
 const incomeKeys = [
   "line8z_form8621_qef",
@@ -129,8 +130,6 @@ export function assertSchedule1Form8621Source(
     const beforeCredits = amount(
       calculated?.form8621_1294_deferred_tax_before_credits,
     );
-    const line18 = amount(filed?.line18_total_tax_before_credits);
-    const line21 = amount(filed?.line21_credits_total);
     const line22 = amount(filed?.line22_tax_after_credits);
     const line23 = amount(filed?.line23_other_taxes);
     if (
@@ -141,10 +140,9 @@ export function assertSchedule1Form8621Source(
         "Form 8621 section 1294 tax worksheet differs from source",
       );
     }
-    const applied = line22 - Math.max(
-      0,
-      line18 - beforeCredits - line21,
-    );
+    assertForm8621QefRefigureSource(pending);
+    const applied = line22 + line23 -
+      amount(filed?.form8621_1294_counterfactual_total_tax);
     if (
       amount(filed?.form8621_1294_deferred_tax) !== applied ||
       amount(filed?.form8621_1294_total_tax_before_deferral) !==

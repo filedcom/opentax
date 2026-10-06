@@ -257,6 +257,13 @@ Deno.test("Form 8621 Election B refigures the current return tax from QEF income
   };
   const result = f1040_2025.executeReturn(sourceInputs);
   assertEquals(result.diagnostics, []);
+  for (const twoPass of ["form8839", "form8990"]) {
+    assertThrows(
+      () => f1040_2025.executeReturn({ ...sourceInputs, [twoPass]: {} }),
+      Error,
+      "Form 8621 Election B needs a settled counterfactual",
+    );
+  }
   const pending = buildPending(result.pending);
   const f1040 = pending.f1040! as Record<string, number>;
   assertEquals(
@@ -297,6 +304,8 @@ Deno.test("Form 8621 Election B refigures the current return tax from QEF income
       (p: Record<string, any>) => p.f1040.form8621_1294_deferred_tax++,
       (p: Record<string, any>) =>
         p.f1040.form8621_1294_deferred_tax_before_credits++,
+      (p: Record<string, any>) =>
+        p.f1040.form8621_1294_counterfactual_total_tax++,
     ]
   ) {
     const changed = structuredClone(pending) as Record<string, any>;
@@ -327,6 +336,176 @@ Deno.test("Form 8621 Election B refigures the current return tax from QEF income
   } finally {
     await Deno.remove(path);
   }
+  const medicalInputs = {
+    ...sourceInputs,
+    schedule_a: { line_1_medical: 30_000 },
+  };
+  const medical = f1040_2025.executeReturn(medicalInputs);
+  assertEquals(medical.diagnostics, []);
+  const medicalPending = buildPending(medical.pending);
+  const medical1040 = medicalPending.f1040! as Record<string, number>;
+  const withoutQef = f1040_2025.executeReturn({
+    ...medicalInputs,
+    f8621: [{
+      ...(sourceInputs.f8621 as Record<string, unknown>[])[0],
+      qef_ordinary_income: 0,
+      qef_capital_gain: 0,
+      qef_1294_election: undefined,
+    }],
+  });
+  assertEquals(withoutQef.diagnostics, []);
+  const without1040 = buildPending(withoutQef.pending).f1040! as Record<
+    string,
+    number
+  >;
+  assertEquals(
+    medical1040.form8621_1294_deferred_tax,
+    medical1040.form8621_1294_total_tax_before_deferral -
+      without1040.line24_total_tax,
+  );
+  assertEquals(
+    medical1040.form8621_1294_counterfactual_total_tax,
+    without1040.line24_total_tax,
+  );
+  assertEquals(medical1040.form8621_1294_deferred_tax, 473);
+  if (
+    medical1040.form8621_1294_deferred_tax <=
+      medical1040.form8621_1294_deferred_tax_before_credits
+  ) {
+    throw new Error(
+      "Schedule A medical AGI floor did not enter the QEF refigure",
+    );
+  }
+  const medicalXml = buildMefXml(medicalPending, base.filer);
+  const medicalXmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(medicalXmlPath, medicalXml);
+    const validation = await new Deno.Command("xmllint", {
+      args: [
+        "--noout",
+        "--schema",
+        ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+        medicalXmlPath,
+      ],
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(medicalXmlPath);
+  }
+  const medicalOrigins: PdfPageOrigin[] = [];
+  const medicalPdf = await buildPdfBytes(
+    medicalPending,
+    base.filer,
+    ".pdf-cache",
+    undefined,
+    medicalOrigins,
+  );
+  assertEquals(
+    (await PDFDocument.load(medicalPdf)).getPageCount(),
+    medicalOrigins.length,
+  );
+  const medicalReviewPdf = Deno.env.get("FORM8621_AGI_REVIEW_PDF");
+  if (medicalReviewPdf) await Deno.writeFile(medicalReviewPdf, medicalPdf);
+  const changedMedical = structuredClone(medicalPending) as Record<string, any>;
+  changedMedical.form8621_1294_refigure.source_inputs.schedule_a
+    .line_1_medical++;
+  assertThrows(
+    () => buildMefXml(changedMedical, base.filer),
+    Error,
+    "Form 8621 section 1294",
+  );
+  const seniorInputs = {
+    ...sourceInputs,
+    general: {
+      ...(base.inputs.general as Record<string, unknown>),
+      taxpayer_dob: "1950-06-15",
+      taxpayer_ssn_valid_for_employment: true,
+      taxpayer_ssn_issued_before_due_date: true,
+      taxpayer_tin_issued_by_due_date: true,
+    },
+    schedule1a: {
+      senior_zero_exclusions_review: {
+        no_section933_puerto_rico_excluded_income: true,
+        section933_review_source_reference: "2025 residency and income review",
+        no_form2555_filed: true,
+        form2555_review_source_reference: "2025 foreign-income return review",
+        no_form4563_filed: true,
+        form4563_review_source_reference: "2025 Samoa-source income review",
+      },
+    },
+  };
+  const senior = f1040_2025.executeReturn(seniorInputs);
+  assertEquals(senior.diagnostics, []);
+  const seniorPending = buildPending(senior.pending);
+  const senior1040 = seniorPending.f1040! as Record<string, number>;
+  const seniorWithout = f1040_2025.executeReturn({
+    ...seniorInputs,
+    f8621: [{
+      ...(sourceInputs.f8621 as Record<string, unknown>[])[0],
+      qef_ordinary_income: 0,
+      qef_capital_gain: 0,
+      qef_1294_election: undefined,
+    }],
+  });
+  assertEquals(seniorWithout.diagnostics, []);
+  const seniorWithout1040 = buildPending(seniorWithout.pending)
+    .f1040! as Record<string, number>;
+  assertEquals(senior1040.line13b_additional_deductions, 5_880);
+  assertEquals(seniorWithout1040.line13b_additional_deductions, 6_000);
+  assertEquals(senior1040.form8621_1294_deferred_tax, 462);
+  assertEquals(
+    senior1040.form8621_1294_deferred_tax,
+    senior1040.form8621_1294_total_tax_before_deferral -
+      seniorWithout1040.line24_total_tax,
+  );
+  if (
+    senior1040.form8621_1294_deferred_tax <=
+      senior1040.form8621_1294_deferred_tax_before_credits
+  ) {
+    throw new Error(
+      "Schedule 1-A senior MAGI phaseout did not enter the QEF refigure",
+    );
+  }
+  const seniorXml = buildMefXml(seniorPending, base.filer);
+  const seniorXmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(seniorXmlPath, seniorXml);
+    const validation = await new Deno.Command("xmllint", {
+      args: [
+        "--noout",
+        "--schema",
+        ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+        seniorXmlPath,
+      ],
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(seniorXmlPath);
+  }
+  const seniorOrigins: PdfPageOrigin[] = [];
+  const seniorPdf = await buildPdfBytes(
+    seniorPending,
+    base.filer,
+    ".pdf-cache",
+    undefined,
+    seniorOrigins,
+  );
+  assertEquals(
+    (await PDFDocument.load(seniorPdf)).getPageCount(),
+    seniorOrigins.length,
+  );
+  const seniorReviewPdf = Deno.env.get("FORM8621_SENIOR_REVIEW_PDF");
+  if (seniorReviewPdf) await Deno.writeFile(seniorReviewPdf, seniorPdf);
 });
 
 Deno.test("Form 8621 retains one filing and two distinct Part V continuation pages", async () => {

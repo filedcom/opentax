@@ -168,6 +168,9 @@ const inputSchema = z.object({
   form8621_tax: z.number().nonnegative().optional(),
   form8621_1294_deferred_tax_before_credits: z.number().nonnegative()
     .optional(),
+  // Executor-derived full counterfactual Form 1040 line 24, after rerunning
+  // AGI-sensitive deductions, credits, and other taxes without QEF earnings.
+  form8621_1294_counterfactual_total_tax: z.number().nonnegative().optional(),
   // Line 17 — AMT (Form 6251) via Schedule 2 line 1
   line17_additional_taxes: z.number().nonnegative().optional(),
   // Line 18 — Total tax before credits (16 + 17)
@@ -877,7 +880,19 @@ function assembleReturn(
       "Form 8621 section 1294 deferral with AMT needs a refigured alternative minimum tax",
     );
   }
-  const deferredTax = deferredBeforeCredits > 0
+  const taxBeforeDeferral = computed_line22 + computed_line23;
+  const counterfactual = input.form8621_1294_counterfactual_total_tax;
+  if (
+    counterfactual !== undefined &&
+    (deferredBeforeCredits <= 0 || counterfactual > taxBeforeDeferral)
+  ) {
+    throw new Error(
+      "Form 8621 section 1294 counterfactual tax needs a positive source-backed deferral",
+    );
+  }
+  const deferredTax = counterfactual !== undefined
+    ? taxBeforeDeferral - counterfactual
+    : deferredBeforeCredits > 0
     ? computed_line22 - Math.max(
       0,
       computed_line18 - deferredBeforeCredits - computed_line21,
