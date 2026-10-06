@@ -167,3 +167,48 @@ Deno.test("cash farm deducts unemployment only when actually paid in 2025", () =
   assertEquals(pending.f1040.line16_income_tax, 146_902);
   assertEquals(pending.f1040.line13_qbi_deduction, 10_000);
 });
+
+Deno.test("farm unemployment wage bases apply separately to each employee", () => {
+  const input: any = scheduleJJointFishingPositiveLimitsInputs("wages");
+  const farm = input.schedule_f.schedule_fs[0];
+  const proof = farm.qbi_positive_limit_inventory;
+  const book = JSON.parse(atob(proof.bytes_base64));
+  const first = book.months[9].payments[0];
+  first.cash_wages = 10_000;
+  first.net_check_paid = 9_235;
+  book.months[9].payments.push({
+    ...first,
+    employee_ssn: "555667777",
+    check_reference: "second-worker-check",
+  });
+  const w2 = book.issued_employee_w2_copies[0];
+  w2.box1_wages =
+    w2.box3_social_security_wages =
+    w2.box5_medicare_wages =
+      10_000;
+  w2.box4_social_security_tax_withheld = 620;
+  w2.box6_medicare_tax_withheld = 145;
+  book.issued_employee_w2_copies.push({
+    ...w2,
+    employee_ssn: "555667777",
+    issued_copy_reference: "second-worker-w2",
+    retained_i9_reference: "second-worker-i9",
+    ssa_filing_reference: "second-worker-ssa",
+  });
+  book.current_2025_agricultural_service_weeks[0].employee_count = 2;
+  const bind = () => {
+    const bytes = new TextEncoder().encode(JSON.stringify(book));
+    proof.bytes_base64 = btoa(String.fromCharCode(...bytes));
+    proof.sha256 = createHash("sha256").update(bytes).digest("hex");
+  };
+  bind();
+  assertThrows(() => f1040_2025.executeReturn(input));
+  book.unemployment.state_tax_payment.amount = 486;
+  book.unemployment.futa_tax_payment.amount = 84;
+  farm.line29_taxes = 2_100;
+  bind();
+  const result = f1040_2025.executeReturn(input);
+  assertEquals(result.diagnostics, []);
+  const pending: any = normalizeAllPending(result.pending);
+  assertEquals(calculateMixedFishingQbi(pending.form8995a).profits[1], 477_900);
+});

@@ -196,8 +196,15 @@ export function reviewedPositiveLimits(
     book.prior_2024_agricultural_payroll.quarter_employee_service_week_counts
         .reduce((sum, count) => sum + count, 0) >= 20;
   const unemployment = book.unemployment;
-  const stateBase = Math.min(wages, 9_000);
-  const futaBase = Math.min(wages, 7_000);
+  const copies = book.issued_employee_w2_copies;
+  const stateBase = copies.reduce(
+    (sum, copy) => sum + Math.min(copy.box1_wages, 9_000),
+    0,
+  );
+  const futaBase = copies.reduce(
+    (sum, copy) => sum + Math.min(copy.box1_wages, 7_000),
+    0,
+  );
   const stateTax = stateBase * 270 / 10_000;
   const futaTax = futaBase * 60 / 1_000 - futaBase * 54 / 1_000;
   const paidIn2025 = (value: string) => value <= "2025-12-31";
@@ -208,7 +215,6 @@ export function reviewedPositiveLimits(
     (unemployment && paidIn2025(unemployment.futa_tax_payment.paid_on)
       ? futaTax
       : 0);
-  const copies = book.issued_employee_w2_copies;
   const assets = book.owned_property_register;
   const basis = assets.reduce((sum, row) => sum + row.original_cost_paid, 0);
   const farmSales = book.farm_product_sales.reduce(
