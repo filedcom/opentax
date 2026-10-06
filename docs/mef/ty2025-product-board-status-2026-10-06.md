@@ -2944,3 +2944,25 @@ Previousgoalturn was progress: exact4952 centsmain738554c2a sealed6/0+7heldpages
 ## Current-main ScheduleJ source gates and existing4852 paper audit
 
 Five rehearse commits integrated cd5a6163d/3813c524c/3e6e519be/644259e34/1b4e2d446; exact two evidence-env permissions added42a8a9912 before standardtask. Main10/0(21s), `/tmp/opentax-schedulej-current-main-source-oct6.log`; actualmainrelated1111 and agent retainedsource checks live, no ledgercredit until complete. CurrentV5run2 wrapper91417/Deno91420 verifiedlive6m23s. Roth classification isolated11/0+274/0 and corrected35/295+original10/70 replay terminal; retainedPDF page comparisons stillneeded. Original applicable traditional/SEP/SIMPLE Form4852 paper copies additionally lack required line8j margin label per rendered instructions; preserve originals and qualify papercompliance until sourcecorrected labeledcopies and positive/negativepaperproof. This is existing4852 scope, not newfuturework. Separate ordinaryclassification prerequisite must not waitfor unrelatedpaperrepair. Ledger1466/frozen52/futureunchanged.
+
+
+## Before ordinary-Roth source classification integration
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,466 recorded slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
+
+Inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF keys / 96 covered / 18 uncovered**.
+
+Latest verified work: exact Form4952 paid-source cents (**main6/0**, isolated44/0), seven reviewed full-XSD pages and exact retained-source replay. Legacy1254 (**17/0**) preserves fourteen full-XSD packets / 235 files / 490 reviewed page occurrences. Donation printing preserves forty full-XSD packets, 472 return pages, all47 reviewed label corrections and888 original files. Ordinary-Roth source classification remains under correction. Wider parents remain open.
+
+Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The first immutable **4a45410da** rerun exited **1**; KeepAlive restarted it and overwrote its terminal log. The second run (wrapper91417/Deno91420, start07:44:10UTC) is live, and a startup guard will archive its result before preventing another launch. First-run totals are unavailable. A passing latest-source full run remains required.
+
+Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **928586521**, published with legacy-depletion proof; exact Form4952 cents changes are verified locally.
+
+Donation source and Section B printing proofs are sealed. The recorded Roth history slice is qualified pending correction of ordinary-Roth issued-source checkbox classification; its calculator/artifact results do not establish that classification. Root preferential ScheduleJ/AMT source work has an isolated checkout and a retained guard audit. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+
+
+Currentmain ScheduleJ10/0+related100/0 terminal; root regenerated5/85sourcecomparison22files exact/XMLonlyTs. Detachedmain42a8 Deno tests regenerate publicfixtures thencompare actualorig bytes; explicitly not immutable raw-inputreplay. New3/49+original2/36source/pending/PDF/origins exact, QEF17/172 PDFs exact (baseline10 PDFs only, seven source-bearingrecords exact), pension8/76 all40artifactsexact. Agent preparing actualraw5source replay beforeledger. Readyclassificationc7b50f6b: focused11/0+274/0, corrected35/295 heldfullXSD source/PDF/origins exact; all295currentPDFpages byteequal originals,271retainedpagepixels equal,997originalbyte records unchanged. Ordinary sources explicitly nonSEP/SIMPLE, historicalJTfalse/currentJ/T/Qline4 independentflag; true traditionalconversion preserved and incompatibletrueordinary rejects. Original10/70 applicable traditional/SEP/SIMPLE4852paper marginlabel remainsqualified; nextseparatepaperfix. Integrateclassification then freshmainchecks and retainedsource before liftingqualification. FullV5run2 lastverified91417/91420live8m59s. Ledger1466/frozen52/futureunchanged.
