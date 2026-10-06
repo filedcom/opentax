@@ -1,8 +1,11 @@
 import { inputSchema as dividendSchema } from "../nodes/inputs/f1099div/index.ts";
+import { inputSchema as saleSchema } from "../nodes/inputs/f8949/index.ts";
 import {
   assertForm8814CalculatedLines,
   type Form8814Lines,
 } from "../nodes/inputs/f8814/index.ts";
+import { assertDirectCapitalGainDistributionSource } from "./line7a-source-reconciliation.ts";
+import { assertCapitalSaleSourceRows } from "./broker-sale-source-reconciliation.ts";
 
 /** Reconcile bounded Form 6251 Part III dividends to retained 1099-DIV payers. */
 export function assertForm6251QualifiedDividendSource(
@@ -32,6 +35,7 @@ export function assertForm6251QualifiedDividendSource(
     (sum, line) => sum + line.line12InvestmentIncome,
     0,
   ) ?? 0;
+  const childCapital = child?.reduce((sum, line) => sum + line.line10, 0) ?? 0;
   if (child !== undefined) {
     const owner = form1040?.taxpayer_ssn;
     if (!Array.isArray(child) || typeof owner !== "string") {
@@ -40,10 +44,26 @@ export function assertForm6251QualifiedDividendSource(
       );
     }
     assertForm8814CalculatedLines(child, owner);
-    if (child.some((line) => line.line10 !== 0)) {
-      throw new Error(
-        "Form 6251 child capital gains need a separate Schedule D source reconciliation",
-      );
+    if (childCapital > 0) {
+      const refs = new Set<string>();
+      for (const line of child) {
+        if (line.line10 <= 0) continue;
+        const review = line.item.source_review
+          ?.capital_gain_distribution_review;
+        if (
+          !review || review.box2a !== line.item.capital_gain_distributions ||
+          (line.item.capital_gain_nominee_distribution ?? 0) !== 0 ||
+          [review.box2b, review.box2c, review.box2d, review.box2e, review.box2f]
+            .some((amount) => amount !== 0) ||
+          refs.has(review.source_document_reference)
+        ) {
+          throw new Error(
+            "Form 6251 child capital gains need distinct reviewed ordinary 1099-DIV box 2 sources",
+          );
+        }
+        refs.add(review.source_document_reference);
+      }
+      assertDirectCapitalGainDistributionSource(form1040!, pending);
     }
   }
   const form4952 = pending?.form4952 as Record<string, unknown> | undefined;
@@ -63,6 +83,41 @@ export function assertForm6251QualifiedDividendSource(
   const sourceReferences = payers.map((payer) =>
     payer.source_document_reference
   );
+  const sales = pending?.f8949 === undefined
+    ? []
+    : saleSchema.parse(pending.f8949).f8949s;
+  const ordinarySales = childCapital > 0 && sales.length > 0 &&
+    pending?.f1099b === undefined && pending?.f1099k === undefined &&
+    sales.every((row) =>
+      ["D", "E", "F"].includes(row.part) &&
+      row.source_transaction_id && row.broker_statement_reference &&
+      row.proceeds > row.cost_basis &&
+      (row.amt_cost_basis ?? row.cost_basis) === row.cost_basis &&
+      row.adjustment_codes === undefined &&
+      row.adjustment_amount === undefined &&
+      row.qsbs_code === undefined && row.qsbs_amount === undefined &&
+      row.wash_sale_loss === undefined &&
+      row.loss_not_allowed === undefined &&
+      row.accrued_market_discount === undefined &&
+      row.ordinary_income_portion === undefined
+    );
+  const ordinarySaleGain = ordinarySales
+    ? sales.reduce((sum, row) => sum + row.proceeds - row.cost_basis, 0)
+    : 0;
+  if (ordinarySales) {
+    assertCapitalSaleSourceRows(pending!);
+    const schedule = pending?.schedule_d as Record<string, unknown> | undefined;
+    const transactions = schedule?.transaction === undefined
+      ? []
+      : Array.isArray(schedule.transaction)
+      ? schedule.transaction
+      : [schedule.transaction];
+    if (transactions.length !== sales.length) {
+      throw new Error(
+        "Form 6251 Schedule D has extra or missing retained capital sales",
+      );
+    }
+  }
   const basisRows = basis
     ? (Array.isArray(fields.line2k_8949_basis_dispositions)
       ? fields.line2k_8949_basis_dispositions
@@ -85,7 +140,7 @@ export function assertForm6251QualifiedDividendSource(
   );
   const issuedIsoCapital = iso && !basis ? distributions : 0;
   const expectedPartThreeGain = qualified + amtNetCapitalGain +
-    issuedIsoCapital;
+    issuedIsoCapital + childCapital + ordinarySaleGain;
   const regularCapitalGain = basisRows.reduce(
     (sum, row) => sum + row.regular_gain,
     0,
@@ -136,19 +191,27 @@ export function assertForm6251QualifiedDividendSource(
     pending?.k1_s_corp !== undefined ||
     pending?.k1_trust !== undefined ||
     pending?.f8814 !== undefined && !childCopiesMatch ||
+    childCapital > 0 && sales.length > 0 && !ordinarySales ||
+    ordinarySales &&
+      (pending?.schedule_d as Record<string, unknown> | undefined)
+          ?.print_line16_combined !==
+        issuedIsoCapital + childCapital + ordinarySaleGain ||
     pending?.form4952 !== undefined && !childOnlyForm4952 ||
     pending?.form2555 !== undefined ||
-    iso && (fields.net_capital_gain ?? 0) !== issuedIsoCapital ||
+    iso && (fields.net_capital_gain ?? 0) !==
+        issuedIsoCapital + childCapital + ordinarySaleGain ||
     iso &&
       (capitalLine("line7_capital_gain") +
-          capitalLine("line7a_cap_gain_distrib")) !== issuedIsoCapital ||
+          capitalLine("line7a_cap_gain_distrib")) !==
+        issuedIsoCapital + childCapital + ordinarySaleGain ||
     iso && issuedIsoCapital > 0 &&
       ((pending?.schedule_d as Record<string, unknown> | undefined)
             ?.line13_cap_gain_distrib !== issuedIsoCapital ||
         (pending?.schedule_d as Record<string, unknown> | undefined)
                 ?.print_line16_combined !== undefined &&
           (pending?.schedule_d as Record<string, unknown> | undefined)
-              ?.print_line16_combined !== issuedIsoCapital) ||
+              ?.print_line16_combined !==
+            issuedIsoCapital + childCapital + ordinarySaleGain) ||
     fields.unrecaptured_1250_gain !== 0 &&
       fields.unrecaptured_1250_gain !== undefined ||
     fields.rate_28_gain !== 0 && fields.rate_28_gain !== undefined ||

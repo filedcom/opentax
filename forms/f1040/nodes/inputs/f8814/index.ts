@@ -47,6 +47,19 @@ const sourceReviewSchema = z.object({
   electing_parent_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
   eligibility_reviewed: z.literal(true),
   income: sourceIncomeSchema,
+  // Reviewed 1099-DIV box 2 classification for the ordinary-distribution
+  // AMT Part III path. This is a structured review, not issuer authentication.
+  capital_gain_distribution_review: z.object({
+    source_document_reference: z.string().trim().min(1),
+    payer_name: z.string().trim().min(1),
+    payer_tin: z.string().regex(/^\d{2}-?\d{7}$/),
+    box2a: z.number().nonnegative(),
+    box2b: z.number().nonnegative(),
+    box2c: z.number().nonnegative(),
+    box2d: z.number().nonnegative(),
+    box2e: z.number().nonnegative(),
+    box2f: z.number().nonnegative(),
+  }).strict().optional(),
   interest_adjustments: z.object({
     nominee_distribution: z.number().nonnegative().optional(),
     accrued_interest: z.number().nonnegative().optional(),

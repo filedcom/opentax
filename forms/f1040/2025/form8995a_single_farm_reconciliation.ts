@@ -46,6 +46,8 @@ export function assertSingleFarmQbiReturn(
   const qualified = sum(sink.line3a_qualified_dividends);
   const capital = sum(tax.net_capital_gain);
   const ordinary = sum(sink.line3b_ordinary_dividends);
+  const filedCapitalGain = sum(sink.line7_capital_gain) +
+    sum(sink.line7a_cap_gain_distrib);
   const childIncome = sum(
     (pending.schedule1 as Record<string, unknown> | undefined)?.line8z_form8814,
   );
@@ -61,11 +63,11 @@ export function assertSingleFarmQbiReturn(
         0,
       ) ||
     sum(sink.line9_total_income) !==
-      source.profit + ordinary + childIncome + sum(sink.line7_capital_gain) +
+      source.profit + ordinary + childIncome + filedCapitalGain +
         sum(sink.line1z_total_wages) ||
     sum(sink.line10_adjustments) !== source.se_tax_deduction ||
     sum(sink.line11_agi) !==
-      source.profit + ordinary + childIncome + sum(sink.line7_capital_gain) -
+      source.profit + ordinary + childIncome + filedCapitalGain -
         source.se_tax_deduction + sum(sink.line1z_total_wages) ||
     Math.round(qualified + capital) !== input.net_capital_gain ||
     input.business_filing_details?.qualified_dividends_zero_confirmed !==
