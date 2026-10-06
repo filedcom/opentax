@@ -19,8 +19,8 @@ describe the excess-employer income and timely withdrawal rules. The
 [2025 Form 1099-SA instructions](https://www.irs.gov/pub/irs-prior/i1099sa--2025.pdf)
 say code 2 applies to an excess distribution **to the account holder** and
 expressly exclude an employer excess and earnings returned to the employer
-from box 1. That employer-returned transaction therefore remains a separate
-gap; it cannot be represented as this code-2 route. Mixed HSA events, partial
+from box 1. At this earlier checkpoint that employer-returned transaction was a
+separate gap; it cannot be represented as this code-2 route. Mixed HSA events, partial
 returns, and independent issuer-byte authentication remain open.
 
 ## Two owners' timely personal excess returns (written, unrun)
@@ -101,7 +101,8 @@ distribution reporting.
 
 This route requires no personal contribution, no W-2 box 1 inclusion of the
 excess, one code-W W-2, no other HSA event, and a payment to the owner in 2025. A
-return to the employer has no code-2 Form 1099-SA and remains unsupported, as
+return to the employer has no code-2 Form 1099-SA and was unsupported at this
+checkpoint, as
 do partial returns, spouse and mixed distribution cases. The W-2, trustee and
 timely-withdrawal bytes are not independently authenticated. Positive and
 changed-W-2, Schedule 1, and Form 1040 fixtures are authored but unrun; the
@@ -141,4 +142,57 @@ and `S.pdf`
 The corresponding `.origins.json`, `.documents.json`, source/pending JSON,
 XML, and fourteen rendered review pages are retained beside them.
 
-Main integration passes the standard143-case gate and separately replays the two actual retained packets against all source bytes, the whole pending graph, native XML apart from its timestamp, PDF and origins. All fourteen reviewed pages match exactly. Logs and the retained manifest are recorded in the October6 status archive. Employer-returned excess remains a separate open branch.
+## Employer error corrected by trustee return to employer (2026-10-06)
+
+The separate employer-returned route accepts an actual contribution error
+above the owner's 2025 section 223(b) annual maximum, with the employer's
+correction, trustee remittance **to the employer**, final filed W-2, and
+Form 5498-SA retained as four independently referenced, SHA-256-checked
+reviewed source records. The recorded $5,000 original deposit less a $700
+employer recoup leaves the $4,300 self-only contribution limit on the final
+W-2 code W, Form 5498-SA box 2, and Form 8889 line 9. The trustee also pays
+$50 earnings to the employer. Neither $750 is an HSA distribution to the
+employee, Form 1099-SA box 1/code 2, Form 8889 lines 14a/14b, nor Schedule 1
+other income on the employee return. The spouse retains a separate $2,000
+personal HSA contribution and Form 8889 copy. Form 1040 has $90,000 wages,
+$2,000 adjustments, zero additional income, and $6,306 total tax; no Form
+5329 is created.
+
+[IRS Notice 2008-59 Q&A-24](https://www.irs.gov/irb/2008-29_IRB)
+permits employer recoup of an erroneous contribution above the annual HSA
+maximum. Q&A-25 disallows recoup simply because the employee later ceases
+to be eligible. The [2025 Form 1099-SA and 5498-SA instructions](https://www.irs.gov/pub/irs-prior/i1099sa--2025.pdf)
+exclude employer-returned principal and earnings from Form 1099-SA box 1
+and the returned contribution from Form 5498-SA box 2. This bounded route
+requires final W-2/5498-SA net figures and a 2025 trustee remittance. It
+does not treat a later owner-paid withdrawal, an employer recoup after year
+end, or a contribution at/below the annual limit as this correction.
+
+Primary- and spouse-owner public packets pass full TY2025 v5.4 Return1040
+XSD and produce six-page PDFs each: Form 1040 pages 1–2, Schedule 1 pages
+1–2, and both owner-specific Form 8889 copies. All twelve pages were
+rendered and visually reviewed. Retained byte hashes establish local source
+integrity, not issuer authentication or IRS acceptance.
+The combined source and preservation gate passes 146/0
+(`/tmp/opentax-hsa-employer-recoup-final-focused-oct6.log`). Reviewed PDFs
+are retained at `.state/research/hsa-employer-recoup-oct6/T.pdf` and `S.pdf`
+with SHA-256 values
+`099cff52b09d460b42f0013a2e7587fe344d05e60cfc4430c76ad49cc8ba6dba`
+and `46b5a43536e8d946c94677c0663bb0e8357e3f918e7f44092d48b010dcff81fc`.
+Prior owner-paid code-2 PDFs, origins, and document manifests remain byte
+identical; their source/pending JSON differs only in the generated filer
+timestamp.
+The final direct-PDF negative gate passes 3/0 with both native and filled-PDF
+rejection for edited source code W, printed line 9, wages, HSA earnings, and
+missing owner copy (`/tmp/opentax-hsa-employer-recoup-direct-negative-oct6.log`).
+A raw replay from the eight separately retained document byte files and saved
+public inputs reproduces both pending graphs, both PDFs and page origins
+exactly; XML differs only in `ReturnTs` and both new outputs validate against
+the full v5.4 XSD (`/tmp/opentax-hsa-employer-recoup-raw-replay-oct6.log`).
+
+The prior owner-paid main integration passed the standard 143-case gate and
+replayed both retained packets against their source bytes, whole pending graph,
+native XML apart from its timestamp, PDF, and origins. All fourteen reviewed
+pages matched exactly. Its logs and manifest are recorded in the October 6
+status archive. At that checkpoint employer-returned excess was open; the
+bounded employer-error correction above now covers the sourced 2025 recoup.
