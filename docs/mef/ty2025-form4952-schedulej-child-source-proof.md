@@ -21,8 +21,8 @@ $74,062, and total tax is $137,792. Removing only the Schedule J election
 gives Form 1040 line 16 $77,569. Form 6251 Part III's preferential pool is
 $16,213 after the Form 4952 election. The native Form 4952 line 4e includes
 `investmentPropGainElectedCd="ELEC"` and elected amount `0`; its filled PDF
-prints `Elec. 0` beside line 4e as required by the [2025 Form 4952
-instructions](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf). The
+prints `Elec. 0` beside line 4e as required by the instructions on pages
+3–4 of the [2025 Form 4952 PDF](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf). The
 [2025 Form 6251 instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf)
 require a separately refigured AMT Form 4952 and a line 2c comparison;
 both reviewed copies produce a zero line 2c adjustment here.
