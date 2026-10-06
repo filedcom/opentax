@@ -85,7 +85,7 @@ export const form8995Pdf: PdfFormDescriptor = {
     const deduction = fields.qbi_deduction;
     if (
       (deduction === undefined || deduction === null || deduction === 0) &&
-      fields.multi_business_filing_rows === undefined
+      fields.multi_business_filing_rows === undefined && fields.joint_owner_filing_rows === undefined
     ) {
       assertNoUnfiled8995Loss(fields);
       return {};

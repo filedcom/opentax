@@ -1,3 +1,5 @@
+import { jointOwnerQbi } from "./joint-owner.ts";
+import { ownerSourcesSchema } from "../schedule_se/owner-calculation.ts";
 import { inputSchema as patronReviewSchema } from "../../../inputs/qbi_patron/schema.ts";
 import { patronSourceAmounts } from "../../../inputs/qbi_patron/calculation.ts";
 import {
@@ -63,6 +65,9 @@ function sumField(value: number | number[] | undefined): number {
 
 export const inputSchema = z.object({
   patron_source_review: patronReviewSchema.optional(),
+  joint_se_source: ownerSourcesSchema.optional(),
+  joint_owner_filing_rows: z.array(z.record(z.string(), z.unknown()))
+    .optional(),
   // Net QBI or (loss) from sole proprietorships (Schedule C), netted across businesses
   qbi_from_schedule_c: accumulable(z.number()).optional(),
   // Net QBI or (loss) from farming (Schedule F)
@@ -952,7 +957,10 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
         (input.schedule_c_qbi_businesses?.length === 1 &&
           input.investment_dividend_totals !== undefined))
     ) return { outputs: [] };
-    if (input.patron_source_review && input.agi === undefined) {
+    if (
+      (input.patron_source_review || input.joint_se_source) &&
+      input.agi === undefined
+    ) {
       return { outputs: [] };
     }
     const taxableIncome = taxableIncomeBeforeQbi(input, cfg);
@@ -969,19 +977,49 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       };
     }
 
-    const multipleLines = multipleScheduleCLines(input, cfg);
+    const ownedLines = input.joint_se_source &&
+        input.joint_se_source.businesses.every((row) =>
+          row.qbi_no_other_adjustments_confirmed === true &&
+          row.farm_optional_method_elected !== true
+        )
+      ? (() => {
+        if (
+          input.filing_status !== FilingStatus.MFJ || input.agi === undefined ||
+          input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+          input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+          sumField(input.qbi) !== 0 ||
+          sumField(input.se_health_insurance_deduction) !== 0 ||
+          sumField(input.retirement_plan_deduction) !== 0 ||
+          sumField(input.line6_sec199a_dividends) !== 0 ||
+          (input.qbi_loss_carryforward ?? 0) !== 0 ||
+          (input.reit_loss_carryforward ?? 0) !== 0 ||
+          qbiCapitalTotal(input) !== 0
+        ) {
+          throw new Error(
+            "Joint owner QBI needs its actual ordinary source and reviewed no-other-component records",
+          );
+        }
+        return jointOwnerQbi(
+          input.joint_se_source,
+          input.agi - standardDeductionAmount(input, cfg),
+          cfg.ssWageBase,
+        );
+      })()
+      : undefined;
+    const multipleLines = ownedLines ?? multipleScheduleCLines(input, cfg);
     if (netQbi(input) < 0 && multipleLines === undefined) {
       throw new Error(
         "Form 8995 net QBI loss needs a sourced carryforward filing route",
       );
     }
 
-    const simplifiedLines = input.schedule_f_qbi_businesses !== undefined
-      ? oneScheduleFLines(input, cfg)
-      : input.schedule_c_qbi_businesses !== undefined
-      ? multipleLines ?? twoSmallScheduleCLines(input, cfg) ??
-        oneScheduleCLines(input, cfg)
-      : reitOnlyLines(input, cfg);
+    const simplifiedLines = ownedLines ??
+      (input.schedule_f_qbi_businesses !== undefined
+        ? oneScheduleFLines(input, cfg)
+        : input.schedule_c_qbi_businesses !== undefined
+        ? multipleLines ?? twoSmallScheduleCLines(input, cfg) ??
+          oneScheduleCLines(input, cfg)
+        : reitOnlyLines(input, cfg));
     // The bounded filed routes carry whole-dollar line 15 exactly
     // into Form 1040. Other QBI routes retain their existing calculation.
     const deduction = simplifiedLines === undefined

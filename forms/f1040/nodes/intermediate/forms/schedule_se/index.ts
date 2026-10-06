@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
@@ -16,10 +16,20 @@ import { schedule1a } from "../schedule1a/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { scheduleSELines } from "./calculation.ts";
+import {
+  ownedScheduleSE,
+  ownerBusinessSchema,
+  ownerIdentitySchema,
+  ownerWageSchema,
+} from "./owner-calculation.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 export const inputSchema = z.object({
+  owner_identity: ownerIdentitySchema.optional(),
+  owner_business_sources: z.array(ownerBusinessSchema).optional(),
+  owner_wage_sources: z.array(ownerWageSchema).optional(),
+  owner_instances: z.array(z.record(z.string(), z.unknown())).optional(),
   // Net profit from Schedule C, line 31 (Sch SE Line 2)
   net_profit_schedule_c: z.number().optional(),
   // Net farm profit from Schedule F, line 34 (Sch SE Line 1a)
@@ -64,6 +74,61 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
     if (!cfg) throw new Error(`No schedule_se config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
 
+    if (input.owner_identity && input.owner_business_sources?.length) {
+      if (
+        (input.unreported_tips_4137 ?? 0) !== 0 || (input.wages_8919 ?? 0) !== 0
+      ) {
+        throw new Error(
+          "Owned Schedule SE needs separate owner sources for Forms 4137/8919",
+        );
+      }
+      const owned = ownedScheduleSE({
+        identity: input.owner_identity,
+        businesses: input.owner_business_sources,
+        wages: input.owner_wage_sources ?? [],
+      }, cfg.ssWageBase);
+      const sole = owned.instances.length === 1
+        ? owned.instances[0]
+        : undefined;
+      return {
+        outputs: [
+          output(schedule_se, {
+            owner_instances: owned.instances,
+            ...(sole ? { w2_ss_wages: sole.w2_ss_wages || undefined } : {}),
+          }),
+          this.outputNodes.output(schedule2, { line4_se_tax: owned.tax }),
+          this.outputNodes.output(schedule1, {
+            line15_se_deduction: owned.deduction,
+          }),
+          this.outputNodes.output(agi_aggregator, {
+            line15_se_deduction: owned.deduction,
+          }),
+          this.outputNodes.output(eitc, { se_tax_deduction: owned.deduction }),
+          this.outputNodes.output(form8959, {
+            se_income: owned.medicareEarnings,
+          }),
+          this.outputNodes.output(form8995, {
+            se_tax_deduction: owned.deduction,
+            joint_se_source: owned.source,
+          }),
+          this.outputNodes.output(schedule1a, {
+            qualified_tips_se_deduction: owned.deduction,
+            qualified_tips_schedule_f_profit: input.net_profit_schedule_f ?? 0,
+            qualified_tips_farm_optional_method:
+              input.farm_optional_method_elected === true,
+          }),
+          this.outputNodes.output(form7206, {
+            schedule_se_source: {
+              net_profit_schedule_c: input.net_profit_schedule_c ?? 0,
+              net_profit_schedule_f: input.net_profit_schedule_f ?? 0,
+              farm_optional_method_elected:
+                input.farm_optional_method_elected === true,
+              line13_deduction: owned.deduction,
+            },
+          }),
+        ],
+      };
+    }
     const lines = scheduleSELines(input, cfg.ssWageBase);
     const source = (line13Deduction: number) =>
       this.outputNodes.output(form7206, {

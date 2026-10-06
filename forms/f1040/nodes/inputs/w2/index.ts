@@ -1,3 +1,4 @@
+import { ownerIdentitySchema } from "../../intermediate/forms/schedule_se/owner-calculation.ts";
 import { inputSchema as patronReviewSchema } from "../qbi_patron/schema.ts";
 import { z } from "zod";
 import type {
@@ -265,6 +266,7 @@ export const inputSchema = z.object({
   w2s: z.array(w2ItemSchema).min(1).describe("All W-2 forms for this return"),
   f8958_allocation: form8958InputSchema.optional(),
   patron_filing_review: patronReviewSchema.optional(),
+  owner_identity: ownerIdentitySchema.optional(),
 });
 
 type F1040Input = z.infer<typeof f1040.inputSchema>;
@@ -1233,6 +1235,25 @@ class W2Node extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(f1040, f1040Fields as AtLeastOne<F1040Input>),
     ];
 
+    if (input.owner_identity) {
+      outputs.push(
+        output(schedule_se, {
+          owner_wage_sources: regularItems(input.w2s).map((row) => {
+            if (!row.employee_ssn || !row.source_document_reference) {
+              throw new Error(
+                "Joint Schedule SE needs identified issued W2 owner sources",
+              );
+            }
+            return {
+              employee_ssn: row.employee_ssn.replaceAll("-", ""),
+              source_reference: row.source_document_reference,
+              ss_wages_and_tips: (row.box3_ss_wages ?? 0) +
+                (row.box7_ss_tips ?? 0),
+            };
+          }),
+        }),
+      );
+    }
     // Route taxable W-2 wages and §501(c)(18)(D) deduction to AGI.
     // Form 4137 routes the actual unreported tips after reconciling box 8.
     const agiWageFields: Partial<

@@ -1,5 +1,6 @@
 import { form8994OwnedReviewFixture } from "./review-8994-owned.fixture.ts";
 import { form8941ArrangementReviewFixture } from "./review-8941-arrangements.fixture.ts";
+import { ownedScheduleSeReviewFixture } from "./review-schedule-se-owner.fixture.ts";
 import { form8941FamilyReviewFixture } from "./review-8941-family.fixture.ts";
 import { form8941PartYearReviewFixture } from "./review-8941-partyear.fixture.ts";
 import { form8941OwnedReviewFixture } from "./review-8941-owned.fixture.ts";
@@ -9041,6 +9042,10 @@ const educationBase = basePdfReviewFixtures.find((fixture) =>
 )!;
 export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
   ...(["full", "partial", "zero"] as const).map(form8994OwnedReviewFixture),
+  ownedScheduleSeReviewFixture(
+    basePdfReviewFixtures.find(f => f.id === "single-schedule-c")!,
+    jointPatronFixture(basePdfReviewFixtures.find(f => f.id === "single-schedule-c")!, basePdfReviewFixtures.find(f => f.id === "joint-two-w2s")!, "farm"),
+  ),
   form8941OwnedReviewFixture(),
   form8941PartYearReviewFixture(),
   form8941FamilyReviewFixture(),

@@ -478,6 +478,30 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
       );
     }
 
+    if (input.filing_status === "mfj") {
+      outputs.push(
+        this.outputNodes.output(schedule_se, {
+          owner_business_sources: items.flatMap((item, index) => {
+            if (isSeExempt(item)) return [];
+            if (!item.proprietor_recipient || !item.business_reference) {
+              throw new Error(
+                "Joint Schedule SE needs each Schedule C proprietor and activity source",
+              );
+            }
+            return [{
+              recipient: item.proprietor_recipient,
+              source_reference: item.business_reference,
+              kind: "schedule_c",
+              net_profit: netProfits[index],
+              business_name: item.line_c_business_name,
+              ein: item.line_d_ein?.replace(/\D/g, ""),
+              qbi_no_other_adjustments_confirmed:
+                item.qbi_no_other_adjustments_confirmed === true,
+            }];
+          }),
+        }),
+      );
+    }
     // Schedule SE: combine the businesses first, then test the total.
     // i1040sse, More Than One Business: "If you had a loss in one business, it reduces the
     // income from another. Figure the combined SE tax on one Schedule SE." The $400 test is

@@ -1,3 +1,4 @@
+import { assertOwnedScheduleSE } from "./schedule-se-owner-source.ts";
 import { CONFIG_BY_YEAR } from "../nodes/config/index.ts";
 import { scheduleSELines } from "../nodes/intermediate/forms/schedule_se/calculation.ts";
 
@@ -11,7 +12,8 @@ export function assertSchedule2ScheduleSETax(
   const source = pending.schedule_se as
     | Parameters<typeof scheduleSELines>[0]
     | undefined;
-  const tax = source === undefined ? 0 : scheduleSELines(
+  const owned = assertOwnedScheduleSE(pending as Record<string, Record<string, unknown>>);
+  const tax = owned ? owned.tax : source === undefined ? 0 : scheduleSELines(
     source,
     CONFIG_BY_YEAR[2025].ssWageBase,
   )?.line12 ?? 0;

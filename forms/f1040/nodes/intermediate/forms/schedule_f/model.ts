@@ -251,6 +251,7 @@ export const farmSourceSchema = z.object({
 export type FarmSource = z.infer<typeof farmSourceSchema>;
 
 export const inputSchema = z.object({
+  owner_filing_status: z.literal("mfj").optional(),
   patron_filing_review: patronReviewSchema.optional(),
   schedule_fs: z.array(itemSchema),
   farm_optional_method_elected: z.boolean().optional(),

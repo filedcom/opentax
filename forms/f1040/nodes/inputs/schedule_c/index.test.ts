@@ -1084,7 +1084,12 @@ Deno.test("Form 461 receives a smaller Schedule C loss without applying its own 
 
 Deno.test("Form 461 receives MFJ Schedule C source before the joint threshold", () => {
   const result = compute(
-    [minimalItem({ line_1_gross_receipts: 0, line_8_advertising: 700000 })],
+    [minimalItem({
+      line_1_gross_receipts: 0,
+      line_8_advertising: 700000,
+      proprietor_recipient: "T",
+      business_reference: "Synthetic primary MFJ Form461 loss 700000",
+    })],
     { filing_status: "mfj" },
   );
   const f461 = findOutput(result, "form461");
@@ -1094,7 +1099,12 @@ Deno.test("Form 461 receives MFJ Schedule C source before the joint threshold", 
 
 Deno.test("Form 461 receives MFJ Schedule C loss below joint threshold", () => {
   const result = compute(
-    [minimalItem({ line_1_gross_receipts: 0, line_8_advertising: 400000 })],
+    [minimalItem({
+      line_1_gross_receipts: 0,
+      line_8_advertising: 400000,
+      proprietor_recipient: "T",
+      business_reference: "Synthetic primary MFJ Form461 loss 400000",
+    })],
     { filing_status: "mfj" },
   );
   const f461 = findOutput(result, "form461");

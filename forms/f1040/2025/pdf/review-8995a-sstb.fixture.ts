@@ -125,6 +125,7 @@ export function jointPrimaryAccountingSstbFixture(
     ...joint.inputs.general as Record<string, unknown>,
   };
   const wage = (inputs.w2 as Record<string, unknown>[])[0];
+  wage.source_document_reference = "Synthetic primary issued 2025 joint SSTB W2";
   wage.box1_wages = 420000;
   wage.box2_fed_withheld = 90000;
   wage.box5_medicare_wages = 420000;

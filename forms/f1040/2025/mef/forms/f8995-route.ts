@@ -1,3 +1,4 @@
+import { assertJointOwner8995 } from "./f8995-joint-owner.ts";
 import { assertMultipleScheduleC8995 } from "./f8995-multiple.ts";
 import { normalizeAllPending } from "../../pending.ts";
 import {
@@ -1046,6 +1047,7 @@ export function assertPositive8995(
   fields: Record<string, unknown>,
   pending: Readonly<Record<string, unknown>> | undefined,
 ): Filed8995 {
+  if (fields.joint_owner_filing_rows !== undefined) return assertJointOwner8995(fields, pending);
   if (fields.multi_business_filing_rows !== undefined) {
     return assertMultipleScheduleC8995(fields, pending);
   }

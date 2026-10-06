@@ -143,6 +143,37 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
       ));
     }
 
+    if (input.owner_filing_status === "mfj") {
+      outputs.push(
+        this.outputNodes.output(schedule_se, {
+          owner_business_sources: input.schedule_fs.map((item, index) => {
+            if (!item.proprietor_recipient || !item.farm_id) {
+              throw new Error(
+                "Joint Schedule SE needs each farm proprietor and source activity",
+              );
+            }
+            return {
+              recipient: item.proprietor_recipient,
+              source_reference: item.farm_id,
+              kind: "schedule_f",
+              business_name: item.line_c_farm_name,
+              ein: item.line_d_ein?.replace(/\D/g, ""),
+              qbi_no_other_adjustments_confirmed:
+                item.qbi_no_other_adjustments_confirmed === true,
+              net_profit: input.farm_optional_method_elected === true
+                ? atRisk[index].preliminaryNet
+                : netProfits[index],
+              ...(input.farm_optional_method_elected === true
+                ? {
+                  farm_optional_method_elected: true,
+                  gross_farm_income: computeGrossIncome(item),
+                }
+                : {}),
+            };
+          }),
+        }),
+      );
+    }
     if (input.farm_optional_method_elected === true) {
       // 2025 Schedule SE Part II footnotes: gross farm income comes from
       // Schedule F line 9, and net farm profit from line 34, before the

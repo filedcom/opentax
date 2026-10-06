@@ -1,3 +1,4 @@
+import { assertOwnedScheduleSE } from "../../schedule-se-owner-source.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import { scheduleSELines } from "../../../nodes/intermediate/forms/schedule_se/calculation.ts";
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
@@ -56,7 +57,9 @@ function buildIRS1040ScheduleSE(
   if (optional && !lines) return "";
 
   const pending = context?.pending;
-  const spouseOwned = scheduleSeSpouseProprietor(pending, fields);
+  const spouseOwned = fields.owner_recipient === "S" ||
+    (fields.owner_recipient === undefined &&
+      scheduleSeSpouseProprietor(pending, fields));
   const ssn =
     (spouseOwned ? context?.filer?.spouse?.ssn : context?.filer?.primarySSN)
       ?.replaceAll("-", "");
@@ -113,11 +116,28 @@ function buildIRS1040ScheduleSE(
   return elements("IRS1040ScheduleSE", [ssnChild, ...children]);
 }
 
-export const scheduleSE: MefFormDescriptor<"schedule_se", Input> = {
+export const scheduleSE: MefFormDescriptor<
+  "schedule_se",
+  Input,
+  string | readonly string[]
+> = {
   pendingKey: "schedule_se",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sse.pdf",
   build(fields, context) {
-    return buildIRS1040ScheduleSE(fields, context);
+    const owned = context?.pending
+      ? assertOwnedScheduleSE(
+        context.pending as Record<string, Record<string, unknown>>,
+        context.filer,
+      )
+      : undefined;
+    return owned
+      ? owned.instances.map((row) =>
+        buildIRS1040ScheduleSE(
+          { ...row, owner_recipient: row.recipient },
+          context,
+        )
+      )
+      : buildIRS1040ScheduleSE(fields, context);
   },
 };
