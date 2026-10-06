@@ -2,9 +2,9 @@
 
 ## Compacted status (2026-10-06)
 
-The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,468 recorded slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,469 recorded slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
 
-Inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF keys / 96 covered / 18 uncovered**.
+Inventory: **151 native / 118 PDF descriptors**, **366 fixtures**, **115 PDF keys / 97 covered / 18 uncovered**.
 
 Latest verified work: source-based preferential ScheduleJ with farm QBI, no-election AMT and staged adoption/education/QEF (**main10/0 + 100/0**), five reviewed full-XSD packets / 85 pages and actual raw-source replay exact after Roth integration. Exact Form4952 cents and donation proofs remain archived. Corrected ordinary-Roth sources pass fresh main11/0 +209/0 and actual retained-source replay35packets/295pages;873 corrected archived files remain byte-exact. Wider parents remain open.
 

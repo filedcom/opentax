@@ -1,6 +1,6 @@
 # TY2025 nonnamed product-board dependency audit
 
-Latest inventory replay: October 6 at `2899d051b`. The board has 52 open rows and 1,438 completed bounded slices. Live imports contain150 native and116 PDF descriptors; the planner has365 fixtures,96 of113 unique PDF keys and17 uncovered keys. Main reviewed18-packet catalog gate passed24/0. Full regression fbacc539c failed11,577/14/0ignored; all14 have focused repaired-main proof. Immutable181575242 full rerun remains live; no latest full pass is claimed. Named-form parents remain in the current execution goal. This supersedes older inventory and deferral language below; historical checkpoints remain evidence only for their stated source. See the [current registry replay](ty2025-native-pdf-registry-parity.md#october-6-current-registry-and-planner-reconciliation).
+Latest authoritative registry/catalog replay: October6 after source-backed QEF catalog registration:151native/147keys,118PDF/115keys,366fixtures/97covered/18uncovered. Reviewed selected QEF packet1/7 and read-only source/artifact/XSD replay pass; existing PFIC/inventory9/0. Frozen52/ledger1469. Prior census counts below are historical; no source-family or release closure is inferred.
 
 Status: 2026-10-04. This maps all **32 open checklist rows outside the
 "Named tax-form gaps" section** of [`product_board.md`](../../product_board.md):

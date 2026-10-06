@@ -1,3 +1,4 @@
+import { form8621QefReviewFixture } from "../form8621_qef.fixture.ts";
 import { tipHealthCfBeneficiaryReviewFixtures } from "./review-tip-health-cf-beneficiary.fixture.ts";
 import { businessTipSourceInputs } from "./business-tip-source.fixture.ts";
 import { multipleAnnuityReviewFixtures } from "./review-4972-multiple-annuity.fixture.ts";
@@ -9187,6 +9188,7 @@ const existingPdfReviewFixtures: readonly PdfReviewFixture[] = [
       "School 1098T No/No indicators and truthful issued-copy exemption match sourced institution identity and Form8863 rows",
     ],
   },
+  form8621QefReviewFixture(basePdfReviewFixtures.find((row) => row.id === "single-w2-refund")!),
   ...basePdfReviewFixtures,
   twoSchoolEducationFixture(educationBase, "llc"),
   twoSchoolEducationFixture(educationBase, "aoc"),
