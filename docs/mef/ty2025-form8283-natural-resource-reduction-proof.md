@@ -247,3 +247,8 @@ fixture financial-PDF modification metadata.
 Producing617 depletion coordination/AMT, positive mining/IDC preferences,
 percentage-depletion and broader legacy methods remain existing parent scope.
 This supported source portion does not close the entire Form8283 parent.
+
+
+## Main legacy1254 verification
+
+Productione5db4222a: standard main task17/0 in1m22s, `/tmp/opentax-resource-legacy-current-main-source-oct6.log`. Immutable original-source replay14packets/235files exact exceptXMLReturnTs, fullXSD/native/PDF/pending/carry/math/origins and original attachments, `/tmp/opentax-resource-legacy-current-main-held-oct6.log`; new outputs `/tmp/opentax-resource-legacy-current-main-held-oct6`. The original490page visual proof manifest SHA25648c99f7d744e1ee00d488ef1d77dfbce047c41933041cebf230292bffdd58091 remains unchanged. Isolated33modulecompat578/0 applies to same production; no fresh main compatibility claim. FullV5 wrapper65945/Deno65949 live115m20s; no terminal/fullpass claim. Frozen52/future unchanged; Rothsource correction ongoing and qualifications preserved.

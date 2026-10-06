@@ -2,13 +2,13 @@
 
 ## Compacted status (2026-10-06)
 
-The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,464 recorded slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,465 recorded slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
 
 Inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF keys / 96 covered / 18 uncovered**.
 
-Latest verified work: natural-resource donation source reductions and corrected Section B explanation labels. Main source **15/0**, rehearsal compatibility **578/0**, and main label checks **43/0**; forty retained full-XSD packets cover 472 return pages. All 47 changed explanation pages were reviewed; 425 other pages and all 888 original files are exact. Earlier Roth proofs remain retained, but ordinary-Roth Box 7 classification is under correction. Wider parents remain open.
+Latest verified work: legacy1254 depletion-offset source accounts (**17/0**) and fourteen full-XSD retained packets / 235 files exact, with 490 reviewed page occurrences; natural-resource donation source reductions and corrected Section B explanation labels. Main source **15/0**, rehearsal compatibility **578/0**, and main label checks **43/0**; forty retained full-XSD packets cover 472 return pages. All 47 changed explanation pages were reviewed; 425 other pages and all 888 original files are exact. Earlier Roth proofs remain retained, but ordinary-Roth Box 7 classification is under correction. Wider parents remain open.
 
-Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at110m54s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
+Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at115m20s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
 
 Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **e1af772d7**, published with the credit changes; current local source changes await publication.
 
