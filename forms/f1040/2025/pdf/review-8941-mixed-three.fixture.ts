@@ -15,6 +15,8 @@ import {
 import { scheduleSELines } from "../../nodes/intermediate/forms/schedule_se/calculation.ts";
 import { allocateSharedSeDeduction } from "../../nodes/inputs/schedule_c/qbi-multiple.ts";
 import { CONFIG_BY_YEAR } from "../../nodes/config/index.ts";
+import { extractFilerIdentity } from "../../mef/filer.ts";
+import type { PdfReviewFixture } from "./review-fixtures.ts";
 
 /** Two retail payrolls and a third, independently sourced cash farm payroll. */
 export function form8941MixedThreeInputs(
@@ -169,4 +171,39 @@ export function form8941MixedThreeInputs(
       source_document_reference: farm.farm_issued_receipt_references[1],
     }],
   };
+}
+
+/** Three complete, previously reviewed C/C/F group credit packets. */
+export function form8941MixedThreeReviewFixtures(): readonly PdfReviewFixture[] {
+  return ([
+    ["full", 180000, 210000, 180000],
+    ["partial", 170000, 210000, 180000],
+    ["zero", 85000, 145000, 140000],
+  ] as const).map(([use, agriculture, first, second]) => {
+    const inputs = form8941MixedThreeInputs(agriculture, first, second);
+    return {
+      id: `same-proprietor-two-c-one-f-shop-${use}`,
+      inputs,
+      filer: extractFilerIdentity(inputs.general)!,
+      expectedPdfForms: [
+        "f1040",
+        "schedule1",
+        "schedule2",
+        ...(use === "zero" ? [] : ["schedule3"]),
+        "schedule_c",
+        "schedule_c",
+        "schedule_f",
+        "schedule_se",
+        "f3800",
+        "form6251",
+        "form8995",
+        "f8941",
+      ],
+      reviewFocus: [
+        "Two actual Schedule C payrolls and one separately sourced cash farm payroll aggregate into one controlled Form 8941",
+        "One shared worker is capped at 2080 annual credited hours with one paid group SHOP enrollment",
+        `Full determined credit reduces both C14 expenses and F15 expense before owner SE/QBI; ${use} current Form 3800 use agrees with the filled packet`,
+      ],
+    };
+  });
 }

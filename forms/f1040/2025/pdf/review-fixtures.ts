@@ -1,6 +1,8 @@
 import { multipleAnnuityReviewFixtures } from "./review-4972-multiple-annuity.fixture.ts";
 import { multipleNuaReviewFixtures } from "./review-4972-multiple-nua.fixture.ts";
 import { mixedCfHealthFixtures } from "./review-mixed-cf-health.fixture.ts";
+import { qualifiedTipReviewFixtures } from "./review-qualified-tips.fixture.ts";
+import { form8941MixedThreeReviewFixtures } from "./review-8941-mixed-three.fixture.ts";
 import { mixedControlledWotcFixtures } from "./review-mixed-controlled-wotc.fixture.ts";
 import { controlledFarmWotcFixtures } from "./review-controlled-farm-wotc.fixture.ts";
 import { twoFarmWotcFixtures } from "./review-two-farm-wotc.fixture.ts";
@@ -9068,7 +9070,7 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
 const educationBase = basePdfReviewFixtures.find((fixture) =>
   fixture.id === "single-form8863-lifetime-learning-scholarship"
 )!;
-export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
+const existingPdfReviewFixtures: readonly PdfReviewFixture[] = [
   ...multipleAnnuityReviewFixtures,
   ...multipleNuaReviewFixtures,
   ...twoFarmWotcFixtures(farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!)),
@@ -9255,3 +9257,12 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     )
   ),
 ];
+
+// The qualified-tip public fixtures select existing catalog source returns.
+// Initialize the reviewed base inventory before constructing those inputs.
+const mutablePdfReviewFixtures: PdfReviewFixture[] = [...existingPdfReviewFixtures];
+export const pdfReviewFixtures: readonly PdfReviewFixture[] = mutablePdfReviewFixtures;
+mutablePdfReviewFixtures.push(
+  ...qualifiedTipReviewFixtures(),
+  ...form8941MixedThreeReviewFixtures(),
+);

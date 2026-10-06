@@ -1,14 +1,14 @@
 import { pdfReviewFixtures } from "./review-fixtures.ts";
 import { independentHealthInputs } from "./form7206-independent-owner.fixture.ts";
 import { inputSchema as wotcSchema } from "../../nodes/inputs/f5884/index.ts";
-const base = pdfReviewFixtures.find((f) =>
-  f.id === "single-1099nec-trade-business-tips-schedule1a"
-)!;
 export function singleTipInputs(
   receipts = 80000,
   tipAmount = 12000,
   wages = 0,
 ): any {
+  const base = pdfReviewFixtures.find((f) =>
+    f.id === "single-1099nec-trade-business-tips-schedule1a"
+  )!;
   const i: any = structuredClone(base.inputs);
   i.f1099nec[0].box1_nec = receipts;
   i.f1099nec[0].qualified_tips_review.amount = tipAmount;
