@@ -2734,3 +2734,25 @@ Integrated a31d6b09a/41ded3aae. Standard source first4/4 and initialcompat33/8 f
 ## Published credit checkpoint and live next gates
 
 GitHub verified PR63 head0feee220bda6a05224d3f303d7d2cca4029c0e7c, title/body/draft updated with wholebranch credit coverage. Wholebranch518commits/767files135753+/5147− retained in /tmp/opentax-pr63-oct6-credit-full-{log,stat}.txt. App attach2359 terminated after no successful response; do not claim attachment. FullV5 wrapper65945/Deno65949 verifiedlive89m16s, no terminal. Naturalresource freshcurrentmain rehearsal1aec01675 at /tmp/opentax-resource-main-rehearsal-oct6 source4915 (/tmp/opentax-resource-main-rehearsal-source-oct6.log) and33modulecompat36725 (/tmp/opentax-resource-main-rehearsal-compat-oct6.log) live, positive complete packets advancing. Ready Rothconsumedhistory c9eb6ad777f474b4037b7e9d2b2f1dbad669fbf7 in /tmp/opentax-form4852-roth-consumed-history-oct6 has2/0+264/0,held12/107current+91historical reviewedpages,old33/258exact; freshmain integration not yet started. Archiveagent prior13/118 audit active; do not claim freshresult. Existing current2025 Rothconversion andlegacy1254 nextparentwork isolated aftercompaction. Frozen52/future unchanged, ledger1462, currentgoalturn progress.
+
+
+## Before consumed Roth history integration
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,462 completed slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
+
+Inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF keys / 96 covered / 18 uncovered**.
+
+Latest verified work: QEF Election B refigures actual education/dependent credits and tax-limited business credits (**8/0 + 41/0**). Four full-XSD packets / 54 reviewed pages preserve all 16 source/pending/PDF/origin files exactly, with XML only timestamp changes. Earlier Roth conversion, donated-asset and simultaneous-QEF proofs remain archived. Wider parents remain open.
+
+Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at89m16s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
+
+Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **0feee220b**, verified published with the new credit changes.
+
+Roth consumed-history and natural-resource donation changes are ready in isolated checkouts; a fresh-main natural-resource rehearsal is running. Root preferential ScheduleJ/AMT source work has an isolated checkout and a retained guard audit. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+
+
+Previousgoalturn progress: maincredit a31/41ded sealed49checks/54reviewedpages andpublishedPR63 e1af772d7. CurrentV5 live89m56s wrapper65945/Deno65949. Naturalresource current-mainrehearsal source15/0 terminal; compat36725 live. Regenerated219filebytecompare fails active_idc_oil attachmentPDF; preservefailedcomparison and use originalimmutable v20 source/retainedbytes for heldreplay before supportclaim. Readyhistoryc9eb6ad777 actual12/107+91priorpages,2/0+264/0,original33/258preserved; integrate then freshmainchecks and actualimmutableheldreplay before ledger. Frozen52/future unchanged,ledger1462.
