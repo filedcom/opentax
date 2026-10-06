@@ -2155,3 +2155,20 @@ Complete ordinary-refund inventory is verified on main; Form4852, remaining Form
 
 
 Sharedparticipant isolated4faff4f96/fb0996cbe:4publicfullXSDreturns/16reviewedpages/20issuedcopies, immutable snapshot /tmp/opentax-form4972-shared-reviewed-4faff4f96.37filepreservation terminal301/1(4m19s), one old assertion expects elect_capital_gain=false toreject. Actual2025instructions permit10yearonly; complete independentDecimal oracle for existing singly sourced fixture predicts2610 and explicitlines8–30. Replace obsolete negative with full positive packet, preserving missingannuityshare/10year/NUAnegative assertions; rerun same37filegate. Mainstill1444/52frozen/future untouched.
+
+## Before shared-participant Form4972 integration
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,444 bounded slices**. Learnings and exact proof remain in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Newly discovered work goes only in `future_todo` and is not executed.
+
+Actual inventory: **150 native / 116 PDF descriptors**, **365 fixtures**, **113 PDF keys / 96 covered / 17 uncovered**. Recent main proof: reviewed catalog24/0 (375 preserved pages), C/F loss-owner health28/0 (6/182), beneficiary death/estate3/0+15/0 (26/78), senior/independent-health6/0+111/0 and retained5/0 (5/95), complete refund inventory119/0 (8/30), fractional beneficiary15/0+298/0 (17/51), paired beneficiaries4/0+298/0 (17/68). Source/PDF bytes match reviewed originals; timestamp-only XML differences are recorded. These close their stated slices; broader parents remain open.
+
+Full `deno task test` at fbacc539c failed11,577/14/0ignored, exit1(82m15s); all14 have focused repaired-main proof. Immutable181575242 rerun started03:53:35UTC; wrapper44964/Deno44970 verified live at62m40s. Its terminal result and a passing full run of latest source remain required. Publication checkpoint for draft [PR63](https://github.com/filedcom/opentax/pull/63): **90f7998cc**, verified published with the paired beneficiary proof.
+
+Complete ordinary-refund inventory is verified on main; Form4852, remaining Form4972, Form8283 and Form8621 parent work continue in isolated checkouts. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+
+
+Isolated ddf7425d1 includes five shared-participant packets and single PartIII-only replacement:6 packets/23 reviewed pages/26 transmitted source copies. Five-packet public gate4/0(19s), single1/0(3s), 37-file preservation303/0(4m12s), source08ba52b14. Original four shared and single artifacts retained separately; five-case manifest56999d13077c91b047fdbea744f28b07e6c26b4a794f5c3eef5952723a58cd87. Main replay and source/PDF/XML comparison still required before ledger credit. Full regression44964/44970 live82m29s at latest observation; no terminal claim. No future work executed.
