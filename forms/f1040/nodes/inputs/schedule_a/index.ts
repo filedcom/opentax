@@ -33,6 +33,7 @@ const noncashContributionItemSchema = z.object({
   original_fmv: z.number().nonnegative().optional(),
   adjusted_basis: z.number().nonnegative().optional(),
   capital_gain_reduction_election_confirmed: z.literal(true).optional(),
+  contribution_year_disposition_reduction_confirmed: z.literal(true).optional(),
   unrelated_use_capital_gain_reduction_confirmed: z.literal(true).optional(),
   private_foundation_capital_gain_reduction_confirmed: z.literal(true)
     .optional(),
@@ -231,6 +232,7 @@ export const inputSchema = z.object({
       item.category === "noncash_50" && !noAppreciation &&
       item.capital_gain_reduction_election_confirmed !== true &&
       item.unrelated_use_capital_gain_reduction_confirmed !== true &&
+      item.contribution_year_disposition_reduction_confirmed !== true &&
       item.taxidermy_capital_gain_reduction_confirmed !== true &&
       item.intellectual_property_capital_gain_reduction_confirmed !== true
     ) {
@@ -309,6 +311,7 @@ export const inputSchema = z.object({
         if (
           (item.capital_gain_reduction_election_confirmed !== true &&
             item.unrelated_use_capital_gain_reduction_confirmed !== true &&
+            item.contribution_year_disposition_reduction_confirmed !== true &&
             item.taxidermy_capital_gain_reduction_confirmed !== true &&
             item.intellectual_property_capital_gain_reduction_confirmed !==
               true &&

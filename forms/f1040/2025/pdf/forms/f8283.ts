@@ -909,6 +909,10 @@ export const form8283Pdf: PdfFormDescriptor = {
       item.unrelated_use_capital_gain_reduction !== undefined &&
       needsFmvReductionStatement(item)
     );
+    const dispositionReduction = sectionA.some((item) =>
+      item.contribution_year_disposition_reduction !== undefined &&
+      needsFmvReductionStatement(item)
+    );
     const privateFoundationReduction = sectionA.some((item) =>
       item.private_foundation_capital_gain_reduction !== undefined &&
       needsFmvReductionStatement(item)
@@ -926,7 +930,7 @@ export const form8283Pdf: PdfFormDescriptor = {
       !creatorReduction && !manuscriptReduction &&
       !unrelatedUseReduction && !soldVehicle && !exceptionVehicle &&
       !privateFoundationReduction && !taxidermyReduction &&
-      !intellectualPropertyReduction &&
+      !intellectualPropertyReduction && !dispositionReduction &&
       sectionA.some((item) => needsFmvReductionStatement(item))
     ) {
       throw new Error(
@@ -938,7 +942,7 @@ export const form8283Pdf: PdfFormDescriptor = {
       !elected && !shortTermReduction && !inventoryReduction &&
       !creatorReduction && !manuscriptReduction && !unrelatedUseReduction &&
       !privateFoundationReduction && !taxidermyReduction &&
-      !intellectualPropertyReduction &&
+      !intellectualPropertyReduction && !dispositionReduction &&
       !soldVehicle &&
       !exceptionVehicle
     ) {

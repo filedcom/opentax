@@ -733,3 +733,15 @@ creator/full-appraisal $600,000 claim, A/B grouping, shared A/B/C forms, multipl
 owners, independent return-tax joins, all-page inventory and exact proof limits.
 Outside signature/appraisal authentication and trusted accepted-prior archives
 remain conditional boundaries; no synthetic signature or acknowledgment closes them.
+
+## 2026-10-06 current-year donee disposition source route
+
+The contribution-year original-donee sale/no-exempt-use-certification route now
+retains actual completed official Form8282 donor-copy fields, an owned purchase
+and certification inventory, and source-derived pre-AGI basis reduction. SectionA
+and grouped/individual/multiowner/mixed SectionB public returns are proved with
+full native/XSD/PDF and all169pages reviewed. See
+[the exact source proof](ty2025-form8283-contribution-year-disposition-proof.md).
+This preserves the original Form8283 intended-use answer. It does not claim
+external signature/authentication, prior accepted carryover evidence, current
+1245/1250 depreciation support, or parent completion.

@@ -707,9 +707,12 @@ export async function buildPdfBytes(
   }
   if (
     !preparedBundle && normalized.f8283 &&
-    form8283SourceSchema.parse(normalized.f8283).section_b_items?.some((row) =>
+    (form8283SourceSchema.parse(normalized.f8283).section_b_items?.some((row) =>
       row.signed_form_source_review?.reviewed_form_fields
-    )
+    ) ||
+      form8283SourceSchema.parse(normalized.f8283).section_a_items?.some(
+        (item) => item.contribution_year_disposition_reduction,
+      ))
   ) {
     throw new Error(
       "Reviewed signed Form8283 PDF needs its prepared return and retained field evidence",

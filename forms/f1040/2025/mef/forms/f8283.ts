@@ -360,6 +360,15 @@ export function fmvReductionExplanation(
     ? `Purchased long-term tangible personal property is put to a use unrelated to the donee's exempt purpose. Purchase record ${item.unrelated_use_capital_gain_reduction.purchase_record_reference} and donee-use statement ${item.unrelated_use_capital_gain_reduction.donee_unrelated_use_statement_reference} support the section 170(e)(1)(B)(i) reduction of long-term appreciation ${
       usd(fmv - item.cost_or_adjusted_basis)
     }, leaving adjusted basis ${usd(item.cost_or_adjusted_basis)}.`
+    : item.contribution_year_disposition_reduction !== undefined &&
+        item.cost_or_adjusted_basis !== undefined
+    ? `Original donee ${item.contribution_year_disposition_reduction.donee_name} (EIN ${item.contribution_year_disposition_reduction.donee_ein}) sold the property on ${item.contribution_year_disposition_reduction.disposition_date}, during the contribution year, for ${
+      usd(item.contribution_year_disposition_reduction.gross_proceeds)
+    }. Disposition record ${item.contribution_year_disposition_reduction.donee_disposition_record_reference} and certification inventory ${item.contribution_year_disposition_reduction.exempt_use_certification_inventory_reference} retain no exempt-use certification. Section170(e)(1)(B)(i)(II) removes long-term appreciation ${
+      usd(fmv - item.cost_or_adjusted_basis)
+    }, leaving basis ${
+      usd(item.cost_or_adjusted_basis)
+    }; actual sale proceeds do not replace the nonvehicle basis reduction.`
     : item.private_foundation_capital_gain_reduction !== undefined &&
         item.cost_or_adjusted_basis !== undefined
     ? `Purchased long-term capital property contributed outright to private nonoperating foundation ${item.private_foundation_capital_gain_reduction.foundation_name} (EIN ${item.private_foundation_capital_gain_reduction.foundation_ein}). Foundation status record ${item.private_foundation_capital_gain_reduction.foundation_status_record_reference} and purchase record ${item.private_foundation_capital_gain_reduction.purchase_record_reference} support the section 170(e)(1)(B)(ii) reduction of long-term appreciation ${
@@ -1500,7 +1509,26 @@ export const form8283: MefFormDescriptor<
     const sectionBVehicleAttachments = sectionB
       .filter(needsSectionBVehicleStatement)
       .map((item) => requiredVehicleAttachment(item, context, "B"));
+    const dispositionSourceIds = sectionA.flatMap((item) =>
+      item.contribution_year_disposition_reduction?.retained_source_documents
+        .map((record) => {
+          if (!context.documentIdsByPendingKey) return undefined;
+          const id = context.documentIdsByAttachmentFileName
+            ?.[record.attachment_file_name];
+          if (
+            !id ||
+            context.attachmentSha256ByFileName
+                ?.[record.attachment_file_name] !== record.pdf_sha256
+          ) {
+            throw new Error(
+              "SectionA disposition source bytes differ from reviewed records",
+            );
+          }
+          return id;
+        }) ?? []
+    );
     const sectionAAttachmentIds = [
+      ...dispositionSourceIds,
       ...new Set(
         sectionAVehicleAttachments.map((attachment) => attachment.id),
       ),
