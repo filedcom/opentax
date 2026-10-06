@@ -1,3 +1,9 @@
+import { assertCapitalSaleSourceRows } from "../../broker-sale-source-reconciliation.ts";
+import {
+  inputSchema as scheduleDSourceSchema,
+  schedule_d as scheduleDNode,
+} from "../../../nodes/intermediate/aggregation/schedule_d/index.ts";
+import { schedule1a as schedule1aNative } from "./schedule1a.ts";
 import { isDeepStrictEqual } from "node:util";
 import {
   filedOwnedScheduleC,
@@ -392,6 +398,22 @@ export function assertOneScheduleC8995(
   const f1040 = pending.f1040;
   const schedule1 = pending.schedule1;
   const general = pending.general;
+  const additionalDeduction =
+    typeof f1040?.line13b_additional_deductions === "number"
+      ? f1040.line13b_additional_deductions
+      : 0;
+  if (!Number.isSafeInteger(additionalDeduction) || additionalDeduction < 0) {
+    throw new Error("Form8995 needs nonnegative sourced additional deductions");
+  }
+  const additionalXml = pending.schedule1a === undefined
+    ? ""
+    : schedule1aNative.build(pending.schedule1a, { pending });
+  if (additionalDeduction > 0 && !additionalXml.includes("IRS1040Schedule1A")) {
+    throw new Error(
+      "Form8995 additional deductions need actual Schedule1A source reconciliation",
+    );
+  }
+
   const scheduleSe = pending.schedule_se;
   const otherSourceKeys = [
     "schedule_f",
@@ -404,7 +426,69 @@ export function assertOneScheduleC8995(
     "sep_retirement",
   ] as const;
   const form7206 = pending.form7206;
-  const qualifiedDividends = !zeroOrAbsent(fields.net_capital_gain)
+  let sourcedCapitalGain = 0;
+  let sourcedFiledCapital: number | undefined;
+  if (pending.schedule_d !== undefined) {
+    if (
+      pending.f1099k === undefined && pending.f1099b === undefined &&
+      pending.f8949 === undefined
+    ) {
+      throw new Error(
+        "ScheduleC QBI capital sales need retained issued or direct sale sources",
+      );
+    }
+    assertCapitalSaleSourceRows(pending);
+    const d = scheduleDSourceSchema.parse(pending.schedule_d);
+    for (
+      const key of [
+        "line_1a_proceeds",
+        "line_1a_cost",
+        "line_8a_proceeds",
+        "line_8a_cost",
+      ] as const
+    ) delete d[key];
+    if (
+      Object.keys(d).some((key) =>
+        !["transaction", "filing_status"].includes(key)
+      )
+    ) {
+      throw new Error(
+        "ScheduleC QBI capital sales have unreconciled additional ScheduleD inputs",
+      );
+    }
+    const replay = scheduleDNode.compute(
+      { taxYear: 2025, formType: "f1040" },
+      d,
+    );
+    sourcedCapitalGain = Number(
+      replay.outputs.find((o) => o.nodeType === "form8995")?.fields
+        .net_capital_gain ?? 0,
+    );
+    const filed = replay.outputs.find((o) => o.nodeType === "f1040");
+    if (
+      !filed ||
+      Object.entries(filed.fields).some(([key, value]) =>
+        !isDeepStrictEqual(pending.f1040?.[key], value)
+      )
+    ) throw new Error("ScheduleC QBI capital sales differ from finalized1040");
+    sourcedFiledCapital = Number(filed.fields.line7_capital_gain ?? 0);
+    const final = replay.outputs.find((o) => o.nodeType === "schedule_d");
+    if (
+      !final ||
+      Object.entries(final.fields).some(([key, value]) =>
+        !isDeepStrictEqual(
+          (pending.schedule_d as Record<string, unknown>)[key],
+          value,
+        )
+      )
+    ) {
+      throw new Error(
+        "ScheduleC QBI capital sales differ from source-replayed ScheduleD",
+      );
+    }
+  }
+  const qualifiedDividends = (pending.f1099div !== undefined &&
+      !zeroOrAbsent(f1040?.line3a_qualified_dividends))
     ? qualifiedDividendSource(
       pending.f1099div,
       fields.reit_dividend_sources,
@@ -519,7 +603,11 @@ export function assertOneScheduleC8995(
     (healthField !== undefined &&
       (typeof healthField !== "number" || !Number.isFinite(healthField) ||
         healthField < 0)) ||
-    otherSourceKeys.some((key) => pending[key] !== undefined) ||
+    otherSourceKeys.some((key) =>
+      pending[key] !== undefined &&
+      !(sourcedFiledCapital !== undefined &&
+        (key === "schedule_d" || key === "f1099b"))
+    ) ||
     (!hasHealthDeduction && form7206 !== undefined &&
       Object.keys(form7206).some((key) =>
         key !== "schedule_c_source" && key !== "schedule_se_source"
@@ -598,15 +686,21 @@ export function assertOneScheduleC8995(
       qualifiedDividends.qualified ||
     (f1040.line3b_ordinary_dividends ?? 0) !==
       reit + qualifiedDividends.ordinary ||
-    !zeroOrAbsent(f1040.line7_capital_gain) ||
+    (sourcedFiledCapital === undefined
+      ? !zeroOrAbsent(f1040.line7_capital_gain)
+      : f1040.line7_capital_gain !== sourcedFiledCapital) ||
     !zeroOrAbsent(f1040.line7a_cap_gain_distrib) ||
-    (fields.net_capital_gain ?? 0) !== qualifiedDividends.qualified ||
+    (fields.net_capital_gain ?? 0) !==
+      qualifiedDividends.qualified + sourcedCapitalGain ||
     reit + qualifiedDividends.ordinary > 1_500 ||
-    !zeroOrAbsent(f1040.line13b_additional_deductions) ||
     typeof f1040.line11_agi !== "number" ||
     typeof f1040.line12c_deduction_total !== "number" ||
     Math.round(
-        Math.max(0, f1040.line11_agi - f1040.line12c_deduction_total),
+        Math.max(
+          0,
+          f1040.line11_agi - f1040.line12c_deduction_total -
+            additionalDeduction,
+        ),
       ) !==
       fields.line11
   ) {
@@ -619,7 +713,7 @@ export function assertOneScheduleC8995(
     fields,
     f1040,
     reit,
-    qualifiedDividends.qualified,
+    qualifiedDividends.qualified + sourcedCapitalGain,
   );
   return {
     businesses: [{

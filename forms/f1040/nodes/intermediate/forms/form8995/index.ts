@@ -150,6 +150,8 @@ export const inputSchema = z.object({
   reit_loss_carryforward: z.number().nonpositive().optional(),
   // AGI — used to compute pre-QBI taxable income when taxable_income is not yet known
   agi: z.number().optional(),
+  // Schedule 1-A reduces taxable income before the section 199A income cap.
+  additional_deductions: z.number().nonnegative().optional(),
   // Filing status — used to look up the standard deduction base for income limit
   filing_status: z.nativeEnum(FilingStatus).optional(),
   // Age/blindness flags — used to compute the full standard deduction (including additional factors)
@@ -252,7 +254,10 @@ function incomeLimitBase(
   // matches what the standard_deduction worksheet will compute.
   if (input.agi !== undefined) {
     const stdDed = standardDeductionAmount(input, cfg);
-    return Math.max(0, input.agi - stdDed - capGain);
+    return Math.max(
+      0,
+      input.agi - stdDed - (input.additional_deductions ?? 0) - capGain,
+    );
   }
 
   // No income information available — income limit cannot be applied; return Infinity
@@ -302,7 +307,11 @@ function taxableIncomeBeforeQbi(
   if (input.agi === undefined || input.filing_status === undefined) {
     return undefined;
   }
-  return Math.max(0, input.agi - standardDeductionAmount(input, cfg));
+  return Math.max(
+    0,
+    input.agi - standardDeductionAmount(input, cfg) -
+      (input.additional_deductions ?? 0),
+  );
 }
 
 function qbiThreshold(
@@ -715,7 +724,11 @@ function oneScheduleCLines(
   );
   if (qbi <= 0) return undefined;
   const line11 = Math.round(
-    Math.max(0, input.agi - standardDeductionAmount(input, cfg)),
+    Math.max(
+      0,
+      input.agi - standardDeductionAmount(input, cfg) -
+        (input.additional_deductions ?? 0),
+    ),
   );
   const line5 = Math.round(qbi * QBI_RATE);
   const reit = sumField(input.line6_sec199a_dividends);
@@ -811,7 +824,11 @@ function multipleScheduleCLines(
   const line4 = Math.max(0, line2);
   const line5 = Math.round(line4 * QBI_RATE);
   const line11 = Math.round(
-    Math.max(0, input.agi - standardDeductionAmount(input, cfg)),
+    Math.max(
+      0,
+      input.agi - standardDeductionAmount(input, cfg) -
+        (input.additional_deductions ?? 0),
+    ),
   );
   const line12 = qbiCapitalTotal(input, true);
   const line13 = Math.max(0, line11 - line12);
@@ -874,7 +891,11 @@ function twoSmallScheduleCLines(
     input.agi === undefined || !Number.isFinite(input.agi)
   ) return undefined;
   const line11 = Math.round(
-    Math.max(0, input.agi - standardDeductionAmount(input, cfg)),
+    Math.max(
+      0,
+      input.agi - standardDeductionAmount(input, cfg) -
+        (input.additional_deductions ?? 0),
+    ),
   );
   const line5 = Math.round(qbi * QBI_RATE);
   const line14 = Math.round(line11 * QBI_RATE);
@@ -940,7 +961,11 @@ function oneScheduleFLines(
   const qbi = Math.round(business.qbi - seDeduction);
   if (qbi <= 0) return undefined;
   const line11 = Math.round(
-    Math.max(0, input.agi - standardDeductionAmount(input, cfg)),
+    Math.max(
+      0,
+      input.agi - standardDeductionAmount(input, cfg) -
+        (input.additional_deductions ?? 0),
+    ),
   );
   const line5 = Math.round(qbi * QBI_RATE);
   const line12 = qbiCapitalTotal(input, true);
@@ -998,7 +1023,11 @@ function reitOnlyLines(
     input.filing_status === undefined
   ) return undefined;
   const line11 = Math.round(
-    Math.max(0, input.agi - standardDeductionAmount(input, cfg)),
+    Math.max(
+      0,
+      input.agi - standardDeductionAmount(input, cfg) -
+        (input.additional_deductions ?? 0),
+    ),
   );
   const line9 = Math.round(reit * QBI_RATE);
   const line14 = Math.round(line11 * QBI_RATE);
@@ -1098,7 +1127,8 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
         }
         return jointOwnerQbi(
           input.joint_se_source,
-          input.agi - standardDeductionAmount(input, cfg),
+          input.agi - standardDeductionAmount(input, cfg) -
+            (input.additional_deductions ?? 0),
           cfg.ssWageBase,
           input.joint_owner_health_plan_source,
           sumField(input.se_health_insurance_deduction),
@@ -1128,7 +1158,8 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
     if (
       deduction <= 0 && multipleLines === undefined &&
       !(simplifiedLines && "line1_qbi" in simplifiedLines &&
-        typeof simplifiedLines.line1_qbi === "number" && simplifiedLines.line1_qbi > 0)
+        typeof simplifiedLines.line1_qbi === "number" &&
+        simplifiedLines.line1_qbi > 0)
     ) {
       return {
         outputs: qbiCapitalTotal(input) > 0

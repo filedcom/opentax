@@ -3,6 +3,7 @@ import type { NodeResult } from "../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import { form8995 } from "../form8995/index.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { standard_deduction } from "../../worksheets/standard_deduction/index.ts";
 import { FilingStatus } from "../../../types.ts";
@@ -1043,7 +1044,7 @@ export function calculateVehicleInterestSchedule1A(
 class Schedule1ANode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule1a";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, standard_deduction]);
+  readonly outputNodes = new OutputNodes([f1040, standard_deduction, form8995]);
 
   compute(ctx: NodeContext, rawInput: Schedule1AInput): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -1056,6 +1057,7 @@ class Schedule1ANode extends TaxNode<typeof inputSchema> {
     if (deduction === 0) return { outputs: [] };
     return {
       outputs: [
+        this.outputNodes.output(form8995, { additional_deductions: deduction }),
         this.outputNodes.output(f1040, {
           line13b_additional_deductions: deduction,
           schedule1a_line37_senior_deduction: enhancedSeniorDeduction,
