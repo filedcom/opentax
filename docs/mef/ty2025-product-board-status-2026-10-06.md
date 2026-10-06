@@ -3590,3 +3590,7 @@ Production0cf6e27da standard263/0/0ignored(4m2s), actualretaineddebt40/354 exact
 ## Pre-married-mortgage integration compaction
 
 Entire board re-read after main three-column seal4cb3157f3, preserving frozen52 and future boundaries. New debt production0cf6e27da passes263/0 and actual40/354 plusEIC9/76 terminalraw proof; no broader parent is closed. Candidatecb6a23eb is reviewed before integration: new SHA-bound title/notes/interest payments bind actualMFJ borrowers/payers and sole noncommunity taxpayerMFS, limits750k/375k; agentstandard92/0, actual11/36raw andsixnewpage review. Candidate remains distinct from old source records and partial missingforceitemized metadata is preserved separately. Main tests/raw/visual verification pending. LatestfullV19 remains older403a snapshot; a current phase full batch follows this integration.
+
+## Married mortgage main seal
+
+Productiona294e738f passesmainsevenmodulestandard92/0/0ignored(1m12s). Actualretained11/36 terminalraw exactPDF/nativeonlyTs/fullXSD,9comparablepending/3priororigins exact. Rootallsixpages/fullsizebothScheduleA reviewed;24originalpacketfiles+manifest privatelyhashpreserved andunchangedafterreplay. Ledger1515, frozen52/futureexact, no missingpriorpending/carry/originsclaim. Existing cross-loan parent work continues separately; wider authentication/IRS requirements remainopen. Three-column263/0/debt40/354/EIC9/76 seal remains separate. Currentfullbatch now required after these production integrations.
