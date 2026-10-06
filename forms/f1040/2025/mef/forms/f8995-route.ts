@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from "node:util";
 import {
   filedOwnedScheduleC,
   filedOwnedScheduleF,
@@ -55,7 +56,19 @@ const lineNumbers = [
 /** A zero deduction cannot discard a required loss carryforward workpaper. */
 export function assertNoUnfiled8995Loss(
   fields: Readonly<Record<string, unknown>>,
+  pending?: Readonly<Record<string, unknown>>,
 ): void {
+  const parent = pending?.form8995a as Record<string, unknown> | undefined;
+  if (
+    parent?.farm_wotc_filing_source &&
+    pending?.form8995a_schedule_c !== undefined &&
+    fields.qbi_deduction === undefined && fields.line15 === undefined
+  ) {
+    assertFarmWotcReturn(parent, pending);
+    const companion = pending?.form8995a_schedule_c;
+    if (companion && isDeepStrictEqual(companion, parent)) return;
+    throw new Error("Farm WOTC delegation needs its actual loss companion");
+  }
   const sum = (name: string): number => {
     const value = fields[name];
     if (value === undefined) return 0;

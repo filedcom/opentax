@@ -12,7 +12,7 @@ import { form5884 } from "./mef/forms/f5884.ts";
 import { form5884Pdf } from "./pdf/forms/f5884.ts";
 import { inputSchema as aSchema } from "../nodes/intermediate/forms/form8995a/index.ts";
 const fixtures = pdfReviewFixtures.filter((f) =>
-  f.id.startsWith("owned-farm-wotc")
+  f.id.startsWith("owned-farm-wotc") && !f.id.startsWith("owned-farm-wotc-loss")
 );
 Deno.test("public reviewed farm WOTC rejects source owner worker payroll income and method conflicts", async () => {
   const fixture = fixtures.find((f) => f.id.endsWith("spouse-phase"))!;

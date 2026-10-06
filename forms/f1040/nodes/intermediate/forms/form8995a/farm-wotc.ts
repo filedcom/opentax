@@ -1,3 +1,4 @@
+import { roundSignedQbiDollars } from "../../../inputs/schedule_c/qbi-multiple.ts";
 import {
   filedOwnedScheduleC,
   filedOwnedScheduleF,
@@ -49,7 +50,8 @@ export function farmWotcBusinessAmounts(
     ? row.item.qbi_w2_wages ?? 0
     : row.item.qbi_w2_wages ?? 0;
   if (
-    !reference || !name || !ein || !/^\d{9}$/.test(ein) || profit <= 0 ||
+    !reference || !name || !ein || !/^\d{9}$/.test(ein) ||
+    (!review && profit <= 0) ||
     item.qbi_no_other_adjustments_confirmed !== true ||
     (item.qbi_unadjusted_basis ?? 0) !== 0 ||
     (isFarm
@@ -62,7 +64,7 @@ export function farmWotcBusinessAmounts(
         row.item.qbi_wotc_filing_review !== undefined)
   ) {
     throw new Error(
-      "Farm WOTC QBI needs actual identified positive ordinary source businesses and regular at-risk SE",
+      "Farm WOTC QBI needs actual identified ordinary source businesses and regular at-risk SE",
     );
   }
   if (isFarm && row.determined_wage_reduction > 0) {
@@ -265,19 +267,55 @@ export function calculateFarmWotcLines(
       );
     }
   });
+  const sourceQbi = amounts.map((a, i) =>
+    roundSignedQbiDollars(a.profit - deductions[i])
+  );
+  const positiveTotal = sourceQbi.reduce((s, q) => s + Math.max(0, q), 0);
+  const lossTotal = -sourceQbi.reduce((s, q) => s + Math.min(0, q), 0);
+  const offset = Math.min(positiveTotal, lossTotal);
+  const lossShares = sourceQbi.map((q) =>
+    q > 0 ? Math.round(offset * q / positiveTotal) : 0
+  );
+  if (positiveTotal > 0) {
+    lossShares[sourceQbi.indexOf(Math.max(...sourceQbi))] += offset -
+      lossShares.reduce((s, q) => s + q, 0);
+  }
+  const adjusted = sourceQbi.map((q, i) => q > 0 ? q - lossShares[i] : 0);
+  if (lossTotal > 0 && amounts.length > 2) {
+    throw new Error(
+      "Reviewed farm loss Schedule C currently supports two actual source businesses",
+    );
+  }
+  const lossSchedule = lossTotal > 0
+    ? {
+      rows: amounts.map((a, i) => ({
+        name: a.name!,
+        line1a: sourceQbi[i],
+        line1b: lossShares[i],
+        line1c: adjusted[i],
+      })),
+      line2: 0,
+      line3: lossTotal,
+      line4: positiveTotal,
+      line5: offset,
+      line6: lossTotal - offset,
+    }
+    : undefined;
   const rows = amounts.map((a, i) => {
     const child: Form8995AInput = {
       filing_status: input.filing_status,
       taxable_income: input.taxable_income,
-      qbi: Math.round(a.profit - deductions[i]),
-      w2_wages: Math.round(a.wages),
+      qbi: lossSchedule ? adjusted[i] : sourceQbi[i],
+      w2_wages: lossSchedule && adjusted[i] <= 0 ? 0 : Math.round(a.wages),
       unadjusted_basis: 0,
       farm_wotc_filing_source: source,
       business_filing_details: {
         business_name: a.name,
         ein: a.ein,
-        business_qbi: Math.round(a.profit - deductions[i]),
-        business_w2_wages: Math.round(a.wages),
+        business_qbi: lossSchedule ? adjusted[i] : sourceQbi[i],
+        business_w2_wages: lossSchedule && adjusted[i] <= 0
+          ? 0
+          : Math.round(a.wages),
         business_ubia: 0,
         one_non_sstb_business_confirmed: true,
         no_aggregation_confirmed: true,
@@ -313,9 +351,10 @@ export function calculateFarmWotcLines(
     line32: line16,
     line37: Math.min(line16, line36),
     line39: Math.min(line16, line36),
+    line40: 0,
     phaseInRequired: rows.some((r) => r.lines.phaseInRequired),
     phaseIn: rows.find((r) => r.lines.phaseInRequired)?.lines.phaseIn ??
       rows[0].lines.phaseIn,
   };
-  return { source, rows, parent };
+  return { source, rows, parent, lossSchedule };
 }

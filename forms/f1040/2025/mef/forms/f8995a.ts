@@ -213,6 +213,13 @@ export function assertScheduleCLossSources(
   fields: Form8995AInput,
   pending: Readonly<Record<string, unknown>> | undefined,
 ): void {
+  if (fields.farm_wotc_filing_source) {
+    assertFarmWotcReturn(fields, pending);
+    if (!calculateFarmWotcLines(fields).lossSchedule) {
+      throw new Error("Farm loss companion needs actual source loss");
+    }
+    return;
+  }
   const lines = calculateScheduleCLossLines(fields);
   if (
     fields.qbi_capital_sources !== undefined ||
@@ -419,7 +426,11 @@ function reconcileReturn(
   } else if (sstbCompanion !== undefined) {
     throw new Error("Form 8995-A Schedule A companion has no SSTB parent");
   }
-  if (fields.schedule_c_qbi_businesses?.some((business) => business.qbi < 0)) {
+  if (
+    fields.schedule_c_qbi_businesses?.some((business) => business.qbi < 0) ||
+    (fields.farm_wotc_filing_source &&
+      calculateFarmWotcLines(fields).lossSchedule)
+  ) {
     if (aggregationCompanion !== undefined) {
       throw new Error(
         "Form 8995-A Schedule C loss cannot accompany Schedule B aggregation",

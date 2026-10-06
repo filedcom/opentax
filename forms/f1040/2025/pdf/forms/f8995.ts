@@ -90,7 +90,7 @@ export const form8995Pdf: PdfFormDescriptor = {
       !(typeof fields.line1_qbi === "number" && fields.line1_qbi > 0 &&
         typeof fields.line1_business_reference === "string")
     ) {
-      assertNoUnfiled8995Loss(fields);
+      assertNoUnfiled8995Loss(fields, allPending);
       return {};
     }
     if (

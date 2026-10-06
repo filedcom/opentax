@@ -22,7 +22,7 @@ export const form8995: MefFormDescriptor<"form8995", Input> = {
       !(typeof fields.line1_qbi === "number" && fields.line1_qbi > 0 &&
         typeof fields.line1_business_reference === "string")
     ) {
-      assertNoUnfiled8995Loss(fields as Record<string, unknown>);
+      assertNoUnfiled8995Loss(fields as Record<string, unknown>, context?.pending);
       return "";
     }
     if (

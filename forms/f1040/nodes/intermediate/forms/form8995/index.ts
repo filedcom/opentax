@@ -1151,7 +1151,12 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       },
     ];
 
-    return { outputs };
+    return {
+      outputs,
+      ...(ownedLines?.line16
+        ? { carryforwards: { qbi_loss_carryforward: ownedLines.line16 } }
+        : {}),
+    };
   }
 }
 

@@ -340,6 +340,9 @@ export function assertFarmWotcReturn(
         fields,
       ) ||
       !isDeepStrictEqual(calculated.source.joint_se_source, owned?.source) ||
+      (calculated.lossSchedule
+        ? !isDeepStrictEqual(pending.form8995a_schedule_c, pending.form8995a)
+        : pending.form8995a_schedule_c !== undefined) ||
       calculated.source.se_tax_deduction !== half ||
       Math.abs(calculated.source.joint_wages_total - wageTotal) > 1e-6 ||
       calculated.source.businesses.length !== businessRefs.length ||

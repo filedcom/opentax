@@ -237,8 +237,8 @@ export function projectOneBusiness8995A(
       );
     }
     return {
-      business_name: (lines.positive ?? lines.negative).business_name,
-      business_ein: (lines.positive ?? lines.negative).ein,
+      business_name: (lines.positive ?? lines.negative)!.business_name,
+      business_ein: (lines.positive ?? lines.negative)!.ein,
       ...(lines.positive
         ? {
           business_name_b: lines.negative.business_name,

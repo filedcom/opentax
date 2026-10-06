@@ -493,6 +493,13 @@ export function calculateTwoBusinessAggregationLines(input: Form8995AInput) {
 }
 
 export function calculateScheduleCLossLines(input: Form8995AInput) {
+  if (input.farm_wotc_filing_source) {
+    const farm = calculateFarmWotcLines(input);
+    if (!farm.lossSchedule) {
+      throw new Error("Farm Schedule C needs actual sourced QBI loss");
+    }
+    return { schedule: farm.lossSchedule, parent: farm.parent, businesses: [] };
+  }
   const businesses = input.schedule_c_qbi_businesses;
   if (
     !businesses ||
@@ -1452,7 +1459,7 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
     assertSupportedSchedulePath(input);
     assertSingleScheduleCWotcAmounts(input);
 
-    if (!hasQbiActivity(input)) {
+    if (!hasQbiActivity(input) && !input.farm_wotc_filing_source) {
       return { outputs: [] };
     }
 
@@ -1523,7 +1530,8 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
     }
 
     if (input.farm_wotc_filing_source) {
-      const deduction = calculateFarmWotcLines(input).parent.line39;
+      const farm = calculateFarmWotcLines(input);
+      const deduction = farm.parent.line39;
       return {
         outputs: [
           this.outputNodes.output(f1040, { line13_qbi_deduction: deduction }),
@@ -1531,7 +1539,13 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
             qbi_deduction: deduction,
           }),
           { nodeType: this.nodeType, fields: input },
+          ...(farm.lossSchedule
+            ? [this.outputNodes.output(form8995aScheduleC, input)]
+            : []),
         ],
+        ...(farm.lossSchedule?.line6
+          ? { carryforwards: { qbi_loss_carryforward_8995a: farm.lossSchedule.line6 } }
+          : {}),
       };
     }
     if (input.wotc_business_sources) {

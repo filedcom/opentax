@@ -1310,3 +1310,99 @@ held source/XML/PDF replay and full local v5.4 XSD checker exits 0 with
 artifact folders and logs are superseded and are not this final evidence.
 
 Main farm integration at6cc665dc0 and independent SHOP at2696c4311 pass28/0 combined typed checks in3m4s. Ordinary root filing operands, optional farms, actual ownerSE and repeated8941 documents are preserved. Current-main held farm replay passes7 cases/186 reviewed pages with matching retained source/XML/PDF hashes and localXSD/template provenance; log `/tmp/opentax-farm-wotc-main-held-check.log`, SHA256 `d202e440c25b75ab8082317dda31c6e495c9fb2b94eec92ced4d7726a7bcfdff`. Combined command log `/tmp/opentax-farm-spouse-cf-main-integration.log`, SHA256 `63b35ac7888d89cda5782c60ec738c3f0462d673f96df8ab08e6451daa4a9d1b`. Actual planner has273 fixtures,116 descriptors,113 keys,95 covered and18 uncovered.
+## 2026-10-06 — reviewed loss farm WOTC / owned SE / QBI loss filing
+
+The existing regular-SE farm source route now retains a reviewed active cash
+farm loss beside one actual same-owner positive ordinary C/F business. Public
+issued agricultural 1099-G and secondary custom-work 1099-NEC copies, farm
+ownership, employee W2/FICA/pay-period/SSA review, SWA certification and payroll
+records continue to reconcile to the actual farm and employer. Full determined
+5884 reduction occurs before filed farm profit, combined owner SE, attributable
+half-SE, QBI and current Form3800 use. Reducing the wage deduction **reduces an
+existing loss**; it cannot deepen that loss. These sources remain genuinely
+negative after the full reduction.
+
+Official [8995 instructions](https://www.irs.gov/instructions/i8995) retain
+current business loss and ordinary carryforward even with zero deduction.
+[8995-A instructions](https://www.irs.gov/instructions/i8995a) require Schedule C
+loss netting before the parent, allocate loss proportionately to positive QBI,
+and set wages/UBIA to zero when adjusted QBI is nonpositive. Ordinary unused
+loss is Schedule C line6; parent line40 concerns REIT/PTP losses and remains
+zero. [5884 instructions](https://www.irs.gov/instructions/i5884) require the
+full wage reduction independently of credit tax use. No prior loss, historical
+tax attribute or accepted carryover scalar is supplied.
+
+Raw cents remain on the source records. For the offset C case, raw gross
+20000.50, labor6000.49, determined credit2400 and feed26400.51 produce raw
+post-credit farm loss -10000.50. Filed leaf operands give gross19000+1001=20001,
+labor3600 and feed26401: expenses30001, farm loss **-10000**, not a separately
+rounded raw-profit override. The same-owner C30000.50 files30001, so combined
+owner profit20001, half-SE1413, filed QBI rows28588 and-10000, sum18588, deduction
+3718. The other negative-half feed boundary26401.50 files26402 and loss-10001;
+an actual positive ordinary farm8000.50 files8001, so aggregate loss/carry2000.
+All signed leaf/subtotal→Schedule1→SE→QBI→1040 XML/PDF equations use this chain.
+
+| Held source case | Filed farm total | Other C | Half-SE | Raw AGI | QBI deduction | Ordinary QBI carry | Current credit use | Total tax |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Primary below, C offset | -10000 | 30001 | 1413 | 168588.37 | 3718 | 0 | 2400 | 19595 |
+| Primary below, zero use | -2000 | 0 | 0 | -2000 | 0 | 2000 | 0 | 0 |
+| Spouse below, net loss | -2000 | 0 | 0 | 98000.37 | 0 | 2000 | 2400 | 5106 |
+| Primary phase, F offset | 70000 | 0 | 938 | 499062.37 | 3734 | 0 | 2400 | 104228 |
+| Spouse above, net loss | -1999 | 0 | 0 | 548001.37 | 0 | 1999 | 2400 | 120170 |
+| Primary below, limited use | -18001 | 20001 | 142 | 31858.37 | 72 | 0 | 29 | 283 |
+
+The phase case retains the actual owner176100 Social Security wage cap;
+loss-10001 offsets positive source QBI79063 (80001 less half-SE938), giving
+adjusted QBI69062. Parent PartIII prints exact72.962%, deduction3734. The
+above-range companion retains -10000/8001 and carry1999 with both parent rows'
+adjusted QBI/wages zero. The limited case retains80 actual distinct employee
+records, full determined192000 reduction and actual farm loss-18001, permits
+only29 current credit use and leaves191971 unused. The zero-use case retains
+full2400 reduction, two farm copies, both signed Form8995 rows and ordinary
+carry2000 without manufacturing tax use or omitting the loss. Actual inherited
+issued W2 box6 withholding is retained; where it exceeds regular Medicare,
+Form8959 and1040 line25c reconcile the excess. No withholding is silently
+recomputed from changed wages.
+
+Proof checkout `/tmp/opentax-farm-wotc-loss-oct6`, base`1d98a1dc5` plus prior
+positive farm commit`e424ad0b4` as equivalent`5395ad6c6`. Root signed formatter
+and ordinary filed helper are already in the base and are not borrowed edits.
+New public conflicts reject missing/inconsistent resolved Form461 scope,
+limited/passive farm, wrong proprietor, qualified payroll and issued program
+income. Prepared native/direct PDF conflicts reject source expense/owner-SE,
+current credit, final deduction, detached/tampered loss companion and changed
+ordinary carry. Existing positive farm, optional owner-SE, spouse-owned WOTC,
+patron phase-in and existing single/unused ScheduleC loss routes remain tested.
+The old positive-fixture assertions explicitly exclude the new loss IDs;
+the actual full farm return test includes all13 positive/loss source cases.
+
+Terminal evidence: **19/0** typed compatibility tests, including all13 full
+farm public/native/PDF/local-v5.4-XSD returns and optional/owned/patron packets
+(`/tmp/opentax-farm-loss-compat.log`,3m28s); separate **38/0** loss and parent/
+existing ScheduleC calculation/source checks
+(`/tmp/opentax-farm-loss-related.log`,1s). Six reusable held packets generated
+successfully (`/tmp/opentax-farm-loss-held-reviewed.log`). All **149 pages**
+were visually reviewed, including both farm copies, actual proprietor/SE,
+all3800 pages, signed QBI/carry rows, exact phase percentage and final1040.
+Ignored final artifacts:
+`.state/research/ty2025-filled-pdf-review/2026-10-06-owned-farm-wotc-loss-reviewed/`
+and rendered sibling`2026-10-06-owned-farm-wotc-loss-reviewed-rendered`.
+Earlier partial packet folders/logs are superseded; the initial inherited
+expectation failure was an ID-filter collision, not a final proof pass.
+
+This filing extension supports one reviewed direct-employer regular-SE loss
+farm and one identified positive ordinary zero-employee C/F source, no UBIA/
+other adjustments, and current-year ordinary loss carry computation. More
+than two loss-netting businesses, prior accepted carryover use, optional/group
+farm WOTC, multiple farm credit employers, passive/limited losses, attributable
+health/retirement, patron/SSTB/aggregation combinations, broader credit ordering
+and external source authentication remain open. Synthetic issued-copy review
+records are not external authentication evidence; full XSD does not establish
+IRS business-rule/ATS/production acceptance. The broader parent remains open.
+
+Final held source/XML/PDF replay and full local TY2025v5.4 XSD checker exits0:
+**6 cases /149 reviewed pages**, source/artifact hashes and template provenance
+confirmed (`/tmp/opentax-farm-loss-held-check.log`). The apparent zero-W2 joint
+header omission on a reduced contact sheet was checked against full-size PDF
+text: Sam Example and444556666 print correctly. No shared header/builder edit
+was required.
