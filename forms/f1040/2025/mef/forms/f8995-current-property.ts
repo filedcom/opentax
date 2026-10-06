@@ -1,6 +1,7 @@
 import { isDeepStrictEqual } from "node:util";
 import { inputSchema as scheduleSchema } from "../../../nodes/inputs/schedule_e/index.ts";
 import {
+  assertCurrentPropertyReturnOwners,
   currentPropertyAmounts,
   currentPropertyPassiveAmounts,
   currentPropertyQbiLines,
@@ -52,6 +53,7 @@ export function assertCurrentPropertyQbi(
       "Current property QBI must join every actual rental/farm owner and issued source",
     );
   }
+  assertCurrentPropertyReturnOwners(sources, owners);
   const pal = palSchema.parse(pending?.form8582 ?? {}),
     expected = [
       ...sources.filter((s) =>

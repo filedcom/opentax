@@ -184,6 +184,22 @@ export const currentPropertySourceSchema = z.object({
     });
   }
 });
+export function assertCurrentPropertyReturnOwners(
+  sources: readonly CurrentPropertySource[],
+  owners: readonly string[],
+): void {
+  if (
+    sources.some((source) =>
+      owners.includes(source.acquisition_record.seller_tin) ||
+      owners.includes(source.closing_record.buyer_tin)
+    )
+  ) {
+    throw new Error(
+      "Current property transfer between return owners needs spouse-transfer basis and nonrecognition evidence",
+    );
+  }
+}
+
 export function currentPropertyRentalDays(
   s: z.infer<typeof currentPropertySourceSchema>,
 ) {
@@ -295,7 +311,7 @@ export function currentPropertyQbiRows(
   unique(
     properties.flatMap((s) =>
       s.acquisition_record.parcels.map((p) =>
-        `${s.recipient_tin}:${p.location_state}:${p.parcel_id}`
+        `${p.location_state}:${p.parcel_id}`
       )
     ),
     "owned parcels",

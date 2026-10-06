@@ -441,6 +441,14 @@ Deno.test("current property inventory rejects relabeled duplicate economics acro
       kind,
     );
   }
+  const otherOwnerDuplicate = structuredClone(first);
+  otherOwnerDuplicate.activity_id = "same-parcels-other-owner";
+  otherOwnerDuplicate.recipient_tin = "222334444";
+  assertThrows(
+    () => currentPropertyQbiRows([first, otherOwnerDuplicate]),
+    Error,
+    "repeat owned parcels",
+  );
   // Keep all scalar amounts and every embedded inventory synchronized. Native
   // and PDF must independently reject the same duplicate economic receipt.
   const badPending: any = structuredClone(p);
@@ -466,4 +474,58 @@ Deno.test("current property inventory rejects relabeled duplicate economics acro
     Error,
     "repeat receipt references",
   );
+  const joint = passivePropertyCases.find((c) =>
+    c.id === "property_joint_spouse_owned"
+  )!;
+  const jointInputs = joint.inputs();
+  const jointResult = f1040_2025.executeReturn(jointInputs);
+  assertEquals(jointResult.diagnostics, []);
+  const jointPending = normalizeAllPending(jointResult.pending);
+  const jointFiler = extractFilerIdentity(jointResult.pending.f1040)!;
+  await buildMefBundle(buildPending(jointPending), {
+    filer: jointFiler,
+    attachments: [],
+  });
+  for (const side of ["buyer", "seller"] as const) {
+    const record = side === "buyer" ? "closing_record" : "acquisition_record";
+    const field = `${side}_tin`;
+    const badInputs: any = structuredClone(jointInputs);
+    badInputs.schedule_e[0].current_property_source[record][field] =
+      "111223333";
+    assertEquals(
+      f1040_2025.executeReturn(badInputs).diagnostics.length > 0,
+      true,
+      side,
+    );
+    const bad: any = structuredClone(jointPending);
+    for (
+      const source of [
+        bad.schedule_e.schedule_es[0].current_property_source,
+        bad.form4797.current_property_sources[0],
+        bad.form8995.current_passive_property_sources[0],
+      ]
+    ) {
+      source[record][field] = "111223333";
+    }
+    const message = "transfer between return owners";
+    await assertRejects(
+      () =>
+        buildMefBundle(buildPending(bad), {
+          filer: jointFiler,
+          attachments: [],
+        }),
+      Error,
+      message,
+    );
+    assertThrows(
+      () => form4797Pdf.projectFields!(bad.form4797, bad),
+      Error,
+      message,
+    );
+    assertThrows(
+      () => irs1040Pdf.projectFields!(bad.f1040, bad),
+      Error,
+      message,
+    );
+  }
 });

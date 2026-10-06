@@ -1,4 +1,5 @@
 import {
+  assertCurrentPropertyReturnOwners,
   currentPropertyAmounts,
   currentPropertyQbiLines,
   currentPropertyQbiRows,
@@ -1667,6 +1668,10 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
               "Current property/farm source belongs to another return owner",
             );
           }
+          assertCurrentPropertyReturnOwners(
+            input.current_passive_property_sources,
+            owners,
+          );
           const raw = input.current_passive_property_sources.reduce((n, s) => {
             const a = currentPropertyAmounts(s);
             return n + a.receipts - a.taxes + a.gain;
