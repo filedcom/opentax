@@ -1,3 +1,9 @@
+import {
+  AGGREGATION_DISCLOSURE_DESCRIPTION,
+  AGGREGATION_DISCLOSURE_FILE,
+  aggregationAnnualDisclosureBytes,
+  aggregationChangeDescription,
+} from "../../pdf/forms/f8995a_aggregation_statement.ts";
 import { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
 import { FilingStatus } from "../../../mef/header.ts";
@@ -48,7 +54,8 @@ export function assertScheduleBAggregationJoin(
     pending.form8995a_schedule_a !== undefined ||
     pending.form8995a_schedule_c !== undefined ||
     pending.form8995a_schedule_d !== undefined ||
-    !source.success || source.data.schedule_cs.length !== 2 ||
+    !source.success ||
+    source.data.schedule_cs.length !== calculated.source.members.length ||
     (source.data.qbi_no_prior_loss_or_suspended_loss_confirmed !== true &&
       !general.success) ||
     source.data.form8829_line30 !== undefined ||
@@ -56,7 +63,7 @@ export function assertScheduleBAggregationJoin(
     pending.form8829 !== undefined || pending.form5884 !== undefined
   ) {
     throw new Error(
-      "Form 8995-A Schedule B needs matching parent, companion, filer, and two unadjusted Schedule C sources",
+      "Form 8995-A Schedule B needs matching parent, companion, filer, and complete unadjusted owned Schedule C sources",
     );
   }
   for (const member of calculated.source.members) {
@@ -131,25 +138,47 @@ export function buildStagedIRS8995AScheduleB(
 ): string {
   const input = inputSchema.strict().parse(raw);
   const { source, schedule } = assertScheduleBAggregationJoin(input, context);
-  return elements("IRS8995AScheduleB", [
-    elements("BusOperationAggregationGrp", [
-      element("TradeOrBusinessAggregationDesc", source.group_description),
-      ...schedule.rows.map((row) =>
-        elements("BusinessAggregationInfoGrp", [
-          elements("TradeOrBusinessName", [
-            element("BusinessNameLine1Txt", row.name),
-          ]),
-          element("EIN", row.ein),
-          element("QlfyBusinessIncomeOrLossAmt", row.qbi),
-          element("W2WagesAmt", row.w2Wages),
-          element("UBIAAmt", row.ubia),
-        ])
-      ),
-      element("TotQlfyBusinessIncomeOrLossAmt", schedule.totalQbi),
-      element("TotalW2WagesAmt", schedule.totalW2Wages),
-      element("TotalUBIAAmt", schedule.totalUbia),
-    ]),
-  ]);
+  const attachmentId = context?.documentIdsByAttachmentFileName
+    ?.[AGGREGATION_DISCLOSURE_FILE];
+  if (
+    !context?.binaryAttachmentFileNames?.includes(
+      AGGREGATION_DISCLOSURE_FILE,
+    ) ||
+    (context.phase === "final" && !attachmentId)
+  ) {
+    throw new Error(
+      "Form 8995-A aggregation requires its bundled annual disclosure PDF",
+    );
+  }
+  return elements(
+    "IRS8995AScheduleB",
+    [
+      elements("BusOperationAggregationGrp", [
+        element("TradeOrBusinessAggregationDesc", source.group_description),
+        element("PriorYearChangeDesc", aggregationChangeDescription(input)),
+        ...schedule.rows.map((row) =>
+          elements("BusinessAggregationInfoGrp", [
+            elements("TradeOrBusinessName", [
+              element("BusinessNameLine1Txt", row.name),
+            ]),
+            element("EIN", row.ein),
+            element("QlfyBusinessIncomeOrLossAmt", row.qbi),
+            element("W2WagesAmt", row.w2Wages),
+            element("UBIAAmt", row.ubia),
+          ])
+        ),
+        element("TotQlfyBusinessIncomeOrLossAmt", schedule.totalQbi),
+        element("TotalW2WagesAmt", schedule.totalW2Wages),
+        element("TotalUBIAAmt", schedule.totalUbia),
+      ]),
+    ],
+    attachmentId
+      ? {
+        referenceDocumentId: attachmentId,
+        referenceDocumentName: "BinaryAttachment",
+      }
+      : undefined,
+  );
 }
 
 export const form8995aScheduleB: MefFormDescriptor<
@@ -159,6 +188,15 @@ export const form8995aScheduleB: MefFormDescriptor<
   pendingKey: "form8995a_schedule_b",
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8995ab--2022.pdf",
+  async buildBinaryAttachments(fields, context) {
+    if (Array.isArray(fields) || Object.keys(fields).length === 0) return [];
+    const input = inputSchema.strict().parse(fields);
+    return [{
+      fileName: AGGREGATION_DISCLOSURE_FILE,
+      description: AGGREGATION_DISCLOSURE_DESCRIPTION,
+      bytes: await aggregationAnnualDisclosureBytes(input, context?.filer),
+    }];
+  },
   build(fields, context) {
     if (Array.isArray(fields) && fields.length === 0) return "";
     return buildStagedIRS8995AScheduleB(fields, context);

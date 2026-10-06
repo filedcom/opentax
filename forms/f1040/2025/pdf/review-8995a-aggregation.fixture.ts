@@ -24,6 +24,7 @@ export function twoBusinessAggregationFixture(
     qbi_unadjusted_basis: 100_000,
   };
   const south = {
+    line_h_new_business: true,
     line_a_principal_business: "Retail",
     line_b_business_code: "459999",
     line_c_business_name: "South Store",
@@ -63,6 +64,31 @@ export function twoBusinessAggregationFixture(
       election_history: {
         status: "new_2025",
         no_prior_election_confirmed: true,
+      },
+      annual_disclosure: {
+        disclosure_source_reference: "annual-business-event-inventory-2025",
+        reviewed_by: "Tax reviewer",
+        review_date: "2026-02-01",
+        timely_original_return_election_confirmed: true,
+        no_commissioner_disaggregation_confirmed: true,
+        complete_current_year_event_inventory_confirmed: true,
+        businesses: [{
+          business_reference: "north-2025",
+          business_description: "Retail",
+          entity_name: "North Store",
+          entity_ein: "123456789",
+          events: [],
+        }, {
+          business_reference: "south-2025",
+          business_description: "Retail",
+          entity_name: "South Store",
+          entity_ein: "987654321",
+          events: [{
+            event: "acquired",
+            date: "2025-01-01",
+            source_reference: "south-2025-acquisition-record",
+          }],
+        }],
       },
       rpe_aggregation_present: false,
       no_other_business_adjustments_confirmed: true,

@@ -98,6 +98,35 @@ const aggregationMemberSchema = z.object({
   source_schedule_c: scheduleCItemSchema,
 }).strict();
 
+const aggregationAnnualDisclosureSchema = z.object({
+  disclosure_source_reference: z.string().trim().min(1),
+  reviewed_by: z.string().trim().min(1),
+  review_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  timely_original_return_election_confirmed: z.literal(true),
+  no_commissioner_disaggregation_confirmed: z.literal(true),
+  complete_current_year_event_inventory_confirmed: z.literal(true),
+  businesses: z.array(
+    z.object({
+      business_reference: z.string().trim().min(1),
+      business_description: z.string().trim().min(1),
+      entity_name: z.string().trim().min(1).max(75),
+      entity_ein: z.string().regex(/^\d{9}$/),
+      events: z.array(
+        z.object({
+          event: z.enum([
+            "formed",
+            "acquired",
+            "disposed",
+            "ceased_operations",
+          ]),
+          date: z.string().regex(/^2025-\d{2}-\d{2}$/),
+          source_reference: z.string().trim().min(1),
+        }).strict(),
+      ),
+    }).strict(),
+  ).min(2),
+}).strict();
+
 export const aggregationFilingDetailsSchema = z.object({
   group_name: z.string().trim().min(1).max(75),
   group_description: z.string().trim().min(1).max(180),
@@ -129,7 +158,8 @@ export const aggregationFilingDetailsSchema = z.object({
       source_reference: z.string().trim().min(1),
     }).strict(),
   ).min(2).max(3),
-  members: z.tuple([aggregationMemberSchema, aggregationMemberSchema]),
+  annual_disclosure: aggregationAnnualDisclosureSchema,
+  members: z.array(aggregationMemberSchema).min(2),
 }).strict();
 
 export const businessFilingDetailsSchema = z.object({
@@ -420,7 +450,7 @@ export function validateTwoBusinessAggregationSource(input: Form8995AInput) {
     (input.reit_loss_carryforward ?? 0) !== 0
   ) {
     throw new Error(
-      "Form 8995-A Schedule B source needs one qualifying two-business group without other QBI paths",
+      "Form 8995-A Schedule B source needs one qualifying directly owned aggregation without other QBI paths",
     );
   }
   const factorNames = source.operational_factors.map((item) => item.factor);
@@ -434,10 +464,9 @@ export function validateTwoBusinessAggregationSource(input: Form8995AInput) {
     );
   }
   const memberRefs = source.members.map((member) => member.business_reference);
-  const memberEins = source.members.map((member) => member.ein);
   if (
-    new Set(memberRefs).size !== 2 || new Set(memberEins).size !== 2 ||
-    group.business_names.length !== 2 ||
+    new Set(memberRefs).size !== source.members.length ||
+    group.business_names.length !== source.members.length ||
     source.members.some((member, index) =>
       member.business_name !== group.business_names[index]
     )
@@ -490,6 +519,85 @@ export function validateTwoBusinessAggregationSource(input: Form8995AInput) {
     ) {
       throw new Error(
         "Form 8995-A Schedule B member QBI, wages, UBIA, and identity must match its Schedule C source",
+      );
+    }
+  }
+  const disclosure = source.annual_disclosure;
+  const reviewDate = new Date(`${disclosure.review_date}T00:00:00.000Z`);
+  if (
+    !Number.isFinite(reviewDate.valueOf()) ||
+    reviewDate.toISOString().slice(0, 10) !== disclosure.review_date ||
+    disclosure.review_date < "2025-12-31" ||
+    disclosure.businesses.length !== source.members.length ||
+    new Set(disclosure.businesses.map((b) => b.business_reference)).size !==
+      source.members.length
+  ) {
+    throw new Error(
+      "Form 8995-A aggregation needs a complete reviewed annual business disclosure",
+    );
+  }
+  for (const member of source.members) {
+    const business = disclosure.businesses.find((b) =>
+      b.business_reference === member.business_reference
+    );
+    if (
+      !business || business.entity_name !== member.business_name ||
+      business.entity_ein !== member.ein ||
+      business.business_description !==
+        member.source_schedule_c.line_a_principal_business
+    ) {
+      throw new Error(
+        "Form 8995-A annual disclosure identity and description must match each actual Schedule C business",
+      );
+    }
+    const eventNames = business.events.map((e) => e.event);
+    if (
+      new Set(eventNames).size !== eventNames.length ||
+      new Set(business.events.map((e) => e.source_reference)).size !==
+        eventNames.length
+    ) {
+      throw new Error(
+        "Form 8995-A annual business events need distinct actual records",
+      );
+    }
+    for (const event of business.events) {
+      const date = new Date(`${event.date}T00:00:00.000Z`);
+      if (
+        !Number.isFinite(date.valueOf()) ||
+        date.toISOString().slice(0, 10) !== event.date ||
+        event.date > "2025-12-31" ||
+        event.event === "disposed" || event.event === "ceased_operations" ||
+        event.date !== member.ownership_start_date
+      ) {
+        throw new Error(
+          "Form 8995-A owned aggregation event must match actual formation/acquisition ownership; disposed or ceased businesses need their complete changed-election route",
+        );
+      }
+    }
+    if (
+      member.ownership_start_date >= "2025-01-01" &&
+      !business.events.some((e) =>
+        e.event === "formed" || e.event === "acquired"
+      )
+    ) {
+      throw new Error(
+        "Form 8995-A current-year ownership requires its actual formed/acquired annual disclosure",
+      );
+    }
+    const currentYearStart = business.events.some((e) =>
+      e.event === "formed" || e.event === "acquired"
+    );
+    if (currentYearStart && member.source_schedule_c.line_h_new_business !== true) {
+      throw new Error(
+        "Form 8995-A annual formation/acquisition events must match actual Schedule C line H started or acquired flag",
+      );
+    }
+    if (
+      source.election_history.status === "continued_unchanged" &&
+      business.events.length > 0
+    ) {
+      throw new Error(
+        "Form 8995-A unchanged election cannot contain a changed business event",
       );
     }
   }
