@@ -4813,3 +4813,26 @@ Both retained failures are corrected against current template/source behavior: F
 ## Joint primary WOTC integration — October 6
 
 Main commit `1a490fc55`: **42 passed, 0 failed (55s)** across joint WOTC, owner-SE, reviewed8978, Form8814, supporting tax projections and review scope. Log `/tmp/opentax-joint-wotc-main-integration.log`, SHA256 `381cc2d113d5a206ed5136cdca4b0c8b9a504b7b401bf7c0cbeaf6d4f54deaf7`. The five isolated complete packets and130-page visual proof are retained under `.state/research/ty2025-filled-pdf-review/2026-10-06-joint-wotc`; source authentication and acceptance remain open.
+
+
+## Mixed C/F, multiple-QHP SHOP and joint WOTC main integration — October 6
+
+Code snapshot `51fd0f34c`, recorded at `04dba771b`: **35 passed, 0 failed (2m39s)** with type checking and real Poppler. Command:
+
+```sh
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin deno test -A forms/f1040/2025/schedule-se-owned-farm-public.test.ts forms/f1040/2025/form8995a_joint_wotc.test.ts forms/f1040/e2e/form8941_multiple_plans_2025.test.ts forms/f1040/e2e/form8941_arrangements_2025.test.ts forms/f1040/2025/schedule-se-owner-public.test.ts scripts/ty2025-pdf-review-scope.test.ts
+```
+
+Log `/tmp/opentax-cf-shop-wotc-main-integration.log`, SHA256 `e94a33f62a0ebc13ccb2a9b00f5a80ea61e93e69265d035435371ef9e444ecc4`. Source/XML/PDF packets, manifests and complete page images are retained in main ignored evidence under `.state/research/2026-10-06-owned-farm-se` and `.state/research/2026-10-06-form8941-multiplan`. Their final visual claims cover86 and143 pages respectively; broad parent and IRS gates remain open.
+
+## Fresh repaired full regression launch — October 6
+
+Exact `deno task test` is running in the stable detached checkout `/tmp/opentax-full-regression-repaired-oct6` at `04dba771b`. It includes the two full-batch expectation repairs plus integrated later sources, ordinary mixed C/F, joint WOTC and multiple-QHP SHOP. Deno2.9.4, TypeScript6.0.3, libxml2.9.13 and real Poppler26.09.0 use the same task PATH. Launchd label `opentax-full-regression-repaired-oct6`; wrapper `/tmp/opentax-full-regression-repaired-oct6.zsh`, status `/tmp/opentax-full-regression-repaired-oct6.status`, log `/tmp/opentax-deno-task-test-repaired-oct6.log`.
+
+Launch status:
+
+```
+commit=04dba771bc909c83325da70e64086dcfd3e1b66c start=2026-10-06T01:04:29Z
+```
+
+Result and final log hash remain pending. The earlier ea23fbb91 process is terminal with exit1; this is its required fresh full rerun, not a duplicated live batch. The stable tree must remain untouched during execution.
