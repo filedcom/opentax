@@ -1,4 +1,5 @@
 import { assertOwned7203RequiredCopies } from "../form7203-owned-return.ts";
+import { assertHsaExcessRequiredCopy } from "../form8889_postyear_single_reconciliation.ts";
 import { assertSingleFarmQbiReturn } from "../form8995a_single_farm_reconciliation.ts";
 import { assertScheduleJSourceReturn } from "../schedule_j_source_return.ts";
 import { executeComposedSourceReturn } from "../composed_source_return.ts";
@@ -293,6 +294,7 @@ function buildReturnXml(
   assertTaxExemptInterestSource(pending);
   assertBusinessSchedule1Amounts(pending);
   assertOwned7203RequiredCopies(pending);
+  assertHsaExcessRequiredCopy(pending);
   assertLine1iCombatPayElectionSource(pending);
   assertSchedule2W2Line13Sources(pending);
   assertSchedule2W2Line17KSource(pending);

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { reconcileSolePostyearForm8889 } from "./form8889_postyear_single_reconciliation.ts";
 import { assertEmployerCode2RetainedSources } from "./form8889_employer_code2_source.ts";
 import { assertEmployerReturnedExcessSources } from "./form8889_employer_return_source.ts";
 import { assertEmployerPostyearOwnerSources } from "./form8889_employer_postyear_source.ts";
@@ -656,11 +657,11 @@ export function reconcilePairedForm8889(
       typeof employer.timely_withdrawal === "object" &&
       "withdrawal_tax_year" in employer.timely_withdrawal &&
       employer.timely_withdrawal.withdrawal_tax_year === 2026;
-    if (
-      postyearClaim ||
-      (source && ("retained_employer_return_evidence" in source ||
-        "retained_employer_postyear_evidence" in source))
-    ) {
+    if (postyearClaim || source?.retained_employer_postyear_evidence !== undefined) {
+      reconcileSolePostyearForm8889(forms, allPending, filer);
+      return;
+    }
+    if (source?.retained_employer_return_evidence !== undefined) {
       throw new Error(
         "Form 8889 employer excess source route needs two identified owner forms",
       );

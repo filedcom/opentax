@@ -1,4 +1,5 @@
 import { assertOwned7203RequiredCopies } from "../form7203-owned-return.ts";
+import { assertHsaExcessRequiredCopy } from "../form8889_postyear_single_reconciliation.ts";
 import { assertSingleFarmQbiReturn } from "../form8995a_single_farm_reconciliation.ts";
 import { assertScheduleJSourceReturn } from "../schedule_j_source_return.ts";
 import { executeComposedSourceReturn } from "../composed_source_return.ts";
@@ -625,6 +626,7 @@ export async function buildPdfBytes(
   assertTaxExemptInterestSource(normalized);
   assertBusinessSchedule1Amounts(normalized);
   assertOwned7203RequiredCopies(normalized);
+  assertHsaExcessRequiredCopy(normalized);
   assertLine1iCombatPayElectionSource(normalized);
   assertSchedule2W2Line13Sources(normalized);
   assertSchedule2W2Line17KSource(normalized);
