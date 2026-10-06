@@ -1,4 +1,6 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { createHash } from "node:crypto";
+import { Buffer } from "node:buffer";
 import { FilingStatus } from "../../../mef/header.ts";
 import type { MefBuildContext } from "../form-descriptor.ts";
 import {
@@ -125,6 +127,14 @@ Deno.test("Form 8889 code-2 timely personal excess reconciles box 1, box 2, MeF,
 });
 
 Deno.test("Form 8889 employer code-2 owner return reconciles W-2, 1099-SA, MeF, PDF, and Form 1040", () => {
+  const retained = (facts: Record<string, unknown>) => {
+    const bytes = Buffer.from(JSON.stringify(facts));
+    return {
+      source_document_reference: String(facts.source_document_reference),
+      sha256: createHash("sha256").update(bytes).digest("hex"),
+      bytes_base64: bytes.toString("base64"),
+    };
+  };
   const source = {
     beneficiary_identity: {
       owner: "T" as const,
@@ -136,6 +146,36 @@ Deno.test("Form 8889 employer code-2 owner return reconciles W-2, 1099-SA, MeF, 
     last_month_rule_elected: false,
     married_at_year_end: false,
     w2_code_w_entries: [{ employee_ssn: "123456789", amount: 5_000 }],
+    retained_employer_code2_evidence: {
+      w2: retained({
+        source_document_reference: "owner-issued-w2",
+        employer_ein: "123456789",
+        employee_ssn: "123456789",
+        box1_wages: 60000,
+        box12_code_w: 5000,
+      }),
+      trustee_1099sa: retained({
+        source_document_reference: "employer-code-2-2025",
+        trustee_ein: "234567890",
+        owner_ssn: "123456789",
+        hsa_account_reference: "HSA-OWNER-2025",
+        paid_on: "2025-09-15",
+        box1_gross_distribution: 750,
+        box2_earnings_on_excess: 50,
+        box3_distribution_code: "2",
+      }),
+      paid_owner_return: retained({
+        source_document_reference: "owner-paid-return",
+        owner_ssn: "123456789",
+        hsa_account_reference: "HSA-OWNER-2025",
+        trustee_1099sa_reference: "employer-code-2-2025",
+        paid_on: "2025-09-15",
+        principal: 700,
+        earnings: 50,
+        paid_to: "hsa_owner",
+        return_due_on: "2026-04-15",
+      }),
+    },
     employer_contribution_years: {
       made_in_2025_for_2024_in_w2: 0,
       made_in_2026_for_2025: 0,
@@ -158,6 +198,7 @@ Deno.test("Form 8889 employer code-2 owner return reconciles W-2, 1099-SA, MeF, 
       box2_earnings_on_excess: 50,
       box3_distribution_code: "2" as const,
       source_reference: "employer-code-2-2025",
+      hsa_account_reference: "HSA-OWNER-2025",
     }],
   };
   const result = form8889Node.compute(
@@ -176,6 +217,8 @@ Deno.test("Form 8889 employer code-2 owner return reconciles W-2, 1099-SA, MeF, 
     w2: {
       w2s: [{
         employee_ssn: "123456789",
+        employer_ein: "123456789",
+        source_document_reference: "owner-issued-w2",
         box1_wages: 60_000,
         box2_fed_withheld: 5_000,
         box12_entries: [{ code: "W" as const, amount: 5_000 }],

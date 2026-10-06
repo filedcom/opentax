@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { assertEmployerCode2RetainedSources } from "./form8889_employer_code2_source.ts";
 import type { FilerIdentity } from "../mef/header.ts";
 import { TS } from "../nodes/types.ts";
 import { FilingStatus } from "../mef/header.ts";
@@ -460,6 +461,21 @@ export function reconcileCode2Form8889(
         "Form 8889 employer code-2 route needs one owner W-2 code W and full employer excess returned to the owner",
       );
     }
+    const issuedCode2 = source.form1099_sa_distributions?.find((row) =>
+      row.box3_distribution_code === "2"
+    );
+    if (!issuedCode2) {
+      throw new Error(
+        "Form 8889 employer code-2 needs its issued trustee source",
+      );
+    }
+    assertEmployerCode2RetainedSources(
+      source,
+      allPending,
+      filed,
+      employerTimely,
+      issuedCode2,
+    );
     employerReturnedPrincipal = employerTimely.principal;
     employerW2Wages = w2.data.w2s.reduce(
       (total, item) => total + item.box1_wages,
@@ -1223,6 +1239,21 @@ export function reconcilePairedForm8889(
         "Form 8889 paired employer code-2 needs one owner W-2 code W and full excess paid to that HSA owner",
       );
     }
+    const issuedCode2 = employerOwner.form1099_sa_distributions?.find((row) =>
+      row.box3_distribution_code === "2"
+    );
+    if (!issuedCode2) {
+      throw new Error(
+        "Form 8889 paired employer code-2 needs its issued trustee source",
+      );
+    }
+    assertEmployerCode2RetainedSources(
+      source,
+      allPending,
+      employerForm,
+      withdrawal,
+      issuedCode2,
+    );
     pairedEmployerReturnedPrincipal = withdrawal.principal;
     pairedEmployerW2Wages = w2.data.w2s.reduce(
       (total, item) => total + item.box1_wages,

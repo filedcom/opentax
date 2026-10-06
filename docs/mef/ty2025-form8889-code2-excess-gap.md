@@ -106,3 +106,37 @@ do partial returns, spouse and mixed distribution cases. The W-2, trustee and
 timely-withdrawal bytes are not independently authenticated. Positive and
 changed-W-2, Schedule 1, and Form 1040 fixtures are authored but unrun; the
 bulk validation and filing gates remain pending.
+
+## Employer owner-paid source packet verification (2026-10-06)
+
+The primary and spouse variants above now have complete public return packets
+from retained, SHA-256-checked W-2, trustee Form 1099-SA, and owner-payment
+records. Their distinct document references, owner SSN, W-2 EIN/box 1/code W,
+trustee code 2/box 1/box 2/account, payment date, paid-to-owner answer, and
+principal plus earnings reconcile to the actual Form 8889, Schedule 1, and
+Form 1040 sources before native or PDF output. Missing bytes, changed hashes,
+reference collisions, and recomputed but conflicting payment facts reject
+export. Each packet has two Form 8889 copies and no Form 5329; the owner with
+code W 5,000 has a 700 excess and 50 earnings returned on one 750 code-2
+Form 1099-SA. Form 1040 wages are 90,000, additional income 750, adjustments
+2,000, and total tax 6,396.
+
+Focused new source tests pass 3/0 and existing employer/native tests pass 19/0.
+The final combined preservation gate passes 143/0, including paired code-2,
+owner reconciliation, node calculation, and native export tests
+(`/tmp/opentax-hsa-code2-final-focused-oct6.log`).
+Both resulting XML packets validate against the local TY2025 MeF v5.4 full
+Return1040 XSD. Both seven-page PDFs were visually reviewed on every page:
+two Form 1040 pages, three Schedule 1/statement pages, and two owner-specific
+Form 8889 pages. These records are retained reviewed source transcriptions;
+their hashes prove local byte preservation, not independent issuer issuance or
+IRS acceptance. The official [2025 Form 1099-SA instructions](https://www.irs.gov/pub/irs-prior/i1099sa--2025.pdf)
+exclude employer-returned excess amounts from box 1, so that event requires a
+separate source route and cannot be expressed as this code-2 distribution.
+
+The reviewed PDFs are retained in the isolated research directory as `T.pdf`
+(SHA-256 `bf820e6685fd0b2616279ed11da97c8298d8eeea03529a7d18f5a73f0c42bce9`)
+and `S.pdf`
+(SHA-256 `e38ea636178637967a5a5af6d2136134d4b8414f82cc0f2d0d002de8314dfc0f`).
+The corresponding `.origins.json`, `.documents.json`, source/pending JSON,
+XML, and fourteen rendered review pages are retained beside them.
