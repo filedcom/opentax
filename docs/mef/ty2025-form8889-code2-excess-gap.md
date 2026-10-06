@@ -196,3 +196,5 @@ native XML apart from its timestamp, PDF, and origins. All fourteen reviewed
 pages matched exactly. Its logs and manifest are recorded in the October 6
 status archive. At that checkpoint employer-returned excess was open; the
 bounded employer-error correction above now covers the sourced 2025 recoup.
+
+Main employer-recoup integration passes the standard154-case combined gate (146 HSA and eight latest shareholder-source cases). Both actual new six-page packets replay exactly from saved inputs and eight retained byte records through full XSD, pending, PDF and origins, with only native timestamp variation. The two actual earlier owner-paid packets also preserve all fourteen pages and six source records exactly. All twelve new pages were visually reviewed. Main logs and manifests are recorded in the October6 archive. Wider corrections, source authenticity and IRS acceptance remain open.
