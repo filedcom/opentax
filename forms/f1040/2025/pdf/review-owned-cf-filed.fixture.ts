@@ -12,7 +12,15 @@ export const ownedCfFiledCases: {
   fGross?: number;
   meals?: number;
   conservation?: number;
+  otherExpenses?: number[];
 }[] = [
+  {
+    id: "business-filed-part-v-total",
+    c: -300.98,
+    f: 800,
+    loss: -301,
+    otherExpenses: [.49, .49],
+  },
   { id: "farm-loss-49", c: 60000, f: -10000.49, loss: -10000 },
   { id: "farm-loss-50", c: 60000, f: -10000.50, loss: -10001 },
   { id: "farm-loss-51", c: 60000, f: -10000.51, loss: -10001 },
@@ -80,6 +88,17 @@ export function ownedCfFiledInputs(
     business.line_24b_meals = row.meals;
     business.line_8_advertising =
       Math.round(((row.cGross ?? 0) - row.c - row.meals * .5) * 100) / 100;
+  }
+  if (row.otherExpenses !== undefined) {
+    const business = inputs.schedule_c[0] as Record<string, unknown>;
+    business.part_v_other_expenses = row.otherExpenses.map((amount, index) => ({
+      description: `Owned bank service fee ${index + 1}`,
+      amount,
+    }));
+    business.line_8_advertising = Math.round(
+      ((row.cGross ?? 0) - row.c -
+        row.otherExpenses.reduce((sum, value) => sum + value, 0)) * 100,
+    ) / 100;
   }
   if (row.conservation !== undefined) {
     const farm = inputs.schedule_f.schedule_fs[0] as Record<string, unknown>;

@@ -22,7 +22,7 @@ function filedLeaves<T extends object>(source: T): T {
         ? roundWholeDollars(value)
         : (key === "part_v_other_expenses" ||
             key === "line32_other_expenses") && Array.isArray(value)
-        ? value.map((row) => ({
+        ? key === "part_v_other_expenses" ? value : value.map((row) => ({
           ...row,
           amount: roundWholeDollars(row.amount),
         }))
@@ -44,6 +44,7 @@ export function filedOwnedScheduleC(
     item.line_g_material_participation !== true ||
     item.line_32_at_risk !== "a" || item.at_risk_simplified ||
     item.qbi_wotc_filing_review ||
+    (item.line_27b_other_expenses ?? 0) !== 0 ||
     (item.line_26_other_employment_credits ?? 0) !== 0 ||
     item.home_office_method || (item.line_30_home_office ?? 0) !== 0
   ) return undefined;
@@ -52,7 +53,19 @@ export function filedOwnedScheduleC(
     (item.line_24b_meals ?? 0) * mealsDeductiblePct(item),
   );
   const gross = cGross(filed);
-  const expenses = cExpenses({ ...filed, line_24b_meals: 0 }) + meals_deduction;
+  const other_expenses = roundWholeDollars(
+    (item.line_27b_other_expenses ?? 0) +
+      (item.part_v_other_expenses ?? []).reduce(
+        (sum, row) => sum + row.amount,
+        0,
+      ),
+  );
+  const expenses = cExpenses({
+    ...filed,
+    line_24b_meals: 0,
+    line_27b_other_expenses: 0,
+    part_v_other_expenses: [],
+  }) + meals_deduction + other_expenses;
   return {
     filed_source: filed,
     gross,

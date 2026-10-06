@@ -36,7 +36,9 @@ Deno.test("actual owned C/F losses retain signed whole-dollar boundaries through
         ((farmLoss ? row.fGross ?? 0 : row.cGross ?? 0) -
           (farmLoss ? row.f : row.c) - (farmLoss
             ? Math.min(row.conservation ?? 0, (row.fGross ?? 0) * .25)
-            : (row.meals ?? 0) * .5)) * 100,
+            : (row.meals ?? 0) * .5 +
+              (row.otherExpenses ?? []).reduce((sum, amount) =>
+                sum + amount, 0))) * 100,
       ) / 100,
     );
     const expectedIncome = (farmLoss ? row.c : row.loss) +
@@ -64,6 +66,9 @@ Deno.test("actual owned C/F losses retain signed whole-dollar boundaries through
       joint.filer,
     );
     const xml = prepared.bundle.xml;
+    if (row.otherExpenses !== undefined) {
+      assertStringIncludes(xml, "<TotalOtherExpensesAmt>1</");
+    }
     if (row.meals !== undefined) {
       assertStringIncludes(xml, "<MealsAndEntertainmentAmt>50</");
     }
