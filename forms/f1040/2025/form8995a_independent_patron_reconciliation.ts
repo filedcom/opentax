@@ -52,7 +52,8 @@ export function assertIndependentPatronReturn(
     );
   }
   const s1 = pending.schedule1, f = pending.f1040, lines = result.parent;
-  const profit = result.family.profit, agi = profit - se.deduction;
+  const health = result.family.health?.deduction ?? 0;
+  const profit = result.family.profit, agi = profit - se.deduction - health;
   const medicare = Math.round(
     Math.max(0, Math.round(se.medicareEarnings) - 250000) * .009,
   );
@@ -75,12 +76,25 @@ export function assertIndependentPatronReturn(
       "form8829",
       "sep_retirement",
     ].some((k) => pending[k] !== undefined) ||
-    !zero(s1?.line16_sep_simple) || !zero(s1?.line17_se_health_insurance) ||
+    !isDeepStrictEqual(
+      pending.form7206?.independent_schedule_c_plans,
+      source.owned_health_source,
+    ) ||
+    !isDeepStrictEqual(
+      pending.form7206?.independent_plan_filing_rows,
+      result.family.health?.rows,
+    ) ||
+    !isDeepStrictEqual(
+      pending.form8995?.joint_owner_health_plans_source,
+      source.owned_health_source,
+    ) ||
+    !zero(s1?.line16_sep_simple) ||
+    Number(s1?.line17_se_health_insurance ?? 0) !== health ||
     s1?.line6_schedule_f !== profit ||
     s1?.line10_total_additional_income !== profit ||
     s1?.line15_se_deduction !== se.deduction ||
     f?.line8_additional_income !== profit || f?.line9_total_income !== profit ||
-    f?.line10_adjustments !== se.deduction ||
+    f?.line10_adjustments !== se.deduction + health ||
     f?.line11_agi !== agi || !zero(f?.line13b_additional_deductions) ||
     input.taxable_income !==
       Math.max(0, agi - Number(f?.line12c_deduction_total)) ||

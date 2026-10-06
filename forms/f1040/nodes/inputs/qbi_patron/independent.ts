@@ -6,12 +6,17 @@ import {
   ownerSourcesSchema,
 } from "../../intermediate/forms/schedule_se/owner-calculation.ts";
 import { independentReviewsSchema, sourceSchema } from "./schema.ts";
+import {
+  calculateIndependentOwnerHealth,
+  independentOwnerHealthSourceSchema,
+} from "../../intermediate/forms/form7206/independent-owner.ts";
 import { patronSourceAmounts } from "./calculation.ts";
 
 export const independentPatronSourceSchema = z.object({
   review: independentReviewsSchema,
   businesses: z.array(sourceSchema).length(2),
   owned_se_source: ownerSourcesSchema,
+  owned_health_source: independentOwnerHealthSourceSchema.optional(),
 }).strict();
 
 /** This route is two independent joint proprietors; generic business routes
@@ -20,6 +25,7 @@ export function independentPatronSources(
   reviewRaw: unknown,
   farmsRaw: unknown,
   seRaw: unknown,
+  healthRaw?: unknown,
 ) {
   const review = independentReviewsSchema.parse(reviewRaw);
   const farms = z.array(farmSchema).length(2).parse(farmsRaw);
@@ -36,6 +42,13 @@ export function independentPatronSources(
       "Independent patron farms need separate positive regular owner SE without wages or other businesses",
     );
   }
+  const health = healthRaw === undefined
+    ? undefined
+    : calculateIndependentOwnerHealth(
+      healthRaw,
+      se.source,
+      CONFIG_BY_YEAR[2025].ssWageBase,
+    );
   const references = new Set<string>();
   const owners = new Set<string>();
   const farmIdentifiers = new Set<string>();
@@ -102,7 +115,9 @@ export function independentPatronSources(
       review: r,
       business_source: farm,
       se_tax_deduction: instance.line13,
-      health_insurance_deduction: 0,
+      health_insurance_deduction: health?.rows.filter((h) =>
+        h.business_reference === farm.farm_id
+      ).reduce((n, h) => n + h.line14, 0) ?? 0,
       retirement_plan_deduction: 0,
     });
     const amounts = patronSourceAmounts(source);
@@ -120,7 +135,13 @@ export function independentPatronSources(
   });
   const amounts = businesses.map(patronSourceAmounts);
   return {
-    source: { review, businesses, owned_se_source: se.source },
+    source: {
+      review,
+      businesses,
+      owned_se_source: se.source,
+      ...(health ? { owned_health_source: health.source } : {}),
+    },
+    health,
     se,
     amounts,
     profit: amounts.reduce((s, r) => s + r.profit, 0),
@@ -135,6 +156,7 @@ export function replayIndependentPatronSources(raw: unknown) {
     source.review,
     source.businesses.map((s) => s.business_source),
     source.owned_se_source,
+    source.owned_health_source,
   );
   if (JSON.stringify(source) !== JSON.stringify(result.source)) {
     throw new Error(

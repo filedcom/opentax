@@ -1,3 +1,6 @@
+import { assertIndependentPatronReturn } from "./form8995a_independent_patron_reconciliation.ts";
+import { inputSchema as patronInputSchema } from "../nodes/intermediate/forms/form8995a/index.ts";
+import { replayIndependentPatronSources } from "../nodes/inputs/qbi_patron/independent.ts";
 import {
   inputSchema as farmSchema,
   reconcileFarmSources,
@@ -180,12 +183,27 @@ export function assertIndependentOwnerHealthSource(
       "Independent health deductions must join each actual owner and sum once to Schedule1, AGI and joint QBI source",
     );
   }
+  const patron = p.form8995a?.independent_patron_sources
+    ? replayIndependentPatronSources(p.form8995a.independent_patron_sources)
+    : undefined;
+  if (patron) {
+    assertIndependentPatronReturn(patronInputSchema.parse(p.form8995a), p);
+  }
+  if (
+    patron &&
+    independentHealthCanonical(patron.source.owned_health_source) !==
+      independentHealthCanonical(result.source)
+  ) {
+    throw new Error(
+      "Patron health expenses must match actual established owner plans",
+    );
+  }
   if (
     [
       "schedule_e",
       "k1_partnership",
       "k1_s_corp",
-      "f1099patr",
+      ...(patron ? [] : ["f1099patr"]),
       "sep_retirement",
       "form2555",
       "f1095a",
@@ -199,7 +217,7 @@ export function assertIndependentOwnerHealthSource(
       "line7_capital_gain",
       "line7a_cap_gain_distrib",
     ].some((k) => Number(f[k] ?? 0) !== 0) ||
-    (p.form8995a && !p.form8995a.farm_wotc_filing_source) ||
+    (p.form8995a && !p.form8995a.farm_wotc_filing_source && !patron) ||
     (p.schedule_c?.wotc_wage_reductions !== undefined &&
       !(p.schedule_f?.schedule_fs as Array<Record<string, unknown>> | undefined)
         ?.some((farm) => farm.qbi_wotc_filing_review)) ||
@@ -230,49 +248,50 @@ export function assertIndependentOwnerHealthSource(
     const necs = p.f1099nec ? necSchema.parse(p.f1099nec).f1099necs : [],
       grants = p.f1099g ? gSchema.parse(p.f1099g).f1099gs : [];
     if (
-      farms.farm_optional_method_elected || farms.patron_filing_review ||
-      farms.schedule_fs.some((farm) => {
-        const owner = farm.proprietor_recipient === "S"
-          ? result.source.spouse_identity.ssn
-          : result.source.taxpayer_identity.ssn;
-        const copies = [
-          ...necs.filter((n) =>
-            n.for_routing === "schedule_f" && n.farm_id === farm.farm_id
-          ).map((n) => ({
-            kind: "1099nec_farm_income",
-            amount: n.box1_nec,
-            reference: n.source_document_reference,
-            payer: n.payer_name,
-            tin: n.payer_tin,
-            recipient: n.recipient_ssn,
-          })),
-          ...grants.filter((g) =>
-            g.farm_id === farm.farm_id &&
-            g.box_7_payment_kind === "agricultural_program"
-          ).map((g) => ({
-            kind: "1099g_agriculture",
-            amount: g.box_7_agriculture,
-            reference: g.source_document_reference,
-            payer: g.payer_name,
-            tin: g.payer_tin,
-            recipient: g.recipient_tin,
-          })),
-        ];
-        return farm.accounting_method !== "cash" ||
-          farm.line_e_material_participation !== true ||
-          farm.line36_at_risk !== "a" || copies.length === 0 ||
-          copies.some((copy) =>
-            String(copy.recipient).replace(/\D/g, "") !== owner ||
-            !copy.reference || !farms.farm_sources?.some((source) =>
-              source.kind === copy.kind && source.farm_id === farm.farm_id &&
-              source.recipient_tin === owner &&
-              source.payer_name === copy.payer &&
-              source.payer_tin === String(copy.tin).replace(/\D/g, "") &&
-              source.amount === copy.amount &&
-              source.source_document_reference === copy.reference
-            )
-          );
-      })
+      !patron &&
+      (farms.farm_optional_method_elected || farms.patron_filing_review ||
+        farms.schedule_fs.some((farm) => {
+          const owner = farm.proprietor_recipient === "S"
+            ? result.source.spouse_identity.ssn
+            : result.source.taxpayer_identity.ssn;
+          const copies = [
+            ...necs.filter((n) =>
+              n.for_routing === "schedule_f" && n.farm_id === farm.farm_id
+            ).map((n) => ({
+              kind: "1099nec_farm_income",
+              amount: n.box1_nec,
+              reference: n.source_document_reference,
+              payer: n.payer_name,
+              tin: n.payer_tin,
+              recipient: n.recipient_ssn,
+            })),
+            ...grants.filter((g) =>
+              g.farm_id === farm.farm_id &&
+              g.box_7_payment_kind === "agricultural_program"
+            ).map((g) => ({
+              kind: "1099g_agriculture",
+              amount: g.box_7_agriculture,
+              reference: g.source_document_reference,
+              payer: g.payer_name,
+              tin: g.payer_tin,
+              recipient: g.recipient_tin,
+            })),
+          ];
+          return farm.accounting_method !== "cash" ||
+            farm.line_e_material_participation !== true ||
+            farm.line36_at_risk !== "a" || copies.length === 0 ||
+            copies.some((copy) =>
+              String(copy.recipient).replace(/\D/g, "") !== owner ||
+              !copy.reference || !farms.farm_sources?.some((source) =>
+                source.kind === copy.kind && source.farm_id === farm.farm_id &&
+                source.recipient_tin === owner &&
+                source.payer_name === copy.payer &&
+                source.payer_tin === String(copy.tin).replace(/\D/g, "") &&
+                source.amount === copy.amount &&
+                source.source_document_reference === copy.reference
+              )
+            );
+        }))
     ) {
       throw new Error(
         "Independent health farm needs actual regular owned issued agricultural/custom-work sources",

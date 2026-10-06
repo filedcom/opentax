@@ -165,7 +165,7 @@ export const sstbFilingDetailsSchema = z.object({
 
 export const patronFilingDetailsSchema = z.object({
   source_1099patr: f1099patrItemSchema,
-  qbi_allocable_to_qualified_payments: z.number().positive().int(),
+  qbi_allocable_to_qualified_payments: z.number().nonnegative().int(),
   w2_wages_allocable_to_qualified_payments: z.number().nonnegative().int(),
   one_cooperative_confirmed: z.literal(true),
   allocation_worksheet_reference: z.string().trim().min(1),
@@ -988,12 +988,22 @@ export function calculatePatronScheduleDLines(input: Form8995AInput) {
   const line3 = input.patron_business_source
     ? Math.round(line2 * 0.09)
     : line2 * 0.09;
-  const line4 = source.w2_wages_allocable_to_qualified_payments;
+  // Schedule D line 4 is the allocable portion of Part II line 4,
+  // which is zero for this business when its QBI is zero. Source payroll
+  // remains positive and reconciled above even when the filed amount is zero.
+  const line4 = input.qbi === 0
+    ? 0
+    : source.w2_wages_allocable_to_qualified_payments;
   const line5 = input.patron_business_source
     ? Math.round(line4 * 0.50)
     : line4 * 0.50;
   const line6 = Math.min(line3, line5);
-  if (line6 <= 0 || ![line3, line5, line6].every(Number.isInteger)) {
+  const independentReviewed = input.patron_business_source &&
+    "no_aggregation_confirmed" in input.patron_business_source.review;
+  if (
+    line6 < 0 || (line6 === 0 && !independentReviewed) ||
+    ![line3, line5, line6].every(Number.isInteger)
+  ) {
     throw new Error(
       "Form 8995-A Schedule D needs a positive whole-dollar patron reduction",
     );
@@ -1223,10 +1233,12 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
       : value;
   const line2 = input.qbi ?? 0;
   const line3 = filedAmount(line2 * QBI_RATE);
-  const line4 = filedAmount(input.w2_wages ?? 0);
+  // Part II lines 4 and 7 are zero when this business has no QBI.
+  // Keep actual payroll/property in the source and business filing details.
+  const line4 = line2 === 0 ? 0 : filedAmount(input.w2_wages ?? 0);
   const line5 = filedAmount(line4 * W2_LIMIT_A_RATE);
   const line6 = filedAmount(line4 * W2_LIMIT_B_WAGE_RATE);
-  const line7 = input.unadjusted_basis ?? 0;
+  const line7 = line2 === 0 ? 0 : input.unadjusted_basis ?? 0;
   const line8 = filedAmount(line7 * UBIA_RATE);
   const line9 = line6 + line8;
   const line10 = Math.max(line5, line9);

@@ -802,7 +802,6 @@ function advancedFormOutput(
       qbiCapitalTotal(input) !== 0 ||
       sumField(input.qbi_from_schedule_c) !== 0 ||
       sumField(input.line6_sec199a_dividends) !== 0 ||
-      sumField(input.se_health_insurance_deduction) !== 0 ||
       sumField(input.retirement_plan_deduction) !== 0 ||
       (input.qbi_loss_carryforward ?? 0) !== 0 ||
       (input.reit_loss_carryforward ?? 0) !== 0
@@ -815,8 +814,11 @@ function advancedFormOutput(
       input.independent_patron_reviews,
       input.schedule_f_qbi_businesses?.map((row) => row.source_schedule_f),
       input.joint_se_source,
+      input.joint_owner_health_plans_source,
     );
     if (
+      sumField(input.se_health_insurance_deduction) !==
+        (family.health?.deduction ?? 0) ||
       sumField(input.se_tax_deduction) !== family.se.deduction ||
       sumField(input.qbi_from_schedule_f) !== family.profit ||
       Math.round(sumField(input.w2_wages)) !== family.wages ||

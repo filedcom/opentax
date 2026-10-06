@@ -131,7 +131,10 @@ export function patronSourceAmounts(raw: PatronSource) {
     source.health_insurance_deduction - source.retirement_plan_deduction;
   const adjustedQbi = profit - source.se_tax_deduction -
     source.health_insurance_deduction - source.retirement_plan_deduction;
-  if (adjustedQbi <= 0) {
+  if (
+    adjustedQbi < 0 ||
+    (adjustedQbi === 0 && !("no_aggregation_confirmed" in source.review))
+  ) {
     throw new Error("Patron source needs positive adjusted QBI");
   }
   const receiptShare = payments / gross;
