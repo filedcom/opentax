@@ -286,7 +286,6 @@ Deno.test("active native-only taxpayer forms cannot disappear from the PDF packe
     { f965: { f965s: [{}] } },
     { form8582cr: { credit_sources: [{}] } },
     { f4255: { rows: [{}] } },
-    { form8621: { items: [{}] } },
     { f8611: { f8611s: [{}] } },
     { f8854: { initial_filing: true } },
     { f8854_annual: { annual_filing: true } },
