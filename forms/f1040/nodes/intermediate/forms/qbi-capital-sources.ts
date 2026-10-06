@@ -4,6 +4,7 @@ import { z } from "zod";
 export const qbiCapitalSourceSchema = z.object({
   source: z.enum([
     "f1099div.qualified_dividends",
+    "form8814.qualified_dividends",
     "schedule_d.net_capital_gain",
   ]),
   amount: z.number().nonnegative().finite(),

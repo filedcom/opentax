@@ -5,6 +5,11 @@ import { execute, type ExecuteResult } from "../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { publicInputSchema } from "../nodes/inputs/schedule_j/index.ts";
 import { scheduleJTaxSourceSchema } from "../nodes/intermediate/forms/schedule_j/tax-source.ts";
+import {
+  assertForm8814CalculatedLines,
+  form8814EicLine4,
+  type Form8814Lines,
+} from "../nodes/inputs/f8814/index.ts";
 import { registry } from "./registry.ts";
 import { buildPending } from "./mef/pending.ts";
 
@@ -372,6 +377,26 @@ export function executeScheduleJSourceReturn(
   const tax = record(baseline.pending.income_tax_calculation);
   const agi = record(baseline.pending.agi_aggregator);
   const farm = record(baseline.pending.schedule_j_calculation);
+  const child =
+    (baseline.pending.form8814 as { items?: Form8814Lines[] } | undefined)
+      ?.items;
+  if (child !== undefined) {
+    const owner = String(record(inputs.general).taxpayer_ssn ?? "");
+    assertForm8814CalculatedLines(child, owner);
+    const childTotal = (pick: (line: Form8814Lines) => number) =>
+      child.reduce((sum, line) => sum + pick(line), 0);
+    if (
+      total(agi.line8z_form8814) !== childTotal((line) => line.line12) ||
+      total(agi.form8814_eic_line4) !== childTotal(form8814EicLine4) ||
+      total(agi.form8814_eic_tax_exempt_interest) !==
+        childTotal((line) => line.item.tax_exempt_interest ?? 0) ||
+      total(tax.form8814_tax) !== childTotal((line) => line.line15)
+    ) {
+      throw new Error(
+        "Schedule J child income and tax differ from reviewed Form 8814",
+      );
+    }
+  }
   if (jointFishing) {
     const farms = record(fs).schedule_fs;
     if (
@@ -395,6 +420,11 @@ export function executeScheduleJSourceReturn(
     "line1a_wages",
     "line7_capital_gain",
     "line7a_cap_gain_distrib",
+    ...(child === undefined ? [] : [
+      "line8z_form8814",
+      "form8814_eic_line4",
+      "form8814_eic_tax_exempt_interest",
+    ]),
   ]);
   for (const [key, value] of Object.entries(agi)) {
     if (!allowed.has(key) && key !== "filing_status" && total(value) !== 0) {
@@ -430,7 +460,7 @@ export function executeScheduleJSourceReturn(
     source_reference: "actual-no-election-return-tax-sources",
   });
   const investment = total(agi.line3b_ordinary_dividends) +
-    total(agi.line7_capital_gain) +
+    total(agi.line8z_form8814) + total(agi.line7_capital_gain) +
     total(agi.line7a_cap_gain_distrib);
   if (total(agi.line1a_wages) !== wages) {
     throw new Error(

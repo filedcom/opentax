@@ -9,6 +9,7 @@ import {
 import { scheduleJLinesSchema } from "../nodes/intermediate/forms/schedule_j/calculation.ts";
 import { ordinaryTax2025 } from "../nodes/intermediate/worksheets/tax_table_2025.ts";
 import { filingStatusSchema } from "../nodes/types.ts";
+import { scheduleJChildElectionTax } from "./schedule_j_child_tax_join.ts";
 
 function record(value: unknown, label: string): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -79,6 +80,7 @@ export function assertForm4972AmtJoin(
   }
   let baseTax = line16 - specialTax;
   if (pending.schedule_j !== undefined) {
+    const childTax = scheduleJChildElectionTax(pending);
     const rawJ = record(pending.schedule_j, "calculated Schedule J");
     const scheduleJ = scheduleJLinesSchema.parse(Object.fromEntries(
       Object.keys(scheduleJLinesSchema.shape).map((key) => [key, rawJ[key]]),
@@ -90,7 +92,7 @@ export function assertForm4972AmtJoin(
     if (
       !Number.isSafeInteger(Math.round(taxableIncome)) ||
       scheduleJ.line1 !== Math.round(taxableIncome) ||
-      scheduleJ.line23 !== line16 - specialTax
+      scheduleJ.line23 !== line16 - specialTax - childTax
     ) {
       throw new Error(
         "Schedule J and Form 4972 differ from finalized Form 1040",
@@ -106,6 +108,7 @@ export function assertForm4972AmtJoin(
         status,
         scheduleJTaxSourceSchema.parse(source),
       );
+    baseTax += childTax;
   }
   const expected = Math.max(
     0,

@@ -43,9 +43,12 @@ export function assertSingleFarmQbiReturn(
   const sink = record(pending.f1040),
     tax = record(pending.income_tax_calculation);
   const general = record(pending.general);
-  const qualified = sum(tax.qualified_dividends);
+  const qualified = sum(sink.line3a_qualified_dividends);
   const capital = sum(tax.net_capital_gain);
   const ordinary = sum(sink.line3b_ordinary_dividends);
+  const childIncome = sum(
+    (pending.schedule1 as Record<string, unknown> | undefined)?.line8z_form8814,
+  );
   if (
     !farms || farms.length !== 1 || !isDeepStrictEqual(farms[0], source.item) ||
     String(general.taxpayer_ssn ?? "").replaceAll("-", "") !==
@@ -58,11 +61,11 @@ export function assertSingleFarmQbiReturn(
         0,
       ) ||
     sum(sink.line9_total_income) !==
-      source.profit + ordinary + sum(sink.line7_capital_gain) +
+      source.profit + ordinary + childIncome + sum(sink.line7_capital_gain) +
         sum(sink.line1z_total_wages) ||
     sum(sink.line10_adjustments) !== source.se_tax_deduction ||
     sum(sink.line11_agi) !==
-      source.profit + ordinary + sum(sink.line7_capital_gain) -
+      source.profit + ordinary + childIncome + sum(sink.line7_capital_gain) -
         source.se_tax_deduction + sum(sink.line1z_total_wages) ||
     Math.round(qualified + capital) !== input.net_capital_gain ||
     input.business_filing_details?.qualified_dividends_zero_confirmed !==

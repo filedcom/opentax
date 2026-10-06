@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import type {
   NodeOutput,
   NodeResult,
@@ -236,7 +237,7 @@ export function assertForm8814CalculatedLines(
     }
     owners.add(owner);
     const expected = calculateForm8814(item);
-    if (expected.line15 === 0) {
+    if (expected.line4 <= UNTAXED_AMOUNT) {
       throw new Error(
         "Form 8814 requires child income above the $1,350 filing threshold",
       );
@@ -283,6 +284,7 @@ class F8814Node extends TaxNode<typeof inputSchema> {
     form8960,
     form4952,
     form6251,
+    form8995,
   ]);
 
   compute(_ctx: NodeContext, rawInput: F8814Input): NodeResult {
@@ -293,7 +295,7 @@ class F8814Node extends TaxNode<typeof inputSchema> {
       throw new Error("Form 8814 cannot elect twice for the same child");
     }
     const lines = input.f8814s.map(calculateForm8814);
-    if (lines.some((line) => line.line15 === 0)) {
+    if (lines.some((line) => line.line4 <= UNTAXED_AMOUNT)) {
       throw new Error(
         "Form 8814 requires child income above the $1,350 filing threshold",
       );
@@ -369,6 +371,16 @@ class F8814Node extends TaxNode<typeof inputSchema> {
       });
     }
     if (line9 > 0) {
+      outputs.push({
+        nodeType: form8995.nodeType,
+        fields: {
+          net_capital_gain: line9,
+          qbi_capital_sources: [{
+            source: "form8814.qualified_dividends",
+            amount: line9,
+          }],
+        },
+      });
       outputs.push({
         nodeType: form4952.nodeType,
         fields: { form8814_line9_qualified_dividends: line9 },

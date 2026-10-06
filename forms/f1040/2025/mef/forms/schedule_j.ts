@@ -1,6 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { ScheduleJLines } from "../../../nodes/intermediate/forms/schedule_j/calculation.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { scheduleJChildElectionTax } from "../../schedule_j_child_tax_join.ts";
 
 // The calculator publishes one complete set of Schedule J dollar lines. Lines
 // 10, 14, and 18 appear on paper but have no TY2025 MeF elements: the schema
@@ -140,9 +141,13 @@ export function buildScheduleJ(
   ) {
     throw new Error("Schedule J needs sourced Form 4972 special tax");
   }
+  const childTax = scheduleJChildElectionTax(
+    context.pending as Record<string, unknown>,
+  );
   if (
     fields.line1 !== numberFromReturn(f1040, "line15_taxable_income") ||
-    fields.line23 !== numberFromReturn(f1040, "line16_income_tax") - specialTax
+    fields.line23 !==
+      numberFromReturn(f1040, "line16_income_tax") - specialTax - childTax
   ) {
     throw new Error("Schedule J must reconcile to Form 1040 lines 15 and 16");
   }

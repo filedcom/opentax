@@ -190,7 +190,8 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
         (hasPrefIncome || unrecaptured1250 > 0 || rate28 > 0 ||
           form4952Election > 0)) ||
         foreignExclusion > 0 ||
-        (input.form8814_tax ?? 0) > 0 ||
+        ((input.form8814_tax ?? 0) > 0 &&
+          !input.schedule_j_current_tax_source) ||
         sumField(input.form8978_tax) > 0 ||
         sumField(input.form8621_tax) > 0)
     ) {

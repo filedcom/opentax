@@ -1,4 +1,8 @@
 import { inputSchema as dividendSchema } from "../nodes/inputs/f1099div/index.ts";
+import {
+  assertForm8814CalculatedLines,
+  type Form8814Lines,
+} from "../nodes/inputs/f8814/index.ts";
 
 /** Reconcile bounded Form 6251 Part III dividends to retained 1099-DIV payers. */
 export function assertForm6251QualifiedDividendSource(
@@ -21,6 +25,41 @@ export function assertForm6251QualifiedDividendSource(
     (sum, payer) => sum + (payer.box1b ?? 0),
     0,
   );
+  const child = (pending?.form8814 as { items?: Form8814Lines[] } | undefined)
+    ?.items;
+  const childQualified = child?.reduce((sum, line) => sum + line.line9, 0) ?? 0;
+  const childInvestment = child?.reduce(
+    (sum, line) => sum + line.line12InvestmentIncome,
+    0,
+  ) ?? 0;
+  if (child !== undefined) {
+    const owner = form1040?.taxpayer_ssn;
+    if (!Array.isArray(child) || typeof owner !== "string") {
+      throw new Error(
+        "Form 6251 needs retained Form 8814 owner and child sources",
+      );
+    }
+    assertForm8814CalculatedLines(child, owner);
+    if (child.some((line) => line.line10 !== 0)) {
+      throw new Error(
+        "Form 6251 child capital gains need a separate Schedule D source reconciliation",
+      );
+    }
+  }
+  const form4952 = pending?.form4952 as Record<string, unknown> | undefined;
+  const childOnlyForm4952 = child !== undefined && form4952 !== undefined &&
+    Object.keys(form4952).every((key) =>
+      key === "form8814_line9_qualified_dividends" ||
+      key === "form8814_line12_investment_income"
+    ) &&
+    form4952.form8814_line9_qualified_dividends === childQualified &&
+    form4952.form8814_line12_investment_income === childInvestment;
+  const childInput = (pending?.f8814 as { f8814s?: unknown[] } | undefined)
+    ?.f8814s;
+  const childCopiesMatch = child !== undefined &&
+    Array.isArray(childInput) &&
+    JSON.stringify(childInput) ===
+      JSON.stringify(child.map((line) => line.item));
   const sourceReferences = payers.map((payer) =>
     payer.source_document_reference
   );
@@ -62,7 +101,8 @@ export function assertForm6251QualifiedDividendSource(
     (payers.length > 1 &&
       (sourceReferences.some((reference) => reference === undefined) ||
         new Set(sourceReferences).size !== payers.length)) ||
-    ordinaryTotal < qualified || qualifiedTotal !== qualified ||
+    ordinaryTotal + childQualified < qualified ||
+    qualifiedTotal + childQualified !== qualified ||
     payers.some((payer) =>
       payer.isNominee !== false || payer.box11 !== false ||
       (payer.box1b ?? 0) > payer.box1a ||
@@ -95,8 +135,8 @@ export function assertForm6251QualifiedDividendSource(
     pending?.k1_partnership !== undefined ||
     pending?.k1_s_corp !== undefined ||
     pending?.k1_trust !== undefined ||
-    pending?.f8814 !== undefined ||
-    pending?.form4952 !== undefined ||
+    pending?.f8814 !== undefined && !childCopiesMatch ||
+    pending?.form4952 !== undefined && !childOnlyForm4952 ||
     pending?.form2555 !== undefined ||
     iso && (fields.net_capital_gain ?? 0) !== issuedIsoCapital ||
     iso &&
@@ -120,7 +160,7 @@ export function assertForm6251QualifiedDividendSource(
     (fields.form4952_amt_elected_capital_gain ?? 0) !== 0 ||
     (fields.foreign_earned_income_exclusion ?? 0) !== 0 ||
     form1040.line3a_qualified_dividends !== qualified ||
-    form1040.line3b_ordinary_dividends !== ordinaryTotal ||
+    form1040.line3b_ordinary_dividends !== ordinaryTotal + childQualified ||
     basis && form1040.line7_capital_gain !== regularCapitalGain ||
     form1040.line15_taxable_income !== fields.regular_taxable_income ||
     typeof fields.taxable_excess !== "number" ||
