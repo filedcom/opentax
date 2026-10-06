@@ -4937,3 +4937,7 @@ At68e6312d6, `/tmp/opentax-farm-loss-main-integration.log` terminal result: ok |
 ## Interpreter, excluded-month and monthly-tier current-main gate
 
 At0ca0b85cc, six-file gate `/tmp/opentax-interpreter-zero-tier-main.log`:33 passed/0 failed,1m25s; source tests cover8826, zero/positive Medicare, tier-change SHOP, three-business and independent-spouse SHOP. SHA256 `f3e877526a92e8379e95d634af20b154446d54424ee07b4640b3bdf58adc14ff`. Current held8826 replay3 cases/68 reviewed pages: `/tmp/opentax-8826-main-held.log`, SHA256 `d1bc9adc9be1485cfc28300f012038324589e2e30c2b98252ac009b7eeaf96ee`. Six excluded-health hashes verified; current tier PDFs equal reviewed hashes and current fullXML passesXSD despite regenerated timestamps. Planner283 fixtures/116 descriptors/113 keys/95 covered/18 uncovered. Phase-wide full rerun and IRS acceptance remain required.
+
+## Fresh full regression, source-v3 October6 (running)
+
+Stable detached checkout `/tmp/opentax-full-regression-source-v3-oct6`, commit `fbacc539ce451cf4d627085edf33f240a11f6335`, exact `deno task test`, start `2026-10-06T02:29:48Z`. LaunchAgent `opentax-full-regression-source-v3-oct6`; confirmed wrapper26565 and child26572 live. Log `/tmp/opentax-deno-task-test-source-v3-oct6.log`, status `/tmp/opentax-full-regression-source-v3-oct6.status`. Real PATH includes Poppler26.09.0, Deno2.9.4 and libxml2.9.13. Local cached IRS schema tree is linked read-only by convention; checkout stays fixed. Final totals/log digest are pending; prior11,494/8 remains authoritative full result.
