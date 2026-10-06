@@ -3586,3 +3586,7 @@ Entire board read before the next implementation/integration phase. Prior diagno
 ## Three-column main seal
 
 Production0cf6e27da standard263/0/0ignored(4m2s), actualretaineddebt40/354 exactpending/carry/origins/source/PDF/nativeonlyTs/fullXSD and EIC9/76 exactpending/preparedpending/carry/origins/source/PDF/nativeonlyTs/fullXSD. All66debt+8newEICpages rootreviewed,64debt+15EICfiles privatelyhashpreserved; earlier originalEICfour untouched. Ledger1514 advances existing7203/EICparents only. Initialisolatemissing-schema diagnostics retained, corrected physical schema copy andv2commands terminal. Frozen52main/future remainexact, broader source/history/overflow/IRS parents remainopen. MortgageMFJ/MFS candidatecb6a23eb is ready separately and not yet integrated.
+
+## Pre-married-mortgage integration compaction
+
+Entire board re-read after main three-column seal4cb3157f3, preserving frozen52 and future boundaries. New debt production0cf6e27da passes263/0 and actual40/354 plusEIC9/76 terminalraw proof; no broader parent is closed. Candidatecb6a23eb is reviewed before integration: new SHA-bound title/notes/interest payments bind actualMFJ borrowers/payers and sole noncommunity taxpayerMFS, limits750k/375k; agentstandard92/0, actual11/36raw andsixnewpage review. Candidate remains distinct from old source records and partial missingforceitemized metadata is preserved separately. Main tests/raw/visual verification pending. LatestfullV19 remains older403a snapshot; a current phase full batch follows this integration.
