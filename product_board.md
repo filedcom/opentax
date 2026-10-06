@@ -2,11 +2,11 @@
 
 ## Compacted status (2026-10-06)
 
-The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,458 completed slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,459 completed slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
 
 Inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF keys / 96 covered / 18 uncovered**.
 
-Latest verified work: complete Roth payment inventories (**211/0**, mixed pension/adoption **6/0**, six packets / 57 reviewed pages); QEF adoption-credit composition (**13/0**, nine pages); hypothetical adoption-credit capacity and zero-tax deferral (**76/0 + 53/0**, two additional nine-page packets). Source, pending, PDFs, page maps and retained bytes match reviewed originals; XML differs only in ReturnTs. Earlier Roth/substitute packets (9/52 and 10/70) and PFIC packets (11/100) remain unchanged. Earlier disposition and preferential pension/AMT proof remains in the archive. These complete the stated slices; wider parents remain open.
+Latest verified work: owned donated-asset depreciation and actual itemized QBI caps (**7/0 + 438/0**, refreshed **67/0**, six packets / 201 reviewed pages); separate simultaneous QEF tax allocations (**16/0 + 10/0**, two packets / 24 reviewed pages). The retained source, PDF and attachment bytes match reviewed originals; XML differs only in ReturnTs. Earlier donation packets (760 pages), Roth/substitute outputs and PFIC/adoption packets (118 pages) are preserved. Earlier no-QBI pending data adds only the actual itemized-deduction source total. These complete the stated slices; wider parents remain open.
 
 Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at43m30s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
 
