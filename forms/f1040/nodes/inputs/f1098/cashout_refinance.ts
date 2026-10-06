@@ -225,6 +225,7 @@ export function validateCashoutRefinanceReview(
             review.home_improvement_invoice_ledger_reference ||
           row.contractor_payment_reference !==
             improvementDisbursement.payment_record_reference ||
+          row.spent_on !== improvementDisbursement.paid_on ||
           !validDate(
             `${row.spent_on.slice(5, 7)}/${row.spent_on.slice(8, 10)}/2025`,
           ) || row.spent_on < date ||

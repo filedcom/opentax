@@ -766,6 +766,37 @@ Deno.test("one mixed refinance sources home improvement and personal use before 
     await assertRejects(() =>
       buildPdfBytes(mismatchedValidCopy, filer, ".pdf-cache")
     );
+    const lateDirectPayment = structuredClone(bundle.pending);
+    const lateDay = `2025-${String(month).padStart(2, "0")}-02`;
+    for (const copy of [
+      (lateDirectPayment as Record<string, any>).f1098,
+      (lateDirectPayment as Record<string, any>)
+        .mortgage_refinance_points.cashout_source,
+    ]) {
+      const row = copy.cashout_refinance_review.improvement_use_records[0];
+      row.spent_on = lateDay;
+      for (const [key, dateField] of [
+        ["contractor_invoice_document", "completed_on"],
+        ["contractor_payment_document", "paid_on"],
+      ] as const) {
+        const document = row[key];
+        const values = JSON.parse(new TextDecoder().decode(document.bytes));
+        values[dateField] = lateDay;
+        document.bytes = new TextEncoder().encode(JSON.stringify(values));
+        document.sha256 = Array.from(new Uint8Array(
+          await crypto.subtle.digest("SHA-256", document.bytes),
+        ), (byte) => byte.toString(16).padStart(2, "0")).join("");
+      }
+    }
+    assertThrows(() =>
+      inputSchema.parse((lateDirectPayment as Record<string, unknown>).f1098)
+    );
+    await assertRejects(() =>
+      buildMefBundle(lateDirectPayment, { filer, attachments: [] })
+    );
+    await assertRejects(() =>
+      buildPdfBytes(lateDirectPayment, filer, ".pdf-cache")
+    );
   }
 });
 
