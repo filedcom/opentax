@@ -83,7 +83,7 @@ export function applyForm8621QefRefigure(
   }
   const without = inputs.form8839 === undefined
     ? execute(buildExecutionPlan(registry), registry, withoutInputs, context)
-    : executeForm8839TwoPass(withoutInputs);
+    : executeForm8839TwoPass(withoutInputs, true);
   if (without.diagnostics.length > 0) {
     throw new Error(
       "Form 8621 Election B needs a settled without-QEF return: " +
@@ -97,10 +97,10 @@ export function applyForm8621QefRefigure(
   const line9b = Number(without1040?.line24_total_tax);
   if (
     !Number.isFinite(line9a) || !Number.isFinite(line9b) ||
-    line9b >= line9a
+    line9b > line9a
   ) {
     throw new Error(
-      "Form 8621 Election B needs a positive full-return tax increase from undistributed earnings",
+      "Form 8621 Election B cannot defer more than the full-return tax from undistributed earnings",
     );
   }
   const sinkInput = {

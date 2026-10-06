@@ -240,8 +240,15 @@ export function assertReturnWideArithmetic(
       "Form 8621 section 1294 deferral differs from Form 1040 tax before deferral",
     );
   }
-  if (form8621DeferredTax === 0 && beforeDeferral !== undefined) {
-    throw new Error("Form 8621 tax before deferral needs a current deferral");
+  if (
+    form8621DeferredTax === 0 && beforeDeferral !== undefined &&
+    (amount("form8621_1294_counterfactual_total_tax") === undefined ||
+      line22 === undefined ||
+      !matches(beforeDeferral, line22 + (amount("line23_other_taxes") ?? 0)))
+  ) {
+    throw new Error(
+      "Form 8621 tax before deferral needs a source-backed election",
+    );
   }
   if (
     line24 !== undefined && line22 !== undefined &&

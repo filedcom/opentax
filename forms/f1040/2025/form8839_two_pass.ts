@@ -10,6 +10,7 @@ import { registry } from "./registry.ts";
 /** Recalculate the adoption credit after the ordinary graph settles. */
 export function executeForm8839TwoPass(
   inputs: Record<string, unknown>,
+  counterfactual = false,
 ): ExecuteResult {
   const { source, publicSource } = parsePublicForm8839Source(inputs.form8839);
   const firstInputs = Object.fromEntries(
@@ -62,8 +63,9 @@ export function executeForm8839TwoPass(
     publicSource.magi_review,
   );
   if (
-    settled.credit.line18 <= 0 ||
-    settled.credit.line14 !== settled.credit.line18
+    !counterfactual &&
+    (settled.credit.line18 <= 0 ||
+      settled.credit.line14 !== settled.credit.line18)
   ) {
     throw new Error(
       "Form 8839 direct route needs a positive fully used nonrefundable credit; carryforward filing is not supported",

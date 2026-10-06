@@ -8,6 +8,7 @@ import { PDFDocument } from "pdf-lib";
 import { buildMefBundle } from "./mef/builder.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "./pdf/builder.ts";
 import { assertForm8621QefRefigureSource } from "./form8621_1294_refigure.ts";
+import { executeForm8839TwoPass } from "./form8839_two_pass.ts";
 import { f1040_2025 } from "./index.ts";
 import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
 import { PficRegime } from "../nodes/inputs/f8621/index.ts";
@@ -68,6 +69,40 @@ const holding = {
     no_section951_inclusion: true,
   },
 };
+async function retainAndValidatePacket(
+  kind: "full" | "shadow-carryforward" | "zero",
+  input: Record<string, unknown>,
+  pending: Record<string, unknown>,
+  xml: string,
+  pdf: Uint8Array,
+  origins: readonly PdfPageOrigin[],
+): Promise<void> {
+  const root = Deno.env.get("FORM8621_ADOPTION_EVIDENCE_DIR") ??
+    ".state/research/form8621-qef-adoption";
+  const dir = kind === "full" ? root : `${root}/${kind}`;
+  await Deno.mkdir(dir, { recursive: true });
+  await Deno.writeTextFile(
+    `${dir}/source-pending.json`,
+    JSON.stringify({ input, pending }, null, 2),
+  );
+  await Deno.writeFile(`${dir}/return.pdf`, pdf);
+  await Deno.writeTextFile(`${dir}/return.xml`, xml);
+  await Deno.writeTextFile(
+    `${dir}/origins.json`,
+    JSON.stringify(origins, null, 2),
+  );
+  const xsd = await new Deno.Command("xmllint", {
+    args: [
+      "--noout",
+      "--schema",
+      ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+      `${dir}/return.xml`,
+    ],
+    stderr: "piped",
+  }).output();
+  assertEquals(xsd.code, 0, new TextDecoder().decode(xsd.stderr));
+}
+
 Deno.test("Form 8621 Election B composes the reviewed Form 8839 staged return in both tax runs", async () => {
   const input = { ...base.inputs, f8621: [holding] };
   const result = f1040_2025.executeReturn(input);
@@ -121,32 +156,14 @@ Deno.test("Form 8621 Election B composes the reviewed Form 8839 staged return in
     "form8621",
     "form8839",
   ]);
-  const dir = Deno.env.get("FORM8621_ADOPTION_EVIDENCE_DIR") ??
-    ".state/research/form8621-qef-adoption";
-  await Deno.mkdir(dir, { recursive: true });
-  await Deno.writeTextFile(
-    `${dir}/source-pending.json`,
-    JSON.stringify({ input, pending }, null, 2),
-  );
-  await Deno.writeFile(`${dir}/return.pdf`, pdf);
-  await Deno.writeTextFile(
-    `${dir}/return.xml`,
+  await retainAndValidatePacket(
+    "full",
+    input,
+    pending,
     bundle.xml,
+    pdf,
+    origins,
   );
-  await Deno.writeTextFile(
-    `${dir}/origins.json`,
-    JSON.stringify(origins, null, 2),
-  );
-  const xsd = await new Deno.Command("xmllint", {
-    args: [
-      "--noout",
-      "--schema",
-      ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
-      `${dir}/return.xml`,
-    ],
-    stderr: "piped",
-  }).output();
-  assertEquals(xsd.code, 0, new TextDecoder().decode(xsd.stderr));
   const tampered = structuredClone(pending) as Record<string, unknown>;
   const marker = tampered.form8621_1294_refigure as {
     source_inputs: { w2: { box1_wages: number }[] };
@@ -170,5 +187,119 @@ Deno.test("Form 8621 Election B composes the reviewed Form 8839 staged return in
     () => buildPdfBytes(tampered, base.filer),
     Error,
     "Form 8621 section 1294",
+  );
+});
+
+Deno.test("Form 8621 Election B keeps an actual fully used adoption credit when only its shadow has a carryforward", async () => {
+  const originalW2 = (base.inputs.w2 as Record<string, unknown>[])[0];
+  const wage = {
+    ...originalW2,
+    box1_wages: 64_500,
+    box2_fed_withheld: 8_000,
+    box3_ss_wages: 64_500,
+    box4_ss_withheld: 3_999,
+    box5_medicare_wages: 64_500,
+    box6_medicare_withheld: 935.25,
+  };
+  const inputs = { ...base.inputs, w2: [wage], f8621: [holding] };
+  const result = f1040_2025.executeReturn(inputs);
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const filed = pending.f1040! as Record<string, number>;
+  const withoutInputs = {
+    ...inputs,
+    f8621: [{
+      ...holding,
+      qef_ordinary_income: 0,
+      qef_capital_gain: 0,
+      qef_1294_election: undefined,
+    }],
+  };
+  assertThrows(
+    () => f1040_2025.executeReturn(withoutInputs),
+    Error,
+    "carryforward filing is not supported",
+  );
+  const without = executeForm8839TwoPass(withoutInputs, true);
+  const shadow = buildPending(without.pending);
+  assertEquals(shadow.schedule3?.line6c_adoption_credit, 5_645);
+  assertEquals(shadow.f1040?.line24_total_tax, 0);
+  assertEquals(pending.schedule3?.line6c_adoption_credit, 6_000);
+  assertEquals(filed.form8621_1294_total_tax_before_deferral, 85);
+  assertEquals(filed.form8621_1294_deferred_tax, 85);
+  assertEquals(filed.line24_total_tax, 0);
+  assertForm8621QefRefigureSource(pending);
+  const bundle = await buildMefBundle(pending, {
+    filer: base.filer,
+    attachments: base.attachments!,
+  });
+  const origins: PdfPageOrigin[] = [];
+  const pdf = await buildPdfBytes(
+    pending,
+    base.filer,
+    ".pdf-cache",
+    bundle,
+    origins,
+  );
+  assertEquals(origins.length, 9);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount(), 9);
+  await retainAndValidatePacket(
+    "shadow-carryforward",
+    inputs,
+    pending,
+    bundle.xml,
+    pdf,
+    origins,
+  );
+});
+
+Deno.test("Form 8621 Election B records zero deferred tax when the full-return tax is unchanged", async () => {
+  const smallHolding = {
+    ...holding,
+    qef_ordinary_income: 1,
+    parent_source: {
+      ...holding.parent_source,
+      qef_annual_statement: {
+        ...cp("qef-small", "QEF annual 1 ordinary"),
+        ordinary_earnings_usd: 1,
+        net_capital_gain_usd: 0,
+      },
+    },
+    qef_1294_election: {
+      ...holding.qef_1294_election,
+      undistributed_ordinary_earnings_usd: 1,
+    },
+  };
+  const inputs = { ...base.inputs, f8621: [smallHolding] };
+  const result = f1040_2025.executeReturn(inputs);
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const filed = pending.f1040! as Record<string, number>;
+  assertEquals(filed.form8621_1294_total_tax_before_deferral, 7_455);
+  assertEquals(filed.form8621_1294_counterfactual_total_tax, 7_455);
+  assertEquals(filed.form8621_1294_deferred_tax, 0);
+  assertEquals(filed.line24_total_tax, 7_455);
+  assertForm8621QefRefigureSource(pending);
+  const bundle = await buildMefBundle(pending, {
+    filer: base.filer,
+    attachments: base.attachments!,
+  });
+  const origins: PdfPageOrigin[] = [];
+  const pdf = await buildPdfBytes(
+    pending,
+    base.filer,
+    ".pdf-cache",
+    bundle,
+    origins,
+  );
+  assertEquals(origins.length, 9);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount(), 9);
+  await retainAndValidatePacket(
+    "zero",
+    inputs,
+    pending,
+    bundle.xml,
+    pdf,
+    origins,
   );
 });

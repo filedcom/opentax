@@ -882,10 +882,11 @@ function assembleReturn(
   const counterfactual = input.form8621_1294_counterfactual_total_tax;
   if (
     counterfactual !== undefined &&
-    (deferredBeforeCredits <= 0 || counterfactual > taxBeforeDeferral)
+    (input.form8621_1294_deferred_tax_before_credits === undefined ||
+      counterfactual > taxBeforeDeferral)
   ) {
     throw new Error(
-      "Form 8621 section 1294 counterfactual tax needs a positive source-backed deferral",
+      "Form 8621 section 1294 counterfactual tax needs a sourced election and cannot exceed current tax",
     );
   }
   const deferredTax = counterfactual !== undefined
@@ -943,7 +944,7 @@ function assembleReturn(
     line25d_total_withholding: computed_line25d,
     line33_total_payments: computed_line33,
   };
-  if (deferredTax > 0) {
+  if (deferredTax > 0 || counterfactual !== undefined) {
     result.form8621_1294_deferred_tax = deferredTax;
     result.form8621_1294_total_tax_before_deferral = computed_line22 +
       computed_line23;

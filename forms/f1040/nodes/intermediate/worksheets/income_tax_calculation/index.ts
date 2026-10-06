@@ -367,7 +367,8 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [
       this.outputNodes.output(f1040, {
         line16_income_tax: tax,
-        ...(form8621DeferredTaxBeforeCredits > 0
+        ...(input.form8621_1294_undistributed_ordinary !== undefined ||
+            input.form8621_1294_undistributed_capital !== undefined
           ? {
             form8621_1294_deferred_tax_before_credits:
               form8621DeferredTaxBeforeCredits,

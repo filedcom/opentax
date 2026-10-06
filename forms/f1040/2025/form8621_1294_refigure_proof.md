@@ -137,3 +137,39 @@ Schedule C source, and its calculated return retains an unfileable diagnostic
 pending durable source and carryforward evidence. A QEF holding fails that
 contract. No Election B/Form 8990 filing claim is made from its internal
 projection, and the existing guard remains.
+
+### Shadow credit limit and zero deferred tax
+
+The actual Form 8839 return must still use its entire nonrefundable credit.
+The hypothetical without-QEF return used only for Form 8621 line 9b may have
+less tax capacity; its unused credit is neither a filed carryforward nor a
+reason to reject the actual return. With reviewed adoption facts, $64,500 of
+W-2 wages, and $2,000 of QEF income, the actual Form 1040 line 18 is $6,085
+and uses all $6,000 of nonrefundable adoption credit. The hypothetical line
+18 is $5,645 and therefore uses only $5,645. Form 8621 lines 9a/9b/9c are
+**$85/$0/$85**. Calling the ordinary public Form 8839 filing path for the
+hypothetical return still rejects its $355 unused credit; only the private
+counterfactual runner permits this calculation.
+
+The [2025 Form 8621 line 9c](https://www.irs.gov/pub/irs-pdf/f8621.pdf)
+instructs subtraction of 9b from 9a without a positive minimum. A separate
+source-backed $1 QEF inclusion falls within the same tax-table band, making
+both line 9a and 9b $7,455 and line 9c **$0**. Its Election B form retains a
+zero deferred-tax entry and the Form 1040 arithmetic remains unchanged.
+
+Both additional packets have nine pages with the same form inventory as the
+first adoption packet. Their full native XML validates against local TY2025
+MeF v5.4 `Return1040.xsd`; all 18 pages were rendered and visually reviewed
+under `/tmp/opentax-form8621-qef-adoption-extended-oct6/`. The PDF SHA-256
+values are `e8d849fc136308e422c5b170f11c00bbf6da29fec91520ba7f5706c30abe5256`
+for the shadow-credit case and
+`ba4ce42961e9fd7ca17b31ee7dff00cf82942d2cbc353bc9e73ab8d009dce36b`
+for the zero-deferral case. The source and pending snapshots, page origins,
+XML, and PDFs are retained in that directory.
+The combined Election B, Form 8839, income-tax worksheet, and Form 1040
+arithmetic gate passed 71/0 in
+`/tmp/opentax-form8621-qef-adoption-extended-focused-oct6.log`. It regenerated
+all 10 prior PFIC PDFs into
+`/tmp/opentax-form8621-qef-adoption-preserved-oct6/`; every SHA-256 still
+matches its reviewed counterpart across the earlier 91 pages. The original
+nine-page adoption PDF also remains byte-identical.
