@@ -140,3 +140,7 @@ capital sales/losses, special28%/1250 parent or sibling income, FEIE, ScheduleJ,
 nominee/foreign/withholding/199A dividend treatments, wider deductions, other
 family/dependency/residence and outside-source authenticity remain existing
 boundaries. Earlier ordinary MFJ/MFS and education/source routes stay intact.
+
+## Main integration
+
+Integrated at9d3929e4e. Preferential plus ordinary remarried MFJ/MFS main integration:16 passed,0 failed (1m9s), `/tmp/opentax-preferential-main-integration.log`. Retained seven packets copied to `.state/research/2026-10-06-parent-preferential`; broader parent remains open.
