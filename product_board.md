@@ -8,9 +8,9 @@ Inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF key
 
 Latest verified work: QEF Election B refigures actual education/dependent credits and tax-limited business credits (**8/0 + 41/0**). Four full-XSD packets / 54 reviewed pages preserve all 16 source/pending/PDF/origin files exactly, with XML only timestamp changes. Earlier Roth conversion, donated-asset and simultaneous-QEF proofs remain archived. Wider parents remain open.
 
-Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at87m41s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
+Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at89m16s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
 
-Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **6d3e0f26d**, last verified published checkpoint; newly verified credit changes are ready to publish.
+Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **0feee220b**, verified published with the new credit changes.
 
 Roth consumed-history and natural-resource donation changes are ready in isolated checkouts; a fresh-main natural-resource rehearsal is running. Root preferential ScheduleJ/AMT source work has an isolated checkout and a retained guard audit. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
 
