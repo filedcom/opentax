@@ -1,3 +1,4 @@
+import { assertProducingMiningZeroQbiReturn } from "../../form8995a_producing_mining_source.ts";
 import { assertFarmWotcReturn } from "../../form8995_farm_wotc_reconciliation.ts";
 import { calculateFarmWotcLines } from "../../../nodes/intermediate/forms/form8995a/farm-wotc.ts";
 import { qbiPercentageForPdf } from "../qbi-percentage.ts";
@@ -130,6 +131,7 @@ export function projectStagedAggregatedParentPdf(
   allPending: Record<string, Record<string, unknown>>,
 ): Record<string, unknown> {
   const input = inputSchema.strict().parse(raw);
+  assertProducingMiningZeroQbiReturn(input, allPending);
   const { source, parent } = assertScheduleBAggregationJoin(input, {
     filer,
     pending: allPending,

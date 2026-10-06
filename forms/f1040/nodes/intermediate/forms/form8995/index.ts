@@ -402,6 +402,50 @@ function advancedFormOutput(
     });
     const wages = input.agi! - businesses.reduce((sum, b) => sum + b.qbi, 0) +
       owned.deduction;
+    if (
+      businesses?.length === 1 &&
+      business?.source_schedule_c.donated_natural_resource_property_source
+          ?.kind === "producing_mining_617"
+    ) {
+      if (
+        input.filing_status !== FilingStatus.Single || !input.taxpayer_ssn ||
+        sumField(input.qbi_from_schedule_c) !== business.qbi ||
+        sumField(input.qbi_from_schedule_f) !== 0 ||
+        sumField(input.qbi) !== 0 ||
+        sstbQbi !== 0 || sumField(input.se_health_insurance_deduction) !== 0 ||
+        sumField(input.retirement_plan_deduction) !== 0 ||
+        input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+        input.qualified_tip_qbi_source
+      ) {
+        throw new Error(
+          "Producing mine advanced QBI needs one actual owner business and only filed halfSE",
+        );
+      }
+      sourcedBusiness = {
+        business_filing_details: {
+          business_name: business.business_name!,
+          ein: business.ein!,
+          business_qbi: business.qbi - sumField(input.se_tax_deduction),
+          business_w2_wages: 0,
+          business_ubia: 0,
+          one_non_sstb_business_confirmed: true,
+          no_aggregation_confirmed: true,
+          no_ptp_or_loss_carryforward_confirmed: true,
+          qualified_dividends_zero_confirmed: true,
+          qbi_wages_ubia_sources_confirmed: true,
+          taxable_income_before_qbi_confirmed: true,
+        },
+        qbi_no_prior_loss_or_suspended_loss_confirmed:
+          input.qbi_no_prior_loss_or_suspended_loss_confirmed,
+        producing_mining_zero_qbi_source: {
+          business,
+          owner_ssn: input.taxpayer_ssn.replaceAll("-", ""),
+          se_tax_deduction: sumField(input.se_tax_deduction),
+        },
+      };
+      taxableIncome = Math.round(taxableIncome);
+    }
+
     return output(form8995a, {
       ...children[0],
       single_schedule_c_source: undefined,

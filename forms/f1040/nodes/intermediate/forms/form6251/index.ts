@@ -164,6 +164,7 @@ export const inputSchema = z.object({
   // Schedule C current-year mining deduction less ten-year AMT amortization.
   line2q_mining_costs: z.number().int().nonnegative().optional(),
   // Form 8864 line 9 is regular income but excluded from AMT on line 3.
+  line3_charitable_contribution_adjustment: z.number().finite().optional(),
   line3_form8864_income_exclusion: z.number().int().negative().optional(),
   // Regular Schedule A interest on a second-home houseboat is disallowed for AMT.
   line3_houseboat_interest_addback: z.number().int().positive().optional(),
@@ -256,6 +257,7 @@ function knownLine2cThrough3Total(input: Form6251Input): number {
     (input.line2p_long_term_contracts ?? 0) +
     (input.line2q_mining_costs ?? 0) +
     (input.line3_form8864_income_exclusion ?? 0) +
+    (input.line3_charitable_contribution_adjustment ?? 0) +
     (input.line3_houseboat_interest_addback ?? 0) +
     (input.depreciation_adjustment ?? 0) +
     (input.nol_adjustment ?? 0) +
@@ -276,6 +278,7 @@ function amtiWithoutKnownLine2cThrough3(input: Form6251Input): number {
     line2q_mining_costs: 0,
     line3_form8864_income_exclusion: 0,
     line3_houseboat_interest_addback: 0,
+    line3_charitable_contribution_adjustment: 0,
     depreciation_adjustment: 0,
     nol_adjustment: 0,
     private_activity_bond_interest: 0,
@@ -309,6 +312,7 @@ function computeAmtiBeforeMfsAddition(input: Form6251Input): number {
     input.line2p_long_term_contracts ?? 0,
     input.line2q_mining_costs ?? 0,
     (input.line3_form8864_income_exclusion ?? 0) +
+    (input.line3_charitable_contribution_adjustment ?? 0) +
     (input.line3_houseboat_interest_addback ?? 0),
     input.depreciation_adjustment ?? 0,
     input.nol_adjustment ?? 0,

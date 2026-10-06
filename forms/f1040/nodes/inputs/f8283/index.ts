@@ -2449,6 +2449,15 @@ function scheduleAOutput(input: F8283Input): NodeOutput[] {
         ? specialSectionBAsSectionA(item as SectionBItem)
         : item;
     return [{
+      ...(("special_fmv_reduction" in item &&
+          item.special_fmv_reduction?.reason ===
+            "natural_resource_ordinary_income" &&
+          item.special_fmv_reduction.source.kind === "producing_mining_617")
+        ? {
+          producing_mining_charitable_amt_source:
+            item.special_fmv_reduction.source,
+        }
+        : {}),
       source: `Form 8283 item ${index + 1}: ${
         item.property_description ?? "property"
       }`,

@@ -1,3 +1,4 @@
+import { assertForm6251CharitableSource } from "../../form6251_charitable_source.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { assertForm6251Line8 } from "../../form6251_line8.ts";
 import { assertForm3921IsoSource } from "../../../nodes/inputs/f3921/index.ts";
@@ -56,8 +57,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   textField("line2o_circulation_costs", 1, 19),
   textField("line2p_long_term_contracts", 1, 20),
   textField("line2q_mining_costs", 1, 21),
-  textField("line3_form8864_income_exclusion", 1, 25),
-  textField("line3_houseboat_interest_addback", 1, 25),
+  textField("line3_related_adjustments_total", 1, 25),
   textField("amti", 1, 26),
   textField("exemption", 1, 27),
   textField("taxable_excess", 1, 28, true),
@@ -98,6 +98,7 @@ export const form6251Pdf: PdfFormDescriptor = {
     textField("primarySSN", 1, 2),
   ],
   projectFields(fields, allPending) {
+    assertForm6251CharitableSource(fields, allPending);
     if (Object.keys(fields).length === 0) return {};
     if (
       typeof fields.nol_adjustment === "number" &&
@@ -190,7 +191,19 @@ export const form6251Pdf: PdfFormDescriptor = {
         recipients,
       );
     }
-    return [fields];
+    const related = [
+      fields.line3_form8864_income_exclusion,
+      fields.line3_houseboat_interest_addback,
+      fields.line3_charitable_contribution_adjustment,
+    ];
+    return [{
+      ...fields,
+      line3_related_adjustments_total: related.some((value) =>
+          typeof value === "number"
+        )
+        ? related.reduce<number>((sum, value) => sum + Number(value ?? 0), 0)
+        : undefined,
+    }];
   },
   includeWhen: (fields) =>
     (typeof fields.tentative_tax === "number" &&

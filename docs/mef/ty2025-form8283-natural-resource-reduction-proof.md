@@ -393,3 +393,122 @@ Integrated e239aa16f (from5ada28c7e) verified with standard-task focused source1
 Current main after rounding also replays actual ScheduleJ5packets85pages exactly, fullXSD/pending/PDF/origins/XMLonlyReturnTs: `/tmp/opentax-schedulej-main-raw-held-after-mining-oct6.log`; exact Form4952 sourcecent packet7pages remains identical in `/tmp/opentax-form4952-source-cents-held-after-mining-oct6.log`. Shared QEF1/7 and corrected ordinary4852 1/8 read-only source/native/PDF/XSD checkers both pass, `/tmp/opentax-{qef,4852}-catalog-after-mining-check-oct6.log`. The authoritative mineral16 proof has611 page occurrences (490prior+121new).
 
 Regular/AMT productive exploration pool and paid616 development differences are derived from actual owned annual accounts; initial produced gift310000 versusAMT311000 binds the same current AGI cap, TMT23527/AMT14406. Recovered pool case has actual depletion difference−1000, TMT22059/AMT13961. Filed6251 operands and tax percentages settle to nearest dollars, while raw exemption multiplication stays through subtraction. This does not close differing current AMT charity/line3/separatecarry, other histories/authentication or IRS parent gates. Isolated broader348/1 missingXML and focusedstable2/0 remain accurately distinguished. Mutable sharedresearch415diagnosticcopies have no beforehash authentication, immutable/tmp originals remain authoritative. Ledger1471; frozen52/future unchanged.
+
+## Producing617: differing current AMT charity, filed line3 and separate carry
+
+The current owned producing-mineral source now supplies the regular and AMT
+charitable property accounts to ScheduleA. The actual hypothetical appreciation
+less ordinary-income recapture determines each account's property class; the
+reviewed properties retain capital-gain30% classification. Regular AGI remains
+the charitable percentage-limit base, as prescribed by the related-adjustment
+instructions. No mining character, gift, development expense or gross-receipt
+amount was changed to obtain a result. Source identity, ownership, claim, basis,
+filed amounts and complete current inventory are independently replayed at
+native and PDF boundaries. The filed adjustment compares separately settled
+regular/AMT ScheduleA cash and noncash lines; raw allowance/carry cents remain
+in the retained reconciliation. Form6251 line3 combines this actual adjustment
+with existing related adjustments exactly once. A supplied aggregate which
+differs from the actual source components rejects.
+
+The two source-backed public returns preserve FMV350000, regular basis200000,
+AMT basis290000, regular pre-limit claim310000, AMT claim311000, current paid
+development100000 and gross140000. Actual second issued W2 wages895536/897536
+and an owned issued3921 exercise (1000 shares, exercise10, FMV510) derive the
+500000 ISO adjustment. Actual W2 identity and withholding are retained; box6
+includes the employer's additional0.9% Medicare withholding over200000. Early
+v6/v7 outputs lacking that additional withholding remain diagnostic artifacts,
+and are not the final source packets. No manually supplied AMT offset is used.
+
+| Filed/source result | Partly limited AMT | Fully allowed AMT |
+|---|---:|---:|
+| AGI |1035000|1037000|
+| Regular/AMT current noncash allowed |310000 /310500|310000 /311000|
+| Form6251 line3 |−500|−1000|
+| Regular/AMT current-year carry |0 /500|0 /0|
+| ScheduleA itemized deduction |320000|320000|
+| Taxable income |715000|717000|
+| Regular tax |221570|222310|
+| AMTI |1314500|1316000|
+| TMT |363278|363698|
+| AMT |141708|141388|
+| Total tax |371841|372279|
+| Filed additional Medicare withholding credit |6260|6278|
+| Amount owed |113381|113801|
+
+Independent ordinary-tax computation is188769.75 plus37% of taxable income
+over626350, settled to filed dollars. TMT is28% of AMTI less4782, with no
+remaining exemption. Actual ScheduleC profit40000 and issued W2 SS wages derive
+SE tax1071 and halfSE536. The actual non-SSTB mineral business has QBI39464,
+wages0 and qualified depreciable property0 (the source asset is depletion-only);
+above the full phase-in threshold its Form8995-A deduction is0. Both native and
+PDF retain the identified two-page zero-deduction Form8995-A. This is a sourced
+owner-business route, not a supplied zero scalar or an SSTB relabel.
+
+### Terminal evidence and independently scoped original replay
+
+Final source2/0, including15 conflicts per case rejected through both native
+and PDF exports (60 rejection checks):
+`/tmp/opentax-producing617-amt-charity-source-v11.log`. Final compatibility237/0:
+`/tmp/opentax-producing617-amt-charity-compat-terminal-v4.log`, comprising
+ScheduleA,6251,8995,8995-A node tests and the houseboat/Pub974 source modules.
+The prior combined source21/0 logv7 is preserved but predates the independently
+corrected new W2 withholding; original19-case amounts remain unchanged.
+Conflicts cover source costs/ownership, detached inventory, issued wages/owner,
+ISO, mining EIN/wages, current allowance/carry/claim, line3, QBI and final tax.
+Historical failed setup/assertion logs are preserved, not called green.
+
+Final packets: `/tmp/opentax-producing617-amt-charity-evidence-terminal-v11`.
+Two packets contain32files,40return-page and90retained-source-page occurrences,
+18PDFs/13uniquePDFs/74unique rasters. Each of the130 final page occurrences is
+exact raster equal to the completed v10 visual review:51 unique rasters match
+the earlier producing-source review, and23 were inspected in three v10 sheets.
+Canonical source/native monetary fields, actual copy/owner/form inventories
+and full local XSD are checked. No clipping/overlap was found. The source's
+completed retained8283/appraisal/payment records are simulated source-contract
+evidence; signatures do not establish outside authenticity or IRS acceptance.
+
+Final review mapping and byte manifest:
+`/tmp/opentax-producing617-amt-charity-review-terminal-v11/all-page-occurrences.json`
+and `proof-manifest.json`. The manifest retains the original16/267/611-page
+archive and new2/32/130-page packet inventory, totaling18/299/741 occurrences.
+It separately records the deliberate original graph deltas: exactly two
+`pending.json` files acquire the actual owned mine on their ScheduleA item and
+the independently calculated AMT reconciliation; exactly two `carryforwards.json`
+files acquire the separately derived AMT category keys. The original producing
+exploration account uses AGI137174, cap41152.2, regular carry268847.8 and AMT
+carry269847.8; recovered uses AGI127881, cap38364.3 and both carries311635.7.
+No original source/attachment/calculation/origin/tax/PDF bytes change. Across
+267 original files:247exact bytes,16XML ReturnTs-only changes,4derived JSON
+changes. The authoritative original source archive remains untouched.
+
+Retained-input replayer (no fixture regeneration or generic field dropping):
+
+```
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run -A --config deno.json \
+ /tmp/opentax-producing617-amt-charity-held-source-replay.ts <checkout> \
+ /tmp/opentax-form8283-producing617-evidence-reviewed-v14 <fresh-output-dir>
+```
+
+The final source test may use `FORM8283_AMT_CHARITY_EVIDENCE_DIR` to select a
+fresh output root. All research writers in this isolated phase use local or
+explicit outside output; only the read-only schema/docs cache is shared.
+
+Authorities: [2025 Form6251 instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf),
+Charitable Contributions of Certain Property, Related Adjustments and AMT
+recordkeeping; [2025 Form8995-A instructions](https://www.irs.gov/pub/irs-prior/i8995a--2025.pdf),
+qualified business/phase-in/wage-and-property limitation;
+[2025 W2/W3 instructions](https://www.irs.gov/pub/irs-prior/iw2w3--2025.pdf),
+box6 employer Additional Medicare withholding.
+
+Separate current-year AMT carry is now actually produced (including a positive
+500 balance); subsequent-year consumption of that balance, externally accepted
+prior carry history, other property-class changes and broader deduction vintage
+combinations remain existing source obligations. A general prior capital-gain
+carryover supplied alongside this owned route still rejects until separately
+sourced. No blanket Form8283/6251/8995-A parent completion is claimed.
+
+Final original replay is terminal16/267/fullXSD in
+`/tmp/opentax-producing617-amt-charity-held-terminal-v3.log`. Its generic terminal
+JSON wording is qualified by the independently audited247/16/4 split above;
+exact four intentional graph additions are not reported as byte-identical.
+Final proof-manifest SHA256: `cd5537ad061a7ee6a2e774341397ab46276c9748339f6b9177fb5664cd3c052f`.

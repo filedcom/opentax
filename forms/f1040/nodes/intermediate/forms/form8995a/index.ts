@@ -2,6 +2,7 @@ import {
   assertSingleFarmAmounts,
   singleFarmSourceSchema,
 } from "./single-farm-source.ts";
+import { assertProducingMiningZeroQbi } from "./producing-mining.ts";
 import { filedOwnedScheduleC } from "../../../owned-business-filing.ts";
 import {
   qualifiedTipQbiSourceSchema,
@@ -256,6 +257,11 @@ export const inputSchema = z.object({
   business_filing_details: businessFilingDetailsSchema.optional(),
   // Internally retained Schedule C net profit and attributable half-SE deduction.
   single_sstb_schedule_c_source: z.object({
+    business: scheduleCQbiBusinessSchema,
+    owner_ssn: z.string().regex(/^\d{9}$/),
+    se_tax_deduction: z.number().int().nonnegative(),
+  }).strict().optional(),
+  producing_mining_zero_qbi_source: z.object({
     business: scheduleCQbiBusinessSchema,
     owner_ssn: z.string().regex(/^\d{9}$/),
     se_tax_deduction: z.number().int().nonnegative(),
@@ -1079,6 +1085,7 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   const filedAmount = (value: number) =>
     input.single_schedule_c_source || input.single_schedule_f_source ||
       input.farm_wotc_filing_source ||
+      input.producing_mining_zero_qbi_source ||
       input.aggregation_filing_details ||
       input.patron_business_source
       ? Math.round(value)
@@ -1596,6 +1603,15 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
           this.outputNodes.output(standard_deduction, {
             qbi_deduction: deduction,
           }),
+          { nodeType: this.nodeType, fields: input },
+        ],
+      };
+    }
+    if (assertProducingMiningZeroQbi(input)) {
+      return {
+        outputs: [
+          this.outputNodes.output(f1040, { line13_qbi_deduction: 0 }),
+          this.outputNodes.output(standard_deduction, { qbi_deduction: 0 }),
           { nodeType: this.nodeType, fields: input },
         ],
       };

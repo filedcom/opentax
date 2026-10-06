@@ -1,3 +1,5 @@
+import { assertProducingMiningZeroQbi } from "../../../nodes/intermediate/forms/form8995a/producing-mining.ts";
+import { assertProducingMiningZeroQbiReturn } from "../../form8995a_producing_mining_source.ts";
 import { assertQualifiedTipQbiSource } from "../../form8995_qualified_tip_source.ts";
 import { assertFarmWotcReturn } from "../../form8995_farm_wotc_reconciliation.ts";
 import { calculateFarmWotcLines } from "../../../nodes/intermediate/forms/form8995a/farm-wotc.ts";
@@ -171,13 +173,17 @@ export function validateOneBusiness(fields: Form8995AInput) {
       "Form8995A nonzero qualified dividends need an actual source route",
     );
   }
+  if (fields.producing_mining_zero_qbi_source) {
+    assertProducingMiningZeroQbi(fields);
+  }
   const lines = calculateOneBusiness8995ALines(fields);
   if (
     !Object.entries(lines).filter(([key, value]) =>
       /^line\d+$/.test(key) && value !== undefined
     ).every(([, value]) => Number.isInteger(value)) ||
     lines.line39 < 0 ||
-    (lines.line39 === 0 && !fields.single_schedule_f_source)
+    (lines.line39 === 0 && !fields.single_schedule_f_source &&
+      !fields.producing_mining_zero_qbi_source)
   ) {
     throw new Error(
       "Form 8995-A MeF needs a sourced whole-dollar calculated QBI deduction",
@@ -529,6 +535,7 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
     throw new Error("Form 8995-A MeF cannot file an empty pending record");
   }
   const fields = inputSchema.strict().parse(rawFields);
+  assertProducingMiningZeroQbiReturn(fields, context?.pending);
   if (fields.farm_wotc_filing_source) {
     assertQualifiedTipQbiSource(
       fields as unknown as Record<string, unknown>,

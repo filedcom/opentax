@@ -1,4 +1,4 @@
-import { scheduleA } from "../../../nodes/inputs/schedule_a/index.ts";
+import { assertForm6251CharitableSource } from "../../form6251_charitable_source.ts";
 import { schedule_f } from "../../../nodes/intermediate/forms/schedule_f/index.ts";
 import { calculateCharitableNaturalResource } from "../../../nodes/inputs/f8283/natural-resource-source.ts";
 import { inputSchema as giftSchema } from "../../../nodes/inputs/f8283/index.ts";
@@ -93,73 +93,10 @@ export function assertCharitableNaturalResourceReturn(
       );
     }
   }
-  // Refigure actual current charitable limits from source-derived AMT claims.
-  // Section56 related adjustments retain regular AGI for these non-AGI limits.
-  const producingSources = sources.filter((source) =>
-    source.kind === "producing_mining_617"
+  assertForm6251CharitableSource(
+    (pending.form6251 ?? {}) as Record<string, unknown>,
+    pending,
   );
-  if (producingSources.length) {
-    const filedScheduleA = pending.schedule_a as Record<string, unknown>;
-    const regular = scheduleA.inputSchema.parse({
-      ...filedScheduleA,
-      line_11_cash_contributions: undefined,
-      line_12_noncash_contributions: undefined,
-      line_13_contribution_carryover: undefined,
-    });
-    const amt = structuredClone(regular);
-    if (
-      regular.agi !==
-        (pending.f1040 as Record<string, unknown> | undefined)?.line11_agi
-    ) {
-      throw new Error(
-        "Producing617 charitable AMT limit needs finalized owned return AGI",
-      );
-    }
-    for (const source of producingSources) {
-      const calc = calculateCharitableNaturalResource(source);
-      const allGiftSources = [
-        ...(gifts.section_a_items ?? []).map((row) =>
-          row.natural_resource_ordinary_income_reduction
-        ),
-        ...(gifts.section_b_items ?? []).map((row) =>
-          row.special_fmv_reduction?.reason ===
-              "natural_resource_ordinary_income"
-            ? row.special_fmv_reduction.source
-            : undefined
-        ),
-      ];
-      const index = allGiftSources.findIndex((row) =>
-        row?.property_reference === source.property_reference
-      ) + 1;
-      const rows = (amt.noncash_contribution_items ?? []).filter((row) =>
-        row.contribution_id === `f8283:${index}`
-      );
-      if (
-        rows.length !== 1 || rows[0].amount !== calc.deduction_claimed ||
-        rows[0].adjusted_basis !== calc.adjusted_basis ||
-        rows[0].original_fmv !== calc.fmv
-      ) {
-        throw new Error(
-          "Producing617 AMT gift needs exact owned current contribution identity/value",
-        );
-      }
-      rows[0].amount = calc.amt_deduction_claimed!;
-      rows[0].adjusted_basis = calc.amt_adjusted_basis!;
-    }
-    const ctx = { taxYear: 2025, formType: "f1040" };
-    const regularResult = scheduleA.compute(ctx, regular),
-      amtResult = scheduleA.compute(ctx, amt);
-    const allowed = (result: typeof regularResult) =>
-      result.finalizations![0].fields.line_12_noncash_contributions;
-    if (
-      allowed(regularResult) !== filedScheduleA.line_12_noncash_contributions ||
-      allowed(amtResult) !== allowed(regularResult)
-    ) {
-      throw new Error(
-        "Producing617 differing current charitable AMT deduction needs its actual line3/carryforward route",
-      );
-    }
-  }
   if (!active) return;
   const ctx = { taxYear: 2025, formType: "f1040" };
   const compare = (
