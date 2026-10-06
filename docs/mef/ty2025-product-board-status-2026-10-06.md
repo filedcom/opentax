@@ -3560,3 +3560,7 @@ Entireboard re-read before the next integration. Mixed debt production6519c6819 
 ## Mixed debt main seal
 
 Integrated production6519c6819 passes final fifteen-module standarddenotasktest246passed/0failed/0ignored(2m36s), `/tmp/opentax-form7203-mixed-main-standard-v2-oct6.log`. Actualraw32/288 terminal exactwholepending/carry/origins/source/PDF/nativeonlyTs/fullXSD, `/tmp/opentax-form7203-mixed-debt-current-main-replay.Dr7lFw/combined-summary.json`. Root66pagevisualreview and64fileprivatehashpreservation recorded separately. Ledger1511 records boundedcurrentmixeddebt, no broadparentclose. Mortgage improvement/datejoin productiona7a00c87c is now integrated after pre-integration compaction; maincompat/raw checks remain pending.
+
+## Mortgage improvement main seal
+
+Productiona7a00c87c passes mainstandardsevenmodule91/0/0ignored(48s), `/tmp/opentax-1098-improvement-main-standard-oct6.log`. Actualretainedraw9/30exactPDF/nativeonlyTs/fullXSD/sevencomparablepending/threepriororigins, matchingrawreport/log; allsixnewpages rootreviewed,17sealedfiles privatelyhashpreserved. Ledger1512, frozen52 andfuture exact; widerparent/externalgates remainopen. Mixed debt main246/0 and32/288 raw proof remain separately sealed.
