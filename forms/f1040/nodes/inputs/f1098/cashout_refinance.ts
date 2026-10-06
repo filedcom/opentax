@@ -27,6 +27,7 @@ function reviewedDocument(
 const monthlyRecord = z.object({
   month: z.number().int().min(1).max(12),
   opening_balance: z.number().int().nonnegative(),
+  principal_advanced_during_month: z.number().int().nonnegative().optional(),
   principal_paid_before_month_end: z.number().int().nonnegative(),
   closing_balance: z.number().int().nonnegative(),
   interest_paid: z.number().int().nonnegative(),
@@ -39,7 +40,7 @@ const additionalLoan = z.object({
   closing_reference: z.string().trim().min(1),
   original_principal: z.number().int().positive(),
   opening_2025_principal: z.number().int().positive(),
-  monthly_records: z.array(monthlyRecord).length(12),
+  monthly_records: z.array(monthlyRecord).min(1).max(12),
   title_document: retainedDocument,
   lien_document: retainedDocument,
   interest_payment_document: retainedDocument,
@@ -47,6 +48,16 @@ const additionalLoan = z.object({
   security_history_document: retainedDocument.optional(),
   improvement_invoice_document: retainedDocument.optional(),
   improvement_payment_document: retainedDocument.optional(),
+  payoff_document: retainedDocument.optional(),
+  advances: z.array(z.object({
+    amount: z.number().int().positive(),
+    advanced_on: z.string().regex(/^2025-(0[1-9]|1[0-2])-01$/),
+    purpose: z.enum(["substantial_improvement", "personal_nonhome_use"]),
+    disbursement_reference: z.string().trim().min(1),
+    bank_disbursement_document: retainedDocument,
+    contractor_invoice_document: retainedDocument.optional(),
+    personal_use_document: retainedDocument.optional(),
+  }).strict()).min(1).optional(),
 }).strict();
 
 /** A single first-of-month refinance of one post-2017 acquisition mortgage. */
@@ -183,6 +194,7 @@ function completeRows(
     if (
       row.month !== firstMonth + index || row.opening_balance !== balance ||
       row.opening_balance <= 0 ||
+      (row.principal_advanced_during_month ?? 0) !== 0 ||
       row.principal_paid_before_month_end > row.opening_balance ||
       row.closing_balance !==
         row.opening_balance - row.principal_paid_before_month_end ||
@@ -285,6 +297,203 @@ function validateSecondHomeLoan(review: Review, source: Loan): boolean {
 type Additional = NonNullable<Review["additional_qualified_loans"]>[number];
 type Category = "grandfathered" | "pre2017" | "post2017";
 
+function validIsoDate(value: string | undefined): Date | undefined {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value ?? "")) return;
+  return validDate(`${value!.slice(5, 7)}/${value!.slice(8, 10)}/${value!.slice(0, 4)}`);
+}
+
+function additionalTimelineValid(
+  loan: Additional,
+  source: Loan,
+  lien: Record<string, unknown> | undefined,
+  originated: Date,
+): boolean {
+  const firstMonth = originated.getUTCFullYear() === 2025
+    ? originated.getUTCMonth() + 1 : 1;
+  const rows = loan.monthly_records;
+  const payoff = loan.payoff_document && reviewedDocument(loan.payoff_document);
+  const advances = loan.advances ?? [];
+  if (
+    originated.getUTCFullYear() === 2025 && originated.getUTCDate() !== 1 ||
+    rows[0]?.month !== firstMonth ||
+    rows.some((row, index) => row.month !== firstMonth + index) ||
+    rows.at(-1)!.month > 12 ||
+    new Set(rows.map((row) => row.lender_statement_reference)).size !==
+      rows.length ||
+    (rows.at(-1)!.closing_balance === 0) !==
+      (loan.payoff_document !== undefined) ||
+    (rows.at(-1)!.closing_balance > 0 && rows.at(-1)!.month !== 12) ||
+    (loan.payoff_document !== undefined && !payoff) ||
+    (advances.length > 0 &&
+      (lien?.open_end_advance_permitted !== true ||
+        typeof lien.open_end_credit_agreement_reference !== "string" ||
+        !lien.open_end_credit_agreement_reference.trim() ||
+        typeof lien.credit_limit !== "number" ||
+        !Number.isInteger(lien.credit_limit) ||
+        lien.credit_limit < loan.original_principal))
+  ) return false;
+  let balance = loan.opening_2025_principal;
+  let latestMonth = firstMonth;
+  for (const row of rows) {
+    const monthAdvances = advances.filter((advance) =>
+      Number(advance.advanced_on.slice(5, 7)) === row.month
+    );
+    const advanced = monthAdvances.reduce((sum, advance) =>
+      sum + advance.amount, 0);
+    if (
+      row.opening_balance !== balance || row.opening_balance <= 0 ||
+      (row.principal_advanced_during_month ?? 0) !== advanced ||
+      row.principal_paid_before_month_end > row.opening_balance + advanced ||
+      row.closing_balance !== row.opening_balance + advanced -
+        row.principal_paid_before_month_end ||
+      row.interest_paid <= 0 ||
+      (row.closing_balance === 0 && row !== rows.at(-1)) ||
+      (typeof lien?.credit_limit === "number" &&
+        row.opening_balance + advanced > lien.credit_limit)
+    ) return false;
+    balance = row.closing_balance;
+    latestMonth = row.month;
+  }
+  if (
+    payoff && (
+      payoff.document_type !== "mortgage_payoff_receipt" ||
+      payoff.property_reference !== loan.property_reference ||
+      payoff.source_document_reference !== loan.source_document_reference ||
+      payoff.lender_name !== source.lender_name ||
+      payoff.payer_tin !== source.recipient_tin ||
+      payoff.principal_paid !== rows.at(-1)!.principal_paid_before_month_end ||
+      payoff.lender_statement_reference !==
+        rows.at(-1)!.lender_statement_reference ||
+      typeof payoff.paid_on !== "string" ||
+      !validIsoDate(payoff.paid_on) ||
+      payoff.paid_on !== new Date(Date.UTC(2025, latestMonth, 0))
+        .toISOString().slice(0, 10))
+  ) return false;
+  const references = new Set<string>();
+  for (const advance of advances) {
+    const date = validIsoDate(advance.advanced_on);
+    const bank = reviewedDocument(advance.bank_disbursement_document);
+    const invoice = advance.contractor_invoice_document &&
+      reviewedDocument(advance.contractor_invoice_document);
+    const personal = advance.personal_use_document &&
+      reviewedDocument(advance.personal_use_document);
+    if (
+      !date || date < originated || date.getUTCMonth() + 1 < firstMonth ||
+      date.getUTCMonth() + 1 > latestMonth ||
+      references.has(advance.disbursement_reference) ||
+      bank?.document_type !== "mortgage_advance_disbursement" ||
+      bank.property_reference !== loan.property_reference ||
+      bank.source_document_reference !== loan.source_document_reference ||
+      bank.lender_name !== source.lender_name ||
+      bank.recipient_tin !== source.recipient_tin ||
+      bank.credit_agreement_reference !==
+        lien?.open_end_credit_agreement_reference ||
+      bank.disbursement_reference !== advance.disbursement_reference ||
+      bank.amount !== advance.amount || bank.paid_on !== advance.advanced_on ||
+      (advance.purpose === "substantial_improvement"
+        ? invoice?.document_type !== "contractor_invoice" ||
+          invoice.property_reference !== loan.property_reference ||
+          invoice.billed_to_tin !== source.recipient_tin ||
+          invoice.amount !== advance.amount ||
+          invoice.completed_on !== advance.advanced_on ||
+          typeof invoice.contractor_name !== "string" ||
+          !invoice.contractor_name.trim() ||
+          typeof invoice.invoice_reference !== "string" ||
+          !invoice.invoice_reference.trim() ||
+          typeof invoice.substantial_improvement_description !== "string" ||
+          !invoice.substantial_improvement_description.trim() ||
+          bank.payee !== invoice.contractor_name ||
+          bank.invoice_reference !== invoice.invoice_reference ||
+          advance.personal_use_document !== undefined
+        : personal?.document_type !== "personal_advance_use_ledger" ||
+          personal.property_reference !== loan.property_reference ||
+          personal.owner_tin !== source.recipient_tin ||
+          personal.disbursement_reference !== advance.disbursement_reference ||
+          personal.amount !== advance.amount ||
+          personal.spent_on !== advance.advanced_on ||
+          typeof personal.personal_purpose !== "string" ||
+          !personal.personal_purpose.trim() ||
+          bank.payee !== source.recipient_tin ||
+          advance.contractor_invoice_document !== undefined)
+    ) return false;
+    references.add(advance.disbursement_reference);
+  }
+  return true;
+}
+
+function additionalLoanAverages(loan: Additional): {
+  grandfathered: number;
+  pre2017: number;
+  post2017: number;
+  total: number;
+} | undefined {
+  const secured = validDate(
+    reviewedDocument(loan.lien_document)?.secured_on as string | undefined,
+  );
+  if (!secured) return;
+  const initial: Category = secured <= new Date("1987-10-13T00:00:00Z")
+    ? "grandfathered"
+    : secured < new Date("2017-12-16T00:00:00Z")
+    ? "pre2017"
+    : "post2017";
+  const advances = loan.advances ?? [];
+  const mixed = advances.some((advance) =>
+    advance.purpose === "personal_nonhome_use" || initial !== "post2017"
+  );
+  const balance = {
+    grandfathered: initial === "grandfathered"
+      ? loan.opening_2025_principal : 0,
+    pre2017: initial === "pre2017" ? loan.opening_2025_principal : 0,
+    post2017: initial === "post2017" ? loan.opening_2025_principal : 0,
+    personal: 0,
+  };
+  const sum = { grandfathered: 0, pre2017: 0, post2017: 0, total: 0 };
+  for (const row of loan.monthly_records) {
+    for (const advance of advances.filter((item) =>
+      Number(item.advanced_on.slice(5, 7)) === row.month
+    )) {
+      if (advance.purpose === "personal_nonhome_use") {
+        balance.personal += advance.amount;
+      } else {
+        balance.post2017 += advance.amount;
+      }
+    }
+    let paid = row.principal_paid_before_month_end;
+    const personalPaid = Math.min(paid, balance.personal);
+    balance.personal -= personalPaid;
+    paid -= personalPaid;
+    const grandfatheredPaid = Math.min(paid, balance.grandfathered);
+    balance.grandfathered -= grandfatheredPaid;
+    paid -= grandfatheredPaid;
+    // Pub. 936 orders home acquisition debt last, but does not establish an
+    // ordering between old- and new-limit acquisition vintages. An actual
+    // payment reaching both vintages needs a further reviewed allocation.
+    if (paid > 0 && balance.pre2017 > 0 && balance.post2017 > 0) return;
+    const prePaid = Math.min(paid, balance.pre2017);
+    balance.pre2017 -= prePaid;
+    paid -= prePaid;
+    const postPaid = Math.min(paid, balance.post2017);
+    balance.post2017 -= postPaid;
+    paid -= postPaid;
+    if (
+      paid !== 0 ||
+      balance.personal + balance.grandfathered + balance.pre2017 +
+          balance.post2017 !== row.closing_balance
+    ) return;
+    sum.grandfathered += balance.grandfathered;
+    sum.pre2017 += balance.pre2017;
+    sum.post2017 += balance.post2017;
+    sum.total += row.closing_balance;
+  }
+  const divisor = mixed ? 12 : loan.monthly_records.length;
+  return {
+    grandfathered: sum.grandfathered / divisor,
+    pre2017: sum.pre2017 / divisor,
+    post2017: sum.post2017 / divisor,
+    total: sum.total / divisor,
+  };
+}
+
 function additionalLoanCategory(
   review: Review,
   loan: Additional,
@@ -305,6 +514,8 @@ function additionalLoanCategory(
   const improvementPayment = loan.improvement_payment_document &&
     reviewedDocument(loan.improvement_payment_document);
   const date = validDate(source.box3_origination_date);
+  const dynamic = date?.getUTCFullYear() === 2025 ||
+    loan.payoff_document !== undefined || (loan.advances?.length ?? 0) > 0;
   const normalize = (tin: string) => tin.replaceAll("-", "");
   const ownership = review.married_ownership_evidence;
   const eligible = review.filing_status_verified === "mfj" && ownership
@@ -315,7 +526,7 @@ function additionalLoanCategory(
   const borrowerTins = lien?.borrower_tins;
   const personalDates = occupancy?.personal_use_dates;
   if (
-    !date || date >= new Date("2025-01-01T00:00:00Z") ||
+    !date || date >= new Date("2026-01-01T00:00:00Z") ||
     (secondHome && secondProperty !== loan.property_reference) ||
     source.box2_outstanding_principal !== loan.opening_2025_principal ||
     source.refinance === true || (source.for_routing ?? "A") !== "A" ||
@@ -324,7 +535,7 @@ function additionalLoanCategory(
     !source.recipient_tin || !source.lender_name?.trim() ||
     !source.box1_deduction_workpaper_reference ||
     !eligible.includes(normalize(source.recipient_tin)) ||
-    !completeRows(loan.monthly_records, 1, 12, loan.opening_2025_principal) ||
+    !additionalTimelineValid(loan, source, lien, date) ||
     loan.monthly_records.reduce((sum, row) => sum + row.interest_paid, 0) !==
       source.box1_mortgage_interest ||
     title?.document_type !== "property_title" ||
@@ -349,6 +560,8 @@ function additionalLoanCategory(
     lien.recipient_tin !== source.recipient_tin ||
     lien.principal !== loan.original_principal ||
     loan.opening_2025_principal > loan.original_principal ||
+    (date.getUTCFullYear() === 2025 &&
+      loan.opening_2025_principal !== loan.original_principal) ||
     lien.secured_on !== source.box3_origination_date ||
     !Array.isArray(borrowerTins) || borrowerTins.length === 0 ||
     !borrowerTins.every((tin) => typeof tin === "string" &&
@@ -359,13 +572,22 @@ function additionalLoanCategory(
     payment.property_reference !== loan.property_reference ||
     payment.source_document_reference !== loan.source_document_reference ||
     payment.payer_tin !== source.recipient_tin ||
-    JSON.stringify(payment.months) !== JSON.stringify(
-      loan.monthly_records.map((row) => ({
+    JSON.stringify(payment.months) !== JSON.stringify(dynamic
+      ? loan.monthly_records.map((row) => ({
+        month: row.month,
+        opening_balance: row.opening_balance,
+        principal_advanced_during_month:
+          row.principal_advanced_during_month ?? 0,
+        principal_paid_before_month_end: row.principal_paid_before_month_end,
+        closing_balance: row.closing_balance,
+        interest_paid: row.interest_paid,
+        lender_statement_reference: row.lender_statement_reference,
+      }))
+      : loan.monthly_records.map((row) => ({
         month: row.month,
         interest_paid: row.interest_paid,
         lender_statement_reference: row.lender_statement_reference,
-      })),
-    ) ||
+      }))) ||
     (secondHome
       ? occupancy?.document_type !== "second_home_occupancy_calendar" ||
         occupancy.property_reference !== loan.property_reference ||
@@ -815,21 +1037,12 @@ export function cashoutRefinanceRatio(review: Review): number | undefined {
   let grandfatheredAverage = 0;
   let additionalTotalAverage = 0;
   for (const loan of review.additional_qualified_loans ?? []) {
-    const date = validDate(
-      (reviewedDocument(loan.lien_document)?.secured_on as string | undefined),
-    );
-    if (!date) return undefined;
-    const average = loan.monthly_records.reduce(
-      (sum, row) => sum + row.closing_balance, 0,
-    ) / 12;
-    additionalTotalAverage += average;
-    if (date <= new Date("1987-10-13T00:00:00Z")) {
-      grandfatheredAverage += average;
-    } else if (date < new Date("2017-12-16T00:00:00Z")) {
-      priorAverage += average;
-    } else {
-      postAverage += average;
-    }
+    const averages = additionalLoanAverages(loan);
+    if (!averages) return undefined;
+    additionalTotalAverage += averages.total;
+    grandfatheredAverage += averages.grandfathered;
+    priorAverage += averages.pre2017;
+    postAverage += averages.post2017;
   }
   // Table 1 lines 6, 9, 10 and 11. A pre-2017 mortgage can preserve a
   // larger qualified limit without reclassifying the later mixed refinance.

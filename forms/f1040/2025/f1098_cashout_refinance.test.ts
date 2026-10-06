@@ -8,6 +8,7 @@ import { buildMefBundle } from "./mef/builder.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
 import { inputSchema } from "../nodes/inputs/f1098/index.ts";
+import { cashoutRefinanceRatio, cashoutRefinanceReviewSchema } from "../nodes/inputs/f1098/cashout_refinance.ts";
 import {
   inputSchema as pointsInputSchema,
   refinancePointsDeduction,
@@ -2036,5 +2037,299 @@ Deno.test("historical and improvement liens share one five-mortgage Table 1", as
       await assertRejects(() => buildPdfBytes(conflictingSecondTitle,
         filer, ".pdf-cache"));
     }
+  }
+});
+
+Deno.test("additional lien payoff and dated advances use sourced Table 1 averages", async () => {
+  const retainedJson = async (name: string, value: unknown) => {
+    const bytes = new TextEncoder().encode(JSON.stringify(value));
+    const sha256 = Array.from(new Uint8Array(await crypto.subtle.digest(
+      "SHA-256", bytes,
+    )), (byte) => byte.toString(16).padStart(2, "0")).join("");
+    return { file_name: name, sha256, bytes };
+  };
+  const editDocument = async (document: any, change: (value: any) => void) => {
+    const value = JSON.parse(new TextDecoder().decode(document.bytes));
+    change(value);
+    return await retainedJson(document.file_name, value);
+  };
+  for (const scenario of ["before", "payoff", "new-lien", "advance"] as const) {
+    const sample = await historicalMultiLienSource("mfj");
+    const mortgage = sample.mortgage;
+    const points = sample.points;
+    const review = mortgage.f1098_cashout_refinance_review
+      .cashout_refinance_review as Record<string, any>;
+    const owner = sample.spouse;
+    if (scenario === "payoff") {
+      const loan = review.additional_qualified_loans[1];
+      const source = mortgage.f1098[3];
+      loan.monthly_records = loan.monthly_records.slice(0, 9).map(
+        (row: any, index: number) => ({
+          ...row, interest_paid: index === 8 ? 2_000 : 2_500,
+          principal_paid_before_month_end: index === 8 ? 500_000 : 0,
+          closing_balance: index === 8 ? 0 : 500_000,
+        })
+      );
+      loan.payoff_document = await retainedJson("mfj-pre2017-payoff.json", {
+        document_type: "mortgage_payoff_receipt",
+        property_reference: loan.property_reference,
+        source_document_reference: loan.source_document_reference,
+        lender_name: source.lender_name, payer_tin: owner,
+        principal_paid: 500_000, paid_on: "2025-09-30",
+        lender_statement_reference: loan.monthly_records[8]
+          .lender_statement_reference,
+      });
+      loan.interest_payment_document = await editDocument(
+        loan.interest_payment_document, (record) => {
+          record.months = loan.monthly_records.map((row: any) => ({
+            month: row.month, opening_balance: row.opening_balance,
+            principal_advanced_during_month: 0,
+            principal_paid_before_month_end: row.principal_paid_before_month_end,
+            closing_balance: row.closing_balance, interest_paid: row.interest_paid,
+            lender_statement_reference: row.lender_statement_reference,
+          }));
+        });
+      source.box1_mortgage_interest = 22_000;
+      source.issuer_copy = await copy(source.lender_name, 22_000, 500_000,
+        source.box3_origination_date, owner);
+    }
+    if (scenario === "advance") {
+      const loan = review.additional_qualified_loans[2];
+      const source = mortgage.f1098[4];
+      loan.lien_document = await editDocument(loan.lien_document, (record) => {
+        record.open_end_advance_permitted = true;
+        record.open_end_credit_agreement_reference = "2021 recorded open-end note";
+        record.credit_limit = 300_000;
+      });
+      loan.advances = [
+        {
+          amount: 50_000, advanced_on: "2025-09-01",
+          purpose: "substantial_improvement",
+          disbursement_reference: "2025 structural expansion advance wire",
+          bank_disbursement_document: await retainedJson(
+            "mfj-post2017-improvement-advance-bank.json", {
+              document_type: "mortgage_advance_disbursement",
+              property_reference: loan.property_reference,
+              source_document_reference: loan.source_document_reference,
+              lender_name: source.lender_name, recipient_tin: owner,
+              credit_agreement_reference: "2021 recorded open-end note",
+              disbursement_reference: "2025 structural expansion advance wire",
+              amount: 50_000, paid_on: "2025-09-01",
+              payee: "Second Home Expansion Contractor",
+              invoice_reference: "2025 second-home structural expansion invoice",
+            }),
+          contractor_invoice_document: await retainedJson(
+            "mfj-post2017-improvement-advance-invoice.json", {
+              document_type: "contractor_invoice",
+              property_reference: loan.property_reference,
+              billed_to_tin: owner, amount: 50_000,
+              completed_on: "2025-09-01",
+              contractor_name: "Second Home Expansion Contractor",
+              invoice_reference: "2025 second-home structural expansion invoice",
+              substantial_improvement_description:
+                "new structural second-home room and roof extension",
+            }),
+        },
+        {
+          amount: 20_000, advanced_on: "2025-10-01",
+          purpose: "personal_nonhome_use",
+          disbursement_reference: "2025 unrelated personal advance wire",
+          bank_disbursement_document: await retainedJson(
+            "mfj-post2017-personal-advance-bank.json", {
+              document_type: "mortgage_advance_disbursement",
+              property_reference: loan.property_reference,
+              source_document_reference: loan.source_document_reference,
+              lender_name: source.lender_name, recipient_tin: owner,
+              credit_agreement_reference: "2021 recorded open-end note",
+              disbursement_reference: "2025 unrelated personal advance wire",
+              amount: 20_000, paid_on: "2025-10-01", payee: owner,
+            }),
+          personal_use_document: await retainedJson(
+            "mfj-post2017-personal-advance-use.json", {
+              document_type: "personal_advance_use_ledger",
+              property_reference: loan.property_reference,
+              owner_tin: owner,
+              disbursement_reference: "2025 unrelated personal advance wire",
+              amount: 20_000, spent_on: "2025-10-01",
+              personal_purpose: "unrelated personal travel",
+            }),
+        },
+      ];
+      loan.monthly_records = loan.monthly_records.map((row: any) => ({
+        ...row,
+        principal_advanced_during_month: row.month === 9 ? 50_000
+          : row.month === 10 ? 20_000 : 0,
+        opening_balance: row.month <= 9 ? 200_000
+          : row.month === 10 ? 250_000
+          : row.month === 11 ? 270_000 : 260_000,
+        principal_paid_before_month_end: row.month >= 11 ? 10_000 : 0,
+        closing_balance: row.month <= 8 ? 200_000
+          : row.month === 9 ? 250_000
+          : row.month === 10 ? 270_000
+          : row.month === 11 ? 260_000 : 250_000,
+        interest_paid: row.month <= 8 ? 1_000
+          : row.month === 9 ? 1_250
+          : row.month === 10 ? 1_350
+          : row.month === 11 ? 1_300 : 1_250,
+      }));
+      loan.interest_payment_document = await editDocument(
+        loan.interest_payment_document, (record) => {
+          record.months = loan.monthly_records.map((row: any) => ({
+            month: row.month, opening_balance: row.opening_balance,
+            principal_advanced_during_month: row.principal_advanced_during_month,
+            principal_paid_before_month_end: row.principal_paid_before_month_end,
+            closing_balance: row.closing_balance, interest_paid: row.interest_paid,
+            lender_statement_reference: row.lender_statement_reference,
+          }));
+        });
+      source.box1_mortgage_interest = 13_150;
+      source.issuer_copy = await copy(source.lender_name, 13_150, 200_000,
+        source.box3_origination_date, owner);
+    }
+    if (scenario === "new-lien") {
+      const loan = review.additional_qualified_loans[2];
+      const source = mortgage.f1098[4];
+      source.box3_origination_date = "07/01/2025";
+      source.box1_mortgage_interest = 6_000;
+      source.issuer_copy = await copy(source.lender_name, 6_000, 200_000,
+        source.box3_origination_date, owner);
+      loan.monthly_records = loan.monthly_records.slice(6);
+      loan.lien_document = await editDocument(loan.lien_document, (record) => {
+        record.incurred_on = "07/01/2025";
+        record.secured_on = "07/01/2025";
+      });
+      loan.improvement_invoice_document = await editDocument(
+        loan.improvement_invoice_document, (record) => {
+          record.completed_on = "07/01/2025";
+        });
+      loan.improvement_payment_document = await editDocument(
+        loan.improvement_payment_document, (record) => {
+          record.paid_on = "07/01/2025";
+        });
+      loan.interest_payment_document = await editDocument(
+        loan.interest_payment_document, (record) => {
+          record.months = loan.monthly_records.map((row: any) => ({
+            month: row.month, opening_balance: row.opening_balance,
+            principal_advanced_during_month: 0,
+            principal_paid_before_month_end: row.principal_paid_before_month_end,
+            closing_balance: row.closing_balance, interest_paid: row.interest_paid,
+            lender_statement_reference: row.lender_statement_reference,
+          }));
+        });
+    }
+    // Independent Table 1 check: line 11 remains the $750,000 MFJ limit.
+    // The payoff lien contributes 8 * $500,000 / 9; the new lien contributes
+    // 6 * $200,000 / 6; the mixed advance uses twelve category balances.
+    const denominator = scenario === "payoff"
+      ? 400_000 + 2_790_000 / 12 + 100_000 + 4_000_000 / 9 + 200_000
+      : scenario === "advance"
+      ? 400_000 + 2_790_000 / 12 + 100_000 + 500_000 + 2_630_000 / 12
+      : 400_000 + 2_790_000 / 12 + 800_000;
+    const expectedRatio = Math.round(750_000 / denominator * 1000) / 1000;
+    assertEquals(expectedRatio, scenario === "before" || scenario === "new-lien"
+      ? .524 : scenario === "payoff" ? .545 : .517);
+    assertEquals(cashoutRefinanceRatio(cashoutRefinanceReviewSchema.parse(review)),
+      expectedRatio);
+    let interest = 0;
+    let allocated = 0;
+    for (const source of mortgage.f1098) {
+      interest += source.box1_mortgage_interest;
+      const next = Math.round(interest * expectedRatio);
+      source.box1_current_year_deductible_interest = next - allocated;
+      allocated = next;
+    }
+    points.cashout_source = { f1098s: mortgage.f1098,
+      ...mortgage.f1098_cashout_refinance_review };
+    const inputs = { ...base.inputs,
+      general: { ...(base.inputs.general as Record<string, unknown>),
+        filing_status: "mfj", spouse_first_name: "Sam",
+        spouse_last_name: "Example", spouse_ssn: sample.spouse },
+      schedule_a: { force_itemized: true }, f1098: mortgage.f1098,
+      f1098_cashout_refinance_review: mortgage.f1098_cashout_refinance_review,
+      mortgage_refinance_points: points };
+    assertEquals(inputSchema.parse({ f1098s: mortgage.f1098,
+      ...mortgage.f1098_cashout_refinance_review }).f1098s.length, 5);
+    const result = f1040_2025.executeReturn(inputs);
+    assertEquals(result.diagnostics, []);
+    assertEquals(result.pending.schedule_a?.line_8a_mortgage_interest_1098,
+      allocated);
+    const pending = buildPending(result.pending);
+    const filer = extractFilerIdentity(result.pending.f1040)!;
+    const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+    try {
+      await Deno.writeTextFile(xmlPath, bundle.xml);
+      const checked = await new Deno.Command("xmllint", {
+        args: ["--noout", "--schema", xsdPath, xmlPath],
+        stdout: "piped", stderr: "piped",
+      }).output();
+      assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+    } finally { await Deno.remove(xmlPath); }
+    const pdf = await buildPdfBytes(bundle.pending, filer, ".pdf-cache", bundle);
+    assertEquals((await PDFDocument.load(pdf)).getPageCount(), 3);
+    let dir: string | undefined;
+    try { dir = Deno.env.get("FORM1098_PAYOFF_ADVANCE_EVIDENCE_DIR"); }
+    catch (error) { if (!(error instanceof Deno.errors.NotCapable)) throw error; }
+    if (dir) {
+      const packet = `${dir}/${scenario}`;
+      await Deno.mkdir(packet, { recursive: true });
+      await Deno.writeTextFile(`${packet}/source.json`, JSON.stringify(inputs));
+      await Deno.writeTextFile(`${packet}/pending.json`, JSON.stringify(bundle.pending));
+      await Deno.writeTextFile(`${packet}/return.xml`, bundle.xml);
+      await Deno.writeFile(`${packet}/return.pdf`, pdf);
+      for (const [index, source] of mortgage.f1098.entries()) {
+        await Deno.writeFile(`${packet}/source-1098-${index + 1}.pdf`,
+          source.issuer_copy.bytes);
+      }
+      const records = [review.qualified_home_inventory_document,
+        ...Object.values(review.married_ownership_evidence).filter(
+          (item: any) => item?.bytes instanceof Uint8Array),
+        ...review.additional_qualified_loans.flatMap((loan: any) => [
+          ...Object.values(loan).filter((item: any) =>
+            item?.bytes instanceof Uint8Array),
+          ...(loan.advances ?? []).flatMap((advance: any) =>
+            Object.values(advance).filter((item: any) =>
+              item?.bytes instanceof Uint8Array)),
+        ]),
+        review.improvement_use_records[0].contractor_invoice_document,
+        review.improvement_use_records[0].contractor_payment_document];
+      for (const record of records as Array<{file_name: string; bytes: Uint8Array}>) {
+        await Deno.writeFile(`${packet}/${record.file_name}`, record.bytes);
+      }
+    }
+    if (scenario === "before") continue;
+    for (const mutate of [
+      (source: any) => { source.f1098s.pop(); },
+      (source: any) => { source.cashout_refinance_review
+        .additional_qualified_loans[scenario === "payoff" ? 1 : 2]
+        .monthly_records[0].opening_balance++; },
+      (source: any) => { source.cashout_refinance_review
+        .additional_qualified_loans[scenario === "payoff" ? 1 : 2]
+        [scenario === "payoff" ? "payoff_document" : "lien_document"]
+        .bytes[0] ^= 1; },
+    ]) {
+      const altered = structuredClone(bundle.pending) as Record<string, any>;
+      mutate(altered.f1098);
+      assertThrows(() => inputSchema.parse(altered.f1098));
+      await assertRejects(() => buildMefBundle(altered, { filer, attachments: [] }));
+      await assertRejects(() => buildPdfBytes(altered, filer, ".pdf-cache"));
+    }
+    const altered = structuredClone(bundle.pending) as Record<string, any>;
+    const changedLoan = altered.f1098.cashout_refinance_review
+      .additional_qualified_loans[scenario === "payoff" ? 1 : 2];
+    const record = scenario === "payoff" ? changedLoan.payoff_document
+      : scenario === "new-lien" ? changedLoan.lien_document
+      : changedLoan.advances[0].bank_disbursement_document;
+    const recorded = JSON.parse(new TextDecoder().decode(record.bytes));
+    if (scenario === "payoff") recorded.paid_on = "2025-09-29";
+    else if (scenario === "new-lien") recorded.secured_on = "07/01/2024";
+    else recorded.amount = 50_001;
+    record.bytes = new TextEncoder().encode(JSON.stringify(recorded));
+    record.sha256 = Array.from(new Uint8Array(await crypto.subtle.digest(
+      "SHA-256", record.bytes,
+    )), (byte) => byte.toString(16).padStart(2, "0")).join("");
+    assertThrows(() => inputSchema.parse(altered.f1098));
+    await assertRejects(() => buildMefBundle(altered, { filer, attachments: [] }));
+    await assertRejects(() => buildPdfBytes(altered, filer, ".pdf-cache"));
   }
 });
