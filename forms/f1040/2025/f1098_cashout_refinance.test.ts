@@ -88,9 +88,9 @@ async function source(refinanceMonth = 7) {
   );
   const newAverage =
     newMonths.reduce((sum, row) => sum + row.closing_balance, 0) /
-    newMonths.length;
+    12;
   const ratio = Math.round(
-    (200_000 + qualifiedNew / newMonths.length) /
+    (200_000 + qualifiedNew / 12) /
       (200_000 + newAverage) * 1000,
   ) / 1000;
   const oldDeductible = Math.round(oldInterest * ratio);
@@ -180,7 +180,7 @@ async function source(refinanceMonth = 7) {
   };
 }
 
-Deno.test("cash-out refinance uses full Pub 936 Table 1 ratio and each loan's secured months", async () => {
+Deno.test("cash-out refinance uses lender secured months for old debt and annual mixed-use balances for new debt", async () => {
   for (const month of [7, 4]) {
     const data = await source(month);
     const parsed = inputSchema.parse({
@@ -194,12 +194,12 @@ Deno.test("cash-out refinance uses full Pub 936 Table 1 ratio and each loan's se
       ),
       data.expectedInterest,
     );
-    if (month === 7) assertEquals(data.expectedInterest, 12_240);
+    if (month === 7) assertEquals(data.expectedInterest, 12_406);
     if (month === 7) {
-      assertEquals(data.f1098[0].box1_current_year_deductible_interest, 5_760);
-      assertEquals(data.f1098[1].box1_current_year_deductible_interest, 6_480);
+      assertEquals(data.f1098[0].box1_current_year_deductible_interest, 5_838);
+      assertEquals(data.f1098[1].box1_current_year_deductible_interest, 6_568);
     }
-    if (month === 4) assertEquals(data.expectedInterest, 12_101);
+    if (month === 4) assertEquals(data.expectedInterest, 12_151);
     const result = f1040_2025.executeReturn({
       ...base.inputs,
       schedule_a: { force_itemized: true },

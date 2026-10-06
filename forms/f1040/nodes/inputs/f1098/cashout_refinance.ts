@@ -214,10 +214,12 @@ export function validateCashoutRefinanceReview(
   const newAverage = review.new_loan_months.reduce(
     (sum, row) => sum + row.closing_balance,
     0,
-  ) / review.new_loan_months.length;
+  ) / 12;
   const qualifiedOldAverage = oldAverage;
-  const qualifiedNewAverage = qualifiedNewClosing /
-    review.new_loan_months.length;
+  // Pub. 936 Example 1 divides mixed-use debt-category balances by twelve,
+  // including zero months before closing. The old lender's single-use loan
+  // retains its separate months-secured denominator.
+  const qualifiedNewAverage = qualifiedNewClosing / 12;
   const ratio = Math.round(
     Math.min(750_000, qualifiedOldAverage + qualifiedNewAverage) /
       (oldAverage + newAverage) * 1000,
