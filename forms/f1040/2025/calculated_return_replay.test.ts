@@ -53,13 +53,15 @@ Deno.test("calculated Form 1040 and Schedule 1-3 amounts cannot change native XM
       continue;
     }
     const pending = buildPending(result.pending);
-    // Reviewed attachment claims must use their retained bytes, just like the
-    // held source review generator. Keep every numerical tamper probe active.
+    // Reviewed attachment and substitute-source claims must use their retained
+    // bytes, just like the held source review generator. Keep every numerical
+    // tamper probe active.
     const fixtureXml = async (data: typeof pending) =>
-      fixture.attachments?.length
+      fixture.attachments?.length || fixture.retainedSourceDocuments?.length
         ? (await buildMefBundle(data, {
           filer: fixture.filer,
-          attachments: fixture.attachments,
+          attachments: fixture.attachments ?? [],
+          retainedSourceDocuments: fixture.retainedSourceDocuments,
         })).xml
         : buildMefXml(data, fixture.filer);
     let baseline: string;
