@@ -314,6 +314,7 @@ function usd(amount: number): string {
 export function fmvReductionExplanation(
   item: SectionAItem,
   index: number,
+  section: "A" | "B" = "A",
 ): string {
   if (!needsFmvReductionStatement(item)) {
     throw new Error("Form 8283 FMV-reduction statement needs a reduced claim");
@@ -444,11 +445,11 @@ export function fmvReductionExplanation(
       "Form 8283 reduced claim needs certified sale proceeds or a sourced ordinary-income or capital-gain reduction",
     );
   }
-  const explanation = `Section A item ${propertyId(index)}: unreduced FMV ${
-    usd(fmv)
-  } minus ${usd(fmv - claimed)} (${reason}) equals claimed contribution ${
-    usd(claimed)
-  }.`;
+  const explanation = `Section ${section} item ${
+    propertyId(index)
+  }: unreduced FMV ${usd(fmv)} minus ${
+    usd(fmv - claimed)
+  } (${reason}) equals claimed contribution ${usd(claimed)}.`;
   if (explanation.length > 1_000) {
     throw new Error("Form 8283 FMV-reduction explanation exceeds MeF limit");
   }

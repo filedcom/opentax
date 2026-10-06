@@ -432,7 +432,7 @@ function sectionBOrdinaryTangibleInstance(
         item.property_type === SectionBPropertyType.Securities,
       section_b_other: item.property_type === SectionBPropertyType.Other,
       reduction_statements: [
-        fmvReductionExplanation(specialSectionBAsSectionA(item), 0),
+        fmvReductionExplanation(specialSectionBAsSectionA(item), 0, "B"),
       ],
     };
   }
