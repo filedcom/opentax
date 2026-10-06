@@ -4006,3 +4006,18 @@ Direct property is integrated at **0298758b2**; root 55-module tests and 50-retu
 Full regression V17–V22 processes were verified live this phase; V22 at immutable **0d153ed24** predates later work. A passing latest-production full batch, remaining filing routes, ATS credentials/scenario conflicts, IRS acknowledgments and release review are still required. Local XSD370/0 and source hashes do not prove external authenticity, business-rule compliance or IRS acceptance.
 
 Root property55-module gate terminal681/0/0ignored (7m44s), session87548exit0; actual source replay50/473 passed at0298758b2. Cross-activity repair is being verified in a separate snapshot; production was held fixed through those gates. Root turning-21 source/PDF review and six private hashes are complete; candidatea72625d2c integration begins next.
+
+
+## Before verified cross-activity property repair integration
+
+## Compacted status (2026-10-06)
+
+The frozen checklist retains **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,528 bounded slices**; broader parents remain open. Learnings are compacted in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries belong only in `future_todo` and are not executed.
+
+Parent payroll (56/0, saved 24 returns/125 pages) and midmonth mortgage (98/0, saved 26 returns/81 pages) retain sealed root evidence. Draft [PR63](https://github.com/filedcom/opentax/pull/63) is externally verified at **ffb978f1e**; its latest attachment completion is unconfirmed. Earlier sealed work and census qualifications are in the archive.
+
+Direct property is integrated at **0298758b2**; root 55-module tests passed 681/0 and the 50-return/473-page replay passed. All corrected 99 PDF pages match reviewed originals; 174 current/prior files are privately hash-preserved. Review found a second activity ID can duplicate the same parcel/payment records and double gain; its correction is under verification in a separate snapshot. Turning-21 child payroll **a72625d2c** has root review of all 12 pages and is integrating next. State/rate payroll work continues separately within the existing parent.
+
+Full regression V17–V22 processes were verified live this phase; V22 at immutable **0d153ed24** predates later work. A passing latest-production full batch, remaining filing routes, ATS credentials/scenario conflicts, IRS acknowledgments and release review are still required. Local XSD370/0 and source hashes do not prove external authenticity, business-rule compliance or IRS acceptance.
+
+Child payroll integrateddcbff9d9f; root13-module gate and actual26return replay live. Independent property source repaire78ea1e2c passed149/0/0ignored with independent second property preserved and synchronized duplicate public/native/directPDF rejection. Exact saved previously accepted duplicate whole pending rejects under the repair; original bytes unchanged. Earlier diagnostic export-name typo is preserved separately. Integrating this property-only change does not change the payroll calculator under its running gates.
