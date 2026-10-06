@@ -2172,3 +2172,20 @@ Complete ordinary-refund inventory is verified on main; Form4852, remaining Form
 
 
 Isolated ddf7425d1 includes five shared-participant packets and single PartIII-only replacement:6 packets/23 reviewed pages/26 transmitted source copies. Five-packet public gate4/0(19s), single1/0(3s), 37-file preservation303/0(4m12s), source08ba52b14. Original four shared and single artifacts retained separately; five-case manifest56999d13077c91b047fdbea744f28b07e6c26b4a794f5c3eef5952723a58cd87. Main replay and source/PDF/XML comparison still required before ledger credit. Full regression44964/44970 live82m29s at latest observation; no terminal claim. No future work executed.
+
+## Shared-participant main verification checkpoint
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,444 bounded slices**. Learnings and exact proof remain in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Newly discovered work goes only in `future_todo` and is not executed.
+
+Actual inventory: **150 native / 116 PDF descriptors**, **365 fixtures**, **113 PDF keys / 96 covered / 17 uncovered**. Recent main proof: reviewed catalog24/0 (375 preserved pages), C/F loss-owner health28/0 (6/182), beneficiary death/estate3/0+15/0 (26/78), senior/independent-health6/0+111/0 and retained5/0 (5/95), complete refund inventory119/0 (8/30), fractional beneficiary15/0+298/0 (17/51), paired beneficiaries4/0+298/0 (17/68). Source/PDF bytes match reviewed originals; timestamp-only XML differences are recorded. These close their stated slices; broader parents remain open.
+
+Full `deno task test` at fbacc539c failed11,577/14/0ignored, exit1(82m15s); all14 have focused repaired-main proof. Immutable181575242 rerun started03:53:35UTC; wrapper44964/Deno44970 verified live at82m29s. Its terminal result and a passing full run of latest source remain required. Publication checkpoint for draft [PR63](https://github.com/filedcom/opentax/pull/63): **90f7998cc**, verified published with the paired beneficiary proof.
+
+Complete ordinary-refund inventory is verified on main; Form4852, remaining Form4972, Form8283 and Form8621 parent work continue in isolated checkouts. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+
+
+Main4f99acaa0 focused shared4/0(17s), single1/0(3s); all6 source/pending/PDF packets byte-equal immutable reviewed originals, XML differs only in ReturnTs. Comparison /tmp/opentax-form4972-shared-single-main-comparison.json. Original17 paired artifacts also preserved by37-file303/0 rerun, /tmp/opentax-form4972-paired-shared-preservation-comparison.json. Full44964/44970 verified live84m06s, not a terminal pass. Frozen52 rows and future section unchanged.
