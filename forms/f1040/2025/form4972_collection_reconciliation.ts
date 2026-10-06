@@ -162,7 +162,60 @@ export function reconcileForm4972Collection(
       "Form 4972 participant taxes must sum to the finalized Form 1040 tax",
     );
   }
-  if (forms.length === 2) {
+  const pairedBeneficiaries = forms.length === 2 &&
+    scoped.some(({ fields }) =>
+      typeof fields.recipient_share_pct === "number" &&
+      fields.recipient_share_pct < 100
+    );
+  if (pairedBeneficiaries) {
+    if (
+      !filer || filer.filingStatus !== FilingStatus.MarriedFilingJointly ||
+      !filer.spouse?.ssn
+    ) {
+      throw new Error(
+        "Form 4972 paired beneficiaries require a joint return with two identified spouses",
+      );
+    }
+    const owners = scoped.map(({ fields }) => fields.recipient);
+    if (
+      new Set(owners).size !== 2 || !owners.includes("T") ||
+      !owners.includes("S")
+    ) {
+      throw new Error(
+        "Form 4972 paired beneficiary documents need one copy per spouse",
+      );
+    }
+    for (const { fields, sources } of scoped) {
+      const recipientSSN = fields.recipient === "T"
+        ? filer.primarySSN
+        : filer.spouse.ssn;
+      if (
+        sources.some((item) =>
+          item.ts !== fields.recipient ||
+          item.recipient_ssn?.replaceAll("-", "") !==
+            recipientSSN.replaceAll("-", "")
+        ) ||
+        (typeof fields.recipient_share_pct === "number" &&
+          fields.recipient_share_pct < 100 &&
+          fields.beneficiary_distribution !== true)
+      ) {
+        throw new Error(
+          "Form 4972 spouse beneficiary issued recipient differs from the filing owner",
+        );
+      }
+    }
+    const plans = scoped.map((entry) => entry.sources[0].form4972_plan);
+    if (
+      !plans[0] || !plans[1] ||
+      plans[0].participant_ssn === plans[1].participant_ssn ||
+      plans[0].plan_reference === plans[1].plan_reference
+    ) {
+      throw new Error(
+        "Form 4972 shared-participant spouse beneficiaries require reconciled participant-wide allocation records",
+      );
+    }
+  }
+  if (forms.length === 2 && !pairedBeneficiaries) {
     if (
       !filer || filer.filingStatus !== FilingStatus.MarriedFilingJointly ||
       !filer.spouse?.ssn ||

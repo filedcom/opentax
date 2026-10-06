@@ -1487,6 +1487,38 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
   const lumpItems = activeItems(items).filter(
     (item) => item.exclude_4972 === true,
   );
+  // Each spouse keeps a complete issued-copy group. Reuse the same source
+  // checks as an individual election rather than combining recipient pools.
+  if (
+    new Set(lumpItems.map((item) => item.ts)).size === 2 &&
+    lumpItems.some((item) =>
+      typeof item.box9a_pct_total === "number" &&
+      item.box9a_pct_total > 0 && item.box9a_pct_total < 100
+    )
+  ) {
+    const refs = lumpItems.map((item) => item.source_document_reference);
+    if (
+      refs.some((ref) => !ref) || new Set(refs).size !== refs.length ||
+      lumpItems.some((item) => item.ts !== "T" && item.ts !== "S")
+    ) {
+      throw new Error(
+        "Form 4972 spouse beneficiary groups need distinct issued copies and two identified owners",
+      );
+    }
+    const sourceForms = (["T", "S"] as const).flatMap((owner) => {
+      const own = items.filter((item) => item.ts === owner);
+      const outputs = form4972Outputs(own);
+      const fields = outputs.find((row) => row.nodeType === "form4972")?.fields;
+      const groups = fields?.source_forms;
+      if (!Array.isArray(groups) || groups.length !== 1) {
+        throw new Error(
+          "Form 4972 spouse beneficiary election needs one complete source inventory per owner",
+        );
+      }
+      return groups;
+    });
+    return [output(form4972Elections, { source_forms: sourceForms })];
+  }
   if (
     lumpItems.length > 2 &&
     new Set(lumpItems.map((item) => item.ts)).size === 2
@@ -1660,7 +1692,7 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         item.ts !== first.ts || item.payer_ein !== first.payer_ein ||
         item.payer_name !== first.payer_name
       ) ||
-      first.ts !== "T" ||
+      (first.ts !== "T" && first.ts !== "S") ||
       first.payer_ein.trim().length === 0 ||
       first.payer_name.trim().length === 0 ||
       items.some((item) =>

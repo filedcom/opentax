@@ -134,7 +134,57 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
         ? ownEstateDeduction
         : 0;
     }
-    if (forms.length === 2) {
+    const pairedBeneficiaries = forms.length === 2 &&
+      forms.some((form) =>
+        typeof form.recipient_share_pct === "number" &&
+        form.recipient_share_pct < 100
+      );
+    if (pairedBeneficiaries) {
+      const recipients = forms.map((form) => form.recipient);
+      if (
+        new Set(recipients).size !== 2 || !recipients.includes("T") ||
+        !recipients.includes("S")
+      ) {
+        throw new Error(
+          "Form 4972 paired beneficiary elections need separate taxpayer and spouse sources",
+        );
+      }
+      for (const [index, form] of forms.entries()) {
+        const source = sources.find((source) =>
+          sameReferences(
+            source.source_document_references,
+            elections[index].source_document_references,
+          )
+        );
+        const plan = source?.form4972_plan as
+          | Record<string, unknown>
+          | undefined;
+        const election = elections[index];
+        if (
+          !plan || !election.participant_name || !election.participant_ssn ||
+          !election.plan_reference ||
+          election.participant_name !== plan.participant_name ||
+          election.participant_ssn !== plan.participant_ssn ||
+          election.plan_reference !== plan.plan_reference ||
+          (typeof form.recipient_share_pct === "number" &&
+            form.recipient_share_pct < 100 &&
+            form.beneficiary_distribution !== true)
+        ) {
+          throw new Error(
+            "Form 4972 paired beneficiary election must retain its identified participant, plan and beneficiary status",
+          );
+        }
+      }
+      if (
+        elections[0].participant_ssn === elections[1].participant_ssn ||
+        elections[0].plan_reference === elections[1].plan_reference
+      ) {
+        throw new Error(
+          "Form 4972 shared-participant spouse beneficiaries require reconciled participant-wide allocation records",
+        );
+      }
+    }
+    if (forms.length === 2 && !pairedBeneficiaries) {
       const recipients = forms.map((form) => form.recipient);
       const plans = sources.map((source) => source.form4972_plan);
       const sourceByElection = elections.map((election) =>
