@@ -110,6 +110,7 @@ export const cashoutRefinanceReviewSchema = z.object({
     property_reference: z.string().trim().min(1),
     purchase_closing_reference: z.string().trim().min(1),
     original_acquisition_principal: z.number().int().positive(),
+    pre2017_purchase_on: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/).optional(),
     monthly_records: z.array(monthlyRecord).length(12),
     title_document: retainedDocument,
     purchase_note_document: retainedDocument,
@@ -203,10 +204,15 @@ function validateSecondHomeLoan(review: Review, source: Loan): boolean {
     { source_document_reference: second.source_document_reference,
       property_reference: second.property_reference },
   ];
+  const isPre2017 = second.pre2017_purchase_on !== undefined;
   return second.property_reference !== review.property_reference &&
     secondDate !== undefined &&
-    secondDate >= new Date("2017-12-16T00:00:00Z") &&
-    secondDate < new Date("2025-01-01T00:00:00Z") &&
+    (isPre2017
+      ? secondDate >= new Date("1987-10-14T00:00:00Z") &&
+        secondDate < new Date("2017-12-16T00:00:00Z") &&
+        second.pre2017_purchase_on === source.box3_origination_date
+      : secondDate >= new Date("2017-12-16T00:00:00Z") &&
+        secondDate < new Date("2025-01-01T00:00:00Z")) &&
     source.box2_outstanding_principal === second.original_acquisition_principal &&
     source.refinance !== true && (source.for_routing ?? "A") === "A" &&
     source.binding_contract_exception !== true &&
@@ -238,6 +244,14 @@ function validateSecondHomeLoan(review: Review, source: Loan): boolean {
     note.lender_name === source.lender_name &&
     note.recipient_tin === source.recipient_tin &&
     note.principal === second.original_acquisition_principal &&
+    (isPre2017
+      ? note.purchase_on === second.pre2017_purchase_on &&
+        note.secured_on === second.pre2017_purchase_on &&
+        typeof note.purchase_price === "number" &&
+        note.purchase_price >= second.original_acquisition_principal
+      : note.purchase_on === undefined &&
+        note.secured_on === undefined &&
+        note.purchase_price === undefined) &&
     Array.isArray(borrowerTins) && borrowerTins.length > 0 &&
     borrowerTins.every((tin) => typeof tin === "string" &&
       eligible.includes(normalize(tin))) &&
@@ -558,12 +572,18 @@ export function cashoutRefinanceRatio(review: Review): number | undefined {
     (sum, row) => sum + row.closing_balance, 0,
   ) ?? 0;
   const secondYearAverage = secondAverage / 12;
+  const separate = review.filing_status_verified === "mfs";
+  const priorAverage = review.second_home_loan?.pre2017_purchase_on
+    ? secondYearAverage : 0;
+  const postAverage = qualifiedOldAverage + qualifiedNewAverage +
+    (review.second_home_loan?.pre2017_purchase_on ? 0 : secondYearAverage);
+  // Table 1 lines 6, 9, 10 and 11. A pre-2017 mortgage can preserve a
+  // larger qualified limit without reclassifying the later mixed refinance.
+  const line6 = Math.min(separate ? 500_000 : 1_000_000, priorAverage);
+  const line9 = Math.max(line6, separate ? 375_000 : 750_000);
+  const line11 = Math.min(line9, line6 + postAverage);
   const ratio = Math.round(
-    Math.min(
-      review.filing_status_verified === "mfs" ? 375_000 : 750_000,
-      qualifiedOldAverage + qualifiedNewAverage + secondYearAverage,
-    ) /
-      (oldAverage + newAverage + secondYearAverage) * 1000,
+    line11 / (oldAverage + newAverage + secondYearAverage) * 1000,
   ) / 1000;
   return ratio;
 }
