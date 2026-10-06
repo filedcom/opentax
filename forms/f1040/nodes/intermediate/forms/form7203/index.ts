@@ -7,6 +7,7 @@ import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import {
+  currentOpenAccountCarry,
   reconcileCashCapitalAndNewNote,
   reviewedForm7203DebtEvidenceSchema,
   sumPrincipalRepayments,
@@ -130,7 +131,8 @@ function tentativeStockBasis(
 function tentativeDebtBasis(input: Form7203Input): number {
   const note =
     (input.reviewed_debt_evidence?.kind === "new_2025_formal_notes" ||
-        input.reviewed_debt_evidence?.kind === "owned_2025_formal_notes")
+        input.reviewed_debt_evidence?.kind === "owned_2025_formal_notes" ||
+        input.reviewed_debt_evidence?.kind === "owned_2025_open_account")
       ? input.reviewed_debt_evidence
       : undefined;
   return (input.debt_basis_beginning ?? 0) + (input.new_loans ?? 0) -
@@ -191,6 +193,12 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
           }),
         ],
         carryforwards: {
+          ...Object.assign(
+            {},
+            ...family.rows.map((r) =>
+              currentOpenAccountCarry(r.note, r.basis.allowedDebt)
+            ),
+          ),
           suspended_scorp_loss_7203: family.suspended,
           basis_suspended_scorp_qbi_loss_7203: family.suspended,
           ...Object.fromEntries(
@@ -226,7 +234,8 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
     const note = input.reviewed_debt_evidence;
     if (
       (note?.kind === "new_2025_formal_notes" ||
-        note?.kind === "owned_2025_formal_notes") &&
+        note?.kind === "owned_2025_formal_notes" ||
+        note?.kind === "owned_2025_open_account") &&
       (input.additional_contributions ?? 0) > 0
     ) {
       const ledger = input.reviewed_stock_loss_ledger;
@@ -312,9 +321,18 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
     const debtBasis = tentativeDebtBasis(input);
     const disallowed = disallowedLoss(pool, stockBasis, debtBasis);
 
+    const accountCarry = currentOpenAccountCarry(
+      note,
+      Math.min(Math.max(0, pool - stockBasis), debtBasis),
+    );
     // Loss fully within basis — no further limitation outputs needed
     if (disallowed === 0) {
-      return { outputs: [] };
+      return {
+        outputs: [],
+        ...(Object.keys(accountCarry).length
+          ? { carryforwards: accountCarry }
+          : {}),
+      };
     }
 
     // Disallowed portion: add back to schedule1 as a positive adjustment
@@ -329,6 +347,7 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
         }),
       ],
       carryforwards: {
+        ...accountCarry,
         suspended_scorp_loss_7203: disallowed,
         ...(note?.owned_current_records !== undefined
           ? { basis_suspended_scorp_qbi_loss_7203: disallowed }

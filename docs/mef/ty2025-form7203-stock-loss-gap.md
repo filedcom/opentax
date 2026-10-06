@@ -420,3 +420,12 @@ inventories before independently limiting each source's stock/debt loss. MFJ
 copies and QBI trade grouping remain source-derived. This retains prior
 accepted-history and wider source/filing boundaries; it does not close the
 parent.
+
+## Owned current open-account advances and annual netting (2026-10-06)
+
+[Current source and packet proof](ty2025-form7203-open-account-source-proof.md)
+separates actual advances without written instruments from formal notes, derives
+annual netting and year-end $25,000 next-year treatment, and independently limits
+owned single/MFJ losses and QBI/copies. Prior reduced/open debt and accepted-history
+requirements remain guarded; constructed bank/oral-term records do not prove
+outside authenticity. Other debt combinations and larger inventories remain open.

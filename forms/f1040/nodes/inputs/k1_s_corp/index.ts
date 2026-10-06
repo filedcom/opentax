@@ -37,6 +37,7 @@ import { reviewedStockLossLedgerSchema } from "../../intermediate/forms/form7203
 import {
   reconcileCashCapitalAndNewNote,
   reconcileNewFormalNotes,
+  actualCurrentDebtRepayments,
   reviewedForm7203DebtEvidenceSchema,
   sumPrincipalRepayments,
 } from "../../intermediate/forms/form7203/debt-note.ts";
@@ -908,8 +909,7 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
           ledger.beginning_basis_workpaper_reference !==
             note.beginning_stock_basis_workpaper_reference ||
           (item.box16_code_e_loan_repayment ?? 0) !==
-            (sumPrincipalRepayments(note.principal_repayments) +
-              (note.second_formal_note?.principal_repayment?.amount ?? 0))
+            actualCurrentDebtRepayments(note)
         ) {
           throw new Error(
             "Form 7203 formal note and reviewed stock ledger must reconcile",

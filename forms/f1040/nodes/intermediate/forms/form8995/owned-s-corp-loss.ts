@@ -18,7 +18,7 @@ export function ownedSCorpLossLines(
     | undefined;
   if (
     !note ||
-    !["new_2025_formal_notes", "owned_2025_formal_notes"].includes(
+    !["new_2025_formal_notes", "owned_2025_formal_notes", "owned_2025_open_account"].includes(
       String(note.kind),
     ) || !stock || !note.owned_current_records ||
     stock.no_shareholder_debt_or_repayments !== false ||

@@ -40,6 +40,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   textField("line15_ending_basis", `${page1}f1_35[0]`, true),
   {
     kind: "checkbox",
+    domainKey: "open_account_debt1",
+    pdfField: `${debtA}Header[0].aDebt1[0].c1_7[1]`,
+  },
+  {
+    kind: "checkbox",
     domainKey: "formal_note_debt1",
     pdfField: `${debtA}Header[0].aDebt1[0].c1_7[0]`,
   },
@@ -190,7 +195,9 @@ export const form7203StockLossPdf: PdfFormDescriptor = {
       line15_ending_basis: availableBasis - allowedStock,
       ...(note
         ? {
-          formal_note_debt1: true,
+          ...(note.kind === "owned_2025_open_account"
+            ? { open_account_debt1: true }
+            : { formal_note_debt1: true }),
           line16_debt1: 0,
           line16_total: 0,
           line17_debt1: note.cash_advance_amount,
@@ -207,7 +214,7 @@ export const form7203StockLossPdf: PdfFormDescriptor = {
           line22_total: totalAdvance,
           line24_debt1: note.cash_advance_amount,
           line24_total: totalAdvance,
-          line25_debt1: "1.0000",
+          ...(note.cash_advance_amount > 0 ? { line25_debt1: "1.0000" } : {}),
           ...(repayment > 0 ? { line26_debt1: repayment } : {}),
           ...(totalRepayment > 0 ? { line26_total: totalRepayment } : {}),
           line27_debt1: debtAfterRepayment,

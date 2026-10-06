@@ -71,9 +71,12 @@ export const coOwnedCorporateInventorySchema = z.object({
           "receipt",
           "ordinary_cost",
           "principal_repayment",
+          "open_account_advance",
+          "open_account_repayment",
         ]),
         shareholder_ssn: tin.optional(),
         formal_note_id: ref.optional(),
+        open_account_reference: ref.optional(),
         amount: amount.refine((n) => n > 0),
         cash_before: amount,
         cash_after: amount,
@@ -169,7 +172,8 @@ export function assertCoOwnedCorporateRecord(s: any) {
       refs.has(t.transaction_reference) || t.cash_before !== cash ||
       t.cash_after !==
         cash +
-          (["capital", "note_advance", "receipt"].includes(t.kind)
+          (["capital", "note_advance", "open_account_advance", "receipt"]
+              .includes(t.kind)
             ? t.amount
             : -t.amount)
     ) throw Error("Complete corporate bank rollforward conflicts");
@@ -195,6 +199,26 @@ export function assertCoOwnedCorporateRecord(s: any) {
     });
   }
   for (const n of s.complete_current_shareholder_debt_inventory) {
+    if (
+      n.debt_record_kind === "current_open_account_without_written_instrument"
+    ) {
+      for (const t of n.transactions) {
+        ownEvents.push({
+          date: t.date,
+          transaction_reference: t.transaction_reference,
+          kind: t.kind === "advance"
+            ? "open_account_advance"
+            : "open_account_repayment",
+          corporate_bank_record_reference: t.corporate_bank_reference,
+          shareholder_ssn: s.shareholder_ssn,
+          open_account_reference: n.account_reference,
+          amount: t.amount,
+          cash_before: t.corporate_cash_before,
+          cash_after: t.corporate_cash_after,
+        });
+      }
+      continue;
+    }
     ownEvents.push({
       date: n.executed_on,
       transaction_reference: n.funding.transfer_reference,
@@ -246,7 +270,7 @@ export function assertCoOwnedCorporateRecord(s: any) {
       !operating.some((t) =>
         t.kind === r.kind && t.transaction_reference === r.reference &&
         t.date === r.date && t.amount === r.amount && !t.shareholder_ssn &&
-        !t.formal_note_id
+        !t.formal_note_id && !t.open_account_reference
       )
     ) ||
     bank.transactions.some((t) =>

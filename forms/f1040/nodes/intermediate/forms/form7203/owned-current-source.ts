@@ -1,3 +1,4 @@
+import { openAccountRecordSchema, replayOpenAccount } from "./open-account.ts";
 import {
   assertCoOwnedCorporateRecord,
   coOwnedCorporateInventorySchema,
@@ -74,7 +75,7 @@ const noteRecord = z.object({
 
 /** Current source-contract records, not an IRS acknowledgement or externally
  * authenticated signature. Older reduced debt remains a separate closed route. */
-export const ownedCurrentDebtRecordsSchema = z.object({
+export const ownedCurrentDebtRecordsBaseSchema = z.object({
   ...identity,
   tax_year: z.literal(2025),
   evidence_kind: z.literal(
@@ -189,6 +190,16 @@ export const ownedCurrentDebtRecordsSchema = z.object({
     not_a_specified_service_or_cooperative_business: z.literal(true),
   }).strict(),
 }).strict();
+export const ownedOpenAccountRecordsSchema = ownedCurrentDebtRecordsBaseSchema
+  .extend({
+    complete_current_shareholder_debt_inventory: z.array(
+      openAccountRecordSchema,
+    ).length(1),
+  });
+export const ownedCurrentDebtRecordsSchema = z.union([
+  ownedCurrentDebtRecordsBaseSchema,
+  ownedOpenAccountRecordsSchema,
+]);
 export type OwnedCurrentDebtRecords = z.infer<
   typeof ownedCurrentDebtRecordsSchema
 >;
@@ -201,10 +212,10 @@ interface NewNote {
   beginning_stock_basis: number;
   beginning_stock_basis_workpaper_reference: string;
   current_box1_ordinary_loss: number;
-  formal_note_id: string;
-  signed_note_document_reference: string;
-  note_execution_date: string;
-  bank_transfer_reference: string;
+  formal_note_id?: string;
+  signed_note_document_reference?: string;
+  note_execution_date?: string;
+  bank_transfer_reference?: string;
   cash_advance_amount: number;
   principal_repayments?: readonly {
     formal_note_id: string;
@@ -346,6 +357,84 @@ export function reconcileOwnedCurrentDebt(raw: unknown, note: NewNote) {
       "missing complete prior stock-basis records; prior nonzero basis activity needs its separate proved history",
     );
   }
+  if (note.kind === "owned_2025_open_account") {
+    const record = s.complete_current_shareholder_debt_inventory[0];
+    const r = replayOpenAccount(record);
+    const allRefs = [
+      r.source.account_reference,
+      r.source.principal_ledger_reference,
+      r.source.oral_creditor_terms_record.record_reference,
+      ...r.source.transactions.flatMap(
+        (t) => [
+          t.transaction_reference,
+          t.shareholder_bank_reference,
+          t.corporate_bank_reference,
+        ],
+      ),
+      ...(capital
+        ? [
+          capital.transfer_reference,
+          capital.corporate_capital_account_reference,
+          capital.shareholder_bank_reference,
+          capital.corporate_bank_reference,
+        ]
+        : []),
+      account.account_reference,
+      participation.log_reference,
+      ...account.receipts.map((t) => t.reference),
+      ...account.paid_ordinary_costs.map((t) => t.reference),
+      stock.workpaper_reference,
+      stock.original_stock_register_reference,
+      stock.original_cash_payment_reference,
+      originalCash.corporate_receipt_reference,
+      k.document_reference,
+      k.section199a_statement_reference,
+      ...stock.prior_annual_basis_records.flatMap(
+        (y) => [
+          y.corporation_annual_account_reference,
+          y.shareholder_basis_review_reference,
+        ],
+      ),
+    ];
+    if (new Set(allRefs).size !== allRefs.length) {
+      fail("open-account and stock/capital/issued source records collide");
+    }
+    if (
+      r.source.shareholder_ssn !== s.shareholder_ssn ||
+      r.source.corporation_ein !== s.corporation_ein ||
+      note.cash_advance_amount !== r.netAdvance ||
+      k.box16_code_e_principal_repayments !== r.repayments
+    ) fail("open-account source/netting/issued repayment conflicts");
+    const allowedStock = Math.min(
+      k.box1_ordinary_loss,
+      stock.original_paid_cash + (capital?.paid_cash ?? 0),
+    );
+    const allowedDebt = Math.min(
+      k.box1_ordinary_loss - allowedStock,
+      r.endingPrincipal,
+    );
+    return {
+      source: s,
+      beginningStock: stock.original_paid_cash,
+      currentCashCapital: capital?.paid_cash ?? 0,
+      remainingDebtFace: r.endingPrincipal,
+      repayments: r.repayments,
+      allowedStock,
+      allowedDebt,
+      allowedLoss: allowedStock + allowedDebt,
+      suspendedLoss: k.box1_ordinary_loss - allowedStock - allowedDebt,
+      restoration: 0,
+      repaymentGain: 0,
+      qualifiedLoss: -(allowedStock + allowedDebt),
+      basisSuspendedQualifiedLoss: k.box1_ordinary_loss - allowedStock -
+        allowedDebt,
+      openAccount: r,
+    };
+  }
+  if (!ownedCurrentDebtRecordsBaseSchema.safeParse(s).success) {
+    fail("formal notes cannot use open-account records");
+  }
+  const formalSource = ownedCurrentDebtRecordsBaseSchema.parse(s);
   const expected = [
     { ...note, payments: note.principal_repayments ?? [] },
     ...(note.second_formal_note
@@ -389,7 +478,7 @@ export function reconcileOwnedCurrentDebt(raw: unknown, note: NewNote) {
   let capacity = 0, repaid = 0;
   for (let i = 0; i < expected.length; i++) {
     const n = expected[i],
-      r = s.complete_current_shareholder_debt_inventory[i],
+      r = formalSource.complete_current_shareholder_debt_inventory[i],
       f = r.funding;
     refs.push(
       r.instrument_reference,

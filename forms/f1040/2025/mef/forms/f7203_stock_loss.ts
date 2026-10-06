@@ -64,7 +64,9 @@ export function buildReviewedStockLoss7203(
     element("StockBasisEndTaxYearAmt", availableBasis - allowedStock),
     note
       ? elements("ShareholderDebtBasisGrp", [
-        element("FormalNoteInd", "X"),
+        note.kind === "owned_2025_open_account"
+          ? element("OpenAccountDebtInd", "X")
+          : element("FormalNoteInd", "X"),
         element("LoanBalanceBeginTaxYrAmt", 0),
         element("AdditionalLoansAmt", note.cash_advance_amount),
         element("LoanedBeginningBalAmt", note.cash_advance_amount),
@@ -72,7 +74,9 @@ export function buildReviewedStockLoss7203(
         element("LoanBalanceEndTaxYrAmt", debtAfterRepayment),
         element("DebtBasisBeginTaxYrAmt", 0),
         element("DebtBasisBfrRepaymentAmt", note.cash_advance_amount),
-        element("DebtLoanRepaymentPct", "1.0000"),
+        note.cash_advance_amount > 0
+          ? element("DebtLoanRepaymentPct", "1.0000")
+          : "",
         repayment > 0 ? element("NontaxableDebtRepaymentAmt", repayment) : "",
         element("DebtBasisBfrExpnssLossAmt", debtAfterRepayment),
         element("DebtBasisBeforeLossDedAmt", debtAfterRepayment),

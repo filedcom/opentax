@@ -37,7 +37,21 @@ export function ownedDebtFamily(raw: unknown) {
       r.source.source_document_reference,
       r.basis.source.issued_k1_record.section199a_statement_reference,
       ...r.basis.source.complete_current_shareholder_debt_inventory.flatMap(
-        (n) => [n.funding.transfer_reference, n.instrument_reference],
+        (n) =>
+          "transactions" in n
+            ? [
+              n.account_reference,
+              n.principal_ledger_reference,
+              n.oral_creditor_terms_record.record_reference,
+              ...n.transactions.flatMap(
+                (t) => [
+                  t.transaction_reference,
+                  t.shareholder_bank_reference,
+                  t.corporate_bank_reference,
+                ],
+              ),
+            ]
+            : [n.funding.transfer_reference, n.instrument_reference],
       ),
     ],
   );

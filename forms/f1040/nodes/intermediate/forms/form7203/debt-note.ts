@@ -1,3 +1,5 @@
+import { ownedOpenAccountRecordsSchema } from "./owned-current-source.ts";
+import { replayOpenAccount } from "./open-account.ts";
 import { z } from "zod";
 import {
   ownedCurrentDebtRecordsSchema,
@@ -30,7 +32,7 @@ export function sumPrincipalRepayments(
 // Source contract for one or two new formal shareholder notes. Each listed
 // The first note may have two dated principal repayments; a second note retains
 // one repayment in its separately bounded source route.
-export const reviewedNewFormalNotesSchema = z.object({
+const newFormalNotesBaseSchema = z.object({
   kind: z.enum(["new_2025_formal_notes", "owned_2025_formal_notes"]),
   owned_current_records: ownedCurrentDebtRecordsSchema.optional(),
   shareholder_ssn: z.string().regex(/^\d{9}$/),
@@ -77,93 +79,130 @@ export const reviewedNewFormalNotesSchema = z.object({
   no_prior_reduced_debt_basis_confirmed: z.literal(true),
   no_other_2025_basis_changes_confirmed: z.literal(true),
   no_prior_suspended_losses_confirmed: z.literal(true),
-}).strict().superRefine((note, ctx) => {
-  if (note.kind === "owned_2025_formal_notes" && !note.owned_current_records) {
-    ctx.addIssue({
-      code: "custom",
-      message:
-        "Owned Form7203 notes require complete current funding and stock-basis source records",
-    });
-  }
-  if (note.owned_current_records) {
-    try {
-      reconcileOwnedCurrentDebt(note.owned_current_records, note);
-    } catch (error) {
-      ctx.addIssue({ code: "custom", message: String(error) });
+}).strict();
+export const reviewedNewFormalNotesSchema = newFormalNotesBaseSchema
+  .superRefine((note, ctx) => {
+    if (
+      note.kind === "owned_2025_formal_notes" && !note.owned_current_records
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Owned Form7203 notes require complete current funding and stock-basis source records",
+      });
     }
-  }
-  const references = [
-    note.k1_source_document_reference,
-    note.beginning_stock_basis_workpaper_reference,
-    note.formal_note_id,
-    note.signed_note_document_reference,
-    note.bank_transfer_reference,
-    ...(note.second_formal_note
-      ? [
-        note.second_formal_note.formal_note_id,
-        note.second_formal_note.signed_note_document_reference,
-        note.second_formal_note.bank_transfer_reference,
-      ]
-      : []),
-    ...(note.principal_repayments ?? []).flatMap((payment) => [
-      payment.corporate_loan_ledger_reference,
-      payment.shareholder_bank_deposit_reference,
-    ]),
-    ...(note.second_formal_note?.principal_repayment
-      ? [
-        note.second_formal_note.principal_repayment
-          .corporate_loan_ledger_reference,
-        note.second_formal_note.principal_repayment
-          .shareholder_bank_deposit_reference,
-      ]
-      : []),
-  ];
-  if (
-    note.shareholder_ssn !== note.shareholder_lender_ssn ||
-    note.corporation_ein !== note.corporate_borrower_ein ||
-    (note.second_formal_note !== undefined &&
-      (note.principal_repayments?.length ?? 0) > 1) ||
-    (note.second_formal_note !== undefined &&
-      (note.second_formal_note.shareholder_lender_ssn !==
-          note.shareholder_ssn ||
-        note.second_formal_note.corporate_borrower_ein !==
-          note.corporation_ein ||
-        note.second_formal_note.no_2025_repayments_confirmed ===
-          (note.second_formal_note.principal_repayment !== undefined))) ||
-    new Set(references).size !== references.length ||
-    note.no_2025_repayments_confirmed ===
-      ((note.principal_repayments?.length ?? 0) > 0) ||
-    (note.principal_repayments ?? []).some((payment, index) =>
-      payment.formal_note_id !== note.formal_note_id ||
-      payment.date <= note.note_execution_date ||
-      (index > 0 &&
-        payment.date <= note.principal_repayments![index - 1].date)
-    ) ||
-    sumPrincipalRepayments(note.principal_repayments) >=
-      note.cash_advance_amount ||
-    (note.second_formal_note?.principal_repayment !== undefined &&
-      (note.second_formal_note.principal_repayment.formal_note_id !==
-          note.second_formal_note.formal_note_id ||
-        note.second_formal_note.principal_repayment.date <=
-          note.second_formal_note.note_execution_date ||
-        note.second_formal_note.principal_repayment.amount >=
-          note.second_formal_note.cash_advance_amount))
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      message:
-        "Form 7203 note needs matching lender/borrower identity, distinct loan records, and any principal repayment after the advance and below the note face amount",
-    });
+    if (note.owned_current_records) {
+      try {
+        reconcileOwnedCurrentDebt(note.owned_current_records, note);
+      } catch (error) {
+        ctx.addIssue({ code: "custom", message: String(error) });
+      }
+    }
+    const references = [
+      note.k1_source_document_reference,
+      note.beginning_stock_basis_workpaper_reference,
+      note.formal_note_id,
+      note.signed_note_document_reference,
+      note.bank_transfer_reference,
+      ...(note.second_formal_note
+        ? [
+          note.second_formal_note.formal_note_id,
+          note.second_formal_note.signed_note_document_reference,
+          note.second_formal_note.bank_transfer_reference,
+        ]
+        : []),
+      ...(note.principal_repayments ?? []).flatMap((payment) => [
+        payment.corporate_loan_ledger_reference,
+        payment.shareholder_bank_deposit_reference,
+      ]),
+      ...(note.second_formal_note?.principal_repayment
+        ? [
+          note.second_formal_note.principal_repayment
+            .corporate_loan_ledger_reference,
+          note.second_formal_note.principal_repayment
+            .shareholder_bank_deposit_reference,
+        ]
+        : []),
+    ];
+    if (
+      note.shareholder_ssn !== note.shareholder_lender_ssn ||
+      note.corporation_ein !== note.corporate_borrower_ein ||
+      (note.second_formal_note !== undefined &&
+        (note.principal_repayments?.length ?? 0) > 1) ||
+      (note.second_formal_note !== undefined &&
+        (note.second_formal_note.shareholder_lender_ssn !==
+            note.shareholder_ssn ||
+          note.second_formal_note.corporate_borrower_ein !==
+            note.corporation_ein ||
+          note.second_formal_note.no_2025_repayments_confirmed ===
+            (note.second_formal_note.principal_repayment !== undefined))) ||
+      new Set(references).size !== references.length ||
+      note.no_2025_repayments_confirmed ===
+        ((note.principal_repayments?.length ?? 0) > 0) ||
+      (note.principal_repayments ?? []).some((payment, index) =>
+        payment.formal_note_id !== note.formal_note_id ||
+        payment.date <= note.note_execution_date ||
+        (index > 0 &&
+          payment.date <= note.principal_repayments![index - 1].date)
+      ) ||
+      sumPrincipalRepayments(note.principal_repayments) >=
+        note.cash_advance_amount ||
+      (note.second_formal_note?.principal_repayment !== undefined &&
+        (note.second_formal_note.principal_repayment.formal_note_id !==
+            note.second_formal_note.formal_note_id ||
+          note.second_formal_note.principal_repayment.date <=
+            note.second_formal_note.note_execution_date ||
+          note.second_formal_note.principal_repayment.amount >=
+            note.second_formal_note.cash_advance_amount))
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Form 7203 note needs matching lender/borrower identity, distinct loan records, and any principal repayment after the advance and below the note face amount",
+      });
+    }
+  });
+
+export const reviewedOpenAccountSchema = newFormalNotesBaseSchema.omit({
+  formal_note_id: true,
+  signed_note_document_reference: true,
+  note_execution_date: true,
+  bank_transfer_reference: true,
+  shareholder_lender_ssn: true,
+  corporate_borrower_ein: true,
+  no_2025_repayments_confirmed: true,
+  principal_repayments: true,
+  second_formal_note: true,
+}).extend({
+  kind: z.literal("owned_2025_open_account"),
+  owned_current_records: ownedOpenAccountRecordsSchema,
+  cash_advance_amount: z.number().int().nonnegative().refine(
+    Number.isSafeInteger,
+  ),
+  formal_note_id: z.never().optional(),
+  signed_note_document_reference: z.never().optional(),
+  note_execution_date: z.never().optional(),
+  bank_transfer_reference: z.never().optional(),
+  principal_repayments: z.never().optional(),
+  second_formal_note: z.never().optional(),
+}).superRefine((note, ctx) => {
+  try {
+    reconcileOwnedCurrentDebt(note.owned_current_records, note);
+  } catch (error) {
+    ctx.addIssue({ code: "custom", message: String(error) });
   }
 });
-
-export const reviewedForm7203DebtEvidenceSchema = z.union([
+const reviewedCurrentDebtSchema = z.union([
   reviewedNewFormalNotesSchema,
+  reviewedOpenAccountSchema,
+]);
+export const reviewedForm7203DebtEvidenceSchema = z.union([
+  reviewedCurrentDebtSchema,
   reviewedPriorReducedNoteSchema,
 ]);
 
 export type ReviewedNewFormalNotes = z.infer<
-  typeof reviewedNewFormalNotesSchema
+  typeof reviewedCurrentDebtSchema
 >;
 
 export function reconcileCashCapitalAndNewNote(
@@ -188,7 +227,7 @@ export function reconcileCashCapitalAndNewNote(
       payment.corporate_loan_ledger_reference,
       payment.shareholder_bank_deposit_reference,
     ]),
-  ];
+  ].filter((r): r is string => r !== undefined);
   if (
     ledger.shareholder_ssn !== note.shareholder_ssn ||
     ledger.corporation_ein !== note.corporation_ein ||
@@ -214,7 +253,7 @@ export function reconcileNewFormalNotes(
     box16_code_e_loan_repayment?: number;
   },
 ) {
-  const note = reviewedNewFormalNotesSchema.parse(raw);
+  const note = reviewedCurrentDebtSchema.parse(raw);
   const loss = -(k1.box1_ordinary_business ?? 0);
   if (
     !k1.corporation_ein || !k1.source_document_reference ||
@@ -224,8 +263,7 @@ export function reconcileNewFormalNotes(
     note.shareholder_ssn !== k1.recipient_tin ||
     note.current_box1_ordinary_loss !== loss ||
     (k1.box16_code_e_loan_repayment ?? 0) !==
-      (sumPrincipalRepayments(note.principal_repayments) +
-        (note.second_formal_note?.principal_repayment?.amount ?? 0))
+      actualCurrentDebtRepayments(note)
   ) {
     throw new Error(
       "Form 7203 formal-note debt candidate must match the identified shareholder, corporation, K-1 source, box-1 loss, and box-16 repayment",
@@ -255,10 +293,39 @@ export function reconcileNewFormalNotes(
       "Form 7203 two-note bounded loss needs exact whole-dollar pro rata debt allocation",
     );
   }
-  if (debtSupportedLossCandidate <= 0) {
+  if (
+    debtSupportedLossCandidate <= 0 && note.kind !== "owned_2025_open_account"
+  ) {
     throw new Error(
       "Form 7203 one-note debt candidate needs a current loss beyond reviewed stock basis",
     );
   }
   return { note, stockSupportedLoss, debtSupportedLossCandidate };
+}
+
+export function actualCurrentDebtRepayments(note: ReviewedNewFormalNotes) {
+  return note.kind === "owned_2025_open_account"
+    ? replayOpenAccount(
+      note.owned_current_records.complete_current_shareholder_debt_inventory[0],
+    ).repayments
+    : sumPrincipalRepayments(note.principal_repayments) +
+      (note.second_formal_note?.principal_repayment?.amount ?? 0);
+}
+
+/** Current calculated ledger consequences only; this is not accepted next-year basis history. */
+export function currentOpenAccountCarry(
+  note: ReviewedNewFormalNotes | undefined,
+  allowedDebt: number,
+): Record<string, number> {
+  if (note?.kind !== "owned_2025_open_account") return {};
+  const r = replayOpenAccount(
+    note.owned_current_records.complete_current_shareholder_debt_inventory[0],
+  );
+  const key = `${note.shareholder_ssn}_${note.corporation_ein}`;
+  return {
+    [`open_account_principal_7203_${key}`]: r.endingPrincipal,
+    [`open_account_debt_basis_7203_${key}`]: r.endingPrincipal - allowedDebt,
+    [`open_account_next_year_separate_debt_7203_${key}`]:
+      r.endingPrincipal > 25000 ? 1 : 0,
+  };
 }

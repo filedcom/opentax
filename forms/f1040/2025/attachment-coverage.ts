@@ -1,3 +1,4 @@
+import { reviewedOpenAccountSchema } from "../nodes/intermediate/forms/form7203/debt-note.ts";
 import { issuerIdentitySchema } from "../nodes/inputs/f8611/partnership-source.ts";
 /**
  * Native attachments that a positive source path requires but this exporter
@@ -308,7 +309,10 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
           keys.includes("reviewed_debt_evidence")) ||
         (keys.includes("new_loans") && (
           typeof fields.new_loans !== "number" ||
-          !Number.isSafeInteger(fields.new_loans) || fields.new_loans <= 0 ||
+          !Number.isSafeInteger(fields.new_loans) || fields.new_loans < 0 ||
+          (fields.new_loans === 0 &&
+            !reviewedOpenAccountSchema.safeParse(fields.reviewed_debt_evidence)
+              .success) ||
           !fields.reviewed_debt_evidence ||
           typeof fields.reviewed_debt_evidence !== "object"
         )) ||
