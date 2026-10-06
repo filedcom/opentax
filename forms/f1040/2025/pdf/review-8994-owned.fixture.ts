@@ -108,7 +108,7 @@ export function form8994OwnedReviewFixture(
       "schedule_se",
       "f3800",
       "form6251",
-      ...(kind === "zero" ? [] : ["form8995"]),
+      "form8995",
       "f8994",
     ],
     reviewFocus: [

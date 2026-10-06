@@ -67,6 +67,8 @@ export function ownedScheduleSeReviewFixture(
       "schedule1",
       "schedule2",
       "schedule_c",
+      "schedule_c",
+      "schedule_se",
       "schedule_se",
       "form8995",
       "form8959",

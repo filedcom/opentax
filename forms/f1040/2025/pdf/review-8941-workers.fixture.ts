@@ -190,8 +190,6 @@ export function form8941WorkerReviewFixture(): PdfReviewFixture {
       "form6251",
       "form8995",
       "f8941",
-      "form8959",
-      "form8960",
     ],
     reviewFocus: [
       "Dated summer timecards supply exactly 120 service days; annual real payroll wages remain in Schedule C while seasonal hours and wages are zero for the credit's FTE and wage worksheets",

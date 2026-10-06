@@ -4649,10 +4649,11 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
     filer: singleFiler,
     expectedPdfForms: [
       "f1040",
-      "schedule_c",
-      "schedule_se",
       "schedule1",
       "schedule2",
+      "schedule_c",
+      "schedule_se",
+      "form8995",
     ],
     reviewFocus: [
       "K box 1a and Schedule C line 1 both retain $3,000 gross payments",
@@ -4716,10 +4717,11 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
     filer: singleFiler,
     expectedPdfForms: [
       "f1040",
-      "schedule_c",
-      "schedule_se",
       "schedule1",
       "schedule2",
+      "schedule_c",
+      "schedule_se",
+      "form8995",
     ],
     reviewFocus: [
       "K box 1a and Schedule C line 1 remain $3,000 gross",
@@ -4821,12 +4823,13 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
     filer: singleFiler,
     expectedPdfForms: [
       "f1040",
-      "schedule_c",
-      "schedule_se",
       "schedule1",
       "schedule2",
+      "schedule_c",
       "schedule_d",
+      "schedule_se",
       "form8949",
+      "form8995",
     ],
     reviewFocus: [
       "K box 1a $2,800 allocates $2,000 to Schedule C and $800 personal proceeds",
@@ -4902,12 +4905,13 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
     filer: singleFiler,
     expectedPdfForms: [
       "f1040",
-      "schedule_c",
-      "schedule_se",
       "schedule1",
       "schedule2",
+      "schedule_c",
       "schedule_d",
+      "schedule_se",
       "form8949",
+      "form8995",
     ],
     reviewFocus: [
       "K box 1a $3,800 allocates $2,000 unique business, $1,000 NEC duplicate, and $800 personal",
@@ -4996,12 +5000,13 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
     filer: singleFiler,
     expectedPdfForms: [
       "f1040",
-      "schedule_c",
-      "schedule_se",
       "schedule1",
       "schedule2",
+      "schedule_c",
       "schedule_d",
+      "schedule_se",
       "form8949",
+      "form8995",
     ],
     reviewFocus: [
       "K box 1a $4,000 allocates $2,000 unique business, $1,000 NEC duplicate, $800 personal sale, and $200 error",
