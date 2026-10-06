@@ -14,6 +14,8 @@ Prior Form 7203 copy consistency now passes the main **14/0** gate and independe
 
 Spouse-owned cooperative QBI is integrated at **67aef9dee/92f1c9020**. Independent main replay verified **8 returns/121 pages** with exact saved calculations and PDFs, native XML differing only by timestamp, full local XSD and unchanged source hashes. Main replay of 10 older returns/151 pages also passed with exact historical PDFs and separately qualified XML metadata. The final ordinary four-module gate passed **110/0 (13m59s)**. All 121 new pages were reviewed and the gate PDFs match those reviewed bytes; the completed ledger records this bounded route. See the [spouse patron proof](docs/mef/ty2025-form8995a-spouse-patron-source.md).
 
+Dated parent Schedule H service and finite/calendar-capacity hour checks are integrated at **22b3a845b/6c85ed12e**. Independent candidate replay passed **18 returns/91 pages** with exact graphs/PDFs and full local XSD. Main ordinary fourteen-module and saved-source eighteen-return gates are running; no bounded completion is claimed. See the [parent timing proof](docs/mef/ty2025-schedule-h-parent-dated-service-source.md).
+
 ## Scope and completion rules
 
 - [ ] Verify the release covers the TY2025 Form 1040 family: Form 1040, its applicable schedules, supporting forms, source documents, statements, PDF packet, MeF return, and A2A submission package.
