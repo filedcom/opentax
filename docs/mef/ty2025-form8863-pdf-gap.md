@@ -1,5 +1,17 @@
 # TY2025 Form 8863 positive PDF boundary
 
+## Required-service scholarship claimant checkpoint (2026-10-06)
+
+The
+[required-service source proof](ty2025-form8863-required-service-scholarship-review.md)
+adds actual award-condition/performance/disbursement joins, issued-W2 and
+Schedule1 reporting, and school-administered taxable box5 reconciliation.
+Exact-half/below-half, nonservice same-AGI control, MAGI phaseout and
+child-credit ordering have actual full native/XSD/PDF packets. Earlier
+nonservice-only scholarship support limits are historical for these reviewed
+own-student cases; parent/child separate-income and outside source authenticity
+remain open.
+
 ## Material-capital claimant support checkpoint (2026-10-06)
 
 The

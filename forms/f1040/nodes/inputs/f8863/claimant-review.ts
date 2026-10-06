@@ -1,4 +1,9 @@
 import {
+  assertRequiredServiceScholarshipCopies,
+  requiredServiceScholarshipEarned,
+  requiredServiceScholarshipSchema,
+} from "../education_income/required-service-scholarship.ts";
+import {
   assertReviewedBusinessIncome,
   businessReviewSchema,
   evidenceCents,
@@ -41,6 +46,9 @@ export const claimantReviewSchema = z.discriminatedUnion("kind", [
     ),
     earned_income_business_sources: z.array(businessReviewSchema).min(1)
       .optional(),
+    earned_income_service_scholarship_sources: z.array(
+      requiredServiceScholarshipSchema,
+    ).min(1).optional(),
     support_sources: z.array(
       z.object({
         source_document_reference: reference,
@@ -124,7 +132,11 @@ export function claimantRefundRestriction(
     review.earned_income_business_sources ?? [],
     review.earned_income_w2_sources,
     review.claimant_ssn,
-  ).earned;
+  ).earned +
+    requiredServiceScholarshipEarned(
+      review.earned_income_service_scholarship_sources ?? [],
+      review.claimant_ssn,
+    );
   const under18 = review.claimant_dob >= "2008-01-02";
   const age18 = review.claimant_dob >= "2007-01-02" && !under18;
   const ageTest = under18 ||
@@ -303,6 +315,11 @@ export function assertEducationClaimantSources(
         );
       }
     }
+    assertRequiredServiceScholarshipCopies(
+      review.earned_income_service_scholarship_sources ?? [],
+      review.claimant_ssn,
+      pending?.education_income,
+    );
     assertReviewedBusinessIncome(
       review.earned_income_business_sources ?? [],
       review.earned_income_w2_sources,

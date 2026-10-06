@@ -1,3 +1,8 @@
+import {
+  assertDistinctRequiredServiceSources,
+  requiredServiceScholarshipAmount,
+  requiredServiceScholarshipSchema,
+} from "./required-service-scholarship.ts";
 import { z } from "zod";
 import {
   type NodeResult,
@@ -16,6 +21,7 @@ const common = {
   taxable_amount: z.number().int().positive(),
 };
 export const itemSchema = z.discriminatedUnion("kind", [
+  requiredServiceScholarshipSchema,
   z.object({
     ...common,
     kind: z.literal("w2_education_payment"),
@@ -45,7 +51,13 @@ export function educationIncomeSources(raw: unknown): EducationIncome[] {
   ) {
     throw new Error("Taxable education income needs distinct source records");
   }
+  assertDistinctRequiredServiceSources(
+    rows.filter((row) => row.kind === "scholarship_for_required_services"),
+  );
   for (const row of rows) {
+    if (row.kind === "scholarship_for_required_services") {
+      requiredServiceScholarshipAmount(row);
+    }
     if (
       row.kind === "scholarship_not_on_w2" &&
       (row.nonqualified_expenses_paid < row.taxable_amount ||
@@ -70,7 +82,13 @@ export function educationIncomeSources(raw: unknown): EducationIncome[] {
 export function scholarshipIncomeTotal(raw: unknown): number {
   return educationIncomeSources(raw).reduce(
     (sum, row) =>
-      sum + (row.kind === "scholarship_not_on_w2" ? row.taxable_amount : 0),
+      sum +
+      (row.kind === "scholarship_not_on_w2"
+        ? row.taxable_amount
+        : row.kind === "scholarship_for_required_services" &&
+            row.reporting.kind === "schedule1_line8r"
+        ? requiredServiceScholarshipAmount(row)
+        : 0),
     0,
   );
 }
@@ -93,18 +111,43 @@ export function assertEducationIncomeSource(
     );
   }
   const wages = pending?.w2 === undefined ? [] : w2Schema.parse(pending.w2).w2s;
-  for (const row of rows) {
-    if (row.kind !== "w2_education_payment") continue;
+  const payrollRows = rows.flatMap((row) =>
+    row.kind === "w2_education_payment"
+      ? [{
+        reference: row.source_document_reference,
+        student: row.student_ssn,
+        ein: row.employer_ein,
+        box1: row.w2_box1_wages,
+        taxable: row.taxable_amount,
+      }]
+      : row.kind === "scholarship_for_required_services" &&
+          row.reporting.kind === "w2_box1"
+      ? [{
+        reference: row.reporting.w2_source_document_reference,
+        student: row.student_ssn,
+        ein: row.payer_ein,
+        box1: row.reporting.w2_box1_wages,
+        taxable: requiredServiceScholarshipAmount(row),
+      }]
+      : []
+  );
+  const allocated = new Map<string, number>();
+  for (const row of payrollRows) {
     const copies = wages.filter((wage) =>
-      wage.source_document_reference === row.source_document_reference
+      wage.source_document_reference === row.reference
+    );
+    allocated.set(
+      row.reference,
+      (allocated.get(row.reference) ?? 0) + row.taxable,
     );
     if (
       copies.length !== 1 ||
       copies[0].employee_ssn?.replaceAll("-", "") !==
-        row.student_ssn.replaceAll("-", "") ||
+        row.student.replaceAll("-", "") ||
       copies[0].employer_ein?.replaceAll("-", "") !==
-        row.employer_ein.replaceAll("-", "") ||
-      copies[0].box1_wages !== row.w2_box1_wages
+        row.ein.replaceAll("-", "") ||
+      copies[0].box1_wages !== row.box1 ||
+      allocated.get(row.reference)! > row.box1
     ) {
       throw new Error(
         "Taxable education payroll allocation differs from the student's retained issued W-2 copy",
@@ -162,7 +205,7 @@ export function assertEducationIncomeSource(
       }
     }
   }
-  if (rows.some((row) => row.kind === "w2_education_payment")) {
+  if (payrollRows.length) {
     const wageTotal = wages.reduce((sum, row) => sum + row.box1_wages, 0);
     if (final1040?.line1a_wages !== wageTotal) {
       throw new Error(

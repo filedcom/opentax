@@ -65,7 +65,38 @@ export function assertForm8863FinalizedReturn(
     ),
   );
   for (const student of fields.f8863s) {
-    for (const { workpaper } of form8863InstitutionWorkpapers(student)) {
+    for (
+      const { institution: school, workpaper } of form8863InstitutionWorkpapers(
+        student,
+      )
+    ) {
+      for (const aid of workpaper.assistance_sources ?? []) {
+        if (aid.required_service_compensation !== true) continue;
+        const source = incomeRows.find((row) =>
+          row.source_document_reference === aid.student_income_source_reference
+        );
+        if (
+          !school.current_year_1098t_received ||
+          !workpaper.issued_form1098t_source || !source ||
+          source.kind !== "scholarship_for_required_services" ||
+          source.student_ssn.replaceAll("-", "") !==
+            student.student_ssn?.replaceAll("-", "") ||
+          source.payer_name !== school.name ||
+          source.payer_ein.replaceAll("-", "") !==
+            school.ein?.replaceAll("-", "") ||
+          source.taxable_amount !== aid.amount ||
+          source.scholarship_terms_record_reference !==
+            aid.required_service_terms_record_reference ||
+          aid.tax_treatment !== "taxable" ||
+          aid.included_in_form1098t_box5 !== true ||
+          claimedIncomeRefs.has(source.source_document_reference)
+        ) {
+          throw new Error(
+            "Form 8863 taxable issued-school required-service aid must match its recipient, school, actual grant terms and finalized compensation income source",
+          );
+        }
+        claimedIncomeRefs.add(source.source_document_reference);
+      }
       const exception = workpaper.missing_1098t_exception;
       if (exception?.reason !== "institution_not_required") continue;
       const basis = exception.furnishing_basis;

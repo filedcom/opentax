@@ -159,6 +159,9 @@ const educationAssistanceSourceSchema = z.object({
   amount: z.number().finite().positive(),
   tax_treatment: z.enum(["tax_free", "taxable"]),
   student_income_source_reference: z.string().trim().min(1).optional(),
+  included_in_form1098t_box5: z.boolean().optional(),
+  required_service_compensation: z.literal(true).optional(),
+  required_service_terms_record_reference: z.string().trim().min(1).optional(),
 }).strict();
 const educationExpenseWorkpaperSchema = z.object({
   issued_form1098t_source: issued1098tSourceSchema.optional(),
@@ -448,7 +451,9 @@ export function validateForm8863FilingSource(
     const basis = exception?.reason === "institution_not_required"
       ? exception.furnishing_basis
       : undefined;
-    const taxableAmount = basis?.kind === "formal_billing_arrangement"
+    const taxableAmount = institution.current_year_1098t_received
+      ? taxable.reduce((sum, source) => sum + source.amount, 0)
+      : basis?.kind === "formal_billing_arrangement"
       ? basis.taxable_payment_amount
       : basis?.kind === "expenses_waived_or_paid_entirely_with_scholarships"
       ? basis.taxable_scholarship_payment_amount
@@ -457,13 +462,28 @@ export function validateForm8863FilingSource(
       taxable.reduce((sum, source) => sum + source.amount, 0) !==
         taxableAmount ||
       taxable.some((source) =>
-        source.student_income_source_reference !==
-          ((basis?.kind === "formal_billing_arrangement" ||
-              basis?.kind ===
-                "expenses_waived_or_paid_entirely_with_scholarships")
-            ? basis.student_gross_income_record_id
-            : undefined)
-      )
+        institution.current_year_1098t_received
+          ? source.required_service_compensation !== true ||
+            source.included_in_form1098t_box5 !== true ||
+            !source.required_service_terms_record_reference ||
+            !source.student_income_source_reference
+          : source.student_income_source_reference !==
+            ((basis?.kind === "formal_billing_arrangement" ||
+                basis?.kind ===
+                  "expenses_waived_or_paid_entirely_with_scholarships")
+              ? basis.student_gross_income_record_id
+              : undefined)
+      ) || assistance.some((source) =>
+        source.required_service_compensation &&
+        source.tax_treatment !== "taxable"
+      ) ||
+      (institution.current_year_1098t_received && taxable.length > 0 &&
+        (!issued || assistance.some((source) =>
+          source.included_in_form1098t_box5 !== true
+        ) ||
+          assistance.reduce((sum, source) =>
+              sum + source.amount, 0) !==
+            workpaper.form1098t_box5_scholarships))
     ) {
       throw new Error(
         "Form 8863 taxable school assistance must match its documented income allocation",
@@ -611,11 +631,16 @@ export function validateForm8863FilingSource(
     );
   }
   if (
-    workpaper.tax_free_assistance_applied_to_expenses <
+    workpaper.tax_free_assistance_applied_to_expenses +
+        (workpaper.assistance_sources ?? []).filter((source) =>
+          source.tax_treatment === "taxable" &&
+          source.required_service_compensation === true &&
+          source.included_in_form1098t_box5 === true
+        ).reduce((sum, source) => sum + source.amount, 0) <
       (workpaper.form1098t_box5_scholarships ?? 0)
   ) {
     throw new Error(
-      "Form 8863 bounded filing route must reduce expenses by all Form 1098-T box 5 scholarships",
+      "Form 8863 filing must account for all Form 1098-T box 5 scholarships as expense-reducing tax-free aid or source-reviewed taxable required-service compensation",
     );
   }
   const paid = workpaper.paid_tuition_required_fees +
