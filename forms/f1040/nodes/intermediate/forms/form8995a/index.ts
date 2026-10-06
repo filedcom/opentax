@@ -168,7 +168,7 @@ export const scheduleCQbiBusinessSchema = z.object({
   // Retain Schedule C cents until the whole-dollar Schedule C filing lines.
   qbi: z.number().finite(),
   wotc_wage_reduction: z.number().positive().optional(),
-  w2_wages: z.number().int().nonnegative(),
+  w2_wages: z.number().nonnegative(),
   ubia: z.number().int().nonnegative(),
   no_other_adjustments_confirmed: z.boolean(),
   source_schedule_c: scheduleCItemSchema,
@@ -1040,7 +1040,7 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
       : value;
   const line2 = input.qbi ?? 0;
   const line3 = filedAmount(line2 * QBI_RATE);
-  const line4 = input.w2_wages ?? 0;
+  const line4 = filedAmount(input.w2_wages ?? 0);
   const line5 = filedAmount(line4 * W2_LIMIT_A_RATE);
   const line6 = filedAmount(line4 * W2_LIMIT_B_WAGE_RATE);
   const line7 = input.unadjusted_basis ?? 0;

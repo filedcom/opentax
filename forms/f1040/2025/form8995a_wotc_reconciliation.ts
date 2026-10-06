@@ -55,20 +55,56 @@ export function assertForm8995AWotcReturn(
   const business = source.business;
   const scheduleC = scheduleCInputSchema.parse(pending.schedule_c);
   const wotc = wotcInputSchema.parse(pending.f5884);
-  if (
-    sources.length === 2 && (!wotc.ordinary_joint_employer_control_review ||
-      wotc.ordinary_joint_employer_control_review.businesses.some((b) =>
-        !sources.some((s) =>
+  if (sources.length === 2) {
+    const ordinary = wotc.ordinary_joint_employer_control_review;
+    const group = wotc.controlled_group;
+    const members = group?.joint_filed_members_review?.members;
+    const matching = group
+      ? members?.length === 2 && group.members.length === 2 &&
+        group.members.every((m) =>
+          sources.some((s) =>
+            s.business.ein === m.ein &&
+            s.business.business_name === m.business_name
+          )
+        ) &&
+        members.every((m) =>
+          sources.some((s) =>
+            s.business.ein === m.ein &&
+            s.business.business_reference === m.business_reference &&
+            s.business.source_schedule_c.proprietor_recipient ===
+              m.proprietor_recipient &&
+            s.business.source_schedule_c.qbi_wotc_filing_review?.owner_ssn ===
+              m.proprietor_ssn
+          )
+        )
+      : ordinary?.businesses.every((b) =>
+        sources.some((s) =>
           s.business.ein === b.employer_ein &&
           s.business.business_reference === b.business_reference &&
           s.business.source_schedule_c.qbi_wotc_filing_review?.owner_ssn ===
             b.proprietor_ssn
         )
-      ))
-  ) {
-    throw new Error(
-      "Two owned WOTC employers need actual reviewed common-control exceptions",
+      );
+    if (!matching) {
+      throw new Error(
+        "Two owned WOTC employers need actual reviewed ordinary exceptions or complete joint common-control source members",
+      );
+    }
+  }
+  if (wotc.controlled_group?.joint_filed_members_review) {
+    const copies = sources.flatMap((s) =>
+      s.business.source_schedule_c.qbi_wotc_filing_review!.employee_w2_records
     );
+    if (
+      new Set(copies.map((r) => r.source_document_reference)).size !==
+        copies.length ||
+      new Set(copies.map((r) => r.ssa_filing_record_reference)).size !==
+        copies.length
+    ) {
+      throw new Error(
+        "Shared group people require distinct issued W2 and SSA employer source copies",
+      );
+    }
   }
   const lines = calculateForm5884(wotc);
   const allocations = lines.wageDeductionAllocations;
@@ -102,7 +138,9 @@ export function assertForm8995AWotcReturn(
           (a.location as any).business_reference &&
         s.business.wotc_wage_reduction === a.credit_amount
       )
-    ) || wotc.controlled_group ||
+    ) ||
+    (wotc.controlled_group &&
+      !wotc.controlled_group.joint_filed_members_review) ||
     wotc.subject_to_passive_activity_limit !== false ||
     credit?.credit_amount !== lines.line4 ||
     credit.subject_to_passive_activity_limit !== false ||
@@ -119,7 +157,8 @@ export function assertForm8995AWotcReturn(
   for (const employee of wotc.f5884s) {
     const matches = sources.filter((s) =>
       s.business.source_schedule_c.qbi_wotc_filing_review!.employee_w2_records
-        .some((r) => r.employee_reference === employee.employee_reference)
+        .some((r) => r.employee_reference === employee.employee_reference) &&
+      (!wotc.controlled_group || s.business.ein === employee.employer_ein)
     );
     if (matches.length !== 1) {
       throw new Error(

@@ -362,7 +362,10 @@ function advancedFormOutput(
       single_schedule_c_source: undefined,
       business_filing_details: undefined,
       qbi: children.reduce((sum, c) => sum + (c.qbi ?? 0), 0),
-      w2_wages: children.reduce((sum, c) => sum + (c.w2_wages ?? 0), 0),
+      w2_wages: children.reduce(
+        (sum, c) => sum + Math.round(c.w2_wages ?? 0),
+        0,
+      ),
       wotc_business_sources: children.map((c) => ({
         ...c.single_schedule_c_source!,
         joint_se_source: input.joint_se_source!,

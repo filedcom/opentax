@@ -1109,3 +1109,108 @@ controlled-group coexistence, mixed-credit ordering and durable unused-credit
 carryovers remain open. Generic owner-SE is preserved. No authentication, IRS
 business-rule, ATS or production acceptance claim is added; the broader parent
 remains open.
+
+## MFJ common-control spouse businesses and group caps — October 6, 2026
+
+The retained two-owner ordinary Schedule C source route now also accepts actual
+reviewed businesses under common control. The existing group contract retains
+its one-taxpayer-member behavior. A new joint filed-member review identifies
+both actual sole proprietors, SSNs, business references and employer EINs,
+100% direct ownership, the other spouse's management participation supporting
+spousal attribution, reviewed ownership/classification sources and complete
+group membership/payroll. Both filed shares feed one joint Form 5884/3800 claim;
+each member's full determined share reduces its actual Schedule C wage deduction
+before its attributable Schedule SE and QBI calculation. Source replay requires
+exact actual employer names, owners and business references. Common control does
+not silently elect QBI aggregation; the actual no-aggregation review is retained.
+
+The [Form 5884 instructions](https://www.irs.gov/instructions/i5884) treat group
+members as a single employer and require the full line 2 deduction reduction
+regardless of limited current use. [26 CFR 1.52-1(a)(1)](https://www.ecfr.gov/current/title-26/section-1.52-1)
+requires proportionate allocation of the group credit, including the shared
+employee cap illustrated in example 2. The spouse attribution rule in
+[26 CFR 1.414(c)-4(b)(5)](https://www.ecfr.gov/current/title-26/section-1.414(c)-4)
+underlies the supplied management/ownership review. Independent-employer
+exception reviews and group common-control reviews cannot coexist.
+
+Shared workers retain one reviewed person identity and the group first-workday
+source, with separate employer-specific certifications, payroll, issued W-2
+copies and SSA filing references. Combined group service hours determine the
+minimum/rate and eligible wages are capped once across those employer rows.
+The capped wages are apportioned proportionately while retaining raw fractions;
+the determined credit's whole-dollar residual is assigned once by proportionate
+fraction and EIN tie order. Each filed member share is allocated only to that
+member's real payroll locations. This replaces per-employer duplicated cap use
+for the same person. Duplicate same-employer/person rows, conflicting identity,
+service-period or target-group sources and reused certification/payroll/source
+copies reject. The existing single-member group and independent-employer
+paths remain covered by related regressions.
+
+Three registered held fixtures execute the full public source graph:
+
+| Source case | Gross primary/spouse payroll | Group determined credit / filed shares | Pre-QBI taxable income | QBI deduction | Current use | Final tax |
+| --- | --- | --- | --- | --- | --- | --- |
+| Shared-person phase-in | 6,000 / 6,000 | 2,400 / 1,200 + 1,200 | 461,852 | 25,716 | 2,400 | 127,481 |
+| Fractional source allocation | 4,000.49 / 3,000.52 | 2,400 / 1,371 + 1,029 | 466,622 | 21,137 | 2,400 | 130,972 |
+| 80 shared people, above range | 480,000 / 480,000 | 192,000 / 96,000 + 96,000 | 683,796 | 83,059 | 118,264 | 68,535 |
+
+The phase-in case has primary/spouse SE tax $7,928/$26,168, half-SE
+$3,964/$13,084, combined raw AGI $493,352.37 and 67.252% phase-in. The fractional
+case retains raw payroll, profits $177,370.51/$188,028.48 and AGI $498,122.36;
+filed Schedule C profits are $177,371/$188,028, Schedule 1 profit $365,399,
+half-SE $3,993/$13,284, filed AGI $498,122 and phase-in 72.022%. Filed QBI rows
+$173,378/$174,744 sum to $348,122. Raw allocable QBI wages $2,629.49/$1,971.52
+file as line 4 $2,629/$1,972; their filed percentages are computed from those
+finalized lines and the parent wage total is $4,601. Raw source cents remain
+retained. Source W-2 wage schemas now admit those actual cents; no altered
+whole-dollar substitute fixture is used.
+
+The above-range case retains the entire $192,000 reduction despite $73,736
+unused current credit. Each Schedule C has $384,000 deductible wages and
+$216,000 profit; primary/spouse SE tax is $5,785/$27,621 and attributable
+half-SE $2,893/$13,811. QBI $213,107/$202,189 yields components $42,621/$40,438.
+Filed AGI is $715,296, taxable income $600,737, income tax $149,352,
+SE/Additional Medicare tax $37,447, final tax $68,535 and amount owed $7,635.
+This proves current use, not durable carryover ledger acceptance.
+
+Native Form 5884 line 2 links both `ControlledGroupMemberStatement` and
+`DeductionDifferentiationStmt`, which show member shares and both filed EINs.
+The printable allocation supplement lists both employer names/EINs, apportioned
+wages, shares and combined filed line 2. All three complete 31-page packets were
+visually reviewed, including every Form 3800 page, separate proprietor C/SE
+copies, allocation supplements, fractional parent percentages, blank
+above-range Part III and final 1040. Held artifacts are under
+`.state/research/ty2025-filled-pdf-review/2026-10-06-joint-controlled-wotc/`
+and its `-rendered` sibling, in isolated `/tmp/opentax-joint-controlled-wotc-oct6`
+from base `15d49d055`.
+
+Final focused proof passed **4 typed tests, 0 failed**, including all three
+public/native/PDF/full local TY2025 v5.4 XSD positives, group-hour minimum/rate
+edges, and reviewed ownership/identity/employer/source/SE/current-credit/1040
+negatives (`/tmp/opentax-controlled-focus-final.log`). Generator completed with
+terminal 0 (`/tmp/opentax-controlled-generate-final-v2.log`).
+
+This positive filing proof covers two MFJ positive ordinary Schedule C sole
+proprietorships, first-year certified qualified payroll and the documented
+spousal attribution facts. Source assertions and synthetic references do not
+authenticate ownership workpapers, SWA certificates, issued W-2s, SSA or payroll
+bytes. Wider owner/member sets, external group entity-return claims, predecessor
+and cross-year shared-person records, second-year group coexistence, SSTBs,
+farms, aggregation, patron adjustments, losses, different wage methods,
+attributable health/retirement adjustments, mixed-credit ordering and durable
+carryovers remain broader scope. Generic owner-SE remains preserved. No IRS
+business-rule, ATS or production acceptance claim is added; the parent stays open.
+
+The selected held checker completed with terminal 0: **3 cases, 93 reviewed
+pages**, source/XML/PDF replay, artifact hashes, IRS template provenance and
+full local TY2025 v5.4 XSD validation
+(`/tmp/opentax-controlled-held-check.log`). These reviewed artifacts are ignored
+and retained locally; no board or future task is changed.
+
+Related terminal regression passed **98 typed tests, 0 failed**, covering
+retained Single/joint primary/spouse/two-owner WOTC, generic owner-SE, Form
+8995-A calculations/PDF and existing single-member group native/PDF statements
+(`/tmp/opentax-controlled-regression-final.log`). The final 4/4 focused rerun
+also proves the last actual employer-name/source conflict rejection. Earlier
+intermediate packets and logs precede the finalized wage projection/ownership
+review and are not this held evidence.

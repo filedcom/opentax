@@ -1,6 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import {
   calculateForm5884,
+  filedControlledGroupEins,
   inputSchema,
 } from "../../../nodes/inputs/f5884/index.ts";
 import {
@@ -40,7 +41,9 @@ export const form5884: MefFormDescriptor<"f5884", unknown> = {
       for (const item of source.f5884s) {
         if (
           source.controlled_group &&
-          item.employer_ein !== source.controlled_group.taxpayer_member_ein
+          !filedControlledGroupEins(source.controlled_group).includes(
+            item.employer_ein!,
+          )
         ) continue;
         for (const record of item.wage_records) {
           if (record.deduction_location.kind === "schedule_c") {

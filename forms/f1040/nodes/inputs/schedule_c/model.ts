@@ -86,8 +86,8 @@ export const itemSchema = z.object({
       z.object({
         employee_reference: z.string().trim().min(1),
         source_document_reference: z.string().trim().min(1),
-        box1_wages: z.number().int().positive(),
-        box5_wages: z.number().int().positive(),
+        box1_wages: z.number().positive(),
+        box5_wages: z.number().positive(),
         ssa_filing_record_reference: z.string().trim().min(1),
         filed_within_60_days_of_due_date_confirmed: z.literal(true),
       }).strict(),
