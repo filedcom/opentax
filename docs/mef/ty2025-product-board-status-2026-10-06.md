@@ -2070,3 +2070,20 @@ Preservation log SHA256: `d4cfcc6c5c8e8b6f9f52faba17583ef3705a36199bd4b7fa0cdea2
 ## Published fractional proof and continuing whole-parent work
 
 PR63 remotehead2ecf2ef35e40994f94a2a91a55363c0f15c974b0/title/fullscope body verified after push. Artifact attachment was attempted again but hung and was terminated; no successful app attachment is claimed. Ledger1443, frozen52rows byte-identical toadf3612ee, futurePFIC unworked. FullV4wrapper44964/Deno44970 confirmedlive50m16s; terminal/latest-source fullpass stillrequired. Root remaining4972parent isolatede4bc840de at /tmp/opentax-form4972-parent-completion-oct6:17different-participant paired source returns, graph/native/PDF2/0 and actualfullXSD/fourpagePDF3/0(56s);17packets68generatedpages64issuedcopies. Renderer session79558 active atlaunch, every-page visual review remainspending; no mainintegration/ledgercredit. Sharedparticipant beneficiary allocation coherence, broader source/eligibility evidence andScheduleJ/AMTremain toimplement, temporaryguards notuser-approved exclusions. Agents4852/8283/8621 continuewholeexistingparents. No goalcompletionclaim.
+
+## Before all-page paired-beneficiary review and shared-participant source completion
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,443 bounded slices**. Learnings and exact proof remain in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Newly discovered work goes only in `future_todo` and is not executed.
+
+Actual inventory: **150 native / 116 PDF descriptors**, **365 fixtures**, **113 PDF keys / 96 covered / 17 uncovered**. Recent main proof: reviewed catalog24/0 (375 preserved pages), C/F loss-owner health28/0 (6/182), beneficiary death/estate3/0+15/0 (26/78), senior/independent-health6/0+111/0 and retained5/0 (5/95), complete refund inventory119/0 (8/30), fractional beneficiary15/0+298/0 (17/51). Source/PDF bytes match reviewed originals; timestamp-only XML differences are recorded. These close their stated slices; broader parents remain open.
+
+Full `deno task test` at fbacc539c failed11,577/14/0ignored, exit1(82m15s); all14 have focused repaired-main proof. Immutable181575242 rerun started03:53:35UTC; wrapper44964/Deno44970 verified live at49m25s. Its terminal result and a passing full run of latest source remain required. Publication checkpoint for draft [PR63](https://github.com/filedcom/opentax/pull/63): **2ecf2ef35**, verified published with the fractional beneficiary proof.
+
+Complete ordinary-refund inventory is verified on main; Form4852, remaining Form4972, Form8283 and Form8621 parent work continue in isolated checkouts. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+
+
+Previous goalturn was progress: verifiedmainfractional15/0+298/0, exact17/51/32 replay, ledger1443 andPR63published843b7d79c. Rootisolatede4bc840de paired-beneficiary actual17fullXSDpackets68generated/renderedpages64issuedcopies3/0; originalhashmanifest retained butevery-page review remainsunproven. FullV4wrapper44964/Deno44970 confirmedlive51m35s. Rootnowreviewsallactualpages, thencontinueswholeexisting4972parent shared-participantpool/allocation/sourceeligibility andScheduleJ/AMT. Unreviewedfixtures andtemporary guards cannotcompleteparent. Main52 frozenrows/futurePFICunworked.
