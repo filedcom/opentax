@@ -5,6 +5,10 @@ import {
   rothSourceMoney,
 } from "./roth-conversion.ts";
 import { z } from "zod";
+import {
+  reviewedRothHistory,
+  rothDistributionYearSchema,
+} from "./roth-history.ts";
 import { isDeepStrictEqual } from "node:util";
 import { roundWholeDollars } from "../../../../whole-dollars.ts";
 import {
@@ -34,18 +38,23 @@ export const rothOwnerInventorySchema = rothActivityReviewSchema.omit({
   inventory: rothActivityReviewSchema.shape.inventory.omit({
     no_other_current_roth_distribution: true,
     no_conversions_or_qualified_plan_rollovers: true,
+    no_prior_distributions_or_returned_contributions: true,
   })
     .extend({
       all_current_roth_payments_included: z.literal(true),
       no_conversions_or_qualified_plan_rollovers: z.boolean(),
       all_prior_roth_conversion_records_included: z.literal(true).optional(),
       no_qualified_plan_rollovers_confirmed: z.literal(true).optional(),
+      no_prior_distributions_or_returned_contributions: z.boolean(),
+      all_prior_roth_payments_included: z.literal(true).optional(),
+      no_returned_contributions_confirmed: z.literal(true).optional(),
     }).strict(),
   contributions: rothActivityReviewSchema.shape.contributions.element.extend({
     form5498: rothActivityReviewSchema.shape.contributions.element.shape
       .form5498.extend({ box3_roth_conversion_amount: rothSourceMoney }),
   }).array(),
   conversions: z.array(rothConversionYearSchema).min(1).optional(),
+  prior_distributions: z.array(rothDistributionYearSchema).min(1).optional(),
   payments: z.array(paymentSchema).min(1),
 }).strict();
 export type RothOwnerInventory = z.infer<typeof rothOwnerInventorySchema>;
@@ -55,6 +64,37 @@ const sumMoney = (values: readonly number[]) =>
 /** Calculate the annual owner basis once; each payment keeps its actual lineage. */
 export function reviewedRothOwnerInventory(raw: unknown) {
   const review = rothOwnerInventorySchema.parse(raw);
+  const hasHistory = !!review.prior_distributions?.length;
+  for (const annual of review.prior_distributions ?? []) {
+    const convertedYear = review.conversions?.find((row) =>
+      row.prior_form8606.tax_year === annual.prior_form8606.tax_year
+    );
+    if (
+      convertedYear &&
+      ["source_document_reference", "owner_ssn", "owner_name"].some((key) =>
+        convertedYear
+          .prior_form8606[key as keyof typeof convertedYear.prior_form8606] !==
+          annual.prior_form8606[key as keyof typeof annual.prior_form8606]
+      )
+    ) {
+      throw new Error(
+        "Roth conversion/distribution PartsII/III must join one actual annual filed8606",
+      );
+    }
+  }
+  if (
+    hasHistory
+      ? review.inventory.no_prior_distributions_or_returned_contributions !==
+          false ||
+        review.inventory.all_prior_roth_payments_included !== true ||
+        review.inventory.no_returned_contributions_confirmed !== true
+      : review.inventory.no_prior_distributions_or_returned_contributions !==
+        true
+  ) {
+    throw new Error(
+      "Roth prior distribution inventory needs complete original payment and filed-history sources",
+    );
+  }
   const converted = reviewedRothConversions(
     review.conversions ?? [],
     review.owner_identity.owner_ssn,
@@ -164,7 +204,17 @@ export function reviewedRothOwnerInventory(raw: unknown) {
   const rawBasis = sumMoney(
     review.contributions.map((row) => row.form5498.box10_roth_contributions),
   );
-  const basis = roundWholeDollars(rawBasis);
+  const history = hasHistory
+    ? reviewedRothHistory(
+      review.prior_distributions!,
+      review.owner_identity,
+      review.inventory.accounts,
+      review.contributions,
+      review.conversions ?? [],
+    )
+    : undefined;
+  const basis = history?.regularBasis ?? roundWholeDollars(rawBasis);
+  const currentConversions = history?.pools ?? converted;
   const payments = review.payments.map((payment) => {
     if (
       payment.owner_ssn !== review.owner_identity.owner_ssn ||
@@ -194,9 +244,20 @@ export function reviewedRothOwnerInventory(raw: unknown) {
     ...rothOwnerInventoryDocuments(review).map((row) =>
       row.source_document_reference
     ),
-    ...(review.conversions ?? []).map((row) =>
-      row.prior_form8606.source_document_reference
-    ),
+    ...(review.conversions ?? []).filter((row) =>
+      !review.prior_distributions?.some((annual) =>
+        annual.prior_form8606.source_document_reference ===
+          row.prior_form8606.source_document_reference
+      )
+    ).map((row) => row.prior_form8606.source_document_reference),
+    ...(review.prior_distributions ?? []).flatMap((
+      row,
+    ) => [
+      row.prior_form8606.source_document_reference,
+      ...(row.prior_form5329
+        ? [row.prior_form5329.source_document_reference]
+        : []),
+    ]),
     ...review.payments.map((row) => row.form1099r_source_document_reference),
   ];
   const lineage = review.payments.map((row) =>
@@ -224,7 +285,10 @@ export function reviewedRothOwnerInventory(raw: unknown) {
   const gross = roundWholeDollars(rawGross);
   const nonqualifiedGross = roundWholeDollars(rawNonqualifiedGross);
   const afterRegular = Math.max(0, nonqualifiedGross - basis);
-  const conversionBasis = converted.reduce((sum, row) => sum + row.gross, 0);
+  const conversionBasis = currentConversions.reduce(
+    (sum, row) => sum + row.gross,
+    0,
+  );
   const taxable = Math.max(0, afterRegular - conversionBasis);
   // Age-based J payments necessarily precede this owner's age-exempt T
   // payments. Regular contributions are consumed first across every account.
@@ -237,7 +301,7 @@ export function reviewedRothOwnerInventory(raw: unknown) {
   );
   let earlyRemainder = Math.max(0, earlyGross - basis);
   let recapture = 0;
-  const conversionAllocations = converted.map((row) => {
+  const conversionAllocations = currentConversions.map((row) => {
     const allocatedTaxable = Math.min(earlyRemainder, row.taxable);
     earlyRemainder -= allocatedTaxable;
     const allocatedNontaxable = Math.min(earlyRemainder, row.nontaxable);
@@ -286,6 +350,9 @@ export function rothOwnerInventoryDocuments(review: RothOwnerInventory) {
     review.inventory,
     ...review.contributions.flatMap((row) => [row.form5498, ...row.receipts]),
     ...review.payments,
+    ...(review.prior_distributions ?? []).flatMap((row) =>
+      row.payments.flatMap((payment) => [payment, payment.issued_form1099r])
+    ),
     ...rothConversionDocuments(review.conversions ?? []).filter((document) => {
       if (!("box3_roth_conversion_amount" in document)) return true;
       const regular = review.contributions.find((row) =>

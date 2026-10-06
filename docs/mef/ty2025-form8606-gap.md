@@ -170,3 +170,30 @@ PartII PDF joins (8 packets79 current pages plus34 historical pages). See
 commands, digests, prior179-page preservation and remaining consumed-history
 contracts. Earlier one-payment-only descriptions are historical. Prior source
 authentication and broader existing8606 parent remain open.
+
+
+## October6 retained historical consumption source proof
+
+The existing consumed-basis gap now has actual annual filed8606 PartIII and
+applicable5329 PDF records joined to complete owner/account prior custodian
+payments and issued1099R records. Owner-wide remaining regular basis and
+conversion FIFO pools derive from filed prior worksheets and later actual
+5498/receipt sources; opening-basis scalars are not accepted. Same annual
+conversion/distribution requires one actual filed8606 PDF with PartsII/III
+independently parsed. Earlier2020–2024 layouts are verified, including5329
+field-name revisions and2024 page count.
+
+Twelve public whole returns pass checked2/0, related25-module264/0 and exact
+held12/107 full2025v5.4XSD/source/XML/PDF replay. All107 current plus91 retained
+historical pages were visually reviewed; old33/258 artifacts are unchanged
+and replay exactly. Rehashed prior basis/recapture mutations update both actual
+bindings and assert parsed-facts rejection. See
+`ty2025-form4852-filing-gap.md` for authoritative logs, commands, digests,
+independent filed amounts and the separately repaired inherited line18 negative.
+Historical copies do not become current native/calculation copies.
+
+Current2025 conversions, prior revisions before2020, qualified historical
+distributions and other unsupported source histories remain guarded; external
+authentication and IRS acceptance remain open. This checkpoint supersedes
+earlier descriptions that prior consumed basis was wholly unimplemented, and
+does not close the broader existing parent.

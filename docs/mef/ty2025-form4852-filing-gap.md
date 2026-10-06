@@ -552,3 +552,76 @@ open. No catalog registration, main, board or future task was changed.
 ## Precise retained prior-PDF parser negative
 
 Currentmain2aeb5ecb3 test-only refinement passed2/0(31s), /tmp/opentax-roth-conversion-parser-current-main.log. The rehashed prior8606 PartII line18 negative now updates both actual f4852.reviewed_source and f4852_reviewed_source and requires the exact parsed-PDF error. Earlier inherited assertion rejected at retained digest, so it did not prove the previously claimed parser-depth negative; positive reviewed parser/byte joins remain unchanged. No production/source/PDF changed, no ledgerincrement, broaderparent unchanged. Root43cdd2906 actualfarmQBI/J95/0+final3/0,2fullXSDpackets36reviewedpages heldsource/pending/XMLonlyReturnTs/PDF/origins exact; priorpension76page sourcegate stilllive afterPATH repair. AgentQEF a3f64c873 ready6/0+32/0 with33reviewednewpages andsourcecallbacks; freshmain integrationnext, Form3800 ordering underseparateinvestigation. FullV5 lastverifiedlive76m11s; frozen52/futureunchanged. Appattachment2284 terminatedwithoutsuccessclaim.
+
+
+## October6 retained historical Roth consumption checkpoint
+
+The existing consumed-history contract is now implemented from actual retained
+owner/account custodian payment and issued1099R records, plus annual filed
+8606 PartIII and applicable5329 PDF bytes. Source-only declarations or opening
+basis scalars cannot replace that inventory. The
+[2025 instructions8606](https://www.irs.gov/pub/irs-prior/i8606--2025.pdf),
+[2025 instructions5329](https://www.irs.gov/pub/irs-prior/i5329--2025.pdf) and
+[Pub590B](https://www.irs.gov/publications/p590b) govern remaining regular basis,
+conversion FIFO/taxable-first ordering, earnings and per-conversion recapture.
+Actual raw current and historical cents remain retained; annual filed basis
+residuals and later actual contributions feed the current worksheets. Prior
+copies remain historical evidence and are not added to current income.
+
+Twelve independent public whole-return cases cover partial regular consumption,
+consumed taxable conversions, multiple annual consumptions, later regular and
+conversion contributions, separate MFJ pools/copies, half-dollar residuals,
+same-annual PartsII/III, exhausted conversion/earnings pools, age-exempt T and
+same-payer distinct prior accounts. A2020 boundary prior PDF is included. The
+cent case retains historical gross500.50 and regular1000.50, filed501/1001,
+remaining500 and current gross9000.50 filed9001. The joint case has current
+gross17500, taxable earnings6000, separate owner early taxes750+600, AGI131000,
+taxable99500, tax-table11724 and total tax13074. Both current owners'8606 and
+applicable5329 copies bind to their actual records. Same-year conversion and
+distribution use one retained annual8606 with both PartsII/III independently
+parsed; distinct invented annual-copy references are rejected.
+
+Retained prior8606/5329 fields and skipped blanks are inspected and parsed for
+2020–2024. The5329 padded2020–2022 field names and2024 three-page layout are
+handled explicitly. Rehashed prior8606 line22 and5329 line4 negatives update
+both actual pending source bindings and reach the exact parsed-facts rejection.
+The inherited prior8606 line18 negative was separately strengthened in
+00c138f248809124e68a3f4e2b9e2ec65084161f: its earlier single-binding mutation
+hit the unchanged second binding's digest check; the repaired test updates both
+and asserts the actual parsed conversion8606 rejection. This corrects the
+depth claimed by the earlier conversion checkpoint without changing production.
+
+Terminal checked public2/0 (54s):
+`PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno test --allow-all forms/f1040/2025/form4852_roth_history.test.ts`,
+log `/tmp/opentax-roth-history-final10.log`. Related25-module264/0 (2m29s),
+log `/tmp/opentax-roth-history-related11.log`; exact command retained in
+`.state/research/form4852-roth-history/compatibility-command.sh`.
+Current12-packet107-page full2025v5.4XSD, all source/retained bytes, PDF/origins
+exact and XML timestamp-only-normalized replay is terminal:
+`/tmp/opentax-roth-history-replay15.log`. All107 current pages and91 retained
+historical PDF pages were visually reviewed, with no layout issues.
+Ignored root `.state/research/form4852-roth-history`; manifestSHA256
+`51694149d65876ecf46453b52ae9557a15d918bbb67388f71d38b1029d49fba6`,
+visual-reviewSHA256
+`c238407410099935fb2eef24ad91aca550c5406274531f838752819ebd9517aa`.
+Preserved cache `.state/research/form4852-roth-history-pdf-cache-preserved`.
+Exact replay from the isolated checkout:
+`PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run --allow-all .state/research/form4852-roth-history/replay.ts`.
+
+Original33 packets258 pages (10/70 source,9/52 Roth,6/57 inventory,8/79
+conversion) remain byte unchanged and replay exactly against this production.
+Terminal logs `/tmp/opentax-roth-history-old4852-preserve14.log`,
+`/tmp/opentax-roth-history-oldroth-preserve14.log`,
+`/tmp/opentax-roth-history-oldinventory-preserve14.log` and
+`/tmp/opentax-roth-history-oldconversion-preserve14.log`.
+
+### Remaining existing parent after this checkpoint
+
+Earlier-than2020 prior PDF revisions, current2025 conversion coexistence,
+qualified historical distributions, inherited/transferred interests, returned
+contributions, qualified-plan rollovers and other exception histories remain
+guarded where complete reviewed source contracts or verified layouts are
+absent. This is not a historical whole-return engine recomputation. Synthetic
+retained fixtures prove byte/hash/parsed-fact joins, not external authentication
+or IRS business-rule/ATS acceptance. Broader parent remains open; no main,
+board, catalog, PR or future task was changed.

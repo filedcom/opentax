@@ -2,6 +2,8 @@ import {
   reviewedRothOwnerInventory,
   rothOwnerInventoryDocuments,
 } from "../nodes/intermediate/forms/form8606/roth-inventory.ts";
+import { assertRothHistoryPdf } from "./form8606_roth_history_evidence.ts";
+import type { RothDistributionYear } from "../nodes/intermediate/forms/form8606/roth-history.ts";
 import {
   reviewedRothActivity,
   rothActivityDocuments,
@@ -148,6 +150,7 @@ export async function assertForm4852RetainedEvidence(
       facts: unknown;
       prior8606?: true;
       priorRothConversion?: true;
+      priorRothDistribution?: "8606" | "5329";
     }[] = [];
     const amounts = [
       "wages",
@@ -315,6 +318,20 @@ export async function assertForm4852RetainedEvidence(
           priorRothConversion: true,
         });
       }
+      for (const year of facts.review.prior_distributions ?? []) {
+        requiredTreatmentRecords.push({
+          reference: year.prior_form8606.source_document_reference,
+          facts: year.prior_form8606,
+          priorRothDistribution: "8606",
+        });
+        if (year.prior_form5329) {
+          requiredTreatmentRecords.push({
+            reference: year.prior_form5329.source_document_reference,
+            facts: year.prior_form5329,
+            priorRothDistribution: "5329",
+          });
+        }
+      }
       for (const documentFacts of rothOwnerInventoryDocuments(facts.review)) {
         requiredTreatmentRecords.push({
           reference: documentFacts.source_document_reference,
@@ -377,9 +394,15 @@ export async function assertForm4852RetainedEvidence(
         facts: item.qcd_transfer_review,
       });
     }
+    const sharedAnnual8606s = requiredTreatmentRecords.filter((treatment) =>
+      treatment.priorRothConversion && requiredTreatmentRecords.some((other) =>
+        other.priorRothDistribution === "8606" &&
+        other.reference === treatment.reference
+      )
+    ).length;
     if (
       (record.treatment_documents ?? []).length !==
-        requiredTreatmentRecords.length
+        requiredTreatmentRecords.length - sharedAnnual8606s
     ) {
       throw new Error(
         "Form 4852 treatment evidence must retain its complete source-document inventory",
@@ -396,7 +419,15 @@ export async function assertForm4852RetainedEvidence(
         );
       }
       const bytes = bytesFor(treatment.reference);
-      if (treatment.priorRothConversion) {
+      if (treatment.priorRothDistribution) {
+        await assertRothHistoryPdf(
+          treatment.facts as
+            | RothDistributionYear["prior_form8606"]
+            | NonNullable<RothDistributionYear["prior_form5329"]>,
+          bytes,
+          treatment.priorRothDistribution,
+        );
+      } else if (treatment.priorRothConversion) {
         const prior = treatment.facts as {
           tax_year: number;
           owner_ssn: string;
