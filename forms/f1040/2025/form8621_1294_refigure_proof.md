@@ -57,3 +57,8 @@ branches are guarded until they can compose with this full-return
 counterfactual. Existing Form 8615, Schedule J, and AMT gates remain. Newly
 discovered Part II D–H, qualifying-insurance, and atypical indirect-owner
 workflows remain outside this original parent scope.
+
+
+## Verified current-main integration
+
+Main4a45410da: source7/0(25s) and seven-module36/0(32s); `/tmp/opentax-form8621-qef-agi-current-main-focused.log` and `/tmp/opentax-form8621-full-refigure-current-main-focused.log`. Full-return QEF counterfactual refigures sourced medical floor473 and senior MAGI phaseout462 rather than440 regular-only difference; finalsourcegraph conflicts rejected. All7fullXSD PDFs/55reviewedpages exactly match prior5/38 plus new2/17 originals; `/tmp/opentax-form8621-full-refigure-current-main-pdf-comparison.json`. Prior related56/0 preserved isolated source proof; latestfull remains live, not a completed gate. AMT/ScheduleJ/Form8615, mixed two-pass, multiple elections, external accepted-filing authenticity and IRS gates remain open.

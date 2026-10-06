@@ -143,3 +143,8 @@ accepted-2024 route. The existing Section A retained-reference carryover and its
 conflicts remain covered by the preservation gate, without an IRS-acceptance claim.
 Special 28%/1250 tax, farm/K1/PAL/senior and other broader income combinations were
 not positive packets in this proof. No main, board, catalog or PR was changed.
+
+
+## Verified current-main integration
+
+Main4a45410da: source16/0(1m57s),18-file preservation159/0(1m32s), logs `/tmp/opentax-form8283-current-main-source.log` and `/tmp/opentax-form8283-current-main-preservation.log`. All16source/pending/origin/XML/PDF packets,208returnpages and330attachments exactly match sealed reviewed originals exceptReturnTs. Original383attachmentpages+208returnpages=591 reviewed; all selected source/attachment bytes unchanged, file inventories exact. `/tmp/opentax-form8283-current-main-final-comparison.json`; originalmanifest548130a532121f4975d51e02425bb327e3ef23a5b8d3a37e1536efe10288c796. External authenticity, accepted-prior carryover and other FMV reasons/return combinations remain open.
