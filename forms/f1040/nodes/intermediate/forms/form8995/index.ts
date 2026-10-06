@@ -1068,8 +1068,7 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
 
     const ownedLines = input.joint_se_source &&
         input.joint_se_source.businesses.every((row) =>
-          row.qbi_no_other_adjustments_confirmed === true &&
-          row.farm_optional_method_elected !== true
+          row.qbi_no_other_adjustments_confirmed === true
         )
       ? (() => {
         if (

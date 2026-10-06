@@ -493,6 +493,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
               source_reference: item.business_reference,
               kind: "schedule_c",
               net_profit: netProfits[index],
+              gross_business_income: computeGrossIncome(item),
               business_name: item.line_c_business_name,
               ein: item.line_d_ein?.replace(/\D/g, ""),
               qbi_no_other_adjustments_confirmed:

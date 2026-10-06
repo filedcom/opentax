@@ -393,6 +393,7 @@ Deno.test("schedule_se: multiple spouse-owned businesses and farms share spouse 
       source_reference: "C1",
       kind: "schedule_c" as const,
       net_profit: 15000,
+      gross_business_income: 15000,
       qbi_no_other_adjustments_confirmed: false,
     },
     {
@@ -400,6 +401,7 @@ Deno.test("schedule_se: multiple spouse-owned businesses and farms share spouse 
       source_reference: "C2",
       kind: "schedule_c" as const,
       net_profit: 15000,
+      gross_business_income: 15000,
       qbi_no_other_adjustments_confirmed: false,
     },
     {

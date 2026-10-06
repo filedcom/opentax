@@ -14,6 +14,7 @@ export const ownerBusinessSchema = z.object({
   ein: z.string().regex(/^\d{9}$/).optional(),
   qbi_no_other_adjustments_confirmed: z.boolean().optional(),
   gross_farm_income: z.number().nonnegative().optional(),
+  gross_business_income: z.number().finite().optional(),
   farm_optional_method_elected: z.boolean().optional(),
 }).strict();
 export const ownerWageSchema = z.object({

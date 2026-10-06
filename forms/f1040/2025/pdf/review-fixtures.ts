@@ -1,4 +1,5 @@
 import { controlledWotcReviewFixtures } from "./review-controlled-wotc.fixture.ts";
+import { optionalFarmReviewFixtures } from "./review-schedule-se-farm-optional.fixture.ts";
 import { ownedFarmReviewFixture } from "./review-schedule-se-farm-owner.fixture.ts";
 import { form8978ReviewFixtures } from "./review-8978.fixture.ts";
 import { form8941MultiplePlanReviewFixture } from "./review-8941-multiple-plans.fixture.ts";
@@ -9050,6 +9051,7 @@ const educationBase = basePdfReviewFixtures.find((fixture) =>
   fixture.id === "single-form8863-lifetime-learning-scholarship"
 )!;
 export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
+ ...optionalFarmReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-schedule-c")!,jointPatronFixture(basePdfReviewFixtures.find(f=>f.id==="single-schedule-c")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!,"farm")),
   ownedFarmReviewFixture(
     basePdfReviewFixtures.find((f) => f.id === "single-schedule-c")!,
     jointPatronFixture(

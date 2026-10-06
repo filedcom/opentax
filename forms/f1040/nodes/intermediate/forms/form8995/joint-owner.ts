@@ -14,8 +14,7 @@ export function jointOwnerQbi(
   const source = owned.source;
   if (
     source.businesses.some((row) =>
-      !row.business_name || row.qbi_no_other_adjustments_confirmed !== true ||
-      row.farm_optional_method_elected === true
+      !row.business_name || row.qbi_no_other_adjustments_confirmed !== true
     )
   ) {
     throw new Error(
@@ -27,13 +26,28 @@ export function jointOwnerQbi(
     const indices = source.businesses.flatMap((row, i) =>
       row.recipient === recipient ? [i] : []
     );
-    const deduction = owned.instances.find((row) =>
-      row.recipient === recipient
-    )?.line13 ?? 0;
-    const shares = allocateSharedSeDeduction(
-      indices.map((i) => source.businesses[i].net_profit),
-      deduction,
+    const instance = owned.instances.find((row) => row.recipient === recipient);
+    const deduction = instance?.line13 ?? 0;
+    const optionalFarms = indices.filter((i) =>
+      source.businesses[i].farm_optional_method_elected === true
     );
+    // Section 1.199A-3(b)(1)(vi): attribute deductible SE tax using the
+    // gross income taken into account for that owner's deduction. Optional
+    // farm SE earnings affect the deduction, not the farm's actual income QBI.
+    const basis = indices.map((i) => {
+      const business = source.businesses[i];
+      if (!optionalFarms.length) return business.net_profit;
+      const gross = business.kind === "schedule_f"
+        ? business.gross_farm_income
+        : business.gross_business_income;
+      if (gross === undefined) {
+        throw new Error(
+          "Optional-farm QBI needs each owner's actual gross business income",
+        );
+      }
+      return Math.max(0, gross);
+    });
+    const shares = allocateSharedSeDeduction(basis, deduction);
     indices.forEach((index, position) => {
       allocations[index] = shares[position];
     });

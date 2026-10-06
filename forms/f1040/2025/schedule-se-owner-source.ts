@@ -2,6 +2,7 @@ import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 import { CONFIG_BY_YEAR } from "../nodes/config/index.ts";
 import {
   calculateScheduleCAtRiskNet,
+  computeGrossIncome as computeCGrossIncome,
   inputSchema as cSchema,
   isSeExempt,
   projectScheduleCItems,
@@ -102,6 +103,7 @@ export function assertOwnedScheduleSE(
         recipient: item.proprietor_recipient,
         source_reference: item.business_reference,
         kind: "schedule_c",
+        gross_business_income: computeCGrossIncome(item),
         business_name: item.line_c_business_name,
         ein: item.line_d_ein?.replace(/\D/g, ""),
         qbi_no_other_adjustments_confirmed:
