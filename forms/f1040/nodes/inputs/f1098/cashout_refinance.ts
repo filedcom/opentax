@@ -10,12 +10,18 @@ const retainedDocument = z.object({
 function reviewedDocument(
   document: z.infer<typeof retainedDocument>,
 ): Record<string, unknown> | undefined {
-  if (createHash("sha256").update(document.bytes).digest("hex") !==
-    document.sha256) return;
+  if (
+    createHash("sha256").update(document.bytes).digest("hex") !==
+      document.sha256
+  ) return;
   try {
     const value = JSON.parse(new TextDecoder().decode(document.bytes));
-    if (value && typeof value === "object" && !Array.isArray(value)) return value;
-  } catch { /* A changed or unreadable retained record does not prove a claim. */ }
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      return value;
+    }
+  } catch {
+    /* A changed or unreadable retained record does not prove a claim. */
+  }
 }
 
 const monthlyRecord = z.object({
@@ -42,7 +48,9 @@ export const cashoutRefinanceReviewSchema = z.object({
   closing_disbursements: z.array(
     z.object({
       purpose: z.enum([
-        "old_acquisition_loan_payoff", "home_improvement", "personal_cashout",
+        "old_acquisition_loan_payoff",
+        "home_improvement",
+        "personal_cashout",
       ]),
       amount: z.number().int().positive(),
       paid_on: z.string().regex(/^2025-(0[1-9]|1[0-2])-01$/),
@@ -61,19 +69,24 @@ export const cashoutRefinanceReviewSchema = z.object({
       use_ledger_reference: z.string().trim().min(1),
     }).strict(),
   ).min(1),
-  improvement_use_records: z.array(z.object({
-    amount: z.number().int().positive(),
-    spent_on: z.string().regex(/^2025-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/),
-    property_reference: z.string().trim().min(1),
-    contractor_invoice_reference: z.string().trim().min(1),
-    contractor_payment_reference: z.string().trim().min(1),
-    contractor_name: z.string().trim().min(1),
-    invoice_ledger_reference: z.string().trim().min(1),
-    substantial_improvement_description: z.string().trim().min(1),
-    contractor_invoice_document: retainedDocument,
-    contractor_payment_document: retainedDocument,
-  }).strict()).min(1).optional(),
-  home_improvement_invoice_ledger_reference: z.string().trim().min(1).optional(),
+  improvement_use_records: z.array(
+    z.object({
+      amount: z.number().int().positive(),
+      spent_on: z.string().regex(
+        /^2025-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/,
+      ),
+      property_reference: z.string().trim().min(1),
+      contractor_invoice_reference: z.string().trim().min(1),
+      contractor_payment_reference: z.string().trim().min(1),
+      contractor_name: z.string().trim().min(1),
+      invoice_ledger_reference: z.string().trim().min(1),
+      substantial_improvement_description: z.string().trim().min(1),
+      contractor_invoice_document: retainedDocument,
+      contractor_payment_document: retainedDocument,
+    }).strict(),
+  ).min(1).optional(),
+  home_improvement_invoice_ledger_reference: z.string().trim().min(1)
+    .optional(),
   new_loan_proceeds_to_home_improvement: z.number().int().positive().optional(),
   main_home_substantial_improvement_verified: z.literal(true).optional(),
   new_loan_proceeds_to_old_payoff: z.number().int().positive(),
@@ -82,7 +95,15 @@ export const cashoutRefinanceReviewSchema = z.object({
   closing_on_first_of_month_verified: z.literal(true),
   all_qualified_home_mortgages_included_verified: z.literal(true),
   no_other_advances_or_debt_categories_verified: z.literal(true),
-  filing_status_verified: z.enum(["single", "mfj", "hoh", "qss"]),
+  filing_status_verified: z.enum(["single", "mfs", "mfj", "hoh", "qss"]),
+  married_ownership_evidence: z.object({
+    taxpayer_tin: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+    spouse_tin: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+    property_title_document: retainedDocument,
+    old_loan_document: retainedDocument,
+    new_loan_document: retainedDocument,
+    interest_payment_document: retainedDocument,
+  }).strict().optional(),
   old_loan_months: z.array(monthlyRecord).min(1).max(11),
   new_loan_months: z.array(monthlyRecord).min(1).max(11),
 }).strict();
@@ -164,8 +185,96 @@ export function validateCashoutRefinanceReview(
   const personalDisbursement = disbursements[hasImprovement ? 2 : 1];
   const improvementDisbursement = hasImprovement ? disbursements[1] : undefined;
   const improvementRows = review.improvement_use_records ?? [];
+  const married = review.filing_status_verified === "mfs" ||
+    review.filing_status_verified === "mfj";
+  const ownership = review.married_ownership_evidence;
+  const title = ownership &&
+    reviewedDocument(ownership.property_title_document);
+  const oldAgreement = ownership &&
+    reviewedDocument(ownership.old_loan_document);
+  const newAgreement = ownership &&
+    reviewedDocument(ownership.new_loan_document);
+  const payments = ownership &&
+    reviewedDocument(ownership.interest_payment_document);
+  const normalizeTin = (tin: string) => tin.replaceAll("-", "");
+  const taxpayer = ownership && normalizeTin(ownership.taxpayer_tin);
+  const spouse = ownership && normalizeTin(ownership.spouse_tin);
+  const eligible = review.filing_status_verified === "mfj"
+    ? [taxpayer, spouse]
+    : [taxpayer];
+  const agreementMatches = (
+    agreement: Record<string, unknown> | undefined,
+    source: Loan | undefined,
+    closingReference: string,
+  ) =>
+    agreement?.document_type === "mortgage_note" &&
+    agreement.property_reference === review.property_reference &&
+    agreement.closing_reference === closingReference &&
+    agreement.source_document_reference === source?.source_document_reference &&
+    agreement.lender_name === source?.lender_name &&
+    agreement.recipient_tin === source?.recipient_tin &&
+    agreement.principal === (source === old
+        ? review.original_acquisition_principal
+        : source?.box2_outstanding_principal) &&
+    Array.isArray(agreement.borrower_tins) &&
+    agreement.borrower_tins.length > 0 &&
+    agreement.borrower_tins.every((tin) =>
+      typeof tin === "string" && eligible.includes(normalizeTin(tin))
+    ) &&
+    agreement.borrower_tins.some((tin) =>
+      typeof tin === "string" &&
+      normalizeTin(tin) === normalizeTin(source?.recipient_tin ?? "")
+    );
   if (
     items.length !== 2 || !old || !fresh || old === fresh ||
+    (married
+      ? !ownership || !taxpayer || !spouse || taxpayer === spouse ||
+        !eligible.includes(normalizeTin(old.recipient_tin ?? "")) ||
+        !eligible.includes(normalizeTin(fresh.recipient_tin ?? "")) ||
+        title?.document_type !== "property_title" ||
+        title.property_reference !== review.property_reference ||
+        !Array.isArray(title.owner_tins) ||
+        title.owner_tins.length !==
+          (review.filing_status_verified === "mfs" ? 1 : 2) ||
+        title.owner_tins.some((tin) =>
+          typeof tin !== "string" || !eligible.includes(normalizeTin(tin))
+        ) ||
+        !title.owner_tins.includes(ownership.taxpayer_tin) ||
+        (review.filing_status_verified === "mfj" &&
+          !title.owner_tins.includes(ownership.spouse_tin)) ||
+        (review.filing_status_verified === "mfs" &&
+          title.noncommunity_property_verified !== true) ||
+        !agreementMatches(
+          oldAgreement,
+          old,
+          review.original_acquisition_closing_reference,
+        ) ||
+        !agreementMatches(
+          newAgreement,
+          fresh,
+          review.refinance_closing_disclosure_reference,
+        ) ||
+        payments?.document_type !== "mortgage_payment_ledger" ||
+        payments.property_reference !== review.property_reference ||
+        !Array.isArray(payments.loans) || payments.loans.length !== 2 ||
+        [old, fresh].some((loan, index) => {
+          const ledger = (payments?.loans as Record<string, unknown>[])[index];
+          const rows = index === 0
+            ? review.old_loan_months
+            : review.new_loan_months;
+          return !ledger || ledger.source_document_reference !==
+              loan.source_document_reference ||
+            (typeof ledger.payer_tin !== "string" ||
+              !eligible.includes(normalizeTin(ledger.payer_tin))) ||
+            !Array.isArray(ledger.months) ||
+            JSON.stringify(ledger.months) !==
+              JSON.stringify(rows.map((row) => ({
+                month: row.month,
+                interest_paid: row.interest_paid,
+                lender_statement_reference: row.lender_statement_reference,
+              })));
+        })
+      : ownership !== undefined) ||
     review.original_acquisition_property_reference !==
       review.property_reference ||
     review.refinance_property_reference !== review.property_reference ||
@@ -331,7 +440,10 @@ export function cashoutRefinanceRatio(review: Review): number | undefined {
   // retains its separate months-secured denominator.
   const qualifiedNewAverage = qualifiedNewClosing / 12;
   const ratio = Math.round(
-    Math.min(750_000, qualifiedOldAverage + qualifiedNewAverage) /
+    Math.min(
+      review.filing_status_verified === "mfs" ? 375_000 : 750_000,
+      qualifiedOldAverage + qualifiedNewAverage,
+    ) /
       (oldAverage + newAverage) * 1000,
   ) / 1000;
   return ratio;

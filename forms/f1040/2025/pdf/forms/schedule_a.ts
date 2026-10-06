@@ -264,6 +264,7 @@ export const scheduleAPdf: PdfFormDescriptor = {
         (all.mortgage_refinance_points as
           | { cashout_source?: unknown }
           | undefined)?.cashout_source !== undefined,
+        filer.spouse?.ssn,
       );
       assertPurchasePointsCrossLoanSources(
         all.f1098,

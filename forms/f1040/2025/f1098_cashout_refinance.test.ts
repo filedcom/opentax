@@ -24,6 +24,7 @@ async function copy(
   interest: number,
   principal: number,
   date: string,
+  recipient = "111-22-3333",
 ) {
   const pdf = await canonicalForm1098CopyDocument();
   const form = pdf.getForm();
@@ -32,7 +33,7 @@ async function copy(
     const [field, value] of Object.entries({
       [`${prefix}.CopyHeader[0].CalendarYear[0].f2_1[0]`]: "25",
       [`${prefix}.LeftCol[0].f2_2[0]`]: lender,
-      [`${prefix}.LeftCol[0].f2_4[0]`]: "***-**-3333",
+      [`${prefix}.LeftCol[0].f2_4[0]`]: `***-**-${recipient.slice(-4)}`,
       [`${prefix}.RightCol[0].f2_11[0]`]: String(interest),
       [`${prefix}.RightCol[0].f2_12[0]`]: String(principal),
       [`${prefix}.RightCol[0].f2_13[0]`]: date,
@@ -867,4 +868,362 @@ Deno.test("mixed refinance rejects unjoined contractor, property, debt-category 
   changedPoints((source) => {
     (source.refinances[0] as Record<string, any>).improvement = undefined;
   });
+});
+
+async function marriedImprovementSource(status: "mfj" | "mfs") {
+  const baseSource = await sourceWithImprovement(7);
+  const mortgage = structuredClone(baseSource.mortgage);
+  const points = structuredClone(baseSource.points);
+  const old = mortgage.f1098[0];
+  const fresh = mortgage.f1098[1];
+  const review = mortgage.f1098_cashout_refinance_review
+    .cashout_refinance_review as Record<string, any>;
+  const taxpayer = "111-22-3333";
+  const spouse = status === "mfj" ? "444-55-6666" : "222-33-4444";
+  const newBorrower = status === "mfj" ? spouse : taxpayer;
+  review.filing_status_verified = status;
+  review.original_acquisition_principal = 400_000;
+  review.new_loan_proceeds_to_old_payoff = 400_000;
+  review.closing_disbursements[0].amount = 400_000;
+  review.old_loan_months = review.old_loan_months.map((row: any) => ({
+    ...row,
+    opening_balance: 400_000,
+    closing_balance: 400_000,
+    interest_paid: 2_000,
+  }));
+  review.new_loan_months = review.new_loan_months.map((
+    row: any,
+    index: number,
+  ) => ({
+    ...row,
+    opening_balance: 500_000 - index * 10_000,
+    closing_balance: 490_000 - index * 10_000,
+    interest_paid: (500_000 - index * 10_000) / 200,
+  }));
+  old.box2_outstanding_principal = 400_000;
+  old.box1_mortgage_interest = 12_000;
+  old.issuer_copy = await copy(
+    "Old Home Lender",
+    12_000,
+    400_000,
+    "01/15/2020",
+  );
+  fresh.recipient_tin = newBorrower;
+  fresh.box2_outstanding_principal = 500_000;
+  fresh.box1_mortgage_interest = review.new_loan_months.reduce(
+    (sum: number, row: any) => sum + row.interest_paid,
+    0,
+  );
+  fresh.issuer_copy = await copy(
+    "New Home Lender",
+    fresh.box1_mortgage_interest,
+    500_000,
+    "07/01/2025",
+    newBorrower,
+  );
+  const retainedJson = async (fileName: string, value: unknown) => {
+    const bytes = new TextEncoder().encode(JSON.stringify(value));
+    const sha256 = Array.from(
+      new Uint8Array(
+        await crypto.subtle.digest(
+          "SHA-256",
+          bytes,
+        ),
+      ),
+      (byte) => byte.toString(16).padStart(2, "0"),
+    ).join("");
+    return { file_name: fileName, sha256, bytes };
+  };
+  const invoice = JSON.parse(new TextDecoder().decode(
+    review.improvement_use_records[0].contractor_invoice_document.bytes,
+  ));
+  const payment = JSON.parse(new TextDecoder().decode(
+    review.improvement_use_records[0].contractor_payment_document.bytes,
+  ));
+  invoice.billed_to_tin = newBorrower;
+  payment.payer_tin = newBorrower;
+  review.improvement_use_records[0].contractor_invoice_document =
+    await retainedJson(`${status}-roof-invoice.json`, invoice);
+  review.improvement_use_records[0].contractor_payment_document =
+    await retainedJson(`${status}-roof-payment.json`, payment);
+  review.married_ownership_evidence = {
+    taxpayer_tin: taxpayer,
+    spouse_tin: spouse,
+    property_title_document: await retainedJson(`${status}-title.json`, {
+      document_type: "property_title",
+      property_reference: review.property_reference,
+      owner_tins: status === "mfj" ? [taxpayer, spouse] : [taxpayer],
+      ...(status === "mfs" ? { noncommunity_property_verified: true } : {}),
+    }),
+    old_loan_document: await retainedJson(`${status}-old-note.json`, {
+      document_type: "mortgage_note",
+      property_reference: review.property_reference,
+      closing_reference: review.original_acquisition_closing_reference,
+      source_document_reference: old.source_document_reference,
+      lender_name: old.lender_name,
+      recipient_tin: taxpayer,
+      principal: 400_000,
+      borrower_tins: [taxpayer],
+    }),
+    new_loan_document: await retainedJson(`${status}-new-note.json`, {
+      document_type: "mortgage_note",
+      property_reference: review.property_reference,
+      closing_reference: review.refinance_closing_disclosure_reference,
+      source_document_reference: fresh.source_document_reference,
+      lender_name: fresh.lender_name,
+      recipient_tin: newBorrower,
+      principal: 500_000,
+      borrower_tins: status === "mfj" ? [taxpayer, spouse] : [taxpayer],
+    }),
+    interest_payment_document: await retainedJson(
+      `${status}-interest-payments.json`,
+      {
+        document_type: "mortgage_payment_ledger",
+        property_reference: review.property_reference,
+        loans: [old, fresh].map((loan, index) => ({
+          source_document_reference: loan.source_document_reference,
+          payer_tin: index === 0 ? taxpayer : newBorrower,
+          months:
+            (index === 0 ? review.old_loan_months : review.new_loan_months)
+              .map((row: any) => ({
+                month: row.month,
+                interest_paid: row.interest_paid,
+                lender_statement_reference: row.lender_statement_reference,
+              })),
+        })),
+      },
+    ),
+  };
+  const ratio = Math.round(
+    Math.min(status === "mfs" ? 375_000 : 750_000, 400_000 + 2_690_000 / 12) /
+      (400_000 + 2_790_000 / 12) * 1_000,
+  ) / 1_000;
+  const totalInterest = Math.round(
+    (old.box1_mortgage_interest +
+      fresh.box1_mortgage_interest) * ratio,
+  );
+  old.box1_current_year_deductible_interest = Math.round(
+    old.box1_mortgage_interest * ratio,
+  );
+  fresh.box1_current_year_deductible_interest = totalInterest -
+    old.box1_current_year_deductible_interest;
+  const item = points.refinances[0] as Record<string, any>;
+  item.recipient_tin = newBorrower;
+  item.refinanced_principal = 500_000;
+  item.prior_qualified_home_debt = 400_000;
+  item.cashout_points_payment.payer_tin = newBorrower;
+  points.cashout_source = {
+    f1098s: mortgage.f1098,
+    ...mortgage.f1098_cashout_refinance_review,
+  };
+  return { mortgage, points, ratio, totalInterest, taxpayer, spouse };
+}
+
+Deno.test("married cash-out refinance uses owner-bound paid interest and separate MFS limit", async () => {
+  for (const status of ["mfj", "mfs"] as const) {
+    const source = await marriedImprovementSource(status);
+    const { mortgage, points, ratio, totalInterest } = source;
+    assertEquals(ratio, status === "mfj" ? .987 : .593);
+    assertEquals(totalInterest, status === "mfj" ? 25_909 : 15_566);
+    assertEquals(
+      refinancePointsDeduction(points),
+      status === "mfj" ? 642 : 385,
+    );
+    assertEquals(
+      inputSchema.parse({
+        f1098s: mortgage.f1098,
+        ...mortgage.f1098_cashout_refinance_review,
+      }).f1098s.length,
+      2,
+    );
+    const general = {
+      ...(base.inputs.general as Record<string, unknown>),
+      filing_status: status,
+      spouse_first_name: "Sam",
+      spouse_last_name: "Example",
+      spouse_ssn: source.spouse,
+    };
+    const result = f1040_2025.executeReturn({
+      ...base.inputs,
+      general,
+      schedule_a: { force_itemized: true },
+      f1098: mortgage.f1098,
+      f1098_cashout_refinance_review: mortgage.f1098_cashout_refinance_review,
+      mortgage_refinance_points: points,
+    });
+    assertEquals(result.diagnostics, []);
+    assertEquals(
+      result.pending.schedule_a?.line_8a_mortgage_interest_1098,
+      totalInterest,
+    );
+    assertEquals(
+      result.pending.schedule_a?.line_8c_points_no_1098,
+      status === "mfj" ? 642 : 385,
+    );
+    const pending = buildPending(result.pending);
+    const filer = extractFilerIdentity(result.pending.f1040)!;
+    const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+    assertEquals(
+      bundle.xml.includes(
+        `<RptHomeMortgIntAndPointsAmt>${totalInterest}</RptHomeMortgIntAndPointsAmt>`,
+      ),
+      true,
+    );
+    const path = await Deno.makeTempFile({ suffix: ".xml" });
+    try {
+      await Deno.writeTextFile(path, bundle.xml);
+      const checked = await new Deno.Command("xmllint", {
+        args: ["--noout", "--schema", xsdPath, path],
+        stdout: "piped",
+        stderr: "piped",
+      }).output();
+      assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+    } finally {
+      await Deno.remove(path);
+    }
+    const pdf = await buildPdfBytes(
+      bundle.pending,
+      filer,
+      ".pdf-cache",
+      bundle,
+    );
+    assertEquals((await PDFDocument.load(pdf)).getPageCount(), 3);
+    let evidenceDir: string | undefined;
+    try {
+      evidenceDir = Deno.env.get("FORM1098_MARRIED_EVIDENCE_DIR");
+    } catch (error) {
+      if (!(error instanceof Deno.errors.NotCapable)) throw error;
+    }
+    if (evidenceDir) {
+      const dir = `${evidenceDir}/${status}`;
+      await Deno.mkdir(dir, { recursive: true });
+      await Deno.writeTextFile(
+        `${dir}/source.json`,
+        JSON.stringify({
+          ...base.inputs,
+          general,
+          schedule_a: { force_itemized: true },
+          f1098: mortgage.f1098,
+          f1098_cashout_refinance_review:
+            mortgage.f1098_cashout_refinance_review,
+          mortgage_refinance_points: points,
+        }),
+      );
+      await Deno.writeTextFile(
+        `${dir}/pending.json`,
+        JSON.stringify(bundle.pending),
+      );
+      await Deno.writeTextFile(`${dir}/return.xml`, bundle.xml);
+      await Deno.writeFile(`${dir}/return.pdf`, pdf);
+      for (const [index, loan] of mortgage.f1098.entries()) {
+        await Deno.writeFile(
+          `${dir}/source-1098-${index + 1}.pdf`,
+          loan.issuer_copy.bytes,
+        );
+      }
+      const review = mortgage.f1098_cashout_refinance_review
+        .cashout_refinance_review as Record<string, any>;
+      for (
+        const document of [
+          ...Object.values(review.married_ownership_evidence).filter((
+            value: any,
+          ) =>
+            value && typeof value === "object" &&
+            value.bytes instanceof Uint8Array
+          ),
+          review.improvement_use_records[0].contractor_invoice_document,
+          review.improvement_use_records[0].contractor_payment_document,
+        ] as Array<{ file_name: string; bytes: Uint8Array }>
+      ) {
+        await Deno.writeFile(`${dir}/${document.file_name}`, document.bytes);
+      }
+    }
+    const bad = structuredClone(bundle.pending);
+    ((bad as Record<string, any>).f1098 as any).cashout_refinance_review
+      .married_ownership_evidence
+      .interest_payment_document.bytes[0] ^= 1;
+    await assertRejects(() => buildMefBundle(bad, { filer, attachments: [] }));
+    await assertRejects(() => buildPdfBytes(bad, filer, ".pdf-cache"));
+    const conflict = (mutate: (value: typeof mortgage) => void) => {
+      const value = structuredClone(mortgage);
+      mutate(value);
+      assertThrows(() =>
+        inputSchema.parse({
+          f1098s: value.f1098,
+          ...value.f1098_cashout_refinance_review,
+        })
+      );
+    };
+    conflict((value) => {
+      (value.f1098_cashout_refinance_review
+        .cashout_refinance_review as Record<string, any>)
+        .married_ownership_evidence.property_title_document.bytes[0] ^= 1;
+    });
+    conflict((value) => {
+      (value.f1098_cashout_refinance_review
+        .cashout_refinance_review as Record<string, any>)
+        .married_ownership_evidence.interest_payment_document.sha256 = "0"
+          .repeat(64);
+    });
+    conflict((value) => {
+      value.f1098[1].recipient_tin = status === "mfj"
+        ? "999-88-7777"
+        : source.spouse;
+    });
+    conflict((value) => {
+      value.f1098[1].box1_current_year_deductible_interest++;
+    });
+    const alteredLedger = structuredClone(mortgage);
+    const ledgerDocument = (alteredLedger.f1098_cashout_refinance_review
+      .cashout_refinance_review as Record<string, any>)
+      .married_ownership_evidence.interest_payment_document;
+    const ledger = JSON.parse(new TextDecoder().decode(ledgerDocument.bytes));
+    ledger.loans[1].payer_tin = status === "mfs"
+      ? source.spouse
+      : "999-88-7777";
+    ledgerDocument.bytes = new TextEncoder().encode(JSON.stringify(ledger));
+    ledgerDocument.sha256 = Array.from(
+      new Uint8Array(
+        await crypto.subtle.digest(
+          "SHA-256",
+          ledgerDocument.bytes,
+        ),
+      ),
+      (byte) => byte.toString(16).padStart(2, "0"),
+    ).join("");
+    assertThrows(() =>
+      inputSchema.parse({
+        f1098s: alteredLedger.f1098,
+        ...alteredLedger.f1098_cashout_refinance_review,
+      })
+    );
+    const alteredPending = structuredClone(bundle.pending);
+    for (
+      const source of [
+        (alteredPending as Record<string, any>).f1098,
+        (alteredPending as Record<string, any>).mortgage_refinance_points
+          .cashout_source,
+      ]
+    ) {
+      source.cashout_refinance_review.married_ownership_evidence
+        .interest_payment_document = structuredClone(ledgerDocument);
+    }
+    await assertRejects(() =>
+      buildMefBundle(alteredPending, { filer, attachments: [] })
+    );
+    await assertRejects(() =>
+      buildPdfBytes(alteredPending, filer, ".pdf-cache")
+    );
+    if (status === "mfs") {
+      const wrongSpouse = structuredClone(bundle.pending);
+      ((wrongSpouse as Record<string, any>).f1098.cashout_refinance_review
+        .married_ownership_evidence.spouse_tin) = "999-88-7777";
+      await assertRejects(() =>
+        buildMefBundle(wrongSpouse, { filer, attachments: [] })
+      );
+      await assertRejects(() =>
+        buildPdfBytes(wrongSpouse, filer, ".pdf-cache")
+      );
+    }
+  }
 });

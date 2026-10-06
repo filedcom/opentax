@@ -138,6 +138,7 @@ function buildIRS1040ScheduleA(
       (context.pending.mortgage_refinance_points as
         | { cashout_source?: unknown }
         | undefined)?.cashout_source !== undefined,
+      filer.spouse?.ssn,
     );
     assertPurchasePointsCrossLoanSources(
       context.pending.f1098,

@@ -820,6 +820,7 @@ export function assertForm1098MortgageLimitSources(
   hasMortgageInterestCredit: boolean,
   filedMortgageUseReview?: unknown,
   cashoutPointsJoined = false,
+  filedSpouseTin?: string,
 ): void {
   if (source === undefined) return;
   const parsed = inputSchema.parse(source);
@@ -916,6 +917,9 @@ export function assertForm1098MortgageLimitSources(
     const allowed = new Set(
       recipientTins.map((tin) => tin.replaceAll("-", "")),
     );
+    const ownership = review.married_ownership_evidence;
+    const taxpayer = recipientTins[0]?.replaceAll("-", "");
+    const spouse = recipientTins[1]?.replaceAll("-", "");
     const expected = parsed.f1098s.reduce(
       (sum, item) => sum + (item.box1_current_year_deductible_interest ?? 0),
       0,
@@ -923,6 +927,14 @@ export function assertForm1098MortgageLimitSources(
     if (
       parsed.cashout_refinance_review.filing_status_verified !==
         expectedStatus ||
+      (ownership !== undefined && (
+        ownership.taxpayer_tin.replaceAll("-", "") !== taxpayer ||
+        (expectedStatus === "mfj" &&
+          ownership.spouse_tin.replaceAll("-", "") !== spouse) ||
+        (expectedStatus === "mfs" &&
+          ownership.spouse_tin.replaceAll("-", "") !==
+            filedSpouseTin?.replaceAll("-", ""))
+      )) ||
       filedUse?.loan_document_reference !==
         review.new_source_document_reference ||
       filedUse?.outstanding_balance_2025 !==
