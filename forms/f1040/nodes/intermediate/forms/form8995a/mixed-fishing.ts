@@ -18,6 +18,7 @@ import {
 } from "../schedule_se/owner-calculation.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { assertZeroLimitInventory } from "./zero-limit-inventory.ts";
+import { reviewedPositiveLimits } from "./positive-limit-inventory.ts";
 import {
   calculateOneBusiness8995ALines,
   type Form8995AInput,
@@ -97,9 +98,10 @@ export function calculateMixedFishingQbi(input: Form8995AInput) {
     c.line_f_accounting_method !== "cash" || f.accounting_method !== "cash" ||
     c.qbi_no_other_adjustments_confirmed !== true ||
     f.qbi_no_other_adjustments_confirmed !== true ||
-    (c.qbi_w2_wages ?? 0) !== 0 || (f.qbi_w2_wages ?? 0) !== 0 ||
-    (c.qbi_unadjusted_basis ?? 0) !== 0 ||
-    (f.qbi_unadjusted_basis ?? 0) !== 0 ||
+    (input.taxable_income < 494_600 &&
+      ((c.qbi_w2_wages ?? 0) !== 0 || (f.qbi_w2_wages ?? 0) !== 0 ||
+        (c.qbi_unadjusted_basis ?? 0) !== 0 ||
+        (f.qbi_unadjusted_basis ?? 0) !== 0)) ||
     (!joint && reviews.some((review, i) =>
       !review ||
       review.deduction_amount !== allocations[i] ||
@@ -118,7 +120,8 @@ export function calculateMixedFishingQbi(input: Form8995AInput) {
     (input.sstb_qbi ?? 0) !== 0 || (input.line6_sec199a_dividends ?? 0) !== 0 ||
     (input.qbi_loss_carryforward ?? 0) !== 0 ||
     (input.reit_loss_carryforward ?? 0) !== 0 ||
-    input.w2_wages !== 0 || input.unadjusted_basis !== 0
+    (input.taxable_income < 494_600 &&
+      (input.w2_wages !== 0 || input.unadjusted_basis !== 0))
   ) {
     throw new Error(
       "Mixed fishing Form 8995-A needs two actual owned businesses and reviewed SE allocation",
@@ -132,13 +135,15 @@ export function calculateMixedFishingQbi(input: Form8995AInput) {
       "Mixed fishing Form 8995-A QBI differs from actual business sources",
     );
   }
+  const limits = [{ wages: 0, basis: 0 }, { wages: 0, basis: 0 }];
+  let employerTax = 0;
+  let farmSales: number | undefined;
   if (input.taxable_income >= 494_600) {
     if (
       (c.line_26_wages ?? 0) !== 0 || (c.line_13_depreciation ?? 0) !== 0 ||
-      (f.line22_labor_hired ?? 0) !== 0 ||
       (f.line14_depreciation ?? 0) !== 0 ||
-      c.qbi_w2_wages !== 0 || f.qbi_w2_wages !== 0 ||
-      c.qbi_unadjusted_basis !== 0 || f.qbi_unadjusted_basis !== 0
+      c.qbi_w2_wages !== 0 || c.qbi_unadjusted_basis !== 0 ||
+      c.qbi_positive_limit_inventory !== undefined
     ) {
       throw new Error(
         "Full phase-out zero limit conflicts with filed payroll, depreciation, or QBI limit amounts",
@@ -151,21 +156,61 @@ export function calculateMixedFishingQbi(input: Form8995AInput) {
           : owned!.source.identity.primary_ssn
       )
       : [source.owner_ssn, source.owner_ssn];
-    [c, f].forEach((business, index) =>
-      assertZeroLimitInventory(business.qbi_zero_limit_inventory, {
-        owner_ssn: ownerSsns[index]!,
-        business_reference: [c.business_reference, f.farm_id][index]!,
-        employer_ein: eins[index]!,
-      })
-    );
+    assertZeroLimitInventory(c.qbi_zero_limit_inventory, {
+      owner_ssn: ownerSsns[0]!,
+      business_reference: c.business_reference!,
+      employer_ein: eins[0]!,
+    });
+    if (f.qbi_positive_limit_inventory) {
+      if (f.qbi_zero_limit_inventory) {
+        throw new Error(
+          "Farm cannot claim both zero and positive QBI inventories",
+        );
+      }
+      const positive = reviewedPositiveLimits(f.qbi_positive_limit_inventory, {
+        owner_ssn: ownerSsns[1]!,
+        business_reference: f.farm_id!,
+        employer_ein: eins[1]!,
+      });
+      limits[1] = positive;
+      employerTax = positive.employerTax;
+      farmSales = positive.farmSales;
+    } else {
+      assertZeroLimitInventory(f.qbi_zero_limit_inventory, {
+        owner_ssn: ownerSsns[1]!,
+        business_reference: f.farm_id!,
+        employer_ein: eins[1]!,
+      });
+    }
+    if (
+      (f.line22_labor_hired ?? 0) !== limits[1].wages ||
+      (f.line29_taxes ?? 0) !== employerTax ||
+      (farmSales !== undefined && (
+        f.line2_sales_products_raised !== farmSales ||
+        Object.entries(f).some(([key, value]) =>
+          /^line\d/.test(key) &&
+          !["line2_sales_products_raised", "line22_labor_hired", "line29_taxes"]
+            .includes(key) &&
+          typeof value === "number" && value !== 0
+        )
+      )) ||
+      f.qbi_w2_wages !== limits[1].wages ||
+      f.qbi_unadjusted_basis !== limits[1].basis ||
+      input.w2_wages !== limits[1].wages ||
+      input.unadjusted_basis !== limits[1].basis
+    ) {
+      throw new Error(
+        "Joint farm QBI wages/UBIA differ from retained paid payroll and property",
+      );
+    }
   }
   const rows = qbi.map((amount, i) => {
     const details = {
       business_name: names[i]!,
       ein: eins[i]!,
       business_qbi: amount,
-      business_w2_wages: 0,
-      business_ubia: 0,
+      business_w2_wages: limits[i].wages,
+      business_ubia: limits[i].basis,
       one_non_sstb_business_confirmed: true as const,
       no_aggregation_confirmed: true as const,
       no_ptp_or_loss_carryforward_confirmed: true as const,
@@ -176,6 +221,8 @@ export function calculateMixedFishingQbi(input: Form8995AInput) {
     const child: Form8995AInput = {
       ...input,
       qbi: amount,
+      w2_wages: limits[i].wages,
+      unadjusted_basis: limits[i].basis,
       business_filing_details: details,
     };
     return { details, lines: calculateOneBusiness8995ALines(child) };

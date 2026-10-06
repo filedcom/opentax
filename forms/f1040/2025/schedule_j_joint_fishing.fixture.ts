@@ -128,3 +128,115 @@ export function scheduleJJointFishingZeroLimitInputs(
   }
   return input;
 }
+
+/** Issued farm W-2 and/or retained pre-2025 depreciable tractor source. */
+export function scheduleJJointFishingPositiveLimitsInputs(
+  kind: "wages" | "property" | "combined",
+  fishingOwner: "T" | "S" = "S",
+): Record<string, unknown> {
+  const input = scheduleJJointFishingZeroLimitInputs(fishingOwner) as Record<
+    string,
+    any
+  >;
+  const f = input.schedule_f.schedule_fs[0];
+  const reference = f.farm_id;
+  const employerEin = f.line_d_ein.replaceAll("-", "");
+  const ownerSsn = f.proprietor_recipient === "T" ? "123456789" : "444556666";
+  const hasWages = kind !== "property";
+  const hasProperty = kind !== "wages";
+  f.line2_sales_products_raised = 500_000;
+  f.line22_labor_hired = hasWages ? 20_000 : 0;
+  f.line29_taxes = hasWages ? 1_530 : 0;
+  f.qbi_w2_wages = hasWages ? 20_000 : 0;
+  f.qbi_unadjusted_basis = hasProperty ? 400_000 : 0;
+  delete f.qbi_zero_limit_inventory;
+  const book = {
+    tax_year: 2025,
+    owner_ssn: ownerSsn,
+    business_reference: reference,
+    employer_ein: employerEin,
+    period_start: "2025-01-01",
+    period_end: "2025-12-31",
+    farm_product_sales: [{
+      buyer: "Texas Grain Cooperative",
+      crop: "Grain raised by owner-operated farm",
+      sold_on: "2025-09-30",
+      buyer_invoice_reference: "TGC-2025-309",
+      paid_on: "2025-10-10",
+      deposit_reference: "grain-bank-deposit-2025-1010",
+      amount: 500_000,
+    }],
+    months: Array.from({ length: 12 }, (_, index) => ({
+      month: `2025-${String(index + 1).padStart(2, "0")}`,
+      payroll_journal_reference: `${reference}-2025-payroll-${index + 1}`,
+      payments: hasWages && index === 9
+        ? [{
+          employee_ssn: "777889999",
+          paid_on: "2025-10-15",
+          check_reference: "grain-2025-paycheck-1015",
+          cash_wages: 20_000,
+          net_check_paid: 18_470,
+        }]
+        : [],
+    })),
+    issued_employee_w2_copies: hasWages
+      ? [{
+        employee_ssn: "777889999",
+        employer_ein: employerEin,
+        issued_copy_reference: "grain-2025-employee-w2-copy-1",
+        issued_on: "2026-01-31",
+        ssa_filing_reference: "grain-2025-ssa-w3-1",
+        ssa_filed_on: "2026-01-31",
+        box1_wages: 20_000,
+        box3_social_security_wages: 20_000,
+        box5_medicare_wages: 20_000,
+        box4_social_security_tax_withheld: 1_240,
+        box6_medicare_tax_withheld: 290,
+      }]
+      : [],
+    ...(hasWages
+      ? {
+        form943_filing_reference: "grain-2025-form943-payroll-return",
+        employer_payroll_tax_deposit: {
+          paid_on: "2025-11-15",
+          bank_debit_reference: "grain-2025-payroll-tax-debit-1115",
+          amount: 3_060,
+        },
+      }
+      : {}),
+    owned_property_register: hasProperty
+      ? [{
+        asset_reference: "grain-tractor-2018-1",
+        purchase_invoice_reference: "farm-equipment-2018-041",
+        title_record_reference: "grain-tractor-title-2018-1",
+        paid_receipt_reference: "grain-tractor-bank-payment-2018-1",
+        seller: "Hill Country Farm Equipment",
+        acquired_on: "2018-03-10",
+        placed_in_service_on: "2018-03-15",
+        recovery_period_years: 5,
+        prior_depreciation_completion_reference:
+          "grain-tractor-2018-2023-depreciation-ledger",
+        prior_depreciation_ledger: [{
+          tax_year: 2018,
+          form4562_source_reference:
+            "grain-tractor-2018-form4562-special-allowance",
+          deduction_method: "100_percent_special_depreciation",
+          deduction: 400_000,
+        }],
+        original_cost_paid: 400_000,
+        owner_ssn: ownerSsn,
+        tangible_depreciable_property: true,
+        held_at_2025_year_end: true,
+        used_in_2025_qbi_production: true,
+        retained_2025_use_record_reference: "grain-tractor-harvest-log-2025",
+      }]
+      : [],
+  };
+  const bytes = new TextEncoder().encode(JSON.stringify(book));
+  f.qbi_positive_limit_inventory = {
+    document_id: `${reference}-2025-positive-qbi-books`,
+    sha256: createHash("sha256").update(bytes).digest("hex"),
+    bytes_base64: btoa(String.fromCharCode(...bytes)),
+  };
+  return input;
+}

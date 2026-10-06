@@ -17,6 +17,7 @@ import {
 } from "../../intermediate/forms/form6198/simplified.ts";
 import { TS } from "../../types.ts";
 import { zeroLimitInventorySchema } from "../../intermediate/forms/form8995a/zero-limit-inventory.ts";
+import { positiveLimitInventorySchema } from "../../intermediate/forms/form8995a/positive-limit-inventory.ts";
 
 const MEALS_STANDARD_PCT = 0.50; // Standard business meals
 const MEALS_DOT_PCT = 0.80; // DOT hours-of-service workers
@@ -92,6 +93,7 @@ export const itemSchema = z.object({
   qbi_w2_wages: z.number().nonnegative().optional(),
   qbi_unadjusted_basis: z.number().nonnegative().optional(),
   qbi_zero_limit_inventory: zeroLimitInventorySchema.optional(),
+  qbi_positive_limit_inventory: positiveLimitInventorySchema.optional(),
   // Reviewed employer W-2 copies for the single-business WOTC filing route.
   // Joint filings also identify the primary business owner explicitly.
   // qbi_w2_wages is the allocable amount AFTER the section 280C reduction.

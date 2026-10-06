@@ -452,8 +452,10 @@ function advancedFormOutput(
         | undefined;
     if (
       !rows || rows.length !== 2 || !input.taxpayer_ssn ||
-      sumField(input.w2_wages) !== 0 ||
-      sumField(input.unadjusted_basis) !== 0 ||
+      sumField(input.w2_wages) !==
+        (jointFishing && taxableIncome >= 494_600 ? f.w2_wages : 0) ||
+      sumField(input.unadjusted_basis) !==
+        (jointFishing && taxableIncome >= 494_600 ? f.ubia : 0) ||
       (jointFishing &&
         (!input.spouse_ssn || !owned ||
           owned.deduction !== sumField(input.se_tax_deduction) ||
@@ -468,8 +470,9 @@ function advancedFormOutput(
           sumField(input.line6_sec199a_dividends) !== 0 ||
           (input.qbi_loss_carryforward ?? 0) !== 0 ||
           (input.reit_loss_carryforward ?? 0) !== 0 ||
-          c.w2_wages !== 0 || c.ubia !== 0 || f.w2_wages !== 0 ||
-          f.ubia !== 0 ||
+          c.w2_wages !== 0 || c.ubia !== 0 ||
+          (taxableIncome < 494_600 &&
+            (f.w2_wages !== 0 || f.ubia !== 0)) ||
           c.source_schedule_c.proprietor_recipient ===
             farmItemSchema.parse(f.source_schedule_f).proprietor_recipient))
     ) {
@@ -485,8 +488,8 @@ function advancedFormOutput(
       investment_dividend_sources: input.investment_dividend_sources,
       investment_dividend_totals: input.investment_dividend_totals,
       qbi: rows.reduce((sum, row) => sum + row.qbi, 0),
-      w2_wages: 0,
-      unadjusted_basis: 0,
+      w2_wages: jointFishing && taxableIncome >= 494_600 ? f.w2_wages : 0,
+      unadjusted_basis: jointFishing && taxableIncome >= 494_600 ? f.ubia : 0,
       patron_of_specified_cooperative: false,
       qbi_no_prior_loss_or_suspended_loss_confirmed: true,
       mixed_fishing_qbi_source: {
