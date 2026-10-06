@@ -3183,3 +3183,7 @@ Fresh authored5471/8992source/native/localrootXSD/PDFprojection42/0, andactualpr
 ## Authored5471/8992 projections and ScheduleR paper zeros sealed
 
 Existing scopedtyped42/0 native-rootXSD/source/PDFprojection gates executed; actual11standalonePDFs27pages rootrendered/reviewed, correctedR4/0. Requiredtwo0amountcells nowprint withno date/nativefakegroup, final-v2 verified26decodedpixelrasters exact/onecorrectedreview. Initialwrapperbytecomparison metadata mismatch and missingprintZero diagnostic preserved. Fullreturnpositiveguard remains; parentreferences/G22versions/priorworksheet/historysource/zeroRbusinessrules/IRS acceptance unresolved. Ledger1479; no sharedfixture/coveragecount changes, frozen52/futureexact.
+
+## Before prior mining carry prerequisite integration
+
+Currentturnmakesconcreteprogress: authoredCFC42/0 andactualstandalone27pagesreviewed; requiredRpaperzero repaired/finaltyped4/0, remainsfullguarded. Ready1b0889804 provides year-awaredistinct2024mining source/current2025carryconsumption with retainedoriginalfinancialPDF+separateregular/AMTaccounts andissuedownedincome sources, explicitlyunverified_no_export. No acceptedarchive available; donotconnect unverifiedhelper topubliccarryfiling orinventACK. Sharednaturalresourcecalculation gains contributionYear branch whilecurrent2025schema/default stay; verifytyped8source+existing66, actualstrictcurrentmining2/32 andoriginal16/267 preservationaftermerge. Ready8120c4487currentconversion followsseparately; positivephasein remainsagentactive. Frozen52/futureunchanged.
