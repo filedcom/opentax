@@ -4851,3 +4851,14 @@ Stable `04dba771b` full `deno task test` exited1 before executing tests:45 TypeS
 ## ScheduleSE full-batch test contract repair
 
 Single-document legacy/ATS assertions now narrow the builder result explicitly. The retained multiple-spouse-source case now supplies actual two-business/two-farm source records, owner calculations and reconciled Schedule1/2 totals, expects one spouse document and rejects omitted owner calculations. This replaces a stale identity-only fixture; no production source guard was relaxed. Final typed check:31 passed,0 failed (605ms), log `/tmp/opentax-se-full-type-repair-final5.log`, SHA256 `0b6044a44912e3dc1a954787f5b8416925cf9f01d16df3b867cc9252b472b619`. Earlier diagnostic focused runs exposed missing fixture fields, now corrected.
+
+
+## Owner-contract repaired full regression launch
+
+Exact `deno task test` started in stable detached `/tmp/opentax-full-regression-repaired-v2-oct6` at `bc6cafec6`, using the same real Poppler/Deno/libxml PATH and task permissions. Launchd label `opentax-full-regression-repaired-v2-oct6`; wrapper/status/log use the same prefix, with log `/tmp/opentax-deno-task-test-repaired-v2-oct6.log`. Prior full process is authoritatively terminal. Launch status:
+
+```
+commit=bc6cafec63f68ce91c9346d67f137a77fb6b3789 start=2026-10-06T01:08:44Z
+```
+
+This result remains pending and predates the agents' pending family PDF and WOTC employer source repairs. Root optional-farm audit found an actual current export rejection in isolated source probe; it is not counted as support.
