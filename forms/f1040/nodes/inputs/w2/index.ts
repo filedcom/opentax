@@ -1,3 +1,4 @@
+import { inputSchema as patronReviewSchema } from "../qbi_patron/schema.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -263,6 +264,7 @@ export const w2ItemSchema = z.object({
 export const inputSchema = z.object({
   w2s: z.array(w2ItemSchema).min(1).describe("All W-2 forms for this return"),
   f8958_allocation: form8958InputSchema.optional(),
+  patron_filing_review: patronReviewSchema.optional(),
 });
 
 type F1040Input = z.infer<typeof f1040.inputSchema>;
@@ -1180,6 +1182,19 @@ class W2Node extends TaxNode<typeof inputSchema> {
         cfg.retirementLimits,
       );
     }
+    if (
+      input.patron_filing_review &&
+      JSON.stringify(input.w2s) !==
+        JSON.stringify(
+          inputSchema.parse({
+            w2s: input.patron_filing_review.spouse_w2_sources,
+          }).w2s,
+        )
+    ) {
+      throw new Error(
+        "Patron reviewed spouse W-2 sources differ from public issued copies",
+      );
+    }
     const excessDeferral = ctx.taxYear === 2025
       ? codeDExcessDeferral(input.w2s)
       : { amount: 0, owners: [] };
@@ -1203,7 +1218,14 @@ class W2Node extends TaxNode<typeof inputSchema> {
       ...depCareOutput(input.w2s),
       ...retirementPlanOutput(input.w2s),
       ...scheduleAOutput(input.w2s),
-      ...scheduleSEOutput(input.w2s),
+      ...scheduleSEOutput(
+        input.patron_filing_review
+          ? input.w2s.filter((row) =>
+            row.employee_ssn?.replaceAll("-", "") ===
+              input.patron_filing_review!.source_1099patr.recipient_tin
+          )
+          : input.w2s,
+      ),
       output(form8919, { w2_sources: form8919W2Sources(input.w2s) }),
       ...qualifiedTipsOutput(input.w2s),
       ...qualifiedOvertimeOutput(input.w2s),

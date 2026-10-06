@@ -1,3 +1,4 @@
+import { inputSchema as w2Schema } from "../nodes/inputs/w2/index.ts";
 import {
   calculateOneBusiness8995ALines,
   type Form8995AInput,
@@ -50,6 +51,47 @@ export function assertForm8995APatronReturn(
       "Patron business filed rounding review differs from its public source",
     );
   }
+  const joint = input.filing_status === "mfj";
+  const primary = String(pending.general?.taxpayer_ssn ?? "").replaceAll(
+    "-",
+    "",
+  );
+  const spouse = String(pending.general?.spouse_ssn ?? "").replaceAll("-", "");
+  const copies = review.spouse_w2_sources
+    ? w2Schema.parse({ w2s: review.spouse_w2_sources }).w2s
+    : [];
+  const w2Input = pending.w2 ? w2Schema.parse(pending.w2) : undefined;
+  const w2s = w2Input?.w2s ?? [];
+  if (
+    pending.general?.filing_status !== input.filing_status ||
+    primary !== review.source_1099patr.recipient_tin ||
+    String(pending.f1040?.taxpayer_ssn ?? "").replaceAll("-", "") !== primary ||
+    (joint && (!/^\d{9}$/.test(spouse) || spouse === primary ||
+      String(pending.f1040?.spouse_ssn ?? "").replaceAll("-", "") !==
+        spouse)) ||
+    JSON.stringify(w2s) !== JSON.stringify(copies) ||
+    (copies.length > 0 &&
+      (!joint ||
+        JSON.stringify(w2Input?.patron_filing_review) !==
+          JSON.stringify(review))) ||
+    copies.some((row) =>
+      row.employee_ssn?.replaceAll("-", "") !== spouse ||
+      !row.source_document_reference || !row.employer_name ||
+      !/^\d{9}$/.test((row.employer_ein ?? "").replaceAll("-", "")) ||
+      !(row.box5_medicare_wages! > 0) ||
+      row.box13_statutory_employee === true ||
+      (row.box7_ss_tips ?? 0) !== 0 || (row.box8_allocated_tips ?? 0) !== 0 ||
+      (row.box12_entries ?? []).length > 0
+    )
+  ) {
+    throw new Error(
+      "Patron primary owner and reviewed spouse W-2 issued copies must match the joint source return",
+    );
+  }
+  const wageIncome = copies.reduce((sum, row) => sum + row.box1_wages, 0);
+  const medicareWages = Math.round(
+    copies.reduce((sum, row) => sum + (row.box5_medicare_wages ?? 0), 0),
+  );
   const amounts = patronSourceAmounts(source);
   const se = seSchema.parse(pending.schedule_se);
   const seLines = scheduleSELines(se, CONFIG_BY_YEAR[2025].ssWageBase);
@@ -96,11 +138,18 @@ export function assertForm8995APatronReturn(
     );
   }
   const lines = calculateOneBusiness8995ALines(input);
-  const medicareTax = Math.round(
-    Math.max(0, Math.round(seLines?.line6 ?? 0) - 200000) * .009,
-  );
+  const medicareThreshold = joint ? 250000 : 200000;
+  const medicareTax =
+    Math.round(Math.max(0, medicareWages - medicareThreshold) * .009) +
+    Math.round(
+      Math.max(
+        0,
+        Math.round(seLines?.line6 ?? 0) -
+          Math.max(0, medicareThreshold - medicareWages),
+      ) * .009,
+    );
   const expectedAgi = Math.round(
-    amounts.profit - source.se_tax_deduction - health,
+    amounts.profit + wageIncome - source.se_tax_deduction - health,
   );
   if (
     !seLines ||
@@ -120,7 +169,10 @@ export function assertForm8995APatronReturn(
     pending.schedule2?.line4_se_tax !== seLines.line12 ||
     f1040?.line8_additional_income !== amounts.profit ||
     Math.round(Number(f1040?.line9_total_income)) !==
-      Math.round(amounts.profit) ||
+      Math.round(amounts.profit + wageIncome) ||
+    Math.round(Number(f1040?.line1a_wages ?? 0)) !== Math.round(wageIncome) ||
+    Math.round(Number(f1040?.line1z_total_wages ?? 0)) !==
+      Math.round(wageIncome) ||
     f1040?.line10_adjustments !== source.se_tax_deduction + health ||
     Math.round(Number(f1040?.line11_agi)) !== expectedAgi ||
     !noAmount(f1040?.line13b_additional_deductions) ||
@@ -147,7 +199,6 @@ export function assertForm8995APatronReturn(
       true ||
     [
       isC ? "schedule_f" : "schedule_c",
-      "w2",
       "schedule_e",
       "k1_partnership",
       "k1_s_corp",

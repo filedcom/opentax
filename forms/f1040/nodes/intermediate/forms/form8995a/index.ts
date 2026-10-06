@@ -792,7 +792,8 @@ export function calculatePatronScheduleDLines(input: Form8995AInput) {
     const review = input.patron_business_source.review;
     const details = input.business_filing_details;
     if (
-      input.filing_status !== FilingStatus.Single ||
+      (input.filing_status !== FilingStatus.Single &&
+        input.filing_status !== FilingStatus.MFJ) ||
       amounts.qbi !== input.qbi || amounts.wages !== input.w2_wages ||
       input.unadjusted_basis !== 0 ||
       details.business_name !== amounts.name || details.ein !== amounts.ein ||
@@ -898,19 +899,29 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   const line9 = line6 + line8;
   const line10 = Math.max(line5, line9);
   const line11 = Math.min(line3, line10);
+  const patronThreshold = input.filing_status === FilingStatus.MFJ
+    ? 394600
+    : 197300;
+  const patronPhaseInRange = input.filing_status === FilingStatus.MFJ
+    ? 100000
+    : 50000;
   // Part III applies only in the middle band when the wage/property limit binds.
   const phaseInRequired = Boolean(input.patron_business_source) &&
-    input.taxable_income > 197300 && input.taxable_income <= 247300 &&
+    input.taxable_income > patronThreshold &&
+    input.taxable_income <= patronThreshold + patronPhaseInRange &&
     line10 < line3;
-  const phaseIn = phaseInRequired ? (input.taxable_income - 197300) / 50000 : 0;
+  const phaseIn = phaseInRequired
+    ? (input.taxable_income - patronThreshold) / patronPhaseInRange
+    : 0;
   const line19 = phaseInRequired ? line3 - line10 : 0;
   const line25 = phaseInRequired ? filedAmount(line19 * phaseIn) : 0;
   const line26 = phaseInRequired ? line3 - line25 : 0;
-  const line13 = input.patron_business_source && input.taxable_income <= 197300
-    ? line3
-    : phaseInRequired
-    ? Math.max(line11, line26)
-    : line11;
+  const line13 =
+    input.patron_business_source && input.taxable_income <= patronThreshold
+      ? line3
+      : phaseInRequired
+      ? Math.max(line11, line26)
+      : line11;
   const line14 = patronReduction;
   const line15 = Math.max(0, line13 - line14);
   const line16 = line15;
@@ -940,6 +951,8 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   return {
     ...(input.patron_business_source
       ? {
+        patronThreshold,
+        patronPhaseInRange,
         phaseInRequired,
         phaseIn,
         line12: phaseInRequired ? line26 : undefined,
@@ -1164,7 +1177,9 @@ function assertSupportedSchedulePath(input: Form8995AInput): void {
       );
     }
     if (
-      input.filing_status !== FilingStatus.Single ||
+      (input.filing_status !== FilingStatus.Single &&
+        !(input.patron_business_source &&
+          input.filing_status === FilingStatus.MFJ)) ||
       (!input.patron_business_source && input.taxable_income <= 247_300) ||
       (input.qbi ?? 0) !== details.business_qbi ||
       (input.w2_wages ?? 0) !== details.business_w2_wages ||

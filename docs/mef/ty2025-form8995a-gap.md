@@ -6,6 +6,82 @@ previously recorded WOTC route remains locally proven. Historical sections below
 retain their original staging status. Broader Form 8995-A coverage, IRS business
 rules and ATS remain open.
 
+## MFJ primary-owned patron plus spouse wages (2026-10-06, locally proven)
+
+The actual patron source route now supports MFJ with a primary-owned active cash
+Schedule C or Schedule F, one specified cooperative and sourced ordinary spouse
+W-2 income. The existing public W-2 copies are joined to the reviewed
+`spouse_w2_sources` on `qbi_patron`; employee SSN, payer identity, copy reference,
+amounts and the retained review must agree. The source verifies the primary
+business owner against General/Form 1040 and the cooperative recipient, and
+verifies every reviewed wage copy against the actual joint spouse. Both owner
+identities and final native header ownership are required.
+
+The [Schedule SE instructions](https://www.irs.gov/instructions/i1040sse) require
+the self-employed spouse's name and a separate Schedule SE for each spouse with
+self-employment income. The existing single-SE W-2 output previously included
+all return Social Security wages. In this reviewed patron route it now selects
+only wages belonging to the actual business owner. The fixture spouse's 176,100
+of Social Security wages therefore does not reduce the primary proprietor's
+Social Security wage base. Spouse wages still enter joint income and reduce the
+joint Additional Medicare Tax threshold; the replay independently checks that
+tax using the 250,000 MFJ threshold and the actual SE income. General W-2/SE
+owner allocation outside this patron source route remains a broader audit scope.
+
+The [Form 8995-A instructions](https://www.irs.gov/instructions/i8995a) specify
+394,600/494,600 for joint phase-in thresholds. The parent now uses that threshold
+and the 100,000 range, while the qualified-payment Schedule D reduction and
+box 6 taxable-income cap retain their source allocations. The owned C health
+plan remains attributable to the primary proprietor: monthly records explicitly
+review both spouses' lack of eligibility for subsidized employer health coverage.
+A spouse W-2 does not become the primary's business wages or earned income under
+the owned plan.
+
+| Joint source case | Raw spouse wages | Raw / filed AGI | Pre-QBI taxable income | Phase-in percent | Half-SE deduction | Health | Schedule D reduction | Box 6 claim | QBI deduction | Total tax |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Farm | 230,000.49 | 455,867.49 / 455,867 | 424,367 | 29.767% | 14,132 | 0 | 13,552 | 10,000 | 37,105 | 108,716 |
+| C health | 230,000.49 | 474,531.49 / 474,531 | 443,031 | 48.431% | 14,467 | 6,000 | 15,720 | 10,000 | 34,030 | 115,962 |
+| Farm income cap | 230,000.49 | 470,665.49 / 470,665 | 439,165 | 44.565% | 14,333 | 0 | 5,001 | 415,255 | 439,165 | 30,604 |
+
+The cap source retains 6,000,000.49 of actual cooperative distributions and
+qualified payments, cent-valued farm expenses, and a written notice for box 6
+of 540,000. The raw book profit remains 254,999.49; the filed leaf
+projection yields 254,998. The raw Form 1040 taxable-income calculation retains approximately
+0.49; its finalized whole-dollar line is zero and the complete filed equations
+agree. The other raw books, W-2s and written notices remain unchanged by filing
+rounding. Joint common forms show both names, while C/F, SE and Form 7206 show
+the primary owner. Fractional percentages use the shared PDF percentage helper.
+
+`form8995a_patron_joint.test.ts` proves three complete public source returns and
+five actual source wage boundaries at 394,600, 394,601, 494,599, 494,600 and
+494,601, with full TY2025 v5.4 XSD and PDF export for all eight. It rejects 56
+mutated source/return cases in both exporters, including valid opposite-owner
+SSNs, detached copies, reviews, SE wage offsets, health owner and final joins.
+An additional complete public graph substitutes the valid primary owner in both
+public and reviewed spouse W-2 copies; both exporters reject the resulting
+wrong-owner route. The four focused tests are typed; the related 11-file
+regression run passes 178 tests, including W-2, original Single patron, owned
+health, joint SSTB and aggregation coverage.
+
+The reusable `joint-form8995a-patron-farm`, `joint-form8995a-patron-c-health` and
+`joint-form8995a-patron-income-cap` fixtures have three complete packets with
+46 pages. Every page was rendered and visually reviewed; the read-only replay
+confirms the complete checklist, hashes and full schema. Ignored artifacts:
+`.state/research/ty2025-filled-pdf-review/2026-10-06-qbi-patron-joint`, with the
+rendered pages in the adjacent `-rendered` directory. Logs:
+`/tmp/opentax-patron-joint-focus-final-oct6.log`,
+`/tmp/opentax-patron-joint-regression-oct6.log` and
+`/tmp/opentax-patron-joint-selected-oct6.log`. Actual proof base is
+`5abcfba2b` plus the shared joint-name/SSTB/percentage commit `6dfb374a1`
+(cherry-picked locally as `81f3ba4d9`); this extension makes no builder or SSTB
+source changes.
+
+Spouse-owned patron businesses, both spouses self-employed, primary W-2/retirement
+combinations, other filing statuses, multiple businesses/cooperatives,
+loss/property/credit/capital combinations and farm health-plan allocation remain
+open. The broad parent, general owner allocation/rounding audits, source-byte
+authentication, IRS business rules and ATS are not closed.
+
 ## Patron wage-limit phase-in (2026-10-06, locally proven)
 
 The actual public patron source route now includes the Single 197,300–247,300

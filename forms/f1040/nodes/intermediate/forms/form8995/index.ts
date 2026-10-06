@@ -463,7 +463,8 @@ function advancedFormOutput(
     const row = rows?.[0];
     if (
       !row || rows?.length !== 1 ||
-      input.filing_status !== FilingStatus.Single ||
+      (input.filing_status !== FilingStatus.Single &&
+        input.filing_status !== FilingStatus.MFJ) ||
       input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
       input.qbi_not_patron_of_specified_cooperative_confirmed === true ||
       sumField(input.qbi) !== 0 || sstbQbi !== 0 ||

@@ -251,15 +251,16 @@ export function projectOneBusiness8995A(
         line17: lines.line3,
         line18: lines.line10,
         line20: lines.line33,
-        line21: 197300,
-        line22: lines.line33 - 197300,
-        line23: 50000,
+        line21: lines.patronThreshold,
+        line22: lines.line33 - lines.patronThreshold!,
+        line23: lines.patronPhaseInRange,
         line24: qbiPercentageForPdf(lines.phaseIn!),
       }
       : Object.fromEntries([17, 18, 19, 20, 21, 22, 23, 24, 25, 26].map(
         (line) => [`line${line}`, undefined],
       ))),
-    ...(input.patron_business_source && input.taxable_income <= 197300
+    ...(input.patron_business_source &&
+        input.taxable_income <= lines.patronThreshold!
       ? Object.fromEntries(
         [4, 5, 6, 7, 8, 9, 10, 11].map((line) => [`line${line}`, undefined]),
       )

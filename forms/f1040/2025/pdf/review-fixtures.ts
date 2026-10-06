@@ -1,4 +1,5 @@
 import { form8941OwnedReviewFixture } from "./review-8941-owned.fixture.ts";
+import { jointPatronFixture } from "./review-8995a-patron-joint.fixture.ts";
 import {
   accountingSstbFixture,
   accountingSstbNoPayrollFixture,
@@ -9085,6 +9086,15 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       basePdfReviewFixtures.find((fixture) =>
         fixture.id === "single-schedule-c"
       )!,
+      kind,
+    )
+  ),
+  ...(["farm", "c-health", "income-cap"] as const).map((kind) =>
+    jointPatronFixture(
+      basePdfReviewFixtures.find((fixture) =>
+        fixture.id === "single-schedule-c"
+      )!,
+      basePdfReviewFixtures.find((fixture) => fixture.id === "joint-two-w2s")!,
       kind,
     )
   ),

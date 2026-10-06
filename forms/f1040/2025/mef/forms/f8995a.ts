@@ -99,7 +99,9 @@ export function validateOneBusiness(fields: Form8995AInput) {
     );
   }
   if (
-    fields.filing_status !== NodeFilingStatus.Single ||
+    (fields.filing_status !== NodeFilingStatus.Single &&
+      !(fields.patron_business_source &&
+        fields.filing_status === NodeFilingStatus.MFJ)) ||
     !fields.patron_business_source && fields.taxable_income <=
         CONFIG_BY_YEAR[2025].qbiThresholdSingle +
           CONFIG_BY_YEAR[2025].qbiPhaseInRange / 2
@@ -349,7 +351,9 @@ function reconcileReturn(
       fields.filing_status === NodeFilingStatus.MFS ||
       fields.filing_status === NodeFilingStatus.HOH ||
       fields.filing_status === NodeFilingStatus.QSS) &&
-      !fields.sstb_filing_details)
+      !fields.sstb_filing_details &&
+      !(fields.filing_status === NodeFilingStatus.MFJ &&
+        fields.patron_business_source))
   ) {
     throw new Error("Form 8995-A filing status differs from the return header");
   }
@@ -563,7 +567,8 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
         : []),
       element("QualifiedBusinessIncomeAmt", lines.line2),
       element("QlfyBusinessIncome20PctAmt", lines.line3),
-      ...(fields.patron_business_source && fields.taxable_income <= 197300
+      ...(fields.patron_business_source &&
+          fields.taxable_income <= lines.patronThreshold!
         ? []
         : [
           element("AllocableShareW2WagesAmt", lines.line4),
@@ -591,9 +596,12 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
     element("TotalQBIComponentAmt", lines.line16),
     ...(lines.phaseInRequired
       ? [
-        element("FilingStatusThresholdCd", 197300),
-        element("TXIBfrQBIDedLessThresholdAmt", lines.line33 - 197300),
-        element("FilingStatusPhaseInRangeCd", 50000),
+        element("FilingStatusThresholdCd", lines.patronThreshold),
+        element(
+          "TXIBfrQBIDedLessThresholdAmt",
+          lines.line33 - lines.patronThreshold!,
+        ),
+        element("FilingStatusPhaseInRangeCd", lines.patronPhaseInRange),
         element("PhaseInPct", lines.phaseIn!.toFixed(5)),
       ]
       : []),
