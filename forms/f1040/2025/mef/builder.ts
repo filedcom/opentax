@@ -1,5 +1,6 @@
 import { assertSingleFarmQbiReturn } from "../form8995a_single_farm_reconciliation.ts";
 import { assertScheduleJSourceReturn } from "../schedule_j_source_return.ts";
+import { executeComposedSourceReturn } from "../composed_source_return.ts";
 import { reconcileForm8606RothInventories } from "../form8606_roth_inventory_reconciliation.ts";
 import { reconcileForm8606RothActivity } from "../form8606_roth_activity_reconciliation.ts";
 import { assertForm4852RetainedEvidence } from "../form4852_retained_evidence.ts";
@@ -322,7 +323,7 @@ function buildReturnXml(
   assertSchedule1Box8SourceIdentity(pending, filer);
   assertSchedule1Form8814Source(pending);
   assertSchedule1Form8621Source(pending);
-  assertScheduleJSourceReturn(pending);
+  assertScheduleJSourceReturn(pending, executeComposedSourceReturn);
   assertSingleFarmQbiReturn(pending);
   assertSchedule1NecSourceIdentity(pending, filer);
   assertSchedule1KSourceIdentity(pending, filer);

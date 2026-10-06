@@ -1,7 +1,5 @@
-import { executeScheduleJSourceReturn } from "./schedule_j_source_return.ts";
 import type { FormDefinition } from "../../../core/types/form-definition.ts";
-import { execute, type ExecuteResult } from "../../../core/runtime/executor.ts";
-import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
+import type { ExecuteResult } from "../../../core/runtime/executor.ts";
 import type { FilerIdentity } from "../mef/header.ts";
 import { publicInputSchema as form8990PublicInputSchema } from "../nodes/intermediate/forms/form8990/index.ts";
 import { runBoundedForm8990TwoPass } from "../nodes/intermediate/forms/form8990/run-two-pass.ts";
@@ -16,8 +14,7 @@ import { buildPdfBytes } from "./pdf/builder.ts";
 import { assertF1040FinalHeader } from "./filer-source-reconciliation.ts";
 import { assertNoRepeatedBrokerSaleSources } from "./broker-sale-source-reconciliation.ts";
 import { applyForm8621QefRefigure } from "./form8621_1294_refigure.ts";
-import { executeForm8839TwoPass } from "./form8839_two_pass.ts";
-import { executeForm8863TwoPass } from "./form8863_two_pass.ts";
+import { executePreQefSourceReturn } from "./staged_source_return.ts";
 
 function executeReturn(inputs: Record<string, unknown>): ExecuteResult {
   const elected = Array.isArray(inputs.f8621) &&
@@ -49,16 +46,11 @@ function executeReturn(inputs: Record<string, unknown>): ExecuteResult {
         "Form 8839 with Form 8990 needs an established credit-ordering route",
       );
     }
-    const full = executeForm8839TwoPass(inputs);
+    const full = executePreQefSourceReturn(inputs);
     return applyForm8621QefRefigure(inputs, full);
   }
   if (inputs.form8990 === undefined) {
-    const full = elected && inputs.f8863 !== undefined
-      ? executeForm8863TwoPass(inputs)
-      : execute(buildExecutionPlan(registry), registry, inputs, {
-        taxYear: 2025,
-        formType: "f1040",
-      });
+    const full = executePreQefSourceReturn(inputs);
     return applyForm8621QefRefigure(inputs, full);
   }
   const source = form8990PublicInputSchema.parse(inputs.form8990);

@@ -62,7 +62,7 @@ export function executeScheduleJSourceReturn(
     "line8z_form8621_qef",
     "line3b_ordinary_dividends",
     "line7_capital_gain",
-    "line7a_capital_gain_distributions",
+    "line7a_cap_gain_distrib",
   ]);
   for (const [key, value] of Object.entries(agi)) {
     if (!allowed.has(key) && key !== "filing_status" && total(value) !== 0) {
@@ -90,7 +90,7 @@ export function executeScheduleJSourceReturn(
   });
   const investment = total(agi.line3b_ordinary_dividends) +
     total(agi.line7_capital_gain) +
-    total(agi.line7a_capital_gain_distributions);
+    total(agi.line7a_cap_gain_distrib);
   const finalInputs = structuredClone(inputs);
   finalInputs.schedule_j = {
     ...source,
@@ -117,6 +117,9 @@ export function executeScheduleJSourceReturn(
 /** Exporters replay actual sources, including each filed prior-year worksheet. */
 export function assertScheduleJSourceReturn(
   pending: Readonly<Record<string, unknown>>,
+  executeFiledReturn: (
+    inputs: Record<string, unknown>,
+  ) => ExecuteResult = executeScheduleJSourceReturn,
 ): void {
   const calculation = pending.schedule_j_calculation as
     | Record<string, unknown>
@@ -144,7 +147,21 @@ export function assertScheduleJSourceReturn(
       ));
   if (!preferential && pending.schedule_j_source_replay === undefined) return;
   const marker = record(pending.schedule_j_source_replay);
-  const replay = executeScheduleJSourceReturn(record(marker.source_inputs));
+  const qef = pending.form8621_1294_refigure === undefined
+    ? undefined
+    : record(pending.form8621_1294_refigure);
+  const adoption = pending.form8839_route === undefined
+    ? undefined
+    : record(pending.form8839_route);
+  const sourceInputs = qef === undefined
+    ? {
+      ...record(marker.source_inputs),
+      ...(adoption === undefined ? {} : {
+        form8839: adoption.public_source,
+      }),
+    }
+    : record(qef.source_inputs);
+  const replay = executeFiledReturn(sourceInputs);
   if (
     replay.diagnostics.length ||
     !isDeepStrictEqual(

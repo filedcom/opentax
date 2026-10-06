@@ -31,3 +31,59 @@ The first prior-pension preservation run11/1 failed solely because `pdftotext` w
 Primary advanced-QBI rule: [2025 IRS Form8995-A instructions](https://www.irs.gov/instructions/i8995a), per-business phase-in and qualified-dividend-inclusive net-capital-gain income cap.
 
 Final prior-pension/J preservation gate12/0(58s), `/tmp/opentax-schedulej-pref-pension-preservation-v2.log`, with the correct existing Poppler PATH. Eight reviewed prior pension/preferential/ISO packets76pages retain all40 source/pending/PDF/text/origin artifacts byte-identically; XML differs onlyReturnTs. Comparison `/tmp/opentax-schedulej-prior-pension-preservation-comparison.json`. Initial inventory comparison included nonpacketexpected.json and failed on its missing generated counterpart; the actual explicit8×5 packet inventory then passed40/40. This does not credit an empty/skipped inventory. No prior source/template/tax was altered. Source-stage code43cdd2906 is now ready for staged-credit callback composition and fresh current-main integration proof; broader ScheduleJ/AMT/QBI parents remain open.
+
+## Actual Schedule J composition with staged credits and QEF
+
+The public executor now uses `executeScheduleJSourceReturn` as the inner
+graph for Form 8839 and Form 8863's source-dependent stages, for the filed
+QEF return, and for every without-QEF counterfactual. The Schedule J native
+and PDF guards replay the **whole** staged source return when an adoption,
+education, or QEF marker follows the inner J graph. They still require the
+J source marker and compare the complete normalized pending dictionary.
+The QEF source guard independently repeats the same complete calculation.
+No caller supplies a tax, worksheet operand, or credit scalar for the shadow.
+
+A separate Alex-owned source packet retains the public Schedule J farm
+election, actual $180,000 issued 1099-G agricultural payment plus $20,000
+issued 1099-NEC custom work, one named cash Schedule F proprietor,
+an issued $400/$100 qualified-dividend copy with dated holding review, the
+existing reviewed Alex adoption decree/payment PDFs, and the independently
+identified QEF issuer/annual/activity records. Farm profit is $200,000; the
+original Ada $200,000 farm/$35,000 ordinary and $30,000 qualified dividend/
+$240,000 ISO/$830 special pension tax packet remains unchanged. The Alex
+combined packet has Schedule J line 23 **$24,212**, Schedule 3 adoption
+credit **$6,000**, and Form 8621 lines 9a/9b/9c
+**$45,404/$45,020/$384**. Form 1040 line 24 is **$45,020**. A second
+Alex packet without QEF retains the adoption credit, and an issued Alex
+1098-T/tuition/payment/scholarship packet proves the education source stage
+at its actual income phaseout. The latter correctly has no Form 8863 copy or
+current education credit at this income; its QEF counterfactual still replays
+the same school evidence and the changed return-derived worksheet.
+
+All three new native packets validate against the local full TY2025 v5.4
+XSD. Their real PDFs have 18, 15, and 16 pages, all reviewed in
+`/tmp/opentax-schedulej-qef-staged-rendered-oct6/` contact sheets.
+The PDF SHA-256 hashes are respectively
+`fee4ec8dc4800546f2eb3030f29443c3c1f2934b28ba8fb93be845885deeee8d`,
+`99d6cb98dd69153addcf6583da621930f489ad18dad491430cbcb88b65a9c570`,
+and `d178455d728819b3144d7fdf431241ff46b3aa57a3fceb277f93eeceb44e6520`.
+Source/pending, XML, PDF, and page origins are retained under
+`/tmp/opentax-schedulej-staged-positive-oct6/`. Native and direct PDF
+reject a changed J worksheet amount, QEF deferral, adoption credit, or
+issued farm payment. The original Ada packet plus an added QEF claim is
+rejected because its net-investment tax changes; the Chapter 1 election
+cannot defer that Schedule 2 tax. Combined adoption and education credits,
+Form 8990's two-pass return, broader farm allocation, and other wider parent
+routes remain guarded.
+
+The local QEF source/AMT/adoption/education preservation gate passed 24/0
+in `/tmp/opentax-schedulej-qef-preservation-oct6.log`. Its 17 reviewed
+packets and 172 pages preserve all PDF and source/pending/origin bytes;
+XML differs only by `ReturnTs`, as recorded in
+`/tmp/opentax-schedulej-qef-preservation-compare-oct6.log`.
+The original J/no-J 2 packets and 36 pages preserve source/pending/PDF/
+origins exactly and XML only differs by `ReturnTs` in
+`/tmp/opentax-schedulej-qef-staged-base-oct6/`. The eight prior pension/
+AMT packets and 76 pages preserve all 40 reviewed artifacts exactly apart
+from XML `ReturnTs`; comparison is in
+`/tmp/opentax-schedulej-qef-prior-pension-compare-oct6.log`.

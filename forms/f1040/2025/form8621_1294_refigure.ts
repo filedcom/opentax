@@ -1,11 +1,8 @@
 import { isDeepStrictEqual } from "node:util";
-import { execute, type ExecuteResult } from "../../../core/runtime/executor.ts";
-import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
+import type { ExecuteResult } from "../../../core/runtime/executor.ts";
 import { f1040 } from "../nodes/outputs/f1040/index.ts";
 import { buildPending } from "./mef/pending.ts";
-import { registry } from "./registry.ts";
-import { executeForm8839TwoPass } from "./form8839_two_pass.ts";
-import { executeForm8863TwoPass } from "./form8863_two_pass.ts";
+import { executePreQefSourceReturn } from "./staged_source_return.ts";
 
 const context = { taxYear: 2025, formType: "f1040" } as const;
 
@@ -106,11 +103,7 @@ export function applyForm8621QefRefigure(
         child_unearned_income: childUnearned - removedUnearned,
       };
     }
-    const without = inputs.form8839 !== undefined
-      ? executeForm8839TwoPass(withoutInputs, true)
-      : inputs.f8863 !== undefined
-      ? executeForm8863TwoPass(withoutInputs, true)
-      : execute(buildExecutionPlan(registry), registry, withoutInputs, context);
+    const without = executePreQefSourceReturn(withoutInputs, true);
     if (without.diagnostics.length > 0) {
       throw new Error(
         "Form 8621 Election B needs a settled without-QEF return: " +
@@ -237,11 +230,7 @@ export function assertForm8621QefRefigureSource(
   if (!inputs) {
     throw new Error("Form 8621 Election B needs actual source inputs");
   }
-  const full = inputs.form8839 !== undefined
-    ? executeForm8839TwoPass(inputs)
-    : inputs.f8863 !== undefined
-    ? executeForm8863TwoPass(inputs)
-    : execute(buildExecutionPlan(registry), registry, inputs, context);
+  const full = executePreQefSourceReturn(inputs);
   if (full.diagnostics.length > 0) {
     throw new Error(
       "Form 8621 section 1294 source return has graph diagnostics",
