@@ -31,7 +31,7 @@ unregistered MeF form files. A registered-file literal is not proof that its
 descriptor can file every branch. `IRS1116ScheduleC` is a seventh unregistered
 root builder whose token is also quoted in the registered Form 1116 file.
 
-The current descriptor inventory is **150 native** and **116 PDF** entries;
+The current descriptor inventory is **151 native** and **117 PDF** entries;
 the native set includes **33 wage/supporting descriptors**. These are not
 211-root coverage counts. The [root applicability crosswalk](ty2025-unregistered-root-applicability.md#registry-to-root-reconciliation)
 records owner classes and unresolved product decisions, while the
