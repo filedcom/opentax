@@ -11,7 +11,7 @@ import {
 
 // Two independent source inventories preserve actual recipient and participant
 // identities; public elections cannot supply replacement issued boxes.
-function pairedInputs(
+export function pairedInputs(
   tSpec = fractionalBeneficiaryCases.find((c) =>
     c.id === "two-death-estate-nua-annuity"
   )!,

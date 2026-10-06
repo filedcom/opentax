@@ -1,3 +1,4 @@
+import { reconcileSharedParticipantElections } from "./participant-inventory.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -175,14 +176,7 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
           );
         }
       }
-      if (
-        elections[0].participant_ssn === elections[1].participant_ssn ||
-        elections[0].plan_reference === elections[1].plan_reference
-      ) {
-        throw new Error(
-          "Form 4972 shared-participant spouse beneficiaries require reconciled participant-wide allocation records",
-        );
-      }
+      reconcileSharedParticipantElections(sources, elections);
     }
     if (forms.length === 2 && !pairedBeneficiaries) {
       const recipients = forms.map((form) => form.recipient);

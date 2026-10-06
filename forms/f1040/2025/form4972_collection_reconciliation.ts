@@ -1,3 +1,7 @@
+import {
+  reconcileParticipantIssuedInventory,
+  reconcileSharedParticipantElections,
+} from "../nodes/intermediate/forms/form4972/participant-inventory.ts";
 import { z } from "zod";
 import { inputSchema as f1099rSchema } from "../nodes/inputs/f1099r/index.ts";
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
@@ -93,6 +97,10 @@ export function reconcileForm4972Collection(
     );
     if (
       items.length !== refs.length ||
+      (sourceForm.form4972_plan !== undefined &&
+        items.some((item) =>
+          !sameValue(item.form4972_plan, sourceForm.form4972_plan)
+        )) ||
       (sourceForm.recipient_ssn !== undefined &&
         items.some((item) =>
           item.recipient_ssn !== sourceForm.recipient_ssn
@@ -204,15 +212,13 @@ export function reconcileForm4972Collection(
         );
       }
     }
+    reconcileSharedParticipantElections(source_forms, elections);
     const plans = scoped.map((entry) => entry.sources[0].form4972_plan);
     if (
-      !plans[0] || !plans[1] ||
-      plans[0].participant_ssn === plans[1].participant_ssn ||
-      plans[0].plan_reference === plans[1].plan_reference
+      plans[0]?.participant_ssn === plans[1]?.participant_ssn ||
+      plans[0]?.plan_reference === plans[1]?.plan_reference
     ) {
-      throw new Error(
-        "Form 4972 shared-participant spouse beneficiaries require reconciled participant-wide allocation records",
-      );
+      reconcileParticipantIssuedInventory(elected);
     }
   }
   if (forms.length === 2 && !pairedBeneficiaries) {

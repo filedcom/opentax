@@ -226,6 +226,15 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
   const deathBenefit = input.death_benefit_exclusion ?? 0;
   const partialDeathBenefit = partialShare && deathBenefit > 0;
   const recipientShare = (input.recipient_share_pct ?? 100) / 100;
+  const partialNuaEstateCombination = partialShare &&
+    input.elect_10yr_averaging === true &&
+    input.elect_include_nua === true && (input.box6_nua ?? 0) > 0 &&
+    (input.federal_estate_tax ?? 0) > 0 &&
+    input.partial_estate_tax_source !== undefined &&
+    (input.elect_capital_gain !== true ||
+      (input.capital_gain_amount ?? 0) > 0) &&
+    ((input.annuity_actuarial_value ?? 0) === 0 ||
+      input.annuity_share_pct !== undefined);
   const partialDeathAndEstatePartIII = partialDeathBenefit &&
     (input.federal_estate_tax ?? 0) > 0 &&
     input.elect_10yr_averaging === true &&
@@ -302,12 +311,12 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
       ((input.annuity_actuarial_value ?? 0) > 0 &&
         !partialDeathAndAnnuityPartIII &&
         !partialDeathAnnuityEstatePartIII &&
-        !partialNuaDeathAnnuityEstatePartIII) ||
+        !partialNuaDeathAnnuityEstatePartIII && !partialNuaEstateCombination) ||
       ((input.federal_estate_tax ?? 0) > 0 &&
         !partialDeathAndEstatePartIII &&
         !partialDeathAnnuityEstatePartIII &&
         !partialNuaDeathEstatePartIII &&
-        !partialNuaDeathAnnuityEstatePartIII) ||
+        !partialNuaDeathAnnuityEstatePartIII && !partialNuaEstateCombination) ||
       !input.death_benefit_exclusion_source_reference ||
       sourceCents(input.death_benefit_recipient_allocated_amount!) !==
         allocatedSourceCents(deathBenefit, input.recipient_share_pct!))
@@ -365,11 +374,13 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
             !partialAnnuityAndEstatePartIII &&
             !partialNuaAnnuityEstatePartIII &&
             !partialDeathAnnuityEstatePartIII &&
-            !partialNuaDeathAnnuityEstatePartIII) ||
+            !partialNuaDeathAnnuityEstatePartIII &&
+            !partialNuaEstateCombination) ||
           (deathBenefit > 0 && !partialDeathAndEstatePartIII &&
             !partialDeathAnnuityEstatePartIII &&
             !partialNuaDeathEstatePartIII &&
-            !partialNuaDeathAnnuityEstatePartIII))))
+            !partialNuaDeathAnnuityEstatePartIII &&
+            !partialNuaEstateCombination))))
   ) {
     throw new Error(
       "form4972: partial box 9a share supports Part II or III with optional elected NUA, Part III with an annuity and its separate box 8 percentage, or bounded sourced beneficiary death benefit and estate tax; other combinations remain unsupported",

@@ -1,4 +1,8 @@
 import {
+  participantInventorySchema,
+  reconcileParticipantIssuedInventory,
+} from "../../intermediate/forms/form4972/participant-inventory.ts";
+import {
   isSourceMoney,
   sameSourceMoney,
 } from "../../intermediate/forms/form4972/source-rounding.ts";
@@ -266,6 +270,7 @@ export const itemSchema = z.object({
     plan_reference: z.string().trim().min(1),
     full_balance_statement_reference: z.string().trim().min(1),
     all_qualified_distributions_included: z.literal(true),
+    participant_distribution_inventory: participantInventorySchema.optional(),
   }).strict().optional(),
   ts: tsSchema.optional(),
 
@@ -1505,6 +1510,15 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         "Form 4972 spouse beneficiary groups need distinct issued copies and two identified owners",
       );
     }
+    const tPlan = lumpItems.find((item) => item.ts === "T")?.form4972_plan;
+    const sPlan = lumpItems.find((item) => item.ts === "S")?.form4972_plan;
+    if (
+      tPlan && sPlan &&
+      (tPlan.participant_ssn === sPlan.participant_ssn ||
+        tPlan.plan_reference === sPlan.plan_reference)
+    ) {
+      reconcileParticipantIssuedInventory(lumpItems);
+    }
     const sourceForms = (["T", "S"] as const).flatMap((owner) => {
       const own = items.filter((item) => item.ts === owner);
       const outputs = form4972Outputs(own);
@@ -1616,7 +1630,11 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         ...(group.length > 1
           ? {
             multiple_1099r: {
-              ...plan,
+              ...Object.fromEntries(
+                Object.entries(plan).filter(([key]) =>
+                  key !== "participant_distribution_inventory"
+                ),
+              ),
               source_document_references,
             },
           }
@@ -1775,7 +1793,11 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
           }
           : {}),
         multiple_1099r: {
-          ...plan,
+          ...Object.fromEntries(
+            Object.entries(plan).filter(([key]) =>
+              key !== "participant_distribution_inventory"
+            ),
+          ),
           source_document_references: refs,
         },
       }],
