@@ -84,7 +84,8 @@ export function calculateIndependentOwnerHealth(
     source.taxpayer_identity.ssn !== owned.source.identity.primary_ssn ||
     source.spouse_identity.ssn !== owned.source.identity.spouse_ssn ||
     owned.source.businesses.length !== 2 ||
-    (owned.source.businesses.every((b) => b.kind === "schedule_f")
+    ((owned.source.businesses.every((b) => b.kind === "schedule_f") ||
+        new Set(owned.source.businesses.map((b) => b.kind)).size === 2)
       ? !owned.source.businesses.some((b) => b.net_profit > 0)
       : owned.instances.length !== 2 ||
         owned.source.businesses.some((b) => b.net_profit <= 0)) ||

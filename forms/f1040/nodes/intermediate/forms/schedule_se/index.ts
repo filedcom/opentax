@@ -120,8 +120,13 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
           }),
           this.outputNodes.output(form7206, {
             schedule_se_source: {
-              net_profit_schedule_c: input.net_profit_schedule_c ?? 0,
-              net_profit_schedule_f: input.net_profit_schedule_f ?? 0,
+              // Preserve loss businesses omitted from legacy positive-only SE inputs.
+              net_profit_schedule_c: owned.source.businesses.filter((b) =>
+                b.kind === "schedule_c"
+              ).reduce((sum, b) => sum + b.net_profit, 0),
+              net_profit_schedule_f: owned.source.businesses.filter((b) =>
+                b.kind === "schedule_f"
+              ).reduce((sum, b) => sum + b.net_profit, 0),
               farm_optional_method_elected:
                 input.farm_optional_method_elected === true,
               line13_deduction: owned.deduction,

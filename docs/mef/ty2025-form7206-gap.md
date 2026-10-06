@@ -223,3 +223,16 @@ capacity and no fabricated positive Form7206/SE copy. See the
 independent-spouse-plans-review proof table, seven held source fixtures and
 remaining parent limits; this does not establish
 optional/patron/PTC/multiple-business or external authentication.
+
+### Mixed C/F loss-owner established source plans
+
+The bounded regular-method mixed C/F owner-health route now retains an actual
+loss C or loss F with established policy/payments and zero capacity, while
+independently filing only the positive owner's SE/7206 copy. Actual public
+G/NEC/payroll/control sources, full WOTC reductions, owner half-SE, income-limited
+and employer-excluded month cases settle through QBI and1040. Six full-XSD/PDF
+returns and source/native/directPDF conflicts, plus182 all-page inspections,
+are documented in `ty2025-form7206-independent-spouse-plans-review.md`.
+The source inventory repair preserves negative C profit previously omitted by
+a legacy SE tax input; it does not fabricate SE or health amounts. Broader
+owner-plan source coverage and external authentication/ATS remain open.

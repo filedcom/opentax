@@ -239,3 +239,101 @@ Single-plan calculator/actual zero-eligible Medicare source compatibility:
 Detached current-main42cccdf15 passes held replay7/all217 reviewed pages (checker terminal0). Artifact root `/tmp/opentax-two-farm-health-main-replay-oct6/.state/research/ty2025-filled-pdf-review/2026-10-06-two-farm-health-main42`; logs `/tmp/two-farm-health-main42-generate.log` and `/tmp/two-farm-health-main42-check-final.log`. Every PDF/XML digest, copy, page origin and owner matches the originally inspected packets. Source snapshot differences are exactly three integrated credit/health/owner-SE fields, independently bound to retained sources; remaining JSON values, public inputs and filer agree. Reviews transferred after these comparisons, and originals remain untouched. Digest inventory `/tmp/two-farm-health-main42-digests.json` SHA256 `693918002bab87316ed172d7fe0421cead8428c10a253765837db1645a0f49c5`. Main source/compatibility gate remains live; broader parents stay open.
 
 Integrated main eight-file source/conflict/compatibility gate:51 passed/0 failed(4m16s), `/tmp/opentax-tip-two-farm-health-current-main.log`. This includes tip-health, two-farm/C-F health, prior C/C health, original tips, Medicare/zeroeligibility and Publication974. Prior running-only checkpoint is superseded by this terminal result.
+
+## Mixed C/F loss-owner learning checkpoint (2026-10-06)
+
+Before edits, the pure owner-health helper permits actual loss capacity only for
+two F businesses; the core binder already requires the full actual C/F receipt,
+owner-SE, plan, wage reduction and return joins. Extend only one actual regular
+C and one actual regular F, one per joint owner, retaining at least one positive
+owner and the existing nonpositive capacity/source row. Keep loss C/C, optional,
+patron, Marketplace and multiple-business claims outside this bounded extension.
+Do not remove the tip-health core/wrapper or scalar/source guards. Established
+paid policies remain retained; loss owners cannot borrow spouse profit or SE.
+
+## Actual mixed C/F loss-owner source proof (2026-10-06)
+
+Isolated base `71debbb4c`. The [2025 Form7206 instructions](https://www.irs.gov/instructions/i7206)
+require the establishing business's earned-income limit, allocable half-SE and
+ineligible employer-plan months to be applied before line14. A regular-method
+loss business does not gain capacity from the other joint owner's profit.
+The reviewed established policy and actual monthly payments remain in public
+source and the nonpositive row, with zero capacity and no filed Form7206 or
+ScheduleSE copy for that owner. The positive owner's existing lines4–14
+calculation and separate copy remain required, even when excluded months make
+the deduction zero.
+
+The pure eligibility extension permits exactly one actual regular C and one
+actual regular F, one per joint owner, with at least one positive business. All
+existing issuer/month/owner/business inventory and native source binders remain.
+The graph exposed a separate source defect: a negative ScheduleC appropriately
+omits the legacy aggregate SE tax input, but Form7206's inventory had reused
+that absent input as zero. Its emitted C/F totals now sum the actual owned
+business source rows. Owner SE taxes, positive instances, wage caps, half-SE and
+Schedule1A/tip outputs are unchanged; actual negative profit is retained.
+
+Six fixtures use the existing actual reviewed controlled mixed-employer source
+with employee/SWA/payroll identities, issued agricultural1099-G and secondary
+NEC, full group credit2400 allocated1200 per employer, and full wage reductions
+before ownerSE and health. Original loss C has raw receipts20000.50,
+wages6000.49 and supplies26401.50; its filed loss is−11201 after credit.
+The reversed case changes actual receipts and expense leaves plus corresponding
+issued G/NEC records, yielding positive C195201 and loss F−11201. No scalar
+profit, SE, health, QBI or tax amounts substitute for the public calculations.
+
+| Owned source / paid-plan case | Health deduction | Raw AGI | QBI deduction | Current3800 credit | Total1040 tax |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| lossC / positiveF, full | 9600 | 460868.37 | 21822 | 2400 | 111277 |
+| lossC / positiveF, income limited | 181669 | 288799.37 | 0 | 2400 | 74182 |
+| lossC / positiveF, all months excluded | 0 | 470468.37 | 20032 | 2400 | 114922 |
+| positiveC / lossF, full | 6000 | 475386.37 | 18972 | 2400 | 94998 |
+| positiveC / lossF, income limited | 192587 | 288799.37 | 0 | 2400 | 52346 |
+| positiveC / lossF, all months excluded | 0 | 481386.37 | 17548 | 2400 | 97374 |
+
+The positive F half-SE is13532; positive C half-SE is2614. Income-limited
+policies retain actual raw premiums240005.88 (filed240006) for each owner;
+only the positive owner's capacity181669/192587 is deducted. Those two returns
+have actual negative QBI−11201 and filed Form8995 loss carryforward11201.
+Full/excluded returns retain actual loss netting through Form8995-A ScheduleC.
+All six source returns pass full local2025v5.4 XSD and direct PDF rendering,
+with one owner SE and one Form7206 copy. Public issued payment/policyholder,
+receipt owner/amount, inventory, control and optional-method conflicts and
+prepared loss capacity/positive flag, source profits, health/AGI/QBI and full
+credit conflicts reject native and directPDF export.
+
+Terminal evidence: `/tmp/mixed-cf-loss-health-focus-final.log`,2/0(39s);
+`/tmp/mixed-cf-loss-health-compat.log`,26/0(2m43s), covering prior two-farm,
+positive C/F, C/C health and actual tip-health. Held artifacts at
+`/tmp/opentax-mixed-cf-loss-health-oct6/.state/research/ty2025-filled-pdf-review/2026-10-06-mixed-cf-loss-health`
+contain six packets182 pages (31/29/31/31/29/31). Every page reviewed through
+18 contact sheets; all six Form7206 pages additionally inspected full size.
+Source owner, actual group allocation, SE, health, loss netting, final tax,
+checkboxes and layout joins reviewed. Generator terminal0:
+`/tmp/mixed-cf-loss-health-held-final.log`. The held generator used an isolated
+uncommitted catalog harness; the fixture factory and tests remain reusable
+without changing the catalog. Original212/217/tip-health artifacts are untouched.
+
+This bounded proof does not extend loss C/C, multiple businesses per owner,
+optional/patron/PTC/retirement plans or community allocations. External insurer,
+issuer/employer/SWA authentication, IRS business rules and ATS acceptance remain
+open; reviewed synthetic issued examples prove binding and arithmetic only.
+The broader Form7206/owner-SE/QBI source parent is not closed.
+
+Held checker terminal0: `/tmp/mixed-cf-loss-health-held-check.log`,6 cases/all182 pages; source/PDF/XML hashes and full2025v5.4 XSD confirmed. Temporary generator registration patch retained only in ignored `.state/research/mixed-cf-loss-health-generator-harness.patch`; catalog restored before commit.
+
+After restoring the catalog, direct fixture-factory proof is terminal2/0(34s),
+`/tmp/mixed-cf-loss-health-committed-factory-focus.log`. Held manifest SHA256:
+`4832d76810fade12d85339444c12ece8dabd6cf5805a31e0feb0d819eccb485a`.
+Packet digest inventory `digest-report.json` SHA256:
+`7ced117b9876b61f99d440014999e10752e0f1725abb63672ea9a9da4959242c`.
+To reproduce held generation/check, apply only the ignored harness patch in an
+isolated checkout, use `/tmp/mixed-cf-loss-health-selection.json` as the third
+generator argument, and restore the catalog afterward. The exact completed
+checker command was:
+
+```sh
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run -A scripts/check-ty2025-pdf-review.ts .state/research/ty2025-filled-pdf-review/2026-10-06-mixed-cf-loss-health /Users/atul/projects/opentax/.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd
+```
+
+Final direct-factory test with explicit XML netloss−11201/carryforward11201
+assertions: terminal2/0(34s), `/tmp/mixed-cf-loss-health-final-loss-lines.log`.
