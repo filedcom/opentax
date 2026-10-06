@@ -2,7 +2,7 @@
 
 ## Compacted status (2026-10-07 local)
 
-The frozen checklist retains **52 open TODOs**; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,551 bounded slices**. Broader parents remain open. Detailed learnings and qualifications are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed. Draft [PR63](https://github.com/filedcom/opentax/pull/63) was verified at **234fb7514**.
+The frozen checklist retains **52 open TODOs**; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,552 bounded slices**. Broader parents remain open. Detailed learnings and qualifications are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed. Draft [PR63](https://github.com/filedcom/opentax/pull/63) was verified at **234fb7514**.
 
 **Aggregation completed:** Direct-owner annual aggregation disclosure passed main **66/0**, actual17returns/348pages/freshXSD and capturedordinary21/425 parity. Combined distinct inventory22returns/443pages plus3annualpages; all56 held hashes and54 originals remain exact. Final270entries+manifest physically retained. Saved buildPending/prepared/carry/origins equality is proven; complete normalized-graph equality is not claimed. See the [aggregation proof](docs/mef/ty2025-owned-aggregation-annual-disclosure.md).
 
@@ -12,7 +12,9 @@ The frozen checklist retains **52 open TODOs**; the [completed ledger](docs/mef/
 
 **PAB AMT completed slice:** Main checked eight-module gate passed **86/0**; twelve saved returns/162 pages passed fresh full XSD with exact normalized JSON, carryforwards, origins and PDF, native differences limited to ReturnTs. All 70 held files remained unchanged and 234 final evidence files were copied. PAB prepared-original parity is unavailable; the shared ordinary output overwrite is qualified. See the [PAB proof](docs/mef/ty2025-form4952-pab-multi-source-proof.md).
 
-**Work in progress:** Larger and joint Form 8962 families passed private **99/0**, five saved returns/36 pages/fresh XSD and independent all-page/source/native review; 310 final evidence files are retained. Integrated at **e2c4eb36f/0d2980527**; main saved-source and checked gates are pending under 77 held files. RPE aggregation statement joins are being verified privately.
+**Larger and joint Form 8962 completed slice:** Main ordinary checked six-module gate passed **99/0**. Five family returns/36 pages and twelve prior returns/162 pages passed fresh full XSD with exact retained source, normalized JSON, carryforwards, origins and PDF; prepared equality is proven where prior prepared files exist. All five ordinary family packets match their references, all 77 held files and 35 originals stayed unchanged, and 229 final evidence files were copied. See the [family proof](docs/mef/ty2025-form8962-family-source-proof.md).
+
+**Work in progress:** Positive-spouse Form 8962 source inventory, RPE aggregation disclosures and remaining Form 4952 owner/destination joins are being completed in isolated worktrees.
 
 **Full regression V32 is running** at immutable **4ea6902e4**, before later investment-interest and aggregation production. It began **2026-10-06T21:47:13Z**; PID64169 is live. Its separate 30,815-file snapshot, 4,567 source/evidence hashes, 42 code hashes and 8 GB allowance are retained. V31 was superseded for production corrections; partial results/reason/exit143 remain preserved. No full-runtime pass is claimed. Remaining filing routes, scope decisions, source authentication, latest full regression, ATS credentials/scenario conflicts, IRS acknowledgments and release review remain required.
 
