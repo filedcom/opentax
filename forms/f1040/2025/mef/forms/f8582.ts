@@ -1,3 +1,7 @@
+import {
+  box11Line10SourceRows,
+  currentPassiveLine10Activities,
+} from "../../../nodes/inputs/k1_partnership/box11_line10.ts";
 import { assertCurrentK1Qbi } from "./f8995-current-k1.ts";
 import { inputSchema as partnershipSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as sCorpSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
@@ -91,7 +95,18 @@ function linkedK1Activities(context: MefBuildContext) {
       throw new Error("Form 8582 K-1 owner differs from actual return filer");
     }
   }
+  const ordinaryRows = box11Line10SourceRows(partnerships);
+  if (
+    ordinaryRows.some((row) =>
+      row.current_passive_source && !owners.includes(row.recipient_tin)
+    )
+  ) {
+    throw new Error(
+      "Form8582 ordinary K1 source owner differs from actual filer",
+    );
+  }
   return [
+    ...currentPassiveLine10Activities(ordinaryRows),
     ...passiveK1Activities(partnerships, "k1_partnership", true),
     ...passiveK1Activities(corporations, "k1_s_corp", true),
   ];
@@ -253,7 +268,12 @@ function linkedActivities(context: MefBuildContext): Array<{
   name: string;
   activity_type: "A" | "B";
   property_type: number;
-  reporting_source: "schedule_e" | "form4835" | "k1_partnership" | "k1_s_corp";
+  reporting_source:
+    | "schedule_e"
+    | "form4835"
+    | "k1_partnership"
+    | "k1_s_corp"
+    | "k1_4797_line10";
   current_net: number;
   prior_unallowed_operating: number;
   prior_year_8582_source?: z.infer<typeof priorYear8582SourceSchema>;
@@ -367,7 +387,9 @@ function linkedActivities(context: MefBuildContext): Array<{
     ...k1s.map((row) => ({
       ...row,
       reporting_source: row.reporting_form,
-      reporting_form: "Sch E, line 28",
+      reporting_form: row.reporting_form === "k1_4797_line10"
+        ? "4797, line 10"
+        : "Sch E, line 28",
     })),
   ];
 }

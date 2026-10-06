@@ -1,3 +1,4 @@
+import { box11Line10SourceRows } from "../../../nodes/inputs/k1_partnership/box11_line10.ts";
 import { inputSchema as farmSchema } from "../../../nodes/inputs/f4835/index.ts";
 import {
   currentFarmRentalNet,
@@ -46,9 +47,14 @@ export function assertCurrentK1Qbi(
     const s = reconcileCurrentFarmRentalQbi(item);
     return s ? [s] : [];
   });
-  const incomes = items.flatMap((item) =>
-    item.passive_income_source ? [item.passive_income_source] : []
-  );
+  const incomes = [
+    ...items.flatMap((item) =>
+      item.passive_income_source ? [item.passive_income_source] : []
+    ),
+    ...box11Line10SourceRows(partnerships).flatMap((row) =>
+      row.current_passive_source ? [row.current_passive_source] : []
+    ),
+  ];
   if (
     actualFarms.length !== farms.length || (farms.length &&
       (!isDeepStrictEqual(farms, fields.current_passive_farm_qbi_sources) ||

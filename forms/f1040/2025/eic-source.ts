@@ -1,3 +1,4 @@
+import { assertCurrentPassiveLine10Return } from "./current_passive_line10_source.ts";
 import { form8582 as nativeForm8582 } from "./mef/forms/f8582.ts";
 import {
   filerCreditEligibility,
@@ -33,7 +34,10 @@ import {
   reviewedK1PassiveIncome,
 } from "../nodes/inputs/k1_passive_eic.ts";
 import { inputSchema as partnershipK1InputSchema } from "../nodes/inputs/k1_partnership/index.ts";
-import { box11Line10SourceSchema } from "../nodes/inputs/k1_partnership/box11_line10.ts";
+import {
+  box11Line10SourceSchema,
+  currentPassiveLine10Activities,
+} from "../nodes/inputs/k1_partnership/box11_line10.ts";
 import { inputSchema as sCorpK1InputSchema } from "../nodes/inputs/k1_s_corp/index.ts";
 import { EITC_INVESTMENT_INCOME_LIMIT_2025 } from "../nodes/config/2025.ts";
 import {
@@ -75,9 +79,21 @@ export function assertEicSource(
   const agiFinal = pending?.agi_final as Record<string, unknown> | undefined;
   const form4797 = pending?.form4797 as Record<string, unknown> | undefined;
   if (form4797?.k1_box11_line10_rows !== undefined) {
+    assertCurrentPassiveLine10Return(form4797, pending);
     const rows = box11Line10SourceSchema.array().parse(
       form4797.k1_box11_line10_rows,
     );
+    const ordinaryActivities = currentPassiveLine10Activities(rows);
+    if (ordinaryActivities.length) {
+      const source = pending?.form8582;
+      if (!source || typeof source !== "object" || Array.isArray(source)) {
+        throw new Error("EIC current passive ordinary K1 needs actual8582");
+      }
+      nativeForm8582.build(
+        source as Parameters<typeof nativeForm8582.build>[0],
+        { pending },
+      );
+    }
     for (const row of rows) {
       const review = row.eic_activity_review;
       if (!review) {
@@ -86,7 +102,7 @@ export function assertEicSource(
         );
       }
       if (
-        review.classification === "passive" &&
+        review.classification === "passive" && !row.current_passive_source &&
         (row.gain_loss < 0 ||
           review.no_current_or_prior_unallowed_loss_for_activity_verified !==
             true)

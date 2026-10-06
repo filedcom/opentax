@@ -4,6 +4,10 @@ import {
 } from "./f4835/qbi-source.ts";
 import type { k1PassiveIncomeSourceSchema } from "./k1_passive_source.ts";
 import { z } from "zod";
+import {
+  box11Line10SourceRows,
+  currentPassiveLine10Activities,
+} from "./k1_partnership/box11_line10.ts";
 export const currentK1QbiSourceSchema = z.object({
   tax_year: z.literal(2025),
   issuer_ein: z.string().regex(/^\d{9}$/),
@@ -12,7 +16,8 @@ export const currentK1QbiSourceSchema = z.object({
   issued_section199a_statement_reference: z.string().trim().min(1),
   business_name: z.string().trim().min(1).max(75),
   domestic_non_sstb_trade: z.literal(true),
-  qualified_box1_income: z.number().int().positive(),
+  qualified_box1_income: z.number().int().nonnegative(),
+  qualified_box11_line10_income: z.number().int().positive().optional(),
   statement_qbi: z.number().int().positive(),
   owner_level_adjustments: z.literal(0),
   prior_qbi_loss: z.literal(0),
@@ -26,18 +31,35 @@ export function currentK1Qbi(item: {
   box1_ordinary_business?: number;
   box20z_qbi?: number;
   qbi_amount?: number;
+  partnership_name?: string;
+  box11_line10_ordinary?: Parameters<
+    typeof box11Line10SourceRows
+  >[0][number]["box11_line10_ordinary"];
   qualified_business_income_source?: CurrentK1QbiSource;
 }) {
   const s = item.qualified_business_income_source;
   if (!s) return undefined;
+  const ordinaryRows = box11Line10SourceRows(
+    item.partnership_name
+      ? [item as Parameters<typeof box11Line10SourceRows>[0][number]]
+      : [],
+  );
+  const ordinary = currentPassiveLine10Activities(ordinaryRows).reduce(
+    (t, r) => t + r.current_net,
+    0,
+  );
+  const qualified = s.qualified_box1_income +
+    (s.qualified_box11_line10_income ?? 0);
   const amount = item.box20z_qbi ?? item.qbi_amount ??
     item.box1_ordinary_business;
   if (
     s.issuer_ein !== (item.partnership_ein ?? item.corporation_ein) ||
     s.recipient_tin !== item.recipient_tin ||
     s.issued_k1_reference !== item.source_document_reference ||
-    s.qualified_box1_income !== item.box1_ordinary_business ||
-    s.statement_qbi !== s.qualified_box1_income || amount !== s.statement_qbi
+    s.qualified_box1_income !== (item.box1_ordinary_business ?? 0) ||
+    (s.qualified_box11_line10_income ?? 0) !== ordinary ||
+    qualified <= 0 || s.statement_qbi !== qualified ||
+    amount !== s.statement_qbi
   ) {
     throw new Error(
       "Current K-1 QBI statement differs from actual issued ordinary income/owner",
@@ -47,7 +69,7 @@ export function currentK1Qbi(item: {
 }
 export function currentK1QbiFarmRows(
   farms: readonly CurrentFarmRentalQbiSource[],
-  incomes: readonly z.infer<typeof k1PassiveIncomeSourceSchema>[],
+  incomes: readonly { activities: readonly { current_income: number }[] }[],
 ) {
   const passiveIncome = incomes.reduce(
     (t, s) => t + s.activities.reduce((n, r) => n + r.current_income, 0),
@@ -79,7 +101,8 @@ export function currentK1QbiLines(
   sources: readonly CurrentK1QbiSource[],
   taxableIncome: number,
   farms: readonly CurrentFarmRentalQbiSource[] = [],
-  incomes: readonly z.infer<typeof k1PassiveIncomeSourceSchema>[] = [],
+  incomes: readonly { activities: readonly { current_income: number }[] }[] =
+    [],
 ) {
   const qbi = sources.reduce((sum, s) => sum + s.statement_qbi, 0) +
     currentK1QbiFarmRows(farms, incomes).reduce((sum, r) => sum + r.qbi, 0);

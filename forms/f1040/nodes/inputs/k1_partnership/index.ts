@@ -68,6 +68,7 @@ import {
 import {
   box11Line10ReviewSchema,
   box11Line10SourceRows,
+  currentPassiveLine10Activities,
 } from "./box11_line10.ts";
 
 // Schedule K-1 (Form 1065) — Partner's Share of Income, Deductions, Credits
@@ -782,9 +783,14 @@ function form8995Output(items: K1PartnershipItems): NodeOutput[] {
     const source = currentK1Qbi(item);
     return source ? [source] : [];
   });
-  const incomeSources = items.flatMap((item) =>
-    item.passive_income_source ? [item.passive_income_source] : []
-  );
+  const incomeSources = [
+    ...items.flatMap((item) =>
+      item.passive_income_source ? [item.passive_income_source] : []
+    ),
+    ...box11Line10SourceRows(items).flatMap((row) =>
+      row.current_passive_source ? [row.current_passive_source] : []
+    ),
+  ];
   const sourceFields = sources.length
     ? {
       current_k1_qbi_sources: sources,
@@ -904,7 +910,25 @@ function box11CodeKGamblingOutputs(items: K1PartnershipItems): NodeOutput[] {
 function box11Line10OrdinaryOutputs(items: K1PartnershipItems): NodeOutput[] {
   const rows = box11Line10SourceRows(items);
   if (rows.length === 0) return [];
-  return [output(form4797, { k1_box11_line10_rows: rows })];
+  const activities = currentPassiveLine10Activities(rows);
+  const income = activities.reduce((t, a) => t + a.current_net, 0);
+  return [
+    output(form4797, { k1_box11_line10_rows: rows }),
+    ...(activities.length
+      ? [
+        output(form8582, {
+          current_income: income,
+          rental_current_income: 0,
+          has_other_passive: true,
+          activities,
+        }),
+        output(agi_aggregator, {
+          pal_current_income: income,
+          pal_rental_income: 0,
+        }),
+      ]
+      : []),
+  ];
 }
 
 // Box 12 — Section 179 deduction → Form 4562

@@ -1,3 +1,4 @@
+import { assertCurrentPassiveLine10Return } from "../../current_passive_line10_source.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import {
   casualtyLossLines,
@@ -602,6 +603,10 @@ export const form4797: MefFormDescriptor<"form4797", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f4797.pdf",
   build(fields, context) {
+    assertCurrentPassiveLine10Return(
+      fields as Record<string, unknown>,
+      context?.pending,
+    );
     return buildIRS4797(fields, context);
   },
 };

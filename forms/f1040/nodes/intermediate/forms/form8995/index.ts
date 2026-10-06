@@ -1,3 +1,4 @@
+import { currentPassiveLine10SourceSchema } from "../../../inputs/k1_partnership/box11_line10.ts";
 import { currentFarmRentalQbiSourceSchema } from "../../../inputs/f4835/qbi-source.ts";
 import { k1PassiveIncomeSourceSchema } from "../../../inputs/k1_passive_source.ts";
 import {
@@ -112,7 +113,9 @@ export const inputSchema = z.object({
   qbi: accumulable(z.number()).optional(),
   current_passive_farm_qbi_sources: z.array(currentFarmRentalQbiSourceSchema)
     .min(1).optional(),
-  current_passive_k1_income_sources: z.array(k1PassiveIncomeSourceSchema).min(1)
+  current_passive_k1_income_sources: z.array(
+    z.union([k1PassiveIncomeSourceSchema, currentPassiveLine10SourceSchema]),
+  ).min(1)
     .optional(),
   current_k1_qbi_sources: z.array(currentK1QbiSourceSchema).min(1).optional(),
   owned_s_corp_loss_source: z.unknown().optional(),

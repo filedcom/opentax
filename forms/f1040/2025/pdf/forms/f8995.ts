@@ -74,13 +74,15 @@ export const form8995Pdf: PdfFormDescriptor = {
       kind: "text",
       domainKey: "nameLine1",
       pdfField: `${page1}f1_01[0]`,
-      includeWhen: (f) => f.owned_loss_header !== true,
+      includeWhen: (f) =>
+        f.owned_loss_header !== true && f.pdf_current_joint_ordinary !== true,
     },
     {
       kind: "text",
       domainKey: "nameShownOnForm1040",
       pdfField: `${page1}f1_01[0]`,
-      includeWhen: (f) => f.owned_loss_header === true,
+      includeWhen: (f) =>
+        f.owned_loss_header === true || f.pdf_current_joint_ordinary === true,
     },
     { kind: "text", domainKey: "primarySSN", pdfField: `${page1}f1_02[0]` },
   ],
@@ -118,6 +120,12 @@ export const form8995Pdf: PdfFormDescriptor = {
       allPending,
     );
     return {
+      pdf_current_joint_ordinary: allPending.general?.filing_status === "mfj" &&
+        Array.isArray(fields.current_k1_qbi_sources) &&
+        fields.current_k1_qbi_sources.some((row) =>
+          typeof row === "object" && row !== null &&
+          "qualified_box11_line10_income" in row
+        ),
       ...(fields.owned_s_corp_loss_source !== undefined ||
           fields.owned_s_corp_loss_sources !== undefined
         ? { owned_loss_header: true }

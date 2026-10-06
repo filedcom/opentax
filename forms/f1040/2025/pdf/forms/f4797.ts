@@ -1,3 +1,4 @@
+import { assertCurrentPassiveLine10Return } from "../../current_passive_line10_source.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
   allocateOtherPassivePrior4797,
@@ -219,6 +220,13 @@ export const form4797Pdf: PdfFormDescriptor = {
       kind: "text",
       domainKey: "nameLine1",
       pdfField: "topmostSubform[0].Page1[0].f1_1[0]",
+      includeWhen: (f) => f.pdf_current_joint_ordinary !== true,
+    },
+    {
+      kind: "text",
+      domainKey: "nameShownOnForm1040",
+      pdfField: "topmostSubform[0].Page1[0].f1_1[0]",
+      includeWhen: (f) => f.pdf_current_joint_ordinary === true,
     },
     {
       kind: "text",
@@ -227,6 +235,7 @@ export const form4797Pdf: PdfFormDescriptor = {
     },
   ],
   projectFields(fields, allPending) {
+    assertCurrentPassiveLine10Return(fields, allPending);
     if (
       typeof fields.ordinary_gain_form4684 === "number" &&
       fields.ordinary_gain_form4684 !== 0
@@ -269,6 +278,9 @@ export const form4797Pdf: PdfFormDescriptor = {
       }
       const total = rows.reduce((sum, row) => sum + row.gain_loss, 0);
       const projected: Record<string, unknown> = {
+        pdf_current_joint_ordinary:
+          allPending.general?.filing_status === "mfj" &&
+          rows.some((row) => row.current_passive_source !== undefined),
         pdf_sale_description: `K-1 ${rows[0].code} ${rows[0].partnership_ein}`,
         pdf_sale_gain: rows[0].gain_loss,
         pdf_line17: total,

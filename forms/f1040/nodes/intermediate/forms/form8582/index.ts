@@ -103,6 +103,7 @@ export const inputSchema = z.object({
       "form4835",
       "k1_partnership",
       "k1_s_corp",
+      "k1_4797_line10",
     ]).optional(),
     current_net: z.number(),
     prior_unallowed_operating: z.number().nonnegative(),

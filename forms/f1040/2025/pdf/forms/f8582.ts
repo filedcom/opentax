@@ -383,11 +383,24 @@ export const form8582Pdf: PdfFormDescriptor = {
     if (typeof xml !== "string" || xml.length === 0) {
       return {};
     }
-    return projectWorksheet(xml);
+    return {
+      ...projectWorksheet(xml),
+      pdf_current_joint_ordinary: allPending.general?.filing_status === "mfj" &&
+        input.activities?.some((row) =>
+          row.reporting_form === "k1_4797_line10"
+        ),
+    };
   },
   fields,
   filerFields: [
-    pdfText("fullName", `${p1}.f1_01[0]`),
+    {
+      ...pdfText("fullName", `${p1}.f1_01[0]`),
+      includeWhen: (f) => f.pdf_current_joint_ordinary !== true,
+    },
+    {
+      ...pdfText("nameShownOnForm1040", `${p1}.f1_01[0]`),
+      includeWhen: (f) => f.pdf_current_joint_ordinary === true,
+    },
     pdfText("primarySSN", `${p1}.f1_02[0]`),
   ],
 };
