@@ -1,3 +1,4 @@
+import { w2gPayerCopyFixture } from "../w2g_payer_copy.fixture.ts";
 /**
  * XSD Validation Tests — validates generated MeF XML against the IRS
  * 2025v5.4 Return1040.xsd schema using xmllint as a subprocess.
@@ -8873,21 +8874,13 @@ Deno.test({
     box4_federal_withheld: 2_400,
     standard_or_nonstandard_code: "S" as const,
   };
-  const issuedCopy = await PDFDocument.create();
-  issuedCopy.addPage([300, 400]);
   const copyFields = w2gPdf.instances?.(
     { w2gs: [issuedFacts] },
     extractFilerIdentity(general),
     { f1040: { line25c_total: 2_400 } },
   )?.[0];
   if (!copyFields) throw new Error("Missing W-2G Copy B fields");
-  for (const field of w2gPdf.fields) {
-    if (field.kind !== "text" || field.domainKey === "payer_phone") continue;
-    issuedCopy.getForm().createTextField(field.pdfField).setText(
-      String(copyFields[field.domainKey] ?? ""),
-    );
-  }
-  const issuedCopyBytes = await issuedCopy.save();
+  const issuedCopyBytes = await w2gPayerCopyFixture(copyFields);
   const issuedCopyHash = Array.from(
     new Uint8Array(
       await crypto.subtle.digest(

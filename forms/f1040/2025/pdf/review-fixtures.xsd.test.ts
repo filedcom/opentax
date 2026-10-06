@@ -1,3 +1,4 @@
+import { w2gPayerCopyFixture } from "../w2g_payer_copy.fixture.ts";
 import {
   assertEquals,
   assertRejects,
@@ -46,15 +47,7 @@ async function withheldW2GXml(
     { f1040: { line25c_total: pending.f1040?.line25c_total } },
   )?.[0];
   if (!projected) throw new Error("Missing W-2G recipient copy projection");
-  const copy = await PDFDocument.create();
-  copy.addPage([300, 400]);
-  for (const field of w2gPdf.fields) {
-    if (field.kind !== "text" || field.domainKey === "payer_phone") continue;
-    copy.getForm().createTextField(field.pdfField).setText(
-      String(projected[field.domainKey] ?? ""),
-    );
-  }
-  const bytes = await copy.save();
+  const bytes = await w2gPayerCopyFixture(projected);
   const hash = await sha256Hex(bytes);
   const fileName = "IssuedW2G.pdf";
   const bundle = await buildMefBundle({
