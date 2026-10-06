@@ -370,8 +370,12 @@ export function fmvReductionExplanation(
       );
       return `Owned ${result.source.kind} hypothetical FMV sale only: source annual paid-cost/depletion account yields adjusted basis ${
         usd(result.adjusted_basis)
-      }, recapture costs ${
-        usd(result.recapture_costs)
+      }, recapture costs ${usd(result.recapture_costs)}${
+        result.source.kind === "legacy_oil_gas_geothermal_1254"
+          ? ` after independently computed hypothetical depletion offset ${
+            usd(result.hypothetical_depletion_offset ?? 0)
+          }`
+          : ""
       }, applicable percentage ${
         result.applicable_percentage * 100
       }%, ordinary gain ${

@@ -1,4 +1,9 @@
-import { assertEquals, assertRejects, assertThrows } from "@std/assert";
+import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
@@ -16,6 +21,7 @@ import {
   reviewedNaturalResourceGift,
 } from "./form8283-natural-resource.fixture.ts";
 const expected = {
+  legacy_oil: [140000, 7000, 1, 7000, 293000],
   active_soil_water_limited: [20000, 27000, .8, 21600, 28400],
   active_soil_water: [20000, 24000, .8, 19200, 30800],
   soil_water: [20000, 12000, .8, 9600, 40400],
@@ -65,7 +71,7 @@ for (const kind of Object.keys(expected) as ResourceCase[]) {
         ? [127881, 62364.3, 59940.7, 8098]
         : kind === "active_soil_water"
         ? [144608, 54800, 80886, 12707]
-        : kind === "active_oil"
+        : ["active_oil", "legacy_oil"].includes(kind)
         ? [137174, 65152.2, 64586.8, 9121]
         : [100000, 54000, 46000, 5285],
     );
@@ -78,11 +84,33 @@ for (const kind of Object.keys(expected) as ResourceCase[]) {
           ? 0
           : want[4] - (kind === "active_idc_oil"
             ? 38364.3
-            : kind === "active_oil"
+            : ["active_oil", "legacy_oil"].includes(kind)
             ? 41152.2
             : 30000)) * 100,
       ) / 100,
     );
+    if (kind === "legacy_oil") {
+      assertEquals(source.calc.hypothetical_depletion_offset, 3000);
+      assertEquals(
+        source.calc.rows.filter((row) =>
+          [2021, 2022, 2025].includes(row.tax_year)
+        ).map((
+          row,
+        ) => [
+          row.tax_year,
+          row.depletion,
+          row.hypothetical_depletion,
+          row.hypothetical_capitalized_basis,
+          row.cumulative_hypothetical_depletion_offset,
+        ]),
+        [
+          [2021, 20000, 21000, 189000, 1000],
+          [2022, 20000, 21000, 168000, 2000],
+          [2025, 20000, 21000, 147000, 3000],
+        ],
+      );
+      assertEquals(source.calc.source.annual_records.length, 40);
+    }
     assertEquals(result.pending.form4797, undefined);
     if (kind === "active_soil_water_limited") {
       assertEquals(
@@ -125,7 +153,24 @@ for (const kind of Object.keys(expected) as ResourceCase[]) {
       origins,
     );
     assertEquals((await PDFDocument.load(pdf)).getPageCount(), origins.length);
-    if (kind.startsWith("active_")) {
+    const printedPath = await Deno.makeTempFile({ suffix: ".pdf" });
+    try {
+      await Deno.writeFile(printedPath, pdf);
+      const printed = await new Deno.Command("pdftotext", {
+        args: [printedPath, "-"],
+        stdout: "piped",
+        stderr: "piped",
+      }).output();
+      assertEquals(printed.code, 0);
+      assertStringIncludes(
+        new TextDecoder().decode(printed.stdout),
+        `Section ${kind === "small_oil" ? "A" : "B"} item A: unreduced FMV`,
+      );
+    } finally {
+      await Deno.remove(printedPath);
+    }
+
+    if ((kind.startsWith("active_") || kind === "legacy_oil")) {
       const farm = kind.startsWith("active_soil_water");
       const business = (p: any) =>
         farm ? p.schedule_f.schedule_fs[0] : p.schedule_c.schedule_cs[0];
@@ -238,6 +283,34 @@ for (const kind of Object.keys(expected) as ResourceCase[]) {
           "natural-resource source field differs",
         );
       }
+    }
+    if (kind === "legacy_oil") {
+      const altered = structuredClone(pending);
+      // Inject a detached AMT workpaper; the normal filed source derives
+      // the20000 deduction from owned basis/units and needs no supplied scalar.
+      altered.schedule_c!.schedule_cs![0].amt_depletion_worksheet = {
+        source_reference: source.calc.source.annual_account_ledger_reference,
+        all_property_income_and_basis_limits_applied_verified: true,
+        no_at_risk_or_basis_limitation_verified: true,
+        properties: [{
+          property_reference: source.calc.source.property_reference,
+          regular_allowed_depletion: 20000,
+          amt_allowed_depletion: 20001,
+        }],
+      };
+      await assertRejects(
+        () =>
+          buildMefBundle(altered, {
+            filer: source.filer,
+            attachments: source.attachments,
+          }),
+        Error,
+        "cost-depletion AMT source differs",
+      );
+      await assertRejects(
+        () => buildPdfBytes(altered, source.filer, ".pdf-cache", bundle),
+        Error,
+      );
     }
     const root = Deno.env.get("FORM8283_EVIDENCE_DIR");
     if (root) {
@@ -483,5 +556,35 @@ Deno.test("Owned1252/legacy617/current1254 real-estate inventory preserves curre
     for (const row of attachments) {
       await Deno.writeFile(`${dir}/attachments/${row.fileName}`, row.bytes);
     }
+  }
+});
+
+Deno.test("Legacy1254 derives productiveIDC depletion offsets and rejects conflicting owned accounts", () => {
+  const source = naturalResourceSource("legacy_oil");
+  for (
+    const [label, mutate] of [
+      [
+        "reserve ledger",
+        (r: any) =>
+          r.annual_records.find((y: any) => y.tax_year === 2021)
+            .recoverable_units_before_sales = 1100,
+      ],
+      ["pre1987 class", (r: any) => r.placed_in_service = "2021-01-15"],
+      ["unsupported resource", (r: any) => r.resource = "gold"],
+      ["positive IDC AMT preference", (r: any) => {
+        const y = r.annual_records.find((y: any) => y.tax_year === 2021);
+        y.expenses[0].amount = 20000;
+        y.deduction_claimed = 20000;
+      }],
+    ] as const
+  ) {
+    const changed = structuredClone(source);
+    mutate(changed);
+    assertThrows(
+      () => calculateCharitableNaturalResource(changed),
+      Error,
+      undefined,
+      label,
+    );
   }
 });

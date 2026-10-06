@@ -117,6 +117,25 @@ export const charitableNaturalResourceSourceSchema = z.discriminatedUnion(
       ),
       mining_exploration_never_reached_producing_stage: z.boolean(),
     }).strict(),
+    common.extend({
+      kind: z.literal("legacy_oil_gas_geothermal_1254"),
+      resource: z.enum(["oil", "gas", "geothermal"]),
+      operating_interest_and_economic_interest_record_reference: ref,
+      expense_election_reference: ref,
+      no_suspended_or_amortized_costs_or_related_party_1254_costs: z.literal(
+        true,
+      ),
+      no_pre1987_binding_contract_transition: z.literal(true),
+      // A bounded cost-depletion route: actual unit/basis computation must equal
+      // the retained annual return, and exceed even the uncapped percentage amount.
+      cost_depletion_exceeds_uncapped_percentage_when_producing: z.literal(
+        true,
+      ),
+      productive_well_cost_and_start_record_reference: ref,
+      geothermal_well_commenced_on: date.optional(),
+      all_idc_allocable_to_depletable_productive_property: z.literal(true),
+      no_other_regular_or_amt_property_basis_adjustments: z.literal(true),
+    }).strict(),
   ],
 );
 export type CharitableNaturalResourceSource = z.infer<
@@ -139,7 +158,13 @@ export function calculateCharitableNaturalResource(raw: unknown) {
         source.date_acquired.slice(4)
       }` ||
     (source.kind === "legacy_mining_617" && placedYear > 1986) ||
-    (source.kind === "natural_resource_1254" && placedYear < 1987)
+    (source.kind === "natural_resource_1254" && placedYear < 1987) ||
+    (source.kind === "legacy_oil_gas_geothermal_1254" &&
+      (placedYear > 1986 ||
+        (source.resource === "geothermal" &&
+          (!source.geothermal_well_commenced_on ||
+            source.geothermal_well_commenced_on < "1978-10-01" ||
+            source.geothermal_well_commenced_on > source.placed_in_service))))
   ) {
     throw new Error(
       "Natural-resource acquisition, service, long holding or recapture effective-date facts disagree",
@@ -200,6 +225,9 @@ export function calculateCharitableNaturalResource(raw: unknown) {
   let basis = source.original_owned_cost, ordinaryCosts = 0, carry = 0;
   const invoices = new Set<string>();
   let remainingUnits: number | undefined;
+  let hypotheticalBasis = source.original_owned_cost,
+    hypotheticalDepletionOffset = 0;
+  const legacyOil = source.kind === "legacy_oil_gas_geothermal_1254";
   const rows = source.annual_records.map((row) => {
     if (
       row.tax_year < placedYear &&
@@ -247,8 +275,8 @@ export function calculateCharitableNaturalResource(raw: unknown) {
         "Natural-resource filed deduction differs from paid-cost ledger and actual section175 gross-income limit/carry",
       );
     }
-    let depletion = 0;
-    if (source.kind !== "natural_resource_1254") {
+    let depletion = 0, hypotheticalDepletion = 0;
+    if (source.kind !== "natural_resource_1254" && !legacyOil) {
       if (
         row.depletion_claimed !== 0 || row.units_sold !== 0 ||
         row.recoverable_units_before_sales !== 0 ||
@@ -261,7 +289,8 @@ export function calculateCharitableNaturalResource(raw: unknown) {
     } else {
       if (
         row.expenses.some((item) => item.nature === "exploration_617") &&
-        (!source.mining_exploration_never_reached_producing_stage ||
+        (source.kind !== "natural_resource_1254" ||
+          !source.mining_exploration_never_reached_producing_stage ||
           row.gross_property_income > 0 || row.units_sold > 0)
       ) {
         throw new Error(
@@ -312,9 +341,43 @@ export function calculateCharitableNaturalResource(raw: unknown) {
           "Natural-resource filed depletion differs from owned basis and actual sold/reserve units",
         );
       }
+      if (legacyOil) {
+        if (
+          row.expenses.some((cost) => cost.paid_on < "1976-01-01") ||
+          (paid > 0 && (row.units_sold === 0 ||
+            paid > .65 * Math.max(
+                  0,
+                  row.gross_property_income -
+                    row.other_deductible_property_expenses - allowed -
+                    depletion,
+                )))
+        ) {
+          throw new Error(
+            "Legacy1254 productive post1975 IDC and independently bounded zero-AMT preference source disagree",
+          );
+        }
+        // CFR1.1254-1(b)(1)(ii)/(vii): legacyIDC is capitalized solely
+        // in the counterfactual account. Actual depletion never enters its pool.
+        hypotheticalBasis = cents(hypotheticalBasis + allowed);
+        hypotheticalDepletion = row.recoverable_units_before_sales > 0
+          ? cents(
+            Math.min(
+              hypotheticalBasis,
+              hypotheticalBasis * row.units_sold /
+                row.recoverable_units_before_sales,
+            ),
+          )
+          : 0;
+        hypotheticalBasis = cents(hypotheticalBasis - hypotheticalDepletion);
+        hypotheticalDepletionOffset = cents(
+          hypotheticalDepletionOffset + hypotheticalDepletion - depletion,
+        );
+      }
       basis = cents(basis - depletion);
     }
-    ordinaryCosts = cents(ordinaryCosts + allowed + depletion);
+    ordinaryCosts = cents(
+      ordinaryCosts + allowed + (legacyOil ? 0 : depletion),
+    );
     return {
       tax_year: row.tax_year,
       paid_costs: paid,
@@ -322,8 +385,20 @@ export function calculateCharitableNaturalResource(raw: unknown) {
       depletion,
       adjusted_basis: basis,
       conservation_carry: carry,
+      ...(legacyOil
+        ? {
+          hypothetical_capitalized_basis: hypotheticalBasis,
+          hypothetical_depletion: hypotheticalDepletion,
+          cumulative_hypothetical_depletion_offset: hypotheticalDepletionOffset,
+        }
+        : {}),
     };
   });
+  if (legacyOil) {
+    ordinaryCosts = cents(
+      Math.max(0, ordinaryCosts - hypotheticalDepletionOffset),
+    );
+  }
   let percentage = 1;
   if (source.kind === "farmland_1252") {
     const anniversaries = Number(source.date_contributed.slice(0, 4)) -
@@ -367,6 +442,9 @@ export function calculateCharitableNaturalResource(raw: unknown) {
       ? "capital_gain_30" as const
       : "ordinary_noncash_50" as const,
     current_year: rows[rows.length - 1],
+    ...(legacyOil
+      ? { hypothetical_depletion_offset: hypotheticalDepletionOffset }
+      : {}),
   };
 }
 

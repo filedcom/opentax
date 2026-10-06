@@ -849,7 +849,8 @@ export function charitableNaturalResourceDepletion(
   const calc = calculateCharitableNaturalResource(raw);
   const current = raw.annual_records[raw.annual_records.length - 1];
   if (
-    raw.kind !== "natural_resource_1254" ||
+    (raw.kind !== "natural_resource_1254" &&
+      raw.kind !== "legacy_oil_gas_geothermal_1254") ||
     item.business_reference !== raw.business_reference ||
     (item.proprietor_recipient ?? "T") !== raw.proprietor_recipient ||
     item.line_1_gross_receipts !== current.gross_property_income ||
@@ -887,7 +888,9 @@ export function naturalResourceCurrentCosts(item: ScheduleCItem): number {
     current = raw.annual_records.at(-1)!;
   if (
     calc.current_year.deduction > 0 &&
-    (raw.kind !== "natural_resource_1254" || raw.resource === "gold" ||
+    ((raw.kind !== "natural_resource_1254" &&
+      raw.kind !== "legacy_oil_gas_geothermal_1254") ||
+      raw.resource === "gold" ||
       current.expenses.some((row) => row.nature !== "idc_263c") ||
       calc.current_year.deduction >
         .65 *
@@ -910,7 +913,12 @@ export function naturalResourceCurrentCosts(item: ScheduleCItem): number {
  * beyond basis or mining expense AMT adjustment is present in this source route. */
 export function charitableNaturalResourceAmt(item: ScheduleCItem) {
   const raw = item.donated_natural_resource_property_source;
-  if (!raw || raw.kind !== "natural_resource_1254" || raw.resource === "gold") {
+  if (
+    !raw ||
+    (raw.kind !== "natural_resource_1254" &&
+      raw.kind !== "legacy_oil_gas_geothermal_1254") ||
+    raw.resource === "gold"
+  ) {
     return item.amt_depletion_worksheet;
   }
   const calc = calculateCharitableNaturalResource(raw);

@@ -69,7 +69,7 @@ The implemented modern depletion route requires actual cost depletion at least
 the uncapped percentage amount, source reserve-unit continuity and no other
 basis adjustments. It proves current oil/gas/geothermal cost-depletion income
 and bounded zero-IDC preference, not all mining/IDC AMT methods. Producing617
-coordination, legacy1254 hypothetical depletion offsets, positive mining/IDC AMT
+coordination, broader legacy1254 methods, positive mining/IDC AMT
 refigures, and broader fractional filed annual-allowance joins remain guarded
 existing parent boundaries. This commit does not close the whole Form8283 parent
 or claim trusted external authenticity/IRS acceptance.
@@ -192,3 +192,58 @@ manifests. The three original manifest hashes are:
 At fc9858cf8, forty retained public-source packets pass full XSD. Of472 return pages,47 explanation occurrences across24 PDFs intentionally change only “Section A item A” to “Section B item A”; all47 were visually inspected in six contact sheets, and425 other pages retain exact text/raster. Actual signed filename, source row and form-copy joins were independently checked; grouped A/B/C copies remain unchanged. Source, attachments, origins and filed tax/native values are preserved; XML differs only by ReturnTs. Twenty-one older pending archives gain only the verified finalized Form8995 itemized-deduction operand. Resource13 archived carryforwards are exact; older27 packets lack a separate archived carryforward file.
 
 All888 original files remain unchanged. Correction of historical arithmetic:591+169+201=961 prior page occurrences, not971; adding432 resource gives1393 total (472 return+921 retained source). This corrects a count, not missing pages or modified originals. Manifest: `/tmp/opentax-8283-label-fc-pages-review-oct6/proof-manifest.json`, SHA256 `11dbd48bfab51e949cc63c149c758d85ffc56b8011d37f1bc2e0e3f8f8a0cbba`. Full logs: `/tmp/opentax-label-fc-{parent,disposition,depreciation,resource}-held-oct6.log`. Main label checks43/0; source15/0 precedes label patch; rehearsal578/0 verifies source production. No IRS acceptance or external authenticity claim.
+
+## Legacy1254 productive-property depletion offset
+
+The additional `legacy_oil_gas_geothermal_1254` source route applies to owned
+pre1987 oil/gas productive property and qualifying geothermal wells commenced
+on/after1978-10-01. Under CFR1.1254-1(b)(1)(ii)/(vii), the ordinary-income pool
+is deducted productive post1975 IDC minus the additional depletion that would
+have been allowed if those IDC had been capitalized. Actual depletion does not
+enter this legacy pool. The source retains every owned annual basis/unit/paid
+account, productive-well/start record and current business receipts; the helper
+computes two accounts independently. Geothermal date/type, reserve continuity,
+productive allocation, actual cost depletion exceeding uncapped percentage,
+ordinary/AMT basis consistency and bounded zero-IDC preference remain enforced.
+No manual hypothetical-offset or ordinary-tax scalar is accepted.
+
+The full-return oil positive has original cost200000, FMV300000, paid2021IDC10000,
+actual2021/2022/2025 depletion20000 each and final actual basis140000. The
+counterfactual depletion is21000 in each producing year, deriving additional
+depletion3000 and ordinary pool7000. Its pre-AGI contribution is293000.
+Current owned receipts60000/depletion20000 derive ScheduleC profit40000,
+SE5652/halfSE2826, AGI137174, itemized65152.20, QBI deduction7435,
+taxable64586.80, income tax9121/total tax14773 and refund1227.
+The contribution carryforward251847.80 is independently asserted. The genuine
+SectionB threshold uses293000 before the AGI cap and retains the completed
+source Form8283, full appraisal, declaration and donee records. The filed
+explanation prints SectionB and the derived3000 offset. The outright gift
+reports no Form4797 sale income.
+
+Actual source/pending/native/PDF conflict tests retain ownership, annual units,
+dates/costs, detached hypothetical/AMT accounts, source amounts/declared hashes
+and rehashed canonical financial-field mutations. The legacy-specific negative
+records include a changed reserve, an invalid effective-date/resource class and
+IDC that cannot independently establish the supported zero-AMT preference.
+The source documents and historical annual returns are simulated contract test
+evidence, not externally authenticated or verified accepted archives.
+
+Final evidence: `/tmp/opentax-form8283-legacy-offset-evidence-terminal-v7`:
+14 full-source/full-XSD packets,143 return+347 source pages,138 PDFs.
+`/tmp/opentax-form8283-legacy-offset-review-v7/proof-manifest.json` seals235
+files. All490 page occurrences map to331 distinct rasters:279 match reviewed
+v20 images and52 new images were visually inspected in sheets001–006.
+Source canonical/widget/AP/AS audit covers63 forms/5469 fields/4796 widgets.
+Source17/0: `/tmp/opentax-form8283-legacy-offset-v7.log`; prior33-module
+compatibility578/0: `/tmp/opentax-form8283-legacy-offset-compat-v1.log`.
+The exact33-file list remains
+`/tmp/opentax-form8283-natural-resource-compat-files.json`.
+Set `FORM8283_EVIDENCE_DIR` to a new directory and run the public
+`forms/f1040/2025/pdf/form8283-natural-resource.test.ts` test with `deno test -A`;
+reuse the retained v7 PDF cache and complete local XSD cache. Immutable-source
+replay must read the retained source JSON/attachment bytes rather than regenerate
+fixture financial-PDF modification metadata.
+
+Producing617 depletion coordination/AMT, positive mining/IDC preferences,
+percentage-depletion and broader legacy methods remain existing parent scope.
+This supported source portion does not close the entire Form8283 parent.

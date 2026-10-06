@@ -16,6 +16,7 @@ export type ResourceCase =
   | "active_soil_water"
   | "active_soil_water_limited"
   | "legacy_exploration"
+  | "legacy_oil"
   | "oil"
   | "small_oil"
   | "active_oil"
@@ -26,15 +27,24 @@ export type ResourceCase =
   | "gold_exploration";
 export function naturalResourceSource(kind: ResourceCase): Record<string, any> {
   const small = kind === "small_oil";
-  const active = kind === "active_oil" || kind === "active_idc_oil";
+  const legacyOil = kind === "legacy_oil";
+  const active = kind === "active_oil" || kind === "active_idc_oil" ||
+    legacyOil;
   const legacy = kind === "legacy_exploration",
     farm = kind === "soil_water" || kind.startsWith("active_soil_water");
-  const acquired = legacy ? "1985-01-15" : farm ? "2020-01-15" : "2021-01-15";
+  const acquired = legacy
+    ? "1985-01-15"
+    : legacyOil
+    ? "1986-01-15"
+    : farm
+    ? "2020-01-15"
+    : "2021-01-15";
   const annual_records = Array.from({
     length: 2025 - Number(acquired.slice(0, 4)) + 1,
   }, (_, n) => {
     const tax_year = Number(acquired.slice(0, 4)) + n;
-    const paid = kind === "active_idc_oil" && tax_year === 2025 ||
+    const paid = legacyOil && tax_year === 2021 ||
+      kind === "active_idc_oil" && tax_year === 2025 ||
       !active &&
         (tax_year === Number(acquired.slice(0, 4)) + (farm ? 1 : 0) ||
           kind.startsWith("active_soil_water") && tax_year === 2025);
@@ -113,6 +123,8 @@ export function naturalResourceSource(kind: ResourceCase): Record<string, any> {
       ? "farmland_1252"
       : legacy
       ? "legacy_mining_617"
+      : legacyOil
+      ? "legacy_oil_gas_geothermal_1254"
       : "natural_resource_1254",
     property_reference: `GIFT-${kind}`,
     donor_name: "Alex Example",
@@ -195,8 +207,17 @@ export function naturalResourceSource(kind: ResourceCase): Record<string, any> {
         no_suspended_or_amortized_costs_or_related_party_1254_costs: true,
         no_pre1987_binding_contract_transition: true,
         cost_depletion_exceeds_uncapped_percentage_when_producing: true,
-        mining_exploration_never_reached_producing_stage:
-          kind === "gold_exploration",
+        ...(legacyOil
+          ? {
+            productive_well_cost_and_start_record_reference:
+              "Owned2021 productive oil well drilling and unit-sales record",
+            all_idc_allocable_to_depletable_productive_property: true,
+            no_other_regular_or_amt_property_basis_adjustments: true,
+          }
+          : {
+            mining_exploration_never_reached_producing_stage:
+              kind === "gold_exploration",
+          }),
       }),
   };
 }
@@ -227,7 +248,11 @@ export async function reviewedNaturalResourceGift(kind: ResourceCase) {
       "Owned annual cost, production and deduction ledger",
       facts,
       calc.rows.map((r) =>
-        `${r.tax_year}: paid eligible costs${r.paid_costs}; actual allowed deduction${r.deduction}; depletion${r.depletion}; closing adjusted basis${r.adjusted_basis}; conservation carry${r.conservation_carry}. Annual source ${
+        `${r.tax_year}: paid eligible costs${r.paid_costs}; actual allowed deduction${r.deduction}; depletion${r.depletion}; closing adjusted basis${r.adjusted_basis}; conservation carry${r.conservation_carry}.${
+          kind === "legacy_oil"
+            ? ` Hypothetical capitalized basis${r.hypothetical_capitalized_basis}; hypothetical depletion${r.hypothetical_depletion}; cumulative IDC depletion offset${r.cumulative_hypothetical_depletion_offset}.`
+            : ""
+        } Annual source ${
           source.annual_records.find((a: any) => a.tax_year === r.tax_year)
             .annual_return_and_account_reference
         }.`
@@ -262,7 +287,11 @@ Current account has no other receipts, expenses or sold units. Property remains 
     await giftSourceRecord(
       "Natural-resource hypothetical ordinary gain reduction",
       facts,
-      [`FMV${calc.fmv}; original cost${source.original_owned_cost}; adjusted basis${calc.adjusted_basis}; hypothetical gain${calc.hypothetical_gain}; retained deductible-cost/depletion account${calc.recapture_costs}; applicable percentage${
+      [`FMV${calc.fmv}; original cost${source.original_owned_cost}; adjusted basis${calc.adjusted_basis}; hypothetical gain${calc.hypothetical_gain}; retained deductible-cost/depletion account${calc.recapture_costs};${
+        kind === "legacy_oil"
+          ? ` deducted productiveIDC10000 less hypothetical depletion offset${calc.hypothetical_depletion_offset};`
+          : ""
+      } applicable percentage${
         calc.applicable_percentage * 100
       }%; ordinary gain${calc.ordinary_gain}; residual long-term${calc.residual_long_term_gain}; preAGI claim${calc.deduction_claimed}. No actual Form4797 income from outright gift.`],
     ),
@@ -359,6 +388,7 @@ Current account has no other receipts, expenses or sold units. Property remains 
       ...([
           "active_oil",
           "active_idc_oil",
+          "legacy_oil",
           "active_soil_water",
           "active_soil_water_limited",
         ].includes(kind)
@@ -370,10 +400,21 @@ Current account has no other receipts, expenses or sold units. Property remains 
           },
         }
         : {}),
-      ...(kind === "legacy_exploration"
-        ? { general: { ...base.inputs.general, taxpayer_dob: "1965-06-15" } }
+      ...(["legacy_exploration", "legacy_oil"].includes(kind)
+        ? {
+          general: {
+            ...base.inputs.general,
+            taxpayer_dob: "1965-06-15",
+            ...(kind === "legacy_oil"
+              ? {
+                qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+                qbi_not_patron_of_specified_cooperative_confirmed: true,
+              }
+              : {}),
+          },
+        }
         : {}),
-      ...(["active_oil", "active_idc_oil"].includes(kind)
+      ...(["active_oil", "active_idc_oil", "legacy_oil"].includes(kind)
         ? {
           schedule_c: [{
             line_a_principal_business: "Operating oil production",
