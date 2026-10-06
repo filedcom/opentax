@@ -1675,3 +1675,7 @@ Full `deno task test` at bc6cafec6 ended11,494/8, exit1. Immutable rerun fbacc53
 
 
 FullV3 fbacc terminal11,577/14/0ignored,exit1,82m15s,14failures mapped tosource/cap/dividend/modulecycle repairs. Final two modulefiles currentmain44/0(49ms), all14 targetedrepairsevidenced. Same denotasktest nowwillrunimmutablelatestverifiedsource. Deno2.9.4/TS6.0.3/libxml2.9.13/Poppler26.09.0. Old source/log/artifacts retained; no lifecycle timeout restart.
+
+## Repaired full regression live
+
+Fresh detached181575242db2afcb5fcceb25088e3311f7aa9d78 in `/tmp/opentax-full-regression-source-v4-oct6` launched exact `deno task test` at2026-10-06T03:53:35Z. LaunchAgent `opentax-full-regression-source-v4-oct6`, wrapper44964/Deno44970 verified live nine seconds later, typechecking progressing. Log `/tmp/opentax-deno-task-test-source-v4-oct6.log`; status/wrapper/plist sameprefix. Canonical local IRS docs are read-only linked; audit/bench/field-dump/PDF caches copied. Immutable source not edited; no fullgreen claim. Three isolated existingtasks active, pending ATS package-location question; frozen52 suffix unchanged.
