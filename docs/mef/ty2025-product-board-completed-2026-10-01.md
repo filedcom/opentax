@@ -1964,3 +1964,6 @@ Audit qualification: preceding Roth entries preserve their original tests and im
 
 
 - [x] Carry optional retained source documents through shared PDF catalog generation, exact source serialization and read-only replay, registering corrected ordinary4852J with all eight original byte records. Typed gate9/0; full-XSD8page packet allreviewed, source/native/PDF replay1/8 passes, PDF/origins exact correctedarchive andXMLonlyReturnTs. Existing QEF1/7 source/pending/PDF/XML bytes exact under newdriver. Shared planner367fixtures/98covered/17uncovered; wider4852/authentication/IRS parent remains open. See [retained catalog proof](ty2025-native-pdf-registry-parity.md).
+
+
+- [x] Derive productive617 default depletion disallowance, regular/AMT remaining pools, actual616 paid development adjustment and owned gift reductions; settle filed6251 lines and tax while retaining raw exemption worksheet multiplication through subtraction. Fresh main19/0+98/0+105/0; actual held16full-XSDpackets267files exactsource/pending/carry/PDF/attachments, XMLonlyReturnTs;611reviewedpageoccurrences preserved. MainScheduleJ5/85,4952cent7pages and sharedQEF7/ordinary4852 8page packets exact. Wider differing AMT charity/line3/separatecarry/authentication/IRS parent remains open. See [productive source proof](ty2025-form8283-natural-resource-reduction-proof.md).

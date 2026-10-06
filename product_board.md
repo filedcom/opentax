@@ -2,17 +2,17 @@
 
 ## Compacted status (2026-10-06)
 
-The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,470 recorded slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,471 recorded slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
 
 Inventory: **151 native / 118 PDF descriptors**, **367 fixtures**, **115 PDF keys / 98 covered / 17 uncovered**.
 
-Latest verified work: source-based preferential ScheduleJ with farm QBI, no-election AMT and staged adoption/education/QEF (**main10/0 + 100/0**), five reviewed full-XSD packets / 85 pages and actual raw-source replay exact after Roth integration. Exact Form4952 cents and donation proofs remain archived. Corrected ordinary-Roth sources pass fresh main11/0 +209/0 and actual retained-source replay35packets/295pages;873 corrected archived files remain byte-exact. Wider parents remain open.
+Latest verified work: source-based preferential ScheduleJ with farm QBI, no-election AMT and staged adoption/education/QEF (**main10/0 + 100/0**), five reviewed full-XSD packets / 85 pages and actual raw-source replay exact after Roth integration. Exact Form4952 cents and donation proofs remain archived; sourced productive mining/AMT now passes fresh main19/0+203related, held16packets267files exact. Corrected ordinary-Roth sources pass fresh main11/0 +209/0 and actual retained-source replay35packets/295pages;873 corrected archived files remain byte-exact. Wider parents remain open.
 
 Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The first immutable **4a45410da** rerun exited **1**; KeepAlive restarted it and overwrote its terminal log. The second run (wrapper91417/Deno91420, start07:44:10UTC) is live, and a startup guard will archive its result before preventing another launch. First-run totals are unavailable. A passing latest-source full run remains required.
 
 Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **c70af78a3**, published with exact Form4952 cents, sourced ScheduleJ staged returns and corrected ordinary-Roth classification; saved title/body and remote head verified.
 
-Donation source and Section B printing proofs are sealed. Ordinary-Roth classification is verified only for the separately corrected35-source proof; original checked source copies remain superseded. Original10 paper margin and codeN recharacterization source/statement consequences remain qualified. Root preferential ScheduleJ/AMT source work has an isolated checkout and a retained guard audit. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+Donation source and Section B printing proofs are sealed. Ordinary-Roth classification is verified only for the separately corrected35-source proof; original checked source copies remain superseded. Original10 paper margin and codeN recharacterization source/statement consequences remain qualified. Current source-backed ScheduleJ and mining/AMT integrations preserve their reviewed packets; wider attribution and differing AMT charitable deductions remain active. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
 
 ## Scope and completion rules
 
