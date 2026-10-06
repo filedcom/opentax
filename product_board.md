@@ -16,6 +16,8 @@ Spouse-owned cooperative QBI is integrated at **67aef9dee/92f1c9020**. Independe
 
 Dated parent Schedule H service and finite/calendar-capacity hour checks are integrated at **22b3a845b/6c85ed12e**. Independent candidate replay passed **18 returns/91 pages** with exact graphs/PDFs and full local XSD. Main ordinary fourteen-module and saved-source eighteen-return gates are running; no bounded completion is claimed. See the [parent timing proof](docs/mef/ty2025-schedule-h-parent-dated-service-source.md).
 
+Form 4972 distinct participant and shared employer-plan reconciliation is integrated at **5b498099c/b03b6ec26**. Candidate typed checks passed **116/0**, and independent actual six-return replay passed **36 pages**, including exact graphs, prepared values, PDF bytes, native XML apart from timestamp and full local XSD. All pages were reviewed. Main ten-module and six-source gates are running; the wider Form 4972 parent remains open. See the [participant proof](docs/mef/ty2025-form4972-participant-collections-review.md).
+
 ## Scope and completion rules
 
 - [ ] Verify the release covers the TY2025 Form 1040 family: Form 1040, its applicable schedules, supporting forms, source documents, statements, PDF packet, MeF return, and A2A submission package.
