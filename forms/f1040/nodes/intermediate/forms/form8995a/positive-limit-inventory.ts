@@ -1,10 +1,17 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
 
-const date = z.string().regex(/^20\d{2}-\d{2}-\d{2}$/);
+const realDate = (value: string) => {
+  if (!/^20\d{2}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === value;
+};
+const date = z.string().refine(realDate, "Actual calendar date required");
+const date2025 = date.refine((value) => value.startsWith("2025-"));
 const payment = z.object({
   employee_ssn: z.string().regex(/^\d{9}$/),
-  paid_on: z.string().regex(/^2025-\d{2}-\d{2}$/),
+  paid_on: date2025,
   check_reference: z.string().min(1),
   cash_wages: z.number().int().positive(),
   net_check_paid: z.number().int().positive(),
@@ -16,6 +23,8 @@ const employeeW2 = z.object({
   issued_on: date,
   ssa_filing_reference: z.string().min(1),
   ssa_filed_on: date,
+  retained_i9_reference: z.string().min(1),
+  agricultural_worker_not_h2a: z.literal(true),
   box1_wages: z.number().int().positive(),
   box3_social_security_wages: z.number().int().positive(),
   box5_medicare_wages: z.number().int().positive(),
@@ -58,9 +67,9 @@ const bookSchema = z.object({
     z.object({
       buyer: z.string().min(1),
       crop: z.string().min(1),
-      sold_on: z.string().regex(/^2025-\d{2}-\d{2}$/),
+      sold_on: date2025,
       buyer_invoice_reference: z.string().min(1),
-      paid_on: z.string().regex(/^2025-\d{2}-\d{2}$/),
+      paid_on: date2025,
       deposit_reference: z.string().min(1),
       amount: z.number().int().positive(),
     }).strict(),
@@ -73,11 +82,55 @@ const bookSchema = z.object({
     }).strict(),
   ).length(12),
   issued_employee_w2_copies: z.array(employeeW2),
+  current_2025_agricultural_service_weeks: z.array(
+    z.object({
+      week_end: date2025,
+      employee_count: z.number().int().positive(),
+    }).strict(),
+  ),
+  prior_2024_agricultural_payroll: z.object({
+    source_reference: z.string().min(1),
+    quarter_cash_wages: z.tuple([
+      z.number().int().nonnegative(),
+      z.number().int().nonnegative(),
+      z.number().int().nonnegative(),
+      z.number().int().nonnegative(),
+    ]),
+    quarter_employee_service_week_counts: z.tuple([
+      z.number().int().nonnegative(),
+      z.number().int().nonnegative(),
+      z.number().int().nonnegative(),
+      z.number().int().nonnegative(),
+    ]),
+  }).strict(),
   form943_filing_reference: z.string().min(1).optional(),
   employer_payroll_tax_deposit: z.object({
-    paid_on: z.string().regex(/^2025-\d{2}-\d{2}$/),
+    paid_on: date2025,
     bank_debit_reference: z.string().min(1),
     amount: z.number().int().positive(),
+  }).strict().optional(),
+  unemployment: z.object({
+    state: z.literal("TX"),
+    state_account_reference: z.string().min(1),
+    state_rate_notice_reference: z.string().min(1),
+    state_assigned_rate_basis_points: z.literal(270),
+    state_q4_report_reference: z.string().min(1),
+    state_q4_report_filed_on: date,
+    state_tax_payment: z.object({
+      paid_on: date,
+      bank_debit_reference: z.string().min(1),
+      amount: z.number().int().positive(),
+    }).strict(),
+    form940_filing_reference: z.string().min(1),
+    form940_filed_on: date,
+    futa_tax_payment: z.object({
+      paid_on: date,
+      bank_debit_reference: z.string().min(1),
+      amount: z.number().int().positive(),
+    }).strict(),
+    same_state_wages_credit_eligible: z.literal(true),
+    state_tax_timely_paid: z.literal(true),
+    no_credit_reduction_state: z.literal(true),
   }).strict().optional(),
   owned_property_register: z.array(property),
 }).strict();
@@ -126,7 +179,35 @@ export function reviewedPositiveLimits(
     });
   });
   const wages = payments.reduce((sum, row) => sum + row.cash_wages, 0);
-  const employerTax = wages * 765 / 10000;
+  const ficaTax = wages * 765 / 10000;
+  const quarterWages = [0, 0, 0, 0];
+  for (const row of payments) {
+    quarterWages[Math.floor((Number(row.paid_on.slice(5, 7)) - 1) / 3)] +=
+      row.cash_wages;
+  }
+  const unemploymentRequired =
+    quarterWages.some((amount) => amount >= 20_000) ||
+    book.prior_2024_agricultural_payroll.quarter_cash_wages.some((amount) =>
+      amount >= 20_000
+    ) ||
+    book.current_2025_agricultural_service_weeks.filter((week) =>
+        week.employee_count >= 10
+      ).length >= 20 ||
+    book.prior_2024_agricultural_payroll.quarter_employee_service_week_counts
+        .reduce((sum, count) => sum + count, 0) >= 20;
+  const unemployment = book.unemployment;
+  const stateBase = Math.min(wages, 9_000);
+  const futaBase = Math.min(wages, 7_000);
+  const stateTax = stateBase * 270 / 10_000;
+  const futaTax = futaBase * 60 / 1_000 - futaBase * 54 / 1_000;
+  const paidIn2025 = (value: string) => value <= "2025-12-31";
+  const employerTax = ficaTax +
+    (unemployment && paidIn2025(unemployment.state_tax_payment.paid_on)
+      ? stateTax
+      : 0) +
+    (unemployment && paidIn2025(unemployment.futa_tax_payment.paid_on)
+      ? futaTax
+      : 0);
   const copies = book.issued_employee_w2_copies;
   const assets = book.owned_property_register;
   const basis = assets.reduce((sum, row) => sum + row.original_cost_paid, 0);
@@ -141,11 +222,36 @@ export function reviewedPositiveLimits(
     book.business_reference !== expected.business_reference ||
     book.employer_ein !== expected.employer_ein ||
     (wages === 0 && basis === 0) ||
-    !Number.isInteger(employerTax) ||
+    !Number.isInteger(ficaTax) || !Number.isInteger(employerTax) ||
+    unemploymentRequired !== (unemployment !== undefined) ||
+    book.current_2025_agricultural_service_weeks.length !==
+      new Set(
+        book.current_2025_agricultural_service_weeks.map((week) =>
+          week.week_end
+        ),
+      ).size ||
+    (wages > 0 &&
+      book.current_2025_agricultural_service_weeks.length === 0) ||
+    (unemployment && (
+      !Number.isInteger(stateTax) || !Number.isInteger(futaTax) ||
+      unemployment.state_q4_report_filed_on < "2025-12-31" ||
+      unemployment.state_q4_report_filed_on > "2026-01-31" ||
+      unemployment.form940_filed_on < "2025-12-31" ||
+      unemployment.form940_filed_on > "2026-02-10" ||
+      unemployment.state_tax_payment.paid_on < payments.at(-1)!.paid_on ||
+      unemployment.futa_tax_payment.paid_on < payments.at(-1)!.paid_on ||
+      unemployment.state_tax_payment.paid_on > unemployment.form940_filed_on ||
+      unemployment.state_tax_payment.paid_on > "2026-02-02" ||
+      unemployment.futa_tax_payment.paid_on > unemployment.form940_filed_on ||
+      unemployment.state_tax_payment.amount !== stateTax ||
+      unemployment.futa_tax_payment.amount !== futaTax ||
+      unemployment.state_tax_payment.bank_debit_reference ===
+        unemployment.futa_tax_payment.bank_debit_reference
+    )) ||
     (wages > 0) !== (book.form943_filing_reference !== undefined) ||
     (wages > 0) !== (book.employer_payroll_tax_deposit !== undefined) ||
     (wages > 0 &&
-      book.employer_payroll_tax_deposit!.amount !== 2 * employerTax) ||
+      book.employer_payroll_tax_deposit!.amount !== 2 * ficaTax) ||
     new Set(book.months.map((row) => row.payroll_journal_reference)).size !==
       12 ||
     new Set(payments.map((row) => row.check_reference)).size !==
@@ -173,6 +279,7 @@ export function reviewedPositiveLimits(
       copy.issued_on < "2025-12-31" || copy.issued_on > "2026-01-31" ||
       copy.ssa_filed_on < copy.issued_on || copy.ssa_filed_on > "2026-04-03" ||
       copy.box1_wages !== copy.box3_social_security_wages ||
+      copy.box3_social_security_wages > 176_100 ||
       copy.box1_wages !== copy.box5_medicare_wages ||
       copy.box4_social_security_tax_withheld !==
         copy.box3_social_security_wages * 62 / 1000 ||

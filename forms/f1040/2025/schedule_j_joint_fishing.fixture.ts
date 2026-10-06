@@ -146,7 +146,7 @@ export function scheduleJJointFishingPositiveLimitsInputs(
   const hasProperty = kind !== "wages";
   f.line2_sales_products_raised = 500_000;
   f.line22_labor_hired = hasWages ? 20_000 : 0;
-  f.line29_taxes = hasWages ? 1_530 : 0;
+  f.line29_taxes = hasWages ? 1_815 : 0;
   f.qbi_w2_wages = hasWages ? 20_000 : 0;
   f.qbi_unadjusted_basis = hasProperty ? 400_000 : 0;
   delete f.qbi_zero_limit_inventory;
@@ -187,6 +187,8 @@ export function scheduleJJointFishingPositiveLimitsInputs(
         issued_on: "2026-01-31",
         ssa_filing_reference: "grain-2025-ssa-w3-1",
         ssa_filed_on: "2026-01-31",
+        retained_i9_reference: "grain-employee-i9-2025-1",
+        agricultural_worker_not_h2a: true,
         box1_wages: 20_000,
         box3_social_security_wages: 20_000,
         box5_medicare_wages: 20_000,
@@ -194,6 +196,14 @@ export function scheduleJJointFishingPositiveLimitsInputs(
         box6_medicare_tax_withheld: 290,
       }]
       : [],
+    current_2025_agricultural_service_weeks: hasWages
+      ? [{ week_end: "2025-10-18", employee_count: 1 }]
+      : [],
+    prior_2024_agricultural_payroll: {
+      source_reference: "grain-2024-quarterly-payroll-archive",
+      quarter_cash_wages: [0, 0, 0, 0],
+      quarter_employee_service_week_counts: [0, 0, 0, 0],
+    },
     ...(hasWages
       ? {
         form943_filing_reference: "grain-2025-form943-payroll-return",
@@ -201,6 +211,29 @@ export function scheduleJJointFishingPositiveLimitsInputs(
           paid_on: "2025-11-15",
           bank_debit_reference: "grain-2025-payroll-tax-debit-1115",
           amount: 3_060,
+        },
+        unemployment: {
+          state: "TX",
+          state_account_reference: "grain-texas-ui-account-2025",
+          state_rate_notice_reference: "grain-texas-ui-2025-rate-notice",
+          state_assigned_rate_basis_points: 270,
+          state_q4_report_reference: "grain-texas-ui-2025-q4-report",
+          state_q4_report_filed_on: "2026-01-15",
+          state_tax_payment: {
+            paid_on: "2025-12-31",
+            bank_debit_reference: "grain-texas-ui-2025-q4-debit",
+            amount: 243,
+          },
+          form940_filing_reference: "grain-federal-form940-2025",
+          form940_filed_on: "2026-02-02",
+          futa_tax_payment: {
+            paid_on: "2025-12-31",
+            bank_debit_reference: "grain-futa-2025-q4-debit",
+            amount: 42,
+          },
+          same_state_wages_credit_eligible: true,
+          state_tax_timely_paid: true,
+          no_credit_reduction_state: true,
         },
       }
       : {}),
