@@ -2856,3 +2856,8 @@ Donation source and Section B printing proofs are sealed. The recorded Roth hist
 
 
 Previous goal turn was progress: main legacy production e5db4222a sealed at33081ebdc with17/0 and original14/235exact fullXSD/490reviewedpages; donation checkpoint ca8c02d4e published PR63. V5 wrapper65945/Deno65949 verified live115m42s in mixed SHOP source tests. Next main changes require current-main staged ScheduleJ integration rehearsal or corrected ordinary-Roth source proof; neither ready yet. Agent naturalresource resumes existing producing617 depletion/AMT parent in isolatedcheckout. No main/future additions or closure claims.
+
+
+## Before Form4952 exact paid-source tracing
+
+Current debt_trace accepts only integer principal/payment amounts; actual loan/interest source cents cannot traverse the existing reviewed-source route. Form4952 debt tracing and source amount fidelity are existing frozen parent scope. Root will retain source cents through safe integer-cent payment reconciliation and whole-source/native/PDF proof, preserving current integer positive artifacts. No wider loan/mixed-use/authentication claim and no future work. Publication PR63 verified928586521; attach2426 still pending. FullV5 live117m06s. OrdinaryRoth prerequisite and stagedScheduleJ freshmain proof continue independently.
