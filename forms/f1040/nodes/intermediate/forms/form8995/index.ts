@@ -1,5 +1,6 @@
 import { farmWotcAdvancedFields } from "../form8995a/farm-wotc.ts";
 import { jointOwnerQbi } from "./joint-owner.ts";
+import { singleScheduleCPlanSchema } from "../form7206/index.ts";
 import {
   ownedScheduleSE,
   ownerSourcesSchema,
@@ -71,6 +72,7 @@ function sumField(value: number | number[] | undefined): number {
 export const inputSchema = z.object({
   patron_source_review: patronReviewSchema.optional(),
   joint_se_source: ownerSourcesSchema.optional(),
+  joint_owner_health_plan_source: singleScheduleCPlanSchema.optional(),
   joint_owner_filing_rows: z.array(z.record(z.string(), z.unknown()))
     .optional(),
   // Net QBI or (loss) from sole proprietorships (Schedule C), netted across businesses
@@ -1081,7 +1083,6 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
           input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
           input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
           sumField(input.qbi) !== 0 ||
-          sumField(input.se_health_insurance_deduction) !== 0 ||
           sumField(input.retirement_plan_deduction) !== 0 ||
           sumField(input.line6_sec199a_dividends) !== 0 ||
           (input.qbi_loss_carryforward ?? 0) !== 0 ||
@@ -1096,6 +1097,8 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
           input.joint_se_source,
           input.agi - standardDeductionAmount(input, cfg),
           cfg.ssWageBase,
+          input.joint_owner_health_plan_source,
+          sumField(input.se_health_insurance_deduction),
         );
       })()
       : undefined;

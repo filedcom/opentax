@@ -232,7 +232,10 @@ export function calculateSingleScheduleCForm7206(
   });
 }
 
-function buildOutput(deduction: number): NodeOutput[] {
+function buildOutput(
+  deduction: number,
+  source?: SingleScheduleCPlan,
+): NodeOutput[] {
   if (deduction <= 0) return [];
   return [
     output(schedule1, { line17_se_health_insurance: deduction }),
@@ -240,7 +243,10 @@ function buildOutput(deduction: number): NodeOutput[] {
     // This deduction is attributable to the trade or business, so it reduces QBI.
     // i8995, Determining Your Qualified Business Income: the items to consider include
     // the "self-employment health insurance deduction".
-    output(form8995, { se_health_insurance_deduction: deduction }),
+    output(form8995, {
+      se_health_insurance_deduction: deduction,
+      ...(source ? { joint_owner_health_plan_source: source } : {}),
+    }),
   ];
 }
 
@@ -402,7 +408,7 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
     const lines = calculateSingleScheduleCForm7206(source);
     return {
       outputs: [
-        ...buildOutput(lines.line14),
+        ...buildOutput(lines.line14, source),
         {
           nodeType: this.nodeType,
           fields: {

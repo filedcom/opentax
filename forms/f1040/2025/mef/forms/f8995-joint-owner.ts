@@ -3,6 +3,14 @@ import { assertOwnedScheduleSE } from "../../schedule-se-owner-source.ts";
 import { jointOwnerQbi } from "../../../nodes/intermediate/forms/form8995/joint-owner.ts";
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
 import type { Filed8995 } from "./f8995-route.ts";
+import {
+  calculateSingleScheduleCForm7206,
+  reconcileSingleScheduleCGraphSource,
+  singleScheduleCPlanSchema,
+} from "../../../nodes/intermediate/forms/form7206/index.ts";
+import { assertForm7206SpouseCoverage } from "../../form7206_spouse_coverage.ts";
+import { assertScheduleCReceiptSourceIdentity } from "../../filer-source-reconciliation.ts";
+import { extractFilerIdentity } from "../../../mef/filer.ts";
 
 /** Recompute actual owner deductions and filed business rows before either export. */
 export function assertJointOwner8995(
@@ -36,10 +44,67 @@ export function assertJointOwner8995(
           )
           : item,
     );
+  const rawPlan = p.form7206?.single_schedule_c_plan;
+  const plan = rawPlan === undefined
+    ? undefined
+    : singleScheduleCPlanSchema.parse(rawPlan);
+  const health = plan ? calculateSingleScheduleCForm7206(plan).line14 : 0;
+  if (plan) {
+    if (p.schedule_c?.f1099nec_receipt_sources) {
+      const filer = extractFilerIdentity(f);
+      if (!filer) {
+        throw new Error(
+          "Joint QBI issued receipts need the actual settled filer identity",
+        );
+      }
+      assertScheduleCReceiptSourceIdentity(p, filer);
+    }
+    const lines = calculateSingleScheduleCForm7206(plan), form = p.form7206!;
+    reconcileSingleScheduleCGraphSource(form, plan, owned.deduction);
+    assertForm7206SpouseCoverage(plan, p);
+    const identityName = `${g.taxpayer_first_name} ${g.taxpayer_last_name}`;
+    const recipient = plan.recipient === "S"
+      ? plan.spouse_identity!
+      : plan.taxpayer_identity;
+    if (
+      Object.entries(lines).some(([key, value]) => form[key] !== value) ||
+      plan.taxpayer_identity.ssn.replaceAll("-", "") !==
+        String(g.taxpayer_ssn).replaceAll("-", "") ||
+      plan.taxpayer_identity.name.trim().toUpperCase() !==
+        identityName.trim().toUpperCase() ||
+      form.recipient_name !== recipient.name ||
+      form.recipient_ssn !== recipient.ssn.replaceAll("-", "") ||
+      p.schedule1?.line17_se_health_insurance !== health
+    ) {
+      throw new Error(
+        "Joint Form8995 must retain its actual computed Form7206 owner, premium lines and Schedule1 deduction",
+      );
+    }
+  }
+  const sum = (v: unknown) =>
+    (Array.isArray(v) ? v : [v ?? 0]).reduce<number>((n, x) => {
+      if (typeof x !== "number" || !Number.isFinite(x) || x < 0) {
+        throw new Error(
+          "Joint QBI deduction source must be a nonnegative amount",
+        );
+      }
+      return n + x;
+    }, 0);
+  if (
+    canonical(fields.joint_owner_health_plan_source) !== canonical(rawPlan) ||
+    sum(fields.se_health_insurance_deduction) !== health ||
+    Number(p.schedule1?.line17_se_health_insurance ?? 0) !== health
+  ) {
+    throw new Error(
+      "Joint Form8995 health adjustment must join the actual sourced Form7206 plan",
+    );
+  }
   const expected = jointOwnerQbi(
     owned.source,
     f.line11_agi - f.line12c_deduction_total,
     CONFIG_BY_YEAR[2025].ssWageBase,
+    plan,
+    health,
   );
   if (
     canonical(fields.joint_se_source) !== canonical(owned.source) ||
@@ -48,8 +113,9 @@ export function assertJointOwner8995(
     g.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     g.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
     g.filing_status !== "mfj" || fields.filing_status !== "mfj" ||
-    Math.abs(f.line11_agi - (wages + profit - owned.deduction)) >= .000001 ||
-    Number(f.line10_adjustments ?? 0) !== owned.deduction ||
+    Math.abs(f.line11_agi - (wages + profit - owned.deduction - health)) >=
+      .000001 ||
+    Number(f.line10_adjustments ?? 0) !== owned.deduction + health ||
     Number(f.line1a_wages ?? 0) !== wages ||
     Number(f.line13_qbi_deduction ?? 0) !== expected.line15 ||
     Number(fields.qbi_deduction) !== expected.line15 ||

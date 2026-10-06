@@ -20,6 +20,7 @@ import { element, elements } from "../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { assertForm7206SpouseCoverage } from "../../form7206_spouse_coverage.ts";
 import { TS } from "../../../nodes/types.ts";
+import { assertScheduleCReceiptSourceIdentity } from "../../filer-source-reconciliation.ts";
 
 type Input = Partial<
   Form7206Lines & {
@@ -125,12 +126,16 @@ function buildIRS7206(fields: Input, context?: MefBuildContext): string {
     (scheduleC.wotc_wage_reductions?.length ?? 0) > 0 ||
     Object.keys(scheduleC).some((key) =>
       key !== "schedule_cs" && key !== "filing_status" &&
-      key !== "patron_distribution_sources" && key !== "patron_filing_review"
+      key !== "patron_distribution_sources" && key !== "patron_filing_review" &&
+      key !== "f1099nec_receipt_sources"
     )
   ) {
     throw new Error("Form 7206 needs one unadjusted Schedule C source");
   }
   const business = scheduleC.schedule_cs[0];
+  if (scheduleC.f1099nec_receipt_sources) {
+    assertScheduleCReceiptSourceIdentity(pending!, filer);
+  }
   if (
     business.business_reference !== source.business_reference ||
     business.proprietor_recipient !== source.recipient ||

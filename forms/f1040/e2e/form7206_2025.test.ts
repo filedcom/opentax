@@ -328,7 +328,12 @@ Deno.test("spouse-owned Schedule C Medicare Part B premiums retain spouse owner 
   assertEquals(result.pending.form7206?.line14, 2_220);
   assertEquals(result.pending.schedule1?.line17_se_health_insurance, 2_220);
   assertEquals(result.pending.f1040?.line10_adjustments, seDeduction + 2_220);
-  assertEquals(result.pending.form8995?.line1_ssn, "222334444");
+  assertEquals(
+    (result.pending.form8995?.joint_owner_filing_rows as Array<
+      { tin: { value: string } }
+    >)[0].tin.value,
+    "222334444",
+  );
   const filer = extractFilerIdentity(result.pending.f1040);
   const xml = buildMefXml(result.pending, filer);
   assertStringIncludes(xml, "<IRS7206 documentId=");
@@ -347,10 +352,11 @@ Deno.test("spouse-owned Schedule C Medicare Part B premiums retain spouse owner 
   );
   assertEquals(projected.recipient_name, "Casey Example");
   assertEquals(projected.line14, 2_220);
-  const projectedSE = scheduleSePdf.projectFields!(
+  const projectedSE = scheduleSePdf.instances!(
     result.pending.schedule_se!,
+    filer,
     result.pending,
-  );
+  )[0];
   assertEquals(projectedSE.owner_name, "Casey Example");
   assertEquals(projectedSE.owner_ssn, "222334444");
 
@@ -382,7 +388,9 @@ Deno.test("spouse-owned Schedule C Medicare Part B premiums retain spouse owner 
     Error,
   );
   const changedQbiOwner = structuredClone(result.pending);
-  changedQbiOwner.form8995!.line1_ssn = "111223333";
+  (changedQbiOwner.form8995!.joint_owner_filing_rows as Array<
+    { tin: { value: string } }
+  >)[0].tin.value = "111223333";
   assertThrows(() => buildMefXml(changedQbiOwner, filer), Error);
 });
 
@@ -425,7 +433,12 @@ Deno.test("one Schedule C policy with taxpayer and spouse months reaches the joi
   assertEquals(result.pending.form7206?.line14, 12_000);
   assertEquals(result.pending.schedule1?.line17_se_health_insurance, 12_000);
   assertEquals(result.pending.f1040?.line10_adjustments, seDeduction + 12_000);
-  assertEquals(result.pending.form8995?.line1_qbi, 34_467);
+  assertEquals(
+    (result.pending.form8995?.joint_owner_filing_rows as Array<
+      { qbi: number }
+    >)[0].qbi,
+    34_467,
+  );
   const filer = extractFilerIdentity(result.pending.f1040);
   assertStringIncludes(
     buildMefXml(result.pending, filer),

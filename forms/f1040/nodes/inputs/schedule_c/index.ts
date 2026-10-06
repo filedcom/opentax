@@ -376,7 +376,8 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
       schedule_c_source: {
         unadjusted_source: Object.keys(input).every((key) =>
           key === "schedule_cs" || key === "patron_distribution_sources" ||
-          key === "patron_filing_review" || key === "filing_status"
+          key === "patron_filing_review" || key === "filing_status" ||
+          key === "f1099nec_receipt_sources"
         ) && items.every((item) =>
           item.at_risk_simplified === undefined &&
           item.line_32_at_risk !== "b"

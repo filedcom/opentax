@@ -18,6 +18,8 @@ import { z } from "zod";
 import { form7206 as nativeForm7206 } from "../../mef/forms/f7206.ts";
 import { assertForm7206SpouseCoverage } from "../../form7206_spouse_coverage.ts";
 import { TS } from "../../../nodes/types.ts";
+import { assertScheduleCReceiptSourceIdentity } from "../../filer-source-reconciliation.ts";
+import { extractFilerIdentity } from "../../../mef/filer.ts";
 
 // TY2025 AcroForm has two identity fields followed by printed lines 1-14.
 // Line 11 is blank for this Schedule C route, and line 6 prints a percentage.
@@ -100,12 +102,22 @@ function projectFields(
     (scheduleC.wotc_wage_reductions?.length ?? 0) > 0 ||
     Object.keys(scheduleC).some((key) =>
       key !== "schedule_cs" && key !== "filing_status" &&
-      key !== "patron_distribution_sources" && key !== "patron_filing_review"
+      key !== "patron_distribution_sources" && key !== "patron_filing_review" &&
+      key !== "f1099nec_receipt_sources"
     )
   ) {
     throw new Error("Form 7206 PDF needs one unadjusted Schedule C");
   }
   const business = scheduleC.schedule_cs[0];
+  if (scheduleC.f1099nec_receipt_sources) {
+    const filer = extractFilerIdentity(allPending.f1040);
+    if (!filer) {
+      throw new Error(
+        "Form7206 issued receipts need the actual settled filer identity",
+      );
+    }
+    assertScheduleCReceiptSourceIdentity(allPending, filer);
+  }
   const schedule1 = z.object({
     line3_schedule_c: z.number(),
     line15_se_deduction: z.number().optional(),

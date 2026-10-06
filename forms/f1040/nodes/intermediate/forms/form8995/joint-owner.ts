@@ -3,15 +3,51 @@ import {
   roundSignedQbiDollars,
 } from "../../../inputs/schedule_c/qbi-multiple.ts";
 import { ownedScheduleSE } from "../schedule_se/owner-calculation.ts";
+import {
+  calculateSingleScheduleCForm7206,
+  singleScheduleCPlanSchema,
+} from "../form7206/index.ts";
 
 /** Attribute each proprietor's own SE deduction before joint-return QBI netting. */
 export function jointOwnerQbi(
   rawSource: unknown,
   taxableIncomeBefore: number,
   ssWageBase: number,
+  rawHealthPlan?: unknown,
+  healthDeduction = 0,
 ) {
   const owned = ownedScheduleSE(rawSource, ssWageBase);
   const source = owned.source;
+  const healthPlan = rawHealthPlan === undefined
+    ? undefined
+    : singleScheduleCPlanSchema.parse(rawHealthPlan);
+  if (healthPlan) {
+    const business = source.businesses[0], owner = owned.instances[0];
+    const expected = calculateSingleScheduleCForm7206(healthPlan);
+    if (
+      source.businesses.length !== 1 || business.kind !== "schedule_c" ||
+      business.source_reference !== healthPlan.business_reference ||
+      business.recipient !== healthPlan.recipient ||
+      business.net_profit !== healthPlan.schedule_c_line31_net_profit ||
+      !owner || owner.recipient !== healthPlan.recipient ||
+      owner.line13 !== healthPlan.schedule1_line15_se_tax_deduction ||
+      healthPlan.schedule1_line16_retirement_deduction !== 0 ||
+      healthPlan.taxpayer_identity.ssn.replaceAll("-", "") !==
+        source.identity.primary_ssn ||
+      (healthPlan.spouse_identity &&
+        healthPlan.spouse_identity.ssn.replaceAll("-", "") !==
+          source.identity.spouse_ssn) ||
+      healthDeduction !== expected.line14
+    ) {
+      throw new Error(
+        "Joint QBI health deduction must derive from its actual sole Schedule C owner, computed half-SE and reviewed Form7206 plan",
+      );
+    }
+  } else if (healthDeduction !== 0) {
+    throw new Error(
+      "Joint QBI health deduction needs its actual reviewed Form7206 plan source",
+    );
+  }
   if (
     source.businesses.some((row) =>
       !row.business_name || row.qbi_no_other_adjustments_confirmed !== true
@@ -53,7 +89,8 @@ export function jointOwnerQbi(
     });
   }
   const rows = source.businesses.map((row, index) => {
-    const rawQbi = row.net_profit - allocations[index];
+    const rawQbi = row.net_profit - allocations[index] -
+      (healthPlan ? healthDeduction : 0);
     return {
       business_reference: row.source_reference,
       business_name: row.business_name!,
@@ -68,6 +105,7 @@ export function jointOwnerQbi(
       raw_qbi: rawQbi,
       qbi: roundSignedQbiDollars(rawQbi),
       se_tax_deduction: allocations[index],
+      ...(healthPlan ? { health_insurance_deduction: healthDeduction } : {}),
     };
   });
   const line2 = rows.reduce((sum, row) => sum + row.qbi, 0);
