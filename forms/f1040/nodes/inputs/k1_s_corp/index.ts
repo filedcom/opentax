@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ownedSCorpLossLines } from "../../intermediate/forms/form8995/owned-s-corp-loss.ts";
 import { ty2025IrsCountryCodeSchema } from "../../irs_country_code.ts";
 import {
   type Box10CodeJSource,
@@ -468,6 +469,25 @@ function resolveUbia(item: K1SCorpItem): number {
 }
 
 function form8995Output(items: K1SCorpItems): NodeOutput[] {
+  const owned = items.filter((item) =>
+    item.form7203_debt_evidence?.kind !==
+      "prior_reduced_formal_note_repayment" &&
+    item.form7203_debt_evidence?.owned_current_records !== undefined
+  );
+  if (owned.length > 0) {
+    if (owned.length !== 1 || items.length !== 1) {
+      throw Error(
+        "Owned7203/QBI loss needs its independently sourced single corporation",
+      );
+    }
+    const lines = ownedSCorpLossLines(owned[0], 0);
+    return [
+      output(form8995, {
+        qbi: lines.line2,
+        owned_s_corp_loss_source: owned[0],
+      }),
+    ];
+  }
   const nonSstb = items.filter((item) => item.sstb_indicator !== true);
   const sstb = items.filter((item) => item.sstb_indicator === true);
   const totalQbi = nonSstb.reduce(

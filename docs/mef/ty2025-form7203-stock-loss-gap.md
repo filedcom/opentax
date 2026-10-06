@@ -391,3 +391,15 @@ referenced rather than independently authenticated. New share purchases,
 property contributions, debt basis, other K-1 basis changes, and prior losses
 remain closed. This follows
 [Form 7203 line 2 instructions](https://www.irs.gov/instructions/i7203).
+
+## Executed owned current debt and QBI loss slice (2026-10-06)
+
+See [the owned debt source proof](ty2025-form7203-owned-debt-source-proof.md).
+The new mandatory current-record route proves original stock cost/history,
+independent current cash capital, direct shareholder funding, principal
+repayments and basis-limited ordinary loss through complete native/PDF packets.
+It also retains the allowed qualified-loss carry on Form8995 separately from
+the basis-suspended qualified portion. Existing old routes remain compatible.
+The prior reduced-debt accepted-history guard and the other explicitly listed
+parent boundaries remain open; constructed current records are not outside
+issuer/signature authentication or acceptance evidence.

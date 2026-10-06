@@ -1,3 +1,4 @@
+import { assertOwnedSCorpLoss8995 } from "./f8995-owned-s-corp-loss.ts";
 import { assertQualifiedTipQbiSource } from "../../form8995_qualified_tip_source.ts";
 import { assertCapitalSaleSourceRows } from "../../broker-sale-source-reconciliation.ts";
 import {
@@ -1379,6 +1380,7 @@ export function assertPositive8995(
   fields: Record<string, unknown>,
   pending: Readonly<Record<string, unknown>> | undefined,
 ): Filed8995 {
+  if (fields.owned_s_corp_loss_source !== undefined) return assertOwnedSCorpLoss8995(fields, pending);
   assertFarmWotcReturn(fields, pending);
   if (
     fields.multi_business_filing_rows !== undefined &&

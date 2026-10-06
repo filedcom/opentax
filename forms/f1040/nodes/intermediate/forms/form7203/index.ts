@@ -126,9 +126,11 @@ function tentativeStockBasis(
 // Step 4: Tentative debt basis for loss allocation (Part II line 29).
 // A fully based principal repayment reduces the new note before the loss.
 function tentativeDebtBasis(input: Form7203Input): number {
-  const note = input.reviewed_debt_evidence?.kind === "new_2025_formal_notes"
-    ? input.reviewed_debt_evidence
-    : undefined;
+  const note =
+    (input.reviewed_debt_evidence?.kind === "new_2025_formal_notes" ||
+        input.reviewed_debt_evidence?.kind === "owned_2025_formal_notes")
+      ? input.reviewed_debt_evidence
+      : undefined;
   return (input.debt_basis_beginning ?? 0) + (input.new_loans ?? 0) -
     sumPrincipalRepayments(note?.principal_repayments) -
     (note?.second_formal_note?.principal_repayment?.amount ?? 0);
@@ -183,7 +185,8 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
 
     const note = input.reviewed_debt_evidence;
     if (
-      note?.kind === "new_2025_formal_notes" &&
+      (note?.kind === "new_2025_formal_notes" ||
+        note?.kind === "owned_2025_formal_notes") &&
       (input.additional_contributions ?? 0) > 0
     ) {
       const ledger = input.reviewed_stock_loss_ledger;
@@ -285,7 +288,12 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
           basis_disallowed_add_back: disallowed,
         }),
       ],
-      carryforwards: { suspended_scorp_loss_7203: disallowed },
+      carryforwards: {
+        suspended_scorp_loss_7203: disallowed,
+        ...(note?.owned_current_records !== undefined
+          ? { basis_suspended_scorp_qbi_loss_7203: disallowed }
+          : {}),
+      },
     };
   }
 }

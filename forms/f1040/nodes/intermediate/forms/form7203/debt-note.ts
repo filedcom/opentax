@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  ownedCurrentDebtRecordsSchema,
+  reconcileOwnedCurrentDebt,
+} from "./owned-current-source.ts";
 import { reviewedPriorReducedNoteSchema } from "./prior-reduced-note.ts";
 import type { ReviewedStockLossLedger } from "./stock-ledger.ts";
 
@@ -27,7 +31,8 @@ export function sumPrincipalRepayments(
 // The first note may have two dated principal repayments; a second note retains
 // one repayment in its separately bounded source route.
 export const reviewedNewFormalNotesSchema = z.object({
-  kind: z.literal("new_2025_formal_notes"),
+  kind: z.enum(["new_2025_formal_notes", "owned_2025_formal_notes"]),
+  owned_current_records: ownedCurrentDebtRecordsSchema.optional(),
   shareholder_ssn: z.string().regex(/^\d{9}$/),
   corporation_ein: z.string().regex(/^\d{9}$/),
   k1_source_document_reference: sourceReference,
@@ -73,6 +78,20 @@ export const reviewedNewFormalNotesSchema = z.object({
   no_other_2025_basis_changes_confirmed: z.literal(true),
   no_prior_suspended_losses_confirmed: z.literal(true),
 }).strict().superRefine((note, ctx) => {
+  if (note.kind === "owned_2025_formal_notes" && !note.owned_current_records) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Owned Form7203 notes require complete current funding and stock-basis source records",
+    });
+  }
+  if (note.owned_current_records) {
+    try {
+      reconcileOwnedCurrentDebt(note.owned_current_records, note);
+    } catch (error) {
+      ctx.addIssue({ code: "custom", message: String(error) });
+    }
+  }
   const references = [
     note.k1_source_document_reference,
     note.beginning_stock_basis_workpaper_reference,

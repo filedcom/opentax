@@ -1,3 +1,4 @@
+import { ownedSCorpLossLines } from "./owned-s-corp-loss.ts";
 import {
   ownerW2WageSourceSchema,
   singleFarmSourceAmounts,
@@ -101,6 +102,7 @@ export const inputSchema = z.object({
   qbi_from_schedule_f: accumulable(z.number()).optional(),
   // QBI from pass-through rentals/partnerships (Schedule E)
   qbi: accumulable(z.number()).optional(),
+  owned_s_corp_loss_source: z.unknown().optional(),
   // W-2 wages and UBIA are carried forward when Form 8995-A is required.
   w2_wages: accumulable(z.number().nonnegative()).optional(),
   unadjusted_basis: accumulable(z.number().nonnegative()).optional(),
@@ -1500,6 +1502,42 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       };
     }
 
+    const ownedSCorp = input.owned_s_corp_loss_source === undefined
+      ? undefined
+      : (() => {
+        if (
+          input.agi === undefined || input.filing_status === undefined ||
+          sumField(input.qbi_from_schedule_c) !== 0 ||
+          sumField(input.qbi_from_schedule_f) !== 0 ||
+          sumField(input.sstb_qbi) !== 0 ||
+          sumField(input.line6_sec199a_dividends) !== 0 ||
+          (input.qbi_loss_carryforward ?? 0) !== 0 ||
+          (input.reit_loss_carryforward ?? 0) !== 0 ||
+          qbiCapitalTotal(input) !== 0 ||
+          sumField(input.se_tax_deduction) !== 0 ||
+          sumField(input.se_health_insurance_deduction) !== 0 ||
+          sumField(input.retirement_plan_deduction) !== 0
+        ) {
+          throw Error(
+            "Owned S corporation QBI loss needs its actual finalized return without unsourced other businesses/components",
+          );
+        }
+        const lines = ownedSCorpLossLines(
+          input.owned_s_corp_loss_source,
+          Math.max(
+            0,
+            input.agi - sourceDeductionAmount(input, cfg) -
+              (input.additional_deductions ?? 0),
+          ),
+        );
+        if (sumField(input.qbi) !== lines.line2) {
+          throw Error(
+            "Owned S corporation QBI must equal the basis-limited actual loss",
+          );
+        }
+        return lines;
+      })();
+
     const ownedLines = input.joint_se_source &&
         input.joint_se_source.businesses.every((row) =>
           row.qbi_no_other_adjustments_confirmed === true
@@ -1533,7 +1571,7 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       })()
       : undefined;
     const mixedLines = mixedScheduleCFLines(input, cfg);
-    const multipleLines = ownedLines ?? mixedLines ??
+    const multipleLines = ownedSCorp ?? ownedLines ?? mixedLines ??
       multipleScheduleCLines(input, cfg);
     if (netQbi(input) < 0 && multipleLines === undefined) {
       throw new Error(
@@ -1541,7 +1579,7 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       );
     }
 
-    const simplifiedLines = ownedLines ?? mixedLines ??
+    const simplifiedLines = ownedSCorp ?? ownedLines ?? mixedLines ??
       (input.schedule_f_qbi_businesses !== undefined
         ? oneScheduleFLines(input, cfg)
         : input.schedule_c_qbi_businesses !== undefined
@@ -1586,8 +1624,12 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
 
     return {
       outputs,
-      ...(ownedLines?.line16
-        ? { carryforwards: { qbi_loss_carryforward: ownedLines.line16 } }
+      ...((ownedSCorp ?? ownedLines)?.line16
+        ? {
+          carryforwards: {
+            qbi_loss_carryforward: (ownedSCorp ?? ownedLines)!.line16,
+          },
+        }
         : {}),
     };
   }

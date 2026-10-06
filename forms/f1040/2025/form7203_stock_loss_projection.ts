@@ -1,3 +1,4 @@
+import { ownedSCorpLossLines } from "../nodes/intermediate/forms/form8995/owned-s-corp-loss.ts";
 import { z } from "zod";
 import type { FilerIdentity } from "../mef/header.ts";
 import { inputSchema as k1SCorpInputSchema } from "../nodes/inputs/k1_s_corp/index.ts";
@@ -182,6 +183,28 @@ export function projectReviewedStockLoss7203(
     throw new Error(
       "Form 7203 allowed stock loss must match Schedule 1 line 5 and Form 1040 line 8",
     );
+  }
+
+  if (note?.owned_current_records !== undefined) {
+    const qbi = pendingRecordSchema.parse(allPending.form8995);
+    const f = form1040;
+    const expected = ownedSCorpLossLines(
+      source,
+      Math.max(
+        0,
+        Number(f.line11_agi) - Number(f.line12c_deduction_total) -
+          Number(f.line13b_additional_deductions ?? 0),
+      ),
+    );
+    if (
+      Object.entries(expected).some(([key, value]) => qbi[key] !== value) ||
+      qbi.qbi_deduction !== 0 || qbi.qbi !== -allowed ||
+      carryover !== currentLoss - allowed
+    ) {
+      throw Error(
+        "Owned Form7203 basis limitation must retain its distinct current qualified-loss carry on the actual Form8995",
+      );
+    }
   }
 
   return {
