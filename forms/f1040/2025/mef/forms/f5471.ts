@@ -1,3 +1,4 @@
+import { requiredScheduleReferences } from "./f5471-linkage.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import type { FilerAddress } from "../../../mef/header.ts";
 import type { F5471Item } from "../../../nodes/inputs/f5471/index.ts";
@@ -40,6 +41,7 @@ export const form5471: MefFormDescriptor<"f5471_parent", unknown> = {
       context.pending,
       context.filer,
     );
+    const referenceAttributes = requiredScheduleReferences(context);
     const id = cfc.form5471_identity;
     const i = cfc.schedule_i;
     const g = cfc.schedule_g;
@@ -300,6 +302,6 @@ export const form5471: MefFormDescriptor<"f5471_parent", unknown> = {
         element("EDAccountInd", "false"),
         element("TotHybridDeductionAccountsAmt", i.hybrid_deduction_accounts),
       ]),
-    ]);
+    ], referenceAttributes);
   },
 };

@@ -157,3 +157,17 @@ Sources:
 - Checked-in TY2025 v5.4 MeF schemas for IRS1040Schedule1, IRS5471, IRS8992, and
   IRS5471ScheduleJ, IRS5471ScheduleP, IRS5471ScheduleR, IRS8992, and
   IRS8992ScheduleA.
+
+## Executed native reference repair (October6,2026)
+
+The sole-owner Category4/5a parent now links its actual eight required separate
+schedule documents in the final builder pass. Exact reference IDs, required copy
+inventory and owner/corporation identity are independently validated. Both EIN
+and reference-ID source cases pass; canonical parent XSD, native/source tests and
+public export guards execute. See
+[precise linkage proof and limits](../../../../../../docs/mef/ty2025-form5471-native-schedule-linkage.md).
+No verified current or v3.0 business-rule package is available in this session;
+old SR rule prose is not verified authority. Required native zero-R/current rule
+acceptance, G22 version reconciliation and authenticated prior history remain
+open, so full native/PDF export remains guarded. The previously authored/unrun
+statements above are historical scope notes, not the current test status.
