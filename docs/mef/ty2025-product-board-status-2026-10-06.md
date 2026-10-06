@@ -4283,3 +4283,8 @@ Root identified/fixed sharedirregularperiod allocation andorphan-state-review gu
 
 
 OHnoordinary actualsavedroot1/6 andbefore1 terminal0 onheld06a954; wholegraph/prepared/carry/origins/PDFexact/nativeonlyTs/fullXSD/sourceunchanged. Allsixpagescontactreviewed plusfullH6, zeroWidget/fields; OH11000stateUIwages/330receipts, adult7000FUTAwages/42FUTA, FICAplusWH1474, H1516/1040tax9471/refund1529, genuineallYesSectionA/blankB. Thirteenraw/replay/review/control files privatelyhashpreserved. Fullboard reread before integration; frozen52/future exact,ledger1536 unchanged. Candidate62232b382 plusOHtest/proof f0f5bae46 ready; main ordinary14module and expanded65record actualsource replay required before boundedseal. Broaderparents/fullbatch/IRSremainopen.
+
+
+## Irregular payroll main integration
+
+Maind47da1b22+f383d1b80 integrate candidate622+OHf0; productionSHA06a954 unchanged. Rootcandidate3/21+OH1/6 fullXSD/nativeonlyTs/wholegraph/source/PDFexact andbefore3+OH1 missing-source rejections terminal. All27newpacketpageinstances reviewed or exact-byte transferred;37finalcandidate/OH source/gate/privatefiles preserved. Mainordinary14module session64237 andactual65record source session3745 live,productionheld; expectedscope63positive386pages+2oldmissingperiodnegatives, notyetterminalverified. Existingparentcare/FICA circumstance ordinary-period audit delegated privately, no main/future edits. Frozen52/future andledger1536 retained.
