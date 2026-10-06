@@ -4808,3 +4808,8 @@ Failures: `2025 parent PDF marks Form8814 dividends and direct child gain` expec
 ## Full-regression failure expectation repairs
 
 Both retained failures are corrected against current template/source behavior: Form1040 fieldc1_43 is the separate ScheduleD-not-required checkbox, asserted true for the direct8814 child gain and false with ScheduleD; wage-only8959 omits inapplicable SE/RRTA parts while retaining exact tax/withholding values and upstream-source rejection assertions. Final typed focused batch **28 passed,0 failed**. Log `/tmp/opentax-full-expectation-repairs-final.log`, SHA256 `e8c2349d88922fd5d82938e4d9de8d76b179d11bf2d4ef6474759aaed4b86e91`. The full exact command still needs a fresh stable-snapshot rerun.
+
+
+## Joint primary WOTC integration — October 6
+
+Main commit `1a490fc55`: **42 passed, 0 failed (55s)** across joint WOTC, owner-SE, reviewed8978, Form8814, supporting tax projections and review scope. Log `/tmp/opentax-joint-wotc-main-integration.log`, SHA256 `381cc2d113d5a206ed5136cdca4b0c8b9a504b7b401bf7c0cbeaf6d4f54deaf7`. The five isolated complete packets and130-page visual proof are retained under `.state/research/ty2025-filled-pdf-review/2026-10-06-joint-wotc`; source authentication and acceptance remain open.

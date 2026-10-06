@@ -9,6 +9,8 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 
 ## Core return and source paths
 
+- [x] File actual primary-owned MFJ WOTC with independently owned spouse W2 through Schedule C full determined wage reduction, owner SE, Form8995-A phase-in and Form3800 current use. Five complete local-XSD/replayed packets and130 pages reviewed; isolated4/4 plus92/92 and main42/42 pass. Fractional threshold boundaries and192000 determined/93402 used credit reconcile. Spouse-owned, both employers, wider credit combinations, source authentication and IRS acceptance remain open.
+
 - [x] Derive required positive dependent scholarship Form8615 from actual child income/age/support and independently settled selected custodial-parent return, using parent pre-credit tax7955 rather than final5955. Three source-owned pairs cover W2 service,8r service and exact-half support, child tax1375, parent separate education/AOC/ODC; six complete XSD packets/36 reviewed pages,454/454 isolated regression,6/6 focused and19/19 main compatibility pass. Unearned8615 income is distinct from dependent standard-deduction earned scholarship treatment. Wider siblings, parent selection, special taxes and source authentication remain open.
 
 - [x] Complete public reviewed Form8978 reporting-year ownership/source-byte joins, four-column/repeated filing PDFs, seven-row ScheduleA continuations, AAR-before-BBA corrected baselines and blank partner-attribute tracking. Three complete XSD/replayed returns,19 tax pages and27 exact attachment pages reviewed, isolated28/28 plus53/53 and main17/17 pass. Historical computations remain reviewed workpaper inputs; issuer/prior-return authentication, arbitrary historical engines and IRS acceptance remain open.
