@@ -4,6 +4,7 @@ import { multipleNuaReviewFixtures } from "./review-4972-multiple-nua.fixture.ts
 import { mixedCfHealthFixtures } from "./review-mixed-cf-health.fixture.ts";
 import { qualifiedTipReviewFixtures } from "./review-qualified-tips.fixture.ts";
 import { form8941MixedThreeReviewFixtures } from "./review-8941-mixed-three.fixture.ts";
+import { ownedFarmShopReviewFixtures, carrierDailyBilledShopReviewFixtures, independentOwnerHealthReviewFixtures } from "./review-farm-shop-partmonth-health.fixture.ts";
 import { mixedControlledWotcFixtures } from "./review-mixed-controlled-wotc.fixture.ts";
 import { controlledFarmWotcFixtures } from "./review-controlled-farm-wotc.fixture.ts";
 import { twoFarmWotcFixtures } from "./review-two-farm-wotc.fixture.ts";
@@ -9206,4 +9207,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = mutablePdfReviewFi
 mutablePdfReviewFixtures.push(
   ...qualifiedTipReviewFixtures(),
   ...form8941MixedThreeReviewFixtures(),
+  ...ownedFarmShopReviewFixtures(existingPdfReviewFixtures.find((row) => row.id === "owned-farm-wotc-single-below")!),
+  ...carrierDailyBilledShopReviewFixtures(),
+  ...independentOwnerHealthReviewFixtures(),
 );
