@@ -4786,3 +4786,8 @@ Log `/tmp/opentax-owned-se-final-proof.log`, SHA256 `a8bd2efd829f842bf2c84cb3a5a
 Log `/tmp/opentax-owned-se-c-repair.log`, SHA256 `17deaff3cf1058d3db4fe3627760af0fdfc0734e714c22e0a273abd1c92d4af7`.
 
 Isolated final13/13,104/104 repaired ScheduleC checks and earlier79/79; broader337/339 initially exposed two missing MFJ proprietor/activity source facts, now repaired. Four complete localXSD/PDF packets contain52 pages, all inspected in13 contact sheets; final hashes match retained manifest. Eight complete-return QBI/source mutations and four owner-instance/source/identity mutations reject both native and PDF. Two cent boundary sources pass final prepared native export. Main held metadata includes8959/8960 as actually emitted. Planner222 fixtures,116 descriptors,113keys,93 covered/20 uncovered. [Owner gap](ty2025-schedule-se-owner-gap.md) records limits. Full regressionea23 lacks this code; IRS acceptance/authentication remain open.
+
+
+## Reviewed Form8978 main integration — 2026-10-06
+
+Codea842e9599, actual typed focused command covering public8978/PDF8978/owner-SE/public8994/held scope: **17 passed,0 failed**,46s with real Poppler. Log `/tmp/opentax-form8978-main-integration.log`, SHA256 `18c3670e0d7c2ee467c1678915017358ec288cddedc054787ec2c8e2fe4e1dae`. Isolated28/28 and53/53; held3 complete localXSD/replayed returns,19 tax pages and27 exact attachment pages inspected. Reviewed prior-year computations and supplied synthetic PDF bytes are bound, not authenticated. Full batch and business-rule/acceptance gates remain open; [exact limits](ty2025-form8978-pdf-gap.md).

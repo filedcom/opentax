@@ -2,13 +2,13 @@
 
 ## Compacted status (2026-10-06)
 
-The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,395 bounded slices**; broader parents remain open. New discoveries belong only in `future_todo`, outside this work queue. Prior learnings are in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md).
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,396 bounded slices**; broader parents remain open. New discoveries belong only in `future_todo`, outside this work queue. Prior learnings are in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md).
 
 Stable762db9012 passed full real-Poppler `deno task test`: **11,271 passed,zero failed or ignored**. Full stableea23fbb91 remains live by actual PID86085 at00:44UTC; later routes are outside that snapshot. [Validation batch](docs/mef/ty2025-form1040-validation-batch.md) retains commands, hashes and limits.
 
 Planner: **222 fixtures**,116 PDF descriptors,113keys,93 covered/20 uncovered. Main family/noncommunity MFS36/36, direct8994 20/20, paired education24/24, SHOP arrangements25/25 and owner-SE28/28 pass. SHOP has ten complete packets/242 reviewed pages. Owner-SE has four complete packets/52 reviewed pages, cent and source conflict checks; owner-specific ordinary QBI is integrated, while broader farm/high-income/deduction combinations remain open. All source-authenticity and IRS acceptance limits remain explicit.
 
-Three agents continue multiple-plan/monthly-eligibility SHOP, positive child tax/Form8615 and reviewed Form8978. Root is integrating reviewed8978 source/year/overflow proof: isolated28/28 plus53/53, three localXSD/replayed returns,19 tax pages and27 attachment pages visually reviewed. Historical computations remain reviewed inputs. ATS Scenarios1/8/13 conflicts, issued credentials, business rules and acceptance remain open; ATS was reported unavailable through October13 at9a.m. Eastern. Checklist and future section remain byte-identical to the published checkpoint.
+Three agents continue multiple-plan/monthly-eligibility SHOP, positive child tax/Form8615 and reviewed Form8978. Reviewed8978 is integrated at `a842e9599`,17 main checks pass. Its source/year/overflow proof: isolated28/28 plus53/53, three localXSD/replayed returns,19 tax pages and27 attachment pages visually reviewed. Historical computations remain reviewed inputs. Root next integrates positive child-tax/Form8615: isolated454/454 plus6/6, six completeXSD packets/36 reviewed pages, child tax1375 from actual parent pre-credit7955. Broader family and special-tax branches remain open. ATS Scenarios1/8/13 conflicts, issued credentials, business rules and acceptance remain open; ATS was reported unavailable through October13 at9a.m. Eastern. Checklist and future section remain byte-identical to the published checkpoint.
 
 ## Scope and completion rules
 

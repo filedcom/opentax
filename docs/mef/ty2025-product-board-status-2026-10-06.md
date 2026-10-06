@@ -650,3 +650,19 @@ Source planner: **222 fixtures**,116 PDF descriptors,113 unique keys,93 covered 
 
 Three agents continue broader SHOP qualifying arrangements, positive child tax/Form8615 and Form8978 source/year/overflow evidence. Root owner-specific ScheduleSE and ordinary joint QBI remain isolated and uncounted:79 focused checks passed, then broader compatibility exposed two incomplete MFJ ScheduleC test sources (337 passed,2 failed). Source facts are repaired with104/104 ScheduleC checks; final owner/source/held checks pass13/13 and all52 packet pages are inspected with matching hashes. Owner-SE is integrated at `0cc6c8389`;28 main checks pass with four complete packets and52 reviewed pages. The bounded ledger entry does not close broader owner/farm/QBI requirements. Wider branches, source authenticity, ATS Scenarios1/8/13 conflicts, issued credentials, business rules and IRS acceptance remain open. ATS was reported unavailable through October13 at9a.m. Eastern. The checklist and future section remain frozen.
 
+
+
+## Before positive child-tax integration
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,396 bounded slices**; broader parents remain open. New discoveries belong only in `future_todo`, outside this work queue. Prior learnings are in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md).
+
+Stable762db9012 passed full real-Poppler `deno task test`: **11,271 passed,zero failed or ignored**. Full stableea23fbb91 remains live by actual PID86085 at00:44UTC; later routes are outside that snapshot. [Validation batch](docs/mef/ty2025-form1040-validation-batch.md) retains commands, hashes and limits.
+
+Planner: **222 fixtures**,116 PDF descriptors,113keys,93 covered/20 uncovered. Main family/noncommunity MFS36/36, direct8994 20/20, paired education24/24, SHOP arrangements25/25 and owner-SE28/28 pass. SHOP has ten complete packets/242 reviewed pages. Owner-SE has four complete packets/52 reviewed pages, cent and source conflict checks; owner-specific ordinary QBI is integrated, while broader farm/high-income/deduction combinations remain open. All source-authenticity and IRS acceptance limits remain explicit.
+
+Three agents continue multiple-plan/monthly-eligibility SHOP, positive child tax/Form8615 and reviewed Form8978. Root is integrating reviewed8978 source/year/overflow proof: isolated28/28 plus53/53, three localXSD/replayed returns,19 tax pages and27 attachment pages visually reviewed. Historical computations remain reviewed inputs. ATS Scenarios1/8/13 conflicts, issued credentials, business rules and acceptance remain open; ATS was reported unavailable through October13 at9a.m. Eastern. Checklist and future section remain byte-identical to the published checkpoint.
+
