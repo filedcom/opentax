@@ -88,3 +88,10 @@ source/pending JSON only by the filer timestamp. See
 isolated checkout for that preservation test. The initial isolated attempt
 failed because that private schema cache was absent, before the link was
 made; it was not a tax or projection failure.
+
+
+## Main terminal verification
+
+Integrated production40a89f5d2. Main ordinary typed four-module `deno task test` passed **55/0 (2m34s)**, terminalexit0, with recorded8GB V8 and normal task permissions. `/tmp/opentax-form4972-paper-main-standard-oct6.log`; all nine ordinary PDFs exactly match reviewed23paper and36electronic pages. The paper wrappers remain intact; staged inputs use separate `.staged.json` names. `/tmp/opentax-form4972-paper-main-standard-source-transfer-oct6.json` records byte transfer and12heldruntime/test hashes. Thirty ordinary artifact/log/transfer/held files physically copied and independently rehashed.
+
+Main actual saved-input replay passed3paperreturns/23pages with full graph/carry/origins/PDF parity and native/defaultPDFmax2 negatives; all original six JSON/PDF files unchanged. Main prior6electronic replay passed36pages with full graph/prepared/carry/origins/PDF parity, native changes onlyReturnTs, freshfullv5.4 XSD and18original sourcefiles unchanged. These replays call no source fixture factory and rewrite no source. Main13paper/34prior/candidate21/rootreview33 physical files rehashed before seal; combined12code hashes exact. Ledger1543 records this paper-only channel, not IRS acceptance, source authentication, broader ScheduleJ/AMT coverage or full regression completion.
