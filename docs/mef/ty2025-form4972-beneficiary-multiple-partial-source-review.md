@@ -18,3 +18,5 @@ Verification: the focused source/XSD/PDF test passed **2/0** (`/tmp/opentax-form
 ## Integrated main source and artifact replay
 
 Detached current-main9a7da5a78 focused source/native/full localXSD/PDF replay passes2/0(9s). Both source-input JSONs and exact elected issued-copy reference lists equal prior reviewed originals; both PDFs remain byte-identical to all6 inspected pages, with line30 and1040line16 taxes2790/5120. Current XML timestamps change, so XML byte equality is not claimed. Full proof `/tmp/opentax-form4972-beneficiary-partial-main-replay-proof-oct6.md`; focused log `/tmp/opentax-form4972-beneficiary-partial-main-focused-oct6.log` SHA256 `0d2fa0d602c879d38a4c0b0ca8e3e8003ddede5c0f7a14d1d5cc37ad0c711eda`. Original artifacts retained; combined current-main gate remains running.
+
+The integrated six-file main source/conflict/compatibility gate is now terminal33 passed/0 failed(3m5s), log `/tmp/opentax-beneficiary-mixed-tip-current-main.log`. Includes both new routes, prior tiphealth/twofarm/C-F health and Publication974. Earlier running checkpoint is superseded; broader parents remain open.
