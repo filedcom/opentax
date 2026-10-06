@@ -1,3 +1,5 @@
+import { assertFarmWotcReturn } from "../../form8995_farm_wotc_reconciliation.ts";
+import { calculateFarmWotcLines } from "../../../nodes/intermediate/forms/form8995a/farm-wotc.ts";
 import { qbiPercentageForPdf } from "../qbi-percentage.ts";
 import { assertSstbScheduleCSource } from "../../mef/forms/f8995a-sstb-source.ts";
 import { assertForm8995APatronReturn } from "../../form8995a_patron_reconciliation.ts";
@@ -28,6 +30,7 @@ const page1 = "topmostSubform[0].Page1[0].";
 const page2 = "topmostSubform[0].Page2[0].";
 const partI = `${page1}Table_PartI[0].RowA[0].`;
 const partIB = `${page1}Table_PartI[0].RowB[0].`;
+const partIC = `${page1}Table_PartI[0].RowC[0].`;
 const columnA = (line: number, fieldNumber: number): string =>
   `${page1}Table_PartII[0].Row${line}[0].f1_${
     String(fieldNumber).padStart(2, "0")
@@ -44,6 +47,8 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   { kind: "text", domainKey: "business_ein", pdfField: `${partI}f1_04[0]` },
   { kind: "text", domainKey: "business_name_b", pdfField: `${partIB}f1_05[0]` },
   { kind: "text", domainKey: "business_ein_b", pdfField: `${partIB}f1_06[0]` },
+  { kind: "text", domainKey: "business_name_c", pdfField: `${partIC}f1_07[0]` },
+  { kind: "text", domainKey: "business_ein_c", pdfField: `${partIC}f1_08[0]` },
   { kind: "checkbox", domainKey: "patron", pdfField: `${partI}c1_3[0]` },
   ...([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] as const).map(
     (line): PdfFieldEntry => ({
@@ -59,6 +64,24 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
       pdfField: columnA(line, 10 + (line - 2) * 3),
     }),
   ),
+  ...([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] as const).map((
+    line,
+  ): PdfFieldEntry => ({
+    kind: "text",
+    domainKey: `line${line}_c`,
+    pdfField: columnA(line, 11 + (line - 2) * 3),
+  })),
+  ...([17, 18, 19, 25, 26] as const).map((line): PdfFieldEntry => ({
+    kind: "text",
+    domainKey: `line${line}_c`,
+    pdfField: `${page2}Table_PartIII[0].Row${line}[0].f2_${
+      String(({ 17: 3, 18: 6, 19: 9, 25: 32, 26: 35 } as const)[line]).padStart(
+        2,
+        "0",
+      )
+    }[0]`,
+    printZero: line === 19 || line === 25,
+  })),
   { kind: "text", domainKey: "line16", pdfField: columnA(16, 51) },
   ...([17, 18, 19, 25, 26] as const).map((line): PdfFieldEntry => ({
     kind: "text",
@@ -126,7 +149,10 @@ export function projectOneBusiness8995A(
 ): Record<string, unknown> {
   if (Object.keys(raw).length === 0) return {};
   const input = inputSchema.strict().parse(raw);
-  assertForm8995AWotcReturn(input, allPending);
+  assertFarmWotcReturn(input as unknown as Record<string, unknown>, allPending);
+  if (!input.farm_wotc_filing_source) {
+    assertForm8995AWotcReturn(input, allPending);
+  }
   assertForm8995APatronReturn(input, allPending);
   if (
     input.aggregation_filing_details ||
@@ -140,42 +166,40 @@ export function projectOneBusiness8995A(
   ) {
     throw new Error("Form 8995-A PDF needs matching parent pending source");
   }
-  if (input.wotc_business_sources) {
+  if (input.wotc_business_sources || input.farm_wotc_filing_source) {
     assertNoFiledForm8995(allPending);
-    const { rows, parent } = calculateOwnedWotcBusinesses(input);
+    const { rows, parent } = input.farm_wotc_filing_source
+      ? calculateFarmWotcLines(input)
+      : calculateOwnedWotcBusinesses(input);
     if (allPending.f1040?.line13_qbi_deduction !== parent.line39) {
-      throw new Error(
-        "Form8995A owned WOTC PDF differs from actual1040 deduction",
-      );
+      throw new Error("Owned WOTC PDF differs from actual1040 deduction");
     }
-    const a = rows[0], b = rows[1];
+    const projection: Record<string, unknown> = { ...parent, ...rows[0].lines };
+    rows.forEach((row, index) => {
+      const suffix = ["", "_b", "_c"][index],
+        details = row.input.business_filing_details!;
+      projection[`business_name${suffix}`] = details.business_name;
+      projection[`business_ein${suffix}`] = details.ein;
+      for (const line of [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]) {
+        projection[`line${line}${suffix}`] = (row.lines as any)[`line${line}`];
+      }
+      for (const line of [19, 25, 26]) {
+        projection[`line${line}${suffix}`] = row.lines.phaseInRequired
+          ? (row.lines as any)[`line${line}`]
+          : undefined;
+      }
+      projection[`line17${suffix}`] = row.lines.phaseInRequired
+        ? row.lines.line3
+        : undefined;
+      projection[`line18${suffix}`] = row.lines.phaseInRequired
+        ? row.lines.line10
+        : undefined;
+    });
+    for (const line of [16, 32, 37, 39]) {
+      projection[`line${line}`] = (parent as any)[`line${line}`];
+    }
     return {
-      ...parent,
-      ...a.lines,
-      business_name: a.source.business.business_name,
-      business_ein: a.source.business.ein,
-      business_name_b: b.source.business.business_name,
-      business_ein_b: b.source.business.ein,
-      ...Object.fromEntries(
-        [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 19, 25, 26].map(
-          (line) => [`line${line}_b`, (b.lines as any)[`line${line}`]],
-        ),
-      ),
-      ...Object.fromEntries(
-        [16, 32, 37, 39].map(
-          (line) => [`line${line}`, (parent as any)[`line${line}`]],
-        ),
-      ),
-      line19: a.lines.phaseInRequired ? a.lines.line19 : undefined,
-      line25: a.lines.phaseInRequired ? a.lines.line25 : undefined,
-      line26: a.lines.phaseInRequired ? a.lines.line26 : undefined,
-      line19_b: b.lines.phaseInRequired ? b.lines.line19 : undefined,
-      line25_b: b.lines.phaseInRequired ? b.lines.line25 : undefined,
-      line26_b: b.lines.phaseInRequired ? b.lines.line26 : undefined,
-      line17: a.lines.phaseInRequired ? a.lines.line3 : undefined,
-      line18: a.lines.phaseInRequired ? a.lines.line10 : undefined,
-      line17_b: b.lines.phaseInRequired ? b.lines.line3 : undefined,
-      line18_b: b.lines.phaseInRequired ? b.lines.line10 : undefined,
+      ...projection,
       line20: parent.phaseInRequired ? parent.line33 : undefined,
       line21: parent.phaseInRequired ? parent.patronThreshold : undefined,
       line22: parent.phaseInRequired

@@ -1,3 +1,4 @@
+import { assertFarmWotcReturn } from "../../form8995_farm_wotc_reconciliation.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 import { isDeepStrictEqual } from "node:util";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
@@ -45,6 +46,12 @@ export const form5884Pdf: PdfFormDescriptor = {
   ],
   projectFields(fields, allPending) {
     if (!Array.isArray(fields.f5884s) || fields.f5884s.length === 0) return {};
+    assertFarmWotcReturn(
+      allPending.form8995a ?? allPending.form8995 ?? {},
+      allPending,
+      undefined,
+      { key: "f5884", value: fields },
+    );
     const source = inputSchema.parse(fields);
     const lines = calculateForm5884(source);
     if (lines.line2 <= 0) return {};

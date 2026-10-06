@@ -201,8 +201,10 @@ export const itemSchema = z.object({
     item.wage_records.some((record) =>
       (record.deduction_location.kind !== "schedule_c" &&
         record.deduction_location.kind !== "schedule_f") ||
-      (record.deduction_location as { business_reference?: string })
-          .business_reference !==
+      (record.deduction_location.kind === "schedule_f"
+          ? record.deduction_location.farm_id
+          : (record.deduction_location as { business_reference?: string })
+            .business_reference) !==
         item.direct_employer_review!.business_reference
     )
   ) {

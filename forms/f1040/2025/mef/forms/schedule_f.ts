@@ -1,4 +1,5 @@
 import { filedOwnedScheduleF } from "../../../nodes/owned-business-filing.ts";
+import { assertFarmWotcReturn } from "../../form8995_farm_wotc_reconciliation.ts";
 import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import {
@@ -281,6 +282,12 @@ export const scheduleF: MefFormDescriptor<
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sf.pdf",
   build(fields, context = {}) {
+    assertFarmWotcReturn(
+      context.pending?.form8995a ?? context.pending?.form8995 ?? {},
+      context.pending,
+      context.filer,
+      { key: "schedule_f", value: fields },
+    );
     const input = inputSchema.parse({
       ...fields,
       schedule_fs: fields?.schedule_fs ?? [],
@@ -356,7 +363,13 @@ export const scheduleF: MefFormDescriptor<
     let accrualLoanIndex = 0;
     return input.schedule_fs.map((item, index) =>
       buildFarm(
-        input.patron_filing_review
+        item.qbi_wotc_filing_review
+          ? patronFiledBusinessLines(
+            "schedule_f",
+            item,
+            reductions.get(item.farm_id ?? "") ?? 0,
+          ).filed_source as typeof item
+          : input.patron_filing_review
           ? patronFiledBusinessLines("schedule_f", item)
             .filed_source as typeof item
           : filedOwnedScheduleF(

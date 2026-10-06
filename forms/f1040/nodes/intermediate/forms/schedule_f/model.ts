@@ -1,3 +1,4 @@
+import { itemSchema as scheduleCItemSchema } from "../../../inputs/schedule_c/model.ts";
 import { z } from "zod";
 import { inputSchema as patronReviewSchema } from "../../../inputs/qbi_patron/schema.ts";
 import { filingStatusSchema } from "../../../types.ts";
@@ -84,6 +85,32 @@ export const itemSchema = z.object({
   ]),
   line_c_farm_name: z.string().optional(),
   line_d_ein: z.string().optional(),
+  qbi_wotc_filing_review: scheduleCItemSchema.shape.qbi_wotc_filing_review
+    .unwrap().extend({
+      employee_w2_records: z.array(
+        scheduleCItemSchema.shape.qbi_wotc_filing_review.unwrap().shape
+          .employee_w2_records.element.extend({
+            box1_wages: z.number().positive(),
+            box5_wages: z.number().positive(),
+            box3_social_security_wages: z.number().positive(),
+            agricultural_labor_duties_source_reference: z.string().trim().min(
+              1,
+            ),
+            more_than_half_each_pay_period_agricultural_labor_confirmed: z
+              .literal(true),
+            social_security_medicare_wages_confirmed: z.literal(true),
+            employee_ssn: z.string().regex(/^\d{9}$/),
+            employer_ein: z.string().regex(/^\d{9}$/),
+            swa_certification_reference: z.string().trim().min(1),
+            payroll_record_references: z.array(z.string().trim().min(1)).min(1),
+          }),
+      ).min(1),
+      principal_income_from_farming_confirmed: z.literal(true),
+      farming_activity_source_reference: z.string().trim().min(1),
+      farm_ownership_source_reference: z.string().trim().min(1),
+      no_joint_venture_or_partnership_confirmed: z.literal(true),
+      no_other_qualified_group_employee_payroll_confirmed: z.literal(true),
+    }).strict().optional(),
   qbi_no_other_adjustments_confirmed: z.boolean().optional(),
   qbi_w2_wages: z.number().finite().nonnegative().optional(),
   qbi_unadjusted_basis: z.number().finite().nonnegative().optional(),

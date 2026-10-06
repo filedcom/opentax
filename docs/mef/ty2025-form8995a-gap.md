@@ -1214,3 +1214,97 @@ retained Single/joint primary/spouse/two-owner WOTC, generic owner-SE, Form
 also proves the last actual employer-name/source conflict rejection. Earlier
 intermediate packets and logs precede the finalized wage projection/ownership
 review and are not this held evidence.
+## 2026-10-06 owned farm WOTC / regular owner SE source extension
+
+The public reviewed Schedule F direct-employer source now carries its full
+Form 5884 line 2 wage reduction into filed farm labor expenses, regular owner
+Schedule SE, attributable half-SE deductions, Form 8995/8995-A and the final
+1040. Form 3800 current tax use is calculated afterward; it never substitutes
+for the determined wage reduction. Single and MFJ primary/spouse ownership is
+replayed against actual general/header records, issued income copies, employer
+EIN, SWA certification, employee identity, payroll and employee W-2 records.
+The retained public input contains original cents; filed leaf operands determine
+farm gross income, expenses and profit before SE/QBI calculations. Other owned
+ordinary positive farms remain separately identified, including same-owner
+half-SE allocation and all three parent QBI columns.
+
+Official basis: [Schedule F instructions](https://www.irs.gov/instructions/i1040sf)
+line 22 employment-credit reduction and principal-activity rules;
+[Form 5884 instructions](https://www.irs.gov/instructions/i5884) qualified wages
+and full line 2 deduction reduction;
+[Form 8995-A instructions](https://www.irs.gov/instructions/i8995a) attributable
+adjustments and wage limits. Agricultural employees whose agricultural labor
+exceeds half of each pay period use Social Security/Medicare wages under the
+5884 qualified-wage rule. The review retains agricultural duty/pay-period
+records, box 3/5 wages and timely SSA filing records. No prior-year FUTA payroll
+threshold is fabricated. [Form 8995 instructions](https://www.irs.gov/instructions/i8995)
+also support retaining identified positive QBI when the taxable-income limit
+makes its final deduction zero; both the farm zero-use return and an actual
+Single Schedule C source replay now file that complete zero-deduction form.
+
+The first packet review caught a classification error in the original proof
+sources: principal agricultural-services income belongs on Schedule C. The
+final reusable fixtures retain every original total income/payroll cent and
+numeric chain, but supply dominant actual issued 1099-G taxable agricultural
+program income for reviewed grain-farming activity, plus secondary issued
+1099-NEC custom-machine-work receipts. The guard reconciles those copies to
+Schedule F lines 4a/4b/8 and rejects missing/conflicting farming records.
+The issued copies and review references are synthetic test records; they are
+not external authentication evidence.
+
+| Final source case | Filed farm profit total | Half-SE | Raw AGI | QBI deduction | Current WOTC use | Total tax |
+|---|---:|---:|---:|---:|---:|---:|
+| Single zero use | 2401 | 170 | 2231 | 0 | 0 | 339 |
+| Single below | 56401 | 2373 | 204028.37 | 10806 | 2400 | 37805 |
+| MFJ primary below | 146401 | 1961 | 364440.37 | 28888 | 2400 | 61134 |
+| MFJ spouse phase | 346401 | 7497 | 468904.37 | 39538 | 2400 | 95835 |
+| MFJ primary above, limited use | 312001 | 4178 | 607823 | 61565 | 95695 | 34964 |
+| MFJ ordinary spouse farm | 366402 | 17404 | 498998.37 | 20229 | 2400 | 131804 |
+| MFJ three farms | 367403 | 17418 | 499985.37 | 19610 | 2400 | 132354 |
+
+For example, raw income 350000.50 splits into taxable program income 349000
+and custom work 1000.50; filed income is 349000 + 1001 = 350001. Raw labor
+6000.49, full determined credit 2400, and filed labor 3600 produce filed profit
+346401. Raw allocable QBI wages 3600.49 file as 3600 before percentage lines.
+The spouse phase case prints 42.804%; two/three-farm cases print
+72.898%/73.885%. The ordinary spouse raw farm 190000.50 files as 190001.
+The above-range case retains all 192000 determined credit before owner SE/QBI,
+allows 95695 current use, and leaves 96305 unused without claiming a durable
+carryover filing. The zero-use case retains full 2400 reduction, positive
+QBI 2231, Form 8995 income limit/deduction zero and SE tax 339.
+
+Proof checkout: `/tmp/opentax-owned-farm-wotc-oct6`, base `15ad3b329`, with
+root signed formatter `107bd11a9` and ordinary filed C/F helper/graph
+`73d8d624b` borrowed for final proof (already integrated separately on main).
+This agent commit excludes those borrowed root files/graph hunks. Public,
+prepared native and direct PDF conflicts cover owner/header, issued copies,
+farm identity, agricultural classification, worker/FICA/payroll/certification,
+regular method, source reduction, owner SE, QBI, Schedule 1, AGI and current
+credit/final 1040 joins. Seven reusable held returns contain **186 pages**;
+every page was visually reviewed, including separate farm/SE owners, all
+Form 3800 pages, fractional parent percentages, all three QBI columns and
+applicable-only Medicare fields. Final ignored packet folder:
+`.state/research/ty2025-filled-pdf-review/2026-10-06-owned-farm-wotc-final-classified/`
+and rendered sibling `2026-10-06-owned-farm-wotc-final-classified-rendered`.
+
+This extension supports one reviewed positive active cash-method farm direct
+employer with regular SE, zero UBIA/no other QBI adjustments, and up to two
+identified ordinary positive zero-employee businesses. Broader farm receipt
+source types, losses/negative-half farm WOTC boundaries, optional-method WOTC,
+controlled-group farm WOTC, multiple farm credit employers, patron/SSTB/
+aggregation, attributable health/retirement adjustments, other statuses,
+mixed-credit ordering and durable carryovers remain open. Root's ordinary
+signed leaf projection is preserved; this slice does not claim negative-farm
+WOTC completion. No IRS business-rule, ATS, production acceptance or external
+certification authentication claim is added; the broader parent remains open.
+
+Terminal final evidence: **235 related typed tests passed, 0 failed**
+(`/tmp/opentax-farm-wotc-final-typed.log`, 2m53s), covering the seven full
+public/native/PDF/local-XSD returns and C/F/1099-G/NEC/5884/owned-WOTC/patron
+compatibility. The final Single C zero-limit source test additionally passes
+**1/0** with full XSD and PDF (`/tmp/opentax-farm-wotc-zero-c-final.log`).
+Final packet generation exits 0 (`/tmp/opentax-farm-wotc-final-generate.log`);
+held source/XML/PDF replay and full local v5.4 XSD checker exits 0 with
+**7 cases / 186 reviewed pages**, hashes and template provenance confirmed
+(`/tmp/opentax-farm-wotc-final-held-check.log`). Earlier unclassified/prezero
+artifact folders and logs are superseded and are not this final evidence.

@@ -1,3 +1,9 @@
+import {
+  filedOwnedScheduleC,
+  filedOwnedScheduleF,
+} from "../../../nodes/owned-business-filing.ts";
+import { assertFarmWotcReturn } from "../../form8995_farm_wotc_reconciliation.ts";
+import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
 import { assertJointOwner8995 } from "./f8995-joint-owner.ts";
 import { assertMultipleScheduleC8995 } from "./f8995-multiple.ts";
 import { normalizeAllPending } from "../../pending.ts";
@@ -450,7 +456,8 @@ export function assertOneScheduleC8995(
     form3800Wotc.subject_to_passive_activity_limit === false &&
     wotcSource.data.subject_to_passive_activity_limit !== true;
   const rawQbi = sourceBusiness
-    ? computeNetProfit(sourceBusiness, wotcReduction)
+    ? filedOwnedScheduleC(sourceBusiness, false, wotcReduction)?.profit ??
+      computeNetProfit(sourceBusiness, wotcReduction)
     : 0;
   const hasSeDeduction = typeof seDeduction === "number" && seDeduction > 0;
   const ein = typeof fields.line1_ein === "string"
@@ -585,7 +592,9 @@ export function assertOneScheduleC8995(
     !zeroOrAbsent(f1040.line13b_additional_deductions) ||
     typeof f1040.line11_agi !== "number" ||
     typeof f1040.line12c_deduction_total !== "number" ||
-    Math.round(f1040.line11_agi - f1040.line12c_deduction_total) !==
+    Math.round(
+        Math.max(0, f1040.line11_agi - f1040.line12c_deduction_total),
+      ) !==
       fields.line11
   ) {
     throw new Error(
@@ -768,7 +777,9 @@ export function assertTwoSmallScheduleC8995(
     !zeroOrAbsent(f1040.line7a_cap_gain_distrib) ||
     !zeroOrAbsent(f1040.line13b_additional_deductions) ||
     typeof f1040.line12c_deduction_total !== "number" ||
-    Math.round(f1040.line11_agi - f1040.line12c_deduction_total) !==
+    Math.round(
+        Math.max(0, f1040.line11_agi - f1040.line12c_deduction_total),
+      ) !==
       fields.line11
   ) {
     throw new Error(
@@ -828,10 +839,20 @@ export function assertOneScheduleF8995(
     ? qualifiedDividendSource(pending.f1099div, undefined)
     : { ordinary: 0, qualified: 0 };
   const rawQbi = farm && source.success
-    ? computeFarmNetProfit(
-      farm,
-      wotcReductionsByFarm(source.data).get(farm.farm_id ?? "") ?? 0,
-    )
+    ? farm.qbi_wotc_filing_review
+      ? patronFiledBusinessLines(
+        "schedule_f",
+        farm,
+        wotcReductionsByFarm(source.data).get(farm.farm_id ?? "") ?? 0,
+      ).profit
+      : filedOwnedScheduleF(
+        farm,
+        source.data.farm_optional_method_elected === true,
+        wotcReductionsByFarm(source.data).get(farm.farm_id ?? "") ?? 0,
+      )?.profit ?? computeFarmNetProfit(
+        farm,
+        wotcReductionsByFarm(source.data).get(farm.farm_id ?? "") ?? 0,
+      )
     : 0;
   const ein = typeof fields.line1_ein === "string"
     ? fields.line1_ein.replace(/\D/g, "")
@@ -924,7 +945,9 @@ export function assertOneScheduleF8995(
     !zeroOrAbsent(f1040.line13b_additional_deductions) ||
     typeof f1040.line11_agi !== "number" ||
     typeof f1040.line12c_deduction_total !== "number" ||
-    Math.round(f1040.line11_agi - f1040.line12c_deduction_total) !==
+    Math.round(
+        Math.max(0, f1040.line11_agi - f1040.line12c_deduction_total),
+      ) !==
       fields.line11
   ) {
     throw new Error(
@@ -1030,7 +1053,9 @@ function assertReitOnly8995(
     !zeroOrAbsent(f1040.line13b_additional_deductions) ||
     typeof f1040.line11_agi !== "number" ||
     typeof f1040.line12c_deduction_total !== "number" ||
-    Math.round(f1040.line11_agi - f1040.line12c_deduction_total) !==
+    Math.round(
+        Math.max(0, f1040.line11_agi - f1040.line12c_deduction_total),
+      ) !==
       fields.line11
   ) {
     throw new Error(
@@ -1047,7 +1072,10 @@ export function assertPositive8995(
   fields: Record<string, unknown>,
   pending: Readonly<Record<string, unknown>> | undefined,
 ): Filed8995 {
-  if (fields.joint_owner_filing_rows !== undefined) return assertJointOwner8995(fields, pending);
+  assertFarmWotcReturn(fields, pending);
+  if (fields.joint_owner_filing_rows !== undefined) {
+    return assertJointOwner8995(fields, pending);
+  }
   if (fields.multi_business_filing_rows !== undefined) {
     return assertMultipleScheduleC8995(fields, pending);
   }

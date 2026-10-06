@@ -1,3 +1,4 @@
+import { assertFarmWotcReturn } from "../../form8995_farm_wotc_reconciliation.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import {
   calculateForm5884,
@@ -20,6 +21,12 @@ export const form5884: MefFormDescriptor<"f5884", unknown> = {
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f5884.pdf",
   build(raw, context) {
     if (!raw || typeof raw !== "object" || !("f5884s" in raw)) return "";
+    assertFarmWotcReturn(
+      context?.pending?.form8995a ?? context?.pending?.form8995 ?? {},
+      context?.pending,
+      context?.filer,
+      { key: "f5884", value: raw },
+    );
     const source = inputSchema.parse(raw);
     const lines = calculateForm5884(source);
     if (lines.line2 <= 0) return "";

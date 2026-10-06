@@ -1365,6 +1365,7 @@ export function assertScheduleFFarmSourceIdentity(
         payer_name: item.payer_name,
         payer_tin: tin(item.payer_tin, "1099-NEC payer"),
         recipient_tin: tin(item.recipient_ssn, "1099-NEC recipient"),
+        ...(item.source_document_reference ? {source_document_reference:item.source_document_reference} : {}),
       }]
       : []
   );

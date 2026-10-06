@@ -1,3 +1,5 @@
+import { assertFarmWotcReturn } from "../../form8995_farm_wotc_reconciliation.ts";
+import { calculateFarmWotcLines } from "../../../nodes/intermediate/forms/form8995a/farm-wotc.ts";
 import { assertSstbScheduleCSource } from "./f8995a-sstb-source.ts";
 import { assertForm8995APatronReturn } from "../../form8995a_patron_reconciliation.ts";
 import { inputSchema as w2InputSchema } from "../../../nodes/inputs/w2/index.ts";
@@ -356,12 +358,13 @@ function reconcileReturn(
       !fields.sstb_filing_details &&
       !(fields.filing_status === NodeFilingStatus.MFJ &&
         (fields.patron_business_source || fields.single_schedule_c_source ||
-          fields.wotc_business_sources)))
+          fields.wotc_business_sources || fields.farm_wotc_filing_source)))
   ) {
     throw new Error("Form 8995-A filing status differs from the return header");
   }
   const jointWotc = fields.single_schedule_c_source?.joint_se_source ??
-    fields.wotc_business_sources?.[0].joint_se_source;
+    fields.wotc_business_sources?.[0].joint_se_source ??
+    fields.farm_wotc_filing_source?.joint_se_source;
   if (
     jointWotc &&
     (jointWotc.identity.primary_ssn !==
@@ -371,6 +374,15 @@ function reconcileReturn(
   ) {
     throw new Error(
       "Form8995A joint WOTC owners differ from actual return header",
+    );
+  }
+  if (
+    fields.farm_wotc_filing_source &&
+    fields.farm_wotc_filing_source.taxpayer_ssn !==
+      context.filer.primarySSN.replaceAll("-", "")
+  ) {
+    throw new Error(
+      "Farm WOTC primary owner differs from actual return header",
     );
   }
   assertMfsSstbOwner(fields, context.filer.primarySSN);
@@ -494,7 +506,13 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
     throw new Error("Form 8995-A MeF cannot file an empty pending record");
   }
   const fields = inputSchema.strict().parse(rawFields);
-  assertForm8995AWotcReturn(fields, context?.pending);
+  assertFarmWotcReturn(
+    fields as unknown as Record<string, unknown>,
+    context?.pending,
+  );
+  if (!fields.farm_wotc_filing_source) {
+    assertForm8995AWotcReturn(fields, context?.pending);
+  }
   assertForm8995APatronReturn(fields, context?.pending);
   if (
     fields.aggregation_filing_details ||
@@ -613,7 +631,9 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
       element("TotQlfyREITDivPTPLossCfwdAmt", 0),
     ]);
   }
-  const multi = fields.wotc_business_sources
+  const multi = fields.farm_wotc_filing_source
+    ? calculateFarmWotcLines(fields)
+    : fields.wotc_business_sources
     ? calculateOwnedWotcBusinesses(fields)
     : undefined;
   const { details, lines } = multi

@@ -36,20 +36,19 @@ import {
 function perItemOutputs(
   item: ScheduleFItem,
   netProfit: number,
+  wotcReduction = 0,
 ): NodeOutput[] {
   const outputs: NodeOutput[] = [];
 
   // Form 8995 (QBI): only when net profit > 0
   if (netProfit > 0) {
     outputs.push(output(form8995, {
-      qbi_from_schedule_f: netProfit,
-      w2_wages: item.qbi_w2_wages ?? 0,
-      unadjusted_basis: item.qbi_unadjusted_basis ?? 0,
       schedule_f_qbi_businesses: [{
         business_reference: item.farm_id,
         business_name: item.line_c_farm_name,
         ein: item.line_d_ein?.replace(/\D/g, ""),
         qbi: netProfit,
+        ...(wotcReduction > 0 ? { wotc_wage_reduction: wotcReduction } : {}),
         w2_wages: item.qbi_w2_wages ?? 0,
         ubia: item.qbi_unadjusted_basis ?? 0,
         no_other_adjustments_confirmed:
@@ -102,7 +101,13 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
       )
     );
     const netProfits = atRisk.map((result, index) =>
-      input.patron_filing_review
+      input.schedule_fs[index].qbi_wotc_filing_review
+        ? patronFiledBusinessLines(
+          "schedule_f",
+          input.schedule_fs[index],
+          reductions.get(input.schedule_fs[index].farm_id ?? "") ?? 0,
+        ).profit
+        : input.patron_filing_review
         ? patronFiledBusinessLines("schedule_f", input.schedule_fs[index])
           .profit
         : (ctx.taxYear === 2025
@@ -142,12 +147,37 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
         .length,
     }));
 
-    // Per-item downstream routing
-    for (let i = 0; i < input.schedule_fs.length; i++) {
-      outputs.push(...perItemOutputs(
-        input.schedule_fs[i],
-        netProfits[i],
-      ));
+    // Keep the actual farm identity rows and their totals in one retained contribution.
+    const routed = input.schedule_fs.flatMap((item, index) =>
+      perItemOutputs(
+        item,
+        netProfits[index],
+        reductions.get(item.farm_id ?? "") ?? 0,
+      )
+    );
+    outputs.push(...routed.filter((row) => row.nodeType !== form8995.nodeType));
+    const qualified = input.schedule_fs.map((item, index) => ({
+      item,
+      profit: netProfits[index],
+    })).filter((row) => row.profit > 0);
+    if (qualified.length) {
+      outputs.push(output(form8995, {
+        schedule_f_qbi_businesses: routed.filter((row) =>
+          row.nodeType === form8995.nodeType
+        ).flatMap((row) => row.fields.schedule_f_qbi_businesses as any[]),
+        qbi_from_schedule_f: qualified.reduce(
+          (sum, row) => sum + row.profit,
+          0,
+        ),
+        w2_wages: qualified.reduce(
+          (sum, row) => sum + (row.item.qbi_w2_wages ?? 0),
+          0,
+        ),
+        unadjusted_basis: qualified.reduce(
+          (sum, row) => sum + (row.item.qbi_unadjusted_basis ?? 0),
+          0,
+        ),
+      }));
     }
 
     if (input.owner_filing_status === "mfj") {

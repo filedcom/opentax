@@ -1,3 +1,5 @@
+import { farmWotcSourceSchema } from "./farm-wotc-source.ts";
+import { calculateFarmWotcLines } from "./farm-wotc.ts";
 import {
   ownedScheduleSE,
   ownerSourcesSchema,
@@ -175,6 +177,7 @@ export const scheduleCQbiBusinessSchema = z.object({
 }).strict();
 
 export const inputSchema = z.object({
+  farm_wotc_filing_source: farmWotcSourceSchema.optional(),
   patron_business_source: patronBusinessSourceSchema.optional(),
   // Filing status — determines income threshold for wage limitation phase-in
   filing_status: filingStatusSchema,
@@ -1034,7 +1037,8 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
     ? calculatePatronScheduleDLines(input).line6
     : 0;
   const filedAmount = (value: number) =>
-    input.single_schedule_c_source || input.aggregation_filing_details ||
+    input.single_schedule_c_source || input.farm_wotc_filing_source ||
+      input.aggregation_filing_details ||
       input.patron_business_source
       ? Math.round(value)
       : value;
@@ -1055,8 +1059,10 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
     ? 100000
     : 50000;
   // Part III applies only in the middle band when the wage/property limit binds.
-  const phaseInRequired =
-    Boolean(input.patron_business_source || input.single_schedule_c_source) &&
+  const phaseInRequired = Boolean(
+    input.patron_business_source || input.single_schedule_c_source ||
+      input.farm_wotc_filing_source,
+  ) &&
     input.taxable_income > patronThreshold &&
     input.taxable_income <= patronThreshold + patronPhaseInRange &&
     line10 < line3;
@@ -1099,7 +1105,8 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   }
   const line39 = line37 + line38;
   return {
-    ...((input.patron_business_source || input.single_schedule_c_source)
+    ...((input.patron_business_source || input.single_schedule_c_source ||
+        input.farm_wotc_filing_source)
       ? {
         patronThreshold,
         patronPhaseInRange,
@@ -1515,6 +1522,18 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
       };
     }
 
+    if (input.farm_wotc_filing_source) {
+      const deduction = calculateFarmWotcLines(input).parent.line39;
+      return {
+        outputs: [
+          this.outputNodes.output(f1040, { line13_qbi_deduction: deduction }),
+          this.outputNodes.output(standard_deduction, {
+            qbi_deduction: deduction,
+          }),
+          { nodeType: this.nodeType, fields: input },
+        ],
+      };
+    }
     if (input.wotc_business_sources) {
       const deduction = calculateOwnedWotcBusinesses(input).parent.line39;
       return {

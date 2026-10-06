@@ -203,7 +203,7 @@ Deno.test("tax-limited WOTC uses full line 2 for QBI before limiting Form 3800 c
       .schedule_c_instances as Record<string, unknown>[];
     assertEquals(businessFields[0].line_26_wages, 3_600);
     assertEquals(businessFields[0].line31, profit);
-    // The partial-use case files Form 8995; the zero deduction case omits it.
+    // Identified positive QBI retains Form 8995 even when its income limit is zero.
     const prepared = await f1040_2025.prepareReturn(result.pending, base.filer);
     assertStringIncludes(prepared.bundle.xml, "<IRS5884 documentId=");
     assertStringIncludes(prepared.bundle.xml, "<IRS3800 documentId=");
@@ -217,7 +217,11 @@ Deno.test("tax-limited WOTC uses full line 2 for QBI before limiting Form 3800 c
         "<QualifiedBusinessIncomeDedAmt>828</QualifiedBusinessIncomeDedAmt>",
       );
     } else {
-      assertEquals(prepared.bundle.xml.includes("<IRS8995 documentId="), false);
+      assertStringIncludes(prepared.bundle.xml, "<IRS8995 documentId=");
+      assertEquals(
+        form8995Pdf.projectFields!(pending.form8995, pending).line15,
+        0,
+      );
     }
   }
 });

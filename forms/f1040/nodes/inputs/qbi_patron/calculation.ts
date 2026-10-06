@@ -20,6 +20,7 @@ import { type PatronSource, sourceSchema } from "./schema.ts";
 export function patronFiledBusinessLines(
   kind: "schedule_c" | "schedule_f",
   raw: unknown,
+  determinedWotcReduction = 0,
 ) {
   const source = kind === "schedule_c"
     ? cSchema.parse(raw)
@@ -40,12 +41,12 @@ export function patronFiledBusinessLines(
   if (kind === "schedule_c") {
     const item = cSchema.parse(filed);
     const gross = cGross(item);
-    const expenses = cExpenses(item);
+    const expenses = cExpenses(item, determinedWotcReduction);
     return { gross, expenses, profit: gross - expenses, filed_source: item };
   }
   const item = fSchema.parse(filed);
   const gross = fGross(item);
-  const expenses = fExpenses(item, gross);
+  const expenses = fExpenses(item, gross, determinedWotcReduction);
   return { gross, expenses, profit: gross - expenses, filed_source: item };
 }
 

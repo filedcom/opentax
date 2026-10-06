@@ -236,6 +236,9 @@ function necIncomeOutput(item: NECItem): NodeOutput[] {
           payer_name: item.payer_name,
           payer_tin: item.payer_tin.replaceAll("-", ""),
           recipient_tin: item.recipient_ssn!.replaceAll("-", ""),
+          ...(item.source_document_reference
+            ? { source_document_reference: item.source_document_reference }
+            : {}),
         }],
       })];
     }

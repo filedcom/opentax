@@ -146,6 +146,12 @@ export function assertOwnedScheduleSE(
           item.qbi_no_other_adjustments_confirmed === true,
         net_profit: f.farm_optional_method_elected === true
           ? atRisk.preliminaryNet
+          : item.qbi_wotc_filing_review
+          ? patronFiledBusinessLines(
+            "schedule_f",
+            item,
+            reductions.get(item.farm_id) ?? 0,
+          ).profit
           : f.patron_filing_review
           ? patronFiledBusinessLines("schedule_f", item).profit
           : filedOwnedScheduleF(item, false, reductions.get(item.farm_id) ?? 0)

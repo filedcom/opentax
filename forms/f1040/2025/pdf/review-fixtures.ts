@@ -1,6 +1,7 @@
 import { ownedCfFiledCases, ownedCfFiledFixture } from "./review-owned-cf-filed.fixture.ts";
 import { controlledWotcReviewFixtures } from "./review-controlled-wotc.fixture.ts";
 import { optionalFarmReviewFixtures } from "./review-schedule-se-farm-optional.fixture.ts";
+import { farmWotcReviewFixtures } from "./review-farm-wotc.fixture.ts";
 import { ownedFarmReviewFixture } from "./review-schedule-se-farm-owner.fixture.ts";
 import { form8978ReviewFixtures } from "./review-8978.fixture.ts";
 import { form8941MultiplePlanReviewFixture } from "./review-8941-multiple-plans.fixture.ts";
@@ -9068,6 +9069,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "farm",
     ),
   ),
+  ...farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!, basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!),
   ...form8978ReviewFixtures,
   ...controlledWotcReviewFixtures(
     basePdfReviewFixtures.find((f) =>

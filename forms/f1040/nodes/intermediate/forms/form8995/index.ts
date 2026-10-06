@@ -1,3 +1,4 @@
+import { farmWotcAdvancedFields } from "../form8995a/farm-wotc.ts";
 import { jointOwnerQbi } from "./joint-owner.ts";
 import {
   ownedScheduleSE,
@@ -46,6 +47,7 @@ export const scheduleFQbiBusinessSchema = z.object({
   ubia: z.number().nonnegative().optional(),
   no_other_adjustments_confirmed: z.boolean(),
   source_schedule_f: z.unknown(),
+  wotc_wage_reduction: z.number().positive().optional(),
 }).strict();
 
 // Schedule C keeps source cents until the Form 8995 line total is rounded.
@@ -311,6 +313,9 @@ function advancedFormOutput(
   input: Form8995Input,
   taxableIncome: number,
 ): NodeOutput {
+  const farmWotc = farmWotcAdvancedFields(input, taxableIncome);
+  if (farmWotc) return output(form8995a, farmWotc);
+
   if (
     input.schedule_c_qbi_businesses?.length === 2 &&
     input.schedule_c_qbi_businesses.every((b) =>
@@ -1113,7 +1118,11 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
     const deduction = simplifiedLines === undefined
       ? qbiDeduction(input, cfg)
       : simplifiedLines.line15;
-    if (deduction <= 0 && multipleLines === undefined) {
+    if (
+      deduction <= 0 && multipleLines === undefined &&
+      !(simplifiedLines && "line1_qbi" in simplifiedLines &&
+        typeof simplifiedLines.line1_qbi === "number" && simplifiedLines.line1_qbi > 0)
+    ) {
       return {
         outputs: qbiCapitalTotal(input) > 0
           ? [{

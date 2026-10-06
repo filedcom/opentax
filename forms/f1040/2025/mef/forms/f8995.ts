@@ -5,6 +5,8 @@ import { assertNoUnfiled8995Loss, assertPositive8995 } from "./f8995-route.ts";
 
 type Input = Partial<ReturnType<typeof inputSchema.parse>> & {
   qbi_deduction?: number | null;
+  line1_qbi?: number;
+  line1_business_reference?: string;
 };
 
 export const form8995: MefFormDescriptor<"form8995", Input> = {
@@ -15,7 +17,10 @@ export const form8995: MefFormDescriptor<"form8995", Input> = {
     const deduction = fields.qbi_deduction;
     if (
       (deduction === undefined || deduction === null || deduction === 0) &&
-      fields.multi_business_filing_rows === undefined && fields.joint_owner_filing_rows === undefined
+      fields.multi_business_filing_rows === undefined &&
+      fields.joint_owner_filing_rows === undefined &&
+      !(typeof fields.line1_qbi === "number" && fields.line1_qbi > 0 &&
+        typeof fields.line1_business_reference === "string")
     ) {
       assertNoUnfiled8995Loss(fields as Record<string, unknown>);
       return "";

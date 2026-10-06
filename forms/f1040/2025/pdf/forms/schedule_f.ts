@@ -1,4 +1,5 @@
 import { filedOwnedScheduleF } from "../../../nodes/owned-business-filing.ts";
+import { assertFarmWotcReturn } from "../../form8995_farm_wotc_reconciliation.ts";
 import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { appendExpenseStatement } from "./expense-statement.ts";
@@ -188,6 +189,12 @@ export const scheduleFPdf: PdfFormDescriptor = {
   fields,
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
+    assertFarmWotcReturn(
+      allPending?.form8995a ?? allPending?.form8995 ?? {},
+      allPending,
+      filer,
+      { key: "schedule_f", value: raw },
+    );
     const input = inputSchema.parse(raw);
     reconcileFarmSources(input);
     const reductions = wotcReductionsByFarm(input);
@@ -217,7 +224,13 @@ export const scheduleFPdf: PdfFormDescriptor = {
           input.farm_optional_method_elected === true,
         reductions.get(rawItem.farm_id ?? "") ?? 0,
       );
-      const item = input.patron_filing_review
+      const item = rawItem.qbi_wotc_filing_review
+        ? patronFiledBusinessLines(
+          "schedule_f",
+          rawItem,
+          reductions.get(rawItem.farm_id ?? "") ?? 0,
+        ).filed_source as typeof rawItem
+        : input.patron_filing_review
         ? patronFiledBusinessLines("schedule_f", rawItem)
           .filed_source as typeof rawItem
         : filedOwnedScheduleF(
