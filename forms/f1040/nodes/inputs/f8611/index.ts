@@ -1,3 +1,4 @@
+import { issuerIdentitySchema } from "./partnership-source.ts";
 import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
@@ -45,6 +46,7 @@ export function calculateLine2Worksheet(worksheet: Line2Worksheet): number {
 }
 
 const common = z.object({
+  issuer_source: issuerIdentitySchema.optional(),
   source_document_reference: z.string().trim().min(1),
   recapture_year: z.number().int(),
   building_bin: z.string().trim().min(1).max(9),

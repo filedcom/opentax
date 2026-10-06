@@ -1,3 +1,4 @@
+import { issuerIdentitySchema } from "../nodes/inputs/f8611/partnership-source.ts";
 /**
  * Native attachments that a positive source path requires but this exporter
  * cannot yet produce. This is a filing boundary, not a document skip list.
@@ -428,7 +429,7 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     exportKinds: ["pdf"],
     reason:
       "Form 8611 historical credit, qualified-basis, and interest records need source verification before printable filing",
-    isActive: (fields) => nonempty(fields.f8611s),
+    isActive: (fields) => nonempty(fields.f8611s) && !(Array.isArray(fields.f8611s) && fields.f8611s.every((item) => item !== null && typeof item === "object" && issuerIdentitySchema.safeParse((item as Record<string, unknown>).issuer_source).success)),
   },
   {
     pendingKey: "f8854",

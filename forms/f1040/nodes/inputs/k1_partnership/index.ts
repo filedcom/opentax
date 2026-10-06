@@ -1,3 +1,5 @@
+import { f8611 } from "../f8611/index.ts";
+import { issuedPartnershipRecaptures, partnershipRecaptureSchema } from "../f8611/partnership-source.ts";
 import { z } from "zod";
 import { ty2025IrsCountryCodeSchema } from "../../irs_country_code.ts";
 import type {
@@ -70,6 +72,7 @@ import {
 
 // Per-item schema — one K-1 from one partnership
 export const itemSchema = z.object({
+  box20_code_f_lihtc_recapture: partnershipRecaptureSchema.optional(),
   // Identification
   partnership_name: z.string().min(1),
   partnership_ein: z.string().regex(/^\d{9}$/).optional(),
@@ -985,6 +988,7 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
     form4952,
     f3800,
     form8582cr,
+    f8611,
     disabledAccessLimit,
     scheduleE,
   ]);
@@ -992,7 +996,9 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { k1_partnerships } = inputSchema.parse(input);
 
+    const recaptures = issuedPartnershipRecaptures(k1_partnerships);
     const outputs: NodeOutput[] = [
+      ...(recaptures.length ? [output(f8611,{f8611s:recaptures})] : []),
       ...schedule1Output(k1_partnerships),
       ...royaltyScheduleEOutputs(k1_partnerships),
       ...scheduleBInterestOutputs(k1_partnerships),

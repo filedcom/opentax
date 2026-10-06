@@ -1,4 +1,5 @@
 import { twoFarmWotcFixtures } from "./review-two-farm-wotc.fixture.ts";
+import { issuedRecaptureReviewFixture } from "./review-8611-issued-k1.fixture.ts";
 import { farmWotcLossFixtures } from "./review-farm-wotc-loss.fixture.ts";
 import { form8826InterpreterReviewFixture } from "./review-8826-interpreter.fixture.ts";
 import { ownedCfFiledCases, ownedCfFiledFixture } from "./review-owned-cf-filed.fixture.ts";
@@ -9061,6 +9062,7 @@ const educationBase = basePdfReviewFixtures.find((fixture) =>
 )!;
 export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
   ...twoFarmWotcFixtures(farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!)),
+  issuedRecaptureReviewFixture(false), issuedRecaptureReviewFixture(true),
  ...farmWotcLossFixtures(farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!),basePdfReviewFixtures.find(f=>f.id==="single-schedule-c")!),
   ...(["full", "partial", "zero"] as const).map(form8826InterpreterReviewFixture),
  ...optionalFarmReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-schedule-c")!,jointPatronFixture(basePdfReviewFixtures.find(f=>f.id==="single-schedule-c")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!,"farm")),

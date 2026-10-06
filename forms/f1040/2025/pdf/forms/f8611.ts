@@ -1,3 +1,4 @@
+import { assertForm8611IssuerSources } from "../../mef/forms/f8611_issuer_source.ts";
 import { StandardFonts } from "pdf-lib";
 import {
   calculateForm8611,
@@ -87,6 +88,7 @@ export const form8611Pdf: PdfFormDescriptor = {
     if (!allPending) {
       throw new Error("Form 8611 PDF needs the finalized return");
     }
+    assertForm8611IssuerSources(f8611s,allPending,filer);
     reconcileForm8611Schedule2(f8611s, allPending);
     return f8611s.map((item) => {
       const lines = calculateForm8611(item);
