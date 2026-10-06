@@ -5,7 +5,7 @@ import { TS } from "../../../types.ts";
 
 export const money = z.number().finite().nonnegative();
 
-const premiumMonthSchema = z.object({
+export const premiumMonthSchema = z.object({
   month: z.number().int().min(1).max(12),
   paid_premium: money,
   policy_source_reference: z.string().trim().min(1),

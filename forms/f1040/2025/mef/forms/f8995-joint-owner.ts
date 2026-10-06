@@ -1,3 +1,4 @@
+import { assertIndependentOwnerHealth } from "../../form7206_independent_owner_source.ts";
 import { normalizeAllPending } from "../../pending.ts";
 import { assertOwnedScheduleSE } from "../../schedule-se-owner-source.ts";
 import { jointOwnerQbi } from "../../../nodes/intermediate/forms/form8995/joint-owner.ts";
@@ -44,11 +45,16 @@ export function assertJointOwner8995(
           )
           : item,
     );
+  const rawFamily = p.form7206?.independent_schedule_c_plans;
+  const family = rawFamily === undefined
+    ? undefined
+    : assertIndependentOwnerHealth(p);
   const rawPlan = p.form7206?.single_schedule_c_plan;
   const plan = rawPlan === undefined
     ? undefined
     : singleScheduleCPlanSchema.parse(rawPlan);
-  const health = plan ? calculateSingleScheduleCForm7206(plan).line14 : 0;
+  const health = family?.deduction ??
+    (plan ? calculateSingleScheduleCForm7206(plan).line14 : 0);
   if (plan) {
     if (p.schedule_c?.f1099nec_receipt_sources) {
       const filer = extractFilerIdentity(f);
@@ -92,6 +98,8 @@ export function assertJointOwner8995(
     }, 0);
   if (
     canonical(fields.joint_owner_health_plan_source) !== canonical(rawPlan) ||
+    canonical(fields.joint_owner_health_plans_source) !==
+      canonical(rawFamily) ||
     sum(fields.se_health_insurance_deduction) !== health ||
     Number(p.schedule1?.line17_se_health_insurance ?? 0) !== health
   ) {
@@ -105,6 +113,7 @@ export function assertJointOwner8995(
     CONFIG_BY_YEAR[2025].ssWageBase,
     plan,
     health,
+    family?.source,
   );
   if (
     canonical(fields.joint_se_source) !== canonical(owned.source) ||

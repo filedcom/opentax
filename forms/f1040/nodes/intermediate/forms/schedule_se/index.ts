@@ -124,6 +124,7 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
               farm_optional_method_elected:
                 input.farm_optional_method_elected === true,
               line13_deduction: owned.deduction,
+              owner_source: owned.source,
             },
           }),
         ],

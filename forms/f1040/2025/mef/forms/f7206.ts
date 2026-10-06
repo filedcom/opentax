@@ -1,3 +1,4 @@
+import { assertIndependentOwnerHealth } from "../../form7206_independent_owner_source.ts";
 import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
 import {
   calculateSingleScheduleCForm7206,
@@ -25,6 +26,8 @@ import { assertScheduleCReceiptSourceIdentity } from "../../filer-source-reconci
 type Input = Partial<
   Form7206Lines & {
     single_schedule_c_plan: SingleScheduleCPlan;
+    independent_schedule_c_plans: unknown;
+    independent_plan_filing_rows: unknown;
     recipient_name: string;
     recipient_ssn: string;
     schedule_c_source: unknown;
@@ -52,7 +55,24 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Form7206Lines, string]> =
     ["line14", "SelfEmpldHealthInsDedAmt"],
   ];
 
-function buildIRS7206(fields: Input, context?: MefBuildContext): string {
+function buildIRS7206(
+  fields: Input,
+  context?: MefBuildContext,
+): string | readonly string[] {
+  if (fields.independent_schedule_c_plans !== undefined) {
+    const family = assertIndependentOwnerHealth(
+      context?.pending,
+      context?.filer,
+      fields,
+    );
+    return family.rows.map((row) =>
+      elements("IRS7206", [
+        element("NameLine1Txt", row.recipient_name),
+        element("SSN", row.recipient_ssn),
+        ...FIELD_MAP.map(([key, tag]) => element(tag, row[key])),
+      ])
+    );
+  }
   if (!FIELD_MAP.some(([key]) => fields[key] !== undefined)) {
     if (
       Object.keys(fields).some((key) =>
@@ -217,7 +237,11 @@ function buildIRS7206(fields: Input, context?: MefBuildContext): string {
   ]);
 }
 
-export const form7206: MefFormDescriptor<"form7206", Input> = {
+export const form7206: MefFormDescriptor<
+  "form7206",
+  Input,
+  string | readonly string[]
+> = {
   pendingKey: "form7206",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f7206--2025.pdf",

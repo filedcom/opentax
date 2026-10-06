@@ -1,3 +1,4 @@
+import { calculateIndependentOwnerHealth } from "../form7206/independent-owner.ts";
 import {
   allocateSharedSeDeduction,
   roundSignedQbiDollars,
@@ -15,12 +16,21 @@ export function jointOwnerQbi(
   ssWageBase: number,
   rawHealthPlan?: unknown,
   healthDeduction = 0,
+  rawHealthPlans?: unknown,
 ) {
   const owned = ownedScheduleSE(rawSource, ssWageBase);
   const source = owned.source;
   const healthPlan = rawHealthPlan === undefined
     ? undefined
     : singleScheduleCPlanSchema.parse(rawHealthPlan);
+  const family = rawHealthPlans === undefined
+    ? undefined
+    : calculateIndependentOwnerHealth(rawHealthPlans, source, ssWageBase);
+  if (family && (healthPlan || healthDeduction !== family.deduction)) {
+    throw new Error(
+      "Independent joint QBI health amounts must derive from the exact reviewed proprietor plan family",
+    );
+  }
   if (healthPlan) {
     const business = source.businesses[0], owner = owned.instances[0];
     const expected = calculateSingleScheduleCForm7206(healthPlan);
@@ -43,7 +53,7 @@ export function jointOwnerQbi(
         "Joint QBI health deduction must derive from its actual sole Schedule C owner, computed half-SE and reviewed Form7206 plan",
       );
     }
-  } else if (healthDeduction !== 0) {
+  } else if (!family && healthDeduction !== 0) {
     throw new Error(
       "Joint QBI health deduction needs its actual reviewed Form7206 plan source",
     );
@@ -89,8 +99,13 @@ export function jointOwnerQbi(
     });
   }
   const rows = source.businesses.map((row, index) => {
-    const rawQbi = row.net_profit - allocations[index] -
-      (healthPlan ? healthDeduction : 0);
+    const ownHealth = family
+      ? family.rows.find((p) => p.business_reference === row.source_reference)
+        ?.line14 ?? 0
+      : healthPlan
+      ? healthDeduction
+      : 0;
+    const rawQbi = row.net_profit - allocations[index] - ownHealth;
     return {
       business_reference: row.source_reference,
       business_name: row.business_name!,
@@ -105,7 +120,9 @@ export function jointOwnerQbi(
       raw_qbi: rawQbi,
       qbi: roundSignedQbiDollars(rawQbi),
       se_tax_deduction: allocations[index],
-      ...(healthPlan ? { health_insurance_deduction: healthDeduction } : {}),
+      ...(healthPlan || family
+        ? { health_insurance_deduction: ownHealth }
+        : {}),
     };
   });
   const line2 = rows.reduce((sum, row) => sum + row.qbi, 0);

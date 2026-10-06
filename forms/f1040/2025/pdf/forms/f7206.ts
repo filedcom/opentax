@@ -1,3 +1,7 @@
+import {
+  assertIndependentOwnerHealth,
+  independentHealthCanonical,
+} from "../../form7206_independent_owner_source.ts";
 import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
@@ -31,6 +35,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text" as const,
     domainKey: `line${line}`,
     pdfField: `${page}.f1_${line + 2}[0]`,
+    ...(line === 1 || line === 3 ? { printZero: true } : {}),
   })),
   { kind: "text", domainKey: "line6_pct", pdfField: `${page}.f1_8[0]` },
   ...([7, 8, 9, 10] as const).map((line) => ({
@@ -42,6 +47,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text" as const,
     domainKey: `line${line}`,
     pdfField: `${page}.f1_${line + 2}[0]`,
+    ...(line === 14 ? { printZero: true } : {}),
   })),
 ];
 
@@ -49,6 +55,28 @@ function projectFields(
   fields: Record<string, unknown>,
   allPending: Record<string, Record<string, unknown>>,
 ) {
+  if (allPending.form7206?.independent_schedule_c_plans !== undefined) {
+    const family = assertIndependentOwnerHealth(allPending);
+    if (fields.independent_plan_required === true) {
+      const row = family.rows.find((r) =>
+        r.plan_identifier === fields.plan_identifier
+      );
+      const { line6_pct, ...sourceFields } = fields;
+      if (
+        !row ||
+        independentHealthCanonical(sourceFields) !==
+          independentHealthCanonical(row) ||
+        (line6_pct !== undefined && line6_pct !== `${row.line6 * 100}%`)
+      ) {
+        throw new Error(
+          "Independent Form7206 PDF copy differs from its actual filed plan row",
+        );
+      }
+      return { ...row, line6_pct: `${row.line6 * 100}%` };
+    }
+    assertIndependentOwnerHealth(allPending, undefined, fields);
+    return { ...fields };
+  }
   if (
     !nativeForm7206.FIELD_MAP.some(([key]) => fields[key] !== undefined)
   ) {
@@ -190,6 +218,17 @@ export const form7206Pdf: PdfFormDescriptor = {
   pendingKey: "form7206",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f7206--2025.pdf",
   projectFields,
-  includeWhen: (projected) => Number(projected.line14 ?? 0) > 0,
+  includeWhen: (projected) =>
+    projected.independent_plan_required === true ||
+    Number(projected.line14 ?? 0) > 0,
+  instances: (fields, filer, allPending) => {
+    if (fields.independent_schedule_c_plans === undefined) return [fields];
+    return assertIndependentOwnerHealth(allPending, filer, fields).rows.map((
+      row,
+    ) => ({
+      ...row,
+      line6_pct: `${row.line6 * 100}%`,
+    }));
+  },
   fields,
 };

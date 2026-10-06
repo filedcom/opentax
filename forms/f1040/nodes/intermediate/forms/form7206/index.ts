@@ -1,4 +1,21 @@
-import { TS } from "../../../types.ts";
+import {
+  calculateIndependentOwnerHealth,
+  independentOwnerHealthSourceSchema,
+  reconcileIndependentOwnerHealthGraph,
+} from "./independent-owner.ts";
+import { ownerSourcesSchema } from "../schedule_se/owner-calculation.ts";
+import {
+  calculateSingleScheduleCForm7206,
+  money,
+  type SingleScheduleCPlan,
+  singleScheduleCPlanSchema,
+} from "./single-source.ts";
+export {
+  calculateSingleScheduleCForm7206,
+  form7206LinesSchema,
+  singleScheduleCPlanSchema,
+} from "./single-source.ts";
+export type { Form7206Lines, SingleScheduleCPlan } from "./single-source.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -12,26 +29,15 @@ import { form8995 } from "../form8995/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { form8962 } from "../form8962/index.ts";
+import { TS } from "../../../types.ts";
 import {
   calculatePub974SingleBusinessIterative,
   pub974SingleBusinessSourceSchema,
 } from "./pub974_worksheets.ts";
 
-import {
-  calculateSingleScheduleCForm7206,
-  money,
-  type SingleScheduleCPlan,
-  singleScheduleCPlanSchema,
-} from "./single-source.ts";
-export {
-  calculateSingleScheduleCForm7206,
-  form7206LinesSchema,
-  singleScheduleCPlanSchema,
-} from "./single-source.ts";
-export type { Form7206Lines, SingleScheduleCPlan } from "./single-source.ts";
-
 export const inputSchema = z.object({
   single_schedule_c_plan: singleScheduleCPlanSchema.optional(),
+  independent_schedule_c_plans: independentOwnerHealthSourceSchema.optional(),
   schedule_c_source: z.object({
     unadjusted_source: z.boolean(),
     businesses: z.array(
@@ -47,6 +53,7 @@ export const inputSchema = z.object({
     net_profit_schedule_f: z.number().finite(),
     farm_optional_method_elected: z.boolean(),
     line13_deduction: money,
+    owner_source: ownerSourcesSchema.optional(),
   }).strict().optional(),
   schedule1_line16_source: money.optional(),
   marketplace_ptc_premium_overlap: z.boolean().optional(),
@@ -129,6 +136,41 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
+    if (input.independent_schedule_c_plans) {
+      if (
+        ctx.taxYear !== 2025 || input.single_schedule_c_plan ||
+        input.pub974_single_business
+      ) {
+        throw new Error(
+          "Independent health plans require only their actual ordinary owner source family",
+        );
+      }
+      const family = calculateIndependentOwnerHealth(
+        input.independent_schedule_c_plans,
+        input.schedule_se_source?.owner_source,
+        cfg.ssWageBase,
+      );
+      reconcileIndependentOwnerHealthGraph(input, family);
+      return {
+        outputs: [
+          output(schedule1, { line17_se_health_insurance: family.deduction }),
+          output(agi_aggregator, {
+            line17_se_health_insurance: family.deduction,
+          }),
+          output(form8995, {
+            se_health_insurance_deduction: family.deduction,
+            joint_owner_health_plans_source: family.source,
+          }),
+          {
+            nodeType: this.nodeType,
+            fields: {
+              independent_schedule_c_plans: family.source,
+              independent_plan_filing_rows: family.rows,
+            },
+          },
+        ],
+      };
+    }
     if (input.pub974_single_business) {
       if (
         ctx.taxYear !== 2025 ||

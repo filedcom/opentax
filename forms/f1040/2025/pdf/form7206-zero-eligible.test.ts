@@ -228,10 +228,10 @@ Deno.test("zero health filing suppression still rejects source eligibility owner
     true,
   );
   assertStringIncludes(
-    form7206.build(changed.pending.form7206, {
+    String(form7206.build(changed.pending.form7206, {
       pending: changed.pending,
       filer: changed.filer,
-    }),
+    })),
     "<IRS7206",
   );
 });
