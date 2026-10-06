@@ -30,20 +30,22 @@ function filedLeaves<T extends object>(source: T): T {
     ]),
   ) as T;
 }
-/** Retain original source cents; settle ordinary reviewed proprietor filing operands. */
+/** Retain source cents; settle ordinary or reviewed WOTC proprietor filing operands. */
 export function filedOwnedScheduleC(
   item: ScheduleCItem,
   specialFiling = false,
   reduction = 0,
 ) {
   if (
-    specialFiling || reduction !== 0 || !item.proprietor_recipient ||
+    specialFiling ||
+    (reduction !== 0 && !(reduction > 0 && item.qbi_wotc_filing_review)) ||
+    !item.proprietor_recipient ||
     item.qbi_no_other_adjustments_confirmed !== true ||
     item.statutory_employee === true || item.professional_gambler === true ||
     item.line_f_accounting_method !== "cash" ||
     item.line_g_material_participation !== true ||
     item.line_32_at_risk !== "a" || item.at_risk_simplified ||
-    item.qbi_wotc_filing_review ||
+    (item.qbi_wotc_filing_review && reduction <= 0) ||
     (item.line_27b_other_expenses ?? 0) !== 0 ||
     (item.line_26_other_employment_credits ?? 0) !== 0 ||
     item.home_office_method || (item.line_30_home_office ?? 0) !== 0
@@ -65,7 +67,7 @@ export function filedOwnedScheduleC(
     line_24b_meals: 0,
     line_27b_other_expenses: 0,
     part_v_other_expenses: [],
-  }) + meals_deduction + other_expenses;
+  }, reduction) + meals_deduction + other_expenses;
   return {
     filed_source: filed,
     gross,

@@ -1,3 +1,4 @@
+import { filedOwnedScheduleC } from "../../../owned-business-filing.ts";
 import { farmWotcSourceSchema } from "./farm-wotc-source.ts";
 import { calculateFarmWotcLines } from "./farm-wotc.ts";
 import {
@@ -318,7 +319,10 @@ export function assertSingleScheduleCWotcAmounts(input: Form8995AInput): void {
     input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     !Number.isInteger(input.taxable_income) || !se ||
     se.line13 !== retained.se_tax_deduction ||
-    business.qbi !== computeNetProfit(item, reduction) || qbi <= 0 ||
+    business.qbi !==
+      (filedOwnedScheduleC(item, false, reduction)?.profit ??
+        computeNetProfit(item, reduction)) ||
+    qbi <= 0 ||
     !business.business_reference ||
     business.business_reference !== item.business_reference ||
     business.business_name !== item.line_c_business_name ||

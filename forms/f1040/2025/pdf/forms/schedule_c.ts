@@ -1,3 +1,4 @@
+import { assertFarmWotcReturn } from "../../form8995_farm_wotc_reconciliation.ts";
 import { filedOwnedScheduleC } from "../../../nodes/owned-business-filing.ts";
 import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
 import { reconcileForm8941DocumentSource } from "../../mef/forms/f8941_source.ts";
@@ -402,6 +403,15 @@ export const scheduleCPdf: PdfFormDescriptor = {
   fields,
   projectFields(raw, allPending) {
     if (Object.keys(raw).length === 0) return { schedule_c_instances: [] };
+    if (allPending.schedule_f) {
+      assertFarmWotcReturn(
+        allPending.form8995a ?? allPending.form8995,
+        allPending,
+        undefined,
+        { key: "schedule_c", value: raw },
+      );
+    }
+
     const input = inputSchema.parse(raw);
     if (
       allPending.f3115 ||

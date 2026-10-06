@@ -1576,3 +1576,87 @@ artifact/template hashes and full local TY2025v5.4 XSD for **4 cases /122
 reviewed pages** (`/tmp/opentax-controlled-farm-held-check.log`). Actual XML
 includes ControlledGroupMemberStatement and DeductionDifferentiationStmt;
 the corresponding Form5884 allocation continuation prints in every packet.
+
+## Mixed common-control C/F source extension (2026-10-06, locally proven)
+
+Retained learning: each issued employee identity can be shared across employers,
+while certification, payroll, issued W-2 and SSA records remain employer-specific.
+The group employee cap is applied once and its filed member shares reduce the
+actual C/F wage deduction before owner SE/QBI, independently of current tax use.
+Mixed fractional payroll also requires the reviewed Schedule C filed leaf chain,
+rather than raw profit plus independently rounded PDF lines. Original cents remain
+in public sources. External issuer/SWA authentication and carryover acceptance
+remain open; this extension does not alter SHOP/paired-health or optional farms.
+
+The public route now retains an actual primary service Schedule C and spouse cash
+farm with the existing complete section 52 common-control/reciprocal-management
+review. Both employers have distinct issued W-2/SSA/certification/payroll sources;
+the shared employee SSN and person reference agree. The C review also binds actual
+issued NEC copy references; payer/recipient/amount joins match retained receipt
+sources. The farm retains principal agricultural G income and secondary NEC
+income. Neither QBI, SE profit, nor tax totals are authored public source inputs.
+
+[Form 5884 instructions](https://www.irs.gov/instructions/i5884) treat common-control
+members as one employer for the credit and require proportionate shares and an
+allocation statement. Line 2 requires the full salary/wage deduction reduction
+even if current credit is limited. [Section 1.52-1](https://www.ecfr.gov/current/title-26/section-1.52-1)
+provides the common-control rules; existing reviewed ownership and spousal
+attribution facts remain mandatory. The mixed route joins both filed members to their actual complete group
+ownership and payroll records. [TY2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi)
+preserve cents while adding source amounts for a line, then round its total.
+Reviewed regular cash C WOTC now settles filed leaf/expense/profit operands through
+the existing owned-business helper, so C → Schedule 1 → owner SE → QBI and native/PDF
+use one filed chain while raw public payroll remains retained. SHOP, ordinary
+noncredit, optional-farm and patron branches keep their existing separate paths.
+
+Four reusable `owned-controlled-mixed-cf-wotc-*` packets start with public inputs:
+
+| Case | Filed C profit | Filed F profit | Half SE | QBI deduction | Determined WOTC | Current use | Total tax |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| below | 35,201 | 55,201 | 4,372 | 17,206 | 2,400 | 2,400 | 56,765 |
+| fractional phase | 177,372 | 188,029 | 17,277 | 21,135 | 2,400 | 2,400 | 130,973 |
+| above limited | 432,001 | 432,001 | 16,288 | 169,543 | 384,000 | 239,748 | 112,690 |
+| phase loss | −11,201 | 195,201 | 13,532 | 20,032 | 2,400 | 2,400 | 114,922 |
+
+Fractional raw payroll is C $4,000.49 / F $3,000.52; the single-person group cap is
+6,000, filed shares are 1,371 / 1,029, C filed wages 2,629 and C gross 180,001 →
+profit 177,372. Raw AGI 498,124.37 gives filed pre-QBI taxable 466,624 and exact
+phase 72.024%. In the loss case raw C receipts 20,000.50 / supplies 26,401.50 settle
+20,001 − 26,402 − 4,800 = −11,201, joining signed Schedule 1/native/PDF. Spouse QBI
+181,669 offsets 11,201 to 170,468; ordinary loss carryforward and parent line 40
+remain zero; phase 44.368%. The above-range case has 160 shared people, 320 distinct
+employer records and 1.92 million actual payroll; group qualified wages 960,000
+produce 192,000 per filed member, independently of 239,748 current tax use.
+Primary SS wages bind the 176,100 owner cap in the below case; spouse wages retain
+50,000.49 and the separate owner SE calculation.
+
+Full public execution, final native source replay, full local 2025 v5.4 XSD and
+filled PDFs passed. Four held packets contain 30 / 31 / 31 / 30 pages; all 122 pages were
+rendered and visually inspected, including both proprietor copies, all nine
+Form 3800 pages, printable group allocation, exact percentage and loss Schedule C.
+The final held checker replays current public sources/XML/PDF, template hashes
+and full XSD and passed 4 cases / 122 pages. Artifacts are ignored at
+`.state/research/ty2025-filled-pdf-review/2026-10-06-mixed-controlled-cf-wotc` in the
+isolated `d882d91d7` checkout. Initial farm-only empty-C PDF preflight failures
+were repaired; subsequent prior farm positive/loss/independent/control replay
+passed 6 / 0. Source negatives cover missing control, attribution/management, wrong
+owner/EIN/person identity, aliased person, reused SSA/W2, certification/payroll,
+actual G/NEC copy/payer/recipient, full reduction, owner wage cap/SE profit,
+Schedule 1, current credit and final QBI, through public prepare / native / direct PDF.
+
+Remaining scope: this mixed route is one reviewed primary/spouse regular cash
+C/F pair, not additional group entities, capitalized wages, optional farm method,
+patron/SSTB/aggregation or wider loss allocations. Retained synthetic reviewed
+issued records establish calculation/source joins, not external issuer/SWA
+authentication, accepted credit carryovers, IRS business rules or ATS acceptance.
+The wider Forms 8995 / 8995-A / 3800 parent remains open.
+
+Focused mixed return suite passed 2 / 0 (24 seconds), including full public,
+prepared native and direct PDF conflicts. Optional-farm, joint-patron, owned
+paired-health, SHOP native and review-scope compatibility passed 21 / 0
+(1 minute 44 seconds). Final prior controlled C / controlled and independent F /
+farm loss / joint C source compatibility passed 17 / 0 (2 minutes 55 seconds).
+Terminal logs: `/tmp/mixed-wotc-final-commit-focus.log`,
+`/tmp/mixed-wotc-terminal-compat.log`, `/tmp/mixed-wotc-scope-compat.log` and
+`/tmp/mixed-wotc-held-check2.log`. These are isolated focused proofs; no main full
+regression, release acceptance, board or future-task status is changed.

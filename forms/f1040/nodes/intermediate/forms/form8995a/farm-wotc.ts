@@ -1,3 +1,4 @@
+import { reviewedWotcQbiWages } from "../../../inputs/schedule_c/qbi-wotc.ts";
 import { roundSignedQbiDollars } from "../../../inputs/schedule_c/qbi-multiple.ts";
 import {
   filedOwnedScheduleC,
@@ -44,8 +45,9 @@ export function farmWotcBusinessAmounts(
         row.determined_wage_reduction,
       ).profit
       : filedOwnedScheduleF(row.item)?.profit ?? fProfit(row.item)
-    : filedOwnedScheduleC(row.item)?.profit ?? cProfit(row.item);
-  const review = isFarm ? row.item.qbi_wotc_filing_review : undefined;
+    : filedOwnedScheduleC(row.item, false, row.determined_wage_reduction)
+      ?.profit ?? cProfit(row.item, row.determined_wage_reduction);
+  const review = row.item.qbi_wotc_filing_review;
   const wages = isFarm
     ? row.item.qbi_w2_wages ?? 0
     : row.item.qbi_w2_wages ?? 0;
@@ -60,8 +62,10 @@ export function farmWotcBusinessAmounts(
         row.item.at_risk_simplified !== undefined ||
         row.item.accounting_method !== "cash"
       : row.item.line_g_material_participation !== true ||
-        row.item.qbi_specified_service === true ||
-        row.item.qbi_wotc_filing_review !== undefined)
+        row.item.line_f_accounting_method !== "cash" ||
+        row.item.line_32_at_risk !== "a" ||
+        row.item.at_risk_simplified !== undefined ||
+        row.item.qbi_specified_service === true)
   ) {
     throw new Error(
       "Farm WOTC QBI needs actual identified ordinary source businesses and regular at-risk SE",
@@ -89,6 +93,8 @@ export function farmWotcBusinessAmounts(
         "Farm WOTC full reduction, employer W2 payroll and allocable QBI wages disagree",
       );
     }
+  } else if (!isFarm && row.determined_wage_reduction > 0) {
+    reviewedWotcQbiWages(row.item, row.determined_wage_reduction);
   } else if (
     review || wages !== 0 ||
     (isFarm && (row.item.line22_labor_hired ?? 0) !== 0)
@@ -126,7 +132,7 @@ export function farmWotcAdvancedFields(
     ...(input.schedule_c_qbi_businesses ?? []).map((r: any) => ({
       kind: "schedule_c" as const,
       item: businessSchema.parse(r.source_schedule_c),
-      determined_wage_reduction: 0 as const,
+      determined_wage_reduction: r.wotc_wage_reduction ?? 0,
     })),
   ];
   const sum = (v: any): number =>

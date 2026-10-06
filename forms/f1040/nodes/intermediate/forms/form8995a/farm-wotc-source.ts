@@ -11,7 +11,7 @@ const business = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("schedule_c"),
     item: businessSchema,
-    determined_wage_reduction: z.literal(0),
+    determined_wage_reduction: z.number().nonnegative(),
   }),
 ]);
 export const farmWotcSourceSchema = z.object({

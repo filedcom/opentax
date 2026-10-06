@@ -81,10 +81,18 @@ export const itemSchema = z.object({
   // Joint filings also identify the primary business owner explicitly.
   // qbi_w2_wages is the allocable amount AFTER the section 280C reduction.
   qbi_wotc_filing_review: z.object({
+    issued_nec_source_references: z.array(z.string().trim().min(1)).min(1)
+      .optional(),
     owner_ssn: z.string().regex(/^\d{9}$/).optional(),
     employee_w2_records: z.array(
       z.object({
         employee_reference: z.string().trim().min(1),
+        employee_ssn: z.string().regex(/^\d{9}$/).optional(),
+        employer_ein: z.string().regex(/^\d{9}$/).optional(),
+        box3_social_security_wages: z.number().nonnegative().optional(),
+        swa_certification_reference: z.string().trim().min(1).optional(),
+        payroll_record_references: z.array(z.string().trim().min(1)).min(1)
+          .optional(),
         source_document_reference: z.string().trim().min(1),
         box1_wages: z.number().positive(),
         box5_wages: z.number().positive(),

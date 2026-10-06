@@ -1,3 +1,4 @@
+import { assertFarmWotcReturn } from "../../form8995_farm_wotc_reconciliation.ts";
 import { filedOwnedScheduleC } from "../../../nodes/owned-business-filing.ts";
 import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
 import { reconcileForm8941DocumentSource } from "./f8941_source.ts";
@@ -327,6 +328,15 @@ export const scheduleC: MefFormDescriptor<
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sc.pdf",
   build(fields, context = {}) {
+    if (context.pending?.schedule_f) {
+      assertFarmWotcReturn(
+        context.pending.form8995a ?? context.pending.form8995,
+        context.pending,
+        context.filer,
+        { key: "schedule_c", value: fields },
+      );
+    }
+
     const input = scheduleCInputSchema.parse({
       ...fields,
       schedule_cs: fields?.schedule_cs ?? [],

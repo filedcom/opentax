@@ -1,5 +1,13 @@
+import {
+  computeNetProfit as cProfit,
+  inputSchema as cSchema,
+  wotcReductionsByBusiness,
+} from "../nodes/inputs/schedule_c/model.ts";
 import { inputSchema as gSchema } from "../nodes/inputs/f1099g/index.ts";
-import { filedOwnedScheduleF } from "../nodes/owned-business-filing.ts";
+import {
+  filedOwnedScheduleC,
+  filedOwnedScheduleF,
+} from "../nodes/owned-business-filing.ts";
 import { jointOwnerQbi } from "../nodes/intermediate/forms/form8995/joint-owner.ts";
 import { isDeepStrictEqual } from "node:util";
 import { normalizeAllPending } from "./pending.ts";
@@ -35,7 +43,10 @@ export function assertFarmWotcReturn(
   fieldsValue: unknown,
   rawPending: Readonly<Record<string, unknown>> | undefined,
   filer?: FilerIdentity,
-  descriptorSource?: { key: "schedule_f" | "f5884"; value: unknown },
+  descriptorSource?: {
+    key: "schedule_f" | "schedule_c" | "f5884";
+    value: unknown;
+  },
 ): void {
   const rawFields = (fieldsValue ?? {}) as Readonly<Record<string, unknown>>;
   const rawFarm = rawPending?.schedule_f as any;
@@ -52,6 +63,23 @@ export function assertFarmWotcReturn(
     projectScheduleFItems(source).map((farm) => [farm.farm_id, farm]),
   );
   const reviewed = source.schedule_fs.filter((f) => f.qbi_wotc_filing_review);
+  const cSource = pending.schedule_c
+    ? cSchema.parse(pending.schedule_c)
+    : undefined;
+  const cReductions = cSource
+    ? wotcReductionsByBusiness(cSource)
+    : new Map<string, number>();
+  const reviewedC =
+    cSource?.schedule_cs.filter((c) => c.qbi_wotc_filing_review) ?? [];
+  // Aliases are local join keys, not authored calculation or ownership sources.
+  const employers = [
+    ...reviewed,
+    ...reviewedC.map((c) => ({
+      ...c,
+      farm_id: c.business_reference,
+      line_c_farm_name: c.line_c_business_name,
+    })),
+  ];
   const wotc = pending.f5884 ? creditSchema.parse(pending.f5884) : undefined;
   const directs = wotc?.f5884s.filter((e) =>
     e.direct_employer_review &&
@@ -61,7 +89,10 @@ export function assertFarmWotcReturn(
     !reviewed.length && !directs.length && !rawFields.farm_wotc_filing_source
   ) return;
   if (
-    (reviewed.length !== 1 && reviewed.length !== 2) || !wotc ||
+    (employers.length !== 1 && employers.length !== 2) || !wotc ||
+    (reviewedC.length > 0 &&
+      (!wotc.controlled_group?.joint_filed_members_review ||
+        reviewed.length !== 1 || reviewedC.length !== 1)) ||
     source.farm_optional_method_elected === true ||
     (wotc.controlled_group &&
       !wotc.controlled_group.joint_filed_members_review) ||
@@ -78,8 +109,14 @@ export function assertFarmWotcReturn(
     descriptorSource && !isDeepStrictEqual(
       descriptorSource.key === "schedule_f"
         ? farmSchema.parse(descriptorSource.value)
+        : descriptorSource.key === "schedule_c"
+        ? cSchema.parse(descriptorSource.value)
         : creditSchema.parse(descriptorSource.value),
-      descriptorSource.key === "schedule_f" ? source : wotc,
+      descriptorSource.key === "schedule_f"
+        ? source
+        : descriptorSource.key === "schedule_c"
+        ? cSource
+        : wotc,
     )
   ) {
     throw new Error("Farm WOTC descriptor differs from actual retained source");
@@ -89,17 +126,23 @@ export function assertFarmWotcReturn(
     allocations = lines.wageDeductionAllocations;
   if (
     lines.line3 !== 0 ||
-    lines.line2 !== [...reductions.values()].reduce((a, b) => a + b, 0) ||
-    allocations.length !== reviewed.length ||
+    lines.line2 !==
+      [...reductions.values(), ...cReductions.values()].reduce(
+        (a, b) => a + b,
+        0,
+      ) ||
+    allocations.length !== employers.length ||
     allocations.some((a) =>
-      a.location.kind !== "schedule_f" ||
-      reductions.get(a.location.farm_id) !== a.credit_amount
+      a.location.kind === "schedule_f"
+        ? reductions.get(a.location.farm_id) !== a.credit_amount
+        : a.location.kind !== "schedule_c" ||
+          cReductions.get(a.location.business_reference) !== a.credit_amount
     ) ||
     (pending.f3800?.f5884_credit as any)?.credit_amount !== lines.line4 ||
     (pending.f3800?.f5884_credit as any)?.subject_to_passive_activity_limit !==
       false ||
     wotc.f5884s.length !==
-      reviewed.reduce(
+      employers.reduce(
         (a, f) => a + f.qbi_wotc_filing_review!.employee_w2_records.length,
         0,
       )
@@ -126,18 +169,18 @@ export function assertFarmWotcReturn(
   ) {
     throw new Error("Farm WOTC actual final/header owner identity differs");
   }
-  if (reviewed.length === 2) {
+  if (employers.length === 2) {
     const control = wotc.ordinary_joint_employer_control_review;
     const group = wotc.controlled_group;
     const matchingControl = group
       ? group.members.length === 2 && group.members.every((m) =>
-        reviewed.some((f) =>
+        employers.some((f) =>
           f.line_d_ein?.replace(/\D/g, "") === m.ein &&
           f.line_c_farm_name === m.business_name
         )
       ) &&
         group.joint_filed_members_review!.members.every((m) =>
-          reviewed.some((f) =>
+          employers.some((f) =>
             f.line_d_ein?.replace(/\D/g, "") === m.ein &&
             f.farm_id === m.business_reference &&
             f.proprietor_recipient === m.proprietor_recipient &&
@@ -145,7 +188,7 @@ export function assertFarmWotcReturn(
           )
         )
       : control?.businesses.every((b) =>
-        reviewed.some((f) =>
+        employers.some((f) =>
           b.employer_ein === f.line_d_ein?.replace(/\D/g, "") &&
           b.business_reference === f.farm_id &&
           b.proprietor_ssn === f.qbi_wotc_filing_review?.owner_ssn &&
@@ -153,36 +196,36 @@ export function assertFarmWotcReturn(
             (f.proprietor_recipient === "S" ? spouse : primary)
         )
       );
-    const employeeCopies = reviewed.flatMap((f) =>
+    const employeeCopies = employers.flatMap((f) =>
       f.qbi_wotc_filing_review!.employee_w2_records
     );
     if (
       general.filing_status !== "mfj" || !matchingControl ||
       new Set(employeeCopies.map((r) => r.source_document_reference)).size !==
         employeeCopies.length ||
-      new Set(reviewed.map((f) => f.proprietor_recipient)).size !== 2 ||
-      new Set(reviewed.map((f) => f.farm_id)).size !== 2 ||
-      new Set(reviewed.map((f) => f.line_d_ein?.replace(/\D/g, ""))).size !==
+      new Set(employers.map((f) => f.proprietor_recipient)).size !== 2 ||
+      new Set(employers.map((f) => f.farm_id)).size !== 2 ||
+      new Set(employers.map((f) => f.line_d_ein?.replace(/\D/g, ""))).size !==
         2 ||
       (group &&
         new Set(employeeCopies.map((r) => r.ssa_filing_record_reference))
             .size !== employeeCopies.length)
     ) {
       throw new Error(
-        "Two farm employers need actual spouse ownership and reviewed independent exceptions or complete common-control sources",
+        "Two reviewed C/F employers need actual spouse ownership and reviewed independent exceptions or complete common-control sources",
       );
     }
   }
-  if (wotc.controlled_group && reviewed.length !== 2) {
+  if (wotc.controlled_group && employers.length !== 2) {
     throw new Error(
-      "Joint farm common control needs both actual filed member farms",
+      "Joint farm common control needs both actual filed C/F member businesses",
     );
   }
   if (wotc.controlled_group) {
     const people = new Map<string, string>();
     const referencesBySsn = new Map<string, string>();
     for (
-      const copy of reviewed.flatMap((f) =>
+      const copy of employers.flatMap((f) =>
         f.qbi_wotc_filing_review!.employee_w2_records
       )
     ) {
@@ -190,10 +233,15 @@ export function assertFarmWotcReturn(
       if (prior && prior !== copy.employee_ssn) {
         throw new Error("Shared group worker issued identities conflict");
       }
-      const priorReference = referencesBySsn.get(copy.employee_ssn);
+      const priorReference = referencesBySsn.get(copy.employee_ssn ?? "");
       if (priorReference && priorReference !== copy.employee_reference) {
         throw new Error(
           "Shared group worker cannot use different person references to avoid the cap",
+        );
+      }
+      if (!copy.employee_ssn) {
+        throw new Error(
+          "Mixed group worker needs actual issued person identity",
         );
       }
       people.set(copy.employee_reference, copy.employee_ssn);
@@ -326,12 +374,103 @@ export function assertFarmWotcReturn(
       }
     }
   }
+  for (const c of reviewedC) {
+    const review = c.qbi_wotc_filing_review!,
+      owner = c.proprietor_recipient === "S" ? spouse : primary;
+    farmWotcBusinessAmounts({
+      kind: "schedule_c",
+      item: c,
+      determined_wage_reduction: cReductions.get(c.business_reference ?? "") ??
+        0,
+    });
+    const others = businessRefs.filter((r) => r !== c.business_reference);
+    const issued = nec.filter((r) =>
+      r.for_routing === "schedule_c" &&
+      r.schedule_c_business_reference === c.business_reference
+    );
+    if (
+      !c.business_reference || !owner || review.owner_ssn !== owner ||
+      review.no_other_business_or_aggregation_confirmed === true ||
+      review.no_aggregation_confirmed !== true ||
+      !isDeepStrictEqual(review.reviewed_other_business_references, others) ||
+      !issued.length || issued.some((r) =>
+        r.recipient_ssn?.replace(/\D/g, "") !== owner ||
+        !r.source_document_reference
+      ) ||
+      issued.reduce((sum, r) =>
+          sum + (r.box1_nec ?? 0), 0) !== c.line_1_gross_receipts ||
+      !isDeepStrictEqual(
+        review.issued_nec_source_references,
+        issued.map((r) =>
+          r.source_document_reference
+        ),
+      ) ||
+      !isDeepStrictEqual(
+        cSource?.f1099nec_receipt_sources?.filter((r) =>
+          r.business_reference === c.business_reference
+        ),
+        issued.map((r) => ({
+          business_reference: c.business_reference,
+          payer_name: r.payer_name,
+          payer_tin: r.payer_tin.replace(/\D/g, ""),
+          recipient_tin: owner,
+          amount: r.box1_nec,
+        })),
+      )
+    ) {
+      throw new Error(
+        "Mixed controlled Schedule C actual owned issued-income sources disagree",
+      );
+    }
+    const workers = wotc.f5884s.filter((e) =>
+      e.direct_employer_review?.business_reference === c.business_reference
+    );
+    if (workers.length !== review.employee_w2_records.length) {
+      throw new Error("Mixed Schedule C worker set differs");
+    }
+    for (const e of workers) {
+      const employer = e.direct_employer_review!,
+        record = review.employee_w2_records.find((r) =>
+          r.employee_reference === e.employee_reference
+        );
+      const payroll = e.wage_records.reduce(
+        (sum, r) => sum + r.qualified_wages,
+        0,
+      );
+      if (
+        !record || !record.employee_ssn ||
+        [primary, spouse].includes(record.employee_ssn) ||
+        record.box3_social_security_wages !==
+          Math.min(record.box1_wages, CONFIG_BY_YEAR[2025].ssWageBase) ||
+        record.employer_ein !== employer.employer_ein ||
+        record.swa_certification_reference !==
+          e.certification.swa_certification_reference ||
+        !isDeepStrictEqual(
+          record.payroll_record_references,
+          e.wage_records.map((r) => r.payroll_record_reference),
+        ) ||
+        Math.abs(record.box1_wages - payroll) > 1e-6 ||
+        Math.abs(record.box5_wages - payroll) > 1e-6 ||
+        employer.employer_ein !== c.line_d_ein?.replace(/\D/g, "") ||
+        employer.proprietor_ssn !== owner ||
+        employer.proprietor_recipient !== c.proprietor_recipient ||
+        e.wage_records.some((r) =>
+          r.deduction_location.kind !== "schedule_c" ||
+          r.deduction_location.business_reference !== c.business_reference
+        )
+      ) {
+        throw new Error(
+          "Mixed Schedule C employer proprietor/certification/payroll/issued W2 identities differ",
+        );
+      }
+    }
+  }
   const wages = pending.w2 ? w2Schema.parse(pending.w2).w2s : [];
   if (
     wages.some((w) =>
       !w.employee_ssn || !w.source_document_reference ||
       ![primary, spouse].includes(w.employee_ssn.replace(/\D/g, "")) ||
-      reviewed.some((f) =>
+      employers.some((f) =>
         w.employer_ein?.replace(/\D/g, "") === f.line_d_ein?.replace(/\D/g, "")
       )
     )
@@ -354,6 +493,12 @@ export function assertFarmWotcReturn(
         computeNetProfit(filedFarmById.get(f.farm_id) ?? f)
   );
   const farmProfit = profits.reduce((a, b) => a + b, 0);
+  const cTotal = cSource?.schedule_cs.reduce((sum, c) => {
+    const reduction = cReductions.get(c.business_reference ?? "") ?? 0;
+    return sum +
+      (filedOwnedScheduleC(c, false, reduction)?.profit ??
+        cProfit(c, reduction));
+  }, 0) ?? 0;
   let half: number, tax: number;
   if (owned) {
     half = owned.deduction;
@@ -378,6 +523,7 @@ export function assertFarmWotcReturn(
     : farmProfit;
   if (
     pending.schedule1?.line6_schedule_f !== farmProfit ||
+    (Number(pending.schedule1?.line3_schedule_c ?? 0) !== cTotal) ||
     pending.schedule1?.line15_se_deduction !== half ||
     pending.schedule2?.line4_se_tax !== tax ||
     Math.abs(Number(final.line11_agi) - (wageTotal + profit - half)) > 1e-6 ||
@@ -435,7 +581,9 @@ export function assertFarmWotcReturn(
               (reductions.get(f.farm_id ?? "") ?? 0)
           )
           : !(pending.schedule_c?.schedule_cs as any[])?.some((c) =>
-            isDeepStrictEqual(c, r.item)
+            isDeepStrictEqual(c, r.item) &&
+            r.determined_wage_reduction ===
+              (cReductions.get(c.business_reference ?? "") ?? 0)
           )
       ) ||
       fields.taxable_income !==

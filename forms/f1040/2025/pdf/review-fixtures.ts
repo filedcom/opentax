@@ -1,4 +1,5 @@
 import { multipleNuaReviewFixtures } from "./review-4972-multiple-nua.fixture.ts";
+import { mixedControlledWotcFixtures } from "./review-mixed-controlled-wotc.fixture.ts";
 import { controlledFarmWotcFixtures } from "./review-controlled-farm-wotc.fixture.ts";
 import { twoFarmWotcFixtures } from "./review-two-farm-wotc.fixture.ts";
 import { issuedRecaptureReviewFixture } from "./review-8611-issued-k1.fixture.ts";
@@ -9067,6 +9068,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
   ...twoFarmWotcFixtures(farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!)),
   issuedRecaptureReviewFixture(false), issuedRecaptureReviewFixture(true),
   ...controlledFarmWotcFixtures(twoFarmWotcFixtures(farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!))),
+  ...mixedControlledWotcFixtures(controlledFarmWotcFixtures(twoFarmWotcFixtures(farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!))), controlledWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!)[0]),
  ...farmWotcLossFixtures(farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!),basePdfReviewFixtures.find(f=>f.id==="single-schedule-c")!),
   ...(["full", "partial", "zero"] as const).map(form8826InterpreterReviewFixture),
  ...optionalFarmReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-schedule-c")!,jointPatronFixture(basePdfReviewFixtures.find(f=>f.id==="single-schedule-c")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!,"farm")),
