@@ -146,3 +146,10 @@ external authentication or IRS business-rule/ATS acceptance. Independent plans
 here do not classify their employers as independent for section52: the WOTC
 employers remain actually reviewed as commonly controlled, and their one group
 cap and filed allocation are preserved.
+
+
+## Current-main C/F health verification
+
+Source `c7c8c4d34` passes the six-file main gate: **22 passed, 0 failed (2m13s)**. It includes the new C/F returns, prior independent C/C plans, spouse Medicare, controlled C/F WOTC, controlled farms and the standalone Publication974 import. Log `/tmp/opentax-mixed-cf-health-current-main.log`, SHA256 `000df1e12ebd396ff791253578f8a49db15a00f62e0a1bd130a44a0642f09d35`.
+
+A fresh current-main batch at `/tmp/opentax-mixed-cf-health-held-main-oct6` passes held replay of **7 cases / all212 reviewed pages**. All seven PDFs are byte-identical to the isolated reviewed outputs; form copies, owners and page origins agree before reviewed page slots are transferred. The new source/XML snapshots retain current graph source fields; the original artifacts remain untouched. Checker `/tmp/opentax-mixed-cf-health-held-main-check.log`; manifestSHA256 `a8d24f7cf57ec409b53899ff7b69e3039f6cd1c58f85bd450dd4ed0edb5651c3`. All seven full return XMLs pass local2025v5.4XSD. These prove the documented C/F health routes; wider owner/source combinations and IRS acceptance remain open.

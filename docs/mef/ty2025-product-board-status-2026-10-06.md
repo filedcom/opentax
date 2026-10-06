@@ -1559,3 +1559,19 @@ Full `deno task test` at bc6cafec6 ended 11,494/8, exit 1. The immutable rerun a
 
 
 PublishedPR63 head5ed5a70a7 verified; actual309fixtures/1431ledger. Fullwrapper26565/Deno26572 remain live03:28UTC. Integrate reviewedC/Fhealthd1 next; its sourcecontract remains separate from pendingtiphealth explicitplan review.
+
+
+## Before reviewed tip and mixed SHOP catalog integration
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,431 bounded slices**. Prior learnings and evidence are preserved in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). New discoveries belong only in `future_todo`.
+
+Actual planner: **309 fixtures**,116 PDF descriptors,113 keys,96 covered/17 uncovered. Published PR63 head **5ed5a70a7** includes verified mixedC/F SHOP (main52/0,52reviewedpages), three-memberSHOP (15/0,80pages), mixed-ownerWOTC/tipQBI (combined62/0,prior12/0,122/147pages) and complete-sourceannuity (247/0,held7/38). Regenerated PDFs match reviewedbytes; oldNUAheld5/27 remains unchanged. These prove stated routes, not broader parent completion.
+
+Full `deno task test` at bc6cafec6 ended11,494/8,exit1. Immutable rerun fbacc539c started02:29:48UTC; wrapper26565/Deno26572 verifiedlive03:28UTC. Five observed failures have focused repairs; terminal totals and a passing latest full run remain required. C/Fhealthd1e1376a0 is ready7/all212reviewedpages; tip-health explicitplan sources and12reviewed-fixture registrations continue in parallel. Wider filing/source combinations, authentication, ATS conflicts/credentials, business rules, IRS acceptance and release readiness remain incomplete.
+
+
+C/F health c7c8c4d34 passes main22/0 and held7/all212pages; all seven main PDFs equal reviewedbytes. Ledger1432; actualcatalog316. Fullwrapper26565/Deno26572 verified live03:31UTC.

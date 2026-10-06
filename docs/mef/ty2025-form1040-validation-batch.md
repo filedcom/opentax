@@ -4985,3 +4985,8 @@ Combined currentmain62/0(3m2s);priorWOTC12/0(1m13s). RefreshedWOTCheld4/all122pa
 ## October6 complete-source Form4972 annuity combinations
 
 Main247/0(1m13s);mainheld7/all38pages,oldNUAheld5/all27pages;allreviewed source/XML/PDFbytes retained. Actualcatalog309. [Full proof](ty2025-form4972-multiple-annuity-source-review.md).
+
+
+## October6 independent C/F health plans
+
+Main22/0(2m13s); fresh held7/all212reviewedpages; all seven main PDFs match reviewed outputs. Actual catalog316. [Source review and boundaries](ty2025-form7206-independent-spouse-plans-review.md).

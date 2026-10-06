@@ -2,11 +2,11 @@
 
 ## Compacted status (2026-10-06)
 
-The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,431 bounded slices**. Prior learnings and evidence are preserved in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). New discoveries belong only in `future_todo`.
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,432 bounded slices**. Prior learnings and evidence are preserved in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). New discoveries belong only in `future_todo`.
 
-Actual planner: **309 fixtures**,116 PDF descriptors,113 keys,96 covered/17 uncovered. Published PR63 head **5ed5a70a7** includes verified mixedC/F SHOP (main52/0,52reviewedpages), three-memberSHOP (15/0,80pages), mixed-ownerWOTC/tipQBI (combined62/0,prior12/0,122/147pages) and complete-sourceannuity (247/0,held7/38). Regenerated PDFs match reviewedbytes; oldNUAheld5/27 remains unchanged. These prove stated routes, not broader parent completion.
+Actual planner: **316 fixtures**, 116 PDF descriptors, 113 keys, 96 covered and 17 uncovered. Published PR63 head is **5ed5a70a7**. Verified main gates cover mixed C/F SHOP (52/0, 52 reviewed pages), three-member SHOP (15/0, 80 pages), mixed-owner WOTC/tip QBI (62/0 plus prior12/0, 122/147 pages), complete-source annuity (247/0, held7/38) and independent C/F health (22/0, held7/212). Regenerated PDFs match reviewed bytes; old NUA held5/27 remains unchanged. These prove their stated routes; broader parents remain open.
 
-Full `deno task test` at bc6cafec6 ended11,494/8,exit1. Immutable rerun fbacc539c started02:29:48UTC; wrapper26565/Deno26572 verifiedlive03:28UTC. Five observed failures have focused repairs; terminal totals and a passing latest full run remain required. C/Fhealthd1e1376a0 is ready7/all212reviewedpages; tip-health explicitplan sources and12reviewed-fixture registrations continue in parallel. Wider filing/source combinations, authentication, ATS conflicts/credentials, business rules, IRS acceptance and release readiness remain incomplete.
+Full `deno task test` at bc6cafec6 ended11,494/8, exit1. Immutable rerun fbacc539c started02:29:48UTC; wrapper26565/Deno26572 were verified live03:31UTC. Five observed failures have focused repairs; terminal totals and a passing latest full run remain required. Root integrates12 reviewed catalog cases; tip-health explicit plan sources and two-farm owner health continue in parallel. Wider filing/source combinations, authentication, ATS conflicts/credentials, business rules, IRS acceptance and release readiness remain incomplete.
 
 ## Scope and completion rules
 
