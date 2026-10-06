@@ -5054,3 +5054,8 @@ Main4f99acaa0 commands: `PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin
 ## Form8621 registered parent current-main proof
 
 Maina2ae96eba seven focused files (`f8621` node, nativeXSD/fx, parentPDF/source/excess, current1294 source, Schedule1 source replay) pass36/0(23s), /tmp/opentax-form8621-current-main-focused.log. Same Schedule2 native/PDF and Form8978 source command passes56/0(11s), /tmp/opentax-form8621-current-main-preservation.log. Five actual prepared fullXSD packets retain38 reviewed pages; all five main PDFs byte-equal final-v6 hashes in [source proof](../../forms/f1040/2025/form8621_parent_source_proof.md). Actual registries now151native/117PDF; planner365fixtures/114keys96covered18uncovered including form8621 not yet catalogued. No fulllatest/sourceauth/IRS acceptance claim.
+
+
+## Full V4 terminal and age-derived QBI expectation repair
+
+Immutable181575242 `deno task test`: 11,794 passed / 1 failed, exit1, 95m00s runner, start2026-10-06T03:53:35Z/end05:29:40Z. Log `/tmp/opentax-deno-task-test-source-v4-oct6.log`, SHA2568bb441d743001c8f067474a04385b8b92fbe41544570744abb66c5d0e6a678a4. Sole failure was the e2e age-derived Form8995 expectation: sourced dividends26,000 minus standard17,750 and actual senior6,000 equals pre-QBI2,250; 20% cap450, taxable1,800. Corrected expectations explicitly assert the senior deduction. Focused actual-main test1/0,17 filtered,19ms; `/tmp/opentax-form8995-age-terminal-repair-v1.log`. Production unchanged. Latest full passing gate still required.

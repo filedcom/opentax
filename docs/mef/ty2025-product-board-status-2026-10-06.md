@@ -2274,3 +2274,8 @@ Complete ordinary-refund inventory is verified on main; Form4852, remaining Form
 
 
 Immutable181575242 full deno task test terminal11794/1,95m0s runner, wrapper start03:53:35/end05:29:40UTC exit1. Solefailure age-derived Form8995 cap oldexpect1650 vsactual450; currentmain stillholds same expectation. Source dividends26000, age65standard17750, actual6000 senior deduction make preQBIincome2250 and20%cap450, finaltaxable1800. Actual source/generated deduction proof and focusedcase will be checked before modifying expectations. Logdigest8bb441d743001c8f067474a04385b8b92fbe41544570744abb66c5d0e6a678a4. No passing latestfull/IRSacceptance claim.
+
+
+## Full V4 terminal and age-derived QBI expectation repair
+
+Immutable181575242 `deno task test`: 11,794 passed / 1 failed, exit1, 95m00s runner, start2026-10-06T03:53:35Z/end05:29:40Z. Log `/tmp/opentax-deno-task-test-source-v4-oct6.log`, SHA2568bb441d743001c8f067474a04385b8b92fbe41544570744abb66c5d0e6a678a4. Sole failure was the e2e age-derived Form8995 expectation: sourced dividends26,000 minus standard17,750 and actual senior6,000 equals pre-QBI2,250; 20% cap450, taxable1,800. Corrected expectations explicitly assert the senior deduction. Focused actual-main test1/0,17 filtered,19ms; `/tmp/opentax-form8995-age-terminal-repair-v1.log`. Production unchanged. Latest full passing gate still required.

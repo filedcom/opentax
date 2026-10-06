@@ -1004,10 +1004,12 @@ Deno.test("age derived from birth date limits Form 8995 deduction across the ret
 
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending["f1040"]?.["line12a_standard_deduction"], 17_750);
-  assertEquals(result.pending["form8995"]?.["qbi_deduction"], 1_650);
-  assertEquals(result.pending["f1040"]?.["line13_qbi_deduction"], 1_650);
+  assertEquals(result.pending["f1040"]?.["line13b_additional_deductions"], 6_000);
+  // $26,000 - $17,750 - $6,000 = $2,250 before QBI; 20% cap = $450.
+  assertEquals(result.pending["form8995"]?.["qbi_deduction"], 450);
+  assertEquals(result.pending["f1040"]?.["line13_qbi_deduction"], 450);
   assertEquals(
     result.pending["income_tax_calculation"]?.["taxable_income"],
-    600,
+    1_800,
   );
 });
