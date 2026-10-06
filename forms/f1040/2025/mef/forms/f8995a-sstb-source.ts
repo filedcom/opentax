@@ -1,3 +1,4 @@
+import { FilingStatus } from "../../../nodes/types.ts";
 import {
   computeNetProfit,
   inputSchema as scheduleCSchema,
@@ -93,6 +94,25 @@ export function assertSstbScheduleCSource(
     throw new Error(
       "SSTB accounting source, payroll, owner and filed SE adjustment must match the retained return",
     );
+  }
+  if (input.filing_status === FilingStatus.MFS) {
+    const mfs = review.mfs_filing_review;
+    if (
+      !mfs || g.address_state !== mfs.domicile_state ||
+      g.spouse_ssn?.toString().replaceAll("-", "") !== mfs.spouse_ssn ||
+      f.spouse_ssn?.toString().replaceAll("-", "") !== mfs.spouse_ssn ||
+      mfs.spouse_ssn === ssn || g.mfs_spouse_itemizing !== false ||
+      f.mfs_spouse_itemizing !== false ||
+      f.filing_status !== input.filing_status ||
+      input.sstb_filing_details?.mfs_owner_ssn !== ssn ||
+      input.sstb_filing_details?.mfs_allocation_source_reference !==
+        mfs.domicile_record_reference ||
+      input.sstb_filing_details?.mfs_no_spouse_share_confirmed !== true
+    ) {
+      throw new Error(
+        "MFS SSTB needs matching Colorado domicile and spouse deduction review in the actual return",
+      );
+    }
   }
   const lines = calculateOneSstb8995ALines(input);
   if (

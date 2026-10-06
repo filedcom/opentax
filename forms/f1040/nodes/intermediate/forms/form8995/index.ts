@@ -409,7 +409,9 @@ function advancedFormOutput(
       !business || businesses.length !== 1 || !review || !owner ||
       review.owner_ssn !== owner ||
       (input.filing_status !== FilingStatus.Single &&
-        input.filing_status !== FilingStatus.MFJ) ||
+        input.filing_status !== FilingStatus.MFJ &&
+        input.filing_status !== FilingStatus.MFS) ||
+      (input.filing_status === FilingStatus.MFS && !review.mfs_filing_review) ||
       !business.business_name ||
       !business.ein || !business.business_reference ||
       business.source_schedule_c.proprietor_recipient !== "T" ||
@@ -434,6 +436,14 @@ function advancedFormOutput(
     sourcedBusiness = {
       sstb_qbi: qbi,
       sstb_filing_details: {
+        ...(input.filing_status === FilingStatus.MFS
+          ? {
+            mfs_owner_ssn: owner,
+            mfs_allocation_source_reference:
+              review.mfs_filing_review!.domicile_record_reference,
+            mfs_no_spouse_share_confirmed: true as const,
+          }
+          : {}),
         business_name: business.business_name,
         ein: business.ein,
         business_qbi: qbi,

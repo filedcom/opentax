@@ -100,6 +100,14 @@ export const itemSchema = z.object({
   }).strict().optional(),
   // Reviewed payroll and classification for one owner-operated SSTB.
   qbi_sstb_filing_review: z.object({
+    mfs_filing_review: z.object({
+      domicile_state: z.literal("CO"),
+      full_year_colorado_domicile_confirmed: z.literal(true),
+      domicile_record_reference: z.string().trim().min(1),
+      spouse_ssn: z.string().regex(/^\d{9}$/),
+      spouse_deduction_record_reference: z.string().trim().min(1),
+      spouse_does_not_itemize_confirmed: z.literal(true),
+    }).strict().optional(),
     owner_ssn: z.string().regex(/^\d{9}$/),
     classification_source_reference: z.string().trim().min(1),
     business_activity_description: z.string().trim().min(1),

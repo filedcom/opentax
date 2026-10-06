@@ -82,6 +82,51 @@ loss/property/credit/capital combinations and farm health-plan allocation remain
 open. The broad parent, general owner allocation/rounding audits, source-byte
 authentication, IRS business rules and ATS are not closed.
 
+## Public MFS primary-owned accounting SSTB (2026-10-06, locally proven)
+
+The existing source-owned accounting route now permits a
+married-filing-separately return with an explicit
+`qbi_sstb_filing_review.mfs_filing_review`: full-year Colorado domicile records,
+spouse SSN, and a spouse deduction record confirming that the spouse does not
+itemize. The actual retained General Colorado address, spouse TIN and explicit
+false spouse-itemizing fact must agree with Form 1040; retained parent and
+Schedule A source copies, primary owner and filed SE deduction remain
+reconciled. This is a separate noncommunity-property return, not a claim that
+community income can be assigned entirely to a proprietor.
+
+The [2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi)
+require zero standard deduction if the MFS spouse itemizes.
+[Publication 555](https://www.irs.gov/publications/p555) lists the
+community-property states; Colorado is outside that list. The
+[2025 Form 8995-A instructions](https://www.irs.gov/instructions/i8995a) use the
+nonjoint 197,300 threshold and 50,000 phase-in range. The
+[2025 Form 8959 instructions](https://www.irs.gov/instructions/i8959) use the
+MFS 125,000 Additional Medicare threshold.
+
+Registered `mfs-primary-form8995a-accounting-sstb-phasein` executes actual
+public General, issued primary W2 and Schedule C sources. Receipts38,431 less
+payroll10,000 produce profit28,431; filed SE761/half381 yield QBI28,050 and
+AGI238,050. Standard deduction15,750 yields pre-QBI taxable222,300 and 50%
+applicability. Schedule A applicable QBI14,025/wages5,000 and parent phased
+reduction153 yield QBI deduction2,652, taxable219,648 and income tax47,350.
+Additional Medicare1,001 plus SE761 produce other taxes1,762, total tax49,112
+and refund888 on withholding50,000.
+
+Typed focused source tests pass6/6. Native/PDF negatives reject missing or
+contradictory domicile/spouse deduction records, wrong owner, status, spouse
+TIN, SE wage base, final QBI/tax and Medicare status, including synchronously
+changed retained source copies. Related schema/calculation/native/PDF regression
+passes 165/165. The selected registered return passes the complete local TY2025
+v5.4 XSD and deterministic source replay; all15 PDF pages were rendered and
+visually reviewed, and the read-only checklist/hash/XSD checker passes.
+
+Proof base `8c20e4dfc`; ignored packet under
+`.state/research/ty2025-filled-pdf-review/2026-10-06-qbi-sstb-mfs`, with
+adjacent `-rendered` contacts. Logs: `/tmp/opentax-sstb-mfs-focus-final.log`,
+`/tmp/opentax-sstb-mfs-regression.log`, `/tmp/opentax-sstb-mfs-selected.log`.
+Other MFS domiciles, community-property allocations, spouse-owned SSTBs,
+additional businesses/adjustments, IRS business rules and ATS remain open.
+
 ## Patron wage-limit phase-in (2026-10-06, locally proven)
 
 The actual public patron source route now includes the Single 197,300–247,300

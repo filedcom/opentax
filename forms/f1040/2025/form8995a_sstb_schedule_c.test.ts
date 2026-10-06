@@ -270,3 +270,134 @@ Deno.test("joint primary-owner SSTB uses joint threshold, source SE and fraction
   await assertRejects(() => bundle(changed, joint.filer));
   await assertRejects(() => buildPdfBytes(changed, joint.filer, ".pdf-cache"));
 });
+
+Deno.test("MFS Colorado primary SSTB actual source joins status, spouse deductions and full return", async () => {
+  const mfs = pdfReviewFixtures.find((f) =>
+    f.id === "mfs-primary-form8995a-accounting-sstb-phasein"
+  )!;
+  const result = f1040_2025.executeReturn({ ...mfs.inputs });
+  assertEquals(result.diagnostics, []);
+  const p = buildPending(result.pending) as Pending;
+  assertEquals([
+    p.f1040.line11_agi,
+    p.f1040.line12a_standard_deduction,
+    p.f1040.line13_qbi_deduction,
+    p.f1040.line15_taxable_income,
+    p.f1040.line24_total_tax,
+  ], [238050, 15750, 2652, 219648, 49112]);
+  assertEquals(p.f1040.mfs_spouse_itemizing, false);
+  const l = calculateOneSstb8995ALines(inputSchema.parse(p.form8995a));
+  assertEquals([l.threshold, l.phaseInRange, l.applicable, l.line39], [
+    197300,
+    50000,
+    0.5,
+    2652,
+  ]);
+  const b = await bundle(p, mfs.filer);
+  assertStringIncludes(b.xml, "<ApplicablePct>0.50000</ApplicablePct>");
+  assertEquals(
+    (await buildPdfBytes(p, mfs.filer, ".pdf-cache", b)).length > 1000,
+    true,
+  );
+  assertEquals(p.f1040.line23_other_taxes, 1762);
+  assertEquals(p.f1040.line35a_refund, 888);
+  const mutations: ((p: Pending) => void)[] = [
+    (p) => {
+      p.f1040.line24_total_tax = 49113;
+    },
+    (p) => {
+      p.form8959.filing_status = "Single";
+    },
+    (p) => {
+      p.general.address_state = "CA";
+    },
+    (p) => {
+      delete p.general.mfs_spouse_itemizing;
+    },
+    (p) => {
+      p.general.mfs_spouse_itemizing = true;
+    },
+    (p) => {
+      p.f1040.mfs_spouse_itemizing = true;
+    },
+    (p) => {
+      p.general.spouse_ssn = "777889999";
+    },
+    (p) => {
+      p.f1040.spouse_ssn = "777889999";
+    },
+    (p) => {
+      p.general.filing_status = "Single";
+    },
+    (p) => {
+      p.f1040.line13_qbi_deduction = 2653;
+    },
+    (p) => {
+      p.schedule_se.w2_ss_wages = 0;
+    },
+  ];
+  const sourceMutations:
+    ((r: Record<string, unknown>, c: Record<string, unknown>) => void)[] = [
+      (r) => {
+        delete r.mfs_filing_review;
+      },
+      (r) => {
+        (r.mfs_filing_review as Record<string, unknown>).domicile_state = "CA";
+      },
+      (r) => {
+        (r.mfs_filing_review as Record<string, unknown>)
+          .full_year_colorado_domicile_confirmed = false;
+      },
+      (r) => {
+        (r.mfs_filing_review as Record<string, unknown>)
+          .spouse_does_not_itemize_confirmed = false;
+      },
+      (r) => {
+        (r.mfs_filing_review as Record<string, unknown>)
+          .spouse_deduction_record_reference = "";
+      },
+      (r) => {
+        (r.mfs_filing_review as Record<string, unknown>).spouse_ssn =
+          "777889999";
+      },
+      (_r, c) => {
+        c.proprietor_recipient = "S";
+      },
+    ];
+  for (const change of sourceMutations) {
+    mutations.push((p) => {
+      const c = (p.schedule_c.schedule_cs as Record<string, unknown>[])[0];
+      change(c.qbi_sstb_filing_review as Record<string, unknown>, c);
+      for (const key of ["form8995a", "form8995a_schedule_a"]) {
+        ((p[key].single_sstb_schedule_c_source as Record<string, unknown>)
+          .business as Record<string, unknown>).source_schedule_c =
+            structuredClone(c);
+      }
+    });
+  }
+  for (const change of mutations) {
+    const changed = structuredClone(p);
+    change(changed);
+    await assertRejects(() => bundle(changed, mfs.filer));
+    await assertRejects(() => buildPdfBytes(changed, mfs.filer, ".pdf-cache"));
+  }
+  const wrongFiler = { ...mfs.filer, primarySSN: "444556666" };
+  await assertRejects(() => bundle(p, wrongFiler));
+  await assertRejects(() => buildPdfBytes(p, wrongFiler, ".pdf-cache"));
+});
+
+Deno.test("public MFS SSTB input rejects an absent filing review or spouse-owned business", () => {
+  const mfs = pdfReviewFixtures.find((f) =>
+    f.id === "mfs-primary-form8995a-accounting-sstb-phasein"
+  )!;
+  for (const missingReview of [true, false]) {
+    const inputs = structuredClone(mfs.inputs);
+    const c = (inputs.schedule_c as Record<string, unknown>[])[0];
+    if (missingReview) {
+      delete (c.qbi_sstb_filing_review as Record<string, unknown>)
+        .mfs_filing_review;
+    } else c.proprietor_recipient = "S";
+    const result = f1040_2025.executeReturn({ ...inputs });
+    assertEquals(result.diagnostics.length > 0, true);
+  }
+});

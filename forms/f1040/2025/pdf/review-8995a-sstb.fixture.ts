@@ -1,3 +1,5 @@
+import { FilingStatus as SourceFilingStatus } from "../../nodes/types.ts";
+import { FilingStatus } from "../../mef/header.ts";
 import type { PdfReviewFixture } from "./review-fixtures.ts";
 
 export function accountingSstbFixture(
@@ -136,6 +138,60 @@ export function jointPrimaryAccountingSstbFixture(
       "Joint filer contains both spouse identities, with one primary-owned accounting business and primary-owned issuedW2; no spouse business/payroll mixed",
       "Actual SE761/half381 and adjustedQBI28050 join joint pre-QBI taxable416550, joint threshold394600/range100000 and applicable78.05percent",
       "Filed phase-in QBI21893/potential4379/wage limit3903/reduction104/deduction4275 reconcile to actual joint1040 tax and all native/PDF pages",
+    ],
+  };
+}
+
+/** Separate Colorado return; reviewed full-year domicile and spouse deductions. */
+export function mfsPrimaryAccountingSstbFixture(
+  base: PdfReviewFixture,
+): PdfReviewFixture {
+  const inputs = structuredClone(base.inputs) as Record<string, unknown>;
+  inputs.general = {
+    ...inputs.general as Record<string, unknown>,
+    filing_status: SourceFilingStatus.MFS,
+    spouse_first_name: "Sam",
+    spouse_last_name: "Example",
+    spouse_ssn: "444-55-6666",
+    mfs_spouse_itemizing: false,
+    address_city: "Denver",
+    address_state: "CO",
+    address_zip: "80202",
+  };
+  const c = (inputs.schedule_c as Record<string, unknown>[])[0];
+  (c.qbi_sstb_filing_review as Record<string, unknown>).mfs_filing_review = {
+    domicile_state: "CO",
+    full_year_colorado_domicile_confirmed: true,
+    domicile_record_reference:
+      "Synthetic full-year Colorado domicile records for both spouses",
+    spouse_ssn: "444556666",
+    spouse_deduction_record_reference:
+      "Synthetic spouse return and standard deduction workpaper",
+    spouse_does_not_itemize_confirmed: true,
+  };
+  return {
+    ...base,
+    id: "mfs-primary-form8995a-accounting-sstb-phasein",
+    inputs,
+    filer: {
+      ...base.filer,
+      filingStatus: FilingStatus.MarriedFilingSeparately,
+      address: {
+        ...base.filer.address,
+        city: "Denver",
+        state: "CO",
+        zip: "80202",
+      },
+      spouse: {
+        ssn: "444556666",
+        firstName: "Sam",
+        lastName: "Example",
+        nameControl: "EXAM",
+      },
+    },
+    reviewFocus: [
+      "Separate Colorado owner source and reviewed spouse standard deduction; no community property allocation",
+      "Actual MFS threshold197300/range50000 and Additional Medicare threshold125000 join SE/QBI and final1040",
     ],
   };
 }
