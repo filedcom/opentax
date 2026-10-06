@@ -300,3 +300,8 @@ current source gate. The replay manifest SHA256 is
 `59eed07322855284a755e03b6d20d7ea6880a83d5f01e72c29e3b0fc34a8d2dd`;
 the all-page visual review SHA256 is
 `e4ec9bb90198147579feaf29a81a49d1d720a633c7fb164997362adb0ea41321`.
+
+
+## Current-main retained substitute proof
+
+Main488d0d288 with fixture803890382: Form4852 focused34/0(41s),15-module compatibility364/0(1m37s); held10 fullXSD packets/70 reviewed pages source/pending/XML/PDF/origin/retainedbytes exact with original manifests. Main manifest SHA25659eed07322855284a755e03b6d20d7ea6880a83d5f01e72c29e3b0fc34a8d2dd; originalvisual SHA256e4ec9bb90198147579feaf29a81a49d1d720a633c7fb164997362adb0ea41321. Logs `/tmp/opentax-form4852-current-main-focused-v2.log`, `/tmp/opentax-form4852-current-main-preservation.log`, `/tmp/opentax-form4852-current-main-held-replay.log`. Prior focused33/1 was unavailable prior-year template URL, fixed to official IRS archive; no production expectation weakened. External authenticity, broader retirement, J/T and IRS gates remain open.

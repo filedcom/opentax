@@ -5059,3 +5059,8 @@ Maina2ae96eba seven focused files (`f8621` node, nativeXSD/fx, parentPDF/source/
 ## Full V4 terminal and age-derived QBI expectation repair
 
 Immutable181575242 `deno task test`: 11,794 passed / 1 failed, exit1, 95m00s runner, start2026-10-06T03:53:35Z/end05:29:40Z. Log `/tmp/opentax-deno-task-test-source-v4-oct6.log`, SHA2568bb441d743001c8f067474a04385b8b92fbe41544570744abb66c5d0e6a678a4. Sole failure was the e2e age-derived Form8995 expectation: sourced dividends26,000 minus standard17,750 and actual senior6,000 equals pre-QBI2,250; 20% cap450, taxable1,800. Corrected expectations explicitly assert the senior deduction. Focused actual-main test1/0,17 filtered,19ms; `/tmp/opentax-form8995-age-terminal-repair-v1.log`. Production unchanged. Latest full passing gate still required.
+
+
+## Current-main retained substitute proof
+
+Main488d0d288 with fixture803890382: Form4852 focused34/0(41s),15-module compatibility364/0(1m37s); held10 fullXSD packets/70 reviewed pages source/pending/XML/PDF/origin/retainedbytes exact with original manifests. Main manifest SHA25659eed07322855284a755e03b6d20d7ea6880a83d5f01e72c29e3b0fc34a8d2dd; originalvisual SHA256e4ec9bb90198147579feaf29a81a49d1d720a633c7fb164997362adb0ea41321. Logs `/tmp/opentax-form4852-current-main-focused-v2.log`, `/tmp/opentax-form4852-current-main-preservation.log`, `/tmp/opentax-form4852-current-main-held-replay.log`. Prior focused33/1 was unavailable prior-year template URL, fixed to official IRS archive; no production expectation weakened. External authenticity, broader retirement, J/T and IRS gates remain open.
