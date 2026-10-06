@@ -198,9 +198,29 @@ export const itemSchema = z.object({
   }
 });
 
+// Retained documents are resolved and verified by the preparation layer; these
+// identifiers alone never authorize final export.
+const retainedDocumentSchema = z.object({
+  document_reference: z.string().trim().min(1),
+  sha256: z.string().regex(/^[a-f0-9]{64}$/),
+}).strict();
+export const reviewedSourceSchema = z.object({
+  records: z.array(
+    z.object({
+      reviewed_substitute: itemSchema,
+      source_workpaper: retainedDocumentSchema,
+      completed_form: retainedDocumentSchema,
+      incorrect_original: retainedDocumentSchema.optional(),
+      taxpayer_completed_form_confirmed: z.literal(true),
+      original_excluded_from_current_income_confirmed: z.literal(true),
+    }).strict(),
+  ).min(1),
+}).strict();
+
 // Node inputSchema — all Form 4852s for this return as a single array
 export const inputSchema = z.object({
   f4852s: z.array(itemSchema).min(1),
+  reviewed_source: reviewedSourceSchema.optional(),
 });
 
 type F4852Item = z.infer<typeof itemSchema>;

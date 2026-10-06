@@ -105,3 +105,26 @@ native withholding/export tests pass. This guards classification but does not
 open the retained Form 4852 export route. A wider seven-file run passed 93
 tests and could not run one PDF text-extraction case because this host lacks
 `pdftotext`; it did not provide a full green PDF-source replay result.
+
+## October 6 retained-source contract in progress
+
+The isolated source-completion checkout adds an optional reviewed-source inventory,
+one fact snapshot per substitute, explicit taxpayer completion and original-income
+replacement review, and retained workpaper/completed-form/incorrect-original
+references with SHA-256 digests. The preparatory reconciler binds taxpayer or joint
+spouse identity, 2025 source year, explanations, addresses and references; it
+rejects changed source facts, duplicate substitute identities, and concurrently
+entered ordinary sources for the same owner/payer. A separate exact-byte resolver
+rejects missing, duplicated or changed retained records. A same-payer joint-owner
+case remains distinct. Focused source-contract and existing node tests passed
+28/0. These tests use synthetic byte buffers to test binding; they do not prove
+completed official PDFs or issuer authenticity.
+
+This work remains preparatory: neither final exporter calls this resolver or
+opens a positive route. Required native substitutes, completed-form field
+replay, incorrect-original allocation where multiple account/distribution copies
+share a payer, foreign/unknown-payer electronic handling, FICA/retirement source
+consequences, printable packets, business rules and ATS proof remain unfinished.
+The local TY2025v5.4 W-2 schema requires `EmployerEIN` without an alternate
+unknown-EIN choice; a paper Form4852's permitted blank TIN must not be fabricated
+for native export.
