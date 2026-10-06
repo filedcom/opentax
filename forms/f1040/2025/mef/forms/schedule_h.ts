@@ -176,6 +176,49 @@ function buildIRS1040ScheduleH(
       );
     }
     for (const employee of familyWorkers) {
+      if (
+        employee.relationship === "parent" &&
+        employee.parent_fica_review.classification === "quarterly_circumstances"
+      ) {
+        const quarter4 = employee.parent_fica_review.quarterly_circumstances
+          .find((q) => q.quarter === 4)!;
+        const status = quarter4.employer_circumstances;
+        const return1040 = context.pending?.f1040 as
+          | Record<string, unknown>
+          | undefined;
+        if (
+          (status.kind === "spouse_incapable" ||
+            status.kind === "married_capable_spouse") &&
+          (digits(filer.spouse?.ssn ?? return1040?.spouse_ssn) !==
+              status.spouse_ssn ||
+            status.spouse_ssn === source.family_employer_ssn ||
+            status.spouse_ssn === employee.employee_ssn)
+        ) {
+          throw new Error(
+            "Schedule H parent year-end spouse circumstances must join the return spouse identity",
+          );
+        }
+        if (
+          (status.kind === "never_married" ||
+            status.kind === "divorced_not_remarried") &&
+          filer.filingStatus === FilingStatus.MarriedFilingJointly
+        ) {
+          throw new Error(
+            "Schedule H parent year-end marital source conflicts with joint filing status",
+          );
+        }
+        if (
+          status.kind === "widowed_not_remarried" &&
+          filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+          (return1040?.spouse_deceased !== true ||
+            return1040?.spouse_death_date !== status.spouse_death_date ||
+            status.spouse_death_date < "2025-01-01")
+        ) {
+          throw new Error(
+            "Schedule H parent year-of-death joint filing needs matching spouse death facts",
+          );
+        }
+      }
       if (employee.relationship !== "spouse") continue;
       const matches = w2s.filter((w2) =>
         digits(w2.employee_ssn) === employee.employee_ssn &&

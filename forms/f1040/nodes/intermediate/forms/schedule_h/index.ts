@@ -119,8 +119,230 @@ const familyPayrollBaseSchema = familyWithholdingEmployeeBaseSchema.omit({
   federal_withholding_agreement:
     futaEmployeeSchema.shape.federal_withholding_agreement,
 });
+const sourceReference = z.string().trim().min(1);
+const fourWeekCarePeriodSchema = z.object({
+  from: calendarDate,
+  to: calendarDate,
+  medical_source_reference: sourceReference,
+}).strict();
+const parentQuarterSchema = z.object({
+  quarter: z.number().int().min(1).max(4),
+  home_residence_source_reference: sourceReference,
+  child: z.union([
+    z.object({
+      kind: z.literal("none"),
+      no_child_of_employer_living_in_home_verified: z.literal(true),
+    }).strict(),
+    z.object({
+      kind: z.literal("child"),
+      child_ssn: z.string().regex(/^\d{9}$/),
+      relationship_source_reference: sourceReference,
+      birth_date: calendarDate,
+      birth_date_source_reference: sourceReference,
+      lived_in_employers_home_throughout_service_quarter_verified: z.literal(
+        true,
+      ),
+      adult_care_period: fourWeekCarePeriodSchema.optional(),
+    }).strict(),
+  ]),
+  employer_circumstances: z.union([
+    z.object({
+      kind: z.literal("divorced_not_remarried"),
+      divorce_date: calendarDate,
+      divorce_source_reference: sourceReference,
+      no_remarriage_throughout_quarter_verified: z.literal(true),
+      continuity_source_reference: sourceReference,
+    }).strict(),
+    z.object({
+      kind: z.literal("widowed_not_remarried"),
+      spouse_death_date: calendarDate,
+      death_source_reference: sourceReference,
+      no_remarriage_throughout_quarter_verified: z.literal(true),
+      continuity_source_reference: sourceReference,
+    }).strict(),
+    z.object({
+      kind: z.literal("spouse_incapable"),
+      spouse_ssn: z.string().regex(/^\d{9}$/),
+      spouse_relationship_source_reference: sourceReference,
+      living_with_spouse_throughout_quarter_verified: z.literal(true),
+      spouse_residence_source_reference: sourceReference,
+      incapable_care_period: fourWeekCarePeriodSchema,
+    }).strict(),
+    z.object({
+      kind: z.literal("never_married"),
+      status_source_reference: sourceReference,
+      never_married_throughout_quarter_verified: z.literal(true),
+    }).strict(),
+    z.object({
+      kind: z.literal("married_capable_spouse"),
+      spouse_ssn: z.string().regex(/^\d{9}$/),
+      spouse_relationship_source_reference: sourceReference,
+      spouse_residence_source_reference: sourceReference,
+      spouse_care_capacity_source_reference: sourceReference,
+      living_with_capable_spouse_throughout_quarter_verified: z.literal(true),
+    }).strict(),
+  ]),
+}).strict();
+const parentFicaReviewSchema = z.union([
+  z.object({
+    classification: z.literal("excluded"),
+    source_reference: sourceReference,
+    no_child_of_employer_living_in_home_during_2025_verified: z.literal(true),
+  }).strict(),
+  z.object({
+    classification: z.literal("quarterly_circumstances"),
+    quarterly_circumstances: z.array(parentQuarterSchema).length(4),
+    wage_payments: z.array(
+      z.object({
+        payment_reference: sourceReference,
+        paid_date: calendarDate,
+        service_from: calendarDate,
+        service_to: calendarDate,
+        cash_wages: z.number().positive(),
+      }).strict(),
+    ).min(1),
+  }).strict(),
+]);
+const parentPayrollEmployeeSchema = familyPayrollBaseSchema.extend({
+  relationship: z.literal("parent"),
+  birth_date: calendarDate,
+  birth_date_source_reference: sourceReference,
+  parent_fica_review: parentFicaReviewSchema,
+  w2: familyWithholdingEmployeeBaseSchema.shape.w2.extend({
+    box2_federal_income_tax_withheld: z.number().nonnegative(),
+    box3_social_security_wages: z.number().nonnegative(),
+    box5_medicare_wages: z.number().nonnegative(),
+  }).strict().optional(),
+}).strict();
+type ParentPayrollEmployee = z.infer<typeof parentPayrollEmployeeSchema>;
+
+function parentTaxableCashWages(
+  employee: ParentPayrollEmployee,
+  employerSsn: string,
+): number {
+  const review = employee.parent_fica_review;
+  if (employee.birth_date > "2024-12-31") {
+    throw new Error("Schedule H parent birth date must precede 2025");
+  }
+  if (review.classification === "excluded") return 0;
+  const quarters = review.quarterly_circumstances;
+  if (new Set(quarters.map((q) => q.quarter)).size !== 4) {
+    throw new Error(
+      "Schedule H parent review needs all four distinct quarters",
+    );
+  }
+  const bounds = (q: number) => ({
+    from: `2025-${String((q - 1) * 3 + 1).padStart(2, "0")}-01`,
+    to: ["2025-03-31", "2025-06-30", "2025-09-30", "2025-12-31"][q - 1],
+  });
+  const quarter = (date: string) => Math.ceil(Number(date.slice(5, 7)) / 3);
+  const care = (
+    period: z.infer<typeof fourWeekCarePeriodSchema>,
+    q: number,
+  ) => {
+    const b = bounds(q);
+    if (
+      period.from < b.from || period.to > b.to || period.from > period.to ||
+      (Date.parse(period.to) - Date.parse(period.from)) / 86400000 + 1 < 28
+    ) {
+      throw new Error(
+        "Schedule H parent care condition needs four continuous weeks within the service quarter",
+      );
+    }
+  };
+  for (const row of quarters) {
+    const b = bounds(row.quarter), status = row.employer_circumstances;
+    if (row.child.kind === "child") {
+      if (
+        row.child.child_ssn === employee.employee_ssn ||
+        row.child.child_ssn === employerSsn ||
+        row.child.birth_date > b.from
+      ) {
+        throw new Error(
+          "Schedule H parent child identity and birth must match service-quarter household facts",
+        );
+      }
+      if (row.child.adult_care_period) {
+        care(row.child.adult_care_period, row.quarter);
+      }
+    }
+    if (
+      status.kind === "divorced_not_remarried" &&
+        status.divorce_date > b.from ||
+      status.kind === "widowed_not_remarried" &&
+        status.spouse_death_date > b.from
+    ) {
+      throw new Error(
+        "Schedule H parent marital event must precede its complete source quarter",
+      );
+    }
+    if (status.kind === "spouse_incapable") {
+      care(status.incapable_care_period, row.quarter);
+    }
+  }
+  const payments = review.wage_payments, paidQuarters = [0, 0, 0, 0];
+  if (
+    new Set(payments.map((p) => p.payment_reference)).size !== payments.length
+  ) {
+    throw new Error("Schedule H parent payment references must be unique");
+  }
+  let total = 0, eligible = 0;
+  for (const payment of payments) {
+    if (
+      payment.paid_date < "2025-01-01" || payment.paid_date > "2025-12-31" ||
+      payment.service_from < "2025-01-01" ||
+      payment.service_to > "2025-12-31" ||
+      payment.service_from > payment.service_to ||
+      payment.paid_date < payment.service_to ||
+      quarter(payment.service_from) !== quarter(payment.service_to)
+    ) {
+      throw new Error(
+        "Schedule H parent cash payments need dated 2025 services within one sourced quarter",
+      );
+    }
+    paidQuarters[quarter(payment.paid_date) - 1] += payment.cash_wages;
+    total += payment.cash_wages;
+    const row = quarters.find((q) =>
+      q.quarter === quarter(payment.service_from)
+    )!;
+    const child = row.child, status = row.employer_circumstances;
+    const eighteenth = child.kind === "child"
+      ? `${Number(child.birth_date.slice(0, 4)) + 18}${
+        child.birth_date.slice(4)
+      }`
+      : "";
+    if (
+      child.kind === "child" && payment.service_from < eighteenth &&
+      payment.service_to >= eighteenth && !child.adult_care_period
+    ) {
+      throw new Error(
+        "Schedule H parent services across child age 18 need separately sourced payment periods",
+      );
+    }
+    const childQualifies = child.kind === "child" &&
+      (payment.service_to < eighteenth ||
+        child.adult_care_period !== undefined);
+    const employerQualifies = [
+      "divorced_not_remarried",
+      "widowed_not_remarried",
+      "spouse_incapable",
+    ].includes(status.kind);
+    if (childQualifies && employerQualifies) eligible += payment.cash_wages;
+  }
+  if (
+    total !== employee.annual_cash_wages ||
+    paidQuarters.some((v, i) => v !== employee.quarterly_cash_wages[i])
+  ) {
+    throw new Error(
+      "Schedule H parent payment ledger must reconcile annual and payment-quarter cash wages",
+    );
+  }
+  return eligible >= TY2025_FICA_CASH_WAGE_THRESHOLD ? eligible : 0;
+}
+
 const payrollEmployeeSchema = z.union([
   futaEmployeeSchema,
+  parentPayrollEmployeeSchema,
   familyPayrollBaseSchema.extend({
     relationship: z.literal("child"),
     birth_date: calendarDate,
@@ -369,12 +591,13 @@ export function computeScheduleHAmounts(
     let sourcedMedicareWages = 0;
     let sourcedFederalWithholding = 0;
     let sourcedAdditionalMedicareWages = 0;
+    let sourcedFicaThresholdMet = false;
     for (const employee of payroll.employee_wages) {
       if (employee.relationship !== "unrelated") {
         const references = [
           employee.relationship_source_reference,
           employee.payroll_source_reference,
-          ...(employee.relationship === "child"
+          ...(employee.relationship !== "spouse"
             ? [employee.birth_date_source_reference]
             : [
               employee.marriage_source_reference,
@@ -387,6 +610,40 @@ export function computeScheduleHAmounts(
           ...(ficaOnly ? [ficaOnly.prior_year_payroll_source_reference] : []),
         ];
         const withholding = employee.w2?.box2_federal_income_tax_withheld ?? 0;
+        const parentWages = employee.relationship === "parent"
+          ? parentTaxableCashWages(employee, input.family_employer_ssn ?? "")
+          : 0;
+        if (employee.relationship === "parent") {
+          const reviewReferences =
+            employee.parent_fica_review.classification === "excluded"
+              ? [employee.parent_fica_review.source_reference]
+              : employee.parent_fica_review.wage_payments.map((p) =>
+                p.payment_reference
+              );
+          if (reviewReferences.some((ref) => references.includes(ref))) {
+            throw new Error(
+              "Schedule H parent circumstances and payments need distinct source references",
+            );
+          }
+          const expectedSS = Math.min(
+            parentWages,
+            TY2025_SOCIAL_SECURITY_WAGE_BASE,
+          );
+          if (
+            (employee.w2?.box3_social_security_wages ?? 0) !== expectedSS ||
+            (employee.w2?.box5_medicare_wages ?? 0) !== parentWages ||
+            parentWages > 0 && !employee.w2
+          ) {
+            throw new Error(
+              "Schedule H parent W-2 FICA wages must match the sourced statutory exception",
+            );
+          }
+          sourcedSocialSecurityWages += expectedSS;
+          sourcedMedicareWages += parentWages;
+          sourcedAdditionalMedicareWages += Math.max(0, parentWages - 200_000);
+          sourcedFicaThresholdMet ||= parentWages > 0;
+        }
+
         if (
           taxYear !== 2025 || !input.family_employer_ssn || family ||
           employee.employee_ssn === input.family_employer_ssn ||
@@ -410,8 +667,8 @@ export function computeScheduleHAmounts(
           );
         }
         sourcedFederalWithholding += withholding;
-        // Family wages do not contribute to FICA, the FUTA quarterly test,
-        // or the per-employee FUTA wage cap.
+        // Parent wages may have a sourced FICA exception. Family wages never
+        // contribute to the FUTA quarterly test or per-employee FUTA cap.
         continue;
       }
       const minor = employee.student_minor_fica_exclusion;
@@ -469,6 +726,7 @@ export function computeScheduleHAmounts(
           employee.annual_cash_wages >= TY2025_FICA_CASH_WAGE_THRESHOLD
         ? employee.annual_cash_wages
         : 0;
+      sourcedFicaThresholdMet ||= ficaWages > 0;
       const expectedSS = Math.min(ficaWages, TY2025_SOCIAL_SECURITY_WAGE_BASE);
       if (
         (employee.w2?.box3_social_security_wages ?? 0) !== expectedSS ||
@@ -540,13 +798,7 @@ export function computeScheduleHAmounts(
     }
     if (
       input.cash_wages_over_2025_limit !== undefined &&
-      input.cash_wages_over_2025_limit !== payroll.employee_wages.some(
-          (employee) =>
-            employee.relationship === "unrelated" &&
-            (employee.age_18_or_older_for_fica ||
-              employee.nonstudent_minor_fica_inclusion !== undefined) &&
-            employee.annual_cash_wages >= TY2025_FICA_CASH_WAGE_THRESHOLD,
-        )
+      input.cash_wages_over_2025_limit !== sourcedFicaThresholdMet
     ) {
       throw new Error("Schedule H line A differs from per-employee cash wages");
     }
