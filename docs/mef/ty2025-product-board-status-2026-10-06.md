@@ -3085,3 +3085,8 @@ Integrated117fbba65+1efa5e91e, exact evidence env permission69dab5754. Fresh sta
 Owned100000 engineering wages remain excluded from elected farm income and farm-paid W2 limitation; original farm200000/dividend35000/ISO240000/pension830 retained. HalfSE7396/AGI327604/QBI192604/deduction0/J68489/1040income-tax69319/noJregular71996/AMT53583/total139786. Wider fishing/mixed/farmwages/authentication/IRS parents remain open. Ledger1472; frozen52/future byte-identical.
 
 Latest full regression V6 started08:28:56UTC on immutable69dab5754, Deno2.9.4/TS6.0.3, one-shotLaunchAgent `opentax-full-regression-source-v6-oct6`, RunAtLoadtrue/KeepAlivefalse, live wrapperPID801. Private research with only schema/docs symlink and independent PDFcache copy; log `/tmp/opentax-deno-task-test-source-v6-oct6.log`, status `/tmp/opentax-full-regression-source-v6-oct6.status`. No terminal result yet. OldV5run2 remains confirmed live, no observation-driven restart.
+
+
+## Before passive-credit shared packet review
+
+Previous goal turn is concrete progress: main nonfarmW2 integrated,3/0 and actual2/38+prior5/85 proof sealed1472 and PR63 published63cc036b2; latest fullV6 confirmed livePID801, oldV5live91417/91420/91421. Shared planner still lacks registeredform8582cr coverage. Existing ordinary passive NewMarkets K1 route has authored owned rental/issuer/recipient/credit/tax/3800/native/PDF reconciliation and guarded direct8874/prior-credit paths. Reuse its actual single and multi-K1 public source factories in shared fullgraph review and execute existing focused tests, fullXSD and wholepacket visual review. This addresses existing passive-credit/nativePDF tasks, does not claim retained issuer authentication or accepted-return carryovers. Frozen52/future unchanged.
