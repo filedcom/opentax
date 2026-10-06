@@ -5170,3 +5170,30 @@ Productione5db4222a: standard main task17/0 in1m22s, `/tmp/opentax-resource-lega
 ## Main exact Form4952 paid-source cents
 
 Production738554c2a main focused6/0(17s), `/tmp/opentax-form4952-source-cents-current-main-oct6.log`; isolated final44/0 sevenmodules verifies same production. Actual main retainedsource replay regenerates7-page fullXSD/PDF/pending/origins exactly, XMLonlyReturnTs, `/tmp/opentax-form4952-source-cents-held-main-oct6.log`; output `/tmp/opentax-form4952-source-cents-held-main-oct6`. Allseven pages reviewed from v4 and confirmed PDF/pending byte-identical finalv5. OriginalolderOctober6 integerarchive untouched; graph additions to laterregeneration are recorded and no oldarchivebyteequality claim. Main6/0 andheld were terminal before sealing, ledger1466; frozen52/future unchanged. FullV5 firstexit1/logoverwritten byKeepAlive, run2 live91417/91420; nextwrapper-start guard archives and removes service. Latest-source fullpass remains required.
+
+
+## Current-main verification and original-source replay
+
+Main source10/0(21s) and related100/0(20s):
+`/tmp/opentax-schedulej-current-main-{source,related}-oct6.log`. Five generated
+packets85pages preserve22source/pending/PDF/origin files exactly, XMLonlyReturnTs,
+`/tmp/opentax-schedulej-current-main-source-comparison-oct6.json`. Actual retained
+raw-input replay on detachedmain42a8 reads original sourceJSON and verified
+inline records: five packets85pages,36inline source byte hashes exact; four
+adoption attachment byte strings reconstructed from stable fixture records
+match the original source-declared hashes (not separately archived in the old
+packet), and both adoption PDFs match exactly. Raw replay rerun on main0616cea72
+after Rothclassification also passes exact wholepending/PDF/origins and fullXSD:
+`/tmp/opentax-schedulej-main-raw-held-after-checkbox-oct6.log`; output
+`/tmp/opentax-schedulej-main-raw-held-after-checkbox-oct6`. No financial source
+PDF regeneration in this raw-source replay.
+
+Detachedmain tests24/0 reproduce QEF17/172 reviewedPDFs exactly; baseline10
+QEF archives contain PDFs only and do not prove archived rawsource/pending
+equality. Seven newer source-bearing QEF packets retain source/pending/origins
+exact. Pension2/0 reproduces8/76 with all40 retainedartifact files exact. These
+are deterministic fixture reproduction/comparison, not independent raw-input
+execution. Logs `/tmp/opentax-schedulej-main-held-{qef,pension}-oct6.log` and
+`...-{qef,pension}-compare-oct6.log`. Broader source allocations, authentication,
+full latest regression and IRS gates remain open. Ledger1467/frozen52/future
+unchanged.

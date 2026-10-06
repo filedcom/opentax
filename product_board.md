@@ -2,15 +2,15 @@
 
 ## Compacted status (2026-10-06)
 
-The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,466 recorded slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,467 recorded slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
 
 Inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF keys / 96 covered / 18 uncovered**.
 
-Latest verified work: exact Form4952 paid-source cents (**main6/0**, isolated44/0), seven reviewed full-XSD pages and exact retained-source replay. Legacy1254 (**17/0**) preserves fourteen full-XSD packets / 235 files / 490 reviewed page occurrences. Donation printing preserves forty full-XSD packets, 472 return pages, all47 reviewed label corrections and888 original files. Ordinary-Roth source classification remains under correction. Wider parents remain open.
+Latest verified work: source-based preferential ScheduleJ with farm QBI, no-election AMT and staged adoption/education/QEF (**main10/0 + 100/0**), five reviewed full-XSD packets / 85 pages and actual raw-source replay exact after Roth integration. Exact Form4952 cents and donation proofs remain archived. Ordinary-Roth classification is integrated; fresh main source/held gates are running. Wider parents remain open.
 
 Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The first immutable **4a45410da** rerun exited **1**; KeepAlive restarted it and overwrote its terminal log. The second run (wrapper91417/Deno91420, start07:44:10UTC) is live, and a startup guard will archive its result before preventing another launch. First-run totals are unavailable. A passing latest-source full run remains required.
 
-Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **928586521**, published with legacy-depletion proof; exact Form4952 cents changes are verified locally.
+Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **fe3d19e23**, published with exact Form4952 cents; newer ScheduleJ and Roth source changes await publication.
 
 Donation source and Section B printing proofs are sealed. The recorded Roth history slice is qualified pending correction of ordinary-Roth issued-source checkbox classification; its calculator/artifact results do not establish that classification. Root preferential ScheduleJ/AMT source work has an isolated checkout and a retained guard audit. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
 
