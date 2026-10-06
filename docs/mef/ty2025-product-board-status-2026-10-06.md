@@ -1790,3 +1790,22 @@ Full `deno task test` at fbacc539c ended11,577/14/0ignored, exit1(82m15s). All14
 ## Current-main mixed C/F loss-owner health proof
 
 Exact source2899d051b compatibility five-module gate28/0(3m18s), `/tmp/mixed-cf-loss-health-main2899-compat.log`; heldchecker6/all182pages terminal0, `/tmp/mixed-cf-loss-health-main2899-check.log`. All six PDF/XML/sourcefiles byte-identical with no timestamp delta; copy/origin/owner metadata identical. Digest report `/tmp/opentax-mixed-cf-loss-health-main-replay-oct6/.state/research/mixed-cf-loss-health-main2899-digest-report.json` SHA1845f1d935c25142eabf5afa9f99c761ea8db843cd48135ed0ef477a77116d65; manifest5f20c9735bd7d810e971ab0e44e3d7b96299ed7eea6bc622d6a8357e15f85702. Original artifacts intact. Current fullV4 live44964/44970 at14m10s; no latestfullgreen orIRSacceptance. Multiple-copy death/estate main2b3a source integrated; currentmain replay remains pending.
+
+## Before current audit summary reconciliation
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,439 bounded slices**. Prior learnings and evidence are preserved in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). New discoveries belong only in `future_todo`.
+
+Actual planner: **365 fixtures**, 116 PDF descriptors, 113 keys, 96 covered and 17 uncovered. Published PR63 head is **dc65dc952**. Verified main gates cover mixed C/F SHOP (52/0, 52 reviewed pages), three-member SHOP (15/0, 80 pages), mixed-owner WOTC/tip QBI (62/0 plus prior12/0, 122/147 pages), complete-source annuity (247/0, held7/38) and independent C/F health (22/0, held7/212). Regenerated PDFs match reviewed bytes; old NUA held5/27 remains unchanged. These prove their stated routes; broader parents remain open.
+
+Full `deno task test` at fbacc539c ended11,577/14/0ignored, exit1(82m15s). All14 have focused repaired-main passing evidence, including final two modulefiles44/0. Latest immutable181575242 rerun started03:53:35UTC; wrapper44964/Deno44970 verified live. Its terminal result and a passing full run remain required. Root registered24 reviewed catalog cases after fixing reverse fixture initialization (main22/0 plus metadata8/0); tip-health explicit plan sources and two-farm owner health are integrated with combined51/0 and reviewed artifact replay149/217pages. Partial-beneficiary4972 and mixedC/Ftips are integrated locally at9a7da5a78 with combined33/0 and source/PDF replay6/220pages verified. Eighteen more previously reviewed packets are registered at f188dacf8 with main24/0 and375 preserved pages/77 owner copies. Mixed C/F loss-owner health is verified at2899d051b with28/0 and6/182 byte-identical reviewed artifact replay. Multiple-copy beneficiary death/estate source is integrated at2b3a2e17b; main replay pending. Wider filing/source combinations, authentication, ATS conflicts/credentials, business rules, IRS acceptance and release readiness remain incomplete.
+
+
+Prior registered-document audit opening retained:
+
+October 5 replay: live registry imports still contain 149 native and 116 PDF descriptors. The latest full regression at `a268f60c` passed 11,233 tests, with no failures or ignored tests. This supersedes historical “unrun” and “focused checks only” descriptions below; the older counts remain a registration history. Execution does not settle any row's source authenticity, unsupported positive variants, full packet review, business rules, or ATS acceptance. The [registry replay](ty2025-native-pdf-registry-parity.md#october-5-inventory-and-regression-replay) records current PDF fixture/key counts.
+
+Published draftPR63 verified f48e23115 title/body/head; source2b3a beneficiarydeathestate focusedmain3/0,26PDFbytes/sourcependingexact/XMLonlyReturnTs, relatedmain preservationlive. Senior isolate6/0+176/0 and5/95reviewedpages readyingcommit; notmain. FullV4wrapper44964/Deno44970 verifiedlive15m46. Attachartifact toolcell1599 hung and explicitly canceled; no attachment success asserted.

@@ -1,6 +1,6 @@
 # TY2025 Form 1040 registered-document audit
 
-October 5 replay: live registry imports still contain 149 native and 116 PDF descriptors. The latest full regression at `a268f60c` passed 11,233 tests, with no failures or ignored tests. This supersedes historical “unrun” and “focused checks only” descriptions below; the older counts remain a registration history. Execution does not settle any row's source authenticity, unsupported positive variants, full packet review, business rules, or ATS acceptance. The [registry replay](ty2025-native-pdf-registry-parity.md#october-5-inventory-and-regression-replay) records current PDF fixture/key counts.
+October 6 replay at `2899d051b`: live imports contain150 native and116 PDF descriptors; the planner has365 unique fixtures,96 of113 PDF keys covered and17 uncovered. Current catalog gate24/0 and mixed-loss-owner health28/0 with6/182 preserved reviewed pages are verified. Full regression fbacc539c failed11,577/14/0ignored; all14 have focused repaired-main proof, and immutable181575242 is still running. No latest full pass, whole-form support, source authentication or IRS acceptance is established. See the [current registry replay](ty2025-native-pdf-registry-parity.md#october-6-current-registry-and-planner-reconciliation).
 
 Updated inventory: 2026-10-03. This is an implementation inventory, not a
 filing-readiness claim. The authoritative registration order is
