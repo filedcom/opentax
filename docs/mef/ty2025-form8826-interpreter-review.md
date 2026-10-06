@@ -29,3 +29,5 @@ Artifact hashes:
 Commands use real Poppler and local xmllint. Authoritative source log `/tmp/opentax-8826-source-final.log`:2/0. Held checker `/tmp/opentax-8826-held-check.log`:exit0. Broader mixed/passive/controlled-group expenses, K1 source authentication and IRS business rules/acceptance remain open.
 
 Final combined seven-file interpreter/credit/native/PDF regression: **48 passed/0 failed (20s)**; log `/tmp/opentax-8826-combined.log`, SHA256 `d801907a40076ddfca3b57e369e18ce7b5f4f3c557483172f7a35ef186b7bbf5`.
+
+Current-main exact expected credit/AGI/QBI/tax totals after3a9180ebd pass **2/0 (19s)**. Log `/tmp/opentax-8826-exact-main.log`, SHA256 `b8470cc7d6b996ac605997dd8f0c4f4a00b3d2e1d0cb5dca18c11c283bf123bf`. The earlier48/0 combined and33/0 main compatibility gates remain retained.
