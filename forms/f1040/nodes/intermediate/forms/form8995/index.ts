@@ -353,8 +353,8 @@ function qbiThreshold(
     : cfg.qbiThresholdSingle;
 }
 
-/** No 8995-A is filed when all identified C/F businesses have a zero
- * deduction above the completed wage/property phase-in. */
+/** Retained fishing C/F sources have no 8995-A when their deduction is zero
+ * above the completed wage/property phase-in. */
 function zeroLimitedMixedScheduleCF(
   input: Form8995Input,
   taxableIncome: number,
@@ -364,6 +364,8 @@ function zeroLimitedMixedScheduleCF(
   const fs = input.schedule_f_qbi_businesses ?? [];
   if (
     input.filing_status !== FilingStatus.Single || cs.length !== 1 ||
+    !cs[0].source_schedule_c.schedule_j_fishing_evidence
+      ?.retained_catch_ledger ||
     fs.length > 2 ||
     taxableIncome < cfg.qbiThresholdSingle + cfg.qbiPhaseInRange / 2 ||
     input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
