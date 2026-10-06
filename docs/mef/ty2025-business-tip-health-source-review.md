@@ -69,3 +69,7 @@ The proofs use whole-dollar filed source operands, one actual ScheduleC per owne
 - Pre-edit compact: `/tmp/opentax-qualified-tip-health-learnings.md`.
 
 Nine packets contain27 retained source/XML/PDF files and149 pages. All PDFs were reopened, checked for zero fields/widgets and rendered at100dpi; every page was inspected in contact sheets, with critical owner health-cap7206, joint8995/Schedule1A and advanced8995-A pages enlarged. The nine filed PDFs remained byte-identical after the explicit plan-ID source refresh. `source-xml-pdf-sha256.json` records27 final hashes; `filed-pdf-review-preservation.json` records the unchanged filed PDFs. All60 prior tip/Medicare/zero-eligible/independent-health source/XML/PDF hashes remain unchanged (`prior-artifact-preservation.json`).
+
+## Integrated main artifact replay
+
+At main42cccdf15, all nine public source packets are recalculated and prepared through current native/PDF builders. Every filled PDF is byte-identical to the previously inspected149 pages. Fresh source/XML/PDF snapshots and27 hashes are retained in `/tmp/opentax-tip-health-current-main-replay`; original reviewed artifacts remain unchanged. Replay script `/tmp/opentax-tip-health-current-main-replay.ts`, terminal0 log `/tmp/opentax-tip-health-current-main-replay.log`, SHA256 `7438495634abbf105fe1c4e78d1eaef120cb7ef8c364a99e1ce307385c396059`. Combined source/conflict/compatibility gate remains running; this artifact comparison alone does not close the broader parent.
