@@ -5091,3 +5091,8 @@ QEFthree36page current-main PDFs exact a7b62dd2f8b848bc88d46a3a37611cf108c0846c1
 PreferentialAMT main8/76packet40files source/pending/origin/XML/PDF/text exact reviewed842original, XMLonlyReturnTs; `/tmp/opentax-form4972-preferential-amt-main-comparison.json`. Independent Decimal sourceoracle, eight1986owner worksheets, fullPartIII, single/MFJ phaseout,128finalmutations, original8/42centproof32files preserved. Rootmanifestdd48537bbe308d32d4f6e62a5975f802083a4ee400bd3e298630f3ef28ed47b5. Repair directPDF exemption drift; earlier failures were expected-key fixture, missing unitexemptionfacts, directcapitaldistribution routing and rawNIITcent oracle formatting, all individually resolved without weakening source guards. Isolatedfinal2/0+53/0; fullgate unaffected immutable4a stilllive, no latestfull/IRS claim.
 
 Four bounded ledger entries added, actual1454; frozen52/future unchanged. Remoteorigin/main checkedmatchesGitHuba75f0bcab3f42824bc257dc3f354168147274111. Publication remains0fd pending nextpush; reviewed completebranch730files pluscurrentdelta beforePRrewrite.
+
+
+### Current-main QEF/adoption composition (October6)
+
+Source8917c6276 +artifact-onlya25499380, exact four-module gate13/0(41s), log `/tmp/opentax-form8621-qef-adoption-current-main-focused.log`. Full2025v5.4XSD source packet9pages, PDF313ed601462c763eb346d13b95a8bdb36b0488dac518ffaa2a38cbe47fb71db7/origins exact, XML onlyReturnTs against reviewed isolated569eaf383. Allprior10packets/91PDFpages hashes exactly preserved; comparison `/tmp/opentax-form8621-qef-adoption-current-main-comparison.json`. Actual/adoption credit $6,000 nonrefundable and $5,000 refundable; Form8621 9a/9b/9c7,895/7,455/440. No authenticity/actual carryforward/IRS acceptance claim.
