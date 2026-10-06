@@ -99,3 +99,7 @@ The raw-projection replayer is `/tmp/opentax-form5471-owned-old-replay-v4.ts`. T
 Final review-manifest SHA256: `887733f01ef52c288df39de10550cbc8f32f91fe9e47ff778525013050392e1d`. Evidence-sha256 manifest: `c1a0df2c7f09b2d5e48928f843c9319e4dfa16300f2f54fbdd90942a786550ae`. Original unsupported fixture SHA256 remains `b39b114d2bf641cbf333cf5de5c17e8ecbb2eda4737fab7c1c178c43432783b1`.
 
 Downloaded source digests and the canonical template digests are recorded in the final evidence manifest. No external authorization, prior acceptance, current IRS business-rule validation or IRS acceptance is inferred from authored records or XSD success.
+
+## Integrated main verification
+
+Production27b82647d passes the standard deno task test source/native/PDF/reference gate80/0, including the impossible-calendar negative. Raw original11 field files and27decoded page rasters remain exact on main. All277 files in the final agent sealed evidence index match their SHA256. Logs `/tmp/opentax-form5471-owned-main-source-gate-oct6.log` and `/tmp/opentax-form5471-owned-main-old11-replay-oct6.log`; main pixel manifest `/tmp/opentax-form5471-owned-main-old11-replay-oct6/main-pixel-preservation.json`. All original guarded filing limits above remain.

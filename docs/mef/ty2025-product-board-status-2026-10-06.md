@@ -3337,3 +3337,7 @@ Production428426ee2 plus rootfd9fd41c1 passes standard denotasktest7/0(2m8s), lo
 ## Before AMT/CFC integration review
 
 Previous goalturn progress: SIMPLE main7/0 plus originalnew9/43docs and prior23/207 exact; productionfd9fd41c1 sealed82428d166, pushedandPR63 exacthead/title/body/draft verified. Compact publicationcheckpoint before nextintegration. V7/V8/V9 actualwrapper/task pairs live81m42s/32m03s/19m47s, no restart. Catalog worker repairing precise six pending-only reconciliation failures while preserving18original source/PDF packets; CFC sourcecalendar fix requested before readycommit. Frozenchecklist/future remain unchanged.
+
+## Guarded owned CFC source integration sealed
+
+Agent3fa6ed21f integratedmain27b82647d:30files3817+/45minus, calendarfixincluded. Main standard denotasktest fullsource/native/PDF/reference gate80/0(2saftertypecheck), /tmp/opentax-form5471-owned-main-source-gate-oct6.log. Actual old11 sourcefieldfiles exact; current27 decodedpixels exactlymatchimmutableoriginals, /tmp/opentax-form5471-owned-main-old11-replay-oct6/main-pixel-preservation.json. Finalagent277sealedfiles SHAverifiedincluding42PDF/110page reviewarchive; originalnote2%60000principal1200coupon360withheld840net unchanged; missing7872/482 and directnative/paperbypass nowguarded. Unrelated-corporatezero956 diagnosticsareseparate; no originalpositive956/fullforeigncompletionclaim. Calendarnegative keepsinvoice/payment/receipt joins equalbut impossible dates rejected. Ledger1496. Workercontinuesexisting7203debtparent inisolation, nofutureexecution.
