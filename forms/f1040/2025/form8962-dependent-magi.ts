@@ -1,5 +1,6 @@
 import {
   inputSchema as generalSchema,
+  ptcDependentDividendSources,
   ptcDependentsModifiedAgi,
 } from "../nodes/inputs/general/index.ts";
 import { FilingStatus } from "../nodes/types.ts";
@@ -84,7 +85,8 @@ export function reconcileDependentMagi(
       dependent.ptc_tax_return?.filing === "required" &&
       dependent.ptc_tax_return.wage_forms_w2?.length === 1 &&
       dependent.ptc_tax_return.interest_forms1099.length === 0 &&
-      dependent.ptc_tax_return.dividend_form1099 === undefined
+      dependent.ptc_tax_return.dividend_form1099 === undefined &&
+      dependent.ptc_tax_return.dividend_forms1099 === undefined
     );
   if (
     householdSize !== 2 && notRequired.length > 0 && !twoReviewedSourceKinds &&
@@ -113,8 +115,9 @@ export function reconcileDependentMagi(
           form.recipient_ssn?.replaceAll("-", "") !== ssn
         ) || source.wage_forms_w2?.some((form) =>
           form.employee_ssn.replaceAll("-", "") !== ssn
-        ) || (source.dividend_form1099 !== undefined &&
-          source.dividend_form1099.recipient_ssn.replaceAll("-", "") !== ssn);
+        ) || ptcDependentDividendSources(source).some((form) =>
+          form.recipient_ssn.replaceAll("-", "") !== ssn
+        );
     })
   ) {
     const hasWages = claimed.some((dependent) =>
@@ -143,9 +146,9 @@ export function reconcileDependentMagi(
         source.filed_form1040.source_document_id,
         ...source.interest_forms1099.map((form) => form.source_document_id),
         ...(source.wage_forms_w2?.map((form) => form.source_document_id) ?? []),
-        ...(source.dividend_form1099
-          ? [source.dividend_form1099.source_document_id]
-          : []),
+        ...ptcDependentDividendSources(source).map((form) =>
+          form.source_document_id
+        ),
       ]
       : [];
   });
@@ -160,10 +163,7 @@ export function reconcileDependentMagi(
         : "Form 8962 two dependents need distinct filed-return and interest source documents",
     );
   }
-  // The required-filing source is limited to interest-only, one or two W-2s
-  // wage-only, or one or two W-2s plus one 1099-INT on a single return. Other income/adjustments,
-  // Form 2555, and Social Security
-  // cannot enter this bounded Worksheet 1-2 route by assertion.
+  // Referenced W-2/1099 income is summed before the single-dependent filing tests.
   const magi = ptcDependentsModifiedAgi(claimed);
   if (reportedMagi !== magi) {
     throw new Error(

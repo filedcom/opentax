@@ -1,7 +1,16 @@
 import type { FilerCreditEligibility } from "./filer-eligibility.ts";
-import { filerCreditEligibility, isAge65ByEndOfTaxYear } from "./filer-eligibility.ts";
-export { filerCreditEligibility, isAge65ByEndOfTaxYear } from "./filer-eligibility.ts";
-export type { FilerCreditFacts, FilerCreditEligibility } from "./filer-eligibility.ts";
+import {
+  filerCreditEligibility,
+  isAge65ByEndOfTaxYear,
+} from "./filer-eligibility.ts";
+export {
+  filerCreditEligibility,
+  isAge65ByEndOfTaxYear,
+} from "./filer-eligibility.ts";
+export type {
+  FilerCreditEligibility,
+  FilerCreditFacts,
+} from "./filer-eligibility.ts";
 import { dependentKiddieTaxFacts } from "../f8615/dependent-source-review.ts";
 import {
   dependentKiddieTaxFamilyReviewSchema,
@@ -115,6 +124,16 @@ export enum DependentCreditCategory {
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
+const ptcDividendSourceSchema = z.object({
+  source_document_id: z.string().min(1),
+  payer_ein: z.string().regex(/^\d{9}$/),
+  recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+  box1a_ordinary_dividends: z.number().positive(),
+  box1b_qualified_dividends: z.literal(0),
+  box2a_capital_gain_distributions: z.literal(0),
+  box12_exempt_interest_dividends: z.literal(0),
+}).strict();
+
 export const dependentSchema = z.object({
   first_name: z.string(),
   last_name: z.string(),
@@ -220,15 +239,8 @@ export const dependentSchema = z.object({
           box8_tax_exempt_interest: z.number().nonnegative(),
         }).strict(),
       ),
-      dividend_form1099: z.object({
-        source_document_id: z.string().min(1),
-        payer_ein: z.string().regex(/^\d{9}$/),
-        recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
-        box1a_ordinary_dividends: z.number().positive(),
-        box1b_qualified_dividends: z.literal(0),
-        box2a_capital_gain_distributions: z.literal(0),
-        box12_exempt_interest_dividends: z.literal(0),
-      }).strict().optional(),
+      dividend_form1099: ptcDividendSourceSchema.optional(),
+      dividend_forms1099: z.array(ptcDividendSourceSchema).min(1).optional(),
       wage_forms_w2: z.array(
         z.object({
           source_document_id: z.string().min(1),
@@ -237,7 +249,7 @@ export const dependentSchema = z.object({
           employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
           box1_wages: z.number().positive(),
         }).strict(),
-      ).min(1).max(2).optional(),
+      ).min(1).optional(),
     }).strict(),
   ]).optional(),
   taxpayer_provided_over_half_support: z.boolean().optional(),
@@ -522,6 +534,24 @@ export function hohQualifyingChildFromGeneral(
 }
 type DependentItem = z.infer<typeof dependentSchema>;
 
+type RequiredDependentReturn = Extract<
+  NonNullable<DependentItem["ptc_tax_return"]>,
+  { filing: "required" }
+>;
+
+export function ptcDependentDividendSources(source: RequiredDependentReturn) {
+  if (
+    source.dividend_form1099 !== undefined &&
+    source.dividend_forms1099 !== undefined
+  ) {
+    throw new Error(
+      "Form 8962 dependent dividend sources must use one collection",
+    );
+  }
+  return source.dividend_forms1099 ??
+    (source.dividend_form1099 ? [source.dividend_form1099] : []);
+}
+
 export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
   const claimedSsns = dependents.map((dependent) =>
     dependent.ssn?.replaceAll("-", "")
@@ -599,48 +629,38 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
       (sum, source) => sum + source.box1_wages,
       0,
     ) ?? 0;
-    const dividends = taxReturn.dividend_form1099?.box1a_ordinary_dividends ??
-      0;
+    const dividendSources = ptcDependentDividendSources(taxReturn);
+    const dividends = dividendSources.reduce(
+      (sum, source) => sum + source.box1a_ordinary_dividends,
+      0,
+    );
+    const documents = [
+      filed.source_document_id,
+      ...taxReturn.interest_forms1099.map((source) =>
+        source.source_document_id
+      ),
+      ...(taxReturn.wage_forms_w2 ?? []).map((source) =>
+        source.source_document_id
+      ),
+      ...dividendSources.map((source) => source.source_document_id),
+    ];
+    if (new Set(documents).size !== documents.length) {
+      throw new Error(
+        "Form 8962 dependent needs distinct filed-return and income source documents",
+      );
+    }
     if (
       taxReturn.wage_forms_w2 &&
-      (new Set(taxReturn.wage_forms_w2.map((form) => form.source_document_id))
-            .size !== taxReturn.wage_forms_w2.length ||
-        new Set(taxReturn.wage_forms_w2.map((form) => form.employer_ein))
-            .size !== taxReturn.wage_forms_w2.length)
+      new Set(taxReturn.wage_forms_w2.map((form) => form.employer_ein)).size !==
+        taxReturn.wage_forms_w2.length
     ) {
       throw new Error(
         "Form 8962 dependent W-2 wage sources need distinct documents and employers",
       );
     }
-    const dividendOnly = dividends > 0 && wages === 0 &&
-      taxableInterest === 0 && exemptInterest === 0 &&
-      taxReturn.interest_forms1099.length === 0 &&
-      taxReturn.wage_forms_w2 === undefined;
-    const wageOnly = dividends === 0 && wages > 0 && taxableInterest === 0 &&
-      exemptInterest === 0 && taxReturn.interest_forms1099.length === 0;
-    const interestOnly = dividends === 0 && wages === 0 &&
-      taxableInterest > 0 &&
-      taxReturn.wage_forms_w2 === undefined;
-    const mixedWagesAndInterest = dividends === 0 && wages > 0 &&
-      taxableInterest > 0 &&
-      (taxReturn.wage_forms_w2?.length === 1 ||
-        taxReturn.wage_forms_w2?.length === 2) &&
-      taxReturn.interest_forms1099.length === 1;
-    const mixedWagesAndDividends = wages > 0 && dividends > 0 &&
-      taxReturn.wage_forms_w2?.length === 1 &&
-      taxableInterest === 0 && exemptInterest === 0 &&
-      taxReturn.interest_forms1099.length === 0;
-    const mixedInterestAndDividends = wages === 0 &&
-      taxReturn.wage_forms_w2 === undefined &&
-      taxableInterest > 0 && dividends > 0 &&
-      taxReturn.interest_forms1099.length === 1;
-    if (
-      !wageOnly && !interestOnly && !mixedWagesAndInterest &&
-      !dividendOnly && !mixedWagesAndDividends &&
-      !mixedInterestAndDividends
-    ) {
+    if (wages + taxableInterest + dividends <= 0) {
       throw new Error(
-        "Form 8962 dependent required-filing source supports bounded W-2, Form 1099-INT, and ordinary-only Form 1099-DIV combinations",
+        "Form 8962 dependent needs positive sourced earned or unearned income",
       );
     }
     if (
@@ -664,80 +684,20 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
       throw new Error("Form 8962 dependent needs a valid birth date");
     }
     const age65 = birth.getTime() < Date.UTC(1961, 0, 2);
-    if (dividendOnly) {
-      const unearnedThreshold = 1_350 +
-        (age65 ? 2_000 : 0) + (filed.blind ? 2_000 : 0);
-      if (dividends <= unearnedThreshold) {
-        throw new Error(
-          "Form 8962 dependent ordinary dividends do not establish the 2025 filing requirement",
-        );
-      }
-      return total + filed.line11b_agi;
-    }
-    if (mixedInterestAndDividends) {
-      const unearnedThreshold = 1_350 +
-        (age65 ? 2_000 : 0) + (filed.blind ? 2_000 : 0);
-      if (taxableInterest + dividends <= unearnedThreshold) {
-        throw new Error(
-          "Form 8962 dependent combined interest and dividends do not establish the 2025 filing requirement",
-        );
-      }
-      return total + filed.line11b_agi + exemptInterest;
-    }
-    if (wageOnly) {
-      if (age65 || filed.blind || wages <= 15_750) {
-        throw new Error(
-          "Form 8962 dependent W-2 wages do not establish the 2025 single-dependent filing requirement",
-        );
-      }
-      return total + filed.line11b_agi;
-    }
-    if (mixedWagesAndDividends) {
-      if (age65 || filed.blind) {
-        throw new Error(
-          "Form 8962 dependent mixed W-2 and 1099-DIV filing requirement needs under-65, nonblind evidence",
-        );
-      }
-      const combinedThreshold = Math.max(
-        1_350,
-        Math.min(wages, 15_300) + 450,
-      );
-      if (
-        dividends <= 1_350 && wages <= 15_750 &&
-        wages + dividends <= combinedThreshold
-      ) {
-        throw new Error(
-          "Form 8962 dependent mixed W-2 and 1099-DIV income does not establish the 2025 filing requirement",
-        );
-      }
-      return total + filed.line11b_agi;
-    }
-    if (mixedWagesAndInterest) {
-      if (age65 || filed.blind) {
-        throw new Error(
-          "Form 8962 dependent mixed W-2 and 1099-INT filing requirement needs under-65, nonblind evidence",
-        );
-      }
-      const grossIncome = wages + taxableInterest;
-      const combinedThreshold = Math.max(
-        1_350,
-        Math.min(wages, 15_300) + 450,
-      );
-      if (
-        taxableInterest <= 1_350 && wages <= 15_750 &&
-        grossIncome <= combinedThreshold
-      ) {
-        throw new Error(
-          "Form 8962 dependent mixed W-2 and 1099-INT income does not establish the 2025 filing requirement",
-        );
-      }
-      return total + filed.line11b_agi + exemptInterest;
-    }
-    const unearnedThreshold = 1_350 +
-      (age65 ? 2_000 : 0) + (filed.blind ? 2_000 : 0);
-    if (taxableInterest <= unearnedThreshold) {
+    // Pub.501 Table2 single dependents: each age/blind condition adds $2,000.
+    const increase = (age65 ? 2_000 : 0) + (filed.blind ? 2_000 : 0);
+    const unearned = taxableInterest + dividends;
+    const gross = wages + unearned;
+    const combinedThreshold = Math.max(
+      1_350 + increase,
+      Math.min(wages, 15_300) + 450 + increase,
+    );
+    if (
+      unearned <= 1_350 + increase && wages <= 15_750 + increase &&
+      gross <= combinedThreshold
+    ) {
       throw new Error(
-        "Form 8962 dependent 1099-INT income does not establish the 2025 filing requirement",
+        "Form 8962 dependent sourced income does not establish the 2025 single-dependent filing requirement",
       );
     }
     return total + filed.line11b_agi + exemptInterest;
