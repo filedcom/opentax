@@ -175,3 +175,18 @@ Schedule C/SE context alone may remain for other calculations without filing
 Form 7206; the truly empty no-form case also emits no document. This guard
 does not expand the one-plan source route or authenticate plan and payment
 records.
+
+## Mixed proprietor C/F plan source extension (2026-10-06)
+
+The actual MFJ primary Schedule C/spouse regular cash Schedule F family now
+retains issuer policy and twelve issued monthly/payment records for each plan,
+actual owner/business inventories and G/NEC farm income joins. Full, individually
+income-limited and employer-month-excluded plans flow to separate filed Form7206
+copies, Schedule1/1040 and attributable QBI; the reviewed farm-WOTC phase/above
+source preserves full determined wage reductions and actual limited current
+credit use before/after the correct owner SE and health order. Seven reusable
+source fixtures have full TY2025v5.4 XSD and native/direct-PDF conflict evidence;
+held replay confirms all 212 visually reviewed pages. See
+[the mixed C/F source equations and terminal evidence](ty2025-form7206-independent-spouse-plans-review.md#mixed-cf-independent-plan-extension-2026-10-06).
+Broader loss/optional/patron, multiple-business-owner, ordinary advanced farm,
+retirement/PTC and external issuer authentication scope remains open.

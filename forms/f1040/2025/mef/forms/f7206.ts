@@ -76,7 +76,8 @@ function buildIRS7206(
   if (!FIELD_MAP.some(([key]) => fields[key] !== undefined)) {
     if (
       Object.keys(fields).some((key) =>
-        key !== "schedule_c_source" && key !== "schedule_se_source"
+        key !== "schedule_c_source" && key !== "schedule_f_source" &&
+        key !== "schedule_se_source"
       )
     ) {
       throw new Error(

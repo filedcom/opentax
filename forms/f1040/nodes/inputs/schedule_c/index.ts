@@ -377,6 +377,22 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     }));
     outputs.push(this.outputNodes.output(form7206, {
       schedule_c_source: {
+        ...(input.wotc_wage_reductions?.length && items.every((item) =>
+            item.qbi_wotc_filing_review &&
+            item.line_f_accounting_method === "cash" &&
+            item.line_g_material_participation === true &&
+            item.line_32_at_risk === "a" && !item.at_risk_simplified
+          ) &&
+            Object.keys(input).every((key) =>
+              [
+                "schedule_cs",
+                "filing_status",
+                "f1099nec_receipt_sources",
+                "wotc_wage_reductions",
+              ].includes(key)
+            )
+          ? { reviewed_wotc_source: true }
+          : {}),
         unadjusted_source: Object.keys(input).every((key) =>
           key === "schedule_cs" || key === "patron_distribution_sources" ||
           key === "patron_filing_review" || key === "filing_status" ||

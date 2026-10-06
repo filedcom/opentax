@@ -1,4 +1,8 @@
 import {
+  calculateIndependentOwnerHealth,
+  reconcileIndependentOwnerHealthGraph,
+} from "../nodes/intermediate/forms/form7206/independent-owner.ts";
+import {
   computeNetProfit as cProfit,
   inputSchema as cSchema,
   wotcReductionsByBusiness,
@@ -517,6 +521,34 @@ export function assertFarmWotcReturn(
     half = expected.line13;
     tax = expected.line12;
   }
+  const health = pending.form7206?.independent_schedule_c_plans === undefined
+    ? undefined
+    : calculateIndependentOwnerHealth(
+      pending.form7206.independent_schedule_c_plans,
+      owned?.source,
+      CONFIG_BY_YEAR[2025].ssWageBase,
+    );
+  if (health) {
+    reconcileIndependentOwnerHealthGraph(pending.form7206!, health);
+    if (
+      !isDeepStrictEqual(
+        pending.form7206?.independent_plan_filing_rows,
+        health.rows,
+      ) || pending.schedule1?.line17_se_health_insurance !== health.deduction ||
+      !isDeepStrictEqual(
+        pending.form8995?.joint_owner_health_plans_source,
+        health.source,
+      )
+    ) {
+      throw new Error(
+        "Farm WOTC health source and actual owner deductions disagree",
+      );
+    }
+  } else if (Number(pending.schedule1?.line17_se_health_insurance ?? 0) !== 0) {
+    throw new Error(
+      "Farm WOTC health deduction needs actual independent owner plan sources",
+    );
+  }
   const wageTotal = wages.reduce((a, w) => a + w.box1_wages, 0);
   const profit = owned
     ? owned.source.businesses.reduce((a, b) => a + b.net_profit, 0)
@@ -526,7 +558,10 @@ export function assertFarmWotcReturn(
     (Number(pending.schedule1?.line3_schedule_c ?? 0) !== cTotal) ||
     pending.schedule1?.line15_se_deduction !== half ||
     pending.schedule2?.line4_se_tax !== tax ||
-    Math.abs(Number(final.line11_agi) - (wageTotal + profit - half)) > 1e-6 ||
+    Math.abs(
+        Number(final.line11_agi) -
+          (wageTotal + profit - half - (health?.deduction ?? 0)),
+      ) > 1e-6 ||
     Number(final.line1a_wages ?? 0) !== wageTotal ||
     general.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     general.qbi_not_patron_of_specified_cooperative_confirmed !== true
@@ -543,7 +578,14 @@ export function assertFarmWotcReturn(
       ),
     );
     const expected = owned
-      ? jointOwnerQbi(owned.source, taxable, CONFIG_BY_YEAR[2025].ssWageBase)
+      ? jointOwnerQbi(
+        owned.source,
+        taxable,
+        CONFIG_BY_YEAR[2025].ssWageBase,
+        undefined,
+        health?.deduction ?? 0,
+        health?.source,
+      )
         .line15
       : Math.min(
         Math.round(Math.max(0, Math.round(farmProfit - half)) * .2),
@@ -571,6 +613,12 @@ export function assertFarmWotcReturn(
         ? !isDeepStrictEqual(pending.form8995a_schedule_c, pending.form8995a)
         : pending.form8995a_schedule_c !== undefined) ||
       calculated.source.se_tax_deduction !== half ||
+      !isDeepStrictEqual(
+        calculated.source.independent_health_plans_source,
+        health?.source,
+      ) ||
+      (calculated.source.se_health_insurance_deduction ?? 0) !==
+        (health?.deduction ?? 0) ||
       Math.abs(calculated.source.joint_wages_total - wageTotal) > 1e-6 ||
       calculated.source.businesses.length !== businessRefs.length ||
       calculated.source.businesses.some((r) =>

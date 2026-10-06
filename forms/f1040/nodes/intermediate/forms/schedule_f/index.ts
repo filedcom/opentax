@@ -1,3 +1,4 @@
+import { form7206 } from "../form7206/index.ts";
 import { filedOwnedScheduleF } from "../../../owned-business-filing.ts";
 import { patronFiledBusinessLines } from "../../../inputs/qbi_patron/calculation.ts";
 import { z } from "zod";
@@ -78,6 +79,7 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
       agi_aggregator,
       schedule_se,
       form8995,
+      form7206,
       form8582,
       form461,
       schedule_j_calculation,
@@ -132,6 +134,22 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
     }
 
     const outputs: NodeOutput[] = [];
+    outputs.push(output(form7206, {
+      schedule_f_source: {
+        regular_source: input.farm_optional_method_elected !== true &&
+          !input.patron_filing_review &&
+          input.schedule_fs.every((f) =>
+            f.accounting_method === "cash" &&
+            f.line_e_material_participation === true &&
+            f.line36_at_risk === "a" && !f.at_risk_simplified
+          ),
+        businesses: input.schedule_fs.map((f, index) => ({
+          farm_id: f.farm_id,
+          proprietor_recipient: f.proprietor_recipient,
+          line34_net_profit: netProfits[index],
+        })),
+      },
+    }));
 
     // Schedule 1 line 6: aggregate net farm profit/loss (always when there is activity)
     outputs.push(

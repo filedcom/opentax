@@ -40,11 +40,22 @@ export const inputSchema = z.object({
   independent_schedule_c_plans: independentOwnerHealthSourceSchema.optional(),
   schedule_c_source: z.object({
     unadjusted_source: z.boolean(),
+    reviewed_wotc_source: z.boolean().optional(),
     businesses: z.array(
       z.object({
         business_reference: z.string().trim().min(1).optional(),
         proprietor_recipient: z.nativeEnum(TS).optional(),
         line31_net_profit: z.number().finite(),
+      }).strict(),
+    ).min(1),
+  }).strict().optional(),
+  schedule_f_source: z.object({
+    regular_source: z.boolean(),
+    businesses: z.array(
+      z.object({
+        farm_id: z.string().trim().min(1).optional(),
+        proprietor_recipient: z.enum(["T", "S"]).optional(),
+        line34_net_profit: z.number().finite(),
       }).strict(),
     ).min(1),
   }).strict().optional(),

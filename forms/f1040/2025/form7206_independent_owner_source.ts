@@ -1,3 +1,10 @@
+import {
+  inputSchema as farmSchema,
+  reconcileFarmSources,
+} from "../nodes/intermediate/forms/schedule_f/model.ts";
+import { inputSchema as necSchema } from "../nodes/inputs/f1099nec/index.ts";
+import { inputSchema as gSchema } from "../nodes/inputs/f1099g/index.ts";
+import { assertFarmWotcReturn } from "./form8995_farm_wotc_reconciliation.ts";
 import { normalizeAllPending } from "./pending.ts";
 import { assertOwnedScheduleSE } from "./schedule-se-owner-source.ts";
 import { assertScheduleCReceiptSourceIdentity } from "./filer-source-reconciliation.ts";
@@ -50,6 +57,7 @@ export function assertIndependentOwnerHealth(
     "independent_schedule_c_plans",
     "independent_plan_filing_rows",
     "schedule_c_source",
+    "schedule_f_source",
     "schedule_se_source",
     "schedule1_line16_source",
     "marketplace_ptc_premium_overlap",
@@ -143,8 +151,20 @@ export function assertIndependentOwnerHealth(
     summed(q.se_health_insurance_deduction) !== result.deduction ||
     p.schedule1?.line17_se_health_insurance !== result.deduction ||
     p.schedule1?.line15_se_deduction !== owned.deduction ||
-    p.schedule1?.line3_schedule_c !== profit ||
+    Number(p.schedule1?.line3_schedule_c ?? 0) !==
+      owned.source.businesses.filter((b) => b.kind === "schedule_c").reduce(
+        (n, b) => n + b.net_profit,
+        0,
+      ) ||
+    Number(p.schedule1?.line6_schedule_f ?? 0) !==
+      owned.source.businesses.filter((b) => b.kind === "schedule_f").reduce(
+        (n, b) => n + b.net_profit,
+        0,
+      ) ||
     Number(p.schedule1?.line16_sep_simple ?? 0) !== 0 ||
+    p.schedule1?.line10_total_additional_income !== profit ||
+    f.line8_additional_income !== profit ||
+    f.line9_total_income !== wages + profit ||
     p.schedule1?.line26_total_adjustments !==
       owned.deduction + result.deduction ||
     f.line10_adjustments !== owned.deduction + result.deduction ||
@@ -157,7 +177,6 @@ export function assertIndependentOwnerHealth(
   }
   if (
     [
-      "schedule_f",
       "schedule_e",
       "k1_partnership",
       "k1_s_corp",
@@ -167,7 +186,6 @@ export function assertIndependentOwnerHealth(
       "f1095a",
       "f4835",
       "form4797",
-      "form8995a",
     ].some((k) => p[k] !== undefined && Object.keys(p[k]).length > 0) ||
     [
       "line2b_taxable_interest",
@@ -177,14 +195,88 @@ export function assertIndependentOwnerHealth(
       "line7a_cap_gain_distrib",
       "line13b_additional_deductions",
     ].some((k) => Number(f[k] ?? 0) !== 0) ||
-    p.schedule_c?.wotc_wage_reductions !== undefined ||
+    (p.form8995a && !p.form8995a.farm_wotc_filing_source) ||
+    (p.schedule_c?.wotc_wage_reductions !== undefined &&
+      !(p.schedule_f?.schedule_fs as Array<Record<string, unknown>> | undefined)
+        ?.some((farm) => farm.qbi_wotc_filing_review)) ||
     Object.keys(p.schedule_c ?? {}).some((k) =>
-      !["schedule_cs", "filing_status", "f1099nec_receipt_sources"].includes(k)
+      ![
+        "schedule_cs",
+        "filing_status",
+        "f1099nec_receipt_sources",
+        "wotc_wage_reductions",
+      ].includes(k)
     ) || (w2s?.some((r) => r.box13_statutory_employee === true) ?? false)
   ) {
     throw new Error(
       "Independent ordinary health plans exclude other business, retirement, Marketplace and unreviewed adjustment sources",
     );
+  }
+  if (p.schedule_f) {
+    const farms = farmSchema.parse(p.schedule_f);
+    reconcileFarmSources(farms);
+    if (
+      farms.wotc_wage_reductions?.some((r) => r.credit_amount > 0) &&
+      !farms.schedule_fs.some((farm) => farm.qbi_wotc_filing_review)
+    ) {
+      throw new Error(
+        "Independent farm health WOTC reductions need the actual reviewed employer source route",
+      );
+    }
+    const necs = p.f1099nec ? necSchema.parse(p.f1099nec).f1099necs : [],
+      grants = p.f1099g ? gSchema.parse(p.f1099g).f1099gs : [];
+    if (
+      farms.farm_optional_method_elected || farms.patron_filing_review ||
+      farms.schedule_fs.some((farm) => {
+        const owner = farm.proprietor_recipient === "S"
+          ? result.source.spouse_identity.ssn
+          : result.source.taxpayer_identity.ssn;
+        const copies = [
+          ...necs.filter((n) =>
+            n.for_routing === "schedule_f" && n.farm_id === farm.farm_id
+          ).map((n) => ({
+            kind: "1099nec_farm_income",
+            amount: n.box1_nec,
+            reference: n.source_document_reference,
+            payer: n.payer_name,
+            tin: n.payer_tin,
+            recipient: n.recipient_ssn,
+          })),
+          ...grants.filter((g) =>
+            g.farm_id === farm.farm_id &&
+            g.box_7_payment_kind === "agricultural_program"
+          ).map((g) => ({
+            kind: "1099g_agriculture",
+            amount: g.box_7_agriculture,
+            reference: g.source_document_reference,
+            payer: g.payer_name,
+            tin: g.payer_tin,
+            recipient: g.recipient_tin,
+          })),
+        ];
+        return farm.accounting_method !== "cash" ||
+          farm.line_e_material_participation !== true ||
+          farm.line36_at_risk !== "a" || copies.length === 0 ||
+          copies.some((copy) =>
+            String(copy.recipient).replace(/\D/g, "") !== owner ||
+            !copy.reference || !farms.farm_sources?.some((source) =>
+              source.kind === copy.kind && source.farm_id === farm.farm_id &&
+              source.recipient_tin === owner &&
+              source.payer_name === copy.payer &&
+              source.payer_tin === String(copy.tin).replace(/\D/g, "") &&
+              source.amount === copy.amount &&
+              source.source_document_reference === copy.reference
+            )
+          );
+      })
+    ) {
+      throw new Error(
+        "Independent health farm needs actual regular owned issued agricultural/custom-work sources",
+      );
+    }
+  }
+  if (p.schedule_f) {
+    assertFarmWotcReturn(p.form8995a ?? p.form8995, p, actualFiler);
   }
   const marketplace = p.form8962 ?? {};
   if (

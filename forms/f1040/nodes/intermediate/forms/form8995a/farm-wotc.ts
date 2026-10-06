@@ -1,3 +1,4 @@
+import { calculateIndependentOwnerHealth } from "../form7206/independent-owner.ts";
 import { reviewedWotcQbiWages } from "../../../inputs/schedule_c/qbi-wotc.ts";
 import { roundSignedQbiDollars } from "../../../inputs/schedule_c/qbi-multiple.ts";
 import {
@@ -139,13 +140,26 @@ export function farmWotcAdvancedFields(
     Array.isArray(v) ? v.reduce((a, b) => a + b, 0) : v ?? 0;
   const amounts = businesses.map(farmWotcBusinessAmounts);
   const half = sum(input.se_tax_deduction);
+  const health = input.joint_owner_health_plans_source === undefined
+    ? undefined
+    : calculateIndependentOwnerHealth(
+      input.joint_owner_health_plans_source,
+      input.joint_se_source,
+      CONFIG_BY_YEAR[2025].ssWageBase,
+    );
   const source = farmWotcSourceSchema.parse({
     businesses,
     se_tax_deduction: half,
     joint_se_source: input.joint_se_source,
     taxpayer_ssn: String(input.taxpayer_ssn ?? "").replace(/\D/g, ""),
+    ...(health
+      ? {
+        independent_health_plans_source: health.source,
+        se_health_insurance_deduction: health.deduction,
+      }
+      : {}),
     joint_wages_total: input.agi - amounts.reduce((a, r) => a + r.profit, 0) +
-      half,
+      half + (health?.deduction ?? 0),
   });
   if (
     sum(input.qbi_from_schedule_f) + sum(input.qbi_from_schedule_c) !==
@@ -153,7 +167,7 @@ export function farmWotcAdvancedFields(
     input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
     sum(input.qbi) !== 0 || sum(input.sstb_qbi) !== 0 ||
-    sum(input.se_health_insurance_deduction) !== 0 ||
+    sum(input.se_health_insurance_deduction) !== (health?.deduction ?? 0) ||
     sum(input.retirement_plan_deduction) !== 0 ||
     sum(input.line6_sec199a_dividends) !== 0 ||
     (input.net_capital_gain ?? 0) !== 0 ||
@@ -233,15 +247,21 @@ export function calculateFarmWotcLines(
       source.joint_se_source,
       input.taxable_income,
       CONFIG_BY_YEAR[2025].ssWageBase,
+      undefined,
+      source.se_health_insurance_deduction ?? 0,
+      source.independent_health_plans_source,
     );
     deductions = amounts.map((a) =>
       qbi.joint_owner_filing_rows.find((r) =>
         r.business_reference === a.reference
-      )!.se_tax_deduction
+      )!.se_tax_deduction + (qbi.joint_owner_filing_rows.find((r) =>
+        r.business_reference === a.reference
+      )?.health_insurance_deduction ?? 0)
     );
   } else {
     if (
-      source.joint_se_source || amounts.length !== 1 ||
+      source.joint_se_source || source.independent_health_plans_source ||
+      source.se_health_insurance_deduction || amounts.length !== 1 ||
       amounts[0].recipient !== "T"
     ) {
       throw new Error(
