@@ -5346,3 +5346,22 @@ Board read and compacted at2393a608d before implementation and3071605a9 before v
 ## Sealed midmonth mortgage source periods
 
 Root c4c597887, seven-module98/0/0ignored(6m37s), session79313 terminal0; original-source26returns/81pages/24comparablepending exact, session5100 terminal0. Root scripts/logs and comparison under `/tmp/opentax-1098-midmonth-main-{standard,retained26}-oct6`; no factories or original rewrites. Every PDF/sourcecopy matches original; XML onlyReturnTs/fulllocalXSD. All9newreturn/4CopyB pages reviewed,348newprior source/privatehashes exactaftergates. Historical2no-points sources remain qualified for missingpending/carry/origins. Generated19/23root replay pending comparisons losslessly gzip-compressed under diskpressure99%/3.2GiB with42exactdecompressedhashes/reclaimed1.99GB; originals/PDF/XML/reports unchanged. Ledger1528, frozen52main andfuture exact. Wideroldpointshistory/sourceauthentication/latestproductionfull/IRS remainopen.
+
+
+## Root property and turning-21 integration seal (October6)
+
+
+## Final root integration evidence
+
+Root production55-module standard at0298758b2 passed681/0/0ignored (7m44s). Cross-activity followup rootthree-module standard at4e46a6a07 passed149/0/0ignored (1m8s), `/tmp/opentax-eic-property-main-final-repair-standard-oct6.log`; actual saved50/473 replay passed every pending/prepared/carry/origins/source/PDF/XMLonlyReturnTs/fullXSD check in `/tmp/opentax-eic-property-main-final-repair-retained50-oct6/report.json`.
+
+Final owner/parcel followup productionfd40c1aec typed focused ordinary gate passed1/0/3filtered (441ms), `/tmp/opentax-eic-property-owner-transfer-main-focus-oct6.log`; three unchanged tests were filtered for the incremental ownership defect, not ignored. Current eight actual saved corrected sources replayed as8/99 exact through whole pending, prepared pending, carry, origins, source, PDF, XMLexceptReturnTs and fullXSD in `/tmp/opentax-eic-property-owner-transfer-main-retained8-oct6/report.json`. The42older source inputs have no current_property_source and cannot enter this final guard; their prior50-return comparison is retained with its actual earlier code version. Exact original known-owner buyer/seller inputs reject public/native/direct4797PDF/direct1040PDF on final main, `/tmp/opentax-eic-property-known-owner-transfer-after-main-oct6.log`.
+
+All174 original/private property files and three before-transfer diagnostic files were hash-rechecked after root gates. Corrected8 PDFs remain identical to all99 reviewed pages and zeroAcroForm/widget checks. Originalv18 eight missing-lease sources remain preserved rejected records. This closes the described current land/source slice only; broader Worksheet1, Form8582, QBI, basis/history/source authentication and IRS acceptance remain open.
+
+
+## Final root integration evidence
+
+Productiondcbff9d9f root13-module ordinary standard passed58/0/0ignored (3m27s), `/tmp/opentax-scheduleh-turn21-main-standard-oct6.log`. Actual original saved26-return/137-page replay passed fullXSD/nativeonlyReturnTs/source preservation in `/tmp/opentax-scheduleh-turn21-main-final26-raw-oct6/report.json`:23newer exact pending/prepared/carry/origins/PDF cases and3explicitly qualified historical cases. The payroll calculator was unchanged by subsequent property-only corrections.
+
+All12 new packet pages were root-reviewed, including full-size four ScheduleH pages; `/tmp/opentax-scheduleh-turn21-root-review-oct6.json` records six-page packets, unchanged PDF SHA, zero widgets/AcroFormfields and currenttax1993/priortriggertax262. The90new/prior source/PDF/XML original/private hashes in `/tmp/opentax-scheduleh-turn21-all90-preservation-oct6.json` were rechecked after root gates. Actual preimplementation inputs rejected before and are preserved. Broader state/rate/family, authenticated external records and IRS acceptance requirements remain open.

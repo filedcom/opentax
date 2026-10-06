@@ -95,3 +95,8 @@ and reclaiming1,988,654,286bytes. Those are generated comparison outputs;
 original source archives, private copies, reviewed PDFs/XML and reports
 remain unchanged. Use gzip decompression when reading those comparison copies.
 Latest-production full regression and IRS acceptance remain required.
+
+
+## Generated comparison-output storage
+
+After the root 26-return replay completed, only its generated `*/pending.json` comparison outputs were losslessly compressed to sibling `pending.json.gz` files. `/tmp/opentax-generated-midmonth-replay-compression-oct6.json` records all 26 decompressed SHA-256 checks and 1,372,186,966 bytes reclaimed. Read those comparison files through gzip; all original source archives, private retained copies, PDFs, XML and reports remain unchanged. The earlier 42 generated inventory/payoff comparison outputs have their separate preservation manifest `/tmp/opentax-generated-mortgage-replay-compression-oct6.json`.

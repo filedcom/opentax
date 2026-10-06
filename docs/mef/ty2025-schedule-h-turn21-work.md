@@ -87,3 +87,10 @@ age transition source:
 `/tmp/opentax-scheduleh-turn21-before-oct6/reject-saved-source.ts`. The final
 standard `deno task test` permission profile passes the new source module
 **2/0** in `/tmp/opentax-scheduleh-turn21-taskgate-oct6.log`.
+
+
+## Final root integration evidence
+
+Productiondcbff9d9f root13-module ordinary standard passed58/0/0ignored (3m27s), `/tmp/opentax-scheduleh-turn21-main-standard-oct6.log`. Actual original saved26-return/137-page replay passed fullXSD/nativeonlyReturnTs/source preservation in `/tmp/opentax-scheduleh-turn21-main-final26-raw-oct6/report.json`:23newer exact pending/prepared/carry/origins/PDF cases and3explicitly qualified historical cases. The payroll calculator was unchanged by subsequent property-only corrections.
+
+All12 new packet pages were root-reviewed, including full-size four ScheduleH pages; `/tmp/opentax-scheduleh-turn21-root-review-oct6.json` records six-page packets, unchanged PDF SHA, zero widgets/AcroFormfields and currenttax1993/priortriggertax262. The90new/prior source/PDF/XML original/private hashes in `/tmp/opentax-scheduleh-turn21-all90-preservation-oct6.json` were rechecked after root gates. Actual preimplementation inputs rejected before and are preserved. Broader state/rate/family, authenticated external records and IRS acceptance requirements remain open.
