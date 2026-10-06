@@ -230,3 +230,64 @@ pages) with unchanged SHA-256 values. The strengthened nonadditivity source
 boundary passed 1/0 on a final focused rerun.
 The final six source/native/PDF/XSD packet and conflict cases passed 6/0 in
 `/tmp/opentax-form8621-qef-multi-final-oct6.log`.
+
+## Election B with education and dependent credits
+
+Form 8863's MAGI and Credit Limit Worksheet are reviewed source workpapers,
+but their return-derived entries change in the hypothetical without-QEF
+return. The staged route first computes actual Form 1040 AGI, line 18, and
+preceding Schedule 3 credits without Form 8863, verifies the filed workpaper,
+then computes the completed source return. In each counterfactual it keeps the
+same school, payment, scholarship, claimant, and dependent evidence while
+recomputing only those return-derived workpaper entries. For a reviewed
+Schedule 8812, it also recomputes the dependent credit's AGI, tax limit, and
+preceding education credit before the final graph pass. Its actual filed
+source values must match independently derived values.
+
+The valid no-1098-T scholarship exception source packet has $75,000 issued
+W-2 wages, $6,000 taxable scholarship and $2,000 undistributed QEF earnings.
+Actual AGI is $83,000; Form 8863 credits are $1,050 nonrefundable and $700
+refundable. Without QEF, AGI is $81,000 and the credits are $1,350 and $900.
+Form 8621 lines 9a/9b/9c are **$8,665/$7,925/$740**. The complete 10-page
+native packet validates against local MeF v5.4 `Return1040.xsd`, and all
+pages were rendered and reviewed at
+`/tmp/opentax-form8621-qef-education-contact.png`. PDF SHA-256 is
+`58858343a5e15f85b5b50a960650fad0ec3ec2e5a6b1ded996485586be71b1a7`.
+
+A separately reviewed issued Form 1098-T, two paid education records and a
+tax-free scholarship establish $7,500 of LLC expenses. With $17,000 issued
+W-2 wages and the same $2,000 QEF inclusion, income tax is $328 and the LLC
+credit is limited to $328. Without the QEF, tax and the LLC credit are both
+$126. The whole-return line 9c is **$0**. Its 10-page native packet validates
+against the same full XSD; all pages were reviewed at
+`/tmp/opentax-form8621-qef-education-issued-contact.png`; PDF SHA-256 is
+`f0ed9b1067d9d863e689ff64bad912c8a8a1e3177a659040f34d518e6f707d56`.
+
+The reviewed two-student claimant packet retains two issued 1098-T copies,
+tuition and scholarship records, dependency/owner reviews, and Schedule 8812
+source worksheet. Actual AGI and income tax are $77,000/$8,395; without QEF
+they are $75,000/$7,955. Both returns use $3,000 education and $1,000
+dependent credits. Form 8621 lines 9a/9b/9c are **$4,395/$3,955/$440**.
+The 13-page native packet validates against the full XSD; every page was
+reviewed at `/tmp/opentax-form8621-qef-education-dependent-contact.png`;
+PDF SHA-256 is
+`414033b3c49e6e134d5d29ff15cfb0f9d16bc640a1eb803ed18f431d73e6ba10`.
+The three immutable source/pending, native XML, PDF and page-origin snapshots
+are under `.state/research/form8621-qef-education/` in the isolated tree.
+
+The [2025 Form 8621 instructions](https://www.irs.gov/instructions/i8621)
+point line 9a at Form 1040 line 24, while
+[temporary regulation 1.1294-1T(f)](https://www.govinfo.gov/content/pkg/CFR-2024-title26-vol13/pdf/CFR-2024-title26-vol13-sec1-1294-1T.pdf)
+defines the deferred amount as a change in **Chapter 1** tax. Form 1040
+line 23 may include Chapter 2A net investment income tax under
+[section 1411](https://uscode.house.gov/view.xhtml?req=%28title%3A26+section%3A1411+edition%3Aprelim%29).
+A sourced $198,000 W-2/$1,000 bank-interest/$2,000 QEF example produces
+$38 NIIT with the QEF but zero without it. The route rejects that change
+instead of including $38 of non-Chapter-1 tax in the Election B deferral.
+Stale filed education MAGI/tax worksheets and dependent AGI sources also fail.
+The native and PDF exporters reject a changed education-credit pending value
+on independent source replay. The six focused new packet/conflict cases passed
+6/0 in `/tmp/opentax-form8621-qef-education-final-oct6.log`. The broader
+Form 8621, adoption, AMT, education owner/scholarship, and Schedule 1 source
+gate passed 32/0 in
+`/tmp/opentax-form8621-qef-education-focused-oct6.log`.

@@ -7,19 +7,25 @@ import { f1040 } from "../nodes/outputs/f1040/index.ts";
 import { normalizePendingDict } from "./pending.ts";
 import { registry } from "./registry.ts";
 
+export type Form8839GraphExecutor = (
+  inputs: Record<string, unknown>,
+) => ExecuteResult;
+
 /** Recalculate the adoption credit after the ordinary graph settles. */
 export function executeForm8839TwoPass(
   inputs: Record<string, unknown>,
   counterfactual = false,
+  executeGraph: Form8839GraphExecutor = (source) =>
+    execute(buildExecutionPlan(registry), registry, source, {
+      taxYear: 2025,
+      formType: "f1040",
+    }),
 ): ExecuteResult {
   const { source, publicSource } = parsePublicForm8839Source(inputs.form8839);
   const firstInputs = Object.fromEntries(
     Object.entries(inputs).filter(([key]) => key !== "form8839"),
   );
-  const pre = execute(buildExecutionPlan(registry), registry, firstInputs, {
-    taxYear: 2025,
-    formType: "f1040",
-  });
+  const pre = executeGraph(firstInputs);
   if (
     pre.diagnostics.length > 0 ||
     ["form2555", "f2555", "form4563", "f4563"].some((key) =>

@@ -5,6 +5,7 @@ import { f1040 } from "../nodes/outputs/f1040/index.ts";
 import { buildPending } from "./mef/pending.ts";
 import { registry } from "./registry.ts";
 import { executeForm8839TwoPass } from "./form8839_two_pass.ts";
+import { executeForm8863TwoPass } from "./form8863_two_pass.ts";
 
 const context = { taxYear: 2025, formType: "f1040" } as const;
 
@@ -30,6 +31,11 @@ export function applyForm8621QefRefigure(
 ): ExecuteResult {
   const elected = deferredHoldings(inputs);
   if (elected.length === 0) return full;
+  if (inputs.form8839 !== undefined && inputs.f8863 !== undefined) {
+    throw new Error(
+      "Form 8621 Election B needs a combined education and adoption counterfactual",
+    );
+  }
   if (inputs.form8990 !== undefined) {
     throw new Error(
       "Form 8621 Election B needs a settled full-return counterfactual before Form 8990",
@@ -47,6 +53,7 @@ export function applyForm8621QefRefigure(
   const full1040 = record(buildPending(full.pending).f1040);
   const line9a = Number(full1040?.line22_tax_after_credits) +
     Number(full1040?.line23_other_taxes ?? 0);
+  const fullOtherTaxes = Number(full1040?.line23_other_taxes ?? 0);
   if (!Number.isFinite(line9a)) {
     throw new Error("Form 8621 Election B needs computed full-return tax");
   }
@@ -99,18 +106,29 @@ export function applyForm8621QefRefigure(
         child_unearned_income: childUnearned - removedUnearned,
       };
     }
-    const without = inputs.form8839 === undefined
-      ? execute(buildExecutionPlan(registry), registry, withoutInputs, context)
-      : executeForm8839TwoPass(withoutInputs, true);
+    const without = inputs.form8839 !== undefined
+      ? executeForm8839TwoPass(withoutInputs, true)
+      : inputs.f8863 !== undefined
+      ? executeForm8863TwoPass(withoutInputs, true)
+      : execute(buildExecutionPlan(registry), registry, withoutInputs, context);
     if (without.diagnostics.length > 0) {
       throw new Error(
         "Form 8621 Election B needs a settled without-QEF return: " +
           without.diagnostics.map((row) => row.message).join("; "),
       );
     }
-    const tax = Number(
-      record(buildPending(without.pending).f1040)?.line24_total_tax,
-    );
+    const without1040 = record(buildPending(without.pending).f1040);
+    const tax = Number(without1040?.line24_total_tax);
+    const withoutOtherTaxes = Number(without1040?.line23_other_taxes ?? 0);
+    if (
+      !Number.isFinite(fullOtherTaxes) ||
+      !Number.isFinite(withoutOtherTaxes) ||
+      fullOtherTaxes !== withoutOtherTaxes
+    ) {
+      throw new Error(
+        "Form 8621 Election B cannot defer a change in Form 1040 line 23 non-Chapter-1 taxes",
+      );
+    }
     if (!Number.isFinite(tax) || tax > line9a) {
       throw new Error(
         "Form 8621 Election B cannot defer more than the full-return tax from undistributed earnings",
@@ -196,9 +214,11 @@ export function assertForm8621QefRefigureSource(
   if (!inputs) {
     throw new Error("Form 8621 Election B needs actual source inputs");
   }
-  const full = inputs.form8839 === undefined
-    ? execute(buildExecutionPlan(registry), registry, inputs, context)
-    : executeForm8839TwoPass(inputs);
+  const full = inputs.form8839 !== undefined
+    ? executeForm8839TwoPass(inputs)
+    : inputs.f8863 !== undefined
+    ? executeForm8863TwoPass(inputs)
+    : execute(buildExecutionPlan(registry), registry, inputs, context);
   if (full.diagnostics.length > 0) {
     throw new Error(
       "Form 8621 section 1294 source return has graph diagnostics",
