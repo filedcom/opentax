@@ -922,3 +922,19 @@ Ordinary mixed C/F, multiple-QHP SHOP and sibling/selected-parent routes are rec
 
 Three agents are implementing actual controlled-group WOTC, remarried/MFJ selected-parent sources and excluded/seasonal SHOP workers. Root is implementing optional-farm/C source allocation in an isolated worktree; no verified completion is claimed. Wider source authentication, named-form gaps, ATS conflicts, issued credentials, IRS business rules and acceptance remain incomplete. The frozen checklist and future section remain unchanged.
 
+
+
+## Before optional farm, remarried MFJ and seasonal SHOP integration
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,402 bounded slices**; broader parents remain open. Prior learnings are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md). Newly discovered work belongs only in `future_todo` and is outside this execution queue.
+
+Corrected spouse/two-owner WOTC is integrated at `15d49d055`: **28 main compatibility checks passed, zero failed (2m34s)**, including the corrected prior primary-owner route, ordinary C/F, sibling/selected-parent and multiple-QHP SHOP. Eight new full local-XSD/replayed packets and all220 pages were reviewed. Employer identity conflicts reject; two independent spousal businesses require reviewed attribution-exception facts. The corrected primary completion and the new owner route are recorded in the completed ledger; packet evidence is retained in ignored research storage.
+
+Ordinary mixed C/F, multiple-QHP SHOP and sibling/selected-parent routes are recorded with full packet review and main compatibility proof. Actual planner: **240 fixtures**,116 descriptors,113 keys,95 covered and18 uncovered. Full `deno task test` is live at stable `bc6cafec6` in `/tmp/opentax-full-regression-repaired-v2-oct6`; it predates sibling/PDF ratio and corrected WOTC changes. Earlier full snapshot had11,386 passes/two stale expectation failures; their repair passes28 checks. A subsequent pre-execution type failure was repaired with31 checks. Exact evidence and limitations are in the [validation record](docs/mef/ty2025-form1040-validation-batch.md).
+
+Actual controlled-group WOTC is ready in isolated131f30ac8:98 related and4 final checks pass, three complete packets/all93 pages reviewed; main integration is next. Agents continue regular-method farm WOTC, remarried/MFJ selected-parent sources and excluded/seasonal SHOP workers. Root optional-farm/C implementation has nine complete XSD/PDF packets (123 pages); visual review and final allocation/source-conflict gates are pending, with no completion yet recorded. Wider source authentication, named-form gaps, ATS conflicts, issued credentials, IRS business rules and acceptance remain incomplete. The frozen checklist and future section remain unchanged.
+

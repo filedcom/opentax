@@ -4872,3 +4872,8 @@ Main `8e492a227`:47 passed,0 failed (42s), with type checking and real Poppler. 
 ## Corrected owner-WOTC main integration — October 6
 
 Main `15d49d055a287f74e442d7b0affa52c0c61d94d3`: exact typed Deno test command with real Poppler passed28, failed0 (2m34s). Files: new owner-WOTC, prior primary-WOTC, ordinary owned C/F, sibling/selected-parent PDF, multiple-QHP SHOP and review scope. Log `/tmp/opentax-corrected-owner-wotc-main-integration.log`, SHA256 `0a7cb570b32db47d836c88a5c535d477a9418d482aa6529d48c531c52aa2e926`. Permissions: read/write, run xmllint/deno/pdftotext/pdftoppm, network www.irs.gov. Eight complete new packets/all220 reviewed pages copied to ignored research storage. Prior primary route reran against corrected external W2 employer identity; its completion is restored. New spouse/both-owner completion is recorded separately. Planner240 fixtures/116 descriptors/113 keys/95 covered/18 uncovered. The live full bc6cafec6 snapshot predates these repairs and the sibling ratio change; latest-head full regression and IRS acceptance remain unproven.
+
+
+## Actual controlled-group WOTC main integration
+
+Main1f42620dd:19 typed checks passed,0 failed (1m46s), with real Poppler; actual controlled-group, independent spouse/both-owner and primary-owner WOTC plus generic owner-SE sources. Log `/tmp/opentax-controlled-main-integration.log`, SHA256 `84e97048d5206cc754a58393136edff72866b3797eb58f83156ab2b1342da663`. Three full XSD/replayed packets/all93 reviewed pages copied into ignored main research. This bounded completion does not close wider group source authentication or credit/owner parents. Running fullbc6cafec6 predates these production changes.

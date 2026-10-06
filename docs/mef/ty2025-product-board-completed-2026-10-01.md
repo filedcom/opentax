@@ -9,6 +9,8 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 
 ## Core return and source paths
 
+- [x] File reviewed two-member MFJ ordinary ScheduleC common-control WOTC with actual ownership/management attribution, shared-person group hours/wage caps once and proportionate member shares. Three complete local-XSD/replayed packets/all93 pages reviewed,98 related/4 final and19 main checks pass. Fractional raw wages split2400 credit1371/1029; full192000 reduction is retained before current118264 use. Outside/entity members, wider owner/farm/year/deduction combinations, authentication and durable carryovers remain open.
+
 - [x] Derive actual reciprocal sibling Form8615 allocation and greater-income never-married parent selection separately from the education claimant. Independently settled parent/student sources yield child taxes1375/1815 or1419/1873 while claimant keeps both AOCs/ODCs. Seven full local-XSD/PDF packets and all38 pages reviewed; focused10/10, selected469/469 and main47/47 pass. Fractional8615 PDF ratios now print correctly. Remarriage/MFJ/MFS, special/preferential parents, broader dependency and source authentication remain open.
 
 - [x] Reconcile ordinary owned mixed Schedule C/F with separate proprietor wage caps, combined subthreshold activity, integer loss offsets and positive source cents. Deterministic source-reference ordering repairs graph/replay mismatches. Six complete local-XSD/PDF returns and all86 pages reviewed, isolated22/22 and combined main35/35 pass. Optional methods, wider deductions, negative half-cent rounding, authenticity and IRS acceptance remain open.
