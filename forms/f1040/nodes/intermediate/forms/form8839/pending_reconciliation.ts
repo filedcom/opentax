@@ -46,13 +46,29 @@ export function reconcilePublicForm8839Pending(
     | Record<string, unknown>
     | undefined;
   const preSchedule3 = route.pre_adoption_schedule3;
+  const settled1040 = {
+    ...(route.pre_adoption_sink_input as Record<string, unknown>),
+    ...settled.final1040,
+  };
+  const counterfactual = final1040?.form8621_1294_counterfactual_total_tax;
+  const expected1040 = pending.form8621_1294_refigure !== undefined &&
+      typeof counterfactual === "number"
+    ? {
+      ...settled1040,
+      ...f1040.compute(
+        { taxYear: 2025, formType: "f1040" },
+        f1040.inputSchema.parse({
+          ...settled1040,
+          form8621_1294_counterfactual_total_tax: counterfactual,
+        }),
+      ).outputs.find((output) => output.nodeType === "f1040")?.fields,
+      form8621_1294_counterfactual_total_tax: counterfactual,
+    }
+    : settled1040;
   if (
     !final1040 || !finalSchedule3 || !preSchedule3 ||
     typeof preSchedule3 !== "object" || Array.isArray(preSchedule3) ||
-    canonical(final1040) !== canonical({
-      ...(route.pre_adoption_sink_input as Record<string, unknown>),
-      ...settled.final1040,
-    }) ||
+    canonical(final1040) !== canonical(expected1040) ||
     canonical(finalSchedule3) !== canonical({
         ...preSchedule3,
         ...settled.finalSchedule3,

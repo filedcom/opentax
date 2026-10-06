@@ -4,6 +4,7 @@ import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { f1040 } from "../nodes/outputs/f1040/index.ts";
 import { buildPending } from "./mef/pending.ts";
 import { registry } from "./registry.ts";
+import { executeForm8839TwoPass } from "./form8839_two_pass.ts";
 
 const context = { taxYear: 2025, formType: "f1040" } as const;
 
@@ -30,8 +31,7 @@ export function applyForm8621QefRefigure(
   const elected = deferredHoldings(inputs);
   if (elected.length === 0) return full;
   if (
-    elected.length !== 1 || inputs.form8839 !== undefined ||
-    inputs.form8990 !== undefined
+    elected.length !== 1 || inputs.form8990 !== undefined
   ) {
     throw new Error(
       "Form 8621 Election B needs one elected holding and a settled full-return counterfactual",
@@ -81,12 +81,9 @@ export function applyForm8621QefRefigure(
       child_unearned_income: childUnearned - removed,
     };
   }
-  const without = execute(
-    buildExecutionPlan(registry),
-    registry,
-    withoutInputs,
-    context,
-  );
+  const without = inputs.form8839 === undefined
+    ? execute(buildExecutionPlan(registry), registry, withoutInputs, context)
+    : executeForm8839TwoPass(withoutInputs);
   if (without.diagnostics.length > 0) {
     throw new Error(
       "Form 8621 Election B needs a settled without-QEF return: " +
@@ -158,7 +155,9 @@ export function assertForm8621QefRefigureSource(
   if (!inputs) {
     throw new Error("Form 8621 Election B needs actual source inputs");
   }
-  const full = execute(buildExecutionPlan(registry), registry, inputs, context);
+  const full = inputs.form8839 === undefined
+    ? execute(buildExecutionPlan(registry), registry, inputs, context)
+    : executeForm8839TwoPass(inputs);
   if (full.diagnostics.length > 0) {
     throw new Error(
       "Form 8621 section 1294 source return has graph diagnostics",

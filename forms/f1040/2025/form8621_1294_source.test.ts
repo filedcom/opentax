@@ -257,13 +257,11 @@ Deno.test("Form 8621 Election B refigures the current return tax from QEF income
   };
   const result = f1040_2025.executeReturn(sourceInputs);
   assertEquals(result.diagnostics, []);
-  for (const twoPass of ["form8839", "form8990"]) {
-    assertThrows(
-      () => f1040_2025.executeReturn({ ...sourceInputs, [twoPass]: {} }),
-      Error,
-      "Form 8621 Election B needs a settled counterfactual",
-    );
-  }
+  assertThrows(
+    () => f1040_2025.executeReturn({ ...sourceInputs, form8990: {} }),
+    Error,
+    "Form 8621 Election B needs a settled counterfactual",
+  );
   const pending = buildPending(result.pending);
   const f1040 = pending.f1040! as Record<string, number>;
   assertEquals(

@@ -52,9 +52,9 @@ The new tests use synthetic source and acceptance copies, not authenticated IRS
 records. The Schedule A medical expense is the currently supported public line-1
 amount; this test proves the refigure, not independent invoice authentication.
 One elected QEF holding is supported; multiple simultaneous Election B holdings
-need a sourced tax-difference allocation. Form 8839 and Form 8990 two-pass
-branches are guarded until they can compose with this full-return
-counterfactual. Existing Form 8615, Schedule J, and AMT gates remain. Newly
+need a sourced tax-difference allocation. Form 8990 remains guarded until its
+source-limited two-pass route can compose with a QEF return. Existing Form 8615,
+Schedule J, and AMT gates remain. Newly
 discovered Part II D–H, qualifying-insurance, and atypical indirect-owner
 workflows remain outside this original parent scope.
 
@@ -100,3 +100,40 @@ are the existing public synthetic review fixtures; they are computation proof,
 not authenticated issuer, parent-return, or IRS acceptance records. Wider
 Schedule J nonfarm-attribution combinations and Form 8615 source variants still
 need their own evidence before filing.
+
+## Reviewed Form 8839 two-pass composition
+
+The [2025 Form 8839 instructions](https://www.irs.gov/instructions/i8839)
+place the nonrefundable adoption credit on Schedule 3, line 6c and limit it
+using Form 1040 line 18 after prior credits. Thus the Election B without-QEF
+return must settle the adoption credit anew; a raw graph run does not do this.
+The existing reviewed, byte-bound one-child adoption route is now an explicit
+two-pass runner reused for the full and without-QEF returns. Exporters replay
+both source returns, and the adoption packet reconciliation compares its
+settled Schedule 3 and the subsequently refigured Form 1040. The pre-adoption
+and final source checks remain in force.
+
+The mixed public W-2, reviewed adoption documents, and 2025 QEF annual statement
+produce Form 8621 lines 9a/9b/9c of **$7,895/$7,455/$440**. Form 8839 carries
+$6,000 nonrefundable and $5,000 refundable credit; Schedule 3 line 6c is
+$6,000, and the final Form 1040 line 24 is $7,455. Both native and PDF
+exporters reject a changed retained W-2 source. The complete packet validates
+against the local TY2025 MeF v5.4 `Return1040.xsd`. Its nine PDF pages—Form
+1040 (2), Schedule 1 and statement (3), Schedule 3 (1), Form 8621 (2), and
+Form 8839 (1)—were rendered and visually reviewed in
+`/tmp/opentax-form8621-qef-adoption-rendered-oct6/`. PDF:
+`/tmp/opentax-form8621-qef-adoption-oct6.pdf`, SHA-256
+`313ed601462c763eb346d13b95a8bdb36b0488dac518ffaa2a38cbe47fb71db7`.
+The focused new and prior source test gate passed 13/0 at
+`/tmp/opentax-form8621-qef-adoption-focused-oct6.log`.
+The 10 earlier packets were regenerated in
+`/tmp/opentax-form8621-qef-adoption-preserved-oct6/`: all 10 PDFs match their
+recorded SHA-256 values above, preserving all 91 reviewed pages. The replay
+gate passed 10/0 in
+`/tmp/opentax-form8621-qef-adoption-preservation-oct6.log`.
+
+Form 8990's current provisional ATI contract accepts only `general` and one
+Schedule C source, and its calculated return retains an unfileable diagnostic
+pending durable source and carryforward evidence. A QEF holding fails that
+contract. No Election B/Form 8990 filing claim is made from its internal
+projection, and the existing guard remains.
