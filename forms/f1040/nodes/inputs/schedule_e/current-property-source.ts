@@ -285,6 +285,41 @@ export function currentPropertyQbiRows(
   properties: readonly CurrentPropertySource[],
   farms: readonly CurrentFarmRentalQbiSource[] = [],
 ) {
+  const unique = (references: string[], kind: string) => {
+    if (new Set(references).size !== references.length) {
+      throw new Error(
+        `Current property activities repeat ${kind}; shared economic records require explicit allocation evidence`,
+      );
+    }
+  };
+  unique(
+    properties.flatMap((s) =>
+      s.acquisition_record.parcels.map((p) =>
+        `${s.recipient_tin}:${p.location_state}:${p.parcel_id}`
+      )
+    ),
+    "owned parcels",
+  );
+  unique(
+    properties.flatMap((s) => [
+      s.closing_record.deposit_reference,
+      ...s.rent_payments.map((r) => r.deposit_reference),
+    ]),
+    "receipt references",
+  );
+  unique(
+    properties.flatMap((s) => [
+      s.acquisition_record.payment_reference,
+      ...s.property_tax_payments.map((r) => r.payment_reference),
+    ]),
+    "payment references",
+  );
+  unique(
+    properties.flatMap((s) =>
+      s.property_tax_payments.map((r) => r.assessment_reference)
+    ),
+    "tax assessment references",
+  );
   const rows = [
     ...properties.map((s) => {
       const a = currentPropertyAmounts(s);

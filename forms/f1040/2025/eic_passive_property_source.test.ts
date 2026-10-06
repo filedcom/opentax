@@ -1,5 +1,8 @@
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
-import { currentPropertySourceSchema } from "../nodes/inputs/schedule_e/current-property-source.ts";
+import {
+  currentPropertyQbiRows,
+  currentPropertySourceSchema,
+} from "../nodes/inputs/schedule_e/current-property-source.ts";
 import { f1040_2025 } from "./index.ts";
 import {
   passivePropertyCases,
@@ -348,4 +351,119 @@ Deno.test("current property source rejects repeated economic records and require
       label,
     );
   }
+});
+
+Deno.test("current property inventory rejects relabeled duplicate economics across activities", async () => {
+  const inputs = passivePropertyInputs();
+  const first = inputs.schedule_e[0].current_property_source;
+  const rename = (value: any): any => {
+    if (Array.isArray(value)) return value.map(rename);
+    if (value && typeof value === "object") {
+      return Object.fromEntries(
+        Object.entries(value).map(([k, v]) => [k, rename(v)]),
+      );
+    }
+    if (
+      typeof value === "string" && !/^\d{9}$/.test(value) &&
+      !/^\d{4}-\d{2}-\d{2}$/.test(value) && value !== "TX"
+    ) return `${value} two`;
+    return value;
+  };
+  const second = currentPropertySourceSchema.parse(rename(first));
+  const itemFor = (source: any) => {
+    const item = structuredClone(inputs.schedule_e[0]);
+    item.activity_id = source.activity_id;
+    item.property_description = source.activity_name;
+    item.current_property_source = source;
+    Object.assign(item.first_year_activity_source, {
+      activity_id: source.activity_id,
+      activity_name: source.activity_name,
+      acquisition_document_reference:
+        source.acquisition_record.closing_reference,
+    });
+    Object.assign(item.passive_property_sales[0], {
+      activity_id: source.activity_id,
+      activity_name: source.activity_name,
+      property_description:
+        source.acquisition_record.parcels[0].property_description,
+      disposition_document_reference: source.closing_record.closing_reference,
+    });
+    return item;
+  };
+  const positive = structuredClone(inputs);
+  positive.schedule_e.push(itemFor(second));
+  const result = f1040_2025.executeReturn(positive);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040.line11_agi, 9000);
+  const p = normalizeAllPending(result.pending),
+    filer = extractFilerIdentity(result.pending.f1040)!;
+  await buildMefBundle(buildPending(p), { filer, attachments: [] });
+  const edits: Array<[string, (s: any) => void]> = [
+    ["owned parcels", (s) => {
+      s.acquisition_record.parcels[0].parcel_id =
+        first.acquisition_record.parcels[0].parcel_id;
+      s.closing_record.parcel_id = first.closing_record.parcel_id;
+      s.lease_records[0].parcel_id = first.lease_records[0].parcel_id;
+    }],
+    [
+      "receipt references",
+      (s) =>
+        s.closing_record.deposit_reference =
+          first.closing_record.deposit_reference,
+    ],
+    [
+      "payment references",
+      (s) =>
+        s.acquisition_record.payment_reference =
+          first.acquisition_record.payment_reference,
+    ],
+    [
+      "tax assessment references",
+      (s) =>
+        s.property_tax_payments[0].assessment_reference =
+          first.property_tax_payments[0].assessment_reference,
+    ],
+  ];
+  for (const [kind, edit] of edits) {
+    const changed = structuredClone(second);
+    edit(changed);
+    currentPropertySourceSchema.parse(changed);
+    assertThrows(
+      () => currentPropertyQbiRows([first, changed]),
+      Error,
+      `repeat ${kind}`,
+    );
+    const bad = structuredClone(inputs);
+    bad.schedule_e.push(itemFor(changed));
+    assertEquals(
+      f1040_2025.executeReturn(bad).diagnostics.length > 0,
+      true,
+      kind,
+    );
+  }
+  // Keep all scalar amounts and every embedded inventory synchronized. Native
+  // and PDF must independently reject the same duplicate economic receipt.
+  const badPending: any = structuredClone(p);
+  const duplicateReference = first.closing_record.deposit_reference;
+  badPending.schedule_e.schedule_es[1].current_property_source.closing_record
+    .deposit_reference = duplicateReference;
+  badPending.form4797.current_property_sources[1].closing_record
+    .deposit_reference = duplicateReference;
+  badPending.form8995.current_passive_property_sources[1].closing_record
+    .deposit_reference = duplicateReference;
+  await assertRejects(
+    () => buildMefBundle(buildPending(badPending), { filer, attachments: [] }),
+    Error,
+    "repeat receipt references",
+  );
+  assertThrows(
+    () => form4797Pdf.projectFields!(badPending.form4797, badPending),
+    Error,
+    "repeat receipt references",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields!(badPending.f1040, badPending),
+    Error,
+    "repeat receipt references",
+  );
 });
