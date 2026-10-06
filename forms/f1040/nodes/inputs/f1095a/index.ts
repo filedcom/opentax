@@ -10,6 +10,11 @@ import {
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { roundForm8962Amounts } from "../../../2025/form8962-money.ts";
 
+import {
+  assertForm8962PolicyEligibility,
+  coverageEligibilityReviewSchema,
+} from "../../../2025/form8962-family-eligibility.ts";
+
 // Form 1095-A — Health Insurance Marketplace Statement
 // IRS Form 1095-A, Parts I–III
 // Data source: Health Insurance Marketplace (exchange)
@@ -200,6 +205,7 @@ export const itemSchema = z.object({
       marketplace_reference: z.string().trim().min(1),
       marketplace_determined_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
       marketplace_record_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+      coverage_eligibility_review: coverageEligibilityReviewSchema.optional(),
       premium_payment: z.discriminatedUnion("status", [
         z.object({
           status: z.literal("paid_in_full"),
@@ -436,6 +442,7 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
       .parse(input);
     const f1095as = current1095AStatements(sourceStatements);
     verifyPolicyCoverageIdentities(f1095as);
+    for (const policy of f1095as) assertForm8962PolicyEligibility(policy);
     const hasProtectedPartial = f1095as.some((item) =>
       item.no_aptc_monthly_evidence?.some((evidence) =>
         evidence.premium_payment.status !== "paid_in_full"

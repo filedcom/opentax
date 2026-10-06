@@ -1,3 +1,7 @@
+import {
+  assertForm8962SpouseIncomeReview,
+  ptcSpouseIncomeReviewSchema,
+} from "../../../2025/form8962-family-eligibility.ts";
 import type { FilerCreditEligibility } from "./filer-eligibility.ts";
 import {
   filerCreditEligibility,
@@ -375,6 +379,8 @@ export const inputSchema = z.object({
   address_in_care_of: z.string().optional(),
   address_city: z.string().optional(),
   address_state: z.string().optional(),
+  // Affirmative reviewed zero-income spouse inventory for joint family PTC.
+  ptc_spouse_income_review: ptcSpouseIncomeReviewSchema.optional(),
   // Distinct 2025 residence states for the Form 8962 poverty table.
   ptc_residence_states_2025: z.array(z.string().regex(/^[A-Z]{2}$/)).min(1)
     .optional(),
@@ -1250,6 +1256,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
 
   compute(ctx: NodeContext, input: GeneralInput): NodeResult {
     const parsed = inputSchema.parse(input);
+    assertForm8962SpouseIncomeReview(parsed);
     if (parsed.dependent_education_income_review) {
       const earned = dependentScholarshipEarned(
         parsed.dependent_education_income_review,

@@ -20,9 +20,12 @@ export function reconcileDependentMagi(
     }
     return 0;
   }
-  if (householdSize !== 2 && householdSize !== 3) {
+  if (
+    typeof householdSize !== "number" || !Number.isInteger(householdSize) ||
+    householdSize < 2
+  ) {
     throw new Error(
-      "Form 8962 bounded dependent path needs one or two claimed dependents",
+      "Form 8962 dependent path needs a positive integer tax-family size",
     );
   }
   const general = generalSchema.safeParse(generalSource);
@@ -42,13 +45,18 @@ export function reconcileDependentMagi(
     }
     return 0;
   }
-  if (general.data.filing_status !== FilingStatus.Single) {
+  if (
+    general.data.filing_status !== FilingStatus.Single &&
+    general.data.filing_status !== FilingStatus.MFJ
+  ) {
     throw new Error(
       "Form 8962 dependent MAGI needs the verified general return source",
     );
   }
   if (
-    claimed.length !== householdSize - 1 ||
+    claimed.length !==
+      householdSize -
+        (general.data.filing_status === FilingStatus.MFJ ? 2 : 1) ||
     claimed.some((dependent) => !dependent.ptc_tax_return)
   ) {
     throw new Error(
@@ -60,40 +68,6 @@ export function reconcileDependentMagi(
   ) {
     throw new Error(
       "Form 8962 bounded dependent path does not include Form 8814",
-    );
-  }
-  const notRequired = claimed.filter((dependent) =>
-    dependent.ptc_tax_return?.filing === "not_required"
-  );
-  const twoReviewedSourceKinds = householdSize === 3 &&
-    notRequired.length === 2 &&
-    notRequired.filter((dependent) =>
-        dependent.ptc_tax_return?.filing === "not_required" &&
-        "wage_form_w2" in dependent.ptc_tax_return
-      ).length === 1 &&
-    notRequired.filter((dependent) =>
-        dependent.ptc_tax_return?.filing === "not_required" &&
-        "interest_form1099" in dependent.ptc_tax_return
-      ).length === 1;
-  const requiredWageWithReviewedInterest = householdSize === 3 &&
-    notRequired.length === 1 &&
-    notRequired.some((dependent) =>
-      dependent.ptc_tax_return?.filing === "not_required" &&
-      "interest_form1099" in dependent.ptc_tax_return
-    ) &&
-    claimed.some((dependent) =>
-      dependent.ptc_tax_return?.filing === "required" &&
-      dependent.ptc_tax_return.wage_forms_w2?.length === 1 &&
-      dependent.ptc_tax_return.interest_forms1099.length === 0 &&
-      dependent.ptc_tax_return.dividend_form1099 === undefined &&
-      dependent.ptc_tax_return.dividend_forms1099 === undefined
-    );
-  if (
-    householdSize !== 2 && notRequired.length > 0 && !twoReviewedSourceKinds &&
-    !requiredWageWithReviewedInterest
-  ) {
-    throw new Error(
-      "Form 8962 three-person not-required path needs two reviewed sources or a required-filing W-2 with one reviewed 1099-INT dependent",
     );
   }
   if (

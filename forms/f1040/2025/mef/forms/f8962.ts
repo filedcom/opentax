@@ -14,6 +14,7 @@ import {
 import { inputSchema as generalSchema } from "../../../nodes/inputs/general/index.ts";
 import { inputSchema as f1099intSchema } from "../../../nodes/inputs/f1099int/index.ts";
 import { reconcileDependentMagi } from "../../form8962-dependent-magi.ts";
+import { assertForm8962FamilyEligibility } from "../../form8962-family-eligibility.ts";
 import { roundForm8962Amounts } from "../../form8962-money.ts";
 import { assertForm8962Pub974Return } from "../../form8962_pub974_return.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
@@ -228,8 +229,13 @@ function reconcileOnePolicyDependentIdentity(
       dependent.dependent_on_another_return !== true
     )
     : [];
+  const joint = general.success &&
+    general.data.filing_status === SourceFilingStatus.MFJ;
   const allowed = new Set([
     primarySSN.replaceAll("-", ""),
+    ...(general.success && joint
+      ? [general.data.spouse_ssn?.replaceAll("-", "")]
+      : []),
     ...dependents.map((dependent) => dependent.ssn?.replaceAll("-", "")),
   ]);
   const covered = policies[0].covered_individual_ssns?.map((ssn) =>
@@ -237,13 +243,13 @@ function reconcileOnePolicyDependentIdentity(
   );
   if (
     !general.success || householdSize === undefined || householdSize === null ||
-    dependents.length !== householdSize - 1 ||
+    dependents.length !== householdSize - (joint ? 2 : 1) ||
     allowed.size !== householdSize ||
     (general.data.taxpayer_ssn !== undefined &&
       general.data.taxpayer_ssn.replaceAll("-", "") !==
         primarySSN.replaceAll("-", "")) ||
     !covered?.length || covered.length > householdSize ||
-    (householdSize === 3 && covered.length !== 3) ||
+    (householdSize >= 3 && covered.length !== householdSize) ||
     new Set(covered).size !== covered.length ||
     covered.some((ssn) => !allowed.has(ssn))
   ) {
@@ -330,9 +336,12 @@ function reconcilePovertyTable(
     }
   }
   const familySize = fields.household_size;
-  if (familySize !== 1 && familySize !== 2 && familySize !== 3) {
+  if (
+    typeof familySize !== "number" || !Number.isInteger(familySize) ||
+    familySize < 1
+  ) {
     throw new Error(
-      "Form 8962 bounded poverty table needs family size 1, 2, or 3",
+      "Form 8962 poverty table needs a positive integer family size",
     );
   }
   return expectedRegion === "alaska"
@@ -360,7 +369,9 @@ function simplePolicyIncomeAmounts(
     (actualPct < 400 &&
       householdSize !== 1 &&
       !(verifiedFamilyPolicies &&
-        ((householdSize === 2 && policyCount <= 2) ||
+        ((policyCount === 1 && typeof householdSize === "number" &&
+          householdSize >= 1) ||
+          (householdSize === 2 && policyCount <= 2) ||
           (householdSize === 3 &&
             (policyCount === 1 || policyCount === 3)))))
   ) {
@@ -992,6 +1003,11 @@ function reconcileNoAptcPolicyMonths(
       "Form 8962 no-APTC PTC needs Form 1095-A, taxpayer identity, and finalized Form 1040",
     );
   }
+  assertForm8962FamilyEligibility(
+    pending,
+    context.filer.primarySSN,
+    context.filer.spouse?.ssn,
+  );
   const policies = current1095AStatements(source.data.f1095as);
   const policy = policies[0];
   const rows = fields.monthly_ptc_rows;
@@ -1004,22 +1020,31 @@ function reconcileNoAptcPolicyMonths(
     fields.dependents_modified_agi,
     pending?.general,
   );
-  const hasVerifiedDependents =
-    (fields.household_size === 2 || fields.household_size === 3) &&
-    (general.data.dependents?.length ?? 0) === fields.household_size - 1;
+  const joint =
+    context.filer.filingStatus === FilingStatus.MarriedFilingJointly;
+  const adults = joint ? 2 : 1;
+  const hasVerifiedDependents = typeof fields.household_size === "number" &&
+    fields.household_size > adults &&
+    (general.data.dependents?.length ?? 0) === fields.household_size - adults;
   if (
-    context.filer.filingStatus !== FilingStatus.Single ||
+    (context.filer.filingStatus !== FilingStatus.Single && !joint) ||
+    (joint &&
+      (!context.filer.spouse ||
+        general.data.spouse_can_be_claimed_as_dependent !== false ||
+        general.data.spouse_ssn?.replaceAll("-", "") !==
+          context.filer.spouse.ssn.replaceAll("-", ""))) ||
     context.filer.address.foreignCountry ||
     policies.length !== 1 || !policy?.policy_number ||
     policy.coverage_state !== context.filer.address.state ||
-    (hasVerifiedDependents
+    ((hasVerifiedDependents || joint)
       ? policy.covered_individual_ssns?.length !== fields.household_size
       : policy.covered_individual_ssns?.length !== 1 ||
         (policy.covered_individual_ssns?.[0] ?? "").replaceAll("-", "") !==
           context.filer.primarySSN.replaceAll("-", "")) ||
     general.data.taxpayer_ssn?.replaceAll("-", "") !==
       context.filer.primarySSN.replaceAll("-", "") ||
-    general.data.filing_status !== SourceFilingStatus.Single ||
+    general.data.filing_status !==
+      (joint ? SourceFilingStatus.MFJ : SourceFilingStatus.Single) ||
     general.data.taxpayer_can_be_claimed_as_dependent !== false ||
     (!hasVerifiedDependents && (general.data.dependents?.length ?? 0) !== 0) ||
     policy.shared_policy_periods || policy.slcsp_review_periods ||
@@ -1032,7 +1057,7 @@ function reconcileNoAptcPolicyMonths(
       policy.monthly_premiums?.[index] === 0 && slcsp !== 0
     ) ||
     policy.monthly_aptcs.some((aptc) => aptc !== 0) ||
-    (fields.household_size !== 1 && !hasVerifiedDependents) ||
+    (fields.household_size !== adults && !hasVerifiedDependents) ||
     fields.dependents_modified_agi !== dependentMagi ||
     fields.qsehra_ind === true || fields.mfs_exception_ind === true ||
     (fields.shared_policy_allocations?.length ?? 0) !== 0 ||
@@ -1044,10 +1069,10 @@ function reconcileNoAptcPolicyMonths(
     pending?.form2555 !== undefined
   ) {
     throw new Error(
-      "Form 8962 no-APTC PTC supports one fully paid, nonshared Marketplace policy and a verified one- to three-person single return",
+      "Form 8962 no-APTC PTC needs one fully paid nonshared Marketplace policy and a complete verified single or joint tax family",
     );
   }
-  if (hasVerifiedDependents) {
+  if (hasVerifiedDependents || joint) {
     reconcileOnePolicyDependentIdentity(
       policies,
       fields.household_size,
@@ -1075,7 +1100,7 @@ function reconcileNoAptcPolicyMonths(
     fields.household_size,
     policies.length,
     general.data.ptc_below_100_fpl_status?.basis === "lawfully_present",
-    hasVerifiedDependents,
+    hasVerifiedDependents || joint,
   );
   if (
     (form1040.data.line6a_ss_gross ?? 0) !==
