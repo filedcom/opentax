@@ -124,13 +124,14 @@ export function reconcileForm8941ScheduleC(
     const group = commonControlForm8941Shares(source);
     const reductions = scheduleC.form8941_premium_reductions;
     if (
-      scheduleC.schedule_cs.length !== 2 || reductions?.length !== 2 ||
+      scheduleC.schedule_cs.length !== source.group_members.length ||
+      reductions?.length !== source.group_members.length ||
       group.shares.some((share) => share <= 0) ||
       (appliedCredit !== undefined &&
         (!Number.isInteger(appliedCredit) || appliedCredit < 0 ||
           appliedCredit > lines.line16))
     ) {
-      throw new Error("Form 8941 common-control two-business return differs");
+      throw new Error("Form 8941 common-control business inventory differs");
     }
     if (
       filer &&

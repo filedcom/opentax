@@ -84,6 +84,16 @@ const commonControlMemberSchema = multiplePlanSourceSchema.extend({
   no_other_trades_or_common_control_verified: z.literal(false),
 });
 const groupReference = z.string().trim().min(1);
+const controlRecordSchema = z.object({
+  business_reference: groupReference,
+  proprietor_ssn: sourceSchema.shape.owner_ssn,
+  ownership_percentage: z.literal(100),
+  ownership_from_date: z.literal("2025-01-01"),
+  ownership_through_date: z.literal("2025-12-31"),
+  management_role: z.literal("sole_proprietor_manager"),
+  ownership_record_reference: groupReference,
+  management_record_reference: groupReference,
+}).strict();
 const commonControlSchema = z.object({
   qualifying_arrangement: z.literal("same_proprietor_common_control"),
   owner_name: sourceSchema.shape.owner_name,
@@ -96,7 +106,10 @@ const commonControlSchema = z.object({
   group_review: z.object({
     tax_year: z.literal(2025),
     common_owner_100_percent_verified: z.literal(true),
-    both_businesses_under_common_management_verified: z.literal(true),
+    both_businesses_under_common_management_verified: z.literal(true)
+      .optional(),
+    all_businesses_under_common_management_verified: z.literal(true)
+      .optional(),
     all_controlled_trades_and_workers_identified_verified: z.literal(true),
     all_group_members_follow_same_shop_contribution_schedule_verified: z
       .literal(
@@ -107,32 +120,8 @@ const commonControlSchema = z.object({
     complete_group_roster_record_reference: groupReference,
     group_contribution_schedule_record_reference: groupReference,
   }).strict(),
-  member_control_records: z.tuple([
-    z.object({
-      business_reference: groupReference,
-      proprietor_ssn: sourceSchema.shape.owner_ssn,
-      ownership_percentage: z.literal(100),
-      ownership_from_date: z.literal("2025-01-01"),
-      ownership_through_date: z.literal("2025-12-31"),
-      management_role: z.literal("sole_proprietor_manager"),
-      ownership_record_reference: groupReference,
-      management_record_reference: groupReference,
-    }).strict(),
-    z.object({
-      business_reference: groupReference,
-      proprietor_ssn: sourceSchema.shape.owner_ssn,
-      ownership_percentage: z.literal(100),
-      ownership_from_date: z.literal("2025-01-01"),
-      ownership_through_date: z.literal("2025-12-31"),
-      management_role: z.literal("sole_proprietor_manager"),
-      ownership_record_reference: groupReference,
-      management_record_reference: groupReference,
-    }).strict(),
-  ]),
-  group_members: z.tuple([
-    commonControlMemberSchema,
-    commonControlMemberSchema,
-  ]),
+  member_control_records: z.array(controlRecordSchema).min(2).max(12),
+  group_members: z.array(commonControlMemberSchema).min(2).max(12),
 }).strict();
 
 const independentSpouseMemberSchema = multiplePlanSourceSchema.extend({
@@ -332,16 +321,32 @@ function finishForm8941Lines(
 }
 
 function commonControlWorksheet(source: z.infer<typeof commonControlSchema>) {
-  const [first, second] = source.group_members;
+  const first = source.group_members[0];
+  const members = source.group_members;
+  if (
+    source.member_control_records.length !== members.length ||
+    (members.length === 2
+      ? source.group_review.both_businesses_under_common_management_verified !==
+          true &&
+        source.group_review.all_businesses_under_common_management_verified !==
+          true
+      : source.group_review.all_businesses_under_common_management_verified !==
+        true)
+  ) {
+    throw new Error(
+      "Form 8941 common-control complete management inventory differs",
+    );
+  }
   if (
     source.schedule_c_business_reference !==
       first.schedule_c_business_reference ||
     source.employment_ein !== first.employment_ein ||
     source.shop_marketplace_identifier !== first.shop_marketplace_identifier ||
     source.shop_plan_reference !== first.shop_plan_reference ||
-    first.schedule_c_business_reference ===
-      second.schedule_c_business_reference ||
-    first.employment_ein === second.employment_ein
+    new Set(members.map((member) => member.schedule_c_business_reference))
+        .size !== members.length ||
+    new Set(members.map((member) => member.employment_ein)).size !==
+      members.length
   ) {
     throw new Error(
       "Form 8941 common-control member or filing identity differs",
@@ -375,8 +380,10 @@ function commonControlWorksheet(source: z.infer<typeof commonControlSchema>) {
     })).sort((a, b) => a.plan - b.plan || a.month - b.month);
   };
   if (
-    JSON.stringify(policyPattern(first)) !==
-      JSON.stringify(policyPattern(second))
+    members.some((member) =>
+      JSON.stringify(policyPattern(first)) !==
+        JSON.stringify(policyPattern(member))
+    )
   ) {
     throw new Error(
       "Form 8941 common-control group contribution schedule differs",
@@ -385,7 +392,7 @@ function commonControlWorksheet(source: z.infer<typeof commonControlSchema>) {
   source.member_control_records.forEach((record, index) => {
     if (
       record.business_reference !==
-        source.group_members[index].schedule_c_business_reference ||
+        members[index].schedule_c_business_reference ||
       record.proprietor_ssn !== source.owner_ssn
     ) {
       throw new Error("Form 8941 common-control ownership record differs");
@@ -405,7 +412,7 @@ function commonControlWorksheet(source: z.infer<typeof commonControlSchema>) {
   let adjustedAveragePremium = 0;
   const memberPremiums: number[] = [];
   const memberPaidCents: number[] = [];
-  for (const member of source.group_members) {
+  for (const member of members) {
     if (
       member.owner_name !== source.owner_name ||
       member.owner_ssn !== source.owner_ssn ||
@@ -461,7 +468,7 @@ function commonControlWorksheet(source: z.infer<typeof commonControlSchema>) {
         employee.employer_premium_paid > 0
       ) {
         throw new Error(
-          "Form 8941 common-control repeated worker has paid coverage in both members",
+          "Form 8941 common-control repeated worker has paid coverage in multiple members",
         );
       }
       if (previous && previous.seasonal !== seasonal) {
@@ -519,13 +526,26 @@ function commonControlWorksheet(source: z.infer<typeof commonControlSchema>) {
     enrolledCount,
     Math.max(1, Math.floor(enrolledHours / 2080)),
   );
-  const firstShare = Math.round(
-    lines.line16 * memberPaidCents[0] /
-      memberPaidCents.reduce((sum, premium) => sum + premium, 0),
+  const totalPaidCents = memberPaidCents.reduce(
+    (sum, premium) => sum + premium,
+    0,
   );
+  const exactShares = memberPaidCents.map((premium) =>
+    lines.line16 * premium / totalPaidCents
+  );
+  const shares = exactShares.map(Math.floor);
+  let remaining = lines.line16 - shares.reduce((sum, share) => sum + share, 0);
+  const residualOrder = exactShares.map((share, index) => ({
+    index,
+    remainder: share - shares[index],
+  })).sort((a, b) => b.remainder - a.remainder || a.index - b.index);
+  for (const row of residualOrder) {
+    if (remaining-- <= 0) break;
+    shares[row.index]++;
+  }
   return {
     lines,
-    shares: [firstShare, lines.line16 - firstShare] as const,
+    shares,
     memberPremiums,
   };
 }
@@ -803,10 +823,9 @@ class F8941Node extends TaxNode<typeof inputSchema> {
             shop_plan_reference: rawInput.shop_plan_reference,
             ...("group_members" in rawInput
               ? {
-                group_business_references: [
-                  rawInput.group_members[0].schedule_c_business_reference,
-                  rawInput.group_members[1].schedule_c_business_reference,
-                ],
+                group_business_references: rawInput.group_members.map((
+                  member,
+                ) => member.schedule_c_business_reference),
               }
               : {}),
             ...("offered_qhps" in rawInput
