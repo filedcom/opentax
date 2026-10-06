@@ -25,7 +25,10 @@ import { form4952 } from "../../intermediate/forms/form4952/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { sellerFinancedBuyerSchema } from "../../../seller_financed_buyer.ts";
-import { pabAllocableDeductionWorkpaperSchema } from "../pab_allocable_deduction.ts";
+import {
+  pabAllocableDeductionWorkpaperSchema,
+  reconcilePabPaidExpense,
+} from "../pab_allocable_deduction.ts";
 
 export const itemSchema = z.object({
   payer_name: z.string().min(1).refine((name) => name.trim().length > 0, {
@@ -303,6 +306,18 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
           "1099-INT PAB allocable deduction exceeds box 9 specified-bond interest",
         );
       }
+      if (deduction > 0 && item.investment_property_for_form4952 === true) {
+        if (!item.recipient_tin || !item.pab_bond_identifier) {
+          throw new Error(
+            "Paid PAB expense needs the bond and recipient identity",
+          );
+        }
+        reconcilePabPaidExpense(
+          item.pab_allocable_deduction_workpaper!,
+          item.pab_bond_identifier,
+          item.recipient_tin,
+        );
+      }
       return sum + gross - deduction;
     }, 0);
     const totalTaxExempt = int1099s.reduce(
@@ -334,6 +349,12 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
         outputs.push(this.outputNodes.output(form4952, {
           source_private_activity_bond_interest: item.box9!,
         }));
+        const paper = item.pab_allocable_deduction_workpaper;
+        if (paper && paper.allocable_deduction > 0) {
+          outputs.push(this.outputNodes.output(form4952, {
+            source_pab_bond_debt_interest: paper.allocable_deduction,
+          }));
+        }
       }
     }
 

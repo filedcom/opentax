@@ -36,8 +36,11 @@ export function assertForm6251Form4952Line2c(
   if (
     parsed.success &&
     parsed.data.prior_year_carryforward_source === undefined &&
-    typeof parsed.data.source_private_activity_bond_interest === "number" &&
-    parsed.data.source_private_activity_bond_interest > 0
+    (Array.isArray(parsed.data.source_private_activity_bond_interest)
+      ? parsed.data.source_private_activity_bond_interest.some((amount) =>
+        amount > 0
+      )
+      : (parsed.data.source_private_activity_bond_interest ?? 0) > 0)
   ) {
     if (!pending || !retainedRaw) {
       throw new Error("Form 6251 line 2c needs retained PAB and loan sources");

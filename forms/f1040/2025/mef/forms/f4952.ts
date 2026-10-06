@@ -91,9 +91,10 @@ export const form4952: MefFormDescriptor<"form4952", Input> = {
       );
     }
     if (
-      fields.direct_debt_trace !== undefined ||
-      (context?.pending?.form4952 as Record<string, unknown> | undefined)
-          ?.direct_debt_trace !== undefined
+      fields.source_private_activity_bond_interest === undefined &&
+      (fields.direct_debt_trace !== undefined ||
+        (context?.pending?.form4952 as Record<string, unknown> | undefined)
+            ?.direct_debt_trace !== undefined)
     ) {
       reconcileForm4952DirectDebtExport(
         fields,

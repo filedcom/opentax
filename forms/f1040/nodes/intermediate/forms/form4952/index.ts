@@ -72,6 +72,7 @@ export const inputSchema = z.object({
   source_1099_qualified_dividends: accumulableAmount.optional(),
   source_1099_capital_gain_distributions: accumulableAmount.optional(),
   source_private_activity_bond_interest: accumulableAmount.optional(),
+  source_pab_bond_debt_interest: accumulableAmount.optional(),
   source_k1_interest: accumulableAmount.optional(),
   source_k1_dividends: accumulableAmount.optional(),
   source_k1_qualified_dividends: accumulableAmount.optional(),
@@ -268,10 +269,19 @@ export function calculateAmtForm4952(input: Form4952Input): {
   }
   const regular = sourceTotals(input);
   const adjusted: Form4952Totals = {
-    line1: regular.line1 + amt.interest_on_private_activity_bonds,
+    line1: regular.line1 + sum(input.source_pab_bond_debt_interest) +
+      amt.interest_on_private_activity_bonds,
     line2: amt.prior_year_disallowed_interest,
-    line4a: regular.line4a + sum(input.source_private_activity_bond_interest) +
-      amt.other_gross_income_adjustment,
+    // Form 6251 line 2g includes specified PAB interest net of deductions
+    // otherwise allowable if taxable. Its instructions carry that same net
+    // interest into AMT Form 4952 line 4a; the paid bond-loan interest also
+    // enters AMT line 1 under the separate Step 1 instruction.
+    line4a: regular.line4a +
+      Math.max(
+        0,
+        sum(input.source_private_activity_bond_interest) -
+          sum(input.source_pab_bond_debt_interest),
+      ) + amt.other_gross_income_adjustment,
     line4b: regular.line4b + amt.qualified_dividends_adjustment,
     line4d: regular.line4d + amt.net_disposition_gain_adjustment,
     netCapitalGain: regular.netCapitalGain +

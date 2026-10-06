@@ -108,9 +108,10 @@ export const form4952Pdf: PdfFormDescriptor = {
       );
     }
     if (
-      fields.direct_debt_trace !== undefined ||
-      (allPending.form4952 as Record<string, unknown> | undefined)
-          ?.direct_debt_trace !== undefined
+      fields.source_private_activity_bond_interest === undefined &&
+      (fields.direct_debt_trace !== undefined ||
+        (allPending.form4952 as Record<string, unknown> | undefined)
+            ?.direct_debt_trace !== undefined)
     ) {
       reconcileForm4952DirectDebtExport(fields, allPending);
     }
@@ -180,9 +181,10 @@ export const form4952Pdf: PdfFormDescriptor = {
       );
     }
     if (
-      fields.direct_debt_trace !== undefined ||
-      (allPending?.form4952 as Record<string, unknown> | undefined)
-          ?.direct_debt_trace !== undefined
+      fields.source_private_activity_bond_interest === undefined &&
+      (fields.direct_debt_trace !== undefined ||
+        (allPending?.form4952 as Record<string, unknown> | undefined)
+            ?.direct_debt_trace !== undefined)
     ) {
       if (!filer || !allPending) {
         throw new Error("Form 4952 PDF direct debt needs final filer identity");
