@@ -59,7 +59,9 @@ export function assertFarmWotcReturn(
   if (
     (reviewed.length !== 1 && reviewed.length !== 2) || !wotc ||
     source.farm_optional_method_elected === true ||
-    wotc.controlled_group || wotc.pass_through_credits?.length ||
+    (wotc.controlled_group &&
+      !wotc.controlled_group.joint_filed_members_review) ||
+    wotc.pass_through_credits?.length ||
     source.patron_filing_review ||
     source.schedule_fs.some((f) => f.accounting_method !== "cash") ||
     wotc.subject_to_passive_activity_limit !== false
@@ -122,30 +124,76 @@ export function assertFarmWotcReturn(
   }
   if (reviewed.length === 2) {
     const control = wotc.ordinary_joint_employer_control_review;
-    const employeeCopies = reviewed.flatMap((f) =>
-      f.qbi_wotc_filing_review!.employee_w2_records
-    );
-    if (
-      general.filing_status !== "mfj" || !control ||
-      new Set(employeeCopies.map((r) => r.source_document_reference)).size !==
-        employeeCopies.length ||
-      new Set(reviewed.map((f) => f.proprietor_recipient)).size !== 2 ||
-      new Set(reviewed.map((f) => f.farm_id)).size !== 2 ||
-      new Set(reviewed.map((f) => f.line_d_ein?.replace(/\D/g, ""))).size !==
-        2 ||
-      control.businesses.some((b) =>
-        !reviewed.some((f) =>
+    const group = wotc.controlled_group;
+    const matchingControl = group
+      ? group.members.length === 2 && group.members.every((m) =>
+        reviewed.some((f) =>
+          f.line_d_ein?.replace(/\D/g, "") === m.ein &&
+          f.line_c_farm_name === m.business_name
+        )
+      ) &&
+        group.joint_filed_members_review!.members.every((m) =>
+          reviewed.some((f) =>
+            f.line_d_ein?.replace(/\D/g, "") === m.ein &&
+            f.farm_id === m.business_reference &&
+            f.proprietor_recipient === m.proprietor_recipient &&
+            f.qbi_wotc_filing_review!.owner_ssn === m.proprietor_ssn
+          )
+        )
+      : control?.businesses.every((b) =>
+        reviewed.some((f) =>
           b.employer_ein === f.line_d_ein?.replace(/\D/g, "") &&
           b.business_reference === f.farm_id &&
           b.proprietor_ssn === f.qbi_wotc_filing_review?.owner_ssn &&
           b.proprietor_ssn ===
             (f.proprietor_recipient === "S" ? spouse : primary)
         )
-      )
+      );
+    const employeeCopies = reviewed.flatMap((f) =>
+      f.qbi_wotc_filing_review!.employee_w2_records
+    );
+    if (
+      general.filing_status !== "mfj" || !matchingControl ||
+      new Set(employeeCopies.map((r) => r.source_document_reference)).size !==
+        employeeCopies.length ||
+      new Set(reviewed.map((f) => f.proprietor_recipient)).size !== 2 ||
+      new Set(reviewed.map((f) => f.farm_id)).size !== 2 ||
+      new Set(reviewed.map((f) => f.line_d_ein?.replace(/\D/g, ""))).size !==
+        2 ||
+      (group &&
+        new Set(employeeCopies.map((r) => r.ssa_filing_record_reference))
+            .size !== employeeCopies.length)
     ) {
       throw new Error(
-        "Two farm employers need actual separate spouse ownership and attribution-exception sources",
+        "Two farm employers need actual spouse ownership and reviewed independent exceptions or complete common-control sources",
       );
+    }
+  }
+  if (wotc.controlled_group && reviewed.length !== 2) {
+    throw new Error(
+      "Joint farm common control needs both actual filed member farms",
+    );
+  }
+  if (wotc.controlled_group) {
+    const people = new Map<string, string>();
+    const referencesBySsn = new Map<string, string>();
+    for (
+      const copy of reviewed.flatMap((f) =>
+        f.qbi_wotc_filing_review!.employee_w2_records
+      )
+    ) {
+      const prior = people.get(copy.employee_reference);
+      if (prior && prior !== copy.employee_ssn) {
+        throw new Error("Shared group worker issued identities conflict");
+      }
+      const priorReference = referencesBySsn.get(copy.employee_ssn);
+      if (priorReference && priorReference !== copy.employee_reference) {
+        throw new Error(
+          "Shared group worker cannot use different person references to avoid the cap",
+        );
+      }
+      people.set(copy.employee_reference, copy.employee_ssn);
+      referencesBySsn.set(copy.employee_ssn, copy.employee_reference);
     }
   }
   assertForm3800FinalCreditJoin(

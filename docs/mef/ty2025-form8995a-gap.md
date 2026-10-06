@@ -1490,3 +1490,89 @@ IRS business-rule/ATS/production acceptance. The broader parent remains open.
 Final held checker terminal0 confirms actual source replay, artifact/template
 hashes and full local TY2025v5.4 XSD for **4 cases /118 reviewed pages**:
 `/tmp/opentax-two-farm-held-check.log`. No shared header/builder edit required.
+
+### Controlled primary/spouse cash-farm continuation — retained learnings
+
+Read frozen board/compact header and prior independent/loss proof before this
+extension. Continue only the existing regular cash-farm employer/QBI parent.
+Common control is an actual retained section52 ownership/management attribution
+source, not separate EINs or an independent-employer exception assertion.
+Existing5884 group source computes shared-person cap once and proportionate
+filed member shares; each share must reduce its real farm before ownerSE/QBI,
+independently of joint current use. Preserve independent four-exception route,
+raw cents→filed leaves, owner W2 SSA caps and ordinary loss companion/carry.
+
+### Controlled primary/spouse cash-farm source filing proof — 2026-10-06
+
+Isolated proof base2e7dd8710. Actual retained joint member records describe
+100% direct ownership of each farm by its respective proprietor, reciprocal
+spousal management, applicable ownership attribution, common control and the
+complete member/payroll set. The existing5884 group calculator applies the
+shared-person cap once and allocates the group's credit proportionately;
+no authored QBI/SE/tax/credit amount is substituted for those sources.
+The farm reconciliation now joins exactly both filed member farm names, EINs,
+references, recipients and proprietor TINs to those reviewed control records.
+Independent four-exception sources and existing W2 owner caps are unchanged.
+
+Authority rechecked: [Form5884 instructions](https://www.irs.gov/instructions/i5884)
+treat controlled/common-control members as one employer, allocate each member's
+share proportionately and require the line2 statement/full deduction reduction;
+[26CFR1.52-1](https://www.ecfr.gov/current/title-26/section-1.52-1) and
+[26CFR1.414(c)-4](https://www.ecfr.gov/current/title-26/section-1.414(c)-4)
+provide the unincorporated control and spousal attribution rules. Each employer
+retains its own certification, covered agricultural-duty/payroll and issued
+employee W2/SSA sources. Shared employee references must identify the same
+issued person SSN across members; one SSN cannot be relabeled with another
+person reference to evade the cap. Employer W2/SSA source references remain
+distinct. No duplicate source-reference permission was introduced.
+
+Four reusable public-source packets cover full use below/within the QBI band,
+fractional qualified wages, cap-binding limited use and an actual owner loss:
+
+| Case | Filed farm profits T / S | Half-SE total | Raw AGI | QBI deduction | Determined reduction T / S | Current use |1040 total tax |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| below |35201 /55201|4372|316030.86|17206|1200 /1200|2400|56765|
+| phase |177372 /188029|17277|498124.37|21135|1371 /1029|2400|130973|
+| above limited |432001 /432001|16288|1247714.86|169543|192000 /192000|239748|112690|
+| phase loss |-11201 /195201|13532|470468.37|20032|1200 /1200|2400|114922|
+
+The fractional actual employee payroll sources4000.49 /3000.52 yield group
+capped wages6000, raw member qualified contributions3428.496745469582 /
+2571.5032545304175 and filed credit shares1371 /1029. Both filed ScheduleF
+leaf equations and exact72.024% parent phase percentage reconcile. The loss
+packet prints44.368%; its primary farm has no positive ownerSE, while spouse
+QBI181669 is reduced by11201 to170468. Ordinary carry and parent40REIT/PTP
+are both0. The large case retains160 actual shared-person records with320
+employer-specific payroll/certification/W2 sets,1920000 raw wages,960000 group
+capped wages and384000 full determined reduction before ownerSE/QBI. Actual
+joint current use239748 leaves144252 unused; accepted carryover filing is
+not claimed. Cent-valued original G/secondary NEC, household W2 and payroll
+sources remain retained through finalized farm/SE/QBI/1040/native/PDF lines.
+
+Typed terminal evidence: controlled source/full local TY2025v5.4 XSD/complete
+PDF positives and public/prepared native/direct-PDF conflict tests **2/0**
+(`/tmp/opentax-controlled-farm-final-focus2.log`,27s); existing independent
+farm, controlled ScheduleC, farm-loss, optional owner farm and held-scope
+compatibility **15/0** (`/tmp/opentax-controlled-farm-compat.log`,1m17s).
+False/missing attribution/management/member review, conflicting farm name,
+shared person/alias/source copies, proprietor/payroll/certification/G/NEC,
+optional method, SE/source reduction/current-use/final-deduction mutations
+reject. Four held packets30/31/31/30 pages include the actual native group
+and differentiation statements and printed allocation; all **122 pages**
+reviewed in22 numbered contact sheets, including both owner farm/SE copies,
+full credit vs limited use, exact percentages and loss companion. Ignored
+artifacts: `.state/research/ty2025-filled-pdf-review/2026-10-06-controlled-spouse-farm-wotc`.
+
+This completes the reviewed two-member MFJ regular cash-farm common-control
+branch. Optional farm WOTC, additional/mixed entity group members, wider group
+ownership configurations, patron/SSTB/aggregation combinations, more-than-two
+QBI loss-netting rows, accepted carryovers and external issuer/SWA authentication
+remain open. Synthetic reviewed source records establish joins/replay and
+calculation proof, not issuer authentication or IRS business-rule/ATS/production
+acceptance. The broader parent remains open.
+
+Final held replay/checker terminal0 confirms actual retained source replay,
+artifact/template hashes and full local TY2025v5.4 XSD for **4 cases /122
+reviewed pages** (`/tmp/opentax-controlled-farm-held-check.log`). Actual XML
+includes ControlledGroupMemberStatement and DeductionDifferentiationStmt;
+the corresponding Form5884 allocation continuation prints in every packet.
