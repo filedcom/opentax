@@ -33,7 +33,13 @@ export const form8941Pdf: PdfFormDescriptor = {
   ],
   projectFields(raw, allPending) {
     if (Object.keys(raw).length === 0) return {};
-    const { source, lines } = reconcileForm8941DocumentSource(raw, allPending);
+    const filed = reconcileForm8941DocumentSource(raw, allPending);
+    const source = filed.kind === "independent_spouses"
+      ? filed.source.independent_members[0]
+      : filed.source;
+    const lines = filed.kind === "independent_spouses"
+      ? filed.memberLines[0]
+      : filed.lines;
     return {
       ...lines,
       owner_name: source.owner_name,
@@ -49,17 +55,52 @@ export const form8941Pdf: PdfFormDescriptor = {
     if (!allPending || !prepared) {
       throw new Error("Form 8941 PDF needs the prepared Form 3800 document");
     }
-    const { lines } = reconcileForm8941DocumentSource(
+    const filed = reconcileForm8941DocumentSource(
       allPending.f8941,
       allPending,
       filer,
     );
+    const lines = filed.lines;
     const rows = prepared.currentRows.filter((row) => row.line === "4h");
     const amounts = prepared.currentAmounts.filter((row) => row.line === "4h");
     const details = prepared.currentDetails.filter((row) => row.line === "4h");
     const [row] = rows;
     const [amount] = amounts;
     const [detail] = details;
+    if (filed.kind === "independent_spouses") {
+      const members = filed.source.independent_members;
+      const expected = filed.memberLines;
+      if (
+        fields.line16 !== expected[0].line16 ||
+        rows.length !== 1 || amounts.length !== 1 || details.length !== 2 ||
+        row.metadata.sourceCount !== 2 ||
+        row.metadata.referenceDocumentName !== "IRS8941" ||
+        row.entityCredits.length !== 0 ||
+        amount.nonpassiveCredit !== lines.line16 ||
+        amount.totalCredit !== lines.line16 ||
+        amount.appliedCredit !== allPending.f3800.form8941_applied_credit ||
+        details.reduce((sum, item) => sum + item.appliedCredit, 0) !==
+          amount.appliedCredit ||
+        details.some((item, index) =>
+          !item.sourceDocumentId ||
+          item.credit !== expected[index].line16 ||
+          item.passThroughEin !== undefined
+        ) ||
+        details[0].sourceDocumentId !== row.metadata.referenceDocumentId
+      ) {
+        throw new Error("Form 8941 spouse PDFs differ from Form 3800 line 4h");
+      }
+      assertForm3800FinalCreditJoin(prepared.lines.line38, allPending);
+      return members.map((member, index) => ({
+        ...expected[index],
+        owner_name: member.owner_name,
+        owner_ssn: member.owner_ssn,
+        shop_yes: true,
+        prior_year_shop_no: true,
+        shop_marketplace_identifier: member.shop_marketplace_identifier,
+        employment_ein: member.employment_ein,
+      }));
+    }
     if (
       fields.line16 !== lines.line16 ||
       rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||

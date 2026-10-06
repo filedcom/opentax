@@ -862,7 +862,16 @@ export function prepareForm3800DocumentParts(
         ) !== JSON.stringify(form8941.planReferences) ||
       JSON.stringify(
           parsed.f8941_direct_employer_credit?.group_business_references,
-        ) !== JSON.stringify(form8941.groupBusinessReferences)
+        ) !== JSON.stringify(form8941.groupBusinessReferences) ||
+      JSON.stringify(
+          parsed.f8941_direct_employer_credit
+            ?.independent_spouse_business_references,
+        ) !==
+        JSON.stringify(form8941.independentSpouseBusinessReferences) ||
+      JSON.stringify(
+          parsed.f8941_direct_employer_credit?.independent_spouse_credits,
+        ) !==
+        JSON.stringify(form8941.independentSpouseCredits)
     )
   ) {
     throw new Error("Form 3800 line 4h differs from filed Form 8941 source");
@@ -1207,7 +1216,10 @@ export function prepareForm3800DocumentParts(
     throw new Error("Form 3800 Form 8908 document count differs from source");
   }
   const form8941Ids = context.documentIdsByPendingKey.f8941 ?? [];
-  if (form8941Ids.length !== (form8941 ? 1 : 0)) {
+  if (
+    form8941Ids.length !==
+      (form8941 ? (form8941.kind === "independent_spouses" ? 2 : 1) : 0)
+  ) {
     throw new Error("Form 3800 Form 8941 document count differs from source");
   }
   const form8994Ids = context.documentIdsByPendingKey.f8994 ?? [];
@@ -1359,6 +1371,14 @@ export function prepareForm3800DocumentParts(
           credit: form8941.lines.line16,
           documentId: form8941Ids[0],
           appliedCredit: form8941Applied,
+          ...(form8941.kind === "independent_spouses"
+            ? {
+              sources: form8941.memberLines.map((line, index) => ({
+                credit: line.line16,
+                documentId: form8941Ids[index],
+              })),
+            }
+            : {}),
         }
         : undefined,
       form8994: form8994

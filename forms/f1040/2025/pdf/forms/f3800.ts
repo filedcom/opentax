@@ -209,11 +209,12 @@ export const form3800Pdf: PdfFormDescriptor = {
       }
     }
     if (source.f8941_direct_employer_credit) {
-      const { lines } = reconcileForm8941ScheduleC(
+      const filed8941 = reconcileForm8941ScheduleC(
         all,
         undefined,
         source.form8941_applied_credit,
       );
+      const { lines } = filed8941;
       const rawSource = f3800InputSchema.parse(raw);
       const rows = prepared.currentRows.filter((row) => row.line === "4h");
       const amounts = prepared.currentAmounts.filter((row) =>
@@ -230,8 +231,9 @@ export const form3800Pdf: PdfFormDescriptor = {
           JSON.stringify(source.f8941_direct_employer_credit) ||
         rawSource.form8941_applied_credit !==
           source.form8941_applied_credit ||
-        rows.length !== 1 || amounts.length !== 1 || details.length !== 1 ||
-        row.metadata.sourceCount !== 1 ||
+        rows.length !== 1 || amounts.length !== 1 ||
+        details.length !== (filed8941.kind === "independent_spouses" ? 2 : 1) ||
+        row.metadata.sourceCount !== details.length ||
         row.metadata.referenceDocumentName !== "IRS8941" ||
         !row.metadata.referenceDocumentId || row.entityCredits.length !== 0 ||
         amount.nonpassiveCredit !== lines.line16 ||
@@ -239,10 +241,17 @@ export const form3800Pdf: PdfFormDescriptor = {
         amount.transferOutCredit !== 0 || amount.passiveBeforeLimit !== 0 ||
         amount.passiveAfterLimit !== 0 ||
         amount.appliedCredit !== source.form8941_applied_credit ||
-        amount.appliedCredit !== detail.appliedCredit ||
-        detail.credit !== lines.line16 ||
+        amount.appliedCredit !==
+          details.reduce((sum, item) => sum + item.appliedCredit, 0) ||
+        details.reduce((sum, item) => sum + item.credit, 0) !== lines.line16 ||
         detail.sourceDocumentId !== row.metadata.referenceDocumentId ||
-        detail.passThroughEin !== undefined
+        details.some((item) =>
+          !item.sourceDocumentId || item.passThroughEin !== undefined
+        ) ||
+        (filed8941.kind === "independent_spouses" &&
+          details.some((item, index) =>
+            item.credit !== filed8941.memberLines[index].line16
+          ))
       ) {
         throw new Error("Form 3800 PDF line 4h differs from Form 8941 source");
       }

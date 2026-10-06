@@ -137,6 +137,10 @@ export type Form3800NonpassiveXmlInput = {
     readonly credit: number;
     readonly documentId: string;
     readonly appliedCredit: number;
+    readonly sources?: readonly {
+      readonly credit: number;
+      readonly documentId: string;
+    }[];
   };
   readonly form8994?: {
     readonly credit: number;
@@ -313,6 +317,20 @@ export function buildForm3800NonpassiveParts(
       input.form8941.appliedCredit > form8941Credit
     )
   ) throw new Error("Form 3800 has an invalid Form 8941 line 4h allocation");
+  if (
+    input.form8941?.sources && (
+      input.form8941.sources.length !== 2 ||
+      input.form8941.sources.some((source) =>
+        !source.documentId || !Number.isInteger(source.credit) ||
+        source.credit <= 0
+      ) ||
+      input.form8941.sources[0].documentId !== input.form8941.documentId ||
+      input.form8941.sources[0].documentId ===
+        input.form8941.sources[1].documentId ||
+      input.form8941.sources.reduce((sum, source) => sum + source.credit, 0) !==
+        form8941Credit
+    )
+  ) throw new Error("Form 3800 Form 8941 member document credits differ");
   if (
     input.form8994 && (
       !input.form8994.documentId || !Number.isInteger(form8994Credit) ||
@@ -816,12 +834,22 @@ export function buildForm3800NonpassiveParts(
     }]
     : [];
   const form8941PartVGroups: Form3800NonpassiveDetailRow[] = input.form8941
-    ? [{
-      line: "4h",
-      credit: form8941Credit,
-      appliedCredit: input.form8941.appliedCredit,
-      sourceDocumentId: input.form8941.documentId,
-    }]
+    ? (input.form8941.sources ??
+      [{ credit: form8941Credit, documentId: input.form8941.documentId }]).map((
+        source,
+        index,
+        sources,
+      ) => ({
+        line: "4h" as const,
+        credit: source.credit,
+        appliedCredit: sources.length === 1
+          ? input.form8941!.appliedCredit
+          : index === 0
+          ? Math.min(source.credit, input.form8941!.appliedCredit)
+          : input.form8941!.appliedCredit -
+            Math.min(sources[0].credit, input.form8941!.appliedCredit),
+        sourceDocumentId: source.documentId,
+      }))
     : [];
   const form8994PartVGroups: Form3800NonpassiveDetailRow[] = input.form8994
     ? [{
@@ -1151,7 +1179,7 @@ export function buildForm3800NonpassiveParts(
         form8941Credit,
         input.form8941.appliedCredit,
         {
-          sourceCount: 1,
+          sourceCount: input.form8941.sources?.length ?? 1,
           referenceDocumentId: input.form8941.documentId,
           referenceDocumentName: "IRS8941",
         },

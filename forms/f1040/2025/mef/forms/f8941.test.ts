@@ -18,7 +18,7 @@ Deno.test("staged IRS8941 and official PDF project the same direct credit", () =
     pending: filed,
     filer,
     documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
-  });
+  }).join("");
   assertStringIncludes(xml, "<SHOPInd>true</SHOPInd>");
   assertStringIncludes(
     xml,

@@ -151,6 +151,14 @@ const f8941DirectEmployerCreditSchema = z.object({
     z.string().trim().min(1),
     z.string().trim().min(1),
   ]).optional(),
+  independent_spouse_business_references: z.tuple([
+    z.string().trim().min(1),
+    z.string().trim().min(1),
+  ]).optional(),
+  independent_spouse_credits: z.tuple([
+    z.number().int().positive(),
+    z.number().int().positive(),
+  ]).optional(),
   shop_plan_reference: z.string().trim().min(1),
   subject_to_passive_activity_limit: z.literal(false),
   shop_plan_references: z.array(z.string().trim().min(1)).min(2).max(12).refine(

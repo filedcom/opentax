@@ -1,10 +1,14 @@
 import {
   calculateForm8941,
   commonControlForm8941Shares,
+  independentSpouseForm8941,
   inputSchema,
 } from "../../../nodes/inputs/f8941/index.ts";
-import { inputSchema as scheduleCInputSchema } from "../../../nodes/inputs/schedule_c/model.ts";
-import { TS } from "../../../nodes/types.ts";
+import {
+  computeGrossIncome,
+  inputSchema as scheduleCInputSchema,
+} from "../../../nodes/inputs/schedule_c/model.ts";
+import { FilingStatus, TS } from "../../../nodes/types.ts";
 import type { FilerIdentity } from "../../../mef/header.ts";
 import { inputSchema as generalInputSchema } from "../../../nodes/inputs/general/index.ts";
 
@@ -15,8 +19,107 @@ export function reconcileForm8941ScheduleC(
   appliedCredit?: number,
 ) {
   const source = inputSchema.parse(pending.f8941);
-  const lines = calculateForm8941(source);
   const scheduleC = scheduleCInputSchema.parse(pending.schedule_c);
+  if ("independent_members" in source) {
+    const joint = independentSpouseForm8941(source);
+    const reductions = scheduleC.form8941_premium_reductions;
+    const general = generalInputSchema.parse(pending.general);
+    if (
+      general.filing_status !== FilingStatus.MFJ ||
+      general.taxpayer_ssn?.replaceAll("-", "") !==
+        source.independent_members[0].owner_ssn ||
+      general.spouse_ssn?.replaceAll("-", "") !==
+        source.independent_members[1].owner_ssn ||
+      `${general.taxpayer_first_name} ${general.taxpayer_last_name}` !==
+        source.independent_members[0].owner_name ||
+      `${general.spouse_first_name} ${general.spouse_last_name}` !==
+        source.independent_members[1].owner_name ||
+      (filer &&
+        (!filer.spouse ||
+          filer.primarySSN !== source.independent_members[0].owner_ssn ||
+          filer.spouse.ssn !== source.independent_members[1].owner_ssn ||
+          (filer.fullName &&
+            filer.fullName !== source.independent_members[0].owner_name) ||
+          `${filer.spouse.firstName} ${filer.spouse.lastName}` !==
+            source.independent_members[1].owner_name)) ||
+      scheduleC.schedule_cs.length !== 2 || reductions?.length !== 2 ||
+      (appliedCredit !== undefined && (!Number.isInteger(appliedCredit) ||
+        appliedCredit < 0 || appliedCredit > joint.totalCredit))
+    ) {
+      throw new Error(
+        "Form 8941 independent spouse filing or tax allocation differs",
+      );
+    }
+    source.independent_members.forEach((member, index) => {
+      const business = scheduleC.schedule_cs.find((item) =>
+        item.business_reference === member.schedule_c_business_reference
+      );
+      const reduction = reductions.find((item) =>
+        item.business_reference === member.schedule_c_business_reference
+      );
+      const record = source.spouse_exception_records[index];
+      const wages = member.employees.reduce((sum, worker) =>
+        sum + worker.social_security_medicare_wages, 0) +
+        (member.excluded_workers ?? []).reduce((sum, worker) =>
+          sum + worker.actual_social_security_medicare_wages, 0);
+      const excludedPaid = (member.excluded_workers ?? []).some((worker) =>
+        worker.coverage_records.some((coverage) =>
+          coverage.employer_payment > 0
+        )
+      );
+      const passive = record.royalties + record.rents + record.dividends +
+        record.interest + record.annuities;
+      if (
+        !business || !reduction ||
+        business.proprietor_recipient !== member.proprietor_recipient ||
+        business.line_g_material_participation !== true ||
+        business.line_d_ein?.replace(/\D/g, "") !== member.employment_ein ||
+        business.line_26_wages !== wages ||
+        (excludedPaid && member.other_schedule_c_employee_benefits !== 0) ||
+        business.line_14_employee_benefits !==
+          member.other_schedule_c_employee_benefits +
+            joint.lines[index].line4 ||
+        reduction.credit_amount !== joint.lines[index].line16 ||
+        record.ordinary_business_gross_income + passive !==
+          computeGrossIncome(business) ||
+        passive !== (business.line_6_other_income ?? 0) ||
+        passive * 2 > computeGrossIncome(business) ||
+        computeGrossIncome(business) <= 0
+      ) {
+        throw new Error(
+          "Form 8941 independent spouse Schedule C or passive income exception differs",
+        );
+      }
+    });
+    if (
+      source.independent_members.some((member) =>
+        (member.excluded_workers ?? []).some((worker) =>
+          worker.exclusion === "proprietor" &&
+          worker.coverage_records.some((record) => record.employer_payment > 0)
+        )
+      ) &&
+      pending.form7206 && typeof pending.form7206 === "object" &&
+      "single_schedule_c_plan" in pending.form7206 &&
+      pending.form7206.single_schedule_c_plan !== undefined
+    ) {
+      throw new Error(
+        "Form 8941 independent spouse owner coverage needs separately reconciled Form 7206 source",
+      );
+    }
+    return {
+      kind: "independent_spouses" as const,
+      source,
+      lines: { ...joint.lines[0], line16: joint.totalCredit },
+      memberLines: joint.lines,
+      planReferences: undefined,
+      groupBusinessReferences: undefined,
+      independentSpouseBusinessReferences: source.independent_members.map((
+        member,
+      ) => member.schedule_c_business_reference),
+      independentSpouseCredits: joint.lines.map((line) => line.line16),
+    };
+  }
+  const lines = calculateForm8941(source);
   if ("group_members" in source) {
     const group = commonControlForm8941Shares(source);
     const reductions = scheduleC.form8941_premium_reductions;
@@ -85,12 +188,15 @@ export function reconcileForm8941ScheduleC(
       );
     }
     return {
+      kind: "single" as const,
       source,
       lines,
       planReferences: undefined,
       groupBusinessReferences: source.group_members.map((member) =>
         member.schedule_c_business_reference
       ),
+      independentSpouseBusinessReferences: undefined,
+      independentSpouseCredits: undefined,
     };
   }
   if (scheduleC.schedule_cs.length !== 1) {
@@ -228,7 +334,15 @@ export function reconcileForm8941ScheduleC(
   const planReferences = "offered_qhps" in source
     ? source.offered_qhps.map((p) => p.shop_plan_reference)
     : undefined;
-  return { source, lines, planReferences, groupBusinessReferences: undefined };
+  return {
+    kind: "single" as const,
+    source,
+    lines,
+    planReferences,
+    groupBusinessReferences: undefined,
+    independentSpouseBusinessReferences: undefined,
+    independentSpouseCredits: undefined,
+  };
 }
 
 /** Native/PDF preparation must use the same direct source as the pending graph. */
@@ -291,7 +405,17 @@ export function reconcileForm8941DocumentSource(
         "group_business_references" in credit
           ? credit.group_business_references
           : undefined,
-      ) !== JSON.stringify(reconciled.groupBusinessReferences)
+      ) !== JSON.stringify(reconciled.groupBusinessReferences) ||
+    JSON.stringify(
+        "independent_spouse_business_references" in credit
+          ? credit.independent_spouse_business_references
+          : undefined,
+      ) !== JSON.stringify(reconciled.independentSpouseBusinessReferences) ||
+    JSON.stringify(
+        "independent_spouse_credits" in credit
+          ? credit.independent_spouse_credits
+          : undefined,
+      ) !== JSON.stringify(reconciled.independentSpouseCredits)
   ) {
     throw new Error(
       "Form 8941 Form 3800 source credit differs from filed form",

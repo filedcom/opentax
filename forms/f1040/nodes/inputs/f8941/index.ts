@@ -135,6 +135,53 @@ const commonControlSchema = z.object({
   ]),
 }).strict();
 
+const independentSpouseMemberSchema = multiplePlanSourceSchema.extend({
+  no_other_trades_or_common_control_verified: z.literal(false),
+});
+const spouseExceptionRecordSchema = z.object({
+  business_reference: groupReference,
+  proprietor_ssn: sourceSchema.shape.owner_ssn,
+  other_spouse_ssn: sourceSchema.shape.owner_ssn,
+  proprietor_ownership_percentage: z.literal(100),
+  other_spouse_direct_ownership_percentage: z.literal(0),
+  ownership_from_date: z.literal("2025-01-01"),
+  ownership_through_date: z.literal("2025-12-31"),
+  ownership_record_reference: groupReference,
+  other_spouse_never_director_fiduciary_employee_or_manager_verified: z.literal(
+    true,
+  ),
+  other_spouse_role_and_payroll_record_reference: groupReference,
+  gross_income_record_reference: groupReference,
+  ordinary_business_gross_income: amount,
+  royalties: amount,
+  rents: amount,
+  dividends: amount,
+  interest: amount,
+  annuities: amount,
+  passive_income_record_reference: groupReference,
+  no_disposal_restriction_favoring_spouse_or_under21_children_verified: z
+    .literal(true),
+  interest_disposal_record_reference: groupReference,
+}).strict();
+const independentSpouseSchema = z.object({
+  qualifying_arrangement: z.literal("independent_mfj_spouse_proprietors"),
+  owner_name: sourceSchema.shape.owner_name,
+  owner_ssn: sourceSchema.shape.owner_ssn,
+  proprietor_recipient: z.literal(TS.T),
+  schedule_c_business_reference: groupReference,
+  shop_plan_reference: groupReference,
+  all_filer_controlled_businesses_identified_confirmed: z.literal(true),
+  complete_business_census_record_reference: groupReference,
+  spouse_exception_records: z.tuple([
+    spouseExceptionRecordSchema,
+    spouseExceptionRecordSchema,
+  ]),
+  independent_members: z.tuple([
+    independentSpouseMemberSchema,
+    independentSpouseMemberSchema,
+  ]),
+}).strict();
+
 /** Full-year compatibility and explicitly sourced whole-month enrollment. */
 export const inputSchema = z.union([
   legacySourceSchema.extend({
@@ -212,6 +259,7 @@ export const inputSchema = z.union([
   }).strict(),
   multiplePlanSourceSchema,
   commonControlSchema,
+  independentSpouseSchema,
 ]);
 
 export type F8941Input = z.infer<typeof inputSchema>;
@@ -487,10 +535,100 @@ export function commonControlForm8941Shares(raw: unknown) {
   return commonControlWorksheet(source);
 }
 
-/** TY2025 Form 8941 lines 1–16 and Worksheets 1–7 for the bounded source. */
-export function calculateForm8941(raw: unknown): Form8941Lines {
-  const source = inputSchema.parse(raw);
-  if ("group_members" in source) return commonControlWorksheet(source).lines;
+export function independentSpouseForm8941(raw: unknown) {
+  const source = independentSpouseSchema.parse(raw);
+  const [first, second] = source.independent_members;
+  if (
+    first.proprietor_recipient !== TS.T ||
+    second.proprietor_recipient !== TS.S ||
+    source.owner_ssn !== first.owner_ssn ||
+    source.owner_name !== first.owner_name ||
+    source.schedule_c_business_reference !==
+      first.schedule_c_business_reference ||
+    source.shop_plan_reference !== first.shop_plan_reference ||
+    first.owner_ssn === second.owner_ssn ||
+    first.schedule_c_business_reference ===
+      second.schedule_c_business_reference ||
+    first.employment_ein === second.employment_ein
+  ) throw new Error("Form 8941 independent spouse member identity differs");
+  const references = new Set<string>();
+  const people = new Set<string>();
+  const collect = (value: unknown): void => {
+    const local = new Set<string>();
+    const visit = (value: unknown): void => {
+      if (!value || typeof value !== "object") return;
+      for (const [key, child] of Object.entries(value)) {
+        if (
+          typeof child === "string" && /_reference$/.test(key) &&
+          key !== "filed_2024_return_reference" &&
+          key !== "business_reference" && key !== "shop_plan_reference" &&
+          key !== "employee_reference"
+        ) {
+          local.add(child);
+        } else if (typeof child === "object") {
+          if (Array.isArray(child)) child.forEach(visit);
+          else visit(child);
+        }
+      }
+    };
+    visit(value);
+    for (const ref of local) {
+      if (references.has(ref)) {
+        throw new Error("Form 8941 independent spouse source reference reused");
+      }
+      references.add(ref);
+    }
+  };
+  const lines = source.independent_members.map((member, index) => {
+    const record = source.spouse_exception_records[index];
+    const other = source.independent_members[1 - index];
+    const passive = record.royalties + record.rents + record.dividends +
+      record.interest + record.annuities;
+    if (
+      record.business_reference !== member.schedule_c_business_reference ||
+      record.proprietor_ssn !== member.owner_ssn ||
+      record.other_spouse_ssn !== other.owner_ssn ||
+      member.employees.some((employee) =>
+        employee.employee_ssn === other.owner_ssn
+      ) ||
+      (member.excluded_workers ?? []).some((worker) =>
+        worker.employee_ssn === other.owner_ssn
+      ) ||
+      record.ordinary_business_gross_income + passive <= 0 ||
+      passive * 2 > record.ordinary_business_gross_income + passive
+    ) {
+      throw new Error(
+        "Form 8941 independent spouse ownership or employment exception differs",
+      );
+    }
+    for (
+      const worker of [...member.employees, ...(member.excluded_workers ?? [])]
+    ) {
+      if (people.has(worker.employee_ssn)) {
+        throw new Error(
+          "Form 8941 independent spouse worker repeated across employers",
+        );
+      }
+      people.add(worker.employee_ssn);
+    }
+    collect(record);
+    collect(member);
+    return calculateSingleEmployerForm8941(member);
+  }) as [Form8941Lines, Form8941Lines];
+  return { source, lines, totalCredit: lines[0].line16 + lines[1].line16 };
+}
+
+type SingleEmployerSource =
+  | Exclude<
+    F8941Input,
+    { group_members: unknown } | { independent_members: unknown }
+  >
+  | z.infer<typeof independentSpouseMemberSchema>;
+
+/** TY2025 Form 8941 lines 1–16 and Worksheets 1–7 for one employer. */
+function calculateSingleEmployerForm8941(
+  source: SingleEmployerSource,
+): Form8941Lines {
   const multi = "monthly_plan_arrangements" in source
     ? multiplePlanWorksheet(source)
     : undefined;
@@ -605,12 +743,55 @@ export function calculateForm8941(raw: unknown): Form8941Lines {
   );
 }
 
+export function calculateForm8941(raw: unknown): Form8941Lines {
+  const source = inputSchema.parse(raw);
+  if ("group_members" in source) return commonControlWorksheet(source).lines;
+  if ("independent_members" in source) {
+    throw new Error("Independent spouse proprietors require two Forms 8941");
+  }
+  return calculateSingleEmployerForm8941(source);
+}
+
 class F8941Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8941";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f3800, schedule_c, f1040]);
 
   compute(_ctx: NodeContext, rawInput: F8941Input): NodeResult {
+    if ("independent_members" in rawInput) {
+      const joint = independentSpouseForm8941(rawInput);
+      return {
+        outputs: [
+          output(f3800, {
+            f8941_direct_employer_credit: {
+              credit_amount: joint.totalCredit,
+              schedule_c_business_reference:
+                rawInput.schedule_c_business_reference,
+              shop_plan_reference: rawInput.shop_plan_reference,
+              independent_spouse_business_references: [
+                rawInput.independent_members[0].schedule_c_business_reference,
+                rawInput.independent_members[1].schedule_c_business_reference,
+              ],
+              independent_spouse_credits: [
+                joint.lines[0].line16,
+                joint.lines[1].line16,
+              ],
+              subject_to_passive_activity_limit: false,
+            },
+          }),
+          output(f1040, { form8941_determined_credit: joint.totalCredit }),
+          output(schedule_c, {
+            form8941_premium_reductions: rawInput.independent_members.map((
+              member,
+              index,
+            ) => ({
+              business_reference: member.schedule_c_business_reference,
+              credit_amount: joint.lines[index].line16,
+            })),
+          }),
+        ],
+      };
+    }
     const lines = calculateForm8941(rawInput);
     return {
       outputs: [
