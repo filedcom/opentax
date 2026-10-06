@@ -34,3 +34,16 @@ Deno.test("2025 Form 1040 PDF checks the primary dependent box", () => {
     "topmostSubform[0].Page2[0].c2_1[0]",
   );
 });
+
+Deno.test("Form 8615 PDF preserves the actual allocation ratio as fractional digits after its printed decimal point", () => {
+  assertEquals(
+    form8615Pdf.instances!({ line12b_allocation_ratio: .431 })[0]
+      .line12b_allocation_ratio,
+    "431",
+  );
+  assertEquals(
+    form8615Pdf.instances!({ line12b_allocation_ratio: .569 })[0]
+      .line12b_allocation_ratio,
+    "569",
+  );
+});

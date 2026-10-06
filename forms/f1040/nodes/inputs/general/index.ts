@@ -1,5 +1,6 @@
 import { dependentKiddieTaxFacts } from "../f8615/dependent-source-review.ts";
 import {
+  dependentKiddieTaxFamilyReviewSchema,
   dependentScholarshipEarned,
   dependentScholarshipReviewSchema,
 } from "../education_income/dependent-scholarship-review.ts";
@@ -316,6 +317,10 @@ export const inputSchema = z.object({
   }).strict().optional(),
   dependent_earned_income: z.number().nonnegative().optional(),
   dependent_education_income_review: dependentScholarshipReviewSchema
+    .optional(),
+  dependent_kiddie_tax_family_record_reference: z.string().trim().min(1)
+    .optional(),
+  dependent_kiddie_tax_family_review: dependentKiddieTaxFamilyReviewSchema
     .optional(),
   taxpayer_occupation: z.string().optional(),
   taxpayer_daytime_phone: z.string().optional(),

@@ -1,3 +1,4 @@
+import { assertDependentKiddieTaxFamilyReturn } from "../../../nodes/inputs/f8615/dependent-source-review.ts";
 import { assertW2ArcherContributionSources } from "../../form8853_contributions_reconciliation.ts";
 import { assertEducationIncomeSource } from "../../../nodes/inputs/education_income/index.ts";
 import { element, elements } from "../../../mef/xml.ts";
@@ -1129,6 +1130,10 @@ export const irs1040: MefFormDescriptor<"f1040", Input> = {
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040.pdf",
   build(fields, context) {
     assertW2ArcherContributionSources(context);
+    assertDependentKiddieTaxFamilyReturn(
+      context?.pending ? { ...context.pending, f1040: fields } : undefined,
+      context?.filer,
+    );
     assertEducationIncomeSource(
       (context?.pending?.general as Record<string, unknown> | undefined)
           ?.dependent_education_income_review

@@ -8,12 +8,13 @@ import {
 const reference = z.string().trim().min(1);
 const ssn = z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/);
 const record = z.record(z.string(), z.unknown());
-export const dependentKiddieTaxReviewSchema = z.object({
+export const settledParentTaxReturnSchema = z.object({
   source_document_reference: reference,
-  tax_year: z.literal(2025),
-  parent_alive_record_reference: reference,
-  parent_alive_on_2025_12_31: z.boolean(),
-  parent_selection: z.object({
+  filer: record,
+  pending: record,
+}).strict();
+const parentSelectionSchema = z.discriminatedUnion("kind", [
+  z.object({
     kind: z.literal("divorced_custodial_unremarried"),
     divorce_decree_record_reference: reference,
     residence_calendar_record_reference: reference,
@@ -25,13 +26,35 @@ export const dependentKiddieTaxReviewSchema = z.object({
     other_parent_nights: z.number().int().min(0).max(365),
     custodial_parent_remarried: z.literal(false),
   }).strict(),
+  z.object({
+    kind: z.literal("never_married_cohabiting_greater_taxable_income"),
+    source_document_reference: reference,
+    parentage_record_reference: reference,
+    joint_residence_record_reference: reference,
+    competing_dependency_claim_record_reference: reference,
+    student_ssn: ssn,
+    parents_never_married: z.literal(true),
+    parents_lived_together_all_year: z.literal(true),
+    joint_residence_days: z.literal(365),
+    eligible_parent_returns: z.array(settledParentTaxReturnSchema).length(2),
+  }).strict(),
+]);
+export const dependentKiddieTaxReviewSchema = z.object({
+  source_document_reference: reference,
+  tax_year: z.literal(2025),
+  parent_alive_record_reference: reference,
+  parent_alive_on_2025_12_31: z.boolean(),
+  parent_selection: parentSelectionSchema,
   family_children_record_reference: reference,
   other_children_requiring_form8615: z.array(ssn),
-  settled_parent_return: z.object({
-    source_document_reference: reference,
-    filer: record,
-    pending: record,
-  }).strict(),
+  other_child_returns: z.array(
+    z.object({
+      source_document_reference: reference,
+      student_claim_review: record,
+      pending: record,
+    }).strict(),
+  ).optional(),
+  settled_parent_return: settledParentTaxReturnSchema,
 }).strict();
 export const dependentScholarshipReviewSchema = z.object({
   tax_year: z.literal(2025),
@@ -66,6 +89,18 @@ export const dependentScholarshipReviewSchema = z.object({
       payer_ssn: ssn,
       kind: z.enum(["ordinary_support", "scholarship_support"]),
       amount: z.number().int().positive(),
+    }).strict(),
+  ).min(1),
+}).strict();
+export const dependentKiddieTaxFamilyReviewSchema = z.object({
+  tax_year: z.literal(2025),
+  source_document_reference: reference,
+  parent_returns: z.array(settledParentTaxReturnSchema).min(1),
+  child_returns: z.array(
+    z.object({
+      source_document_reference: reference,
+      student_claim_review: dependentScholarshipReviewSchema,
+      pending: record,
     }).strict(),
   ).min(1),
 }).strict();
@@ -110,6 +145,34 @@ export function dependentScholarshipEarned(
     throw new Error(
       "Dependent scholarship income must belong to the student, not the parent",
     );
+  }
+  const payrollAllocations = new Map<string, number>();
+  for (const row of incomes) {
+    if (
+      row.kind !== "scholarship_for_required_services" ||
+      row.reporting.kind !== "w2_box1"
+    ) continue;
+    const reporting = row.reporting;
+    const source = review.student_w2_sources.find((w) =>
+      w.source_document_reference === reporting.w2_source_document_reference
+    );
+    if (
+      !source || tin(source.employer_ein) !== tin(row.payer_ein) ||
+      source.box1_wages !== row.reporting.w2_box1_wages
+    ) {
+      throw new Error(
+        "Dependent service compensation must join its actual owned issued payroll source",
+      );
+    }
+    const total =
+      (payrollAllocations.get(source.source_document_reference) ?? 0) +
+      row.taxable_amount;
+    if (total > source.box1_wages) {
+      throw new Error(
+        "Dependent service allocations exceed actual issued payroll income",
+      );
+    }
+    payrollAllocations.set(source.source_document_reference, total);
   }
   let earned = review.student_w2_sources.reduce((s, r) => s + r.box1_wages, 0);
   for (const row of incomes) {
@@ -282,17 +345,16 @@ export function dependentScholarshipEarned(
   }
   return earned;
 }
-export function assertDependentScholarshipReturn(
+export function assertDependentScholarshipIncome(
   pending: Readonly<Record<string, unknown>> | undefined,
   rows: readonly EducationIncome[],
-): void {
+): number | undefined {
   const general = pending?.general as Record<string, unknown> | undefined;
   if (general?.dependent_education_income_review === undefined) return;
   const review = dependentScholarshipReviewSchema.parse(
     general.dependent_education_income_review,
   );
   const earned = dependentScholarshipEarned(review);
-  assertDependentKiddieTaxReturn(pending!, review, earned);
   const final = pending?.f1040 as Record<string, unknown> | undefined;
   const wages =
     ((pending?.w2 as { w2s?: Record<string, unknown>[] } | undefined)?.w2s ??
@@ -348,4 +410,17 @@ export function assertDependentScholarshipReturn(
       "Dependent scholarship return must reconcile actual student income, dependent standard deduction and parent-only education credit",
     );
   }
+  return earned;
+}
+export function assertDependentScholarshipReturn(
+  pending: Readonly<Record<string, unknown>> | undefined,
+  rows: readonly EducationIncome[],
+): void {
+  const earned = assertDependentScholarshipIncome(pending, rows);
+  if (earned === undefined) return;
+  const review = dependentScholarshipReviewSchema.parse(
+    (pending!.general as Record<string, unknown>)
+      .dependent_education_income_review,
+  );
+  assertDependentKiddieTaxReturn(pending!, review, earned);
 }

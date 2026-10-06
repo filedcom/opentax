@@ -1,3 +1,4 @@
+import { assertDependentKiddieTaxFamilyReturn } from "../../../nodes/inputs/f8615/dependent-source-review.ts";
 import { assertW2ArcherContributionSources } from "../../form8853_contributions_reconciliation.ts";
 import { assertEducationIncomeSource } from "../../../nodes/inputs/education_income/index.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
@@ -1080,6 +1081,10 @@ export const irs1040Pdf: PdfFormDescriptor = {
   fields,
   instances(fields, filer, all) {
     assertW2ArcherContributionSources({ filer, pending: all ?? {} });
+    assertDependentKiddieTaxFamilyReturn(
+      all ? { ...all, f1040: fields } : undefined,
+      filer,
+    );
     assertEducationIncomeSource(
       all?.general?.dependent_education_income_review
         ? { ...all, f1040: fields }

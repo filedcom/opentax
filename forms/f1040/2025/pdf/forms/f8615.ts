@@ -149,7 +149,19 @@ export const form8615Pdf: PdfFormDescriptor = {
     assertReviewedDependentForm8615(
       pending ? { ...pending, form8615: fields } : undefined,
     );
-    return [fields];
+    // IRS prints the decimal point before this narrow ratio widget. Passing
+    // a numeric ratio to the shared amount filler rounds it to whole dollars
+    // (and blanks .431). Retain the actual numeric filed ratio for source
+    // preflight above, then fill its fractional digits as text.
+    return [{
+      ...fields,
+      ...(typeof fields.line12b_allocation_ratio === "number"
+        ? {
+          line12b_allocation_ratio: fields.line12b_allocation_ratio.toFixed(3)
+            .replace(/^0\./, ""),
+        }
+        : {}),
+    }];
   },
   filerFields: [
     {
