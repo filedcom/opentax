@@ -11,3 +11,9 @@ The conflict gate rejects mismatched catch owner/digest, missing spouse identity
 Source scope remains the existing public sole proprietor Schedule C/F path. These synthetic records do not prove an externally accepted prior-year return, partnership or joint-venture allocation, or an unsupported separate spouse credit. The broader Schedule J attribution parent remains open.
 
 Primary instruction: https://www.irs.gov/instructions/i1040sj
+
+## Current main integration proof
+
+Integrated53d8b2dce after source-learnings compact. Fresh standard-task joint2 + priorfishing5 + mining2 = typed9/0 (1m38s), `/tmp/opentax-joint-fishing-mining-current-main-v2-oct6.log`. Initialcommand used a nonexistent miningmodule and ran no tests; its diagnosticlog is retained. Actual four original raw-input packets rerun against main and full TY2025 v5.4 XSD preserve completepending/PDF/origins exactly, XMLonlyReturnTs, `/tmp/opentax-schedulej-joint-fishing-main-held-oct6.log`; fresh fixture-generated source/pending/PDF also match all four originals. Original reviewmanifestSHA483df467341c60a8248be442dfc2cd0d4f826ccd20ace31e216c2326b8b64710; all72 reviewedpages transfer by exactPDFhashes. Root replay script `/tmp/opentax-schedulej-joint-fishing-main-held-replay-oct6.ts` writes only fresh outputs.
+
+Prior eight fishing packets152pages remain exact under actual retainedsource replay, `/tmp/opentax-schedulej-fishing-prior8-after-joint-main-oct6.log`. Strict retained mining replay2/32 also preserves actualsource/attachments/pending/PDF/origins/XMLonlyReturnTs, `/tmp/opentax-mining-after-joint-main-held-oct6.log`. A preliminary comparison of newly generated mining issuerPDFs differed from oldbytes; it is superseded by the strict actual-original source replay and makes no originalpreservation claim. Exactjoint optionalenvironment permissions are in denotask. Wider jointowner aboveMFJthreshold conditional8995A, sourceauthentication and IRS/businessrule/ATS gates remainopen.
