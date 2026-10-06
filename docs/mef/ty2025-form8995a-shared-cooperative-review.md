@@ -70,3 +70,10 @@ and it is not a passing gate. Root owns final six-source integration verificatio
 This bounded correction does not authenticate issuers, prove IRS acceptance,
 or close the wider Forms8995/8995-A parent. Other business/deduction/aggregation
 combinations retain their existing limits.
+
+
+## Main integration saved-source verification
+
+Integrated69ad0956f/00dfa9cb3/c72c52310 holds all19corrected code/test/fixture hashes. Mainactualsix-source replay59423 terminalexit0:6returns/114pages withwhole normalizedgraph andpending/prepared/carry/origins/PDFexact, nativeonlyReturnTs, fresh local2025v5.4XSD andall18originalsourceJSON/PDF/XML unchanged. Report `/tmp/opentax-independent-patron-main6-oct6/report.json`;40physicalfiles include output, originalsources, script/log andheldmanifest, copied/rehashed to main research under2026-10-06-independent-patron-main6.
+
+Mainactualold18 replay64728 terminalexit0:18returns/272pages, graph/carryexact against unchanged prior spouseproduction, historicalPDFbyteexact andnativeonlyReturnTs against previously validated references. All54originalJSON/PDF/XML unchanged,19held filescheckedbefore/after. Historicalnativeexactness transfers priorfullXSDqualification; nofresh18XSDclaim. Report `/tmp/opentax-independent-patron-main18-oct6/report.json`;94physicalfilesretained under2026-10-06-independent-patron-main18. Mainordinaryfour-modulegate94998 is stillrunning; no boundedcompletion or fullregression passclaimed.
