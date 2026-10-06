@@ -12,6 +12,8 @@ Full regression **V28** is running at **fc6abc3c5**, including both payroll corr
 
 Prior Form 7203 copy consistency now passes the main **14/0** gate and independent replay of two saved source bundles / 20 documents. Complete form content and namespace conflicts reject even when hashes are recomputed; standard schema metadata remains valid. This is a prerequisite correction: trusted prior acceptance and the positive prior-basis filing route remain open. See the [prior-copy proof](docs/mef/ty2025-form7203-prior-copy-linkage.md).
 
+Spouse-owned cooperative QBI is integrated at **67aef9dee/92f1c9020**. Independent main replay verified **8 returns/121 pages** with exact saved calculations and PDFs, native XML differing only by timestamp, full local XSD and unchanged source hashes. Ordinary compatibility and main replay of 10 older returns remain running; no bounded completion is recorded yet. See the [spouse patron proof](docs/mef/ty2025-form8995a-spouse-patron-source.md).
+
 ## Scope and completion rules
 
 - [ ] Verify the release covers the TY2025 Form 1040 family: Form 1040, its applicable schedules, supporting forms, source documents, statements, PDF packet, MeF return, and A2A submission package.
