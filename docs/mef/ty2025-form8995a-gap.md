@@ -1308,3 +1308,5 @@ held source/XML/PDF replay and full local v5.4 XSD checker exits 0 with
 **7 cases / 186 reviewed pages**, hashes and template provenance confirmed
 (`/tmp/opentax-farm-wotc-final-held-check.log`). Earlier unclassified/prezero
 artifact folders and logs are superseded and are not this final evidence.
+
+Main farm integration at6cc665dc0 and independent SHOP at2696c4311 pass28/0 combined typed checks in3m4s. Ordinary root filing operands, optional farms, actual ownerSE and repeated8941 documents are preserved. Current-main held farm replay passes7 cases/186 reviewed pages with matching retained source/XML/PDF hashes and localXSD/template provenance; log `/tmp/opentax-farm-wotc-main-held-check.log`, SHA256 `d202e440c25b75ab8082317dda31c6e495c9fb2b94eec92ced4d7726a7bcfdff`. Combined command log `/tmp/opentax-farm-spouse-cf-main-integration.log`, SHA256 `63b35ac7888d89cda5782c60ec738c3f0462d673f96df8ab08e6451daa4a9d1b`. Actual planner has273 fixtures,116 descriptors,113 keys,95 covered and18 uncovered.

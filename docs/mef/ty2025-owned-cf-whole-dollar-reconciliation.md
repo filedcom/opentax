@@ -30,3 +30,15 @@ Original generic, patron, WOTC and optional-method source contracts stay indepen
 - opentax-owned-cf-filed-held-check.log: SHA256 `6ef81f64e669244448b610126fb5c2ed326a6a099c627515a59ae958b2c650d2`.
 - opentax-owned-cf-filed-main-integration.log: SHA256 `cd7f56e3b8fab398ad3e0f315038f869d346544057b081f7b268b5d81383afe7`.
 - opentax-owned-cf-filed-held-main-check.log: SHA256 `6ef81f64e669244448b610126fb5c2ed326a6a099c627515a59ae958b2c650d2`.
+
+## Part V source-summed expense correction
+
+At51012d822, two original bank-service costs of0.49 each remain retained as source rows. Their sum0.98 files as1 on ScheduleC lines48/27b; advertising300 therefore yields expenses301 and loss-301. Schedule1 total499, ownerSE70/half35 and AGI464 reconcile. Scalar line27b claims remain outside this ordinary helper pending their separate supported contract.
+
+The additional complete packet has13 pages, all visually reviewed. Current-main held replay passes1 case/13 pages; the prior ten packets also replay unchanged with130 reviewed pages. Together the ordinary MFJ proof covers11 packets/143 pages and33 retained source/XML/PDF hashes. Planner at51012d822 has265 fixtures. The whole11-case source/native/full-XSD/flattened-PDF and conflict tests pass2/0 in41s; logs are `/tmp/opentax-owned-cf-part-v-main.log`, `/tmp/opentax-owned-cf-part-v-held-main-check.log` and `/tmp/opentax-owned-cf-filed-part-v-main-check.log`. Retained new packet/renderings are `.state/research/2026-10-06-owned-cf-part-v-held` and its rendered sibling. This corrects the existing bounded completion and adds no ledger slice.
+
+- opentax-owned-cf-part-v-main.log: SHA256 `486354b03599d6c7878692720ea5ccc0edfc07ef379ec28c564900aa4d82274b`.
+
+- opentax-owned-cf-part-v-held-main-check.log: SHA256 `bbcd7cca0469542df8c9e790a03870dad89270b768e6c78edd6e20639ad69cd9`.
+
+- opentax-owned-cf-filed-part-v-main-check.log: SHA256 `6ef81f64e669244448b610126fb5c2ed326a6a099c627515a59ae958b2c650d2`.
