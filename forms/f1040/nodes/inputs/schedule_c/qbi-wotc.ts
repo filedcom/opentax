@@ -18,6 +18,9 @@ export function reviewedWotcQbiWages(
   const box5 = records.reduce((sum, record) => sum + record.box5_wages, 0);
   const wages = Math.min(box1, box5) - reduction;
   if (
+    (review.no_other_business_or_aggregation_confirmed !== true &&
+      !(review.no_aggregation_confirmed === true &&
+        review.reviewed_other_business_references?.length)) ||
     !unique("employee_reference") || !unique("source_document_reference") ||
     box1 !== item.line_26_wages || box5 !== item.line_26_wages ||
     (item.line_26_other_employment_credits ?? 0) !== 0 ||
@@ -26,7 +29,7 @@ export function reviewedWotcQbiWages(
     item.line_g_material_participation !== true ||
     item.qbi_specified_service === true ||
     item.qbi_no_other_adjustments_confirmed !== true ||
-    item.proprietor_recipient === "S" || item.statutory_employee === true ||
+    item.statutory_employee === true ||
     item.line_32_at_risk === "b" || item.at_risk_simplified !== undefined ||
     (item.line_30_home_office ?? 0) !== 0 ||
     item.home_office_method !== undefined

@@ -1012,3 +1012,100 @@ generic owner-SE and patron phase-in (`/tmp/opentax-joint-wotc-final-regression.
 The earlier narrower compatibility batch also passed 14/14
 (`/tmp/opentax-joint-wotc-regression.log`). Generator completed with terminal 0
 (`/tmp/opentax-joint-wotc-generate.log`).
+
+## MFJ spouse and two-owner WOTC source filing — October 6, 2026
+
+This extension completes the retained ordinary non-SSTB Schedule C route for a
+spouse proprietor and for two positive businesses, one per spouse. Actual public
+Schedule C, employee payroll/certification reviews, issued-copy W-2 records and
+generic owner Schedule SE sources feed the parent, Form 3800 and final 1040.
+Each business retains its full determined Form 5884 credit wage reduction before
+profit, attributable half-SE, QBI and deductible W-2 wage limitation; current
+tax use never changes that reduction. Separate business rows retain their owner,
+EIN, source references and per-business phase-in calculation in native XML and
+PDF. The two-owner source carries truthful reviewed other-business references
+and no aggregation, rather than a false no-other-business assertion.
+
+The [Form 5884 instructions](https://www.irs.gov/instructions/i5884) require the
+full line 2 wage deduction reduction and treat common-control employers as one
+employer. The
+[Schedule SE instructions](https://www.irs.gov/instructions/i1040sse) require
+separate owner SE calculations; the
+[Form 8995-A instructions](https://www.irs.gov/instructions/i8995a) require
+attributable adjustments and the joint $394,600/$494,600 phase-in boundaries.
+The two-employer route requires reviewed ownership/income sources supporting all
+four spouse-attribution exceptions in
+[26 CFR 1.414(c)-4(b)(5)(ii)](https://www.ecfr.gov/current/title-26/section-1.414(c)-4),
+as applied by
+[26 CFR 1.52-1(d)](https://www.ecfr.gov/current/title-26/section-1.52-1), and no
+other common-control ownership/options. These include no other-spouse direct
+interest or management/employment, the passive-income condition and no
+spouse/minor-child disposition restriction. Missing or contrary facts reject
+this ordinary independent-employer route. Common-control source allocations must
+use the existing controlled-group route; this proof does not complete its
+multi-owner QBI coexistence.
+
+**Correction to inherited primary fixtures:** their external household W-2 EIN
+was inherited as 12-3456789, matching the reviewed WOTC sole proprietor EIN.
+That contradicted the asserted separate external employer and complete reviewed
+payroll. The fixtures now identify the external employer as 54-3216789,
+preserving all actual wages and prior numerical proof. Retained primary, spouse
+and multi-owner exports reject a household W-2 employer EIN matching any
+reviewed WOTC business EIN. This corrects the earlier synthetic employer
+assumption; source references and review assertions still do not authenticate
+certifications, issued W-2s, payroll or ownership workpapers.
+
+Five spouse-owned cases retain the previous joint phase-in, first threshold
+dollar, upper edge, first above-range dollar and limited-current-use amounts.
+Their one-employee QBI is $330,843 after spouse SE $31,113 and half-SE $15,557.
+The limited case retains full credit $192,000 with current use $93,402, unused
+$98,598, QBI deduction $59,381, final tax $56,036 and refund $4,864. It proves
+current tax use, not a durable carryover ledger.
+
+Three additional actual public two-owner returns prove the combined chain:
+
+| Case                          | Primary/spouse profit | Primary/spouse SE tax | Filed primary/spouse QBI | Pre-QBI taxable income | QBI deduction | Current WOTC use | Final tax |
+| ----------------------------- | --------------------- | --------------------- | ------------------------ | ---------------------- | ------------- | ---------------- | --------- |
+| Both phase-in                 | 176,400 / 186,400     | 7,960 / 26,337        | 172,420 / 173,231        | 464,151                | 23,553        | 4,800            | 126,729   |
+| Both above, limited use       | 312,000 / 312,000     | 8,356 / 30,192        | 307,822 / 296,904        | 873,226                | 120,945       | 158,054          | 88,536    |
+| Only spouse requires Part III | 2,400 / 346,400       | 339 / 31,113          | 2,230 / 330,843          | 451,573                | 29,942        | 4,800            | 117,699   |
+
+The cent-valued external W-2 is retained as $150,000.37 in both phase-in cases.
+Raw AGI $495,651.37/$483,073.37 files as $495,651/$483,073. Ratios are
+69.551%/56.973%; each finalized business percentage line is rounded before the
+parent sums its deduction components. Only the spouse column prints Part III
+amounts in the third case; inapplicable primary amounts remain blank, shared
+phase-in operands remain present, and Part IV line 27 remains total Part II line
+16 ($29,942). Above-range Part III is blank. The limited case retains $384,000
+full wage reductions, $158,054 current use and $225,946 unused credit; its
+SE/Additional Medicare total is $44,184, withholding $60,900 and amount owed
+$27,636. Gross employee W-2 source wages remain unchanged.
+
+Proof base: `ab5bd6dfc` plus equivalent prior joint commit `896477d00`, in
+`/tmp/opentax-joint-owner-wotc-oct6`. Terminal evidence: **86 related typed
+tests passed, 0 failed** (`/tmp/opentax-joint-owner-wotc-final-tests-v2.log`);
+final **5 typed owner tests passed, 0 failed** after blank-column projection
+repair (`/tmp/opentax-joint-owner-wotc-final-focus.log`). The final five tests
+include all eight full public/native/PDF/local-v5.4-XSD positives and
+source/owner/header, SE, payroll, employer, common-control, allocation,
+current-credit and finalized 1040/QBI tamper rejection. Generation completed
+with terminal 0 (`/tmp/opentax-joint-owner-wotc-generate-final.log`).
+
+Final held packets are under
+`.state/research/ty2025-filled-pdf-review/2026-10-06-joint-owner-wotc/`, with
+rendered sibling `2026-10-06-joint-owner-wotc-rendered`. All **220 pages of
+eight returns** were visually reviewed, including both owners' separate Schedule
+C/SE copies, every Form 3800 page, Form 5884, exact fractional parent
+percentages, applicable-only Part III columns and final 1040 joins.
+Source/XML/PDF replay, full local TY2025 v5.4 XSD, file hashes and IRS template
+provenance are checked by the selected held checker; terminal log is
+`/tmp/opentax-joint-owner-wotc-held-check.log`.
+
+This route supports two independent positive ordinary Schedule C proprietorships
+with reviewed attribution exceptions, zero UBIA and no unsupported QBI
+adjustments. Wider statuses, farms, SSTBs, aggregation, patron reductions,
+losses, other wage methods, attributable health/retirement adjustments,
+controlled-group coexistence, mixed-credit ordering and durable unused-credit
+carryovers remain open. Generic owner-SE is preserved. No authentication, IRS
+business-rule, ATS or production acceptance claim is added; the broader parent
+remains open.

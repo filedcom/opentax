@@ -161,6 +161,14 @@ const successorEmployerSchema = z.object({
 export const itemSchema = z.object({
   employee_reference: z.string().trim().min(1),
   employer_ein: z.string().regex(/^\d{9}$/).optional(),
+  direct_employer_review: z.object({
+    employer_ein: z.string().regex(/^\d{9}$/),
+    proprietor_recipient: z.enum(["T", "S"]),
+    proprietor_ssn: z.string().regex(/^\d{9}$/),
+    business_reference: z.string().trim().min(1),
+    certification_employer_and_payroll_match_confirmed: z.literal(true),
+    source_review_reference: z.string().trim().min(1),
+  }).strict().optional(),
   target_group: z.nativeEnum(TargetGroup),
   hired_on: z.string().date().refine((date) => date < "2026-01-01", {
     message:
@@ -182,6 +190,23 @@ export const itemSchema = z.object({
   summer_youth_zone_and_service_period_confirmed: z.literal(true).optional(),
   designated_community_resident_location_confirmed: z.literal(true).optional(),
 }).strict().superRefine((item, ctx) => {
+  if (
+    item.direct_employer_review &&
+    item.wage_records.some((record) =>
+      (record.deduction_location.kind !== "schedule_c" &&
+        record.deduction_location.kind !== "schedule_f") ||
+      (record.deduction_location as { business_reference?: string })
+          .business_reference !==
+        item.direct_employer_review!.business_reference
+    )
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["direct_employer_review"],
+      message:
+        "Reviewed direct employer must match each actual payroll deduction location",
+    });
+  }
   const certification = item.certification;
   const revocation = certification.revocation;
   if (revocation.status === "revoked_for_false_employee_information") {
@@ -453,6 +478,26 @@ const controlledGroupSchema = z.object({
 export const inputSchema = z.object({
   f5884s: z.array(itemSchema),
   controlled_group: controlledGroupSchema.optional(),
+  ordinary_joint_employer_control_review: z.object({
+    businesses: z.array(
+      z.object({
+        employer_ein: z.string().regex(/^\d{9}$/),
+        business_reference: z.string().trim().min(1),
+        proprietor_ssn: z.string().regex(/^\d{9}$/),
+        other_spouse_no_direct_interest_confirmed: z.literal(true),
+        other_spouse_no_director_fiduciary_employee_or_management_confirmed: z
+          .literal(true),
+        passive_gross_income_not_more_than_half_confirmed: z.literal(true),
+        no_disposition_restrictions_favoring_spouse_or_minor_children_confirmed:
+          z.literal(true),
+        ownership_and_income_source_reference: z.string().trim().min(1),
+      }).strict(),
+    ).length(2),
+    no_other_common_control_ownership_or_options_confirmed: z.literal(true),
+    reviewed_by: z.string().trim().min(1),
+    reviewed_on: z.string().date(),
+    review_reference: z.string().trim().min(1),
+  }).strict().optional(),
   pass_through_credits: z.array(passThroughCreditSchema).optional(),
   subject_to_passive_activity_limit: z.boolean(),
 }).superRefine((input, ctx) => {
@@ -483,6 +528,38 @@ export const inputSchema = z.object({
       path: ["f5884s"],
       message: "Form 5884 needs an employer wage or pass-through credit source",
     });
+  }
+  const direct = input.f5884s.flatMap((item) =>
+    item.direct_employer_review ? [item.direct_employer_review] : []
+  );
+  const employerEins = new Set(direct.map((r) => r.employer_ein));
+  const ordinary = input.ordinary_joint_employer_control_review;
+  if (employerEins.size > 1 || ordinary) {
+    if (
+      group || !ordinary || employerEins.size !== 2 ||
+      new Set(ordinary.businesses.map((b) => b.employer_ein)).size !== 2 ||
+      ordinary.businesses.some((b) =>
+        !direct.some((r) =>
+          r.employer_ein === b.employer_ein &&
+          r.proprietor_ssn === b.proprietor_ssn &&
+          r.business_reference === b.business_reference
+        )
+      ) ||
+      direct.some((r) =>
+        !ordinary.businesses.some((b) =>
+          b.employer_ein === r.employer_ein &&
+          b.proprietor_ssn === r.proprietor_ssn &&
+          b.business_reference === r.business_reference
+        )
+      )
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["ordinary_joint_employer_control_review"],
+        message:
+          "Distinct ordinary joint employers need matching reviewed ownership and spousal-attribution exceptions",
+      });
+    }
   }
   const references = new Set<string>();
   input.f5884s.forEach((item, index) => {

@@ -15,6 +15,7 @@ import {
   assertPatron1099PATRSource,
   calculateOneBusiness8995ALines,
   calculateOneSstb8995ALines,
+  calculateOwnedWotcBusinesses,
   calculateScheduleCLossLines,
   type Form8995AInput,
   inputSchema,
@@ -354,11 +355,13 @@ function reconcileReturn(
       fields.filing_status === NodeFilingStatus.QSS) &&
       !fields.sstb_filing_details &&
       !(fields.filing_status === NodeFilingStatus.MFJ &&
-        (fields.patron_business_source || fields.single_schedule_c_source)))
+        (fields.patron_business_source || fields.single_schedule_c_source ||
+          fields.wotc_business_sources)))
   ) {
     throw new Error("Form 8995-A filing status differs from the return header");
   }
-  const jointWotc = fields.single_schedule_c_source?.joint_se_source;
+  const jointWotc = fields.single_schedule_c_source?.joint_se_source ??
+    fields.wotc_business_sources?.[0].joint_se_source;
   if (
     jointWotc &&
     (jointWotc.identity.primary_ssn !==
@@ -440,6 +443,49 @@ function reconcileReturn(
   if (!form1040.success || form1040.data.line13_qbi_deduction !== deduction) {
     throw new Error("Form 8995-A line 39 differs from Form 1040 line 13");
   }
+}
+
+function ownedWotcGroup(
+  fields: Form8995AInput,
+  details: NonNullable<Form8995AInput["business_filing_details"]>,
+  lines: ReturnType<typeof calculateOneBusiness8995ALines>,
+): string {
+  return elements("QBIDeductionInformationGrp", [
+    elements("TradeOrBusinessName", [
+      element("BusinessNameLine1Txt", details.business_name),
+    ]),
+    element("EIN", details.ein),
+    ...(fields.patron_of_specified_cooperative === true
+      ? [element("PatronInd", "X")]
+      : []),
+    element("QualifiedBusinessIncomeAmt", lines.line2),
+    element("QlfyBusinessIncome20PctAmt", lines.line3),
+    ...(fields.patron_business_source &&
+        fields.taxable_income <= lines.patronThreshold!
+      ? []
+      : [
+        element("AllocableShareW2WagesAmt", lines.line4),
+        element("AllocableShareW2Wages50PctAmt", lines.line5),
+        element("AllocableShareW2Wages25PctAmt", lines.line6),
+        element("AllocableShareUBIAQlfyPropAmt", lines.line7),
+        element("AllcblShrUBIAQlfyProp025PctAmt", lines.line8),
+        element("TotalAllcblW2WgsQlfyPropPctAmt", lines.line9),
+        element("GrtrAllcblShrW2WageQlfyPropAmt", lines.line10),
+        element("W2WageQlfyPropLimitationAmt", lines.line11),
+      ]),
+    element("QBIDedBeforePatronReductionAmt", lines.line13),
+    ...(fields.patron_of_specified_cooperative === true
+      ? [element("PatronReductionAmt", lines.line14)]
+      : []),
+    element("QBIComponentAmt", lines.line15),
+    ...(lines.phaseInRequired
+      ? [
+        element("QBI20PctLessGrtrAllcblShareAmt", lines.line19),
+        element("TotalPhaseInReductionAmt", lines.line25),
+        element("QBIAfterPhaseInReductionAmt", lines.line26),
+      ]
+      : []),
+  ]);
 }
 
 function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
@@ -567,46 +613,23 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
       element("TotQlfyREITDivPTPLossCfwdAmt", 0),
     ]);
   }
-  const { details, lines } = validateOneBusiness(fields);
-  assertOneBusinessReitSource(fields, context?.pending);
+  const multi = fields.wotc_business_sources
+    ? calculateOwnedWotcBusinesses(fields)
+    : undefined;
+  const { details, lines } = multi
+    ? {
+      details: multi.rows[0].input.business_filing_details!,
+      lines: multi.parent,
+    }
+    : validateOneBusiness(fields);
+  if (!multi) assertOneBusinessReitSource(fields, context?.pending);
   reconcileReturn(context, lines.line39, fields);
   return elements("IRS8995A", [
-    elements("QBIDeductionInformationGrp", [
-      elements("TradeOrBusinessName", [
-        element("BusinessNameLine1Txt", details.business_name),
-      ]),
-      element("EIN", details.ein),
-      ...(fields.patron_of_specified_cooperative === true
-        ? [element("PatronInd", "X")]
-        : []),
-      element("QualifiedBusinessIncomeAmt", lines.line2),
-      element("QlfyBusinessIncome20PctAmt", lines.line3),
-      ...(fields.patron_business_source &&
-          fields.taxable_income <= lines.patronThreshold!
-        ? []
-        : [
-          element("AllocableShareW2WagesAmt", lines.line4),
-          element("AllocableShareW2Wages50PctAmt", lines.line5),
-          element("AllocableShareW2Wages25PctAmt", lines.line6),
-          element("AllocableShareUBIAQlfyPropAmt", lines.line7),
-          element("AllcblShrUBIAQlfyProp025PctAmt", lines.line8),
-          element("TotalAllcblW2WgsQlfyPropPctAmt", lines.line9),
-          element("GrtrAllcblShrW2WageQlfyPropAmt", lines.line10),
-          element("W2WageQlfyPropLimitationAmt", lines.line11),
-        ]),
-      element("QBIDedBeforePatronReductionAmt", lines.line13),
-      ...(fields.patron_of_specified_cooperative === true
-        ? [element("PatronReductionAmt", lines.line14)]
-        : []),
-      element("QBIComponentAmt", lines.line15),
-      ...(lines.phaseInRequired
-        ? [
-          element("QBI20PctLessGrtrAllcblShareAmt", lines.line19),
-          element("TotalPhaseInReductionAmt", lines.line25),
-          element("QBIAfterPhaseInReductionAmt", lines.line26),
-        ]
-        : []),
-    ]),
+    ...(multi
+      ? multi.rows.map((row) =>
+        ownedWotcGroup(row.input, row.input.business_filing_details!, row.lines)
+      )
+      : [ownedWotcGroup(fields, details, lines)]),
     element("TotalQBIComponentAmt", lines.line16),
     ...(lines.phaseInRequired
       ? [

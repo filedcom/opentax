@@ -3,6 +3,7 @@ import { inputSchema as w2Schema } from "../nodes/inputs/w2/index.ts";
 import { isDeepStrictEqual } from "node:util";
 import {
   assertSingleScheduleCWotcAmounts,
+  calculateOwnedWotcBusinesses,
   type Form8995AInput,
   inputSchema as form8995aInputSchema,
 } from "../nodes/intermediate/forms/form8995a/index.ts";
@@ -24,7 +25,9 @@ export function assertForm8995AWotcReturn(
   input: Form8995AInput,
   rawPending: Readonly<Record<string, unknown>> | undefined,
 ): void {
-  const source = input.single_schedule_c_source;
+  const sources = input.wotc_business_sources ??
+    (input.single_schedule_c_source ? [input.single_schedule_c_source] : []);
+  const source = sources[0];
   const rawScheduleC = rawPending?.schedule_c as
     | Record<string, unknown>
     | undefined;
@@ -38,7 +41,8 @@ export function assertForm8995AWotcReturn(
       "Form 8995-A with WOTC needs its retained Schedule C and full return source",
     );
   }
-  assertSingleScheduleCWotcAmounts(input);
+  if (input.wotc_business_sources) calculateOwnedWotcBusinesses(input);
+  else assertSingleScheduleCWotcAmounts(input);
   const pending = normalizeAllPending(rawPending as Record<string, unknown>);
   const parent = form8995aInputSchema.strict().safeParse(pending.form8995a);
   if (
@@ -51,9 +55,28 @@ export function assertForm8995AWotcReturn(
   const business = source.business;
   const scheduleC = scheduleCInputSchema.parse(pending.schedule_c);
   const wotc = wotcInputSchema.parse(pending.f5884);
+  if (
+    sources.length === 2 && (!wotc.ordinary_joint_employer_control_review ||
+      wotc.ordinary_joint_employer_control_review.businesses.some((b) =>
+        !sources.some((s) =>
+          s.business.ein === b.employer_ein &&
+          s.business.business_reference === b.business_reference &&
+          s.business.source_schedule_c.qbi_wotc_filing_review?.owner_ssn ===
+            b.proprietor_ssn
+        )
+      ))
+  ) {
+    throw new Error(
+      "Two owned WOTC employers need actual reviewed common-control exceptions",
+    );
+  }
   const lines = calculateForm5884(wotc);
   const allocations = lines.wageDeductionAllocations;
-  const reduction = business.wotc_wage_reduction!;
+  const reduction = sources.reduce(
+    (sum, s) => sum + s.business.wotc_wage_reduction!,
+    0,
+  );
+  const profit = sources.reduce((sum, s) => sum + s.business.qbi, 0);
   const retained = scheduleC.schedule_cs[0];
   const reductions = wotcReductionsByBusiness(scheduleC);
   const credit = pending.f3800?.f5884_credit as
@@ -61,25 +84,51 @@ export function assertForm8995AWotcReturn(
     | undefined;
   const review = retained?.qbi_wotc_filing_review;
   if (
-    scheduleC.schedule_cs.length !== 1 || !retained || !review ||
-    JSON.stringify(retained) !== JSON.stringify(business.source_schedule_c) ||
-    reductions.size !== 1 ||
-    reductions.get(business.business_reference!) !== reduction ||
+    scheduleC.schedule_cs.length !== sources.length || !retained || !review ||
+    sources.some((s) =>
+      !scheduleC.schedule_cs.some((c) =>
+        isDeepStrictEqual(c, s.business.source_schedule_c)
+      ) ||
+      reductions.get(s.business.business_reference!) !==
+        s.business.wotc_wage_reduction
+    ) ||
+    reductions.size !== sources.length ||
     lines.line2 !== reduction || lines.line3 !== 0 ||
-    allocations.length !== 1 || allocations[0].location.kind !== "schedule_c" ||
-    allocations[0].location.business_reference !==
-      business.business_reference ||
-    allocations[0].credit_amount !== reduction || wotc.controlled_group ||
+    allocations.length !== sources.length ||
+    allocations.some((a) =>
+      a.location.kind !== "schedule_c" ||
+      !sources.some((s) =>
+        s.business.business_reference ===
+          (a.location as any).business_reference &&
+        s.business.wotc_wage_reduction === a.credit_amount
+      )
+    ) || wotc.controlled_group ||
     wotc.subject_to_passive_activity_limit !== false ||
     credit?.credit_amount !== lines.line4 ||
     credit.subject_to_passive_activity_limit !== false ||
-    wotc.f5884s.length !== review.employee_w2_records.length
+    wotc.f5884s.length !==
+      sources.reduce((sum, s) =>
+        sum +
+        s.business.source_schedule_c.qbi_wotc_filing_review!.employee_w2_records
+          .length, 0)
   ) {
     throw new Error(
       "Form 8995-A WOTC line 2, employer payroll and Form 3800 source do not reconcile",
     );
   }
   for (const employee of wotc.f5884s) {
+    const matches = sources.filter((s) =>
+      s.business.source_schedule_c.qbi_wotc_filing_review!.employee_w2_records
+        .some((r) => r.employee_reference === employee.employee_reference)
+    );
+    if (matches.length !== 1) {
+      throw new Error(
+        "WOTC employee must belong to one distinct reviewed employer",
+      );
+    }
+    const business = matches[0].business,
+      retained = business.source_schedule_c,
+      review = retained.qbi_wotc_filing_review!;
     const w2 = review.employee_w2_records.find((record) =>
       record.employee_reference === employee.employee_reference
     );
@@ -89,6 +138,13 @@ export function assertForm8995AWotcReturn(
     );
     if (
       !w2 || w2.box1_wages !== payroll || w2.box5_wages !== payroll ||
+      (source.joint_se_source && (!employee.direct_employer_review ||
+        employee.direct_employer_review.employer_ein !== business.ein ||
+        employee.direct_employer_review.proprietor_ssn !== review.owner_ssn ||
+        employee.direct_employer_review.proprietor_recipient !==
+          (retained.proprietor_recipient ?? "T") ||
+        employee.direct_employer_review.business_reference !==
+          business.business_reference)) ||
       employee.wage_records.some((record) =>
         record.deduction_location.kind !== "schedule_c" ||
         record.deduction_location.business_reference !==
@@ -104,16 +160,31 @@ export function assertForm8995AWotcReturn(
   const joint = source.joint_se_source;
   const owned = joint ? assertOwnedScheduleSE(pending) : undefined;
   const seLines = owned
-    ? owned.instances.find((row) => row.recipient === "T")
+    ? { line12: owned.tax, line13: owned.deduction }
     : scheduleSELines(se, CONFIG_BY_YEAR[2025].ssWageBase);
   const wageRows = pending.w2 ? w2Schema.parse(pending.w2).w2s : [];
+  if (
+    wageRows.some((row) =>
+      sources.some((s) =>
+        row.employer_ein?.replace(/\D/g, "") === s.business.ein
+      )
+    )
+  ) {
+    throw new Error(
+      "Actual W2 employer conflicts with WOTC proprietor or reviewed complete employer payroll",
+    );
+  }
   const wagesTotal = wageRows.reduce((sum, row) => sum + row.box1_wages, 0);
   if (
     joint && (!owned || !isDeepStrictEqual(joint, owned.source) ||
       Math.abs(wagesTotal - (source.joint_wages_total ?? 0)) > 1e-7 ||
       pending.general?.filing_status !== "mfj" ||
-      pending.general.taxpayer_ssn?.toString().replaceAll("-", "") !==
-        review.owner_ssn)
+      sources.some((s) =>
+        (s.business.source_schedule_c.proprietor_recipient === "S"
+          ? pending.general.spouse_ssn
+          : pending.general.taxpayer_ssn)?.toString().replaceAll("-", "") !==
+          s.business.source_schedule_c.qbi_wotc_filing_review!.owner_ssn
+      ))
   ) {
     throw new Error(
       "Form8995A joint WOTC owner and actual W2 sources disagree",
@@ -126,35 +197,36 @@ export function assertForm8995AWotcReturn(
   if (
     !seLines ||
     (owned
-        ? owned.instances.find((row) => row.recipient === "T")
-          ?.net_profit_schedule_c
+        ? owned.instances.reduce(
+          (sum, row) => sum + row.net_profit_schedule_c,
+          0,
+        )
         : se.net_profit_schedule_c) !==
-      business.qbi ||
+      profit ||
     !noAmount(se.net_profit_schedule_f) ||
     se.farm_optional_method_elected === true ||
     (!owned && !noAmount(se.w2_ss_wages)) ||
     !noAmount(se.unreported_tips_4137) ||
     !noAmount(se.wages_8919) ||
-    seLines.line13 !== source.se_tax_deduction ||
+    seLines.line13 !==
+      sources.reduce((sum, s) => sum + s.se_tax_deduction, 0) ||
     schedule1?.line15_se_deduction !== seLines.line13 ||
     pending.schedule2?.line4_se_tax !== seLines.line12 ||
-    schedule1?.line3_schedule_c !== business.qbi ||
-    schedule1?.line10_total_additional_income !== business.qbi ||
+    schedule1?.line3_schedule_c !== profit ||
+    schedule1?.line10_total_additional_income !== profit ||
     !noAmount(schedule1?.line16_sep_simple) ||
     !noAmount(schedule1?.line17_se_health_insurance) ||
-    f1040?.line8_additional_income !== business.qbi ||
+    f1040?.line8_additional_income !== profit ||
     (joint &&
       (f1040?.line1a_wages !== wagesTotal ||
         f1040?.line1z_total_wages !== wagesTotal)) ||
     f1040?.line9_total_income !==
-      (joint
-        ? business.qbi + wagesTotal
-        : Math.round(business.qbi + wagesTotal)) ||
+      (joint ? profit + wagesTotal : Math.round(profit + wagesTotal)) ||
     f1040?.line10_adjustments !== seLines.line13 ||
     f1040?.line11_agi !==
       (joint
-        ? business.qbi + wagesTotal - seLines.line13
-        : Math.round(business.qbi + wagesTotal - seLines.line13)) ||
+        ? profit + wagesTotal - seLines.line13
+        : Math.round(profit + wagesTotal - seLines.line13)) ||
     !noAmount(f1040?.line13b_additional_deductions) ||
     input.taxable_income !==
       Math.max(

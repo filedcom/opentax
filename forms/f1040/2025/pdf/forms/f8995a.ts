@@ -7,6 +7,7 @@ import {
   assertMfsSstbOwner,
   assertPatron1099PATRSource,
   calculateOneSstb8995ALines,
+  calculateOwnedWotcBusinesses,
   calculateScheduleCLossLines,
   inputSchema,
 } from "../../../nodes/intermediate/forms/form8995a/index.ts";
@@ -69,6 +70,17 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     }[0]`,
     printZero: line === 19 || line === 25,
   })),
+  ...([17, 18, 19, 25, 26] as const).map((line): PdfFieldEntry => ({
+    kind: "text",
+    domainKey: `line${line}_b`,
+    pdfField: `${page2}Table_PartIII[0].Row${line}[0].f2_${
+      String(({ 17: 2, 18: 5, 19: 8, 25: 31, 26: 34 } as const)[line]).padStart(
+        2,
+        "0",
+      )
+    }[0]`,
+    printZero: line === 19 || line === 25,
+  })),
   ...([20, 21, 22, 23, 24] as const).map((line): PdfFieldEntry => ({
     kind: "text",
     domainKey: `line${line}`,
@@ -127,6 +139,55 @@ export function projectOneBusiness8995A(
     !retained.success || JSON.stringify(retained.data) !== JSON.stringify(input)
   ) {
     throw new Error("Form 8995-A PDF needs matching parent pending source");
+  }
+  if (input.wotc_business_sources) {
+    assertNoFiledForm8995(allPending);
+    const { rows, parent } = calculateOwnedWotcBusinesses(input);
+    if (allPending.f1040?.line13_qbi_deduction !== parent.line39) {
+      throw new Error(
+        "Form8995A owned WOTC PDF differs from actual1040 deduction",
+      );
+    }
+    const a = rows[0], b = rows[1];
+    return {
+      ...parent,
+      ...a.lines,
+      business_name: a.source.business.business_name,
+      business_ein: a.source.business.ein,
+      business_name_b: b.source.business.business_name,
+      business_ein_b: b.source.business.ein,
+      ...Object.fromEntries(
+        [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 19, 25, 26].map(
+          (line) => [`line${line}_b`, (b.lines as any)[`line${line}`]],
+        ),
+      ),
+      ...Object.fromEntries(
+        [16, 32, 37, 39].map(
+          (line) => [`line${line}`, (parent as any)[`line${line}`]],
+        ),
+      ),
+      line19: a.lines.phaseInRequired ? a.lines.line19 : undefined,
+      line25: a.lines.phaseInRequired ? a.lines.line25 : undefined,
+      line26: a.lines.phaseInRequired ? a.lines.line26 : undefined,
+      line19_b: b.lines.phaseInRequired ? b.lines.line19 : undefined,
+      line25_b: b.lines.phaseInRequired ? b.lines.line25 : undefined,
+      line26_b: b.lines.phaseInRequired ? b.lines.line26 : undefined,
+      line17: a.lines.phaseInRequired ? a.lines.line3 : undefined,
+      line18: a.lines.phaseInRequired ? a.lines.line10 : undefined,
+      line17_b: b.lines.phaseInRequired ? b.lines.line3 : undefined,
+      line18_b: b.lines.phaseInRequired ? b.lines.line10 : undefined,
+      line20: parent.phaseInRequired ? parent.line33 : undefined,
+      line21: parent.phaseInRequired ? parent.patronThreshold : undefined,
+      line22: parent.phaseInRequired
+        ? parent.line33 - parent.patronThreshold!
+        : undefined,
+      line23: parent.phaseInRequired ? parent.patronPhaseInRange : undefined,
+      line24: parent.phaseInRequired
+        ? qbiPercentageForPdf(parent.phaseIn!)
+        : undefined,
+      line27: parent.line16,
+      line40: 0,
+    };
   }
   if (input.schedule_c_qbi_businesses?.some((business) => business.qbi < 0)) {
     const companion = inputSchema.strict().safeParse(

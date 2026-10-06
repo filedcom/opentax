@@ -93,7 +93,10 @@ export const itemSchema = z.object({
       }).strict(),
     ).min(1),
     all_business_payroll_included_confirmed: z.literal(true),
-    no_other_business_or_aggregation_confirmed: z.literal(true),
+    no_other_business_or_aggregation_confirmed: z.literal(true).optional(),
+    reviewed_other_business_references: z.array(z.string().trim().min(1)).min(1)
+      .optional(),
+    no_aggregation_confirmed: z.literal(true).optional(),
     no_ptp_or_loss_carryforward_confirmed: z.literal(true),
     qualified_dividends_zero_confirmed: z.literal(true),
     no_qualified_property_confirmed: z.literal(true),

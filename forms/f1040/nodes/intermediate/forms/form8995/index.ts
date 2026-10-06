@@ -1,5 +1,8 @@
 import { jointOwnerQbi } from "./joint-owner.ts";
-import { ownerSourcesSchema } from "../schedule_se/owner-calculation.ts";
+import {
+  ownedScheduleSE,
+  ownerSourcesSchema,
+} from "../schedule_se/owner-calculation.ts";
 import { inputSchema as patronReviewSchema } from "../../../inputs/qbi_patron/schema.ts";
 import { patronSourceAmounts } from "../../../inputs/qbi_patron/calculation.ts";
 import {
@@ -308,6 +311,65 @@ function advancedFormOutput(
   input: Form8995Input,
   taxableIncome: number,
 ): NodeOutput {
+  if (
+    input.schedule_c_qbi_businesses?.length === 2 &&
+    input.schedule_c_qbi_businesses.every((b) =>
+      b.source_schedule_c.qbi_wotc_filing_review
+    )
+  ) {
+    const businesses = input.schedule_c_qbi_businesses;
+    if (
+      input.filing_status !== FilingStatus.MFJ || !input.joint_se_source ||
+      new Set(businesses.map((b) => b.source_schedule_c.proprietor_recipient))
+          .size !== 2 ||
+      sumField(input.qbi_from_schedule_c) !==
+        businesses.reduce((sum, b) => sum + b.qbi, 0)
+    ) {
+      throw new Error(
+        "Two owned WOTC businesses need actual joint owners and source totals",
+      );
+    }
+    const owned = ownedScheduleSE(
+      input.joint_se_source,
+      CONFIG_BY_YEAR[2025].ssWageBase,
+    );
+    if (owned.deduction !== sumField(input.se_tax_deduction)) {
+      throw new Error(
+        "Two owned WOTC half-SE total differs from actual owners",
+      );
+    }
+    const children = businesses.map((b) => {
+      const half = owned.instances.find((row) =>
+        row.recipient === (b.source_schedule_c.proprietor_recipient ?? "T")
+      )?.line13;
+      if (half === undefined) {
+        throw new Error("Owned WOTC business lacks owner ScheduleSE");
+      }
+      const result = advancedFormOutput({
+        ...input,
+        schedule_c_qbi_businesses: [b],
+        qbi_from_schedule_c: b.qbi,
+        w2_wages: b.w2_wages,
+        unadjusted_basis: b.ubia,
+        se_tax_deduction: half,
+      }, taxableIncome);
+      return result.fields as Form8995AInput;
+    });
+    const wages = input.agi! - businesses.reduce((sum, b) => sum + b.qbi, 0) +
+      owned.deduction;
+    return output(form8995a, {
+      ...children[0],
+      single_schedule_c_source: undefined,
+      business_filing_details: undefined,
+      qbi: children.reduce((sum, c) => sum + (c.qbi ?? 0), 0),
+      w2_wages: children.reduce((sum, c) => sum + (c.w2_wages ?? 0), 0),
+      wotc_business_sources: children.map((c) => ({
+        ...c.single_schedule_c_source!,
+        joint_se_source: input.joint_se_source!,
+        joint_wages_total: wages,
+      })),
+    });
+  }
   const nonSstbQbi = sumField(input.qbi_from_schedule_c) +
     sumField(input.qbi_from_schedule_f) + sumField(input.qbi);
   const sstbQbi = sumField(input.sstb_qbi);
@@ -354,6 +416,14 @@ function advancedFormOutput(
     const review = business?.source_schedule_c.qbi_wotc_filing_review;
     if (
       businesses.length !== 1 || !business || !review ||
+      (review.no_other_business_or_aggregation_confirmed !== true &&
+        (!input.joint_se_source || review.no_aggregation_confirmed !== true ||
+          JSON.stringify(review.reviewed_other_business_references) !==
+            JSON.stringify(
+              input.joint_se_source.businesses.filter((row) =>
+                row.source_reference !== business.business_reference
+              ).map((row) => row.source_reference),
+            ))) ||
       !business.business_reference || !business.business_name ||
       !business.ein ||
       business.qbi <= 0 || !business.wotc_wage_reduction ||
@@ -373,8 +443,10 @@ function advancedFormOutput(
           Math.round(business.qbi - sumField(input.se_tax_deduction))) ||
       (input.filing_status === FilingStatus.MFJ &&
         (!input.joint_se_source || !review.owner_ssn ||
-          review.owner_ssn !== input.taxpayer_ssn?.replaceAll("-", "") ||
-          business.source_schedule_c.proprietor_recipient !== "T")) ||
+          review.owner_ssn !==
+            (business.source_schedule_c.proprietor_recipient === "S"
+              ? input.spouse_ssn
+              : input.taxpayer_ssn)?.replaceAll("-", ""))) ||
       sumField(input.se_health_insurance_deduction) !== 0 ||
       sumField(input.retirement_plan_deduction) !== 0
     ) {
@@ -395,10 +467,8 @@ function advancedFormOutput(
         business_qbi: qbi,
         business_w2_wages: wages,
         business_ubia: 0,
-        one_non_sstb_business_confirmed:
-          review.no_other_business_or_aggregation_confirmed,
-        no_aggregation_confirmed:
-          review.no_other_business_or_aggregation_confirmed,
+        one_non_sstb_business_confirmed: true,
+        no_aggregation_confirmed: true,
         no_ptp_or_loss_carryforward_confirmed:
           review.no_ptp_or_loss_carryforward_confirmed,
         qualified_dividends_zero_confirmed:

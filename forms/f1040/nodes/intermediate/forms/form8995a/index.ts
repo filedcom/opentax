@@ -252,6 +252,14 @@ export const inputSchema = z.object({
     joint_se_source: ownerSourcesSchema.optional(),
     joint_wages_total: z.number().nonnegative().optional(),
   }).strict().optional(),
+  wotc_business_sources: z.array(
+    z.object({
+      business: scheduleCQbiBusinessSchema,
+      se_tax_deduction: z.number().nonnegative(),
+      joint_se_source: ownerSourcesSchema,
+      joint_wages_total: z.number().nonnegative(),
+    }).strict(),
+  ).length(2).optional(),
   sstb_filing_details: sstbFilingDetailsSchema.optional(),
   schedule_c_qbi_businesses: z.array(scheduleCQbiBusinessSchema).optional(),
   qbi_no_prior_loss_or_suspended_loss_confirmed: z.literal(true).optional(),
@@ -270,7 +278,9 @@ export function assertSingleScheduleCWotcAmounts(input: Form8995AInput): void {
   const qbi = Math.round(business.qbi - retained.se_tax_deduction);
   const se = retained.joint_se_source
     ? ownedScheduleSE(retained.joint_se_source, CONFIG_BY_YEAR[2025].ssWageBase)
-      .instances.find((row) => row.recipient === "T")
+      .instances.find((row) =>
+        row.recipient === (item.proprietor_recipient ?? "T")
+      )
     : scheduleSELines(
       { net_profit_schedule_c: business.qbi },
       CONFIG_BY_YEAR[2025].ssWageBase,
@@ -282,14 +292,24 @@ export function assertSingleScheduleCWotcAmounts(input: Form8995AInput): void {
       (input.filing_status === FilingStatus.MFJ ? 394600 : 197300) ||
     (input.filing_status === FilingStatus.MFJ &&
       (!retained.joint_se_source || retained.joint_wages_total === undefined ||
-        item.proprietor_recipient !== "T" ||
         item.qbi_wotc_filing_review?.owner_ssn !==
-          retained.joint_se_source.identity.primary_ssn ||
-        retained.joint_se_source.businesses.length !== 1 ||
-        retained.joint_se_source.businesses[0].net_profit !== business.qbi ||
-        retained.joint_se_source.businesses[0].source_reference !==
+          (item.proprietor_recipient === "S"
+            ? retained.joint_se_source.identity.spouse_ssn
+            : retained.joint_se_source.identity.primary_ssn) ||
+        retained.joint_se_source.businesses.filter((row) =>
+            row.recipient === (item.proprietor_recipient ?? "T")
+          ).length !== 1 ||
+        retained.joint_se_source.businesses.find((row) =>
+            row.source_reference === business.business_reference
+          )?.net_profit !== business.qbi ||
+        retained.joint_se_source.businesses.find((row) =>
+            row.source_reference === business.business_reference
+          )?.source_reference !==
           business.business_reference ||
-        retained.joint_se_source.businesses[0].recipient !== "T")) ||
+        retained.joint_se_source.businesses.find((row) =>
+            row.source_reference === business.business_reference
+          )?.recipient !==
+          (item.proprietor_recipient ?? "T"))) ||
     (input.filing_status === FilingStatus.Single &&
       retained.joint_se_source !== undefined) ||
     input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
@@ -902,6 +922,112 @@ export function calculatePatronScheduleDLines(input: Form8995AInput) {
   return { line2, line3, line4, line5, line6 };
 }
 
+export function calculateOwnedWotcBusinesses(input: Form8995AInput) {
+  const sources = input.wotc_business_sources;
+  if (
+    !sources || input.single_schedule_c_source ||
+    input.business_filing_details ||
+    input.filing_status !== FilingStatus.MFJ ||
+    input.taxable_income <= 394600 ||
+    input.aggregation_filing_details || input.sstb_filing_details ||
+    input.patron_filing_details ||
+    (input.sstb_qbi ?? 0) !== 0 || (input.net_capital_gain ?? 0) !== 0 ||
+    (input.line6_sec199a_dividends ?? 0) !== 0 ||
+    (input.qbi_loss_carryforward ?? 0) !== 0 ||
+    (input.reit_loss_carryforward ?? 0) !== 0 ||
+    new Set(
+        sources.map((s) => s.business.source_schedule_c.proprietor_recipient),
+      ).size !== 2 ||
+    new Set(sources.map((s) => s.business.business_reference)).size !== 2 ||
+    new Set(sources.map((s) => s.business.ein)).size !== 2 ||
+    JSON.stringify(sources[0].joint_se_source) !==
+      JSON.stringify(sources[1].joint_se_source) ||
+    sources[0].joint_se_source.businesses.length !== 2 ||
+    sources[0].joint_wages_total !== sources[1].joint_wages_total
+  ) {
+    throw new Error(
+      "Form8995A two owned WOTC businesses need distinct actual employer and owner sources",
+    );
+  }
+  if (
+    sources.some((s) =>
+      s.business.source_schedule_c.qbi_wotc_filing_review
+          ?.no_aggregation_confirmed !== true ||
+      JSON.stringify(
+          s.business.source_schedule_c.qbi_wotc_filing_review
+            ?.reviewed_other_business_references,
+        ) !==
+        JSON.stringify(
+          sources.filter((other) => other !== s).map((other) =>
+            other.business.business_reference
+          ),
+        )
+    )
+  ) {
+    throw new Error(
+      "Owned WOTC reviews must identify the actual other business without aggregation",
+    );
+  }
+  const rows = sources.map((source) => {
+    const b = source.business,
+      review = b.source_schedule_c.qbi_wotc_filing_review!;
+    const qbi = Math.round(b.qbi - source.se_tax_deduction);
+    const child: Form8995AInput = {
+      ...input,
+      wotc_business_sources: undefined,
+      single_schedule_c_source: source,
+      qbi,
+      w2_wages: b.w2_wages,
+      unadjusted_basis: 0,
+      business_filing_details: {
+        business_name: b.business_name!,
+        ein: b.ein!,
+        business_qbi: qbi,
+        business_w2_wages: b.w2_wages,
+        business_ubia: 0,
+        one_non_sstb_business_confirmed: true,
+        no_aggregation_confirmed: true,
+        no_ptp_or_loss_carryforward_confirmed:
+          review.no_ptp_or_loss_carryforward_confirmed,
+        qualified_dividends_zero_confirmed:
+          review.qualified_dividends_zero_confirmed,
+        qbi_wages_ubia_sources_confirmed:
+          review.all_business_payroll_included_confirmed,
+        taxable_income_before_qbi_confirmed: true,
+      },
+    };
+    return {
+      source,
+      input: child,
+      lines: calculateOneBusiness8995ALines(child),
+    };
+  });
+  if (
+    input.qbi !== rows.reduce((sum, r) => sum + r.lines.line2, 0) ||
+    input.w2_wages !== rows.reduce((sum, r) => sum + r.lines.line4, 0) ||
+    input.unadjusted_basis !== 0
+  ) {
+    throw new Error(
+      "Form8995A owned WOTC QBI and wage totals disagree with source rows",
+    );
+  }
+  const line16 = rows.reduce((sum, r) => sum + r.lines.line15, 0),
+    line36 = rows[0].lines.line36;
+  return {
+    rows,
+    parent: {
+      ...rows[0].lines,
+      phaseInRequired: rows.some((row) => row.lines.phaseInRequired),
+      phaseIn: rows.find((row) => row.lines.phaseInRequired)?.lines.phaseIn ??
+        0,
+      line16,
+      line32: line16,
+      line37: Math.min(line16, line36),
+      line39: Math.min(line16, line36),
+    },
+  };
+}
+
 export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   assertSingleScheduleCWotcAmounts(input);
   const patronReduction = input.patron_of_specified_cooperative === true
@@ -1389,6 +1515,18 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
       };
     }
 
+    if (input.wotc_business_sources) {
+      const deduction = calculateOwnedWotcBusinesses(input).parent.line39;
+      return {
+        outputs: [
+          this.outputNodes.output(f1040, { line13_qbi_deduction: deduction }),
+          this.outputNodes.output(standard_deduction, {
+            qbi_deduction: deduction,
+          }),
+          { nodeType: this.nodeType, fields: input },
+        ],
+      };
+    }
     if (input.single_schedule_c_source) {
       const deduction = calculateOneBusiness8995ALines(input).line39;
       return {
