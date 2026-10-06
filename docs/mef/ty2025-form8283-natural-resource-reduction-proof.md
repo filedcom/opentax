@@ -185,3 +185,10 @@ manifests. The three original manifest hashes are:
   `35eaf29059b2c4662c214b2f537227fe0f0eae3556074cbfaa8a1d9350e079dd`
 - Depreciation201:
   `5b0c77b00c29e533943869452e86b16a7b9fb3241f3c0825ba58f297189366f7`
+
+
+## Final main Section B printing audit
+
+At fc9858cf8, forty retained public-source packets pass full XSD. Of472 return pages,47 explanation occurrences across24 PDFs intentionally change only “Section A item A” to “Section B item A”; all47 were visually inspected in six contact sheets, and425 other pages retain exact text/raster. Actual signed filename, source row and form-copy joins were independently checked; grouped A/B/C copies remain unchanged. Source, attachments, origins and filed tax/native values are preserved; XML differs only by ReturnTs. Twenty-one older pending archives gain only the verified finalized Form8995 itemized-deduction operand. Resource13 archived carryforwards are exact; older27 packets lack a separate archived carryforward file.
+
+All888 original files remain unchanged. Correction of historical arithmetic:591+169+201=961 prior page occurrences, not971; adding432 resource gives1393 total (472 return+921 retained source). This corrects a count, not missing pages or modified originals. Manifest: `/tmp/opentax-8283-label-fc-pages-review-oct6/proof-manifest.json`, SHA256 `11dbd48bfab51e949cc63c149c758d85ffc56b8011d37f1bc2e0e3f8f8a0cbba`. Full logs: `/tmp/opentax-label-fc-{parent,disposition,depreciation,resource}-held-oct6.log`. Main label checks43/0; source15/0 precedes label patch; rehearsal578/0 verifies source production. No IRS acceptance or external authenticity claim.

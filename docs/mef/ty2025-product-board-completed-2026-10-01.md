@@ -1941,3 +1941,8 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 
 
 - [x] Derive remaining owner Roth regular and conversion FIFO pools from complete prior issued1099R/payment accounts and retained2020–2024 annual8606/5329 PDFs; reconcile current8606/5329/1040 with both owner copies and shared annualPartsII/III. Main2/0+264/0; held12/107currentpages and91retainedhistoricalpages reviewed,696files exact, original33packets258pages unchanged/exact. Native/PDF rehashedpriorfacts conflict guards pass. Earlierlayouts/current2025conversions/otherhistories/authentication/IRS parent remains open. See [history proof](ty2025-form4852-filing-gap.md).
+
+
+- [x] Bind natural-resource donation reductions to actual annual paid175/conservation, modern1254 depletion/263c IDC and nonproducing617 records, ScheduleC/F, SE, AGI, itemized/QBI and carryforward math. Main15/0, rehearsal578/0, main SectionB printing43/0; thirteen retained resource packets432 page occurrences, forty combined full-XSD packets472 return pages,47 corrected explanation pages reviewed and425 exact pages. All888 original files unchanged. Wider legacy/producing617/AMT/external authenticity and IRS parents remain open. See [source proof](ty2025-form8283-natural-resource-reduction-proof.md).
+
+Audit qualification: the preceding Roth ordinary/inventory/conversion/history entries retain their recorded tests and immutable artifacts, but ordinary-Roth Box7 checkbox classification is now under correction. Do not treat those entries as proof of valid issued-source classification until source-corrected public/native/PDF evidence is sealed; traditional conversion and RothSIMPLE checkbox rules are distinct.

@@ -2800,3 +2800,27 @@ Roth consumed-history is verified on main; the natural-resource donation rehears
 
 
 Donationintegrated4e114e829 withrunnerpermission1e9a7951c. Freshactualmain15/0(1m8s) plusheld13/219 exact fullsourcegraph/carry/math/native/PDF/XSD, /tmp/opentax-resource-current-main-{source,held}-oct6.log. Rehearsal578/0 supports same sourceproduction, but agentvisualreview found existing sharedhelper labels special SectionB explanation text as SectionA. No donationledger credit until minimal label-onlypatch and explicit allaffected explanation-page review; originalv20/669oldfiles retained. Expected intentional PDFexplanationchanges mustbe independently checked while source/pending/XML/tax/carry/origins/retainedattachmentbytes stayexact. CurrentmainRoth2/0+264/0,12/107+91priorpages and696filesexact, old33/258exact alreadysealed. QEF13/118freshpreservation16/0 confirmed. FullV5lastverifiedlive98m16s, no terminal. Frozen52/futureunchanged,ledger1463.
+
+
+## Before sealing donation proof and auditing Roth classification
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,463 completed slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
+
+Inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF keys / 96 covered / 18 uncovered**.
+
+Latest verified work: complete retained Roth consumption histories (**2/0 + 264/0**), twelve full-XSD packets / 107 reviewed current pages plus 91 retained historical pages, with all 696 reviewed files exact. Earlier 33 Roth/substitute packets / 258 pages are preserved. QEF credit and donation proof remains archived. Wider parents remain open.
+
+Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at98m16s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
+
+Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **0feee220b**, verified published with the new credit changes.
+
+Roth consumed-history is verified on main. Donation changes passed main15/0, rehearsal578/0 and retained13/432; an existing SectionB explanation label is being corrected before completion credit. Root preferential ScheduleJ/AMT source work has an isolated checkout and a retained guard audit. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+
+
+Previous goal turn supplied verified daemon/model-cache evidence. This continuation verifies V5 wrapper65945/Deno65949 live at110m54s, now in Form8853 source tests; no terminal result. SectionB final proof at fc9858cf8 independently covers40 full-XSD packets,472 return pages,47 intentional A-to-B glyph corrections visually reviewed and425 exact pages. All888 originals preserved; prior page arithmetic591+169+201=961, not historical971; total1393 including432 resource. Original logs remain intact. Older27 archives lack separate carryforwards.json; do not claim archived carry-byte equality there.
+
+Official2025 1099-R Box7 instructions distinguish ordinary Roth (checkbox must be unmarked) from traditional/RothSIMPLE. Main historicalJT source requires true; existing source classification claim is under audit and must be qualified until corrected issued-source evidence and whole-return proof. Agent wotc notified; preserve traditional-conversion checkbox and immutable originals. This is existing source classification/8606/4852 scope. Legacy1254 ready6ab723c45 remains separate pending main replay; compact before integration.

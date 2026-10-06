@@ -2,17 +2,17 @@
 
 ## Compacted status (2026-10-06)
 
-The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,463 completed slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,464 recorded slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
 
 Inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF keys / 96 covered / 18 uncovered**.
 
-Latest verified work: complete retained Roth consumption histories (**2/0 + 264/0**), twelve full-XSD packets / 107 reviewed current pages plus 91 retained historical pages, with all 696 reviewed files exact. Earlier 33 Roth/substitute packets / 258 pages are preserved. QEF credit and donation proof remains archived. Wider parents remain open.
+Latest verified work: natural-resource donation source reductions and corrected Section B explanation labels. Main source **15/0**, rehearsal compatibility **578/0**, and main label checks **43/0**; forty retained full-XSD packets cover 472 return pages. All 47 changed explanation pages were reviewed; 425 other pages and all 888 original files are exact. Earlier Roth proofs remain retained, but ordinary-Roth Box 7 classification is under correction. Wider parents remain open.
 
-Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at98m16s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
+Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at110m54s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
 
-Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **0feee220b**, verified published with the new credit changes.
+Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **e1af772d7**, published with the credit changes; current local source changes await publication.
 
-Roth consumed-history is verified on main. Donation changes passed main15/0, rehearsal578/0 and retained13/432; an existing SectionB explanation label is being corrected before completion credit. Root preferential ScheduleJ/AMT source work has an isolated checkout and a retained guard audit. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+Donation source and Section B printing proofs are sealed. The recorded Roth history slice is qualified pending correction of ordinary-Roth issued-source checkbox classification; its calculator/artifact results do not establish that classification. Root preferential ScheduleJ/AMT source work has an isolated checkout and a retained guard audit. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
 
 ## Scope and completion rules
 
