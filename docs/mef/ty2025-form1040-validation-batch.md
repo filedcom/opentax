@@ -4862,3 +4862,8 @@ commit=bc6cafec63f68ce91c9346d67f137a77fb6b3789 start=2026-10-06T01:08:44Z
 ```
 
 This result remains pending and predates the agents' pending family PDF and WOTC employer source repairs. Root optional-farm audit found an actual current export rejection in isolated source probe; it is not counted as support.
+
+
+## Sibling/selected-parent main integration
+
+Main `8e492a227`:47 passed,0 failed (42s), with type checking and real Poppler. Files: sibling-parent-selection, prior parent-child kiddie tax, Form8615 PDF descriptor, ScheduleSE native descriptor and ATS Scenario3 source/PDF tests. Log `/tmp/opentax-sibling-main-integration.log`, SHA256 `16a37194b8557523faa56cd9081037cb9efef45e5cdf82579896870302ce08c5`. Seven full XSD/PDF packets/all38 visually reviewed pages and21 matching hashes copied to ignored `.state/research/2026-10-06-sibling-parent-selection`. Running full bc6cafec6 snapshot predates this family source/ratio repair; no complete latest-head regression is claimed.
