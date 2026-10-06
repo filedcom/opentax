@@ -1145,3 +1145,19 @@ PartV51012d822 preserves two49-cent costs and files their source sum as1 before 
 
 Full `deno task test` remains live at stablebc6cafec6 in `/tmp/opentax-full-regression-repaired-v2-oct6`; it predates later production changes. Latest-head full regression is unproven. Two observed older-batch failures are the stale8995-A error-text expectation (repaired with7/0) and actual spouse7206/jointQBI deduction source attribution (agent repair in progress). Three-business SHOP proof is ready:23 checks and two full-XSD packets/all56 pages reviewed; root integration and current-main validation are next. Agents continue existing farm-loss netting, changing coverage tiers and spouse Medicare7206/QBI. Wider named-form/source branches, authentication, ATS conflicts, issued credentials, IRS business rules and acceptance remain incomplete. Frozen checklist and future section remain unchanged.
 
+
+
+## Before terminal full-regression owner fixture repairs
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,412 bounded slices**; broader parents remain open. Learnings are retained in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md). New discoveries belong only in `future_todo`, outside this queue.
+
+Actual planner: **273 fixtures**,116 PDF descriptors,113 keys,95 covered and18 uncovered. FarmWOTC6cc665dc0 and independent-spouse SHOP2696c4311 pass **28 combined typed checks, zero failed (3m4s)** with ordinary/optional farm, ownerSE, C/F cents, positive-zero8995, common-control SHOP and native8941 preservation. Farm proof has235 related/1 final checks and seven complete local-XSD packets/all186 reviewed pages; current-main held replay verifies hashes and provenance. Independent spouse proof has47 related/18 focused checks and two full-XSD packets/all58 reviewed pages; current-main regenerated PDFs are byte-identical. Only those bounded routes are recorded.
+
+PartV51012d822 preserves two49-cent costs and files their source sum as1 before Schedule1/SE/QBI joins. Eleven complete C/F packets/all143 pages and33 artifact hashes are reviewed; current held replay passes, complete11-case/conflict gate passes2/0. This corrects the existing C/F slice without another ledger count. Preferential selected-parent9d3929e4e has657 related/5 final/16 main checks and seven packets/all37 reviewed pages with21 hashes. Prior optional-farm, education, SHOP and owner-WOTC proof remains in the archive and [validation record](docs/mef/ty2025-form1040-validation-batch.md).
+
+Full `deno task test` remains live at stablebc6cafec6 in `/tmp/opentax-full-regression-repaired-v2-oct6`; it predates later production changes. Latest-head full regression is unproven. Two observed older-batch failures are the stale8995-A error-text expectation (repaired with7/0) and actual spouse7206/jointQBI deduction source attribution (agent repair in progress). Three-business SHOP proof is ready:23 checks and two full-XSD packets/all56 pages reviewed; integrated atcac62758f; current-main validation is running. Root takes up the existing Form8826 interpreter-expense route: its native/PDF source mappings lack a retained complete filled-PDF packet and registered coverage fixture. Agents continue existing farm-loss netting, changing coverage tiers and spouse Medicare7206/QBI. Wider named-form/source branches, authentication, ATS conflicts, issued credentials, IRS business rules and acceptance remain incomplete. Frozen checklist and future section remain unchanged.
+
