@@ -1096,24 +1096,24 @@ export function computeScheduleHAmounts(
     }
   }
   const socialSecurityTax = Math.round(
-    (input.ss_wages ?? 0) * (SS_RATE_EMPLOYER + SS_RATE_EMPLOYEE),
+    Math.round(input.ss_wages ?? 0) * (SS_RATE_EMPLOYER + SS_RATE_EMPLOYEE),
   );
   const medicareTax = Math.round(
-    (input.medicare_wages ?? 0) *
+    Math.round(input.medicare_wages ?? 0) *
       (MEDICARE_RATE_EMPLOYER + MEDICARE_RATE_EMPLOYEE),
   );
   const additionalMedicareTax = Math.round(
-    (input.additional_medicare_wages ?? 0) * 0.009,
+    Math.round(input.additional_medicare_wages ?? 0) * 0.009,
   );
   const ficaAndWithholding = socialSecurityTax + medicareTax +
     additionalMedicareTax +
-    (input.federal_income_tax_withheld ?? 0);
+    Math.round(input.federal_income_tax_withheld ?? 0);
   const sectionB = unemployment && "state_rows" in unemployment
     ? computeSectionB(unemployment)
     : undefined;
   const futaTax = sectionB?.futaTax ??
     (unemployment && "taxable_wages" in unemployment
-      ? Math.round(unemployment.taxable_wages * 0.006)
+      ? Math.round(Math.round(unemployment.taxable_wages) * 0.006)
       : 0);
   return {
     socialSecurityTax,

@@ -264,3 +264,54 @@ Deno.test("Schedule H multiworker payroll rejects aggregate qualifying quarters 
     })
   );
 });
+
+Deno.test("Schedule H preserves source cash cents and computes tax from filed wage and withholding operands", async () => {
+  const payroll = source("adult");
+  const employee = payroll.fica_only_payroll!.employee_wages[0];
+  payroll.ss_wages =
+    payroll.medicare_wages =
+    employee.annual_cash_wages =
+    employee.w2!.box3_social_security_wages =
+    employee.w2!.box5_medicare_wages =
+      2802.49;
+  employee.quarterly_cash_wages[3] = 702.49;
+  payroll.federal_income_tax_withheld = 50.49;
+  employee.w2!.box2_federal_income_tax_withheld = 40.49;
+  const before = structuredClone(payroll);
+  const amounts = computeScheduleHAmounts(payroll, 2025);
+  assertEquals(amounts.socialSecurityTax, 347);
+  assertEquals(amounts.medicareTax, 81);
+  assertEquals(amounts.totalTax, 478);
+  const result = f1040_2025.executeReturn({
+    ...structuredClone(base.inputs),
+    schedule_h: payroll,
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule2.line9_household_employment, 478);
+  assertEquals(result.pending.f1040.line23_other_taxes, 478);
+  assertEquals(payroll, before);
+  const pending = buildPending(result.pending);
+  const filer = extractFilerIdentity(result.pending.f1040)!;
+  const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+  assertEquals(
+    bundle.xml.includes(
+      "<TotSocSecMedcrAndFedIncmTaxAmt>478</TotSocSecMedcrAndFedIncmTaxAmt>",
+    ),
+    true,
+  );
+  const projected = scheduleHPdf.projectFields!(payroll, {}) as Record<
+    string,
+    unknown
+  >;
+  assertEquals(projected.line2_social_security_tax, 347);
+  assertEquals(projected.line8_fica_and_withholding, 478);
+  assertEquals(projected.line26_total_tax, undefined);
+  const changed = structuredClone(payroll);
+  changed.fica_only_payroll!.employee_wages[0].w2!
+    .box2_federal_income_tax_withheld = 40.48;
+  assertThrows(
+    () => computeScheduleHAmounts(changed, 2025),
+    Error,
+    "differ from employee Forms W-2",
+  );
+});

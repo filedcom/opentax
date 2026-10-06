@@ -4124,3 +4124,10 @@ Full regression **V23** is running at sealed production **ee63eaedf**, with24,80
 
 
 State-source exact0.030245 rate exceeds nativeRatioTypefivefractionalplaces; preserve original as rejectedprecision case, no positive nativeclaim. Schema-valid sourcecents cases and splitlate correction remain in candidate verification. Root independently found same filed-operand defect in existing FICA-only route: actualwages2802.49 and aggregateWH50.49 publiclyaccepted withtax479.49 inSchedule2/Form1040. Filedwages2802 produceSS347,Medicare81,filedWH50 and householdtax478. Preserve exact sourcecash/W2/threshold checks, normalize only filed operands. This is existing householdsource/returnwide arithmetic TODO; no frozen/future edits.
+
+
+## Payroll verification continuation
+
+The full frozen board was reread. Ledger remains1530 and all52parents/future scope remain unchanged. Root actual saved FICA input now produces478 through public/native/PDF/full-XSD with five reviewed pages and source bytes preserved. Typed focused verification exposed a test projector signature error, so its required unused context argument must be supplied before any passing test claim. State split-late saved-input replay independently passes1356/full-XSD; original six-place rate remains a precise unsupported negative. V23 actualPID97539 remains live at17m27s; it predates these payroll changes. Candidate state gate and saved replay remain pending.
+
+Root FICA typed gate terminal1/0/2filtered324ms; exact saved full pipeline tax478/fullXSD/5reviewedpages/sourceunchanged. State candidate broad gate terminal35/0 (3m26s); all49pages root reviewed and21private/sourcehashesexact, original2PDFshashesunchanged. A contact-sheet wage misread was corrected with full page/source:8009filedwages correctlyproduceSS993. Final combined saved replay still required; no parent or ledgerseal.
