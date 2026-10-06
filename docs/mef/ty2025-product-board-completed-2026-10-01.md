@@ -9,6 +9,8 @@ Moved from [product_board.md](../../product_board.md) on 2026-10-01 so the board
 
 ## Core return and source paths
 
+- [x] File actual remarried MFS greater-taxable-income parent selection from two independently settled NY wage returns, reciprocal child sources and owned property-tax itemization. Spouse itemization forces the other parent standard deduction to zero; required child8615 remains complete and MFS education claims reject. Eight full local-XSD/PDF packets/all33 pages reviewed,24 hashes verified;480 related/6 final and24 main compatibility checks pass. Preferential/special parent income, community allocations, broader sources and authentication remain open.
+
 - [x] File reviewed owned optional-method ScheduleF with actual ScheduleC gross income and owner-specific wage caps, negative C offsets and multiple farms. Nine complete local-XSD/PDF packets/all123 pages reviewed and held replay verified;95 related/3 final checks and48 combined main checks pass. Half-SE allocation uses actual gross income while QBI retains actual farm profit/loss. Patron, optional high-income8995-A, wider deductions, source authentication and IRS acceptance remain open.
 
 - [x] File remarried MFJ selected-parent sibling returns with actual owned parent wages, school/payment/support records and separately identified education claimant. Six complete local-XSD/PDF packets/all36 pages reviewed;474 selected/5 final and48 combined main checks pass. Joint parent income/settled credit ordering binds child8615; step-first identity and Form8863 joint-name header are reconciled. MFS, special/preferential parent income, broader sources and authentication remain open.

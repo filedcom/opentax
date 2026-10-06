@@ -4888,3 +4888,14 @@ deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm
 ```
 
 Log `/tmp/opentax-farm-family-shop-controlled-main.log`, SHA256 `e4d991f371a8237bbe3e53a149fb1c6efb1155c9310fb48bba1162e984c81267`. Optional-farm nine full-XSD/replayed packets/all123 reviewed pages, remarried MFJ six full-XSD packets/all36 reviewed pages and seasonal SHOP three full-XSD packets/all69 reviewed pages are retained in ignored main research. Actual planner253 fixtures/116 descriptors/113 keys/95 covered/18 uncovered. This combined check includes controlled and independent joint-owner WOTC compatibility. The still-running full `bc6cafec6` batch predates these production/source repairs; latest-head full regression, broader parent completion and IRS acceptance remain unproven.
+
+
+## Actual remarried MFS main integration
+
+Main `2850dc05e`:24 typed checks passed,0 failed (1m28s), with real Poppler. Exact command:
+
+```sh
+deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/2025/pdf/form8863-remarried-mfs-parent.test.ts forms/f1040/2025/pdf/form8863-remarried-mfj-parent.test.ts forms/f1040/2025/pdf/form8863-sibling-parent-selection.test.ts forms/f1040/2025/pdf/form8863-parent-child-kiddie-tax.test.ts
+```
+
+Log `/tmp/opentax-remarried-mfs-main-integration.log`, SHA256 `8d33cfe09d8d824bac34ee69743cd506503b62d1db6073890983059ebf65fbb0`. Eight complete local-XSD packets/all33 visually reviewed pages and24 matching source/XML/PDF hashes retained in ignored `.state/research/2026-10-06-remarried-mfs-parent`. Selected480/0 and final6/0 isolated checks are recorded in the route proof. Actual separate property-tax/standard-deduction returns and both parent identities are checked; prior MFJ/sibling/kiddie-tax compatibility passes. Stable fullbc6cafec6 still runs and predates this source work; two failures are now observed in CLI spouse SEHI and an older8995-A negative expectation, with final full totals and causes pending. No latest-head full pass or IRS acceptance is claimed.
