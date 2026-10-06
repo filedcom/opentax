@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-const wholeDollars = z.number().int().positive().refine(Number.isSafeInteger);
+const cents = (amount: number) => Math.round(amount * 100);
+const exactMoney = (amount: number) =>
+  Number.isFinite(amount) && Number.isSafeInteger(cents(amount)) &&
+  cents(amount) / 100 === amount;
+const positiveMoney = z.number().positive().refine(exactMoney);
 const date2025 = z.string().regex(/^2025-\d{2}-\d{2}$/).refine(
   (date) =>
     !Number.isNaN(Date.parse(`${date}T00:00:00Z`)) &&
@@ -18,19 +22,19 @@ export const form4952DirectDebtTraceSchema = z.object({
   purchase_record_reference: z.string().trim().min(1),
   loan_date: date2025,
   direct_purchase_date: date2025,
-  borrowed_principal: wholeDollars,
-  direct_taxable_securities_purchase: wholeDollars,
+  borrowed_principal: positiveMoney,
+  direct_taxable_securities_purchase: positiveMoney,
   asset_id: z.string().trim().min(1),
   no_other_loan_proceeds_use: z.literal(true),
   no_tax_exempt_or_passive_activity_asset: z.literal(true),
   investment_use_maintained_through_2025: z.literal(true),
-  lender_2025_interest_total: wholeDollars,
+  lender_2025_interest_total: positiveMoney,
   interest_payments: z.array(
     z.object({
       payment_id: z.string().trim().min(1),
       payment_date: date2025,
       payment_record_reference: z.string().trim().min(1),
-      interest_amount: wholeDollars,
+      interest_amount: positiveMoney,
     }).strict(),
   ).min(1),
 }).strict();
@@ -56,19 +60,22 @@ export function reconcileForm4952DirectDebtTrace(
   const trace = form4952DirectDebtTraceSchema.parse(rawTrace);
   const form = claimedInterestSchema.parse(rawForm4952Input);
   const paymentTotal = trace.interest_payments.reduce(
-    (total, payment) => total + payment.interest_amount,
+    (total, payment) => total + cents(payment.interest_amount),
     0,
   );
   if (
     trace.owner_tin !== finalFilerTin ||
     trace.direct_purchase_date < trace.loan_date ||
-    trace.direct_taxable_securities_purchase !== trace.borrowed_principal ||
+    cents(trace.direct_taxable_securities_purchase) !==
+      cents(trace.borrowed_principal) ||
     new Set(trace.interest_payments.map((row) => row.payment_id)).size !==
       trace.interest_payments.length ||
     trace.interest_payments.some((row) => row.payment_date < trace.loan_date) ||
     !Number.isSafeInteger(paymentTotal) ||
-    paymentTotal !== trace.lender_2025_interest_total ||
-    form.investment_interest_expense !== paymentTotal ||
+    paymentTotal !== cents(trace.lender_2025_interest_total) ||
+    (form.investment_interest_expense === undefined ||
+      !exactMoney(form.investment_interest_expense) ||
+      cents(form.investment_interest_expense) !== paymentTotal) ||
     (form.source_k1_investment_interest !== undefined &&
       (Array.isArray(form.source_k1_investment_interest)
         ? form.source_k1_investment_interest.some((amount) => amount > 0)

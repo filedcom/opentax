@@ -52,15 +52,15 @@ const trace = {
   }],
 };
 
-async function filing(interestPayers = [{
+async function filingInputs(interestPayers = [{
   payer_name: "Taxable Securities Bank",
   payer_tin: "222334444",
   recipient_tin: "111223333",
   source_document_reference: "issued-2025-interest-copy",
   box1: 500,
   investment_property_for_form4952: true,
-}]) {
-  return execute(buildExecutionPlan(registry), registry, {
+}], debtTrace = trace) {
+  return {
     ...base.inputs,
     f1098: [
       await withSyntheticForm1098Copy("form4952-royalty-trace", {
@@ -97,9 +97,9 @@ async function filing(interestPayers = [{
       },
     }],
     form4952: {
-      investment_interest_expense: 300,
+      investment_interest_expense: debtTrace.lender_2025_interest_total,
       investment_interest_expense_excludes_royalty_attributable_interest: true,
-      direct_debt_trace: trace,
+      direct_debt_trace: debtTrace,
       amt_refigure: {
         prior_year_disallowed_interest: 0,
         interest_on_private_activity_bonds: 0,
@@ -110,7 +110,16 @@ async function filing(interestPayers = [{
         investment_expenses_adjustment: 0,
       },
     },
-  }, { taxYear: 2025, formType: "f1040" });
+  };
+}
+
+async function filing(interestPayers?: Parameters<typeof filingInputs>[0]) {
+  return execute(
+    buildExecutionPlan(registry),
+    registry,
+    await filingInputs(interestPayers),
+    { taxYear: 2025, formType: "f1040" },
+  );
 }
 
 Deno.test("traced loan, royalty, and taxable interest reach the full native and filled PDF return", async () => {
@@ -347,5 +356,107 @@ Deno.test("royalty and multiple owned interest payers reconcile individually thr
   ) {
     const altered = { ...raw, f1099int: { f1099ints: alteredPayers } };
     await assertRejects(() => f1040_2025.prepareReturn(altered, base.filer));
+  }
+});
+
+Deno.test("Form4952 source cents reconcile before native/PDF whole-dollar filing", async () => {
+  const debt = {
+    ...trace,
+    borrowed_principal: 10000.49,
+    direct_taxable_securities_purchase: 10000.49,
+    lender_2025_interest_total: 300.60,
+    interest_payments: [
+      {
+        ...trace.interest_payments[0],
+        payment_id: "paid-1",
+        payment_record_reference: "bank-paid-1",
+        interest_amount: 100.30,
+      },
+      {
+        ...trace.interest_payments[0],
+        payment_id: "paid-2",
+        payment_record_reference: "bank-paid-2",
+        interest_amount: 200.30,
+      },
+    ],
+  };
+  const inputs = await filingInputs(undefined, debt);
+  const result = execute(buildExecutionPlan(registry), registry, inputs, {
+    taxYear: 2025,
+    formType: "f1040",
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form4952.line1, 300.60);
+  assertEquals(result.pending.form4952.line8, 300.60);
+  assertEquals(result.pending.schedule_a.line_9_investment_interest, 300.60);
+  const pending = buildPending(result.pending);
+  const bundle = await buildMefBundle(pending, {
+    filer: base.filer,
+    attachments: [],
+  });
+  assertStringIncludes(
+    bundle.xml,
+    "<InvestmentInterestExpDeductAmt>301</InvestmentInterestExpDeductAmt>",
+  );
+  const root = Deno.args.includes("--write-review-artifacts")
+    ? "/tmp/opentax-form4952-source-cents-proof-v5-oct6"
+    : await Deno.makeTempDir({ prefix: "opentax-4952-source-cents-" });
+  await Deno.mkdir(root, { recursive: true });
+  await Deno.writeTextFile(`${root}/return.xml`, bundle.xml);
+  const xsd = new URL(
+    "../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const checked = await new Deno.Command("xmllint", {
+    args: ["--noout", "--schema", xsd, `${root}/return.xml`],
+    stdout: "piped",
+    stderr: "piped",
+  }).output();
+  assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+  const origins: import("./builder.ts").PdfPageOrigin[] = [];
+  const pdf = await buildPdfBytes(
+    pending,
+    base.filer,
+    ".pdf-cache",
+    bundle,
+    origins,
+  );
+  await Deno.writeFile(`${root}/filled-return.pdf`, pdf);
+  for (
+    const [name, value] of Object.entries({
+      source: { inputs, filer: base.filer },
+      pending,
+      origins,
+    })
+  ) {
+    await Deno.writeTextFile(
+      `${root}/${name}.json`,
+      JSON.stringify(value, null, 2),
+    );
+  }
+  for (
+    const changed of [
+      { ...debt, direct_taxable_securities_purchase: 10000.48 },
+      { ...debt, lender_2025_interest_total: 300.61 },
+      {
+        ...debt,
+        interest_payments: debt.interest_payments.map((row, i) => ({
+          ...row,
+          interest_amount: i === 0 ? 100.31 : row.interest_amount,
+        })),
+      },
+    ]
+  ) {
+    const altered = {
+      ...pending,
+      form4952: { ...pending.form4952, direct_debt_trace: changed },
+    };
+    await assertRejects(() =>
+      buildMefBundle(altered, { filer: base.filer, attachments: [] })
+    );
+    await assertRejects(() => buildPdfBytes(altered, base.filer, ".pdf-cache"));
+  }
+  if (!Deno.args.includes("--write-review-artifacts")) {
+    await Deno.remove(root, { recursive: true });
   }
 });

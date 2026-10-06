@@ -754,3 +754,34 @@ The expense-free portfolio royalty route now accepts multiple plain owned Form 1
 The three-interest-source positive uses $500/$750/$600 taxable interest plus $800 portfolio royalty: Form 4952 line 4a $2,650, deduction $300, Schedule B/1040 interest $1,850, Schedule E/1 royalty $800 and itemization $18,300. Public return preparation passes full local TY2025 v5.4 XSD. Eight packet pages were rendered and visually inspected; Form 1040 tax/refund $7,977/$3,023 and Schedule B's three named payer rows reconcile. Offsetting source changes preserving the aggregate, a changed recipient, and duplicate document references reject. The final legacy royalty-only, one-interest and new multiple-interest suite passes 3/3 with real Poppler.
 
 The visual review exposed omitted required zero on Form 4952 line 7; PDF lines 6/7 now print zero as directed by the [2025 form and instructions](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf). Actual filled-PDF text asserts line 7's zero, and the corrected final page was rerendered and inspected. Final retained temporary packet `/tmp/opentax-form4952-royalty-multi-interest-review/`; PDF SHA-256 `9cc2a419479b8ece10a2642d263a25450b761775c8b98aff293be0ecf01c3fc3`, XML SHA-256 `bdea6a9fdc07b72cda7f30be7153b9a326a29daca7c07304a61ab269ff64a498`; test log `/tmp/opentax-4952-multi-interest-zero.log`. Synthetic facts do not prove issuer or loan-byte authenticity, wider PDF overflow, business rules or IRS acceptance.
+
+## Exact paid-source cents (2026-10-06)
+
+The direct taxable-securities borrowing contract now retains principal and paid
+interest to exact cents. Source payments reconcile in safe integer cents;
+third-decimal and unsafe totals reject before export. Filed whole dollars are
+rounded after aggregate source reconciliation, preserving ownership, investment
+use, dates and all existing debt guards.
+
+The source-owned principal10000.49 and two distinct reviewed payments100.30 +
+200.30 produce raw Form4952 lines1/8 and ScheduleA interest300.60, filed301,
+itemized18301, royalty800, AGI76300, tax7669 and refund3331. One-cent source
+purchase/payment/annual-total changes reject native and direct PDF even when
+whole-dollar filed values would be unchanged. Seven full-XSD packet pages were
+visually reviewed: both1040 pages, bothSchedule1 pages, ScheduleA, ScheduleE and
+Form4952. Final44/0 covers seven related source/calculation/native/PDF modules;
+log `/tmp/opentax-form4952-source-cents-final-oct6.log`. Exact retained-source
+replay regenerates PDF/pending/origins byte-identically, XML onlyReturnTs:
+`/tmp/opentax-form4952-source-cents-held-isolated-oct6.log`.
+
+Evidence `/tmp/opentax-form4952-source-cents-proof-v5-oct6` retains source,
+pending, XML, origins, PDF and the review manifest. Filed PDF SHA256
+`d6ab7d8e441dd6b8cc8a82f4f99fb7645453961bb348d8a0740636eb58c3f289`.
+The final PDF is flattened; the synthetic mortgage-source copy has canonical
+source fields but no page widgets and is not authenticated issued-document
+proof. Loan/bank/broker records remain simulated reviewed references. The older
+October6 royalty archive differs from a newly regenerated integer fixture by
+later ScheduleB-question and finalized QBI input additions; its originals are
+untouched, and no byte-preservation claim is made against that older archive.
+Wider debt use, source authentication, prior accepted carryovers, K1 codeB,
+foreign allocation and IRS parent gates remain open.
