@@ -39,6 +39,9 @@ export function reconcileForm4972Multiple1099R(
   const taxable = sumSourceMoney(
     elected.map((item) => (item.box2a_taxable_amount ?? 0)),
   );
+  const fullBeneficiary = !partialBeneficiary &&
+    form.beneficiary_distribution === true &&
+    form.participant_collection_review?.role === "beneficiary";
   const death = form.death_benefit_allocation;
   const estate = form.partial_estate_tax_source;
   const hasDeath = (form.death_benefit_exclusion ?? 0) > 0;
@@ -49,7 +52,7 @@ export function reconcileForm4972Multiple1099R(
     ) ?? [];
   if (
     !owner ||
-    (partialBeneficiary
+    ((partialBeneficiary || fullBeneficiary)
       ? owner.ssn.replaceAll("-", "") === plan.participant_ssn ||
         form.beneficiary_distribution !== true ||
         form.participant_five_year_member !== false
@@ -119,8 +122,8 @@ export function reconcileForm4972Multiple1099R(
       (form.elect_include_nua !== true ||
         [nua, gain, taxable].some((amount) => !isSourceMoney(amount)))) ||
     (nua === 0 && form.elect_include_nua === true) ||
-    ((hasDeath || hasEstate) && !partialBeneficiary) ||
-    (hasDeath &&
+    ((hasDeath || hasEstate) && !partialBeneficiary && !fullBeneficiary) ||
+    (hasDeath && !fullBeneficiary &&
       (!death ||
         death.participant_ssn !== plan.participant_ssn ||
         death.elected_recipient_ssn !== owner?.ssn.replaceAll("-", "") ||
@@ -130,7 +133,7 @@ export function reconcileForm4972Multiple1099R(
           form.death_benefit_recipient_allocated_amount ||
         !form.death_benefit_exclusion_source_reference ||
         refs.includes(form.death_benefit_exclusion_source_reference))) ||
-    (hasEstate &&
+    (hasEstate && !fullBeneficiary &&
       (!estate ||
         sourceCents(estate.full_distribution_taxable_amount) !==
           grossedSourceCents(taxable + nua, share) ||

@@ -1,3 +1,4 @@
+import { reconcileParticipantCollection } from "../nodes/intermediate/forms/form4972/participant-collection.ts";
 import { inputSchema as f1099rSchema } from "../nodes/inputs/f1099r/index.ts";
 import {
   form4972,
@@ -11,6 +12,43 @@ export function reconcileForm4972FullShare(
   pending: Readonly<Record<string, unknown>> | undefined,
   owner?: { name: string; ssn: string },
 ): void {
+  if (fields.participant_collection_review !== undefined) {
+    const all = f1099rSchema.parse(pending?.f1099r).f1099rs;
+    const refs = fields.source_document_references;
+    const elected = all.filter((item) =>
+      item.exclude_4972 === true && Array.isArray(refs) &&
+      refs.includes(item.source_document_reference)
+    );
+    const plan = elected[0]?.form4972_plan;
+    if (
+      !owner || !plan || !Array.isArray(refs) ||
+      elected.length !== refs.length || elected.some((item) =>
+        item.recipient_ssn?.replaceAll("-", "") !==
+          owner.ssn.replaceAll("-", "") ||
+        item.form4972_plan?.participant_ssn !== plan.participant_ssn ||
+        item.form4972_plan?.plan_reference !== plan.plan_reference ||
+        item.form4972_plan?.full_balance_statement_reference !==
+          plan.full_balance_statement_reference
+      )
+    ) {
+      throw new Error(
+        "Form4972 participant review needs its complete source group and final owner",
+      );
+    }
+    reconcileParticipantCollection([fields], [{
+      source_document_references: refs,
+      form4972_plan: plan,
+      recipient_ssn: owner.ssn.replaceAll("-", ""),
+    }], [{
+      source_document_references: refs,
+      participant_name: plan.participant_name,
+      participant_ssn: plan.participant_ssn,
+      plan_reference: plan.plan_reference,
+    }], {
+      taxpayer: fields.recipient === "T" ? owner.ssn : "",
+      spouse: fields.recipient === "S" ? owner.ssn : undefined,
+    });
+  }
   if (fields.multiple_1099r !== undefined) {
     reconcileForm4972Multiple1099R(fields, pending, owner);
     return;

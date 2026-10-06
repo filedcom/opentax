@@ -1,3 +1,7 @@
+import {
+  needsParticipantCollection,
+  reconcileParticipantCollection,
+} from "./participant-collection.ts";
 import { isSourceMoney } from "./source-rounding.ts";
 import { reconcileSharedParticipantElections } from "./participant-inventory.ts";
 import { z } from "zod";
@@ -31,10 +35,10 @@ const electionSchema = singleElectionSchema.extend({
   plan_reference: z.string().trim().min(1).optional(),
 });
 export const publicElectionCollectionSchema = z.object({
-  elections: z.array(electionSchema).min(1).max(2),
+  elections: z.array(electionSchema).min(1),
 }).strict();
 export const inputSchema = publicElectionCollectionSchema.extend({
-  source_forms: z.array(z.record(z.string(), z.unknown())).min(1).max(2),
+  source_forms: z.array(z.record(z.string(), z.unknown())).min(1),
 });
 
 class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
@@ -136,7 +140,11 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
         ? ownEstateDeduction
         : 0;
     }
-    const pairedBeneficiaries = forms.length === 2 &&
+    const participantCollection = needsParticipantCollection(forms);
+    if (participantCollection) {
+      reconcileParticipantCollection(forms, sources, elections);
+    }
+    const pairedBeneficiaries = !participantCollection && forms.length === 2 &&
       forms.some((form) =>
         typeof form.recipient_share_pct === "number" &&
         form.recipient_share_pct < 100
@@ -179,7 +187,7 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
       }
       reconcileSharedParticipantElections(sources, elections);
     }
-    if (forms.length === 2 && !pairedBeneficiaries) {
+    if (forms.length === 2 && !pairedBeneficiaries && !participantCollection) {
       const recipients = forms.map((form) => form.recipient);
       const plans = sources.map((source) => source.form4972_plan);
       const sourceByElection = elections.map((election) =>

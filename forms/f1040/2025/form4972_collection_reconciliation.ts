@@ -1,3 +1,11 @@
+import {
+  form4972 as calculateParticipant,
+  inputSchema as participantSchema,
+} from "../nodes/intermediate/forms/form4972/index.ts";
+import {
+  needsParticipantCollection,
+  reconcileParticipantCollection,
+} from "../nodes/intermediate/forms/form4972/participant-collection.ts";
 import { sumSourceMoney } from "../nodes/intermediate/forms/form4972/source-rounding.ts";
 import { isSourceMoney } from "../nodes/intermediate/forms/form4972/source-rounding.ts";
 import {
@@ -16,9 +24,9 @@ const formSchema = z.record(z.string(), z.unknown()).refine((form) =>
   )
 );
 const collectionSchema = z.object({
-  forms: z.array(formSchema).min(1).max(2),
-  elections: z.array(z.record(z.string(), z.unknown())).min(1).max(2),
-  source_forms: z.array(z.record(z.string(), z.unknown())).min(1).max(2),
+  forms: z.array(formSchema).min(1),
+  elections: z.array(z.record(z.string(), z.unknown())).min(1),
+  source_forms: z.array(z.record(z.string(), z.unknown())).min(1),
 }).strict();
 
 function sameReferences(left: unknown, right: unknown): boolean {
@@ -56,6 +64,14 @@ export function reconcileForm4972Collection(
   filer: FilerIdentity | undefined,
 ) {
   const { forms, elections, source_forms } = collectionSchema.parse(raw);
+  // Official IMF2025v5.4 ReturnData1040.xsd permits at most two IRS4972
+  // documents. More participants may calculate but need an authorized filing
+  // route; do not manufacture an XML/PDF overflow attachment.
+  if (forms.length > 2) {
+    throw new Error(
+      "Form4972 native filing schema permits at most two participant documents; additional participants remain unfileable",
+    );
+  }
   if (
     forms.length !== elections.length || forms.length !== source_forms.length
   ) {
@@ -172,7 +188,35 @@ export function reconcileForm4972Collection(
       "Form 4972 participant taxes must sum to the finalized Form 1040 tax",
     );
   }
-  const pairedBeneficiaries = forms.length === 2 &&
+  const participantCollection = needsParticipantCollection(forms);
+  if (participantCollection) {
+    if (!filer) {
+      throw new Error(
+        "Form4972 participant collection needs final filer identity",
+      );
+    }
+    reconcileParticipantCollection(forms, source_forms, elections, {
+      taxpayer: filer.primarySSN,
+      spouse: filer.spouse?.ssn,
+    });
+    const ordinary = forms.reduce((sum, form) => {
+      const result = calculateParticipant.compute({
+        taxYear: 2025,
+        formType: "f1040",
+      }, participantSchema.parse(form));
+      return sum +
+        Number(
+          result.outputs.find((output) => output.nodeType === "f1040")?.fields
+            .line5b_form4972_ordinary ?? 0,
+        );
+    }, 0);
+    if ((returnFields.line5b_form4972_ordinary ?? 0) !== ordinary) {
+      throw new Error(
+        "Form4972 participant collection ordinary amounts differ from Form1040",
+      );
+    }
+  }
+  const pairedBeneficiaries = !participantCollection && forms.length === 2 &&
     scoped.some(({ fields }) =>
       typeof fields.recipient_share_pct === "number" &&
       fields.recipient_share_pct < 100
@@ -223,7 +267,7 @@ export function reconcileForm4972Collection(
       reconcileParticipantIssuedInventory(elected);
     }
   }
-  if (forms.length === 2 && !pairedBeneficiaries) {
+  if (forms.length === 2 && !pairedBeneficiaries && !participantCollection) {
     if (
       !filer || filer.filingStatus !== FilingStatus.MarriedFilingJointly ||
       !filer.spouse?.ssn ||

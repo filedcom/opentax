@@ -1593,6 +1593,78 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
   const lumpItems = activeItems(items).filter(
     (item) => item.exclude_4972 === true,
   );
+  // IRS2025 permits separate forms for each participant, including several
+  // inherited participants belonging to one recipient. Group before computing.
+  const participantGroups = new Map<string, R1099Items>();
+  for (const item of lumpItems) {
+    if (item.form4972_plan && (item.ts === "T" || item.ts === "S")) {
+      const key = `${item.ts}:${item.form4972_plan.participant_ssn}`;
+      const group = participantGroups.get(key) ?? [];
+      group.push(item);
+      participantGroups.set(key, group);
+    }
+  }
+  const distinctOwners = new Set(lumpItems.map((item) => item.ts)).size;
+  const newCollection = participantGroups.size > 2 ||
+    participantGroups.size === 2 && (
+        distinctOwners === 1 ||
+        !lumpItems.some((item) => (item.box9a_pct_total ?? 100) < 100) &&
+          lumpItems.some((item) =>
+            item.recipient_ssn !== undefined &&
+            item.recipient_ssn.replaceAll("-", "") !==
+              item.form4972_plan?.participant_ssn
+          )
+      );
+  if (newCollection) {
+    if (
+      participantGroups.size === 0 ||
+      [...participantGroups.values()].reduce(
+          (n, group) => n + group.length,
+          0,
+        ) !== lumpItems.length
+    ) {
+      throw new Error(
+        "Form4972 participant collection needs a complete identified source group for every elected copy",
+      );
+    }
+    const groups = [...participantGroups.values()].flatMap((group) => {
+      const plan = group[0].form4972_plan!;
+      if (
+        !group[0].recipient_ssn ||
+        group.some((item) =>
+          item.recipient_ssn !== group[0].recipient_ssn ||
+          item.form4972_plan?.plan_reference !== plan.plan_reference ||
+          item.form4972_plan?.full_balance_statement_reference !==
+            plan.full_balance_statement_reference ||
+          item.form4972_plan?.all_qualified_distributions_included !== true ||
+          item.form4972_plan?.participant_name !== plan.participant_name ||
+          items.some((other) =>
+            other.exclude_4972 !== true &&
+            other.form4972_plan?.participant_ssn === plan.participant_ssn &&
+            other.ts === item.ts
+          )
+        )
+      ) {
+        throw new Error(
+          "Form4972 participant collection needs one complete issued inventory per recipient and participant",
+        );
+      }
+      const rows = form4972Outputs(group).find((row) =>
+        row.nodeType === "form4972"
+      )?.fields.source_forms;
+      if (!Array.isArray(rows) || rows.length !== 1) {
+        throw new Error(
+          "Form4972 participant collection cannot split one participant's sources",
+        );
+      }
+      return rows.map((row) => ({
+        ...row,
+        form4972_plan: plan,
+        recipient_ssn: group[0].recipient_ssn!.replaceAll("-", ""),
+      }));
+    });
+    return [output(form4972Elections, { source_forms: groups })];
+  }
   // Each spouse keeps a complete issued-copy group. Reuse the same source
   // checks as an individual election rather than combining recipient pools.
   if (

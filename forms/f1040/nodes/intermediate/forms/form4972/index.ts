@@ -1,3 +1,4 @@
+import { participantCollectionReviewSchema } from "./participant-collection.ts";
 import {
   allocatedSourceCents,
   filedDollars,
@@ -56,6 +57,7 @@ const TAX_RATE_SCHEDULE: ReadonlyArray<{
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 export const inputSchema = z.object({
+  participant_collection_review: participantCollectionReviewSchema.optional(),
   // Taxable distribution (Form 1099-R box 2a, not gross box 1).
   lump_sum_amount: z.number().nonnegative(),
 
@@ -188,8 +190,11 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
       (partialMultiple
         ? input.beneficiary_distribution !== true ||
           input.participant_five_year_member !== false
-        : input.beneficiary_distribution !== false ||
-          input.participant_five_year_member !== true) ||
+        : (input.beneficiary_distribution !== false &&
+          input.participant_collection_review?.role !== "beneficiary") ||
+          (input.beneficiary_distribution === true
+            ? input.participant_five_year_member !== false
+            : input.participant_five_year_member !== true)) ||
       input.elect_10yr_averaging !== true ||
       (input.elect_capital_gain === true &&
         (input.capital_gain_amount ?? 0) <= 0) ||
@@ -207,6 +212,7 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
       (partialMultiple && (input.annuity_actuarial_value ?? 0) > 0 &&
         input.annuity_share_pct === undefined) ||
       (!partialMultiple &&
+        input.participant_collection_review?.role !== "beneficiary" &&
         ((input.death_benefit_exclusion ?? 0) !== 0 ||
           (input.federal_estate_tax ?? 0) !== 0))
     ) {
