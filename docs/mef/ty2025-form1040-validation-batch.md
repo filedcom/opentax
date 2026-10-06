@@ -4796,3 +4796,10 @@ Codea842e9599, actual typed focused command covering public8978/PDF8978/owner-SE
 ## Positive child-tax/Form8615 main integration — 2026-10-06
 
 Code72bd53a19, typed real-Poppler focused command covering paired positive child tax, earlier paired education, public8978 and owner-SE: **19 passed,0 failed**,1m6s. Log `/tmp/opentax-positive-child-tax-main-integration.log`, SHA256 `4b42fd0d80e8c403ff0f1bb7b793b99b64e930daa1ec911a8f8fced4c741907e`. Final isolated454/454 across24 selected existing/new files plus6/6 source/artifact checks. Six full Return1040v5.4 XMLs and36 filled PDF pages inspected; child AGI22000/SD15750/TI6250 yields8615 tax1375 using actual selected parent TI59250/pre-credit7955. Parent income/AOC/ODC remain separate. Source/header/support/parent-choice/duplicate-credit and standalone slice conflicts reject. [Exact limits](ty2025-form8863-parent-child-kiddie-tax-review.md) retain wider sibling/parent/special-tax/authentication scope. Full batchea23 predates this code.
+
+
+## Terminal full batch at ea23fbb91 — 2026-10-06
+
+Exact isolated `deno task test`, real Poppler26.09.0/Deno2.9.4/TS6.0.3/libxml2.9.13. Commit `ea23fbb91f9f9be2710f534b59e42267041c87a7`, start2026-10-05T23:57:45Z, end2026-10-06T00:54:03Z, exit1. **11,386 passed,2 failed,0 ignored**,55m8s test duration/56m18s wall. Log `/tmp/opentax-deno-task-test-ea23fbb91.log`, SHA256 `3f3dca6c256779f1c97105d1eda3788c8e4eb56208f140908a2196cc0ee56ecf`; status `/tmp/opentax-full-regression-ea23fbb91.status`. Actual wrapper/Deno PIDs86079/86085 are terminal.
+
+Failures: `2025 parent PDF marks Form8814 dividends and direct child gain` expects the old checkbox domain key; `Form8959 PDF rejects a print line that differs from upstream deposits` expects inapplicable SE/RRTA lines in a wage-only PDF. Verify source/template decisions and repair tests, then rerun the full exact command on a fresh stable snapshot. This earlier snapshot excludes later joint patron/partyear SHOP/service grants/MFS/arrangements/8994/education/owner-SE/8978/child tax changes; it is not a full pass for current code.

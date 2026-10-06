@@ -4,7 +4,7 @@
 
 The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,397 bounded slices**; broader parents remain open. New discoveries belong only in `future_todo`, outside this work queue. Prior learnings are in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md).
 
-Stable762db9012 passed full real-Poppler `deno task test`: **11,271 passed,zero failed or ignored**. Full stableea23fbb91 remains live by actual PID86085 at00:51UTC; later routes are outside that snapshot. [Validation batch](docs/mef/ty2025-form1040-validation-batch.md) retains commands, hashes and limits.
+Stable762db9012 passed full real-Poppler `deno task test`: **11,271 passed,zero failed or ignored**. Full stableea23fbb91 finished October6 at00:54:03UTC: **11,386 passed,2 failed,zero ignored**,55m8s test duration. Failures are retained Form8814 checkbox and Form8959 projection expectations; verify against actual templates and source calculations before repair. Later routes are outside that snapshot. [Validation batch](docs/mef/ty2025-form1040-validation-batch.md) retains commands, hashes and limits.
 
 Planner: **225 fixtures**,116 PDF descriptors,113keys,95 covered/18 uncovered. Main family/noncommunity MFS36/36, direct8994 20/20, paired education24/24, SHOP arrangements25/25 and owner-SE28/28 pass. SHOP has ten complete packets/242 reviewed pages. Owner-SE has four complete packets/52 reviewed pages, cent and source conflict checks; owner-specific ordinary QBI is integrated, while broader farm/high-income/deduction combinations remain open. All source-authenticity and IRS acceptance limits remain explicit.
 
