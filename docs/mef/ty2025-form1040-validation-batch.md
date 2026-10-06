@@ -4867,3 +4867,8 @@ This result remains pending and predates the agents' pending family PDF and WOTC
 ## Sibling/selected-parent main integration
 
 Main `8e492a227`:47 passed,0 failed (42s), with type checking and real Poppler. Files: sibling-parent-selection, prior parent-child kiddie tax, Form8615 PDF descriptor, ScheduleSE native descriptor and ATS Scenario3 source/PDF tests. Log `/tmp/opentax-sibling-main-integration.log`, SHA256 `16a37194b8557523faa56cd9081037cb9efef45e5cdf82579896870302ce08c5`. Seven full XSD/PDF packets/all38 visually reviewed pages and21 matching hashes copied to ignored `.state/research/2026-10-06-sibling-parent-selection`. Running full bc6cafec6 snapshot predates this family source/ratio repair; no complete latest-head regression is claimed.
+
+
+## Corrected owner-WOTC main integration — October 6
+
+Main `15d49d055a287f74e442d7b0affa52c0c61d94d3`: exact typed Deno test command with real Poppler passed28, failed0 (2m34s). Files: new owner-WOTC, prior primary-WOTC, ordinary owned C/F, sibling/selected-parent PDF, multiple-QHP SHOP and review scope. Log `/tmp/opentax-corrected-owner-wotc-main-integration.log`, SHA256 `0a7cb570b32db47d836c88a5c535d477a9418d482aa6529d48c531c52aa2e926`. Permissions: read/write, run xmllint/deno/pdftotext/pdftoppm, network www.irs.gov. Eight complete new packets/all220 reviewed pages copied to ignored research storage. Prior primary route reran against corrected external W2 employer identity; its completion is restored. New spouse/both-owner completion is recorded separately. Planner240 fixtures/116 descriptors/113 keys/95 covered/18 uncovered. The live full bc6cafec6 snapshot predates these repairs and the sibling ratio change; latest-head full regression and IRS acceptance remain unproven.
