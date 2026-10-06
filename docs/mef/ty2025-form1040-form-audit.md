@@ -1,6 +1,6 @@
 # TY2025 Form 1040 registered-document audit
 
-October6 current imports contain152 native/148 keys and118 PDF/115 keys; planner369 fixtures,99 covered/16 uncovered. IRA paper/source integration has fresh10/0 and actual15/105 held replay with exactlythree independentlyderived QBI operand additions; source/tax/XML/PDF/retained bytes remain scoped as documented. CombinedIRA/PFICstatementordering is fullXSD-valid and10pages reviewed. Full latest-source regression, broad parent/source authentication and IRS acceptance remain open. See the [current registry replay](ty2025-native-pdf-registry-parity.md#october6-ira-recharacterization-statement-reconciliation).
+October6 current imports contain152 native/148 keys and118 PDF/115 keys; planner372 fixtures,99 covered/16 uncovered. IRA paper/source integration has fresh10/0 and actual15/105 held replay with exactlythree independentlyderived QBI operand additions; source/tax/XML/PDF/retained bytes remain scoped as documented. CombinedIRA/PFICstatementordering is fullXSD-valid and10pages reviewed. Full latest-source regression, broad parent/source authentication and IRS acceptance remain open. See the [current registry replay](ty2025-native-pdf-registry-parity.md#october6-ira-recharacterization-statement-reconciliation).
 
 Updated inventory: 2026-10-03. This is an implementation inventory, not a
 filing-readiness claim. The authoritative registration order is
