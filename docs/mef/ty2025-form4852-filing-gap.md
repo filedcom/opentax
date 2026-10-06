@@ -1085,3 +1085,5 @@ Private generated proof: `/tmp/opentax-simple-roth-clock-oct6/.state/research/si
 focused log `/tmp/opentax-simple-roth-test-final-oct6.log`; preservation log
 `/tmp/opentax-simple-roth-preservation-oct6.log`. The new PDF SHA256 is
 `135a844da31c1c0e54090f03216a294c0704cbe6be7cf3bc6cfaceb1888b0de7`.
+
+Main integration also shares the first employer-deposit clock across retained plans/accounts of the same employer, keeps different employers separate, and rejects current funding that contradicts the retained annual declaration. Standard source gate passes7/0. Original SIMPLE9-page packet/43 source documents and prior annual10/91 plus current13/116 packets replay exactly on main from original inputs and copied private cache; whole pending, native XML except ReturnTs, PDF bytes and page origins agree. This does not authenticate issuers or prior acceptance.
