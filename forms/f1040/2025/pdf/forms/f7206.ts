@@ -190,5 +190,6 @@ export const form7206Pdf: PdfFormDescriptor = {
   pendingKey: "form7206",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f7206--2025.pdf",
   projectFields,
+  includeWhen: (projected) => Number(projected.line14 ?? 0) > 0,
   fields,
 };

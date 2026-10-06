@@ -208,6 +208,8 @@ function buildIRS7206(fields: Input, context?: MefBuildContext): string {
       "Form 7206 one-plan filing excludes other business, retirement, Form 2555, and Marketplace/PTC sources",
     );
   }
+  // Retain and reconcile the source calculation, but no deduction is claimed.
+  if (lines.line14 === 0) return "";
   return elements("IRS7206", [
     element("NameLine1Txt", recipient.name),
     element("SSN", ssn),

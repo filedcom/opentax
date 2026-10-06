@@ -203,8 +203,15 @@ export function calculateSingleScheduleCForm7206(
         ? 0
         : month.paid_premium - month.public_safety_officer_excluded_amount);
   }, 0);
-  if (eligiblePremiums <= 0) {
-    throw new Error("Form 7206 needs positive eligible insurance premiums");
+  if (
+    eligiblePremiums === 0 &&
+    !source.premium_months.every((month) =>
+      month.eligible_for_subsidized_employer_plan
+    )
+  ) {
+    throw new Error(
+      "Form 7206 zero eligible premiums need a reviewed employer-plan exclusion for every month",
+    );
   }
   const profit = source.schedule_c_line31_net_profit;
   const seTax = source.schedule1_line15_se_tax_deduction;
@@ -236,7 +243,7 @@ function buildOutput(
   deduction: number,
   source?: SingleScheduleCPlan,
 ): NodeOutput[] {
-  if (deduction <= 0) return [];
+  if (deduction <= 0 && !source) return [];
   return [
     output(schedule1, { line17_se_health_insurance: deduction }),
     output(agi_aggregator, { line17_se_health_insurance: deduction }),
