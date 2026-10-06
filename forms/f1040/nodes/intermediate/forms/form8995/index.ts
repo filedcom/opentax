@@ -920,7 +920,11 @@ function mixedScheduleCFLines(
   const line2 = filed[0] + filed[1];
   const line5 = Math.round(Math.max(0, line2) * QBI_RATE);
   const line11 = Math.round(
-    Math.max(0, input.agi - standardDeductionAmount(input, cfg)),
+    Math.max(
+      0,
+      input.agi - standardDeductionAmount(input, cfg) -
+        (input.additional_deductions ?? 0),
+    ),
   );
   const line14 = Math.round(line11 * QBI_RATE);
   return {

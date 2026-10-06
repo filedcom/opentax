@@ -4965,3 +4965,8 @@ FarmSHOP8c9a77447 currentmain gate16/0(1m29s); log `/tmp/opentax-farm-shop-curre
 ## 2026-10-06 complete-source Form4972 NUA integration
 
 Main747ec258c:14-file source/preservation gate233/0(31s), five complete2025v5.4XSDreturns and80native/PDFtamper rejections. Held checker5cases/all27reviewedpages; all main PDFs byte-identical to reviewed isolated/held outputs. Actual planner298fixtures/116descriptors/113keys/96covered/17uncovered. Evidence and digests: [review](ty2025-form4972-multiple-nua-source-review.md). Earlier isolatedpreservation231/1 was a supersededfive-copyrejection assertion; correctedpreservation232/0. Mainlog `/tmp/opentax-form4972-multiple-nua-current-main.log`; heldlog `/tmp/opentax-form4972-multiple-nua-main-held-check.log`. No full-suitepass or IRSacceptance inferred.
+
+
+## October6 mixed C/F SHOP current-main verification
+
+Main52/0(56s), two full-XSD packets/all52 pages reviewed; actual senior deduction1,455 reduces Form8995 line11 to131,552/deduction26,310. Full evidence and hashes: [mixed SHOP review](ty2025-form8941-mixed-cf-shop-review.md). Broader parent remains open.

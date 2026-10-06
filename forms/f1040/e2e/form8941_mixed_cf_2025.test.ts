@@ -284,3 +284,72 @@ Deno.test({
     }
   },
 });
+
+Deno.test("mixed C/F SHOP QBI uses actual sourced senior deduction in its income cap", async () => {
+  const base = form8941MixedCfInputs();
+  const input = {
+    ...base,
+    general: {
+      ...base.general,
+      taxpayer_dob: "1930-01-01",
+      taxpayer_ssn_valid_for_employment: true,
+      taxpayer_ssn_issued_before_due_date: true,
+      taxpayer_tin_issued_by_due_date: true,
+    },
+    schedule1a: {
+      senior_zero_exclusions_review: {
+        no_section933_puerto_rico_excluded_income: true,
+        section933_review_source_reference: "2025 reviewed domestic C/F income",
+        no_form2555_filed: true,
+        form2555_review_source_reference:
+          "2025 reviewed no foreign earned income",
+        no_form4563_filed: true,
+        form4563_review_source_reference: "2025 reviewed no Samoa income",
+      },
+    },
+  };
+  const result = execute(plan, registry, input, {
+    taxYear: 2025,
+    formType: "f1040",
+  });
+  assertEquals(result.diagnostics, []);
+  const p = result.pending;
+  assertEquals(p.f1040.line11_agi, 150757);
+  assertEquals(p.f1040.line12c_deduction_total, 17750);
+  // Senior phaseout is6% of75757 excessMAGI:4545 rounded reduction.
+  assertEquals(p.f1040.line13b_additional_deductions, 1455);
+  assertEquals(p.form8995.line11, 131552);
+  assertEquals(p.f1040.line13_qbi_deduction, 26310);
+  const filer = extractFilerIdentity(input.general)!;
+  const bundle = await buildMefBundle(buildPending(p), {
+    filer,
+    attachments: [],
+  });
+  const prefix = dir + "same-owner-c-f-senior-income-cap";
+  await Deno.mkdir(dir, { recursive: true });
+  await Deno.writeTextFile(
+    prefix + ".json",
+    JSON.stringify({ input, pending: p }, null, 2),
+  );
+  await Deno.writeTextFile(prefix + ".xml", bundle.xml);
+  const x = await new Deno.Command("xmllint", {
+    args: ["--noout", "--schema", xsd, prefix + ".xml"],
+    stderr: "piped",
+  }).output();
+  assertEquals(x.code, 0, new TextDecoder().decode(x.stderr));
+  await Deno.writeFile(
+    prefix + ".pdf",
+    await buildPdfBytes(bundle.pending, filer, dir + "irs-pdf-cache", bundle),
+  );
+  for (
+    const q of [
+      { ...p, f1040: { ...p.f1040, line13b_additional_deductions: 1456 } },
+      { ...p, schedule1a: undefined },
+    ]
+  ) {
+    await assertRejects(() =>
+      buildMefBundle(buildPending(q), { filer, attachments: [] })
+    );
+    await assertRejects(() => buildPdfBytes(q as typeof p, filer));
+  }
+});

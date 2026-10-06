@@ -1201,6 +1201,20 @@ function assertMixedScheduleCF8995(
     : [];
   const se = pending.schedule_se, schedule1 = pending.schedule1;
   const f1040 = pending.f1040, general = pending.general;
+  const additionalDeduction = Number(f1040?.line13b_additional_deductions ?? 0);
+  if (!Number.isSafeInteger(additionalDeduction) || additionalDeduction < 0) {
+    throw new Error(
+      "Mixed C/F QBI needs nonnegative sourced additional deductions",
+    );
+  }
+  const additionalXml = pending.schedule1a === undefined
+    ? ""
+    : schedule1aNative.build(pending.schedule1a, { pending });
+  if (additionalDeduction > 0 && !additionalXml.includes("IRS1040Schedule1A")) {
+    throw new Error(
+      "Mixed C/F QBI needs actual Schedule1A source reconciliation",
+    );
+  }
   const form7206 = pending.form7206;
   const seSource = form7206?.schedule_se_source as
     | Record<string, unknown>
@@ -1275,7 +1289,8 @@ function assertMixedScheduleCF8995(
       Math.round(
         Math.max(
           0,
-          Number(f1040.line11_agi) - Number(f1040.line12c_deduction_total),
+          Number(f1040.line11_agi) - Number(f1040.line12c_deduction_total) -
+            additionalDeduction,
         ),
       ) ||
     pending.form8995a !== undefined ||
