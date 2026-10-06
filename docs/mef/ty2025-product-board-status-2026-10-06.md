@@ -3441,3 +3441,9 @@ W2codeW5000/limit4300/principal700, March15 2026 trustee/ownerpayment750 include
 ## Latest sealed source regression V14 and postyear HSA publication
 
 PR63 published exact3d01e8e5fca2a267ad4642a52c7f036b1cc33f75; title/body/head/draft verified /tmp/opentax-pr63-final-postyear-oct6.json and appattachment refresh succeeded. Latest full standard deno task test snapshot3d01e8e5fca2a267ad4642a52c7f036b1cc33f75 started2026-10-06T11:34:09Z, Deno2.9.4/V8 15.0.245.2-rusty/TS6.0.3; actualwrapper44813/task44817 confirmedlive. Private copiedresearch has zero symlinks and privatecopiedPDFcache; KeepAlivefalse/statusstartupguard. Log /tmp/opentax-deno-task-test-source-v14-oct6.log, status /tmp/opentax-full-regression-source-v14-oct6.status. Includes postyearHSA production; olderV7–V13actualtasks remainlive, no elapsedtime restarts. Main/futurefrozen exact, broadfullpass/IRS acceptance stillrequired.
+
+## Before independent MFJ shareholder debt/QBI source integration
+
+Previousgoalturn progressed postyearHSA production222f0d05d/seal3d01e8e5f: main157/0/new2/14pages plusprior2/14+2/12 exactactualrawsource/pending/nativeonlyTs/PDF/origins; PRpublished17fbc173b. Latest fullV14snapshot3d01e8e5f wrapper44813/task44817 confirmedlive36s; no terminal evidence/restart.
+
+Read/compact before existing7203/8995 owner-family parent. Ready1815dc263 isolatedsource8/0/compat208/0/header13/0, sixfullXSD54pages andactualprior4/32rawexact. Perowner source basis mustlimit loss beforejoint aggregation; primary3000note/spouseoriginal2000 disprovesbadpooled8000deduction (actual7500). Native requiredtwo7203copies, jointE/8995 rows/headers andseparatecurrent/basis-suspended carries requirefreshmain216gate/rawnew6/54+prior4/32/allpage review. Priorhistory/sourceauth/otherbusiness/sharedcorporation parentopen; no main/futureTODO changes.
