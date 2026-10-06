@@ -69,6 +69,8 @@ export function ownedScheduleSeReviewFixture(
       "schedule_c",
       "schedule_se",
       "form8995",
+      "form8959",
+      "form8960",
     ],
   };
 }

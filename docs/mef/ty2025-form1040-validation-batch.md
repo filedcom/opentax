@@ -4773,3 +4773,16 @@ Code `5dfe1aa9a` integrates isolated `917b0d87c`. Exact typed restricted command
 ## SHOP composite/list main integration — 2026-10-06
 
 Code `35afc890a`, real Poppler and typed Deno focused command covering arrangement, family, public8994 and held scope tests: **25 passed,0 failed**,1m46s. Log `/tmp/opentax-shop-arrangements-main-integration.log`, SHA256 `8d8d1cd864621e6bb4efb2f7208f39dbf2aaacd5e92df518749cfad280d9692f`. Isolated agent proof:47/47 compatibility plus15/15 final order; ten full-XSD/PDF packets,242 pages inspected,33 prepared-source and27 public-source conflicts rejected. One-QHP Albany records only; multiple plans, eligibility changes, authentication and IRS acceptance remain open. Full batchea23 does not include this change.
+
+
+## Owner-specific ScheduleSE and ordinary joint QBI — 2026-10-06
+
+Isolated62747389e integrated at0cc6c8389. Final main typed integration **28 passed,0 failed**,1m40s; owner public/source/cents, pure calculations, public8994, joint patron, SSTB and held scope checks. Command: `deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/2025/schedule-se-owner-public.test.ts forms/f1040/nodes/intermediate/forms/schedule_se/owner-calculation.test.ts forms/f1040/2025/form8994_public_source.test.ts forms/f1040/2025/form8995a_patron_joint.test.ts forms/f1040/2025/form8995a_sstb_schedule_c.test.ts scripts/ty2025-pdf-review-scope.test.ts`. Real Poppler PATH used.
+
+Log `/tmp/opentax-owned-se-main-integration.log`, SHA256 `96f2e20ec540ac0f06b66b4cdfe320279517f8575cd33d0d3c981b120a2f7cbd`.
+
+Log `/tmp/opentax-owned-se-final-proof.log`, SHA256 `a8bd2efd829f842bf2c84cb3a5ad03825d04862ca71f0e04fe752a240b3339f6`.
+
+Log `/tmp/opentax-owned-se-c-repair.log`, SHA256 `17deaff3cf1058d3db4fe3627760af0fdfc0734e714c22e0a273abd1c92d4af7`.
+
+Isolated final13/13,104/104 repaired ScheduleC checks and earlier79/79; broader337/339 initially exposed two missing MFJ proprietor/activity source facts, now repaired. Four complete localXSD/PDF packets contain52 pages, all inspected in13 contact sheets; final hashes match retained manifest. Eight complete-return QBI/source mutations and four owner-instance/source/identity mutations reject both native and PDF. Two cent boundary sources pass final prepared native export. Main held metadata includes8959/8960 as actually emitted. Planner222 fixtures,116 descriptors,113keys,93 covered/20 uncovered. [Owner gap](ty2025-schedule-se-owner-gap.md) records limits. Full regressionea23 lacks this code; IRS acceptance/authentication remain open.
