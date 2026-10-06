@@ -121,3 +121,7 @@ external authorization/authentication, or IRS acceptance is invented. The wider
 Form7203/8995 parent remains open. The historical original eight duplicated
 stock-loss archive's whole-pending/8960 and XML-newline qualifications in the
 original owned-debt proof remain unchanged and are not relabeled exact.
+
+## Main integration seal
+
+Integrated production `e654fedef` passes the standard14-module `deno task test` gate **234/0 (2m11s)**, `/tmp/opentax-form7203-open-account-main-standard-oct6.log`, with optional artifact permission unset. Actual retained source/filer replays through the integrated main graph are terminal exit0, `/tmp/opentax-form7203-open-account-main-raw-oct6.log`; reports under `/tmp/opentax-form7203-open-account-current-main-replay.V64Eba/{new-eight,prior-multi-six,prior-spouse-six,prior-single-four}/report.json` verify **8/70 +6/66 +6/54 +4/32** packets/pages with exact wholepending, carry, origins, sourcebytes, PDF and XML onlyReturnTs, plus fullXSD. Originals never regenerated or edited. All64 new artifact files independently copied/hash-compared into `.state/research/form7203-open-account-oct6-preserved`. Root reviewed all70 new pages, plus full-size fully-repaid blank ratio, spouse open-account checkbox and25001/22501 face/basis detail; root review manifest `/tmp/opentax-form7203-open-account-root-page-review-oct6.json`. Broader source/terms, same-pair mixed inventories, prior reduced debt and accepted-history boundaries remain open; current calculated carry never authenticates a subsequent-year filing.
