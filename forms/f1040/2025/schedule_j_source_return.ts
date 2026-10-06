@@ -27,6 +27,91 @@ const nonfarmEmployerRecordSchema = z.object({
   services: z.string().trim().min(1),
 }).strict();
 
+const fishingLedgerSchema = z.object({
+  tax_year: z.literal(2025),
+  taxpayer_ssn: z.string().regex(/^\d{9}$/),
+  business_reference: z.string().trim().min(1),
+  catch_sales_record_reference: z.string().trim().min(1),
+  vessel_name: z.string().trim().min(1),
+  commercial_harvest: z.literal(true),
+  scientific_research_vessel: z.literal(false),
+  sales: z.array(
+    z.object({
+      sold_on: z.string().regex(/^2025-\d{2}-\d{2}$/),
+      buyer: z.string().trim().min(1),
+      buyer_invoice_reference: z.string().trim().min(1),
+      catch_description: z.string().trim().min(1),
+      amount: z.number().int().positive(),
+    }).strict(),
+  ).min(1),
+  supplies: z.array(
+    z.object({
+      paid_on: z.string().regex(/^2025-\d{2}-\d{2}$/),
+      supplier: z.string().trim().min(1),
+      paid_receipt_reference: z.string().trim().min(1),
+      amount: z.number().int().positive(),
+    }).strict(),
+  ),
+}).strict();
+
+function retainedFishingProfit(inputs: Record<string, unknown>): number {
+  const schedules = inputs.schedule_c;
+  if (!Array.isArray(schedules) || schedules.length !== 1) {
+    throw new Error(
+      "Schedule J fishing source needs exactly one Schedule C business",
+    );
+  }
+  const business = record(schedules[0]);
+  const evidence = record(business.schedule_j_fishing_evidence);
+  const proof = record(evidence.retained_catch_ledger);
+  const encoded = String(proof.bytes_base64 ?? "");
+  const bytes = Uint8Array.from(atob(encoded), (c) => c.charCodeAt(0));
+  if (
+    btoa(String.fromCharCode(...bytes)) !== encoded ||
+    createHash("sha256").update(bytes).digest("hex") !== proof.sha256
+  ) {
+    throw new Error(
+      "Schedule J fishing catch ledger bytes differ from retained digest",
+    );
+  }
+  const ledger = fishingLedgerSchema.parse(
+    JSON.parse(new TextDecoder().decode(bytes)),
+  );
+  const owner = String(record(inputs.general).taxpayer_ssn ?? "").replaceAll(
+    "-",
+    "",
+  );
+  const sales = ledger.sales.reduce((sum, item) => sum + item.amount, 0);
+  const supplies = ledger.supplies.reduce((sum, item) => sum + item.amount, 0);
+  const saleRefs = ledger.sales.map((row) => row.buyer_invoice_reference);
+  const paidRefs = ledger.supplies.map((row) => row.paid_receipt_reference);
+  if (
+    proof.document_id !== evidence.catch_sales_record_reference ||
+    ledger.taxpayer_ssn !== owner ||
+    ledger.business_reference !== business.business_reference ||
+    ledger.business_reference !== evidence.business_reference ||
+    ledger.catch_sales_record_reference !==
+      evidence.catch_sales_record_reference ||
+    business.line_b_business_code !== "114110" ||
+    business.line_f_accounting_method !== "cash" ||
+    business.line_g_material_participation !== true ||
+    sales !== business.line_1_gross_receipts ||
+    supplies !== (business.line_22_supplies ?? 0) ||
+    new Set(saleRefs).size !== saleRefs.length ||
+    new Set(paidRefs).size !== paidRefs.length ||
+    Object.entries(business).some(([key, value]) =>
+      /^line_\d/.test(key) &&
+      key !== "line_1_gross_receipts" && key !== "line_22_supplies" &&
+      typeof value === "number" && value !== 0
+    )
+  ) {
+    throw new Error(
+      "Schedule J fishing ledger, owner, and filed Schedule C do not reconcile",
+    );
+  }
+  return sales - supplies;
+}
+
 function nonfarmWages(
   inputs: Record<string, unknown>,
   source: z.infer<typeof publicInputSchema>,
@@ -148,6 +233,7 @@ export function executeScheduleJSourceReturn(
   const allowed = new Set([
     "filing_status",
     "line6_schedule_f",
+    "line3_schedule_c",
     "line15_se_deduction",
     "line8z_form8621_qef",
     "line3b_ordinary_dividends",
@@ -162,12 +248,21 @@ export function executeScheduleJSourceReturn(
       );
     }
   }
-  if (
-    farm.fishing_net_profit !== undefined ||
-    total(farm.schedule_c_net_profit) !== 0
-  ) {
+  const fishing = farm.fishing_net_profit !== undefined;
+  if (fishing) {
+    const retainedProfit = retainedFishingProfit(inputs);
+    if (
+      retainedProfit !== total(farm.fishing_net_profit) ||
+      retainedProfit !== total(farm.schedule_c_net_profit) ||
+      retainedProfit !== total(agi.line3_schedule_c)
+    ) {
+      throw new Error(
+        "Schedule J retained fishing profit differs from actual return sources",
+      );
+    }
+  } else if (total(farm.schedule_c_net_profit) !== 0) {
     throw new Error(
-      "Schedule J preferential source replay needs independently allocated fishing or other business deductions",
+      "Schedule J preferential source replay needs independently allocated other business deductions",
     );
   }
   const worksheet = scheduleJTaxSourceSchema.parse({

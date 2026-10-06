@@ -41,6 +41,11 @@ export const itemSchema = z.object({
     catch_sales_record_reference: z.string().trim().min(1),
     harvested_fish_entered_commerce_verified: z.literal(true),
     scientific_research_vessel: z.literal(false),
+    retained_catch_ledger: z.object({
+      document_id: z.string().trim().min(1),
+      sha256: z.string().regex(/^[0-9a-f]{64}$/),
+      bytes_base64: z.string().trim().min(1),
+    }).strict().optional(),
   }).strict().optional(),
   // The bounded Form 8829 route checks taxpayer ownership separately.
   proprietor_recipient: z.nativeEnum(TS).optional(),

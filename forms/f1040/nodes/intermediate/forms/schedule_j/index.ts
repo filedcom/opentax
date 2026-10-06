@@ -64,10 +64,15 @@ function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
   }
   const fishing = source.fishing_net_profit !== undefined;
   const mixed = fishing && source.farm_net_profit !== undefined;
+  // The preferential source prepass independently reconciles investment
+  // income to the actual return. The ordinary path still uses the AGI source
+  // classifier and cannot silently absorb an unrelated receipt.
+  const reconciledOtherIncome = source.nonfarm_investment_income !== undefined;
   if (
     mixed && (
-      !source.mixed_farm_fishing_income_verified ||
-      source.mixed_farm_fishing_unsupported_source_key !== undefined ||
+      (!source.mixed_farm_fishing_income_verified && !reconciledOtherIncome) ||
+      (source.mixed_farm_fishing_unsupported_source_key !== undefined &&
+        !reconciledOtherIncome) ||
       (source.farm_activity_count !== 1 &&
         source.farm_activity_count !== 2) ||
       (source.farm_activity_count === 2 &&
@@ -86,8 +91,11 @@ function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
     );
   }
   if (
-    fishing && !mixed && (!source.fishing_only_income_verified ||
-      source.fishing_only_unsupported_source_key !== undefined)
+    fishing && !mixed && (
+      (!source.fishing_only_income_verified && !reconciledOtherIncome) ||
+      (source.fishing_only_unsupported_source_key !== undefined &&
+        !reconciledOtherIncome)
+    )
   ) {
     throw new Error(
       source.fishing_only_unsupported_source_key

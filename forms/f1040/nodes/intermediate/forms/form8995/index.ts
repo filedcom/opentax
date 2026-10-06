@@ -38,7 +38,11 @@ import {
 } from "../../../inputs/schedule_c/qbi-multiple.ts";
 import { reviewedWotcQbiWages } from "../../../inputs/schedule_c/qbi-wotc.ts";
 import { FilingStatus } from "../../../types.ts";
-import { itemSchema as farmItemSchema } from "../schedule_f/model.ts";
+import {
+  calculateScheduleFAtRiskNet,
+  itemSchema as farmItemSchema,
+} from "../schedule_f/model.ts";
+import { calculateScheduleCAtRiskNet } from "../../../inputs/schedule_c/model.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR, type F1040Config } from "../../../config/index.ts";
 
@@ -347,6 +351,53 @@ function qbiThreshold(
   return filingStatus === FilingStatus.MFJ
     ? cfg.qbiThresholdMfj
     : cfg.qbiThresholdSingle;
+}
+
+/** No 8995-A is filed when all identified C/F businesses have a zero
+ * deduction above the completed wage/property phase-in. */
+function zeroLimitedMixedScheduleCF(
+  input: Form8995Input,
+  taxableIncome: number,
+  cfg: F1040Config,
+): boolean {
+  const cs = input.schedule_c_qbi_businesses ?? [];
+  const fs = input.schedule_f_qbi_businesses ?? [];
+  if (
+    input.filing_status !== FilingStatus.Single || cs.length !== 1 ||
+    fs.length > 2 ||
+    taxableIncome < cfg.qbiThresholdSingle + cfg.qbiPhaseInRange ||
+    input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+    totalQbi(input) <= 0 ||
+    reviewedQualifiedTipExclusions(input.qualified_tip_qbi_source).total !==
+      0 ||
+    sumField(input.qbi) !== 0 || sumField(input.sstb_qbi) !== 0 ||
+    sumField(input.w2_wages) !== 0 || sumField(input.unadjusted_basis) !== 0 ||
+    sumField(input.line6_sec199a_dividends) !== 0 ||
+    (input.qbi_loss_carryforward ?? 0) !== 0 ||
+    (input.reit_loss_carryforward ?? 0) !== 0 ||
+    sumField(input.se_health_insurance_deduction) !== 0 ||
+    sumField(input.retirement_plan_deduction) !== 0 ||
+    cs[0].source_schedule_c.proprietor_recipient !== "T" ||
+    cs[0].source_schedule_c.line_g_material_participation !== true ||
+    cs[0].no_other_adjustments_confirmed !== true ||
+    fs.some((row) => {
+      const source = farmItemSchema.parse(row.source_schedule_f);
+      return source.proprietor_recipient !== "T" ||
+        source.line_e_material_participation !== true ||
+        row.no_other_adjustments_confirmed !== true ||
+        row.w2_wages !== 0 || row.ubia !== 0 || row.wotc_wage_reduction ||
+        row.qbi !== calculateScheduleFAtRiskNet(source).atRiskNet;
+    }) ||
+    cs[0].w2_wages !== 0 || cs[0].ubia !== 0 ||
+    cs[0].wotc_wage_reduction !== undefined ||
+    cs[0].qbi !==
+      calculateScheduleCAtRiskNet(cs[0].source_schedule_c).atRiskNet ||
+    sumField(input.qbi_from_schedule_c) !== cs[0].qbi ||
+    sumField(input.qbi_from_schedule_f) !==
+      fs.reduce((sum, row) => sum + row.qbi, 0)
+  ) return false;
+  return true;
 }
 
 function advancedFormOutput(
@@ -1341,6 +1392,9 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       (taxableIncome > qbiThreshold(input.filing_status, cfg) ||
         input.patron_source_review !== undefined)
     ) {
+      if (zeroLimitedMixedScheduleCF(input, taxableIncome, cfg)) {
+        return { outputs: [] };
+      }
       return {
         outputs: [advancedFormOutput(input, taxableIncome), {
           nodeType: this.nodeType,
