@@ -216,6 +216,95 @@ const parentPayrollEmployeeSchema = familyPayrollBaseSchema.extend({
 }).strict();
 type ParentPayrollEmployee = z.infer<typeof parentPayrollEmployeeSchema>;
 
+const childServicePaymentSchema = z.object({
+  payment_reference: sourceReference,
+  paid_date: calendarDate,
+  service_from: calendarDate,
+  service_to: calendarDate,
+  cash_wages: z.number().positive(),
+}).strict();
+const childAgeTransitionSchema = z.object({
+  service_payment_ledger_source_reference: sourceReference,
+  wage_payments: z.array(childServicePaymentSchema).min(2),
+}).strict();
+const childPayrollEmployeeSchema = familyPayrollBaseSchema.extend({
+  relationship: z.literal("child"),
+  birth_date: calendarDate,
+  birth_date_source_reference: sourceReference,
+  age_21_transition_review: childAgeTransitionSchema.optional(),
+  w2: familyPayrollBaseSchema.shape.w2.unwrap().extend({
+    box3_social_security_wages: z.number().nonnegative(),
+    box5_medicare_wages: z.number().nonnegative(),
+  }).strict().optional(),
+}).strict();
+type ChildPayrollEmployee = z.infer<typeof childPayrollEmployeeSchema>;
+
+function childPost21Wages(employee: ChildPayrollEmployee) {
+  const review = employee.age_21_transition_review;
+  if (!review) return { wages: 0, paidQuarters: [0, 0, 0, 0] };
+  if (employee.birth_date === "2004-02-29") {
+    throw new Error(
+      "Schedule H leap-day age transition needs separate birthday-law review",
+    );
+  }
+  const birthday = `2025${employee.birth_date.slice(4)}`;
+  const paidQuarters = [0, 0, 0, 0], allPaidQuarters = [0, 0, 0, 0];
+  const quarter = (date: string) => Math.ceil(Number(date.slice(5, 7)) / 3) - 1;
+  const references = [
+    employee.relationship_source_reference,
+    employee.birth_date_source_reference,
+    employee.payroll_source_reference,
+    review.service_payment_ledger_source_reference,
+    ...review.wage_payments.map((p) => p.payment_reference),
+    ...(employee.w2 ? [employee.w2.source_reference] : []),
+    ...(employee.federal_withholding_agreement
+      ? [employee.federal_withholding_agreement.w4_source_reference]
+      : []),
+  ];
+  if (new Set(references).size !== references.length) {
+    throw new Error(
+      "Schedule H child transition needs distinct retained source references",
+    );
+  }
+  let wages = 0, total = 0, before = false, after = false;
+  const periods = [...review.wage_payments].sort((a, b) =>
+    a.service_from.localeCompare(b.service_from)
+  );
+  for (const [index, payment] of periods.entries()) {
+    if (
+      payment.paid_date < "2025-01-01" || payment.paid_date > "2025-12-31" ||
+      payment.service_from < "2025-01-01" ||
+      payment.service_to > "2025-12-31" ||
+      payment.service_from > payment.service_to ||
+      payment.paid_date < payment.service_to ||
+      index > 0 && periods[index - 1].service_to >= payment.service_from ||
+      payment.service_from < birthday && payment.service_to >= birthday
+    ) {
+      throw new Error(
+        "Schedule H child transition needs distinct dated services split at the 21st birthday and paid in 2025",
+      );
+    }
+    total += payment.cash_wages;
+    allPaidQuarters[quarter(payment.paid_date)] += payment.cash_wages;
+    if (payment.service_from >= birthday) {
+      after = true;
+      wages += payment.cash_wages;
+      paidQuarters[quarter(payment.paid_date)] += payment.cash_wages;
+    } else before = true;
+  }
+  if (
+    !before || !after || total !== employee.annual_cash_wages ||
+    allPaidQuarters.some((amount, index) =>
+      amount !== employee.quarterly_cash_wages[index]
+    )
+  ) {
+    throw new Error(
+      "Schedule H child transition payment ledger must reconcile both ages and every paid quarter",
+    );
+  }
+  return { wages, paidQuarters };
+}
+
 function parentTaxableCashWages(
   employee: ParentPayrollEmployee,
   employerSsn: string,
@@ -343,11 +432,7 @@ function parentTaxableCashWages(
 const payrollEmployeeSchema = z.union([
   futaEmployeeSchema,
   parentPayrollEmployeeSchema,
-  familyPayrollBaseSchema.extend({
-    relationship: z.literal("child"),
-    birth_date: calendarDate,
-    birth_date_source_reference: z.string().trim().min(1),
-  }).strict(),
+  childPayrollEmployeeSchema,
   familyPayrollBaseSchema.extend({
     relationship: z.literal("spouse"),
     marriage_date: calendarDate,
@@ -414,6 +499,13 @@ export const inputSchema = z.object({
       all_household_employees_included: z.literal(true),
       prior_year_quarter_threshold_met: z.boolean(),
       prior_year_quarter_source_reference: z.string().trim().min(1).optional(),
+      prior_year_eligible_quarter_source_reference: sourceReference.optional(),
+      prior_year_eligible_quarter_cash_wages: z.tuple([
+        z.number().nonnegative(),
+        z.number().nonnegative(),
+        z.number().nonnegative(),
+        z.number().nonnegative(),
+      ]).optional(),
       employee_wages: z.array(payrollEmployeeSchema).min(1),
     }).strict(),
     z.object({
@@ -424,6 +516,13 @@ export const inputSchema = z.object({
       all_household_employees_included: z.literal(true),
       prior_year_quarter_threshold_met: z.boolean(),
       prior_year_quarter_source_reference: z.string().trim().min(1).optional(),
+      prior_year_eligible_quarter_source_reference: sourceReference.optional(),
+      prior_year_eligible_quarter_cash_wages: z.tuple([
+        z.number().nonnegative(),
+        z.number().nonnegative(),
+        z.number().nonnegative(),
+        z.number().nonnegative(),
+      ]).optional(),
       employee_wages: z.array(payrollEmployeeSchema).min(1),
       state_rows: z.array(
         z.object({
@@ -559,7 +658,12 @@ export function computeScheduleHAmounts(
   if (
     unemployment && (
       unemployment.prior_year_quarter_threshold_met !==
-        (unemployment.prior_year_quarter_source_reference !== undefined)
+        (unemployment.prior_year_quarter_source_reference !== undefined) ||
+      unemployment.prior_year_eligible_quarter_cash_wages !== undefined &&
+        unemployment.prior_year_eligible_quarter_cash_wages.some((w) =>
+            w >= 1_000
+          ) !==
+          unemployment.prior_year_quarter_threshold_met
     )
   ) {
     throw new Error(
@@ -568,6 +672,20 @@ export function computeScheduleHAmounts(
   }
   const payroll = unemployment ?? ficaOnly;
   if (payroll) {
+    if (
+      unemployment &&
+      payroll.employee_wages.some((employee) =>
+        employee.relationship === "child" &&
+        employee.age_21_transition_review !== undefined
+      ) && (!unemployment.prior_year_eligible_quarter_cash_wages ||
+        !unemployment.prior_year_eligible_quarter_source_reference ||
+        unemployment.prior_year_eligible_quarter_source_reference ===
+          unemployment.prior_year_quarter_source_reference)
+    ) {
+      throw new Error(
+        "Schedule H child transition prior-year FUTA test needs dated eligible-quarter cash wages",
+      );
+    }
     const ids = payroll.employee_wages.map((employee) => employee.employee_id);
     if (new Set(ids).size !== ids.length) {
       throw new Error("Schedule H FUTA employee payroll IDs must be unique");
@@ -613,6 +731,21 @@ export function computeScheduleHAmounts(
         const parentWages = employee.relationship === "parent"
           ? parentTaxableCashWages(employee, input.family_employer_ssn ?? "")
           : 0;
+        const childTransition = employee.relationship === "child" &&
+            employee.birth_date >= "2004-01-01" &&
+            employee.birth_date <= "2004-12-31"
+          ? childPost21Wages(employee)
+          : undefined;
+        if (
+          employee.relationship === "child" &&
+          ((employee.birth_date >= "2004-01-01" &&
+            employee.birth_date <= "2004-12-31") !==
+            (employee.age_21_transition_review !== undefined))
+        ) {
+          throw new Error(
+            "Schedule H child turning 21 needs the dated service and payment review",
+          );
+        }
         if (employee.relationship === "parent") {
           const reviewReferences =
             employee.parent_fica_review.classification === "excluded"
@@ -643,12 +776,46 @@ export function computeScheduleHAmounts(
           sourcedAdditionalMedicareWages += Math.max(0, parentWages - 200_000);
           sourcedFicaThresholdMet ||= parentWages > 0;
         }
+        if (childTransition) {
+          const ficaWages = childTransition.wages >=
+              TY2025_FICA_CASH_WAGE_THRESHOLD
+            ? childTransition.wages
+            : 0;
+          const expectedSS = Math.min(
+            ficaWages,
+            TY2025_SOCIAL_SECURITY_WAGE_BASE,
+          );
+          if (
+            (employee.w2?.box3_social_security_wages ?? 0) !== expectedSS ||
+            (employee.w2?.box5_medicare_wages ?? 0) !== ficaWages ||
+            ficaWages > 0 && !employee.w2
+          ) {
+            throw new Error(
+              "Schedule H child transition W-2 must match taxable post-21 service wages",
+            );
+          }
+          sourcedSocialSecurityWages += expectedSS;
+          sourcedMedicareWages += ficaWages;
+          sourcedAdditionalMedicareWages += Math.max(0, ficaWages - 200_000);
+          sourcedFicaThresholdMet ||= ficaWages > 0;
+          childTransition.paidQuarters.forEach((wages, index) => {
+            quarterlyWages[index] += wages;
+          });
+        } else if (
+          employee.relationship === "child" &&
+          ((employee.w2?.box3_social_security_wages ?? 0) !== 0 ||
+            (employee.w2?.box5_medicare_wages ?? 0) !== 0)
+        ) {
+          throw new Error(
+            "Schedule H under-21 child W-2 cannot report taxable FICA wages",
+          );
+        }
 
         if (
           taxYear !== 2025 || !input.family_employer_ssn || family ||
           employee.employee_ssn === input.family_employer_ssn ||
           (employee.relationship === "child" &&
-            (employee.birth_date < "2005-01-01" ||
+            (employee.birth_date < "2004-01-01" ||
               employee.birth_date > "2024-12-31")) ||
           (employee.relationship === "spouse" &&
             employee.marriage_date > "2024-12-31") ||
@@ -667,8 +834,8 @@ export function computeScheduleHAmounts(
           );
         }
         sourcedFederalWithholding += withholding;
-        // Parent wages may have a sourced FICA exception. Family wages never
-        // contribute to the FUTA quarterly test or per-employee FUTA cap.
+        // Parent and spouse wages remain excluded. Child services performed
+        // on or after the 21st birthday enter the paid-quarter FUTA test.
         continue;
       }
       const minor = employee.student_minor_fica_exclusion;
@@ -819,6 +986,9 @@ export function computeScheduleHAmounts(
           total +
           (employee.relationship === "unrelated"
             ? Math.min(employee.annual_cash_wages, 7_000)
+            : employee.relationship === "child" &&
+                employee.age_21_transition_review
+            ? Math.min(childPost21Wages(employee).wages, 7_000)
             : 0),
         0,
       );
