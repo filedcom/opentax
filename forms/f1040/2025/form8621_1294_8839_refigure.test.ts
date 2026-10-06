@@ -121,13 +121,20 @@ Deno.test("Form 8621 Election B composes the reviewed Form 8839 staged return in
     "form8621",
     "form8839",
   ]);
-  await Deno.writeFile("/tmp/opentax-form8621-qef-adoption-oct6.pdf", pdf);
+  const dir = Deno.env.get("FORM8621_ADOPTION_EVIDENCE_DIR") ??
+    ".state/research/form8621-qef-adoption";
+  await Deno.mkdir(dir, { recursive: true });
   await Deno.writeTextFile(
-    "/tmp/opentax-form8621-qef-adoption-oct6.xml",
+    `${dir}/source-pending.json`,
+    JSON.stringify({ input, pending }, null, 2),
+  );
+  await Deno.writeFile(`${dir}/return.pdf`, pdf);
+  await Deno.writeTextFile(
+    `${dir}/return.xml`,
     bundle.xml,
   );
   await Deno.writeTextFile(
-    "/tmp/opentax-form8621-qef-adoption-origins-oct6.json",
+    `${dir}/origins.json`,
     JSON.stringify(origins, null, 2),
   );
   const xsd = await new Deno.Command("xmllint", {
@@ -135,7 +142,7 @@ Deno.test("Form 8621 Election B composes the reviewed Form 8839 staged return in
       "--noout",
       "--schema",
       ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
-      "/tmp/opentax-form8621-qef-adoption-oct6.xml",
+      `${dir}/return.xml`,
     ],
     stderr: "piped",
   }).output();
