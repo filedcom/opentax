@@ -408,6 +408,15 @@ export const form8863: MefFormDescriptor<"f8863", F8863Input> = {
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8863.pdf",
   build(fields, context) {
     if (Object.keys(fields).length === 0) return "";
+    if (
+      fields.f8863s?.length &&
+      (context?.filer?.filingStatus === 3 ||
+        fields.f8863s.some((s) => s.filing_status === "mfs"))
+    ) {
+      throw new Error(
+        "Married filing separately cannot file an education credit claim source",
+      );
+    }
     const lines = calculateForm8863Lines(fields);
     if (!lines || (lines.line8 === 0 && lines.line19 === 0)) return "";
     const students = [

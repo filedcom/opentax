@@ -15,6 +15,51 @@ export const settledParentTaxReturnSchema = z.object({
 }).strict();
 const parentSelectionSchema = z.discriminatedUnion("kind", [
   z.object({
+    kind: z.literal("divorced_custodial_remarried_mfs_greater_taxable_income"),
+    source_document_reference: reference,
+    divorce_decree_record_reference: reference,
+    remarriage_certificate_record_reference: reference,
+    remarriage_date: z.string().date(),
+    residence_calendar_record_reference: reference,
+    separate_filing_record_reference: reference,
+    competing_dependency_claim_record_reference: reference,
+    student_ssn: ssn,
+    custodial_parent_ssn: ssn,
+    stepparent_ssn: ssn,
+    noncustodial_parent_ssn: ssn,
+    custodial_parent_nights: z.number().int().min(0).max(365),
+    noncustodial_parent_nights: z.number().int().min(0).max(365),
+    custodial_parent_remarried: z.literal(true),
+    spouses_lived_together_all_year: z.literal(true),
+    noncommunity_property_residence_review: z.object({
+      source_document_reference: reference,
+      state: z.literal("NY"),
+      full_year_domicile_days: z.literal(365),
+      separate_owned_income_reviewed: z.literal(true),
+    }).strict(),
+    separate_return_deduction_reviews: z.array(
+      z.object({
+        source_document_reference: reference,
+        taxpayer_ssn: ssn,
+        spouse_ssn: ssn,
+        itemized_payment_inventory_complete: z.literal(true),
+        real_estate_tax_payments: z.array(
+          z.object({
+            source_document_reference: reference,
+            assessor_bill_reference: reference,
+            payment_date: z.string().date(),
+            payer_ssn: ssn,
+            property_owner_ssn: ssn,
+            property_address: reference,
+            deductible_real_estate_tax_confirmed: z.literal(true),
+            amount: z.number().int().positive(),
+          }).strict(),
+        ),
+      }).strict(),
+    ).length(2),
+    eligible_parent_returns: z.array(settledParentTaxReturnSchema).length(2),
+  }).strict(),
+  z.object({
     kind: z.literal("divorced_custodial_remarried_mfj"),
     source_document_reference: reference,
     divorce_decree_record_reference: reference,
