@@ -175,23 +175,20 @@ Deno.test("Form 4972 full-share beneficiary NUA, annuity, and allocations reconc
   );
   const fractional = calculated({ ...beneficiary, capital_gain_amount: 9_999 });
   const fractionalPending = pending(fractional.line30 as number);
-  assertThrows(
-    () =>
-      buildIRS4972(fractional, {
-        filer,
-        pending: {
-          ...fractionalPending,
-          f1099r: {
-            f1099rs: [{
-              ...fractionalPending.f1099r.f1099rs[0],
-              box3_capital_gain: 9_999,
-            }],
-          },
-        },
-      }),
-    Error,
-    "exact NUA capital allocation",
+  const fractionalSources = {
+    ...fractionalPending,
+    f1099r: {
+      f1099rs: [{
+        ...fractionalPending.f1099r.f1099rs[0],
+        box3_capital_gain: 9_999,
+      }],
+    },
+  };
+  assertStringIncludes(
+    buildIRS4972(fractional, { filer, pending: fractionalSources }),
+    ">10999</CapitalGainElectionAmt>",
   );
+  assertEquals(projectedFields(fractional, fractionalSources)?.line6, 10999);
 });
 
 Deno.test("Form 4972 NUA plus annuity rejects altered box 8, line 11, tax, or partial share", () => {
@@ -235,23 +232,20 @@ Deno.test("Form 4972 NUA plus annuity rejects altered box 8, line 11, tax, or pa
   );
   const roundedFields = calculated({ ...source, capital_gain_amount: 9_999 });
   const roundedPending = pending(roundedFields.line30 as number);
-  assertThrows(
-    () =>
-      buildIRS4972(roundedFields, {
-        filer,
-        pending: {
-          ...roundedPending,
-          f1099r: {
-            f1099rs: [{
-              ...roundedPending.f1099r.f1099rs[0],
-              box3_capital_gain: 9_999,
-            }],
-          },
-        },
-      }),
-    Error,
-    "exact NUA capital allocation",
+  const roundedSources = {
+    ...roundedPending,
+    f1099r: {
+      f1099rs: [{
+        ...roundedPending.f1099r.f1099rs[0],
+        box3_capital_gain: 9_999,
+      }],
+    },
+  };
+  assertStringIncludes(
+    buildIRS4972(roundedFields, { filer, pending: roundedSources }),
+    ">11999</CapitalGainElectionAmt>",
   );
+  assertEquals(projectedFields(roundedFields, roundedSources)?.line6, 11999);
 });
 
 Deno.test("Form 4972 Part-III-only full-share NUA plus annuity omits Part II", () => {

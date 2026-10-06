@@ -1,3 +1,4 @@
+import { sumSourceMoney } from "../nodes/intermediate/forms/form4972/source-rounding.ts";
 import { isSourceMoney } from "../nodes/intermediate/forms/form4972/source-rounding.ts";
 import {
   reconcileParticipantIssuedInventory,
@@ -248,9 +249,9 @@ export function reconcileForm4972Collection(
                 ].every((amount) =>
                   typeof amount === "number" && isSourceMoney(amount)
                 ))) ||
-            sources.reduce((sum, source) => sum + (source.box6_nua ?? 0), 0) !==
+            sumSourceMoney(sources.map((item) => (item.box6_nua ?? 0))) !==
               fields.box6_nua)) ||
-        sources.reduce((sum, source) => sum + (source.box8_other ?? 0), 0) !==
+        sumSourceMoney(sources.map((item) => (item.box8_other ?? 0))) !==
           (fields.annuity_actuarial_value ?? 0) ||
         ((fields.annuity_actuarial_value ?? 0) !== 0 &&
           fields.elect_10yr_averaging !== true) ||

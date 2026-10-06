@@ -1,3 +1,4 @@
+import { sumSourceMoney } from "../nodes/intermediate/forms/form4972/source-rounding.ts";
 import {
   allocatedSourceCents,
   grossedSourceCents,
@@ -31,14 +32,12 @@ export function reconcileForm4972Multiple1099R(
   const partialBeneficiary = share < 100;
   const annuityCopies = elected.filter((item) => (item.box8_other ?? 0) > 0);
   const annuityShare = annuityCopies[0]?.box8_pct_total;
-  const nua = elected.reduce((sum, item) => sum + (item.box6_nua ?? 0), 0);
-  const gain = elected.reduce(
-    (sum, item) => sum + (item.box3_capital_gain ?? 0),
-    0,
+  const nua = sumSourceMoney(elected.map((item) => (item.box6_nua ?? 0)));
+  const gain = sumSourceMoney(
+    elected.map((item) => (item.box3_capital_gain ?? 0)),
   );
-  const taxable = elected.reduce(
-    (sum, item) => sum + (item.box2a_taxable_amount ?? 0),
-    0,
+  const taxable = sumSourceMoney(
+    elected.map((item) => (item.box2a_taxable_amount ?? 0)),
   );
   const death = form.death_benefit_allocation;
   const estate = form.partial_estate_tax_source;
@@ -112,7 +111,7 @@ export function reconcileForm4972Multiple1099R(
     taxable !== form.lump_sum_amount ||
     gain !== (form.capital_gain_amount ?? 0) ||
     nua !== (form.box6_nua ?? 0) ||
-    elected.reduce((sum, item) => sum + (item.box8_other ?? 0), 0) !==
+    sumSourceMoney(elected.map((item) => (item.box8_other ?? 0))) !==
       (form.annuity_actuarial_value ?? 0) ||
     (partialBeneficiary && (form.annuity_share_pct ?? null) !==
         (annuityShare ?? null)) ||

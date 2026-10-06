@@ -1,3 +1,4 @@
+import { sumSourceMoney } from "../../intermediate/forms/form4972/source-rounding.ts";
 import {
   participantInventorySchema,
   reconcileParticipantIssuedInventory,
@@ -1614,20 +1615,15 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         source_document_references,
         form4972_plan: plan,
         recipient: group[0].ts,
-        lump_sum_amount: group.reduce(
-          (sum, item) => sum + item.box2a_taxable_amount!,
-          0,
+        lump_sum_amount: sumSourceMoney(
+          group.map((item) => item.box2a_taxable_amount!),
         ),
-        capital_gain_amount: group.reduce(
-          (sum, item) => sum + (item.box3_capital_gain ?? 0),
-          0,
+        capital_gain_amount: sumSourceMoney(
+          group.map((item) => (item.box3_capital_gain ?? 0)),
         ),
         ...(group.some((item) => (item.box6_nua ?? 0) > 0)
           ? {
-            box6_nua: group.reduce(
-              (sum, item) => sum + (item.box6_nua ?? 0),
-              0,
-            ),
+            box6_nua: sumSourceMoney(group.map((item) => (item.box6_nua ?? 0))),
           }
           : {}),
         ...(group.length === 1 && group[0].box8_pct_total !== undefined
@@ -1635,9 +1631,8 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
           : {}),
         ...(group.some((item) => (item.box8_other ?? 0) > 0)
           ? {
-            annuity_actuarial_value: group.reduce(
-              (sum, item) => sum + (item.box8_other ?? 0),
-              0,
+            annuity_actuarial_value: sumSourceMoney(
+              group.map((item) => (item.box8_other ?? 0)),
             ),
           }
           : {}),
@@ -1778,34 +1773,29 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         recipient: first.ts,
         ...(partialBeneficiary ? { recipient_ssn: first.recipient_ssn } : {}),
         ...(partialBeneficiary ? { recipient_share_pct: share } : {}),
-        lump_sum_amount: lumpItems.reduce(
-          (sum, item) => sum + item.box2a_taxable_amount!,
-          0,
+        lump_sum_amount: sumSourceMoney(
+          lumpItems.map((item) => item.box2a_taxable_amount!),
         ),
-        ...(lumpItems.reduce(
-            (sum, item) => sum + (item.box3_capital_gain ?? 0),
-            0,
+        ...(sumSourceMoney(
+            lumpItems.map((item) => (item.box3_capital_gain ?? 0)),
           ) > 0
           ? {
-            capital_gain_amount: lumpItems.reduce(
-              (sum, item) => sum + (item.box3_capital_gain ?? 0),
-              0,
+            capital_gain_amount: sumSourceMoney(
+              lumpItems.map((item) => (item.box3_capital_gain ?? 0)),
             ),
           }
           : {}),
         ...(lumpItems.some((item) => (item.box6_nua ?? 0) > 0)
           ? {
-            box6_nua: lumpItems.reduce(
-              (sum, item) => sum + (item.box6_nua ?? 0),
-              0,
+            box6_nua: sumSourceMoney(
+              lumpItems.map((item) => (item.box6_nua ?? 0)),
             ),
           }
           : {}),
         ...(lumpItems.some((item) => (item.box8_other ?? 0) > 0)
           ? {
-            annuity_actuarial_value: lumpItems.reduce(
-              (sum, item) => sum + (item.box8_other ?? 0),
-              0,
+            annuity_actuarial_value: sumSourceMoney(
+              lumpItems.map((item) => (item.box8_other ?? 0)),
             ),
             ...(partialBeneficiary ? { annuity_share_pct: annuityShare } : {}),
           }

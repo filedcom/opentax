@@ -87,3 +87,15 @@ export function sourceDistributionFraction(percentage: number): string {
   return `${padded.slice(0, -places)}.${padded.slice(-places)}`
     .replace(/0+$/, "").replace(/\.$/, "");
 }
+
+/** Add issued cents before rounding a filed total, including large inventories. */
+export function sumSourceMoney(amounts: readonly number[]): number {
+  if (amounts.some((amount) => !isSourceMoney(amount))) {
+    throw new Error("Form4972 issued money needs exact cents");
+  }
+  const cents = amounts.reduce((sum, amount) => sum + sourceCents(amount), 0);
+  if (!Number.isSafeInteger(cents)) {
+    throw new Error("Form4972 issued inventory total exceeds exact cent range");
+  }
+  return cents / 100;
+}
