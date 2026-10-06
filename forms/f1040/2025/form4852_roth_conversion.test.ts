@@ -228,9 +228,12 @@ Deno.test("Roth conversion FIFO rejects changed historical source facts and reta
   const pending = structuredClone(prepared.bundle.pending);
   const altered = {
     ...pending,
+    f4852: { ...pending.f4852, reviewed_source: review },
     f4852_reviewed_source: { reviewed_source: review },
   };
-  await assertRejects(() =>
-    f1040_2025.prepareReturn(altered, source.filer, [], documents)
+  await assertRejects(
+    () => f1040_2025.prepareReturn(altered, source.filer, [], documents),
+    Error,
+    "prior filed conversion8606 actual PDF",
   );
 });
