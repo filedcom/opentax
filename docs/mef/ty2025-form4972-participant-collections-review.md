@@ -72,5 +72,46 @@ adjusted standard deduction and6000 senior deduction: taxable250. The official
 [2025 tax table](https://www.irs.gov/publications/p1040) gives26 regular tax.
 Special tax3198 is added once, yielding1040line16=3224.
 
-Final gates, preserved source replays and visual review are recorded after they
-reach terminal status. No parent-completion credit is claimed here.
+Final ordinary typed source/native/XSD/PDF and existing core gate reached
+terminal exit0: **116 passed,0 failed** (4m20s). It held production digest
+`0d2eb98dae5f9843aad0f09222f8c63ad9d78c7bd60754193d1e63956253dfe2`
+at code/test commit `75e35c3b70ba891bc55bfc0cbe7e8998eb822a64`.
+Log: `/tmp/opentax-4972-participant-final-v8-oct6.log`.
+
+The final actual saved-source export is
+`/tmp/opentax-4972-participant-final-savedsource-v2-oct6`:
+six positive packets,12 Form4972 documents,26 issued1099R copies and36 flattened
+PDF pages. Every full native1040 packet passes the complete reviewed XSD; all
+six PDFs reopen with zero Fields/widgets. All36 page instances were visually
+inspected, including the12 new shared-employer inherited/own spouse pages.
+Three additional actual staged packets retain11 participant forms and27 issued
+copies, with explicit native and direct-PDF max2 rejection.
+
+The original four captured JSON/XML/PDF packets were transferred byte-for-byte
+from the retained runtime-v4 archive. The two new employer-plan packets were
+transferred byte-for-byte from the separate held-source-v1 archive. Captured filer
+timestamps were reused; original archives were not rewritten. The ordinary
+final-v8 gate's input, pending, prepared pending, carry, page origins, independent
+expected results and PDF bytes exactly match these final packets. Its fresh XML
+ReturnTs may differ. `source-transfer-report.json` retains per-file SHA256 and
+these comparisons. A digest proves retained byte identity, not issuer provenance.
+
+Final replay at held75e executed95 original saved input wrappers from nine
+existing archives, without fixture factories or archive writes. All95 match
+pending exactly, native XML exactly except ReturnTs, and PDF bytes exactly;
+input bytes remained unchanged. Those historical wrappers contain no saved carry
+field: `carryExact:false` records that unavailable comparison, not a mismatch.
+Final rehash preserves all376 archived physical files. Report/log:
+`/tmp/opentax-4972-participant-all-saved-final-v2-replay-oct6.{json,log}`.
+The earlier95 replay started before the explicit max2 boundary; the next95 replay
+held7e2 after max2 but before employer-plan correction. Both are historical and
+are not the final held-code preservation result. The114-pass ordinary core gate
+at7e2 likewise predates the employer-plan correction.
+
+A read-only baseline run against87012d21e uses the same nine saved input maps;
+all nine produce unsupported diagnostics. Final saved input maps are retained
+without factory regeneration. Initial failed runtime gates and superseded typed
+gates remain preserved with their actual outcomes. Final116-pass gate is the
+ordinary typed result after the plan-identity and own-date-control corrections.
+No parent-completion credit, issuer authentication, prior accepted election,
+IRS acceptance, or authorized overflow filing route is claimed here.
