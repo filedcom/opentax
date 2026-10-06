@@ -224,7 +224,9 @@ export const form7206Pdf: PdfFormDescriptor = {
     Number(projected.line14 ?? 0) > 0,
   instances: (fields, filer, allPending) => {
     if (fields.independent_schedule_c_plans === undefined) return [fields];
-    return assertIndependentOwnerHealth(allPending, filer, fields).rows.map((
+    return assertIndependentOwnerHealth(allPending, filer, fields).rows.filter(
+      (row) => row.independent_plan_required,
+    ).map((
       row,
     ) => ({
       ...row,

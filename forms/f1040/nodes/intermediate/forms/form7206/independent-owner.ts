@@ -6,6 +6,7 @@ import {
 } from "../schedule_se/owner-calculation.ts";
 import {
   calculateSingleScheduleCForm7206,
+  eligiblePlanPremiums,
   premiumMonthSchema,
   type SingleScheduleCPlan,
 } from "./single-source.ts";
@@ -82,18 +83,21 @@ export function calculateIndependentOwnerHealth(
   if (
     source.taxpayer_identity.ssn !== owned.source.identity.primary_ssn ||
     source.spouse_identity.ssn !== owned.source.identity.spouse_ssn ||
-    owned.source.businesses.length !== 2 || owned.instances.length !== 2 ||
-    !owned.source.businesses.some((b) => b.kind === "schedule_c") ||
+    owned.source.businesses.length !== 2 ||
+    (owned.source.businesses.every((b) => b.kind === "schedule_f")
+      ? !owned.source.businesses.some((b) => b.net_profit > 0)
+      : owned.instances.length !== 2 ||
+        owned.source.businesses.some((b) => b.net_profit <= 0)) ||
     ["T", "S"].some((recipient) =>
       owned.source.businesses.filter((b) =>
         b.recipient === recipient &&
-        ["schedule_c", "schedule_f"].includes(b.kind) && b.net_profit > 0 &&
+        ["schedule_c", "schedule_f"].includes(b.kind) &&
         b.farm_optional_method_elected !== true
       ).length !== 1
     )
   ) {
     throw new Error(
-      "Independent health plans need the two actual profitable regular sole C/F owners and distinct joint identities",
+      "Independent health plans need the two actual regular sole C/F owners and distinct joint identities",
     );
   }
   const reviews = new Set<string>(),
@@ -130,7 +134,10 @@ export function calculateIndependentOwnerHealth(
         b.source_reference === plan.business_reference
       ),
       owner = owned.instances.find((o) => o.recipient === plan.recipient);
-    if (!business || !owner || business.recipient !== plan.recipient) {
+    if (
+      !business || business.recipient !== plan.recipient ||
+      (business.net_profit > 0 && !owner)
+    ) {
       throw new Error(
         "Health plan must use its actual establishing business and proprietor",
       );
@@ -175,26 +182,48 @@ export function calculateIndependentOwnerHealth(
     }
     // These operands are derived from one actual business within this owner;
     // no return-wide sole-business or externally supplied income assertion is used.
-    const calculationPlan: SingleScheduleCPlan = {
-      business_reference: plan.business_reference,
-      recipient: plan.recipient as TS,
-      plan_identifier: plan.plan_identifier,
-      taxpayer_identity: source.taxpayer_identity,
-      ...(plan.recipient === "S" ||
-          plan.premium_months.some((m) => m.covered_person === "spouse")
-        ? { spouse_identity: source.spouse_identity }
-        : {}),
-      premium_months: plan.premium_months,
-      schedule_c_line31_net_profit: business.net_profit,
-      schedule1_line15_se_tax_deduction: owner.line13,
-      schedule1_line16_retirement_deduction: 0,
-      plan_established_under_business: true,
-      sole_positive_business_verified: true,
-      no_form2555: true,
-      no_schedule_se_optional_method: true,
-      no_other_earned_income: true,
-    };
-    const rawLines = calculateSingleScheduleCForm7206(calculationPlan);
+    const calculationPlan:
+      & Omit<SingleScheduleCPlan, "sole_positive_business_verified">
+      & { sole_positive_business_verified: boolean } = {
+        business_reference: plan.business_reference,
+        recipient: plan.recipient as TS,
+        plan_identifier: plan.plan_identifier,
+        taxpayer_identity: source.taxpayer_identity,
+        ...(plan.recipient === "S" ||
+            plan.premium_months.some((m) => m.covered_person === "spouse")
+          ? { spouse_identity: source.spouse_identity }
+          : {}),
+        premium_months: plan.premium_months,
+        schedule_c_line31_net_profit: business.net_profit,
+        schedule1_line15_se_tax_deduction: owner?.line13 ?? 0,
+        schedule1_line16_retirement_deduction: 0,
+        plan_established_under_business: true,
+        sole_positive_business_verified: business.net_profit > 0,
+        no_form2555: true,
+        no_schedule_se_optional_method: true,
+        no_other_earned_income: true,
+      };
+    const eligible = eligiblePlanPremiums(plan.premium_months);
+    const rawLines = business.net_profit > 0
+      ? calculateSingleScheduleCForm7206({
+        ...calculationPlan,
+        sole_positive_business_verified: true,
+      })
+      : {
+        line1: eligible,
+        line2: 0,
+        line3: eligible,
+        line4: business.net_profit,
+        line5: business.net_profit,
+        line6: 0,
+        line7: 0,
+        line8: business.net_profit,
+        line9: 0,
+        line10: business.net_profit,
+        line12: 0,
+        line13: business.net_profit,
+        line14: 0,
+      };
     // Each filed copy settles its finalized lines before the return sums deductions.
     const lines = Object.fromEntries(
       Object.entries(rawLines).map((
@@ -210,7 +239,17 @@ export function calculateIndependentOwnerHealth(
       recipient: plan.recipient,
       recipient_name: recipient.name,
       recipient_ssn: recipient.ssn,
-      independent_plan_required: true,
+      independent_plan_required: business.net_profit > 0,
+      ...(business.net_profit <= 0
+        ? {
+          nonpositive_business_income_source: {
+            net_profit: business.net_profit,
+            recipient: business.recipient,
+            source_reference: business.source_reference,
+            health_deduction_capacity: 0,
+          },
+        }
+        : {}),
       ...lines,
       calculation_plan: calculationPlan,
     };
@@ -282,11 +321,14 @@ export function reconcileIndependentOwnerHealthGraph(
   );
   if (
     fields.marketplace_ptc_premium_overlap !== false ||
-    (c?.unadjusted_source !== true && c?.reviewed_wotc_source !== true) ||
+    (expected.length > 0 && c?.unadjusted_source !== true &&
+      c?.reviewed_wotc_source !== true) ||
+    (expected.length === 0 && c !== undefined) ||
     canonical(actual) !== canonical(expected) || !se ||
     se.net_profit_schedule_c !==
       expected.reduce((n, b) => n + b.line31_net_profit, 0) ||
     (expectedF.length > 0 && farms?.regular_source !== true) ||
+    (expectedF.length === 0 && farms !== undefined) ||
     canonical(actualF) !== canonical(expectedF) ||
     se.net_profit_schedule_f !==
       expectedF.reduce((sum, f) => sum + f.line34_net_profit, 0) ||

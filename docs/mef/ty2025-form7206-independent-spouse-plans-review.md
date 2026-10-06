@@ -153,3 +153,83 @@ cap and filed allocation are preserved.
 Source `c7c8c4d34` passes the six-file main gate: **22 passed, 0 failed (2m13s)**. It includes the new C/F returns, prior independent C/C plans, spouse Medicare, controlled C/F WOTC, controlled farms and the standalone Publication974 import. Log `/tmp/opentax-mixed-cf-health-current-main.log`, SHA256 `000df1e12ebd396ff791253578f8a49db15a00f62e0a1bd130a44a0642f09d35`.
 
 A fresh current-main batch at `/tmp/opentax-mixed-cf-health-held-main-oct6` passes held replay of **7 cases / all212 reviewed pages**. All seven PDFs are byte-identical to the isolated reviewed outputs; form copies, owners and page origins agree before reviewed page slots are transferred. The new source/XML snapshots retain current graph source fields; the original artifacts remain untouched. Checker `/tmp/opentax-mixed-cf-health-held-main-check.log`; manifestSHA256 `a8d24f7cf57ec409b53899ff7b69e3039f6cd1c58f85bd450dd4ed0edb5651c3`. All seven full return XMLs pass local2025v5.4XSD. These prove the documented C/F health routes; wider owner/source combinations and IRS acceptance remain open.
+## Two-farm extension learning checkpoint (2026-10-06)
+
+Before edits: retain both real farm proprietors and independent section52
+ownership exception sources, both agricultural G/secondary NEC issued copies,
+certified employee payroll, and full determined reductions before separate owner
+SE. A health plan cannot borrow its other spouse's profit or half-SE. A loss
+proprietor has no positive net-profit health deduction capacity; retain that
+owner's actual policy/payments and source inventory without inventing positive
+income or an SE instance. Optional/patron/retirement/PTC and unsupported
+multiple-owner-business branches remain excluded. Separate-copy filed rounding
+and actual current-use credit limitation from the preceding C/F proof must be
+preserved.
+
+## Actual independent two-farm plans (2026-10-06)
+
+Extension proof base `d1e1376a0` retains the existing twoFarmWotc public issued
+agricultural 1099-G/secondary NEC, actual farm identities, direct-employer
+payroll/SWA/W2 and all four reviewed spousal-attribution exceptions. Each owner
+has one regular cash farm and one established plan with
+insurer/EIN/policy/holder and twelve actual monthly payment/date/source records.
+Mailing or marriage facts alone do not classify the employers as independent.
+Full determined wage reductions precede each owner's SE, health, QBI and joint
+current-credit use.
+
+[IRS Instructions for Form7206](https://www.irs.gov/instructions/i7206) require
+positive C/F profit (except stated optional-method and other qualifying routes),
+exclude employer-eligible months, require separate forms for established plans,
+and prohibit using health deductions to reduce SE earnings. Applying those
+separate-owner income limits, the actual negative farm retains its policy,
+payments, loss and zero capacity; it does not borrow spouse profit and does not
+emit a fabricated positive SE or Form7206 copy. The derived unfiled row is
+explicitly marked `independent_plan_required:false`, with actual negative source
+income. Both successful zero deductions from excluded months remain filed on
+profitable owners' copies. Raw payment cents are retained; each filed copy
+rounds finalized lines before Schedule1 sums line14.
+
+| Actual public case    | Filed health sum |   Raw AGI | QBI deduction | Current WOTC use | Total tax |
+| --------------------- | ---------------: | --------: | ------------: | ---------------: | --------: |
+| full                  |            15600 | 302729.86 |         14546 |             4800 |     52033 |
+| income limited        |            88329 | 230000.86 |             0 |             4800 |     38233 |
+| excluded months       |            10900 | 307429.86 |         15486 |             4800 |     52936 |
+| all months excluded   |                0 | 318329.86 |         17666 |             4800 |     55028 |
+| phase in              |            15600 | 480053.37 |         32337 |             4800 |    118927 |
+| above, limited credit |            15600 | 995328.86 |        119066 |           183719 |     85590 |
+| loss owner            |             9600 | 463252.37 |         21189 |             4800 |    109884 |
+
+Below threshold filed farm profits are 36401/56401 after the full 2400 credit
+reduction per farm. Filed half-SE is 488/3985; income-limited health is
+35913/52416. Raw full premiums 6000.48/9600.48 settle to 6000/9600. Above range,
+the full 384000 reduction remains although only 183719 is currently used. Loss
+profits are -10001/196401, spouse half-SE 13548, primary health capacity zero;
+primary paid premiums remain retained. Schedule8995-A C nets the actual loss.
+
+Terminal evidence: `/tmp/two-farm-health-final.log` 2/0 (40s), full public
+graph, native/XML full2025v5.4 schema and rendered PDF; compatibility
+`/tmp/two-farm-health-compat-final.log` 16/0 (1m27s), paired C/C, mixed C/F,
+two-farm WOTC and farm-loss source routes. Added negative replay covers
+fabricated absent business kinds and forged loss capacity, in addition to
+issuer/owner/date/
+policy/payment/inventory/agriculture/payroll/control/SE/health/AGI/QBI and
+detached descriptor conflicts. Seven reusable `owned-two-farm-health-*` held
+fixtures produce 217 pages (31/30/31/31/32/32/30). All pages were reviewed
+through 21 contact sheets; thirteen Form7206 pages additionally reviewed at full
+size, including spouse-only SE/7206 ownership in the loss packet.
+
+Artifacts:
+`/tmp/opentax-two-owned-farm-health-oct6/.state/research/ty2025-filled-pdf-review/2026-10-06-two-owned-farm-health`
+and sibling `-visual`; generator `/tmp/two-farm-health-held-generate.log`
+terminal0. Final held replay/hash/schema evidence is
+`/tmp/two-farm-health-held-check.log`.
+
+This establishes regular reviewed independent two-farm source plans, including
+one actual loss owner, without extending loss C/F, multiple businesses per
+owner, optional/patron/retirement/PTC or unsupported ordinary advanced farm
+plans. The broader owner/health/QBI parent and external insurer/employer/SWA
+authentication, IRS business rules and ATS acceptance remain open. Synthetic
+reviewed issued examples demonstrate binding and arithmetic, not authentication.
+
+Single-plan calculator/actual zero-eligible Medicare source compatibility:
+`/tmp/two-farm-health-single-compat.log`, terminal0, 14/0 (7s).

@@ -190,3 +190,15 @@ held replay confirms all 212 visually reviewed pages. See
 [the mixed C/F source equations and terminal evidence](ty2025-form7206-independent-spouse-plans-review.md#mixed-cf-independent-plan-extension-2026-10-06).
 Broader loss/optional/patron, multiple-business-owner, ordinary advanced farm,
 retirement/PTC and external issuer authentication scope remains open.
+
+### Independent two-farm source extension (2026-10-06)
+
+The existing regular owner-health source family now retains actual independent
+primary/spouse cash-farm WOTC income/payroll/control records with one
+established issuer/payment/month plan per owner, full/limited/month-excluded
+deductions, below/phase/above QBI and limited current credit use. An actual loss
+proprietor's paid plan and negative income remain source-bound with zero
+capacity and no fabricated positive Form7206/SE copy. See the
+independent-spouse-plans-review proof table, seven held source fixtures and
+remaining parent limits; this does not establish
+optional/patron/PTC/multiple-business or external authentication.

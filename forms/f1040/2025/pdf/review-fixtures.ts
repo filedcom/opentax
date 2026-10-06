@@ -1,6 +1,7 @@
 import { businessTipSourceInputs } from "./business-tip-source.fixture.ts";
 import { multipleAnnuityReviewFixtures } from "./review-4972-multiple-annuity.fixture.ts";
 import { multipleNuaReviewFixtures } from "./review-4972-multiple-nua.fixture.ts";
+import { twoFarmHealthFixtures } from "./review-two-farm-health.fixture.ts";
 import { mixedCfHealthFixtures } from "./review-mixed-cf-health.fixture.ts";
 import { qualifiedTipReviewFixtures } from "./review-qualified-tips.fixture.ts";
 import { form8941MixedThreeReviewFixtures } from "./review-8941-mixed-three.fixture.ts";
@@ -9016,6 +9017,7 @@ const existingPdfReviewFixtures: readonly PdfReviewFixture[] = [
   ...multipleAnnuityReviewFixtures,
   ...multipleNuaReviewFixtures,
   ...twoFarmWotcFixtures(farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!)),
+  ...twoFarmHealthFixtures(twoFarmWotcFixtures(farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!))),
   issuedRecaptureReviewFixture(false), issuedRecaptureReviewFixture(true),
   ...controlledFarmWotcFixtures(twoFarmWotcFixtures(farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!))),
   ...mixedControlledWotcFixtures(controlledFarmWotcFixtures(twoFarmWotcFixtures(farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!))), controlledWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!)[0]),

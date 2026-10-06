@@ -65,7 +65,9 @@ function buildIRS7206(
       context?.filer,
       fields,
     );
-    return family.rows.map((row) =>
+    return family.rows.filter((row) => row.independent_plan_required).map((
+      row,
+    ) =>
       elements("IRS7206", [
         element("NameLine1Txt", row.recipient_name),
         element("SSN", row.recipient_ssn),

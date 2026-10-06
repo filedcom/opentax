@@ -9,7 +9,10 @@ const normalizedName = (name: string) =>
   name.trim().replace(/\s+/g, " ").toUpperCase();
 
 export function assertForm7206SpouseCoverage(
-  plan: SingleScheduleCPlan,
+  plan: Pick<
+    SingleScheduleCPlan,
+    "recipient" | "premium_months" | "taxpayer_identity" | "spouse_identity"
+  >,
   pending: Record<string, Record<string, unknown>> | undefined,
   filer?: FilerIdentity,
 ): void {

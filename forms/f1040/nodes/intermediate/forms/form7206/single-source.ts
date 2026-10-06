@@ -87,11 +87,10 @@ export type Form7206Lines = z.infer<typeof form7206LinesSchema>;
 
 // ─── Pure Helpers ─────────────────────────────────────────────────────────────
 
-export function calculateSingleScheduleCForm7206(
-  raw: SingleScheduleCPlan,
-): Form7206Lines {
-  const source = singleScheduleCPlanSchema.parse(raw);
-  const totalPublicSafetyExclusion = source.premium_months.reduce(
+export function eligiblePlanPremiums(
+  months: readonly z.infer<typeof premiumMonthSchema>[],
+): number {
+  const totalPublicSafetyExclusion = months.reduce(
     (sum, month) => sum + month.public_safety_officer_excluded_amount,
     0,
   );
@@ -100,7 +99,7 @@ export function calculateSingleScheduleCForm7206(
       "Form 7206 public-safety-officer exclusion exceeds the annual $3,000 limit",
     );
   }
-  const eligiblePremiums = source.premium_months.reduce((sum, month) => {
+  const eligiblePremiums = months.reduce((sum, month) => {
     if (month.marketplace_policy || month.long_term_care_policy) {
       throw new Error(
         "Form 7206 bounded one-plan calculation excludes Marketplace and long-term-care premiums",
@@ -126,14 +125,20 @@ export function calculateSingleScheduleCForm7206(
   }, 0);
   if (
     eligiblePremiums === 0 &&
-    !source.premium_months.every((month) =>
-      month.eligible_for_subsidized_employer_plan
-    )
+    !months.every((month) => month.eligible_for_subsidized_employer_plan)
   ) {
     throw new Error(
       "Form 7206 zero eligible premiums need a reviewed employer-plan exclusion for every month",
     );
   }
+  return eligiblePremiums;
+}
+
+export function calculateSingleScheduleCForm7206(
+  raw: SingleScheduleCPlan,
+): Form7206Lines {
+  const source = singleScheduleCPlanSchema.parse(raw);
+  const eligiblePremiums = eligiblePlanPremiums(source.premium_months);
   const profit = source.schedule_c_line31_net_profit;
   const seTax = source.schedule1_line15_se_tax_deduction;
   const retirement = source.schedule1_line16_retirement_deduction;
