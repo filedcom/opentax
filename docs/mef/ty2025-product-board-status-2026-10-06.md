@@ -2694,3 +2694,8 @@ Existing Roth consumed-history, natural-resource donation reductions and educati
 
 
 Current main6d3e0f26d is tracked-clean. Previous goal work made progress with verified parser correction and ready source evidence; the intervening daemon diagnosis did not change board state. Ready a3f64c873 has three full-XSD reviewed packets/33 pages and6/0+32/0. Independent ea247ac89 fixes double-applied Form3800 allowance: actual18347 less9533=8814, shadow17867 less9573=8294, deferral520; 21 reviewed pages,8/0+31/0. Both need fresh main verification and retained artifact preservation before ledger credit. FullV5 wrapper65945/Deno65949 verified live81m59s; no terminal result. Frozen52/future untouched; ledger1460.
+
+
+## Before standard credit evidence runner repair
+
+Integrated a31d6b09a/41ded3aae. Fresh standard source command ended4/4 solely NotCapable for explicit FORM8621_EDUCATION_EVIDENCE_DIR/FORM8621_BUSINESS_EVIDENCE_DIR; all four packet builds reached directory access, so no passing packet/XSD claim yet. Existing adoption module also reads FORM8621_ADOPTION_EVIDENCE_DIR. Add only those named permissions to the standard task, then rerun; preserve failed log /tmp/opentax-qef-credit-current-main-source-oct6.log. Compatibility59607 remains live. Frozen52/future untouched, ledger1460.
