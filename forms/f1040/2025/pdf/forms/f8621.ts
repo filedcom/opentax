@@ -83,7 +83,7 @@ const partVFields = Array.from(
 );
 const continuationDescriptor: PdfFormDescriptor = {
   pendingKey: "form8621",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8621.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f8621--2025.pdf",
   fields: partVFields,
   pageIndices: () => [2],
 };
@@ -93,7 +93,7 @@ const partVIFields = Array.from(
 );
 const partVIContinuationDescriptor: PdfFormDescriptor = {
   pendingKey: "form8621",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8621.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f8621--2025.pdf",
   fields: partVIFields,
   pageIndices: () => [3],
 };
@@ -108,7 +108,7 @@ function lineFrom(fields: Record<string, unknown>): Form8621Lines {
 
 export const form8621Pdf: PdfFormDescriptor = {
   pendingKey: "form8621",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8621.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f8621--2025.pdf",
   fields,
   pageIndices(fields) {
     const line = lineFrom(fields);

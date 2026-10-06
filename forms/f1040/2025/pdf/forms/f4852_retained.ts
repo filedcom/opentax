@@ -34,7 +34,7 @@ const amount = (domainKey: string, path: string): PdfFieldEntry => ({
 
 export const form4852RetainedPdf: PdfFormDescriptor = {
   pendingKey: "f4852",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f4852.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f4852--2020.pdf",
   pageIndices: () => [0],
   fields: [
     field("return_names", "f1_1[0]"),
