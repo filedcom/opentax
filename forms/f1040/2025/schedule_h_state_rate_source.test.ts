@@ -635,6 +635,52 @@ function turning21NoOrdinarySharedPeriodSource() {
   return raw;
 }
 
+function turning18OhioNoOrdinarySource() {
+  const raw: any = sectionAReviewedOhioSource();
+  const family: any = turning18NoOrdinarySource();
+  const unemployment = raw.federal_unemployment;
+  const child = family.federal_unemployment.employee_wages[1];
+  raw.family_employer_ssn = "111223333";
+  raw.federal_income_tax_withheld = 250;
+  unemployment.employee_wages.push(child);
+  unemployment.contributions_paid = 330;
+  unemployment.state_review_rows[0].taxable_state_wages = 11_000;
+  unemployment.state_review_rows[0].contributions_paid_by_due_date = 330;
+  const review = unemployment.state_payroll_review;
+  review.child_no_ordinary_frequency_reviews = structuredClone(
+    family.federal_unemployment.state_payroll_review
+      .child_no_ordinary_frequency_reviews,
+  );
+  const ohio = (payment: any) => {
+    const result = structuredClone(payment);
+    result.state = "OH";
+    if (result.family_state_coverage_source_reference) {
+      result.family_state_coverage_source_reference =
+        result.family_state_coverage_source_reference.replace("CA", "OH");
+    }
+    if (result.coverage_source_reference) {
+      result.coverage_source_reference =
+        result.coverage_source_reference.replace("CA", "OH");
+    }
+    return result;
+  };
+  review.wage_payments.push(
+    ...family.federal_unemployment.state_payroll_review.wage_payments.filter(
+      (payment: any) => payment.employee_id === child.employee_id
+    ).map(ohio),
+  );
+  review.excluded_state_wage_payments =
+    family.federal_unemployment.state_payroll_review
+      .excluded_state_wage_payments.map(ohio);
+  review.contribution_payments.push({
+    rate_notice_source_reference: "OH-2025-household-UI-notice",
+    paid_date: "2026-01-15",
+    amount: 90,
+    payment_reference: "OH-child18-irregular-UI-receipt",
+  });
+  return raw;
+}
+
 function child20PartialStateSource() {
   const raw: any = mixedFamilyStateSource(true);
   const unemployment = raw.federal_unemployment;
@@ -936,11 +982,14 @@ Deno.test("Schedule H no ordinary pay period uses actual birthday-side services 
     ["child18-no-ordinary-period", turning18NoOrdinarySource(), 1_588, 114],
     ["child21-no-ordinary-period", turning21NoOrdinarySource(), 2_902, 204],
     ["child21-shared-irregular-period", turning21NoOrdinarySharedPeriodSource(), 2_902, 204],
+    ["child18-ohio-no-ordinary", turning18OhioNoOrdinarySource(), 1_516, 42],
   ] as const) {
     const amount = computeScheduleHAmounts(inputSchema.parse(raw), 2025);
     assertEquals(amount.futaTax, expectedFuta);
     assertEquals(amount.totalTax, expectedTax);
-    await verifyAdditionalPacket(raw, id, expectedTax);
+    await verifyAdditionalPacket(
+      raw, id, expectedTax, id === "child18-ohio-no-ordinary" ? 6 : 7,
+    );
   }
   const rejects = async (original: any, edit: (raw: any) => void) => {
     const packet = f1040_2025.executeReturn({
@@ -1001,6 +1050,12 @@ Deno.test("Schedule H no ordinary pay period uses actual birthday-side services 
   await rejects(child18, (raw) => {
     delete raw.federal_unemployment.state_payroll_review
       .child_no_ordinary_frequency_reviews;
+  });
+  await rejects(turning18OhioNoOrdinarySource(), (raw) => {
+    raw.federal_unemployment.state_payroll_review.wage_payments =
+      raw.federal_unemployment.state_payroll_review.wage_payments.filter(
+        (payment: any) => payment.payment_reference !== "child18-Jun-cash-payment"
+      );
   });
   await rejects(child18, (raw) => {
     raw.federal_unemployment.state_payroll_review
