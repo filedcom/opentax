@@ -21,8 +21,12 @@ test bytes were copied hash-for-hash into the isolated verification checkout;
 the originals and V29 result were not changed.
 
 The post-change discovery/typecheck uses the exact task with `--no-run`:
-`deno task test --no-run`. This is an inventory/typecheck gate only. A separate
-full `deno task test` run remains required to establish a passing regression
-batch. Its output and discovery comparison are retained at
-`/tmp/opentax-deno-test-discovery-after-oct6.log` and
-`/tmp/opentax-deno-test-discovery-comparison-oct6.json`.
+`deno task test --no-run`. It terminated with exit 0 after checking exactly
+1,184 modules, with no private research modules. The set of registered paths
+is byte-for-byte identical to V29's registered path set after removing its two
+private copies; the comparison is retained at
+`/tmp/opentax-deno-test-discovery-comparison-oct6.json` and the terminal log's
+SHA-256 is `6d7bcaf16e54f5dc430ea302e863a7b6be60d484cb7813baa7a5f86eb6bdf2cc`.
+This is an inventory/typecheck gate only. A separate full `deno task test`
+run remains required to establish a passing regression batch. The no-run
+output is retained at `/tmp/opentax-deno-test-discovery-after-oct6.log`.
