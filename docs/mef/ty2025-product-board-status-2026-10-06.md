@@ -2423,3 +2423,21 @@ QEFthree36page current-main PDFs exact a7b62dd2f8b848bc88d46a3a37611cf108c0846c1
 PreferentialAMT main8/76packet40files source/pending/origin/XML/PDF/text exact reviewed842original, XMLonlyReturnTs; `/tmp/opentax-form4972-preferential-amt-main-comparison.json`. Independent Decimal sourceoracle, eight1986owner worksheets, fullPartIII, single/MFJ phaseout,128finalmutations, original8/42centproof32files preserved. Rootmanifestdd48537bbe308d32d4f6e62a5975f802083a4ee400bd3e298630f3ef28ed47b5. Repair directPDF exemption drift; earlier failures were expected-key fixture, missing unitexemptionfacts, directcapitaldistribution routing and rawNIITcent oracle formatting, all individually resolved without weakening source guards. Isolatedfinal2/0+53/0; fullgate unaffected immutable4a stilllive, no latestfull/IRS claim.
 
 Four bounded ledger entries added, actual1454; frozen52/future unchanged. Remoteorigin/main checkedmatchesGitHuba75f0bcab3f42824bc257dc3f354168147274111. Publication remains0fd pending nextpush; reviewed completebranch730files pluscurrentdelta beforePRrewrite.
+
+
+## Before QEF and adoption-credit two-pass composition
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,454 bounded slices**. Learnings and exact proof remain in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Newly discovered work goes only in `future_todo` and is not executed.
+
+Actual inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF keys / 96 covered / 18 uncovered**. Latest integrations: retained Roth J/T source9/52, donated-property dispositions5/169, QEF AMT/J/8615 tax methods3/36 and preferential pension/ISO-AMT8/76. Checked compatibility **505/0**, refreshed packets **25/0**, prior QEF **7/0**, preferential AMT **5/0**; retained source/PDF/attachment bytes match reviewed originals, XML onlyReturnTs. Earlier substitute10/70, donated-property16/591, QEF7/55 and pension8/42 packets are preserved. These close their stated slices; broader parents remain open.
+
+Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**, exit1; the sole senior/QBI fixture expectation is repaired with focused1/0. Immutable **4a45410da** full rerun started05:41:11UTC; wrapper65945/Deno65949 verified live. It predates the latest integrations; its terminal result and a passing latest-source run remain required. Publication checkpoint for draft [PR63](https://github.com/filedcom/opentax/pull/63): **0fd54c08d**; new verified integrations are pending publication.
+
+Existing Roth inventory/conversion, donated-asset depreciation and QEF mixed-credit work continues in isolated checkouts. Preferential ScheduleJ, wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+
+
+Published9f3e370a9 verified GitHubhead/title/body after four sealed slices;1454ledger/frozen52exact. Appartifactattachmentattempt2137 didnotreturn and wasterminated, no successfulattachmentclaim. Ready569eaf383 freshfulltwo-passadoptionhelper used by actual andwithout-QEF counterfactual/native/PDF: isolated13/0+10/0, new9reviewedpages PDF313ed601462c763eb346d13b95a8bdb36b0488dac518ffaa2a38cbe47fb71db7, prior10/91PDFs exact. Form8990 remains unfileable/sourceguarded; simultaneousholdingallocation and actual-used/shadow-unusedcredit tax ordering need existingparent audit. No future items pickedup. Current-mainproof required beforecredit.
