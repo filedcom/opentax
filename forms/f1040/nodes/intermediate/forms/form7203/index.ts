@@ -1,3 +1,4 @@
+import { additionalPrincipalRepayments } from "./debt-allocation.ts";
 import { ownedDebtFamily } from "./owned-family.ts";
 import { z } from "zod";
 import type { NodeResult } from "../../../../../../core/types/tax-node.ts";
@@ -140,7 +141,8 @@ function tentativeDebtBasis(input: Form7203Input): number {
       : undefined;
   return (input.debt_basis_beginning ?? 0) + (input.new_loans ?? 0) -
     sumPrincipalRepayments(note?.principal_repayments) -
-    (note?.second_formal_note?.principal_repayment?.amount ?? 0);
+    (note?.second_formal_note?.principal_repayment?.amount ?? 0) -
+    additionalPrincipalRepayments(note);
 }
 
 // Step 5: Total loss pool — current year + prior carryforward (Part III)

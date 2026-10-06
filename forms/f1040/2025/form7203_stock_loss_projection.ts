@@ -1,4 +1,5 @@
 import {
+  allocateDebtInventory,
   allocateThreeDebtReductions,
   allocateTwoDebtReductions,
 } from "../nodes/intermediate/forms/form7203/debt-allocation.ts";
@@ -178,21 +179,35 @@ function projectSingleReviewedStockLoss7203(
       note.second_formal_note
     ? note.open_account_net_advance_amount
     : 0;
+  const inventoryCapacities = note?.additional_formal_notes
+    ? [
+      firstDebtBasis,
+      secondDebtBasis,
+      ...note.additional_formal_notes.map((n) =>
+        n.cash_advance_amount - (n.principal_repayment?.amount ?? 0)
+      ),
+      thirdDebtBasis,
+    ]
+    : undefined;
   const allowedDebt = note
     ? Math.min(
       currentLoss - allowedStock,
-      firstDebtBasis + secondDebtBasis + thirdDebtBasis,
+      inventoryCapacities?.reduce((a, b) => a + b, 0) ??
+        firstDebtBasis + secondDebtBasis + thirdDebtBasis,
     )
     : 0;
+  const inventoryAllocation = inventoryCapacities
+    ? allocateDebtInventory(allowedDebt, inventoryCapacities)
+    : undefined;
   const three = note?.kind === "owned_2025_formal_and_open_account" &&
-      note.second_formal_note
+      note.second_formal_note && !note.additional_formal_notes
     ? allocateThreeDebtReductions(allowedDebt, [
       firstDebtBasis,
       secondDebtBasis,
       thirdDebtBasis,
     ])
     : undefined;
-  const allowedDebt1 = three?.filed[0] ??
+  const allowedDebt1 = inventoryAllocation?.filed[0] ?? three?.filed[0] ??
     (note?.kind === "owned_2025_formal_and_open_account"
       ? allocateTwoDebtReductions(allowedDebt, firstDebtBasis, secondDebtBasis)
         .first
@@ -204,8 +219,9 @@ function projectSingleReviewedStockLoss7203(
       "Form 7203 two-note loss does not allocate in exact whole dollars",
     );
   }
-  const allowedDebt2 = three?.filed[1] ?? (allowedDebt - allowedDebt1);
-  const allowedDebt3 = three?.filed[2] ?? 0;
+  const allowedDebt2 = inventoryAllocation?.filed[1] ?? three?.filed[1] ??
+    (allowedDebt - allowedDebt1);
+  const allowedDebt3 = inventoryAllocation?.filed[2] ?? three?.filed[2] ?? 0;
   const allowed = allowedStock + allowedDebt;
   const carryover = currentLoss - allowed;
   const schedule1 = pendingRecordSchema.parse(allPending.schedule1);

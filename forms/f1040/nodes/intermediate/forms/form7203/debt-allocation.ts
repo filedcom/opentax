@@ -61,11 +61,16 @@ export function totalCurrentDebtAdvances(
   note: {
     cash_advance_amount: number;
     second_formal_note?: { cash_advance_amount: number };
+    additional_formal_notes?: readonly { cash_advance_amount: number }[];
     open_account_net_advance_amount?: number;
   },
 ) {
   return note.cash_advance_amount +
     (note.second_formal_note?.cash_advance_amount ?? 0) +
+    (note.additional_formal_notes ?? []).reduce(
+      (n, r) => n + r.cash_advance_amount,
+      0,
+    ) +
     (note.open_account_net_advance_amount ?? 0);
 }
 
@@ -116,4 +121,61 @@ export function allocateThreeDebtReductions(
     })),
     basis: capacities.map((c, i) => c - filed[i]),
   };
+}
+
+/** General source-bound inventory; preserves exact ratios and the fixed filed total. */
+export function allocateDebtInventory(
+  loss: number,
+  capacities: readonly number[],
+) {
+  const total = capacities.reduce((a, b) => a + b, 0);
+  if (
+    !capacities.length ||
+    ![loss, total, ...capacities].every(Number.isSafeInteger) ||
+    Math.min(loss, ...capacities) < 0 || loss > total
+  ) {
+    throw Error(
+      "Debt inventory needs exact individually owned capacities and limited loss",
+    );
+  }
+  const d = BigInt(total || 1),
+    nums = capacities.map((c) => BigInt(c) * BigInt(loss));
+  const basisNums = capacities.map((c, i) => BigInt(c) * d - nums[i]);
+  if (
+    [...nums, ...basisNums].some((n) => n > BigInt(Number.MAX_SAFE_INTEGER))
+  ) throw Error("Exact debt inventory metadata exceeds safe representation");
+  const filed = nums.map((n) => Number(n / d));
+  let remaining = loss - filed.reduce((a, b) => a + b, 0);
+  const ranked = nums.map((n, i) => ({ i, remainder: n % d })).sort((a, b) =>
+    a.remainder === b.remainder ? a.i - b.i : a.remainder > b.remainder ? -1 : 1
+  );
+  for (const r of ranked) {
+    if (!remaining) break;
+    filed[r.i]++;
+    remaining--;
+  }
+  if (remaining || filed.some((v, i) => v > capacities[i])) {
+    throw Error("Filed inventory allocation exceeds capacity");
+  }
+  return {
+    filed,
+    basis: capacities.map((c, i) => c - filed[i]),
+    exact: nums.map((n, i) => ({
+      numerator: Number(n),
+      basisNumerator: Number(basisNums[i]),
+      denominator: Number(d),
+    })),
+  };
+}
+export function additionalPrincipalRepayments(
+  note: {
+    additional_formal_notes?: readonly {
+      principal_repayment?: { amount: number };
+    }[];
+  } | undefined,
+) {
+  return (note?.additional_formal_notes ?? []).reduce(
+    (n, r) => n + (r.principal_repayment?.amount ?? 0),
+    0,
+  );
 }

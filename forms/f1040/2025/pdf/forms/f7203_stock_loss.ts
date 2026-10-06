@@ -1,3 +1,5 @@
+import { PDFName, StandardFonts } from "pdf-lib";
+import { projectOverflowDebtInventory } from "../../form7203_debt_inventory.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { projectReviewedStockLoss7203 } from "../../form7203_stock_loss_projection.ts";
 import { sumPrincipalRepayments } from "../../../nodes/intermediate/forms/form7203/debt-note.ts";
@@ -62,6 +64,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "checkbox",
     domainKey: "open_account_debt3",
     pdfField: `${debtA}Header[0].cDebt3[0].c1_9[1]`,
+  },
+  {
+    kind: "checkbox",
+    domainKey: "formal_note_debt3",
+    pdfField: `${debtA}Header[0].cDebt3[0].c1_9[0]`,
   },
   ...[
     ["16", "36", "39"],
@@ -139,6 +146,8 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
       textField(`line${line}_total`, `${debtC}Line${line}[0].f2_${total}[0]`),
     ],
   ),
+  textField("line32_debt3", `${debtC}Line32[0].f2_47[0]`),
+  textField("line33_debt3", `${debtC}Line33[0].f2_51[0]`),
   textField("line35_current_loss", `${page2}Line35[0].f2_57[0]`),
   textField("line35_allowed_stock", `${page2}Line35[0].f2_59[0]`),
   textField("line35_allowed_debt", `${page2}Line35[0].f2_60[0]`),
@@ -202,7 +211,7 @@ export const form7203StockLossPdf: PdfFormDescriptor = {
       (thirdAdvance ?? 0);
     const totalDebtAfterRepayment = debtAfterRepayment +
       secondDebtAfterRepayment + (thirdAdvance ?? 0);
-    return [{
+    const base: Record<string, unknown> = {
       shareholder_name: ledger.shareholder_name_as_on_k1,
       shareholder_ssn: ledger.shareholder_ssn,
       corporation_name: source.corporation_name,
@@ -322,6 +331,153 @@ export const form7203StockLossPdf: PdfFormDescriptor = {
       ...(availableBasis > 0 ? { line47_allowed_stock: allowedStock } : {}),
       ...(note ? { line47_allowed_debt: allowedDebt } : {}),
       ...(carryover > 0 ? { line47_carryover: carryover } : {}),
-    }];
+    };
+    const overflow = projectOverflowDebtInventory(note, allowedDebt);
+    if (!overflow) return [base];
+    const result: Record<string, unknown>[] = [];
+    for (let start = 0; start < overflow.length; start += 3) {
+      const row: Record<string, unknown> = start === 0 ? { ...base } : {
+        shareholder_name: base.shareholder_name,
+        shareholder_ssn: base.shareholder_ssn,
+        corporation_name: base.corporation_name,
+        corporation_ein: base.corporation_ein,
+        part_ii_continuation: true,
+      };
+      for (const key of Object.keys(row)) {
+        if (
+          /_(debt[123]|total)$/.test(key) ||
+          /^(formal_note|open_account)_debt/.test(key)
+        ) delete row[key];
+      }
+      overflow.slice(start, start + 3).forEach((d, j) => {
+        const suffix = `debt${j + 1}`;
+        row[`${d.open ? "open_account" : "formal_note"}_${suffix}`] = true;
+        Object.entries({
+          16: 0,
+          17: d.advance,
+          18: d.advance,
+          20: d.endingPrincipal,
+          21: 0,
+          22: d.advance,
+          24: d.advance,
+          27: d.endingPrincipal,
+          29: d.endingPrincipal,
+          30: d.loss,
+          31: d.basis,
+        }).forEach(([line, v]) => row[`line${line}_${suffix}`] = v);
+        if (d.advance) row[`line25_${suffix}`] = "1.0000";
+        if (d.repayment) {
+          for (const line of [19, 26, 32, 33]) {
+            row[`line${line}_${suffix}`] = d.repayment;
+          }
+        }
+      });
+      if (start === 0) {
+        const advance = overflow.reduce((n, r) => n + r.advance, 0),
+          repay = overflow.reduce((n, r) => n + r.repayment, 0),
+          face = advance - repay;
+        for (
+          const [line, v] of Object.entries({
+            16: 0,
+            17: advance,
+            18: advance,
+            20: face,
+            21: 0,
+            22: advance,
+            24: advance,
+            27: face,
+            29: face,
+            30: allowedDebt,
+            31: face - allowedDebt,
+          })
+        ) row[`line${line}_total`] = v;
+        if (repay) {
+          for (const line of [19, 26, 32, 33]) {
+            row[`line${line}_total`] = repay;
+          }
+        }
+      }
+      row.debt_column_start = start + 1;
+      row.debt_column_count = overflow.length;
+      row.debt_source_references = overflow.slice(start, start + 3).map((d) =>
+        d.id
+      );
+      result.push(row);
+    }
+    return result;
+  },
+  async decoratePages(document, pages, fields) {
+    if (!fields.debt_column_start) return;
+    const font = await document.embedFont(StandardFonts.Helvetica);
+    if (fields.part_ii_continuation) {
+      const sections = await Promise.all([
+        document.embedPage(pages[0], {
+          left: 0,
+          bottom: 0,
+          right: 612,
+          top: 192,
+        }),
+        document.embedPage(pages[1], {
+          left: 0,
+          bottom: 444,
+          right: 612,
+          top: 792,
+        }),
+      ]);
+      for (let i = 0; i < 2; i++) {
+        await sections[i].embed();
+        pages[i].node.set(PDFName.of("Contents"), document.context.obj([]));
+        pages[i].drawPage(sections[i], {
+          x: 0,
+          y: i ? 444 : 0,
+          width: 612,
+          height: i ? 348 : 192,
+        });
+      }
+      pages[0].drawText("Form 7203 - additional Part II only", {
+        x: 36,
+        y: 730,
+        size: 12,
+        font,
+      });
+      pages[0].drawText(
+        `${fields.shareholder_name}  SSN ${fields.shareholder_ssn}`,
+        { x: 36, y: 710, size: 10, font },
+      );
+      pages[0].drawText(
+        `${fields.corporation_name}  EIN ${fields.corporation_ein}`,
+        { x: 36, y: 692, size: 10, font },
+      );
+      pages[1].drawText(
+        `${fields.shareholder_name}  SSN ${fields.shareholder_ssn}  EIN ${fields.corporation_ein}`,
+        { x: 36, y: 767, size: 8, font },
+      );
+    }
+    const end = Math.min(
+      Number(fields.debt_column_start) + 2,
+      Number(fields.debt_column_count),
+    );
+    pages[0].drawText(
+      `Part II debt inventory ${fields.debt_column_start}-${end} of ${fields.debt_column_count}`,
+      {
+        x: 36,
+        y: fields.part_ii_continuation ? 595 : 8,
+        size: fields.part_ii_continuation ? 10 : 7,
+        font,
+      },
+    );
+    if (fields.part_ii_continuation) {
+      for (
+        const [j, id] of (fields.debt_source_references as string[]).entries()
+      ) {
+        pages[0].drawText(`${Number(fields.debt_column_start) + j}: ${id}`, {
+          x: 36,
+          y: 575 - j * 14,
+          size: 8,
+          font,
+          maxWidth: 530,
+        });
+      }
+    }
   },
 };

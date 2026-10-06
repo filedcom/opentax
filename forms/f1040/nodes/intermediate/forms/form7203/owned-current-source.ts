@@ -4,6 +4,7 @@ import {
   unrelatedCorporateCreditSchema,
 } from "./corporate-bank.ts";
 import {
+  allocateDebtInventory,
   allocateThreeDebtReductions,
   allocateTwoDebtReductions,
 } from "./debt-allocation.ts";
@@ -213,10 +214,14 @@ export const ownedMixedDebtRecordsSchema = ownedCurrentDebtRecordsBaseSchema
     complete_unrelated_corporate_credit_inventory: z.array(
       unrelatedCorporateCreditSchema,
     ).min(1).max(2),
-    complete_current_shareholder_debt_inventory: z.union([
-      z.tuple([noteRecord, openAccountRecordSchema]),
-      z.tuple([noteRecord, noteRecord, openAccountRecordSchema]),
-    ]),
+    complete_current_shareholder_debt_inventory: z.array(
+      z.union([noteRecord, openAccountRecordSchema]),
+    ).min(2).refine(
+      (rows) =>
+        rows.slice(0, -1).every((r) => "formal_note_id" in r) &&
+        "transactions" in rows.at(-1)!,
+      "Mixed complete inventory needs separate written notes followed by one genuine open account",
+    ),
   });
 export const ownedCurrentDebtRecordsSchema = z.union([
   ownedCurrentDebtRecordsBaseSchema,
@@ -262,6 +267,7 @@ interface NewNote {
       shareholder_bank_deposit_reference: string;
     };
   };
+  additional_formal_notes?: NonNullable<NewNote["second_formal_note"]>[];
 }
 function fail(message: string): never {
   throw Error(`Owned Form7203 debt source: ${message}`);
@@ -462,7 +468,6 @@ export function reconcileOwnedCurrentDebt(raw: unknown, note: NewNote) {
   const formalSource = mixed
     ? {
       complete_current_shareholder_debt_inventory: z.array(noteRecord).min(1)
-        .max(2)
         .parse(mixed.complete_current_shareholder_debt_inventory.slice(0, -1)),
     }
     : ownedCurrentDebtRecordsBaseSchema.parse(s);
@@ -476,6 +481,10 @@ export function reconcileOwnedCurrentDebt(raw: unknown, note: NewNote) {
           : [],
       }]
       : []),
+    ...(note.additional_formal_notes ?? []).map((n) => ({
+      ...n,
+      payments: n.principal_repayment ? [n.principal_repayment] : [],
+    })),
   ];
   if (
     formalSource.complete_current_shareholder_debt_inventory.length !==
@@ -635,6 +644,14 @@ export function reconcileOwnedCurrentDebt(raw: unknown, note: NewNote) {
     ...(open
       ? {
         openAccount: open,
+        ...(formalCapacities.length > 2
+          ? {
+            mixedInventoryAllocation: allocateDebtInventory(allowedDebt, [
+              ...formalCapacities,
+              open.endingPrincipal,
+            ]),
+          }
+          : {}),
         ...(formalCapacities.length === 2
           ? {
             mixedThreeDebtAllocation: allocateThreeDebtReductions(allowedDebt, [

@@ -444,3 +444,15 @@ remain independent; MFJ owner capacities are limited before aggregation. This
 fits three canonical columns in one owner copy. More than three debts require
 additional PartII copies under the instructions and remain guarded, as do prior
 accepted-history/restoration/gain and broader source/authentication boundaries.
+
+## Additional current mixed-debt Part II copies
+
+[Overflow source and paper proof](ty2025-form7203-overflow-debt-source-proof.md)
+replays each additional written note alongside the genuine open account. Four
+and seven current debts retain separate native groups in one owner document;
+additional PDF PartII sections contain individual columns only, with aggregate
+totals and PartsI/III confined to the original owner copy. Exact rational current
+basis, whole-dollar filing projection and independent spouse limits remain
+separate. Original current40packet source/pending/carry/origins/PDF archives are
+preserved. Prior reduced basis, accepted-history/source authenticity and wider
+parent requirements remain guarded and open.
