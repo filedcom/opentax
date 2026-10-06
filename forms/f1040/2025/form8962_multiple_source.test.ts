@@ -70,7 +70,7 @@ Deno.test("multiple dependent W2/INT/DIV sources reconcile all income and househ
     await Deno.writeFile(dir + "/return.pdf", pdf);
     await Deno.writeTextFile(dir + "/return.xml", prepared.bundle.xml);
     const xsd =
-      "/Users/atul/projects/opentax/.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
+      ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
     const validated = await new Deno.Command("xmllint", {
       args: ["--noout", "--schema", xsd, dir + "/return.xml"],
       stdout: "piped",
