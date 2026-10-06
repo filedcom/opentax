@@ -2,7 +2,7 @@
 
 ## Compacted status (2026-10-06)
 
-The frozen checklist retains **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,532 bounded slices**; broader parents remain open. Learnings are compacted in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries belong only in `future_todo` and are not executed.
+The frozen checklist retains **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,533 bounded slices**; broader parents remain open. Learnings are compacted in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries belong only in `future_todo` and are not executed.
 
 Parent payroll (56/0, saved 24 returns/125 pages) and midmonth mortgage (98/0, saved 26 returns/81 pages) retain sealed root evidence. Draft [PR63](https://github.com/filedcom/opentax/pull/63) is externally verified and attached at **5e5d78b7f**. Earlier sealed work and census qualifications are in the archive.
 
