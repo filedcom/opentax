@@ -6,7 +6,7 @@ Agentcommit6b8caca84 integrates as cac62758f. Agent and current-main combined no
 
 Original all-page review caught implausible6240 annual worker hours. Final proof uses2700 total actual hours; the statutory2080 cap and independent16/13 versus17/14 identity counterproof remain tested. The old pre-correction packets do not support this completion.
 
-This is synthetic reviewed source proof; outside/entity common-control groups, attribution regimes, broader employers/coverage, external authentication, durable carryovers and IRS acceptance remain open. Source/rendered evidence is copied to `.state/research/2026-10-06-form8941-three-business-reviewed`; all-page images remain in its rendered subdirectories.
+This is synthetic reviewed source proof; outside/entity common-control groups, attribution regimes, broader employers/coverage, external authentication, durable carryovers and IRS acceptance remain open. Source/rendered evidence is copied to `.state/research/2026-10-06-form8941-three-business-reviewed`; all-page contact images and full-size detail pages are retained in that folder.
 
 ## Evidence hashes
 
