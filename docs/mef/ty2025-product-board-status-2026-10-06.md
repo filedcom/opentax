@@ -2861,3 +2861,25 @@ Previous goal turn was progress: main legacy production e5db4222a sealed at33081
 ## Before Form4952 exact paid-source tracing
 
 Current debt_trace accepts only integer principal/payment amounts; actual loan/interest source cents cannot traverse the existing reviewed-source route. Form4952 debt tracing and source amount fidelity are existing frozen parent scope. Root will retain source cents through safe integer-cent payment reconciliation and whole-source/native/PDF proof, preserving current integer positive artifacts. No wider loan/mixed-use/authentication claim and no future work. Publication PR63 verified928586521; attach2426 still pending. FullV5 live117m06s. OrdinaryRoth prerequisite and stagedScheduleJ freshmain proof continue independently.
+
+
+## Before integrating exact Form4952 source cents
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,465 recorded slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
+
+Inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF keys / 96 covered / 18 uncovered**.
+
+Latest verified work: legacy1254 depletion-offset source accounts (**17/0**) and fourteen full-XSD retained packets / 235 files exact, with 490 reviewed page occurrences; natural-resource donation source reductions and corrected Section B explanation labels. Main source **15/0**, rehearsal compatibility **578/0**, and main label checks **43/0**; forty retained full-XSD packets cover 472 return pages. All 47 changed explanation pages were reviewed; 425 other pages and all 888 original files are exact. Earlier Roth proofs remain retained, but ordinary-Roth Box 7 classification is under correction. Wider parents remain open.
+
+Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at115m20s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
+
+Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **ca8c02d4e**, published with donation proof; verified legacy-depletion changes are ready for publication.
+
+Donation source and Section B printing proofs are sealed. The recorded Roth history slice is qualified pending correction of ordinary-Roth issued-source checkbox classification; its calculator/artifact results do not establish that classification. Root preferential ScheduleJ/AMT source work has an isolated checkout and a retained guard audit. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+
+
+Isolated readybf0f4f0a1 retains10000.49principal and100.30+200.30 paid source amounts, compares safe integer cents, rejects fractional/unsafe totals and one-cent alterations before native/directPDF. Final44/0 seven related modules; fullXSD7pages all visually reviewed, isolated immutable heldsource PDF/pending/origins exact andXMLonlyReturnTs. OlderOctober6 royalty regenerated baseline differs by known later ScheduleB/QBI graph additions, not claimed exact; original archive untouched. Synthetic mortgage copy has canonical fields/no widgets; no externally authenticated source claim. Earlier attempts missing isolated XSD link and temporarytesttype error were corrected, retained logs v1/v2 are failures, finalgate governs. Mainintegration must use actualcurrentmain heldsource and focusedsource checks before credit. PR63 verified928586521; attachment2426 stalled/terminated, no success. Ledger1465/frozen52/future unchanged.
