@@ -634,14 +634,16 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
     );
   }
   const line2 = adjustedQbi;
-  const line3Parent = line2 * QBI_RATE;
+  const line3Parent = Math.round(line2 * QBI_RATE);
   // Schedule C line 1(c) of zero also zeros this business's wage and UBIA
   // amounts on the parent; those limits cannot create a deduction by themselves.
-  const line4Parent = adjustedQbi > 0 ? positive!.w2_wages : 0;
-  const line5Parent = line4Parent * W2_LIMIT_A_RATE;
-  const line6Parent = line4Parent * W2_LIMIT_B_WAGE_RATE;
+  const line4Parent = adjustedQbi > 0 ? Math.round(positive!.w2_wages) : 0;
+  // Each monetary line is filed in whole dollars. Fractional percentage
+  // products are rounded when entered, before later lines compare or add them.
+  const line5Parent = Math.round(line4Parent * W2_LIMIT_A_RATE);
+  const line6Parent = Math.round(line4Parent * W2_LIMIT_B_WAGE_RATE);
   const line7Parent = adjustedQbi > 0 ? positive!.ubia : 0;
-  const line8Parent = line7Parent * UBIA_RATE;
+  const line8Parent = Math.round(line7Parent * UBIA_RATE);
   const line9Parent = line6Parent + line8Parent;
   const line10Parent = Math.max(line5Parent, line9Parent);
   const line11Parent = Math.min(line3Parent, line10Parent);
@@ -660,10 +662,10 @@ export function calculateScheduleCLossLines(input: Form8995AInput) {
       line11Parent,
       line36,
       line39,
-    ].every(Number.isInteger) || (adjustedQbi > 0 && line39 <= 0)
+    ].every(Number.isSafeInteger)
   ) {
     throw new Error(
-      "Form 8995-A Schedule C bounded route needs a whole-dollar deduction or sourced unused loss",
+      "Form 8995-A Schedule C needs safe whole-dollar filed monetary lines",
     );
   }
   return {
