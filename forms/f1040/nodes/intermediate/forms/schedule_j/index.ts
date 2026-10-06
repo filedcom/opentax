@@ -18,6 +18,7 @@ const completeInputSchema = z.object({
   current_year_tax_source:
     scheduleJOrdinaryIncomeInputSchema.shape.current_year_tax_source,
   nonfarm_investment_income: finiteAmount.optional(),
+  nonfarm_wage_income: dollar.optional(),
   elected_farm_income: dollar.positive(),
   elected_farm_income_net_capital_gain: z.literal(0),
   base_year_source: baseYearSourceSchema,
@@ -145,6 +146,7 @@ function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
     Math.abs(
       source.agi - (source.nonfarm_qef_ordinary ?? 0) -
         (source.nonfarm_investment_income ?? 0) -
+        (source.nonfarm_wage_income ?? 0) -
         (activityProfit - source.se_tax_deduction),
     ) > 0.01
   ) {

@@ -1,4 +1,7 @@
-import { singleFarmSourceAmounts } from "../form8995a/single-farm-source.ts";
+import {
+  ownerW2WageSourceSchema,
+  singleFarmSourceAmounts,
+} from "../form8995a/single-farm-source.ts";
 import {
   qualifiedTipQbiSourceSchema,
   reviewedQualifiedTipExclusions,
@@ -152,6 +155,7 @@ export const inputSchema = z.object({
   schedule_c_qbi_businesses: z.array(scheduleCQbiBusinessWithCentsSchema)
     .optional(),
   schedule_f_qbi_businesses: z.array(scheduleFQbiBusinessSchema).optional(),
+  single_farm_owner_w2_sources: z.array(ownerW2WageSourceSchema).optional(),
   qbi_no_prior_loss_or_suspended_loss_confirmed: z.literal(true).optional(),
   qbi_not_patron_of_specified_cooperative_confirmed: z.literal(true).optional(),
   taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
@@ -705,6 +709,9 @@ function advancedFormOutput(
       item: farmItemSchema.parse(farm.source_schedule_f),
       owner_ssn: input.taxpayer_ssn.replaceAll("-", ""),
       se_tax_deduction: sumField(input.se_tax_deduction),
+      ...(input.single_farm_owner_w2_sources?.length
+        ? { owner_w2_wage_sources: input.single_farm_owner_w2_sources }
+        : {}),
     });
     if (
       farm.qbi !== source.profit ||
@@ -721,6 +728,9 @@ function advancedFormOutput(
         item: source.item,
         owner_ssn: source.owner_ssn,
         se_tax_deduction: source.se_tax_deduction,
+        ...(source.owner_w2_wage_sources?.length
+          ? { owner_w2_wage_sources: source.owner_w2_wage_sources }
+          : {}),
       },
       patron_of_specified_cooperative: false,
       qbi_no_prior_loss_or_suspended_loss_confirmed: true,

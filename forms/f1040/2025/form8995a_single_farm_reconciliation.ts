@@ -25,6 +25,21 @@ export function assertSingleFarmQbiReturn(
   assertSingleFarmAmounts(input);
   const source = singleFarmSourceAmounts(input.single_schedule_f_source!);
   const farms = farmInput.parse(pending.schedule_f).schedule_fs;
+  const filedW2 =
+    ((pending.w2 as Record<string, unknown> | undefined)?.w2s ?? []) as Record<
+      string,
+      unknown
+    >[];
+  const ownerW2 = filedW2.map((row) => ({
+    employer_ein: String(row.employer_ein ?? "").replaceAll("-", ""),
+    employer_name: row.employer_name,
+    employee_ssn: String(row.employee_ssn ?? "").replaceAll("-", ""),
+    source_document_reference: row.source_document_reference,
+    box1_wages: row.box1_wages,
+    box3_ss_wages: row.box3_ss_wages ?? 0,
+    box5_medicare_wages: row.box5_medicare_wages ?? 0,
+    box7_ss_tips: row.box7_ss_tips ?? 0,
+  }));
   const sink = record(pending.f1040),
     tax = record(pending.income_tax_calculation);
   const general = record(pending.general);
@@ -37,13 +52,18 @@ export function assertSingleFarmQbiReturn(
       source.owner_ssn ||
     general.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
     general.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
-    sum(sink.line1z_total_wages) !== 0 ||
+    !isDeepStrictEqual(ownerW2, source.owner_w2_wage_sources ?? []) ||
+    sum(sink.line1z_total_wages) !== ownerW2.reduce(
+        (total, row) => total + Number(row.box1_wages),
+        0,
+      ) ||
     sum(sink.line9_total_income) !==
-      source.profit + ordinary + sum(sink.line7_capital_gain) ||
+      source.profit + ordinary + sum(sink.line7_capital_gain) +
+        sum(sink.line1z_total_wages) ||
     sum(sink.line10_adjustments) !== source.se_tax_deduction ||
     sum(sink.line11_agi) !==
       source.profit + ordinary + sum(sink.line7_capital_gain) -
-        source.se_tax_deduction ||
+        source.se_tax_deduction + sum(sink.line1z_total_wages) ||
     Math.round(qualified + capital) !== input.net_capital_gain ||
     input.business_filing_details?.qualified_dividends_zero_confirmed !==
       (qualified === 0)

@@ -21,6 +21,11 @@ export const publicInputSchema = z.object({
     year2023: ordinaryYearFactsSchema,
     year2024: ordinaryYearFactsSchema,
   }).strict(),
+  nonfarm_wage_source: z.object({
+    document_id: z.string().trim().min(1),
+    sha256: z.string().regex(/^[0-9a-f]{64}$/),
+    bytes_base64: z.string().trim().min(1),
+  }).strict().optional(),
 }).strict();
 
 // Derived only by the source-return prepass; public entry rejects this field.
@@ -28,6 +33,7 @@ export const inputSchema = publicInputSchema.extend({
   _derived_source: z.object({
     current_year_tax_source: scheduleJTaxSourceSchema,
     nonfarm_investment_income: z.number().finite(),
+    nonfarm_wage_income: z.number().int().nonnegative().optional(),
   }).strict().optional(),
 }).strict();
 type ScheduleJInput = z.infer<typeof inputSchema>;

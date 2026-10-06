@@ -24,6 +24,7 @@ import { ira_deduction_worksheet } from "../../intermediate/worksheets/ira_deduc
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import { schedule_se } from "../../intermediate/forms/schedule_se/index.ts";
+import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { scheduleA as schedule_a } from "../schedule_a/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
@@ -124,6 +125,8 @@ export const w2ItemSchema = z.object({
   source_document_reference: z.string().trim().min(1).optional().describe(
     "Issued W-2 copy reference for reviewed cross-form income inclusions",
   ),
+  schedule_j_nonfarm_wage_source_document_id: z.string().trim().min(1)
+    .optional(),
   nonstandard_document_review: z.object({
     kind: z.enum(["altered", "handwritten", "typed"]),
     source_document_reference: z.string().trim().min(1),
@@ -1201,6 +1204,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
     schedule_a,
     schedule_c,
     schedule_se,
+    form8995,
     form4137,
     form8919,
     form2441,
@@ -1271,6 +1275,26 @@ class W2Node extends TaxNode<typeof inputSchema> {
           )
           : input.w2s,
       ),
+      ...(regularItems(input.w2s).some((row) =>
+          row.schedule_j_nonfarm_wage_source_document_id
+        ) &&
+          regularItems(input.w2s).every((row) =>
+            row.employer_ein && row.employer_name && row.employee_ssn &&
+            row.source_document_reference
+          )
+        ? [this.outputNodes.output(form8995, {
+          single_farm_owner_w2_sources: regularItems(input.w2s).map((row) => ({
+            employer_ein: String(row.employer_ein ?? "").replaceAll("-", ""),
+            employer_name: row.employer_name ?? "",
+            employee_ssn: String(row.employee_ssn ?? "").replaceAll("-", ""),
+            source_document_reference: row.source_document_reference ?? "",
+            box1_wages: row.box1_wages,
+            box3_ss_wages: row.box3_ss_wages ?? 0,
+            box5_medicare_wages: row.box5_medicare_wages ?? 0,
+            box7_ss_tips: row.box7_ss_tips ?? 0,
+          })),
+        })]
+        : []),
       output(form8919, { w2_sources: form8919W2Sources(input.w2s) }),
       ...qualifiedTipsOutput(input.w2s),
       ...qualifiedOvertimeOutput(input.w2s),

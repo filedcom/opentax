@@ -175,10 +175,12 @@ export function validateOneBusiness(fields: Form8995AInput) {
   if (
     !Object.entries(lines).filter(([key, value]) =>
       /^line\d+$/.test(key) && value !== undefined
-    ).every(([, value]) => Number.isInteger(value)) || lines.line39 <= 0
+    ).every(([, value]) => Number.isInteger(value)) ||
+    lines.line39 < 0 ||
+    (lines.line39 === 0 && !fields.single_schedule_f_source)
   ) {
     throw new Error(
-      "Form 8995-A MeF needs a positive whole-dollar calculated QBI deduction",
+      "Form 8995-A MeF needs a sourced whole-dollar calculated QBI deduction",
     );
   }
   return { details, lines };

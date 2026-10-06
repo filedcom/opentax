@@ -1,10 +1,99 @@
 import { isDeepStrictEqual } from "node:util";
+import { createHash } from "node:crypto";
+import { z } from "zod";
 import { execute, type ExecuteResult } from "../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { publicInputSchema } from "../nodes/inputs/schedule_j/index.ts";
 import { scheduleJTaxSourceSchema } from "../nodes/intermediate/forms/schedule_j/tax-source.ts";
 import { registry } from "./registry.ts";
 import { buildPending } from "./mef/pending.ts";
+
+const nonfarmEmployerRecordSchema = z.object({
+  tax_year: z.literal(2025),
+  issued_by: z.string().trim().min(1),
+  issued_on: z.string().regex(/^202[5-6]-\d{2}-\d{2}$/),
+  employer_ein: z.string().regex(/^\d{9}$/),
+  employer_name: z.string().trim().min(1),
+  legal_entity_type: z.literal("c_corporation"),
+  naics_code: z.string().regex(/^\d{6}$/),
+  employee_ssn: z.string().regex(/^\d{9}$/),
+  w2_source_document_reference: z.string().trim().min(1),
+  w2_box1_wages: z.number().int().positive(),
+  w2_box2_withholding: z.number().nonnegative(),
+  w2_box3_ss_wages: z.number().nonnegative(),
+  w2_box5_medicare_wages: z.number().nonnegative(),
+  employment_start: z.string().regex(/^2025-\d{2}-\d{2}$/),
+  employment_end: z.string().regex(/^2025-\d{2}-\d{2}$/),
+  services: z.string().trim().min(1),
+}).strict();
+
+function nonfarmWages(
+  inputs: Record<string, unknown>,
+  source: z.infer<typeof publicInputSchema>,
+): number {
+  const w2s = inputs.w2;
+  if (w2s === undefined) {
+    if (source.nonfarm_wage_source) {
+      throw new Error("Schedule J nonfarm wage record has no issued W-2");
+    }
+    return 0;
+  }
+  if (
+    !Array.isArray(w2s) || w2s.length !== 1 ||
+    !source.nonfarm_wage_source
+  ) {
+    throw new Error(
+      "Schedule J needs each nonfarm wage attributed to one issued W-2 and employer record",
+    );
+  }
+  const wage = record(w2s[0]);
+  const proof = source.nonfarm_wage_source;
+  const encoded = proof.bytes_base64;
+  const bytes = Uint8Array.from(atob(encoded), (c) => c.charCodeAt(0));
+  if (
+    btoa(String.fromCharCode(...bytes)) !== encoded ||
+    createHash("sha256").update(bytes).digest("hex") !== proof.sha256
+  ) {
+    throw new Error(
+      "Schedule J nonfarm employer record bytes differ from retained digest",
+    );
+  }
+  const employer = nonfarmEmployerRecordSchema.parse(
+    JSON.parse(new TextDecoder().decode(bytes)),
+  );
+  const general = record(inputs.general);
+  const farm = record(
+    record(inputs.schedule_f).schedule_fs instanceof Array
+      ? (record(inputs.schedule_f).schedule_fs as unknown[])[0]
+      : undefined,
+  );
+  const digits = (v: unknown) => String(v ?? "").replaceAll("-", "");
+  const amount = Number(wage.box1_wages);
+  if (
+    !Number.isSafeInteger(amount) || amount <= 0 ||
+    employer.naics_code.startsWith("11") ||
+    employer.employment_start > employer.employment_end ||
+    employer.issued_on < employer.employment_end ||
+    employer.employer_ein === digits(farm.line_d_ein) ||
+    employer.issued_by !== employer.employer_name ||
+    employer.employer_ein !== digits(wage.employer_ein) ||
+    employer.employer_name !== wage.employer_name ||
+    employer.employee_ssn !== digits(general.taxpayer_ssn) ||
+    employer.employee_ssn !== digits(wage.employee_ssn) ||
+    employer.w2_source_document_reference !== wage.source_document_reference ||
+    proof.document_id !== wage.schedule_j_nonfarm_wage_source_document_id ||
+    employer.w2_box1_wages !== amount ||
+    employer.w2_box2_withholding !== wage.box2_fed_withheld ||
+    employer.w2_box3_ss_wages !== wage.box3_ss_wages ||
+    employer.w2_box5_medicare_wages !== wage.box5_medicare_wages ||
+    wage.box13_statutory_employee === true
+  ) {
+    throw new Error(
+      "Schedule J W-2 does not match a distinct nonfarm employer and owner source",
+    );
+  }
+  return amount;
+}
 
 const context = { taxYear: 2025, formType: "f1040" } as const;
 function record(value: unknown): Record<string, unknown> {
@@ -53,6 +142,7 @@ export function executeScheduleJSourceReturn(
   const tax = record(baseline.pending.income_tax_calculation);
   const agi = record(baseline.pending.agi_aggregator);
   const farm = record(baseline.pending.schedule_j_calculation);
+  const wages = nonfarmWages(inputs, source);
   // Establish the separately attributable investment income from actual graph
   // sources. Other business/adjustment allocations still need their own proof.
   const allowed = new Set([
@@ -61,6 +151,7 @@ export function executeScheduleJSourceReturn(
     "line15_se_deduction",
     "line8z_form8621_qef",
     "line3b_ordinary_dividends",
+    "line1a_wages",
     "line7_capital_gain",
     "line7a_cap_gain_distrib",
   ]);
@@ -91,12 +182,18 @@ export function executeScheduleJSourceReturn(
   const investment = total(agi.line3b_ordinary_dividends) +
     total(agi.line7_capital_gain) +
     total(agi.line7a_cap_gain_distrib);
+  if (total(agi.line1a_wages) !== wages) {
+    throw new Error(
+      "Schedule J nonfarm W-2 wages differ from actual AGI source",
+    );
+  }
   const finalInputs = structuredClone(inputs);
   finalInputs.schedule_j = {
     ...source,
     _derived_source: {
       current_year_tax_source: worksheet,
       nonfarm_investment_income: investment,
+      ...(wages ? { nonfarm_wage_income: wages } : {}),
     },
   };
   const result = raw(finalInputs);
