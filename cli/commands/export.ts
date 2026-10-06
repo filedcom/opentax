@@ -13,6 +13,9 @@ import type { DiagnosticEntry } from "../../core/validation/types.ts";
 import type { ExecutorDiagnosticEntry } from "../../core/runtime/executor.ts";
 import { loadForm8839Attachments } from "./form8839-attachments.ts";
 import { normalizeAllPending } from "../../forms/f1040/2025/pending.ts";
+import { buildForm4972PaperPdfBytes } from "../../forms/f1040/2025/pdf/builder.ts";
+import { reconcileForm4972Collection } from "../../forms/f1040/2025/form4972_collection_reconciliation.ts";
+import { sha256Hex } from "../../forms/f1040/2025/prepared-source.ts";
 
 function getCatalogEntry(formType: string, year: number) {
   const key = `${formType}:${year}`;
@@ -318,5 +321,65 @@ export async function exportPdfCommand(
   const outPath = args.outputPath ??
     join(args.baseDir, args.returnId, "export.pdf");
   await Deno.writeFile(outPath, outputBytes);
+  return outPath;
+}
+
+/** This route emits a paper packet only; it never constructs MeF XML. */
+export async function exportForm4972PaperCommand(
+  args: ExportPdfArgs,
+): Promise<string> {
+  if (args.force || args.draft) {
+    throw new Error(
+      "Form 4972 paper-only export cannot bypass filing checks or export a draft",
+    );
+  }
+  const { pending, def, filer } = await runReturnPipeline(args);
+  if (def.formType !== "f1040" || def.taxYear !== 2025) {
+    throw new Error("Form 4972 paper-only export requires a TY2025 Form 1040");
+  }
+  // MeF business rules are scoped by emitted native documents. This route
+  // deliberately emits no native return; source and PDF guards still run.
+  const bytes = await buildForm4972PaperPdfBytes(
+    def.buildPending(pending),
+    filer,
+  );
+  const scoped = reconcileForm4972Collection(
+    pending.form4972,
+    pending,
+    filer,
+    "paper",
+  );
+  const outPath = args.outputPath ??
+    join(args.baseDir, args.returnId, "paper-only-form4972.pdf");
+  await Deno.writeFile(outPath, bytes);
+  await Deno.writeTextFile(
+    `${outPath}.source-manifest.json`,
+    JSON.stringify(
+      {
+        filingChannel: "paper_only",
+        taxYear: 2025,
+        electronicSubmissionAuthorized: false,
+        pdfSha256: await sha256Hex(bytes),
+        form1040Line16: pending.f1040.line16_income_tax,
+        form4972Tax: pending.f1040.form4972_tax,
+        participantForms: scoped.map(({ fields, sources, tax }, index) => ({
+          copy: index + 1,
+          recipient: fields.recipient,
+          participantName: sources[0].form4972_plan?.participant_name,
+          participantSsn: sources[0].form4972_plan?.participant_ssn,
+          planReference: sources[0].form4972_plan?.plan_reference,
+          sourceDocumentReferences: fields.source_document_references,
+          capitalGainElection: fields.elect_capital_gain,
+          tenYearAveragingElection: fields.elect_10yr_averaging,
+          determinedTax: tax,
+          line30Tax: fields.line30,
+        })),
+        sourceRetentionNotice:
+          "Retained source records and any required statements must be reviewed separately; this manifest is not an IRS attachment or acceptance record.",
+      },
+      null,
+      2,
+    ),
+  );
   return outPath;
 }

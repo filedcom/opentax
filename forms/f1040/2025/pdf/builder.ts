@@ -13,6 +13,7 @@ import { PDFDocument, StandardFonts } from "pdf-lib";
 import { join } from "@std/path";
 import { normalizeAllPending } from "../pending.ts";
 import { ALL_PDF_FORMS } from "./forms/index.ts";
+import { form4972PaperPdf } from "./forms/f4972.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "./form-descriptor.ts";
 import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
 import { assertAttachmentCoverage } from "../attachment-coverage.ts";
@@ -571,12 +572,13 @@ export async function fillFormPdf(
  * @param filer     Filer identity (name, SSN, address)
  * @param cacheDir  Directory to cache downloaded IRS PDFs (default: .pdf-cache)
  */
-export async function buildPdfBytes(
+async function buildPdfBytesInternal(
   pending: Record<string, unknown>,
   filer: FilerIdentity | undefined,
   cacheDir = ".pdf-cache",
   preparedBundle?: MefBundle,
   pageOrigins?: PdfPageOrigin[],
+  paperOnly4972 = false,
 ): Promise<Uint8Array> {
   assertForm8858FilingSource(pending.f8858);
   assertDigitalAssetDispositionAnswer(pending);
@@ -849,7 +851,11 @@ export async function buildPdfBytes(
   const merged = await PDFDocument.create({ updateMetadata: false });
   const copyCounts = new Map<string, number>();
 
-  for (const descriptor of ALL_PDF_FORMS) {
+  for (const registeredDescriptor of ALL_PDF_FORMS) {
+    const descriptor = paperOnly4972 &&
+        registeredDescriptor.pendingKey === "form4972"
+      ? form4972PaperPdf
+      : registeredDescriptor;
     const fields = (normalized[descriptor.pendingKey] ?? {}) as Record<
       string,
       unknown
@@ -927,4 +933,47 @@ export async function buildPdfBytes(
   }
 
   return merged.save();
+}
+
+export function buildPdfBytes(
+  pending: Record<string, unknown>,
+  filer: FilerIdentity | undefined,
+  cacheDir = ".pdf-cache",
+  preparedBundle?: MefBundle,
+  pageOrigins?: PdfPageOrigin[],
+): Promise<Uint8Array> {
+  return buildPdfBytesInternal(
+    pending,
+    filer,
+    cacheDir,
+    preparedBundle,
+    pageOrigins,
+  );
+}
+
+/** Produce a paper filing packet for a validated Form 4972 collection too large for MeF. */
+export async function buildForm4972PaperPdfBytes(
+  pending: Record<string, unknown>,
+  filer: FilerIdentity | undefined,
+  cacheDir = ".pdf-cache",
+  pageOrigins?: PdfPageOrigin[],
+): Promise<Uint8Array> {
+  const forms = (pending.form4972 as Record<string, unknown> | undefined)
+    ?.forms;
+  if (!Array.isArray(forms) || forms.length <= 2) {
+    throw new Error(
+      "Form 4972 paper-only export requires more than two elected participant forms",
+    );
+  }
+  if (!filer) {
+    throw new Error("Form 4972 paper-only export needs filer identity");
+  }
+  return buildPdfBytesInternal(
+    pending,
+    filer,
+    cacheDir,
+    undefined,
+    pageOrigins,
+    true,
+  );
 }

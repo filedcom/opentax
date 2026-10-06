@@ -62,12 +62,13 @@ export function reconcileForm4972Collection(
   raw: Record<string, unknown>,
   allPending: Readonly<Record<string, unknown>>,
   filer: FilerIdentity | undefined,
+  filingChannel: "mef" | "paper" = "mef",
 ) {
   const { forms, elections, source_forms } = collectionSchema.parse(raw);
   // Official IMF2025v5.4 ReturnData1040.xsd permits at most two IRS4972
   // documents. More participants may calculate but need an authorized filing
   // route; do not manufacture an XML/PDF overflow attachment.
-  if (forms.length > 2) {
+  if (filingChannel === "mef" && forms.length > 2) {
     throw new Error(
       "Form4972 native filing schema permits at most two participant documents; additional participants remain unfileable",
     );
