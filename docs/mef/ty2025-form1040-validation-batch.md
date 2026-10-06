@@ -4955,3 +4955,5 @@ Main source integration83b74af8f: Form8611 gate97/0 (10s), held replay2 cases/12
 - `/tmp/opentax-f8611-main-held.log` SHA256 `61e5149245a51d6911444587b8b5699715d1b965b67a909c4def8a86f875e43b`
 - `/tmp/opentax-cycle-controlled-farm-main.log` SHA256 `9303173cd91593699c2a3cfd27ed4a9f22fb53662c2799b0637f286dda2e23e7`
 - `/tmp/opentax-controlled-farm-main-held.log` SHA256 `364abce19b76d15051c7d2a53072491fd9b231c3b6b18e76421eb5b55a7f7a53`
+
+Independent spouse health plans current mainfa0e3272e:57/0(31s), exact owned-source/zeroMedicare/native8995/Pub974 gate. Six complete packets/all101 reviewed pages and18 hashes retained under `.state/research/2026-10-06-independent-spouse-health-plans-reviewed`. Log `/tmp/opentax-independent-health-main.log` SHA256 `942422b5c8c7914ab414879b5ff571d8060dc9f7717874b863af43b089cd3aed`. IRS acceptance and broader parent scope remain unproven.
