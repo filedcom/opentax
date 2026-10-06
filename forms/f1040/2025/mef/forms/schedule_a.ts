@@ -1,3 +1,4 @@
+import { assertRetirementStateLocalTaxSource } from "../../retirement_state_local_tax_source.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import {
@@ -38,6 +39,7 @@ export interface Fields {
   // IRC §164(b)(5) election: either income tax or sales tax — mutually exclusive.
   // Both fields map to the same IRS XSD element (StateAndLocalTaxAmt).
   line_5a_state_income_tax?: number | null;
+  retirement_state_local_withholding?: number | null;
   line_5a_sales_tax?: number | null;
   line_5b_real_estate_tax?: number | null;
   line_5c_personal_property_tax?: number | null;
@@ -91,6 +93,7 @@ function buildIRS1040ScheduleA(
   fields: Input,
   context?: MefBuildContext,
 ): string {
+  assertRetirementStateLocalTaxSource(context?.pending, fields);
   const returnFields = context?.pending?.f1040 as
     | Record<string, unknown>
     | undefined;
@@ -305,6 +308,7 @@ function buildIRS1040ScheduleA(
   // Combine the mutually exclusive line 5a fields into a single XSD element.
   // Only one will be nonzero (enforced by schedule_a inputSchema superRefine).
   const line5a = (fields.line_5a_state_income_tax ?? 0) +
+    (fields.retirement_state_local_withholding ?? 0) +
     (fields.line_5a_sales_tax ?? 0);
   const hasDeduction =
     FIELD_MAP.some(([key]) =>

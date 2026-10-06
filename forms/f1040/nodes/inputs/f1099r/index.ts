@@ -29,6 +29,7 @@ import {
   taxableRothDistribution,
   taxableTraditionalDistribution,
 } from "../../intermediate/forms/form8606/index.ts";
+import { scheduleA } from "../schedule_a/index.ts";
 import { tsSchema } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
@@ -516,7 +517,19 @@ export const itemSchema = z.object({
 
 // Node inputSchema — receives all 1099-Rs for this return as a single array
 export const inputSchema = z.object({
-  f1099rs: z.array(itemSchema).min(1),
+  f1099rs: z.array(itemSchema).default([]),
+  substitute_f1099rs: z.array(itemSchema).optional(),
+}).transform(({ substitute_f1099rs, ...input }, ctx) => {
+  const f1099rs = [...input.f1099rs, ...(substitute_f1099rs ?? [])];
+  if (f1099rs.length === 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "At least one source is required",
+    });
+  }
+  return { ...input, f1099rs } as Omit<typeof input, "substitute_f1099rs"> & {
+    substitute_f1099rs?: z.infer<typeof itemSchema>[];
+  };
 });
 
 type R1099Item = z.infer<typeof itemSchema>;
@@ -1870,6 +1883,7 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     form5329,
     form4972Elections,
     form8606,
+    scheduleA,
   ]);
 
   compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
@@ -1904,6 +1918,11 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
       validateItem(item);
     }
     const corrective = correctivePlanItems(r1099s);
+    const stateLocalWithholding = activeItems(r1099s).reduce(
+      (sum, item) =>
+        sum + (item.box14_state_tax ?? 0) + (item.box17_local_tax ?? 0),
+      0,
+    );
     if (
       corrective.length > 0 &&
       (ctx.taxYear !== 2025 ||
@@ -1916,7 +1935,15 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     }
     assertIraRolloverEvidence(r1099s);
 
-    const outputs: NodeOutput[] = [];
+    const outputs: NodeOutput[] = [
+      ...(stateLocalWithholding > 0
+        ? [
+          output(scheduleA, {
+            retirement_state_local_withholding: stateLocalWithholding,
+          }),
+        ]
+        : []),
+    ];
 
     // IRA f1040 fields
     const iraFields = iraF1040Fields(

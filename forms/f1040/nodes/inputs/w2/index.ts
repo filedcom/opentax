@@ -264,10 +264,22 @@ export const w2ItemSchema = z.object({
 
 // Node inputSchema — receives all W-2s for this return as a single array.
 export const inputSchema = z.object({
-  w2s: z.array(w2ItemSchema).min(1).describe("All W-2 forms for this return"),
+  w2s: z.array(w2ItemSchema).default([]).describe("Ordinary issued W-2 forms"),
+  substitute_w2s: z.array(w2ItemSchema).optional(),
   f8958_allocation: form8958InputSchema.optional(),
   patron_filing_review: patronReviewSchema.optional(),
   owner_identity: ownerIdentitySchema.optional(),
+}).transform(({ substitute_w2s, ...input }, ctx) => {
+  const w2s = [...input.w2s, ...(substitute_w2s ?? [])];
+  if (w2s.length === 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "At least one source is required",
+    });
+  }
+  return { ...input, w2s } as Omit<typeof input, "substitute_w2s"> & {
+    substitute_w2s?: z.infer<typeof w2ItemSchema>[];
+  };
 });
 
 type F1040Input = z.infer<typeof f1040.inputSchema>;

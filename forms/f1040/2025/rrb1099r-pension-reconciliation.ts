@@ -1,3 +1,4 @@
+import { reconcileForm4852Source } from "./form4852_source.ts";
 import { inputSchema } from "../nodes/inputs/rrb1099r/index.ts";
 import { f1099r } from "../nodes/inputs/f1099r/index.ts";
 import { f4852 } from "../nodes/inputs/f4852/index.ts";
@@ -39,7 +40,10 @@ export function assertRrb1099rPensionSource(
   const line5a = filed?.line5a_pension_gross ?? 0;
   const line5b = filed?.line5b_pension_taxable ?? 0;
   const context = { taxYear: 2025, formType: "f1040" } as const;
-  if (pending.f1099r !== undefined && pending.f4852 !== undefined) {
+  if (
+    pending.f1099r !== undefined && pending.f4852 !== undefined &&
+    (pending.f4852 as Record<string, unknown>).reviewed_source === undefined
+  ) {
     const issued = f1099r.inputSchema.parse(pending.f1099r).f1099rs;
     const substitutes = f4852.inputSchema.parse(pending.f4852).f4852s;
     const payerIds = new Set(
@@ -64,6 +68,10 @@ export function assertRrb1099rPensionSource(
       );
     }
   }
+  if (
+    pending.f4852 &&
+    (pending.f4852 as Record<string, unknown>).reviewed_source && filer
+  ) reconcileForm4852Source(pending, filer);
   const pensionFrom = (
     source: unknown,
     node: typeof f1099r | typeof f4852,

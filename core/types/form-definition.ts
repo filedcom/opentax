@@ -37,6 +37,9 @@ export interface FormDefinition {
     pending: Record<string, unknown>,
     filer: FilerIdentity | undefined,
     attachments?: ReadonlyArray<MefPdfAttachment>,
+    retainedSourceDocuments?: ReadonlyArray<
+      { document_reference: string; bytes: Uint8Array }
+    >,
   ) => Promise<PreparedFormReturn>;
   readonly buildMefXml: (
     pending: Record<string, unknown>,

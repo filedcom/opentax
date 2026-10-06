@@ -118,6 +118,8 @@ export const inputSchema = z.object({
   // Line 5a: State and local income taxes — mutually exclusive with line_5a_sales_tax
   // per IRC §164(b)(5) election. Provide one or the other, never both.
   line_5a_state_income_tax: z.number().nonnegative().optional(),
+  // Separate issued retirement withholding contribution; preserve wage/other taxes.
+  retirement_state_local_withholding: z.number().nonnegative().optional(),
   // Line 5a (alternative): General sales tax deduction in lieu of income taxes
   // IRC §164(b)(5)(A) — taxpayer elects sales tax OR income tax, not both.
   line_5a_sales_tax: z.number().nonnegative().optional(),
@@ -374,7 +376,8 @@ export const inputSchema = z.object({
   // state and local income taxes. The election is mutually exclusive — you cannot
   // deduct both. Reject when both are provided with nonzero values.
   const hasSalesTax = (data.line_5a_sales_tax ?? 0) > 0;
-  const hasIncomeTax = (data.line_5a_state_income_tax ?? 0) > 0;
+  const hasIncomeTax = ((data.line_5a_state_income_tax ?? 0) +
+    (data.retirement_state_local_withholding ?? 0)) > 0;
   if (hasSalesTax && hasIncomeTax) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -411,6 +414,7 @@ function effectiveSaltCap(input: ScheduleAInput, cfg: F1040Config): number {
 function computeSALT(input: ScheduleAInput, cfg: F1040Config): number {
   // line_5a is either state income tax or sales tax (election) — never both (validated in schema)
   const line5a = (input.line_5a_state_income_tax ?? 0) +
+    (input.retirement_state_local_withholding ?? 0) +
     (input.line_5a_sales_tax ?? 0);
   const saltTotal = line5a +
     (input.line_5b_real_estate_tax ?? 0) +
@@ -606,7 +610,11 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
     const niitAllocatedTax = input.niit_allocable_state_local_tax ?? 0;
     if (
       niitAllocatedTax >
-        Math.min(input.line_5a_state_income_tax ?? 0, saltCapped)
+        Math.min(
+          (input.line_5a_state_income_tax ?? 0) +
+            (input.retirement_state_local_withholding ?? 0),
+          saltCapped,
+        )
     ) {
       throw new Error(
         "Form 8960 state tax allocation exceeds deductible state income tax",

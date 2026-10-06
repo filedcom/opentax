@@ -138,6 +138,11 @@ export function assert1099WithholdingSource(
     }
   }
   for (const source of sources) {
+    if (
+      source.key === "f4852" &&
+      (pending.f1099r as Record<string, unknown> | undefined)
+          ?.substitute_f1099rs !== undefined
+    ) continue;
     const raw = pending[source.key];
     if (raw === undefined) continue;
     const parsed = source.schema.parse(raw) as Record<string, unknown>;

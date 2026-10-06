@@ -1,3 +1,4 @@
+import { assertRetirementStateLocalTaxSource } from "../../retirement_state_local_tax_source.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import {
@@ -311,6 +312,7 @@ export const scheduleAPdf: PdfFormDescriptor = {
       capital_gain_election_finalized: _election,
       ...source
     } = input;
+    assertRetirementStateLocalTaxSource(all, input);
     const parsed = scheduleAInputSchema.parse(source);
     const recomputed = scheduleA.compute(
       { taxYear: 2025, formType: "f1040" },
@@ -329,6 +331,7 @@ export const scheduleAPdf: PdfFormDescriptor = {
     }
     const amount = (key: string) => Number(input[key] ?? 0);
     const saltBeforeCap = amount("line_5a_state_income_tax") +
+      amount("retirement_state_local_withholding") +
       amount("line_5a_sales_tax") + amount("line_5b_real_estate_tax") +
       amount("line_5c_personal_property_tax");
     const taxes = Number(standard.itemized_taxes);
@@ -372,6 +375,8 @@ export const scheduleAPdf: PdfFormDescriptor = {
     );
     return [{
       ...input,
+      line_5a_state_income_tax: amount("line_5a_state_income_tax") +
+        amount("retirement_state_local_withholding"),
       line_8a_mortgage_interest_1098: line8a,
       line_8b_mortgage_interest_no_1098: line8b,
       print_line_8b_seller_details: line8bSeller?.description,

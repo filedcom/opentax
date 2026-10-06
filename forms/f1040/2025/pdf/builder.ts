@@ -1,3 +1,4 @@
+import { assertForm4852RetainedEvidence } from "../form4852_retained_evidence.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
 import { assertForm8978SourceBytes } from "../form8978_source.ts";
 import { PDFDocument, StandardFonts } from "pdf-lib";
@@ -577,7 +578,16 @@ export async function buildPdfBytes(
   assertPatrIssuedCopies(normalized.f1099patr);
   assertPatrWithholdingRecipient(normalized.f1099patr, filer);
   assertLine1bHouseholdWageSource(normalized);
-  assertForm4852FilingRoute(normalized);
+  assertForm4852FilingRoute(
+    normalized,
+    filer,
+    preparedBundle?.retainedSourceDocuments !== undefined,
+  );
+  await assertForm4852RetainedEvidence(
+    normalized,
+    filer,
+    preparedBundle?.retainedSourceDocuments ?? [],
+  );
   assertW2WithholdingSource(normalized, filer);
   assert1099WithholdingSource(normalized, filer);
   assertOtherFormsWithholding(normalized.f1040 ?? {}, normalized, true);

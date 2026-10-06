@@ -166,12 +166,18 @@ export const f1040_2025: FormDefinition = {
   inputNodes,
   registry,
   executeReturn,
-  prepareReturn: async (pending, filer, attachments = []) => {
+  prepareReturn: async (
+    pending,
+    filer,
+    attachments = [],
+    retainedSourceDocuments = [],
+  ) => {
     const normalized = buildPending(pending) as MefFormsPending;
     assertF1040FinalHeader(normalized.f1040 ?? {}, filer);
     const bundle = await buildMefBundle(normalized, {
       filer,
       attachments,
+      retainedSourceDocuments,
       schemaVersion: F1040_2025_CONFIG.mefSchemaVersion,
       year: F1040_2025_CONFIG.taxYear,
       returnType: "1040",

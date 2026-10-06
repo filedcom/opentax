@@ -90,7 +90,9 @@ export function buildStartNode(entries: readonly InputNodeEntry[]): TaxNode {
       }
       const ownerContext = (nodeType: string): Record<string, unknown> => {
         if (!ownerIdentity) return {};
-        if (nodeType === "w2") return { owner_identity: ownerIdentity };
+        if (nodeType === "w2" || nodeType === "f4852") {
+          return { owner_identity: ownerIdentity };
+        }
         if (nodeType === "schedule_c") return { filing_status: "mfj" };
         if (nodeType === "schedule_f") return { owner_filing_status: "mfj" };
         return {};
@@ -115,7 +117,9 @@ export function buildStartNode(entries: readonly InputNodeEntry[]): TaxNode {
             nodeType: entry.node.nodeType,
             fields: {
               ...(value as Record<string, unknown>),
-              ...ownerContext(entry.node.nodeType),
+              ...(entry.node.nodeType === "f4852"
+                ? {}
+                : ownerContext(entry.node.nodeType)),
             },
           });
         }

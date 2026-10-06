@@ -1,3 +1,4 @@
+import { inputSchema as w2SourceSchema } from "../../../nodes/inputs/w2/index.ts";
 import { assertQualifiedTipQbiSource } from "../../form8995_qualified_tip_source.ts";
 import { assertIndependentOwnerHealth } from "../../form7206_independent_owner_source.ts";
 import { normalizeAllPending } from "../../pending.ts";
@@ -34,7 +35,7 @@ export function assertJointOwner8995(
     (sum, row) => sum + row.net_profit,
     0,
   );
-  const w2s = p.w2?.w2s as Array<Record<string, unknown>> | undefined;
+  const w2s = p.w2 === undefined ? undefined : w2SourceSchema.parse(p.w2).w2s;
   const wages = w2s?.reduce((sum, row) => sum + Number(row.box1_wages), 0) ?? 0;
   const canonical = (value: unknown) =>
     JSON.stringify(

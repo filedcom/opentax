@@ -189,6 +189,7 @@ export const f1099r: MefFormDescriptor<"f1099r", Fields, readonly string[]> = {
     const substitutes =
       form4852NativeSources(context?.pending, context?.filer).f1099rs;
     const allSources = [...(fields.f1099rs ?? []), ...substitutes];
+    if (allSources.length === 0) return [];
     assertDistinct1099RCopies(allSources);
     assert1099RRecipientOwner({ f1099rs: allSources }, context?.filer);
     return allSources.map((item, index) =>

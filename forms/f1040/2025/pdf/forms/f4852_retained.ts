@@ -6,11 +6,13 @@ import {
 import { type FilerIdentity, FilingStatus } from "../../../mef/header.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
-// A retained taxpayer/ERO copy. This descriptor is deliberately absent from
-// ALL_PDF_FORMS: final export remains guarded until the substitute's MeF source
-// document and return-wide reconciliation are implemented and reviewed.
+// Taxpayer/ERO packet copy. Final rendering separately verifies the completed
+// official source PDF and retained workpaper bytes before producing this copy.
 const page = "topmostSubform[0].Page1[0]";
-const field = (domainKey: string, pdfField: string): PdfFieldEntry => ({
+const field = (
+  domainKey: string,
+  pdfField: string,
+): Extract<PdfFieldEntry, { kind: "text" }> => ({
   kind: "text",
   domainKey,
   pdfField: `${page}.${pdfField}`,
@@ -46,7 +48,7 @@ export const form4852RetainedPdf: PdfFormDescriptor = {
       pdfField: `${page}.c1_1[1]`,
       whenValue: FormType.R_1099,
     },
-    field("payer_name_address", "f1_5[0]"),
+    { ...field("payer_name_address", "f1_5[0]"), fontSize: 7 },
     field("payer_tin", "f1_6[0]"),
     amount("wages", `${line7Left}.f1_7[0]`),
     amount("social_security_wages", `${line7Left}.f1_8[0]`),

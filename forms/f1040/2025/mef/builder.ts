@@ -1,3 +1,5 @@
+import { assertForm4852RetainedEvidence } from "../form4852_retained_evidence.ts";
+import type { Form4852RetainedDocument } from "../form4852_source.ts";
 import { assertForm8978SourceBytes } from "../form8978_source.ts";
 import { buildReturnHeader, FilingStatus } from "../../mef/header.ts";
 import { element, elements } from "../../mef/xml.ts";
@@ -122,6 +124,7 @@ import {
 } from "../../nodes/intermediate/forms/form8839/public_source.ts";
 
 export interface MefBundle {
+  readonly retainedSourceDocuments?: readonly Form4852RetainedDocument[];
   readonly xml: string;
   readonly attachments: ReadonlyArray<MefPdfAttachment>;
   readonly pending: MefFormsPending;
@@ -133,6 +136,7 @@ export interface MefBundle {
 }
 
 export interface MefBundleOptions {
+  readonly retainedSourceDocuments?: readonly Form4852RetainedDocument[];
   readonly filer?: FilerIdentity;
   readonly attachments: ReadonlyArray<MefPdfAttachment>;
   readonly schemaVersion?: string;
@@ -227,6 +231,7 @@ function buildReturnXml(
   returnType: string,
   attachments: ReadonlyArray<MefPdfAttachment>,
   attachmentSha256ByFileName?: Readonly<Record<string, string>>,
+  form4852EvidenceVerified = false,
 ): { readonly xml: string; readonly form3800Parts?: Form3800DocumentParts } {
   if (year !== 2025 || returnType !== "1040") {
     throw new Error(
@@ -262,7 +267,7 @@ function buildReturnXml(
   assertPatrIssuedCopies(pending.f1099patr);
   assertPatrWithholdingRecipient(pending.f1099patr, filer);
   assertLine1bHouseholdWageSource(pending);
-  assertForm4852FilingRoute(pending);
+  assertForm4852FilingRoute(pending, filer, form4852EvidenceVerified);
   assertW2WithholdingSource(pending, filer);
   assert1099WithholdingSource(pending, filer);
   assertOtherFormsWithholding(pending.f1040 ?? {}, pending, true);
@@ -459,6 +464,7 @@ export function assertPreparedBundleProjection(
     "1040",
     bundle.attachments,
     bundle.attachmentSha256ByFileName,
+    bundle.retainedSourceDocuments !== undefined,
   );
   if (projected.xml !== bundle.xml) {
     throw new Error(
@@ -507,6 +513,17 @@ export async function buildMefBundle(
   options: MefBundleOptions,
 ): Promise<MefBundle> {
   await assertForm1098IssuerCopies(pending);
+  const retainedSourceDocuments = (options.retainedSourceDocuments ?? []).map((
+    d,
+  ) => ({
+    document_reference: d.document_reference,
+    bytes: Uint8Array.from(d.bytes),
+  }));
+  await assertForm4852RetainedEvidence(
+    pending,
+    options.filer,
+    retainedSourceDocuments,
+  );
   const generated = await Promise.all(
     ALL_MEF_FORMS.map((form) =>
       "buildBinaryAttachments" in form && form.buildBinaryAttachments
@@ -558,6 +575,7 @@ export async function buildMefBundle(
     options.returnType ?? "1040",
     attachments,
     attachmentSha256ByFileName,
+    pending.f4852 !== undefined,
   );
   if (pending.f8283) {
     await assertPreparedVehicleAcknowledgments(
@@ -569,6 +587,7 @@ export async function buildMefBundle(
   }
   return {
     ...prepared,
+    retainedSourceDocuments,
     attachments,
     pending,
     sourceSha256: await preparedSourceSha256(pending, options.filer),

@@ -371,6 +371,7 @@ import {
 import {
   f4852,
   itemSchema as f4852ItemSchema,
+  reviewedSourceSchema as f4852ReviewedSourceSchema,
 } from "../nodes/inputs/f4852/index.ts";
 import {
   itemSchema as sepRetirementItemSchema,
@@ -804,6 +805,12 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f8908, itemSchema: f8908ItemSchema, isArray: true },
   { node: f8609, itemSchema: f8609ItemSchema, isArray: true },
   { node: f4852, itemSchema: f4852ItemSchema, isArray: true },
+  {
+    node: f4852,
+    inputKey: "f4852_reviewed_source",
+    inputSchema: z.object({ reviewed_source: f4852ReviewedSourceSchema }),
+    isArray: false,
+  },
   { node: sep_retirement, itemSchema: sepRetirementItemSchema, isArray: true },
   // Singleton inputs: entire form as a single object
   {

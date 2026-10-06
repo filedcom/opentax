@@ -1,3 +1,4 @@
+import { form4852RetainedPdf } from "./f4852_retained.ts";
 import type { PdfFormDescriptor } from "../form-descriptor.ts";
 import { irs1040Pdf } from "./f1040.ts";
 import { schedule1aPdf } from "./schedule1a.ts";
@@ -119,6 +120,7 @@ import { w2gPdf } from "./w2g.ts";
 
 export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   irs1040Pdf,
+  form4852RetainedPdf,
   w2gPdf,
   schedule1Pdf,
   schedule1aPdf,

@@ -1,3 +1,4 @@
+import type { inputSchema as form4852InputSchema } from "../../nodes/inputs/f4852/index.ts";
 import type { inputSchema as educationIncomeSchema } from "../../nodes/inputs/education_income/index.ts";
 export { FilingStatus } from "../../mef/header.ts";
 export type { FilerIdentity } from "../../mef/header.ts";
@@ -70,6 +71,7 @@ export type MefFormsPending =
   & {
     // An affirmative Form 4547 request stays in pending until its required
     // election signature route is implemented; attachment coverage rejects it.
+    f4852?: z.infer<typeof form4852InputSchema>;
     f4547?: z.infer<typeof f4547InputSchema>;
     // A payment request is separate from a tax result or an already-paid
     // estimate. Preserve intent for a reviewed handoff; never emit a debit.
