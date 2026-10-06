@@ -39,6 +39,17 @@ Deno.test("actual interpreter invoice and full expense reduction reconcile full 
     assertEquals(typeof pending.f3800.allowed_credit, "number");
     const allowed = Number(pending.f3800.allowed_credit);
     assertEquals(pending.f1040.line20_nonrefundable_credits, allowed);
+    const expected = {
+      full: [2375, 71908, 11232, 13711],
+      partial: [181, 18006, 451, 2738],
+      zero: [0, 3136, 0, 477],
+    }[id];
+    assertEquals([
+      allowed,
+      pending.f1040.line11_agi,
+      pending.f1040.line13_qbi_deduction,
+      pending.f1040.line24_total_tax,
+    ], expected);
     assertEquals(allowed >= 0 && allowed <= 2375, true);
     if (id === "full") assertEquals(allowed, 2375);
     if (id === "partial") assertEquals(allowed > 0 && allowed < 2375, true);
