@@ -189,3 +189,7 @@ element despite positive overall net income; the2025 form explicitly stops after
 line3 and reports all losses directly. v18 corrects that filing assertion
 without changing sources or computed amounts. No single full-regression result
 or wider source completion is asserted.
+
+## Independent main integration
+
+Integrated production2bd7ad887: 51-module standard621/0/0ignored(3m58s), including current ScheduleH source tests. Actual saved33returns/271pages replay exact pending/preparedpending/carry/origins/PDF/source; native timestamp only, full XSD. Root reviewed all141newpages and independently preserved/hashchecked54new and45prior packet files before/after. Root reports `/tmp/opentax-eic-passive-k1-main-retained33-oct6/report.json`, `/tmp/opentax-eic-passive-k1-root-review-oct6.json`, and `/tmp/opentax-eic-passive-k1-root-{preservation,prior15-preservation}-oct6.json`; standard log `/tmp/opentax-eic-passive-k1-main-standard-oct6.log`. Broad parent and latest full regression remain open.
