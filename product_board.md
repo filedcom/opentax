@@ -10,7 +10,7 @@ Latest [Form7203 source proof](docs/mef/ty2025-form7203-multi-owned-debt-source-
 
 Complete fixture XSD replay passes **370/0**. Earlier full batches ended **11,794/1**, **11,896/24**, **11,991/10**, and **12,019/10**, with recorded repairs. A passing latest-production full batch is still required. V17 at **4bf25df11** is confirmed live, wrapper49975/task49981; it includes the shared-corporation integration and predates the pending mortgage correction. Live runs retain immutable snapshots, private evidence and restart guards; elapsed time alone never triggers a restart.
 
-Draft [PR63](https://github.com/filedcom/opentax/pull/63) is verified at shared-corporation seal **4bf25df11**. The local cash-out mortgage candidate is held for correction of the IRS mixed-use averaging rule; it is not a completed filing route. Source transcriptions do not authenticate issuers, signatures or prior acceptance. ATS credentials, scenario conflicts, IRS business rules, acknowledgments and release review remain incomplete; local XSD success does not establish IRS acceptance.
+Draft [PR63](https://github.com/filedcom/opentax/pull/63) is verified at shared-corporation seal **4bf25df11**. The local cash-out mortgage candidate remains held: corrected mixed-use averages pass source/XSD/PDF2/0 with unchanged lenderbytes; full compatibility, independent original replay and final integration are pending. Source transcriptions do not authenticate issuers, signatures or prior acceptance. ATS credentials, scenario conflicts, IRS business rules, acknowledgments and release review remain incomplete; local XSD success does not establish IRS acceptance.
 
 ## Scope and completion rules
 
