@@ -110,9 +110,29 @@ returns/151 pages in
 pre-ratio-correction replay passed **33 returns/186 pages** in
 `/tmp/opentax-scheduleh-state-rate-final33-v7-raw-oct6/report.json`, preserving
 all retained source, pending, prepared pending, carryforwards, origins, PDF and
-native XML except ReturnTs. The final ratio-correction replay will preserve
-those same records and qualify only corrected native rate elements. Its terminal
-report and final standard gate will be recorded before integration.
+native XML except ReturnTs. The integrated replay below independently checks the
+same source family after the native ratio correction. The isolated final
+eight-module gate passed **36/0**
+(`/tmp/opentax-scheduleh-state-rate-standard-v8-oct6.log`); focused source gate
+passed **8/0** (`/tmp/opentax-scheduleh-state-rate-focus-v8-oct6.log`). At
+integrated main `5e5d78b7f`, the 14-module gate passed **67/0**
+(`/tmp/opentax-scheduleh-state-rate-main-standard-oct6.log`) and the retained
+source replay passed **34 returns/191 pages**
+(`/tmp/opentax-scheduleh-state-rate-main-final34-oct6/report.json`): 31 newer
+saved inputs have exact source, whole pending, prepared pending, carryforwards,
+origins, PDF and native XML except ReturnTs, plus three historical packets with
+their earlier documented qualifications. Full TY2025v5.4 XSD and source-rate
+matching passed for every native output.
+
+Those retained packets did not contain a legacy supplied-rate row. A separate
+exact-input before/after proof at
+`/tmp/opentax-scheduleh-legacy-rate-comparison-oct6.json` replayed a 7-page
+legacy row packet from `ee63eaedf` and `5e5d78b7f`. Saved inputs, whole pending,
+prepared pending, carryforwards, filer, origins, and PDF were byte-equal; the
+three native ratios alone changed from `0/0/0` to `0.03/0.05/0.027` besides
+ReturnTs. Both XML packets passed full XSD; the before/after source and outputs
+remain in `/tmp/opentax-scheduleh-legacy-rate-before-oct6` and
+`/tmp/opentax-scheduleh-legacy-rate-after-oct6`.
 
 This selected source review does not convert older supplied Section A or B
 totals into derived dated evidence. State credits with unknown rates,
