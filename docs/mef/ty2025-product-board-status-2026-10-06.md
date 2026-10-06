@@ -4646,3 +4646,27 @@ Owned SEP plans, employee census and actual uniform contributions reconcile owne
 ## Resume with investment-interest main saved-source terminal
 
 Previous goal turn made progress: SEP ledger1547 sealed72d1cc22d after42/0, nineteenPDF382page parity and821physicalfile rehashes; Form4952 source productionac5fd2bde/docf6cb044a1 integrated,177integrationfiles physicallyretained, mainactual4/102 replay terminal0/freshfullXSD/graph/carry/origins/PDFexact/nativeonlyReturnTs and49codeheld. Main4 evidence94files plusmanifest=95 copied/rehashed. Normal28module67082/PID64374 remainslive atcurrentc3f49a374; fullV32PID64169 verifiedlive atpreceding4ea snapshot, notlatest4952. Ordinaryparity verifier prepared for sixteenPDF262reviewedpages, notexecuted beforeterminal. ExactdraftPR63headc3f49a374/title/body/draftverified andattached; initialpublicationverifier erroneouslystripped expectedtrailingnewline, correctedexactbytecomparison passed withoutPRmutation. Aggregationprivate24/0 and45page/sourceDecimalreview pendingfinalsource/legacytwo-storehandoff. Allfrozen52/futurebytes unchanged; no new mainTODO or future execution.
+
+
+## Continuation compaction — October 6, 22:14 UTC
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist retains **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,547 bounded slices**; broader parents remain open. Detailed learnings, predecessor qualifications and preservation records are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed. Draft [PR63](https://github.com/filedcom/opentax/pull/63) was verified at **c3f49a374**.
+
+**Current verification:** Form 4952 owner-paid investment interest and election coexistence with Schedule J, Form 8814 and Form 6251 is integrated at **ac5fd2bde/f6cb044a1**. Main replay of four actual saved returns passed **102 pages**, exact graph/carry/origins/PDF, timestamp-only native differences and fresh full local XSD. All 49 held code hashes match; 177 integration and 95 main replay files are physically preserved. Its normal **28-module typed gate is running**; completion still requires its terminal result and ordinary artifact parity. See the [investment-interest proof](docs/mef/ty2025-form4952-schedulej-child-source-proof.md).
+
+**Recent completion:** Owned SEP source plans and employee contributions passed main **42/0** with nineteen ordinary PDFs matching **382 reviewed pages**. Actual seven SEP returns/142 pages, prior seven health returns/145 pages and six independent returns/114 pages passed fresh local XSD; eighteen older returns/272 pages retain transferred historical XSD qualification. Raw deductions round at instructed totals, including the actual 20% half-dollar source. All 821 integration/main files and 42 held code hashes were verified. See the [owned SEP proof](docs/mef/ty2025-independent-patron-owned-sep-source.md).
+
+Earlier verified routes include child-capital Schedule J/AMT (**26/0**, fifteen ordinary PDFs/236 reviewed pages), child-tax AMT (**23/0**, twelve PDFs/160 pages), owner-health, independent/spouse farm QBI, paper Form 4972 collections, participant reconciliation, dated household service and family/state payroll, and prior Form 7203 copy consistency. Their exact scope, source authentication limits, replay results and retained evidence remain in the archive and linked proofs; these bounded routes do not close their broader parent TODOs.
+
+**Full regression V32 is running** at immutable **4ea6902e4**, including child-tax AMT, child-capital and SEP production, before the later investment-interest change. It has **30,815 physically separate private files**, **4,567 verified source/evidence hashes**, 42 held code hashes and an 8 GB V8 heap allowance. V31 was superseded for those three production corrections; partial results, reason and terminal exit143 are preserved. V32 began **2026-10-06T21:47:13Z**, with actual PID64169 verified live. No full-runtime pass is claimed.
+
+Existing QBI aggregation annual-disclosure work remains isolated pending final source/packet handoff. Remaining filing routes and scope decisions, source authentication, latest full regression, ATS credentials/scenario conflicts, IRS acknowledgments and release review remain required.
+
+
+Form 8962 private V2 saved-source replay passed two returns with PTC 8,184 and refund 10,291; independent review approved all ten pages. Its typed gate was 94 passed/1 failed because new test assertions used incorrect Form 1040 aliases. Original code/logs and qualification remain preserved. V3 corrects those aliases and adds a blind dependent whose filing requirement follows only the gross-income test; normal four-module gate remains live. No main production integration or seal is claimed.
+
+QBI aggregation final candidate 3a317f998/proof5507ed01a passed private 24/0, actual three saved-source returns/61 return pages and three annual attachment pages, exact graph/PDF/native attachment and fresh local XSD. Author preserved 298 evidence files; independent review approved 45 new-case pages. Baseline nineteen-page independent supplement and main gates remain required.
