@@ -3564,3 +3564,9 @@ Integrated production6519c6819 passes final fifteen-module standarddenotasktest2
 ## Mortgage improvement main seal
 
 Productiona7a00c87c passes mainstandardsevenmodule91/0/0ignored(48s), `/tmp/opentax-1098-improvement-main-standard-oct6.log`. Actualretainedraw9/30exactPDF/nativeonlyTs/fullXSD/sevencomparablepending/threepriororigins, matchingrawreport/log; allsixnewpages rootreviewed,17sealedfiles privatelyhashpreserved. Ledger1512, frozen52 andfuture exact; widerparent/externalgates remainopen. Mixed debt main246/0 and32/288 raw proof remain separately sealed.
+
+## Latest production regression and publication checkpoint
+
+V19 standarddenotasktest started immutable403a0719b6b6ed7fa14a02b273aa233ee7ed367b at2026-10-06T12:48:51Z, wrapper66712/task66716, actualdenotest descendant independently checked. Deno2.9.4/V8 15.0.245.2-rusty/TS6.0.3. Private research/cache cloned independently, KeepAlivefalse/statusrestartguard; log `/tmp/opentax-deno-task-test-source-v19-oct6.log`, status `/tmp/opentax-full-regression-source-v19-oct6.status`. This snapshot includes mixeddebt, mortgageimprovement/datejoin andQBIrounding; V17/V18 remain liveolderruns, no completedfullpass asserted.
+
+DraftPR63 pushed, exact head/title/body/draft verified at403a0719b in `/tmp/opentax-pr63-final-mixed-improvement-oct6.json`, fullPRcontext reviewed and pr-describe body updated. Artifact attachment succeeded. Source issuer/bank/signature authentication, history boundaries, broader52tasks and allexternalATS/IRSacceptance/release gates remainopen. Next existing shareholderparent work addresses two writtennotes with oneactualopenaccount in the canonicalthreecolumns; futuresection is not executed.
