@@ -533,3 +533,307 @@ Deno.test("cash-out points reject missing and conflicting owner, settlement, not
   changed((value) => { value.refinances[0].closing_disclosure_reference = "different property closing"; });
   changed((value) => { value.refinances[0].refinanced_principal++; });
 });
+
+async function sourceWithImprovement(month: 4 | 7) {
+  const prior = await sourceWithPoints(month);
+  const mortgage = structuredClone(prior.mortgage) as typeof prior.mortgage;
+  const points = structuredClone(prior.points) as typeof prior.points;
+  const review = mortgage.f1098_cashout_refinance_review
+    .cashout_refinance_review as Record<string, any>;
+  const count = 13 - month;
+  const newMonths = Array.from({ length: count }, (_, index) => {
+    const opening = 300_000 - 10_000 * index;
+    return {
+      month: month + index,
+      opening_balance: opening,
+      principal_paid_before_month_end: 10_000,
+      closing_balance: opening - 10_000,
+      interest_paid: opening / 200,
+      lender_statement_reference: `New lender 2025-${month + index} statement`,
+    };
+  });
+  const interest = newMonths.reduce((sum, row) => sum + row.interest_paid, 0);
+  const qualifiedClosings = newMonths.reduce((sum, _row, index) =>
+    sum + 250_000 - Math.max(0, 10_000 * (index + 1) - 50_000), 0);
+  const fullClosings = newMonths.reduce((sum, row) =>
+    sum + row.closing_balance, 0);
+  const ratio = Math.round(
+    (200_000 + qualifiedClosings / 12) /
+      (200_000 + fullClosings / 12) * 1000,
+  ) / 1000;
+  const oldInterest = mortgage.f1098[0].box1_mortgage_interest;
+  const oldAllowed = Math.round(oldInterest * ratio);
+  const totalAllowed = Math.round((oldInterest + interest) * ratio);
+  mortgage.f1098[0].box1_current_year_deductible_interest = oldAllowed;
+  mortgage.f1098[1].box1_mortgage_interest = interest;
+  mortgage.f1098[1].box1_current_year_deductible_interest =
+    totalAllowed - oldAllowed;
+  mortgage.f1098[1].box2_outstanding_principal = 300_000;
+  mortgage.f1098[1].issuer_copy = await copy(
+    "New Home Lender", interest, 300_000,
+    `${String(month).padStart(2, "0")}/01/2025`,
+  );
+  review.new_loan_months = newMonths;
+  review.new_loan_proceeds_to_home_improvement = 50_000;
+  review.home_improvement_invoice_ledger_reference =
+    "2025 substantial roof replacement contractor ledger";
+  review.main_home_substantial_improvement_verified = true;
+  const spentOn = `2025-${String(month).padStart(2, "0")}-01`;
+  const invoiceRecord = {
+    document_type: "contractor_invoice",
+    contractor_name: "Roof Specialist LLC",
+    billed_to_tin: "111-22-3333",
+    property_reference: "2025 principal residence",
+    invoice_reference: "2025 structural roof replacement completion invoice",
+    invoice_ledger_reference:
+      "2025 substantial roof replacement contractor ledger",
+    amount: 50_000,
+    completed_on: spentOn,
+    description: "Structural roof replacement prolongs the home's useful life",
+  };
+  const paymentRecord = {
+    document_type: "bank_payment",
+    payer_tin: "111-22-3333",
+    payee: "Roof Specialist LLC",
+    payment_reference: "2025 escrow wire to roof contractor",
+    amount: 50_000,
+    paid_on: spentOn,
+  };
+  async function retainedJson(fileName: string, document: unknown) {
+    const bytes = new TextEncoder().encode(JSON.stringify(document));
+    const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+    return {
+      file_name: fileName,
+      sha256: Array.from(digest, (byte) => byte.toString(16).padStart(2, "0"))
+        .join(""),
+      bytes,
+    };
+  }
+  review.closing_disbursements = [review.closing_disbursements[0], {
+    purpose: "home_improvement",
+    amount: 50_000,
+    paid_on: `2025-${String(month).padStart(2, "0")}-01`,
+    payment_record_reference: "2025 escrow wire to roof contractor",
+  }, review.closing_disbursements[1]];
+  review.improvement_use_records = [{
+    amount: 50_000,
+    spent_on: spentOn,
+    property_reference: "2025 principal residence",
+    contractor_invoice_reference:
+      "2025 structural roof replacement completion invoice",
+    contractor_payment_reference: "2025 escrow wire to roof contractor",
+    contractor_name: "Roof Specialist LLC",
+    invoice_ledger_reference:
+      "2025 substantial roof replacement contractor ledger",
+    substantial_improvement_description:
+      "Structural roof replacement prolongs the home's useful life",
+    contractor_invoice_document: await retainedJson(
+      `roof-invoice-${month}.json`, invoiceRecord,
+    ),
+    contractor_payment_document: await retainedJson(
+      `roof-payment-${month}.json`, paymentRecord,
+    ),
+  }];
+  const item = points.refinances[0] as Record<string, any>;
+  item.refinanced_principal = 300_000;
+  item.total_points_charged = 6_000;
+  item.points_for_nondeductible_services = 1_000;
+  item.cashout_points_payment.settlement_points_charged = 6_000;
+  item.cashout_points_payment.payer_bank_debit_amount = 6_000;
+  item.improvement = {
+    amount_used_to_substantially_improve_main_home: 50_000,
+    improvement_expense_records_reference:
+      "2025 substantial roof replacement contractor ledger",
+    main_home_and_substantial_improvement_verified: true,
+    pub936_immediate_points_tests_1_through_6_verified: true,
+    points_paid_with_own_funds_verified: true,
+    local_points_practice_review: {
+      established_practice_evidence_reference:
+        "2025 local lender discount-point practice review",
+      customary_charge_evidence_reference:
+        "2025 local 2-point rate comparison",
+      customary_interest_points_percent_ceiling: 2,
+      separate_service_charge_settlement_reference:
+        "2025 closing disclosure separate $1000 service fee line",
+    },
+  };
+  points.cashout_source = {
+    f1098s: mortgage.f1098,
+    ...mortgage.f1098_cashout_refinance_review,
+  };
+  const interestLike = 5_000;
+  const immediate = interestLike * 50_000 / 300_000;
+  const expectedPoints = Math.round((immediate +
+    (interestLike - immediate) * count / item.loan_term_months) * ratio);
+  return { mortgage, points, ratio, totalAllowed, expectedPoints };
+}
+
+Deno.test("one mixed refinance sources home improvement and personal use before interest and points limits", async () => {
+  for (const month of [7, 4] as const) {
+    const { mortgage, points, ratio, totalAllowed, expectedPoints } =
+      await sourceWithImprovement(month);
+    assertEquals(ratio, month === 7 ? .975 : .978);
+    assertEquals(totalAllowed, month === 7 ? 13_894 : 14_377);
+    assertEquals(expectedPoints, month === 7 ? 948 : 968);
+    assertEquals(refinancePointsDeduction(points), expectedPoints);
+    const result = f1040_2025.executeReturn({
+      ...base.inputs,
+      schedule_a: { force_itemized: true },
+      f1098: mortgage.f1098,
+      f1098_cashout_refinance_review:
+        mortgage.f1098_cashout_refinance_review,
+      mortgage_refinance_points: points,
+    });
+    assertEquals(result.diagnostics, []);
+    assertEquals(result.pending.schedule_a?.line_8c_points_no_1098, expectedPoints);
+    const pending = buildPending(result.pending);
+    const filer = extractFilerIdentity(result.pending.f1040)!;
+    const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+    assertEquals(bundle.xml.includes(
+      `<RptHomeMortgIntAndPointsAmt>${totalAllowed}</RptHomeMortgIntAndPointsAmt>`,
+    ), true);
+    assertEquals(bundle.xml.includes(
+      `<Form1098PointsNotReportedAmt>${expectedPoints}</Form1098PointsNotReportedAmt>`,
+    ), true);
+    const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+    try {
+      await Deno.writeTextFile(xmlPath, bundle.xml);
+      const checked = await new Deno.Command("xmllint", {
+        args: ["--noout", "--schema", xsdPath, xmlPath],
+        stdout: "piped", stderr: "piped",
+      }).output();
+      assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+    } finally { await Deno.remove(xmlPath); }
+    const filled = await buildPdfBytes(bundle.pending, filer, ".pdf-cache", bundle);
+    assertEquals((await PDFDocument.load(filled)).getPageCount(), 3);
+    let dir: string | undefined;
+    try { dir = Deno.env.get("FORM1098_IMPROVEMENT_EVIDENCE_DIR"); }
+    catch (error) { if (!(error instanceof Deno.errors.NotCapable)) throw error; }
+    if (dir) {
+      const path = `${dir}/month-${month}`;
+      await Deno.mkdir(path, { recursive: true });
+      await Deno.writeTextFile(`${path}/source.json`, JSON.stringify({
+        f1098: mortgage.f1098,
+        f1098_cashout_refinance_review:
+          mortgage.f1098_cashout_refinance_review,
+        mortgage_refinance_points: points,
+      }));
+      await Deno.writeTextFile(`${path}/pending.json`, JSON.stringify(bundle.pending));
+      await Deno.writeTextFile(`${path}/return.xml`, bundle.xml);
+      await Deno.writeFile(`${path}/return.pdf`, filled);
+      for (const [index, loan] of mortgage.f1098.entries()) {
+        await Deno.writeFile(`${path}/source-1098-${index + 1}.pdf`,
+          loan.issuer_copy.bytes);
+      }
+      const invoice = (mortgage.f1098_cashout_refinance_review
+        .cashout_refinance_review as Record<string, any>)
+        .improvement_use_records[0];
+      await Deno.writeFile(`${path}/${invoice.contractor_invoice_document.file_name}`,
+        invoice.contractor_invoice_document.bytes);
+      await Deno.writeFile(`${path}/${invoice.contractor_payment_document.file_name}`,
+        invoice.contractor_payment_document.bytes);
+    }
+    const bad = structuredClone(bundle.pending);
+    const review = ((bad as Record<string, unknown>).f1098 as
+      Record<string, any>).cashout_refinance_review;
+    review.improvement_use_records[0].amount++;
+    await assertRejects(() => buildMefBundle(bad, { filer, attachments: [] }));
+    await assertRejects(() => buildPdfBytes(bad, filer, ".pdf-cache"));
+    const changedInvoiceBytes = structuredClone(bundle.pending);
+    const filedReview = ((changedInvoiceBytes as Record<string, unknown>)
+      .f1098 as Record<string, any>).cashout_refinance_review;
+    filedReview.improvement_use_records[0].contractor_invoice_document
+      .bytes[0] ^= 1;
+    await assertRejects(() =>
+      buildMefBundle(changedInvoiceBytes, { filer, attachments: [] })
+    );
+    await assertRejects(() =>
+      buildPdfBytes(changedInvoiceBytes, filer, ".pdf-cache")
+    );
+    const mismatchedValidCopy = structuredClone(bundle.pending);
+    const copiedReview = ((mismatchedValidCopy as Record<string, unknown>)
+      .mortgage_refinance_points as Record<string, any>).cashout_source
+      .cashout_refinance_review;
+    const document = copiedReview.improvement_use_records[0]
+      .contractor_invoice_document;
+    document.bytes = Uint8Array.from([...document.bytes, 32]);
+    document.sha256 = Array.from(new Uint8Array(
+      await crypto.subtle.digest("SHA-256", document.bytes),
+    ), (byte) => byte.toString(16).padStart(2, "0")).join("");
+    await assertRejects(() =>
+      buildMefBundle(mismatchedValidCopy, { filer, attachments: [] })
+    );
+    await assertRejects(() =>
+      buildPdfBytes(mismatchedValidCopy, filer, ".pdf-cache")
+    );
+  }
+});
+
+Deno.test("mixed refinance rejects unjoined contractor, property, debt-category and immediate-points evidence", async () => {
+  const { mortgage, points } = await sourceWithImprovement(7);
+  const mortgageRaw = {
+    f1098s: mortgage.f1098,
+    ...mortgage.f1098_cashout_refinance_review,
+  };
+  const changedMortgage = (mutate: (source: typeof mortgageRaw) => void) => {
+    const source = structuredClone(mortgageRaw);
+    mutate(source);
+    assertThrows(() => inputSchema.parse(source));
+  };
+  changedMortgage((source) => {
+    (source.cashout_refinance_review as Record<string, any>)
+      .improvement_use_records[0].amount++;
+  });
+  changedMortgage((source) => {
+    (source.cashout_refinance_review as Record<string, any>)
+      .improvement_use_records[0].property_reference = "another house";
+  });
+  changedMortgage((source) => {
+    (source.cashout_refinance_review as Record<string, any>)
+      .improvement_use_records[0].contractor_invoice_document.bytes[0] ^= 1;
+  });
+  changedMortgage((source) => {
+    (source.cashout_refinance_review as Record<string, any>)
+      .improvement_use_records[0].contractor_payment_document.sha256 =
+        "0".repeat(64);
+  });
+  changedMortgage((source) => {
+    (source.cashout_refinance_review as Record<string, any>)
+      .improvement_use_records[0].spent_on = "2025-06-30";
+  });
+  changedMortgage((source) => {
+    (source.cashout_refinance_review as Record<string, any>)
+      .closing_disbursements[1].amount++;
+  });
+  changedMortgage((source) => {
+    (source.cashout_refinance_review as Record<string, any>)
+      .new_loan_proceeds_to_home_improvement++;
+  });
+  changedMortgage((source) => {
+    source.f1098s[1].box2_outstanding_principal++;
+  });
+  const changedPoints = (mutate: (source: typeof points) => void) => {
+    const source = structuredClone(points);
+    mutate(source);
+    assertThrows(() => pointsInputSchema.parse(source));
+  };
+  changedPoints((source) => {
+    ((source.refinances[0] as Record<string, any>).improvement)
+      .amount_used_to_substantially_improve_main_home++;
+  });
+  changedPoints((source) => {
+    ((source.refinances[0] as Record<string, any>).improvement)
+      .improvement_expense_records_reference = "unrelated contractor";
+  });
+  changedPoints((source) => {
+    ((source.refinances[0] as Record<string, any>).improvement)
+      .local_points_practice_review.customary_interest_points_percent_ceiling = 1;
+  });
+  changedPoints((source) => {
+    (source.refinances[0] as Record<string, any>).cashout_points_payment
+      .payer_bank_debit_amount--;
+  });
+  changedPoints((source) => {
+    (source.refinances[0] as Record<string, any>).improvement = undefined;
+  });
+});

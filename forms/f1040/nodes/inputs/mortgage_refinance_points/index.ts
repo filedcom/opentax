@@ -42,6 +42,12 @@ const improvementSchema = z.object({
   main_home_and_substantial_improvement_verified: z.literal(true),
   pub936_immediate_points_tests_1_through_6_verified: z.literal(true),
   points_paid_with_own_funds_verified: z.literal(true),
+  local_points_practice_review: z.object({
+    established_practice_evidence_reference: z.string().trim().min(1),
+    customary_charge_evidence_reference: z.string().trim().min(1),
+    customary_interest_points_percent_ceiling: z.number().positive().max(10),
+    separate_service_charge_settlement_reference: z.string().trim().min(1),
+  }).strict().optional(),
 }).strict();
 
 const priorYear2024Schema = z.object({
@@ -283,10 +289,22 @@ export const inputSchema = z.object({
       item.refinanced_principal !== newLoan.box2_outstanding_principal ||
       item.refinanced_principal !==
         review.new_loan_proceeds_to_old_payoff +
+          (review.new_loan_proceeds_to_home_improvement ?? 0) +
           review.new_loan_proceeds_to_personal_cashout ||
       item.refinance_close_year !== 2025 ||
       item.refinance_close_month !== review.refinance_month ||
-      item.early_payoff_2025 !== undefined || item.improvement !== undefined ||
+      item.early_payoff_2025 !== undefined ||
+      (review.new_loan_proceeds_to_home_improvement
+        ? item.improvement?.amount_used_to_substantially_improve_main_home !==
+            review.new_loan_proceeds_to_home_improvement ||
+          item.improvement.improvement_expense_records_reference !==
+            review.home_improvement_invoice_ledger_reference ||
+          !item.improvement.local_points_practice_review ||
+          (item.total_points_charged - item.points_for_nondeductible_services) /
+              item.refinanced_principal * 100 >
+            item.improvement.local_points_practice_review
+              .customary_interest_points_percent_ceiling
+        : item.improvement !== undefined) ||
       item.loan_term_months !== payment.promissory_note_term_months ||
       item.total_points_charged !== payment.settlement_points_charged ||
       payment.payer_bank_debit_amount !== payment.settlement_points_charged ||
@@ -302,7 +320,7 @@ export const inputSchema = z.object({
         ...review.closing_disbursements.map((row) =>
           row.payment_record_reference
         ),
-      ]).size !== 5 ||
+      ]).size !== 3 + review.closing_disbursements.length ||
       item.monthly_payment_records.length !== months.length ||
       item.monthly_payment_records.some((row, index) =>
         row.month !== months[index] ||

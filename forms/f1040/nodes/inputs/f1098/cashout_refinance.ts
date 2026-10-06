@@ -1,4 +1,22 @@
 import { z } from "zod";
+import { createHash } from "node:crypto";
+
+const retainedDocument = z.object({
+  file_name: z.string().trim().regex(/^[^/\\]+\.json$/),
+  sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  bytes: z.instanceof(Uint8Array),
+}).strict();
+
+function reviewedDocument(
+  document: z.infer<typeof retainedDocument>,
+): Record<string, unknown> | undefined {
+  if (createHash("sha256").update(document.bytes).digest("hex") !==
+    document.sha256) return;
+  try {
+    const value = JSON.parse(new TextDecoder().decode(document.bytes));
+    if (value && typeof value === "object" && !Array.isArray(value)) return value;
+  } catch { /* A changed or unreadable retained record does not prove a claim. */ }
+}
 
 const monthlyRecord = z.object({
   month: z.number().int().min(1).max(12),
@@ -23,13 +41,15 @@ export const cashoutRefinanceReviewSchema = z.object({
   personal_cashout_use_ledger_reference: z.string().trim().min(1),
   closing_disbursements: z.array(
     z.object({
-      purpose: z.enum(["old_acquisition_loan_payoff", "personal_cashout"]),
+      purpose: z.enum([
+        "old_acquisition_loan_payoff", "home_improvement", "personal_cashout",
+      ]),
       amount: z.number().int().positive(),
       paid_on: z.string().regex(/^2025-(0[1-9]|1[0-2])-01$/),
       payment_record_reference: z.string().trim().min(1),
       payoff_receipt_reference: z.string().trim().min(1).optional(),
     }).strict(),
-  ).length(2),
+  ).min(2).max(3),
   cashout_use_records: z.array(
     z.object({
       amount: z.number().int().positive(),
@@ -41,6 +61,21 @@ export const cashoutRefinanceReviewSchema = z.object({
       use_ledger_reference: z.string().trim().min(1),
     }).strict(),
   ).min(1),
+  improvement_use_records: z.array(z.object({
+    amount: z.number().int().positive(),
+    spent_on: z.string().regex(/^2025-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/),
+    property_reference: z.string().trim().min(1),
+    contractor_invoice_reference: z.string().trim().min(1),
+    contractor_payment_reference: z.string().trim().min(1),
+    contractor_name: z.string().trim().min(1),
+    invoice_ledger_reference: z.string().trim().min(1),
+    substantial_improvement_description: z.string().trim().min(1),
+    contractor_invoice_document: retainedDocument,
+    contractor_payment_document: retainedDocument,
+  }).strict()).min(1).optional(),
+  home_improvement_invoice_ledger_reference: z.string().trim().min(1).optional(),
+  new_loan_proceeds_to_home_improvement: z.number().int().positive().optional(),
+  main_home_substantial_improvement_verified: z.literal(true).optional(),
   new_loan_proceeds_to_old_payoff: z.number().int().positive(),
   new_loan_proceeds_to_personal_cashout: z.number().int().positive(),
   refinance_month: z.number().int().min(2).max(12),
@@ -124,6 +159,11 @@ export function validateCashoutRefinanceReview(
   const month = review.refinance_month;
   const date = `2025-${String(month).padStart(2, "0")}-01`;
   const disbursements = review.closing_disbursements;
+  const improvement = review.new_loan_proceeds_to_home_improvement ?? 0;
+  const hasImprovement = improvement > 0;
+  const personalDisbursement = disbursements[hasImprovement ? 2 : 1];
+  const improvementDisbursement = hasImprovement ? disbursements[1] : undefined;
+  const improvementRows = review.improvement_use_records ?? [];
   if (
     items.length !== 2 || !old || !fresh || old === fresh ||
     review.original_acquisition_property_reference !==
@@ -134,16 +174,72 @@ export function validateCashoutRefinanceReview(
     oldDate >= new Date("2025-01-01T00:00:00Z") ||
     newDate.getUTCFullYear() !== 2025 ||
     newDate.getUTCMonth() + 1 !== month || newDate.getUTCDate() !== 1 ||
+    disbursements.length !== (hasImprovement ? 3 : 2) ||
     disbursements[0].purpose !== "old_acquisition_loan_payoff" ||
     disbursements[0].amount !== review.new_loan_proceeds_to_old_payoff ||
     disbursements[0].payoff_receipt_reference !==
       review.old_loan_payoff_reference ||
-    disbursements[1].purpose !== "personal_cashout" ||
-    disbursements[1].amount !== review.new_loan_proceeds_to_personal_cashout ||
-    disbursements[1].payoff_receipt_reference !== undefined ||
+    personalDisbursement?.purpose !== "personal_cashout" ||
+    personalDisbursement.amount !==
+      review.new_loan_proceeds_to_personal_cashout ||
+    personalDisbursement.payoff_receipt_reference !== undefined ||
+    (hasImprovement
+      ? improvementDisbursement?.purpose !== "home_improvement" ||
+        improvementDisbursement.amount !== improvement ||
+        improvementDisbursement.payoff_receipt_reference !== undefined ||
+        review.main_home_substantial_improvement_verified !== true ||
+        !review.home_improvement_invoice_ledger_reference ||
+        improvementRows.reduce((sum, row) => sum + row.amount, 0) !==
+          improvement ||
+        improvementRows.some((row) =>
+          (() => {
+            const invoice = reviewedDocument(
+              row.contractor_invoice_document,
+            );
+            const payment = reviewedDocument(
+              row.contractor_payment_document,
+            );
+            return !invoice || !payment ||
+              invoice.document_type !== "contractor_invoice" ||
+              invoice.contractor_name !== row.contractor_name ||
+              invoice.billed_to_tin !== fresh.recipient_tin ||
+              invoice.property_reference !== row.property_reference ||
+              invoice.invoice_reference !==
+                row.contractor_invoice_reference ||
+              invoice.invoice_ledger_reference !==
+                row.invoice_ledger_reference ||
+              invoice.amount !== row.amount ||
+              invoice.completed_on !== row.spent_on ||
+              invoice.description !==
+                row.substantial_improvement_description ||
+              payment.document_type !== "bank_payment" ||
+              payment.payer_tin !== fresh.recipient_tin ||
+              payment.payee !== row.contractor_name ||
+              payment.payment_reference !==
+                row.contractor_payment_reference ||
+              payment.amount !== row.amount ||
+              payment.paid_on !== row.spent_on;
+          })() ||
+          row.property_reference !== review.property_reference ||
+          row.invoice_ledger_reference !==
+            review.home_improvement_invoice_ledger_reference ||
+          row.contractor_payment_reference !==
+            improvementDisbursement.payment_record_reference ||
+          !validDate(
+            `${row.spent_on.slice(5, 7)}/${row.spent_on.slice(8, 10)}/2025`,
+          ) || row.spent_on < date ||
+          row.spent_on.slice(0, 7) !== date.slice(0, 7)
+        ) ||
+        new Set(improvementRows.map((row) => row.contractor_invoice_reference))
+            .size !== improvementRows.length ||
+        new Set(improvementRows.map((row) => row.contractor_payment_reference))
+            .size !== improvementRows.length
+      : improvementRows.length !== 0 ||
+        review.home_improvement_invoice_ledger_reference !== undefined ||
+        review.main_home_substantial_improvement_verified !== undefined) ||
     disbursements.some((row) => row.paid_on !== date) ||
-    disbursements[0].payment_record_reference ===
-      disbursements[1].payment_record_reference ||
+    new Set(disbursements.map((row) => row.payment_record_reference)).size !==
+      disbursements.length ||
     review.cashout_use_records.reduce((sum, row) => sum + row.amount, 0) !==
       review.new_loan_proceeds_to_personal_cashout ||
     review.cashout_use_records.some((row) =>
@@ -160,7 +256,7 @@ export function validateCashoutRefinanceReview(
     old.box2_outstanding_principal > review.original_acquisition_principal ||
     fresh.box2_outstanding_principal !==
       review.new_loan_proceeds_to_old_payoff +
-        review.new_loan_proceeds_to_personal_cashout ||
+        improvement + review.new_loan_proceeds_to_personal_cashout ||
     old.refinance === true || fresh.refinance !== true ||
     [old, fresh].some((item) =>
       (item.for_routing ?? "A") !== "A" ||
@@ -205,7 +301,8 @@ export function validateCashoutRefinanceReview(
 /** Pub. 936 Table 1 line 14, only after the complete source review passes. */
 export function cashoutRefinanceRatio(review: Review): number | undefined {
   let personal = review.new_loan_proceeds_to_personal_cashout;
-  let acquisition = review.new_loan_proceeds_to_old_payoff;
+  let acquisition = review.new_loan_proceeds_to_old_payoff +
+    (review.new_loan_proceeds_to_home_improvement ?? 0);
   let qualifiedNewClosing = 0;
   for (const row of review.new_loan_months) {
     const personalPaid = Math.min(
