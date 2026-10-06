@@ -1630,3 +1630,18 @@ Integrated tip-health and two-farm source gate51/0(4m16s), eight files. Main9tip
 ## Publication and next verification checkpoint
 
 PR63 updated and remote head verified03a39a422944ea64b7606a1439474d03baa7a4b1, draft retained, full scope body/title verified. Latest local source9a7da5a78 adds partialbeneficiary4972 and mixedC/Ftips; six-file main gate91228 live, detached artifact replay delegated to original reviewers. Full immutable V3 PIDs26565/26572 verified live01h18m08; no terminal/fullgreen claim. PR attachment retry1489 pending after old1408 cancellation; no attachment-success claim. Frozen52 suffix byte-identical, ledger1435 bounded slices, catalog347unique, future section untouched.
+
+## Before remaining owner-health source work
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,435 bounded slices**. Prior learnings and evidence are preserved in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). New discoveries belong only in `future_todo`.
+
+Actual planner: **347 fixtures**, 116 PDF descriptors, 113 keys, 96 covered and 17 uncovered. Published PR63 head is **03a39a422**. Verified main gates cover mixed C/F SHOP (52/0, 52 reviewed pages), three-member SHOP (15/0, 80 pages), mixed-owner WOTC/tip QBI (62/0 plus prior12/0, 122/147 pages), complete-source annuity (247/0, held7/38) and independent C/F health (22/0, held7/212). Regenerated PDFs match reviewed bytes; old NUA held5/27 remains unchanged. These prove their stated routes; broader parents remain open.
+
+Full `deno task test` at bc6cafec6 ended11,494/8, exit1. Immutable rerun fbacc539c started02:29:48UTC; wrapper26565/Deno26572 were verified live03:41UTC. Twelve observed failures include prior source and module-initialization issues; all12 have current-main focused passing evidence (replay2/0, publicXML6/0, module checks3/0+8/0); terminal totals and a passing latest full run remain required. Root registered24 reviewed catalog cases after fixing reverse fixture initialization (main22/0 plus metadata8/0); tip-health explicit plan sources and two-farm owner health are integrated with combined51/0 and reviewed artifact replay149/217pages. Partial-beneficiary4972 and mixedC/Ftips are integrated locally at9a7da5a78 with combined/source artifact checks running. Wider filing/source combinations, authentication, ATS conflicts/credentials, business rules, IRS acceptance and release readiness remain incomplete.
+
+
+Previous goal turn made authoritative progress: source2d3/42 verified51/0, PDF149/217pages, PR03a published; source250/9a integrated and currentgate91228 remains live. FullV3 confirmedlive PIDs26565/26572 at01h18m36. Existing Form7206 ownerhealth parent still lacks mixedC/F loss-owner source/capacity combinations; that work belongs to existing task, not future backlog. Frozen suffix unchanged.
