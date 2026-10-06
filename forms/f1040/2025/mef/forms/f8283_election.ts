@@ -522,6 +522,84 @@ export function isTwoSectionBReducedEquipmentGifts(form: F8283Input): boolean {
     new Set(documents).size === documents.length;
 }
 
+/** Complete reviewed current-year reduction inventory, one signed copy per gift.
+ * Source parsing enforces each property's specific tax treatment; this gate
+ * reconciles all copies and permits distinct gifts to the same donee.
+ */
+export function isReviewedSectionBReductionInventory(
+  form: F8283Input,
+): boolean {
+  const items = form.section_b_items ?? [];
+  if ((form.section_a_items ?? []).length !== 0 || items.length < 2) {
+    return false;
+  }
+  const supported = new Set([
+    SectionBPropertyType.Equipment,
+    SectionBPropertyType.ArtUnder20000,
+    SectionBPropertyType.ArtAtLeast20000,
+    SectionBPropertyType.Collectibles,
+    SectionBPropertyType.Securities,
+    SectionBPropertyType.OtherRealEstate,
+  ]);
+  const references = new Set<string>();
+  const gifts = new Set<string>();
+  return items.every((item) => {
+    const reduction = item.ordinary_income_reduction ??
+      item.unrelated_use_capital_gain_reduction;
+    if (
+      !item.property_type || !supported.has(item.property_type) ||
+      !item.similar_item_group?.trim() || !item.property_description?.trim() ||
+      !reduction || !item.signed_form_source_review ||
+      !item.qualified_appraisal?.full_appraisal_source_review ||
+      !item.qualified_appraisal.signed_by_appraiser ||
+      !item.donee_acknowledgment?.signed_by_donee ||
+      item.donee_acknowledgment.received_date !== item.date_contributed ||
+      !item.date_contributed?.startsWith("2025-") ||
+      item.capital_gain_reduction_election_confirmed === true
+    ) return false;
+    const facts = item.signed_form_source_review.reviewed_form_fields;
+    if (
+      !facts || facts.property_description !== item.property_description ||
+      facts.property_type !== item.property_type ||
+      facts.date_acquired !== item.date_acquired ||
+      facts.date_contributed !== item.date_contributed ||
+      facts.fmv !== item.fmv ||
+      facts.deduction_claimed !== item.deduction_claimed ||
+      facts.cost_or_adjusted_basis !== item.cost_or_adjusted_basis ||
+      facts.donee_name !== item.donee_acknowledgment.organization_name ||
+      facts.donee_ein !== item.donee_acknowledgment.ein ||
+      facts.donee_received_date !== item.donee_acknowledgment.received_date
+    ) return false;
+    const identity = JSON.stringify([
+      item.donee_acknowledgment.ein,
+      item.property_description.trim().toLowerCase(),
+      item.date_acquired,
+      item.date_contributed,
+    ]);
+    if (gifts.has(identity)) return false;
+    gifts.add(identity);
+    const documents = [
+      item.signed_form_attachment_file_name,
+      item.qualified_appraisal.attachment_file_name,
+      item.qualified_appraisal.signature_attachment_file_name,
+      item.donee_acknowledgment.signature_attachment_file_name,
+      reduction.purchase_record_attachment_file_name,
+      reduction.reduction_statement_attachment_file_name,
+      ...(item.unrelated_use_capital_gain_reduction
+        ? [
+          item.unrelated_use_capital_gain_reduction
+            .donee_use_attachment_file_name,
+        ]
+        : []),
+    ];
+    return documents.every((name) => {
+      if (!name || references.has(name)) return false;
+      references.add(name);
+      return true;
+    });
+  });
+}
+
 function assertSectionBReconciled(
   context: MefBuildContext | undefined,
   filedScheduleA: Readonly<Record<string, unknown>> | undefined,
@@ -550,6 +628,8 @@ function assertSectionBReconciled(
     );
   }
   const form = form8283InputSchema.parse(source8283);
+  const reviewedInventory = ordinary &&
+    isReviewedSectionBReductionInventory(form);
   const pairedArt = ordinary &&
     ordinaryPropertyType === SectionBPropertyType.ArtAtLeast20000 &&
     isTwoSectionBSimilarArtGroup(form);
@@ -558,11 +638,11 @@ function assertSectionBReconciled(
     isTwoSectionBReducedEquipmentGifts(form);
   if (
     (form.section_a_items ?? []).length !== 0 ||
-    (!pairedArt && !pairedEquipment &&
+    (!reviewedInventory && !pairedArt && !pairedEquipment &&
       (form.section_b_items ?? []).length !== 1) ||
     (ordinary
       ? form.section_b_items?.some((item) =>
-        item.property_type !== ordinaryPropertyType ||
+        (!reviewedInventory && item.property_type !== ordinaryPropertyType) ||
         item.capital_gain_reduction_election_confirmed === true
       )
       : form.section_b_items?.[0]?.capital_gain_reduction_election_confirmed !==
@@ -570,7 +650,7 @@ function assertSectionBReconciled(
   ) {
     throw new Error(
       ordinary
-        ? `Form 8283 Section B ${route} needs one current-year gift or two separately sourced Section B gifts`
+        ? `Form 8283 Section B ${route} needs one current-year gift or two separately sourced Section B gifts or a complete reviewed inventory`
         : "Form 8283 Section B election is bounded to one current-year investment-land gift",
     );
   }

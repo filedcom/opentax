@@ -1078,6 +1078,18 @@ const sectionBItemSchema = z.object({
     appraiser_signature_present: z.literal(true),
     donee_signature_present: z.literal(true),
     matches_electronic_form_confirmed: z.literal(true),
+    reviewed_form_fields: z.object({
+      property_description: z.string().trim().min(1),
+      property_type: z.nativeEnum(SectionBPropertyType),
+      date_acquired: z.string().min(1),
+      date_contributed: z.string().min(1),
+      fmv: z.number().nonnegative(),
+      deduction_claimed: z.number().nonnegative(),
+      cost_or_adjusted_basis: z.number().nonnegative(),
+      donee_name: z.string().trim().min(1),
+      donee_ein: z.string().regex(/^\d{9}$/),
+      donee_received_date: z.string().min(1),
+    }).strict().optional(),
   }).optional(),
   cost_or_adjusted_basis: z.number().nonnegative().optional(),
   // An exception vehicle above $5,000 belongs in Section B, with its own
@@ -1133,6 +1145,27 @@ const sectionBItemSchema = z.object({
   // does not by itself cap the deduction at basis.
   is_capital_gain_property: z.boolean().optional(),
 }).superRefine((item, ctx) => {
+  const facts = item.signed_form_source_review?.reviewed_form_fields;
+  if (
+    facts && (facts.property_description !== item.property_description ||
+      facts.property_type !== item.property_type ||
+      facts.date_acquired !== item.date_acquired ||
+      facts.date_contributed !== item.date_contributed ||
+      facts.fmv !== item.fmv ||
+      facts.deduction_claimed !== item.deduction_claimed ||
+      facts.cost_or_adjusted_basis !== item.cost_or_adjusted_basis ||
+      facts.donee_name !== item.donee_acknowledgment?.organization_name ||
+      facts.donee_ein !== item.donee_acknowledgment?.ein ||
+      facts.donee_received_date !== item.donee_acknowledgment?.received_date)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["signed_form_source_review", "reviewed_form_fields"],
+      message:
+        "Form 8283 entered gift differs from reviewed completed signed-form fields",
+    });
+  }
+
   validateCharitableLimitCategory(item, ctx);
   const ordinaryReduction = item.ordinary_income_reduction;
   const unrelatedReduction = item.unrelated_use_capital_gain_reduction;

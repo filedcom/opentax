@@ -693,3 +693,32 @@ authored for the deferred bulk pass. The route depends on a real review of the
 purchase, use, valuation, and signed documents; a name or digest alone does not
 authenticate their contents. Other equipment histories, disposition-year
 reductions, multiple gifts, and carryovers remain closed.
+
+## October6 complete reviewed SectionB reduction inventory in progress
+
+Isolated implementation accepts complete current-year reviewed ordinary/unrelated
+reduction inventories across retained property types, without the previous exact
+one/two copy limit. It permits distinct gifts to the same donee with separate
+completed signed copies. Each gift has distinct document references and reviewed
+signed-form columns binding property, dates, FMV, basis, deduction and donee
+identity; changed columns reject at source parsing and final native/PDF preflight.
+The shared reconciliation replays the complete ScheduleA inventory and itemized
+Form1040. No global same-donee rejection substitutes for identifying a gift.
+
+Focused three-file gate6/0(15s), `/tmp/opentax-form8283-inventory-combined-v4.log`:
+three and nine equipment gifts, three mixed equipment/art gifts to one donee,
+existing two-gift art/equipment preservation, actual source-to-native-to-PDF and
+local2025v5.4 XSD. The nine-gift $58,500 source claim produces the independently
+expected $50,000 current deduction at $100,000 AGI. Source-amount, donee and
+attachment-byte conflicts reject. Initial failures are retained: old diagnostic
+wording, a newly permissive same-donee branch missing reviewed fields, and test
+assumptions ignoring the AGI cap or treating separate native binary attachments
+as pages of generated return PDF; the terminal gate supersedes them.
+
+This is not completed packet or authentication proof. The test evidence PDFs
+are synthetic labelled source buffers; completed official signed8283 contents,
+all emitted pages and separate attachment pages, precise owner facts, wider
+required reduction reasons, mixed SectionA/B, shared same-donee forms, grouping
+below individual$5,000 thresholds, high-value appraisals and prior accepted
+carryover evidence remain existing-parent obligations. No main/catalog/board
+change or release readiness claim follows from this isolated gate.
