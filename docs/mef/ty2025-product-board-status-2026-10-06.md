@@ -1900,3 +1900,20 @@ Full `deno task test` at fbacc539c ended11,577/14/0ignored, exit1(82m15s). All14
 
 
 The October6 fullparent audit newly identifies PartII D–H/qualifying-insurance/atypicalindirect-ownerfirstchain workflows beyond existingtyped1291/QEF/MTM/1294gap. Userrequiresnewdiscoveriesfuture_todoonly andneverexecuted; rootcorrectedagenttask beforeimplementationofnewworkflows. CurrentexistingknownparentPartsIII–VI continues. Frozenmain52body byteidentical; futuresectionmayappend asuserexplicitlyrequires. Prior full-suffix bytecomparison remains historical proof beforefirstfutureentry, notrestrictiononuserauthorizedfutureappend.
+
+## Before recording verified senior slice and compacting summary
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,440 bounded slices**. Prior learnings and evidence are preserved in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). New discoveries belong only in `future_todo`.
+
+Actual planner: **365 fixtures**, 116 PDF descriptors, 113 keys, 96 covered and 17 uncovered. Last verified published PR63 head is **f48e23115**. Verified main gates cover mixed C/F SHOP (52/0, 52 reviewed pages), three-member SHOP (15/0, 80 pages), mixed-owner WOTC/tip QBI (62/0 plus prior12/0, 122/147 pages), complete-source annuity (247/0, held7/38) and independent C/F health (22/0, held7/212). Regenerated PDFs match reviewed bytes; old NUA held5/27 remains unchanged. These prove their stated routes; broader parents remain open.
+
+Full `deno task test` at fbacc539c ended11,577/14/0ignored, exit1(82m15s). All14 have focused repaired-main passing evidence, including final two modulefiles44/0. Latest immutable181575242 rerun started03:53:35UTC; wrapper44964/Deno44970 verified live. Its terminal result and a passing full run remain required. Root registered24 reviewed catalog cases after fixing reverse fixture initialization (main22/0 plus metadata8/0); tip-health explicit plan sources and two-farm owner health are integrated with combined51/0 and reviewed artifact replay149/217pages. Partial-beneficiary4972 and mixedC/Ftips are integrated locally at9a7da5a78 with combined33/0 and source/PDF replay6/220pages verified. Eighteen more previously reviewed packets are registered at f188dacf8 with main24/0 and375 preserved pages/77 owner copies. Mixed C/F loss-owner health is verified at2899d051b with28/0 and6/182 byte-identical reviewed artifact replay. Multiple-copy beneficiary death/estate at2b3a2e17b is verified with3/0+15/0 and26/78 source/PDF byte-equal replay. Senior/independent-health source ordering is integrated at2d3638ca3; fresh main proof pending. Wider filing/source combinations, authentication, ATS conflicts/credentials, business rules, IRS acceptance and release readiness remain incomplete.
+
+
+## Current-main senior/independent-health source ordering proof
+
+Exactsource2d3638ca33ca3e18bd3bc31f5137b4592f2536ac: focused6/0 `/tmp/opentax-owner-health-senior-main-focused.log`; retained-input replay5/0 `/tmp/opentax-owner-health-senior-main-replay.log`; six-file general/health/tip/mixedCF/newloss/Pub974 compatibility111/0(2m36s) `/tmp/opentax-owner-health-senior-main-compat.log`. Freshmanifest `/tmp/opentax-owner-health-senior-main-evidence-2d3638ca3/current-main-replay-manifest.json` SHAad85f55b7a44aa54521256dc2555fc6cdcccfa46b3a4e6a86358588073615c70 confirms all5 sourceJSON/PDFbytes identical (95pages), source/pending unchanged, XML onlyReturnTs and0fields/widgets; original15hashes unchanged. This closes actualsenior+independenthealthsourceordering slice, notwholeparent or externalproof. FullV4 wrapper44964/Deno44970 verifiedlive21m30s; unchangedimmutable181575242 excludeslatestphases, latestfullgate stillrequired.
