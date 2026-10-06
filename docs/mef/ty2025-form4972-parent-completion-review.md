@@ -50,3 +50,7 @@ Isolated396caefbf baseline uses actual reviewed same-plan3 taxpayer/2 spouse iss
 ## Before full-share cent source implementation
 
 Board read and prior integration learnings compacted on main396caefbf. Baseline ce48f8cc0 proves the five-copy source assembly guard. Existing participant/plan/reference/owner/eligibility/annuity-share and source-to-final reconciliation checks remain required. The next change accepts cent money and rounds combined source totals for full-share worksheets; no future tasks are executed.
+
+## Full-share cent packet review checkpoint
+
+Candidatea5207207b accepts cent-valued full-share NUA/annuity copies while retaining distinct participant/plan/owner/reference and prior eligibility checks. Complete public gate2/0(30s) covers six prepared packets (single/three/seven copies, two spouse plans, ten-year-only and noNUA),24 issued native copies and32 filledPDF pages. IndependentDecimal worksheet compares every defined filed line and bothNUA notes;72 finalnative/PDF mutations reject, four public subcent conflicts reject. All32 pageinstances visually inspected, including1040status/SSNs/age/senior deduction/taxbox2/totals and both4972eligibility/election/NUA/annuity ratio/worksheet/pageorder. Snapshot /tmp/opentax-form4972-full-share-cents-reviewed-a5207207b retains source/pending/XML/PDF/renders/oracle. The38-file preservation gate remains live; no main integration or parentcompletion claimed. Syntax development failure and intermediate paired guard failure are retained in source-v1/v2 logs; source-v3 passes graph.
