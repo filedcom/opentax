@@ -641,10 +641,12 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
         itemized_investment_interest: input.line_9_investment_interest ?? 0,
         niit_allocable_state_local_tax: niitAllocatedTax,
       }),
-      this.outputNodes.output(form8995, {
-        itemized_deductions: totalItemized,
-        force_itemized: input.force_itemized,
-      }),
+      ...(totalItemized > 0 || input.force_itemized === true
+        ? [this.outputNodes.output(form8995, {
+          itemized_deductions: totalItemized,
+          force_itemized: input.force_itemized,
+        })]
+        : []),
     ];
     return {
       outputs,
