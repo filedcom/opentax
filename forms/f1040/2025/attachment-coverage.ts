@@ -286,6 +286,11 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
       "Form 7203 basis paths outside the reviewed stock loss or one new formal note require further filing work",
     isActive: (fields) => {
       const keys = Object.keys(fields);
+      if (
+        keys.length === 1 && keys[0] === "owned_debt_loss_sources" &&
+        Array.isArray(fields.owned_debt_loss_sources) &&
+        fields.owned_debt_loss_sources.length === 2
+      ) return false;
       const allowedKeys = new Set([
         "stock_basis_beginning",
         "ordinary_loss",

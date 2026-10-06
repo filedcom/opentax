@@ -20,10 +20,14 @@ export const form8995: MefFormDescriptor<"form8995", Input> = {
       fields.multi_business_filing_rows === undefined &&
       fields.joint_owner_filing_rows === undefined &&
       fields.owned_s_corp_loss_source === undefined &&
+      fields.owned_s_corp_loss_sources === undefined &&
       !(typeof fields.line1_qbi === "number" && fields.line1_qbi > 0 &&
         typeof fields.line1_business_reference === "string")
     ) {
-      assertNoUnfiled8995Loss(fields as Record<string, unknown>, context?.pending);
+      assertNoUnfiled8995Loss(
+        fields as Record<string, unknown>,
+        context?.pending,
+      );
       return "";
     }
     if (

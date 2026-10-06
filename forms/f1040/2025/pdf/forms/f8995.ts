@@ -70,7 +70,18 @@ export const form8995Pdf: PdfFormDescriptor = {
   pendingKey: "form8995",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8995--2025.pdf",
   filerFields: [
-    { kind: "text", domainKey: "nameLine1", pdfField: `${page1}f1_01[0]` },
+    {
+      kind: "text",
+      domainKey: "nameLine1",
+      pdfField: `${page1}f1_01[0]`,
+      includeWhen: (f) => f.owned_loss_header !== true,
+    },
+    {
+      kind: "text",
+      domainKey: "nameShownOnForm1040",
+      pdfField: `${page1}f1_01[0]`,
+      includeWhen: (f) => f.owned_loss_header === true,
+    },
     { kind: "text", domainKey: "primarySSN", pdfField: `${page1}f1_02[0]` },
   ],
   fields,
@@ -88,6 +99,7 @@ export const form8995Pdf: PdfFormDescriptor = {
       fields.multi_business_filing_rows === undefined &&
       fields.joint_owner_filing_rows === undefined &&
       fields.owned_s_corp_loss_source === undefined &&
+      fields.owned_s_corp_loss_sources === undefined &&
       !(typeof fields.line1_qbi === "number" && fields.line1_qbi > 0 &&
         typeof fields.line1_business_reference === "string")
     ) {
@@ -105,6 +117,10 @@ export const form8995Pdf: PdfFormDescriptor = {
       allPending,
     );
     return {
+      ...(fields.owned_s_corp_loss_source !== undefined ||
+          fields.owned_s_corp_loss_sources !== undefined
+        ? { owned_loss_header: true }
+        : {}),
       ...Object.fromEntries(
         businesses.slice(0, 5).flatMap((row, index) => {
           const prefix =

@@ -1,3 +1,4 @@
+import { ownedDebtFamilyQbiLines } from "../form7203/owned-family.ts";
 import { ownedSCorpLossLines } from "./owned-s-corp-loss.ts";
 import {
   ownerW2WageSourceSchema,
@@ -103,6 +104,7 @@ export const inputSchema = z.object({
   // QBI from pass-through rentals/partnerships (Schedule E)
   qbi: accumulable(z.number()).optional(),
   owned_s_corp_loss_source: z.unknown().optional(),
+  owned_s_corp_loss_sources: z.array(z.unknown()).length(2).optional(),
   // W-2 wages and UBIA are carried forward when Form 8995-A is required.
   w2_wages: accumulable(z.number().nonnegative()).optional(),
   unadjusted_basis: accumulable(z.number().nonnegative()).optional(),
@@ -1502,7 +1504,8 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       };
     }
 
-    const ownedSCorp = input.owned_s_corp_loss_source === undefined
+    const ownedSCorp = input.owned_s_corp_loss_source === undefined &&
+        input.owned_s_corp_loss_sources === undefined
       ? undefined
       : (() => {
         if (
@@ -1522,14 +1525,50 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
             "Owned S corporation QBI loss needs its actual finalized return without unsourced other businesses/components",
           );
         }
-        const lines = ownedSCorpLossLines(
-          input.owned_s_corp_loss_source,
-          Math.max(
-            0,
-            input.agi - sourceDeductionAmount(input, cfg) -
-              (input.additional_deductions ?? 0),
-          ),
+        if (
+          input.owned_s_corp_loss_sources &&
+          (input.filing_status !== FilingStatus.MFJ ||
+            input.owned_s_corp_loss_source !== undefined)
+        ) {
+          throw Error(
+            "Two owned shareholders require the actual MFJ source family",
+          );
+        }
+        const actualOwners = [
+          input.taxpayer_ssn,
+          ...(input.filing_status === FilingStatus.MFJ
+            ? [input.spouse_ssn]
+            : []),
+        ]
+          .filter((v) => v !== undefined).map((v) => v!.replace(/\D/g, ""));
+        const sources = input.owned_s_corp_loss_sources ??
+          [input.owned_s_corp_loss_source];
+        const sourceOwners = sources.map((s: any) =>
+          s.recipient_tin?.replace(/\D/g, "")
         );
+        if (
+          !input.taxpayer_ssn ||
+          sourceOwners.some((v) => !actualOwners.includes(v)) ||
+          (input.owned_s_corp_loss_sources &&
+            JSON.stringify([...sourceOwners].sort()) !==
+              JSON.stringify([...actualOwners].sort()))
+        ) {
+          throw Error(
+            "Owned S corporation loss must belong to the actual finalized return claimant(s)",
+          );
+        }
+        const lines =
+          (input.owned_s_corp_loss_sources !== undefined
+            ? ownedDebtFamilyQbiLines
+            : ownedSCorpLossLines)(
+              input.owned_s_corp_loss_sources ??
+                input.owned_s_corp_loss_source,
+              Math.max(
+                0,
+                input.agi - sourceDeductionAmount(input, cfg) -
+                  (input.additional_deductions ?? 0),
+              ),
+            );
         if (sumField(input.qbi) !== lines.line2) {
           throw Error(
             "Owned S corporation QBI must equal the basis-limited actual loss",
@@ -1628,6 +1667,17 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
         ? {
           carryforwards: {
             qbi_loss_carryforward: (ownedSCorp ?? ownedLines)!.line16,
+            ...(input.owned_s_corp_loss_sources
+              ? Object.fromEntries(
+                ownedDebtFamilyQbiLines(input.owned_s_corp_loss_sources, 0)
+                  .owned_s_corp_loss_filing_rows.map((
+                    r,
+                  ) => [
+                    `qbi_loss_carryforward_${r.shareholder_ssn}_${r.corporation_ein}`,
+                    -r.qbi,
+                  ]),
+              )
+              : {}),
           },
         }
         : {}),

@@ -129,6 +129,21 @@ export const form7203StockLossPdf: PdfFormDescriptor = {
   fields,
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
+    if (
+      Array.isArray(raw.owned_debt_loss_sources) &&
+      raw.owned_debt_loss_copy_index === undefined
+    ) {
+      return raw.owned_debt_loss_sources.flatMap((_, i) =>
+        form7203StockLossPdf.instances!(
+          {
+            owned_debt_loss_sources: raw.owned_debt_loss_sources,
+            owned_debt_loss_copy_index: i,
+          },
+          filer,
+          allPending,
+        ) ?? []
+      );
+    }
     const {
       source,
       ledger,

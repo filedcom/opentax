@@ -14,6 +14,19 @@ export function assertOwned7203RequiredCopies(
         ?.owned_current_records !== undefined
     ) ?? [];
   if (!owned.length) return;
+  if (owned.length === 2 && k!.k1_s_corps!.length === 2) {
+    const b = pending.form7203 as any, q = pending.form8995 as any;
+    if (
+      !b || !q || !isDeepStrictEqual(b.owned_debt_loss_sources, owned) ||
+      !isDeepStrictEqual(q.owned_s_corp_loss_sources, owned)
+    ) {
+      throw Error(
+        "Both owned MFJ source copies and their joint QBI loss must remain filed",
+      );
+    }
+    return;
+  }
+
   const basis = pending.form7203 as Record<string, unknown> | undefined;
   const qbi = pending.form8995 as Record<string, unknown> | undefined;
   if (

@@ -151,6 +151,21 @@ export const form7203StockLoss: MefFormDescriptor<
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f7203.pdf",
   build(fields, context) {
     if (Object.keys(fields).length === 0) return "";
+    if (Array.isArray(fields.owned_debt_loss_sources)) {
+      return buildReviewedStockLoss7203({
+        owned_debt_loss_sources: fields.owned_debt_loss_sources,
+        owned_debt_loss_copy_index: 0,
+      }, context);
+    }
     return buildReviewedStockLoss7203(fields, context);
+  },
+  buildAdditionalDocuments(fields, context) {
+    if (!Array.isArray(fields.owned_debt_loss_sources)) return [];
+    return fields.owned_debt_loss_sources.slice(1).map((_, i) =>
+      buildReviewedStockLoss7203({
+        owned_debt_loss_sources: fields.owned_debt_loss_sources,
+        owned_debt_loss_copy_index: i + 1,
+      }, context)
+    );
   },
 };

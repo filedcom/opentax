@@ -1380,7 +1380,10 @@ export function assertPositive8995(
   fields: Record<string, unknown>,
   pending: Readonly<Record<string, unknown>> | undefined,
 ): Filed8995 {
-  if (fields.owned_s_corp_loss_source !== undefined) return assertOwnedSCorpLoss8995(fields, pending);
+  if (
+    fields.owned_s_corp_loss_source !== undefined ||
+    fields.owned_s_corp_loss_sources !== undefined
+  ) return assertOwnedSCorpLoss8995(fields, pending);
   assertFarmWotcReturn(fields, pending);
   if (
     fields.multi_business_filing_rows !== undefined &&

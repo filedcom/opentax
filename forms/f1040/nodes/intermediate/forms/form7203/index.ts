@@ -1,3 +1,4 @@
+import { ownedDebtFamily } from "./owned-family.ts";
 import { z } from "zod";
 import type { NodeResult } from "../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../core/types/tax-node.ts";
@@ -36,6 +37,7 @@ import { reviewedStockLossLedgerSchema } from "./stock-ledger.ts";
 // IRC §1366(d) — limitation on losses; IRC §1367 — adjustments to basis
 
 export const inputSchema = z.object({
+  owned_debt_loss_sources: z.array(z.unknown()).length(2).optional(),
   // ── Part I: Stock Basis ───────────────────────────────────────────────────
   // Line 1 — Beginning stock basis at start of tax year
   stock_basis_beginning: z.number().nonnegative().optional(),
@@ -167,6 +169,44 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: Form7203Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    if (input.owned_debt_loss_sources !== undefined) {
+      if (
+        Object.keys(input).some((k) =>
+          k !== "owned_debt_loss_sources" &&
+          input[k as keyof typeof input] !== undefined
+        )
+      ) {
+        throw Error(
+          "Owned MFJ debt family cannot mix scalar/shareholder basis fields",
+        );
+      }
+      const family = ownedDebtFamily(input.owned_debt_loss_sources);
+      return {
+        outputs: [
+          this.outputNodes.output(schedule1, {
+            basis_disallowed_add_back: family.suspended,
+          }),
+          this.outputNodes.output(agi_aggregator, {
+            basis_disallowed_add_back: family.suspended,
+          }),
+        ],
+        carryforwards: {
+          suspended_scorp_loss_7203: family.suspended,
+          basis_suspended_scorp_qbi_loss_7203: family.suspended,
+          ...Object.fromEntries(
+            family.rows.flatMap(
+              (r) => [[
+                `suspended_scorp_loss_7203_${r.source.recipient_tin}_${r.source.corporation_ein}`,
+                r.basis.suspendedLoss,
+              ], [
+                `basis_suspended_scorp_qbi_loss_7203_${r.source.recipient_tin}_${r.source.corporation_ein}`,
+                r.basis.basisSuspendedQualifiedLoss,
+              ]],
+            ),
+          ),
+        },
+      };
+    }
 
     if (
       input.reviewed_debt_evidence?.kind ===

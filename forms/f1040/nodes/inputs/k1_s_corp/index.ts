@@ -1,3 +1,7 @@
+import {
+  ownedDebtFamily,
+  ownedDebtFamilyQbiLines,
+} from "../../intermediate/forms/form7203/owned-family.ts";
 import { z } from "zod";
 import { ownedSCorpLossLines } from "../../intermediate/forms/form8995/owned-s-corp-loss.ts";
 import { ty2025IrsCountryCodeSchema } from "../../irs_country_code.ts";
@@ -475,6 +479,15 @@ function form8995Output(items: K1SCorpItems): NodeOutput[] {
     item.form7203_debt_evidence?.owned_current_records !== undefined
   );
   if (owned.length > 0) {
+    if (owned.length === 2 && items.length === 2) {
+      const lines = ownedDebtFamilyQbiLines(owned, 0);
+      return [
+        output(form8995, {
+          qbi: lines.line2,
+          owned_s_corp_loss_sources: owned,
+        }),
+      ];
+    }
     if (owned.length !== 1 || items.length !== 1) {
       throw Error(
         "Owned7203/QBI loss needs its independently sourced single corporation",
@@ -680,6 +693,17 @@ function buildForm7203Fields(
 }
 
 function form7203Outputs(items: K1SCorpItems): NodeOutput[] {
+  if (
+    items.length === 2 &&
+    items.every((item) =>
+      item.form7203_debt_evidence?.kind !==
+        "prior_reduced_formal_note_repayment" &&
+      item.form7203_debt_evidence?.owned_current_records !== undefined
+    )
+  ) {
+    ownedDebtFamily(items);
+    return [output(form7203, { owned_debt_loss_sources: items })];
+  }
   return items
     .filter(hasBasisData)
     .map((item) => output(form7203, buildForm7203Fields(item)));
@@ -908,6 +932,12 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
     }
     if (
       k1_s_corps.length !== 1 &&
+      !(k1_s_corps.length === 2 &&
+        k1_s_corps.every((item) =>
+          item.form7203_debt_evidence?.kind !==
+            "prior_reduced_formal_note_repayment" &&
+          item.form7203_debt_evidence?.owned_current_records !== undefined
+        )) &&
       k1_s_corps.some((item) => (item.box1_ordinary_business ?? 0) < 0)
     ) {
       throw new Error(
