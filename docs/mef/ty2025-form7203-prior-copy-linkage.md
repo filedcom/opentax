@@ -54,8 +54,9 @@ The initial two-module check was superseded and canceled after the metadata
 production correction (exit143), with no pass claim. The final production ordinary two-module typed gate is terminal **14passed/
 0failed** (28seconds), log `/tmp/opentax-7203-prior-history-final-broad-oct6.log`,
 with production SHAc5e68cf207e2b2bf2c6056714f90d17efb0d45ca10af43c0e691e347788288fb
-held. A separate latest test-source typecheck remains running for the optional
-exporter added after that broad gate began. An optional `--write-prior7203-evidence`
+held. The latest test-source `deno check` for the optional exporter is terminal
+**exit0**, log `/tmp/opentax-7203-prior-history-final-test-check-oct6.log`. This
+checks the actual retained exporter added after that broad gate began. An optional `--write-prior7203-evidence`
 argument retains actual final plain and schema-metadata inputs, ten source bytes
 per case, verified manifests, pending/diagnostics/carry, staged gain and inspected
 filing results as new files; creation fails rather than overwriting an archive.
