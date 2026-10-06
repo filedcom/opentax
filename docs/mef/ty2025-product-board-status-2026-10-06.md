@@ -3071,3 +3071,8 @@ Regular/AMT productive exploration pool and paid616 development differences are 
 ## Shared catalog and productive mining publication checkpoint
 
 PR63 remote49631a539067198cd2b60f60fc7eb23f98c38547 verified after push and saved wholebranch title/body; app attachment now returned success. Wholebranchlog/stat retained `/tmp/opentax-pr63-full-{log,stat}-latest-oct6.txt`. Lastgoalturn made concrete progress through correctedRothsource sealing/publication and regressionfailure repair; this turn adds fullyreviewed sourcecatalog2packets15pages and mainproductive mining/6251source19/0+203related+strict16/267. Latestfullgate stillrequired. CurrentW2ScheduleJ isolatedpost6251 source2/0/38reviewedpages is under finalhandoff; review requested explicitemptyW2 preservation without an orphan employerrecord. Mainboard52/futureunchanged.
+
+
+## Before nonfarm W-2 Schedule J integration
+
+Main245338134 retains sealed productive617/6251 ledger1471. Ready a1ddedff4 and dc21f4357 derive actual100000 nonfarm engineering W-2 with existing200000farm/35000DIV/240000ISO/830pension tax; source-owned wage attribution changes SE/QBI and preserves no-election AMT. Independent worksheet and explicit-empty-W2 preservation gate3/0; two full-XSD packets38pages reviewed, priorJ5/85,QEF17/172,pension8/76 comparisons pass in isolated post6251 checkout. Main must rerun focused source and actual retained-input packets before sealing. Old V5 run2 confirmed live PID91417/91420/91421 at44m12s, source4a45410da; never restart on observation timeout. Latest-source one-shot full regression remains required. Frozen52 checklist and future section unchanged.
