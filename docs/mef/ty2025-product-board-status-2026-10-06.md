@@ -4098,3 +4098,8 @@ Full regression **V23** is running at sealed production **ee63eaedf**, with24,80
 
 
 Previous goal turn made production progress: finalowner property correction and root property/turn21 evidence sealed, ledger1530, draftPR63 exact externallyverified atca9e677b5. Current V17–V23 test handles were reinspectedlive. State/rate final candidate gate remains in progress; integration is unproven until code, source and page review plus terminal gates.
+
+
+## State/rate root review and precise paid-cents finding
+
+Root inspected both7-page finalv4 packets, including nativeScheduleH line17 changedCA rates and thirdTXrow continuation, line18column sums118/314or114 and finaltax1338or1353 reachingSchedule2/Form1040 refund1707or1692. All14pages reviewed; zeroAcroFormfields/widgets, six original/private source/PDF/XML hashes recorded in /tmp/opentax-scheduleh-state-rate-root-review-oct6.json and -root-preservation-oct6.json. Candidate finalv6 eight-module gate terminal30/0 (2m55s). Final integration remains held for a concrete retained-cents defect: actual2000wages at.030245 state rate and60.49paid receipt are synchronized in source and filed row but rejected by premature integer rounding. Original input/script/log privatelyhash-preserved by /tmp/opentax-scheduleh-state-rate-cents-root-preservation-oct6.json; fix remains within existing ScheduleH source/rate TODO. Prior broader state/family/authentication/IRS parents remain open.
