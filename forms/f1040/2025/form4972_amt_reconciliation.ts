@@ -1,4 +1,8 @@
 import {
+  scheduleJCurrentYearTax,
+  scheduleJTaxSourceSchema,
+} from "../nodes/intermediate/forms/schedule_j/tax-source.ts";
+import {
   AMT_EXEMPTION_2025,
   AMT_PHASE_OUT_START_2025,
 } from "../nodes/config/2025.ts";
@@ -75,7 +79,10 @@ export function assertForm4972AmtJoin(
   }
   let baseTax = line16 - specialTax;
   if (pending.schedule_j !== undefined) {
-    const scheduleJ = scheduleJLinesSchema.parse(pending.schedule_j);
+    const rawJ = record(pending.schedule_j, "calculated Schedule J");
+    const scheduleJ = scheduleJLinesSchema.parse(Object.fromEntries(
+      Object.keys(scheduleJLinesSchema.shape).map((key) => [key, rawJ[key]]),
+    ));
     const taxableIncome = dollars(
       form1040.line15_taxable_income,
       "Form 1040 line 15",
@@ -89,10 +96,16 @@ export function assertForm4972AmtJoin(
         "Schedule J and Form 4972 differ from finalized Form 1040",
       );
     }
-    baseTax = ordinaryTax2025(
-      taxableIncome,
-      filingStatusSchema.parse(form1040.filing_status),
-    );
+    const source =
+      (pending.schedule_j_calculation as Record<string, unknown> | undefined)
+        ?.current_year_tax_source;
+    baseTax = source === undefined
+      ? ordinaryTax2025(taxableIncome, status)
+      : scheduleJCurrentYearTax(
+        taxableIncome,
+        status,
+        scheduleJTaxSourceSchema.parse(source),
+      );
   }
   const expected = Math.max(
     0,

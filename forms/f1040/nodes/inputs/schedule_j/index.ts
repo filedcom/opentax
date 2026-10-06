@@ -7,16 +7,11 @@ import { baseYearSourceSchema } from "./base_years.ts";
 import { schedule_j_calculation } from "../../intermediate/forms/schedule_j/index.ts";
 import { income_tax_calculation } from "../../intermediate/worksheets/income_tax_calculation/index.ts";
 
-const ordinaryYearFactsSchema = z.object({
-  has_qualified_dividends: z.literal(false),
-  has_net_capital_gain: z.literal(false),
-  has_unrecaptured_section1250_gain: z.literal(false),
-  has_28_percent_rate_gain: z.literal(false),
-  filed_form2555: z.literal(false),
-}).strict();
+import { ordinaryYearFactsSchema } from "../../intermediate/forms/schedule_j/calculation.ts";
+import { scheduleJTaxSourceSchema } from "../../intermediate/forms/schedule_j/tax-source.ts";
 
 // This is an election and filed-base-year source, never an asserted tax.
-export const inputSchema = z.object({
+export const publicInputSchema = z.object({
   elected_farm_income: z.number().int().positive(),
   elected_farm_income_net_capital_gain: z.literal(0),
   base_year_source: baseYearSourceSchema,
@@ -28,6 +23,13 @@ export const inputSchema = z.object({
   }).strict(),
 }).strict();
 
+// Derived only by the source-return prepass; public entry rejects this field.
+export const inputSchema = publicInputSchema.extend({
+  _derived_source: z.object({
+    current_year_tax_source: scheduleJTaxSourceSchema,
+    nonfarm_investment_income: z.number().finite(),
+  }).strict().optional(),
+}).strict();
 type ScheduleJInput = z.infer<typeof inputSchema>;
 
 class ScheduleJNode extends TaxNode<typeof inputSchema> {
@@ -47,9 +49,16 @@ class ScheduleJNode extends TaxNode<typeof inputSchema> {
           elected_farm_income_net_capital_gain: 0,
           base_year_source: input.base_year_source,
           tax_treatment: input.tax_treatment,
+          ...(input._derived_source ?? {}),
         }),
         this.outputNodes.output(income_tax_calculation, {
           schedule_j_election_requested: true,
+          ...(input._derived_source
+            ? {
+              schedule_j_current_tax_source:
+                input._derived_source.current_year_tax_source,
+            }
+            : {}),
         }),
       ],
     };

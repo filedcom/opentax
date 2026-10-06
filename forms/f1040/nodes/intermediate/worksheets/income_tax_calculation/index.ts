@@ -1,3 +1,4 @@
+import { scheduleJTaxSourceSchema } from "../../forms/schedule_j/tax-source.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -81,6 +82,7 @@ export const inputSchema = z.object({
   form8814_tax: z.number().nonnegative().optional(),
   // Internal calculated Schedule J line 23, never a public asserted tax.
   // Form 6251 still receives the tax refigured without this election.
+  schedule_j_current_tax_source: scheduleJTaxSourceSchema.optional(),
   schedule_j_election_requested: z.literal(true).optional(),
   schedule_j_calculated_tax: z.number().int().nonnegative().optional(),
   form4972_tax: accumulable(z.number().nonnegative()).optional(),
@@ -184,8 +186,10 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     const hasPrefIncome = qualDiv > 0 || netCg > 0;
     if (
       input.schedule_j_calculated_tax !== undefined &&
-      (hasPrefIncome || unrecaptured1250 > 0 || rate28 > 0 ||
-        form4952Election > 0 || foreignExclusion > 0 ||
+      ((!input.schedule_j_current_tax_source &&
+        (hasPrefIncome || unrecaptured1250 > 0 || rate28 > 0 ||
+          form4952Election > 0)) ||
+        foreignExclusion > 0 ||
         (input.form8814_tax ?? 0) > 0 ||
         sumField(input.form8978_tax) > 0 ||
         sumField(input.form8621_tax) > 0)
@@ -193,6 +197,22 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
       throw new Error(
         "Schedule J ordinary-rate route cannot omit a current-year tax worksheet or line 16 add-on",
       );
+    }
+
+    if (input.schedule_j_current_tax_source) {
+      const s = input.schedule_j_current_tax_source;
+      if (
+        s.qualified_dividends !== Math.round(qualDiv) ||
+        s.net_capital_gain !== Math.round(netCg) ||
+        s.unrecaptured_1250_gain !== Math.round(unrecaptured1250) ||
+        s.rate_28_gain !== Math.round(rate28) ||
+        s.form4952_line4g !== Math.round(form4952Election) ||
+        s.form4952_line4e !== Math.round(electedCapitalGain)
+      ) {
+        throw new Error(
+          "Schedule J current worksheet differs from actual return tax sources",
+        );
+      }
     }
 
     // Form 2555's Foreign Earned Income Tax Worksheet uses the Tax Table on

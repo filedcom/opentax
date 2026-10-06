@@ -15,6 +15,9 @@ const dollar = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
 const finiteAmount = z.number().finite();
 
 const completeInputSchema = z.object({
+  current_year_tax_source:
+    scheduleJOrdinaryIncomeInputSchema.shape.current_year_tax_source,
+  nonfarm_investment_income: finiteAmount.optional(),
   elected_farm_income: dollar.positive(),
   elected_farm_income_net_capital_gain: z.literal(0),
   base_year_source: baseYearSourceSchema,
@@ -91,7 +94,10 @@ function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
         : "Schedule J fishing-only election needs a single sourced Schedule C activity",
     );
   }
-  if (!fishing && !source.farm_only_income_verified) {
+  if (
+    !fishing && !source.farm_only_income_verified &&
+    source.nonfarm_investment_income === undefined
+  ) {
     throw new Error(
       source.farm_only_unsupported_source_key
         ? `Schedule J Schedule F-only election cannot include ${source.farm_only_unsupported_source_key} until attributable farming or fishing income is reconciled`
@@ -138,6 +144,7 @@ function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
   if (
     Math.abs(
       source.agi - (source.nonfarm_qef_ordinary ?? 0) -
+        (source.nonfarm_investment_income ?? 0) -
         (activityProfit - source.se_tax_deduction),
     ) > 0.01
   ) {
@@ -180,6 +187,7 @@ class ScheduleJCalculationNode extends TaxNode<typeof inputSchema> {
       elected_farm_income_net_capital_gain: 0,
       base_year_source: input.base_year_source,
       tax_treatment: input.tax_treatment,
+      current_year_tax_source: input.current_year_tax_source,
     });
     return {
       outputs: [this.outputNodes.output(income_tax_calculation, {

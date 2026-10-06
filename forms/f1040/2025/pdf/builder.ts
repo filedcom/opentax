@@ -1,3 +1,4 @@
+import { assertScheduleJSourceReturn } from "../schedule_j_source_return.ts";
 import { reconcileForm8606RothInventories } from "../form8606_roth_inventory_reconciliation.ts";
 import { reconcileForm8606RothActivity } from "../form8606_roth_activity_reconciliation.ts";
 import { assertForm4852RetainedEvidence } from "../form4852_retained_evidence.ts";
@@ -563,6 +564,7 @@ export async function buildPdfBytes(
   assertDigitalAssetDispositionAnswer(pending);
   await assertForm1098IssuerCopies(pending);
   const normalized = normalizeAllPending(pending);
+  assertScheduleJSourceReturn(pending);
   if (normalized.f1040) {
     assertF1040FinalHeader(normalized.f1040, filer);
     assertLine1hSupportedSource(normalized.f1040, normalized, filer);
