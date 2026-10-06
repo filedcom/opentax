@@ -4945,3 +4945,13 @@ Stable detached checkout `/tmp/opentax-full-regression-source-v3-oct6`, commit `
 ## Independent farm and daily-billed SHOP main verification
 
 Mainbf1370de3 independent farm/ownerW2/nativeSchedule3/farm-loss gate142/0(28s); `/tmp/opentax-two-farm-main-integration.log` SHA256 `2aa5eb4d42ffa253070a552b4611f593b20ea93f14e8eabc2de70a04add0b86c`. Current held replay4 cases/118 pages, `/tmp/opentax-two-farm-main-held.log` SHA256 `50ae02172d7bf93cd1d544165b4f14ae36c63e7df2aeff42ed39f3a5f8e14226`. Main41e675163 daily-billed/monthly-tier/three-business gate35/0(51s); `/tmp/opentax-partmonth-tier-main-integration.log` SHA256 `b037f91f04b58e91dff6ee85bcabe4d175cc05a2da333ca5f86071413f8f5bc9`. Two reviewed part-month PDF hashes copied/verified. Earlier fullsource-v3 run remains live but predates these changes; observed replay and Pub974 module-init failures are under repair.
+
+
+## October6 issued K1, controlled farms and schema-cycle verification
+
+Main source integration83b74af8f: Form8611 gate97/0 (10s), held replay2 cases/12 pages; controlled/independent/loss farm and exact Pub974 cycle gate11/0 (52s), controlled held replay4 cases/122 pages. Exact planner at69a748ccc:293 fixtures,116 descriptors,113 keys,96 covered and17 uncovered. These are structural/source/artifact proofs; wider parent scope and IRS business-rule/acceptance evidence remain incomplete.
+
+- `/tmp/opentax-f8611-main-integration.log` SHA256 `ec46839e4a402ba839b95b9704a9d3ec90258019868dc3e17fa45f95fe3ca0a0`
+- `/tmp/opentax-f8611-main-held.log` SHA256 `61e5149245a51d6911444587b8b5699715d1b965b67a909c4def8a86f875e43b`
+- `/tmp/opentax-cycle-controlled-farm-main.log` SHA256 `9303173cd91593699c2a3cfd27ed4a9f22fb53662c2799b0637f286dda2e23e7`
+- `/tmp/opentax-controlled-farm-main-held.log` SHA256 `364abce19b76d15051c7d2a53072491fd9b231c3b6b18e76421eb5b55a7f7a53`

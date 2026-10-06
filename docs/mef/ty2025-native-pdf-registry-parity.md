@@ -104,10 +104,7 @@ an inspected five-page synthetic packet. It reproduces reviewed source facts;
 the issued-copy bytes and any required signature remain separate evidence
 gates. This does not change the parent taxpayer-form priority-1 list.
 
-Form 8611 now has a registered, bounded one-page-per-building PDF descriptor
-that reconciles native recapture totals with Schedule 2 line 16. Positive
-printable export stays closed until the historical Forms 8586/8609/8609-A/8611
-or issuer K-1 credit and interest records can be verified. Its source/native/PDF fixtures ran in the passing full regression at `a268f60c`; positive export remains guarded.
+Form8611 has verified Single and MFJ spouse section42(j)(5) issued partnership K1 codeF recapture through source replay, native XML and one-page-per-building PDF. Main97/0 checks and held replay of two full-XSD packets/all12 reviewed pages pass; see [issued K1 review](ty2025-form8611-issued-k1-review.md). Own-credit history, unused-credit, bond and wider issuer branches remain guarded pending evidence. External issuer-byte authenticity and IRS acceptance are unproven.
 
 Form 965-A now has a registered PDF projection for one original installment
 liability, its eight historical payments, and the current Schedule 2 line 20
