@@ -4803,3 +4803,8 @@ Code72bd53a19, typed real-Poppler focused command covering paired positive child
 Exact isolated `deno task test`, real Poppler26.09.0/Deno2.9.4/TS6.0.3/libxml2.9.13. Commit `ea23fbb91f9f9be2710f534b59e42267041c87a7`, start2026-10-05T23:57:45Z, end2026-10-06T00:54:03Z, exit1. **11,386 passed,2 failed,0 ignored**,55m8s test duration/56m18s wall. Log `/tmp/opentax-deno-task-test-ea23fbb91.log`, SHA256 `3f3dca6c256779f1c97105d1eda3788c8e4eb56208f140908a2196cc0ee56ecf`; status `/tmp/opentax-full-regression-ea23fbb91.status`. Actual wrapper/Deno PIDs86079/86085 are terminal.
 
 Failures: `2025 parent PDF marks Form8814 dividends and direct child gain` expects the old checkbox domain key; `Form8959 PDF rejects a print line that differs from upstream deposits` expects inapplicable SE/RRTA lines in a wage-only PDF. Verify source/template decisions and repair tests, then rerun the full exact command on a fresh stable snapshot. This earlier snapshot excludes later joint patron/partyear SHOP/service grants/MFS/arrangements/8994/education/owner-SE/8978/child tax changes; it is not a full pass for current code.
+
+
+## Full-regression failure expectation repairs
+
+Both retained failures are corrected against current template/source behavior: Form1040 fieldc1_43 is the separate ScheduleD-not-required checkbox, asserted true for the direct8814 child gain and false with ScheduleD; wage-only8959 omits inapplicable SE/RRTA parts while retaining exact tax/withholding values and upstream-source rejection assertions. Final typed focused batch **28 passed,0 failed**. Log `/tmp/opentax-full-expectation-repairs-final.log`, SHA256 `e8c2349d88922fd5d82938e4d9de8d76b179d11bf2d4ef6474759aaed4b86e91`. The full exact command still needs a fresh stable-snapshot rerun.
