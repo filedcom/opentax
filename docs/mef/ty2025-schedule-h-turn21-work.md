@@ -19,10 +19,14 @@ evidence and actual covered service remuneration. Payment date alone does not
 identify the ordinary period. [California UIC 607](https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=UIC&sectionNum=607.)
 also applies period-majority treatment to state employment.
 
-Correction is underway in the isolated mixed family/state checkout. Original
-input/PDF/XML archives remain unchanged; separately sourced new packets and
-negative checks are required before integration. The existing family/age/state
-parent remains open.
+Correction is integrated at `898cbf510`. Required ordinary-period source facts
+and actual service-time majority now drive FICA/FUTA classification. The two
+unchanged historical inputs reject for missing ordinary-period provenance;
+separately sourced positive packets cover long periods, short-period majorities,
+exactly-half service time and payment patterns. Candidate source tests passed
+25/0; main ordinary and actual saved-source gates are running. Original
+input/PDF/XML archives remain unchanged. The existing family/age/state parent
+remains open.
 
 Base `c4c597887`; frozen board read in full. Existing complete family/unrelated
 payroll inventory excludes a child under 21 for the whole year; a 2004 birth is
