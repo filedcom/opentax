@@ -1935,3 +1935,20 @@ Existing ordinary-refund inventory and Form8621 parent source/PDF work continue 
 
 Read-only current-source audit: issuedbox9a/box8 permitsfractionalpercentages but threevalidation layers requireintegralgrossed-up cash/NUA/annuity and death/estate allocations. Existing50%/25% packets donotprovenonintegral shares. OfficialForm4972p3Steps2–3 usecashbox9a andseparateannuitybox8; Step5 usescashshare againstfull residualtax; line20 ratio at least3decimals. ExistingForm4972parent explicitlyrequiresbeneficiarypartial-share combinations; root authorizes full synchronizedsource/calculator/export rounding route, preservingrawissuedcents and prescribed filedline rounding. Differentsharepercentages acrosscopies retainexistingguard pendingactualfull-pool allocation interpretation; donotinventweightedshare. Newdiscoveries remainfutureonly; currentfuturePartIID–Hnotexecuted.
 Published draftPR63 verified c4d0ff580 title/body/head. Attachmentcell1625stillhanging, no successclaimed. Ordinaryrefundowner-qualifiedgate116/0 and20pages underartifactreplay; zero-taxableissuedcopy source-detailwithinexistinginventorywork ongoing. FullV4immutablelive44964/44970 at22m39s, no reportedfailuresyet.
+
+## Before existing Form4852 source-route implementation
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,441 bounded slices**. Learnings and exact proof remain in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Newly discovered work goes only in `future_todo` and is not executed.
+
+Actual inventory: **150 native / 116 PDF descriptors**, **365 fixtures**, **113 PDF keys / 96 covered / 17 uncovered**. Recent main proof: reviewed catalog24/0 (375 preserved pages), C/F loss-owner health28/0 (6/182), beneficiary death/estate3/0+15/0 (26/78), senior/independent-health6/0+111/0 and retained5/0 (5/95). Source/PDF bytes match reviewed originals; timestamp-only XML differences are recorded. These close their stated slices; broader parents remain open.
+
+Full `deno task test` at fbacc539c failed11,577/14/0ignored, exit1(82m15s); all14 have focused repaired-main proof. Immutable181575242 rerun started03:53:35UTC; wrapper44964/Deno44970 verified live at21m30s. Its terminal result and a passing full run of latest source remain required. Last verified published draft [PR63](https://github.com/filedcom/opentax/pull/63) head: **f48e23115**.
+
+Existing ordinary-refund inventory and Form8621 parent source/PDF work continue in isolated checkouts. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+
+
+Read-only source audit confirms the existing Form4852 node adds directly to wages/IRA/pension/withholding and Additional Medicare Tax; neither native source descriptor emits a substitute. Native sourcePendingKeys supports a retained f4852 source without mutating ordinary source arrays or counting income twice. Publication1345 Rev12-2025 p21 permits electronic filing after taxpayer completes4852, requires nonstandard W2 indicator and ERO retention. Official Form4852 permits unknown payer TIN, but cached TY2025v5.4 IRSW2 requires EmployerEIN with no alternate choice: no invented EIN or unverified route. Completed retained form, workpaper and incorrect-original provenance, replacement/duplicate checks, recipient ownership, basis/distribution classification, native source and printable packet remain existing-task obligations. Required business-rule and ATS evidence remain outstanding. Root begins source-contract implementation before any export guard is opened. Frozenmain unchanged; futurePFIC work not executed. FullV4 processes44964/44970 confirmedlive27m39s. Refund agent complete issued-copy inventory now includes zero-taxable and separately sourced unemployment, final proof ongoing.
