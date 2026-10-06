@@ -132,6 +132,7 @@ export const itemSchema = z.object({
   qbi_no_other_adjustments_confirmed: z.boolean().optional(),
   qbi_w2_wages: z.number().finite().nonnegative().optional(),
   qbi_unadjusted_basis: z.number().finite().nonnegative().optional(),
+  qbi_zero_limit_inventory: scheduleCItemSchema.shape.qbi_zero_limit_inventory,
   line_e_material_participation: z.boolean(),
   line_f_made_1099_payments: z.boolean().optional(),
   line_f_filed_1099s: z.boolean().optional(),

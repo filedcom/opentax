@@ -413,8 +413,6 @@ function advancedFormOutput(
   const f = input.schedule_f_qbi_businesses?.[0];
   const jointFishing = input.filing_status === FilingStatus.MFJ &&
     taxableIncome > CONFIG_BY_YEAR[2025].qbiThresholdMfj &&
-    taxableIncome < CONFIG_BY_YEAR[2025].qbiThresholdMfj +
-        CONFIG_BY_YEAR[2025].qbiPhaseInRange &&
     input.joint_se_source !== undefined;
   if (
     input.schedule_c_qbi_businesses?.length === 1 &&

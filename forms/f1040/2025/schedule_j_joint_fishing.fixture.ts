@@ -82,3 +82,49 @@ export function scheduleJJointFishingAdvancedInputs(
   input.schedule_f.schedule_fs[0].line2_sales_products_raised = 300_000;
   return input;
 }
+
+/** Full-year payroll journals and fixed-asset registers for each owner business. */
+export function scheduleJJointFishingZeroLimitInputs(
+  fishingOwner: "T" | "S" = "S",
+): Record<string, unknown> {
+  const input = scheduleJJointFishingAdvancedInputs(fishingOwner) as Record<
+    string,
+    any
+  >;
+  const c = input.schedule_c[0];
+  const f = input.schedule_f.schedule_fs[0];
+  f.line2_sales_products_raised = 400_000;
+  const identity = (recipient: "T" | "S") =>
+    recipient === "T" ? "123456789" : "444556666";
+  for (
+    const [business, reference] of [[c, c.business_reference], [
+      f,
+      f.farm_id,
+    ]] as const
+  ) {
+    const book = {
+      tax_year: 2025,
+      owner_ssn: identity(business.proprietor_recipient),
+      business_reference: reference,
+      employer_ein: business.line_d_ein.replaceAll("-", ""),
+      period_start: "2025-01-01",
+      period_end: "2025-12-31",
+      months: Array.from({ length: 12 }, (_, index) => ({
+        month: `2025-${String(index + 1).padStart(2, "0")}`,
+        payroll_journal_reference: `${reference}-payroll-${index + 1}`,
+        fixed_asset_register_reference: `${reference}-assets-${index + 1}`,
+        employee_payments: [],
+        qualifying_property: [],
+      })),
+    };
+    const bytes = new TextEncoder().encode(JSON.stringify(book));
+    business.qbi_zero_limit_inventory = {
+      document_id: `${reference}-2025-payroll-property`,
+      sha256: createHash("sha256").update(bytes).digest("hex"),
+      bytes_base64: btoa(String.fromCharCode(...bytes)),
+    };
+    business.qbi_w2_wages = 0;
+    business.qbi_unadjusted_basis = 0;
+  }
+  return input;
+}

@@ -17,6 +17,7 @@ import {
   ownerSourcesSchema,
 } from "../schedule_se/owner-calculation.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
+import { assertZeroLimitInventory } from "./zero-limit-inventory.ts";
 import {
   calculateOneBusiness8995ALines,
   type Form8995AInput,
@@ -62,7 +63,7 @@ export function calculateMixedFishingQbi(input: Form8995AInput) {
   if (
     (joint
       ? input.filing_status !== "mfj" ||
-        input.taxable_income <= 394_600 || input.taxable_income >= 494_600 ||
+        input.taxable_income <= 394_600 ||
         source.owner_ssn !== undefined || !owned ||
         owned.source.businesses.length !== 2 ||
         owned.instances.length !== 2 ||
@@ -129,6 +130,33 @@ export function calculateMixedFishingQbi(input: Form8995AInput) {
   if (input.qbi !== qbi[0] + qbi[1]) {
     throw new Error(
       "Mixed fishing Form 8995-A QBI differs from actual business sources",
+    );
+  }
+  if (input.taxable_income >= 494_600) {
+    if (
+      (c.line_26_wages ?? 0) !== 0 || (c.line_13_depreciation ?? 0) !== 0 ||
+      (f.line22_labor_hired ?? 0) !== 0 ||
+      (f.line14_depreciation ?? 0) !== 0 ||
+      c.qbi_w2_wages !== 0 || f.qbi_w2_wages !== 0 ||
+      c.qbi_unadjusted_basis !== 0 || f.qbi_unadjusted_basis !== 0
+    ) {
+      throw new Error(
+        "Full phase-out zero limit conflicts with filed payroll, depreciation, or QBI limit amounts",
+      );
+    }
+    const ownerSsns = joint
+      ? [c.proprietor_recipient, f.proprietor_recipient].map((recipient) =>
+        recipient === "S"
+          ? owned!.source.identity.spouse_ssn
+          : owned!.source.identity.primary_ssn
+      )
+      : [source.owner_ssn, source.owner_ssn];
+    [c, f].forEach((business, index) =>
+      assertZeroLimitInventory(business.qbi_zero_limit_inventory, {
+        owner_ssn: ownerSsns[index]!,
+        business_reference: [c.business_reference, f.farm_id][index]!,
+        employer_ein: eins[index]!,
+      })
     );
   }
   const rows = qbi.map((amount, i) => {
