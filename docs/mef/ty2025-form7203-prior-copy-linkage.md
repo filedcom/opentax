@@ -77,3 +77,8 @@ source is rewritten by that adjustment.
 
 No original current debt source/PDF/XML archive is rewritten, and this
 work does not create a positive prior-history filing packet.
+
+
+## Independent main verification
+
+Integrated prior-form copy consistency at5b48f3dc0/87012d21e, production SHA c5e68cf207e2b2bf2c6056714f90d17efb0d45ca10af43c0e691e347788288fb. Main ordinary two-module gate passed14/0 (26s), `/tmp/opentax-7203-prior-copy-main-standard-oct6.log`; final candidate production gate14/0 and exporter typecheck0 remain separately retained. Independent root actual saved two-source/20-document replay preserved exact pending, diagnostics, carry, staged $200 gain and inspector facts; synchronized-hash content mutation specifically rejects. Same original bytes on preimplementation main accepted that altered copy at the inspector, while the real filing route remained guarded. Standard schema metadata is accepted. Original/private 37 root evidence files, 6 main verification files and 39 final worker files are hash-preserved in main research. No positive prior-history return is created: issuerAuthenticated remainsfalse and public/native/PDF filing guards remain closed. Trusted acquisition, accepted transmission linkage, complete basis/election activity and final tax/posting/export remain required.
