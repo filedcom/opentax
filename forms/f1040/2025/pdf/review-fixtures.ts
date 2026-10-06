@@ -1,3 +1,5 @@
+import { ordinaryRothSubstituteReviewFixture } from "./review-4852-ordinary-roth.fixture.ts";
+import type { Form4852RetainedDocument } from "../form4852_source.ts";
 import { form8621QefReviewFixture } from "../form8621_qef.fixture.ts";
 import { tipHealthCfBeneficiaryReviewFixtures } from "./review-tip-health-cf-beneficiary.fixture.ts";
 import { businessTipSourceInputs } from "./business-tip-source.fixture.ts";
@@ -95,6 +97,7 @@ export interface PdfReviewFixture {
   readonly expectedPdfForms: readonly string[];
   readonly reviewFocus: readonly string[];
   readonly attachments?: readonly MefPdfAttachment[];
+  readonly retainedSourceDocuments?: readonly Form4852RetainedDocument[];
 }
 
 const singleFiler: FilerIdentity = {
@@ -9189,6 +9192,7 @@ const existingPdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   form8621QefReviewFixture(basePdfReviewFixtures.find((row) => row.id === "single-w2-refund")!),
+  ordinaryRothSubstituteReviewFixture(),
   ...basePdfReviewFixtures,
   twoSchoolEducationFixture(educationBase, "llc"),
   twoSchoolEducationFixture(educationBase, "aoc"),

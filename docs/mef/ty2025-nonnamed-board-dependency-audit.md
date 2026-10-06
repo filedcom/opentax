@@ -1,6 +1,6 @@
 # TY2025 nonnamed product-board dependency audit
 
-Latest authoritative registry/catalog replay: October6 after source-backed QEF catalog registration:151native/147keys,118PDF/115keys,366fixtures/97covered/18uncovered. Reviewed selected QEF packet1/7 and read-only source/artifact/XSD replay pass; existing PFIC/inventory9/0. Frozen52/ledger1469. Prior census counts below are historical; no source-family or release closure is inferred.
+Latest authoritative registry/catalog replay: October6 after source-backed QEF catalog registration:151native/147keys,118PDF/115keys,367fixtures/98covered/17uncovered. Reviewed selected QEF packet1/7 and retained ordinary4852packet1/8 and read-only source/artifact/XSD replay pass; existing PFIC/inventory9/0. Frozen52/ledger1470. Prior census counts below are historical; no source-family or release closure is inferred.
 
 Status: 2026-10-04. This maps all **32 open checklist rows outside the
 "Named tax-form gaps" section** of [`product_board.md`](../../product_board.md):

@@ -1961,3 +1961,6 @@ Audit qualification: preceding Roth entries preserve their original tests and im
 
 
 - [x] Register the existing byte-bound QEF2000 ElectionB source in the shared filled-PDF catalog and reuse it in the established source test. Gate9/0; actual fullgraph/catalog1full-XSDpacket7pages all reviewed, read-only source/artifact/native/PDF replay1/7 passes. PDF byte-identical to source-test output; three retained source hashes exact. Shared planner366fixtures/97covered/18uncovered, actual151native/118PDF. Wider QEF/source authentication and IRS parents remain open. See [catalog proof](ty2025-native-pdf-registry-parity.md).
+
+
+- [x] Carry optional retained source documents through shared PDF catalog generation, exact source serialization and read-only replay, registering corrected ordinary4852J with all eight original byte records. Typed gate9/0; full-XSD8page packet allreviewed, source/native/PDF replay1/8 passes, PDF/origins exact correctedarchive andXMLonlyReturnTs. Existing QEF1/7 source/pending/PDF/XML bytes exact under newdriver. Shared planner367fixtures/98covered/17uncovered; wider4852/authentication/IRS parent remains open. See [retained catalog proof](ty2025-native-pdf-registry-parity.md).

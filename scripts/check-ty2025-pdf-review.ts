@@ -238,6 +238,7 @@ for (const [index, rawCase] of cases.entries()) {
   const rebuilt = await buildMefBundle(buildPending(result.pending), {
     filer,
     attachments: [...(fixture.attachments ?? [])],
+    retainedSourceDocuments: fixture.retainedSourceDocuments,
   });
   if (new TextDecoder().decode(xml) !== rebuilt.xml + "\n") {
     throw new Error(`${id}: saved XML differs from current source calculation`);

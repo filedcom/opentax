@@ -82,3 +82,26 @@ Deno.test("source replay binds exact optional reviewed attachment bytes", () => 
     "source JSON differs",
   );
 });
+
+Deno.test("source replay binds retained custodian document identity and exact bytes", () => {
+  const filer = { primarySSN: "111223333" } as FilerIdentity;
+  const fixture: PdfReviewFixture = {
+    id: "retained-substitute-case",
+    inputs: { general: { filing_status: "single" } },
+    filer,
+    expectedPdfForms: ["f1040", "f4852"],
+    reviewFocus: ["source copies"],
+    retainedSourceDocuments: [{ document_reference: "custodian-record", bytes: new Uint8Array([1, 2, 3]) }],
+  };
+  const expected = reviewSourceFileContents(fixture, filer, {});
+  for (const changed of [
+    { document_reference: "wrong-custodian", bytes: new Uint8Array([1, 2, 3]) },
+    { document_reference: "custodian-record", bytes: new Uint8Array([1, 2, 4]) },
+  ]) {
+    assertThrows(() => assertReviewSourceFileContents(
+      fixture.id,
+      new TextEncoder().encode(reviewSourceFileContents({ ...fixture, retainedSourceDocuments: [changed] }, filer, {})),
+      expected,
+    ), Error, "source JSON differs");
+  }
+});

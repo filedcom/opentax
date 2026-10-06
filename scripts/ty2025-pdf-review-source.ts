@@ -31,6 +31,14 @@ export function reviewSourceFileContents(
           ),
         })),
       }),
+      ...(fixture.retainedSourceDocuments === undefined ? {} : {
+        retainedSourceDocuments: fixture.retainedSourceDocuments.map((document) => ({
+          document_reference: document.document_reference,
+          bytesBase64: btoa(
+            Array.from(document.bytes, (byte) => String.fromCharCode(byte)).join(""),
+          ),
+        })),
+      }),
       pending,
     },
     null,

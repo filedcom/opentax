@@ -123,6 +123,7 @@ for (const fixture of pdfReviewFixtures) {
   const bundle = await buildMefBundle(buildPending(result.pending), {
     filer,
     attachments: [...(fixture.attachments ?? [])],
+    retainedSourceDocuments: fixture.retainedSourceDocuments,
   });
   await validateXmlAgainstXsd(bundle.xml, fixture.id);
   const pageOrigins: PdfPageOrigin[] = [];
