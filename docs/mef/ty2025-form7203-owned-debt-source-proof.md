@@ -134,3 +134,7 @@ Form8995-A and additional-owner/business combinations are not proved by these
 four packets. Whole-dollar current note allocation retains its existing bounds.
 This is a current owned-source and carry-ordering slice, not blanket Form7203,
 shareholder-debt, history-authentication or IRS-acceptance completion.
+
+## Main integration evidence
+
+Main standard-task combined gate passes208/0. Actual four retained packets replay exactly across all32 reviewed pages using a private PDF cache, including pending, carry, PDF and origins; native XML differs only by timestamp. Main before/after replay also preserves the older seven-page legacy packet exactly. The old archive differs only by its independently checked pre-existing below-threshold Form8960 removal and historical XML terminal newline. All24 original files were rehashed at both original and preserved paths. Main logs and the exact preservation manifest are recorded in the October6 status archive.
