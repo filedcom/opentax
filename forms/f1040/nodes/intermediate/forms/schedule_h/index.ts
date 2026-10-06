@@ -501,6 +501,18 @@ const statePayrollReviewSchema = z.object({
       source_reference: sourceReference,
     }).strict(),
   ).optional(),
+  unpaid_contribution_review: z.object({
+    filing_review_date: calendarDate,
+    notice_balances: z.array(
+      z.object({
+        rate_notice_source_reference: sourceReference,
+        state: z.string().regex(/^[A-Z]{2}$/),
+        statement_as_of_date: calendarDate,
+        outstanding_balance: z.number().nonnegative(),
+        balance_record_reference: sourceReference,
+      }).strict(),
+    ).min(1),
+  }).strict().optional(),
 }).strict();
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -622,7 +634,7 @@ function schemaRepresentableStateRate(rate: number) {
 
 function validateStatePayrollReview(input: SectionBSource) {
   const review = input.state_payroll_review;
-  if (!review) return;
+  if (!review) return 0;
   if (
     input.employee_wages.some((employee) =>
       employee.relationship !== "unrelated"
@@ -638,6 +650,9 @@ function validateStatePayrollReview(input: SectionBSource) {
     ...review.contribution_payments.map((payment) => payment.payment_reference),
     ...(review.quarterly_assessments ?? []).map((assessment) =>
       assessment.source_reference
+    ),
+    ...(review.unpaid_contribution_review?.notice_balances ?? []).map(
+      (balance) => balance.balance_record_reference,
     ),
     ...input.employee_wages.map((employee) =>
       employee.payroll_source_reference
@@ -822,6 +837,7 @@ function validateStatePayrollReview(input: SectionBSource) {
     }
   }
   let lateCents = 0;
+  let unpaidCents = 0;
   const paidByNotice = notices.map(() => 0);
   const paidByAssessment = new Map<string, number>();
   const contributionPayments = [...review.contribution_payments].sort((a, b) =>
@@ -835,6 +851,15 @@ function validateStatePayrollReview(input: SectionBSource) {
     if (index < 0 || payment.paid_date > "2026-12-31") {
       throw new Error(
         "Schedule H state contribution needs a matching rate notice and actual payment date",
+      );
+    }
+    if (
+      review.unpaid_contribution_review &&
+      payment.paid_date >
+        review.unpaid_contribution_review.filing_review_date
+    ) {
+      throw new Error(
+        "Schedule H state account balance must include only payments through filing review",
       );
     }
     const amountCents = cents(payment.amount);
@@ -883,6 +908,46 @@ function validateStatePayrollReview(input: SectionBSource) {
       rowContributionCents[index] += cents(payment.amount);
     } else lateCents += cents(payment.amount);
   }
+  const balanceReview = review.unpaid_contribution_review;
+  if (balanceReview) {
+    if (
+      balanceReview.filing_review_date < "2026-04-15" ||
+      balanceReview.notice_balances.length !== notices.length
+    ) {
+      throw new Error(
+        "Schedule H unpaid state balance needs a complete account review at filing",
+      );
+    }
+  }
+  for (const [index, notice] of notices.entries()) {
+    const required = assessedByNotice[index].length > 0
+      ? assessedByNotice[index].reduce(
+        (total, assessment) => total + cents(assessment.assessed_contribution),
+        0,
+      )
+      : Math.round(rowWages[index] * notice.experience_rate);
+    const balance = balanceReview?.notice_balances.filter((entry) =>
+      entry.rate_notice_source_reference === notice.source_reference
+    );
+    if (
+      (balanceReview && balance?.length !== 1) ||
+      (balance &&
+        (balance[0].state !== notice.state ||
+          balance[0].statement_as_of_date !==
+            balanceReview?.filing_review_date))
+    ) {
+      throw new Error(
+        "Schedule H state account balance needs one dated record per rate notice",
+      );
+    }
+    const outstanding = balance ? cents(balance[0].outstanding_balance) : 0;
+    if (paidByNotice[index] + outstanding !== required) {
+      throw new Error(
+        "Schedule H assessed state liability must equal paid receipts plus reviewed unpaid balance",
+      );
+    }
+    unpaidCents += outstanding;
+  }
   if (
     rowWages.some((wages) => wages === 0) ||
     input.state_rows.length !== notices.length ||
@@ -893,23 +958,14 @@ function validateStatePayrollReview(input: SectionBSource) {
       row.experience_rate !== notices[index].experience_rate ||
       cents(row.taxable_state_wages) !== rowWages[index] ||
       cents(row.contributions_paid_by_due_date) !==
-        rowContributionCents[index] ||
-      review.contribution_payments.filter((p) =>
-          p.rate_notice_source_reference === notices[index].source_reference
-        ).reduce((total, p) => total + cents(p.amount), 0) !==
-        (assessedByNotice[index].length > 0
-          ? assessedByNotice[index].reduce(
-            (total, assessment) =>
-              total + cents(assessment.assessed_contribution),
-            0,
-          )
-          : Math.round(rowWages[index] * notices[index].experience_rate))
+        rowContributionCents[index]
     ) || cents(input.taxable_futa_wages) !== futaWages ||
     input.paid_only_one_state !==
       (new Set(payments.map((payment) => payment.state)).size === 1) ||
     input.all_futa_wages_state_taxable !==
       (stateCoveredFutaWages === futaWages) ||
-    input.all_contributions_paid_on_time !== (lateCents === 0) ||
+    input.all_contributions_paid_on_time !==
+      (lateCents === 0 && unpaidCents === 0) ||
     cents(input.late_contributions ?? 0) !== lateCents
   ) {
     throw new Error(
@@ -928,6 +984,7 @@ function validateStatePayrollReview(input: SectionBSource) {
       );
     }
   }
+  return unpaidCents;
 }
 
 // ─── Pure Helpers ─────────────────────────────────────────────────────────────
@@ -1408,7 +1465,7 @@ export function computeScheduleHAmounts(
     }
   }
   if (unemployment && "state_rows" in unemployment) {
-    validateStatePayrollReview(unemployment);
+    const unpaidCents = validateStatePayrollReview(unemployment);
     if (
       unemployment.paid_only_one_state &&
       unemployment.all_contributions_paid_on_time &&
@@ -1420,7 +1477,7 @@ export function computeScheduleHAmounts(
     }
     if (
       unemployment.all_contributions_paid_on_time ===
-        (unemployment.late_contributions !== undefined)
+        (unemployment.late_contributions !== undefined || unpaidCents > 0)
     ) {
       throw new Error(
         "Schedule H late contributions must match the line 11 answer",

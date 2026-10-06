@@ -191,6 +191,7 @@ async function verifyAdditionalPacket(
   raw: any,
   id: string,
   expectedTax: number,
+  expectedPages = 7,
 ) {
   const schedule = inputSchema.parse(raw);
   const inputs = { ...structuredClone(base.inputs), schedule_h: schedule };
@@ -212,7 +213,7 @@ async function verifyAdditionalPacket(
     bundle,
     origins,
   );
-  assertEquals(origins.length, 7);
+  assertEquals(origins.length, expectedPages);
   const temp = await Deno.makeTempFile({ suffix: ".xml" });
   try {
     await Deno.writeTextFile(temp, bundle.xml);
@@ -994,4 +995,266 @@ Deno.test("Schedule H retains a zero-taxable quarter after the state wage base",
     rejected.diagnostics.some((d) => d.nodeType === "schedule_h"),
     true,
   );
+});
+
+function unpaidStateSource(
+  kind: "partial" | "unpaid" | "partial-late" | "all-unpaid",
+) {
+  const raw: any = source();
+  const unemployment = raw.federal_unemployment;
+  const review = unemployment.state_payroll_review;
+  unemployment.all_contributions_paid_on_time = false;
+  unemployment.state_rows[1].contributions_paid_by_due_date =
+    kind === "unpaid" || kind === "all-unpaid" ? 0 : 100;
+  review.contribution_payments = review.contribution_payments.filter(
+    (payment: any) =>
+      payment.rate_notice_source_reference !== "CA-rate-notice-Q2-Q4",
+  );
+  if (kind !== "unpaid" && kind !== "all-unpaid") {
+    review.contribution_payments.push({
+      rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+      assessment_quarter: 2,
+      paid_date: "2025-07-15",
+      amount: 100,
+      payment_reference: "CA-Q2-SUTA-receipt",
+    });
+  }
+  if (kind === "partial-late") {
+    unemployment.late_contributions = 50;
+    review.contribution_payments.push({
+      rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+      assessment_quarter: 3,
+      paid_date: "2026-05-15",
+      amount: 50,
+      payment_reference: "CA-Q3-partial-late-receipt",
+    });
+  }
+  if (kind === "all-unpaid") {
+    review.contribution_payments = [];
+    unemployment.state_rows[0].contributions_paid_by_due_date = 0;
+    unemployment.state_rows[2].contributions_paid_by_due_date = 0;
+  }
+  review.quarterly_assessments = [
+    {
+      rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+      quarter: 2,
+      taxable_state_wages: 2_000,
+      assessed_contribution: 100,
+      source_reference: "CA-Q2-DE9-assessment",
+    },
+    {
+      rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+      quarter: 3,
+      taxable_state_wages: 2_000,
+      assessed_contribution: 100,
+      source_reference: "CA-Q3-DE9-assessment",
+    },
+  ];
+  const reviewDate = kind === "partial-late" ? "2026-06-01" : "2026-04-15";
+  review.unpaid_contribution_review = {
+    filing_review_date: reviewDate,
+    notice_balances: [
+      {
+        rate_notice_source_reference: "CA-rate-notice-Q1",
+        state: "CA",
+        statement_as_of_date: reviewDate,
+        outstanding_balance: kind === "all-unpaid" ? 60 : 0,
+        balance_record_reference: `CA-Q1-account-${kind}`,
+      },
+      {
+        rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+        state: "CA",
+        statement_as_of_date: reviewDate,
+        outstanding_balance: kind === "unpaid" || kind === "all-unpaid"
+          ? 200
+          : kind === "partial"
+          ? 100
+          : 50,
+        balance_record_reference: `CA-Q2-Q3-account-${kind}`,
+      },
+      {
+        rate_notice_source_reference: "TX-rate-notice-2025",
+        state: "TX",
+        statement_as_of_date: reviewDate,
+        outstanding_balance: kind === "all-unpaid" ? 54 : 0,
+        balance_record_reference: `TX-Q4-account-${kind}`,
+      },
+    ],
+  };
+  return raw;
+}
+
+Deno.test("Schedule H retains assessed state contributions partly or wholly unpaid at filing", async () => {
+  for (
+    const [kind, tax, contributions, futa] of [
+      ["partial", 1_384, 214, 160],
+      ["unpaid", 1_484, 114, 260],
+      ["partial-late", 1_343, 214, 119],
+      ["all-unpaid", 1_598, 0, 374],
+    ] as const
+  ) {
+    const raw = unpaidStateSource(kind);
+    const amounts = computeScheduleHAmounts(inputSchema.parse(raw), 2025);
+    assertEquals(amounts.sectionB?.contributions, contributions);
+    assertEquals(amounts.futaTax, futa);
+    assertEquals(amounts.totalTax, tax);
+    const { bundle } = await verifyAdditionalPacket(
+      raw,
+      `changed-rate-${kind}-unpaid-state`,
+      tax,
+    );
+    assertEquals(
+      bundle.xml.includes(`<FUTATaxAmt>${futa}</FUTATaxAmt>`),
+      true,
+    );
+    assertEquals(
+      bundle.xml.includes(
+        `<TotalContriStateUnemplFundAmt>${contributions}</TotalContriStateUnemplFundAmt>`,
+      ),
+      true,
+    );
+  }
+});
+
+function txOnlyUnpaidStateSource() {
+  const raw: any = source();
+  const unemployment = raw.federal_unemployment;
+  const review = unemployment.state_payroll_review;
+  unemployment.paid_only_one_state = true;
+  unemployment.all_contributions_paid_on_time = false;
+  unemployment.state_rows = [{
+    ...unemployment.state_rows[2],
+    taxable_state_wages: 8_000,
+    contributions_paid_by_due_date: 0,
+  }];
+  unemployment.credit_reduction_wages = [];
+  review.rate_notices = [review.rate_notices[2]];
+  review.contribution_payments = [];
+  for (const [index, payment] of review.wage_payments.entries()) {
+    payment.state = "TX";
+    payment.payment_reference = `TX-Q${index + 1}-household-payroll`;
+  }
+  review.unpaid_contribution_review = {
+    filing_review_date: "2026-04-15",
+    notice_balances: [{
+      rate_notice_source_reference: "TX-rate-notice-2025",
+      state: "TX",
+      statement_as_of_date: "2026-04-15",
+      outstanding_balance: 216,
+      balance_record_reference: "TX-full-year-account-unpaid",
+    }],
+  };
+  return raw;
+}
+
+Deno.test("Schedule H one-state wholly unpaid assessment uses Section B without a late worksheet", async () => {
+  const raw = txOnlyUnpaidStateSource();
+  const amounts = computeScheduleHAmounts(inputSchema.parse(raw), 2025);
+  assertEquals(amounts.sectionB?.additionalCredit, 216);
+  assertEquals(amounts.sectionB?.contributions, 0);
+  assertEquals(amounts.sectionB?.needsWorksheet, false);
+  assertEquals(amounts.futaTax, 204);
+  assertEquals(amounts.totalTax, 1_428);
+  const { bundle } = await verifyAdditionalPacket(
+    raw,
+    "tx-only-wholly-unpaid-state",
+    1_428,
+    6,
+  );
+  assertEquals(bundle.xml.includes("<FUTATaxAmt>204</FUTATaxAmt>"), true);
+});
+
+Deno.test("Schedule H unpaid state balances reject missing, stale, duplicate and contradicted source records at every exporter", async () => {
+  const raw = unpaidStateSource("partial");
+  const { schedule, result, bundle } = await verifyAdditionalPacket(
+    raw,
+    "changed-rate-partial-unpaid-negative-control",
+    1_384,
+  );
+  const filer = extractFilerIdentity(result.pending.f1040)!;
+  const pending = buildPending(result.pending);
+  const bad = async (edit: (row: any) => void) => {
+    const altered: any = structuredClone(schedule);
+    edit(altered.federal_unemployment);
+    assertThrows(() =>
+      computeScheduleHAmounts(inputSchema.parse(altered), 2025)
+    );
+    assertThrows(() => scheduleH.build(altered, { filer, pending }));
+    await assertRejects(() =>
+      buildPdfBytes(
+        { ...bundle.pending, schedule_h: altered },
+        filer,
+        ".pdf-cache",
+      )
+    );
+    const rejected = f1040_2025.executeReturn({
+      ...structuredClone(base.inputs),
+      schedule_h: altered,
+    });
+    assertEquals(
+      rejected.diagnostics.some((diagnostic) =>
+        diagnostic.nodeType === "schedule_h"
+      ),
+      true,
+    );
+  };
+  await bad((row) =>
+    delete row.state_payroll_review.unpaid_contribution_review
+  );
+  await bad((row) =>
+    row.state_payroll_review.unpaid_contribution_review.notice_balances.pop()
+  );
+  await bad((row) =>
+    row.state_payroll_review.unpaid_contribution_review.notice_balances[1]
+      .outstanding_balance = 99
+  );
+  await bad((row) =>
+    row.state_payroll_review.unpaid_contribution_review.notice_balances[1]
+      .outstanding_balance = 100.001
+  );
+  await bad((row) =>
+    row.state_payroll_review.unpaid_contribution_review.notice_balances[2]
+      .balance_record_reference =
+        row.state_payroll_review.unpaid_contribution_review.notice_balances[1]
+          .balance_record_reference
+  );
+  await bad((row) =>
+    row.state_payroll_review.unpaid_contribution_review.notice_balances[2]
+      .rate_notice_source_reference = "CA-rate-notice-Q2-Q4"
+  );
+  await bad((row) =>
+    row.state_payroll_review.unpaid_contribution_review.notice_balances[1]
+      .statement_as_of_date = "2026-04-16"
+  );
+  await bad((row) =>
+    row.state_payroll_review.unpaid_contribution_review.notice_balances[1]
+      .state = "TX"
+  );
+  await bad((row) => row.all_contributions_paid_on_time = true);
+  await bad((row) => {
+    row.state_payroll_review.contribution_payments.push({
+      rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+      assessment_quarter: 3,
+      paid_date: "2025-10-15",
+      amount: 100,
+      payment_reference: "CA-Q3-SUTA-receipt",
+    });
+    row.state_payroll_review.unpaid_contribution_review.notice_balances[1]
+      .outstanding_balance = 0;
+    row.state_rows[1].contributions_paid_by_due_date = 200;
+    // All liabilities have been paid by the deadline, contradicting line 11.
+    row.all_contributions_paid_on_time = false;
+  });
+  await bad((row) => row.late_contributions = 100);
+  await bad((row) =>
+    row.state_payroll_review.contribution_payments[1].amount = 201
+  );
+  await bad((row) =>
+    row.state_payroll_review.unpaid_contribution_review.filing_review_date =
+      "2026-04-14"
+  );
+  await bad((row) => {
+    row.state_payroll_review.contribution_payments[1].paid_date = "2026-05-15";
+    row.late_contributions = 100;
+  });
 });
