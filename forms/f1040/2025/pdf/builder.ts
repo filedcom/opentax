@@ -1,3 +1,4 @@
+import { assertForm8978SourceBytes } from "../form8978_source.ts";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { join } from "@std/path";
 import { normalizeAllPending } from "../pending.ts";
@@ -176,6 +177,7 @@ function fillEntry(
       const blankZero = typeof value === "number" && Math.round(value) === 0 &&
         !("printZero" in entry && entry.printZero);
       const field = form.getTextField(entry.pdfField);
+      if (entry.fontSize !== undefined) field.setFontSize(entry.fontSize);
       if (!blankZero) {
         const text = typeof value === "number"
           ? Math.round(value).toString()
@@ -709,6 +711,18 @@ export async function buildPdfBytes(
       preparedBundle.attachments,
       preparedBundle.xml,
       filer.primarySSN,
+    );
+  }
+  if ((pending.f8978 as Record<string, unknown> | undefined)?.reviewed_source) {
+    if (!preparedBundle) {
+      throw new Error(
+        "Form8978 reviewed source PDF needs prepared attachment bundle",
+      );
+    }
+    await assertForm8978SourceBytes(
+      pending as Record<string, Record<string, unknown>>,
+      filer,
+      preparedBundle.attachments,
     );
   }
   if (hasForm8994Claim(pending)) {

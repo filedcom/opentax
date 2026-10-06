@@ -508,7 +508,18 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
 
   // ── Page 2: Tax and Credits (Lines 16–24) ────────────────────────────────
-  // f2_07 = line 16 form-name text box (not a dollar field — skipped).
+  {
+    kind: "checkbox",
+    domainKey: "print_form8978_tax_box",
+    pdfField: "topmostSubform[0].Page2[0].c2_11[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_form8978_tax_name",
+    fontSize: 6,
+    pdfField: "topmostSubform[0].Page2[0].f2_07[0]",
+  },
+  // f2_07 = line 16 form-name text box (not a dollar field).
   // All tax lines shifted +1 vs the pre-2025 descriptor.
   {
     kind: "text",
@@ -1047,6 +1058,12 @@ export const irs1040Pdf: PdfFormDescriptor = {
       print_form8888_attached: hasForm8888,
       print_form8814_tax_box: typeof fields.form8814_tax === "number" &&
         fields.form8814_tax > 0,
+      print_form8978_tax_box: typeof fields.form8978_tax === "number" &&
+        fields.form8978_tax > 0,
+      print_form8978_tax_name:
+        typeof fields.form8978_tax === "number" && fields.form8978_tax > 0
+          ? "FORM 8978"
+          : undefined,
       print_form4972_tax_box: typeof fields.form4972_tax === "number" &&
         fields.form4972_tax > 0,
       print_form8814_line3a_included: child.dividends > 0,

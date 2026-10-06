@@ -11,6 +11,8 @@ export type PdfFieldEntry =
     readonly pdfField: string;
     readonly extraPdfFields?: readonly string[];
     readonly printZero?: boolean;
+    /** Explicit font size for a narrow IRS text widget proven by visual review. */
+    readonly fontSize?: number;
   }
   | {
     readonly kind: "checkbox";

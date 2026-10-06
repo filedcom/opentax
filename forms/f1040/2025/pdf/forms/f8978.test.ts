@@ -86,24 +86,25 @@ Deno.test("Form 8978 PDF prints native parent and Schedule A lines with source i
   const scheduleA = instance(form8978ScheduleAPdf, allPending);
   assertEquals(parent?.partner_name, "Alex Partner");
   assertEquals(parent?.source, Form8978Source.BbaAudit);
-  assertEquals(parent?.line1b, scheduleA?.line2);
-  assertEquals(parent?.line3b, scheduleA?.line4);
-  assertEquals(parent?.line9b, scheduleA?.line6);
-  assertEquals(parent?.line13, 450);
+  assertEquals(parent?.line1b_0, scheduleA?.line2_0);
+  assertEquals(parent?.line3b_0, scheduleA?.line4_0);
+  assertEquals(parent?.line9b_0, scheduleA?.line6_0);
+  assertEquals(parent?.line13_0, 450);
   assertEquals(parent?.line14, 450);
-  assertEquals(parent?.line15, 10);
+  assertEquals(parent?.line15_0, 10);
   assertEquals(parent?.line16, 10);
-  assertEquals(parent?.line17, 20);
+  assertEquals(parent?.line17_0, 20);
   assertEquals(scheduleA?.income_0_tracking, "20231231-123456");
   assertEquals(scheduleA?.deduction_0_tracking, "2312123456");
   assertEquals(scheduleA?.credit_0_tracking, "123456789");
   assertEquals(
-    form8978Pdf.fields.find((field) => field.domainKey === "line13")?.pdfField,
+    form8978Pdf.fields.find((field) => field.domainKey === "line13_0")
+      ?.pdfField,
     "topmostSubform[0].Page1[0].Table_PartI[0].Row13[0].f1_75[0]",
   );
   assertEquals(
     form8978ScheduleAPdf.fields.find((field) =>
-      field.domainKey === "income_0_amount"
+      field.domainKey === "income_0_amount_0"
     )?.pdfField,
     "topmostSubform[0].Page1[0].Table_1_Income[0].Row1a[0].f1_17[0]",
   );
@@ -115,62 +116,51 @@ Deno.test("Form 8978 PDF rejects changed native or final-return tax", () => {
   assertThrows(
     () => instance(form8978Pdf, allPending),
     Error,
-    "native affected-year calculation disagree",
+    "native affected-year calculations disagree",
   );
   const changed = pending();
   changed.f1040.form8978_tax = 449;
   assertThrows(
     () => instance(form8978Pdf, changed),
     Error,
-    "finalized Form 1040 line 16 routing",
+    "finalized Form1040 routing",
   );
 });
 
-Deno.test("Form 8978 PDF rejects extra years, overflow rows, and unattributed rows", () => {
-  const extraYear = filing();
-  extraYear.columns.push({
-    ...extraYear.columns[0],
-    tax_year_end: "2021-12-31",
-  });
-  assertThrows(
-    () => instance(form8978Pdf, pending(extraYear)),
-    Error,
-    "one filing and one affected tax year",
+Deno.test("Form8978 PDF preserves extra year columns and complete seven-row overflow sheets", () => {
+  const f = filing();
+  f.columns.push({ ...f.columns[0], tax_year_end: "2021-12-31" });
+  const p = pending(f);
+  const parent = instance(form8978Pdf, p);
+  assertEquals(parent?.line13_1, 450);
+  f.columns[0].income_adjustments = Array(8).fill(
+    f.columns[0].income_adjustments[0],
   );
-  const overflow = filing();
-  overflow.columns[0].income_adjustments = Array(8).fill(
-    overflow.columns[0].income_adjustments[0],
-  );
-  assertThrows(
-    () => instance(form8978Pdf, pending(overflow)),
-    Error,
-    "seven printed rows",
-  );
-  const noTracking = filing();
-  noTracking.columns[0].income_adjustments[0] = {
+  const sheets = form8978ScheduleAPdf.instances!({}, filer, pending(f));
+  assertEquals(sheets.length, 2);
+  assertEquals(sheets[0].line2_0, 14000);
+  assertEquals(sheets[1].line2_0, 2000);
+  assertEquals(sheets[0].line2_1, 2000);
+});
+Deno.test("Form8978 PDF requires actual tracking except explicit partner attributes", () => {
+  const f = filing();
+  f.columns[0].income_adjustments[0] = {
     description: "Partner-level adjustment",
     amount: 2000,
   };
   assertThrows(
-    () => instance(form8978ScheduleAPdf, pending(noTracking)),
+    () => instance(form8978ScheduleAPdf, pending(f)),
     Error,
-    "tracking number",
+    "tracking identifier",
   );
-});
-
-Deno.test("Form 8978 PDF negative line 14 requires finalized reporting-year worksheet", () => {
-  const negative = filing();
-  negative.columns[0].original_tax_liability = 2_000;
-  const allPending = pending(negative);
-  delete allPending.f1040.form8978_tax;
-  allPending.form8978_reporting_year = {
-    negative_form8978_line14: 550,
+  f.columns[0].income_adjustments[0] = {
+    origin: "partner_tax_attribute",
+    attribute_explanation: "Reviewed historical loss ledger",
+    description: "Partner-level adjustment",
+    amount: 2000,
   };
-  assertEquals(instance(form8978Pdf, allPending)?.line14, -550);
-  allPending.form8978_reporting_year.negative_form8978_line14 = 500;
-  assertThrows(
-    () => instance(form8978Pdf, allPending),
-    Error,
-    "finalized reporting-year worksheet",
+  assertEquals(
+    instance(form8978ScheduleAPdf, pending(f))?.income_0_tracking,
+    undefined,
   );
 });

@@ -1,3 +1,4 @@
+import { assertForm8978SourceBytes } from "../form8978_source.ts";
 import { buildReturnHeader, FilingStatus } from "../../mef/header.ts";
 import { element, elements } from "../../mef/xml.ts";
 import { F1040_2025_CONFIG } from "../config.ts";
@@ -486,6 +487,11 @@ export function buildMefXml(
       "MeF Form 8839 requires reviewed PDF attachment bytes; use buildMefBundle",
     );
   }
+  if (pending.f8978?.reviewed_source) {
+    throw new Error(
+      "Form8978 reviewed source needs validated attachment bundle",
+    );
+  }
   if (hasForm8994Claim(pending)) {
     throw new Error(
       "MeF Form 8994 requires validated policy and payroll attachment bytes; use buildMefBundle",
@@ -523,6 +529,13 @@ export async function buildMefBundle(
       throw new Error("Form 8839 needs a reviewed executor route");
     }
     await assertPublicForm8839Attachments(route.public_source, attachments);
+  }
+  if (pending.f8978?.reviewed_source) {
+    await assertForm8978SourceBytes(
+      pending as Record<string, Record<string, unknown>>,
+      options.filer,
+      attachments,
+    );
   }
   if (hasForm8994Claim(pending)) {
     await reconcileForm8994EvidenceBytes(pending.f8994, attachments);
