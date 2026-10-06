@@ -32,7 +32,7 @@ function nonfarmWages(
   source: z.infer<typeof publicInputSchema>,
 ): number {
   const w2s = inputs.w2;
-  if (w2s === undefined) {
+  if (w2s === undefined || (Array.isArray(w2s) && w2s.length === 0)) {
     if (source.nonfarm_wage_source) {
       throw new Error("Schedule J nonfarm wage record has no issued W-2");
     }

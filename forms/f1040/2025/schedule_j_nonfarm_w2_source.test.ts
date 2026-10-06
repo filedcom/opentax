@@ -28,6 +28,11 @@ Deno.test("issued nonfarm W-2 joins high-income farm Schedule J, SE, zero-limite
   assertEquals(pending.f1040.line1a_wages, 100_000);
   assertEquals(pending.f1040.line9_total_income, 335_000);
   assertEquals(pending.schedule_se.w2_ss_wages, 100_000);
+  // Independently apply the 2025 $176,100 SS wage base and Schedule SE rates.
+  const farmSeEarnings = 200_000 * 0.9235;
+  const ssTax = Math.round((176_100 - 100_000) * 0.124);
+  const medicareTax = Math.round(farmSeEarnings * 0.029);
+  assertEquals((ssTax + medicareTax) / 2, 7_396);
   assertEquals(pending.schedule1.line15_se_deduction, 7_396);
   assertEquals(pending.f1040.line11_agi, 327_604);
   assertEquals(
@@ -40,10 +45,22 @@ Deno.test("issued nonfarm W-2 joins high-income farm Schedule J, SE, zero-limite
   assertEquals(pending.form8995a.qbi, 192_604);
   assertEquals(pending.f1040.line13_qbi_deduction, 0);
   assertEquals(pending.schedule_j.line3, 294_854);
+  // The 2025 single tax schedule gives $57,231 at $250,525. The $30,000
+  // qualified dividend is taxed at 15%, outside the ordinary bracket.
+  const ordinaryWithJ = 294_854 - 30_000;
+  const currentTax = Math.round(
+    57_231 + (ordinaryWithJ - 250_525) * 0.35 + 30_000 * 0.15,
+  );
+  assertEquals(currentTax, 66_746);
   assertEquals(pending.schedule_j.line4, 66_746);
   assertEquals(pending.schedule_j.line23, 68_489);
   assertEquals(pending.f1040.line16_income_tax, 69_319);
   assertEquals(noJ.f1040.line16_income_tax, 72_826);
+  const ordinaryWithoutJ = 309_854 - 30_000;
+  assertEquals(
+    Math.round(57_231 + (ordinaryWithoutJ - 250_525) * 0.35 + 30_000 * 0.15),
+    71_996,
+  );
   assertEquals(pending.form6251.regular_tax, 71_996);
   assertEquals(noJ.form6251.regular_tax, 71_996);
   assertEquals(pending.form6251.line11_amt, 53_583);
@@ -174,4 +191,34 @@ Deno.test("Schedule J nonfarm W-2 source and complete filed return reject confli
     await assertRejects(() => f1040_2025.prepareReturn(altered, filer));
     await assertRejects(() => buildPdfBytes(altered, filer));
   }
+});
+
+Deno.test("explicit empty W-2 inventory preserves the original no-wage farm return and rejects orphan proof", () => {
+  const source: any = scheduleJNonfarmW2Inputs();
+  delete source.w2;
+  delete source.schedule_j.nonfarm_wage_source;
+  const original = f1040_2025.executeReturn(source);
+  assertEquals(original.diagnostics, []);
+  const empty = structuredClone(source);
+  empty.w2 = [];
+  const explicitEmpty = f1040_2025.executeReturn(empty);
+  assertEquals(explicitEmpty.diagnostics, []);
+  const prior: any = normalizeAllPending(original.pending);
+  const current: any = normalizeAllPending(explicitEmpty.pending);
+  for (
+    const key of [
+      "f1040",
+      "schedule1",
+      "schedule2",
+      "schedule_f",
+      "schedule_se",
+      "form8995a",
+      "schedule_j",
+      "form6251",
+    ]
+  ) assertEquals(current[key], prior[key], key);
+  const orphan = structuredClone(empty);
+  orphan.schedule_j.nonfarm_wage_source =
+    (scheduleJNonfarmW2Inputs() as any).schedule_j.nonfarm_wage_source;
+  assertThrows(() => f1040_2025.executeReturn(orphan));
 });

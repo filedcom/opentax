@@ -114,3 +114,76 @@ execution. Logs `/tmp/opentax-schedulej-main-held-{qef,pension}-oct6.log` and
 `...-{qef,pension}-compare-oct6.log`. Broader source allocations, authentication,
 full latest regression and IRS gates remain open. Ledger1467/frozen52/future
 unchanged.
+
+## Separately sourced nonfarm W-2 wages with the same high-income farm
+
+The isolated `schedule_j_nonfarm_w2` source keeps Ada's original **$200,000**
+owned cash Schedule F profit, **$35,000/$30,000** ordinary/qualified
+investment dividends, issued Form 4972 source, and **$240,000** ISO AMT
+adjustment. It adds one issued **$100,000** W-2 for Ada from a separately
+identified engineering C corporation. A retained employer record contains its
+2025 employment dates, EIN, legal name, nonagricultural NAICS, Ada's SSN,
+issued W-2 reference, and boxes 1/2/3/5. The public Schedule J source carries
+its exact bytes and SHA-256; the prepass decodes those bytes and joins every
+field to the issued W-2 and the distinct owned farm EIN. The W-2's separate
+source-document ID routes its actual Social Security wages to the farm QBI
+half-SE calculation. Neither Ada's wages nor her employer's payroll are treated
+as wages **paid by the grain farm** for Form 8995-A. This is the eligible
+nonfarm-wage exclusion described by the [2025 Schedule J instructions](https://www.irs.gov/instructions/i1040sj): line 1a wages attributable to farming are limited to the stated farming S-corporation shareholder or fishing crew circumstances. The
+[2025 Form 8995-A instructions](https://www.irs.gov/instructions/i8995a)
+measure its W-2 limitation using wages paid by the qualified business.
+
+The issued W-2 consumes **$100,000** of the 2025 Social Security wage base on
+Schedule SE. Actual farm net earnings are $184,700; the remaining $76,100
+Social Security base produces $9,436 tax and the Medicare amount is $5,356.
+Half-SE is **$7,396**. Form 1040 wages/total income/AGI are
+**$100,000/$335,000/$327,604**. Sourced farm QBI is **$192,604**, with
+business-paid W-2 wages and UBIA both zero. At $309,854 taxable income before
+QBI, its wage/UBIA limitation has fully phased in and the current QBI
+deduction is **zero**; the full filed Form 8995-A remains source-bound. The
+nonfarm wage enters AGI and the current tax worksheet but is excluded from
+elected farm income. Schedule J lines 3/4/23 are
+**$294,854/$66,746/$68,489**; Form 1040 line 16 is **$69,319**. The actual
+without-election graph produces regular tax **$71,996** for Form 6251 line 10
+and AMT **$53,583**, rather than using the lower Schedule J tax. The filed
+Form 1040 line 24 is **$139,786**. These values remain exact after the
+current producing-mining/Form 6251 rounding integration `e239aa16f`.
+An independent 2025 single-rate check uses $57,231 tax at the $250,525
+ordinary-income breakpoint: $264,854 ordinary income with J adds 35% of
+$14,329 and 15% of the $30,000 qualified dividend, rounding to $66,746;
+$279,854 ordinary income without J rounds to $71,996.
+
+Focused public source and conflict gate: **3/0**,
+`/tmp/opentax-schedulej-w2-after6251-final-v2-oct6.log`. Its elected and
+without-election native returns each validate against the full local TY2025
+v5.4 XSD. Their real PDFs have **20** and **18** pages; every page was
+visually reviewed in ten contact sheets, with page/form inventory under
+`/tmp/opentax-schedulej-w2-rendered-oct6/visual-review-manifest.json`.
+PDF SHA-256 hashes are
+`db3901a99aec2a23993ee6e80aba4fcc5c348d5536de55de74833250d0462715`
+and `108459bbd6ab8cd73bf9f1d2a1ad7c34768f7b22bf543310faf5324ef92c8d74`.
+The post-6251 source/pending/PDF/origin files are byte-identical to the
+reviewed packets, and XML differs only by `ReturnTs`:
+`/tmp/opentax-schedulej-w2-after6251-oct6/`. Native and direct PDF paths
+reject changed employer classification or bytes, W-2 employer/owner/payroll,
+source reference, farm owner SE source, QBI source, Schedule J line, and
+filed wage amount.
+An explicit empty W-2 inventory computes the same original farm return,
+while an employer proof with no W-2 copy rejects.
+
+Before the 6251 integration, the existing five Schedule J packets/85 pages
+remained exact (7/0), as did all 17 QEF PDFs/172 pages (24/0) and eight
+pension packets/76 pages (2/0); comparison logs are
+`/tmp/opentax-schedulej-w2-preserve-{staged,original,qef-v2,pension-v2}-compare-oct6.log`.
+Current-base replay of the five Schedule J packets is recorded separately in
+`/tmp/opentax-schedulej-w2-after6251-preserve-base-oct6.log`; all five
+reviewed source/pending/PDF/page-origin packets remain exact and XML differs
+only in `ReturnTs`.
+After `e239aa16f`, the QEF 17/172 and pension 8/76 suites also remain exact:
+`/tmp/opentax-schedulej-w2-after6251-{qef,pension}-compare-oct6.log`.
+The employer record is a retained synthetic review record, not an externally
+authenticated government registration. This packet establishes only the
+identified one-employer nonfarm W-2 source route. Farm S-corporation wages,
+fishing crew wages, farm-paid payroll/UBIA, multiple employers and broader
+farming/fishing attribution remain outside this bounded proof and the wider
+parent stays open.
