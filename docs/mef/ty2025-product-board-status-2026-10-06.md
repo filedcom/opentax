@@ -2883,3 +2883,19 @@ Donation source and Section B printing proofs are sealed. The recorded Roth hist
 
 
 Isolated readybf0f4f0a1 retains10000.49principal and100.30+200.30 paid source amounts, compares safe integer cents, rejects fractional/unsafe totals and one-cent alterations before native/directPDF. Final44/0 seven related modules; fullXSD7pages all visually reviewed, isolated immutable heldsource PDF/pending/origins exact andXMLonlyReturnTs. OlderOctober6 royalty regenerated baseline differs by known later ScheduleB/QBI graph additions, not claimed exact; original archive untouched. Synthetic mortgage copy has canonical fields/no widgets; no externally authenticated source claim. Earlier attempts missing isolated XSD link and temporarytesttype error were corrected, retained logs v1/v2 are failures, finalgate governs. Mainintegration must use actualcurrentmain heldsource and focusedsource checks before credit. PR63 verified928586521; attachment2426 stalled/terminated, no success. Ledger1465/frozen52/future unchanged.
+
+## FullV5 automatic restart audit
+
+Original wrapper65945/Deno65949 disappeared after the source4a45410da run;
+launchctl confirms runs2 and last exit code1. KeepAlive automatically reran the
+same immutable source at07:44:10UTC with wrapper91417/Deno91420. The original
+wrapper overwrites log/status at startup, so first-run totals/failure details
+are unavailable: this is a failed gate without an auditable first terminal log,
+not a passing or still-running original result. Current run2 remains live.
+Original wrapper and launchctl evidence retained in
+`/tmp/opentax-full-regression-v5-original-wrapper-oct6.zsh` and
+`/tmp/opentax-full-regression-v5-restart-audit-oct6.txt`.
+The next service invocation is overridden to archive terminal run2 log/status
+and remove the KeepAlive service before another regression launch. This does
+not interrupt currentrun2; its explicit terminal result remains required.
+Latest-source full run must use a one-shot launcher and unique immutable paths.
