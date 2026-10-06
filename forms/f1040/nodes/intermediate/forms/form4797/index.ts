@@ -1,3 +1,7 @@
+import {
+  currentPropertyPassiveAmounts,
+  currentPropertySourceSchema,
+} from "../../../inputs/schedule_e/current-property-source.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -146,6 +150,8 @@ export const inputSchema = z.object({
   k1_1231_rows: z.array(k1Section1231RowSchema).optional(),
   k1_box11_line10_rows: z.array(box11Line10SourceSchema).optional(),
   passive_property_sales: z.array(passivePropertySaleSchema).optional(),
+  current_property_sources: z.array(currentPropertySourceSchema).min(1)
+    .optional(),
   passive_activity_sources: form8582.inputSchema.shape.activities,
   passive_disposed_activity_ids: z.array(z.string().trim().min(1).max(64))
     .optional(),
@@ -250,7 +256,16 @@ function mixedPassiveAllocation(input: Form4797Input) {
     activity_id: sale.activity_id,
     activity_name: sale.activity_name,
     part: sale.part,
-    gain: passiveSaleGain(sale),
+    gain:
+      input.current_property_sources?.find((s) =>
+          s.activity_id === sale.activity_id
+        )
+        ? currentPropertyPassiveAmounts(
+          input.current_property_sources.find((s) =>
+            s.activity_id === sale.activity_id
+          )!,
+        ).passiveGain
+        : passiveSaleGain(sale),
   }));
   const currentIncome = activities.reduce(
     (sum, activity) => sum + Math.max(0, activity.current_net),
@@ -316,7 +331,20 @@ export function form4797EicPassiveOrdinary(
   const input = inputSchema.parse(rawInput);
   const gross = (input.passive_property_sales ?? [])
     .filter((sale) => sale.part === "II")
-    .reduce((sum, sale) => sum + passiveSaleGain(sale), 0) +
+    .reduce(
+      (sum, sale) =>
+        sum +
+        (input.current_property_sources?.find((s) =>
+            s.activity_id === sale.activity_id
+          )
+          ? currentPropertyPassiveAmounts(
+            input.current_property_sources.find((s) =>
+              s.activity_id === sale.activity_id
+            )!,
+          ).passiveGain
+          : passiveSaleGain(sale)),
+      0,
+    ) +
     (input.k1_box11_line10_rows ?? []).reduce(
       (sum, row) =>
         sum +
@@ -543,14 +571,23 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
       activity_id: sale.activity_id,
       activity_name: sale.activity_name,
       part: sale.part,
-      gain: passiveSaleGain(sale),
+      gain:
+        input.current_property_sources?.find((s) =>
+            s.activity_id === sale.activity_id
+          )
+          ? currentPropertyPassiveAmounts(
+            input.current_property_sources.find((s) =>
+              s.activity_id === sale.activity_id
+            )!,
+          ).passiveGain
+          : passiveSaleGain(sale),
       ...(sale.entire_activity_interest_disposed !== undefined
         ? {
           entire_activity_interest_disposed:
             sale.entire_activity_interest_disposed,
         }
         : {}),
-    }));
+    })).filter((sale) => sale.gain > 0);
 
     const grossGain = totalSection1231(input) -
       (allocation?.allowedPartI ?? 0);

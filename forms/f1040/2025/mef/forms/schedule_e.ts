@@ -1,3 +1,5 @@
+import { currentPropertyPassiveAmounts } from "../../../nodes/inputs/schedule_e/current-property-source.ts";
+import { assertCurrentPassivePropertyReturn } from "../../current_passive_property_source.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import {
   computeExpenses,
@@ -412,13 +414,19 @@ export function validatePassiveActivityLink(
   }
   const needsLimitation = items.some((item) =>
     (item.activity_type === "A" || item.activity_type === "B") &&
-    (computePropertyNet(item) < 0 ||
+    ((item.current_property_source
+      ? currentPropertyPassiveAmounts(item.current_property_source)
+        .passiveOperating < 0
+      : computePropertyNet(item) < 0) ||
       (item.prior_unallowed_passive_operating ?? 0) > 0)
   );
   if (!needsLimitation) return new Map();
   const activityItems = items.flatMap((item, index) =>
     (item.activity_type === "A" || item.activity_type === "B") &&
-      (computePropertyNet(item) !== 0 ||
+      ((item.current_property_source
+        ? currentPropertyPassiveAmounts(item.current_property_source)
+          .passiveOperating !== 0
+        : computePropertyNet(item) !== 0) ||
         (item.prior_unallowed_passive_operating ?? 0) > 0)
       ? [{ item, index }]
       : []
@@ -438,7 +446,11 @@ export function validatePassiveActivityLink(
       return !activity || activity.name !== item.property_description ||
         activity.activity_type !== item.activity_type ||
         activity.property_type !== item.property_type ||
-        activity.current_net !== computePropertyNet(item) ||
+        activity.current_net !==
+          (item.current_property_source
+            ? currentPropertyPassiveAmounts(item.current_property_source)
+              .passiveOperating
+            : computePropertyNet(item)) ||
         activity.prior_unallowed_operating !==
           (item.prior_unallowed_passive_operating ?? 0) ||
         activity.prior_active_participation !==
@@ -535,6 +547,16 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
     return statement ? [statement] : [];
   },
   build(fields, context) {
+    if (
+      context?.pending &&
+      (context.pending.form4797 as Record<string, unknown> | undefined)
+          ?.current_property_sources !== undefined
+    ) {
+      assertCurrentPassivePropertyReturn(
+        context.pending.form4797 as Record<string, unknown>,
+        { ...context.pending, schedule_e: fields },
+      );
+    }
     const k1Rows = scheduleEK1Part2Rows(context?.pending);
     if ((!fields || Object.keys(fields).length === 0) && k1Rows.length === 0) {
       return "";
@@ -570,7 +592,14 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
     validatePartIxCarryovers(itemList, context);
     const allowedPassiveLosses = validatePassiveActivityLink(itemList, context);
     const properties = itemList.map((item, index) =>
-      buildProperty(item, allowedPassiveLosses.get(index))
+      buildProperty(
+        item,
+        item.current_property_source &&
+          currentPropertyPassiveAmounts(item.current_property_source)
+              .recharacterized > 0
+          ? Math.max(0, -computePropertyNet(item))
+          : allowedPassiveLosses.get(index),
+      )
     ).filter(
       (line): line is PropertyLines => line !== undefined,
     );
@@ -794,7 +823,29 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
         : "",
       properties.length > 0 ? element("IncomeAmt", income) : "",
       losses > 0 ? element("LossesAmt", losses) : "",
-      properties.length > 0 ? element("TotalIncomeOrLossAmt", propertyNet) : "",
+      properties.length > 0
+        ? element(
+          "TotalIncomeOrLossAmt",
+          propertyNet,
+          itemList.some((item) =>
+              item.current_property_source &&
+              currentPropertyPassiveAmounts(item.current_property_source)
+                  .nonpassiveOperating !== 0
+            )
+            ? {
+              nonpassiveActivityLiteralCd: "NPA",
+              nonpassiveActivityAmt: String(
+                itemList.reduce((n, item) =>
+                  n + (item.current_property_source
+                    ? currentPropertyPassiveAmounts(
+                      item.current_property_source,
+                    ).nonpassiveOperating
+                    : 0), 0),
+              ),
+            }
+            : undefined,
+        )
+        : "",
       ...k1Rows.map((row) =>
         elements("PartnershipOrSCorpGroup", [
           element("PartnershipOrSCorporationNm", row.name),

@@ -1,3 +1,5 @@
+import { StandardFonts } from "pdf-lib";
+import { currentPropertyPassiveAmounts } from "../../../nodes/inputs/schedule_e/current-property-source.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
   computeExpenses,
@@ -435,10 +437,14 @@ export const scheduleEPdf: PdfFormDescriptor = {
       );
       const expenseTotal = Math.round(computeExpenses(item) * fraction);
       const net = Math.round(computePropertyNet(item));
-      const allowedLoss = entireLoss ?? entireGain ??
-        (item.activity_type === "A" || item.activity_type === "B"
-          ? allowedByActivity.get(index) ?? 0
-          : Math.max(0, -net));
+      const allowedLoss = item.current_property_source &&
+          currentPropertyPassiveAmounts(item.current_property_source)
+              .recharacterized > 0
+        ? Math.max(0, -net)
+        : entireLoss ?? entireGain ??
+          (item.activity_type === "A" || item.activity_type === "B"
+            ? allowedByActivity.get(index) ?? 0
+            : Math.max(0, -net));
       const deductibleNet = entireLoss === undefined &&
           entireGain === undefined
         ? Math.max(0, net) - allowedLoss
@@ -585,6 +591,15 @@ export const scheduleEPdf: PdfFormDescriptor = {
       line24: rows.reduce((sum, row) => sum + Math.max(0, row.net), 0),
       line25: sumRows("allowedLoss") || undefined,
       line26: propertyTotal,
+      nonpassive_activity_amount: input.schedule_es.reduce(
+        (n, item) =>
+          n +
+          (item.current_property_source
+            ? currentPropertyPassiveAmounts(item.current_property_source)
+              .nonpassiveOperating
+            : 0),
+        0,
+      ),
       trust_line41: partIIFields === undefined
         ? input.farm_rental_net === undefined
           ? undefined
@@ -609,6 +624,13 @@ export const scheduleEPdf: PdfFormDescriptor = {
     if (!Array.isArray(continuations)) return [fields];
     const { partIContinuationPages: _continuations, ...primary } = fields;
     return [primary, ...continuations as Record<string, unknown>[]];
+  },
+  async decoratePages(document, pages, fields) {
+    const nonpassive = Number(fields.nonpassive_activity_amount ?? 0);
+    if (nonpassive !== 0) {
+      const font = await document.embedFont(StandardFonts.Helvetica);
+      pages[0].drawText(`NPA ${nonpassive}`, { x: 492, y: 57, size: 8, font });
+    }
   },
   async appendSupplementalPages(document, fields, filer) {
     await appendScheduleEPartIStatement(

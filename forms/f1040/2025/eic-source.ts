@@ -1,3 +1,4 @@
+import { assertCurrentPassivePropertyReturn } from "./current_passive_property_source.ts";
 import { assertCurrentPassiveLine10Return } from "./current_passive_line10_source.ts";
 import { form8582 as nativeForm8582 } from "./mef/forms/f8582.ts";
 import {
@@ -78,6 +79,7 @@ export function assertEicSource(
   };
   const agiFinal = pending?.agi_final as Record<string, unknown> | undefined;
   const form4797 = pending?.form4797 as Record<string, unknown> | undefined;
+  if (form4797) assertCurrentPassivePropertyReturn(form4797, pending);
   if (form4797?.k1_box11_line10_rows !== undefined) {
     assertCurrentPassiveLine10Return(form4797, pending);
     const rows = box11Line10SourceSchema.array().parse(

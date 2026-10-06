@@ -1,4 +1,9 @@
 import {
+  currentPropertyPassiveAmounts,
+  reconcileCurrentPropertySource,
+} from "../../../nodes/inputs/schedule_e/current-property-source.ts";
+import { assertCurrentPropertyQbi } from "./f8995-current-property.ts";
+import {
   box11Line10SourceRows,
   currentPassiveLine10Activities,
 } from "../../../nodes/inputs/k1_partnership/box11_line10.ts";
@@ -119,7 +124,13 @@ function assertK1PoolReturn(
   context: MefBuildContext,
 ) {
   const activities = input.activities ?? [];
-  if (!linkedK1Activities(context).length) return;
+  const propertySources = scheduleEInputSchema.parse(
+    context.pending?.schedule_e ?? {},
+  ).schedule_es.flatMap((item) => {
+    const source = reconcileCurrentPropertySource(item);
+    return source ? [source] : [];
+  });
+  if (!linkedK1Activities(context).length && !propertySources.length) return;
   assertLinkedActivities(activities, context);
   assertLinkedSales(input, context);
   const agi = agiInputSchema.parse(context.pending?.agi_aggregator ?? {});
@@ -191,10 +202,21 @@ function assertK1PoolReturn(
     }
     assertCurrentK1Qbi(qbi as Record<string, unknown>, context.pending);
   }
+  if (propertySources.length) {
+    const qbi = context.pending?.form8995;
+    if (!qbi || typeof qbi !== "object" || Array.isArray(qbi)) {
+      throw new Error("Current property source requires actual mandatory8995");
+    }
+    assertCurrentPropertyQbi(qbi as Record<string, unknown>, context.pending);
+  }
   const gross = sourceE.schedule_es.reduce((total, row) => {
     const net = computePropertyNet(row);
     return total +
-      ((row.activity_type === "A" || row.activity_type === "B")
+      (row.current_property_source &&
+          currentPropertyPassiveAmounts(row.current_property_source)
+              .recharacterized > 0
+        ? net
+        : (row.activity_type === "A" || row.activity_type === "B")
         ? Math.max(0, net)
         : net);
   }, 0) +
@@ -333,7 +355,10 @@ function linkedActivities(context: MefBuildContext): Array<{
   }
   const properties = scheduleE.schedule_es.filter((item) =>
     (item.activity_type === "A" || item.activity_type === "B") &&
-    (computePropertyNet(item) !== 0 ||
+    ((item.current_property_source
+      ? currentPropertyPassiveAmounts(item.current_property_source)
+        .passiveOperating !== 0
+      : computePropertyNet(item) !== 0) ||
       (item.prior_unallowed_passive_operating ?? 0) > 0 ||
       (item.prior_unallowed_passive_4797_part1 ?? 0) > 0 ||
       (item.prior_unallowed_passive_4797_part2 ?? 0) > 0)
@@ -343,7 +368,10 @@ function linkedActivities(context: MefBuildContext): Array<{
     activity_type: item.activity_type as "A" | "B",
     property_type: item.property_type,
     reporting_source: "schedule_e" as const,
-    current_net: computePropertyNet(item),
+    current_net: item.current_property_source
+      ? currentPropertyPassiveAmounts(item.current_property_source)
+        .passiveOperating
+      : computePropertyNet(item),
     prior_unallowed_operating: item.prior_unallowed_passive_operating ?? 0,
     prior_year_8582_source: item.prior_year_8582_source,
     first_year_activity_source: item.first_year_activity_source,
@@ -502,12 +530,26 @@ function assertLinkedSales(
     retained: boolean | undefined,
   ) => JSON.stringify([activityId, activityName, part, gain, retained ?? null]);
   const remaining = new Map<string, number>();
+  const propertySources = scheduleEInputSchema.parse(
+    context.pending.schedule_e ?? {},
+  ).schedule_es.flatMap((item) =>
+    item.current_property_source ? [item.current_property_source] : []
+  );
+  let expectedCount = 0;
   for (const sale of sales) {
+    const source = propertySources.find((s) =>
+        s.activity_id === sale.activity_id
+      ),
+      passiveGain = source
+        ? currentPropertyPassiveAmounts(source).passiveGain
+        : passiveSaleGain(sale);
+    if (passiveGain === 0) continue;
+    expectedCount++;
     const id = key(
       sale.activity_id,
       sale.activity_name,
       sale.part,
-      passiveSaleGain(sale),
+      passiveGain,
       sale.entire_activity_interest_disposed,
     );
     remaining.set(id, (remaining.get(id) ?? 0) + 1);
@@ -525,7 +567,7 @@ function assertLinkedSales(
     else remaining.set(id, -1);
   }
   if (
-    sales.length !== actual.length ||
+    expectedCount !== actual.length ||
     [...remaining.values()].some((count) => count !== 0)
   ) {
     throw new Error(

@@ -386,9 +386,10 @@ export const form8582Pdf: PdfFormDescriptor = {
     return {
       ...projectWorksheet(xml),
       pdf_current_joint_ordinary: allPending.general?.filing_status === "mfj" &&
-        input.activities?.some((row) =>
-          row.reporting_form === "k1_4797_line10"
-        ),
+        (allPending.form4797?.current_property_sources !== undefined ||
+          input.activities?.some((row) =>
+            row.reporting_form === "k1_4797_line10"
+          )),
     };
   },
   fields,

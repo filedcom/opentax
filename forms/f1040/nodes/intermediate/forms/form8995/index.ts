@@ -1,3 +1,9 @@
+import {
+  currentPropertyAmounts,
+  currentPropertyQbiLines,
+  currentPropertyQbiRows,
+  currentPropertySourceSchema,
+} from "../../../inputs/schedule_e/current-property-source.ts";
 import { currentPassiveLine10SourceSchema } from "../../../inputs/k1_partnership/box11_line10.ts";
 import { currentFarmRentalQbiSourceSchema } from "../../../inputs/f4835/qbi-source.ts";
 import { k1PassiveIncomeSourceSchema } from "../../../inputs/k1_passive_source.ts";
@@ -116,6 +122,8 @@ export const inputSchema = z.object({
   current_passive_k1_income_sources: z.array(
     z.union([k1PassiveIncomeSourceSchema, currentPassiveLine10SourceSchema]),
   ).min(1)
+    .optional(),
+  current_passive_property_sources: z.array(currentPropertySourceSchema).min(1)
     .optional(),
   current_k1_qbi_sources: z.array(currentK1QbiSourceSchema).min(1).optional(),
   owned_s_corp_loss_source: z.unknown().optional(),
@@ -1626,12 +1634,67 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
     const mixedLines = mixedScheduleCFLines(input, cfg);
     const multipleLines = ownedSCorp ?? ownedLines ?? mixedLines ??
       multipleScheduleCLines(input, cfg);
-    if (netQbi(input) < 0 && multipleLines === undefined) {
+    if (
+      netQbi(input) < 0 && multipleLines === undefined &&
+      input.current_passive_property_sources === undefined
+    ) {
       throw new Error(
         "Form 8995 net QBI loss needs a sourced carryforward filing route",
       );
     }
 
+    const currentPropertyLines =
+      input.current_passive_property_sources === undefined
+        ? undefined
+        : (() => {
+          if (input.agi === undefined) return undefined;
+          const owners = [
+            input.taxpayer_ssn,
+            ...(input.filing_status === FilingStatus.MFJ
+              ? [input.spouse_ssn]
+              : []),
+          ].filter((v) => typeof v === "string").map((v) =>
+            v!.replace(/\D/g, "")
+          );
+          if (
+            input.current_passive_property_sources.some((s) =>
+              !owners.includes(s.recipient_tin)
+            ) || (input.current_passive_farm_qbi_sources ?? []).some((s) =>
+              !owners.includes(s.recipient_tin)
+            )
+          ) {
+            throw new Error(
+              "Current property/farm source belongs to another return owner",
+            );
+          }
+          const raw = input.current_passive_property_sources.reduce((n, s) => {
+            const a = currentPropertyAmounts(s);
+            return n + a.receipts - a.taxes + a.gain;
+          }, 0);
+          if (
+            sumField(input.qbi) !== raw ||
+            input.current_k1_qbi_sources !== undefined ||
+            sumField(input.qbi_from_schedule_c) !== 0 ||
+            sumField(input.qbi_from_schedule_f) !== 0 ||
+            sumField(input.sstb_qbi) !== 0 ||
+            sumField(input.line6_sec199a_dividends) !== 0 ||
+            (input.qbi_loss_carryforward ?? 0) !== 0 ||
+            (input.reit_loss_carryforward ?? 0) !== 0 ||
+            qbiCapitalTotal(input) !== 0 ||
+            sumField(input.se_tax_deduction) !== 0 ||
+            sumField(input.se_health_insurance_deduction) !== 0 ||
+            sumField(input.retirement_plan_deduction) !== 0
+          ) {
+            throw new Error(
+              "Current property QBI must reconcile complete actual source components",
+            );
+          }
+          return currentPropertyQbiLines(
+            input.current_passive_property_sources,
+            input.current_passive_farm_qbi_sources ?? [],
+            taxableIncome ?? 0,
+          );
+        })();
     const currentK1Lines = input.current_k1_qbi_sources === undefined
       ? undefined
       : (() => {
@@ -1664,7 +1727,8 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
           input.current_passive_k1_income_sources,
         );
       })();
-    const simplifiedLines = currentK1Lines ?? ownedSCorp ?? ownedLines ??
+    const simplifiedLines = currentPropertyLines ?? currentK1Lines ??
+      ownedSCorp ?? ownedLines ??
       mixedLines ??
       (input.schedule_f_qbi_businesses !== undefined
         ? oneScheduleFLines(input, cfg)
@@ -1679,7 +1743,7 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       : simplifiedLines.line15;
     if (
       deduction <= 0 && multipleLines === undefined &&
-      currentK1Lines === undefined &&
+      currentK1Lines === undefined && currentPropertyLines === undefined &&
       !(simplifiedLines && "line1_qbi" in simplifiedLines &&
         typeof simplifiedLines.line1_qbi === "number" &&
         simplifiedLines.line1_qbi > 0)
@@ -1712,13 +1776,29 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
     return {
       outputs,
       ...((currentK1Lines ?? ownedSCorp ?? ownedLines)?.line16 ||
+          (currentPropertyLines !== undefined) ||
           (currentK1Lines && input.current_passive_farm_qbi_sources?.length)
         ? {
           carryforwards: {
-            ...((currentK1Lines ?? ownedSCorp ?? ownedLines)!.line16
+            ...(currentPropertyLines
+              ? Object.fromEntries(
+                currentPropertyQbiRows(
+                  input.current_passive_property_sources!,
+                  input.current_passive_farm_qbi_sources ?? [],
+                ).filter((r) => r.suspended_loss > 0).map(
+                  (r) => [
+                    `qualified_passive_loss_199a:${r.tin.value}:${r.activity_id}`,
+                    r.suspended_loss,
+                  ],
+                ),
+              )
+              : {}),
+            ...((currentPropertyLines ?? currentK1Lines ?? ownedSCorp ??
+                ownedLines)!.line16
               ? {
                 qbi_loss_carryforward:
-                  (currentK1Lines ?? ownedSCorp ?? ownedLines)!.line16,
+                  (currentPropertyLines ?? currentK1Lines ?? ownedSCorp ??
+                    ownedLines)!.line16,
               }
               : {}),
             ...(currentK1Lines

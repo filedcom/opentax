@@ -1,3 +1,4 @@
+import { assertCurrentPassivePropertyReturn } from "../../current_passive_property_source.ts";
 import { assertCurrentPassiveLine10Return } from "../../current_passive_line10_source.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
@@ -122,6 +123,25 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     ...(n === 45 ? { printZero: true } : {}),
   })),
   ...Array.from({ length: 3 }, (_, index): PdfFieldEntry[] => {
+    const row = index + 2, first = 48 + index * 7;
+    return [
+      "description",
+      "acquired",
+      "sold",
+      "price",
+      "depreciation",
+      "basis",
+      "gain",
+    ].map((name, j) => ({
+      kind: "text",
+      domainKey: `pdf_current_sale_${row}_${name}`,
+      pdfField: `topmostSubform[0].Page1[0].TableLine10[0].Row${row}[0].f1_${
+        first + j
+      }[0]`,
+      ...(name === "depreciation" ? { printZero: true } : {}),
+    }));
+  }).flat(),
+  ...Array.from({ length: 3 }, (_, index): PdfFieldEntry[] => {
     const row = index + 2;
     const first = 48 + index * 7;
     return [
@@ -235,6 +255,7 @@ export const form4797Pdf: PdfFormDescriptor = {
     },
   ],
   projectFields(fields, allPending) {
+    assertCurrentPassivePropertyReturn(fields, allPending);
     assertCurrentPassiveLine10Return(fields, allPending);
     if (
       typeof fields.ordinary_gain_form4684 === "number" &&
@@ -459,6 +480,35 @@ export const form4797Pdf: PdfFormDescriptor = {
         pdf_line17: gain,
         ordinary_gain: gain,
       };
+    }
+    if (fields.current_property_sources !== undefined) {
+      if (passiveSales.length > 4) {
+        throw new Error(
+          "Current property4797 needs an additional source column copy beyond four sales",
+        );
+      }
+      const projected: Record<string, unknown> = {
+        pdf_current_joint_ordinary: allPending.general?.filing_status === "mfj",
+        pdf_line17: passiveSales.reduce((n, s) => n + passiveSaleGain(s), 0),
+        ordinary_gain: passiveSales.reduce((n, s) => n + passiveSaleGain(s), 0),
+      };
+      const date = (iso: string) => {
+        const [y, m, d] = iso.split("-");
+        return `${m}/${d}/${y}`;
+      };
+      passiveSales.forEach((sale, i) => {
+        const prefix = i === 0 ? "pdf_sale" : `pdf_current_sale_${i + 1}`;
+        Object.assign(projected, {
+          [`${prefix}_description`]: sale.property_description.slice(0, 20),
+          [`${prefix}_acquired`]: date(sale.acquired_on),
+          [`${prefix}_sold`]: date(sale.sold_on),
+          [`${prefix}_price`]: sale.gross_sales_price,
+          [`${prefix}_depreciation`]: 0,
+          [`${prefix}_basis`]: sale.cost_or_other_basis,
+          [`${prefix}_gain`]: passiveSaleGain(sale),
+        });
+      });
+      return projected;
     }
     const firstYearRetainedPartII = scheduleEInputSchema.safeParse(
       allPending.schedule_e ?? {},
