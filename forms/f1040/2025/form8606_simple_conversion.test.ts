@@ -132,6 +132,9 @@ Deno.test("SIMPLE first-employer-deposit clock, owner, plan, account and substit
         origin(r).employer_deposits[0].account_number = "OTHER";
       },
       (r: any) => {
+        origin(r).employer_deposits[1].deposited_on = "2025-04-09";
+      },
+      (r: any) => {
         issued(r).originating_account_type = undefined;
       },
       (r: any) => {
@@ -186,6 +189,19 @@ Deno.test("SIMPLE first-employer-deposit clock, owner, plan, account and substit
     fair_market_value: 0,
   });
   assertThrows(() => reviewedRothOwnerInventory(other));
+  // The identical historical account under this employer does mature the
+  // newer account's clock, without borrowing another employer's history.
+  const sameEmployer = structuredClone(other);
+  const older = sameEmployer.current_conversion!.inventory.simple_origins![1];
+  older.employer_ein = origin(sameEmployer).employer_ein;
+  older.plan_document.employer_ein = older.employer_ein;
+  older.employer_deposits[0].employer_ein = older.employer_ein;
+  const settled = reviewedRothOwnerInventory(sameEmployer);
+  assertEquals(
+    settled.review.current_conversion!.accounts[0].transfers[1].issued_form1099r
+      .distributed_on,
+    "2025-04-10",
+  );
   const prepared = await f1040_2025.prepareReturn(
     f1040_2025.executeReturn(source.inputs).pending,
     source.filer,

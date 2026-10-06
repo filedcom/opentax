@@ -302,6 +302,7 @@ export function reviewedCurrentRothConversion(
     string,
     NonNullable<typeof review.inventory.simple_origins>[number]
   >();
+  const firstDepositByEmployer = new Map<string, string>();
   for (const origin of review.inventory.simple_origins ?? []) {
     const account = key(origin);
     if (
@@ -319,7 +320,12 @@ export function reviewedCurrentRothConversion(
         key(deposit) !== account ||
         deposit.deposited_on < origin.plan_document.effective_on ||
         deposit.deposited_on < origin.account_opened_on ||
-        deposit.deposited_on > "2025-12-31"
+        deposit.deposited_on > "2025-12-31" ||
+        (deposit.deposited_on.startsWith("2025-") && (
+          review.inventory.no_current_traditional_contributions ||
+          review.annual_traditional_activity
+            ?.no_employer_sep_simple_or_returned_excess_contributions
+        ))
       )
     ) {
       throw new Error(
@@ -327,6 +333,12 @@ export function reviewedCurrentRothConversion(
       );
     }
     simple.set(account, origin);
+    for (const deposit of origin.employer_deposits) {
+      const first = firstDepositByEmployer.get(origin.employer_ein);
+      if (!first || deposit.deposited_on < first) {
+        firstDepositByEmployer.set(origin.employer_ein, deposit.deposited_on);
+      }
+    }
   }
   const statementKeys = review.year_end_statements.map(key);
   if (
@@ -375,11 +387,10 @@ export function reviewedCurrentRothConversion(
         );
       }
       if (simpleOrigin) {
-        const first = simpleOrigin.employer_deposits.reduce(
-          (earliest, deposit) =>
-            deposit.deposited_on < earliest ? deposit.deposited_on : earliest,
-          simpleOrigin.employer_deposits[0].deposited_on,
-        );
+        // First participation belongs to this owner/employer, across its
+        // separately retained accounts and plans; opening another account
+        // does not restart the employer's two-year period.
+        const first = firstDepositByEmployer.get(simpleOrigin.employer_ein)!;
         const anniversary = `${Number(first.slice(0, 4)) + 2}${first.slice(4)}`;
         if (i.distributed_on < anniversary) {
           throw new Error(
