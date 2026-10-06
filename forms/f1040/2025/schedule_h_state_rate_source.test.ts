@@ -187,6 +187,858 @@ function changeSourceQuarterWages(raw: any, first: number, fourth: number) {
   unemployment.credit_reduction_wages[0].taxable_futa_wages = first + 4_000;
 }
 
+function mixedFamilyStateSource(stateCoveredChild: boolean) {
+  const raw: any = source(false);
+  raw.family_employer_ssn = "111223333";
+  raw.federal_income_tax_withheld = 250;
+  const unemployment = raw.federal_unemployment;
+  const child = {
+    employee_id: "child-employee-1",
+    employee_ssn: "400001041",
+    relationship: "child",
+    relationship_source_reference: "family-relationship-record",
+    birth_date: stateCoveredChild ? "2005-01-01" : "2008-06-15",
+    birth_date_source_reference: stateCoveredChild
+      ? "age20-reviewed-birth-record"
+      : "age17-reviewed-birth-record",
+    payroll_source_reference: "2025-child-payroll-ledger",
+    ordinary_cash_only: true,
+    annual_cash_wages: 5_000,
+    quarterly_cash_wages: [1_250, 1_250, 1_250, 1_250],
+    federal_withholding_agreement: {
+      w4_source_reference: "2025-child-form-w4",
+      employee_requested_and_employer_agreed: true,
+    },
+    w2: {
+      source_reference: "2025-child-form-w2",
+      employee_ssn: "400001041",
+      box1_wages: 5_000,
+      box2_federal_income_tax_withheld: 250,
+      box3_social_security_wages: 0,
+      box5_medicare_wages: 0,
+    },
+  };
+  unemployment.employee_wages.push(child);
+  const review = unemployment.state_payroll_review;
+  const childPayments = ["2025-03-31", "2025-06-30", "2025-09-30", "2025-12-31"]
+    .map((date, index) => ({
+      employee_id: child.employee_id,
+      paid_date: date,
+      state: "CA",
+      cash_wages: 1_250,
+      payment_reference: `child-CA-Q${index + 1}-pay`,
+      ...(stateCoveredChild
+        ? {
+          family_state_coverage_source_reference: `CA-UI-covered-age20-Q${
+            index + 1
+          }`,
+        }
+        : { coverage_source_reference: `CA-UI-excluded-age17-Q${index + 1}` }),
+    }));
+  if (stateCoveredChild) {
+    review.wage_payments.push(...childPayments);
+    unemployment.state_rows[0].taxable_state_wages += 1_250;
+    unemployment.state_rows[1].taxable_state_wages += 3_750;
+    unemployment.state_rows[0].contributions_paid_by_due_date += 37.5;
+    unemployment.state_rows[1].contributions_paid_by_due_date += 187.5;
+    review.contribution_payments.push(
+      {
+        rate_notice_source_reference: "CA-rate-notice-Q1",
+        paid_date: "2025-04-15",
+        amount: 37.5,
+        payment_reference: "child-CA-Q1-UI-receipt",
+      },
+      {
+        rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+        paid_date: "2026-01-15",
+        amount: 187.5,
+        payment_reference: "child-CA-Q2-Q4-UI-receipt",
+      },
+    );
+  } else review.excluded_state_wage_payments = childPayments;
+  return raw;
+}
+
+function sectionAReviewedOhioSource() {
+  const raw: any = source(false);
+  const previous = raw.federal_unemployment;
+  const payments = previous.state_payroll_review.wage_payments.map(
+    (payment: any) => ({ ...payment, state: "OH" }),
+  );
+  raw.federal_unemployment = {
+    paid_only_one_state: true,
+    all_contributions_paid_on_time: true,
+    all_futa_wages_state_taxable: true,
+    state: "OH",
+    contributions_paid: 240,
+    taxable_wages: 7_000,
+    all_household_employees_included: true,
+    prior_year_quarter_threshold_met: false,
+    employee_wages: previous.employee_wages,
+    state_review_rows: [{
+      state: "OH",
+      taxable_state_wages: 8_000,
+      experience_rate: .03,
+      rate_period_from: "2025-01-01",
+      rate_period_to: "2025-12-31",
+      contributions_paid_by_due_date: 240,
+    }],
+    state_payroll_review: {
+      all_household_cash_payments_included: true,
+      rate_notices: [{
+        state: "OH",
+        period_from: "2025-01-01",
+        period_to: "2025-12-31",
+        experience_rate: .03,
+        annual_taxable_wage_base: 9_000,
+        source_reference: "OH-2025-household-UI-notice",
+      }],
+      wage_payments: payments,
+      contribution_payments: [{
+        rate_notice_source_reference: "OH-2025-household-UI-notice",
+        paid_date: "2026-01-15",
+        amount: 240,
+        payment_reference: "OH-2025-household-UI-receipt",
+      }],
+    },
+  };
+  return raw;
+}
+
+const longOrdinaryPeriod = (
+  from: string,
+  to: string,
+  id: string,
+  allocation = id,
+) => ({
+  kind: "over_31_days",
+  period_from: from,
+  period_to: to,
+  period_source_reference: `${id}-ordinary-payroll-schedule`,
+  service_time_source_reference: `${allocation}-allocated-service-ledger`,
+});
+const shortBirthdayPeriod = (
+  id: string,
+  excludedHours: number,
+  coveredHours: number,
+) => ({
+  kind: "within_31_days",
+  period_from: "2025-06-01",
+  period_to: "2025-06-30",
+  period_source_reference: `${id}-ordinary-June-payroll`,
+  service_time_source_reference: `${id}-June-service-hours`,
+  excluded_service_hours: excludedHours,
+  covered_service_hours: coveredHours,
+});
+
+Deno.test("Schedule H reviewed Ohio state receipts retain the correct Section A filing path", async () => {
+  const raw = sectionAReviewedOhioSource();
+  const amounts = computeScheduleHAmounts(inputSchema.parse(raw), 2025);
+  assertEquals(amounts.futaTax, 42);
+  assertEquals(amounts.totalTax, 1_266);
+  const { result, bundle } = await verifyAdditionalPacket(
+    raw,
+    "reviewed-oh-section-a",
+    1_266,
+    6,
+  );
+  assertEquals(bundle.xml.includes("<IRS1040ScheduleH"), true);
+  const filer = extractFilerIdentity(result.pending.f1040)!;
+  const pending = buildPending(result.pending);
+  const rejected = async (edit: (row: any) => void) => {
+    const altered: any = structuredClone(raw);
+    edit(altered.federal_unemployment);
+    assertThrows(() =>
+      computeScheduleHAmounts(inputSchema.parse(altered), 2025)
+    );
+    assertThrows(() => scheduleH.build(altered, { filer, pending }));
+    await assertRejects(() =>
+      buildPdfBytes(
+        { ...bundle.pending, schedule_h: altered },
+        filer,
+        ".pdf-cache",
+      )
+    );
+    assertEquals(
+      f1040_2025.executeReturn({
+        ...structuredClone(base.inputs),
+        schedule_h: altered,
+      }).diagnostics.some((row) => row.nodeType === "schedule_h"),
+      true,
+    );
+  };
+  await rejected((row) => {
+    row.contributions_paid = 239;
+  });
+  await rejected((row) => {
+    row.state_review_rows[0].taxable_state_wages = 7_999;
+  });
+  await rejected((row) => {
+    row.state_payroll_review.contribution_payments[0].amount = 239;
+  });
+  await rejected((row) => {
+    row.state_payroll_review.rate_notices[0].state = "CA";
+  });
+  await rejected((row) => {
+    delete row.state_payroll_review;
+  });
+});
+
+function turning18MixedStateSource() {
+  const raw: any = mixedFamilyStateSource(false);
+  const unemployment = raw.federal_unemployment;
+  const child = unemployment.employee_wages[1];
+  child.birth_date = "2007-06-15";
+  child.birth_date_source_reference = "reviewed-turning18-birth-record";
+  const review = unemployment.state_payroll_review;
+  review.excluded_state_wage_payments = [
+    {
+      employee_id: child.employee_id,
+      paid_date: "2025-03-31",
+      state: "CA",
+      cash_wages: 1_250,
+      payment_reference: "child-CA-Q1-pay",
+      coverage_source_reference: "CA-child-before18-Q1",
+      service_from: "2025-01-01",
+      service_to: "2025-03-31",
+      ordinary_pay_period: longOrdinaryPeriod(
+        "2025-01-01",
+        "2025-03-31",
+        "child18-Q1",
+      ),
+    },
+    {
+      employee_id: child.employee_id,
+      paid_date: "2025-06-30",
+      state: "CA",
+      cash_wages: 750,
+      payment_reference: "child-CA-Q2-before18-pay",
+      coverage_source_reference: "CA-child-before18-Q2",
+      service_from: "2025-04-01",
+      service_to: "2025-06-14",
+      ordinary_pay_period: longOrdinaryPeriod(
+        "2025-04-01",
+        "2025-06-30",
+        "child18-Q2",
+        "child18-Q2-before",
+      ),
+    },
+  ];
+  review.wage_payments.push(
+    {
+      employee_id: child.employee_id,
+      paid_date: "2025-06-30",
+      state: "CA",
+      cash_wages: 500,
+      payment_reference: "child-CA-Q2-after18-pay",
+      family_state_coverage_source_reference: "CA-child-after18-Q2",
+      service_from: "2025-06-15",
+      service_to: "2025-06-30",
+      ordinary_pay_period: longOrdinaryPeriod(
+        "2025-04-01",
+        "2025-06-30",
+        "child18-Q2",
+        "child18-Q2-after",
+      ),
+    },
+    {
+      employee_id: child.employee_id,
+      paid_date: "2025-09-30",
+      state: "CA",
+      cash_wages: 1_250,
+      payment_reference: "child-CA-Q3-pay",
+      family_state_coverage_source_reference: "CA-child-after18-Q3",
+      service_from: "2025-07-01",
+      service_to: "2025-09-30",
+      ordinary_pay_period: longOrdinaryPeriod(
+        "2025-07-01",
+        "2025-09-30",
+        "child18-Q3",
+      ),
+    },
+    {
+      employee_id: child.employee_id,
+      paid_date: "2025-12-31",
+      state: "CA",
+      cash_wages: 1_250,
+      payment_reference: "child-CA-Q4-pay",
+      family_state_coverage_source_reference: "CA-child-after18-Q4",
+      service_from: "2025-10-01",
+      service_to: "2025-12-31",
+      ordinary_pay_period: longOrdinaryPeriod(
+        "2025-10-01",
+        "2025-12-31",
+        "child18-Q4",
+      ),
+    },
+  );
+  unemployment.state_rows[1].taxable_state_wages = 7_000;
+  unemployment.state_rows[1].contributions_paid_by_due_date = 350;
+  review.contribution_payments.push({
+    rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+    paid_date: "2026-01-15",
+    amount: 150,
+    payment_reference: "child-CA-after18-UI-receipt",
+  });
+  return raw;
+}
+
+function turning18ShortPeriodSource() {
+  const raw: any = turning18MixedStateSource();
+  const unemployment = raw.federal_unemployment;
+  const review = unemployment.state_payroll_review;
+  review.excluded_state_wage_payments = review.excluded_state_wage_payments.filter(
+    (payment: any) => payment.payment_reference !== "child-CA-Q2-before18-pay",
+  );
+  const june = review.wage_payments.find((payment: any) =>
+    payment.payment_reference === "child-CA-Q2-after18-pay"
+  );
+  june.cash_wages = 1_250;
+  june.service_from = "2025-06-01";
+  june.ordinary_pay_period = shortBirthdayPeriod("child18", 40, 60);
+  june.family_state_coverage_source_reference = "CA-child-June-majority-covered";
+  unemployment.state_rows[1].taxable_state_wages = 7_750;
+  unemployment.state_rows[1].contributions_paid_by_due_date = 387.5;
+  review.contribution_payments.find((payment: any) =>
+    payment.payment_reference === "child-CA-after18-UI-receipt"
+  ).amount = 187.5;
+  return raw;
+}
+
+function child20PartialStateSource() {
+  const raw: any = mixedFamilyStateSource(true);
+  const unemployment = raw.federal_unemployment;
+  const review = unemployment.state_payroll_review;
+  unemployment.all_contributions_paid_on_time = false;
+  unemployment.state_rows[1].contributions_paid_by_due_date = 287.5;
+  review.contribution_payments = review.contribution_payments.filter((
+    payment: any,
+  ) =>
+    payment.payment_reference !== "CA-Q2-Q4-SUTA-receipt" &&
+    payment.payment_reference !== "child-CA-Q2-Q4-UI-receipt"
+  );
+  review.quarterly_assessments = [
+    {
+      rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+      quarter: 2,
+      taxable_state_wages: 3_250,
+      assessed_contribution: 162.5,
+      source_reference: "CA-Q2-DE9-child20-assessment",
+    },
+    {
+      rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+      quarter: 3,
+      taxable_state_wages: 3_250,
+      assessed_contribution: 162.5,
+      source_reference: "CA-Q3-DE9-child20-assessment",
+    },
+    {
+      rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+      quarter: 4,
+      taxable_state_wages: 1_250,
+      assessed_contribution: 62.5,
+      source_reference: "CA-Q4-DE9-child20-assessment",
+    },
+  ];
+  review.contribution_payments.push(
+    {
+      rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+      assessment_quarter: 2,
+      paid_date: "2025-07-15",
+      amount: 100,
+      payment_reference: "CA-Q2-SUTA-receipt",
+    },
+    {
+      rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+      assessment_quarter: 2,
+      paid_date: "2025-07-15",
+      amount: 62.5,
+      payment_reference: "child20-CA-Q2-UI-receipt",
+    },
+    {
+      rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+      assessment_quarter: 3,
+      paid_date: "2025-10-15",
+      amount: 62.5,
+      payment_reference: "child20-CA-Q3-UI-receipt",
+    },
+    {
+      rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+      assessment_quarter: 4,
+      paid_date: "2026-01-15",
+      amount: 62.5,
+      payment_reference: "child20-CA-Q4-UI-receipt",
+    },
+  );
+  review.unpaid_contribution_review = {
+    filing_review_date: "2026-04-15",
+    notice_balances: [
+      {
+        rate_notice_source_reference: "CA-rate-notice-Q1",
+        state: "CA",
+        statement_as_of_date: "2026-04-15",
+        outstanding_balance: 0,
+        balance_record_reference: "CA-Q1-child20-account",
+      },
+      {
+        rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+        state: "CA",
+        statement_as_of_date: "2026-04-15",
+        outstanding_balance: 100,
+        balance_record_reference: "CA-Q2-Q4-child20-account",
+      },
+      {
+        rate_notice_source_reference: "TX-rate-notice-2025",
+        state: "TX",
+        statement_as_of_date: "2026-04-15",
+        outstanding_balance: 0,
+        balance_record_reference: "TX-Q4-child20-account",
+      },
+    ],
+  };
+  return raw;
+}
+
+function turning21MixedStateSource() {
+  const raw: any = mixedFamilyStateSource(true);
+  const unemployment = raw.federal_unemployment;
+  const child = unemployment.employee_wages[1];
+  child.birth_date = "2004-06-15";
+  child.birth_date_source_reference = "reviewed-2004-birth-record";
+  child.annual_cash_wages = child.w2.box1_wages = 11_000;
+  child.quarterly_cash_wages = [1_500, 0, 2_500, 7_000];
+  child.w2.box3_social_security_wages = child.w2.box5_medicare_wages = 9_500;
+  child.age_21_transition_review = {
+    service_payment_ledger_source_reference:
+      "2025-child-dated-service-payment-ledger",
+    wage_payments: [
+      {
+        payment_reference: "child-payment-one",
+        service_from: "2025-01-01",
+        service_to: "2025-03-31",
+        paid_date: "2025-03-31",
+        cash_wages: 1_500,
+        ordinary_pay_period: longOrdinaryPeriod(
+          "2025-01-01",
+          "2025-03-31",
+          "child21-Q1",
+        ),
+      },
+      {
+        payment_reference: "child-birthday-June-payment",
+        service_from: "2025-06-01",
+        service_to: "2025-06-30",
+        paid_date: "2025-07-01",
+        cash_wages: 2_500,
+        ordinary_pay_period: shortBirthdayPeriod("child21", 40, 40),
+      },
+      {
+        payment_reference: "child-payment-four",
+        service_from: "2025-07-01",
+        service_to: "2025-12-31",
+        paid_date: "2025-12-31",
+        cash_wages: 7_000,
+        ordinary_pay_period: longOrdinaryPeriod(
+          "2025-07-01",
+          "2025-12-31",
+          "child21-second-half",
+        ),
+      },
+    ],
+  };
+  raw.ss_wages = raw.medicare_wages = 17_500;
+  unemployment.taxable_futa_wages = 14_000;
+  unemployment.all_futa_wages_state_taxable = false;
+  unemployment.prior_year_eligible_quarter_source_reference =
+    "2024-eligible-quarter-payment-ledger";
+  unemployment.prior_year_eligible_quarter_cash_wages = [100, 250, 300, 0];
+  unemployment.credit_reduction_wages[0].taxable_futa_wages = 11_500;
+  unemployment.state_rows[0].taxable_state_wages = 3_500;
+  unemployment.state_rows[0].contributions_paid_by_due_date = 105;
+  unemployment.state_rows[1].taxable_state_wages = 9_500;
+  unemployment.state_rows[1].contributions_paid_by_due_date = 475;
+  const review = unemployment.state_payroll_review;
+  review.wage_payments = review.wage_payments.filter((payment: any) =>
+    payment.employee_id !== child.employee_id
+  );
+  for (const service of child.age_21_transition_review.wage_payments) {
+    review.wage_payments.push({
+      employee_id: child.employee_id,
+      paid_date: service.paid_date,
+      state: "CA",
+      cash_wages: service.cash_wages,
+      payment_reference: `CA-${service.payment_reference}`,
+      family_state_coverage_source_reference:
+        `CA-covered-${service.payment_reference}`,
+      service_payment_reference: service.payment_reference,
+      service_from: service.service_from,
+      service_to: service.service_to,
+      ...(service.ordinary_pay_period
+        ? { ordinary_pay_period: service.ordinary_pay_period }
+        : {}),
+    });
+  }
+  review.contribution_payments = review.contribution_payments.filter((
+    payment: any,
+  ) => !payment.payment_reference.startsWith("child-CA-"));
+  review.contribution_payments.push(
+    {
+      rate_notice_source_reference: "CA-rate-notice-Q1",
+      paid_date: "2025-04-15",
+      amount: 45,
+      payment_reference: "child21-CA-Q1-UI-receipt",
+    },
+    {
+      rate_notice_source_reference: "CA-rate-notice-Q2-Q4",
+      paid_date: "2026-01-15",
+      amount: 275,
+      payment_reference: "child21-CA-Q2-Q4-UI-receipt",
+    },
+  );
+  return raw;
+}
+
+function turning21HighPreBirthdaySource() {
+  const raw: any = turning21MixedStateSource();
+  const unemployment = raw.federal_unemployment;
+  const child = unemployment.employee_wages[1];
+  child.birth_date_source_reference =
+    "high-prebirthday-reviewed-2004-birth-record";
+  child.payroll_source_reference = "high-prebirthday-complete-cash-payroll";
+  child.quarterly_cash_wages = [7_000, 0, 2_000, 2_000];
+  child.w2.source_reference = "high-prebirthday-child-issued-w2";
+  child.w2.box3_social_security_wages = child.w2.box5_medicare_wages = 4_000;
+  child.age_21_transition_review.service_payment_ledger_source_reference =
+    "high-prebirthday-dated-service-payment-ledger";
+  const service = child.age_21_transition_review.wage_payments;
+  [7_000, 2_000, 2_000].forEach((wages, index) => {
+    service[index].cash_wages = wages;
+  });
+  raw.ss_wages = raw.medicare_wages = 12_000;
+  unemployment.taxable_futa_wages = 11_000;
+  unemployment.credit_reduction_wages[0].taxable_futa_wages = 6_000;
+  unemployment.state_rows[0].taxable_state_wages = 9_000;
+  unemployment.state_rows[0].contributions_paid_by_due_date = 270;
+  unemployment.state_rows[1].taxable_state_wages = 4_000;
+  unemployment.state_rows[1].contributions_paid_by_due_date = 200;
+  const review = unemployment.state_payroll_review;
+  const names = [
+    "CA-high-prebirthday-rate-Q1",
+    "CA-high-prebirthday-rate-Q2-Q4",
+  ];
+  review.rate_notices[0].source_reference = names[0];
+  review.rate_notices[1].source_reference = names[1];
+  review.contribution_payments.forEach((payment: any) => {
+    if (payment.rate_notice_source_reference === "CA-rate-notice-Q1") {
+      payment.rate_notice_source_reference = names[0];
+    }
+    if (payment.rate_notice_source_reference === "CA-rate-notice-Q2-Q4") {
+      payment.rate_notice_source_reference = names[1];
+    }
+    if (payment.payment_reference === "child21-CA-Q1-UI-receipt") {
+      payment.amount = 210;
+    }
+  });
+  review.contribution_payments = review.contribution_payments.filter(
+    (payment: any) =>
+      payment.payment_reference !== "child21-CA-Q2-Q4-UI-receipt",
+  );
+  review.wage_payments.filter((payment: any) =>
+    payment.employee_id === child.employee_id
+  )
+    .forEach((payment: any, index: number) => {
+      payment.cash_wages = service[index].cash_wages;
+      payment.family_state_coverage_source_reference =
+        `CA-high-prebirthday-covered-${index + 1}`;
+    });
+  return raw;
+}
+
+Deno.test("Schedule H CA mixed family coverage separates state wages and federal FUTA wages", async () => {
+  for (
+    const [id, covered] of [["mixed-ca-child17-state-excluded", false], [
+      "mixed-ca-child20-state-covered",
+      true,
+    ]] as const
+  ) {
+    const raw = mixedFamilyStateSource(covered);
+    const amounts = computeScheduleHAmounts(inputSchema.parse(raw), 2025);
+    assertEquals(amounts.totalTax, 1_588);
+    assertEquals(amounts.sectionB?.allowedCredit, 306);
+    assertEquals(amounts.futaTax, 114);
+    assertEquals(raw.federal_unemployment.taxable_futa_wages, 7_000);
+    assertEquals(
+      raw.federal_unemployment.state_rows[0].taxable_state_wages,
+      covered ? 3_250 : 2_000,
+    );
+    assertEquals(
+      raw.federal_unemployment.state_rows[1].taxable_state_wages,
+      covered ? 7_750 : 4_000,
+    );
+    await verifyAdditionalPacket(raw, id, 1_588);
+  }
+});
+
+Deno.test("Schedule H CA child turning 18 or 21 joins dated service to state and federal wage bases", async () => {
+  const turn18 = turning18MixedStateSource();
+  await verifyAdditionalPacket(turn18, "mixed-ca-child-turns18", 1_588);
+  const turn21 = turning21MixedStateSource();
+  const amounts = computeScheduleHAmounts(inputSchema.parse(turn21), 2025);
+  assertEquals(amounts.futaTax, 222);
+  assertEquals(amounts.totalTax, 3_150);
+  await verifyAdditionalPacket(turn21, "mixed-ca-child-turns21", 3_150);
+  const highPre = turning21HighPreBirthdaySource();
+  const highPreAmounts = computeScheduleHAmounts(
+    inputSchema.parse(highPre),
+    2025,
+  );
+  assertEquals(highPreAmounts.futaTax, 138);
+  assertEquals(highPreAmounts.totalTax, 2_224);
+  await verifyAdditionalPacket(
+    highPre,
+    "mixed-ca-child-turns21-high-prebirthday",
+    2_224,
+  );
+});
+
+Deno.test("Schedule H crossing ordinary pay period uses sourced half, covered-majority and excluded-majority service time", async () => {
+  for (
+    const [id, coveredHours, excludedHours, expectedTax, expectedFuta] of [
+      ["child21-period-exact-half", 40, 40, 3_150, 222],
+      ["child21-period-covered-majority", 60, 40, 3_150, 222],
+      ["child21-period-excluded-majority", 40, 60, 2_737, 192],
+    ] as const
+  ) {
+    const raw = turning21MixedStateSource();
+    const child = raw.federal_unemployment.employee_wages[1];
+    const period =
+      child.age_21_transition_review.wage_payments[1].ordinary_pay_period;
+    period.covered_service_hours = coveredHours;
+    period.excluded_service_hours = excludedHours;
+    period.service_time_source_reference = `${id}-June-service-hours`;
+    raw.federal_unemployment.state_payroll_review.wage_payments.find(
+      (payment: any) =>
+        payment.service_payment_reference === "child-birthday-June-payment",
+    ).ordinary_pay_period = structuredClone(period);
+    if (coveredHours < excludedHours) {
+      child.w2.box3_social_security_wages = 7_000;
+      child.w2.box5_medicare_wages = 7_000;
+      raw.ss_wages = raw.medicare_wages = 15_000;
+      raw.federal_unemployment.credit_reduction_wages[0].taxable_futa_wages =
+        9_000;
+    }
+    const amounts = computeScheduleHAmounts(inputSchema.parse(raw), 2025);
+    assertEquals(amounts.futaTax, expectedFuta);
+    assertEquals(amounts.totalTax, expectedTax);
+    await verifyAdditionalPacket(raw, id, expectedTax);
+  }
+});
+
+Deno.test("Schedule H California child turning 18 uses the actual June ordinary-period majority", async () => {
+  const raw = turning18ShortPeriodSource();
+  const amounts = computeScheduleHAmounts(inputSchema.parse(raw), 2025);
+  assertEquals(amounts.futaTax, 114);
+  assertEquals(amounts.totalTax, 1_588);
+  const { result, bundle } = await verifyAdditionalPacket(
+    raw, "child18-June-majority-covered", 1_588,
+  );
+  const filer = extractFilerIdentity(result.pending.f1040)!;
+  const pending = buildPending(result.pending);
+  const wrong = async (edit: (row: any) => void) => {
+    const altered: any = structuredClone(raw);
+    edit(altered.federal_unemployment);
+    assertThrows(() => computeScheduleHAmounts(inputSchema.parse(altered), 2025));
+    assertThrows(() => scheduleH.build(altered, { filer, pending }));
+    await assertRejects(() => buildPdfBytes(
+      { ...bundle.pending, schedule_h: altered }, filer, ".pdf-cache",
+    ));
+  };
+  await wrong((row) => {
+    row.state_payroll_review.wage_payments.find((p: any) =>
+      p.payment_reference === "child-CA-Q2-after18-pay"
+    ).ordinary_pay_period.covered_service_hours = 0;
+  });
+  await wrong((row) => {
+    row.state_payroll_review.wage_payments.find((p: any) =>
+      p.payment_reference === "child-CA-Q2-after18-pay"
+    ).ordinary_pay_period.period_from = "2025-05-01";
+  });
+  await wrong((row) => {
+    row.state_payroll_review.rate_notices[1].annual_taxable_wage_base = 10_000;
+  });
+});
+
+Deno.test("Schedule H CA covered child age 20 changes actual credit with adult state balance still unpaid", async () => {
+  const raw = child20PartialStateSource();
+  const amount = computeScheduleHAmounts(inputSchema.parse(raw), 2025);
+  assertEquals(amount.sectionB?.additionalCredit, 163);
+  assertEquals(amount.sectionB?.contributions, 440);
+  assertEquals(amount.sectionB?.maximumCredit, 378);
+  assertEquals(amount.sectionB?.allowedCredit, 306);
+  assertEquals(amount.futaTax, 114);
+  assertEquals(amount.totalTax, 1_588);
+  await verifyAdditionalPacket(raw, "mixed-ca-child20-partial-state", 1_588);
+});
+
+Deno.test("Schedule H mixed family state coverage rejects missing or contradictory relationship and wage sources", async () => {
+  const accepted = mixedFamilyStateSource(false);
+  const result = f1040_2025.executeReturn({
+    ...structuredClone(base.inputs),
+    schedule_h: accepted,
+  });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending),
+    filer = extractFilerIdentity(result.pending.f1040)!;
+  const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+  const mutations: Array<(raw: any) => void> = [
+    (raw) => {
+      raw.federal_unemployment.state_payroll_review.excluded_state_wage_payments
+        .pop();
+    },
+    (raw) => {
+      raw.federal_unemployment.state_payroll_review
+        .excluded_state_wage_payments[0].coverage_source_reference = "";
+    },
+    (raw) => {
+      raw.federal_unemployment.state_payroll_review
+        .excluded_state_wage_payments[0].employee_id = "household-adult";
+    },
+    (raw) => {
+      raw.federal_unemployment.state_payroll_review
+        .excluded_state_wage_payments[0].cash_wages = 1_251;
+    },
+    (raw) => {
+      raw.federal_unemployment.state_payroll_review
+        .excluded_state_wage_payments[0].payment_reference = "adult-CA-Q1-pay";
+    },
+    (raw) => {
+      raw.federal_unemployment.employee_wages[1].birth_date = "2007-06-15";
+    },
+    (raw) => {
+      raw.federal_unemployment.employee_wages[1].relationship = "unrelated";
+    },
+  ];
+  for (const mutate of mutations) {
+    const raw = structuredClone(accepted);
+    mutate(raw);
+    const publicResult = f1040_2025.executeReturn({
+      ...structuredClone(base.inputs),
+      schedule_h: raw,
+    });
+    assertEquals(
+      publicResult.diagnostics.some((d: any) => d.severity === "error"),
+      true,
+    );
+    assertThrows(() => scheduleH.build(raw, { filer, pending }));
+    await assertRejects(() =>
+      buildPdfBytes({ ...bundle.pending, schedule_h: raw }, filer, ".pdf-cache")
+    );
+  }
+});
+
+Deno.test("Schedule H CA family cash alone cannot satisfy federal FUTA quarter and dated transitions reject source conflicts", async () => {
+  const below: any = mixedFamilyStateSource(false);
+  const adult = below.federal_unemployment.employee_wages[0];
+  adult.annual_cash_wages = 3_200;
+  adult.quarterly_cash_wages = [800, 800, 800, 800];
+  adult.w2.box3_social_security_wages = adult.w2.box5_medicare_wages = 3_200;
+  below.ss_wages = below.medicare_wages = 3_200;
+  below.cash_wages_over_quarter_limit = false;
+  below.federal_unemployment.taxable_futa_wages = 3_200;
+  below.federal_unemployment.state_payroll_review.wage_payments.forEach((
+    payment: any,
+  ) => payment.cash_wages = 800);
+  below.federal_unemployment.state_rows[0].taxable_state_wages = 800;
+  below.federal_unemployment.state_rows[0].contributions_paid_by_due_date = 24;
+  below.federal_unemployment.state_rows[1].taxable_state_wages = 1_600;
+  below.federal_unemployment.state_rows[1].contributions_paid_by_due_date = 80;
+  below.federal_unemployment.state_rows[2].taxable_state_wages = 800;
+  below.federal_unemployment.state_rows[2].contributions_paid_by_due_date =
+    21.6;
+  below.federal_unemployment.credit_reduction_wages[0].taxable_futa_wages =
+    2_400;
+  [24, 80, 21.6].forEach((amount, index) =>
+    below.federal_unemployment.state_payroll_review.contribution_payments[index]
+      .amount = amount
+  );
+  assertThrows(
+    () => computeScheduleHAmounts(inputSchema.parse(below), 2025),
+    Error,
+    "Part II requires a true quarter-limit answer",
+  );
+  below.cash_wages_over_quarter_limit = true;
+  assertThrows(
+    () => computeScheduleHAmounts(inputSchema.parse(below), 2025),
+    Error,
+    "FUTA needs a $1,000 current- or prior-year quarter",
+  );
+
+  const mutations: Array<[any, (raw: any) => void]> = [
+    [turning18MixedStateSource(), (raw) => {
+      raw.federal_unemployment.state_payroll_review
+        .excluded_state_wage_payments[1].service_to = "2025-06-15";
+    }],
+    [turning18MixedStateSource(), (raw) => {
+      raw.federal_unemployment.state_payroll_review
+        .excluded_state_wage_payments[1].service_from = "2025-06-15";
+    }],
+    [turning18MixedStateSource(), (raw) => {
+      raw.federal_unemployment.state_payroll_review.wage_payments.find((
+        p: any,
+      ) => p.payment_reference === "child-CA-Q2-after18-pay").paid_date =
+        "2025-06-14";
+    }],
+    [turning21HighPreBirthdaySource(), (raw) => {
+      raw.federal_unemployment.state_payroll_review.wage_payments.find((
+        p: any,
+      ) => p.service_payment_reference === "child-birthday-June-payment")
+        .family_state_coverage_source_reference = "";
+    }],
+    [turning21HighPreBirthdaySource(), (raw) => {
+      raw.federal_unemployment.state_payroll_review.wage_payments.find((
+        p: any,
+      ) => p.service_payment_reference === "child-birthday-June-payment").cash_wages =
+        999;
+    }],
+    [turning21HighPreBirthdaySource(), (raw) => {
+      raw.federal_unemployment.state_payroll_review.wage_payments.find((
+        p: any,
+      ) => p.service_payment_reference === "child-birthday-June-payment").service_from =
+        "2025-06-15";
+    }],
+    [turning21HighPreBirthdaySource(), (raw) => {
+      raw.federal_unemployment.taxable_futa_wages = 7_000;
+    }],
+    [turning21HighPreBirthdaySource(), (raw) => {
+      raw.federal_unemployment.credit_reduction_wages[0].taxable_futa_wages =
+        10_000;
+    }],
+  ];
+  for (const [accepted, edit] of mutations) {
+    const result = f1040_2025.executeReturn({
+      ...structuredClone(base.inputs),
+      schedule_h: accepted,
+    });
+    assertEquals(result.diagnostics, []);
+    const pending = buildPending(result.pending),
+      filer = extractFilerIdentity(result.pending.f1040)!;
+    const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+    const bad = structuredClone(accepted);
+    edit(bad);
+    assertEquals(
+      f1040_2025.executeReturn({
+        ...structuredClone(base.inputs),
+        schedule_h: bad,
+      }).diagnostics.some((d: any) => d.severity === "error"),
+      true,
+    );
+    assertThrows(() => scheduleH.build(bad, { filer, pending }));
+    await assertRejects(() =>
+      buildPdfBytes({ ...bundle.pending, schedule_h: bad }, filer, ".pdf-cache")
+    );
+  }
+});
+
 async function verifyAdditionalPacket(
   raw: any,
   id: string,

@@ -25,6 +25,14 @@ const xsd = optionalEnv("SCHEDULE_H_TURN21_XSD_PATH") ?? new URL(
   import.meta.url,
 ).pathname;
 
+const period = (from: string, to: string, id: string, allocation: string) => ({
+  kind: "over_31_days",
+  period_from: from,
+  period_to: to,
+  period_source_reference: `${id}-ordinary-quarterly-payroll`,
+  service_time_source_reference: `${allocation}-dated-service-allocation`,
+});
+
 function source(prior = false) {
   const child = {
     employee_id: "child-2004",
@@ -47,6 +55,12 @@ function source(prior = false) {
           service_to: "2025-03-31",
           paid_date: "2025-03-31",
           cash_wages: 1_500,
+          ordinary_pay_period: period(
+            "2025-01-01",
+            "2025-03-31",
+            "Q1",
+            "Q1-child",
+          ),
         },
         {
           payment_reference: "child-payment-two",
@@ -54,6 +68,12 @@ function source(prior = false) {
           service_to: "2025-06-14",
           paid_date: "2025-07-01",
           cash_wages: 1_500,
+          ordinary_pay_period: period(
+            "2025-04-01",
+            "2025-06-30",
+            "Q2",
+            "Q2-before21",
+          ),
         },
         {
           payment_reference: "child-payment-three",
@@ -61,6 +81,12 @@ function source(prior = false) {
           service_to: "2025-06-30",
           paid_date: "2025-07-01",
           cash_wages: 1_000,
+          ordinary_pay_period: period(
+            "2025-04-01",
+            "2025-06-30",
+            "Q2",
+            "Q2-after21",
+          ),
         },
         {
           payment_reference: "child-payment-four",
@@ -68,6 +94,12 @@ function source(prior = false) {
           service_to: "2025-12-31",
           paid_date: "2025-12-31",
           cash_wages: 7_000,
+          ordinary_pay_period: period(
+            "2025-07-01",
+            "2025-12-31",
+            "Q3-Q4",
+            "Q3-Q4-child",
+          ),
         },
       ],
     },
@@ -152,6 +184,78 @@ function priorOnlySource() {
   raw.federal_unemployment.taxable_wages = 2_000;
   return raw;
 }
+
+Deno.test("Schedule H turning-21 payroll distinguishes two periods paid one day and one period paid on two days", async () => {
+  const distinct: any = source(false);
+  const distinctRows = distinct.federal_unemployment.employee_wages[1]
+    .age_21_transition_review.wage_payments;
+  distinctRows[1].ordinary_pay_period.period_to = "2025-06-14";
+  distinctRows[2].ordinary_pay_period = {
+    kind: "within_31_days",
+    period_from: "2025-06-15",
+    period_to: "2025-06-30",
+    period_source_reference: "Q2-after21-separate-ordinary-pay-period",
+    service_time_source_reference: "Q2-after21-separate-service-ledger",
+  };
+  assertEquals(computeScheduleHAmounts(inputSchema.parse(distinct), 2025).totalTax, 1_993);
+
+  const shared: any = source(false);
+  const child = shared.federal_unemployment.employee_wages[1];
+  const rows = child.age_21_transition_review.wage_payments;
+  const crossing = {
+    kind: "within_31_days", period_from: "2025-06-01",
+    period_to: "2025-06-30",
+    period_source_reference: "Q2-June-shared-ordinary-pay-period",
+    service_time_source_reference: "Q2-June-reviewed-service-hours",
+    excluded_service_hours: 40, covered_service_hours: 60,
+  };
+  rows[1].service_from = "2025-06-01";
+  rows[1].service_to = "2025-06-14";
+  rows[1].ordinary_pay_period = structuredClone(crossing);
+  rows[2].paid_date = "2025-07-02";
+  rows[2].ordinary_pay_period = structuredClone(crossing);
+  child.w2.box3_social_security_wages = 9_500;
+  child.w2.box5_medicare_wages = 9_500;
+  shared.ss_wages = shared.medicare_wages = 12_500;
+  const amount = computeScheduleHAmounts(inputSchema.parse(shared), 2025);
+  assertEquals(amount.socialSecurityTax, 1_550);
+  assertEquals(amount.medicareTax, 363);
+  assertEquals(amount.futaTax, 60);
+  assertEquals(amount.totalTax, 2_223);
+  for (const [id, raw, tax] of [
+    ["distinct-periods-same-payday", distinct, 1_993],
+    ["shared-period-separate-paydays", shared, 2_223],
+  ] as const) {
+    const inputs = { ...structuredClone(base.inputs), schedule_h: raw };
+    const result = f1040_2025.executeReturn(inputs);
+    assertEquals(result.diagnostics, []);
+    assertEquals(result.pending.schedule2.line9_household_employment, tax);
+    const pending = buildPending(result.pending);
+    const filer = extractFilerIdentity(result.pending.f1040)!;
+    const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+    const origins: any[] = [];
+    const pdf = await buildPdfBytes(bundle.pending, filer, ".pdf-cache", bundle, origins);
+    assertEquals(origins.length, 6);
+    const temp = await Deno.makeTempFile({ suffix: ".xml" });
+    try {
+      await Deno.writeTextFile(temp, bundle.xml);
+      const check = await new Deno.Command("xmllint", {
+        args: ["--noout", "--schema", xsd, temp], stdout: "piped", stderr: "piped",
+      }).output();
+      assertEquals(check.code, 0, new TextDecoder().decode(check.stderr));
+    } finally { await Deno.remove(temp); }
+    const dir = optionalEnv("SCHEDULE_H_TURN21_EVIDENCE_DIR");
+    if (dir) {
+      await Deno.mkdir(dir, { recursive: true });
+      await Deno.writeTextFile(`${dir}/${id}.json`, JSON.stringify({
+        inputs, pending, preparedPending: bundle.pending,
+        carryforwards: result.carryforwards, filer, origins,
+      }, null, 2));
+      await Deno.writeTextFile(`${dir}/${id}.xml`, bundle.xml);
+      await Deno.writeFile(`${dir}/${id}.pdf`, pdf);
+    }
+  }
+});
 
 Deno.test("Schedule H child turning 21 uses service dates, paid quarters and full return filing", async () => {
   const dir = optionalEnv("SCHEDULE_H_TURN21_EVIDENCE_DIR");

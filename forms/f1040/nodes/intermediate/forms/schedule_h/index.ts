@@ -238,6 +238,15 @@ const childServicePaymentSchema = z.object({
   service_from: calendarDate,
   service_to: calendarDate,
   cash_wages: z.number().positive(),
+  ordinary_pay_period: z.object({
+    kind: z.enum(["within_31_days", "over_31_days"]),
+    period_from: calendarDate,
+    period_to: calendarDate,
+    period_source_reference: sourceReference,
+    service_time_source_reference: sourceReference,
+    excluded_service_hours: z.number().nonnegative().optional(),
+    covered_service_hours: z.number().nonnegative().optional(),
+  }).strict(),
 }).strict();
 const childAgeTransitionSchema = z.object({
   service_payment_ledger_source_reference: sourceReference,
@@ -254,6 +263,71 @@ const childPayrollEmployeeSchema = familyPayrollBaseSchema.extend({
   }).strict().optional(),
 }).strict();
 type ChildPayrollEmployee = z.infer<typeof childPayrollEmployeeSchema>;
+
+type BirthdayPeriod = {
+  service_from: string;
+  service_to: string;
+  ordinary_pay_period: z.infer<
+    typeof childServicePaymentSchema
+  >["ordinary_pay_period"];
+};
+
+function coveredBirthdayService(period: BirthdayPeriod, birthday: string) {
+  const review = period.ordinary_pay_period;
+  if (!review) {
+    throw new Error(
+      "Schedule H birthday service needs retained ordinary pay-period evidence",
+    );
+  }
+  const days = (Date.parse(review.period_to) - Date.parse(review.period_from)) /
+      86_400_000 + 1;
+  if (
+    review.period_from > period.service_from ||
+    review.period_to < period.service_to ||
+    period.service_from > period.service_to || days < 1 ||
+    (review.kind === "within_31_days") !== (days <= 31) ||
+    review.period_source_reference === review.service_time_source_reference
+  ) {
+    throw new Error(
+      "Schedule H birthday wages need a sourced ordinary pay period containing the actual services",
+    );
+  }
+  if (review.kind === "over_31_days") {
+    if (
+      review.excluded_service_hours !== undefined ||
+      review.covered_service_hours !== undefined ||
+      (period.service_from < birthday && period.service_to >= birthday)
+    ) {
+      throw new Error(
+        "Schedule H over-31-day pay period needs separately allocated services and wages on one birthday side",
+      );
+    }
+    return period.service_from >= birthday;
+  }
+  const crosses = review.period_from < birthday && review.period_to >= birthday;
+  if (!crosses) {
+    if (
+      review.covered_service_hours !== undefined ||
+      review.excluded_service_hours !== undefined
+    ) {
+      throw new Error(
+        "Schedule H noncrossing pay period cannot claim birthday service-time allocation",
+      );
+    }
+    return review.period_from >= birthday;
+  }
+  if (
+    (review.covered_service_hours ?? 0) <= 0 ||
+    (review.excluded_service_hours ?? 0) <= 0
+  ) {
+    throw new Error(
+      "Schedule H crossing ordinary pay period needs both dated service-time totals",
+    );
+  }
+  // Section 3306(d) and CA UIC 607 include the entire short pay period
+  // when covered service occupies at least half of actual service time.
+  return review.covered_service_hours! >= review.excluded_service_hours!;
+}
 
 function childPost21Wages(employee: ChildPayrollEmployee) {
   const review = employee.age_21_transition_review;
@@ -272,6 +346,16 @@ function childPost21Wages(employee: ChildPayrollEmployee) {
     employee.payroll_source_reference,
     review.service_payment_ledger_source_reference,
     ...review.wage_payments.map((p) => p.payment_reference),
+    ...new Set(
+      review.wage_payments.map((p) =>
+        p.ordinary_pay_period.period_source_reference
+      ),
+    ),
+    ...new Set(
+      review.wage_payments.map((p) =>
+        p.ordinary_pay_period.service_time_source_reference
+      ),
+    ),
     ...(employee.w2 ? [employee.w2.source_reference] : []),
     ...(employee.federal_withholding_agreement
       ? [employee.federal_withholding_agreement.w4_source_reference]
@@ -282,7 +366,16 @@ function childPost21Wages(employee: ChildPayrollEmployee) {
       "Schedule H child transition needs distinct retained source references",
     );
   }
+  const allocatedTimeRefs = review.wage_payments.filter((payment) =>
+    payment.ordinary_pay_period.kind === "over_31_days"
+  ).map((payment) => payment.ordinary_pay_period.service_time_source_reference);
+  if (new Set(allocatedTimeRefs).size !== allocatedTimeRefs.length) {
+    throw new Error(
+      "Schedule H long-period service allocations need distinct retained records",
+    );
+  }
   let wages = 0, total = 0, before = false, after = false;
+  const payPeriods = new Map<string, BirthdayPeriod["ordinary_pay_period"]>();
   const periods = [...review.wage_payments].sort((a, b) =>
     a.service_from.localeCompare(b.service_from)
   );
@@ -293,21 +386,47 @@ function childPost21Wages(employee: ChildPayrollEmployee) {
       payment.service_to > "2025-12-31" ||
       payment.service_from > payment.service_to ||
       payment.paid_date < payment.service_to ||
-      index > 0 && periods[index - 1].service_to >= payment.service_from ||
-      payment.service_from < birthday && payment.service_to >= birthday
+      index > 0 && periods[index - 1].service_to >= payment.service_from
     ) {
       throw new Error(
         "Schedule H child transition needs distinct dated services split at the 21st birthday and paid in 2025",
       );
     }
     const paymentCents = cashCents(payment.cash_wages);
+    const periodReview = payment.ordinary_pay_period;
+    const previousPeriod = payPeriods.get(periodReview.period_source_reference);
+    if (previousPeriod) {
+      if (
+        previousPeriod.period_from !== periodReview.period_from ||
+        previousPeriod.period_to !== periodReview.period_to ||
+        previousPeriod.kind !== periodReview.kind ||
+        (periodReview.kind === "within_31_days" &&
+          JSON.stringify(previousPeriod) !== JSON.stringify(periodReview))
+      ) {
+        throw new Error(
+          "Schedule H one ordinary pay period must use one retained period and service-time record",
+        );
+      }
+    } else {
+      if (
+        [...payPeriods.values()].some((other) =>
+          other.period_from <= periodReview.period_to &&
+          other.period_to >= periodReview.period_from
+        )
+      ) {
+        throw new Error("Schedule H ordinary pay periods cannot overlap");
+      }
+      payPeriods.set(periodReview.period_source_reference, periodReview);
+    }
+    const covered = coveredBirthdayService(payment, birthday);
+    before ||= payment.service_from < birthday;
+    after ||= payment.service_to >= birthday;
     total += paymentCents;
     allPaidQuarters[quarter(payment.paid_date)] += paymentCents;
-    if (payment.service_from >= birthday) {
-      after = true;
+    if (covered) {
       wages += paymentCents;
       paidQuarters[quarter(payment.paid_date)] += paymentCents;
-    } else before = true;
+    }
   }
   if (
     !before || !after || total !== cashCents(employee.annual_cash_wages) ||
@@ -481,8 +600,29 @@ const statePayrollReviewSchema = z.object({
       state: z.string().regex(/^[A-Z]{2}$/),
       cash_wages: z.number().positive(),
       payment_reference: sourceReference,
+      family_state_coverage_source_reference: sourceReference.optional(),
+      service_from: calendarDate.optional(),
+      service_to: calendarDate.optional(),
+      service_payment_reference: sourceReference.optional(),
+      ordinary_pay_period: childServicePaymentSchema.shape.ordinary_pay_period
+        .optional(),
     }).strict(),
   ).min(1),
+  excluded_state_wage_payments: z.array(
+    z.object({
+      employee_id: sourceReference,
+      paid_date: calendarDate,
+      state: z.enum(["CA", "OH"]),
+      cash_wages: z.number().positive(),
+      payment_reference: sourceReference,
+      coverage_source_reference: sourceReference,
+      service_from: calendarDate.optional(),
+      service_to: calendarDate.optional(),
+      service_payment_reference: sourceReference.optional(),
+      ordinary_pay_period: childServicePaymentSchema.shape.ordinary_pay_period
+        .optional(),
+    }).strict(),
+  ).optional(),
   contribution_payments: z.array(
     z.object({
       rate_notice_source_reference: sourceReference,
@@ -580,6 +720,19 @@ export const inputSchema = z.object({
         z.number().nonnegative(),
       ]).optional(),
       employee_wages: z.array(payrollEmployeeSchema).min(1),
+      // A source review verifies Section A's three Yes answers without
+      // changing its filed Section A presentation to Section B.
+      state_review_rows: z.array(
+        z.object({
+          state: z.string().regex(/^[A-Z]{2}$/),
+          taxable_state_wages: z.number().nonnegative(),
+          experience_rate: z.number().min(0).max(1).optional(),
+          rate_period_from: calendarDate.optional(),
+          rate_period_to: calendarDate.optional(),
+          contributions_paid_by_due_date: z.number().nonnegative(),
+        }).strict(),
+      ).min(1).max(62).optional(),
+      state_payroll_review: statePayrollReviewSchema.optional(),
     }).strict(),
     z.object({
       paid_only_one_state: z.boolean(),
@@ -635,18 +788,28 @@ function schemaRepresentableStateRate(rate: number) {
 function validateStatePayrollReview(input: SectionBSource) {
   const review = input.state_payroll_review;
   if (!review) return 0;
-  if (
-    input.employee_wages.some((employee) =>
-      employee.relationship !== "unrelated"
-    )
-  ) {
-    throw new Error(
-      "Schedule H state payment review needs an unrelated-worker complete inventory",
-    );
-  }
+  const reviewedPeriods = [
+    ...review.wage_payments,
+    ...(review.excluded_state_wage_payments ?? []),
+  ].flatMap((payment) =>
+    payment.ordinary_pay_period ? [payment.ordinary_pay_period] : []
+  );
   const references = [
     ...review.rate_notices.map((notice) => notice.source_reference),
     ...review.wage_payments.map((payment) => payment.payment_reference),
+    ...review.wage_payments.flatMap((payment) =>
+      payment.family_state_coverage_source_reference
+        ? [payment.family_state_coverage_source_reference]
+        : []
+    ),
+    ...new Set(reviewedPeriods.map((period) => period.period_source_reference)),
+    ...new Set(
+      reviewedPeriods.map((period) => period.service_time_source_reference),
+    ),
+    ...(review.excluded_state_wage_payments ?? []).flatMap((payment) => [
+      payment.payment_reference,
+      payment.coverage_source_reference,
+    ]),
     ...review.contribution_payments.map((payment) => payment.payment_reference),
     ...(review.quarterly_assessments ?? []).map((assessment) =>
       assessment.source_reference
@@ -666,11 +829,23 @@ function validateStatePayrollReview(input: SectionBSource) {
       "Schedule H state rate, wage and contribution sources must be distinct",
     );
   }
+  const allocatedTimeRefs = reviewedPeriods.filter((period) =>
+    period.kind === "over_31_days"
+  ).map((period) => period.service_time_source_reference);
+  if (new Set(allocatedTimeRefs).size !== allocatedTimeRefs.length) {
+    throw new Error(
+      "Schedule H long-period state service allocations need distinct retained records",
+    );
+  }
   const notices = review.rate_notices;
   for (const [index, notice] of notices.entries()) {
     if (
       !FUTA_STATE_CODES.has(notice.state) ||
       !schemaRepresentableStateRate(notice.experience_rate) ||
+      (notice.state === "CA" &&
+        cashCents(notice.annual_taxable_wage_base) !== 700_000) ||
+      ((notice.state === "TX" || notice.state === "OH") &&
+        cashCents(notice.annual_taxable_wage_base) !== 900_000) ||
       notice.period_from < "2025-01-01" || notice.period_to > "2025-12-31" ||
       notice.period_from > notice.period_to ||
       notices.some((other, otherIndex) =>
@@ -700,19 +875,33 @@ function validateStatePayrollReview(input: SectionBSource) {
   );
   const workerAnnual = new Map<string, number>(),
     workerQuarters = new Map<string, number[]>();
+  const childServiceLinks = new Map<string, string[]>();
+  const childStateServicePeriods = new Map<
+    string,
+    { from: string; to: string }[]
+  >();
+  const childStatePayPeriods = new Map<
+    string,
+    Map<string, BirthdayPeriod["ordinary_pay_period"]>
+  >();
   const workerFuta = new Map<string, number>(),
     workerState = new Map<string, number>();
   let futaWages = 0, stateCoveredFutaWages = 0;
-  const payments = [...review.wage_payments].sort((a, b) =>
+  const payments = [
+    ...review.wage_payments,
+    ...(review.excluded_state_wage_payments ?? []),
+  ].sort((a, b) =>
     a.paid_date.localeCompare(b.paid_date) ||
+    (a.service_from ?? "").localeCompare(b.service_from ?? "") ||
     a.payment_reference.localeCompare(b.payment_reference)
   );
   const workerPayDates = new Set<string>();
   for (const payment of payments) {
+    const excludedFromState = "coverage_source_reference" in payment;
     const workerPayDate = `${payment.employee_id}:${payment.paid_date}`;
-    if (workerPayDates.has(workerPayDate)) {
+    if (workerPayDates.has(workerPayDate) && !payment.ordinary_pay_period) {
       throw new Error(
-        "Schedule H state FUTA wage allocation needs one ordered payment per worker and date",
+        "Schedule H duplicate-date state wages need retained ordinary pay-period evidence",
       );
     }
     workerPayDates.add(workerPayDate);
@@ -731,44 +920,178 @@ function validateStatePayrollReview(input: SectionBSource) {
         ? [index]
         : []
     );
-    if (matches.length !== 1) {
+    if (!excludedFromState && matches.length !== 1) {
       throw new Error(
         "Schedule H each state wage payment needs one dated rate notice",
       );
     }
     const index = matches[0], notice = notices[index];
-    const paymentCents = cents(payment.cash_wages);
-    const stateBaseCents = cents(notice.annual_taxable_wage_base);
-    const previousFuta = workerFuta.get(payment.employee_id) ?? 0;
-    const futa = Math.min(
-      paymentCents,
-      Math.max(0, 700_000 - previousFuta),
-    );
-    workerFuta.set(payment.employee_id, previousFuta + paymentCents);
-    const key = `${payment.employee_id}:${payment.state}`;
-    const previousState = workerState.get(key) ?? 0;
+    const employee = workers.get(payment.employee_id)!;
+    const serviceDates = payment.service_from !== undefined &&
+      payment.service_to !== undefined &&
+      payment.service_from <= payment.service_to &&
+      payment.service_from >= "2025-01-01" &&
+      payment.service_to <= "2025-12-31" &&
+      payment.service_to <= payment.paid_date;
     if (
-      previousFuta > previousState &&
-      previousFuta + paymentCents > stateBaseCents
+      (payment.service_from === undefined) !==
+        (payment.service_to === undefined) ||
+      (payment.service_from !== undefined && !serviceDates)
     ) {
       throw new Error(
-        "Schedule H interstate wage-base credit needs retained state evidence",
+        "Schedule H state family service dates must precede retained cash payment",
       );
     }
-    const stateWages = Math.min(
-      paymentCents,
-      Math.max(0, stateBaseCents - previousState),
+    let federalEligible = employee.relationship === "unrelated";
+    if (employee.relationship !== "unrelated") {
+      if (
+        employee.relationship === "child" &&
+        employee.birth_date >= "2004-01-01" &&
+        employee.birth_date <= "2004-12-31"
+      ) {
+        const service = employee.age_21_transition_review?.wage_payments.find(
+          (row) => row.payment_reference === payment.service_payment_reference,
+        );
+        if (
+          !service || !serviceDates ||
+          service.paid_date !== payment.paid_date ||
+          service.service_from !== payment.service_from ||
+          service.service_to !== payment.service_to ||
+          JSON.stringify(service.ordinary_pay_period) !==
+            JSON.stringify(payment.ordinary_pay_period) ||
+          cents(service.cash_wages) !== cents(payment.cash_wages)
+        ) {
+          throw new Error(
+            "Schedule H turning-21 state cash must join its dated service source",
+          );
+        }
+        const birthday = `2025${employee.birth_date.slice(4)}`;
+        federalEligible = coveredBirthdayService(service, birthday);
+        const links = childServiceLinks.get(employee.employee_id) ?? [];
+        links.push(payment.service_payment_reference!);
+        childServiceLinks.set(employee.employee_id, links);
+      } else if (payment.service_payment_reference) {
+        throw new Error(
+          "Schedule H family state service reference needs the child turning-21 ledger",
+        );
+      }
+      const turns18 = employee.relationship === "child" &&
+        employee.birth_date >= "2007-01-01" &&
+        employee.birth_date <= "2007-12-31";
+      if (turns18 && !serviceDates) {
+        throw new Error(
+          "Schedule H turning-18 state coverage needs dated service and payment facts",
+        );
+      }
+      const eighteenth = turns18 ? `2025${employee.birth_date.slice(4)}` : "";
+      const adultStateService = turns18
+        ? coveredBirthdayService(payment as BirthdayPeriod, eighteenth)
+        : false;
+      if (turns18) {
+        const period = payment.ordinary_pay_period!;
+        const existing = childStatePayPeriods.get(employee.employee_id) ??
+          new Map();
+        const earlier = existing.get(period.period_source_reference);
+        if (earlier) {
+          if (
+            earlier.period_from !== period.period_from ||
+            earlier.period_to !== period.period_to ||
+            earlier.kind !== period.kind ||
+            (period.kind === "within_31_days" &&
+              JSON.stringify(earlier) !== JSON.stringify(period))
+          ) {
+            throw new Error(
+              "Schedule H one child state pay period needs one reviewed time record",
+            );
+          }
+        } else {
+          if (
+            [...existing.values()].some((other) =>
+              other.period_from <= period.period_to &&
+              other.period_to >= period.period_from
+            )
+          ) {
+            throw new Error(
+              "Schedule H child state ordinary pay periods cannot overlap",
+            );
+          }
+          existing.set(period.period_source_reference, period);
+        }
+        childStatePayPeriods.set(employee.employee_id, existing);
+        const periods = childStateServicePeriods.get(employee.employee_id) ??
+          [];
+        periods.push({ from: payment.service_from!, to: payment.service_to! });
+        childStateServicePeriods.set(employee.employee_id, periods);
+      }
+      // Both California and Ohio exclude the spouse, parent, and child before
+      // age 18 from their unemployment coverage for this sourced household route.
+      const supportedFamilyState = payment.state === "CA" ||
+        payment.state === "OH";
+      const familyExcluded = supportedFamilyState &&
+        (employee.relationship === "spouse" ||
+          employee.relationship === "parent" ||
+          employee.relationship === "child" &&
+            (employee.birth_date >= "2008-01-01" ||
+              turns18 && !adultStateService));
+      const adultChildCovered = supportedFamilyState &&
+        employee.relationship === "child" &&
+        (employee.birth_date >= "2004-01-01" &&
+            employee.birth_date <= "2006-12-31" ||
+          turns18 && adultStateService);
+      if (
+        !(familyExcluded || adultChildCovered) ||
+        excludedFromState !== familyExcluded ||
+        (!excludedFromState &&
+          !payment.family_state_coverage_source_reference)
+      ) {
+        throw new Error(
+          "Schedule H family state UI coverage needs retained state relationship, age and coverage source",
+        );
+      }
+    } else if (
+      excludedFromState || payment.family_state_coverage_source_reference ||
+      payment.service_payment_reference
+    ) {
+      throw new Error(
+        "Schedule H unrelated employee cannot claim family state UI coverage",
+      );
+    }
+    const paymentCents = cents(payment.cash_wages);
+    const previousFuta = workerFuta.get(payment.employee_id) ?? 0;
+    const futa = federalEligible
+      ? Math.min(paymentCents, Math.max(0, 700_000 - previousFuta))
+      : 0;
+    workerFuta.set(
+      payment.employee_id,
+      previousFuta + (federalEligible ? paymentCents : 0),
     );
-    workerState.set(key, previousState + paymentCents);
-    rowWages[index] += stateWages;
-    accruedWages[index].push({ date: payment.paid_date, cents: stateWages });
+    if (!excludedFromState) {
+      const stateBaseCents = cents(notice.annual_taxable_wage_base);
+      const key = `${payment.employee_id}:${payment.state}`;
+      const previousState = workerState.get(key) ?? 0;
+      if (
+        previousFuta > previousState &&
+        previousFuta + paymentCents > stateBaseCents && federalEligible
+      ) {
+        throw new Error(
+          "Schedule H interstate wage-base credit needs retained state evidence",
+        );
+      }
+      const stateWages = Math.min(
+        paymentCents,
+        Math.max(0, stateBaseCents - previousState),
+      );
+      workerState.set(key, previousState + paymentCents);
+      rowWages[index] += stateWages;
+      accruedWages[index].push({ date: payment.paid_date, cents: stateWages });
+      const covered = Math.min(futa, stateWages);
+      stateCoveredFutaWages += covered;
+      reductionWages.set(
+        payment.state,
+        (reductionWages.get(payment.state) ?? 0) + covered,
+      );
+    }
     futaWages += futa;
-    const covered = Math.min(futa, stateWages);
-    stateCoveredFutaWages += covered;
-    reductionWages.set(
-      payment.state,
-      (reductionWages.get(payment.state) ?? 0) + covered,
-    );
     workerAnnual.set(
       payment.employee_id,
       (workerAnnual.get(payment.employee_id) ?? 0) + paymentCents,
@@ -788,6 +1111,36 @@ function validateStatePayrollReview(input: SectionBSource) {
       throw new Error(
         "Schedule H state payment ledger must reconcile every worker's annual and quarterly payroll",
       );
+    }
+    if (
+      employee.relationship === "child" && employee.age_21_transition_review
+    ) {
+      const linked = childServiceLinks.get(employee.employee_id) ?? [];
+      const actual = employee.age_21_transition_review.wage_payments.map((
+        row,
+      ) => row.payment_reference);
+      if (
+        linked.length !== actual.length ||
+        new Set(linked).size !== linked.length ||
+        linked.some((reference) => !actual.includes(reference))
+      ) {
+        throw new Error(
+          "Schedule H state cash must join every turning-21 child service payment exactly once",
+        );
+      }
+    }
+    const periods = childStateServicePeriods.get(employee.employee_id);
+    if (periods) {
+      periods.sort((a, b) => a.from.localeCompare(b.from));
+      if (
+        periods.some((row, index) =>
+          index > 0 && periods[index - 1].to >= row.from
+        )
+      ) {
+        throw new Error(
+          "Schedule H turning-18 child state service periods cannot overlap",
+        );
+      }
     }
   }
   const quarterOf = (date: string) => Math.ceil(Number(date.slice(5, 7)) / 3);
@@ -961,7 +1314,8 @@ function validateStatePayrollReview(input: SectionBSource) {
         rowContributionCents[index]
     ) || cents(input.taxable_futa_wages) !== futaWages ||
     input.paid_only_one_state !==
-      (new Set(payments.map((payment) => payment.state)).size === 1) ||
+      (new Set(review.wage_payments.map((payment) => payment.state)).size ===
+        1) ||
     input.all_futa_wages_state_taxable !==
       (stateCoveredFutaWages === futaWages) ||
     input.all_contributions_paid_on_time !==
@@ -1462,6 +1816,41 @@ export function computeScheduleHAmounts(
       throw new Error(
         "Schedule H Section A needs either contributions paid or an explicit 0% rate",
       );
+    }
+    if (
+      (unemployment.state_review_rows === undefined) !==
+        (unemployment.state_payroll_review === undefined)
+    ) {
+      throw new Error(
+        "Schedule H Section A state source needs both filed row reconciliation and complete payroll review",
+      );
+    }
+    if (unemployment.state_review_rows && unemployment.state_payroll_review) {
+      const rows = unemployment.state_review_rows;
+      if (
+        rows.length !== 1 || rows[0].state !== unemployment.state ||
+        cashCents(rows[0].contributions_paid_by_due_date) !==
+          cashCents(unemployment.contributions_paid ?? 0) ||
+        (unemployment.zero_experience_rate === true) !==
+          (rows[0].experience_rate === 0)
+      ) {
+        throw new Error(
+          "Schedule H Section A state, paid contribution and rate must reconcile its reviewed state row",
+        );
+      }
+      // Reuse the complete dated worker, rate, assessment, payment, and
+      // family-coverage validator. The adapter is validation-only: the filed
+      // return remains Section A because all three answers are Yes.
+      const reviewed = {
+        ...unemployment,
+        state_rows: rows,
+        taxable_futa_wages: unemployment.taxable_wages,
+      } as SectionBSource;
+      if (validateStatePayrollReview(reviewed) !== 0) {
+        throw new Error(
+          "Schedule H Section A requires no unpaid state contribution",
+        );
+      }
     }
   }
   if (unemployment && "state_rows" in unemployment) {
