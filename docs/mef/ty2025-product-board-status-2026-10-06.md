@@ -2527,3 +2527,25 @@ Existing Roth conversion/history, donated-asset depreciation and simultaneous QE
 
 
 Ready543337c4b: source7/0,25module438/0, nativeC/SE40/0, standalone8995node43/0. SixfullXSD packets83return+118attachment=201reviewedpage occurrences/160distinctrasters,71attachments, manifest5b0c77b00c29e533943869452e86b16a7b9fb3241f3c0825ba58f297189366f7. Current active1245/1250 actualdepreciation→C/SE/AGI/QBI anddonationordinaryreduction; fixes actualitemizedScheduleA→8995 taxableincomecap. PrimaryCFR1.170A-4(b)(4) outrightgift rule doesnotimpose1231(c)salelookback; source donation-vs-saleguardretained. Prior760pages untouched. Main currentpacket/preservation gates required beforecredit. FullV5 live44m30s atread; root checkouta3fad4af2compact done noimplementation credited. Frozen52/future untouched.
+
+
+## Before simultaneous QEF-election integration
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,457 completed slices** with their limits. Learnings and exact evidence are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries go only in `future_todo` and are not executed.
+
+Inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF keys / 96 covered / 18 uncovered**.
+
+Latest verified work: complete Roth payment inventories (**211/0**, mixed pension/adoption **6/0**, six packets / 57 reviewed pages); QEF adoption-credit composition (**13/0**, nine pages); hypothetical adoption-credit capacity and zero-tax deferral (**76/0 + 53/0**, two additional nine-page packets). Source, pending, PDFs, page maps and retained bytes match reviewed originals; XML differs only in ReturnTs. Earlier Roth/substitute packets (9/52 and 10/70) and PFIC packets (11/100) remain unchanged. Earlier disposition and preferential pension/AMT proof remains in the archive. These complete the stated slices; wider parents remain open.
+
+Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**; the sole senior/QBI fixture expectation was repaired with focused1/0. The immutable **4a45410da** rerun started05:41:11UTC; wrapper65945/Deno65949 were verified live at43m30s. It predates the latest production changes. Its terminal result and a passing latest-source full run remain required.
+
+Publication checkpoint: draft [PR63](https://github.com/filedcom/opentax/pull/63), **1b74f03b4**, verified published with the latest source changes and evidence.
+
+Existing Roth conversion/history, donated-asset depreciation and simultaneous QEF-election work continues in isolated checkouts. Root preferential ScheduleJ/AMT source work has an isolated checkout and a retained guard audit. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+
+
+Main owneddepreciation43193b7d7 +5a19691fd: source7/0(32s), compatibility438/0(3m56s) at431, finalsource/ScheduleA67/0(29s) afterzero-fieldpreservation. Exactheld six83returnpage packets/71attachments using originalv8source inputs/retainedbytes, not regeneratedfinancialPDF metadata; full201pagesoriginalreview remains. Rootretained83PDFreturnpages source/pending/XMLonlyReturnTs/origins andattachmentbytes exact. Nine priorRoth52pages exact; prior485210/70PDF/source/retainedbytes exact, pending gains only actualScheduleA itemized total inform8995, independentlychecked against standard-deduction source. Earlier8283disposition5/169exact; sixteen591page currentheld replay running73425. RootprefJ purecalc9112c4b02 has14/0, distinctcurrent/priorworksheet source amounts, stillno public/exportclaim and not integrated. Readyb33e0bf04 two/three additiveElectionB fullsource packets24reviewedpages,73/0+6/0; nonlinearallocation remains underaudit/guard. FullV5 wrapper65945/Deno65949 confirmedlive52m16s, no restart. Frozen52/future unchanged.
