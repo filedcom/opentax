@@ -1,3 +1,4 @@
+import { ownedFarmReviewFixture } from "./review-schedule-se-farm-owner.fixture.ts";
 import { form8978ReviewFixtures } from "./review-8978.fixture.ts";
 import { jointWotcReviewFixtures } from "./review-joint-wotc.fixture.ts";
 import { form8994OwnedReviewFixture } from "./review-8994-owned.fixture.ts";
@@ -9043,6 +9044,7 @@ const educationBase = basePdfReviewFixtures.find((fixture) =>
   fixture.id === "single-form8863-lifetime-learning-scholarship"
 )!;
 export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
+ ownedFarmReviewFixture(basePdfReviewFixtures.find(f=>f.id==="single-schedule-c")!,jointPatronFixture(basePdfReviewFixtures.find(f=>f.id==="single-schedule-c")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!,"farm")),
   ...form8978ReviewFixtures,
   ...jointWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id === "single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id === "joint-two-w2s")!),
   ...(["full", "partial", "zero"] as const).map(form8994OwnedReviewFixture),

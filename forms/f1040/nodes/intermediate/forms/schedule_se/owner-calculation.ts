@@ -40,6 +40,20 @@ export type OwnerSEFields = {
 /** Net businesses within each proprietor; never net one spouse against the other. */
 export function ownedScheduleSE(raw: unknown, ssWageBase: number) {
   const source = ownerSourcesSchema.parse(raw);
+  source.businesses.sort((a, b) =>
+    a.source_reference < b.source_reference
+      ? -1
+      : a.source_reference > b.source_reference
+      ? 1
+      : 0
+  );
+  source.wages.sort((a, b) =>
+    a.source_reference < b.source_reference
+      ? -1
+      : a.source_reference > b.source_reference
+      ? 1
+      : 0
+  );
   if (
     source.identity.primary_ssn === source.identity.spouse_ssn ||
     source.identity.primary_ssn === "000000000" ||

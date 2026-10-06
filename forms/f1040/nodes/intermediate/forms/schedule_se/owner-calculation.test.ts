@@ -137,3 +137,13 @@ Deno.test("owned farm optional method uses the separate proprietor's gross incom
   assertEquals(result.instances[1].line12, 612);
   assertEquals(result.instances[1].line13, 306);
 });
+
+Deno.test("owner source order is deterministic across independent farm/business/W2 graph arrival", () => {
+  const reversed = structuredClone(source);
+  reversed.businesses.reverse();
+  reversed.wages.reverse();
+  assertEquals(
+    ownedScheduleSE(reversed, 176100),
+    ownedScheduleSE(source, 176100),
+  );
+});
