@@ -1,3 +1,4 @@
+import { assertSingleFarmQbiReturn } from "../form8995a_single_farm_reconciliation.ts";
 import { assertScheduleJSourceReturn } from "../schedule_j_source_return.ts";
 import { reconcileForm8606RothInventories } from "../form8606_roth_inventory_reconciliation.ts";
 import { reconcileForm8606RothActivity } from "../form8606_roth_activity_reconciliation.ts";
@@ -565,6 +566,7 @@ export async function buildPdfBytes(
   await assertForm1098IssuerCopies(pending);
   const normalized = normalizeAllPending(pending);
   assertScheduleJSourceReturn(pending);
+  assertSingleFarmQbiReturn(normalized);
   if (normalized.f1040) {
     assertF1040FinalHeader(normalized.f1040, filer);
     assertLine1hSupportedSource(normalized.f1040, normalized, filer);

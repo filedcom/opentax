@@ -107,6 +107,7 @@ export function validateOneBusiness(fields: Form8995AInput) {
       !((fields.patron_business_source || fields.single_schedule_c_source) &&
         fields.filing_status === NodeFilingStatus.MFJ)) ||
     !fields.patron_business_source && !fields.single_schedule_c_source &&
+      !fields.single_schedule_f_source &&
       fields.taxable_income <=
         CONFIG_BY_YEAR[2025].qbiThresholdSingle +
           CONFIG_BY_YEAR[2025].qbiPhaseInRange / 2
@@ -122,7 +123,7 @@ export function validateOneBusiness(fields: Form8995AInput) {
     (fields.qbi_loss_carryforward ?? 0) !== 0 ||
     (fields.reit_loss_carryforward ?? 0) !== 0 ||
     (fields.aggregation_groups ?? []).length !== 0 ||
-    fields.net_capital_gain !== 0
+    (!fields.single_schedule_f_source && fields.net_capital_gain !== 0)
   ) {
     throw new Error(
       "Form 8995-A MeF does not yet support SSTB, aggregation, loss, or capital-gain paths",
@@ -160,6 +161,14 @@ export function validateOneBusiness(fields: Form8995AInput) {
   ) {
     throw new Error(
       "Form 8995-A MeF needs matching whole-dollar per-business QBI, W-2 wages, UBIA, and taxable income",
+    );
+  }
+  if (
+    !fields.single_schedule_f_source &&
+    details.qualified_dividends_zero_confirmed !== true
+  ) {
+    throw new Error(
+      "Form8995A nonzero qualified dividends need an actual source route",
     );
   }
   const lines = calculateOneBusiness8995ALines(fields);

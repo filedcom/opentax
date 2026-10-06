@@ -127,7 +127,16 @@ export function assertScheduleJSourceReturn(
   const treatment = calculation?.tax_treatment as
     | Record<string, Record<string, unknown>>
     | undefined;
-  const preferential = sourceTax !== undefined ||
+  const filedJ = pending.schedule_j as Record<string, unknown> | undefined;
+  const actualTax = pending.income_tax_calculation as
+    | Record<string, unknown>
+    | undefined;
+  const actual1040 = pending.f1040 as Record<string, unknown> | undefined;
+  const actualPreferential = filedJ?.line23 !== undefined &&
+    (total(actualTax?.qualified_dividends) > 0 ||
+      total(actualTax?.net_capital_gain) > 0 ||
+      total(actual1040?.line3a_qualified_dividends) > 0);
+  const preferential = actualPreferential || sourceTax !== undefined ||
     (treatment &&
       Object.values(treatment).some((f) =>
         f.has_qualified_dividends || f.has_net_capital_gain ||

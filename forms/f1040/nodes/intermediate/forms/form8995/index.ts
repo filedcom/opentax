@@ -1,3 +1,4 @@
+import { singleFarmSourceAmounts } from "../form8995a/single-farm-source.ts";
 import {
   qualifiedTipQbiSourceSchema,
   reviewedQualifiedTipExclusions,
@@ -684,6 +685,58 @@ function advancedFormOutput(
         allocation_worksheet_reviewed_by: review.reviewed_by,
         allocation_worksheet_review_date: review.reviewed_on,
         box6_written_notice_review: review.box6_written_notice_review,
+      },
+    };
+  }
+
+  const farm = input.schedule_f_qbi_businesses?.[0];
+  if (
+    input.schedule_f_qbi_businesses?.length === 1 &&
+    !input.schedule_c_qbi_businesses && farm &&
+    input.qbi_no_prior_loss_or_suspended_loss_confirmed === true &&
+    input.qbi_not_patron_of_specified_cooperative_confirmed === true &&
+    input.filing_status === FilingStatus.Single && input.taxpayer_ssn &&
+    sumField(input.qbi) === 0 && sstbQbi === 0 &&
+    sumField(input.se_health_insurance_deduction) === 0 &&
+    sumField(input.retirement_plan_deduction) === 0 &&
+    !input.patron_source_review
+  ) {
+    const source = singleFarmSourceAmounts({
+      item: farmItemSchema.parse(farm.source_schedule_f),
+      owner_ssn: input.taxpayer_ssn.replaceAll("-", ""),
+      se_tax_deduction: sumField(input.se_tax_deduction),
+    });
+    if (
+      farm.qbi !== source.profit ||
+      sumField(input.qbi_from_schedule_f) !== source.profit
+    ) {
+      throw new Error(
+        "Advanced farm QBI profit differs from its actual farm source",
+      );
+    }
+    taxableIncome = Math.round(taxableIncome);
+    sourcedBusiness = {
+      qbi: source.qbi,
+      single_schedule_f_source: {
+        item: source.item,
+        owner_ssn: source.owner_ssn,
+        se_tax_deduction: source.se_tax_deduction,
+      },
+      patron_of_specified_cooperative: false,
+      qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+      business_filing_details: {
+        business_name: source.name,
+        ein: source.ein,
+        business_qbi: source.qbi,
+        business_w2_wages: 0,
+        business_ubia: 0,
+        one_non_sstb_business_confirmed: true,
+        no_aggregation_confirmed: true,
+        no_ptp_or_loss_carryforward_confirmed: true,
+        qualified_dividends_zero_confirmed:
+          (input.investment_dividend_totals?.qualified ?? 0) === 0,
+        qbi_wages_ubia_sources_confirmed: true,
+        taxable_income_before_qbi_confirmed: true,
       },
     };
   }

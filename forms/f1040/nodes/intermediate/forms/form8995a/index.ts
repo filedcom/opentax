@@ -1,3 +1,7 @@
+import {
+  assertSingleFarmAmounts,
+  singleFarmSourceSchema,
+} from "./single-farm-source.ts";
 import { filedOwnedScheduleC } from "../../../owned-business-filing.ts";
 import {
   qualifiedTipQbiSourceSchema,
@@ -128,7 +132,7 @@ export const businessFilingDetailsSchema = z.object({
   one_non_sstb_business_confirmed: z.literal(true),
   no_aggregation_confirmed: z.literal(true),
   no_ptp_or_loss_carryforward_confirmed: z.literal(true),
-  qualified_dividends_zero_confirmed: z.literal(true),
+  qualified_dividends_zero_confirmed: z.boolean(),
   qbi_wages_ubia_sources_confirmed: z.literal(true),
   taxable_income_before_qbi_confirmed: z.literal(true),
 });
@@ -182,6 +186,7 @@ export const scheduleCQbiBusinessSchema = z.object({
 }).strict();
 
 export const inputSchema = z.object({
+  single_schedule_f_source: singleFarmSourceSchema.optional(),
   qualified_tip_qbi_source: qualifiedTipQbiSourceSchema.optional(),
   farm_wotc_filing_source: farmWotcSourceSchema.optional(),
   patron_business_source: patronBusinessSourceSchema.optional(),
@@ -1067,11 +1072,13 @@ export function calculateOwnedWotcBusinesses(input: Form8995AInput) {
 
 export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   assertSingleScheduleCWotcAmounts(input);
+  assertSingleFarmAmounts(input);
   const patronReduction = input.patron_of_specified_cooperative === true
     ? calculatePatronScheduleDLines(input).line6
     : 0;
   const filedAmount = (value: number) =>
-    input.single_schedule_c_source || input.farm_wotc_filing_source ||
+    input.single_schedule_c_source || input.single_schedule_f_source ||
+      input.farm_wotc_filing_source ||
       input.aggregation_filing_details ||
       input.patron_business_source
       ? Math.round(value)
@@ -1095,6 +1102,7 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   // Part III applies only in the middle band when the wage/property limit binds.
   const phaseInRequired = Boolean(
     input.patron_business_source || input.single_schedule_c_source ||
+      input.single_schedule_f_source ||
       input.farm_wotc_filing_source,
   ) &&
     input.taxable_income > patronThreshold &&
@@ -1140,6 +1148,7 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
   const line39 = line37 + line38;
   return {
     ...((input.patron_business_source || input.single_schedule_c_source ||
+        input.single_schedule_f_source ||
         input.farm_wotc_filing_source)
       ? {
         patronThreshold,
@@ -1571,7 +1580,11 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
             : []),
         ],
         ...(farm.lossSchedule?.line6
-          ? { carryforwards: { qbi_loss_carryforward_8995a: farm.lossSchedule.line6 } }
+          ? {
+            carryforwards: {
+              qbi_loss_carryforward_8995a: farm.lossSchedule.line6,
+            },
+          }
           : {}),
       };
     }
@@ -1587,7 +1600,7 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
         ],
       };
     }
-    if (input.single_schedule_c_source) {
+    if (input.single_schedule_c_source || input.single_schedule_f_source) {
       const deduction = calculateOneBusiness8995ALines(input).line39;
       return {
         outputs: [
