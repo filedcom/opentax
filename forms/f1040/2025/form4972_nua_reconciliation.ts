@@ -51,6 +51,14 @@ export function reconcileForm4972Nua(
   const partialEstate = sharePct < 100 &&
     typeof fields.federal_estate_tax === "number" &&
     fields.federal_estate_tax > 0;
+  const partialNuaEstateCombination = partialEstate &&
+    fields.elect_10yr_averaging === true && fields.elect_include_nua === true &&
+    typeof fields.box6_nua === "number" && fields.box6_nua > 0 &&
+    fields.partial_estate_tax_source !== undefined &&
+    (fields.elect_capital_gain !== true ||
+      (typeof fields.capital_gain_amount === "number" &&
+        fields.capital_gain_amount > 0)) &&
+    ((item?.box8_other ?? 0) === 0 || typeof item?.box8_pct_total === "number");
   const partialNuaDeathEstatePartIII = partialDeath && partialEstate &&
     fields.elect_capital_gain === true &&
     fields.elect_10yr_averaging === true &&
@@ -88,11 +96,13 @@ export function reconcileForm4972Nua(
         (sharePct !== 100 &&
           (((partialDeath && partialEstate) &&
             !partialNuaDeathEstatePartIII &&
-            !partialNuaDeathAnnuityEstatePartIII) ||
+            !partialNuaDeathAnnuityEstatePartIII &&
+            !partialNuaEstateCombination) ||
             (!partialDeath && !partialEstate) ||
             ((item.box8_other ?? 0) > 0 &&
               !partialNuaAnnuityEstatePartIII &&
-              !partialNuaDeathAnnuityEstatePartIII) ||
+              !partialNuaDeathAnnuityEstatePartIII &&
+              !partialNuaEstateCombination) ||
             (partialEstate && fields.elect_capital_gain === true &&
               fields.elect_10yr_averaging === true &&
               (typeof fields.capital_gain_amount !== "number" ||
@@ -108,7 +118,7 @@ export function reconcileForm4972Nua(
       fields.elect_10yr_averaging !== true)
   ) {
     throw new Error(
-      "Form 4972 NUA requires a sourced Part II or III; combined partial-share death-benefit, estate, and annuity adjustments require both elections and a sourced box 8 percentage",
+      "Form 4972 NUA requires a sourced Part II or III; partial-share death-benefit, estate, and annuity adjustments require source allocations and a sourced box 8 percentage",
     );
   }
   if (

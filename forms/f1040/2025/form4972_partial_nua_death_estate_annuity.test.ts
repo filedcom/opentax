@@ -306,7 +306,6 @@ Deno.test("beneficiary annuity rejects missing source share and lost elections",
     const [sourceChanges, electionChanges] of [
       [{ box8_pct_total: undefined }, {}],
       [{}, { elect_10yr_averaging: false }],
-      [{}, { elect_capital_gain: false }],
       [{}, { elect_include_nua: false }],
     ]
   ) {
@@ -425,3 +424,77 @@ async function validateXml(xml: string) {
     await Deno.remove(xmlPath);
   }
 }
+
+Deno.test("beneficiary annuity ten-year-only option retains source capital gain without Part II", async () => {
+  const { pending, filer } = returnCase({
+    ...election,
+    elect_capital_gain: false,
+  });
+  const form = (pending.form4972!.forms as Record<string, unknown>[])[0];
+  // Independent Decimal worksheet from the official2025form; source boxes
+  // remain unchanged when the recipient chooses not to elect PartII.
+  const expected = {
+    line8: 48000,
+    line9: 5000,
+    line10: 43000,
+    line11: 12000,
+    line12: 55000,
+    line13: 10000,
+    line14: 35000,
+    line15: 7000,
+    line16: 3000,
+    line17: 52000,
+    line18: 2000,
+    line19: 50000,
+    line20: 0.21818,
+    line21: 655,
+    line22: 11345,
+    line23: 5000,
+    line24: 647,
+    line25: 6470,
+    line26: 1135,
+    line27: 125,
+    line28: 1250,
+    line29: 2610,
+    line30: 2610,
+    line8_nua_included: 8000,
+  };
+  for (const [key, value] of Object.entries(expected)) {
+    assertEquals(form[key], value, key);
+  }
+  assertEquals(form.line6, undefined);
+  assertEquals(form.line7, undefined);
+  assertEquals(pending.f1040!.form4972_tax, 2610);
+  const xml = native.build(pending.form4972!, { filer, pending })[0];
+  assertStringIncludes(
+    xml,
+    "<LumpSumDistributionTaxAmt>2610</LumpSumDistributionTaxAmt>",
+  );
+  const printed = form4972Pdf.instances!(pending.form4972!, filer, pending)[0];
+  assertEquals(printed.line30, 2610);
+  assertEquals(printed.line6, undefined);
+  const prepared = await f1040_2025.prepareReturn(pending, filer);
+  const dir = ".state/research/2026-10-06-form4972-shared-participant-single";
+  await Deno.mkdir(dir, { recursive: true });
+  await Deno.writeTextFile(
+    dir + "/single-part3.json",
+    JSON.stringify(
+      { source, election: { ...election, elect_capital_gain: false }, pending },
+      null,
+      2,
+    ),
+  );
+  await Deno.writeTextFile(dir + "/single-part3.xml", prepared.bundle.xml);
+  const pdf = await prepared.renderPdf();
+  await Deno.writeFile(dir + "/single-part3.pdf", pdf);
+  const document = await PDFDocument.load(pdf);
+  assertEquals(document.getPageCount(), 3);
+  assertEquals(document.getForm().getFields().length, 0);
+  const xsd =
+    ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
+  const validated = await new Deno.Command("xmllint", {
+    args: ["--noout", "--schema", xsd, dir + "/single-part3.xml"],
+    stderr: "piped",
+  }).output();
+  assertEquals(validated.code, 0, new TextDecoder().decode(validated.stderr));
+});
