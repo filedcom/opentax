@@ -1,4 +1,5 @@
 import { form8994OwnedReviewFixture } from "./review-8994-owned.fixture.ts";
+import { form8941ArrangementReviewFixture } from "./review-8941-arrangements.fixture.ts";
 import { form8941FamilyReviewFixture } from "./review-8941-family.fixture.ts";
 import { form8941PartYearReviewFixture } from "./review-8941-partyear.fixture.ts";
 import { form8941OwnedReviewFixture } from "./review-8941-owned.fixture.ts";
@@ -9043,6 +9044,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
   form8941OwnedReviewFixture(),
   form8941PartYearReviewFixture(),
   form8941FamilyReviewFixture(),
+  form8941ArrangementReviewFixture(),
   medicareMsaReviewFixture(),
   ...(["NY", "AK", "TN", "SD"] as const).map((state) =>
     noncommunityMfsAccountingSstbFixture(

@@ -17,6 +17,12 @@ import {
   verifyForm8941ShopReview,
 } from "./shop_evidence.ts";
 
+import {
+  arrangementWorksheet,
+  monthlyArrangementSchema,
+  premiumMoney,
+} from "./arrangements.ts";
+
 const amount = z.number().int().finite().nonnegative();
 const employeeSchema = z.object({
   employee_ssn: z.string().regex(/^\d{9}$/),
@@ -40,9 +46,6 @@ const sourceSchema = z.object({
   shop_marketplace_identifier: z.string().trim().min(1).max(100),
   shop_plan_reference: z.string().trim().min(1),
   all_nonexcluded_employees_enrolled_verified: z.literal(true),
-  uniform_employer_contribution_basis_points: z.number().int().min(5000).max(
-    10000,
-  ),
   excluded_owner_family_seasonal_and_nonbusiness_workers_none_verified: z
     .literal(true),
   no_other_trades_or_common_control_verified: z.literal(true),
@@ -58,9 +61,15 @@ const sourceSchema = z.object({
   shop_review: shopReviewSchema,
 }).strict();
 
+const legacySourceSchema = sourceSchema.extend({
+  uniform_employer_contribution_basis_points: z.number().int().min(5000).max(
+    10000,
+  ),
+});
+
 /** Full-year compatibility and explicitly sourced whole-month enrollment. */
 export const inputSchema = z.union([
-  sourceSchema.extend({
+  legacySourceSchema.extend({
     full_year_employee_only_coverage_verified: z.literal(true),
     employees: z.array(
       employeeSchema.extend({
@@ -68,7 +77,7 @@ export const inputSchema = z.union([
       }).strict(),
     ).min(1).max(24),
   }).strict(),
-  sourceSchema.extend({
+  legacySourceSchema.extend({
     employee_only_calendar_month_coverage_verified: z.literal(true),
     all_enrollment_invoice_payment_records_identified_confirmed: z.literal(
       true,
@@ -80,7 +89,7 @@ export const inputSchema = z.union([
       }).strict(),
     ).min(1).max(24),
   }).strict(),
-  sourceSchema.extend({
+  legacySourceSchema.extend({
     identified_shop_tier_calendar_month_coverage_confirmed: z.literal(true),
     qualified_shop_health_plan_confirmed: z.literal(true),
     qualified_shop_plan_source_reference: z.string().trim().min(1),
@@ -96,6 +105,36 @@ export const inputSchema = z.union([
       employeeSchema.extend({
         enrollment_period: enrollmentPeriodSchema,
         tax_year_shop_premium: z.number().int().positive(),
+        coverage_tier: coverageTierSchema,
+        covered_dependents_all_enrolled_for_employee_period_confirmed: z
+          .literal(true),
+        covered_dependents: z.array(coveredDependentSchema).max(10),
+      }).strict(),
+    ).min(1).max(24),
+  }).strict(),
+  sourceSchema.extend({
+    identified_shop_tier_calendar_month_coverage_confirmed: z.literal(true),
+    qualified_shop_health_plan_confirmed: z.literal(true),
+    qualified_shop_plan_source_reference: z.string().trim().min(1),
+    no_wellness_or_state_law_contribution_adjustment_confirmed: z.literal(true),
+    qualifying_arrangement: z.literal("monthly_owned_composite_or_list_rules"),
+    all_plan_eligible_employees_identified_confirmed: z.literal(true),
+    all_identified_employees_plan_eligible_every_policy_month_confirmed: z
+      .literal(true),
+    proprietor_and_excluded_workers_not_plan_eligible_confirmed: z.literal(
+      true,
+    ),
+    no_salary_reduction_or_tobacco_surcharge_in_employer_premiums_confirmed: z
+      .literal(true),
+    all_enrollment_invoice_payment_records_identified_confirmed: z.literal(
+      true,
+    ),
+    monthly_arrangements: z.array(monthlyArrangementSchema).min(1).max(12),
+    employees: z.array(
+      employeeSchema.extend({
+        employer_premium_paid: premiumMoney,
+        enrollment_period: enrollmentPeriodSchema,
+        tax_year_shop_premium: premiumMoney.refine((n) => n > 0),
         coverage_tier: coverageTierSchema,
         covered_dependents_all_enrolled_for_employee_period_confirmed: z
           .literal(true),
@@ -140,8 +179,9 @@ export function calculateForm8941(raw: unknown): Form8941Lines {
   }
   const references = new Set<string>();
   const enrollmentRecords = new Set<string>();
-  const contribution = source.uniform_employer_contribution_basis_points /
-    10000;
+  const contribution = "monthly_arrangements" in source
+    ? undefined
+    : source.uniform_employer_contribution_basis_points / 10000;
   const ratingArea = source.employees[0];
   for (const employee of source.employees) {
     if (
@@ -159,7 +199,7 @@ export function calculateForm8941(raw: unknown): Form8941Lines {
       throw new Error("Form 8941 bounded SHOP plan needs one rating area");
     }
     if (
-      employee.employer_premium_paid !==
+      contribution !== undefined && employee.employer_premium_paid !==
         Math.round(employeeTaxYearPremium(employee) * contribution)
     ) {
       throw new Error(
@@ -181,21 +221,28 @@ export function calculateForm8941(raw: unknown): Form8941Lines {
   if (line2 >= 25 || line3 >= 67_000) {
     throw new Error("Form 8941 FTE or wage ceiling bars the direct credit");
   }
-  const line4 = source.employees.reduce(
+  const line4 = Math.round(source.employees.reduce(
     (sum, employee) => sum + employee.employer_premium_paid,
     0,
-  );
+  ));
   // Worksheet4(c): prorate the annual table premium only for enrolled periods.
   // Preserve the fractional row amounts and round their sum for the filed line.
-  const line5 = Math.round(
-    source.employees.reduce(
-      (sum, employee) =>
-        sum + employee.irs_2025_rating_area_average_premium *
-          source.uniform_employer_contribution_basis_points *
-          enrollmentMonthCount(employee),
-      0,
-    ) / 120000,
-  );
+  const line5 = "monthly_arrangements" in source
+    ? Math.round(
+      arrangementWorksheet(source).reduce(
+        (sum, row) => sum + row.adjusted_average_premium,
+        0,
+      ),
+    )
+    : Math.round(
+      source.employees.reduce(
+        (sum, employee) =>
+          sum + employee.irs_2025_rating_area_average_premium *
+            source.uniform_employer_contribution_basis_points *
+            enrollmentMonthCount(employee),
+        0,
+      ) / 120000,
+    );
   const line6 = Math.min(line4, line5);
   const line7 = Math.round(line6 * 0.5);
   const line8 = line2 <= 10

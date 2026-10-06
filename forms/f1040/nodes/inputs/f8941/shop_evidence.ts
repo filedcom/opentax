@@ -1,4 +1,10 @@
 import { z } from "zod";
+import {
+  arrangementWorksheet,
+  cents,
+  type MonthlyArrangement,
+  premiumMoney,
+} from "./arrangements.ts";
 
 const sourceUrl = "https://www.irs.gov/instructions/i8941";
 
@@ -74,8 +80,10 @@ const monthlyPremiumSchema = z.object({
   employee_only_coverage_verified: z.literal(true).optional(),
   coverage_tier: coverageTierSchema.optional(),
   covered_dependent_references: z.array(z.string().trim().min(1)).optional(),
-  billed_premium: z.number().int().positive(),
-  employer_payment: z.number().int().positive(),
+  billed_premium: premiumMoney.refine((n) => n > 0),
+  employer_payment: premiumMoney,
+  employer_policy_reference: z.string().trim().min(1).optional(),
+  insured_quote_reference: z.string().trim().min(1).optional(),
   shop_invoice_reference: z.string().trim().min(1),
   employer_payment_reference: z.string().trim().min(1),
 }).strict();
@@ -135,7 +143,8 @@ interface ReviewSource {
   readonly shop_marketplace_identifier: string;
   readonly shop_plan_reference: string;
   readonly employment_ein: string;
-  readonly uniform_employer_contribution_basis_points: number;
+  readonly uniform_employer_contribution_basis_points?: number;
+  readonly monthly_arrangements?: readonly MonthlyArrangement[];
   readonly employees: readonly EmployeeWorksheetSource[];
   readonly shop_review: ShopReview;
 }
@@ -287,7 +296,10 @@ export function verifyForm8941ShopReview(source: ReviewSource): void {
         }
         const key = `${employee.coverage_tier}:${month.month}`;
         const existing = tierMonthPremiums.get(key);
-        if (existing !== undefined && existing !== month.billed_premium) {
+        if (
+          !source.monthly_arrangements && existing !== undefined &&
+          existing !== month.billed_premium
+        ) {
           throw new Error(
             "Form 8941 composite tier monthly premium differs across employees",
           );
@@ -343,10 +355,19 @@ export function verifyForm8941ShopReview(source: ReviewSource): void {
         seenDocuments.add(reference);
       }
       if (
-        month.employer_payment !== Math.round(
-          month.billed_premium *
-            source.uniform_employer_contribution_basis_points / 10000,
-        )
+        !source.monthly_arrangements &&
+        (month.employer_policy_reference !== undefined ||
+          month.insured_quote_reference !== undefined)
+      ) {
+        throw new Error(
+          "Form 8941 invoice arrangement references need monthly owned rules",
+        );
+      }
+      if (
+        !source.monthly_arrangements && month.employer_payment !== Math.round(
+            month.billed_premium *
+              source.uniform_employer_contribution_basis_points! / 10000,
+          )
       ) {
         throw new Error("Form 8941 monthly employer contribution differs");
       }
@@ -359,12 +380,24 @@ export function verifyForm8941ShopReview(source: ReviewSource): void {
       );
     }
     if (
-      billed !== employeeTaxYearPremium(employee) ||
-      paid !== employee.employer_premium_paid
+      cents(billed) !== cents(employeeTaxYearPremium(employee)) ||
+      cents(paid) !== cents(employee.employer_premium_paid)
     ) {
       throw new Error(
         "Form 8941 monthly premiums differ from worksheet inputs",
       );
     }
+  }
+  if (source.monthly_arrangements) {
+    arrangementWorksheet({
+      ...source,
+      monthly_arrangements: source.monthly_arrangements,
+      employees: source.employees.map((e) => {
+        if (!e.coverage_tier) {
+          throw new Error("Form 8941 arrangement requires enrolled tier");
+        }
+        return { ...e, coverage_tier: e.coverage_tier };
+      }),
+    });
   }
 }

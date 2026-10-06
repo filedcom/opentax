@@ -481,9 +481,19 @@ export function assertAttachmentCoverage(
     typeof form3800 === "object" &&
     ("f8941_direct_employer_credit" in form3800 ||
       "form8941_applied_credit" in form3800);
-  if (byKey.f8941 !== undefined || hasForm8941Credit) {
+  // A failed public input node can leave only start.f8941. Keep that source
+  // active so malformed qualifying records cannot silently export a no-credit
+  // return after the graph reports diagnostics.
+  const publicForm8941 = byKey.start && typeof byKey.start === "object" &&
+      "f8941" in byKey.start
+    ? byKey.start.f8941
+    : undefined;
+  if (
+    byKey.f8941 !== undefined || publicForm8941 !== undefined ||
+    hasForm8941Credit
+  ) {
     try {
-      reconcileForm8941DocumentSource(byKey.f8941, byKey);
+      reconcileForm8941DocumentSource(publicForm8941 ?? byKey.f8941, byKey);
     } catch (cause) {
       throw new Error(
         `[${exportKind.toUpperCase()}] Form 8941 needs a reconciled direct Schedule C source, Form 3800 allocation, and premium deduction; export blocked`,

@@ -216,6 +216,9 @@ export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   form8936Pdf,
   form8936ScheduleAPdf,
   form8949Pdf,
+  // QBI55 and health credit65 precede Additional Medicare/NIIT71/72.
+  form8995Pdf,
+  form8941Pdf,
   form8959Pdf,
   form8960Pdf,
   form8962Pdf,
@@ -225,8 +228,6 @@ export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   form8992Pdf,
   form8992ScheduleAPdf,
   form8994Pdf,
-  form8995Pdf,
-  form8941Pdf,
   form965aPdf,
   form8995aPdf,
   form8995aScheduleAPdf,
