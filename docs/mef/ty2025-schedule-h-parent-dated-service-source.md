@@ -65,7 +65,8 @@ The original reviewed source packet directory is
 `/tmp/opentax-scheduleh-parent-period-final-v7-oct6.log` (terminal 4/0,
 before the finite/calendar-cap hours guard). A fresh final-code v8 run and
 archive use `/tmp/opentax-scheduleh-parent-period-final-v8-oct6.log` and
-`/tmp/opentax-scheduleh-parent-period-final-v8-oct6`, respectively.
+`/tmp/opentax-scheduleh-parent-period-final-v8-oct6`, respectively. The v8
+four-test focused run passed 4/0; a separate explicit `deno check` passed.
 The ten new cases total 50 filled pages:
 
 | Source circumstance | Parent FICA wages | Schedule H / Schedule 2 / 1040 other tax |
@@ -99,6 +100,18 @@ previously reviewed reference; none has a PDF widget or AcroForm field. The
 new May-divorce source corrects three retained continuity-reference labels
 relative to the provisional v6 archive; its financial facts and reviewed PDF
 are unchanged. The other 17 source inputs match their reviewed references.
+The final-code v8 parity manifest is
+`/tmp/opentax-scheduleh-parent-period-final-v8-parity-oct6.json`:
+18 packets/91 pages, exact saved inputs, whole pending, prepared pending,
+carryforwards and origins versus v7; native XML differs only in `ReturnTs`;
+all filled PDFs are byte-identical to the reviewed v7 files, with no widgets
+or AcroForm fields. The ten new v7 saved inputs also replayed on the final
+hours-guard code with full XSD and exact source/graph/PDF at
+`/tmp/opentax-scheduleh-parent-period-hours-root10-oct6/report.json`
+(10 returns, 50 pages); the original eight older inputs replayed exact at
+`/tmp/opentax-scheduleh-parent-prior8-hours-held-oct6.log` (8 returns,
+41 pages). The held production file's SHA-256 was
+`47212fab388ee4d4d04e81c57b2f7f4f24408ca2c2f1d93dd2f2bc59a1a3f938`.
 
 The existing eight parent packets remain saved at
 `/tmp/opentax-scheduleh-parent-evidence-v2-oct6`; the actual raw-source
@@ -107,7 +120,7 @@ whole pending, prepared pending, carryforwards, origins, native XML except
 `ReturnTs`, and every PDF byte, with full XSD validation. The script normalizes
 the generated filer timestamp only. Its terminal log is
 `/tmp/opentax-scheduleh-parent-prior8-final-held-oct6.log` (8 returns,
-41 pages on final held production). The earlier successful replay is
+41 pages on the original v7 production). The earlier successful replay is
 `/tmp/opentax-scheduleh-parent-prior8-replay-v2-oct6.log`. The first replay attempt incorrectly
 compared that timestamp and is retained at
 `/tmp/opentax-scheduleh-parent-prior8-replay-oct6.log` as a diagnostic, not a
