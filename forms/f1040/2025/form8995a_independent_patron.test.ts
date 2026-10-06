@@ -277,3 +277,77 @@ Deno.test("independent patron rejects owner, allocation, payroll, duplicate sour
   );
   await assertRejects(() => buildPdfBytes(good, wrong, ".pdf-cache"));
 });
+
+Deno.test("independent farms may share a cooperative issuer while farm and issued-copy identities remain distinct", async () => {
+  const fixture = independentPatronFixture("phase"),
+    inputs = structuredClone(fixture.inputs) as any;
+  const reviews = inputs.qbi_patron.independent_farm_reviews;
+  reviews[1].source_1099patr.payer_tin = reviews[0].source_1099patr.payer_tin;
+  reviews[1].source_1099patr.payer_name = reviews[0].source_1099patr.payer_name;
+  inputs.f1099patr[1].payer_tin = reviews[0].source_1099patr.payer_tin;
+  inputs.f1099patr[1].payer_name = reviews[0].source_1099patr.payer_name;
+  const r = f1040_2025.executeReturn(inputs);
+  assertEquals(r.diagnostics, []);
+  const p = buildPending(r.pending) as any;
+  assertEquals(p.f1040.line13_qbi_deduction, 66136);
+  const projected = form8995aPdf.projectFields!(p.form8995a, p) as any;
+  assertEquals([projected.line15, projected.line15_b, projected.line38], [
+    24164,
+    31971,
+    10001,
+  ]);
+  const b = await buildMefBundle(p, { filer: fixture.filer, attachments: [] });
+  assertEquals((b.xml.match(/<PatronAgricHortCoopGrp>/g) ?? []).length, 2);
+  assertStringIncludes(
+    b.xml,
+    "<DPADSect199AgAllocAgricHortAmt>10001</DPADSect199AgAllocAgricHortAmt>",
+  );
+  const origins: any[] = [];
+  await buildPdfBytes(b.pending, fixture.filer, ".pdf-cache", b, origins);
+  assertEquals(origins.length, 19);
+  for (
+    const mutate of [
+      (i: any) =>
+        i.schedule_f.schedule_fs[1].line_d_ein =
+          i.schedule_f.schedule_fs[0].line_d_ein,
+      (i: any) =>
+        i.qbi_patron.independent_farm_reviews[1].source_1099patr
+          .source_document_reference =
+            i.qbi_patron.independent_farm_reviews[0].source_1099patr
+              .source_document_reference,
+      (i: any) =>
+        i.qbi_patron.independent_farm_reviews[1].source_1099patr.recipient_tin =
+          "111223333",
+    ]
+  ) {
+    const bad = structuredClone(inputs);
+    mutate(bad);
+    assert(
+      f1040_2025.executeReturn(bad).diagnostics.some((d) =>
+        d.severity === "error"
+      ),
+    );
+  }
+  for (
+    const mutate of [
+      (v: any) =>
+        v.schedule_f.schedule_fs[1].line_d_ein =
+          v.schedule_f.schedule_fs[0].line_d_ein,
+      (v: any) =>
+        v.qbi_patron.independent_farm_reviews[1].source_1099patr
+          .source_document_reference =
+            v.qbi_patron.independent_farm_reviews[0].source_1099patr
+              .source_document_reference,
+      (v: any) =>
+        v.qbi_patron.independent_farm_reviews[1].source_1099patr.recipient_tin =
+          "111223333",
+    ]
+  ) {
+    const bad = structuredClone(p);
+    mutate(bad);
+    await assertRejects(() =>
+      buildMefBundle(bad, { filer: fixture.filer, attachments: [] })
+    );
+    await assertRejects(() => buildPdfBytes(bad, fixture.filer, ".pdf-cache"));
+  }
+});

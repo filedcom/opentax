@@ -38,7 +38,7 @@ export function independentPatronSources(
   }
   const references = new Set<string>();
   const owners = new Set<string>();
-  const identifiers = new Set<string>();
+  const farmIdentifiers = new Set<string>();
   const businesses = review.independent_farm_reviews.map((r) => {
     if (r.business.kind !== "schedule_f") {
       throw new Error("Independent patron route needs cash farm reviews");
@@ -90,19 +90,14 @@ export function independentPatronSources(
       }
       references.add(reference);
     }
-    for (
-      const id of [
-        farm.line_d_ein?.replace(/\D/g, ""),
-        r.source_1099patr.payer_tin,
-      ]
-    ) {
-      if (!id || identifiers.has(id)) {
-        throw new Error(
-          "Independent patron businesses and cooperative identities must be distinct",
-        );
-      }
-      identifiers.add(id);
+    // Distinct proprietors may receive separate issued copies from the same
+    // cooperative. Only the owned farm identity must be distinct; payer identity
+    // remains reconciled to each actual recipient and source copy.
+    const farmEin = farm.line_d_ein?.replace(/\D/g, "");
+    if (!farmEin || farmIdentifiers.has(farmEin)) {
+      throw new Error("Independent patron farm identities must be distinct");
     }
+    farmIdentifiers.add(farmEin);
     const source = sourceSchema.parse({
       review: r,
       business_source: farm,
