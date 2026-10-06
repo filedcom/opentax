@@ -4201,3 +4201,8 @@ The intervening daemon diagnosis did not advance the board. Full board reread be
 
 
 Root unpaid extra2 actual saved replay terminal0: all-notices unpaid1598/7pages and TX-only no-credit-reduction1428/6pages, fullXSD/source unchanged. All13pages reviewed including full ScheduleHpage2; TX-only one-stateYes/line11No/line12Yes and worksheet checkbox false, multi-state worksheet checkbox true. ZeroWidgets/Acrofields; PDFs and native exceptReturnTs exact final focusedv4. Final focus3/0/11filtered (1m3s). Original raw3 plus extra2 give5returns/34pages; root38private source/replay hashes retained. Prior41 actual11405/session81720 and broadcandidate10838 inspected live; no integration or parentclosure yet. Root render first failed because PATH lacked Poppler; corrected absolute retained executable without modifying any PDF/source.
+
+
+## Before unpaid account source integration
+
+Complete board reread and learnings compacted before integration of settled candidate8e924543c. Final focus3/0/11filtered, independent root5saved returns/34pages fullXSD/sourceunchanged with exact native/PDF and allpages reviewed support reversible integration. First two positives add only retained account-review facts to untouched before source; no factory/source rewrite claim. Candidate broad10838 and rootprior41 replay11405 remain live; main14module and46saved-source gates are required before bounded ledger seal. Frozen52/future exact; ledger1534. FullV25 predates this new production and remains live/versionqualified.
