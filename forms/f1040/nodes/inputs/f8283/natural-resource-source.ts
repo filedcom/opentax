@@ -180,6 +180,13 @@ export const charitableNaturalResourceSourceSchema = z.discriminatedUnion(
     }).strict(),
   ],
 );
+/** Prior producing-mineral history is a distinct source contract. Public current
+ * gifts keep their2025 schema; prior computations do not imply filing authority. */
+export const priorProducingMining2024SourceSchema =
+  charitableNaturalResourceSourceSchema.options[2].extend({
+    date_contributed: date.refine((value) => value.startsWith("2024-")),
+  });
+
 export type CharitableNaturalResourceSource = z.infer<
   typeof charitableNaturalResourceSourceSchema
 >;
@@ -189,7 +196,20 @@ const cents = (value: number) =>
 /** Outright gift: 170(e)/1.170A-4, not actual taxable sale income. Current
  * 1251 is repealed and 1252 no longer includes 182 land-clearing deductions. */
 export function calculateCharitableNaturalResource(raw: unknown) {
-  const source = charitableNaturalResourceSourceSchema.parse(raw);
+  return calculateNaturalResourceForYear(raw, 2025);
+}
+
+export function calculatePriorProducingMining2024(raw: unknown) {
+  return calculateNaturalResourceForYear(raw, 2024);
+}
+
+function calculateNaturalResourceForYear(
+  raw: unknown,
+  contributionYear: 2024 | 2025,
+) {
+  const source = contributionYear === 2024
+    ? priorProducingMining2024SourceSchema.parse(raw)
+    : charitableNaturalResourceSourceSchema.parse(raw);
   const acquiredYear = Number(source.date_acquired.slice(0, 4));
   const placedYear = Number(source.placed_in_service.slice(0, 4));
   if (
@@ -214,13 +234,13 @@ export function calculateCharitableNaturalResource(raw: unknown) {
     );
   }
   if (
-    source.annual_records.length !== 2025 - acquiredYear + 1 ||
+    source.annual_records.length !== contributionYear - acquiredYear + 1 ||
     source.annual_records.some((row, index) =>
       row.tax_year !== acquiredYear + index
     )
   ) {
     throw new Error(
-      "Natural-resource annual account must retain every owned year in order through2025",
+      `Natural-resource annual account must retain every owned year in order through${contributionYear}`,
     );
   }
   const refs = [
@@ -245,7 +265,7 @@ export function calculateCharitableNaturalResource(raw: unknown) {
   const received = cents(
     source.current_year_paid_receipts.reduce((sum, row) => {
       if (
-        !row.received_on.startsWith("2025-") ||
+        !row.received_on.startsWith(`${contributionYear}-`) ||
         row.received_on > source.date_contributed ||
         receiptIds.has(row.sale_invoice_reference)
       ) {
@@ -378,7 +398,7 @@ export function calculateCharitableNaturalResource(raw: unknown) {
             "Owned mining exploration/development cost differs from actual stage record",
           );
         }
-        if (row.tax_year > 1986 && row.tax_year !== 2025) {
+        if (row.tax_year > 1986 && row.tax_year !== contributionYear) {
           throw new Error(
             "Prior post1986 mining AMT vintages need their complete amortization source route",
           );
@@ -506,7 +526,9 @@ export function calculateCharitableNaturalResource(raw: unknown) {
       basis = cents(basis - depletion);
       const amortizable = row.tax_year > 1986 ? allowed : 0;
       miningAmtUnamortized = cents(miningAmtUnamortized + amortizable * .9);
-      if (row.tax_year === 2025) miningAmtAdjustment = cents(amortizable * .9);
+      if (row.tax_year === contributionYear) {
+        miningAmtAdjustment = cents(amortizable * .9);
+      }
     } else if (source.kind !== "natural_resource_1254" && !legacyOil) {
       if (
         row.depletion_claimed !== 0 || row.units_sold !== 0 ||
@@ -722,8 +744,11 @@ export function calculateCharitableNaturalResource(raw: unknown) {
 export function charitableNaturalResourceDocumentFields(
   raw: unknown,
   index: number,
+  contributionYear: 2024 | 2025 = 2025,
 ): Record<string, string> {
-  const source = charitableNaturalResourceSourceSchema.parse(raw);
+  const source = contributionYear === 2024
+    ? priorProducingMining2024SourceSchema.parse(raw)
+    : charitableNaturalResourceSourceSchema.parse(raw);
   const commonFields = {
     property_reference: source.property_reference,
     donor_name: source.donor_name,
