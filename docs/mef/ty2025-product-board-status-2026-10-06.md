@@ -4288,3 +4288,8 @@ OHnoordinary actualsavedroot1/6 andbefore1 terminal0 onheld06a954; wholegraph/pr
 ## Irregular payroll main integration
 
 Maind47da1b22+f383d1b80 integrate candidate622+OHf0; productionSHA06a954 unchanged. Rootcandidate3/21+OH1/6 fullXSD/nativeonlyTs/wholegraph/source/PDFexact andbefore3+OH1 missing-source rejections terminal. All27newpacketpageinstances reviewed or exact-byte transferred;37finalcandidate/OH source/gate/privatefiles preserved. Mainordinary14module session64237 andactual65record source session3745 live,productionheld; expectedscope63positive386pages+2oldmissingperiodnegatives, notyetterminalverified. Existingparentcare/FICA circumstance ordinary-period audit delegated privately, no main/future edits. Frozen52/future andledger1536 retained.
+
+
+## Immutable full regression V28
+
+V28immutablefc6abc3c5 starts18:29:40Z with25789physicalprivatefiles/1453hashes reverified; Deno2.9.4/V815.0.245.2-rusty/TS6.0.3, actualwrapper19356/task19365/test19366 inspectedlive. Ordinarydenotasktest one-shot LaunchAgentguard; codeincludesirregularSHA06a954/OHtestf383. PriorV27/V26 processes retained/versionqualified; nofullbatchterminaltotals. PR63exactfc6abc3c5 title/body/draft verified andattached. Main14module64237 andsaved65record3745 remainlive; ledger1536/frozen52/future unchanged. ParentFICA nextprimaryaudit confirmsfour-weekmedicalqualifiersarecalendar-quarterconditions, whileactualage/marital transitionsneedordinaryperiod review; no medicalday-by-day gate inferred.
