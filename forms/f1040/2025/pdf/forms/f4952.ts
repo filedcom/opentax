@@ -18,6 +18,7 @@ import {
 } from "../../form4952_prior_carryforward_reconciliation.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import { reconcileForm4952ScheduleJChildDividend } from "../../form4952_schedulej_child_reconciliation.ts";
+import { reconcileForm4952PabAmt } from "../../form4952_pab_amt_reconciliation.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 
 // TY2025 AcroForm order: f1_01/f1_02 are taxpayer name and identifying
@@ -140,6 +141,8 @@ export const form4952Pdf: PdfFormDescriptor = {
       fields.source_k1_investment_interest !== undefined
     ) {
       reconcileForm4952K1InterestAgainst1099Path(fields, allPending);
+    } else if (fields.source_private_activity_bond_interest !== undefined) {
+      reconcileForm4952PabAmt(fields, allPending);
     } else if (fields.source_1099_interest !== undefined) {
       reconcileForm4952InterestPath(fields, allPending);
     } else if (

@@ -19,6 +19,7 @@ import {
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 import { FilingStatus } from "../types.ts";
 import { reconcileForm4952ScheduleJChildDividend } from "../../form4952_schedulej_child_reconciliation.ts";
+import { reconcileForm4952PabAmt } from "../../form4952_pab_amt_reconciliation.ts";
 
 export interface Fields {
   line1?: number | null;
@@ -157,6 +158,12 @@ export const form4952: MefFormDescriptor<"form4952", Input> = {
       reconcileForm4952K1InterestAgainst1099Path(
         fields,
         context?.pending ?? {},
+      );
+    } else if (fields.source_private_activity_bond_interest !== undefined) {
+      reconcileForm4952PabAmt(
+        fields,
+        context?.pending ?? {},
+        context?.filer?.primarySSN,
       );
     } else if (fields.source_1099_interest !== undefined) {
       reconcileForm4952InterestPath(fields, context?.pending ?? {});
