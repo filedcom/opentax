@@ -1611,3 +1611,18 @@ Both catalog patches are integrated at b9e165f45: 340 unique fixtures. First met
 ## Before two-farm health integration
 
 Tip-health source commit2d3fdcbcb integrated with both C/F source imports and tip-source binder/wrapper retained; no main gate yet. Existing frozen board read and preserved. Two-farm source0cdafecb6 adds actual loss-owner zero capacity without inventing a ScheduleSE or Form7206 copy; focused combined verification follows both integrations.
+
+## Before beneficiary and mixed C/F tip integrations
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,433 bounded slices**. Prior learnings and evidence are preserved in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). New discoveries belong only in `future_todo`.
+
+Actual planner: **347 fixtures**, 116 PDF descriptors, 113 keys, 96 covered and 17 uncovered. Published PR63 head is **5ed5a70a7**. Verified main gates cover mixed C/F SHOP (52/0, 52 reviewed pages), three-member SHOP (15/0, 80 pages), mixed-owner WOTC/tip QBI (62/0 plus prior12/0, 122/147 pages), complete-source annuity (247/0, held7/38) and independent C/F health (22/0, held7/212). Regenerated PDFs match reviewed bytes; old NUA held5/27 remains unchanged. These prove their stated routes; broader parents remain open.
+
+Full `deno task test` at bc6cafec6 ended11,494/8, exit1. Immutable rerun fbacc539c started02:29:48UTC; wrapper26565/Deno26572 were verified live03:41UTC. Twelve observed failures include prior source and module-initialization issues; current main calculated-return/NEC replay passes2/0, while the six exact public-source XML checks continue; terminal totals and a passing latest full run remain required. Root registered24 reviewed catalog cases after fixing reverse fixture initialization (main22/0 plus metadata8/0); tip-health explicit plan sources and two-farm owner health are integrated with combined verification running. Wider filing/source combinations, authentication, ATS conflicts/credentials, business rules, IRS acceptance and release readiness remain incomplete.
+
+
+Integrated tip-health and two-farm source gate51/0(4m16s), eight files. Main9tiphealthPDFs equal149reviewedpages; twofarmheld7/217 terminal0 with PDF/XML bytes unchanged. Exact12 old fullV3 failures have targeted passing evidence; fullV3 live01h17m31. Next ready709 partialbeneficiary and21e mixedC/Ftips are existing frozen tasks, not future tasks.

@@ -73,3 +73,5 @@ Nine packets contain27 retained source/XML/PDF files and149 pages. All PDFs were
 ## Integrated main artifact replay
 
 At main42cccdf15, all nine public source packets are recalculated and prepared through current native/PDF builders. Every filled PDF is byte-identical to the previously inspected149 pages. Fresh source/XML/PDF snapshots and27 hashes are retained in `/tmp/opentax-tip-health-current-main-replay`; original reviewed artifacts remain unchanged. Replay script `/tmp/opentax-tip-health-current-main-replay.ts`, terminal0 log `/tmp/opentax-tip-health-current-main-replay.log`, SHA256 `7438495634abbf105fe1c4e78d1eaef120cb7ef8c364a99e1ce307385c396059`. Combined source/conflict/compatibility gate remains running; this artifact comparison alone does not close the broader parent.
+
+Integrated main eight-file source/conflict/compatibility gate:51 passed/0 failed(4m16s), `/tmp/opentax-tip-two-farm-health-current-main.log`. This includes tip-health, two-farm/C-F health, prior C/C health, original tips, Medicare/zeroeligibility and Publication974. Prior running-only checkpoint is superseded by this terminal result.
