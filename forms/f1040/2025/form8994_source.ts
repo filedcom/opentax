@@ -2,7 +2,10 @@ import {
   calculateForm8994,
   inputSchema as form8994InputSchema,
 } from "../nodes/inputs/f8994/index.ts";
-import { inputSchema as scheduleCInputSchema } from "../nodes/inputs/schedule_c/model.ts";
+import {
+  inputSchema as scheduleCInputSchema,
+  projectScheduleCItems,
+} from "../nodes/inputs/schedule_c/model.ts";
 
 /** Reconcile the direct-employer credit to the prepared proprietor and wages. */
 export function reconcileForm8994DirectEmployer(
@@ -24,7 +27,8 @@ export function reconcileForm8994DirectEmployer(
   ) {
     throw new Error("Form 8994 proprietor differs from finalized Form 1040");
   }
-  const businesses = scheduleCInputSchema.parse(pending.schedule_c).schedule_cs;
+  const scheduleC = scheduleCInputSchema.parse(pending.schedule_c);
+  const businesses = projectScheduleCItems(scheduleC);
   const matches = businesses.filter((business) =>
     business.business_reference === source.schedule_c_business_reference
   );
@@ -54,14 +58,25 @@ export function reconcileForm8994DirectEmployer(
     );
   }
   if (
+    business.line_26_other_employment_credits !== lines.line1 ||
+    scheduleC.form8994_wage_reductions?.length !== 1 ||
+    scheduleC.form8994_wage_reductions[0].business_reference !==
+      source.schedule_c_business_reference ||
+    scheduleC.form8994_wage_reductions[0].credit_amount !== lines.line1
+  ) {
+    throw new Error(
+      "Form 8994 Schedule C wage deduction reduction differs from full determined credit",
+    );
+  }
+  if (
     appliedCredit !== undefined && (
       !Number.isInteger(appliedCredit) || appliedCredit < 0 ||
       appliedCredit > lines.line3 ||
-      business.line_26_other_employment_credits !== appliedCredit
+      business.line_26_other_employment_credits !== lines.line1
     )
   ) {
     throw new Error(
-      "Form 8994 Schedule C wage deduction reduction differs from Form 3800 allowed credit",
+      "Form 8994 Schedule C wage deduction reduction differs from full determined credit",
     );
   }
   return { source, lines };

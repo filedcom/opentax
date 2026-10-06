@@ -194,6 +194,7 @@ const inputSchema = z.object({
   form8859_worksheet_b_line14: z.number().finite().nonnegative().optional(),
   form8834_source_credit: z.number().finite().nonnegative().optional(),
   form8396_source: form8396SourceSchema.optional(),
+  form8994_determined_credit: z.number().int().finite().positive().optional(),
   form8941_determined_credit: z.number().int().finite().positive().optional(),
   form3800_source_credits: z.object({
     standardCredit: z.number().finite().nonnegative(),
@@ -1412,6 +1413,19 @@ class F1040Node extends TaxNode<typeof inputSchema> {
                     input.form3800_source_credits?.passiveLines ?? {},
                   ).every((amount) => amount === 0)
                 ? { form8941_applied_credit: businessCredit.lines.line37 }
+                : {}),
+              ...(input.form8994_determined_credit !== undefined &&
+                  input.form3800_source_credits?.standardCredit === 0 &&
+                  (input.form3800_source_credits?.empowermentCredit ?? 0) ===
+                    0 &&
+                  input.form3800_source_credits?.specifiedCredit ===
+                    input.form8994_determined_credit &&
+                  input.form3800_source_credits?.standardCarryforward === 0 &&
+                  input.form3800_source_credits?.specifiedCarryforward === 0 &&
+                  Object.values(
+                    input.form3800_source_credits?.passiveLines ?? {},
+                  ).every((amount) => amount === 0)
+                ? { form8994_applied_credit: businessCredit.lines.line37 }
                 : {}),
             },
           }]

@@ -295,6 +295,12 @@ export const inputSchema = z.object({
     schedule_c_line29_tentative_profit: z.number().int().finite(),
     line36: z.number().int().positive(),
   }).strict().optional(),
+  form8994_wage_reductions: z.array(
+    z.object({
+      business_reference: z.string().trim().min(1),
+      credit_amount: z.number().int().finite().positive(),
+    }).strict(),
+  ).optional(),
   form8941_premium_reductions: z.array(
     z.object({
       business_reference: z.string().trim().min(1),
@@ -508,7 +514,40 @@ export function projectSection481aScheduleCItems(
 export function projectScheduleCItems(
   input: z.infer<typeof inputSchema>,
 ): ScheduleCItem[] {
-  const items = projectSection481aScheduleCItems(input);
+  const rawItems = projectSection481aScheduleCItems(input);
+  const wageReductions = input.form8994_wage_reductions ?? [];
+  const wageSeen = new Set<string>();
+  for (const reduction of wageReductions) {
+    if (
+      wageSeen.has(reduction.business_reference) ||
+      rawItems.filter((item) =>
+          item.business_reference === reduction.business_reference
+        ).length !== 1
+    ) {
+      throw new Error(
+        "Form8994 wage reduction needs one distinct ScheduleC business",
+      );
+    }
+    wageSeen.add(reduction.business_reference);
+  }
+  const items = rawItems.map((item) => {
+    const reduction = wageReductions.find((row) =>
+      row.business_reference === item.business_reference
+    );
+    if (!reduction) return item;
+    if (
+      (item.line_26_other_employment_credits ?? 0) !== 0 ||
+      reduction.credit_amount > (item.line_26_wages ?? 0)
+    ) {
+      throw new Error(
+        "Form8994 full wage reduction needs unreduced gross payroll without duplicate employment credits",
+      );
+    }
+    return itemSchema.parse({
+      ...item,
+      line_26_other_employment_credits: reduction.credit_amount,
+    });
+  });
   const reductions = input.form8941_premium_reductions ?? [];
   const seen = new Set<string>();
   for (const reduction of reductions) {

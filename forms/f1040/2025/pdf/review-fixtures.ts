@@ -1,3 +1,4 @@
+import { form8994OwnedReviewFixture } from "./review-8994-owned.fixture.ts";
 import { form8941FamilyReviewFixture } from "./review-8941-family.fixture.ts";
 import { form8941PartYearReviewFixture } from "./review-8941-partyear.fixture.ts";
 import { form8941OwnedReviewFixture } from "./review-8941-owned.fixture.ts";
@@ -9038,6 +9039,7 @@ const educationBase = basePdfReviewFixtures.find((fixture) =>
   fixture.id === "single-form8863-lifetime-learning-scholarship"
 )!;
 export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
+  ...(["full", "partial", "zero"] as const).map(form8994OwnedReviewFixture),
   form8941OwnedReviewFixture(),
   form8941PartYearReviewFixture(),
   form8941FamilyReviewFixture(),
