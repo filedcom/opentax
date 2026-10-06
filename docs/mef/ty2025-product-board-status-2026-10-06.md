@@ -4734,3 +4734,8 @@ Main checked direct `deno test --v8-flags=--max-old-space-size=8192` eight-modul
 ## Main Form8962 multiple-source integration
 
 Reviewed5873/4ed/portable574 integrated as0689d76e5/acb375097/ffe0458fc without conflict. Private95/0 plusportable3/0 andactual3/15 independent review remain bounded evidence; main source replay andchecked4modules are pending, withunion60 held atffe0458fc. Production retains existing policy/household scope; familyeligibility work remains isolated, including oldmissing-review negatives. V32PID64169 verifiedlive at65minutes; no terminalfullpass claim.
+
+
+## October7 compaction before next reviews
+
+Previous goal turn made authoritative progress: aggregation sealed1549, reviewed mixed-source8962 integrated anddraftPR63 exacthead/title/body verified393363bdb. Main8962 typed4 gate PID77141 live; corrected saved3 V2 replay compares full JSON projection, preserving the initial undefined-property comparison failure in86files (manifestdd802d69ea621aa79eabcc66510443b8090b0d2ecffc576387830cf90066d086). Privatefamily8962 V4 normal6modules launched91780 with10 frozen hashes, affirmative eligibility/zero-spouse reviewed sources and real native/directPDF controls; no positivefinalapprovalyet. WiderPAB correctednetline4a limit-binding source andfinal gates pending; existingprototype versions retainedqualified. FullV32 PID64169 verifiedlive at69minutes, no terminalsummary. Frozen52/futureunchanged; no widerparent orIRScompletionclaim.
