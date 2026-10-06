@@ -1,3 +1,4 @@
+import { reconcileForm8606RothInventories } from "../../form8606_roth_inventory_reconciliation.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { form8606 } from "../../mef/forms/f8606.ts";
 import { printSchema } from "../../../nodes/intermediate/forms/form8606/index.ts";
@@ -221,6 +222,16 @@ export const form8606Pdf: PdfFormDescriptor = {
       filer,
       pending: allPending,
     });
+    const inventory = reconcileForm8606RothInventories(allPending, filer);
+    if (inventory) {
+      return inventory.owners.filter((owner) => owner.requires8606).map((owner) => ({ ...owner.fields,
+        print_line1_nondeductible: undefined, print_line2_prior_basis: undefined,
+        print_line3_total_basis: undefined, print_line14_remaining_basis: undefined,
+        ...(owner.taxable === 0 ? { print_roth_line23_after_contribution_basis: "0",
+          print_roth_line24_conversion_basis: undefined, print_roth_line25a_earnings: undefined,
+          print_roth_line25b_disaster: undefined, print_roth_line25c_taxable: undefined } : {}),
+        print_owner_name: owner.ownerName, print_owner_ssn: owner.ownerSsn }));
+    }
     const roth = reconcileForm8606Roth(raw, allPending, filer);
     if (roth) {
       return [{

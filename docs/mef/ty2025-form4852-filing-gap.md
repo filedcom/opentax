@@ -406,3 +406,77 @@ are reviewed synthetic test bytes, not external authentication. Taxpayer
 completion/source authenticity and IRS business rules/ATS remain external gates.
 The broader4852/8606 parent remains open. Current-main4972 group/inventory and
 exact-cent changes must be preserved when integrating the separate Roth blocks.
+
+
+## Learning checkpoint before complete current Roth inventories (October6)
+
+The045 source extension's nine packets/52 pages and earlier3dcc ten/70 remain
+preserved in their original checkouts. One-payment restrictions are real copy-
+layout/source-aggregation limits, not authority to omit other issued accounts.
+The next existing parent extension must bind complete actual current payment
+lists to the same owned account/history record for each owner, consume regular
+contribution basis once across accounts, allocate early earnings before the
+actual age59½ date, and file distinct taxpayer/spouse8606 and5329 consequences.
+Qualified payments are excluded from8606 nonqualified line19. Each issued or
+substitute copy retains its own payer/account/distribution lineage and amounts.
+Conversion FIFO/recapture and consumed historical basis require separate actual
+retained prior-tax source evidence; regular-only inventories cannot imply these
+facts. External authentication and IRS acceptance remain outside fixture proof.
+
+## Complete current owner Roth inventory proof (October 6)
+
+The retained source route now binds every actual current issued/substitute Roth
+payment to a complete owner account/history inventory. Regular contribution
+basis is consumed once across accounts, separately for taxpayer and spouse.
+Native/PDF Form8606 and Form5329 copy emission uses the actual owner consequence;
+qualified-only payments produce neither form. Actual issuer address and federal,
+state and local withholding remain joined to each current copy. Distinct known
+payer/account/distribution lineage permits legitimate same-payer payments without
+allowing repeated source copies. Unknown taxable amounts remain unknown on the
+completed substitute, while owner history derives the taxable earnings.
+
+Six public full-return cases include three Single payments, five MFJ payments,
+two early owners, crossing age59½, a qualified spouse, qualified-only payments,
+and raw cents. The cents case retains payments3000.25+4000.25+2000=9000.50 and
+regular basis5000.50: finalized annual lines19/22 are9001/5001 and earnings4000.
+Individual issued-copy gross projections3000/4000/2000 are independently rounded;
+no invented residual alters a source copy. The [2025 Form1040 rounding rules](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+require adding amounts before rounding when several amounts enter one line.
+[Publication590-B](https://www.irs.gov/publications/p590b) requires owner-wide
+aggregation and regular-contribution ordering; [2025 Form8606 instructions](https://www.irs.gov/pub/irs-prior/i8606--2025.pdf)
+require distinct spouse forms. IRS business-rule/ATS acceptance remains external.
+
+Terminal checked evidence on isolated045 source: new public positives/negatives
+2/0 (21s), byte-bound rehashed account conflict1/0 (251ms), unjoined-current-IRA source rejection1/0, and related21-module
+preservation211/0 (1m24s). Authoritative logs are
+`/tmp/opentax-roth-inventory-public5.log`,
+`/tmp/opentax-roth-inventory-bytes6.log`, and
+`/tmp/opentax-roth-inventory-related3.log`. Six held packets/57 pages pass full
+local2025v5.4 XSD and exact replay of source, pending, XML except ReturnTs, PDF,
+page origins and every retained byte/hash. All57 pages were visually inspected
+for owner headers, copy ordering, equations and legibility. Artifact root is
+`/tmp/opentax-form4852-roth-inventory-oct6/.state/research/form4852-roth-inventory`;
+`replay.ts`, `verified-manifest.json`, and `visual-review.json` retain the proof.
+Earlier10/70 and9/52 original artifacts remain unchanged in their prior trees.
+
+This completes current-payment regular-history inventory/copy layout, while the
+existing parent continues conversion FIFO/recapture and consumed historical
+basis. The source contract still rejects conversion/prior-distribution/inherited
+or transferred basis rather than deriving these facts from an unknown declaration.
+Retained test records prove byte/fact joins, not external issuer authenticity or
+IRS acceptance. No unknown payerTIN or earlier-year engine coverage is invented.
+
+### Learning checkpoint before conversion FIFO/recapture
+
+Current owner aggregation and owner forms are now independent of payment copy
+count. Conversion history must extend this same complete inventory with actual
+annual5498 conversion receipts and retained prior-filed tax treatment; taxable
+conversion portions precede nontaxable portions within FIFO tax years, each with
+its own five-year recapture clock. Prior distribution consumption cannot be
+replaced by opening basis scalars. Preserve current57 and prior70/52 packet bytes
+when opening the next existing parent phase.
+
+Final held replay log: `/tmp/opentax-roth-inventory-replay-final6.log`; manifestSHA256
+`595ea6feb5b508e53a429df1ae7932b0f0fb168c31fc4470cdf8500764a8068f`;
+visual-reviewSHA256 `17b2bbbbf5c6ead2b3bde7ae48596bdbe6720c5f7dcc28472787a6ce0fdda549`.
+Replay command from the isolated checkout: `PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run --allow-all .state/research/form4852-roth-inventory/replay.ts`.

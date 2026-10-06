@@ -1,4 +1,9 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { f1040_2025 } from "./index.ts";
 import { FilingStatus } from "../nodes/types.ts";
 import { IraOwner } from "../nodes/intermediate/forms/form8606/index.ts";
@@ -77,6 +82,7 @@ Deno.test("sourced zero-opening-basis IRA contribution joins Form 8606, Form 104
   const pending = normalizeForm8606TestPending(result.pending);
   const filer = extractFilerIdentity(general);
   const xml = form8606.build(pending.form8606, { filer, pending });
+  assert(typeof xml === "string");
   assertStringIncludes(
     xml,
     "<NondedIRACurrTYNondedContriAmt>7000</NondedIRACurrTYNondedContriAmt>",

@@ -138,6 +138,7 @@ for (
     assertEquals(pending.f1040.line4b_ira_taxable, taxable);
     assertEquals(pending.schedule1?.line20_ira_deduction ?? 0, 0);
     const xml = form8606.build(fields, { filer, pending });
+    assert(typeof xml === "string");
     assertStringIncludes(
       xml,
       "<Form8606IRANamelineTxt>Blair Saver</Form8606IRANamelineTxt>",

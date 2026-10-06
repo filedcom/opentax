@@ -7,6 +7,7 @@ import {
   isSourceMoney,
   sameSourceMoney,
 } from "../../intermediate/forms/form4972/source-rounding.ts";
+import { reconcileRothOwnerInventoryCopies, rothOwnerInventorySchema } from "../../intermediate/forms/form8606/roth-inventory.ts";
 import {
   reviewedRothActivity,
   rothActivityReviewSchema,
@@ -110,6 +111,7 @@ function effectiveTaxableAmount(
 ): number {
   // Suppressed items contribute no taxable income
   if (item.exclude_4972 === true) return 0;
+  if (item.roth_owner_inventory_review) return 0;
   if (item.roth_activity_review) {
     return reviewedRothActivity(item.roth_activity_review).taxable;
   }
@@ -488,6 +490,7 @@ export const itemSchema = z.object({
   form8606_distribution_evidence: distributionEvidenceSchema.optional(),
   roth_distribution_evidence: rothDistributionEvidenceSchema.optional(),
   roth_activity_review: rothActivityReviewSchema.optional(),
+  roth_owner_inventory_review: rothOwnerInventorySchema.optional(),
 
   // Form 8606 — year-end FMV of all traditional IRAs (line 6).
   // Required when prior_ira_basis is set and there are remaining IRA assets after distribution.
@@ -1155,6 +1158,12 @@ function validateItem(item: R1099Item): void {
     );
   }
   validateIraRolloverEvidence(item);
+  if (item.roth_owner_inventory_review &&
+    (item.roth_activity_review || item.roth_distribution_evidence || item.prior_ira_basis !== undefined ||
+      item.form8606_distribution_evidence || item.rollover_code || item.exclude_4972 || item.qcd_full ||
+      (item.qcd_partial_amount ?? 0) > 0 || item.form8915f_treatment || item.no_distribution_received)) {
+    throw new Error("Complete Roth inventory conflicts with another distribution treatment");
+  }
   if (item.roth_activity_review) {
     const facts = reviewedRothActivity(item.roth_activity_review);
     const payment = facts.review.payment;
@@ -1186,7 +1195,7 @@ function validateItem(item: R1099Item): void {
     }
   }
   if (
-    !item.roth_activity_review && (item.exclude_8606_roth === true ||
+    !item.roth_activity_review && !item.roth_owner_inventory_review && (item.exclude_8606_roth === true ||
       item.roth_distribution_evidence !== undefined)
   ) {
     const evidence = item.roth_distribution_evidence;
@@ -1401,7 +1410,7 @@ function iraF1040Fields(
   );
   // Items routed through Form 8606 Part I are excluded here — form8606 emits line4b for them.
   const nonBasisItems = active.filter((item) =>
-    !routedThrough8606PartI(item) &&
+    !routedThrough8606PartI(item) && !item.roth_owner_inventory_review &&
     item.roth_distribution_evidence === undefined &&
     (!item.roth_activity_review ||
       reviewedRothActivity(item.roth_activity_review).qualified)
@@ -1519,14 +1528,15 @@ function form8606RothInput(item: R1099Item) {
 // A reviewed, source-matched Form 8915-F qualified disaster distribution is
 // exempt and the exporter requires its actual Form 8915-F document.
 function form5329Outputs(items: R1099Items): NodeOutput[] {
+  const inventories = reconcileRothOwnerInventoryCopies(activeItems(items));
   const earlyItems = activeItems(items).filter(
     (item) =>
-      EARLY_DIST_CODES.has(item.box7_distribution_code) &&
+      !item.roth_owner_inventory_review && EARLY_DIST_CODES.has(item.box7_distribution_code) &&
       item.form8915f_treatment === undefined &&
       (!item.roth_activity_review ||
         reviewedRothActivity(item.roth_activity_review).earlyTaxable > 0),
   );
-  return earlyItems.map((item) => {
+  const ordinary = earlyItems.map((item) => {
     if (
       item.form8606_distribution_evidence
         ?.no_current_nondeductible_contribution_confirmed === false
@@ -1561,6 +1571,9 @@ function form5329Outputs(items: R1099Items): NodeOutput[] {
       }],
     });
   });
+  return [...ordinary, ...inventories.filter((facts) => facts.earlyTaxable > 0).map((facts) => output(form5329, {
+    owner_entries: [{ owner: tsSchema.parse(facts.review.owner), distribution_code: "J", early_distribution: facts.earlyTaxable }],
+  }))];
 }
 
 // Code 5 means a prohibited transaction, not a lump-sum election. Code A
@@ -1916,8 +1929,12 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
 
 // Form 8606 outputs: triggered by exclude_8606_roth, rollover_code = C, or prior_ira_basis.
 function form8606Outputs(items: R1099Items): NodeOutput[] {
-  const outputs: NodeOutput[] = [];
+  const inventories = reconcileRothOwnerInventoryCopies(activeItems(items));
+  const outputs: NodeOutput[] = inventories.length ? [output(form8606, {
+    nondeductible_contributions: 0, roth_owner_inventory_reviews: inventories.map((facts) => facts.review),
+  })] : [];
   for (const item of activeItems(items)) {
+    if (item.roth_owner_inventory_review) continue;
     if (item.exclude_8606_roth === true) {
       outputs.push(output(form8606, form8606RothInput(item)));
     } else if (item.rollover_code === "C") {

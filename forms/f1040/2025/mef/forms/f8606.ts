@@ -1,3 +1,4 @@
+import { reconcileForm8606RothInventories } from "../../form8606_roth_inventory_reconciliation.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import {
@@ -234,11 +235,19 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
   ]);
 }
 
-export const form8606: MefFormDescriptor<"form8606", Input> = {
+export const form8606: MefFormDescriptor<"form8606", Input, string | readonly string[]> = {
   pendingKey: "form8606",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8606.pdf",
   build(fields, context) {
+    if (!Array.isArray(fields) && "owner_forms" in fields) {
+      if (!context?.pending) throw new Error("Separate Roth owner copies require actual source graph");
+      const inventory = reconcileForm8606RothInventories(context.pending, context.filer);
+      if (!inventory || JSON.stringify(printSchema.parse(fields)) !== JSON.stringify(printSchema.parse(context.pending.form8606))) {
+        throw new Error("Form8606 collection differs from finalized complete source");
+      }
+      return inventory.owners.filter((owner) => owner.requires8606).map((owner) => buildIRS8606(owner.fields!, context));
+    }
     return buildIRS8606(fields, context);
   },
 };

@@ -1,3 +1,4 @@
+import { reconcileForm8606RothInventories } from "./form8606_roth_inventory_reconciliation.ts";
 import { reconcileForm8606RothActivity } from "./form8606_roth_activity_reconciliation.ts";
 import { inputSchema as f1099rSchema } from "../nodes/inputs/f1099r/index.ts";
 import {
@@ -12,6 +13,16 @@ export function reconcileForm8606Roth(
   pending: Readonly<Record<string, unknown>> | undefined,
   filer: FilerIdentity | undefined,
 ) {
+  const collection = pending ? reconcileForm8606RothInventories(pending, filer) : undefined;
+  if (collection) {
+    const fields = printSchema.parse(rawFields);
+    const owner = collection.owners.find((row) => row.review.owner === fields.roth_owner_inventory_review?.owner);
+    if (!owner?.fields || JSON.stringify(fields) !== JSON.stringify(printSchema.parse(owner.fields))) {
+      throw new Error("Form8606 owner descriptor differs from the complete retained current inventory");
+    }
+    return { fields, gross: owner.nonqualifiedGross, contribution: owner.basis,
+      taxable: owner.taxable, ownerName: owner.ownerName!, ownerSsn: owner.ownerSsn! };
+  }
   const activity = pending
     ? reconcileForm8606RothActivity(pending, filer)
     : undefined;

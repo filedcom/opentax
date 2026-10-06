@@ -1,3 +1,9 @@
+import { roundWholeDollars } from "../../../../whole-dollars.ts";
+import {
+  reviewedRothOwnerInventory,
+  rothOwnerInventorySchema,
+  rothOwnerPrintFields,
+} from "./roth-inventory.ts";
 import {
   reviewedRothActivity,
   rothActivityReviewSchema,
@@ -165,11 +171,13 @@ export const inputSchema = z.object({
   distribution_evidence: distributionEvidenceSchema.optional(),
   roth_distribution_evidence: rothDistributionEvidenceSchema.optional(),
   roth_activity_review: rothActivityReviewSchema.optional(),
+  roth_owner_inventory_reviews: z.array(rothOwnerInventorySchema).min(1).max(2)
+    .optional(),
 });
 
 export type Form8606Input = z.infer<typeof inputSchema>;
 
-export const printSchema = z.object({
+const ownerPrintSchema = z.object({
   print_line1_nondeductible: z.number().nonnegative(),
   print_line2_prior_basis: z.number().nonnegative(),
   print_line3_total_basis: z.number().nonnegative(),
@@ -200,6 +208,7 @@ export const printSchema = z.object({
   distribution_evidence: distributionEvidenceSchema.optional(),
   roth_distribution_evidence: rothDistributionEvidenceSchema.optional(),
   roth_activity_review: rothActivityReviewSchema.optional(),
+  roth_owner_inventory_review: rothOwnerInventorySchema.optional(),
   print_roth_line19_distributions: z.number().int().nonnegative().optional(),
   print_roth_line20_homebuyer: z.number().int().nonnegative().optional(),
   print_roth_line21_after_homebuyer: z.number().int().nonnegative().optional(),
@@ -211,6 +220,11 @@ export const printSchema = z.object({
   print_roth_line25a_earnings: z.number().int().nonnegative().optional(),
   print_roth_line25b_disaster: z.number().int().nonnegative().optional(),
   print_roth_line25c_taxable: z.number().int().nonnegative().optional(),
+});
+export const printSchema = ownerPrintSchema.extend({
+  roth_owner_inventory_reviews: z.array(rothOwnerInventorySchema).optional(),
+  owner_forms: z.array(ownerPrintSchema.extend({ owner: z.enum(["T", "S"]) }))
+    .optional(),
 });
 
 // ─── Part I Helpers ───────────────────────────────────────────────────────────
@@ -535,6 +549,64 @@ class Form8606Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: Form8606Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    if (input.roth_owner_inventory_reviews) {
+      if (
+        Object.entries(input).some(([key, value]) =>
+          value !== undefined &&
+          !["nondeductible_contributions", "roth_owner_inventory_reviews"]
+            .includes(key)
+        ) || input.nondeductible_contributions !== 0 ||
+        input.prior_basis !== undefined ||
+        input.roth_distribution !== undefined ||
+        input.traditional_distributions !== undefined ||
+        input.roth_conversion !== undefined || input.roth_activity_review ||
+        input.distribution_evidence ||
+        input.roth_distribution_evidence || input.current_contribution_source ||
+        input.zero_basis_source || input.filing_details
+      ) {
+        throw new Error(
+          "Complete owner Roth inventory cannot merge scalar/other8606 activity",
+        );
+      }
+      const facts = input.roth_owner_inventory_reviews.map(
+        reviewedRothOwnerInventory,
+      );
+      if (new Set(facts.map((row) => row.review.owner)).size !== facts.length) {
+        throw new Error("Roth owner history repeated");
+      }
+      const rawGross = facts.reduce((sum, row) =>
+        sum + Math.round(row.rawGross * 100), 0) / 100;
+      const gross = roundWholeDollars(rawGross);
+      const taxable = facts.reduce((sum, row) =>
+        sum + row.taxable, 0);
+      return {
+        outputs: [
+          output(f1040, {
+            line4a_ira_gross: gross,
+            line4b_ira_taxable: taxable,
+          }),
+          output(agi_aggregator, { line4b_ira_taxable: taxable }),
+          {
+            nodeType: this.nodeType,
+            fields: {
+              print_line1_nondeductible: 0,
+              print_line2_prior_basis: 0,
+              print_line3_total_basis: 0,
+              print_line14_remaining_basis: 0,
+              source_traditional_distributions: 0,
+              source_roth_conversion: 0,
+              source_roth_distribution: 0,
+              source_roth_basis_contributions: 0,
+              source_roth_basis_conversions: 0,
+              roth_owner_inventory_reviews: facts.map((row) => row.review),
+              owner_forms: facts.filter((row) => row.requires8606).map((
+                row,
+              ) => ({ owner: row.review.owner, ...rothOwnerPrintFields(row) })),
+            },
+          },
+        ],
+      };
+    }
 
     const reviewed = input.distribution_evidence
       ? reviewedDistributionPartI(input)

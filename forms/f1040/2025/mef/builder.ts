@@ -1,3 +1,4 @@
+import { reconcileForm8606RothInventories } from "../form8606_roth_inventory_reconciliation.ts";
 import { reconcileForm8606RothActivity } from "../form8606_roth_activity_reconciliation.ts";
 import { assertForm4852RetainedEvidence } from "../form4852_retained_evidence.ts";
 import type { Form4852RetainedDocument } from "../form4852_source.ts";
@@ -270,6 +271,7 @@ function buildReturnXml(
   assertPatrWithholdingRecipient(pending.f1099patr, filer);
   assertLine1bHouseholdWageSource(pending);
   assertForm4852FilingRoute(pending, filer, form4852EvidenceVerified);
+  reconcileForm8606RothInventories(pending, filer);
   reconcileForm8606RothActivity(pending, filer);
   assertW2WithholdingSource(pending, filer);
   assert1099WithholdingSource(pending, filer);

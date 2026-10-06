@@ -256,7 +256,7 @@ export const itemSchema = z.object({
       });
     }
     if (
-      val.retirement_source?.roth_activity_review &&
+      (val.retirement_source?.roth_activity_review || val.retirement_source?.roth_owner_inventory_review) &&
       (val.taxable_amount_not_determined !== true ||
         val.retirement_source.box2b_not_determined !== true ||
         val.retirement_source.box2a_taxable_amount !== undefined)
@@ -370,6 +370,7 @@ function pensionItems(items: F4852Items): F4852Items {
 // that source for the paper copy; actual reviewed Roth records can separately
 // determine its taxable earnings. Other undetermined amounts remain guarded.
 export function effectiveTaxable(item: F4852Item): number {
+  if (item.retirement_source?.roth_owner_inventory_review) return 0;
   if (item.retirement_source?.roth_activity_review) {
     return reviewedRothActivity(item.retirement_source.roth_activity_review)
       .taxable;

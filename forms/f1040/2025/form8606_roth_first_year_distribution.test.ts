@@ -1,4 +1,9 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { FilingStatus } from "../nodes/types.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
 import { f1040_2025 } from "./index.ts";
@@ -82,6 +87,7 @@ Deno.test("first-year Roth contribution and code J distribution print Form 8606 
   const ownerForms = pending.form5329.owner_forms as Record<string, unknown>[];
   assertEquals(ownerForms[0].early_distribution, 2_000);
   const xml = form8606.build(pending.form8606, { filer, pending });
+  assert(typeof xml === "string");
   assertStringIncludes(
     xml,
     "<TotNonQlfyDistriFromRothIRAAmt>7000</TotNonQlfyDistriFromRothIRAAmt>",

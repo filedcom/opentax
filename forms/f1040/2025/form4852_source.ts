@@ -1,3 +1,4 @@
+import { reconcileForm8606RothInventories } from "./form8606_roth_inventory_reconciliation.ts";
 import { reconcileForm8606RothActivity } from "./form8606_roth_activity_reconciliation.ts";
 import { isDeepStrictEqual } from "node:util";
 import { createHash } from "node:crypto";
@@ -364,6 +365,7 @@ export function reconcileForm4852Source(
       "Form4852 treatment source cannot replace an original, workpaper or completed copy",
     );
   }
+  reconcileForm8606RothInventories(pending ?? {}, filer);
   reconcileForm8606RothActivity(pending ?? {}, filer);
   return source;
 }

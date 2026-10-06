@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { assert, assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../mef/header.ts";
 import { IraOwner } from "../../../nodes/intermediate/forms/form8606/index.ts";
 import { form8606 } from "./f8606.ts";
@@ -35,6 +35,7 @@ Deno.test("Form 8606: absent pending produces no document", () => {
 
 Deno.test("Form 8606: taxpayer-owned no-activity Part I uses native ordered fields", () => {
   const xml = form8606.build(partI, { filer });
+  assert(typeof xml === "string");
   assertStringIncludes(
     xml,
     "<IRS8606><Form8606IRANamelineTxt>John A Smith</Form8606IRANamelineTxt>",

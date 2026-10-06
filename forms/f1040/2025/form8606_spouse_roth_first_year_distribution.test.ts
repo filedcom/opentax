@@ -1,4 +1,9 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { FilingStatus } from "../nodes/types.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
 import { f1040_2025 } from "./index.ts";
@@ -88,6 +93,7 @@ Deno.test("spouse-owned first-year Roth distribution keeps one owner through For
   assertEquals(ownerForms[0].owner, "S");
   assertEquals(ownerForms[0].early_distribution, 2_000);
   const xml = form8606.build(pending.form8606, { filer, pending });
+  assert(typeof xml === "string");
   assertStringIncludes(
     xml,
     "<Form8606IRANamelineTxt>Blair Saver</Form8606IRANamelineTxt>",

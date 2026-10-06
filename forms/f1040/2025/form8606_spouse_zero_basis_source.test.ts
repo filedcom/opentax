@@ -1,4 +1,9 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { f1040_2025 } from "./index.ts";
 import { FilingStatus } from "../nodes/types.ts";
 import { IraOwner } from "../nodes/intermediate/forms/form8606/index.ts";
@@ -79,6 +84,7 @@ Deno.test("spouse zero-opening-basis contribution reconciles joint return, nativ
   assertEquals(pending.form8606.print_line14_remaining_basis, 7_000);
   assertEquals(pending.schedule1?.line20_ira_deduction ?? 0, 0);
   const xml = form8606.build(pending.form8606, { filer, pending });
+  assert(typeof xml === "string");
   assertStringIncludes(
     xml,
     "<Form8606IRANamelineTxt>Blair Saver</Form8606IRANamelineTxt>",
