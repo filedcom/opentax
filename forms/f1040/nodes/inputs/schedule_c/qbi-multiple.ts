@@ -1,8 +1,9 @@
+import { roundWholeDollars } from "../../../whole-dollars.ts";
 import { computeNetProfit, type ScheduleCItem } from "./model.ts";
 
 /** IRS whole-dollar losses round by absolute value, including exact half dollars. */
 export function roundSignedQbiDollars(value: number): number {
-  return value < 0 ? -Math.round(-value) : Math.round(value);
+  return roundWholeDollars(value);
 }
 
 /** Cent allocation: largest positive business absorbs the residual; order breaks ties. */

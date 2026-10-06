@@ -199,3 +199,20 @@ Deno.test("elements: multiple children are concatenated with no whitespace", () 
     "<Parent><A>1</A><B>2</B></Parent>",
   );
 });
+
+Deno.test("native signed amounts preserve half-dollar losses and zero boundaries", () => {
+  for (
+    const [source, expected] of [
+      [-10000.49, -10000],
+      [-10000.5, -10001],
+      [-10000.51, -10001],
+      [-.49, 0],
+      [-.5, -1],
+      [.49, 0],
+      [.5, 1],
+      [10000.5, 10001],
+    ]
+  ) {
+    assertEquals(element("LossAmt", source), `<LossAmt>${expected}</LossAmt>`);
+  }
+});

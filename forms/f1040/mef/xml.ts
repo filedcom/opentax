@@ -1,3 +1,4 @@
+import { roundWholeDollars } from "../whole-dollars.ts";
 export function escapeXml(value: string): string {
   for (const char of value) {
     const codePoint = char.codePointAt(0)!;
@@ -32,7 +33,7 @@ export function element(
     throw new Error(`MeF XML ${tag} has a nonfinite numeric value`);
   }
   const content = typeof value === "number"
-    ? String(Math.round(value))
+    ? String(roundWholeDollars(value))
     : escapeXml(value);
   const attrsStr = attrs
     ? Object.entries(attrs).map(([k, v]) => ` ${k}="${escapeXml(v)}"`).join("")

@@ -1,3 +1,4 @@
+import { roundWholeDollars } from "../../whole-dollars.ts";
 import { assertForm8978SourceBytes } from "../form8978_source.ts";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { join } from "@std/path";
@@ -174,13 +175,14 @@ function fillEntry(
       }
       // IRS convention: leave numeric fields blank when value is zero —
       // unless the descriptor marks the line as printZero (explicit "0").
-      const blankZero = typeof value === "number" && Math.round(value) === 0 &&
+      const blankZero = typeof value === "number" &&
+        roundWholeDollars(value) === 0 &&
         !("printZero" in entry && entry.printZero);
       const field = form.getTextField(entry.pdfField);
       if (entry.fontSize !== undefined) field.setFontSize(entry.fontSize);
       if (!blankZero) {
         const text = typeof value === "number"
-          ? Math.round(value).toString()
+          ? roundWholeDollars(value).toString()
           : String(value);
         field.setText(text);
       }
@@ -210,12 +212,12 @@ function fillEntry(
         try {
           if (entry.kind === "text") {
             const blankZero = typeof value === "number" &&
-              Math.round(value) === 0 &&
+              roundWholeDollars(value) === 0 &&
               !("printZero" in entry && entry.printZero);
             const field = form.getTextField(extraField);
             if (!blankZero) {
               const text = typeof value === "number"
-                ? Math.round(value).toString()
+                ? roundWholeDollars(value).toString()
                 : String(value);
               field.setText(text);
             }
@@ -301,7 +303,7 @@ function assertRetainedPdfFields(
       : entry.kind === "checkbox"
       ? value === true
       : typeof value === "number"
-      ? Math.round(value) !== 0 ||
+      ? roundWholeDollars(value) !== 0 ||
         ("printZero" in entry && entry.printZero === true)
       : typeof value === "string" && value.length > 0;
     if (!printable) continue;
@@ -368,7 +370,7 @@ export async function fillFormPdf(
   // 8959 / 8960 / 8962 pages to be included in the export.
   const isMeaningful = (v: unknown): boolean => {
     if (v === undefined || v === null) return false;
-    if (typeof v === "number") return Math.round(v) !== 0;
+    if (typeof v === "number") return roundWholeDollars(v) !== 0;
     if (typeof v === "boolean") return v;
     if (typeof v === "string") return v.length > 0;
     return false;
@@ -502,7 +504,7 @@ export async function fillFormPdf(
               }
               form.getTextField(pdfField).setText(
                 typeof value === "number"
-                  ? Math.round(value).toString()
+                  ? roundWholeDollars(value).toString()
                   : String(value),
               );
             }
