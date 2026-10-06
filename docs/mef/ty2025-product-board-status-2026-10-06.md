@@ -3594,3 +3594,7 @@ Entire board re-read after main three-column seal4cb3157f3, preserving frozen52 
 ## Married mortgage main seal
 
 Productiona294e738f passesmainsevenmodulestandard92/0/0ignored(1m12s). Actualretained11/36 terminalraw exactPDF/nativeonlyTs/fullXSD,9comparablepending/3priororigins exact. Rootallsixpages/fullsizebothScheduleA reviewed;24originalpacketfiles+manifest privatelyhashpreserved andunchangedafterreplay. Ledger1515, frozen52/futureexact, no missingpriorpending/carry/originsclaim. Existing cross-loan parent work continues separately; wider authentication/IRS requirements remainopen. Three-column263/0/debt40/354/EIC9/76 seal remains separate. Currentfullbatch now required after these production integrations.
+
+## Current phase full regression
+
+V20 standard `deno task test` started immutable012bd46a673effb3fa58cd284fc5fb526c03d595 at2026-10-06T13:12:10Z, wrapper70208/task70212/actualtest70213 independentlylive. Deno2.9.4/V8 15.0.245.2-rusty/TS6.0.3, physicallyclonedprivateevidence/cache withzero symlinks, KeepAlivefalse/statusrestartguard. Log `/tmp/opentax-deno-task-test-source-v20-oct6.log`, status `/tmp/opentax-full-regression-source-v20-oct6.status`. Includes allsealedthree-column/EIC/marriedmortgage production pluspriorimprovement/QBI. OlderV19/V18/V17 remainindependentlylive, no completedfullpass claimed. New overflowdebt/cross-loan candidates are ongoing separately and not included.
