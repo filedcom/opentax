@@ -934,3 +934,9 @@ Proof-index SHA256:
 This establishes the retained known-source routes and local schema/layout proof;
 external authentication, IRS Business Rules/ATS acceptance and the broader
 Form4852/8606 parent remain open.
+
+## Current conversion integrated main preservation
+
+Main eff7c4703 preserved newer4972source/cents and combinedIRA/PFICordering; only append-only evidence documentation conflicted, both notes retained. Fresh typed source2+combinedordering1 pass **3/0** (1m10s), `/tmp/opentax-roth-current-conversion-main-source-oct6.log`. Actual immutable source **13/116** full-XSD packet replay exact pending/nativeXMLexceptTs/PDF/origins/retained bytes: `/tmp/opentax-roth-current-conversion-main-held13-oct6.log`. Its116returnpages and162retainedsourcepage occurrences retain the agent's complete reviewed bytes. Broader isolated274/0 is separate evidence, not a fresh root bulk count.
+
+Fresh root oldconversion **8/79** whole-source/native/PDF preservation exact `/tmp/opentax-roth-current-conversion-original8-main-oct6.log`. Paper/account/qualifiedQ/forwardN **15/105** preserved `/tmp/opentax-ira-paper-after-current-conversion-held15-oct6.log`; actual deltas checked separately are exactly the three previous itemizedQBI operands22000/20000/20000, no new changes. Prior35/295/997originalhash preservation is separately recorded isolated proof. Annual traditional distributions/current contributions/withheld replacements remain actively incomplete; negative actualpaper18(-5000) nativeNNschema guard, external authentication/businessrules/IRS parents remain open.

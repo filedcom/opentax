@@ -90,3 +90,9 @@ at21 also remain unresolved. Authenticated prior balance history and required
 worksheet source bytes remain open. The [IRS instructions](https://www.irs.gov/instructions/i5471)
 and local source contracts remain the basis for those obligations. Full foreign
 entity/Form5471/Form8992 parent completion and full-return export are not claimed.
+
+## Integrated main gate
+
+Mainfdc645224 integrates six linkage/proof files without changing tax or lifting the full native/PDF guard. Standardtask permits exactly optionalFORM5471_LINKAGE_EVIDENCE_DIR. Fresh typed linkage/nativeidentity/publicattachmentguard modules pass **24/0** (288ms), `/tmp/opentax-5471-linkage-main-source-identity-guard-oct6.log`; includes actuallinkedparentXSD, referenceID/EIN source positives, 94linkageconflict assertions andpublicexportrejection. Root27page paper review remains exact; no changedPDFdescriptor or statementordering. Isolated192/0+13/0 andall27pixel/11projectionJSONpreservation are separately recorded, notfresh root counts.
+
+Further source inspection confirms the authored diagnostic fixture has no actualUSproperty ledger supporting WorksheetB1000, and ordinaryinterest1000 is included in tested/general income without actualFPHCIexception source. Linkage/XSD/PDF projection success does not establish these tax classifications; source/WorksheetA/B reconstruction is active under the existingforeign/source parent. Frozenoriginals remain diagnostic; no silently changed interest/asset/history or fabricated acceptance. Fullguard stays.

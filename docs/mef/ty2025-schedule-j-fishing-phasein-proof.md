@@ -49,3 +49,7 @@ This local result is schema, source and rendering proof;
 externally authenticated catch buyers/suppliers, accepted prior-year returns,
 IRS business-rule acceptance, further businesses, wages, property, losses and
 other attributable source classes remain outside this checkpoint.
+
+## Integrated current main
+
+Main690b53d34 keeps root fishing-source omission restriction and required mining zero8995A. Fresh typed fishing5+mining2 source **7/0** (1m20s), `/tmp/opentax-fishing-phasein-mining-main-source-oct6.log`. Actual retained elected/noJ **2/42** full-XSD replay exactpending/PDF/origins/XMLonlyTs `/tmp/opentax-fishing-phasein-actual-main-held-oct6.log`; prior **8/152** unchanged `/tmp/opentax-fishing-phasein-prior8-main-held-oct6.log`. VisualmanifestSHA899e2e263c15a1cc61542ad4f557739637f755168e5fd8eb6a67fa50df315a26 transfers all42new reviewedpages by PDFbyteidentity. IsolatedQBI52/0 remains separate, broaderjointowner/attribution/prioraccepted/IRS parentsopen.

@@ -150,3 +150,9 @@ allocation, mixed property classes/current gifts, status changes and actual
 accepted prior filing attachment/export remain existing obligations. The
 current-source assertions and financial pages do not authenticate an outside
 issuer or prior filing. The full Form8283/Form6251 parent remains open.
+
+## Integrated current main proof
+
+Main934547e2f retains current2025 schema/default while adding distinct prior2024 calculation. Standardtask permits exactly optionalFORM8283_PRIOR_MINING_EVIDENCE_DIR. Fresh typed prior8+existinginput44+naturalresource19 source cases pass **71/0** (2m10s): `/tmp/opentax-prior-mining-current-main-source-v2-oct6.log`. Initial command named a nonexistent test file and did not execute tests; preserved diagnostic `/tmp/opentax-prior-mining-current-main-source-oct6.log`.
+
+Actual immutable prerequisite **12 files** replay exactly with independent prior and five current calculations: `/tmp/opentax-prior-mining-actual-retained-main-oct6.log`. Strict existing charity **2/32** full-XSD current packets remain exact pending/source/carry/PDF/origins, XMLonlyReturnTs: `/tmp/opentax-mining-after-prior-carry-main-oct6.log`. Original **16/267** preservation terminal `/tmp/opentax-prior-mining-main-original16-oct6.log` retains the already recorded247byteexact/16timestampXML/4independently derived charity JSON additions; no additional source/tax/PDF deltas. Required mining zero8995A remains. Agent reviewed31retainedsourcepages transfer by exact retained bytes. No current carryover full-return export/accepted-history authority is introduced; broad parents remain open.
