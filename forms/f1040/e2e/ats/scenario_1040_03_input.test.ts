@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assert, assertEquals, assertStringIncludes } from "@std/assert";
 import { DistributionCode } from "../../nodes/inputs/f1099r/index.ts";
 import { schedule_f } from "../../nodes/intermediate/forms/schedule_f/index.ts";
 import { schedule_se } from "../../nodes/intermediate/forms/schedule_se/index.ts";
@@ -200,6 +200,10 @@ Deno.test("ATS 1040 Scenario 3 farm source matches native and printable Schedule
   assertEquals(filledFarm.getPageCount(), 2);
 
   const seXml = scheduleSeMef.build(parsedSe, { filer });
+  assert(
+    typeof seXml === "string",
+    "ATS Scenario3 must emit one Schedule SE document",
+  );
   assertStringIncludes(seXml, "<OptionalMethodAmt>5407</OptionalMethodAmt>");
   assertStringIncludes(
     seXml,

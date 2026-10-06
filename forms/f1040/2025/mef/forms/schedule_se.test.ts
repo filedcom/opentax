@@ -1,5 +1,11 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../mef/header.ts";
+import { ownedScheduleSE } from "../../../nodes/intermediate/forms/schedule_se/owner-calculation.ts";
 import { scheduleSE as rawScheduleSE } from "./schedule_se.ts";
 
 const filer: FilerIdentity = {
@@ -11,8 +17,14 @@ const filer: FilerIdentity = {
   filingStatus: FilingStatus.Single,
 };
 const scheduleSE = {
-  build: (fields: Parameters<typeof rawScheduleSE.build>[0]) =>
-    rawScheduleSE.build(fields, { filer }),
+  build: (fields: Parameters<typeof rawScheduleSE.build>[0]) => {
+    const result = rawScheduleSE.build(fields, { filer });
+    assert(
+      typeof result === "string",
+      "Legacy single-owner input must emit one XML document",
+    );
+    return result;
+  },
 };
 
 function assertNotIncludes(actual: string, expected: string) {
@@ -353,6 +365,10 @@ Deno.test("schedule_se: sole spouse farm uses spouse SSN in native XML", () => {
       f1040: { spouse_ssn: "111223333" },
     },
   });
+  assert(
+    typeof result === "string",
+    "Legacy spouse-only input must emit one XML document",
+  );
   assertStringIncludes(result, "<SSN>111223333</SSN>");
   assertStringIncludes(
     result,
@@ -371,28 +387,108 @@ Deno.test("schedule_se: multiple spouse-owned businesses and farms share spouse 
       nameControl: "FARM",
     },
   };
-  const result = rawScheduleSE.build({
-    net_profit_schedule_c: 30_000,
-    net_profit_schedule_f: 50_000,
-  }, {
-    filer: joint,
-    pending: {
-      schedule_c: {
-        schedule_cs: [
-          { proprietor_recipient: "S" },
-          { proprietor_recipient: "S" },
-        ],
-      },
-      schedule_f: {
-        schedule_fs: [
-          { proprietor_recipient: "S" },
-          { proprietor_recipient: "S" },
-        ],
-      },
-      general: { spouse_ssn: "111223333", filing_status: "mfj" },
-      f1040: { spouse_ssn: "111223333", filing_status: "mfj" },
+  const businesses = [
+    {
+      recipient: "S" as const,
+      source_reference: "C1",
+      kind: "schedule_c" as const,
+      net_profit: 15000,
+      qbi_no_other_adjustments_confirmed: false,
     },
+    {
+      recipient: "S" as const,
+      source_reference: "C2",
+      kind: "schedule_c" as const,
+      net_profit: 15000,
+      qbi_no_other_adjustments_confirmed: false,
+    },
+    {
+      recipient: "S" as const,
+      source_reference: "F1",
+      kind: "schedule_f" as const,
+      net_profit: 25000,
+      qbi_no_other_adjustments_confirmed: false,
+    },
+    {
+      recipient: "S" as const,
+      source_reference: "F2",
+      kind: "schedule_f" as const,
+      net_profit: 25000,
+      qbi_no_other_adjustments_confirmed: false,
+    },
+  ];
+  const owner = ownedScheduleSE({
+    identity: { primary_ssn: filer.primarySSN, spouse_ssn: joint.spouse.ssn },
+    businesses,
+    wages: [],
+  }, 176100);
+  const pending = {
+    general: {
+      filing_status: "mfj",
+      taxpayer_ssn: filer.primarySSN,
+      spouse_ssn: joint.spouse.ssn,
+    },
+    f1040: {
+      filing_status: "mfj",
+      taxpayer_ssn: filer.primarySSN,
+      spouse_ssn: joint.spouse.ssn,
+    },
+    schedule_c: {
+      schedule_cs: businesses.filter((b) => b.kind === "schedule_c").map(
+        (b) => ({
+          business_reference: b.source_reference,
+          proprietor_recipient: b.recipient,
+          line_a_principal_business: "Consulting",
+          line_b_business_code: "541600",
+          line_f_accounting_method: "cash",
+          line_g_material_participation: true,
+          line_1_gross_receipts: b.net_profit,
+        }),
+      ),
+    },
+    schedule_f: {
+      schedule_fs: businesses.filter((b) => b.kind === "schedule_f").map(
+        (b) => ({
+          farm_id: b.source_reference,
+          line_a_principal_crop_activity: "Grain farming",
+          line_b_agricultural_activity_code: "111100",
+          line_e_material_participation: true,
+          proprietor_recipient: b.recipient,
+          accounting_method: "cash",
+          line1_sales_livestock_resale: 0,
+          line2_sales_products_raised: b.net_profit,
+          line36_at_risk: "a",
+        }),
+      ),
+    },
+    schedule_se: {
+      owner_identity: owner.source.identity,
+      owner_business_sources: owner.source.businesses,
+      owner_wage_sources: [],
+      owner_instances: owner.instances,
+    },
+    schedule1: { line15_se_deduction: owner.deduction },
+    schedule2: { line4_se_tax: owner.tax },
+  };
+  const documents = rawScheduleSE.build(pending.schedule_se, {
+    filer: joint,
+    pending,
   });
+  assert(
+    typeof documents !== "string",
+    "Retained owner source must emit distinct documents",
+  );
+  assertEquals(documents.length, 1);
+  const result = documents[0];
+  assertThrows(
+    () =>
+      rawScheduleSE.build({}, {
+        filer: joint,
+        pending: { ...pending, schedule_se: {} },
+      }),
+    Error,
+    "retained Schedule SE owner calculations",
+  );
   assertStringIncludes(result, "<SSN>111223333</SSN>");
   assertStringIncludes(
     result,

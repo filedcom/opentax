@@ -4841,3 +4841,13 @@ Result and final log hash remain pending. The earlier ea23fbb91 process is termi
 ## Pending source/visual repairs discovered after the full launch
 
 The sibling family audit found Form8615 fractional ratios incorrectly rounded/blanked by the shared PDF numeric filler. An isolated descriptor-specific repair and all-page proof are running. The spouse/both-employer WOTC audit found the inherited joint fixture used the same EIN for an external W2 employer and the reviewed ScheduleC employer. Distinct employer identity plus actual source conflict rejection and business-specific common-control ownership attribution facts are being implemented. The published primary-MFJ WOTC synthetic proof and current stable full batch predate these corrections. No whole-parent support or IRS acceptance is claimed from either result.
+
+
+## Terminal repaired snapshot type check — October 6
+
+Stable `04dba771b` full `deno task test` exited1 before executing tests:45 TypeScript2345 errors, all in legacy `schedule_se.test.ts` and ATS `scenario_1040_03_input.test.ts`. Those single-document assertions did not narrow the new string-or-owner-document-array return type. Start01:04:29UTC/end01:05:14UTC; log SHA256 `7fff2e2be00b863f1b9689dc36ccb0b0b914b1b7d550b7a2a9d63a1d32c2df66`. Runtime pass/fail totals are unavailable because tests did not run. The old launch is terminal; a fresh full command is required after explicit shape assertion repair.
+
+
+## ScheduleSE full-batch test contract repair
+
+Single-document legacy/ATS assertions now narrow the builder result explicitly. The retained multiple-spouse-source case now supplies actual two-business/two-farm source records, owner calculations and reconciled Schedule1/2 totals, expects one spouse document and rejects omitted owner calculations. This replaces a stale identity-only fixture; no production source guard was relaxed. Final typed check:31 passed,0 failed (605ms), log `/tmp/opentax-se-full-type-repair-final5.log`, SHA256 `0b6044a44912e3dc1a954787f5b8416925cf9f01d16df3b867cc9252b472b619`. Earlier diagnostic focused runs exposed missing fixture fields, now corrected.
