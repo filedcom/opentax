@@ -4914,3 +4914,12 @@ Log `/tmp/opentax-aggregate-shop-main-integration.log`, SHA256 `78feebe323d2be65
 ## October6 owned C/F filed-operand main proof
 
 At68f876474, the exact21-case selected main integration batch passed21/0 in2m16s. Commands and logs are retained in the [whole-dollar proof](ty2025-owned-cf-whole-dollar-reconciliation.md). Ten registered source-backed full local-XSD returns produced130 flattened PDF pages; all130 current pages were rendered and reviewed,30 source/XML/PDF hashes retained, and main held replay passed. Main planner actually reports264 fixtures,116 descriptors,113 keys,95 covered keys and18 uncovered. The full regression atbc6cafec6 remains live and has two observed failures; its current result and later-head full proof are unproven. This bounded MFJ route does not close52 parent TODOs or IRS acceptance.
+
+
+## Full regression checkpoint bc6cafec6 (terminal October6)
+
+Stable detached checkout `/tmp/opentax-full-regression-repaired-v2-oct6` ran the unchanged `deno task test` with Deno2.9.4/TypeScript6.0.3, libxml2.9.13 and real Poppler26.09.0 on PATH. Commit `bc6cafec63f68ce91c9346d67f137a77fb6b3789`; started2026-10-06T01:08:44Z, ended02:14:42Z, exit1; terminal result **11,494 passed,8 failed,0 ignored**,65m24s test time. The stable checkout predates later source/production changes and does not prove latest-head regression.
+
+Failures: CLIissue60 spouse Medicare7206; Form8995A stale negative error wording (already repaired); three Form7206 MFJ policy/Medicare/mixed-month E2E cases; MFJ scenarios15/16 owner-source calculations; ATS02 XSD fixture’s nonstatutory spouse W2 lacks issued-source identity. Current-source investigations and repairs remain in progress; rerun the same full command after phase changes/repairs are integrated. No passing full checkpoint is claimed.
+
+Log `/tmp/opentax-deno-task-test-repaired-v2-oct6.log`, SHA256 `c986b2f4b22005c9416fcd2821b1e94c549dd6e158a9293f1446e866a6071512`; terminal status `/tmp/opentax-full-regression-repaired-v2-oct6.status`. Both process handles are terminal; no duplicate batch was started while live.
