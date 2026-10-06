@@ -1,3 +1,7 @@
+import type { FilerCreditEligibility } from "./filer-eligibility.ts";
+import { filerCreditEligibility, isAge65ByEndOfTaxYear } from "./filer-eligibility.ts";
+export { filerCreditEligibility, isAge65ByEndOfTaxYear } from "./filer-eligibility.ts";
+export type { FilerCreditFacts, FilerCreditEligibility } from "./filer-eligibility.ts";
 import { dependentKiddieTaxFacts } from "../f8615/dependent-source-review.ts";
 import {
   dependentKiddieTaxFamilyReviewSchema,
@@ -739,55 +743,6 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
     return total + filed.line11b_agi + exemptInterest;
   }, 0);
 }
-export type FilerCreditFacts = Pick<
-  GeneralInput,
-  | "filing_status"
-  | "taxpayer_ssn"
-  | "taxpayer_ssn_valid_for_employment"
-  | "taxpayer_ssn_issued_before_due_date"
-  | "taxpayer_tin_issued_by_due_date"
-  | "spouse_ssn"
-  | "spouse_ssn_valid_for_employment"
-  | "spouse_ssn_issued_before_due_date"
-  | "spouse_tin_issued_by_due_date"
->;
-
-export interface FilerCreditEligibility {
-  taxpayerValidSsn: boolean;
-  spouseValidSsn: boolean;
-  ctc: boolean;
-  odc: boolean;
-  eitc: boolean;
-}
-
-export function filerCreditEligibility(
-  facts: FilerCreditFacts,
-): FilerCreditEligibility {
-  const taxpayerTimelyTin = Boolean(facts.taxpayer_ssn) &&
-    facts.taxpayer_tin_issued_by_due_date === true;
-  const spouseTimelyTin = Boolean(facts.spouse_ssn) &&
-    facts.spouse_tin_issued_by_due_date === true;
-  const taxpayerEitcSsn = taxpayerTimelyTin &&
-    facts.taxpayer_ssn_valid_for_employment === true;
-  const spouseEitcSsn = spouseTimelyTin &&
-    facts.spouse_ssn_valid_for_employment === true;
-  const taxpayerCtcSsn = taxpayerEitcSsn &&
-    facts.taxpayer_ssn_issued_before_due_date === true;
-  const spouseCtcSsn = spouseEitcSsn &&
-    facts.spouse_ssn_issued_before_due_date === true;
-  const joint = facts.filing_status === FilingStatus.MFJ;
-  return {
-    taxpayerValidSsn: taxpayerCtcSsn,
-    spouseValidSsn: spouseCtcSsn,
-    ctc: joint
-      ? (taxpayerCtcSsn && spouseTimelyTin) ||
-        (spouseCtcSsn && taxpayerTimelyTin)
-      : taxpayerCtcSsn,
-    odc: taxpayerTimelyTin && (!joint || spouseTimelyTin),
-    eitc: taxpayerEitcSsn && (!joint || spouseEitcSsn),
-  };
-}
-
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 // Tax year-end reference date for age calculations
@@ -827,39 +782,6 @@ function ageAtYearEnd(dob: string): number {
 // For federal tax purposes, a person reaches age 65 on the day before their
 // 65th birthday. For TY2025, this matches the Schedule 1-A instruction to use
 // a birth date before January 2, 1961.
-export function isAge65ByEndOfTaxYear(
-  dob: string | undefined,
-  taxYear: number,
-  owner: "taxpayer" | "spouse",
-): boolean | undefined {
-  if (dob === undefined) return undefined;
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dob);
-  if (match === null) {
-    throw new Error(`${owner} date of birth must be a valid YYYY-MM-DD date`);
-  }
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const birthDate = Date.UTC(
-    year,
-    month - 1,
-    day,
-  );
-  const parsed = new Date(birthDate);
-  if (
-    parsed.getUTCFullYear() !== year ||
-    parsed.getUTCMonth() !== month - 1 ||
-    parsed.getUTCDate() !== day
-  ) {
-    throw new Error(`${owner} date of birth must be a valid YYYY-MM-DD date`);
-  }
-  if (birthDate > Date.UTC(taxYear, 11, 31)) {
-    throw new Error(`${owner} date of birth is after the tax year`);
-  }
-  const cutoff = Date.UTC(taxYear - 64, 0, 2);
-  return birthDate < cutoff;
-}
-
 // For TY2025, CTC requires an employment-valid SSN issued before the return
 // due date. An ITIN or ATIN cannot satisfy that test.
 function passesSSNTest(dep: DependentItem): boolean {

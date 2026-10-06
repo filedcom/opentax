@@ -297,7 +297,7 @@ export function assertIndependentOwnerHealthSource(
   return result;
 }
 
-/** The public health guard also reconciles any claimed business-tip deduction. */
+/** Reconcile actual Schedule1A claims alongside the independent health source. */
 export function assertIndependentOwnerHealth(
   raw: Readonly<Record<string, unknown>> | undefined,
   filer?: FilerIdentity,
@@ -313,14 +313,13 @@ export function assertIndependentOwnerHealth(
     const tips = tipInputSchema.parse(p.schedule1a);
     const expected = qualifiedBusinessTipQbiSource(tips);
     if (
-      !expected ||
       independentHealthCanonical(tips.qualified_tips_health_plans_source) !==
         independentHealthCanonical(result.source) ||
       independentHealthCanonical(p.form8995?.qualified_tip_qbi_source) !==
         independentHealthCanonical(expected)
     ) {
       throw new Error(
-        "Independent health additional deduction needs its actual owned business-tip source",
+        "Independent health additional deductions must match actual owned health and Schedule1A sources",
       );
     }
     schedule1a.build(tips, { pending: p, filer });

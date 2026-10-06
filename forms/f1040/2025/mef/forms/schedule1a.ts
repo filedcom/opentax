@@ -1,3 +1,4 @@
+import { assertSchedule1ASeniorGeneralSource } from "../../schedule1a-senior-source.ts";
 import { schedule_f as scheduleF } from "../../../nodes/intermediate/forms/schedule_f/index.ts";
 import { extractFilerIdentity } from "../../../mef/filer.ts";
 import { form7206 } from "./f7206.ts";
@@ -876,6 +877,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       { taxYear: 2025, formType: "f1040" },
       input,
     );
+    assertSchedule1ASeniorGeneralSource(context?.pending?.general, input, lines.line36a_taxpayer, lines.line36b_spouse);
     const matchesPerson = (
       claimed: number,
       sourceSsn: string | undefined,
