@@ -3012,3 +3012,8 @@ The corrected35/295 proof seals ordinary checkbox classification only. Earlier o
 ## ScheduleJ and corrected Roth publication checkpoint
 
 PR63 remote head c70af78a33042d02f9f4429706d6f794d8ee05de verified after push; saved title/body describe whole source-filing branch and retain52-parent/latest-regression/IRS limitations. Main recorded1468 includes corrected ordinary35-source proof; original10 margin/recharacterization boundaries remain explicit. Complete branch log/stat archived `/tmp/opentax-pr63-full-{log,stat}-oct6.txt`. App attachment request pending; no successful attachment claim.
+
+
+## Before resolving observed V5 regression failures
+
+ImmutableV5 run2 wrapper91417/Deno91420 remains live at20m46s. Its log currently reports six failures: attachment coverage native-only test and five Form8621 source tests. Do not infer terminal totals. Current main already adds the exact Form8621 optional evidence environment permissions and removes the superseded adoption two-pass rejection; source tests are being rerun with the standard task. Attachment test still incorrectly expects blanket PDF rejection for active Form8621 after sourced parent PDF registration at a2ae96eba removed that missing-attachment rule. Its public/native/PDF source guards remain the authoritative unsupported-input gate; update the stale blanket-absence expectation only after reproducing it. PR63 verified remote1fc58a9db; attachment request2515 timed out and was terminated, no successful attachment claim. Frozen52/future exact.
