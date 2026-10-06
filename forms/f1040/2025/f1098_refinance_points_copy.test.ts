@@ -1,3 +1,4 @@
+import { canonicalForm1098CopyDocument } from "./pdf/review-1098-copy.fixture.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { extractFilerIdentity } from "../mef/filer.ts";
@@ -14,8 +15,7 @@ const xsdPath = new URL(
 ).pathname;
 
 async function issuerCopy(): Promise<Uint8Array> {
-  const doc = await PDFDocument.create();
-  doc.addPage([612, 792]);
+  const doc = await canonicalForm1098CopyDocument();
   const form = doc.getForm();
   const copy = "topmostSubform[0].CopyB[0]";
   for (
@@ -30,7 +30,7 @@ async function issuerCopy(): Promise<Uint8Array> {
       [`${copy}.RightCol[0].f2_15[0]`]: "",
       [`${copy}.RightCol[0].f2_16[0]`]: "",
     })
-  ) form.createTextField(field).setText(value);
+  ) form.getTextField(field).setText(value);
   return doc.save();
 }
 

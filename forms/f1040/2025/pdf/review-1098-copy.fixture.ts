@@ -1,5 +1,43 @@
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, StandardFonts } from "pdf-lib";
 import { sha256Hex } from "../prepared-source.ts";
+
+/** Constructed Copy B uses the official page and printable widgets; no issuer authentication. */
+export async function canonicalForm1098CopyDocument(): Promise<PDFDocument> {
+  const path = ".pdf-cache/form1098-2025-printable-source.pdf";
+  let bytes: Uint8Array;
+  try {
+    bytes = await Deno.readFile(path);
+  } catch (error) {
+    if (!(error instanceof Deno.errors.NotFound)) throw error;
+    const response = await fetch(
+      "https://www.irs.gov/pub/irs-prior/f1098--2025.pdf",
+    );
+    if (!response.ok) {
+      throw Error(`Form1098 canonical template HTTP ${response.status}`);
+    }
+    bytes = new Uint8Array(await response.arrayBuffer());
+    await Deno.mkdir(".pdf-cache", { recursive: true });
+    await Deno.writeFile(path, bytes);
+  }
+  const pdf = await PDFDocument.load(bytes, { updateMetadata: false });
+  const form = pdf.getForm();
+  const font = await pdf.embedFont(StandardFonts.Helvetica);
+  form.updateFieldAppearances(font);
+  const prefix = "topmostSubform[0].CopyB[0]";
+  const keep = new Set([
+    `${prefix}.CopyHeader[0].CalendarYear[0].f2_1[0]`,
+    `${prefix}.LeftCol[0].f2_2[0]`,
+    `${prefix}.LeftCol[0].f2_4[0]`,
+    ...[11, 12, 13, 14, 15, 16].map((n) => `${prefix}.RightCol[0].f2_${n}[0]`),
+  ]);
+  for (const field of form.getFields()) {
+    if (!keep.has(field.getName())) form.removeField(field);
+  }
+  for (let page = pdf.getPageCount() - 1; page >= 0; page--) {
+    if (page !== 2) pdf.removePage(page);
+  }
+  return pdf;
+}
 
 interface Form1098CopySource {
   readonly lender_name: string;
@@ -26,8 +64,7 @@ export async function withSyntheticForm1098Copy<T extends Form1098CopySource>(
     };
   }
 > {
-  const pdf = await PDFDocument.create({ updateMetadata: false });
-  pdf.addPage([612, 792]);
+  const pdf = await canonicalForm1098CopyDocument();
   const form = pdf.getForm();
   const prefix = "topmostSubform[0].CopyB[0]";
   const values: Record<string, string> = {
@@ -48,7 +85,7 @@ export async function withSyntheticForm1098Copy<T extends Form1098CopySource>(
       "",
   };
   for (const [name, value] of Object.entries(values)) {
-    form.createTextField(name).setText(value);
+    form.getTextField(name).setText(value);
   }
   const bytes = await pdf.save();
   return {

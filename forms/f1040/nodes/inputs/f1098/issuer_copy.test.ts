@@ -1,5 +1,6 @@
+import { canonicalForm1098CopyDocument } from "../../../2025/pdf/review-1098-copy.fixture.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, PDFName } from "pdf-lib";
 import {
   assertForm1098IssuerCopies,
   verifyForm1098IssuerCopy,
@@ -34,8 +35,7 @@ async function copy(
   includeBox6 = true,
   box2 = "",
 ): Promise<Uint8Array> {
-  const pdf = await PDFDocument.create();
-  pdf.addPage([612, 792]);
+  const pdf = await canonicalForm1098CopyDocument();
   const form = pdf.getForm();
   const prefix = "topmostSubform[0].CopyB[0]";
   const values: Record<string, string> = {
@@ -50,7 +50,10 @@ async function copy(
     ...(includeBox6 ? { [`${prefix}.RightCol[0].f2_16[0]`]: "2400" } : {}),
   };
   for (const [name, value] of Object.entries(values)) {
-    form.createTextField(name).setText(value);
+    form.getTextField(name).setText(value);
+  }
+  if (!includeBox6) {
+    form.removeField(form.getTextField(`${prefix}.RightCol[0].f2_16[0]`));
   }
   return pdf.save();
 }
@@ -214,8 +217,7 @@ async function lenderCopy(
   source: ReturnType<typeof purchasePointsCrossLoanFixture>["f1098"][number],
   interest = source.box1_mortgage_interest,
 ): Promise<Uint8Array> {
-  const pdf = await PDFDocument.create();
-  pdf.addPage([612, 792]);
+  const pdf = await canonicalForm1098CopyDocument();
   const form = pdf.getForm();
   const prefix = "topmostSubform[0].CopyB[0]";
   const values: Record<string, string> = {
@@ -232,7 +234,7 @@ async function lenderCopy(
     [`${prefix}.RightCol[0].f2_16[0]`]: String(source.box6_points_paid ?? ""),
   };
   for (const [name, value] of Object.entries(values)) {
-    form.createTextField(name).setText(value);
+    form.getTextField(name).setText(value);
   }
   return pdf.save();
 }
@@ -385,4 +387,55 @@ Deno.test("two-loan Pub. 936 limit review also needs both issuer copies", async 
     Error,
     "reviewed issuer Copy B bytes for each lender",
   );
+});
+
+Deno.test("Form1098 issuer metadata and stale/hidden/missing printable appearances cannot prove the submitted source copy", async () => {
+  const valid = await copy();
+  const original = await PDFDocument.load(valid);
+  const metadata = await PDFDocument.create();
+  metadata.addPage([612, 792]);
+  for (const field of original.getForm().getFields()) {
+    metadata.getForm().createTextField(field.getName()).setText(
+      original.getForm().getTextField(field.getName()).getText() ?? "",
+    );
+  }
+  const metadataBytes = await metadata.save();
+  await assertRejects(
+    async () =>
+      verifyForm1098IssuerCopy(
+        item,
+        await review(metadataBytes),
+        metadataBytes,
+        "Lender1098.pdf",
+      ),
+    Error,
+    "printable",
+  );
+  for (const kind of ["stale", "hidden", "offpage", "missing"]) {
+    const pdf = await PDFDocument.load(
+      kind === "stale" ? await copy("17000") : valid,
+    );
+    const field = pdf.getForm().getTextField(
+      "topmostSubform[0].CopyB[0].RightCol[0].f2_11[0]",
+    );
+    const widget = field.acroField.getWidgets()[0];
+    if (kind === "stale") field.setText("18000");
+    if (kind === "hidden") widget.setFlags(widget.getFlags() | 2);
+    if (kind === "offpage") {
+      widget.setRectangle({ ...widget.getRectangle(), x: 900 });
+    }
+    if (kind === "missing") widget.dict.delete(PDFName.of("AP"));
+    const bytes = await pdf.save({ updateFieldAppearances: false });
+    await assertRejects(
+      async () =>
+        verifyForm1098IssuerCopy(
+          item,
+          await review(bytes),
+          bytes,
+          "Lender1098.pdf",
+        ),
+      Error,
+      "printable",
+    );
+  }
 });

@@ -1,3 +1,4 @@
+import { assertPrintableSourceTextFields } from "../../../source-printable-fields.ts";
 import { PDFDocument } from "pdf-lib";
 import { z } from "zod";
 import { inputSchema as refinancePointsInputSchema } from "../mortgage_refinance_points/index.ts";
@@ -79,6 +80,18 @@ export async function verifyForm1098IssuerCopy(
       );
     }
   };
+  const requiredFields = [
+    headerYear,
+    `${left}.f2_2[0]`,
+    `${left}.f2_4[0]`,
+    ...[11, 12, 13, 14, 15, 16].map((n) => `${right}.f2_${n}[0]`),
+  ];
+  for (const name of requiredFields) field(name);
+  await assertPrintableSourceTextFields(
+    bytes,
+    requiredFields.map((pdfField) => ({ pdfField, domainKey: pdfField })),
+    "Form 1098 issuer Copy B",
+  );
   const year = digits(field(headerYear));
   const lender = field(`${left}.f2_2[0]`).split(/\r?\n/)[0]?.trim() ?? "";
   const borrowerTin = digits(field(`${left}.f2_4[0]`));
