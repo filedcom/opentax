@@ -140,3 +140,5 @@ and `S.pdf`
 (SHA-256 `e38ea636178637967a5a5af6d2136134d4b8414f82cc0f2d0d002de8314dfc0f`).
 The corresponding `.origins.json`, `.documents.json`, source/pending JSON,
 XML, and fourteen rendered review pages are retained beside them.
+
+Main integration passes the standard143-case gate and separately replays the two actual retained packets against all source bytes, the whole pending graph, native XML apart from its timestamp, PDF and origins. All fourteen reviewed pages match exactly. Logs and the retained manifest are recorded in the October6 status archive. Employer-returned excess remains a separate open branch.
