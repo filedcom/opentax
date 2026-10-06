@@ -8,7 +8,7 @@ import { rothCases, rothReturnSource } from "./form4852_roth.fixture.ts";
 import { assertForm4852RetainedEvidence } from "./form4852_retained_evidence.ts";
 import { reviewedRothActivity } from "../nodes/intermediate/forms/form8606/roth-activity.ts";
 
-const root = ".state/research/form4852-roth-source";
+const root = ".state/research/form4852-roth-source-checkbox-corrected";
 const schema =
   ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd";
 
@@ -46,6 +46,8 @@ Deno.test("retained Form4852 Roth J/T account contribution and age records deriv
       source.retained.documents,
     );
     assertEquals(prepared.bundle.attachments, []);
+    // Ordinary Roth account records require an unmarked native IRA/SEP/SIMPLE box.
+    assertEquals(prepared.bundle.xml.includes("<IRASEPSIMPLEInd>"), false);
     assertEquals((prepared.bundle.xml.match(/<IRS1099R /g) ?? []).length, 1);
     assertEquals(
       (prepared.bundle.xml.match(/<IRS8606 /g) ?? []).length,

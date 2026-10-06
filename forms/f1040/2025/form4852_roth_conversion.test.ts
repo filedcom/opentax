@@ -14,7 +14,7 @@ import {
   rothConversionReturnSource,
 } from "./form4852_roth_conversion.fixture.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "./pdf/builder.ts";
-const root = ".state/research/form4852-roth-conversion";
+const root = ".state/research/form4852-roth-conversion-checkbox-corrected";
 Deno.test("actual prior filed Roth conversions reconcile FIFO and five-year recapture through owner8606/5329 and1040", async () => {
   await Deno.mkdir(root, { recursive: true });
   for (const [n, row] of rothConversionCases.entries()) {
@@ -56,6 +56,7 @@ Deno.test("actual prior filed Roth conversions reconcile FIFO and five-year reca
       (prepared.bundle.xml.match(/<IRS1099R /g) ?? []).length,
       row.joint ? 5 : 3,
     );
+    assertEquals(prepared.bundle.xml.includes("<IRASEPSIMPLEInd>"), false);
     await Deno.writeTextFile(`${root}/${row.id}.xml`, prepared.bundle.xml);
     const xsd = await new Deno.Command("xmllint", {
       args: [

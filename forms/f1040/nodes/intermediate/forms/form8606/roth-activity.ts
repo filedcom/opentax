@@ -27,6 +27,7 @@ export const rothActivityReviewSchema = z.object({
     owner_ssn: ssn,
     accounts: z.array(account).min(1),
     all_owned_roth_iras_and_activity_included: z.literal(true),
+    all_owned_accounts_are_ordinary_roth_not_sep_or_simple: z.literal(true),
     no_contributions_before_listed_inventory: z.literal(true),
     no_prior_distributions_or_returned_contributions: z.literal(true),
     no_conversions_or_qualified_plan_rollovers: z.literal(true),

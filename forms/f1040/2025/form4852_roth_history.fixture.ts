@@ -396,7 +396,7 @@ export async function rothHistoryReturnSource(
               box1_gross_distribution: amount,
               box2a_taxable_amount: 0,
               box2b_taxable_not_determined: true,
-              box7_ira_indicator: true,
+              box7_ira_indicator: false,
               box7_distribution_code: row.base === 6 ? "T" : "J",
             },
           }],

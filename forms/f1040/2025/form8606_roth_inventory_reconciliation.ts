@@ -31,7 +31,9 @@ export function reconcileForm8606RothInventories(
     !(filer.filingStatus === FilingStatus.Single ||
       filer.filingStatus === FilingStatus.MarriedFilingJointly) ||
     items.some((row) =>
-      row.box7_ira_simple_indicator && !row.roth_owner_inventory_review
+      (row.box7_ira_simple_indicator ||
+        ["J", "T", "Q"].includes(row.box7_distribution_code ?? "")) &&
+      !row.roth_owner_inventory_review
     )
   ) {
     throw new Error(

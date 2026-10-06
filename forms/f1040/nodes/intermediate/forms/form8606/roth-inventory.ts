@@ -436,7 +436,7 @@ export function reconcileRothOwnerInventoryCopies(
       (item.box17_local_tax ?? 0) !== payment.local_tax_withheld ||
       item.box2a_taxable_amount !== undefined ||
       item.box2b_not_determined !== true ||
-      item.box7_ira_simple_indicator !== true || item.exclude_8606_roth !== true
+      item.box7_ira_simple_indicator === true || item.exclude_8606_roth !== true
     ) {
       throw new Error(
         "Current Roth copy owner/account/payment and unknown-taxable facts differ from complete inventory",
@@ -460,7 +460,9 @@ export function reconcileRothOwnerInventoryCopies(
     }
     if (
       items.some((row) =>
-        row.ts === facts.review.owner && row.box7_ira_simple_indicator &&
+        row.ts === facts.review.owner &&
+        (row.box7_ira_simple_indicator ||
+          ["J", "T", "Q"].includes(row.box7_distribution_code ?? "")) &&
         !row.roth_owner_inventory_review
       )
     ) {

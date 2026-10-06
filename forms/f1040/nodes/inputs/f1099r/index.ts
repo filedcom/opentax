@@ -1168,7 +1168,7 @@ function validateItem(item: R1099Item): void {
     const facts = reviewedRothActivity(item.roth_activity_review);
     const payment = facts.review.payment;
     if (
-      item.ts === undefined || item.box7_ira_simple_indicator !== true ||
+      item.ts === undefined || item.box7_ira_simple_indicator === true ||
       item.box7_distribution_code !== payment.distribution_code ||
       item.box7_code2 !== undefined ||
       item.account_number !== payment.account_number ||
@@ -1203,7 +1203,7 @@ function validateItem(item: R1099Item): void {
       item.exclude_8606_roth !== true || !evidence ||
       (item.ts !== "T" && item.ts !== "S") ||
       item.box7_distribution_code !== DistributionCode.CodeJ ||
-      item.box7_ira_simple_indicator !== true ||
+      item.box7_ira_simple_indicator === true ||
       item.box2a_taxable_amount !== undefined ||
       item.box2b_not_determined !== true ||
       !item.box13_date_of_payment ||
@@ -1290,20 +1290,20 @@ function activeItems(items: R1099Items): R1099Items {
   return items.filter((item) => item.no_distribution_received !== true);
 }
 
-// A code-Q qualified Roth IRA distribution is an IRA distribution even when
-// its payer leaves the IRA/SEP/SIMPLE box unchecked, as the IRS permits.
+// Roth IRA J/T/Q codes identify IRA distributions independently of the
+// IRA/SEP/SIMPLE checkbox; ordinary Roth IRAs leave that box unmarked.
 function iraItems(items: R1099Items): R1099Items {
   return items.filter((item) =>
     item.box7_ira_simple_indicator === true ||
-    item.box7_distribution_code === DistributionCode.CodeQ
+    [DistributionCode.CodeJ, DistributionCode.CodeT, DistributionCode.CodeQ].includes(item.box7_distribution_code!)
   );
 }
 
-// Pension/annuity items exclude code-Q Roth IRA distributions.
+// Pension/annuity items exclude Roth IRA J/T/Q distributions.
 function pensionItems(items: R1099Items): R1099Items {
   return items.filter((item) =>
     item.box7_ira_simple_indicator !== true &&
-    item.box7_distribution_code !== DistributionCode.CodeQ &&
+    ![DistributionCode.CodeJ, DistributionCode.CodeT, DistributionCode.CodeQ].includes(item.box7_distribution_code!) &&
     item.box7_distribution_code !== DistributionCode.Code8
   );
 }

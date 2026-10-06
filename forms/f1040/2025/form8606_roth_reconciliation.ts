@@ -97,7 +97,7 @@ export function reconcileForm8606Roth(
     entered.length !== 1 || !item ||
     item.ts !== (spouseOwned ? "S" : "T") ||
     item.box7_distribution_code !== "J" ||
-    item.box7_ira_simple_indicator !== true ||
+    item.box7_ira_simple_indicator === true ||
     item.exclude_8606_roth !== true ||
     item.box2a_taxable_amount !== undefined ||
     item.box2b_not_determined !== true ||

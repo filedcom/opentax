@@ -8,7 +8,7 @@ import {
   rothInventoryReturnSource,
 } from "./form4852_roth_inventory.fixture.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "./pdf/builder.ts";
-const root = ".state/research/form4852-roth-inventory";
+const root = ".state/research/form4852-roth-inventory-checkbox-corrected";
 Deno.test("complete source-owned Roth current inventories aggregate basis once and file separate owner8606/5329 copies", async () => {
   await Deno.mkdir(root, { recursive: true });
   for (const [n, row] of rothInventoryCases.entries()) {
@@ -43,6 +43,7 @@ Deno.test("complete source-owned Roth current inventories aggregate basis once a
       (prepared.bundle.xml.match(/<IRS1099R /g) ?? []).length,
       row.joint ? 5 : 3,
     );
+    assertEquals(prepared.bundle.xml.includes("<IRASEPSIMPLEInd>"), false);
     await Deno.writeTextFile(`${root}/${row.id}.xml`, prepared.bundle.xml);
     const xsd = await new Deno.Command("xmllint", {
       args: [
@@ -146,6 +147,7 @@ Deno.test("complete Roth current source rejects missing copies, repeated lineage
           source_document_reference: "other-current-IRA",
           account_number: "other-IRA-account",
           box7_distribution_code: "7",
+          box7_ira_simple_indicator: true,
           box2a_taxable_amount: 2000,
           box2b_not_determined: false,
           exclude_8606_roth: undefined,

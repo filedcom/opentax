@@ -256,7 +256,8 @@ export const itemSchema = z.object({
       });
     }
     if (
-      (val.retirement_source?.roth_activity_review || val.retirement_source?.roth_owner_inventory_review) &&
+      (val.retirement_source?.roth_activity_review ||
+        val.retirement_source?.roth_owner_inventory_review) &&
       (val.taxable_amount_not_determined !== true ||
         val.retirement_source.box2b_not_determined !== true ||
         val.retirement_source.box2a_taxable_amount !== undefined)
@@ -356,12 +357,18 @@ function r1099Items(items: F4852Items): F4852Items {
 
 // IRA items from 1099-R substitutes
 function iraItems(items: F4852Items): F4852Items {
-  return r1099Items(items).filter((item) => item.is_ira === true);
+  return r1099Items(items).filter((item) =>
+    item.is_ira === true ||
+    ["J", "T", "Q"].includes(item.distribution_code ?? "")
+  );
 }
 
 // Pension/annuity items from 1099-R substitutes (non-IRA)
 function pensionItems(items: F4852Items): F4852Items {
-  return r1099Items(items).filter((item) => item.is_ira !== true);
+  return r1099Items(items).filter((item) =>
+    item.is_ira !== true &&
+    !["J", "T", "Q"].includes(item.distribution_code ?? "")
+  );
 }
 
 // Line 8b is already the taxable amount when supplied. When the filer can

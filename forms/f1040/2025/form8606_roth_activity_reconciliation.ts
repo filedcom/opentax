@@ -24,7 +24,7 @@ export function reconcileForm8606RothActivity(
   }
   if (
     items.length !== 1 ||
-    sources.filter((item) => item.box7_ira_simple_indicator).length !== 1
+    sources.filter((item) => item.box7_ira_simple_indicator || ["J", "T", "Q"].includes(item.box7_distribution_code ?? "")).length !== 1
   ) {
     throw new Error(
       "Roth activity requires its complete one-payment owner IRA inventory; multiple owner/source joins remain guarded",
@@ -71,7 +71,7 @@ export function reconcileForm8606RothActivity(
     item.source_document_reference !==
       facts.review.form1099r_source_document_reference ||
     item.exclude_8606_roth !== !facts.qualified ||
-    item.box7_ira_simple_indicator !== true ||
+    item.box7_ira_simple_indicator === true ||
     f1040?.line4a_ira_gross !== facts.gross ||
     (f1040?.line4b_ira_taxable ?? 0) !== facts.taxable ||
     (facts.earlyTaxable > 0

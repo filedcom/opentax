@@ -200,3 +200,17 @@ does not close the broader existing parent.
 
 
 Current-main7a75f732f verified source2/0+related264/0 and held12/107 exact with696artifactfiles preserved, prior33/258 unchanged/exact. Exact logs and limitations are archived in the October6 status/validation record.
+
+## Ordinary Roth classification prerequisite
+
+Ordinary J/T source and prior issued records now require the correct unmarked
+IRA/SEP/SIMPLE classification, supported by actual retained non-SEP/SIMPLE
+account records. Code J/T/Q income classification remains IRA line4 independent
+of that mark. Wrong marked ordinary current/historical copies reject at source
+and final native/PDF boundaries. Earlier checked ordinary source claims are
+qualified; originals remain unchanged. Corrected35/295 full-source/XSD/held
+packets pass11/0 and related274/0; all295 current plus271 retained pages have
+proven visual transfer. See `ty2025-form4852-filing-gap.md` for exact commands,
+logs/digests, original997-byte preservation and the separate applicable
+traditional/SEP/SIMPLE Form4852 margin-label limitation. Current conversions,
+external authenticity/acceptance and broader existing parent remain open.

@@ -117,6 +117,7 @@ export const rothDistributionEvidenceSchema = z.object({
     owner_ssn: z.string().regex(/^\d{9}$/),
     custodian_ein: z.string().regex(/^\d{9}$/),
     roth_ira_confirmed: z.literal(true),
+    roth_sep_or_simple_ira: z.literal(false),
     box10_roth_ira_contributions: z.number().int().positive(),
     box2_rollover_contributions: z.literal(0),
     box3_roth_conversion_amount: z.literal(0),

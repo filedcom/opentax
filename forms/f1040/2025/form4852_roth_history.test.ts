@@ -15,7 +15,7 @@ import {
 } from "./form4852_roth_history.fixture.ts";
 import { buildPdfBytes, type PdfPageOrigin } from "./pdf/builder.ts";
 import { PDFDocument } from "pdf-lib";
-const root = ".state/research/form4852-roth-history";
+const root = ".state/research/form4852-roth-history-checkbox-corrected";
 Deno.test("actual prior Roth payment and filed-form history derives remaining owner basis and current8606/5329/1040", async () => {
   await Deno.mkdir(root, { recursive: true });
   for (const [n, row] of rothHistoryCases.entries()) {
@@ -56,6 +56,7 @@ Deno.test("actual prior Roth payment and filed-form history derives remaining ow
       (prepared.bundle.xml.match(/<IRS1099R /g) ?? []).length,
       (row.base === 4) ? 5 : 3,
     );
+    assertEquals(prepared.bundle.xml.includes("<IRASEPSIMPLEInd>"), false);
     await Deno.writeTextFile(`${root}/${row.id}.xml`, prepared.bundle.xml);
     const xsd = await new Deno.Command("xmllint", {
       args: [

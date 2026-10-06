@@ -628,3 +628,85 @@ board, catalog, PR or future task was changed.
 
 
 Current-main7a75f732f verified source2/0+related264/0 and held12/107 exact with696artifactfiles preserved, prior33/258 unchanged/exact. Exact logs and limitations are archived in the October6 status/validation record.
+
+## Ordinary Roth IRA checkbox source correction — isolated prerequisite
+
+The [2025 Form1099-R instructions, p15](https://www.irs.gov/pub/irs-prior/i1099r--2025.pdf)
+require ordinary Roth IRA payments to leave IRA/SEP/SIMPLE unmarked; traditional
+and Roth SIMPLE payments are marked. The [2020 instructions, p14](https://www.irs.gov/pub/irs-prior/i1099r--2020.pdf)
+also prohibit the mark on ordinary Roth payments. Earlier ordinary J/T fixture
+and historical-source filing claims used an incorrect checked box and are
+explicitly superseded by separately constructed corrected source proofs below.
+Their original retained source/XML/PDF bytes remain unchanged; this does not
+represent an authenticated issuer correction to those originals.
+
+Actual retained complete account inventory now confirms ordinary Roth accounts,
+excluding SEP/SIMPLE; first-year5498 evidence likewise records non-SEP/SIMPLE
+classification. Reviewed current J/T sources reject the incompatible mark;
+prior ordinary J/T issued records require false. J/T/Q codes determine IRA
+income classification independently of that checkbox, so actual unmarked
+payments reach1040 line4 rather than pension line5. Source amount, withholding,
+owner, account, basis/FIFO/recapture and copy joins remain enforced. Traditional
+conversion issued-source markers and generic marked SIMPLE/codeQ behavior are
+preserved; this does not add an unsupported Roth SIMPLE history calculation.
+
+Fresh isolated `/tmp/opentax-form4852-roth-checkbox-audit-oct6` from
+`c9eb6ad777`: checked five-module11/0 (2m22s), related28-module274/0 (3m15s).
+Authoritative logs `/tmp/opentax-roth-checkbox-prerequisite25.log` and
+`/tmp/opentax-roth-checkbox-related26.log`; exact related command is held in
+`.state/research/roth-checkbox-audit/compatibility-command.sh`.
+Source/public/native/directPDF negatives cover marked ordinary current copies,
+wrong owner, missing account classification and marked ordinary historical
+copies. The inherited extra traditional-IRA negative now explicitly marks its
+traditional source instead of inheriting the corrected unmarked Roth fixture.
+
+Corrected held positives:9/52 Roth,6/57 inventory,8/79 conversions,12/107
+consumed history —35 packets295 pages. Each full public graph uses independent
+expected1040/8606/5329 values and passes full local2025v5.4XSD, source/pending,
+XML(timestamp only), PDF, origin and actual retained-byte replay. Exact commands
+from the isolated checkout, with
+`PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH`:
+
+```
+deno run --allow-all .state/research/form4852-roth-source-checkbox-corrected/replay.ts
+deno run --allow-all .state/research/form4852-roth-inventory-checkbox-corrected/replay.ts
+deno run --allow-all .state/research/form4852-roth-conversion-checkbox-corrected/replay.ts
+deno run --allow-all .state/research/form4852-roth-history-checkbox-corrected/replay.ts
+```
+
+Each root has its separately preserved `-pdf-cache-preserved` sibling. Terminal
+logs `/tmp/opentax-roth-checkbox-{roth,inventory,conversion,history}-replay28.log`.
+Aggregate held-indexSHA256
+`2198c7da77e049f888f5e222c64534e93f90490f61a553e974e39adba0bf55c2`.
+Original-comparisonSHA256
+`519c45d25740319d4404ae0f9b449ae37c7cc1adfeebe33ae06708b501fb089c`.
+Visual-transferSHA256 `4b2f7cdba6e240c9407c6b32ec80f4043a13973fad83c6bb16080a43b19f8f17`.
+
+All295 corrected packet pages and origins equal the previously reviewed original
+PDF bytes. Original-versus-corrected XML differs only by removal of incompatible
+ordinary checkbox elements and timestamp. Every271 retained PDF page has exact
+old/new rendered pixels (regenerated source PDF bytes can differ);146 completed
+source pages include73 first pages also proven equal to their reviewed packet
+copies, plus73 copies of the one actual instruction page visually inspected.
+The125 historical pages transfer their prior visual reviews by exact pixels.
+Actual corrected retained bytes remain hashed and parsed; this comparison is
+not a source-authentication claim. Terminal comparison/visual logs
+`/tmp/opentax-roth-checkbox-original-comparison27.log` and
+`/tmp/opentax-roth-checkbox-visual-transfer31.log`. All997 original byte records
+across45 packets365 pages remain unchanged.
+
+Original10/70 arithmetic/source/XML/PDF/fullXSD replay remains exact against
+this production (`/tmp/opentax-roth-checkbox-original10-replay29.log`), but its
+applicable traditional/SEP/SIMPLE Form4852 paper-copy claims are explicitly
+qualified: official Form4852 instructions line8j require the IRA/SEP/SIMPLE
+right-margin label, absent from the current descriptor/generated completed
+sources. Those original bytes must not be silently stamped or replaced. This
+separate existing paper-source/layout issue will be repaired in a following
+phase; ordinary Roth J/T copies here do not require that margin label.
+
+Current2025 conversion coexistence remains a separate uncommitted phase;
+qualified/inherited/transferred/other unsupported histories retain existing
+source guards. Synthetic retained sources establish byte/hash/parsed-fact and
+filing-layout behavior, not external authentication or IRS business-rule/ATS
+acceptance. Broader parent remains open. No main, board, catalog, PR or future
+scope was changed.

@@ -51,13 +51,27 @@ export function assertIra1099rIncomeSource(
     .parse(pending.f1099r).f1099rs;
   const inventories = reconcileRothOwnerInventoryCopies(issuedRows);
   if (inventories.length) {
-    const gross = roundWholeDollars(inventories.reduce((sum,row) => sum + Math.round(row.rawGross * 100), 0) / 100);
-    const taxable = inventories.reduce((sum,row) => sum + row.taxable, 0);
+    const gross = roundWholeDollars(
+      inventories.reduce(
+        (sum, row) => sum + Math.round(row.rawGross * 100),
+        0,
+      ) / 100,
+    );
+    const taxable = inventories.reduce((sum, row) => sum + row.taxable, 0);
     const filed = pending.f1040 as Record<string, unknown> | undefined;
-    if (issuedRows.some((row) => row.box7_ira_simple_indicator && !row.roth_owner_inventory_review) ||
-      filed?.line4a_ira_gross !== gross || (filed?.line4b_ira_taxable ?? 0) !== taxable ||
-      retainedAgiIraTaxable(pending) !== taxable) {
-      throw new Error("Complete Roth current inventory gross/taxable/AGI differs from source owner annual lines");
+    if (
+      issuedRows.some((row) =>
+        (row.box7_ira_simple_indicator ||
+          ["J", "T", "Q"].includes(row.box7_distribution_code ?? "")) &&
+        !row.roth_owner_inventory_review
+      ) ||
+      filed?.line4a_ira_gross !== gross ||
+      (filed?.line4b_ira_taxable ?? 0) !== taxable ||
+      retainedAgiIraTaxable(pending) !== taxable
+    ) {
+      throw new Error(
+        "Complete Roth current inventory gross/taxable/AGI differs from source owner annual lines",
+      );
     }
     return;
   }

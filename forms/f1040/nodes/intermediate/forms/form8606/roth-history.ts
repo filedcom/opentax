@@ -24,7 +24,7 @@ const priorPayment = rothActivityReviewSchema.shape.payment.extend({
     box1_gross_distribution: money,
     box2a_taxable_amount: z.literal(0),
     box2b_taxable_not_determined: z.literal(true),
-    box7_ira_indicator: z.literal(true),
+    box7_ira_indicator: z.literal(false),
     box7_distribution_code: z.enum(["J", "T"]),
   }).strict(),
 }).strict();
