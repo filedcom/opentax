@@ -180,8 +180,11 @@ export function calculateFarmWotcLines(
 ) {
   const source = farmWotcSourceSchema.parse(input.farm_wotc_filing_source);
   const amounts = source.businesses.map(farmWotcBusinessAmounts);
+  const reviewed = amounts.filter((a) => a.review);
   if (
-    amounts.filter((a) => a.review).length !== 1 ||
+    (reviewed.length !== 1 && reviewed.length !== 2) ||
+    (reviewed.length === 2 && (input.filing_status !== "mfj" ||
+      new Set(reviewed.map((a) => a.recipient)).size !== 2)) ||
     !["single", "mfj"].includes(input.filing_status) ||
     input.taxable_income <= (input.filing_status === "mfj" ? 394600 : 197300) ||
     !Number.isInteger(input.taxable_income) ||

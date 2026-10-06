@@ -1406,3 +1406,87 @@ confirmed (`/tmp/opentax-farm-loss-held-check.log`). The apparent zero-W2 joint
 header omission on a reduced contact sheet was checked against full-size PDF
 text: Sam Example and444556666 print correctly. No shared header/builder edit
 was required.
+
+### Two independent farm employer continuation — retained learnings
+
+Continue the existing owned regular-SE source parent. Retain raw cents and
+derive signed profit from filed farm leaf operands; full5884 deduction reduction
+precedes owner-specific SE/QBI independently of current credit use. Ordinary
+QBI carry belongs to8995 line16 /8995-A ScheduleC6, not parent40. Distinct spouse
+EINs alone do not establish independent employers: actual reviewed ownership,
+all four spousal-attribution exceptions and no other common-control/options
+must join both issued payroll/certification/farm source sets. Existing C,
+controlled-group, positive/loss, zero, optional and patron routes are retained.
+
+### Two independent primary/spouse cash-farm WOTC source proof — 2026-10-06
+
+Proof base4dc5a8fcb plus the prior loss source commit276ffd5c2 (equivalent
+isolatedaa92b44ee). The public route now accepts two actual reviewed farm
+employers only when each is a different primary/spouse-owned cash farm and the
+existing ordinary joint employer control review joins their actual EINs,
+proprietor TINs and farm references. Its four spousal-attribution exceptions
+and no-other-common-control/options review remain mandatory; false/missing
+facts do not become independent employer evidence. Issued employee W2 source
+references must also be distinct across both employer copies. Existing
+certification, agricultural covered-duty/payroll, direct employer allocation,
+G/secondary NEC income and final-return source joins remain active.
+
+Authority rechecked: [Form5884 instructions](https://www.irs.gov/instructions/i5884)
+require the full line2 deduction reduction even when current credit use is
+limited and explain agricultural covered wages and section52 common control;
+[26CFR1.52-1](https://www.ecfr.gov/current/title-26/section-1.52-1) and
+[26CFR1.414(c)-4(b)(5)](https://www.ecfr.gov/current/title-26/section-1.414(c)-4)
+supply the ownership/attribution conditions. The reviewed exception facts are
+actual retained public inputs, not an inference from separate EINs.
+
+Four reusable held cases retain cent-valued gross/payroll/W2 facts and derive
+filed farm leaves, owner SE, attributable half-SE, QBI and joint current use:
+
+| Case | Filed farm profits T / S | Half-SE total | Raw AGI | QBI deduction | Current WOTC use | Total1040 tax |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| below |36401 /56401|4473|318329.86|17666|4800|55028|
+| phase |176401 /186401|17149|495653.37|23552|4800|126730|
+| above limited |312001 /312001|13074|1010928.86|122186|187181|86745|
+| phase loss |-10001 /196401|13548|472852.37|19249|4800|113577|
+
+The above-range case retains80 actual distinct employee records per employer,
+192000 determined reduction per farm /384000 combined, while Form3800 uses
+187181. No accepted carryover filing is claimed for the unused196819. External
+primary/spouse W2 wages independently consume their own SSA caps; the primary
+has no remaining SSA base while the spouse retains76099.51 in the limited
+case. Phase percentages69.553% and46.752% print intact. In the loss case only
+the spouse has positive regular SE; QBI loss netting offsets182853 spouse QBI
+by10001 to172852, with parent40REIT/PTP0 and ordinary carry0.
+
+Actual issued household W2 sources exposed an inherited calculation defect:
+Schedule3 excess Social Security pooled both spouses under one cap. The W2
+node now groups complete employee-SSN/employer-EIN source copies per owner,
+requires multiple employers and wages above that owner's base, then rounds
+the finalized combined credit. The existing native/PDF source guard already
+used this rule and was preserved. A separate actual second primary employer
+proves1240 excess credit; separate one-employer spouses produce none. Legacy
+unidentified calculation inputs remain compatible and still cannot bypass
+the stricter issued-source filing reconciliation.
+
+Terminal evidence: typed focused source/full-XSD/PDF and review-scope tests
+**5/0** (`/tmp/opentax-two-farm-final-focus.log`); W2 unit, existing positive/loss
+farm, joint owner WOTC, controlled WOTC and optional farm compatibility
+**115/0** (`/tmp/opentax-two-farm-compat.log`,2m53s). Public ownership/payroll/
+certification/G/NEC/optional conflicts and prepared native/direct PDF farm,
+SE, determined-credit/current-use and final deduction mutations reject.
+Four held packets generated:29/30/30/29 pages, all **118 pages** visually
+reviewed in20 numbered contact sheets, including both proprietor/SE copies,
+AMT/Medicare/NIIT, credit inventory, exact percentage and loss companion.
+Ignored packet directory:
+`.state/research/ty2025-filled-pdf-review/2026-10-06-two-independent-farm-wotc-reviewed`.
+
+This completes the reviewed independent two-employer regular cash-farm branch;
+controlled-group farm allocation, optional farm WOTC, patron/SSTB/aggregation
+combinations, more-than-two QBI loss-netting rows, accepted carryovers and
+external issuer/SWA authentication remain open. Synthetic reviewed issued-copy
+fixtures prove retained source joins and replay, not issuer authentication or
+IRS business-rule/ATS/production acceptance. The broader parent remains open.
+
+Final held checker terminal0 confirms actual source replay, artifact/template
+hashes and full local TY2025v5.4 XSD for **4 cases /118 reviewed pages**:
+`/tmp/opentax-two-farm-held-check.log`. No shared header/builder edit required.

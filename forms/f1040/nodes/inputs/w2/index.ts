@@ -710,7 +710,37 @@ function combatPayFields(w2s: W2Items): F1040Input {
   return total > 0 ? { line1i_combat_pay: total } : {};
 }
 
-function excessSsOutput(w2s: W2Items, ssTaxPerEmployer: number): NodeOutput[] {
+function excessSsOutput(
+  w2s: W2Items,
+  ssTaxPerEmployer: number,
+  ssWageBase: number,
+): NodeOutput[] {
+  // Joint filers each retain their own wage base; distinct employer sources
+  // are necessary for an excess credit. Legacy unidentified calculations
+  // remain subject to the stricter issued-source export reconciliation.
+  if (w2s.every((row) => row.employee_ssn && row.employer_ein)) {
+    const owners = new Map<
+      string,
+      { employers: Set<string>; wages: number; withheld: number }
+    >();
+    for (const row of w2s) {
+      const owner = row.employee_ssn!.replace(/\D/g, "");
+      const group = owners.get(owner) ??
+        { employers: new Set<string>(), wages: 0, withheld: 0 };
+      if ((row.box4_ss_withheld ?? 0) > 0) {
+        group.employers.add(row.employer_ein!.replace(/\D/g, ""));
+        group.wages += row.box3_ss_wages ?? 0;
+        group.withheld += row.box4_ss_withheld ?? 0;
+      }
+      owners.set(owner, group);
+    }
+    const excess = Math.round([...owners.values()].reduce((sum, owner) =>
+      sum +
+      (owner.employers.size > 1 && owner.wages > ssWageBase
+        ? Math.max(0, owner.withheld - ssTaxPerEmployer)
+        : 0), 0));
+    return excess > 0 ? [output(schedule3, { line11_excess_ss: excess })] : [];
+  }
   const totalSsWithheld = w2s.reduce(
     (sum, item) => sum + (item.box4_ss_withheld ?? 0),
     0,
@@ -1213,7 +1243,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
     };
 
     const outputs: NodeOutput[] = [
-      ...excessSsOutput(input.w2s, cfg.ssTaxPerEmployer),
+      ...excessSsOutput(input.w2s, cfg.ssTaxPerEmployer, cfg.ssWageBase),
       ...statutoryOutput(input.w2s),
       ...medicareOutput(input.w2s),
       ...allocatedTipsOutput(input.w2s),

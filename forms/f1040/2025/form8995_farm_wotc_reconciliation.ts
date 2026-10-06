@@ -57,7 +57,7 @@ export function assertFarmWotcReturn(
     !reviewed.length && !directs.length && !rawFields.farm_wotc_filing_source
   ) return;
   if (
-    reviewed.length !== 1 || !wotc ||
+    (reviewed.length !== 1 && reviewed.length !== 2) || !wotc ||
     source.farm_optional_method_elected === true ||
     wotc.controlled_group || wotc.pass_through_credits?.length ||
     source.patron_filing_review ||
@@ -119,6 +119,34 @@ export function assertFarmWotcReturn(
         filer.spouse?.ssn.replace(/\D/g, "") !== spouse)))
   ) {
     throw new Error("Farm WOTC actual final/header owner identity differs");
+  }
+  if (reviewed.length === 2) {
+    const control = wotc.ordinary_joint_employer_control_review;
+    const employeeCopies = reviewed.flatMap((f) =>
+      f.qbi_wotc_filing_review!.employee_w2_records
+    );
+    if (
+      general.filing_status !== "mfj" || !control ||
+      new Set(employeeCopies.map((r) => r.source_document_reference)).size !==
+        employeeCopies.length ||
+      new Set(reviewed.map((f) => f.proprietor_recipient)).size !== 2 ||
+      new Set(reviewed.map((f) => f.farm_id)).size !== 2 ||
+      new Set(reviewed.map((f) => f.line_d_ein?.replace(/\D/g, ""))).size !==
+        2 ||
+      control.businesses.some((b) =>
+        !reviewed.some((f) =>
+          b.employer_ein === f.line_d_ein?.replace(/\D/g, "") &&
+          b.business_reference === f.farm_id &&
+          b.proprietor_ssn === f.qbi_wotc_filing_review?.owner_ssn &&
+          b.proprietor_ssn ===
+            (f.proprietor_recipient === "S" ? spouse : primary)
+        )
+      )
+    ) {
+      throw new Error(
+        "Two farm employers need actual separate spouse ownership and attribution-exception sources",
+      );
+    }
   }
   assertForm3800FinalCreditJoin(
     Number(pending.f3800?.allowed_credit ?? 0),
