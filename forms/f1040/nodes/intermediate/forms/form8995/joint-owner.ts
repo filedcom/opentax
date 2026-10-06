@@ -1,3 +1,4 @@
+import { reviewedQualifiedTipExclusions } from "./qualified-tips.ts";
 import { calculateIndependentOwnerHealth } from "../form7206/independent-owner.ts";
 import {
   allocateSharedSeDeduction,
@@ -17,9 +18,11 @@ export function jointOwnerQbi(
   rawHealthPlan?: unknown,
   healthDeduction = 0,
   rawHealthPlans?: unknown,
+  rawTips?: unknown,
 ) {
   const owned = ownedScheduleSE(rawSource, ssWageBase);
   const source = owned.source;
+  const tips = reviewedQualifiedTipExclusions(rawTips);
   const healthPlan = rawHealthPlan === undefined
     ? undefined
     : singleScheduleCPlanSchema.parse(rawHealthPlan);
@@ -105,7 +108,21 @@ export function jointOwnerQbi(
       : healthPlan
       ? healthDeduction
       : 0;
-    const rawQbi = row.net_profit - allocations[index] - ownHealth;
+    const ownTips = tips.rows.find((t) =>
+      t.business_reference === row.source_reference
+    );
+    if (
+      ownTips &&
+      (ownTips.recipient !== row.recipient ||
+        ownTips.net_profit !== Math.round(row.net_profit) ||
+        ownTips.se_tax_deduction !== allocations[index])
+    ) {
+      throw new Error(
+        "Joint QBI tips must join the actual business owner's profit and halfSE",
+      );
+    }
+    const rawQbi = row.net_profit - allocations[index] - ownHealth -
+      (ownTips?.qbi_tip_exclusion ?? 0);
     return {
       business_reference: row.source_reference,
       business_name: row.business_name!,
@@ -120,6 +137,9 @@ export function jointOwnerQbi(
       raw_qbi: rawQbi,
       qbi: roundSignedQbiDollars(rawQbi),
       se_tax_deduction: allocations[index],
+      ...(tips.source
+        ? { qualified_tip_exclusion: ownTips?.qbi_tip_exclusion ?? 0 }
+        : {}),
       ...(healthPlan || family
         ? { health_insurance_deduction: ownHealth }
         : {}),

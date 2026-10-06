@@ -1,4 +1,8 @@
 import { filedOwnedScheduleC } from "../../../owned-business-filing.ts";
+import {
+  qualifiedTipQbiSourceSchema,
+  reviewedQualifiedTipExclusions,
+} from "../form8995/qualified-tips.ts";
 import { farmWotcSourceSchema } from "./farm-wotc-source.ts";
 import { calculateFarmWotcLines } from "./farm-wotc.ts";
 import {
@@ -253,6 +257,7 @@ export const inputSchema = z.object({
   single_schedule_c_source: z.object({
     business: scheduleCQbiBusinessSchema,
     se_tax_deduction: z.number().nonnegative(),
+    qualified_tip_qbi_source: qualifiedTipQbiSourceSchema.optional(),
     joint_se_source: ownerSourcesSchema.optional(),
     joint_wages_total: z.number().nonnegative().optional(),
   }).strict().optional(),
@@ -279,7 +284,24 @@ export function assertSingleScheduleCWotcAmounts(input: Form8995AInput): void {
   const details = input.business_filing_details;
   const reduction = business.wotc_wage_reduction ?? 0;
   const wages = reviewedWotcQbiWages(item, reduction);
-  const qbi = Math.round(business.qbi - retained.se_tax_deduction);
+  const tips = reviewedQualifiedTipExclusions(
+    retained.qualified_tip_qbi_source,
+  );
+  const tipRow = tips.rows.find((r) =>
+    r.business_reference === business.business_reference
+  );
+  if (
+    tips.source &&
+    (tips.rows.length !== 1 || !tipRow ||
+      tipRow.recipient !== item.proprietor_recipient ||
+      tipRow.net_profit !== Math.round(business.qbi) ||
+      tipRow.se_tax_deduction !== retained.se_tax_deduction)
+  ) {
+    throw new Error(
+      "Advanced QBI tips need actual establishing business and owner halfSE",
+    );
+  }
+  const qbi = Math.round(business.qbi - retained.se_tax_deduction - tips.total);
   const se = retained.joint_se_source
     ? ownedScheduleSE(retained.joint_se_source, CONFIG_BY_YEAR[2025].ssWageBase)
       .instances.find((row) =>

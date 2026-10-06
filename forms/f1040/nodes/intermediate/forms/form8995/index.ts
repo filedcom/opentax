@@ -1,3 +1,7 @@
+import {
+  qualifiedTipQbiSourceSchema,
+  reviewedQualifiedTipExclusions,
+} from "./qualified-tips.ts";
 import { farmWotcAdvancedFields } from "../form8995a/farm-wotc.ts";
 import { jointOwnerQbi } from "./joint-owner.ts";
 import { singleScheduleCPlanSchema } from "../form7206/single-source.ts";
@@ -157,6 +161,7 @@ export const inputSchema = z.object({
   agi: z.number().optional(),
   // Schedule 1-A reduces taxable income before the section 199A income cap.
   additional_deductions: z.number().nonnegative().optional(),
+  qualified_tip_qbi_source: qualifiedTipQbiSourceSchema.optional(),
   // Filing status — used to look up the standard deduction base for income limit
   filing_status: z.nativeEnum(FilingStatus).optional(),
   // Age/blindness flags — used to compute the full standard deduction (including additional factors)
@@ -186,7 +191,8 @@ function totalQbi(input: Form8995Input): number {
   return sumField(input.qbi_from_schedule_c) +
     sumField(input.qbi_from_schedule_f) +
     sumField(input.qbi) + sumField(input.sstb_qbi) -
-    businessDeductions(input);
+    businessDeductions(input) -
+    reviewedQualifiedTipExclusions(input.qualified_tip_qbi_source).total;
 }
 
 function netQbi(input: Form8995Input): number {
@@ -398,7 +404,8 @@ function advancedFormOutput(
     });
   }
   const nonSstbQbi = sumField(input.qbi_from_schedule_c) +
-    sumField(input.qbi_from_schedule_f) + sumField(input.qbi);
+    sumField(input.qbi_from_schedule_f) + sumField(input.qbi) -
+    reviewedQualifiedTipExclusions(input.qualified_tip_qbi_source).total;
   const sstbQbi = sumField(input.sstb_qbi);
   if (input.schedule_c_qbi_businesses?.some((business) => business.qbi < 0)) {
     if (
@@ -485,7 +492,13 @@ function advancedFormOutput(
       business.source_schedule_c,
       business.wotc_wage_reduction,
     );
-    const qbi = Math.round(business.qbi - sumField(input.se_tax_deduction));
+    const tipExclusion =
+      reviewedQualifiedTipExclusions(input.qualified_tip_qbi_source).rows.find(
+        (r) => r.business_reference === business.business_reference,
+      )?.qbi_tip_exclusion ?? 0;
+    const qbi = Math.round(
+      business.qbi - sumField(input.se_tax_deduction) - tipExclusion,
+    );
     sourcedBusiness = {
       qbi,
       business_filing_details: {
@@ -507,6 +520,9 @@ function advancedFormOutput(
       single_schedule_c_source: {
         business,
         se_tax_deduction: sumField(input.se_tax_deduction),
+        ...(input.qualified_tip_qbi_source
+          ? { qualified_tip_qbi_source: input.qualified_tip_qbi_source }
+          : {}),
         ...(input.filing_status === FilingStatus.MFJ
           ? {
             joint_se_source: input.joint_se_source,
@@ -723,9 +739,13 @@ function oneScheduleCLines(
     input.agi === undefined || !Number.isFinite(input.agi) ||
     input.filing_status === undefined
   ) return undefined;
+  const tipExclusion =
+    reviewedQualifiedTipExclusions(input.qualified_tip_qbi_source).rows.find(
+      (r) => r.business_reference === business.business_reference,
+    )?.qbi_tip_exclusion ?? 0;
   const qbi = Math.round(
-    business.qbi - seDeduction -
-      sumField(input.se_health_insurance_deduction),
+    business.qbi - seDeduction - sumField(input.se_health_insurance_deduction) -
+      tipExclusion,
   );
   if (qbi <= 0) return undefined;
   const line11 = Math.round(
@@ -1241,6 +1261,7 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
           input.joint_owner_health_plan_source,
           sumField(input.se_health_insurance_deduction),
           input.joint_owner_health_plans_source,
+          input.qualified_tip_qbi_source,
         );
       })()
       : undefined;

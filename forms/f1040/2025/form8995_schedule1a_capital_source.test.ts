@@ -31,14 +31,24 @@ Deno.test("actual ScheduleC tip deduction and personal-sale capital sources reta
     }
     const r = f1040_2025.executeReturn(input);
     assertEquals(r.diagnostics, []);
-    const p = normalizeAllPending(r.pending);
-    assertEquals(typeof p.form8995.line1_qbi, "number");
-    assertEquals(typeof p.form8995.line15, "number");
-    assertEquals(Number(p.form8995.line1_qbi) > 0, true);
-    assertEquals(Number(p.form8995.line15) > 0, positive);
-    assertEquals(p.form8995.line12, kind === "capital" ? 500 : 0);
+    const p: any = normalizeAllPending(r.pending);
+    const whollyExcluded = kind === "tips" && !positive;
+    if (whollyExcluded) {
+      assertEquals(p.form8995.line1_qbi, undefined);
+      assertEquals(p.form8995.line15, undefined);
+      assertEquals(
+        p.form8995.qualified_tip_qbi_source.business_rows[0].qbi_tip_exclusion,
+        9293,
+      );
+    } else {
+      assertEquals(typeof p.form8995.line1_qbi, "number");
+      assertEquals(typeof p.form8995.line15, "number");
+      assertEquals(Number(p.form8995.line1_qbi) > 0, true);
+      assertEquals(Number(p.form8995.line15) > 0, positive);
+      assertEquals(p.form8995.line12, kind === "capital" ? 500 : 0);
+    }
     assertEquals(
-      p.form8995.line11,
+      whollyExcluded ? 0 : p.form8995.line11,
       Math.round(
         Math.max(
           0,
@@ -48,7 +58,7 @@ Deno.test("actual ScheduleC tip deduction and personal-sale capital sources reta
       ),
     );
     const prepared = await f1040_2025.prepareReturn!(r.pending, f.filer);
-    assertStringIncludes(prepared.bundle.xml, "<IRS8995 ");
+    assertEquals(prepared.bundle.xml.includes("<IRS8995 "), !whollyExcluded);
     const id = kind + (positive ? "-positive" : "-zero");
     const dir = ".state/research/2026-10-06-form8995-schedule1a-capital-source";
     await Deno.mkdir(dir, { recursive: true });

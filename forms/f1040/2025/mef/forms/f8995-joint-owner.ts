@@ -1,3 +1,4 @@
+import { assertQualifiedTipQbiSource } from "../../form8995_qualified_tip_source.ts";
 import { assertIndependentOwnerHealth } from "../../form7206_independent_owner_source.ts";
 import { normalizeAllPending } from "../../pending.ts";
 import { assertOwnedScheduleSE } from "../../schedule-se-owner-source.ts";
@@ -107,13 +108,16 @@ export function assertJointOwner8995(
       "Joint Form8995 health adjustment must join the actual sourced Form7206 plan",
     );
   }
+  const tips = assertQualifiedTipQbiSource(fields, p);
+  const additional = Number(f.line13b_additional_deductions ?? 0);
   const expected = jointOwnerQbi(
     owned.source,
-    f.line11_agi - f.line12c_deduction_total,
+    f.line11_agi - f.line12c_deduction_total - additional,
     CONFIG_BY_YEAR[2025].ssWageBase,
     plan,
     health,
     family?.source,
+    tips.source,
   );
   if (
     canonical(fields.joint_se_source) !== canonical(owned.source) ||
@@ -132,7 +136,8 @@ export function assertJointOwner8995(
         Number(f.line15_taxable_income ?? 0) -
           Math.max(
             0,
-            f.line11_agi - f.line12c_deduction_total - expected.line15,
+            f.line11_agi - f.line12c_deduction_total - additional -
+              expected.line15,
           ),
       ) >= .000001 ||
     (w2s?.some((row) => row.box13_statutory_employee === true) ?? false) ||
@@ -150,7 +155,6 @@ export function assertJointOwner8995(
       "line3b_ordinary_dividends",
       "line7_capital_gain",
       "line7a_cap_gain_distrib",
-      "line13b_additional_deductions",
     ].some((key) => Number(f[key] ?? 0) !== 0)
   ) {
     throw new Error(

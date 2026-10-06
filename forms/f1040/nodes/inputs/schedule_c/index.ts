@@ -370,6 +370,9 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
         business_reference: item.business_reference,
         proprietor_recipient: item.proprietor_recipient,
         line31_net_profit: netProfits[index],
+        ...(item.qbi_specified_service === true
+          ? { specified_service_business: true as const }
+          : {}),
       })),
     }));
     outputs.push(this.outputNodes.output(form7206, {

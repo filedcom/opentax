@@ -1,3 +1,4 @@
+import { assertQualifiedTipQbiSource } from "./form8995_qualified_tip_source.ts";
 import { assertOwnedScheduleSE } from "./schedule-se-owner-source.ts";
 import { inputSchema as w2Schema } from "../nodes/inputs/w2/index.ts";
 import { isDeepStrictEqual } from "node:util";
@@ -44,6 +45,11 @@ export function assertForm8995AWotcReturn(
   if (input.wotc_business_sources) calculateOwnedWotcBusinesses(input);
   else assertSingleScheduleCWotcAmounts(input);
   const pending = normalizeAllPending(rawPending as Record<string, unknown>);
+  assertQualifiedTipQbiSource({
+    qualified_tip_qbi_source: input.single_schedule_c_source
+      ?.qualified_tip_qbi_source,
+  }, pending);
+  const additional = Number(pending.f1040?.line13b_additional_deductions ?? 0);
   const parent = form8995aInputSchema.strict().safeParse(pending.form8995a);
   if (
     !parent.success || JSON.stringify(parent.data) !== JSON.stringify(input)
@@ -266,12 +272,12 @@ export function assertForm8995AWotcReturn(
       (joint
         ? profit + wagesTotal - seLines.line13
         : Math.round(profit + wagesTotal - seLines.line13)) ||
-    !noAmount(f1040?.line13b_additional_deductions) ||
     input.taxable_income !==
       Math.max(
         0,
         Math.round(
-          Number(f1040?.line11_agi) - Number(f1040?.line12c_deduction_total),
+          Number(f1040?.line11_agi) - Number(f1040?.line12c_deduction_total) -
+            additional,
         ),
       ) ||
     Math.round(

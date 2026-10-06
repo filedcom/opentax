@@ -1,3 +1,6 @@
+import { normalizeAllPending } from "../../pending.ts";
+import { assertOwnedScheduleSE } from "../../schedule-se-owner-source.ts";
+import { tipSourceCanonical } from "../../../nodes/intermediate/forms/form8995/qualified-tips.ts";
 import { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
 import {
@@ -470,6 +473,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       const businessRows = businessOutput?.fields
         .qualified_tips_schedule_c_businesses;
       const scheduleOne = z.object({
+        line3_schedule_c: z.number().optional(),
         line15_se_deduction: z.number().optional(),
         line6_schedule_f: z.number().optional(),
         line16_sep_simple: z.number().optional(),
@@ -477,10 +481,31 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       })
         .passthrough().parse(context?.pending?.schedule1);
       const line15 = scheduleOne.line15_se_deduction ?? 0;
+      const owned = input.qualified_tips_owner_se_source === undefined
+        ? undefined
+        : context?.pending
+        ? assertOwnedScheduleSE(
+          normalizeAllPending(context.pending as Record<string, unknown>),
+        )
+        : undefined;
+      if (
+        input.qualified_tips_owner_se_source !== undefined && (!owned ||
+          tipSourceCanonical(owned.source) !==
+            tipSourceCanonical(input.qualified_tips_owner_se_source))
+      ) {
+        throw new Error(
+          "Schedule1A tips owner halfSE source differs from the actual issued income and businesses",
+        );
+      }
       if (
         JSON.stringify(businessRows) !==
           JSON.stringify(input.qualified_tips_schedule_c_businesses) ||
         line15 !== (input.qualified_tips_se_deduction ?? 0) ||
+        scheduleOne.line3_schedule_c !==
+          input.qualified_tips_schedule_c_businesses?.reduce(
+            (sum, business) => sum + business.line31_net_profit,
+            0,
+          ) ||
         (scheduleOne.line6_schedule_f ?? 0) !== 0 ||
         (scheduleOne.line16_sep_simple ?? 0) !== 0 ||
         (scheduleOne.line17_se_health_insurance ?? 0) !== 0 ||

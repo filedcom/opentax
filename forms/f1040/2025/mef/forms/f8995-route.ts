@@ -1,3 +1,4 @@
+import { assertQualifiedTipQbiSource } from "../../form8995_qualified_tip_source.ts";
 import { assertCapitalSaleSourceRows } from "../../broker-sale-source-reconciliation.ts";
 import {
   inputSchema as scheduleDSourceSchema,
@@ -72,6 +73,10 @@ export function assertNoUnfiled8995Loss(
   fields: Readonly<Record<string, unknown>>,
   pending?: Readonly<Record<string, unknown>>,
 ): void {
+  const tipExclusions = assertQualifiedTipQbiSource(
+    fields as Record<string, unknown>,
+    pending,
+  );
   const parent = pending?.form8995a as Record<string, unknown> | undefined;
   if (
     parent?.farm_wotc_filing_source &&
@@ -99,8 +104,19 @@ export function assertNoUnfiled8995Loss(
   const priorQbi = sum("qbi_loss_carryforward");
   const netQbi = sum("qbi_from_schedule_c") + sum("qbi_from_schedule_f") +
     sum("qbi") + sum("sstb_qbi") - sum("se_tax_deduction") -
-    sum("se_health_insurance_deduction") - sum("retirement_plan_deduction") +
+    sum("se_health_insurance_deduction") - sum("retirement_plan_deduction") -
+    tipExclusions.total +
     priorQbi;
+  if (
+    tipExclusions.source && netQbi === 0 &&
+    ["line1_qbi", "qbi_deduction", ...lineNumbers.map((n) => `line${n}`)].some((
+      k,
+    ) => fields[k] !== undefined && fields[k] !== 0)
+  ) {
+    throw new Error(
+      "Wholly excluded business tips cannot retain a conflicting filed QBI claim",
+    );
+  }
   const currentReit = fields.line6_sec199a_dividends;
   const prior = fields.reit_loss_carryforward;
   if (
@@ -394,6 +410,7 @@ export function assertOneScheduleC8995(
     );
   }
   const pending = normalizeAllPending(rawPending as Record<string, unknown>);
+  const tipExclusions = assertQualifiedTipQbiSource(fields, pending);
   const source = scheduleCInputSchema.safeParse(pending.schedule_c);
   const sourceInput = source.success ? source.data : undefined;
   const businesses = source.success ? projectScheduleCItems(source.data) : [];
@@ -665,7 +682,8 @@ export function assertOneScheduleC8995(
     row.qbi !== rawQbi ||
     fields.qbi_from_schedule_c !== rawQbi ||
     typeof seDeduction !== "number" ||
-    Math.round(rawQbi - seDeduction - healthDeduction) !== fields.line1_qbi ||
+    Math.round(rawQbi - seDeduction - healthDeduction - tipExclusions.total) !==
+      fields.line1_qbi ||
     (hasSeDeduction
       ? scheduleSe?.net_profit_schedule_c !== rawQbi ||
         !zeroOrAbsent(scheduleSe?.net_profit_schedule_f) ||

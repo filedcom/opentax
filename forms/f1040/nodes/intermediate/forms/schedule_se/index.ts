@@ -113,6 +113,7 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
           }),
           this.outputNodes.output(schedule1a, {
             qualified_tips_se_deduction: owned.deduction,
+            qualified_tips_owner_se_source: owned.source,
             qualified_tips_schedule_f_profit: input.net_profit_schedule_f ?? 0,
             qualified_tips_farm_optional_method:
               input.farm_optional_method_elected === true,
