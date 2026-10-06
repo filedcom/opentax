@@ -137,3 +137,12 @@ parity and XSD structure. They do not establish issuer authentication or IRS
 acceptance. Remarriage during a quarter, a changed parent/employer
 relationship, and absent complete pay-period records remain guarded; the
 broader Schedule H family/source parent remains open.
+
+
+## Main integration completion
+
+Integrated22b3a845b/6c85ed12e holds productionSHA47212fab388ee4d4d04e81c57b2f7f4f24408ca2c2f1d93dd2f2bc59a1a3f938. Main normaltyped fourteen-module `deno task test` terminalexit0:86passed/0failed(21m6s). Theoriginal samegate exhausted4GBV8heap duringtypecheck; retainedlog133 andtransparentretry with `DENO_V8_FLAGS=--max-old-space-size=8192` preserve thefailure andnormaltyped command. Log `/tmp/opentax-scheduleh-parent-period-main-standard-v2-oct6.log`; wrapper/log/heldproduction3physicalfiles retained separately.
+
+Mainactual18returns/91pages replay terminal0 withwholegraph/prepared/carry/origins/PDFexact, nativeonlyReturnTs, fresh2025v5.4XSD andoriginalsourcehashesunchanged. Report `/tmp/opentax-scheduleh-parent-period-main18-held-oct6/report.json`. Old65recordsreplay terminal0:63positive/386pages(60freshcurrentexact,3historicallyqualified) plus2expectedmissingordinaryperiodrejections; everypositive freshfullXSD andexact reviewedsource rates, alloriginalJSON/PDF/XML unchanged andheldproductioncheckedbefore/after. Thisrunhas no native ratecorrection; nativecomparison onlyReturnTs. Report `/tmp/opentax-scheduleh-parent-period-main-source65-oct6/report.json`;131physicalterminalfiles preserved. Eightolderparentcases overlapthe63oldpositiveinventory; combineduniquepositives are73returns/436pages, including10new/50reviewedpages.
+
+Finalcandidate/source98, rootreview41, qualifiedv757, sharedmain56, old65terminal131 andtypedterminal3physicalfilepairs rehashed beforeledger1541. This records onlythe source-reconciled datedparentservice route; widerScheduleH/sourceauthentication/deceased-jointauthorization/fullbatch/businessrules/IRSacceptance remainopen.
