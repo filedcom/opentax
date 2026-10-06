@@ -2699,3 +2699,6 @@ Current main6d3e0f26d is tracked-clean. Previous goal work made progress with ve
 ## Before standard credit evidence runner repair
 
 Integrated a31d6b09a/41ded3aae. Fresh standard source command ended4/4 solely NotCapable for explicit FORM8621_EDUCATION_EVIDENCE_DIR/FORM8621_BUSINESS_EVIDENCE_DIR; all four packet builds reached directory access, so no passing packet/XSD claim yet. Existing adoption module also reads FORM8621_ADOPTION_EVIDENCE_DIR. Add only those named permissions to the standard task, then rerun; preserve failed log /tmp/opentax-qef-credit-current-main-source-oct6.log. Compatibility59607 remains live. Frozen52/future untouched, ledger1460.
+
+
+Before completing the same standard-runner repair: direct audit found existing QEF source/AMT review PDF settings also read by these tests; include their exact named permissions. No runtime tax/source change, no ledger credit.
