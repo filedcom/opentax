@@ -158,3 +158,58 @@ Deno.test("paired beneficiary public returns preserve both native copies and com
     assertEquals(text.code, 0, new TextDecoder().decode(text.stderr));
   }
 });
+
+Deno.test("paired beneficiary final projections reject contradictory source and election inventories", () => {
+  const input = pairedInputs();
+  const result = f1040_2025.executeReturn(input);
+  assertEquals(result.diagnostics, []);
+  const filer = extractFilerIdentity(input.general)!;
+  type Row = Record<string, unknown>;
+  type Inventory = { forms: Row[]; elections: Row[]; source_forms: Row[] };
+  const changes: [string, (p: typeof result.pending) => void][] = [
+    ["spouse source assigned to taxpayer", (p) => {
+      (p.f1099r!.f1099rs as Row[])[2].ts = "T";
+    }],
+    ["spouse issued amount changed", (p) => {
+      const row = (p.f1099r!.f1099rs as Row[])[2];
+      row.box2a_taxable_amount = Number(row.box2a_taxable_amount) + 1;
+    }],
+    ["spouse source reference duplicates taxpayer", (p) => {
+      const rows = p.f1099r!.f1099rs as Row[];
+      rows[2].source_document_reference = rows[0].source_document_reference;
+    }],
+    ["spouse election changes participant", (p) => {
+      (p.form4972 as unknown as Inventory).elections[1].participant_ssn =
+        "111223333";
+    }],
+    ["spouse computed owner changes", (p) => {
+      (p.form4972 as unknown as Inventory).forms[1].recipient = "T";
+    }],
+    ["spouse computed tax changes", (p) => {
+      const row = (p.form4972 as unknown as Inventory).forms[1];
+      row.line30 = Number(row.line30) + 1;
+    }],
+    ["one source group omitted", (p) => {
+      (p.form4972 as unknown as Inventory).source_forms.pop();
+    }],
+    ["Form1040 special tax changes", (p) => {
+      p.f1040!.form4972_tax = Number(p.f1040!.form4972_tax) + 1;
+    }],
+  ];
+  for (const [label, change] of changes) {
+    const changed = structuredClone(result.pending);
+    change(changed);
+    assertThrows(
+      () => native.build(changed.form4972!, { filer, pending: changed }),
+      Error,
+      undefined,
+      label,
+    );
+    assertThrows(
+      () => form4972Pdf.instances!(changed.form4972!, filer, changed),
+      Error,
+      undefined,
+      label,
+    );
+  }
+});
