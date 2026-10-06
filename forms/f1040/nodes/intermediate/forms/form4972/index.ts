@@ -158,7 +158,7 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
           ))) ||
       ((input.box6_nua ?? 0) === 0 &&
         input.elect_include_nua === true) ||
-      (input.annuity_actuarial_value ?? 0) !== 0 ||
+      !Number.isSafeInteger(input.annuity_actuarial_value ?? 0) ||
       (input.death_benefit_exclusion ?? 0) !== 0 ||
       (input.federal_estate_tax ?? 0) !== 0 ||
       (input.recipient_share_pct ?? 100) !== 100

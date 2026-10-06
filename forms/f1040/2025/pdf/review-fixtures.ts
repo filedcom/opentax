@@ -1,3 +1,4 @@
+import { multipleAnnuityReviewFixtures } from "./review-4972-multiple-annuity.fixture.ts";
 import { multipleNuaReviewFixtures } from "./review-4972-multiple-nua.fixture.ts";
 import { mixedControlledWotcFixtures } from "./review-mixed-controlled-wotc.fixture.ts";
 import { controlledFarmWotcFixtures } from "./review-controlled-farm-wotc.fixture.ts";
@@ -5,7 +6,10 @@ import { twoFarmWotcFixtures } from "./review-two-farm-wotc.fixture.ts";
 import { issuedRecaptureReviewFixture } from "./review-8611-issued-k1.fixture.ts";
 import { farmWotcLossFixtures } from "./review-farm-wotc-loss.fixture.ts";
 import { form8826InterpreterReviewFixture } from "./review-8826-interpreter.fixture.ts";
-import { ownedCfFiledCases, ownedCfFiledFixture } from "./review-owned-cf-filed.fixture.ts";
+import {
+  ownedCfFiledCases,
+  ownedCfFiledFixture,
+} from "./review-owned-cf-filed.fixture.ts";
 import { controlledWotcReviewFixtures } from "./review-controlled-wotc.fixture.ts";
 import { optionalFarmReviewFixtures } from "./review-schedule-se-farm-optional.fixture.ts";
 import { farmWotcReviewFixtures } from "./review-farm-wotc.fixture.ts";
@@ -9064,6 +9068,7 @@ const educationBase = basePdfReviewFixtures.find((fixture) =>
   fixture.id === "single-form8863-lifetime-learning-scholarship"
 )!;
 export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
+  ...multipleAnnuityReviewFixtures,
   ...multipleNuaReviewFixtures,
   ...twoFarmWotcFixtures(farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!)),
   issuedRecaptureReviewFixture(false), issuedRecaptureReviewFixture(true),
@@ -9085,7 +9090,12 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "farm",
     ),
   ),
-  ...farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!, basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!),
+  ...farmWotcReviewFixtures(
+    basePdfReviewFixtures.find((f) =>
+      f.id === "single-certified-work-opportunity-credit"
+    )!,
+    basePdfReviewFixtures.find((f) => f.id === "joint-two-w2s")!,
+  ),
   ...form8978ReviewFixtures,
   ...controlledWotcReviewFixtures(
     basePdfReviewFixtures.find((f) =>

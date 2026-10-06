@@ -1503,8 +1503,8 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
       ((item.box6_nua ?? 0) === 0 ||
         (Number.isSafeInteger(item.box2a_taxable_amount) &&
           Number.isSafeInteger(item.box3_capital_gain ?? 0))) &&
-      (item.box8_other ?? 0) === 0 &&
-      item.box8_pct_total === undefined
+      Number.isSafeInteger(item.box8_other ?? 0) &&
+      (item.box8_pct_total === undefined || item.box8_pct_total === 100)
     );
     const samePlan = groups.every((group) =>
       group[0] && group.every((item) =>
@@ -1566,6 +1566,17 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
             ),
           }
           : {}),
+        ...(group.length === 1 && group[0].box8_pct_total !== undefined
+          ? { annuity_share_pct: group[0].box8_pct_total }
+          : {}),
+        ...(group.some((item) => (item.box8_other ?? 0) > 0)
+          ? {
+            annuity_actuarial_value: group.reduce(
+              (sum, item) => sum + (item.box8_other ?? 0),
+              0,
+            ),
+          }
+          : {}),
         ...(group.length > 1
           ? {
             multiple_1099r: {
@@ -1613,6 +1624,9 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         capital_gain_amount: item.box3_capital_gain ?? 0,
         box6_nua: item.box6_nua ?? 0,
         annuity_actuarial_value: item.box8_other ?? 0,
+        ...(item.box8_pct_total !== undefined
+          ? { annuity_share_pct: item.box8_pct_total }
+          : {}),
       };
     });
     return [output(form4972Elections, { source_forms: sourceForms })];
@@ -1648,8 +1662,8 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         (item.box3_capital_gain ?? 0) > item.box2a_taxable_amount ||
         ((item.box6_nua ?? 0) > 0 &&
           (!Number.isSafeInteger(item.box6_nua ?? 0))) ||
-        (item.box8_other ?? 0) !== 0 ||
-        item.box8_pct_total !== undefined
+        !Number.isSafeInteger(item.box8_other ?? 0) ||
+        (item.box8_pct_total !== undefined && item.box8_pct_total !== 100)
       )
     ) {
       throw new Error(
@@ -1680,6 +1694,14 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
           ? {
             box6_nua: lumpItems.reduce(
               (sum, item) => sum + (item.box6_nua ?? 0),
+              0,
+            ),
+          }
+          : {}),
+        ...(lumpItems.some((item) => (item.box8_other ?? 0) > 0)
+          ? {
+            annuity_actuarial_value: lumpItems.reduce(
+              (sum, item) => sum + (item.box8_other ?? 0),
               0,
             ),
           }

@@ -161,6 +161,13 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
                     form.lump_sum_amount,
                 ))))
         ) ||
+        forms.some((form, index) =>
+          !Number.isSafeInteger(form.annuity_actuarial_value ?? 0) ||
+          ((form.annuity_actuarial_value ?? 0) !== 0 &&
+            (sourceByElection[index].annuity_actuarial_value !==
+                form.annuity_actuarial_value ||
+              form.elect_10yr_averaging !== true))
+        ) ||
         plans.some((plan) => !plan || typeof plan !== "object") ||
         elections.some((election, index) => {
           const plan = sourceByElection[index].form4972_plan as Record<
@@ -181,8 +188,7 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
           (source.source_document_references.length > 1 &&
             source.multiple_1099r === undefined) ||
           (source.source_document_references.length === 1 &&
-            source.multiple_1099r !== undefined) ||
-          (source.annuity_actuarial_value ?? 0) !== 0
+            source.multiple_1099r !== undefined)
         )
       ) {
         throw new Error(

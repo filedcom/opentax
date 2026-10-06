@@ -186,7 +186,10 @@ export function reconcileForm4972Collection(
                 ))) ||
             sources.reduce((sum, source) => sum + (source.box6_nua ?? 0), 0) !==
               fields.box6_nua)) ||
-        (fields.annuity_actuarial_value ?? 0) !== 0 ||
+        sources.reduce((sum, source) => sum + (source.box8_other ?? 0), 0) !==
+          (fields.annuity_actuarial_value ?? 0) ||
+        ((fields.annuity_actuarial_value ?? 0) !== 0 &&
+          fields.elect_10yr_averaging !== true) ||
         (fields.federal_estate_tax ?? 0) !== 0 ||
         (fields.death_benefit_exclusion ?? 0) !== 0
       )

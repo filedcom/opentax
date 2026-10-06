@@ -54,7 +54,8 @@ export function reconcileForm4972Multiple1099R(
         (!Number.isSafeInteger(item.box2a_taxable_amount ?? 0) ||
           !Number.isSafeInteger(item.box3_capital_gain ?? 0) ||
           !Number.isSafeInteger(item.box6_nua ?? 0))) ||
-      (item.box8_other ?? 0) !== 0 || item.box8_pct_total !== undefined
+      !Number.isSafeInteger(item.box8_other ?? 0) ||
+      (item.box8_pct_total !== undefined && item.box8_pct_total !== 100)
     ) ||
     elected.some((item) =>
       item.payer_ein !== elected[0]?.payer_ein ||
@@ -64,6 +65,8 @@ export function reconcileForm4972Multiple1099R(
     taxable !== form.lump_sum_amount ||
     gain !== (form.capital_gain_amount ?? 0) ||
     nua !== (form.box6_nua ?? 0) ||
+    elected.reduce((sum, item) => sum + (item.box8_other ?? 0), 0) !==
+      (form.annuity_actuarial_value ?? 0) ||
     (nua > 0 &&
       (form.elect_include_nua !== true ||
         form.elect_capital_gain !== true || gain <= 0 ||
