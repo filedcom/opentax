@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "./index.ts";
 import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
@@ -121,5 +121,44 @@ Deno.test("actual owned C/F losses retain signed whole-dollar boundaries through
         agi: pending.f1040.line11_agi,
       }),
     );
+  }
+});
+
+Deno.test("owned filed C/F cent boundary rejects stale source, income and owner-QBI exports", async () => {
+  const row = ownedCfFiledCases.find((row) => row.id === "farm-loss-50")!;
+  const result = f1040_2025.executeReturn(
+    ownedCfFiledInputs(single, joint, row),
+  );
+  assertEquals(result.diagnostics, []);
+  const settled = normalizeAllPending(result.pending);
+  const mutations: ((pending: typeof settled) => void)[] = [
+    (pending) => {
+      const farm =
+        (pending.schedule_f.schedule_fs as { line16_feed: number }[])[0];
+      farm.line16_feed = 10000.49;
+    },
+    (pending) => {
+      pending.schedule1.line6_schedule_f = -10000;
+    },
+    (pending) => {
+      pending.schedule1.line10_total_additional_income = 50000;
+    },
+    (pending) => {
+      pending.f1040.line11_agi = Number(pending.f1040.line11_agi) + 1;
+    },
+    (pending) => {
+      const farm = (pending.form8995.joint_owner_filing_rows as {
+        business_reference: string;
+        qbi: number;
+      }[]).find((row) => row.business_reference === "Owned-Farm")!;
+      farm.qbi = -10000;
+    },
+  ];
+  const { buildPdfBytes } = await import("./pdf/builder.ts");
+  for (const mutate of mutations) {
+    const changed = structuredClone(settled);
+    mutate(changed);
+    await assertRejects(() => f1040_2025.prepareReturn!(changed, joint.filer));
+    await assertRejects(() => buildPdfBytes(changed, joint.filer));
   }
 });
