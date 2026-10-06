@@ -940,3 +940,100 @@ Form4852/8606 parent remain open.
 Main eff7c4703 preserved newer4972source/cents and combinedIRA/PFICordering; only append-only evidence documentation conflicted, both notes retained. Fresh typed source2+combinedordering1 pass **3/0** (1m10s), `/tmp/opentax-roth-current-conversion-main-source-oct6.log`. Actual immutable source **13/116** full-XSD packet replay exact pending/nativeXMLexceptTs/PDF/origins/retained bytes: `/tmp/opentax-roth-current-conversion-main-held13-oct6.log`. Its116returnpages and162retainedsourcepage occurrences retain the agent's complete reviewed bytes. Broader isolated274/0 is separate evidence, not a fresh root bulk count.
 
 Fresh root oldconversion **8/79** whole-source/native/PDF preservation exact `/tmp/opentax-roth-current-conversion-original8-main-oct6.log`. Paper/account/qualifiedQ/forwardN **15/105** preserved `/tmp/opentax-ira-paper-after-current-conversion-held15-oct6.log`; actual deltas checked separately are exactly the three previous itemizedQBI operands22000/20000/20000, no new changes. Prior35/295/997originalhash preservation is separately recorded isolated proof. Annual traditional distributions/current contributions/withheld replacements remain actively incomplete; negative actualpaper18(-5000) nativeNNschema guard, external authentication/businessrules/IRS parents remain open.
+
+### Annual traditional contributions, withdrawals and current Roth conversions — source proof
+
+Isolated implementation base `c2539927c` plus the prior current-conversion
+commit `8120c4487` (local cherry `e0d822c70`). This extends the existing retained
+owner inventory with complete2025 regular traditional contribution receipts,
+issued5498 box1, the owner's nondeductible election, ordinary issued1099R
+withdrawals and actual paid dispositions, conversion debits/Roth receipts, and
+all owned traditional account year-end statements. Distinct account,
+distribution, issuer and owner joins retain multiple copies, two custodians and
+both MFJ owners. Reviewed source JSON and completed official PDFs remain bound
+to actual retained bytes and parsed facts; generated native copies do not enter
+the calculation a second time. These are constructed reviewed source records
+proving the contract, not issuer authentication or prior IRS acceptance.
+
+Annual PartI now includes actual lines1/4/7/12/15, with PartII conversions and
+PartIII Roth ordering where applicable. Postyear designated2025 contributions
+remain in line1 and carryforward but leave current distribution basis through
+line4, as required by the [Form8606 instructions](https://www.irs.gov/instructions/i8606).
+Raw cents aggregate before finalized line rounding. The filed ratio is used
+for both multiplications without the inherited scalar basis clamp; additional
+precision up to the native five-decimal limit resolves the proved small-basis
+case. Actual basis1, conversion1000 and withdrawal500 print ratio.0007,
+conversion basis1, withdrawal basis0 and remaining basis0. A genuine source
+that still overconsumes basis at five decimals remains explicitly guarded.
+The genuine signed PartII market-loss/native nonnegative-schema gate remains.
+
+The partial-conversion source reconciles gross11500 to paid Roth10000,
+withheld1000 and paid owner cash500. The [2025 issuer instructions, Box2a](https://www.irs.gov/pub/irs-prior/i1099r--2025.pdf)
+require the issued conversion Box2a to report the converted amount10000.
+Initial unsealed drafts incorrectly used full gross there; those draft bytes
+are preserved and superseded by corrected source records. Unconverted funds
+join line7 and the owner's taxable/early-distribution computations; withholding
+enters1040 exactly once. A real completed traditional Form4852 conversion with
+unknown taxable amount and the required IRA margin also files without any Roth
+withdrawal, using distinct paper-copy and custodian-record references. SIMPLE
+substitute conversions still require the missing actual participation-clock
+source. Replenished withholding is not inferred from a gross receipt.
+
+Annual eligibility binds actual owned W2 compensation, joint spousal capacity,
+per-owner age limits, all retained traditional/Roth regular contributions, and
+the actual nondeductible election. Concurrent Roth regular contributions use
+actual MAGI excluding taxable conversion income, with supported addbacks. The
+[Pub590-A Worksheet2-2](https://www.irs.gov/publications/p590a)
+phases out the full statutory/compensation limit, then takes the lesser of that
+result and capacity after traditional contributions. The earlier unsealed
+residual-times-phaseout formula was corrected. Actual W2 wages157864 plus
+IRA taxable13066 produce AGI170930 and Roth MAGI162500 after conversion8430;
+the Roth limit1170 permits actual Roth1000 alongside traditional2000. Actual
+sourced MAGI184636 rejects native and directPDF filing. Unsupported exclusions,
+qualified-plan conversion addbacks and Saver-credit source combinations retain
+their guards; no contribution authority is fabricated.
+
+Final checked source gate: **3/0, ten full public returns/91 pages**, log
+`/tmp/opentax-roth-annual-source29.log` (1m1s). Full local2025v5.4 XSD, separate
+owner8606/5329 copies, final1040 tax/withholding joins and meaningful public,
+prepared-native/directPDF source conflicts pass. The paid receipt negative
+updates all active hashes and requires the exact parsed-facts rejection.
+Cents remain raw: contribution receipts1000.25+1000.25 file line1=2001;
+withholding4200.50 files1040/XML/PDF4201, with incomeTax22203, otherTax1214,
+total23417 and refund784. Final28-module related gate **274/0** (3m25s), log
+`/tmp/opentax-roth-annual-related28.log`.
+
+Held10 replay passes source/raw pending/XML except ReturnTs/PDF bytes/copy
+origins/retained hashes exactly, log `/tmp/opentax-roth-annual-held31.log`.
+All91 packet pages were reviewed;82 earlier pages have exact pixels and nine
+new phaseout pages were inspected. All133 retained pages (66 PDFs,32 distinct
+rendered pages) were reviewed through explicit pixel groups. All66 canonical
+AcroForm/widget parent chains agree, and all21 completed4852 first pages match
+the packet pixels exactly, log `/tmp/opentax-roth-annual-pdf32.log`. Frozen earlier
+nine packets/82 pages also replay exactly on final code, log
+`/tmp/opentax-roth-annual-held9-preservation32.log`. Their regenerated retained
+PDF copies have fresh ModDate metadata and fresh byte bindings; canonical
+fields and rendered pixels are unchanged, and the original held9 bytes remain
+preserved. Earlier corrected35/295, paper15/105 and current13/116 replay on
+final code, logs `/tmp/opentax-roth-annual-preservation30.log` and
+`/tmp/opentax-roth-annual-current13-preservation30.log`. Paper15 retains only the
+previously qualified added AMT itemized operand exception. All997 original
+archived file hashes remain unchanged; qualified original10 claims are not
+revived.
+
+Ignored evidence root:
+`/tmp/opentax-roth-annual-traditional-oct6/.state/research/annual-traditional-audit/`.
+It contains frozen `held10-preserved`, `held9-preserved`, preserved drafts,
+cache, source/visual/widget/pixel manifests, exact compatibility command,
+replay.ts and prior preservation scripts. Replay from this checkout:
+`PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run --allow-all .state/research/annual-traditional-audit/replay.ts .state/research/annual-traditional-audit/held10-preserved .state/research/annual-traditional-audit/pdf-cache-preserved .state/research/annual-traditional-audit/verified10-manifest.json`.
+
+This proves regular nondeductible annual contribution/ordinary withdrawal/current
+conversion coexistence for the retained known-source owner routes. Outstanding
+rollovers, QCD/HSA, disaster/repayment/transferred basis, employer SEP/SIMPLE or
+returned excess contributions, actual withdrawal exceptions/replenishment,
+missing historical election evidence, external authentication and IRS Business
+Rules/ATS acceptance remain open. The broader Form4852/8606 parent is not closed.
+
+Annual proof-index SHA256: `b7b1abf2118b1f50589d9a249af4a4d05a3132c3064872ef67566a9949cdc27e`.
+Held10 manifest SHA256: `fbe381c196937da1bb54b2c2254aa7d2f8028dc9d5b4027d2818dffcf4e3ef5b`.

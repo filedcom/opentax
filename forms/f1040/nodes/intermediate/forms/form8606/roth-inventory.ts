@@ -61,7 +61,7 @@ export const rothOwnerInventorySchema = rothActivityReviewSchema.omit({
   conversions: z.array(rothConversionYearSchema).min(1).optional(),
   current_conversion: currentRothConversionSchema.optional(),
   prior_distributions: z.array(rothDistributionYearSchema).min(1).optional(),
-  payments: z.array(paymentSchema).min(1),
+  payments: z.array(paymentSchema),
 }).strict();
 export type RothOwnerInventory = z.infer<typeof rothOwnerInventorySchema>;
 const sumMoney = (values: readonly number[]) =>
@@ -70,6 +70,11 @@ const sumMoney = (values: readonly number[]) =>
 /** Calculate the annual owner basis once; each payment keeps its actual lineage. */
 export function reviewedRothOwnerInventory(raw: unknown) {
   const review = rothOwnerInventorySchema.parse(raw);
+  if (!review.payments.length && !review.current_conversion) {
+    throw new Error(
+      "Empty current owner inventory requires actual conversion sources",
+    );
+  }
   const hasHistory = !!review.prior_distributions?.length;
   const currentConversion = review.current_conversion
     ? reviewedCurrentRothConversion(
@@ -380,14 +385,15 @@ export function reviewedRothOwnerInventory(raw: unknown) {
     return { ...row, allocatedTaxable, allocatedNontaxable };
   });
   const earlyEarnings = Math.min(taxable, earlyRemainder);
-  const earlyTaxable = recapture + earlyEarnings;
+  const earlyTaxable = recapture + earlyEarnings +
+    (currentConversion?.earlyWithdrawalTaxable ?? 0);
   return {
     review,
     payments,
     rawGross,
     gross,
     nonqualifiedGross,
-    rawBasis: payments[0].rawBasis,
+    rawBasis,
     basis,
     taxable,
     earlyTaxable,
@@ -398,10 +404,11 @@ export function reviewedRothOwnerInventory(raw: unknown) {
     requires8606: nonqualified.length > 0 || !!currentConversion,
     currentConversion,
     rawTotalGross: sumMoney([rawGross, currentConversion?.rawGross ?? 0]),
-    totalTaxable: taxable + (currentConversion?.taxable ?? 0),
+    totalTaxable: taxable + (currentConversion?.taxable ?? 0) +
+      (currentConversion?.withdrawalTaxable ?? 0),
     rawRemainingContributionBasis: Math.max(
       0,
-      payments[0].rawBasis - rawNonqualifiedGross,
+      rawBasis - rawNonqualifiedGross,
     ),
     print: {
       print_roth_line19_distributions: nonqualifiedGross,
@@ -496,7 +503,8 @@ export function reconcileRothOwnerInventoryCopies(
     const converted = facts.review.current_conversion?.accounts.flatMap(
       (account) => account.transfers,
     ).find((t) =>
-      t.issued_form1099r.source_document_reference ===
+      (t.issued_form1099r.completed_form4852_reference ??
+        t.issued_form1099r.source_document_reference) ===
         item.source_document_reference
     )?.issued_form1099r;
     if (converted) {
@@ -523,6 +531,40 @@ export function reconcileRothOwnerInventoryCopies(
       ) {
         throw new Error(
           "Current conversion issued copy differs from actual owner/account/debit source",
+        );
+      }
+      continue;
+    }
+    const withdrawal = facts.review.current_conversion
+      ?.annual_traditional_activity?.withdrawals.find((w) =>
+        w.issued_form1099r.source_document_reference ===
+          item.source_document_reference
+      )?.issued_form1099r;
+    if (withdrawal) {
+      if (
+        item.ts !== facts.review.owner ||
+        item.recipient_ssn?.replace(/\D/g, "") !== withdrawal.owner_ssn ||
+        item.payer_ein.replace(/\D/g, "") !== withdrawal.payer_ein ||
+        item.account_number !== withdrawal.traditional_account_number ||
+        item.box1_gross_distribution !== withdrawal.box1_gross_distribution ||
+        item.box2a_taxable_amount !== withdrawal.box2a_taxable_amount ||
+        item.box13_date_of_payment !== withdrawal.distributed_on ||
+        item.box7_distribution_code !== withdrawal.box7_distribution_code ||
+        item.box7_code2 !== undefined || item.box2b_not_determined !== true ||
+        item.box7_ira_simple_indicator !== true ||
+        item.rollover_code !== undefined ||
+        item.exclude_8606_roth !== undefined ||
+        item.payer_name !== withdrawal.issuer.name ||
+        item.payer_address_line1 !== withdrawal.issuer.address_line1 ||
+        item.payer_address_city !== withdrawal.issuer.city ||
+        item.payer_address_state !== withdrawal.issuer.state ||
+        item.payer_address_zip !== withdrawal.issuer.zip ||
+        (item.box4_federal_withheld ?? 0) !== withdrawal.federal_withheld ||
+        (item.box14_state_tax ?? 0) !== withdrawal.state_tax_withheld ||
+        (item.box17_local_tax ?? 0) !== withdrawal.local_tax_withheld
+      ) {
+        throw new Error(
+          "Annual traditional issued withdrawal copy differs from actual owner/account/paid source",
         );
       }
       continue;
@@ -559,12 +601,18 @@ export function reconcileRothOwnerInventoryCopies(
   for (const facts of groups.values()) {
     const actual = current.filter((row) => row.ts === facts.review.owner);
     const expectedCurrentReferences = [
+      ...(facts.review.current_conversion?.annual_traditional_activity
+        ?.withdrawals ?? []).map((w) =>
+          w.issued_form1099r.source_document_reference
+        ),
       ...facts.review.payments.map((payment) =>
         payment.form1099r_source_document_reference
       ),
       ...(facts.review.current_conversion?.accounts ?? []).flatMap((account) =>
-        account.transfers.map((t) =>
-          t.issued_form1099r.source_document_reference
+        account.transfers.map((
+          t,
+        ) => (t.issued_form1099r.completed_form4852_reference ??
+          t.issued_form1099r.source_document_reference)
         )
       ),
     ];
@@ -607,7 +655,7 @@ export function rothOwnerPrintFields(
     print_line2_prior_basis: 0,
     print_line3_total_basis: 0,
     print_line14_remaining_basis: 0,
-    source_traditional_distributions: 0,
+    source_traditional_distributions: facts.currentConversion?.withdrawals ?? 0,
     source_roth_conversion: facts.currentConversion?.gross ?? 0,
     source_roth_distribution: facts.nonqualifiedGross,
     source_roth_basis_contributions: facts.basis,

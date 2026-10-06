@@ -1,3 +1,4 @@
+import { formatForm8606BasisRatio } from "../../../nodes/intermediate/forms/form8606/roth-current-conversion.ts";
 import { reconcileForm8606RothInventories } from "../../form8606_roth_inventory_reconciliation.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { form8606 } from "../../mef/forms/f8606.ts";
@@ -239,6 +240,16 @@ export const form8606Pdf: PdfFormDescriptor = {
             [
               ...(owner.currentConversion.hasPartI
                 ? [
+                  ...(owner.currentConversion.review.annual_traditional_activity
+                    ? [
+                      "print_line1_nondeductible",
+                      "print_line2_prior_basis",
+                      "print_line4_post_year_contributions",
+                      "print_line15a_not_converted",
+                      "print_line15b_disaster",
+                      "print_line15c_taxable",
+                    ]
+                    : []),
                   "print_line6_year_end_value",
                   "print_line7_distributions",
                   "print_line11_nontaxable_conversion",
@@ -260,9 +271,10 @@ export const form8606Pdf: PdfFormDescriptor = {
         ...(owner.currentConversion?.hasPartI
           ? {
             print_line10_ratio_whole: Math.floor(owner.currentConversion.ratio),
-            print_line10_ratio_fraction: String(
-              Math.round(owner.currentConversion.ratio * 1000) % 1000,
-            ).padStart(3, "0"),
+            print_line10_ratio_fraction:
+              formatForm8606BasisRatio(owner.currentConversion.ratio).split(
+                ".",
+              )[1],
           }
           : {
             print_line1_nondeductible: undefined,

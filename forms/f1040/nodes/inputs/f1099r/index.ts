@@ -1168,7 +1168,7 @@ function validateItem(item: R1099Item): void {
   validateIraRolloverEvidence(item);
   if (item.roth_owner_inventory_review &&
     (item.roth_activity_review || item.roth_distribution_evidence || item.prior_ira_basis !== undefined ||
-      item.form8606_distribution_evidence || (item.rollover_code && !(item.rollover_code === "C" && item.roth_owner_inventory_review.current_conversion?.accounts.some(a => a.transfers.some(t => t.issued_form1099r.source_document_reference === item.source_document_reference)))) || item.exclude_4972 || item.qcd_full ||
+      item.form8606_distribution_evidence || (item.rollover_code && !(item.rollover_code === "C" && item.roth_owner_inventory_review.current_conversion?.accounts.some(a => a.transfers.some(t => (t.issued_form1099r.completed_form4852_reference ?? t.issued_form1099r.source_document_reference) === item.source_document_reference)))) || item.exclude_4972 || item.qcd_full ||
       (item.qcd_partial_amount ?? 0) > 0 || item.form8915f_treatment || item.no_distribution_received)) {
     throw new Error("Complete Roth inventory conflicts with another distribution treatment");
   }
@@ -1337,7 +1337,7 @@ function disabilityWagesItems(items: R1099Items): R1099Items {
 // its taxable amount is separately determined for line 4b or 5b.
 function isExcludedFromGross(item: R1099Item): boolean {
   if (item.exclude_4972 === true) return true;
-  if (item.roth_owner_inventory_review?.current_conversion && item.rollover_code === "C") return true;
+  if (item.roth_owner_inventory_review?.current_conversion && (item.rollover_code === "C" || item.roth_owner_inventory_review.current_conversion.annual_traditional_activity?.withdrawals.some(w => w.issued_form1099r.source_document_reference === item.source_document_reference))) return true;
   if (item.roth_activity_review) {
     return !reviewedRothActivity(item.roth_activity_review).qualified;
   }

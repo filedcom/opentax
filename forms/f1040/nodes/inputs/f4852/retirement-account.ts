@@ -36,14 +36,17 @@ export function reviewedForm4852AccountType(
 ): RetirementAccountType | undefined {
   if (item.form_type !== "R_1099") return undefined;
   const declared = item.distribution_source?.account_type;
-  const ordinary = [
+  const ordinary = ["J", "T", "Q"].includes(item.distribution_code ?? "") && [
     item.retirement_source?.roth_activity_review,
     item.retirement_source?.roth_owner_inventory_review,
   ].some((review) =>
     review?.inventory.all_owned_accounts_are_ordinary_roth_not_sep_or_simple ===
       true
   );
-  if (ordinary && declared && declared !== "ordinary_roth_ira") {
+  if (
+    ordinary && ["J", "T", "Q"].includes(item.distribution_code ?? "") &&
+    declared && declared !== "ordinary_roth_ira"
+  ) {
     throw new Error(
       "Form4852 custodian account type conflicts with retained ordinary Roth inventory",
     );

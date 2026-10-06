@@ -1,3 +1,4 @@
+import { inputSchema as wagesSchema } from "../nodes/inputs/w2/index.ts";
 import { isDeepStrictEqual } from "node:util";
 import { inputSchema as rSchema } from "../nodes/inputs/f1099r/index.ts";
 import {
@@ -39,6 +40,149 @@ export function reconcileForm8606RothInventories(
     throw new Error(
       "Complete Roth owner filing needs supported filer and all current IRA source joins",
     );
+  }
+  for (const row of facts) {
+    for (
+      const transfer of row.review.current_conversion?.accounts.flatMap((a) =>
+        a.transfers
+      ) ?? []
+    ) {
+      const source = transfer.issued_form1099r;
+      if (source.source_kind === "completed_form4852") {
+        const substitutes = (pending.f4852 as {
+          f4852s?: {
+            completed_form_review_reference?: string;
+            distribution_source?: { account_type?: string };
+            retirement_source?: { roth_owner_inventory_review?: unknown };
+          }[];
+        } | undefined)?.f4852s ?? [];
+        const matched = substitutes.filter((s) =>
+          s.completed_form_review_reference ===
+            source.completed_form4852_reference &&
+          isDeepStrictEqual(
+            s.retirement_source?.roth_owner_inventory_review,
+            row.review,
+          )
+        );
+        if (
+          matched.length !== 1 ||
+          !["traditional_ira", "sep_ira"].includes(
+            matched[0].distribution_source?.account_type ?? "",
+          )
+        ) {
+          throw new Error(
+            "Annual traditional conversion completed-source kind requires its actual retained Form4852 copy",
+          );
+        }
+      }
+    }
+  }
+  const annualOwners = facts.filter((row) =>
+    row.review.current_conversion?.annual_traditional_activity
+  );
+  if (annualOwners.length) {
+    const wages = pending.w2 ? wagesSchema.parse(pending.w2).w2s : [];
+    const identities = [
+      filer.primarySSN,
+      ...(filer.filingStatus === FilingStatus.MarriedFilingJointly
+        ? [filer.spouse?.ssn]
+        : []),
+    ].filter(Boolean).map((s) => s!.replace(/\D/g, ""));
+    const compensation = wages.filter((w) =>
+      w.box13_statutory_employee !== true &&
+      identities.includes(w.employee_ssn?.replace(/\D/g, "") ?? "")
+    ).reduce((total, w) =>
+      total + Math.round(w.box1_wages * 100), 0) / 100;
+    const contributed = facts.map((row) => ({
+      row,
+      amount: (row.review.current_conversion?.annual_traditional_activity
+            ?.contributions ?? []).reduce(
+              (total, c) =>
+                total + Math.round(c.form5498.box1_ira_contributions * 100),
+              0,
+            ) / 100 +
+        row.review.contributions.filter((c) => c.form5498.tax_year === 2025)
+            .reduce(
+              (total, c) =>
+                total + Math.round(c.form5498.box10_roth_contributions * 100),
+              0,
+            ) / 100,
+    }));
+    const schedule1 = pending.schedule1 as Record<string, unknown> | undefined;
+    const agi = (pending.f1040 as Record<string, unknown> | undefined)
+      ?.line11_agi;
+    if (typeof agi === "number") {
+      const magi = agi - facts.reduce((sum, row) =>
+        sum + (row.currentConversion?.taxable ?? 0), 0) +
+        Number(schedule1?.line21_student_loan_interest ?? 0);
+      for (const row of facts) {
+        const currentRoth = row.review.contributions.filter((c) =>
+          c.form5498.tax_year === 2025
+        ).reduce((sum, c) =>
+          sum + Math.round(c.form5498.box10_roth_contributions * 100), 0) / 100;
+        if (!currentRoth) {
+          continue;
+        }
+        const traditional =
+          (row.review.current_conversion?.annual_traditional_activity
+            ?.contributions ?? []).reduce((sum, c) =>
+              sum + Math.round(c.form5498.box1_ira_contributions * 100), 0) /
+          100;
+        const fullLimit = Math.min(
+          row.review.owner_identity.date_of_birth <= "1975-12-31" ? 8000 : 7000,
+          compensation - contributed.filter((c) =>
+            c.row !== row
+          ).reduce((sum, c) =>
+            sum + c.amount, 0),
+        );
+        const residual = fullLimit - traditional;
+        const lower = filer.filingStatus === FilingStatus.MarriedFilingJointly
+          ? 236000
+          : 150000;
+        const width = filer.filingStatus === FilingStatus.MarriedFilingJointly
+          ? 10000
+          : 15000;
+        const allowed = magi >= lower + width
+          ? 0
+          : magi <= lower
+          ? residual
+          : Math.min(
+            residual,
+            Math.max(
+              200,
+              Math.ceil(fullLimit * (lower + width - magi) / width / 10) * 10,
+            ),
+          );
+        if (
+          currentRoth > allowed || pending.form2555 || pending.form8839 ||
+          pending.form8815 || items.some((i) =>
+            i.box7_distribution_code === "H" ||
+            i.box7_distribution_code === "G" &&
+              (i.box2a_taxable_amount ?? 0) > 0
+          )
+        ) {
+          throw new Error(
+            "Annual current Roth regular contributions need actual MAGI/combined-contribution eligibility and supported exclusion/plan-conversion source joins",
+          );
+        }
+      }
+    }
+    const saverCeiling =
+      filer.filingStatus === FilingStatus.MarriedFilingJointly ? 79000 : 39500;
+    if (
+      contributed.some(({ row, amount }) =>
+        amount >
+          (row.review.owner_identity.date_of_birth <= "1975-12-31"
+            ? 8000
+            : 7000)
+      ) || contributed.reduce((t, c) => t + c.amount, 0) > compensation ||
+      (schedule1?.line20_ira_deduction ?? 0) !== 0 || typeof agi !== "number" ||
+      agi <= saverCeiling
+    ) {
+      throw new Error(
+        "Annual nondeductible traditional contributions need actual owner/combined compensation limits, retained election, no conflicting deduction and supported Saver-credit source joins",
+      );
+    }
   }
   const expectedForms = facts.filter((row) => row.requires8606).map((row) => ({
     owner: row.review.owner,

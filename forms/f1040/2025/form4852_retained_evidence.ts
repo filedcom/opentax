@@ -304,15 +304,34 @@ export async function assertForm4852RetainedEvidence(
         row.form1099r_source_document_reference ===
           item.completed_form_review_reference
       );
+      const converted = facts.review.current_conversion?.accounts.flatMap((a) =>
+        a.transfers
+      ).find((t) =>
+        (t.issued_form1099r.completed_form4852_reference ??
+          t.issued_form1099r.source_document_reference) ===
+          item.completed_form_review_reference
+      )?.issued_form1099r;
+      const matched = payment ??
+        (converted?.source_kind === "completed_form4852"
+          ? {
+            owner_ssn: converted.owner_ssn,
+            custodian_ein: converted.payer_ein,
+            account_number: converted.traditional_account_number,
+            distribution_reference: converted.distribution_reference,
+            distributed_on: converted.distributed_on,
+            gross_distribution: converted.box1_gross_distribution,
+            distribution_code: converted.box7_distribution_code,
+          }
+          : undefined);
       if (
-        !payment || facts.review.owner !== item.subject_ts ||
-        payment.owner_ssn !== item.recipient_ssn?.replace(/\D/g, "") ||
-        payment.custodian_ein !== item.payer_tin?.replace(/\D/g, "") ||
-        payment.account_number !== item.account_number ||
-        payment.distribution_reference !== item.distribution_reference ||
-        payment.distributed_on !== item.distribution_source?.paid_on ||
-        payment.gross_distribution !== item.gross_distribution ||
-        payment.distribution_code !== item.distribution_code
+        !matched || facts.review.owner !== item.subject_ts ||
+        matched.owner_ssn !== item.recipient_ssn?.replace(/\D/g, "") ||
+        matched.custodian_ein !== item.payer_tin?.replace(/\D/g, "") ||
+        matched.account_number !== item.account_number ||
+        matched.distribution_reference !== item.distribution_reference ||
+        matched.distributed_on !== item.distribution_source?.paid_on ||
+        matched.gross_distribution !== item.gross_distribution ||
+        matched.distribution_code !== item.distribution_code
       ) {
         throw new Error(
           "Form4852 complete Roth inventory payment/account/owner differs from actual completed source",

@@ -1,3 +1,4 @@
+import { formatForm8606BasisRatio } from "../../../nodes/intermediate/forms/form8606/roth-current-conversion.ts";
 import { reconcileForm8606RothInventories } from "../../form8606_roth_inventory_reconciliation.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import { FilingStatus } from "../../../mef/header.ts";
@@ -47,19 +48,28 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
       element("NondedIRATxpyrWithIRASSN", reviewedRoth.ownerSsn),
       ...(fields.roth_owner_inventory_review?.current_conversion
         ? [
-          ...(fields.print_line2_prior_basis > 0 &&
-              fields.roth_owner_inventory_review.current_conversion
-                .year_end_statements.some((statement) =>
-                  statement.fair_market_value > 0
-                )
+          ...((fields.roth_owner_inventory_review.current_conversion
+                  .annual_traditional_activity !== undefined ||
+              (fields.print_line7_distributions ?? 0) > 0 ||
+              fields.print_line2_prior_basis > 0 &&
+                fields.roth_owner_inventory_review.current_conversion
+                  .year_end_statements.some((statement) =>
+                    statement.fair_market_value > 0
+                  ))
             ? [
-              element("NondedIRACurrTYNondedContriAmt", 0),
+              element(
+                "NondedIRACurrTYNondedContriAmt",
+                fields.print_line1_nondeductible,
+              ),
               element("NondedIRABasisForPYAmt", fields.print_line2_prior_basis),
               element(
                 "NondedIRATotalIRAValueAmt",
                 fields.print_line3_total_basis,
               ),
-              element("NondedIRAPostTaxYrContriAmt", 0),
+              element(
+                "NondedIRAPostTaxYrContriAmt",
+                fields.print_line4_post_year_contributions,
+              ),
               element(
                 "NondedIRATaxYearNetBasisAmt",
                 fields.print_line5_current_basis,
@@ -68,7 +78,10 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
                 "NondedIRACurrTYIRAPlusRllvrAmt",
                 fields.print_line6_year_end_value,
               ),
-              element("NondedIRAWthdrwLessRllvrAmt", 0),
+              element(
+                "NondedIRAWthdrwLessRllvrAmt",
+                fields.print_line7_distributions,
+              ),
               element(
                 "NondedIRATYCombinedIRAValueAmt",
                 fields.print_line8_conversions,
@@ -79,13 +92,16 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
               ),
               element(
                 "NondedIRATaxYearBasisRt",
-                fields.print_line10_basis_ratio!.toFixed(3),
+                formatForm8606BasisRatio(fields.print_line10_basis_ratio!),
               ),
               element(
                 "NondedIRANontxCnvrtAmt",
                 fields.print_line11_nontaxable_conversion,
               ),
-              element("NondedIRANontxWthdrwUncnvrtAmt", 0),
+              element(
+                "NondedIRANontxWthdrwUncnvrtAmt",
+                fields.print_line12_nontaxable_distribution,
+              ),
               element(
                 "NondedIRANontxOfWthdrwAmt",
                 fields.print_line13_nontaxable,
@@ -94,6 +110,19 @@ function buildIRS8606(rawFields: Input, context?: MefBuildContext): string {
                 "NondedIRATotalIRABasisAmt",
                 fields.print_line14_remaining_basis,
               ),
+              ...(fields.print_line15c_taxable !== undefined
+                ? [
+                  element(
+                    "NondedIRANotCnvrtLessRllvrAmt",
+                    fields.print_line15a_not_converted,
+                  ),
+                  element(
+                    "NondedIRAQlfyDisasterDistriAmt",
+                    fields.print_line15b_disaster,
+                  ),
+                  element("NondedIRATaxableAmt", fields.print_line15c_taxable),
+                ]
+                : []),
             ]
             : []),
           element("TotalIRAConvertedToRothAmt", fields.print_line16_converted),

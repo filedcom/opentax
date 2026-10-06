@@ -3,7 +3,10 @@ import {
   rothConversionYearSchema,
   rothSourceMoney,
 } from "./roth-conversion.ts";
-import { rothPaymentAgeFacts } from "./roth-activity.ts";
+import {
+  rothActivityReviewSchema,
+  rothPaymentAgeFacts,
+} from "./roth-activity.ts";
 import { roundWholeDollars } from "../../../../whole-dollars.ts";
 const reference = z.string().trim().min(1), ssn = z.string().regex(/^\d{9}$/);
 const historicalAccount = rothConversionYearSchema.shape.accounts.element;
@@ -33,9 +36,84 @@ const priorPartI = z.discriminatedUnion("method", [
     line13: filedMoney,
   }).strict(),
 ]);
+const date = rothActivityReviewSchema.shape.payment.shape.distributed_on;
+const issuer = z.object({
+  name: reference,
+  address_line1: reference,
+  city: reference,
+  state: z.string().regex(/^[A-Z]{2}$/),
+  zip: reference,
+}).strict();
+const withdrawal = historicalTransfer.shape.issued_form1099r.omit({
+  complete_direct_roth_conversion_confirmed: true,
+}).extend({
+  tax_year: z.literal(2025),
+  box7_distribution_code: z.enum(["1", "7"]),
+  issuer,
+  federal_withheld: rothSourceMoney,
+  state_tax_withheld: rothSourceMoney,
+  local_tax_withheld: rothSourceMoney,
+}).strict();
+const annual = z.object({
+  source_document_reference: reference,
+  owner_ssn: ssn,
+  all_current_regular_traditional_contributions_included: z.literal(true),
+  all_current_nonconversion_traditional_distributions_included: z.literal(true),
+  no_employer_sep_simple_or_returned_excess_contributions: z.literal(true),
+  nondeductible_election: z.object({
+    source_document_reference: reference,
+    owner_ssn: ssn,
+    tax_year: z.literal(2025),
+    all_listed_regular_contributions_nondeductible_confirmed: z.literal(true),
+  }).strict(),
+  contributions: z.array(
+    z.object({
+      form5498: z.object({
+        source_document_reference: reference,
+        owner_ssn: ssn,
+        tax_year: z.literal(2025),
+        custodian_ein: ssn,
+        account_number: reference,
+        traditional_ira_confirmed: z.literal(true),
+        box1_ira_contributions: rothSourceMoney,
+        box2_rollover_contributions: z.literal(0),
+        box8_sep_contributions: z.literal(0),
+        box9_simple_contributions: z.literal(0),
+      }).strict(),
+      receipts: z.array(
+        z.object({
+          source_document_reference: reference,
+          owner_ssn: ssn,
+          custodian_ein: ssn,
+          account_number: reference,
+          designated_tax_year: z.literal(2025),
+          received_on: date,
+          amount: rothSourceMoney,
+        }).strict(),
+      ).min(1),
+    }).strict(),
+  ),
+  withdrawals: z.array(
+    z.object({
+      issued_form1099r: withdrawal,
+      disposition: z.object({
+        source_document_reference: reference,
+        owner_ssn: ssn,
+        distribution_reference: reference,
+        paid_on: date,
+        cash_paid_to_owner: rothSourceMoney,
+        no_early_distribution_exception_claimed: z.literal(true),
+      }).strict(),
+    }).strict(),
+  ),
+}).strict();
 const transfer = historicalTransfer.extend({
   issued_form1099r: historicalTransfer.shape.issued_form1099r.extend({
     tax_year: z.literal(2025),
+    source_kind: z.literal("completed_form4852").optional(),
+    completed_form4852_reference: reference.optional(),
+    box2a_taxable_amount: rothSourceMoney.optional(),
+    complete_direct_roth_conversion_confirmed: z.boolean(),
     issuer: z.object({
       name: reference,
       address_line1: reference,
@@ -47,6 +125,14 @@ const transfer = historicalTransfer.extend({
     state_tax_withheld: rothSourceMoney,
     local_tax_withheld: rothSourceMoney,
   }).strict(),
+  unconverted_disposition: z.object({
+    source_document_reference: reference,
+    owner_ssn: ssn,
+    distribution_reference: reference,
+    paid_on: date,
+    cash_paid_to_owner: rothSourceMoney,
+    no_early_distribution_exception_claimed: z.literal(true),
+  }).strict().optional(),
 }).strict();
 export const currentRothConversionSchema = z.object({
   inventory: z.object({
@@ -56,13 +142,12 @@ export const currentRothConversionSchema = z.object({
       z.object({ custodian_ein: ssn, account_number: reference }).strict(),
     ).min(1),
     all_owned_traditional_sep_simple_iras_included: z.literal(true),
-    all_current_traditional_distributions_are_listed_conversions: z.literal(
-      true,
-    ),
-    no_current_traditional_contributions: z.literal(true),
+    all_current_traditional_distributions_are_listed_conversions: z.boolean(),
+    no_current_traditional_contributions: z.boolean(),
     no_outstanding_rollovers_repayments_qcd_hsa_disaster_or_transferred_basis: z
       .literal(true),
   }).strict(),
+  annual_traditional_activity: annual.optional(),
   prior_form8606: z.object({
     source_document_reference: reference,
     tax_year: z.literal(2024),
@@ -93,15 +178,47 @@ export const currentRothConversionSchema = z.object({
 export type CurrentRothConversion = z.infer<typeof currentRothConversionSchema>;
 const sum = (numbers: readonly number[]) =>
   numbers.reduce((s, n) => s + Math.round(n * 100), 0) / 100;
+/** Paper line10 permits at least three decimals; native RatioType permits five. */
+export function formatForm8606BasisRatio(ratio: number) {
+  const [whole, fraction] = ratio.toFixed(5).split(".");
+  return `${whole}.${fraction.replace(/0+$/, "").padEnd(3, "0")}`;
+}
 export function currentRothConversionDocuments(review: CurrentRothConversion) {
   return [
     review.inventory,
+    ...(review.annual_traditional_activity
+      ? [
+        review.annual_traditional_activity.nondeductible_election,
+        ...review.annual_traditional_activity.contributions.flatMap(
+          (c) => [c.form5498, ...c.receipts],
+        ),
+        ...review.annual_traditional_activity.withdrawals.flatMap(
+          (w) => [w.issued_form1099r, w.disposition],
+        ),
+        {
+          source_document_reference:
+            review.annual_traditional_activity.source_document_reference,
+          owner_ssn: review.annual_traditional_activity.owner_ssn,
+          all_current_regular_traditional_contributions_included: true,
+          all_current_nonconversion_traditional_distributions_included: true,
+          no_employer_sep_simple_or_returned_excess_contributions: true,
+        },
+      ]
+      : []),
     ...review.year_end_statements,
     ...review.accounts.flatMap(
       (account) => [
         account.form5498,
         ...account.transfers.flatMap(
-          (row) => [row.issued_form1099r, row.receipt],
+          (
+            row,
+          ) => [
+            row.issued_form1099r,
+            row.receipt,
+            ...(row.unconverted_disposition
+              ? [row.unconverted_disposition]
+              : []),
+          ],
         ),
       ],
     ),
@@ -120,7 +237,14 @@ export function reviewedCurrentRothConversion(
       ? prior.filed_line14_basis !== p.line3
       : p.line5 !== p.line3 - p.line4 ||
         p.line9 !== p.line6 + p.line7 + p.line8 || p.line9 <= 0 ||
-        p.line10 !== Math.min(1, Math.round(p.line5 / p.line9 * 1000) / 1000) ||
+        p.line10 !==
+          Math.min(
+            1,
+            Math.round(
+              p.line5 / p.line9 *
+                10 ** formatForm8606BasisRatio(p.line10).split(".")[1].length,
+            ) / 10 ** formatForm8606BasisRatio(p.line10).split(".")[1].length,
+          ) ||
         p.line11 !== roundWholeDollars(p.line8 * p.line10) ||
         p.line12 !== roundWholeDollars(p.line7 * p.line10) ||
         p.line13 !== p.line11 + p.line12 ||
@@ -170,11 +294,22 @@ export function reviewedCurrentRothConversion(
     for (const t of account.transfers) {
       const i = t.issued_form1099r, r = t.receipt;
       if (
-        i.federal_withheld !== 0 || i.state_tax_withheld !== 0 ||
-        i.local_tax_withheld !== 0
+        !t.unconverted_disposition && (
+          i.federal_withheld !== 0 || i.state_tax_withheld !== 0 ||
+          i.local_tax_withheld !== 0 ||
+          !i.complete_direct_roth_conversion_confirmed
+        )
       ) {
         throw new Error(
           "Current complete direct conversion needs actual replacement/unconverted distribution records for withheld funds",
+        );
+      }
+      if (
+        (i.source_kind === "completed_form4852") !==
+          !!i.completed_form4852_reference
+      ) {
+        throw new Error(
+          "Current conversion source kind requires distinct actual completed Form4852 reference",
         );
       }
       const lineage = JSON.stringify([
@@ -197,8 +332,24 @@ export function reviewedCurrentRothConversion(
         r.custodian_ein !== f.custodian_ein ||
         r.account_number !== f.account_number ||
         r.originating_distribution_reference !== i.distribution_reference ||
-        r.amount !== i.box1_gross_distribution ||
-        i.box2a_taxable_amount !== i.box1_gross_distribution ||
+        (t.unconverted_disposition
+          ? i.complete_direct_roth_conversion_confirmed ||
+            t.unconverted_disposition.owner_ssn !== owner.owner_ssn ||
+            t.unconverted_disposition.distribution_reference !==
+              i.distribution_reference ||
+            t.unconverted_disposition.paid_on < i.distributed_on ||
+            t.unconverted_disposition.paid_on > "2025-12-31" ||
+            sum([
+                r.amount,
+                t.unconverted_disposition.cash_paid_to_owner,
+                i.federal_withheld,
+                i.state_tax_withheld,
+                i.local_tax_withheld,
+              ]) !== i.box1_gross_distribution
+          : r.amount !== i.box1_gross_distribution) ||
+        (i.source_kind === "completed_form4852"
+          ? i.box2a_taxable_amount !== undefined
+          : i.box2a_taxable_amount !== r.amount) ||
         i.distributed_on < owner.date_of_birth
       ) {
         throw new Error(
@@ -208,38 +359,165 @@ export function reviewedCurrentRothConversion(
       lineages.add(lineage);
     }
   }
+  const activity = review.annual_traditional_activity;
+  if (
+    (!activity &&
+      (!review.inventory.no_current_traditional_contributions ||
+        !review.inventory
+          .all_current_traditional_distributions_are_listed_conversions)) ||
+    (activity &&
+      (activity.owner_ssn !== owner.owner_ssn ||
+        activity.nondeductible_election.owner_ssn !== owner.owner_ssn ||
+        review.inventory.no_current_traditional_contributions !==
+          (activity.contributions.length === 0) ||
+        review.inventory
+            .all_current_traditional_distributions_are_listed_conversions !==
+          (activity.withdrawals.length === 0)))
+  ) {
+    throw new Error(
+      "Current annual traditional inventory/election owner and complete source declarations differ",
+    );
+  }
+  const contributedAccounts = new Set<string>();
+  for (const contribution of activity?.contributions ?? []) {
+    const f = contribution.form5498;
+    if (
+      f.owner_ssn !== owner.owner_ssn || !owned.includes(key(f)) ||
+      contributedAccounts.has(key(f)) || f.box1_ira_contributions <= 0 ||
+      sum(contribution.receipts.map((r) => r.amount)) !==
+        f.box1_ira_contributions ||
+      contribution.receipts.some((r) =>
+        r.owner_ssn !== owner.owner_ssn || key(r) !== key(f) || r.amount <= 0 ||
+        r.received_on < "2025-01-01" || r.received_on > "2026-04-15" ||
+        r.received_on < owner.date_of_birth
+      )
+    ) {
+      throw new Error(
+        "Annual traditional contribution issued5498/paid receipt owner account year amounts differ",
+      );
+    }
+    contributedAccounts.add(key(f));
+  }
+  for (const w of activity?.withdrawals ?? []) {
+    const i = w.issued_form1099r, d = w.disposition;
+    const lineage = JSON.stringify([
+      i.payer_ein,
+      i.traditional_account_number,
+      i.distribution_reference,
+    ]);
+    rothPaymentAgeFacts({ date_of_birth: owner.date_of_birth }, {
+      distributed_on: i.distributed_on,
+      distribution_code: i.box7_distribution_code === "7" ? "T" : "J",
+    }, Infinity);
+    if (
+      lineages.has(lineage) ||
+      !owned.includes(
+        JSON.stringify([i.payer_ein, i.traditional_account_number]),
+      ) || i.owner_ssn !== owner.owner_ssn || d.owner_ssn !== owner.owner_ssn ||
+      d.distribution_reference !== i.distribution_reference ||
+      !i.distributed_on.startsWith("2025-") || d.paid_on < i.distributed_on ||
+      d.paid_on > "2025-12-31" ||
+      i.box2a_taxable_amount !== i.box1_gross_distribution ||
+      sum([
+          d.cash_paid_to_owner,
+          i.federal_withheld,
+          i.state_tax_withheld,
+          i.local_tax_withheld,
+        ]) !== i.box1_gross_distribution
+    ) {
+      throw new Error(
+        "Annual traditional withdrawal issued debit/owner/paid disposition lineage differs",
+      );
+    }
+    lineages.add(lineage);
+  }
   if (new Set(references).size !== references.length) {
     throw new Error(
       "Current conversion repeats actual retained source references",
     );
   }
-  const rawGross = sum(
+  const rawConverted = sum(
     review.accounts.map((a) => a.form5498.box3_roth_conversion_amount),
   );
-  const gross = roundWholeDollars(rawGross),
-    basis = review.prior_form8606.filed_line14_basis;
-  const rawYearEnd = sum(
-    review.year_end_statements.map((s) => s.fair_market_value),
+  const transfers = review.accounts.flatMap((a) => a.transfers);
+  const rawGross = sum([
+    ...transfers.map((t) => t.issued_form1099r.box1_gross_distribution),
+    ...(activity?.withdrawals ?? []).map((w) =>
+      w.issued_form1099r.box1_gross_distribution
+    ),
+  ]);
+  const rawWithdrawals = sum([rawGross, -rawConverted]);
+  const gross = roundWholeDollars(rawConverted),
+    withdrawals = roundWholeDollars(rawWithdrawals);
+  const contribution = roundWholeDollars(
+    sum(
+      (activity?.contributions ?? []).map((c) =>
+        c.form5498.box1_ira_contributions
+      ),
+    ),
   );
-  const yearEnd = roundWholeDollars(rawYearEnd);
+  const postYear = roundWholeDollars(
+    sum(
+      (activity?.contributions ?? []).flatMap((c) => c.receipts).filter((r) =>
+        r.received_on > "2025-12-31"
+      ).map((r) => r.amount),
+    ),
+  );
+  const basis = review.prior_form8606.filed_line14_basis,
+    totalBasis = basis + contribution,
+    currentBasis = totalBasis - postYear;
+  const rawYearEnd = sum(
+      review.year_end_statements.map((s) => s.fair_market_value),
+    ),
+    yearEnd = roundWholeDollars(rawYearEnd);
   if (gross <= 0) {
     throw new Error(
       "Current conversion requires positive actual source amounts",
     );
   }
-  // Filed line10 rounded to three decimal places, then used by the printed worksheet.
-  const ratio = Math.min(
-    1,
-    Math.round(basis / (yearEnd + gross) * 1000) / 1000,
-  );
-  const nontaxable = Math.min(basis, gross, roundWholeDollars(gross * ratio));
-  const hasPartI = basis > 0 && rawYearEnd > 0;
+  const combined = yearEnd + gross + withdrawals;
+  let ratio = 0, nontaxable = 0, nontaxableWithdrawal = 0;
+  for (let decimals = 3; decimals <= 5; decimals++) {
+    const scale = 10 ** decimals;
+    ratio = Math.min(1, Math.round(currentBasis / combined * scale) / scale);
+    nontaxable = roundWholeDollars(gross * ratio);
+    nontaxableWithdrawal = roundWholeDollars(withdrawals * ratio);
+    if (nontaxable + nontaxableWithdrawal <= currentBasis) break;
+  }
+  if (nontaxable + nontaxableWithdrawal > currentBasis) {
+    throw new Error(
+      "Annual Form8606 filed multiplication exceeds basis at native five-decimal precision; source basis cannot be capped",
+    );
+  }
+  const hasPartI = !!activity || withdrawals > 0 || basis > 0 && rawYearEnd > 0;
   const filedLine17 = hasPartI ? nontaxable : basis;
-  const filedLine18 = gross - filedLine17;
-  const taxable = Math.max(0, filedLine18);
+  const filedLine18 = gross - filedLine17,
+    taxable = Math.max(0, filedLine18),
+    withdrawalTaxable = withdrawals - nontaxableWithdrawal;
+  const rawEarlyWithdrawals = sum([
+    ...transfers.filter((t) =>
+      t.issued_form1099r.box7_distribution_code === "2"
+    ).map((t) => t.issued_form1099r.box1_gross_distribution - t.receipt.amount),
+    ...(activity?.withdrawals ?? []).filter((w) =>
+      w.issued_form1099r.box7_distribution_code === "1"
+    ).map((w) => w.issued_form1099r.box1_gross_distribution),
+  ]);
+  const earlyWithdrawalTaxable = Math.min(
+    withdrawalTaxable,
+    Math.max(
+      0,
+      roundWholeDollars(rawEarlyWithdrawals) -
+        roundWholeDollars(roundWholeDollars(rawEarlyWithdrawals) * ratio),
+    ),
+  );
   return {
     review,
     rawGross,
+    rawConverted,
+    withdrawals,
+    withdrawalTaxable,
+    earlyWithdrawalTaxable,
+    contribution,
     year: 2025,
     gross,
     nontaxable,
@@ -249,20 +527,28 @@ export function reviewedCurrentRothConversion(
     ratio,
     hasPartI,
     print: {
-      print_line1_nondeductible: 0,
+      print_line1_nondeductible: contribution,
       print_line2_prior_basis: basis,
-      print_line3_total_basis: basis,
-      print_line4_post_year_contributions: 0,
-      print_line5_current_basis: basis,
+      print_line3_total_basis: totalBasis,
+      print_line4_post_year_contributions: postYear,
+      print_line5_current_basis: currentBasis,
       print_line6_year_end_value: yearEnd,
-      print_line7_distributions: 0,
+      print_line7_distributions: withdrawals,
       print_line8_conversions: gross,
-      print_line9_combined_value: yearEnd + gross,
+      print_line9_combined_value: combined,
       print_line10_basis_ratio: ratio,
       print_line11_nontaxable_conversion: nontaxable,
-      print_line12_nontaxable_distribution: 0,
-      print_line13_nontaxable: nontaxable,
-      print_line14_remaining_basis: basis - nontaxable,
+      print_line12_nontaxable_distribution: nontaxableWithdrawal,
+      print_line13_nontaxable: nontaxable + nontaxableWithdrawal,
+      print_line14_remaining_basis: totalBasis - nontaxable -
+        nontaxableWithdrawal,
+      ...(activity || withdrawals > 0
+        ? {
+          print_line15a_not_converted: withdrawalTaxable,
+          print_line15b_disaster: 0,
+          print_line15c_taxable: withdrawalTaxable,
+        }
+        : {}),
       print_line16_converted: gross,
       print_line17_nontaxable_conversion: filedLine17,
       print_line18_taxable_conversion: filedLine18,
