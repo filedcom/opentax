@@ -135,3 +135,7 @@ packet manifest SHA-256:
 `4170d4f78f16f0411b7a94810f5858baf2f187408e4e053a3245ee748d058290`. Private
 canonical template cache retained outside checkout at
 `/tmp/opentax-form7203-spouse-owned-debt-pdf-cache-final`.
+
+## Main integration verification
+
+Integrated production2f90ab34f passes the fresh standard-task twelve-module gate **216/0** (1m5s), `/tmp/opentax-form7203-spouse-main-combined-v2-oct6.log`, using installed Poppler tools on PATH. The preceding completed210/6 invocation records missing pdftotext in its shell PATH, not a tax/output mismatch. Raw replay from six actual original retained public sources/filer records reproduces whole pending, carry, PDF and page origins exactly, native XML only ReturnTs, with full v5.4 XSD validation: `/tmp/opentax-form7203-spouse-main-retained-oct6/report.json`. Four prior immutable owned-current packets also reproduce all32pages and wholepending/carry/PDF/origins exactly: `/tmp/opentax-form7203-spouse-prior-main-retained-oct6/report.json`. Root visually reviewed all54 new pages and shareholder/QBI details. Original48files copied independently into `.state/research/form7203-spouse-owned-debt-oct6-preserved`; reviewmanifest digest verified. Wider corporate/history/authentication/IRS gates remain open.
