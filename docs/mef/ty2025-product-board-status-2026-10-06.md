@@ -2354,3 +2354,21 @@ Main4a45410da: source16/0(1m57s),18-file preservation159/0(1m32s), logs `/tmp/op
 Main4a45410da: source7/0(25s) and seven-module36/0(32s); `/tmp/opentax-form8621-qef-agi-current-main-focused.log` and `/tmp/opentax-form8621-full-refigure-current-main-focused.log`. Full-return QEF counterfactual refigures sourced medical floor473 and senior MAGI phaseout462 rather than440 regular-only difference; finalsourcegraph conflicts rejected. All7fullXSD PDFs/55reviewedpages exactly match prior5/38 plus new2/17 originals; `/tmp/opentax-form8621-full-refigure-current-main-pdf-comparison.json`. Prior related56/0 preserved isolated source proof; latestfull remains live, not a completed gate. AMT/ScheduleJ/Form8615, mixed two-pass, multiple elections, external accepted-filing authenticity and IRS gates remain open.
 
 Immutablefull4a45410da wrapper65945/Deno65949 independently live2m59s; focused proof does not replace its terminal gate. Frozen52 checklist byteidenticaladf3612ee; future section unchanged/unworked. Published39ef358d4 verified viaGitHubhead/title/body; app artifact attachment attempted but did not return and was terminated, so no successful attachment claim.
+
+
+## Before sourced Form4972 and preferential AMT integration audit
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,450 bounded slices**. Learnings and exact proof remain in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Newly discovered work goes only in `future_todo` and is not executed.
+
+Actual inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF keys / 96 covered / 18 uncovered**. Recent main proof: reviewed catalog24/0 (375 preserved pages), C/F loss-owner health28/0 (6/182), beneficiary death/estate3/0+15/0 (26/78), senior/independent-health6/0+111/0 and retained5/0 (5/95), complete refund inventory119/0 (8/30), fractional beneficiary15/0+298/0 (17/51), paired beneficiaries4/0+298/0 (17/68), shared participant and single PartIII-only4/0+1/0+303/0 (6/23), Form8621 parent36/0+56/0 (5/38), retained Form4852 main34/0+364/0 (10/70), exact-cent Form4972 main16/0 (8/42), Form8283 current-source16/0+159/0 (16/591), full-return QEF refigure36/0 (7/55). Source/PDF bytes match reviewed originals; timestamp-only XML differences are recorded. These close their stated slices; broader parents remain open.
+
+Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**, exit1 (95m00s runner; 03:53:35–05:29:40UTC). The sole age-derived Form8995 expectation omitted the $6,000 senior deduction; corrected source arithmetic has focused **1/0** proof. Immutable **4a45410da** full rerun started05:41:11UTC; wrapper65945/Deno65949 verified live. Its terminal result and a passing latest-source run remain required. Publication checkpoint for draft [PR63](https://github.com/filedcom/opentax/pull/63): **39ef358d4**, verified published with retained substitutes, exact-cent pensions, donated-property source inventory and full QEF refigure.
+
+Complete ordinary-refund inventory is verified on main; Form4852, remaining Form4972, Form8283 and Form8621 parent work continue in isolated checkouts. Wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+
+
+Prior goal turn made verified implementation progress: retained4852/cent4972/current8283/fullQEF integrations published0fd54c08d, all focused/held proofs sealed. FullV5 wrapper65945/Deno65949 independently live4m19s; no terminal claim. Root next existing4972/6251 task will join actual retained cent/fractional source inventories with issued3921 and qualified-dividend/holding sources, independently verify special-tax exclusion and AMT PartIII, then inspect ScheduleJ counterfactual boundary. Fresh isolated checkout preserves immutable full gate and all originals. No future tasks executed.
