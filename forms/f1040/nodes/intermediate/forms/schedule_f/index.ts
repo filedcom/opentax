@@ -114,7 +114,7 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
           filedItems[index],
           reductions.get(input.schedule_fs[index].farm_id ?? "") ?? 0,
         ).profit
-        : input.patron_filing_review
+        : (input.patron_filing_review || input.independent_patron_reviews)
         ? patronFiledBusinessLines("schedule_f", filedItems[index])
           .profit
         : (ctx.taxYear === 2025

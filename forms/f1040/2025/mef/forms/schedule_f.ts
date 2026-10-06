@@ -379,7 +379,7 @@ export const scheduleF: MefFormDescriptor<
             item,
             reductions.get(item.farm_id ?? "") ?? 0,
           ).filed_source as typeof item
-          : input.patron_filing_review
+          : (input.patron_filing_review || input.independent_patron_reviews)
           ? patronFiledBusinessLines("schedule_f", item)
             .filed_source as typeof item
           : filedOwnedScheduleF(
@@ -401,7 +401,7 @@ export const scheduleF: MefFormDescriptor<
         reductions.get(item.farm_id ?? "") ?? 0,
         filedOwnedScheduleF(
           item,
-          Boolean(input.patron_filing_review) ||
+          Boolean(input.patron_filing_review || input.independent_patron_reviews) ||
             input.farm_optional_method_elected === true,
           reductions.get(item.farm_id ?? "") ?? 0,
         ),

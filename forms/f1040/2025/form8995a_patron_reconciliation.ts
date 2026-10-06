@@ -1,3 +1,4 @@
+import { assertIndependentPatronReturn } from "./form8995a_independent_patron_reconciliation.ts";
 import {
   type FilerIdentity,
   FilingStatus as MefFilingStatus,
@@ -30,6 +31,7 @@ export function assertForm8995APatronReturn(
   input: Form8995AInput,
   raw: Readonly<Record<string, unknown>> | undefined,
 ): void {
+  if (input.independent_patron_sources) { assertIndependentPatronReturn(input, raw); return; }
   if (!input.patron_business_source) return;
   if (!raw) throw new Error("Patron filing needs its complete source return");
   const pending = normalizeAllPending(raw as Record<string, unknown>);

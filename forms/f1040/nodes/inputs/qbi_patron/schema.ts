@@ -55,8 +55,23 @@ export const inputSchema = z.object({
 }).strict();
 export type PatronReview = z.infer<typeof inputSchema>;
 
+// Independent businesses retain truthful per-business books reviews, without
+// asserting that the joint return contains only one business.
+export const independentReviewSchema = inputSchema.omit({
+  no_other_business_or_aggregation_confirmed: true,
+  spouse_w2_sources: true,
+  primary_w2_sources: true,
+}).extend({
+  no_aggregation_confirmed: z.literal(true),
+}).strict();
+export const independentReviewsSchema = z.object({
+  independent_farm_reviews: z.array(independentReviewSchema).length(2),
+  no_other_businesses_confirmed: z.literal(true),
+}).strict();
+export const publicSchema = z.union([inputSchema, independentReviewsSchema]);
+
 export const sourceSchema = z.object({
-  review: inputSchema,
+  review: z.union([inputSchema, independentReviewSchema]),
   business_source: z.unknown(),
   se_tax_deduction: z.number().finite().nonnegative(),
   health_insurance_deduction: z.number().finite().nonnegative(),

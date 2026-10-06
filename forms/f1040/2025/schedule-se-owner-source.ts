@@ -152,7 +152,7 @@ export function assertOwnedScheduleSE(
             item,
             reductions.get(item.farm_id) ?? 0,
           ).profit
-          : f.patron_filing_review
+          : (f.patron_filing_review || f.independent_patron_reviews)
           ? patronFiledBusinessLines("schedule_f", item).profit
           : filedOwnedScheduleF(item, false, reductions.get(item.farm_id) ?? 0)
             ?.profit ?? atRisk.atRiskNet,

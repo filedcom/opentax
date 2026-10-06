@@ -68,7 +68,7 @@ export function assertBusinessSchedule1Amounts(
           sum +
           (farm.qbi_wotc_filing_review
             ? patronFiledBusinessLines("schedule_f", farm, reductions.get(farm.farm_id ?? "") ?? 0).profit
-            : source.patron_filing_review
+            : (source.patron_filing_review || source.independent_patron_reviews)
             ? patronFiledBusinessLines("schedule_f", farm).profit
             : filedOwnedScheduleF(
               farm,

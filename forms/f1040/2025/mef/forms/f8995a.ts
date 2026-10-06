@@ -1,3 +1,4 @@
+import { calculateIndependentPatronBusinesses } from "../../../nodes/intermediate/forms/form8995a/index.ts";
 import { patronProprietorSsn } from "../../form8995a_patron_reconciliation.ts";
 import { assertProducingMiningZeroQbi } from "../../../nodes/intermediate/forms/form8995a/producing-mining.ts";
 import { assertProducingMiningZeroQbiReturn } from "../../form8995a_producing_mining_source.ts";
@@ -384,7 +385,7 @@ function reconcileReturn(
       fields.filing_status === NodeFilingStatus.QSS) &&
       !fields.sstb_filing_details &&
       !(fields.filing_status === NodeFilingStatus.MFJ &&
-        (fields.patron_business_source || fields.single_schedule_c_source ||
+        (fields.independent_patron_sources || fields.patron_business_source || fields.single_schedule_c_source ||
           fields.wotc_business_sources || fields.farm_wotc_filing_source ||
           fields.mixed_fishing_qbi_source?.joint_se_source)))
   ) {
@@ -392,7 +393,7 @@ function reconcileReturn(
   }
   const jointWotc = fields.single_schedule_c_source?.joint_se_source ??
     fields.wotc_business_sources?.[0].joint_se_source ??
-    fields.farm_wotc_filing_source?.joint_se_source;
+    fields.farm_wotc_filing_source?.joint_se_source ?? fields.independent_patron_sources?.owned_se_source;
   if (
     jointWotc &&
     (jointWotc.identity.primary_ssn !==
@@ -671,7 +672,9 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
     ]);
   }
   const mixed = assertMixedFishingQbiReturn(fields, context?.pending);
-  const oldMulti = fields.farm_wotc_filing_source
+  const oldMulti = fields.independent_patron_sources
+    ? calculateIndependentPatronBusinesses(fields)
+    : fields.farm_wotc_filing_source
     ? calculateFarmWotcLines(fields)
     : fields.wotc_business_sources
     ? calculateOwnedWotcBusinesses(fields)

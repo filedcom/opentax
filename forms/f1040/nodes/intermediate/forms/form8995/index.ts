@@ -1,3 +1,5 @@
+import { independentReviewsSchema } from "../../../inputs/qbi_patron/schema.ts";
+import { independentPatronSources } from "../../../inputs/qbi_patron/independent.ts";
 import {
   assertCurrentPropertyReturnOwners,
   currentPropertyAmounts,
@@ -106,6 +108,7 @@ function sumField(value: number | number[] | undefined): number {
 
 export const inputSchema = z.object({
   patron_source_review: patronReviewSchema.optional(),
+  independent_patron_reviews: independentReviewsSchema.optional(),
   joint_se_source: ownerSourcesSchema.optional(),
   joint_owner_health_plan_source: singleScheduleCPlanSchema.optional(),
   joint_owner_health_plans_source: independentOwnerHealthSourceSchema
@@ -789,6 +792,49 @@ function advancedFormOutput(
     };
   }
 
+  if (input.independent_patron_reviews) {
+    if (
+      input.filing_status !== FilingStatus.MFJ || !input.joint_se_source ||
+      input.patron_source_review ||
+      input.qbi_not_patron_of_specified_cooperative_confirmed === true ||
+      input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+      sumField(input.qbi) !== 0 || sstbQbi !== 0 ||
+      qbiCapitalTotal(input) !== 0 ||
+      sumField(input.qbi_from_schedule_c) !== 0 ||
+      sumField(input.line6_sec199a_dividends) !== 0 ||
+      sumField(input.se_health_insurance_deduction) !== 0 ||
+      sumField(input.retirement_plan_deduction) !== 0 ||
+      (input.qbi_loss_carryforward ?? 0) !== 0 ||
+      (input.reit_loss_carryforward ?? 0) !== 0
+    ) {
+      throw new Error(
+        "Independent patron farms need only actual joint positive farms and owned regular SE",
+      );
+    }
+    const family = independentPatronSources(
+      input.independent_patron_reviews,
+      input.schedule_f_qbi_businesses?.map((row) => row.source_schedule_f),
+      input.joint_se_source,
+    );
+    if (
+      sumField(input.se_tax_deduction) !== family.se.deduction ||
+      sumField(input.qbi_from_schedule_f) !== family.profit ||
+      Math.round(sumField(input.w2_wages)) !== family.wages ||
+      sumField(input.unadjusted_basis) !== 0
+    ) {
+      throw new Error(
+        "Independent patron farm totals differ from owned source deductions and payroll",
+      );
+    }
+    sourcedBusiness = {
+      independent_patron_sources: family.source,
+      qbi: family.qbi,
+      w2_wages: family.wages,
+      unadjusted_basis: 0,
+      patron_of_specified_cooperative: true,
+      qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+    };
+  }
   if (input.patron_source_review) {
     const review = input.patron_source_review;
     const rows = review.business.kind === "schedule_c"
@@ -971,9 +1017,10 @@ function advancedFormOutput(
 
   return output(form8995a, {
     filing_status: input.filing_status,
-    taxable_income: input.patron_source_review
-      ? Math.round(taxableIncome)
-      : taxableIncome,
+    taxable_income:
+      (input.patron_source_review || input.independent_patron_reviews)
+        ? Math.round(taxableIncome)
+        : taxableIncome,
     net_capital_gain: qbiCapitalTotal(input, true),
     qbi_capital_sources: input.qbi_capital_sources,
     investment_interest_sources: input.investment_interest_sources,
@@ -1506,7 +1553,8 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
           input.investment_dividend_totals !== undefined))
     ) return { outputs: [] };
     if (
-      (input.patron_source_review || input.joint_se_source) &&
+      (input.patron_source_review || input.independent_patron_reviews ||
+        input.joint_se_source) &&
       input.agi === undefined
     ) {
       return { outputs: [] };
@@ -1515,7 +1563,8 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
     if (
       taxableIncome !== undefined && input.filing_status !== undefined &&
       (taxableIncome > qbiThreshold(input.filing_status, cfg) ||
-        input.patron_source_review !== undefined)
+        input.patron_source_review !== undefined ||
+        input.independent_patron_reviews !== undefined)
     ) {
       if (zeroLimitedMixedScheduleCF(input, taxableIncome, cfg)) {
         return { outputs: [] };

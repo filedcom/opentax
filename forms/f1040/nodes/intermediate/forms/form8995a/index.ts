@@ -1,4 +1,8 @@
 import {
+  independentPatronSourceSchema,
+  replayIndependentPatronSources,
+} from "../../../inputs/qbi_patron/independent.ts";
+import {
   assertSingleFarmAmounts,
   singleFarmSourceSchema,
 } from "./single-farm-source.ts";
@@ -196,6 +200,7 @@ export const inputSchema = z.object({
   qualified_tip_qbi_source: qualifiedTipQbiSourceSchema.optional(),
   farm_wotc_filing_source: farmWotcSourceSchema.optional(),
   patron_business_source: patronBusinessSourceSchema.optional(),
+  independent_patron_sources: independentPatronSourceSchema.optional(),
   // Filing status — determines income threshold for wage limitation phase-in
   filing_status: filingStatusSchema,
   // Taxable income before QBI deduction (Form 8995-A line 33)
@@ -854,6 +859,25 @@ export function assertPatron1099PATRSource(
   pendingSource: unknown,
 ): void {
   if (input.patron_of_specified_cooperative !== true) return;
+  if (input.independent_patron_sources) {
+    const source = replayIndependentPatronSources(
+      input.independent_patron_sources,
+    );
+    const retained = f1099patrInputSchema.parse(pendingSource).f1099patrs;
+    if (
+      retained.length !== source.source.businesses.length ||
+      source.source.businesses.some((s) =>
+        retained.filter((r) =>
+          JSON.stringify(r) === JSON.stringify(s.review.source_1099patr)
+        ).length !== 1
+      )
+    ) {
+      throw new Error(
+        "Independent patron issued cooperative copies differ from retained sources",
+      );
+    }
+    return;
+  }
   const parsed = f1099patrInputSchema.safeParse(pendingSource);
   const captured = input.patron_filing_details?.source_1099patr;
   const specified = parsed.success
@@ -1079,6 +1103,105 @@ export function calculateOwnedWotcBusinesses(input: Form8995AInput) {
       line32: line16,
       line37: Math.min(line16, line36),
       line39: Math.min(line16, line36),
+    },
+  };
+}
+
+export function calculateIndependentPatronBusinesses(input: Form8995AInput) {
+  const family = replayIndependentPatronSources(
+    input.independent_patron_sources,
+  );
+  if (
+    input.filing_status !== FilingStatus.MFJ ||
+    input.patron_of_specified_cooperative !== true ||
+    input.patron_business_source || input.patron_filing_details ||
+    input.business_filing_details ||
+    input.aggregation_filing_details ||
+    (input.aggregation_groups?.length ?? 0) !== 0 ||
+    input.sstb_filing_details ||
+    (input.sstb_qbi ?? 0) !== 0 || (input.sstb_w2_wages ?? 0) !== 0 ||
+    (input.sstb_unadjusted_basis ?? 0) !== 0 ||
+    input.schedule_c_qbi_businesses || input.single_schedule_c_source ||
+    input.single_schedule_f_source ||
+    input.wotc_business_sources || input.farm_wotc_filing_source ||
+    input.mixed_fishing_qbi_source ||
+    input.qbi !== family.qbi || input.w2_wages !== family.wages ||
+    input.unadjusted_basis !== 0 ||
+    input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    qbiCapitalTotal(input, true) !== 0 ||
+    (input.line6_sec199a_dividends ?? 0) !== 0 ||
+    (input.qbi_loss_carryforward ?? 0) !== 0 ||
+    (input.reit_loss_carryforward ?? 0) !== 0
+  ) {
+    throw new Error(
+      "Independent patron parent totals and scope must match actual separately owned farms",
+    );
+  }
+  const rows = family.source.businesses.map((source, index) => {
+    const amount = family.amounts[index], review = source.review;
+    const child: Form8995AInput = {
+      filing_status: input.filing_status,
+      taxable_income: input.taxable_income,
+      qbi: amount.qbi,
+      w2_wages: amount.wages,
+      unadjusted_basis: 0,
+      patron_of_specified_cooperative: true,
+      patron_business_source: source,
+      business_filing_details: {
+        business_name: amount.name!,
+        ein: amount.ein,
+        business_qbi: amount.qbi,
+        business_w2_wages: amount.wages,
+        business_ubia: 0,
+        one_non_sstb_business_confirmed: true,
+        no_aggregation_confirmed: true,
+        no_ptp_or_loss_carryforward_confirmed: true,
+        qualified_dividends_zero_confirmed: true,
+        qbi_wages_ubia_sources_confirmed: true,
+        taxable_income_before_qbi_confirmed: true,
+      },
+      patron_filing_details: {
+        source_1099patr: review.source_1099patr,
+        qbi_allocable_to_qualified_payments: amount.qualified_qbi,
+        w2_wages_allocable_to_qualified_payments: amount.qualified_wages,
+        one_cooperative_confirmed: true,
+        allocation_worksheet_reference: review.allocation_worksheet_reference,
+        allocation_worksheet_reviewed_by: review.reviewed_by,
+        allocation_worksheet_review_date: review.reviewed_on,
+        box6_written_notice_review: review.box6_written_notice_review,
+      },
+    };
+    return {
+      input: child,
+      lines: calculateOneBusiness8995ALines(child),
+      schedule: calculatePatronScheduleDLines(child),
+    };
+  });
+  const line16 = rows.reduce((s, r) => s + r.lines.line15, 0),
+    line36 = rows[0].lines.line36;
+  const line37 = Math.min(line16, line36);
+  // Add cooperative allocations before rounding the shared line38 and apply
+  // the one final taxable-income limitation after the combined QBI component.
+  const passed = family.source.businesses.reduce(
+    (s, r) => s + (r.review.source_1099patr.box6_section199ag_deduction ?? 0),
+    0,
+  );
+  const line38 = Math.min(
+    Math.round(passed),
+    Math.max(0, input.taxable_income - line37),
+  );
+  return {
+    family,
+    rows,
+    parent: {
+      ...rows[0].lines,
+      phaseInRequired: rows.some((r) => r.lines.phaseInRequired),
+      phaseIn: rows.find((r) => r.lines.phaseInRequired)?.lines.phaseIn ?? 0,
+      line16,
+      line32: line16,
+      line37,
+      line38,
+      line39: line37 + line38,
     },
   };
 }
@@ -1386,7 +1509,9 @@ function assertSupportedSchedulePath(input: Form8995AInput): void {
   if (input.schedule_c_qbi_businesses?.some((business) => business.qbi < 0)) {
     calculateScheduleCLossLines(input);
   }
-  if (input.patron_of_specified_cooperative === true) {
+  if (input.independent_patron_sources) {
+    calculateIndependentPatronBusinesses(input);
+  } else if (input.patron_of_specified_cooperative === true) {
     const details = input.business_filing_details;
     if (!details || !input.patron_filing_details) {
       throw new Error(
@@ -1572,7 +1697,9 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
     }
 
     if (input.patron_of_specified_cooperative === true) {
-      const deduction = calculateOneBusiness8995ALines(input).line39;
+      const deduction = input.independent_patron_sources
+        ? calculateIndependentPatronBusinesses(input).parent.line39
+        : calculateOneBusiness8995ALines(input).line39;
       return {
         outputs: [
           this.outputNodes.output(f1040, { line13_qbi_deduction: deduction }),

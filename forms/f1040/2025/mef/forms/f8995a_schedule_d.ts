@@ -1,3 +1,6 @@
+import { normalizeAllPending } from "../../pending.ts";
+import { calculateIndependentPatronBusinesses } from "../../../nodes/intermediate/forms/form8995a/index.ts";
+import { assertOwnedScheduleSE } from "../../schedule-se-owner-source.ts";
 import { patronProprietorSsn } from "../../form8995a_patron_reconciliation.ts";
 import { assertForm8995APatronReturn } from "../../form8995a_patron_reconciliation.ts";
 import {
@@ -27,6 +30,33 @@ function buildScheduleD(rawFields: Input, context?: MefBuildContext): string {
     );
   }
   assertPatron1099PATRSource(fields, context?.pending?.f1099patr);
+  if (fields.independent_patron_sources) {
+    assertForm8995APatronReturn(fields, context?.pending);
+    assertOwnedScheduleSE(
+      normalizeAllPending(context!.pending! as Record<string, unknown>),
+      context?.filer,
+    );
+    const result = calculateIndependentPatronBusinesses(fields);
+    return elements(
+      "IRS8995AScheduleD",
+      result.rows.map((row) =>
+        elements("PatronAgricHortCoopGrp", [
+          elements("TradeOrBusinessName", [
+            element(
+              "BusinessNameLine1Txt",
+              row.input.business_filing_details!.business_name,
+            ),
+          ]),
+          element("EIN", row.input.business_filing_details!.ein),
+          element("QBIAllcblQlfyCoopPymtAmt", row.schedule.line2),
+          element("QBIAllcblQlfyCoopPymtPctAmt", row.schedule.line3),
+          element("W2WageAllcblQlfyCoopPymtAmt", row.schedule.line4),
+          element("W2WageAllcblQlfyCoopPymtPctAmt", row.schedule.line5),
+          element("PatronReductionAmt", row.schedule.line6),
+        ])
+      ),
+    );
+  }
   validateOneBusiness(fields);
   assertForm8995APatronReturn(fields, context?.pending);
   const source = fields.patron_filing_details;

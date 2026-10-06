@@ -230,7 +230,7 @@ export const scheduleFPdf: PdfFormDescriptor = {
     return filedItems.map((rawItem, index) => {
       const filing = filedOwnedScheduleF(
         rawItem,
-        Boolean(input.patron_filing_review) ||
+        Boolean(input.patron_filing_review || input.independent_patron_reviews) ||
           input.farm_optional_method_elected === true,
         reductions.get(rawItem.farm_id ?? "") ?? 0,
       );
@@ -240,7 +240,7 @@ export const scheduleFPdf: PdfFormDescriptor = {
           rawItem,
           reductions.get(rawItem.farm_id ?? "") ?? 0,
         ).filed_source as typeof rawItem
-        : input.patron_filing_review
+        : (input.patron_filing_review || input.independent_patron_reviews)
         ? patronFiledBusinessLines("schedule_f", rawItem)
           .filed_source as typeof rawItem
         : filedOwnedScheduleF(

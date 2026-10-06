@@ -1,3 +1,5 @@
+import { assertOwnedScheduleSE } from "../../schedule-se-owner-source.ts";
+import { calculateIndependentPatronBusinesses } from "../../../nodes/intermediate/forms/form8995a/index.ts";
 import { patronProprietorSsn } from "../../form8995a_patron_reconciliation.ts";
 import { assertProducingMiningZeroQbiReturn } from "../../form8995a_producing_mining_source.ts";
 import { assertFarmWotcReturn } from "../../form8995_farm_wotc_reconciliation.ts";
@@ -53,6 +55,8 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   { kind: "text", domainKey: "business_name_c", pdfField: `${partIC}f1_07[0]` },
   { kind: "text", domainKey: "business_ein_c", pdfField: `${partIC}f1_08[0]` },
   { kind: "checkbox", domainKey: "patron", pdfField: `${partI}c1_3[0]` },
+  { kind: "checkbox", domainKey: "patron_b", pdfField: `${partIB}c1_6[0]` },
+  { kind: "checkbox", domainKey: "patron_c", pdfField: `${partIC}c1_9[0]` },
   ...([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] as const).map(
     (line): PdfFieldEntry => ({
       kind: "text",
@@ -171,12 +175,15 @@ export function projectOneBusiness8995A(
     throw new Error("Form 8995-A PDF needs matching parent pending source");
   }
   if (
-    input.wotc_business_sources || input.farm_wotc_filing_source ||
+    input.independent_patron_sources || input.wotc_business_sources ||
+    input.farm_wotc_filing_source ||
     input.mixed_fishing_qbi_source
   ) {
     assertNoFiledForm8995(allPending);
     const mixed = assertMixedFishingQbiReturn(input, allPending);
-    const oldMulti = input.farm_wotc_filing_source
+    const oldMulti = input.independent_patron_sources
+      ? calculateIndependentPatronBusinesses(input)
+      : input.farm_wotc_filing_source
       ? calculateFarmWotcLines(input)
       : mixed
       ? undefined
@@ -197,9 +204,14 @@ export function projectOneBusiness8995A(
         details = row.details;
       projection[`business_name${suffix}`] = details.business_name;
       projection[`business_ein${suffix}`] = details.ein;
+      projection[`patron${suffix}`] =
+        input.independent_patron_sources !== undefined;
       for (const line of [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]) {
-        projection[`line${line}${suffix}`] =
-          (row.lines as Record<string, unknown>)[`line${line}`];
+        projection[`line${line}${suffix}`] = input.independent_patron_sources &&
+            input.taxable_income <= row.lines.patronThreshold! && line >= 4 &&
+            line <= 11
+          ? undefined
+          : (row.lines as Record<string, unknown>)[`line${line}`];
       }
       for (const line of [19, 25, 26]) {
         projection[`line${line}${suffix}`] = row.lines.phaseInRequired
@@ -219,6 +231,8 @@ export function projectOneBusiness8995A(
     }
     return {
       ...projection,
+      patron: input.patron_of_specified_cooperative === true,
+      line38: parent.line38,
       line20: parent.phaseInRequired ? parent.line33 : undefined,
       line21: parent.phaseInRequired ? parent.patronThreshold : undefined,
       line22: parent.phaseInRequired
@@ -393,6 +407,9 @@ export const form8995aPdf: PdfFormDescriptor = {
     // aggregation details against the retained source instead.
     const input = inputSchema.strict().parse(allPending?.form8995a ?? raw);
     assertSstbScheduleCSource(input, allPending, filer?.primarySSN, filer);
+    if (input.independent_patron_sources) {
+      assertOwnedScheduleSE(allPending!, filer);
+    }
     if (
       (input.patron_filing_details?.source_1099patr
           .box6_section199ag_deduction ?? 0) > 0 &&
