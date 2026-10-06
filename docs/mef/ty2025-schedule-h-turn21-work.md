@@ -1,5 +1,29 @@
 # Schedule H child turning 21: working compact
 
+## October 6 pay-period qualification
+
+The historical gates and retained packet hashes below remain reproducible, but
+they do **not** establish the correct classification of a birthday-spanning
+ordinary pay period. The original sources describe quarterly or longer service
+segments and separate pre/post-birthday cash amounts without identifying the
+ordinary pay period or service-time majority. Splitting service rows at the
+birthday alone is insufficient. Earlier descriptions below are historical
+implementation evidence and are superseded on this point.
+
+The 2025 editions of [26 CFR 31.3121(c)-1](https://www.govinfo.gov/content/pkg/CFR-2025-title26-vol17/pdf/CFR-2025-title26-vol17-sec31-3121c-1.pdf)
+and [26 CFR 31.3306(d)-1](https://www.govinfo.gov/content/pkg/CFR-2025-title26-vol17/pdf/CFR-2025-title26-vol17-sec31-3306d-1.pdf)
+require all-or-none employment treatment when at least half of an ordinary
+pay period's service time is covered; exactly half is covered. Their exceptions
+for no ordinary period or an ordinary period exceeding 31 days require source
+evidence and actual covered service remuneration. Payment date alone does not
+identify the ordinary period. [California UIC 607](https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=UIC&sectionNum=607.)
+also applies period-majority treatment to state employment.
+
+Correction is underway in the isolated mixed family/state checkout. Original
+input/PDF/XML archives remain unchanged; separately sourced new packets and
+negative checks are required before integration. The existing family/age/state
+parent remains open.
+
 Base `c4c597887`; frozen board read in full. Existing complete family/unrelated
 payroll inventory excludes a child under 21 for the whole year; a 2004 birth is
 rejected. The selected existing parent gap is service performed before and after
