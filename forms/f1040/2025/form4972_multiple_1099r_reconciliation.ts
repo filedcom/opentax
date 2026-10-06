@@ -1,3 +1,10 @@
+import {
+  allocatedSourceCents,
+  grossedSourceCents,
+  isSourceMoney,
+  sameSourceMoney,
+  sourceCents,
+} from "../nodes/intermediate/forms/form4972/source-rounding.ts";
 import { inputSchema as f1099rSchema } from "../nodes/inputs/f1099r/index.ts";
 import {
   form4972,
@@ -69,34 +76,29 @@ export function reconcileForm4972Multiple1099R(
       (partialBeneficiary &&
         (item.box7_distribution_code !== "A" ||
           item.recipient_ssn !== owner.ssn.replaceAll("-", "") ||
-          item.box1_gross_distribution !==
-            (item.box2a_taxable_amount ?? 0) + (item.box6_nua ?? 0) ||
-          !Number.isSafeInteger(
-            (item.box2a_taxable_amount ?? 0) * 100 / share,
+          !sameSourceMoney(
+            item.box1_gross_distribution,
+            (item.box2a_taxable_amount ?? 0) + (item.box6_nua ?? 0),
           ) ||
-          !Number.isSafeInteger(
-            (item.box3_capital_gain ?? 0) * 100 / share,
-          ) ||
-          !Number.isSafeInteger((item.box6_nua ?? 0) * 100 / share) ||
-          ((item.box6_nua ?? 0) > 0 &&
-            !Number.isSafeInteger(
-              (item.box6_nua ?? 0) * (item.box3_capital_gain ?? 0) /
-                (item.box2a_taxable_amount ?? 0),
-            )) ||
+          [
+            item.box2a_taxable_amount ?? 0,
+            item.box3_capital_gain ?? 0,
+            item.box6_nua ?? 0,
+            item.box8_other ?? 0,
+          ]
+            .some((amount) => !isSourceMoney(amount)) ||
           ((item.box8_other ?? 0) > 0 &&
-            (!annuityShare || item.box8_pct_total !== annuityShare ||
-              !Number.isSafeInteger(
-                item.box8_other! * 100 / annuityShare,
-              ))) ||
+            (!annuityShare || item.box8_pct_total !== annuityShare)) ||
           ((item.box8_other ?? 0) === 0 &&
             item.box8_pct_total !== undefined))) ||
       typeof item.box2a_taxable_amount !== "number" ||
       item.box2a_taxable_amount <= 0 ||
-      (nua > 0 &&
+      (item.box3_capital_gain ?? 0) > item.box2a_taxable_amount ||
+      (!partialBeneficiary && nua > 0 &&
         (!Number.isSafeInteger(item.box2a_taxable_amount ?? 0) ||
           !Number.isSafeInteger(item.box3_capital_gain ?? 0) ||
           !Number.isSafeInteger(item.box6_nua ?? 0))) ||
-      !Number.isSafeInteger(item.box8_other ?? 0) ||
+      (!partialBeneficiary && !Number.isSafeInteger(item.box8_other ?? 0)) ||
       (!partialBeneficiary && item.box8_pct_total !== undefined &&
         item.box8_pct_total !== 100)
     ) ||
@@ -114,7 +116,8 @@ export function reconcileForm4972Multiple1099R(
         (annuityShare ?? null)) ||
     (nua > 0 &&
       (form.elect_include_nua !== true ||
-        !Number.isSafeInteger(nua * gain / taxable))) ||
+        (!partialBeneficiary &&
+          !Number.isSafeInteger(nua * gain / taxable)))) ||
     (nua === 0 && form.elect_include_nua === true) ||
     ((hasDeath || hasEstate) && !partialBeneficiary) ||
     (hasDeath &&
@@ -129,12 +132,12 @@ export function reconcileForm4972Multiple1099R(
         refs.includes(form.death_benefit_exclusion_source_reference))) ||
     (hasEstate &&
       (!estate ||
-        estate.full_distribution_taxable_amount !==
-          (taxable + nua) * 100 / share ||
+        sourceCents(estate.full_distribution_taxable_amount) !==
+          grossedSourceCents(taxable + nua, share) ||
         estate.full_distribution_federal_estate_tax !==
           form.federal_estate_tax ||
-        estate.recipient_allocated_federal_estate_tax !==
-          form.federal_estate_tax! * share / 100 ||
+        sourceCents(estate.recipient_allocated_federal_estate_tax) !==
+          allocatedSourceCents(form.federal_estate_tax!, share) ||
         [
           estate.administrator_statement_reference,
           estate.estate_tax_return_reference,

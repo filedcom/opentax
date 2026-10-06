@@ -1,3 +1,8 @@
+import {
+  filedDollars,
+  roundRecipientTax,
+  worksheetRatio,
+} from "../../../nodes/intermediate/forms/form4972/source-rounding.ts";
 import { StandardFonts } from "pdf-lib";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { reconcileForm4972Nua } from "../../form4972_nua_reconciliation.ts";
@@ -267,19 +272,17 @@ function assertElectedPdfShape(
     numberOn(fields, "line25") !== numberOn(fields, "line24") * 10 ||
     annuity > 0 &&
       (numberOn(fields, "line20") !==
-          Math.round(annuity / taxable * 100_000) / 100_000 ||
+          worksheetRatio(annuity, taxable) ||
         numberOn(fields, "line21") !==
-          Math.round(allowance * numberOn(fields, "line20")) ||
+          filedDollars(allowance * numberOn(fields, "line20")) ||
         numberOn(fields, "line22") !== annuity - numberOn(fields, "line21") ||
         numberOn(fields, "line26") !==
           Math.round(numberOn(fields, "line22") * 0.1) ||
         numberOn(fields, "line28") !== numberOn(fields, "line27") * 10) ||
-    numberOn(fields, "line29") !== Math.round(
-        (numberOn(fields, "line25") -
-          (annuity > 0 ? numberOn(fields, "line28") : 0)) *
-          (multipleRecipients
-            ? numberOn(fields, "recipient_share_pct") / 100
-            : 1),
+    numberOn(fields, "line29") !== roundRecipientTax(
+        numberOn(fields, "line25") -
+          (annuity > 0 ? numberOn(fields, "line28") : 0),
+        multipleRecipients ? numberOn(fields, "recipient_share_pct") : 100,
       ) ||
     numberOn(fields, "line30") !== numberOn(fields, "line29") +
         (capital ? numberOn(fields, "line7") : 0)

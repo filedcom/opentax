@@ -1,3 +1,4 @@
+import { sourceDistributionFraction } from "../../../nodes/intermediate/forms/form4972/source-rounding.ts";
 import type { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
 import {
@@ -139,7 +140,8 @@ function build1099R(
     amount("OtherDistributionAmt", item.box8_other),
     item.box9a_pct_total === undefined ? "" : element(
       "RcpntTotalDistributionPct",
-      String(item.box9a_pct_total / 100),
+      // Preserve the issued decimal share, avoiding a binary expansion.
+      sourceDistributionFraction(item.box9a_pct_total),
     ),
     amount(
       "TotalEmployeeContributionsAmt",

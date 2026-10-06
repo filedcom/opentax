@@ -1,3 +1,7 @@
+import {
+  isSourceMoney,
+  sameSourceMoney,
+} from "../../intermediate/forms/form4972/source-rounding.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -1670,34 +1674,27 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
             !item.recipient_ssn ||
             item.recipient_ssn === plan.participant_ssn ||
             item.recipient_ssn !== first.recipient_ssn ||
-            item.box1_gross_distribution !==
-              (item.box2a_taxable_amount ?? 0) + (item.box6_nua ?? 0) ||
-            !Number.isSafeInteger(
-              (item.box2a_taxable_amount ?? 0) * 100 / share,
+            !sameSourceMoney(
+              item.box1_gross_distribution,
+              (item.box2a_taxable_amount ?? 0) + (item.box6_nua ?? 0),
             ) ||
-            !Number.isSafeInteger(
-              (item.box3_capital_gain ?? 0) * 100 / share,
-            ) ||
-            !Number.isSafeInteger((item.box6_nua ?? 0) * 100 / share) ||
-            ((item.box6_nua ?? 0) > 0 &&
-              !Number.isSafeInteger(
-                (item.box6_nua ?? 0) *
-                  (item.box3_capital_gain ?? 0) /
-                  (item.box2a_taxable_amount ?? 0),
-              )) ||
+            [
+              item.box2a_taxable_amount ?? 0,
+              item.box3_capital_gain ?? 0,
+              item.box6_nua ?? 0,
+              item.box8_other ?? 0,
+            ]
+              .some((amount) => !isSourceMoney(amount)) ||
             ((item.box8_other ?? 0) > 0 &&
-              (!annuityShare || item.box8_pct_total !== annuityShare ||
-                !Number.isSafeInteger(
-                  item.box8_other! * 100 / annuityShare,
-                ))) ||
+              (!annuityShare || item.box8_pct_total !== annuityShare)) ||
             ((item.box8_other ?? 0) === 0 &&
               item.box8_pct_total !== undefined))) ||
         item.box2a_taxable_amount === undefined ||
         item.box2a_taxable_amount <= 0 ||
         (item.box3_capital_gain ?? 0) > item.box2a_taxable_amount ||
-        ((item.box6_nua ?? 0) > 0 &&
-          (!Number.isSafeInteger(item.box6_nua ?? 0))) ||
-        !Number.isSafeInteger(item.box8_other ?? 0) ||
+        (!partialBeneficiary && ((item.box6_nua ?? 0) > 0 &&
+          !Number.isSafeInteger(item.box6_nua ?? 0))) ||
+        (!partialBeneficiary && !Number.isSafeInteger(item.box8_other ?? 0)) ||
         (!partialBeneficiary && item.box8_pct_total !== undefined &&
           item.box8_pct_total !== 100)
       )

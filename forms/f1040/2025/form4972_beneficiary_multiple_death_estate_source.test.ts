@@ -186,7 +186,10 @@ Deno.test("death and estate group rejects incomplete beneficiary, owner, source 
           plan_reference: "other-plan",
         },
       (q: any) => q.f1099r[1].recipient_ssn = "987654321",
-      (q: any) => q.f1099r[2].box3_capital_gain++,
+      // A nonintegral NUA split is now applicable; exceeding the issued
+      // taxable distribution remains an invalid capital source.
+      (q: any) =>
+        q.f1099r[2].box3_capital_gain = q.f1099r[2].box2a_taxable_amount + 1,
       (q: any) =>
         q.form4972.elections[0].death_benefit_allocation.participant_ssn =
           "111223333",

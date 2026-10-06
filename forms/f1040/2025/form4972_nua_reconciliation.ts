@@ -1,3 +1,4 @@
+import { sameSourceMoney } from "../nodes/intermediate/forms/form4972/source-rounding.ts";
 import { inputSchema as f1099rSchema } from "../nodes/inputs/f1099r/index.ts";
 import {
   form4972,
@@ -96,8 +97,10 @@ export function reconcileForm4972Nua(
               fields.elect_10yr_averaging === true &&
               (typeof fields.capital_gain_amount !== "number" ||
                 fields.capital_gain_amount <= 0)) ||
-            item.box1_gross_distribution !==
-              (item.box2a_taxable_amount ?? 0) + (item.box6_nua ?? 0))) ||
+            !sameSourceMoney(
+              item.box1_gross_distribution,
+              (item.box2a_taxable_amount ?? 0) + (item.box6_nua ?? 0),
+            ))) ||
         ((item.box8_other ?? 0) > 0 &&
           fields.elect_10yr_averaging !== true))) ||
     (item.box8_other ?? 0) !== (fields.annuity_actuarial_value ?? 0) ||
@@ -130,6 +133,42 @@ export function reconcileForm4972Nua(
     throw new Error(
       "Form 4972 NUA source amounts differ from Form 1099-R boxes 2a, 3, or 6",
     );
+  }
+  if (sharePct < 100) {
+    const computed = form4972.compute(
+      { taxYear: 2025, formType: "f1040" },
+      form4972Schema.parse(fields),
+    ).outputs;
+    const expected = computed.find((output) => output.nodeType === "form4972")
+      ?.fields;
+    const tax = computed.find((output) =>
+      output.nodeType === "income_tax_calculation"
+    )?.fields.form4972_tax;
+    const ret = pending?.f1040 as Record<string, unknown> | undefined;
+    if (
+      fields.elect_10yr_averaging !== true &&
+      (typeof ret?.line5b_pension_taxable !== "number" ||
+        ret.line5b_pension_taxable < Number(
+            computed.find((output) => output.nodeType === "f1040")?.fields
+              .line5b_form4972_ordinary,
+          ))
+    ) {
+      throw new Error(
+        "Form 4972 Part-II-only NUA needs its recipient ordinary income and special tax on Form 1040 without Part III",
+      );
+    }
+    if (
+      !expected || Array.from({ length: 25 }, (_, i) => `line${i + 6}`)
+        .some((key) => expected[key] !== fields[key]) ||
+      expected.line6_nua_capital_gain !== fields.line6_nua_capital_gain ||
+      expected.line8_nua_included !== fields.line8_nua_included ||
+      ret?.form4972_tax !== tax
+    ) {
+      throw new Error(
+        "Form 4972 NUA worksheet does not reconcile with lines 6 through 8; NUA and annuity lines differ from Form 1099-R and Form 1040 tax",
+      );
+    }
+    return;
   }
   const roundedTaxable = Math.round(taxable);
   const roundedGain = Math.round(gain);
