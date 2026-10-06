@@ -68,3 +68,52 @@ export function totalCurrentDebtAdvances(
     (note.second_formal_note?.cash_advance_amount ?? 0) +
     (note.open_account_net_advance_amount ?? 0);
 }
+
+/** Exact three-debt allocation; largest fractional remainders settle only the
+ * whole-dollar filing projection. Raw source fractions remain unchanged. */
+export function allocateThreeDebtReductions(
+  loss: number,
+  capacities: readonly number[],
+) {
+  const total = capacities.reduce((a, b) => a + b, 0);
+  if (
+    capacities.length !== 3 ||
+    ![loss, total, ...capacities].every(Number.isSafeInteger) ||
+    Math.min(loss, ...capacities) < 0 || loss > total
+  ) {
+    throw Error(
+      "Three debt columns need exact individually owned capacities and limited loss",
+    );
+  }
+  const denominator = BigInt(total || 1),
+    nums = capacities.map((c) => BigInt(c) * BigInt(loss));
+  const basisNums = capacities.map((c, i) => BigInt(c) * denominator - nums[i]);
+  if (
+    [...nums, ...basisNums].some((n) => n > BigInt(Number.MAX_SAFE_INTEGER))
+  ) throw Error("Exact three-debt metadata exceeds safe representation");
+  const filed = nums.map((n) => Number(n / denominator));
+  let remaining = loss - filed.reduce((a, b) => a + b, 0);
+  const ranked = nums.map((n, i) => ({ i, remainder: n % denominator })).sort((
+    a,
+    b,
+  ) =>
+    a.remainder === b.remainder ? a.i - b.i : a.remainder > b.remainder ? -1 : 1
+  );
+  for (const r of ranked) {
+    if (!remaining) break;
+    filed[r.i]++;
+    remaining--;
+  }
+  if (remaining || filed.some((n, i) => n > capacities[i])) {
+    throw Error("Filed three-debt allocation exceeds capacity");
+  }
+  return {
+    filed,
+    exact: nums.map((n, i) => ({
+      numerator: Number(n),
+      basisNumerator: Number(basisNums[i]),
+      denominator: Number(denominator),
+    })),
+    basis: capacities.map((c, i) => c - filed[i]),
+  };
+}

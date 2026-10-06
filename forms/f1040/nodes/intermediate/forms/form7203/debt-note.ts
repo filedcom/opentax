@@ -1,4 +1,7 @@
-import { allocateTwoDebtReductions } from "./debt-allocation.ts";
+import {
+  allocateThreeDebtReductions,
+  allocateTwoDebtReductions,
+} from "./debt-allocation.ts";
 import {
   ownedMixedDebtRecordsSchema,
   ownedOpenAccountRecordsSchema,
@@ -200,7 +203,6 @@ export const reviewedOpenAccountSchema = newFormalNotesBaseSchema.omit({
 export const reviewedMixedCurrentDebtSchema = newFormalNotesBaseSchema.extend({
   kind: z.literal("owned_2025_formal_and_open_account"),
   owned_current_records: ownedMixedDebtRecordsSchema,
-  second_formal_note: z.never().optional(),
   open_account_net_advance_amount: z.number().int().nonnegative().refine(
     Number.isSafeInteger,
   ),
@@ -210,7 +212,14 @@ export const reviewedMixedCurrentDebtSchema = newFormalNotesBaseSchema.extend({
     if (
       note.shareholder_lender_ssn !== note.shareholder_ssn ||
       note.corporate_borrower_ein !== note.corporation_ein ||
-      note.no_2025_repayments_confirmed === (r.repayments > 0)
+      note.no_2025_repayments_confirmed === (r.repayments > 0) ||
+      (note.second_formal_note &&
+        (note.second_formal_note.shareholder_lender_ssn !==
+            note.shareholder_ssn ||
+          note.second_formal_note.corporate_borrower_ein !==
+            note.corporation_ein ||
+          note.second_formal_note.no_2025_repayments_confirmed ===
+            (note.second_formal_note.principal_repayment !== undefined)))
     ) {
       throw Error(
         "Mixed direct-debt instrument owner/borrower/complete repayment facts conflict",
@@ -239,7 +248,11 @@ export function reconcileCashCapitalAndNewNote(
   note: ReviewedNewFormalNotes,
 ): number {
   const contribution = ledger.cash_capital_contribution;
-  if (!contribution || note.second_formal_note) {
+  if (
+    !contribution ||
+    (note.second_formal_note &&
+      note.kind !== "owned_2025_formal_and_open_account")
+  ) {
     throw new Error(
       "Form 7203 combined capital-and-debt route needs one new formal note",
     );
@@ -309,6 +322,7 @@ export function reconcileNewFormalNotes(
   );
   if (
     note.second_formal_note &&
+    note.kind !== "owned_2025_formal_and_open_account" &&
     !Number.isSafeInteger(
       debtSupportedLossCandidate *
         (note.cash_advance_amount -
@@ -341,8 +355,9 @@ export function actualCurrentDebtRepayments(note: ReviewedNewFormalNotes) {
     return sumPrincipalRepayments(note.principal_repayments) +
       replayOpenAccount(
         note.owned_current_records
-          .complete_current_shareholder_debt_inventory[1],
-      ).repayments;
+          .complete_current_shareholder_debt_inventory.at(-1),
+      ).repayments +
+      (note.second_formal_note?.principal_repayment?.amount ?? 0);
   }
   return note.kind === "owned_2025_open_account"
     ? replayOpenAccount(
@@ -364,12 +379,43 @@ export function currentOpenAccountCarry(
   const mixed = note.kind === "owned_2025_formal_and_open_account";
   const r = replayOpenAccount(
     note.owned_current_records
-      .complete_current_shareholder_debt_inventory[mixed ? 1 : 0],
+      .complete_current_shareholder_debt_inventory[
+        mixed
+          ? note.owned_current_records
+            .complete_current_shareholder_debt_inventory.length - 1
+          : 0
+      ],
   );
   const formalCapacity = mixed
     ? note.cash_advance_amount -
       sumPrincipalRepayments(note.principal_repayments)
     : 0;
+  if (mixed && note.second_formal_note) {
+    const secondCapacity = note.second_formal_note.cash_advance_amount -
+      (note.second_formal_note.principal_repayment?.amount ?? 0);
+    const allocation = allocateThreeDebtReductions(allowedDebt, [
+      formalCapacity,
+      secondCapacity,
+      r.endingPrincipal,
+    ]);
+    const key = `${note.shareholder_ssn}_${note.corporation_ein}`;
+    const labels = ["formal_note", "second_formal_note", "open_account"];
+    const caps = [formalCapacity, secondCapacity, r.endingPrincipal];
+    const result: Record<string, number> = {};
+    labels.forEach((label, i) => {
+      result[`${label}_principal_7203_${key}`] = caps[i];
+      result[`${label}_debt_basis_7203_${key}`] = allocation.basis[i];
+      result[`${label}_exact_loss_numerator_7203_${key}`] =
+        allocation.exact[i].numerator;
+      result[`${label}_exact_basis_numerator_7203_${key}`] =
+        allocation.exact[i].basisNumerator;
+    });
+    result[`mixed_debt_exact_loss_denominator_7203_${key}`] =
+      allocation.exact[0].denominator;
+    result[`open_account_next_year_separate_debt_7203_${key}`] =
+      r.endingPrincipal > 25000 ? 1 : 0;
+    return result;
+  }
   const allocation = mixed
     ? allocateTwoDebtReductions(allowedDebt, formalCapacity, r.endingPrincipal)
     : undefined;

@@ -1,4 +1,7 @@
-import { allocateTwoDebtReductions } from "../nodes/intermediate/forms/form7203/debt-allocation.ts";
+import {
+  allocateThreeDebtReductions,
+  allocateTwoDebtReductions,
+} from "../nodes/intermediate/forms/form7203/debt-allocation.ts";
 import { isDeepStrictEqual } from "node:util";
 import { FilingStatus } from "../mef/header.ts";
 import {
@@ -168,27 +171,41 @@ function projectSingleReviewedStockLoss7203(
     ? note.cash_advance_amount -
       sumPrincipalRepayments(note.principal_repayments)
     : 0;
-  const secondDebtBasis = (note?.open_account_net_advance_amount ??
-    note?.second_formal_note?.cash_advance_amount ?? 0) -
+  const secondDebtBasis = (note?.second_formal_note?.cash_advance_amount ??
+    note?.open_account_net_advance_amount ?? 0) -
     (note?.second_formal_note?.principal_repayment?.amount ?? 0);
+  const thirdDebtBasis = note?.kind === "owned_2025_formal_and_open_account" &&
+      note.second_formal_note
+    ? note.open_account_net_advance_amount
+    : 0;
   const allowedDebt = note
     ? Math.min(
       currentLoss - allowedStock,
-      firstDebtBasis + secondDebtBasis,
+      firstDebtBasis + secondDebtBasis + thirdDebtBasis,
     )
     : 0;
-  const allowedDebt1 = note?.kind === "owned_2025_formal_and_open_account"
-    ? allocateTwoDebtReductions(allowedDebt, firstDebtBasis, secondDebtBasis)
-      .first
-    : secondDebtBasis > 0
-    ? allowedDebt * firstDebtBasis / (firstDebtBasis + secondDebtBasis)
-    : allowedDebt;
+  const three = note?.kind === "owned_2025_formal_and_open_account" &&
+      note.second_formal_note
+    ? allocateThreeDebtReductions(allowedDebt, [
+      firstDebtBasis,
+      secondDebtBasis,
+      thirdDebtBasis,
+    ])
+    : undefined;
+  const allowedDebt1 = three?.filed[0] ??
+    (note?.kind === "owned_2025_formal_and_open_account"
+      ? allocateTwoDebtReductions(allowedDebt, firstDebtBasis, secondDebtBasis)
+        .first
+      : secondDebtBasis > 0
+      ? allowedDebt * firstDebtBasis / (firstDebtBasis + secondDebtBasis)
+      : allowedDebt);
   if (!Number.isSafeInteger(allowedDebt1)) {
     throw new Error(
       "Form 7203 two-note loss does not allocate in exact whole dollars",
     );
   }
-  const allowedDebt2 = allowedDebt - allowedDebt1;
+  const allowedDebt2 = three?.filed[1] ?? (allowedDebt - allowedDebt1);
+  const allowedDebt3 = three?.filed[2] ?? 0;
   const allowed = allowedStock + allowedDebt;
   const carryover = currentLoss - allowed;
   const schedule1 = pendingRecordSchema.parse(allPending.schedule1);
@@ -240,6 +257,7 @@ function projectSingleReviewedStockLoss7203(
     allowedDebt,
     allowedDebt1,
     allowedDebt2,
+    allowedDebt3,
     allowed,
     carryover,
   };

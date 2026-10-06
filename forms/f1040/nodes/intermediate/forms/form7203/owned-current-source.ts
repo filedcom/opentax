@@ -3,7 +3,10 @@ import {
   corporateBankLedgerSchema,
   unrelatedCorporateCreditSchema,
 } from "./corporate-bank.ts";
-import { allocateTwoDebtReductions } from "./debt-allocation.ts";
+import {
+  allocateThreeDebtReductions,
+  allocateTwoDebtReductions,
+} from "./debt-allocation.ts";
 import { openAccountRecordSchema, replayOpenAccount } from "./open-account.ts";
 import {
   assertCoOwnedCorporateRecord,
@@ -210,9 +213,9 @@ export const ownedMixedDebtRecordsSchema = ownedCurrentDebtRecordsBaseSchema
     complete_unrelated_corporate_credit_inventory: z.array(
       unrelatedCorporateCreditSchema,
     ).min(1).max(2),
-    complete_current_shareholder_debt_inventory: z.tuple([
-      noteRecord,
-      openAccountRecordSchema,
+    complete_current_shareholder_debt_inventory: z.union([
+      z.tuple([noteRecord, openAccountRecordSchema]),
+      z.tuple([noteRecord, noteRecord, openAccountRecordSchema]),
     ]),
   });
 export const ownedCurrentDebtRecordsSchema = z.union([
@@ -458,8 +461,9 @@ export function reconcileOwnedCurrentDebt(raw: unknown, note: NewNote) {
   if (mixed) assertMixedCorporateCashSource(mixed);
   const formalSource = mixed
     ? {
-      complete_current_shareholder_debt_inventory: z.array(noteRecord).length(1)
-        .parse([mixed.complete_current_shareholder_debt_inventory[0]]),
+      complete_current_shareholder_debt_inventory: z.array(noteRecord).min(1)
+        .max(2)
+        .parse(mixed.complete_current_shareholder_debt_inventory.slice(0, -1)),
     }
     : ownedCurrentDebtRecordsBaseSchema.parse(s);
   const expected = [
@@ -504,6 +508,7 @@ export function reconcileOwnedCurrentDebt(raw: unknown, note: NewNote) {
     ]),
   ];
   let capacity = 0, repaid = 0;
+  const formalCapacities: number[] = [];
   for (let i = 0; i < expected.length; i++) {
     const n = expected[i],
       r = formalSource.complete_current_shareholder_debt_inventory[i],
@@ -586,10 +591,13 @@ export function reconcileOwnedCurrentDebt(raw: unknown, note: NewNote) {
       );
     }
     capacity += face;
+    formalCapacities.push(face);
   }
   const formalCapacity = capacity;
   const open = mixed
-    ? replayOpenAccount(mixed.complete_current_shareholder_debt_inventory[1])
+    ? replayOpenAccount(
+      mixed.complete_current_shareholder_debt_inventory.at(-1),
+    )
     : undefined;
   if (open) {
     if (
@@ -627,6 +635,14 @@ export function reconcileOwnedCurrentDebt(raw: unknown, note: NewNote) {
     ...(open
       ? {
         openAccount: open,
+        ...(formalCapacities.length === 2
+          ? {
+            mixedThreeDebtAllocation: allocateThreeDebtReductions(allowedDebt, [
+              ...formalCapacities,
+              open.endingPrincipal,
+            ]),
+          }
+          : {}),
         mixedDebtAllocation: allocateTwoDebtReductions(
           allowedDebt,
           formalCapacity,

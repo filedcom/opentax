@@ -279,7 +279,10 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
         "Form 7203 debt-supported loss needs identified formal-note source and matching current K-1 loss without other basis items",
       );
     }
-    if (note?.second_formal_note) {
+    if (
+      note?.second_formal_note &&
+      note.kind !== "owned_2025_formal_and_open_account"
+    ) {
       const stock = input.stock_basis_beginning ?? 0;
       const firstDebtBasis = note.cash_advance_amount -
         sumPrincipalRepayments(note.principal_repayments);

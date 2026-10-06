@@ -19,6 +19,7 @@ export function buildReviewedStockLoss7203(
     allowedDebt,
     allowedDebt1,
     allowedDebt2,
+    allowedDebt3,
     carryover,
   } = projectReviewedStockLoss7203(
     rawFields,
@@ -27,15 +28,20 @@ export function buildReviewedStockLoss7203(
   );
   const repayment = sumPrincipalRepayments(note?.principal_repayments);
   const debtAfterRepayment = (note?.cash_advance_amount ?? 0) - repayment;
-  const secondAdvance = note?.open_account_net_advance_amount ??
-    note?.second_formal_note?.cash_advance_amount ?? 0;
+  const secondAdvance = note?.second_formal_note?.cash_advance_amount ??
+    note?.open_account_net_advance_amount ?? 0;
   const secondRepayment =
     note?.second_formal_note?.principal_repayment?.amount ?? 0;
   const secondDebtAfterRepayment = secondAdvance - secondRepayment;
+  const thirdAdvance = note?.kind === "owned_2025_formal_and_open_account" &&
+      note.second_formal_note
+    ? note.open_account_net_advance_amount
+    : undefined;
   const totalRepayment = repayment + secondRepayment;
-  const totalAdvance = (note?.cash_advance_amount ?? 0) + secondAdvance;
+  const totalAdvance = (note?.cash_advance_amount ?? 0) + secondAdvance +
+    (thirdAdvance ?? 0);
   const totalDebtAfterRepayment = debtAfterRepayment +
-    secondDebtAfterRepayment;
+    secondDebtAfterRepayment + (thirdAdvance ?? 0);
   const lossGroup = (amount: number) => [
     element("OrdinaryBusinessLossAmt", amount),
     element("TotalAllowableLossAmt", amount),
@@ -88,7 +94,8 @@ export function buildReviewedStockLoss7203(
     (note?.second_formal_note ||
         note?.kind === "owned_2025_formal_and_open_account")
       ? elements("ShareholderDebtBasisGrp", [
-        note?.kind === "owned_2025_formal_and_open_account"
+        note?.kind === "owned_2025_formal_and_open_account" &&
+          !note.second_formal_note
           ? element("OpenAccountDebtInd", "X")
           : element("FormalNoteInd", "X"),
         element("LoanBalanceBeginTaxYrAmt", 0),
@@ -111,6 +118,22 @@ export function buildReviewedStockLoss7203(
           "DebtBasisEndTaxYrAmt",
           secondDebtAfterRepayment - allowedDebt2,
         ),
+      ])
+      : "",
+    thirdAdvance !== undefined
+      ? elements("ShareholderDebtBasisGrp", [
+        element("OpenAccountDebtInd", "X"),
+        element("LoanBalanceBeginTaxYrAmt", 0),
+        element("AdditionalLoansAmt", thirdAdvance),
+        element("LoanedBeginningBalAmt", thirdAdvance),
+        element("LoanBalanceEndTaxYrAmt", thirdAdvance),
+        element("DebtBasisBeginTaxYrAmt", 0),
+        element("DebtBasisBfrRepaymentAmt", thirdAdvance),
+        thirdAdvance > 0 ? element("DebtLoanRepaymentPct", "1.0000") : "",
+        element("DebtBasisBfrExpnssLossAmt", thirdAdvance),
+        element("DebtBasisBeforeLossDedAmt", thirdAdvance),
+        element("AllowableLossAmt", allowedDebt3),
+        element("DebtBasisEndTaxYrAmt", thirdAdvance - allowedDebt3),
       ])
       : "",
     note ? element("TotLoanBalanceBeginTaxYrAmt", 0) : "",

@@ -58,6 +58,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "formal_note_debt2",
     pdfField: `${debtA}Header[0].bDebt2[0].c1_8[0]`,
   },
+  {
+    kind: "checkbox",
+    domainKey: "open_account_debt3",
+    pdfField: `${debtA}Header[0].cDebt3[0].c1_9[1]`,
+  },
   ...[
     ["16", "36", "39"],
     ["17", "40", "43"],
@@ -73,6 +78,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     textField(
       `line${line}_debt2`,
       `${debtA}Line${line}[0].f1_${Number(first) + 1}[0]`,
+      line === "16",
+    ),
+    textField(
+      `line${line}_debt3`,
+      `${debtA}Line${line}[0].f1_${Number(first) + 2}[0]`,
       line === "16",
     ),
     textField(
@@ -101,6 +111,13 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
       `line${line}_debt2`,
       `${debtB}Line${line}[0].f2_${
         String(Number(first) + 1).padStart(2, "0")
+      }[0]`,
+      line === "21",
+    ),
+    textField(
+      `line${line}_debt3`,
+      `${debtB}Line${line}[0].f2_${
+        String(Number(first) + 2).padStart(2, "0")
       }[0]`,
       line === "21",
     ),
@@ -166,19 +183,25 @@ export const form7203StockLossPdf: PdfFormDescriptor = {
       allowedDebt,
       allowedDebt1,
       allowedDebt2,
+      allowedDebt3,
       carryover,
     } = projectReviewedStockLoss7203(raw, allPending ?? {}, filer);
     const repayment = sumPrincipalRepayments(note?.principal_repayments);
     const debtAfterRepayment = (note?.cash_advance_amount ?? 0) - repayment;
-    const secondAdvance = note?.open_account_net_advance_amount ??
-      note?.second_formal_note?.cash_advance_amount ?? 0;
+    const secondAdvance = note?.second_formal_note?.cash_advance_amount ??
+      note?.open_account_net_advance_amount ?? 0;
     const secondRepayment =
       note?.second_formal_note?.principal_repayment?.amount ?? 0;
     const secondDebtAfterRepayment = secondAdvance - secondRepayment;
+    const thirdAdvance = note?.kind === "owned_2025_formal_and_open_account" &&
+        note.second_formal_note
+      ? note.open_account_net_advance_amount
+      : undefined;
     const totalRepayment = repayment + secondRepayment;
-    const totalAdvance = (note?.cash_advance_amount ?? 0) + secondAdvance;
+    const totalAdvance = (note?.cash_advance_amount ?? 0) + secondAdvance +
+      (thirdAdvance ?? 0);
     const totalDebtAfterRepayment = debtAfterRepayment +
-      secondDebtAfterRepayment;
+      secondDebtAfterRepayment + (thirdAdvance ?? 0);
     return [{
       shareholder_name: ledger.shareholder_name_as_on_k1,
       shareholder_ssn: ledger.shareholder_ssn,
@@ -234,7 +257,8 @@ export const form7203StockLossPdf: PdfFormDescriptor = {
           ...(secondAdvance > 0 ||
               note.kind === "owned_2025_formal_and_open_account"
             ? {
-              ...(note.kind === "owned_2025_formal_and_open_account"
+              ...(note.kind === "owned_2025_formal_and_open_account" &&
+                  !note.second_formal_note
                 ? { open_account_debt2: true }
                 : { formal_note_debt2: true }),
               line16_debt2: 0,
@@ -251,6 +275,23 @@ export const form7203StockLossPdf: PdfFormDescriptor = {
               line29_debt2: secondDebtAfterRepayment,
               line30_debt2: allowedDebt2,
               line31_debt2: secondDebtAfterRepayment - allowedDebt2,
+            }
+            : {}),
+          ...(thirdAdvance !== undefined
+            ? {
+              open_account_debt3: true,
+              line16_debt3: 0,
+              line17_debt3: thirdAdvance,
+              line18_debt3: thirdAdvance,
+              line20_debt3: thirdAdvance,
+              line21_debt3: 0,
+              line22_debt3: thirdAdvance,
+              line24_debt3: thirdAdvance,
+              ...(thirdAdvance > 0 ? { line25_debt3: "1.0000" } : {}),
+              line27_debt3: thirdAdvance,
+              line29_debt3: thirdAdvance,
+              line30_debt3: allowedDebt3,
+              line31_debt3: thirdAdvance - allowedDebt3,
             }
             : {}),
           ...(repayment > 0
