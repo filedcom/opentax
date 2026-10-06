@@ -11,7 +11,10 @@ function settle(inputs: any) {
   assertEquals(r.diagnostics, []);
   return r.pending;
 }
-export function remarriedFamily(stepFirst: boolean): any {
+export function remarriedFamily(
+  stepFirst: boolean,
+  dividendCopies?: any[],
+): any {
   const old = family(false),
     children = old.children,
     parent = old.parents[0].inputs;
@@ -78,6 +81,13 @@ export function remarriedFamily(stepFirst: boolean): any {
     box6_medicare_withheld: patWage * .0145,
   };
   parent.w2.push(pat);
+  if (dividendCopies) {
+    parent.f1099div = structuredClone(dividendCopies);
+    parent.schedule_b_part_iii = {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    };
+  }
   Object.assign(parent.f8863_claimant_review.claimant_review, {
     claimant_ssn: first.ssn,
     claimant_dob: first.dob,

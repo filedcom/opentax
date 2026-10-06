@@ -11,7 +11,10 @@ function settle(inputs: any) {
   assertEquals(r.diagnostics, []);
   return r.pending;
 }
-export function separateFamily(stepHigher: boolean): any {
+export function separateFamily(
+  stepHigher: boolean,
+  dividendCopies?: any[],
+): any {
   const old = family(false), children = old.children;
   const cust = { ssn: "111223333", firstName: "Alex", dob: "1985-06-15" },
     step = { ssn: "999887777", firstName: "Pat", dob: "1982-04-11" };
@@ -54,6 +57,13 @@ export function separateFamily(stepHigher: boolean): any {
       box5_medicare_wages: wages,
       box6_medicare_withheld: wages * .0145,
     });
+    if (dividendCopies && i === 1) {
+      inputs.f1099div = structuredClone(dividendCopies);
+      inputs.schedule_b_part_iii = {
+        foreign_accounts_question: false,
+        foreign_trust_question: false,
+      };
+    }
     if (stepHigher && i === 0) {
       inputs.schedule_a = {
         filing_status: "mfs",

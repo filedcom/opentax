@@ -8,7 +8,14 @@ import {
 } from "../education_income/dependent-scholarship-review.ts";
 import { FilingStatus } from "../../types.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
-import { ordinaryTax2025 } from "../../intermediate/worksheets/tax_table_2025.ts";
+import {
+  assertDistinct1099DIVCopies,
+  inputSchema as dividendSchema,
+} from "../f1099div/index.ts";
+import {
+  ordinaryTax2025,
+  qualifiedDividendTax2025,
+} from "../../intermediate/worksheets/tax_table_2025.ts";
 import { calculateForm8615 } from "../../intermediate/forms/form8615/calculation.ts";
 import { inputSchema } from "./schema.ts";
 const tin = (v: unknown) => String(v ?? "").replaceAll("-", "");
@@ -17,6 +24,10 @@ const object = (v: unknown): Record<string, unknown> =>
 export const PARENT_TAX_SOURCE_KEYS = [
   "general",
   "w2",
+  "f1099div",
+  "schedule_b",
+  "schedule_d",
+  "agi_aggregator",
   "f1040",
   "standard_deduction",
   "income_tax_calculation",
@@ -207,9 +218,134 @@ function parentIncomeFacts(record: ParentReturn) {
       "Form 8615 parent wages need distinct issued parent-owned sources",
     );
   }
-  const income = wages.reduce((s, w) => s + Number(w.box1_wages), 0);
-  const taxable = Math.max(0, income - deductionAmount),
-    tax = ordinaryTax2025(taxable, filingStatus);
+  const wageIncome = wages.reduce((s, w) => s + Number(w.box1_wages), 0);
+  const dividends = pending.f1099div === undefined
+    ? []
+    : dividendSchema.parse(pending.f1099div).f1099divs;
+  assertDistinct1099DIVCopies(dividends);
+  const otherBoxes = [
+    "box2b",
+    "box2c",
+    "box2d",
+    "box2e",
+    "box2f",
+    "box3",
+    "box4",
+    "box5",
+    "box6",
+    "box7",
+    "box9",
+    "box10",
+    "box12",
+    "box13",
+    "box16",
+    "foreign_source_dividends_usd",
+    "foreign_source_qualified_dividends_usd",
+  ] as const;
+  if (
+    dividends.some((d) =>
+      !d.source_document_reference || !d.payerTin || !d.payerName?.trim() ||
+      wages.some((w) =>
+        w.source_document_reference === d.source_document_reference
+      ) ||
+      !owners.includes(tin(d.recipient_tin)) || d.isNominee || d.box11 ||
+      d.nominee_distribution !== undefined ||
+      !Number.isInteger(d.box1a) || !Number.isInteger(d.box1b ?? 0) ||
+      !Number.isInteger(d.box2a ?? 0) ||
+      (d.box1b ?? 0) > d.box1a ||
+      otherBoxes.some((k) => Number(d[k] ?? 0) !== 0) ||
+      ((d.box1b ?? 0) > 0 && (!d.qualified_dividend_filing_review ||
+        d.qualified_dividend_filing_review
+                .qualified_held_days_in_121_day_window +
+              d.qualified_dividend_filing_review.diminished_risk_days_excluded >
+          121 ||
+        d.qualified_dividend_filing_review.reviewed_on <
+          d.qualified_dividend_filing_review.ex_dividend_date))
+    )
+  ) {
+    throw new Error(
+      "Selected-parent dividends require distinct owned domestic issued ordinary/qualified/capital-distribution sources and actual qualified holding review; other source tax treatments remain unproved",
+    );
+  }
+  const ordinaryDividends = dividends.reduce((n, d) => n + d.box1a, 0);
+  const qualifiedDividends = dividends.reduce((n, d) => n + (d.box1b ?? 0), 0);
+  const netCapitalGain = dividends.reduce((n, d) => n + (d.box2a ?? 0), 0);
+  const sum = (v: unknown) =>
+    (Array.isArray(v) ? v : [v ?? 0]).reduce<number>((n, x) => {
+      if (typeof x !== "number" || !Number.isInteger(x) || x < 0) {
+        throw new Error(
+          "Parent portfolio worksheet amounts must preserve the actual filed whole-dollar sources",
+        );
+      }
+      return n + x;
+    }, 0);
+  const a = object(pending.agi_aggregator),
+    b = object(pending.schedule_b),
+    d = object(pending.schedule_d);
+  if (
+    Number(final.line3b_ordinary_dividends ?? 0) !== ordinaryDividends ||
+    Number(final.line3a_qualified_dividends ?? 0) !== qualifiedDividends ||
+    sum(a.line3b_ordinary_dividends) !== ordinaryDividends ||
+    sum(taxInput.qualified_dividends) !== qualifiedDividends ||
+    sum(taxInput.net_capital_gain) !== netCapitalGain ||
+    Number(final.line7a_cap_gain_distrib ?? 0) !== netCapitalGain ||
+    Number(final.line7_capital_gain ?? 0) !== 0 ||
+    Number(d.line13_cap_gain_distrib ?? 0) !== netCapitalGain ||
+    Object.entries(d).some(([k, v]) =>
+      k.startsWith("line") && k !== "line13_cap_gain_distrib" &&
+      Number(v ?? 0) !== 0
+    ) ||
+    [
+      "rate_28_gain",
+      "unrecaptured_1250_gain",
+      "form4952_election",
+      "form4952_elected_capital_gain",
+    ].some((k) => sum(taxInput[k]) !== 0)
+  ) {
+    throw new Error(
+      "Selected-parent ordinary/qualified dividends and capital distributions must independently reconcile issued sources, AGI, ScheduleD and the actual QDCGT worksheet",
+    );
+  }
+  if (ordinaryDividends > 1500) {
+    const detail = Array.isArray(b.dividend_detail)
+      ? b.dividend_detail
+      : b.dividend_detail === undefined
+      ? []
+      : [b.dividend_detail];
+    if (
+      b.foreign_accounts_question !== false ||
+      b.foreign_trust_question !== false ||
+      sum(b.ordinaryDividends) +
+            detail.reduce((n, slot) => n + Number(object(slot).net ?? 0), 0) !==
+        ordinaryDividends ||
+      detail.length !== dividends.length ||
+      dividends.some((row) =>
+        !detail.some((slot) => {
+          const item = object(slot);
+          return item.payer_name === row.payerName &&
+            item.gross === row.box1a && item.net === row.box1a &&
+            item.nominee === 0;
+        })
+      )
+    ) {
+      throw new Error(
+        "Selected-parent ScheduleB must retain actual issued payer rows and reviewed domestic account/trust answers",
+      );
+    }
+  }
+  const income = wageIncome + ordinaryDividends + netCapitalGain;
+  const taxable = Math.max(0, income - deductionAmount);
+  const taxMethod = qualifiedDividends + netCapitalGain > 0
+    ? "qualified_dividend" as const
+    : "ordinary" as const;
+  const tax = taxMethod === "qualified_dividend"
+    ? qualifiedDividendTax2025(
+      taxable,
+      qualifiedDividends,
+      netCapitalGain,
+      filingStatus,
+    )
+    : ordinaryTax2025(taxable, filingStatus);
   const name = [filer.firstName, filer.middleInitial, filer.lastName].filter(
     Boolean,
   ).join(" ");
@@ -225,7 +361,7 @@ function parentIncomeFacts(record: ParentReturn) {
     general.taxpayer_can_be_claimed_as_dependent === true ||
     general.taxpayer_blind === true ||
     typeof general.taxpayer_dob !== "string" ||
-    general.taxpayer_dob < "1961-01-02" || final.line1a_wages !== income ||
+    general.taxpayer_dob < "1961-01-02" || final.line1a_wages !== wageIncome ||
     final.line9_total_income !== income || final.line11_agi !== income ||
     Number(final.line8_additional_income ?? 0) !== 0 ||
     (itemized
@@ -244,7 +380,7 @@ function parentIncomeFacts(record: ParentReturn) {
     taxInput.taking_standard_deduction !== !itemized
   ) {
     throw new Error(
-      "Form 8615 must reconcile the actual selected parent's ordinary-income return",
+      "Form 8615 must reconcile the actual selected parent's issued wage and portfolio income return",
     );
   }
   return {
@@ -252,6 +388,9 @@ function parentIncomeFacts(record: ParentReturn) {
     owner,
     owners,
     filingStatus,
+    qualifiedDividends,
+    netCapitalGain,
+    taxMethod,
     itemized: itemized && deductionAmount > 0,
     deductionAmount,
     general,
@@ -297,7 +436,7 @@ function familySourceIds(review: DependentScholarshipReview) {
   }
   return ids;
 }
-function ordinarySource(
+function parentTaxSource(
   parent: ReturnType<typeof parentIncomeFacts>,
   unearned: number,
   others: number[],
@@ -311,19 +450,19 @@ function ordinarySource(
     parent_filing_status: parent.filingStatus,
     parent_taxable_income: parent.taxable,
     parent_income_tax: parent.tax,
-    parent_tax_method: "ordinary",
+    parent_tax_method: parent.taxMethod,
     child_unearned_income: unearned,
     other_children_line5: others,
     other_children_qualified_dividends_line5: others.map(() => 0),
     other_children_net_capital_gain_line5: others.map(() => 0),
     other_children_schedule_d_tax_worksheet_used: others.map(() => false),
     other_children_form2555_used: others.map(() => false),
-    parent_qualified_dividends: 0,
-    parent_net_capital_gain: 0,
+    parent_qualified_dividends: parent.qualifiedDividends,
+    parent_net_capital_gain: parent.netCapitalGain,
   });
 }
 function expectedTax(
-  source: ReturnType<typeof ordinarySource>,
+  source: ReturnType<typeof parentTaxSource>,
   facts: ReturnType<typeof childIncomeFacts>,
   earned: number,
 ) {
@@ -612,7 +751,25 @@ export function dependentKiddieTaxFacts(
   }
   const extended = siblings.length > 0 ||
     selection.kind !== "divorced_custodial_unremarried";
+  const parentSourceIds = new Set<unknown>();
   for (const candidate of parents) {
+    const parentPending = candidate.record.pending;
+    const parentIncomeSources = [
+      ...(object(parentPending.w2).w2s as Record<string, unknown>[]),
+      ...((object(parentPending.f1099div).f1099divs ?? []) as Record<
+        string,
+        unknown
+      >[]),
+    ];
+    for (const row of parentIncomeSources) {
+      const id = row.source_document_reference;
+      if (sourceIds.has(String(id)) || parentSourceIds.has(id)) {
+        throw new Error(
+          "Parent wage/dividend sources cannot reuse another parent's or child's owned source identity",
+        );
+      }
+      parentSourceIds.add(id);
+    }
     if (
       extended &&
       candidate.general.dependent_kiddie_tax_family_record_reference !==
@@ -647,14 +804,18 @@ export function dependentKiddieTaxFacts(
   const required = facts.unearned > 2700 && facts.requiredToFile &&
     facts.ageApplies && r.parent_alive_on_2025_12_31;
   const source = required
-    ? ordinarySource(parent, facts.unearned, siblings.map((s) => s.facts.line5))
+    ? parentTaxSource(
+      parent,
+      facts.unearned,
+      siblings.map((s) => s.facts.line5),
+    )
     : undefined;
   for (const sibling of verifySiblingFiledTax ? siblings : []) {
     const others = [
       facts.line5,
       ...siblings.filter((s) => s !== sibling).map((s) => s.facts.line5),
     ];
-    const siblingSource = ordinarySource(
+    const siblingSource = parentTaxSource(
       parent,
       sibling.facts.unearned,
       others,

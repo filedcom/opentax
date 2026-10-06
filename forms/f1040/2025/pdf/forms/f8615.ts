@@ -90,9 +90,19 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: "topmostSubform[0].Page1[0].f1_13[0]",
   },
   {
+    kind: "checkbox",
+    domainKey: "line9_preferential_tax_used",
+    pdfField: "topmostSubform[0].Page1[0].Line9_ReadOrder[0].c1_2[0]",
+  },
+  {
     kind: "text",
     domainKey: "line10_parent_tax",
     pdfField: "topmostSubform[0].Page1[0].f1_14[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "line10_preferential_tax_used",
+    pdfField: "topmostSubform[0].Page1[0].Line10_ReadOrder[0].c1_3[0]",
   },
   {
     kind: "text",
@@ -125,6 +135,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: "topmostSubform[0].Page1[0].f1_20[0]",
   },
   {
+    kind: "checkbox",
+    domainKey: "line15_preferential_tax_used",
+    pdfField: "topmostSubform[0].Page1[0].Line15_ReadOrder[0].c1_4[0]",
+  },
+  {
     kind: "text",
     domainKey: "line16_combined_child_tax",
     pdfField: "topmostSubform[0].Page1[0].f1_21[0]",
@@ -133,6 +148,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line17_child_regular_tax",
     pdfField: "topmostSubform[0].Page1[0].f1_22[0]",
+  },
+  {
+    kind: "checkbox",
+    domainKey: "line17_preferential_tax_used",
+    pdfField: "topmostSubform[0].Page1[0].Line17_ReadOrder[0].c1_5[0]",
   },
   {
     kind: "text",
