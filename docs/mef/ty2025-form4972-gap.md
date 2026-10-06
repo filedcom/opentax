@@ -1,5 +1,26 @@
 # TY2025 Form 4972 remaining coverage
 
+## Current evidence checkpoint (2026-10-06)
+
+Historical sections below retain their original staged status; use the later
+source reviews for verified extensions of those specific boundaries. Complete
+same-plan/full-share NUA and annuity inventories, including separate spouse
+elections, pass current-main source/native/PDF checks and reviewed packet replay
+([NUA](ty2025-form4972-multiple-nua-source-review.md):5 packets/27 pages;
+[annuity](ty2025-form4972-multiple-annuity-source-review.md):7 packets/38 pages,
+247 main checks).
+
+The [multiple partial-beneficiary source review](ty2025-form4972-beneficiary-multiple-partial-source-review.md)
+adds one beneficiary/participant/plan with two or three issued copies, consistent
+50% box9a shares and separate actual25% box8 annuity shares. Current source9a7
+replay passes2/0/full localXSD and produces the same six inspected PDF pages;
+original public inputs and elected-copy references are unchanged. The related
+35-file isolated preservation gate passes293/0. Combined main integration
+verification is still running; death/estate across copies, unequal/nonintegral
+shares, separate-spouse beneficiary groups, wider eligibility, authenticated
+records, ScheduleJ/AMT and IRS acceptance remain unproven. This checkpoint
+does not close the Form4972 parent.
+
 ## Two spouses each elect NUA, Part II, and Part III (2026-10-06, verified)
 
 The existing `elections[]` calculation and collection export also support a

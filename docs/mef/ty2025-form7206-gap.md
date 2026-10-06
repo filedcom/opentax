@@ -1,5 +1,26 @@
 # TY2025 Form 7206 source-to-filing gap
 
+## Current evidence checkpoint (2026-10-06)
+
+The early one-ScheduleC status below is historical. The later
+[independent-plan source review](ty2025-form7206-independent-spouse-plans-review.md)
+verifies C/C, primaryC/spousecashF and two-cash-farm owner plans. Actual policy,
+month payments, establishing business and ownerSE inventories determine the
+deduction after full WOTC wage reductions. The two-farm loss owner retains
+policy sources with zero capacity and no invented SE/Form7206 copy. Main
+combined source/conflict gate51/0 and replay7/212 C/F plus7/217 two-farm pages
+pass; all reviewed PDF bytes remain unchanged.
+
+[Actual business-tip health sources](ty2025-business-tip-health-source-review.md)
+join plan identifiers on issued NEC/MISC/K tip reviews to actual7206 plans,
+apply owner health before eligible-tip net-income limits, and reduce QBI with
+both deductions. Nine current PDFs match149 reviewed pages; the same51/0
+gate covers source conflicts and prior health/tip/Publication974 routes.
+The newer mixedC/F tip source is integrated with combined verification running.
+MixedC/F loss-owner, retirement, several establishing businesses/plans,
+Marketplace overlap, insurer/payment authentication and IRS acceptance remain
+open; these route proofs do not close the parent.
+
 Status: a narrow taxpayer-owned one-Schedule-C, one-non-Marketplace-plan path is
 coded and verified in a full TY2025 return with local v5.4 XSD validation and a
 12-page filled-PDF inspection, 2026-09-30. Source document bytes, the full bulk
