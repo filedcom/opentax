@@ -1,5 +1,6 @@
 import { assertForm4852RetainedEvidence } from "../form4852_retained_evidence.ts";
 import type { Form4852RetainedDocument } from "../form4852_source.ts";
+import { assertReviewedForm8283PdfFields } from "./forms/f8283_signed_fields.ts";
 import { assertForm8978SourceBytes } from "../form8978_source.ts";
 import { buildReturnHeader, FilingStatus } from "../../mef/header.ts";
 import { element, elements } from "../../mef/xml.ts";
@@ -538,6 +539,11 @@ export async function buildMefBundle(
     ...options.attachments,
     ...generated.flat(),
   ]);
+  await assertReviewedForm8283PdfFields(
+    pending.f8283,
+    options.filer,
+    attachments,
+  );
   if (hasForm8839Claim(pending)) {
     const route = pending.form8839_route as
       | { public_source?: unknown }

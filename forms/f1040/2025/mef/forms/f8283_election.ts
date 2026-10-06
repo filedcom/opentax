@@ -9,6 +9,7 @@ import {
   inputSchema as scheduleAInputSchema,
   scheduleA,
 } from "../../../nodes/inputs/schedule_a/index.ts";
+import type { FilerIdentity } from "../../../mef/header.ts";
 import type { MefBuildContext } from "../form-descriptor.ts";
 
 function hasCompleteSectionAColumns(item: SectionAItem): boolean {
@@ -131,6 +132,15 @@ export function assertOrdinarySectionAReconciled(
   }
   const form = form8283InputSchema.parse(pending.f8283);
   const sectionA = form.section_a_items ?? [];
+  const repeatedPageReviewedGifts = sectionA.length > 4 &&
+    sectionA.every((item) =>
+      hasCompleteSectionAColumns(item) && item.is_vehicle !== true &&
+      item.capital_gain_reduction_election_confirmed !== true &&
+      !!item.similar_item_group?.trim() &&
+      item.date_contributed?.startsWith("2025-") &&
+      item.cost_or_adjusted_basis !== undefined &&
+      item.deduction_claimed !== undefined
+    );
   const repeatedPagePlainGifts = sectionA.length > 4 &&
     sectionA.every((item) =>
       item.is_vehicle !== true && item.is_capital_gain_property === false &&
@@ -151,9 +161,11 @@ export function assertOrdinarySectionAReconciled(
       ).size === sectionA.length;
   if (
     sectionA.length < 1 || sectionA.length > 12 ||
-    (form.section_b_items ?? []).length !== 0 ||
+    ((form.section_b_items ?? []).length !== 0 &&
+      !isReviewedSectionBReductionInventory(form)) ||
     sectionA.some((item) => !hasCompleteSectionAColumns(item)) ||
-    (sectionA.length > 4 && !repeatedPagePlainGifts)
+    (sectionA.length > 4 && !repeatedPagePlainGifts &&
+      !repeatedPageReviewedGifts)
   ) {
     throw new Error(
       "Form 8283 ordinary Section A needs one to four sourced gifts, or five to twelve distinct unreduced nonvehicle gifts",
@@ -405,6 +417,7 @@ export function assertOrdinarySectionBReconciled(
       SectionBPropertyType.Collectibles,
       SectionBPropertyType.ClothingHousehold,
       SectionBPropertyType.OtherRealEstate,
+      SectionBPropertyType.Other,
     ]).has(propertyType)
   ) {
     throw new Error(
@@ -530,7 +543,13 @@ export function isReviewedSectionBReductionInventory(
   form: F8283Input,
 ): boolean {
   const items = form.section_b_items ?? [];
-  if ((form.section_a_items ?? []).length !== 0 || items.length < 2) {
+  if (
+    items.length < 1 ||
+    (form.section_a_items ?? []).some((item) =>
+      !hasCompleteSectionAColumns(item) || item.is_vehicle === true ||
+      item.capital_gain_reduction_election_confirmed === true
+    )
+  ) {
     return false;
   }
   const supported = new Set([
@@ -540,16 +559,20 @@ export function isReviewedSectionBReductionInventory(
     SectionBPropertyType.Collectibles,
     SectionBPropertyType.Securities,
     SectionBPropertyType.OtherRealEstate,
+    SectionBPropertyType.Other,
   ]);
   const references = new Set<string>();
   const gifts = new Set<string>();
   return items.every((item) => {
+    const special = item.special_fmv_reduction;
     const reduction = item.ordinary_income_reduction ??
       item.unrelated_use_capital_gain_reduction;
     if (
       !item.property_type || !supported.has(item.property_type) ||
       !item.similar_item_group?.trim() || !item.property_description?.trim() ||
-      !reduction || !item.signed_form_source_review ||
+      (!reduction && !special && !item.unreduced_purchased_property) ||
+      !item.signed_form_source_review ||
+      !item.donor_ownership_review ||
       !item.qualified_appraisal?.full_appraisal_source_review ||
       !item.qualified_appraisal.signed_by_appraiser ||
       !item.donee_acknowledgment?.signed_by_donee ||
@@ -559,7 +582,11 @@ export function isReviewedSectionBReductionInventory(
     ) return false;
     const facts = item.signed_form_source_review.reviewed_form_fields;
     if (
-      !facts || facts.property_description !== item.property_description ||
+      !facts || !facts.donor_name || !facts.donor_ssn ||
+      !facts.donee_us_address ||
+      !facts.appraiser_name || !facts.appraiser_identifying_number ||
+      !facts.appraiser_us_address || !facts.appraiser_signed_date ||
+      facts.property_description !== item.property_description ||
       facts.property_type !== item.property_type ||
       facts.date_acquired !== item.date_acquired ||
       facts.date_contributed !== item.date_contributed ||
@@ -583,8 +610,20 @@ export function isReviewedSectionBReductionInventory(
       item.qualified_appraisal.attachment_file_name,
       item.qualified_appraisal.signature_attachment_file_name,
       item.donee_acknowledgment.signature_attachment_file_name,
-      reduction.purchase_record_attachment_file_name,
-      reduction.reduction_statement_attachment_file_name,
+      ...(item.unreduced_purchased_property
+        ? [
+          item.unreduced_purchased_property
+            .purchase_record_attachment_file_name,
+        ]
+        : special
+        ? [
+          ...special.source_documents.map((row) => row.attachment_file_name),
+          special.reduction_statement_attachment_file_name,
+        ]
+        : [
+          reduction!.purchase_record_attachment_file_name,
+          reduction!.reduction_statement_attachment_file_name,
+        ]),
       ...(item.unrelated_use_capital_gain_reduction
         ? [
           item.unrelated_use_capital_gain_reduction
@@ -593,7 +632,26 @@ export function isReviewedSectionBReductionInventory(
         : []),
     ];
     return documents.every((name) => {
-      if (!name || references.has(name)) return false;
+      if (
+        !name ||
+        references.has(name) &&
+          !((name === item.qualified_appraisal?.attachment_file_name &&
+            item.qualified_appraisal.covers_similar_item_group_confirmed ===
+              true &&
+            item.qualified_appraisal.reviewed_property_inventory) ||
+            (item.signed_form_row_identifier && items.some((other) =>
+              other !== item &&
+              other.signed_form_attachment_file_name ===
+                item.signed_form_attachment_file_name
+            ) &&
+              [
+                item.signed_form_attachment_file_name,
+                item.qualified_appraisal?.signature_attachment_file_name,
+                item.donee_acknowledgment?.signature_attachment_file_name,
+              ].includes(name)))
+      ) {
+        return false;
+      }
       references.add(name);
       return true;
     });
@@ -637,7 +695,7 @@ function assertSectionBReconciled(
     ordinaryPropertyType === SectionBPropertyType.Equipment &&
     isTwoSectionBReducedEquipmentGifts(form);
   if (
-    (form.section_a_items ?? []).length !== 0 ||
+    ((form.section_a_items ?? []).length !== 0 && !reviewedInventory) ||
     (!reviewedInventory && !pairedArt && !pairedEquipment &&
       (form.section_b_items ?? []).length !== 1) ||
     (ordinary
@@ -730,5 +788,56 @@ function assertSectionBReconciled(
     throw new Error(
       `Form 8283 Section B ${route} differs from recomputed Schedule A lines 11–13 or Form 1040 itemized total`,
     );
+  }
+}
+
+/** A reviewed gift's owner must be one of the actual filers; child/third-party
+ * sources cannot acquire a deduction merely by changing the return identity. */
+export function assertReviewedForm8283Owners(
+  form: F8283Input,
+  filer: FilerIdentity | undefined,
+): void {
+  for (
+    const item of [...form.section_a_items ?? [], ...form.section_b_items ?? []]
+  ) {
+    const facts = "signed_form_source_review" in item
+      ? item.signed_form_source_review?.reviewed_form_fields
+      : undefined;
+    if (
+      facts?.return_filer_ssn !== undefined &&
+        facts.return_filer_ssn !== filer?.primarySSN ||
+      facts?.return_filer_name !== undefined &&
+        facts.return_filer_name.trim().toLowerCase() !==
+          (filer?.nameLine1 ?? filer?.fullName ?? "").trim().toLowerCase()
+    ) {
+      throw new Error(
+        "Reviewed signed Form8283 return identity differs from actual filer",
+      );
+    }
+    const owner = item.donor_ownership_review;
+    if (!owner) continue;
+    const person = owner.donor_ssn === filer?.primarySSN
+      ? filer
+      : owner.donor_ssn === filer?.spouse?.ssn
+      ? filer.spouse
+      : undefined;
+    const normalizedName = (value: string) =>
+      value.trim().toLowerCase().replaceAll(".", "").replace(/\s+/g, " ");
+    const names = person
+      ? [
+        `${person.firstName} ${person.lastName}`,
+        [person.firstName, person.middleInitial, person.lastName, person.suffix]
+          .filter(Boolean).join(" "),
+      ]
+      : [];
+    if (
+      !names.some((name) =>
+        normalizedName(name) === normalizedName(owner.donor_name)
+      )
+    ) {
+      throw new Error(
+        "Form8283 reviewed donated property owner differs from actual return filers",
+      );
+    }
   }
 }

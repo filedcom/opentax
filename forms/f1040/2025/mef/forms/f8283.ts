@@ -1,7 +1,9 @@
+import { assertReviewedForm8283Return } from "./f8283_return.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import {
   type F8283Input,
   FMVMethod,
+  groupSectionBSourceForms,
   inputSchema,
   normalizeSimilarItemGroup,
   type SectionAItem,
@@ -16,6 +18,7 @@ import {
   assertExceptionVehicleUnreducedSource,
   assertOrdinarySectionAReconciled,
   assertOrdinarySectionBReconciled,
+  assertReviewedForm8283Owners,
   hasSectionAShortTermReduction,
   isReviewedSectionBReductionInventory,
   isSingleSectionAExceptionVehicleUnreduced,
@@ -1106,7 +1109,7 @@ function buildSectionBItem(
   }
   if (
     item.property_type === SectionBPropertyType.ArtUnder20000 &&
-    item.fmv >= 20_000
+    item.deduction_claimed >= 20_000
   ) {
     throw new Error(
       "Form 8283 art valued at $20,000 needs its appraisal attachment",
@@ -1128,6 +1131,7 @@ function buildSectionBItem(
     SectionBPropertyType.Collectibles,
     SectionBPropertyType.Vehicle,
     SectionBPropertyType.ClothingHousehold,
+    ...(item.special_fmv_reduction ? [SectionBPropertyType.Other] : []),
   ]);
   if (tangible.has(item.property_type) && !item.physical_condition?.trim()) {
     throw new Error("Form 8283 tangible property needs its physical condition");
@@ -1141,7 +1145,8 @@ function buildSectionBItem(
     Math.round((item.fmv - item.deduction_claimed) * 100) > 0 &&
     item.capital_gain_reduction_election_confirmed !== true &&
     item.ordinary_income_reduction === undefined &&
-    item.unrelated_use_capital_gain_reduction === undefined
+    item.unrelated_use_capital_gain_reduction === undefined &&
+    item.special_fmv_reduction === undefined
   ) {
     throw new Error(
       "Form 8283 Section B reduced claim needs a supported reviewed FMV-reduction computation and statement",
@@ -1169,6 +1174,60 @@ function buildSectionBItem(
   const unrelatedReductionIds = item.unrelated_use_capital_gain_reduction
     ? requiredUnrelatedUseAttachments(item, context)
     : [];
+  const unreducedIds: string[] = [];
+  if (item.unreduced_purchased_property && context.documentIdsByPendingKey) {
+    const review = item.unreduced_purchased_property;
+    const name = review.purchase_record_attachment_file_name;
+    const id = context.documentIdsByAttachmentFileName?.[name];
+    if (
+      !id ||
+      context.attachmentSha256ByFileName?.[name] !==
+        review.purchase_record_review.pdf_sha256 ||
+      !context.attachmentDescriptionsByFileName?.[name]?.startsWith(
+        "Form 8283 unreduced property purchase record",
+      )
+    ) {
+      throw new Error(
+        "Form8283 unreduced purchase source differs from retained bytes",
+      );
+    }
+    unreducedIds.push(id);
+    const appraisalId = requiredQualifiedAppraisalAttachment(
+      appraisal.attachment_file_name,
+      context,
+      appraisal.full_appraisal_source_review,
+    );
+    if (appraisalId) unreducedIds.push(appraisalId);
+  }
+  const specialReductionIds: string[] = [];
+  if (item.special_fmv_reduction && context.documentIdsByPendingKey) {
+    const review = item.special_fmv_reduction;
+    const records = [...review.source_documents, {
+      attachment_file_name: review.reduction_statement_attachment_file_name,
+      pdf_sha256: review.reduction_statement_sha256,
+    }];
+    for (const record of records) {
+      const name = record.attachment_file_name;
+      if (
+        context.attachmentSha256ByFileName?.[name] !== record.pdf_sha256 ||
+        !context.attachmentDescriptionsByFileName?.[name]?.startsWith(
+          "Form 8283 Section B reduction source record:",
+        ) ||
+        !context.documentIdsByAttachmentFileName?.[name]
+      ) {
+        throw new Error(
+          "Form8283 special reduction source record missing or differs from reviewed bytes",
+        );
+      }
+      specialReductionIds.push(context.documentIdsByAttachmentFileName[name]);
+    }
+    const id = requiredQualifiedAppraisalAttachment(
+      appraisal.attachment_file_name,
+      context,
+      appraisal.full_appraisal_source_review,
+    );
+    if (id) specialReductionIds.push(id);
+  }
   const artAtLeast20000 =
     item.property_type === SectionBPropertyType.ArtAtLeast20000;
   if (
@@ -1182,7 +1241,8 @@ function buildSectionBItem(
   const qualifiedAppraisalId =
     (similarGroupTotal > 500_000 || artAtLeast20000) &&
       item.ordinary_income_reduction === undefined &&
-      item.unrelated_use_capital_gain_reduction === undefined
+      item.unrelated_use_capital_gain_reduction === undefined &&
+      item.special_fmv_reduction === undefined
       ? requiredQualifiedAppraisalAttachment(
         appraisal.attachment_file_name,
         context,
@@ -1195,7 +1255,9 @@ function buildSectionBItem(
     reductionAttachmentId,
     signedFormId,
     ...ordinaryReductionIds,
+    ...unreducedIds,
     ...unrelatedReductionIds,
+    ...specialReductionIds,
     ...signatureIds,
   ]
     .filter(
@@ -1218,6 +1280,16 @@ function buildSectionBItem(
       "Form 8283 unrelated-use Section B art needs seven distinct linked MeF document IDs",
     );
   }
+  if (
+    item.special_fmv_reduction && context.documentIdsByPendingKey &&
+    (binaryIds.length !==
+        item.special_fmv_reduction.source_documents.length + 5 ||
+      new Set(binaryIds).size !== binaryIds.length)
+  ) {
+    throw new Error(
+      "Form8283 special reduction needs distinct signed form, appraisal, signatures, source and computation records",
+    );
+  }
   return elements(
     "IRS8283",
     [
@@ -1225,7 +1297,10 @@ function buildSectionBItem(
       elements(
         "PropertyInformation",
         [
-          element("PropertyId", propertyId(0)),
+          element(
+            "PropertyId",
+            item.signed_form_row_identifier ?? propertyId(0),
+          ),
           element("DonatedPropertyDesc", item.property_description),
           element("DonatedPropertyPhysicalCondTxt", item.physical_condition),
           element("AppraisedFairMarketValueAmt", item.fmv),
@@ -1242,6 +1317,11 @@ function buildSectionBItem(
           }
           : undefined,
       ),
+      ...(item.donor_statement_source_review
+        ? [elements("PropertyIdLetterAndDescGrp", [
+          element("PropertyId", item.donor_statement_source_review.property_id),
+        ])]
+        : []),
       elements("AppraiserName", [
         element("PersonFirstNm", appraisal.appraiser_first_name),
         element("PersonLastNm", appraisal.appraiser_last_name),
@@ -1298,7 +1378,9 @@ export const form8283: MefFormDescriptor<
       ((parsed.section_a_items ?? []).some(needsFmvReductionStatement) ||
         (parsed.section_b_items ?? []).some((item) =>
           item.ordinary_income_reduction !== undefined ||
-          item.unrelated_use_capital_gain_reduction !== undefined
+          item.unrelated_use_capital_gain_reduction !== undefined ||
+          item.special_fmv_reduction !== undefined ||
+          item.unreduced_purchased_property !== undefined
         )) &&
       context.pending?.f8283 !== undefined &&
       JSON.stringify(parsed) !==
@@ -1327,9 +1409,13 @@ export const form8283: MefFormDescriptor<
     );
     const ordinaryReductionB = (parsed.section_b_items ?? []).some((item) =>
       item.ordinary_income_reduction !== undefined ||
-      item.unrelated_use_capital_gain_reduction !== undefined
+      item.unrelated_use_capital_gain_reduction !== undefined ||
+      item.special_fmv_reduction !== undefined ||
+      item.unreduced_purchased_property !== undefined
     );
     const sectionB = parsed.section_b_items ?? [];
+    assertReviewedForm8283Owners(parsed, context.filer);
+    assertReviewedForm8283Return(context);
     if (elected || electedB) {
       if (electedB) {
         assertElectedSectionBReconciled(context);
@@ -1351,7 +1437,8 @@ export const form8283: MefFormDescriptor<
         propertyType !== SectionBPropertyType.ArtAtLeast20000 &&
         propertyType !== SectionBPropertyType.Collectibles &&
         propertyType !== SectionBPropertyType.Securities &&
-        propertyType !== SectionBPropertyType.OtherRealEstate
+        propertyType !== SectionBPropertyType.OtherRealEstate &&
+        propertyType !== SectionBPropertyType.Other
       ) {
         throw new Error(
           "Form 8283 ordinary-income Section B property type is unsupported",
@@ -1406,14 +1493,6 @@ export const form8283: MefFormDescriptor<
       )
     ) {
       assertOrdinarySectionAReconciled(context);
-    }
-    const signedFormFiles = sectionB.map((item) =>
-      item.signed_form_attachment_file_name
-    ).filter((fileName): fileName is string => fileName !== undefined);
-    if (new Set(signedFormFiles).size !== signedFormFiles.length) {
-      throw new Error(
-        "Form 8283 Section B needs a separate completed signed form PDF for each electronic Section B document",
-      );
     }
     const similarGroupTotals = similarItemGroupTotals(parsed);
     const sectionAVehicleAttachments = sectionA.filter(needsVehicleStatement)
@@ -1493,29 +1572,72 @@ export const form8283: MefFormDescriptor<
             : undefined,
         )]
         : []),
-      ...sectionB.map((item, index) =>
-        buildSectionBItem(
-          item,
-          index,
-          item.similar_item_group
-            ? similarGroupTotals.get(
-              normalizeSimilarItemGroup(item.similar_item_group),
-            ) ?? item.deduction_claimed
-            : item.deduction_claimed,
-          context,
-          needsSectionBVehicleStatement(item)
-            ? statementIds[nextStatement++]
-            : undefined,
-          item.vehicle_acknowledgment_attachment_file_name
-            ? sectionBAttachmentIdsByFileName[
-              item.vehicle_acknowledgment_attachment_file_name
-            ]
-            : undefined,
-          item.capital_gain_reduction_election_confirmed === true
-            ? requiredReductionAttachment(item, context)
-            : undefined,
-        )
-      ),
+      ...groupSectionBSourceForms(sectionB).map((rows) => {
+        const documents = rows.map((item) =>
+          buildSectionBItem(
+            item,
+            sectionB.indexOf(item),
+            item.similar_item_group
+              ? similarGroupTotals.get(
+                normalizeSimilarItemGroup(item.similar_item_group),
+              ) ?? item.deduction_claimed
+              : item.deduction_claimed,
+            context,
+            needsSectionBVehicleStatement(item)
+              ? statementIds[nextStatement++]
+              : undefined,
+            item.vehicle_acknowledgment_attachment_file_name
+              ? sectionBAttachmentIdsByFileName[
+                item.vehicle_acknowledgment_attachment_file_name
+              ]
+              : undefined,
+            item.capital_gain_reduction_election_confirmed === true
+              ? requiredReductionAttachment(item, context)
+              : undefined,
+          )
+        );
+        if (documents.length === 1) return documents[0];
+        const properties = documents.map((xml) =>
+          xml.match(
+            /<PropertyInformation(?:\s[^>]*)?>[\s\S]*?<\/PropertyInformation>/,
+          )?.[0]
+        );
+        if (properties.some((xml) => !xml)) {
+          throw new Error("Shared Form8283 lacks native row data");
+        }
+        const binaryIds = [
+          ...new Set(
+            documents.flatMap((xml) =>
+              xml.match(/^<IRS8283[^>]*referenceDocumentId="([^"]*)"/)?.[1]
+                .split(
+                  " ",
+                ) ?? []
+            ),
+          ),
+        ];
+        let combined = documents[0].replace(
+          properties[0]!,
+          properties.join(""),
+        );
+        const statements = documents.flatMap((xml) =>
+          xml.match(
+            /<PropertyIdLetterAndDescGrp>[\s\S]*?<\/PropertyIdLetterAndDescGrp>/g,
+          ) ?? []
+        );
+        combined = combined.replace(
+          /<PropertyIdLetterAndDescGrp>[\s\S]*?<\/PropertyIdLetterAndDescGrp>/g,
+          "",
+        );
+        combined = combined.replace(
+          "<AppraiserName>",
+          statements.join("") + "<AppraiserName>",
+        );
+        combined = combined.replace(
+          /^(<IRS8283[^>]*referenceDocumentId=")[^"]*(")/,
+          `$1${binaryIds.join(" ")}$2`,
+        );
+        return combined;
+      }),
     ];
   },
 };

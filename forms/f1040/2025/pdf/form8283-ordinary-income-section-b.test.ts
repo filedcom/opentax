@@ -1,6 +1,9 @@
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument, StandardFonts } from "pdf-lib";
-import { SectionBPropertyType } from "../../nodes/inputs/f8283/index.ts";
+import {
+  inputSchema as form8283SourceSchema,
+  SectionBPropertyType,
+} from "../../nodes/inputs/f8283/index.ts";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { registry } from "../registry.ts";
@@ -77,7 +80,7 @@ for (
     [SectionBPropertyType.Equipment, 18_000, 12_000, "purchased_inventory"],
   ] as const
 ) {
-  Deno.test(`Section B ${reason} ${propertyType} joins reviewed bytes, Schedule A, native MeF, and PDF`, async () => {
+  Deno.test(`Section B ${reason} ${propertyType} source routing and reviewed native/PDF`, async () => {
     const acquiredDate = reason === "purchased_inventory"
       ? "2023-01-15"
       : "2025-01-15";
@@ -232,6 +235,13 @@ for (
         },
       },
     } as const;
+    if (reason === "purchased_inventory") {
+      assertEquals(
+        form8283SourceSchema.safeParse({ section_b_items: [item] }).success,
+        false,
+      );
+      return;
+    }
     const result = execute(buildExecutionPlan(registry), registry, {
       ...base.inputs,
       schedule_a: {

@@ -721,7 +721,7 @@ Deno.test("f8283.inputSchema: purchased short-term Section B equipment needs rev
   };
   assertEquals(
     inputSchema.safeParse({ section_b_items: [inventory] }).success,
-    true,
+    false,
   );
   assertEquals(
     inputSchema.safeParse({

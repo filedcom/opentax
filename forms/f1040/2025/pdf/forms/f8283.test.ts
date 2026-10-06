@@ -814,7 +814,19 @@ Deno.test("Form 8283 PDF maps December 2025 Section A identity and four rows", (
     byKey.get("row4_claim"),
     "Form8283[0].Page1[0].Table_Line1_ColsD-I[0].Row1D[0].f1_39[0]",
   );
-  assertEquals(form8283Pdf.fields.length, 72);
+  assertEquals(
+    byKey.get("section_b_donor_statement"),
+    "Form8283[0].Page2[0].f2_12[0]",
+  );
+  assertEquals(
+    byKey.get("section_b_claim_b"),
+    "Form8283[0].Page1[0].Table_Line3_ColsD-I[0].Row3B[0].f1_62[0]",
+  );
+  assertEquals(
+    byKey.get("section_b_claim_c"),
+    "Form8283[0].Page1[0].Table_Line3_ColsD-I[0].Row3C[0].f1_68[0]",
+  );
+  assertEquals(form8283Pdf.fields.length, 92);
 });
 
 Deno.test("Form 8283 PDF prints reconciled Section A and carries the FMV explanation", () => {

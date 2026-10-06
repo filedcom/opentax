@@ -343,7 +343,7 @@ Deno.test("Form 8283 Section B does not file an unexplained reduction below appr
   );
 });
 
-Deno.test("Form 8283 similar books across three donees need three Section B documents", () => {
+Deno.test("Form 8283 partial similar-book group without owned signed-source packets is rejected", () => {
   const base = sectionBHighValueEquipmentGift();
   const gifts = [
     ["City College", "111111111", 2_000],
@@ -370,26 +370,22 @@ Deno.test("Form 8283 similar books across three donees need three Section B docu
       signature_attachment_file_name: `Donee-${index + 1}.pdf`,
     },
   }));
-  const documents = form8283.build({ section_b_items: sectionB }, {
-    attachmentDescriptionsByFileName: {
-      "Form8283AppraiserSignature.pdf":
-        "Form 8283 appraiser signature document",
-      "Donee-1.pdf": "Form 8283 Donee signature document",
-      "Donee-2.pdf": "Form 8283 Donee signature document",
-      "Donee-3.pdf": "Form 8283 Donee signature document",
-    },
-  });
-  assertEquals(documents.length, 3);
-  for (const [index, document] of documents.entries()) {
-    assertStringIncludes(
-      document,
-      `<DeductionClaimedAmt>${gifts[index]![2]}</DeductionClaimedAmt>`,
-    );
-    assertStringIncludes(
-      document,
-      `<BusinessNameLine1Txt>${gifts[index]![0]}</BusinessNameLine1Txt>`,
-    );
-  }
+  // A native-only partial fixture cannot replace actual reviewed signed forms,
+  // owned purchase records and the finalized public source graph.
+  assertThrows(
+    () =>
+      form8283.build({ section_b_items: sectionB }, {
+        attachmentDescriptionsByFileName: {
+          "Form8283AppraiserSignature.pdf":
+            "Form 8283 appraiser signature document",
+          "Donee-1.pdf": "Form 8283 Donee signature document",
+          "Donee-2.pdf": "Form 8283 Donee signature document",
+          "Donee-3.pdf": "Form 8283 Donee signature document",
+        },
+      }),
+    Error,
+    "distinct signed/appraised",
+  );
 });
 
 Deno.test("Form 8283 unreduced equipment group needs separately supported Section B sources", () => {
@@ -432,7 +428,7 @@ Deno.test("Form 8283 unreduced equipment group needs separately supported Sectio
         },
       }),
     Error,
-    "distinct signed/appraised similar-art sources and donees or reduced equipment sources",
+    "Shared qualified appraisal needs exact same-property",
   );
 });
 

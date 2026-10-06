@@ -1,10 +1,13 @@
+import { assertReviewedForm8283Return } from "../../mef/forms/f8283_return.ts";
 import { type PDFFont, type PDFPage, rgb, StandardFonts } from "pdf-lib";
 import type { FilerIdentity } from "../../../mef/header.ts";
 import {
+  groupSectionBSourceForms,
   inputSchema,
   type SectionAItem,
   type SectionBItem,
   SectionBPropertyType,
+  specialSectionBAsSectionA,
 } from "../../../nodes/inputs/f8283/index.ts";
 import {
   assertCreatorReductionSource,
@@ -26,6 +29,7 @@ import {
   assertExceptionVehicleUnreducedSource,
   assertOrdinarySectionAReconciled,
   assertOrdinarySectionBReconciled,
+  assertReviewedForm8283Owners,
   isReviewedSectionBReductionInventory,
   isSingleSectionAExceptionVehicleUnreduced,
   isSingleSectionAVehicleSale,
@@ -90,6 +94,42 @@ const fields: PdfFieldEntry[] = [
     domainKey: "section_b_vehicle",
     pdfField: `${page}.Lines2i-l[0].c1_6[0]`,
   },
+  {
+    kind: "checkbox",
+    domainKey: "section_b_other",
+    pdfField: `${page}.Lines2i-l[0].c1_6[3]`,
+  },
+  ...[1, 2].flatMap((row): PdfFieldEntry[] => {
+    const letter = "ABC"[row], suffix = letter.toLowerCase();
+    return ["description", "condition", "appraised_fmv"].map((
+      key,
+      offset,
+    ) => ({
+      kind: "text",
+      domainKey: `section_b_${key}_${suffix}`,
+      pdfField: `${page}.Table_Line3_ColsA-C[0].Line3${letter}[0].f1_${
+        42 + 3 * row + offset
+      }[0]`,
+    } as PdfFieldEntry)).concat(
+      [
+        "acquired_date",
+        "how_acquired",
+        "basis",
+        "bargain_sale_received",
+        "conservation_basis",
+        "claim",
+      ].map((
+        key,
+        offset,
+      ) => ({
+        kind: "text",
+        domainKey: `section_b_${key}_${suffix}`,
+        pdfField: `${page}.Table_Line3_ColsD-I[0].Row3${letter}[0].f1_${
+          51 + 6 * row + offset
+        }[0]`,
+      } as PdfFieldEntry)),
+    );
+  }),
   text("section_b_description", "Table_Line3_ColsA-C[0].Row3A[0].f1_42[0]"),
   text("section_b_condition", "Table_Line3_ColsA-C[0].Row3A[0].f1_43[0]"),
   text("section_b_appraised_fmv", "Table_Line3_ColsA-C[0].Row3A[0].f1_44[0]"),
@@ -126,6 +166,7 @@ const fields: PdfFieldEntry[] = [
     pdfField: `${page2}.c2_4[1]`,
   },
   ...([
+    ["donor_statement", "f2_12[0]"],
     ["appraiser_name", "f2_13[0]"],
     ["appraiser_street", "f2_15[0]"],
     ["appraiser_id", "f2_16[0]"],
@@ -291,6 +332,9 @@ function sectionBPrintedFields(
     ...person,
     page2_filer_name: person.filer_name,
     page2_filer_ssn: person.filer_ssn,
+    section_b_donor_statement: item.donor_statement_source_review
+      ? `Property ${item.donor_statement_source_review.property_id}`
+      : undefined,
     section_b_description: item.property_description,
     section_b_condition: item.physical_condition,
     section_b_appraised_fmv: item.fmv,
@@ -357,6 +401,41 @@ function sectionBOrdinaryTangibleInstance(
   item: SectionBItem,
   filer: FilerIdentity | undefined,
 ): Record<string, unknown> {
+  if (item.unreduced_purchased_property) {
+    return {
+      ...sectionBPrintedFields(item, filer),
+      section_b_equipment:
+        item.property_type === SectionBPropertyType.Equipment,
+      section_b_collectibles:
+        item.property_type === SectionBPropertyType.Collectibles,
+      section_b_art_under_20000:
+        item.property_type === SectionBPropertyType.ArtUnder20000,
+      section_b_art_at_least_20000:
+        item.property_type === SectionBPropertyType.ArtAtLeast20000,
+      reduction_statements: [],
+    };
+  }
+  if (item.special_fmv_reduction) {
+    return {
+      ...sectionBPrintedFields(item, filer),
+      section_b_art_at_least_20000:
+        item.property_type === SectionBPropertyType.ArtAtLeast20000,
+      section_b_art_under_20000:
+        item.property_type === SectionBPropertyType.ArtUnder20000,
+      section_b_equipment:
+        item.property_type === SectionBPropertyType.Equipment,
+      section_b_collectibles:
+        item.property_type === SectionBPropertyType.Collectibles,
+      section_b_other_real_estate:
+        item.property_type === SectionBPropertyType.OtherRealEstate,
+      section_b_securities:
+        item.property_type === SectionBPropertyType.Securities,
+      section_b_other: item.property_type === SectionBPropertyType.Other,
+      reduction_statements: [
+        fmvReductionExplanation(specialSectionBAsSectionA(item), 0),
+      ],
+    };
+  }
   const appraisal = item.qualified_appraisal;
   const donee = item.donee_acknowledgment;
   const propertyType = item.property_type;
@@ -387,9 +466,9 @@ function sectionBOrdinaryTangibleInstance(
     item.is_capital_gain_property !==
       (item.unrelated_use_capital_gain_reduction !== undefined) ||
     item.charitable_limit_category !== "noncash_50" ||
-    item.fmv <= 5_000 || item.fmv > 500_000 ||
+    item.fmv <= 0 || item.fmv > 500_000 ||
     (propertyType === SectionBPropertyType.ArtUnder20000 &&
-      item.fmv >= 20_000) ||
+      item.deduction_claimed >= 20_000) ||
     (propertyType === SectionBPropertyType.ArtAtLeast20000 &&
       (item.deduction_claimed < 20_000 ||
         !appraisal?.attachment_file_name ||
@@ -596,6 +675,45 @@ function drawWrappedText(
   return y;
 }
 
+function sectionBSourceFormInstances(
+  items: readonly SectionBItem[],
+  filer: FilerIdentity | undefined,
+) {
+  return groupSectionBSourceForms(items).map((rows) => {
+    const first = sectionBOrdinaryTangibleInstance(rows[0], filer);
+    for (let index = 1; index < rows.length; index++) {
+      const fields = sectionBPrintedFields(rows[index], filer);
+      const suffix = "abc"[index];
+      for (
+        const key of [
+          "description",
+          "condition",
+          "appraised_fmv",
+          "acquired_date",
+          "how_acquired",
+          "basis",
+          "claim",
+        ]
+      ) {
+        first[`section_b_${key}_${suffix}`] = fields[`section_b_${key}`];
+      }
+    }
+    first.section_b_donor_statement = rows.filter((row) =>
+      row.donor_statement_source_review
+    )
+      .map((row) =>
+        `Property ${row.donor_statement_source_review!.property_id}`
+      ).join("; ") || undefined;
+    first.reduction_statements = rows.flatMap((row, index) => {
+      const projected = sectionBOrdinaryTangibleInstance(row, filer);
+      return (projected.reduction_statements as string[] ?? []).map((text) =>
+        text.replace("Section B item A", `Section B item ${"ABC"[index]}`)
+      );
+    });
+    return first;
+  });
+}
+
 export const form8283Pdf: PdfFormDescriptor = {
   pendingKey: "f8283",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8283--2025.pdf",
@@ -608,12 +726,14 @@ export const form8283Pdf: PdfFormDescriptor = {
       instance.section_b_securities === true ||
       instance.section_b_collectibles === true ||
       instance.section_b_clothing_household === true ||
-      instance.section_b_vehicle === true
+      instance.section_b_vehicle === true || instance.section_b_other === true
       ? [0, 1]
       : [0],
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
     const source = inputSchema.parse(raw);
+    assertReviewedForm8283Owners(source, filer);
+    assertReviewedForm8283Return({ pending: allPending });
     if (source.carryover_evidence !== undefined) {
       if (
         source.carryover_evidence.some((row) =>
@@ -649,19 +769,31 @@ export const form8283Pdf: PdfFormDescriptor = {
     }
     const sectionA = source.section_a_items ?? [];
     const sectionB = source.section_b_items ?? [];
+    const mixedInventory = sectionA.length > 0 && sectionB.length > 0 &&
+      isReviewedSectionBReductionInventory(source);
+    const mixedCopies = mixedInventory
+      ? sectionBSourceFormInstances(sectionB, filer)
+      : [];
+    if (mixedInventory) {
+      assertOrdinarySectionBReconciled(
+        { pending: allPending },
+        sectionB[0].property_type!,
+      );
+    }
     if (
       sectionA.length > 12 ||
       (sectionA.length > 4 &&
-        (sectionB.length > 0 ||
+        ((!mixedInventory && sectionB.length > 0) ||
           sectionA.some((item) =>
-            item.is_vehicle === true || needsFmvReductionStatement(item)
+            item.is_vehicle === true ||
+            item.capital_gain_reduction_election_confirmed === true
           )))
     ) {
       throw new Error(
         "Form 8283 PDF supports five to twelve Section A rows only as distinct unreduced nonvehicle gifts on repeated copies",
       );
     }
-    if (sectionB.length > 0) {
+    if (sectionB.length > 0 && !mixedInventory) {
       if (sectionB.length > 1) {
         const similarArt = isTwoSectionBSimilarArtGroup(source);
         const reducedEquipment = isTwoSectionBReducedEquipmentGifts(source);
@@ -685,9 +817,7 @@ export const form8283Pdf: PdfFormDescriptor = {
             "Form 8283 PDF source differs from the pending return",
           );
         }
-        return sectionB.map((item) =>
-          sectionBOrdinaryTangibleInstance(item, filer)
-        );
+        return sectionBSourceFormInstances(sectionB, filer);
       }
       if (sectionA.length > 0 || sectionB.length !== 1) {
         throw new Error(
@@ -706,6 +836,9 @@ export const form8283Pdf: PdfFormDescriptor = {
             : []),
           SectionBPropertyType.Collectibles,
           SectionBPropertyType.ClothingHousehold,
+          ...(sectionB[0].special_fmv_reduction
+            ? [SectionBPropertyType.Other]
+            : []),
           ...(sectionB[0].ordinary_income_reduction !== undefined
             ? [SectionBPropertyType.OtherRealEstate]
             : []),
@@ -735,6 +868,7 @@ export const form8283Pdf: PdfFormDescriptor = {
                 item.ordinary_income_reduction !== undefined) ||
               item.property_type === SectionBPropertyType.Collectibles ||
               item.property_type === SectionBPropertyType.ClothingHousehold ||
+              item.special_fmv_reduction !== undefined ||
               (item.property_type === SectionBPropertyType.OtherRealEstate &&
                 item.ordinary_income_reduction !== undefined)
           ? sectionBOrdinaryTangibleInstance(item, filer)
@@ -840,37 +974,41 @@ export const form8283Pdf: PdfFormDescriptor = {
       { length: Math.ceil(sectionA.length / 4) },
       (_, index) => sectionA.slice(index * 4, (index + 1) * 4),
     );
-    return pages.map((items, pageIndex) => {
-      const instance: Record<string, unknown> = {
-        ...identity(filer),
-        reduction_statements: items.flatMap((item, index) =>
-          needsFmvReductionStatement(item)
-            ? [fmvReductionExplanation(item, pageIndex * 4 + index)]
-            : []
-        ),
-      };
-      items.forEach((item, index) => {
-        const prefix = `row${index + 1}_`;
-        instance[`${prefix}donee`] = doneeLine(item);
-        instance[`${prefix}vehicle`] = item.is_vehicle === true;
-        instance[`${prefix}vin`] = item.is_vehicle
-          ? item.vehicle_vin
-          : undefined;
-        instance[`${prefix}description`] = item.property_description;
-        instance[`${prefix}contribution_date`] = printedDate(
-          item.date_contributed,
-        );
-        instance[`${prefix}acquired_date`] = printedDate(
-          item.date_acquired,
-          true,
-        );
-        instance[`${prefix}how_acquired`] = item.donor_acquisition_description;
-        instance[`${prefix}basis`] = item.cost_or_adjusted_basis;
-        instance[`${prefix}claim`] = item.deduction_claimed ?? item.fmv;
-        instance[`${prefix}fmv_method`] = sectionAFmvMethodDescription(item);
-      });
-      return instance;
-    });
+    return [
+      ...mixedCopies,
+      ...pages.map((items, pageIndex) => {
+        const instance: Record<string, unknown> = {
+          ...identity(filer),
+          reduction_statements: items.flatMap((item, index) =>
+            needsFmvReductionStatement(item)
+              ? [fmvReductionExplanation(item, pageIndex * 4 + index)]
+              : []
+          ),
+        };
+        items.forEach((item, index) => {
+          const prefix = `row${index + 1}_`;
+          instance[`${prefix}donee`] = doneeLine(item);
+          instance[`${prefix}vehicle`] = item.is_vehicle === true;
+          instance[`${prefix}vin`] = item.is_vehicle
+            ? item.vehicle_vin
+            : undefined;
+          instance[`${prefix}description`] = item.property_description;
+          instance[`${prefix}contribution_date`] = printedDate(
+            item.date_contributed,
+          );
+          instance[`${prefix}acquired_date`] = printedDate(
+            item.date_acquired,
+            true,
+          );
+          instance[`${prefix}how_acquired`] =
+            item.donor_acquisition_description;
+          instance[`${prefix}basis`] = item.cost_or_adjusted_basis;
+          instance[`${prefix}claim`] = item.deduction_claimed ?? item.fmv;
+          instance[`${prefix}fmv_method`] = sectionAFmvMethodDescription(item);
+        });
+        return instance;
+      }),
+    ];
   },
   async appendSupplementalPages(document, instance) {
     const statements = instance.reduction_statements as string[] | undefined;
@@ -886,7 +1024,7 @@ export const form8283Pdf: PdfFormDescriptor = {
         instance.section_b_securities === true ||
         instance.section_b_collectibles === true ||
         instance.section_b_clothing_household === true ||
-        instance.section_b_vehicle === true
+        instance.section_b_vehicle === true || instance.section_b_other === true
         ? "Form 8283 Section B - Source and attachment record"
         : "Form 8283 Section A - Fair market value reductions",
       {

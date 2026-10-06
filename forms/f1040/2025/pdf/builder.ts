@@ -1,4 +1,5 @@
 import { assertForm4852RetainedEvidence } from "../form4852_retained_evidence.ts";
+import { assertReviewedForm8283PdfFields } from "../mef/forms/f8283_signed_fields.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
 import { assertForm8978SourceBytes } from "../form8978_source.ts";
 import { PDFDocument, StandardFonts } from "pdf-lib";
@@ -675,6 +676,11 @@ export async function buildPdfBytes(
       );
     }
     await assertPreparedAttachmentManifest(preparedBundle);
+    await assertReviewedForm8283PdfFields(
+      normalized.f8283,
+      filer,
+      preparedBundle.attachments,
+    );
     if (!filer) {
       throw new Error("Prepared MeF PDF needs its filer identity");
     }
@@ -698,6 +704,16 @@ export async function buildPdfBytes(
       );
     }
     assertPreparedBundleProjection(preparedBundle, filer);
+  }
+  if (
+    !preparedBundle && normalized.f8283 &&
+    form8283SourceSchema.parse(normalized.f8283).section_b_items?.some((row) =>
+      row.signed_form_source_review?.reviewed_form_fields
+    )
+  ) {
+    throw new Error(
+      "Reviewed signed Form8283 PDF needs its prepared return and retained field evidence",
+    );
   }
   const form8283Source = normalized.f8283
     ? form8283SourceSchema.parse(normalized.f8283)

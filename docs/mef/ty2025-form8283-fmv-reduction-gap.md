@@ -722,3 +722,14 @@ required reduction reasons, mixed SectionA/B, shared same-donee forms, grouping
 below individual$5,000 thresholds, high-value appraisals and prior accepted
 carryover evidence remain existing-parent obligations. No main/catalog/board
 change or release readiness claim follows from this isolated gate.
+
+## October 6 current-source inventory extension
+
+The later isolated implementation and evidence supersede the preceding initial
+label-only-buffer proof for the expanded current-source routes. See
+[complete inventory proof](ty2025-form8283-complete-inventory-proof.md) for the
+actual official completed AcroForm fields, retained distinct source content,
+creator/full-appraisal $600,000 claim, A/B grouping, shared A/B/C forms, multiple
+owners, independent return-tax joins, all-page inventory and exact proof limits.
+Outside signature/appraisal authentication and trusted accepted-prior archives
+remain conditional boundaries; no synthetic signature or acknowledgment closes them.
