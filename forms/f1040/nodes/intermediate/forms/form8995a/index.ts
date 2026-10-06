@@ -182,6 +182,7 @@ export const scheduleCQbiBusinessSchema = z.object({
 }).strict();
 
 export const inputSchema = z.object({
+  qualified_tip_qbi_source: qualifiedTipQbiSourceSchema.optional(),
   farm_wotc_filing_source: farmWotcSourceSchema.optional(),
   patron_business_source: patronBusinessSourceSchema.optional(),
   // Filing status — determines income threshold for wage limitation phase-in

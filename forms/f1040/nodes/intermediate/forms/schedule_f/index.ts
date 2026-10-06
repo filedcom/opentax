@@ -1,3 +1,4 @@
+import { schedule1a } from "../schedule1a/index.ts";
 import { form7206 } from "../form7206/index.ts";
 import { filedOwnedScheduleF } from "../../../owned-business-filing.ts";
 import { patronFiledBusinessLines } from "../../../inputs/qbi_patron/calculation.ts";
@@ -76,6 +77,7 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
   get outputNodes() {
     return new OutputNodes([
       schedule1,
+      schedule1a,
       agi_aggregator,
       schedule_se,
       form8995,
@@ -149,6 +151,16 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
           line34_net_profit: netProfits[index],
         })),
       },
+    }));
+
+    outputs.push(this.outputNodes.output(schedule1a, {
+      qualified_tips_schedule_f_businesses: filedItems.map((f, index) => ({
+        farm_id: f.farm_id,
+        proprietor_recipient: f.proprietor_recipient,
+        line34_net_profit: netProfits[index],
+        accounting_method: f.accounting_method,
+        material_participation: f.line_e_material_participation,
+      })),
     }));
 
     // Schedule 1 line 6: aggregate net farm profit/loss (always when there is activity)

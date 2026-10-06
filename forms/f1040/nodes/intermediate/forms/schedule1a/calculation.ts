@@ -209,6 +209,15 @@ export const inputSchema = claimInputSchema.extend({
       specified_service_business: z.literal(true).optional(),
     }).strict(),
   ).optional(),
+  qualified_tips_schedule_f_businesses: z.array(
+    z.object({
+      farm_id: z.string().trim().min(1).optional(),
+      proprietor_recipient: z.enum(["T", "S"]).optional(),
+      line34_net_profit: z.number(),
+      accounting_method: z.enum(["cash", "accrual"]),
+      material_participation: z.boolean().optional(),
+    }).strict(),
+  ).optional(),
   qualified_tips_se_deduction: z.number().nonnegative().optional(),
   qualified_tips_owner_se_source: ownerSourcesSchema.optional(),
   qualified_tips_health_plan_source: singleScheduleCPlanSchema.optional(),
@@ -515,8 +524,9 @@ export function qualifiedTradeBusinessTipRows(input: Schedule1AInput) {
   const reports = input.qualified_trade_business_tips ?? [];
   if (reports.length === 0) return [];
   const businesses = input.qualified_tips_schedule_c_businesses ?? [];
+  const farms = input.qualified_tips_schedule_f_businesses ?? [];
   if (
-    !businesses.length || (input.qualified_tips_schedule_f_profit ?? 0) !== 0 ||
+    !businesses.length ||
     input.qualified_tips_farm_optional_method === true
   ) {
     throw new Error(
@@ -532,7 +542,28 @@ export function qualifiedTradeBusinessTipRows(input: Schedule1AInput) {
   if (!owned && businesses.length !== 1) {
     throw new Error("Multiple ScheduleC tips need actual owned SE attribution");
   }
+  if (
+    farms.length && (!owned || input.filing_status !== FilingStatus.MFJ ||
+      businesses.length !== 1 || businesses[0].proprietor_recipient !== "T" ||
+      farms.length !== 1 || farms[0].proprietor_recipient !== "S" ||
+      farms[0].accounting_method !== "cash" ||
+      farms[0].material_participation !== true ||
+      !farms[0].farm_id || farms[0].line34_net_profit <= 0)
+  ) {
+    throw new Error(
+      "Mixed business tips need actual primary ordinary C and spouse regular cash farm owners",
+    );
+  }
+  if (
+    (input.qualified_tips_schedule_f_profit ?? 0) !==
+      farms.reduce((n, f) => n + f.line34_net_profit, 0)
+  ) {
+    throw new Error(
+      "Mixed business tips farm profit needs its complete actual farm inventory",
+    );
+  }
   const half = businesses.map(() => 0);
+  const allHalf = new Map<string, number>();
   if (owned) {
     if (
       owned.source.identity.primary_ssn !==
@@ -540,7 +571,16 @@ export function qualifiedTradeBusinessTipRows(input: Schedule1AInput) {
       owned.source.identity.spouse_ssn !==
         input.spouse_ssn?.replaceAll("-", "") ||
       owned.deduction !== Math.round(input.qualified_tips_se_deduction ?? 0) ||
-      owned.source.businesses.length !== businesses.length ||
+      owned.source.businesses.length !== businesses.length + farms.length ||
+      farms.some((f) =>
+        !owned.source.businesses.some((o) =>
+          o.kind === "schedule_f" &&
+          o.source_reference === f.farm_id &&
+          o.recipient === f.proprietor_recipient &&
+          o.net_profit === f.line34_net_profit &&
+          o.farm_optional_method_elected !== true
+        )
+      ) ||
       businesses.some((b) =>
         !owned.source.businesses.some((o) =>
           o.kind === "schedule_c" &&
@@ -555,18 +595,21 @@ export function qualifiedTradeBusinessTipRows(input: Schedule1AInput) {
       );
     }
     for (const recipient of ["T", "S"]) {
-      const indices = businesses.flatMap((b, i) =>
-        b.proprietor_recipient === recipient ? [i] : []
+      const rows = owned.source.businesses.filter((b) =>
+        b.recipient === recipient
       );
       const amount = owned.instances.find((o) =>
         o.recipient === recipient
       )?.line13 ?? 0;
       const shares = allocateSharedSeDeduction(
-        indices.map((i) => businesses[i].line31_net_profit),
+        rows.map((b) => b.net_profit),
         amount,
       );
-      indices.forEach((i, j) => half[i] = shares[j]);
+      rows.forEach((row, i) => allHalf.set(row.source_reference, shares[i]));
     }
+    businesses.forEach((b, i) =>
+      half[i] = allHalf.get(b.business_reference!) ?? 0
+    );
   } else half[0] = Math.round(input.qualified_tips_se_deduction ?? 0);
   const health = new Map<string, number>();
   const healthPlans = new Map<string, string[]>();
@@ -615,9 +658,17 @@ export function qualifiedTradeBusinessTipRows(input: Schedule1AInput) {
         b.business_reference === row.business_reference &&
         b.proprietor_recipient === row.recipient
       );
+      const farm = farms.find((f) =>
+        f.farm_id === row.business_reference &&
+        f.proprietor_recipient === row.recipient
+      );
       if (
-        index < 0 || row.line4 !== businesses[index].line31_net_profit ||
-        row.line7 !== half[index]
+        (index < 0 && !farm) ||
+        row.line4 !==
+          (index < 0
+            ? farm!.line34_net_profit
+            : businesses[index].line31_net_profit) ||
+        row.line7 !== allHalf.get(row.business_reference)
       ) {
         throw new Error(
           "Business tip health family is detached from the establishing owner",

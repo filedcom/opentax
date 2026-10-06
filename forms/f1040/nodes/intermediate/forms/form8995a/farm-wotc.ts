@@ -1,3 +1,7 @@
+import {
+  reviewedQualifiedTipExclusions,
+  tipSourceCanonical,
+} from "../form8995/qualified-tips.ts";
 import { calculateIndependentOwnerHealth } from "../form7206/independent-owner.ts";
 import { reviewedWotcQbiWages } from "../../../inputs/schedule_c/qbi-wotc.ts";
 import { roundSignedQbiDollars } from "../../../inputs/schedule_c/qbi-multiple.ts";
@@ -158,6 +162,9 @@ export function farmWotcAdvancedFields(
         se_health_insurance_deduction: health.deduction,
       }
       : {}),
+    ...(input.qualified_tip_qbi_source
+      ? { qualified_tip_qbi_source: input.qualified_tip_qbi_source }
+      : {}),
     joint_wages_total: input.agi - amounts.reduce((a, r) => a + r.profit, 0) +
       half + (health?.deduction ?? 0),
   });
@@ -184,6 +191,9 @@ export function farmWotcAdvancedFields(
     net_capital_gain: 0,
     qbi_no_prior_loss_or_suspended_loss_confirmed: true,
     farm_wotc_filing_source: source,
+    ...(source.qualified_tip_qbi_source
+      ? { qualified_tip_qbi_source: source.qualified_tip_qbi_source }
+      : {}),
   };
   const calculated = calculateFarmWotcLines(fields, false);
   return {
@@ -200,6 +210,22 @@ export function calculateFarmWotcLines(
 ) {
   const source = farmWotcSourceSchema.parse(input.farm_wotc_filing_source);
   const amounts = source.businesses.map(farmWotcBusinessAmounts);
+  const tips = reviewedQualifiedTipExclusions(source.qualified_tip_qbi_source);
+  if (
+    tipSourceCanonical(input.qualified_tip_qbi_source) !==
+      tipSourceCanonical(tips.source) ||
+    tips.rows.some((t) =>
+      !amounts.some((a, i) =>
+        source.businesses[i].kind === "schedule_c" &&
+        a.reference === t.business_reference && a.recipient === t.recipient &&
+        Math.round(a.profit) === t.net_profit
+      )
+    )
+  ) {
+    throw new Error(
+      "Farm WOTC business tips need their exact actual C owner source and QBI payload",
+    );
+  }
   const reviewed = amounts.filter((a) => a.review);
   if (
     (reviewed.length !== 1 && reviewed.length !== 2) ||
@@ -250,18 +276,23 @@ export function calculateFarmWotcLines(
       undefined,
       source.se_health_insurance_deduction ?? 0,
       source.independent_health_plans_source,
+      tips.source,
     );
     deductions = amounts.map((a) =>
       qbi.joint_owner_filing_rows.find((r) =>
         r.business_reference === a.reference
       )!.se_tax_deduction + (qbi.joint_owner_filing_rows.find((r) =>
         r.business_reference === a.reference
-      )?.health_insurance_deduction ?? 0)
+      )?.health_insurance_deduction ?? 0) +
+      (qbi.joint_owner_filing_rows.find((r) =>
+        r.business_reference === a.reference
+      )?.qualified_tip_exclusion ?? 0)
     );
   } else {
     if (
       source.joint_se_source || source.independent_health_plans_source ||
-      source.se_health_insurance_deduction || amounts.length !== 1 ||
+      source.se_health_insurance_deduction || tips.source ||
+      amounts.length !== 1 ||
       amounts[0].recipient !== "T"
     ) {
       throw new Error(
@@ -338,6 +369,9 @@ export function calculateFarmWotcLines(
       w2_wages: lossSchedule && adjusted[i] <= 0 ? 0 : Math.round(a.wages),
       unadjusted_basis: 0,
       farm_wotc_filing_source: source,
+      ...(source.qualified_tip_qbi_source
+        ? { qualified_tip_qbi_source: source.qualified_tip_qbi_source }
+        : {}),
       business_filing_details: {
         business_name: a.name,
         ein: a.ein,

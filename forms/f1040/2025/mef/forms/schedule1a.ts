@@ -1,3 +1,4 @@
+import { schedule_f as scheduleF } from "../../../nodes/intermediate/forms/schedule_f/index.ts";
 import { extractFilerIdentity } from "../../../mef/filer.ts";
 import { form7206 } from "./f7206.ts";
 import { assertIndependentOwnerHealthSource } from "../../form7206_independent_owner_source.ts";
@@ -499,6 +500,22 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       ).outputs.find((item) => item.nodeType === "schedule1a");
       const businessRows = businessOutput?.fields
         .qualified_tips_schedule_c_businesses;
+      const farmOutput = context?.pending?.schedule_f === undefined
+        ? undefined
+        : scheduleF.compute(
+          { taxYear: 2025, formType: "f1040" },
+          context.pending.schedule_f as Parameters<typeof scheduleF.compute>[1],
+        ).outputs.find((item) => item.nodeType === "schedule1a");
+      if (
+        tipSourceCanonical(
+          farmOutput?.fields.qualified_tips_schedule_f_businesses,
+        ) !==
+          tipSourceCanonical(input.qualified_tips_schedule_f_businesses)
+      ) {
+        throw new Error(
+          "Schedule1A actual farm source inventory differs from issued owned farm return",
+        );
+      }
       const scheduleOne = z.object({
         line3_schedule_c: z.number().optional(),
         line15_se_deduction: z.number().optional(),
@@ -561,7 +578,8 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
             (sum, business) => sum + business.line31_net_profit,
             0,
           ) ||
-        (scheduleOne.line6_schedule_f ?? 0) !== 0 ||
+        (scheduleOne.line6_schedule_f ?? 0) !==
+          (input.qualified_tips_schedule_f_profit ?? 0) ||
         (scheduleOne.line16_sep_simple ?? 0) !== 0 ||
         (scheduleOne.line17_se_health_insurance ?? 0) !== healthDeduction ||
         !reports.every((report) => {

@@ -1,4 +1,9 @@
 import {
+  inputSchema as tipInputSchema,
+  qualifiedBusinessTipQbiSource,
+} from "../nodes/intermediate/forms/schedule1a/calculation.ts";
+import { tipSourceCanonical } from "../nodes/intermediate/forms/form8995/qualified-tips.ts";
+import {
   calculateIndependentOwnerHealth,
   reconcileIndependentOwnerHealthGraph,
 } from "../nodes/intermediate/forms/form7206/independent-owner.ts";
@@ -549,6 +554,24 @@ export function assertFarmWotcReturn(
       "Farm WOTC health deduction needs actual independent owner plan sources",
     );
   }
+  // Pure recomputation avoids S1A -> health binder -> farm return -> S1A recursion.
+  // Native8995/S1A entry points additionally replay the separately issued tip reviews.
+  const tipSource = pending.schedule1a === undefined
+    ? undefined
+    : qualifiedBusinessTipQbiSource(tipInputSchema.parse(pending.schedule1a));
+  if (
+    tipSourceCanonical(tipSource) !==
+      tipSourceCanonical(pending.form8995?.qualified_tip_qbi_source) ||
+    (rawFields.farm_wotc_filing_source &&
+      tipSourceCanonical(tipSource) !==
+        tipSourceCanonical(
+          (rawFields.farm_wotc_filing_source as any).qualified_tip_qbi_source,
+        ))
+  ) {
+    throw new Error(
+      "Farm WOTC tips must bind actual Schedule1A and each retained QBI source",
+    );
+  }
   const wageTotal = wages.reduce((a, w) => a + w.box1_wages, 0);
   const profit = owned
     ? owned.source.businesses.reduce((a, b) => a + b.net_profit, 0)
@@ -574,7 +597,8 @@ export function assertFarmWotcReturn(
     const taxable = Math.round(
       Math.max(
         0,
-        Number(final.line11_agi) - Number(final.line12c_deduction_total),
+        Number(final.line11_agi) - Number(final.line12c_deduction_total) -
+          Number(final.line13b_additional_deductions ?? 0),
       ),
     );
     const expected = owned
@@ -585,6 +609,7 @@ export function assertFarmWotcReturn(
         undefined,
         health?.deduction ?? 0,
         health?.source,
+        tipSource,
       )
         .line15
       : Math.min(
@@ -636,7 +661,8 @@ export function assertFarmWotcReturn(
       ) ||
       fields.taxable_income !==
         Math.round(
-          Number(final.line11_agi) - Number(final.line12c_deduction_total),
+          Number(final.line11_agi) - Number(final.line12c_deduction_total) -
+            Number(final.line13b_additional_deductions ?? 0),
         ) ||
       final.line13_qbi_deduction !== calculated.parent.line39 ||
       Math.round(Number(final.line15_taxable_income)) !==

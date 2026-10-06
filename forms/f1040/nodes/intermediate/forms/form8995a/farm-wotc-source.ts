@@ -1,3 +1,4 @@
+import { qualifiedTipQbiSourceSchema } from "../form8995/qualified-tips.ts";
 import { independentOwnerHealthSourceSchema } from "../form7206/independent-owner.ts";
 import { z } from "zod";
 import { itemSchema as farmSchema } from "../schedule_f/model.ts";
@@ -23,6 +24,7 @@ export const farmWotcSourceSchema = z.object({
   independent_health_plans_source: independentOwnerHealthSourceSchema
     .optional(),
   se_health_insurance_deduction: z.number().nonnegative().optional(),
+  qualified_tip_qbi_source: qualifiedTipQbiSourceSchema.optional(),
   joint_wages_total: z.number().nonnegative(),
 }).strict();
 export type FarmWotcSource = z.infer<typeof farmWotcSourceSchema>;

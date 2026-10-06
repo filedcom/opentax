@@ -1,3 +1,4 @@
+import { assertQualifiedTipQbiSource } from "../../form8995_qualified_tip_source.ts";
 import { assertFarmWotcReturn } from "../../form8995_farm_wotc_reconciliation.ts";
 import { calculateFarmWotcLines } from "../../../nodes/intermediate/forms/form8995a/farm-wotc.ts";
 import { assertSstbScheduleCSource } from "./f8995a-sstb-source.ts";
@@ -517,6 +518,12 @@ function buildIRS8995A(rawFields: Input, context?: MefBuildContext): string {
     throw new Error("Form 8995-A MeF cannot file an empty pending record");
   }
   const fields = inputSchema.strict().parse(rawFields);
+  if (fields.farm_wotc_filing_source) {
+    assertQualifiedTipQbiSource(
+      fields as unknown as Record<string, unknown>,
+      context?.pending,
+    );
+  }
   assertFarmWotcReturn(
     fields as unknown as Record<string, unknown>,
     context?.pending,
