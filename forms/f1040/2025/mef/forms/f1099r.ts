@@ -1,4 +1,5 @@
 import { sourceDistributionFraction } from "../../../nodes/intermediate/forms/form4972/source-rounding.ts";
+import { form4852NativeSources } from "../../form4852_native_source.ts";
 import type { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
 import {
@@ -181,12 +182,16 @@ function build1099R(
 
 export const f1099r: MefFormDescriptor<"f1099r", Fields, readonly string[]> = {
   pendingKey: "f1099r",
+  sourcePendingKeys: ["f1099r", "f4852"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1099r.pdf",
   build(fields, context) {
-    assertDistinct1099RCopies(fields.f1099rs ?? []);
-    assert1099RRecipientOwner(fields, context?.filer);
-    return (fields.f1099rs ?? []).map((item, index) =>
+    const substitutes =
+      form4852NativeSources(context?.pending, context?.filer).f1099rs;
+    const allSources = [...(fields.f1099rs ?? []), ...substitutes];
+    assertDistinct1099RCopies(allSources);
+    assert1099RRecipientOwner({ f1099rs: allSources }, context?.filer);
+    return allSources.map((item, index) =>
       build1099R(item, context ?? {}, index)
     );
   },

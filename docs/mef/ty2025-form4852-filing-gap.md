@@ -128,3 +128,14 @@ consequences, printable packets, business rules and ATS proof remain unfinished.
 The local TY2025v5.4 W-2 schema requires `EmployerEIN` without an alternate
 unknown-EIN choice; a paper Form4852's permitted blank TIN must not be fabricated
 for native export.
+
+Derived-native phase in isolation: the ordinary W-2 and1099-R descriptors now
+also discover retained4852 sources and derive nonstandard copies inside native
+serialization, preserving calculation arrays. Source projections carry taxpayer/
+spouse identity, payer address/EIN, taxable/basis and withholding amounts. W-2
+state/local values previously omitted by its native builder now emit the schema's
+state/local groups. The derived pension retains explicit net taxable amount and
+basis independently. Source/native descriptor gate26/0 passed. Final export is
+still guarded; this is not full-return XSD/PDF evidence. Completed-form byte/
+field verification, packet registration and complete retirement/FICA/source
+combination work remain required before opening the route.

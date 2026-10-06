@@ -230,6 +230,7 @@ export const w2ItemSchema = z.object({
   box14b_tipped_code: z.string().regex(/^\d{3}$/).optional().describe(
     "Treasury Tipped Occupation Code",
   ),
+  box20_locality_name: z.string().trim().min(1).optional(),
   box15_state: z.string().optional().describe("State abbreviation"),
   box16_state_wages: z.number().nonnegative().optional().describe(
     "State wages, tips, etc.",

@@ -1,3 +1,4 @@
+import { form4852NativeSources } from "../../form4852_native_source.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import type { W2Item } from "../../../nodes/inputs/w2/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
@@ -183,6 +184,33 @@ function buildW2(
         element("Amt", amount),
       ])
     ),
+    [
+        item.box15_state,
+        item.box16_state_wages,
+        item.box17_state_withheld,
+        item.box18_local_wages,
+        item.box19_local_withheld,
+        item.box20_locality_name,
+      ]
+        .some((value) => value !== undefined)
+      ? elements("W2StateLocalTaxGrp", [elements("W2StateTaxGrp", [
+        element("StateAbbreviationCd", item.box15_state),
+        optionalAmount("StateWagesAmt", item.box16_state_wages),
+        optionalAmount("StateIncomeTaxAmt", item.box17_state_withheld),
+        [
+            item.box18_local_wages,
+            item.box19_local_withheld,
+            item.box20_locality_name,
+          ]
+            .some((value) => value !== undefined)
+          ? elements("W2LocalTaxGrp", [
+            optionalAmount("LocalWagesAndTipsAmt", item.box18_local_wages),
+            optionalAmount("LocalIncomeTaxAmt", item.box19_local_withheld),
+            element("LocalityNm", item.box20_locality_name),
+          ])
+          : "",
+      ])])
+      : "",
     element(
       "StandardOrNonStandardCd",
       item.nonstandard_document_review ? "N" : "S",
@@ -192,11 +220,13 @@ function buildW2(
 
 export const w2: MefFormDescriptor<"w2", Fields, readonly string[]> = {
   pendingKey: "w2",
+  sourcePendingKeys: ["w2", "f4852"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/fw2.pdf",
   build(fields, context) {
-    return (fields.w2s ?? []).map((item, index) =>
-      buildW2(item, context ?? {}, index)
-    );
+    const substitutes =
+      form4852NativeSources(context?.pending, context?.filer).w2s;
+    const allSources = [...(fields.w2s ?? []), ...substitutes];
+    return allSources.map((item, index) => buildW2(item, context ?? {}, index));
   },
 };
