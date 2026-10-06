@@ -35,8 +35,9 @@ const sourcedAmounts = [
   "nontaxable_social_security",
 ] as const;
 const sourceIncomeSchema = z.object(
-  Object.fromEntries(sourcedAmounts.map((key) => [key, z.number().nonnegative().optional()])) as
-    Record<typeof sourcedAmounts[number], z.ZodOptional<z.ZodNumber>>,
+  Object.fromEntries(
+    sourcedAmounts.map((key) => [key, z.number().nonnegative().optional()]),
+  ) as Record<typeof sourcedAmounts[number], z.ZodOptional<z.ZodNumber>>,
 ).strict();
 const sourceReviewSchema = z.object({
   source_document_reference: z.string().trim().min(1),
@@ -127,7 +128,9 @@ export function assertForm8814SourceReview(
     digits(source.child_ssn) !== digits(item.child_ssn) ||
     digits(source.electing_parent_ssn) !== digits(parentSSN)
   ) {
-    throw new Error("Form 8814 reviewed source child/parent owner differs from the filed return");
+    throw new Error(
+      "Form 8814 reviewed source child/parent owner differs from the filed return",
+    );
   }
   for (const key of sourcedAmounts) {
     if ((source.income[key] ?? 0) !== (item[key] ?? 0)) {
@@ -135,13 +138,20 @@ export function assertForm8814SourceReview(
     }
   }
   for (
-    const key of ["nominee_distribution", "accrued_interest", "abp_adjustment", "oid_adjustment"] as const
+    const key of [
+      "nominee_distribution",
+      "accrued_interest",
+      "abp_adjustment",
+      "oid_adjustment",
+    ] as const
   ) {
     if (
       (source.interest_adjustments?.[key] ?? 0) !==
         (item.interest_adjustments?.[key] ?? 0)
     ) {
-      throw new Error(`Form 8814 reviewed interest adjustment differs on ${key}`);
+      throw new Error(
+        `Form 8814 reviewed interest adjustment differs on ${key}`,
+      );
     }
   }
 }
@@ -209,6 +219,36 @@ export function calculateForm8814(item: F8814Item): Form8814Lines {
     dependentPtcMagi,
     line12InvestmentIncome,
   };
+}
+
+/** Recompute every emitted child line from the reviewed election source. */
+export function assertForm8814CalculatedLines(
+  lines: readonly Form8814Lines[],
+  parentSSN: string,
+): void {
+  const owners = new Set<string>();
+  for (const line of lines) {
+    const item = itemSchema.parse(line.item);
+    assertForm8814SourceReview(item, parentSSN);
+    const owner = item.child_ssn.replaceAll("-", "");
+    if (owners.has(owner)) {
+      throw new Error("Form 8814 cannot elect twice for the same child");
+    }
+    owners.add(owner);
+    const expected = calculateForm8814(item);
+    if (expected.line15 === 0) {
+      throw new Error(
+        "Form 8814 requires child income above the $1,350 filing threshold",
+      );
+    }
+    for (const key of Object.keys(expected) as (keyof Form8814Lines)[]) {
+      if (key !== "item" && line[key] !== expected[key]) {
+        throw new Error(
+          `Form 8814 calculated ${key} differs from reviewed child income`,
+        );
+      }
+    }
+  }
 }
 
 /** Pub. 596 Worksheet 1 line 4, using Worksheet 2 for an Alaska PFD. */

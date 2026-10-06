@@ -2,7 +2,7 @@
 
 ## Compacted status (2026-10-06)
 
-The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,517 bounded slices**. Exact learnings, regression snapshots and publication history are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries belong only in `future_todo` and are not executed.
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,518 bounded slices**. Exact learnings, regression snapshots and publication history are retained in the [October 6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Discoveries belong only in `future_todo` and are not executed.
 
 Inventory remains **152 native / 118 PDF descriptors**, **369 fixtures**, **115 PDF keys / 99 covered / 16 uncovered**, and **128 source literals / 83 absent**. These counts do not establish filing support.
 
@@ -11,6 +11,8 @@ Latest [shareholder debt overflow proof](docs/mef/ty2025-form7203-overflow-debt-
 Latest [QBI parent-rounding proof](docs/mef/ty2025-form8995a-fractional-parent.md) resolves fractional monetary products after current loss netting: four full-XSD packets/48 reviewed pages, focus1/0 pluscompat48/0, exact saved source/pending/carry/origins/PDF/nativeonlyTs replay. Raw cents remain retained; 40/41/51/0 deductions share finalized native/PDF/1040 lines. The old percentage-integrality rejection is removed; wider owner/history/IRS parent remains open.
 
 The [EIC/nonpassive basis-loss join](docs/mef/ty2025-eic-owned-basis-loss.md) now replays finalized7203/QBI/Schedule1/1040 before export; nonpassive losses never reduce investment income or wages. Main30/0, fourfullXSDreturns/34reviewedpages and actualretainedrawpending/preparedpending/carry/origins/source/PDF/nativeonlyTs exact; twelveoriginalfiles privately preserved. The11951investment case retains noEIC. Widerpassive allocation andsource/eligibility/IRS parents remainopen.
+
+[Mixed Form8814 child packet proof](docs/mef/ty2025-form8814-source-review.md) now recalculates all child lines at native/PDF export and rejects forged allocations or duplicate child forms. Standard34/0 and typedfocus1/0; actualsaved2packets/14pages exactpending/preparedpending/carry/origins/source/PDF/nativeonlyTs/fullXSD, allpages visuallyreviewed andsixfiles privatelypreserved. External issuer/election authority and wider parentremainopen.
 
 Complete fixture XSD replay passes **370/0**. Earlier full batches ended **11,794/1**, **11,896/24**, **11,991/10**, and **12,019/10**, with recorded repairs. A passing latest-production full batch is still required. Latest V20 at **012bd46a6** is confirmed live, wrapper70208/task70212; it includes three-column debt, positiveEIC joins, married mortgage ownership/limits, improvement points and QBI rounding. V19, V18 and V17 remain live at their older snapshots; superseded V8–V16 were deliberately cancelled with retained evidence to release resources. Live runs retain immutable snapshots, private evidence and restart guards; elapsed time alone never triggers a restart.
 

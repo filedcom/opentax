@@ -1,6 +1,6 @@
 import { element, elements } from "../../../mef/xml.ts";
 import {
-  assertForm8814SourceReview,
+  assertForm8814CalculatedLines,
   type Form8814Lines,
 } from "../../../nodes/inputs/f8814/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
@@ -90,9 +90,7 @@ export const form8814: MefFormDescriptor<"form8814", Input, readonly string[]> =
       if (items.length > 0 && !context?.filer?.primarySSN) {
         throw new Error("Form 8814 needs finalized electing-parent identity");
       }
-      for (const line of items) {
-        assertForm8814SourceReview(line.item, context!.filer!.primarySSN);
-      }
+      assertForm8814CalculatedLines(items, context?.filer?.primarySSN ?? "");
       const statementIds = context?.documentIdsByPendingKey
         ?.child_taxable_interest_statement ?? [];
       let statementIndex = 0;
