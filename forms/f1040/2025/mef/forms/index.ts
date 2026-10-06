@@ -393,10 +393,10 @@ export const ALL_MEF_FORMS = [
   // Form 8283 Section A column (h) FMV-reduction explanations follow the
   // vehicle statement in ReturnData1040.xsd.
   form8283FmvReductionStatement,
+  // Form 8606 IRA statements precede Form 8621 statements in ReturnData.
+  iraRecharacterizationStatement,
   // Form 8621 mark-to-market sale statements precede Part V statements in MeF.
   form8621MtmDispositionsStatement,
-
-  iraRecharacterizationStatement,
   // Form 8621 Part V holding-period computation statements follow numbered forms.
   form8621ExcessStatement,
   // Form 8814 line 1a nominee and interest-adjustment statement.

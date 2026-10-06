@@ -4,7 +4,7 @@ Static comparison replayed 2026-10-05 of the descriptors actually registered in
 `forms/f1040/2025/mef/forms/index.ts` and `forms/f1040/2025/pdf/forms/index.ts`,
 checked against `forms/f1040/2025/attachment-coverage.ts`. This is a
 printable-return coverage audit, not an IRS rule, passed test, or new product
-exclusion. The indexes currently hold **151 native descriptors and 117 PDF
+exclusion. The indexes currently hold **152 native descriptors and 118 PDF
 descriptors**. The newly registered Form 9000 has focused local XML/XSD and filled-page
 evidence; that does not establish the remaining route, business-rule, or ATS
 coverage.
@@ -276,3 +276,7 @@ Shared fullgraph review exposed two missing8582CR pages: descriptor includeWhen 
 Two actual full-local2025v5.4XSD packets18+18=36pages generated at `/tmp/opentax-8582cr-catalog-review-v4-oct6`, all36 visually reviewed across9sheets in `/tmp/opentax-8582cr-catalog-rendered-oct6`. Completed read-only source/artifact/native/PDF/XSDchecker2/36 passes `/tmp/opentax-8582cr-catalog-check-v2-oct6.log`; completedmanifestSHA8ee667879bd92b0af1d7e9c13966c2c52377eb7a2b819c79ab19708ff3bc12bd. PDFSHAs9c5a6be182e14e462575c0711f9dc47dc1155e801d34836953a50f8e719b26d9 / e238df97254ff25d44beb04e69cd6a3fd86a1990e8618a709d31b51f8ffdbcb2. Single500credit→1040tax17367/owed1367; mixedpartnership5000+Scorp2500→allowed4412/unallowed3088, PartVrows2941/1471, finaltax13455/refund2545. Wage100000/rental20000/AGI120000/taxable104250/regular17867/passivetax4412 andTMT8294/AMT0 match native andpaper. Singleentity is reported directlyPartIII, mixed usesPartV; unusedPartsIV/VI blank. ActualRevDec2024two-page8582CR applies here.
 
 Failed sharedv1 wrongform3800key, v2 missingexpected6251, v3 actualmissing8582CR and initialincompletechecker are retained diagnostics; v4 pluscompletedchecker govern. Older missing-form packets are not preservation proof. Registereddescriptors151native/118PDF unchanged; actualplanner369fixtures/99covered/16uncovered `/tmp/opentax-pdf-planner-8582cr-catalog-oct6.json`. This closes existing packet omission and selectedreview gap only: authenticated prioracceptedreturns/carryovers, direct8874issuerbytes, otherpassiveincome/specialallowance/IRS parent stillopen. Ledger1473/frozen52/future unchanged. V6immutable69dab5754 is live and predates this repair; a passing full run including latestproduction remains required.
+
+## October6 IRA recharacterization statement reconciliation
+
+Currentliveimports152native/148keys and118PDF/115keys; planner369fixtures99covered16uncovered unchanged. NewIRARecharacterizationStmt is a native8606source statement printed asForm1040supplement, notaseparatePDFdescriptor orBinaryAttachment. ActualownedNsource15/105andold35/295 proof describedin[IRA source record](ty2025-form4852-filing-gap.md#october6-current-main-ira-paper-source-proof); threeindependentlyderivedQBIoperands qualifywholependingexactness. ActualcombinedN+PFICMTM10pages/fullXSD andallpage review provesstatementordernowmatches schema; beforefailurepreserved. Broaderpartial/reverse/priorN,Saverlookback/Rothbasis/accountauth andIRS parentremainopen.
