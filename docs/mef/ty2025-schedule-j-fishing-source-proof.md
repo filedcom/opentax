@@ -82,3 +82,13 @@ with source/pending/PDF/origins exact and XML only ReturnTs in
 2/36 source/pending/PDF/origins and prior staged QEF/adoption/education 3/49
 source/pending/PDF/origins are also byte exact against their separately retained
 reviewed originals, with XML only ReturnTs.
+
+## Integrated main preservation and interaction repair
+
+Main d0f1c29d1/cccc2bd7f includes both source attribution and corrected single-filer full phase-out247300. Root b2c90ce1d restricts the newly introduced zero-limited omission to actual retained fishing catch-ledger sources. Before that restriction, strict actual retained mining replay failed pending reconciliation and would lose its required zero-deduction Form8995A; `/tmp/opentax-mining-before-fishing-scope-fix-oct6.log` remains diagnostic evidence, not a passing gate. The standard task now permits exactly the two optional fishing evidence/schema environment variables.
+
+Fresh main combined fishing4/mining2/nonfarmW2three source tests pass **9/0** (1m32s), and related QBI calculation, multiple-C, zero-source, mixed-WOTC and positive8995A tests pass **86/0** (1m0s). Typed fishing/mining checks and formatter pass. Logs: `/tmp/opentax-fishing-mining-w2-scope-source-oct6.log`, `/tmp/opentax-fishing-qbi-scope-related-oct6.log`, `/tmp/opentax-fishing-mining-scope-typecheck-oct6.log`.
+
+Actual immutable fishing source replay passes **8 packets/152 pages**, full local XSD, exact pending/PDF/origins and XML differing only at ReturnTs: `/tmp/opentax-fishing-after-qbi-scope-fix-oct6.log`. The retained visual manifest SHA256 is d434c7bb64fc48a23d969d5b62bcf2dd23cc53fddc12cee2b3f2c19261c5378d; exact PDF comparisons preserve all reviewed occurrences. Strict original mining replay passes **2 packets/32 files** with no derived JSON allowances, preserving filled zero8995A: `/tmp/opentax-mining-after-fishing-scope-fix-oct6.log`. Actual nonfarmW2 **2/38** full-XSD packet replay remains exact: `/tmp/opentax-schedulej-w2-after-fishing-scope-main-held-oct6.log`.
+
+True positive mixed-business QBI phase-in, broader attribution/owner/source combinations, prior accepted returns, authenticity, IRS business rules and acceptance remain open. No broad parent is closed by these bounded proofs.
