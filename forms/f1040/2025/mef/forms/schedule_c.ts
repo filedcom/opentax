@@ -1,3 +1,4 @@
+import { filedOwnedScheduleC } from "../../../nodes/owned-business-filing.ts";
 import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
 import { reconcileForm8941DocumentSource } from "./f8941_source.ts";
 import { roundSignedQbiDollars } from "../../../nodes/inputs/schedule_c/qbi-multiple.ts";
@@ -144,6 +145,7 @@ function buildScheduleC(
   context: MefBuildContext,
   index: number,
   wotcReduction = 0,
+  filing?: ReturnType<typeof filedOwnedScheduleC>,
 ): string {
   assertScheduleCConditionalAnswers(item);
   const filer = context.filer;
@@ -188,12 +190,14 @@ function buildScheduleC(
   const netReceipts = grossReceipts - (item.line_2_returns_allowances ?? 0);
   const cogs = computeCOGS(item);
   const grossIncome = computeGrossIncome(item);
-  const expenses = computeTotalExpenses(item, wotcReduction);
+  const expenses = filing?.expenses ??
+    computeTotalExpenses(item, wotcReduction);
   const tentativeProfit = grossIncome - expenses;
   // Schedule C line 31 is the pre-Form-6198 result. The at-risk limit changes
   // the loss carried to Schedule 1, not the amount printed on Schedule C.
-  const netProfit = calculateScheduleCAtRiskNet(item, wotcReduction)
-    .preliminaryNet;
+  const netProfit = filing?.profit ??
+    calculateScheduleCAtRiskNet(item, wotcReduction)
+      .preliminaryNet;
   const otherExpenses = (item.part_v_other_expenses ?? []).reduce(
     (sum, entry) => sum + entry.amount,
     item.line_27b_other_expenses ?? 0,
@@ -267,7 +271,7 @@ function buildScheduleC(
     amount("TravelAmt", item.line_24a_travel),
     item.line_24b_meals === undefined ? "" : element(
       "MealsAndEntertainmentAmt",
-      item.line_24b_meals * mealsDeductiblePct(item),
+      filing?.meals_deduction ?? item.line_24b_meals * mealsDeductiblePct(item),
     ),
     amount("UtilitiesAmt", item.line_25_utilities),
     amount(
@@ -434,10 +438,19 @@ export const scheduleC: MefFormDescriptor<
         input.patron_filing_review
           ? patronFiledBusinessLines("schedule_c", item)
             .filed_source as typeof item
-          : item,
+          : filedOwnedScheduleC(
+            item,
+            false,
+            reductions.get(item.business_reference ?? "") ?? 0,
+          )?.filed_source ?? item,
         context,
         index,
         reductions.get(item.business_reference ?? "") ?? 0,
+        filedOwnedScheduleC(
+          item,
+          Boolean(input.patron_filing_review),
+          reductions.get(item.business_reference ?? "") ?? 0,
+        ),
       )
     );
   },

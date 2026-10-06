@@ -1,3 +1,4 @@
+import { filedOwnedScheduleC } from "../../owned-business-filing.ts";
 import { roundWholeDollars } from "../../../whole-dollars.ts";
 import { computeNetProfit, type ScheduleCItem } from "./model.ts";
 
@@ -37,7 +38,9 @@ export function reviewedMultipleScheduleCQbi(
   if (items.length < 1) {
     throw new Error("Multiple Schedule C QBI needs at least one source");
   }
-  const profits = items.map((item) => computeNetProfit(item));
+  const profits = items.map((item) =>
+    filedOwnedScheduleC(item)?.profit ?? computeNetProfit(item)
+  );
   const allocations = allocateSharedSeDeduction(profits, deduction);
   for (const [index, item] of items.entries()) {
     const review = item.qbi_se_tax_allocation_review;

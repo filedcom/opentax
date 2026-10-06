@@ -1,3 +1,7 @@
+import {
+  filedOwnedScheduleC,
+  filedOwnedScheduleF,
+} from "../nodes/owned-business-filing.ts";
 import { patronFiledBusinessLines } from "../nodes/inputs/qbi_patron/calculation.ts";
 import {
   calculateScheduleCAtRiskNet,
@@ -37,7 +41,11 @@ export function assertBusinessSchedule1Amounts(
           sum +
           (source.patron_filing_review
             ? patronFiledBusinessLines("schedule_c", item).profit
-            : calculateScheduleCAtRiskNet(
+            : filedOwnedScheduleC(
+              item,
+              false,
+              reductions.get(item.business_reference ?? "") ?? 0,
+            )?.profit ?? calculateScheduleCAtRiskNet(
               item,
               reductions.get(item.business_reference ?? "") ?? 0,
             ).atRiskNet),
@@ -59,7 +67,11 @@ export function assertBusinessSchedule1Amounts(
           sum +
           (source.patron_filing_review
             ? patronFiledBusinessLines("schedule_f", farm).profit
-            : calculateScheduleFAtRiskNet(
+            : filedOwnedScheduleF(
+              farm,
+              source.farm_optional_method_elected === true,
+              reductions.get(farm.farm_id ?? "") ?? 0,
+            )?.profit ?? calculateScheduleFAtRiskNet(
               farm,
               reductions.get(farm.farm_id ?? "") ?? 0,
             ).atRiskNet),

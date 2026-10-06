@@ -1,3 +1,4 @@
+import { filedOwnedScheduleF } from "../../../owned-business-filing.ts";
 import { patronFiledBusinessLines } from "../../../inputs/qbi_patron/calculation.ts";
 import { z } from "zod";
 import type {
@@ -104,7 +105,13 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
       input.patron_filing_review
         ? patronFiledBusinessLines("schedule_f", input.schedule_fs[index])
           .profit
-        : result.atRiskNet
+        : (ctx.taxYear === 2025
+          ? filedOwnedScheduleF(
+            input.schedule_fs[index],
+            input.farm_optional_method_elected === true,
+            reductions.get(input.schedule_fs[index].farm_id ?? "") ?? 0,
+          )?.profit
+          : undefined) ?? result.atRiskNet
     );
     const propertyNet = netProfits.reduce((sum, p) => sum + p, 0);
     const totalNetProfit = propertyNet;

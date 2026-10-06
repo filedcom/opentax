@@ -3,45 +3,51 @@ import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "./index.ts";
 import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
 import {
-  mixedOwnerCases,
-  ownedFarmInputs,
-} from "./pdf/review-schedule-se-farm-owner.fixture.ts";
+  ownedCfFiledCases,
+  ownedCfFiledInputs,
+} from "./pdf/review-owned-cf-filed.fixture.ts";
 import { normalizeAllPending } from "./pending.ts";
 
 const single = pdfReviewFixtures.find((f) => f.id === "single-schedule-c")!;
 const joint = pdfReviewFixtures.find((f) =>
   f.id === "joint-form8995a-patron-farm"
 )!;
-const cases = [
-  { id: "farm-loss-49", c: 60000, f: -10000.49, loss: -10000 },
-  { id: "farm-loss-50", c: 60000, f: -10000.50, loss: -10001 },
-  { id: "farm-loss-51", c: 60000, f: -10000.51, loss: -10001 },
-  { id: "business-loss-49", c: -300.49, f: 800, loss: -300 },
-  { id: "business-loss-50", c: -300.50, f: 800, loss: -301 },
-  { id: "farm-loss-small-half", c: 60000, f: -.50, loss: -1 },
-];
 Deno.test("actual owned C/F losses retain signed whole-dollar boundaries through source, QBI, native and flattened full PDF", async () => {
   const root = ".state/research/2026-10-06-owned-cf-signed-dollars";
   await Deno.mkdir(root, { recursive: true });
-  for (const row of cases) {
-    const inputs = ownedFarmInputs(
-      single,
-      joint,
-      {
-        ...mixedOwnerCases[0],
-        c: row.c,
-        f: row.f,
-        recipient: "T",
-        wages: [],
-      } as unknown as typeof mixedOwnerCases[number],
-    );
+  for (const row of ownedCfFiledCases) {
+    const inputs = ownedCfFiledInputs(single, joint, row);
     const result = f1040_2025.executeReturn(inputs);
     assertEquals(result.diagnostics, [], row.id);
     const pending = normalizeAllPending(result.pending);
     const farmLoss = row.f < 0;
     assertEquals(
       pending.schedule1[farmLoss ? "line6_schedule_f" : "line3_schedule_c"],
-      farmLoss ? row.f : row.c,
+      row.loss,
+    );
+    const sourceLoss = farmLoss
+      ? (pending.schedule_f.schedule_fs as { line16_feed: number }[])[0]
+        .line16_feed
+      : (pending.schedule_c.schedule_cs as { line_8_advertising: number }[])[0]
+        .line_8_advertising;
+    assertEquals(
+      sourceLoss,
+      Math.round(
+        ((farmLoss ? row.fGross ?? 0 : row.cGross ?? 0) -
+          (farmLoss ? row.f : row.c) - (farmLoss
+            ? Math.min(row.conservation ?? 0, (row.fGross ?? 0) * .25)
+            : (row.meals ?? 0) * .5)) * 100,
+      ) / 100,
+    );
+    const expectedIncome = (farmLoss ? row.c : row.loss) +
+      (farmLoss ? row.loss : row.f);
+    assertEquals(
+      pending.schedule1.line10_total_additional_income,
+      expectedIncome,
+    );
+    assertEquals(
+      pending.f1040.line11_agi,
+      expectedIncome - Number(pending.schedule1.line15_se_deduction),
     );
     const qbi = pending.form8995.joint_owner_filing_rows as {
       business_reference: string;
@@ -58,6 +64,12 @@ Deno.test("actual owned C/F losses retain signed whole-dollar boundaries through
       joint.filer,
     );
     const xml = prepared.bundle.xml;
+    if (row.meals !== undefined) {
+      assertStringIncludes(xml, "<MealsAndEntertainmentAmt>50</");
+    }
+    if (row.conservation !== undefined) {
+      assertStringIncludes(xml, "<ConservationExpenseAmt>251</");
+    }
     assertStringIncludes(
       xml,
       `<${

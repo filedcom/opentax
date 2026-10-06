@@ -1,3 +1,4 @@
+import { filedOwnedScheduleC } from "../../owned-business-filing.ts";
 import { patronFiledBusinessLines } from "../qbi_patron/calculation.ts";
 import { assertPatrScheduleCIncome } from "../f1099patr/schedule-c-source.ts";
 import type { z } from "zod";
@@ -328,7 +329,13 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     const netProfits = atRisk.map((result, index) =>
       input.patron_filing_review
         ? patronFiledBusinessLines("schedule_c", items[index]).profit
-        : result.atRiskNet
+        : (ctx.taxYear === 2025
+          ? filedOwnedScheduleC(
+            items[index],
+            false,
+            reductions.get(items[index].business_reference ?? "") ?? 0,
+          )?.profit
+          : undefined) ?? result.atRiskNet
     );
     const fishingEvidenceItems = items.filter((item) =>
       item.schedule_j_fishing_evidence !== undefined

@@ -1,3 +1,4 @@
+import { filedOwnedScheduleC } from "../../../nodes/owned-business-filing.ts";
 import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
 import { reconcileForm8941DocumentSource } from "../../mef/forms/f8941_source.ts";
 import { roundSignedQbiDollars } from "../../../nodes/inputs/schedule_c/qbi-multiple.ts";
@@ -231,6 +232,7 @@ function projectBusiness(
   item: ScheduleCItem,
   wotcReduction: number,
   filingStatus: unknown,
+  filing?: ReturnType<typeof filedOwnedScheduleC>,
 ): Record<string, unknown> {
   requirePrintable(item, filingStatus);
   const line1 = item.line_1_gross_receipts;
@@ -240,10 +242,10 @@ function projectBusiness(
   const line5 = line3 - line4;
   const line6 = item.line_6_other_income ?? 0;
   const line7 = computeGrossIncome(item);
-  const line28 = computeTotalExpenses(item, wotcReduction);
+  const line28 = filing?.expenses ?? computeTotalExpenses(item, wotcReduction);
   const line29 = line7 - line28;
   const line30 = homeOfficeDeduction(item, line29);
-  const line31 = computeNetProfit(item, wotcReduction);
+  const line31 = filing?.profit ?? computeNetProfit(item, wotcReduction);
   if (item.professional_gambler === true && line31 !== line29 - line30) {
     throw new Error(
       "Schedule C PDF cannot print clamped professional-gambler loss",
@@ -305,7 +307,8 @@ function projectBusiness(
     line5,
     line6,
     line7,
-    line_24b_meals: (item.line_24b_meals ?? 0) * mealsDeductiblePct(item),
+    line_24b_meals: filing?.meals_deduction ??
+      (item.line_24b_meals ?? 0) * mealsDeductiblePct(item),
     line_26_wages: wagesLessEmploymentCredits(item, wotcReduction),
     line27b: line48,
     line28,
@@ -492,11 +495,20 @@ export const scheduleCPdf: PdfFormDescriptor = {
             input.patron_filing_review
               ? patronFiledBusinessLines("schedule_c", item)
                 .filed_source as typeof item
-              : item,
+              : filedOwnedScheduleC(
+                item,
+                false,
+                wotc.get(item.business_reference ?? "") ?? 0,
+              )?.filed_source ?? item,
             allPending,
           ),
           wotc.get(item.business_reference ?? "") ?? 0,
           allPending.general?.filing_status,
+          filedOwnedScheduleC(
+            item,
+            Boolean(input.patron_filing_review),
+            wotc.get(item.business_reference ?? "") ?? 0,
+          ),
         ),
         business_copy_number: index + 1,
         ...proprietorIdentity(allPending, item.proprietor_recipient),

@@ -1,3 +1,4 @@
+import { filedOwnedScheduleF } from "../../../nodes/owned-business-filing.ts";
 import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { appendExpenseStatement } from "./expense-statement.ts";
@@ -210,10 +211,20 @@ export const scheduleFPdf: PdfFormDescriptor = {
       }
     }
     return input.schedule_fs.map((rawItem, index) => {
+      const filing = filedOwnedScheduleF(
+        rawItem,
+        Boolean(input.patron_filing_review) ||
+          input.farm_optional_method_elected === true,
+        reductions.get(rawItem.farm_id ?? "") ?? 0,
+      );
       const item = input.patron_filing_review
         ? patronFiledBusinessLines("schedule_f", rawItem)
           .filed_source as typeof rawItem
-        : rawItem;
+        : filedOwnedScheduleF(
+          rawItem,
+          input.farm_optional_method_elected === true,
+          reductions.get(rawItem.farm_id ?? "") ?? 0,
+        )?.filed_source ?? rawItem;
       assertScheduleF1099Answers(item);
       const other = item.line32_other_expenses ?? [];
       const continuation = other.length > 6 ? other.slice(5) : [];
@@ -232,7 +243,8 @@ export const scheduleFPdf: PdfFormDescriptor = {
         : undefined;
       const gross = computeGrossIncome(item);
       const wotcReduction = reductions.get(item.farm_id ?? "") ?? 0;
-      const expenses = computeTotalExpenses(item, gross, wotcReduction);
+      const expenses = filing?.expenses ??
+        computeTotalExpenses(item, gross, wotcReduction);
       assertScheduleFLossAtRiskAnswer(item, wotcReduction);
       return {
         ...item,
@@ -246,7 +258,8 @@ export const scheduleFPdf: PdfFormDescriptor = {
         line9_gross_income: gross,
         line12_conservation_allowed: item.line12_conservation === undefined
           ? undefined
-          : conservationDeduction(item, gross),
+          : filing?.conservation_deduction ??
+            conservationDeduction(item, gross),
         line22_labor_after_credits: item.line22_labor_hired === undefined &&
             item.line22_other_employment_credits === undefined
           ? undefined

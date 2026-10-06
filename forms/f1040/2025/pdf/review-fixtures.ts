@@ -1,3 +1,4 @@
+import { ownedCfFiledCases, ownedCfFiledFixture } from "./review-owned-cf-filed.fixture.ts";
 import { controlledWotcReviewFixtures } from "./review-controlled-wotc.fixture.ts";
 import { optionalFarmReviewFixtures } from "./review-schedule-se-farm-optional.fixture.ts";
 import { ownedFarmReviewFixture } from "./review-schedule-se-farm-owner.fixture.ts";
@@ -9054,6 +9055,11 @@ const educationBase = basePdfReviewFixtures.find((fixture) =>
 )!;
 export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
  ...optionalFarmReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-schedule-c")!,jointPatronFixture(basePdfReviewFixtures.find(f=>f.id==="single-schedule-c")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!,"farm")),
+  ...ownedCfFiledCases.map((row) => ownedCfFiledFixture(
+    basePdfReviewFixtures.find((fixture) => fixture.id === "single-schedule-c")!,
+    jointPatronFixture(basePdfReviewFixtures.find((fixture) => fixture.id === "single-schedule-c")!, basePdfReviewFixtures.find((fixture) => fixture.id === "joint-two-w2s")!, "farm"),
+    row,
+  )),
   ownedFarmReviewFixture(
     basePdfReviewFixtures.find((f) => f.id === "single-schedule-c")!,
     jointPatronFixture(
