@@ -547,3 +547,8 @@ payment records, not opening basis scalars, while preserving original25/179
 and current8/79 artifacts. Synthetic retained fixtures prove byte/parsed-fact
 joins only; external authenticity, business rules and IRS acceptance remain
 open. No catalog registration, main, board or future task was changed.
+
+
+## Precise retained prior-PDF parser negative
+
+Currentmain2aeb5ecb3 test-only refinement passed2/0(31s), /tmp/opentax-roth-conversion-parser-current-main.log. The rehashed prior8606 PartII line18 negative now updates both actual f4852.reviewed_source and f4852_reviewed_source and requires the exact parsed-PDF error. Earlier inherited assertion rejected at retained digest, so it did not prove the previously claimed parser-depth negative; positive reviewed parser/byte joins remain unchanged. No production/source/PDF changed, no ledgerincrement, broaderparent unchanged. Root43cdd2906 actualfarmQBI/J95/0+final3/0,2fullXSDpackets36reviewedpages heldsource/pending/XMLonlyReturnTs/PDF/origins exact; priorpension76page sourcegate stilllive afterPATH repair. AgentQEF a3f64c873 ready6/0+32/0 with33reviewednewpages andsourcecallbacks; freshmain integrationnext, Form3800 ordering underseparateinvestigation. FullV5 lastverifiedlive76m11s; frozen52/futureunchanged. Appattachment2284 terminatedwithoutsuccessclaim.
