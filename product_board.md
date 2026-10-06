@@ -85,3 +85,5 @@ Full `deno task test` at fbacc539c ended11,577/14/0ignored, exit1(82m15s). All14
 
 Newly discovered work belongs here for future planning. It is outside the
 current execution queue.
+
+- [ ] Review newly identified Form 8621 Part II elections D–H, qualifying-insurance status, and atypical indirect-owner/first-chain workflows against their specific deemed-sale/dividend, E&P, basis, source and attachment requirements. Discovered in the October6 parent scope audit; future planning only, not part of the current execution queue.
