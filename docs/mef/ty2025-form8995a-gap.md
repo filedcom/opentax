@@ -1660,3 +1660,10 @@ Terminal logs: `/tmp/mixed-wotc-final-commit-focus.log`,
 `/tmp/mixed-wotc-terminal-compat.log`, `/tmp/mixed-wotc-scope-compat.log` and
 `/tmp/mixed-wotc-held-check2.log`. These are isolated focused proofs; no main full
 regression, release acceptance, board or future-task status is changed.
+
+
+### Mixed C/F current-main verification
+
+Source30774dd85 plus actual-tip correction660521649 passes combinedmain62/0(3m2s), and prior controlledC/controlledF/independentF/farmloss12/0(1m13s). Logs `/tmp/opentax-mixed-wotc-qualified-tips-current-main.log` SHA256 `11334d922bbea926bf2045f9945c04f4297b0b9ca8375104f9c6e22546444806` and `/tmp/opentax-mixed-wotc-prior-source-current-main.log` SHA256 `b5c339b30149fb8a5fb9343d986fc169b43c3555172a1ca09dbe5a7366c096e2`.
+
+The old held checker failed exactpending comparison because current graph retains Form1040 determinedWOTC source and actual Schedule1A ownerSE inventory. Those changes did not change tax amounts. Original source/XML/PDF bytes remain untouched. A fresh current-main batch at `/tmp/opentax-mixed-wotc-held-regenerated-main-oct6` uses the same public sources; allfour PDFs equal the reviewed122pages. New checker passes4cases/all122pages including currentpending/source/XML/template/XSD replay. Log `/tmp/opentax-mixed-wotc-held-regenerated-main-check.log`; manifestSHA256 `7348b2e9e996187836da9a95ca86bf1031943d7f4bdb83c9a792cca5f8726cfc`. The old failed checker is not described as passing.

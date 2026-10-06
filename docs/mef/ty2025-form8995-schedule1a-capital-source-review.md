@@ -29,3 +29,8 @@ Current main six-file QBI/paired-health/registered-return-replay/Pub974 gate pas
 - `capital-zero.xml`: `ca3e5e46f7140a3cef0e3d989d078f95950f7a61610e2fe6358462b3433af52b`
 - `tips-positive.xml`: `f8f9cbf6fca311511a826695706e79c18857737768a2b49638be3bcfa5e52d05`
 - `tips-zero.xml`: `cb342d990063cec0d7173f9910f30bd37d676bd1ae59452e8504ff9138f81a63`
+
+
+## Superseding deductible-business-tip QBI correction
+
+The earlier bounded proof established Schedule1A taxable-income cap and actual personal-sale capital joins, but retained deducted business tips in QBI. Source660521649 now excludes the actual deductible business share: wholly excludedQBI9293→0 with noForm8995, and positiveQBI66913→54913. The actual capital-source joins and cap ordering remain verified by currentmain62/0. Use [current tip source review](ty2025-qualified-business-tips-qbi-source-review.md) for corrected native/PDF packets; older reviewed tip PDF bytes are historical evidence, not current-output claims.

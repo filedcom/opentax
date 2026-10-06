@@ -4975,3 +4975,8 @@ Main52/0(56s), two full-XSD packets/all52 pages reviewed; actual senior deductio
 ## October6 three-member mixed SHOP
 
 Main15/0(1m27s);3full-XSD packets/all80reviewedpages; allmainPDFs match reviewed outputs. [Evidence and boundaries](ty2025-form8941-mixed-three-shop-review.md).
+
+
+## October6 mixed-owner WOTC and deducted tips
+
+Combined currentmain62/0(3m2s);priorWOTC12/0(1m13s). RefreshedWOTCheld4/all122pages and ninecurrenttipsPDFs/all147reviewedpages preserve reviewedPDFbytes. [WOTC source review](ty2025-form8995a-gap.md), [tip source review](ty2025-qualified-business-tips-qbi-source-review.md). Actualcatalog302 includesfournewWOTCfixtures.
