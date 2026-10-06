@@ -21,6 +21,8 @@ Latest full `deno task test` **V22** is live at immutable **0d153ed24** (wrapper
 
 Draft [PR63](https://github.com/filedcom/opentax/pull/63) was externally verified at **85b489a72**, with exact title/body/head/draft and successful attachment. The ordinary-gain, mortgage payoff/advance and mixed-payroll integrations are published with completed root gates. Source contracts and hashes do not authenticate issuers, signatures or prior acceptance. Wider filing routes, ATS credentials/scenario conflicts, IRS acknowledgments and release review remain unfinished.
 
+Parent payroll source verification is in progress: its first focused gate stopped on a test union-narrowing type error. Midmonth mortgage candidate **3a89e4207** has isolate98/0 and saved26returns/81pages replay; root review/integration remains pending.
+
 ## Scope and completion rules
 
 - [ ] Verify the release covers the TY2025 Form 1040 family: Form 1040, its applicable schedules, supporting forms, source documents, statements, PDF packet, MeF return, and A2A submission package.
