@@ -4293,3 +4293,8 @@ Maind47da1b22+f383d1b80 integrate candidate622+OHf0; productionSHA06a954 unchang
 ## Immutable full regression V28
 
 V28immutablefc6abc3c5 starts18:29:40Z with25789physicalprivatefiles/1453hashes reverified; Deno2.9.4/V815.0.245.2-rusty/TS6.0.3, actualwrapper19356/task19365/test19366 inspectedlive. Ordinarydenotasktest one-shot LaunchAgentguard; codeincludesirregularSHA06a954/OHtestf383. PriorV27/V26 processes retained/versionqualified; nofullbatchterminaltotals. PR63exactfc6abc3c5 title/body/draft verified andattached. Main14module64237 andsaved65record3745 remainlive; ledger1536/frozen52/future unchanged. ParentFICA nextprimaryaudit confirmsfour-weekmedicalqualifiersarecalendar-quarterconditions, whileactualage/marital transitionsneedordinaryperiod review; no medicalday-by-day gate inferred.
+
+
+## Resume after SSH diagnosis
+
+The preceding daemon diagnosis yielded no board progress. The entire board was reread before further work; frozen52/future bytes match85b489a72 andledger1536 remains open. Learnings compacted: retain actual source archives unchanged; medical four-week qualifiers apply across the service quarter, while age/marital transitions require actual ordinary-period treatment; final production SHA06a954 must remain held through main gates. Main ordinary14module64237 andactual65record3745 re-polled live, actual PIDs19067/19065 inspected. FullV28 actual19366 inspectedlive; no latest full-pass claim. Private OH final broad gate is terminal26/0 (5m48s), root main stillpending. Existingparent timing worker continues privately; twoadditional isolated workers advance existing spouse/cooperative QBI and shareholder priorbasis/history branches after their own fullboard scope review. No futurework executed.
