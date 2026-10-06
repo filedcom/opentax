@@ -1,0 +1,11 @@
+# Schedule J preferential source integration — work in progress
+
+The existing frozen Form4972/ScheduleJ task requires source-backed preferential tax and the Form6251 tax refigure without averaging. This phase is incomplete and has no filing-support or ledger completion claim.
+
+The isolated actual return uses owned ScheduleF receipts200000, issuedDIV ordinary35000/qualified30000 with holding-period review, full issued4972 specialtax830 and3921 ISO adjustment240000. WithoutJ the existing source graph succeeds, regulartax31214 and AMT55517. WithJ the current public schema rejects the true qualified-dividend treatment. The source audit is retained in `.state/research/schedulej-preferential-source/guard-audit.json`.
+
+The calculator now accepts distinct current and filed-base-year worksheet source amounts, matches all four preferential treatment flags to their amounts, and uses each year's existing IRS worksheet calculator. It does not accept an asserted tax. New current example: line3=156111, qualified30000, ordinary126111; tax23113.64+4500 rounds27614. Original base rates1595/1580/1568 and filed subtraction3000 produce ScheduleJ line23=29357. The three preferential base examples at55000 with qualified10000 yield7017/6708/6364 using2022/2023/2024 thresholds independently.
+
+Checked calculation gate14/0 (70ms), log `/tmp/opentax-schedulej-preferential-source-calculation-v1.log`. This covers the new source/treatment conflicts plus retained ordinary/base worksheet calculations. It is not public full-return, XSD, source-authentication or filled-PDF evidence. Public graph source joins, final native/PDF replay and actual6251 reconciliation remain to be completed before integration credit. Existing elected-gain, foreign-exclusion and conflicting historical2022/2023 ScheduleD guards remain until their source/allocation rules are resolved.
+
+Primary rule: [2025 IRS ScheduleJ instructions](https://www.irs.gov/instructions/i1040sj), lines4/8/12/16 require the applicable current/base worksheet; base tax-rate schedules replace the regular prior-year TaxTable in those calculations. [2025 Form6251 instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf), line10 requires tax recomputed without ScheduleJ.
