@@ -1607,3 +1607,7 @@ Full `deno task test` at bc6cafec6 ended11,494/8, exit1. Immutable rerun fbacc53
 
 
 Both catalog patches are integrated at b9e165f45: 340 unique fixtures. First metadata/source gate22/0 after removing reverse initialization cycle; nine original tip public inputs unchanged. Second metadata gate8/0. These register24 already reviewed packets/466pages, not new tax support. Full immutable regression PIDs26565/26572 verified live at03:41UTC.
+
+## Before two-farm health integration
+
+Tip-health source commit2d3fdcbcb integrated with both C/F source imports and tip-source binder/wrapper retained; no main gate yet. Existing frozen board read and preserved. Two-farm source0cdafecb6 adds actual loss-owner zero capacity without inventing a ScheduleSE or Form7206 copy; focused combined verification follows both integrations.
