@@ -102,10 +102,18 @@ for (
           .line_14_employee_benefits,
         input.f8941.other_schedule_c_employee_benefits + lines.line4,
       );
-      assertEquals(
-        result.pending.f1040.line8_additional_income,
-        receipts - 110000 - benefits,
-      );
+    assertEquals(
+      result.pending.f1040.line8_additional_income,
+      receipts - 110000 - benefits,
+    );
+    assertEquals(
+      result.pending.schedule_se.net_profit_schedule_c,
+      receipts - 110000 - benefits,
+    );
+    assertEquals(
+      result.pending.form8995.qbi_from_schedule_c,
+      receipts - 110000 - benefits,
+    );
       const use = Number(result.pending.f3800.form8941_applied_credit);
       assert(
         name === "full-use"
