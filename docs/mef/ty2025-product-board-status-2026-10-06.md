@@ -1679,3 +1679,18 @@ FullV3 fbacc terminal11,577/14/0ignored,exit1,82m15s,14failures mapped tosource/
 ## Repaired full regression live
 
 Fresh detached181575242db2afcb5fcceb25088e3311f7aa9d78 in `/tmp/opentax-full-regression-source-v4-oct6` launched exact `deno task test` at2026-10-06T03:53:35Z. LaunchAgent `opentax-full-regression-source-v4-oct6`, wrapper44964/Deno44970 verified live nine seconds later, typechecking progressing. Log `/tmp/opentax-deno-task-test-source-v4-oct6.log`; status/wrapper/plist sameprefix. Canonical local IRS docs are read-only linked; audit/bench/field-dump/PDF caches copied. Immutable source not edited; no fullgreen claim. Three isolated existingtasks active, pending ATS package-location question; frozen52 suffix unchanged.
+
+## Before independent owner-health Schedule1A ordering review
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,437 bounded slices**. Prior learnings and evidence are preserved in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). New discoveries belong only in `future_todo`.
+
+Actual planner: **347 fixtures**, 116 PDF descriptors, 113 keys, 96 covered and 17 uncovered. Published PR63 head is **dc65dc952**. Verified main gates cover mixed C/F SHOP (52/0, 52 reviewed pages), three-member SHOP (15/0, 80 pages), mixed-owner WOTC/tip QBI (62/0 plus prior12/0, 122/147 pages), complete-source annuity (247/0, held7/38) and independent C/F health (22/0, held7/212). Regenerated PDFs match reviewed bytes; old NUA held5/27 remains unchanged. These prove their stated routes; broader parents remain open.
+
+Full `deno task test` at fbacc539c ended11,577/14/0ignored, exit1(82m15s). All14 have focused repaired-main passing evidence, including final two modulefiles44/0. Latest immutable181575242 rerun started03:53:35UTC; wrapper44964/Deno44970 verified live. Its terminal result and a passing full run remain required. Root registered24 reviewed catalog cases after fixing reverse fixture initialization (main22/0 plus metadata8/0); tip-health explicit plan sources and two-farm owner health are integrated with combined51/0 and reviewed artifact replay149/217pages. Partial-beneficiary4972 and mixedC/Ftips are integrated locally at9a7da5a78 with combined33/0 and source/PDF replay6/220pages verified. Wider filing/source combinations, authentication, ATS conflicts/credentials, business rules, IRS acceptance and release readiness remain incomplete.
+
+
+Existing Schedule1A/7206/8995 returnwide ordering scope: independenthealth wrapper currently requires business-tip payload whenever any13b is positive, including source-backed senior-only returns. Core and QBIcalculatealreadytakeactualadditionaldeductions; rootwillprobeactualDOB/timelySSNsenior+health sources beforechangingguard. This is existingreturnwide source-combination work; nofuturetasks started. FullV4live44964/44970 at02m27, maintrackedclean.
