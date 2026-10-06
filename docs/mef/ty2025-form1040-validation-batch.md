@@ -4941,3 +4941,7 @@ At0ca0b85cc, six-file gate `/tmp/opentax-interpreter-zero-tier-main.log`:33 pass
 ## Fresh full regression, source-v3 October6 (running)
 
 Stable detached checkout `/tmp/opentax-full-regression-source-v3-oct6`, commit `fbacc539ce451cf4d627085edf33f240a11f6335`, exact `deno task test`, start `2026-10-06T02:29:48Z`. LaunchAgent `opentax-full-regression-source-v3-oct6`; confirmed wrapper26565 and child26572 live. Log `/tmp/opentax-deno-task-test-source-v3-oct6.log`, status `/tmp/opentax-full-regression-source-v3-oct6.status`. Real PATH includes Poppler26.09.0, Deno2.9.4 and libxml2.9.13. Local cached IRS schema tree is linked read-only by convention; checkout stays fixed. Final totals/log digest are pending; prior11,494/8 remains authoritative full result.
+
+## Independent farm and daily-billed SHOP main verification
+
+Mainbf1370de3 independent farm/ownerW2/nativeSchedule3/farm-loss gate142/0(28s); `/tmp/opentax-two-farm-main-integration.log` SHA256 `2aa5eb4d42ffa253070a552b4611f593b20ea93f14e8eabc2de70a04add0b86c`. Current held replay4 cases/118 pages, `/tmp/opentax-two-farm-main-held.log` SHA256 `50ae02172d7bf93cd1d544165b4f14ae36c63e7df2aeff42ed39f3a5f8e14226`. Main41e675163 daily-billed/monthly-tier/three-business gate35/0(51s); `/tmp/opentax-partmonth-tier-main-integration.log` SHA256 `b037f91f04b58e91dff6ee85bcabe4d175cc05a2da333ca5f86071413f8f5bc9`. Two reviewed part-month PDF hashes copied/verified. Earlier fullsource-v3 run remains live but predates these changes; observed replay and Pub974 module-init failures are under repair.
