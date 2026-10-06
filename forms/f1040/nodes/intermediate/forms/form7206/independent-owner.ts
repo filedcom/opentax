@@ -11,6 +11,7 @@ import {
   type SingleScheduleCPlan,
 } from "./single-source.ts";
 import { TS } from "../../../types.ts";
+import { calculateOwnedSep } from "../../../inputs/sep_retirement/owned-source.ts";
 const identity = z.object({
   name: z.string().trim().min(1),
   ssn: z.string().regex(/^\d{9}$/),
@@ -77,9 +78,13 @@ export function calculateIndependentOwnerHealth(
   raw: unknown,
   rawOwned: unknown,
   ssWageBase: number,
+  rawRetirement?: unknown,
 ) {
   const source = independentOwnerHealthSourceSchema.parse(raw),
     owned = ownedScheduleSE(rawOwned, ssWageBase);
+  const retirement = rawRetirement === undefined
+    ? undefined
+    : calculateOwnedSep(rawRetirement, owned.source, ssWageBase);
   if (
     source.taxpayer_identity.ssn !== owned.source.identity.primary_ssn ||
     source.spouse_identity.ssn !== owned.source.identity.spouse_ssn ||
@@ -197,7 +202,9 @@ export function calculateIndependentOwnerHealth(
         premium_months: plan.premium_months,
         schedule_c_line31_net_profit: business.net_profit,
         schedule1_line15_se_tax_deduction: owner?.line13 ?? 0,
-        schedule1_line16_retirement_deduction: 0,
+        schedule1_line16_retirement_deduction: retirement?.rows.find((r) =>
+          r.business_reference === business.source_reference
+        )?.deduction ?? 0,
         plan_established_under_business: true,
         sole_positive_business_verified: business.net_profit > 0,
         no_form2555: true,
@@ -258,6 +265,7 @@ export function calculateIndependentOwnerHealth(
   return {
     source,
     owned,
+    ...(retirement ? { retirement } : {}),
     rows,
     deduction: rows.reduce((n, r) => n + r.line14, 0),
   };
@@ -268,6 +276,7 @@ export function reconcileIndependentOwnerHealthGraph(
     schedule_f_source?: unknown;
     schedule_se_source?: unknown;
     schedule1_line16_source?: unknown;
+    owned_sep_plans?: unknown;
     marketplace_ptc_premium_overlap?: unknown;
   },
   result: ReturnType<typeof calculateIndependentOwnerHealth>,
@@ -337,10 +346,13 @@ export function reconcileIndependentOwnerHealthGraph(
     se.line13_deduction !== result.owned.deduction ||
     canonical(ownerSourcesSchema.parse(se.owner_source)) !==
       canonical(result.owned.source) ||
-    Number(fields.schedule1_line16_source ?? 0) !== 0
+    Number(
+        fields.schedule1_line16_source ?? result.retirement?.deduction ?? 0,
+      ) !== (result.retirement?.deduction ?? 0) ||
+    canonical(fields.owned_sep_plans) !== canonical(result.retirement?.source)
   ) {
     throw new Error(
-      "Independent health source must match its actual C/F inventory, owned SE and zero retirement adjustments",
+      "Independent health source must match its actual C/F inventory, owned SE and attributable sourced retirement adjustments",
     );
   }
 }

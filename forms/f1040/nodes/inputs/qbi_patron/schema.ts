@@ -29,6 +29,7 @@ export const inputSchema = z.object({
   employee_w2_records: z.array(
     z.object({
       employee_reference: z.string().trim().min(1),
+      employee_ssn: z.string().regex(/^\d{9}$/).optional(),
       source_document_reference: z.string().trim().min(1),
       box1_wages: z.number().finite().nonnegative(),
       eligible_199a_wages: z.number().finite().nonnegative(),

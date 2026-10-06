@@ -11,6 +11,7 @@ import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { form7206 } from "../../intermediate/forms/form7206/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
+import { ownedSepSourceSchema } from "./owned-source.ts";
 
 // TY2025 — Self-employed retirement plan deduction (IRC §404(a)(8), §408(k), §408(p), §401(k))
 // Flows to Schedule 1, Part II, Line 16.
@@ -49,7 +50,11 @@ export const itemSchema = z.object({
 });
 
 export const inputSchema = z.object({
-  sep_retirements: z.array(itemSchema).min(1),
+  sep_retirements: z.array(itemSchema).min(1).optional(),
+  owned_sep_plans: ownedSepSourceSchema.optional(),
+}).refine((v) => Boolean(v.sep_retirements) !== Boolean(v.owned_sep_plans), {
+  message:
+    "SEP needs either legacy plan items or actual owned plan records, without mixing",
 });
 
 type SepRetirementItem = z.infer<typeof itemSchema>;
@@ -168,26 +173,37 @@ class SepRetirementNode extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const parsed = inputSchema.parse(input);
+    if (parsed.owned_sep_plans) {
+      if (ctx.taxYear !== 2025) {
+        throw new Error("Owned SEP source currently needs TY2025");
+      }
+      return {
+        outputs: [
+          output(form7206, { owned_sep_plans: parsed.owned_sep_plans }),
+        ],
+      };
+    }
+    const items = parsed.sep_retirements!;
     const outputs: NodeOutput[] = [
       output(form7206, {
         schedule1_line16_source: totalDeduction(
-          parsed.sep_retirements,
+          items,
           cfg.sepMaxContribution,
           cfg.sepContributionRate,
         ),
       }),
       ...schedule1Output(
-        parsed.sep_retirements,
+        items,
         cfg.sepMaxContribution,
         cfg.sepContributionRate,
       ),
       ...agiOutput(
-        parsed.sep_retirements,
+        items,
         cfg.sepMaxContribution,
         cfg.sepContributionRate,
       ),
       ...form8995Output(
-        parsed.sep_retirements,
+        items,
         cfg.sepMaxContribution,
         cfg.sepContributionRate,
       ),

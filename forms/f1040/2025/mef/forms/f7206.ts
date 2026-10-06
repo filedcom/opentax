@@ -1,4 +1,7 @@
-import { assertIndependentOwnerHealth } from "../../form7206_independent_owner_source.ts";
+import {
+  assertIndependentOwnerHealth,
+  assertOwnedSepContext,
+} from "../../form7206_independent_owner_source.ts";
 import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
 import {
   calculateSingleScheduleCForm7206,
@@ -28,6 +31,8 @@ type Input = Partial<
     single_schedule_c_plan: SingleScheduleCPlan;
     independent_schedule_c_plans: unknown;
     independent_plan_filing_rows: unknown;
+    owned_sep_plans: unknown;
+    owned_sep_filing_rows: unknown;
     recipient_name: string;
     recipient_ssn: string;
     schedule_c_source: unknown;
@@ -74,6 +79,10 @@ function buildIRS7206(
         ...FIELD_MAP.map(([key, tag]) => element(tag, row[key])),
       ])
     );
+  }
+  if (fields.owned_sep_plans !== undefined) {
+    assertOwnedSepContext(context?.pending, context?.filer, fields);
+    return "";
   }
   if (!FIELD_MAP.some(([key]) => fields[key] !== undefined)) {
     if (

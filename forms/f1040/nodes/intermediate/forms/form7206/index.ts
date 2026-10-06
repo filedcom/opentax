@@ -36,9 +36,15 @@ import {
   pub974SingleBusinessSourceSchema,
 } from "./pub974_worksheets.ts";
 
+import {
+  calculateOwnedSep,
+  ownedSepSourceSchema,
+} from "../../../inputs/sep_retirement/owned-source.ts";
+
 export const inputSchema = z.object({
   single_schedule_c_plan: singleScheduleCPlanSchema.optional(),
   independent_schedule_c_plans: independentOwnerHealthSourceSchema.optional(),
+  owned_sep_plans: ownedSepSourceSchema.optional(),
   schedule_c_source: z.object({
     unadjusted_source: z.boolean(),
     reviewed_wotc_source: z.boolean().optional(),
@@ -165,10 +171,25 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
         input.independent_schedule_c_plans,
         input.schedule_se_source?.owner_source,
         cfg.ssWageBase,
+        input.owned_sep_plans,
       );
       reconcileIndependentOwnerHealthGraph(input, family);
       return {
         outputs: [
+          ...(family.retirement
+            ? [
+              output(schedule1, {
+                line16_sep_simple: family.retirement.deduction,
+              }),
+              output(agi_aggregator, {
+                line16_sep_simple: family.retirement.deduction,
+              }),
+              output(form8995, {
+                retirement_plan_deduction: family.retirement.deduction,
+                owned_sep_plans: family.retirement.source,
+              }),
+            ]
+            : []),
           output(schedule1, { line17_se_health_insurance: family.deduction }),
           output(agi_aggregator, {
             line17_se_health_insurance: family.deduction,
@@ -185,6 +206,53 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
             fields: {
               independent_schedule_c_plans: family.source,
               independent_plan_filing_rows: family.rows,
+              ...(family.retirement
+                ? {
+                  schedule1_line16_source: family.retirement.deduction,
+                  owned_sep_filing_rows: family.retirement.rows,
+                }
+                : {}),
+            },
+          },
+        ],
+      };
+    }
+    if (input.owned_sep_plans) {
+      if (
+        ctx.taxYear !== 2025 || input.single_schedule_c_plan ||
+        input.pub974_single_business
+      ) {
+        throw new Error(
+          "Owned SEP source must remain in its actual ordinary proprietor family",
+        );
+      }
+      const retirement = calculateOwnedSep(
+        input.owned_sep_plans,
+        input.schedule_se_source?.owner_source,
+        cfg.ssWageBase,
+      );
+      if (
+        input.schedule1_line16_source !== undefined &&
+        input.schedule1_line16_source !== retirement.deduction
+      ) {
+        throw new Error(
+          "Owned SEP source conflicts with an externally supplied retirement amount",
+        );
+      }
+      return {
+        outputs: [
+          output(schedule1, { line16_sep_simple: retirement.deduction }),
+          output(agi_aggregator, { line16_sep_simple: retirement.deduction }),
+          output(form8995, {
+            retirement_plan_deduction: retirement.deduction,
+            owned_sep_plans: retirement.source,
+          }),
+          {
+            nodeType: this.nodeType,
+            fields: {
+              owned_sep_plans: retirement.source,
+              owned_sep_filing_rows: retirement.rows,
+              schedule1_line16_source: retirement.deduction,
             },
           },
         ],

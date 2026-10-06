@@ -1,3 +1,4 @@
+import { ownedSepSourceSchema } from "../nodes/inputs/sep_retirement/owned-source.ts";
 import { claimantReviewSchema } from "../nodes/inputs/f8863/claimant-review.ts";
 import {
   inputSchema as qbiPatronInputSchema,
@@ -821,6 +822,12 @@ export const inputNodes: readonly InputNodeEntry[] = [
     isArray: false,
   },
   { node: sep_retirement, itemSchema: sepRetirementItemSchema, isArray: true },
+  {
+    node: sep_retirement,
+    inputKey: "owned_sep_retirement",
+    inputSchema: z.object({ owned_sep_plans: ownedSepSourceSchema }).strict(),
+    isArray: false,
+  },
   // Singleton inputs: entire form as a single object
   {
     node: schedule_b_part_iii,

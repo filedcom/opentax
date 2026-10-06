@@ -1,5 +1,6 @@
 import {
   assertIndependentOwnerHealth,
+  assertOwnedSepContext,
   independentHealthCanonical,
 } from "../../form7206_independent_owner_source.ts";
 import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
@@ -76,6 +77,10 @@ function projectFields(
     }
     assertIndependentOwnerHealth(allPending, undefined, fields);
     return { ...fields };
+  }
+  if (fields.owned_sep_plans !== undefined) {
+    assertOwnedSepContext(allPending, undefined, fields);
+    return fields;
   }
   if (
     !nativeForm7206.FIELD_MAP.some(([key]) => fields[key] !== undefined)
@@ -223,7 +228,13 @@ export const form7206Pdf: PdfFormDescriptor = {
     projected.independent_plan_required === true ||
     Number(projected.line14 ?? 0) > 0,
   instances: (fields, filer, allPending) => {
-    if (fields.independent_schedule_c_plans === undefined) return [fields];
+    if (fields.independent_schedule_c_plans === undefined) {
+      if (fields.owned_sep_plans !== undefined) {
+        assertOwnedSepContext(allPending, filer, fields);
+        return [];
+      }
+      return [fields];
+    }
     return assertIndependentOwnerHealth(allPending, filer, fields).rows.filter(
       (row) => row.independent_plan_required,
     ).map((

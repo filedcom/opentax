@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
-import { itemSchema as farmSchema } from "../../intermediate/forms/schedule_f/model.ts";
+import {
+  computeGrossIncome,
+  itemSchema as farmSchema,
+} from "../../intermediate/forms/schedule_f/model.ts";
 import {
   ownedScheduleSE,
   ownerSourcesSchema,
@@ -11,12 +14,17 @@ import {
   independentOwnerHealthSourceSchema,
 } from "../../intermediate/forms/form7206/independent-owner.ts";
 import { patronSourceAmounts } from "./calculation.ts";
+import {
+  calculateOwnedSep,
+  ownedSepSourceSchema,
+} from "../sep_retirement/owned-source.ts";
 
 export const independentPatronSourceSchema = z.object({
   review: independentReviewsSchema,
   businesses: z.array(sourceSchema).length(2),
   owned_se_source: ownerSourcesSchema,
   owned_health_source: independentOwnerHealthSourceSchema.optional(),
+  owned_retirement_source: ownedSepSourceSchema.optional(),
 }).strict();
 
 /** This route is two independent joint proprietors; generic business routes
@@ -26,6 +34,7 @@ export function independentPatronSources(
   farmsRaw: unknown,
   seRaw: unknown,
   healthRaw?: unknown,
+  retirementRaw?: unknown,
 ) {
   const review = independentReviewsSchema.parse(reviewRaw);
   const farms = z.array(farmSchema).length(2).parse(farmsRaw);
@@ -48,7 +57,76 @@ export function independentPatronSources(
       healthRaw,
       se.source,
       CONFIG_BY_YEAR[2025].ssWageBase,
+      retirementRaw,
     );
+  const retirement = retirementRaw === undefined
+    ? undefined
+    : calculateOwnedSep(
+      retirementRaw,
+      se.source,
+      CONFIG_BY_YEAR[2025].ssWageBase,
+    );
+  if (retirement) {
+    if (
+      retirement.source.employer_relationship_review
+        .spousal_attribution_exception_reviews.some((r) => {
+          const farm = farms.find((f) => f.farm_id === r.business_reference);
+          return !farm ||
+            Math.abs(computeGrossIncome(farm) - r.section61_gross_income) >
+              .005;
+        })
+    ) {
+      throw new Error(
+        "Owned SEP spousal attribution gross-income review must match the actual farm source books",
+      );
+    }
+    if (
+      farms.some((farm) =>
+        Math.abs(
+          (farm.line23_pension_plans ?? 0) -
+            (retirement.rows.find((r) => r.business_reference === farm.farm_id)
+              ?.employee_contribution ?? 0),
+        ) > .005
+      )
+    ) {
+      throw new Error(
+        "Owned SEP plan inventory must account for every farm employee pension expense",
+      );
+    }
+    for (const plan of retirement.source.plans) {
+      const farm = farms.find((f) => f.farm_id === plan.business_reference);
+      const payroll = review.independent_farm_reviews.find((r) =>
+        r.business.kind === "schedule_f" &&
+        r.business.farm_id === plan.business_reference
+      )?.employee_w2_records;
+      const row = retirement.rows.find((r) =>
+        r.business_reference === plan.business_reference
+      )!;
+      if (
+        !farm || farm.line_d_ein?.replace(/-/g, "") !== plan.employer_ein ||
+        !payroll ||
+        Math.abs((farm.line23_pension_plans ?? 0) - row.employee_contribution) >
+          0.005 ||
+        payroll.length !== plan.employee_census.length ||
+        plan.employee_census.some((e) => {
+          const record = payroll.find((w) =>
+            w.employee_reference === e.employee_reference
+          );
+          return !record ||
+            record.source_document_reference !==
+              e.payroll_source_document_reference ||
+            record.box1_wages !== e.compensation ||
+            record.employee_ssn !== e.employee_ssn ||
+            e.employee_ssn === se.source.identity.primary_ssn ||
+            e.employee_ssn === se.source.identity.spouse_ssn;
+        })
+      ) {
+        throw new Error(
+          "Owned SEP employee census, compensation and pension expenses must reconcile to its actual farm payroll and employer",
+        );
+      }
+    }
+  }
   const references = new Set<string>();
   const owners = new Set<string>();
   const farmIdentifiers = new Set<string>();
@@ -118,7 +196,9 @@ export function independentPatronSources(
       health_insurance_deduction: health?.rows.filter((h) =>
         h.business_reference === farm.farm_id
       ).reduce((n, h) => n + h.line14, 0) ?? 0,
-      retirement_plan_deduction: 0,
+      retirement_plan_deduction: retirement?.rows.find((r) =>
+        r.business_reference === farmId
+      )?.raw_deduction ?? 0,
     });
     const amounts = patronSourceAmounts(source);
     if (
@@ -140,8 +220,10 @@ export function independentPatronSources(
       businesses,
       owned_se_source: se.source,
       ...(health ? { owned_health_source: health.source } : {}),
+      ...(retirement ? { owned_retirement_source: retirement.source } : {}),
     },
     health,
+    retirement,
     se,
     amounts,
     profit: amounts.reduce((s, r) => s + r.profit, 0),
@@ -157,6 +239,7 @@ export function replayIndependentPatronSources(raw: unknown) {
     source.businesses.map((s) => s.business_source),
     source.owned_se_source,
     source.owned_health_source,
+    source.owned_retirement_source,
   );
   if (JSON.stringify(source) !== JSON.stringify(result.source)) {
     throw new Error(

@@ -68,6 +68,8 @@ export function assertIndependentOwnerHealthSource(
     "schedule_f_source",
     "schedule_se_source",
     "schedule1_line16_source",
+    "owned_sep_plans",
+    "owned_sep_filing_rows",
     "marketplace_ptc_premium_overlap",
   ]);
   if (Object.keys(fields).some((k) => !allowed.has(k))) {
@@ -86,8 +88,18 @@ export function assertIndependentOwnerHealthSource(
     fields.independent_schedule_c_plans,
     owned.source,
     CONFIG_BY_YEAR[2025].ssWageBase,
+    fields.owned_sep_plans,
   );
   reconcileIndependentOwnerHealthGraph(fields, result);
+  if (
+    independentHealthCanonical(fields.owned_sep_filing_rows) !==
+      independentHealthCanonical(result.retirement?.rows)
+  ) {
+    throw new Error(
+      "Owned SEP filing rows differ from actual source owner calculations",
+    );
+  }
+  const retirement = result.retirement?.deduction ?? 0;
   if (
     independentHealthCanonical(fields.independent_plan_filing_rows) !==
       independentHealthCanonical(result.rows)
@@ -169,14 +181,15 @@ export function assertIndependentOwnerHealthSource(
         (n, b) => n + b.net_profit,
         0,
       ) ||
-    Number(p.schedule1?.line16_sep_simple ?? 0) !== 0 ||
+    Number(p.schedule1?.line16_sep_simple ?? 0) !== retirement ||
     p.schedule1?.line10_total_additional_income !== profit ||
     f.line8_additional_income !== profit ||
     f.line9_total_income !== wages + profit ||
     p.schedule1?.line26_total_adjustments !==
-      owned.deduction + result.deduction ||
-    f.line10_adjustments !== owned.deduction + result.deduction ||
-    f.line11_agi !== wages + profit - owned.deduction - result.deduction ||
+      owned.deduction + result.deduction + retirement ||
+    f.line10_adjustments !== owned.deduction + result.deduction + retirement ||
+    f.line11_agi !==
+      wages + profit - owned.deduction - result.deduction - retirement ||
     Number(f.line1a_wages ?? 0) !== wages
   ) {
     throw new Error(
@@ -204,7 +217,7 @@ export function assertIndependentOwnerHealthSource(
       "k1_partnership",
       "k1_s_corp",
       ...(patron ? [] : ["f1099patr"]),
-      "sep_retirement",
+      ...(patron?.source.owned_retirement_source ? [] : ["sep_retirement"]),
       "form2555",
       "f1095a",
       "f4835",
@@ -344,4 +357,48 @@ export function assertIndependentOwnerHealth(
     schedule1a.build(tips, { pending: p, filer });
   }
   return result;
+}
+
+/** SEP-only graph context has no filed Form7206; validate its actual return first. */
+export function assertOwnedSepContext(
+  raw: Readonly<Record<string, unknown>> | undefined,
+  filer?: FilerIdentity,
+  providedFields?: unknown,
+) {
+  if (!raw) {
+    throw new Error("Owned SEP context needs the complete actual return");
+  }
+  const p = normalizeAllPending(raw as Record<string, unknown>),
+    fields = p.form7206;
+  const allowed = new Set([
+    "owned_sep_plans",
+    "owned_sep_filing_rows",
+    "schedule1_line16_source",
+    "schedule_f_source",
+    "schedule_se_source",
+  ]);
+  if (
+    !fields?.owned_sep_plans || fields.independent_schedule_c_plans ||
+    Object.keys(fields).some((k) => !allowed.has(k)) ||
+    (providedFields !== undefined &&
+      independentHealthCanonical(providedFields) !==
+        independentHealthCanonical(fields))
+  ) {
+    throw new Error(
+      "Owned SEP context differs from the actual source-only return",
+    );
+  }
+  if (!p.form8995a?.independent_patron_sources) {
+    throw new Error("Owned SEP context needs the reviewed patron source route");
+  }
+  const source = replayIndependentPatronSources(
+    p.form8995a.independent_patron_sources,
+  );
+  if (!source.retirement || source.health) {
+    throw new Error(
+      "Owned SEP-only context cannot borrow health or retirement rows",
+    );
+  }
+  assertOwnedScheduleSE(p, filer ?? extractFilerIdentity(p.f1040));
+  assertIndependentPatronReturn(patronInputSchema.parse(p.form8995a), p);
 }

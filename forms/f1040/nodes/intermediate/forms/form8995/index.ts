@@ -1,3 +1,4 @@
+import { ownedSepSourceSchema } from "../../../inputs/sep_retirement/owned-source.ts";
 import { independentReviewsSchema } from "../../../inputs/qbi_patron/schema.ts";
 import { independentPatronSources } from "../../../inputs/qbi_patron/independent.ts";
 import {
@@ -168,6 +169,7 @@ export const inputSchema = z.object({
   // Deduction for contributions to a qualified retirement plan (Schedule 1 line 16)
   // — reduces QBI
   retirement_plan_deduction: accumulable(z.number().nonnegative()).optional(),
+  owned_sep_plans: ownedSepSourceSchema.optional(),
   // Prior-year QBI net loss carryforward (must be zero or negative)
   qbi_loss_carryforward: z.number().nonpositive().optional(),
   investment_interest_sources: z.array(z.unknown()).optional(),
@@ -802,7 +804,6 @@ function advancedFormOutput(
       qbiCapitalTotal(input) !== 0 ||
       sumField(input.qbi_from_schedule_c) !== 0 ||
       sumField(input.line6_sec199a_dividends) !== 0 ||
-      sumField(input.retirement_plan_deduction) !== 0 ||
       (input.qbi_loss_carryforward ?? 0) !== 0 ||
       (input.reit_loss_carryforward ?? 0) !== 0
     ) {
@@ -815,10 +816,13 @@ function advancedFormOutput(
       input.schedule_f_qbi_businesses?.map((row) => row.source_schedule_f),
       input.joint_se_source,
       input.joint_owner_health_plans_source,
+      input.owned_sep_plans,
     );
     if (
       sumField(input.se_health_insurance_deduction) !==
         (family.health?.deduction ?? 0) ||
+      sumField(input.retirement_plan_deduction) !==
+        (family.retirement?.deduction ?? 0) ||
       sumField(input.se_tax_deduction) !== family.se.deduction ||
       sumField(input.qbi_from_schedule_f) !== family.profit ||
       Math.round(sumField(input.w2_wages)) !== family.wages ||
@@ -1536,6 +1540,11 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
+    if (input.owned_sep_plans && !input.independent_patron_reviews) {
+      throw new Error(
+        "Owned SEP allocation needs the reviewed independent patron source route",
+      );
+    }
 
     if (!hasQbiActivity(input)) {
       return { outputs: [] };
