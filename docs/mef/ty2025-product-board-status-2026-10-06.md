@@ -2477,3 +2477,21 @@ Existing Roth inventory/conversion, donated-asset depreciation and QEF mixed-cre
 
 
 Current-main7da4282d3 completeRoth inventories: six57page held packets exact, original immutable045Roth9/52 exact and retained485210/70 exact. MixednewRoth+pensionpreferential+QEFadoption checked6/0(1m29s);21module compatibility still running. The local mutable oldRoth source artifact contained obsolete nonfarm_qef_ordinary:0; untouched isolated originals pass, no production adjustment needed. FullV5 wrapper65945/Deno65949 verified live39m34s. Next root existing Form4972/ScheduleJ preferential-AMT source phase: current/base2022–24 IRS tax worksheets already have pure calculators but public ScheduleJ and full graph guard all preferential income. Reconcile issued dividend/gain provenance and actual farm attribution, calculated tax treatment, current/base worksheet inputs, finalized6251 line10 without ScheduleJ, and full return native/PDF. Official source inspected https://www.irs.gov/instructions/i1040sj (2025), lines4/8/12/16 and archived worksheet references; elected gain needs source-attribution/allocation, not scalar opening. Existing pure2022/2023 ScheduleD guards identify conflicting historical line references; audit actual archived worksheets before changing. No ledger credit until complete source/packet proof. FutureonlyPartIID–H untouched.
+
+
+## Before QEF shadow-credit and zero-tax integration
+
+# TY2025 Form 1040 product board
+
+## Compacted status (2026-10-06)
+
+The frozen checklist has **52 open TODOs**; the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,455 bounded slices**. Learnings and exact proof remain in the [October6 archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md). Newly discovered work goes only in `future_todo` and is not executed.
+
+Actual inventory: **151 native / 117 PDF descriptors**, **365 fixtures**, **114 PDF keys / 96 covered / 18 uncovered**. Latest adoption composition: **13/0**, new9-page PDF/origins exact, prior10/91PDFs preserved. Latest integrations: retained Roth J/T source9/52, donated-property dispositions5/169, QEF AMT/J/8615 tax methods3/36 and preferential pension/ISO-AMT8/76. Checked compatibility **505/0**, refreshed packets **25/0**, prior QEF **7/0**, preferential AMT **5/0**; retained source/PDF/attachment bytes match reviewed originals, XML onlyReturnTs. Earlier substitute10/70, donated-property16/591, QEF7/55 and pension8/42 packets are preserved. These close their stated slices; broader parents remain open.
+
+Full `deno task test` at immutable181575242 finished **11,794 passed / 1 failed**, exit1; the sole senior/QBI fixture expectation is repaired with focused1/0. Immutable **4a45410da** full rerun started05:41:11UTC; wrapper65945/Deno65949 verified live. It predates the latest integrations; its terminal result and a passing latest-source run remain required. Publication checkpoint for draft [PR63](https://github.com/filedcom/opentax/pull/63): **9f3e370a9**, verified published with these integrations.
+
+Existing Roth inventory/conversion, donated-asset depreciation and QEF mixed-credit work continues in isolated checkouts. Preferential ScheduleJ, wider source/filing combinations, required external evidence, ATS conflicts/credentials, IRS business rules/acceptance and release readiness remain incomplete.
+
+
+Main Roth inventory7da4282d3 checked21module211/0(1m21s), mixedsource6/0(1m29s), six57page exactheld replay, prior9/52 and10/70 exact. Logs /tmp/opentax-roth-inventory-main-related.log, /tmp/opentax-roth-inventory-main-focused.log, /tmp/opentax-roth-inventory-current-main-replay.log, /tmp/opentax-roth-inventory-prior-roth-main-v2.log, /tmp/opentax-roth-inventory-prior-substitutes-main.log. New ready3e6feada9 actual-used/shadow-unusedadoption capacity and $1QEF zero-tax ElectionB: isolated71/0, two9page packets reviewed, original11/100PDF hashes preserved. Main proof required before credit. Root isolated1b1f31fc7 actualfarm200k+issuedDIV30kqualified+pension830+ISO240k sourceprobe confirms noJ baseline succeeds; preferentialJ publicliteralguard fails, actualbaselineAMT55517. Exactprobe retained /tmp/opentax-schedulej-preferential-source-oct6/.state/research/schedulej-preferential-source/guard-audit.json. Frozen52/future untouched.

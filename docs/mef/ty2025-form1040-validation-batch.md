@@ -5096,3 +5096,8 @@ Four bounded ledger entries added, actual1454; frozen52/future unchanged. Remote
 ### Current-main QEF/adoption composition (October6)
 
 Source8917c6276 +artifact-onlya25499380, exact four-module gate13/0(41s), log `/tmp/opentax-form8621-qef-adoption-current-main-focused.log`. Full2025v5.4XSD source packet9pages, PDF313ed601462c763eb346d13b95a8bdb36b0488dac518ffaa2a38cbe47fb71db7/origins exact, XML onlyReturnTs against reviewed isolated569eaf383. Allprior10packets/91PDFpages hashes exactly preserved; comparison `/tmp/opentax-form8621-qef-adoption-current-main-comparison.json`. Actual/adoption credit $6,000 nonrefundable and $5,000 refundable; Form8621 9a/9b/9c7,895/7,455/440. No authenticity/actual carryforward/IRS acceptance claim.
+
+
+### Current-main complete Roth payment inventories (October6)
+
+7da4282d3:21module211/0(1m21s), three-module mixedsource6/0(1m29s), full2025v5.4XSD held6packets/57reviewedpages exactsource/pending/XMLonlyReturnTs/PDF/origins/retainedbytes. Immutable reviewed copy `.state/research/form4852-roth-inventory-reviewed`; manifest595ea6feb5b508e53a429df1ae7932b0f0fb168c31fc4470cdf8500764a8068f and visual17b2bbbbf5c6ead2b3bde7ae48596bdbe6720c5f7dcc28472787a6ce0fdda549. OriginalisolatedRoth9/52 andretained485210/70 exactcurrent-main replay. Logs `/tmp/opentax-roth-inventory-main-related.log`, `/tmp/opentax-roth-inventory-main-focused.log`, `/tmp/opentax-roth-inventory-current-main-replay.log`, `/tmp/opentax-roth-inventory-prior-roth-main-v2.log`, `/tmp/opentax-roth-inventory-prior-substitutes-main.log`. First priorRoth attempt used mutable source with stalezeroQEFpending; untouched originalsource passes withoutproduction change. Source conversion/prior-consumption/authentication/IRS parent gates remain open.
