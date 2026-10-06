@@ -128,7 +128,7 @@ Deno.test("ATS Scenario 1 Schedule H PDF prints sourced Part I on the 2025 widge
     scheduleHPdf.filerFields?.map((entry) => [entry.domainKey, entry.pdfField]),
   );
   assertEquals(
-    filerMap.get("nameShownOnForm1040"),
+    filerMap.get("fullName"),
     "topmostSubform[0].Page1[0].f1_1[0]",
   );
   assertEquals(

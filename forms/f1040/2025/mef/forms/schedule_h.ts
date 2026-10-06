@@ -164,9 +164,7 @@ function buildIRS1040ScheduleH(
     );
   }
   const amounts = computeScheduleHAmounts(source, 2025);
-  const ficaOnlyMinor = source.fica_only_payroll?.employee_wages[0]
-    ?.nonstudent_minor_fica_inclusion;
-  if (ficaOnlyMinor) {
+  if (source.fica_only_payroll) {
     const retained = inputSchema.parse(context.pending?.schedule_h ?? {});
     if (
       JSON.stringify(retained.fica_only_payroll) !==
@@ -175,7 +173,7 @@ function buildIRS1040ScheduleH(
           ?.line9_household_employment !== amounts.totalTax
     ) {
       throw new Error(
-        "Schedule H FICA-only minor source and tax must reconcile to retained payroll and Schedule 2 line 9",
+        "Schedule H FICA-only source and tax must reconcile to Schedule 2 line 9 and retained payroll",
       );
     }
   }

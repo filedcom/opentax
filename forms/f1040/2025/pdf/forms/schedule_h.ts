@@ -85,7 +85,7 @@ export const scheduleHPdf: PdfFormDescriptor = {
   pageIndices: (projected) =>
     projected.line9_quarter_limit === false ? [0] : [0, 1],
   filerFields: [
-    text("nameShownOnForm1040", `${page1}f1_1[0]`),
+    text("fullName", `${page1}f1_1[0]`),
     text("primarySSN", `${page1}f1_2[0]`),
   ],
   fields: [

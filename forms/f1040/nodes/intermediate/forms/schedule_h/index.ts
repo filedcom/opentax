@@ -127,8 +127,8 @@ export const inputSchema = z.object({
   // Must withhold only if employee requests it (Form W-4)
   federal_income_tax_withheld: z.number().nonnegative().optional(),
 
-  // One unrelated qualifying worker can owe FICA without reaching the FUTA
-  // quarterly threshold in either year. Both years' quarter facts are sourced.
+  // Complete unrelated-worker inventory, including minor classifications.
+  // Aggregate quarters in both years establish the absence of FUTA.
   fica_only_payroll: z.object({
     all_household_employees_included: z.literal(true),
     prior_year_payroll_source_reference: z.string().trim().min(1),
@@ -138,7 +138,7 @@ export const inputSchema = z.object({
       z.number().nonnegative(),
       z.number().nonnegative(),
     ]),
-    employee_wages: z.array(futaEmployeeSchema).length(1),
+    employee_wages: z.array(futaEmployeeSchema).min(1),
   }).strict().optional(),
 
   // One sourced child or spouse. Family wages are excluded from FICA and FUTA,
@@ -277,91 +277,34 @@ export function computeScheduleHAmounts(
       );
     }
   }
-  if (ficaOnly) {
-    const employee = ficaOnly.employee_wages[0]!;
-    const workingMinor = employee.nonstudent_minor_fica_inclusion;
-    if (
+  if (
+    ficaOnly && (
       unemployment || taxYear !== 2025 ||
-      (employee.age_18_or_older_for_fica !== true && !workingMinor) ||
-      (employee.age_18_or_older_for_fica === true && !!workingMinor) ||
-      employee.student_minor_fica_exclusion !== undefined ||
-      input.cash_wages_over_2025_limit !== true ||
       input.cash_wages_over_quarter_limit !== false ||
-      ficaOnly.prior_year_quarter_cash_wages.some((wages) => wages >= 1_000) ||
-      employee.quarterly_cash_wages.some((wages) => wages >= 1_000) ||
-      employee.quarterly_cash_wages.reduce((sum, wages) => sum + wages, 0) !==
-        employee.annual_cash_wages ||
-      employee.annual_cash_wages < TY2025_FICA_CASH_WAGE_THRESHOLD
-    ) {
-      throw new Error(
-        "Schedule H FICA-only source needs one qualifying worker and both years below the FUTA quarter threshold",
-      );
-    }
-    if (workingMinor) {
-      const references = [
-        employee.payroll_source_reference,
-        workingMinor.birth_date_source_reference,
-        workingMinor.education_status_source_reference,
-        workingMinor.principal_occupation_source_reference,
-        employee.w2?.source_reference,
-        ficaOnly.prior_year_payroll_source_reference,
-      ];
-      if (
-        workingMinor.birth_date < "2007-01-02" ||
-        workingMinor.birth_date > "2024-12-31" ||
-        new Set(references).size !== references.length
-      ) {
-        throw new Error(
-          "Schedule H FICA-only minor needs distinct age, nonstudent, principal-occupation, current/prior payroll, and W-2 sources",
-        );
-      }
-    }
-    if (
-      !employee.w2 ||
-      employee.w2.box3_social_security_wages !== employee.annual_cash_wages ||
-      employee.w2.box5_medicare_wages !== employee.annual_cash_wages ||
-      input.ss_wages !== employee.annual_cash_wages ||
-      input.medicare_wages !== employee.annual_cash_wages ||
-      (input.additional_medicare_wages ?? 0) !== 0 ||
-      (input.federal_income_tax_withheld ?? 0) !==
-        employee.w2.box2_federal_income_tax_withheld
-    ) {
-      throw new Error(
-        "Schedule H FICA-only wages and withholding differ from the employee Form W-2",
-      );
-    }
-    if (
-      employee.w2.box2_federal_income_tax_withheld > 0 &&
-      (!employee.federal_withholding_agreement ||
-        [
-          employee.payroll_source_reference,
-          ficaOnly.prior_year_payroll_source_reference,
-          employee.w2.source_reference,
-        ].includes(
-          employee.federal_withholding_agreement.w4_source_reference,
-        ))
-    ) {
-      throw new Error(
-        "Schedule H FICA-only federal withholding needs a distinct reviewed Form W-4 request and employer agreement",
-      );
-    }
+      ficaOnly.prior_year_quarter_cash_wages.some((wages) => wages >= 1_000)
+    )
+  ) {
+    throw new Error(
+      "Schedule H FICA-only source needs both years below the FUTA quarter threshold",
+    );
   }
-  if (unemployment) {
-    if (
+  if (
+    unemployment && (
       unemployment.prior_year_quarter_threshold_met !==
         (unemployment.prior_year_quarter_source_reference !== undefined)
-    ) {
-      throw new Error(
-        "Schedule H prior-year FUTA quarter needs its payroll source reference",
-      );
-    }
-    const ids = unemployment.employee_wages.map((employee) =>
-      employee.employee_id
+    )
+  ) {
+    throw new Error(
+      "Schedule H prior-year FUTA quarter needs its payroll source reference",
     );
+  }
+  const payroll = unemployment ?? ficaOnly;
+  if (payroll) {
+    const ids = payroll.employee_wages.map((employee) => employee.employee_id);
     if (new Set(ids).size !== ids.length) {
       throw new Error("Schedule H FUTA employee payroll IDs must be unique");
     }
-    const w2References = unemployment.employee_wages.flatMap((employee) =>
+    const w2References = payroll.employee_wages.flatMap((employee) =>
       employee.w2 ? [employee.w2.source_reference] : []
     );
     if (new Set(w2References).size !== w2References.length) {
@@ -374,7 +317,7 @@ export function computeScheduleHAmounts(
     let sourcedMedicareWages = 0;
     let sourcedFederalWithholding = 0;
     let sourcedAdditionalMedicareWages = 0;
-    for (const employee of unemployment.employee_wages) {
+    for (const employee of payroll.employee_wages) {
       const minor = employee.student_minor_fica_exclusion;
       const workingMinor = employee.nonstudent_minor_fica_inclusion;
       if (employee.age_18_or_older_for_fica) {
@@ -440,12 +383,38 @@ export function computeScheduleHAmounts(
           "Schedule H employee Form W-2 FICA wages differ from payroll",
         );
       }
+      if (ficaOnly) {
+        const references = [
+          employee.payroll_source_reference,
+          ficaOnly.prior_year_payroll_source_reference,
+          ...(employee.w2 ? [employee.w2.source_reference] : []),
+          ...(minor
+            ? [
+              minor.birth_date_source_reference,
+              minor.student_enrollment_source_reference,
+            ]
+            : []),
+          ...(workingMinor
+            ? [
+              workingMinor.birth_date_source_reference,
+              workingMinor.education_status_source_reference,
+              workingMinor.principal_occupation_source_reference,
+            ]
+            : []),
+        ];
+        if (new Set(references).size !== references.length) {
+          throw new Error(
+            "Schedule H FICA-only worker needs distinct current/prior payroll, classification, and W-2 sources",
+          );
+        }
+      }
       if (
         (employee.w2?.box2_federal_income_tax_withheld ?? 0) > 0 &&
         (!employee.federal_withholding_agreement ||
           [
             employee.payroll_source_reference,
             employee.w2!.source_reference,
+            ...(ficaOnly ? [ficaOnly.prior_year_payroll_source_reference] : []),
           ].includes(
             employee.federal_withholding_agreement.w4_source_reference,
           ))
@@ -461,16 +430,21 @@ export function computeScheduleHAmounts(
         employee.w2?.box2_federal_income_tax_withheld ?? 0;
     }
     if (
-      !unemployment.prior_year_quarter_threshold_met &&
+      unemployment && !unemployment.prior_year_quarter_threshold_met &&
       quarterlyWages.every((wages) => wages < 1_000)
     ) {
       throw new Error(
         "Schedule H FUTA needs a $1,000 current- or prior-year quarter",
       );
     }
+    if (ficaOnly && quarterlyWages.some((wages) => wages >= 1_000)) {
+      throw new Error(
+        "Schedule H FICA-only aggregate employee wages must stay below the FUTA quarter threshold",
+      );
+    }
     if (
       input.cash_wages_over_2025_limit !== undefined &&
-      input.cash_wages_over_2025_limit !== unemployment.employee_wages.some(
+      input.cash_wages_over_2025_limit !== payroll.employee_wages.some(
           (employee) =>
             (employee.age_18_or_older_for_fica ||
               employee.nonstudent_minor_fica_inclusion !== undefined) &&
@@ -490,17 +464,20 @@ export function computeScheduleHAmounts(
         "Schedule H FICA and withholding differ from employee Forms W-2",
       );
     }
-    const sourcedFutaWages = unemployment.employee_wages.reduce(
-      (total, employee) => total + Math.min(employee.annual_cash_wages, 7_000),
-      0,
-    );
-    const filedFutaWages = "taxable_wages" in unemployment
-      ? unemployment.taxable_wages
-      : unemployment.taxable_futa_wages;
-    if (sourcedFutaWages !== filedFutaWages) {
-      throw new Error(
-        "Schedule H FUTA wages differ from per-employee payroll after the $7,000 cap",
+    if (unemployment) {
+      const sourcedFutaWages = payroll.employee_wages.reduce(
+        (total, employee) =>
+          total + Math.min(employee.annual_cash_wages, 7_000),
+        0,
       );
+      const filedFutaWages = "taxable_wages" in unemployment
+        ? unemployment.taxable_wages
+        : unemployment.taxable_futa_wages;
+      if (sourcedFutaWages !== filedFutaWages) {
+        throw new Error(
+          "Schedule H FUTA wages differ from per-employee payroll after the $7,000 cap",
+        );
+      }
     }
   }
   if (unemployment && taxYear !== 2025) {

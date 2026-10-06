@@ -62,7 +62,13 @@ Deno.test("Schedule H native FICA-only withholding replays the reviewed W-4", ()
       }],
     },
   };
-  const xml = scheduleH.build(withWithholding, { filer });
+  const xml = scheduleH.build(withWithholding, {
+    filer,
+    pending: {
+      schedule_h: withWithholding,
+      schedule2: { line9_household_employment: 574 },
+    },
+  });
   assertStringIncludes(
     xml,
     "<FederalIncomeTaxWithheldAmt>100</FederalIncomeTaxWithheldAmt>",
@@ -89,7 +95,13 @@ Deno.test("Schedule H native FICA-only withholding replays the reviewed W-4", ()
 });
 
 Deno.test("Schedule H uses the form's required identity and line-level tax amounts", () => {
-  const xml = scheduleH.build(ficaOnlySource, { filer });
+  const xml = scheduleH.build(ficaOnlySource, {
+    filer,
+    pending: {
+      schedule_h: ficaOnlySource,
+      schedule2: { line9_household_employment: 474 },
+    },
+  });
   assertStringIncludes(
     xml,
     "<HouseholdEmployerNm>Tara Black</HouseholdEmployerNm>",
@@ -201,7 +213,7 @@ Deno.test("Schedule H FICA-only source rejects current/prior quarter and W-2 dri
         },
       }, { filer }),
     Error,
-    "differ from the employee Form W-2",
+    "Form W-2 FICA wages differ from payroll",
   );
 });
 

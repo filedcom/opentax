@@ -174,3 +174,57 @@ Their manifest digests and paths are in the
 [validation batch](ty2025-form1040-validation-batch.md). Referenced payroll,
 W-2, and state records remain unverified bytes, and the other worker and
 state/rate branches still require review.
+
+## Complete unrelated-worker FICA-only inventory (October 6)
+
+The FICA-only source now accepts a complete nonempty worker inventory and uses
+the same per-worker FICA classification and W-2/W-4 validation as the FUTA
+route. Adults, evidenced student minors, evidenced nonstudent minors whose
+principal occupation is household work, and employees below the $2,800 annual
+threshold retain separate wage tests. Both years must have aggregate quarterly
+cash wages below $1,000; checking each worker separately is insufficient.
+Duplicate employee IDs or W-2 references, conflicting classification or wage
+amounts, missing withholding agreements, and changed retained employee records
+reject. Native and PDF exports bind the complete ledger and calculated tax to
+Schedule 2 line 9. The one-worker/index-zero restriction is removed.
+
+Three reviewed structured-source full returns exercise adult+student+low-paid
+adult ($478), principal-occupation minor+student+low-paid adult ($524), and
+student+low-paid adult with agreed withholding only ($40). These are reviewed
+constructed payroll records, not authenticated W-2/W-4, birth, school, payment
+or employer records. All 15 new pages show correct owner, route, required
+blanks and Schedule 2/Form 1040 amounts. An aggregate $1,000 current quarter
+rejects even when each worker remains below $1,000; a prior $1,000 quarter,
+last-worker wage/classification conflict, and substituted last-worker record
+also reject.
+
+Retained joint-source replay exposed an independent identity discrepancy: the
+Schedule H PDF used the combined name shown on Form 1040 while native MeF
+identified the household employer. The PDF now prints the same employer name
+as native MeF, rather than adding the employee spouse to the employer field.
+Historical source packets and the pre-change production replay are retained
+separately; historical equality is not inferred where later zero/name or
+pending changes already existed before this payroll phase.
+
+Mixed family/unrelated inventories, parent exceptions, noncash or employer-paid
+employee tax, broader state/rate tracing, source-byte authentication and IRS
+acceptance remain open under the existing board parent.
+
+Final nine-module standard task: **50 passed, 0 failed, 0 ignored (19s)**.
+Typed source gate: **2/0 (12s)**. Actual saved-input replay: **6 packets,
+33 pages**, all full local v5.4 XSD; three new packets are exact whole pending,
+prepared pending, carry, origins, PDF and native XML except ReturnTs. Two prior
+packets match pre-change commit 530f39141 exactly; the joint packet changes only
+its employer-name field, with four other pages raster-exact and its corrected
+Schedule H page matching the historical original. Historical Form1040 amounts
+remain unchanged; older XML final newline and PDF zero/joint-name differences
+are separately retained. No full historical pending/PDF equality is claimed.
+
+Logs: `/tmp/opentax-scheduleh-multiworker-final-standard-v2-oct6.log`,
+`/tmp/opentax-scheduleh-multiworker-focus-v3-oct6.log`,
+`/tmp/opentax-scheduleh-main-raw-v3-oct6.log`.
+Actual replay report: `/tmp/opentax-scheduleh-main-raw-oct6/report.json`.
+Private originals: `.state/research/scheduleh-multiworker-oct6-preserved`
+(nine files), `.state/research/scheduleh-prior-oct6-preserved` (21 files).
+Root reviews: `/tmp/opentax-scheduleh-multiworker-review-oct6.json` and
+`/tmp/opentax-scheduleh-joint-identity-review-oct6.json`.
