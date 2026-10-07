@@ -254,3 +254,12 @@ withholding 3,000 and refund 1,609 agree with source, pending and XML.
 Identity, elections, page order and legibility passed.
 `final-trust-short-loss-four-page-review.json` retains observations/digests;
 this review is outside the three existing checker batches.
+
+All three pages of `single-form8888-two-account-refund` were freshly
+reviewed. Form 1040 marks attached Form 8888 and leaves its single-account
+fields blank; the 1,000 refund equals the checking allocation 300 plus savings
+allocation 700. Both routing/account numbers and account types match the
+synthetic source, pending and native XML groups. Calendar year, filer identity,
+order and legibility passed. `two-account-refund-three-page-review.json`
+retains observations/digests; this is outside the three checker batches and
+does not authenticate real bank ownership.
