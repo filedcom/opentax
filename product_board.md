@@ -2,9 +2,9 @@
 
 ## Compacted learnings — October 7, 2026
 
-- **Released checkpoint:** [v2.0.10](https://github.com/filedcom/opentax/releases/tag/v2.0.10) includes positive-spouse Form 8962 income, issuer RPE QBI aggregation, and MFJ spouse royalties from PR63. Five platform build/smoke checks, checksums and Mac ARM64 download smoke passed.
+- **Released checkpoint:** [v2.0.10](https://github.com/filedcom/opentax/releases/tag/v2.0.10) contains PR63’s Form 8962/QBI/spouse-royalty fixes; platform builds, checksums and Mac download smoke passed. Release proof remains linked below.
 - **Retained progress:** [Completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md): 1,555 bounded slices; 52 TODOs remain, requiring full proof.
-- **Evidence:** [October 7 archive](docs/mef/ty2025-product-board-status-2026-10-07.md), [handoff](docs/mef/ty2025-checkpoint-handoff-2026-10-07.md), [validation record](docs/mef/ty2025-form1040-validation-batch.md), and [current execution](docs/mef/ty2025-readiness-execution-2026-10-07.md) retain detailed proof. Combined route checks passed 7/0; V32 regression covers an older snapshot.
+- **Evidence:** Detailed proof: [archive](docs/mef/ty2025-product-board-status-2026-10-07.md), [handoff](docs/mef/ty2025-checkpoint-handoff-2026-10-07.md), [validation](docs/mef/ty2025-form1040-validation-batch.md), [execution](docs/mef/ty2025-readiness-execution-2026-10-07.md). Combined route checks: 7/0; V32 covers an older snapshot.
 - **Current validation:** 361/372 prepared (4,714 pages), 11 guarded; 75 bounded passes / 267 packets / 2,706 pages. Thirteen SHOP packets unapproved; prior Form 3800 parity qualified. Authenticity, coverage, BR and IRS acceptance open. Drive/local: 746 XSDs agree. Full regression: 12,213 passed / 42 failed; eight test repairs verified by 189/0 focused cases. Exact full rerun live on 23cbeee5d; detailed failures and hashes in current execution.
 - **Execution boundary:** finish existing TODOs for MeF testing. Main scope frozen; check off only fully proved requirements. Discoveries belong only in `future_todo` and remain unworked. Compact learnings before work; link detailed evidence.
 
@@ -85,6 +85,8 @@
 
 Newly discovered work belongs here for future planning. It is outside the
 current execution queue.
+
+- [ ] Reconcile Form 1040 line 12b in `mfs-two-loan-mortgage-limit`: the October 7 source and pending data set `mfs_spouse_itemizing: true`, and native XML emits `MustItemizeInd` X, but actual page 2 leaves the spouse-itemizes checkbox blank. The [2025 IRS instructions](https://www.irs.gov/instructions/i1040gi) require that mark. Mortgage deduction 15,012, tax 9,209 and refund 2,791 reconcile; full checkbox parity remains unapproved. Future planning only; do not implement in the current queue.
 
 - [ ] Review newly identified Form 8621 Part II elections D–H, qualifying-insurance status, and atypical indirect-owner/first-chain workflows against their specific deemed-sale/dividend, E&P, basis, source and attachment requirements. Discovered in the October6 parent scope audit; future planning only, not part of the current execution queue.
 
