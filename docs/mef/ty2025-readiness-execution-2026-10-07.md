@@ -1309,3 +1309,9 @@ terminal log SHA256 `20377222e40eb9017c7293b94a1efdb5df33b02a35df7a57f3d01634d63
 `verified220-aggregate.json` verifies 29 disjoint terminal passing batches /
 220 packets / 1,952 actual pages. Runtime and original generation flags unchanged.
 Main scope remains frozen: 52 requirements open; thirteen future items unworked.
+
+### Paired-owner HSA other-coverage/current-excess packet: review withheld
+
+All ten actual pages of `joint-other-coverage-hsa-current-excess` were inspected against source, pending amounts and native XML. Alex’s six family-eligible months give 4,275 before the shared 2,000 allocation; Sam’s 2,275 shared allocation plus 4,275 exclusive second-half limit gives 6,550. Deductions of 2,000 and 6,000 join Schedule 1/1040 at 8,000; Alex’s 1,000 excess and 5,000 year-end balance produce 60 tax, total tax 5,646 and refund 6,354. Form 8889 identities/copies remain distinct. See [2025 Form 8889 instructions](https://www.irs.gov/instructions/i8889) and [Form 5329 instructions](https://www.irs.gov/instructions/i5329).
+
+PDF Form 5329 line 47 prints 1,000; native XML omits `HSAExcessContriCurrentYearAmt`, although the cached IRS v5.4 schema identifies it as line 47. Native line 48/49 totals remain correct. This discrepancy is recorded only in `future_todo` and remains unworked. The packet is unapproved and outside the 220-packet passing aggregate; no checker pass claimed. Private `paired-hsa-current-excess-ten-page-observation.json` pins all source/XML/PDF hashes and page observations. Original preparation flags remain unchanged. The synthetic allocation reference and coverage/contribution/balance assertions do not authenticate signed or issuer records, prior filings, business rules or IRS acceptance.
