@@ -1,6 +1,6 @@
 import { form8582 } from "./mef/forms/f8582.ts";
 import { form8582Pdf } from "./pdf/forms/f8582.ts";
-import { assertEquals, assertRejects, assertThrows } from "@std/assert";
+import { assertEquals, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "./index.ts";
 import { passivePropertyInputs } from "./eic_passive_property.fixture.ts";
 import { normalizeAllPending } from "./pending.ts";
@@ -28,7 +28,7 @@ function lossInputs(farmIncome: boolean, nonpassive: boolean, above: boolean) {
   return inputs;
 }
 
-Deno.test("source-backed current ordinary sale losses reach finalized AGI/EIC and preserve loss character while exports stay guarded", async () => {
+Deno.test("source-backed current ordinary sale losses reach finalized AGI/EIC and preserve loss character through source-reconciled registered exports", async () => {
   const flag = Deno.args.indexOf("--write-review-artifacts");
   const output = flag < 0 ? undefined : Deno.args[flag + 1];
 
@@ -100,31 +100,26 @@ Deno.test("source-backed current ordinary sale losses reach finalized AGI/EIC an
       assertEquals(form4797EicPassiveOrdinary(p.form4797), -1500);
     }
     const filer = extractFilerIdentity(result.pending.f1040)!;
-    const guard =
-      "Current passive property sale loss filing projection is not finalized";
-    assertThrows(
-      () => form4797.build(p.form4797, { pending: p, filer }),
-      Error,
-      guard,
+    const nativeSale = form4797.build(p.form4797, { pending: p, filer });
+    if (c.ordinary === 0) assertEquals(nativeSale, "");
+    else {assertStringIncludes(
+        nativeSale,
+        `<OtherGainLossAmt>${c.ordinary}</OtherGainLossAmt>`,
+      );}
+    assertEquals(
+      form4797Pdf.projectFields!(p.form4797 as any, p as any).ordinary_gain ??
+        0,
+      c.ordinary,
     );
-    assertThrows(
-      () => form4797Pdf.projectFields!(p.form4797 as any, p as any),
-      Error,
-      guard,
+    assertStringIncludes(
+      form8582.build(p.form8582, { pending: p, filer }),
+      "<IRS8582>",
     );
-    assertThrows(
-      () => form8582.build(p.form8582, { pending: p, filer }),
-      Error,
-      "Current passive original-form loss filing projection is not finalized",
-    );
-    assertThrows(
-      () => form8582Pdf.projectFields!(p.form8582 as any, p as any),
-      Error,
-      "Current passive original-form loss filing projection is not finalized",
-    );
-    await assertRejects(() =>
-      buildMefBundle(buildPending(result.pending), { filer, attachments: [] })
-    );
+    form8582Pdf.projectFields!(p.form8582 as any, p as any);
+    await buildMefBundle(buildPending(result.pending), {
+      filer,
+      attachments: [],
+    });
     if (output) {
       await Deno.writeTextFile(
         `${output}/graph-${Number(c.farmIncome)}-${Number(c.nonpassive)}-${

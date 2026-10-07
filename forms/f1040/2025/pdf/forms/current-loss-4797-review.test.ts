@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { assertEquals, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../index.ts";
 import { passivePropertyInputs } from "../../eic_passive_property.fixture.ts";
@@ -47,10 +47,9 @@ Deno.test("current ordinary loss Form 4797 review prints allowed amounts and omi
     assertEquals(review.filingReady, false);
     assertEquals(review.issuerVerified, false);
     assertEquals(review.line4, c.amount);
-    assertThrows(
-      () => form4797Pdf.projectFields!(pending.form4797, pending),
-      Error,
-      "filing projection is not finalized",
+    assertEquals(
+      form4797Pdf.projectFields!(pending.form4797, pending).ordinary_gain ?? 0,
+      c.amount,
     );
     assertEquals(pending, before);
     if (c.amount === 0) {

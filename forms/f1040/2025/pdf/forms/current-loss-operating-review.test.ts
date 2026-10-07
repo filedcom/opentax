@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { assertEquals, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../index.ts";
 import { normalizeAllPending } from "../../pending.ts";
@@ -126,9 +126,12 @@ Deno.test("current loss operating review PDFs retain original expenses and only 
     assertStringIncludes(farmText, "Alex Example");
     assertStringIncludes(farmText, "7000");
     if (c.npa) assertStringIncludes(scheduleText, "NPA 5000");
-    if (!c.farm) {
-      assertThrows(() => form4835Pdf.projectFields!(pending.f4835, pending));
-    }
+    const farmProjection = form4835Pdf.projectFields!(pending.f4835, pending);
+    assertEquals(
+      (farmProjection.activities as Record<string, unknown>[])[0]
+        .line34c_allowed_loss ?? 0,
+      0,
+    );
     assertEquals(pending, before);
     if (output) {
       await Deno.writeFile(

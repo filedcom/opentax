@@ -1,3 +1,4 @@
+import { currentLossFilingProjection } from "../../current-loss-filing-projection.ts";
 import { assertCurrentPassivePropertyReturn } from "../../current_passive_property_source.ts";
 import { assertCurrentPassiveLine10Return } from "../../current_passive_line10_source.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
@@ -234,7 +235,10 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 export const form4797Pdf: PdfFormDescriptor = {
   pendingKey: "form4797",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f4797--2025.pdf",
-  pageIndices: (fields) => fields.pdf_line14 !== undefined ? [0] : [0, 1],
+  pageIndices: (fields) =>
+    fields.pdf_line14 !== undefined || fields.pdf_current_loss_only === true
+      ? [0]
+      : [0, 1],
   filerFields: [
     {
       kind: "text",
@@ -255,6 +259,43 @@ export const form4797Pdf: PdfFormDescriptor = {
     },
   ],
   projectFields(fields, allPending) {
+    if (fields.current_loss_forms !== undefined) {
+      const projection = currentLossFilingProjection({
+        ...allPending,
+        form4797: fields,
+      });
+      const sales = projection.saleRows.filter((row) => row.filed_net !== 0);
+      if (!sales.length) return {};
+      if (sales.length > 4) {
+        throw new Error(
+          "Current loss Form 4797 needs more than four sale columns",
+        );
+      }
+      const projected: Record<string, unknown> = {
+        pdf_line17: projection.line4,
+        ordinary_gain: projection.line4,
+        pdf_current_loss_only: true,
+      };
+      const date = (iso: string) => {
+        const [year, month, day] = iso.split("-");
+        return `${month}/${day}/${year}`;
+      };
+      sales.forEach((row, index) => {
+        const prefix = index === 0
+          ? "pdf_sale"
+          : `pdf_current_sale_${index + 1}`;
+        Object.assign(projected, {
+          [`${prefix}_description`]: row.description,
+          [`${prefix}_acquired`]: date(row.acquired_on),
+          [`${prefix}_sold`]: date(row.sold_on),
+          [`${prefix}_price`]: row.gross_sales_price,
+          [`${prefix}_depreciation`]: row.depreciation_allowed,
+          [`${prefix}_basis`]: row.cost_or_other_basis,
+          [`${prefix}_gain`]: row.filed_net,
+        });
+      });
+      return projected;
+    }
     assertCurrentPassivePropertyReturn(fields, allPending);
     assertCurrentPassiveLine10Return(fields, allPending);
     if (

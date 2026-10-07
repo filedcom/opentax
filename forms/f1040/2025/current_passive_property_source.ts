@@ -1,3 +1,4 @@
+import { currentLossFilingProjection } from "./current-loss-filing-projection.ts";
 import { isDeepStrictEqual } from "node:util";
 import { inputSchema as scheduleSchema } from "../nodes/inputs/schedule_e/index.ts";
 import {
@@ -11,9 +12,8 @@ export function assertCurrentPassivePropertyReturn(
   pending: Readonly<Record<string, unknown>> | undefined,
 ) {
   if (fields.current_loss_forms !== undefined) {
-    throw new Error(
-      "Current passive property sale loss filing projection is not finalized",
-    );
+    currentLossFilingProjection({ ...pending, form4797: fields });
+    return;
   }
   const raw = pending?.schedule_e;
   const buckets = Array.isArray(raw) ? raw : [raw];
@@ -31,9 +31,8 @@ export function assertCurrentPassivePropertyReturn(
     return s ? [s] : [];
   });
   if (sources.some((s) => currentPropertyAmounts(s).gain < 0)) {
-    throw new Error(
-      "Current passive property sale loss filing projection is not finalized",
-    );
+    currentLossFilingProjection({ ...pending, form4797: fields });
+    return;
   }
   if (!sources.length) {
     if (fields.current_property_sources !== undefined) {

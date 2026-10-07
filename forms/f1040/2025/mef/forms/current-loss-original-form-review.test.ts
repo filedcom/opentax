@@ -135,17 +135,13 @@ Deno.test("current loss original-form native reviews reconcile original deductio
       schemas.IRS1040ScheduleE,
     );
     await validateXml(review.farmRows[0].xml, "IRS4835", schemas.IRS4835);
-    assertThrows(
-      () =>
-        form4797.build(source.pending.form4797, { pending: source.pending }),
-      Error,
-      "filing projection is not finalized",
+    assertEquals(
+      form4797.build(source.pending.form4797, { pending: source.pending }),
+      review.saleXml,
     );
-    assertThrows(
-      () =>
-        scheduleE.build(source.pending.schedule_e, { pending: source.pending }),
-      Error,
-      "filing projection is not finalized",
+    assertEquals(
+      scheduleE.build(source.pending.schedule_e, { pending: source.pending }),
+      review.scheduleXml,
     );
     assertEquals(source.pending, before);
     if (output) {

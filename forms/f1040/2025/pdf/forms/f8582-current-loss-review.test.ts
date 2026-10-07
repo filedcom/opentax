@@ -81,11 +81,8 @@ Deno.test("current property loss review prints source-bound Parts V VII VIII IX 
       assertEquals(Number(f.part8_total_unallowed), 5000);
       assertEquals(Number(f.part8_total_allowed), 0);
     }
-    assertThrows(
-      () => form8582Pdf.projectFields!(pending.form8582, pending),
-      Error,
-      "filing projection is not finalized",
-    );
+    const filed = form8582Pdf.projectFields!(pending.form8582, pending);
+    for (const key of Object.keys(f)) assertEquals(filed[key], f[key]);
     const changed = structuredClone(pending);
     changed.eitc.investment_income_floor = 11949;
     assertThrows(() => projectCurrentPropertyLoss8582Review(changed));

@@ -1,3 +1,4 @@
+import { currentLossFilingProjection } from "../../current-loss-filing-projection.ts";
 import { mefBusinessNameLine1 } from "../../../mef/business-name.ts";
 import { currentPropertyPassiveAmounts } from "../../../nodes/inputs/schedule_e/current-property-source.ts";
 import { assertCurrentPassivePropertyReturn } from "../../current_passive_property_source.ts";
@@ -370,6 +371,25 @@ export function validatePassiveActivityLink(
   items: readonly Property[],
   context: MefBuildContext | undefined,
 ): ReadonlyMap<number, number> {
+  if (
+    (context?.pending?.form8582 as Record<string, unknown> | undefined)
+      ?.current_loss_forms !== undefined
+  ) {
+    const projection = currentLossFilingProjection(context?.pending);
+    if (
+      projection.properties.length !== items.length ||
+      projection.properties.some((row, index) =>
+        row.activity_id !== items[index].activity_id
+      )
+    ) {
+      throw new Error(
+        "Current loss Schedule E needs the matching property inventory",
+      );
+    }
+    return new Map(
+      projection.properties.map((row, index) => [index, row.deductibleLoss]),
+    );
+  }
   const entireLoss = items.length === 1
     ? qualifiedEntireDispositionLoss(items[0])
     : undefined;

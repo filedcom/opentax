@@ -1,3 +1,4 @@
+import { currentLossFilingProjection } from "../../current-loss-filing-projection.ts";
 import { currentPropertyPassiveAmounts } from "../../../nodes/inputs/schedule_e/current-property-source.ts";
 import { assertCurrentPassivePropertyReturn } from "../../current_passive_property_source.ts";
 import { assertCurrentPassiveLine10Return } from "../../current_passive_line10_source.ts";
@@ -624,6 +625,12 @@ export const form4797: MefFormDescriptor<"form4797", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f4797.pdf",
   build(fields, context) {
+    if (fields.current_loss_forms !== undefined) {
+      return currentLossFilingProjection({
+        ...context?.pending,
+        form4797: fields,
+      }).saleXml;
+    }
     assertCurrentPassivePropertyReturn(
       fields as Record<string, unknown>,
       context?.pending,

@@ -127,11 +127,9 @@ Deno.test("source-bound current ordinary loss review projects Parts V VII VIII I
     } finally {
       await Deno.remove(temp);
     }
-    assertThrows(
-      () =>
-        form8582.build(source.pending.form8582, { pending: source.pending }),
-      Error,
-      "filing projection is not finalized",
+    assertEquals(
+      form8582.build(source.pending.form8582, { pending: source.pending }),
+      review.xml,
     );
     if (output) {
       await Deno.writeTextFile(`${output}/${c.id}.xml`, xml, {

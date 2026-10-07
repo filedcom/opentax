@@ -1,3 +1,4 @@
+import { currentLossFilingProjection } from "../../current-loss-filing-projection.ts";
 import {
   calculateForm4835AtRiskNet,
   inputSchema as form4835InputSchema,
@@ -32,6 +33,20 @@ export function farmAllowedLosses(
     );
   }
   const input = form8582InputSchema.parse(linked);
+  if (input.current_loss_forms !== undefined) {
+    const projection = currentLossFilingProjection(context?.pending);
+    if (
+      projection.farmRows.length !== farms.length ||
+      projection.farmRows.some((row, index) =>
+        row.activity_id !== farms[index].activity_id
+      )
+    ) {
+      throw new Error(
+        "Current loss farm allocation needs the matching activity inventory",
+      );
+    }
+    return projection.farmRows.map((row) => row.allowed_loss);
+  }
   const activities = input.activities ?? [];
   form8582.build(linked as Record<string, unknown>, context);
   const limit = passiveLossLimit({

@@ -1,9 +1,4 @@
-import {
-  assertEquals,
-  assertRejects,
-  assertStringIncludes,
-  assertThrows,
-} from "@std/assert";
+import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../index.ts";
 import { normalizeAllPending } from "../../pending.ts";
@@ -127,18 +122,12 @@ Deno.test("current loss return review prints finalized Schedule 1 and Form 1040 
       facts.pending.eitc.investment_income_floor,
       c.above ? 11951 : 11950,
     );
-    if (c.eic) {
-      assertThrows(
-        () => irs1040Pdf.projectFields!(facts.pending.f1040, facts.pending),
-        Error,
-        "Current passive property sale loss filing projection is not finalized",
-      );
-    }
-    assertThrows(
-      () => form8582Pdf.projectFields!(facts.pending.form8582, facts.pending),
-      Error,
-      "Current passive original-form loss filing projection is not finalized",
+    const filedReturn = irs1040Pdf.projectFields!(
+      facts.pending.f1040,
+      facts.pending,
     );
+    assertEquals(filedReturn.line27_eitc ?? 0, c.eic);
+    form8582Pdf.projectFields!(facts.pending.form8582, facts.pending);
     for (
       const [key, pdf] of [["f1040", review.f1040], [
         "schedule1",

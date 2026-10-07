@@ -1,3 +1,4 @@
+import { currentLossFilingProjection } from "../../current-loss-filing-projection.ts";
 import { worksheetRatios } from "./f8582-ratios.ts";
 import {
   currentPropertyPassiveAmounts,
@@ -1320,9 +1321,10 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8582.pdf",
   build(fields, context) {
     if (fields.current_loss_forms !== undefined) {
-      throw new Error(
-        "Current passive original-form loss filing projection is not finalized",
-      );
+      return currentLossFilingProjection({
+        ...context?.pending,
+        form8582: fields,
+      }).worksheet.xml;
     }
 
     const hasActivity =
