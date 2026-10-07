@@ -3,6 +3,202 @@ import { buildForm8582Ledger, readForm8582Ledger } from "./ledger.ts";
 import { reconcileForm8582NextYearOpening } from "./next_year_import.ts";
 import { FilingStatus } from "../../../types.ts";
 
+const retainedSaleSource = {
+  activities: [{
+    activity_id: "retained-rental",
+    name: "Retained rental",
+    activity_type: "B",
+    property_type: 1,
+    reporting_form: "schedule_e",
+    current_net: -2_000,
+    prior_unallowed_operating: 3_000,
+    prior_unallowed_4797_part1: 0,
+    prior_unallowed_4797_part2: 0,
+    prior_year_8582_source: {
+      tax_year: 2024,
+      activity_id: "retained-rental",
+      filed_part_vii_column_c: 3_000,
+      source_document_reference: "2024 filed Form 8582 Part VII",
+    },
+  }],
+  current_loss: 2_000,
+  prior_unallowed: 3_000,
+  has_other_passive: true,
+  has_current_4797_transaction: true,
+  current_4797_sale_gains: [{
+    activity_id: "retained-rental",
+    activity_name: "Retained rental",
+    part: "II",
+    gain: 4_000,
+    entire_activity_interest_disposed: false,
+  }],
+};
+
+Deno.test("Form 8582 retained-sale ledger keeps operating loss separate from either sale character", () => {
+  for (const part of ["I", "II"] as const) {
+    const source = {
+      ...retainedSaleSource,
+      current_4797_sale_gains: [{
+        ...retainedSaleSource.current_4797_sale_gains[0],
+        part,
+      }],
+    };
+    const ledger = buildForm8582Ledger(source, "Accepted retained-sale return");
+    assertEquals(ledger.ending_unallowed_loss, 1_000);
+    assertEquals(ledger.activities[0].lines, [{
+      reporting_form: "schedule_e",
+      opening_unallowed_loss: 3_000,
+      current_year_loss: 2_000,
+      current_same_part_income: 0,
+      allowed_loss: 4_000,
+      ending_unallowed_loss: 1_000,
+    }]);
+    assertEquals(
+      readForm8582Ledger(ledger, source, "Accepted retained-sale return"),
+      ledger,
+    );
+    assertEquals(
+      reconcileForm8582NextYearOpening(
+        {
+          tax_year: 2026,
+          prior_accepted_return_reference: "Accepted retained-sale return",
+          rows: [{
+            activity_id: "retained-rental",
+            reporting_part: "viii",
+            reporting_form: "schedule_e",
+            prior_unallowed_loss: 1_000,
+          }],
+        },
+        ledger,
+        source,
+        "Accepted retained-sale return",
+      ).rows[0]
+        .prior_unallowed_loss,
+      1_000,
+    );
+    assertThrows(
+      () =>
+        readForm8582Ledger(ledger, {
+          ...source,
+          current_4797_sale_gains: [{
+            ...source.current_4797_sale_gains[0],
+            gain: 4_001,
+          }],
+        }, "Accepted retained-sale return"),
+      Error,
+      "stored ledger does not match",
+    );
+  }
+});
+
+Deno.test("Form 8582 retained active-rental ledger includes sale income before special allowance", () => {
+  const source = {
+    ...retainedSaleSource,
+    activities: [{
+      ...retainedSaleSource.activities[0],
+      activity_type: "A",
+      current_net: -5_000,
+      prior_unallowed_operating: 8_000,
+      prior_active_participation: true,
+      prior_year_8582_source: {
+        ...retainedSaleSource.activities[0].prior_year_8582_source,
+        filed_part_vii_column_c: 8_000,
+      },
+    }],
+    current_loss: 5_000,
+    rental_current_loss: 5_000,
+    prior_unallowed: 8_000,
+    rental_prior_eligible_loss: 8_000,
+    has_other_passive: false,
+    has_active_rental: true,
+    active_participation: true,
+    filing_status: FilingStatus.Single,
+    modified_agi: 140_000,
+    current_4797_sale_gains: [{
+      ...retainedSaleSource.current_4797_sale_gains[0],
+      gain: 3_000,
+    }],
+  };
+  const ledger = buildForm8582Ledger(source, "Accepted active retained sale");
+  assertEquals(ledger.activities[0].lines[0], {
+    reporting_form: "schedule_e",
+    opening_unallowed_loss: 8_000,
+    current_year_loss: 5_000,
+    current_same_part_income: 0,
+    allowed_loss: 8_000,
+    ending_unallowed_loss: 5_000,
+  });
+  const phasedOut = buildForm8582Ledger({
+    ...source,
+    modified_agi: 200_000,
+  }, "Accepted active retained sale");
+  assertEquals(phasedOut.activities[0].lines[0].allowed_loss, 3_000);
+  assertEquals(phasedOut.ending_unallowed_loss, 10_000);
+  for (
+    const changed of [
+      { active_participation: false },
+      { modified_agi: undefined },
+      {
+        activities: [{
+          ...source.activities[0],
+          prior_active_participation: false,
+        }],
+      },
+    ]
+  ) {
+    assertThrows(() =>
+      buildForm8582Ledger(
+        { ...source, ...changed },
+        "Accepted active retained sale",
+      )
+    );
+  }
+});
+
+Deno.test("Form 8582 retained-sale ledger rejects unreviewed disposition and source changes", () => {
+  const sale = retainedSaleSource.current_4797_sale_gains[0];
+  for (
+    const changed of [
+      {
+        current_4797_sale_gains: [{
+          ...sale,
+          entire_activity_interest_disposed: undefined,
+        }],
+      },
+      {
+        current_4797_sale_gains: [{
+          ...sale,
+          entire_activity_interest_disposed: true,
+        }],
+      },
+      { current_4797_sale_gains: [{ ...sale, activity_id: "another-rental" }] },
+      {
+        current_4797_sale_gains: [{ ...sale, activity_name: "Another rental" }],
+      },
+      { current_4797_sale_gains: [sale, sale] },
+      {
+        activities: [{
+          ...retainedSaleSource.activities[0],
+          prior_year_8582_source: undefined,
+        }],
+      },
+      {
+        activities: [{
+          ...retainedSaleSource.activities[0],
+          prior_unallowed_4797_part1: 1,
+        }],
+      },
+    ]
+  ) {
+    assertThrows(() =>
+      buildForm8582Ledger(
+        { ...retainedSaleSource, ...changed },
+        "Accepted retained sale",
+      )
+    );
+  }
+});
+
 const source = {
   activities: [
     {

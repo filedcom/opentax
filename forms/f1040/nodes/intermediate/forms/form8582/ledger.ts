@@ -6,6 +6,7 @@ import {
   assertPriorYear8582Evidence,
   form8582,
   inputSchema,
+  passiveActivity,
   passiveLossLimit,
 } from "./index.ts";
 import { FilingStatus } from "../../../types.ts";
@@ -137,12 +138,24 @@ export function buildForm8582Ledger(
     );
   const hasCurrentSale = input.has_current_4797_transaction === true ||
     (input.current_4797_sale_gains?.length ?? 0) > 0;
+  // Only the existing operating-PAL retained-sale route is admitted here.
+  // The source validator and node below still review the activity, sale,
+  // prior filed row, and active-rental allowance before a snapshot is built.
+  const retainedOperatingSale = hasCurrentSale &&
+    sourceActivities.length === 1 &&
+    sourceActivities[0].reporting_form === "schedule_e" &&
+    sourceActivities[0].prior_unallowed_operating > 0 &&
+    !hasPrior4797 &&
+    input.current_4797_sale_gains?.length === 1 &&
+    input.current_4797_sale_gains[0].entire_activity_interest_disposed ===
+      false;
   if (
-    (!hasPrior4797 && !activeRentalActivities && !otherPassiveActivities) ||
-    hasCurrentSale
+    (!hasPrior4797 && !activeRentalActivities && !otherPassiveActivities &&
+      !retainedOperatingSale) ||
+    (hasCurrentSale && !retainedOperatingSale)
   ) {
     throw new Error(
-      "Form 8582 operating ledger needs identified other-passive activities or sourced active rentals without a current sale",
+      "Form 8582 operating ledger needs identified other-passive activities or sourced active rentals without a current sale, or a reviewed retained operating sale",
     );
   }
   assertPriorYear8582Evidence(input);
@@ -153,33 +166,43 @@ export function buildForm8582Ledger(
     : undefined;
   const operatingAllocation = !hasPrior4797
     ? allocatePassiveActivityLosses(
-      sourceActivities.map((activity) => ({
-        currentNet: activity.current_net,
-        priorUnallowed: activity.prior_unallowed_operating,
-        specialEligible: activity.activity_type === "A",
-        priorSpecialEligible: activeRentalActivities &&
-          activity.prior_active_participation === true,
-      })),
-      passiveLossLimit({
-        currentIncome: input.current_income ?? 0,
-        currentLoss: input.current_loss ?? 0,
-        priorUnallowed: input.prior_unallowed ?? 0,
-        rentalLoss: activeRentalActivities
-          ? (input.rental_current_loss ?? 0) +
-            (input.rental_prior_eligible_loss ?? 0)
-          : 0,
-        rentalIncome: activeRentalActivities
-          ? input.rental_current_income ?? 0
-          : 0,
-        activeParticipation: activeRentalActivities,
-        ...(activeRentalActivities
-          ? {
-            modifiedAgi: input.modified_agi,
-            filingStatus: input.filing_status,
-            mfsLivedApartAllYear: input.mfs_lived_apart_all_year,
-          }
-          : {}),
-      }).allowed,
+      sourceActivities.map((activity) => {
+        const saleGain = (input.current_4797_sale_gains ?? []).filter((sale) =>
+          sale.activity_id === activity.activity_id
+        ).reduce((sum, sale) => sum + sale.gain, 0);
+        return {
+          currentNet: activity.current_net + saleGain,
+          currentIncome: Math.max(0, activity.current_net) + saleGain,
+          currentLoss: Math.max(0, -activity.current_net),
+          priorUnallowed: activity.prior_unallowed_operating,
+          specialEligible: activity.activity_type === "A",
+          priorSpecialEligible:
+            (activeRentalActivities || retainedOperatingSale) &&
+            activity.prior_active_participation === true,
+        };
+      }),
+      passiveLossLimit(
+        retainedOperatingSale ? passiveActivity(input) : {
+          currentIncome: input.current_income ?? 0,
+          currentLoss: input.current_loss ?? 0,
+          priorUnallowed: input.prior_unallowed ?? 0,
+          rentalLoss: activeRentalActivities
+            ? (input.rental_current_loss ?? 0) +
+              (input.rental_prior_eligible_loss ?? 0)
+            : 0,
+          rentalIncome: activeRentalActivities
+            ? input.rental_current_income ?? 0
+            : 0,
+          activeParticipation: activeRentalActivities,
+          ...(activeRentalActivities
+            ? {
+              modifiedAgi: input.modified_agi,
+              filingStatus: input.filing_status,
+              mfsLivedApartAllYear: input.mfs_lived_apart_all_year,
+            }
+            : {}),
+        },
+      ).allowed,
     )
     : undefined;
   const allocatedActivities = prior4797Allocation?.byActivity ??
