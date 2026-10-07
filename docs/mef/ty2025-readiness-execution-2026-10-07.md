@@ -607,3 +607,15 @@ standalone-only address, order and full-page legibility were checked.
 The new disjoint **1-packet / 5-page** `early-ira-reviewed-batch` is
 under unchanged read-only verification, with no pass claim until terminal.
 Synthetic issuer facts do not prove authentic records or ATS acceptance.
+
+
+The early-IRA verifier completed **exit 0** at
+`2026-10-07T03:59:31.377243Z`, manifest SHA-256
+`4df261056f515f766b089621ceaeedadcc158e03715cb30dddd7194b3fab4187`,
+log SHA-256 `b42d1d2f80d996571c15991b0a2b76f84a5f43df6092c1e725ac55399229249c`.
+No runtime files changed. Ten disjoint terminal scopes now cover
+**193 packets / 1,838 pages**, with Form2441/Form7217 observations excluded.
+`verified193-aggregate.json` retains the audit. Current full-regression handle
+remains live; latest observation585 passing markers/zero failures is progress
+only, not a terminal full-regression pass. Main52 requirements and all five
+future items remain unchanged.
