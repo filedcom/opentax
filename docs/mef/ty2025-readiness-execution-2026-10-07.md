@@ -584,3 +584,26 @@ were rechecked: the reopening ATS service requires **R10.A** WSDLs. The
 available Drive **R10.9/PY2026** package is therefore historical comparison
 material, not proof of the required current service package. This is evidence
 for the existing current-WSDL gate, not a new task or future-scope implementation.
+
+
+The joint-HSA verifier completed **exit 0** at
+`2026-10-07T03:57:34.954635Z`, manifest SHA-256
+`0eb062bb13e6f920612faac1ab034bc8ad3869b50f8154a024b8686975056c35`,
+log SHA-256 `697d8a9b80a16fc34db37abd6f8fa97e794673a60c75eaad13cee664df9be994`.
+No runtime files changed. Nine disjoint passing checkpoints now cover
+**192 packets / 1,833 pages**; `verified192-aggregate.json` retains the audit.
+
+Fresh `single-form5329-two-early-ira-distributions` review checked five
+actual pages against complete supplied synthetic source, pending and native
+XML. Primary owner is Alex111223333 (age40); distinct payer EINs123456789
+and987654321 report taxable code1 IRA distributions4,000 and6,000.
+IRA gross/taxable and Form5329PartIline1/3 total10,000; no exception
+claim entered. [2025 Form5329](https://www.irs.gov/pub/irs-prior/f5329--2025.pdf)
+line4 gives additional tax1,000, reaching Schedule2lines8/21 and
+Form1040line23/24 once. Standard15,750 reduces taxable income tozero;
+no withholding/payment/refund, owed1,000. Names/SSNs, checkbox semantics,
+standalone-only address, order and full-page legibility were checked.
+`two-early-ira-5329-five-page-review.json` retains notes and hashes.
+The new disjoint **1-packet / 5-page** `early-ira-reviewed-batch` is
+under unchanged read-only verification, with no pass claim until terminal.
+Synthetic issuer facts do not prove authentic records or ATS acceptance.
