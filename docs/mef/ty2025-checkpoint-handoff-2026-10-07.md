@@ -1,10 +1,16 @@
 # TY2025 checkpoint and next-session handoff — October 7, 2026
 
-## Release boundary
+## Current release and cleaned board
+
+[OpenTax v2.0.10](https://github.com/filedcom/opentax/releases/tag/v2.0.10) is the latest regular release, from merged main `d756a895346909c2a2e2c81f735045f1f910084f` ([PR63](https://github.com/filedcom/opentax/pull/63)). It includes all three follow-up routes below. Release workflow [37556448774](https://github.com/filedcom/opentax/actions/runs/37556448774) passed all five platform builds/smokes and publication; published digests match SHA256SUMS and the downloaded Mac ARM64 checksum/smoke passed. Physical evidence: `.state/research/release-v2.0.10-oct7/manifest.json` (nine files plus manifest).
+
+The board is cleaned up for this checkpoint: **1,555 bounded completed slices**, **52 unchanged active TODOs**, and **one unchanged future item**. [October 7 status](ty2025-product-board-status-2026-10-07.md) supersedes the historical v2.0.9/pending-branch summaries. The four completed remote branches are removed; local evidence and worktrees remain. No full filing-ready or IRS-acceptance claim is made.
+
+## Historical v2.0.9 release boundary
 
 The initial prerelease tag `v2.0.8-checkpoint.1` remains historical; its publication run was cancelled when the user explicitly requested regular version `v2.0.9`.
 
-User requested a checkpoint, a new OpenTax version and continuation in a new session; the latest instruction leaves the board TODOs unchanged. `v2.0.9` is the regular iteration of the integrated branch `codex/ty2025-board-progress-20261004`, through 1,552 completed ledger slices. The broad filing-ready objective is unfinished. Release completed: https://github.com/filedcom/opentax/releases/tag/v2.0.9, regular/latest, tag commit `aa88071812f6f45e014509c1c3f27ae189860472`. Workflow37552329479 succeeded with allfive matching-platform builds andsmokes. Allfive downloaded assets match SHA256SUMS; downloaded macOSARM64 binary independently passed version2.0.9/calculation/validation/finalizedMeF/two-pagefilledPDF smoke. Final evidence under `.state/research/release-v2.0.9-oct7/manifest.json`; these smoke results do not prove the unfinished fullcoverage/IRS gates.
+User requested a checkpoint, a new OpenTax version and continuation in a new session; the latest instruction leaves the board TODOs unchanged. `v2.0.9` is the regular iteration of the integrated branch `codex/ty2025-board-progress-20261004`, through 1,552 completed ledger slices. The broad filing-ready objective is unfinished. Release completed: https://github.com/filedcom/opentax/releases/tag/v2.0.9, regular/latest at publication, tag commit `aa88071812f6f45e014509c1c3f27ae189860472`. Workflow37552329479 succeeded with allfive matching-platform builds andsmokes. Allfive downloaded assets match SHA256SUMS; downloaded macOSARM64 binary independently passed version2.0.9/calculation/validation/finalizedMeF/two-pagefilledPDF smoke. Final evidence under `.state/research/release-v2.0.9-oct7/manifest.json`; these smoke results do not prove the unfinished fullcoverage/IRS gates.
 
 Read all of `product_board.md` and compact current learnings before resuming implementation. The main checklist from `## Scope and completion rules` onward is frozen against `85b489a72`; 52 broad TODOs remain open. Discoveries go only into `future_todo`, which is outside the execution queue. Do not equate bounded ledger completions with closing broad parents. Detailed history is preserved in the October 6 status archive, validation batch and completed ledger.
 
@@ -20,7 +26,7 @@ Refer to the board's source-proof links for commands, digests, failure qualifica
 
 ## Three follow-up routes — integrated after the v2.0.9 tag
 
-The user subsequently authorized completing and merging these three routes, then explicitly instructed that the board TODOs remain as they are. Their implementation is now integrated into PR63; the published v2.0.9 tag remains unchanged and excludes these later commits.
+The user subsequently authorized completing and merging these three routes, then explicitly instructed that the board TODOs remain as they are. Their implementation is merged through PR63 and released in v2.0.10; the published v2.0.9 tag remains unchanged and excludes these later commits.
 
 | Route | Implementation / final proof | Retained qualification |
 |---|---|---|
@@ -50,4 +56,4 @@ ATS credentials/certificate/enrollment/endpoint/WSDL/trust/businessrules remain 
 
 ## Next session boundary
 
-The board TODOs are unchanged. Do not resume or finish the broader board without a new user request. This turn's scope is the three routes, their checks, PR63 merge, and cleanup of their completed remote branches. Full-regression and ATS notes above are retained background; no complete filing-ready or IRS-acceptance claim is made.
+The latest user request authorizes board cleanup after v2.0.10. Completed records are archived and the stale pending-route summary is removed; every active and future TODO remains unchanged. Do not execute the broader implementation queue until requested. Full-regression and ATS notes above retain their original qualifications and need current-state verification before future work.
