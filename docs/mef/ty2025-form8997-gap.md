@@ -72,3 +72,48 @@ Do not register either staged descriptor or relax
 `forms/f1040/2025/attachment-coverage.ts` until the source and return-wide joins
 above are built, then run the full test batch, TY2025 XSD/business rules, visual
 PDF checks, and ATS cases.
+
+## October 7: actual public-graph holding-only staged artifact
+
+An actual `f1040_2025.executeReturn` calculation now supplies the pending data
+for a one-lot holding-only staged projection. The synthetic opening and closing
+lot both retain QOF EIN123456789, acquisition April15,2021, description “Five
+percent QOF interest” and **50,000 long-term deferred gain**. There are no current
+additions, sales, special codes or uninvested balances. These references are
+explicitly labeled synthetic/unverified; no accepted prior return or issuer
+origin is established.
+
+The actual registered `single-w2-refund` source/filer supplies the surrounding
+return: wages75,000, withholding11,000, standard deduction15,750, taxable
+income59,250, tax7,955 and refund3,045. All Form1040 pending fields are exactly
+unchanged by the holding-only source. The staged descriptor's actual field
+projection and common `fillFormPdf` helper produce a flattened form; its
+pageIndices0/1 yield **two real filled pages**, both rendered and visually
+reviewed. PartI/IV lots and totals match the source and staged XML. PartsII/III
+and the disposition checkbox are blank; foreign No is checked and the skipped
+waiver question is blank, consistent with the [official2025 form](https://www.irs.gov/pub/irs-prior/f8997--2025.pdf).
+
+The actual standalone `IRS8997` element, with required namespace/documentId,
+passes `xmllint` against the locally cached TY2025v5.4 IRS8997 XSD and its
+includes, exit0. This is **not** a full Return1040 XSD or business-rule result.
+Both real full MeF and PDF exporters still reject with the annual-document
+guard. No descriptor was registered and no source/authentication guard was
+relaxed; activation prerequisites above remain open. Historical “no PDF filled
+or rendered” wording is superseded only for this staged holding artifact.
+
+Private artifacts are under
+`.state/research/board-execution-2026-10-07/form8997-holding-artifact-v2-20261007/`:
+source/pending/filer/projected values, XML, two-page PDF, both rendered images,
+raw filled four-page template before declared page selection, canonical cached
+IRS template and independent audit. PDFSHA256
+`64ccee6917fbdfc17a22a3276d4915987c9b3c57cadcbd667071262c4be2544f`;
+XMLSHA256 `83d0cffa8b6067407f77a78f3cd10733803d90d6655f3492b991cfd88624af21`;
+templateSHA256 `97589000d39b67737c516763bc4b89a167a3c18b47163517e98490144f4f5a4b`.
+All2,590 runtime hashes still match the green full-run manifest. First attempts
+failed for missing umask permission and an incorrect assumption that the fill
+helper itself selects form pages; v2 preserves the four-page intermediate and
+applies the staged descriptor's declared selection. This is an artifact-review
+prerequisite, **not a new positive filing packet**; passing aggregate75/267/2,706,
+main52 and future31 remain unchanged. No new future task implemented or main
+checkoff, complete Form8997 support, authentic prior history, IRSBR or ATS
+acceptance is claimed.
