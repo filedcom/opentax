@@ -6,6 +6,14 @@ import { f1040_2025 } from "../../forms/f1040/2025/index.ts";
 import { normalizeAllPending } from "../../forms/f1040/2025/pending.ts";
 import { buildForm8582Ledger } from "../../forms/f1040/nodes/intermediate/forms/form8582/ledger.ts";
 import { assertThrows } from "@std/assert";
+import { buildPending } from "../../forms/f1040/2025/mef/pending.ts";
+import { buildMefBundle } from "../../forms/f1040/2025/mef/builder.ts";
+import {
+  buildPdfBytes,
+  type PdfPageOrigin,
+} from "../../forms/f1040/2025/pdf/builder.ts";
+import { extractFilerIdentity } from "../../forms/f1040/mef/filer.ts";
+import { PDFDocument } from "pdf-lib";
 import { appendInput, createReturn, loadReturn, updateInput } from "./store.ts";
 import {
   archiveForm8582LedgerCandidate,
@@ -378,5 +386,95 @@ Deno.test("durable first-year rental sale ledgers retain allowed operating chara
     }
   } finally {
     await Deno.remove(base, { recursive: true });
+  }
+});
+
+Deno.test("first-year sale ledger sources produce complete native and prepared PDF packets", async () => {
+  const flag = Deno.args.indexOf("--write-review-artifacts");
+  const output = flag < 0 ? undefined : Deno.args[flag + 1];
+  const schema = new URL(
+    "../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  for (
+    const c of [
+      { id: "other-retained", active: false, entire: false },
+      { id: "active-retained", active: true, entire: false },
+      { id: "other-entire-gain", active: false, entire: true },
+    ]
+  ) {
+    const inputs = firstYearSaleInputs(c.active, c.entire);
+    const graph = f1040_2025.executeReturn(inputs);
+    assertEquals(graph.diagnostics, []);
+    const pending = normalizeAllPending(graph.pending);
+    const before = structuredClone(pending);
+    const filer = extractFilerIdentity(pending.f1040)!;
+    const bundle = await buildMefBundle(buildPending(pending), {
+      filer,
+      attachments: [],
+    });
+    const origins: PdfPageOrigin[] = [];
+    const bytes = await buildPdfBytes(
+      bundle.pending,
+      filer,
+      undefined,
+      bundle,
+      origins,
+    );
+    assertEquals(
+      (await PDFDocument.load(bytes)).getPageCount(),
+      origins.length,
+    );
+    assert(origins.some((p) => p.formKey === "form8582"));
+    assert(origins.some((p) => p.formKey === "form4797"));
+    assertEquals(pending.schedule1.line4_other_gains, c.entire ? 8000 : 2000);
+    assertEquals(pending.schedule1.line5_schedule_e, c.entire ? -5000 : -2000);
+    assertEquals(pending.f1040.line11_agi, c.entire ? 163000 : 160000);
+    assertEquals(pending, before);
+    const temp = await Deno.makeTempFile({ suffix: ".xml" });
+    try {
+      await Deno.writeTextFile(temp, bundle.xml);
+      const validated = await new Deno.Command("xmllint", {
+        args: ["--noout", "--schema", schema, temp],
+        stderr: "piped",
+      }).output();
+      assertEquals(
+        validated.code,
+        0,
+        new TextDecoder().decode(validated.stderr),
+      );
+    } finally {
+      await Deno.remove(temp);
+    }
+    if (output) {
+      const dir = join(output, c.id);
+      await Deno.mkdir(dir, { mode: 0o700 });
+      await Deno.writeFile(join(dir, "return.pdf"), bytes, {
+        createNew: true,
+        mode: 0o600,
+      });
+      await Deno.writeTextFile(join(dir, "return.xml"), bundle.xml, {
+        createNew: true,
+        mode: 0o600,
+      });
+      await Deno.writeTextFile(
+        join(dir, "source-pending.json"),
+        JSON.stringify(
+          {
+            inputs,
+            pending,
+            preparedPending: bundle.pending,
+            origins,
+            carryforwards: graph.carryforwards,
+            ledger: buildForm8582Ledger(pending.form8582, reference),
+            issuerVerified: false,
+            acceptanceVerified: false,
+          },
+          null,
+          2,
+        ),
+        { createNew: true, mode: 0o600 },
+      );
+    }
   }
 });
