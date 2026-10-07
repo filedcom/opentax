@@ -3507,3 +3507,55 @@ acceptances by the original deadline remain0/0%. After reopening probability
 unestimable pending source/version/business-rule/credential/acceptance gates.
 Snapshot `irs-ats-status-midnight-20261008.json` SHA256
 `11967afcb3a37a6fc31e1a5dfd7233f15fa58e23ca9ab2f565f3c8fcf3ab9245`.
+
+### October8 combined EIC investment-income source reconciliation
+
+Existing Worksheet1 parent reviewed after the compacted board. Root runtime
+remains frozen during full regression. Isolated branch
+`codex/eic-investment-reconciliation-20261008`, commit `8e1d39a44`, based on
+`d856173a5`; no production guard was opened or changed.
+
+Independent source ledger combines taxable interest200, parent exempt
+interest7000, child exempt interest150, ordinary dividends300, child
+Form8814 line12 income1400, capital distributions400, portfolio royalty900,
+nonbusiness personal-property rent900 less expenses300, and passive
+partnership rental income6000 less allowed current farm loss5000. Investment
+income is11950, AGI9800, wages5000, child tax135, EIC384 and refund249. Raising
+only parent exempt interest by1 gives investment11951, unchanged AGI, zero
+EIC and amount owed135. These are calculation results, not filed returns.
+
+Native and full PDF exports of both variants reject Form8582's gross
+ScheduleE replay: the linked royalty net900 is counted in explicit property
+rows and again in the matching passthrough royalty900, although public
+calculation includes it once. A companion existing retained-sale input with
+a second royalty property fails the separate public per-property source
+guard. The preliminary single-property royalty-expense probe also hits the
+explicit expense-free boundary. New discoveries are future rows37–38,
+unworked. Do not classify this evidence as positive filing support.
+
+Typed focused command: `deno test --allow-read --allow-write
+--allow-net=www.irs.gov forms/f1040/2025/eic_combined_investment.test.ts --
+--write-review-artifacts <private-evidence-directory>`; terminal2/0 in1s
+(whole invocation5.61s),2026-10-07T22:09:52.378844Z–22:09:57.992218Z.
+The initial focused attempt was1/1 because the fixture omitted the portfolio
+classification required by the existing native royalty source contract; the
+corrected source includes that fact and the issued-copy reference. No
+production repair is claimed. Formatter check passed.
+
+Private evidence: `.state/research/board-execution-2026-10-07/
+eic-combined-investment-20261008-v1/`; focused log SHA256
+`7121d6f81a2aaf7b80b8339a05a6aa1c47f463748b76244314df11b015a208c9`;
+11950 source/pending JSON SHA256
+`47d363e647a8d7fb1de2823ef189142801633c8c9c4035f665786d396a9335b4`;
+11951 JSON SHA256
+`d91a9d4e27e51dc7b322b336003d2c0822a56ca6e09e2427f680d61991016559`.
+Audit confirms2592 launch-path hashes unchanged, frozen main area exact to
+`0c6ae76a32d12373956d4f8e47564811185c60d7`,52 main requirements open and38
+future rows. No PDF packet, XSD pass, issuer authentication or ATS acceptance
+was produced; aggregate positive packet/page counts stay unchanged.
+
+The direct ordinary-sale loss boundary was also traced: sale schema and
+current-property reconciliation require positive gains, and allocation
+currently emits only positive sale gains. Broad EIC/8582/4797 loss support
+therefore needs original-form loss allocation, not merely removing a schema
+guard. That remains the pre-existing parent scope, not a completed slice.
