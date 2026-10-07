@@ -69,6 +69,49 @@ Primary authorities: [2025 Form 4952 and instructions](https://www.irs.gov/pub/i
   `Uint8Array` instance. V2 rehydrates the unchanged byte values before
   public execution; the source JSON hash is checked before and after.
 - Initial checked test failed typechecking seven test-only annotations;
-  corrected focused run passed 2/0. Broader compatibility is recorded by its
-  terminal log, if available, before integration. No ATS or issuer acceptance
-  is claimed.
+  corrected focused run passed 2/0. No ATS or issuer acceptance is claimed.
+
+## Final bounded qualification — October 7
+
+The original compatibility PID 2855 was absent at resume, and the retained
+`compat-v1` log had no terminal summary. The ordinary checked six-module
+`deno task test` rerun reached terminal exit 1: 29 passed and two failed solely
+because `pdftotext` was missing from the launch PATH. Both failure stacks and
+exit status are preserved. The unchanged final module was rerun with
+`/tmp/opentax-poppler-env/bin` on PATH and passed all three tests with terminal
+exit 0. All 31 distinct tests in those six modules passed across the two
+checked runs; this is not reported as a single 31/0 run.
+
+A separate fresh literal replay at
+`/tmp/opentax-form4952-mfjspouse-literal-final-oct7/` passed full local XSD
+and produced the same seven-page PDF. Source hash, complete normalized graph,
+pending packet, prepared packet, carry and page origins are unchanged. XML
+is completely equal after excluding only its generated `ReturnTs`; both
+original and fresh native files are retained. The received 1099-MISC,
+1099-INT and Schedule E property copies equal the saved source, and preparation
+preserves them. The direct debt trace and all entered Form 4952 inputs also
+match. Arithmetic independently confirms $75,000 wages plus $500 interest
+and $800 royalties gives $76,300 AGI, less $40,300 itemized deductions gives
+$36,000 taxable income, and $11,000 withholding less $3,846 tax gives the
+$7,154 refund. Form 4952 deducts the smaller of $300 traced interest and
+$1,300 investment income, with line 5 zero.
+
+The ordinary checked positive test produces the identical PDF; its carry and
+origins equal the literal replay as parsed JSON. Its prepared packet differs
+only in the synthetic Form 1098 issuer-copy file name in the `start` and
+`f1098` branches. The literal replay has exact prepared equality. No broader
+ordinary source equality is inferred from the PDF match.
+
+The final private physical archive contains 75 files with the five held
+checkpoint code/proof files, exact source, original/final/ordinary packets,
+prechange control, failure/success logs and status files, replay scripts,
+qualification report and all seven reviewed pages:
+`/tmp/opentax-form4952-mfjspouse-final-preservation-oct7/manifest.json`,
+SHA-256 `1e61056843b6b89a3d5829e395f54acc7a8aee61ff83aeb74e5afb9f1d9ea540`.
+Production and test hashes are unchanged from `f6257fc7e`; this final
+qualification updates only this proof document.
+
+The root independent source/Decimal/native oracle and seven-page review are
+retained in `.state/research/royalty-root-final-review-oct7/manifest.json`
+(20 files), SHA-256
+`a309e5c8cd9d499280b46f10d4d4cee7a89347588d26ac9880e24ca550d68e99`.
