@@ -16,6 +16,11 @@ first-year other-passive entire sale with overall gain. The normal typed
 ledger/native/source suite passed 29/0. The tested entire-gain ledger retains
 5,000 allowed operating loss and zero ending PAL; retained-sale ledgers keep
 3,000 suspended operating loss and source-reconciled synthetic opening rows.
+Isolated `c2e5dafec` subsequently produced three complete locally XSD-valid
+ten-page packets, with 19 unique images inspected and 11 exact within-batch
+matches; its test file passed 5/0. Amounts and identity reconcile, but retained
+sale FPA and entire-disposition EDPA PDF identification is missing. This is
+future item 40, unworked; complete PDF instruction parity remains unproved.
 These are unverified candidates, not accepted filings or a production 2026
 import. Prior-accepted-return proof, wider disposition characters, matching
 business rules and ATS remain open. See the [activity ledger checkpoint](ty2025-form8582-activity-id-gap.md#current-evidence-checkpoint--october-8-2026)

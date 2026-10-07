@@ -4260,3 +4260,55 @@ joint PDF header and future 39 active first-year entire-gain graph boundaries.
 No approval aggregate, main board requirement, registry count or future item
 was promoted. The running root full regression predates the new isolated
 filing/storage commits and cannot certify them.
+
+
+## October 8 — first-year sale ledger source packet verification
+
+Isolated `c2e5dafec` adds a complete local native/prepared-PDF test to the
+existing candidate storage suite, without changing production runtime. Normal
+typed result: **5 passed / 0 failed**, exit 0,
+2026-10-07T23:31:41.615988Z–23:32:24.620267Z (11s tests).
+Private `form8582-first-year-ledger-filing-20261008-v1/run.json` binds base
+`b82c1bbc4` and the changed test. Exact command/permissions are retained there;
+Poppler PATH is `/tmp/opentax-poppler-env/bin`. Log SHA-256:
+`4c7c6e58533988aaa8bc0ecbd8a487a9e67f4e5bccfec4636d887dc66b5fef16`.
+
+All three complete returns validate against cached TY2025 v5.4 Return1040 XSD:
+other-passive retained, active retained above the allowance phaseout, and
+other-passive entire disposition with overall gain. Each ten-page packet has
+two Form 1040 pages, two Schedule 1 pages, Schedule E, two Form 4797 pages
+and three Form 8582 pages. All 30 page records are covered by **19 unique
+images viewed on ten review sheets at 110dpi and 11 exact within-batch image
+matches**. `render-manifest.json`, `review-sheets.json`, and
+`independent-review-v3.json` retain source/XML/PDF hashes, origins and review.
+No independently new 30-page review is inferred from older images.
+
+Both retained cases have source operating loss 5,000 and sale gain 2,000,
+allowed operating loss 2,000 and closing PAL 3,000, AGI 160,000, deduction
+15,750, taxable income 144,250 and tax/balance due 27,467. The active Form
+8582 has modified AGI 162,000 and zero special allowance. The entire gain is
+8,000, allowed operating loss 5,000, closing PAL zero, AGI 163,000, taxable
+147,250 and tax/balance due 28,187. Tax uses the ordinary rate worksheet;
+Form 1040, Schedule 1, Schedule E and the native ordinary-gain totals agree.
+All packet document IDs are unique and the taxpayer identity matches. Source
+purchase/closing and issuer references remain synthetic.
+
+Visual review found omitted PDF disposition identification: retained Form 4797
+gains have no FPA marking; the entire-disposition normal-form gain/loss entries
+have no EDPA marking. The [2025 Form 8582 instructions](https://www.irs.gov/instructions/i8582),
+rechecked this turn under “How To Report Allowed Losses,” direct these
+identifications. Native property descriptions remain “Rental equipment,” with
+no matching BR proof. This new discovery is recorded only as future item 40,
+unworked; no annotation or native/PDF builder was changed. The XSD/test passes
+prove local generation and scoped arithmetic, not full PDF instruction parity
+or IRS acceptance. Whole Form 8582 completion and approval aggregates remain
+unchanged. The active first-year entire-gain source stays future 39, guarded.
+
+Two independent-audit script mistakes are retained separately: v1 expected a
+single global OtherGainLossAmt although Schedule 1 and Form 4797 each emit it;
+v2 looked for PrimarySSN inside IRS1040 rather than ReturnHeader. The corrected
+v3 scopes the gain assertions to their documents and the SSN to the header;
+production and the 5/0 packet test were unchanged. No failed assertion was
+counted as successful evidence. The temporary isolated research symlink was
+removed; caches and root private evidence were preserved. Root full regression
+session 41991 remains the existing held run and predates this isolated test.
