@@ -822,3 +822,76 @@ no runtimechanges. Eighteen mutually disjoint terminal scopes cover
 Currentruntime hashes match launch. Main52 requirements andall six
 futureitems remain unchanged/unworked. Latestfull-regression observation
 723passingmarkers/zerofailures remains nonterminal;PID53927 islive.
+
+
+Six actual `single-form4835-farm-rental-profit` pages were inspected:
+Form1040(two),Schedule1(two),ScheduleEpage2,Form4835. Crop-shareincome8,000
+minusfeedexpense1,000 gives7,000, agreeing4835line32/ScheduleE40/41/
+Schedule1line5/10/1040line8/9/11a. Gross8,000 agreesScheduleE42;
+standard15,750/taxable0/tax0. However, [Form4835lineA](https://www.irs.gov/pub/irs-pdf/f4835.pdf)
+has **bothYes/Noblank**, andthe completeenteredsource contains no
+active-participation answer. Calculateddefaultfalse is notsourceproofofNo.
+`farm-rental-participation-observation.json` is explicitlyunapproved;
+this packet isoutsideallpassingreviewscopes. No definitivematerial-
+participationclassification/taxerrorisasserted. The unansweredquestion
+wasrecordedonlyin `future_todo`, remainsunworked, andnoimplementation
+wasmade. Main52 unchanged; sevenfutureitems nowrecorded.
+
+
+### Unapproved disaster-plan PDF observation
+
+All six actual pages of `single-form8915f-disaster-and-ordinary-plan-distributions`
+were inspected against retained source and native XML. Form 1040 reports
+pension gross 21,000 and taxable 7,667, including 1,000 ordinary income and
+6,667 of the 20,000 disaster distribution under the three-year treatment.
+Form 8915-F Part I prints 21,000 on line 2 column (a), 20,000 on line 6,
+but leaves line 7 blank. The [IRS line 7 instructions](https://www.irs.gov/instructions/i8915f)
+require the 1,000 difference for this single-form fixture without Part IV.
+The blank was confirmed by the actual page image and extracted PDF text.
+The packet remains unapproved and outside the 202 passing selected packets;
+`disaster-plan-line7-observation.json` retains hashes and qualifications.
+The new discrepancy is recorded only in `future_todo`, with no implementation.
+Synthetic residence, loss and issuer references are not authenticated evidence.
+
+
+### Unapproved positive Form 8978 tax join
+
+All four actual pages of `single-form8978-positive-reviewed-source` were
+inspected: Form1040(two),Form8978,ScheduleA8978. The sourced 2024 correction
+27,459 minus original25,539 gives additional1,920, printed on Form8978line14
+and emitted as native `OtherTaxAmt`. Form1040line16 still prints9,875,
+the current ordinary tax alone; downstream total9,875/refund1,125 omit1,920.
+The [2025 IRS line16 instructions](https://www.irs.gov/instructions/i1040gi)
+require inclusion of positive Form8978line14 tax. Source/amount/native/PDF
+hashes are retained in `form8978-positive-tax-observation.json`.
+This packet remains unapproved and outside passing selected scopes; the
+new discrepancy is recorded only in `future_todo`, with no implementation.
+The observation does not validate prior accepted returns or external records.
+
+
+### Current rollover review checkpoint
+
+Four actual Form1040 pages across `single-direct-pension-rollover` and
+`single-ira-rollover` were inspected against synthetic source, pending and
+native XML. Pension gross20,000/taxable0 uses only line5c(1); traditional
+IRA gross5,000/taxable0 uses only line4c(1), with matching owner/account,
+June1–June2 dates, noninherited/nonRMD and no prior IRA rollover assertions.
+Both returns have standard deduction15,750 and zero tax/payments/refund.
+The [2025 IRS rollover instructions](https://www.irs.gov/instructions/i1040gi)
+support the distinct presentation. These are synthetic reviewed facts,
+not authenticated custodian/eligibility or acceptance proof.
+
+The first selected review checker exited1 because this run's review record
+incorrectly encoded `observedOwner` as an object; the checker requires the
+role string `primary`. Original record, batch and failure log are retained.
+Corrected `*-two-page-review-v2.json` records and `rollover-v2-reviewed-batch`
+retain the same source/XML/PDF hashes with corrected review metadata only.
+The corrected independent checker exited0 at2026-10-07T04:29:50.274305Z;
+source replay, actualPDF/nativeXML, canonical fields and fullXSD checks passed.
+Manifest SHA256 `93ec84671fe8bfefcea1742e168862b81d790d8d09729f70feac9a42d5f3f732`;
+terminal log SHA256 `d5dcf7cd62e87b19d713cf977424f4707abf82f892164ac44ba305a965b5d44f`.
+Tracked runtime hashes are unchanged. `verified204-aggregate.json` confirms
+19 disjoint passing batches /204 packets /1,882 actual pages. This selected
+proof does not close any broad form, source-authentication or ATS requirement.
+The full integrated regression is also still running: latest snapshot has
+792 passing markers and0 failures, which is not a terminal full-test pass.
