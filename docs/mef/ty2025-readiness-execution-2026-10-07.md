@@ -505,3 +505,28 @@ log SHA-256 `b908c1793ea52ce0db9dd8d482782a55f4f19ac3881cc2cb79b457e5b5b5874f`.
 is inferred. Original generation page checklists remain false on all
 4,714 pages. Preparation/XSD and completed selected reviews are separate
 evidence; full visual/source/coverage, business-rule and ATS gates remain open.
+
+
+The full generation was re-matched after terminal completion: **361 cases**,
+91 exact-source/PDF/XML prior matches (501 pages) and 92 internal-pending-only
+candidates (1,288 pages). No additional retained matches emerged after the
+348-packet checkpoint. Future-observation forms remain excluded from passing
+scopes regardless of historical review flags.
+
+Fresh EIC opt-out review checked the two actual Form 1040 pages against
+supplied synthetic W-2/general facts, current pending and native XML.
+Wages/AGI 15,000, standard deduction 15,750, zero tax/payment/refund;
+explicit `do_not_claim_eic: true` yields line 27c checked, line 27a blank,
+no Schedule EIC and native `DoNotClaimEICInd` X. US-main-home and digital
+asset marks, identity, order and legibility agree.
+`eic-opt-out-two-page-review.json` preserves notes and hashes. Together
+with fresh Form 8880, the separate **2-packet / 6-page**
+`fresh-elections-reviewed-batch` is now undergoing unchanged read-only
+replay/PDF/template/page-origin/XSD verification. These IDs are disjoint
+from all six verified batches and the running 28-packet batch; no terminal
+pass or broad completion is claimed yet. All future items remain unworked.
+
+The authorized Drive folder could not be opened through computer use:
+the browser tool reported `No browser is available`. This does not resolve
+the existing connector HTTP 403 package-download gate; no credentials or
+external state were changed.
