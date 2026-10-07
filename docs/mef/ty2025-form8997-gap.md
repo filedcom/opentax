@@ -117,3 +117,50 @@ prerequisite, **not a new positive filing packet**; passing aggregate75/267/2,70
 main52 and future31 remain unchanged. No new future task implemented or main
 checkoff, complete Form8997 support, authentic prior history, IRSBR or ATS
 acceptance is claimed.
+
+## October 7: current deferral/inclusion staged artifact from actual graph rows
+
+The existing staged test source was replayed through the actual public graph
+alongside `single-w2-refund`. Original asserted calculated row values were
+removed from its input array; the executor itself derives and deposits all
+three Form8949 and ScheduleD transactions. They match exactly: eligible stock
+sale30,000−10,000=20,000 short gain; separate QOF codeZ −20,000 short deferral;
+QOF codeY sale20,000−10,000+10,000 inclusion=20,000 long gain. Conditional
+ScheduleD totals are short0/long20,000; Form1040 carries capitalgain20,000,
+AGI95,000, taxable79,250, tax10,955 and refund45. The public Form8997 node
+still emits its expected blocking diagnostic. These are **conditional synthetic
+source values, not verified issuer, prior filing, basis history or election
+eligibility**; no broad legal/source approval follows from matching arithmetic.
+
+The actual staged descriptor produces two flattened pages, both rendered and
+visually inspected: PartI old-lot long50,000; PartII new-lot short20,000;
+PartIII old-lot inclusion long10,000; PartIV old-lot long40,000 and new-lot
+short20,000. Each date, EIN, description and total matches the staged XML.
+ForeignNo is checked, waiver boxes skipped, no1099B disposition checked.
+StandaloneIRS8997 validates against cached TY2025v5.4 XSD/includes, exit0;
+this is not complete Return1040 validation or business-rule approval.
+
+Actual full MeF export rejects QOF codeZ/Y without the registered annual
+attachment. Actual full PDF export rejects the fixture's unadjusted PartA
+eligible-sale row as also being a ScheduleD direct sale, **before** the QOF
+attachment guard. This newly exposed fixture issue is recorded in
+`product_board.md`'s separate future_todo and remains unworked; neither source
+rows nor production guards were changed to make the replay pass. A standalone
+staged projection does not substitute for the missing complete filing route.
+
+Private artifact root
+`.state/research/board-execution-2026-10-07/form8997-current-events-artifact-v4-20261007/`
+retains actual inputs/filer/pending/projection, graph diagnostics, distinct full
+export errors, XML/PDF/template, both viewed images, four-page intermediate and
+independent audit. PDFSHA256
+`2ebbbb77bff21121e42cd57b31b32bcb2498e4e7e08d49383342e67058149111`;
+XMLSHA256 `d056d556acc17c0092dd8464a3da954cb28ade6e58cb89b87f320461d38ec49f`;
+auditSHA256 `aa18dd1642ccd41c7655748769fb880c4c93a91c779c9059fcf23aa74f2600f2`.
+Earlier private attempts incorrectly asserted the distribution field and then
+the holding-only/same native-and-PDF guard; v4 uses the actual ScheduleD
+capital-gain field and records the different real guards. Previous scripts and
+intermediates remain retained. All2,590 runtime hashes unchanged. No production
+change or redundant suite rerun; no descriptor registration, positive full
+packet/pass aggregate increase or main checkoff. Main52/future32; current
+passing aggregate75/267/2,706 unchanged. Form8997 activation prerequisites and
+IRS/source gates remain open.
