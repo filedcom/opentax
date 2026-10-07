@@ -51,7 +51,7 @@ function otherExpense(description: string, value: number): string {
   ]);
 }
 
-function buildItem(
+export function buildForm4835Item(
   raw: F4835Item,
   loanStatementId?: string,
   cropStatementId?: string,
@@ -210,7 +210,7 @@ export const form4835: MefFormDescriptor<"f4835", Fields, readonly string[]> = {
     }
     const allowedLosses = farmAllowedLosses(context);
     return items.map((item, index) =>
-      buildItem(
+      buildForm4835Item(
         item,
         (item.ccc_loans_reported_election ?? 0) > 0
           ? statementIds[statementIndex++]

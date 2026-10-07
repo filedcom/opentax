@@ -28,7 +28,7 @@ import {
   inputSchema as form4835InputSchema,
 } from "../../../nodes/inputs/f4835/index.ts";
 import type { z } from "zod";
-import { FilingStatus, type FilerIdentity } from "../../../mef/header.ts";
+import { type FilerIdentity, FilingStatus } from "../../../mef/header.ts";
 import { inputSchema as partnershipK1InputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as miscInputSchema } from "../../../nodes/inputs/f1099m/index.ts";
 import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
@@ -237,7 +237,7 @@ function propertyAddress(item: Property): string {
   ]);
 }
 
-function buildProperty(
+export function buildScheduleEPropertyLines(
   raw: Property,
   allowedPassiveLoss?: number,
 ): PropertyLines | undefined {
@@ -599,7 +599,7 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
     validatePartIxCarryovers(itemList, context);
     const allowedPassiveLosses = validatePassiveActivityLink(itemList, context);
     const properties = itemList.map((item, index) =>
-      buildProperty(
+      buildScheduleEPropertyLines(
         item,
         item.current_property_source &&
           currentPropertyPassiveAmounts(item.current_property_source)
