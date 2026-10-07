@@ -416,3 +416,14 @@ current artifacts/cache are hardlinked without modifying existing evidence.
 read-only verifier run. No terminal pass is claimed yet. Form 7217 is excluded
 from this bounded review transfer only; this is not a filing-scope disposition
 or permission to implement the future item. Runtime still matches launch.
+
+All four pages of `single-form8606-post-year-contribution-and-distribution`
+were freshly reviewed. Form 8606 line 4 includes the 1,000 contribution
+received February 15, 2026 for 2025; prior basis 6,000, year-end value 10,000
+and distribution 20,000 give ratio .200, nontaxable 4,000, taxable 16,000
+and remaining basis 3,000. Form 1040 AGI 116,000, standard deduction
+15,750, taxable income 100,250, tax 16,969 and amount owed 1,969 reconcile
+with source/pending/XML. Identity, marks, blank conversion/Roth/standalone
+sections, order and legibility passed.
+`form8606-post-year-four-page-review.json` retains notes/digests; it is outside
+current checker batches and does not authenticate prior/custodian records.
