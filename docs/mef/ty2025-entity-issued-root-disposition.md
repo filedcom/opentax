@@ -121,3 +121,12 @@ annotations, altered page resources/scripts and print controls. Focused140/0;
 all four unchanged retained copies passed. Issuer authentication and required
 statements/prepared filing packet integration remain unproved; exports remain
 guarded. See `125a8e136` and evidence in the execution record.
+
+
+The isolated immutable preparation step now binds reviewed copies/native
+projections and exact retained PDF bytes to finalized source/filer/graph SHA256,
+including top-level Form8949 rows. Focused147/0 and unchanged retained ordinary
+source/native evidence passed. This is a preparation prerequisite, not a
+registered complete packet; issuer/statement evidence and final export
+integration remain open. The newly discovered backup-withholding statement
+root is recorded future-only and unworked. See execution for commit/digests.

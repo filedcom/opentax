@@ -3413,3 +3413,37 @@ registered builder was found. Schema SHA256 `2df5649fd400c2285e62e746f84e6b1a3ed
 Added future_todo row36; no implementation, registration, projection or
 filing claim. Required use, ownership, source-copy/reference and rounding
 semantics need future review with matching BR. Main52 requirements unchanged.
+
+
+### Trust K-1 immutable prepared source-copy evidence — October 7, 2026
+
+Isolated commit `03dd02a6a5a0e93f3b99400d62703c86015020b7` adds `PreparedTrustK1Copies`.
+It snapshots source/filer/recipient/bytes before asynchronous verification,
+reconciles every directly modeled copied fact and exact finalized other-form
+line25c total, keeps native projection plus frozen nested review records and
+private retained bytes, and binds them to shared prepared-return SHA256.
+Retrieval returns defensive byte copies; current-source assertion rejects
+changed source, owner or graph. Raw pending is retained for hashing so the
+shared contract preserves top-level Form8949 rows. This is a source-preparation
+prerequisite, not registration, complete packet assembly or export approval.
+
+Normal typed nine-file focused suite: **147 passed /0 failed** (31s). Tests
+include the real calculated graph, no alias after caller/copy mutation, changed
+income/source/refund/filer/Form8949 rows, missing withholding and extra bytes.
+Both complete exporters still reject codeB. V1 stopped at type checking because
+a test tried mutating a readonly filer; changed its adversarial fixture to a
+mutable copy without disabling checks. V2 passed146/0; added explicit Form8949
+binding coverage and preserved raw pending for final147/0. Logs retained.
+Final log SHA256 `496a3dafb15aa4553f938e29d5dc09c9da105456ccb4f271bfd1dfc08ecdd919`;
+audit SHA256 `9f850f9b54abe3989c346cfab1ee6066f9d08d7cff5b354d8483b3fb392c91fd`.
+
+Retained ordinary-income source audit reused PDF SHA256
+`d34621958c93d342566e2f5b762226437322560ad5d138e208da51793bcec5ec`
+and confirmed nativeK1 XML unchanged from its earlier standalone XSD/viewed
+source proof. Prepared source SHA256
+`f366180505b2885ee1c75cdde725d39f8ed05f1eb20fa4b34e02cf27caa04ce4`;
+retained audit SHA256 `2f4a48b5a2c9117c9aa426b5415d32b64f2218365c704b1e17159448d58d8e54`.
+No new full packet or page approval/aggregate increase. Issuer and required
+supplemental statements remain unproved; `filingReady:false` and both public
+guards remain. Newly discovered withholding statement stays future-only36,
+unimplemented. Main52 frozen; existing packet/issuer task remains open.
