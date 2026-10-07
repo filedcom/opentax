@@ -217,3 +217,12 @@ diagnostic. The corrected batch excludes those three cases. Original packets,
 prior manifests and the verified 23-case checkpoint remain intact. Current
 terminal state/digests are recorded in `pending-source-reviewed-check.status`;
 no terminal pass is claimed yet.
+
+All five pages of `joint-schedule-h-spouse-withholding-only` were freshly
+reviewed. Tara remains the Schedule H employer; spouse Sam’s W-2 wages 5,000
+and withholding 250 join Form 1040 once. Schedule H A No/B Yes/C blank and
+line 9 No agree with the family withholding-only facts; lines 7/8 tax 250
+flow through Schedule 2 lines 9/21 into Form 1040 total tax 250, offset by
+withholding 250. All pages are legible and correctly ordered.
+`schedule-h-spouse-withholding-five-page-review.json` retains observations and
+digests. This fresh review is outside the verified 23-case checkpoint.
