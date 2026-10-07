@@ -3733,3 +3733,95 @@ through October13 09:00 Eastern; reopening notice describes TY2026 testing.
 TY2025 testing/version availability remains part of the existing ATS/source
 verification scope. Original October8 morning acceptance estimate stays0tests/0%;
 post-reopening pass probability remains unestimated.
+
+
+## October 8 continuation — original-form loss reporting joins
+
+Progress under the existing EIC investment-income, Form8582/4797, Schedule E,
+Form4835 and return-wide ordering TODOs. Isolated branch
+`codex/eic-investment-reconciliation-20261008`: native original-form review
+`0184da285`; Form4797 PDF review `ad5ee4103`. Root runtime is unchanged while
+its integrated full regression continues.
+
+`reviewCurrentLossOriginalForms` first runs the owned current-source Form8582
+review, then derives each reporting-form allowed/suspended amount from the same
+source allocation. It reuses the existing Schedule E property and Form4835 item
+renderers, exported without changing their logic. Its Schedule E, Form4835 and
+ordinary Form4797 rows reconcile to finalized Schedule1 lines4/5. Owner, source
+reference, basis, farm expenses and reporting-total mutations reject. Sale rows
+retain economic proceeds/basis/loss plus allowed/suspended reporting amounts.
+Fully suspended ordinary loss emits no deductible sale row. Passive allowed
+loss is identified PAL; recharacterized nonpassive land sale is not labeled PAL.
+Schedule E retains the nonpassive amount annotation where applicable.
+
+The [Form4797 passive-loss instructions](https://www.irs.gov/instructions/i4797)
+require determining the allowed loss before reporting it. The
+[Form8582 reporting instructions](https://www.irs.gov/instructions/i8582)
+require original-form allowed losses, Schedule E line22 and Form4835 deductible
+loss reporting, and PAL identification on Form4797. Local schema validation is
+not proof of matching IRS business-rule acceptance for the limited loss row.
+
+Independent expected cases: mixed property operating loss1000/ordinary loss3000
+plus farm income2000 gives ScheduleE allowed500, Form4797 allowed1500,
+Schedule1 line4=-1500/line5=1500. All suspended gives both lines0 and no Form4797
+deduction document. Recharacterized land gives line4=-3000/line5=5000, excluding
+that land activity from the passive pool. Operating income1000 plus ordinary
+loss3000/farm loss5000 gives ordinary allowed1000, suspended7000 overall and
+line4=-1000/line5=1000. All four retain the previously verified EIC/AGI bindings.
+
+Native/source regression terminal45/0 (33s; 37.39s invocation),
+2026-10-07T22:45:06.896211Z–22:45:44.290264Z. Private directory
+`current-loss-original-forms-20261008-v1/`, focused-log SHA256
+`a0de84a1696c3e110958cf07adb39b1306a54814b9d5d9a8b5953d956c3eaa41`.
+Run JSON binds all four modified/new code/test files, source/pending review
+JSONs and11 standalone XSD-validated documents: four IRS1040ScheduleE, four
+IRS4835 and three IRS4797; the fully suspended ordinary loss has no IRS4797.
+Command: `deno test --allow-read --allow-write --allow-run=xmllint
+--allow-net=www.irs.gov forms/f1040/2025/mef/forms/current-loss-original-form-review.test.ts
+forms/f1040/2025/mef/forms/schedule_e.test.ts
+forms/f1040/2025/mef/forms/f4835.test.ts
+forms/f1040/2025/mef/forms/f4797.test.ts
+forms/f1040/2025/eic_passive_property_source.test.ts --
+--write-review-artifacts <private-directory>`.
+Existing positive property/native/source cases passed; eight existing positive
+PDF packets/99 pages were regenerated, with no additional filing-support count.
+
+Form4797 PDF focus final1/0 (745ms; 2.37s invocation),
+2026-10-07T22:47:47.458878Z–22:47:49.832209Z. Private directory
+`current-loss-4797-pdf-review-20261008-v3/`, log SHA256
+`578534c9e0388758845fa29b243e5a602303bad9923f646742dd4c87fd773624`.
+Three one-page reviews, all viewed at110dpi, print actual source proceeds3000,
+basis6000 and allowed ordinary deductions1500/3000/1000; lines17/18b match
+Schedule1 line4. Passive rows include PAL, recharacterized row does not.
+No missing or clipped amount was found. Whole source names/references remain
+bound in the accompanying JSON; the printed property description follows the
+native20-character limit. No blank deductible page is generated for fully
+suspended loss. Command: `PATH=/tmp/opentax-poppler-env/bin:$PATH deno test
+--allow-read --allow-write --allow-run=pdftotext
+forms/f1040/2025/pdf/forms/current-loss-4797-review.test.ts --
+--write-review-artifacts <private-directory>`.
+
+PDF v1 failed type checking: my empty-result fields had an inconsistent inferred
+type; fixed to the same Record type. Failed log retained SHA256
+`1d7d8e48ad2ee017e5197efea4b5d850019cfe98910cd102d9c29d0aac7624d1`.
+V2 was0/1 because my test expected first-last title case while the existing
+Form4797 descriptor prints its canonical `nameLine1` (`EXAMPLE ALEX`); corrected
+that assertion only. Failed log retained SHA256
+`b922e7472f3afcd1e75c25aa970114070fb087f6c2a9b49f07c86d3a2aa351ab`.
+V3 final1/0. No pre-existing header behavior was changed.
+
+Review helpers remain unregistered, `filingReady:false`, `issuerVerified:false`.
+Full loss filing exports remain guarded; this is not a full Return1040 XML/PDF
+packet, source authentication, matching business-rule result, durable accepted
+carryover ledger or ATS acceptance. Original-form filled Schedule E/Form4835
+and full packet proof remain in the existing parent TODOs. No main requirement
+is checked off and no positive filing/coverage count is increased. All38 future
+rows, including35–38, remain unworked. Both worktrees retain only untracked
+PDF cache after commits; isolated research symlink removed.
+
+Root regression session12057 was confirmed live by its handle and
+PIDs99648/99655/99656 near1h58m; no terminal result claimed. All2592 launch
+runtime hashes match; main board52/future38 unchecked and frozen main section
+matches baseline. Original October8 morning ATS acceptance estimate remains0;
+post-reopening probability remains unestimated pending existing version,
+source, business-rule, credential and acceptance verification.
