@@ -1336,6 +1336,12 @@ export const form8582: MefFormDescriptor<"form8582", Input> = {
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8582.pdf",
   build(fields, context) {
+    if (fields.current_loss_forms !== undefined) {
+      throw new Error(
+        "Current passive original-form loss filing projection is not finalized",
+      );
+    }
+
     const hasActivity =
       (Array.isArray(fields.activities) && fields.activities.length > 0) ||
       (Array.isArray(fields.current_4797_sale_gains) &&

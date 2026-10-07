@@ -1,3 +1,5 @@
+import { allocateCurrentPassiveForms } from "./current-form-allocation.ts";
+import { currentPassiveFormsSchema } from "./current-form-schema.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -113,6 +115,7 @@ export const inputSchema = z.object({
     prior_unallowed_4797_part1: z.number().nonnegative(),
     prior_unallowed_4797_part2: z.number().nonnegative(),
   })).optional(),
+  current_loss_forms: currentPassiveFormsSchema.optional(),
   // Positive, activity-linked Form 4797 gains. Keep Parts I and II separate
   // for Part IX same-part offsets and final reporting character.
   current_4797_sale_gains: z.array(z.object({
@@ -1021,6 +1024,49 @@ class Form8582Node extends TaxNode<typeof inputSchema> {
             (input.rental_prior_eligible_loss ?? 0) > 0
     ) {
       assertMfsLivedApartSource(input.mfs_lived_apart_source);
+    }
+
+    if (input.current_loss_forms) {
+      const a = allocateCurrentPassiveForms(
+        input.current_loss_forms,
+        Math.min(input.current_income ?? 0, input.current_loss ?? 0),
+      );
+      if (
+        a.current_income !== (input.current_income ?? 0) ||
+        a.current_loss !== (input.current_loss ?? 0) ||
+        (input.prior_unallowed ?? 0) !== 0
+      ) {
+        throw new Error(
+          "Current original-form loss allocation differs from Form 8582 source totals",
+        );
+      }
+      const operating = a.by_activity.flatMap((r) => r.forms).filter((r) =>
+        r.reporting_form === "Schedule E" || r.reporting_form === "Form 4835"
+      ).reduce((n, r) => n + r.allowed_loss, 0);
+      return {
+        outputs: schedule1Output(operating),
+        carryforwards: Object.fromEntries([
+          ["suspended_pal_8582", a.suspended_loss],
+          ...a.by_activity.flatMap((r) => [
+            [`suspended_pal_8582:${r.activity_id}`, r.suspended_loss],
+            ...r.forms.filter((f) => f.suspended_loss > 0).map((f) => [
+              `suspended_pal_8582_${
+                r.forms.filter((x) => x.current_loss > 0).length > 1
+                  ? "partix"
+                  : "partviii"
+              }:${encodeURIComponent(r.activity_id)}:${
+                ({
+                  "Schedule E": "schedule_e",
+                  "Form 4835": "form4835",
+                  "Form 4797 Part I": "form4797_part1",
+                  "Form 4797 Part II": "form4797_part2",
+                } as const)[f.reporting_form]
+              }`,
+              f.suspended_loss,
+            ]),
+          ]),
+        ]),
+      };
     }
 
     assertPriorYear8582Evidence(input);

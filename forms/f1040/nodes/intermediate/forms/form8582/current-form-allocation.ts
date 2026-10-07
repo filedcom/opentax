@@ -1,28 +1,12 @@
-import { z } from "zod";
+import {
+  currentPassiveDollarsSchema as dollars,
+  currentPassiveFormsSchema,
+} from "./current-form-schema.ts";
+export { currentPassiveFormsSchema } from "./current-form-schema.ts";
 import {
   allocatePartIXLosses,
   allocatePassiveActivityLosses,
 } from "./index.ts";
-
-const dollars = z.number().int().nonnegative().refine(Number.isSafeInteger);
-export const currentPassiveFormsSchema = z.array(
-  z.object({
-    activity_id: z.string().trim().min(1),
-    special_allowance_eligible: z.boolean(),
-    forms: z.array(
-      z.object({
-        reporting_form: z.enum([
-          "Schedule E",
-          "Form 4835",
-          "Form 4797 Part I",
-          "Form 4797 Part II",
-        ]),
-        current_income: dollars,
-        current_loss: dollars,
-      }).strict(),
-    ).min(1),
-  }).strict(),
-).min(1);
 
 /** Current losses only. Caller must reconcile the complete source inventory,
  * prior-year balances, special allowance and finalized allowed total before

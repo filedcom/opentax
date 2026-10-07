@@ -277,7 +277,10 @@ export function reconcileCurrentPropertySource(item: Record<string, unknown>) {
     sale.installment_method !== false ||
     sale.disposition_document_reference !==
       s.closing_record.closing_reference ||
-    a.gain <= 0 || first?.activity_id !== s.activity_id ||
+    (a.gain === 0 ||
+      (a.gain < 0 &&
+        sale.current_loss_source_reference !== s.source_reference)) ||
+    first?.activity_id !== s.activity_id ||
     first?.activity_name !== s.activity_name ||
     first?.activity_acquired_on !== s.acquisition_record.acquired_on ||
     first?.acquisition_document_reference !==

@@ -10,6 +10,11 @@ export function assertCurrentPassivePropertyReturn(
   fields: Record<string, unknown>,
   pending: Readonly<Record<string, unknown>> | undefined,
 ) {
+  if (fields.current_loss_forms !== undefined) {
+    throw new Error(
+      "Current passive property sale loss filing projection is not finalized",
+    );
+  }
   const raw = pending?.schedule_e;
   const buckets = Array.isArray(raw) ? raw : [raw];
   const hasOwnedSource = buckets.some((bucket) => {
@@ -25,6 +30,11 @@ export function assertCurrentPassivePropertyReturn(
     const s = reconcileCurrentPropertySource(item);
     return s ? [s] : [];
   });
+  if (sources.some((s) => currentPropertyAmounts(s).gain < 0)) {
+    throw new Error(
+      "Current passive property sale loss filing projection is not finalized",
+    );
+  }
   if (!sources.length) {
     if (fields.current_property_sources !== undefined) {
       throw new Error(

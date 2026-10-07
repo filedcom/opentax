@@ -1,4 +1,8 @@
 import {
+  allocateCurrentPassiveForms,
+  currentPassiveFormsSchema,
+} from "../../intermediate/forms/form8582/current-form-allocation.ts";
+import {
   currentPropertyAmounts,
   currentPropertyPassiveAmounts,
   currentPropertySourceSchema,
@@ -739,6 +743,63 @@ function isPassive(item: EItem): boolean {
 
 // ─── Routing helpers ─────────────────────────────────────────────────────────
 
+function currentLossForms(items: EItems, farms: readonly FarmActivity[]) {
+  if (
+    !items.some((i) =>
+      i.current_property_source &&
+      currentPropertyAmounts(i.current_property_source).gain < 0
+    )
+  ) return undefined;
+  if (
+    items.some((i) => !i.current_property_source) ||
+    farms.some((f) => (f.prior_unallowed_operating ?? 0) !== 0)
+  ) {
+    throw new Error(
+      "Current property sale losses need the complete current-only property/farm inventory",
+    );
+  }
+  const forms = [
+    ...items.flatMap((i) => {
+      const source = reconcileCurrentPropertySource(i)!;
+      const a = currentPropertyAmounts(source),
+        p = currentPropertyPassiveAmounts(source);
+      return p.net > 0 ? [] : [{
+        activity_id: source.activity_id,
+        special_allowance_eligible: false,
+        forms: [{
+          reporting_form: "Schedule E" as const,
+          current_income: Math.max(0, p.operating),
+          current_loss: Math.max(0, -p.operating),
+        }, {
+          reporting_form: "Form 4797 Part II" as const,
+          current_income: Math.max(0, a.gain),
+          current_loss: Math.max(0, -a.gain),
+        }],
+      }];
+    }),
+    ...farms.map((f) => ({
+      activity_id: f.activity_id!,
+      special_allowance_eligible: false,
+      forms: [{
+        reporting_form: "Form 4835" as const,
+        current_income: Math.max(0, f.current_net),
+        current_loss: Math.max(0, -f.current_net),
+      }],
+    })),
+  ];
+  if (!forms.length) return undefined;
+  const parsed = currentPassiveFormsSchema.parse(forms);
+  const total = (key: "current_income" | "current_loss") =>
+    parsed.reduce((n, a) => n + a.forms.reduce((t, f) => t + f[key], 0), 0);
+  return {
+    forms: parsed,
+    allocation: allocateCurrentPassiveForms(
+      parsed,
+      Math.min(total("current_income"), total("current_loss")),
+    ),
+  };
+}
+
 function passiveItems(items: EItems): EItems {
   return items.filter(isPassive);
 }
@@ -879,7 +940,9 @@ function form8582Outputs(
   const reportedProperties = passiveItems(items).filter((item) =>
     item.current_property_source
       ? currentPropertyPassiveAmounts(item.current_property_source)
-        .passiveOperating !== 0
+            .passiveOperating !== 0 ||
+        currentPropertyPassiveAmounts(item.current_property_source)
+            .passiveGain < 0
       : computePropertyNet(item) !== 0 ||
         (item.passive_property_sales?.length ?? 0) > 0 ||
         (item.prior_unallowed_passive_operating ?? 0) > 0 ||
@@ -961,6 +1024,13 @@ function form8582Outputs(
     f8582Input.rental_prior_eligible_loss = eligibleRentalPriorLoss;
   }
 
+  const lossForms = currentLossForms(items, farms);
+  if (lossForms) {
+    f8582Input.current_loss_forms = lossForms.forms;
+    f8582Input.current_income = lossForms.allocation.current_income;
+    f8582Input.current_loss = lossForms.allocation.current_loss;
+  }
+
   // Activity type breakdown
   const hasTypeA = f8582Input.activities?.some((activity) =>
     activity.activity_type === "A"
@@ -996,6 +1066,19 @@ function palFields(
   items: EItems,
   farms: readonly FarmActivity[],
 ): Partial<z.infer<typeof agi_aggregator["inputSchema"]>> {
+  const lossForms = currentLossForms(items, farms);
+  if (lossForms) {
+    const a = lossForms.allocation;
+    const allowedII = a.by_activity.flatMap((r) => r.forms).filter((r) =>
+      r.reporting_form === "Form 4797 Part II"
+    ).reduce((n, r) => n + r.allowed_loss, 0);
+    return {
+      pal_current_loss: a.current_loss,
+      pal_current_income: a.current_income,
+      pal_final_allowed_loss: a.allowed_loss,
+      pal_4797_preapplied_loss: allowedII,
+    };
+  }
   if (!hasPassiveLoss(items, farms)) return {};
 
   const fields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> = {
@@ -1184,6 +1267,9 @@ function form4797Outputs(
     ) ?? false;
   if (disposedItems.length === 0 && !hasPrior4797) return [];
   return [output(form4797, {
+    ...(currentLossForms(items, farms)
+      ? { current_loss_forms: currentLossForms(items, farms)!.forms }
+      : {}),
     disposed_properties: disposedItems.length,
     passive_disposed_activity_ids: disposedItems.flatMap((item) =>
       item.activity_id ? [item.activity_id] : []

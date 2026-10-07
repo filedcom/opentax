@@ -1,4 +1,8 @@
 import {
+  allocateCurrentPassiveForms,
+  currentPassiveFormsSchema,
+} from "../form8582/current-form-allocation.ts";
+import {
   currentPropertyPassiveAmounts,
   currentPropertySourceSchema,
 } from "../../../inputs/schedule_e/current-property-source.ts";
@@ -59,6 +63,7 @@ export const passivePropertySaleSchema = z.object({
   fully_taxable: z.boolean().optional(),
   installment_method: z.boolean().optional(),
   disposition_document_reference: z.string().trim().min(1).optional(),
+  current_loss_source_reference: z.string().trim().min(1).optional(),
 }).strict().superRefine((sale, ctx) => {
   const gain = sale.gross_sales_price - sale.cost_or_other_basis;
   const acquired = new Date(`${sale.acquired_on}T00:00:00Z`);
@@ -84,7 +89,8 @@ export const passivePropertySaleSchema = z.object({
     sold <= acquired ||
     (sale.part === "I" && sold <= anniversary) ||
     (sale.part === "II" && sold > anniversary) ||
-    !Number.isSafeInteger(gain) || gain <= 0
+    !Number.isSafeInteger(gain) || gain === 0 ||
+    (gain < 0 && (sale.part !== "II" || !sale.current_loss_source_reference))
   ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -118,7 +124,8 @@ export function samePassiveSale(
     left.fully_taxable === right.fully_taxable &&
     left.installment_method === right.installment_method &&
     left.disposition_document_reference ===
-      right.disposition_document_reference;
+      right.disposition_document_reference &&
+    left.current_loss_source_reference === right.current_loss_source_reference;
 }
 
 /** The only complete-disposition sale currently supported is a single,
@@ -150,6 +157,7 @@ export const inputSchema = z.object({
   k1_1231_rows: z.array(k1Section1231RowSchema).optional(),
   k1_box11_line10_rows: z.array(box11Line10SourceSchema).optional(),
   passive_property_sales: z.array(passivePropertySaleSchema).optional(),
+  current_loss_forms: currentPassiveFormsSchema.optional(),
   current_property_sources: z.array(currentPropertySourceSchema).min(1)
     .optional(),
   passive_activity_sources: form8582.inputSchema.shape.activities,
@@ -322,6 +330,31 @@ export function form4797EicCapitalExclusion(
   );
 }
 
+function currentLossAllocation(input: Form4797Input) {
+  return input.current_loss_forms
+    ? allocateCurrentPassiveForms(
+      input.current_loss_forms,
+      Math.min(
+        input.current_loss_forms.reduce(
+          (n, a) => n + a.forms.reduce((t, f) => t + f.current_income, 0),
+          0,
+        ),
+        input.current_loss_forms.reduce(
+          (n, a) => n + a.forms.reduce((t, f) => t + f.current_loss, 0),
+          0,
+        ),
+      ),
+    )
+    : undefined;
+}
+function suspendedCurrentPartII(input: Form4797Input) {
+  return currentLossAllocation(input)?.by_activity.flatMap((a) => a.forms)
+    .filter((f) => f.reporting_form === "Form 4797 Part II").reduce(
+      (n, f) => n + f.suspended_loss,
+      0,
+    ) ?? 0;
+}
+
 /** Pub. 596 Worksheet 1 line 11/12: ordinary passive Part II sale gain,
  * net of the prior PAL applied to that Form 4797 line. */
 export function form4797EicPassiveOrdinary(
@@ -357,7 +390,7 @@ export function form4797EicPassiveOrdinary(
     ? undefined
     : mixedPassiveAllocation(input);
   return gross - (allocation?.allowedPartII ?? 0) -
-    (activeRentalAllowedPartII ?? 0);
+    (activeRentalAllowedPartII ?? 0) + suspendedCurrentPartII(input);
 }
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
@@ -490,6 +523,23 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
       };
     }
     const passiveSales = input.passive_property_sales ?? [];
+    for (const sale of passiveSales.filter((s) => passiveSaleGain(s) < 0)) {
+      const source = input.current_property_sources?.find((s) =>
+        s.activity_id === sale.activity_id
+      );
+      if (
+        !source ||
+        source.source_reference !== sale.current_loss_source_reference ||
+        source.closing_record.gross_paid !== sale.gross_sales_price ||
+        (!input.current_loss_forms &&
+          currentPropertyPassiveAmounts(source).net <= 0)
+      ) {
+        throw new Error(
+          "Current Form 4797 sale loss needs actual source and complete original-form allocation",
+        );
+      }
+    }
+    const suspendedII = suspendedCurrentPartII(input);
     const entireSale = passiveSales.find((sale) =>
       sale.entire_activity_interest_disposed === true
     );
@@ -601,7 +651,7 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
       (input.recapture_form6252 ?? 0) +
       (input.passive_property_sales ?? []).filter((sale) => sale.part === "II")
         .reduce((sum, sale) => sum + passiveSaleGain(sale), 0) -
-      (allocation?.allowedPartII ?? 0);
+      (allocation?.allowedPartII ?? 0) + suspendedII;
     const eicPassiveOrdinary = form4797EicPassiveOrdinary(input);
     const unrecaptured1250 = input.unrecaptured_section_1250_gain ?? 0;
 
@@ -631,7 +681,7 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
       return { outputs };
     }
     if (
-      saleGains.length > 0 &&
+      !input.current_loss_forms && saleGains.length > 0 &&
       (!entireSale || (input.passive_activity_sources?.length ?? 0) === 1)
     ) {
       outputs.push(output(form8582, {
@@ -640,7 +690,7 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
       }));
     }
     if (
-      saleGains.length > 0 &&
+      !input.current_loss_forms && saleGains.length > 0 &&
       (!entireSale || (input.passive_activity_sources?.length ?? 0) === 1)
     ) {
       outputs.push(output(agi_aggregator, {
