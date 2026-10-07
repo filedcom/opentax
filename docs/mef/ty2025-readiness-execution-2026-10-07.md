@@ -750,3 +750,75 @@ remain outside passing scopes. The main52 requirements remain frozen;
 six future items remain unworked. Latest full-regression observation697
 passing markers/zero failures with livePID53927 is progress only,
 not a terminal full-suite pass.
+
+
+Fresh six-page `single-high-wage-no-niit` review checked structuredW2
+wages220,000/Medicarewithholding3,190/income-taxwithholding40,000.
+[Form8959](https://www.irs.gov/pub/irs-prior/f8959--2025.pdf)
+Singlethreshold200,000 yields20,000excess*.009=180, joining
+Schedule2line11/21/1040line23 once. W2Medicarewithholding equals
+regular1.45%, so noadditionalwithholding isinvented. Wages are excluded
+from [NII](https://www.irs.gov/instructions/i8960):0NII/MAGI220,000/
+20,000excess giveszeroNIIT. Standard15,750/taxable204,250/
+incometax42,423/totaltax42,603/owed2,603 agree native/pending/PDF.
+All six actualpages andowner/marks/continuations/legibility inspected.
+`high-wage-six-page-review.json` retains hashes/notes; syntheticissuer
+facts are notauthenticatedsource/ATSproof. Unchangedverifier exit0 at
+`2026-10-07T04:17:38.575087Z`,manifestSHA256
+`710a45351b2c548b2a36d702d53feb18861b5b6dd7481ee7a675e7d27d327ea4`,
+logSHA256 `697d8a9b80a16fc34db37abd6f8fa97e794673a60c75eaad13cee664df9be994`;
+no runtimechanges. Sixteen disjoint scopes cover**199packets/1,867pages**.
+
+Two fresh nonbusiness1099 packets, each fourpages, were reviewed:
+`single-k-blank-tin-withholding` has explicitly reviewed named/address
+recipientAlex matchingtheprimary despite absentrecipientTIN; payerEIN,
+gross5,000/withholding480, nonbusinesscraftallocation/nooverlapreference
+match. Schedule1line8j/9/10 and1040line8/9/11a=5,000,
+1040line25b/25d/33/refund=480. `single-nec-k-nonbusiness-line8j` has
+NEC3,000plusK5,000withseparatepayeridentities/correctrecipient/nooverlap
+review, so8,000reachesthesameincomejoins once; nowithholding/refund.
+Bothstd15,750/taxable0/tax0,noSE/QBI/expenseoffsetclaims.
+[2025 ScheduleC instructions](https://www.irs.gov/pub/irs-prior/i1040sc--2025.pdf)
+route suppliednonbusinessclassificationtoline8j. Classificationis
+verified against suppliedfacts, notindependentlyauthenticatedprofitintent.
+All eightactualpages/marks/names/order/legibility checked;1040line8
+amounts additionallyconfirmedhigh-resolutioncropsandtext. Records
+`k-withholding-four-page-review.json` and
+`nec-k-nonbusiness-four-page-review.json` retain hashes/notes.
+Selected2-packet/8-page `nonbusiness-source-reviewed-batch` isunder
+unchangedread-onlyverification; no terminal passclaimedyet.
+
+
+The nonbusiness-source verifier completed **exit0** at
+`2026-10-07T04:19:27.070441Z`, manifestSHA256
+`450b21585a686971fd066dac9ad7314223814fa246d24fcc3f6d4959f5fcd3e4`,
+logSHA256 `5f31a6fdf23323c5cf4ae8aa0c7da805f49427981370c396ea3d414ffe24bf43`;
+no runtimechanges. Seventeen disjoint scopes cover**201packets/1,875pages**;
+`verified201-aggregate.json` retains audit. Main52 andsixfutureitems unchanged.
+
+Fresh three-page `single-actc-opt-out` review checked complete supplied
+W2/dependentSSN/DOB/relationship/residence/support/jointreturn/status/
+EICprior-disallowance facts. Ada111223334/born2017/daughter/12monthsUS
+is present1040/ScheduleEIC/native; youngerthanparent/bornafter2006, so
+ScheduleEIC4a/4bappropriatelyskipped. Wages/AGI15,000/std15,750/tax0
+agree. ExplicitACTCoptoutmarks1040line28/nativeDoNotClaimACTCIndX;
+ACTCamountblank/noSchedule8812. EIC4,328matches
+[2025 IRS table](https://www.irs.gov/publications/p596) Singleonechild
+15,000–15,050, joins1040line27a/32once; withholding1,500 givesrefund5,828.
+The [1040 instructions](https://www.irs.gov/instructions/i1040gi) permit
+theline28optout. Names/SSNs/marks/order/legibility checkedonallactualpages.
+Syntheticreferences do notauthenticatesource/status/IRSaccountrecords.
+`actc-opt-out-three-page-review.json` retains hashes/notes. Disjoint
+1-packet/3-page `actc-opt-out-reviewed-batch` isunderunchangedread-only
+verification; no terminal passclaimedyet.
+
+
+The ACTCoptout verifier completed **exit0** at
+`2026-10-07T04:21:02.117514Z`, manifestSHA256
+`9e0dedd3d78446396b508bd20bd520e9e9e2e9bbebde177ac591f7f78637c0d0`,
+logSHA256 `41f1dd98c2ecdbf80452e4e9e22e4602a52db262b737a74a4df915d8c3d44a76`;
+no runtimechanges. Eighteen mutually disjoint terminal scopes cover
+**202 packets / 1,878 pages**; `verified202-aggregate.json` retains audit.
+Currentruntime hashes match launch. Main52 requirements andall six
+futureitems remain unchanged/unworked. Latestfull-regression observation
+723passingmarkers/zerofailures remains nonterminal;PID53927 islive.
