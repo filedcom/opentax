@@ -241,12 +241,19 @@ export function reviewCurrentPropertyLoss8582(
         ...losses.map((r, i) =>
           elements("WrkshtLossGrp", [
             element("UnallowedLossActivityNm", names.get(r.activity_id)),
-            r.lossForms.length === 1
-              ? element(
-                "ReportingFormOrScheduleNm",
-                formName(r.lossForms[0].reporting_form),
-              )
-              : "",
+            element(
+              "ReportingFormOrScheduleNm",
+              r.lossForms.length === 1
+                ? formName(r.lossForms[0].reporting_form).replace("Form ", "")
+                : r.lossForms.map((f) =>
+                  ({
+                    "Schedule E": "SchE22",
+                    "Form 4835": "4835/34c",
+                    "Form 4797 Part I": "4797I",
+                    "Form 4797 Part II": "4797II",
+                  })[f.reporting_form]
+                ).join("/"),
+            ),
             element("F8582WrkshtLossesAmt", r.loss - r.income),
             element("LossesPct", ratios[i]),
             element("PriorYearUnallowedLossesAmt", r.suspended_loss),
@@ -266,7 +273,7 @@ export function reviewCurrentPropertyLoss8582(
             element("AllowedLossActivityNm", names.get(r.activity_id)),
             element(
               "ReportingFormOrScheduleNm",
-              formName(r.lossForms[0].reporting_form),
+              formName(r.lossForms[0].reporting_form).replace("Form ", ""),
             ),
             element("F8582WrkshtLossesAmt", r.loss),
             element("PriorYearUnallowedLossesAmt", r.suspended_loss),

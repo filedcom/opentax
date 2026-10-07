@@ -5,7 +5,11 @@ import { normalizeAllPending } from "../../pending.ts";
 import { reviewCurrentPropertyLoss8582 } from "./f8582-current-loss-review.ts";
 import { form8582 } from "./f8582.ts";
 
-function currentLoss(farmIncome = true, nonpassive = false) {
+function currentLoss(
+  farmIncome = true,
+  nonpassive = false,
+  operatingIncome = false,
+) {
   const i = passivePropertyInputs(-3000);
   const property = i.schedule_e[0];
   property.passive_property_sales[0].current_loss_source_reference =
@@ -17,6 +21,10 @@ function currentLoss(farmIncome = true, nonpassive = false) {
   if (nonpassive) {
     property.rent_income = 8000;
     property.current_property_source.rent_payments[0].amount = 8000;
+  }
+  if (operatingIncome) {
+    property.rent_income = 4000;
+    property.current_property_source.rent_payments[0].amount = 4000;
   }
   const r = f1040_2025.executeReturn(i);
   assertEquals(r.diagnostics, []);
@@ -47,6 +55,14 @@ Deno.test("source-bound current ordinary loss review projects Parts V VII VIII I
         suspended: 9000,
       },
       {
+        id: "income-with-ordinary-loss",
+        farm: false,
+        nonpassive: false,
+        operatingIncome: true,
+        allowed: 1000,
+        suspended: 7000,
+      },
+      {
         id: "recharacterized-land",
         farm: false,
         nonpassive: true,
@@ -55,7 +71,11 @@ Deno.test("source-bound current ordinary loss review projects Parts V VII VIII I
       },
     ]
   ) {
-    const source = currentLoss(c.farm, c.nonpassive);
+    const source = currentLoss(
+      c.farm,
+      c.nonpassive,
+      "operatingIncome" in c && c.operatingIncome,
+    );
     const review = reviewCurrentPropertyLoss8582(source.pending);
     assertEquals(review.filingReady, false);
     assertEquals(review.issuerVerified, false);
@@ -65,7 +85,22 @@ Deno.test("source-bound current ordinary loss review projects Parts V VII VIII I
       review.xml,
       `<TotalLossesAllowedAmt>${c.allowed}</TotalLossesAllowedAmt>`,
     );
+    if (c.id === "income-with-ordinary-loss") {
+      assertStringIncludes(
+        review.xml,
+        "<ReportingFormOrScheduleNm>4797, Part II</ReportingFormOrScheduleNm>",
+      );
+      const loss = review.allocation.by_activity.find((a) =>
+        a.activity_id === "current-rented-land"
+      )!.forms.find((f) => f.reporting_form === "Form 4797 Part II")!;
+      assertEquals(loss.allowed_loss, 1000);
+      assertEquals(loss.suspended_loss, 2000);
+    }
     if (c.farm) {
+      assertStringIncludes(
+        review.xml,
+        "<ReportingFormOrScheduleNm>SchE22/4797II</ReportingFormOrScheduleNm>",
+      );
       assertStringIncludes(review.xml, "<LossesPct>0.25000</LossesPct>");
       assertStringIncludes(review.xml, "<LossesPct>0.75000</LossesPct>");
       assertStringIncludes(
@@ -104,7 +139,7 @@ Deno.test("source-bound current ordinary loss review projects Parts V VII VIII I
         mode: 0o600,
       });
       await Deno.writeTextFile(
-        `${output}/${c.id}.json`,
+        `${output}/${c.id}-native.json`,
         JSON.stringify({ ...source, review }, null, 2),
         { createNew: true, mode: 0o600 },
       );
