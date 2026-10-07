@@ -263,3 +263,14 @@ synthetic source, pending and native XML groups. Calendar year, filer identity,
 order and legibility passed. `two-account-refund-three-page-review.json`
 retains observations/digests; this is outside the three checker batches and
 does not authenticate real bank ownership.
+
+A **9-case / 46-page** nonoverlapping checkpoint is assembled and queued
+behind the 15-case checker: seven further exact prior PDF/XML/source-facts
+matches (39 pages, saved pending differences requiring current replay) and
+the fresh final-trust short-loss and split-refund reviews (7 pages). All three
+earlier batches are excluded. Prior physical artifacts, complete source facts
+and manifest digests were rechecked before hardlink assembly.
+`next-reviewed-assembly.json` records origins; `next-reviewed-check.status`
+records the live wrapper and dependency. The unchanged verifier starts only
+after the 15-case checker exits zero and runtime digests still match. Neither
+the queued batch nor any live checker is counted as a completed pass.
