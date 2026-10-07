@@ -130,3 +130,11 @@ source/native evidence passed. This is a preparation prerequisite, not a
 registered complete packet; issuer/statement evidence and final export
 integration remain open. The newly discovered backup-withholding statement
 root is recorded future-only and unworked. See execution for commit/digests.
+
+
+Fixed review-copy pages now project only verified normal appearances while
+retaining original source bytes separately. Focused151/0; single checked/
+unchecked and independent joint-owner copies were rendered/viewed with no
+AcroForm collisions, and their standalone K1 XMLs passed XSD. These are source
+reviews, not a registered full filing packet or issuer proof; full exports
+remain guarded. See `496be0822` and the execution record.

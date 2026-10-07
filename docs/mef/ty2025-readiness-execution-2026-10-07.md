@@ -3447,3 +3447,63 @@ No new full packet or page approval/aggregate increase. Issuer and required
 supplemental statements remain unproved; `filingReady:false` and both public
 guards remain. Newly discovered withholding statement stays future-only36,
 unimplemented. Main52 frozen; existing packet/issuer task remains open.
+
+
+### Trust K-1 fixed copy-review pages — October 8 local / October 7 UTC
+
+Isolated commit `496be0822` adds `PreparedTrustK1Copies.buildReviewPdf`: it
+asserts the current source binding, clones private verified source bytes,
+flattens only reviewed normal appearances without regeneration and copies
+both source pages in claim order, returning owner/hash/page origins. Original
+retained bytes stay unchanged; no live AcroForm field-name collisions remain.
+For an original unchecked glyph with no Off stream, remove the blank widget
+and AcroForm membership directly on the private working copy, keeping the
+static outline. The first run149/1 exposed pdf-lib removeField's appearance
+requirement; corrected the introduced projection path, V2 passed150/0. Added
+joint-owner coverage; final typed nine-file suite **151 passed /0 failed** (32s).
+Source binding, bytes and complete-export guards are unchanged.
+
+Retained final and blank-original-final review PDFs each have two fixed pages,
+checked/blank outline respectively, Test Taxpayer/111223333, EIN123456789,
+ordinary income234.56/div100/qualified50/ST30/LT80/portfolio200 and B125.25.
+Both standalone nativeK1 XMLs passed XSD; all4 review pages and2 new blank
+source pages were viewed. ReviewPDF hashes
+`766be34360a2c1cc833ab2717d66367f84f035832bf7ad430677c9c449c69633` /
+`cd83c371e474c35448bd12b9e0cffe92730f76b44e66203cd8ccb005b547c1d7`;
+new blank source SHA256 `af841ad7838257021d1ff90166651fa21ccedc5111fe3912d7271818f0701744`.
+
+Joint source-copy review: four fixed pages with primary Test/111223333/EIN
+123456789/B125.25 and spouse Sam Example/444556666/EIN987654321/B225.50;
+both instruction pages retained. Both standalone K1 XMLs passed XSD; all4
+review pages and2 new spouse source pages viewed, amounts/owners/marks agree.
+ReviewPDF SHA256 `889e2805acc52991f1cf030be801aa26f8ad1b292b86a3645b9b42a1a691c333`;
+spouse source SHA256 `22b5549d67e0a7ace43a5bbb64cd6ac82e5bd837d42cefcccca4819b41144973`.
+Artifact generator V1 used an invalid public filing-status string and stopped
+before emitting files; retained it and used the public MFJ enum in separate
+V2. Initial XSD/render driver referenced a nonexistent env xmllint; selected
+the actual system xmllint, then all four validations passed. No no-check
+bypass and no changed-source/issuer approval.
+
+Final test log SHA256 `21825b6cd1894386d02dff3e7683a2c36bd250a127b5a6099b8c14deb71dc6ab`; audit SHA256
+`c00bcda06a58d27943ecf17752a261c8bd95b54c26437f1d5aeb9947b1f51779`. Artifact records:
+- `trust-k1-review-page-artifacts-20261007/observations.json`: `4ec91ecd7252109f1606195911f37e4fe22ab8fbeb2d001b652f25a818a08538`
+- `trust-k1-review-page-artifacts-20261007/validation.json`: `358baff4578b3233e3030dfed0db655ce2d7a3e4836387cc6733878886c399b7`
+- `trust-k1-review-page-artifacts-20261007/visual-review.json`: `2c083e776a7fefbec5b904be15f005d6df70c07b7665258abf198cbe9457cd8c`
+- `trust-k1-review-page-joint-artifacts-20261007/observations.json`: `e62184a64ce42e8031423c13ac25829625ce985bd37d8f62cc29125d478cdaf3`
+- `trust-k1-review-page-joint-artifacts-20261007/validation.json`: `8c8a5e66e954bb445ffdc28b78ab57b039e7b84f93b300ae9017f60b8e4e21c2`
+- `trust-k1-review-page-joint-artifacts-20261007/visual-review.json`: `33210a93a3b3f1b9f951d1c4ca1cc4d3cc658e238305edc6337c13b800764312`
+
+Cumulative K1 source pages12, fixed copy-review pages8, individual Form1040
+preview pages2. These are source/projection reviews, not a complete filing
+packet or approved return; bounded75/267/2706 and prepared361/372/4714 stay
+unchanged. Issuer and supplemental statement evidence, registration and
+final Return1040/PDF packet integration remain open. Future36 remains
+unimplemented; main52 frozen. All2,592 live regression runtime paths unchanged.
+
+At midnight Europe/Stockholm, refreshed the top estimate and anchored the
+original deadline explicitly to October8 morning. Fresh official IRS status
+still reports ATS unavailable through October13 09:00 Eastern; expected
+acceptances by the original deadline remain0/0%. After reopening probability
+unestimable pending source/version/business-rule/credential/acceptance gates.
+Snapshot `irs-ats-status-midnight-20261008.json` SHA256
+`11967afcb3a37a6fc31e1a5dfd7233f15fa58e23ca9ab2f565f3c8fcf3ab9245`.
