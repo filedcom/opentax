@@ -427,3 +427,15 @@ with source/pending/XML. Identity, marks, blank conversion/Roth/standalone
 sections, order and legibility passed.
 `form8606-post-year-four-page-review.json` retains notes/digests; it is outside
 current checker batches and does not authenticate prior/custodian records.
+
+All four pages of `single-form2441-child-care-credit` were inspected, but
+the packet is **not approved**. The supplied cap 500 reaches native/PDF
+Form 2441 line 10 and limits the tentative 600 credit to 500. The [2025 IRS
+worksheet](https://www.irs.gov/instructions/i2441) instead uses Form 1040
+line 18 (3,875) less Schedule 3 lines 1/6l (zero here): limit 3,875 and credit
+600 on the saved facts. The printed credit/tax/refund 500/3,375/1,625 therefore
+do not prove full-return correctness. Amount completion remains false on the
+affected pages. This new discovery is recorded only in `future_todo` and
+left unimplemented. `form2441-cap-four-page-observation.json` retains all
+observations/digests. The case/form is absent from all verified/current selected
+checkpoints; source/input/runtime files remain unchanged.
