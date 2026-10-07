@@ -664,3 +664,13 @@ cents fields, all continuations and legibility were checked.
 disjoint1-packet/7-page `fuel-credit-reviewed-batch` is under unchanged
 read-only verification. This synthetic fixture does not authenticate seller
 receipts or establish complete business income/expense reporting.
+
+
+The fuel-credit verifier completed **exit 0** at
+`2026-10-07T04:05:58.894696Z`, manifest SHA-256
+`073eb51f33398a061f68087b07bd2da9e4b243bf8b64f9337c5b21fef473b492`,
+log SHA-256 `20377222e40eb9017c7293b94a1efdb5df33b02a35df7a57f3d01634d6333a3e`.
+No runtime files changed. Twelve disjoint terminal passing scopes cover
+**195 packets / 1,849 pages**; `verified195-aggregate.json` retains the audit.
+All five future items remain unchanged/unworked; the Form4952 preview
+misread did not create a false future item. Main52 requirements remain open.
