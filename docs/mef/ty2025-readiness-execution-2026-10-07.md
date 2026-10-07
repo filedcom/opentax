@@ -2873,3 +2873,17 @@ rendered images, template cache and independent observation. PDF SHA256
 `1505b8c5cfe17d091c13d85affd4ef700bd686b66137dd74c58e87f250673a58`; XML SHA256 `fd832f503c3a8c5c28cf0ce9f3549e5111356ddc54f666625ad86faabdc3fb37`; audit SHA256 `c80d0492e88c1d1dcea36279f0cd533674247c2dbafc7ece5f84c0190814e27c`.
 Continuation-sheet staging is implemented and reviewed; the broad Form 8997
 board requirement remains unchecked until its activation prerequisites are met.
+
+### Fresh full regression launched after continuation implementation
+
+At `2026-10-07T18:49:15.229443+00:00`, committed runtime `0eb1cd6da977c53d94b6dd8097ae1a6f9c945aaa` launched the normal
+`PATH=/tmp/opentax-poppler-env/bin:$PATH DENO_V8_FLAGS=--max-old-space-size=8192 deno task test` command. Live executor session `46497`, Deno PID `77046`.
+The 2,591-path runtime manifest SHA256 is
+`ef4da8782ca007dce3e3e9cce8ae07b4d1f5be8d13efafe8bab0d670dc4d3015`. Only the staged PDF descriptor, its new
+continuation helper and staged tests differ from the prior passing runtime.
+Private log/status are `full-test-after-8997-continuation.log` and
+`full-test-after-8997-continuation.status`; manifest is
+`runtime-full-after-8997-continuation-at-launch.json` under the board execution
+evidence directory. Running is not a pass. Poll this same live handle and
+inspect terminal output and runtime hashes before counting the result; do not
+replace the retained prior passing or interrupted logs.
