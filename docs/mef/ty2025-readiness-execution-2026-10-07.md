@@ -297,3 +297,15 @@ The tips worksheet is complete and legible; every page’s order and clipping
 were checked. `mixed-schedule1a-five-page-review.json` retains digests/notes;
 this is outside the existing checker batches and does not authenticate the
 synthetic payroll/vehicle/loan records.
+
+The **9-case / 46-page** checker completed at
+`2026-10-07T03:08:22.810147Z` with exit **0** and exact selected-scope
+completion output. Manifest SHA-256 is
+`763b02713b69ca594269dbe2c0ddaa29b815efba3cb01c588f68c00ce46de0de`;
+log SHA-256 is
+`e0734aa37442748f2f4063e86a60acc9fe5704155a34d68cfd677b10bbaa9d8d`.
+No tracked runtime files changed. Mutual nonoverlap across all three terminal
+checkpoints was rechecked: **47 distinct packets / 315 pages** are verified.
+The 48-case replay, full regression and PDF preparation remain live; the fresh
+mixed Schedule 1-A review is outside these completed checkpoints. Broad board
+requirements and MeF/ATS readiness are still incomplete.
