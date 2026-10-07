@@ -247,10 +247,39 @@ export function buildForm8582Ledger(
     typeof input.current_4797_sale_gains[0]
         .entire_activity_interest_disposed ===
       "boolean";
+  const firstYearActivity = sourceActivities[0];
+  const firstYearSale = input.current_4797_sale_gains?.[0];
+  const firstYearSource = firstYearActivity?.first_year_activity_source;
+  const reviewedFirstYearSale = hasCurrentSale &&
+    sourceActivities.length === 1 &&
+    firstYearActivity.reporting_form === "schedule_e" &&
+    firstYearActivity.current_net < 0 &&
+    firstYearActivity.prior_unallowed_operating === 0 &&
+    !hasPrior4797 &&
+    firstYearActivity.prior_year_8582_source === undefined &&
+    firstYearSource?.activity_id === firstYearActivity.activity_id &&
+    firstYearSource.activity_name === firstYearActivity.name &&
+    firstYearSource.activity_acquired_on.startsWith("2025-") &&
+    firstYearSource.not_grouped_with_prior_activity === true &&
+    input.current_4797_sale_gains?.length === 1 &&
+    firstYearSale?.activity_id === firstYearActivity.activity_id &&
+    firstYearSale.activity_name === firstYearActivity.name &&
+    firstYearSale.part === "II" &&
+    ((firstYearSale.entire_activity_interest_disposed === false &&
+      firstYearSale.gain < -firstYearActivity.current_net) ||
+      (firstYearSale.entire_activity_interest_disposed === true &&
+        firstYearSale.gain > -firstYearActivity.current_net)) &&
+    (firstYearActivity.activity_type === "B" ||
+      (firstYearActivity.activity_type === "A" &&
+        firstYearActivity.property_type === 1 &&
+        firstYearSale.entire_activity_interest_disposed === false &&
+        input.active_participation === true &&
+        input.has_active_rental === true));
+  const reviewedSale = reviewedOperatingSale || reviewedFirstYearSale;
   if (
     (!hasPrior4797 && !activeRentalActivities && !otherPassiveActivities &&
-      !reviewedOperatingSale) ||
-    (hasCurrentSale && !reviewedOperatingSale)
+      !reviewedSale) ||
+    (hasCurrentSale && !reviewedSale)
   ) {
     throw new Error(
       "Form 8582 operating ledger needs identified other-passive activities or sourced active rentals without a current sale, or a reviewed operating sale",
@@ -280,7 +309,7 @@ export function buildForm8582Ledger(
         };
       }),
       passiveLossLimit(
-        reviewedOperatingSale ? passiveActivity(input) : {
+        reviewedSale ? passiveActivity(input) : {
           currentIncome: input.current_income ?? 0,
           currentLoss: input.current_loss ?? 0,
           priorUnallowed: input.prior_unallowed ?? 0,

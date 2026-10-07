@@ -1,6 +1,11 @@
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import { join } from "@std/path";
 import { passivePropertyInputs } from "../../forms/f1040/2025/eic_passive_property.fixture.ts";
+import { reconcileForm8582NextYearOpening } from "../../forms/f1040/nodes/intermediate/forms/form8582/next_year_import.ts";
+import { f1040_2025 } from "../../forms/f1040/2025/index.ts";
+import { normalizeAllPending } from "../../forms/f1040/2025/pending.ts";
+import { buildForm8582Ledger } from "../../forms/f1040/nodes/intermediate/forms/form8582/ledger.ts";
+import { assertThrows } from "@std/assert";
 import { appendInput, createReturn, loadReturn, updateInput } from "./store.ts";
 import {
   archiveForm8582LedgerCandidate,
@@ -8,6 +13,56 @@ import {
 } from "./form8582-ledger.ts";
 
 const reference = "Synthetic candidate reference; no IRS acceptance";
+
+function firstYearSaleInputs(active: boolean, entire: boolean) {
+  const inputs = passivePropertyInputs();
+  delete inputs.f4835;
+  inputs.w2[0].box1_wages = 160000;
+  const activityId = "first-year-rental";
+  const name = "First-year rental";
+  inputs.schedule_e = [{
+    tsj: "T",
+    activity_id: activityId,
+    property_description: name,
+    property_type: 1,
+    activity_type: active ? "A" : "B",
+    active_participation: active,
+    fair_rental_days: 180,
+    personal_use_days: 0,
+    rent_income: 0,
+    expense_taxes: 5000,
+    form_1099_payments_made: false,
+    street_address: "12 Main Street",
+    city: "Austin",
+    state: "TX",
+    zip: "78701",
+    disposed_of: true,
+    first_year_activity_source: {
+      activity_id: activityId,
+      activity_name: name,
+      activity_acquired_on: "2025-01-01",
+      acquisition_document_reference: "Synthetic current rental acquisition",
+      not_grouped_with_prior_activity: true,
+    },
+    passive_property_sales: [{
+      activity_id: activityId,
+      activity_name: name,
+      part: "II",
+      property_description: "Rental equipment",
+      acquired_on: "2025-01-01",
+      sold_on: "2025-06-01",
+      gross_sales_price: entire ? 15000 : 9000,
+      cost_or_other_basis: 7000,
+      depreciation_allowed: 0,
+      entire_activity_interest_disposed: entire,
+      buyer_unrelated: true,
+      fully_taxable: true,
+      installment_method: false,
+      disposition_document_reference: "Synthetic current equipment closing",
+    }],
+  }];
+  return inputs;
+}
 
 async function source(base: string, rent = 2000, farmIncome = true) {
   const inputs = passivePropertyInputs(-3000);
@@ -212,6 +267,115 @@ Deno.test("Form 8582 candidate concurrent snapshots do not overwrite and reject 
     await assertRejects(() =>
       archiveForm8582LedgerCandidate(base, "../escape", reference)
     );
+  } finally {
+    await Deno.remove(base, { recursive: true });
+  }
+});
+
+Deno.test("durable first-year rental sale ledgers retain allowed operating character and zero closing balance for an entire overall gain", async () => {
+  const base = await Deno.makeTempDir();
+  try {
+    for (const active of [false, true]) {
+      for (const entire of [false, true]) {
+        // Active entire-gain export remains guarded by the existing graph.
+        if (active && entire) continue;
+        const inputs = firstYearSaleInputs(active, entire);
+        const graph = f1040_2025.executeReturn(inputs);
+        assertEquals(graph.diagnostics, []);
+        const pending = normalizeAllPending(graph.pending);
+        const facts = await createReturn(2025, base);
+        const entry = await appendInput(facts.returnPath, "start", inputs);
+        const record = await archiveForm8582LedgerCandidate(
+          base,
+          facts.returnId,
+          reference,
+        );
+        assertEquals(record.status, "acceptance-unverified");
+        const expectedSuspended = entire ? 0 : 3000;
+        assertEquals(record.ledger.ending_unallowed_loss, expectedSuspended);
+        assertEquals(record.ledger.activities[0].lines, [{
+          reporting_form: "schedule_e",
+          opening_unallowed_loss: 0,
+          current_year_loss: 5000,
+          current_same_part_income: 0,
+          allowed_loss: entire ? 5000 : 2000,
+          ending_unallowed_loss: expectedSuspended,
+        }]);
+        assertEquals(record.ledger.activities[0].reporting_part, "viii");
+        assertEquals(pending.schedule1.line4_other_gains, entire ? 8000 : 2000);
+        assertEquals(
+          pending.schedule1.line5_schedule_e,
+          entire ? -5000 : -2000,
+        );
+        assertEquals(pending.f1040.line11_agi, entire ? 163000 : 160000);
+        assertEquals(
+          await readForm8582LedgerCandidate(
+            base,
+            facts.returnId,
+            record.recordId,
+            reference,
+          ),
+          record,
+        );
+        if (!entire) {
+          const opening = {
+            tax_year: 2026,
+            prior_accepted_return_reference: reference,
+            rows: [{
+              activity_id: "first-year-rental",
+              reporting_part: "viii",
+              reporting_form: "schedule_e",
+              prior_unallowed_loss: 3000,
+            }],
+          };
+          // Contract arithmetic only: the candidate reference remains unverified.
+          assertEquals(
+            reconcileForm8582NextYearOpening(
+              opening,
+              record.ledger,
+              pending.form8582,
+              reference,
+            ),
+            opening,
+          );
+        }
+        for (
+          const mutate of [
+            (p: any) => {
+              delete p.activities[0].first_year_activity_source;
+            },
+            (p: any) => {
+              p.activities[0].first_year_activity_source.activity_acquired_on =
+                "2024-01-01";
+            },
+            (p: any) => {
+              p.activities[0].first_year_activity_source.activity_id =
+                "different";
+            },
+            (p: any) => {
+              p.current_4797_sale_gains[0].part = "I";
+            },
+            (p: any) => {
+              p.current_4797_sale_gains[0].entire_activity_interest_disposed =
+                undefined;
+            },
+            (p: any) => {
+              p.current_4797_sale_gains[0].gain = 5000;
+            },
+          ]
+        ) {
+          const changed = structuredClone(pending.form8582);
+          mutate(changed);
+          assertThrows(() => buildForm8582Ledger(changed, reference));
+        }
+        inputs.schedule_e[0].first_year_activity_source.activity_acquired_on =
+          "2025-02-01";
+        await updateInput(facts.returnPath, entry.id, inputs);
+        await assertRejects(() =>
+          archiveForm8582LedgerCandidate(base, facts.returnId, reference)
+        );
+      }
+    }
   } finally {
     await Deno.remove(base, { recursive: true });
   }
