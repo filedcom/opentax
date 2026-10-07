@@ -2995,3 +2995,16 @@ are recorded in [the Form 8997 gap](ty2025-form8997-gap.md). All 2,591 runtime
 hashes still match the full-regression launch manifest; the same test run remains
 live, with no terminal result. Both full-export guards remain. No aggregate
 increase, main-board checkoff, future-row implementation or PR creation.
+
+## Form8582 ledger completion-boundary review — October7
+
+Verified all13 ledger test passes in the hash-verified prior full-green log and
+matched all8 Form8582 subtree/public-export paths to both tested manifests.
+Inspected the current snapshot builder, reader and next-year opening reconciler,
+and recorded the tracked non-test TypeScript caller inventory. These helpers
+validate entered references and source balances; no production durable store,
+authenticated acceptance lookup or2026 engine importer is established.
+[The activity-ID gap](ty2025-form8582-activity-id-gap.md) now distinguishes this
+passing helper evidence from the still-open existing persistence/import scope.
+Private audit SHA256: `06591a4c941128ad994db31fdf5a74ef738c1e91e811e77d4de00775c6d050d8`.
+No runtime or future-row work; main52 requirements and aggregates unchanged.

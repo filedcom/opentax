@@ -653,3 +653,30 @@ This extends the existing one-farm offset with a source-checked three-activity
 case. Farm and rental document bytes, grouping, prior PALs, dispositions,
 extra passive sources, accepted-year ledger storage, filled PDF review, and
 IRS filing acceptance remain open.
+
+## October 7: current ledger proof and production boundary
+
+The earlier “unrun” ledger notes above describe their original checkpoints.
+The retained October7 full regression completed with 12,255/0 and contains all
+**13 passing `ledger.test.ts` cases**, including the 2026 opening reconciliation,
+active-rental allowances, character/balance retention, changed sources, coherent
+snapshot edits, missing filing references and duplicate activities. Its log hash
+was verified, and all eight Form8582 subtree/public-export paths still match both
+that tested manifest and the ongoing fresh-regression launch manifest. This is
+historical bounded helper proof; the fresh full regression has no terminal result.
+
+Current `buildForm8582Ledger` returns a source-reconciled snapshot with an entered
+accepted-return reference. `readForm8582Ledger` parses and recomputes that
+snapshot; it does not load a production store or authenticate acceptance.
+`reconcileForm8582NextYearOpening` compares activity, reporting part/form,
+positive balance and reference; it does not import those rows into a 2026 engine.
+The tracked non-test TypeScript caller inventory contains their definitions,
+`mod.ts` exports and the next-year helper's call to the reader. No production
+store or engine importer is established by that inventory. The existing board's
+durable-ledger and next-year-import requirement therefore remains open, together
+with authenticated source/acceptance and broader worksheet/PDF route proof.
+
+Private audit:
+`.state/research/board-execution-2026-10-07/form8582-ledger-current-boundary-review-20261007.json`,
+SHA256 `06591a4c941128ad994db31fdf5a74ef738c1e91e811e77d4de00775c6d050d8`.
+This review changes no runtime, aggregate readiness count or main-board checkoff.
