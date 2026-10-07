@@ -4373,3 +4373,44 @@ replace the known matching-BR gate. No messages or access/sharing changes were
 made. Main requirement text remains frozen with 52 unchecked items; all 40
 future items remain unworked. ATS estimate remains 0 acceptance tests by the
 original October 8 morning deadline and unestimated after reopening.
+
+
+## October 8 — offline A2A archival identity mismatch; future only
+
+Read-only A2A review found `returnPrimarySsn` selects
+`ReturnData/IRS1040/PrimarySSN`. A retained generated first-year return instead
+has exactly one PrimarySSN in ReturnHeader and none inside IRS1040. A synthetic
+manifest with the matching TIN and an offline Send request using the repository's
+transmitter namespace reproduces rejection by the unchanged `recordA2aSendPackage`:
+“A2A Send submission manifest or taxpayer differs.” This is future item 41,
+unworked; no A2A implementation or positive fixture was repaired.
+
+Normal typed private probe: `deno run --check --config deno.json --allow-read
+--allow-write .state/research/board-execution-2026-10-07/
+a2a-real-return-identity-probe-20261008-v2/probe.ts`, terminal exit 0 after
+asserting the observed rejection. No network permission or transmission was
+used. Synthetic request/container bytes, result and probe are retained there.
+`verification.json` independently revalidates the unaltered source Return1040
+against cached v5.4, confirms header/IRS1040 SSN locations and binds the source,
+current A2A runtime and probe hashes. Source XML SHA-256:
+`cb44e09a08697348ae9f9b32fad16c2f17dcffa7c22b3d123e36c4b780ce85fb`;
+A2A source SHA-256:
+`3836dbaa95900cefba0884e132c4a94e1a17df7bb3fe4d1550ed2ee8e6df574b`;
+probe SHA-256:
+`08b175b7e64590d4adfab87b9adb9a9720e69abc38c49cced974765296c5ff63`.
+
+The initial v1 probe used an incorrect service namespace, rejected at request
+validation and exited 1 because it had not reached the hypothesized identity
+check. Its request/container/result remain retained. v2 corrected only that
+probe namespace to the repository's MeFTransmitterService.xsd namespace and
+used normal type checking; production runtime remained unchanged. The probe
+constructs local archive bytes using the writer's expected fields and does not
+claim a full submission-archive XSD validation, authenticated taxpayer source,
+real IRS Submission ID, enrollment, transport or accepted acknowledgment.
+
+This strengthens the evidence qualification: the synthetic positive A2A archive
+checks alone do not prove archival of actual generated Return1040 packets.
+The existing full regression and staged 308/0 gate remain their scoped results,
+not acceptance evidence. Root runtime stays held; the root full run remains
+live. The main board remains 52 unchecked frozen requirements; only the future
+section gains item 41, unworked. No aggregate filing approval is increased.
