@@ -895,3 +895,60 @@ Tracked runtime hashes are unchanged. `verified204-aggregate.json` confirms
 proof does not close any broad form, source-authentication or ATS requirement.
 The full integrated regression is also still running: latest snapshot has
 792 passing markers and0 failures, which is not a terminal full-test pass.
+
+
+### Unapproved Form 2439 native Schedule D parity
+
+All six actual pages of `single-form2439-undistributed-gain-and-tax-credit`
+were inspected: Form1040(two),Schedule3,ScheduleD(two),Form2439CopyB.
+Issuer/owner/name/address/calendar2025, box1a10,000/box2 1,500 agree with
+nativeIRS2439; ScheduleD11/15/16 and Form1040capitalgain/AGI are10,000.
+Standard15,750 yields taxable0/tax0; Schedule3 13a/14/15 and Form1040
+31/32/33/refund are1,500. The [2025 IRS ScheduleD instructions](https://www.irs.gov/instructions/i1040sd)
+support these joins. However, the nativeIRS1040ScheduleD contains only
+`LTGainOrLossFromFormsAmt`10,000, omitting the printed line15/16 totals
+and QOFNo/line17Yes/line20Yes answers. This packet remains unapproved
+for full native/PDF parity and is outside passing selected scopes.
+`form2439-native-parity-observation.json` retains source/XML/PDF hashes.
+The finding belongs solely to `future_todo`; no implementation was made.
+This review does not authenticate the issuer's original CopyB.
+
+
+### Unapproved purchase-points native Schedule A parity
+
+All three actual `single-1098-purchase-points` pages and the retained
+synthetic Form1098CopyB page were inspected. Retained bytes have SHA256
+`cfc1038ba649af6b5963343aaa0b02ee7ccb9628e54cfa466673a0a627b94c00`;
+lenderHomeLender/calendar25/maskedborrower3333/interest18,000/points2,400
+agree with source. ScheduleA8a/8e/10/17 are20,400; Form1040AGI80,000,
+deduction20,400,taxable59,600,tax8,032,withholding12,000,refund3,968.
+The native ScheduleA emits line8a20,400 but omits printed8e/10/17 totals.
+The packet remains unapproved for full native/PDF parity and outside passing
+selected scopes. `purchase-points-native-parity-observation.json` retains
+hashes; the discovery is only in `future_todo`, with no implementation.
+Retained syntheticCopyB does not authenticate lender origin or prove the
+external Pub936 eligibility/loan-limit workpapers already required on the board.
+
+
+### Three-child EIC newborn review checkpoint
+
+All three actual pages of `single-w2-three-eic-children-with-reviewed-birth`
+were inspected against source, pending and native XML. Ada/Ben/Cora names,
+SSNs,birthyears2017/2020/2025 and daughter/son/daughter relationships agree.
+ScheduleEIC prints12/8/12 months: Cora's reviewed December1 birth and
+US residence with filer through year-end use the printed birth-year rule,
+rather than printing the actual one month. All three children's lines4a/4b
+are correctly skipped as born after2006. W2earned income/AGI15,000,
+standard15,750,taxable0/tax0 and withholding1,500 reconcile. The [2025 IRS
+Publication596 table](https://www.irs.gov/publications/p596) gives6,761
+for Single,threechildren,income15,000–15,050. Form1040/native credit is6,761,
+refund8,261; explicitACTCoptout is checked and nativeDoNotClaimACTCInd isX.
+These are reviewed synthetic facts, not authenticated birth/custody/IRSaccount
+records. The independent selected checker exited0 at2026-10-07T04:34:58.978029Z;
+source replay, PDF/nativeXML/canonicalfield/template checks and fullXSD passed.
+Manifest SHA256 `2f23d873bdba76edc3652ce8caefced797dc44dc50ce91989967ad99c979e85e`;
+terminal log SHA256 `41f1dd98c2ecdbf80452e4e9e22e4602a52db262b737a74a4df915d8c3d44a76`.
+Runtime hashes unchanged. `verified205-aggregate.json` confirms20disjoint
+passingbatches/205packets/1,885actualpages; broadcoverage/source/ATSgatesremainopen.
+Latest full-regression snapshot has839passingmarkers/0failuremarkers and
+its live process remains running; this is not a terminal full-suite pass.
