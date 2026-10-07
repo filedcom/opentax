@@ -7,7 +7,7 @@
 - **Released checkpoint:** [v2.0.10](https://github.com/filedcom/opentax/releases/tag/v2.0.10): PR63’s Form 8962/QBI/spouse-royalty fixes; builds, checksums and Mac download smoke passed.
 - **Retained progress:** [Ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md): 1,555 bounded slices; 52 TODOs still need full proof.
 - **Evidence:** [Archive](docs/mef/ty2025-product-board-status-2026-10-07.md), [handoff](docs/mef/ty2025-checkpoint-handoff-2026-10-07.md), [validation](docs/mef/ty2025-form1040-validation-batch.md), [execution](docs/mef/ty2025-readiness-execution-2026-10-07.md). Combined route checks: 7/0; V32 is older.
-- **Current validation:** 361/372 prepared (4,714 pages), 11 guarded; 75 bounded passes / 267 packets / 2,706 pages. 22 Form 3800 observations unapproved; prior parity qualified. Authenticity, coverage, BR and IRS acceptance open. Drive/local: 746 XSDs agree. Prior full: 12,213/42; eight test repairs: 189/0 focused. Rerun ended SIGTERM/143, incomplete; Poppler restored; isolated Form 4972 7/0; full restart pending. See execution.
+- **Current validation:** 361/372 prepared (4,714 pages), 11 guarded; 75 bounded passes / 267 packets / 2,706 pages. 22 Form 3800 observations unapproved; prior parity qualified. Authenticity, coverage, BR and IRS acceptance open. Drive/local: 746 XSDs agree. Prior full: 12,213/42; eight test repairs: 189/0 focused. Rerun ended SIGTERM/143, incomplete; Poppler restored; isolated Form 4972 7/0; fresh full rerun live. See execution.
 - **Execution boundary:** existing MeF TODOs only; main scope frozen except proved checkoffs. New work goes to `future_todo`, unworked. Compact learnings first; link detailed evidence.
 
 ## Scope and completion rules
