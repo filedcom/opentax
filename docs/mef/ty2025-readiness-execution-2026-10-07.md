@@ -390,3 +390,15 @@ indicator. Page 3 checkbox completion remains false. This presentation
 question is recorded solely in the board’s `future_todo` execution queue and
 is not being implemented. `form7217-basis-four-page-observation.json` retains
 notes/digests; this packet is excluded from passing checkpoints.
+
+The **34-case / 170-page** verifier completed at
+`2026-10-07T03:24:21.547355Z` with exit **0**, exact selected-scope
+completion output and no changed runtime files. Manifest SHA-256 is
+`978e6425b93c3ba0b490825b2f650048e1d1aa6a54229fe12c98f6c084f6c8f7`;
+log SHA-256 is
+`7b7b7700ad0e63f6708bcc81e8fdca6d595c428aae722d6b323eba5aa07420f2`.
+Mutual nonoverlap across all five terminal checkpoints was rechecked:
+**129 distinct packets / 1,468 pages** are verified. The unapproved Form 7217
+case is absent from these checkpoints. `verified129-aggregate.json` retains
+this audit; all-case review, full regression, coverage/source, business rules
+and ATS remain incomplete.
