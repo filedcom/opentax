@@ -3068,3 +3068,17 @@ Typed PDF/native/node suite133/0. [The activity-ID gap](ty2025-form8582-activity
 records evidence hashes and qualifications. Production storage, accepted-source
 authentication and engine import remain open; main runtime2,591paths unchanged.
 No main checkoff, future-row work or aggregate increase.
+
+## Form8582 integration preflight
+
+Read-only preflight confirms the four isolated commits through `25fefcab7`
+change exactly five Form8582 code/test paths and apply cleanly to the main
+worktree (`git apply --check`, exit0). All2,591 main runtime hashes remain
+unchanged. Private audit SHA256
+`e2cdd51dd67d51df272736cd6c69c24d4c682a2e0a9a4e0478a80e1085028b35`;
+patch SHA256 `28e5782057b46c4f0f47325bd82643615ca9f64ed201fffbf469c570f7124628`,
+under `.state/research/board-execution-2026-10-07/form8582-integration-preflight-20261007/`.
+The next full-regression driver is prepared with syntax checked, not run; it
+requires the current regression's successful terminal result, clean integrated
+code matching the isolated hashes, and fresh output paths before launching.
+No integration, main-board checkoff, future implementation or aggregate increase.
