@@ -1,0 +1,196 @@
+{
+  "general": {
+    "filing_status": "single",
+    "taxpayer_first_name": "Alex",
+    "taxpayer_last_name": "Taxpayer",
+    "taxpayer_ssn": "123-45-6789",
+    "taxpayer_dob": "1985-06-15",
+    "address_line1": "1 Main St",
+    "address_city": "Austin",
+    "address_state": "TX",
+    "address_zip": "78701",
+    "digital_assets": false,
+    "qbi_no_prior_loss_or_suspended_loss_confirmed": true,
+    "qbi_not_patron_of_specified_cooperative_confirmed": true
+  },
+  "k1_s_corp": [
+    {
+      "corporation_name": "Harbor Retail Inc.",
+      "corporation_ein": "345678901",
+      "recipient_tin": "123456789",
+      "source_document_reference": "harbor-k1-2025-original",
+      "box1_ordinary_business": 240000,
+      "qbi_amount": 240000,
+      "w2_wages": 60000,
+      "ubia_qualified_property": 2000000,
+      "rpe_aggregation_source": {
+        "tax_year": 2025,
+        "issuer_name": "Harbor Retail Inc.",
+        "issuer_ein": "345678901",
+        "recipient_tin": "123456789",
+        "issued_k1_reference": "harbor-k1-2025-original",
+        "issued_section199a_statement_reference": "harbor-199a-2025-formation-acquisition",
+        "recipient_share_pct": 100,
+        "recipient_ownership_start_date": "2010-01-01",
+        "recipient_owned_on_2025_12_31": true,
+        "recipient_ownership_source_reference": "harbor-shareholder-register-2025",
+        "group_name": "Harbor retail operations",
+        "group_description": "RPE-owned retail stores selling the same goods with centralized purchasing and accounting",
+        "tax_year_end": "2025-12-31",
+        "tax_year_end_source_reference": "harbor-calendar-year-ledger",
+        "election_history": {
+          "status": "new_2025",
+          "no_prior_election_confirmed": true
+        },
+        "timely_original_return_election_confirmed": true,
+        "no_commissioner_disaggregation_confirmed": true,
+        "complete_current_year_event_inventory_confirmed": true,
+        "complete_member_inventory_confirmed": true,
+        "no_lower_tier_rpe_aggregations_confirmed": true,
+        "no_other_199a_groups_confirmed": true,
+        "domestic_non_sstb_trades_confirmed": true,
+        "owner_level_adjustments": 0,
+        "prior_qbi_loss": 0,
+        "qualified_dividends_zero_confirmed": true,
+        "review_source_reference": "harbor-formation-acquisition-annual-review-2025",
+        "reviewed_by": "Tax preparer",
+        "review_date": "2026-02-15",
+        "operational_factors": [
+          {
+            "factor": "common_products",
+            "explanation": "Stores sell the same catalog of merchandise",
+            "source_reference": "harbor-199a-2025-formation-acquisition"
+          },
+          {
+            "factor": "shared_facilities_or_functions",
+            "explanation": "Stores share centralized purchasing accounting and payroll",
+            "source_reference": "harbor-199a-2025-formation-acquisition"
+          }
+        ],
+        "members": [
+          {
+            "business_reference": "north-2025",
+            "business_name": "North",
+            "business_description": "Retail household goods",
+            "entity_name": "Harbor Retail Inc.",
+            "entity_ein": "345678901",
+            "rpe_ownership_start_date": "2010-01-01",
+            "rpe_owned_on_2025_12_31": true,
+            "rpe_owner_share_pct": 100,
+            "ownership_source_reference": "north-ownership-record",
+            "events": [],
+            "qualified_box1_income": 100000,
+            "qbi": 100000,
+            "w2_wages": 10000,
+            "ubia": 2000000,
+            "member_statement_reference": "harbor-199a-2025-formation-acquisition"
+          },
+          {
+            "business_reference": "south-2025",
+            "business_name": "South",
+            "business_description": "Retail household goods",
+            "entity_name": "Harbor Retail Inc.",
+            "entity_ein": "345678901",
+            "rpe_ownership_start_date": "2025-02-01",
+            "rpe_owned_on_2025_12_31": true,
+            "rpe_owner_share_pct": 100,
+            "ownership_source_reference": "south-formation-and-purchase-2025",
+            "events": [
+              {
+                "event": "formed",
+                "date": "2025-01-15",
+                "source_reference": "south-formation-and-purchase-2025"
+              },
+              {
+                "event": "acquired",
+                "date": "2025-02-01",
+                "source_reference": "south-formation-and-purchase-2025"
+              }
+            ],
+            "qualified_box1_income": 80000,
+            "qbi": 80000,
+            "w2_wages": 30000,
+            "ubia": 0,
+            "member_statement_reference": "harbor-199a-2025-formation-acquisition"
+          },
+          {
+            "business_reference": "east-2025",
+            "business_name": "East",
+            "business_description": "Retail household goods",
+            "entity_name": "Harbor Retail Inc.",
+            "entity_ein": "345678901",
+            "rpe_ownership_start_date": "2025-03-01",
+            "rpe_owned_on_2025_12_31": true,
+            "rpe_owner_share_pct": 100,
+            "ownership_source_reference": "east-ownership-record",
+            "events": [
+              {
+                "event": "acquired",
+                "date": "2025-03-01",
+                "source_reference": "east-purchase"
+              }
+            ],
+            "qualified_box1_income": 60000,
+            "qbi": 60000,
+            "w2_wages": 20000,
+            "ubia": 0,
+            "member_statement_reference": "harbor-199a-2025-formation-acquisition"
+          }
+        ],
+        "issued_statement_pdf": {
+          "file_name": "HarborRPEFormationAcquisition2025.pdf",
+          "document_reference": "harbor-rpe-formation-acquisition-2025",
+          "pdf_sha256": "af180d1fc5d8db98c684ffb78135f92983630df1ff9b7e5a5517bad1a2b73040",
+          "pdf_base64": "JVBERi0xLjMKJZOMi54gUmVwb3J0TGFiIEdlbmVyYXRlZCBQREYgZG9jdW1lbnQgKG9wZW5zb3VyY2UpCjEgMCBvYmoKPDwKL0YxIDIgMCBSCj4+CmVuZG9iagoyIDAgb2JqCjw8Ci9CYXNlRm9udCAvSGVsdmV0aWNhIC9FbmNvZGluZyAvV2luQW5zaUVuY29kaW5nIC9OYW1lIC9GMSAvU3VidHlwZSAvVHlwZTEgL1R5cGUgL0ZvbnQKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL0NvbnRlbnRzIDcgMCBSIC9NZWRpYUJveCBbIDAgMCA2MTIgNzkyIF0gL1BhcmVudCA2IDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iago0IDAgb2JqCjw8Ci9QYWdlTW9kZSAvVXNlTm9uZSAvUGFnZXMgNiAwIFIgL1R5cGUgL0NhdGFsb2cKPj4KZW5kb2JqCjUgMCBvYmoKPDwKL0F1dGhvciAoYW5vbnltb3VzKSAvQ3JlYXRpb25EYXRlIChEOjIwMDAwMTAxMDAwMDAwKzAwJzAwJykgL0NyZWF0b3IgKGFub255bW91cykgL0tleXdvcmRzICgpIC9Nb2REYXRlIChEOjIwMDAwMTAxMDAwMDAwKzAwJzAwJykgL1Byb2R1Y2VyIChSZXBvcnRMYWIgUERGIExpYnJhcnkgLSBcKG9wZW5zb3VyY2VcKSkgCiAgL1N1YmplY3QgKHVuc3BlY2lmaWVkKSAvVGl0bGUgKHVudGl0bGVkKSAvVHJhcHBlZCAvRmFsc2UKPj4KZW5kb2JqCjYgMCBvYmoKPDwKL0NvdW50IDEgL0tpZHMgWyAzIDAgUiBdIC9UeXBlIC9QYWdlcwo+PgplbmRvYmoKNyAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCAxMjE1Cj4+CnN0cmVhbQpHYXRtOmhmJTctJjpYKFRFQSVGSlUlMVRTUC0rTC4/NSJtVU9EXW8wQDZlMTVsNjxRdTcjZSMtSEBQbVJQbC46b1YuRG9fK0pDN0xeOlg5Vl0tRHJpSVtMLWNDNExGOjVNUyMlJmBjYSdpYFFdYzA2ISxpKSJvYyMqUjl0S0QpUExQNldiVFdqPkZVSk08Zy9Mbjo2aEokTFNmZUs6QksiUilfZTA9Q3JfLyE6aUBMME00U0tkcFc3Zl5ZU3JEOTh0Nyw7RGg5QSw6WzdjTk5YSykhO1pAcl80Jlw1ZiVZX2tmJkhwYForcTRkUGE4Ll5HZFJVKl9WJkYlRyd1PjxDWWcuWztTKVJAIT5nNjBkUl5oZ2EoKSpoSFUmYFlNMmQ1VCQ5cGklNUlHbSIpS0gxSDc3MmxhOVE3TEE8QyldRFJZQl5FLm88ajRfRFNWMihrakxMNjpTX2JRdF9rM2JqLzJCWSRhZidtWlhcVGVHYiNlXyouNSVhcjc8RCopWmMjYjpeSjFvc3BITFVGZF5PRy1AUmhPcyYkZlRzJFxcXGdHL1Qpb1kyUlNOVTsxOmokITk3QiFLSlRKalRUIXE7dS5QQUsjPVY9dFlNQyNZaURXI0NZXCFaR1Awbk0rQWFOW0RNSDZwPUc2ND5NVkYmOiZ0KF8pOlNBbFA3KTZRLmhvQVg8ZE5tIj50YE0wMFNrWChNKS0mSmAvSS1QLk9fYm5LXD04O00/OGJiOj9SKjI/Zm4lLTMjLTxnLm1QWC1WQCVpNkUlJmxJUyZMXjBYUmpbJDFLcW8xOVUkPGw7MC0oPDpIaDpmUTpYRU5NLjNSUy86WSg4SlpaOm1zODkkLWZoOzdIaGFsbj9bbENILyJcWDJXLj89dUMsa0drbHJMMGlncWshRW81Vi9iZyNBX21QVixMW0g0UmNtbiMxJDNjTzBYVywxdUR1OXUiI2RocSopKEtdWU1aYGc+WE1TPitLJFg5WGMwMyM0Nj0nc1VcTVgraUo4L0xZb0NVJV4ydElbJT5laE4hSVZsTFh0VEVONTIvRGA8YFdIUFRXJFNYWksrTTo2QjQndChBJXFCJlsqZmJASDA5O15pYTlNS0tFVS9SKSYkRF1yNSVqY1MvKypwT2RgakdOLzJfOTdBNFJdJzhvUCRAJFtsRCRJTV06ZVNONy9EUElIK0VbNk0wWmI1YlVTSWR1JXRgYGdjUVdjKURZVGdWNFpKM1U/XT4mSWA2MF8xKUc7cUwzRyVOST9OaU9IKiY5K0FVVEs8UGVWLy5aISwwOGQ0SVUkRE0xNCtISDpWRSRZKTpmODpLSStIL0s5TFElOXVAYzwjajxgJnJXY0ZZTD1uMUhqYTJ0VzhRJydFRClialQzYGxfI0hYPDU+V2RFbW4xKldDU1BZTFgnIUwoLjEhLGpncF0nU10jQmxYPEc5ZmFhU0VKLW40OFtSL2dNJGprZXAubWhuYy5icz9wRmc2T2NeYy1FPjAvV0ExJWxxJ2l1bWVZJU8qO19TUFRESHFtSlhkXltJOyIlLk5IQio0XD9NZyEjby4jPSoyVGZqMFdOLk86KnJyUDU/c1khTWRPNE9JOE1UY2lhOHQkJD0zfj5lbmRzdHJlYW0KZW5kb2JqCnhyZWYKMCA4CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDA2MSAwMDAwMCBuIAowMDAwMDAwMDkyIDAwMDAwIG4gCjAwMDAwMDAxOTkgMDAwMDAgbiAKMDAwMDAwMDM5MiAwMDAwMCBuIAowMDAwMDAwNDYwIDAwMDAwIG4gCjAwMDAwMDA3MjEgMDAwMDAgbiAKMDAwMDAwMDc4MCAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9JRCAKWzwxYzE3ODE5OGZiZGZhNTFiMjU5OTVkODlkNDEwMjA0Mz48MWMxNzgxOThmYmRmYTUxYjI1OTk1ZDg5ZDQxMDIwNDM+XQolIFJlcG9ydExhYiBnZW5lcmF0ZWQgUERGIGRvY3VtZW50IC0tIGRpZ2VzdCAob3BlbnNvdXJjZSkKCi9JbmZvIDUgMCBSCi9Sb290IDQgMCBSCi9TaXplIDgKPj4Kc3RhcnR4cmVmCjIwODYKJSVFT0YK",
+          "reviewed_by": "Tax preparer",
+          "review_date": "2026-02-15",
+          "complete_member_amounts_events_and_owner_match_confirmed": true
+        }
+      },
+      "eic_passive_activity_review": {
+        "box1": "nonpassive",
+        "recipient_tin": "123456789",
+        "activity_statement_reference": "harbor-199a-2025-formation-acquisition",
+        "participation_workpaper_reference": "harbor-owner-participation-workpaper-2025"
+      }
+    }
+  ],
+  "w2": [
+    {
+      "box1_wages": 90000,
+      "box2_fed_withheld": 9000,
+      "employee_ssn": "123-45-6789",
+      "employer_name": "Outside Employer",
+      "employer_ein": "98-7654321",
+      "employer_address_line1": "10 Work St",
+      "employer_address_city": "Austin",
+      "employer_address_state": "TX",
+      "employer_address_zip": "78701"
+    },
+    {
+      "box1_wages": 10000,
+      "box2_fed_withheld": 1000,
+      "employee_ssn": "123-45-6789",
+      "employer_name": "Harbor Retail Inc.",
+      "employer_ein": "34-5678901",
+      "employer_address_line1": "10 Work St",
+      "employer_address_city": "Austin",
+      "employer_address_state": "TX",
+      "employer_address_zip": "78701"
+    }
+  ],
+  "qbi_aggregation": {
+    "aggregation_groups": [
+      {
+        "group_name": "Harbor retail operations",
+        "business_names": [
+          "North",
+          "South",
+          "East"
+        ],
+        "combined_for_limitation": true
+      }
+    ],
+    "qbi_no_prior_loss_or_suspended_loss_confirmed": true
+  }
+}

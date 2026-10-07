@@ -29,6 +29,10 @@ import {
   qbiCapitalTotal,
 } from "../qbi-capital-sources.ts";
 import { z } from "zod";
+import {
+  reviewedRpeAggregation,
+  rpeAggregationSourceSchema,
+} from "../../../inputs/k1_rpe_aggregation_source.ts";
 import type {
   NodeOutput,
   NodeResult,
@@ -287,6 +291,7 @@ export const inputSchema = z.object({
   // treatment applied. Omit when no aggregation election has been made.
   aggregation_groups: z.array(aggregationGroupSchema).optional(),
   aggregation_filing_details: aggregationFilingDetailsSchema.optional(),
+  rpe_aggregation_source: rpeAggregationSourceSchema.optional(),
 
   // An affirmative status requires Schedule D's payment and wage allocation.
   // Absence is not a negative attestation for the bounded filing route.
@@ -587,7 +592,9 @@ export function validateTwoBusinessAggregationSource(input: Form8995AInput) {
     const currentYearStart = business.events.some((e) =>
       e.event === "formed" || e.event === "acquired"
     );
-    if (currentYearStart && member.source_schedule_c.line_h_new_business !== true) {
+    if (
+      currentYearStart && member.source_schedule_c.line_h_new_business !== true
+    ) {
       throw new Error(
         "Form 8995-A annual formation/acquisition events must match actual Schedule C line H started or acquired flag",
       );
@@ -620,6 +627,105 @@ export function validateTwoBusinessAggregationSource(input: Form8995AInput) {
 }
 
 export function calculateTwoBusinessAggregationLines(input: Form8995AInput) {
+  if (input.rpe_aggregation_source) {
+    const totals = reviewedRpeAggregation(input.rpe_aggregation_source),
+      issued = totals.source;
+    const group = input.aggregation_groups?.[0];
+    if (
+      input.filing_status !== FilingStatus.Single ||
+      input.taxable_income <= 247300 ||
+      !Number.isInteger(input.taxable_income) || input.net_capital_gain !== 0 ||
+      input.aggregation_groups?.length !== 1 || !group ||
+      group.group_name !== issued.group_name ||
+      group.combined_for_limitation !== true ||
+      JSON.stringify(group.business_names) !==
+        JSON.stringify(issued.members.map((m) => m.business_name)) ||
+      input.qbi !== totals.qbi || input.w2_wages !== totals.wages ||
+      input.unadjusted_basis !== totals.ubia ||
+      input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+      input.aggregation_filing_details || input.business_filing_details ||
+      input.sstb_filing_details ||
+      input.schedule_c_qbi_businesses || input.patron_filing_details ||
+      input.patron_of_specified_cooperative ||
+      input.independent_patron_sources || input.wotc_business_sources ||
+      input.farm_wotc_filing_source ||
+      input.single_schedule_c_source || input.single_schedule_f_source ||
+      input.mixed_fishing_qbi_source ||
+      (input.sstb_qbi ?? 0) !== 0 || (input.sstb_w2_wages ?? 0) !== 0 ||
+      (input.sstb_unadjusted_basis ?? 0) !== 0 ||
+      (input.line6_sec199a_dividends ?? 0) !== 0 ||
+      (input.qbi_loss_carryforward ?? 0) !== 0 ||
+      (input.reit_loss_carryforward ?? 0) !== 0
+    ) {
+      throw Error(
+        "RPE Schedule B must preserve the complete issued aggregation and grouped source amounts without other QBI paths",
+      );
+    }
+    const source = {
+      group_name: issued.group_name,
+      group_description: issued.group_description,
+      common_owner_ssn: issued.recipient_tin,
+      tax_year_end: issued.tax_year_end,
+      tax_year_end_source_reference: issued.tax_year_end_source_reference,
+      election_history: issued.election_history,
+      rpe_aggregation_present: true as const,
+      operational_factors: issued.operational_factors,
+      annual_disclosure: {
+        disclosure_source_reference: issued.review_source_reference,
+        reviewed_by: issued.reviewed_by,
+        review_date: issued.review_date,
+        businesses: issued.members.map((m) => ({
+          business_reference: m.business_reference,
+          business_description: m.business_description,
+          entity_name: m.entity_name,
+          entity_ein: m.entity_ein,
+          events: m.events,
+        })),
+      },
+      members: issued.members.map((m) => ({
+        business_reference: m.business_reference,
+        business_name: m.business_name,
+        ein: m.entity_ein,
+        qbi: m.qbi,
+        w2_wages: m.w2_wages,
+        ubia: m.ubia,
+        owner_share_pct: 100 as const,
+        ownership_start_date: m.rpe_ownership_start_date,
+        ownership_source_reference: m.ownership_source_reference,
+        source_schedule_c: undefined,
+        qbi_adjustments: {
+          deductible_se_tax: 0,
+          self_employed_health_insurance: 0,
+          qualified_retirement_plan: 0,
+          allocation_method_description:
+            "Recipient amounts from the intact issued RPE aggregation; no owner-level adjustments",
+          allocation_worksheet_reference: m.member_statement_reference,
+        },
+      })),
+    };
+    const parent = calculateOneBusiness8995ALines(input);
+    if (!Object.values(parent).every(Number.isInteger) || parent.line39 <= 0) {
+      throw Error(
+        "RPE aggregation needs its finalized positive whole-dollar grouped deduction",
+      );
+    }
+    return {
+      source,
+      schedule: {
+        rows: source.members.map((m) => ({
+          name: m.business_name,
+          ein: m.ein,
+          qbi: m.qbi,
+          w2Wages: m.w2_wages,
+          ubia: m.ubia,
+        })),
+        totalQbi: totals.qbi,
+        totalW2Wages: totals.wages,
+        totalUbia: totals.ubia,
+      },
+      parent,
+    };
+  }
   // Schedule C net profit alone is not generally QBI. Each member's explicit
   // attributable deductions are checked against its retained Schedule C and
   // the Schedule 1 totals in the native/PDF join.
@@ -1336,6 +1442,7 @@ export function calculateOneBusiness8995ALines(input: Form8995AInput) {
       input.mixed_fishing_qbi_source ||
       input.producing_mining_zero_qbi_source ||
       input.aggregation_filing_details ||
+      input.rpe_aggregation_source ||
       input.patron_business_source
       ? Math.round(value)
       : value;
@@ -1613,7 +1720,7 @@ function assertSupportedSchedulePath(input: Form8995AInput): void {
   }
   if (
     (input.aggregation_groups ?? []).length > 0 ||
-    input.aggregation_filing_details
+    input.aggregation_filing_details || input.rpe_aggregation_source
   ) {
     calculateTwoBusinessAggregationLines(input);
   }
@@ -1748,7 +1855,10 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
       );
     }
 
-    if (input.aggregation_filing_details && ctx.taxYear !== 2025) {
+    if (
+      (input.aggregation_filing_details || input.rpe_aggregation_source) &&
+      ctx.taxYear !== 2025
+    ) {
       throw new Error(
         "Form 8995-A Schedule B bounded aggregation route is TY2025 only",
       );
@@ -1764,7 +1874,7 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
-    if (input.aggregation_filing_details) {
+    if (input.aggregation_filing_details || input.rpe_aggregation_source) {
       const deduction =
         calculateTwoBusinessAggregationLines(input).parent.line39;
       return {

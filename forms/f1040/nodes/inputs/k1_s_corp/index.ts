@@ -1,4 +1,8 @@
 import { currentK1Qbi, currentK1QbiSourceSchema } from "../k1_qbi_source.ts";
+import {
+  currentSCorpRpeAggregation,
+  rpeAggregationSourceSchema,
+} from "../k1_rpe_aggregation_source.ts";
 import { form8582 } from "../../intermediate/forms/form8582/index.ts";
 import {
   k1PassiveIncomeSourceSchema,
@@ -107,6 +111,7 @@ export const itemSchema = z.object({
   eic_passive_activity_review: k1PassiveEicReviewSchema.optional(),
   passive_income_source: k1PassiveIncomeSourceSchema.optional(),
   qualified_business_income_source: currentK1QbiSourceSchema.optional(),
+  rpe_aggregation_source: rpeAggregationSourceSchema.optional(),
 
   // Box 4 — Interest income → Schedule B
   box4_interest: z.number().nonnegative().optional(),
@@ -513,6 +518,21 @@ function resolveUbia(item: K1SCorpItem): number {
 }
 
 function form8995Output(items: K1SCorpItems): NodeOutput[] {
+  const rpe = items.filter((item) => item.rpe_aggregation_source);
+  if (rpe.length) {
+    if (rpe.length !== 1 || items.length !== 1) {
+      throw Error(
+        "RPE aggregation needs its complete single-issuer current K1 inventory; other issuer combinations need their source route",
+      );
+    }
+    const group = currentSCorpRpeAggregation(rpe[0])!;
+    return [output(form8995, {
+      qbi: group.qbi,
+      w2_wages: group.wages,
+      unadjusted_basis: group.ubia,
+      rpe_aggregation_source: group.source,
+    })];
+  }
   const owned = items.filter((item) =>
     item.form7203_debt_evidence?.kind !==
       "prior_reduced_formal_note_repayment" &&

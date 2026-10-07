@@ -1,8 +1,10 @@
+import { mefBusinessNameLine1 } from "../../../mef/business-name.ts";
 import {
   AGGREGATION_DISCLOSURE_DESCRIPTION,
   AGGREGATION_DISCLOSURE_FILE,
   aggregationAnnualDisclosureBytes,
   aggregationChangeDescription,
+  checkedIssuedRpeStatementBytes,
 } from "../../pdf/forms/f8995a_aggregation_statement.ts";
 import { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
@@ -17,6 +19,100 @@ import {
   inputSchema as scheduleCInputSchema,
 } from "../../../nodes/inputs/schedule_c/model.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { inputSchema as sCorpInputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
+import { currentSCorpRpeAggregation } from "../../../nodes/inputs/k1_rpe_aggregation_source.ts";
+import { isDeepStrictEqual } from "node:util";
+
+function assertRpeScheduleBJoin(
+  input: Form8995AInput,
+  context: MefBuildContext | undefined,
+) {
+  const calculated = calculateTwoBusinessAggregationLines(input),
+    pending = context?.pending,
+    filer = context?.filer;
+  const source = input.rpe_aggregation_source!;
+  const k1 = sCorpInputSchema.parse(pending?.k1_s_corp);
+  if (k1.k1_s_corps.length !== 1) {
+    throw Error("RPE Schedule B needs the complete actual issuer K1 inventory");
+  }
+  const issued = currentSCorpRpeAggregation(k1.k1_s_corps[0]);
+  const parent = inputSchema.strict().parse(pending?.form8995a);
+  const companion = inputSchema.strict().parse(pending?.form8995a_schedule_b);
+  const upstream = pending?.form8995 as Record<string, unknown> | undefined;
+  const general = pending?.general as Record<string, unknown> | undefined;
+  const s1 = pending?.schedule1 as Record<string, number> | undefined;
+  const f = pending?.f1040 as Record<string, number> | undefined;
+  // These nodes can retain inert executor inputs without a filed deduction or
+  // passive activity. Do not treat their presence as another business route.
+  const passive = pending?.form8582 as Record<string, unknown> | undefined;
+  const health = pending?.form7206 as Record<string, unknown> | undefined;
+  const zeroSe = health?.schedule_se_source as
+    | Record<string, unknown>
+    | undefined;
+  const record = (value: unknown) =>
+    typeof value === "object" && value !== null && !Array.isArray(value);
+  const passiveInert = passive === undefined ||
+    (record(passive) &&
+      Object.entries(passive).every(([key, value]) =>
+        value === undefined || (key === "filing_status" && value === "single")
+      ));
+  const healthInert = health === undefined ||
+    (record(health) &&
+      Object.entries(health).every(([key, value]) =>
+        value === undefined || key === "schedule_se_source"
+      ) &&
+      (zeroSe === undefined ||
+        (record(zeroSe) &&
+          Object.entries(zeroSe).every(([key, value]) =>
+            value === undefined ||
+            (key === "farm_optional_method_elected" && value === false) ||
+            ([
+              "net_profit_schedule_c",
+              "net_profit_schedule_f",
+              "line13_deduction",
+            ]
+              .includes(key) && value === 0)
+          ))));
+  if (
+    !issued || !isDeepStrictEqual(issued.source, source) ||
+    !isDeepStrictEqual(parent, input) || !isDeepStrictEqual(companion, input) ||
+    !filer || filer.filingStatus !== FilingStatus.Single ||
+    filer.primarySSN.replaceAll("-", "") !== source.recipient_tin ||
+    general?.filing_status !== "single" ||
+    general?.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+    general.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+    !upstream || !isDeepStrictEqual(upstream.rpe_aggregation_source, source) ||
+    upstream.line15 !== undefined || upstream.qbi_deduction !== undefined ||
+    !s1 || s1.line5_schedule_e !== issued.qbi ||
+    (s1.line15_se_deduction ?? 0) !== 0 ||
+    (s1.line16_sep_simple ?? 0) !== 0 ||
+    (s1.line17_se_health_insurance ?? 0) !== 0 ||
+    !f || f.line8_additional_income !== issued.qbi ||
+    f.line13_qbi_deduction !== calculated.parent.line39 ||
+    f.line15_taxable_income + calculated.parent.line39 !==
+      input.taxable_income ||
+    (f.line3a_qualified_dividends ?? 0) !== 0 ||
+    (f.line7_capital_gain ?? 0) !== 0 ||
+    !passiveInert || !healthInert || [
+      "schedule_c",
+      "schedule_f",
+      "k1_partnership",
+      "k1_trust",
+      "form7203",
+      "sep_retirement",
+      "form8995a_schedule_a",
+      "form8995a_schedule_c",
+      "form8995a_schedule_d",
+      "form5884",
+      "form8829",
+    ].some((key) => pending?.[key] !== undefined)
+  ) {
+    throw Error(
+      "RPE Schedule B must join actual issuer/recipient source, intact aggregation, Schedule E income and finalized 1040 deduction",
+    );
+  }
+  return calculated;
+}
 
 // The bounded two-business companion must reconcile the retained parent,
 // Schedule C sources, Schedule 1 adjustments, and finalized Form 1040.
@@ -24,6 +120,9 @@ export function assertScheduleBAggregationJoin(
   input: Form8995AInput,
   context: MefBuildContext | undefined,
 ): ReturnType<typeof calculateTwoBusinessAggregationLines> {
+  if (input.rpe_aggregation_source) {
+    return assertRpeScheduleBJoin(input, context);
+  }
   const calculated = calculateTwoBusinessAggregationLines(input);
   const pending = context?.pending;
   const filer = context?.filer;
@@ -140,11 +239,19 @@ export function buildStagedIRS8995AScheduleB(
   const { source, schedule } = assertScheduleBAggregationJoin(input, context);
   const attachmentId = context?.documentIdsByAttachmentFileName
     ?.[AGGREGATION_DISCLOSURE_FILE];
+  const issuedFile = input.rpe_aggregation_source?.issued_statement_pdf
+    .file_name;
+  const issuedId = issuedFile
+    ? context?.documentIdsByAttachmentFileName?.[issuedFile]
+    : undefined;
   if (
     !context?.binaryAttachmentFileNames?.includes(
       AGGREGATION_DISCLOSURE_FILE,
     ) ||
-    (context.phase === "final" && !attachmentId)
+    (context.phase === "final" && !attachmentId) ||
+    (issuedFile !== undefined &&
+      (!context?.binaryAttachmentFileNames?.includes(issuedFile) ||
+        (context.phase === "final" && !issuedId)))
   ) {
     throw new Error(
       "Form 8995-A aggregation requires its bundled annual disclosure PDF",
@@ -159,7 +266,7 @@ export function buildStagedIRS8995AScheduleB(
         ...schedule.rows.map((row) =>
           elements("BusinessAggregationInfoGrp", [
             elements("TradeOrBusinessName", [
-              element("BusinessNameLine1Txt", row.name),
+              element("BusinessNameLine1Txt", mefBusinessNameLine1(row.name)),
             ]),
             element("EIN", row.ein),
             element("QlfyBusinessIncomeOrLossAmt", row.qbi),
@@ -174,7 +281,9 @@ export function buildStagedIRS8995AScheduleB(
     ],
     attachmentId
       ? {
-        referenceDocumentId: attachmentId,
+        referenceDocumentId: issuedId
+          ? attachmentId + " " + issuedId
+          : attachmentId,
         referenceDocumentName: "BinaryAttachment",
       }
       : undefined,
@@ -191,11 +300,20 @@ export const form8995aScheduleB: MefFormDescriptor<
   async buildBinaryAttachments(fields, context) {
     if (Array.isArray(fields) || Object.keys(fields).length === 0) return [];
     const input = inputSchema.strict().parse(fields);
-    return [{
+    const attachments = [{
       fileName: AGGREGATION_DISCLOSURE_FILE,
       description: AGGREGATION_DISCLOSURE_DESCRIPTION,
       bytes: await aggregationAnnualDisclosureBytes(input, context?.filer),
     }];
+    if (input.rpe_aggregation_source) {
+      attachments.push({
+        fileName: input.rpe_aggregation_source.issued_statement_pdf.file_name,
+        description:
+          "Issued RPE aggregation disclosure attached to Schedule K-1",
+        bytes: await checkedIssuedRpeStatementBytes(input),
+      });
+    }
+    return attachments;
   },
   build(fields, context) {
     if (Array.isArray(fields) && fields.length === 0) return "";

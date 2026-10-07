@@ -227,3 +227,30 @@ Deno.test("W-2 MeF binds an explicit employee SSN to the return owner", () => {
     "spouse wages require a joint Form 1040",
   );
 });
+
+Deno.test("W2 native business-name formatting preserves legal source spelling, EIN and name control", () => {
+  const source = item({
+    employer_name: "Harbor Retail Inc.",
+    employer_ein: "34-5678901",
+  });
+  const original = structuredClone(source);
+  const [xml] = w2.build({ w2s: [source] }, { filer: filer() });
+  assertStringIncludes(
+    xml,
+    "<BusinessNameLine1Txt>Harbor Retail Inc</BusinessNameLine1Txt>",
+  );
+  assertStringIncludes(xml, "<EmployerEIN>345678901</EmployerEIN>");
+  assertStringIncludes(
+    xml,
+    "<EmployerNameControlTxt>HARB</EmployerNameControlTxt>",
+  );
+  assertEquals(source, original);
+  assertThrows(
+    () =>
+      w2.build({ w2s: [item({ employer_name: "A+B Retail" })] }, {
+        filer: filer(),
+      }),
+    Error,
+    "MeF-supported",
+  );
+});

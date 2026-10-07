@@ -1,5 +1,6 @@
-import { PDFDocument, StandardFonts } from "pdf-lib";
+import { PDFDict, PDFDocument, PDFName, StandardFonts } from "pdf-lib";
 import type { FilerIdentity } from "../../../mef/header.ts";
+import { issuedRpeStatementBytes } from "../../../nodes/inputs/k1_rpe_aggregation_source.ts";
 import {
   calculateTwoBusinessAggregationLines,
   type Form8995AInput,
@@ -16,7 +17,13 @@ export function aggregationChangeDescription(
   const { source } = calculateTwoBusinessAggregationLines(input);
   const events = source.annual_disclosure.businesses.flatMap((b) =>
     b.events.map((e) =>
-      `${b.entity_name} ${e.event.replaceAll("_", " ")} ${e.date}`
+      `${
+        input.rpe_aggregation_source
+          ? source.members.find((m) =>
+            m.business_reference === b.business_reference
+          )!.business_name
+          : b.entity_name
+      } ${e.event.replaceAll("_", " ")} ${e.date}`
     )
   );
   if (!events.length) return undefined;
@@ -30,6 +37,7 @@ export async function appendAggregationAnnualDisclosure(
   document: PDFDocument,
   input: Form8995AInput,
   filer?: FilerIdentity,
+  includeIssuedCopy = true,
 ): Promise<void> {
   const { source, schedule } = calculateTwoBusinessAggregationLines(input);
   if (
@@ -89,10 +97,16 @@ export async function appendAggregationAnnualDisclosure(
   };
   write(`Aggregation 1: ${source.group_name}. ${source.group_description}`);
   write(
-    `Election: ${source.election_history.status}. Calendar tax-year end: ${source.tax_year_end}. Timely original-return election and no Commissioner disaggregation reviewed.`,
+    input.rpe_aggregation_source
+      ? `RPE election: ${source.election_history.status}; issuer ${input.rpe_aggregation_source.issuer_name}, EIN ${input.rpe_aggregation_source.issuer_ein}. Calendar tax-year end: ${source.tax_year_end}. RPE timely original-return election and no Commissioner disaggregation reviewed; taxpayer preserves this intact issued aggregation.`
+      : `Election: ${source.election_history.status}. Calendar tax-year end: ${source.tax_year_end}. Timely original-return election and no Commissioner disaggregation reviewed.`,
   );
   write(
-    `Annual review: ${disclosure.disclosure_source_reference}; ${disclosure.reviewed_by}; ${disclosure.review_date}. Complete current-year business event inventory reviewed. RPE aggregations: none.`,
+    `Annual review: ${disclosure.disclosure_source_reference}; ${disclosure.reviewed_by}; ${disclosure.review_date}. Complete current-year business event inventory reviewed. ${
+      input.rpe_aggregation_source
+        ? `RPE aggregation: ${source.group_name}; issued K-1 ${input.rpe_aggregation_source.issued_k1_reference}, section199A statement ${input.rpe_aggregation_source.issued_section199a_statement_reference}. Actual issued disclosure ${input.rpe_aggregation_source.issued_statement_pdf.file_name} is retained and attached.`
+        : "RPE aggregations: none."
+    }`,
   );
   for (const factor of source.operational_factors) {
     write(
@@ -105,10 +119,14 @@ export async function appendAggregationAnnualDisclosure(
     )!;
     const row = schedule.rows[index];
     write(
-      `${business.entity_name}, EIN ${business.entity_ein}: ${business.business_description}. Business reference: ${business.business_reference}.`,
+      `${
+        input.rpe_aggregation_source ? member.business_name + ": " : ""
+      }${business.entity_name}, EIN ${business.entity_ein}: ${business.business_description}. Business reference: ${business.business_reference}.`,
     );
     write(
-      `Direct owner ${source.common_owner_ssn}, share 100%, owned from ${member.ownership_start_date} through December 31, 2025. Ownership record: ${member.ownership_source_reference}.`,
+      input.rpe_aggregation_source
+        ? `RPE directly operates this business from ${member.ownership_start_date} through December 31, 2025; ownership record ${member.ownership_source_reference}. Shareholder ${source.common_owner_ssn}, share 100%, owned issuer shares from ${input.rpe_aggregation_source.recipient_ownership_start_date}; shareholder record ${input.rpe_aggregation_source.recipient_ownership_source_reference}.`
+        : `Direct owner ${source.common_owner_ssn}, share 100%, owned from ${member.ownership_start_date} through December 31, 2025. Ownership record: ${member.ownership_source_reference}.`,
     );
     if (!business.events.length) {
       write(
@@ -129,6 +147,45 @@ export async function appendAggregationAnnualDisclosure(
   write(
     `Aggregation totals: QBI ${schedule.totalQbi}; W-2 wages ${schedule.totalW2Wages}; UBIA ${schedule.totalUbia}.`,
   );
+  if (input.rpe_aggregation_source && includeIssuedCopy) {
+    const issued = await PDFDocument.load(
+      await checkedIssuedRpeStatementBytes(input),
+    );
+    if (
+      issued.getPageCount() === 0 || issued.getForm().getFields().length !== 0
+    ) {
+      throw Error(
+        "RPE aggregation disclosure needs a printable finalized issued PDF copy",
+      );
+    }
+    const copies = await document.copyPages(issued, issued.getPageIndices());
+    copies.forEach((copy) => document.addPage(copy));
+  }
+}
+
+export async function checkedIssuedRpeStatementBytes(
+  input: Form8995AInput,
+): Promise<Uint8Array> {
+  if (!input.rpe_aggregation_source) {
+    throw Error("Issued RPE statement source required");
+  }
+  const bytes = issuedRpeStatementBytes(input.rpe_aggregation_source);
+  const document = await PDFDocument.load(bytes);
+  const widgets = document.getPages().some((page) =>
+    page.node.Annots()?.asArray().some((ref) =>
+      document.context.lookup(ref, PDFDict).get(PDFName.of("Subtype"))
+        ?.toString() === "/Widget"
+    )
+  );
+  if (
+    document.getPageCount() === 0 ||
+    document.getForm().getFields().length !== 0 || widgets
+  ) {
+    throw Error(
+      "RPE aggregation disclosure needs a printable finalized issued PDF copy",
+    );
+  }
+  return bytes;
 }
 
 export async function aggregationAnnualDisclosureBytes(
@@ -136,6 +193,6 @@ export async function aggregationAnnualDisclosureBytes(
   filer?: FilerIdentity,
 ): Promise<Uint8Array> {
   const document = await PDFDocument.create({ updateMetadata: false });
-  await appendAggregationAnnualDisclosure(document, input, filer);
+  await appendAggregationAnnualDisclosure(document, input, filer, false);
   return document.save();
 }

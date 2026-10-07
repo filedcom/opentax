@@ -1,3 +1,4 @@
+import { mefBusinessNameLine1 } from "../../../mef/business-name.ts";
 import { currentPropertyPassiveAmounts } from "../../../nodes/inputs/schedule_e/current-property-source.ts";
 import { assertCurrentPassivePropertyReturn } from "../../current_passive_property_source.ts";
 import { element, elements } from "../../../mef/xml.ts";
@@ -848,7 +849,10 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
         : "",
       ...k1Rows.map((row) =>
         elements("PartnershipOrSCorpGroup", [
-          element("PartnershipOrSCorporationNm", row.name),
+          element(
+            "PartnershipOrSCorporationNm",
+            mefBusinessNameLine1(row.name),
+          ),
           element("PartnershipSCorpCd", row.code),
           element("PartnershipOrSCorpEIN", row.ein),
           row.passiveIncome > 0

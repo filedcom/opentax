@@ -163,7 +163,7 @@ export function projectOneBusiness8995A(
   }
   assertForm8995APatronReturn(input, allPending);
   if (
-    input.aggregation_filing_details ||
+    input.aggregation_filing_details || input.rpe_aggregation_source ||
     (input.aggregation_groups ?? []).length > 0
   ) {
     return input;
@@ -440,7 +440,7 @@ export const form8995aPdf: PdfFormDescriptor = {
       );
     }
     if (
-      input.aggregation_filing_details ||
+      input.aggregation_filing_details || input.rpe_aggregation_source ||
       (input.aggregation_groups ?? []).length > 0
     ) {
       if (!filer || !allPending) {

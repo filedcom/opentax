@@ -480,3 +480,31 @@ Deno.test("Schedule E rejects unresolved loss and expense limitations", () => {
     })
   );
 });
+
+Deno.test("Schedule E actual issued RPE K1 keeps legal source identity while native business name fits schema", async () => {
+  const source = JSON.parse(
+    await Deno.readTextFile(
+      new URL(
+        "../../fixtures/form8995a-rpe-3-business-source.json",
+        import.meta.url,
+      ),
+    ),
+  );
+  const item = source.k1_s_corp[0], original = structuredClone(item);
+  const xml = scheduleE.build({ schedule_es: [] }, {
+    pending: { general: source.general, k1_s_corp: { k1_s_corps: [item] } },
+  });
+  assertStringIncludes(
+    xml,
+    "<PartnershipOrSCorporationNm>Harbor Retail Inc</PartnershipOrSCorporationNm>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PartnershipOrSCorpEIN>345678901</PartnershipOrSCorpEIN>",
+  );
+  assertStringIncludes(
+    xml,
+    "<NonpassiveIncomeAmt>240000</NonpassiveIncomeAmt>",
+  );
+  assertEquals(item, original);
+});

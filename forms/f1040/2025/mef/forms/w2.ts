@@ -1,3 +1,4 @@
+import { mefBusinessNameLine1 } from "../../../mef/business-name.ts";
 import { form4852NativeSources } from "../../form4852_native_source.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import type { W2Item } from "../../../nodes/inputs/w2/index.ts";
@@ -149,7 +150,9 @@ function buildW2(
     element("EmployeeSSN", employee.ssn),
     element("EmployerEIN", employerEin),
     element("EmployerNameControlTxt", employerNameControl(employerName)),
-    elements("EmployerName", [element("BusinessNameLine1Txt", employerName)]),
+    elements("EmployerName", [
+      element("BusinessNameLine1Txt", mefBusinessNameLine1(employerName)),
+    ]),
     buildEmployerAddress(item, index),
     element("EmployeeNm", employee.name),
     buildEmployeeAddress(context, index),

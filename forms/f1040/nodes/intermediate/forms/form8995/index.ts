@@ -1,4 +1,8 @@
 import { ownedSepSourceSchema } from "../../../inputs/sep_retirement/owned-source.ts";
+import {
+  reviewedRpeAggregation,
+  rpeAggregationSourceSchema,
+} from "../../../inputs/k1_rpe_aggregation_source.ts";
 import { independentReviewsSchema } from "../../../inputs/qbi_patron/schema.ts";
 import { independentPatronSources } from "../../../inputs/qbi_patron/independent.ts";
 import {
@@ -131,6 +135,7 @@ export const inputSchema = z.object({
   current_passive_property_sources: z.array(currentPropertySourceSchema).min(1)
     .optional(),
   current_k1_qbi_sources: z.array(currentK1QbiSourceSchema).min(1).optional(),
+  rpe_aggregation_source: rpeAggregationSourceSchema.optional(),
   owned_s_corp_loss_source: z.unknown().optional(),
   owned_s_corp_loss_sources: z.array(z.unknown()).min(2).max(4).optional(),
   // W-2 wages and UBIA are carried forward when Form 8995-A is required.
@@ -439,6 +444,43 @@ function advancedFormOutput(
   input: Form8995Input,
   taxableIncome: number,
 ): NodeOutput {
+  if (input.rpe_aggregation_source) {
+    const group = reviewedRpeAggregation(input.rpe_aggregation_source);
+    if (
+      input.filing_status !== FilingStatus.Single ||
+      input.taxpayer_ssn?.replaceAll("-", "") !== group.source.recipient_tin ||
+      taxableIncome <= 247300 ||
+      sumField(input.qbi) !== group.qbi ||
+      sumField(input.w2_wages) !== group.wages ||
+      sumField(input.unadjusted_basis) !== group.ubia ||
+      sumField(input.qbi_from_schedule_c) !== 0 ||
+      sumField(input.qbi_from_schedule_f) !== 0 ||
+      sumField(input.sstb_qbi) !== 0 || qbiCapitalTotal(input) !== 0 ||
+      sumField(input.line6_sec199a_dividends) !== 0 ||
+      sumField(input.se_tax_deduction) !== 0 ||
+      sumField(input.se_health_insurance_deduction) !== 0 ||
+      sumField(input.retirement_plan_deduction) !== 0 ||
+      (input.qbi_loss_carryforward ?? 0) !== 0 ||
+      (input.reit_loss_carryforward ?? 0) !== 0 ||
+      input.qbi_no_prior_loss_or_suspended_loss_confirmed !== true ||
+      input.qbi_not_patron_of_specified_cooperative_confirmed !== true ||
+      input.current_k1_qbi_sources || input.owned_s_corp_loss_source ||
+      input.owned_s_corp_loss_sources
+    ) {
+      throw Error(
+        "RPE aggregation needs its actual Single owner and positive current statement without other QBI/owner adjustment paths",
+      );
+    }
+    return output(form8995a, {
+      filing_status: input.filing_status,
+      taxable_income: taxableIncome,
+      net_capital_gain: 0,
+      qbi: group.qbi,
+      w2_wages: group.wages,
+      unadjusted_basis: group.ubia,
+      rpe_aggregation_source: group.source,
+    });
+  }
   const farmWotc = farmWotcAdvancedFields(input, taxableIncome);
   if (farmWotc) return output(form8995a, farmWotc);
 
@@ -1571,6 +1613,14 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
     const taxableIncome = taxableIncomeBeforeQbi(input, cfg);
+    if (
+      input.rpe_aggregation_source && taxableIncome !== undefined &&
+      taxableIncome <= 247300
+    ) {
+      throw Error(
+        "RPE aggregation below the completed high-income 8995-A source route requires its own simplified/phase-in filing projection",
+      );
+    }
     if (
       taxableIncome !== undefined && input.filing_status !== undefined &&
       (taxableIncome > qbiThreshold(input.filing_status, cfg) ||
