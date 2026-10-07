@@ -4441,3 +4441,19 @@ Main scope remains frozen at 52 unchecked rows; all 41 future rows remain
 unworked. No new test, packet, viewed page, approval or checkoff is counted.
 The root full regression remains live; staged full validation and integration
 remain pending. Known future items 39–41 retain their existing qualifications.
+
+### October 8 — remaining staged source/projector diff review
+
+Read the `current_passive_property_source.ts` change, registered native Form 4797
+branch and PDF return-review helper at `8c49c01f4`. Current-loss sale sources now
+invoke the shared original-form filing reconciliation before export. Native
+Form 4797 uses that reconciliation's sale XML. The separate PDF review helper
+checks return arithmetic, schedule joins and replayed EIC, and continues to
+label its artifacts `filingReady: false` and `issuerVerified: false`.
+
+Its earlier comment that full current-loss routes remain guarded is stale
+relative to the registered bounded packet routes. Added only future item 42
+for that comment reconciliation; no source or test was changed. This finding
+does not authenticate sources, approve all loss routes or prove IRS acceptance.
+The root full regression remains live in session 41991; staged full execution
+still waits for its terminal success. No tests or reviewed pages are recounted.
