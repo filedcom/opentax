@@ -321,3 +321,16 @@ identity, checkboxes, order and legibility were checked on all four pages.
 `spouse-dependent-refund-two-page-review.json` and
 `mfs-lived-apart-two-page-review.json` retain notes/digests. Both reviews are
 outside existing checker batches; dependency/residency sources are synthetic.
+
+The **48-case / 983-page** checker completed at
+`2026-10-07T03:10:58.255453Z` with exit **0** and exact selected-scope
+completion output. Log SHA-256 is
+`34214a52d7e5b8806234a03dd4675d706130c3e69732bb0bdbd67962496a56bb`;
+manifest SHA-256 remains
+`da0735840cfb7795be0ba9596d5328f0a0a766b008804c8a09bf0fab89229ee7`.
+Current replay proves the changed internal pending records while reproducing
+reviewed PDF/XML, page origins, templates and full XSD. All tracked runtime
+digests still match launch. Mutual nonoverlap across the four completed
+checkpoints was rechecked: **95 distinct packets / 1,298 pages** are verified.
+`verified95-aggregate.json` records this audit. Remaining all-case evidence,
+full regression, broad source/coverage, business rules and ATS gates are open.
