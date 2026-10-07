@@ -203,3 +203,25 @@ rendered images, template cache and independent observation. PDF SHA256
 `1505b8c5cfe17d091c13d85affd4ef700bd686b66137dd74c58e87f250673a58`; XML SHA256 `fd832f503c3a8c5c28cf0ce9f3549e5111356ddc54f666625ad86faabdc3fb37`; audit SHA256 `c80d0492e88c1d1dcea36279f0cd533674247c2dbafc7ece5f84c0190814e27c`.
 Continuation-sheet staging is implemented and reviewed; the broad Form 8997
 board requirement remains unchecked until its activation prerequisites are met.
+
+## October 7: maximum-length continuation descriptions
+
+A separate synthetic public-graph probe changes copies 6–17 to 100-character
+descriptions while preserving the first five copies. Independent text comparison
+confirms all **60 maximum-length occurrences** in both XML and the flattened PDF;
+a 101-character description is rejected. The packet still has 85 rows and 12
+pages. All ten continuation pages were visually reviewed: wrapped text, identity,
+columns, row ranges and totals remain legible without observed overlap or
+clipping. The two main-page rendered images exactly match the previously reviewed
+packet. Standalone IRS8997 XSD validation exits 0.
+
+Private evidence is retained in
+`.state/research/board-execution-2026-10-07/form8997-continuation-max-description-20261007/`.
+PDF SHA256 `1cf16bdf1c32b36521e20b1ca198455fe94b23e04103251e11ed31364f18bedc`;
+XML SHA256 `6fd5d6e6a8b9f0416947edab6a78f18cd2446cf047d28c8809bf1ec7025d049d`;
+independent audit SHA256 `77ac93a4a6cdbac95cad9ab87460d03799b4bc5dfd2f3192ec3064dea0894ccf`.
+All 2,591 runtime hashes match the ongoing full-regression launch manifest.
+No runtime change or new full-return approval follows from this probe: both
+full-export guards remain, and the source-authenticity, prior-filing, business-rule
+and IRS acceptance prerequisites remain open. Aggregate readiness counts and
+the main-board requirement are unchanged.

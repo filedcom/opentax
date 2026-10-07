@@ -2982,3 +2982,16 @@ were not reverified here. The available root packet/hash proof above does not
 reconstruct that larger historical evidence set. Locating the originals is
 recorded in future_todo only; no recovery work was performed. Existing broader
 parent requirements remain unchecked, with aggregate approval counts unchanged.
+
+## Form 8997 maximum-length continuation probe — October 7
+
+Verified the existing continuation implementation with 100-character descriptions
+on copies 6–17 of the synthetic 17-copy public-graph replay. Independent PDF/XML
+comparison retains all 60 maximum-length occurrences; 101 characters are rejected.
+All ten continuation pages were visually reviewed without observed clipping or
+overlap; the two main-page image hashes match the prior reviewed packet. The
+85-row/12-page packet passes standalone IRS8997 XSD. Evidence and SHA256 hashes
+are recorded in [the Form 8997 gap](ty2025-form8997-gap.md). All 2,591 runtime
+hashes still match the full-regression launch manifest; the same test run remains
+live, with no terminal result. Both full-export guards remain. No aggregate
+increase, main-board checkoff, future-row implementation or PR creation.
