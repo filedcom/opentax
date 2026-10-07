@@ -4414,3 +4414,30 @@ The existing full regression and staged 308/0 gate remain their scoped results,
 not acceptance evidence. Root runtime stays held; the root full run remains
 live. The main board remains 52 unchecked frozen requirements; only the future
 section gains item 41, unworked. No aggregate filing approval is increased.
+
+### October 8 — staged ledger diff and privacy review
+
+Read the candidate archive writer/reader, its tests, the changed ledger branches,
+and the next-year opening contract at staged commit `8c49c01f4`. The archive
+schema retains `acceptance-unverified`; the writer does not update return inputs
+or promote acceptance. The reader checks retained source/XML hashes and
+recomputes the candidate from current CLI inputs and the supplied reference.
+UUID validation and separate record directories prevent path traversal through
+these identifiers and ordinary concurrent overwrite. Newly created directories
+use 0700 and files use 0600; writes sync files before renaming the staging
+directory. This review makes no broader filesystem or crash-durability claim.
+
+Existing tests exercise byte corruption, coherent character forgery, false
+accepted status, foreign identity, reference changes, same-total source edits,
+concurrency and unsupported sources. The ledger changes retain original-form
+character within their admitted current-loss and first-year routes. Next-year
+opening assertions remain a synthetic arithmetic contract: issuer authenticity,
+an accepted IRS filing and production import authorization are unproved.
+
+Private evidence: `staged-ledger-diff-review-20261008-v1/review.json`, SHA-256
+`770ddad0b1b0b922cd66c756fce09c36da608a778d92e1deb37030828e4321f0`.
+All 2,624 root and 2,631 staged held runtime paths were unchanged at review.
+Main scope remains frozen at 52 unchecked rows; all 41 future rows remain
+unworked. No new test, packet, viewed page, approval or checkoff is counted.
+The root full regression remains live; staged full validation and integration
+remain pending. Known future items 39–41 retain their existing qualifications.
