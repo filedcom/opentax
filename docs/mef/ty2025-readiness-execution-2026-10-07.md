@@ -3559,3 +3559,43 @@ current-property reconciliation require positive gains, and allocation
 currently emits only positive sale gains. Broad EIC/8582/4797 loss support
 therefore needs original-form loss allocation, not merely removing a schema
 guard. That remains the pre-existing parent scope, not a completed slice.
+
+### October8 current passive disposition-loss calculation staged
+
+Existing EIC/Form8582/Form4797 parent advanced on isolated
+`codex/eic-investment-reconciliation-20261008`, commit `fb225f45b`. Added
+`current-form-allocation.ts` for gross current income/loss by activity and
+original reporting form, and `current-property-loss-allocation.ts` deriving
+those columns from purchase/closing/rent/tax and farm receipt/repair sources.
+The calculation uses the existing exact-dollar activity and PartIX allocation
+helpers, preserves Form4797 PartsI/II separately and checks every allowed/
+suspended form total against its activity. Prior-history fields are rejected
+at this current-only calculation boundary; full parent scope remains open.
+
+Actual constructed source arithmetic: sale proceeds3000 less purchased parcel
+cost6000 produces ordinary loss3000; rent2000 less tax3000 produces operating
+loss1000. Independent farm receipts9000 less repairs7000 provide2000 income.
+Of4000 gross losses,2000 are allowed:500 ScheduleE and1500 Form4797II; the
+remaining500/1500 retain their reporting character. A changed rent record8000
+gives positive net land income2000, preserving ScheduleE5000 and4797II-3000
+as nonpassive amounts while an unrelated farm loss5000 stays suspended.
+Tests also cover same-form income offsets, special-allowance allocation,
+whole-dollar multi-activity rounding, duplicate origins, invented allowances,
+unsafe totals and rejected prior/entire-disposition source claims.
+
+Final three-module typed command `deno test --allow-read` on current-form
+allocation, existing8582 index and current-property loss allocation tests:
+73/0 in203ms, invocation0.88s,2026-10-07T22:14:32.935508Z–22:14:33.818676Z.
+Private evidence directory
+`.state/research/board-execution-2026-10-07/current-passive-form-allocation-20261008-v2/`;
+log SHA256 `447bcc1bea8f33a102d6f17135a3923b8ba2abb12851888d29a8a481f5f98c9f`.
+Run JSON binds all four new source/test hashes. Prior70/0 allocation/index
+gate retained separately in v1; new source cases initially3/0.
+
+This is staged calculation work. Existing public sale-positive guards are
+unchanged; no graph, native or PDF filing route was opened. Full owner/source
+inventory reconciliation, finalized graph/AGI/QBI/EIC joins, character ledger,
+native/PDF projection and review must follow before claiming support. No
+positive packet/page/XSD/ATS count changed and no main requirement closed.
+Future rows35–38 remain unworked. Root2592 runtime files remain unchanged
+while the live integrated regression runs.
