@@ -1,15 +1,18 @@
 # TY2025 Form 8606 coverage gap
 
-Status: bounded taxpayer-owned no-activity and prior-basis distribution Part I
-native MeF/PDF routes, plus one spouse-owned prior-basis distribution on a joint
-return without a current contribution, written but unrun. One sourced 2025
-nondeductible contribution with the taxpayer distribution is also written. One
-spouse-owned prior-basis distribution with a sourced 2025 nondeductible
-contribution now covers both receipt windows, written but unrun. One first-year
-taxpayer Roth IRA code J distribution now has a sourced Part III native/PDF
-route. A spouse-owned zero-opening-basis 2025 nondeductible contribution on a
-joint return now has a sourced no-activity native/PDF route. Tests, local XSD
-validation, filled PDF rendering, and IRS ATS remain outstanding.
+Status: current registered retained-owner routes include historical Roth
+basis/consumption, owner-separated current payments, current2025 traditional
+IRA-to-Roth conversions, annual traditional contributions/withdrawals, and
+reviewed SIMPLE first-employer-deposit source joins. The legacy scalar worksheet
+routes have narrower boundaries. The broad Form8606 parent, unsupported source
+histories, external issuer/prior-acceptance authentication and IRS business
+rules/acceptance remain open.
+
+The early single-owner/authored-unrun sections below are historical. They are
+superseded only for the specific routes and evidence in
+[Form4852 source proof](ty2025-form4852-filing-gap.md) and the current October7
+observation below. Registration or a passing test alone does not establish
+whole-form filing readiness.
 
 ## Structural mismatch
 
@@ -27,10 +30,11 @@ require a joint filer to put only the IRA owner's name and SSN on that spouse's
 Form 8606 and to file separate forms when both spouses must file. The reviewed
 Form 1099-R route now uses its T/S owner designation, filed prior Form 8606 and
 year-end statement SSNs, and the return's spouse identity to select one owner.
-The current pending record can print only one Form 8606, so simultaneous
-taxpayer and spouse Form 8606 claims remain closed.
+The current retained-owner `owner_forms` path prepares separate source-reconciled
+copies for inventoried taxpayer/spouse owners. The earlier scalar worksheet
+branch does not establish that wider support by itself.
 
-## Calculation and output blockers
+## Historical calculation and output boundaries
 
 1. The node now self-emits explicit IRA owner and no-activity attestations,
    source traditional/Roth distribution and conversion amounts, and its
@@ -214,3 +218,50 @@ proven visual transfer. See `ty2025-form4852-filing-gap.md` for exact commands,
 logs/digests, original997-byte preservation and the separate applicable
 traditional/SEP/SIMPLE Form4852 margin-label limitation. Current conversions,
 external authenticity/acceptance and broader existing parent remain open.
+
+## October7: current boundary and available SIMPLE packet verified
+
+Current code has a retained `current_conversion` source contract and annual
+traditional-IRA activity, including distinct SIMPLE employer/plan/account
+records, deposit ledgers and owner forms. The native and PDF builders replay
+the retained owner reconciliation. Unsupported negative PartII line18 filing
+representation remains rejected; no new route or guard change was made here.
+
+The available root-generated `simple-current` packet has the exact documented
+original PDF SHA256
+`135a844da31c1c0e54090f03216a294c0704cbe6be7cf3bc6cfaceb1888b0de7`.
+All43 retained source hashes verify and were snapshotted separately. The
+retained SIMPLE plan/deposit/debit/receipt records join the same owner and
+account: first employer deposit April10,2023, distribution April10,2025 and
+Roth receipt April11,2025 for2,000. They are synthetic reviewed records, not
+issuer authentication or IRS filing proof.
+
+The nine-page packet passes the current local full Return1040v5.4 XSD, exit0;
+all nine rendered pages were freshly reviewed. The two Form4852 copies print
+11,500 and2,000 gross, with IRA/SIMPLE margin labels. A separate native1099R
+adds4,000 gross, so the three source copies total17,500 and withholding1,100.
+Form8606 PartI lines1–14 are2,000/3,000/5,000/1,000/4,000/10,000/5,500/12,000/
+27,500/.145/1,740/798/2,538/2,462. Decimal arithmetic verifies allocation and
+rounding. Line15c4,702 plus PartII line18 10,260 equals Form1040 taxable IRA
+14,962. Form5329 early tax470 joins Schedule2 and Form1040; total tax23,128,
+payments21,100 and amount owed2,028. PartIII stays blank. Identity and all nine
+page origins agree.
+
+The retained prior full typed regression log independently confirms both
+SIMPLE source-positive and source-conflict tests passed. Its digest matches
+the terminal exit0 status; all31 Form8606 runtime paths still match that tested
+snapshot. The new full regression remains running and is not counted passed.
+Private independent observation SHA256
+`1afb148eddf7fc5ccbfc81d698d80d79bbb15b6f459587d32dc7ce06fe70520f`, under
+`.state/research/board-execution-2026-10-07/form8606-current-boundary-review-20261007/`,
+retains copied XML/PDF/origins,43 source files, image hashes and exact prior
+terminal check lines. Initial snapshot validation needed paths resolved relative
+to its source directory; independent arithmetic uses Decimal to avoid binary
+half-dollar error. Both were corrected before the successful checks.
+
+Two documented historical `/tmp` proof directories are absent. The original
+13/116 current-conversion proof index and original temporary logs therefore
+were not reverified here. The available root packet/hash proof above does not
+reconstruct that larger historical evidence set. Locating the originals is
+recorded in future_todo only; no recovery work was performed. Existing broader
+parent requirements remain unchecked, with aggregate approval counts unchanged.
