@@ -1016,3 +1016,69 @@ The overlap was confirmed with retained `form8919-nec-review/owner-detail.png`
 at200dpi. `form8919-owner-overlap-observation.json` retains packet hashes and
 qualifications. The page remains unapproved for legibility, outside passing
 selected scopes. The new finding is only in `future_todo`, with no implementation.
+
+
+### Schedule H source, tax and continuation verification
+
+The two existing Schedule H fixtures passed the unchanged selected checker
+at 2026-10-07T04:46:57.068492Z: two packets and all 13 actual pages.
+`single-schedule-h-fica-and-futa` has one unrelated adult worker paid 3,100:
+Social Security rounds to 384 and Medicare to 90, with Ohio FUTA 19.
+Schedule H total 493 reaches Schedule 2 line 9/21 and Form 1040 tax/owed once.
+`single-schedule-h-three-state-futa` has two workers each below the 2,800
+FICA threshold; OH/NY/PA each have 1,000 state wages and 30 timely contributions.
+The PA row is retained on the readable line 17 continuation; native XML
+contains all three rows. Without supplied experience-rate/additional-credit
+facts, the contribution credit is 90, gross FUTA 180 and net tax/owed 90.
+Checkbox flow, owner/EIN, page order and amounts agree with source/pending/XML.
+The [2025 IRS instructions](https://www.irs.gov/instructions/i1040sh)
+confirm these calculation and continuation rules and zero credit reductions
+for OH/NY/PA. These synthetic payroll/contribution assertions do not authenticate
+payroll, W-2s, state payments or experience-rate notices; the broad requirement
+remains open.
+
+Manifest SHA256 `6794760347f3414b2b075d6b165e834801ec232a77b14b1bd09e71019d3fbe86`;
+terminal log SHA256 `f24b5bb31c0f1db2e37c39bebf945ab151259395c0b6bff38e2da709aa71c18d`.
+Runtime files unchanged. Original generation checklist flags remain unchanged.
+
+### Retained Form 4852 ordinary Roth packet verification
+
+`single-retained-4852-ordinary-roth` passed the unchanged selected checker
+at 2026-10-07T04:48:58.621965Z: one packet and all eight actual pages.
+The retained completed Form 4852 page and packet page 3 render pixel-identically;
+all eight completed-form/workpaper/treatment-document hashes match the reviewed
+record. Substitute facts match the retained workpaper. Native IRS1099R uses
+nonstandard code N, correct owner/payer/account/payment date, gross 7,000,
+withholding 1,000, distribution J and no IRA/SEP/SIMPLE indicator.
+
+The ordinary non-SIMPLE Roth inventory, eligible contribution 5,000 and payment
+7,000 reconcile to Form 8606 taxable earnings 2,000 and Form 5329 tax 200.
+Issued W-2 wages 125,000 produce AGI 127,000, deduction 15,750, taxable 111,250,
+ordinary tax 19,547 and total tax 19,747. Withholding 21,000 gives refund 1,253.
+All source/pending/native/PDF amounts, owner identity, checkbox semantics,
+continuations and legibility were checked. The [2025 Form 8606 instructions](https://www.irs.gov/instructions/i8606)
+and [Form 5329 instructions](https://www.irs.gov/instructions/i5329) support
+this selected basis/early-tax treatment. Synthetic retained bytes do not prove
+external issuer, correspondence or signature authenticity, wider eligibility,
+business-rule success or IRS acceptance.
+
+Manifest SHA256 `aaec792a59e098c44be1bb2409500c99eedbe9d7cac09c9b35062ce4618d9d04`;
+terminal log SHA256 `9af906f2e018da449d27172bb0ca1e42fa9a05eef06a5d08062a0fc69d9bc482`.
+Runtime files unchanged. `verified211-aggregate.json` verifies 24 disjoint passing
+batches / 211 packets / 1,915 actual pages. No production change or broad closure.
+
+### Current full regression failure under investigation
+
+The original corrected full regression remains live. It now reports
+`Form 8962 mixed dependent rejects source, threshold, MAGI, and return tampering`
+as FAILED. The retained focused diagnostic is
+`form8962-mixed-failure-diagnostic.log`; its outcome will be recorded when terminal.
+The focused normal typechecked run exited 1: zero passed, one failed,
+five filtered out. It confirms the filing-threshold assertion expects
+“does not establish the 2025 filing requirement”, while the guard correctly
+rejects that fixture with “Form 8962 dependent sourced income does not establish
+the 2025 single-dependent filing requirement”. The diagnostic JSON retains
+command, terminal totals, log/test hashes and exact expected/actual messages.
+This is the existing full-regression task's failing assertion. No runtime
+file has been changed during the live full run; the assertion correction and
+required full rerun remain pending. No full pass is claimed.
