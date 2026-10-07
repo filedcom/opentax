@@ -632,7 +632,7 @@ Deno.test("f1099r.compute: two same-plan full-share 4972 sources aggregate", () 
         },
       }]),
     Error,
-    "multi-distribution election needs one fully identified participant",
+    "participant collection needs one complete issued inventory per recipient and participant",
   );
   assertThrows(
     () => compute([first, { ...second, ts: TS.S }]),

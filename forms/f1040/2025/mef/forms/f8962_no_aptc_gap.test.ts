@@ -72,7 +72,7 @@ Deno.test("Form 8962 positive no-APTC claim cannot rely on blank reported SLCSP"
   assertThrows(
     () => form8962.build(fields, { filer, pending }),
     Error,
-    "one fully paid, nonshared Marketplace policy",
+    "one fully paid nonshared Marketplace policy",
   );
 });
 
@@ -92,6 +92,6 @@ Deno.test("Form 8962 positive no-APTC claim blocks corrections without payment e
       },
     }),
     Error,
-    "one fully paid, nonshared Marketplace policy",
+    "one fully paid nonshared Marketplace policy",
   );
 });

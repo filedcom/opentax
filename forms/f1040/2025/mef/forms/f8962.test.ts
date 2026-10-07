@@ -816,7 +816,7 @@ Deno.test("Form 8962 no-APTC PTC rejects absent, mismatched, or late source evid
         }),
       ),
     Error,
-    "one fully paid, nonshared",
+    "one fully paid nonshared",
   );
   assertThrows(
     () =>
@@ -826,7 +826,7 @@ Deno.test("Form 8962 no-APTC PTC rejects absent, mismatched, or late source evid
         withPolicy({ ...policy, no_aptc_monthly_evidence: undefined }).pending,
       ),
     Error,
-    "one fully paid, nonshared",
+    "one fully paid nonshared",
   );
   assertThrows(
     () =>

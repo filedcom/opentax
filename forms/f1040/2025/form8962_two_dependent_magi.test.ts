@@ -224,7 +224,7 @@ Deno.test("Form 8962 two-dependent family rejects changed source, identity, poli
         }),
       }),
     Error,
-    "does not establish the 2025 filing requirement",
+    "does not establish the 2025 single-dependent filing requirement",
   );
   assertThrows(
     () =>

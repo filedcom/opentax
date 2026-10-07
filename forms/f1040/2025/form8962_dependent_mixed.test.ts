@@ -349,7 +349,7 @@ Deno.test("Form 8962 mixed dependent rejects source, threshold, MAGI, and return
         }),
       }),
     Error,
-    "does not establish the 2025 filing requirement",
+    "does not establish the 2025 single-dependent filing requirement",
   );
   assertThrows(
     () =>

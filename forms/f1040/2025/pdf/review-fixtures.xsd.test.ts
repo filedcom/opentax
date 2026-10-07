@@ -196,6 +196,11 @@ for (const fixture of pdfReviewFixtures) {
         ? await withheldW2GXml(pending, fixture.filer)
         : fixture.id === "single-form8824-section1231-exchange"
         ? await section1231ExchangeXml(pending, fixture.filer)
+        : fixture.id === "single-form8995a-two-business-aggregation"
+        ? (await buildMefBundle(pending, {
+          filer: fixture.filer,
+          attachments: [],
+        })).xml
         : buildMefXml(pending, fixture.filer);
       if (fixture.id === "single-reviewed-adoption-credit") {
         assertEquals(pending.schedule3?.line6c_adoption_credit, 6_000);

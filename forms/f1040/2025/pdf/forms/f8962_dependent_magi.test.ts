@@ -155,7 +155,7 @@ Deno.test("Form 8962 dependent filing threshold cannot be asserted from a below-
         annual_premium: 6_000,
       }, { general: belowLimit }),
     Error,
-    "does not establish the 2025 filing requirement",
+    "does not establish the 2025 single-dependent filing requirement",
   );
 });
 
