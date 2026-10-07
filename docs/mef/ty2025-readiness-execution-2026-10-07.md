@@ -3894,3 +3894,41 @@ Original October8 morning acceptance estimate remains0tests/0%; post-reopening
 probability remains unestimated. With the root runtime freeze now lifted,
 previously verified isolated current-loss/K-1 changes can be integrated and
 checked together before another normal full regression.
+
+
+### Combined K-1/current-loss integration and new full regression — October 8
+
+The ten staged K-1 and nine current-loss commits applied cleanly to
+`codex/mef-readiness-20261007`, ending at
+`690add3766b2eb377ef1cab720fa0024a4feb0f4`. All19 K-1 and30 loss runtime paths
+match the isolated branches byte-for-byte; private `preflight.json` binds those
+hashes. Main frozen section matches baseline `0c6ae76a32d12373956d4f8e47564811185c60d7`:
+52 unchecked main TODOs and38 future TODOs. No future item was implemented.
+
+Combined normal typed focused check: **257 passed/0 failed**, exit0,
+2026-10-07T22:54:49.759483Z–22:56:40.010853Z, tested commit above.
+Evidence: private `integrated-k1-current-loss-20261008-v1/run.json` and
+`focused.log`, SHA256
+`21190607351a2ea3479c735f6c7b2697ed3b65222582746f5c70e4f584b162ec`.
+The retained run manifest lists all21 modules and exact command:
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno test --allow-read --allow-write
+--allow-run=xmllint,pdftotext,pdftoppm --allow-net=www.irs.gov <21 modules>
+-- --write-review-artifacts <private-directory>`.
+Full loss/K-1 filing guards remain closed. Regenerated review/source/positive
+artifacts do not add reviewed-page, filing-pass or scope-completion counts.
+
+A fresh normal typed full regression started2026-10-07T22:57:43.812002Z on that
+integrated commit: `PATH=/tmp/opentax-poppler-env/bin:$PATH
+DENO_V8_FLAGS=--max-old-space-size=8192 deno task test`.
+Session41991, PID20110. Log/status:
+`full-test-after-k1-current-loss-integration.log/.status`;
+launch manifest `runtime-full-after-k1-current-loss-integration-at-launch.json`
+binds2624 runtime paths, SHA256
+`db4f04fed93275a604c216df358cc6b210dcc5eea8047d8de04518cf591be17d`.
+Versions: Deno2.9.4/V815.0.245.2-rusty/TypeScript6.0.3,
+Poppler26.09.0/libxml2.9.13. Runtime is frozen while it runs; documentation-only
+changes are allowed. This run is pending, not a pass. Latest terminal full
+result remains12,266/0 on earlier `df26ee299`; it does not cover this integration.
+No IRS acceptance, matching BR, source authenticity, durable next-year import,
+or broader52-TODO completion is implied. Estimate unchanged:0 acceptance by
+original October8 morning deadline; post-reopening probability unestimated.
