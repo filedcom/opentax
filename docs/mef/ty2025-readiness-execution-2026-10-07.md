@@ -164,3 +164,14 @@ marks and all rendered pages agree; the farm-loss sign was also verified in
 extracted page text. `optional-spouse-loss-fifteen-page-review.json` retains
 the reviewed observations and digests. This packet is outside the unchanged
 23-case checker scope and does not yet contribute to its terminal result.
+
+All sixteen pages of `single-form8995a-patron-phase-c-health` were freshly
+reviewed. PATR distributions appear once in business income; health 6,000 and
+half-SE 14,467 feed QBI 244,531. The 62.962% phase-in produces 37,003 before
+the Schedule D patron reduction 15,720; written-notice deduction 10,000 yields
+QBI deduction 31,283. SE 28,933, additional Medicare 403, zero NIIT and Form
+1040 tax/amount owed 69,598 agree across source/pending/XML/PDF. Correct
+identities, applicable canonical revisions, marks, ordering and legibility were
+checked on every page, including the wrapped Schedule D business name.
+`patron-c-health-sixteen-page-review.json` binds this review to all artifact and
+render digests; it is outside the unchanged 23-case checker scope.
