@@ -2,13 +2,21 @@
 
 ## Checkpoint — October 7, 2026
 
-**Release:** [OpenTax v2.0.9](https://github.com/filedcom/opentax/releases/tag/v2.0.9) is published as the latest regular iteration. All five platform builds and binary smoke tests passed; downloaded checksums and host smoke passed. Evidence is recorded in the [checkpoint handoff](docs/mef/ty2025-checkpoint-handoff-2026-10-07.md). Full filing readiness and IRS acceptance remain incomplete.
+**Released:** [OpenTax v2.0.10](https://github.com/filedcom/opentax/releases/tag/v2.0.10), the latest regular iteration, includes the three routes merged in [PR63](https://github.com/filedcom/opentax/pull/63). All five platform builds and binary smoke tests passed; published checksums and the downloaded Mac ARM64 smoke were verified.
 
-**Progress:** The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,552 bounded slices**. The frozen checklist retains **52 open TODOs**. Detailed learnings, commands, evidence and qualifications remain in the [status archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md).
+**Open work:** **52 active TODOs** below and **one separate future item**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) now records **1,555 bounded slices**. These completions do not close the broader form requirements or filing-ready gates.
 
-**Integrated source proofs:** [Investment interest](docs/mef/ty2025-form4952-schedulej-child-source-proof.md), [owned SEP](docs/mef/ty2025-independent-patron-owned-sep-source.md), [direct-owner aggregation](docs/mef/ty2025-owned-aggregation-annual-disclosure.md), [dependent MAGI](docs/mef/ty2025-form8962-multiple-dependent-source.md), [PAB AMT](docs/mef/ty2025-form4952-pab-multi-source-proof.md), and [larger/zero-spouse joint families](docs/mef/ty2025-form8962-family-source-proof.md) retain focused tests, actual native/PDF review and local XSD evidence.
+### Newly completed bounded routes
 
-**Resume:** Positive-spouse Form8962, issuer RPE aggregation and MFJ spouse royalty work are preserved on separate checkpoint branches; qualification and main integration remain pending. Full regression V32 covers an earlier immutable production snapshot; latest integrated full regression remains required. Read the [handoff](docs/mef/ty2025-checkpoint-handoff-2026-10-07.md), revalidate live gates, then continue existing TODOs. Discoveries belong only in `future_todo`, outside the execution queue.
+| Route | Source and validation record |
+|---|---|
+| Positive-spouse premium-credit income | [Form 8962 joint-income proof](docs/mef/ty2025-form8962-joint-income-source-scope.md) |
+| Issuer QBI aggregation | [RPE aggregation proof](docs/mef/ty2025-rpe-aggregation-source-checkpoint.md) |
+| MFJ spouse royalties and investment interest | [Form 4952 spouse-royalty proof](docs/mef/ty2025-form4952-mfjspouse-royalty-source-proof.md) |
+
+**Validation still open:** Latest integrated full regression, broader source/coverage and PDF review, IRS business rules, ATS credentials and accepted acknowledgments. The combined route checks passed 7/0; that does not close these gates.
+
+**Handoff:** The [October 7 status archive](docs/mef/ty2025-product-board-status-2026-10-07.md) records release, merge, focused checks, retained evidence and branch cleanup. The [checkpoint handoff](docs/mef/ty2025-checkpoint-handoff-2026-10-07.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md) preserve earlier qualifications. The completed remote branches are removed; no private-route integration remains pending from this checkpoint. Board cleanup leaves every existing TODO unchanged; implementation can resume when requested. Discoveries belong only in `future_todo`, outside the active queue.
 
 ## Scope and completion rules
 
