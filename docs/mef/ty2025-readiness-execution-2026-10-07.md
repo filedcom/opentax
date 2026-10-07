@@ -138,3 +138,20 @@ Primary-owned farm optional earnings 7,240, primary wage-cap isolation from
 spouse wages, SE tax 1,249/half-SE 625, allocated QBI 7,267 + 947, deduction
 1,643 and refund 5,665 agree across source/pending/XML/PDF. All page/checklist
 observations and digests are in `optional-boundary-thirteen-page-review.json`.
+
+All fifteen pages of `optional-spouse-cap-profit` were freshly reviewed.
+Alex/Sam ownership on separate Schedule SE copies, spouse-only wage cap,
+primary/spouse SE tax 8,478 + 58, half-SE 4,239 + 29, owner QBI 55,761 + 271,
+QBI deduction 11,206 and Form 1040 amount owed 10,038 agree. Evidence is in
+`optional-spouse-profit-fifteen-page-review.json`; no parent gate is closed.
+
+A separate 23-case / 201-page selected checkpoint combines 20 exact
+PDF/XML/source-equivalent prior reviews with the three fresh packets above.
+Artifact/cache hardlinks preserve the originals without copying their storage;
+the original generation batch remains untouched. The repository read-only
+checker is replaying source, XML, PDF, page origins, template evidence and XSD;
+no terminal pass is claimed yet. Review origin/manifest digests are in
+`reviewed-checkpoint-assembly.json`. The first local assembly omitted canonical
+Form 1040 from its seed-only URL lookup and stopped before writing a manifest;
+its checker correctly rejected the missing manifest. The corrected assembly
+uses the complete current registry URL inventory; both diagnostic logs remain.
