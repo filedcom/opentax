@@ -10,6 +10,7 @@ import {
   passiveLossLimit,
 } from "./index.ts";
 import { FilingStatus } from "../../../types.ts";
+import { allocateCurrentPassiveForms } from "./current-form-allocation.ts";
 
 const reportingFormSchema = z.enum([
   "schedule_e",
@@ -106,6 +107,102 @@ export function buildForm8582Ledger(
 ): Form8582Ledger {
   const input = inputSchema.parse(rawInput);
   const sourceActivities = input.activities ?? [];
+  if (input.current_loss_forms) {
+    // Current-only original-form allocations have a separate gross loss
+    // inventory; the legacy operating-only allocation cannot represent them.
+    if (
+      sourceActivities.length !== input.current_loss_forms.length ||
+      new Set(sourceActivities.map((row) => row.activity_id)).size !==
+        sourceActivities.length ||
+      (input.prior_unallowed ?? 0) !== 0 ||
+      input.has_current_4797_transaction === true ||
+      (input.current_4797_sale_gains?.length ?? 0) > 0 ||
+      input.current_loss_forms.some((row) => {
+        const source = sourceActivities.find((activity) =>
+          activity.activity_id === row.activity_id
+        );
+        const operatingForm = source?.reporting_form === "schedule_e"
+          ? "Schedule E"
+          : source?.reporting_form === "form4835"
+          ? "Form 4835"
+          : undefined;
+        const operating = row.forms.find((f) =>
+          f.reporting_form === operatingForm
+        );
+        return !source || source.activity_type !== "B" ||
+          row.special_allowance_eligible || !operating ||
+          row.forms.filter((f) =>
+              f.reporting_form === "Schedule E" ||
+              f.reporting_form === "Form 4835"
+            ).length !== 1 ||
+          source.current_net !==
+            operating.current_income - operating.current_loss ||
+          source.prior_unallowed_operating !== 0 ||
+          source.prior_unallowed_4797_part1 !== 0 ||
+          source.prior_unallowed_4797_part2 !== 0;
+      })
+    ) {
+      throw new Error(
+        "Current-loss ledger needs matching current-only other-passive activity and original-form sources",
+      );
+    }
+    const result = form8582.compute(
+      { taxYear: 2025, formType: "f1040" },
+      input,
+    );
+    const allocated = allocateCurrentPassiveForms(
+      input.current_loss_forms,
+      Math.min(input.current_income ?? 0, input.current_loss ?? 0),
+    );
+    const formNames = {
+      "Schedule E": "schedule_e",
+      "Form 4835": "form4835",
+      "Form 4797 Part I": "form4797_part1",
+      "Form 4797 Part II": "form4797_part2",
+    } as const;
+    const activities = allocated.by_activity.filter((row) =>
+      row.forms.some((form) => form.current_loss > 0)
+    ).map((row) => {
+      const source = sourceActivities.find((activity) =>
+        activity.activity_id === row.activity_id
+      )!;
+      const lines = row.forms.filter((form) => form.current_loss > 0).map(
+        (form) => ({
+          reporting_form: formNames[form.reporting_form],
+          opening_unallowed_loss: 0,
+          current_year_loss: form.current_loss,
+          current_same_part_income: form.current_income,
+          allowed_loss: form.allowed_loss,
+          ending_unallowed_loss: form.suspended_loss,
+        }),
+      );
+      return {
+        activity_id: row.activity_id,
+        activity_name: source.name,
+        reporting_part: lines.length === 1 ? "viii" as const : "ix" as const,
+        lines,
+        ending_unallowed_loss: row.suspended_loss,
+      };
+    });
+    if (
+      result.carryforwards?.suspended_pal_8582 !== allocated.suspended_loss ||
+      activities.some((row) =>
+        result.carryforwards?.[`suspended_pal_8582:${row.activity_id}`] !==
+          row.ending_unallowed_loss
+      )
+    ) {
+      throw new Error(
+        "Current-loss ledger differs from calculator carryforwards",
+      );
+    }
+    return form8582LedgerSchema.parse({
+      schema_version: 1,
+      tax_year: 2025,
+      accepted_return_reference: acceptedReturnReference,
+      activities,
+      ending_unallowed_loss: allocated.suspended_loss,
+    });
+  }
   const hasPrior4797 = sourceActivities.some((activity) =>
     activity.prior_unallowed_4797_part1 > 0 ||
     activity.prior_unallowed_4797_part2 > 0
