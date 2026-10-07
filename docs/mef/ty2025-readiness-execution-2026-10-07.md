@@ -3982,3 +3982,55 @@ still pending. Main52/future38 remain frozen, future35–38 unworked. Source
 issuer/history authenticity, durable next-year import, full loss packet,
 matching BR, IRS acceptance and overall TODO completion remain open. Original
 morning acceptance estimate remains0; post-reopening probability unknown.
+
+
+### Current-loss character ledger and next-year contract — October 8 isolated
+
+Existing Form8582 ledger requirement continued in isolated commit
+`dd50e389b`: the storage-ready helper now handles the current-only original-form
+inventory separately from its legacy operating-only calculation. Other-passive
+activity IDs, operating form/net, zero prior balances and gross totals must
+match. A second operating form, duplicate activity/form, special allowance,
+prior balance or detached legacy sale-gain inventory rejects. Current loss
+character is retained on ScheduleE, Form4835 and Form4797 PartsI/II; only the
+public short-held PartII current-sale cases are proved here. No wider PartI
+public/source filing claim is opened. Existing legacy behavior remains covered.
+
+Four public graph cases pass the complete original-form source review before
+ledger construction. Mixed source has current losses1000/3000, allowed500/1500,
+ending500/1500 on ScheduleE/ordinary Form4797, aggregate2000. Fully suspended
+case retains1000/3000 plus5000 farm loss, total9000. Recharacterized land is
+nonpassive and absent from the PAL ledger; farm ending5000 remains. Operating
+income/ordinary-loss case retains ordinary2000 plus farm5000, total7000.
+Calculator aggregate/activity/PartVIII–IX character keys reconcile. JSON
+roundtrip is rechecked against original2025 input; explicit2026 openings match
+known characters/amounts. Swapping characters, forging self-consistent allowed
+and suspended allocations, source changes or a changed filing reference reject.
+
+Normal typed focus **89 passed/0 failed**, exit0,
+2026-10-07T23:06:28.660798Z–23:06:30.910700Z, base
+`798ff260beb263622466a39d6b9ef3e41b68fed2` plus two bound files.
+Command: `deno test --allow-read --allow-write
+forms/f1040/2025/current-loss-ledger.test.ts
+forms/f1040/nodes/intermediate/forms/form8582/ledger.test.ts
+forms/f1040/nodes/intermediate/forms/form8582/current-form-allocation.test.ts
+forms/f1040/nodes/intermediate/forms/form8582/index.test.ts --
+--write-review-artifacts <private-directory>`.
+Private `current-loss-ledger-20261008-v3/` retains run/verification manifests
+and four source/pending/ledger/opening JSONs. Log SHA256
+`f351b6e20a06f176533e871bcc51e3cb57b6f2a3e7c9c71069b3946e2ac700fb`.
+v2 passed89/0 before the extra single-operating-form guard; finalv3 covers it.
+v1 failed before tests because I named a nonexistent next-year test module:
+`e43a4ce1cad4334176aa01e7387e4773ad3780dcbf487c2f6dba03847eae80da`.
+The actual next-year tests live in the ledger suite; no failed case was skipped.
+
+The acceptance reference in these tests explicitly says synthetic/not IRS
+acceptance. A caller string does not authenticate an accepted return. This
+proves the calculation/roundtrip/opening contract, not a production durable
+accepted-filing store or2026 engine import. CLI store inspection confirms the
+existing Form8990 record is explicitly calculated-unfiled; it cannot supply
+accepted Form8582 evidence. No current-loss filing guard was lifted. No new
+PDF/XML or filing-pass/page/coverage counts. Root full session41991 remains
+live and all2624 held runtime hashes are unchanged; the new ledger and return
+review commits remain isolated until that gate is terminal. Main52/future38,
+future35–38 unworked, and acceptance estimate remain unchanged.
