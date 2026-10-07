@@ -452,3 +452,28 @@ observations are absent from these selected scopes.
 `verified161-aggregate.json` records the audit. Fresh Form 8606 review remains
 outside these scopes; all-case, broad source/coverage, business-rule and ATS
 requirements remain open and future discoveries stay unimplemented.
+
+
+The three-page two-employer excess Social Security packet was freshly
+reviewed against both complete synthetic W-2 records, native XML and rendered
+pages. Employer EINs 123456789 and 987654321 each report wages 100,000 and
+Social Security withheld 6,200. The [2025 IRS instructions](https://www.irs.gov/instructions/i1040gi)
+limit is 10,918.20, so 12,400 less 10,918.20 yields rounded credit 1,482.
+Schedule 3 lines 11/15 and Form 1040 lines 31/32/33 carry it once. AGI
+200,000, standard deduction 15,750, taxable income 184,250, tax 37,067 and
+amount owed 35,585 reconcile; all three pages have correct identity, marks,
+order and legibility. `excess-social-security-three-page-review.json` retains
+notes and artifact/render hashes. This is synthetic selected evidence, not
+authenticated issuer records or ATS acceptance.
+
+The generation checkpoint reached 348 complete packets when matching began.
+91 packets / 501 pages match prior PDF/XML and complete source facts exactly;
+92 / 1,288 are candidates with differences confined to internal pending state.
+After excluding all six verified scopes and every Form 2441/Form 7217 case,
+26 further retained reviews (179 pages) plus the fresh Form 8606 and
+Social Security reviews (7 pages) form **28 packets / 186 pages**.
+`further-reviewed-assembly.json` and `further-reviewed-batch/review-manifest.json`
+retain origins and exact hashes. The unchanged read-only checker is running;
+no pass is claimed until its terminal result. Original generation flags and
+all runtime/source files remain unchanged; all five future items remain
+unworked. Broad requirements remain open.
