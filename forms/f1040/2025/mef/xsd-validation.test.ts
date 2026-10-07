@@ -1,3 +1,4 @@
+import { w2gPayerCopyFixture } from "../w2g_payer_copy.fixture.ts";
 /**
  * XSD Validation Tests — validates generated MeF XML against the IRS
  * 2025v5.4 Return1040.xsd schema using xmllint as a subprocess.
@@ -54,6 +55,7 @@ import { purchasePointsCrossLoanFixture } from "../../nodes/inputs/f1098/purchas
 import { twoObligation453aFixture } from "../../nodes/inputs/f453a_interest/fixture.ts";
 import { priorIsoSaleFixture } from "../form6251_prior_iso_sale.fixture.ts";
 import { form6251Form4952Fixture } from "../form6251_4952.fixture.ts";
+import { Form7217PropertyTreatment } from "../../nodes/inputs/f7217/index.ts";
 import {
   SCENARIO_1040_01_FACTS,
   SCENARIO_1040_02_FACTS,
@@ -8463,6 +8465,169 @@ Deno.test({
   await validateXsd(xml, "Form 5695 audit only");
 });
 
+Deno.test({
+  name:
+    "XSD: Form 7217 section 731 cash gain reconciles through Form 8949, Schedule D, and Form 1040",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const ssn = general.taxpayer_ssn;
+  const distributionDate = "2025-03-01";
+  const form7217 = {
+    partnership_name: "Orchid Partnership",
+    partnership_ein: "98-7654321",
+    distribution_date: distributionDate,
+    complete_liquidation: false,
+    section_751b_sale_or_exchange: false,
+    partner_adjusted_basis_before_distribution: 10_000,
+    cash_received: 15_000,
+    us_tax_required_on_gain: true,
+    distributed_properties: [{
+      description: "EQUIPMENT",
+      property_treatment: Form7217PropertyTreatment.Section732Property,
+      partnership_basis_before_distribution: 32_507,
+      fair_market_value: 9_000,
+      partner_basis_after_section_732: 0,
+    }],
+    section_731_capital_gain_source: {
+      k1_document_reference: "2025-orchid-k1",
+      k1_box19_statement_reference: "2025-orchid-k1-march-01",
+      k1_box19_statement_distribution_date: distributionDate,
+      k1_partner_ssn: ssn,
+      k1_partnership_ein: "98-7654321",
+      k1_box19_code_a_cash: 14_000,
+      k1_box19_code_d_deemed_cash: 1_000,
+      k1_box19_code_c_property_basis: 32_507,
+      k1_box19_code_c_property_fmv: 9_000,
+      k1_box19_code_b_section737_property: 0,
+      k1_box19_code_f_service_cash: 0,
+      k1_box19_code_g_service_property: 0,
+      outside_basis_workpaper_reference: "2025-orchid-outside-basis",
+      outside_basis_workpaper_as_of_date: distributionDate,
+      opening_outside_basis: 8_000,
+      increases_before_distribution: 4_000,
+      decreases_before_distribution: 2_000,
+      partnership_interest_acquired_date: "2020-01-01",
+      entire_interest_has_one_holding_period: true,
+      not_section707_disguised_sale: true,
+    },
+  };
+  const result = runReturn({ general, f7217: { form7217s: [form7217] } });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending) as MefFormsPending;
+  assertEquals(pending.form8949?.length, 1);
+  assertEquals(pending.form8949?.[0]?.gain_loss, 5_000);
+  assertEquals(
+    pending.form8949?.[0]?.source_transaction_id,
+    "f7217:987654321:2025-03-01",
+  );
+  assertEquals(pending.schedule_d?.print_line16_combined, 5_000);
+  assertEquals(pending.f1040?.line7_capital_gain, 5_000);
+
+  const xml = buildMefXml(pending, extractFilerIdentity(general));
+  assertStringIncludes(xml, "<RecognizedGainAmt>5000</RecognizedGainAmt>");
+  assertStringIncludes(xml, "<CapitalGainLossAmt>5000</CapitalGainLossAmt>");
+  assertStringIncludes(xml, "<TotalGainOrLossAmt>5000</TotalGainOrLossAmt>");
+  assertStringIncludes(xml, "<LongTermCapitalGainAndLossGrp>");
+  await validateXsd(xml, "Form 7217 section 731 gain full return");
+
+  const tampered = {
+    ...pending,
+    form8949: [{ ...pending.form8949![0]!, gain_loss: 4_999 }],
+  };
+  assertThrows(
+    () => buildMefXml(tampered, extractFilerIdentity(general)),
+    Error,
+    "Form 8949 gain or loss does not reconcile to proceeds, basis, and column (g)",
+  );
+});
+
+Deno.test({
+  name:
+    "XSD: Form 7217 liquidating section 732(c) basis allocation reaches a full return",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const distributedProperties = [
+    {
+      description: "Inventory",
+      property_treatment: Form7217PropertyTreatment.Section732Property,
+      section_732c_class: "inventory_or_receivable" as const,
+      partnership_basis_before_distribution: 100,
+      fair_market_value: 200,
+      partner_basis_after_section_732: 100,
+    },
+    {
+      description: "Asset X",
+      property_treatment: Form7217PropertyTreatment.Section732Property,
+      section_732c_class: "other_property" as const,
+      partnership_basis_before_distribution: 50,
+      fair_market_value: 400,
+      partner_basis_after_section_732: 440,
+    },
+    {
+      description: "Asset Y",
+      property_treatment: Form7217PropertyTreatment.Section732Property,
+      section_732c_class: "other_property" as const,
+      partnership_basis_before_distribution: 100,
+      fair_market_value: 100,
+      partner_basis_after_section_732: 110,
+    },
+  ];
+  const form7217 = {
+    partnership_name: "PRS Partnership",
+    partnership_ein: "12-3456789",
+    distribution_date: "2025-08-01",
+    complete_liquidation: true,
+    section_751b_sale_or_exchange: false,
+    partner_adjusted_basis_before_distribution: 750,
+    cash_received: 100,
+    section_732c_allocation_workpaper_reference:
+      "2025 PRS section 732(c) allocation",
+    distributed_properties: distributedProperties,
+  };
+  const result = runReturn({ general, f7217: { form7217s: [form7217] } });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending) as MefFormsPending;
+  assertEquals(pending.form8949?.length ?? 0, 0);
+  const xml = buildMefXml(pending, extractFilerIdentity(general));
+  assertStringIncludes(
+    xml,
+    "<TotPrtnrBssAllocDistriPropAmt>650</TotPrtnrBssAllocDistriPropAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PrtnrBssPropAftrSect732Amt>440</PrtnrBssPropAftrSect732Amt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PrtnrBssPropAftrSect732Amt>110</PrtnrBssPropAftrSect732Amt>",
+  );
+  await validateXsd(
+    xml,
+    "Form 7217 section 732(c) liquidating basis full return",
+  );
+
+  const invalid = runReturn({
+    general,
+    f7217: {
+      form7217s: [{
+        ...form7217,
+        distributed_properties: [
+          distributedProperties[0],
+          { ...distributedProperties[1], partner_basis_after_section_732: 439 },
+          { ...distributedProperties[2], partner_basis_after_section_732: 111 },
+        ],
+      }],
+    },
+  });
+  assertEquals(invalid.diagnostics.length > 0, true);
+});
+
 function runReturn(inputs: Record<string, unknown>) {
   return execute(plan, registry, inputs, { taxYear: 2025, formType: "f1040" });
 }
@@ -8709,21 +8874,13 @@ Deno.test({
     box4_federal_withheld: 2_400,
     standard_or_nonstandard_code: "S" as const,
   };
-  const issuedCopy = await PDFDocument.create();
-  issuedCopy.addPage([300, 400]);
   const copyFields = w2gPdf.instances?.(
     { w2gs: [issuedFacts] },
     extractFilerIdentity(general),
     { f1040: { line25c_total: 2_400 } },
   )?.[0];
   if (!copyFields) throw new Error("Missing W-2G Copy B fields");
-  for (const field of w2gPdf.fields) {
-    if (field.kind !== "text" || field.domainKey === "payer_phone") continue;
-    issuedCopy.getForm().createTextField(field.pdfField).setText(
-      String(copyFields[field.domainKey] ?? ""),
-    );
-  }
-  const issuedCopyBytes = await issuedCopy.save();
+  const issuedCopyBytes = await w2gPayerCopyFixture(copyFields);
   const issuedCopyHash = Array.from(
     new Uint8Array(
       await crypto.subtle.digest(
@@ -9283,6 +9440,71 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: over-limit purchase points share the two-loan Pub. 936 ratio",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const fixture = purchasePointsCrossLoanFixture(general.taxpayer_ssn);
+  const sources = fixture.f1098.map((item, index) =>
+    index === 0
+      ? {
+        ...item,
+        box1_current_year_deductible_interest: 4_734,
+        box6_current_year_deductible_points: 2_367,
+      }
+      : {
+        ...item,
+        box2_outstanding_principal: 650_000,
+        box1_current_year_deductible_interest: 9_468,
+      }
+  );
+  const review = fixture.f1098_purchase_points_cross_loan_review;
+  review.purchase_points_cross_loan_review.existing_loan.maximum_2025_balance =
+    650_000;
+  review.purchase_points_cross_loan_review.existing_loan
+    .monthly_balance_records = review.purchase_points_cross_loan_review
+      .existing_loan.monthly_balance_records
+      .map((row) => ({ ...row, closing_balance: 650_000 }));
+  const f1098 = await Promise.all(
+    sources.map((source, index) =>
+      withSyntheticForm1098Copy(`xsd-capped-points-${index}`, source)
+    ),
+  );
+  const result = runReturn({
+    general,
+    f1098,
+    f1098_purchase_points_cross_loan_review: review,
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    result.pending.schedule_a?.line_8a_mortgage_interest_1098,
+    16_569,
+  );
+  assertEquals(result.pending.f1040?.line12e_itemized_deductions, 16_569);
+  const pending = buildPending(result.pending) as MefFormsPending;
+  const xml = buildMefXml(pending, extractFilerIdentity(general));
+  assertStringIncludes(
+    xml,
+    "<RptHomeMortgIntAndPointsAmt>16569</RptHomeMortgIntAndPointsAmt>",
+  );
+  await validateXsd(xml, "over-limit purchase points and existing mortgage");
+  const pdf = await buildPdfBytes(pending, extractFilerIdentity(general));
+  assertEquals((await PDFDocument.load(pdf)).getPageCount(), 3);
+
+  const wrongPoints = runReturn({
+    general,
+    f1098: [
+      { ...f1098[0], box6_current_year_deductible_points: 2_368 },
+      f1098[1],
+    ],
+    f1098_purchase_points_cross_loan_review: review,
+  });
+  assertEquals(wrongPoints.diagnostics.length > 0, true);
+});
+
+Deno.test({
   name: "XSD: two post-2017 Form 1098 loans share one mortgage interest limit",
   sanitizeOps: false,
   sanitizeResources: false,
@@ -9355,6 +9577,102 @@ Deno.test({
     "<RptHomeMortgIntAndPointsAmt>29988</RptHomeMortgIntAndPointsAmt>",
   );
   await validateXsd(xml, "two-loan mortgage-limit full return");
+});
+
+Deno.test({
+  name: "XSD: MFS two-loan interest uses the $375,000 mortgage limit",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = {
+    ...singleGeneral(),
+    filing_status: FilingStatus.MFS,
+    spouse_first_name: "Other",
+    spouse_last_name: "Taxpayer",
+    spouse_ssn: "222-33-4444",
+    mfs_spouse_itemizing: true,
+  };
+  const f1098 = await Promise.all([
+    {
+      lender_name: "First Lender",
+      recipient_tin: general.taxpayer_ssn,
+      source_document_reference: "2025 MFS first Form 1098",
+      box3_origination_date: "01/15/2020",
+      box1_mortgage_interest: 20_000,
+      box1_current_year_deductible_interest: 8_340,
+      box1_deduction_workpaper_reference: "2025 MFS Pub. 936 Table 1",
+      for_routing: "A",
+    },
+    {
+      lender_name: "Second Lender",
+      recipient_tin: general.taxpayer_ssn,
+      source_document_reference: "2025 MFS second Form 1098",
+      box3_origination_date: "02/15/2021",
+      box1_mortgage_interest: 16_000,
+      box1_current_year_deductible_interest: 6_672,
+      box1_deduction_workpaper_reference: "2025 MFS Pub. 936 Table 1",
+      for_routing: "A",
+    },
+  ].map((source, index) =>
+    withSyntheticForm1098Copy(`xsd-mfs-1098-${index}`, source)
+  ));
+  const review = {
+    mortgage_limit_review: {
+      table1_workpaper_reference: "2025 MFS Pub. 936 Table 1",
+      all_qualified_home_mortgages_included_verified: true,
+      all_post_2017_acquisition_debt_verified: true,
+      filing_status_verified: "mfs",
+      mfs_noncommunity_property_verified: true,
+      mfs_sole_paid_interest_verified: true,
+      mfs_payment_workpaper_reference: "2025 separate-funds payment ledger",
+      loans: ([
+        ["2025 MFS first Form 1098", 500_000],
+        ["2025 MFS second Form 1098", 400_000],
+      ] as const).map(([source_document_reference, balance]) => ({
+        source_document_reference,
+        monthly_balance_records: Array.from({ length: 12 }, (_, index) => ({
+          month: index + 1,
+          closing_balance: balance,
+          lender_statement_reference: `${source_document_reference}-month-${
+            index + 1
+          }`,
+        })),
+      })),
+    },
+  };
+  const result = runReturn({
+    general,
+    f1098,
+    f1098_mortgage_limit_review: review,
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    result.pending.schedule_a?.line_8a_mortgage_interest_1098,
+    15_012,
+  );
+  assertEquals(result.pending.f1040?.line12e_itemized_deductions, 15_012);
+  const pending = buildPending(result.pending) as MefFormsPending;
+  const xml = buildMefXml(pending, extractFilerIdentity(general));
+  assertStringIncludes(
+    xml,
+    "<RptHomeMortgIntAndPointsAmt>15012</RptHomeMortgIntAndPointsAmt>",
+  );
+  await validateXsd(xml, "MFS two-loan mortgage-limit full return");
+  const pdf = await buildPdfBytes(pending, extractFilerIdentity(general));
+  assertEquals((await PDFDocument.load(pdf)).getPageCount(), 3);
+
+  const missingPaymentEvidence = runReturn({
+    general,
+    f1098,
+    f1098_mortgage_limit_review: {
+      mortgage_limit_review: {
+        ...review.mortgage_limit_review,
+        mfs_payment_workpaper_reference: undefined,
+      },
+    },
+  });
+  assertEquals(missingPaymentEvidence.diagnostics.length > 0, true);
 });
 
 Deno.test({
@@ -10131,9 +10449,21 @@ Deno.test(
     const result = runReturn({
       general: singleGeneral(),
       w2: [w2Item(200_000, 40_000)],
+      f1098: [{
+        lender_name: "Example Home Lender",
+        recipient_tin: "111-22-3333",
+        source_document_reference: "2025 lender copy",
+        box1_mortgage_interest: 18_000,
+        box1_current_year_deductible_interest: 18_000,
+        box1_deduction_workpaper_reference: "2025 Pub. 936 workpaper",
+        issuer_copy: {
+          file_name: "Test1098.pdf",
+          pdf_sha256: "0".repeat(64),
+          bytes: new Uint8Array(),
+        },
+      }],
       schedule_a: {
         line_5a_state_income_tax: 10_000,
-        line_8a_mortgage_interest_1098: 18_000,
         line_11_cash_contributions: 5_000,
       },
     });

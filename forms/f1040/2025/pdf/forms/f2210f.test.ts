@@ -139,4 +139,17 @@ Deno.test("Form 2210-F PDF rejects changed 1040 tax and unsourced filed lines", 
       },
     )
   );
+  assertThrows(() =>
+    form2210fPdf.projectFields?.(
+      {
+        source: {
+          ...facts,
+          current_return_reference:
+            facts.prior_separate_returns[0].filed_return_reference,
+        },
+        filed_lines: lines,
+      },
+      pending,
+    ), Error, "distinct filed 2024 taxpayer, spouse, and 2025 joint returns"
+  );
 });

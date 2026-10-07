@@ -108,8 +108,8 @@ Deno.test("two-country interest and ordinary dividends reconcile the return, nat
   const pdf = form1116Pdf.projectFields!(parent, result.pending);
   assertEquals(result.pending.f1040.line2b_taxable_interest, 20_000);
   assertEquals(result.pending.f1040.line3b_ordinary_dividends, 30_000);
-  assertEquals(pdf.pdf_country_a, "CA");
-  assertEquals(pdf.pdf_country_b, "FR");
+  assertEquals(pdf.pdf_country_a, "Canada");
+  assertEquals(pdf.pdf_country_b, "France");
   assertEquals(pdf.pdf_line3g_a, 6_300);
   assertEquals(pdf.pdf_line3g_b, 9_450);
   assertEquals(pdf.pdf_part2_us_interest_a, 2_000);

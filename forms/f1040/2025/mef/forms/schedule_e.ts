@@ -1,3 +1,6 @@
+import { mefBusinessNameLine1 } from "../../../mef/business-name.ts";
+import { currentPropertyPassiveAmounts } from "../../../nodes/inputs/schedule_e/current-property-source.ts";
+import { assertCurrentPassivePropertyReturn } from "../../current_passive_property_source.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import {
   computeExpenses,
@@ -25,7 +28,7 @@ import {
   inputSchema as form4835InputSchema,
 } from "../../../nodes/inputs/f4835/index.ts";
 import type { z } from "zod";
-import type { FilerIdentity } from "../../../mef/header.ts";
+import { FilingStatus, type FilerIdentity } from "../../../mef/header.ts";
 import { inputSchema as partnershipK1InputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as miscInputSchema } from "../../../nodes/inputs/f1099m/index.ts";
 import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
@@ -126,6 +129,7 @@ const permittedMiscRoyaltyFields = new Set([
   "payer_name",
   "payer_tin",
   "recipient_tin",
+  "source_document_reference",
   "account_number",
   "multi_form_code",
   "box2_royalties",
@@ -148,14 +152,19 @@ export function verifyMiscRoyaltySource(
     misc.payer_name !== source.payer_name ||
     misc.payer_tin !== source.payer_tin ||
     misc.recipient_tin !== source.recipient_tin ||
+    misc.source_document_reference !== source.source_document_reference ||
     misc.box2_royalties !== source.box2_gross_royalties ||
     misc.box2_nonpassive_portfolio_investment_for_form4952_verified !== true ||
     misc.box2_royalties_routing === "schedule_c" ||
     Object.keys(misc).some((key) => !permittedMiscRoyaltyFields.has(key)) ||
     item.k1_royalty_source !== undefined ||
-    item.tsj !== "T" ||
+    (item.tsj !== "T" && item.tsj !== "S") ||
     (filer !== undefined &&
-      source.recipient_tin !== filer.primarySSN.replaceAll("-", "")) ||
+      (item.tsj === "T"
+        ? source.recipient_tin !== filer.primarySSN.replaceAll("-", "")
+        : filer.filingStatus !== FilingStatus.MarriedFilingJointly ||
+          !filer.spouse?.ssn ||
+          source.recipient_tin !== filer.spouse.ssn.replaceAll("-", ""))) ||
     item.property_type !== 6 || item.activity_type !== "D" ||
     item.rent_income !== 0 ||
     item.royalties_income !== source.box2_gross_royalties ||
@@ -412,13 +421,19 @@ export function validatePassiveActivityLink(
   }
   const needsLimitation = items.some((item) =>
     (item.activity_type === "A" || item.activity_type === "B") &&
-    (computePropertyNet(item) < 0 ||
+    ((item.current_property_source
+      ? currentPropertyPassiveAmounts(item.current_property_source)
+        .passiveOperating < 0
+      : computePropertyNet(item) < 0) ||
       (item.prior_unallowed_passive_operating ?? 0) > 0)
   );
   if (!needsLimitation) return new Map();
   const activityItems = items.flatMap((item, index) =>
     (item.activity_type === "A" || item.activity_type === "B") &&
-      (computePropertyNet(item) !== 0 ||
+      ((item.current_property_source
+        ? currentPropertyPassiveAmounts(item.current_property_source)
+          .passiveOperating !== 0
+        : computePropertyNet(item) !== 0) ||
         (item.prior_unallowed_passive_operating ?? 0) > 0)
       ? [{ item, index }]
       : []
@@ -431,16 +446,23 @@ export function validatePassiveActivityLink(
   const input = form8582InputSchema.parse(linked);
   if (
     activityItems.length > (input.activities?.length ?? 0) ||
-    activityItems.some(({ item }, index) =>
-      input.activities?.[index].name !== item.property_description ||
-      input.activities[index].activity_type !== item.activity_type ||
-      input.activities[index].property_type !== item.property_type ||
-      input.activities[index].current_net !== computePropertyNet(item) ||
-      input.activities[index].prior_unallowed_operating !==
-        (item.prior_unallowed_passive_operating ?? 0) ||
-      input.activities[index].prior_active_participation !==
-        item.prior_passive_losses_active_when_incurred
-    )
+    activityItems.some(({ item }) => {
+      const activity = input.activities?.find((row) =>
+        row.activity_id === item.activity_id
+      );
+      return !activity || activity.name !== item.property_description ||
+        activity.activity_type !== item.activity_type ||
+        activity.property_type !== item.property_type ||
+        activity.current_net !==
+          (item.current_property_source
+            ? currentPropertyPassiveAmounts(item.current_property_source)
+              .passiveOperating
+            : computePropertyNet(item)) ||
+        activity.prior_unallowed_operating !==
+          (item.prior_unallowed_passive_operating ?? 0) ||
+        activity.prior_active_participation !==
+          item.prior_passive_losses_active_when_incurred;
+    })
   ) {
     throw new Error(
       "Schedule E passive loss does not match Form 8582 activity",
@@ -468,7 +490,16 @@ export function validatePassiveActivityLink(
     allowed,
   ).allowed;
   return new Map(
-    activityItems.map(({ index }, position) => [index, allocations[position]]),
+    activityItems.map((
+      { item, index },
+    ) => [
+      index,
+      allocations[
+        (input.activities ?? []).findIndex((row) =>
+          row.activity_id === item.activity_id
+        )
+      ],
+    ]),
   );
 }
 
@@ -523,6 +554,16 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
     return statement ? [statement] : [];
   },
   build(fields, context) {
+    if (
+      context?.pending &&
+      (context.pending.form4797 as Record<string, unknown> | undefined)
+          ?.current_property_sources !== undefined
+    ) {
+      assertCurrentPassivePropertyReturn(
+        context.pending.form4797 as Record<string, unknown>,
+        { ...context.pending, schedule_e: fields },
+      );
+    }
     const k1Rows = scheduleEK1Part2Rows(context?.pending);
     if ((!fields || Object.keys(fields).length === 0) && k1Rows.length === 0) {
       return "";
@@ -558,7 +599,14 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
     validatePartIxCarryovers(itemList, context);
     const allowedPassiveLosses = validatePassiveActivityLink(itemList, context);
     const properties = itemList.map((item, index) =>
-      buildProperty(item, allowedPassiveLosses.get(index))
+      buildProperty(
+        item,
+        item.current_property_source &&
+          currentPropertyPassiveAmounts(item.current_property_source)
+              .recharacterized > 0
+          ? Math.max(0, -computePropertyNet(item))
+          : allowedPassiveLosses.get(index),
+      )
     ).filter(
       (line): line is PropertyLines => line !== undefined,
     );
@@ -782,10 +830,35 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
         : "",
       properties.length > 0 ? element("IncomeAmt", income) : "",
       losses > 0 ? element("LossesAmt", losses) : "",
-      properties.length > 0 ? element("TotalIncomeOrLossAmt", propertyNet) : "",
+      properties.length > 0
+        ? element(
+          "TotalIncomeOrLossAmt",
+          propertyNet,
+          itemList.some((item) =>
+              item.current_property_source &&
+              currentPropertyPassiveAmounts(item.current_property_source)
+                  .nonpassiveOperating !== 0
+            )
+            ? {
+              nonpassiveActivityLiteralCd: "NPA",
+              nonpassiveActivityAmt: String(
+                itemList.reduce((n, item) =>
+                  n + (item.current_property_source
+                    ? currentPropertyPassiveAmounts(
+                      item.current_property_source,
+                    ).nonpassiveOperating
+                    : 0), 0),
+              ),
+            }
+            : undefined,
+        )
+        : "",
       ...k1Rows.map((row) =>
         elements("PartnershipOrSCorpGroup", [
-          element("PartnershipOrSCorporationNm", row.name),
+          element(
+            "PartnershipOrSCorporationNm",
+            mefBusinessNameLine1(row.name),
+          ),
           element("PartnershipSCorpCd", row.code),
           element("PartnershipOrSCorpEIN", row.ein),
           row.passiveIncome > 0

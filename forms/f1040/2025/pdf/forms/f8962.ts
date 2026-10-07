@@ -272,7 +272,8 @@ function projectFields(
     hasPolicy &&
     typeof fields.dependents_modified_agi === "number" &&
     fields.dependents_modified_agi !== 0 &&
-    fields.household_size !== 2 && fields.household_size !== 3
+    (typeof fields.household_size !== "number" ||
+      !Number.isInteger(fields.household_size) || fields.household_size < 2)
   ) {
     throw new Error(
       "Form 8962 PDF dependent MAGI needs the bounded dependent source route",
@@ -280,7 +281,7 @@ function projectFields(
   }
   if (
     hasPolicy &&
-    (fields.household_size === 2 || fields.household_size === 3)
+    typeof fields.household_size === "number" && fields.household_size >= 2
   ) {
     const dependentMagi = reconcileDependentMagi(
       fields.household_size,

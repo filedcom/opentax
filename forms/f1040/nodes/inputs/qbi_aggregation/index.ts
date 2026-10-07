@@ -2,7 +2,10 @@ import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { form8995a } from "../../intermediate/forms/form8995a/index.ts";
+import {
+  aggregationFilingDetailsSchema,
+  form8995a,
+} from "../../intermediate/forms/form8995a/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // QBI Aggregation — Aggregation of Business Operations for §199A
@@ -42,6 +45,8 @@ export const itemSchema = aggregationGroupSchema;
 export const inputSchema = z.object({
   // At least one aggregation group must be declared on the BAN screen
   aggregation_groups: z.array(aggregationGroupSchema).min(1),
+  aggregation_filing_details: aggregationFilingDetailsSchema.optional(),
+  qbi_no_prior_loss_or_suspended_loss_confirmed: z.literal(true).optional(),
 });
 
 type QbiAggregationInput = z.infer<typeof inputSchema>;
@@ -61,6 +66,12 @@ class QbiAggregationNode extends TaxNode<typeof inputSchema> {
     return {
       outputs: [this.outputNodes.output(form8995a, {
         aggregation_groups: input.aggregation_groups,
+        ...(input.aggregation_filing_details && {
+          aggregation_filing_details: input.aggregation_filing_details,
+        }),
+        ...(input.qbi_no_prior_loss_or_suspended_loss_confirmed && {
+          qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+        }),
       })],
     };
   }

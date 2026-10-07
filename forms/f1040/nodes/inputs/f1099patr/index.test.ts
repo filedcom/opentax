@@ -315,6 +315,35 @@ Deno.test("1099-PATR retains specified-cooperative QBI source only for business 
   );
 });
 
+Deno.test("1099-PATR specified-cooperative payments and passed deduction agree with boxes 7 and 13", () => {
+  const cooperative = {
+    box7_qualified_payments: 1_000,
+    box6_section199ag_deduction: 90,
+    box13_specified_cooperative: true,
+  };
+  compute([cooperative]);
+  assertThrows(
+    () => compute([{ ...cooperative, box13_specified_cooperative: false }]),
+    Error,
+    "boxes 6 and 7 require a specified cooperative",
+  );
+  assertThrows(
+    () => compute([{ ...cooperative, box7_qualified_payments: 0 }]),
+    Error,
+    "box 6 deduction cannot exceed 9%",
+  );
+  assertThrows(
+    () => compute([{ ...cooperative, box6_section199ag_deduction: 91 }]),
+    Error,
+    "box 6 deduction cannot exceed 9%",
+  );
+  assertThrows(
+    () => compute([{ box7_qualified_payments: 100 }]),
+    Error,
+    "boxes 6 and 7 require a specified cooperative",
+  );
+});
+
 Deno.test("1099-PATR empty informational item does not produce tax output", () => {
   assertEquals(
     compute([{

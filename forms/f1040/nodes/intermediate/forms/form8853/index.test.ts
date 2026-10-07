@@ -100,20 +100,16 @@ Deno.test("archer_msa_20pct_tax_on_taxable_distribution: 20% additional tax rout
   );
 });
 
-Deno.test("archer_msa_no_20pct_tax_when_exception: exception waives 20% tax", () => {
-  const result = compute({
-    archer_msa_distributions: 5_000,
-    archer_msa_qualified_expenses: 2_000,
-    archer_msa_exception: true,
-  });
-  // Taxable income still flows to schedule1 but no penalty tax
-  assertEquals(
-    fieldsOf(result.outputs, schedule2)?.line17e_archer_msa_tax ?? 0,
-    0,
-  );
-  assertEquals(
-    fieldsOf(result.outputs, schedule1)!.line8e_archer_msa_dist,
-    3_000,
+Deno.test("archer_msa_exception needs distribution-level source rather than blanket waiver", () => {
+  assertThrows(
+    () =>
+      compute({
+        archer_msa_distributions: 5000,
+        archer_msa_qualified_expenses: 2000,
+        archer_msa_exception: true,
+      }),
+    Error,
+    "distribution-level ledger",
   );
 });
 
@@ -198,16 +194,16 @@ Deno.test("medicare_advantage_msa_50pct_tax: 50% penalty routes to schedule2 lin
   );
 });
 
-Deno.test("medicare_advantage_msa_no_50pct_tax_when_exception: exception waives 50% tax", () => {
-  const result = compute({
-    medicare_advantage_distributions: 4_000,
-    medicare_advantage_qualified_expenses: 1_000,
-    medicare_advantage_exception: true,
-  });
-  assertEquals(
-    fieldsOf(result.outputs, schedule2)?.line17f_medicare_advantage_msa_tax ??
-      0,
-    0,
+Deno.test("medicare_advantage exception needs sourced distribution-level ledger", () => {
+  assertThrows(
+    () =>
+      compute({
+        medicare_advantage_distributions: 4000,
+        medicare_advantage_qualified_expenses: 1000,
+        medicare_advantage_exception: true,
+      }),
+    Error,
+    "sourced distribution-level ledger",
   );
 });
 
@@ -369,4 +365,33 @@ Deno.test("validation: negative ltc_gross_payments throws", () => {
 
 Deno.test("validation: negative ltc_period_days throws", () => {
   assertThrows(() => compute({ ltc_period_days: -1 }));
+});
+
+Deno.test("positive Archer deduction cannot replace missing actual compensation with infinity", () => {
+  assertThrows(
+    () =>
+      compute({
+        taxpayer_archer_msa_contributions: 2000,
+        line3_limitation_amount: 2600,
+      }),
+    Error,
+    "actual compensation",
+  );
+});
+
+Deno.test("Archer compensation and monthly limitation cannot be explicitly infinite", () => {
+  assertThrows(() =>
+    compute({
+      taxpayer_archer_msa_contributions: 2000,
+      line3_limitation_amount: 2600,
+      compensation: Infinity,
+    })
+  );
+  assertThrows(() =>
+    compute({
+      taxpayer_archer_msa_contributions: 2000,
+      line3_limitation_amount: Infinity,
+      compensation: 50000,
+    })
+  );
 });

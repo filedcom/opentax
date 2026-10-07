@@ -105,6 +105,26 @@ Deno.test("Form 6198 PDF rejects an incomplete Form 4835 at-risk loss", () => {
   );
 });
 
+Deno.test("Form 4835 at-risk native document rejects manual pending fields", () => {
+  assertThrows(
+    () => form4835AtRisk.build({ deductible_loss: -500 }, {
+      pending: {
+        f4835: {
+          f4835s: [{
+            activity_name: "Risk-limited rental farm",
+            livestock_crop_income: 1_000,
+            expense_feed: 3_000,
+            some_investment_not_at_risk: true,
+            at_risk_simplified: risk(500),
+          }],
+        },
+      },
+    }),
+    Error,
+    "cannot be filed from manual fields",
+  );
+});
+
 Deno.test("Form 6198 PDF uses the printed line 1, 10b, 20, and 21 widgets", () => {
   const byKey = Object.fromEntries(
     form6198Pdf.fields.map((field) => [field.domainKey, field.pdfField]),

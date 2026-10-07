@@ -1,6 +1,15 @@
+import {
+  scheduleJCurrentYearTax,
+  scheduleJTaxSourceSchema,
+} from "../nodes/intermediate/forms/schedule_j/tax-source.ts";
+import {
+  AMT_EXEMPTION_2025,
+  AMT_PHASE_OUT_START_2025,
+} from "../nodes/config/2025.ts";
 import { scheduleJLinesSchema } from "../nodes/intermediate/forms/schedule_j/calculation.ts";
 import { ordinaryTax2025 } from "../nodes/intermediate/worksheets/tax_table_2025.ts";
 import { filingStatusSchema } from "../nodes/types.ts";
+import { scheduleJChildElectionTax } from "./schedule_j_child_tax_join.ts";
 
 function record(value: unknown, label: string): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -44,13 +53,38 @@ export function assertForm4972AmtJoin(
   // The execution graph also retains the Form 6251 input when the node returns
   // no filed document. Only a filed output carries the calculated line 11.
   if (form6251.line11_amt === undefined) return;
+  const status = filingStatusSchema.parse(form1040.filing_status);
+  if (form6251.filing_status !== status) {
+    throw new Error("Form 6251 filing status differs from Form 1040");
+  }
+  const amti = form6251.amti;
+  if (typeof amti !== "number" || !Number.isFinite(amti)) {
+    throw new Error("Form 4972 AMT join needs calculated Form 6251 line 4");
+  }
+  const exemption = Math.max(
+    0,
+    AMT_EXEMPTION_2025[status] -
+      Math.floor(Math.max(0, amti - AMT_PHASE_OUT_START_2025[status]) * 0.25),
+  );
+  if (
+    form6251.exemption !== exemption ||
+    form6251.taxable_excess !== Math.max(0, amti - exemption)
+  ) {
+    throw new Error(
+      "Form 6251 exemption and taxable excess differ from calculated 2025 lines 4–6",
+    );
+  }
   const line10 = dollars(form6251.regular_tax, "Form 6251 line 10");
   if (form6251.form4972_tax !== specialTax) {
     throw new Error("Form 6251 omits the Form 4972 special tax source");
   }
   let baseTax = line16 - specialTax;
   if (pending.schedule_j !== undefined) {
-    const scheduleJ = scheduleJLinesSchema.parse(pending.schedule_j);
+    const childTax = scheduleJChildElectionTax(pending);
+    const rawJ = record(pending.schedule_j, "calculated Schedule J");
+    const scheduleJ = scheduleJLinesSchema.parse(Object.fromEntries(
+      Object.keys(scheduleJLinesSchema.shape).map((key) => [key, rawJ[key]]),
+    ));
     const taxableIncome = dollars(
       form1040.line15_taxable_income,
       "Form 1040 line 15",
@@ -58,16 +92,23 @@ export function assertForm4972AmtJoin(
     if (
       !Number.isSafeInteger(Math.round(taxableIncome)) ||
       scheduleJ.line1 !== Math.round(taxableIncome) ||
-      scheduleJ.line23 !== line16 - specialTax
+      scheduleJ.line23 !== line16 - specialTax - childTax
     ) {
       throw new Error(
         "Schedule J and Form 4972 differ from finalized Form 1040",
       );
     }
-    baseTax = ordinaryTax2025(
-      taxableIncome,
-      filingStatusSchema.parse(form1040.filing_status),
-    );
+    const source =
+      (pending.schedule_j_calculation as Record<string, unknown> | undefined)
+        ?.current_year_tax_source;
+    baseTax = source === undefined
+      ? ordinaryTax2025(taxableIncome, status)
+      : scheduleJCurrentYearTax(
+        taxableIncome,
+        status,
+        scheduleJTaxSourceSchema.parse(source),
+      );
+    baseTax += childTax;
   }
   const expected = Math.max(
     0,

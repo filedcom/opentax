@@ -1,6 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import {
   calculateForm5884,
+  filedControlledGroupEins,
   inputSchema,
 } from "../../../nodes/inputs/f5884/index.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
@@ -33,7 +34,9 @@ export const form5884DeductionDifferentiationStatement: MefFormDescriptor<
       `Form 5884 controlled-group credit allocation (${input.controlled_group.group_classification_document_reference}): ` +
       `group qualified wages ${totalWages}; ` +
       `group credit ${lines.groupCredit}; taxpayer member ${input.controlled_group.taxpayer_member_ein}; ` +
-      `taxpayer line 2 share ${lines.line2}. ` + details.join("; ");
+      `filed member EINs ${
+        filedControlledGroupEins(input.controlled_group).join(", ")
+      }; filed line 2 shares ${lines.line2}. ` + details.join("; ");
     if (explanation.length > 9000) {
       throw new Error("Form 5884 controlled-group explanation is too long");
     }

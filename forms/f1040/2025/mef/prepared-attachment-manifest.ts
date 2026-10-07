@@ -32,6 +32,7 @@ export function assertPreparedDocumentInventory(
     documents.length === 0 ||
     Number(returnData[0][1]) !== documents.length ||
     documents[0]?.tag !== "IRS1040" ||
+    documents.filter((document) => document.tag === "IRS1040").length !== 1 ||
     new Set(documentIds).size !== documentIds.length ||
     referenceGroups.some((group) => new Set(group).size !== group.length) ||
     referencedIds.some((id) => !documentIds.includes(id)) ||

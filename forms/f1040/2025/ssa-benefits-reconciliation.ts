@@ -56,11 +56,18 @@ export function assertSocialSecurityBenefitSource(
       "Negative total SSA-1099 benefits need repayment deduction or credit review before filing",
     );
   }
-  const lumpNet = lump.reduce(
-    (sum, row) => sum + row.total_ss_benefits_this_year,
-    0,
-  );
-  const expected = ssaNet + lumpNet;
+  // Each worksheet row carries the annual box-5 total, even if separate rows
+  // describe distinct prior-year payments. The annual total is not additive.
+  if (
+    lump.some((row) =>
+      ssa.length === 0 || row.total_ss_benefits_this_year !== ssaNet
+    )
+  ) {
+    throw new Error(
+      "Social Security lump-sum worksheet total must match retained SSA-1099/RRB-1099 box 5 sources",
+    );
+  }
+  const expected = ssaNet;
   const actual = (pending.f1040 as Record<string, unknown> | undefined)
     ?.line6a_ss_gross ?? 0;
   if (actual !== expected) {

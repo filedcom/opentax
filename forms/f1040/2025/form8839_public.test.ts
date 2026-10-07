@@ -178,7 +178,21 @@ Deno.test("Form 8839 direct reviewed child settles Schedule 3/1040 and prepares 
   const bundle = await buildMefBundle(pending, { filer, attachments });
   assertStringIncludes(bundle.xml, "<IRS8839");
   assertStringIncludes(bundle.xml, "<BinaryAttachment");
-  await buildPdfBytes(pending, filer, ".pdf-cache", bundle);
+  const origins: { pageNumber: number; formKey: string; formCopy: number }[] =
+    [];
+  const pdf = await buildPdfBytes(
+    pending,
+    filer,
+    ".pdf-cache",
+    bundle,
+    origins,
+  );
+  const adoptedPages = origins.filter((origin) =>
+    origin.formKey === "form8839"
+  );
+  assertEquals(adoptedPages.length, 1);
+  assertEquals(adoptedPages[0].formCopy, 1);
+  assertEquals((await PDFDocument.load(pdf)).getPageCount(), origins.length);
 });
 
 Deno.test("Form 8839 direct route rejects changed evidence, orphan credit, and standalone PDF", async () => {

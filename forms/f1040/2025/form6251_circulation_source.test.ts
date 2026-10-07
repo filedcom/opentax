@@ -43,3 +43,27 @@ Deno.test("Form 6251 line 2o replays reviewed §59(e) deductions at export", () 
     "matching retained, reviewed circulation-cost deductions",
   );
 });
+
+Deno.test("Form 6251 line 2o replays zero-net circulation records at export", () => {
+  assertForm6251CirculationSource({}, undefined);
+  const offsetting = { ...item, regular_tax_deduction: 10_000, amt_deduction: 8_000,
+    circulation_reviewed_workpaper_reference: "circulation-offset-2025" };
+  const retained = { f59e: { f59es: [item, offsetting] } };
+  assertForm6251CirculationSource({}, retained);
+  for (const altered of [
+    { ...offsetting, circulation_reviewed_workpaper_reference: item.circulation_reviewed_workpaper_reference },
+    { ...offsetting, regular_three_year_writeoff_elected: true },
+    { ...offsetting, circulation_no_unamortized_property_loss: undefined },
+  ]) {
+    assertThrows(
+      () => assertForm6251CirculationSource({}, { f59e: { f59es: [item, altered] } }),
+      Error,
+      "matching retained, reviewed circulation-cost deductions",
+    );
+  }
+  assertThrows(
+    () => assertForm6251CirculationSource({}, { f59e: { f59es: [] } }),
+    Error,
+    "matching retained, reviewed circulation-cost deductions",
+  );
+});

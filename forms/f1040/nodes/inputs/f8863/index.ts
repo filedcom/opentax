@@ -1,3 +1,8 @@
+import {
+  claimantReviewSchema,
+  reviewedEducationStudents,
+  studentOwnershipReviewSchema,
+} from "./claimant-review.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -48,12 +53,130 @@ const studentFilingSchema = z.object({
   institutions: z.array(institutionFilingSchema).min(1),
 });
 
+// IRS 2025 instructions, page 1: both permitted nonreceipt paths still need
+// eligible enrollment and substantiated payments. No nonexistent 1098-T is
+// synthesized from those records.
+const missing1098tCommonSchema = z.object({
+  student_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+  institution_name: z.string().trim().min(1),
+  eligible_educational_institution: z.literal(true),
+  eligible_institution_record_id: z.string().trim().min(1),
+  student_enrolled: z.literal(true),
+  enrolled_in_degree_or_credential_program: z.boolean(),
+  enrollment_record_id: z.string().trim().min(1),
+  academic_period_start_date: z.string().date(),
+  payment_tax_year: z.literal(2025),
+  assistance_record_id: z.string().trim().min(1),
+  nonreceipt_basis_record_id: z.string().trim().min(1),
+});
+const missing1098tExceptionSchema = z.discriminatedUnion("reason", [
+  missing1098tCommonSchema.extend({
+    reason: z.literal("institution_not_required"),
+    institution_required_to_furnish_1098t: z.literal(false),
+    furnishing_basis: z.discriminatedUnion("kind", [
+      z.object({
+        kind: z.literal("qualified_nonresident_alien"),
+        student_nonresident_alien: z.literal(true),
+        student_requested_1098t: z.literal(false),
+      }).strict(),
+      z.object({
+        kind: z.literal("expenses_waived_or_paid_entirely_with_scholarships"),
+        qualified_tuition_entirely_waived_or_scholarship_paid: z.literal(true),
+        waived_qualified_tuition_amount: z.number().finite().nonnegative(),
+        scholarship_paid_qualified_tuition_amount: z.number().finite()
+          .nonnegative(),
+        tax_free_scholarship_payment_amount: z.number().finite().nonnegative(),
+        taxable_scholarship_payment_amount: z.number().finite().nonnegative(),
+        scholarship_terms_record_id: z.string().trim().min(1),
+        scholarship_terms_allow_taxable_allocation: z.boolean(),
+        taxable_allocation_record_id: z.string().trim().min(1).optional(),
+        taxable_amount_in_student_gross_income: z.number().finite()
+          .nonnegative(),
+        student_gross_income_record_id: z.string().trim().min(1).optional(),
+      }).strict(),
+      z.object({
+        kind: z.literal("formal_billing_arrangement"),
+        separate_student_financial_account: z.literal(false),
+        billing_counterparty: z.enum(["employer", "governmental_entity"]),
+        qualified_tuition_covered_by_formal_billing: z.literal(true),
+        billing_arrangement_record_id: z.string().trim().min(1),
+        covered_qualified_tuition_payment_amount: z.number().finite()
+          .nonnegative(),
+        covered_payment_record_ids: z.array(z.string().trim().min(1)).min(1),
+        taxable_payment_amount: z.number().finite().nonnegative(),
+        tax_free_section127_payment_amount: z.number().finite().nonnegative(),
+        section127_exclusion_record_id: z.string().trim().min(1).optional(),
+        other_tax_free_payment_amount: z.number().finite().nonnegative(),
+        payment_tax_treatment_record_id: z.string().trim().min(1),
+        taxable_amount_in_student_gross_income: z.number().finite()
+          .nonnegative(),
+        student_gross_income_record_id: z.string().trim().min(1).optional(),
+      }).strict(),
+      z.object({
+        kind: z.literal("noncredit_courses_only"),
+        all_courses_noncredit: z.literal(true),
+      }).strict(),
+    ]),
+  }).strict(),
+  missing1098tCommonSchema.extend({
+    reason: z.literal("required_but_not_received"),
+    institution_required_to_furnish_1098t: z.literal(true),
+    requested_1098t_date: z.string().date(),
+    request_record_id: z.string().trim().min(1),
+    fully_cooperated: z.literal(true),
+    cooperation_record_id: z.string().trim().min(1),
+    return_filing_date: z.string().date(),
+  }).strict(),
+]);
+
 // Actual 2025 payments may differ from Form 1098-T box 1. Keep the
 // substantiating document amounts separate from the credit workpaper.
+const schoolSourceIdentity = {
+  student_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+  institution_name: z.string().trim().min(1),
+  tax_year: z.literal(2025),
+};
+const issued1098tSourceSchema = z.object({
+  ...schoolSourceIdentity,
+  institution_ein: z.string().regex(/^\d{2}-?\d{7}$/),
+  document_id: z.string().trim().min(1),
+  box1_payments: z.number().finite().nonnegative(),
+  box5_scholarships: z.number().finite().nonnegative(),
+}).strict();
+const educationPaymentSourceSchema = z.object({
+  ...schoolSourceIdentity,
+  payment_record_id: z.string().trim().min(1),
+  payer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
+  payment_date: z.string().date().optional(),
+  payment_account_record_reference: z.string().trim().min(1).optional(),
+  category: z.enum([
+    "tuition_required_fees",
+    "institution_materials",
+    "outside_materials",
+  ]),
+  amount: z.number().finite().positive(),
+}).strict();
+const educationAssistanceSourceSchema = z.object({
+  ...schoolSourceIdentity,
+  source_document_reference: z.string().trim().min(1),
+  amount: z.number().finite().positive(),
+  tax_treatment: z.enum(["tax_free", "taxable"]),
+  student_income_source_reference: z.string().trim().min(1).optional(),
+  included_in_form1098t_box5: z.boolean().optional(),
+  required_service_compensation: z.literal(true).optional(),
+  required_service_terms_record_reference: z.string().trim().min(1).optional(),
+  taxable_nonservice_scholarship: z.literal(true).optional(),
+  scholarship_terms_record_reference: z.string().trim().min(1).optional(),
+  taxable_allocation_record_reference: z.string().trim().min(1).optional(),
+}).strict();
 const educationExpenseWorkpaperSchema = z.object({
-  form1098t_box1_payments: z.number().finite().nonnegative(),
-  form1098t_box5_scholarships: z.number().finite().nonnegative(),
-  form1098t_document_id: z.string().trim().min(1),
+  issued_form1098t_source: issued1098tSourceSchema.optional(),
+  payment_sources: z.array(educationPaymentSourceSchema).optional(),
+  assistance_sources: z.array(educationAssistanceSourceSchema).optional(),
+  form1098t_box1_payments: z.number().finite().nonnegative().optional(),
+  form1098t_box5_scholarships: z.number().finite().nonnegative().optional(),
+  form1098t_document_id: z.string().trim().min(1).optional(),
+  missing_1098t_exception: missing1098tExceptionSchema.optional(),
   payment_record_ids: z.array(z.string().trim().min(1)).min(1),
   paid_tuition_required_fees: z.number().finite().nonnegative(),
   paid_course_materials_to_institution: z.number().finite().nonnegative(),
@@ -102,7 +225,13 @@ export const itemSchema = z.object({
   // Required by TY2025 MeF. The older display strings above are not parsed
   // into identity or institution addresses for filing.
   filing_details: studentFilingSchema.optional(),
+  ownership_review: studentOwnershipReviewSchema.optional(),
   education_expense_workpaper: educationExpenseWorkpaperSchema.optional(),
+  institution_expense_workpapers: z.array(z.object({
+    institution_ein: z.string().regex(/^\d{2}-?\d{7}$/).optional(),
+    institution_name: z.string().trim().min(1).optional(),
+    workpaper: educationExpenseWorkpaperSchema,
+  })).length(2).optional(),
 });
 
 // 2025 Form 8863 Credit Limit Worksheet, lines 4 and 5. These amounts must
@@ -117,6 +246,7 @@ export const creditLimitWorksheetSchema = z.object({
 
 export const inputSchema = z.object({
   f8863s: z.array(itemSchema).min(1),
+  claimant_review: claimantReviewSchema.optional(),
   // Set by Form 8862 when prior-year AOTC disallowance has been cleared
   form8862_filed: z.boolean().optional(),
   credit_limit_worksheet: creditLimitWorksheetSchema.optional(),
@@ -126,21 +256,360 @@ export type F8863Item = z.infer<typeof itemSchema>;
 type F8863Items = F8863Item[];
 export type F8863Input = z.infer<typeof inputSchema>;
 
-// The bounded filing route is one U.S. institution that supplied the 2025
-// Form 1098-T. Other IRS-permitted 1098-T exceptions need their own evidence.
+export function form8863InstitutionWorkpapers(item: F8863Item) {
+  const institutions = item.filing_details?.institutions ?? [];
+  if (!item.institution_expense_workpapers) {
+    return item.education_expense_workpaper && institutions.length === 1
+      ? [{
+        institution: institutions[0],
+        workpaper: item.education_expense_workpaper,
+      }]
+      : [];
+  }
+  const sources = item.institution_expense_workpapers;
+  const schoolEins = institutions.flatMap((school) =>
+    school.ein ? [school.ein.replaceAll("-", "")] : []
+  );
+  if (new Set(schoolEins).size !== schoolEins.length) {
+    throw new Error(
+      "Form 8863 school workpapers need distinct institutions, without duplicate school EINs",
+    );
+  }
+  const used = new Set<number>();
+  const joined = institutions.map((institution) => {
+    const matches = sources.flatMap((source, index) => {
+      if (!source.institution_ein && !source.institution_name) return [];
+      const einMatches = source.institution_ein === undefined ||
+        source.institution_ein.replaceAll("-", "") ===
+          institution.ein?.replaceAll("-", "");
+      const nameMatches = source.institution_name === undefined ||
+        source.institution_name === institution.name;
+      return einMatches && nameMatches ? [index] : [];
+    });
+    if (matches.length !== 1 || used.has(matches[0])) {
+      throw new Error(
+        "Form 8863 school workpapers must match distinct institution identities",
+      );
+    }
+    used.add(matches[0]);
+    return { institution, workpaper: sources[matches[0]].workpaper };
+  });
+  if (used.size !== sources.length) {
+    throw new Error("Form 8863 contains a detached school workpaper");
+  }
+  return joined;
+}
+
+// Each U.S. institution needs its received Form 1098-T or the documented
+// statutory nonreceipt exception. Two schools retain separate workpapers.
 export function validateForm8863FilingSource(
   item: F8863Item,
   credit: "aoc" | "llc",
 ): void {
   const institutions = item.filing_details?.institutions;
   const workpaper = item.education_expense_workpaper;
+  const perInstitution = item.institution_expense_workpapers;
+  if (perInstitution !== undefined) {
+    if (institutions?.length !== 2 || workpaper !== undefined) {
+      throw new Error(
+        "Form 8863 two-school sources need two institutions and separate workpapers without an aggregate workpaper",
+      );
+    }
+    const joined = form8863InstitutionWorkpapers(item);
+    const mixed = institutions.some((institution) =>
+      institution.current_year_1098t_received
+    ) &&
+      institutions.some((institution) =>
+        !institution.current_year_1098t_received
+      );
+    if (
+      mixed && joined.some(({ institution, workpaper: source }) =>
+        source.payment_sources === undefined ||
+        source.assistance_sources === undefined ||
+        (institution.current_year_1098t_received &&
+          !source.issued_form1098t_source)
+      )
+    ) {
+      throw new Error(
+        "Form 8863 mixed two-school sources need separate issued copies, payment inventories and assistance inventories",
+      );
+    }
+    assertDistinctEducationSourceReferences([item]);
+    let combinedExpenses = 0;
+    for (const { institution, workpaper: source } of joined) {
+      const adjusted = source.paid_tuition_required_fees +
+        source.paid_course_materials_to_institution +
+        source.paid_course_materials_elsewhere -
+        source.tax_free_assistance_applied_to_expenses -
+        source.qualified_expense_refunds -
+        source.expenses_used_for_other_tax_benefits;
+      validateForm8863FilingSource({
+        ...item,
+        institution_expense_workpapers: undefined,
+        education_expense_workpaper: source,
+        filing_details: {
+          ...item.filing_details!,
+          institutions: [institution],
+        },
+        ...(credit === "aoc"
+          ? { aoc_adjusted_expenses: adjusted }
+          : { llc_adjusted_expenses: adjusted }),
+      }, credit);
+      combinedExpenses += adjusted;
+    }
+    const claimed = credit === "aoc"
+      ? item.aoc_adjusted_expenses
+      : item.llc_adjusted_expenses;
+    if (
+      claimed === undefined || Math.abs(claimed - combinedExpenses) > 0.000001
+    ) {
+      throw new Error(
+        "Form 8863 combined adjusted expenses must equal both school workpapers",
+      );
+    }
+    return;
+  }
   if (
     institutions?.length !== 1 || !institutions[0].us_address ||
-    institutions[0].current_year_1098t_received !== true || !workpaper
+    !workpaper
   ) {
     throw new Error(
-      "Form 8863 filing needs one U.S. institution, received 2025 Form 1098-T, and an education expense workpaper",
+      "Form 8863 filing needs one U.S. institution and an education expense workpaper",
     );
+  }
+  const institution = institutions[0];
+  const exception = workpaper.missing_1098t_exception;
+  const sourceMatchesSchool = (
+    source: { student_ssn: string; institution_name: string },
+  ) =>
+    source.student_ssn.replaceAll("-", "") ===
+      item.student_ssn?.replaceAll("-", "") &&
+    source.institution_name === institution.name;
+  const issued = workpaper.issued_form1098t_source;
+  if (
+    issued &&
+    (!institution.current_year_1098t_received || !sourceMatchesSchool(issued) ||
+      issued.institution_ein.replaceAll("-", "") !==
+        institution.ein?.replaceAll("-", "") ||
+      issued.document_id !== workpaper.form1098t_document_id ||
+      issued.box1_payments !== workpaper.form1098t_box1_payments ||
+      issued.box5_scholarships !== workpaper.form1098t_box5_scholarships)
+  ) {
+    throw new Error(
+      "Form 8863 issued 1098-T copy differs from its school, student, document or box amounts",
+    );
+  }
+  if (workpaper.payment_sources !== undefined) {
+    const payments = workpaper.payment_sources;
+    if (
+      payments.some((source) => !sourceMatchesSchool(source)) ||
+      new Set(payments.map((source) => source.payment_record_id)).size !==
+        payments.length ||
+      payments.length !== workpaper.payment_record_ids.length ||
+      payments.some((source) =>
+        !workpaper.payment_record_ids.includes(source.payment_record_id)
+      )
+    ) {
+      throw new Error(
+        "Form 8863 payment inventory must match the student, institution and distinct workpaper payment references",
+      );
+    }
+    for (
+      const [category, amount] of [
+        ["tuition_required_fees", workpaper.paid_tuition_required_fees],
+        [
+          "institution_materials",
+          workpaper.paid_course_materials_to_institution,
+        ],
+        ["outside_materials", workpaper.paid_course_materials_elsewhere],
+      ] as const
+    ) {
+      if (
+        payments.filter((source) => source.category === category).reduce(
+          (sum, source) => sum + source.amount,
+          0,
+        ) !== amount
+      ) {
+        throw new Error(
+          "Form 8863 school payment amounts must reconcile independently by expense category",
+        );
+      }
+    }
+  }
+  if (workpaper.assistance_sources !== undefined) {
+    const assistance = workpaper.assistance_sources;
+    if (
+      assistance.some((source) => !sourceMatchesSchool(source)) ||
+      new Set(assistance.map((source) => source.source_document_reference))
+          .size !== assistance.length ||
+      assistance.filter((source) => source.tax_treatment === "tax_free").reduce(
+          (sum, source) => sum + source.amount,
+          0,
+        ) !== workpaper.tax_free_assistance_applied_to_expenses
+    ) {
+      throw new Error(
+        "Form 8863 school assistance inventory must match its student, school and tax-free expense reduction",
+      );
+    }
+    const taxable = assistance.filter((source) =>
+      source.tax_treatment === "taxable"
+    );
+    const basis = exception?.reason === "institution_not_required"
+      ? exception.furnishing_basis
+      : undefined;
+    const taxableAmount = institution.current_year_1098t_received
+      ? taxable.reduce((sum, source) => sum + source.amount, 0)
+      : basis?.kind === "formal_billing_arrangement"
+      ? basis.taxable_payment_amount
+      : basis?.kind === "expenses_waived_or_paid_entirely_with_scholarships"
+      ? basis.taxable_scholarship_payment_amount
+      : 0;
+    if (
+      taxable.reduce((sum, source) => sum + source.amount, 0) !==
+        taxableAmount ||
+      taxable.some((source) =>
+        institution.current_year_1098t_received
+          ? (!source.required_service_compensation &&
+            !source.taxable_nonservice_scholarship) ||
+            (source.required_service_compensation === true &&
+              (!source.required_service_terms_record_reference ||
+                source.taxable_nonservice_scholarship === true)) ||
+            (source.taxable_nonservice_scholarship === true &&
+              (!source.scholarship_terms_record_reference ||
+                !source.taxable_allocation_record_reference)) ||
+            source.included_in_form1098t_box5 !== true ||
+            !source.student_income_source_reference
+          : source.student_income_source_reference !==
+            ((basis?.kind === "formal_billing_arrangement" ||
+                basis?.kind ===
+                  "expenses_waived_or_paid_entirely_with_scholarships")
+              ? basis.student_gross_income_record_id
+              : undefined)
+      ) || assistance.some((source) =>
+        (source.required_service_compensation ||
+          source.taxable_nonservice_scholarship) &&
+        source.tax_treatment !== "taxable"
+      ) ||
+      (institution.current_year_1098t_received && taxable.length > 0 &&
+        (!issued || assistance.some((source) =>
+          source.included_in_form1098t_box5 !== true
+        ) ||
+          assistance.reduce((sum, source) =>
+              sum + source.amount, 0) !==
+            workpaper.form1098t_box5_scholarships))
+    ) {
+      throw new Error(
+        "Form 8863 taxable school assistance must match its documented income allocation",
+      );
+    }
+  }
+
+  if (institution.current_year_1098t_received) {
+    if (
+      exception || workpaper.form1098t_document_id === undefined ||
+      workpaper.form1098t_box1_payments === undefined ||
+      workpaper.form1098t_box5_scholarships === undefined
+    ) {
+      throw new Error(
+        "Form 8863 received 1098-T needs its document and box amounts without a nonreceipt exception",
+      );
+    }
+  } else {
+    if (
+      !exception || workpaper.form1098t_document_id !== undefined ||
+      workpaper.form1098t_box1_payments !== undefined ||
+      workpaper.form1098t_box5_scholarships !== undefined
+    ) {
+      throw new Error(
+        "Form 8863 missing 1098-T needs a statutory exception with enrollment and payment evidence, without invented 1098-T amounts",
+      );
+    }
+    if (
+      exception.student_ssn.replaceAll("-", "") !==
+        item.student_ssn?.replaceAll("-", "") ||
+      exception.institution_name !== institution.name ||
+      exception.academic_period_start_date < "2025-01-01" ||
+      exception.academic_period_start_date > "2026-03-31" ||
+      (credit === "aoc" &&
+        (!institution.ein ||
+          !exception.enrolled_in_degree_or_credential_program))
+    ) {
+      throw new Error(
+        "Form 8863 missing 1098-T evidence must match the student, eligible institution, academic period, and AOC degree program/EIN",
+      );
+    }
+    if (
+      exception.reason === "required_but_not_received" &&
+      (exception.requested_1098t_date <= "2026-01-31" ||
+        exception.requested_1098t_date >= exception.return_filing_date)
+    ) {
+      throw new Error(
+        "Form 8863 required missing 1098-T must be requested after January 31, 2026 and before filing",
+      );
+    }
+    if (
+      exception.reason === "institution_not_required" &&
+      exception.furnishing_basis.kind === "noncredit_courses_only" &&
+      credit === "aoc"
+    ) {
+      throw new Error(
+        "Form 8863 noncredit-only courses cannot establish AOC degree or credential eligibility",
+      );
+    }
+    if (exception.reason === "institution_not_required") {
+      const basis = exception.furnishing_basis;
+      // Furnishing exceptions cover the institution's reportable qualified
+      // tuition/fees, including materials required to be paid to the school.
+      // AOC materials bought optionally from its bookstore are separate.
+      const institutionPaid = workpaper.paid_tuition_required_fees +
+        (workpaper.institution_materials_required_for_enrollment
+          ? workpaper.paid_course_materials_to_institution
+          : 0);
+      if (basis.kind === "formal_billing_arrangement") {
+        const taxFree = basis.tax_free_section127_payment_amount +
+          basis.other_tax_free_payment_amount;
+        if (
+          basis.covered_qualified_tuition_payment_amount !== institutionPaid ||
+          basis.taxable_payment_amount + taxFree !== institutionPaid ||
+          basis.taxable_amount_in_student_gross_income !==
+            basis.taxable_payment_amount ||
+          (basis.taxable_payment_amount > 0 &&
+            !basis.student_gross_income_record_id) ||
+          (basis.tax_free_section127_payment_amount > 0 &&
+            (basis.billing_counterparty !== "employer" ||
+              !basis.section127_exclusion_record_id)) ||
+          new Set(basis.covered_payment_record_ids).size !==
+            basis.covered_payment_record_ids.length ||
+          basis.covered_payment_record_ids.some((id) =>
+            !workpaper.payment_record_ids.includes(id)
+          ) ||
+          workpaper.tax_free_assistance_applied_to_expenses < taxFree
+        ) {
+          throw new Error(
+            "Form 8863 formal billing payments need reconciled taxable student income and fully reduced section 127/other tax-free assistance",
+          );
+        }
+      }
+      if (basis.kind === "expenses_waived_or_paid_entirely_with_scholarships") {
+        if (
+          basis.scholarship_paid_qualified_tuition_amount !== institutionPaid ||
+          basis.tax_free_scholarship_payment_amount +
+                basis.taxable_scholarship_payment_amount !== institutionPaid ||
+          basis.taxable_amount_in_student_gross_income !==
+            basis.taxable_scholarship_payment_amount ||
+          (basis.taxable_scholarship_payment_amount > 0 &&
+            (!basis.scholarship_terms_allow_taxable_allocation ||
+              !basis.taxable_allocation_record_id ||
+              !basis.student_gross_income_record_id)) ||
+          workpaper.tax_free_assistance_applied_to_expenses <
+            basis.tax_free_scholarship_payment_amount
+        ) {
+          throw new Error(
+            "Form 8863 waived/scholarship tuition needs actual paid amounts, full tax-free reduction, and documented permitted taxable allocation in student income",
+          );
+        }
+      }
+    }
   }
   if (
     workpaper.paid_course_materials_elsewhere > 0 &&
@@ -175,11 +644,17 @@ export function validateForm8863FilingSource(
     );
   }
   if (
-    workpaper.tax_free_assistance_applied_to_expenses <
-      workpaper.form1098t_box5_scholarships
+    workpaper.tax_free_assistance_applied_to_expenses +
+        (workpaper.assistance_sources ?? []).filter((source) =>
+          source.tax_treatment === "taxable" &&
+          (source.required_service_compensation === true ||
+            source.taxable_nonservice_scholarship === true) &&
+          source.included_in_form1098t_box5 === true
+        ).reduce((sum, source) => sum + source.amount, 0) <
+      (workpaper.form1098t_box5_scholarships ?? 0)
   ) {
     throw new Error(
-      "Form 8863 bounded filing route must reduce expenses by all Form 1098-T box 5 scholarships",
+      "Form 8863 filing must account for all Form 1098-T box 5 scholarships as expense-reducing tax-free aid or source-reviewed taxable scholarship income",
     );
   }
   const paid = workpaper.paid_tuition_required_fees +
@@ -206,24 +681,39 @@ export function validateForm8863FilingSource(
 function assertDistinctEducationSourceReferences(items: F8863Items): void {
   const documentIds = new Set<string>();
   const paymentIds = new Set<string>();
+  const assistanceIds = new Set<string>();
   for (const item of items) {
-    const workpaper = item.education_expense_workpaper;
-    if (!workpaper) continue;
-    const documentId = workpaper.form1098t_document_id.trim();
-    if (documentIds.has(documentId)) {
-      throw new Error(
-        "Form 8863 students cannot reuse a Form 1098-T document reference",
-      );
-    }
-    documentIds.add(documentId);
-    for (const rawPaymentId of workpaper.payment_record_ids) {
-      const paymentId = rawPaymentId.trim();
-      if (paymentIds.has(paymentId)) {
+    const workpapers = item.institution_expense_workpapers?.map((source) =>
+      source.workpaper
+    ) ??
+      (item.education_expense_workpaper
+        ? [item.education_expense_workpaper]
+        : []);
+    for (const workpaper of workpapers) {
+      const documentId = workpaper.form1098t_document_id?.trim();
+      if (documentId && documentIds.has(documentId)) {
         throw new Error(
-          "Form 8863 students cannot reuse an education payment reference",
+          "Form 8863 students cannot reuse a Form 1098-T document reference",
         );
       }
-      paymentIds.add(paymentId);
+      if (documentId) documentIds.add(documentId);
+      for (const source of workpaper.assistance_sources ?? []) {
+        if (assistanceIds.has(source.source_document_reference)) {
+          throw new Error(
+            "Form 8863 schools cannot reuse an assistance source reference",
+          );
+        }
+        assistanceIds.add(source.source_document_reference);
+      }
+      for (const rawPaymentId of workpaper.payment_record_ids) {
+        const paymentId = rawPaymentId.trim();
+        if (paymentIds.has(paymentId)) {
+          throw new Error(
+            "Form 8863 students cannot reuse an education payment reference",
+          );
+        }
+        paymentIds.add(paymentId);
+      }
     }
   }
 }
@@ -487,7 +977,7 @@ function llcOutputs(
 
 export function calculateForm8863Lines(rawInput: F8863Input) {
   const input = inputSchema.parse(rawInput);
-  const items = input.f8863s;
+  const items = reviewedEducationStudents(input);
   validateReturnContext(items);
   const aocStudents = eligibleAocStudents(items);
   const llcStudents = eligibleLlcStudents(items);

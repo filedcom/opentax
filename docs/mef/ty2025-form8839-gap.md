@@ -501,6 +501,18 @@ the review transcription. The exporters replay the entire final Form 1040 and
 Schedule 3 against the retained pre-credit snapshot, but a standalone caller
 that fabricates an entire pending graph can also fabricate that snapshot; the
 repository does not sign executor output. Those evidentiary limits require
-operational review before a real taxpayer filing. The implementation and
-fixtures have not yet passed the requested final bulk test, XSD, or PDF render
-pass.
+operational review before a real taxpayer filing. The final all-route batch
+and ATS gates remain open.
+
+## Reviewed packet page selection (2026-10-05)
+
+The bounded source confirms no employer-provided adoption benefits. Its
+prepared Form 8839 PDF now retains page 1 only; the unused Part III on page 2
+no longer enters the filing packet. The positive prepared-bundle test confirms
+one Form 8839 page origin and reconciles all packet origins to the page count.
+The focused route passed and its filled Form 8839 page was rendered and visually
+checked for identity, child facts, amounts, and answers. The retained PDF and
+page image are under
+`.state/research/ty2025-filled-pdf-review/2026-10-05-form8839-page/`.
+Wider adoption routes,
+source authenticity, full-batch validation, and ATS remain open.

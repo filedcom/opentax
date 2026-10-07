@@ -154,7 +154,7 @@ Deno.test("2025 purchase points and existing acquisition loan share the $750,000
         ...review,
         existing_loan: {
           ...review.existing_loan,
-          maximum_2025_balance: 500_001,
+          maximum_2025_balance: 399_999,
         },
       },
     }).success,
@@ -205,6 +205,74 @@ Deno.test("2025 purchase points and existing acquisition loan share the $750,000
       f1098s: fixture.f1098,
       purchase_points_cross_loan_review: review,
       mortgage_limit_review: { loans: [] },
+    }).success,
+    false,
+  );
+});
+
+Deno.test("purchase points and two-loan interest use one over-limit Pub. 936 ratio", () => {
+  const fixture = purchasePointsCrossLoanFixture();
+  const review = fixture.f1098_purchase_points_cross_loan_review
+    .purchase_points_cross_loan_review;
+  const cappedReview = {
+    ...review,
+    existing_loan: {
+      ...review.existing_loan,
+      maximum_2025_balance: 650_000,
+      monthly_balance_records: review.existing_loan.monthly_balance_records.map(
+        (row) => ({ ...row, closing_balance: 650_000 }),
+      ),
+    },
+  };
+  const f1098s = fixture.f1098.map((item, index) =>
+    index === 0
+      ? {
+        ...item,
+        box1_current_year_deductible_interest: 4_734,
+        box6_current_year_deductible_points: 2_367,
+      }
+      : {
+        ...item,
+        box2_outstanding_principal: 650_000,
+        box1_current_year_deductible_interest: 9_468,
+      }
+  );
+  const source = inputSchema.parse({
+    f1098s,
+    purchase_points_cross_loan_review: cappedReview,
+  });
+  const result = f1098.compute({ taxYear: 2025, formType: "f1040" }, source);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleA)?.line_8a_mortgage_interest_1098,
+    16_569,
+  );
+  assertPurchasePointsCrossLoanSources(
+    source,
+    ["111223333"],
+    true,
+    16_569,
+    0,
+    0,
+    false,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      f1098s: [
+        { ...f1098s[0], box6_current_year_deductible_points: 2_368 },
+        f1098s[1],
+      ],
+      purchase_points_cross_loan_review: cappedReview,
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      f1098s: [f1098s[0], {
+        ...f1098s[1],
+        box1_current_year_deductible_interest: 9_469,
+      }],
+      purchase_points_cross_loan_review: cappedReview,
     }).success,
     false,
   );
@@ -401,6 +469,120 @@ Deno.test("two full-year post-2017 loans share one Pub. 936 mortgage limit", () 
       ),
     Error,
     "no other mortgage-interest",
+  );
+});
+
+Deno.test("MFS two-loan mortgage limit needs solely paid noncommunity interest", () => {
+  const source = {
+    f1098s: [
+      reviewedInterest(20_000, 8_340, {
+        lender_name: "First Lender",
+        recipient_tin: "111-22-3333",
+        source_document_reference: "2025 MFS first Form 1098",
+        box3_origination_date: "01/15/2020",
+        box2_outstanding_principal: 500_000,
+      }),
+      reviewedInterest(16_000, 6_672, {
+        lender_name: "Second Lender",
+        recipient_tin: "111-22-3333",
+        source_document_reference: "2025 MFS second Form 1098",
+        box3_origination_date: "02/15/2021",
+        box2_outstanding_principal: 400_000,
+      }),
+    ],
+    mortgage_limit_review: {
+      table1_workpaper_reference: "2025 MFS Pub. 936 Table 1",
+      all_qualified_home_mortgages_included_verified: true,
+      all_post_2017_acquisition_debt_verified: true,
+      filing_status_verified: "mfs",
+      mfs_noncommunity_property_verified: true,
+      mfs_sole_paid_interest_verified: true,
+      mfs_payment_workpaper_reference: "2025 separate-funds payment ledger",
+      loans: ([
+        ["2025 MFS first Form 1098", 500_000],
+        ["2025 MFS second Form 1098", 400_000],
+      ] as const).map(([source_document_reference, balance]) => ({
+        source_document_reference,
+        monthly_balance_records: Array.from({ length: 12 }, (_, index) => ({
+          month: index + 1,
+          closing_balance: balance,
+          lender_statement_reference: `${source_document_reference}-month-${
+            index + 1
+          }`,
+        })),
+      })),
+    },
+  };
+  const parsed = inputSchema.parse(source);
+  const result = f1098.compute({ taxYear: 2025, formType: "f1040" }, parsed);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleA)?.line_8a_mortgage_interest_1098,
+    15_012,
+  );
+  assertForm1098MortgageLimitSources(
+    source,
+    ["111223333"],
+    FilingStatus.MarriedFilingSeparately,
+    15_012,
+    0,
+    0,
+    false,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      mortgage_limit_review: {
+        ...source.mortgage_limit_review,
+        mfs_sole_paid_interest_verified: undefined,
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      mortgage_limit_review: {
+        ...source.mortgage_limit_review,
+        mfs_noncommunity_property_verified: undefined,
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      mortgage_limit_review: {
+        ...source.mortgage_limit_review,
+        mfs_payment_workpaper_reference: "",
+      },
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...source,
+      f1098s: [source.f1098s[0], {
+        ...source.f1098s[1],
+        box1_current_year_deductible_interest: 6_673,
+      }],
+    }).success,
+    false,
+  );
+  assertThrows(
+    () =>
+      assertForm1098MortgageLimitSources(
+        source,
+        ["111223333"],
+        FilingStatus.Single,
+        15_012,
+        0,
+        0,
+        false,
+        false,
+      ),
+    Error,
+    "verified filing status",
   );
 });
 

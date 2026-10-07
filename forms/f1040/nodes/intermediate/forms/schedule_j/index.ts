@@ -15,6 +15,10 @@ const dollar = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
 const finiteAmount = z.number().finite();
 
 const completeInputSchema = z.object({
+  current_year_tax_source:
+    scheduleJOrdinaryIncomeInputSchema.shape.current_year_tax_source,
+  nonfarm_investment_income: finiteAmount.optional(),
+  nonfarm_wage_income: dollar.optional(),
   elected_farm_income: dollar.positive(),
   elected_farm_income_net_capital_gain: z.literal(0),
   base_year_source: baseYearSourceSchema,
@@ -30,11 +34,13 @@ const completeInputSchema = z.object({
   mixed_farm_fishing_income_verified: z.boolean().optional(),
   mixed_farm_fishing_unsupported_source_key: z.string().optional(),
   schedule_c_net_profit: finiteAmount.optional(),
+  nonfarm_qef_ordinary: z.number().nonnegative().optional(),
   se_tax_deduction: finiteAmount,
   agi: finiteAmount,
   taxable_income_2025: finiteAmount,
   filing_status_2025: z.nativeEnum(FilingStatus),
   taking_standard_deduction: z.boolean(),
+  itemized_investment_interest_source: z.literal(true).optional(),
   qbi_deduction: finiteAmount,
   additional_deductions: finiteAmount,
   nol_deduction: finiteAmount,
@@ -59,10 +65,15 @@ function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
   }
   const fishing = source.fishing_net_profit !== undefined;
   const mixed = fishing && source.farm_net_profit !== undefined;
+  // The preferential source prepass independently reconciles investment
+  // income to the actual return. The ordinary path still uses the AGI source
+  // classifier and cannot silently absorb an unrelated receipt.
+  const reconciledOtherIncome = source.nonfarm_investment_income !== undefined;
   if (
     mixed && (
-      !source.mixed_farm_fishing_income_verified ||
-      source.mixed_farm_fishing_unsupported_source_key !== undefined ||
+      (!source.mixed_farm_fishing_income_verified && !reconciledOtherIncome) ||
+      (source.mixed_farm_fishing_unsupported_source_key !== undefined &&
+        !reconciledOtherIncome) ||
       (source.farm_activity_count !== 1 &&
         source.farm_activity_count !== 2) ||
       (source.farm_activity_count === 2 &&
@@ -81,8 +92,11 @@ function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
     );
   }
   if (
-    fishing && !mixed && (!source.fishing_only_income_verified ||
-      source.fishing_only_unsupported_source_key !== undefined)
+    fishing && !mixed && (
+      (!source.fishing_only_income_verified && !reconciledOtherIncome) ||
+      (source.fishing_only_unsupported_source_key !== undefined &&
+        !reconciledOtherIncome)
+    )
   ) {
     throw new Error(
       source.fishing_only_unsupported_source_key
@@ -90,7 +104,10 @@ function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
         : "Schedule J fishing-only election needs a single sourced Schedule C activity",
     );
   }
-  if (!fishing && !source.farm_only_income_verified) {
+  if (
+    !fishing && !source.farm_only_income_verified &&
+    source.nonfarm_investment_income === undefined
+  ) {
     throw new Error(
       source.farm_only_unsupported_source_key
         ? `Schedule J Schedule F-only election cannot include ${source.farm_only_unsupported_source_key} until attributable farming or fishing income is reconciled`
@@ -127,7 +144,10 @@ function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
     throw new Error("Schedule J Schedule C profit lacks fishing attribution");
   }
   if (
-    !source.taking_standard_deduction ||
+    (!source.taking_standard_deduction &&
+      source.itemized_investment_interest_source !== true) ||
+    (source.taking_standard_deduction &&
+      source.itemized_investment_interest_source === true) ||
     source.additional_deductions !== 0 || source.nol_deduction !== 0
   ) {
     throw new Error(
@@ -136,7 +156,10 @@ function reconcileCurrentYear(source: ScheduleJCalculationInput): void {
   }
   if (
     Math.abs(
-      source.agi - (activityProfit - source.se_tax_deduction),
+      source.agi - (source.nonfarm_qef_ordinary ?? 0) -
+        (source.nonfarm_investment_income ?? 0) -
+        (source.nonfarm_wage_income ?? 0) -
+        (activityProfit - source.se_tax_deduction),
     ) > 0.01
   ) {
     throw new Error(
@@ -178,6 +201,7 @@ class ScheduleJCalculationNode extends TaxNode<typeof inputSchema> {
       elected_farm_income_net_capital_gain: 0,
       base_year_source: input.base_year_source,
       tax_treatment: input.tax_treatment,
+      current_year_tax_source: input.current_year_tax_source,
     });
     return {
       outputs: [this.outputNodes.output(income_tax_calculation, {

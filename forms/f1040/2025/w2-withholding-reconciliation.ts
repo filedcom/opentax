@@ -1,3 +1,4 @@
+import { reconcileForm4852Source } from "./form4852_source.ts";
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 import {
   assertDistinctW2IssuedCopies,
@@ -38,14 +39,17 @@ function hasReportedAmount(
 /** Form 4852 amounts cannot be filed until its completed substitute-form route exists. */
 export function assertForm4852FilingRoute(
   pending: Record<string, unknown>,
+  filer?: FilerIdentity,
+  retainedEvidenceVerified = false,
 ): void {
   if (pending.f4852 === undefined) return;
   const substitutes = substituteInputSchema.parse(pending.f4852).f4852s;
-  if (substitutes.length > 0) {
+  if (substitutes.length > 0 && (!filer || !retainedEvidenceVerified)) {
     throw new Error(
       "Form 4852 requires a completed substitute-form filing and packet route before export",
     );
   }
+  if (filer) reconcileForm4852Source(pending, filer);
 }
 
 /** Replay ordinary W-2 and substitute W-2 wages into Form 1040 line 1a. */
@@ -55,11 +59,13 @@ export function assertLine1aWageSource(
   const w2 = pending.w2 === undefined
     ? undefined
     : w2InputSchema.parse(pending.w2);
-  const substituteWages = pending.f4852 === undefined
-    ? []
-    : substituteInputSchema.parse(pending.f4852).f4852s.filter((row) =>
-      row.form_type === FormType.W2
-    );
+  const substituteWages =
+    (pending.w2 as Record<string, unknown> | undefined)?.substitute_w2s !==
+        undefined || pending.f4852 === undefined
+      ? []
+      : substituteInputSchema.parse(pending.f4852).f4852s.filter((row) =>
+        row.form_type === FormType.W2
+      );
   let issuedWages =
     w2?.w2s.filter((row) => row.box13_statutory_employee !== true).reduce(
       (total, row) => total + row.box1_wages,
@@ -138,11 +144,13 @@ export function assertW2WithholdingSource(
   const source = pending.w2 === undefined
     ? undefined
     : w2InputSchema.parse(pending.w2);
-  const substitutes = pending.f4852 === undefined
-    ? []
-    : substituteInputSchema.parse(pending.f4852).f4852s.filter((row) =>
-      row.form_type === FormType.W2
-    );
+  const substitutes =
+    (pending.w2 as Record<string, unknown> | undefined)?.substitute_w2s !==
+        undefined || pending.f4852 === undefined
+      ? []
+      : substituteInputSchema.parse(pending.f4852).f4852s.filter((row) =>
+        row.form_type === FormType.W2
+      );
   if (source) assertDistinctW2IssuedCopies(source.w2s);
   const substituteWithholding = substitutes.reduce(
     (sum, row) => sum + (row.federal_withheld ?? 0),

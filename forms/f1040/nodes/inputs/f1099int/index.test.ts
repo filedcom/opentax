@@ -182,6 +182,35 @@ Deno.test("1099-INT rejects positive same-payer copies when one lacks copy ident
   );
 });
 
+Deno.test("1099-INT does not split one payer when only one copy has its TIN", () => {
+  const withTin = minimalItem({
+    payer_name: "Test Bank",
+    payer_tin: "123456789",
+    box1: 200,
+  });
+  const withoutTin = minimalItem({ payer_name: " test   bank ", box1: 300 });
+  const ambiguous =
+    "1099-INT has multiple positive payer copies without account or issued source reference";
+  assertThrows(() => compute([withTin, withoutTin]), Error, ambiguous);
+  assertThrows(() => compute([withoutTin, withTin]), Error, ambiguous);
+  assertThrows(
+    () =>
+      compute([
+        { ...withTin, account_number: "SAV-1" },
+        { ...withoutTin, account_number: "SAV-1" },
+      ]),
+    Error,
+    "repeats the same payer and account",
+  );
+  assertEquals(
+    compute([
+      { ...withTin, account_number: "SAV-1" },
+      { ...withoutTin, account_number: "SAV-2" },
+    ]).outputs.filter((row) => row.nodeType === schedule_b.nodeType).length,
+    2,
+  );
+});
+
 Deno.test("1099-INT routes adjusted investment-property interest to Form 4952 only when affirmed", () => {
   const ordinary = compute([minimalItem({ box1: 1_000 })]);
   assertEquals(findOutput(ordinary, "form4952"), undefined);

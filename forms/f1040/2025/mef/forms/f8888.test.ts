@@ -194,6 +194,49 @@ Deno.test("Form 8888 rejects duplicate or unowned deposit accounts", () => {
   );
 });
 
+Deno.test("Form 8888 spouse-owned deposit requires a joint return", () => {
+  const spouse = {
+    ssn: "111223333",
+    firstName: "John",
+    lastName: "Smith",
+    nameControl: "SMIT",
+  };
+  const spouseAccount = {
+    account_1: first,
+    account_2: { ...second, owner_name: "John Smith" },
+  };
+  for (
+    const filingStatus of [
+      FilingStatus.Single,
+      FilingStatus.MarriedFilingSeparately,
+    ]
+  ) {
+    assertThrows(
+      () =>
+        build(spouseAccount, {
+          filer: { ...filer, filingStatus, spouse },
+          pending: {
+            f1040: { line34_overpayment: 1000, line35a_refund: 1000 },
+          },
+        }),
+      Error,
+      "account owner must match",
+    );
+  }
+  const xml = build(spouseAccount, {
+    filer: {
+      ...filer,
+      filingStatus: FilingStatus.MarriedFilingJointly,
+      spouse,
+    },
+    pending: { f1040: { line34_overpayment: 1000, line35a_refund: 1000 } },
+  });
+  assertStringIncludes(
+    xml,
+    "<DepositorAccountNum>444555666</DepositorAccountNum>",
+  );
+});
+
 Deno.test("Form 8888 rejects a refund mismatch or missing final refund", () => {
   assertThrows(
     () =>

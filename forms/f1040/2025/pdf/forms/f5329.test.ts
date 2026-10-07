@@ -1,7 +1,9 @@
 import { assertEquals, assertThrows } from "@std/assert";
+import { PDFDocument } from "pdf-lib";
 import { calculateOwnerForms } from "../../../nodes/intermediate/forms/form5329/index.ts";
 import { TS } from "../../../nodes/types.ts";
 import { FilingStatus } from "../../mef/types.ts";
+import { fillFormPdf } from "../builder.ts";
 import { form5329Pdf } from "./f5329.ts";
 
 const filer = {
@@ -55,6 +57,10 @@ Deno.test("Form 5329 PDF instances keep each owner's identity and Part VII", () 
     "987654321",
   ]);
   assertEquals(copies?.[1]?.print_hsa_line49, 60);
+  assertEquals(copies?.map((copy) => form5329Pdf.pageIndices?.(copy)), [
+    [0],
+    [0, 1],
+  ]);
   assertThrows(
     () =>
       form5329Pdf.instances?.(
@@ -117,6 +123,7 @@ Deno.test("Form 5329 PDF carries one owner's reviewed 2024 HSA excess and reject
   );
   assertEquals(copies?.[0]?.print_hsa_line42, 2_000);
   assertEquals(copies?.[0]?.print_hsa_line49, 90);
+  assertEquals(form5329Pdf.pageIndices?.(copies?.[0] ?? {}), [0, 1]);
   assertThrows(
     () =>
       form5329Pdf.instances?.(
@@ -126,5 +133,108 @@ Deno.test("Form 5329 PDF carries one owner's reviewed 2024 HSA excess and reject
       ),
     Error,
     "reviewed filed 2024 owner source",
+  );
+});
+
+Deno.test("Form 5329 PDF prints Part I and II taxes on their own lines", () => {
+  const owner_entries = [{
+    owner: TS.T,
+    early_distribution: [4_000, 6_000],
+    early_distribution_exception: 2_000,
+    early_distribution_exception_code: "01" as const,
+    esa_able_distribution: 500,
+    esa_able_exception: 100,
+  }];
+  const owner_forms = calculateOwnerForms({ owner_entries }).forms;
+  const [copy] = form5329Pdf.instances?.(
+    { owner_entries, owner_forms },
+    filer,
+    { schedule2: { line8_form5329_tax: 840 } },
+  ) ?? [];
+  assertEquals(copy?.print_early_line1, 10_000);
+  assertEquals(copy?.print_early_line3, 8_000);
+  assertEquals(copy?.print_early_line4, 800);
+  assertEquals(copy?.print_education_line7, 400);
+  assertEquals(copy?.print_education_line8, 40);
+  assertEquals(form5329Pdf.pageIndices?.(copy ?? {}), [0]);
+  assertEquals(
+    form5329Pdf.fields?.find((field) => field.domainKey === "print_early_line4")
+      ?.pdfField,
+    "topmostSubform[0].Page1[0].f1_13[0]",
+  );
+  assertEquals(
+    form5329Pdf.fields?.find((field) => field.domainKey === "print_hsa_line49")
+      ?.pdfField,
+    "topmostSubform[0].Page2[0].f2_24[0]",
+  );
+});
+
+Deno.test("Form 5329 PDF retains Page 2 for every printable Part VII line", () => {
+  for (let line = 42; line <= 49; line++) {
+    assertEquals(form5329Pdf.pageIndices?.({ [`print_hsa_line${line}`]: 1 }), [
+      0,
+      1,
+    ]);
+  }
+  assertEquals(
+    form5329Pdf.pageIndices?.({
+      print_early_line1: 1_000,
+      print_hsa_line42: 0,
+      print_hsa_line43: 100,
+      print_hsa_line47: 0,
+    }),
+    [0, 1],
+  );
+  assertEquals(
+    form5329Pdf.pageIndices?.({
+      print_early_line1: 1_000,
+      print_hsa_line42: 0,
+      print_hsa_line49: 0,
+    }),
+    [0],
+  );
+  assertEquals(form5329Pdf.pageIndices?.({ print_hsa_line42: 0.49 }), [0]);
+});
+
+Deno.test("Form 5329 filed PDF selects only populated pages", async () => {
+  const owner_entries = [{ owner: TS.T, early_distribution: 10_000 }];
+  const owner_forms = calculateOwnerForms({ owner_entries }).forms;
+  const [copy] = form5329Pdf.instances?.(
+    { owner_entries, owner_forms },
+    filer,
+    { schedule2: { line8_form5329_tax: 1_000 } },
+  ) ?? [];
+  if (!copy) throw new Error("Missing Form 5329 PDF instance");
+  const bytes = await fillFormPdf(form5329Pdf, copy, filer, ".pdf-cache");
+  if (!bytes) throw new Error("Missing Form 5329 PDF bytes");
+  const filled = await PDFDocument.load(bytes);
+  assertEquals(filled.getPageCount(), 3);
+  const packet = await PDFDocument.create();
+  for (
+    const page of await packet.copyPages(
+      filled,
+      [...form5329Pdf.pageIndices!(copy)],
+    )
+  ) packet.addPage(page);
+  assertEquals(packet.getPageCount(), 1);
+});
+
+Deno.test("Form 5329 PDF stops an excess-IRA packet without worksheet vintages", () => {
+  const owner_entries = [{
+    owner: TS.T,
+    excess_traditional_ira: 1_000,
+    traditional_ira_value: 5_000,
+  }];
+  const owner_forms = calculateOwnerForms({ owner_entries }).forms;
+  assertEquals(owner_forms[0]?.print_total_tax, 60);
+  assertThrows(
+    () =>
+      form5329Pdf.instances?.(
+        { owner_entries, owner_forms },
+        filer,
+        { schedule2: { line8_form5329_tax: 60 } },
+      ),
+    Error,
+    "sourced excess-contribution worksheet lines",
   );
 });

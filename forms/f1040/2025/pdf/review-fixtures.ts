@@ -1,3 +1,67 @@
+import { form8582crReviewFixtures } from "../form8582cr_k1.fixture.ts";
+import { ordinaryRothSubstituteReviewFixture } from "./review-4852-ordinary-roth.fixture.ts";
+import type { Form4852RetainedDocument } from "../form4852_source.ts";
+import { form8621QefReviewFixture } from "../form8621_qef.fixture.ts";
+import { tipHealthCfBeneficiaryReviewFixtures } from "./review-tip-health-cf-beneficiary.fixture.ts";
+import { businessTipSourceInputs } from "./business-tip-source.fixture.ts";
+import { multipleAnnuityReviewFixtures } from "./review-4972-multiple-annuity.fixture.ts";
+import { multipleNuaReviewFixtures } from "./review-4972-multiple-nua.fixture.ts";
+import { twoFarmHealthFixtures } from "./review-two-farm-health.fixture.ts";
+import { mixedCfHealthFixtures } from "./review-mixed-cf-health.fixture.ts";
+import { qualifiedTipReviewFixtures } from "./review-qualified-tips.fixture.ts";
+import { form8941MixedThreeReviewFixtures } from "./review-8941-mixed-three.fixture.ts";
+import { ownedFarmShopReviewFixtures, carrierDailyBilledShopReviewFixtures, independentOwnerHealthReviewFixtures } from "./review-farm-shop-partmonth-health.fixture.ts";
+import { mixedControlledWotcFixtures } from "./review-mixed-controlled-wotc.fixture.ts";
+import { controlledFarmWotcFixtures } from "./review-controlled-farm-wotc.fixture.ts";
+import { twoFarmWotcFixtures } from "./review-two-farm-wotc.fixture.ts";
+import { issuedRecaptureReviewFixture } from "./review-8611-issued-k1.fixture.ts";
+import { farmWotcLossFixtures } from "./review-farm-wotc-loss.fixture.ts";
+import { form8826InterpreterReviewFixture } from "./review-8826-interpreter.fixture.ts";
+import {
+  ownedCfFiledCases,
+  ownedCfFiledFixture,
+} from "./review-owned-cf-filed.fixture.ts";
+import { controlledWotcReviewFixtures } from "./review-controlled-wotc.fixture.ts";
+import { optionalFarmReviewFixtures } from "./review-schedule-se-farm-optional.fixture.ts";
+import { farmWotcReviewFixtures } from "./review-farm-wotc.fixture.ts";
+import { ownedFarmReviewFixture } from "./review-schedule-se-farm-owner.fixture.ts";
+import { form8978ReviewFixtures } from "./review-8978.fixture.ts";
+import { form8941MultiplePlanReviewFixture } from "./review-8941-multiple-plans.fixture.ts";
+import {
+  bothOwnerWotcReviewFixtures,
+  jointWotcReviewFixtures,
+  spouseWotcReviewFixtures,
+} from "./review-joint-wotc.fixture.ts";
+import { form8941WorkerReviewFixture } from "./review-8941-workers.fixture.ts";
+import { form8941CommonControlReviewFixture } from "./review-8941-common-control.fixture.ts";
+import { form8941ThreeBusinessReviewFixture } from "./review-8941-three-business.fixture.ts";
+import { form8941IndependentSpouseReviewFixture } from "./review-8941-independent-spouses.fixture.ts";
+import { form8994OwnedReviewFixture } from "./review-8994-owned.fixture.ts";
+import { form8941ArrangementReviewFixture } from "./review-8941-arrangements.fixture.ts";
+import { ownedScheduleSeReviewFixture } from "./review-schedule-se-owner.fixture.ts";
+import { form8941FamilyReviewFixture } from "./review-8941-family.fixture.ts";
+import { form8941PartYearReviewFixture } from "./review-8941-partyear.fixture.ts";
+import { form8941OwnedReviewFixture } from "./review-8941-owned.fixture.ts";
+import { jointPatronFixture, spouseOwnedPatronFixture } from "./review-8995a-patron-joint.fixture.ts";
+import {
+  accountingSstbFixture,
+  accountingSstbNoPayrollFixture,
+  jointPrimaryAccountingSstbFixture,
+  mfsPrimaryAccountingSstbFixture,
+  noncommunityMfsAccountingSstbFixture,
+} from "./review-8995a-sstb.fixture.ts";
+import { patronFixture } from "./review-8995a-patron.fixture.ts";
+import { twoBusinessAggregationFixture } from "./review-8995a-aggregation.fixture.ts";
+import { medicareMsaReviewFixture } from "./review-8853-medicare.fixture.ts";
+import educationScholarshipSource from "./review-8863-scholarship-source.json" with {
+  type: "json",
+};
+import { multipleScheduleCFixture } from "./review-8995-multiple.fixture.ts";
+import { twoSchoolEducationFixture } from "./review-8863-two-schools.fixture.ts";
+import {
+  directAgriBiodieselPending,
+  directAgriBiodieselSource,
+} from "../../nodes/inputs/f8864/fixture.ts";
 import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
 import { withReviewedForm8874A } from "../../nodes/inputs/f8874/issuance_fixture.ts";
 import {
@@ -20,6 +84,11 @@ import {
   form8882ScheduleCFixture,
 } from "../../nodes/inputs/f8882/fixture.ts";
 import { withSyntheticForm1098Copy } from "./review-1098-copy.fixture.ts";
+import type { MefPdfAttachment } from "../mef/form-descriptor.ts";
+import {
+  adoptionReviewAttachments,
+  adoptionReviewSource,
+} from "./review-8839.fixture.ts";
 
 /** Synthetic source returns for the held TY2025 filled-PDF review. */
 export interface PdfReviewFixture {
@@ -28,6 +97,8 @@ export interface PdfReviewFixture {
   readonly filer: FilerIdentity;
   readonly expectedPdfForms: readonly string[];
   readonly reviewFocus: readonly string[];
+  readonly attachments?: readonly MefPdfAttachment[];
+  readonly retainedSourceDocuments?: readonly Form4852RetainedDocument[];
 }
 
 const singleFiler: FilerIdentity = {
@@ -258,7 +329,23 @@ function noAptcPolicyForMonths(
   };
 }
 
-export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
+const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
+  {
+    id: "single-reviewed-adoption-credit",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(100_000, 15_000, "Example Employer", "12-3456789")],
+      form8839: adoptionReviewSource,
+    },
+    filer: singleFiler,
+    attachments: adoptionReviewAttachments,
+    expectedPdfForms: ["f1040", "form8839", "schedule3"],
+    reviewFocus: [
+      "Synthetic decree and birth record identify Ada Example and Alex Example as the adoptive parent",
+      "Form 8839 shows 11,000 of reviewed adoption expense, 6,000 nonrefundable and 5,000 refundable credit",
+      "Schedule 3 line 6c and Form 1040 line 30 carry the separate adoption credit parts",
+    ],
+  },
   {
     id: "mfj-spouse-dependent-refund-only",
     inputs: {
@@ -345,6 +432,50 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       "Form 8960 prints 220,000 MAGI above the 200,000 filing threshold despite zero NII and NIIT",
       "Form 8959 and Schedule 2 carry Additional Medicare Tax without a Schedule 2 NIIT amount",
       "Form 1040 tax and payments reconcile with the 220,000 W-2 wages and withholding",
+    ],
+  },
+  {
+    id: "single-agri-biodiesel-producer-credit",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        qbi_no_prior_loss_or_suspended_loss_confirmed: true,
+        qbi_not_patron_of_specified_cooperative_confirmed: true,
+      },
+      w2: [{
+        ...wage(75_000, 11_000, "Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
+      }],
+      f8864: {
+        ...directAgriBiodieselSource,
+        proprietor_ssn: singleFiler.primarySSN,
+      },
+      schedule_c: directAgriBiodieselPending.schedule_c.schedule_cs.map(
+        (business) => ({
+          ...business,
+          qbi_no_other_adjustments_confirmed: true,
+          line_i_made_1099_payments: false,
+        }),
+      ),
+    },
+    filer: singleFiler,
+    expectedPdfForms: [
+      "f1040",
+      "schedule_c",
+      "schedule1",
+      "schedule2",
+      "schedule_se",
+      "schedule3",
+      "f3800",
+      "form6251",
+      "form8995",
+      "f8864",
+    ],
+    reviewFocus: [
+      "Form 8864 line 8 shows 2,500 post-June gallons at $0.20, with $500 on lines 8, 9 and 11",
+      "Schedule C includes $500 credit income; Form 6251 line 3 subtracts the same amount",
+      "Form 3800 line 1l and Schedule 3 carry the $500 allowed credit to Form 1040 line 20",
+      "Owner identity and source amounts agree across all packet pages",
     ],
   },
   {
@@ -938,6 +1069,89 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "mfs-two-loan-mortgage-limit",
+    inputs: {
+      general: {
+        ...singleGeneral,
+        filing_status: SourceFilingStatus.MFS,
+        spouse_first_name: "Other",
+        spouse_last_name: "Taxpayer",
+        spouse_ssn: "222-33-4444",
+        mfs_spouse_itemizing: true,
+      },
+      w2: [{
+        ...wage(80_000, 12_000, "Example Employer", "12-3456789"),
+        employee_ssn: singleGeneral.taxpayer_ssn,
+      }],
+      f1098: await Promise.all(([
+        [
+          "First Lender",
+          "2025 MFS first Form 1098",
+          "01/15/2020",
+          20_000,
+          8_340,
+        ],
+        [
+          "Second Lender",
+          "2025 MFS second Form 1098",
+          "02/15/2021",
+          16_000,
+          6_672,
+        ],
+      ] as const).map(([
+        lender_name,
+        source_document_reference,
+        box3_origination_date,
+        box1_mortgage_interest,
+        box1_current_year_deductible_interest,
+      ], index) =>
+        withSyntheticForm1098Copy(`mfs-two-loan-${index}`, {
+          lender_name,
+          recipient_tin: singleGeneral.taxpayer_ssn,
+          source_document_reference,
+          box3_origination_date,
+          box1_mortgage_interest,
+          box1_current_year_deductible_interest,
+          box1_deduction_workpaper_reference: "2025 MFS Pub. 936 Table 1",
+          for_routing: "A",
+        })
+      )),
+      f1098_mortgage_limit_review: {
+        mortgage_limit_review: {
+          table1_workpaper_reference: "2025 MFS Pub. 936 Table 1",
+          all_qualified_home_mortgages_included_verified: true,
+          all_post_2017_acquisition_debt_verified: true,
+          filing_status_verified: "mfs",
+          mfs_noncommunity_property_verified: true,
+          mfs_sole_paid_interest_verified: true,
+          mfs_payment_workpaper_reference: "2025 separate-funds payment ledger",
+          loans: ([
+            ["2025 MFS first Form 1098", 500_000],
+            ["2025 MFS second Form 1098", 400_000],
+          ] as const).map(([source_document_reference, balance]) => ({
+            source_document_reference,
+            monthly_balance_records: Array.from(
+              { length: 12 },
+              (_, index) => ({
+                month: index + 1,
+                closing_balance: balance,
+                lender_statement_reference:
+                  `${source_document_reference}-month-${index + 1}`,
+              }),
+            ),
+          })),
+        },
+      },
+    },
+    filer: mfsFiler,
+    expectedPdfForms: ["f1040", "schedule_a"],
+    reviewFocus: [
+      "MFS status and spouse-itemizing marks print on Form 1040",
+      "Schedule A line 8a prints 15,012 after the three-decimal MFS debt ratio",
+      "Form 1040 line 12e matches the 15,012 itemized deduction",
+    ],
+  },
+  {
     id: "single-1098-construction-refinance-points",
     inputs: {
       general: singleGeneral,
@@ -1377,6 +1591,150 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "joint-schedule-h-spouse-withholding-only",
+    inputs: {
+      general: {
+        filing_status: SourceFilingStatus.MFJ,
+        taxpayer_first_name: "Tara",
+        taxpayer_last_name: "Black",
+        taxpayer_ssn: "400-00-1032",
+        taxpayer_dob: "1980-04-10",
+        digital_assets: false,
+        spouse_first_name: "Sam",
+        spouse_last_name: "Black",
+        spouse_ssn: "400-00-1041",
+        address_line1: "17 Lexington Drive",
+        address_city: "Cincinnati",
+        address_state: "OH",
+        address_zip: "45223",
+      },
+      w2: [{
+        employee_ssn: "400-00-1041",
+        employer_name: "Tara Black",
+        employer_ein: "123456789",
+        employer_address_line1: "17 Lexington Drive",
+        employer_address_city: "Cincinnati",
+        employer_address_state: "OH",
+        employer_address_zip: "45223",
+        box1_wages: 5_000,
+        box2_fed_withheld: 250,
+        box3_ss_wages: 0,
+        box4_ss_withheld: 0,
+        box5_medicare_wages: 0,
+        box6_medicare_withheld: 0,
+      }],
+      schedule_h: {
+        employer_ein: "123456789",
+        cash_wages_over_2025_limit: false,
+        cash_wages_over_quarter_limit: false,
+        federal_income_tax_withheld: 250,
+        family_withholding_only_payroll: {
+          all_household_employees_included: true,
+          employer_ssn: "400001032",
+          employee: {
+            employee_id: "spouse-employee-1",
+            employee_ssn: "400001041",
+            relationship: "spouse",
+            relationship_source_reference: "spouse-relationship-review",
+            marriage_date: "2010-06-15",
+            marriage_source_reference: "marriage-certificate-review",
+            marriage_continuity_source_reference:
+              "2025-marriage-continuity-review",
+            married_through_2025_verified: true,
+            payroll_source_reference: "2025-spouse-payroll-ledger",
+            ordinary_cash_only: true,
+            annual_cash_wages: 5_000,
+            quarterly_cash_wages: [1_250, 1_250, 1_250, 1_250],
+            federal_income_tax_withholding_requested_and_agreed: true,
+            w4_source_reference: "2025-spouse-form-w4",
+            w2: {
+              source_reference: "2025-spouse-form-w2",
+              employee_ssn: "400001041",
+              box1_wages: 5_000,
+              box2_federal_income_tax_withheld: 250,
+              box3_social_security_wages: 0,
+              box5_medicare_wages: 0,
+            },
+          },
+        },
+      },
+    },
+    filer: {
+      ...singleFiler,
+      firstNameWithInitial: "Tara",
+      lastName: "Black",
+      nameLine1: "BLACK TARA",
+      fullName: "Tara Black",
+      primarySSN: "400001032",
+      nameControl: "BLAC",
+      filingStatus: FilingStatus.MarriedFilingJointly,
+      spouse: {
+        firstName: "Sam",
+        lastName: "Black",
+        ssn: "400001041",
+        nameControl: "BLAC",
+      },
+      address: {
+        line1: "17 Lexington Drive",
+        city: "Cincinnati",
+        state: "OH",
+        zip: "45223",
+      },
+    },
+    expectedPdfForms: ["f1040", "schedule2", "schedule_h"],
+    reviewFocus: [
+      "The joint spouse's $5,000 Form W-2 wages and $250 withholding reach Form 1040 once",
+      "Schedule H box A No, box B Yes, box C blank, line 9 No, and line 8 tax $250 reconcile to Schedule 2",
+      "Taxpayer Tara is the Schedule H employer; Sam is the spouse/employee; family FICA and FUTA remain zero",
+    ],
+  },
+  {
+    id: "single-schedule-h-fica-and-futa",
+    inputs: {
+      general: singleGeneral,
+      schedule_h: {
+        employer_ein: "123456789",
+        cash_wages_over_2025_limit: true,
+        cash_wages_over_quarter_limit: true,
+        ss_wages: 3_100,
+        medicare_wages: 3_100,
+        federal_income_tax_withheld: 0,
+        federal_unemployment: {
+          paid_only_one_state: true,
+          all_contributions_paid_on_time: true,
+          all_futa_wages_state_taxable: true,
+          state: "OH",
+          contributions_paid: 100,
+          taxable_wages: 3_100,
+          all_household_employees_included: true,
+          prior_year_quarter_threshold_met: false,
+          employee_wages: [{
+            employee_id: "worker-1",
+            payroll_source_reference: "2025-household-payroll-1",
+            relationship: "unrelated",
+            annual_cash_wages: 3_100,
+            age_18_or_older_for_fica: true,
+            ordinary_cash_only: true,
+            quarterly_cash_wages: [3_100, 0, 0, 0],
+            w2: {
+              source_reference: "2025-household-w2-1",
+              box2_federal_income_tax_withheld: 0,
+              box3_social_security_wages: 3_100,
+              box5_medicare_wages: 3_100,
+            },
+          }],
+        },
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "schedule2", "schedule_h"],
+    reviewFocus: [
+      "Schedule H box A and line 9 both answer Yes; Part I calculates $384 Social Security and $90 Medicare tax",
+      "Section A reports $3,100 FUTA wages and $19 FUTA; line 26 and Schedule 2 line 9 total $493",
+      "The owner, EIN, Form 1040 tax/amount owed, and native Schedule H agree with the source",
+    ],
+  },
+  {
     id: "single-schedule-h-three-state-futa",
     inputs: {
       general: singleGeneral,
@@ -1532,7 +1890,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       w2: [wage(100_000, 16_000, "Example Employer", "12-3456789")],
       schedule_a: {
         line_5a_state_income_tax: 24_000,
-        line_8a_mortgage_interest_1098: 12_000,
         current_noncash_gift_inventory_complete_confirmed: true,
         other_prior_charitable_carryovers_absent_confirmed: true,
         capital_gain_property_carryovers: [],
@@ -1574,7 +1931,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       w2: [wage(100_000, 16_000, "Example Employer", "12-3456789")],
       schedule_a: {
         line_5a_state_income_tax: 24_000,
-        line_8a_mortgage_interest_1098: 12_000,
         capital_gain_50_percent_election_confirmed: true,
         current_noncash_gift_inventory_complete_confirmed: true,
         other_prior_charitable_carryovers_absent_confirmed: true,
@@ -1618,7 +1974,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       w2: [wage(100_000, 16_000, "Example Employer", "12-3456789")],
       schedule_a: {
         line_5a_state_income_tax: 24_000,
-        line_8a_mortgage_interest_1098: 12_000,
         current_noncash_gift_inventory_complete_confirmed: true,
         other_prior_charitable_carryovers_absent_confirmed: true,
         capital_gain_property_carryovers: [],
@@ -1670,7 +2025,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
       w2: [wage(100_000, 16_000, "Example Employer", "12-3456789")],
       schedule_a: {
         line_5a_state_income_tax: 24_000,
-        line_8a_mortgage_interest_1098: 12_000,
         current_noncash_gift_inventory_complete_confirmed: true,
         other_prior_charitable_carryovers_absent_confirmed: true,
         capital_gain_property_carryovers: [],
@@ -1704,7 +2058,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     reviewFocus: [
       "Form 8283 prints both $700 Section A claims and two separate reduction explanations",
       "Each native reduced amount links to its own FMV statement; item B remains item B",
-      "Schedule A line 12 is $1,400 and Form 1040 itemized deductions are $37,400",
+      "Schedule A line 12 is $1,400 and Form 1040 itemized deductions are $25,400",
     ],
   },
   {
@@ -3840,68 +4194,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
   },
   {
     id: "single-1099nec-trade-business-tips-schedule1a",
-    inputs: {
-      general: {
-        ...singleGeneral,
-        main_home_in_us_over_half_year: true,
-        taxpayer_can_be_claimed_as_dependent: false,
-        childless_eic_review: {
-          not_qualifying_child_of_another_taxpayer_verified: true,
-          qualifying_child_status_record_reference:
-            "Synthetic 2025 family review",
-        },
-        taxpayer_ssn_valid_for_employment: true,
-        taxpayer_ssn_issued_before_due_date: true,
-        taxpayer_tin_issued_by_due_date: true,
-        qbi_no_prior_loss_or_suspended_loss_confirmed: true,
-        qbi_not_patron_of_specified_cooperative_confirmed: true,
-      },
-      f1099nec: [{
-        payer_name: "Example Events",
-        payer_tin: "98-7654321",
-        recipient_ssn: "111-22-3333",
-        box1_nec: 18_000,
-        for_routing: "schedule_c",
-        schedule_c_business_reference: "synthetic-event-service-2025",
-        qualified_tips_review: {
-          amount: 12_000,
-          occupation_code: "102",
-          occupation_review_reference:
-            "Synthetic 2025 service occupation record",
-          tip_records_reference: "Synthetic 2025 point-of-sale tip ledger",
-          included_in_box1: true,
-          no_other_allocable_deductions: true,
-          no_other_allocable_deductions_review_reference:
-            "Synthetic 2025 Schedule 1 allocation review",
-        },
-      }],
-      schedule_c: [{
-        business_reference: "synthetic-event-service-2025",
-        proprietor_recipient: "T",
-        line_a_principal_business: "Event food service",
-        line_b_business_code: "722320",
-        line_c_business_name: "Example Event Service",
-        line_f_accounting_method: "cash",
-        line_g_material_participation: true,
-        line_i_made_1099_payments: false,
-        line_j_filed_1099s: false,
-        qbi_no_other_adjustments_confirmed: true,
-        line_1_gross_receipts: 18_000,
-        line_8_advertising: 8_000,
-      }],
-      schedule1a: {
-        senior_zero_exclusions_review: {
-          no_section933_puerto_rico_excluded_income: true,
-          section933_review_source_reference: "Synthetic 2025 residency review",
-          no_form2555_filed: true,
-          form2555_review_source_reference:
-            "Synthetic 2025 foreign-income review",
-          no_form4563_filed: true,
-          form4563_review_source_reference:
-            "Synthetic 2025 Samoa-source review",
-        },
-      },
-    },
+    inputs: businessTipSourceInputs(),
     filer: singleFiler,
     expectedPdfForms: [
       "f1040",
@@ -3975,7 +4268,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         line_f_accounting_method: "cash",
         line_g_material_participation: true,
         line_i_made_1099_payments: false,
-        line_j_filed_1099s: false,
         qbi_no_other_adjustments_confirmed: true,
         line_1_gross_receipts: 18_000,
         line_8_advertising: 8_000,
@@ -4099,7 +4391,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         line_f_accounting_method: "cash",
         line_g_material_participation: true,
         line_i_made_1099_payments: false,
-        line_j_filed_1099s: false,
         qbi_no_other_adjustments_confirmed: true,
         line_1_gross_receipts: 18_000,
         line_8_advertising: 8_000,
@@ -4350,7 +4641,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         line_f_accounting_method: "cash",
         line_g_material_participation: true,
         line_i_made_1099_payments: false,
-        line_j_filed_1099s: false,
         qbi_no_other_adjustments_confirmed: true,
         line_1_gross_receipts: 3_000,
         line_2_returns_allowances: 400,
@@ -4359,10 +4649,11 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     filer: singleFiler,
     expectedPdfForms: [
       "f1040",
-      "schedule_c",
-      "schedule_se",
       "schedule1",
       "schedule2",
+      "schedule_c",
+      "schedule_se",
+      "form8995",
     ],
     reviewFocus: [
       "K box 1a and Schedule C line 1 both retain $3,000 gross payments",
@@ -4417,7 +4708,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         line_f_accounting_method: "cash",
         line_g_material_participation: true,
         line_i_made_1099_payments: false,
-        line_j_filed_1099s: false,
         qbi_no_other_adjustments_confirmed: true,
         line_1_gross_receipts: 3_000,
         line_2_returns_allowances: 400,
@@ -4427,10 +4717,11 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     filer: singleFiler,
     expectedPdfForms: [
       "f1040",
-      "schedule_c",
-      "schedule_se",
       "schedule1",
       "schedule2",
+      "schedule_c",
+      "schedule_se",
+      "form8995",
     ],
     reviewFocus: [
       "K box 1a and Schedule C line 1 remain $3,000 gross",
@@ -4525,7 +4816,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         line_f_accounting_method: "cash",
         line_g_material_participation: true,
         line_i_made_1099_payments: false,
-        line_j_filed_1099s: false,
         qbi_no_other_adjustments_confirmed: true,
         line_1_gross_receipts: 2_000,
       }],
@@ -4533,12 +4823,13 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     filer: singleFiler,
     expectedPdfForms: [
       "f1040",
-      "schedule_c",
-      "schedule_se",
       "schedule1",
       "schedule2",
+      "schedule_c",
       "schedule_d",
+      "schedule_se",
       "form8949",
+      "form8995",
     ],
     reviewFocus: [
       "K box 1a $2,800 allocates $2,000 to Schedule C and $800 personal proceeds",
@@ -4607,7 +4898,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         line_f_accounting_method: "cash",
         line_g_material_participation: true,
         line_i_made_1099_payments: false,
-        line_j_filed_1099s: false,
         qbi_no_other_adjustments_confirmed: true,
         line_1_gross_receipts: 3_000,
       }],
@@ -4615,12 +4905,13 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     filer: singleFiler,
     expectedPdfForms: [
       "f1040",
-      "schedule_c",
-      "schedule_se",
       "schedule1",
       "schedule2",
+      "schedule_c",
       "schedule_d",
+      "schedule_se",
       "form8949",
+      "form8995",
     ],
     reviewFocus: [
       "K box 1a $3,800 allocates $2,000 unique business, $1,000 NEC duplicate, and $800 personal",
@@ -4702,7 +4993,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         line_f_accounting_method: "cash",
         line_g_material_participation: true,
         line_i_made_1099_payments: false,
-        line_j_filed_1099s: false,
         qbi_no_other_adjustments_confirmed: true,
         line_1_gross_receipts: 3_000,
       }],
@@ -4710,12 +5000,13 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     filer: singleFiler,
     expectedPdfForms: [
       "f1040",
-      "schedule_c",
-      "schedule_se",
       "schedule1",
       "schedule2",
+      "schedule_c",
       "schedule_d",
+      "schedule_se",
       "form8949",
+      "form8995",
     ],
     reviewFocus: [
       "K box 1a $4,000 allocates $2,000 unique business, $1,000 NEC duplicate, $800 personal sale, and $200 error",
@@ -5303,6 +5594,69 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "joint-other-coverage-hsa-current-excess",
+    inputs: {
+      general: { ...jointGeneral, spouse_dob: "1982-03-10" },
+      w2: [{
+        ...wage(90_000, 12_000, "Example Employer", "12-3456789"),
+        employee_ssn: "111223333",
+      }],
+      form8889: {
+        beneficiary_identity: {
+          owner: "T",
+          name: "Alex Example",
+          ssn: "111223333",
+        },
+        eligible_hdhp_coverage_by_month: [
+          ...Array(6).fill(CoverageType.Family),
+          ...Array(6).fill(null),
+        ],
+        other_disqualifying_coverage: {
+          first_ineligible_month: 7,
+          source_reference: "Alex July nonpermitted coverage notice",
+          continuing_spouse_not_covered_by_other_plan: true,
+        },
+        age_55_or_older: false,
+        married_at_year_end: true,
+        spouse_has_separate_hsa: true,
+        last_month_rule_elected: false,
+        allocated_family_limit: 2_000,
+        family_allocation_source_reference: "2025 signed family allocation",
+        taxpayer_hsa_contributions: 3_000,
+        hsa_december_31_value: 5_000,
+        spouse_hsa: {
+          beneficiary_identity: {
+            owner: "S",
+            name: "Sam Example",
+            ssn: "444556666",
+          },
+          eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.Family),
+          age_55_or_older: false,
+          married_at_year_end: true,
+          spouse_has_separate_hsa: true,
+          last_month_rule_elected: false,
+          allocated_family_limit: 2_275,
+          family_allocation_source_reference: "2025 signed family allocation",
+          taxpayer_hsa_contributions: 6_000,
+        },
+      },
+    },
+    filer: jointFiler,
+    expectedPdfForms: [
+      "f1040",
+      "schedule1",
+      "schedule2",
+      "form5329",
+      "form8889",
+      "form8889",
+    ],
+    reviewFocus: [
+      "The two Form 8889 copies retain separate owner identity and 2,000/6,000 deductions",
+      "Taxpayer Form 5329 Part VII lines 47 and 48 show 1,000 and line 49 shows 60",
+      "Schedule 1 and Form 1040 show 8,000 HSA deduction; Schedule 2 and Form 1040 show 60 additional tax",
+    ],
+  },
+  {
     id: "single-sequential-no-aptc-policies-200-fpl",
     inputs: {
       general: {
@@ -5724,7 +6078,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     filer: singleFiler,
     expectedPdfForms: ["f1040", "form8962", "schedule2"],
     reviewFocus: [
-      "Form 8962 prints one named policy across its monthly rows, not a second or blank copy",
+      "Form 8962 uses annual line 11 for one full-year policy; monthly rows and allocation page remain blank, with no duplicate form copy",
       "Household income, federal-poverty percentage, applicable figure and repayment limitation agree with the source calculation",
       "Excess APTC carries once to Schedule 2 line 1a and Form 1040 line 17",
       "Both Form 8962 pages and the Schedule 2 page have legible fields and no clipped monthly amount",
@@ -7004,14 +7358,36 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
   {
+    id: "single-form6781-four-section1256-accounts",
+    inputs: {
+      general: singleGeneral,
+      w2: [wage(75_000, 11_000, "Example Employer", "12-3456789")],
+      form6781: {
+        accounts: [
+          { account_identification: "Broker A Form 1099-B", gain_loss: 12_000 },
+          { account_identification: "Broker B Form 1099-B", gain_loss: -2_000 },
+          { account_identification: "Broker C Form 1099-B", gain_loss: 500 },
+          { account_identification: "Broker D Form 1099-B", gain_loss: -500 },
+        ],
+      },
+    },
+    filer: singleFiler,
+    expectedPdfForms: ["f1040", "form6781", "schedule_d"],
+    reviewFocus: [
+      "Form 6781 names Alex Example and SSN 111223333, prints Brokers A-C on line 1, and places Broker D's 500 loss on a labeled line-1 continuation page",
+      "Form 6781 line 2 includes all four accounts: 2,500 loss and 12,500 gain, net 10,000 on lines 3, 5, and 7",
+      "Form 6781 lines 8 and 9 report 4,000 short-term and 6,000 long-term gain, matching Schedule D, native XML, and Form 1040 line 7a",
+    ],
+  },
+  {
     id: "single-form8863-lifetime-learning-scholarship",
     inputs: {
       general: singleGeneral,
       w2: [wage(75_000, 11_000, "Example Employer", "12-3456789")],
       f8863: [{
         credit_type: "llc",
-        student_name: "Student Test",
-        student_ssn: "222-33-4444",
+        student_name: "Alex Example",
+        student_ssn: singleGeneral.taxpayer_ssn,
         filer_magi: 75_000,
         filing_status: SourceFilingStatus.Single,
         llc_adjusted_expenses: 7_500,
@@ -7034,9 +7410,9 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
           expenses_used_for_other_tax_benefits: 0,
         },
         filing_details: {
-          first_name: "Student",
-          last_name: "Test",
-          name_control: "TEST",
+          first_name: singleGeneral.taxpayer_first_name,
+          last_name: singleGeneral.taxpayer_last_name,
+          name_control: "EXAM",
           institutions: [{
             name: "Test University",
             us_address: {
@@ -7195,7 +7571,7 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
             public_safety_officer_excluded_amount: 0,
           })),
           schedule_c_line31_net_profit: 50_000,
-          schedule1_line15_se_tax_deduction: 3_532.3875,
+          schedule1_line15_se_tax_deduction: 3_533,
           schedule1_line16_retirement_deduction: 0,
           plan_established_under_business: true,
           sole_positive_business_verified: true,
@@ -7949,7 +8325,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         line_1_gross_receipts: 10_000,
         qbi_no_other_adjustments_confirmed: true,
         line_i_made_1099_payments: false,
-        line_j_filed_1099s: false,
       }],
       f8881: {
         schedule_c_business_reference: "PLAN-BUSINESS-1",
@@ -8300,7 +8675,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         line_f_accounting_method: "cash",
         line_g_material_participation: true,
         line_i_made_1099_payments: false,
-        line_j_filed_1099s: false,
         line_1_gross_receipts: 3_600,
         line_26_wages: 6_000,
       }],
@@ -8431,7 +8805,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         line_f_accounting_method: "cash",
         line_g_material_participation: true,
         line_i_made_1099_payments: false,
-        line_j_filed_1099s: false,
         line_1_gross_receipts: 8_000,
         line_26_wages: 10_000,
         line_26_other_employment_credits: 2_000,
@@ -8482,7 +8855,6 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
         ...business,
         line_1_gross_receipts: 39_000,
         line_i_made_1099_payments: false,
-        line_j_filed_1099s: false,
       })),
       f8882: form8882Fixture(),
     },
@@ -8648,3 +9020,218 @@ export const pdfReviewFixtures: readonly PdfReviewFixture[] = [
     ],
   },
 ];
+
+const educationBase = basePdfReviewFixtures.find((fixture) =>
+  fixture.id === "single-form8863-lifetime-learning-scholarship"
+)!;
+const existingPdfReviewFixtures: readonly PdfReviewFixture[] = [
+  ...multipleAnnuityReviewFixtures,
+  ...multipleNuaReviewFixtures,
+  ...twoFarmWotcFixtures(farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!)),
+  ...twoFarmHealthFixtures(twoFarmWotcFixtures(farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!))),
+  issuedRecaptureReviewFixture(false), issuedRecaptureReviewFixture(true),
+  ...controlledFarmWotcFixtures(twoFarmWotcFixtures(farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!))),
+  ...mixedControlledWotcFixtures(controlledFarmWotcFixtures(twoFarmWotcFixtures(farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!))), controlledWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!)[0]),
+  ...mixedCfHealthFixtures(mixedControlledWotcFixtures(controlledFarmWotcFixtures(twoFarmWotcFixtures(farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!))), controlledWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!)[0])),
+ ...farmWotcLossFixtures(farmWotcReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-certified-work-opportunity-credit")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!),basePdfReviewFixtures.find(f=>f.id==="single-schedule-c")!),
+  ...(["full", "partial", "zero"] as const).map(form8826InterpreterReviewFixture),
+ ...optionalFarmReviewFixtures(basePdfReviewFixtures.find(f=>f.id==="single-schedule-c")!,jointPatronFixture(basePdfReviewFixtures.find(f=>f.id==="single-schedule-c")!,basePdfReviewFixtures.find(f=>f.id==="joint-two-w2s")!,"farm")),
+  ...ownedCfFiledCases.map((row) => ownedCfFiledFixture(
+    basePdfReviewFixtures.find((fixture) => fixture.id === "single-schedule-c")!,
+    jointPatronFixture(basePdfReviewFixtures.find((fixture) => fixture.id === "single-schedule-c")!, basePdfReviewFixtures.find((fixture) => fixture.id === "joint-two-w2s")!, "farm"),
+    row,
+  )),
+  ownedFarmReviewFixture(
+    basePdfReviewFixtures.find((f) => f.id === "single-schedule-c")!,
+    jointPatronFixture(
+      basePdfReviewFixtures.find((f) => f.id === "single-schedule-c")!,
+      basePdfReviewFixtures.find((f) => f.id === "joint-two-w2s")!,
+      "farm",
+    ),
+  ),
+  ...farmWotcReviewFixtures(
+    basePdfReviewFixtures.find((f) =>
+      f.id === "single-certified-work-opportunity-credit"
+    )!,
+    basePdfReviewFixtures.find((f) => f.id === "joint-two-w2s")!,
+  ),
+  ...form8978ReviewFixtures,
+  ...controlledWotcReviewFixtures(
+    basePdfReviewFixtures.find((f) =>
+      f.id === "single-certified-work-opportunity-credit"
+    )!,
+    basePdfReviewFixtures.find((f) => f.id === "joint-two-w2s")!,
+  ),
+  ...bothOwnerWotcReviewFixtures(
+    basePdfReviewFixtures.find((f) =>
+      f.id === "single-certified-work-opportunity-credit"
+    )!,
+    basePdfReviewFixtures.find((f) => f.id === "joint-two-w2s")!,
+  ),
+  ...spouseWotcReviewFixtures(
+    basePdfReviewFixtures.find((f) =>
+      f.id === "single-certified-work-opportunity-credit"
+    )!,
+    basePdfReviewFixtures.find((f) => f.id === "joint-two-w2s")!,
+  ),
+  ...jointWotcReviewFixtures(
+    basePdfReviewFixtures.find((f) =>
+      f.id === "single-certified-work-opportunity-credit"
+    )!,
+    basePdfReviewFixtures.find((f) => f.id === "joint-two-w2s")!,
+  ),
+  ...(["full", "partial", "zero"] as const).map(form8994OwnedReviewFixture),
+  ownedScheduleSeReviewFixture(
+    basePdfReviewFixtures.find((f) => f.id === "single-schedule-c")!,
+    jointPatronFixture(
+      basePdfReviewFixtures.find((f) => f.id === "single-schedule-c")!,
+      basePdfReviewFixtures.find((f) => f.id === "joint-two-w2s")!,
+      "farm",
+    ),
+  ),
+  form8941OwnedReviewFixture(),
+  form8941PartYearReviewFixture(),
+  form8941FamilyReviewFixture(),
+  form8941ArrangementReviewFixture(),
+  form8941MultiplePlanReviewFixture(),
+  form8941WorkerReviewFixture(),
+  form8941CommonControlReviewFixture(),
+  form8941ThreeBusinessReviewFixture(),
+  form8941IndependentSpouseReviewFixture(),
+  medicareMsaReviewFixture(),
+  ...(["NY", "AK", "TN", "SD"] as const).map((state) =>
+    noncommunityMfsAccountingSstbFixture(
+      accountingSstbFixture(
+        basePdfReviewFixtures.find((fixture) =>
+          fixture.id === "single-schedule-c"
+        )!,
+        basePdfReviewFixtures.find((fixture) =>
+          fixture.id === "single-w2-refund"
+        )!,
+      ),
+      state,
+    )
+  ),
+  mfsPrimaryAccountingSstbFixture(accountingSstbFixture(
+    basePdfReviewFixtures.find((fixture) =>
+      fixture.id === "single-schedule-c"
+    )!,
+    basePdfReviewFixtures.find((fixture) => fixture.id === "single-w2-refund")!,
+  )),
+  jointPrimaryAccountingSstbFixture(
+    accountingSstbFixture(
+      basePdfReviewFixtures.find((fixture) =>
+        fixture.id === "single-schedule-c"
+      )!,
+      basePdfReviewFixtures.find((fixture) =>
+        fixture.id === "single-w2-refund"
+      )!,
+    ),
+    basePdfReviewFixtures.find((fixture) => fixture.id === "joint-two-w2s")!,
+  ),
+  accountingSstbNoPayrollFixture(accountingSstbFixture(
+    basePdfReviewFixtures.find((fixture) =>
+      fixture.id === "single-schedule-c"
+    )!,
+    basePdfReviewFixtures.find((fixture) => fixture.id === "single-w2-refund")!,
+  )),
+  accountingSstbFixture(
+    basePdfReviewFixtures.find((fixture) =>
+      fixture.id === "single-schedule-c"
+    )!,
+    basePdfReviewFixtures.find((fixture) => fixture.id === "single-w2-refund")!,
+  ),
+  patronFixture(
+    basePdfReviewFixtures.find((fixture) =>
+      fixture.id === "single-schedule-c"
+    )!,
+  ),
+  patronFixture(
+    basePdfReviewFixtures.find((fixture) =>
+      fixture.id === "single-schedule-c"
+    )!,
+    "c-health",
+  ),
+  patronFixture(
+    basePdfReviewFixtures.find((fixture) =>
+      fixture.id === "single-schedule-c"
+    )!,
+    "income-cap",
+  ),
+  ...([
+    "phase-farm",
+    "phase-c-health",
+    "phase-income-cap",
+    "phase-unbound",
+  ] as const).map((kind) =>
+    patronFixture(
+      basePdfReviewFixtures.find((fixture) =>
+        fixture.id === "single-schedule-c"
+      )!,
+      kind,
+    )
+  ),
+  ...(["farm", "c-health", "income-cap"] as const).map((kind) =>
+    jointPatronFixture(
+      basePdfReviewFixtures.find((fixture) =>
+        fixture.id === "single-schedule-c"
+      )!,
+      basePdfReviewFixtures.find((fixture) => fixture.id === "joint-two-w2s")!,
+      kind,
+    )
+  ),
+  ...(["farm", "c-health", "income-cap"] as const).map((kind) =>
+    spouseOwnedPatronFixture(jointPatronFixture(
+      basePdfReviewFixtures.find((fixture) => fixture.id === "single-schedule-c")!,
+      basePdfReviewFixtures.find((fixture) => fixture.id === "joint-two-w2s")!,
+      kind,
+    ))
+  ),
+  twoBusinessAggregationFixture(
+    basePdfReviewFixtures.find((fixture) =>
+      fixture.id === "single-schedule-c"
+    )!,
+    basePdfReviewFixtures.find((fixture) => fixture.id === "single-w2-refund")!,
+  ),
+  {
+    id: "single-form8863-missing-tuition-form-taxable-scholarship-phaseout",
+    inputs: educationScholarshipSource.inputs,
+    filer: educationScholarshipSource.filer as FilerIdentity,
+    expectedPdfForms: ["f1040", "schedule1", "schedule3", "f8863"],
+    reviewFocus: [
+      "Retained 6000 taxable scholarship reaches Schedule 1 line 8r and 81000 MAGI without changing issued W2 wages75000",
+      "AOC phaseout yields 1350 nonrefundable and900 refundable credit from paid tuition after taxable assistance allocation",
+      "School 1098T No/No indicators and truthful issued-copy exemption match sourced institution identity and Form8863 rows",
+    ],
+  },
+  form8621QefReviewFixture(basePdfReviewFixtures.find((row) => row.id === "single-w2-refund")!),
+  ordinaryRothSubstituteReviewFixture(),
+  ...form8582crReviewFixtures(),
+  ...basePdfReviewFixtures,
+  twoSchoolEducationFixture(educationBase, "llc"),
+  twoSchoolEducationFixture(educationBase, "aoc"),
+  ...(["overflow", "net-loss"] as const).map((kind) =>
+    multipleScheduleCFixture(
+      basePdfReviewFixtures.find((fixture) =>
+        fixture.id === "single-schedule-c"
+      )!,
+      basePdfReviewFixtures.find((fixture) =>
+        fixture.id === "single-w2-refund"
+      )!,
+      kind,
+    )
+  ),
+];
+
+// The qualified-tip public fixtures select existing catalog source returns.
+// Initialize the reviewed base inventory before constructing those inputs.
+const mutablePdfReviewFixtures: PdfReviewFixture[] = [...existingPdfReviewFixtures];
+export const pdfReviewFixtures: readonly PdfReviewFixture[] = mutablePdfReviewFixtures;
+mutablePdfReviewFixtures.push(
+  ...qualifiedTipReviewFixtures(),
+  ...tipHealthCfBeneficiaryReviewFixtures(),
+  ...form8941MixedThreeReviewFixtures(),
+  ...ownedFarmShopReviewFixtures(existingPdfReviewFixtures.find((row) => row.id === "owned-farm-wotc-single-below")!),
+  ...carrierDailyBilledShopReviewFixtures(),
+  ...independentOwnerHealthReviewFixtures(),
+);

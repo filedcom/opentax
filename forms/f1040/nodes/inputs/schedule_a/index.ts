@@ -1,3 +1,9 @@
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
+import {
+  calculateCharitableNaturalResource,
+  charitableNaturalResourceSourceSchema,
+} from "../f8283/natural-resource-source.ts";
+import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -23,6 +29,8 @@ export type NoncashContributionCategory = z.infer<
   typeof noncashContributionCategorySchema
 >;
 const noncashContributionItemSchema = z.object({
+  producing_mining_charitable_amt_source: charitableNaturalResourceSourceSchema
+    .optional(),
   source: z.string().trim().min(1),
   amount: z.number().nonnegative(),
   category: noncashContributionCategorySchema,
@@ -33,6 +41,7 @@ const noncashContributionItemSchema = z.object({
   original_fmv: z.number().nonnegative().optional(),
   adjusted_basis: z.number().nonnegative().optional(),
   capital_gain_reduction_election_confirmed: z.literal(true).optional(),
+  contribution_year_disposition_reduction_confirmed: z.literal(true).optional(),
   unrelated_use_capital_gain_reduction_confirmed: z.literal(true).optional(),
   private_foundation_capital_gain_reduction_confirmed: z.literal(true)
     .optional(),
@@ -118,6 +127,8 @@ export const inputSchema = z.object({
   // Line 5a: State and local income taxes — mutually exclusive with line_5a_sales_tax
   // per IRC §164(b)(5) election. Provide one or the other, never both.
   line_5a_state_income_tax: z.number().nonnegative().optional(),
+  // Separate issued retirement withholding contribution; preserve wage/other taxes.
+  retirement_state_local_withholding: z.number().nonnegative().optional(),
   // Line 5a (alternative): General sales tax deduction in lieu of income taxes
   // IRC §164(b)(5)(A) — taxpayer elects sales tax OR income tax, not both.
   line_5a_sales_tax: z.number().nonnegative().optional(),
@@ -229,6 +240,7 @@ export const inputSchema = z.object({
       item.category === "noncash_50" && !noAppreciation &&
       item.capital_gain_reduction_election_confirmed !== true &&
       item.unrelated_use_capital_gain_reduction_confirmed !== true &&
+      item.contribution_year_disposition_reduction_confirmed !== true &&
       item.taxidermy_capital_gain_reduction_confirmed !== true &&
       item.intellectual_property_capital_gain_reduction_confirmed !== true
     ) {
@@ -307,6 +319,7 @@ export const inputSchema = z.object({
         if (
           (item.capital_gain_reduction_election_confirmed !== true &&
             item.unrelated_use_capital_gain_reduction_confirmed !== true &&
+            item.contribution_year_disposition_reduction_confirmed !== true &&
             item.taxidermy_capital_gain_reduction_confirmed !== true &&
             item.intellectual_property_capital_gain_reduction_confirmed !==
               true &&
@@ -374,7 +387,8 @@ export const inputSchema = z.object({
   // state and local income taxes. The election is mutually exclusive — you cannot
   // deduct both. Reject when both are provided with nonzero values.
   const hasSalesTax = (data.line_5a_sales_tax ?? 0) > 0;
-  const hasIncomeTax = (data.line_5a_state_income_tax ?? 0) > 0;
+  const hasIncomeTax = ((data.line_5a_state_income_tax ?? 0) +
+    (data.retirement_state_local_withholding ?? 0)) > 0;
   if (hasSalesTax && hasIncomeTax) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -411,6 +425,7 @@ function effectiveSaltCap(input: ScheduleAInput, cfg: F1040Config): number {
 function computeSALT(input: ScheduleAInput, cfg: F1040Config): number {
   // line_5a is either state income tax or sales tax (election) — never both (validated in schema)
   const line5a = (input.line_5a_state_income_tax ?? 0) +
+    (input.retirement_state_local_withholding ?? 0) +
     (input.line_5a_sales_tax ?? 0);
   const saltTotal = line5a +
     (input.line_5b_real_estate_tax ?? 0) +
@@ -515,6 +530,105 @@ function computeContributions(
   };
 }
 
+/** Refigure current gifts from the same owned mine ledger, retaining regular AGI.
+ * No supplied AMT allowance or carry amount enters this calculation. */
+export function reconcileProducingMiningCharitableAmt(
+  input: ScheduleAInput,
+  taxYear: number,
+) {
+  const sourced = (input.noncash_contribution_items ?? []).filter((row) =>
+    row.producing_mining_charitable_amt_source
+  );
+  if (!sourced.length) return undefined;
+  if (input.agi === undefined) {
+    throw new Error("Producing617 AMT charity needs finalized AGI");
+  }
+  if ((input.capital_gain_property_carryovers?.length ?? 0) > 0) {
+    throw new Error(
+      "Producing617 current AMT charity needs separately sourced prior AMT carryovers before using older gifts",
+    );
+  }
+  const seen = new Set<string>();
+  const amt = structuredClone(input);
+  const giftRecords = [];
+  for (const row of amt.noncash_contribution_items ?? []) {
+    const source = row.producing_mining_charitable_amt_source;
+    if (!source) continue;
+    if (
+      source.kind !== "producing_mining_617" || !row.contribution_id ||
+      seen.has(source.property_reference)
+    ) {
+      throw new Error(
+        "Producing617 AMT charity requires unique owned current contribution identities",
+      );
+    }
+    seen.add(source.property_reference);
+    const calc = calculateCharitableNaturalResource(source);
+    const regularCapitalGain = calc.hypothetical_gain > calc.ordinary_gain;
+    const regularCategory = regularCapitalGain
+      ? "capital_gain_30"
+      : "noncash_50";
+    const amtCapitalGain = Math.max(0, calc.fmv - calc.amt_adjusted_basis!) >
+      calc.amt_ordinary_gain!;
+    const amtCategory = amtCapitalGain ? "capital_gain_30" : "noncash_50";
+    if (
+      row.category !== regularCategory ||
+      row.is_capital_gain_property !== regularCapitalGain
+    ) {
+      throw new Error(
+        "Producing617 charitable class differs from actual hypothetical capital/ordinary gain source",
+      );
+    }
+    if (
+      row.amount !== calc.deduction_claimed ||
+      row.adjusted_basis !== calc.adjusted_basis ||
+      row.original_fmv !== calc.fmv
+    ) {
+      throw new Error(
+        "Producing617 current gift differs from its owned regular source",
+      );
+    }
+    giftRecords.push({
+      contribution_id: row.contribution_id,
+      property_reference: source.property_reference,
+      donor_ssn: source.donor_ssn,
+      category: row.category,
+      ...(amtCategory !== row.category ? { amt_category: amtCategory } : {}),
+      regular_claim: calc.deduction_claimed,
+      amt_claim: calc.amt_deduction_claimed!,
+      regular_basis: calc.adjusted_basis,
+      amt_basis: calc.amt_adjusted_basis!,
+    });
+    row.category = amtCategory;
+    row.is_capital_gain_property = amtCapitalGain;
+    row.amount = calc.amt_deduction_claimed!;
+    row.adjusted_basis = calc.amt_adjusted_basis!;
+  }
+  const regular = computeContributions(input, input.agi, taxYear);
+  const refigured = computeContributions(amt, input.agi, taxYear);
+  // Form6251 line3 compares the refigured filed ScheduleA contribution
+  // lines; retain raw allowance/carry cents in the account below.
+  const currentDifference = Math.round(regular.cash) +
+    Math.round(regular.noncash) - Math.round(refigured.cash) -
+    Math.round(refigured.noncash);
+  return {
+    contribution_year: taxYear,
+    agi: input.agi,
+    gifts: giftRecords,
+    regular_current_cash_allowed: regular.cash,
+    amt_current_cash_allowed: refigured.cash,
+    regular_current_noncash_allowed: regular.noncash,
+    amt_current_noncash_allowed: refigured.noncash,
+    line3_charitable_contribution_adjustment: currentDifference,
+    regular_carryforwards: regular.carryforwards,
+    amt_carryforwards: Object.fromEntries(
+      Object.entries(refigured.carryforwards).map((
+        [key, value],
+      ) => [`amt_${key}`, value]),
+    ),
+  };
+}
+
 function computeElectedCapitalGainCarryovers(
   input: ScheduleAInput,
   agi: number,
@@ -570,7 +684,11 @@ function computeElectedCapitalGainCarryovers(
 class ScheduleANode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_a";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([standard_deduction]);
+  readonly outputNodes = new OutputNodes([
+    standard_deduction,
+    form8995,
+    form6251,
+  ]);
 
   compute(ctx: NodeContext, input: ScheduleAInput): NodeResult {
     inputSchema.parse(input);
@@ -588,6 +706,10 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
       throw new Error("Schedule A charitable limits require computed AGI");
     }
     const contributions = computeContributions(input, agi, ctx.taxYear);
+    const charitableAmt = reconcileProducingMiningCharitableAmt(
+      input,
+      ctx.taxYear,
+    );
     const election =
       input.capital_gain_50_percent_election_confirmed === true ||
       (input.noncash_contribution_items ?? []).some((item) =>
@@ -606,7 +728,11 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
     const niitAllocatedTax = input.niit_allocable_state_local_tax ?? 0;
     if (
       niitAllocatedTax >
-        Math.min(input.line_5a_state_income_tax ?? 0, saltCapped)
+        Math.min(
+          (input.line_5a_state_income_tax ?? 0) +
+            (input.retirement_state_local_withholding ?? 0),
+          saltCapped,
+        )
     ) {
       throw new Error(
         "Form 8960 state tax allocation exceeds deductible state income tax",
@@ -622,6 +748,15 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
       (input.line_16_other_deductions ?? 0);
 
     const outputs: NodeOutput[] = [
+      ...(charitableAmt &&
+          charitableAmt.line3_charitable_contribution_adjustment !== 0
+        ? [
+          this.outputNodes.output(form6251, {
+            line3_charitable_contribution_adjustment:
+              charitableAmt.line3_charitable_contribution_adjustment,
+          }),
+        ]
+        : []),
       this.outputNodes.output(standard_deduction, {
         itemized_deductions: totalItemized,
         force_itemized: input.force_itemized,
@@ -629,6 +764,12 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
         itemized_investment_interest: input.line_9_investment_interest ?? 0,
         niit_allocable_state_local_tax: niitAllocatedTax,
       }),
+      ...(totalItemized > 0 || input.force_itemized === true
+        ? [this.outputNodes.output(form8995, {
+          itemized_deductions: totalItemized,
+          force_itemized: input.force_itemized,
+        })]
+        : []),
     ];
     return {
       outputs,
@@ -638,12 +779,16 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
           line_11_cash_contributions: contributions.cash,
           line_12_noncash_contributions: contributions.noncash,
           line_13_contribution_carryover: electedCarryovers.allowed,
+          ...(charitableAmt
+            ? { charitable_amt_reconciliation: charitableAmt }
+            : {}),
           charitable_limits_finalized: true,
           capital_gain_election_finalized: election,
         },
       }],
       carryforwards: {
         ...contributions.carryforwards,
+        ...(charitableAmt?.amt_carryforwards ?? {}),
         ...electedCarryovers.remaining,
       },
     };

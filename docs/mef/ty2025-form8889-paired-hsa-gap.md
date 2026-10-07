@@ -1,5 +1,20 @@
 # TY2025 paired Form 8889 boundary
 
+## Current Form 5329 Part VII filled-packet review (2026-10-04)
+
+The existing paired other-coverage excess source is now a retained filled-PDF
+fixture and was replayed through the real return graph and PDF builder after
+the Form 5329 AcroForm mapping repair. The eleven-page packet has separate
+taxpayer and spouse Forms 8889 and one taxpayer Form 5329. All pages passed the
+selected visual, source, PDF replay, artifact-hash, page-origin, and local
+TY2025v5.4 XSD checks. Form 5329 page 2 visibly prints $1,000 on Part VII lines
+47 and 48 and $60 on line 49; Schedule 2 line 8 and Form 1040 line 23 show
+$60. The two Form 8889 line-13 deductions total $8,000 on Schedule 1 and
+Form 1040 line 10. The focused review-fixture XSD test also passed. The
+manifest digest is in the [validation batch](ty2025-form1040-validation-batch.md).
+External source proof, other HSA branches, IRS business rules, and ATS remain
+open.
+
 ## One spouse's other coverage leaves a current personal excess (written, unrun)
 
 The paired family-HDHP route now carries a retained current-year personal HSA
@@ -584,3 +599,26 @@ patient cases are authored to reject. The [2025 Form 8889 line-15 instructions](
 allow HSA funds for qualified expenses of dependents. These cases are unrun;
 special deemed-dependent exceptions, multiple patient receipts, receipt-byte
 authentication, and wider HSA combinations remain open.
+
+## Form 8889 PDF owner identity replay (2026-10-05)
+
+The Form 8889 PDF descriptor now checks each projected beneficiary SSN and
+name against the selected filer, as the MeF descriptor already does. It also
+rejects a page without computed lines, unsupported line-1 coverage or line-17a
+values, and negative or nonfinite printed amounts. A direct one-owner PDF call
+previously could print a valid-looking HSA page for a different taxpayer. This
+guard verifies output identity and shape; it does not authenticate the HDHP,
+Medicare, trustee, or receipt source records or complete other monthly routes.
+
+## Bounded Form 5329 PDF page selection (2026-10-05)
+
+The registered Form 5329 PDF now keeps official page 1 for its supported
+early-distribution Part I rows. It keeps page 2 only when at least one
+projected Part VII HSA line 42–49 prints a nonzero rounded amount. Page 3 is
+omitted because the current source route has no Part IX accumulation facts.
+The existing source guard still rejects unsupported positive excess amounts
+in Parts V, VI, and VIII. Six focused PDF tests passed, including a real
+filled-form page-copy check and a line-43-only selection. The selected packet
+review is recorded separately in the [validation batch](ty2025-form1040-validation-batch.md).
+This page selection does not authenticate prior HSA records or complete the
+owner-specific funding and distribution paths described above.

@@ -15,6 +15,75 @@ import { buildPending } from "../../mef/pending.ts";
 import { DistributionCode } from "../../../nodes/inputs/f1099r/index.ts";
 import { scheduleALine16EstateStatement } from "../../mef/forms/schedule_a_line16_estate_statement.ts";
 
+Deno.test("Schedule A PDF line 8a requires a retained Form 1098", () => {
+  const filer = {
+    primarySSN: "111223333",
+    nameLine1: "Test Taxpayer",
+    nameControl: "TAXP",
+    address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
+    filingStatus: FilingStatus.Single,
+  };
+  assertThrows(
+    () =>
+      scheduleAPdf.instances?.(
+        { line_8a_mortgage_interest_1098: 20_000 },
+        filer,
+        { f1040: { line12e_itemized_deductions: 20_000 } },
+      ),
+    Error,
+    "line 8a needs retained Form 1098",
+  );
+});
+
+Deno.test("Schedule A PDF line 8a equals retained Form 1098 box 1 interest", () => {
+  const filer = {
+    primarySSN: "111223333",
+    nameLine1: "Test Taxpayer",
+    nameControl: "TAXP",
+    address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
+    filingStatus: FilingStatus.Single,
+  };
+  const source = {
+    f1098s: [{
+      lender_name: "Home Lender",
+      recipient_tin: "111-22-3333",
+      source_document_reference: "2025 issued Form 1098",
+      box1_mortgage_interest: 20_000,
+      box1_current_year_deductible_interest: 20_000,
+      box1_deduction_workpaper_reference: "2025 Pub. 936 workpaper",
+      issuer_copy: {
+        file_name: "Test1098.pdf",
+        pdf_sha256: "0".repeat(64),
+        bytes: new Uint8Array(),
+      },
+    }],
+  };
+  const pending = {
+    f1098: source,
+    f1040: { line12e_itemized_deductions: 20_000 },
+  };
+  assertEquals(
+    scheduleAPdf.instances?.(
+      { line_8a_mortgage_interest_1098: 20_000 },
+      filer,
+      pending,
+    )[0]?.line_8a_mortgage_interest_1098,
+    20_000,
+  );
+  for (const filed of [19_000, 21_000]) {
+    assertThrows(
+      () =>
+        scheduleAPdf.instances?.(
+          { line_8a_mortgage_interest_1098: filed },
+          filer,
+          { ...pending, f1040: { line12e_itemized_deductions: filed } },
+        ),
+      Error,
+      "line 8a differs from retained Form 1098 deductible interest and points",
+    );
+  }
+});
+
 async function assertScheduleAXsd(xml: string): Promise<void> {
   const xsdPath = new URL(
     "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
@@ -418,6 +487,19 @@ Deno.test("Schedule A reviewed nonqualifying mortgage use checks native and PDF 
         taxpayer_ssn: "111223333",
         digital_assets: false,
       },
+      f1098: [{
+        lender_name: "Example Home Lender",
+        recipient_tin: "111223333",
+        source_document_reference: "2025 lender copy",
+        box1_mortgage_interest: 20_000,
+        box1_current_year_deductible_interest: 20_000,
+        box1_deduction_workpaper_reference: "2025 Pub. 936 interest workpaper",
+        issuer_copy: {
+          file_name: "Test1098.pdf",
+          pdf_sha256: "0".repeat(64),
+          bytes: new Uint8Array(),
+        },
+      }],
       schedule_a: {
         line_8a_mortgage_interest_1098: 20_000,
         home_mortgage_nonqualifying_use_review: {
@@ -595,13 +677,28 @@ Deno.test("Schedule A PDF fills TY2025 line 8e and prints Form 8396 net mortgage
   const pending = {
     f1040: { line12e_itemized_deductions: 20_800 },
     form8396: { line3: 2_000, interest_reporting_line: "8a" },
+    f1098: {
+      f1098s: [{
+        lender_name: "Example Home Lender",
+        recipient_tin: filer.primarySSN,
+        source_document_reference: "2025 lender copy",
+        box1_mortgage_interest: 21_000,
+        box1_current_year_deductible_interest: 21_000,
+        box1_deduction_workpaper_reference: "2025 Pub. 936 workpaper",
+        issuer_copy: {
+          file_name: "Test1098.pdf",
+          pdf_sha256: "0".repeat(64),
+          bytes: new Uint8Array(),
+        },
+      }],
+    },
   };
   const [instance] = scheduleAPdf.instances?.(source, filer, pending) ?? [];
   assertEquals(instance?.line_8a_mortgage_interest_1098, 19_000);
   assertEquals(instance?.line_8b_mortgage_interest_no_1098, 1_000);
   assertEquals(instance?.line_8e_mortgage_interest, 20_500);
   assertEquals(instance?.line_10_interest, 20_800);
-  const xml = scheduleAMef.build(source, { pending });
+  const xml = scheduleAMef.build(source, { pending, filer });
   assertEquals(
     xml.includes(
       "<RptHomeMortgIntAndPointsAmt>19000</RptHomeMortgIntAndPointsAmt>",
@@ -637,6 +734,13 @@ Deno.test("Schedule A PDF fills TY2025 line 8e and prints Form 8396 net mortgage
     filer,
     {
       ...pending,
+      f1098: {
+        f1098s: [{
+          ...pending.f1098.f1098s[0],
+          box1_mortgage_interest: 1_000,
+          box1_current_year_deductible_interest: 1_000,
+        }],
+      },
       form8396: { line3: 2_000, interest_reporting_line: "8b" },
     },
   ) ?? [];
@@ -714,6 +818,83 @@ Deno.test("Schedule A PDF replays purchase points and the second mortgage", () =
       ),
     Error,
     "same single filer",
+  );
+});
+
+Deno.test("Schedule A PDF replays the capped two-loan points and interest total", () => {
+  const fixture = purchasePointsCrossLoanFixture();
+  const review = fixture.f1098_purchase_points_cross_loan_review;
+  review.purchase_points_cross_loan_review.existing_loan.maximum_2025_balance =
+    650_000;
+  review.purchase_points_cross_loan_review.existing_loan
+    .monthly_balance_records = review.purchase_points_cross_loan_review
+      .existing_loan.monthly_balance_records
+      .map((row) => ({ ...row, closing_balance: 650_000 }));
+  const f1098s = fixture.f1098.map((item, index) => ({
+    ...item,
+    ...(index === 0
+      ? {
+        box1_current_year_deductible_interest: 4_734,
+        box6_current_year_deductible_points: 2_367,
+      }
+      : {
+        box2_outstanding_principal: 650_000,
+        box1_current_year_deductible_interest: 9_468,
+      }),
+    issuer_copy: {
+      file_name: "Test1098.pdf",
+      pdf_sha256: "0".repeat(64),
+      bytes: new Uint8Array(),
+    },
+  }));
+  const filer = {
+    primarySSN: "111223333",
+    nameLine1: "Test Taxpayer",
+    firstNameWithInitial: "Test",
+    lastName: "Taxpayer",
+    nameControl: "TAXP",
+    address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
+    filingStatus: FilingStatus.Single,
+  };
+  const source = { f1098s, ...review };
+  const pending = {
+    f1040: { line12e_itemized_deductions: 16_569 },
+    f1098: source,
+  };
+  const [instance] = scheduleAPdf.instances?.(
+    { line_8a_mortgage_interest_1098: 16_569 },
+    filer,
+    pending,
+  ) ?? [];
+  assertEquals(instance?.line_8a_mortgage_interest_1098, 16_569);
+  assertThrows(
+    () =>
+      scheduleAPdf.instances?.(
+        { line_8a_mortgage_interest_1098: 16_570 },
+        filer,
+        pending,
+      ),
+    Error,
+    "exact sourced line 8a",
+  );
+  assertThrows(
+    () =>
+      scheduleAPdf.instances?.(
+        { line_8a_mortgage_interest_1098: 16_569 },
+        filer,
+        {
+          ...pending,
+          f1098: {
+            ...source,
+            f1098s: [{
+              ...f1098s[0],
+              box6_current_year_deductible_points: 2_368,
+            }, f1098s[1]],
+          },
+        },
+      ),
+    Error,
+    "same Pub. 936 Table 1 ratio",
   );
 });
 
@@ -832,7 +1013,7 @@ Deno.test("Schedule A PDF prints the ordinary gift on the official line 12 widge
   );
   assertEquals(instance?.line_5e_salt_deduction, 24_000);
   assertEquals(instance?.line_12_noncash_contributions, 1_200);
-  assertEquals(instance?.line_17_itemized, 37_200);
+  assertEquals(instance?.line_17_itemized, 25_200);
   assertEquals(
     scheduleAPdf.fields.find((field) =>
       field.domainKey === "line_12_noncash_contributions"

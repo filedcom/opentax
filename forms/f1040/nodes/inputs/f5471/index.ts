@@ -1,3 +1,7 @@
+import {
+  ownedCfcWorksheetSourceSchema,
+  ownedWorksheetFiledOperands,
+} from "./worksheet-source.ts";
 import { z } from "zod";
 import type {
   AtLeastOne,
@@ -191,7 +195,7 @@ export const scheduleHSchema = z.object({
   book_net_income_functional: z.number().int(),
   adjustments: scheduleHAdjustmentsSchema,
   dastm_gain_or_loss: z.literal(0),
-  passive_category_ep: z.literal(0),
+  passive_category_ep: dollars,
   section901j_category_ep: z.literal(0),
   current_ep_usd: z.number().int(),
   average_exchange_rate: z.string().regex(/^\d{1,10}(\.\d{1,12})?$/)
@@ -220,7 +224,7 @@ export const scheduleESchema = z.object({
   tax_functional: dollars,
   section986_election: z.literal(false),
   lower_tier_deemed_paid_tax: z.literal(0),
-  disallowed_tax: z.literal(0),
+  disallowed_tax: dollars,
   prior_year_tax_balance: z.literal(0),
   other_e1_adjustments: z.literal(0),
   taxes_deemed_paid_on_inclusion: z.literal(0),
@@ -334,7 +338,7 @@ export const scheduleQSchema = z.object({
   tested_average_asset_value_functional: dollars,
   foreign_taxes_credit_allowed_usd: dollars,
   residual_gross_income_functional: z.literal(0),
-  us_source_income_functional: z.literal(0),
+  us_source_income_functional: dollars,
   foreign_oil_gas_income_functional: z.literal(0),
   high_tax_election: z.literal(false),
   source_workpaper_reference: sourceReference,
@@ -346,11 +350,12 @@ export const scheduleQSchema = z.object({
 export const scheduleMSchema = z.object({
   inventory_sales_to_filer_functional: dollars,
   inventory_sales_to_filer_usd: dollars,
-  no_other_related_party_transactions: z.literal(true),
+  no_other_related_party_transactions: z.boolean(),
   maximum_related_party_accounts_payable_usd: z.literal(0),
   maximum_related_party_borrowing_usd: z.literal(0),
   maximum_related_party_accounts_receivable_usd: z.literal(0),
-  maximum_related_party_lending_usd: z.literal(0),
+  maximum_related_party_lending_usd: dollars,
+  interest_received_from_filer_usd: dollars.optional(),
   source_workpaper_reference: sourceReference,
 }).strict();
 
@@ -381,7 +386,9 @@ export const scheduleFSchema = z.object({
   common_stock_end_usd: dollars,
   retained_earnings_begin_usd: dollars,
   retained_earnings_end_usd: dollars,
-  no_other_assets_liabilities_or_equity: z.literal(true),
+  no_other_assets_liabilities_or_equity: z.boolean(),
+  other_investments_begin_usd: dollars.optional(),
+  other_investments_end_usd: dollars.optional(),
   gaap_begin_translation_rate: z.literal("1.0000"),
   gaap_end_translation_rate: z.literal("1.0000"),
   source_workpaper_reference: sourceReference,
@@ -458,7 +465,73 @@ export const itemSchema = z.object({
   schedule_c: scheduleCSchema,
   schedule_f: scheduleFSchema,
   form5471_identity: form5471IdentitySchema,
+  owned_worksheet_source: ownedCfcWorksheetSourceSchema.optional(),
 }).strict().superRefine((value, ctx) => {
+  if (value.owned_worksheet_source) {
+    try {
+      const { operands } = ownedWorksheetFiledOperands(
+        value.owned_worksheet_source,
+      );
+      const compare = (actual: unknown, expected: unknown, path: string[]) => {
+        if (expected !== null && typeof expected === "object") {
+          for (const [key, operand] of Object.entries(expected)) {
+            compare(
+              (actual as Record<string, unknown> | undefined)?.[key],
+              operand,
+              [...path, key],
+            );
+          }
+        } else if (actual !== expected) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path,
+            message:
+              "Owned CFC invoice/property/quarter/EP worksheet source does not reconcile to filed operand",
+          });
+        }
+      };
+      compare(value, operands, []);
+      if (
+        value.foreign_corp_ein ||
+        value.schedule_i.worksheet_a_reference !==
+          value.owned_worksheet_source.cfc_reference + "-worksheet-a" ||
+        value.schedule_i.worksheet_b_reference !==
+          value.owned_worksheet_source.cfc_reference + "-worksheet-b"
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["owned_worksheet_source"],
+          message:
+            "Owned CFC worksheet identity and record references conflict",
+        });
+      }
+    } catch (error) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["owned_worksheet_source"],
+        message: String(error),
+      });
+    }
+    return;
+  }
+  if (
+    value.schedule_e.disallowed_tax !== 0 ||
+    !value.schedule_m.no_other_related_party_transactions ||
+    value.schedule_m.maximum_related_party_lending_usd !== 0 ||
+    value.schedule_m.interest_received_from_filer_usd !== undefined ||
+    value.schedule_q.us_source_income_functional !== 0 ||
+    value.schedule_h.passive_category_ep !== 0 ||
+    !value.schedule_f.no_other_assets_liabilities_or_equity ||
+    value.schedule_f.other_investments_begin_usd !== undefined ||
+    value.schedule_f.other_investments_end_usd !== undefined
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["schedule_f"],
+      message:
+        "Passive categories and investment assets need complete owned worksheet sources",
+    });
+  }
   const e = value.schedule_e;
   const identity = value.form5471_identity;
   if (

@@ -400,6 +400,9 @@ Deno.test("2025 Form 7206 accepts a source-reconciled one-plan return", () => {
     },
     pending: filingPending,
   });
+  if (typeof xml !== "string") {
+    throw new Error("Single-plan Form7206 must emit one native copy");
+  }
   assertStringIncludes(xml, "<IRS7206>");
   assertStringIncludes(
     xml,

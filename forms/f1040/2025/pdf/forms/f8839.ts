@@ -24,6 +24,8 @@ const fields: PdfFieldEntry[] = Object.entries(form8839Page1FieldMap).map(
 export const form8839Pdf: PdfFormDescriptor = {
   pendingKey: "form8839",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8839--2025.pdf",
+  // The reviewed route excludes employer benefits, so Part III is blank.
+  pageIndices: () => [0],
   fields,
   instances(raw, filer, allPending) {
     const source = inputSchema.parse(raw);

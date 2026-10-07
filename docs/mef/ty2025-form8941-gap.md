@@ -1,51 +1,126 @@
-# TY2025 Form 8941 direct employer route and filing boundary
+# TY2025 Form 8941 owned direct employer route
 
-The [2025 IRS instructions](https://www.irs.gov/instructions/i8941) require
-qualifying SHOP coverage, fewer than 25 FTEs, average annual wages below
-$67,000, a two-consecutive-year credit period, and an employee/rating-area
-premium calculation. A direct individual employer reports Form 8941 line 16 on
-Form 3800 Part III line 4h. A K-1-only recipient generally reports on Form 3800
-without a personal Form 8941; a tax-exempt employer uses Form 990-T. Those are
-separate paths.
+## Source and deduction rule
 
-The old public input accepted asserted FTEs, average wages and total premiums.
-It could not prove the credit. It has been replaced with one direct Schedule C
-employer source: one owner and employment EIN, one full-year employee-only SHOP
-plan that covers all nonexcluded employees, a uniform contribution of at least 50%, 1–24 identified nonseasonal
-employees, hours, Medicare/Social Security wages, paid premiums, rating-area
-average premiums, payroll/plan references, no state subsidies, no other
-business/common control, and explicit 2024/2025 credit-period history. The
-calculator builds Worksheets 1–7 and Form 8941 lines 1–16. It floors FTEs,
-rounds average wages down to $1,000, caps employer premiums by the rating-area
-average, and applies both FTE and wage phaseouts. Worksheet 6's printed formula
-uses $33,300 even though the eligibility prose describes the reduction as
-beginning above $33,000. The
-[2025 average-premium table](https://www.irs.gov/instructions/i8941) lists
-$9,358 for employee-only coverage in Albany County, NY, used in the authored
-positive fixture. Other table values are not accepted by this staged source.
+The [2025 IRS instructions](https://www.irs.gov/pub/irs-prior/i8941--2025.pdf) require qualifying SHOP coverage, fewer than25 FTEs, average annual wages below$67,000, a two-consecutive-year credit period and employee/rating-area worksheets. The modeled ordinary employer rate is50%. Worksheets 1–7 floor FTEs at2080hours and average wages to$1,000, cap premiums by the rating-area average and subtract both phaseouts from the original credit. Worksheet 6 uses$33,300 despite the rounded$33,000 threshold in the prose. Table 2025 lists$9,358 for employee-only coverage in Albany County, NY.
 
-The staged SHOP review now checks the official Albany County row at $9,358 and
-binds the Marketplace, plan, employer EIN, and exact employee set. Each employee
-has 12 distinct coverage months with invoice and employer-payment references.
-The monthly amounts must match the annual Worksheet 4 inputs and the uniform
-employer contribution. Duplicated references, missing coverage months, changed
-amounts, and another rating-area row are rejected. This deliberately narrows
-the current staged source to Albany County, NY; other 2025 table rows need
-authenticated entries. Document references are assertions until issuer/plan
-and payment records are independently reviewed, so they do not open filing.
+[26 USC 280C(h)](https://www.govinfo.gov/content/pkg/USCODE-2024-title26/html/USCODE-2024-title26-subtitleA-chap1-subchapB-partIX-sec280C.htm) and [26 CFR 1.45R-5(c)](https://www.ecfr.gov/current/title-26/section-1.45R-5) reduce the premium deduction by the credit **determined under 45R(a)**, before section 38 tax-use limitation. Section 45R(e)(1) instead excludes owners and family from eligible employee expenses. This repairs the earlier staged implementation, which incorrectly netted premiums only by the Form 3800 allowed amount.
 
-The native IRS8941 serializer follows the locally available TY2025 v5.4
-IRS8941 schema. The official one-page PDF descriptor maps the same calculated
-lines and SHOP/credit-period marks. The bounded node sends line 16 to Form 3800
-Part III line 4h, a specified credit. The Form 3800 tax-use allocation carries
-the amount allowed to Schedule 3 and Form 1040, and the source join requires
-Schedule C wages, employment EIN, proprietor, and line 14 employee benefits to
-reflect that allowed amount. The native/PDF registries include Form 8941.
-Positive and tamper fixtures are authored but unrun.
+The public graph retains gross Schedule C employee benefits and produces a business-bound reduction equal to Form 8941 line 16. That projection reaches Schedule C profit, Schedule 1, SE tax/deduction, QBI and Form 1040. A separate sole-source Form 3800 allocation is finalized from actual return tax; no caller supplies the allowed amount for this public route. Native/PDF preflight reconciles gross premiums, wages, business/EIN/proprietor and the full reduction. It also rejects orphan reductions and incompatible credit/allocation/final-return totals.
 
-**Filing remains closed by the attachment guard until the bounded route is
-reviewed.** Payroll and SHOP document references, prior filed returns, local
-XSD, rendered PDF, full-batch tests, IRS business rules, and ATS have not been
-validated. Nonemployee, seasonal, dependent/family
-coverage, multiple plans or businesses, county SHOP exception, tax-exempt, and
-pass-through routes need separate source models.
+## Retained employer records
+
+The bounded source covers one materially participating Schedule C proprietor, employment EIN and full-year employee-only SHOP plan in Albany County, with all nonexcluded employees enrolled and uniform employer contributions of at least50%. Each employee has a distinct SSN and payroll/enrollment reference. Owned payroll records retain tax year, employer EIN, hours and wages. Twelve distinct monthly records bind employee SSN, payer EIN and plan to paid/billed amounts and unique invoice/payment references. Monthly sums and contribution percentages reconcile to annual worksheets. Owner SSNs, reused payroll/invoice/payment records, wrong employer/plan, missing months and changed amounts reject. Exclusion, no-common-control, no-subsidy and credit-period review facts remain explicit source assertions.
+
+The source records and first-year 2025 fixtures are synthetic; they demonstrate source retention and joins, not independent issuer authentication or prior IRS acceptance. The modeled2024 first-year history still needs separate external authentication evidence.
+
+## Executed filing evidence
+
+`forms/f1040/e2e/form8941_owned_2025.test.ts` executes public input through the calculator, native return, prepared bundle and actual filled PDF. Three packets validate against the **complete local TY2025 v5.4 Return1040.xsd** and retain original input, pending graph, calculated form lines, prepared Form 3800 allocation, XML, PDF and extracted text.
+
+| Current tax use | Form 8941 line 16 | Gross Schedule C benefits | Deductible benefits | Schedule C profit | SE tax | Form 1040 AGI | QBI deduction | Form 1040 total tax |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Full 11698 | 11698 | 26000 | 14302 | 135698 | 19173 | 126111 | 22072 | 21810 |
+| Partial 3221 | 11698 | 26000 | 14302 | 55698 | 7870 | 51763 | 7203 | 7870 |
+| Zero 0 | 11698 | 26000 | 14302 | 5698 | 805 | 5295 | 0 | 805 |
+
+The partial and zero cases retain unused current credit 8477/11698 in prepared source allocations. They do not assert an authenticated future carryover or a carryback claim. The credit reaches Form 3800 Part III4h and Parts I/II; the positive allowed amounts reach Schedule 3/1040. Zero use correctly has no Schedule 3 credit document. Form 6251 retains the tentative-minimum-tax calculation. Internal source allocation details reconcile native preparation; printed Part V remains blank for the single source, as the [2025 Form 3800 instructions](https://www.irs.gov/pub/irs-prior/i3800--2025.pdf) require breakdowns for aggregated multiple-source amounts.
+
+Focused evidence: 141 source/Schedule C/native/PDF tests passed; 103 shared Form 3800/F1040 tests passed; the final source packet suite passed 5 tests. Actual native/PDF negatives cover 13 retained-source/allocation/return mutations, and public negatives cover conflicting employee/payroll/invoice ownership. Full and partial packets each have23 pages; zero has21: **all67 pages** were rendered with real Poppler and visually inspected. Review repaired attachment ordering (Form 8995 before Form 8941), required Form 8941 zero lines 10/15 and Form 3800 zero tax-use lines. No clipping, overlap, missing ownership fields or remaining route-specific page defects were observed.
+
+Artifacts: `/tmp/opentax-f8941-owned/.state/research/2026-10-06-form8941-owned/`, including `PROOF.md`, focused logs, the three packets and `all-page-review/`.
+
+The reusable held fixture `single-shop-health-premium-credit` now covers `f8941`. Descriptors remain150 native/116 PDF; the source planner reports199 fixtures,113 unique PDF keys,91 expected keys and22 uncovered keys. This is focused synthetic local evidence, not a full regression, IRS business-rule pass or ATS acceptance.
+
+## October 6 sourced part-year enrollment
+
+The [2025 instructions, Worksheet 4 and Example 4](https://www.irs.gov/pub/irs-prior/i8941--2025.pdf) prorate the rating-area average premium for actual enrolled pay periods. Worksheet 4(d) copies each enrolled employee's **annual** Worksheet 1 hours; Worksheets 2, 3 and 7 do not prorate annual payroll for coverage months. Worksheet 1 caps credited annual hours at 2080 per employee. [26 CFR 1.45R-3](https://www.ecfr.gov/current/title-26/section-1.45R-3) applies the same employer arrangement with average premiums substituted. The [2025 Form 1040 rounding instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf) require adding fractional amounts before rounding their total.
+
+A second public source profile now retains exact whole calendar-month enrollment periods and an enrollment source reference for every employee. Each owned monthly invoice/payment includes exact coverage dates, invoice date, payment date, employee SSN, employer EIN, plan and distinct invoice/payment references. Payments must occur in 2025; an invoice's issue date can precede the tax year. Exact period/month counts, paid/billed totals, uniform employer percentage and annual payroll reconcile before calculation and again during native/PDF preparation. The original full-year profile remains compatible. Raw payroll hours can exceed 2080; the annual worksheet amount must equal the source hours capped at 2080.
+
+The first-year synthetic Albany fixture has five nonseasonal employees enrolled for 6, 9, 6, 3 and 10 months, totaling34 employee-months. Retained payroll totals8020 hours; after the first employee's2300 hours are capped at2080, credited hours7800 and annual wages75000 yield3 FTEs and25000 average wages. Paid premiums17000 at50% of billed premiums34000 produce raw substituted average-premium amounts2339.50,3509.25,2339.50,1169.75 and3899.1666667. Their sum13257.1666667 rounds to filed line5=13257; rounding each row separately would incorrectly produce13258. Determined credit is6629 in every tax-use case.
+
+| Current tax use | Gross benefits | Deductible benefits | Schedule C profit | SE tax | Form 1040 AGI | QBI deduction | Total tax | Unused current credit |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Full6629 | 18000 | 11371 | 93629 | 13230 | 87014 | 14253 | 14061 | 0 |
+| Partial1253 | 18000 | 11371 | 33629 | 4752 | 31253 | 3101 | 4752 | 5376 |
+| Zero0 | 18000 | 11371 | 8629 | 1219 | 8019 | 0 | 1219 | 6629 |
+
+`forms/f1040/e2e/form8941_partyear_2025.test.ts` retains public input, calculated lines, row-level Worksheet4 evidence, pending graph, prepared allocation, actual XML, filled PDF and extracted text for all three cases. All three validate against the complete local TY2025 v5.4 Return1040.xsd. Final focused proof passed19 tests; the separate date-boundary unit suite passed8. The earlier combined legacy/part-year packet compatibility suite passed10. Twenty-one actual native/PDF mutations reject, including omitted/outside/duplicate months, changed policy/coverage/payment dates, payroll ownership/hours/wages, reused invoices, wrong plan/employer, determined-premium reduction, allowed credit and return totals. Six conflicting public-source cases also reject through calculation and actual XML/PDF export. Annual wage-ceiling proof remains based on actual annual payroll despite short enrollment.
+
+All23 full-use,23 partial-use and21 zero-use packet pages (**67 total**) were rendered with real Poppler and visually inspected. Employer/proprietor identity, amounts, required zeros and attachment order reconcile; no clipping or overlap was observed. Artifacts: `/tmp/opentax-f8941-partyear/.state/research/2026-10-06-form8941-partyear/`, including `PROOF.md`, logs, original sources and `all-page-review/`. The reusable `single-shop-part-year-enrollment` held fixture adds no descriptors. At this isolated base the planner reports208 fixtures,116 PDF descriptors,113 unique registered PDF keys,92 expected keys and21 uncovered keys. These figures include already integrated education fixtures, not solely this change.
+
+## October 6 sourced family and mixed tiers
+
+The [2025 IRS instructions](https://www.irs.gov/pub/irs-prior/i8941--2025.pdf), qualifying-arrangement discussion and Worksheet 4(c), distinguish employee-only from other coverage in the average-premium table. The Albany County, New York row lists **$9,358 employee-only and $24,527 family/dependent coverage**. Family coverage includes the enrolled employee; separately sold dependent-only coverage is a different arrangement. The modeled qualifying route pays the same uniform percentage, at least 50%, in each composite billing tier, as [26 CFR 1.45R-4(b)(2)(ii), Example 1](https://www.ecfr.gov/current/title-26/section-1.45R-4) permits. Equal-dollar contributions with a lower family percentage, list billing, separately offered dependent coverage and different per-tier percentages are not established by this slice.
+
+A third public profile identifies the qualified SHOP plan and its source reference, composite tier billing, the uniform percentage arrangement and no salary-reduction/tobacco/wellness/state-law adjustment. Every employee retains a coverage tier, exact calendar-month enrollment period, actual annual payroll and covered spouse/child records with SSNs, employee relationships, plan eligibility confirmation and enrollment references. Dependent eligibility is a plan enrollment fact; no tax-dependent claim is inferred. Each invoice/payment carries the employee SSN, employer EIN, plan, tier, exact covered dependent references, coverage/payment dates and distinct source references. The dependent set must match the employee's enrollment throughout the period. Reused dependent identities/source references, owner/employee identities used as dependents, missing/wrong members, different tier/month composite rates and incorrect employer payments reject. Source percentages remain uniform within and across the two modeled tiers.
+
+The matching table column is selected for each employee; coverage months prorate the cap while annual payroll still drives FTEs/wages. Fractional substituted averages are retained until their total is rounded for the filed line. All-family full-year coverage totals $61,317.50 before line 5 rounds to $61,318; five enrolled employees remain five FTEs despite ten covered dependents. Three family/two employee-only full-year employees total $46,148.50 before line 5 rounds to $46,149. The mixed part-year profile totals 22 family and 12 employee-only months, yielding $27,162.0833333 before line 5 rounds to $27,162. Original employee-only full-year and part-year profiles remain compatible.
+
+| Packet | Paid premiums | Determined credit | Current use | Deductible benefits | Profit | SE tax | AGI | QBI | Total tax |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| All family, full year | 72000 | 30659 | 17955 | 42341 | 157659 | 22276 | 146521 | 26154 | 22276 |
+| Mixed tiers, full use | 55200 | 23075 | 23075 | 33125 | 191875 | 26975 | 178387 | 32527 | 27973 |
+| Mixed tiers, partial use | 55200 | 23075 | 5111 | 33125 | 76875 | 10862 | 71444 | 11139 | 10862 |
+| Mixed tiers, zero use | 55200 | 23075 | 0 | 33125 | 6875 | 971 | 6389 | 0 | 971 |
+| Mixed tiers, part year | 32400 | 13581 | 6074 | 19819 | 85181 | 12035 | 79163 | 12683 | 12035 |
+
+Gross benefits add $1,000 of separately retained employee benefits to paid premiums. Each packet reduces that deduction by the **full determined** credit before SE/QBI/1040, even where current section 38 tax use is partial or zero. No future carryover acceptance is asserted.
+
+The five first-year synthetic packets in `forms/f1040/e2e/form8941_family_2025.test.ts` retain original input, annual/period worksheet evidence, graph, prepared allocation, actual XML and filled IRS PDF. They validate against the complete local TY2025 v5.4 Return1040.xsd. Focused and legacy public compatibility evidence is retained at `/tmp/opentax-f8941-family/.state/research/2026-10-06-form8941-family/`. The final combined suite passed 34 tests, including all five new packets, both existing three-packet employee-only routes, source units, native/PDF source preflight and held review scope. Thirty actual native/PDF mutations and nine public source/export conflicts reject. All 113 new packet pages (23/23/23/21/23) were rendered with real Poppler and visually inspected, including every blank Form 3800 page. Identity, amounts, required zero lines and attachment order reconcile without observed clipping or overlap.
+
+The held fixture `single-shop-mixed-family-tiers` adds no descriptor. The actual source planner reports 212 fixtures, 116 PDF descriptors, 113 unique registered PDF keys, 92 expected keys and 21 uncovered keys at this base. See artifact `PROOF.md` for precise logs, source ownership, inspected pages and bounds. Family coverage here covers only one reviewed composite/uniform-percentage plan and each employee's unchanged spouse/child membership for one continuous whole-month period. Other family arrangements, member changes, additional relationships, separate dependent-only policies, common-control/subsidy branches and source authentication remain open.
+
+## October 6 sourced qualifying arrangements
+
+[2025 instructions, Qualifying Arrangement and Worksheet4(c)/Example4](https://www.irs.gov/pub/irs-prior/i8941--2025.pdf), [26 CFR1.45R-4(b)(1)–(4), Examples1/2/5/6](https://www.ecfr.gov/current/title-26/section-1.45R-4) and [the final-regulation IRS bulletin](https://www.irs.gov/irb/2014-30_IRB) establish these one-QHP arrangements:
+
+| Billing | Employee-only rule | Family rule |
+| --- | --- | --- |
+| Composite | Uniform percentage at least50% | Independent uniform percentage at least50% |
+| Composite | Uniform percentage at least50% | Uniform dollar payment no less than the hypothetical employee-only contribution |
+| List | Uniform percentage at least50% | Independent uniform percentage at least50% |
+| List | Uniform percentage at least50% | Each employee's payment at least that employee's hypothetical employee-only contribution |
+| List | Uniform employee contribution no more than half the employer-computed composite rate | Each employee's payment at least that employee's hypothetical employee-only contribution |
+| List | Uniform percentage or qualifying uniform employee contribution | Uniform family employee contribution no more than half the family employer-computed composite rate |
+
+The list composite calculation averages the insurer's quoted premiums for **every eligible employee**, regardless of current enrollment or tier. Its uniform amount is the **employee** contribution; the employer pays the individual premium minus that amount. Flat employer contributions equal to half a computed average are not substituted for this rule. The source also supports an employee-only policy without a family rule; the retained positive packet evidence below exercises each rule with mixed employee-only/family enrollment.
+
+A fourth public profile retains each month's qualifying policy, employer EIN, QHP, exact coverage dates, billing method and rules. Every eligible employee has owned SSN/reference and separate employee-only/family insurer quotes. Every paid invoice binds to that policy and the insured employee's quote as well as the existing plan/employer/employee/enrollment and payment records. All identified workers must be eligible in every modeled policy month; the complete quoted roster includes workers not enrolled during that month. Reused source references, omitted/duplicate quote identities, altered prices, wrong-month/owner/plan joins, missing hypothetical premiums and underfunded or nonuniform contributions reject. Composite reference premiums must be uniform within a tier; list quotes may vary by employee. The contract takes source amounts and rates, not fixture-specific prices or counts.
+
+Cent amounts remain in monthly quotes, invoices, payments and annual employee totals. Completed line4 and line5 totals round to whole dollars after summing. Percentage rules use their stated contribution percentage; dollar-payment exceptions use each month's actual employer payment divided by actual billed premium for Worksheet4(c). This follows Example4's effective percentages and the [IRS examination worksheet's employee-level percentage/month instructions](https://www.irs.gov/irm/part4/irm_04-070-017r), alongside [26 CFR1.45R-3(b)](https://www.ecfr.gov/current/title-26/section-1.45R-3). A midyear premium change retains separate month calculations. Annual payroll remains unchanged by enrollment periods.
+
+Native and PDF attachment preflight also retain supplied `start.f8941` as an active source. A schema-invalid public source can stop graph routing; it must not silently disappear and produce a no-credit export. Preflight compares that original parsed source to the filed source and reconciles determined credit, gross deduction, tax-use allocation and final return.
+
+The seven full-use arrangements plus partial-use, zero-use and part-year list-family cases retain original sources, every monthly Worksheet4 row, public graph, prepared allocation, full native XML and actual filled IRS PDF. The new held fixture is `single-shop-list-computed-family-floor`. Detailed executed counts, all-page review, packet hashes and exact totals are recorded in `/tmp/opentax-f8941-arrangements/.state/research/2026-10-06-form8941-arrangements/PROOF.md`. The actual planner reports218 fixtures,150 native/116 PDF descriptors,113 unique PDF keys,92 expected keys and21 uncovered keys. No descriptor was added.
+
+The focused compatibility suite passed **47/47**; the final packet-order and held-scope gate passed **15/15** after the ordering repair. All **10 new full local TY2025 v5.4 XSD packets and all 242 final PDF pages** were retained and visually reviewed (seven 25-page full-use packets, 23-page partial-use, 21-page zero-use and 23-page part-year). Actual export negatives reject 33 prepared-source mutations and 27 public-source conflicts in both native and PDF exports. Final PDF hashes match the reviewed manifest; every packet is flattened. The relevant PDF registry order is now attachment 55 → 65 → 71 → 72.
+
+## October 6 multiple QHPs and monthly eligibility
+
+[26 CFR 1.45R-4(c), Examples 3, 4 and 7](https://www.ecfr.gov/current/title-26/section-1.45R-4) permits either independent qualification for each QHP or a designated reference QHP whose qualifying contribution is available toward other offered QHPs. The [2025 instructions](https://www.irs.gov/pub/irs-prior/i8941--2025.pdf), qualifying arrangements and Worksheets 1–4/7, use every plan-eligible employee in a computed composite quote denominator, including workers who do not enroll. Annual payroll counts/hours/wages remain distinct from enrolled worker counts and enrolled workers' annual hours. Actual covered months and midyear premiums determine Worksheet 4 premium rows.
+
+A fifth public profile identifies every offered QHP and its employer/SHOP ownership, qualified-plan source, offering dates and source. Every annual payroll employee has owned employment, plan eligibility and enrollment selection periods, including workers who decline coverage entirely. Each plan-month policy retains its exact eligible roster source and all eligible employee-only/family insurer quotes. Family members retain plan-specific dependent eligibility sources. Every actual invoice/payment joins the selected plan, policy, quote, employee, dates and family member set; duplicate employee/month coverage, out-of-employment/eligibility enrollment and reused source records reject.
+
+Independent plans use the same generic composite/list contribution rules as the one-QHP profile, with rates and amounts allowed to differ by plan. The reference method retains each eligible employee's hypothetical employee-only/family contribution entitlement, validates it against the reference plan's qualifying rules, and requires every eligible worker to be eligible for that reference plan. A selected plan uses the owned reference entitlement rather than substitute contribution rules. The derived Form 3800 direct credit retains the complete owned QHP reference list, and both native/PDF preparations reconcile it to the original Form 8941 source. Application to a cheaper selected premium is limited to the actual insurance cost; the retained worksheet records the full entitlement and unused amount. This implements the available contribution toward the cost of coverage in paragraph (c)(2), together with the restriction to actual employer-paid premiums in [1.45R-3(g)(1)](https://www.ecfr.gov/current/title-26/section-1.45R-3).
+
+Source premium cents are retained. Paid premium totals sum integer source cents before filed rounding; average-premium rows retain fractions until their completed total is rounded. Full determined credit continues to reduce Schedule C premiums before SE/QBI and Form 1040, including partial or zero current tax use. Annual payroll has six workers, 10,400 credited hours and $110,000 wages (line 1/2/3 = 6/5/22,000); five workers actually enroll with 8,320 annual hours (line 13/14 = 5/4). The source proves April employment with June plan eligibility, September termination, a July plan switch and a wholly unenrolled eligible worker. January reference quotes average $1,580.05 across five eligible workers; actual enrolled workers' quotes average $1,225.05. The uniform employee contribution $650.01 qualifies under the correct $790.025 half-average, while the enrollment-only denominator would incorrectly reject it.
+
+Retained full public source/native/PDF cases cover independent mixed composite/list QHPs, composite and list reference plans, a cheaper selected-plan premium, and partial/zero tax use. Detailed logs, original source records, every monthly worksheet row, actual full local TY2025 v5.4 XSD packets and final all-page review are recorded in `/tmp/opentax-f8941-multiplan/.state/research/2026-10-06-form8941-multiplan/PROOF.md`. The held fixture is `single-shop-multiple-qhp-reference-eligibility`; no descriptor is added.
+
+
+Final focused verification passed **55/55** with type checking, including all 47 previous one-QHP cases. Six new actual public/native packets validate against the complete local TY2025 v5.4 XSD; all **143 final PDF pages** (24/25/25/25/23/21) were rendered and visually inspected across 36 sheets. Final PDF hashes match the reviewed manifest and all six packets are flattened. Actual negative proof rejects **38 public-source conflicts and 46 prepared/native/PDF mutations**. The isolated planner reports 222 fixtures, 150 native/116 PDF descriptors, 113 unique PDF keys, 93 expected keys and 20 uncovered keys, including already integrated base coverage. The full/partial/zero list-reference determined credit is 9731 in every case, with current use 9731/5297/0 and the full 9731 premium reduction before SE/QBI. These are synthetic local source/filing proofs; broader branches and authentication/acceptance remain open.
+
+## Remaining boundaries
+
+Other rating areas, partial-month or discontinuous enrollment, changing family membership, additional family tiers/relationships, separate SHOP dependent policies, excluded workers, state subsidies, common control/multiple businesses, tax-exempt employers and pass-through credits need their applicable sources and packet evidence. Automatic tax-use allocation here is the sole direct credit with no competing credit/carryover/passive sources; broader mixed-source allocation remains subject to existing source-specific Form 3800 reconciliation. Payroll remains whole-dollar source; the new monthly arrangement profile retains premium cents. Independent source authentication, prior/future credit-period and carryover evidence, full-return regression, business rules and ATS remain open. The broader employer health credit parent is not closed by this slice.
+
+
+## Verified same-proprietor two-business SHOP source route
+
+IRS [2025 Form8941 instructions](https://www.irs.gov/instructions/i8941), Employers treated as a single employer/Example1, require one Form8941 for this actual same-proprietor two-ScheduleC group. Two payroll/EIN/SHOP sources aggregate actual employee wages/hours and paid qualifying premiums; a worker employed at both businesses counts once and receives one2080-hour cap. Reused payroll/invoice references, contradictory owner/group records, included/excluded overlaps and double paid SHOP coverage reject.
+
+Filed lines1/2/3/4/5/13/14/16:11/9/22000/65800/48033/9/7/24017. Actual premium expense39245/26555 yields full determined-credit shares14324/9693, benefits24921/16862, combinedprofit118217, SE16703, QBI18823 and current3800/1040 use11475. Full determined reduction precedes current section38 use. One full native/local-XSD packet and all25 PDF pages reviewed;29 isolated compatibility/2 final checks and20 main checks pass. Exact commands/log/hash are in the validation record; source/PDF/render/proof evidence remains ignored research.
+
+This verified route covers actual full-year sole ownership of two businesses, with group roster/contribution records and no double paid coverage. Wider entity/affiliated-service/>2-member groups, independent-spouse multiple8941 copies, external authentication and IRS acceptance remain open.

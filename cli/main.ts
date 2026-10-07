@@ -11,7 +11,11 @@ import {
 import { graphViewCommand } from "./commands/graph.ts";
 import { nodeInspectCommand, nodeListCommand } from "./commands/node.ts";
 import { createReturnCommand, getReturnCommand } from "./commands/return.ts";
-import { exportMefCommand, exportPdfCommand } from "./commands/export.ts";
+import {
+  exportForm4972PaperCommand,
+  exportMefCommand,
+  exportPdfCommand,
+} from "./commands/export.ts";
 import { validateReturnCommand } from "./commands/validate.ts";
 import {
   checkForUpdate,
@@ -113,14 +117,15 @@ const COMMANDS: readonly CommandDef[] = [
   {
     cmd: "return",
     sub: "export",
-    description: "Export a return as MEF XML or filled IRS PDF",
+    description:
+      "Export a return as MeF XML, filled IRS PDF, or Form 4972 paper packet",
     usage:
-      "opentax return export --returnId <id> --type mef|pdf [--force] [--draft] [--output <path>]",
+      "opentax return export --returnId <id> --type mef|pdf|form4972-paper [--force] [--draft] [--output <path>]",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
       {
         flag: "--type",
-        description: "Export format: mef or pdf",
+        description: "Export format: mef, pdf, or form4972-paper",
         required: true,
       },
       {
@@ -167,8 +172,23 @@ const COMMANDS: readonly CommandDef[] = [
           });
           console.log(`PDF written to ${writtenPath}`);
         });
+      } else if (args.type === "form4972-paper") {
+        await run(async () => {
+          const writtenPath = await exportForm4972PaperCommand({
+            returnId,
+            baseDir: RETURNS_DIR,
+            force,
+            draft,
+            outputPath: args.output as string | undefined,
+          });
+          console.log(
+            `PAPER ONLY: ${writtenPath} (source manifest: ${writtenPath}.source-manifest.json). This packet has no MeF XML or electronic-submission authorization.`,
+          );
+        });
       } else {
-        console.error("Error: --type must be 'mef' or 'pdf'");
+        console.error(
+          "Error: --type must be 'mef', 'pdf', or 'form4972-paper'",
+        );
         Deno.exit(1);
       }
     },

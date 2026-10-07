@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ty2025IrsCountryCodeSchema } from "../../irs_country_code.ts";
 import type {
   NodeOutput,
   NodeResult,
@@ -87,7 +88,7 @@ export const itemSchema = z.object({
   foreign_tax_paid_usd: z.number().nonnegative().optional(),
   // IRS MeF CountryType code for the tax-credit source, which may differ from
   // the ISO employer country code (for example, Germany is GM rather than DE).
-  foreign_tax_irs_country_code: z.string().length(2).optional(),
+  foreign_tax_irs_country_code: ty2025IrsCountryCodeSchema.optional(),
   foreign_tax_paid_or_accrued_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
   foreign_tax_credit_method: z.nativeEnum(ForeignTaxCreditMethod).optional(),

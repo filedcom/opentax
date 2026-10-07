@@ -1,5 +1,303 @@
 # TY2025 Form 8995 positive export boundary
 
+## Distinct qualified-dividend and capital-gain contributions (October 6, 2026)
+
+The contribution issue discovered in the investment slice is now repaired at QBI
+source routing and finalization. The executor retains both numeric deposits;
+export normalization selects the last element of ordinary numeric arrays. That
+could leave the retained `net_capital_gain` showing only one contribution even
+when calculation used both. No global merge or normalization rule is changed.
+1099-DIV and Schedule D now supply distinct `qbi_capital_sources` records named
+`f1099div.qualified_dividends` and `schedule_d.net_capital_gain`. Duplicate
+semantic source identities fail validation. Form 8995 derives its calculation
+and entered limitation from those records and finalizes the retained raw total
+as a scalar, including delegation to Form 8995-A and an income-limited zero
+claim. Form 8995-A retains the same records and owned investment-copy snapshots.
+
+The general source contribution representation replaces the prior multiple-C
+workaround using only dividend-copy totals. Each source amount retains cents;
+entered Form 8995 line 12 / Form 8995-A line 34 combines the separately rounded
+qualified-dividend and Schedule D net-gain amounts. This follows
+[Form 8995 line 12](https://www.irs.gov/instructions/i8995) and
+[Form 8995-A line 34](https://www.irs.gov/instructions/i8995a): qualified
+dividends increase net capital gain, and actual Schedule D gains use the smaller
+positive line 15 or 16. The same capital limitation reaches Form 1040's final
+QBI subtraction and preferential tax calculation.
+
+Owned investment source replay now also supports identified ordinary broker
+sales. It rebuilds each Form 8949 transaction from the retained 1099-B copy,
+checks owner/payer/reference and distinct transaction IDs, matches the retained
+Schedule D transaction rows, replays Schedule D, and compares its final lines
+and Form 1040 capital gain. Final Schedule D retains direct-sale aggregates
+alongside transaction rows; replay strips only those four calculated aggregate
+inputs, recomputes the transactions once, and compares the aggregate output.
+This avoids counting the same owned sale twice. Other Schedule D sources,
+special-rate transactions, market discount, adjustments and withholding are
+outside this proven broker route. Existing final-return Form 8949/Schedule D
+checks continue to apply.
+
+A single taxpayer Schedule C with investment income now uses the same sourced
+filed-row replay as multiple businesses. A sole business receives its entire
+sourced deductible SE tax; no shared-business allocation review is needed for
+that sole-business allocation. Multiple businesses still require their supplied
+reasonable shared-SE allocation reviews. The existing above-threshold current
+loss route also accepts these owned investment contributions, reconciles wages,
+business and investment income with Form 1040, computes line 34/35/36, and
+prints line 34 in native XML rather than the previous hardcoded zero. Its
+existing net-business-income-below-SE-threshold boundary remains open for larger
+losses and profits requiring shared deductions.
+
+The supplied qualified-dividend review's `ex_dividend_date` and `reviewed_on`
+now require actual calendar dates. Impossible month/day combinations fail
+public-input validation and native/PDF source replay; the proof includes a
+non-leap February 29, April 31, February 30, and month 13. No holding review or
+source authentication is invented.
+
+| Case                   | Retained qualified / net capital contributions | Entered QBI capital limitation | Entered limitation base / 20% limit | QBI deduction | Raw AGI / taxable income | Income tax | PDF pages |
+| ---------------------- | ---------------------------------------------- | -----------------------------: | ----------------------------------- | ------------: | ------------------------ | ---------: | --------: |
+| single-business        | 1,800.49 / 1,800.49                            |                          3,600 | 80,088 / 16,018                     |        16,018 | 99,438.45 / 67,670.45    |      9,551 |        12 |
+| multiple-business      | 1,800.49 / 1,800.49                            |                          3,600 | 80,088 / 16,018                     |        16,018 | 99,438.45 / 67,670.45    |      9,551 |        14 |
+| broker-net-gain        | 1,800.49 / 1,800.49                            |                          3,600 | 80,088 / 16,018                     |        16,018 | 99,438.45 / 67,670.45    |      9,551 |        16 |
+| advanced-business-loss | 1,800.49 / 1,800.49                            |                          3,600 | 287,452 / 57,490                    |            50 | 306,802.47 / 291,002.47  |     70,678 |        16 |
+
+The broker case combines sourced long-term proceeds $3,500.25/basis $2,000,
+short-term proceeds $1,000/basis $1,200, and two distributions $300.12/$200.12.
+Schedule D entered lines 7/15/16 are -$200/$2,000/$1,800. The advanced case has
+$300,000 personal W-2 wages, $1,300 positive business income, a $1,000 current
+business loss, $100 sourced business W-2 wages, and $0 shared SE adjustment:
+adjusted QBI $300, wage-limited component $50. Both QBI forms retain two equal
+raw $1,800.49 source contributions; the retained raw sum is $3,600.98, while the
+entered limitation is $3,600. Complete native/PDF return proof preserves the
+source cents and the finalized line equations.
+
+The advanced W-2 retains Social Security wages $176,100/tax $10,918.20 and
+Medicare wages $300,000/withholding $4,350. Its full return includes $900
+Additional Medicare Tax and $247.09 net investment income tax, with entered
+total tax $71,825.
+
+Evidence: four additional complete public-input native/PDF return cases pass
+full local TY2025 v5.4 XSD validation. All four PDFs are flattened
+(`Form: none`) and visually checked with real Poppler on QBI pages, Schedule D
+sales, and the Form 1040 investment/tax pages. The typed final focused run has
+six passing tests, including the previous investment proof (nine XSD positives
+across the two files). The new proof rejects 52
+source/identity/reference/total/date/line mutations in both native and PDF
+projection, plus four impossible public-input dates. Review artifacts with
+`return.xml`, `calculation.json`, and `filled-return.pdf` are under
+`.state/research/ty2025-filled-pdf-review/2026-10-06-qbi-distinct/` in the
+isolated checkout. The relevant existing regression passed 391 tests; the final
+retained-zero-claim unit run passed 43 tests. Local XSD validation does not
+prove IRS business-rule/ATS acceptance.
+
+The generic retained-contribution issue above is resolved for these QBI paths.
+Broader parent scope remains open: additional capital sources and special-rate
+tax worksheets, larger Form 8995-A loss/SE allocations, other statuses,
+aggregation/SSTB/REIT/PTP combinations, authenticated
+source/holding/carryforward records, complete business-rule acceptance, and
+other return-wide rounding or income normalization fields.
+
+## Owned investment income with multiple Schedule C businesses (October 6, 2026)
+
+The below-threshold single-taxpayer route now replays actual retained 1099-INT
+box 1 and 1099-DIV boxes 1a, 1b, and 2a copies through Schedule B, the
+capital-distribution-only Schedule D path, Form 1040, Form 8995, native XML, and
+filled PDFs. Two interest payers and two dividend payers appear in each positive
+case. Every copy needs a payer identity, account, recipient TIN matching the
+taxpayer, and distinct source reference. Form 8995 retains parsed copy snapshots
+and dividend totals; export reconciles these to the original input copies,
+Schedule B payer rows and totals, and Form 1040 investment lines.
+
+Positive qualified dividends need a supplied ordinary-stock holding review: 2025
+ex-dividend date, more than 60 eligible days in the 121-day window, excluded
+risk days, eligible issuer/no disqualified dividend confirmation, and no related
+payment obligation. The review remains source evidence requiring authentication;
+the tests supply explicitly synthetic reviews. These rules follow
+[Publication 550](https://www.irs.gov/publications/p550). Other dividend types,
+preferred-stock holding rules, and source-document authentication remain open.
+
+[Form 8995 instructions](https://www.irs.gov/instructions/i8995) line 12
+combines qualified dividends and net capital gain. This distribution-only route
+adds the separately rounded entered qualified-dividend and capital-distribution
+totals, then subtracts from entered line 11 and rounds the 20% limit. A focused
+edge uses raw qualified dividends $1,800.49 and raw distributions $1,800.49:
+entered components are $1,800 each, line 12 is $3,600, line 13 is $80,088, and
+the final QBI deduction is $16,018. Combining raw components and rounding once
+would incorrectly change that deduction by $1. Raw cents are retained for
+aggregation within each source line, following the
+[Form 1040 rounding instructions](https://www.irs.gov/instructions/i1040gi).
+
+The source replay accepts only floating addition-order differences smaller than
+$0.00000001 in category/profit and return-income joins; this does not round or
+alter retained source cents. The original slice used distinct retained dividend-copy totals to avoid losing a
+contribution during export normalization. That discovery and workaround are
+superseded by the distinct source contribution repair described above.
+
+The final income tax is replayed from sourced qualified dividends,
+distributions, and final taxable income using the existing Qualified Dividends
+and Capital Gain Tax Worksheet calculator. Positive cases verify both 0% and 15%
+treatment and the ordinary-income Tax Table. The actual filled Form 1040 exposed
+a numeric value passed to the Schedule D-not-required checkbox; its projector
+now supplies a source-validated boolean. All four packets render that checkbox
+and tax lines.
+
+| Case                   |    Raw AGI | Entered 8995 lines 11 / 12 / 13 | Entered QBI deduction | Entered taxable income / income tax | PDF pages |
+| ---------------------- | ---------: | ------------------------------- | --------------------: | ----------------------------------- | --------: |
+| profitable-cents       |  99,438.94 | 83,689 / 3,602 / 80,087         |                16,017 | 67,672 / 9,551                      |        14 |
+| mixed-loss-wages       | 168,298.46 | 152,548 / 34,002 / 118,546      |                15,799 | 136,749 / 22,618                    |        17 |
+| zero-rate-income-limit |  65,030.45 | 49,280 / 28,002 / 21,278        |                 4,256 | 45,024 / 1,805                      |        16 |
+| net-loss-investment    |  46,502.95 | 30,753 / 3,602 / 27,151         |                     0 | 30,753 / 3,023                      |        11 |
+
+Profitable raw business profits are $60,000.49 and $40,000.49; shared SE
+adjustments yield entered QBI rows $55,762 and $37,174, summing to $92,936. The
+mixed case includes $50,000 W-2 wages, three businesses, and a current loss. The
+zero-rate case combines profitable and loss businesses and an actual
+income-limited deduction. The net-loss case retains profits $10,000.49 and
+-$20,000.50: raw Schedule C total -$10,000.01 enters Schedule 1/1040 as
+-$10,000; separately entered Form 8995 rows $10,000 and -$20,001 sum to
+-$10,001, producing a $10,001 line 16 loss carryforward. No adjustment is
+invented to force separately rounded business rows to equal the rounded raw
+aggregate. Those cross-form business-rule acceptance details remain a gate.
+
+Evidence: the new proof has three passing tests, four full-source return/PDF
+cases, five successful full local TY2025 v5.4 XSD validations (including the
+rounding edge), and 24 source/identity/holding/worksheet/line tamper variants
+rejected by both native and PDF projection. The consolidated relevant regression
+has **393 passed, 0 failed**. The final focused rounding test also passed.
+Poppler visual inspection covered all four Form 8995 pages, the multi-payer
+Schedule B, and Form 1040 tax pages covering 0% and 15% results; packets are
+flattened (`Form: none`). Review artifacts, including each `return.xml`,
+`calculation.json`, and `filled-return.pdf`, are under
+`.state/research/ty2025-filled-pdf-review/2026-10-06-form8995-investment/` in
+the isolated checkout. These prove local export/render behavior, not IRS
+acceptance.
+
+Remaining broader scope includes other interest/dividend boxes and adjustments,
+OID/bond premium, nominee/foreign/FATCA/withholding cases, actual capital trades
+and Form 8949, Schedule D special-rate worksheets, investment interest, mixed
+REIT/PTP routes, other ownership/statuses, above-threshold Form 8995-A income
+interactions, authenticated carryforward ledgers and holding/source records, and
+complete IRS business rules/ATS acceptance. The existing parent TODO remains
+open; this evidence does not certify those routes.
+
+## Multiple reviewed Schedule C businesses (locally validated October 6, 2026)
+
+The simplified Form 8995 route now supports two or more separately identified
+Schedule C businesses for one single taxpayer below the threshold. Profitable
+businesses, current losses, below-threshold SSTBs, and a current combined net
+loss are included. Each retained Schedule C carries a supplied SE allocation
+review with its method, amount, workpaper reference, reviewer/date, reasonable
+business-facts confirmation, consistency/books confirmation, all-businesses
+confirmation, and no aggregation. No review or source authentication is invented.
+
+[Schedule SE instructions](https://www.irs.gov/instructions/i1040sse) require
+combined business earnings, with losses reducing positive profits, on one
+Schedule SE. The source join recalculates that SE tax using retained personal
+W-2 Social Security wages, checks Schedule 1's half-SE deduction, and checks
+Form 7206's retained business/SE records. Its reviewed allocation method divides
+the combined deductible SE tax among positive Schedule C profits in proportion
+to those profits, retaining cents and assigning the cent residual to the largest
+positive business (source order breaks ties). Loss businesses get zero of that
+shared deduction. This is an explicitly reviewed method, not an IRS-mandated
+formula: [26 CFR 1.199A-3(b)(5)](https://www.ecfr.gov/current/title-26/section-1.199A-3)
+requires a reasonable method reflecting the facts, consistent application, and
+agreement with the books. Authenticating those conclusions remains open.
+
+Raw profit, allocated deduction, and adjusted QBI remain in the source rows.
+Only the entered Form 8995 row is rounded. Line 2 combines all entered signed
+rows; line 4 is clamped to zero; a current net loss appears on line 16 even when
+line 15 is zero. Native XML emits every identified business group; PDF prints
+rows 1i–1v and appends a paginated statement with every remaining business name,
+EIN/owner SSN, and signed QBI amount. The
+[Form 8995 instructions](https://www.irs.gov/instructions/i8995) require the
+additional-business statement beyond five rows and current net-loss carryforward.
+A zero deduction no longer discards this sourced multi-business loss form.
+Both exports reject missing or changed business, review, payroll, shared SE,
+Schedule 1, prepared row, and final Form 1040 amounts.
+
+| Local full-return fixture | Raw Schedule C total | Half-SE deduction | Entered Form 8995 line 2 | Line 15 | Line 16 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Two profitable businesses with cents | 100,000.98 | 7,065 | 92,936 | 15,437 | 0 |
+| Three businesses including a loss, with W-2 | 85,000.50 | 6,005 | 78,996 | 15,799 | 0 |
+| Six businesses including overflow loss | 76,000 | 5,369 | 70,631 | 10,976 | 0 |
+| Two businesses with combined net loss, with W-2 | -10,000.01 | 0 | -10,001 | 0 | 10,001 |
+
+The last fixture retains +10,000.49 and -20,000.50 raw business profits. Its
+Schedule C loss and Form 8995 loss row both enter -20,001, using signed rounding
+at the half-dollar boundary. The other QBI row is +10,000, giving Form 8995
+line 2 -10,001 and line 16 10,001. Schedule 1 combines the raw profits first,
+then enters -10,000; Form 1040 line 8 is -10,000, lines 9/11a are 40,000 after
+50,000 wages, line 13a is zero, and line 15 is 24,250. The exact raw graph
+income/AGI is 39,999.99, and taxable income is 24,249.99. This source-to-total
+rounding is intentional: the [IRS rounding instructions](https://www.irs.gov/instructions/i1040gi)
+require cents to be retained while adding amounts for a line, then rounding its
+total. Separately rounded business rows can therefore differ by $1 from the
+rounded raw Schedule 1 total. Native assertions and filled-PDF review record
+both representations. IRS business rules/ATS may impose further equations;
+acceptance remains an explicit gate. Other generic negative half-dollar export
+boundaries remain in the existing return-wide rounding audit scope.
+
+A fifth full native return verifies the W-2 wage-base interaction: 150,000
+combined profits and 50,000 Social Security wages produce 19,653 SE tax and a
+9,827 deduction, allocated 5,896.20/3,930.80. Entered QBI rows are 84,104/56,069,
+line 2 is 140,173, and line 15 is 28,035.
+
+Validation passed 221 existing focused regressions and 32 final tests including
+the four new multi-business cases and Schedule C exporters. All five native
+full returns passed the complete local TY2025 v5.4 Return1040 XSD. Seventeen
+tamper variants rejected both native/PDF export. The continuation pagination
+case retains all 41 additional businesses across three pages. Four filled
+packets (13, 16, 22, and 10 pages) were rendered with real Poppler; the Form 8995
+rows/totals, overflow statement, and net-loss Schedule C/Schedule 1/1040 pages
+were visually reviewed. Local artifacts, each with `return.xml` and
+`filled-return.pdf`, are under
+`.state/research/ty2025-filled-pdf-review/2026-10-06-form8995-multiple/` in
+`profitable-cents`, `mixed-loss`, `overflow`, and `net-loss`.
+
+Remaining scope includes other filing statuses or spouse/community/QJV
+ownership, other reasonable allocation methods, attributable health/retirement
+adjustments, prior or suspended losses, at-risk/passive limits, aggregation,
+farms/pass-throughs, REIT/PTP/capital-gain combinations, multi-business WOTC, and
+Form 8995-A coexistence. The current net-loss fixture supplies the existing
+Form 461 scope review and has no excess-business-loss adjustment. Imported
+future-year carryover provenance and a durable carryover ledger are not added.
+Workpaper/document byte authentication, IRS business rules, and ATS remain open.
+The older narrow route notes below describe their historical boundaries.
+
+## One Schedule C with certified WOTC wages (validated October 6, 2026)
+
+The existing single-business Form 8995 route now accepts one nonpassive Form
+5884 employer credit allocated entirely to that retained Schedule C. Export
+recalculates Form 5884 from the certified employee and payroll records,
+requires its sole Schedule C deduction allocation and Form 3800 source credit
+to agree, and recomputes QBI from net profit after the full line 2 reduction.
+Both native MeF and PDF use this same source reconciliation. The existing graph
+already applies the reduction to Schedule C, Schedule SE, and QBI; this change
+allows the correctly sourced calculation to file through Form 8995.
+
+[Form 5884 line 2 instructions](https://www.irs.gov/instructions/i5884)
+require the wage deduction reduction even when the taxpayer cannot use the
+entire credit this year. [Schedule C line 26 instructions](https://www.irs.gov/instructions/i1040sc)
+explicitly require wages less the Work Opportunity Credit. Accordingly, a
+$6,000 payroll and $2,400 credit produce a $3,600 wage deduction. The positive
+full-return fixture has $66,400 Schedule C profit, $62,033 QBI after the half-SE
+deduction, $12,407 QBI deduction, and $2,400 allowed Form 3800 credit. A
+$25,000 receipts case preserves the entire $2,400 wage reduction while the
+$828 QBI deduction lowers income tax to $333 and limits current-year credit
+to $333. A zero-income-tax case also preserves the full wage reduction and
+uses none of the credit; it omits the zero-deduction Form 8995.
+
+The focused regression set passes 31 tests. All three WOTC return shapes pass
+the full local TY2025 v5.4 Return1040 XSD. The positive case generates a filled
+23-page PDF; rendered Schedule C, Form 5884, Form 8995, and Form 1040 pages
+show the reconciled values. Employee-hours, wage-allocation, and Form 3800
+source-credit tampering reject both Form 8995 projections.
+
+This remains a synthetic source-backed route. It does not authenticate SWA or
+payroll documents, prove IRS acceptance, or emit a new unused-credit carryover
+ledger. Form 8995-A, multiple Schedule C businesses, multiple deduction
+locations, mixed pass-through credit, and passive activity credit coexistence
+remain outside this extension.
+
 ## REIT-only two or three issued payers (implementation authored; bulk validation pending)
 
 The positive Form 8995 route without trade or business QBI now accepts up to
@@ -315,3 +613,10 @@ needs a $2,000 ending loss record; the current source and export contract does
 not support that filing route. Focused node and direct native/PDF rejection
 cases are written but unrun. Source-backed line 17 filing, prior-loss
 provenance, and the wider zero-deduction audit remain open.
+
+The same direct MeF/PDF zero-deduction guard now sums current Schedule C/F,
+other QBI, and attributable deduction inputs with the prior QBI loss. A net
+business loss cannot disappear without Form 8995 line 16 and a sourced
+carryforward route. A prior loss fully absorbed by current positive QBI can
+still leave a zero-deduction no-claim return when the income limit is zero.
+This guard does not implement line 16 filing or prove prior-year loss history.

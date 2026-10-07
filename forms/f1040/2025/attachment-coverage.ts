@@ -1,3 +1,5 @@
+import { reviewedOpenAccountSchema } from "../nodes/intermediate/forms/form7203/debt-note.ts";
+import { issuerIdentitySchema } from "../nodes/inputs/f8611/partnership-source.ts";
 /**
  * Native attachments that a positive source path requires but this exporter
  * cannot yet produce. This is a filing boundary, not a document skip list.
@@ -38,7 +40,7 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     pendingKey: "f4547",
     exportKinds: ["mef", "pdf"],
     reason:
-      "Form 4547 child-account election needs verified responsible-party authority, child eligibility, and a separately authorized electronic signature before attachment",
+      "Form 4547 election needs verified authorized-individual authority, child eligibility, consent, and a valid Form 4547 electronic signature before attachment",
     isActive: (fields) => Object.keys(fields).length > 0,
   },
   {
@@ -262,6 +264,19 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     pendingKey: "f5471",
     exportKinds: ["mef", "pdf"],
     reason:
+      "Form 5471 constructed worksheet/election/consent and prior-year books remain unverified; source calculation and paper projections do not authorize full foreign export",
+    isActive: (fields) =>
+      Array.isArray(fields.f5471s) &&
+      fields.f5471s.some((cfc: unknown) =>
+        cfc !== null && typeof cfc === "object" &&
+        "owned_worksheet_source" in cfc &&
+        (cfc as Record<string, unknown>).owned_worksheet_source !== undefined
+      ),
+  },
+  {
+    pendingKey: "f5471",
+    exportKinds: ["mef", "pdf"],
+    reason:
       "Form 5471 Schedule R all-zero treatment and parent reference linkage need current MeF evidence",
     isActive: (fields) => nonempty(fields.f5471s),
   },
@@ -272,6 +287,12 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
       "Form 7203 basis paths outside the reviewed stock loss or one new formal note require further filing work",
     isActive: (fields) => {
       const keys = Object.keys(fields);
+      if (
+        keys.length === 1 && keys[0] === "owned_debt_loss_sources" &&
+        Array.isArray(fields.owned_debt_loss_sources) &&
+        fields.owned_debt_loss_sources.length >= 2 &&
+        fields.owned_debt_loss_sources.length <= 4
+      ) return false;
       const allowedKeys = new Set([
         "stock_basis_beginning",
         "ordinary_loss",
@@ -288,7 +309,10 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
           keys.includes("reviewed_debt_evidence")) ||
         (keys.includes("new_loans") && (
           typeof fields.new_loans !== "number" ||
-          !Number.isSafeInteger(fields.new_loans) || fields.new_loans <= 0 ||
+          !Number.isSafeInteger(fields.new_loans) || fields.new_loans < 0 ||
+          (fields.new_loans === 0 &&
+            !reviewedOpenAccountSchema.safeParse(fields.reviewed_debt_evidence)
+              .success) ||
           !fields.reviewed_debt_evidence ||
           typeof fields.reviewed_debt_evidence !== "object"
         )) ||
@@ -418,17 +442,18 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     isActive: (fields) => nonempty(fields.rows),
   },
   {
-    pendingKey: "form8621",
-    exportKinds: ["pdf"],
-    reason: "Form 8621 has a native filing but no source-backed PDF",
-    isActive: (fields) => nonempty(fields.items),
-  },
-  {
     pendingKey: "f8611",
     exportKinds: ["pdf"],
     reason:
       "Form 8611 historical credit, qualified-basis, and interest records need source verification before printable filing",
-    isActive: (fields) => nonempty(fields.f8611s),
+    isActive: (fields) =>
+      nonempty(fields.f8611s) &&
+      !(Array.isArray(fields.f8611s) && fields.f8611s.every((item) =>
+        item !== null && typeof item === "object" &&
+        issuerIdentitySchema.safeParse(
+          (item as Record<string, unknown>).issuer_source,
+        ).success
+      )),
   },
   {
     pendingKey: "f8854",
@@ -481,9 +506,19 @@ export function assertAttachmentCoverage(
     typeof form3800 === "object" &&
     ("f8941_direct_employer_credit" in form3800 ||
       "form8941_applied_credit" in form3800);
-  if (byKey.f8941 !== undefined || hasForm8941Credit) {
+  // A failed public input node can leave only start.f8941. Keep that source
+  // active so malformed qualifying records cannot silently export a no-credit
+  // return after the graph reports diagnostics.
+  const publicForm8941 = byKey.start && typeof byKey.start === "object" &&
+      "f8941" in byKey.start
+    ? byKey.start.f8941
+    : undefined;
+  if (
+    byKey.f8941 !== undefined || publicForm8941 !== undefined ||
+    hasForm8941Credit
+  ) {
     try {
-      reconcileForm8941DocumentSource(byKey.f8941, byKey);
+      reconcileForm8941DocumentSource(publicForm8941 ?? byKey.f8941, byKey);
     } catch (cause) {
       throw new Error(
         `[${exportKind.toUpperCase()}] Form 8941 needs a reconciled direct Schedule C source, Form 3800 allocation, and premium deduction; export blocked`,

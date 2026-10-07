@@ -43,7 +43,7 @@ export interface MefSubmissionArchive {
 
 export interface MefTransmissionSubmission {
   readonly archive: MefSubmissionArchive;
-  readonly electronicPostmark: Date;
+  readonly electronicPostmark?: Date;
 }
 
 export interface MefTransmissionPackage {
@@ -433,14 +433,20 @@ export function buildMefTransmissionPackage(
         `Duplicate MeF Submission ID: ${submission.submissionId}`,
       );
     }
-    if (Number.isNaN(electronicPostmark.getTime())) {
+    if (
+      electronicPostmark !== undefined &&
+      (!(electronicPostmark instanceof Date) ||
+        Number.isNaN(electronicPostmark.getTime()))
+    ) {
       throw new Error("MeF transmission needs a valid electronic postmark");
     }
     assertPreparedArchiveContents(submission);
     files[submission.fileName] = submission.bytes;
     requestEntries.push(elements("SubmissionData", [
       element("SubmissionId", submission.submissionId),
-      element("ElectronicPostmarkTs", electronicPostmark.toISOString()),
+      ...(electronicPostmark === undefined ? [] : [
+        element("ElectronicPostmarkTs", electronicPostmark.toISOString()),
+      ]),
     ]));
   }
   const list = elements("SubmissionDataList", requestEntries);

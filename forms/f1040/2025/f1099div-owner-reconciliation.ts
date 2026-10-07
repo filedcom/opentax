@@ -1,4 +1,7 @@
-import { inputSchema } from "../nodes/inputs/f1099div/index.ts";
+import {
+  assertDistinct1099DIVCopies,
+  inputSchema,
+} from "../nodes/inputs/f1099div/index.ts";
 
 const positiveAmountKeys = [
   "box1a",
@@ -30,6 +33,7 @@ export function assertPositive1099DivOwner(
 ): void {
   if (pending?.f1099div === undefined) return;
   const rows = inputSchema.parse(pending.f1099div).f1099divs;
+  assertDistinct1099DIVCopies(rows);
   const primary = typeof fields.taxpayer_ssn === "string"
     ? fields.taxpayer_ssn.replace(/\D/g, "")
     : undefined;

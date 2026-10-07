@@ -7,6 +7,7 @@ import { buildPdfBytes } from "./pdf/builder.ts";
 import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
 import { registry } from "./registry.ts";
 import { assertRrb1099rPensionSource } from "./rrb1099r-pension-reconciliation.ts";
+import { inputSchema as railroadSourceSchema } from "../nodes/inputs/rrb1099r/index.ts";
 
 const filer: FilerIdentity = {
   primarySSN: "111223333",
@@ -160,7 +161,8 @@ Deno.test("RRB with issued and substitute pensions replays both filed amounts ex
       "lines 5a and 5b or AGI differ",
     );
   }
-  const guard = "Form 4852 requires a completed substitute-form filing and packet route";
+  const guard =
+    "Form 4852 requires a completed substitute-form filing and packet route";
   assertThrows(
     () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
     Error,
@@ -353,5 +355,133 @@ Deno.test("RRB-1099-R pension recipient must belong to this return", async () =>
     () => buildPdfBytes(pending, filer),
     Error,
     "recipient must match",
+  );
+});
+
+Deno.test("repeated RRB-1099-R copies need distinct issued references", async () => {
+  const copy = rrb1099r.rrb1099rs[0];
+  const repeated = {
+    rrb1099r: { rrb1099rs: [copy, { ...copy }] },
+    f1040: { ...filed(11_000), line25b_withheld_1099: 1_100 },
+  };
+  const unidentified =
+    "RRB-1099-R has multiple positive payer copies without issued source references";
+  assertThrows(
+    () => railroadSourceSchema.parse(repeated.rrb1099r),
+    Error,
+    unidentified,
+  );
+  assertThrows(
+    () => buildMefXml(repeated as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    unidentified,
+  );
+  await assertRejects(
+    () => buildPdfBytes(repeated, filer),
+    Error,
+    unidentified,
+  );
+
+  const identified = {
+    rrb1099rs: [
+      { ...copy, source_document_reference: "RRB-original-1" },
+      { ...copy, source_document_reference: "RRB-original-1" },
+    ],
+  };
+  assertThrows(
+    () => railroadSourceSchema.parse(identified),
+    Error,
+    "RRB-1099-R repeats the same issued-copy source reference",
+  );
+  railroadSourceSchema.parse({
+    rrb1099rs: [
+      identified.rrb1099rs[0],
+      { ...copy, source_document_reference: "RRB-original-2" },
+    ],
+  });
+});
+
+Deno.test("RRB-1099-R payer spelling cannot bypass repeated-copy guard", async () => {
+  const copy = rrb1099r.rrb1099rs[0];
+  const variant = { ...copy, payer_name: "Railroad  Retirement Board." };
+  const totals = {
+    f1040: { ...filed(11_000), line25b_withheld_1099: 1_100 },
+  };
+  for (
+    const { rrb1099rs, message } of [
+      {
+        rrb1099rs: [copy, variant],
+        message:
+          "RRB-1099-R has multiple positive payer copies without issued source references",
+      },
+      {
+        rrb1099rs: [
+          { ...copy, source_document_reference: "RRB-original-1" },
+          { ...variant, source_document_reference: "rrb-original-1" },
+        ],
+        message: "RRB-1099-R repeats the same issued-copy source reference",
+      },
+    ]
+  ) {
+    const pending = { rrb1099r: { rrb1099rs }, ...totals };
+    assertThrows(
+      () => railroadSourceSchema.parse(pending.rrb1099r),
+      Error,
+      message,
+    );
+    assertThrows(
+      () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
+      Error,
+      message,
+    );
+    await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
+  }
+
+  const distinct = {
+    rrb1099r: {
+      rrb1099rs: [
+        { ...copy, source_document_reference: "RRB-original-1" },
+        { ...variant, source_document_reference: "RRB-original-2" },
+      ],
+    },
+    ...totals,
+  };
+  railroadSourceSchema.parse(distinct.rrb1099r);
+  buildMefXml(distinct as Parameters<typeof buildMefXml>[0], filer);
+  await buildPdfBytes(distinct, filer);
+
+  const conflictingOwner = {
+    rrb1099r: {
+      rrb1099rs: [
+        { ...copy, source_document_reference: "RRB-original-1" },
+        {
+          ...variant,
+          recipient_tin: "222334444",
+          source_document_reference: "RRB-original-1",
+        },
+      ],
+    },
+    ...totals,
+  };
+  const duplicateReference =
+    "RRB-1099-R repeats the same issued-copy source reference";
+  assertThrows(
+    () => railroadSourceSchema.parse(conflictingOwner.rrb1099r),
+    Error,
+    duplicateReference,
+  );
+  assertThrows(
+    () =>
+      buildMefXml(
+        conflictingOwner as Parameters<typeof buildMefXml>[0],
+        filer,
+      ),
+    Error,
+    duplicateReference,
+  );
+  await assertRejects(
+    () => buildPdfBytes(conflictingOwner, filer),
+    Error,
+    duplicateReference,
   );
 });

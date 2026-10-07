@@ -1,3 +1,7 @@
+import {
+  buildOwned5471Schedule,
+  owned5471AdditionalSchedules,
+} from "./f5471-owned-schedules.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import { projectForm8992Source } from "../../form8992_source.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
@@ -17,6 +21,14 @@ export const form5471ScheduleE: MefFormDescriptor<"f5471_schedule_e", unknown> =
         context.pending,
         context.filer,
       );
+      if (cfc.owned_worksheet_source) {
+        return buildOwned5471Schedule(
+          cfc,
+          shareholderName,
+          "IRS5471ScheduleE",
+          "GEN",
+        );
+      }
       const e = cfc.schedule_e;
       return elements("IRS5471ScheduleE", [
         element("PersonNm", shareholderName),
@@ -67,5 +79,20 @@ export const form5471ScheduleE: MefFormDescriptor<"f5471_schedule_e", unknown> =
           element("RedOtherTxsNotDeemedPdAmt", -e.tax_usd),
         ]),
       ]);
+    },
+    buildAdditionalDocuments(_fields, context) {
+      if (!context?.pending?.f5471) return [];
+      if (!context.filer) {
+        throw Error("Owned category schedules need final filer identity");
+      }
+      const { cfc, shareholderName } = projectForm8992Source(
+        context.pending,
+        context.filer,
+      );
+      return owned5471AdditionalSchedules(
+        cfc,
+        shareholderName,
+        "IRS5471ScheduleE",
+      );
     },
   };

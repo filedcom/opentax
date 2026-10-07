@@ -1,3 +1,17 @@
+import {
+  form4972 as calculateParticipant,
+  inputSchema as participantSchema,
+} from "../nodes/intermediate/forms/form4972/index.ts";
+import {
+  needsParticipantCollection,
+  reconcileParticipantCollection,
+} from "../nodes/intermediate/forms/form4972/participant-collection.ts";
+import { sumSourceMoney } from "../nodes/intermediate/forms/form4972/source-rounding.ts";
+import { isSourceMoney } from "../nodes/intermediate/forms/form4972/source-rounding.ts";
+import {
+  reconcileParticipantIssuedInventory,
+  reconcileSharedParticipantElections,
+} from "../nodes/intermediate/forms/form4972/participant-inventory.ts";
 import { z } from "zod";
 import { inputSchema as f1099rSchema } from "../nodes/inputs/f1099r/index.ts";
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
@@ -5,15 +19,14 @@ import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 const formSchema = z.record(z.string(), z.unknown()).refine((form) =>
   Array.isArray(form.source_document_references) &&
   form.source_document_references.length >= 1 &&
-  form.source_document_references.length <= 4 &&
   form.source_document_references.every((ref: unknown) =>
     typeof ref === "string" && ref.trim().length > 0
   )
 );
 const collectionSchema = z.object({
-  forms: z.array(formSchema).min(1).max(2),
-  elections: z.array(z.record(z.string(), z.unknown())).min(1).max(2),
-  source_forms: z.array(z.record(z.string(), z.unknown())).min(1).max(2),
+  forms: z.array(formSchema).min(1),
+  elections: z.array(z.record(z.string(), z.unknown())).min(1),
+  source_forms: z.array(z.record(z.string(), z.unknown())).min(1),
 }).strict();
 
 function sameReferences(left: unknown, right: unknown): boolean {
@@ -49,8 +62,17 @@ export function reconcileForm4972Collection(
   raw: Record<string, unknown>,
   allPending: Readonly<Record<string, unknown>>,
   filer: FilerIdentity | undefined,
+  filingChannel: "mef" | "paper" = "mef",
 ) {
   const { forms, elections, source_forms } = collectionSchema.parse(raw);
+  // Official IMF2025v5.4 ReturnData1040.xsd permits at most two IRS4972
+  // documents. More participants may calculate but need an authorized filing
+  // route; do not manufacture an XML/PDF overflow attachment.
+  if (filingChannel === "mef" && forms.length > 2) {
+    throw new Error(
+      "Form4972 native filing schema permits at most two participant documents; additional participants remain unfileable",
+    );
+  }
   if (
     forms.length !== elections.length || forms.length !== source_forms.length
   ) {
@@ -80,6 +102,7 @@ export function reconcileForm4972Collection(
       ) ||
       !Object.entries(sourceForm).every(([key, value]) =>
         key === "source_document_references" || key === "form4972_plan" ||
+        key === "recipient_ssn" ||
         sameValue(form[key], value)
       )
     ) {
@@ -93,6 +116,14 @@ export function reconcileForm4972Collection(
     );
     if (
       items.length !== refs.length ||
+      (sourceForm.form4972_plan !== undefined &&
+        items.some((item) =>
+          !sameValue(item.form4972_plan, sourceForm.form4972_plan)
+        )) ||
+      (sourceForm.recipient_ssn !== undefined &&
+        items.some((item) =>
+          item.recipient_ssn !== sourceForm.recipient_ssn
+        )) ||
       items.some((item) =>
         !item.source_document_reference ||
         used.has(item.source_document_reference)
@@ -158,12 +189,91 @@ export function reconcileForm4972Collection(
       "Form 4972 participant taxes must sum to the finalized Form 1040 tax",
     );
   }
-  if (forms.length === 2) {
+  const participantCollection = needsParticipantCollection(forms);
+  if (participantCollection) {
+    if (!filer) {
+      throw new Error(
+        "Form4972 participant collection needs final filer identity",
+      );
+    }
+    reconcileParticipantCollection(forms, source_forms, elections, {
+      taxpayer: filer.primarySSN,
+      spouse: filer.spouse?.ssn,
+    });
+    const ordinary = forms.reduce((sum, form) => {
+      const result = calculateParticipant.compute({
+        taxYear: 2025,
+        formType: "f1040",
+      }, participantSchema.parse(form));
+      return sum +
+        Number(
+          result.outputs.find((output) => output.nodeType === "f1040")?.fields
+            .line5b_form4972_ordinary ?? 0,
+        );
+    }, 0);
+    if ((returnFields.line5b_form4972_ordinary ?? 0) !== ordinary) {
+      throw new Error(
+        "Form4972 participant collection ordinary amounts differ from Form1040",
+      );
+    }
+  }
+  const pairedBeneficiaries = !participantCollection && forms.length === 2 &&
+    scoped.some(({ fields }) =>
+      typeof fields.recipient_share_pct === "number" &&
+      fields.recipient_share_pct < 100
+    );
+  if (pairedBeneficiaries) {
+    if (
+      !filer || filer.filingStatus !== FilingStatus.MarriedFilingJointly ||
+      !filer.spouse?.ssn
+    ) {
+      throw new Error(
+        "Form 4972 paired beneficiaries require a joint return with two identified spouses",
+      );
+    }
+    const owners = scoped.map(({ fields }) => fields.recipient);
+    if (
+      new Set(owners).size !== 2 || !owners.includes("T") ||
+      !owners.includes("S")
+    ) {
+      throw new Error(
+        "Form 4972 paired beneficiary documents need one copy per spouse",
+      );
+    }
+    for (const { fields, sources } of scoped) {
+      const recipientSSN = fields.recipient === "T"
+        ? filer.primarySSN
+        : filer.spouse.ssn;
+      if (
+        sources.some((item) =>
+          item.ts !== fields.recipient ||
+          item.recipient_ssn?.replaceAll("-", "") !==
+            recipientSSN.replaceAll("-", "")
+        ) ||
+        (typeof fields.recipient_share_pct === "number" &&
+          fields.recipient_share_pct < 100 &&
+          fields.beneficiary_distribution !== true)
+      ) {
+        throw new Error(
+          "Form 4972 spouse beneficiary issued recipient differs from the filing owner",
+        );
+      }
+    }
+    reconcileSharedParticipantElections(source_forms, elections);
+    const plans = scoped.map((entry) => entry.sources[0].form4972_plan);
+    if (
+      plans[0]?.participant_ssn === plans[1]?.participant_ssn ||
+      plans[0]?.plan_reference === plans[1]?.plan_reference
+    ) {
+      reconcileParticipantIssuedInventory(elected);
+    }
+  }
+  if (forms.length === 2 && !pairedBeneficiaries && !participantCollection) {
     if (
       !filer || filer.filingStatus !== FilingStatus.MarriedFilingJointly ||
       !filer.spouse?.ssn ||
       scoped.some(({ fields, sources }) =>
-        (sources.length !== 1 && sources.length !== 2) ||
+        sources.length < 1 ||
         (fields.elect_10yr_averaging !== true &&
           (sources.length !== 1 || fields.elect_capital_gain !== true ||
             typeof fields.capital_gain_amount !== "number" ||
@@ -171,22 +281,25 @@ export function reconcileForm4972Collection(
         fields.beneficiary_distribution !== false ||
         fields.recipient_share_pct !== undefined ||
         (typeof fields.box6_nua === "number" && fields.box6_nua > 0 &&
-          (sources.length !== 1 || fields.elect_include_nua !== true ||
+          (fields.elect_include_nua !== true ||
             fields.elect_10yr_averaging !== true ||
             (fields.elect_capital_gain === true &&
               (typeof fields.capital_gain_amount !== "number" ||
                 fields.capital_gain_amount <= 0 ||
                 typeof fields.lump_sum_amount !== "number" ||
-                !Number.isSafeInteger(fields.lump_sum_amount) ||
-                !Number.isSafeInteger(fields.capital_gain_amount) ||
-                typeof fields.box6_nua !== "number" ||
-                !Number.isSafeInteger(fields.box6_nua) ||
-                !Number.isSafeInteger(
-                  fields.box6_nua * fields.capital_gain_amount /
-                    fields.lump_sum_amount,
+                ![
+                  fields.lump_sum_amount,
+                  fields.capital_gain_amount,
+                  fields.box6_nua,
+                ].every((amount) =>
+                  typeof amount === "number" && isSourceMoney(amount)
                 ))) ||
-            sources[0].box6_nua !== fields.box6_nua)) ||
-        (fields.annuity_actuarial_value ?? 0) !== 0 ||
+            sumSourceMoney(sources.map((item) => (item.box6_nua ?? 0))) !==
+              fields.box6_nua)) ||
+        sumSourceMoney(sources.map((item) => (item.box8_other ?? 0))) !==
+          (fields.annuity_actuarial_value ?? 0) ||
+        ((fields.annuity_actuarial_value ?? 0) !== 0 &&
+          fields.elect_10yr_averaging !== true) ||
         (fields.federal_estate_tax ?? 0) !== 0 ||
         (fields.death_benefit_exclusion ?? 0) !== 0
       )

@@ -5,6 +5,8 @@ import { assertNoUnfiled8995Loss, assertPositive8995 } from "./f8995-route.ts";
 
 type Input = Partial<ReturnType<typeof inputSchema.parse>> & {
   qbi_deduction?: number | null;
+  line1_qbi?: number;
+  line1_business_reference?: string;
 };
 
 export const form8995: MefFormDescriptor<"form8995", Input> = {
@@ -13,8 +15,21 @@ export const form8995: MefFormDescriptor<"form8995", Input> = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8995--2025.pdf",
   build(fields, context) {
     const deduction = fields.qbi_deduction;
-    if (deduction === undefined || deduction === null || deduction === 0) {
-      assertNoUnfiled8995Loss(fields as Record<string, unknown>);
+    if (
+      (deduction === undefined || deduction === null || deduction === 0) &&
+      fields.multi_business_filing_rows === undefined &&
+      fields.joint_owner_filing_rows === undefined &&
+      fields.current_k1_qbi_sources === undefined &&
+      fields.current_passive_property_sources === undefined &&
+      fields.owned_s_corp_loss_source === undefined &&
+      fields.owned_s_corp_loss_sources === undefined &&
+      !(typeof fields.line1_qbi === "number" && fields.line1_qbi > 0 &&
+        typeof fields.line1_business_reference === "string")
+    ) {
+      assertNoUnfiled8995Loss(
+        fields as Record<string, unknown>,
+        context?.pending,
+      );
       return "";
     }
     if (

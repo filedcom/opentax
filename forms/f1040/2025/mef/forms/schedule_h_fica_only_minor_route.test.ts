@@ -177,3 +177,44 @@ Deno.test("Schedule H FICA-only minor rejects unsupported age, student, source, 
     )
   );
 });
+
+Deno.test("Schedule H complete FICA-only cash payroll sums quarter cents exactly", () => {
+  const raw: any = structuredClone(source);
+  const worker = raw.fica_only_payroll.employee_wages[0];
+  worker.annual_cash_wages = 2_802.49;
+  worker.quarterly_cash_wages = [700, 700.11, 700.11, 702.27];
+  worker.w2.box3_social_security_wages = 2_802.49;
+  worker.w2.box5_medicare_wages = 2_802.49;
+  raw.ss_wages = 2_802.49;
+  raw.medicare_wages = 2_802.49;
+  const filed = inputSchema.parse(raw);
+  const result = schedule_h.compute(
+    { taxYear: 2025, formType: "f1040" },
+    filed,
+  );
+  assertEquals(
+    result.outputs.find((entry) => entry.nodeType === "schedule2")?.fields
+      .line9_household_employment,
+    428,
+  );
+  const pending = {
+    schedule_h: filed,
+    schedule2: { line9_household_employment: 428 },
+  };
+  const xml = scheduleH.build(filed, { filer, pending });
+  assertStringIncludes(
+    xml,
+    "<CombinedFUTATaxPlusNetTaxesAmt>428</CombinedFUTATaxPlusNetTaxesAmt>",
+  );
+  assertEquals(
+    scheduleHPdf.projectFields!(filed, {}).line8_fica_and_withholding,
+    428,
+  );
+  worker.quarterly_cash_wages[1] = 700.111;
+  assertThrows(() =>
+    schedule_h.compute(
+      { taxYear: 2025, formType: "f1040" },
+      inputSchema.parse(raw),
+    )
+  );
+});

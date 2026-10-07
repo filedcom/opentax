@@ -176,3 +176,24 @@ Deno.test("normalizeAllPending: preserves non-numeric fields as-is", () => {
     f1040: { filing_status: "mfj", wages: 120000 },
   });
 });
+
+Deno.test("normalizePendingDict: independent K1 PAL income operands remain additive at export", () => {
+  assertEquals(
+    normalizePendingDict({
+      pal_current_income: [1500, 1500],
+      pal_rental_income: [0, 0],
+    }, "agi_aggregator"),
+    { pal_current_income: 3000, pal_rental_income: 0 },
+  );
+  assertEquals(
+    normalizePendingDict({
+      current_income: [1500, 1500],
+      rental_current_income: [0, 0],
+    }, "form8582"),
+    { current_income: 3000, rental_current_income: 0 },
+  );
+  assertEquals(
+    normalizePendingDict({ current_income: [1500, 3000] }, "f1040"),
+    { current_income: 3000 },
+  );
+});

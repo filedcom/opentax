@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { calculateForm4255Routes, f4255 } from "./index.ts";
 
 const row = {
@@ -158,4 +158,27 @@ Deno.test("Form 4255 rejects ambiguous original-credit shortcut and inconsistent
     }).success,
     false,
   );
+});
+
+Deno.test("Form 4255 rejects repeated credit-line rows before Schedule 2 summation", () => {
+  const duplicate = {
+    rows: [row, { ...row, source_document_reference: "second workpaper" }],
+  };
+  assertEquals(f4255.inputSchema.safeParse(duplicate).success, false);
+  assertThrows(
+    () => calculateForm4255Routes(duplicate),
+    Error,
+    "one staged row per credit line",
+  );
+  const distinct = {
+    rows: [row, {
+      ...row,
+      credit_line: "1d" as const,
+      prior_credit_evidence: {
+        ...row.prior_credit_evidence,
+        original_form: "3468_part_iv" as const,
+      },
+    }],
+  };
+  assertEquals(f4255.inputSchema.safeParse(distinct).success, true);
 });

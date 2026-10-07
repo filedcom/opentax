@@ -1,5 +1,14 @@
 # TY2025 Form 2210-F farmer/fisher underpayment gap
 
+## Distinct current and prior return references (2026-10-05)
+
+The box-B calculator now rejects a 2025 joint-return reference reused as
+either 2024 separate-return reference. Native MeF and PDF projection recheck
+the same source, so a plausible numeric worksheet cannot bypass the distinct
+return identity requirement at export. Focused calculator, native, and PDF
+fixtures pass. The references still identify caller-supplied records; this
+guard does not authenticate the underlying filed 2024 returns.
+
 The [2025 Form 2210-F](https://www.irs.gov/pub/irs-prior/f2210f--2025.pdf)
 and its [instructions](https://www.irs.gov/instructions/i2210f) distinguish
 the farmer/fisher penalty from ordinary Form 2210. A filer whose 2024 or 2025

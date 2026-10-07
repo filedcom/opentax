@@ -1,9 +1,11 @@
+import { assertFarmWotcReturn } from "../../form8995_farm_wotc_reconciliation.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 import { isDeepStrictEqual } from "node:util";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { assertForm3800FinalCreditJoin } from "../../form3800_final_credit_join.ts";
 import {
   calculateForm5884,
+  filedControlledGroupEins,
   inputSchema,
 } from "../../../nodes/inputs/f5884/index.ts";
 
@@ -44,6 +46,12 @@ export const form5884Pdf: PdfFormDescriptor = {
   ],
   projectFields(fields, allPending) {
     if (!Array.isArray(fields.f5884s) || fields.f5884s.length === 0) return {};
+    assertFarmWotcReturn(
+      allPending.form8995a ?? allPending.form8995 ?? {},
+      allPending,
+      undefined,
+      { key: "f5884", value: fields },
+    );
     const source = inputSchema.parse(fields);
     const lines = calculateForm5884(source);
     if (lines.line2 <= 0) return {};
@@ -199,9 +207,9 @@ export const form5884Pdf: PdfFormDescriptor = {
       y -= 30;
     }
     page.drawText(
-      `Taxpayer member ${source.controlled_group.taxpayer_member_ein}: Form 5884 line 2 = ${
-        lines.line2.toFixed(0)
-      }`,
+      `Filed member(s) ${
+        filedControlledGroupEins(source.controlled_group).join(", ")
+      }: Form 5884 line 2 = ${lines.line2.toFixed(0)}`,
       { x: 40, y: Math.max(40, y - 12), size: 9, font: bold },
     );
   },

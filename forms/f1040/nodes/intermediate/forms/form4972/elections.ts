@@ -1,3 +1,9 @@
+import {
+  needsParticipantCollection,
+  reconcileParticipantCollection,
+} from "./participant-collection.ts";
+import { isSourceMoney } from "./source-rounding.ts";
+import { reconcileSharedParticipantElections } from "./participant-inventory.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -29,10 +35,10 @@ const electionSchema = singleElectionSchema.extend({
   plan_reference: z.string().trim().min(1).optional(),
 });
 export const publicElectionCollectionSchema = z.object({
-  elections: z.array(electionSchema).min(1).max(2),
+  elections: z.array(electionSchema).min(1),
 }).strict();
 export const inputSchema = publicElectionCollectionSchema.extend({
-  source_forms: z.array(z.record(z.string(), z.unknown())).min(1).max(2),
+  source_forms: z.array(z.record(z.string(), z.unknown())).min(1),
 });
 
 class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
@@ -74,6 +80,21 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
       }
       used.add(matching);
       const source = sources[matching];
+      if (source.multiple_1099r && election.death_benefit_allocation) {
+        const plan = source.form4972_plan as
+          | Record<string, unknown>
+          | undefined;
+        if (
+          election.death_benefit_allocation.participant_ssn !==
+            plan?.participant_ssn ||
+          election.death_benefit_allocation.elected_recipient_ssn !==
+            source.recipient_ssn
+        ) {
+          throw new Error(
+            "Form 4972 multiple-copy death allocation must identify the issued plan participant and recipient",
+          );
+        }
+      }
       const owner = source.recipient;
       if (owner !== "T" && owner !== "S") {
         throw new Error("Form 4972 source needs a taxpayer or spouse owner");
@@ -119,7 +140,54 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
         ? ownEstateDeduction
         : 0;
     }
-    if (forms.length === 2) {
+    const participantCollection = needsParticipantCollection(forms);
+    if (participantCollection) {
+      reconcileParticipantCollection(forms, sources, elections);
+    }
+    const pairedBeneficiaries = !participantCollection && forms.length === 2 &&
+      forms.some((form) =>
+        typeof form.recipient_share_pct === "number" &&
+        form.recipient_share_pct < 100
+      );
+    if (pairedBeneficiaries) {
+      const recipients = forms.map((form) => form.recipient);
+      if (
+        new Set(recipients).size !== 2 || !recipients.includes("T") ||
+        !recipients.includes("S")
+      ) {
+        throw new Error(
+          "Form 4972 paired beneficiary elections need separate taxpayer and spouse sources",
+        );
+      }
+      for (const [index, form] of forms.entries()) {
+        const source = sources.find((source) =>
+          sameReferences(
+            source.source_document_references,
+            elections[index].source_document_references,
+          )
+        );
+        const plan = source?.form4972_plan as
+          | Record<string, unknown>
+          | undefined;
+        const election = elections[index];
+        if (
+          !plan || !election.participant_name || !election.participant_ssn ||
+          !election.plan_reference ||
+          election.participant_name !== plan.participant_name ||
+          election.participant_ssn !== plan.participant_ssn ||
+          election.plan_reference !== plan.plan_reference ||
+          (typeof form.recipient_share_pct === "number" &&
+            form.recipient_share_pct < 100 &&
+            form.beneficiary_distribution !== true)
+        ) {
+          throw new Error(
+            "Form 4972 paired beneficiary election must retain its identified participant, plan and beneficiary status",
+          );
+        }
+      }
+      reconcileSharedParticipantElections(sources, elections);
+    }
+    if (forms.length === 2 && !pairedBeneficiaries && !participantCollection) {
       const recipients = forms.map((form) => form.recipient);
       const plans = sources.map((source) => source.form4972_plan);
       const sourceByElection = elections.map((election) =>
@@ -146,7 +214,6 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
         forms.some((form, index) =>
           typeof form.box6_nua === "number" && form.box6_nua > 0 &&
           (sourceByElection[index].box6_nua !== form.box6_nua ||
-            elections[index].source_document_references.length !== 1 ||
             form.elect_include_nua !== true ||
             form.elect_10yr_averaging !== true ||
             (form.elect_capital_gain === true &&
@@ -154,13 +221,17 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
                 form.capital_gain_amount <= 0 ||
                 typeof form.lump_sum_amount !== "number" ||
                 typeof form.box6_nua !== "number" ||
-                !Number.isSafeInteger(form.lump_sum_amount) ||
-                !Number.isSafeInteger(form.capital_gain_amount) ||
-                !Number.isSafeInteger(form.box6_nua) ||
-                !Number.isSafeInteger(
-                  form.box6_nua * form.capital_gain_amount /
-                    form.lump_sum_amount,
-                ))))
+                ![form.lump_sum_amount, form.capital_gain_amount, form.box6_nua]
+                  .every((amount) =>
+                    typeof amount === "number" && isSourceMoney(amount)
+                  ))))
+        ) ||
+        forms.some((form, index) =>
+          !isSourceMoney(Number(form.annuity_actuarial_value ?? 0)) ||
+          ((form.annuity_actuarial_value ?? 0) !== 0 &&
+            (sourceByElection[index].annuity_actuarial_value !==
+                form.annuity_actuarial_value ||
+              form.elect_10yr_averaging !== true))
         ) ||
         plans.some((plan) => !plan || typeof plan !== "object") ||
         elections.some((election, index) => {
@@ -176,15 +247,13 @@ class Form4972ElectionsNode extends TaxNode<typeof inputSchema> {
         }) ||
         sources.some((source) =>
           !Array.isArray(source.source_document_references) ||
-          (source.source_document_references.length !== 1 &&
-            source.source_document_references.length !== 2) ||
+          source.source_document_references.length < 1 ||
           source.beneficiary_distribution === true ||
           source.recipient_share_pct !== undefined ||
-          (source.source_document_references.length === 2 &&
+          (source.source_document_references.length > 1 &&
             source.multiple_1099r === undefined) ||
           (source.source_document_references.length === 1 &&
-            source.multiple_1099r !== undefined) ||
-          (source.annuity_actuarial_value ?? 0) !== 0
+            source.multiple_1099r !== undefined)
         )
       ) {
         throw new Error(

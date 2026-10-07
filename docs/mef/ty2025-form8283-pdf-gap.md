@@ -349,3 +349,15 @@ authored return. Changed second-group and finalized-total fixtures reject
 through native and PDF preflight. These source and output fixtures are unrun
 pending the bulk gate. Mixed property types, more than two Section B items,
 carryovers, and real document/authenticity review remain outside this route.
+
+## October 6 complete current-source copy inventory
+
+The isolated current-source extension maps all A/B/C Section B columns, Other
+property selection and the actual Part III low-value donor statement. Shared
+same-donee signed forms retain one source-bound A/B/C copy; different donees remain
+separate forms. Mixed Section A/B and eight-reason A overflow preserve their
+independent required copy counts. Actual completed official source AcroForms remain
+separate native binary attachments; generated unsigned return pages do not replace
+those retained source forms. The complete proof, inventory, checks and remaining
+source-authentication boundaries are in
+[complete inventory proof](ty2025-form8283-complete-inventory-proof.md).

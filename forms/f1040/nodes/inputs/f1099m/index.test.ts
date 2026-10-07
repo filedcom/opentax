@@ -1111,15 +1111,20 @@ Deno.test("f1099m.compute: box10 client funds do not become income", () => {
   assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("f1099m.compute: box3_other_income with physical injury classification does not throw", () => {
-  const result = f1099m.compute({ taxYear: 2025, formType: "f1040" }, {
-    f1099ms: [{
-      ...minimalItem(),
-      box3_other_income: 10000,
-      box3_other_income_routing: "excluded",
-    }],
+Deno.test("f1099m.compute: positive box 3 exclusion needs reviewed facts", () => {
+  const item = minimalItem({
+    box3_other_income: 10000,
+    box3_other_income_routing: "excluded",
   });
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(
+    f1099m.inputSchema.safeParse({ f1099ms: [item] }).success,
+    false,
+  );
+  assertThrows(
+    () => compute([item]),
+    Error,
+    "exclusion needs reviewed payment and prior-deduction facts",
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -1203,22 +1208,26 @@ Deno.test("f1099m.compute: box10 client funds do not route to Schedule 1 or C", 
   assertEquals(findOutput(result, "schedule_c"), undefined);
 });
 
-// Box 3 — Physical injury exclusion does not route
-Deno.test("f1099m.compute: box3_other_income excluded (physical injury IRC §104) does not route to schedule1", () => {
-  const result = compute([
-    minimalItem({
-      box3_other_income: 10000,
-      box3_other_income_routing: "excluded",
-    }),
-  ]);
-  const out = findOutput(result, "schedule1");
-  const prizes = out
-    ? (out.fields as Record<string, unknown>).line8i_prizes_awards
-    : undefined;
-  const other = out
-    ? (out.fields as Record<string, unknown>).line8z_other
-    : undefined;
-  assertEquals(!prizes && !other, true);
+// Box 3 — A bare exclusion classification cannot establish tax character.
+Deno.test("f1099m.compute: an excluded copy cannot disappear beside taxable box 3 income", () => {
+  assertThrows(
+    () =>
+      compute([
+        minimalItem({
+          payer_tin: "111111111",
+          box3_other_income: 10000,
+          box3_other_income_routing: "excluded",
+        }),
+        minimalItem({
+          payer_tin: "222222222",
+          box3_other_income: 500,
+          box3_other_income_routing: "other_income",
+          box3_other_income_description: "Research stipend",
+        }),
+      ]),
+    Error,
+    "exclusion needs reviewed payment and prior-deduction facts",
+  );
 });
 
 // Box 15 supplies tax on box 3 income without a second income deposit.

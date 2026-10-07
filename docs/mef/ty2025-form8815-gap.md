@@ -1,9 +1,21 @@
 # TY2025 Form 8815: source-to-return gap
 
-Status: bounded TY2025 implementation written, not validated. No test, XSD,
-filled-PDF, IRS business-rule, or ATS acceptance is claimed here. The old
-calculation and MeF tags described below were the starting point; they have been
-replaced in the current working tree.
+Status: a bounded TY2025 Series EE exclusion route has current-source local
+XSD and filled-PDF evidence. The old calculation and MeF tags described below
+were the starting point and have been replaced. Wider source, IRS business-rule,
+and ATS acceptance remain open.
+
+## Current selected evidence (2026-10-04)
+
+The checked-in `single-form8815-series-ee-bond-exclusion` fixture generated a
+four-page Form 1040, Schedule B, and Form 8815 packet. Each page was visually
+checked against source and native XML: $2,000 bond interest is excluded in full
+against $15,000 qualified expenses and $12,000 proceeds, leaving $70,000
+Form 1040 wages/AGI. The selected-scope checker passed exact source replay,
+PDF/XML hashes, page origins, and local TY2025v5.4 XSD. The packet location
+and manifest digest are in the
+[validation batch](ty2025-form1040-validation-batch.md). Issued bond/tuition
+records, other phaseout and ownership cases, IRS rules, and ATS remain open.
 
 ## Evidence and current behavior
 
@@ -117,3 +129,11 @@ cases are authored but unrun pending the agreed bulk validation. Bond and
 tuition document authentication beyond retained references, multiple interest
 payers, any Form 8815 line 9 special royalty
 computation, and the remaining bounded routes are still open.
+
+## Multiple interest payer source reconciliation (2026-10-06)
+
+The public Form8815 source may now declare distinct `bond_interest_source_references` identifying the eligible redeemed-bond1099-INT copies. Each reference must match exactly one current source; selected copies must have positive Box3 and no Box1. Their combined current interest must equal the independent line6 proceeds/face-value/prior-interest worksheet. All current1099-INT rows on this route require reviewed source references and taxpayer/spouse recipient identity; unselected bank or noneligible Treasury interest stays in ScheduleB line2 and Form1040 taxable interest. The complete source total must reconcile the finalized line9 MAGI worksheet. Missing/duplicate/unmatched references, conflicting owners/amounts and unsupported premium/nominee/accrual/OID adjustments remain rejected. The original one-copy path remains supported.
+
+Two constructed complete public packets (single/MFJ) retain four distinct interest sources: eligible EE1200/I800, bank300 and noneligible Treasury500. Net education expenses6000/proceeds12000 gives tentative1000, MAGI102800/162800 and2025 exclusions780/548. Form1040 taxable interest2020/2252 andAGI102020/162252 reconcile to nativeXML/fullv5.4XSD and four-page packets. Main standard source/node/validation/existing-route gate21/0(8s), `/tmp/opentax-form8815-multiple-main-source-v2-oct6.log`; all eight pages rendered and visually reviewed with readable names, status, source rows, decimal ratios, amounts and order. Evidence `.state/research/form8815-multiple-interest-oct6/{single,joint}` retains original inputs/pending/native/PDF/origins/manifests; these are constructed source scenarios, not independently authenticated issuer or tuition records.
+
+The actual October4 original rawsource still produces its exact four-pagePDF, `/tmp/opentax-form8815-held-original-main-v2-oct6.log` and matching manifest. Its sole prior-production pending difference is the added Form8995 `investment_interest_sources` array, checked exactly against the original1099-INT input; this is explicitly qualified rather than claiming whole-pending byte equality. Original bytes remain unchanged and replay uses a copied private template cache. Broader interest adjustments, royalty/addbacks, tuition/redemption authenticity, qualified institution/beneficiary evidence and IRS filing/acceptance gates remain open. Primary form line5 includes all qualifying redeemed bonds, line6 its interest, and line9 includes complete interest before exclusion: [2025 IRS Form8815](https://www.irs.gov/pub/irs-prior/f8815--2025.pdf).

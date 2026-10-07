@@ -41,6 +41,7 @@ Deno.test("PDF final export rejects non-withheld W-2G winnings for another winne
       buildPdfBytes({
         w2g: {
           w2gs: [{
+            calendar_year: 2025,
             box1_winnings: 1_000,
             box4_federal_withheld: 0,
             payer_name: "Casino Inc",
@@ -54,6 +55,28 @@ Deno.test("PDF final export rejects non-withheld W-2G winnings for another winne
       }, mockFiler),
     Error,
     "W-2G winnings or withholding needs",
+  );
+});
+
+Deno.test("PDF final export rejects non-withheld W-2G without TY2025 source year", async () => {
+  await assertRejects(
+    () =>
+      buildPdfBytes({
+        w2g: {
+          w2gs: [{
+            box1_winnings: 1_000,
+            box4_federal_withheld: 0,
+            payer_name: "Casino Inc",
+            payer_ein: "12-3456789",
+            source_document_reference: "issued-yearless-w2g",
+            winner_name: "John Doe",
+            box9_winner_tin: mockFiler.primarySSN,
+            winner_us_address: mockFiler.address,
+          }],
+        },
+      }, mockFiler),
+    Error,
+    "issued 2025 tax year",
   );
 });
 
@@ -1174,6 +1197,73 @@ Deno.test("buildPdfBytes: rejects incomplete multi-category Form 1116 PDF source
         mockFiler,
         tmpDir,
       ), Error);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("shared PDF headers retain both joint names and require spouse identity", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const doc = await PDFDocument.create();
+    const page = doc.addPage();
+    doc.getForm().createTextField("shared_name").addToPage(page, {
+      x: 20,
+      y: 700,
+      width: 400,
+      height: 25,
+    });
+    await seedCache(tmpDir, F1040_PDF_URL, await doc.save());
+    const descriptor = {
+      pendingKey: "shared_header",
+      pdfUrl: F1040_PDF_URL,
+      fields: [{
+        kind: "text" as const,
+        domainKey: "amount",
+        pdfField: "shared_name",
+      }],
+      filerFields: [{
+        kind: "text" as const,
+        domainKey: "nameShownOnForm1040",
+        pdfField: "shared_name",
+      }],
+    };
+    const joint: FilerIdentity = {
+      ...mockFiler,
+      filingStatus: FilingStatus.MarriedFilingJointly,
+      spouse: {
+        firstName: "Jane",
+        middleInitial: "Q",
+        lastName: "Smith",
+        nameControl: "SMIT",
+        ssn: "987654321",
+      },
+    };
+    const bytes = await fillFormPdf(descriptor, { amount: 1 }, joint, tmpDir);
+    const output = join(tmpDir, "joint.pdf");
+    await Deno.writeFile(output, bytes!);
+    const extracted = await new Deno.Command("pdftotext", {
+      args: [output, "-"],
+      stdout: "piped",
+    }).output();
+    assertEquals(extracted.success, true);
+    assertEquals(
+      new TextDecoder().decode(extracted.stdout).includes(
+        "John Doe and Jane Q Smith",
+      ),
+      true,
+    );
+    await assertRejects(
+      () =>
+        fillFormPdf(
+          descriptor,
+          { amount: 1 },
+          { ...joint, spouse: undefined },
+          tmpDir,
+        ),
+      Error,
+      "needs the identified spouse first and last names",
+    );
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }

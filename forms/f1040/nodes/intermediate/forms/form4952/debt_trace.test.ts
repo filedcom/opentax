@@ -71,3 +71,48 @@ Deno.test("Form 4952 direct debt trace rejects other uses, source drift, and dup
     source_k1_investment_interest: 100,
   });
 });
+
+Deno.test("Form4952 retains exact principal and paid cents without floating-point drift", () => {
+  const source = {
+    ...trace,
+    borrowed_principal: 10000.49,
+    direct_taxable_securities_purchase: 10000.49,
+    lender_2025_interest_total: 300.30,
+    interest_payments: trace.interest_payments.map((row, index) => ({
+      ...row,
+      interest_amount: index === 0 ? 100.10 : 200.20,
+    })),
+  };
+  assertEquals(
+    reconcileForm4952DirectDebtTrace(source, {
+      investment_interest_expense: 300.30,
+    }, "123456789"),
+    source,
+  );
+  for (
+    const changed of [
+      { ...source, direct_taxable_securities_purchase: 10000.48 },
+      { ...source, lender_2025_interest_total: 300.31 },
+      { ...source, borrowed_principal: 10000.491 },
+      { ...source, borrowed_principal: 0.000000001 },
+      {
+        ...source,
+        interest_payments: source.interest_payments.map((row, i) => ({
+          ...row,
+          interest_amount: i === 0 ? 100.101 : row.interest_amount,
+        })),
+      },
+    ]
+  ) {
+    assertThrows(() =>
+      reconcileForm4952DirectDebtTrace(changed, {
+        investment_interest_expense: 300.30,
+      }, "123456789")
+    );
+  }
+  assertThrows(() =>
+    reconcileForm4952DirectDebtTrace(source, {
+      investment_interest_expense: 300.301,
+    }, "123456789")
+  );
+});

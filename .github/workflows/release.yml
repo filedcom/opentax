@@ -23,13 +23,13 @@ jobs:
             os: ubuntu-latest
             asset: opentax-linux-x64
           - target: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-24.04-arm
             asset: opentax-linux-arm64
           - target: x86_64-apple-darwin
-            os: macos-latest
+            os: macos-15-intel
             asset: opentax-macos-x64
           - target: aarch64-apple-darwin
-            os: macos-latest
+            os: macos-15
             asset: opentax-macos-arm64
           - target: x86_64-pc-windows-msvc
             os: windows-latest
@@ -56,6 +56,7 @@ jobs:
           rm -f cli/version.ts.bak
           grep -q "\"${VERSION}\"" cli/version.ts || { echo "Version injection failed"; exit 1; }
           echo "Building version ${VERSION}"
+          echo "OPENTAX_RELEASE_VERSION=${VERSION}" >> "$GITHUB_ENV"
 
       - name: Compile
         run: >
@@ -65,6 +66,12 @@ jobs:
           --output ${{ matrix.asset }}
           cli/main.ts
 
+      - name: Smoke compiled asset
+        run: >
+          deno run --allow-read --allow-write --allow-run --allow-net=www.irs.gov
+          scripts/smoke-release-binary.ts
+          ./${{ matrix.asset }} ${{ env.OPENTAX_RELEASE_VERSION }}
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -72,7 +79,7 @@ jobs:
           path: ${{ matrix.asset }}
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') && (github.event_name != 'workflow_dispatch' || inputs.dry_run == false)
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -81,8 +88,19 @@ jobs:
           path: artifacts
           merge-multiple: true
 
+      - name: Verify assets and write checksums
+        shell: bash
+        run: |
+          cd artifacts
+          expected=(opentax-linux-x64 opentax-linux-arm64 opentax-macos-x64 opentax-macos-arm64 opentax-windows-x64.exe)
+          [[ "$(find . -maxdepth 1 -type f | wc -l)" -eq 5 ]]
+          for asset in "${expected[@]}"; do test -s "$asset"; done
+          sha256sum "${expected[@]}" > SHA256SUMS
+          sha256sum --check SHA256SUMS
+
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
           files: artifacts/*
           generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-checkpoint.') }}

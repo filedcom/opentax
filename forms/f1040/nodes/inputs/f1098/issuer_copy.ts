@@ -1,3 +1,4 @@
+import { assertPrintableSourceTextFields } from "../../../source-printable-fields.ts";
 import { PDFDocument } from "pdf-lib";
 import { z } from "zod";
 import { inputSchema as refinancePointsInputSchema } from "../mortgage_refinance_points/index.ts";
@@ -20,8 +21,18 @@ function digits(value: string): string {
 
 function amount(value: string): number | undefined {
   if (!value.trim()) return undefined;
-  const parsed = Number(value.replace(/[$,\s]/g, ""));
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+  const trimmed = value.trim();
+  if (
+    !/^\$?\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?$/.test(trimmed)
+  ) {
+    throw new Error("Form 1098 issuer Copy B has an invalid amount field");
+  }
+  const normalized = trimmed.replace(/[$,\s]/g, "");
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed)) {
+    throw new Error("Form 1098 issuer Copy B has an invalid amount field");
+  }
+  return parsed;
 }
 
 /**
@@ -69,6 +80,18 @@ export async function verifyForm1098IssuerCopy(
       );
     }
   };
+  const requiredFields = [
+    headerYear,
+    `${left}.f2_2[0]`,
+    `${left}.f2_4[0]`,
+    ...[11, 12, 13, 14, 15, 16].map((n) => `${right}.f2_${n}[0]`),
+  ];
+  for (const name of requiredFields) field(name);
+  await assertPrintableSourceTextFields(
+    bytes,
+    requiredFields.map((pdfField) => ({ pdfField, domainKey: pdfField })),
+    "Form 1098 issuer Copy B",
+  );
   const year = digits(field(headerYear));
   const lender = field(`${left}.f2_2[0]`).split(/\r?\n/)[0]?.trim() ?? "";
   const borrowerTin = digits(field(`${left}.f2_4[0]`));
@@ -131,6 +154,7 @@ export async function assertForm1098IssuerCopies(
     f1098s,
     mortgage_limit_review,
     purchase_points_cross_loan_review,
+    cashout_refinance_review,
   } = inputSchema.parse(raw);
   const reviewedLoans = new Set([
     ...(mortgage_limit_review?.loans.map((loan) =>
@@ -142,6 +166,12 @@ export async function assertForm1098IssuerCopies(
           .source_document_reference,
         purchase_points_cross_loan_review.existing_loan
           .source_document_reference,
+      ]
+      : []),
+    ...(cashout_refinance_review
+      ? [
+        cashout_refinance_review.old_source_document_reference,
+        cashout_refinance_review.new_source_document_reference,
       ]
       : []),
   ]);

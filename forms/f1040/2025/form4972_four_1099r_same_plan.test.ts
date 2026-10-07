@@ -137,7 +137,7 @@ Deno.test("four-copy Form 4972 rejects a missing or changed source and final tax
   );
 });
 
-Deno.test("five same-plan copies remain outside the reviewed printable Form 4972 collection", () => {
+Deno.test("five complete same-plan copies reconcile one native and printable Form 4972", () => {
   const fifth = {
     ...copies[3],
     source_document_reference: "1099-R-A-5",
@@ -150,12 +150,16 @@ Deno.test("five same-plan copies remain outside the reviewed printable Form 4972
     [...election.source_document_references, "1099-R-A-5"],
   );
   assertEquals(result.diagnostics, []);
-  assertThrows(
-    () =>
-      mef.build(result.pending.form4972!, { filer, pending: result.pending }),
+  const pending = result.pending;
+  const [xml] = mef.build(pending.form4972!, { filer, pending });
+  assertStringIncludes(
+    xml,
+    "<CapitalGainElectionAmt>15000</CapitalGainElectionAmt>",
   );
-  assertThrows(
-    () =>
-      form4972Pdf.instances?.(result.pending.form4972!, filer, result.pending),
-  );
+  const [pdf] = form4972Pdf.instances?.(pending.form4972!, filer, pending) ??
+    [];
+  assertEquals(pdf?.line6, 15_000);
+  assertEquals(pdf?.line7, 3_000);
+  assertEquals(pdf?.line8, 105_000);
+  assertEquals(pdf?.line30, pending.f1040?.form4972_tax);
 });

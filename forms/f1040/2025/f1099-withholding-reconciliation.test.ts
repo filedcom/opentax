@@ -194,6 +194,39 @@ Deno.test("changed identified INT, DIV, and OID copies reject direct native and 
   }
 });
 
+Deno.test("mixed payer TIN OID copies cannot double interest in native or PDF export", async () => {
+  const pending = {
+    f1099oid: {
+      f1099oids: [
+        {
+          payer_name: "Bond Fund",
+          payer_tin: "123456789",
+          recipient_tin: filer.primarySSN,
+          account_number: "BROKER-1",
+          box7_description: "Bond A",
+          box1_oid: 200,
+        },
+        {
+          payer_name: "  bond   FUND ",
+          recipient_tin: filer.primarySSN,
+          account_number: "BROKER-1",
+          box7_description: "Bond A",
+          box1_oid: 250,
+        },
+      ],
+    },
+  };
+  const message =
+    "1099-OID repeats the same payer, recipient, account, and obligation";
+  assertThrows(
+    () => assert1099WithholdingSource(pending, filer),
+    Error,
+    message,
+  );
+  assertThrows(() => buildMefXml(pending, filer), Error, message);
+  await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
+});
+
 Deno.test("1099 payer-name variants cannot double an unidentified copy", async () => {
   const cases = [
     {
@@ -322,6 +355,30 @@ Deno.test("1099 payer-name variants cannot double an unidentified copy", async (
     );
     await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
   }
+});
+
+Deno.test("final exports reject a 1099-INT duplicate with only one payer TIN", async () => {
+  const pending = {
+    f1099int: {
+      f1099ints: [
+        { payer_name: "Example Bank", payer_tin: "123456789", box1: 200 },
+        { payer_name: " example   BANK ", box1: 250 },
+      ],
+    },
+  };
+  const reason =
+    "1099-INT has multiple positive payer copies without account or issued source reference";
+  assertThrows(
+    () => assert1099WithholdingSource(pending, filer),
+    Error,
+    reason,
+  );
+  assertThrows(
+    () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    reason,
+  );
+  await assertRejects(() => buildPdfBytes(pending, filer), Error, reason);
 });
 
 Deno.test("unidentified repeated 1099-MISC copies reject native and PDF export", async () => {
@@ -922,6 +979,33 @@ Deno.test("unidentified repeated 1099-R copies reject native and PDF export", as
   };
   const message =
     "Form 1099-R has multiple positive payer copies without account or issued source reference";
+  assertThrows(
+    () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    message,
+  );
+  await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
+});
+
+Deno.test("1099-R punctuation-only payer variant cannot bypass native and PDF copy guard", async () => {
+  const issued = {
+    payer_name: "Plan Trust, Inc.",
+    payer_ein: "123456789",
+    recipient_ssn: filer.primarySSN,
+    account_number: "PENSION-1",
+    box1_gross_distribution: 1_000,
+    box7_distribution_code: "7",
+  };
+  const pending = {
+    f1099r: {
+      f1099rs: [issued, {
+        ...issued,
+        payer_name: "PLAN TRUST INC",
+        box1_gross_distribution: 1_200,
+      }],
+    },
+  };
+  const message = "one account without issued source references";
   assertThrows(
     () => buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer),
     Error,

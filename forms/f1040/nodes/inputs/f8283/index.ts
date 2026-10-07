@@ -1,3 +1,11 @@
+import {
+  calculateCharitableNaturalResource,
+  charitableNaturalResourceSourceSchema,
+} from "./natural-resource-source.ts";
+import {
+  calculateCharitableDepreciation,
+  charitableDepreciationSourceSchema,
+} from "./depreciation-source.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -192,7 +200,15 @@ const vehicleMaterialImprovementAcknowledgmentSchema = z.object({
 });
 
 // Section A — items ≤$5,000 each (or ≤$10,000 for closely held stock)
+const donorOwnershipReviewSchema = z.object({
+  donor_ssn: z.string().regex(/^\d{9}$/),
+  donor_name: z.string().trim().min(1),
+  ownership_record_reference: z.string().trim().min(1),
+  outright_full_owned_interest_contributed_verified: z.literal(true),
+}).strict();
+
 const sectionAItemSchema = z.object({
+  donor_ownership_review: donorOwnershipReviewSchema.optional(),
   property_description: z.string().optional(),
   donee_organization_name: z.string().optional(),
   donee_organization_us_address: z.object({
@@ -241,6 +257,53 @@ const sectionAItemSchema = z.object({
     tangible_personal_property_verified: z.literal(true),
     donee_use_unrelated_to_exempt_purpose_verified: z.literal(true),
     hypothetical_fmv_sale_gain_entirely_long_term_verified: z.literal(true),
+    no_other_reduction_reason_verified: z.literal(true),
+  }).strict().optional(),
+  natural_resource_ordinary_income_reduction:
+    charitableNaturalResourceSourceSchema.optional(),
+  depreciation_ordinary_income_reduction: charitableDepreciationSourceSchema
+    .optional(),
+  contribution_year_disposition_reduction: z.object({
+    purchase_record_reference: z.string().trim().min(1),
+    donee_disposition_record_reference: z.string().trim().min(1),
+    exempt_use_certification_inventory_reference: z.string().trim().min(1),
+    retained_source_documents: z.array(
+      z.object({
+        source_reference: z.string().trim().min(1),
+        attachment_file_name: z.string().trim().min(1),
+        pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+      }).strict(),
+    ).length(3),
+    donee_name: z.string().trim().min(1),
+    donee_ein: z.string().regex(/^\d{9}$/),
+    donee_us_address: usAddressSchema,
+    original_donor_name: z.string().trim().min(1),
+    original_donor_ssn: z.string().regex(/^\d{9}$/),
+    property_description: z.string().trim().min(1),
+    received_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    disposition_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    disposition_method: z.literal("sale"),
+    actual_use_description: z.tuple([
+      z.string().trim().min(1),
+      z.string().trim().min(1),
+    ]),
+    intended_use_and_no_certification_description: z.tuple([
+      z.string().trim().min(1),
+      z.string().trim().min(1),
+      z.string().trim().min(1),
+    ]),
+    gross_proceeds: z.number().nonnegative(),
+    disposition_notice_furnished_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    officer_name: z.string().trim().min(1),
+    officer_title: z.string().trim().min(1),
+    original_donee_sale_and_donor_copy_reviewed: z.literal(true),
+    no_exempt_use_certification_present: z.literal(true),
+    no_signed_substantial_related_use_certification: z.literal(true),
+    no_signed_impossible_intended_use_certification: z.literal(true),
+    tangible_personal_property_verified: z.literal(true),
+    purchased_personal_use_not_depreciable_or_inventory: z.literal(true),
+    hypothetical_fmv_sale_gain_entirely_long_term_verified: z.literal(true),
+    donee_50_percent_limit_organization_verified: z.literal(true),
     no_other_reduction_reason_verified: z.literal(true),
   }).strict().optional(),
   private_foundation_capital_gain_reduction: z.object({
@@ -393,6 +456,12 @@ const sectionAItemSchema = z.object({
     }
     const shortTerm = item.short_term_ordinary_income_reduction_confirmed ===
       true;
+    const disposition =
+      item.contribution_year_disposition_reduction !== undefined;
+    const naturalResource =
+      item.natural_resource_ordinary_income_reduction !== undefined;
+    const depreciation =
+      item.depreciation_ordinary_income_reduction !== undefined;
     const inventory = item.inventory_ordinary_income_reduction !== undefined;
     const creator = item.creator_ordinary_income_reduction !== undefined;
     const manuscript = item.manuscript_ordinary_income_reduction !== undefined;
@@ -433,6 +502,7 @@ const sectionAItemSchema = z.object({
       reductionCents > 0 && !certifiedSaleReduction && !shortTerm &&
       !inventory && !creator && !manuscript && !unrelatedUse &&
       !privateFoundation && !taxidermy && !intellectualProperty &&
+      !disposition && !depreciation && !naturalResource &&
       !capitalGainElection
     ) {
       ctx.addIssue({
@@ -441,6 +511,102 @@ const sectionAItemSchema = z.object({
         message:
           "Form 8283 reduced Section A claim needs certified sale proceeds or a sourced ordinary-income or capital-gain reduction",
       });
+    }
+    if (naturalResource) {
+      try {
+        const result = calculateCharitableNaturalResource(
+          item.natural_resource_ordinary_income_reduction,
+        );
+        const source = result.source;
+        if (
+          item.date_acquired !== source.date_acquired ||
+          item.date_contributed !== source.date_contributed ||
+          item.donor_acquisition_description?.trim().toLowerCase() !==
+            "purchase" ||
+          item.is_vehicle === true ||
+          item.fmv !== result.fmv ||
+          item.cost_or_adjusted_basis !== result.adjusted_basis ||
+          item.deduction_claimed !== result.deduction_claimed ||
+          item.is_capital_gain_property !== result.is_capital_gain_property ||
+          item.charitable_limit_category !== result.charitable_limit_category ||
+          item.donor_ownership_review?.donor_name !== source.donor_name ||
+          item.donor_ownership_review?.donor_ssn !== source.donor_ssn ||
+          item.donor_ownership_review?.ownership_record_reference !==
+            source.purchase_record_reference ||
+          [
+            depreciation,
+            shortTerm,
+            inventory,
+            creator,
+            manuscript,
+            unrelatedUse,
+            privateFoundation,
+            taxidermy,
+            intellectualProperty,
+            disposition,
+            capitalGainElection,
+            certifiedSaleReduction,
+          ].some(Boolean)
+        ) {
+          throw new Error(
+            "Owned donation, appraisal, adjusted basis and ordinary reduction must equal source ledger",
+          );
+        }
+      } catch (error) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["natural_resource_ordinary_income_reduction"],
+          message: String(error),
+        });
+      }
+    }
+    if (depreciation) {
+      try {
+        const result = calculateCharitableDepreciation(
+          item.depreciation_ordinary_income_reduction,
+        );
+        const source = result.source;
+        if (
+          item.date_acquired !== source.date_acquired ||
+          item.date_contributed !== source.date_contributed ||
+          item.donor_acquisition_description?.trim().toLowerCase() !==
+            "purchase" ||
+          item.is_vehicle === true ||
+          item.fmv !== result.fmv ||
+          item.cost_or_adjusted_basis !== result.adjusted_basis ||
+          item.deduction_claimed !== result.deduction_claimed ||
+          item.is_capital_gain_property !== result.is_capital_gain_property ||
+          item.charitable_limit_category !== result.charitable_limit_category ||
+          item.donor_ownership_review?.donor_name !== source.donor_name ||
+          item.donor_ownership_review?.donor_ssn !== source.donor_ssn ||
+          item.donor_ownership_review?.ownership_record_reference !==
+            source.purchase_record_reference ||
+          [
+            naturalResource,
+            shortTerm,
+            inventory,
+            creator,
+            manuscript,
+            unrelatedUse,
+            privateFoundation,
+            taxidermy,
+            intellectualProperty,
+            disposition,
+            capitalGainElection,
+            certifiedSaleReduction,
+          ].some(Boolean)
+        ) {
+          throw new Error(
+            "Owned donation, appraisal, adjusted basis and ordinary reduction must equal source ledger",
+          );
+        }
+      } catch (error) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["depreciation_ordinary_income_reduction"],
+          message: String(error),
+        });
+      }
     }
     if (capitalGainElection && reductionCents > 0) {
       const acquired = item.date_acquired
@@ -551,7 +717,7 @@ const sectionAItemSchema = z.object({
           "purchase" ||
         item.is_vehicle === true || item.is_capital_gain_property !== false ||
         item.charitable_limit_category !== "noncash_50" ||
-        item.fmv > 5_000 || item.cost_or_adjusted_basis === undefined ||
+        item.cost_or_adjusted_basis === undefined ||
         Math.round(item.cost_or_adjusted_basis * 100) !==
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
@@ -586,7 +752,7 @@ const sectionAItemSchema = z.object({
           "created" ||
         item.is_vehicle === true || item.is_capital_gain_property !== false ||
         item.charitable_limit_category !== "noncash_50" ||
-        item.fmv > 5_000 || item.cost_or_adjusted_basis === undefined ||
+        item.cost_or_adjusted_basis === undefined ||
         Math.round(item.cost_or_adjusted_basis * 100) !==
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
@@ -621,7 +787,7 @@ const sectionAItemSchema = z.object({
           "created" ||
         item.is_vehicle === true || item.is_capital_gain_property !== false ||
         item.charitable_limit_category !== "noncash_50" ||
-        item.fmv > 5_000 || item.cost_or_adjusted_basis === undefined ||
+        item.cost_or_adjusted_basis === undefined ||
         Math.round(item.cost_or_adjusted_basis * 100) !==
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
@@ -665,7 +831,7 @@ const sectionAItemSchema = z.object({
           "purchase" ||
         item.is_vehicle === true || item.is_capital_gain_property !== true ||
         item.charitable_limit_category !== "noncash_50" ||
-        item.fmv > 5_000 || item.cost_or_adjusted_basis === undefined ||
+        item.cost_or_adjusted_basis === undefined ||
         Math.round(item.cost_or_adjusted_basis * 100) !==
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
@@ -679,6 +845,80 @@ const sectionAItemSchema = z.object({
           path: ["unrelated_use_capital_gain_reduction"],
           message:
             "Form 8283 unrelated-use reduction needs purchased long-term tangible property, a 50% limit donee, and a basis claim below $5,000 FMV",
+        });
+      }
+    }
+    if (disposition) {
+      const review = item.contribution_year_disposition_reduction!;
+      const acquired = new Date(`${item.date_acquired}T00:00:00Z`);
+      const contribution = Date.parse(`${item.date_contributed}T00:00:00Z`);
+      const disposed = new Date(`${review.disposition_date}T00:00:00Z`);
+      const notice = new Date(
+        `${review.disposition_notice_furnished_date}T00:00:00Z`,
+      );
+      const anniversary = Number.isFinite(acquired.getTime())
+        ? Date.UTC(
+          acquired.getUTCFullYear() + 1,
+          acquired.getUTCMonth(),
+          acquired.getUTCDate(),
+        )
+        : NaN;
+      if (
+        !Number.isFinite(contribution) ||
+        !Number.isFinite(acquired.getTime()) ||
+        acquired.toISOString().slice(0, 10) !== item.date_acquired ||
+        !item.date_contributed?.startsWith("2025-") ||
+        new Date(contribution).toISOString().slice(0, 10) !==
+          item.date_contributed ||
+        contribution <= anniversary ||
+        !Number.isFinite(disposed.getTime()) ||
+        disposed.toISOString().slice(0, 10) !== review.disposition_date ||
+        !review.disposition_date.startsWith("2025-") ||
+        disposed.getTime() < contribution ||
+        !Number.isFinite(notice.getTime()) ||
+        notice.toISOString().slice(0, 10) !==
+          review.disposition_notice_furnished_date ||
+        notice.getTime() < disposed.getTime() ||
+        item.donor_acquisition_description?.trim().toLowerCase() !==
+          "purchase" ||
+        item.fmv! <= 5000 || item.cost_or_adjusted_basis === undefined ||
+        item.cost_or_adjusted_basis >= item.fmv! ||
+        item.deduction_claimed !== item.cost_or_adjusted_basis ||
+        item.is_vehicle === true || item.is_capital_gain_property !== true ||
+        item.charitable_limit_category !== "noncash_50" ||
+        review.property_description !== item.property_description ||
+        review.received_date !== item.date_contributed ||
+        review.donee_name !== item.donee_organization_name ||
+        JSON.stringify(review.donee_us_address) !==
+          JSON.stringify(item.donee_organization_us_address) ||
+        review.original_donor_name !==
+          item.donor_ownership_review?.donor_name ||
+        review.original_donor_ssn !== item.donor_ownership_review?.donor_ssn ||
+        review.purchase_record_reference !==
+          item.donor_ownership_review?.ownership_record_reference ||
+        new Set(
+            review.retained_source_documents.map((row) =>
+              row.attachment_file_name
+            ),
+          ).size !== 3 ||
+        [
+          review.purchase_record_reference,
+          review.donee_disposition_record_reference,
+          review.exempt_use_certification_inventory_reference,
+        ].some((reference) =>
+          review.retained_source_documents.filter((row) =>
+            row.source_reference === reference
+          ).length !== 1
+        ) ||
+        shortTerm || inventory || creator || manuscript || unrelatedUse ||
+        privateFoundation || taxidermy || intellectualProperty ||
+        capitalGainElection || certifiedSaleReduction
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["contribution_year_disposition_reduction"],
+          message:
+            "Contribution-year disposition reduction needs owned purchased long-term tangible property, original FMV above5000, exact original donor/donee/property/receipt and current-year sale/no-certification sources, and basis claim",
         });
       }
     }
@@ -727,7 +967,7 @@ const sectionAItemSchema = z.object({
         item.donee_organization_us_address?.zip !==
           item.private_foundation_capital_gain_reduction!
             .foundation_us_address.zip ||
-        item.fmv > 5_000 || item.cost_or_adjusted_basis === undefined ||
+        item.cost_or_adjusted_basis === undefined ||
         Math.round(item.cost_or_adjusted_basis * 100) !==
           Math.round(item.deduction_claimed * 100) ||
         item.cost_or_adjusted_basis >= item.fmv ||
@@ -773,7 +1013,7 @@ const sectionAItemSchema = z.object({
           "created" ||
         item.is_vehicle === true || item.is_capital_gain_property !== true ||
         item.charitable_limit_category !== "noncash_50" ||
-        item.fmv > 5_000 || item.cost_or_adjusted_basis === undefined ||
+        item.cost_or_adjusted_basis === undefined ||
         Math.round(costs * 100) !==
           Math.round(item.cost_or_adjusted_basis * 100) ||
         Math.round(costs * 100) !==
@@ -821,7 +1061,7 @@ const sectionAItemSchema = z.object({
           "purchase" ||
         item.is_vehicle === true || item.is_capital_gain_property !== true ||
         item.charitable_limit_category !== "noncash_50" ||
-        item.fmv > 5_000 || item.cost_or_adjusted_basis === undefined ||
+        item.cost_or_adjusted_basis === undefined ||
         Math.round(basis * 100) !==
           Math.round(item.cost_or_adjusted_basis * 100) ||
         Math.round(basis * 100) !==
@@ -847,7 +1087,8 @@ const sectionAItemSchema = z.object({
       item.unrelated_use_capital_gain_reduction !== undefined ||
       item.private_foundation_capital_gain_reduction !== undefined ||
       item.taxidermy_capital_gain_reduction !== undefined ||
-      item.intellectual_property_capital_gain_reduction !== undefined) &&
+      item.intellectual_property_capital_gain_reduction !== undefined ||
+      item.contribution_year_disposition_reduction !== undefined) &&
     (item.fmv === undefined || item.deduction_claimed === undefined)
   ) {
     ctx.addIssue({
@@ -996,7 +1237,77 @@ const ordinaryIncomeReductionSchema = z.discriminatedUnion("reason", [
 ]);
 
 // Section B — items >$5,000 each (requires qualified appraisal)
+const specialReductionDocumentSchema = z.object({
+  source_reference: z.string().trim().min(1),
+  attachment_file_name: z.string().trim().min(1),
+  pdf_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+}).strict();
+const specialReductionBase = z.object({
+  source_documents: z.array(specialReductionDocumentSchema).min(2),
+  source_documents_review: z.object({
+    reviewed_by: z.string().trim().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    property_owner_dates_basis_and_reason_match_confirmed: z.literal(true),
+  }).strict(),
+  reduction_statement_attachment_file_name: z.string().trim().min(1),
+  reduction_statement_sha256: z.string().regex(/^[a-f0-9]{64}$/),
+});
+const sectionASourceFields = sectionAItemSchema.innerType().shape;
+const specialSectionBReductionSchema = z.discriminatedUnion("reason", [
+  specialReductionBase.extend({
+    reason: z.literal("natural_resource_ordinary_income"),
+    source: charitableNaturalResourceSourceSchema,
+  }).strict(),
+  specialReductionBase.extend({
+    reason: z.literal("depreciation_ordinary_income"),
+    source: charitableDepreciationSourceSchema,
+  }).strict(),
+  specialReductionBase.extend({
+    reason: z.literal("contribution_year_disposition"),
+    source: sectionASourceFields.contribution_year_disposition_reduction
+      .unwrap(),
+  }).strict(),
+  specialReductionBase.extend({
+    reason: z.literal("donor_created_artwork"),
+    source: sectionASourceFields.creator_ordinary_income_reduction.unwrap(),
+  }).strict(),
+  specialReductionBase.extend({
+    reason: z.literal("donor_prepared_manuscript"),
+    source: sectionASourceFields.manuscript_ordinary_income_reduction.unwrap(),
+  }).strict(),
+  specialReductionBase.extend({
+    reason: z.literal("private_nonoperating_foundation"),
+    source: sectionASourceFields.private_foundation_capital_gain_reduction
+      .unwrap(),
+  }).strict(),
+  specialReductionBase.extend({
+    reason: z.literal("donor_prepared_taxidermy"),
+    source: sectionASourceFields.taxidermy_capital_gain_reduction.unwrap(),
+  }).strict(),
+]);
+
 const sectionBItemSchema = z.object({
+  donor_ownership_review: donorOwnershipReviewSchema.optional(),
+  special_fmv_reduction: specialSectionBReductionSchema.optional(),
+  unreduced_purchased_property: z.object({
+    purchase_record_attachment_file_name: z.string().trim().min(1),
+    purchase_record_review:
+      ordinaryIncomeReductionSchema.options[0].shape.purchase_record_review,
+    fmv_not_above_adjusted_basis_verified: z.literal(true),
+    donee_50_percent_limit_organization_verified: z.literal(true),
+    donee_status_record_reference: z.string().trim().min(1),
+    personal_use_non_depreciable_property_verified: z.literal(true),
+    no_other_reduction_reason_verified: z.literal(true),
+  }).strict().optional(),
+  donor_statement_source_review: z.object({
+    property_id: z.enum(["A", "B", "C"]),
+    donor_name: z.string().trim().min(1),
+    donor_ssn: z.string().regex(/^\d{9}$/),
+    signed_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    donor_signature_present: z.literal(true),
+    identified_property_appraised_at_most_500_confirmed: z.literal(true),
+    completed_before_donee_acknowledgment_confirmed: z.literal(true),
+  }).strict().optional(),
   property_description: z.string().optional(),
   property_type: z.nativeEnum(SectionBPropertyType).optional(),
   physical_condition: z.string().optional(),
@@ -1071,6 +1382,7 @@ const sectionBItemSchema = z.object({
   // The actual completed and signed Form 8283 is a separate filing artifact.
   // Names of appraiser/donee signature excerpts do not substitute for it.
   signed_form_attachment_file_name: z.string().min(1).optional(),
+  signed_form_row_identifier: z.enum(["A", "B", "C"]).optional(),
   signed_form_source_review: z.object({
     reviewed_by: z.string().trim().min(1),
     reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -1078,6 +1390,28 @@ const sectionBItemSchema = z.object({
     appraiser_signature_present: z.literal(true),
     donee_signature_present: z.literal(true),
     matches_electronic_form_confirmed: z.literal(true),
+    reviewed_form_fields: z.object({
+      row_identifier: z.enum(["A", "B", "C"]).optional(),
+      property_description: z.string().trim().min(1),
+      property_type: z.nativeEnum(SectionBPropertyType),
+      date_acquired: z.string().min(1),
+      date_contributed: z.string().min(1),
+      fmv: z.number().nonnegative(),
+      deduction_claimed: z.number().nonnegative(),
+      cost_or_adjusted_basis: z.number().nonnegative(),
+      donee_name: z.string().trim().min(1),
+      donee_ein: z.string().regex(/^\d{9}$/),
+      donee_received_date: z.string().min(1),
+      return_filer_name: z.string().trim().min(1).optional(),
+      return_filer_ssn: z.string().regex(/^\d{9}$/).optional(),
+      donor_name: z.string().trim().min(1).optional(),
+      donor_ssn: z.string().regex(/^\d{9}$/).optional(),
+      donee_us_address: usAddressSchema.optional(),
+      appraiser_name: z.string().trim().min(1).optional(),
+      appraiser_identifying_number: z.string().regex(/^\d{9}$/).optional(),
+      appraiser_us_address: usAddressSchema.optional(),
+      appraiser_signed_date: z.string().min(1).optional(),
+    }).strict().optional(),
   }).optional(),
   cost_or_adjusted_basis: z.number().nonnegative().optional(),
   // An exception vehicle above $5,000 belongs in Section B, with its own
@@ -1112,6 +1446,15 @@ const sectionBItemSchema = z.object({
       appraised_fmv_matches_confirmed: z.literal(true),
     }).optional(),
     covers_similar_item_group_confirmed: z.literal(true).optional(),
+    reviewed_property_inventory: z.array(
+      z.object({
+        property_description: z.string().trim().min(1),
+        fmv: z.number().nonnegative(),
+        date_contributed: z.string().min(1),
+        donee_ein: z.string().regex(/^\d{9}$/),
+        donor_ssn: z.string().regex(/^\d{9}$/),
+      }).strict(),
+    ).min(1).optional(),
   }).superRefine((appraisal, ctx) => {
     if (Boolean(appraisal.appraiser_ein) === Boolean(appraisal.appraiser_ssn)) {
       ctx.addIssue({
@@ -1133,8 +1476,219 @@ const sectionBItemSchema = z.object({
   // does not by itself cap the deduction at basis.
   is_capital_gain_property: z.boolean().optional(),
 }).superRefine((item, ctx) => {
-  validateCharitableLimitCategory(item, ctx);
+  if (item.unreduced_purchased_property) {
+    const acquired = new Date(`${item.date_acquired}T00:00:00Z`);
+    const contributed = Date.parse(`${item.date_contributed}T00:00:00Z`);
+    const validDate = Number.isFinite(acquired.getTime()) &&
+      Number.isFinite(contributed);
+    if (
+      !validDate ||
+      acquired.toISOString().slice(0, 10) !== item.date_acquired ||
+      contributed < acquired.getTime() ||
+      item.donor_acquisition_description?.trim().toLowerCase() !== "purchase" ||
+      item.deduction_claimed !== item.fmv || item.fmv <= 0 ||
+      item.cost_or_adjusted_basis === undefined ||
+      item.cost_or_adjusted_basis < item.fmv ||
+      item.is_capital_gain_property !== false ||
+      item.charitable_limit_category !== "noncash_50" ||
+      ![
+        SectionBPropertyType.Equipment,
+        SectionBPropertyType.Collectibles,
+        SectionBPropertyType.ArtUnder20000,
+        SectionBPropertyType.ArtAtLeast20000,
+      ].includes(item.property_type!) ||
+      item.ordinary_income_reduction ||
+      item.unrelated_use_capital_gain_reduction || item.special_fmv_reduction ||
+      item.capital_gain_reduction_election_confirmed ||
+      !item.donor_ownership_review ||
+      !item.signed_form_source_review?.reviewed_form_fields ||
+      !item.qualified_appraisal?.full_appraisal_source_review ||
+      item.donee_acknowledgment?.unrelated_use !== false
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["unreduced_purchased_property"],
+        message:
+          "Unreduced SectionB purchase needs owned nondepreciable property with no gain at hypothetical FMV sale, FMV no higher than retained basis, complete appraisal/signedform and no competing reduction",
+      });
+    }
+  }
+  const special = item.special_fmv_reduction;
+  if (special) {
+    const expectedType = special.reason === "natural_resource_ordinary_income"
+      ? [SectionBPropertyType.OtherRealEstate]
+      : special.reason === "depreciation_ordinary_income"
+      ? [SectionBPropertyType.Equipment, SectionBPropertyType.OtherRealEstate]
+      : special.reason === "contribution_year_disposition"
+      ? [
+        SectionBPropertyType.ArtUnder20000,
+        SectionBPropertyType.ArtAtLeast20000,
+        SectionBPropertyType.Equipment,
+        SectionBPropertyType.Collectibles,
+      ]
+      : special.reason === "donor_created_artwork"
+      ? [
+        SectionBPropertyType.ArtUnder20000,
+        SectionBPropertyType.ArtAtLeast20000,
+      ]
+      : special.reason === "donor_prepared_manuscript" ||
+          special.reason === "donor_prepared_taxidermy"
+      ? [SectionBPropertyType.Other]
+      : [
+        SectionBPropertyType.ArtUnder20000,
+        SectionBPropertyType.ArtAtLeast20000,
+        SectionBPropertyType.Collectibles,
+        SectionBPropertyType.Equipment,
+        SectionBPropertyType.OtherRealEstate,
+        SectionBPropertyType.Securities,
+      ];
+    const sourceProperty = specialSectionBAsSectionA(item);
+    const valid = sectionAItemSchema.safeParse(sourceProperty);
+    const references = special.reason === "natural_resource_ordinary_income"
+      ? [
+        special.source.purchase_record_reference,
+        special.source.annual_account_ledger_reference,
+        special.source.property_use_record_reference,
+      ]
+      : special.reason === "depreciation_ordinary_income"
+      ? [
+        special.source.purchase_record_reference,
+        special.source.annual_depreciation_ledger_reference,
+        special.source.business_use_and_retirement_record_reference,
+      ]
+      : Object.entries(special.source).filter(([key]) =>
+        key.endsWith("_reference")
+      ).map(([, value]) => value);
+    if (
+      !valid.success || !item.property_type ||
+      (special.reason === "natural_resource_ordinary_income" &&
+        JSON.stringify(special.source.retained_source_documents) !==
+          JSON.stringify(special.source_documents)) ||
+      (special.reason === "depreciation_ordinary_income" &&
+        JSON.stringify(special.source.retained_source_documents) !==
+          JSON.stringify(special.source_documents)) ||
+      (special.reason === "contribution_year_disposition" &&
+        (special.source.donee_ein !== item.donee_acknowledgment?.ein ||
+          JSON.stringify(special.source.retained_source_documents) !==
+            JSON.stringify(special.source_documents))) ||
+      (special.reason === "depreciation_ordinary_income" &&
+        ((item.property_type === SectionBPropertyType.Equipment) !==
+          (special.source.components.length === 1 &&
+            special.source.components[0].method ===
+              "ads_5_year_sl_hy_computer"))) ||
+      !expectedType.includes(item.property_type) ||
+      item.ordinary_income_reduction ||
+      item.unrelated_use_capital_gain_reduction ||
+      item.capital_gain_reduction_election_confirmed ||
+      item.donee_acknowledgment?.received_date !== item.date_contributed ||
+      item.donee_acknowledgment?.unrelated_use !== false ||
+      !item.donor_ownership_review ||
+      !item.signed_form_source_review?.reviewed_form_fields ||
+      !item.qualified_appraisal?.full_appraisal_source_review ||
+      references.length !== special.source_documents.length ||
+      new Set(special.source_documents.map((row) => row.source_reference))
+          .size !== references.length ||
+      references.some((reference) =>
+        !special.source_documents.some((row) =>
+          row.source_reference === reference
+        )
+      ) ||
+      new Set(special.source_documents.map((row) => row.attachment_file_name))
+          .size !== special.source_documents.length
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["special_fmv_reduction"],
+        message:
+          "SectionB special reduction needs complete owned source records, correct property/donee facts, reviewed appraisal/signed form and basis computation",
+      });
+    }
+  }
+  const donorStatement = item.donor_statement_source_review;
+  if (
+    (item.fmv <= 500 && !donorStatement) || (donorStatement && (
+      item.fmv > 500 ||
+      donorStatement.property_id !== (item.signed_form_row_identifier ?? "A") ||
+      donorStatement.donor_name !== item.donor_ownership_review?.donor_name ||
+      donorStatement.donor_ssn !== item.donor_ownership_review?.donor_ssn ||
+      donorStatement.signed_date >
+        (item.donee_acknowledgment?.received_date ?? "")
+    ))
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["donor_statement_source_review"],
+      message:
+        "Section B property appraised at most $500 needs the owned, signed Part III statement before donee acknowledgment",
+    });
+  }
+  const facts = item.signed_form_source_review?.reviewed_form_fields;
+  if (
+    facts &&
+    (facts.row_identifier !== undefined &&
+        facts.row_identifier !== (item.signed_form_row_identifier ?? "A") ||
+      facts.property_description !== item.property_description ||
+      facts.property_type !== item.property_type ||
+      facts.date_acquired !== item.date_acquired ||
+      facts.date_contributed !== item.date_contributed ||
+      facts.fmv !== item.fmv ||
+      facts.deduction_claimed !== item.deduction_claimed ||
+      facts.cost_or_adjusted_basis !== item.cost_or_adjusted_basis ||
+      facts.donee_name !== item.donee_acknowledgment?.organization_name ||
+      facts.donee_ein !== item.donee_acknowledgment?.ein ||
+      facts.donee_received_date !== item.donee_acknowledgment?.received_date)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["signed_form_source_review", "reviewed_form_fields"],
+      message:
+        "Form 8283 entered gift differs from reviewed completed signed-form fields",
+    });
+  }
+
+  if (
+    facts && (
+      (facts.donor_name !== undefined &&
+        facts.donor_name !== item.donor_ownership_review?.donor_name) ||
+      (facts.donor_ssn !== undefined &&
+        facts.donor_ssn !== item.donor_ownership_review?.donor_ssn) ||
+      (facts.donee_us_address !== undefined &&
+        JSON.stringify(facts.donee_us_address) !==
+          JSON.stringify(item.donee_acknowledgment?.us_address)) ||
+      (facts.appraiser_name !== undefined &&
+        facts.appraiser_name !==
+          `${item.qualified_appraisal?.appraiser_first_name} ${item.qualified_appraisal?.appraiser_last_name}`) ||
+      (facts.appraiser_identifying_number !== undefined &&
+        facts.appraiser_identifying_number !==
+          (item.qualified_appraisal?.appraiser_ein ??
+            item.qualified_appraisal?.appraiser_ssn)) ||
+      (facts.appraiser_us_address !== undefined &&
+        JSON.stringify(facts.appraiser_us_address) !==
+          JSON.stringify(item.qualified_appraisal?.us_address)) ||
+      (facts.appraiser_signed_date !== undefined &&
+        facts.appraiser_signed_date !== item.qualified_appraisal?.signed_date)
+    )
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["signed_form_source_review", "reviewed_form_fields"],
+      message:
+        "Reviewed signed Form8283 donor, donee address or appraiser differs from source",
+    });
+  }
+  validateCharitableLimitCategory(
+    special ? specialSectionBAsSectionA(item) : item,
+    ctx,
+  );
   const ordinaryReduction = item.ordinary_income_reduction;
+  if (ordinaryReduction?.reason === "purchased_inventory") {
+    ctx.addIssue({
+      code: "custom",
+      path: ["ordinary_income_reduction"],
+      message:
+        "Inventory described in section1221(a)(1) belongs in Section A regardless of value",
+    });
+  }
   const unrelatedReduction = item.unrelated_use_capital_gain_reduction;
   if (unrelatedReduction) {
     const acquired =
@@ -1160,9 +1714,9 @@ const sectionBItemSchema = z.object({
       (item.property_type === SectionBPropertyType.Equipment &&
         unrelatedReduction.purchase_record_review
             .personal_use_non_depreciable_equipment_confirmed !== true) ||
-      item.fmv <= 5_000 || item.fmv > 500_000 ||
+      item.fmv <= 0 || item.fmv > 500_000 ||
       (item.property_type === SectionBPropertyType.ArtUnder20000 &&
-        item.fmv >= 20_000) ||
+        item.deduction_claimed >= 20_000) ||
       (item.property_type === SectionBPropertyType.ArtAtLeast20000 &&
         item.cost_or_adjusted_basis !== undefined &&
         item.cost_or_adjusted_basis < 20_000) ||
@@ -1176,10 +1730,11 @@ const sectionBItemSchema = z.object({
       item.is_capital_gain_property !== true ||
       item.charitable_limit_category !== "noncash_50" ||
       item.donee_acknowledgment?.unrelated_use !== true ||
+      item.donee_acknowledgment?.received_date !== item.date_contributed ||
       item.capital_gain_reduction_election_confirmed === true ||
       ordinaryReduction !== undefined ||
       item.cost_or_adjusted_basis === undefined ||
-      item.cost_or_adjusted_basis <= 5_000 ||
+      item.cost_or_adjusted_basis <= 0 ||
       item.cost_or_adjusted_basis >= item.fmv ||
       Math.round(item.deduction_claimed * 100) !==
         Math.round(item.cost_or_adjusted_basis * 100) ||
@@ -1231,7 +1786,7 @@ const sectionBItemSchema = z.object({
       (item.property_type !== SectionBPropertyType.Securities &&
         item.nonpublic_security !== undefined) ||
       (item.property_type === SectionBPropertyType.ArtUnder20000 &&
-        item.fmv >= 20_000) ||
+        item.deduction_claimed >= 20_000) ||
       (item.property_type === SectionBPropertyType.ArtAtLeast20000 &&
         item.deduction_claimed < 20_000) ||
       item.capital_gain_reduction_election_confirmed === true ||
@@ -1251,7 +1806,7 @@ const sectionBItemSchema = z.object({
       item.is_capital_gain_property !== false ||
       item.charitable_limit_category !== "noncash_50" ||
       item.cost_or_adjusted_basis === undefined ||
-      item.cost_or_adjusted_basis <= 5_000 ||
+      item.cost_or_adjusted_basis <= 0 ||
       item.cost_or_adjusted_basis >= item.fmv ||
       Math.round(
           ordinaryReduction.gain_removed * 100,
@@ -1352,7 +1907,9 @@ const sectionBItemSchema = z.object({
   }
   if (item.property_type === SectionBPropertyType.ArtAtLeast20000) {
     if (
-      item.deduction_claimed < 20_000 || item.deduction_claimed > 500_000 ||
+      item.deduction_claimed < 20_000 ||
+      (item.deduction_claimed > 500_000 &&
+        item.special_fmv_reduction?.reason !== "donor_created_artwork") ||
       !item.qualified_appraisal?.attachment_file_name ||
       !item.qualified_appraisal.full_appraisal_source_review
     ) {
@@ -1365,7 +1922,10 @@ const sectionBItemSchema = z.object({
   }
   if (item.deduction_claimed > 500_000) {
     if (
-      !item.property_type || !SUPPORTED_HIGH_VALUE_TYPES.has(item.property_type)
+      !item.property_type ||
+      (!SUPPORTED_HIGH_VALUE_TYPES.has(item.property_type) &&
+        !(item.property_type === SectionBPropertyType.ArtAtLeast20000 &&
+          item.special_fmv_reduction?.reason === "donor_created_artwork"))
     ) {
       ctx.addIssue({
         code: "custom",
@@ -1543,22 +2103,6 @@ export const inputSchema = z.object({
       index,
     })),
   ].filter(({ item }) => (item.deduction_claimed ?? item.fmv ?? 0) > 0);
-  if (
-    sectionA.some((item) =>
-      item.private_foundation_capital_gain_reduction !== undefined ||
-      item.taxidermy_capital_gain_reduction !== undefined ||
-      item.intellectual_property_capital_gain_reduction !== undefined
-    ) &&
-    (positive.length !== 1 || sectionB.length > 0 ||
-      input.carryover_evidence !== undefined)
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["section_a_items"],
-      message:
-        "Form 8283 special capital-gain reduction supports one current Section A gift without a Section B item",
-    });
-  }
   if (positive.length > 1) {
     for (const { item, section, index } of positive) {
       if (!item.similar_item_group) {
@@ -1571,6 +2115,93 @@ export const inputSchema = z.object({
       }
     }
   }
+  for (const rows of groupSectionBSourceForms(sectionB)) {
+    if (rows.length === 1) continue;
+    const first = rows[0];
+    const common = (item: typeof first) => ({
+      donee: item.donee_acknowledgment,
+      property_type: item.property_type,
+      similar_item_group: normalizeSimilarItemGroup(
+        item.similar_item_group ?? "",
+      ),
+      appraiser_name: [
+        item.qualified_appraisal?.appraiser_first_name,
+        item.qualified_appraisal?.appraiser_last_name,
+      ],
+      appraiser_id: item.qualified_appraisal?.appraiser_ein ??
+        item.qualified_appraisal?.appraiser_ssn,
+      appraiser_address: item.qualified_appraisal?.us_address,
+      appraiser_signed_date: item.qualified_appraisal?.signed_date,
+      appraiser_signature_file: item.qualified_appraisal
+        ?.signature_attachment_file_name,
+      signed_sha256: item.signed_form_source_review?.pdf_sha256,
+      return_name: item.signed_form_source_review?.reviewed_form_fields
+        ?.return_filer_name,
+      return_ssn: item.signed_form_source_review?.reviewed_form_fields
+        ?.return_filer_ssn,
+    });
+    if (
+      rows.length > 3 ||
+      rows.some((item, index) =>
+        item.signed_form_row_identifier !== "ABC"[index] ||
+        item.signed_form_source_review?.reviewed_form_fields?.row_identifier !==
+          item.signed_form_row_identifier ||
+        !item.donor_ownership_review ||
+        !item.signed_form_source_review?.reviewed_form_fields ||
+        JSON.stringify(common(item)) !== JSON.stringify(common(first))
+      )
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["section_b_items"],
+        message:
+          "Shared completed signed Form8283 needs distinct reviewed ABC rows with same donee/type/appraiser/filer/signature facts",
+      });
+    }
+  }
+  const appraisalFiles = new Set(
+    sectionB.map((item) => item.qualified_appraisal?.attachment_file_name)
+      .filter(Boolean),
+  );
+  for (const file of appraisalFiles) {
+    const rows = sectionB.filter((item) =>
+      item.qualified_appraisal?.attachment_file_name === file
+    );
+    for (const [index, item] of sectionB.entries()) {
+      if (
+        !item.qualified_appraisal ||
+        item.qualified_appraisal.attachment_file_name !== file
+      ) continue;
+      const reviewed = item.qualified_appraisal.reviewed_property_inventory;
+      if (rows.length < 2 && !reviewed) continue;
+      const expected = rows.map((row) => ({
+        property_description: row.property_description,
+        fmv: row.fmv,
+        date_contributed: row.date_contributed,
+        donee_ein: row.donee_acknowledgment?.ein,
+        donor_ssn: row.donor_ownership_review?.donor_ssn,
+      }));
+      if (
+        item.qualified_appraisal.covers_similar_item_group_confirmed !== true ||
+        rows.some((row) =>
+          normalizeSimilarItemGroup(row.similar_item_group ?? "") !==
+            normalizeSimilarItemGroup(item.similar_item_group ?? "")
+        ) ||
+        JSON.stringify(reviewed) !== JSON.stringify(expected) ||
+        rows.some((row) =>
+          row.qualified_appraisal?.full_appraisal_source_review?.pdf_sha256 !==
+            item.qualified_appraisal?.full_appraisal_source_review?.pdf_sha256
+        )
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["section_b_items", index, "qualified_appraisal"],
+          message:
+            "Shared qualified appraisal needs exact same-property donor/donee/date/FMV inventory and reviewed bytes",
+        });
+      }
+    }
+  }
   const groupTotals = similarItemGroupTotals(input);
   for (const [index, item] of sectionA.entries()) {
     const amount = item.deduction_claimed ?? item.fmv ?? 0;
@@ -1579,7 +2210,11 @@ export const inputSchema = z.object({
       ? groupTotals.get(normalizeSimilarItemGroup(item.similar_item_group)) ??
         amount
       : amount;
-    if (groupTotal > 5_000 && !item.vehicle_sale_acknowledgment) {
+    if (
+      groupTotal > 5_000 && !item.vehicle_sale_acknowledgment &&
+      !item.intellectual_property_capital_gain_reduction &&
+      !item.inventory_ordinary_income_reduction
+    ) {
       ctx.addIssue({
         code: "custom",
         path: ["section_a_items", index, "similar_item_group"],
@@ -1604,7 +2239,9 @@ export const inputSchema = z.object({
     if (groupTotal > 500_000) {
       if (
         !item.property_type ||
-        !SUPPORTED_HIGH_VALUE_TYPES.has(item.property_type)
+        (!SUPPORTED_HIGH_VALUE_TYPES.has(item.property_type) &&
+          !(item.property_type === SectionBPropertyType.ArtAtLeast20000 &&
+            item.special_fmv_reduction?.reason === "donor_created_artwork"))
       ) {
         ctx.addIssue({
           code: "custom",
@@ -1724,6 +2361,9 @@ type ClassifiedItem = {
   >;
   is_capital_gain_property?: boolean;
   capital_gain_reduction_election_confirmed?: true;
+  contribution_year_disposition_reduction?: unknown;
+  natural_resource_ordinary_income_reduction?: unknown;
+  depreciation_ordinary_income_reduction?: unknown;
   unrelated_use_capital_gain_reduction?: unknown;
   taxidermy_capital_gain_reduction?: unknown;
   intellectual_property_capital_gain_reduction?: unknown;
@@ -1776,6 +2416,7 @@ function validateCharitableLimitCategory(
       item.cost_or_adjusted_basis === item.fmv && claimed === item.fmv;
     if (
       (!item.capital_gain_reduction_election_confirmed &&
+        !item.contribution_year_disposition_reduction &&
         !item.unrelated_use_capital_gain_reduction &&
         !item.taxidermy_capital_gain_reduction &&
         !item.intellectual_property_capital_gain_reduction &&
@@ -1803,35 +2444,56 @@ function scheduleAOutput(input: F8283Input): NodeOutput[] {
     if (!item.charitable_limit_category) {
       throw new Error("Form 8283 contribution lacks AGI-limit category");
     }
+    const classified =
+      "special_fmv_reduction" in item && item.special_fmv_reduction
+        ? specialSectionBAsSectionA(item as SectionBItem)
+        : item;
     return [{
+      ...(("special_fmv_reduction" in item &&
+          item.special_fmv_reduction?.reason ===
+            "natural_resource_ordinary_income" &&
+          item.special_fmv_reduction.source.kind === "producing_mining_617")
+        ? {
+          producing_mining_charitable_amt_source:
+            item.special_fmv_reduction.source,
+        }
+        : {}),
       source: `Form 8283 item ${index + 1}: ${
         item.property_description ?? "property"
       }`,
       amount,
       category: item.charitable_limit_category,
       contribution_id: `f8283:${index + 1}`,
-      is_capital_gain_property: item.is_capital_gain_property,
-      original_fmv: item.fmv,
-      adjusted_basis: item.cost_or_adjusted_basis,
+      is_capital_gain_property: classified.is_capital_gain_property,
+      original_fmv: classified.fmv,
+      adjusted_basis: classified.cost_or_adjusted_basis,
       capital_gain_reduction_election_confirmed:
-        item.capital_gain_reduction_election_confirmed,
+        classified.capital_gain_reduction_election_confirmed,
+      contribution_year_disposition_reduction_confirmed:
+        !("contribution_year_disposition_reduction" in classified) ||
+          classified.contribution_year_disposition_reduction === undefined
+          ? undefined
+          : true as const,
       unrelated_use_capital_gain_reduction_confirmed:
-        item.unrelated_use_capital_gain_reduction === undefined
+        classified.unrelated_use_capital_gain_reduction === undefined
           ? undefined
           : true as const,
       private_foundation_capital_gain_reduction_confirmed:
-        !("private_foundation_capital_gain_reduction" in item) ||
-          item.private_foundation_capital_gain_reduction === undefined
+        !("private_foundation_capital_gain_reduction" in classified) ||
+          classified.private_foundation_capital_gain_reduction === undefined
           ? undefined
           : true as const,
       taxidermy_capital_gain_reduction_confirmed:
-        !("taxidermy_capital_gain_reduction" in item) ||
-          item.taxidermy_capital_gain_reduction === undefined
-          ? undefined
-          : true as const,
+        (("taxidermy_capital_gain_reduction" in classified &&
+            classified.taxidermy_capital_gain_reduction !== undefined) ||
+            ("special_fmv_reduction" in classified &&
+              classified.special_fmv_reduction?.reason ===
+                "donor_prepared_taxidermy"))
+          ? true as const
+          : undefined,
       intellectual_property_capital_gain_reduction_confirmed:
-        !("intellectual_property_capital_gain_reduction" in item) ||
-          item.intellectual_property_capital_gain_reduction === undefined
+        !("intellectual_property_capital_gain_reduction" in classified) ||
+          classified.intellectual_property_capital_gain_reduction === undefined
           ? undefined
           : true as const,
     }];
@@ -1856,3 +2518,59 @@ class F8283Node extends TaxNode<typeof inputSchema> {
 }
 
 export const f8283 = new F8283Node();
+
+export function specialSectionBAsSectionA(item: SectionBItem): SectionAItem {
+  const review = item.special_fmv_reduction;
+  const sources = review?.reason === "natural_resource_ordinary_income"
+    ? { natural_resource_ordinary_income_reduction: review.source }
+    : review?.reason === "depreciation_ordinary_income"
+    ? { depreciation_ordinary_income_reduction: review.source }
+    : review?.reason === "contribution_year_disposition"
+    ? { contribution_year_disposition_reduction: review.source }
+    : review?.reason === "donor_created_artwork"
+    ? { creator_ordinary_income_reduction: review.source }
+    : review?.reason === "donor_prepared_manuscript"
+    ? { manuscript_ordinary_income_reduction: review.source }
+    : review?.reason === "private_nonoperating_foundation"
+    ? { private_foundation_capital_gain_reduction: review.source }
+    : review?.reason === "donor_prepared_taxidermy"
+    ? { taxidermy_capital_gain_reduction: review.source }
+    : {};
+  return {
+    donor_ownership_review: item.donor_ownership_review,
+    property_description: item.property_description,
+    date_acquired: item.date_acquired,
+    date_contributed: item.date_contributed,
+    donor_acquisition_description: item.donor_acquisition_description,
+    fmv: item.fmv,
+    deduction_claimed: item.deduction_claimed,
+    cost_or_adjusted_basis: item.cost_or_adjusted_basis,
+    charitable_limit_category: item.charitable_limit_category,
+    is_capital_gain_property: item.is_capital_gain_property,
+    donee_organization_name: item.donee_acknowledgment?.organization_name,
+    donee_organization_us_address: item.donee_acknowledgment?.us_address,
+    fmv_method: FMVMethod.Appraisal,
+    ...sources,
+  };
+}
+
+/** Copies follow actual signed-form references; a new donee never shares a
+ * Section B document merely because amount or appraiser happens to match. */
+export function groupSectionBSourceForms(
+  items: readonly SectionBItem[],
+): SectionBItem[][] {
+  const groups = new Map<string, SectionBItem[]>();
+  items.forEach((item, index) => {
+    const key = item.signed_form_attachment_file_name ?? `unreviewed:${index}`;
+    groups.set(key, [...groups.get(key) ?? [], item]);
+  });
+  return [...groups.values()].map((rows) =>
+    rows.length > 1
+      ? rows.toSorted((a, b) =>
+        (a.signed_form_row_identifier ?? "A").localeCompare(
+          b.signed_form_row_identifier ?? "A",
+        )
+      )
+      : rows
+  );
+}

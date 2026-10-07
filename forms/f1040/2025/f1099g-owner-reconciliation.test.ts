@@ -81,6 +81,34 @@ Deno.test("one issued 1099-G reference without an account cannot replay changed 
   }
 });
 
+Deno.test("one missing payer TIN cannot split duplicate 1099-G income in native or PDF", () => {
+  const pending = {
+    f1099g: {
+      f1099gs: [
+        {
+          payer_name: "State Agency",
+          payer_tin: "123456789",
+          recipient_tin: "111223333",
+          box_1_unemployment: 500,
+        },
+        {
+          payer_name: " state   AGENCY ",
+          recipient_tin: "111223333",
+          box_1_unemployment: 600,
+        },
+      ],
+    },
+  };
+  const reason =
+    "1099-G has multiple positive payer copies without account or issued source reference";
+  assertThrows(() => irs1040.build(filed, { pending }), Error, reason);
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(filed, pending),
+    Error,
+    reason,
+  );
+});
+
 Deno.test("joint spouse 1099-G belongs on MFJ return only", () => {
   const source = unemployment("444556666");
   const joint = {

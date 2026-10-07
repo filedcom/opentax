@@ -1,5 +1,5 @@
 import { assertEquals, assertRejects } from "@std/assert";
-import { PDFDocument } from "pdf-lib";
+import { w2gPayerCopyFixture } from "../w2g_payer_copy.fixture.ts";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { registry } from "../registry.ts";
@@ -33,19 +33,11 @@ Deno.test("prepared PDF rechecks W-2G payer-copy content after attachment digest
   ) ?? [];
   if (!projected) throw new Error("Missing W-2G copy projection");
 
-  async function issuedCopy(withheld: number): Promise<Uint8Array> {
-    const pdf = await PDFDocument.create();
-    pdf.addPage([612, 792]);
-    for (const field of w2gPdf.fields) {
-      if (field.kind !== "text" || field.domainKey === "payer_phone") continue;
-      const value = field.domainKey === "box4_federal_withheld"
-        ? withheld
-        : projected[field.domainKey];
-      pdf.getForm().createTextField(field.pdfField).setText(
-        String(value ?? ""),
-      );
-    }
-    return pdf.save();
+  function issuedCopy(withheld: number): Promise<Uint8Array> {
+    return w2gPayerCopyFixture({
+      ...projected,
+      box4_federal_withheld: withheld,
+    });
   }
 
   const fileName = "IssuedW2G.pdf";

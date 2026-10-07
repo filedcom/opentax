@@ -116,7 +116,20 @@ export const rowSchema = z.object({
   }
 });
 
-export const inputSchema = z.object({ rows: z.array(rowSchema).min(1) });
+export const inputSchema = z.object({ rows: z.array(rowSchema).min(1) })
+  .superRefine((input, ctx) => {
+    const creditLines = new Set<string>();
+    for (const [index, row] of input.rows.entries()) {
+      if (creditLines.has(row.credit_line)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["rows", index, "credit_line"],
+          message: "Form 4255 supports one staged row per credit line",
+        });
+      }
+      creditLines.add(row.credit_line);
+    }
+  });
 export type F4255Input = z.infer<typeof inputSchema>;
 export type F4255Row = z.infer<typeof rowSchema>;
 

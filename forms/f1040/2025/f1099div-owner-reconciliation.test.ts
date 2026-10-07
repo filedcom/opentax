@@ -106,3 +106,26 @@ Deno.test("capital-gain-only and tax-exempt 1099-DIV copies require owners", () 
     );
   }
 });
+
+Deno.test("native and PDF exports reject a corrected DIV copy with a missing payer TIN", () => {
+  const issued = {
+    ...retained("111223333").f1099div.f1099divs[0],
+    payerName: "Fund  Company",
+    account_number: "FUND-1",
+  };
+  const corrected = {
+    ...issued,
+    payerName: " fund company ",
+    payerTin: undefined,
+    source_document_reference: "div-corrected-copy",
+    box1a: 150,
+  };
+  const pending = { f1099div: { f1099divs: [issued, corrected] } };
+  const message = "repeats the same payer, recipient, and account";
+  assertThrows(() => irs1040.build(filed, { pending }), Error, message);
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(filed, pending),
+    Error,
+    message,
+  );
+});

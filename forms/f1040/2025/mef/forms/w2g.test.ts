@@ -74,6 +74,29 @@ Deno.test("positive non-withheld W-2G belongs to the taxpayer or joint spouse", 
   );
 });
 
+Deno.test("non-withheld winnings and withholding claims need a TY2025 source year", () => {
+  for (
+    const row of [
+      { ...issued, calendar_year: undefined, box4_federal_withheld: 0 },
+      { ...issued, calendar_year: undefined, box1_winnings: 0 },
+    ]
+  ) {
+    assertThrows(
+      () => assertPositiveW2GRecipient({ w2gs: [row] }, filer),
+      Error,
+      "issued 2025 tax year",
+    );
+  }
+  assertThrows(
+    () =>
+      assertPositiveW2GRecipient({
+        w2gs: [{ ...issued, box1_winnings: 0, box9_winner_tin: "999-88-7777" }],
+      }, filer),
+    Error,
+    "winner name, SSN, and address",
+  );
+});
+
 Deno.test("withheld W-2G emits one native document in TY2025 order", () => {
   const xml = w2g.build({ w2gs: [issued, { box1_winnings: 0 }] }, context);
   assertEquals(xml.length, 1);

@@ -22,7 +22,11 @@ decreases** for multiple section 732 properties in both nonliquidating and
 liquidating distributions, using explicit class, partnership basis, FMV,
 partner basis, and a section 732(c) workpaper reference. The property totals
 must match line 10, and the same source reaches native XML and PDF. Positive
-and tamper fixtures are authored for the later bulk validation pass.
+and tamper fixtures pass focused checks. A graph-driven full-return case for
+the IRS instructions' liquidating Example 2 also passes local TY2025 v5.4 XSD:
+$750 outside basis less $100 cash leaves $650, allocated $100 to inventory,
+$440 to Asset X, and $110 to Asset Y. An offsetting $1 property-basis tamper
+rejects through the full return graph.
 
 The workpaper reference and K-1 property amounts are caller supplied; retained
 source bytes and accepted K-1 provenance are not yet bound. Marketable

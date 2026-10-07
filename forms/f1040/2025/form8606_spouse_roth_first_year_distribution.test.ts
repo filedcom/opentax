@@ -1,4 +1,9 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { FilingStatus } from "../nodes/types.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
 import { f1040_2025 } from "./index.ts";
@@ -37,6 +42,7 @@ const evidence = {
     owner_ssn: "999887777",
     custodian_ein: "123456789",
     roth_ira_confirmed: true as const,
+    roth_sep_or_simple_ira: false as const,
     box10_roth_ira_contributions: 5_000,
     box2_rollover_contributions: 0 as const,
     box3_roth_conversion_amount: 0 as const,
@@ -59,11 +65,12 @@ function filedReturn() {
     f1099r: [{
       payer_name: "IRA Custodian",
       payer_ein: "123456789",
+      recipient_ssn: "999-88-7777",
       source_document_reference: evidence.form1099r_source_document_reference,
       box1_gross_distribution: 7_000,
       box2b_not_determined: true,
       box7_distribution_code: "J",
-      box7_ira_simple_indicator: true,
+      box7_ira_simple_indicator: false,
       box13_date_of_payment: "2025-09-01",
       ts: "S",
       exclude_8606_roth: true,
@@ -87,6 +94,7 @@ Deno.test("spouse-owned first-year Roth distribution keeps one owner through For
   assertEquals(ownerForms[0].owner, "S");
   assertEquals(ownerForms[0].early_distribution, 2_000);
   const xml = form8606.build(pending.form8606, { filer, pending });
+  assert(typeof xml === "string");
   assertStringIncludes(
     xml,
     "<Form8606IRANamelineTxt>Blair Saver</Form8606IRANamelineTxt>",
@@ -111,6 +119,8 @@ Deno.test("spouse Roth Form 8606 rejects changed owner, source, early tax, and f
   const item = (pending.f1099r.f1099rs as Record<string, unknown>[])[0];
   const altered = [
     { f1099r: { f1099rs: [{ ...item, ts: "T" }] } },
+    { f1099r: { f1099rs: [{ ...item, recipient_ssn: "111-22-3333" }] } },
+    { f1099r: { f1099rs: [{ ...item, recipient_ssn: undefined }] } },
     {
       f1099r: {
         f1099rs: [{

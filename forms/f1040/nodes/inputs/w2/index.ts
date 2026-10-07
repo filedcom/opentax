@@ -1,3 +1,5 @@
+import { ownerIdentitySchema } from "../../intermediate/forms/schedule_se/owner-calculation.ts";
+import { inputSchema as patronReviewSchema } from "../qbi_patron/schema.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -22,6 +24,7 @@ import { ira_deduction_worksheet } from "../../intermediate/worksheets/ira_deduc
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import { schedule_se } from "../../intermediate/forms/schedule_se/index.ts";
+import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { scheduleA as schedule_a } from "../schedule_a/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
@@ -122,6 +125,8 @@ export const w2ItemSchema = z.object({
   source_document_reference: z.string().trim().min(1).optional().describe(
     "Issued W-2 copy reference for reviewed cross-form income inclusions",
   ),
+  schedule_j_nonfarm_wage_source_document_id: z.string().trim().min(1)
+    .optional(),
   nonstandard_document_review: z.object({
     kind: z.enum(["altered", "handwritten", "typed"]),
     source_document_reference: z.string().trim().min(1),
@@ -228,6 +233,7 @@ export const w2ItemSchema = z.object({
   box14b_tipped_code: z.string().regex(/^\d{3}$/).optional().describe(
     "Treasury Tipped Occupation Code",
   ),
+  box20_locality_name: z.string().trim().min(1).optional(),
   box15_state: z.string().optional().describe("State abbreviation"),
   box16_state_wages: z.number().nonnegative().optional().describe(
     "State wages, tips, etc.",
@@ -261,8 +267,22 @@ export const w2ItemSchema = z.object({
 
 // Node inputSchema — receives all W-2s for this return as a single array.
 export const inputSchema = z.object({
-  w2s: z.array(w2ItemSchema).min(1).describe("All W-2 forms for this return"),
+  w2s: z.array(w2ItemSchema).default([]).describe("Ordinary issued W-2 forms"),
+  substitute_w2s: z.array(w2ItemSchema).optional(),
   f8958_allocation: form8958InputSchema.optional(),
+  patron_filing_review: patronReviewSchema.optional(),
+  owner_identity: ownerIdentitySchema.optional(),
+}).transform(({ substitute_w2s, ...input }, ctx) => {
+  const w2s = [...input.w2s, ...(substitute_w2s ?? [])];
+  if (w2s.length === 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "At least one source is required",
+    });
+  }
+  return { ...input, w2s } as Omit<typeof input, "substitute_w2s"> & {
+    substitute_w2s?: z.infer<typeof w2ItemSchema>[];
+  };
 });
 
 type F1040Input = z.infer<typeof f1040.inputSchema>;
@@ -706,7 +726,37 @@ function combatPayFields(w2s: W2Items): F1040Input {
   return total > 0 ? { line1i_combat_pay: total } : {};
 }
 
-function excessSsOutput(w2s: W2Items, ssTaxPerEmployer: number): NodeOutput[] {
+function excessSsOutput(
+  w2s: W2Items,
+  ssTaxPerEmployer: number,
+  ssWageBase: number,
+): NodeOutput[] {
+  // Joint filers each retain their own wage base; distinct employer sources
+  // are necessary for an excess credit. Legacy unidentified calculations
+  // remain subject to the stricter issued-source export reconciliation.
+  if (w2s.every((row) => row.employee_ssn && row.employer_ein)) {
+    const owners = new Map<
+      string,
+      { employers: Set<string>; wages: number; withheld: number }
+    >();
+    for (const row of w2s) {
+      const owner = row.employee_ssn!.replace(/\D/g, "");
+      const group = owners.get(owner) ??
+        { employers: new Set<string>(), wages: 0, withheld: 0 };
+      if ((row.box4_ss_withheld ?? 0) > 0) {
+        group.employers.add(row.employer_ein!.replace(/\D/g, ""));
+        group.wages += row.box3_ss_wages ?? 0;
+        group.withheld += row.box4_ss_withheld ?? 0;
+      }
+      owners.set(owner, group);
+    }
+    const excess = Math.round([...owners.values()].reduce((sum, owner) =>
+      sum +
+      (owner.employers.size > 1 && owner.wages > ssWageBase
+        ? Math.max(0, owner.withheld - ssTaxPerEmployer)
+        : 0), 0));
+    return excess > 0 ? [output(schedule3, { line11_excess_ss: excess })] : [];
+  }
   const totalSsWithheld = w2s.reduce(
     (sum, item) => sum + (item.box4_ss_withheld ?? 0),
     0,
@@ -1017,8 +1067,29 @@ function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
     outputs.push(output(form8889, { w2_code_w_entries: codeW }));
   }
 
-  const r = sum(Box12Code.R);
-  if (r > 0) outputs.push(output(form8853, { employer_archer_msa: r }));
+  const codeR = regularItems(w2s).flatMap((item) =>
+    (item.box12_entries ?? []).filter((entry) =>
+      entry.code === Box12Code.R && entry.amount > 0
+    ).map((entry) => {
+      if (
+        !item.employee_ssn || !item.employer_ein ||
+        !item.source_document_reference
+      ) {
+        throw new Error(
+          "W-2 code R requires employee SSN, employer EIN and issued source reference",
+        );
+      }
+      return {
+        employee_ssn: item.employee_ssn,
+        employer_ein: item.employer_ein,
+        source_document_reference: item.source_document_reference,
+        amount: entry.amount,
+      };
+    })
+  );
+  if (codeR.length) {
+    outputs.push(output(form8853, { w2_code_r_entries: codeR }));
+  }
 
   const t = sum(Box12Code.T);
   if (t > 0) outputs.push(output(form8839, { adoption_benefits: t }));
@@ -1133,6 +1204,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
     schedule_a,
     schedule_c,
     schedule_se,
+    form8995,
     form4137,
     form8919,
     form2441,
@@ -1159,6 +1231,20 @@ class W2Node extends TaxNode<typeof inputSchema> {
         cfg.retirementLimits,
       );
     }
+    if (
+      input.patron_filing_review &&
+      JSON.stringify(input.w2s) !==
+        JSON.stringify(
+          inputSchema.parse({
+            w2s: input.patron_filing_review.spouse_w2_sources ??
+              input.patron_filing_review.primary_w2_sources,
+          }).w2s,
+        )
+    ) {
+      throw new Error(
+        "Patron reviewed spouse W-2 sources differ from public issued copies",
+      );
+    }
     const excessDeferral = ctx.taxYear === 2025
       ? codeDExcessDeferral(input.w2s)
       : { amount: 0, owners: [] };
@@ -1175,14 +1261,41 @@ class W2Node extends TaxNode<typeof inputSchema> {
     };
 
     const outputs: NodeOutput[] = [
-      ...excessSsOutput(input.w2s, cfg.ssTaxPerEmployer),
+      ...excessSsOutput(input.w2s, cfg.ssTaxPerEmployer, cfg.ssWageBase),
       ...statutoryOutput(input.w2s),
       ...medicareOutput(input.w2s),
       ...allocatedTipsOutput(input.w2s),
       ...depCareOutput(input.w2s),
       ...retirementPlanOutput(input.w2s),
       ...scheduleAOutput(input.w2s),
-      ...scheduleSEOutput(input.w2s),
+      ...scheduleSEOutput(
+        input.patron_filing_review
+          ? input.w2s.filter((row) =>
+            row.employee_ssn?.replaceAll("-", "") ===
+              input.patron_filing_review!.source_1099patr.recipient_tin
+          )
+          : input.w2s,
+      ),
+      ...(regularItems(input.w2s).some((row) =>
+          row.schedule_j_nonfarm_wage_source_document_id
+        ) &&
+          regularItems(input.w2s).every((row) =>
+            row.employer_ein && row.employer_name && row.employee_ssn &&
+            row.source_document_reference
+          )
+        ? [this.outputNodes.output(form8995, {
+          single_farm_owner_w2_sources: regularItems(input.w2s).map((row) => ({
+            employer_ein: String(row.employer_ein ?? "").replaceAll("-", ""),
+            employer_name: row.employer_name ?? "",
+            employee_ssn: String(row.employee_ssn ?? "").replaceAll("-", ""),
+            source_document_reference: row.source_document_reference ?? "",
+            box1_wages: row.box1_wages,
+            box3_ss_wages: row.box3_ss_wages ?? 0,
+            box5_medicare_wages: row.box5_medicare_wages ?? 0,
+            box7_ss_tips: row.box7_ss_tips ?? 0,
+          })),
+        })]
+        : []),
       output(form8919, { w2_sources: form8919W2Sources(input.w2s) }),
       ...qualifiedTipsOutput(input.w2s),
       ...qualifiedOvertimeOutput(input.w2s),
@@ -1190,6 +1303,25 @@ class W2Node extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(f1040, f1040Fields as AtLeastOne<F1040Input>),
     ];
 
+    if (input.owner_identity) {
+      outputs.push(
+        output(schedule_se, {
+          owner_wage_sources: regularItems(input.w2s).map((row) => {
+            if (!row.employee_ssn || !row.source_document_reference) {
+              throw new Error(
+                "Joint Schedule SE needs identified issued W2 owner sources",
+              );
+            }
+            return {
+              employee_ssn: row.employee_ssn.replaceAll("-", ""),
+              source_reference: row.source_document_reference,
+              ss_wages_and_tips: (row.box3_ss_wages ?? 0) +
+                (row.box7_ss_tips ?? 0),
+            };
+          }),
+        }),
+      );
+    }
     // Route taxable W-2 wages and §501(c)(18)(D) deduction to AGI.
     // Form 4137 routes the actual unreported tips after reconciling box 8.
     const agiWageFields: Partial<

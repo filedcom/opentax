@@ -1,3 +1,6 @@
+import { filedOwnedScheduleF } from "../../../nodes/owned-business-filing.ts";
+import { assertFarmWotcReturn } from "../../form8995_farm_wotc_reconciliation.ts";
+import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { appendExpenseStatement } from "./expense-statement.ts";
 import { type FilerIdentity, FilingStatus } from "../../../mef/header.ts";
@@ -9,6 +12,7 @@ import {
   computeTotalExpenses,
   conservationDeduction,
   inputSchema,
+  projectScheduleFItems,
   laborLessEmploymentCredits,
   reconcileFarmSources,
   type ScheduleFItem,
@@ -18,6 +22,7 @@ import {
   calculateForm5884,
   inputSchema as form5884InputSchema,
 } from "../../../nodes/inputs/f5884/index.ts";
+import { reconcileForm8941DocumentSource } from "../../mef/forms/f8941_source.ts";
 
 // Field names verified against the 2025 IRS Schedule F AcroForm.
 const p1 = "topmostSubform[0].Page1[0].";
@@ -186,9 +191,23 @@ export const scheduleFPdf: PdfFormDescriptor = {
   fields,
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
+    assertFarmWotcReturn(
+      allPending?.form8995a ?? allPending?.form8995 ?? {},
+      allPending,
+      filer,
+      { key: "schedule_f", value: raw },
+    );
     const input = inputSchema.parse(raw);
     reconcileFarmSources(input);
+    if (input.form8941_premium_reductions?.length) {
+      reconcileForm8941DocumentSource(
+        allPending?.f8941,
+        allPending ?? {},
+        filer,
+      );
+    }
     const reductions = wotcReductionsByFarm(input);
+    const filedItems = projectScheduleFItems(input);
     if (reductions.size > 0) {
       const source = form5884InputSchema.parse(allPending?.f5884);
       const expected = new Map(
@@ -208,7 +227,27 @@ export const scheduleFPdf: PdfFormDescriptor = {
         );
       }
     }
-    return input.schedule_fs.map((item, index) => {
+    return filedItems.map((rawItem, index) => {
+      const filing = filedOwnedScheduleF(
+        rawItem,
+        Boolean(input.patron_filing_review || input.independent_patron_reviews) ||
+          input.farm_optional_method_elected === true,
+        reductions.get(rawItem.farm_id ?? "") ?? 0,
+      );
+      const item = rawItem.qbi_wotc_filing_review
+        ? patronFiledBusinessLines(
+          "schedule_f",
+          rawItem,
+          reductions.get(rawItem.farm_id ?? "") ?? 0,
+        ).filed_source as typeof rawItem
+        : (input.patron_filing_review || input.independent_patron_reviews)
+        ? patronFiledBusinessLines("schedule_f", rawItem)
+          .filed_source as typeof rawItem
+        : filedOwnedScheduleF(
+          rawItem,
+          input.farm_optional_method_elected === true,
+          reductions.get(rawItem.farm_id ?? "") ?? 0,
+        )?.filed_source ?? rawItem;
       assertScheduleF1099Answers(item);
       const other = item.line32_other_expenses ?? [];
       const continuation = other.length > 6 ? other.slice(5) : [];
@@ -227,7 +266,8 @@ export const scheduleFPdf: PdfFormDescriptor = {
         : undefined;
       const gross = computeGrossIncome(item);
       const wotcReduction = reductions.get(item.farm_id ?? "") ?? 0;
-      const expenses = computeTotalExpenses(item, gross, wotcReduction);
+      const expenses = filing?.expenses ??
+        computeTotalExpenses(item, gross, wotcReduction);
       assertScheduleFLossAtRiskAnswer(item, wotcReduction);
       return {
         ...item,
@@ -241,7 +281,8 @@ export const scheduleFPdf: PdfFormDescriptor = {
         line9_gross_income: gross,
         line12_conservation_allowed: item.line12_conservation === undefined
           ? undefined
-          : conservationDeduction(item, gross),
+          : filing?.conservation_deduction ??
+            conservationDeduction(item, gross),
         line22_labor_after_credits: item.line22_labor_hired === undefined &&
             item.line22_other_employment_credits === undefined
           ? undefined

@@ -29,6 +29,8 @@ export function scenario104013Input(): Record<string, unknown> {
       address_state: facts.taxpayer.address.state,
       address_zip: facts.taxpayer.address.zip,
       digital_assets: facts.taxpayer.digitalAssets,
+      main_home_in_us_over_half_year:
+        facts.form1040.mainHomeInUsOverHalfYearCheckboxChecked,
     },
     w2: [{
       employer_name: facts.w2.employerName,

@@ -528,7 +528,7 @@ Deno.test({
       employee_ssn: form.employeeSsn,
       source_document_reference: form.statutoryEmployee
         ? "ATS02-STATUTORY-W2"
-        : undefined,
+        : "ATS02-SPOUSE-W2",
       schedule_c_business_reference: form.statutoryEmployee
         ? "ATS02-STATUTORY-C"
         : undefined,
@@ -906,6 +906,19 @@ Deno.test({
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(200_000, 40_000)],
+    f1098: [{
+      lender_name: "Example Home Lender",
+      recipient_tin: BASE_IDENTITY.taxpayer_ssn,
+      source_document_reference: "2025 lender copy",
+      box1_mortgage_interest: 18_000,
+      box1_current_year_deductible_interest: 18_000,
+      box1_deduction_workpaper_reference: "2025 Pub. 936 workpaper",
+      issuer_copy: {
+        file_name: "Test1098.pdf",
+        pdf_sha256: "0".repeat(64),
+        bytes: new Uint8Array(),
+      },
+    }],
     schedule_a: {
       line_5a_state_income_tax: 10_000,
       line_8a_mortgage_interest_1098: 18_000,

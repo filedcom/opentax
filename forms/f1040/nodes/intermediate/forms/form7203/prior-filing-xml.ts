@@ -38,6 +38,44 @@ function amount(row: Record<string, unknown>, key: string): number {
   return Number(found);
 }
 
+function assertMeFNamespaceTree(value: unknown): void {
+  if (Array.isArray(value)) {
+    value.forEach(assertMeFNamespaceTree);
+    return;
+  }
+  if (typeof value !== "object" || value === null) return;
+  for (const [key, child] of Object.entries(value)) {
+    if (key === "@xmlns") {
+      if (child !== "http://www.irs.gov/efile") {
+        throw new Error(
+          "Form 7203 prior filing contains a foreign XML namespace",
+        );
+      }
+    } else if (!key.startsWith("@") && key.includes(":")) {
+      throw new Error(
+        "Form 7203 prior filing contains unsupported prefixed XML",
+      );
+    } else {
+      assertMeFNamespaceTree(child);
+    }
+  }
+}
+
+// Attribute and element order does not change a parsed copy. The separate root
+// needs its namespace declaration; its other content must equal the embedded copy.
+function canonicalFormContent(value: unknown): string {
+  function normalize(value: unknown): unknown {
+    if (Array.isArray(value)) return value.map(normalize);
+    if (typeof value !== "object" || value === null) return value;
+    return Object.fromEntries(
+      Object.entries(value).filter(([key]) => key !== "@xmlns")
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, child]) => [key, normalize(child)]),
+    );
+  }
+  return JSON.stringify(normalize(value));
+}
+
 function xml(
   documents: VerifiedSourceDocuments,
   reference: string,
@@ -66,6 +104,7 @@ function xml(
   if (root["@xmlns"] !== "http://www.irs.gov/efile") {
     throw new Error(`Form 7203 prior ${rootName} XML needs the MeF namespace`);
   }
+  assertMeFNamespaceTree(root);
   return root;
 }
 
@@ -125,6 +164,11 @@ export function inspectPrior7203MeFXml(
     "IRS7203",
   );
   reviewedForm7203(copy, source);
+  if (canonicalFormContent(returnData.IRS7203) !== canonicalFormContent(copy)) {
+    throw new Error(
+      "Form 7203 separate filed copy differs from the complete embedded return form",
+    );
+  }
 
   const manifest = xml(
     documents,
@@ -184,6 +228,7 @@ export function inspectPrior7203MeFXml(
     noteBasis: source.opening_note_debt_basis,
     parsedAcknowledgmentStatus: "Accepted" as const,
     returnDigestLinkedToManifest: manifestReturnDigest !== undefined,
+    separateFormMatchesEmbeddedContent: true as const,
     issuerAuthenticated: false as const,
   };
 }

@@ -92,6 +92,45 @@ Deno.test("Form 8889 PDF maps line 14b and age-65 exception fields separately", 
   }
 });
 
+Deno.test("Form 8889 PDF rejects unjoined owner identity and malformed printed lines", () => {
+  const filer: FilerIdentity = {
+    primarySSN: "123456789",
+    fullName: "Alex Taxpayer",
+    nameLine1: "TAXPAYER ALEX",
+    nameControl: "TAXP",
+    filingStatus: FilingStatus.Single,
+    address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
+  };
+  const owner = {
+    owner: "primary",
+    beneficiary_name: "Alex Taxpayer",
+    beneficiary_ssn: "123456789",
+    print_line13_deduction: 0,
+  };
+  assertEquals(form8889Pdf.instances?.({ forms: [owner] }, filer, {}), [owner]);
+  for (const altered of [
+    { ...owner, beneficiary_ssn: "999999999" },
+    { ...owner, beneficiary_name: "Other Taxpayer" },
+  ]) {
+    assertThrows(
+      () => form8889Pdf.instances?.({ forms: [altered] }, filer, {}),
+      Error,
+      "beneficiary identity must match the filer",
+    );
+  }
+  for (const altered of [
+    { ...owner, print_line13_deduction: -1 },
+    { ...owner, print_line13_deduction: Number.NaN },
+    { ...owner, print_line1_coverage: "unknown" },
+  ]) {
+    assertThrows(
+      () => form8889Pdf.instances?.({ forms: [altered] }, filer, {}),
+      Error,
+      "valid computed nonnegative lines",
+    );
+  }
+});
+
 Deno.test("Form 8889 PDF creates one correctly identified page per HSA beneficiary", () => {
   const source = {
     beneficiary_identity: {

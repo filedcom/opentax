@@ -43,13 +43,13 @@ unrun and unrendered, not validated filing results.
 ## Inventory disposition, not a release decision
 
 The [registered-document audit](ty2025-form1040-form-audit.md) enumerates all
-**148/148** entries in `ALL_MEF_FORMS`: 19 main-return/schedule documents, 97
+**149/149** entries in `ALL_MEF_FORMS`: 19 main-return/schedule documents, 98
 numbered forms or distinct schedules, and 32 wage/supporting documents. Each row
 names its coded source/calculation boundary, native serializer, PDF status,
 written case status, and remaining branch. This completes the _registered_
 form-by-form inventory, not the set of Form 1040 situations the product can
-file. The [211-root schema census](ty2025-xsd-document-root-census.md) has 122
-roots with a MeF source literal and 89 without one. Its five
+file. The [211-root schema census](ty2025-xsd-document-root-census.md) has 123
+roots with a MeF source literal and 88 without one. Its five
 [ordered reviews](ty2025-unregistered-roots-01-25.md) and
 [applicability crosswalk](ty2025-unregistered-root-applicability.md) record the
 per-root evidence, but unresolved individual attachment and workflow choices
@@ -61,7 +61,7 @@ remain. A source literal and a registered descriptor are different measures.
 | Active claim explicitly rejected                | Form 8839 outside its reviewed one-child prepared-bundle route; calculated nonexcepted Form 8990 pending durable carryforward persistence; Form 1116 Schedule C; Form 8995-A Schedule B and Schedule C paths outside their narrow two-business routes; Schedule J paths outside its narrow Schedule F election; Form 9465; Form 7203 paths outside the reviewed single-corporation stock-only ordinary loss; and the [guarded public-input paths](ty2025-unregistered-root-applicability.md). | The present unsupported input/trigger cannot be filed as supported. Form 8990's bounded two-pass result is a calculation/projection, not export acceptance. Rejection is a safety boundary, not an approved permanent exclusion. Each linked row states the missing source or native attachment. |
 | Bounded payer-issued source route, unvalidated  | Form 2439 gain boxes route to Schedule D. Positive box 2 now requires payer Copy B identity, shareholder name/SSN-last-four and a TY2025 period, then routes through Schedule 3 line 13a to Form 1040 line 31. Native `IRS2439` documents link from line 13a; the filled PDF uses Copy B. Positive box 1c still rejects.                                                                                                                          | [IRS Form 2439](https://www.irs.gov/pub/irs-pdf/f2439.pdf) and TY2025 v5.4 XSD support this route. Written node, MeF, XSD and PDF cases remain unrun. The full batch, visual filled-PDF check and ATS acceptance remain gates before calling this filing-ready.                      |
 | Historical input explicitly rejected            | Public `f8917` input now rejects any TY2025 Form 8917 item instead of silently dropping tuition facts.                                                                                                                                                                                                                                                                                                                                            | The IRS marks Form 8917 historical and TY2025 MeF rule F8917-014 requires its absence. Current education credits must be sourced through their own inputs; this is not a state-return route.                                                                                         |
-| No public trigger yet, applicability still open | Many of the 89 nonliteral schema roots, including conditional individual, owner/entity, and payment/information-document families in the [crosswalk](ty2025-unregistered-root-applicability.md).                                                                                                                                                                                                                                                 | No current typed input can silently produce those documents, but absence of an input is not proof that a real filer never needs one. Decide each filing trigger and source owner before support or exclusion is claimed.                                                             |
+| No public trigger yet, applicability still open | Many of the 88 nonliteral schema roots, including conditional individual, owner/entity, and payment/information-document families in the [crosswalk](ty2025-unregistered-root-applicability.md).                                                                                                                                                                                                                                                 | No current typed input can silently produce those documents, but absence of an input is not proof that a real filer never needs one. Decide each filing trigger and source owner before support or exclusion is claimed.                                                             |
 
 The only approved scope exclusions are standalone 1040-NR, 1040-SS, Form 4868,
 and dual-status Form 1040 e-file. No other unsupported path is excluded by the
@@ -172,9 +172,9 @@ validation gate remains unrun. The rows below do not add product exclusions.
 
 At this older overlay's checkpoint, `ALL_MEF_FORMS` had **124 entries** and the
 schema census had 114 roots without a MeF source literal. The current registries
-have **148 MeF** and **115 PDF** descriptors, and the 211-root census has **122**
-source-literal roots and **89** without one. These are descriptor and static
-literal counts, not supported filing situations. The 89 remain an
+have **150 MeF** and **116 PDF** descriptors, and the 211-root census has **123**
+source-literal roots and **88** without one. These are descriptor and static
+literal counts, not supported filing situations. The 88 remain an
 applicability/implementation queue, including staged but unregistered Form
 1116 Schedule C. No new exclusion is inferred from absent registration, a
 fail-closed guard, or an unrun test. In particular, the only approved
@@ -460,3 +460,9 @@ establish full-batch, XSD, filled-PDF, IRS-rule, or ATS acceptance.
 | Source             | Document  | Current evidence                                                                                                   |
 | ------------------ | --------- | ------------------------------------------------------------------------------------------------------------------ |
 | `f8814` input node | `IRS8814` | Listed above as `form8814`; source-to-XML/XSD and related Form 1040/8962 business rules await the full-batch test. |
+
+## October 6 current registry and planner reconciliation
+
+At code `2899d051b`, live imports contain **150 native descriptors (146 unique pending keys)** and **116 PDF descriptors (113 unique keys)**. Exact source-only planner: **365 fixtures, 96 expected keys, 17 uncovered keys**. Commands: `deno run --allow-read scripts/plan-ty2025-pdf-review.ts` and live `ALL_MEF_FORMS`/`ALL_PDF_FORMS` imports. Planner evidence `/tmp/opentax-pdf-planner-2899.json`, SHA-256 `95d99e58c4c2ed8e1895a9c1e1d0fc941dffdc4340a5e55452e549687d34e6ad`; key comparison `/tmp/opentax-registry-parity-2899.json`, SHA-256 `5f7b509b6b5d2f4bf101d902fdb6b9fb9934d72f4558ff9e6aea781bd73356d4`.
+
+Uncovered keys: `f4255`, `f5471_parent`, `f5471_schedule_e`, `f5471_schedule_h`, `f5471_schedule_i1`, `f5471_schedule_j`, `f5471_schedule_m`, `f5471_schedule_p`, `f5471_schedule_q`, `f5471_schedule_r`, `f8854`, `f8854_annual`, `f965`, `form8582cr`, `form8990`, `form8992`, `form8992_schedule_a`. Key comparison still identifies `form8621` as a native parent without a matching PDF descriptor; statement/source keys require individual packet review. `f4835_at_risk` emits Form6198 using the existing PDF route, and native `f8911` has the separate PDF companion key `f8911_schedule_a`; key names alone are not absence/support decisions. These counts establish inventory only. Named-form parents are part of the current goal; none is deferred from execution or approved for exclusion.

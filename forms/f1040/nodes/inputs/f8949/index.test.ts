@@ -53,6 +53,26 @@ Deno.test("direct Form 8949 input deposits an identified transaction for MeF bef
   assertEquals(transaction.source_transaction_id, "deemed-sale-1");
 });
 
+Deno.test("direct Form 8949 rejects a repeated identified sale on one statement", () => {
+  const sale = minimalItem({
+    source_transaction_id: "sale-42",
+    broker_statement_reference: "broker-2025-statement",
+  });
+  assertThrows(
+    () => compute([sale, { ...sale, proceeds: 5_100 }]),
+    Error,
+    "repeats the same identified statement transaction",
+  );
+  assertEquals(
+    compute([sale, {
+      ...sale,
+      broker_statement_reference: "other-broker-2025-statement",
+      proceeds: 5_100,
+    }]).outputs.filter((row) => row.nodeType === "schedule_d").length,
+    2,
+  );
+});
+
 Deno.test("Form 8949 market discount prints code D and reaches taxable interest", () => {
   const source = f8949.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -697,6 +717,28 @@ Deno.test("amt_cost_basis: identified short-term loss routes signed bases to For
       amt_basis: 6_500,
       regular_gain: -1_000,
       amt_gain: -1_500,
+    },
+  );
+});
+
+Deno.test("amt_cost_basis: short-term regular loss can become an AMT gain", () => {
+  const result = compute([minimalItem({
+    part: "A",
+    source_transaction_id: "broker-st-mfs-crossover",
+    proceeds: 1_000,
+    cost_basis: 1_500,
+    amt_cost_basis: 500,
+  })]);
+  assertEquals(
+    fieldsOf(result.outputs, form6251)!.line2k_8949_basis_dispositions,
+    {
+      source_transaction_id: "broker-st-mfs-crossover",
+      part: "A",
+      proceeds: 1_000,
+      regular_basis: 1_500,
+      amt_basis: 500,
+      regular_gain: -500,
+      amt_gain: 500,
     },
   );
 });

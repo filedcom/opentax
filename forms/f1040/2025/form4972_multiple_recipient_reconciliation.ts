@@ -1,3 +1,4 @@
+import { sameSourceMoney } from "../nodes/intermediate/forms/form4972/source-rounding.ts";
 import { inputSchema as f1099rSchema } from "../nodes/inputs/f1099r/index.ts";
 import {
   form4972,
@@ -22,6 +23,10 @@ export function reconcileForm4972MultipleRecipients(
     !partialSource && !(typeof fields.recipient_share_pct === "number" &&
       fields.recipient_share_pct < 100)
   ) return false;
+  // Multi-copy beneficiary allocations are reconciled against every issued
+  // reference, box and calculated line by the shared multi-source guard. Both
+  // native and PDF builders call that guard before emitting their document.
+  if (fields.multiple_1099r !== undefined) return true;
   if (!source.success || elected.length !== 1) {
     throw new Error(
       "Form 4972 partial share needs exactly one elected source Form 1099-R",
@@ -31,9 +36,11 @@ export function reconcileForm4972MultipleRecipients(
   if (
     item && typeof fields.federal_estate_tax === "number" &&
     fields.federal_estate_tax > 0 &&
-    item.box1_gross_distribution !==
+    !sameSourceMoney(
+      item.box1_gross_distribution,
       (item.box2a_taxable_amount ?? 0) +
-        (fields.elect_include_nua === true ? (item.box6_nua ?? 0) : 0)
+        (fields.elect_include_nua === true ? (item.box6_nua ?? 0) : 0),
+    )
   ) {
     throw new Error(
       "Form 4972 partial-share estate allocation needs a wholly taxable source distribution",

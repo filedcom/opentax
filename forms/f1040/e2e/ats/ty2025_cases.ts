@@ -311,6 +311,18 @@ export const SCENARIO_1040_NR_03_FACTS = {
     line1aStateAndLocalIncomeTax: 18_860,
     line1bAllowedProvided: false,
   },
+  form8283: {
+    sectionBVehicleChecked: true,
+    rowA: {
+      description: "2005 Mercedes Benz",
+      condition: "Good",
+      appraisedFairMarketValue: 5_005,
+      dateAcquired: "Various",
+      acquisitionMethod: "Purchase",
+      donorCostOrAdjustedBasis: 53_470,
+      claimedDeduction: null,
+    },
+  },
   attachmentsRequiredByCoverSheet: [
     "1098-C",
     "Motor Vehicles Boats and Airplanes Statement",
@@ -360,7 +372,18 @@ export const SCENARIO_1040_NR_02_FACTS = {
     priorYearUSPresenceDays: { year2023: 110, year2024: 110 },
     currentYearUSPresenceDays: 110,
   },
-  schedule1: { printedLine5RentalAndRoyaltyIncome: 500 },
+  scheduleE: {
+    partnershipRowA: {
+      name: "Sarah's Vegan Bakery",
+      entityType: "P",
+      ein: "001234567",
+      printedLine28hPassiveIncome: 500,
+    },
+    printedLine32Provided: false,
+    printedLine41Provided: false,
+    scheduleK1IncludedInPacket: false,
+  },
+  schedule1: { printedLine5SupplementalIncome: 500 },
 } as const;
 
 /** Scenario 1's cover-sheet IRA amount differs from its printed 1040-NR line 4a. */
@@ -620,6 +643,10 @@ export const SCENARIO_1040_01_FACTS = {
     federalWithholding: 0,
   },
   form5695: {
+    qualifiedEnergyEfficiencyImprovementsInstalledInUS: true,
+    originalUserOfImprovements: true,
+    improvementsExpectedToRemainInUseFiveYears: true,
+    improvementsRelatedToHomeConstruction: false,
     exteriorDoors: [
       { cost: 1_020, qmid: "A1B2" },
       { cost: 920, qmid: "A1B3" },
@@ -630,6 +657,8 @@ export const SCENARIO_1040_01_FACTS = {
     // Keep the source discrepancy visible until IRS guidance resolves it.
     line19eOtherDoorsCost: 2_740,
     windows: [{ cost: 600, qmid: "A1B5" }],
+    residentialEnergyPropertyCostsIncurred: true,
+    residentialEnergyPropertyOriginallyPlacedInServiceByTaxpayer: true,
     centralAirConditioners: [{ cost: 2_100, qmid: "A1B6" }, { cost: 400 }],
   },
 } as const;
@@ -655,12 +684,19 @@ export const SCENARIO_1040_02_FACTS = {
     dateOfBirth: "1966-03-19",
     dateOfDeath: "2025-09-11",
     identityProtectionPin: "876543",
+    nonresidentSpouseChoiceStatementAssumed: true,
   },
+  printedFilingStatus: {
+    marriedFilingJointlyChecked: true,
+    qualifyingSurvivingSpouseChecked: false,
+  },
+  formerSpouseSsn: "400001037",
   dependent: {
     firstName: "Jacob",
     lastName: "Jones",
     ssn: "400001070",
     dateOfBirth: "2006-07-20",
+    fullTimeHighSchoolStudent: true,
   },
   w2: [
     {
@@ -730,6 +766,12 @@ export const SCENARIO_1040_02_FACTS = {
     businessMiles: 665,
     commutingMiles: 710,
     otherMiles: 15_151,
+    allMileageBeforeJuly1: true,
+    vehiclePlacedInService: "2023-08-22",
+    vehicleAvailableForPersonalUse: true,
+    anotherVehicleAvailable: true,
+    mileageEvidence: true,
+    mileageEvidenceWritten: true,
   },
   form8283: {
     donee: "Goodwill",
@@ -830,6 +872,13 @@ export const SCENARIO_1040_04_FACTS = {
     placedInService: "2023-09-22",
     solarKilowattHoursProducedAndSold: 440_000,
     printedSolarRate: 0.006,
+    solarDcNameplateKw: 10_000,
+    solarAcNameplateKw: 765,
+    maximumNetOutputUnderOneMwChecked: true,
+    constructionBefore2023Checked: true,
+    prevailingWageApprenticeshipChecked: true,
+    ownerIsTaxpayer: false,
+    computedLine15Blank: true,
   },
   form8936ScheduleA: {
     vehicleYear: 2024,
@@ -839,6 +888,7 @@ export const SCENARIO_1040_04_FACTS = {
     placedInService: "2025-01-25",
     creditTransferredToDealer: false,
     newCleanVehicle: true,
+    businessUseCreditLines9Through11Blank: true,
   },
   requiredBinaryAttachmentDescription: "Transfer Election Statement",
 } as const;
@@ -902,6 +952,10 @@ export const SCENARIO_1040_05_FACTS = {
     box6MedicareWithholding: 453,
   },
   form2441: {
+    // The dependent-care-benefits Yes/No answer and credit lines are blank.
+    dependentCareBenefitsAnswer: null,
+    printedTaxLiabilityLimit: null,
+    printedCredit: null,
     providers: [
       {
         name: "Kid Korner",
@@ -924,20 +978,31 @@ export const SCENARIO_1040_05_FACTS = {
     line14ArmedForcesCheck: true,
   },
   form8862: {
+    taxYearOnLine1: null,
+    creditBoxesMarkedOnLine2: [],
     eicDisallowedForIncomeReportingOnly: false,
     taxpayerQualifyingChildOfAnotherTaxpayer: false,
+    qualifyingChildAnswerOnLine6: null,
     child1DaysInUnitedStates: 365,
     child2DaysInUnitedStates: 365,
     child1QualifiesForChildTaxCredit: true,
     child2QualifiesForChildTaxCredit: true,
+    aotcStudentNameOnLine18a: null,
     studentEligibleForAotc: true,
     studentClaimedAotcForFourYears: false,
   },
   form8863: {
     studentName: "Bobby Barker",
     institutionName: "University of Texas",
+    institutionAddress: "1234 Blue Street, Austin, Texas 78701",
     institutionEin: "000000004",
+    // The $980 is stated on the cover sheet, not entered on Form 8863.
     adjustedQualifiedEducationExpenses: 980,
+    printedLine27Expenses: null,
+    printedLine30AmericanOpportunityCredit: null,
+    printedPartILine8RefundableCredit: null,
+    printedPartIILine19NonrefundableCredit: null,
+    form1098TIncludedInPacket: false,
     received1098TFor2025: false,
     received1098TFor2024: false,
     enrolledAtLeastHalfTime: true,
@@ -1076,6 +1141,10 @@ export const SCENARIO_1040_13_FACTS = {
     lastName: "Birch",
     ssn: "400001234",
   },
+  form1040: {
+    // Page 1's main-home-in-the-U.S. box is visibly unmarked in the issued PDF.
+    mainHomeInUsOverHalfYearCheckboxChecked: false,
+  },
   w2: {
     employerName: "OAK SUPPLY CO",
     employerEin: "000000014",
@@ -1099,7 +1168,13 @@ export const SCENARIO_1040_13_FACTS = {
     line2aScheduleATaxesOrStandardDeduction: 30_000,
     line4AlternativeMinimumTaxableIncome: 31_620,
     line5Exemption: 137_000,
+    line6ExcessOverExemption: 0,
+    line7TentativeMinimumTaxBeforeCredits: 0,
+    line8AlternativeMinimumTaxForeignTaxCredit: 0,
+    line9TentativeMinimumTax: 0,
+    line10RegularTaxBeforeCredits: 162,
     line11AlternativeMinimumTax: 0,
+    partIIILines12Through40Blank: true,
   },
   form8911ScheduleA: {
     propertyDescription: "ELECTRIC CHARGER",

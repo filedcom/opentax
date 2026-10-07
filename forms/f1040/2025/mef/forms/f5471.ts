@@ -1,3 +1,5 @@
+import { owned5471Calculation } from "../../form5471-owned-source.ts";
+import { requiredScheduleReferences } from "./f5471-linkage.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import type { FilerAddress } from "../../../mef/header.ts";
 import type { F5471Item } from "../../../nodes/inputs/f5471/index.ts";
@@ -40,6 +42,7 @@ export const form5471: MefFormDescriptor<"f5471_parent", unknown> = {
       context.pending,
       context.filer,
     );
+    const referenceAttributes = requiredScheduleReferences(context, cfc);
     const id = cfc.form5471_identity;
     const i = cfc.schedule_i;
     const g = cfc.schedule_g;
@@ -52,13 +55,27 @@ export const form5471: MefFormDescriptor<"f5471_parent", unknown> = {
       c.depreciation_functional;
     const preTaxIncome = totalIncome - totalDeductions;
     const netIncome = preTaxIncome - c.current_income_tax_expense_functional;
-    const assetsBegin = f.cash_begin_usd +
+    const assetsBegin = (f.other_investments_begin_usd ?? 0) +
+      f.cash_begin_usd +
       f.depreciable_assets_gross_begin_usd -
       f.accumulated_depreciation_begin_usd;
-    const assetsEnd = f.cash_end_usd +
+    const assetsEnd = (f.other_investments_end_usd ?? 0) + f.cash_end_usd +
       f.depreciable_assets_gross_end_usd -
       f.accumulated_depreciation_end_usd;
     const cfcAddress = id.foreign_address;
+    let investmentRefs: Record<string, string> | undefined;
+    if (f.other_investments_end_usd && context.phase === "final") {
+      const ids = context.documentIdsByTag?.ItemizedOtherInvestmentsSch;
+      if (ids?.length !== 1) {
+        throw Error(
+          "Owned Form5471 investments require exactly one source itemized investment document",
+        );
+      }
+      investmentRefs = {
+        referenceDocumentId: ids[0],
+        referenceDocumentName: "ItemizedOtherInvestmentsSchedule",
+      };
+    }
     return elements("IRS5471", [
       element("TaxYearBeginDt", id.cfc_tax_year_begin),
       element("TaxYearEndDt", id.cfc_tax_year_end),
@@ -188,6 +205,20 @@ export const form5471: MefFormDescriptor<"f5471_parent", unknown> = {
       elements("IRS5471ScheduleF", [
         element("BegngAcctPrdCashAmt", f.cash_begin_usd),
         element("EndAcctPrdCashAmt", f.cash_end_usd),
+        f.other_investments_end_usd
+          ? element(
+            "BegngAcctPrdOthInvestmentsAmt",
+            f.other_investments_begin_usd ?? 0,
+            investmentRefs,
+          )
+          : "",
+        f.other_investments_end_usd
+          ? element(
+            "EndAcctPrdOthInvestmentsAmt",
+            f.other_investments_end_usd,
+            investmentRefs,
+          )
+          : "",
         element(
           "BegngAcctPrdBldgAndOtherAstAmt",
           f.depreciable_assets_gross_begin_usd,
@@ -300,6 +331,31 @@ export const form5471: MefFormDescriptor<"f5471_parent", unknown> = {
         element("EDAccountInd", "false"),
         element("TotHybridDeductionAccountsAmt", i.hybrid_deduction_accounts),
       ]),
-    ]);
+    ], referenceAttributes);
+  },
+  buildAdditionalDocuments(_fields, context) {
+    if (!context?.pending?.f5471 || !context.filer) return [];
+    const { cfc } = projectForm8992Source(context.pending, context.filer);
+    const r = owned5471Calculation(cfc);
+    if (!r || r.books.investments_end === 0) return [];
+    return [
+      elements(
+        "ItemizedOtherInvestmentsSch",
+        r.source.owned_assets.filter((a) => a.kind === "debt_obligation").map((
+          a,
+        ) =>
+          elements("ItemizedOtherInvestment", [
+            elements("CorporationName", [
+              element("BusinessNameLine1Txt", cfc.foreign_corp_name),
+            ]),
+            elements("OtherInvestmentsLineItemGrp", [
+              element("Desc", `Owned debt obligation ${a.asset_reference}`),
+              element("BeginningAmt", 0),
+              element("EndingAmt", Math.round(a.principal)),
+            ]),
+          ])
+        ),
+      ),
+    ];
   },
 };

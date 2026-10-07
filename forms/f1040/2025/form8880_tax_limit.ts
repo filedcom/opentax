@@ -9,6 +9,124 @@ import {
   calculatePhysicalPresence2555,
   physicalPresenceFilingSchema,
 } from "../nodes/intermediate/forms/form2555/calculation.ts";
+import {
+  assertDistinctW2IssuedCopies,
+  inputSchema as w2InputSchema,
+} from "../nodes/inputs/w2/index.ts";
+import { inputSchema as generalInputSchema } from "../nodes/inputs/general/index.ts";
+
+const saverCreditCodes = new Set(["D", "E", "F", "H", "S", "AA", "BB", "EE"]);
+
+function assertForm8880W2DeferralSources(
+  source: ReturnType<typeof form8880InputSchema.parse>,
+  pending: Readonly<Record<string, unknown>>,
+): void {
+  if (!source.w2_deferral_entries?.length) return;
+  if (pending.w2 === undefined) {
+    throw new Error(
+      "Form 8880 W-2 deferrals differ from retained W-2 box 12 sources",
+    );
+  }
+  const w2s = w2InputSchema.parse(pending.w2).w2s;
+  assertDistinctW2IssuedCopies(w2s);
+  const actual = source.w2_deferral_entries.map((entry) =>
+    JSON.stringify([
+      entry.employee_ssn.replaceAll("-", ""),
+      entry.code,
+      entry.amount,
+      entry.governmental_457b ?? null,
+      entry.employee_elective_amount ?? null,
+      entry.employee_split_review_ref ?? null,
+    ])
+  ).sort();
+  const expected = w2s.flatMap((item) =>
+    (item.box12_entries ?? [])
+      .filter((entry) =>
+        (saverCreditCodes.has(entry.code) && entry.amount > 0) ||
+        (entry.code === "G" && (entry.code_g_employee_elective_amount ?? 0) > 0)
+      )
+      .map((entry) =>
+        JSON.stringify([
+          item.employee_ssn?.replaceAll("-", "") ?? null,
+          entry.code,
+          entry.amount,
+          entry.code === "G" ? true : null,
+          entry.code === "G"
+            ? entry.code_g_employee_elective_amount ?? null
+            : null,
+          entry.code === "G"
+            ? entry.code_g_employee_split_review_ref ?? null
+            : null,
+        ])
+      )
+  ).sort();
+  if (
+    actual.length !== expected.length ||
+    actual.some((entry, index) => entry !== expected[index])
+  ) {
+    throw new Error(
+      "Form 8880 W-2 deferrals differ from retained W-2 box 12 sources",
+    );
+  }
+}
+
+function assertForm8880GeneralEligibility(
+  source: ReturnType<typeof form8880InputSchema.parse>,
+  fields: Record<string, unknown>,
+  pending: Readonly<Record<string, unknown>>,
+): void {
+  // Standalone Form 8880 inputs can supply reviewed eligibility facts. When
+  // the return retains their general-source origin, replay each claimed owner.
+  if (pending.general === undefined) return;
+  const general = generalInputSchema.parse(pending.general);
+  const sameOwner = (left: string | undefined, right: string | undefined) =>
+    left === undefined && right === undefined ||
+    left !== undefined && right !== undefined &&
+      /^\d{9}$/.test(left.replaceAll("-", "")) &&
+      left.replaceAll("-", "") === right.replaceAll("-", "");
+  if (source.filing_status !== general.filing_status) {
+    throw new Error(
+      "Form 8880 retained general eligibility differs from claimed owner facts",
+    );
+  }
+  const claimed = [
+    {
+      amount: fields.print_line6a_eligible,
+      sourceSsn: source.taxpayer_ssn,
+      generalSsn: general.taxpayer_ssn,
+      sourceDob: source.taxpayer_dob,
+      generalDob: general.taxpayer_dob,
+      sourceStudent: source.taxpayer_student_five_months,
+      generalStudent: general.taxpayer_form8880_student_five_months,
+      sourceDependent: source.taxpayer_claimed_as_dependent,
+      generalDependent: general.taxpayer_form8880_claimed_as_dependent,
+    },
+    {
+      amount: fields.print_line6b_eligible,
+      sourceSsn: source.spouse_ssn,
+      generalSsn: general.spouse_ssn,
+      sourceDob: source.spouse_dob,
+      generalDob: general.spouse_dob,
+      sourceStudent: source.spouse_student_five_months,
+      generalStudent: general.spouse_form8880_student_five_months,
+      sourceDependent: source.spouse_claimed_as_dependent,
+      generalDependent: general.spouse_form8880_claimed_as_dependent,
+    },
+  ];
+  for (const owner of claimed) {
+    if (typeof owner.amount !== "number" || owner.amount <= 0) continue;
+    if (
+      !sameOwner(owner.sourceSsn, owner.generalSsn) ||
+      owner.sourceDob !== owner.generalDob ||
+      owner.sourceStudent !== owner.generalStudent ||
+      owner.sourceDependent !== owner.generalDependent
+    ) {
+      throw new Error(
+        "Form 8880 retained general eligibility differs from claimed owner facts",
+      );
+    }
+  }
+}
 
 // 2025 Form 8880 Credit Limit Worksheet: 1040 line 18 less Schedule 3
 // lines 1 through 3, 6d, and 6l. The retirement credit on line 4 is not
@@ -89,6 +207,12 @@ export function assertForm8880FiledCalculation(
   pending: Readonly<Record<string, unknown>>,
 ): void {
   const source = form8880InputSchema.parse(fields);
+  assertForm8880W2DeferralSources(source, pending);
+  assertForm8880GeneralEligibility(
+    source,
+    fields as Record<string, unknown>,
+    pending,
+  );
   const f1040 = pending.f1040 as F1040Fields | undefined;
   if (
     !f1040 || source.filing_status !== f1040.filing_status ||

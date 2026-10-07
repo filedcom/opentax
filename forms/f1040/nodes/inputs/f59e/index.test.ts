@@ -165,6 +165,23 @@ Deno.test("f59e.compute: elected three-year write-off has no circulation adjustm
   assertEquals(result.outputs, []);
 });
 
+Deno.test("f59e.compute: offsetting circulation pools need distinct reviewed references", () => {
+  const common = {
+    expenditure_type: ExpenditureType.Circulation,
+    regular_three_year_writeoff_elected: false,
+    circulation_reviewed_workpaper_reference: "2025 circulation worksheet shared",
+    circulation_no_unamortized_property_loss: true,
+  };
+  assertThrows(
+    () => compute([
+      minimalItem({ ...common, regular_tax_deduction: 3_000, amt_deduction: 1_000 }),
+      minimalItem({ ...common, regular_tax_deduction: 1_000, amt_deduction: 3_000 }),
+    ]),
+    Error,
+    "distinct reviewed workpaper references",
+  );
+});
+
 Deno.test("f59e.compute: unsupported non-circulation items remain separate from line 2o", () => {
   const result = compute([
     minimalItem({ expenditure_type: ExpenditureType.ResearchExperimental, remaining_unamortized: 10000 }),

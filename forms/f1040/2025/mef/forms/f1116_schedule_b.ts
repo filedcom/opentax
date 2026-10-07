@@ -204,6 +204,10 @@ export const form1116ScheduleB: MefFormDescriptor<
         summary.category === presentation.category
       );
       const summary = matching.length === 1 ? matching[0] : undefined;
+      const parentCredit = summaries.reduce(
+        (total, entry) => total + entry.allowedCredit,
+        0,
+      );
       const schedule3 = pending.schedule3 as
         | { line1_foreign_tax_credit?: unknown; line8_total?: unknown }
         | undefined;
@@ -219,8 +223,7 @@ export const form1116ScheduleB: MefFormDescriptor<
             (presentation.case === "combined_current_excess_prior_balance" &&
               summary.currentYearExcessTax !== presentation.amount)) ||
         typeof schedule3?.line1_foreign_tax_credit !== "number" ||
-        (summaries.length === 1 &&
-          schedule3.line1_foreign_tax_credit !== summary.allowedCredit) ||
+        schedule3.line1_foreign_tax_credit !== parentCredit ||
         typeof schedule3.line8_total !== "number" ||
         form1040?.line20_nonrefundable_credits !== schedule3.line8_total
       ) {

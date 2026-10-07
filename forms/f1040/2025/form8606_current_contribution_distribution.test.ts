@@ -135,6 +135,7 @@ Deno.test("2025 IRA contribution received in early 2026 prints Form 8606 line 4 
   assertEquals(pending.f1040.line4b_ira_taxable, 16_000);
   assertEquals(pending.schedule1?.line20_ira_deduction ?? 0, 0);
   const xml = form8606.build(pending.form8606, { filer, pending });
+  assert(typeof xml === "string");
   assertStringIncludes(
     xml,
     "<NondedIRAPostTaxYrContriAmt>1000</NondedIRAPostTaxYrContriAmt>",
@@ -162,8 +163,10 @@ Deno.test("2025 IRA contribution received in 2025 contributes to the distributio
   assertEquals(pending.form8606.print_line5_current_basis, 7_000);
   assertEquals(pending.form8606.print_line14_remaining_basis, 2_340);
   assertEquals(pending.form8606.print_line15c_taxable, 15_340);
+  const xml = form8606.build(pending.form8606, { filer, pending });
+  assert(typeof xml === "string");
   assertStringIncludes(
-    form8606.build(pending.form8606, { filer, pending }),
+    xml,
     "<NondedIRATaxableAmt>15340</NondedIRATaxableAmt>",
   );
 });

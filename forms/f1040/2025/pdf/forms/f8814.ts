@@ -1,5 +1,5 @@
 import {
-  assertForm8814SourceReview,
+  assertForm8814CalculatedLines,
   type Form8814Lines,
 } from "../../../nodes/inputs/f8814/index.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
@@ -188,9 +188,10 @@ export const form8814Pdf: PdfFormDescriptor = {
     if (items.length > 0 && !filer?.primarySSN) {
       throw new Error("Form 8814 PDF needs finalized electing-parent identity");
     }
-    for (const line of items as Form8814Lines[]) {
-      assertForm8814SourceReview(line.item, filer!.primarySSN);
-    }
+    assertForm8814CalculatedLines(
+      items as Form8814Lines[],
+      filer?.primarySSN ?? "",
+    );
     return (items as Form8814Lines[]).map((line) =>
       toPdfFields(line, items.length > 1)
     );

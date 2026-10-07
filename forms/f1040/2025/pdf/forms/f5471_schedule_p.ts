@@ -1,3 +1,4 @@
+import { owned5471PdfValues } from "./f5471-owned-values.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { projectForm8992Source } from "../../form8992_source.ts";
 
@@ -76,6 +77,9 @@ export const form5471SchedulePPdf: PdfFormDescriptor = {
       filer,
     );
     const j = cfc.schedule_j;
+    if (cfc.owned_worksheet_source) {
+      return owned5471PdfValues(cfc, shareholderName, "P");
+    }
     const p = cfc.schedule_p;
     const subpartFUsd = cfc.schedule_i.line1a + cfc.schedule_i.line1b +
       cfc.schedule_i.line1c + cfc.schedule_i.line1d + cfc.schedule_i.line1e +

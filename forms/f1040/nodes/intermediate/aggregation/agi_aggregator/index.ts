@@ -139,7 +139,14 @@ export const inputSchema = z.object({
   // Current-year passive loss withheld from line5_schedule_e (positive amount)
   pal_current_loss: z.number().nonnegative().optional(),
   // Current-year net income from passive activities
-  pal_current_income: z.number().nonnegative().optional(),
+  pal_current_income: z.union([
+    z.number().nonnegative(),
+    z.array(z.number().nonnegative()),
+  ]).transform((value) =>
+    Array.isArray(value)
+      ? value.reduce((sum, amount) => sum + amount, 0)
+      : value
+  ).optional(),
   // Gross current Form 4797 passive sale gain, before any prior PAL netted on
   // Form 4797. It is income available for the §469 limitation.
   pal_current_4797_gain: z.number().nonnegative().optional(),
@@ -152,7 +159,14 @@ export const inputSchema = z.object({
   // The finalized Form 8582 allowance is carried into the second AGI pass.
   pal_final_allowed_loss: z.number().nonnegative().optional(),
   // Current income from actively participated rental real estate, for Form 8582 line 1a.
-  pal_rental_income: z.number().nonnegative().optional(),
+  pal_rental_income: z.union([
+    z.number().nonnegative(),
+    z.array(z.number().nonnegative()),
+  ]).transform((value) =>
+    Array.isArray(value)
+      ? value.reduce((sum, amount) => sum + amount, 0)
+      : value
+  ).optional(),
   // Prior-year unallowed passive loss carryforward
   pal_prior_unallowed: z.number().nonnegative().optional(),
   // Current-year loss from active rental real estate only (§469(i) allowance)
@@ -197,10 +211,12 @@ export const inputSchema = z.object({
   line8z_form8814: z.number().nonnegative().optional(),
   line8z_hsa_excess_earnings: z.number().nonnegative().optional(),
   line8z_hsa_excess_employer: z.number().nonnegative().optional(),
+  line8z_archer_excess_employer: z.number().nonnegative().optional(),
   line8b_gambling_winnings: z.number().nonnegative().optional(),
   // Line 8z — RTAA payments (Form 1099-G)
   line8z_rtaa: z.number().optional(),
   // Line 8z — Taxable grants (Form 1099-G)
+  line8r_taxable_scholarships: z.number().int().nonnegative().optional(),
   line8z_taxable_grants: z.number().optional(),
   // Form 6198 at-risk disallowance add-back (restores previously posted loss)
   at_risk_disallowed_add_back: z.number().nonnegative().optional(),
@@ -254,6 +270,9 @@ function firstNonScheduleFIncomeSource(input: AgiInput): string | undefined {
     "filing_status",
     "line6_schedule_f",
     "line15_se_deduction",
+    // Source-replayed QEF ordinary income is investment income, not elected
+    // farm income; Schedule J reconciles it separately from Schedule F.
+    "line8z_form8621_qef",
   ]);
   return Object.entries(input).find(([key, value]) => {
     if (allowed.has(key) || value === undefined) return false;
@@ -409,7 +428,9 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
     (input.line8z_form8814 ?? 0) +
     (input.line8z_hsa_excess_earnings ?? 0) +
     (input.line8z_hsa_excess_employer ?? 0) +
+    (input.line8z_archer_excess_employer ?? 0) +
     (input.line8z_rtaa ?? 0) +
+    (input.line8r_taxable_scholarships ?? 0) +
     (input.line8z_taxable_grants ?? 0) +
     (input.at_risk_disallowed_add_back ?? 0) +
     (input.at_risk_recapture ?? 0) +
@@ -651,7 +672,9 @@ function scheduleOnePartI(input: AgiInput): number {
     (input.line8z_form8814 ?? 0) +
     (input.line8z_hsa_excess_earnings ?? 0) +
     (input.line8z_hsa_excess_employer ?? 0) +
+    (input.line8z_archer_excess_employer ?? 0) +
     (input.line8z_rtaa ?? 0) +
+    (input.line8r_taxable_scholarships ?? 0) +
     (input.line8z_taxable_grants ?? 0) +
     (input.at_risk_disallowed_add_back ?? 0) +
     (input.at_risk_recapture ?? 0) +
@@ -783,6 +806,9 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(schedule_j_calculation, {
         farm_only_income_verified: unsupportedFarmIncome === undefined,
         farm_only_unsupported_source_key: unsupportedFarmIncome,
+        ...(input.line8z_form8621_qef
+          ? { nonfarm_qef_ordinary: input.line8z_form8621_qef }
+          : {}),
         fishing_only_income_verified:
           firstNonFishingScheduleCIncomeSource(input) === undefined,
         fishing_only_unsupported_source_key:

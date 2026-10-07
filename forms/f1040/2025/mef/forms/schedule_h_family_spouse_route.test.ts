@@ -124,6 +124,11 @@ Deno.test("Schedule H spouse withholding source joins W-2, Form 1040, Schedule 2
   );
   const projected = scheduleHPdf.projectFields!(filed, {});
   assertEquals(projected.line8_fica_and_withholding, 250);
+  assertEquals(projected.box_b_federal_withheld, true);
+  assertEquals(projected.box_c_quarter_limit, undefined);
+  assertEquals(projected.line6_additional_medicare_tax, undefined);
+  assertEquals(projected.line9_quarter_limit, false);
+  assertEquals(scheduleHPdf.pageIndices?.(projected), [0]);
   assertEquals(
     scheduleHPdf.instances?.(projected, filer, result.pending)?.length,
     1,

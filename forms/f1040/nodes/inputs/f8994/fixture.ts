@@ -166,6 +166,10 @@ export const form8994MatchedPending = {
   },
   f1040: { taxpayer_ssn: "123-45-6789" },
   schedule_c: {
+    form8994_wage_reductions: [{
+      business_reference: "boise-design-2025",
+      credit_amount: 1250,
+    }],
     schedule_cs: [{
       line_a_principal_business: "Design",
       line_b_business_code: "541400",
@@ -177,7 +181,6 @@ export const form8994MatchedPending = {
       line_g_material_participation: true,
       line_1_gross_receipts: 100_000,
       line_26_wages: 50_000,
-      line_26_other_employment_credits: 1_250,
     }],
   },
 };

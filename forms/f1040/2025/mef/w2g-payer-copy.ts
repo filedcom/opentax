@@ -1,4 +1,5 @@
 import { PDFDocument } from "pdf-lib";
+import { assertPrintableSourceTextFields } from "../../source-printable-fields.ts";
 import { inputSchema } from "../../nodes/inputs/w2g/index.ts";
 import { w2gPdf } from "../pdf/forms/w2g.ts";
 import type { FilerIdentity } from "../../mef/header.ts";
@@ -60,8 +61,14 @@ export async function assertW2GPayerCopyContents(
     if (!attachment) {
       throw new Error("W-2G payer copy content needs its exact attached PDF");
     }
-    const pdf = await PDFDocument.load(attachment.bytes);
-    const form = pdf.getForm();
+    await assertPrintableSourceTextFields(
+      attachment.bytes,
+      w2gPdf.fields.filter((field) =>
+        field.kind === "text" && field.domainKey !== "payer_phone"
+      ),
+      "W-2G payer copy",
+    );
+    const form = (await PDFDocument.load(attachment.bytes)).getForm();
     for (const field of w2gPdf.fields) {
       if (field.kind !== "text" || field.domainKey === "payer_phone") {
         continue;

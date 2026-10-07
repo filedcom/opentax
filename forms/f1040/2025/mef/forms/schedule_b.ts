@@ -1,6 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 import { scheduleBFilingRequired } from "../../../schedule_b_filing.ts";
+import { isTy2025IrsCountryCode } from "../../../nodes/irs_country_code.ts";
 import {
   type SellerFinancedBuyer,
   sellerFinancedBuyerSchema,
@@ -235,7 +236,10 @@ function buildIRS1040ScheduleB(fields: Input): string {
   if (
     (fields.foreign_country_codes?.length ?? 0) > 25 ||
     (fields.foreign_country_codes?.length &&
-      fields.fincen_form114_required !== true)
+      fields.fincen_form114_required !== true) ||
+    fields.foreign_country_codes?.some((code) =>
+      typeof code !== "string" || !isTy2025IrsCountryCode(code)
+    )
   ) {
     throw new Error("Schedule B MeF foreign country codes are invalid");
   }

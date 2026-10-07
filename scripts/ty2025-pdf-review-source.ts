@@ -21,6 +21,24 @@ export function reviewSourceFileContents(
       filer,
       expectedPdfForms: fixture.expectedPdfForms,
       reviewFocus: fixture.reviewFocus,
+      ...(fixture.attachments === undefined ? {} : {
+        attachments: fixture.attachments.map((attachment) => ({
+          fileName: attachment.fileName,
+          description: attachment.description,
+          bytesBase64: btoa(
+            Array.from(attachment.bytes, (byte) => String.fromCharCode(byte))
+              .join(""),
+          ),
+        })),
+      }),
+      ...(fixture.retainedSourceDocuments === undefined ? {} : {
+        retainedSourceDocuments: fixture.retainedSourceDocuments.map((document) => ({
+          document_reference: document.document_reference,
+          bytesBase64: btoa(
+            Array.from(document.bytes, (byte) => String.fromCharCode(byte)).join(""),
+          ),
+        })),
+      }),
       pending,
     },
     null,

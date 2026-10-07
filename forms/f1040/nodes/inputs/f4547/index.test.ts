@@ -26,12 +26,12 @@ Deno.test("entered Form 4547 intent survives intake and blocks both final export
   assertThrows(
     () => f1040_2025.buildMefXml(pending, base.filer),
     Error,
-    "Form 4547 child-account election needs verified responsible-party authority",
+    "Form 4547 election needs verified authorized-individual authority",
   );
   await assertRejects(
     () => f1040_2025.buildPdfBytes(pending, base.filer),
     Error,
-    "Form 4547 child-account election needs verified responsible-party authority",
+    "Form 4547 election needs verified authorized-individual authority",
   );
 });
 

@@ -47,3 +47,7 @@ entered worksheet, recapture, interest, and unused-credit facts against them.
 Then run the deferred XSD and filled-PDF visual batch and the IRS rules. A zero
 line 14 is not, by itself, proof that a Form 8611 or carryforward line 15 is
 unnecessary; classify the recapture event and IRS exceptions separately.
+
+## October6 issued section42(j)(5) K1 recipient proof
+
+The [issued-K1 review](ty2025-form8611-issued-k1-review.md) supersedes the unrun statement for this specific issuer path. Actual issuer/recipient/building allocations now derive line8 and strict native/PDF source replay. Two complete packets/all12 pages,22 mutations,109 related checks and current held localXSD/source/catalog/template replay pass. The other historical, own-credit, unused-credit, bond and non-section42j5 variants remain open; no accepted prior filing or external authentication is inferred.

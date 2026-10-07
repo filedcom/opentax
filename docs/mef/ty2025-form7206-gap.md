@@ -1,9 +1,38 @@
 # TY2025 Form 7206 source-to-filing gap
 
+## Current evidence checkpoint (2026-10-06)
+
+The early one-ScheduleC status below is historical. The later
+[independent-plan source review](ty2025-form7206-independent-spouse-plans-review.md)
+verifies C/C, primaryC/spousecashF and two-cash-farm owner plans. Actual policy,
+month payments, establishing business and ownerSE inventories determine the
+deduction after full WOTC wage reductions. The two-farm loss owner retains
+policy sources with zero capacity and no invented SE/Form7206 copy. Main
+combined source/conflict gate51/0 and replay7/212 C/F plus7/217 two-farm pages
+pass; all reviewed PDF bytes remain unchanged.
+
+[Actual business-tip health sources](ty2025-business-tip-health-source-review.md)
+join plan identifiers on issued NEC/MISC/K tip reviews to actual7206 plans,
+apply owner health before eligible-tip net-income limits, and reduce QBI with
+both deductions. Nine current PDFs match149 reviewed pages; the same51/0
+gate covers source conflicts and prior health/tip/Publication974 routes.
+The newer mixedC/F tip source is integrated with combined verification running.
+MixedC/F loss-owner, retirement, several establishing businesses/plans,
+Marketplace overlap, insurer/payment authentication and IRS acceptance remain
+open; these route proofs do not close the parent.
+
 Status: a narrow taxpayer-owned one-Schedule-C, one-non-Marketplace-plan path is
 coded and verified in a full TY2025 return with local v5.4 XSD validation and a
 12-page filled-PDF inspection, 2026-09-30. Source document bytes, the full bulk
 regression, IRS business rules, and ATS acceptance remain unverified.
+
+On 2026-10-04 the checked-in one-plan fixture was regenerated from current
+source. All 12 pages were reviewed against its source, pending graph, and
+native XML; the selected-scope checker passed exact source/PDF/XML hashes,
+page origins, and local TY2025v5.4 XSD. The current packet location and
+manifest digest are in the
+[validation batch](ty2025-form1040-validation-batch.md). This does not expand
+the supported plan or owner boundary.
 
 The [2025 Form 7206](https://www.irs.gov/pub/irs-pdf/f7206.pdf) and
 [instructions](https://www.irs.gov/instructions/i7206) require a separate form
@@ -159,3 +188,51 @@ covered-person support beyond the single taxpayer or spouse policy.
 No legacy-tag remapping, empty-document skip, or externally asserted deduction
 would establish complete filing support. The broader route remains open in the
 inventory until the remaining sources and execution gates are satisfied.
+
+A retained Form 7206 export record now requires computed filing lines in both
+MeF and PDF. A record with Form 7206-specific identity or plan facts fails at
+export instead of being silently omitted in MeF or passed to the PDF writer.
+Schedule C/SE context alone may remain for other calculations without filing
+Form 7206; the truly empty no-form case also emits no document. This guard
+does not expand the one-plan source route or authenticate plan and payment
+records.
+
+## Mixed proprietor C/F plan source extension (2026-10-06)
+
+The actual MFJ primary Schedule C/spouse regular cash Schedule F family now
+retains issuer policy and twelve issued monthly/payment records for each plan,
+actual owner/business inventories and G/NEC farm income joins. Full, individually
+income-limited and employer-month-excluded plans flow to separate filed Form7206
+copies, Schedule1/1040 and attributable QBI; the reviewed farm-WOTC phase/above
+source preserves full determined wage reductions and actual limited current
+credit use before/after the correct owner SE and health order. Seven reusable
+source fixtures have full TY2025v5.4 XSD and native/direct-PDF conflict evidence;
+held replay confirms all 212 visually reviewed pages. See
+[the mixed C/F source equations and terminal evidence](ty2025-form7206-independent-spouse-plans-review.md#mixed-cf-independent-plan-extension-2026-10-06).
+Broader loss/optional/patron, multiple-business-owner, ordinary advanced farm,
+retirement/PTC and external issuer authentication scope remains open.
+
+### Independent two-farm source extension (2026-10-06)
+
+The existing regular owner-health source family now retains actual independent
+primary/spouse cash-farm WOTC income/payroll/control records with one
+established issuer/payment/month plan per owner, full/limited/month-excluded
+deductions, below/phase/above QBI and limited current credit use. An actual loss
+proprietor's paid plan and negative income remain source-bound with zero
+capacity and no fabricated positive Form7206/SE copy. See the
+independent-spouse-plans-review proof table, seven held source fixtures and
+remaining parent limits; this does not establish
+optional/patron/PTC/multiple-business or external authentication.
+
+### Mixed C/F loss-owner established source plans
+
+The bounded regular-method mixed C/F owner-health route now retains an actual
+loss C or loss F with established policy/payments and zero capacity, while
+independently filing only the positive owner's SE/7206 copy. Actual public
+G/NEC/payroll/control sources, full WOTC reductions, owner half-SE, income-limited
+and employer-excluded month cases settle through QBI and1040. Six full-XSD/PDF
+returns and source/native/directPDF conflicts, plus182 all-page inspections,
+are documented in `ty2025-form7206-independent-spouse-plans-review.md`.
+The source inventory repair preserves negative C profit previously omitted by
+a legacy SE tax input; it does not fabricate SE or health amounts. Broader
+owner-plan source coverage and external authentication/ATS remain open.

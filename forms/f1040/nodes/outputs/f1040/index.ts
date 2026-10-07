@@ -166,6 +166,11 @@ const inputSchema = z.object({
   form4972_tax: z.number().nonnegative().optional(),
   form8978_tax: z.number().nonnegative().optional(),
   form8621_tax: z.number().nonnegative().optional(),
+  form8621_1294_deferred_tax_before_credits: z.number().nonnegative()
+    .optional(),
+  // Executor-derived full counterfactual Form 1040 line 24, after rerunning
+  // AGI-sensitive deductions, credits, and other taxes without QEF earnings.
+  form8621_1294_counterfactual_total_tax: z.number().nonnegative().optional(),
   // Line 17 — AMT (Form 6251) via Schedule 2 line 1
   line17_additional_taxes: z.number().nonnegative().optional(),
   // Line 18 — Total tax before credits (16 + 17)
@@ -194,6 +199,9 @@ const inputSchema = z.object({
   form8859_worksheet_b_line14: z.number().finite().nonnegative().optional(),
   form8834_source_credit: z.number().finite().nonnegative().optional(),
   form8396_source: form8396SourceSchema.optional(),
+  form8994_determined_credit: z.number().int().finite().positive().optional(),
+  form8941_determined_credit: z.number().int().finite().positive().optional(),
+  form5884_determined_credit: z.number().int().finite().positive().optional(),
   form3800_source_credits: z.object({
     standardCredit: z.number().finite().nonnegative(),
     empowermentCredit: z.number().finite().nonnegative().optional(),
@@ -679,6 +687,7 @@ function businessCreditAllowance(
   const lines = calculateForm3800Nonpassive(
     tax,
     credits.passiveLines,
+    { roundPercentageLinesToWholeDollars: true },
   );
   const originalSchedule3Credits = homebuyer?.schedule3Credits ??
     mortgage?.schedule3Credits ?? cleanVehicles?.schedule3Credits ??
@@ -864,7 +873,31 @@ function assembleReturn(
       "Form 8978 reduction exceeds Form 1040 line 23 other taxes",
     );
   }
-  const computed_line24 = computed_line22 + computed_line23;
+  const deferredBeforeCredits =
+    input.form8621_1294_deferred_tax_before_credits ?? 0;
+  // The executor's Election B route replaces this first-pass regular-tax
+  // estimate with a complete without-QEF return, including Form 6251 and
+  // Schedule 2. The exporters require that replay before filing.
+  const taxBeforeDeferral = computed_line22 + computed_line23;
+  const counterfactual = input.form8621_1294_counterfactual_total_tax;
+  if (
+    counterfactual !== undefined &&
+    (input.form8621_1294_deferred_tax_before_credits === undefined ||
+      counterfactual > taxBeforeDeferral)
+  ) {
+    throw new Error(
+      "Form 8621 section 1294 counterfactual tax needs a sourced election and cannot exceed current tax",
+    );
+  }
+  const deferredTax = counterfactual !== undefined
+    ? taxBeforeDeferral - counterfactual
+    : deferredBeforeCredits > 0
+    ? computed_line22 - Math.max(
+      0,
+      computed_line18 - deferredBeforeCredits - computed_line21,
+    )
+    : 0;
+  const computed_line24 = computed_line22 + computed_line23 - deferredTax;
   const computed_line25d = totalWithholding(input);
   const computed_line25c = (input.line25c_additional_medicare_withheld ?? 0) +
     sumField(input.line25c_other_withheld);
@@ -911,6 +944,11 @@ function assembleReturn(
     line25d_total_withholding: computed_line25d,
     line33_total_payments: computed_line33,
   };
+  if (deferredTax > 0 || counterfactual !== undefined) {
+    result.form8621_1294_deferred_tax = deferredTax;
+    result.form8621_1294_total_tax_before_deferral = computed_line22 +
+      computed_line23;
+  }
   // The sink's finalized value also gives PDF and MeF a scalar line 1h.
   if (input.line1h_other_earned !== undefined) {
     result.line1h_other_earned = sumField(input.line1h_other_earned);
@@ -1396,6 +1434,60 @@ class F1040Node extends TaxNode<typeof inputSchema> {
               allowed_credit: businessCredit.lines.line38,
               standard_credit_allowed: businessCredit.lines.line17,
               specified_credit_allowed: businessCredit.lines.line37,
+              // For the two direct employer credits, use the earlier Form3800
+              // WOTC row first; both full determined credits reduce farm expenses.
+              ...(input.form8941_determined_credit !== undefined &&
+                  input.form5884_determined_credit !== undefined &&
+                  input.form3800_source_credits?.standardCredit === 0 &&
+                  (input.form3800_source_credits?.empowermentCredit ?? 0) ===
+                    0 &&
+                  input.form3800_source_credits?.specifiedCredit ===
+                    input.form8941_determined_credit +
+                      input.form5884_determined_credit &&
+                  input.form3800_source_credits?.standardCarryforward === 0 &&
+                  input.form3800_source_credits?.specifiedCarryforward === 0 &&
+                  Object.values(
+                    input.form3800_source_credits?.passiveLines ?? {},
+                  ).every((amount) => amount === 0)
+                ? {
+                  form5884_applied_credit: Math.min(
+                    businessCredit.lines.line37,
+                    input.form5884_determined_credit,
+                  ),
+                  form8941_applied_credit: Math.max(
+                    0,
+                    businessCredit.lines.line37 -
+                      input.form5884_determined_credit,
+                  ),
+                }
+                : {}),
+              ...(input.form8941_determined_credit !== undefined &&
+                  input.form5884_determined_credit === undefined &&
+                  input.form3800_source_credits?.standardCredit === 0 &&
+                  (input.form3800_source_credits?.empowermentCredit ?? 0) ===
+                    0 &&
+                  input.form3800_source_credits?.specifiedCredit ===
+                    input.form8941_determined_credit &&
+                  input.form3800_source_credits?.standardCarryforward === 0 &&
+                  input.form3800_source_credits?.specifiedCarryforward === 0 &&
+                  Object.values(
+                    input.form3800_source_credits?.passiveLines ?? {},
+                  ).every((amount) => amount === 0)
+                ? { form8941_applied_credit: businessCredit.lines.line37 }
+                : {}),
+              ...(input.form8994_determined_credit !== undefined &&
+                  input.form3800_source_credits?.standardCredit === 0 &&
+                  (input.form3800_source_credits?.empowermentCredit ?? 0) ===
+                    0 &&
+                  input.form3800_source_credits?.specifiedCredit ===
+                    input.form8994_determined_credit &&
+                  input.form3800_source_credits?.standardCarryforward === 0 &&
+                  input.form3800_source_credits?.specifiedCarryforward === 0 &&
+                  Object.values(
+                    input.form3800_source_credits?.passiveLines ?? {},
+                  ).every((amount) => amount === 0)
+                ? { form8994_applied_credit: businessCredit.lines.line37 }
+                : {}),
             },
           }]
           : []),

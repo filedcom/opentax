@@ -58,9 +58,10 @@ cannot carry them without also transmitting them. Implementing a single
 required Schedule R source route needs that storage/packet distinction before
 the free-text-reference path can be replaced without a bypass.
 
-Focused calculation, native, and PDF cases for the age and disability statuses
-are written but unrun under the implementation-first workflow. A complete
-source-backed full-return XSD/filled-PDF case for each new status, verified
-underlying document bytes, all combinations of Schedule 3 priorities, business
-rules, and ATS remain open. This route does not establish whole-form Schedule R
+Focused Schedule R native and PDF tests pass 16/16, including TY2025 XSD cases
+for the sourced single age-65 credit, joint/MFS age-only boxes, and disability
+box 6. These do not authenticate the underlying age, residence, disability,
+or benefit records, nor provide a graph-generated full-return XSD/filled-PDF
+case for every status. All Schedule 3 priority combinations, business rules,
+and ATS remain open; this evidence does not establish whole-form Schedule R
 support.

@@ -80,6 +80,8 @@ export function assertReturnWideArithmetic(
       "line22_tax_after_credits",
       "line23_other_taxes",
       "line24_total_tax",
+      "form8621_1294_deferred_tax",
+      "form8621_1294_total_tax_before_deferral",
       "line25a_w2_withheld",
       "line25b_withheld_1099",
       "line25c_total",
@@ -226,9 +228,34 @@ export function assertReturnWideArithmetic(
     throw new Error("Form 1040 line 22 differs from lines 18 and 21");
   }
   const line24 = amount("line24_total_tax");
+  const form8621DeferredTax = amount("form8621_1294_deferred_tax") ?? 0;
+  const beforeDeferral = amount("form8621_1294_total_tax_before_deferral");
+  if (
+    form8621DeferredTax > 0 &&
+    (line22 === undefined || form8621DeferredTax > line22 ||
+      beforeDeferral === undefined ||
+      !matches(beforeDeferral, line22 + (amount("line23_other_taxes") ?? 0)))
+  ) {
+    throw new Error(
+      "Form 8621 section 1294 deferral differs from Form 1040 tax before deferral",
+    );
+  }
+  if (
+    form8621DeferredTax === 0 && beforeDeferral !== undefined &&
+    (amount("form8621_1294_counterfactual_total_tax") === undefined ||
+      line22 === undefined ||
+      !matches(beforeDeferral, line22 + (amount("line23_other_taxes") ?? 0)))
+  ) {
+    throw new Error(
+      "Form 8621 tax before deferral needs a source-backed election",
+    );
+  }
   if (
     line24 !== undefined && line22 !== undefined &&
-    !matches(line24, line22 + (amount("line23_other_taxes") ?? 0))
+    !matches(
+      line24,
+      line22 + (amount("line23_other_taxes") ?? 0) - form8621DeferredTax,
+    )
   ) {
     throw new Error("Form 1040 line 24 differs from lines 22 and 23");
   }
@@ -334,6 +361,16 @@ export function assertReturnScheduleJoins(
   pending: Readonly<Record<string, unknown>> | undefined,
 ): void {
   if (!pending) return;
+  const suppliedTotal = (
+    row: Record<string, unknown>,
+    key: string,
+    schedule: string,
+  ): number | undefined => {
+    const value = row[key];
+    if (value === undefined || value === null) return undefined;
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    throw new Error(`${schedule} ${key} needs a finite amount`);
+  };
   const amount = (row: Record<string, unknown>, key: string): number => {
     const value = row[key];
     return typeof value === "number" && Number.isFinite(value) ? value : 0;
@@ -379,6 +416,7 @@ export function assertReturnScheduleJoins(
           "line8n_section951a_inclusion",
           "line8o_section951aa_inclusion",
           "line8p_excess_business_loss",
+          "line8r_taxable_scholarships",
         ) - line("line8d_foreign_earned_income_exclusion") +
         schedule1ActivityNotForProfitTotal(schedule1) +
         schedule1OtherIncomeTotal(schedule1);
@@ -443,30 +481,52 @@ export function assertReturnScheduleJoins(
         );
       }
     }
-    const income = schedule1.line10_total_additional_income;
-    if (typeof income === "number") {
+    const income = suppliedTotal(
+      schedule1,
+      "line10_total_additional_income",
+      "Schedule 1",
+    );
+    if (income !== undefined) {
       match(amount(fields, "line8_additional_income"), income, "line 8");
     }
-    const adjustments = schedule1.line26_total_adjustments;
-    if (typeof adjustments === "number") {
+    const adjustments = suppliedTotal(
+      schedule1,
+      "line26_total_adjustments",
+      "Schedule 1",
+    );
+    if (adjustments !== undefined) {
       match(amount(fields, "line10_adjustments"), adjustments, "line 10");
     }
   }
 
   const scheduleB = record("schedule_b");
-  if (scheduleB && typeof scheduleB.print_line4_total === "number") {
+  const scheduleBTotal = scheduleB
+    ? suppliedTotal(
+      scheduleB,
+      "print_line4_total",
+      "Schedule B",
+    )
+    : undefined;
+  if (scheduleBTotal !== undefined) {
     match(
       amount(fields, "line2b_taxable_interest"),
-      scheduleB.print_line4_total,
+      scheduleBTotal,
       "line 2b",
     );
   }
 
   const schedule1a = record("schedule1a");
-  if (schedule1a && typeof schedule1a.line38_total === "number") {
+  const schedule1aTotal = schedule1a
+    ? suppliedTotal(
+      schedule1a,
+      "line38_total",
+      "Schedule 1-A",
+    )
+    : undefined;
+  if (schedule1aTotal !== undefined) {
     match(
       amount(fields, "line13b_additional_deductions"),
-      schedule1a.line38_total,
+      schedule1aTotal,
       "line 13b",
     );
   }
@@ -482,8 +542,12 @@ export function assertReturnScheduleJoins(
 
   const schedule3 = record("schedule3");
   if (schedule3) {
-    const nonrefundableCredits = schedule3.line8_total;
-    if (typeof nonrefundableCredits === "number") {
+    const nonrefundableCredits = suppliedTotal(
+      schedule3,
+      "line8_total",
+      "Schedule 3",
+    );
+    if (nonrefundableCredits !== undefined) {
       match(
         amount(fields, "line20_nonrefundable_credits"),
         nonrefundableCredits,
@@ -492,9 +556,10 @@ export function assertReturnScheduleJoins(
     }
     // The graph retains cents for Schedule 3 and Form 1040 arithmetic. Both
     // export paths print whole dollars, so compare their filed amounts here.
+    const payments = suppliedTotal(schedule3, "line15_total", "Schedule 3");
     match(
       Math.round(amount(fields, "line31_additional_payments")),
-      Math.round(amount(schedule3, "line15_total")),
+      Math.round(payments ?? 0),
       "line 31",
     );
   }

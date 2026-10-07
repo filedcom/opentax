@@ -306,7 +306,7 @@ Deno.test("partnership K-3 passive interest and line 12 reduction reconcile to K
     part_ii_section_1_line_24_passive_total: 1_000,
     part_iii_section_4_line_1_foreign_tax: 50,
     part_iii_section_4_line_2_tax_reduction: 10,
-    irs_country_code: "DE",
+    irs_country_code: "GM",
     tax_paid_date: "2025-06-15",
     foreign_tax_currency: {
       currency_code: "EUR",
@@ -323,7 +323,7 @@ Deno.test("partnership K-3 passive interest and line 12 reduction reconcile to K
     box16_foreign_income: 1_000,
     box16_foreign_tax: 50,
     box16_foreign_income_category: IncomeCategory.Passive,
-    box16_foreign_tax_irs_country_code: "DE",
+    box16_foreign_tax_irs_country_code: "GM",
     box16_foreign_tax_paid_or_accrued_date: "2025-06-15",
     box16_foreign_tax_kind: ForeignTaxKind.Interest,
     box16_foreign_tax_credit_method: ForeignTaxCreditMethod.Paid,
@@ -335,6 +335,27 @@ Deno.test("partnership K-3 passive interest and line 12 reduction reconcile to K
   );
   assertEquals(item?.schedule_k3_line12_reduction?.amount, 10);
   assertEquals(item?.partnership_k3_passive_interest, k3);
+  assertEquals(
+    k1Partnership.inputSchema.safeParse({
+      k1_partnerships: [minimalItem({
+        ...source,
+        schedule_k3_passive_interest: {
+          ...k3,
+          irs_country_code: "DE",
+        },
+      })],
+    }).success,
+    false,
+  );
+  assertEquals(
+    k1Partnership.inputSchema.safeParse({
+      k1_partnerships: [minimalItem({
+        ...source,
+        box16_foreign_tax_irs_country_code: "DE",
+      })],
+    }).success,
+    false,
+  );
   assertThrows(
     () => compute([minimalItem({ ...source, box5_interest: 999 })]),
     Error,

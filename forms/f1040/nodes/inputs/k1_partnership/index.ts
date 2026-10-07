@@ -1,4 +1,16 @@
+import { currentK1Qbi, currentK1QbiSourceSchema } from "../k1_qbi_source.ts";
+import { form8582 } from "../../intermediate/forms/form8582/index.ts";
+import {
+  k1PassiveIncomeSourceSchema,
+  passiveK1Activities,
+} from "../k1_passive_source.ts";
+import { f8611 } from "../f8611/index.ts";
+import {
+  issuedPartnershipRecaptures,
+  partnershipRecaptureSchema,
+} from "../f8611/partnership-source.ts";
 import { z } from "zod";
+import { ty2025IrsCountryCodeSchema } from "../../irs_country_code.ts";
 import type {
   NodeOutput,
   NodeResult,
@@ -56,6 +68,7 @@ import {
 import {
   box11Line10ReviewSchema,
   box11Line10SourceRows,
+  currentPassiveLine10Activities,
 } from "./box11_line10.ts";
 
 // Schedule K-1 (Form 1065) — Partner's Share of Income, Deductions, Credits
@@ -69,6 +82,7 @@ import {
 
 // Per-item schema — one K-1 from one partnership
 export const itemSchema = z.object({
+  box20_code_f_lihtc_recapture: partnershipRecaptureSchema.optional(),
   // Identification
   partnership_name: z.string().min(1),
   partnership_ein: z.string().regex(/^\d{9}$/).optional(),
@@ -100,6 +114,8 @@ export const itemSchema = z.object({
   // Box 3 — Other net rental income/loss → Schedule E
   box3_other_rental: z.number().optional(),
   eic_passive_activity_review: k1PassiveEicReviewSchema.optional(),
+  passive_income_source: k1PassiveIncomeSourceSchema.optional(),
+  qualified_business_income_source: currentK1QbiSourceSchema.optional(),
 
   // Box 4a — Guaranteed payments for services → Schedule E + Schedule SE
   box4a_guaranteed_services: z.number().optional(),
@@ -204,7 +220,7 @@ export const itemSchema = z.object({
   box16_foreign_deductions: z.number().nonnegative().optional(),
   box16_foreign_deductions_explanation: z.string().trim().min(1).optional(),
   // Use the country, tax type, and payment details from Schedule K-3 Part III.
-  box16_foreign_tax_irs_country_code: z.string().length(2).optional(),
+  box16_foreign_tax_irs_country_code: ty2025IrsCountryCodeSchema.optional(),
   box16_foreign_tax_paid_or_accrued_date: z.string().regex(
     /^\d{4}-\d{2}-\d{2}$/,
   ).optional(),
@@ -551,6 +567,11 @@ type K1PartnershipItems = K1PartnershipItem[];
 // Aggregate Schedule E income → schedule1 line5_schedule_e
 // Includes: Box 1 + 2 + 3 + 4a + 4b. Box 7 goes through Schedule E Part I.
 function schedule1Output(items: K1PartnershipItems): NodeOutput[] {
+  const activities = passiveK1Activities(items, "k1_partnership");
+  const passiveIncome = activities.reduce(
+    (sum, row) => sum + row.current_net,
+    0,
+  );
   const total = items.reduce(
     (sum, item) =>
       sum +
@@ -567,7 +588,18 @@ function schedule1Output(items: K1PartnershipItems): NodeOutput[] {
     output(agi_aggregator, {
       line5_schedule_e: total,
       eic_passive_k1_income: reviewedK1PassiveIncome(items),
+      ...(passiveIncome > 0
+        ? { pal_current_income: passiveIncome, pal_rental_income: 0 }
+        : {}),
     }),
+    ...(activities.length
+      ? [output(form8582, {
+        current_income: passiveIncome,
+        rental_current_income: 0,
+        has_other_passive: true,
+        activities,
+      })]
+      : []),
   ];
 }
 
@@ -747,6 +779,24 @@ function scheduleSEOutputs(items: K1PartnershipItems): NodeOutput[] {
 
 // QBI routing: Box 20Z → form8995
 function form8995Output(items: K1PartnershipItems): NodeOutput[] {
+  const sources = items.flatMap((item) => {
+    const source = currentK1Qbi(item);
+    return source ? [source] : [];
+  });
+  const incomeSources = [
+    ...items.flatMap((item) =>
+      item.passive_income_source ? [item.passive_income_source] : []
+    ),
+    ...box11Line10SourceRows(items).flatMap((row) =>
+      row.current_passive_source ? [row.current_passive_source] : []
+    ),
+  ];
+  const sourceFields = sources.length
+    ? {
+      current_k1_qbi_sources: sources,
+      current_passive_k1_income_sources: incomeSources,
+    }
+    : {};
   const totalQbi = items.reduce((sum, item) => sum + (item.box20z_qbi ?? 0), 0);
   const totalW2 = items.reduce(
     (sum, item) => sum + (item.box20_w2_wages ?? 0),
@@ -757,13 +807,19 @@ function form8995Output(items: K1PartnershipItems): NodeOutput[] {
     0,
   );
 
-  if (totalQbi === 0 && totalW2 <= 0 && totalUbia <= 0) return [];
+  if (totalQbi === 0 && totalW2 <= 0 && totalUbia <= 0) {
+    return incomeSources.length
+      ? [output(form8995, { current_passive_k1_income_sources: incomeSources })]
+      : [];
+  }
 
   if (totalQbi !== 0 && totalW2 > 0) {
-    return [output(form8995, { qbi: totalQbi, w2_wages: totalW2 })];
+    return [
+      output(form8995, { qbi: totalQbi, w2_wages: totalW2, ...sourceFields }),
+    ];
   }
   if (totalQbi !== 0) {
-    return [output(form8995, { qbi: totalQbi })];
+    return [output(form8995, { qbi: totalQbi, ...sourceFields })];
   }
   return [output(form8995, { w2_wages: totalW2 })];
 }
@@ -854,7 +910,25 @@ function box11CodeKGamblingOutputs(items: K1PartnershipItems): NodeOutput[] {
 function box11Line10OrdinaryOutputs(items: K1PartnershipItems): NodeOutput[] {
   const rows = box11Line10SourceRows(items);
   if (rows.length === 0) return [];
-  return [output(form4797, { k1_box11_line10_rows: rows })];
+  const activities = currentPassiveLine10Activities(rows);
+  const income = activities.reduce((t, a) => t + a.current_net, 0);
+  return [
+    output(form4797, { k1_box11_line10_rows: rows }),
+    ...(activities.length
+      ? [
+        output(form8582, {
+          current_income: income,
+          rental_current_income: 0,
+          has_other_passive: true,
+          activities,
+        }),
+        output(agi_aggregator, {
+          pal_current_income: income,
+          pal_rental_income: 0,
+        }),
+      ]
+      : []),
+  ];
 }
 
 // Box 12 — Section 179 deduction → Form 4562
@@ -984,6 +1058,8 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
     form4952,
     f3800,
     form8582cr,
+    form8582,
+    f8611,
     disabledAccessLimit,
     scheduleE,
   ]);
@@ -991,7 +1067,9 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { k1_partnerships } = inputSchema.parse(input);
 
+    const recaptures = issuedPartnershipRecaptures(k1_partnerships);
     const outputs: NodeOutput[] = [
+      ...(recaptures.length ? [output(f8611, { f8611s: recaptures })] : []),
       ...schedule1Output(k1_partnerships),
       ...royaltyScheduleEOutputs(k1_partnerships),
       ...scheduleBInterestOutputs(k1_partnerships),

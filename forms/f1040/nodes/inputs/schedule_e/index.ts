@@ -1,3 +1,9 @@
+import {
+  currentPropertyAmounts,
+  currentPropertyPassiveAmounts,
+  currentPropertySourceSchema,
+  reconcileCurrentPropertySource,
+} from "./current-property-source.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -67,6 +73,7 @@ const otherExpenseLineSchema = z.object({
 export const itemSchema = z.object({
   // --- Required identification fields ---
   tsj: tsjSchema,
+  current_property_source: currentPropertySourceSchema.optional(),
   activity_id: z.string().trim().min(1).max(64).optional(),
   // Retained evidence for a positive passive net-income amount used in the
   // Form 8582-CR line 6 tax-without-passive-income worksheet.
@@ -183,6 +190,7 @@ export const itemSchema = z.object({
     payer_name: z.string().min(1),
     payer_tin: z.string().regex(/^\d{9}$/),
     recipient_tin: z.string().regex(/^\d{9}$/),
+    source_document_reference: z.string().trim().min(1).optional(),
     box2_gross_royalties: z.number().positive(),
   }).strict().optional(),
 
@@ -422,6 +430,7 @@ export function qualifiedRetainedPropertySale(item: EItem): boolean {
  * short-held property. The acquisition record establishes the activity ID;
  * there can be no prior-year passive loss in this bounded route. */
 export function qualifiedFirstYearRetainedPropertySale(item: EItem): boolean {
+  if (reconcileCurrentPropertySource(item)) return true;
   const sale = item.passive_property_sales?.[0];
   const source = item.first_year_activity_source;
   return (item.activity_type === "A" || item.activity_type === "B") &&
@@ -514,6 +523,7 @@ export function reviewPre2025PartIEntireGainCandidate(item: EItem): {
 // ─── Validation ──────────────────────────────────────────────────────────────
 
 function validateItem(item: EItem): void {
+  reconcileCurrentPropertySource(item);
   if (reviewPre2025PartIEntireGainCandidate(item)) {
     throw new Error(
       "Schedule E long-held Part I entire disposition needs executor-owned authentication of the accepted prior-year activity and zero passive-loss balance",
@@ -736,7 +746,12 @@ function passiveItems(items: EItems): EItems {
 // Current-year net loss from passive activities (positive amount).
 function passiveCurrentLoss(items: EItems): number {
   return passiveItems(items)
-    .map(computePropertyNet)
+    .map((item) =>
+      item.current_property_source
+        ? currentPropertyPassiveAmounts(item.current_property_source)
+          .passiveOperating
+        : computePropertyNet(item)
+    )
     .filter((n) => n < 0)
     .reduce((sum, n) => sum + Math.abs(n), 0);
 }
@@ -744,7 +759,12 @@ function passiveCurrentLoss(items: EItems): number {
 // Current-year net income from passive activities.
 function passiveCurrentIncome(items: EItems): number {
   return passiveItems(items)
-    .map(computePropertyNet)
+    .map((item) =>
+      item.current_property_source
+        ? currentPropertyPassiveAmounts(item.current_property_source)
+          .passiveOperating
+        : computePropertyNet(item)
+    )
     .filter((n) => n > 0)
     .reduce((sum, n) => sum + n, 0);
 }
@@ -754,7 +774,12 @@ function passiveCurrentIncome(items: EItems): number {
 function activeRentalCurrentLoss(items: EItems): number {
   return items
     .filter((item) => item.activity_type === "A")
-    .map(computePropertyNet)
+    .map((item) =>
+      item.current_property_source
+        ? currentPropertyPassiveAmounts(item.current_property_source)
+          .passiveOperating
+        : computePropertyNet(item)
+    )
     .filter((n) => n < 0)
     .reduce((sum, n) => sum + Math.abs(n), 0);
 }
@@ -762,7 +787,12 @@ function activeRentalCurrentLoss(items: EItems): number {
 function activeRentalCurrentIncome(items: EItems): number {
   return items
     .filter((item) => item.activity_type === "A")
-    .map(computePropertyNet)
+    .map((item) =>
+      item.current_property_source
+        ? currentPropertyPassiveAmounts(item.current_property_source)
+          .passiveOperating
+        : computePropertyNet(item)
+    )
     .filter((net) => net > 0)
     .reduce((sum, net) => sum + net, 0);
 }
@@ -808,7 +838,10 @@ export function scheduleEPassiveEicIncome(rawInput: unknown): number {
   const input = inputSchema.parse(rawInput);
   const rentalIncome = input.schedule_es.filter(isPassive).reduce(
     (sum, item) => {
-      const net = computePropertyNet(item);
+      const net = item.current_property_source
+        ? currentPropertyPassiveAmounts(item.current_property_source)
+          .passiveOperating
+        : computePropertyNet(item);
       if ((item.royalties_income ?? 0) === 0) return sum + Math.max(0, net);
       const fraction = (item.ownership_percent ?? 100) / 100;
       const royaltyGross = Math.round(item.royalties_income! * fraction);
@@ -844,11 +877,14 @@ function form8582Outputs(
   if (!hasPassiveLoss(items, farms)) return [];
 
   const reportedProperties = passiveItems(items).filter((item) =>
-    computePropertyNet(item) !== 0 ||
-    (item.passive_property_sales?.length ?? 0) > 0 ||
-    (item.prior_unallowed_passive_operating ?? 0) > 0 ||
-    (item.prior_unallowed_passive_4797_part1 ?? 0) > 0 ||
-    (item.prior_unallowed_passive_4797_part2 ?? 0) > 0
+    item.current_property_source
+      ? currentPropertyPassiveAmounts(item.current_property_source)
+        .passiveOperating !== 0
+      : computePropertyNet(item) !== 0 ||
+        (item.passive_property_sales?.length ?? 0) > 0 ||
+        (item.prior_unallowed_passive_operating ?? 0) > 0 ||
+        (item.prior_unallowed_passive_4797_part1 ?? 0) > 0 ||
+        (item.prior_unallowed_passive_4797_part2 ?? 0) > 0
   );
   const reportedFarms = farms.filter((farm) =>
     farm.current_net !== 0 || (farm.prior_unallowed_operating ?? 0) > 0
@@ -884,7 +920,10 @@ function form8582Outputs(
       activity_type: item.activity_type as "A" | "B",
       property_type: item.property_type,
       reporting_form: "schedule_e" as const,
-      current_net: computePropertyNet(item),
+      current_net: item.current_property_source
+        ? currentPropertyPassiveAmounts(item.current_property_source)
+          .passiveOperating
+        : computePropertyNet(item),
       prior_unallowed_operating: item.prior_unallowed_passive_operating ?? 0,
       prior_year_8582_source: item.prior_year_8582_source,
       first_year_activity_source: item.first_year_activity_source,
@@ -1036,6 +1075,24 @@ function scheduleAOutputs(items: EItems): NodeOutput[] {
 }
 
 function form8995Outputs(items: EItems): NodeOutput[] {
+  const currentProperties = items.flatMap((item) => {
+    const source = reconcileCurrentPropertySource(item);
+    return source ? [source] : [];
+  });
+  if (currentProperties.length) {
+    if (items.some((item) => !item.current_property_source)) {
+      throw new Error(
+        "Current property QBI requires complete owned rental source inventory",
+      );
+    }
+    return [output(form8995, {
+      current_passive_property_sources: currentProperties,
+      qbi: currentProperties.reduce((n, s) => {
+        const a = currentPropertyAmounts(s);
+        return n + a.receipts - a.taxes + a.gain;
+      }, 0),
+    })];
+  }
   const qbiItems = items.filter((item) => item.qbi_trade_or_business === "Y");
   if (qbiItems.length === 0) return [];
 
@@ -1132,6 +1189,13 @@ function form4797Outputs(
       item.activity_id ? [item.activity_id] : []
     ),
     ...(sales.length ? { passive_property_sales: sales } : {}),
+    ...(items.some((item) => item.current_property_source)
+      ? {
+        current_property_sources: items.flatMap((item) =>
+          item.current_property_source ? [item.current_property_source] : []
+        ),
+      }
+      : {}),
     ...(sales.some((sale) => sale.part === "I") &&
         items.length === 1 &&
         items[0].section_1231_lookback_source

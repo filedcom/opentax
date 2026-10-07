@@ -1,3 +1,5 @@
+import { iraRecharacterizationStatement } from "./ira_recharacterization_statement.ts";
+import { form8853MedicareStatements } from "./f8853_medicare_statements.ts";
 import { eitc } from "./eitc.ts";
 import { cccLoanStatement } from "./ccc_loan_statement.ts";
 import { cccLoanAccrualStatement } from "./ccc_loan_accrual_statement.ts";
@@ -75,6 +77,7 @@ import { form8611 } from "./f8611.ts";
 import { form8615 } from "./f8615.ts";
 import { form8621 } from "./f8621.ts";
 import { form8621ExcessStatement } from "./f8621_excess_statement.ts";
+import { form8621MtmDispositionsStatement } from "./f8621_mtm_dispositions_statement.ts";
 import { form8814 } from "./f8814.ts";
 import { childTaxableInterestStatement } from "./child_taxable_interest_statement.ts";
 import { form8815 } from "./f8815.ts";
@@ -390,12 +393,18 @@ export const ALL_MEF_FORMS = [
   // Form 8283 Section A column (h) FMV-reduction explanations follow the
   // vehicle statement in ReturnData1040.xsd.
   form8283FmvReductionStatement,
+  // Form 8606 IRA statements precede Form 8621 statements in ReturnData.
+  iraRecharacterizationStatement,
+  // Form 8621 mark-to-market sale statements precede Part V statements in MeF.
+  form8621MtmDispositionsStatement,
   // Form 8621 Part V holding-period computation statements follow numbered forms.
   form8621ExcessStatement,
   // Form 8814 line 1a nominee and interest-adjustment statement.
   childTaxableInterestStatement,
   // Form 8820 controlled-group allocation follows Form 8814 statements.
   form8820ControlledGroupStatement,
+  // Form 8853 owner statements precede Form 8854 supporting roots in ReturnData.
+  form8853MedicareStatements,
   // Form 8854 native roots follow Form 8820 controlled-group statements.
   form8854NativeStatements,
 ] as const;

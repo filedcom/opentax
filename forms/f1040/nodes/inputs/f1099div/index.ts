@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ty2025IrsCountryCodeSchema } from "../../irs_country_code.ts";
 import type {
   NodeOutput,
   NodeResult,
@@ -53,6 +54,12 @@ const nomineeDistributionSchema = z.object({
   foreign_source_qualified_dividends_usd: z.number().nonnegative().optional(),
 });
 
+function realCalendarDate(value: string): boolean {
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return Number.isFinite(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === value;
+}
+
 export const itemSchema = z.object({
   payerName: z.string().optional(),
   payerTin: z.string().regex(/^\d{9}$/).optional(),
@@ -66,6 +73,22 @@ export const itemSchema = z.object({
   // Affirm this payer's dividends and capital-gain distributions come from
   // investment property and are excluded from Form 4952 manual "other" facts.
   investment_property_for_form4952: z.boolean().optional(),
+  qualified_dividend_filing_review: z.object({
+    ex_dividend_date: z.string().regex(/^2025-\d{2}-\d{2}$/).refine(
+      realCalendarDate,
+      "Expected a real calendar date",
+    ),
+    qualified_held_days_in_121_day_window: z.number().int().min(61).max(121),
+    diminished_risk_days_excluded: z.number().int().min(0).max(121),
+    ordinary_stock_rule_confirmed: z.literal(true),
+    eligible_issuer_and_no_disqualified_dividend_confirmed: z.literal(true),
+    no_related_payment_obligation_confirmed: z.literal(true),
+    review_reference: z.string().trim().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(
+      realCalendarDate,
+      "Expected a real calendar date",
+    ),
+  }).strict().optional(),
   box1b: z.number().nonnegative().optional(),
   box2a: z.number().nonnegative().optional(),
   box2b: z.number().nonnegative().optional(),
@@ -81,7 +104,7 @@ export const itemSchema = z.object({
   box8: z.string().optional(),
   foreign_source_dividends_usd: z.number().nonnegative().optional(),
   foreign_source_qualified_dividends_usd: z.number().nonnegative().optional(),
-  foreign_tax_irs_country_code: z.string().length(2).optional(),
+  foreign_tax_irs_country_code: ty2025IrsCountryCodeSchema.optional(),
   box9: z.number().nonnegative().optional(),
   box10: z.number().nonnegative().optional(),
   box12: z.number().nonnegative().optional(),
@@ -163,11 +186,13 @@ export function assertDistinct1099DIVCopies(items: readonly DIVItem[]): void {
   const seenAccounts = new Set<string>();
   const seenOwners = new Set<string>();
   const unidentifiedCopies = new Set<string>();
+  const seenItems: DIVItem[] = [];
   for (const item of items) {
     const payer = item.payerTin ??
       item.payerName?.trim().replace(/\s+/g, " ").toUpperCase() ?? null;
     const owner = JSON.stringify([payer, item.recipient_tin ?? null]);
     const identifiedAccount = !!(item.account_number && payer);
+    const positive = nomineeFields.some((key) => (item[key] ?? 0) > 0);
     if (item.source_document_reference) {
       if (seenReferences.has(item.source_document_reference)) {
         throw new Error(
@@ -185,7 +210,36 @@ export function assertDistinct1099DIVCopies(items: readonly DIVItem[]): void {
       }
       seenAccounts.add(key);
     }
-    if (!nomineeFields.some((key) => (item[key] ?? 0) > 0)) continue;
+    const payerName = item.payerName?.trim().replace(/\s+/g, " ")
+      .toUpperCase() ?? null;
+    for (const earlier of seenItems) {
+      // A missing payer TIN must not separate two otherwise matching copies.
+      if (
+        earlier.recipient_tin !== item.recipient_tin ||
+        (earlier.payerName?.trim().replace(/\s+/g, " ").toUpperCase() ??
+            null) !== payerName ||
+        Boolean(earlier.payerTin) === Boolean(item.payerTin)
+      ) continue;
+      if (
+        earlier.account_number && item.account_number &&
+        earlier.account_number === item.account_number
+      ) {
+        throw new Error(
+          "1099-DIV repeats the same payer, recipient, and account; corrected copies need a reviewed single current row",
+        );
+      }
+      if (
+        positive && nomineeFields.some((key) => (earlier[key] ?? 0) > 0) &&
+        ((!earlier.account_number && !earlier.source_document_reference) ||
+          (!item.account_number && !item.source_document_reference))
+      ) {
+        throw new Error(
+          "1099-DIV has multiple positive issued copies without account or source_document_reference; identify each distinct copy",
+        );
+      }
+    }
+    seenItems.push(item);
+    if (!positive) continue;
     if (!identifiedAccount && !item.source_document_reference) {
       if (seenOwners.has(owner)) {
         throw new Error(
@@ -490,8 +544,29 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
     // Aggregate every Form 8995 field into one output.
     // Line 12 is Form 1040 line 3a plus net capital gain (i8995, Line 12), so the
     // qualified dividends reduce the 20%-of-taxable-income limit on line 13.
-    const form8995Fields: Partial<z.infer<typeof form8995["inputSchema"]>> = {};
-    if (totalQualDiv > 0) form8995Fields.net_capital_gain = totalQualDiv;
+    const form8995Fields: Partial<z.infer<typeof form8995["inputSchema"]>> = {
+      ...(parsed.f1099divs.length > 0 &&
+          parsed.f1099divs.every((item) =>
+            item.payerTin && item.recipient_tin && item.account_number &&
+            item.source_document_reference
+          )
+        ? {
+          investment_dividend_sources: parsed.f1099divs,
+          investment_dividend_totals: {
+            ordinary: div1099s.reduce((sum, item) => sum + item.box1a, 0),
+            qualified: totalQualDiv,
+            capital_gain_distributions: totalBox2a,
+          },
+        }
+        : {}),
+    };
+    if (totalQualDiv > 0) {
+      form8995Fields.net_capital_gain = totalQualDiv;
+      form8995Fields.qbi_capital_sources = [{
+        source: "f1099div.qualified_dividends",
+        amount: totalQualDiv,
+      }];
+    }
 
     // NII: ordinary dividends subject to NIIT (IRC §1411(c)(1)(A)) → form8960 line 2
     const totalOrdinaryForNiit = div1099s.reduce(

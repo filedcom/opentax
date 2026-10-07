@@ -3,11 +3,12 @@ import { unzipSync, Zip, ZipPassThrough, zipSync } from "fflate";
 import { PDFDocument } from "pdf-lib";
 import { type FilerIdentity, FilingStatus } from "./types.ts";
 import type { MefFormsPending } from "./types.ts";
-import { buildMefBundle } from "./builder.ts";
+import { buildMefBundle, type MefBundle } from "./builder.ts";
 import { preparedSourceSha256, sha256Hex } from "../prepared-source.ts";
 import type { MefPdfAttachment } from "./form-descriptor.ts";
 import { f1040_2025 } from "../index.ts";
 import { pdfReviewFixtures } from "../pdf/review-fixtures.ts";
+import { assertPreparedDocumentInventory } from "./prepared-attachment-manifest.ts";
 import {
   buildMefSubmissionArchive,
   buildMefTransmissionPackage,
@@ -136,6 +137,20 @@ function filer(): FilerIdentity {
     originator: { efin: "123456", originatorType: "ERO" },
   };
 }
+
+Deno.test("prepared ReturnData rejects a second IRS1040 document", () => {
+  const bundle = {
+    xml:
+      `<Return><ReturnHeader binaryAttachmentCnt="0"></ReturnHeader><ReturnData documentCnt="2"><IRS1040 documentId="IRS10400"></IRS1040><IRS1040 documentId="IRS10401"></IRS1040></ReturnData></Return>`,
+    attachments: [],
+    attachmentSha256ByFileName: {},
+  } as unknown as MefBundle;
+  assertThrows(
+    () => assertPreparedDocumentInventory(bundle),
+    Error,
+    "Prepared MeF document count, order, IDs, references, or attachment count differs from its return",
+  );
+});
 
 async function makeSubmissionArchive(
   pending: MefFormsPending,
@@ -931,9 +946,11 @@ Deno.test("Form 3800 PDF and submission ZIP consume one prepared native return",
   assertEquals(submission.bundle, prepared.bundle);
   assertEquals(prepared.bundle.form3800Parts?.lines.line38, 600);
   assertEquals(xml.includes("<IRS3800 "), true);
+  // Form 6251's blank Part III continuation page is omitted by the TY2025
+  // selector; this fixture still includes its populated Form 6251 page.
   assertEquals(
     (await PDFDocument.load(await prepared.renderPdf())).getPageCount(),
-    17,
+    16,
   );
 });
 
@@ -1045,6 +1062,44 @@ Deno.test("A2A request entries match both ZIP attachments in order", async () =>
     /<SubmissionId>([^<]+)<\/SubmissionId>/g,
   )].map((match) => match[1]);
   assertEquals(requestIds, ids);
+  const container = unzipSync(transmission.containerZipBytes);
+  assertEquals(Object.keys(container), ids.map((id) => `${id}.zip`));
+  for (const archive of archives) {
+    assertEquals(container[archive.fileName], archive.bytes);
+  }
+});
+
+Deno.test("A2A request omits an absent electronic postmark per Publication 5830", async () => {
+  const ids = ["1234562026269abcdefg", "1234562026269abcdefh"];
+  const archives = await Promise.all(ids.map((id) =>
+    makeSubmissionArchive({
+      f1040: { filing_status: "single", digital_assets: false },
+    }, {
+      filer: filer(),
+      submissionId: id,
+      processingDate,
+      attachments: [],
+    })
+  ));
+  const transmission = buildMefTransmissionPackage([
+    { archive: archives[0] },
+    {
+      archive: archives[1],
+      electronicPostmark: new Date("2026-09-26T09:00:00.123Z"),
+    },
+  ]);
+  assertEquals(
+    transmission.sendSubmissionsRequestXml,
+    '<?xml version="1.0" encoding="UTF-8"?>\n' +
+      '<SendSubmissionsRequest xmlns="http://www.irs.gov/a2a/mef/MeFTransmitterService.xsd">' +
+      "<SubmissionDataList>" +
+      `<SubmissionData><SubmissionId>${
+        ids[0]
+      }</SubmissionId></SubmissionData>` +
+      `<SubmissionData><SubmissionId>${ids[1]}</SubmissionId>` +
+      "<ElectronicPostmarkTs>2026-09-26T09:00:00.123Z</ElectronicPostmarkTs>" +
+      "</SubmissionData></SubmissionDataList></SendSubmissionsRequest>",
+  );
   const container = unzipSync(transmission.containerZipBytes);
   assertEquals(Object.keys(container), ids.map((id) => `${id}.zip`));
   for (const archive of archives) {
@@ -1196,6 +1251,15 @@ Deno.test("MeF A2A package rejects an empty or duplicate submission set", async 
       buildMefTransmissionPackage([{
         archive: submission,
         electronicPostmark: new Date("invalid"),
+      }]),
+    Error,
+    "valid electronic postmark",
+  );
+  assertThrows(
+    () =>
+      buildMefTransmissionPackage([{
+        archive: submission,
+        electronicPostmark: "2026-09-26T09:00:00Z" as unknown as Date,
       }]),
     Error,
     "valid electronic postmark",

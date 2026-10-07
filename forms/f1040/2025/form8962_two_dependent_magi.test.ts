@@ -290,3 +290,34 @@ Deno.test("Form 8962 two-dependent family rejects changed source, identity, poli
     "finalized Form 1040",
   );
 });
+
+Deno.test("Form 8962 does not count one claimed SSN twice in dependent MAGI", () => {
+  const duplicate = {
+    ...interest,
+    ssn: mixed.ssn,
+    ptc_tax_return: {
+      ...interest.ptc_tax_return,
+      filed_form1040: {
+        ...interest.ptc_tax_return.filed_form1040,
+        taxpayer_ssn: mixed.ssn,
+      },
+      interest_forms1099: [{
+        ...interest.ptc_tax_return.interest_forms1099[0],
+        recipient_ssn: mixed.ssn,
+      }],
+    },
+  };
+  assertThrows(
+    () =>
+      general.compute(
+        { taxYear: 2025, formType: "f1040" },
+        general.inputSchema.parse({
+          filing_status: "single",
+          taxpayer_ssn: filer.primarySSN,
+          dependents: [mixed, duplicate],
+        }),
+      ),
+    Error,
+    "claimed dependents need distinct SSNs",
+  );
+});

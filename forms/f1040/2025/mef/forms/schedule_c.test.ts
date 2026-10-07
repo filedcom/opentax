@@ -339,6 +339,48 @@ Deno.test("Schedule C emits the vehicle substantiation fields", () => {
   );
 });
 
+Deno.test("Schedule C MeF rejects answers to inapplicable follow-up boxes", () => {
+  for (const trigger of [false, undefined]) {
+    for (const answer of [true, false]) {
+      assertThrows(
+        () =>
+          scheduleC.build({
+            schedule_cs: [item({
+              line_i_made_1099_payments: trigger,
+              line_j_filed_1099s: answer,
+            })],
+          }, { filer }),
+        Error,
+        "line J applies only when line I is yes",
+      );
+      assertThrows(
+        () =>
+          scheduleC.build({
+            schedule_cs: [item({
+              line_47a_evidence: trigger,
+              line_47b_written_evidence: answer,
+            })],
+          }, { filer }),
+        Error,
+        "line 47b applies only when line 47a is yes",
+      );
+    }
+  }
+  const [xml] = scheduleC.build({
+    schedule_cs: [item({
+      line_i_made_1099_payments: true,
+      line_j_filed_1099s: false,
+      line_47a_evidence: true,
+      line_47b_written_evidence: false,
+    })],
+  }, { filer });
+  assertStringIncludes(
+    xml,
+    "<RequiredForm1099FiledInd>false</RequiredForm1099FiledInd>",
+  );
+  assertStringIncludes(xml, "<EvidenceWrittenInd>false</EvidenceWrittenInd>");
+});
+
 Deno.test("Schedule C emits a structured business address and rejects missing statements", () => {
   const [addressXml] = scheduleC.build({
     schedule_cs: [item({

@@ -141,6 +141,37 @@ Deno.test("f4852: Part I W2 substitute → wages to line1a, withheld to line25a_
   assertEquals(fields["line25a_w2_withheld"], 8000);
 });
 
+Deno.test("f4852: substitute type cannot silently discard the other form's fields", () => {
+  const wrongW2Fields: Array<Partial<Item>> = [
+    { gross_distribution: 2_000 },
+    { taxable_amount: 1_500 },
+    { taxable_amount_not_determined: false },
+    { total_distribution: false },
+    { is_ira: false },
+    { capital_gain: 100 },
+    { employee_contributions: 500 },
+    { distribution_code: "7" },
+  ];
+  const wrongR1099Fields: Array<Partial<Item>> = [
+    { wages: 3_000 },
+    { social_security_wages: 3_000 },
+    { social_security_withheld: 186 },
+    { social_security_tips: 100 },
+    { medicare_wages: 3_000 },
+    { medicare_withheld: 43.50 },
+  ];
+  for (const fields of wrongW2Fields) {
+    const item = w2Item(fields);
+    assertEquals(itemSchema.safeParse(item).success, false);
+    assertThrows(() => compute([item]));
+  }
+  for (const fields of wrongR1099Fields) {
+    const item = r1099Item(fields);
+    assertEquals(itemSchema.safeParse(item).success, false);
+    assertThrows(() => compute([item]));
+  }
+});
+
 Deno.test("f4852: Part I W2 substitute with only wages (no withholding)", () => {
   const result = compute([w2Item({ wages: 40000, federal_withheld: 0 })]);
   const fields = f1040Fields(result);
@@ -210,6 +241,20 @@ Deno.test("f4852: Part II taxable amount includes basis once", () => {
       employee_contributions: 21_000,
     })).success,
     false,
+  );
+});
+
+Deno.test("f4852: undetermined 1099-R taxable amount cannot enter a calculated return", () => {
+  const item = r1099Item({
+    gross_distribution: 20_000,
+    employee_contributions: 2_000,
+    taxable_amount_not_determined: true,
+  });
+  assertEquals(itemSchema.safeParse(item).success, true);
+  assertThrows(
+    () => compute([item]),
+    Error,
+    "Form 4852 taxable amount is undetermined",
   );
 });
 

@@ -1,3 +1,4 @@
+import { assertForm8611IssuerSources } from "./f8611_issuer_source.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import {
   calculateForm8611,
@@ -96,6 +97,7 @@ export const form8611: MefFormDescriptor<"f8611", unknown, readonly string[]> =
     build(raw, context?: MefBuildContext) {
       if (!raw || typeof raw !== "object" || !("f8611s" in raw)) return [];
       const input = inputSchema.parse(raw);
+      assertForm8611IssuerSources(input.f8611s,context?.pending,context?.filer);
       reconcileForm8611Schedule2(input.f8611s, context?.pending);
       return input.f8611s.map(building);
     },

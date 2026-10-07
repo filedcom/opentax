@@ -39,8 +39,16 @@ Deno.test("RRB-1099-R fully taxable pension reaches Form 1040 and AGI", () => {
 
 Deno.test("RRB-1099-R adds distinct pension statements", () => {
   const result = compute([
-    source({ box5_vested_dual_benefit: 500, box7_total_gross_paid: 500 }),
-    source({ box6_supplemental_annuity: 700, box7_total_gross_paid: 700 }),
+    source({
+      source_document_reference: "RRB-original-1",
+      box5_vested_dual_benefit: 500,
+      box7_total_gross_paid: 500,
+    }),
+    source({
+      source_document_reference: "RRB-original-2",
+      box6_supplemental_annuity: 700,
+      box7_total_gross_paid: 700,
+    }),
   ]);
   assertEquals(fieldsOf(result.outputs, f1040)?.line5a_pension_gross, 1_200);
   assertEquals(

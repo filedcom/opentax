@@ -55,8 +55,8 @@ Deno.test("2025 Schedule 1-A PDF maps the source-backed NEC line 5 and zero empl
     result.pending,
   );
   assertEquals(projected?.line4c_employee_tips, 0);
-  assertEquals(projected?.line5_trade_business_tips, 9_294);
-  assertEquals(projected?.line6_total_tips, 9_294);
+  assertEquals(projected?.line5_trade_business_tips, 9_293);
+  assertEquals(projected?.line6_total_tips, 9_293);
   assertEquals(
     schedule1aPdf.fields.find((field) =>
       field.domainKey === "line5_trade_business_tips"

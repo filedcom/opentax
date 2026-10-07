@@ -1,4 +1,5 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
+import { createHash } from "node:crypto";
 import { buildMefXml } from "../builder.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import {
@@ -35,6 +36,14 @@ const filer: FilerIdentity = {
   softwareId: "12345678",
   originator: { efin: "123456", originatorType: "ERO" },
 };
+const copy = (document_id: string, content: string) => {
+  const bytes = new TextEncoder().encode(content);
+  return {
+    document_id,
+    sha256: createHash("sha256").update(bytes).digest("hex"),
+    bytes_base64: btoa(String.fromCharCode(...bytes)),
+  };
+};
 
 Deno.test({
   name:
@@ -63,10 +72,41 @@ Deno.test({
     regime: PficRegime.EXCESS_DISTRIBUTION,
     shares_owned: 100,
     fmv_at_year_end: 10_000,
+    parent_source: {
+      corporation_address: {
+        line1: "1 Fund Quay",
+        city: "Dublin",
+        country_code: "EI",
+      },
+      corporation_tax_year_start: "2025-01-01",
+      corporation_tax_year_end: "2025-12-31",
+      share_classes: [{
+        description: "Ordinary",
+        year_end_shares: 100,
+        year_end_value_usd: 10_000,
+      }],
+      jointly_owned_with_spouse: false,
+      shares_acquired_during_2025: false,
+      election_status: "section1291_no_new_election",
+      no_outstanding_section1294_election: true,
+      issuer_record: copy("issuer-2025", "2025 issuer holdings"),
+      section1291_prior_distribution_records: [{
+        source_event_index: 0,
+        tax_year: 2024,
+        currency_code: "USD",
+        amount: 0,
+        ...copy("issuer-2024", "2024 issuer distributions zero"),
+      }],
+    },
     excess_events: [event],
   });
   const interest = Math.round(
     calculateSection1291Interest(2024, 5_006.84 * 0.37),
+  );
+  const excessEvents = calculateExcessEvents(event);
+  const section1291Income = excessEvents.reduce(
+    (sum, result) => sum + result.line16b_current_and_pre_pfic_income,
+    0,
   );
   const xml = buildMefXml({
     f1040: {
@@ -80,9 +120,10 @@ Deno.test({
       line23_other_taxes: interest,
       line24_total_tax: 1_853 + interest,
     },
+    schedule1: { line8z_form8621_section1291: section1291Income },
     schedule2: { line17p_form8621_interest: interest },
     form8621: {
-      items: [{ item, excessEvents: calculateExcessEvents(event) }],
+      items: [{ item, excessEvents }],
     },
   }, filer);
   assertStringIncludes(xml, "<IRS8621 documentId=");

@@ -1,5 +1,10 @@
 # TY2025 Form 8621 printable-return gap
 
+## Current verified parent packet checkpoint (October6)
+
+The source-bound parent PDF is registered. [Current proof](../../forms/f1040/2025/form8621_parent_source_proof.md) records main36/0+56/0 and five fullXSD packets/38 reviewed pages byte-identical to reviewed originals. QEF ElectionB, accepted-record contract for section1294 status/interest and seven-election overflow, multiple MTM dispositions and line14c Form8949 are verified within the stated source contract. Synthetic issuer/ACK bytes do not authenticate external records. Broader QEF AGI-sensitive refigure and IRS acceptance remain open. Historical staged sections below are superseded only for these proved routes.
+
+
 Static source, native, and blank-PDF review on 2026-09-28, followed by a Part V
 supporting-statement build slice. No parent Form 8621 PDF descriptor is
 registered; no test, typecheck, XSD, filled-PDF render, business-rule, or ATS
@@ -107,3 +112,39 @@ complete return packet. QEF and MTM need their distinct income, basis, and
 election evidence before either has a positive parent PDF route. Absence of
 current income does not by itself establish that an annual Form 8621 is not
 required.
+
+## October 4 focused verification
+
+The current [IRS December 2025 Form 8621](https://www.irs.gov/pub/irs-pdf/f8621.pdf)
+was fetched into the private source cache as a four-page XFA/AcroForm PDF
+(SHA-256 `9c063d71a970eff604d9c3f05449422f86fbe29d99407282a87d94fc6c10a2d0`).
+The staged page-1 widget names and locations for shareholder identity,
+corporation identity, share descriptions/count/value, line 5, and election
+boxes were compared with its AcroForm annotations. This is a field-position
+check, not a filled-page visual review.
+
+`deno test --allow-read --allow-write --allow-run=xmllint` over
+`f8621_parent_source.test.ts`, `f8621_excess_statement.test.ts`,
+`f8621.fx.test.ts`, and `f8621.xsd.test.ts` passed **11/11** with no ignored
+tests. It exercises the staged parent projection, distinct Part V events and
+statements, source tamper checks, foreign-currency amounts, and one local
+TY2025v5.4 XSD case. These checks do not authenticate the referenced issuer,
+historical election, prior-distribution, value, or tax records and do not
+establish a printable registered parent packet. The parent parity gap stays
+open; a current-worktree full suite is running separately.
+
+Both final exporters now separately replay QEF, mark-to-market, and section
+1291 Schedule 1 income from retained holding inputs before return assembly.
+The three regime examples and no-source export guards passed with 79 nearby
+tests on October 4. This guards the line 8z join; the parent PDF, issuer
+authentication, historical records, and ATS gates above remain open.
+
+The staged section 1291 parent projection now omits a zero-excess distribution
+from Part V pages and their line 16a statements while retaining all original
+source events for the return reconciliation. A mixed holding with a nonexcess
+distribution followed by an excess distribution prints only the latter Part V
+and preserves its source event number in the statement. The Form 8621 local
+PDF/MeF/XSD group passed 12 tests on October 4. The XSD fixture also now
+supplies the source-replayed Schedule 1 line 8z amount required by the final
+export guard. The parent form remains unregistered pending authenticated issuer
+and historical evidence and a complete printable-return review.

@@ -109,8 +109,8 @@ Deno.test("two countries' passive interest reconciles Form 1116 columns A/B, Sch
   assertEquals(summary.automaticallyApportionedDeductions, 15_750);
   assertEquals(result.pending.f1040.line2b_taxable_interest, 50_000);
   const pdf = form1116Pdf.projectFields!(parent, result.pending);
-  assertEquals(pdf.pdf_country_a, "CA");
-  assertEquals(pdf.pdf_country_b, "FR");
+  assertEquals(pdf.pdf_country_a, "Canada");
+  assertEquals(pdf.pdf_country_b, "France");
   assertEquals(pdf.pdf_line1a_a, 20_000);
   assertEquals(pdf.pdf_line1a_b, 30_000);
   assertEquals(pdf.pdf_line3g_a, 6_300);
@@ -290,8 +290,8 @@ Deno.test("two-country passive interest uses a filed 2024 vintage through both F
     scheduleB,
     result.pending,
   );
-  assertEquals(parentPdf.pdf_country_a, "CA");
-  assertEquals(parentPdf.pdf_country_b, "FR");
+  assertEquals(parentPdf.pdf_country_a, "Canada");
+  assertEquals(parentPdf.pdf_country_b, "France");
   assertEquals(parentPdf.pdf_line10, 500);
   assertEquals(parentPdf.pdf_line35, 700);
   assertEquals(schedulePdf.line1_2024, 500);

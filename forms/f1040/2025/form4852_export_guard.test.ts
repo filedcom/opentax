@@ -1,3 +1,4 @@
+import { FormType } from "../nodes/inputs/f4852/index.ts";
 import { assertRejects, assertThrows } from "@std/assert";
 import { execute } from "../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
@@ -20,12 +21,12 @@ const message =
 
 for (
   const source of [{
-    form_type: "W2",
+    form_type: FormType.W2,
     payer_name: "Unissued Employer",
     wages: 1_200,
     federal_withheld: 120,
   }, {
-    form_type: "R_1099",
+    form_type: FormType.R_1099,
     payer_name: "Unissued Pension",
     gross_distribution: 1_200,
     federal_withheld: 120,

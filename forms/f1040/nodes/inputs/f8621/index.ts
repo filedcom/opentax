@@ -16,6 +16,18 @@ import {
   excessEventSchema,
 } from "./excess_distribution.ts";
 import type { ExcessEventResult } from "./excess_distribution.ts";
+import {
+  calculateMtmDisposition,
+  mtmDispositionSchema,
+  mtmOtherLossForm8949Transaction,
+} from "./mtm_disposition.ts";
+import { form8949 } from "../../intermediate/forms/form8949/index.ts";
+import { retainedSourceCopySchema } from "./retained_source_copy.ts";
+import { isTy2025IrsCountryCode } from "../../irs_country_code.ts";
+import {
+  calculateSection1294PriorStatus,
+  section1294PriorStatusSchema,
+} from "./section1294.ts";
 
 // TY2025 — Form 8621: Information Return by a Shareholder of a PFIC or QEF
 // US shareholders of Passive Foreign Investment Companies (PFICs) file annually.
@@ -46,7 +58,10 @@ export const form8621ParentSourceSchema = z.object({
     line2: z.string().trim().min(1).optional(),
     city: z.string().trim().min(1),
     province_or_state: z.string().trim().min(1).optional(),
-    country_code: z.string().regex(/^[A-Z]{2}$/),
+    country_code: z.string().regex(/^[A-Z]{2}$/).refine(
+      isTy2025IrsCountryCode,
+      "Form 8621 corporation address needs a TY2025 IRS country code",
+    ),
     postal_code: z.string().trim().min(1).optional(),
   }).strict(),
   corporation_tax_year_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -68,11 +83,40 @@ export const form8621ParentSourceSchema = z.object({
     "mtm_new_2025",
     "mtm_continuing",
   ]),
-  no_outstanding_section1294_election: z.literal(true),
-  issuer_record: z.object({
-    document_id: z.string().trim().min(1),
-    sha256: z.string().regex(/^[a-fA-F0-9]{64}$/),
-  }).strict(),
+  no_outstanding_section1294_election: z.boolean(),
+  section1294_prior_status: section1294PriorStatusSchema.optional(),
+  issuer_record: retainedSourceCopySchema.extend({
+    bytes_base64: retainedSourceCopySchema.shape.bytes_base64.optional(),
+  }),
+  // The QEF/Annual Intermediary Statement reports the shareholder's pro rata
+  // amounts, rather than a taxpayer-supplied stand-alone tax operand.
+  qef_annual_statement: retainedSourceCopySchema.extend({
+    ordinary_earnings_usd: z.number().nonnegative(),
+    net_capital_gain_usd: z.number().nonnegative(),
+  }).optional(),
+  qef_1294_activity_record: retainedSourceCopySchema.extend({
+    distributions_cash_and_property_usd: z.number().nonnegative(),
+    transferred_share_earnings_usd: z.number().nonnegative(),
+  }).optional(),
+  // Election continuity is a claim about an earlier filed form, not a result
+  // inferred from this year's ordinary income or market price.
+  prior_election_filing: retainedSourceCopySchema.extend({
+    tax_year: z.number().int().min(1987).max(2024),
+    election_kind: z.enum(["qef", "mtm"]),
+    accepted_submission_id: z.string().trim().min(1),
+    acceptance_record: retainedSourceCopySchema.extend({
+      submission_id: z.string().trim().min(1),
+      disposition: z.literal("Accepted"),
+    }),
+  }).optional(),
+  mtm_year_end_value_record: retainedSourceCopySchema.extend({
+    quoted_value_usd: z.number().nonnegative(),
+    market_name: z.string().trim().min(1),
+  }).optional(),
+  mtm_adjusted_basis_record: retainedSourceCopySchema.extend({
+    adjusted_basis_usd: z.number().nonnegative(),
+    unreversed_inclusions_usd: z.number().nonnegative(),
+  }).optional(),
   // Staged PDF evidence locators for each prior holding-year distribution,
   // including an issuer record that reports zero. Exact bytes still need an
   // independent authentication step before a printable parent can register.
@@ -84,6 +128,7 @@ export const form8621ParentSourceSchema = z.object({
       amount: z.number().nonnegative(),
       document_id: z.string().trim().min(1),
       sha256: z.string().regex(/^[a-fA-F0-9]{64}$/),
+      bytes_base64: retainedSourceCopySchema.shape.bytes_base64.optional(),
     }).strict(),
   ).optional(),
 }).strict().superRefine((source, ctx) => {
@@ -125,6 +170,16 @@ export const form8621ParentSourceSchema = z.object({
       message: "PFIC share classes must be distinct",
     });
   }
+  if (
+    source.no_outstanding_section1294_election ===
+      Boolean(source.section1294_prior_status)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Form 8621 section 1294 absence and prior election status conflict",
+    });
+  }
 });
 
 // Per-item schema — each Form 8621 covers one PFIC/QEF holding
@@ -151,10 +206,18 @@ export const itemSchema = z.object({
   // QEF: pro-rata share of net capital gain (Form 8621 Part III line 6b; IRC §1293(a)(1)(B))
   qef_capital_gain: z.number().nonnegative().optional(),
   qef_capital_951_or_1293g_reduction: z.number().nonnegative().optional(),
+  qef_1294_election: z.object({
+    distributions_cash_and_property_usd: z.number().nonnegative(),
+    transferred_share_earnings_usd: z.number().nonnegative(),
+    undistributed_ordinary_earnings_usd: z.number().nonnegative(),
+    undistributed_capital_gain_usd: z.number().nonnegative(),
+    no_section951_inclusion: z.literal(true),
+  }).strict().optional(),
   // Form 8621 Part IV lines 10a-12. A loss is limited by unreversed prior
   // inclusions, rather than accepted as an arbitrary signed amount.
   mtm_adjusted_basis_at_year_end: z.number().nonnegative().optional(),
   mtm_unreversed_inclusions: z.number().nonnegative().optional(),
+  mtm_dispositions: z.array(mtmDispositionSchema).optional(),
 }).strict();
 
 export const inputSchema = z.object({
@@ -189,13 +252,21 @@ function totalMtmGainLoss(items: F8621Items): number {
     }
     const difference = item.fmv_at_year_end -
       item.mtm_adjusted_basis_at_year_end;
-    if (difference >= 0) return sum + difference;
+    const yearEnd = difference >= 0
+      ? difference
+      : -Math.min(-difference, item.mtm_unreversed_inclusions ?? 0);
     if (item.mtm_unreversed_inclusions === undefined) {
-      throw new Error(
-        "Form 8621 mark-to-market loss needs unreversed prior inclusions",
-      );
+      if (difference < 0) {
+        throw new Error(
+          "Form 8621 mark-to-market loss needs unreversed prior inclusions",
+        );
+      }
     }
-    return sum - Math.min(-difference, item.mtm_unreversed_inclusions);
+    return sum + yearEnd + (item.mtm_dispositions ?? []).reduce(
+      (total, disposition) =>
+        total + calculateMtmDisposition(disposition).ordinary,
+      0,
+    );
   }, 0);
 }
 
@@ -223,14 +294,16 @@ function validateHoldings(items: F8621Items): void {
       ((item.qef_ordinary_income ?? 0) > 0 ||
         (item.qef_ordinary_951_or_1293g_reduction ?? 0) > 0 ||
         (item.qef_capital_gain ?? 0) > 0 ||
-        (item.qef_capital_951_or_1293g_reduction ?? 0) > 0)
+        (item.qef_capital_951_or_1293g_reduction ?? 0) > 0 ||
+        item.qef_1294_election !== undefined)
     ) {
       throw new Error("Form 8621 QEF earnings require the QEF regime");
     }
     if (
       item.regime !== PficRegime.MTM &&
       (item.mtm_adjusted_basis_at_year_end !== undefined ||
-        item.mtm_unreversed_inclusions !== undefined)
+        item.mtm_unreversed_inclusions !== undefined ||
+        item.mtm_dispositions !== undefined)
     ) {
       throw new Error("Form 8621 mark-to-market basis requires the MTM regime");
     }
@@ -253,12 +326,52 @@ function validateHoldings(items: F8621Items): void {
         "Form 8621 QEF section 951 or 1293(g) reduction exceeds pro rata income",
       );
     }
+    const deferred = item.qef_1294_election;
+    if (deferred) {
+      const ordinary = (item.qef_ordinary_income ?? 0) -
+        (item.qef_ordinary_951_or_1293g_reduction ?? 0);
+      const capital = (item.qef_capital_gain ?? 0) -
+        (item.qef_capital_951_or_1293g_reduction ?? 0);
+      const undistributed = deferred.undistributed_ordinary_earnings_usd +
+        deferred.undistributed_capital_gain_usd;
+      if (
+        (item.qef_ordinary_951_or_1293g_reduction ?? 0) > 0 ||
+        (item.qef_capital_951_or_1293g_reduction ?? 0) > 0 ||
+        undistributed <= 0 ||
+        deferred.undistributed_ordinary_earnings_usd > ordinary ||
+        deferred.undistributed_capital_gain_usd > capital ||
+        undistributed !== ordinary + capital -
+            deferred.distributions_cash_and_property_usd -
+            deferred.transferred_share_earnings_usd
+      ) {
+        throw new Error(
+          "Form 8621 section 1294 election amounts or section 951 exclusion differ from QEF earnings",
+        );
+      }
+    }
     if (
       item.regime !== PficRegime.EXCESS_DISTRIBUTION &&
       item.excess_events?.length
     ) {
       throw new Error(
         "Form 8621 excess events require the section 1291 regime",
+      );
+    }
+    if (item.mtm_dispositions?.length) {
+      const ids = item.mtm_dispositions.map((row) => row.transaction_id);
+      if (new Set(ids).size !== ids.length) {
+        throw new Error("Form 8621 MTM disposition IDs must be distinct");
+      }
+      for (const row of item.mtm_dispositions) {
+        mtmOtherLossForm8949Transaction(row);
+      }
+    }
+    if (
+      item.parent_source?.section1294_prior_status &&
+      item.regime !== PficRegime.QEF
+    ) {
+      throw new Error(
+        "Form 8621 prior section 1294 elections need a QEF holding",
       );
     }
   }
@@ -292,11 +405,13 @@ class F8621Node extends TaxNode<typeof inputSchema> {
     schedule_d,
     form8960,
     income_tax_calculation,
+    form8949,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { f8621s } = inputSchema.parse(input);
     validateHoldings(f8621s);
+    const elected = f8621s.filter((item) => item.qef_1294_election);
     const lines = calculatedLines(f8621s);
     const currentAndPrePficIncome = totalEventLine(
       lines,
@@ -313,6 +428,33 @@ class F8621Node extends TaxNode<typeof inputSchema> {
 
     const mtmIncome = totalMtmGainLoss(f8621s);
     const qefOrdinaryIncome = totalQefOrdinaryIncome(f8621s);
+    const qef1294Ordinary = elected.reduce(
+      (sum, item) =>
+        sum +
+        (item.qef_1294_election?.undistributed_ordinary_earnings_usd ?? 0),
+      0,
+    );
+    const qef1294Capital = elected.reduce(
+      (sum, item) =>
+        sum + (item.qef_1294_election?.undistributed_capital_gain_usd ?? 0),
+      0,
+    );
+    const prior1294 = f8621s.flatMap((item) =>
+      item.parent_source?.section1294_prior_status
+        ? calculateSection1294PriorStatus(
+          item.parent_source.section1294_prior_status,
+          item.company_ein_or_ref,
+        )
+        : []
+    );
+    const priorTaxDue = prior1294.reduce(
+      (sum, column) => sum + (column.taxDue ?? 0),
+      0,
+    );
+    const priorInterestDue = prior1294.reduce(
+      (sum, column) => sum + (column.interestDue ?? 0),
+      0,
+    );
     const otherIncomeFields = {
       ...(qefOrdinaryIncome !== 0
         ? { line8z_form8621_qef: qefOrdinaryIncome }
@@ -322,6 +464,15 @@ class F8621Node extends TaxNode<typeof inputSchema> {
         ? { line8z_form8621_section1291: currentAndPrePficIncome }
         : {}),
     };
+    const mtmOtherLossRows = f8621s.flatMap((item) =>
+      (item.mtm_dispositions ?? []).flatMap((row) => {
+        const transaction = mtmOtherLossForm8949Transaction(
+          row,
+          item.company_ein_or_ref,
+        );
+        return transaction ? [transaction] : [];
+      })
+    );
     const capitalGain = qefItems(f8621s).reduce(
       (sum, item) =>
         sum + (item.qef_capital_gain ?? 0) -
@@ -342,6 +493,9 @@ class F8621Node extends TaxNode<typeof inputSchema> {
 
     return {
       outputs: [
+        ...mtmOtherLossRows.map((transaction) =>
+          output(form8949, { transaction })
+        ),
         { nodeType: "form8621", fields: { items: lines } },
         ...nonexcessDividends.map((dividend) => output(schedule_b, dividend)),
         ...(nonexcessDividends.length > 0
@@ -370,8 +524,20 @@ class F8621Node extends TaxNode<typeof inputSchema> {
         ...(additionalTax > 0
           ? [output(income_tax_calculation, { form8621_tax: additionalTax })]
           : []),
+        ...(elected.length > 0
+          ? [output(income_tax_calculation, {
+            form8621_1294_undistributed_ordinary: qef1294Ordinary,
+            form8621_1294_undistributed_capital: qef1294Capital,
+          })]
+          : []),
         ...(interest > 0
           ? [output(schedule2, { line17p_form8621_interest: interest })]
+          : []),
+        ...(priorTaxDue > 0 || priorInterestDue > 0
+          ? [output(schedule2, {
+            line17z_form8621_1294_deferred_tax: priorTaxDue,
+            line17q_form8621_1294_interest: priorInterestDue,
+          })]
           : []),
       ],
     };

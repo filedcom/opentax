@@ -1,3 +1,5 @@
+import { additionalPrincipalRepayments } from "./debt-allocation.ts";
+import { ownedDebtFamily } from "./owned-family.ts";
 import { z } from "zod";
 import type { NodeResult } from "../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../core/types/tax-node.ts";
@@ -6,9 +8,11 @@ import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import {
+  currentOpenAccountCarry,
   reconcileCashCapitalAndNewNote,
   reviewedForm7203DebtEvidenceSchema,
   sumPrincipalRepayments,
+  totalCurrentDebtAdvances,
 } from "./debt-note.ts";
 import { reviewedStockLossLedgerSchema } from "./stock-ledger.ts";
 
@@ -36,6 +40,7 @@ import { reviewedStockLossLedgerSchema } from "./stock-ledger.ts";
 // IRC §1366(d) — limitation on losses; IRC §1367 — adjustments to basis
 
 export const inputSchema = z.object({
+  owned_debt_loss_sources: z.array(z.unknown()).min(2).max(4).optional(),
   // ── Part I: Stock Basis ───────────────────────────────────────────────────
   // Line 1 — Beginning stock basis at start of tax year
   stock_basis_beginning: z.number().nonnegative().optional(),
@@ -126,12 +131,18 @@ function tentativeStockBasis(
 // Step 4: Tentative debt basis for loss allocation (Part II line 29).
 // A fully based principal repayment reduces the new note before the loss.
 function tentativeDebtBasis(input: Form7203Input): number {
-  const note = input.reviewed_debt_evidence?.kind === "new_2025_formal_notes"
-    ? input.reviewed_debt_evidence
-    : undefined;
+  const note =
+    (input.reviewed_debt_evidence?.kind === "new_2025_formal_notes" ||
+        input.reviewed_debt_evidence?.kind === "owned_2025_formal_notes" ||
+        input.reviewed_debt_evidence?.kind === "owned_2025_open_account" ||
+        input.reviewed_debt_evidence?.kind ===
+          "owned_2025_formal_and_open_account")
+      ? input.reviewed_debt_evidence
+      : undefined;
   return (input.debt_basis_beginning ?? 0) + (input.new_loans ?? 0) -
     sumPrincipalRepayments(note?.principal_repayments) -
-    (note?.second_formal_note?.principal_repayment?.amount ?? 0);
+    (note?.second_formal_note?.principal_repayment?.amount ?? 0) -
+    additionalPrincipalRepayments(note);
 }
 
 // Step 5: Total loss pool — current year + prior carryforward (Part III)
@@ -165,6 +176,50 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: Form7203Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    if (input.owned_debt_loss_sources !== undefined) {
+      if (
+        Object.keys(input).some((k) =>
+          k !== "owned_debt_loss_sources" &&
+          input[k as keyof typeof input] !== undefined
+        )
+      ) {
+        throw Error(
+          "Owned MFJ debt family cannot mix scalar/shareholder basis fields",
+        );
+      }
+      const family = ownedDebtFamily(input.owned_debt_loss_sources);
+      return {
+        outputs: [
+          this.outputNodes.output(schedule1, {
+            basis_disallowed_add_back: family.suspended,
+          }),
+          this.outputNodes.output(agi_aggregator, {
+            basis_disallowed_add_back: family.suspended,
+          }),
+        ],
+        carryforwards: {
+          ...Object.assign(
+            {},
+            ...family.rows.map((r) =>
+              currentOpenAccountCarry(r.note, r.basis.allowedDebt)
+            ),
+          ),
+          suspended_scorp_loss_7203: family.suspended,
+          basis_suspended_scorp_qbi_loss_7203: family.suspended,
+          ...Object.fromEntries(
+            family.rows.flatMap(
+              (r) => [[
+                `suspended_scorp_loss_7203_${r.source.recipient_tin}_${r.source.corporation_ein}`,
+                r.basis.suspendedLoss,
+              ], [
+                `basis_suspended_scorp_qbi_loss_7203_${r.source.recipient_tin}_${r.source.corporation_ein}`,
+                r.basis.basisSuspendedQualifiedLoss,
+              ]],
+            ),
+          ),
+        },
+      };
+    }
 
     if (
       input.reviewed_debt_evidence?.kind ===
@@ -183,7 +238,10 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
 
     const note = input.reviewed_debt_evidence;
     if (
-      note?.kind === "new_2025_formal_notes" &&
+      (note?.kind === "new_2025_formal_notes" ||
+        note?.kind === "owned_2025_formal_notes" ||
+        note?.kind === "owned_2025_open_account" ||
+        note?.kind === "owned_2025_formal_and_open_account") &&
       (input.additional_contributions ?? 0) > 0
     ) {
       const ledger = input.reviewed_stock_loss_ledger;
@@ -208,8 +266,7 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
       ((input.debt_basis_beginning ?? 0) > 0 || (input.new_loans ?? 0) > 0 ||
         note) &&
       (!note || input.debt_basis_beginning !== undefined ||
-        input.new_loans !== note.cash_advance_amount +
-            (note.second_formal_note?.cash_advance_amount ?? 0) ||
+        input.new_loans !== totalCurrentDebtAdvances(note) ||
         input.stock_basis_beginning !== note.beginning_stock_basis ||
         input.ordinary_loss !== note.current_box1_ordinary_loss ||
         ((input.additional_contributions ?? 0) !== 0 &&
@@ -224,7 +281,10 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
         "Form 7203 debt-supported loss needs identified formal-note source and matching current K-1 loss without other basis items",
       );
     }
-    if (note?.second_formal_note) {
+    if (
+      note?.second_formal_note &&
+      note.kind !== "owned_2025_formal_and_open_account"
+    ) {
       const stock = input.stock_basis_beginning ?? 0;
       const firstDebtBasis = note.cash_advance_amount -
         sumPrincipalRepayments(note.principal_repayments);
@@ -269,9 +329,18 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
     const debtBasis = tentativeDebtBasis(input);
     const disallowed = disallowedLoss(pool, stockBasis, debtBasis);
 
+    const accountCarry = currentOpenAccountCarry(
+      note,
+      Math.min(Math.max(0, pool - stockBasis), debtBasis),
+    );
     // Loss fully within basis — no further limitation outputs needed
     if (disallowed === 0) {
-      return { outputs: [] };
+      return {
+        outputs: [],
+        ...(Object.keys(accountCarry).length
+          ? { carryforwards: accountCarry }
+          : {}),
+      };
     }
 
     // Disallowed portion: add back to schedule1 as a positive adjustment
@@ -285,7 +354,13 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
           basis_disallowed_add_back: disallowed,
         }),
       ],
-      carryforwards: { suspended_scorp_loss_7203: disallowed },
+      carryforwards: {
+        ...accountCarry,
+        suspended_scorp_loss_7203: disallowed,
+        ...(note?.owned_current_records !== undefined
+          ? { basis_suspended_scorp_qbi_loss_7203: disallowed }
+          : {}),
+      },
     };
   }
 }

@@ -34,7 +34,7 @@ const yesNo = (domainKey: string, yesField: string, noField: string) => [
 
 const fields: readonly PdfFieldEntry[] = [
   ...["a", "b", "c"].map((part, index) =>
-    text(`pdf_return_ssn_${part}`, `${p1}.SocialSecurity[0].f1_${index + 2}[0]`)
+    text(`pdf_totals_ssn_${part}`, `${p1}.SocialSecurity[0].f1_${index + 2}[0]`)
   ),
   ...[
     ["line1", "f1_5"],
@@ -106,7 +106,11 @@ const fields: readonly PdfFieldEntry[] = [
     )
   ),
   ...[27, 28, 29, 30, 31].map((line, index) =>
-    text(`pdf_line${line}`, `${p2}.f2_${31 + index}[0]`)
+    text(
+      `pdf_line${line}`,
+      `${p2}.f2_${31 + index}[0]`,
+      line === 28 || line === 29,
+    )
   ),
 ];
 
@@ -171,14 +175,19 @@ export const form8863Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8863--2025.pdf",
   fields,
   filerFields: [
-    text("nameLine1", `${p1}.f1_1[0]`),
+    {
+      ...text("nameLine1", `${p1}.f1_1[0]`),
+      includeWhen: (instance) => instance.pdf_first_student === true,
+    },
     text("nameLine1", `${p2}.f2_1[0]`),
   ],
   pageIndices: (instance) => instance.pdf_first_student === true ? [0, 1] : [1],
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
     const source = inputSchema.parse(raw);
-    if (!nativeForm8863.build(source, { filer, pending: allPending })) return [];
+    if (!nativeForm8863.build(source, { filer, pending: allPending })) {
+      return [];
+    }
     const lines = calculateForm8863Lines(source);
     if (!lines) return [];
     if (!filer) throw new Error("Form 8863 PDF needs filer identity");
@@ -233,6 +242,9 @@ export const form8863Pdf: PdfFormDescriptor = {
           : { pdf_line31: item.llc_adjusted_expenses }),
         ...(index === 0
           ? {
+            pdf_totals_ssn_a: taxpayerA,
+            pdf_totals_ssn_b: taxpayerB,
+            pdf_totals_ssn_c: taxpayerC,
             ...(lines.aocStudents.length > 0
               ? {
                 line1: lines.line1,

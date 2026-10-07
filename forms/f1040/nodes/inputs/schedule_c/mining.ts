@@ -1,6 +1,8 @@
 import {
   calculateScheduleCAtRiskNet,
+  charitableNaturalResourceMiningWorkpaper,
   inputSchema as scheduleCSourceSchema,
+  projectScheduleCItems,
   type ScheduleCItem,
   wotcReductionsByBusiness,
 } from "./model.ts";
@@ -35,7 +37,7 @@ export function assertDistinctMiningSources(
 
 /** One identified current-year Schedule C expense, with ten-year AMT cost. */
 export function miningCostAdjustment(item: ScheduleCItem): number {
-  const workpaper = item.amt_mining_cost_workpaper;
+  const workpaper = charitableNaturalResourceMiningWorkpaper(item);
   if (!workpaper) return 0;
   if (
     item.line_g_material_participation !== true ||
@@ -71,7 +73,7 @@ export function assertForm6251MiningSource(
   pending: Readonly<Record<string, unknown>> | undefined,
 ): void {
   const parsed = scheduleCSourceSchema.safeParse(pending?.schedule_c);
-  const items = parsed.success ? parsed.data.schedule_cs : [];
+  const items = parsed.success ? projectScheduleCItems(parsed.data) : [];
   const mining = items.filter((item) => item.amt_mining_cost_workpaper);
   const filed = fields.line2q_mining_costs;
   const amt = fields.line11_amt;

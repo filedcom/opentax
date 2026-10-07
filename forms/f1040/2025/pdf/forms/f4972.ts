@@ -1,3 +1,8 @@
+import {
+  filedDollars,
+  roundRecipientTax,
+  worksheetRatio,
+} from "../../../nodes/intermediate/forms/form4972/source-rounding.ts";
 import { StandardFonts } from "pdf-lib";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { reconcileForm4972Nua } from "../../form4972_nua_reconciliation.ts";
@@ -267,19 +272,17 @@ function assertElectedPdfShape(
     numberOn(fields, "line25") !== numberOn(fields, "line24") * 10 ||
     annuity > 0 &&
       (numberOn(fields, "line20") !==
-          Math.round(annuity / taxable * 100_000) / 100_000 ||
+          worksheetRatio(annuity, taxable) ||
         numberOn(fields, "line21") !==
-          Math.round(allowance * numberOn(fields, "line20")) ||
+          filedDollars(allowance * numberOn(fields, "line20")) ||
         numberOn(fields, "line22") !== annuity - numberOn(fields, "line21") ||
         numberOn(fields, "line26") !==
           Math.round(numberOn(fields, "line22") * 0.1) ||
         numberOn(fields, "line28") !== numberOn(fields, "line27") * 10) ||
-    numberOn(fields, "line29") !== Math.round(
-        (numberOn(fields, "line25") -
-          (annuity > 0 ? numberOn(fields, "line28") : 0)) *
-          (multipleRecipients
-            ? numberOn(fields, "recipient_share_pct") / 100
-            : 1),
+    numberOn(fields, "line29") !== roundRecipientTax(
+        numberOn(fields, "line25") -
+          (annuity > 0 ? numberOn(fields, "line28") : 0),
+        multipleRecipients ? numberOn(fields, "recipient_share_pct") : 100,
       ) ||
     numberOn(fields, "line30") !== numberOn(fields, "line29") +
         (capital ? numberOn(fields, "line7") : 0)
@@ -306,30 +309,44 @@ export function form4972NuaAnnotations(fields: Record<string, unknown>) {
   ];
 }
 
+function collectionInstances(
+  raw: Record<string, unknown>,
+  filer: Parameters<NonNullable<PdfFormDescriptor["instances"]>>[1],
+  allPending: Parameters<NonNullable<PdfFormDescriptor["instances"]>>[2],
+  filingChannel: "mef" | "paper",
+) {
+  if (Object.keys(raw).length === 0) return [];
+  if (!allPending) {
+    throw new Error(
+      "Form 4972 PDF collection needs the final pending return",
+    );
+  }
+  const scoped = reconcileForm4972Collection(
+    raw,
+    allPending,
+    filer,
+    filingChannel,
+  );
+  if (allPending.form6251 !== undefined) {
+    assertForm4972AmtJoin(
+      scoped.reduce((sum, entry) => sum + entry.tax, 0),
+      allPending,
+    );
+  }
+  return scoped.map(({ fields: form, pending }) =>
+    projectedFields(
+      form,
+      pending as Record<string, Record<string, unknown>>,
+    )
+  );
+}
+
 export const form4972Pdf: PdfFormDescriptor = {
   pendingKey: "form4972",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f4972--2025.pdf",
   pageIndices: () => [0],
   instances(raw, filer, allPending) {
-    if (Object.keys(raw).length === 0) return [];
-    if (!allPending) {
-      throw new Error(
-        "Form 4972 PDF collection needs the final pending return",
-      );
-    }
-    const scoped = reconcileForm4972Collection(raw, allPending, filer);
-    if (allPending.form6251 !== undefined) {
-      assertForm4972AmtJoin(
-        scoped.reduce((sum, entry) => sum + entry.tax, 0),
-        allPending,
-      );
-    }
-    return scoped.map(({ fields: form, pending }) =>
-      projectedFields(
-        form,
-        pending as Record<string, Record<string, unknown>>,
-      )
-    );
+    return collectionInstances(raw, filer, allPending, "mef");
   },
   decoratePages: async (document, pages, fields) => {
     const annotations = form4972NuaAnnotations(fields);
@@ -353,4 +370,12 @@ export const form4972Pdf: PdfFormDescriptor = {
   includeWhen: (fields) =>
     typeof fields.line6 === "number" || typeof fields.line8 === "number",
   fields,
+};
+
+/** Explicit paper packet projection; ordinary PDF and MeF retain the two-copy limit. */
+export const form4972PaperPdf: PdfFormDescriptor = {
+  ...form4972Pdf,
+  instances(raw, filer, allPending) {
+    return collectionInstances(raw, filer, allPending, "paper");
+  },
 };

@@ -1,4 +1,7 @@
+import { reconcileRothOwnerInventoryCopies } from "../nodes/intermediate/forms/form8606/roth-inventory.ts";
+import { roundWholeDollars } from "../whole-dollars.ts";
 import { f1099r } from "../nodes/inputs/f1099r/index.ts";
+import { reviewedRothActivity } from "../nodes/intermediate/forms/form8606/roth-activity.ts";
 import { f4852 } from "../nodes/inputs/f4852/index.ts";
 
 type IraAmounts = { gross: number; taxable: number };
@@ -46,11 +49,44 @@ export function assertIra1099rIncomeSource(
   const substitute = sourcedIraAmounts(pending.f4852, f4852);
   const issuedRows = pending.f1099r === undefined ? [] : f1099r.inputSchema
     .parse(pending.f1099r).f1099rs;
+  const inventories = reconcileRothOwnerInventoryCopies(issuedRows);
+  if (inventories.length) {
+    const gross = roundWholeDollars(
+      inventories.reduce(
+        (sum, row) => sum + Math.round(row.rawTotalGross * 100),
+        0,
+      ) / 100,
+    );
+    const taxable = inventories.reduce((sum, row) => sum + row.totalTaxable, 0);
+    const filed = pending.f1040 as Record<string, unknown> | undefined;
+    if (
+      issuedRows.some((row) =>
+        (row.box7_ira_simple_indicator ||
+          ["J", "T", "Q"].includes(row.box7_distribution_code ?? "")) &&
+        !row.roth_owner_inventory_review
+      ) ||
+      filed?.line4a_ira_gross !== gross ||
+      (filed?.line4b_ira_taxable ?? 0) !== taxable ||
+      retainedAgiIraTaxable(pending) !== taxable
+    ) {
+      throw new Error(
+        "Complete Roth current inventory gross/taxable/AGI differs from source owner annual lines",
+      );
+    }
+    return;
+  }
   // Form 8606 owns line 4a for reviewed Roth distributions excluded from the
   // ordinary Form 1099-R gross output, but the issued box 1 still proves it.
   const form8606RothGross = issuedRows.filter((row) =>
     row.exclude_8606_roth === true && row.no_distribution_received !== true
-  ).reduce((sum, row) => sum + row.box1_gross_distribution, 0);
+  ).reduce(
+    (sum, row) =>
+      sum +
+      (row.roth_activity_review
+        ? reviewedRothActivity(row.roth_activity_review).gross
+        : row.box1_gross_distribution),
+    0,
+  );
   const form8606IncomeSource = issuedRows.some((row) =>
     row.no_distribution_received !== true &&
     (row.exclude_8606_roth === true || row.rollover_code === "C" ||

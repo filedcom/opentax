@@ -1,3 +1,21 @@
+import {
+  calculateIndependentOwnerHealth,
+  independentOwnerHealthSourceSchema,
+  reconcileIndependentOwnerHealthGraph,
+} from "./independent-owner.ts";
+import { ownerSourcesSchema } from "../schedule_se/owner-calculation.ts";
+import {
+  calculateSingleScheduleCForm7206,
+  money,
+  type SingleScheduleCPlan,
+  singleScheduleCPlanSchema,
+} from "./single-source.ts";
+export {
+  calculateSingleScheduleCForm7206,
+  form7206LinesSchema,
+  singleScheduleCPlanSchema,
+} from "./single-source.ts";
+export type { Form7206Lines, SingleScheduleCPlan } from "./single-source.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -7,6 +25,7 @@ import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
+import { schedule1a } from "../schedule1a/index.ts";
 import { form8995 } from "../form8995/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
@@ -17,94 +36,18 @@ import {
   pub974SingleBusinessSourceSchema,
 } from "./pub974_worksheets.ts";
 
-// ─── Schema ───────────────────────────────────────────────────────────────────
-
-const money = z.number().finite().nonnegative();
-
-const premiumMonthSchema = z.object({
-  month: z.number().int().min(1).max(12),
-  paid_premium: money,
-  policy_source_reference: z.string().trim().min(1),
-  payment_source_reference: z.string().trim().min(1),
-  // Each month identifies the person covered by this one policy.
-  covered_person: z.enum(["taxpayer", "spouse"]),
-  eligible_for_subsidized_employer_plan: z.boolean(),
-  employer_plan_review_reference: z.string().trim().min(1),
-  marketplace_policy: z.boolean(),
-  long_term_care_policy: z.boolean(),
-  public_safety_officer_excluded_amount: money,
-  public_safety_officer_exclusion_source_reference: z.string().trim().min(1)
-    .optional(),
-}).strict();
-
-export const singleScheduleCPlanSchema = z.object({
-  business_reference: z.string().trim().min(1),
-  plan_identifier: z.string().trim().min(1),
-  recipient: z.nativeEnum(TS),
-  taxpayer_identity: z.object({
-    name: z.string().trim().min(1),
-    ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
-  }).strict(),
-  spouse_identity: z.object({
-    name: z.string().trim().min(1),
-    ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
-  }).strict().optional(),
-  premium_months: z.array(premiumMonthSchema).length(12).refine(
-    (months) => months.every((record, index) => record.month === index + 1),
-    "Form 7206 needs January through December premium records in order",
-  ),
-  schedule_c_line31_net_profit: money.positive(),
-  schedule1_line15_se_tax_deduction: money,
-  schedule1_line16_retirement_deduction: money,
-  plan_established_under_business: z.literal(true),
-  sole_positive_business_verified: z.literal(true),
-  no_form2555: z.literal(true),
-  no_schedule_se_optional_method: z.literal(true),
-  no_other_earned_income: z.literal(true),
-}).strict().superRefine((plan, ctx) => {
-  const coversSpouse = plan.premium_months.some((month) =>
-    month.covered_person === "spouse"
-  );
-  if (
-    (coversSpouse || plan.recipient === TS.S
-      ? !plan.spouse_identity ||
-        plan.spouse_identity.ssn.replaceAll("-", "") ===
-          plan.taxpayer_identity.ssn.replaceAll("-", "")
-      : plan.spouse_identity !== undefined)
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["premium_months"],
-      message:
-        "Form 7206 one-plan coverage needs an identified spouse for each spouse-covered month",
-    });
-  }
-});
-
-export type SingleScheduleCPlan = z.infer<typeof singleScheduleCPlanSchema>;
-
-export const form7206LinesSchema = z.object({
-  line1: money,
-  line2: money,
-  line3: money,
-  line4: money,
-  line5: money,
-  line6: z.number().min(0).max(1),
-  line7: money,
-  line8: money,
-  line9: money,
-  line10: money,
-  line12: money,
-  line13: money,
-  line14: money,
-});
-
-export type Form7206Lines = z.infer<typeof form7206LinesSchema>;
+import {
+  calculateOwnedSep,
+  ownedSepSourceSchema,
+} from "../../../inputs/sep_retirement/owned-source.ts";
 
 export const inputSchema = z.object({
   single_schedule_c_plan: singleScheduleCPlanSchema.optional(),
+  independent_schedule_c_plans: independentOwnerHealthSourceSchema.optional(),
+  owned_sep_plans: ownedSepSourceSchema.optional(),
   schedule_c_source: z.object({
     unadjusted_source: z.boolean(),
+    reviewed_wotc_source: z.boolean().optional(),
     businesses: z.array(
       z.object({
         business_reference: z.string().trim().min(1).optional(),
@@ -113,11 +56,22 @@ export const inputSchema = z.object({
       }).strict(),
     ).min(1),
   }).strict().optional(),
+  schedule_f_source: z.object({
+    regular_source: z.boolean(),
+    businesses: z.array(
+      z.object({
+        farm_id: z.string().trim().min(1).optional(),
+        proprietor_recipient: z.enum(["T", "S"]).optional(),
+        line34_net_profit: z.number().finite(),
+      }).strict(),
+    ).min(1),
+  }).strict().optional(),
   schedule_se_source: z.object({
     net_profit_schedule_c: z.number().finite(),
     net_profit_schedule_f: z.number().finite(),
     farm_optional_method_elected: z.boolean(),
     line13_deduction: money,
+    owner_source: ownerSourcesSchema.optional(),
   }).strict().optional(),
   schedule1_line16_source: money.optional(),
   marketplace_ptc_premium_overlap: z.boolean().optional(),
@@ -164,83 +118,24 @@ export function reconcileSingleScheduleCGraphSource(
   }
 }
 
-// ─── Pure Helpers ─────────────────────────────────────────────────────────────
-
-export function calculateSingleScheduleCForm7206(
-  raw: SingleScheduleCPlan,
-): Form7206Lines {
-  const source = singleScheduleCPlanSchema.parse(raw);
-  const totalPublicSafetyExclusion = source.premium_months.reduce(
-    (sum, month) => sum + month.public_safety_officer_excluded_amount,
-    0,
-  );
-  if (totalPublicSafetyExclusion > 3_000) {
-    throw new Error(
-      "Form 7206 public-safety-officer exclusion exceeds the annual $3,000 limit",
-    );
-  }
-  const eligiblePremiums = source.premium_months.reduce((sum, month) => {
-    if (month.marketplace_policy || month.long_term_care_policy) {
-      throw new Error(
-        "Form 7206 bounded one-plan calculation excludes Marketplace and long-term-care premiums",
-      );
-    }
-    if (month.public_safety_officer_excluded_amount > month.paid_premium) {
-      throw new Error(
-        "Form 7206 public-safety-officer exclusion exceeds the paid monthly premium",
-      );
-    }
-    if (
-      month.public_safety_officer_excluded_amount > 0 &&
-      !month.public_safety_officer_exclusion_source_reference
-    ) {
-      throw new Error(
-        "Form 7206 public-safety-officer exclusion needs a source reference",
-      );
-    }
-    return sum +
-      (month.eligible_for_subsidized_employer_plan
-        ? 0
-        : month.paid_premium - month.public_safety_officer_excluded_amount);
-  }, 0);
-  if (eligiblePremiums <= 0) {
-    throw new Error("Form 7206 needs positive eligible insurance premiums");
-  }
-  const profit = source.schedule_c_line31_net_profit;
-  const seTax = source.schedule1_line15_se_tax_deduction;
-  const retirement = source.schedule1_line16_retirement_deduction;
-  if (seTax > profit || retirement > profit - seTax) {
-    throw new Error(
-      "Form 7206 Schedule 1 lines 15-16 exceed the establishing business income",
-    );
-  }
-  const line10 = profit - seTax - retirement;
-  return form7206LinesSchema.parse({
-    line1: eligiblePremiums,
-    line2: 0,
-    line3: eligiblePremiums,
-    line4: profit,
-    line5: profit,
-    line6: 1,
-    line7: seTax,
-    line8: profit - seTax,
-    line9: retirement,
-    line10,
-    line12: 0,
-    line13: line10,
-    line14: Math.min(eligiblePremiums, line10),
-  });
-}
-
-function buildOutput(deduction: number): NodeOutput[] {
-  if (deduction <= 0) return [];
+function buildOutput(
+  deduction: number,
+  source?: SingleScheduleCPlan,
+): NodeOutput[] {
+  if (deduction <= 0 && !source) return [];
   return [
     output(schedule1, { line17_se_health_insurance: deduction }),
     output(agi_aggregator, { line17_se_health_insurance: deduction }),
     // This deduction is attributable to the trade or business, so it reduces QBI.
     // i8995, Determining Your Qualified Business Income: the items to consider include
     // the "self-employment health insurance deduction".
-    output(form8995, { se_health_insurance_deduction: deduction }),
+    ...(source
+      ? [output(schedule1a, { qualified_tips_health_plan_source: source })]
+      : []),
+    output(form8995, {
+      se_health_insurance_deduction: deduction,
+      ...(source ? { joint_owner_health_plan_source: source } : {}),
+    }),
   ];
 }
 
@@ -255,6 +150,7 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
       agi_aggregator,
       form8995,
       form8962,
+      schedule1a,
     ]);
   }
 
@@ -262,6 +158,106 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
+    if (input.independent_schedule_c_plans) {
+      if (
+        ctx.taxYear !== 2025 || input.single_schedule_c_plan ||
+        input.pub974_single_business
+      ) {
+        throw new Error(
+          "Independent health plans require only their actual ordinary owner source family",
+        );
+      }
+      const family = calculateIndependentOwnerHealth(
+        input.independent_schedule_c_plans,
+        input.schedule_se_source?.owner_source,
+        cfg.ssWageBase,
+        input.owned_sep_plans,
+      );
+      reconcileIndependentOwnerHealthGraph(input, family);
+      return {
+        outputs: [
+          ...(family.retirement
+            ? [
+              output(schedule1, {
+                line16_sep_simple: family.retirement.deduction,
+              }),
+              output(agi_aggregator, {
+                line16_sep_simple: family.retirement.deduction,
+              }),
+              output(form8995, {
+                retirement_plan_deduction: family.retirement.deduction,
+                owned_sep_plans: family.retirement.source,
+              }),
+            ]
+            : []),
+          output(schedule1, { line17_se_health_insurance: family.deduction }),
+          output(agi_aggregator, {
+            line17_se_health_insurance: family.deduction,
+          }),
+          output(schedule1a, {
+            qualified_tips_health_plans_source: family.source,
+          }),
+          output(form8995, {
+            se_health_insurance_deduction: family.deduction,
+            joint_owner_health_plans_source: family.source,
+          }),
+          {
+            nodeType: this.nodeType,
+            fields: {
+              independent_schedule_c_plans: family.source,
+              independent_plan_filing_rows: family.rows,
+              ...(family.retirement
+                ? {
+                  schedule1_line16_source: family.retirement.deduction,
+                  owned_sep_filing_rows: family.retirement.rows,
+                }
+                : {}),
+            },
+          },
+        ],
+      };
+    }
+    if (input.owned_sep_plans) {
+      if (
+        ctx.taxYear !== 2025 || input.single_schedule_c_plan ||
+        input.pub974_single_business
+      ) {
+        throw new Error(
+          "Owned SEP source must remain in its actual ordinary proprietor family",
+        );
+      }
+      const retirement = calculateOwnedSep(
+        input.owned_sep_plans,
+        input.schedule_se_source?.owner_source,
+        cfg.ssWageBase,
+      );
+      if (
+        input.schedule1_line16_source !== undefined &&
+        input.schedule1_line16_source !== retirement.deduction
+      ) {
+        throw new Error(
+          "Owned SEP source conflicts with an externally supplied retirement amount",
+        );
+      }
+      return {
+        outputs: [
+          output(schedule1, { line16_sep_simple: retirement.deduction }),
+          output(agi_aggregator, { line16_sep_simple: retirement.deduction }),
+          output(form8995, {
+            retirement_plan_deduction: retirement.deduction,
+            owned_sep_plans: retirement.source,
+          }),
+          {
+            nodeType: this.nodeType,
+            fields: {
+              owned_sep_plans: retirement.source,
+              owned_sep_filing_rows: retirement.rows,
+              schedule1_line16_source: retirement.deduction,
+            },
+          },
+        ],
+      };
+    }
     if (input.pub974_single_business) {
       if (
         ctx.taxYear !== 2025 ||
@@ -402,7 +398,7 @@ class Form7206Node extends TaxNode<typeof inputSchema> {
     const lines = calculateSingleScheduleCForm7206(source);
     return {
       outputs: [
-        ...buildOutput(lines.line14),
+        ...buildOutput(lines.line14, source),
         {
           nodeType: this.nodeType,
           fields: {

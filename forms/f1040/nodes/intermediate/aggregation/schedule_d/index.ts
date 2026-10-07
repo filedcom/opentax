@@ -418,6 +418,10 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
         }),
         this.outputNodes.output(form8995, {
           net_capital_gain: distributions,
+          qbi_capital_sources: [{
+            source: "schedule_d.net_capital_gain",
+            amount: distributions,
+          }],
         }),
         this.outputNodes.output(form8960, { line5a_net_gain: distributions }),
       ];
@@ -528,7 +532,13 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
       // Form 8995 line 12 is Form 1040 line 3a plus net capital gain, and i8995 Line 12
       // defines that gain as the smaller of Schedule D line 15 or 16.
       outputs.push(
-        this.outputNodes.output(form8995, { net_capital_gain: netCapGain }),
+        this.outputNodes.output(form8995, {
+          net_capital_gain: netCapGain,
+          qbi_capital_sources: [{
+            source: "schedule_d.net_capital_gain",
+            amount: netCapGain,
+          }],
+        }),
       );
 
       // Line 18: 28% Rate Gain Worksheet (collectibles/1202 gains from f8949 + Form 2439)

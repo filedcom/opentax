@@ -3,6 +3,7 @@ import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f3800 } from "../f3800/index.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
 import { scheduleC } from "../schedule_c/index.ts";
 import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -161,6 +162,20 @@ const successorEmployerSchema = z.object({
 export const itemSchema = z.object({
   employee_reference: z.string().trim().min(1),
   employer_ein: z.string().regex(/^\d{9}$/).optional(),
+  direct_employer_review: z.object({
+    employer_ein: z.string().regex(/^\d{9}$/),
+    proprietor_recipient: z.enum(["T", "S"]),
+    proprietor_ssn: z.string().regex(/^\d{9}$/),
+    business_reference: z.string().trim().min(1),
+    certification_employer_and_payroll_match_confirmed: z.literal(true),
+    source_review_reference: z.string().trim().min(1),
+  }).strict().optional(),
+  group_employee_identity_review: z.object({
+    employee_identity_source_reference: z.string().trim().min(1),
+    same_employee_across_members_confirmed: z.literal(true),
+    group_first_workday_on: z.string().date(),
+    complete_group_hours_and_wages_confirmed: z.literal(true),
+  }).strict().optional(),
   target_group: z.nativeEnum(TargetGroup),
   hired_on: z.string().date().refine((date) => date < "2026-01-01", {
     message:
@@ -182,6 +197,25 @@ export const itemSchema = z.object({
   summer_youth_zone_and_service_period_confirmed: z.literal(true).optional(),
   designated_community_resident_location_confirmed: z.literal(true).optional(),
 }).strict().superRefine((item, ctx) => {
+  if (
+    item.direct_employer_review &&
+    item.wage_records.some((record) =>
+      (record.deduction_location.kind !== "schedule_c" &&
+        record.deduction_location.kind !== "schedule_f") ||
+      (record.deduction_location.kind === "schedule_f"
+          ? record.deduction_location.farm_id
+          : (record.deduction_location as { business_reference?: string })
+            .business_reference) !==
+        item.direct_employer_review!.business_reference
+    )
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["direct_employer_review"],
+      message:
+        "Reviewed direct employer must match each actual payroll deduction location",
+    });
+  }
   const certification = item.certification;
   const revocation = certification.revocation;
   if (revocation.status === "revoked_for_false_employee_information") {
@@ -442,6 +476,24 @@ const controlledGroupSchema = z.object({
   kind: z.enum(["controlled_corporations", "businesses_under_common_control"]),
   group_classification_document_reference: z.string().trim().min(1).max(80),
   taxpayer_member_ein: z.string().regex(/^\d{9}$/),
+  joint_filed_members_review: z.object({
+    members: z.array(
+      z.object({
+        ein: z.string().regex(/^\d{9}$/),
+        proprietor_recipient: z.enum(["T", "S"]),
+        proprietor_ssn: z.string().regex(/^\d{9}$/),
+        business_reference: z.string().trim().min(1),
+        direct_owner_percent: z.literal(100),
+        other_spouse_management_participation_confirmed: z.literal(true),
+        spousal_ownership_attribution_applies_confirmed: z.literal(true),
+      }).strict(),
+    ).length(2),
+    ownership_and_attribution_source_reference: z.string().trim().min(1),
+    common_control_confirmed: z.literal(true),
+    complete_group_members_and_payroll_confirmed: z.literal(true),
+    reviewed_by: z.string().trim().min(1),
+    reviewed_on: z.string().date(),
+  }).strict().optional(),
   members: z.array(z.object({
     ein: z.string().regex(/^\d{9}$/),
     business_name: z.string().trim().min(1).max(75).regex(
@@ -453,6 +505,26 @@ const controlledGroupSchema = z.object({
 export const inputSchema = z.object({
   f5884s: z.array(itemSchema),
   controlled_group: controlledGroupSchema.optional(),
+  ordinary_joint_employer_control_review: z.object({
+    businesses: z.array(
+      z.object({
+        employer_ein: z.string().regex(/^\d{9}$/),
+        business_reference: z.string().trim().min(1),
+        proprietor_ssn: z.string().regex(/^\d{9}$/),
+        other_spouse_no_direct_interest_confirmed: z.literal(true),
+        other_spouse_no_director_fiduciary_employee_or_management_confirmed: z
+          .literal(true),
+        passive_gross_income_not_more_than_half_confirmed: z.literal(true),
+        no_disposition_restrictions_favoring_spouse_or_minor_children_confirmed:
+          z.literal(true),
+        ownership_and_income_source_reference: z.string().trim().min(1),
+      }).strict(),
+    ).length(2),
+    no_other_common_control_ownership_or_options_confirmed: z.literal(true),
+    reviewed_by: z.string().trim().min(1),
+    reviewed_on: z.string().date(),
+    review_reference: z.string().trim().min(1),
+  }).strict().optional(),
   pass_through_credits: z.array(passThroughCreditSchema).optional(),
   subject_to_passive_activity_limit: z.boolean(),
 }).superRefine((input, ctx) => {
@@ -484,6 +556,38 @@ export const inputSchema = z.object({
       message: "Form 5884 needs an employer wage or pass-through credit source",
     });
   }
+  const direct = input.f5884s.flatMap((item) =>
+    item.direct_employer_review ? [item.direct_employer_review] : []
+  );
+  const employerEins = new Set(direct.map((r) => r.employer_ein));
+  const ordinary = input.ordinary_joint_employer_control_review;
+  if ((!group && employerEins.size > 1) || ordinary) {
+    if (
+      group || !ordinary || employerEins.size !== 2 ||
+      new Set(ordinary.businesses.map((b) => b.employer_ein)).size !== 2 ||
+      ordinary.businesses.some((b) =>
+        !direct.some((r) =>
+          r.employer_ein === b.employer_ein &&
+          r.proprietor_ssn === b.proprietor_ssn &&
+          r.business_reference === b.business_reference
+        )
+      ) ||
+      direct.some((r) =>
+        !ordinary.businesses.some((b) =>
+          b.employer_ein === r.employer_ein &&
+          b.proprietor_ssn === r.proprietor_ssn &&
+          b.business_reference === r.business_reference
+        )
+      )
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["ordinary_joint_employer_control_review"],
+        message:
+          "Distinct ordinary joint employers need matching reviewed ownership and spousal-attribution exceptions",
+      });
+    }
+  }
   const references = new Set<string>();
   input.f5884s.forEach((item, index) => {
     if (group && (!item.employer_ein || !memberEins.has(item.employer_ein))) {
@@ -503,7 +607,7 @@ export const inputSchema = z.object({
     item.wage_records.forEach((record, recordIndex) => {
       if (
         record.deduction_location.kind === "entity_return" &&
-        (!group || item.employer_ein === group.taxpayer_member_ein)
+        (!group || filedControlledGroupEins(group).includes(item.employer_ein!))
       ) {
         ctx.addIssue({
           code: "custom",
@@ -519,15 +623,125 @@ export const inputSchema = z.object({
         });
       }
     });
-    if (references.has(item.employee_reference)) {
+    const sourceKey = group
+      ? `${item.employer_ein}:${item.employee_reference}`
+      : item.employee_reference;
+    if (references.has(sourceKey)) {
       ctx.addIssue({
         code: "custom",
         path: ["f5884s", index, "employee_reference"],
         message: "Work opportunity credit employee is duplicated",
       });
     }
-    references.add(item.employee_reference);
+    references.add(sourceKey);
   });
+  if (group?.joint_filed_members_review) {
+    const review = group.joint_filed_members_review;
+    if (
+      group.kind !== "businesses_under_common_control" ||
+      new Set(review.members.map((m) => m.ein)).size !== 2 ||
+      new Set(review.members.map((m) => m.proprietor_recipient)).size !== 2 ||
+      new Set(review.members.map((m) => m.proprietor_ssn)).size !== 2 ||
+      new Set(review.members.map((m) => m.business_reference)).size !== 2 ||
+      review.members.some((m) => !memberEins.has(m.ein)) ||
+      !review.members.some((m) => m.ein === group.taxpayer_member_ein) ||
+      input.f5884s.some((e) =>
+        !e.direct_employer_review ||
+        !review.members.some((m) =>
+          m.ein === e.employer_ein &&
+          m.ein === e.direct_employer_review!.employer_ein &&
+          m.proprietor_recipient ===
+            e.direct_employer_review!.proprietor_recipient &&
+          m.proprietor_ssn === e.direct_employer_review!.proprietor_ssn &&
+          m.business_reference === e.direct_employer_review!.business_reference
+        )
+      )
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["controlled_group"],
+        message:
+          "Joint filed group members need distinct actual owner, business and employer source joins",
+      });
+    }
+  }
+  if (group?.joint_filed_members_review) {
+    const certificates = input.f5884s.map((e) =>
+      e.certification.swa_certification_reference
+    );
+    const payroll = input.f5884s.flatMap((e) =>
+      e.wage_records.map((r) => r.payroll_record_reference)
+    );
+    if (
+      new Set(certificates).size !== certificates.length ||
+      new Set(payroll).size !== payroll.length
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["f5884s"],
+        message:
+          "Joint group employer certification and payroll source references must remain distinct",
+      });
+    }
+  }
+  const persons = new Map<string, typeof input.f5884s>();
+  for (const row of input.f5884s) {
+    persons.set(row.employee_reference, [
+      ...(persons.get(row.employee_reference) ?? []),
+      row,
+    ]);
+  }
+  const reviewedPersonIds = new Map<string, string>();
+  for (const [person, rows] of persons) {
+    const identity = rows[0].group_employee_identity_review
+      ?.employee_identity_source_reference;
+    if (
+      identity && reviewedPersonIds.has(identity) &&
+      reviewedPersonIds.get(identity) !== person
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["f5884s"],
+        message:
+          "One reviewed person identity cannot be split into different group employee references",
+      });
+    }
+    if (identity) reviewedPersonIds.set(identity, person);
+  }
+  for (const rows of persons.values()) {
+    if (rows.length < 2) continue;
+    const identity = rows[0].group_employee_identity_review;
+    if (
+      !group || !identity || rows.some((row) =>
+        !row.group_employee_identity_review ||
+        JSON.stringify(row.group_employee_identity_review) !==
+          JSON.stringify(identity) ||
+        row.target_group !== rows[0].target_group ||
+        row.veteran_category !== rows[0].veteran_category ||
+        row.successor_employer ||
+        row.hired_on < identity.group_first_workday_on ||
+        row.wage_records.some((r) =>
+          r.credited_wages !== undefined
+        )
+      ) ||
+      identity.group_first_workday_on !==
+        rows.map((r) => r.hired_on).sort()[0] ||
+      new Set(rows.map((r) => r.certification.swa_certification_reference))
+          .size !== rows.length ||
+      new Set(
+          rows.flatMap((r) =>
+            r.wage_records.map((w) => w.payroll_record_reference)
+          ),
+        ).size !== rows.flatMap((r) => r.wage_records).length
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["f5884s"],
+        message:
+          "Shared group employee requires one reviewed identity and service period with distinct employer certification/payroll sources",
+      });
+    }
+  }
   const entities = new Set<string>();
   input.pass_through_credits?.forEach((entry, index) => {
     const id = `${entry.source_type}:${entry.entity_ein}`;
@@ -579,6 +793,13 @@ function allocateWholeDollars(
   })).sort((a, b) => b.fraction - a.fraction || a.index - b.index);
   for (const { index } of order.slice(0, residual)) shares[index]++;
   return shares;
+}
+
+export function filedControlledGroupEins(
+  group: z.infer<typeof controlledGroupSchema>,
+): string[] {
+  return group.joint_filed_members_review?.members.map((m) => m.ein) ??
+    [group.taxpayer_member_ein];
 }
 
 // IRC 52(a)-(b): divide the group credit by each member's proportionate
@@ -662,6 +883,49 @@ export function calculateForm5884(input: z.infer<typeof inputSchema>) {
           : 0,
     };
   });
+  if (input.controlled_group) {
+    const persons = new Map<string, typeof rows>();
+    for (const row of rows) {
+      persons.set(row.item.employee_reference, [
+        ...(persons.get(row.item.employee_reference) ?? []),
+        row,
+      ]);
+    }
+    for (const person of persons.values()) {
+      if (person.length < 2) continue;
+      const firstWorkday =
+        person[0].item.group_employee_identity_review!.group_first_workday_on;
+      const end = anniversary(firstWorkday, 1);
+      const hours = person.reduce((sum, r) => sum + r.totalHours, 0);
+      const firstPaid = person.map((r) =>
+        r.item.wage_records.filter((w) => w.service_period_start_on < end)
+          .reduce((sum, w) => sum + w.qualified_wages, 0)
+      );
+      const secondPaid = person.map((r) =>
+        r.item.wage_records.filter((w) => w.service_period_start_on >= end)
+          .reduce((sum, w) => sum + w.qualified_wages, 0)
+      );
+      const firstTotal = firstPaid.reduce((a, b) => a + b, 0),
+        secondTotal = secondPaid.reduce((a, b) => a + b, 0);
+      const firstCap = hours >= 120
+        ? Math.min(firstTotal, wageCap(person[0].item))
+        : 0;
+      const secondCap = hours >= 120 &&
+          person[0].item.target_group === TargetGroup.LongTermFamilyAssistance
+        ? Math.min(secondTotal, WAGE_CAP_LTFA_SECOND)
+        : 0;
+      person.forEach((row, i) => {
+        row.totalHours = hours;
+        row.firstAnniversary = end;
+        row.firstYearWages = firstTotal > 0
+          ? firstCap * firstPaid[i] / firstTotal
+          : 0;
+        row.secondYearWages = secondTotal > 0
+          ? secondCap * secondPaid[i] / secondTotal
+          : 0;
+      });
+    }
+  }
   const line1aWages = Math.round(
     rows.filter((row) => row.totalHours >= 120 && row.totalHours < 400).reduce(
       (sum, row) => sum + row.firstYearWages,
@@ -685,9 +949,9 @@ export function calculateForm5884(input: z.infer<typeof inputSchema>) {
     ? allocateControlledGroupCredit(group, rows, groupCredit)
     : [];
   const line2 = group
-    ? controlledGroupShares.find((member) =>
-      member.ein === group.taxpayer_member_ein
-    )?.credit_share ?? 0
+    ? controlledGroupShares.filter((member) =>
+      filedControlledGroupEins(group).includes(member.ein)
+    ).reduce((sum, member) => sum + member.credit_share, 0)
     : groupCredit;
   const line3 = (input.pass_through_credits ?? []).reduce(
     (sum, entry) => sum + entry.credit_amount,
@@ -696,22 +960,27 @@ export function calculateForm5884(input: z.infer<typeof inputSchema>) {
   const firstYearDeductionShares = rows.map(() => 0);
   const secondYearDeductionShares = rows.map(() => 0);
   if (group) {
-    const shares = allocateWholeDollars(
-      line2,
-      rows.map((row) =>
-        row.item.employer_ein === group.taxpayer_member_ein
-          ? row.firstYearWages + row.secondYearWages
-          : 0
-      ),
-    );
-    shares.forEach((share, index) => {
-      const [first, second] = allocateWholeDollars(share, [
-        rows[index].firstYearWages,
-        rows[index].secondYearWages,
-      ]);
-      firstYearDeductionShares[index] = first;
-      secondYearDeductionShares[index] = second;
-    });
+    for (const ein of filedControlledGroupEins(group)) {
+      const memberCredit = controlledGroupShares.find((m) =>
+        m.ein === ein
+      )?.credit_share ?? 0;
+      const shares = allocateWholeDollars(
+        memberCredit,
+        rows.map((row) =>
+          row.item.employer_ein === ein
+            ? row.firstYearWages + row.secondYearWages
+            : 0
+        ),
+      );
+      shares.forEach((share, index) => {
+        const [first, second] = allocateWholeDollars(share, [
+          rows[index].firstYearWages,
+          rows[index].secondYearWages,
+        ]);
+        firstYearDeductionShares[index] += first;
+        secondYearDeductionShares[index] += second;
+      });
+    }
   } else {
     const low = allocateWholeDollars(
       line1aCredit,
@@ -788,7 +1057,7 @@ export function calculateForm5884(input: z.infer<typeof inputSchema>) {
 class F5884Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f5884";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f3800, scheduleC, schedule_f]);
+  readonly outputNodes = new OutputNodes([f3800, scheduleC, schedule_f, f1040]);
 
   compute(
     _ctx: NodeContext,
@@ -798,16 +1067,19 @@ class F5884Node extends TaxNode<typeof inputSchema> {
     const lines = calculateForm5884(input);
     const credit = lines.line4;
     if (credit <= 0) return { outputs: [] };
-    const outputs = [output(f3800, {
-      f5884_credit: {
-        credit_amount: credit,
-        subject_to_passive_activity_limit:
-          (lines.line2 > 0 && input.subject_to_passive_activity_limit) ||
-          (input.pass_through_credits ?? []).some((entry) =>
-            entry.credit_amount > 0 && entry.subject_to_passive_activity_limit
-          ),
-      },
-    })];
+    const outputs = [
+      output(f3800, {
+        f5884_credit: {
+          credit_amount: credit,
+          subject_to_passive_activity_limit:
+            (lines.line2 > 0 && input.subject_to_passive_activity_limit) ||
+            (input.pass_through_credits ?? []).some((entry) =>
+              entry.credit_amount > 0 && entry.subject_to_passive_activity_limit
+            ),
+        },
+      }),
+      output(f1040, { form5884_determined_credit: credit }),
+    ];
     for (const allocation of lines.wageDeductionAllocations) {
       if (allocation.location.kind === "schedule_c") {
         outputs.push(output(scheduleC, {

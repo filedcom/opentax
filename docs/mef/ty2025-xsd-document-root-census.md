@@ -1,6 +1,6 @@
 # TY2025 Form 1040 schema document-root census
 
-Root list from 2026-09-28; source-literal status updated 2026-10-01. Source: locally cached TY2025 v5.4 `ReturnData1040.xsd`
+Root list from 2026-09-28; source-literal status updated 2026-10-06. Source: locally cached TY2025 v5.4 `ReturnData1040.xsd`
 top-level `IRS...` references under ignored `.state/research/docs/`. These
 schema files are not tracked in Git; reproducible official artifact provenance
 remains a release gate. The [v5.4 archive record](ty2025-v54-schema-provenance.md)
@@ -18,21 +18,25 @@ likewise does not prove a form is required. The
 [registered-document audit](ty2025-form1040-form-audit.md) covers the
 registered-descriptor `INV-01` evidence inventory. The five
 [ordered unregistered-root reviews](ty2025-unregistered-roots-01-25.md) cover
-the former 128-`No` snapshot; thirty-nine roots have since gained source literals,
-leaving 88 current `No` rows. Their ordinal labels are historical, not current
+the former 128-`No` snapshot; the current scan has 83 `No` rows. Their ordinal labels are historical, not current
 missing-root counts. A per-root review is not approval to exclude a filing
 situation, and product applicability decisions for these roots remain open
 separately from `INV-01`.
 
-Counts: 211 schema roots; 123 with a MeF source literal; 88 without one.
-Of the 123 literal roots, 117 occur in files imported by `ALL_MEF_FORMS`; six
-(`IRS2210`, `IRS8828`, `IRS8908`, `IRS8938`, `IRS8997`, `IRS9465`) occur only in
-unregistered MeF form files. A registered-file literal is not proof that its
-descriptor can file every branch. `IRS1116ScheduleC` is a seventh unregistered
-root builder whose token is also quoted in the registered Form 1116 file.
+Counts: 211 schema roots; 128 with a MeF source literal; 83 without one.
+Of the 128 literal roots, 117 occur directly in registered descriptor files.
+Six (`IRS2210`, `IRS8828`, `IRS8908`, `IRS8938`, `IRS8997`, `IRS9465`)
+occur only in staged descriptor files. Five more (`IRS3115`,
+`IRS5471ScheduleO`, `IRS8594`, `IRS8833`, `IRS8883`) occur only in the
+Form 5471 linkage helper's permitted reference-name enumeration. That helper
+is used by the registered parent, but these quoted names do not emit documents
+or establish a source or filing route. There remain seven identifiable staged
+root builders: the six above plus `IRS1116ScheduleC`, whose token is also
+quoted in the registered Form 1116 file. These classifications are source
+inventory, not supported-form counts.
 
-The current descriptor inventory is **149 native** and **116 PDF** entries;
-the native set includes **32 wage/supporting descriptors**. These are not
+The current descriptor inventory is **152 native** and **118 PDF** entries;
+the native set includes **35 wage/supporting descriptors**. These are not
 211-root coverage counts. The [root applicability crosswalk](ty2025-unregistered-root-applicability.md#registry-to-root-reconciliation)
 records owner classes and unresolved product decisions, while the
 [supporting-descriptor audit](ty2025-form1040-form-audit.md#supporting-descriptor-case-and-packet-disposition)
@@ -84,7 +88,7 @@ the linked evidence, not an inference from this flag.
 | `IRS2439`             | Yes            | Registered bounded payer Copy B box-2 route links Schedule 3 line 13a and a native document; PDF map and cases are written but unrun. Positive box 1c and acceptance remain open.                                                                                                                                                                        |
 | `IRS2441`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS2555`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
-| `IRS3115`             | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
+| `IRS3115`             | Yes            | Quoted only as a permitted Form5471 reference name in the linkage helper; no new native builder or verified filing route. Applicability/source/calculation/output/IRS disposition remains open. |
 | `IRS3468` | Yes | A bounded trust-owned solar Part V native/PDF descriptor is registered; wider facility and owner routes, source bytes, bulk validation, business rules and ATS remain open. |
 | `IRS3800`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS3903`             | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
@@ -110,7 +114,7 @@ the linked evidence, not an inference from this flag.
 | `IRS5471ScheduleI1` | Yes | A bounded Category 5a CFC Schedule I-1 native/PDF descriptor is registered; wider owners, calculations and the full packet remain open. |
 | `IRS5471ScheduleJ` | Yes | A bounded Category 5a CFC general-category E&P/PTEP rollforward has native/PDF descriptors and authored fixtures; wider histories and the full Form 5471 packet remain open. |
 | `IRS5471ScheduleM` | Yes | A reviewed one-CFC Category 4/5a related-party inventory sale has bounded native/two-page PDF detail; wider transactions, conditional attachments, and the complete packet remain open. |
-| `IRS5471ScheduleO`    | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
+| `IRS5471ScheduleO`    | Yes            | Quoted only as a permitted Form5471 reference name in the linkage helper; no new native builder or verified filing route. Applicability/source/calculation/output/IRS disposition remains open. |
 | `IRS5471ScheduleP` | Yes | A bounded sole-shareholder Category 5a CFC general-category PTEP and USD basis rollforward has native/PDF descriptors and authored fixtures; wider histories and full Form 5471 packet remain open. |
 | `IRS5471ScheduleQ` | Yes | One CFC general-category sales/tested-income source has a bounded native/four-page PDF attachment with authored fixtures; wider categories, Category 4 packet, business rules, and full validation remain open. |
 | `IRS5471ScheduleR` | Yes | A reviewed no-distribution CFC has a bounded identity-only native/PDF attachment with authored fixtures; all-zero schedule business rules, actual distributions, and the complete Category 4/5a packet remain open. |
@@ -146,7 +150,7 @@ the linked evidence, not an inference from this flag.
 | `IRS8582`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS8582CR`           | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS8586`             | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
-| `IRS8594`             | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
+| `IRS8594`             | Yes            | Quoted only as a permitted Form5471 reference name in the linkage helper; no new native builder or verified filing route. Applicability/source/calculation/output/IRS disposition remains open. |
 | `IRS8606`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS8609A`            | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS8611`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
@@ -163,7 +167,7 @@ the linked evidence, not an inference from this flag.
 | `IRS8826`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS8828`             | Yes             | Source literal is staged outside the registry; positive Form 8828 export remains guarded. Refinance/disposition evidence and validation remain open. |
 | `IRS8829`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
-| `IRS8833`             | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
+| `IRS8833`             | Yes            | Quoted only as a permitted Form5471 reference name in the linkage helper; no new native builder or verified filing route. Applicability/source/calculation/output/IRS disposition remains open. |
 | `IRS8834`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS8835`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS8838`             | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
@@ -172,7 +176,7 @@ the linked evidence, not an inference from this flag.
 | `IRS8844`             | Yes             | Bounded direct-employer native/PDF descriptor is registered; payroll/zone source authenticity, wider branches, and final validation remain open. |
 | `IRS8845`             | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS8846`             | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
-| `IRS8853`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
+| `IRS8853` | Yes | Sourced Archer/Medicare distributions, including both-holder MFJ Medicare controlling form and dedicated taxpayer/spouse statement roots, have bounded local full XSD/PDF evidence. Broader contributions/LTC/inheritance, source authenticity, IRS business rules and ATS remain open; see [gap](ty2025-form8853-gap.md). |
 | `IRS8854`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS8858`             | No             | Strict category-1 direct FDE/foreign-branch source now survives graph execution and blocks both final exports. Parent form, income/credit joins, native/PDF and validation remain open; [decision detail](ty2025-unregistered-root-applicability.md#individual-and-business-roots-audited-in-this-pass). |
 | `IRS8858ScheduleM`    | No             | Category-1 per-activity related-transaction fact is retained; both exports block until the required parent/conditional companion is assembled. Category-5 Form 5471 filers do not complete Schedule M. Native/PDF and no-transaction treatment remain open; [decision detail](ty2025-unregistered-root-applicability.md#individual-and-business-roots-audited-in-this-pass). |
@@ -195,7 +199,7 @@ the linked evidence, not an inference from this flag.
 | `IRS8880`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS8881`             | Yes             | Bounded direct-employer native/PDF descriptor is registered; wider plans, source authenticity, and final validation remain open. |
 | `IRS8882`             | Yes             | Bounded direct-employer native/PDF descriptor is registered; wider costs/employers, source authenticity, and final validation remain open. |
-| `IRS8883`             | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
+| `IRS8883`             | Yes            | Quoted only as a permitted Form5471 reference name in the linkage helper; no new native builder or verified filing route. Applicability/source/calculation/output/IRS disposition remains open. |
 | `IRS8886`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS8888`             | Yes            | Bounded two- or three-account allocation is registered and reconciles to Form 1040 line 35a. Focused local XSD cases and a synthetic full-return XSD/filled-PDF packet pass; the Form 1040 line 35a attachment mark prints. Bank/source verification, final release batch, other business rules, and ATS remain open.                                                                                                                                        |
 | `IRS8889`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
@@ -268,3 +272,9 @@ PDF projections but no live export route. `IRS8839` has a registered descriptor
 and a bounded byte-bound prepared-bundle route, while wider claims remain
 guarded. These are why a source-literal check is
 deliberately weaker than support.
+
+The 2026-10-06 both-holder Medicare extension adds one registered supporting
+descriptor for `PrimaryTaxpayerMedicareMSAStmt` and `SpouseTaxpayerMedicareMSAStmt`.
+These two non-`IRS...` statement roots do not change the 211-root IRS census.
+They are filed with the controlling `IRS8853` and project through its existing
+PDF descriptor; see the [Form 8853 gap](ty2025-form8853-gap.md).

@@ -9,7 +9,30 @@ import { schedule_se } from "../nodes/intermediate/forms/schedule_se/index.ts";
 import { TS } from "../nodes/types.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
 import { form7206Pdf } from "../2025/pdf/forms/f7206.ts";
+import { form7206 as form7206Mef } from "../2025/mef/forms/f7206.ts";
 import { scheduleSePdf } from "../2025/pdf/forms/schedule_se.ts";
+
+Deno.test("Form 7206 export rejects retained identity without computed lines", () => {
+  assertEquals(form7206Mef.build({}), "");
+  assertEquals(form7206Pdf.projectFields?.({}, {}), {});
+  const ambient = { schedule_se_source: { line13_deduction: 0 } };
+  assertEquals(form7206Mef.build(ambient), "");
+  assertEquals(form7206Pdf.projectFields?.(ambient, {}), {});
+  const partial = {
+    recipient_name: "Alex Example",
+    recipient_ssn: "111223333",
+  };
+  assertThrows(
+    () => form7206Mef.build(partial),
+    Error,
+    "needs computed lines",
+  );
+  assertThrows(
+    () => form7206Pdf.projectFields?.(partial, {}),
+    Error,
+    "needs computed lines",
+  );
+});
 
 const seDeduction = schedule_se.compute(
   { taxYear: 2025, formType: "f1040" },
@@ -113,7 +136,7 @@ Deno.test("one Schedule C health plan reaches Form 7206 and the full return", as
     result.pending.form8995?.line1_qbi,
     Math.round(50_000 - seDeduction - 12_000),
   );
-  assertEquals(result.pending.f1040?.line13_qbi_deduction, 3_744);
+  assertEquals(result.pending.f1040?.line13_qbi_deduction, 3_743);
   const filer = extractFilerIdentity(result.pending.f1040);
   const xml = buildMefXml(result.pending, filer);
   assertStringIncludes(xml, "<IRS7206 documentId=");
@@ -123,7 +146,7 @@ Deno.test("one Schedule C health plan reaches Form 7206 and the full return", as
   );
   assertStringIncludes(
     xml,
-    "<DeductibleSelfEmploymentTaxAmt>3532</DeductibleSelfEmploymentTaxAmt>",
+    "<DeductibleSelfEmploymentTaxAmt>3533</DeductibleSelfEmploymentTaxAmt>",
   );
   assertStringIncludes(
     xml,
@@ -131,7 +154,7 @@ Deno.test("one Schedule C health plan reaches Form 7206 and the full return", as
   );
   assertStringIncludes(
     xml,
-    "<QlfyBusinessIncomeOrLossAmt>34468</QlfyBusinessIncomeOrLossAmt>",
+    "<QlfyBusinessIncomeOrLossAmt>34467</QlfyBusinessIncomeOrLossAmt>",
   );
   await validateXml(xml);
   const pdf = await buildPdfBytes(result.pending, filer);
@@ -305,7 +328,12 @@ Deno.test("spouse-owned Schedule C Medicare Part B premiums retain spouse owner 
   assertEquals(result.pending.form7206?.line14, 2_220);
   assertEquals(result.pending.schedule1?.line17_se_health_insurance, 2_220);
   assertEquals(result.pending.f1040?.line10_adjustments, seDeduction + 2_220);
-  assertEquals(result.pending.form8995?.line1_ssn, "222334444");
+  assertEquals(
+    (result.pending.form8995?.joint_owner_filing_rows as Array<
+      { tin: { value: string } }
+    >)[0].tin.value,
+    "222334444",
+  );
   const filer = extractFilerIdentity(result.pending.f1040);
   const xml = buildMefXml(result.pending, filer);
   assertStringIncludes(xml, "<IRS7206 documentId=");
@@ -324,10 +352,11 @@ Deno.test("spouse-owned Schedule C Medicare Part B premiums retain spouse owner 
   );
   assertEquals(projected.recipient_name, "Casey Example");
   assertEquals(projected.line14, 2_220);
-  const projectedSE = scheduleSePdf.projectFields!(
+  const projectedSE = scheduleSePdf.instances!(
     result.pending.schedule_se!,
+    filer,
     result.pending,
-  );
+  )[0];
   assertEquals(projectedSE.owner_name, "Casey Example");
   assertEquals(projectedSE.owner_ssn, "222334444");
 
@@ -359,7 +388,9 @@ Deno.test("spouse-owned Schedule C Medicare Part B premiums retain spouse owner 
     Error,
   );
   const changedQbiOwner = structuredClone(result.pending);
-  changedQbiOwner.form8995!.line1_ssn = "111223333";
+  (changedQbiOwner.form8995!.joint_owner_filing_rows as Array<
+    { tin: { value: string } }
+  >)[0].tin.value = "111223333";
   assertThrows(() => buildMefXml(changedQbiOwner, filer), Error);
 });
 
@@ -402,7 +433,12 @@ Deno.test("one Schedule C policy with taxpayer and spouse months reaches the joi
   assertEquals(result.pending.form7206?.line14, 12_000);
   assertEquals(result.pending.schedule1?.line17_se_health_insurance, 12_000);
   assertEquals(result.pending.f1040?.line10_adjustments, seDeduction + 12_000);
-  assertEquals(result.pending.form8995?.line1_qbi, 34_468);
+  assertEquals(
+    (result.pending.form8995?.joint_owner_filing_rows as Array<
+      { qbi: number }
+    >)[0].qbi,
+    34_467,
+  );
   const filer = extractFilerIdentity(result.pending.f1040);
   assertStringIncludes(
     buildMefXml(result.pending, filer),

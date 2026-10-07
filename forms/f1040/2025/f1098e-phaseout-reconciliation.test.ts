@@ -122,6 +122,55 @@ Deno.test("positive 1098-E needs an issued lender and the filed borrower in both
   }
 });
 
+Deno.test("full-TIN 1098-E checks a supplied borrower name in both exports", async () => {
+  for (
+    const [fixture, wages, borrowerTin, matchingName, wrongName] of [
+      [single, [90_000], "111-22-3333", "Alex Example", "Other Example"],
+      [joint, [128_000, 42_000], "444-55-6666", "Sam Example", "Alex Example"],
+    ] as const
+  ) {
+    const pending = withStudentInterest(fixture, wages, [{
+      box1_student_loan_interest: 2_500,
+      lender_name: "Example Loan Servicer",
+      lender_tin: "12-3456789",
+      borrower_tin: borrowerTin,
+      source_document_reference: "issued-1098e-2025",
+    }]);
+    const issued = pending.f1098e!.f1098es![0];
+    for (
+      const borrowerName of [
+        undefined,
+        matchingName,
+        matchingName.toUpperCase(),
+      ]
+    ) {
+      const valid = {
+        ...pending,
+        f1098e: { f1098es: [{ ...issued, borrower_name: borrowerName }] },
+      };
+      assertStringIncludes(
+        buildMefXml(valid, fixture.filer),
+        "StudentLoanInterestDedAmt",
+      );
+      assert((await buildPdfBytes(valid, fixture.filer)).length > 100_000);
+    }
+    const conflicting = {
+      ...pending,
+      f1098e: { f1098es: [{ ...issued, borrower_name: wrongName }] },
+    };
+    assertThrows(
+      () => buildMefXml(conflicting, fixture.filer),
+      Error,
+      "borrower must match",
+    );
+    await assertRejects(
+      () => buildPdfBytes(conflicting, fixture.filer),
+      Error,
+      "borrower must match",
+    );
+  }
+});
+
 Deno.test("same-account 1098-E copies with different references reject both exports", async () => {
   const pending = withStudentInterest(single, [90_000]);
   const issued = {

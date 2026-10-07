@@ -821,6 +821,7 @@ export function deriveForm3800NonpassiveInput(
 export function calculateForm3800Nonpassive(
   input: Form3800NonpassiveInput,
   passive: Form3800PassiveActivityLines,
+  filing?: { readonly roundPercentageLinesToWholeDollars: true },
 ): Form3800NonpassiveLines {
   for (
     const [name, amount] of Object.entries({
@@ -873,12 +874,16 @@ export function calculateForm3800Nonpassive(
       input.spouseHasBusinessCredit
     ? 12_500
     : 25_000;
-  const line13 = 0.25 * Math.max(0, line12 - threshold);
+  // A whole-dollar filed return must reuse the rounded numbered line in later
+  // subtraction and tax-use allocation. Rounding only line 38 can differ by $1.
+  const percentageLine = (amount: number) =>
+    filing ? Math.round(amount) : amount;
+  const line13 = percentageLine(0.25 * Math.max(0, line12 - threshold));
   const line14 = input.tentativeMinimumTax;
   const line15 = Math.max(line13, line14);
   const line16 = Math.max(0, line11 - line15);
   const line17 = Math.min(line6, line16);
-  const line18 = 0.75 * line14;
+  const line18 = percentageLine(0.75 * line14);
   const line19 = Math.max(line13, line18);
   const line20 = Math.max(0, line11 - line19);
   const line21 = Math.max(0, line20 - line17);

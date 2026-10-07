@@ -1,5 +1,30 @@
 # TY2025 Form 1098 box 6 points
 
+## MFS two-loan acquisition-debt limit (bounded 2026-10-05)
+
+The [2025 Publication 936 Table 1](https://www.irs.gov/publications/p936)
+sets a $375,000 post-2017 acquisition-debt limit for married filing
+separately and rounds the deductible-interest ratio to three places. The
+[2025 Publication 504](https://www.irs.gov/publications/p504) limits a
+separate filer's mortgage-interest deduction to interest that filer paid;
+community-property rules need separate review. The existing two-full-year-loan
+review now permits MFS only with affirmative reviewed noncommunity-property
+and solely paid-interest findings plus an identified payment workpaper. It
+continues to require one whole-return Pub. 936 loan and monthly-balance review.
+
+In the synthetic case, two post-2017 loans average $500,000 and $400,000 for
+the year. The $375,000 / $900,000 ratio rounds to 0.417, so $36,000 reported
+interest yields $15,012 on Schedule A line 8a and Form 1040 line 12e.
+Omitting either MFS finding or its payment-workpaper reference, changing the
+asserted interest, or using the wrong filing status rejects. The Form 1098
+source suite passes 59/59; the full-return local TY2025 v5.4 XSD and
+three-page filled-PDF build pass 1/1. All three pages were rendered and
+visually reviewed: the MFS status and spouse-itemizing boxes are checked,
+Schedule A lines 8a/8e/10/17 print $15,012, and Form 1040 line 12e prints
+the same amount. This structured review does not authenticate payment records,
+issuer Copy B provenance, or property-law facts; community-property,
+mixed-year, points, and other MFS mortgage combinations remain open.
+
 ## Issuer Copy B byte/content gate (implemented, unrun)
 
 A strict 2025 Form 1098 Copy B verifier now accepts one identified source item,
@@ -24,13 +49,20 @@ bundle path. The verifier is limited to readable official Copy B AcroForm values
 flattened copies, rendered-appearance differences, issuer provenance,
 signature, and independently verified Pub. 936/Pub. 525 workpapers remain open.
 
+The Copy B amount-field reader distinguishes a truly blank box from an
+unreadable nonblank value: blank is accepted only when the typed source omits
+that amount, while malformed or negative amount text rejects. A focused
+tamper test covers malformed text in an otherwise blank box 2. This closes a
+parser ambiguity only; it does not authenticate the lender as the issuer or
+verify the appearance/signature of the supplied PDF.
+
 The [2025 Schedule A instructions](https://www.irs.gov/instructions/i1040sca) put deductible mortgage interest **and points reported on Form 1098** on line 8a. Line 8c is for points **not** reported on Form 1098. The [2025 Form 1098 instructions](https://www.irs.gov/pub/irs-prior/i1098--2025.pdf) say box 6 reports points paid on the purchase of a principal residence, but the lender reports the points in the closing year regardless of the taxpayer's accounting method. The box 6 source amount alone therefore does not establish the current-year deduction; Pub. 936 and the Schedule A mortgage limits still matter.
 
 The Form 1098 input keeps `box6_points_paid` as the information-return amount. A positive box 6 requires an identified lender, recipient TIN, distinct payer-copy reference, reviewed Pub. 936 workpaper reference, and `box6_current_year_deductible_points` between zero and box 6. Duplicate payer-copy references reject. Only the approved amount is added to Schedule A line 8a; it cannot flow to line 8c. Native and PDF Schedule A export check that claimed points are present in line 8a and belong to the taxpayer or joint-filing spouse. A zero current-year deduction is an explicit reviewed determination, not an implicit drop. If the reviewed current-year amount is less than box 6, any later-year amortization remains an external workpaper obligation; this node does not create a future-year carryforward.
 
 Business/rental routing, ordinary refinancing, and DEDM override with positive box 6 reject. These cases cannot be silently ignored or treated as fully deductible purchase points. A full return with $18,000 of box 1 interest and $2,400 of box 6 points reaches Schedule A line 8a and Form 1040 itemized deductions and passes local TY2025 v5.4 XSD. Sixty focused source/native/PDF descriptor tests pass. All three pages of a filled PDF from that synthetic source were inspected and reconcile to the native return; see the [v57 review](ty2025-filled-pdf-review-2026-09-29.md). The actual payer-issued copy, Pub. 936 calculation evidence, cross-source mortgage allocation, IRS business rules, and ATS acceptance remain open; the final bulk regression is deferred until implementation is complete.
 
-## Construction-debt refinance exception (implementation written; untested)
+## Construction-debt refinance exception (bounded route verified 2026-10-05)
 
 The [2025 Form 1098 instructions](https://www.irs.gov/pub/irs-prior/i1098--2025.pdf)
 exclude ordinary refinancing points from box 6, but allow qualifying points on
@@ -39,7 +71,23 @@ a loan that refinances debt incurred to construct a principal residence. The
 refinancing points over the loan term. Ordinary refinancing points therefore
 need a separate, unreported-points Schedule A line 8c source route.
 
-The new box 6 construction-refinance input requires the original construction
+This box 6 exception is narrow: the points must be clearly designated and
+computed as a percentage of principal, fit local established point-charging
+practice, be for debt incurred by the payer to construct a residence intended
+as the payer's principal home, be paid directly by the payer, and stay within
+the $750,000 acquisition-debt limit. Refinance points allocable to debt above
+the original construction debt do not qualify. The typed review records
+affirmative reviewed findings for principal-residence intent, direct payment,
+and the acquisition limit, plus original construction debt and refinanced
+principal; this bounded route expects that reviewed evidence and does not
+itself calculate a partial eligible share. The [Form 1098
+instructions](https://www.irs.gov/pub/irs-prior/i1098--2025.pdf) also require
+the lender to report qualifying points for the year of closing regardless of
+the borrower's accounting method. For the taxpayer's deduction, Pub. 936's
+general rule is ratable amortization over the loan term; its example uses the
+number of 2025 monthly payments divided by total loan months.
+
+The box 6 construction-refinance input requires the original construction
 loan and closing-disclosure references, original debt covering the refinanced
 principal, loan term, a distinct month-identified record for every consecutive
 monthly payment through December 2025, and explicit review of principal-residence,
@@ -48,13 +96,40 @@ deduction as reported points times 2025 payment months divided by loan-term
 months, rounded to whole dollars. An asserted current-year amount is rejected
 for this route. The computed amount joins box 1 interest on Schedule A line 8a;
 the remaining points need a durable later-year amortization ledger. A synthetic
-$2,000 box 6 / 180-month / six-payment example is written to expect $67 on
-line 8a, or $18,067 with $18,000 of box 1 interest. These fixtures have not run
-under the agreed implementation-first workflow. The lender-issued copy, payment
-and debt records, full Pub. 936 mortgage-limit review, PDF packet, business
-rules, and ATS remain open.
+$2,000 box 6 / 180-month / six-payment example produces $67 of current-year
+points and $18,067 of line 8a with $18,000 of box 1 interest. The focused run
+passed **57/57** cases in `forms/f1040/nodes/inputs/f1098/index.test.ts`,
+including invalid payment-month and caller-deduction rejection. The full-return
+`XSD: Form 1098 construction-refinance points amortize on Schedule A` case
+passed against the cached TY2025 v5.4 XSD; it emitted $18,067 on Schedule A
+line 8a and Form 1040 line 12e.
 
-## Ordinary refinance points outside box 6 (implementation written; untested)
+The selected filled packet was generated and visually inspected on 2026-10-05:
+three pages in Form 1040 / Form 1040 continuation / Schedule A order. Schedule A
+line 8a and line 8e show $18,067, line 8b and line 8c are blank, and Form 1040
+line 12e shows $18,067. Form labels/year, taxpayer identity, page order, and
+legibility were checked. The local review artifact is
+`.state/research/ty2025-1098-construction-review/`; its PDF SHA-256 is
+`18b1fcd876d231c36bb9b443f6d7f9e5477a4f11974abe3bc9d93ccdfa1caa34`, XML
+SHA-256 `9fe6eb0401144441c0303c3fc310ffe4f9ddae4fa42353d9c5edbf725f560219`,
+and the schema digest is `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+
+This verifies one synthetic route only. The lender-issued copy, authenticated
+payment/debt records, full Pub. 936 mortgage-limit review, other refinance and
+points combinations, IRS business rules, and ATS acceptance remain open; it
+does not close the Form 1098 gap.
+
+## Ordinary refinance points outside box 6 (bounded 2025 route verified)
+
+For a 2025 refinance whose linked Form 1098 identifies a 2025 origination and
+reports box 2, Schedule A's shared native/PDF source replay now requires box 2
+to equal the reviewed new-loan principal. The [2025 Form 1098 instructions](https://www.irs.gov/pub/irs-prior/i1098--2025.pdf)
+put principal at origination in box 2 for a loan originated during the year.
+The source unit suite passed 8/8; the full-return lender Copy B fixture passed
+native XML, local TY2025 XSD, and filled PDF with the matching amount, then
+rejected a changed box 2 at native and PDF export. If box 2 or a 2025 box 3
+origination is absent, this narrow parity check does not infer it. The retained
+Copy B verifier still handles the bytes separately.
 
 The separate public `mortgage_refinance_points` source records the linked
 payer-issued Form 1098, closing disclosure, Pub. 936 workpaper, borrower,
@@ -68,15 +143,32 @@ and the filed line 8c amount to equal the source calculation. The associated
 Form 1098 box 1 interest continues separately to line 8a.
 
 A synthetic $3,000 charge with $1,000 of service fees and six payments on a
-180-month loan is written to expect $67 on line 8c, $18,000 on line 8a, and
-$18,067 on Form 1040 line 12e. The focused cases, full-return XSD fixture,
-and filled-PDF fixture have not run under the agreed implementation-first
-workflow. This bounded route does not resolve mixed acquisition/cash-out
+180-month loan produces $67 on line 8c, $18,000 on line 8a, and $18,067 on
+Form 1040 line 12e in the verified bounded route. This bounded route does not
+resolve mixed acquisition/cash-out
 allocation beyond the qualified improvement case below, later-year amortization
 beyond the 2024-origin slice below,
 multiple-source mortgage-limit allocation beyond the bounded two-loan route,
 payer-issued bytes, business rules,
 or ATS acceptance.
+
+The bounded 2025 route was run on 2026-10-05. The input-node suite passed
+7/7; the Form 1098 Copy B, Schedule A native, and Schedule A PDF suites passed
+24/24; and the focused full-return test passed local TY2025 v5.4 XSD 1/1.
+The selected packet generator produced a three-page PDF and matching XML for
+`single-unreported-refinance-points`; PDF text extraction confirms Schedule A
+line 8a $18,000, line 8c $67, line 8e $18,067, and Form 1040 line 12e
+$18,067. Artifacts are under
+`.state/research/ty2025-filled-pdf-review/2026-10-05-ordinary-refinance-points/`.
+Manifest SHA-256 is
+`d0944e5fd16fd1dbe7ca197071a74950a56d9f5df09e12609807c1b7f2160259`;
+the XML and PDF SHA-256 values are `0201100810cc7408b36d1f4c8344a4897cbd587c48b7a58f10357c7a3f69404c`
+and `3c5bc677bd8b199f80d2856a3bf83f3e4b6fbad0d0ba5601ec3926a9fb74a608`.
+This is source-fixture, XSD, and text-projection evidence, not visual
+signoff or proof of the lender/payment records. The 2024- and 2023-origin
+ledgers and mixed-improvement extension below remain unrun. Issuer/source-byte
+authentication, full mortgage-limit interaction, business rules, and ATS
+remain open.
 
 The ordinary line 8c source now uses one `refinance_close_year` and
 `refinance_close_month` pair. For a 2024 closing, it requires a referenced
@@ -233,6 +325,23 @@ describes lender monthly balances and Table 1, and the
 [2025 Form 1098 instructions](https://www.irs.gov/pub/irs-prior/i1098--2025.pdf)
 define box 2 for a current-year origination.
 
+The three-loan follow-up covers the same Table 1 across two qualified homes:
+one $300,000 July purchase of the principal residence plus two $300,000
+full-year acquisition loans on the elected former-main-home second residence.
+Their reviewed average balances total $900,000, so the .833 Table 1 ratio
+reduces $3,000 of reported interest to $2,499 on Schedule A line 8a. The
+synthetic three-copy case passes final native export, local TY2025 v5.4 XSD,
+and a three-page filled-PDF text check. The exact test is
+`one or more sourced mortgages apply one reviewed Pub. 936 limit in native and PDF exports`
+in `forms/f1040/2025/f1098_three_loan_limit.test.ts`, run with
+`PATH=/tmp/opentax-pdf-tools:$PATH deno test --allow-read --allow-write --allow-run=xmllint,pdftotext --allow-net=www.irs.gov forms/f1040/2025/f1098_three_loan_limit.test.ts`
+(1 passed). Pub. 936 says to complete one Table 1 for both main and second
+homes regardless of mortgage count, and its lender-statement method includes
+zero balances for months a mortgage did not secure a qualified home.
+This does not authenticate the lender statements, election/occupancy evidence,
+or issuer provenance, and it does not extend the route to another second
+property, MFS, grandfathered or mixed-use debt, points, or ATS acceptance.
+
 For a 2025 purchase combined with a preexisting mortgage, the retained review
 now identifies two different properties and the prior home's second-home
 election and occupancy record. A nonrented second home must not have been
@@ -251,7 +360,7 @@ occupancy documents remain reviewed references rather than authenticated
 bytes. [2025 Publication 936](https://www.irs.gov/publications/p936)
 provides the second-home rules.
 
-## One 2025 purchase loan with points and one existing mortgage (implementation written; untested)
+## One 2025 purchase loan with points and one existing mortgage
 
 The public `f1098_purchase_points_cross_loan_review` joins one 2025
 principal-residence purchase Form 1098 with box 6 points and one full-year
@@ -260,21 +369,45 @@ copies, the purchase closing disclosure, a Publication 936 points workpaper,
 12 monthly lender statements for each loan, and a lender-certified maximum
 balance covering every day of 2025 for each loan. The purchase loan has zero
 balance before its origination month; its Form 1098 box 2 must match the
-reviewed maximum original principal. The sum of the two daily maxima must not
-exceed $750,000. Reviewed facts affirm that these are all qualified home
+reviewed maximum original principal. The 12 closing balances establish each
+loan's average for its secured months; one Publication 936 Table 1 ratio uses
+the $750,000 limit over the combined average, rounded to three decimals, or
+one when the average is below the limit. Reviewed facts affirm that these are all qualified home
 mortgages, that the purchase is a principal residence, and that the points
-meet the immediate-deduction conditions. The two box 1 deductions and box 6
-deduction must exactly equal their reported amounts. Native and PDF Schedule A
+meet the immediate-deduction conditions. The combined box 1 deduction and box
+6 points deduction must match that ratio. Native and PDF Schedule A
 replay the two source identities and exact line 8a total and reject competing
 line 8b/8c, refinance points, and Form 8396 claims. The synthetic $6,000 and
 $12,000 interest plus $3,000 purchase points reaches $21,000 on Schedule A
-and Form 1040; positive and tamper source/export fixtures are authored but
-unrun under the implementation-first workflow.
+and Form 1040.
+
+On 2026-10-05, the authored positive full-return case passed local TY2025
+v5.4 XSD validation: the source calculation carries $21,000 to Schedule A
+line 8a and Form 1040 itemized deductions. The direct Schedule A PDF projection
+case also passed, checking the same $21,000 amount and rejecting a changed
+filed total or a second-loan recipient that is not the filer. Focused commands:
+`deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov --filter='2025 purchase points and an existing mortgage' forms/f1040/2025/mef/xsd-validation.test.ts`
+(1 passed) and
+`deno test --filter='Schedule A PDF replays purchase points and the second mortgage' forms/f1040/2025/pdf/forms/schedule_a.test.ts`
+(1 passed). The later capped-ratio case also generated a three-page packet;
+all pages were visually inspected and its Schedule A/Form 1040 amounts match
+native XML. Issuer provenance, loan and points records, other loan counts,
+and full mortgage-limit scope remain open.
+
+A bounded over-limit case adds a $650,000 full-year second-home loan to the
+$300,000 July purchase loan. Their $950,000 combined average gives a 0.789
+Table 1 ratio. The $18,000 combined box 1 interest becomes $14,202, and the
+$3,000 reported purchase points become $2,367, totaling $16,569 on Schedule A
+line 8a and Form 1040 line 12e. The source node, native full-return XML,
+local TY2025 v5.4 XSD, three-page filled PDF, and Schedule A PDF projection
+pass focused checks; changed points, interest, or filed totals reject. The
+[2025 Publication 936 Table 1 instructions](https://www.irs.gov/publications/p936)
+apply line 14's ratio to deductible points as well as interest.
 
 This structured review does not authenticate lender-issued Form 1098 copies,
 closing disclosure, lender maximum-balance certificates, or proof of direct
-points payment. Cash-out debt, daily balances above $750,000, additional
-mortgages, MFJ/MFS, and partial points deductions remain outside this route.
+points payment. Cash-out debt, additional mortgages, MFJ/MFS, and other partial
+points deduction routes remain outside this bounded review.
 The [2025 Publication 936](https://www.irs.gov/publications/p936) combines
 mortgages under the acquisition-debt limit, and the
 [2025 Schedule A instructions](https://www.irs.gov/instructions/i1040sca)
@@ -283,12 +416,44 @@ place deductible Form 1098 interest and points on line 8a.
 The purchase-points cross-loan review now also identifies distinct purchase
 and prior-home properties and applies the same qualified second-home
 occupancy test as the no-points combined review. Its former-home occupancy
-record is required even while the two lender-certified maxima stay below
-$750,000. A rented second home with 100 fair-rental and 15 personal-use days
+record is required across the combined debt-limit calculation. A rented
+second home with 100 fair-rental and 15 personal-use days
 passes source validation; 14 personal days or the same property reference
 rejects. The structured occupancy record is not yet authenticated to source
 bytes. [2025 Publication 936](https://www.irs.gov/publications/p936)
 provides the second-home criteria.
+
+## Positive Schedule A line 8a source presence
+
+The [2025 Schedule A instructions](https://www.irs.gov/pub/irs-pdf/i1040sca.pdf)
+place deductible interest and points reported on Form 1098 on line 8a;
+unreported interest belongs on line 8b under its own rules. Native MeF and
+PDF Schedule A exporters now reject a positive line 8a when the retained
+`f1098` source is absent. They call one shared presence guard before the
+existing Form 1098 owner, box 1, box 6, and mortgage-limit checks. The guard
+does not change zero line 8a or the supported seller-financed line 8b route.
+Direct native and PDF rejection tests, sourced Form 1098 descriptor cases, a
+full-return Schedule A XSD case, and the affected gift-route regressions pass.
+Unrelated Form 8283 examples no longer use unsupported mortgage interest to
+raise their itemized deduction totals.
+
+The presence guard alone does not prove the exact line 8a amount or the
+authenticity of an issuer copy. The bounded cross-loan and mortgage-limit
+reviews compare their own calculated totals; final bundle review separately
+checks readable Copy B bytes where required. Other mortgage source routes,
+Pub. 936 calculations, and IRS acceptance remain open.
+
+## Positive line 8a amount replay
+
+Both exporters now also compare the gross line 8a claim with the same retained
+Form 1098 deductible box 1 interest plus deductible box 6 points aggregate
+used by the source node. The check runs after owner and source review, before
+the Form 8396 credit-interest reduction is printed. Direct native/PDF tests
+reject a $19,000 or $21,000 claim against a $20,000 source and accept the
+matching claim. Focused Schedule A and Form 1098 tests passed 27/27, and all
+seven selected current-source Form 1098 packet cases remain exportable. This
+is structured amount parity; independent issuer-byte proof, wider mortgage
+limits, and IRS business-rule/ATS review remain open.
 
 ## Lender Copy B proof for bounded cross-loan reviews
 
@@ -314,3 +479,11 @@ the final bulk regression remain open.
 ## Box 4 recovery audited with the points route
 
 [2025 Publication 525](https://www.irs.gov/publications/p525) says Form 1098 box 4 is a 2025 refund of mortgage interest paid in an earlier year. It does not reduce current-year box 1 interest. Taxable recovery depends on the earlier deduction and tax benefit. A positive box 4 now requires personal Schedule A routing, an identified lender, recipient TIN, distinct payer-copy reference, `box4_prior_year_refund: true`, a reviewed Pub. 525 recovery workpaper reference, and `box4_taxable_recovery_verified_amount` from zero through box 4. Duplicate copies reject. Current box 1 interest stays on Schedule A line 8a; only the reviewed taxable recovery routes to Schedule 1 line 8z and AGI. Native and PDF Schedule 1 exports require the taxpayer or joint-filing spouse as recipient and an exact match to the sourced recovery. Same-year netting, business/rental recovery without its own route, and unsourced full-refund taxation reject. A synthetic $2,000 prior-year refund with $1,200 reviewed taxable recovery and $18,000 current interest passes local TY2025 v5.4 full-return XSD; all five filled PDF pages were inspected in the [v58 review](ty2025-filled-pdf-review-2026-09-29.md). Payer-issued bytes, the actual Pub. 525 calculation, IRS business rules, ATS, and the final bulk regression remain open.
+
+## Printable Copy B appearances (October 6)
+
+The byte verifier now requires visible, printable normal appearances for the nine modeled official Copy B fields, independently comparing decoded appearance content, standard-font resources and page geometry with their field values. Metadata-only, stale, hidden, off-page, missing and viewer-regenerated appearances reject. It never updates submitted bytes. Fixtures use the actual archived 2025 Copy B page; they remain constructed records.
+
+Fresh main standard-task gate passes10/0. Three full-v5.4-XSD packets cover purchase points, two-loan MFS limits and prior-year recovery; all12 return plus4 retained source pages were visually reviewed. The actual two original October5 metadata-only sources reject unchanged; their nine return pages remain byte exact. Shared W-2G checks pass3/0 and its original two packets preserve10 return plus2 source pages exactly. Logs and manifests are recorded in the October6 status archive. No original MFS artifact was available for preservation.
+
+This proves modeled printable values, not issuer authentication or complete page authenticity. Wider mortgage workpapers, flattened/scanned copies, provenance and IRS acceptance remain open.

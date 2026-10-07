@@ -1,3 +1,6 @@
+import { filedOwnedScheduleF } from "../../../nodes/owned-business-filing.ts";
+import { assertFarmWotcReturn } from "../../form8995_farm_wotc_reconciliation.ts";
+import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import {
   assertScheduleF1099Answers,
@@ -8,6 +11,7 @@ import {
   computeTotalExpenses,
   conservationDeduction,
   inputSchema,
+  projectScheduleFItems,
   laborLessEmploymentCredits,
   reconcileFarmSources,
   type ScheduleFItem,
@@ -20,6 +24,7 @@ import {
   calculateForm5884,
   inputSchema as form5884InputSchema,
 } from "../../../nodes/inputs/f5884/index.ts";
+import { reconcileForm8941DocumentSource } from "./f8941_source.ts";
 
 type Fields = Partial<ReturnType<typeof inputSchema.parse>>;
 
@@ -39,6 +44,7 @@ function buildFarm(
   cropStatementId?: string,
   accrualLoanStatementId?: string,
   wotcReduction = 0,
+  filing?: ReturnType<typeof filedOwnedScheduleF>,
 ): string {
   assertScheduleF1099Answers(item);
   const filer = context.filer;
@@ -68,7 +74,8 @@ function buildFarm(
     : filer.fullName ?? filer.nameLine1;
   const proprietorSSN = spouse?.ssn ?? filer.primarySSN;
   const gross = computeGrossIncome(item);
-  const expenses = computeTotalExpenses(item, gross, wotcReduction);
+  const expenses = filing?.expenses ??
+    computeTotalExpenses(item, gross, wotcReduction);
   const preliminaryNet = gross - expenses;
   assertScheduleFLossAtRiskAnswer(item, wotcReduction);
   calculateScheduleFAtRiskNet(item, wotcReduction);
@@ -194,7 +201,7 @@ function buildFarm(
     amount("ChemicalExpenseAmt", item.line11_chemicals),
     item.line12_conservation === undefined ? "" : element(
       "ConservationExpenseAmt",
-      conservationDeduction(item, gross),
+      filing?.conservation_deduction ?? conservationDeduction(item, gross),
     ),
     amount("CustomHireExpenseAmt", item.line13_custom_hire),
     amount("DeprecAndSect179ExpnsDedAmt", item.line14_depreciation),
@@ -277,12 +284,26 @@ export const scheduleF: MefFormDescriptor<
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sf.pdf",
   build(fields, context = {}) {
+    assertFarmWotcReturn(
+      context.pending?.form8995a ?? context.pending?.form8995 ?? {},
+      context.pending,
+      context.filer,
+      { key: "schedule_f", value: fields },
+    );
     const input = inputSchema.parse({
       ...fields,
       schedule_fs: fields?.schedule_fs ?? [],
     });
     reconcileFarmSources(input);
+    if (input.form8941_premium_reductions?.length) {
+      reconcileForm8941DocumentSource(
+        context.pending?.f8941,
+        context.pending ?? {},
+        context.filer,
+      );
+    }
     const reductions = wotcReductionsByFarm(input);
+    const filedItems = projectScheduleFItems(input);
     if (reductions.size > 0 && context.pending) {
       const source = form5884InputSchema.parse(context.pending.f5884);
       const expected = new Map(
@@ -350,9 +371,22 @@ export const scheduleF: MefFormDescriptor<
     let loanIndex = rentalLoanCount;
     let cropIndex = rentalCropCount;
     let accrualLoanIndex = 0;
-    return input.schedule_fs.map((item, index) =>
+    return filedItems.map((item, index) =>
       buildFarm(
-        item,
+        item.qbi_wotc_filing_review
+          ? patronFiledBusinessLines(
+            "schedule_f",
+            item,
+            reductions.get(item.farm_id ?? "") ?? 0,
+          ).filed_source as typeof item
+          : (input.patron_filing_review || input.independent_patron_reviews)
+          ? patronFiledBusinessLines("schedule_f", item)
+            .filed_source as typeof item
+          : filedOwnedScheduleF(
+            item,
+            input.farm_optional_method_elected === true,
+            reductions.get(item.farm_id ?? "") ?? 0,
+          )?.filed_source ?? item,
         context,
         index,
         (item.line5a_ccc_loans_election ?? 0) > 0
@@ -365,6 +399,12 @@ export const scheduleF: MefFormDescriptor<
           ? accrualLoanIds[accrualLoanIndex++]
           : undefined,
         reductions.get(item.farm_id ?? "") ?? 0,
+        filedOwnedScheduleF(
+          item,
+          Boolean(input.patron_filing_review || input.independent_patron_reviews) ||
+            input.farm_optional_method_elected === true,
+          reductions.get(item.farm_id ?? "") ?? 0,
+        ),
       )
     );
   },

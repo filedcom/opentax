@@ -189,6 +189,14 @@ arithmetic does not establish receipt ownership or IRS account posting.
 
 ## Remaining return-wide work
 
+Final Form 1040 native and PDF export now rejects a supplied attached total
+that is a string, NaN, or infinity on Schedule 1 lines 10/26, Schedule B
+line 4, Schedule 1-A line 38, or Schedule 3 lines 8/15. These values
+previously could skip the comparison with the filed Form 1040 line. The
+focused direct/native/PDF suite passes 13/13. A missing optional total still
+uses the existing route-specific presence rule; this check does not prove
+complete source or multi-copy coverage.
+
 | Area                           | Current graph observation                                                                                                                                                                                                      | Unresolved join                                                                                                                                                                                                                              |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Income/AGI                     | The AGI aggregator deposits line 11; the Form 1040 sink can also receive explicit lines 1z, 9, 11, and 15. Final export replays line 1z and line 9 from retained components when enough rows are present, line 11 from lines 9–10, line 14 from lines 12–13, and nonnegative line 15 from lines 11 and 14. | Recompute each component from identified source rows at export; sparse direct sink inputs still prevent a blanket source equality assertion. |

@@ -1,5 +1,19 @@
+import { ownedSepSourceSchema } from "../nodes/inputs/sep_retirement/owned-source.ts";
+import { claimantReviewSchema } from "../nodes/inputs/f8863/claimant-review.ts";
+import {
+  inputSchema as qbiPatronInputSchema,
+  qbiPatron,
+} from "../nodes/inputs/qbi_patron/index.ts";
+import {
+  education_income,
+  itemSchema as educationIncomeItemSchema,
+} from "../nodes/inputs/education_income/index.ts";
 import type { InputNodeEntry } from "../../../core/types/form-definition.ts";
 import { z } from "zod";
+import {
+  form8853,
+  inputSchema as form8853InputSchema,
+} from "../nodes/intermediate/forms/form8853/index.ts";
 import { form6251 } from "../nodes/intermediate/forms/form6251/index.ts";
 import { priorIsoSaleReviewSchema } from "./form6251_prior_iso_sale.ts";
 import { form4797 } from "../nodes/intermediate/forms/form4797/index.ts";
@@ -38,6 +52,7 @@ import {
   mortgageLimitReviewSchema,
   purchasePointsCrossLoanReviewSchema,
 } from "../nodes/inputs/f1098/index.ts";
+import { cashoutRefinanceReviewSchema } from "../nodes/inputs/f1098/cashout_refinance.ts";
 import {
   inputSchema as mortgageRefinancePointsInputSchema,
   mortgage_refinance_points,
@@ -358,6 +373,7 @@ import {
 import {
   f4852,
   itemSchema as f4852ItemSchema,
+  reviewedSourceSchema as f4852ReviewedSourceSchema,
 } from "../nodes/inputs/f4852/index.ts";
 import {
   itemSchema as sepRetirementItemSchema,
@@ -729,6 +745,14 @@ export const inputNodes: readonly InputNodeEntry[] = [
     }),
     isArray: false,
   },
+  {
+    node: f1098,
+    inputKey: "f1098_cashout_refinance_review",
+    inputSchema: z.object({
+      cashout_refinance_review: cashoutRefinanceReviewSchema,
+    }),
+    isArray: false,
+  },
   { node: f1098e, itemSchema: f1098eItemSchema, isArray: true },
   {
     node: f1098e,
@@ -744,6 +768,17 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: form6252, itemSchema: form6252ItemSchema, isArray: true },
   { node: f2441, itemSchema: f2441ItemSchema, isArray: true },
   { node: f8812, itemSchema: f8812ItemSchema, isArray: true },
+  {
+    node: education_income,
+    itemSchema: educationIncomeItemSchema,
+    isArray: true,
+  },
+  {
+    node: f8863,
+    inputKey: "f8863_claimant_review",
+    inputSchema: z.object({ claimant_review: claimantReviewSchema }),
+    isArray: false,
+  },
   { node: f8863, itemSchema: f8863ItemSchema, isArray: true },
   {
     node: f8863,
@@ -780,7 +815,19 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f8908, itemSchema: f8908ItemSchema, isArray: true },
   { node: f8609, itemSchema: f8609ItemSchema, isArray: true },
   { node: f4852, itemSchema: f4852ItemSchema, isArray: true },
+  {
+    node: f4852,
+    inputKey: "f4852_reviewed_source",
+    inputSchema: z.object({ reviewed_source: f4852ReviewedSourceSchema }),
+    isArray: false,
+  },
   { node: sep_retirement, itemSchema: sepRetirementItemSchema, isArray: true },
+  {
+    node: sep_retirement,
+    inputKey: "owned_sep_retirement",
+    inputSchema: z.object({ owned_sep_plans: ownedSepSourceSchema }).strict(),
+    isArray: false,
+  },
   // Singleton inputs: entire form as a single object
   {
     node: schedule_b_part_iii,
@@ -986,6 +1033,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
     inputSchema: qbiAggregationInputSchema,
     isArray: false,
   },
+  { node: qbiPatron, inputSchema: qbiPatronInputSchema, isArray: false },
   { node: f843, inputSchema: f843InputSchema, isArray: false },
   { node: f2120, inputSchema: f2120InputSchema, isArray: false },
   { node: f8275, inputSchema: f8275InputSchema, isArray: false },
@@ -1000,6 +1048,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   },
   { node: preparer, inputSchema: preparerInputSchema, isArray: false },
   { node: form8889, inputSchema: form8889InputSchema, isArray: false },
+  { node: form8853, inputSchema: form8853InputSchema, isArray: false },
   {
     node: ira_deduction_worksheet,
     inputSchema: iraDeductionWorksheetInputSchema,

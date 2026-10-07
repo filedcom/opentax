@@ -1,5 +1,26 @@
 # TY2025 Schedule J elected-income source boundary
 
+## October6 preferential-source integration checkpoint
+
+Current main integrates independently sourced current/prior ScheduleJ tax
+worksheets, actual farm SE/QBI allocation and the no-election6251 tax refigure.
+Main focused10/0 includes five full-XSD reviewed packets (85 pages): original
+farm with/without election and three owned adoption/education/QEF compositions.
+Native and PDF compare the entire final source replay. The original200000 farm
+plus35000 dividend QEF case retains its changed-NIIT rejection; the owner-matched
+Alex farm source has200000 receipts and permits supported adoption/QEF staging.
+See [preferential source proof](ty2025-schedule-j-preferential-source-proof.md).
+
+The rehearsal preserves earlier17QEF/172pages and8pension/76pages, with33/0
+donation overlap. Fresh actual-main held comparisons and related tests are
+in progress; no passing full regression, externally authenticated prior filing,
+IRS business-rule acceptance or wider ScheduleJ support is asserted. Other
+attributable incomes, fishing preferential allocation, itemization/NOL and
+2555/8615/1116/other-credit combinations remain existing parent work.
+
+## Historical build-first notes
+
+
 Status: build-first, unrun. Bounded Schedule F-only and one-business fishing
 Schedule C positive elections are wired through the graph. No MeF/XSD,
 filled-PDF, IRS-rule, or ATS acceptance is claimed.

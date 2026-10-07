@@ -72,10 +72,24 @@ Deno.test("Form 8959 PDF rejects a print line that differs from upstream deposit
     ?.fields;
   assert(printed);
   const pending = { ...source, ...printed };
-  assertEquals(
-    form8959Pdf.projectFields?.(pending, {}),
-    printed,
-  );
+  // A wage-only return completes Parts I/IV/V; no SE or RRTA parts print.
+  assertEquals(form8959Pdf.projectFields?.(pending, {}), {
+    medicare_wages: 230_000,
+    medicare_withheld: 3_635,
+    line1_medicare_wages: 230_000,
+    line2_unreported_tips: 0,
+    line3_wages_8919: 0,
+    line4_total_medicare_wages: 230_000,
+    line5_threshold: 200_000,
+    line6_wage_excess: 30_000,
+    line7_wage_tax: 270,
+    line18_total_tax: 270,
+    line19_medicare_withheld: 3_635,
+    line20_medicare_wages: 230_000,
+    line21_regular_medicare_tax: 3_335,
+    line22_additional_withheld: 300,
+    line24_total_withheld: 300,
+  });
   assertThrows(
     () =>
       form8959Pdf.projectFields?.(

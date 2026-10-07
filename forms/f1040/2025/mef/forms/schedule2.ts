@@ -1,6 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import { necBox3ExciseFromSources } from "../../../nodes/inputs/f1099nec/index.ts";
+import { section1294DueFromCalculatedForm } from "../../../nodes/inputs/f8621/section1294.ts";
 import { calculateForm8874Recapture } from "../../../nodes/inputs/f8874/recapture_node.ts";
 import type { F8874RecaptureInput } from "../../../nodes/inputs/f8874/recapture_node.ts";
 import { assertForm8874RecaptureOwners } from "../../../nodes/inputs/f8874/recapture_owner.ts";
@@ -47,6 +48,8 @@ export interface Fields {
   line17e_archer_msa_tax?: number | null;
   line17f_medicare_advantage_msa_tax?: number | null;
   line17p_form8621_interest?: number | null;
+  line17q_form8621_1294_interest?: number | null;
+  line17z_form8621_1294_deferred_tax?: number | null;
   line17z_other_additional_taxes?: number | null;
   line20_965_tax_installment?: number | null;
   line19_form4255_net_epe?: number | null;
@@ -123,6 +126,7 @@ const ELEMENT_ORDER = [
   "IncmNonqlfyDefrdCompPlanAmt",
   "ExcessParachutePaymentAmt",
   "InterestOnEachNetIncrInTaxAmt",
+  "AccruedInterestDueThisRetAmt",
   "TotalAnyOtherTaxesAmt",
   "TotalOtherAdditionalTaxesAmt",
   "Frm3468IVRcptrPrtnNetEPECrAmt",
@@ -319,6 +323,13 @@ function buildIRS1040Schedule2(
   }
 
   const form8621Interest = fields.line17p_form8621_interest;
+  const partVI = section1294DueFromCalculatedForm(context?.pending?.form8621);
+  if (
+    (fields.line17q_form8621_1294_interest ?? 0) !== partVI.interest ||
+    (fields.line17z_form8621_1294_deferred_tax ?? 0) !== partVI.tax
+  ) {
+    throw new Error("Schedule 2 Part VI amounts differ from Form 8621 sources");
+  }
   const investmentRecapture = fields.line17a_investment_credit_recapture;
   if (typeof investmentRecapture === "number" && investmentRecapture > 0) {
     throw new Error(
@@ -382,14 +393,33 @@ function buildIRS1040Schedule2(
       ),
     );
   }
+  if (partVI.interest > 0) {
+    const formIds = context?.documentIdsByPendingKey?.form8621 ?? [];
+    if (context?.documentIdsByPendingKey && formIds.length === 0) {
+      throw new Error("Schedule 2 line 17q needs an attached Form 8621");
+    }
+    childrenByTag.set(
+      "AccruedInterestDueThisRetAmt",
+      element(
+        "AccruedInterestDueThisRetAmt",
+        partVI.interest,
+        formIds.length > 0
+          ? {
+            referenceDocumentId: formIds.join(" "),
+            referenceDocumentName: "IRS8621",
+          }
+          : undefined,
+      ),
+    );
+  }
 
   const adjustment = context?.pending?.form8978_reporting_year;
   const reduction = adjustment && typeof adjustment === "object"
     ? (adjustment as Record<string, unknown>).schedule2_line17z_reduction
     : undefined;
-  const line17z = (fields.line17z_other_additional_taxes ?? 0) -
+  const line17z = (fields.line17z_other_additional_taxes ?? 0) + partVI.tax -
     (typeof reduction === "number" ? reduction : 0);
-  if (line17z !== 0) {
+  if (line17z !== 0 || partVI.tax > 0) {
     const statementId = context?.documentIdsByPendingKey
       ?.any_other_taxes_statement?.[0];
     if (context?.documentIdsByPendingKey && !statementId) {
@@ -421,7 +451,8 @@ function buildIRS1040Schedule2(
     amount("golden_parachute_excise") +
     amount("line17k_golden_parachute_excise") +
     amount("line17p_form8621_interest") + line17z;
-  if (line18 < 0) {
+  const line18WithPartVI = line18 + partVI.interest;
+  if (line18WithPartVI < 0) {
     // IRS1040Schedule2.xsd declares line 18 as USAmountNNType even though
     // the Form 8978 worksheet can place a negative amount on line 17z.
     // Omitting a negative line 18 would also break business rule S2-F1040-004.
@@ -429,10 +460,10 @@ function buildIRS1040Schedule2(
       "Schedule 2 negative Form 8978 adjustment makes line 18 negative; the TY2025 MeF schema cannot represent that result",
     );
   }
-  if (line18 > 0) {
+  if (line18WithPartVI > 0) {
     childrenByTag.set(
       "TotalOtherAdditionalTaxesAmt",
-      element("TotalOtherAdditionalTaxesAmt", line18),
+      element("TotalOtherAdditionalTaxesAmt", line18WithPartVI),
     );
   }
   const calculatedPart2 = amount("line4_se_tax") + line7 +
@@ -440,7 +471,7 @@ function buildIRS1040Schedule2(
     amount("line11_additional_medicare") + amount("line12_niit") +
     amount("line15_section453a_interest") +
     amount("uncollected_fica") + amount("uncollected_fica_gtl") +
-    amount("line16_lihtc_recapture") + line18 +
+    amount("line16_lihtc_recapture") + line18WithPartVI +
     amount("line19_form4255_net_epe");
   const adjustedPart2 = adjustment && typeof adjustment === "object"
     ? (adjustment as Record<string, unknown>).schedule2_line21

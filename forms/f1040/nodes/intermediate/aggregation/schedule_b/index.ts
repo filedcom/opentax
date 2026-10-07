@@ -15,6 +15,7 @@ import { form8960 } from "../../forms/form8960/index.ts";
 import { normalizeArray } from "../../../utils.ts";
 import { scheduleBFilingRequired } from "../../../../schedule_b_filing.ts";
 import { sellerFinancedBuyerSchema } from "../../../../seller_financed_buyer.ts";
+import { ty2025IrsCountryCodeSchema } from "../../../irs_country_code.ts";
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -42,7 +43,7 @@ const dividendDetailSchema = z.object({
 });
 
 export const foreignCountrySchema = z.object({
-  irs_code: z.string().regex(/^[A-Z]{2}$/),
+  irs_code: ty2025IrsCountryCodeSchema,
   name: z.string().min(1).max(90),
 });
 

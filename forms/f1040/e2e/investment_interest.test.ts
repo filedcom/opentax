@@ -31,6 +31,19 @@ const amtRefigure = {
   net_capital_gain_adjustment: 0,
   investment_expenses_adjustment: 0,
 };
+const mortgage1098 = {
+  lender_name: "Example Home Lender",
+  recipient_tin: "123456789",
+  source_document_reference: "2025 lender copy",
+  box1_mortgage_interest: 20_000,
+  box1_current_year_deductible_interest: 20_000,
+  box1_deduction_workpaper_reference: "2025 Pub. 936 workpaper",
+  issuer_copy: {
+    file_name: "Test1098.pdf",
+    pdf_sha256: "0".repeat(64),
+    bytes: new Uint8Array(),
+  },
+};
 
 function run(inputs: Record<string, unknown>) {
   return execute(plan, registry, {
@@ -70,6 +83,7 @@ Deno.test("Form 4952 limits the reported Schedule A deduction and carries excess
       investment_interest_expense: 50_000,
       amt_refigure: amtRefigure,
     },
+    f1098: [mortgage1098],
     schedule_a: {
       line_8a_mortgage_interest_1098: 20_000,
     },
@@ -124,6 +138,7 @@ Deno.test("Form 8960 receives allowed interest and taxpayer-allocated state tax"
       investment_interest_expense: 5_000,
       amt_refigure: amtRefigure,
     },
+    f1098: [mortgage1098],
     schedule_a: {
       line_8a_mortgage_interest_1098: 20_000,
       niit_allocable_state_local_tax: 3_000,
@@ -227,6 +242,7 @@ Deno.test("Form 4952 uses prior carryforward and an explicit qualified-dividend 
       investment_income_election: 5_000,
       amt_refigure: amtRefigure,
     },
+    f1098: [mortgage1098],
     schedule_a: {
       line_8a_mortgage_interest_1098: 20_000,
     },
@@ -251,6 +267,7 @@ Deno.test("Form 4952 subtracts investment expenses before limiting interest", ()
       investment_expenses: 1_500,
       amt_refigure: amtRefigure,
     },
+    f1098: [mortgage1098],
     schedule_a: {
       line_8a_mortgage_interest_1098: 20_000,
     },
@@ -288,6 +305,7 @@ Deno.test("Form 4952 pools interest and nonqualified dividends without counting 
       investment_interest_expense: 5_000,
       amt_refigure: amtRefigure,
     },
+    f1098: [mortgage1098],
     schedule_a: {
       line_8a_mortgage_interest_1098: 20_000,
     },

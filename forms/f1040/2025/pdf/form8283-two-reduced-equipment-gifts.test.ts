@@ -196,7 +196,6 @@ Deno.test("two separately signed reduced Section B equipment gifts reach Schedul
     ...base.inputs,
     schedule_a: {
       line_5a_state_income_tax: 24_000,
-      line_8a_mortgage_interest_1098: 12_000,
       current_noncash_gift_inventory_complete_confirmed: true,
       other_prior_charitable_carryovers_absent_confirmed: true,
       capital_gain_property_carryovers: [],
@@ -205,7 +204,7 @@ Deno.test("two separately signed reduced Section B equipment gifts reach Schedul
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule_a.line_12_noncash_contributions, 25_000);
-  assertEquals(result.pending.f1040.line12e_itemized_deductions, 61_000);
+  assertEquals(result.pending.f1040.line12e_itemized_deductions, 49_000);
   const pending = buildPending(result.pending);
   const bundle = await buildMefBundle(pending, {
     filer: base.filer,
@@ -249,7 +248,6 @@ Deno.test("two separately signed reduced Section B equipment gifts reach Schedul
     ...base.inputs,
     schedule_a: {
       line_5a_state_income_tax: 24_000,
-      line_8a_mortgage_interest_1098: 12_000,
       current_noncash_gift_inventory_complete_confirmed: true,
       other_prior_charitable_carryovers_absent_confirmed: true,
       capital_gain_property_carryovers: [],
@@ -263,7 +261,7 @@ Deno.test("two separately signed reduced Section B equipment gifts reach Schedul
   );
   assertEquals(
     distinctResult.pending.f1040.line12e_itemized_deductions,
-    61_000,
+    49_000,
   );
   const distinctPending = buildPending(distinctResult.pending);
   const distinctBundle = await buildMefBundle(distinctPending, {
@@ -310,7 +308,7 @@ Deno.test("two separately signed reduced Section B equipment gifts reach Schedul
         ...distinctPending,
         f1040: {
           ...distinctPending.f1040,
-          line12e_itemized_deductions: 60_999,
+          line12e_itemized_deductions: 48_999,
         },
       }, { filer: base.filer, attachments }),
     Error,
@@ -323,7 +321,7 @@ Deno.test("two separately signed reduced Section B equipment gifts reach Schedul
         schedule_a: distinctPending.schedule_a!,
         f1040: {
           ...distinctPending.f1040!,
-          line12e_itemized_deductions: 60_999,
+          line12e_itemized_deductions: 48_999,
         },
       }),
     Error,
@@ -364,7 +362,7 @@ Deno.test("two separately signed reduced Section B equipment gifts reach Schedul
     () =>
       buildMefBundle({
         ...pending,
-        f1040: { ...pending.f1040, line12e_itemized_deductions: 60_999 },
+        f1040: { ...pending.f1040, line12e_itemized_deductions: 48_999 },
       }, { filer: base.filer, attachments }),
     Error,
     "itemized total",

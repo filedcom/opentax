@@ -1,5 +1,12 @@
 import { assertRejects } from "@std/assert";
-import { PDFDocument } from "pdf-lib";
+import {
+  type PDFDict,
+  PDFDocument,
+  PDFName,
+  PDFNumber,
+  type PDFRawStream,
+} from "pdf-lib";
+import { w2gPayerCopyFixture } from "../w2g_payer_copy.fixture.ts";
 import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
 import { w2gPdf } from "../pdf/forms/w2g.ts";
 import { assertW2GPayerCopyContents } from "./w2g-payer-copy.ts";
@@ -46,22 +53,14 @@ const pending = {
   f1040: { line25c_total: 2_400 },
 } as MefFormsPending;
 
-async function copy(changed: Record<string, string> = {}): Promise<Uint8Array> {
+function copy(changed: Record<string, string> = {}): Promise<Uint8Array> {
   const projected = w2gPdf.instances?.(
     { w2gs: [item] },
     filer,
     { f1040: { line25c_total: 2_400 } },
   )?.[0];
   if (!projected) throw new Error("Missing W-2G recipient projection");
-  const pdf = await PDFDocument.create();
-  pdf.addPage([612, 792]);
-  const form = pdf.getForm();
-  for (const field of w2gPdf.fields) {
-    if (field.kind !== "text" || field.domainKey === "payer_phone") continue;
-    const value = changed[field.domainKey] ?? projected[field.domainKey];
-    form.createTextField(field.pdfField).setText(String(value ?? ""));
-  }
-  return pdf.save();
+  return w2gPayerCopyFixture({ ...projected, ...changed });
 }
 
 Deno.test("W-2G bundle matches readable payer-copy contents to source", async () => {
@@ -81,4 +80,106 @@ Deno.test("W-2G bundle matches readable payer-copy contents to source", async ()
     Error,
     "box4_federal_withheld differs",
   );
+});
+
+Deno.test("W-2G rejects field metadata without printable recipient widgets", async () => {
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  const projected = w2gPdf.instances!({ w2gs: [item] }, filer, {
+    f1040: { line25c_total: 2400 },
+  })![0];
+  for (const field of w2gPdf.fields) {
+    if (field.kind === "text" && field.domainKey !== "payer_phone") {
+      pdf.getForm().createTextField(field.pdfField).setText(
+        String(projected[field.domainKey] ?? ""),
+      );
+    }
+  }
+  const metadata = await pdf.save();
+  await assertRejects(
+    () =>
+      assertW2GPayerCopyContents(pending, filer, [{
+        fileName: "IssuedW2G.pdf",
+        description: "Metadata-only negative source",
+        bytes: metadata,
+      }]),
+    Error,
+    "printable field widgets",
+  );
+});
+
+Deno.test("W-2G rejects hidden, offpage, stale, missing and forged-font normal appearances", async () => {
+  const name =
+    w2gPdf.fields.find((f) => f.domainKey === "box4_federal_withheld")!
+      .pdfField;
+  for (
+    const change of [
+      (pdf: PDFDocument) =>
+        pdf.getForm().getTextField(name).acroField.getWidgets()[0].setFlags(6),
+      (pdf: PDFDocument) =>
+        pdf.getForm().getTextField(name).acroField.getWidgets()[0].setRectangle(
+          { x: 900, y: 900, width: 50, height: 20 },
+        ),
+      (pdf: PDFDocument) => pdf.getForm().getTextField(name).setText("2399"),
+      (pdf: PDFDocument) =>
+        pdf.getForm().getTextField(name).acroField.getWidgets()[0].dict.delete(
+          PDFName.of("AP"),
+        ),
+      (pdf: PDFDocument) =>
+        pdf.getForm().getTextField(name).acroField.getWidgets()[0]
+          .setDefaultAppearance("/Helvetica 8 Tf 1 g"),
+      (pdf: PDFDocument) => pdf.getPage(0).setCropBox(0, 0, 1, 1),
+      (pdf: PDFDocument) =>
+        (pdf.catalog.lookup(PDFName.of("AcroForm")) as PDFDict).set(
+          PDFName.of("XFA"),
+          pdf.context.register(pdf.context.stream("conflicting XFA source")),
+        ),
+      (pdf: PDFDocument) =>
+        (pdf.catalog.lookup(PDFName.of("AcroForm")) as PDFDict).set(
+          PDFName.of("NeedAppearances"),
+          pdf.context.obj(true),
+        ),
+
+      (pdf: PDFDocument) => {
+        const widget =
+          pdf.getForm().getTextField(name).acroField.getWidgets()[0];
+        const stream = widget.AP()!.lookup(PDFName.of("N")) as PDFRawStream;
+        const resources = stream.dict.lookup(
+          PDFName.of("Resources"),
+        ) as PDFDict;
+        const fonts = resources.lookup(PDFName.of("Font")) as PDFDict;
+        const font = fonts.lookup(PDFName.of("Helvetica")) as PDFDict;
+        font.set(PDFName.of("BaseFont"), PDFName.of("Courier"));
+      },
+      (pdf: PDFDocument) => {
+        const widget =
+          pdf.getForm().getTextField(name).acroField.getWidgets()[0];
+        const stream = widget.AP()!.lookup(PDFName.of("N")) as PDFRawStream;
+        stream.dict.set(
+          PDFName.of("Group"),
+          pdf.context.obj({ S: "Transparency" }),
+        );
+      },
+
+      (pdf: PDFDocument) =>
+        pdf.getForm().getTextField(name).acroField.getWidgets()[0].dict.set(
+          PDFName.of("F"),
+          PDFNumber.of(0),
+        ),
+    ]
+  ) {
+    const pdf = await PDFDocument.load(await copy());
+    change(pdf);
+    const bytes = await pdf.save({ updateFieldAppearances: false });
+    await assertRejects(
+      () =>
+        assertW2GPayerCopyContents(pending, filer, [{
+          fileName: "IssuedW2G.pdf",
+          description: "Appearance-conflict negative source",
+          bytes,
+        }]),
+      Error,
+      "appearance",
+    );
+  }
 });

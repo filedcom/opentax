@@ -118,8 +118,11 @@ taxpayer and spouse Form 8606 claims remain closed.
    spouse owns the opening statement, Form 5498, contribution receipt, issued
    Form 1099-R, and sole Form 5329 early-distribution entry. The native and PDF
    Form 8606 print the spouse's name and SSN; the return's IRA totals remain
-   joint. Taxpayer and spouse positives and source/owner/tax tamper fixtures are
-   authored but unrun. The generic Part III calculation remains unsupported for
+   joint. The issued Form 1099-R recipient SSN is now required to match the
+   reviewed Roth owner's SSN for both taxpayer and spouse routes; the native
+   and PDF replay rejects changed or missing recipients. The focused taxpayer
+   and spouse tests passed on 2026-10-05, including a source mismatch and
+   export tamper cases. The generic Part III calculation remains unsupported for
    export because it does not model qualifying distributions,
    first-time-homebuyer expense, prior contribution or conversion basis, and
    taxable earnings ordering.
@@ -140,3 +143,74 @@ agreed full batch, TY2025 XSD check, PDF inspection, and IRS business-rule/ATS
 gates. The current Form 5498 and prior-return facts are reviewed fields, not
 authenticated source bytes; copy authentication and additional
 custodians/contributions remain open.
+
+
+## October6 retained Roth activity evidence
+
+The current Form4852 extension proves nine regular-contribution J/T public
+returns, with actual retained owner/account/Form5498/receipt/payment bytes and
+source-derived basis/five-year/age treatment. Its checked18-module gate is
+206/0; all nine full2025v5.4XSD packets/52 pages have exact held replay and
+visual review. See `ty2025-form4852-filing-gap.md` for authoritative commands,
+digests and expected source/filed amounts; earlier authored/unrun descriptions
+above are historical and do not describe this new proof. The source record
+admits neither scalar opening basis nor unreviewed historical conversions or
+consumed-basis claims. One actual current owner payment is proven; simultaneous
+owner/current-payment aggregation and conversion/prior-history source gates
+remain open, as do external authentication and IRS acceptance.
+
+
+## October6 complete current inventory and historical conversion extension
+
+The retained Form4852 source proof now includes owner-wide multiple current
+payments/accounts and separate taxpayer/spouse8606 copies (6 packets57 pages),
+and historical conversion FIFO/recapture with actual retained prior-filed
+PartII PDF joins (8 packets79 current pages plus34 historical pages). See
+`ty2025-form4852-filing-gap.md` for authoritative source amounts, terminal
+commands, digests, prior179-page preservation and remaining consumed-history
+contracts. Earlier one-payment-only descriptions are historical. Prior source
+authentication and broader existing8606 parent remain open.
+
+
+## October6 retained historical consumption source proof
+
+The existing consumed-basis gap now has actual annual filed8606 PartIII and
+applicable5329 PDF records joined to complete owner/account prior custodian
+payments and issued1099R records. Owner-wide remaining regular basis and
+conversion FIFO pools derive from filed prior worksheets and later actual
+5498/receipt sources; opening-basis scalars are not accepted. Same annual
+conversion/distribution requires one actual filed8606 PDF with PartsII/III
+independently parsed. Earlier2020–2024 layouts are verified, including5329
+field-name revisions and2024 page count.
+
+Twelve public whole returns pass checked2/0, related25-module264/0 and exact
+held12/107 full2025v5.4XSD/source/XML/PDF replay. All107 current plus91 retained
+historical pages were visually reviewed; old33/258 artifacts are unchanged
+and replay exactly. Rehashed prior basis/recapture mutations update both actual
+bindings and assert parsed-facts rejection. See
+`ty2025-form4852-filing-gap.md` for authoritative logs, commands, digests,
+independent filed amounts and the separately repaired inherited line18 negative.
+Historical copies do not become current native/calculation copies.
+
+Current2025 conversions, prior revisions before2020, qualified historical
+distributions and other unsupported source histories remain guarded; external
+authentication and IRS acceptance remain open. This checkpoint supersedes
+earlier descriptions that prior consumed basis was wholly unimplemented, and
+does not close the broader existing parent.
+
+
+Current-main7a75f732f verified source2/0+related264/0 and held12/107 exact with696artifactfiles preserved, prior33/258 unchanged/exact. Exact logs and limitations are archived in the October6 status/validation record.
+
+## Ordinary Roth classification prerequisite
+
+Ordinary J/T source and prior issued records now require the correct unmarked
+IRA/SEP/SIMPLE classification, supported by actual retained non-SEP/SIMPLE
+account records. Code J/T/Q income classification remains IRA line4 independent
+of that mark. Wrong marked ordinary current/historical copies reject at source
+and final native/PDF boundaries. Earlier checked ordinary source claims are
+qualified; originals remain unchanged. Corrected35/295 full-source/XSD/held
+packets pass11/0 and related274/0; all295 current plus271 retained pages have
+proven visual transfer. See `ty2025-form4852-filing-gap.md` for exact commands,
+logs/digests, original997-byte preservation and the separate applicable
+traditional/SEP/SIMPLE Form4852 margin-label limitation. Current conversions,
+external authenticity/acceptance and broader existing parent remain open.

@@ -1,3 +1,7 @@
+import {
+  isSourceMoney,
+  sameSourceMoney,
+} from "../nodes/intermediate/forms/form4972/source-rounding.ts";
 import { inputSchema as f1099rSchema } from "../nodes/inputs/f1099r/index.ts";
 import {
   form4972,
@@ -9,7 +13,9 @@ import {
 // allocations are supported for a full-share beneficiary, including a
 // Part III annuity. A sourced partial-share Part-II-only estate allocation
 // and Part-III-only estate allocations are also supported. A separate
-// partial-share beneficiary route combines NUA with a sourced death benefit.
+// partial-share beneficiary route combines NUA with sourced death benefit
+// and estate tax when both Parts II and III are elected, optionally with a
+// sourced annuity amount and its separate box 8 percentage.
 export function reconcileForm4972Nua(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
@@ -22,8 +28,8 @@ export function reconcileForm4972Nua(
       fields.line8_nua_included > 0)
   ) return;
 
-  // The full-share multi-copy path independently sums all three NUA worksheet
-  // boxes and replays the calculation after matching each plan source.
+  // The multi-copy path independently sums all three NUA worksheet boxes and
+  // replays the calculation after matching each plan source and recipient share.
   if (fields.multiple_1099r !== undefined) return;
 
   const source = f1099rSchema.safeParse(pending?.f1099r);
@@ -48,6 +54,27 @@ export function reconcileForm4972Nua(
   const partialEstate = sharePct < 100 &&
     typeof fields.federal_estate_tax === "number" &&
     fields.federal_estate_tax > 0;
+  const partialNuaEstateCombination = partialEstate &&
+    fields.elect_10yr_averaging === true && fields.elect_include_nua === true &&
+    typeof fields.box6_nua === "number" && fields.box6_nua > 0 &&
+    fields.partial_estate_tax_source !== undefined &&
+    (fields.elect_capital_gain !== true ||
+      (typeof fields.capital_gain_amount === "number" &&
+        fields.capital_gain_amount > 0)) &&
+    ((item?.box8_other ?? 0) === 0 || typeof item?.box8_pct_total === "number");
+  const partialNuaDeathEstatePartIII = partialDeath && partialEstate &&
+    fields.elect_capital_gain === true &&
+    fields.elect_10yr_averaging === true &&
+    typeof fields.capital_gain_amount === "number" &&
+    fields.capital_gain_amount > 0 &&
+    (item?.box8_other ?? 0) === 0;
+  const partialNuaDeathAnnuityEstatePartIII = partialDeath && partialEstate &&
+    fields.elect_capital_gain === true &&
+    fields.elect_10yr_averaging === true &&
+    typeof fields.capital_gain_amount === "number" &&
+    fields.capital_gain_amount > 0 &&
+    (item?.box8_other ?? 0) > 0 &&
+    typeof item?.box8_pct_total === "number";
   const partialNuaAnnuityEstatePartIII = partialEstate && !partialDeath &&
     (item?.box8_other ?? 0) > 0 &&
     fields.elect_10yr_averaging === true &&
@@ -70,16 +97,23 @@ export function reconcileForm4972Nua(
     (hasAllocation &&
       (fields.beneficiary_distribution !== true ||
         (sharePct !== 100 &&
-          ((partialDeath && partialEstate) ||
+          (((partialDeath && partialEstate) &&
+            !partialNuaDeathEstatePartIII &&
+            !partialNuaDeathAnnuityEstatePartIII &&
+            !partialNuaEstateCombination) ||
             (!partialDeath && !partialEstate) ||
             ((item.box8_other ?? 0) > 0 &&
-              !partialNuaAnnuityEstatePartIII) ||
+              !partialNuaAnnuityEstatePartIII &&
+              !partialNuaDeathAnnuityEstatePartIII &&
+              !partialNuaEstateCombination) ||
             (partialEstate && fields.elect_capital_gain === true &&
               fields.elect_10yr_averaging === true &&
               (typeof fields.capital_gain_amount !== "number" ||
                 fields.capital_gain_amount <= 0)) ||
-            item.box1_gross_distribution !==
-              (item.box2a_taxable_amount ?? 0) + (item.box6_nua ?? 0))) ||
+            !sameSourceMoney(
+              item.box1_gross_distribution,
+              (item.box2a_taxable_amount ?? 0) + (item.box6_nua ?? 0),
+            ))) ||
         ((item.box8_other ?? 0) > 0 &&
           fields.elect_10yr_averaging !== true))) ||
     (item.box8_other ?? 0) !== (fields.annuity_actuarial_value ?? 0) ||
@@ -87,7 +121,7 @@ export function reconcileForm4972Nua(
       fields.elect_10yr_averaging !== true)
   ) {
     throw new Error(
-      "Form 4972 NUA requires a sourced Part II or III; partial-share beneficiary allocation needs a single death-benefit or estate adjustment without an annuity",
+      "Form 4972 NUA requires a sourced Part II or III; partial-share death-benefit, estate, and annuity adjustments require source allocations and a sourced box 8 percentage",
     );
   }
   if (
@@ -113,6 +147,42 @@ export function reconcileForm4972Nua(
       "Form 4972 NUA source amounts differ from Form 1099-R boxes 2a, 3, or 6",
     );
   }
+  if (sharePct < 100) {
+    const computed = form4972.compute(
+      { taxYear: 2025, formType: "f1040" },
+      form4972Schema.parse(fields),
+    ).outputs;
+    const expected = computed.find((output) => output.nodeType === "form4972")
+      ?.fields;
+    const tax = computed.find((output) =>
+      output.nodeType === "income_tax_calculation"
+    )?.fields.form4972_tax;
+    const ret = pending?.f1040 as Record<string, unknown> | undefined;
+    if (
+      fields.elect_10yr_averaging !== true &&
+      (typeof ret?.line5b_pension_taxable !== "number" ||
+        ret.line5b_pension_taxable < Number(
+            computed.find((output) => output.nodeType === "f1040")?.fields
+              .line5b_form4972_ordinary,
+          ))
+    ) {
+      throw new Error(
+        "Form 4972 Part-II-only NUA needs its recipient ordinary income and special tax on Form 1040 without Part III",
+      );
+    }
+    if (
+      !expected || Array.from({ length: 25 }, (_, i) => `line${i + 6}`)
+        .some((key) => expected[key] !== fields[key]) ||
+      expected.line6_nua_capital_gain !== fields.line6_nua_capital_gain ||
+      expected.line8_nua_included !== fields.line8_nua_included ||
+      ret?.form4972_tax !== tax
+    ) {
+      throw new Error(
+        "Form 4972 NUA worksheet does not reconcile with lines 6 through 8; NUA and annuity lines differ from Form 1099-R and Form 1040 tax",
+      );
+    }
+    return;
+  }
   const roundedTaxable = Math.round(taxable);
   const roundedGain = Math.round(gain);
   const roundedNua = Math.round(nua);
@@ -130,14 +200,15 @@ export function reconcileForm4972Nua(
   const averaging = fields.elect_10yr_averaging === true;
   if (hasAllocation) {
     const annuitySource = item.box8_other ?? 0;
+    // This route retains raw box 8 cents; the calculator rounds its grossed-up
+    // line 11 before the official annuity worksheet. Cash allocations stay exact.
     if (
-      annuitySource > 0 &&
-      (!Number.isInteger(taxable) || !Number.isInteger(gain) ||
-        !Number.isInteger(nua) || !Number.isInteger(annuitySource) ||
-        (capitalElection && roundedNua * roundedGain % roundedTaxable !== 0))
+      [taxable, gain, nua, annuitySource].some((amount) =>
+        !isSourceMoney(amount)
+      )
     ) {
       throw new Error(
-        "Form 4972 NUA and annuity allocation needs whole-dollar sources and exact NUA capital allocation",
+        "Form 4972 NUA and annuity allocation needs exact source cents",
       );
     }
     const computed = form4972.compute(
@@ -209,13 +280,11 @@ export function reconcileForm4972Nua(
   if (annuitySource > 0) {
     const annuitySharePct = item.box8_pct_total ?? 100;
     if (
-      !Number.isInteger(taxable) || !Number.isInteger(gain) ||
-      !Number.isInteger(nua) || !Number.isInteger(annuitySource) ||
-      (capitalElection && roundedNua * roundedGain % roundedTaxable !== 0)
+      [taxable, gain, nua, annuitySource].some((amount) =>
+        !isSourceMoney(amount)
+      )
     ) {
-      throw new Error(
-        "Form 4972 NUA and annuity bounded route needs whole-dollar sources and exact NUA capital allocation",
-      );
+      throw new Error("Form 4972 NUA and annuity needs exact source cents");
     }
     const computed = form4972.compute(
       { taxYear: 2025, formType: "f1040" },

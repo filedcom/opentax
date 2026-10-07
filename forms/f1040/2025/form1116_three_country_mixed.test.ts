@@ -1,8 +1,18 @@
 import { assert, assertEquals, assertThrows } from "@std/assert";
+import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../nodes/types.ts";
 import { f1040_2025 } from "./index.ts";
 import { form1116 } from "./mef/forms/f1116.ts";
 import { form1116Pdf } from "./pdf/forms/f1116.ts";
+import { buildMefBundle } from "./mef/builder.ts";
+import { buildPending } from "./mef/pending.ts";
+import { buildPdfBytes, type PdfPageOrigin } from "./pdf/builder.ts";
+import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
+
+const XSD_PATH = new URL(
+  "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+  import.meta.url,
+).pathname;
 
 const canadaRef = "2025 Canadian bank interest copy";
 const franceRef = "2025 French corporation dividend copy";
@@ -24,7 +34,7 @@ const germany = {
   box6: 1_000,
   box7: "Germany",
   foreign_source_interest_usd: 10_000,
-  foreign_tax_irs_country_code: "DE",
+  foreign_tax_irs_country_code: "GM",
   foreign_tax_source_document_reference: germanyRef,
 };
 const france = {
@@ -55,7 +65,7 @@ const review = {
   column_b_dividend_source_document_reference: franceRef,
   column_b_dividend_irs_country_code: "FR",
   column_c_interest_source_document_reference: germanyRef,
-  column_c_interest_irs_country_code: "DE",
+  column_c_interest_irs_country_code: "GM",
   all_foreign_tax_items_identified_confirmed: true,
   all_worldwide_income_sources_identified_confirmed: true,
   all_part_i_deductions_and_losses_except_standard_zero_confirmed: true,
@@ -73,6 +83,7 @@ function filedReturn() {
   const result = f1040_2025.executeReturn({
     general: {
       filing_status: FilingStatus.Single,
+      digital_assets: false,
       taxpayer_first_name: "Alex",
       taxpayer_last_name: "Example",
       taxpayer_ssn: "111-22-3333",
@@ -113,6 +124,58 @@ function filedReturn() {
   return result;
 }
 
+Deno.test("three-country mixed credit retains its parent and Schedule B pages in an XSD-valid packet", async () => {
+  const result = filedReturn();
+  const filer =
+    pdfReviewFixtures.find((fixture) => fixture.id === "single-w2-refund")!
+      .filer;
+  const pending = buildPending(result.pending);
+  const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+  for (const code of ["CA", "FR", "GM"]) {
+    assert(bundle.xml.includes(`<ForeignCountryCd>${code}</ForeignCountryCd>`));
+  }
+  const origins: PdfPageOrigin[] = [];
+  const bytes = await buildPdfBytes(
+    pending,
+    filer,
+    ".pdf-cache",
+    bundle,
+    origins,
+  );
+  const document = await PDFDocument.load(bytes);
+  assertEquals(document.getPageCount(), origins.length);
+  assertEquals(
+    origins.filter((page) => page.formKey === "form_1116").length,
+    2,
+  );
+  assertEquals(
+    origins.filter((page) => page.formKey === "form1116_schedule_b").length,
+    2,
+  );
+  try {
+    await Deno.stat(XSD_PATH);
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) return;
+    throw error;
+  }
+  const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(xmlPath, bundle.xml);
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", XSD_PATH, xmlPath],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(xmlPath);
+  }
+});
+
 Deno.test("three-country interest and ordinary dividends reconcile native Form 1116 and PDF A/B/C", () => {
   const result = filedReturn();
   const parent = result.pending.form_1116;
@@ -126,9 +189,9 @@ Deno.test("three-country interest and ordinary dividends reconcile native Form 1
   assertEquals(result.pending.f1040.line2b_taxable_interest, 30_000);
   assertEquals(result.pending.f1040.line3b_ordinary_dividends, 30_000);
   const pdf = form1116Pdf.projectFields!(parent, result.pending);
-  assertEquals(pdf.pdf_country_a, "CA");
-  assertEquals(pdf.pdf_country_b, "FR");
-  assertEquals(pdf.pdf_country_c, "DE");
+  assertEquals(pdf.pdf_country_a, "Canada");
+  assertEquals(pdf.pdf_country_b, "France");
+  assertEquals(pdf.pdf_country_c, "Germany");
   assertEquals(pdf.pdf_line3g_a, 5_250);
   assertEquals(pdf.pdf_line3g_b, 7_875);
   assertEquals(pdf.pdf_line3g_c, 2_625);
@@ -142,7 +205,7 @@ Deno.test("three-country interest and ordinary dividends reconcile native Form 1
   const [xml] = form1116.build(parent as Parameters<typeof form1116.build>[0], {
     pending: result.pending,
   });
-  for (const country of ["CA", "FR", "DE"]) {
+  for (const country of ["CA", "FR", "GM"]) {
     assert(xml.includes(`<ForeignCountryCd>${country}</ForeignCountryCd>`));
   }
   assert(

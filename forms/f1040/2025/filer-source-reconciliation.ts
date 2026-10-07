@@ -1,3 +1,4 @@
+import { assertPatrScheduleCIncome } from "../nodes/inputs/f1099patr/schedule-c-source.ts";
 import {
   AccountType,
   type FilerIdentity,
@@ -506,6 +507,42 @@ export function assertScheduleCReceiptSourceIdentity(
   pending: Record<string, unknown>,
   filer: FilerIdentity,
 ): void {
+  const patr = pending.f1099patr === undefined
+    ? []
+    : form1099patrSchema.parse(pending.f1099patr).f1099patrs.filter((row) =>
+      row.distribution_treatment?.kind === "schedule_c"
+    );
+  const patrScheduleC = pending.schedule_c === undefined
+    ? undefined
+    : scheduleCInputSchema.parse(pending.schedule_c);
+  if (
+    patr.length > 0 || patrScheduleC?.patron_distribution_sources !== undefined
+  ) {
+    if (
+      !patrScheduleC ||
+      JSON.stringify(patrScheduleC.patron_distribution_sources) !==
+        JSON.stringify(patr)
+    ) {
+      throw new Error(
+        "Schedule C PATR distribution source differs from the issued copies",
+      );
+    }
+    assertPatrScheduleCIncome(patr, patrScheduleC.schedule_cs);
+    for (const row of patr) {
+      const treatment = row.distribution_treatment;
+      if (treatment?.kind !== "schedule_c") continue;
+      const owner = patrScheduleC.schedule_cs.find((business) =>
+        business.business_reference === treatment.business_reference
+      )?.proprietor_recipient;
+      const ssn = owner === "T" ? filer.primarySSN : filer.spouse?.ssn;
+      if (row.recipient_tin !== ssn?.replace(/\D/g, "")) {
+        throw new Error(
+          "Schedule C PATR recipient differs from its proprietor",
+        );
+      }
+    }
+  }
+
   const miscRows = pending.f1099m === undefined
     ? []
     : form1099mSchema.parse(pending.f1099m).f1099ms;
@@ -1328,6 +1365,7 @@ export function assertScheduleFFarmSourceIdentity(
         payer_name: item.payer_name,
         payer_tin: tin(item.payer_tin, "1099-NEC payer"),
         recipient_tin: tin(item.recipient_ssn, "1099-NEC recipient"),
+        ...(item.source_document_reference ? {source_document_reference:item.source_document_reference} : {}),
       }]
       : []
   );

@@ -1,3 +1,7 @@
+import { sourceDistributionFraction } from "../../../nodes/intermediate/forms/form4972/source-rounding.ts";
+
+import { reconcileIraRecharacterizations } from "../../form8606_recharacterization_source.ts";
+import { form4852NativeSources } from "../../form4852_native_source.ts";
 import type { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
 import {
@@ -139,7 +143,8 @@ function build1099R(
     amount("OtherDistributionAmt", item.box8_other),
     item.box9a_pct_total === undefined ? "" : element(
       "RcpntTotalDistributionPct",
-      String(item.box9a_pct_total / 100),
+      // Preserve the issued decimal share, avoiding a binary expansion.
+      sourceDistributionFraction(item.box9a_pct_total),
     ),
     amount(
       "TotalEmployeeContributionsAmt",
@@ -179,12 +184,28 @@ function build1099R(
 
 export const f1099r: MefFormDescriptor<"f1099r", Fields, readonly string[]> = {
   pendingKey: "f1099r",
+  sourcePendingKeys: ["f1099r", "f4852"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1099r.pdf",
   build(fields, context) {
-    assertDistinct1099RCopies(fields.f1099rs ?? []);
-    assert1099RRecipientOwner(fields, context?.filer);
-    return (fields.f1099rs ?? []).map((item, index) =>
+    const substitutes =
+      form4852NativeSources(context?.pending, context?.filer).f1099rs;
+    const allSources = [...(fields.f1099rs ?? []), ...substitutes];
+    if (allSources.length === 0) return [];
+    if (
+      allSources.some((item) =>
+        ["N", "R"].includes(item.box7_distribution_code ?? "") ||
+        item.ira_recharacterization_review
+      )
+    ) {
+      reconcileIraRecharacterizations(
+        { ...context?.pending, f1099r: { f1099rs: allSources } },
+        context?.filer,
+      );
+    }
+    assertDistinct1099RCopies(allSources);
+    assert1099RRecipientOwner({ f1099rs: allSources }, context?.filer);
+    return allSources.map((item, index) =>
       build1099R(item, context ?? {}, index)
     );
   },

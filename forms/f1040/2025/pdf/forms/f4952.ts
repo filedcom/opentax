@@ -17,6 +17,9 @@ import {
   reconcileForm4952PriorCarryforward,
 } from "../../form4952_prior_carryforward_reconciliation.ts";
 import { FilingStatus } from "../../../mef/header.ts";
+import { reconcileForm4952ScheduleJChildDividend } from "../../form4952_schedulej_child_reconciliation.ts";
+import { reconcileForm4952PabAmt } from "../../form4952_pab_amt_reconciliation.ts";
+import { rgb, StandardFonts } from "pdf-lib";
 
 // TY2025 AcroForm order: f1_01/f1_02 are taxpayer name and identifying
 // number; the numbered form lines start at f1_03.
@@ -38,8 +41,18 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   { kind: "text", domainKey: "line4g", pdfField: `${page}f1_12[0]` },
   { kind: "text", domainKey: "line4h", pdfField: `${page}f1_13[0]` },
   { kind: "text", domainKey: "line5", pdfField: `${page}f1_14[0]` },
-  { kind: "text", domainKey: "line6", pdfField: `${page}f1_15[0]` },
-  { kind: "text", domainKey: "line7", pdfField: `${page}f1_16[0]` },
+  {
+    kind: "text",
+    domainKey: "line6",
+    pdfField: `${page}f1_15[0]`,
+    printZero: true,
+  },
+  {
+    kind: "text",
+    domainKey: "line7",
+    pdfField: `${page}f1_16[0]`,
+    printZero: true,
+  },
   { kind: "text", domainKey: "line8", pdfField: `${page}f1_17[0]` },
 ];
 
@@ -53,6 +66,33 @@ export const form4952Pdf: PdfFormDescriptor = {
     { kind: "text", domainKey: "primarySSN", pdfField: `${page}f1_02[0]` },
   ],
   fields,
+  async decoratePages(document, pages, fields) {
+    const page = pages[0];
+    const electedCapital = fields.elected_capital_gain_portion;
+    const election = fields.line4g;
+    const line4e = fields.line4e;
+    if (
+      !page || typeof electedCapital !== "number" ||
+      typeof election !== "number" || typeof line4e !== "number" ||
+      election <= 0 || electedCapital >= Math.min(election, line4e)
+    ) return;
+    // 2025 Form 4952 instructions require "Elec." and the selected portion
+    // beside line 4e when the usual capital-first election is reduced.
+    const font = await document.embedFont(StandardFonts.Helvetica);
+    page.drawRectangle({
+      x: 353,
+      y: 519,
+      width: 30,
+      height: 12,
+      color: rgb(1, 1, 1),
+    });
+    page.drawText(`Elec. ${electedCapital}`, {
+      x: 355,
+      y: 522,
+      size: 8,
+      font,
+    });
+  },
   projectFields(fields, allPending) {
     if (hasForm4952K1CodeB(fields, allPending)) {
       reconcileForm4952K1CodeBRoyaltyPath(fields, allPending);
@@ -68,9 +108,10 @@ export const form4952Pdf: PdfFormDescriptor = {
       );
     }
     if (
-      fields.direct_debt_trace !== undefined ||
-      (allPending.form4952 as Record<string, unknown> | undefined)
-          ?.direct_debt_trace !== undefined
+      fields.source_private_activity_bond_interest === undefined &&
+      (fields.direct_debt_trace !== undefined ||
+        (allPending.form4952 as Record<string, unknown> | undefined)
+            ?.direct_debt_trace !== undefined)
     ) {
       reconcileForm4952DirectDebtExport(fields, allPending);
     }
@@ -88,6 +129,12 @@ export const form4952Pdf: PdfFormDescriptor = {
       fields.source_1099_interest !== undefined
     ) {
       reconcileForm4952CombinedPath(fields, allPending);
+    } else if (
+      fields.source_1099_dividends !== undefined &&
+      allPending.schedule_j !== undefined &&
+      allPending.form8814 !== undefined
+    ) {
+      reconcileForm4952ScheduleJChildDividend(fields, allPending);
     } else if (fields.source_1099_dividends !== undefined) {
       reconcileForm4952DividendPath(fields, allPending);
     } else if (
@@ -95,6 +142,8 @@ export const form4952Pdf: PdfFormDescriptor = {
       fields.source_k1_investment_interest !== undefined
     ) {
       reconcileForm4952K1InterestAgainst1099Path(fields, allPending);
+    } else if (fields.source_private_activity_bond_interest !== undefined) {
+      reconcileForm4952PabAmt(fields, allPending);
     } else if (fields.source_1099_interest !== undefined) {
       reconcileForm4952InterestPath(fields, allPending);
     } else if (
@@ -132,9 +181,10 @@ export const form4952Pdf: PdfFormDescriptor = {
       );
     }
     if (
-      fields.direct_debt_trace !== undefined ||
-      (allPending?.form4952 as Record<string, unknown> | undefined)
-          ?.direct_debt_trace !== undefined
+      fields.source_private_activity_bond_interest === undefined &&
+      (fields.direct_debt_trace !== undefined ||
+        (allPending?.form4952 as Record<string, unknown> | undefined)
+            ?.direct_debt_trace !== undefined)
     ) {
       if (!filer || !allPending) {
         throw new Error("Form 4952 PDF direct debt needs final filer identity");

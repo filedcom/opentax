@@ -339,14 +339,14 @@ Deno.test("Scenario 6: HOH, W-2 $52K — refund $1,135", () => {
 // SE earnings: $80,000 × 0.9235 = $73,880
 // SS tax: $73,880 × 0.124 = $9,161.12
 // Medicare: $73,880 × 0.029 = $2,142.52
-// SE tax: $11,303.64  |  SE deduction: $5,651.82
+// Filed SE tax: $9,161 + $2,143 = $11,304  |  half-tax deduction: $5,652
 //
-// AGI: $80,000 − $5,651.82 = $74,348.18
-// Std ded: $15,750  |  Pre-QBI taxable: $58,598.18
-// QBI deduction: 20% × $58,598.18 = $11,719.636 (Form 8995)
-// Taxable income: $58,598.18 − $11,719.636 = $46,878.544
+// AGI: $80,000 − $5,652 = $74,348
+// Std ded: $15,750  |  Pre-QBI taxable: $58,598
+// QBI deduction: 20% × $58,598 = $11,719.60 (Form 8995)
+// Taxable income: $58,598 − $11,719.60 = $46,878.40
 // Income tax: $5,387 from 2025 Tax Table row $46,850–$46,900
-// Total tax (income + SE): $5,387 + $11,303.64 = $16,690.64
+// Total tax (income + SE): $5,387 + $11,304 = $16,691
 // Amount owed on whole-dollar return: $16,691
 
 Deno.test("Scenario 7: Single, self-employed Schedule C $80K — owes ~$16,691", () => {
@@ -369,27 +369,27 @@ Deno.test("Scenario 7: Single, self-employed Schedule C $80K — owes ~$16,691",
   assertEquals(agg["line3_schedule_c"], 80_000, "schedule C income");
   assertEquals(
     r2(agg["line15_se_deduction"] as number),
-    5_651.82,
+    5_652,
     "SE deduction",
   );
 
   // Standard deduction receives correct AGI
   assertEquals(
     r2(result.pending["standard_deduction"]?.["agi"] as number),
-    74_348.18,
-    "AGI = $80K − $5,651.82 SE deduction",
+    74_348,
+    "AGI = $80K − $5,652 SE deduction",
   );
 
   // Income tax calculation receives correct taxable income (after QBI deduction)
   assertEquals(
     r2(result.pending["income_tax_calculation"]?.["taxable_income"] as number),
-    46_878.54,
+    46_878.4,
     "taxable income = AGI − $15,750 std ded − QBI deduction",
   );
 
   // F1040 scalar summary (total tax = income tax + SE tax via schedule 2)
   const f = result.pending["f1040"] ?? {};
-  assertEquals(r2(f["line24_total_tax"] as number), 16_690.64, "total tax");
+  assertEquals(r2(f["line24_total_tax"] as number), 16_691, "total tax");
   assertEquals(f["line33_total_payments"], 0, "no payments");
   // line 37 = round(line24) − round(line33): whole-dollar per filed-form arithmetic
   assertEquals(f["line37_amount_owed"], 16_691, "amount owed");
@@ -868,13 +868,13 @@ Deno.test("Scenario 14: MFJ, CTC + ACTC, 3 children, $85K — refund $8,654", ()
 // line 31 minus Schedule SE line 13, not line 31 alone.
 //
 // SE earnings: $150,000 × 0.9235 = $138,525 (below the $176,100 SS wage base)
-// SE tax: $138,525 × (0.124 + 0.029) = $21,194.325  |  SE deduction: $10,597.1625
+// Filed SE tax: $17,177 + $4,017 = $21,194  |  half-tax deduction: $10,597
 //
-// QBI: $150,000 − $10,597.1625 = $139,402.8375  |  20% = $27,880.5675
-// AGI: $100,000 + $150,000 − $10,597.1625 = $239,402.8375
-// Pre-QBI taxable: $239,402.8375 − $31,500 = $207,902.8375
-// Income limit: 20% × $207,902.8375 = $41,580.5675 — does not bind
-// QBI deduction: $27,880.5675  |  Taxable income: $180,022.27
+// QBI: $150,000 − $10,597 = $139,403  |  20% = $27,880.60
+// AGI: $100,000 + $150,000 − $10,597 = $239,403
+// Pre-QBI taxable: $239,403 − $31,500 = $207,903
+// Income limit: 20% × $207,903 = $41,580.60 — does not bind
+// QBI deduction: $27,880.60  |  Taxable income: $180,022.40
 
 Deno.test("Scenario 15: MFJ, Schedule C $150K + interest — QBI reduced by the SE deduction", () => {
   const result = runReturn({
@@ -886,6 +886,10 @@ Deno.test("Scenario 15: MFJ, Schedule C $150K + interest — QBI reduced by the 
     },
     schedule_c: [
       {
+        business_reference: "SCENARIO15-PRIMARY-C",
+        proprietor_recipient: "T",
+        line_c_business_name: "Test Consulting",
+        line_d_ein: "123456789",
         line_a_principal_business: "Consulting",
         line_b_business_code: "541600",
         line_f_accounting_method: "cash",
@@ -895,20 +899,21 @@ Deno.test("Scenario 15: MFJ, Schedule C $150K + interest — QBI reduced by the 
     ],
   });
 
+  assertEquals(result.diagnostics, []);
   assertEquals(
     r2(result.pending["form8995"]?.["se_tax_deduction"] as number),
-    10_597.16,
+    10_597,
     "deductible part of SE tax reaches Form 8995",
   );
   assertEquals(
     r2(result.pending["standard_deduction"]?.["qbi_deduction"] as number),
-    27_880.57,
-    "QBI deduction = 20% × ($150,000 − $10,597.16)",
+    27_880.6,
+    "QBI deduction = 20% × ($150,000 − $10,597)",
   );
   assertEquals(
     r2(result.pending["income_tax_calculation"]?.["taxable_income"] as number),
-    180_022.27,
-    "taxable income = $207,902.84 pre-QBI − $27,880.57",
+    180_022.4,
+    "taxable income = $207,903 pre-QBI − $27,880.60",
   );
 });
 
@@ -919,13 +924,13 @@ Deno.test("Scenario 15: MFJ, Schedule C $150K + interest — QBI reduced by the 
 // the limit binds well below 20% of QBI.
 //
 // SE earnings: $100,000 × 0.9235 = $92,350
-// SE tax: $92,350 × 0.153 = $14,129.55  |  SE deduction: $7,064.775
+// Filed SE tax: $11,451 + $2,678 = $14,129  |  filed half-tax deduction: $7,065
 //
-// QBI: $100,000 − $7,064.775 = $92,935.225  |  20% = $18,587.045
-// AGI: $100,000 + $100,000 − $7,064.775 = $192,935.225
-// Pre-QBI taxable: $192,935.225 − $31,500 = $161,435.225
-// Income limit: 20% × ($161,435.225 − $100,000) = $12,287.045 — binds
-// QBI deduction: $12,287.045  |  Taxable income: $149,148.18
+// QBI: $100,000 − $7,065 = $92,935  |  20% = $18,587
+// AGI: $100,000 + $100,000 − $7,065 = $192,935
+// Pre-QBI taxable: $192,935 − $31,500 = $161,435
+// Income limit: 20% × ($161,435 − $100,000) = $12,287 — binds
+// QBI deduction: $12,287  |  Taxable income: $149,148
 
 Deno.test("Scenario 16: MFJ, Schedule C + qualified dividends — income limit binds net of cap gain", () => {
   const result = runReturn({
@@ -945,6 +950,10 @@ Deno.test("Scenario 16: MFJ, Schedule C + qualified dividends — income limit b
     },
     schedule_c: [
       {
+        business_reference: "SCENARIO16-PRIMARY-C",
+        proprietor_recipient: "T",
+        line_c_business_name: "Test Consulting",
+        line_d_ein: "123456789",
         line_a_principal_business: "Consulting",
         line_b_business_code: "541600",
         line_f_accounting_method: "cash",
@@ -954,6 +963,7 @@ Deno.test("Scenario 16: MFJ, Schedule C + qualified dividends — income limit b
     ],
   });
 
+  assertEquals(result.diagnostics, []);
   assertEquals(
     result.pending["form8995"]?.["net_capital_gain"],
     100_000,
@@ -961,13 +971,13 @@ Deno.test("Scenario 16: MFJ, Schedule C + qualified dividends — income limit b
   );
   assertEquals(
     r2(result.pending["standard_deduction"]?.["qbi_deduction"] as number),
-    12_287.05,
-    "QBI deduction = 20% × ($161,435.23 − $100,000)",
+    12_287,
+    "QBI deduction = 20% × ($161,435 − $100,000)",
   );
   assertEquals(
     r2(result.pending["income_tax_calculation"]?.["taxable_income"] as number),
-    149_148.18,
-    "taxable income = $161,435.23 pre-QBI − $12,287.05",
+    149_148,
+    "taxable income = $161,435 pre-QBI − $12,287",
   );
 });
 
@@ -994,10 +1004,12 @@ Deno.test("age derived from birth date limits Form 8995 deduction across the ret
 
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending["f1040"]?.["line12a_standard_deduction"], 17_750);
-  assertEquals(result.pending["form8995"]?.["qbi_deduction"], 1_650);
-  assertEquals(result.pending["f1040"]?.["line13_qbi_deduction"], 1_650);
+  assertEquals(result.pending["f1040"]?.["line13b_additional_deductions"], 6_000);
+  // $26,000 - $17,750 - $6,000 = $2,250 before QBI; 20% cap = $450.
+  assertEquals(result.pending["form8995"]?.["qbi_deduction"], 450);
+  assertEquals(result.pending["f1040"]?.["line13_qbi_deduction"], 450);
   assertEquals(
     result.pending["income_tax_calculation"]?.["taxable_income"],
-    600,
+    1_800,
   );
 });

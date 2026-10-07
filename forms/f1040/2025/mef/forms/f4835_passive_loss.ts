@@ -35,7 +35,11 @@ export function farmAllowedLosses(
   const activities = input.activities ?? [];
   form8582.build(linked as Record<string, unknown>, context);
   const limit = passiveLossLimit({
-    currentIncome: input.current_income ?? 0,
+    currentIncome: (input.current_income ?? 0) +
+      (input.current_4797_sale_gains ?? []).reduce(
+        (sum, sale) => sum + sale.gain,
+        0,
+      ),
     currentLoss: input.current_loss ?? 0,
     priorUnallowed: input.prior_unallowed ?? 0,
     rentalLoss: (input.rental_current_loss ?? 0) +
@@ -48,7 +52,15 @@ export function farmAllowedLosses(
   });
   const allocation = allocatePassiveActivityLosses(
     activities.map((activity) => ({
-      currentNet: activity.current_net,
+      currentNet: activity.current_net +
+        (input.current_4797_sale_gains ?? []).filter((sale) =>
+          sale.activity_id === activity.activity_id
+        ).reduce((sum, sale) => sum + sale.gain, 0),
+      currentIncome: Math.max(0, activity.current_net) +
+        (input.current_4797_sale_gains ?? []).filter((sale) =>
+          sale.activity_id === activity.activity_id
+        ).reduce((sum, sale) => sum + sale.gain, 0),
+      currentLoss: Math.max(0, -activity.current_net),
       priorUnallowed: activity.prior_unallowed_operating,
       specialEligible: activity.activity_type === "A",
       priorSpecialEligible: activity.prior_active_participation === true,

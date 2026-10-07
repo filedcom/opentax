@@ -112,7 +112,7 @@ Deno.test("Form 8995-A: missing business identity or lower income rejects", () =
   assertThrows(
     () => form8995a.build({ ...oneBusiness, taxable_income: 230_000 }, context),
     Error,
-    "fully above",
+    "above the applicable threshold",
   );
   assertThrows(
     () => form8995a.build({ ...oneBusiness, qbi: 99_000 }, context),

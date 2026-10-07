@@ -36,6 +36,8 @@ export const itemSchema = z.object({
     tip_records_reference: z.string().trim().min(1),
     included_in_box1: z.literal(true),
     no_other_allocable_deductions: z.literal(true),
+    allocable_health_plan_identifiers: z.array(z.string().trim().min(1)).max(1)
+      .optional(),
     no_other_allocable_deductions_review_reference: z.string().trim().min(1),
   }).strict().optional(),
   nonbusiness_activity_description: z.string().trim().min(1).max(100)
@@ -236,6 +238,9 @@ function necIncomeOutput(item: NECItem): NodeOutput[] {
           payer_name: item.payer_name,
           payer_tin: item.payer_tin.replaceAll("-", ""),
           recipient_tin: item.recipient_ssn!.replaceAll("-", ""),
+          ...(item.source_document_reference
+            ? { source_document_reference: item.source_document_reference }
+            : {}),
         }],
       })];
     }
@@ -338,6 +343,13 @@ class F1099necNode extends TaxNode<typeof inputSchema> {
             item.qualified_tips_review.included_in_box1,
           no_other_allocable_deductions:
             item.qualified_tips_review.no_other_allocable_deductions,
+          ...(item.qualified_tips_review.allocable_health_plan_identifiers !==
+              undefined
+            ? {
+              allocable_health_plan_identifiers:
+                item.qualified_tips_review.allocable_health_plan_identifiers,
+            }
+            : {}),
           no_other_allocable_deductions_review_reference:
             item.qualified_tips_review
               .no_other_allocable_deductions_review_reference,

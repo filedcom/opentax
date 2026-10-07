@@ -1,3 +1,4 @@
+import { scheduleJTaxSourceSchema } from "../../intermediate/forms/schedule_j/tax-source.ts";
 import { z } from "zod";
 import { FilingStatus } from "../../types.ts";
 
@@ -19,23 +20,35 @@ const zeroIncomeWorksheetSchema = z.object({
   nol_remaining_after_base_year: tax,
   nol_reference: reference,
 }).strict().superRefine((source, context) => {
-  if (source.schedule_d_line21_loss === 0 &&
+  if (
+    source.schedule_d_line21_loss === 0 &&
     (source.schedule_d_line16_loss !== 0 ||
-      source.capital_loss_carryover_to_next_year !== 0)) {
-    context.addIssue({ code: "custom", message: "Schedule J worksheet line 2 needs a Schedule D line 21 loss" });
+      source.capital_loss_carryover_to_next_year !== 0)
+  ) {
+    context.addIssue({
+      code: "custom",
+      message: "Schedule J worksheet line 2 needs a Schedule D line 21 loss",
+    });
   }
-  const line2 = source.schedule_d_line21_loss === 0 ? 0 :
-    source.schedule_d_line21_loss +
-    source.capital_loss_carryover_to_next_year -
-    source.schedule_d_line16_loss;
-  if (line2 < 0 || line2 + source.nol_remaining_after_base_year >
-      -source.unfloored_taxable_income) {
-    context.addIssue({ code: "custom", message: "Schedule J negative-income worksheet amounts do not reconcile" });
+  const line2 = source.schedule_d_line21_loss === 0
+    ? 0
+    : source.schedule_d_line21_loss +
+      source.capital_loss_carryover_to_next_year -
+      source.schedule_d_line16_loss;
+  if (
+    line2 < 0 || line2 + source.nol_remaining_after_base_year >
+      -source.unfloored_taxable_income
+  ) {
+    context.addIssue({
+      code: "custom",
+      message: "Schedule J negative-income worksheet amounts do not reconcile",
+    });
   }
 });
 
 const filedReturnSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus),
+  preferential_tax_source: scheduleJTaxSourceSchema.optional(),
   taxable_income_line15: amount.nonnegative(),
   adjusted_taxable_income: amount.optional(),
   adjustment_reference: reference.optional(),
@@ -44,18 +57,26 @@ const filedReturnSchema = z.object({
   filed_return_reference: reference,
   section1_tax_workpaper_reference: reference,
   zero_income_worksheet: zeroIncomeWorksheetSchema.optional(),
-}).strict().refine((source) =>
-  source.section1_tax_from_line16 <= source.filed_line16_tax, {
-  message: "Schedule J base-year section 1 tax exceeds filed Form 1040 line 16",
-}).refine((source) =>
+}).strict().refine(
+  (source) => source.section1_tax_from_line16 <= source.filed_line16_tax,
+  {
+    message:
+      "Schedule J base-year section 1 tax exceeds filed Form 1040 line 16",
+  },
+).refine((source) =>
   (source.adjusted_taxable_income === undefined) ===
     (source.adjustment_reference === undefined), {
-  message: "Schedule J adjusted taxable income requires its filed adjustment reference",
-}).refine((source) =>
-  ((source.adjusted_taxable_income ?? source.taxable_income_line15) <= 0) ===
-    (source.zero_income_worksheet !== undefined), {
-  message: "Schedule J zero or negative adjusted taxable income requires its sourced worksheet; positive income must not provide one",
-});
+  message:
+    "Schedule J adjusted taxable income requires its filed adjustment reference",
+}).refine(
+  (source) =>
+    ((source.adjusted_taxable_income ?? source.taxable_income_line15) <= 0) ===
+      (source.zero_income_worksheet !== undefined),
+  {
+    message:
+      "Schedule J zero or negative adjusted taxable income requires its sourced worksheet; positive income must not provide one",
+  },
+);
 
 const baseReturnsSchema = z.object({
   year2022: filedReturnSchema,
@@ -87,27 +108,30 @@ const prior2024ScheduleJ = z.object({
 
 // The latest filed Schedule J controls all six base-year selections on the
 // 2025 form. Do not mix its columns with direct 1040 values from another route.
-export const baseYearSourceSchema = z.discriminatedUnion("latest_averaging_year", [
-  z.object({
-    latest_averaging_year: z.literal("none"),
-    base_returns: baseReturnsSchema,
-  }).strict(),
-  z.object({
-    latest_averaging_year: z.literal(2022),
-    base_returns: baseReturnsSchema,
-    latest_filed_schedule_j: prior2022ScheduleJ,
-  }).strict(),
-  z.object({
-    latest_averaging_year: z.literal(2023),
-    base_returns: baseReturnsSchema,
-    latest_filed_schedule_j: prior2023ScheduleJ,
-  }).strict(),
-  z.object({
-    latest_averaging_year: z.literal(2024),
-    base_returns: baseReturnsSchema,
-    latest_filed_schedule_j: prior2024ScheduleJ,
-  }).strict(),
-]);
+export const baseYearSourceSchema = z.discriminatedUnion(
+  "latest_averaging_year",
+  [
+    z.object({
+      latest_averaging_year: z.literal("none"),
+      base_returns: baseReturnsSchema,
+    }).strict(),
+    z.object({
+      latest_averaging_year: z.literal(2022),
+      base_returns: baseReturnsSchema,
+      latest_filed_schedule_j: prior2022ScheduleJ,
+    }).strict(),
+    z.object({
+      latest_averaging_year: z.literal(2023),
+      base_returns: baseReturnsSchema,
+      latest_filed_schedule_j: prior2023ScheduleJ,
+    }).strict(),
+    z.object({
+      latest_averaging_year: z.literal(2024),
+      base_returns: baseReturnsSchema,
+      latest_filed_schedule_j: prior2024ScheduleJ,
+    }).strict(),
+  ],
+);
 
 export type BaseYearSource = z.infer<typeof baseYearSourceSchema>;
 
@@ -121,10 +145,11 @@ function directBaseIncome(
   }
   const worksheet = filedReturn.zero_income_worksheet!;
   const line1 = -worksheet.unfloored_taxable_income;
-  const line2 = worksheet.schedule_d_line21_loss === 0 ? 0 :
-    worksheet.schedule_d_line21_loss +
-    worksheet.capital_loss_carryover_to_next_year -
-    worksheet.schedule_d_line16_loss;
+  const line2 = worksheet.schedule_d_line21_loss === 0
+    ? 0
+    : worksheet.schedule_d_line21_loss +
+      worksheet.capital_loss_carryover_to_next_year -
+      worksheet.schedule_d_line16_loss;
   return -(line1 - line2 - worksheet.nol_remaining_after_base_year);
 }
 

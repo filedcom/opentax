@@ -1,3 +1,27 @@
+import { ptcJointIncomeReviewSchema } from "../../../2025/form8962-joint-income.ts";
+import {
+  assertForm8962SpouseIncomeReview,
+  ptcSpouseIncomeReviewSchema,
+} from "../../../2025/form8962-family-eligibility.ts";
+import type { FilerCreditEligibility } from "./filer-eligibility.ts";
+import {
+  filerCreditEligibility,
+  isAge65ByEndOfTaxYear,
+} from "./filer-eligibility.ts";
+export {
+  filerCreditEligibility,
+  isAge65ByEndOfTaxYear,
+} from "./filer-eligibility.ts";
+export type {
+  FilerCreditEligibility,
+  FilerCreditFacts,
+} from "./filer-eligibility.ts";
+import { dependentKiddieTaxFacts } from "../f8615/dependent-source-review.ts";
+import {
+  dependentKiddieTaxFamilyReviewSchema,
+  dependentScholarshipEarned,
+  dependentScholarshipReviewSchema,
+} from "../education_income/dependent-scholarship-review.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -105,6 +129,16 @@ export enum DependentCreditCategory {
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
+const ptcDividendSourceSchema = z.object({
+  source_document_id: z.string().min(1),
+  payer_ein: z.string().regex(/^\d{9}$/),
+  recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+  box1a_ordinary_dividends: z.number().positive(),
+  box1b_qualified_dividends: z.literal(0),
+  box2a_capital_gain_distributions: z.literal(0),
+  box12_exempt_interest_dividends: z.literal(0),
+}).strict();
+
 export const dependentSchema = z.object({
   first_name: z.string(),
   last_name: z.string(),
@@ -210,15 +244,8 @@ export const dependentSchema = z.object({
           box8_tax_exempt_interest: z.number().nonnegative(),
         }).strict(),
       ),
-      dividend_form1099: z.object({
-        source_document_id: z.string().min(1),
-        payer_ein: z.string().regex(/^\d{9}$/),
-        recipient_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
-        box1a_ordinary_dividends: z.number().positive(),
-        box1b_qualified_dividends: z.literal(0),
-        box2a_capital_gain_distributions: z.literal(0),
-        box12_exempt_interest_dividends: z.literal(0),
-      }).strict().optional(),
+      dividend_form1099: ptcDividendSourceSchema.optional(),
+      dividend_forms1099: z.array(ptcDividendSourceSchema).min(1).optional(),
       wage_forms_w2: z.array(
         z.object({
           source_document_id: z.string().min(1),
@@ -227,7 +254,7 @@ export const dependentSchema = z.object({
           employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
           box1_wages: z.number().positive(),
         }).strict(),
-      ).min(1).max(2).optional(),
+      ).min(1).optional(),
     }).strict(),
   ]).optional(),
   taxpayer_provided_over_half_support: z.boolean().optional(),
@@ -240,6 +267,7 @@ export const dependentSchema = z.object({
     no_competing_eitc_claim_verified: z.literal(true),
   }).strict().optional(),
   child_care_months: z.number().int().min(0).max(12).optional(), // For Form 2441
+  education_dependency_record_reference: z.string().trim().min(1).optional(),
   education_credit_eligible: z.boolean().optional(), // For Form 8863
   ip_pin: z.string().length(6).optional(), // Dependent's IP PIN
 });
@@ -299,6 +327,7 @@ export const inputSchema = z.object({
   taxpayer_form8880_claimed_as_dependent: z.boolean().optional(),
   taxpayer_blind: z.boolean().optional(),
   taxpayer_age_65_or_older: z.boolean().optional(),
+  taxpayer_claimed_as_dependent: z.boolean().optional(),
   taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
   spouse_can_be_claimed_as_dependent: z.boolean().optional(),
   mfj_dependent_refund_only_review: z.object({
@@ -308,6 +337,12 @@ export const inputSchema = z.object({
     ),
   }).strict().optional(),
   dependent_earned_income: z.number().nonnegative().optional(),
+  dependent_education_income_review: dependentScholarshipReviewSchema
+    .optional(),
+  dependent_kiddie_tax_family_record_reference: z.string().trim().min(1)
+    .optional(),
+  dependent_kiddie_tax_family_review: dependentKiddieTaxFamilyReviewSchema
+    .optional(),
   taxpayer_occupation: z.string().optional(),
   taxpayer_daytime_phone: z.string().optional(),
   taxpayer_email: z.string().optional(),
@@ -345,6 +380,9 @@ export const inputSchema = z.object({
   address_in_care_of: z.string().optional(),
   address_city: z.string().optional(),
   address_state: z.string().optional(),
+  // Affirmative reviewed zero-income spouse inventory for joint family PTC.
+  ptc_spouse_income_review: ptcSpouseIncomeReviewSchema.optional(),
+  ptc_joint_income_review: ptcJointIncomeReviewSchema.optional(),
   // Distinct 2025 residence states for the Form 8962 poverty table.
   ptc_residence_states_2025: z.array(z.string().regex(/^[A-Z]{2}$/)).min(1)
     .optional(),
@@ -504,7 +542,31 @@ export function hohQualifyingChildFromGeneral(
 }
 type DependentItem = z.infer<typeof dependentSchema>;
 
+type RequiredDependentReturn = Extract<
+  NonNullable<DependentItem["ptc_tax_return"]>,
+  { filing: "required" }
+>;
+
+export function ptcDependentDividendSources(source: RequiredDependentReturn) {
+  if (
+    source.dividend_form1099 !== undefined &&
+    source.dividend_forms1099 !== undefined
+  ) {
+    throw new Error(
+      "Form 8962 dependent dividend sources must use one collection",
+    );
+  }
+  return source.dividend_forms1099 ??
+    (source.dividend_form1099 ? [source.dividend_form1099] : []);
+}
+
 export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
+  const claimedSsns = dependents.map((dependent) =>
+    dependent.ssn?.replaceAll("-", "")
+  ).filter((ssn): ssn is string => ssn !== undefined);
+  if (new Set(claimedSsns).size !== claimedSsns.length) {
+    throw new Error("Form 8962 claimed dependents need distinct SSNs");
+  }
   return dependents.reduce((total, dep) => {
     const taxReturn = dep.ptc_tax_return;
     if (taxReturn?.filing === "not_required") {
@@ -575,48 +637,38 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
       (sum, source) => sum + source.box1_wages,
       0,
     ) ?? 0;
-    const dividends = taxReturn.dividend_form1099?.box1a_ordinary_dividends ??
-      0;
+    const dividendSources = ptcDependentDividendSources(taxReturn);
+    const dividends = dividendSources.reduce(
+      (sum, source) => sum + source.box1a_ordinary_dividends,
+      0,
+    );
+    const documents = [
+      filed.source_document_id,
+      ...taxReturn.interest_forms1099.map((source) =>
+        source.source_document_id
+      ),
+      ...(taxReturn.wage_forms_w2 ?? []).map((source) =>
+        source.source_document_id
+      ),
+      ...dividendSources.map((source) => source.source_document_id),
+    ];
+    if (new Set(documents).size !== documents.length) {
+      throw new Error(
+        "Form 8962 dependent needs distinct filed-return and income source documents",
+      );
+    }
     if (
       taxReturn.wage_forms_w2 &&
-      (new Set(taxReturn.wage_forms_w2.map((form) => form.source_document_id))
-            .size !== taxReturn.wage_forms_w2.length ||
-        new Set(taxReturn.wage_forms_w2.map((form) => form.employer_ein))
-            .size !== taxReturn.wage_forms_w2.length)
+      new Set(taxReturn.wage_forms_w2.map((form) => form.employer_ein)).size !==
+        taxReturn.wage_forms_w2.length
     ) {
       throw new Error(
         "Form 8962 dependent W-2 wage sources need distinct documents and employers",
       );
     }
-    const dividendOnly = dividends > 0 && wages === 0 &&
-      taxableInterest === 0 && exemptInterest === 0 &&
-      taxReturn.interest_forms1099.length === 0 &&
-      taxReturn.wage_forms_w2 === undefined;
-    const wageOnly = dividends === 0 && wages > 0 && taxableInterest === 0 &&
-      exemptInterest === 0 && taxReturn.interest_forms1099.length === 0;
-    const interestOnly = dividends === 0 && wages === 0 &&
-      taxableInterest > 0 &&
-      taxReturn.wage_forms_w2 === undefined;
-    const mixedWagesAndInterest = dividends === 0 && wages > 0 &&
-      taxableInterest > 0 &&
-      (taxReturn.wage_forms_w2?.length === 1 ||
-        taxReturn.wage_forms_w2?.length === 2) &&
-      taxReturn.interest_forms1099.length === 1;
-    const mixedWagesAndDividends = wages > 0 && dividends > 0 &&
-      taxReturn.wage_forms_w2?.length === 1 &&
-      taxableInterest === 0 && exemptInterest === 0 &&
-      taxReturn.interest_forms1099.length === 0;
-    const mixedInterestAndDividends = wages === 0 &&
-      taxReturn.wage_forms_w2 === undefined &&
-      taxableInterest > 0 && dividends > 0 &&
-      taxReturn.interest_forms1099.length === 1;
-    if (
-      !wageOnly && !interestOnly && !mixedWagesAndInterest &&
-      !dividendOnly && !mixedWagesAndDividends &&
-      !mixedInterestAndDividends
-    ) {
+    if (wages + taxableInterest + dividends <= 0) {
       throw new Error(
-        "Form 8962 dependent required-filing source supports bounded W-2, Form 1099-INT, and ordinary-only Form 1099-DIV combinations",
+        "Form 8962 dependent needs positive sourced earned or unearned income",
       );
     }
     if (
@@ -640,134 +692,25 @@ export function ptcDependentsModifiedAgi(dependents: DependentItem[]): number {
       throw new Error("Form 8962 dependent needs a valid birth date");
     }
     const age65 = birth.getTime() < Date.UTC(1961, 0, 2);
-    if (dividendOnly) {
-      const unearnedThreshold = 1_350 +
-        (age65 ? 2_000 : 0) + (filed.blind ? 2_000 : 0);
-      if (dividends <= unearnedThreshold) {
-        throw new Error(
-          "Form 8962 dependent ordinary dividends do not establish the 2025 filing requirement",
-        );
-      }
-      return total + filed.line11b_agi;
-    }
-    if (mixedInterestAndDividends) {
-      const unearnedThreshold = 1_350 +
-        (age65 ? 2_000 : 0) + (filed.blind ? 2_000 : 0);
-      if (taxableInterest + dividends <= unearnedThreshold) {
-        throw new Error(
-          "Form 8962 dependent combined interest and dividends do not establish the 2025 filing requirement",
-        );
-      }
-      return total + filed.line11b_agi + exemptInterest;
-    }
-    if (wageOnly) {
-      if (age65 || filed.blind || wages <= 15_750) {
-        throw new Error(
-          "Form 8962 dependent W-2 wages do not establish the 2025 single-dependent filing requirement",
-        );
-      }
-      return total + filed.line11b_agi;
-    }
-    if (mixedWagesAndDividends) {
-      if (age65 || filed.blind) {
-        throw new Error(
-          "Form 8962 dependent mixed W-2 and 1099-DIV filing requirement needs under-65, nonblind evidence",
-        );
-      }
-      const combinedThreshold = Math.max(
-        1_350,
-        Math.min(wages, 15_300) + 450,
-      );
-      if (
-        dividends <= 1_350 && wages <= 15_750 &&
-        wages + dividends <= combinedThreshold
-      ) {
-        throw new Error(
-          "Form 8962 dependent mixed W-2 and 1099-DIV income does not establish the 2025 filing requirement",
-        );
-      }
-      return total + filed.line11b_agi;
-    }
-    if (mixedWagesAndInterest) {
-      if (age65 || filed.blind) {
-        throw new Error(
-          "Form 8962 dependent mixed W-2 and 1099-INT filing requirement needs under-65, nonblind evidence",
-        );
-      }
-      const grossIncome = wages + taxableInterest;
-      const combinedThreshold = Math.max(
-        1_350,
-        Math.min(wages, 15_300) + 450,
-      );
-      if (
-        taxableInterest <= 1_350 && wages <= 15_750 &&
-        grossIncome <= combinedThreshold
-      ) {
-        throw new Error(
-          "Form 8962 dependent mixed W-2 and 1099-INT income does not establish the 2025 filing requirement",
-        );
-      }
-      return total + filed.line11b_agi + exemptInterest;
-    }
-    const unearnedThreshold = 1_350 +
-      (age65 ? 2_000 : 0) + (filed.blind ? 2_000 : 0);
-    if (taxableInterest <= unearnedThreshold) {
+    // Pub.501 Table2 single dependents: each age/blind condition adds $2,000.
+    const increase = (age65 ? 2_000 : 0) + (filed.blind ? 2_000 : 0);
+    const unearned = taxableInterest + dividends;
+    const gross = wages + unearned;
+    const combinedThreshold = Math.max(
+      1_350 + increase,
+      Math.min(wages, 15_300) + 450 + increase,
+    );
+    if (
+      unearned <= 1_350 + increase && wages <= 15_750 + increase &&
+      gross <= combinedThreshold
+    ) {
       throw new Error(
-        "Form 8962 dependent 1099-INT income does not establish the 2025 filing requirement",
+        "Form 8962 dependent sourced income does not establish the 2025 single-dependent filing requirement",
       );
     }
     return total + filed.line11b_agi + exemptInterest;
   }, 0);
 }
-export type FilerCreditFacts = Pick<
-  GeneralInput,
-  | "filing_status"
-  | "taxpayer_ssn"
-  | "taxpayer_ssn_valid_for_employment"
-  | "taxpayer_ssn_issued_before_due_date"
-  | "taxpayer_tin_issued_by_due_date"
-  | "spouse_ssn"
-  | "spouse_ssn_valid_for_employment"
-  | "spouse_ssn_issued_before_due_date"
-  | "spouse_tin_issued_by_due_date"
->;
-
-export interface FilerCreditEligibility {
-  taxpayerValidSsn: boolean;
-  spouseValidSsn: boolean;
-  ctc: boolean;
-  odc: boolean;
-  eitc: boolean;
-}
-
-export function filerCreditEligibility(
-  facts: FilerCreditFacts,
-): FilerCreditEligibility {
-  const taxpayerTimelyTin = Boolean(facts.taxpayer_ssn) &&
-    facts.taxpayer_tin_issued_by_due_date === true;
-  const spouseTimelyTin = Boolean(facts.spouse_ssn) &&
-    facts.spouse_tin_issued_by_due_date === true;
-  const taxpayerEitcSsn = taxpayerTimelyTin &&
-    facts.taxpayer_ssn_valid_for_employment === true;
-  const spouseEitcSsn = spouseTimelyTin &&
-    facts.spouse_ssn_valid_for_employment === true;
-  const taxpayerCtcSsn = taxpayerEitcSsn &&
-    facts.taxpayer_ssn_issued_before_due_date === true;
-  const spouseCtcSsn = spouseEitcSsn &&
-    facts.spouse_ssn_issued_before_due_date === true;
-  const joint = facts.filing_status === FilingStatus.MFJ;
-  return {
-    taxpayerValidSsn: taxpayerCtcSsn,
-    spouseValidSsn: spouseCtcSsn,
-    ctc: joint
-      ? (taxpayerCtcSsn && spouseTimelyTin) ||
-        (spouseCtcSsn && taxpayerTimelyTin)
-      : taxpayerCtcSsn,
-    odc: taxpayerTimelyTin && (!joint || spouseTimelyTin),
-    eitc: taxpayerEitcSsn && (!joint || spouseEitcSsn),
-  };
-}
-
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 // Tax year-end reference date for age calculations
@@ -807,39 +750,6 @@ function ageAtYearEnd(dob: string): number {
 // For federal tax purposes, a person reaches age 65 on the day before their
 // 65th birthday. For TY2025, this matches the Schedule 1-A instruction to use
 // a birth date before January 2, 1961.
-export function isAge65ByEndOfTaxYear(
-  dob: string | undefined,
-  taxYear: number,
-  owner: "taxpayer" | "spouse",
-): boolean | undefined {
-  if (dob === undefined) return undefined;
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dob);
-  if (match === null) {
-    throw new Error(`${owner} date of birth must be a valid YYYY-MM-DD date`);
-  }
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const birthDate = Date.UTC(
-    year,
-    month - 1,
-    day,
-  );
-  const parsed = new Date(birthDate);
-  if (
-    parsed.getUTCFullYear() !== year ||
-    parsed.getUTCMonth() !== month - 1 ||
-    parsed.getUTCDate() !== day
-  ) {
-    throw new Error(`${owner} date of birth must be a valid YYYY-MM-DD date`);
-  }
-  if (birthDate > Date.UTC(taxYear, 11, 31)) {
-    throw new Error(`${owner} date of birth is after the tax year`);
-  }
-  const cutoff = Date.UTC(taxYear - 64, 0, 2);
-  return birthDate < cutoff;
-}
-
 // For TY2025, CTC requires an employment-valid SSN issued before the return
 // due date. An ITIN or ATIN cannot satisfy that test.
 function passesSSNTest(dep: DependentItem): boolean {
@@ -934,6 +844,14 @@ function isQualifyingRelativeForODC(dep: DependentItem): boolean {
   if (dep.taxpayer_provided_over_half_support !== true) return false;
   // The 2025 gross-income limit is $5,200. Zero is a valid explicit answer.
   return dep.gross_income !== undefined && dep.gross_income < 5200;
+}
+
+/** Ordinary dependency facts reused by education ownership reconciliation. */
+export function educationDependentSourceEligible(dep: DependentItem): boolean {
+  return dep.us_citizen_national_or_resident === true &&
+    dep.provided_over_half_own_support !== true &&
+    dep.dependent_on_another_return !== true &&
+    (isQualifyingChildForODC(dep) || isQualifyingRelativeForODC(dep));
 }
 
 export function dependentCreditCategory(
@@ -1340,6 +1258,29 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
 
   compute(ctx: NodeContext, input: GeneralInput): NodeResult {
     const parsed = inputSchema.parse(input);
+    assertForm8962SpouseIncomeReview(parsed);
+    if (parsed.dependent_education_income_review) {
+      const earned = dependentScholarshipEarned(
+        parsed.dependent_education_income_review,
+      );
+      if (
+        parsed.taxpayer_can_be_claimed_as_dependent !== true ||
+        parsed.taxpayer_claimed_as_dependent !== true ||
+        parsed.filing_status !== FilingStatus.Single ||
+        parsed.dependent_education_income_review.student_ssn.replaceAll(
+            "-",
+            "",
+          ) !== parsed.taxpayer_ssn?.replaceAll("-", "") ||
+        (parsed.dependent_earned_income !== undefined &&
+          parsed.dependent_earned_income !== earned)
+      ) {
+        throw new Error(
+          "Dependent education deduction must derive from its actual owned sources and claimed-dependency review",
+        );
+      }
+      parsed.dependent_earned_income = earned;
+    }
+
     const mfsLivedApartAllYear = parsed.filing_status === FilingStatus.MFS &&
       parsed.mfs_spouse_lived_with_taxpayer === false &&
       parsed.mfs_lived_apart_source !== undefined;
@@ -1446,6 +1387,14 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       sdInput["dependent_earned_income"] = parsed.dependent_earned_income;
     }
 
+    if (parsed.dependent_education_income_review) {
+      const facts = dependentKiddieTaxFacts(
+        parsed.dependent_education_income_review,
+        parsed.dependent_earned_income!,
+      );
+      sdInput.form8615_reviewed_unearned_income = facts.unearned;
+      if (facts.source) sdInput.form8615_reviewed_source = facts.source;
+    }
     const deps = parsed.dependents ?? [];
     for (const dep of deps) {
       if (
@@ -1622,6 +1571,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       // the same standard deduction amount as the standard_deduction worksheet.
       this.outputNodes.output(form8995, {
         filing_status: parsed.filing_status,
+        mfs_spouse_itemizing: parsed.mfs_spouse_itemizing,
         ...(parsed.taxpayer_ssn !== undefined && {
           taxpayer_ssn: parsed.taxpayer_ssn,
         }),

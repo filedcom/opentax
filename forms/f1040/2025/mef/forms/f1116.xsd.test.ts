@@ -11,6 +11,8 @@ import {
 import { buildMefXml } from "../builder.ts";
 import { type FilerIdentity, FilingStatus } from "../types.ts";
 import { FilingStatus as InputFilingStatus } from "../../../nodes/types.ts";
+import { ty2025IrsCountryCodeSchema } from "../../../nodes/irs_country_code.ts";
+import { inputSchema as f1099IntInputSchema } from "../../../nodes/inputs/f1099int/index.ts";
 import { form1116 } from "./f1116.ts";
 import { scheduleBFieldsSchema } from "./f1116_schedule_b.ts";
 
@@ -249,6 +251,110 @@ Deno.test({
     "<ForeignGeneralIncTaxCreditAmt>900</ForeignGeneralIncTaxCreditAmt>",
   );
   assertStringIncludes(xml, 'referenceDocumentId="IRS1116');
+  await validateXsd(xml);
+});
+
+Deno.test("Form 1116 country input and export reject ISO DE and unknown codes", () => {
+  assertEquals(ty2025IrsCountryCodeSchema.safeParse("GM").success, true);
+  assertEquals(ty2025IrsCountryCodeSchema.safeParse("DE").success, false);
+  assertEquals(ty2025IrsCountryCodeSchema.safeParse("ZZ").success, false);
+  const bank = {
+    payer_name: "German Bank",
+    box1: 1_000,
+    box6: 100,
+    box7: "Germany",
+    foreign_source_interest_usd: 1_000,
+    foreign_tax_irs_country_code: "GM",
+  };
+  assertEquals(
+    f1099IntInputSchema.safeParse({ f1099ints: [bank] }).success,
+    true,
+  );
+  assertEquals(
+    f1099IntInputSchema.safeParse({
+      f1099ints: [{ ...bank, foreign_tax_irs_country_code: "DE" }],
+    }).success,
+    false,
+  );
+  const fields = computedFields();
+  const summaries = fields.category_summaries ?? [];
+  for (const code of ["DE", "ZZ"]) {
+    assertThrows(
+      () =>
+        form1116.build({
+          ...fields,
+          category_summaries: [{
+            ...summaries[0],
+            items: [{ ...summaries[0].items[0], irs_country_code: code }],
+          }, summaries[1]],
+        }),
+      Error,
+      "TY2025 Form 1116 requires an IRS MeF country code",
+    );
+  }
+});
+
+Deno.test({
+  name: "XSD: German 1099 interest reaches Form 1116 with IRS code GM",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: "single",
+      digital_assets: false,
+      taxpayer_first_name: "Test",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "123-45-6789",
+      taxpayer_dob: "1985-06-15",
+      address_line1: "1 Main St",
+      address_city: "Austin",
+      address_state: "TX",
+      address_zip: "78701",
+    },
+    w2: [{
+      employee_ssn: "123-45-6789",
+      box1_wages: 100_000,
+      box2_fed_withheld: 12_000,
+      box3_ss_wages: 100_000,
+      box4_ss_withheld: 6_200,
+      box5_medicare_wages: 100_000,
+      box6_medicare_withheld: 1_450,
+      employer_ein: "12-3456789",
+      employer_name: "ACME Corp",
+      employer_address_line1: "100 Main St",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
+      box12_entries: [],
+    }],
+    f1099int: [{
+      recipient_tin: "123456789",
+      payer_name: "German Bank",
+      box1: 1_000,
+      box6: 100,
+      box7: "Germany",
+      foreign_source_interest_usd: 1_000,
+      foreign_tax_irs_country_code: "GM",
+    }],
+    form1116_review: {
+      all_foreign_sources_reviewed: true,
+      foreign_qualified_dividends: 0,
+      foreign_capital_gains_or_losses_present: false,
+      source_document_references: [
+        "2025 German bank 1099-INT and source review",
+      ],
+      no_amt_liability_verified: true,
+    },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const xml = buildMefXml(result.pending, filer);
+  assertStringIncludes(xml, "<ForeignCountryCd>GM</ForeignCountryCd>");
+  assertStringIncludes(
+    xml,
+    "<ForeignPassiveIncTaxCreditAmt>100</ForeignPassiveIncTaxCreditAmt>",
+  );
   await validateXsd(xml);
 });
 

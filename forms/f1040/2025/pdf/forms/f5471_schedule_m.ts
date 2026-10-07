@@ -33,6 +33,7 @@ export const form5471ScheduleMPdf: PdfFormDescriptor = {
     text("cfc_reference_id", 1, "f1_5[0]"),
     text("currency_rate", 1, "f1_6[0]"),
     row("inventory_sales", 1, 1, 7),
+    row("interest_received", 1, 11, 57),
     row("total_received", 1, 15, 77),
     text("filer_name", 2, "f2_1[0]"),
     text("filer_tin", 2, "f2_2[0]"),
@@ -60,7 +61,9 @@ export const form5471ScheduleMPdf: PdfFormDescriptor = {
       currency_rate:
         `${cfc.functional_currency} / ${cfc.schedule_i1.average_exchange_rate}`,
       inventory_sales: m.inventory_sales_to_filer_usd,
-      total_received: m.inventory_sales_to_filer_usd,
+      interest_received: m.interest_received_from_filer_usd,
+      total_received: m.inventory_sales_to_filer_usd +
+        (m.interest_received_from_filer_usd ?? 0),
       max_accounts_payable: m.maximum_related_party_accounts_payable_usd,
       max_borrowing: m.maximum_related_party_borrowing_usd,
       max_accounts_receivable: m.maximum_related_party_accounts_receivable_usd,

@@ -1,4 +1,6 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { createHash } from "node:crypto";
+import { Buffer } from "node:buffer";
 import { type FilerIdentity, FilingStatus } from "../mef/header.ts";
 import {
   CoverageType,
@@ -25,6 +27,16 @@ const filer: FilerIdentity = {
 
 function pairedEmployerCode2Case(employerOwner: "T" | "S" = "T") {
   const employerSsn = employerOwner === "T" ? "123456789" : "987654321";
+  const retained = (facts: Record<string, unknown>) => {
+    const bytes = Buffer.from(JSON.stringify(facts));
+    return {
+      source_document_reference: String(facts.source_document_reference),
+      sha256: createHash("sha256").update(bytes).digest("hex"),
+      bytes_base64: bytes.toString("base64"),
+    };
+  };
+  const w2Reference = `employer-${employerOwner}-issued-w2`;
+  const account = `HSA-${employerOwner}`;
   const employerFacts = {
     employer_excess_treatment: {
       amount_included_in_w2_box1: 0,
@@ -44,6 +56,7 @@ function pairedEmployerCode2Case(employerOwner: "T" | "S" = "T") {
       box2_earnings_on_excess: 50,
       box3_distribution_code: "2",
       source_reference: "employer-owner-code2",
+      hsa_account_reference: account,
     }],
   };
   const ownerFacts = {
@@ -68,6 +81,36 @@ function pairedEmployerCode2Case(employerOwner: "T" | "S" = "T") {
       ? employerFacts
       : { taxpayer_hsa_contributions: 2_000 }),
     w2_code_w_entries: [{ employee_ssn: employerSsn, amount: 5_000 }],
+    retained_employer_code2_evidence: {
+      w2: retained({
+        source_document_reference: w2Reference,
+        employer_ein: "123456789",
+        employee_ssn: employerSsn,
+        box1_wages: 60000,
+        box12_code_w: 5000,
+      }),
+      trustee_1099sa: retained({
+        source_document_reference: "employer-owner-code2",
+        trustee_ein: "234567890",
+        owner_ssn: employerSsn,
+        hsa_account_reference: account,
+        paid_on: "2025-09-15",
+        box1_gross_distribution: 750,
+        box2_earnings_on_excess: 50,
+        box3_distribution_code: "2",
+      }),
+      paid_owner_return: retained({
+        source_document_reference: `employer-${employerOwner}-paid-owner`,
+        owner_ssn: employerSsn,
+        hsa_account_reference: account,
+        trustee_1099sa_reference: "employer-owner-code2",
+        paid_on: "2025-09-15",
+        principal: 700,
+        earnings: 50,
+        paid_to: "hsa_owner",
+        return_due_on: "2026-04-15",
+      }),
+    },
     spouse_hsa: {
       beneficiary_identity: {
         owner: "S",
@@ -94,6 +137,8 @@ function pairedEmployerCode2Case(employerOwner: "T" | "S" = "T") {
     w2: {
       w2s: [{
         employee_ssn: employerSsn,
+        employer_ein: "123456789",
+        source_document_reference: w2Reference,
         box1_wages: 60_000,
         box2_fed_withheld: 5_000,
         box12_entries: [{ code: "W" as const, amount: 5_000 }],
@@ -212,7 +257,7 @@ for (const employerOwner of ["T", "S"] as const) {
           },
         }),
       Error,
-      "matching code-2 Form 1099-SA",
+      "retained W-2/trustee/owner-payment facts differ",
     );
   });
 }

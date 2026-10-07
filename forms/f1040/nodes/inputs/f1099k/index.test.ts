@@ -764,6 +764,38 @@ Deno.test("1099-K identified payer copy cannot replay changed boxes or classific
   );
 });
 
+Deno.test("1099-K reviewed owner without TIN cannot separate a corrected account copy", () => {
+  const issued = hobbyItem(100, {
+    account_number: "merchant-1",
+    source_document_reference: "original-copy",
+  });
+  const corrected = hobbyItem(150, {
+    recipient_tin: undefined,
+    recipient_identity_review: {
+      recipient_name: "Alex Example",
+      address_line1: "1 Example Way",
+      address_city: "Austin",
+      address_state: "TX",
+      address_zip: "78701",
+      source_reference: "reviewed corrected recipient",
+    },
+    account_number: "merchant-1",
+    source_document_reference: "corrected-copy",
+  });
+  for (const rows of [[issued, corrected], [corrected, issued]]) {
+    assertThrows(
+      () => compute(rows),
+      Error,
+      "repeats the same identified payer, recipient, and account",
+    );
+  }
+  compute([issued, {
+    ...issued,
+    recipient_tin: "111223333",
+    source_document_reference: "different-recipient-copy",
+  }]);
+});
+
 Deno.test("1099-K issued reference rejects changed boxes without an account", () => {
   const issued = hobbyItem(100, {
     source_document_reference: "processor-issued-copy",

@@ -164,6 +164,36 @@ Deno.test("native and PDF export reject a benefit statement owned by another per
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
+Deno.test("native and PDF export reject a repeated SSA issued copy despite reference casing", async () => {
+  const row = {
+    box3_gross_benefits: 4_000,
+    recipient_tin: filer.primarySSN,
+    source_document_reference: "SSA-2025-A",
+  };
+  const duplicated = {
+    ssa1099: {
+      ssas: [row, { ...row, source_document_reference: "ssa-2025-a" }],
+    },
+    f1040: filed(8_000),
+  };
+  const message = "Benefit statement repeats an issued-copy reference";
+  assertThrows(
+    () => buildMefXml(duplicated as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    message,
+  );
+  await assertRejects(() => buildPdfBytes(duplicated, filer), Error, message);
+
+  const distinct = {
+    ...duplicated,
+    ssa1099: {
+      ssas: [row, { ...row, source_document_reference: "SSA-2025-B" }],
+    },
+  };
+  buildMefXml(distinct as Parameters<typeof buildMefXml>[0], filer);
+  await buildPdfBytes(distinct, filer);
+});
+
 Deno.test("native and PDF export reject inflated SSA line 6a", async () => {
   const pending = {
     ssa1099,
@@ -199,7 +229,7 @@ Deno.test("SSA-1099 contradictory box 5 rejects final native and PDF export", as
   await assertRejects(() => buildPdfBytes(pending, filer), Error, message);
 });
 
-Deno.test("SSA line 6a replay includes RRB-1099 and lump-sum source rows", () => {
+Deno.test("SSA line 6a counts issued SSA/RRB box 5 once alongside lump-sum review", () => {
   const pending = {
     ssa1099: {
       ssas: [
@@ -209,14 +239,110 @@ Deno.test("SSA line 6a replay includes RRB-1099 and lump-sum source rows", () =>
     },
     lump_sum_ss: {
       lump_sum_sss: [{
-        total_ss_benefits_this_year: 2_000,
+        total_ss_benefits_this_year: 7_000,
         lump_sum_amount: 1_000,
       }],
     },
-    f1040: filed(9_000),
+    f1040: filed(7_000),
   };
   assertSocialSecurityBenefitSource(pending);
-  assertEquals(pending.f1040.line6a_ss_gross, 9_000);
+  assertEquals(pending.f1040.line6a_ss_gross, 7_000);
+});
+
+Deno.test("lump-sum worksheet cannot supply or inflate line 6a without issued box 5", async () => {
+  const worksheet = {
+    lump_sum_sss: [{
+      total_ss_benefits_this_year: 5_000,
+      lump_sum_amount: 2_000,
+    }],
+  };
+  const message =
+    "Social Security lump-sum worksheet total must match retained SSA-1099/RRB-1099 box 5 sources";
+  const unsupported = {
+    lump_sum_ss: worksheet,
+    f1040: filed(5_000),
+  };
+  assertThrows(
+    () => assertSocialSecurityBenefitSource(unsupported),
+    Error,
+    message,
+  );
+  assertThrows(
+    () => buildMefXml(unsupported as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    message,
+  );
+  await assertRejects(() => buildPdfBytes(unsupported, filer), Error, message);
+
+  const changed = {
+    ssa1099: {
+      ssas: [{
+        box3_gross_benefits: 5_000,
+        recipient_tin: filer.primarySSN,
+        source_document_reference: "SSA-issued-2025",
+      }],
+    },
+    lump_sum_ss: {
+      lump_sum_sss: [{
+        ...worksheet.lump_sum_sss[0],
+        total_ss_benefits_this_year: 6_000,
+      }],
+    },
+    f1040: filed(11_000),
+  };
+  assertThrows(
+    () => assertSocialSecurityBenefitSource(changed),
+    Error,
+    message,
+  );
+  assertThrows(
+    () => buildMefXml(changed as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    message,
+  );
+  await assertRejects(() => buildPdfBytes(changed, filer), Error, message);
+});
+
+Deno.test("two lump-sum worksheets each reconcile the annual issued box 5 total", async () => {
+  const issued = {
+    ssas: [{
+      box3_gross_benefits: 5_000,
+      recipient_tin: filer.primarySSN,
+      source_document_reference: "SSA-issued-2025",
+    }],
+  };
+  const worksheets = {
+    lump_sum_sss: [
+      { total_ss_benefits_this_year: 5_000, lump_sum_amount: 1_000 },
+      { total_ss_benefits_this_year: 5_000, lump_sum_amount: 2_000 },
+    ],
+  };
+  const pending = {
+    ssa1099: issued,
+    lump_sum_ss: worksheets,
+    f1040: filed(5_000),
+  };
+  assertSocialSecurityBenefitSource(pending);
+  buildMefXml(pending as Parameters<typeof buildMefXml>[0], filer);
+  await buildPdfBytes(pending, filer);
+
+  const changed = {
+    ...pending,
+    lump_sum_ss: {
+      lump_sum_sss: [
+        worksheets.lump_sum_sss[0],
+        { ...worksheets.lump_sum_sss[1], total_ss_benefits_this_year: 6_000 },
+      ],
+    },
+  };
+  const message =
+    "Social Security lump-sum worksheet total must match retained SSA-1099/RRB-1099 box 5 sources";
+  assertThrows(
+    () => buildMefXml(changed as Parameters<typeof buildMefXml>[0], filer),
+    Error,
+    message,
+  );
+  await assertRejects(() => buildPdfBytes(changed, filer), Error, message);
 });
 
 Deno.test("negative SSA box 5 offsets positive RRB-1099 box 5", () => {
@@ -307,6 +433,10 @@ Deno.test("SSA repayment and RRB-1099 benefits reach full-graph line 6a and taxa
         rrb_box10_federal_withheld: 100,
       },
     ],
+    lump_sum_ss: [{
+      total_ss_benefits_this_year: 4_000,
+      lump_sum_amount: 1_000,
+    }],
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.f1040?.line6a_ss_gross, 4_000);

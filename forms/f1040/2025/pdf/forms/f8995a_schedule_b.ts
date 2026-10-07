@@ -1,3 +1,7 @@
+import {
+  aggregationChangeDescription,
+  appendAggregationAnnualDisclosure,
+} from "./f8995a_aggregation_statement.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { inputSchema } from "../../../nodes/intermediate/forms/form8995a/index.ts";
 import { assertScheduleBAggregationJoin } from "../../mef/forms/f8995a_schedule_b.ts";
@@ -20,8 +24,8 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: `line2_part${part}`,
     pdfField: `${page}f1_0${part + 6}[0]`,
   })),
-  ...([1, 2] as const).flatMap((index): PdfFieldEntry[] => {
-    const start = index === 1 ? 10 : 15;
+  ...([1, 2, 3] as const).flatMap((index): PdfFieldEntry[] => {
+    const start = 10 + (index - 1) * 5;
     return [
       {
         kind: "text",
@@ -82,6 +86,12 @@ export const form8995aScheduleBPdf: PdfFormDescriptor = {
     { kind: "text", domainKey: "primarySSN", pdfField: `${page}f1_02[0]` },
   ],
   fields,
+  appendSupplementalPages(document, raw, filer, allPending) {
+    if (raw.append_annual_disclosure !== true) return;
+    const input = inputSchema.strict().parse(allPending?.form8995a_schedule_b);
+    assertScheduleBAggregationJoin(input, { filer, pending: allPending });
+    return appendAggregationAnnualDisclosure(document, input, filer);
+  },
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
     const input = inputSchema.strict().parse(raw);
@@ -90,24 +100,35 @@ export const form8995aScheduleBPdf: PdfFormDescriptor = {
       pending: allPending,
     });
     const description = paragraphLines(source.group_description);
-    return [{
-      aggregation_no: "1",
-      line1_part1: description[0],
-      line1_part2: description[1],
-      line1_part3: description[2],
-      row1_name: schedule.rows[0]?.name,
-      row1_ein: schedule.rows[0]?.ein,
-      row1_qbi: schedule.rows[0]?.qbi,
-      row1_wages: schedule.rows[0]?.w2Wages,
-      row1_ubia: schedule.rows[0]?.ubia,
-      row2_name: schedule.rows[1]?.name,
-      row2_ein: schedule.rows[1]?.ein,
-      row2_qbi: schedule.rows[1]?.qbi,
-      row2_wages: schedule.rows[1]?.w2Wages,
-      row2_ubia: schedule.rows[1]?.ubia,
-      total_qbi: schedule.totalQbi,
-      total_wages: schedule.totalW2Wages,
-      total_ubia: schedule.totalUbia,
-    }];
+    const changes = paragraphLines(aggregationChangeDescription(input) ?? "");
+    const instances: Record<string, unknown>[] = [];
+    for (let offset = 0; offset < schedule.rows.length; offset += 3) {
+      const fields: Record<string, unknown> = {
+        aggregation_no: "1",
+        append_annual_disclosure: offset === 0,
+        line1_part1: description[0],
+        line1_part2: description[1],
+        line1_part3: description[2],
+        line2_part1: changes[0],
+        line2_part2: changes[1],
+        line2_part3: changes[2],
+        ...(offset === 0
+          ? {
+            total_qbi: schedule.totalQbi,
+            total_wages: schedule.totalW2Wages,
+            total_ubia: schedule.totalUbia,
+          }
+          : {}),
+      };
+      schedule.rows.slice(offset, offset + 3).forEach((row, i) => {
+        fields[`row${i + 1}_name`] = row.name;
+        fields[`row${i + 1}_ein`] = row.ein;
+        fields[`row${i + 1}_qbi`] = row.qbi;
+        fields[`row${i + 1}_wages`] = row.w2Wages;
+        fields[`row${i + 1}_ubia`] = row.ubia;
+      });
+      instances.push(fields);
+    }
+    return instances;
   },
 };

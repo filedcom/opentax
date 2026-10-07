@@ -1,4 +1,5 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { scheduleJChildElectionTax } from "../../schedule_j_child_tax_join.ts";
 
 // Verified against the 2025 IRS Schedule J AcroForm. Page 1 has the name and
 // SSN followed by lines 1-17; page 2 has lines 18-23.
@@ -63,6 +64,9 @@ export const scheduleJPdf: PdfFormDescriptor = {
     const line15 = form1040?.line15_taxable_income;
     const line16 = form1040?.line16_income_tax;
     const specialTax = form1040?.form4972_tax ?? 0;
+    const childTax = scheduleJChildElectionTax(
+      allPending as Record<string, unknown>,
+    );
     if (
       typeof specialTax !== "number" || !Number.isSafeInteger(specialTax) ||
       specialTax < 0 || (specialTax > 0 && allPending.form4972 === undefined)
@@ -73,7 +77,7 @@ export const scheduleJPdf: PdfFormDescriptor = {
       typeof line15 !== "number" || !Number.isFinite(line15) ||
       typeof line16 !== "number" || !Number.isFinite(line16) ||
       raw.line1 !== Math.round(line15) ||
-      raw.line23 !== Math.round(line16) - specialTax
+      raw.line23 !== Math.round(line16) - specialTax - childTax
     ) {
       throw new Error(
         "Schedule J PDF needs lines 1 and 23 to match finalized Form 1040 lines 15 and 16",

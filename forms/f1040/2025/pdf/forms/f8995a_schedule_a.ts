@@ -1,3 +1,5 @@
+import { qbiPercentageForPdf } from "../qbi-percentage.ts";
+import { assertSstbScheduleCSource } from "../../mef/forms/f8995a-sstb-source.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
   assertMfsSstbOwner,
@@ -60,13 +62,15 @@ export function projectOneSstbScheduleA(
     );
   }
   if (
-    allPending.form8995 !== undefined ||
+    allPending.form8995?.qbi_deduction !== undefined ||
+    allPending.form8995?.line15 !== undefined ||
     allPending.form8995a_schedule_d !== undefined
   ) {
     throw new Error(
       "Form 8995-A Schedule A PDF cannot accompany Form 8995 or Schedule D",
     );
   }
+  assertSstbScheduleCSource(input, allPending);
   const lines = calculateOneSstb8995ALines(input);
   assertZeroReductionScheduleAReturn(input, lines, allPending);
   if (allPending.f1040?.line13_qbi_deduction !== lines.line39) {
@@ -84,8 +88,8 @@ export function projectOneSstbScheduleA(
     line6: lines.threshold,
     line7: lines.line33 - lines.threshold,
     line8: lines.phaseInRange,
-    line9: lines.phaseIn * 100,
-    line10: lines.applicable * 100,
+    line9: qbiPercentageForPdf(lines.phaseIn),
+    line10: qbiPercentageForPdf(lines.applicable),
     line11: lines.line2,
     line12: lines.line4,
     line13: lines.line7,
@@ -101,9 +105,10 @@ export const form8995aScheduleAPdf: PdfFormDescriptor = {
   ],
   fields,
   projectFields: projectOneSstbScheduleA,
-  instances(raw, filer) {
+  instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
-    const input = inputSchema.strict().parse(raw);
+    const input = inputSchema.strict().parse(allPending?.form8995a_schedule_a);
+    assertSstbScheduleCSource(input, allPending, filer?.primarySSN, filer);
     if (input.filing_status === NodeFilingStatus.MFS) {
       if (
         !filer ||

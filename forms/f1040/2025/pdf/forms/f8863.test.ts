@@ -1,3 +1,9 @@
+import {
+  adultEducationReview,
+  educationDependentReview,
+  educationGeneralReview,
+  educationOwnershipReview,
+} from "../form8863-owner-review.fixture.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import { type FilerIdentity, FilingStatus } from "../../../mef/header.ts";
 import { FilingStatus as SourceFilingStatus } from "../../../nodes/types.ts";
@@ -14,6 +20,7 @@ const student = {
   credit_type: "aoc" as const,
   student_name: "Student Test",
   student_ssn: "222-33-4444",
+  ownership_review: educationOwnershipReview("222-33-4444"),
   filer_magi: 70_000,
   filing_status: SourceFilingStatus.Single,
   aoc_adjusted_expenses: 4_000,
@@ -61,10 +68,19 @@ const worksheet = {
   schedule3_line6d: 0,
   schedule3_line6l: 0,
 };
-const source = { f8863s: [student], credit_limit_worksheet: worksheet };
+const source = {
+  claimant_review: adultEducationReview,
+  f8863s: [student],
+  credit_limit_worksheet: worksheet,
+};
 const final = {
+  general: educationGeneralReview,
   f1040: {
     filing_status: "single",
+    dependent_details: [
+      educationDependentReview("222-33-4444"),
+      educationDependentReview("333-44-5555"),
+    ],
     line11_agi: 70_000,
     line18_total_tax_before_credits: 10_000,
     line29_refundable_aoc: 1_000,
@@ -105,6 +121,7 @@ Deno.test("Form 8863 PDF adds only a Part III page for a second student", () => 
     credit_type: "llc" as const,
     student_name: "Scholar Test",
     student_ssn: "333-44-5555",
+    ownership_review: educationOwnershipReview("333-44-5555"),
     aoc_adjusted_expenses: undefined,
     llc_adjusted_expenses: 5_000,
     education_expense_workpaper: {
@@ -118,6 +135,7 @@ Deno.test("Form 8863 PDF adds only a Part III page for a second student", () => 
   };
   const instances = form8863Pdf.instances?.(
     {
+      claimant_review: adultEducationReview,
       f8863s: [student, llc],
       credit_limit_worksheet: worksheet,
     },
@@ -132,6 +150,45 @@ Deno.test("Form 8863 PDF adds only a Part III page for a second student", () => 
   assertEquals(form8863Pdf.pageIndices?.(instances[1]), [1]);
   assertEquals(instances[1].pdf_line31, 5_000);
   assertEquals(instances[1].line19, undefined);
+});
+
+Deno.test("Form 8863 PDF prints zero on AOC lines 28 and 29 below the first tier", () => {
+  const firstTierStudent = {
+    ...student,
+    aoc_adjusted_expenses: 2_000,
+    education_expense_workpaper: {
+      ...student.education_expense_workpaper,
+      form1098t_box1_payments: 2_000,
+      paid_tuition_required_fees: 2_000,
+    },
+  };
+  const [projected] = form8863Pdf.instances?.(
+    {
+      ...source,
+      claimant_review: adultEducationReview,
+      f8863s: [firstTierStudent],
+    },
+    filer,
+    {
+      ...final,
+      f1040: { ...final.f1040, line29_refundable_aoc: 800 },
+      schedule3: { line3_education_credit: 1_200 },
+    },
+  ) ?? [];
+  assertEquals(projected.pdf_line27, 2_000);
+  assertEquals(projected.pdf_line28, 0);
+  assertEquals(projected.pdf_line29, 0);
+  assertEquals(projected.pdf_line30, 2_000);
+  for (const line of [28, 29]) {
+    const field = form8863Pdf.fields.find((entry) =>
+      entry.domainKey === `pdf_line${line}`
+    );
+    assertEquals(
+      field?.pdfField,
+      `topmostSubform[0].Page2[0].f2_${line + 4}[0]`,
+    );
+    assertEquals(field?.kind === "text" && field.printZero, true);
+  }
 });
 
 Deno.test("Form 8863 PDF closes ambiguous institution and unreconciled return paths", () => {
@@ -154,6 +211,7 @@ Deno.test("Form 8863 PDF closes ambiguous institution and unreconciled return pa
       form8863Pdf.instances?.(
         {
           ...source,
+          claimant_review: adultEducationReview,
           f8863s: [{
             ...student,
             filing_details: {
@@ -176,6 +234,7 @@ Deno.test("Form 8863 PDF closes ambiguous institution and unreconciled return pa
       form8863Pdf.instances?.(
         {
           ...source,
+          claimant_review: adultEducationReview,
           f8863s: [{
             ...student,
             filing_details: {
@@ -195,6 +254,6 @@ Deno.test("Form 8863 PDF closes ambiguous institution and unreconciled return pa
         final,
       ),
     Error,
-    "needs one U.S. institution, received 2025 Form 1098-T",
+    "needs one U.S. institution and an education expense workpaper",
   );
 });

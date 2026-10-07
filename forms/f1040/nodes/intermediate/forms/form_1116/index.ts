@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ty2025IrsCountryCodeSchema } from "../../../irs_country_code.ts";
 import type {
   NodeOutput,
   NodeResult,
@@ -96,15 +97,15 @@ export const twoCountryInterestPdfReviewSchema = singleSourcePdfReviewSchema
     domestic_interest_source_document_reference: true,
   }).extend({
     column_a_source_document_reference: z.string().trim().min(1),
-    column_a_irs_country_code: z.string().length(2),
+    column_a_irs_country_code: ty2025IrsCountryCodeSchema,
     column_b_source_document_reference: z.string().trim().min(1),
-    column_b_irs_country_code: z.string().length(2),
+    column_b_irs_country_code: ty2025IrsCountryCodeSchema,
   }).strict();
 
 export const threeCountryInterestPdfReviewSchema =
   twoCountryInterestPdfReviewSchema.extend({
     column_c_source_document_reference: z.string().trim().min(1),
-    column_c_irs_country_code: z.string().length(2),
+    column_c_irs_country_code: ty2025IrsCountryCodeSchema,
   }).strict();
 
 export const twoCountryTreasuryPdfReviewSchema =
@@ -121,15 +122,15 @@ export const twoCountryMixedPdfReviewSchema = twoCountryInterestPdfReviewSchema
     column_b_irs_country_code: true,
   }).extend({
     column_a_interest_source_document_reference: z.string().trim().min(1),
-    column_a_interest_irs_country_code: z.string().length(2),
+    column_a_interest_irs_country_code: ty2025IrsCountryCodeSchema,
     column_b_dividend_source_document_reference: z.string().trim().min(1),
-    column_b_dividend_irs_country_code: z.string().length(2),
+    column_b_dividend_irs_country_code: ty2025IrsCountryCodeSchema,
   }).strict();
 
 export const threeCountryMixedPdfReviewSchema = twoCountryMixedPdfReviewSchema
   .extend({
     column_c_interest_source_document_reference: z.string().trim().min(1),
-    column_c_interest_irs_country_code: z.string().length(2),
+    column_c_interest_irs_country_code: ty2025IrsCountryCodeSchema,
   }).strict();
 
 export const partnershipK3PassiveInterestSchema = z.object({
@@ -140,7 +141,7 @@ export const partnershipK3PassiveInterestSchema = z.object({
   part_ii_section_1_line_24_passive_total: z.number().finite().positive(),
   part_iii_section_4_line_1_foreign_tax: z.number().finite().positive(),
   part_iii_section_4_line_2_tax_reduction: z.number().finite().positive(),
-  irs_country_code: z.string().length(2),
+  irs_country_code: ty2025IrsCountryCodeSchema,
   tax_paid_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
   foreign_tax_currency: foreignTaxCurrencySchema,
   no_other_income_tax_or_reduction_on_k3_confirmed: z.literal(true),
@@ -154,7 +155,7 @@ export const sCorpK3PassiveInterestSchema = z.object({
   part_ii_section_1_line_24_passive_total: z.number().finite().positive(),
   part_iii_section_3_line_1_foreign_tax: z.number().finite().positive(),
   part_iii_section_3_line_2_tax_reduction: z.number().finite().positive(),
-  irs_country_code: z.string().length(2),
+  irs_country_code: ty2025IrsCountryCodeSchema,
   tax_paid_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
   foreign_tax_currency: foreignTaxCurrencySchema,
   no_other_income_tax_or_reduction_on_k3_confirmed: z.literal(true),
@@ -240,7 +241,7 @@ export const foreignTaxItemSchema = z.object({
   direct_expense_explanation: z.string().trim().min(1).max(9000).optional(),
   apportioned_deductions: z.number().nonnegative().optional(),
   excluded_income: z.number().nonnegative().optional(),
-  irs_country_code: z.string().length(2).optional(),
+  irs_country_code: ty2025IrsCountryCodeSchema.optional(),
   tax_paid_or_accrued_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   tax_kind: z.nativeEnum(ForeignTaxKind).optional(),
   tax_credit_method: z.nativeEnum(ForeignTaxCreditMethod).optional(),
@@ -291,7 +292,7 @@ const payorIdentifierSchema = z.discriminatedUnion("kind", [
 const payorRedeterminationSchema = z.object({
   payor_name: z.string().trim().min(1),
   payor_identifier: payorIdentifierSchema,
-  irs_country_code: z.string().regex(/^[A-Z]{2}$/),
+  irs_country_code: ty2025IrsCountryCodeSchema,
   foreign_tax_year_end: taxDateSchema,
   payor_foreign_income_subject_to_tax: moneySchema,
   local_currency_code: z.string().regex(/^[A-Z]{3}$/),
@@ -604,7 +605,7 @@ const vehicleInterestAssetSchema = z.object({
   ending_tax_book_value: z.number().finite().nonnegative(),
   income_source: z.enum(["us", "foreign"]),
   income_category: z.nativeEnum(IncomeCategory).optional(),
-  irs_country_code: z.string().length(2).optional(),
+  irs_country_code: ty2025IrsCountryCodeSchema.optional(),
 });
 
 const vehicleInterestAssetMethodSchema = z.object({

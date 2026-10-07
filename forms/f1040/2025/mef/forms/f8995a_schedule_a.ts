@@ -1,3 +1,4 @@
+import { assertSstbScheduleCSource } from "./f8995a-sstb-source.ts";
 import {
   assertMfsSstbOwner,
   calculateOneSstb8995ALines,
@@ -57,6 +58,12 @@ function buildScheduleA(rawFields: Input, context?: MefBuildContext): string {
       "Form 8995-A Schedule A bounded route cannot include Schedule D",
     );
   }
+  assertSstbScheduleCSource(
+    fields,
+    context?.pending,
+    context?.filer?.primarySSN,
+    context?.filer,
+  );
   const lines = calculateOneSstb8995ALines(fields);
   assertZeroReductionScheduleAReturn(fields, lines, context?.pending);
   const expectedStatus = fields.filing_status === NodeFilingStatus.MFJ

@@ -43,6 +43,8 @@ export async function buildForm8978Statements(
   return await Promise.all(input.filings.map(async (filing, index) => {
     const calculation = calculateFiling(filing);
     const pdf = await PDFDocument.create({ updateMetadata: false });
+    pdf.setCreationDate(new Date("2025-12-31T12:00:00Z"));
+    pdf.setModificationDate(new Date("2025-12-31T12:00:00Z"));
     const regular = await pdf.embedFont(StandardFonts.Helvetica);
     const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
     let page: PDFPage = pdf.addPage([612, 792]);

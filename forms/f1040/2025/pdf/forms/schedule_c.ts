@@ -1,8 +1,14 @@
+import { assertFarmWotcReturn } from "../../form8995_farm_wotc_reconciliation.ts";
+import { filedOwnedScheduleC } from "../../../nodes/owned-business-filing.ts";
+import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
+import { reconcileForm8941DocumentSource } from "../../mef/forms/f8941_source.ts";
+import { roundSignedQbiDollars } from "../../../nodes/inputs/schedule_c/qbi-multiple.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
 import { FilingStatus, filingStatusSchema, TS } from "../../../nodes/types.ts";
 import { FilingStatus as MefFilingStatus } from "../../../mef/header.ts";
 import {
+  assertScheduleCConditionalAnswers,
   assertScheduleCInterestExempt,
   computeCOGS,
   computeGrossIncome,
@@ -138,6 +144,7 @@ function requirePrintable(
   item: ScheduleCItem,
   filingStatus: unknown,
 ): void {
+  assertScheduleCConditionalAnswers(item);
   if (
     item.proprietor_recipient === undefined &&
     (!filingStatusSchema.safeParse(filingStatus).success ||
@@ -226,6 +233,7 @@ function projectBusiness(
   item: ScheduleCItem,
   wotcReduction: number,
   filingStatus: unknown,
+  filing?: ReturnType<typeof filedOwnedScheduleC>,
 ): Record<string, unknown> {
   requirePrintable(item, filingStatus);
   const line1 = item.line_1_gross_receipts;
@@ -235,10 +243,10 @@ function projectBusiness(
   const line5 = line3 - line4;
   const line6 = item.line_6_other_income ?? 0;
   const line7 = computeGrossIncome(item);
-  const line28 = computeTotalExpenses(item, wotcReduction);
+  const line28 = filing?.expenses ?? computeTotalExpenses(item, wotcReduction);
   const line29 = line7 - line28;
   const line30 = homeOfficeDeduction(item, line29);
-  const line31 = computeNetProfit(item, wotcReduction);
+  const line31 = filing?.profit ?? computeNetProfit(item, wotcReduction);
   if (item.professional_gambler === true && line31 !== line29 - line30) {
     throw new Error(
       "Schedule C PDF cannot print clamped professional-gambler loss",
@@ -300,11 +308,14 @@ function projectBusiness(
     line5,
     line6,
     line7,
-    line_24b_meals: (item.line_24b_meals ?? 0) * mealsDeductiblePct(item),
+    line_24b_meals: filing?.meals_deduction ??
+      (item.line_24b_meals ?? 0) * mealsDeductiblePct(item),
     line_26_wages: wagesLessEmploymentCredits(item, wotcReduction),
     line27b: line48,
     line28,
-    line29,
+    line29: item.qbi_se_tax_allocation_review
+      ? roundSignedQbiDollars(line29)
+      : line29,
     line30_total_home_sq_ft: item.home_office_method === "simplified"
       ? item.home_total_sq_ft
       : undefined,
@@ -312,7 +323,9 @@ function projectBusiness(
       ? item.home_office_sq_ft
       : undefined,
     line30,
-    line31,
+    line31: item.qbi_se_tax_allocation_review
+      ? roundSignedQbiDollars(line31)
+      : line31,
     line35: item.line_35_cogs_beginning_inventory,
     line36: item.line_36_purchases,
     line37: item.line_37_cost_of_labor,
@@ -390,6 +403,15 @@ export const scheduleCPdf: PdfFormDescriptor = {
   fields,
   projectFields(raw, allPending) {
     if (Object.keys(raw).length === 0) return { schedule_c_instances: [] };
+    if (allPending.schedule_f) {
+      assertFarmWotcReturn(
+        allPending.form8995a ?? allPending.form8995,
+        allPending,
+        undefined,
+        { key: "schedule_c", value: raw },
+      );
+    }
+
     const input = inputSchema.parse(raw);
     if (
       allPending.f3115 ||
@@ -441,6 +463,9 @@ export const scheduleCPdf: PdfFormDescriptor = {
         "Schedule C PDF line 30 needs a linked Form 8829 calculation",
       );
     }
+    if (input.form8941_premium_reductions?.length) {
+      reconcileForm8941DocumentSource(allPending.f8941, allPending);
+    }
     const items = projectScheduleCItems(input);
     items.forEach((item) =>
       assertScheduleCInterestExempt(
@@ -476,9 +501,24 @@ export const scheduleCPdf: PdfFormDescriptor = {
     return {
       schedule_c_instances: items.map((item, index) => ({
         ...projectBusiness(
-          printableBusiness(item, allPending),
+          printableBusiness(
+            input.patron_filing_review
+              ? patronFiledBusinessLines("schedule_c", item)
+                .filed_source as typeof item
+              : filedOwnedScheduleC(
+                item,
+                false,
+                wotc.get(item.business_reference ?? "") ?? 0,
+              )?.filed_source ?? item,
+            allPending,
+          ),
           wotc.get(item.business_reference ?? "") ?? 0,
           allPending.general?.filing_status,
+          filedOwnedScheduleC(
+            item,
+            Boolean(input.patron_filing_review),
+            wotc.get(item.business_reference ?? "") ?? 0,
+          ),
         ),
         business_copy_number: index + 1,
         ...proprietorIdentity(allPending, item.proprietor_recipient),

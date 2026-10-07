@@ -11,8 +11,9 @@ export const form8864: MefFormDescriptor<"f8864", unknown> = {
     if (raw === undefined || raw === null) return "";
     if (
       !context?.pending ||
-      context.documentIdsByPendingKey?.f3800?.length !== 1 ||
-      context.documentIdsByPendingKey?.form6251?.length !== 1
+      (context.phase !== "discovery" &&
+        (context.documentIdsByPendingKey?.f3800?.length !== 1 ||
+          context.documentIdsByPendingKey?.form6251?.length !== 1))
     ) {
       throw new Error("Form 8864 needs sourced Form 3800 and AMT documents");
     }

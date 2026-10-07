@@ -1,3 +1,15 @@
+import {
+  allocateDebtInventory,
+  allocateThreeDebtReductions,
+  allocateTwoDebtReductions,
+} from "../nodes/intermediate/forms/form7203/debt-allocation.ts";
+import { isDeepStrictEqual } from "node:util";
+import { FilingStatus } from "../mef/header.ts";
+import {
+  ownedDebtFamily,
+  ownedDebtFamilyQbiLines,
+} from "../nodes/intermediate/forms/form7203/owned-family.ts";
+import { ownedSCorpLossLines } from "../nodes/intermediate/forms/form8995/owned-s-corp-loss.ts";
 import { z } from "zod";
 import type { FilerIdentity } from "../mef/header.ts";
 import { inputSchema as k1SCorpInputSchema } from "../nodes/inputs/k1_s_corp/index.ts";
@@ -7,13 +19,14 @@ import {
   reconcileCashCapitalAndNewNote,
   reconcileNewFormalNotes,
   sumPrincipalRepayments,
+  totalCurrentDebtAdvances,
 } from "../nodes/intermediate/forms/form7203/debt-note.ts";
 
 const pendingRecordSchema = z.record(z.string(), z.unknown());
 
 // Shared by the staged native and PDF projections. It is deliberately strict:
 // the historical loose basis number is not a filing-source alternative.
-export function projectReviewedStockLoss7203(
+function projectSingleReviewedStockLoss7203(
   rawFields: Record<string, unknown>,
   allPending: Readonly<Record<string, unknown>>,
   filer: FilerIdentity | undefined,
@@ -92,8 +105,7 @@ export function projectReviewedStockLoss7203(
           note.beginning_stock_basis_workpaper_reference ||
         ledger.shareholder_ssn !== note.shareholder_ssn ||
         ledger.corporation_ein !== note.corporation_ein ||
-        fields.new_loans !== note.cash_advance_amount +
-            (note.second_formal_note?.cash_advance_amount ?? 0) ||
+        fields.new_loans !== totalCurrentDebtAdvances(note) ||
         JSON.stringify(fields.reviewed_debt_evidence) !== JSON.stringify(note)
       : !ledger.no_shareholder_debt_or_repayments ||
         fields.new_loans !== undefined ||
@@ -106,6 +118,16 @@ export function projectReviewedStockLoss7203(
   const availableBasis = basis + contribution;
   const normalizedName = (value: string) =>
     value.trim().toUpperCase().replace(/\s+/g, " ");
+  const isSpouse = filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+    ledger.shareholder_ssn === filer.spouse?.ssn;
+  const shareholderSSN = isSpouse ? filer.spouse!.ssn : filer.primarySSN;
+  const shareholderName = isSpouse
+    ? [
+      filer.spouse!.firstName,
+      filer.spouse!.middleInitial,
+      filer.spouse!.lastName,
+    ].filter(Boolean).join(" ")
+    : filer.fullName ?? filer.nameLine1;
   const validBusinessName = /^([A-Za-z0-9#\-()&'] ?)*[A-Za-z0-9#\-()&']$/;
   if (
     !Number.isSafeInteger(currentLoss) || currentLoss <= 0 ||
@@ -115,9 +137,9 @@ export function projectReviewedStockLoss7203(
     !source.source_document_reference ||
     source.stock_basis_beginning !== undefined ||
     source.debt_basis_beginning !== undefined ||
-    ledger.shareholder_ssn !== filer.primarySSN ||
+    ledger.shareholder_ssn !== shareholderSSN ||
     normalizedName(ledger.shareholder_name_as_on_k1) !==
-      normalizedName(filer.fullName ?? filer.nameLine1) ||
+      normalizedName(shareholderName) ||
     fields.stock_basis_beginning !== basis ||
     (fields.additional_contributions ?? 0) !== contribution ||
     fields.ordinary_loss !== currentLoss ||
@@ -150,23 +172,56 @@ export function projectReviewedStockLoss7203(
     ? note.cash_advance_amount -
       sumPrincipalRepayments(note.principal_repayments)
     : 0;
-  const secondDebtBasis = (note?.second_formal_note?.cash_advance_amount ?? 0) -
+  const secondDebtBasis = (note?.second_formal_note?.cash_advance_amount ??
+    note?.open_account_net_advance_amount ?? 0) -
     (note?.second_formal_note?.principal_repayment?.amount ?? 0);
+  const thirdDebtBasis = note?.kind === "owned_2025_formal_and_open_account" &&
+      note.second_formal_note
+    ? note.open_account_net_advance_amount
+    : 0;
+  const inventoryCapacities = note?.additional_formal_notes
+    ? [
+      firstDebtBasis,
+      secondDebtBasis,
+      ...note.additional_formal_notes.map((n) =>
+        n.cash_advance_amount - (n.principal_repayment?.amount ?? 0)
+      ),
+      thirdDebtBasis,
+    ]
+    : undefined;
   const allowedDebt = note
     ? Math.min(
       currentLoss - allowedStock,
-      firstDebtBasis + secondDebtBasis,
+      inventoryCapacities?.reduce((a, b) => a + b, 0) ??
+        firstDebtBasis + secondDebtBasis + thirdDebtBasis,
     )
     : 0;
-  const allowedDebt1 = secondDebtBasis > 0
-    ? allowedDebt * firstDebtBasis / (firstDebtBasis + secondDebtBasis)
-    : allowedDebt;
+  const inventoryAllocation = inventoryCapacities
+    ? allocateDebtInventory(allowedDebt, inventoryCapacities)
+    : undefined;
+  const three = note?.kind === "owned_2025_formal_and_open_account" &&
+      note.second_formal_note && !note.additional_formal_notes
+    ? allocateThreeDebtReductions(allowedDebt, [
+      firstDebtBasis,
+      secondDebtBasis,
+      thirdDebtBasis,
+    ])
+    : undefined;
+  const allowedDebt1 = inventoryAllocation?.filed[0] ?? three?.filed[0] ??
+    (note?.kind === "owned_2025_formal_and_open_account"
+      ? allocateTwoDebtReductions(allowedDebt, firstDebtBasis, secondDebtBasis)
+        .first
+      : secondDebtBasis > 0
+      ? allowedDebt * firstDebtBasis / (firstDebtBasis + secondDebtBasis)
+      : allowedDebt);
   if (!Number.isSafeInteger(allowedDebt1)) {
     throw new Error(
       "Form 7203 two-note loss does not allocate in exact whole dollars",
     );
   }
-  const allowedDebt2 = allowedDebt - allowedDebt1;
+  const allowedDebt2 = inventoryAllocation?.filed[1] ?? three?.filed[1] ??
+    (allowedDebt - allowedDebt1);
+  const allowedDebt3 = inventoryAllocation?.filed[2] ?? three?.filed[2] ?? 0;
   const allowed = allowedStock + allowedDebt;
   const carryover = currentLoss - allowed;
   const schedule1 = pendingRecordSchema.parse(allPending.schedule1);
@@ -184,6 +239,28 @@ export function projectReviewedStockLoss7203(
     );
   }
 
+  if (note?.owned_current_records !== undefined) {
+    const qbi = pendingRecordSchema.parse(allPending.form8995);
+    const f = form1040;
+    const expected = ownedSCorpLossLines(
+      source,
+      Math.max(
+        0,
+        Number(f.line11_agi) - Number(f.line12c_deduction_total) -
+          Number(f.line13b_additional_deductions ?? 0),
+      ),
+    );
+    if (
+      Object.entries(expected).some(([key, value]) => qbi[key] !== value) ||
+      qbi.qbi_deduction !== 0 || qbi.qbi !== -allowed ||
+      carryover !== currentLoss - allowed
+    ) {
+      throw Error(
+        "Owned Form7203 basis limitation must retain its distinct current qualified-loss carry on the actual Form8995",
+      );
+    }
+  }
+
   return {
     source,
     ledger,
@@ -196,7 +273,117 @@ export function projectReviewedStockLoss7203(
     allowedDebt,
     allowedDebt1,
     allowedDebt2,
+    allowedDebt3,
     allowed,
     carryover,
   };
+}
+
+export function projectReviewedStockLoss7203(
+  rawFields: Record<string, unknown>,
+  allPending: Readonly<Record<string, unknown>>,
+  filer: FilerIdentity | undefined,
+) {
+  if (rawFields.owned_debt_loss_sources !== undefined) {
+    if (
+      Object.keys(rawFields).some((k) =>
+        k !== "owned_debt_loss_sources" && k !== "owned_debt_loss_copy_index"
+      )
+    ) {
+      throw Error(
+        "Owned MFJ basis copies cannot mix scalar or unreviewed basis fields",
+      );
+    }
+    const projections = projectOwned7203Family(rawFields, allPending, filer);
+    const index = rawFields.owned_debt_loss_copy_index;
+    if (
+      typeof index !== "number" || !Number.isInteger(index) || index < 0 ||
+      index >= projections.length
+    ) throw Error("Owned MFJ Form7203 needs its actual selected source copy");
+    return projections[index];
+  }
+  return projectSingleReviewedStockLoss7203(rawFields, allPending, filer);
+}
+
+export function projectOwned7203Family(
+  rawFields: Record<string, unknown>,
+  allPending: Readonly<Record<string, unknown>>,
+  filer: FilerIdentity | undefined,
+) {
+  if (
+    !filer || filer.filingStatus !== FilingStatus.MarriedFilingJointly ||
+    !filer.spouse?.ssn
+  ) {
+    throw Error(
+      "Owned spouse debt family requires the actual identified MFJ return",
+    );
+  }
+  const sources = k1SCorpInputSchema.parse(allPending.k1_s_corp).k1_s_corps;
+  if (
+    !isDeepStrictEqual(rawFields.owned_debt_loss_sources, sources) ||
+    !isDeepStrictEqual(
+      (allPending.form7203 as any)?.owned_debt_loss_sources,
+      sources,
+    )
+  ) {
+    throw Error(
+      "Owned MFJ basis copies must retain the complete actual source inventory",
+    );
+  }
+  const family = ownedDebtFamily(sources);
+  const owners = new Set(family.rows.map((r) => r.source.recipient_tin));
+  if (
+    [...owners].some((ssn) =>
+      ssn !== filer.primarySSN && ssn !== filer.spouse!.ssn
+    )
+  ) {
+    throw Error(
+      "Owned MFJ debt sources must belong separately to primary and spouse",
+    );
+  }
+  const sch = pendingRecordSchema.parse(allPending.schedule1),
+    f = pendingRecordSchema.parse(allPending.f1040),
+    qbi = pendingRecordSchema.parse(allPending.form8995);
+  const taxable = Math.max(
+    0,
+    Number(f.line11_agi) - Number(f.line12c_deduction_total) -
+      Number(f.line13b_additional_deductions ?? 0),
+  );
+  const expected = ownedDebtFamilyQbiLines(sources, taxable);
+  if (
+    sch.line5_schedule_e !== -family.allowed ||
+    f.line8_additional_income !== sch.line10_total_additional_income ||
+    qbi.qbi !== -family.allowed ||
+    !isDeepStrictEqual(qbi.owned_s_corp_loss_sources, sources) ||
+    Object.entries(expected).some(([k, v]) => !isDeepStrictEqual(qbi[k], v))
+  ) {
+    throw Error(
+      "Owned MFJ basis losses/carries and jointQBI must reconcile independently before summing",
+    );
+  }
+  return family.rows.map((r) => {
+    const delta = family.allowed - r.basis.allowedLoss;
+    const virtual = {
+      ...allPending,
+      k1_s_corp: { k1_s_corps: [r.source] },
+      form7203: r.fields,
+      schedule1: {
+        ...sch,
+        line5_schedule_e: -r.basis.allowedLoss,
+        line10_total_additional_income:
+          Number(sch.line10_total_additional_income) + delta,
+      },
+      f1040: {
+        ...f,
+        line8_additional_income: Number(f.line8_additional_income) + delta,
+      },
+      form8995: {
+        ...qbi,
+        ...ownedSCorpLossLines(r.source, taxable),
+        qbi: -r.basis.allowedLoss,
+        owned_s_corp_loss_source: r.source,
+      },
+    };
+    return projectSingleReviewedStockLoss7203(r.fields, virtual, filer);
+  });
 }

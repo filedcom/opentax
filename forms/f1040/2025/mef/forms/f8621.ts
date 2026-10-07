@@ -2,9 +2,15 @@ import { element, elements } from "../../../mef/xml.ts";
 import type { Form8621Lines } from "../../../nodes/inputs/f8621/index.ts";
 import { PficRegime } from "../../../nodes/inputs/f8621/index.ts";
 import { ExcessEventKind } from "../../../nodes/inputs/f8621/excess_distribution.ts";
-import { projectForm8621ParentSource } from "../../form8621_parent_source.ts";
+import { calculateMtmDisposition } from "../../../nodes/inputs/f8621/mtm_disposition.ts";
+import { calculateSection1294PriorStatus } from "../../../nodes/inputs/f8621/section1294.ts";
+import {
+  assertForm8621PrintableSource,
+  projectForm8621ParentSource,
+} from "../../form8621_parent_source.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { explainForm8621ExcessStatement } from "./f8621_excess_statement.ts";
+import { form8621ElectionBTaxForHolding } from "../../form8621_1294_allocation.ts";
 
 type Input = { items?: readonly Form8621Lines[] };
 
@@ -67,6 +73,7 @@ function buildItem(
   context?: MefBuildContext,
 ): string {
   const { item } = line;
+  if (context?.pending) assertForm8621PrintableSource(item);
   const parent = item.parent_source
     ? projectForm8621ParentSource(item)
     : undefined;
@@ -83,6 +90,29 @@ function buildItem(
   const qefGain = item.qef_capital_gain ?? 0;
   const qefOrdinaryReduction = item.qef_ordinary_951_or_1293g_reduction ?? 0;
   const qefCapitalReduction = item.qef_capital_951_or_1293g_reduction ?? 0;
+  const qefIncome = qefOrdinary - qefOrdinaryReduction + qefGain -
+    qefCapitalReduction;
+  const qef1294 = item.qef_1294_election;
+  const electionTax = qef1294
+    ? form8621ElectionBTaxForHolding(context?.pending ?? {}, item)
+    : undefined;
+  const yearEndMtm = item.mtm_adjusted_basis_at_year_end === undefined
+    ? 0
+    : Math.max(0, item.fmv_at_year_end - item.mtm_adjusted_basis_at_year_end) -
+      Math.min(
+        Math.max(0, item.mtm_adjusted_basis_at_year_end - item.fmv_at_year_end),
+        item.mtm_unreversed_inclusions ?? 0,
+      );
+  const mtmIncome = yearEndMtm + (item.mtm_dispositions ?? []).reduce(
+    (sum, row) => sum + calculateMtmDisposition(row).ordinary,
+    0,
+  );
+  const prior1294 = parent?.section1294_prior_status
+    ? calculateSection1294PriorStatus(
+      parent.section1294_prior_status,
+      item.company_ein_or_ref,
+    )
+    : [];
   const hasEin = /^\d{2}-?\d{7}$/.test(item.company_ein_or_ref);
   const currencies = new Set(
     line.excessEvents.filter((event) =>
@@ -160,11 +190,20 @@ function buildItem(
           : undefined,
       )
       : "",
-    item.regime === PficRegime.QEF ? element("Section1293Ind", "X") : "",
-    item.regime === PficRegime.MTM ? element("Section1296Ind", "X") : "",
+    item.regime === PficRegime.QEF
+      ? element("Section1293Ind", "X", {
+        section1293Amt: String(Math.round(qefIncome)),
+      })
+      : "",
+    item.regime === PficRegime.MTM
+      ? element("Section1296Ind", "X", {
+        Section1296Amt: String(Math.round(mtmIncome)),
+      })
+      : "",
     parent?.election_status === "qef_new_2025"
       ? element("ElectionToTreatThePFICAsQEFInd", "X")
       : "",
+    qef1294 ? element("ElectToExtndTmForPymtOfTxInd", "X") : "",
     parent?.election_status === "mtm_new_2025"
       ? element("ElectionToMarkToMrktPFICStkInd", "X")
       : "",
@@ -176,10 +215,35 @@ function buildItem(
         element("ProRataShareOfTotNetCapGainAmt", qefGain),
         element("IncomePortionOfNetCapGainAmt", qefCapitalReduction),
         element("NetLongTermCapitalGainAmt", qefGain - qefCapitalReduction),
-        element(
-          "DividendIncomeAndNetLTCGAmt",
-          qefOrdinary - qefOrdinaryReduction + qefGain - qefCapitalReduction,
-        ),
+        ...(qef1294
+          ? [
+            element("DividendIncomeAndNetLTCGAmt", qefIncome),
+            element(
+              "TotalCashAndDistributionsAmt",
+              qef1294.distributions_cash_and_property_usd,
+            ),
+            element(
+              "PortionOfProRateOrdnryEarnAmt",
+              qef1294.transferred_share_earnings_usd,
+            ),
+            element(
+              "TotalCashAndPrtnOfProRataAmt",
+              qef1294.distributions_cash_and_property_usd +
+                qef1294.transferred_share_earnings_usd,
+            ),
+            element(
+              "ProRataLessCashAndPortionAmt",
+              qef1294.undistributed_ordinary_earnings_usd +
+                qef1294.undistributed_capital_gain_usd,
+            ),
+            element(
+              "TotalTaxForTaxYearAmt",
+              electionTax?.line9a,
+            ),
+            element("TotTxWithoutProRataLessCashAmt", electionTax?.line9b),
+            element("DeferredTaxAmt", electionTax?.line9c),
+          ]
+          : []),
       ].join("")
       : "",
     item.regime === PficRegime.MTM &&
@@ -208,8 +272,79 @@ function buildItem(
           : "",
       ].join("")
       : "",
+    ...((item.mtm_dispositions?.length ?? 0) > 1
+      ? [
+        element(
+          "OrdinaryIncomeFromPFICStkAmt",
+          item.mtm_dispositions!.reduce(
+            (sum, row) =>
+              sum + Math.max(0, calculateMtmDisposition(row).ordinary),
+            0,
+          ),
+        ),
+        element(
+          "LossLimitedByOrdinaryIncomeAmt",
+          item.mtm_dispositions!.reduce(
+            (sum, row) =>
+              sum + Math.min(0, calculateMtmDisposition(row).ordinary),
+            0,
+          ),
+        ),
+        element(
+          "LossExcessOfUnrvrsdInclsnAmt",
+          item.mtm_dispositions!.reduce(
+            (sum, row) => sum + calculateMtmDisposition(row).otherLoss,
+            0,
+          ),
+        ),
+      ]
+      : (item.mtm_dispositions ?? []).map((disposition) => {
+        const calculation = calculateMtmDisposition(disposition);
+        return [
+          element(
+            "FMVStkOnDtSaleOrDisposAmt",
+            disposition.fair_market_value_usd,
+          ),
+          element(
+            "AdjBasisStkOnDtSaleOrDisposAmt",
+            disposition.adjusted_basis_usd,
+          ),
+          element("OrdinaryIncomeFromPFICStkAmt", calculation.difference),
+          ...(calculation.difference < 0
+            ? [
+              element(
+                "StkSaleUnreversedInclusionsAmt",
+                disposition.unreversed_inclusions_usd,
+              ),
+              element("LossLimitedByOrdinaryIncomeAmt", calculation.ordinary),
+              ...(calculation.otherLoss > 0
+                ? [
+                  element(
+                    "LossExcessOfUnrvrsdInclsnAmt",
+                    calculation.otherLoss,
+                  ),
+                ]
+                : []),
+            ]
+            : []),
+        ].join("");
+      })),
     element("FunctionalCurrencyCd", [...currencies][0] ?? "USD"),
     ...line.excessEvents.map(buildEvent),
+    ...prior1294.map((column) =>
+      elements("ElectionStatus", [
+        element("OutstandingElectionTaxYr", column.taxYear),
+        element("UndistributedEarningsAmt", column.earnings),
+        element("DeferredTaxAmt", column.deferredTax),
+        element("InterestAccruedOnDefrdTaxAmt", column.interestAtFiling),
+        element("EventTerminatingElectionTxt", column.terminationDescription),
+        element("EarningsDistributedDurTheTYAmt", column.earningsDistributed),
+        element("DeferredTaxDueWithThisRetAmt", column.taxDue),
+        element("AccruedInterestDueThisRetAmt", column.interestDue),
+        element("DeferredTaxAfterPartialTermAmt", column.taxRemaining),
+        element("InterestAccrAftrPartlTermAmt", column.interestRemaining),
+      ])
+    ),
   ];
   return elements(
     "IRS8621",

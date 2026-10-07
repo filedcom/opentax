@@ -8,9 +8,13 @@ export type PdfFieldEntry =
   | {
     readonly kind: "text";
     readonly domainKey: string;
+    /** Retained legacy projection alias, used only when the current key is absent. */
+    readonly fallbackDomainKey?: string;
     readonly pdfField: string;
     readonly extraPdfFields?: readonly string[];
     readonly printZero?: boolean;
+    /** Explicit font size for a narrow IRS text widget proven by visual review. */
+    readonly fontSize?: number;
   }
   | {
     readonly kind: "checkbox";
@@ -110,6 +114,7 @@ export interface PdfFormDescriptor {
     filer: FilerIdentity | undefined,
     allPending?: Record<string, Record<string, unknown>>,
     preparedForm3800?: Form3800DocumentParts,
+    cacheDir?: string,
   ) => Promise<void> | void;
   /**
    * Inclusion gate evaluated against the form's pending fields. When provided,

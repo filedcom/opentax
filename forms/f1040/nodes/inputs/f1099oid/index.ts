@@ -93,11 +93,28 @@ export const inputSchema = z.object({
 type OIDItem = z.infer<typeof itemSchema>;
 type OIDItems = OIDItem[];
 
+function hasPositive1099OIDBox(item: OIDItem): boolean {
+  return [
+    item.box1_oid,
+    item.box2_other_interest,
+    item.box3_early_withdrawal_penalty,
+    item.box4_federal_withheld,
+    item.box5_market_discount,
+    item.box6_acquisition_premium,
+    item.box8_oid_treasury,
+    item.box9_investment_expenses,
+    item.box10_bond_premium,
+    item.box11_tax_exempt_oid,
+    item.box12_state_tax,
+  ].some((amount) => (amount ?? 0) > 0);
+}
+
 export function assertDistinct1099OIDCopies(items: OIDItems): void {
   const seenReferences = new Set<string>();
   const seenAccounts = new Set<string>();
   const seenOwners = new Set<string>();
   const unidentifiedCopies = new Set<string>();
+  const seenItems: OIDItem[] = [];
   for (const item of items) {
     const payer = item.payer_tin?.replace(/\D/g, "") ||
       item.payer_name.trim().replace(/\s+/g, " ").toUpperCase();
@@ -126,19 +143,40 @@ export function assertDistinct1099OIDCopies(items: OIDItems): void {
       }
       seenAccounts.add(key);
     }
-    const positive = [
-      item.box1_oid,
-      item.box2_other_interest,
-      item.box3_early_withdrawal_penalty,
-      item.box4_federal_withheld,
-      item.box5_market_discount,
-      item.box6_acquisition_premium,
-      item.box8_oid_treasury,
-      item.box9_investment_expenses,
-      item.box10_bond_premium,
-      item.box11_tax_exempt_oid,
-      item.box12_state_tax,
-    ].some((amount) => (amount ?? 0) > 0);
+    const positive = hasPositive1099OIDBox(item);
+    const payerName = item.payer_name.trim().replace(/\s+/g, " ").toUpperCase();
+    for (const earlier of seenItems) {
+      // A copy with no payer TIN must still match an identified copy from
+      // the same named payer and recipient. Two distinct supplied TINs remain
+      // distinct payers, even when their display names happen to match.
+      if (
+        earlier.recipient_tin !== item.recipient_tin ||
+        earlier.payer_name.trim().replace(/\s+/g, " ").toUpperCase() !==
+          payerName ||
+        Boolean(earlier.payer_tin?.replace(/\D/g, "")) ===
+          Boolean(item.payer_tin?.replace(/\D/g, ""))
+      ) continue;
+      if (
+        earlier.account_number && item.account_number &&
+        earlier.account_number === item.account_number &&
+        (earlier.box7_description?.trim().toUpperCase() ?? null) ===
+          (item.box7_description?.trim().toUpperCase() ?? null)
+      ) {
+        throw new Error(
+          "1099-OID repeats the same payer, recipient, account, and obligation; corrected copies need a reviewed single current row",
+        );
+      }
+      if (
+        positive && hasPositive1099OIDBox(earlier) &&
+        ((!earlier.account_number && !earlier.source_document_reference) ||
+          (!item.account_number && !item.source_document_reference))
+      ) {
+        throw new Error(
+          "1099-OID has multiple positive payer copies without account or issued source reference",
+        );
+      }
+    }
+    seenItems.push(item);
     if (!positive) continue;
     if (!item.account_number && !item.source_document_reference) {
       if (seenOwners.has(owner)) {

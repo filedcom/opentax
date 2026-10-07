@@ -1328,7 +1328,14 @@ Deno.test("form6251: line 2b refund alone does not activate the lines 2c-through
     line2b_tax_refund: 20_000,
     regular_tax: 2_000,
   });
-  assertEquals(result.outputs, []);
+  const retained = result.outputs.find((output) =>
+    output.nodeType === "form6251"
+  );
+  assertEquals(retained?.fields.line2b_tax_refund, 20_000);
+  assertEquals(retained?.fields.amti, 80_000);
+  assertEquals(retained?.fields.line11_amt, 0);
+  assertEquals(retained?.fields.must_file_for_negative_adjustments, false);
+  assertEquals(fieldsOf(result.outputs, schedule2), undefined);
 });
 
 Deno.test("form6251: Form 8911 claim files the form with zero AMT", () => {
@@ -2410,18 +2417,41 @@ Deno.test("form6251: line 2l needs distinct reviewed post-1998 property deductio
 Deno.test("form6251: exemption phases out for high-AMTI single filer", () => {
   // Single: AMTI = $700,000
   // Phase-out start = $626,350; excess = $73,650
-  // Reduction = floor(0.25 × $73,650) = floor($18,412.50) = $18,412
-  // Exemption = max(0, $88,100 − $18,412) = $69,688
-  // Line 6 = $700,000 − $69,688 = $630,312
-  // $630,312 > $239,100 → TMT = floor($630,312 × 0.28 − $4,782)
-  //   = floor($176,487.36 − $4,782) = floor($171,705.36) = $171,705
-  // AMT = $171,705 − $100,000 = $71,705
+  // Worksheet reduction retains $18,412.50 through subtraction.
+  // Resulting exemption $69,687.50 settles to filed line5 $69,688.
+  // Line6 $630,312; TMT $171,705.36 settles to line7 $171,705.
+  // AMT $171,705 − $100,000 = $71,705.
   const result = compute({
     filing_status: "single",
     regular_tax_income: 700_000,
     regular_tax: 100_000,
   });
   assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 71_705);
+});
+
+Deno.test("form6251: settle filed exemption after raw quarter-dollar worksheet subtraction", () => {
+  // i6251 worksheet5 multiplies25%; worksheet6 subtracts before filed line5.
+  for (
+    const [amti, exemption, tentative] of [[700000, 69688, 171705], [
+      700001,
+      69687,
+      171706,
+    ], [700004, 69687, 171707]]
+  ) {
+    const result = compute({
+      filing_status: "single",
+      regular_tax_income: amti,
+      regular_tax: 100000,
+    });
+    const filed = result.outputs.find((output) =>
+      output.nodeType === "form6251"
+    )?.fields as Record<string, unknown>;
+    assertEquals([filed.exemption, filed.taxable_excess, filed.tentative_tax], [
+      exemption,
+      amti - exemption,
+      tentative,
+    ]);
+  }
 });
 
 Deno.test("form6251: exemption is zero when AMTI exceeds complete phase-out threshold", () => {

@@ -74,6 +74,7 @@ Deno.test("reviewed prior-basis IRA distribution reconciles Form 8606 Part I and
   assertEquals(pending.form8606.print_line10_basis_ratio, 0.2);
   assertEquals(pending.form8606.print_line14_remaining_basis, 2_000);
   const xml = form8606.build(pending.form8606, { filer, pending });
+  assert(typeof xml === "string");
   assertStringIncludes(
     xml,
     "<NondedIRATaxYearBasisRt>0.200</NondedIRATaxYearBasisRt>",

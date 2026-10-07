@@ -1,5 +1,86 @@
 # TY2025 Form 1116 main PDF category boundary
 
+## Shared IRS country-code validation (2026-10-05)
+
+Retained Form 1116 and related foreign-source paths now use a shared exact
+258-code allowlist extracted from the local TY2025 `Common/efileTypes.xsd`.
+The source, intermediate calculation, native export, and PDF export reject
+unlisted codes; Germany `GM` passes a full-return local XSD case while ISO
+`DE` and unknown `ZZ` reject. The foreign-employer country field remains a
+separate ISO-coded field. This checks code membership, not whether every
+issuer's stated country matches the economic source of income. The integrated
+affected test suites passed 163/163; broader source authentication, visual
+page review, IRS business rules, and ATS acceptance remain open.
+
+## Three-country Germany code correction (2026-10-05)
+
+The assembled three-country interest return exposed an invalid Germany
+`ForeignCountryCd`: its source and PDF fixtures used ISO `DE`, but the TY2025
+MeF schema enumerates IRS country code `GM`. The interest fixture now uses
+`GM`, and its shared native/PDF reconciliation rejects a Germany Form 1099-INT
+with `DE`. The mixed interest/dividend route's source check, native item match,
+and printable country C also use `GM`. Both bounded examples built prepared
+native returns and filled PDF packets with two Form 1116 parent pages and two
+Schedule B pages; both assembled XML returns passed the local TY2025 v5.4 XSD.
+The seven focused cases passed. This verifies those synthetic shapes and their
+page presence; country-code coverage for every other possible source, issued
+copy authentication, visual page review, IRS business rules, and ATS remain open.
+
+## Three-country passive-interest prepared packet visual review (2026-10-05)
+
+Built the bounded Canada/France/Germany interest return from the focused
+`three-country passive interest` fixture, assembled its native MeF bundle and
+filled PDF, then rendered all pages with Poppler `pdftoppm` 26.09.0 at 150 dpi.
+The reviewed packet has eight letter-size pages in this order: Form 1040 pages
+1–2, Schedule 3, Form 1040 Schedule B, Form 1116 pages 1–2, and Schedule B
+(Form 1116) pages 1–2. The owner is Alex Example, SSN `111223333`, consistently
+printed on each document's identity header.
+
+The printed amounts agree with the fixture and generated native XML: Form 1040
+line 2b and worldwide interest are $60,000; Form 1116 columns A/B/C show
+Canada $20,000/$4,000, France $30,000/$5,000, and Germany
+$10,000/$2,000. The apportioned standard deduction is $5,250/$7,875/$2,625;
+Form 1116 allows $5,075, matching Form 1040 line 16, Schedule 3 lines 1 and 8,
+and Form 1040 line 20. Schedule B (Form 1116) reports $5,925 of current-year
+excess carried forward. Form 1040 Schedule B lists the three matching payer
+names and interest amounts. The reviewed page layouts showed no clipping,
+overlap, missing pages, or page-order issue. A first rendering exposed that Part
+I row i printed IRS codes `CA`/`FR`/`GM` even though the form requests country
+names. The PDF projection now uses the TY2025 IRS country-name map for all three
+columns, and page 5 visibly prints `Canada`/`France`/`Germany`. Native XML still
+uses the corresponding IRS codes. A fresh eight-page contact review found no
+other changed page; pages 1–4 and 6–8 retain their earlier rendered hashes.
+
+Review-only source references map Canadian Bank to `2025 Canadian Bank
+1099-INT`, French Bank to `2025 French Bank 1099-INT`, and German Bank to
+`2025 German Bank 1099-INT`; the country and amounts match the corresponding
+Form 1116 columns and Schedule B payer rows. These are synthetic reviewed
+references: no issued 1099-INT bytes were attached or authenticated, and the
+PDF does not print those reference strings. The assembled XML validates against
+the locally retained TY2025 v5.4 `Return1040.xsd`.
+
+Generated artifacts remain untracked in `.pdf-cache/` for this worktree:
+
+- PDF: `.pdf-cache/three-country-form1116-interest.pdf`, SHA-256
+  `e094253a5d942daecc26aa93c6af715735b3fb35fbce2b8346f8e203c0fd602a`.
+- Native XML: `.pdf-cache/three-country-form1116-interest.xml`, SHA-256
+  `deea823716ff39a9d27af8cc3b8d7e2f5d696993252c56b9838fad8eb4d96c89`.
+- The eight 150-dpi page PNG hashes are listed in
+  `.pdf-cache/three-country-form1116-interest-render-manifest.txt`, whose SHA-256
+  is `e893110938e9a6a84bba7c78d428b9440d800aac051f9c13f75719e3f75e50b4`.
+  Corrected page 5 is
+  `e8b8137d6dcaa93b308bd8a5baf763681504a2c0d9555b6810d93fe73e388d64`.
+
+The broader Form 1116 PDF and source test files passed (78/78), including all
+previously code-valued PDF country expectations.
+The isolated worktree lacks the ignored local XSD cache, so its test skips that
+optional check. Manual `xmllint` passed against the retained TY2025 v5.4
+`Return1040.xsd` in the main repository. Source-byte authentication, other
+combinations, IRS business rules, and ATS acceptance remain open; the review establishes only
+this prepared synthetic route and its printed PDF output. The PDF builder
+reported removing XFA form data, and `pdfinfo` reports no AcroForm; this review
+verifies the visible rendering, not interactive field behavior.
+
 ## Two ordinary foreign dividend payers in separate countries (implementation authored; bulk validation pending)
 
 Two separately identified Forms 1099-DIV with ordinary, entirely foreign-source

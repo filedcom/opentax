@@ -1,3 +1,6 @@
+import { currentPropertyPassiveAmounts } from "../../../nodes/inputs/schedule_e/current-property-source.ts";
+import { assertCurrentPassivePropertyReturn } from "../../current_passive_property_source.ts";
+import { assertCurrentPassiveLine10Return } from "../../current_passive_line10_source.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import {
   casualtyLossLines,
@@ -309,7 +312,12 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
             row.activity_id === sale.activity_id &&
             row.activity_name === sale.activity_name &&
             row.part === sale.part &&
-            row.gain === passiveSaleGain(sale) &&
+            row.gain ===
+              (activity.current_property_source
+                ? currentPropertyPassiveAmounts(
+                  activity.current_property_source,
+                ).passiveGain
+                : passiveSaleGain(sale)) &&
             row.entire_activity_interest_disposed === true
           ))
       ) {
@@ -319,11 +327,18 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
       }
       if (
         hasPassiveLoss && entireLoss === undefined &&
+        (!activity.current_property_source ||
+          currentPropertyPassiveAmounts(activity.current_property_source)
+              .passiveGain > 0) &&
         !passiveLedger?.current_4797_sale_gains?.some((row) =>
           row.activity_id === sale.activity_id &&
           row.activity_name === sale.activity_name &&
           row.part === sale.part &&
-          row.gain === passiveSaleGain(sale) &&
+          row.gain ===
+            (activity.current_property_source
+              ? currentPropertyPassiveAmounts(activity.current_property_source)
+                .passiveGain
+              : passiveSaleGain(sale)) &&
           row.entire_activity_interest_disposed ===
             sale.entire_activity_interest_disposed
         )
@@ -562,7 +577,14 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
       : "",
     ...passivePartII.map((sale) =>
       elements("OrdinaryGainLoss", [
-        element("PropertyDesc", propertyDesc(sale.property_description)),
+        element(
+          "PropertyDesc",
+          propertyDesc(
+            fields.current_property_sources !== undefined
+              ? sale.property_description.slice(0, 20)
+              : sale.property_description,
+          ),
+        ),
         element("AcquiredDt", sale.acquired_on),
         element("SoldDt", sale.sold_on),
         element("GrossSalesPriceAmt", sale.gross_sales_price),
@@ -602,6 +624,14 @@ export const form4797: MefFormDescriptor<"form4797", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f4797.pdf",
   build(fields, context) {
+    assertCurrentPassivePropertyReturn(
+      fields as Record<string, unknown>,
+      context?.pending,
+    );
+    assertCurrentPassiveLine10Return(
+      fields as Record<string, unknown>,
+      context?.pending,
+    );
     return buildIRS4797(fields, context);
   },
 };

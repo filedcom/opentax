@@ -90,7 +90,7 @@ Deno.test("schedule1a: NEC trade tips stop at one business profit after SE deduc
         ],
       }),
     Error,
-    "one Schedule C business",
+    "actual owned SE attribution",
   );
   assertThrows(
     () =>
@@ -102,7 +102,7 @@ Deno.test("schedule1a: NEC trade tips stop at one business profit after SE deduc
         }],
       }),
     Error,
-    "do not match the owner",
+    "detach the actual proprietor",
   );
 });
 

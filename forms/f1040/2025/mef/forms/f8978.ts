@@ -1,3 +1,4 @@
+import { reconcileForm8978Source } from "../../form8978_source.ts";
 import { isDeepStrictEqual } from "node:util";
 import { element, elements } from "../../../mef/xml.ts";
 import {
@@ -61,7 +62,10 @@ function buildForm(
   const scheduleId = scheduleIds?.[index];
   const statementId = context?.documentIdsByAttachmentFileName
     ?.[statementFileName(index)];
-  if (context?.documentIdsByPendingKey && !statementId) {
+  if (
+    context?.phase !== "discovery" && context?.documentIdsByPendingKey &&
+    !statementId
+  ) {
     throw new Error(
       "Form 8978 needs its tax-computation statement PDF in the MeF bundle",
     );
@@ -91,6 +95,12 @@ export const form8978: MefFormDescriptor<"f8978", Input, readonly string[]> = {
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8978.pdf",
   build(fields, context) {
+    if (fields.reviewed_source && context?.pending) {
+      reconcileForm8978Source(
+        context.pending as Record<string, Record<string, unknown>>,
+        context.filer,
+      );
+    }
     if (fields.filings && !fields.calculated_filings) {
       throw new Error(
         "Form 8978 needs calculated affected-year liabilities before MeF export",

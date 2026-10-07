@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import type {
   NodeOutput,
   NodeResult,
@@ -35,8 +36,9 @@ const sourcedAmounts = [
   "nontaxable_social_security",
 ] as const;
 const sourceIncomeSchema = z.object(
-  Object.fromEntries(sourcedAmounts.map((key) => [key, z.number().nonnegative().optional()])) as
-    Record<typeof sourcedAmounts[number], z.ZodOptional<z.ZodNumber>>,
+  Object.fromEntries(
+    sourcedAmounts.map((key) => [key, z.number().nonnegative().optional()]),
+  ) as Record<typeof sourcedAmounts[number], z.ZodOptional<z.ZodNumber>>,
 ).strict();
 const sourceReviewSchema = z.object({
   source_document_reference: z.string().trim().min(1),
@@ -45,6 +47,19 @@ const sourceReviewSchema = z.object({
   electing_parent_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
   eligibility_reviewed: z.literal(true),
   income: sourceIncomeSchema,
+  // Reviewed 1099-DIV box 2 classification for the ordinary-distribution
+  // AMT Part III path. This is a structured review, not issuer authentication.
+  capital_gain_distribution_review: z.object({
+    source_document_reference: z.string().trim().min(1),
+    payer_name: z.string().trim().min(1),
+    payer_tin: z.string().regex(/^\d{2}-?\d{7}$/),
+    box2a: z.number().nonnegative(),
+    box2b: z.number().nonnegative(),
+    box2c: z.number().nonnegative(),
+    box2d: z.number().nonnegative(),
+    box2e: z.number().nonnegative(),
+    box2f: z.number().nonnegative(),
+  }).strict().optional(),
   interest_adjustments: z.object({
     nominee_distribution: z.number().nonnegative().optional(),
     accrued_interest: z.number().nonnegative().optional(),
@@ -127,7 +142,9 @@ export function assertForm8814SourceReview(
     digits(source.child_ssn) !== digits(item.child_ssn) ||
     digits(source.electing_parent_ssn) !== digits(parentSSN)
   ) {
-    throw new Error("Form 8814 reviewed source child/parent owner differs from the filed return");
+    throw new Error(
+      "Form 8814 reviewed source child/parent owner differs from the filed return",
+    );
   }
   for (const key of sourcedAmounts) {
     if ((source.income[key] ?? 0) !== (item[key] ?? 0)) {
@@ -135,13 +152,20 @@ export function assertForm8814SourceReview(
     }
   }
   for (
-    const key of ["nominee_distribution", "accrued_interest", "abp_adjustment", "oid_adjustment"] as const
+    const key of [
+      "nominee_distribution",
+      "accrued_interest",
+      "abp_adjustment",
+      "oid_adjustment",
+    ] as const
   ) {
     if (
       (source.interest_adjustments?.[key] ?? 0) !==
         (item.interest_adjustments?.[key] ?? 0)
     ) {
-      throw new Error(`Form 8814 reviewed interest adjustment differs on ${key}`);
+      throw new Error(
+        `Form 8814 reviewed interest adjustment differs on ${key}`,
+      );
     }
   }
 }
@@ -211,6 +235,36 @@ export function calculateForm8814(item: F8814Item): Form8814Lines {
   };
 }
 
+/** Recompute every emitted child line from the reviewed election source. */
+export function assertForm8814CalculatedLines(
+  lines: readonly Form8814Lines[],
+  parentSSN: string,
+): void {
+  const owners = new Set<string>();
+  for (const line of lines) {
+    const item = itemSchema.parse(line.item);
+    assertForm8814SourceReview(item, parentSSN);
+    const owner = item.child_ssn.replaceAll("-", "");
+    if (owners.has(owner)) {
+      throw new Error("Form 8814 cannot elect twice for the same child");
+    }
+    owners.add(owner);
+    const expected = calculateForm8814(item);
+    if (expected.line4 <= UNTAXED_AMOUNT) {
+      throw new Error(
+        "Form 8814 requires child income above the $1,350 filing threshold",
+      );
+    }
+    for (const key of Object.keys(expected) as (keyof Form8814Lines)[]) {
+      if (key !== "item" && line[key] !== expected[key]) {
+        throw new Error(
+          `Form 8814 calculated ${key} differs from reviewed child income`,
+        );
+      }
+    }
+  }
+}
+
 /** Pub. 596 Worksheet 1 line 4, using Worksheet 2 for an Alaska PFD. */
 export function form8814EicLine4(line: Form8814Lines): number {
   const alaskaPfd = line.item.alaska_pfd ?? 0;
@@ -243,6 +297,7 @@ class F8814Node extends TaxNode<typeof inputSchema> {
     form8960,
     form4952,
     form6251,
+    form8995,
   ]);
 
   compute(_ctx: NodeContext, rawInput: F8814Input): NodeResult {
@@ -253,7 +308,7 @@ class F8814Node extends TaxNode<typeof inputSchema> {
       throw new Error("Form 8814 cannot elect twice for the same child");
     }
     const lines = input.f8814s.map(calculateForm8814);
-    if (lines.some((line) => line.line15 === 0)) {
+    if (lines.some((line) => line.line4 <= UNTAXED_AMOUNT)) {
       throw new Error(
         "Form 8814 requires child income above the $1,350 filing threshold",
       );
@@ -329,6 +384,16 @@ class F8814Node extends TaxNode<typeof inputSchema> {
       });
     }
     if (line9 > 0) {
+      outputs.push({
+        nodeType: form8995.nodeType,
+        fields: {
+          net_capital_gain: line9,
+          qbi_capital_sources: [{
+            source: "form8814.qualified_dividends",
+            amount: line9,
+          }],
+        },
+      });
       outputs.push({
         nodeType: form4952.nodeType,
         fields: { form8814_line9_qualified_dividends: line9 },

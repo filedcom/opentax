@@ -1,8 +1,11 @@
+import { assertRetirementStateLocalTaxSource } from "../../retirement_state_local_tax_source.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import {
   assertForm1098Box1Sources,
   assertForm1098Box6Sources,
+  assertForm1098Line8aAmount,
+  assertForm1098Line8aSourcePresence,
   assertForm1098MortgageLimitSources,
   assertPurchasePointsCrossLoanSources,
 } from "../../../nodes/inputs/f1098/index.ts";
@@ -36,11 +39,13 @@ export interface Fields {
   // IRC §164(b)(5) election: either income tax or sales tax — mutually exclusive.
   // Both fields map to the same IRS XSD element (StateAndLocalTaxAmt).
   line_5a_state_income_tax?: number | null;
+  retirement_state_local_withholding?: number | null;
   line_5a_sales_tax?: number | null;
   line_5b_real_estate_tax?: number | null;
   line_5c_personal_property_tax?: number | null;
   line_6_other_taxes?: number | null;
   line_8a_mortgage_interest_1098?: number | null;
+  home_mortgage_nonqualifying_use_review?: unknown;
   line_8b_mortgage_interest_no_1098?: number | null;
   line_8c_points_no_1098?: number | null;
   form8396_interest_credit_reduction?: number | null;
@@ -89,6 +94,7 @@ function buildIRS1040ScheduleA(
   fields: Input,
   context?: MefBuildContext,
 ): string {
+  assertRetirementStateLocalTaxSource(context?.pending, fields);
   const returnFields = context?.pending?.f1040 as
     | Record<string, unknown>
     | undefined;
@@ -98,6 +104,10 @@ function buildIRS1040ScheduleA(
   ) {
     return "";
   }
+  assertForm1098Line8aSourcePresence(
+    context?.pending?.f1098,
+    fields.line_8a_mortgage_interest_1098 ?? 0,
+  );
   if (context?.pending?.f1098 !== undefined) {
     const filer = context.filer;
     if (!filer) {
@@ -124,6 +134,11 @@ function buildIRS1040ScheduleA(
       fields.line_8c_points_no_1098 ?? 0,
       context.pending.mortgage_refinance_points !== undefined,
       context.pending.form8396 !== undefined,
+      fields.home_mortgage_nonqualifying_use_review,
+      (context.pending.mortgage_refinance_points as
+        | { cashout_source?: unknown }
+        | undefined)?.cashout_source !== undefined,
+      filer.spouse?.ssn,
     );
     assertPurchasePointsCrossLoanSources(
       context.pending.f1098,
@@ -136,6 +151,10 @@ function buildIRS1040ScheduleA(
       context.pending.form8396 !== undefined,
     );
     assertForm1098Box1Sources(context.pending.f1098, recipients);
+    assertForm1098Line8aAmount(
+      context.pending.f1098,
+      fields.line_8a_mortgage_interest_1098 ?? 0,
+    );
   }
   if (context?.pending?.mortgage_refinance_points !== undefined) {
     const filer = context.filer;
@@ -295,6 +314,7 @@ function buildIRS1040ScheduleA(
   // Combine the mutually exclusive line 5a fields into a single XSD element.
   // Only one will be nonzero (enforced by schedule_a inputSchema superRefine).
   const line5a = (fields.line_5a_state_income_tax ?? 0) +
+    (fields.retirement_state_local_withholding ?? 0) +
     (fields.line_5a_sales_tax ?? 0);
   const hasDeduction =
     FIELD_MAP.some(([key]) =>

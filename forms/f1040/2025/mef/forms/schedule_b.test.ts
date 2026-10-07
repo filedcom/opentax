@@ -401,6 +401,25 @@ Deno.test("schedule_b: FBAR Yes carries ordered IRS country codes", () => {
   );
 });
 
+Deno.test("schedule_b: native MeF rejects codes outside TY2025 CountryType", () => {
+  const facts = {
+    foreign_accounts_question: true,
+    fincen_form114_required: true,
+    foreign_trust_question: false,
+  };
+  assertStringIncludes(
+    scheduleB.build({ ...facts, foreign_country_codes: ["GM"] }),
+    "<ForeignCountryCd>GM</ForeignCountryCd>",
+  );
+  for (const invalid of ["DE", "ZZ", "gm"]) {
+    assertThrows(
+      () => scheduleB.build({ ...facts, foreign_country_codes: [invalid] }),
+      Error,
+      "Schedule B MeF foreign country codes are invalid",
+    );
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Section 5: Sparse output
 // ---------------------------------------------------------------------------

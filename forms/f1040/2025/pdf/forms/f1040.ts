@@ -1,8 +1,15 @@
+import { assertDependentKiddieTaxFamilyReturn } from "../../../nodes/inputs/f8615/dependent-source-review.ts";
+import { assertW2ArcherContributionSources } from "../../form8853_contributions_reconciliation.ts";
+import { assertEducationIncomeSource } from "../../../nodes/inputs/education_income/index.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { rgb, StandardFonts } from "pdf-lib";
 import { AccountType } from "../../../mef/header.ts";
+import { ty2025IrsCountryName } from "./irs_country_name.ts";
 import { form8814ParentPrintAmounts } from "./f8814.ts";
-import { appendIraDistributionStatement } from "./ira_distribution_statement.ts";
+import {
+  appendIraDistributionStatement,
+  appendIraRecharacterizationStatements,
+} from "./ira_distribution_statement.ts";
 import { appendDependentContinuation } from "./dependent_continuation.ts";
 import { schedule1aPdf } from "./schedule1a.ts";
 import { assertMfsEitcSource } from "../../mfs-eitc-source.ts";
@@ -402,7 +409,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "checkbox",
-    domainKey: "line7a_cap_gain_distrib",
+    domainKey: "print_schedule_d_not_required",
     pdfField: "topmostSubform[0].Page1[0].c1_43[0]",
   },
   {
@@ -501,10 +508,22 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line15_taxable_income",
     pdfField: "topmostSubform[0].Page2[0].f2_06[0]",
+    printZero: true,
   },
 
   // ── Page 2: Tax and Credits (Lines 16–24) ────────────────────────────────
-  // f2_07 = line 16 form-name text box (not a dollar field — skipped).
+  {
+    kind: "checkbox",
+    domainKey: "print_form8978_tax_box",
+    pdfField: "topmostSubform[0].Page2[0].c2_11[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_form8978_tax_name",
+    fontSize: 6,
+    pdfField: "topmostSubform[0].Page2[0].f2_07[0]",
+  },
+  // f2_07 = line 16 form-name text box (not a dollar field).
   // All tax lines shifted +1 vs the pre-2025 descriptor.
   {
     kind: "text",
@@ -551,6 +570,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line22_tax_after_credits",
     pdfField: "topmostSubform[0].Page2[0].f2_14[0]",
+    printZero: true,
   },
   {
     kind: "text",
@@ -1008,12 +1028,13 @@ export const irs1040Pdf: PdfFormDescriptor = {
     return {
       ...fields,
       ...printedDependents,
+      print_schedule_d_not_required:
+        typeof fields.line7a_cap_gain_distrib === "number" &&
+        fields.line7a_cap_gain_distrib > 0,
       print_former_spouse_estimated_tax_ssn: printFormerSpouseEstimatedTaxSsn,
       print_foreign_country_name: typeof fields.address_foreign_country ===
             "string" && fields.address_foreign_country.length > 0
-        ? new Intl.DisplayNames(["en"], { type: "region" }).of(
-          fields.address_foreign_country,
-        )
+        ? ty2025IrsCountryName(fields.address_foreign_country)
         : undefined,
       print_line1h_type: printLine1hType,
       print_do_not_claim_actc: retainedActcOptOut(
@@ -1041,6 +1062,12 @@ export const irs1040Pdf: PdfFormDescriptor = {
       print_form8888_attached: hasForm8888,
       print_form8814_tax_box: typeof fields.form8814_tax === "number" &&
         fields.form8814_tax > 0,
+      print_form8978_tax_box: typeof fields.form8978_tax === "number" &&
+        fields.form8978_tax > 0,
+      print_form8978_tax_name:
+        typeof fields.form8978_tax === "number" && fields.form8978_tax > 0
+          ? "FORM 8978"
+          : undefined,
       print_form4972_tax_box: typeof fields.form4972_tax === "number" &&
         fields.form4972_tax > 0,
       print_form8814_line3a_included: child.dividends > 0,
@@ -1055,7 +1082,20 @@ export const irs1040Pdf: PdfFormDescriptor = {
     };
   },
   fields,
-  instances(fields, filer) {
+  instances(fields, filer, all) {
+    assertW2ArcherContributionSources({ filer, pending: all ?? {} });
+    assertDependentKiddieTaxFamilyReturn(
+      all ? { ...all, f1040: fields } : undefined,
+      filer,
+    );
+    assertEducationIncomeSource(
+      all?.general?.dependent_education_income_review
+        ? { ...all, f1040: fields }
+        : all,
+      [filer?.primarySSN, filer?.spouse?.ssn].filter((s): s is string => !!s),
+      (all?.schedule1 as Record<string, unknown> | undefined)
+        ?.line8r_taxable_scholarships,
+    );
     const spouse = filer?.spouse;
     return [{
       ...fields,
@@ -1076,6 +1116,22 @@ export const irs1040Pdf: PdfFormDescriptor = {
   async decoratePages(document, pages, fields) {
     const note = fields.print_form8814_line7a_note;
     const page = pages[0];
+    const deferred = fields.form8621_1294_deferred_tax;
+    if (
+      typeof deferred === "number" && Number.isFinite(deferred) &&
+      deferred > 0
+    ) {
+      const taxPage = pages[1];
+      if (!taxPage) throw new Error("Form 1040 section 1294 note needs page 2");
+      const font = await document.embedFont(StandardFonts.Helvetica);
+      // IRS instructions put Election B's deferred tax in brackets left of 24.
+      taxPage.drawText(`[${Math.round(deferred)}]`, {
+        x: 466,
+        y: 530,
+        size: 8,
+        font,
+      });
+    }
     if (!page || typeof note !== "string") return;
     const font = await document.embedFont(StandardFonts.Helvetica);
     // The 2025 source PDF places line 7a's dotted space at x312-470,
@@ -1096,6 +1152,11 @@ export const irs1040Pdf: PdfFormDescriptor = {
       filer,
     );
     await appendIraDistributionStatement(document, allPending?.f1099r, filer);
+    await appendIraRecharacterizationStatements(
+      document,
+      allPending ?? {},
+      filer,
+    );
   },
   filerFields: [
     // domainKey uses dot-notation to traverse FilerIdentity (resolved in builder).

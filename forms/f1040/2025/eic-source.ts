@@ -1,3 +1,6 @@
+import { assertCurrentPassivePropertyReturn } from "./current_passive_property_source.ts";
+import { assertCurrentPassiveLine10Return } from "./current_passive_line10_source.ts";
+import { form8582 as nativeForm8582 } from "./mef/forms/f8582.ts";
 import {
   filerCreditEligibility,
   inputSchema as generalInputSchema,
@@ -32,9 +35,17 @@ import {
   reviewedK1PassiveIncome,
 } from "../nodes/inputs/k1_passive_eic.ts";
 import { inputSchema as partnershipK1InputSchema } from "../nodes/inputs/k1_partnership/index.ts";
-import { box11Line10SourceSchema } from "../nodes/inputs/k1_partnership/box11_line10.ts";
+import {
+  box11Line10SourceSchema,
+  currentPassiveLine10Activities,
+} from "../nodes/inputs/k1_partnership/box11_line10.ts";
 import { inputSchema as sCorpK1InputSchema } from "../nodes/inputs/k1_s_corp/index.ts";
 import { EITC_INVESTMENT_INCOME_LIMIT_2025 } from "../nodes/config/2025.ts";
+import {
+  projectOwned7203Family,
+  projectReviewedStockLoss7203,
+} from "./form7203_stock_loss_projection.ts";
+import { extractFilerIdentity } from "../mef/filer.ts";
 
 /** Check a positive Form 1040 EIC against the reviewed source before export. */
 export function assertEicSource(
@@ -68,10 +79,23 @@ export function assertEicSource(
   };
   const agiFinal = pending?.agi_final as Record<string, unknown> | undefined;
   const form4797 = pending?.form4797 as Record<string, unknown> | undefined;
+  if (form4797) assertCurrentPassivePropertyReturn(form4797, pending);
   if (form4797?.k1_box11_line10_rows !== undefined) {
+    assertCurrentPassiveLine10Return(form4797, pending);
     const rows = box11Line10SourceSchema.array().parse(
       form4797.k1_box11_line10_rows,
     );
+    const ordinaryActivities = currentPassiveLine10Activities(rows);
+    if (ordinaryActivities.length) {
+      const source = pending?.form8582;
+      if (!source || typeof source !== "object" || Array.isArray(source)) {
+        throw new Error("EIC current passive ordinary K1 needs actual8582");
+      }
+      nativeForm8582.build(
+        source as Parameters<typeof nativeForm8582.build>[0],
+        { pending },
+      );
+    }
     for (const row of rows) {
       const review = row.eic_activity_review;
       if (!review) {
@@ -80,7 +104,7 @@ export function assertEicSource(
         );
       }
       if (
-        review.classification === "passive" &&
+        review.classification === "passive" && !row.current_passive_source &&
         (row.gain_loss < 0 ||
           review.no_current_or_prior_unallowed_loss_for_activity_verified !==
             true)
@@ -137,7 +161,64 @@ export function assertEicSource(
     ? []
     : sCorpK1InputSchema.parse(pending.k1_s_corp).k1_s_corps;
   assertK1EicReview(partnershipItems);
-  assertK1EicReview(sCorpItems);
+  const ownedLosses = sCorpItems.filter((item) =>
+    (item.box1_ordinary_business ?? 0) < 0 &&
+    item.form7203_debt_evidence?.kind !==
+      "prior_reduced_formal_note_repayment" &&
+    item.form7203_debt_evidence?.owned_current_records !== undefined
+  );
+  if (ownedLosses.length) {
+    if (
+      ownedLosses.some((item) =>
+        item.form7203_stock_loss_ledger
+            ?.materially_participated_in_s_corporation !== true ||
+        (item.eic_passive_activity_review?.box1 !== undefined &&
+          item.eic_passive_activity_review.box1 !== "nonpassive")
+      )
+    ) {
+      throw new Error(
+        "Form 1040 EIC owned basis loss needs consistent nonpassive source facts",
+      );
+    }
+    const basisFields = pending?.form7203 as
+      | Record<string, unknown>
+      | undefined;
+    if (!basisFields) {
+      throw new Error("Form 1040 EIC owned loss needs its finalized Form 7203");
+    }
+    const filer = extractFilerIdentity(filed ?? {});
+    if (basisFields.owned_debt_loss_sources !== undefined) {
+      projectOwned7203Family(basisFields, pending!, filer);
+    } else {
+      projectReviewedStockLoss7203(basisFields, pending!, filer);
+    }
+  }
+  // A replayed materially participated S-corporation loss affects AGI, not
+  // Worksheet 1 passive losses or earned income. All other K-1 loss guards stay.
+  assertK1EicReview(
+    sCorpItems.map((item) =>
+      ownedLosses.includes(item) ? { ...item, box1_ordinary_business: 0 } : item
+    ),
+  );
+  if (
+    reviewedK1PassiveIncome(partnershipItems) +
+        reviewedK1PassiveIncome(sCorpItems) > 0
+  ) {
+    if (
+      (agiInput.pal_current_loss ?? 0) + (agiInput.pal_prior_unallowed ?? 0) >
+        0 &&
+      pending?.form8582 === undefined
+    ) {
+      throw new Error(
+        "Form 1040 EIC K-1 passive losses need their actual Form 8582",
+      );
+    }
+    if (pending?.form8582 !== undefined) {
+      nativeForm8582.build(pending.form8582 as Record<string, unknown>, {
+        pending,
+      });
+    }
+  }
   const k1PassiveIncome = reviewedK1PassiveIncome(partnershipItems) +
     reviewedK1PassiveIncome(sCorpItems);
   const reportedK1PassiveIncome = Array.isArray(agiInput.eic_passive_k1_income)

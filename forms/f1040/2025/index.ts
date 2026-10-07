@@ -1,6 +1,5 @@
 import type { FormDefinition } from "../../../core/types/form-definition.ts";
-import { execute, type ExecuteResult } from "../../../core/runtime/executor.ts";
-import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
+import type { ExecuteResult } from "../../../core/runtime/executor.ts";
 import type { FilerIdentity } from "../mef/header.ts";
 import { publicInputSchema as form8990PublicInputSchema } from "../nodes/intermediate/forms/form8990/index.ts";
 import { runBoundedForm8990TwoPass } from "../nodes/intermediate/forms/form8990/run-two-pass.ts";
@@ -13,14 +12,28 @@ import { buildMefBundle, buildMefXml } from "./mef/builder.ts";
 import { buildPending } from "./mef/pending.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
 import { assertF1040FinalHeader } from "./filer-source-reconciliation.ts";
-import { normalizePendingDict } from "./pending.ts";
-import { parsePublicForm8839Source } from "../nodes/intermediate/forms/form8839/public_source.ts";
-import { finalizeStagedForm8839Sink } from "../nodes/intermediate/forms/form8839/staged_sink_finalizer.ts";
-import { f1040 } from "../nodes/outputs/f1040/index.ts";
-import { schedule3 } from "../nodes/intermediate/aggregation/schedule3/index.ts";
 import { assertNoRepeatedBrokerSaleSources } from "./broker-sale-source-reconciliation.ts";
+import { applyForm8621QefRefigure } from "./form8621_1294_refigure.ts";
+import { executePreQefSourceReturn } from "./staged_source_return.ts";
 
 function executeReturn(inputs: Record<string, unknown>): ExecuteResult {
+  const elected = Array.isArray(inputs.f8621) &&
+    inputs.f8621.some((item) =>
+      item !== null && typeof item === "object" &&
+      "qef_1294_election" in item && item.qef_1294_election !== undefined
+    );
+  if (elected && inputs.form8839 !== undefined && inputs.f8863 !== undefined) {
+    throw new Error(
+      "Form 8621 Election B with both adoption and education credits needs a settled combined counterfactual",
+    );
+  }
+  if (
+    inputs.form8990 !== undefined && elected
+  ) {
+    throw new Error(
+      "Form 8621 Election B needs a settled counterfactual before Form 8990 two-pass filing",
+    );
+  }
   if (inputs.f1099b !== undefined && inputs.f8949 !== undefined) {
     assertNoRepeatedBrokerSaleSources(
       { f1099bs: inputs.f1099b },
@@ -33,95 +46,12 @@ function executeReturn(inputs: Record<string, unknown>): ExecuteResult {
         "Form 8839 with Form 8990 needs an established credit-ordering route",
       );
     }
-    const { source, publicSource } = parsePublicForm8839Source(
-      inputs.form8839,
-    );
-    const firstInputs = Object.fromEntries(
-      Object.entries(inputs).filter(([key]) => key !== "form8839"),
-    );
-    const pre = execute(buildExecutionPlan(registry), registry, firstInputs, {
-      taxYear: 2025,
-      formType: "f1040",
-    });
-    if (
-      pre.diagnostics.length > 0 ||
-      ["form2555", "f2555", "form4563", "f4563"].some((key) =>
-        inputs[key] !== undefined || pre.pending[key] !== undefined
-      )
-    ) {
-      throw new Error(
-        "Form 8839 needs a fully settled pre-adoption return without foreign-income exclusions",
-      );
-    }
-    const graphSink = normalizePendingDict(pre.pending.f1040, "f1040");
-    const graphSchedule3 = normalizePendingDict(
-      pre.pending.schedule3,
-      "schedule3",
-    );
-    if (!graphSink) {
-      throw new Error("Form 8839 needs an executor-computed Form 1040 sink");
-    }
-    // A return with no other Schedule 3 activity has no pending Schedule 3
-    // node. Compute its zero-credit priority lines through the same node,
-    // without exposing the base Form 8839 ledger as a second public input.
-    const marker = { form8839_source_credit_pending: true } as const;
-    const emptySchedule3 = graphSchedule3 === undefined
-      ? schedule3.compute(
-        { taxYear: 2025, formType: "f1040" },
-        schedule3.inputSchema.parse(marker),
-      )
-      : undefined;
-    const schedule3To1040 = emptySchedule3?.outputs.find((output) =>
-      output.nodeType === "f1040"
-    )?.fields;
-    if (graphSchedule3 === undefined && !schedule3To1040) {
-      throw new Error("Form 8839 needs computed Schedule 3 priority lines");
-    }
-    const preSink = {
-      ...graphSink,
-      ...(schedule3To1040 ?? {}),
-    };
-    const preSchedule3 = { ...graphSchedule3, ...marker };
-    const settled = finalizeStagedForm8839Sink(
-      source,
-      publicSource.reviewed_source,
-      f1040.inputSchema.parse(preSink),
-      publicSource.magi_review,
-    );
-    if (
-      settled.credit.line18 <= 0 ||
-      settled.credit.line14 !== settled.credit.line18
-    ) {
-      throw new Error(
-        "Form 8839 direct route needs a positive fully used nonrefundable credit; carryforward filing is not supported",
-      );
-    }
-    return {
-      ...pre,
-      pending: {
-        ...pre.pending,
-        form8839: source,
-        form8839_route: {
-          public_source: publicSource,
-          pre_adoption_sink_input: preSink,
-          pre_adoption_schedule3: preSchedule3,
-        },
-        schedule3: {
-          ...preSchedule3,
-          ...settled.finalSchedule3,
-        },
-        f1040: {
-          ...preSink,
-          ...settled.final1040,
-        },
-      },
-    };
+    const full = executePreQefSourceReturn(inputs);
+    return applyForm8621QefRefigure(inputs, full);
   }
   if (inputs.form8990 === undefined) {
-    return execute(buildExecutionPlan(registry), registry, inputs, {
-      taxYear: 2025,
-      formType: "f1040",
-    });
+    const full = executePreQefSourceReturn(inputs);
+    return applyForm8621QefRefigure(inputs, full);
   }
   const source = form8990PublicInputSchema.parse(inputs.form8990);
   const returnInputs = Object.fromEntries(
@@ -166,12 +96,18 @@ export const f1040_2025: FormDefinition = {
   inputNodes,
   registry,
   executeReturn,
-  prepareReturn: async (pending, filer, attachments = []) => {
+  prepareReturn: async (
+    pending,
+    filer,
+    attachments = [],
+    retainedSourceDocuments = [],
+  ) => {
     const normalized = buildPending(pending) as MefFormsPending;
     assertF1040FinalHeader(normalized.f1040 ?? {}, filer);
     const bundle = await buildMefBundle(normalized, {
       filer,
       attachments,
+      retainedSourceDocuments,
       schemaVersion: F1040_2025_CONFIG.mefSchemaVersion,
       year: F1040_2025_CONFIG.taxYear,
       returnType: "1040",

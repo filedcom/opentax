@@ -82,8 +82,10 @@ function continuationCell(row: SectionBRow): string[] {
 export const scheduleHPdf: PdfFormDescriptor = {
   pendingKey: "schedule_h",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sh--2025.pdf",
+  pageIndices: (projected) =>
+    projected.line9_quarter_limit === false ? [0] : [0, 1],
   filerFields: [
-    text("nameShownOnForm1040", `${page1}f1_1[0]`),
+    text("fullName", `${page1}f1_1[0]`),
     text("primarySSN", `${page1}f1_2[0]`),
   ],
   fields: [
@@ -97,8 +99,10 @@ export const scheduleHPdf: PdfFormDescriptor = {
     text("line6_additional_medicare_tax", `${page1}f1_9[0]`, true),
     text("federal_income_tax_withheld", `${page1}f1_10[0]`, true),
     text("line8_fica_and_withholding", `${page1}f1_11[0]`),
-    // Line 9 prints No first and Yes second, unlike line A.
-    ...answer("cash_wages_over_quarter_limit", 4, 1),
+    ...answer("box_b_federal_withheld", 2),
+    // Box C prints No before Yes; line 9 places No above Yes.
+    ...answer("box_c_quarter_limit", 3, 1),
+    ...answer("line9_quarter_limit", 4),
     ...answer("paid_only_one_state", 1, 0, `${page2}Line10[0].`),
     ...answer("all_contributions_paid_on_time", 2, 0, page2),
     ...answer("all_futa_wages_state_taxable", 3, 0, page2),
@@ -130,6 +134,10 @@ export const scheduleHPdf: PdfFormDescriptor = {
     if (Object.keys(raw).length === 0) return {};
     const input = inputSchema.parse(raw);
     const amounts = computeScheduleHAmounts(input, 2025);
+    const skipFicaLines = input.cash_wages_over_2025_limit === false;
+    const skipPartI = input.cash_wages_over_2025_limit === false &&
+      (input.federal_income_tax_withheld ?? 0) === 0 &&
+      input.cash_wages_over_quarter_limit === true;
     const unemployment = input.federal_unemployment;
     const sectionB = amounts.sectionB;
     const rows: Record<string, unknown> = {};
@@ -149,9 +157,30 @@ export const scheduleHPdf: PdfFormDescriptor = {
     }
     return {
       ...input,
+      ...(skipFicaLines
+        ? {
+          additional_medicare_wages: undefined,
+        }
+        : {}),
+      ...(skipPartI ? { federal_income_tax_withheld: undefined } : {}),
+      ...(input.cash_wages_over_2025_limit === false
+        ? {
+          box_b_federal_withheld: (input.federal_income_tax_withheld ?? 0) > 0,
+          ...((input.federal_income_tax_withheld ?? 0) === 0
+            ? { box_c_quarter_limit: input.cash_wages_over_quarter_limit }
+            : {}),
+        }
+        : {}),
+      ...(input.cash_wages_over_2025_limit === true ||
+          (input.cash_wages_over_2025_limit === false &&
+            (input.federal_income_tax_withheld ?? 0) > 0)
+        ? { line9_quarter_limit: input.cash_wages_over_quarter_limit }
+        : {}),
       line2_social_security_tax: amounts.socialSecurityTax,
       line4_medicare_tax: amounts.medicareTax,
-      line6_additional_medicare_tax: amounts.additionalMedicareTax,
+      line6_additional_medicare_tax: skipFicaLines
+        ? undefined
+        : amounts.additionalMedicareTax,
       line8_fica_and_withholding: amounts.ficaAndWithholding,
       ...(unemployment === undefined ? {} : {
         paid_only_one_state: unemployment.paid_only_one_state,
@@ -181,7 +210,7 @@ export const scheduleHPdf: PdfFormDescriptor = {
             line18_contributions: sectionB.contributions,
             line19_tentative_credit: sectionB.tentativeCredit,
             line20_futa_wages: "taxable_futa_wages" in unemployment
-              ? unemployment.taxable_futa_wages
+              ? sectionB.filedFutaWages
               : undefined,
             line21_gross_futa_tax: sectionB.grossTax,
             line22_maximum_credit: sectionB.maximumCredit,

@@ -550,6 +550,59 @@ Deno.test("final Form 1040 joins Schedules B, 1, 1-A, 2, and 3 totals", () => {
   );
 });
 
+Deno.test("final Form 1040 rejects malformed attached Schedule totals", () => {
+  for (
+    const [fields, pending, reason] of [
+      [
+        { line8_additional_income: 100 },
+        { schedule1: { line10_total_additional_income: "100" } },
+        "Schedule 1 line10_total_additional_income",
+      ],
+      [
+        { line10_adjustments: 20 },
+        { schedule1: { line26_total_adjustments: Number.NaN } },
+        "Schedule 1 line26_total_adjustments",
+      ],
+      [
+        { line2b_taxable_interest: 100 },
+        { schedule_b: { print_line4_total: "100" } },
+        "Schedule B print_line4_total",
+      ],
+      [
+        { line13b_additional_deductions: 100 },
+        { schedule1a: { line38_total: Number.POSITIVE_INFINITY } },
+        "Schedule 1-A line38_total",
+      ],
+      [
+        { line20_nonrefundable_credits: 100 },
+        { schedule3: { line8_total: "100" } },
+        "Schedule 3 line8_total",
+      ],
+      [
+        { line31_additional_payments: 0 },
+        { schedule3: { line15_total: "0" } },
+        "Schedule 3 line15_total",
+      ],
+    ] as const
+  ) {
+    assertThrows(
+      () => assertReturnScheduleJoins(fields, pending),
+      Error,
+      reason,
+    );
+    assertThrows(
+      () => irs1040.build(fields, { pending }),
+      Error,
+      reason,
+    );
+    assertThrows(
+      () => irs1040Pdf.projectFields?.(fields, pending),
+      Error,
+      reason,
+    );
+  }
+});
+
 Deno.test("Form 1040 line 31 uses the rounded Schedule 3 payment total", () => {
   const pending = { schedule3: { line15_total: 42.6 } };
   assertReturnScheduleJoins({ line31_additional_payments: 42.6 }, pending);

@@ -39,6 +39,11 @@ Deno.test("Form 8994 rejects prepared-return and wage deduction tampering", () =
         {
           ...form8994MatchedPending,
           schedule_c: {
+            ...form8994MatchedPending.schedule_c,
+            form8994_wage_reductions: [{
+              business_reference: business.business_reference,
+              credit_amount: 1249,
+            }],
             schedule_cs: [{ ...business, line_d_ein: "111111111" }],
           },
         },
@@ -53,9 +58,13 @@ Deno.test("Form 8994 rejects prepared-return and wage deduction tampering", () =
         {
           ...form8994MatchedPending,
           schedule_c: {
+            ...form8994MatchedPending.schedule_c,
+            form8994_wage_reductions: [{
+              business_reference: business.business_reference,
+              credit_amount: 1249,
+            }],
             schedule_cs: [{
               ...business,
-              line_26_other_employment_credits: 1_249,
             }],
           },
         },

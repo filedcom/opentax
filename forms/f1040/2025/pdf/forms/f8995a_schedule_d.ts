@@ -1,3 +1,6 @@
+import { calculateIndependentPatronBusinesses } from "../../../nodes/intermediate/forms/form8995a/index.ts";
+import { assertOwnedScheduleSE } from "../../schedule-se-owner-source.ts";
+import { patronProprietorSsn } from "../../form8995a_patron_reconciliation.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
   calculatePatronScheduleDLines,
@@ -28,19 +31,34 @@ export const form8995aScheduleDPdf: PdfFormDescriptor = {
     { kind: "text", domainKey: "nameLine1", pdfField: `${page}f1_01[0]` },
     { kind: "text", domainKey: "primarySSN", pdfField: `${page}f1_02[0]` },
   ],
-  fields,
-  instances(raw, filer) {
+  fields: [
+    ...fields,
+    ...fields.map((entry) => ({
+      ...entry,
+      domainKey: entry.domainKey + "_b",
+      pdfField: entry.pdfField.replace(
+        /f1_(\d+)/,
+        (_, n) => `f1_${String(Number(n) + 1).padStart(2, "0")}`,
+      ),
+    })),
+  ],
+  instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
-    const input = inputSchema.strict().parse(raw);
+    const input = inputSchema.strict().parse(
+      allPending?.form8995a_schedule_d ?? raw,
+    );
     if (
       (input.patron_filing_details?.source_1099patr
           .box6_section199ag_deduction ?? 0) > 0 &&
       input.patron_filing_details?.source_1099patr.recipient_tin !==
-        filer?.primarySSN.replaceAll("-", "")
+        patronProprietorSsn(input, filer)
     ) {
       throw new Error(
         "Form 8995-A Schedule D PDF box 6 recipient differs from the final filer",
       );
+    }
+    if (input.independent_patron_sources) {
+      assertOwnedScheduleSE(allPending!, filer);
     }
     return [raw];
   },
@@ -60,6 +78,20 @@ export const form8995aScheduleDPdf: PdfFormDescriptor = {
       allPending.form8995a,
       allPending,
     );
+    if (schedule.independent_patron_sources) {
+      const result = calculateIndependentPatronBusinesses(schedule);
+      const projection: Record<string, unknown> = {};
+      result.rows.forEach((r, i) => {
+        const suffix = i === 0 ? "" : "_b";
+        projection[`line1a${suffix}`] =
+          r.input.business_filing_details!.business_name;
+        projection[`line1b${suffix}`] = r.input.business_filing_details!.ein;
+        for (const [key, value] of Object.entries(r.schedule)) {
+          projection[key + suffix] = value;
+        }
+      });
+      return projection;
+    }
     const lines = calculatePatronScheduleDLines(schedule);
     if (lines.line6 !== parentProjection.line14) {
       throw new Error(

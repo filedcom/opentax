@@ -14,7 +14,12 @@ export const form4835AtRisk: MefFormDescriptor<
   sourcePendingKeys: ["f4835"],
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f6198.pdf",
-  build(_fields, context) {
+  build(fields, context) {
+    if (Object.keys(fields).length > 0) {
+      throw new Error(
+        "Form 4835 at-risk documents cannot be filed from manual fields; each source activity needs its own calculation",
+      );
+    }
     const source = context?.pending?.f4835;
     if (source === undefined) return [];
     const { f4835s } = form4835InputSchema.parse(source);

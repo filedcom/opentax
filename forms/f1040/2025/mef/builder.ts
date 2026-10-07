@@ -1,3 +1,14 @@
+import { assertOwned7203RequiredCopies } from "../form7203-owned-return.ts";
+import { assertHsaExcessRequiredCopy } from "../form8889_postyear_single_reconciliation.ts";
+import { assertSingleFarmQbiReturn } from "../form8995a_single_farm_reconciliation.ts";
+import { assertScheduleJSourceReturn } from "../schedule_j_source_return.ts";
+import { executeComposedSourceReturn } from "../composed_source_return.ts";
+import { reconcileForm8606RothInventories } from "../form8606_roth_inventory_reconciliation.ts";
+import { reconcileForm8606RothActivity } from "../form8606_roth_activity_reconciliation.ts";
+import { assertForm4852RetainedEvidence } from "../form4852_retained_evidence.ts";
+import type { Form4852RetainedDocument } from "../form4852_source.ts";
+import { assertReviewedForm8283PdfFields } from "./forms/f8283_signed_fields.ts";
+import { assertForm8978SourceBytes } from "../form8978_source.ts";
 import { buildReturnHeader, FilingStatus } from "../../mef/header.ts";
 import { element, elements } from "../../mef/xml.ts";
 import { F1040_2025_CONFIG } from "../config.ts";
@@ -33,6 +44,7 @@ import {
   assertScheduleFFarmSourceIdentity,
 } from "../filer-source-reconciliation.ts";
 import { assertBox11CodeJSources } from "../../nodes/inputs/k1_partnership/box11_code_j.ts";
+import { assertSchedule1Form8621Source } from "../schedule1-form8621-source.ts";
 import { assertBox11CodeESources } from "../../nodes/inputs/k1_partnership/box11_code_e.ts";
 import { assertBox11CodeKSources } from "../../nodes/inputs/k1_partnership/box11_code_k.ts";
 import { assertBox11CodeSSources } from "../../nodes/inputs/k1_partnership/box11_code_s.ts";
@@ -120,6 +132,7 @@ import {
 } from "../../nodes/intermediate/forms/form8839/public_source.ts";
 
 export interface MefBundle {
+  readonly retainedSourceDocuments?: readonly Form4852RetainedDocument[];
   readonly xml: string;
   readonly attachments: ReadonlyArray<MefPdfAttachment>;
   readonly pending: MefFormsPending;
@@ -131,6 +144,7 @@ export interface MefBundle {
 }
 
 export interface MefBundleOptions {
+  readonly retainedSourceDocuments?: readonly Form4852RetainedDocument[];
   readonly filer?: FilerIdentity;
   readonly attachments: ReadonlyArray<MefPdfAttachment>;
   readonly schemaVersion?: string;
@@ -208,7 +222,11 @@ function buildFragments(
       (source ?? []) as never,
       context,
     );
-    const fragments = typeof built === "string" ? [built] : built;
+    const fragments = [
+      ...(typeof built === "string" ? [built] : built),
+      ...(form.buildAdditionalDocuments?.((source ?? []) as never, context) ??
+        []),
+    ];
     return fragments.filter((xml) => xml !== "").map((xml) => {
       const tag = /^<([A-Za-z0-9]+)(?:\s[^>]*)?>/.exec(xml)?.[1];
       if (!tag) throw new Error(`Invalid MeF document from ${form.pendingKey}`);
@@ -225,6 +243,7 @@ function buildReturnXml(
   returnType: string,
   attachments: ReadonlyArray<MefPdfAttachment>,
   attachmentSha256ByFileName?: Readonly<Record<string, string>>,
+  form4852EvidenceVerified = false,
 ): { readonly xml: string; readonly form3800Parts?: Form3800DocumentParts } {
   if (year !== 2025 || returnType !== "1040") {
     throw new Error(
@@ -260,7 +279,9 @@ function buildReturnXml(
   assertPatrIssuedCopies(pending.f1099patr);
   assertPatrWithholdingRecipient(pending.f1099patr, filer);
   assertLine1bHouseholdWageSource(pending);
-  assertForm4852FilingRoute(pending);
+  assertForm4852FilingRoute(pending, filer, form4852EvidenceVerified);
+  reconcileForm8606RothInventories(pending, filer);
+  reconcileForm8606RothActivity(pending, filer);
   assertW2WithholdingSource(pending, filer);
   assert1099WithholdingSource(pending, filer);
   assertOtherFormsWithholding(pending.f1040 ?? {}, pending, true);
@@ -272,6 +293,8 @@ function buildReturnXml(
   assertScheduleBPreparedProjection(pending);
   assertTaxExemptInterestSource(pending);
   assertBusinessSchedule1Amounts(pending);
+  assertOwned7203RequiredCopies(pending);
+  assertHsaExcessRequiredCopy(pending);
   assertLine1iCombatPayElectionSource(pending);
   assertSchedule2W2Line13Sources(pending);
   assertSchedule2W2Line17KSource(pending);
@@ -307,6 +330,9 @@ function buildReturnXml(
   assertSchedule1Box3SourceIdentity(pending, filer);
   assertSchedule1Box8SourceIdentity(pending, filer);
   assertSchedule1Form8814Source(pending);
+  assertSchedule1Form8621Source(pending);
+  assertScheduleJSourceReturn(pending, executeComposedSourceReturn);
+  assertSingleFarmQbiReturn(pending);
   assertSchedule1NecSourceIdentity(pending, filer);
   assertSchedule1KSourceIdentity(pending, filer);
   assertScheduleFFarmSourceIdentity(pending, filer);
@@ -456,6 +482,7 @@ export function assertPreparedBundleProjection(
     "1040",
     bundle.attachments,
     bundle.attachmentSha256ByFileName,
+    bundle.retainedSourceDocuments !== undefined,
   );
   if (projected.xml !== bundle.xml) {
     throw new Error(
@@ -484,6 +511,11 @@ export function buildMefXml(
       "MeF Form 8839 requires reviewed PDF attachment bytes; use buildMefBundle",
     );
   }
+  if (pending.f8978?.reviewed_source) {
+    throw new Error(
+      "Form8978 reviewed source needs validated attachment bundle",
+    );
+  }
   if (hasForm8994Claim(pending)) {
     throw new Error(
       "MeF Form 8994 requires validated policy and payroll attachment bytes; use buildMefBundle",
@@ -499,6 +531,17 @@ export async function buildMefBundle(
   options: MefBundleOptions,
 ): Promise<MefBundle> {
   await assertForm1098IssuerCopies(pending);
+  const retainedSourceDocuments = (options.retainedSourceDocuments ?? []).map((
+    d,
+  ) => ({
+    document_reference: d.document_reference,
+    bytes: Uint8Array.from(d.bytes),
+  }));
+  await assertForm4852RetainedEvidence(
+    pending,
+    options.filer,
+    retainedSourceDocuments,
+  );
   const generated = await Promise.all(
     ALL_MEF_FORMS.map((form) =>
       "buildBinaryAttachments" in form && form.buildBinaryAttachments
@@ -513,6 +556,11 @@ export async function buildMefBundle(
     ...options.attachments,
     ...generated.flat(),
   ]);
+  await assertReviewedForm8283PdfFields(
+    pending.f8283,
+    options.filer,
+    attachments,
+  );
   if (hasForm8839Claim(pending)) {
     const route = pending.form8839_route as
       | { public_source?: unknown }
@@ -521,6 +569,13 @@ export async function buildMefBundle(
       throw new Error("Form 8839 needs a reviewed executor route");
     }
     await assertPublicForm8839Attachments(route.public_source, attachments);
+  }
+  if (pending.f8978?.reviewed_source) {
+    await assertForm8978SourceBytes(
+      pending as Record<string, Record<string, unknown>>,
+      options.filer,
+      attachments,
+    );
   }
   if (hasForm8994Claim(pending)) {
     await reconcileForm8994EvidenceBytes(pending.f8994, attachments);
@@ -543,6 +598,7 @@ export async function buildMefBundle(
     options.returnType ?? "1040",
     attachments,
     attachmentSha256ByFileName,
+    pending.f4852 !== undefined,
   );
   if (pending.f8283) {
     await assertPreparedVehicleAcknowledgments(
@@ -554,6 +610,7 @@ export async function buildMefBundle(
   }
   return {
     ...prepared,
+    retainedSourceDocuments,
     attachments,
     pending,
     sourceSha256: await preparedSourceSha256(pending, options.filer),

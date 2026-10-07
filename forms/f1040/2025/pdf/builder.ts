@@ -1,7 +1,19 @@
+import { assertOwned7203RequiredCopies } from "../form7203-owned-return.ts";
+import { assertHsaExcessRequiredCopy } from "../form8889_postyear_single_reconciliation.ts";
+import { assertSingleFarmQbiReturn } from "../form8995a_single_farm_reconciliation.ts";
+import { assertScheduleJSourceReturn } from "../schedule_j_source_return.ts";
+import { executeComposedSourceReturn } from "../composed_source_return.ts";
+import { reconcileForm8606RothInventories } from "../form8606_roth_inventory_reconciliation.ts";
+import { reconcileForm8606RothActivity } from "../form8606_roth_activity_reconciliation.ts";
+import { assertForm4852RetainedEvidence } from "../form4852_retained_evidence.ts";
+import { assertReviewedForm8283PdfFields } from "../mef/forms/f8283_signed_fields.ts";
+import { roundWholeDollars } from "../../whole-dollars.ts";
+import { assertForm8978SourceBytes } from "../form8978_source.ts";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { join } from "@std/path";
 import { normalizeAllPending } from "../pending.ts";
 import { ALL_PDF_FORMS } from "./forms/index.ts";
+import { form4972PaperPdf } from "./forms/f4972.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "./form-descriptor.ts";
 import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
 import { assertAttachmentCoverage } from "../attachment-coverage.ts";
@@ -36,6 +48,7 @@ import { assertScheduleDSalesMatchPrepared } from "../mef/forms/schedule_d.ts";
 import { assertPreparedVehicleAcknowledgments } from "../mef/forms/f8283_vehicle_sale_evidence.ts";
 import { inputSchema as form8283SourceSchema } from "../../nodes/inputs/f8283/index.ts";
 import { assertBox11CodeJSources } from "../../nodes/inputs/k1_partnership/box11_code_j.ts";
+import { assertSchedule1Form8621Source } from "../schedule1-form8621-source.ts";
 import { assertBox11CodeESources } from "../../nodes/inputs/k1_partnership/box11_code_e.ts";
 import { assertBox11CodeKSources } from "../../nodes/inputs/k1_partnership/box11_code_k.ts";
 import { assertBox11CodeSSources } from "../../nodes/inputs/k1_partnership/box11_code_s.ts";
@@ -172,12 +185,14 @@ function fillEntry(
       }
       // IRS convention: leave numeric fields blank when value is zero —
       // unless the descriptor marks the line as printZero (explicit "0").
-      const blankZero = typeof value === "number" && Math.round(value) === 0 &&
+      const blankZero = typeof value === "number" &&
+        roundWholeDollars(value) === 0 &&
         !("printZero" in entry && entry.printZero);
       const field = form.getTextField(entry.pdfField);
+      if (entry.fontSize !== undefined) field.setFontSize(entry.fontSize);
       if (!blankZero) {
         const text = typeof value === "number"
-          ? Math.round(value).toString()
+          ? roundWholeDollars(value).toString()
           : String(value);
         field.setText(text);
       }
@@ -207,12 +222,12 @@ function fillEntry(
         try {
           if (entry.kind === "text") {
             const blankZero = typeof value === "number" &&
-              Math.round(value) === 0 &&
+              roundWholeDollars(value) === 0 &&
               !("printZero" in entry && entry.printZero);
             const field = form.getTextField(extraField);
             if (!blankZero) {
               const text = typeof value === "number"
-                ? Math.round(value).toString()
+                ? roundWholeDollars(value).toString()
                 : String(value);
               field.setText(text);
             }
@@ -298,7 +313,7 @@ function assertRetainedPdfFields(
       : entry.kind === "checkbox"
       ? value === true
       : typeof value === "number"
-      ? Math.round(value) !== 0 ||
+      ? roundWholeDollars(value) !== 0 ||
         ("printZero" in entry && entry.printZero === true)
       : typeof value === "string" && value.length > 0;
     if (!printable) continue;
@@ -331,6 +346,20 @@ export async function fillFormPdf(
   cacheDir: string,
   allPending?: Record<string, Record<string, unknown>>,
 ): Promise<Uint8Array | undefined> {
+  // Keep retained projection bytes immutable while resolving an explicitly
+  // declared former operand name at this form's rendering boundary.
+  for (const entry of descriptor.fields) {
+    if (
+      entry.kind === "text" && entry.fallbackDomainKey &&
+      fields[entry.domainKey] === undefined &&
+      fields[entry.fallbackDomainKey] !== undefined
+    ) {
+      fields = {
+        ...fields,
+        [entry.domainKey]: fields[entry.fallbackDomainKey],
+      };
+    }
+  }
   if (descriptor.presenceKey !== undefined) {
     const gate = fields[descriptor.presenceKey];
     if (gate === undefined || gate === null) return undefined;
@@ -365,7 +394,7 @@ export async function fillFormPdf(
   // 8959 / 8960 / 8962 pages to be included in the export.
   const isMeaningful = (v: unknown): boolean => {
     if (v === undefined || v === null) return false;
-    if (typeof v === "number") return Math.round(v) !== 0;
+    if (typeof v === "number") return roundWholeDollars(v) !== 0;
     if (typeof v === "boolean") return v;
     if (typeof v === "string") return v.length > 0;
     return false;
@@ -431,6 +460,22 @@ export async function fillFormPdf(
         );
       }
       nameShownOnForm1040 = `${first} ${last}`;
+      if (filer.filingStatus === FilingStatus.MarriedFilingJointly) {
+        const spouseFirst = filer.spouse?.firstName?.trim();
+        const spouseLast = filer.spouse?.lastName?.trim();
+        if (!spouseFirst || !spouseLast) {
+          throw new Error(
+            `[PDF] ${descriptor.pendingKey}: joint name shown on Form 1040 needs the identified spouse first and last names`,
+          );
+        }
+        const spouseName = [
+          spouseFirst,
+          filer.spouse?.middleInitial?.trim(),
+          spouseLast,
+        ]
+          .filter(Boolean).join(" ");
+        nameShownOnForm1040 += ` and ${spouseName}`;
+      }
     }
     for (const entry of activeFilerFields) {
       const value = entry.domainKey === "nameShownOnForm1040"
@@ -483,7 +528,7 @@ export async function fillFormPdf(
               }
               form.getTextField(pdfField).setText(
                 typeof value === "number"
-                  ? Math.round(value).toString()
+                  ? roundWholeDollars(value).toString()
                   : String(value),
               );
             }
@@ -527,17 +572,20 @@ export async function fillFormPdf(
  * @param filer     Filer identity (name, SSN, address)
  * @param cacheDir  Directory to cache downloaded IRS PDFs (default: .pdf-cache)
  */
-export async function buildPdfBytes(
+async function buildPdfBytesInternal(
   pending: Record<string, unknown>,
   filer: FilerIdentity | undefined,
   cacheDir = ".pdf-cache",
   preparedBundle?: MefBundle,
   pageOrigins?: PdfPageOrigin[],
+  paperOnly4972 = false,
 ): Promise<Uint8Array> {
   assertForm8858FilingSource(pending.f8858);
   assertDigitalAssetDispositionAnswer(pending);
   await assertForm1098IssuerCopies(pending);
   const normalized = normalizeAllPending(pending);
+  assertScheduleJSourceReturn(pending, executeComposedSourceReturn);
+  assertSingleFarmQbiReturn(normalized);
   if (normalized.f1040) {
     assertF1040FinalHeader(normalized.f1040, filer);
     assertLine1hSupportedSource(normalized.f1040, normalized, filer);
@@ -556,7 +604,18 @@ export async function buildPdfBytes(
   assertPatrIssuedCopies(normalized.f1099patr);
   assertPatrWithholdingRecipient(normalized.f1099patr, filer);
   assertLine1bHouseholdWageSource(normalized);
-  assertForm4852FilingRoute(normalized);
+  assertForm4852FilingRoute(
+    normalized,
+    filer,
+    preparedBundle?.retainedSourceDocuments !== undefined,
+  );
+  await assertForm4852RetainedEvidence(
+    normalized,
+    filer,
+    preparedBundle?.retainedSourceDocuments ?? [],
+  );
+  reconcileForm8606RothInventories(normalized, filer);
+  reconcileForm8606RothActivity(normalized, filer);
   assertW2WithholdingSource(normalized, filer);
   assert1099WithholdingSource(normalized, filer);
   assertOtherFormsWithholding(normalized.f1040 ?? {}, normalized, true);
@@ -568,6 +627,8 @@ export async function buildPdfBytes(
   assertScheduleBPreparedProjection(normalized);
   assertTaxExemptInterestSource(normalized);
   assertBusinessSchedule1Amounts(normalized);
+  assertOwned7203RequiredCopies(normalized);
+  assertHsaExcessRequiredCopy(normalized);
   assertLine1iCombatPayElectionSource(normalized);
   assertSchedule2W2Line13Sources(normalized);
   assertSchedule2W2Line17KSource(normalized);
@@ -603,6 +664,10 @@ export async function buildPdfBytes(
     assertSchedule1Box3SourceIdentity(normalized, filer);
     assertSchedule1Box8SourceIdentity(normalized, filer);
     assertSchedule1Form8814Source(normalized);
+    assertSchedule1Form8621Source({
+      ...normalized,
+      form8949: pending.form8949,
+    });
     assertSchedule1NecSourceIdentity(normalized, filer);
     assertSchedule1KSourceIdentity(normalized, filer);
     assertScheduleFFarmSourceIdentity(normalized, filer);
@@ -640,6 +705,11 @@ export async function buildPdfBytes(
       );
     }
     await assertPreparedAttachmentManifest(preparedBundle);
+    await assertReviewedForm8283PdfFields(
+      normalized.f8283,
+      filer,
+      preparedBundle.attachments,
+    );
     if (!filer) {
       throw new Error("Prepared MeF PDF needs its filer identity");
     }
@@ -663,6 +733,22 @@ export async function buildPdfBytes(
       );
     }
     assertPreparedBundleProjection(preparedBundle, filer);
+  }
+  if (
+    !preparedBundle && normalized.f8283 &&
+    (form8283SourceSchema.parse(normalized.f8283).section_b_items?.some((row) =>
+      row.signed_form_source_review?.reviewed_form_fields
+    ) ||
+      form8283SourceSchema.parse(normalized.f8283).section_a_items?.some(
+        (item) =>
+          item.contribution_year_disposition_reduction ||
+          item.natural_resource_ordinary_income_reduction ||
+          item.depreciation_ordinary_income_reduction,
+      ))
+  ) {
+    throw new Error(
+      "Reviewed signed Form8283 PDF needs its prepared return and retained field evidence",
+    );
   }
   const form8283Source = normalized.f8283
     ? form8283SourceSchema.parse(normalized.f8283)
@@ -691,6 +777,18 @@ export async function buildPdfBytes(
       preparedBundle.attachments,
       preparedBundle.xml,
       filer.primarySSN,
+    );
+  }
+  if ((pending.f8978 as Record<string, unknown> | undefined)?.reviewed_source) {
+    if (!preparedBundle) {
+      throw new Error(
+        "Form8978 reviewed source PDF needs prepared attachment bundle",
+      );
+    }
+    await assertForm8978SourceBytes(
+      pending as Record<string, Record<string, unknown>>,
+      filer,
+      preparedBundle.attachments,
     );
   }
   if (hasForm8994Claim(pending)) {
@@ -753,7 +851,11 @@ export async function buildPdfBytes(
   const merged = await PDFDocument.create({ updateMetadata: false });
   const copyCounts = new Map<string, number>();
 
-  for (const descriptor of ALL_PDF_FORMS) {
+  for (const registeredDescriptor of ALL_PDF_FORMS) {
+    const descriptor = paperOnly4972 &&
+        registeredDescriptor.pendingKey === "form4972"
+      ? form4972PaperPdf
+      : registeredDescriptor;
     const fields = (normalized[descriptor.pendingKey] ?? {}) as Record<
       string,
       unknown
@@ -808,6 +910,7 @@ export async function buildPdfBytes(
         filer,
         normalized,
         preparedBundle?.form3800Parts,
+        cacheDir,
       );
       for (
         let pageNumber = firstPageNumber;
@@ -830,4 +933,47 @@ export async function buildPdfBytes(
   }
 
   return merged.save();
+}
+
+export function buildPdfBytes(
+  pending: Record<string, unknown>,
+  filer: FilerIdentity | undefined,
+  cacheDir = ".pdf-cache",
+  preparedBundle?: MefBundle,
+  pageOrigins?: PdfPageOrigin[],
+): Promise<Uint8Array> {
+  return buildPdfBytesInternal(
+    pending,
+    filer,
+    cacheDir,
+    preparedBundle,
+    pageOrigins,
+  );
+}
+
+/** Produce a paper filing packet for a validated Form 4972 collection too large for MeF. */
+export async function buildForm4972PaperPdfBytes(
+  pending: Record<string, unknown>,
+  filer: FilerIdentity | undefined,
+  cacheDir = ".pdf-cache",
+  pageOrigins?: PdfPageOrigin[],
+): Promise<Uint8Array> {
+  const forms = (pending.form4972 as Record<string, unknown> | undefined)
+    ?.forms;
+  if (!Array.isArray(forms) || forms.length <= 2) {
+    throw new Error(
+      "Form 4972 paper-only export requires more than two elected participant forms",
+    );
+  }
+  if (!filer) {
+    throw new Error("Form 4972 paper-only export needs filer identity");
+  }
+  return buildPdfBytesInternal(
+    pending,
+    filer,
+    cacheDir,
+    undefined,
+    pageOrigins,
+    true,
+  );
 }

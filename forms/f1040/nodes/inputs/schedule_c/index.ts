@@ -1,3 +1,6 @@
+import { filedOwnedScheduleC } from "../../owned-business-filing.ts";
+import { patronFiledBusinessLines } from "../qbi_patron/calculation.ts";
+import { assertPatrScheduleCIncome } from "../f1099patr/schedule-c-source.ts";
 import type { z } from "zod";
 import type {
   NodeOutput,
@@ -25,6 +28,7 @@ import { longTermContractAdjustment } from "./long_term_contract.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
 import {
+  assertScheduleCConditionalAnswers,
   assertScheduleCInterestExempt,
   calculateScheduleCAtRiskNet,
   computeCOGS,
@@ -45,6 +49,7 @@ import {
 } from "./model.ts";
 
 export {
+  assertScheduleCConditionalAnswers,
   assertScheduleCInterestExempt,
   calculateScheduleCAtRiskNet,
   computeCOGS,
@@ -192,6 +197,10 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
         "Schedule C top-level gross receipts need business-linked source rows",
       );
     }
+    assertPatrScheduleCIncome(
+      input.patron_distribution_sources ?? [],
+      input.schedule_cs,
+    );
     const receiptsByBusiness = new Map<string, number>();
     for (
       const source of [
@@ -284,6 +293,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
       );
     }
     const items = projectScheduleCItems(input);
+    items.forEach(assertScheduleCConditionalAnswers);
     const form8990Pass = internalForm8990ScheduleCPass(ctx);
     if (form8990Pass === undefined) {
       items.forEach((item) =>
@@ -316,7 +326,17 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
         reductions.get(item.business_reference ?? "") ?? 0,
       )
     );
-    const netProfits = atRisk.map((result) => result.atRiskNet);
+    const netProfits = atRisk.map((result, index) =>
+      input.patron_filing_review
+        ? patronFiledBusinessLines("schedule_c", items[index]).profit
+        : (ctx.taxYear === 2025
+          ? filedOwnedScheduleC(
+            items[index],
+            false,
+            reductions.get(items[index].business_reference ?? "") ?? 0,
+          )?.profit
+          : undefined) ?? result.atRiskNet
+    );
     const fishingEvidenceItems = items.filter((item) =>
       item.schedule_j_fishing_evidence !== undefined
     );
@@ -350,12 +370,33 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
         business_reference: item.business_reference,
         proprietor_recipient: item.proprietor_recipient,
         line31_net_profit: netProfits[index],
+        ...(item.qbi_specified_service === true
+          ? { specified_service_business: true as const }
+          : {}),
       })),
     }));
     outputs.push(this.outputNodes.output(form7206, {
       schedule_c_source: {
+        ...(input.wotc_wage_reductions?.length && items.every((item) =>
+            item.qbi_wotc_filing_review &&
+            item.line_f_accounting_method === "cash" &&
+            item.line_g_material_participation === true &&
+            item.line_32_at_risk === "a" && !item.at_risk_simplified
+          ) &&
+            Object.keys(input).every((key) =>
+              [
+                "schedule_cs",
+                "filing_status",
+                "f1099nec_receipt_sources",
+                "wotc_wage_reductions",
+              ].includes(key)
+            )
+          ? { reviewed_wotc_source: true }
+          : {}),
         unadjusted_source: Object.keys(input).every((key) =>
-          key === "schedule_cs" || key === "filing_status"
+          key === "schedule_cs" || key === "patron_distribution_sources" ||
+          key === "patron_filing_review" || key === "filing_status" ||
+          key === "f1099nec_receipt_sources"
         ) && items.every((item) =>
           item.at_risk_simplified === undefined &&
           item.line_32_at_risk !== "b"
@@ -440,6 +481,9 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
           business_name: item.line_c_business_name,
           ein: item.line_d_ein?.replace(/\D/g, ""),
           qbi: netProfits[index],
+          ...((reductions.get(item.business_reference ?? "") ?? 0) > 0 && {
+            wotc_wage_reduction: reductions.get(item.business_reference ?? ""),
+          }),
           w2_wages: item.qbi_w2_wages ?? 0,
           ubia: item.qbi_unadjusted_basis ?? 0,
           no_other_adjustments_confirmed:
@@ -461,6 +505,31 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
       );
     }
 
+    if (input.filing_status === "mfj") {
+      outputs.push(
+        this.outputNodes.output(schedule_se, {
+          owner_business_sources: items.flatMap((item, index) => {
+            if (isSeExempt(item)) return [];
+            if (!item.proprietor_recipient || !item.business_reference) {
+              throw new Error(
+                "Joint Schedule SE needs each Schedule C proprietor and activity source",
+              );
+            }
+            return [{
+              recipient: item.proprietor_recipient,
+              source_reference: item.business_reference,
+              kind: "schedule_c",
+              net_profit: netProfits[index],
+              gross_business_income: computeGrossIncome(item),
+              business_name: item.line_c_business_name,
+              ein: item.line_d_ein?.replace(/\D/g, ""),
+              qbi_no_other_adjustments_confirmed:
+                item.qbi_no_other_adjustments_confirmed === true,
+            }];
+          }),
+        }),
+      );
+    }
     // Schedule SE: combine the businesses first, then test the total.
     // i1040sse, More Than One Business: "If you had a loss in one business, it reduces the
     // income from another. Figure the combined SE tax on one Schedule SE." The $400 test is

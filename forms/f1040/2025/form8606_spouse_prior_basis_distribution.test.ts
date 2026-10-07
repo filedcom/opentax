@@ -76,6 +76,7 @@ Deno.test("spouse-owned prior-basis IRA distribution has one owner through Form 
   assertEquals(pending.form8606.print_line10_basis_ratio, 0.2);
   assertEquals(pending.form8606.print_line14_remaining_basis, 2_000);
   const xml = form8606.build(pending.form8606, { filer, pending });
+  assert(typeof xml === "string");
   assertStringIncludes(
     xml,
     "<Form8606IRANamelineTxt>Blair Saver</Form8606IRANamelineTxt>",

@@ -181,10 +181,10 @@ export function reconcileForm1116ThreeCountryMixed(
     fields.two_country_treasury_pdf_review !== undefined ||
     a.foreign_tax_irs_country_code !== "CA" || a.box7 !== "Canada" ||
     b.foreign_tax_irs_country_code !== "FR" || b.box8 !== "France" ||
-    c.foreign_tax_irs_country_code !== "DE" || c.box7 !== "Germany" ||
+    c.foreign_tax_irs_country_code !== "GM" || c.box7 !== "Germany" ||
     review.data.column_a_interest_irs_country_code !== "CA" ||
     review.data.column_b_dividend_irs_country_code !== "FR" ||
-    review.data.column_c_interest_irs_country_code !== "DE" ||
+    review.data.column_c_interest_irs_country_code !== "GM" ||
     !a.foreign_tax_source_document_reference ||
     !b.source_document_reference ||
     !c.foreign_tax_source_document_reference ||
@@ -241,7 +241,7 @@ export function reconcileForm1116ThreeCountryMixed(
       c.foreign_tax_source_document_reference,
       c.box1!,
       c.box6!,
-      "DE",
+      "GM",
     ) ||
     typeof deduction !== "number" || !Number.isSafeInteger(deduction) ||
     deduction < 0 || foreignGross <= deduction ||
@@ -295,7 +295,7 @@ export function reconcileForm1116ThreeCountryMixed(
       allocatedDeduction: allocatedB,
     },
     c: {
-      country: "DE",
+      country: "GM",
       gross: c.box1!,
       tax: c.box6!,
       allocatedDeduction: allocatedC,

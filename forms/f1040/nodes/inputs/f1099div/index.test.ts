@@ -18,6 +18,7 @@ import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/in
 type ItemOverrides = Partial<{
   payerName: string;
   payerTin: string;
+  recipient_tin: string;
   account_number: string;
   source_document_reference: string;
   isNominee: boolean;
@@ -176,6 +177,55 @@ Deno.test("1099-DIV rejects one issued copy repeated without a payer TIN", () =>
     () => compute([issued, { ...issued, box1a: 250, box4: 20 }]),
     Error,
     "repeats the same issued-copy source reference",
+  );
+});
+
+Deno.test("1099-DIV mixed payer TIN copies cannot bypass account and unidentified-copy checks", () => {
+  const issued = minimalItem({
+    payerName: "Fund  Company",
+    payerTin: "123456789",
+    account_number: "FUND-1",
+    source_document_reference: "original-copy",
+    recipient_tin: "111223333",
+    box1a: 200,
+  });
+  const corrected = {
+    ...issued,
+    payerName: " fund company ",
+    payerTin: undefined,
+    source_document_reference: "corrected-copy",
+    box1a: 250,
+  };
+  for (const rows of [[issued, corrected], [corrected, issued]]) {
+    assertThrows(
+      () => compute(rows),
+      Error,
+      "repeats the same payer, recipient, and account",
+    );
+  }
+  const unidentified = {
+    ...corrected,
+    account_number: undefined,
+    source_document_reference: undefined,
+  };
+  for (const rows of [[issued, unidentified], [unidentified, issued]]) {
+    assertThrows(
+      () => compute(rows),
+      Error,
+      "multiple positive issued copies without account or source_document_reference",
+    );
+  }
+  assertEquals(
+    fieldsOf(
+      compute([issued, {
+        ...issued,
+        payerTin: "987654321",
+        source_document_reference: "different-payer-copy",
+        box1a: 300,
+      }]).outputs,
+      f1040,
+    )?.line3b_ordinary_dividends,
+    500,
   );
 });
 

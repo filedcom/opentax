@@ -56,8 +56,10 @@ Deno.test("2025 Schedule SE PDF projects regular tax and deduction", () => {
   assertEquals(projected?.owner_ssn, "123456789");
   assertEquals(projected?.line3, 50_000);
   assertEquals(projected?.line4a, 46_175);
-  assertEquals(projected?.line12, 7_064.775);
-  assertEquals(projected?.line13, 3_532.3875);
+  assertEquals(projected?.line10, 5_726);
+  assertEquals(projected?.line11, 1_339);
+  assertEquals(projected?.line12, 7_065);
+  assertEquals(projected?.line13, 3_533);
 });
 
 Deno.test("2025 Schedule SE PDF projects elected farm method without Part I line 1a", () => {

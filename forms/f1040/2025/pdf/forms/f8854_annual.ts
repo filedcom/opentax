@@ -37,7 +37,8 @@ const propertyFields = Array.from({ length: 7 }, (_, index) => {
 export const form8854AnnualPdf: PdfFormDescriptor = {
   pendingKey: "f8854_annual",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8854--2025.pdf",
-  pageIndices: () => [0, 1, 2, 3, 4],
+  // Pages 2–3 are initial-statement Sections B/C, absent from this annual route.
+  pageIndices: () => [0, 3, 4],
   fields: [
     text("filer_name", `${page1}f1_4[0]`),
     text("filer_tin", `${page1}f1_5[0]`),

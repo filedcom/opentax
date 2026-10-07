@@ -69,6 +69,34 @@ export function buildStartNode(entries: readonly InputNodeEntry[]): TaxNode {
 
     compute(_ctx: NodeContext, input: StartInput): NodeResult {
       const outputs: NodeOutput[] = [];
+      const publicInput = input as Record<string, unknown>;
+      const general = publicInput.general as
+        | Record<string, unknown>
+        | undefined;
+      const jointSE = general?.filing_status === "mfj" &&
+        (publicInput.schedule_c !== undefined ||
+          publicInput.schedule_f !== undefined);
+      const ownerIdentity = jointSE
+        ? {
+          primary_ssn: String(general?.taxpayer_ssn ?? "").replaceAll("-", ""),
+          spouse_ssn: String(general?.spouse_ssn ?? "").replaceAll("-", ""),
+        }
+        : undefined;
+      if (ownerIdentity) {
+        outputs.push({
+          nodeType: "schedule_se",
+          fields: { owner_identity: ownerIdentity },
+        });
+      }
+      const ownerContext = (nodeType: string): Record<string, unknown> => {
+        if (!ownerIdentity) return {};
+        if (nodeType === "w2" || nodeType === "f4852") {
+          return { owner_identity: ownerIdentity };
+        }
+        if (nodeType === "schedule_c") return { filing_status: "mfj" };
+        if (nodeType === "schedule_f") return { owner_filing_status: "mfj" };
+        return {};
+      };
       for (const entry of entries) {
         const key = entry.inputKey ?? entry.node.nodeType;
         const value = (input as Record<string, unknown>)[key];
@@ -79,12 +107,20 @@ export function buildStartNode(entries: readonly InputNodeEntry[]): TaxNode {
           const downstreamKey = getArrayNodeKey(entry);
           outputs.push({
             nodeType: entry.node.nodeType,
-            fields: { [downstreamKey]: arr },
+            fields: {
+              [downstreamKey]: arr,
+              ...ownerContext(entry.node.nodeType),
+            },
           });
         } else {
           outputs.push({
             nodeType: entry.node.nodeType,
-            fields: value as Record<string, unknown>,
+            fields: {
+              ...(value as Record<string, unknown>),
+              ...(entry.node.nodeType === "f4852"
+                ? {}
+                : ownerContext(entry.node.nodeType)),
+            },
           });
         }
       }

@@ -7,7 +7,6 @@ import { sourceFromPending } from "../../mef/forms/f8396.ts";
 import { assertForm8396ReissueForm8828Join } from "../../mef/forms/f8396_reissue_join.ts";
 
 const page1 = "topmostSubform[0].Page1[0].";
-const worksheet = "topmostSubform[0].Page2[0].Col2[0].Line8_Worksheet[0].";
 
 const text = (domainKey: string, pdfField: string): PdfFieldEntry => ({
   kind: "text",
@@ -34,14 +33,13 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: `${page1}f1_23[0]`,
     printZero: true,
   },
-  text("credit_limit_worksheet_line1", `${worksheet}Line1[0].f2_1[0]`),
-  text("credit_limit_worksheet_line2", `${worksheet}Line2[0].f2_2[0]`),
-  text("credit_limit_worksheet_line3", `${worksheet}Line3[0].f2_3[0]`),
 ];
 
 export const form8396Pdf: PdfFormDescriptor = {
   pendingKey: "form8396",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8396--2025.pdf",
+  // Page 2 is instructions with a credit-limit worksheet kept for records.
+  pageIndices: () => [0],
   fields,
   filerFields: [
     text("nameLine1", `${page1}f1_1[0]`),

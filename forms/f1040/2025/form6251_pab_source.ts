@@ -2,12 +2,38 @@ import { inputSchema as intSchema } from "../nodes/inputs/f1099int/index.ts";
 import { inputSchema as oidSchema } from "../nodes/inputs/f1099oid/index.ts";
 import { inputSchema as divSchema } from "../nodes/inputs/f1099div/index.ts";
 import { inputSchema as childSchema } from "../nodes/inputs/f8814/index.ts";
+import { reconcileForm4952PabAmt } from "./form4952_pab_amt_reconciliation.ts";
 
 /** Replay the four retained private-activity-bond source routes at export. */
 export function assertForm6251PrivateActivityBondSource(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
 ): void {
+  const currentInvestmentBondSource = pending?.form4952 as
+    | Record<string, unknown>
+    | undefined;
+  if (
+    currentInvestmentBondSource?.source_private_activity_bond_interest !==
+      undefined
+  ) {
+    const difference = reconcileForm4952PabAmt(
+      currentInvestmentBondSource,
+      pending!,
+    );
+    const retained6251 = pending?.form6251 as
+      | Record<string, unknown>
+      | undefined;
+    if (
+      !retained6251 || fields.line2c_investment_interest !== difference ||
+      fields.line2g_pab_interest !== retained6251.line2g_pab_interest ||
+      fields.line11_amt !== retained6251.line11_amt
+    ) {
+      throw new Error(
+        "Form 6251 current PAB sources disagree with its filed AMT amounts",
+      );
+    }
+    return;
+  }
   const int = pending?.f1099int === undefined
     ? undefined
     : intSchema.safeParse(pending.f1099int);

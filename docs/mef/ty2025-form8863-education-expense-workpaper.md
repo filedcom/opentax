@@ -1,6 +1,6 @@
 # TY2025 Form 8863 education-expense workpaper
 
-Status: bounded implementation with focused cases written but not yet run.
+Status: bounded implementation; the two-school LLC and AOC routes have local full-return XSD and filled-packet review evidence.
 
 The [IRS 2025 Form 8863 instructions](https://www.irs.gov/instructions/i8863) say the 1098-T box 1 amount may differ from the actual 2025 payments, AOC course materials can be bought away from the school when needed for a course, and LLC materials qualify only when they must be paid to the institution for enrollment or attendance. Tax-free educational assistance, refunds, and expenses used for other tax benefits reduce the amount available for the credit.
 
@@ -31,3 +31,38 @@ requirement reference, and changed Schedule 3 fixtures are authored for
 deferred validation. The record references and Form 1098-T amounts are
 structured assertions, not authenticated school or payment bytes. Other
 scholarship allocation and LLC material purchase paths remain open.
+
+## Two U.S. institutions for one student (2026-10-06, verified locally)
+
+The [2025 instructions](https://www.irs.gov/instructions/i8863) require the
+student's institution information and adjusted paid expenses; two schools
+share the student's AOC limit or the return's LLC limit. A positive route
+now retains `institution_expense_workpapers`, exactly two separately keyed
+school EINs with complete workpapers, instead of a single aggregate
+`education_expense_workpaper`. Both institutions must be U.S. schools that
+provided current-year Forms 1098-T. Each expense source follows the existing
+material, scholarship, refund and other-benefit rules. The per-school adjusted
+amounts must sum to the student's claimed amount. School, payment and Form
+1098-T references cannot be duplicated within or across students.
+
+The two-school LLC fixture combines $7,500 and $2,500 adjusted expenses,
+producing $2,000 on Schedule 3/Form 1040, tax $5,955 and refund $5,045. Its
+full XML validates the local TY2025 v5.4 XSD, with two native institution
+groups and both schools/EINs on the same printed Part III. Root rendered and
+inspected all five packet pages. The adjacent source/PDF/LLC suites passed
+79/79; a final two-test run also proves the combined AOC expenses use one
+$4,000 expense cap with $1,000 refundable/$1,500 nonrefundable credit. A follow-up two-test run also validates the AOC full return against local XSD; all five AOC packet pages were rendered and inspected, including both school EINs, Part III $4,000 expense cap, $1,000 refundable credit and $1,500 nonrefundable credit.
+Changed claims, duplicate school/document/payment records and ambiguous
+aggregate-plus-school workpapers reject at prepared export.
+
+Retained LLC packet: `.state/research/ty2025-filled-pdf-review/2026-10-06-form8863-two-schools/`.
+XML SHA-256 `ae8545760506c5a83a949b9884532e86baa354f4c2f6544c2c86352ce12a950f`;
+PDF SHA-256 `c5826722de49c2fb21f3f24dc5cc32d4341e48c2749ad2ad9eef5a78985e211e`.
+The source records are synthetic structured facts, not independently
+issued school/payment bytes. Three-school overflow, foreign institutions,
+missing-1098-T exceptions, other scholarship allocations, issuer/enrollment
+proof, IRS business rules and ATS acceptance remain open.
+
+AOC follow-up artifacts: `/tmp/opentax-form8863-two-schools-aoc-review/`; test log `/tmp/opentax-two-schools-aoc-xsd.log` (2 passed, zero failed). Form 1040 tax $6,455, payments $12,000 and refund $5,545 visibly reconcile. Historical assertions above that all focused cases are unrun are superseded only for the tested LLC/AOC paths; wider routes remain unproven.
+
+Both two-school credit routes are now registered reusable held-review fixtures. The real source/attachment/PDF/native generator produced two cases and ten pages in `/tmp/opentax-two-schools-selected-packet`; root rendered and visually inspected all ten actual generated pages. The read-only replay checker verified source hashes, final calculation, native XML, PDF, page origins, template cache and full local XSD. Reviewed manifest SHA-256: `8137b9d0adf452950b5fc19bdc2da9160c5dd41e644c97c9fec3a537a2218093`. Registered positive-route tests pass 2/2. This synthetic selected packet does not constitute complete inventory or IRS acceptance.

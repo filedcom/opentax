@@ -1,3 +1,4 @@
+import { owned5471PdfValues } from "./f5471-owned-values.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { projectForm8992Source } from "../../form8992_source.ts";
 
@@ -77,6 +78,9 @@ export const form5471ScheduleJPdf: PdfFormDescriptor = {
       allPending,
       filer,
     );
+    if (cfc.owned_worksheet_source) {
+      return owned5471PdfValues(cfc, shareholderName, "J");
+    }
     const j = cfc.schedule_j;
     const opening = j.opening_post2017_untaxed_ep_functional;
     const current = cfc.schedule_h.book_net_income_functional;

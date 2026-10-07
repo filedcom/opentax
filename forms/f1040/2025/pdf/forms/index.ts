@@ -1,3 +1,4 @@
+import { form4852RetainedPdf } from "./f4852_retained.ts";
 import type { PdfFormDescriptor } from "../form-descriptor.ts";
 import { irs1040Pdf } from "./f1040.ts";
 import { schedule1aPdf } from "./schedule1a.ts";
@@ -69,6 +70,7 @@ import { form8582Pdf } from "./f8582.ts";
 import { form8606Pdf } from "./f8606.ts";
 import { form8611Pdf } from "./f8611.ts";
 import { form8615Pdf } from "./f8615.ts";
+import { form8621Pdf } from "./f8621.ts";
 import { form8814Pdf } from "./f8814.ts";
 import { form8815Pdf } from "./f8815.ts";
 import { form8820Pdf } from "./f8820.ts";
@@ -118,6 +120,7 @@ import { w2gPdf } from "./w2g.ts";
 
 export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   irs1040Pdf,
+  form4852RetainedPdf,
   w2gPdf,
   schedule1Pdf,
   schedule1aPdf,
@@ -185,6 +188,7 @@ export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   form8606Pdf,
   form8611Pdf,
   form8615Pdf,
+  form8621Pdf,
   form8814Pdf,
   form8815Pdf,
   form8820Pdf,
@@ -215,8 +219,10 @@ export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   form8919Pdf,
   form8936Pdf,
   form8936ScheduleAPdf,
-  form8941Pdf,
   form8949Pdf,
+  // QBI55 and health credit65 precede Additional Medicare/NIIT71/72.
+  form8995Pdf,
+  form8941Pdf,
   form8959Pdf,
   form8960Pdf,
   form8962Pdf,
@@ -226,7 +232,6 @@ export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   form8992Pdf,
   form8992ScheduleAPdf,
   form8994Pdf,
-  form8995Pdf,
   form965aPdf,
   form8995aPdf,
   form8995aScheduleAPdf,

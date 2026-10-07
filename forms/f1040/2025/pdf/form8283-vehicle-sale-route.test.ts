@@ -131,7 +131,6 @@ Deno.test("sold Section A vehicle joins graph, acknowledgment, native XML and fi
     ...base.inputs,
     schedule_a: {
       line_5a_state_income_tax: 24_000,
-      line_8a_mortgage_interest_1098: 12_000,
       current_noncash_gift_inventory_complete_confirmed: true,
       other_prior_charitable_carryovers_absent_confirmed: true,
       capital_gain_property_carryovers: [],
@@ -144,7 +143,7 @@ Deno.test("sold Section A vehicle joins graph, acknowledgment, native XML and fi
   });
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule_a.line_12_noncash_contributions, 15_000);
-  assertEquals(result.pending.f1040.line12e_itemized_deductions, 51_000);
+  assertEquals(result.pending.f1040.line12e_itemized_deductions, 39_000);
   const pending = buildPending(result.pending);
   const bundle = await buildMefBundle(pending, {
     filer: base.filer,
@@ -161,7 +160,7 @@ Deno.test("sold Section A vehicle joins graph, acknowledgment, native XML and fi
   );
   assertStringIncludes(
     bundle.xml,
-    "<TotalItemizedOrStandardDedAmt>51000</TotalItemizedOrStandardDedAmt>",
+    "<TotalItemizedOrStandardDedAmt>39000</TotalItemizedOrStandardDedAmt>",
   );
   assertStringIncludes(bundle.xml, "<VIN>1HGBH41JXMN109186</VIN>");
   assertStringIncludes(bundle.xml, "gross proceeds $15000.00");
@@ -264,7 +263,6 @@ Deno.test("unreduced needy-transfer vehicle joins certification, native XML and 
     ...base.inputs,
     schedule_a: {
       line_5a_state_income_tax: 24_000,
-      line_8a_mortgage_interest_1098: 12_000,
       current_noncash_gift_inventory_complete_confirmed: true,
       other_prior_charitable_carryovers_absent_confirmed: true,
       capital_gain_property_carryovers: [],
@@ -273,7 +271,7 @@ Deno.test("unreduced needy-transfer vehicle joins certification, native XML and 
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule_a.line_12_noncash_contributions, 4_000);
-  assertEquals(result.pending.f1040.line12e_itemized_deductions, 40_000);
+  assertEquals(result.pending.f1040.line12e_itemized_deductions, 28_000);
   const pending = buildPending(result.pending);
   const bundle = await buildMefBundle(pending, {
     filer: base.filer,
@@ -290,7 +288,7 @@ Deno.test("unreduced needy-transfer vehicle joins certification, native XML and 
   );
   assertStringIncludes(
     bundle.xml,
-    "<TotalItemizedOrStandardDedAmt>40000</TotalItemizedOrStandardDedAmt>",
+    "<TotalItemizedOrStandardDedAmt>28000</TotalItemizedOrStandardDedAmt>",
   );
   assertStringIncludes(bundle.xml, "<VIN>1HGBH41JXMN109186</VIN>");
   assertStringIncludes(
@@ -430,7 +428,6 @@ Deno.test("Section A significant-use vehicle joins reviewed box 5a/5c PDF throug
     ...base.inputs,
     schedule_a: {
       line_5a_state_income_tax: 24_000,
-      line_8a_mortgage_interest_1098: 12_000,
       current_noncash_gift_inventory_complete_confirmed: true,
       other_prior_charitable_carryovers_absent_confirmed: true,
       capital_gain_property_carryovers: [],
@@ -439,7 +436,7 @@ Deno.test("Section A significant-use vehicle joins reviewed box 5a/5c PDF throug
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule_a.line_12_noncash_contributions, 4_000);
-  assertEquals(result.pending.f1040.line12e_itemized_deductions, 40_000);
+  assertEquals(result.pending.f1040.line12e_itemized_deductions, 28_000);
   const pending = buildPending(result.pending);
   const attachment = {
     fileName: significantUse.vehicle_acknowledgment_attachment_file_name,
@@ -573,7 +570,6 @@ Deno.test("Section A material-improvement vehicle joins reviewed box 5a/5c PDF t
     ...base.inputs,
     schedule_a: {
       line_5a_state_income_tax: 24_000,
-      line_8a_mortgage_interest_1098: 12_000,
       current_noncash_gift_inventory_complete_confirmed: true,
       other_prior_charitable_carryovers_absent_confirmed: true,
       capital_gain_property_carryovers: [],
@@ -582,7 +578,7 @@ Deno.test("Section A material-improvement vehicle joins reviewed box 5a/5c PDF t
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule_a.line_12_noncash_contributions, 4_000);
-  assertEquals(result.pending.f1040.line12e_itemized_deductions, 40_000);
+  assertEquals(result.pending.f1040.line12e_itemized_deductions, 28_000);
   const pending = buildPending(result.pending);
   const attachment = {
     fileName: improvement.vehicle_acknowledgment_attachment_file_name,

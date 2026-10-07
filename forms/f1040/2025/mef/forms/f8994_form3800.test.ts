@@ -59,7 +59,7 @@ Deno.test("Form 8994 stages one sourced specified Form 3800 line 4j and Part V r
   );
 });
 
-Deno.test("Form 8994 Schedule C wage reduction follows tax-use allocation", () => {
+Deno.test("Form 8994 full Schedule C wage reduction persists under partial tax use", () => {
   const pending = {
     ...form8994MatchedPending,
     f3800: {
@@ -67,9 +67,9 @@ Deno.test("Form 8994 Schedule C wage reduction follows tax-use allocation", () =
       form8994_applied_credit: 500,
     },
     schedule_c: {
+      ...form8994MatchedPending.schedule_c,
       schedule_cs: [{
         ...form8994MatchedPending.schedule_c.schedule_cs[0],
-        line_26_other_employment_credits: 500,
       }],
     },
   };
@@ -78,7 +78,7 @@ Deno.test("Form 8994 Schedule C wage reduction follows tax-use allocation", () =
     1_250,
   );
   assertThrows(
-    () => reconcileForm8994DirectEmployer(pending.f8994, pending, 501),
+    () => reconcileForm8994DirectEmployer(pending.f8994, pending, 1251),
     Error,
     "deduction reduction differs",
   );
@@ -87,6 +87,7 @@ Deno.test("Form 8994 Schedule C wage reduction follows tax-use allocation", () =
       reconcileForm8994DirectEmployer(pending.f8994, {
         ...pending,
         schedule_c: {
+          ...pending.schedule_c,
           schedule_cs: [{
             ...pending.schedule_c.schedule_cs[0],
             line_26_wages: 49_999,

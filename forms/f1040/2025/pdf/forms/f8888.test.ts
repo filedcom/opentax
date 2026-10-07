@@ -124,3 +124,39 @@ Deno.test("Form 8888 PDF rejects a checksum-invalid routing number", () => {
     "fails the banking checksum",
   );
 });
+
+Deno.test("Form 8888 PDF spouse-owned deposit requires a joint return", () => {
+  const spouse = {
+    ssn: "111223333",
+    firstName: "John",
+    lastName: "Smith",
+    nameControl: "SMIT",
+  };
+  const spouseAccounts = {
+    ...source,
+    account_2: { ...source.account_2, owner_name: "John Smith" },
+  };
+  for (
+    const filingStatus of [
+      FilingStatus.Single,
+      FilingStatus.MarriedFilingSeparately,
+    ]
+  ) {
+    assertThrows(
+      () =>
+        form8888Pdf.instances?.(
+          spouseAccounts,
+          { ...filer, filingStatus, spouse },
+          pending,
+        ),
+      Error,
+      "account owner must match",
+    );
+  }
+  const instances = form8888Pdf.instances?.(
+    spouseAccounts,
+    { ...filer, filingStatus: FilingStatus.MarriedFilingJointly, spouse },
+    pending,
+  ) ?? [];
+  assertEquals(instances[0].account_2_number, "444555666");
+});

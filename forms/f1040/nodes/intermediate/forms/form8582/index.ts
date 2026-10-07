@@ -98,7 +98,13 @@ export const inputSchema = z.object({
     name: z.string().trim().min(1),
     activity_type: z.enum(["A", "B"]),
     property_type: z.number().int().min(1).max(8),
-    reporting_form: z.enum(["schedule_e", "form4835"]).optional(),
+    reporting_form: z.enum([
+      "schedule_e",
+      "form4835",
+      "k1_partnership",
+      "k1_s_corp",
+      "k1_4797_line10",
+    ]).optional(),
     current_net: z.number(),
     prior_unallowed_operating: z.number().nonnegative(),
     prior_year_8582_source: priorYear8582SourceSchema.optional(),
@@ -127,9 +133,23 @@ export const inputSchema = z.object({
   passive_schedule_f: z.number().optional(),
 
   // Current-year net passive income (sum of activities with net > 0)
-  current_income: z.number().nonnegative().optional(),
+  current_income: z.union([
+    z.number().nonnegative(),
+    z.array(z.number().nonnegative()),
+  ]).transform((value) =>
+    Array.isArray(value)
+      ? value.reduce((sum, amount) => sum + amount, 0)
+      : value
+  ).optional(),
   // The portion of current passive income from actively participated rentals.
-  rental_current_income: z.number().nonnegative().optional(),
+  rental_current_income: z.union([
+    z.number().nonnegative(),
+    z.array(z.number().nonnegative()),
+  ]).transform((value) =>
+    Array.isArray(value)
+      ? value.reduce((sum, amount) => sum + amount, 0)
+      : value
+  ).optional(),
 
   // Current-year net passive loss (positive amount; sum of |net| for loss activities)
   current_loss: z.number().nonnegative().optional(),
@@ -148,7 +168,9 @@ export const inputSchema = z.object({
   has_active_rental: z.boolean().optional(),
 
   // True if any other passive activity exists (activity_type="B")
-  has_other_passive: z.boolean().optional(),
+  has_other_passive: z.union([z.boolean(), z.array(z.boolean())]).transform((
+    value,
+  ) => Array.isArray(value) ? value.some(Boolean) : value).optional(),
 
   // Modified AGI for Part II phase-out calculation (line 6)
   // Excludes passive losses, rental RE losses to real estate professionals,

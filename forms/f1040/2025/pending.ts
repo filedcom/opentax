@@ -32,7 +32,11 @@ export function normalizePendingDict(
         : additiveNumericKeys.has(key) ||
             (nodeType === "agi_aggregator" &&
               (key === "line1h_other_earned" || key === "tax_exempt_interest" ||
-                key === "line3b_ordinary_dividends"))
+                key === "line3b_ordinary_dividends" ||
+                key === "pal_current_income" ||
+                key === "pal_rental_income")) ||
+            (nodeType === "form8582" &&
+              (key === "current_income" || key === "rental_current_income"))
         ? value.reduce((sum, amount) => sum + amount, 0)
         : value[value.length - 1];
     } else {

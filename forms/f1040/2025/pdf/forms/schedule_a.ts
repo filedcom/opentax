@@ -1,8 +1,11 @@
+import { assertRetirementStateLocalTaxSource } from "../../retirement_state_local_tax_source.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import {
   assertForm1098Box1Sources,
   assertForm1098Box6Sources,
+  assertForm1098Line8aAmount,
+  assertForm1098Line8aSourcePresence,
   assertForm1098MortgageLimitSources,
   assertPurchasePointsCrossLoanSources,
 } from "../../../nodes/inputs/f1098/index.ts";
@@ -228,6 +231,10 @@ export const scheduleAPdf: PdfFormDescriptor = {
     ) {
       return [];
     }
+    assertForm1098Line8aSourcePresence(
+      all?.f1098,
+      Number(input.line_8a_mortgage_interest_1098 ?? 0),
+    );
     if (all?.f1098 !== undefined) {
       if (!filer) {
         throw new Error("Schedule A PDF Form 1098 box 6 needs filer identity");
@@ -253,6 +260,11 @@ export const scheduleAPdf: PdfFormDescriptor = {
         Number(input.line_8c_points_no_1098 ?? 0),
         all.mortgage_refinance_points !== undefined,
         all.form8396 !== undefined,
+        input.home_mortgage_nonqualifying_use_review,
+        (all.mortgage_refinance_points as
+          | { cashout_source?: unknown }
+          | undefined)?.cashout_source !== undefined,
+        filer.spouse?.ssn,
       );
       assertPurchasePointsCrossLoanSources(
         all.f1098,
@@ -265,6 +277,10 @@ export const scheduleAPdf: PdfFormDescriptor = {
         all.form8396 !== undefined,
       );
       assertForm1098Box1Sources(all.f1098, recipients);
+      assertForm1098Line8aAmount(
+        all.f1098,
+        Number(input.line_8a_mortgage_interest_1098 ?? 0),
+      );
     }
     if (all?.mortgage_refinance_points !== undefined) {
       if (!filer) {
@@ -301,6 +317,7 @@ export const scheduleAPdf: PdfFormDescriptor = {
       capital_gain_election_finalized: _election,
       ...source
     } = input;
+    assertRetirementStateLocalTaxSource(all, input);
     const parsed = scheduleAInputSchema.parse(source);
     const recomputed = scheduleA.compute(
       { taxYear: 2025, formType: "f1040" },
@@ -319,6 +336,7 @@ export const scheduleAPdf: PdfFormDescriptor = {
     }
     const amount = (key: string) => Number(input[key] ?? 0);
     const saltBeforeCap = amount("line_5a_state_income_tax") +
+      amount("retirement_state_local_withholding") +
       amount("line_5a_sales_tax") + amount("line_5b_real_estate_tax") +
       amount("line_5c_personal_property_tax");
     const taxes = Number(standard.itemized_taxes);
@@ -362,6 +380,8 @@ export const scheduleAPdf: PdfFormDescriptor = {
     );
     return [{
       ...input,
+      line_5a_state_income_tax: amount("line_5a_state_income_tax") +
+        amount("retirement_state_local_withholding"),
       line_8a_mortgage_interest_1098: line8a,
       line_8b_mortgage_interest_no_1098: line8b,
       print_line_8b_seller_details: line8bSeller?.description,

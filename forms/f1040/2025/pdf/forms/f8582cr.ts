@@ -53,8 +53,8 @@ export const form8582crPdf: PdfFormDescriptor = {
     { kind: "text", domainKey: "nameLine1", pdfField: `${page1}.f1_1[0]` },
     { kind: "text", domainKey: "primarySSN", pdfField: `${page1}.f1_2[0]` },
   ],
-  includeWhen: (raw) =>
-    Array.isArray(raw.credit_sources) && raw.credit_sources.length > 0,
+  // The builder passes projected filed lines here, not the source inventory.
+  includeWhen: (fields) => typeof fields.line5 === "number" && fields.line5 > 0,
   projectFields(raw, allPending) {
     if (!Array.isArray(raw.credit_sources) || raw.credit_sources.length === 0) {
       return {};

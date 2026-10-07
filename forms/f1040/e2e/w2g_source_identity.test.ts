@@ -13,6 +13,7 @@ import { testFiler } from "../2025/mef/test-filer.ts";
 import type { MefFormsPending } from "../2025/mef/types.ts";
 
 const source = {
+  calendar_year: 2025,
   payer_name: "Casino Inc",
   payer_ein: "12-3456789",
   source_document_reference: "issued-2025-casino-w2g-1",

@@ -1,3 +1,12 @@
+import { assertSchedule1ASeniorGeneralSource } from "../../schedule1a-senior-source.ts";
+import { schedule_f as scheduleF } from "../../../nodes/intermediate/forms/schedule_f/index.ts";
+import { extractFilerIdentity } from "../../../mef/filer.ts";
+import { form7206 } from "./f7206.ts";
+import { assertIndependentOwnerHealthSource } from "../../form7206_independent_owner_source.ts";
+import { calculateSingleScheduleCForm7206 } from "../../../nodes/intermediate/forms/form7206/single-source.ts";
+import { normalizeAllPending } from "../../pending.ts";
+import { assertOwnedScheduleSE } from "../../schedule-se-owner-source.ts";
+import { tipSourceCanonical } from "../../../nodes/intermediate/forms/form8995/qualified-tips.ts";
 import { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
 import {
@@ -389,6 +398,13 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
                 item.qualified_tips_review.included_in_box1,
               no_other_allocable_deductions:
                 item.qualified_tips_review.no_other_allocable_deductions,
+              ...(item.qualified_tips_review
+                  .allocable_health_plan_identifiers !== undefined
+                ? {
+                  allocable_health_plan_identifiers: item.qualified_tips_review
+                    .allocable_health_plan_identifiers,
+                }
+                : {}),
               no_other_allocable_deductions_review_reference:
                 item.qualified_tips_review
                   .no_other_allocable_deductions_review_reference,
@@ -414,6 +430,14 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
                 item.qualified_tips_box3_review.included_in_box3,
               no_other_allocable_deductions:
                 item.qualified_tips_box3_review.no_other_allocable_deductions,
+              ...(item.qualified_tips_box3_review
+                  .allocable_health_plan_identifiers !== undefined
+                ? {
+                  allocable_health_plan_identifiers:
+                    item.qualified_tips_box3_review
+                      .allocable_health_plan_identifiers,
+                }
+                : {}),
               no_other_allocable_deductions_review_reference:
                 item.qualified_tips_box3_review
                   .no_other_allocable_deductions_review_reference,
@@ -439,6 +463,14 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
                 item.qualified_tips_box1a_review.included_in_box1a,
               no_other_allocable_deductions:
                 item.qualified_tips_box1a_review.no_other_allocable_deductions,
+              ...(item.qualified_tips_box1a_review
+                  .allocable_health_plan_identifiers !== undefined
+                ? {
+                  allocable_health_plan_identifiers:
+                    item.qualified_tips_box1a_review
+                      .allocable_health_plan_identifiers,
+                }
+                : {}),
               no_other_allocable_deductions_review_reference:
                 item.qualified_tips_box1a_review
                   .no_other_allocable_deductions_review_reference,
@@ -469,21 +501,88 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       ).outputs.find((item) => item.nodeType === "schedule1a");
       const businessRows = businessOutput?.fields
         .qualified_tips_schedule_c_businesses;
+      const farmOutput = context?.pending?.schedule_f === undefined
+        ? undefined
+        : scheduleF.compute(
+          { taxYear: 2025, formType: "f1040" },
+          context.pending.schedule_f as Parameters<typeof scheduleF.compute>[1],
+        ).outputs.find((item) => item.nodeType === "schedule1a");
+      if (
+        tipSourceCanonical(
+          farmOutput?.fields.qualified_tips_schedule_f_businesses,
+        ) !==
+          tipSourceCanonical(input.qualified_tips_schedule_f_businesses)
+      ) {
+        throw new Error(
+          "Schedule1A actual farm source inventory differs from issued owned farm return",
+        );
+      }
       const scheduleOne = z.object({
+        line3_schedule_c: z.number().optional(),
         line15_se_deduction: z.number().optional(),
         line6_schedule_f: z.number().optional(),
         line16_sep_simple: z.number().optional(),
         line17_se_health_insurance: z.number().optional(),
       })
         .passthrough().parse(context?.pending?.schedule1);
+      const actualPending = normalizeAllPending(
+        context?.pending as Record<string, unknown>,
+      );
+      const actualHealth = actualPending.form7206;
+      if (
+        tipSourceCanonical(input.qualified_tips_health_plan_source) !==
+          tipSourceCanonical(actualHealth?.single_schedule_c_plan) ||
+        tipSourceCanonical(input.qualified_tips_health_plans_source) !==
+          tipSourceCanonical(actualHealth?.independent_schedule_c_plans)
+      ) {
+        throw new Error(
+          "Schedule1A business-tip health source must match actual established Form7206 plans",
+        );
+      }
+      let healthDeduction = 0;
+      if (input.qualified_tips_health_plan_source) {
+        form7206.build(actualHealth!, {
+          pending: actualPending,
+          filer: context?.filer ?? extractFilerIdentity(actualPending.f1040),
+        });
+        healthDeduction = calculateSingleScheduleCForm7206(
+          input.qualified_tips_health_plan_source,
+        ).line14;
+      } else if (input.qualified_tips_health_plans_source) {
+        healthDeduction =
+          assertIndependentOwnerHealthSource(actualPending, context?.filer)
+            .deduction;
+      }
       const line15 = scheduleOne.line15_se_deduction ?? 0;
+      const owned = input.qualified_tips_owner_se_source === undefined
+        ? undefined
+        : context?.pending
+        ? assertOwnedScheduleSE(
+          normalizeAllPending(context.pending as Record<string, unknown>),
+        )
+        : undefined;
+      if (
+        input.qualified_tips_owner_se_source !== undefined && (!owned ||
+          tipSourceCanonical(owned.source) !==
+            tipSourceCanonical(input.qualified_tips_owner_se_source))
+      ) {
+        throw new Error(
+          "Schedule1A tips owner halfSE source differs from the actual issued income and businesses",
+        );
+      }
       if (
         JSON.stringify(businessRows) !==
           JSON.stringify(input.qualified_tips_schedule_c_businesses) ||
         line15 !== (input.qualified_tips_se_deduction ?? 0) ||
-        (scheduleOne.line6_schedule_f ?? 0) !== 0 ||
+        scheduleOne.line3_schedule_c !==
+          input.qualified_tips_schedule_c_businesses?.reduce(
+            (sum, business) => sum + business.line31_net_profit,
+            0,
+          ) ||
+        (scheduleOne.line6_schedule_f ?? 0) !==
+          (input.qualified_tips_schedule_f_profit ?? 0) ||
         (scheduleOne.line16_sep_simple ?? 0) !== 0 ||
-        (scheduleOne.line17_se_health_insurance ?? 0) !== 0 ||
+        (scheduleOne.line17_se_health_insurance ?? 0) !== healthDeduction ||
         !reports.every((report) => {
           const ssn = report.recipient_ssn.replaceAll("-", "");
           return matchesRecipient(
@@ -778,6 +877,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       { taxYear: 2025, formType: "f1040" },
       input,
     );
+    assertSchedule1ASeniorGeneralSource(context?.pending?.general, input, lines.line36a_taxpayer, lines.line36b_spouse);
     const matchesPerson = (
       claimed: number,
       sourceSsn: string | undefined,
@@ -850,6 +950,7 @@ function buildSchedule(raw: Input, context?: MefBuildContext): string {
       "Schedule 1-A total and senior deduction do not reconcile to Form 1040",
     );
   }
+  if (total === 0) return "";
   return elements("IRS1040Schedule1A", [
     element("AdjustedGrossIncomeAmt", part1.line1_agi),
     form2555Line45 > 0

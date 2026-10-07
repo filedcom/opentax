@@ -80,3 +80,21 @@ withheld W-2G. This prevents an unsupported free-form `N` claim but does not
 authenticate the payer or open scanned/flattened copies. Forty-two focused
 W-2G source, native, and payer-copy tests passed; the current full suite and
 ATS remain open.
+
+The final MeF and filled-PDF preflight now also requires an explicit
+`calendar_year: 2025` and a winner matching the filer for every W-2G row with
+positive winnings **or withholding**. This closes a withholding-only owner
+gap and prevents a yearless typed row from borrowing the 2025 filing route.
+The focused source, MeF-builder, and PDF-builder suites pass 194/194; a
+payer-issued copy still needs independent provenance and signature review.
+
+## Retained Copy B normal appearances
+
+Final bundle verification now checks original submitted field widgets and normal appearance streams, rather than accepting AcroForm values alone. Each modeled recipient field must be attached to one printable, unrotated visible page and remain inside its crop box. Hidden/nonprinting/missing/offpage widgets, stale or absent normal appearances, alternate XFA/viewer regeneration, optional-content/transparency groups, changed appearance geometry, white/unsupported text colors, and forged font resources reject. A separate in-memory comparison regenerates the supported standard Helvetica appearance from the original field value and layout; submitted bytes are never repaired before verification. Black color encodings are equivalent; the canonical IRS dark-blue text is supported. This parser deliberately verifies the existing standard recipient template appearance; differently encoded genuine payer appearances remain unresolved rather than being silently trusted. Whole-page overlays, issuer provenance, signatures and external acceptance are not authenticated by this check.
+
+The former positive fixture built blank-page field metadata without widgets; that pattern is now an explicit negative. New constructed source copies use the actual [December2023 IRS CopyB template](https://www.irs.gov/pub/irs-prior/fw2g--2023.pdf), with one retained recipient page per source. Native and catalog fixtures use the same visible source helper. Fresh standard-task source/native/fullXSD gate **6/0(14s)**, `/tmp/opentax-w2g-printable-full-source-gate-v2-oct6.log`, with eleven appearance/source conflicts plus ordinary amount conflict. Actual source-backed single-withheld and partnership-combination packets **2/10 return pages +2 retained source pages**, fullv5.4XSD, `/tmp/opentax-w2g-printable-full-packets-oct6.log`. All12 rendered pages inspected in three contact sheets under `/tmp/opentax-w2g-printable-full-packets-oct6/rendered`: payer/winner/year, amounts, owners, ordering and totals agree. Single winnings10000/withholding2400 givesAGI10000/refund2400; mixed wages30000 plus partnershipgambling1000 andW2G200 givesincome31200, tax1619, combinedwithholding3050/refund1431. These are constructed binding/rendering proofs, not payer-issued/authenticated or signed forms. Broader source/IRS/filing-readiness parent remainsopen.
+
+
+## Prepared bundle regression fixture repair
+
+The current ordinary prepared-copy task reproduced the full-run failure:0passed/1failed because its nominal valid attachment had field metadata without printable widgets. Beforelog `/tmp/opentax-w2g-prepared-copy-before-oct6.log`; this is a rejected constructed test source, not a production filing failure. The test now uses the existing canonicalCopyB helper, preserving the prepared-source/attachment digest recomputation and changed2399vs2400withholding rejection. Ordinary two-module task passed4/0 (6s), `/tmp/opentax-w2g-prepared-copy-after-oct6.log`, session36153 terminal0. Existing source checks still reject metadata-only, hidden, offpage, stale, missing and forged-font appearances. No production guard changed and no issuer-authentication claim is added. V24predates this test repair; the next coherent full batch must include it.

@@ -1,4 +1,9 @@
 import {
+  form4852IraMarginLabel,
+  reviewedForm4852AccountType,
+} from "../../../nodes/inputs/f4852/retirement-account.ts";
+import { addForm4852IraMargin } from "../../form4852_ira_margin.ts";
+import {
   effectiveTaxable,
   FormType,
   itemSchema,
@@ -6,11 +11,13 @@ import {
 import { type FilerIdentity, FilingStatus } from "../../../mef/header.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
-// A retained taxpayer/ERO copy. This descriptor is deliberately absent from
-// ALL_PDF_FORMS: final export remains guarded until the substitute's MeF source
-// document and return-wide reconciliation are implemented and reviewed.
+// Taxpayer/ERO packet copy. Final rendering separately verifies the completed
+// official source PDF and retained workpaper bytes before producing this copy.
 const page = "topmostSubform[0].Page1[0]";
-const field = (domainKey: string, pdfField: string): PdfFieldEntry => ({
+const field = (
+  domainKey: string,
+  pdfField: string,
+): Extract<PdfFieldEntry, { kind: "text" }> => ({
   kind: "text",
   domainKey,
   pdfField: `${page}.${pdfField}`,
@@ -27,7 +34,7 @@ const amount = (domainKey: string, path: string): PdfFieldEntry => ({
 
 export const form4852RetainedPdf: PdfFormDescriptor = {
   pendingKey: "f4852",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f4852.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f4852--2020.pdf",
   pageIndices: () => [0],
   fields: [
     field("return_names", "f1_1[0]"),
@@ -46,7 +53,7 @@ export const form4852RetainedPdf: PdfFormDescriptor = {
       pdfField: `${page}.c1_1[1]`,
       whenValue: FormType.R_1099,
     },
-    field("payer_name_address", "f1_5[0]"),
+    { ...field("payer_name_address", "f1_5[0]"), fontSize: 7 },
     field("payer_tin", "f1_6[0]"),
     amount("wages", `${line7Left}.f1_7[0]`),
     amount("social_security_wages", `${line7Left}.f1_8[0]`),
@@ -82,6 +89,15 @@ export const form4852RetainedPdf: PdfFormDescriptor = {
     field("amount_determination_explanation", "f1_29[0]"),
     field("payer_form_efforts_explanation", "f1_30[0]"),
   ],
+  decoratePages(document, pages, instance) {
+    if (instance.ira_margin_label) {
+      addForm4852IraMargin(
+        document,
+        pages[0],
+        String(instance.ira_margin_label),
+      );
+    }
+  },
   instances(raw, filer) {
     if (!Array.isArray(raw.f4852s)) return [];
     if (!filer) throw new Error("Form 4852 retained PDF needs filed identity");
@@ -200,6 +216,9 @@ export const form4852RetainedPdf: PdfFormDescriptor = {
           r1099_locality_name: item.locality_name,
           employee_contributions: item.employee_contributions,
           distribution_code: item.distribution_code,
+          ira_margin_label: reviewedForm4852AccountType(item)
+            ? form4852IraMarginLabel(item)
+            : undefined,
         };
     });
   },

@@ -6,8 +6,41 @@ input keys were removed. A contribution without computed native lines or a
 reviewed zero-credit outcome rejects instead of silently omitting IRS8880, and
 the calculator now uses sourced AGI, filing status and a tax-liability limit
 derived during Form 1040 finalization before a positive Saver's Credit reaches
-Schedule 3 line 4. Focused source-to-MeF and negative cases are written but
-unrun. No XSD, filled-PDF, IRS business-rule or ATS acceptance is claimed.
+Schedule 3 line 4. The initial build-first notes below retain their historical
+test status. Current evidence is recorded in the following update; IRS
+business-rule and ATS acceptance remain open.
+
+## Current selected evidence (2026-10-04)
+
+Sixty-six focused Form 8880 and PDF-builder tests pass. The existing
+`single-form8880-w2-deferral` source fixture yields a local TY2025v5.4
+XSD-valid return and a visually reviewed four-page packet. The PDF builder
+now omits the second IRS Form 8880 source page because it contains instructions
+only. The filed page reconciles a $2,000 W-2 code D deferral and a $428 credit
+to Schedule 3 line 4 and Form 1040 line 20. The selected review manifest
+passed source replay, page-origin, PDF/XML hash, and XSD checks; its digest is
+in the [validation batch](ty2025-form1040-validation-batch.md). This is one
+synthetic route; source authenticity, other branches, IRS business rules, and
+ATS acceptance remain open.
+
+On 2026-10-05, native MeF and PDF export gained a shared replay of positive
+Form 8880 W-2 deferral entries against retained W-2 box 12 copies. It compares
+employee SSN, deferral code, amount, and the reviewed code G employee split as
+a multiset; a missing, changed, or duplicated W-2 now rejects instead of
+allowing a self-contained Form 8880 claim. Sourced MFJ D/E and governmental
+457(b) code G examples still pass. The focused native/PDF cases passed 22/22,
+and a wider related batch passed 139/139. Issuer authenticity and other
+contribution sources remain separate gates.
+
+The same native/PDF finalization check now also replays positive contributors'
+birth dates, five-month student answers, dependent-claim answers, filing
+status, and present SSNs against the retained general source when that source
+is part of the return. Direct tests first showed that a retained five-month
+student could be contradicted by a positive Form 8880 claim; they now reject
+that drift for taxpayer and spouse, while matching single and joint claims
+pass. The focused 35-test batch and wider 145-test batch pass. Standalone
+reviewed Form 8880 inputs without a retained general record remain a separate
+supported source route; independent fact authentication is still open.
 
 The TY2025 line 9 AGI bands now match the printed 2025 Form 8880 table:
 single/MFS/QSS ceilings of $23,750/$25,500/$39,500, HOH ceilings of

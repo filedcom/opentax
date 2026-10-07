@@ -1,3 +1,5 @@
+import { reconcileForm8606RothInventories } from "./form8606_roth_inventory_reconciliation.ts";
+import { reconcileForm8606RothActivity } from "./form8606_roth_activity_reconciliation.ts";
 import { inputSchema as f1099rSchema } from "../nodes/inputs/f1099r/index.ts";
 import {
   printSchema,
@@ -11,6 +13,42 @@ export function reconcileForm8606Roth(
   pending: Readonly<Record<string, unknown>> | undefined,
   filer: FilerIdentity | undefined,
 ) {
+  const collection = pending ? reconcileForm8606RothInventories(pending, filer) : undefined;
+  if (collection) {
+    const fields = printSchema.parse(rawFields);
+    const owner = collection.owners.find((row) => row.review.owner === fields.roth_owner_inventory_review?.owner);
+    if (!owner?.fields || JSON.stringify(fields) !== JSON.stringify(printSchema.parse(owner.fields))) {
+      throw new Error("Form8606 owner descriptor differs from the complete retained current inventory");
+    }
+    return { fields, gross: owner.nonqualifiedGross, contribution: owner.basis,
+      taxable: owner.taxable, ownerName: owner.ownerName!, ownerSsn: owner.ownerSsn! };
+  }
+  const activity = pending
+    ? reconcileForm8606RothActivity(pending, filer)
+    : undefined;
+  if (activity) {
+    if (activity.qualified || !activity.fields) {
+      throw new Error(
+        "Qualified Roth distribution cannot file Form8606 PartIII",
+      );
+    }
+    if (
+      JSON.stringify(printSchema.parse(rawFields)) !==
+        JSON.stringify(activity.fields)
+    ) {
+      throw new Error(
+        "Form8606 Roth activity descriptor fields differ from actual pending source",
+      );
+    }
+    return {
+      fields: activity.fields,
+      gross: activity.gross,
+      contribution: activity.basis,
+      taxable: activity.taxable,
+      ownerName: activity.ownerName,
+      ownerSsn: activity.ownerSsn!,
+    };
+  }
   const fields = printSchema.parse(rawFields);
   const source = f1099rSchema.safeParse(pending?.f1099r);
   const hasSource = source.success &&
@@ -59,7 +97,7 @@ export function reconcileForm8606Roth(
     entered.length !== 1 || !item ||
     item.ts !== (spouseOwned ? "S" : "T") ||
     item.box7_distribution_code !== "J" ||
-    item.box7_ira_simple_indicator !== true ||
+    item.box7_ira_simple_indicator === true ||
     item.exclude_8606_roth !== true ||
     item.box2a_taxable_amount !== undefined ||
     item.box2b_not_determined !== true ||
@@ -74,6 +112,7 @@ export function reconcileForm8606Roth(
     item.box13_date_of_payment > "2025-12-31" ||
     item.source_document_reference !==
       evidence.form1099r_source_document_reference ||
+    item.recipient_ssn?.replace(/\D/g, "") !== ownerSsn ||
     item.payer_ein.replace(/\D/g, "") !== evidence.form5498.custodian_ein ||
     evidence.opening_statement.owner_ssn !== ownerSsn ||
     evidence.form5498.owner_ssn !== ownerSsn ||

@@ -89,6 +89,13 @@ Deno.test("Form 2210-F box B local XML rejects unsourced eligibility", () => {
       ],
     })
   );
+  assertThrows(() =>
+    buildForm2210FBoxB({
+      ...input,
+      current_return_reference:
+        input.prior_separate_returns[1].filed_return_reference,
+    }), Error, "distinct filed 2024 taxpayer, spouse, and 2025 joint returns"
+  );
 });
 
 Deno.test("registered Form 2210-F checks finalized 1040 and filed worksheet", () => {

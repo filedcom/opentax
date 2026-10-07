@@ -11,7 +11,8 @@ export const form8994: MefFormDescriptor<"f8994", unknown> = {
     if (raw === undefined || raw === null) return "";
     if (
       !context?.pending ||
-      context.documentIdsByPendingKey?.f3800?.length !== 1
+      (context.phase !== "discovery" &&
+        context.documentIdsByPendingKey?.f3800?.length !== 1)
     ) {
       throw new Error("Form 8994 needs one sourced Form 3800 document");
     }

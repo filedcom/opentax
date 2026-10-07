@@ -170,7 +170,6 @@ for (
       ...base.inputs,
       schedule_a: {
         line_5a_state_income_tax: 24_000,
-        line_8a_mortgage_interest_1098: 12_000,
         current_noncash_gift_inventory_complete_confirmed: true,
         other_prior_charitable_carryovers_absent_confirmed: true,
         capital_gain_property_carryovers: [],
@@ -186,7 +185,7 @@ for (
       result.pending.schedule_a.line_12_noncash_contributions,
       15_000,
     );
-    assertEquals(result.pending.f1040.line12e_itemized_deductions, 51_000);
+    assertEquals(result.pending.f1040.line12e_itemized_deductions, 39_000);
     const pending = buildPending(result.pending);
     const bundle = await buildMefBundle(pending, {
       filer: base.filer,
@@ -234,7 +233,7 @@ for (
     );
     assertStringIncludes(
       bundle.xml,
-      "<TotalItemizedOrStandardDedAmt>51000</TotalItemizedOrStandardDedAmt>",
+      "<TotalItemizedOrStandardDedAmt>39000</TotalItemizedOrStandardDedAmt>",
     );
     const xsd = new URL(
       "../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
@@ -384,7 +383,6 @@ for (
       ...base.inputs,
       schedule_a: {
         line_5a_state_income_tax: 24_000,
-        line_8a_mortgage_interest_1098: 12_000,
         current_noncash_gift_inventory_complete_confirmed: true,
         other_prior_charitable_carryovers_absent_confirmed: true,
         capital_gain_property_carryovers: [],
@@ -402,7 +400,7 @@ for (
     );
     assertEquals(
       result.pending.f1040.line12e_itemized_deductions,
-      36_000 + claim,
+      24_000 + claim,
     );
     const pending = buildPending(result.pending);
     const attachments = [
@@ -465,7 +463,7 @@ for (
     assertStringIncludes(
       bundle.xml,
       `<TotalItemizedOrStandardDedAmt>${
-        36_000 + claim
+        24_000 + claim
       }</TotalItemizedOrStandardDedAmt>`,
     );
     const xsd = new URL(

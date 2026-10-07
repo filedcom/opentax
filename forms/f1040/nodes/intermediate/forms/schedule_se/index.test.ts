@@ -12,7 +12,6 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
-// Round to cents for SE tax assertions
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
@@ -40,10 +39,11 @@ function computeExpectedSeTax(
     0,
     SS_WAGE_BASE - w2SsWages - unreportedTips - wages8919,
   );
-  const line10 = Math.min(line6, line9) * SS_RATE;
-  const line11 = line6 * MEDICARE_RATE;
+  const filedLine6 = Math.round(line6);
+  const line10 = Math.round(Math.min(filedLine6, line9) * SS_RATE);
+  const line11 = Math.round(filedLine6 * MEDICARE_RATE);
   const line12 = line10 + line11;
-  const line13 = line12 * SE_DEDUCTION_RATE;
+  const line13 = Math.round(line12 * SE_DEDUCTION_RATE);
   return { seTax: line12, seDeduction: line13 };
 }
 
@@ -96,6 +96,15 @@ Deno.test("calc_schedule_c_basic: net_profit_schedule_c=10000 → correct SE tax
   assertEquals(
     round2(s1!.fields.line15_se_deduction as number),
     round2(seDeduction),
+  );
+});
+
+Deno.test("ATS Scenario 12 profit adds rounded Schedule SE tax components", () => {
+  const result = compute({ net_profit_schedule_c: 24_328 });
+  assertEquals(findOutput(result, "schedule2")?.fields.line4_se_tax, 3_438);
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line15_se_deduction,
+    1_719,
   );
 });
 
@@ -177,7 +186,15 @@ Deno.test("calc_se_deduction_is_half: deduction = SE tax × 0.50", () => {
 
   const seTax = s2!.fields.line4_se_tax as number;
   const seDeduction = s1!.fields.line15_se_deduction as number;
-  assertEquals(round2(seDeduction), round2(seTax * SE_DEDUCTION_RATE));
+  assertEquals(seDeduction, Math.round(seTax * SE_DEDUCTION_RATE));
+  assertEquals(
+    findOutput(result, "agi_aggregator")?.fields.line15_se_deduction,
+    seDeduction,
+  );
+  assertEquals(
+    findOutput(result, "form8995")?.fields.se_tax_deduction,
+    seDeduction,
+  );
 });
 
 // ── SS wage base threshold ────────────────────────────────────────────────────
@@ -229,7 +246,7 @@ Deno.test("threshold_wage_base_w2_fully_consumed: w2_ss_wages >= wage base → o
 
   // Line 9 = 0 → no SS portion, only Medicare
   const line6 = profit * NE_MULTIPLIER;
-  const expectedSeTax = line6 * MEDICARE_RATE;
+  const expectedSeTax = Math.round(Math.round(line6) * MEDICARE_RATE);
   assertEquals(
     round2(s2!.fields.line4_se_tax as number),
     round2(expectedSeTax),
@@ -246,7 +263,7 @@ Deno.test("threshold_wage_base_fully_consumed: tips >= 176100 → only Medicare 
 
   // line9 = 0, line10 = 0, only Medicare = line6 × 2.9%
   const line6 = profit * NE_MULTIPLIER;
-  const expectedSeTax = line6 * MEDICARE_RATE; // no SS portion
+  const expectedSeTax = Math.round(Math.round(line6) * MEDICARE_RATE); // no SS portion
   assertEquals(
     round2(s2!.fields.line4_se_tax as number),
     round2(expectedSeTax),
@@ -262,7 +279,7 @@ Deno.test("threshold_wage_base_exceeded: tips > base → still only Medicare", (
   const s2 = findOutput(result, "schedule2");
 
   const line6 = profit * NE_MULTIPLIER;
-  const expectedSeTax = line6 * MEDICARE_RATE;
+  const expectedSeTax = Math.round(Math.round(line6) * MEDICARE_RATE);
   assertEquals(
     round2(s2!.fields.line4_se_tax as number),
     round2(expectedSeTax),
@@ -391,7 +408,7 @@ Deno.test("edge_all_offsets: tips + 8919 fully consume wage base → only Medica
   const s2 = findOutput(result, "schedule2");
 
   const line6 = profit * NE_MULTIPLIER;
-  const expectedSeTax = line6 * MEDICARE_RATE;
+  const expectedSeTax = Math.round(Math.round(line6) * MEDICARE_RATE);
   assertEquals(
     round2(s2!.fields.line4_se_tax as number),
     round2(expectedSeTax),
@@ -446,13 +463,13 @@ Deno.test("farm_optional_loss_election: line15 replaces farm loss on line1a", ()
   // is $600, not -$600 and not $554.10 after the regular 92.35% multiplier.
   assertEquals(
     round2(findOutput(result, "schedule2")!.fields.line4_se_tax as number),
-    91.8,
+    91,
   );
   assertEquals(
     round2(
       findOutput(result, "schedule1")!.fields.line15_se_deduction as number,
     ),
-    45.9,
+    46,
   );
   assertEquals(findOutput(result, "form8959")!.fields.se_income, 600);
 });
@@ -518,7 +535,8 @@ Deno.test("farm_optional_combines_nonfarm_regular_earnings_without_double_counti
   assertEquals(findOutput(result, "form8959")!.fields.se_income, expectedLine6);
   assertEquals(
     round2(findOutput(result, "schedule2")!.fields.line4_se_tax as number),
-    round2(expectedLine6 * (SS_RATE + MEDICARE_RATE)),
+    Math.round(Math.round(expectedLine6) * SS_RATE) +
+      Math.round(Math.round(expectedLine6) * MEDICARE_RATE),
   );
 });
 

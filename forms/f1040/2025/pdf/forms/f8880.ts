@@ -126,6 +126,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 export const form8880Pdf: PdfFormDescriptor = {
   pendingKey: "form8880",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8880--2025.pdf",
+  pageIndices: () => [0], // The second source page contains instructions only.
   fields,
   projectFields(raw, allPending) {
     const credit = raw.print_line12_credit;

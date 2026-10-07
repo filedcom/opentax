@@ -22,14 +22,21 @@ net-EPE amount, and a reasonable-cause decision. The row's column (n)(1) and 20%
 column (n)(3) must reconcile to that notice. An EP-only candidate without Part
 II recapture can be calculated and routed to Schedule 2. The existing row
 arithmetic and zero limits on columns (j), (k), and (n)(2) remain.
+The staged input now permits at most one row per supported credit line, matching
+the bounded PDF projection; duplicate rows are rejected before their amounts
+can be summed into Schedule 2. Focused source, native-gate, and PDF tests passed
+10/10 on 2026-10-05.
 
 The December 2025 PDF descriptor projects at most one EP-only row on each of
 line 1d and line 2a. It fills columns (a) through (f), (n)(1), (n)(3), (q), (s),
 and (t), and the same columns on line 3. It rejects recapture and duplicate
 credit-line rows, and reconciles the candidate to finalized Schedule 2 fields.
-The native descriptor serializes the same staged row and totals. The PDF keeps
-all five official pages while leaving Parts II and III blank for this bounded
-case.
+The native descriptor serializes the same staged row and totals. The bounded
+PDF projection retains only pages 1–3, where Part I spans the three printed
+column groups. It excludes page 4 (Part II recapture) and page 5 (Part III
+emissions-tier recapture), because the EP-only guard rejects nonzero recapture
+amounts and maps no fields to those pages. This page trim does not open positive
+filing.
 
 These references and hashes are entered source metadata. The executor cannot yet
 authenticate the filed return, original credit utilization, or IRS notice bytes
@@ -53,6 +60,10 @@ PDF, Schedule 2, and final Form 1040 tax totals. Determine whether Part II or
 III and attachments are required. Keep other credit lines, transfer columns,
 penalties and unproved recapture events closed until each has its own route.
 
-Source-staging and PDF projection positive/tamper fixtures are written but
-unrun. No tests, typecheck, XSD validation or filled-PDF rendering was run in
-this implementation batch.
+Source-staging and PDF projection positive/tamper fixtures were written before
+this page trim. In the 2026-10-05 page audit, the three focused Form 4255 PDF
+tests passed; `deno check`, lint, and diff checks passed on the two Form 4255
+files. A staged EP-only PDF was rendered and all three retained Part I pages
+were visually inspected, including the line 1d/2a entries and line 3 totals.
+The native positive-export gate still rejects unauthenticated source bytes, so
+this direct descriptor review is not a filed full-return or XSD validation.

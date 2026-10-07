@@ -2,7 +2,7 @@ import { TS } from "../../types.ts";
 import { calculateForm8941 } from "./index.ts";
 
 /** Albany's 2025 employee-only average premium is $9,358 in IRS Table 2025. */
-export function form8941DirectFixture() {
+export function form8941DirectFixture(employeeCount = 5, annualWages = 20_000) {
   return {
     owner_name: "Jane Soleproprietor",
     owner_ssn: "111223333",
@@ -22,10 +22,11 @@ export function form8941DirectFixture() {
     no_pre_2024_positive_form8941_claim_or_predecessor_verified: true as const,
     credit_period_first_year: 2025 as const,
     other_schedule_c_employee_benefits: 1000,
-    employees: Array.from({ length: 5 }, (_, index) => ({
+    employees: Array.from({ length: employeeCount }, (_, index) => ({
+      employee_ssn: `33344${String(index + 1).padStart(4, "0")}`,
       employee_reference: `EMP-${index + 1}`,
       hours_of_service: 2080,
-      social_security_medicare_wages: 20_000,
+      social_security_medicare_wages: annualWages,
       full_year_employee_only_shop_premium: 10_000,
       employer_premium_paid: 5000,
       irs_2025_rating_area_average_premium: 9358,
@@ -43,20 +44,32 @@ export function form8941DirectFixture() {
       shop_marketplace_identifier: "NY-SHOP-2025",
       shop_plan_reference: "SHOP-PLAN-1",
       employment_ein: "123456789",
-      employee_premium_reviews: Array.from({ length: 5 }, (_, index) => ({
-        employee_reference: `EMP-${index + 1}`,
-        enrollment_and_payroll_record_reference: `SHOP-PAYROLL-${index + 1}`,
-        monthly_premiums: Array.from({ length: 12 }, (_, monthIndex) => ({
-          month: monthIndex + 1,
-          employee_only_coverage_verified: true as const,
-          billed_premium: monthIndex < 8 ? 834 : 832,
-          employer_payment: monthIndex < 8 ? 417 : 416,
-          shop_invoice_reference: `SHOP-INV-${index + 1}-${monthIndex + 1}`,
-          employer_payment_reference: `SHOP-PAID-${index + 1}-${
-            monthIndex + 1
-          }`,
-        })),
-      })),
+      payroll_ledger_reference: "PAYROLL-2025-SHOP",
+      employee_premium_reviews: Array.from(
+        { length: employeeCount },
+        (_, index) => ({
+          employee_ssn: `33344${String(index + 1).padStart(4, "0")}`,
+          employee_reference: `EMP-${index + 1}`,
+          payroll_tax_year: 2025 as const,
+          payroll_employment_ein: "123456789",
+          payroll_hours_of_service: 2080,
+          payroll_social_security_medicare_wages: annualWages,
+          enrollment_and_payroll_record_reference: `SHOP-PAYROLL-${index + 1}`,
+          monthly_premiums: Array.from({ length: 12 }, (_, monthIndex) => ({
+            employee_ssn: `33344${String(index + 1).padStart(4, "0")}`,
+            payer_employment_ein: "123456789",
+            shop_plan_reference: "SHOP-PLAN-1",
+            month: monthIndex + 1,
+            employee_only_coverage_verified: true as const,
+            billed_premium: monthIndex < 8 ? 834 : 832,
+            employer_payment: monthIndex < 8 ? 417 : 416,
+            shop_invoice_reference: `SHOP-INV-${index + 1}-${monthIndex + 1}`,
+            employer_payment_reference: `SHOP-PAID-${index + 1}-${
+              monthIndex + 1
+            }`,
+          })),
+        }),
+      ),
     },
   };
 }
@@ -75,12 +88,20 @@ export function form8941FiledFixture() {
         subject_to_passive_activity_limit: false as const,
       },
       form8941_applied_credit: lines.line16,
+      specified_credit_allowed: lines.line16,
     },
     schedule_c: {
+      form8941_premium_reductions: [{
+        business_reference: source.schedule_c_business_reference,
+        credit_amount: lines.line16,
+      }],
       schedule_cs: [{
         business_reference: source.schedule_c_business_reference,
         proprietor_recipient: source.proprietor_recipient,
         line_a_principal_business: "Retail shop",
+        line_c_business_name: "Jane Retail Shop",
+        line_i_made_1099_payments: false,
+        qbi_no_other_adjustments_confirmed: true,
         line_b_business_code: "459999",
         line_d_ein: source.employment_ein,
         line_f_accounting_method: "cash",
@@ -88,7 +109,7 @@ export function form8941FiledFixture() {
         line_1_gross_receipts: 250_000,
         line_26_wages: 100_000,
         line_14_employee_benefits: source.other_schedule_c_employee_benefits +
-          lines.line4 - lines.line16,
+          lines.line4,
       }],
     },
   };

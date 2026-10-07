@@ -631,6 +631,20 @@ authenticate underlying preparation invoices or property photographs.
 
 ## Purchased Section A patent (implementation staged 2026-10-01)
 
+The purchased-patent route now also accepts an initial deduction above $5,000
+in Section A. The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283)
+explicitly list intellectual property among the Section A exceptions regardless
+of claimed value; [Publication 526 (2025)](https://www.irs.gov/publications/p526)
+limits that initial deduction to the lesser of FMV and basis. A $18,000 FMV,
+$12,000 unamortized-basis gift now reaches the completed Schedule A, itemized
+Form 1040, native Section A with its separate reduction statement, and the PDF
+projection. Focused source-to-full-return/native/PDF tests passed on
+2026-10-05. The full XML passed local TY2025 v5.4 XSD validation; the filled
+five-page PDF's Form 8283 Section A row and reduction-statement page were
+rendered and visually inspected. The route remains one purchased long-term patent with zero 2025
+donee net income; document references are reviewed facts, not authenticated
+bytes.
+
 [Publication 526 (2025)](https://www.irs.gov/publications/p526) and the
 [2025 Form 8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
 limit the initial intellectual-property deduction to the lesser of FMV and
@@ -639,17 +653,25 @@ when the donee reports qualifying net income on Form 8899. The bounded new
 route accepts one purchased patent held more than a year, given outright to a
 50%-limit public charity in 2025. Reviewed registration, purchase, full-rights
 transfer, and unamortized basis records must support a basis claim below original
-FMV of no more than $5,000. A distinct reviewed donee statement must confirm
+FMV. A distinct reviewed donee statement must confirm
 zero 2025 net income, so no same-year income-based addition is claimed. The
 basis claim runs through Schedule A and itemized Form 1040; native Form 8283
 links an FMV statement and the official PDF preview explains the reduction.
 Positive and altered-basis, ownership, donee-income, Schedule A, native, and
-PDF fixtures are authored for the deferred bulk pass. The record references do
+PDF fixtures are covered by focused tests; the full regression remains pending.
+The record references do
 not authenticate the underlying documents or a filed Form 8899. Other
 intellectual property, nonzero donee income, Section B, multiple gifts, and
 carryovers remain unsupported.
 
 ## Purchased long-term Section B equipment put to unrelated use (2026-10-01, unrun)
+
+The signed donee receipt date must now equal the contribution date on the
+Section B item for this bounded route. A changed receipt date is rejected at
+source parsing and again by the native bundle preflight, so the same gift cannot
+be represented with conflicting dates across the reviewed donee evidence and
+Form 8283. The focused source-to-PDF/native fixture passed on 2026-10-05;
+underlying document authenticity and IRS acceptance remain open.
 
 The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283)
 and [Publication 526 (2025)](https://www.irs.gov/publications/p526) reduce the
@@ -671,3 +693,55 @@ authored for the deferred bulk pass. The route depends on a real review of the
 purchase, use, valuation, and signed documents; a name or digest alone does not
 authenticate their contents. Other equipment histories, disposition-year
 reductions, multiple gifts, and carryovers remain closed.
+
+## October6 complete reviewed SectionB reduction inventory in progress
+
+Isolated implementation accepts complete current-year reviewed ordinary/unrelated
+reduction inventories across retained property types, without the previous exact
+one/two copy limit. It permits distinct gifts to the same donee with separate
+completed signed copies. Each gift has distinct document references and reviewed
+signed-form columns binding property, dates, FMV, basis, deduction and donee
+identity; changed columns reject at source parsing and final native/PDF preflight.
+The shared reconciliation replays the complete ScheduleA inventory and itemized
+Form1040. No global same-donee rejection substitutes for identifying a gift.
+
+Focused three-file gate6/0(15s), `/tmp/opentax-form8283-inventory-combined-v4.log`:
+three and nine equipment gifts, three mixed equipment/art gifts to one donee,
+existing two-gift art/equipment preservation, actual source-to-native-to-PDF and
+local2025v5.4 XSD. The nine-gift $58,500 source claim produces the independently
+expected $50,000 current deduction at $100,000 AGI. Source-amount, donee and
+attachment-byte conflicts reject. Initial failures are retained: old diagnostic
+wording, a newly permissive same-donee branch missing reviewed fields, and test
+assumptions ignoring the AGI cap or treating separate native binary attachments
+as pages of generated return PDF; the terminal gate supersedes them.
+
+This is not completed packet or authentication proof. The test evidence PDFs
+are synthetic labelled source buffers; completed official signed8283 contents,
+all emitted pages and separate attachment pages, precise owner facts, wider
+required reduction reasons, mixed SectionA/B, shared same-donee forms, grouping
+below individual$5,000 thresholds, high-value appraisals and prior accepted
+carryover evidence remain existing-parent obligations. No main/catalog/board
+change or release readiness claim follows from this isolated gate.
+
+## October 6 current-source inventory extension
+
+The later isolated implementation and evidence supersede the preceding initial
+label-only-buffer proof for the expanded current-source routes. See
+[complete inventory proof](ty2025-form8283-complete-inventory-proof.md) for the
+actual official completed AcroForm fields, retained distinct source content,
+creator/full-appraisal $600,000 claim, A/B grouping, shared A/B/C forms, multiple
+owners, independent return-tax joins, all-page inventory and exact proof limits.
+Outside signature/appraisal authentication and trusted accepted-prior archives
+remain conditional boundaries; no synthetic signature or acknowledgment closes them.
+
+## 2026-10-06 current-year donee disposition source route
+
+The contribution-year original-donee sale/no-exempt-use-certification route now
+retains actual completed official Form8282 donor-copy fields, an owned purchase
+and certification inventory, and source-derived pre-AGI basis reduction. SectionA
+and grouped/individual/multiowner/mixed SectionB public returns are proved with
+full native/XSD/PDF and all169pages reviewed. See
+[the exact source proof](ty2025-form8283-contribution-year-disposition-proof.md).
+This preserves the original Form8283 intended-use answer. It does not claim
+external signature/authentication, prior accepted carryover evidence, current
+1245/1250 depreciation support, or parent completion.

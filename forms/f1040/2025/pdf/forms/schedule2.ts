@@ -1,9 +1,11 @@
+import { StandardFonts } from "pdf-lib";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
   calculateForm4255Routes,
   type F4255Input,
 } from "../../../nodes/inputs/f4255/index.ts";
 import { necBox3ExciseFromSources } from "../../../nodes/inputs/f1099nec/index.ts";
+import { section1294DueFromCalculatedForm } from "../../../nodes/inputs/f8621/section1294.ts";
 import { calculateForm8874Recapture } from "../../../nodes/inputs/f8874/recapture_node.ts";
 import type { F8874RecaptureInput } from "../../../nodes/inputs/f8874/recapture_node.ts";
 import { assertForm8874RecaptureOwners } from "../../../nodes/inputs/f8874/recapture_owner.ts";
@@ -196,6 +198,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "line17q_form8621_1294_interest",
+    pdfField: "form1[0].Page2[0].f2_18[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line17z_description",
     pdfField: "form1[0].Page2[0].Line17z_ReadOrder[0].f2_19[0]",
   },
@@ -242,6 +249,50 @@ export const schedule2Pdf: PdfFormDescriptor = {
     },
   ],
   fields,
+  async appendSupplementalPages(document, _fields, filer, allPending) {
+    const reduction = allPending?.form8978_reporting_year
+      ?.schedule2_line17z_reduction;
+    const tax = section1294DueFromCalculatedForm(allPending?.form8621).tax;
+    if (typeof reduction !== "number" || reduction <= 0 || tax <= 0) return;
+    const name = filer?.fullName ?? filer?.nameLine1;
+    const ssn = filer?.primarySSN?.replaceAll("-", "");
+    if (!name || !ssn || !/^\d{9}$/.test(ssn)) {
+      throw new Error("Schedule 2 line 17z statement needs filer identity");
+    }
+    const page = document.addPage([612, 792]);
+    const font = await document.embedFont(StandardFonts.Helvetica);
+    const bold = await document.embedFont(StandardFonts.HelveticaBold);
+    page.drawText("Schedule 2 (Form 1040) line 17z - other taxes statement", {
+      x: 42,
+      y: 748,
+      font: bold,
+      size: 12,
+    });
+    page.drawText(`${name} | SSN ${ssn} | Tax year 2025`, {
+      x: 42,
+      y: 718,
+      font,
+      size: 9,
+    });
+    page.drawText(`1294DT - deferred tax due from Form 8621: ${tax}`, {
+      x: 42,
+      y: 680,
+      font,
+      size: 10,
+    });
+    page.drawText(`Form 8978 ADJ: (${Math.round(reduction)})`, {
+      x: 42,
+      y: 658,
+      font,
+      size: 10,
+    });
+    page.drawText(`Net line 17z: ${tax - Math.round(reduction)}`, {
+      x: 42,
+      y: 630,
+      font: bold,
+      size: 10,
+    });
+  },
   projectFields(fields, allPending) {
     assertNo2025Schedule2Line10(fields);
     assertNoUnsupportedSchedule2Line14(fields);
@@ -369,6 +420,13 @@ export const schedule2Pdf: PdfFormDescriptor = {
       }
       : { ...fields, ...form4255Boxes, ...sourceTotals };
     const worksheet = allPending.form8978_reporting_year;
+    const partVI = section1294DueFromCalculatedForm(allPending.form8621);
+    if (
+      amount("line17q_form8621_1294_interest") !== partVI.interest ||
+      amount("line17z_form8621_1294_deferred_tax") !== partVI.tax
+    ) {
+      throw new Error("Schedule 2 PDF Part VI differs from Form 8621 sources");
+    }
     const reduction = typeof worksheet?.schedule2_line17z_reduction === "number"
       ? worksheet.schedule2_line17z_reduction
       : 0;
@@ -394,7 +452,8 @@ export const schedule2Pdf: PdfFormDescriptor = {
     const line3 = line1z + amount("line2_amt");
     const line7 = amount("line5_unreported_tip_tax") +
       amount("line6_uncollected_8919");
-    const line17z = amount("line17z_other_additional_taxes") - reduction;
+    const line17z = amount("line17z_other_additional_taxes") + partVI.tax -
+      reduction;
     const line18 = [
       "line17a_investment_credit_recapture",
       "line17a_new_markets_credit_recapture",
@@ -408,6 +467,7 @@ export const schedule2Pdf: PdfFormDescriptor = {
       "golden_parachute_excise",
       "line17k_golden_parachute_excise",
       "line17p_form8621_interest",
+      "line17q_form8621_1294_interest",
     ].reduce((sum, key) => sum + amount(key), line17z);
     if (line18 < 0) {
       throw new Error(
@@ -432,10 +492,16 @@ export const schedule2Pdf: PdfFormDescriptor = {
       ...(line7 > 0 ? { line7_unreported_ss_medicare_total: line7 } : {}),
       ...(line18 > 0 ? { line18_other_additional_taxes: line18 } : {}),
       ...(line21 > 0 || reduction > 0 ? { line21_total: line21 } : {}),
-      ...(reduction > 0
+      ...(reduction > 0 || partVI.tax > 0
         ? {
-          line17z_description: "Form 8978 ADJ",
-          line17z_amount: `(${Math.round(reduction)})`,
+          line17z_description: reduction > 0 && partVI.tax > 0
+            ? "SEE STATEMENT"
+            : partVI.tax > 0
+            ? "1294DT"
+            : "Form 8978 ADJ",
+          line17z_amount: line17z < 0
+            ? `(${Math.abs(Math.round(line17z))})`
+            : Math.round(line17z),
         }
         : {}),
     };

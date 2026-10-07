@@ -155,3 +155,82 @@ fixtures are authored for the deferred batch. Source references are reviewed
 assertions, not authenticated document bytes. Separate returns, multiple
 workers or W-2s, other relationship histories, and other family cases remain
 open.
+
+## Current selected PDF evidence (2026-10-04)
+
+Three full-return packets now exercise all three initial Schedule H routing
+paths. The
+three-state FUTA-only return prints Box A/B No and Box C Yes, skips Part I, and
+reconciles $90 FUTA through Schedule H, Schedule 2, and Form 1040 across seven
+reviewed pages. A separate sourced adult-worker FICA plus Ohio FUTA return
+prints Box A and line 9 Yes, $474 FICA, $19 FUTA, and $493 on Schedule H line
+26, Schedule 2 line 9, and Form 1040 across six reviewed pages. A joint
+spouse withholding-only packet prints Box A No/B Yes/C blank, skips lines
+1–6, and stops after line 9 No on its sole Schedule H page; its $250 line 8
+tax reaches Schedule 2 and Form 1040, offset by the spouse's W-2 withholding.
+Its five pages also passed review. All three packets passed source replay,
+local TY2025v5.4 XSD, artifact hashes, page-origin checks, and visual review.
+Their manifest digests and paths are in the
+[validation batch](ty2025-form1040-validation-batch.md). Referenced payroll,
+W-2, and state records remain unverified bytes, and the other worker and
+state/rate branches still require review.
+
+## Complete unrelated-worker FICA-only inventory (October 6)
+
+The FICA-only source now accepts a complete nonempty worker inventory and uses
+the same per-worker FICA classification and W-2/W-4 validation as the FUTA
+route. Adults, evidenced student minors, evidenced nonstudent minors whose
+principal occupation is household work, and employees below the $2,800 annual
+threshold retain separate wage tests. Both years must have aggregate quarterly
+cash wages below $1,000; checking each worker separately is insufficient.
+Duplicate employee IDs or W-2 references, conflicting classification or wage
+amounts, missing withholding agreements, and changed retained employee records
+reject. Native and PDF exports bind the complete ledger and calculated tax to
+Schedule 2 line 9. The one-worker/index-zero restriction is removed.
+
+Three reviewed structured-source full returns exercise adult+student+low-paid
+adult ($478), principal-occupation minor+student+low-paid adult ($524), and
+student+low-paid adult with agreed withholding only ($40). These are reviewed
+constructed payroll records, not authenticated W-2/W-4, birth, school, payment
+or employer records. All 15 new pages show correct owner, route, required
+blanks and Schedule 2/Form 1040 amounts. An aggregate $1,000 current quarter
+rejects even when each worker remains below $1,000; a prior $1,000 quarter,
+last-worker wage/classification conflict, and substituted last-worker record
+also reject.
+
+Retained joint-source replay exposed an independent identity discrepancy: the
+Schedule H PDF used the combined name shown on Form 1040 while native MeF
+identified the household employer. The PDF now prints the same employer name
+as native MeF, rather than adding the employee spouse to the employer field.
+Historical source packets and the pre-change production replay are retained
+separately; historical equality is not inferred where later zero/name or
+pending changes already existed before this payroll phase.
+
+Mixed family/unrelated inventories, parent exceptions, noncash or employer-paid
+employee tax, broader state/rate tracing, source-byte authentication and IRS
+acceptance remain open under the existing board parent.
+
+Final nine-module standard task: **50 passed, 0 failed, 0 ignored (19s)**.
+Typed source gate: **2/0 (12s)**. Actual saved-input replay: **6 packets,
+33 pages**, all full local v5.4 XSD; three new packets are exact whole pending,
+prepared pending, carry, origins, PDF and native XML except ReturnTs. Two prior
+packets match pre-change commit 530f39141 exactly; the joint packet changes only
+its employer-name field, with four other pages raster-exact and its corrected
+Schedule H page matching the historical original. Historical Form1040 amounts
+remain unchanged; older XML final newline and PDF zero/joint-name differences
+are separately retained. No full historical pending/PDF equality is claimed.
+
+Logs: `/tmp/opentax-scheduleh-multiworker-final-standard-v2-oct6.log`,
+`/tmp/opentax-scheduleh-multiworker-focus-v3-oct6.log`,
+`/tmp/opentax-scheduleh-main-raw-v3-oct6.log`.
+Actual replay report: `/tmp/opentax-scheduleh-main-raw-oct6/report.json`.
+Private originals: `.state/research/scheduleh-multiworker-oct6-preserved`
+(nine files), `.state/research/scheduleh-prior-oct6-preserved` (21 files).
+Root reviews: `/tmp/opentax-scheduleh-multiworker-review-oct6.json` and
+`/tmp/opentax-scheduleh-joint-identity-review-oct6.json`.
+
+## Child wages throughout the under-21 age range
+
+The existing family withholding-only route rejected sourced younger children because its birth-date guard accepted only 2005–2006. The retained before-probe `/tmp/opentax-scheduleh-child-before-source-oct6.json` and `/tmp/opentax-scheduleh-child-before-oct6.log` show rejection of a 2008 birth with the same5000 cash wages/250 agreed withholding and zero W-2 FICA wages. [TY2025 Schedule H instructions](https://www.irs.gov/instructions/i1040sh) exclude wages paid to the employer’s child under21 from FICA and FUTA. The source guard now admits children born2005–2024 while retaining relationship/identity, complete payroll, W-2/W-4 and employer/retained-ledger/Schedule2 checks. A child who reaches21 during2025 still needs a separately sourced split-period route; future or invalid dates remain rejected. No minor student or principal-occupation exception is needed for the employer’s own under21 child.
+
+New full-return cases cover age20, turning18, age17 andage15. Each retains5000 cash wages/250 withholding and no household FICA/FUTA; the employer’s unrelated W-2 remains taxable in its own document. Source/native/direct-PDF negatives reject changed birth record, altered tax, age21 and future dates. These constructed ordinary source facts do not authenticate a birth record, employer, W-2 or signed W-4. Wider mixed-family/unrelated payroll and parent exceptions remain within the existing open parent. Final typed focus2/0(15s) and ten-module standard52/0/0ignored(37s) passed. Actual retained10returns/53pages replay is exact for freshseven pending/preparedpending/carry/origins/PDF/source/XMLonlyTs/fullXSD; the historicalthree retain the previously qualified pre-change data and corrected employer-name PDF. All20newpages rootreviewed, including full-size age17ScheduleH;12new and30prior original/private hashes unchanged. The original rejected17yearold source now independently computes0FICA/0FUTA/250withholding tax. Reports `/tmp/opentax-scheduleh-child-age-main-raw-oct6/report.json`, `/tmp/opentax-scheduleh-child-age-root-review-oct6.json` and `/tmp/opentax-scheduleh-child-age-all-source-preservation-oct6.json`. Initial typed-test context errors and the overbroad whole-XML SocialSecurityTax assertion remain diagnostics.

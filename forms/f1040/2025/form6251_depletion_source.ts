@@ -1,3 +1,4 @@
+import { projectScheduleCItems } from "../nodes/inputs/schedule_c/model.ts";
 import {
   calculateScheduleCAtRiskNet,
   inputSchema as scheduleCSourceSchema,
@@ -11,7 +12,7 @@ export function assertForm6251DepletionSource(
 ): void {
   const amount = fields.line2d_depletion;
   const source = scheduleCSourceSchema.safeParse(pending?.schedule_c);
-  const businesses = source.success ? source.data.schedule_cs : [];
+  const businesses = source.success ? projectScheduleCItems(source.data) : [];
   const worksheets = businesses.filter((business) =>
     business.amt_depletion_worksheet !== undefined
   );

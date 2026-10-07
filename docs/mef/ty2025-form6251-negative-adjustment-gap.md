@@ -212,21 +212,16 @@ and keeps line 2b outside the special negative-lines-2c-through-3 filing test.
 The positive magnitude maps to TY2025 `IRS6251` `TotalRefundReceivedAmt` (an
 `USAmountNNType` in `IRS6251.xsd`) and the parenthetical line 2b AcroForm field
 `f1_6[0]`; the actual canonical field and page widget were inspected in the
-cached 2025 PDF. Focused source, calculation, MeF, and PDF mapping cases are
-written but unrun.
+cached 2025 PDF. Focused refund/source, calculation, native and PDF cases now have terminal evidence in the complete-inventory proof below; shared full-batch and ATS acceptance are separate gates.
 
-The bounded positive export now replays one retained, identified Form 1099-G
-box 2 source with a reviewed 2024 tax-benefit workpaper. Its recipient SSN
+The bounded export now replays the complete retained, identified Form1099-G box2 inventory with one reviewed combined2024 tax-benefit workpaper, including primary/spouse copies and reviewed zero-taxable recoveries. Its recipient SSN
 must match the final filer or joint spouse. Its taxable recovery must equal
 Schedule 1 line 1 and Form 6251 line 2b; Schedule 1 line 10 must
 equal Form 1040 line 8. Final Form 1040 income, AGI, deductions, and tax lines
 must reconcile with Form 6251 line 1b and Schedule 2 line 2. Both native and
-PDF reject a direct or altered refund claim. This bounded route excludes mixed
-or multiple refund statements, business tax refunds, other recovery years, and
-the other Schedule 1 line 8z refund types described in the
+PDF reject a direct or altered refund claim. This refund binder excludes business tax refunds, unsupported corrections, other recovery years and the other Schedule1 line8z refund types described in the
 [2025 Form 6251 line 2b instructions](https://www.irs.gov/instructions/i6251).
-The positive and tamper fixtures are authored for the deferred combined pass;
-issued 1099-G and prior filed-return bytes remain unauthenticated.
+Positive and tamper evidence is terminal below. Separate ordinary unemployment statements use their existing source binder; unsupported same-copy mixed classifications remain guarded. Issued1099-G and prior filed-return bytes remain unauthenticated.
 
 ## Canonical PDF fields and ATNOLD sign
 
@@ -344,3 +339,104 @@ property, section 1250 property, qualified special-allowance property,
 depreciation embedded in another AMT adjustment, and inventory capitalization
 remain outside this path. Tests, typecheck, XSD, filled-PDF, business-rule, and
 ATS validation have not run.
+
+## Ordinary complete state-refund inventory source proof (2026-10-06)
+
+Isolated base`fe4906829d6bdf144bceb496c5c8869dc4729fde`. The
+[2025 Form6251 instructions](https://www.irs.gov/instructions/i6251) subtract
+Schedule1 taxable state-income-tax refunds on line2b. The special negative
+adjustment filing test covers lines2c–3; line2b alone does not cause attachment.
+Other actual filing triggers remain required. Positive taxable refunds now
+retain the node's complete computed fields for final source replay, even when
+no attachment is required. A reviewed all-zero taxable recovery does not
+fabricate a completed Form6251 or Schedule1 copy.
+
+The refund binder identifies the complete issued box2 inventory, including
+zero-taxable recoveries, independently of other1099-G ordinary income rows.
+There is no copy-count ceiling. Multiple refund copies require distinct retained
+source references and the same actual combined2024 recovery workpaper. Their
+normalized payerTIN, actual recipientSSN and recovery year identify a copy;
+both MFJ recipients can have separate copies from the same state payer.
+Ambiguous same-owner/payer/year reissues stop unless a supported correction
+lineage exists. Every refund recipient must join the final taxpayer/joint spouse.
+The reviewed taxable recoveries sum to Schedule1 line1 and retained6251 line2b;
+ordinary additional income, finalized1040 AGI/deductions/tax and actual AMT
+amount reconcile. Actual zero AMT accepts an omitted zero Schedule2/line17;
+positive AMT still requires its matching tax joins. A separate sourced
+unemployment copy uses its existing owner/source replay and contributes to
+Schedule1 line7 rather than the refund sum. Other farm/grant classification
+requirements and same-copy mixed-box guards remain intact.
+
+Eight public source cases use actual owned W2 records and retained reviewed
+issued1099-G facts, with no scalar AGI/tax/AMTI input and no runtime catalog
+import. Nine issued copies prove aggregation beyond the former one/two limit;
+no additional refund detail rows are required on the filed aggregate line.
+Each original copy remains in the public/pending source snapshot. The reviewed
+recovery amounts are supplied tax-benefit workpaper facts; this does not
+independently recompute or authenticate a historical return.
+
+| Source inventory | Taxable recovery | AGI | Taxable income | Retained AMTI |1040 tax |1040 refund | PDF pages |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Single,1 refund |600|75600|59850|75000|8087|2913|4|
+| Single,2 refunds |1000|76000|60250|75000|8175|2825|4|
+| Single,3 refunds |1300|76300|60550|75000|8241|2759|4|
+| Single,9 refunds |1900|76900|61150|75000|8373|2627|4|
+| MFJ,same payer/two recipients |1000|116000|84500|115000|9666|5334|4|
+| Single,positive plus zero-taxable copy |1000|76000|60250|75000|8175|2825|4|
+| Single,3 all-zero reviewed recoveries |0|75000|59250|uncomputed/unrequired|7955|3045|2|
+| Single,refund plus10000 unemployment |600|85600|69850|85000|10287|713|4|
+
+All eight settle through actual public graph, native/full local2025v5.4 XSD,
+PDF and final source/tax joins. Every issued recipient is mutated in public
+source; native/directPDF reject changed refund totals, positive AMT inventions,
+later-copy taxable recovery, recipient, duplicate/missing reference, ambiguous
+normalized payer/owner identity, combined review or recovery year. The actual
+zero source cannot invent a refund/AMT copy, and a zero-taxable issued copy
+cannot disappear from positive refund inventory validation.
+
+Final checked six-module command:
+
+```sh
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno test -A forms/f1040/2025/ordinary_state_refund_source.test.ts forms/f1040/2025/form6251_refund_source.test.ts forms/f1040/2025/form6251_two_refunds.test.ts forms/f1040/nodes/intermediate/forms/form6251/index.test.ts forms/f1040/2025/f1099g-owner-reconciliation.test.ts forms/f1040/2025/f1099g_unemployment_source_replay.test.ts
+```
+
+Terminal119/0(46s), `/tmp/opentax-state-refund-final-source-proof.log`. This
+includes97 existing6251 node cases (positive AMT and actual zero-AMT filing
+triggers), earlier positive-AMT refund native/PDF cases, and ordinary1099-G
+owner/unemployment source preservation. Earlier failed type/schema/test
+projection attempts are retained; the final result supersedes them.
+
+Eight source/XML/PDF packets are ignored artifacts under isolated
+`.state/research/ordinary-state-refund-source-2026-10-06`(2/8pages),
+`ordinary-state-refund-complete-inventory-2026-10-06`(3/12pages), and
+`ordinary-state-refund-zero-mixed-source-2026-10-06`(3/10pages). All30 pages
+inspected individually at full Poppler size; correct form/year, owner/SSNs,
+filing checkbox, income/tax/refund, sequence and legibility. The joint packet
+retains both actual names/SSNs, and allzero prints only1040. No catalog,
+main/board or future scope changes. Prior1/2 artifacts remain unchanged.
+
+The broader6251/source/return-wide parents remain open. Source tax-benefit
+review is not external issuer/prior-return authentication. Unsupported recovery
+years, same-owner corrections without lineage, business/non-income-tax refunds
+and other AMT source refigures retain their guards; IRS business-rule and ATS
+acceptance remain external gates.
+
+Final artifact checker terminal0:
+`/tmp/opentax-state-refund-final-artifact-check.log`,8/all30 reviewedpages.
+Each saved public source regenerates identical pending values, native XML and
+PDF bytes against the committed pure fixture factories; full2025v5.4 XSD and
+page origins verified again. Reproduction command (no catalog harness):
+
+```sh
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno run -A .state/research/check-final-refund.ts
+```
+
+Digest inventory is ignored `.state/research/state-refund-final-digest-report.json`.
+Generator scripts/logs and every original packet remain retained; actual
+source/XML/PDF bytes were not replaced when inventory coverage expanded.
+
+## Current-main complete ordinary state-refund source proof
+
+Exact source b4187c06a: six-module source gate119/0(47s), log `/tmp/opentax-state-refund-current-main-source-proof.log`, SHA2565d94087c33de0803ac6f5e93d5d955ecc0916790aa59af026ad8b501f4d2576d. Immutable main replay `/tmp/opentax-state-refund-current-main-replay-oct6` regenerated8/all30 reviewedpages with exact source/pending/XML/PDF bytes and full2025v5.4 XSD. Checker terminal0 `/tmp/opentax-state-refund-current-main-artifact-check-v2.log`, SHA256dc6a6599abe036a39936c38768a09fe26732cd40448947d8669ac2d426bcdfc2. Initial checker stopped before validation on a dangling cache symlink; replaced only that replay cache with a real copy and reran the same checker. Original retained packets unchanged.
+
+Source inventory has no count cap, separates samepayer MFJ recipients, retains issuedzero-taxable copies and separately sourced unemployment; zero-taxable refund-only packet prints1040alone. Positive taxable refunds retain completed AMT computation at zeroAMT without inventing a6251 attachment. Broader tax-benefit workpapers, recovery years/corrections/business classifications, authenticity, IRS business rules and acceptance remain open. Form4852 derivednative26/0 isolated593f1cc34 remains guarded; fullroute delegated after compactfe9765617. FullV4 same44964/44970 confirmedlive33m27s; latestfull stillrequired.

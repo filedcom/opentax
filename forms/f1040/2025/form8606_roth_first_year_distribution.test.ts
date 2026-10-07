@@ -1,4 +1,9 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { FilingStatus } from "../nodes/types.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
 import { f1040_2025 } from "./index.ts";
@@ -33,6 +38,7 @@ const evidence = {
     owner_ssn: "111223333",
     custodian_ein: "123456789",
     roth_ira_confirmed: true as const,
+    roth_sep_or_simple_ira: false as const,
     box10_roth_ira_contributions: 5_000,
     box2_rollover_contributions: 0 as const,
     box3_roth_conversion_amount: 0 as const,
@@ -55,11 +61,12 @@ function filedReturn() {
     f1099r: [{
       payer_name: "IRA Custodian",
       payer_ein: "123456789",
+      recipient_ssn: "111-22-3333",
       source_document_reference: evidence.form1099r_source_document_reference,
       box1_gross_distribution: 7_000,
       box2b_not_determined: true,
       box7_distribution_code: "J",
-      box7_ira_simple_indicator: true,
+      box7_ira_simple_indicator: false,
       box13_date_of_payment: "2025-09-01",
       ts: "T",
       exclude_8606_roth: true,
@@ -81,6 +88,7 @@ Deno.test("first-year Roth contribution and code J distribution print Form 8606 
   const ownerForms = pending.form5329.owner_forms as Record<string, unknown>[];
   assertEquals(ownerForms[0].early_distribution, 2_000);
   const xml = form8606.build(pending.form8606, { filer, pending });
+  assert(typeof xml === "string");
   assertStringIncludes(
     xml,
     "<TotNonQlfyDistriFromRothIRAAmt>7000</TotNonQlfyDistriFromRothIRAAmt>",
@@ -109,6 +117,11 @@ Deno.test("first-year Roth Part III rejects source, owner, Form 5329, and finali
   const pending = filedReturn();
   const filer = extractFilerIdentity(general);
   const item = (pending.f1099r.f1099rs as Record<string, unknown>[])[0];
+  const mismatchedSource = f1040_2025.executeReturn({
+    general,
+    f1099r: [{ ...item, recipient_ssn: "999-88-7777" }],
+  });
+  assertEquals(mismatchedSource.diagnostics.length > 0, true);
   const altered = [
     {
       form8606: {
@@ -119,6 +132,8 @@ Deno.test("first-year Roth Part III rejects source, owner, Form 5329, and finali
     { form8606: { ...pending.form8606, print_roth_line25c_taxable: 1_999 } },
     { f1040: { ...pending.f1040, line4b_ira_taxable: 1_999 } },
     { f1099r: { f1099rs: [{ ...item, ts: "S" }] } },
+    { f1099r: { f1099rs: [{ ...item, recipient_ssn: "999-88-7777" }] } },
+    { f1099r: { f1099rs: [{ ...item, recipient_ssn: undefined }] } },
     { f1099r: { f1099rs: [{ ...item, box1_gross_distribution: 7_001 }] } },
     {
       form5329: {

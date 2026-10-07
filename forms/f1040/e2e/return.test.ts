@@ -161,17 +161,17 @@ Deno.test("E2E Scenario 1: single W-2 wage earner — wages flow through AGI, st
 //
 // SE tax on $80,000 net profit:
 //   Net earnings for SE = $80,000 × 0.9235 = $73,880
-//   SE tax = $73,880 × 0.153 = $11,303.64
-//   SE deduction (half SE tax) = $5,651.82
+//   Filed SE tax = $9,161 + $2,143 = $11,304
+//   SE deduction (half SE tax) = $5,652
 //
 // Expected pipeline:
 //   agi_aggregator inputs:
 //     line3_schedule_c     = $80,000
-//     line15_se_deduction  = $5,651.82
+//     line15_se_deduction  = $5,652
 //   standard_deduction inputs:
-//     agi                  = $74,348.18  (80,000 − 5,651.82)
+//     agi                  = $74,348  (80,000 − 5,652)
 //   income_tax_calculation inputs:
-//     taxable_income       = $46,878.54  (74,348.18 − 15,750 std ded − QBI)
+//     taxable_income       = $46,878.40  (74,348 − 15,750 std ded − QBI)
 //   f1040 scalars:
 //     line33_total_payments = $0          (no withholding)
 //     line37_amount_owed    = line24_total_tax  (owes full computed tax)
@@ -210,30 +210,30 @@ Deno.test("E2E Scenario 2: self-employed Schedule C — SE income and SE deducti
     "agi_aggregator should receive line3_schedule_c = $80,000",
   );
 
-  // SE deduction = $80,000 × 0.9235 × 0.153 / 2 = $5,651.82
+  // Filed SE tax components sum to $11,304; half is $5,652.
   const seDeductionInAgg = agg["line15_se_deduction"] as number;
   assertEquals(
     Math.round(seDeductionInAgg * 100) / 100,
-    5_651.82,
-    "agi_aggregator should receive line15_se_deduction ≈ $5,651.82",
+    5_652,
+    "agi_aggregator should receive line15_se_deduction = $5,652",
   );
 
   // ── Standard deduction node inputs ────────────────────────────────────────
-  // AGI = 80,000 − 5,651.82 = 74,348.18
+  // AGI = 80,000 − 5,652 = 74,348
   const sdPending = result.pending["standard_deduction"] ?? {};
   assertEquals(
     Math.round((sdPending["agi"] as number) * 100) / 100,
-    74_348.18,
-    "standard_deduction node should receive agi ≈ $74,348.18",
+    74_348,
+    "standard_deduction node should receive agi = $74,348",
   );
 
   // ── Income tax calculation node inputs ────────────────────────────────────
-  // Taxable income = 74,348.18 − 15,750 (std ded) − 11,719.64 (QBI deduction) = 46,878.54
+  // Taxable income = 74,348 − 15,750 (std ded) − 11,719.60 (QBI deduction) = 46,878.40
   const itcPending = result.pending["income_tax_calculation"] ?? {};
   assertEquals(
     Math.round((itcPending["taxable_income"] as number) * 100) / 100,
-    46_878.54,
-    "income_tax_calculation should receive taxable_income ≈ $46,878.54",
+    46_878.4,
+    "income_tax_calculation should receive taxable_income = $46,878.40",
   );
 
   // ── F1040 final scalar summary ─────────────────────────────────────────────

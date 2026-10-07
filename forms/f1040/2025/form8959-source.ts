@@ -86,7 +86,11 @@ function assertOriginalDeposits(
     }
   }
   const f4852 = pending?.["f4852"];
-  if (f4852 !== undefined) {
+  if (
+    f4852 !== undefined &&
+    (pending?.w2 as Record<string, unknown> | undefined)?.substitute_w2s ===
+      undefined
+  ) {
     const items = f4852Schema.parse(f4852).f4852s.filter((item) =>
       item.form_type === "W2"
     );

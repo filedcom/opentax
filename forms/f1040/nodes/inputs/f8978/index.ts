@@ -16,6 +16,8 @@ export enum Form8978Source {
 }
 
 export const adjustmentSchema = z.object({
+  origin: z.enum(["form8986", "partner_tax_attribute"]).optional(),
+  attribute_explanation: z.string().trim().min(1).max(5000).optional(),
   description: z.string().trim().min(1).max(50),
   amount: z.number().int(),
   tracking_number: z.string().regex(
@@ -86,8 +88,33 @@ export const filingSchema = z.object({
   columns: z.array(yearColumnSchema).min(1).max(4),
 });
 
+const documentSchema = z.object({
+  document_reference: z.string().trim().min(1),
+  attachment_file_name: z.string().regex(/^[A-Za-z0-9_-]+\.pdf$/),
+  sha256: z.string().regex(/^[a-f0-9]{64}$/),
+}).strict();
+export const reviewedSourceSchema = z.object({
+  partner_ssn: z.string().regex(/^\d{9}$/),
+  reporting_year: z.literal(2025),
+  non_passthrough_calendar_year_partner_confirmed: z.literal(true),
+  filings: z.array(
+    z.object({
+      issuer_ein: z.string().regex(/^\d{9}$/),
+      furnished_date: z.string().regex(/^2025-\d{2}-\d{2}$/).refine((d) =>
+        !Number.isNaN(Date.parse(d)) &&
+        new Date(d).toISOString().slice(0, 10) === d
+      ),
+      source_document: documentSchema,
+      computation_document: documentSchema,
+      reviewed_filing: filingSchema,
+      historical_tax_rules_and_original_return_reviewed: z.literal(true),
+      no_unreported_nonincome_tax_changes_confirmed: z.literal(true),
+    }).strict(),
+  ).min(1).max(6),
+}).strict();
 export const inputSchema = z.object({
   filings: z.array(filingSchema).min(1).max(6),
+  reviewed_source: reviewedSourceSchema.optional(),
 });
 
 type YearColumn = z.infer<typeof yearColumnSchema>;

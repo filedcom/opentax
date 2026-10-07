@@ -18,6 +18,7 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 export const itemSchema = z.object({
   payer_name: z.string().trim().min(1),
   recipient_tin: z.string().regex(/^\d{9}$/).optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
   box3_employee_contributions: z.number().nonnegative().optional(),
   box4_contributory_amount_paid: z.number().nonnegative().optional(),
   box5_vested_dual_benefit: z.number().nonnegative().optional(),
@@ -74,6 +75,51 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   rrb1099rs: z.array(itemSchema).min(1),
+}).superRefine(({ rrb1099rs }, ctx) => {
+  const seen = new Set<string>();
+  const recipientCounts = new Map<string, number>();
+  for (const [index, item] of rrb1099rs.entries()) {
+    // The form itself identifies the Railroad Retirement Board as issuer;
+    // free-text payer spelling must not distinguish two copies for one owner.
+    const recipient = item.recipient_tin ?? "";
+    const positive = (item.box7_total_gross_paid ?? 0) > 0 ||
+      (item.box9_federal_withheld ?? 0) > 0;
+    if (!positive) continue;
+    recipientCounts.set(
+      recipient,
+      (recipientCounts.get(recipient) ?? 0) + 1,
+    );
+    if (item.source_document_reference) {
+      // One retained issued-copy reference cannot identify two different
+      // recipients, even when both belong to the same joint return.
+      const sourceKey = item.source_document_reference.toUpperCase();
+      if (seen.has(sourceKey)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["rrb1099rs", index, "source_document_reference"],
+          message: "RRB-1099-R repeats the same issued-copy source reference",
+        });
+      }
+      seen.add(sourceKey);
+    }
+  }
+  for (const [index, item] of rrb1099rs.entries()) {
+    const recipient = item.recipient_tin ?? "";
+    const positive = (item.box7_total_gross_paid ?? 0) > 0 ||
+      (item.box9_federal_withheld ?? 0) > 0;
+    if (
+      positive &&
+      (recipientCounts.get(recipient) ?? 0) > 1 &&
+      !item.source_document_reference
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["rrb1099rs", index, "source_document_reference"],
+        message:
+          "RRB-1099-R has multiple positive payer copies without issued source references",
+      });
+    }
+  }
 });
 
 type RRBItems = z.infer<typeof inputSchema>["rrb1099rs"];

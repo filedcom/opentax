@@ -17,6 +17,7 @@ const SOURCED_COMPONENTS = [
   ["line8z_f1098_interest_recovery", "Form 1098 mortgage interest refund"],
   ["line8z_hsa_excess_earnings", "HSA excess earnings"],
   ["line8z_hsa_excess_employer", "HSA excess employer contributions"],
+  ["line8z_archer_excess_employer", "Archer MSA excess employer contributions"],
 ] as const;
 
 /**

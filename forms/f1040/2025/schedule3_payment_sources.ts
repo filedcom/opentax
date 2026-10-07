@@ -1,3 +1,5 @@
+import { isDeepStrictEqual } from "node:util";
+import { form4852CalculationSources } from "../nodes/inputs/f4852/index.ts";
 import { inputSchema as extInputSchema } from "../nodes/inputs/ext/index.ts";
 import {
   FormType,
@@ -75,7 +77,11 @@ export function assertSchedule3PaymentSources(
     if (
       substitutes.f4852s.some((row) =>
         row.form_type === FormType.W2 && (row.social_security_withheld ?? 0) > 0
-      ) && excessSs > 0
+      ) && excessSs > 0 &&
+      (!substitutes.reviewed_source || !isDeepStrictEqual(
+        (pending.w2 as Record<string, unknown> | undefined)?.substitute_w2s,
+        form4852CalculationSources(substitutes.f4852s).w2s,
+      ))
     ) {
       throw new Error(
         "Schedule 3 line 11 Form 4852 source needs reviewed excess withholding calculation",
@@ -92,6 +98,7 @@ export function assertSchedule3PaymentSources(
     string,
     { employers: Set<string>; wages: number; withheld: number }
   >();
+  const employerTotals = new Map<string, number>();
   for (const row of w2InputSchema.parse(pending.w2).w2s) {
     if ((row.box4_ss_withheld ?? 0) === 0) continue;
     const ssn = row.employee_ssn?.replaceAll(/\D/g, "");
@@ -110,6 +117,15 @@ export function assertSchedule3PaymentSources(
     ) {
       throw new Error(
         "Schedule 3 line 11 cannot claim a single employer's excess withholding",
+      );
+    }
+    const employerKey = JSON.stringify([ssn, employer]);
+    const employerTax = (employerTotals.get(employerKey) ?? 0) +
+      cents(row.box4_ss_withheld, "W-2 box 4");
+    employerTotals.set(employerKey, employerTax);
+    if (employerTax > cents(SS_MAX_TAX_PER_EMPLOYER_2025, "2025 SS maximum")) {
+      throw new Error(
+        "Schedule 3 line11 cannot claim one employer's excess across multiple source copies",
       );
     }
     const group = owners.get(ssn) ?? {

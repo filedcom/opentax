@@ -131,6 +131,16 @@ Deno.test("1040-NR Scenario 3 retains wages, donation attachments, and refund sp
   assertEquals(facts.refundAllocation.remainderToChecking, true);
 });
 
+Deno.test("1040-NR Scenario 3 keeps printed Form 8283 vehicle value distinct from basis", () => {
+  const vehicle = SCENARIO_1040_NR_03_FACTS.form8283;
+  assertEquals(vehicle.sectionBVehicleChecked, true);
+  assertEquals(vehicle.rowA.description, "2005 Mercedes Benz");
+  assertEquals(vehicle.rowA.condition, "Good");
+  assertEquals(vehicle.rowA.appraisedFairMarketValue, 5_005);
+  assertEquals(vehicle.rowA.donorCostOrAdjustedBasis, 53_470);
+  assertEquals(vehicle.rowA.claimedDeduction, null);
+});
+
 Deno.test("1040-NR Scenario 2 retains W-2, NEC, OI, and Schedule 1 entries", () => {
   const facts = SCENARIO_1040_NR_02_FACTS;
   assertEquals(facts.taxpayer.ssn, "123003333");
@@ -141,7 +151,24 @@ Deno.test("1040-NR Scenario 2 retains W-2, NEC, OI, and Schedule 1 entries", () 
   assertEquals(facts.scheduleOI.appliedForGreenCard, true);
   assertEquals(facts.scheduleOI.previouslyCitizenOrGreenCardHolder, false);
   assertEquals(facts.scheduleOI.currentYearUSPresenceDays, 110);
-  assertEquals(facts.schedule1.printedLine5RentalAndRoyaltyIncome, 500);
+  assertEquals(facts.schedule1.printedLine5SupplementalIncome, 500);
+});
+
+Deno.test("1040-NR Scenario 2 traces printed partnership passive income to Schedule 1", () => {
+  const facts = SCENARIO_1040_NR_02_FACTS;
+  assertEquals(facts.scheduleE.partnershipRowA, {
+    name: "Sarah's Vegan Bakery",
+    entityType: "P",
+    ein: "001234567",
+    printedLine28hPassiveIncome: 500,
+  });
+  assertEquals(
+    facts.scheduleE.partnershipRowA.printedLine28hPassiveIncome,
+    facts.schedule1.printedLine5SupplementalIncome,
+  );
+  assertEquals(facts.scheduleE.printedLine32Provided, false);
+  assertEquals(facts.scheduleE.printedLine41Provided, false);
+  assertEquals(facts.scheduleE.scheduleK1IncludedInPacket, false);
 });
 
 Deno.test("1040-NR Scenario 1 keeps conflicting IRA values separate", () => {
@@ -213,6 +240,19 @@ Deno.test("1040-SS Scenario 6 preserves Puerto Rico wages, children, and busines
   );
 });
 
+Deno.test("1040-SS Scenario 6 W-2PR withholding supplies Part II line 13a only", () => {
+  const facts = SCENARIO_1040_SS_06_FACTS;
+  const line13aWithheldSocialSecurityAndMedicare =
+    facts.form499R2W2PR.socialSecurityTaxWithheld +
+    facts.form499R2W2PR.medicareTaxWithheld;
+  assertEquals(line13aWithheldSocialSecurityAndMedicare, 3_288);
+
+  // Schedule C receipts and its net profit are unprinted, so this source
+  // amount does not establish self-employment tax or the final ACTC.
+  assertEquals(facts.scheduleC.grossReceiptsProvided, false);
+  assertEquals("printedNetProfit" in facts.scheduleC, false);
+});
+
 Deno.test("4868 Scenario 7 keeps payment instructions distinct from blank form lines", () => {
   const facts = SCENARIO_4868_07_FACTS;
   const form = facts.printedForm4868;
@@ -252,6 +292,18 @@ Deno.test("1040 Scenario 1 source amounts and test SSN stay intact", () => {
   assertEquals(facts.scheduleH.cashWagesOverQuarterLimit, false);
   assertEquals(facts.taxpayer.filingStatus, "single");
   assertEquals(facts.taxpayer.digitalAssets, false);
+  assertEquals(
+    facts.form5695.qualifiedEnergyEfficiencyImprovementsInstalledInUS,
+    true,
+  );
+  assertEquals(facts.form5695.originalUserOfImprovements, true);
+  assertEquals(facts.form5695.improvementsExpectedToRemainInUseFiveYears, true);
+  assertEquals(facts.form5695.improvementsRelatedToHomeConstruction, false);
+  assertEquals(facts.form5695.residentialEnergyPropertyCostsIncurred, true);
+  assertEquals(
+    facts.form5695.residentialEnergyPropertyOriginallyPlacedInServiceByTaxpayer,
+    true,
+  );
   assertEquals(facts.w2[0].employerName, "The Green Ladies");
   assertEquals(facts.w2[1].employerName, "C&R");
   assertEquals(facts.w2[0].employerEin, facts.w2[1].employerEin);
@@ -293,6 +345,8 @@ Deno.test("1040 Scenario 1 W-2s route sourced wages and withholding to 1040", ()
 
 Deno.test("1040 Scenario 2 source entries remain distinct from computed totals", () => {
   const facts = SCENARIO_1040_02_FACTS;
+  assertEquals(facts.printedFilingStatus.marriedFilingJointlyChecked, true);
+  assertEquals(facts.printedFilingStatus.qualifyingSurvivingSpouseChecked, false);
   assertMatch(facts.taxpayer.ssn, /^\d{3}00\d{4}$/);
   assertMatch(facts.spouse.ssn, /^\d{3}00\d{4}$/);
   assertEquals(facts.w2.reduce((sum, form) => sum + form.box1Wages, 0), 38_026);
@@ -308,8 +362,12 @@ Deno.test("1040 Scenario 2 source entries remain distinct from computed totals",
   assertEquals(facts.scheduleC.businessAddress.zip, "07757");
   assertEquals(facts.scheduleC.printedLine1GrossReceiptsProvided, false);
   assertEquals(facts.scheduleC.businessMiles, 665);
+  assertEquals(facts.scheduleC.allMileageBeforeJuly1, true);
   assertEquals(facts.form8283.fairMarketValue, 700);
   assertEquals(facts.qualifiedBusinessIncomeDeductionEligible, false);
+  assertEquals(facts.formerSpouseSsn, "400001037");
+  assertEquals(facts.spouse.nonresidentSpouseChoiceStatementAssumed, true);
+  assertEquals(facts.dependent.fullTimeHighSchoolStudent, true);
 });
 
 Deno.test("1040 Scenario 2 statutory W-2 goes to Schedule C, not 1040 wages", () => {
@@ -438,9 +496,81 @@ Deno.test("1040 Scenario 5 preserves dependent, care, education, and opt-out inp
   );
   assertEquals(facts.schedule1.movingExpenses, 1_475);
   assertEquals(facts.form8863.adjustedQualifiedEducationExpenses, 980);
+  assertEquals(
+    facts.form8863.institutionAddress,
+    "1234 Blue Street, Austin, Texas 78701",
+  );
+  assertEquals(facts.form8863.printedLine27Expenses, null);
+  assertEquals(facts.form8863.printedLine30AmericanOpportunityCredit, null);
+  assertEquals(facts.form8863.printedPartILine8RefundableCredit, null);
+  assertEquals(facts.form8863.printedPartIILine19NonrefundableCredit, null);
+  assertEquals(facts.form8863.form1098TIncludedInPacket, false);
   assertEquals(facts.form8862.child1DaysInUnitedStates, 365);
   assertEquals(facts.form8862.child2DaysInUnitedStates, 365);
+  assertEquals(facts.form8862.taxYearOnLine1, null);
+  assertEquals(facts.form8862.creditBoxesMarkedOnLine2, []);
+  assertEquals(facts.form8862.qualifyingChildAnswerOnLine6, null);
+  assertEquals(facts.form8862.aotcStudentNameOnLine18a, null);
+  assertEquals(facts.form8863.studentName, "Bobby Barker");
   assertEquals(facts.optOutOfAdditionalChildTaxCredit, true);
+});
+
+Deno.test("1040 Scenario 5 Form 2441 preserves provider/person rows and pre-credit amounts", () => {
+  const facts = SCENARIO_1040_05_FACTS;
+  assertEquals(facts.form2441.providers, [
+    {
+      name: "Kid Korner",
+      ein: "000000041",
+      amountPaid: 1_300,
+      address: "227 Maze Street, Seattle, WA 98104",
+      householdEmployee: false,
+    },
+    {
+      name: "Little Genius",
+      ein: "000000042",
+      amountPaid: 520,
+      address: "7311 Apple Road, Seattle, WA 98104",
+      householdEmployee: false,
+    },
+  ]);
+  assertEquals(
+    facts.dependents.map((child) => ({
+      name: `${child.firstName} ${child.lastName}`,
+      ssn: child.ssn,
+      form2441Line2d: child.careExpenses,
+    })),
+    [
+      { name: "Skylar Barker", ssn: "400001057", form2441Line2d: 1_300 },
+      { name: "Kaylee Barker", ssn: "400001058", form2441Line2d: 520 },
+    ],
+  );
+
+  // These are Part II worksheet targets if no dependent-care benefits apply.
+  // The packet does not mark the benefits Yes/No answer or fill lines 3-11.
+  const paidExpenses = facts.dependents.reduce(
+    (sum, child) => sum + child.careExpenses,
+    0,
+  );
+  const line3WithoutBenefits = Math.min(paidExpenses, 6_000);
+  const line4EarnedIncome = facts.w2.box1Wages;
+  const line5EarnedIncome = line4EarnedIncome; // Head of household.
+  const line6WithoutBenefits = Math.min(
+    line3WithoutBenefits,
+    line4EarnedIncome,
+    line5EarnedIncome,
+  );
+  assertEquals(
+    [
+      line3WithoutBenefits,
+      line4EarnedIncome,
+      line5EarnedIncome,
+      line6WithoutBenefits,
+    ],
+    [1_820, 31_232, 31_232, 1_820],
+  );
+  assertEquals(facts.form2441.dependentCareBenefitsAnswer, null);
+  assertEquals(facts.form2441.printedTaxLiabilityLimit, null);
+  assertEquals(facts.form2441.printedCredit, null);
 });
 
 Deno.test("1040 Scenario 5 W-2 routes sourced wages and withholding to 1040", () => {
@@ -557,7 +687,7 @@ Deno.test("1040 Scenario 12 W-2 routes sourced wages and withholding to 1040", (
   assertEquals(fieldsOf(result.outputs, f1040)?.line25a_w2_withheld, 14_444);
 });
 
-Deno.test("1040 Scenario 12 Schedule SE reconciles cents and printed whole-dollar conventions", () => {
+Deno.test("1040 Scenario 12 Schedule SE adds filed whole-dollar tax components", () => {
   const facts = SCENARIO_1040_12_FACTS;
   const result = schedule_se.compute(
     { taxYear: 2025, formType: "f1040" },
@@ -566,23 +696,22 @@ Deno.test("1040 Scenario 12 Schedule SE reconciles cents and printed whole-dolla
       w2_ss_wages: facts.w2.box3SocialSecurityWages,
     },
   );
-  const netEarnings = facts.scheduleC.printedNetProfit * 0.9235;
-  const ssTax = netEarnings * 0.124;
-  const medicareTax = netEarnings * 0.029;
-  const centsTotal = ssTax + medicareTax;
+  const filedNetEarnings = Math.round(
+    facts.scheduleC.printedNetProfit * 0.9235,
+  );
+  const ssTax = Math.round(filedNetEarnings * 0.124);
+  const medicareTax = Math.round(filedNetEarnings * 0.029);
+  const filedTotal = ssTax + medicareTax;
 
-  // IRS permits a consistent cents or whole-dollar convention. This node keeps
-  // cents through line 12; the published fixture rounds lines 10 and 11 first.
-  assertEquals(fieldsOf(result.outputs, schedule2)?.line4_se_tax, centsTotal);
+  assertEquals(fieldsOf(result.outputs, schedule2)?.line4_se_tax, filedTotal);
   assertEquals(
     fieldsOf(result.outputs, schedule1)?.line15_se_deduction,
-    centsTotal * 0.5,
+    filedTotal * 0.5,
   );
-  assertEquals(Math.round(centsTotal), 3_437);
-  assertEquals(Math.round(ssTax), facts.scheduleSE.printedSocialSecurityTax);
-  assertEquals(Math.round(medicareTax), facts.scheduleSE.printedMedicareTax);
+  assertEquals(ssTax, facts.scheduleSE.printedSocialSecurityTax);
+  assertEquals(medicareTax, facts.scheduleSE.printedMedicareTax);
   assertEquals(
-    Math.round(ssTax) + Math.round(medicareTax),
+    filedTotal,
     facts.scheduleSE.printedTotalTax,
   );
   assertEquals(
@@ -596,6 +725,13 @@ Deno.test("1040 Scenario 13 preserves the charger credit limit and printed retur
   const printed = facts.printedForm1040;
   assertEquals(facts.taxpayer.ssn, "400001313");
   assertEquals(facts.spouse.ssn, "400001234");
+  assertEquals(facts.form6251.line6ExcessOverExemption, 0);
+  assertEquals(facts.form6251.line7TentativeMinimumTaxBeforeCredits, 0);
+  assertEquals(facts.form6251.line8AlternativeMinimumTaxForeignTaxCredit, 0);
+  assertEquals(facts.form6251.line9TentativeMinimumTax, 0);
+  assertEquals(facts.form6251.line10RegularTaxBeforeCredits, 162);
+  assertEquals(facts.form6251.line11AlternativeMinimumTax, 0);
+  assertEquals(facts.form6251.partIIILines12Through40Blank, true);
   assertEquals(facts.form8911ScheduleA.censusTractGeoid, "48201100000");
   assertEquals(facts.form8911ScheduleA.censusTractGeoid.length, 11);
   assertEquals(

@@ -1,3 +1,5 @@
+import { assertArcherEmployerExcessIncomeSource } from "../../form8853_contributions_reconciliation.ts";
+import { assertEducationIncomeSource } from "../../../nodes/inputs/education_income/index.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import { assertForm1098Box4Sources } from "../../../nodes/inputs/f1098/index.ts";
@@ -31,6 +33,7 @@ export interface Fields {
   line8l_personal_property_rent?: number | null;
   line8n_section951a_inclusion?: number | null;
   line8o_section951aa_inclusion?: number | null;
+  line8r_taxable_scholarships?: number | null;
   line8p_excess_business_loss?: number | null;
   line8z_rtaa?: number | null;
   line8z_taxable_grants?: number | null;
@@ -47,6 +50,7 @@ export interface Fields {
   line8z_form8814?: number | null;
   line8z_hsa_excess_earnings?: number | null;
   line8z_hsa_excess_employer?: number | null;
+  line8z_archer_excess_employer?: number | null;
   line8z_golden_parachute?: number | null;
   at_risk_disallowed_add_back?: number | null;
   at_risk_recapture?: number | null;
@@ -94,6 +98,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line8n_section951a_inclusion", "Section951aInclusionAmt"],
   ["line8o_section951aa_inclusion", "Section951AaInclusionAmt"],
   ["line8p_excess_business_loss", "ExcessBusinessLossAmt"],
+  ["line8r_taxable_scholarships", "GrantsOrScholarshipsAmt"],
   ["line8z_other", "OtherIncomeTotalAmt"],
   ["line9_total_other_income", "TotalOtherIncomeAmt"],
   ["line10_total_additional_income", "TotalAdditionalIncomeAmt"],
@@ -232,6 +237,17 @@ export const schedule1: MefFormDescriptor<"schedule1", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040s1.pdf",
   build(fields, context) {
+    assertArcherEmployerExcessIncomeSource(
+      fields as Record<string, unknown>,
+      context,
+    );
+    assertEducationIncomeSource(
+      context?.pending,
+      [context?.filer?.primarySSN, context?.filer?.spouse?.ssn].filter((
+        s,
+      ): s is string => !!s),
+      fields.line8r_taxable_scholarships,
+    );
     if (fields.line8z_nqdc !== undefined) {
       throw new Error(
         "Schedule 1 NQDC income needs an identified W-2 or 1099-NEC source; Form 1099-MISC box 15 is only a section 409A tax base",

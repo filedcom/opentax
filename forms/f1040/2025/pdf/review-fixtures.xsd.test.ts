@@ -1,3 +1,4 @@
+import { w2gPayerCopyFixture } from "../w2g_payer_copy.fixture.ts";
 import {
   assertEquals,
   assertRejects,
@@ -12,9 +13,12 @@ import { buildMefBundle, buildMefXml } from "../mef/builder.ts";
 import { buildPending } from "../mef/pending.ts";
 import { sha256Hex } from "../prepared-source.ts";
 import { buildPdfBytes } from "./builder.ts";
+import { f1040_2025 } from "../index.ts";
 import { inputSchema as w2gInputSchema } from "../../nodes/inputs/w2g/index.ts";
 import { pdfReviewFixtures } from "./review-fixtures.ts";
 import { irs1040Pdf } from "./forms/f1040.ts";
+import { form8911Pdf } from "./forms/f8911.ts";
+import { form8911ScheduleAPdf } from "./forms/f8911_schedule_a.ts";
 import { w2gPdf } from "./forms/w2g.ts";
 
 const xsd = new URL(
@@ -43,15 +47,7 @@ async function withheldW2GXml(
     { f1040: { line25c_total: pending.f1040?.line25c_total } },
   )?.[0];
   if (!projected) throw new Error("Missing W-2G recipient copy projection");
-  const copy = await PDFDocument.create();
-  copy.addPage([300, 400]);
-  for (const field of w2gPdf.fields) {
-    if (field.kind !== "text" || field.domainKey === "payer_phone") continue;
-    copy.getForm().createTextField(field.pdfField).setText(
-      String(projected[field.domainKey] ?? ""),
-    );
-  }
-  const bytes = await copy.save();
+  const bytes = await w2gPayerCopyFixture(projected);
   const hash = await sha256Hex(bytes);
   const fileName = "IssuedW2G.pdf";
   const bundle = await buildMefBundle({
@@ -124,10 +120,7 @@ for (const fixture of pdfReviewFixtures) {
       : `filled-PDF source ${fixture.id} also exports TY2025 v5.4 XML`,
     ignore: !xsdAvailable,
     async fn() {
-      const result = execute(plan, registry, { ...fixture.inputs }, {
-        taxYear: 2025,
-        formType: "f1040",
-      });
+      const result = f1040_2025.executeReturn({ ...fixture.inputs });
       if (fixture.id === "single-form461-schedule-c-excess-business-loss") {
         assertEquals(result.diagnostics.length, 1);
         assertStringIncludes(
@@ -191,12 +184,89 @@ for (const fixture of pdfReviewFixtures) {
           500,
         );
       }
-      const xml = fixture.id === "single-withheld-w2g" ||
-          fixture.id === "single-partnership-code-k-and-w2g"
+      const xml = fixture.attachments?.length ||
+          fixture.retainedSourceDocuments?.length
+        ? (await buildMefBundle(pending, {
+          filer: fixture.filer,
+          attachments: fixture.attachments ?? [],
+          retainedSourceDocuments: fixture.retainedSourceDocuments,
+        })).xml
+        : fixture.id === "single-withheld-w2g" ||
+            fixture.id === "single-partnership-code-k-and-w2g"
         ? await withheldW2GXml(pending, fixture.filer)
         : fixture.id === "single-form8824-section1231-exchange"
         ? await section1231ExchangeXml(pending, fixture.filer)
         : buildMefXml(pending, fixture.filer);
+      if (fixture.id === "single-reviewed-adoption-credit") {
+        assertEquals(pending.schedule3?.line6c_adoption_credit, 6_000);
+        assertEquals(pending.f1040?.line30_refundable_adoption, 5_000);
+        assertStringIncludes(xml, "<AdoptionFinalInd>X</AdoptionFinalInd>");
+        assertStringIncludes(xml, "<IRS8839");
+        assertStringIncludes(xml, "<BinaryAttachment");
+        await assertRejects(
+          () =>
+            buildMefBundle(pending, {
+              filer: fixture.filer,
+              attachments: [{
+                ...fixture.attachments![0],
+                bytes: fixture.attachments![1].bytes,
+              }, ...fixture.attachments!.slice(1)],
+            }),
+          Error,
+          "bytes differ",
+        );
+      }
+      if (fixture.id === "single-personal-home-charger-credit") {
+        const projectedPending = pending as unknown as Record<
+          string,
+          Record<string, unknown>
+        >;
+        const parent = form8911Pdf.instances?.(
+          {},
+          fixture.filer,
+          projectedPending,
+        )?.[0];
+        const scheduleA = form8911ScheduleAPdf.instances?.(
+          {},
+          fixture.filer,
+          projectedPending,
+        )?.[0];
+        assertEquals(parent?.line4, 300);
+        assertEquals(parent?.line5, 3_875);
+        assertEquals(parent?.line10, 300);
+        assertEquals(scheduleA?.line8, 1_000);
+        assertEquals(scheduleA?.line19, 300);
+        assertEquals(scheduleA?.line21, parent?.line4);
+        assertStringIncludes(
+          xml,
+          "<PrsnlUseRefuelingPropCrAmt>300</PrsnlUseRefuelingPropCrAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<TotQlfyPropertyCostCreditAmt>1000</TotQlfyPropertyCostCreditAmt>",
+        );
+        assertStringIncludes(
+          xml,
+          "<AdjustedPersonalUsePartAmt>300</AdjustedPersonalUsePartAmt>",
+        );
+        const mismatched = {
+          ...pending,
+          schedule3: {
+            ...pending.schedule3,
+            line6j_alt_fuel_vehicle_refueling: 299,
+          },
+        };
+        assertThrows(
+          () =>
+            form8911Pdf.instances?.(
+              {},
+              fixture.filer,
+              mismatched as unknown as Record<string, Record<string, unknown>>,
+            ),
+          Error,
+          "disagrees with finalized Form 1040",
+        );
+      }
       if (fixture.id === "single-w2-overpayment-applied-2026") {
         assertStringIncludes(xml, "<AppliedToEsTaxAmt>500</AppliedToEsTaxAmt>");
       }
@@ -205,14 +275,14 @@ for (const fixture of pdfReviewFixtures) {
           result.pending.schedule_a.line_12_noncash_contributions,
           3_000,
         );
-        assertEquals(result.pending.f1040.line12e_itemized_deductions, 39_000);
+        assertEquals(result.pending.f1040.line12e_itemized_deductions, 27_000);
         assertStringIncludes(
           xml,
           "<OtherThanByCashOrCheckAmt>3000</OtherThanByCashOrCheckAmt>",
         );
         assertStringIncludes(
           xml,
-          "<TotalItemizedOrStandardDedAmt>39000</TotalItemizedOrStandardDedAmt>",
+          "<TotalItemizedOrStandardDedAmt>27000</TotalItemizedOrStandardDedAmt>",
         );
         assertStringIncludes(
           xml,
@@ -227,7 +297,7 @@ for (const fixture of pdfReviewFixtures) {
           result.pending.schedule_a.line_12_noncash_contributions,
           1_400,
         );
-        assertEquals(result.pending.f1040.line12e_itemized_deductions, 37_400);
+        assertEquals(result.pending.f1040.line12e_itemized_deductions, 25_400);
         assertEquals(
           (xml.match(/<FairMarketValueStatement documentId=/g) ?? []).length,
           2,
@@ -242,7 +312,7 @@ for (const fixture of pdfReviewFixtures) {
         );
         assertStringIncludes(
           xml,
-          "<TotalItemizedOrStandardDedAmt>37400</TotalItemizedOrStandardDedAmt>",
+          "<TotalItemizedOrStandardDedAmt>25400</TotalItemizedOrStandardDedAmt>",
         );
         assertStringIncludes(
           xml,
@@ -383,7 +453,7 @@ for (const fixture of pdfReviewFixtures) {
           "childless EIC needs reviewed general source facts",
         );
         const expected = Math.min(12_000, 10_000 - Math.round(line15));
-        assertEquals(expected, 9_294);
+        assertEquals(expected, 9_293);
         assertEquals(
           result.pending.f1040.line13b_additional_deductions,
           expected,
@@ -428,10 +498,10 @@ for (const fixture of pdfReviewFixtures) {
           reports.reduce((sum, row) => sum + Number(row.amount), 0),
           13_000,
         );
-        assertEquals(result.pending.f1040.line13b_additional_deductions, 9_294);
+        assertEquals(result.pending.f1040.line13b_additional_deductions, 9_293);
         assertStringIncludes(
           xml,
-          "<QualifiedTipsTradeOrBusAmt>9294</QualifiedTipsTradeOrBusAmt>",
+          "<QualifiedTipsTradeOrBusAmt>9293</QualifiedTipsTradeOrBusAmt>",
         );
         assertThrows(
           () =>
@@ -467,10 +537,10 @@ for (const fixture of pdfReviewFixtures) {
           >)[0].line_1_gross_receipts,
           18_000,
         );
-        assertEquals(result.pending.f1040.line13b_additional_deductions, 9_294);
+        assertEquals(result.pending.f1040.line13b_additional_deductions, 9_293);
         assertStringIncludes(
           xml,
-          "<QualifiedTipsTradeOrBusAmt>9294</QualifiedTipsTradeOrBusAmt>",
+          "<QualifiedTipsTradeOrBusAmt>9293</QualifiedTipsTradeOrBusAmt>",
         );
         assertThrows(
           () =>

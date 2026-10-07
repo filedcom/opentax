@@ -1,3 +1,4 @@
+import { owned5471PdfValues } from "./f5471-owned-values.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { projectForm8992Source } from "../../form8992_source.ts";
 
@@ -6,7 +7,7 @@ const textField = (
   page: number,
   path: string,
   printZero = false,
-): PdfFieldEntry => ({
+): Extract<PdfFieldEntry, { kind: "text" }> => ({
   kind: "text",
   domainKey: key,
   pdfField: `topmostSubform[0].Page${page}[0].${path}`,
@@ -43,17 +44,29 @@ export const form5471ScheduleEPdf: PdfFormDescriptor = {
     row("rate", "Table_Part1_Sec1_g-m", "f1_31"),
     row("tax_usd", "Table_Part1_Sec1_g-m", "f1_32"),
     row("tax_functional", "Table_Part1_Sec1_g-m", "f1_33"),
-    simple("tax_usd", 1, "f1_52"),
-    simple("tax_functional", 1, "f1_53"),
+    {
+      ...simple("total_tax_usd", 1, "f1_52", true),
+      fallbackDomainKey: "tax_usd",
+    },
+    {
+      ...simple("total_tax_functional", 1, "f1_53", true),
+      fallbackDomainKey: "tax_functional",
+    },
+    textField("disallowed_payor_name", 2, "Table_Part3[0].BodyRow1[0].f2_2[0]"),
+    textField("disallowed_payor_id", 2, "Table_Part3[0].BodyRow1[0].f2_3[0]"),
+    textField("disallowed_tax", 2, "Table_Part3[0].BodyRow1[0].f2_7[0]"),
+    textField("disallowed_tax", 2, "Table_Part3[0].BodyRow1[0].f2_10[0]"),
+    simple("disallowed_tax", 2, "f2_20"),
+    simple("disallowed_tax", 2, "f2_21"),
     {
       kind: "checkboxWhen",
       domainKey: "section986_election",
       pdfField: "topmostSubform[0].Page2[0].c2_1[1]",
       whenValue: "false",
     },
-    e1("tax_usd", "4", "f2_47"),
-    e1("tax_usd", "8", "f2_63"),
-    e1("tax_usd", "13", "f2_83"),
+    { ...e1("total_tax_usd", "4", "f2_47"), fallbackDomainKey: "tax_usd" },
+    { ...e1("total_tax_usd", "8", "f2_63"), fallbackDomainKey: "tax_usd" },
+    { ...e1("total_tax_usd", "13", "f2_83"), fallbackDomainKey: "tax_usd" },
     e1("e1_reduction", "15", "f2_91"),
   ],
   instances(_fields, filer, allPending) {
@@ -65,6 +78,9 @@ export const form5471ScheduleEPdf: PdfFormDescriptor = {
       allPending,
       filer,
     );
+    if (cfc.owned_worksheet_source) {
+      return owned5471PdfValues(cfc, shareholderName, "E");
+    }
     const e = cfc.schedule_e;
     return [{
       shareholder_name: shareholderName,
@@ -83,6 +99,8 @@ export const form5471ScheduleEPdf: PdfFormDescriptor = {
       tax_local: e.tax_local,
       rate: e.tax_conversion_rate,
       tax_usd: e.tax_usd,
+      total_tax_usd: e.tax_usd,
+      total_tax_functional: e.tax_functional,
       tax_functional: e.tax_functional,
       section986_election: e.section986_election,
       e1_reduction: -e.tax_usd,

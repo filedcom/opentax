@@ -74,21 +74,54 @@ Deno.test("Form 8880 positive serializer needs matching contribution sources", (
 });
 
 Deno.test("Form 8880 canonical calculated lines map to TY2025 MeF line tags", () => {
-  const xml = form8880.build({
+  const fields = {
     ...calculated,
     taxpayer_dob: "1980-01-01",
     taxpayer_student_five_months: false,
     taxpayer_claimed_as_dependent: false,
-  }, {
-    pending: {
-      f1040: {
-        filing_status: FilingStatus.Single,
-        line11_agi: 20_000,
-        line18_total_tax_before_credits: 800,
-      },
-      schedule3: { line4_retirement_savings_credit: 800 },
+  };
+  const pending = {
+    general: {
+      filing_status: FilingStatus.Single,
+      taxpayer_dob: "1980-01-01",
+      taxpayer_form8880_student_five_months: false,
+      taxpayer_form8880_claimed_as_dependent: false,
     },
+    f1040: {
+      filing_status: FilingStatus.Single,
+      line11_agi: 20_000,
+      line18_total_tax_before_credits: 800,
+    },
+    schedule3: { line4_retirement_savings_credit: 800 },
+  };
+  const xml = form8880.build(fields, {
+    pending,
   });
+  assertThrows(
+    () =>
+      form8880.build(fields, {
+        pending: {
+          ...pending,
+          general: {
+            ...pending.general,
+            taxpayer_form8880_student_five_months: true,
+          },
+        },
+      }),
+    Error,
+    "retained general eligibility",
+  );
+  assertThrows(
+    () =>
+      form8880.build(fields, {
+        pending: {
+          ...pending,
+          general: { ...pending.general, taxpayer_dob: "2010-01-01" },
+        },
+      }),
+    Error,
+    "retained general eligibility",
+  );
   assertStringIncludes(
     xml,
     "<PrimaryRothIRAForCurrentYrAmt>1000</PrimaryRothIRAForCurrentYrAmt>",
@@ -479,14 +512,43 @@ Deno.test("Form 8880 native spouse deferral line agrees with W-2 SSN ownership",
     throw new Error("Form 8880 calculator did not emit native lines");
   }
   const fields = { ...source, ...result.printFields };
+  const w2 = {
+    w2s: [
+      {
+        employee_ssn: "123456789",
+        box1_wages: 30_000,
+        box2_fed_withheld: 0,
+        box12_entries: [{ code: "D", amount: 500 }],
+      },
+      {
+        employee_ssn: "987654321",
+        box1_wages: 0,
+        box2_fed_withheld: 0,
+        box12_entries: [{ code: "E", amount: 800 }],
+      },
+    ],
+  };
+  const general = {
+    filing_status: FilingStatus.MFJ,
+    taxpayer_ssn: "123456789",
+    spouse_ssn: "987654321",
+    taxpayer_dob: "1980-01-01",
+    spouse_dob: "1981-01-01",
+    taxpayer_form8880_student_five_months: false,
+    spouse_form8880_student_five_months: false,
+    taxpayer_form8880_claimed_as_dependent: false,
+    spouse_form8880_claimed_as_dependent: false,
+  };
   const xml = form8880.build(fields, {
     pending: {
+      general,
       f1040: {
         filing_status: FilingStatus.MFJ,
         line11_agi: 30_000,
         line18_total_tax_before_credits: 1_000,
       },
       schedule3: { line4_retirement_savings_credit: 650 },
+      w2,
     },
   });
   assertStringIncludes(
@@ -496,6 +558,68 @@ Deno.test("Form 8880 native spouse deferral line agrees with W-2 SSN ownership",
   assertStringIncludes(
     xml,
     "<SpouseContributionsAmt>800</SpouseContributionsAmt>",
+  );
+  const finalized = {
+    general,
+    f1040: {
+      filing_status: FilingStatus.MFJ,
+      line11_agi: 30_000,
+      line18_total_tax_before_credits: 1_000,
+    },
+    schedule3: { line4_retirement_savings_credit: 650 },
+  };
+  assertThrows(
+    () =>
+      form8880.build(fields, {
+        pending: {
+          ...finalized,
+          w2,
+          general: { ...general, spouse_ssn: "999887777" },
+        },
+      }),
+    Error,
+    "retained general eligibility",
+  );
+  assertThrows(
+    () =>
+      form8880.build(fields, {
+        pending: {
+          ...finalized,
+          w2,
+          general: { ...general, spouse_form8880_student_five_months: true },
+        },
+      }),
+    Error,
+    "retained general eligibility",
+  );
+  assertThrows(
+    () => form8880.build(fields, { pending: finalized }),
+    Error,
+    "retained W-2 box 12",
+  );
+  assertThrows(
+    () =>
+      form8880.build(fields, {
+        pending: {
+          ...finalized,
+          w2: {
+            w2s: [
+              { ...w2.w2s[0], box12_entries: [{ code: "D", amount: 501 }] },
+              w2.w2s[1],
+            ],
+          },
+        },
+      }),
+    Error,
+    "retained W-2 box 12",
+  );
+  assertThrows(
+    () =>
+      form8880.build(fields, {
+        pending: { ...finalized, w2: { w2s: [...w2.w2s, w2.w2s[0]] } },
+      }),
+    Error,
+    "retained W-2 box 12",
   );
   assertThrows(
     () =>
@@ -543,6 +667,20 @@ Deno.test("Form 8880 native line 2 excludes the employer portion of reviewed cod
         line18_total_tax_before_credits: 1_000,
       },
       schedule3: { line4_retirement_savings_credit: 300 },
+      w2: {
+        w2s: [{
+          employee_ssn: "123456789",
+          box1_wages: 20_000,
+          box2_fed_withheld: 0,
+          box12_entries: [{
+            code: "G",
+            amount: 1_800,
+            code_g_governmental_457b: true,
+            code_g_employee_elective_amount: 600,
+            code_g_employee_split_review_ref: "2025 payroll 457b allocation",
+          }],
+        }],
+      },
     },
   };
   const xml = form8880.build(fields, context);

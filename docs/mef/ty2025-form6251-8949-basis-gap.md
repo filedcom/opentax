@@ -19,11 +19,38 @@ created. Its $500 regular loss and $500 AMT gain yield a positive $1,000 Form
 transaction and require the regular loss on Form 1040 line 7, the computed AMT
 on Schedule 2, and matching Form 1040 tax and taxable income.
 
-This slice remains limited to one single-filer short-term lot with no other
-capital activity, qualified dividends, Form 4952 election, special-rate gain, or
-capital-loss carryover. MFS, wider sign-changing lots, Part III and broker byte
-authentication remain open. Positive and tamper fixtures are authored for the
-deferred bulk validation.
+The same one-lot route now accepts married filing separately when the regular
+loss is within its $1,500 current-year limit. The Form 8949 input node routes
+that sign-changing short-term lot to Form 6251; the Form 6251 calculator checks
+the filing-status limit and complete Schedule D audit. A full-return MFS case
+reconciles the $500 Form 1040 line 7 loss, $1,000 line 2k adjustment, positive
+AMT on Schedule 2 and Form 1040 line 17, and the same native/PDF Form 6251
+line. Changed broker basis, Schedule 2 AMT, and final return amounts reject.
+This follows the [2025 Schedule D instructions](https://www.irs.gov/pub/irs-prior/i1040sd--2025.pdf)
+and [2025 Form 6251 instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf).
+
+This slice remains limited to one single- or MFS-filer short-term lot with no
+other capital activity, qualified dividends, Form 4952 election, special-rate
+gain, or capital-loss carryover. Other statuses, wider sign-changing lots, Part
+III, and broker byte authentication remain open. Focused graph, calculation,
+native, and PDF cases pass. The MFS prepared return also validates against the
+local TY2025 v5.4 `Return1040.xsd` and renders as an eight-page filled PDF.
+Visual review of its Form 6251 page 7 confirms line 2k `$1,000`, line 5 MFS
+exemption `$68,500`, and line 11 AMT `$64,822`, with no clipped entries. The
+corrected Form 1040 page 1 visibly carries spouse Sam Taxpayer, SSN
+`444556666`, and the MFS full-name entry; the native return has the spouse SSN.
+The packet's Schedule D line 21 prints the regular `$500` loss and Form 1040
+line 17 prints `$64,822`. The focused render/XSD test passes 3/3. Ignored review
+artifacts are in `.pdf-cache/review/mfs-short-loss-amt-gain/`. XML SHA-256 is
+`3ba3ccaeb7139e08afa4f58ba9e2c9a632313995878306655c136d29dd721bd7`;
+the filled PDF is
+`c0c04adc27cef3b05d8930f1dc2233d7d860f9285e8d5f9d93a85b1d912facaf`;
+the rendered Form 1040 page-1 image is
+`1e47804b660b7ed8925e6f6426a2daef8f5f212b50ad63454896f5a107c5d344`,
+and Form 6251 page-7 image is
+`1f6443a384555fe1714b70deb291e136c2addc007b8981f1d1ab0b20f75edd52`.
+Issued broker-copy authentication, IRS business rules, and ATS acceptance
+remain open.
 
 The native and PDF Form 6251 exporters now replay every line 2k basis row
 against the retained raw Form 8949 input. The row set must be exact, with

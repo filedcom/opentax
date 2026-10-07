@@ -84,7 +84,7 @@ export const inputSchema = z.object({
     if (!row.source_document_reference) continue;
     const key = JSON.stringify([
       row.is_rrb === true ? "RRB-1099" : "SSA-1099",
-      row.source_document_reference,
+      row.source_document_reference.toUpperCase(),
     ]);
     if (seen.has(key)) {
       ctx.addIssue({

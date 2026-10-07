@@ -1,3 +1,4 @@
+import { canonicalForm1098CopyDocument } from "./pdf/review-1098-copy.fixture.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { extractFilerIdentity } from "../mef/filer.ts";
@@ -14,8 +15,7 @@ const xsdPath = new URL(
 ).pathname;
 
 async function issuerCopy(): Promise<Uint8Array> {
-  const doc = await PDFDocument.create();
-  doc.addPage([612, 792]);
+  const doc = await canonicalForm1098CopyDocument();
   const form = doc.getForm();
   const copy = "topmostSubform[0].CopyB[0]";
   for (
@@ -24,17 +24,17 @@ async function issuerCopy(): Promise<Uint8Array> {
       [`${copy}.LeftCol[0].f2_2[0]`]: "Refinance Lender",
       [`${copy}.LeftCol[0].f2_4[0]`]: "***-**-3333",
       [`${copy}.RightCol[0].f2_11[0]`]: "0",
-      [`${copy}.RightCol[0].f2_12[0]`]: "",
-      [`${copy}.RightCol[0].f2_13[0]`]: "",
+      [`${copy}.RightCol[0].f2_12[0]`]: "100000",
+      [`${copy}.RightCol[0].f2_13[0]`]: "06/15/2025",
       [`${copy}.RightCol[0].f2_14[0]`]: "",
       [`${copy}.RightCol[0].f2_15[0]`]: "",
       [`${copy}.RightCol[0].f2_16[0]`]: "",
     })
-  ) form.createTextField(field).setText(value);
+  ) form.getTextField(field).setText(value);
   return doc.save();
 }
 
-Deno.test("Schedule A refinance points with zero Form 1098 boxes still bind exact lender Copy B", async () => {
+Deno.test("Schedule A refinance points bind lender Copy B principal and origination", async () => {
   const bytes = await issuerCopy();
   const hash = Array.from(
     new Uint8Array(
@@ -47,6 +47,8 @@ Deno.test("Schedule A refinance points with zero Form 1098 boxes still bind exac
     recipient_tin: "111-22-3333",
     source_document_reference: "2025 refinance lender Copy B",
     box1_mortgage_interest: 0,
+    box2_outstanding_principal: 100_000,
+    box3_origination_date: "06/15/2025",
     issuer_copy: {
       file_name: "Refinance1098.pdf",
       pdf_sha256: hash,
@@ -147,5 +149,20 @@ Deno.test("Schedule A refinance points with zero Form 1098 boxes still bind exac
     () => buildPdfBytes(withoutCopy, filer, ".pdf-cache"),
     Error,
     "reviewed issuer Copy B bytes",
+  );
+  const changedPrincipal = {
+    ...pending,
+    f1098: {
+      f1098s: [{ ...mortgage, box2_outstanding_principal: 90_000 }],
+    },
+  };
+  assertThrows(
+    () => buildMefXml(changedPrincipal, filer),
+    Error,
+    "principal differs from the linked 2025 Form 1098 box 2",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changedPrincipal, filer, ".pdf-cache"),
+    Error,
   );
 });

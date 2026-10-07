@@ -176,3 +176,37 @@ Deno.test("final exports reject changed 1099-MISC line 8z description and amount
     );
   }
 });
+
+Deno.test("final exports reject an unreviewed 1099-MISC box 3 exclusion", async () => {
+  const result = calculated();
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const misc = (pending as unknown as {
+    f1099m: { f1099ms: Array<Record<string, unknown>> };
+  }).f1099m;
+  const filer = extractFilerIdentity(general);
+  const altered = {
+    ...pending,
+    f1099m: {
+      ...misc,
+      f1099ms: [
+        ...misc.f1099ms,
+        {
+          payer_name: "Payer Three",
+          payer_tin: "456789012",
+          recipient_tin: "111223333",
+          box3_other_income: 10_000,
+          box3_other_income_routing: "excluded",
+        },
+      ],
+    },
+  };
+  const reason =
+    "1099-MISC box 3 exclusion needs reviewed payment and prior-deduction facts";
+  await assertRejects(
+    () => buildMefBundle(altered, { filer, attachments: [] }),
+    Error,
+    reason,
+  );
+  await assertRejects(() => buildPdfBytes(altered, filer), Error, reason);
+});

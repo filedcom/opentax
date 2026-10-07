@@ -438,6 +438,17 @@ for (
   });
 }
 
+Deno.test("form8880: January 1, 2008 birth is within the statutory cutoff", () => {
+  const result = compute({
+    ira_contributions_taxpayer: 1_000,
+    agi: 20_000,
+    filing_status: FilingStatus.Single,
+    taxpayer_dob: "2008-01-01",
+  });
+  const lines = findOutput(result, "form8880")!.fields;
+  assertEquals(lines.print_line12_credit, 500);
+});
+
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }

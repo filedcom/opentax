@@ -1,3 +1,22 @@
+import { sumSourceMoney } from "../../intermediate/forms/form4972/source-rounding.ts";
+import {
+  participantInventorySchema,
+  reconcileParticipantIssuedInventory,
+} from "../../intermediate/forms/form4972/participant-inventory.ts";
+import {
+  isSourceMoney,
+  sameSourceMoney,
+} from "../../intermediate/forms/form4972/source-rounding.ts";
+
+import {
+  iraRecharacterizationReviewSchema,
+  reviewedIraRecharacterization,
+} from "../../intermediate/forms/form8606/recharacterization.ts";
+import { reconcileRothOwnerInventoryCopies, rothOwnerInventorySchema } from "../../intermediate/forms/form8606/roth-inventory.ts";
+import {
+  reviewedRothActivity,
+  rothActivityReviewSchema,
+} from "../../intermediate/forms/form8606/roth-activity.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -21,6 +40,7 @@ import {
   taxableRothDistribution,
   taxableTraditionalDistribution,
 } from "../../intermediate/forms/form8606/index.ts";
+import { scheduleA } from "../schedule_a/index.ts";
 import { tsSchema } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
@@ -96,6 +116,10 @@ function effectiveTaxableAmount(
 ): number {
   // Suppressed items contribute no taxable income
   if (item.exclude_4972 === true) return 0;
+  if (item.roth_owner_inventory_review) return 0;
+  if (item.roth_activity_review) {
+    return reviewedRothActivity(item.roth_activity_review).taxable;
+  }
   if (item.exclude_8606_roth === true) return 0;
 
   const rawTaxable = item.box2a_taxable_amount ?? item.box1_gross_distribution;
@@ -262,6 +286,7 @@ export const itemSchema = z.object({
     plan_reference: z.string().trim().min(1),
     full_balance_statement_reference: z.string().trim().min(1),
     all_qualified_distributions_included: z.literal(true),
+    participant_distribution_inventory: participantInventorySchema.optional(),
   }).strict().optional(),
   ts: tsSchema.optional(),
 
@@ -463,12 +488,16 @@ export const itemSchema = z.object({
   combined_ages_at_start: z.number().nonnegative().optional(),
   prior_excludable_recovered: z.number().nonnegative().optional(),
 
+  ira_recharacterization_review: iraRecharacterizationReviewSchema.optional(),
+
   // Form 8606 — traditional IRA prior basis (nondeductible contributions carried forward).
   // When set, this item's gross distribution is routed through Form 8606 Part I to compute
   // the correct taxable amount (box2a is suppressed from line4b; form8606 emits taxable instead).
   prior_ira_basis: z.number().nonnegative().optional(),
   form8606_distribution_evidence: distributionEvidenceSchema.optional(),
   roth_distribution_evidence: rothDistributionEvidenceSchema.optional(),
+  roth_activity_review: rothActivityReviewSchema.optional(),
+  roth_owner_inventory_review: rothOwnerInventorySchema.optional(),
 
   // Form 8606 — year-end FMV of all traditional IRAs (line 6).
   // Required when prior_ira_basis is set and there are remaining IRA assets after distribution.
@@ -507,7 +536,19 @@ export const itemSchema = z.object({
 
 // Node inputSchema — receives all 1099-Rs for this return as a single array
 export const inputSchema = z.object({
-  f1099rs: z.array(itemSchema).min(1),
+  f1099rs: z.array(itemSchema).default([]),
+  substitute_f1099rs: z.array(itemSchema).optional(),
+}).transform(({ substitute_f1099rs, ...input }, ctx) => {
+  const f1099rs = [...input.f1099rs, ...(substitute_f1099rs ?? [])];
+  if (f1099rs.length === 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "At least one source is required",
+    });
+  }
+  return { ...input, f1099rs } as Omit<typeof input, "substitute_f1099rs"> & {
+    substitute_f1099rs?: z.infer<typeof itemSchema>[];
+  };
 });
 
 type R1099Item = z.infer<typeof itemSchema>;
@@ -517,6 +558,8 @@ type R1099Items = R1099Item[];
 export function assertDistinct1099RCopies(
   items: readonly R1099Item[],
 ): void {
+  const normalizedPayerName = (name: string) =>
+    name.replace(/[.,]/g, " ").trim().replace(/\s+/g, " ").toUpperCase();
   const seenReferences = new Set<string>();
   const seenOwners = new Set<string>();
   const unidentifiedOwners = new Set<string>();
@@ -528,9 +571,9 @@ export function assertDistinct1099RCopies(
     const recipient = item.recipient_ssn?.replace(/\D/g, "");
     const account = item.account_number?.trim() || null;
     // The ATS packet uses one synthetic EIN for differently named payers.
-    // Collapse presentation-only name differences while retaining that
-    // distinction; same-name distributions need an account or issued reference.
-    const payerName = item.payer_name.trim().replace(/\s+/g, " ").toUpperCase();
+    // Collapse spacing, case, and punctuation-only variants while retaining
+    // distinct plan names that share the synthetic ATS EIN.
+    const payerName = normalizedPayerName(item.payer_name);
     const owner = JSON.stringify([payer, payerName, recipient ?? null]);
     // The retained source reference identifies the issued copy. Altering a
     // box value cannot turn that same identified copy into a second payment.
@@ -1097,6 +1140,7 @@ function validateIraRolloverEvidence(item: R1099Item): void {
 
 // Cross-field validation for a single item
 function validateItem(item: R1099Item): void {
+  if (item.ira_recharacterization_review) reviewedIraRecharacterization(item);
   if (
     item.box7_distribution_code === DistributionCode.Code8 &&
     item.box7_ira_simple_indicator !== true &&
@@ -1122,16 +1166,52 @@ function validateItem(item: R1099Item): void {
     );
   }
   validateIraRolloverEvidence(item);
+  if (item.roth_owner_inventory_review &&
+    (item.roth_activity_review || item.roth_distribution_evidence || item.prior_ira_basis !== undefined ||
+      item.form8606_distribution_evidence || (item.rollover_code && !(item.rollover_code === "C" && item.roth_owner_inventory_review.current_conversion?.accounts.some(a => a.transfers.some(t => (t.issued_form1099r.completed_form4852_reference ?? t.issued_form1099r.source_document_reference) === item.source_document_reference)))) || item.exclude_4972 || item.qcd_full ||
+      (item.qcd_partial_amount ?? 0) > 0 || item.form8915f_treatment || item.no_distribution_received)) {
+    throw new Error("Complete Roth inventory conflicts with another distribution treatment");
+  }
+  if (item.roth_activity_review) {
+    const facts = reviewedRothActivity(item.roth_activity_review);
+    const payment = facts.review.payment;
+    if (
+      item.ts === undefined || item.box7_ira_simple_indicator === true ||
+      item.box7_distribution_code !== payment.distribution_code ||
+      item.box7_code2 !== undefined ||
+      item.account_number !== payment.account_number ||
+      item.payer_ein.replace(/\D/g, "") !== payment.custodian_ein ||
+      item.recipient_ssn?.replace(/\D/g, "") !== payment.owner_ssn ||
+      item.box13_date_of_payment !== payment.distributed_on ||
+      item.box1_gross_distribution !== payment.gross_distribution ||
+      item.source_document_reference !==
+        facts.review.form1099r_source_document_reference ||
+      item.box2a_taxable_amount !== undefined ||
+      item.box2b_not_determined !== true ||
+      item.exclude_8606_roth !== !facts.qualified ||
+      item.roth_distribution_evidence !== undefined ||
+      item.rollover_code !== undefined || item.prior_ira_basis !== undefined ||
+      item.form8606_distribution_evidence !== undefined ||
+      item.exclude_4972 === true ||
+      item.qcd_full === true || (item.qcd_partial_amount ?? 0) > 0 ||
+      item.form8915f_treatment !== undefined ||
+      item.no_distribution_received === true
+    ) {
+      throw new Error(
+        "Roth activity payment must match actual owner/account J/T source and qualified/PartIII routing",
+      );
+    }
+  }
   if (
-    item.exclude_8606_roth === true ||
-    item.roth_distribution_evidence !== undefined
+    !item.roth_activity_review && !item.roth_owner_inventory_review && (item.exclude_8606_roth === true ||
+      item.roth_distribution_evidence !== undefined)
   ) {
     const evidence = item.roth_distribution_evidence;
     if (
       item.exclude_8606_roth !== true || !evidence ||
       (item.ts !== "T" && item.ts !== "S") ||
       item.box7_distribution_code !== DistributionCode.CodeJ ||
-      item.box7_ira_simple_indicator !== true ||
+      item.box7_ira_simple_indicator === true ||
       item.box2a_taxable_amount !== undefined ||
       item.box2b_not_determined !== true ||
       !item.box13_date_of_payment ||
@@ -1144,6 +1224,8 @@ function validateItem(item: R1099Item): void {
       !item.box13_date_of_payment.startsWith("2025-") ||
       item.source_document_reference !==
         evidence.form1099r_source_document_reference ||
+      item.recipient_ssn?.replace(/\D/g, "") !==
+        evidence.form5498.owner_ssn ||
       item.payer_ein.replace(/\D/g, "") !== evidence.form5498.custodian_ein ||
       item.rollover_code !== undefined ||
       item.prior_ira_basis !== undefined ||
@@ -1216,20 +1298,20 @@ function activeItems(items: R1099Items): R1099Items {
   return items.filter((item) => item.no_distribution_received !== true);
 }
 
-// A code-Q qualified Roth IRA distribution is an IRA distribution even when
-// its payer leaves the IRA/SEP/SIMPLE box unchecked, as the IRS permits.
+// Roth IRA J/T/Q codes identify IRA distributions independently of the
+// IRA/SEP/SIMPLE checkbox; ordinary Roth IRAs leave that box unmarked.
 function iraItems(items: R1099Items): R1099Items {
   return items.filter((item) =>
     item.box7_ira_simple_indicator === true ||
-    item.box7_distribution_code === DistributionCode.CodeQ
+    [DistributionCode.CodeJ, DistributionCode.CodeT, DistributionCode.CodeQ, DistributionCode.CodeN].includes(item.box7_distribution_code!)
   );
 }
 
-// Pension/annuity items exclude code-Q Roth IRA distributions.
+// Pension/annuity items exclude Roth IRA J/T/Q distributions.
 function pensionItems(items: R1099Items): R1099Items {
   return items.filter((item) =>
     item.box7_ira_simple_indicator !== true &&
-    item.box7_distribution_code !== DistributionCode.CodeQ &&
+    ![DistributionCode.CodeJ, DistributionCode.CodeT, DistributionCode.CodeQ, DistributionCode.CodeN].includes(item.box7_distribution_code!) &&
     item.box7_distribution_code !== DistributionCode.Code8
   );
 }
@@ -1255,11 +1337,16 @@ function disabilityWagesItems(items: R1099Items): R1099Items {
 // its taxable amount is separately determined for line 4b or 5b.
 function isExcludedFromGross(item: R1099Item): boolean {
   if (item.exclude_4972 === true) return true;
+  if (item.roth_owner_inventory_review?.current_conversion && (item.rollover_code === "C" || item.roth_owner_inventory_review.current_conversion.annual_traditional_activity?.withdrawals.some(w => w.issued_form1099r.source_document_reference === item.source_document_reference))) return true;
+  if (item.roth_activity_review) {
+    return !reviewedRothActivity(item.roth_activity_review).qualified;
+  }
   if (item.exclude_8606_roth === true) return true;
   // Code Q is zero taxable, but its gross Roth IRA distribution belongs on
   // Form 1040 line 4a under the 2025 line 4a/4b Exception 2 instructions.
   if (
     item.box7_distribution_code !== DistributionCode.CodeQ &&
+    item.box7_distribution_code !== DistributionCode.CodeN &&
     ZERO_TAXABLE_CODES.has(item.box7_distribution_code)
   ) return true;
   return false;
@@ -1324,13 +1411,19 @@ function iraF1040Fields(
   // Direct rollovers remain in gross distributions even when line 4b is zero.
   const reportableItems = active.filter((item) => !isExcludedFromGross(item));
   const gross = reportableItems.reduce(
-    (sum, item) => sum + item.box1_gross_distribution,
+    (sum, item) =>
+      sum +
+      (item.roth_activity_review
+        ? reviewedRothActivity(item.roth_activity_review).gross
+        : item.box1_gross_distribution),
     0,
   );
   // Items routed through Form 8606 Part I are excluded here — form8606 emits line4b for them.
   const nonBasisItems = active.filter((item) =>
-    !routedThrough8606PartI(item) &&
-    item.roth_distribution_evidence === undefined
+    !routedThrough8606PartI(item) && !item.roth_owner_inventory_review &&
+    item.roth_distribution_evidence === undefined &&
+    (!item.roth_activity_review ||
+      reviewedRothActivity(item.roth_activity_review).qualified)
   );
   const taxable = nonBasisItems.reduce(
     (sum, item) =>
@@ -1339,7 +1432,9 @@ function iraF1040Fields(
   );
   const has8606Items = active.some((item) =>
     routedThrough8606PartI(item) ||
-    item.roth_distribution_evidence !== undefined
+    item.roth_distribution_evidence !== undefined ||
+    (item.roth_activity_review !== undefined &&
+      !reviewedRothActivity(item.roth_activity_review).qualified)
   );
   const fields: Record<string, number> = {};
   if (gross > 0) fields.line4a_ira_gross = gross;
@@ -1416,6 +1511,17 @@ function withholdingF1040Fields(items: R1099Items): Record<string, number> {
 }
 
 function form8606RothInput(item: R1099Item) {
+  if (item.roth_activity_review) {
+    const facts = reviewedRothActivity(item.roth_activity_review);
+    return {
+      nondeductible_contributions: 0,
+      roth_distribution: facts.gross,
+      roth_basis_contributions: facts.basis,
+      roth_basis_conversions: 0,
+      roth_activity_review: facts.review,
+    };
+  }
+
   const evidence = rothDistributionEvidenceSchema.parse(
     item.roth_distribution_evidence,
   );
@@ -1432,12 +1538,15 @@ function form8606RothInput(item: R1099Item) {
 // A reviewed, source-matched Form 8915-F qualified disaster distribution is
 // exempt and the exporter requires its actual Form 8915-F document.
 function form5329Outputs(items: R1099Items): NodeOutput[] {
+  const inventories = reconcileRothOwnerInventoryCopies(activeItems(items));
   const earlyItems = activeItems(items).filter(
     (item) =>
-      EARLY_DIST_CODES.has(item.box7_distribution_code) &&
-      item.form8915f_treatment === undefined,
+      !item.roth_owner_inventory_review && EARLY_DIST_CODES.has(item.box7_distribution_code) &&
+      item.form8915f_treatment === undefined &&
+      (!item.roth_activity_review ||
+        reviewedRothActivity(item.roth_activity_review).earlyTaxable > 0),
   );
-  return earlyItems.map((item) => {
+  const ordinary = earlyItems.map((item) => {
     if (
       item.form8606_distribution_evidence
         ?.no_current_nondeductible_contribution_confirmed === false
@@ -1448,7 +1557,9 @@ function form5329Outputs(items: R1099Items): NodeOutput[] {
     }
     // Form 5329 line 1 takes the early distribution "includible in income". With
     // nondeductible basis that is the Form 8606 line 15c taxable amount, not box 2a.
-    const taxable = item.roth_distribution_evidence
+    const taxable = item.roth_activity_review
+      ? reviewedRothActivity(item.roth_activity_review).earlyTaxable
+      : item.roth_distribution_evidence
       ? taxableRothDistribution(form8606RothInput(item))
       : routedThrough8606PartI(item)
       ? taxableTraditionalDistribution({
@@ -1470,6 +1581,9 @@ function form5329Outputs(items: R1099Items): NodeOutput[] {
       }],
     });
   });
+  return [...ordinary, ...inventories.filter((facts) => facts.earlyTaxable > 0).map((facts) => output(form5329, {
+    owner_entries: [{ owner: tsSchema.parse(facts.review.owner), distribution_code: "J", early_distribution: facts.earlyTaxable, ...((facts.review.conversions?.length || facts.review.prior_distributions?.length || facts.review.current_conversion) ? { roth_owner_inventory_review: facts.review } : {}) }],
+  }))];
 }
 
 // Code 5 means a prohibited transaction, not a lump-sum election. Code A
@@ -1479,14 +1593,134 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
   const lumpItems = activeItems(items).filter(
     (item) => item.exclude_4972 === true,
   );
+  // IRS2025 permits separate forms for each participant, including several
+  // inherited participants belonging to one recipient. Group before computing.
+  const participantGroups = new Map<string, R1099Items>();
+  for (const item of lumpItems) {
+    if (item.form4972_plan && (item.ts === "T" || item.ts === "S")) {
+      const key = `${item.ts}:${item.form4972_plan.participant_ssn}`;
+      const group = participantGroups.get(key) ?? [];
+      group.push(item);
+      participantGroups.set(key, group);
+    }
+  }
+  const distinctOwners = new Set(lumpItems.map((item) => item.ts)).size;
+  const newCollection = participantGroups.size > 2 ||
+    participantGroups.size === 2 && (
+        distinctOwners === 1 ||
+        (!lumpItems.some((item) => (item.box9a_pct_total ?? 100) < 100) &&
+          lumpItems.every((item) =>
+            item.recipient_ssn !== undefined &&
+            item.recipient_ssn.replaceAll("-", "") ===
+              item.form4972_plan?.participant_ssn
+          ) &&
+          new Set(lumpItems.map((item) => item.form4972_plan?.plan_reference))
+              .size === 1) ||
+        !lumpItems.some((item) => (item.box9a_pct_total ?? 100) < 100) &&
+          lumpItems.some((item) =>
+            item.recipient_ssn !== undefined &&
+            item.recipient_ssn.replaceAll("-", "") !==
+              item.form4972_plan?.participant_ssn
+          )
+      );
+  if (newCollection) {
+    if (
+      participantGroups.size === 0 ||
+      [...participantGroups.values()].reduce(
+          (n, group) => n + group.length,
+          0,
+        ) !== lumpItems.length
+    ) {
+      throw new Error(
+        "Form4972 participant collection needs a complete identified source group for every elected copy",
+      );
+    }
+    const groups = [...participantGroups.values()].flatMap((group) => {
+      const plan = group[0].form4972_plan!;
+      if (
+        !group[0].recipient_ssn ||
+        group.some((item) =>
+          item.recipient_ssn !== group[0].recipient_ssn ||
+          item.form4972_plan?.plan_reference !== plan.plan_reference ||
+          item.form4972_plan?.full_balance_statement_reference !==
+            plan.full_balance_statement_reference ||
+          item.form4972_plan?.all_qualified_distributions_included !== true ||
+          item.form4972_plan?.participant_name !== plan.participant_name ||
+          items.some((other) =>
+            other.exclude_4972 !== true &&
+            other.form4972_plan?.participant_ssn === plan.participant_ssn &&
+            other.ts === item.ts
+          )
+        )
+      ) {
+        throw new Error(
+          "Form4972 participant collection needs one complete issued inventory per recipient and participant",
+        );
+      }
+      const rows = form4972Outputs(group).find((row) =>
+        row.nodeType === "form4972"
+      )?.fields.source_forms;
+      if (!Array.isArray(rows) || rows.length !== 1) {
+        throw new Error(
+          "Form4972 participant collection cannot split one participant's sources",
+        );
+      }
+      return rows.map((row) => ({
+        ...row,
+        form4972_plan: plan,
+        recipient_ssn: group[0].recipient_ssn!.replaceAll("-", ""),
+      }));
+    });
+    return [output(form4972Elections, { source_forms: groups })];
+  }
+  // Each spouse keeps a complete issued-copy group. Reuse the same source
+  // checks as an individual election rather than combining recipient pools.
   if (
-    (lumpItems.length === 3 || lumpItems.length === 4) &&
+    new Set(lumpItems.map((item) => item.ts)).size === 2 &&
+    lumpItems.some((item) =>
+      typeof item.box9a_pct_total === "number" &&
+      item.box9a_pct_total > 0 && item.box9a_pct_total < 100
+    )
+  ) {
+    const refs = lumpItems.map((item) => item.source_document_reference);
+    if (
+      refs.some((ref) => !ref) || new Set(refs).size !== refs.length ||
+      lumpItems.some((item) => item.ts !== "T" && item.ts !== "S")
+    ) {
+      throw new Error(
+        "Form 4972 spouse beneficiary groups need distinct issued copies and two identified owners",
+      );
+    }
+    const tPlan = lumpItems.find((item) => item.ts === "T")?.form4972_plan;
+    const sPlan = lumpItems.find((item) => item.ts === "S")?.form4972_plan;
+    if (
+      tPlan && sPlan &&
+      (tPlan.participant_ssn === sPlan.participant_ssn ||
+        tPlan.plan_reference === sPlan.plan_reference)
+    ) {
+      reconcileParticipantIssuedInventory(lumpItems);
+    }
+    const sourceForms = (["T", "S"] as const).flatMap((owner) => {
+      const own = items.filter((item) => item.ts === owner);
+      const outputs = form4972Outputs(own);
+      const fields = outputs.find((row) => row.nodeType === "form4972")?.fields;
+      const groups = fields?.source_forms;
+      if (!Array.isArray(groups) || groups.length !== 1) {
+        throw new Error(
+          "Form 4972 spouse beneficiary election needs one complete source inventory per owner",
+        );
+      }
+      return groups;
+    });
+    return [output(form4972Elections, { source_forms: sourceForms })];
+  }
+  if (
+    lumpItems.length > 2 &&
     new Set(lumpItems.map((item) => item.ts)).size === 2
   ) {
     const taxpayer = lumpItems.filter((item) => item.ts === "T");
     const spouse = lumpItems.filter((item) => item.ts === "S");
     const groups = [taxpayer, spouse];
-    const pair = groups.find((group) => group.length === 2);
     const refs = lumpItems.map((item) => item.source_document_reference);
     const sourceValid = lumpItems.every((item) =>
       !!item.source_document_reference && !!item.form4972_plan &&
@@ -1496,8 +1730,13 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
       item.box2a_taxable_amount > 0 &&
       (item.box3_capital_gain ?? 0) >= 0 &&
       (item.box3_capital_gain ?? 0) <= item.box2a_taxable_amount &&
-      (item.box6_nua ?? 0) === 0 && (item.box8_other ?? 0) === 0 &&
-      item.box8_pct_total === undefined
+      [
+        item.box2a_taxable_amount,
+        item.box3_capital_gain ?? 0,
+        item.box6_nua ?? 0,
+        item.box8_other ?? 0,
+      ].every(isSourceMoney) &&
+      (item.box8_pct_total === undefined || item.box8_pct_total === 100)
     );
     const samePlan = groups.every((group) =>
       group[0] && group.every((item) =>
@@ -1515,7 +1754,7 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
       group[0].payer_name.trim().length > 0
     );
     if (
-      !pair || groups.some((group) => group.length < 1 || group.length > 2) ||
+      groups.some((group) => group.length < 1) ||
       !sourceValid || !samePlan ||
       new Set(refs).size !== lumpItems.length ||
       taxpayer[0]?.form4972_plan?.participant_ssn ===
@@ -1531,7 +1770,7 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
       )
     ) {
       throw new Error(
-        "Form 4972 joint multi-source election needs one or two complete same-plan copies per spouse and distinct full-share plans",
+        "Form 4972 joint multi-source election needs complete same-plan copies per spouse and distinct full-share plans",
       );
     }
     const sourceForms = groups.map((group) => {
@@ -1543,22 +1782,36 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         source_document_references,
         form4972_plan: plan,
         recipient: group[0].ts,
-        lump_sum_amount: group.reduce(
-          (sum, item) => sum + item.box2a_taxable_amount!,
-          0,
+        lump_sum_amount: sumSourceMoney(
+          group.map((item) => item.box2a_taxable_amount!),
         ),
-        capital_gain_amount: group.reduce(
-          (sum, item) => sum + (item.box3_capital_gain ?? 0),
-          0,
+        capital_gain_amount: sumSourceMoney(
+          group.map((item) => (item.box3_capital_gain ?? 0)),
         ),
-        ...(group.length === 2
+        ...(group.some((item) => (item.box6_nua ?? 0) > 0)
+          ? {
+            box6_nua: sumSourceMoney(group.map((item) => (item.box6_nua ?? 0))),
+          }
+          : {}),
+        ...(group.length === 1 && group[0].box8_pct_total !== undefined
+          ? { annuity_share_pct: group[0].box8_pct_total }
+          : {}),
+        ...(group.some((item) => (item.box8_other ?? 0) > 0)
+          ? {
+            annuity_actuarial_value: sumSourceMoney(
+              group.map((item) => (item.box8_other ?? 0)),
+            ),
+          }
+          : {}),
+        ...(group.length > 1
           ? {
             multiple_1099r: {
-              ...plan,
-              source_document_references: [
-                source_document_references[0],
-                source_document_references[1],
-              ],
+              ...Object.fromEntries(
+                Object.entries(plan).filter(([key]) =>
+                  key !== "participant_distribution_inventory"
+                ),
+              ),
+              source_document_references,
             },
           }
           : {}),
@@ -1601,6 +1854,9 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         capital_gain_amount: item.box3_capital_gain ?? 0,
         box6_nua: item.box6_nua ?? 0,
         annuity_actuarial_value: item.box8_other ?? 0,
+        ...(item.box8_pct_total !== undefined
+          ? { annuity_share_pct: item.box8_pct_total }
+          : {}),
       };
     });
     return [output(form4972Elections, { source_forms: sourceForms })];
@@ -1609,8 +1865,16 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
     const [first, second] = lumpItems;
     const plan = first?.form4972_plan;
     const refs = lumpItems.map((item) => item.source_document_reference);
+    const share = first?.box9a_pct_total;
+    const partialBeneficiary = typeof share === "number" && share > 0 &&
+      share < 100;
+    const annuityCopies = lumpItems.filter((item) =>
+      (item.box8_other ?? 0) > 0
+    );
+    const annuityShare = annuityCopies[0]?.box8_pct_total;
     if (
       !first || !second || !plan ||
+      (share !== 100 && !partialBeneficiary) ||
       refs.some((ref) => !ref) || new Set(refs).size !== refs.length ||
       lumpItems.some((item) =>
         item.form4972_plan?.participant_name !== plan.participant_name ||
@@ -1622,7 +1886,7 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         item.ts !== first.ts || item.payer_ein !== first.payer_ein ||
         item.payer_name !== first.payer_name
       ) ||
-      first.ts !== "T" ||
+      (first.ts !== "T" && first.ts !== "S") ||
       first.payer_ein.trim().length === 0 ||
       first.payer_name.trim().length === 0 ||
       items.some((item) =>
@@ -1630,19 +1894,43 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         item.form4972_plan?.plan_reference === plan.plan_reference
       ) ||
       lumpItems.some((item) =>
-        item.box9a_pct_total !== 100 ||
+        item.box9a_pct_total !== share ||
+        (partialBeneficiary &&
+          (item.box7_distribution_code !== DistributionCode.CodeA ||
+            !item.recipient_ssn ||
+            item.recipient_ssn === plan.participant_ssn ||
+            item.recipient_ssn !== first.recipient_ssn ||
+            !sameSourceMoney(
+              item.box1_gross_distribution,
+              (item.box2a_taxable_amount ?? 0) + (item.box6_nua ?? 0),
+            ) ||
+            [
+              item.box2a_taxable_amount ?? 0,
+              item.box3_capital_gain ?? 0,
+              item.box6_nua ?? 0,
+              item.box8_other ?? 0,
+            ]
+              .some((amount) => !isSourceMoney(amount)) ||
+            ((item.box8_other ?? 0) > 0 &&
+              (!annuityShare || item.box8_pct_total !== annuityShare)) ||
+            ((item.box8_other ?? 0) === 0 &&
+              item.box8_pct_total !== undefined))) ||
         item.box2a_taxable_amount === undefined ||
         item.box2a_taxable_amount <= 0 ||
         (item.box3_capital_gain ?? 0) > item.box2a_taxable_amount ||
-        ((item.box6_nua ?? 0) > 0 &&
-          (!Number.isSafeInteger(item.box6_nua ?? 0) ||
-            lumpItems.length !== 2)) ||
-        (item.box8_other ?? 0) !== 0 ||
-        item.box8_pct_total !== undefined
+        (!partialBeneficiary &&
+          [
+            item.box2a_taxable_amount,
+            item.box3_capital_gain ?? 0,
+            item.box6_nua ?? 0,
+            item.box8_other ?? 0,
+          ].some((amount) => !isSourceMoney(amount))) ||
+        (!partialBeneficiary && item.box8_pct_total !== undefined &&
+          item.box8_pct_total !== 100)
       )
     ) {
       throw new Error(
-        "Form 4972 multi-distribution election needs one fully identified participant, plan, recipient and distinct full-share source copies",
+        "Form 4972 multi-distribution election needs one fully identified participant, plan, recipient share and distinct complete source copies",
       );
     }
     return [output(form4972Elections, {
@@ -1650,31 +1938,41 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
         source_document_references: refs,
         form4972_plan: plan,
         recipient: first.ts,
-        lump_sum_amount: lumpItems.reduce(
-          (sum, item) => sum + item.box2a_taxable_amount!,
-          0,
+        ...(partialBeneficiary ? { recipient_ssn: first.recipient_ssn } : {}),
+        ...(partialBeneficiary ? { recipient_share_pct: share } : {}),
+        lump_sum_amount: sumSourceMoney(
+          lumpItems.map((item) => item.box2a_taxable_amount!),
         ),
-        ...(lumpItems.reduce(
-            (sum, item) => sum + (item.box3_capital_gain ?? 0),
-            0,
+        ...(sumSourceMoney(
+            lumpItems.map((item) => (item.box3_capital_gain ?? 0)),
           ) > 0
           ? {
-            capital_gain_amount: lumpItems.reduce(
-              (sum, item) => sum + (item.box3_capital_gain ?? 0),
-              0,
+            capital_gain_amount: sumSourceMoney(
+              lumpItems.map((item) => (item.box3_capital_gain ?? 0)),
             ),
           }
           : {}),
         ...(lumpItems.some((item) => (item.box6_nua ?? 0) > 0)
           ? {
-            box6_nua: lumpItems.reduce(
-              (sum, item) => sum + (item.box6_nua ?? 0),
-              0,
+            box6_nua: sumSourceMoney(
+              lumpItems.map((item) => (item.box6_nua ?? 0)),
             ),
           }
           : {}),
+        ...(lumpItems.some((item) => (item.box8_other ?? 0) > 0)
+          ? {
+            annuity_actuarial_value: sumSourceMoney(
+              lumpItems.map((item) => (item.box8_other ?? 0)),
+            ),
+            ...(partialBeneficiary ? { annuity_share_pct: annuityShare } : {}),
+          }
+          : {}),
         multiple_1099r: {
-          ...plan,
+          ...Object.fromEntries(
+            Object.entries(plan).filter(([key]) =>
+              key !== "participant_distribution_inventory"
+            ),
+          ),
           source_document_references: refs,
         },
       }],
@@ -1721,8 +2019,12 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
 
 // Form 8606 outputs: triggered by exclude_8606_roth, rollover_code = C, or prior_ira_basis.
 function form8606Outputs(items: R1099Items): NodeOutput[] {
-  const outputs: NodeOutput[] = [];
+  const inventories = reconcileRothOwnerInventoryCopies(activeItems(items));
+  const outputs: NodeOutput[] = inventories.length ? [output(form8606, {
+    nondeductible_contributions: 0, roth_owner_inventory_reviews: inventories.map((facts) => facts.review),
+  })] : [];
   for (const item of activeItems(items)) {
+    if (item.roth_owner_inventory_review) continue;
     if (item.exclude_8606_roth === true) {
       outputs.push(output(form8606, form8606RothInput(item)));
     } else if (item.rollover_code === "C") {
@@ -1747,6 +2049,7 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     form5329,
     form4972Elections,
     form8606,
+    scheduleA,
   ]);
 
   compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
@@ -1781,6 +2084,11 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
       validateItem(item);
     }
     const corrective = correctivePlanItems(r1099s);
+    const stateLocalWithholding = activeItems(r1099s).reduce(
+      (sum, item) =>
+        sum + (item.box14_state_tax ?? 0) + (item.box17_local_tax ?? 0),
+      0,
+    );
     if (
       corrective.length > 0 &&
       (ctx.taxYear !== 2025 ||
@@ -1793,7 +2101,15 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     }
     assertIraRolloverEvidence(r1099s);
 
-    const outputs: NodeOutput[] = [];
+    const outputs: NodeOutput[] = [
+      ...(stateLocalWithholding > 0
+        ? [
+          output(scheduleA, {
+            retirement_state_local_withholding: stateLocalWithholding,
+          }),
+        ]
+        : []),
+    ];
 
     // IRA f1040 fields
     const iraFields = iraF1040Fields(

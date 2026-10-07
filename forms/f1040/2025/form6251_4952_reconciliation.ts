@@ -7,6 +7,7 @@ import { inputSchema as interestSourceSchema } from "../nodes/inputs/f1099int/in
 import { reconcileForm4952DirectDebtExport } from "./form4952_debt_reconciliation.ts";
 import { reconcileForm4952InterestPath } from "./form4952_interest_reconciliation.ts";
 import { reconcileForm4952PriorCarryforward } from "./form4952_prior_carryforward_reconciliation.ts";
+import { reconcileForm4952PabAmt } from "./form4952_pab_amt_reconciliation.ts";
 
 /** Replay a bounded Schedule A investment-interest AMT refigure at filing. */
 export function assertForm6251Form4952Line2c(
@@ -31,6 +32,34 @@ export function assertForm6251Form4952Line2c(
   }
   if (requireFinalFiler && !finalFilerTin) {
     throw new Error("Form 6251 line 2c needs final filer identity");
+  }
+  if (
+    parsed.success &&
+    parsed.data.prior_year_carryforward_source === undefined &&
+    (Array.isArray(parsed.data.source_private_activity_bond_interest)
+      ? parsed.data.source_private_activity_bond_interest.some((amount) =>
+        amount > 0
+      )
+      : (parsed.data.source_private_activity_bond_interest ?? 0) > 0)
+  ) {
+    if (!pending || !retainedRaw) {
+      throw new Error("Form 6251 line 2c needs retained PAB and loan sources");
+    }
+    const difference = reconcileForm4952PabAmt(
+      retainedRaw,
+      pending,
+      finalFilerTin,
+    );
+    if (
+      claimed !== difference || retainedDifference !== difference ||
+      sourceDifference !== difference ||
+      fields.form4952_amt_line2c_difference !== difference
+    ) {
+      throw new Error(
+        "Form 6251 line 2c must equal regular Form 4952 line 8 less AMT line 8",
+      );
+    }
+    return;
   }
   const interest = interestSourceSchema.safeParse(pending?.f1099int);
   const form1040 = pending?.f1040 as Record<string, unknown> | undefined;

@@ -1,8 +1,20 @@
+import {
+  adultEducationReview,
+  educationDependentReview,
+  educationGeneralReview,
+  educationOwnershipReview,
+} from "../../pdf/form8863-owner-review.fixture.ts";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { buildMefXml } from "../builder.ts";
 import { type FilerIdentity, FilingStatus } from "../types.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../nodes/types.ts";
-import { calculateForm8863Lines, type F8863Input } from "../../../nodes/inputs/f8863/index.ts";
+import {
+  filedDependentsFromGeneral,
+} from "../../../nodes/inputs/general/index.ts";
+import {
+  calculateForm8863Lines,
+  type F8863Input,
+} from "../../../nodes/inputs/f8863/index.ts";
 import { form8863 } from "./f8863.ts";
 
 const XSD_PATH = new URL(
@@ -55,6 +67,7 @@ const aocStudent = {
   credit_type: "aoc" as const,
   student_name: "Student Test",
   student_ssn: "222-33-4444",
+  ownership_review: educationOwnershipReview("222-33-4444"),
   filer_magi: 70_000,
   filing_status: NodeFilingStatus.Single,
   aoc_adjusted_expenses: 4_000,
@@ -91,11 +104,14 @@ function finalizedContext(fields: F8863Input) {
   return {
     filer,
     pending: {
+      general: educationGeneralReview,
       f1040: {
         filing_status: "single",
         line11_agi: lines.line3,
-        line18_total_tax_before_credits: fields.credit_limit_worksheet.form1040_line18_tax,
+        line18_total_tax_before_credits:
+          fields.credit_limit_worksheet.form1040_line18_tax,
         line29_refundable_aoc: lines.line8,
+        dependent_details: [educationDependentReview("222-33-4444")],
       },
       schedule3: { line3_education_credit: lines.line19 },
     },
@@ -119,6 +135,7 @@ async function validateXsd(xml: string): Promise<void> {
 
 Deno.test("Form 8863 XML uses capped line 19 and real student detail", () => {
   const fields = {
+    claimant_review: adultEducationReview,
     f8863s: [aocStudent],
     credit_limit_worksheet: { ...worksheet, form1040_line18_tax: 400 },
   };
@@ -137,8 +154,41 @@ Deno.test("Form 8863 XML uses capped line 19 and real student detail", () => {
   assert(xml.includes("<EIN>123456789</EIN>"));
 });
 
+Deno.test("Form 8863 student identity must match a return filer or dependent", () => {
+  const fields = {
+    claimant_review: adultEducationReview,
+    f8863s: [aocStudent],
+    credit_limit_worksheet: worksheet,
+  };
+  const context = finalizedContext(fields);
+  assert(
+    form8863.build(fields, context).includes(
+      "<StudentSSN>222334444</StudentSSN>",
+    ),
+  );
+  assertThrows(
+    () =>
+      form8863.build(fields, {
+        ...context,
+        pending: {
+          ...context.pending,
+          f1040: {
+            ...context.pending.f1040,
+            dependent_details: [{ ssn: "555-66-7777" }],
+          },
+        },
+      }),
+    Error,
+    "must match the primary filer, spouse, or a dependent",
+  );
+});
+
 Deno.test("Form 8863 native filing requires the finalized return credit lines", () => {
-  const fields = { f8863s: [aocStudent], credit_limit_worksheet: worksheet };
+  const fields = {
+    claimant_review: adultEducationReview,
+    f8863s: [aocStudent],
+    credit_limit_worksheet: worksheet,
+  };
   assertThrows(
     () => form8863.build(fields),
     Error,
@@ -146,13 +196,14 @@ Deno.test("Form 8863 native filing requires the finalized return credit lines", 
   );
   const context = finalizedContext(fields);
   assertThrows(
-    () => form8863.build(fields, {
-      ...context,
-      pending: {
-        ...context.pending,
-        schedule3: { line3_education_credit: 1_499 },
-      },
-    }),
+    () =>
+      form8863.build(fields, {
+        ...context,
+        pending: {
+          ...context.pending,
+          schedule3: { line3_education_credit: 1_499 },
+        },
+      }),
     Error,
     "finalized Form 1040/Schedule 3",
   );
@@ -162,6 +213,7 @@ Deno.test("Form 8863 XML rejects missing structured filing facts", () => {
   assertThrows(
     () =>
       form8863.build({
+        claimant_review: adultEducationReview,
         f8863s: [{ ...aocStudent, filing_details: undefined }],
         credit_limit_worksheet: worksheet,
       }),
@@ -171,6 +223,7 @@ Deno.test("Form 8863 XML rejects missing structured filing facts", () => {
   assertThrows(
     () =>
       form8863.build({
+        claimant_review: adultEducationReview,
         f8863s: [{ ...aocStudent, aoc_claimed_4_prior_years: undefined }],
         credit_limit_worksheet: worksheet,
       }),
@@ -180,6 +233,7 @@ Deno.test("Form 8863 XML rejects missing structured filing facts", () => {
   assertThrows(
     () =>
       form8863.build({
+        claimant_review: adultEducationReview,
         f8863s: [{
           ...aocStudent,
           filing_details: {
@@ -209,47 +263,61 @@ Deno.test("Form 8863 filing reconciles paid expenses, scholarships, and 1098-T r
       tax_free_assistance_applied_to_expenses: 500,
     },
   };
-  const fields = { f8863s: [sourced], credit_limit_worksheet: worksheet };
-  assert(form8863.build(fields, finalizedContext(fields))
-    .includes("<AmerOppQualifiedExpensesAmt>4000</AmerOppQualifiedExpensesAmt>"));
+  const fields = {
+    claimant_review: adultEducationReview,
+    f8863s: [sourced],
+    credit_limit_worksheet: worksheet,
+  };
+  assert(
+    form8863.build(fields, finalizedContext(fields))
+      .includes(
+        "<AmerOppQualifiedExpensesAmt>4000</AmerOppQualifiedExpensesAmt>",
+      ),
+  );
   assertThrows(
-    () => form8863.build({
-      f8863s: [{ ...sourced, aoc_adjusted_expenses: 4_500 }],
-      credit_limit_worksheet: worksheet,
-    }),
+    () =>
+      form8863.build({
+        claimant_review: adultEducationReview,
+        f8863s: [{ ...sourced, aoc_adjusted_expenses: 4_500 }],
+        credit_limit_worksheet: worksheet,
+      }),
     Error,
     "do not reconcile to the education expense workpaper",
   );
   assertThrows(
-    () => form8863.build({
-      f8863s: [{
-        ...sourced,
-        education_expense_workpaper: {
-          ...sourced.education_expense_workpaper,
-          tax_free_assistance_applied_to_expenses: 0,
-        },
-      }],
-      credit_limit_worksheet: worksheet,
-    }),
+    () =>
+      form8863.build({
+        claimant_review: adultEducationReview,
+        f8863s: [{
+          ...sourced,
+          education_expense_workpaper: {
+            ...sourced.education_expense_workpaper,
+            tax_free_assistance_applied_to_expenses: 0,
+          },
+        }],
+        credit_limit_worksheet: worksheet,
+      }),
     Error,
     "all Form 1098-T box 5 scholarships",
   );
   assertThrows(
-    () => form8863.build({
-      f8863s: [{
-        ...sourced,
-        filing_details: {
-          ...sourced.filing_details,
-          institutions: [{
-            ...sourced.filing_details.institutions[0],
-            current_year_1098t_received: false,
-          }],
-        },
-      }],
-      credit_limit_worksheet: worksheet,
-    }),
+    () =>
+      form8863.build({
+        claimant_review: adultEducationReview,
+        f8863s: [{
+          ...sourced,
+          filing_details: {
+            ...sourced.filing_details,
+            institutions: [{
+              ...sourced.filing_details.institutions[0],
+              current_year_1098t_received: false,
+            }],
+          },
+        }],
+        credit_limit_worksheet: worksheet,
+      }),
     Error,
-    "received 2025 Form 1098-T",
+    "missing 1098-T needs a statutory exception",
   );
 });
 
@@ -257,6 +325,7 @@ Deno.test("Form 8863 XML rejects duplicate student across AOC and LLC", () => {
   assertThrows(
     () =>
       form8863.build({
+        claimant_review: adultEducationReview,
         f8863s: [
           aocStudent,
           {
@@ -276,20 +345,22 @@ Deno.test("Form 8863 XML rejects duplicate student across AOC and LLC", () => {
 
 Deno.test("Form 8863 LLC rejects course materials bought outside the institution", () => {
   assertThrows(
-    () => form8863.build({
-      f8863s: [{
-        ...aocStudent,
-        credit_type: "llc",
-        aoc_adjusted_expenses: undefined,
-        llc_adjusted_expenses: 4_000,
-        education_expense_workpaper: {
-          ...educationWorkpaper,
-          paid_tuition_required_fees: 3_500,
-          paid_course_materials_elsewhere: 500,
-        },
-      }],
-      credit_limit_worksheet: worksheet,
-    }),
+    () =>
+      form8863.build({
+        claimant_review: adultEducationReview,
+        f8863s: [{
+          ...aocStudent,
+          credit_type: "llc",
+          aoc_adjusted_expenses: undefined,
+          llc_adjusted_expenses: 4_000,
+          education_expense_workpaper: {
+            ...educationWorkpaper,
+            paid_tuition_required_fees: 3_500,
+            paid_course_materials_elsewhere: 500,
+          },
+        }],
+        credit_limit_worksheet: worksheet,
+      }),
     Error,
     "outside-institution course materials",
   );
@@ -303,6 +374,7 @@ Deno.test({
 }, async () => {
   const xml = buildMefXml({
     f8863: {
+      claimant_review: adultEducationReview,
       f8863s: [
         aocStudent,
         {
@@ -310,6 +382,7 @@ Deno.test({
           credit_type: "llc",
           student_name: "Scholar Test",
           student_ssn: "333-44-5555",
+          ownership_review: educationOwnershipReview("333-44-5555"),
           aoc_adjusted_expenses: undefined,
           llc_adjusted_expenses: 5_000,
           education_expense_workpaper: {
@@ -327,12 +400,21 @@ Deno.test({
       ],
       credit_limit_worksheet: worksheet,
     },
+    general: educationGeneralReview,
     f1040: {
+      digital_assets: false,
       filing_status: "single",
+      taxpayer_ssn: "123-45-6789",
+      taxpayer_ssn_valid_for_employment: true,
+      taxpayer_ssn_issued_before_due_date: true,
+      taxpayer_tin_issued_by_due_date: true,
       line11_agi: 70_000,
       line18_total_tax_before_credits: 10_000,
       line20_nonrefundable_credits: 2_500,
       line29_refundable_aoc: 1_000,
+      dependent_count: 2,
+      other_dependent_count: 2,
+      dependent_details: filedDependentsFromGeneral(educationGeneralReview),
     },
     schedule3: { line3_education_credit: 2_500, line8_total: 2_500 },
   }, filer);

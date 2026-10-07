@@ -1,4 +1,9 @@
 import {
+  assertIndependentOwnerHealth,
+  assertOwnedSepContext,
+} from "../../form7206_independent_owner_source.ts";
+import { patronFiledBusinessLines } from "../../../nodes/inputs/qbi_patron/calculation.ts";
+import {
   calculateSingleScheduleCForm7206,
   type Form7206Lines,
   form7206LinesSchema,
@@ -19,10 +24,15 @@ import { element, elements } from "../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { assertForm7206SpouseCoverage } from "../../form7206_spouse_coverage.ts";
 import { TS } from "../../../nodes/types.ts";
+import { assertScheduleCReceiptSourceIdentity } from "../../filer-source-reconciliation.ts";
 
 type Input = Partial<
   Form7206Lines & {
     single_schedule_c_plan: SingleScheduleCPlan;
+    independent_schedule_c_plans: unknown;
+    independent_plan_filing_rows: unknown;
+    owned_sep_plans: unknown;
+    owned_sep_filing_rows: unknown;
     recipient_name: string;
     recipient_ssn: string;
     schedule_c_source: unknown;
@@ -50,8 +60,43 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Form7206Lines, string]> =
     ["line14", "SelfEmpldHealthInsDedAmt"],
   ];
 
-function buildIRS7206(fields: Input, context?: MefBuildContext): string {
-  if (!FIELD_MAP.some(([key]) => fields[key] !== undefined)) return "";
+function buildIRS7206(
+  fields: Input,
+  context?: MefBuildContext,
+): string | readonly string[] {
+  if (fields.independent_schedule_c_plans !== undefined) {
+    const family = assertIndependentOwnerHealth(
+      context?.pending,
+      context?.filer,
+      fields,
+    );
+    return family.rows.filter((row) => row.independent_plan_required).map((
+      row,
+    ) =>
+      elements("IRS7206", [
+        element("NameLine1Txt", row.recipient_name),
+        element("SSN", row.recipient_ssn),
+        ...FIELD_MAP.map(([key, tag]) => element(tag, row[key])),
+      ])
+    );
+  }
+  if (fields.owned_sep_plans !== undefined) {
+    assertOwnedSepContext(context?.pending, context?.filer, fields);
+    return "";
+  }
+  if (!FIELD_MAP.some(([key]) => fields[key] !== undefined)) {
+    if (
+      Object.keys(fields).some((key) =>
+        key !== "schedule_c_source" && key !== "schedule_f_source" &&
+        key !== "schedule_se_source"
+      )
+    ) {
+      throw new Error(
+        "Form 7206 needs computed lines for a retained filing record",
+      );
+    }
+    return "";
+  }
   const allowed = new Set([
     "single_schedule_c_plan",
     "recipient_name",
@@ -112,17 +157,24 @@ function buildIRS7206(fields: Input, context?: MefBuildContext): string {
     scheduleC.form8829_line30 !== undefined ||
     (scheduleC.wotc_wage_reductions?.length ?? 0) > 0 ||
     Object.keys(scheduleC).some((key) =>
-      key !== "schedule_cs" && key !== "filing_status"
+      key !== "schedule_cs" && key !== "filing_status" &&
+      key !== "patron_distribution_sources" && key !== "patron_filing_review" &&
+      key !== "f1099nec_receipt_sources"
     )
   ) {
     throw new Error("Form 7206 needs one unadjusted Schedule C source");
   }
   const business = scheduleC.schedule_cs[0];
+  if (scheduleC.f1099nec_receipt_sources) {
+    assertScheduleCReceiptSourceIdentity(pending!, filer);
+  }
   if (
     business.business_reference !== source.business_reference ||
     business.proprietor_recipient !== source.recipient ||
     business.at_risk_simplified !== undefined ||
-    computeNetProfit(business) !== lines.line4
+    (scheduleC.patron_filing_review
+        ? patronFiledBusinessLines("schedule_c", business).profit
+        : computeNetProfit(business)) !== lines.line4
   ) {
     throw new Error("Form 7206 Schedule C owner or line 31 differs");
   }
@@ -188,6 +240,8 @@ function buildIRS7206(fields: Input, context?: MefBuildContext): string {
       "Form 7206 one-plan filing excludes other business, retirement, Form 2555, and Marketplace/PTC sources",
     );
   }
+  // Retain and reconcile the source calculation, but no deduction is claimed.
+  if (lines.line14 === 0) return "";
   return elements("IRS7206", [
     element("NameLine1Txt", recipient.name),
     element("SSN", ssn),
@@ -195,7 +249,11 @@ function buildIRS7206(fields: Input, context?: MefBuildContext): string {
   ]);
 }
 
-export const form7206: MefFormDescriptor<"form7206", Input> = {
+export const form7206: MefFormDescriptor<
+  "form7206",
+  Input,
+  string | readonly string[]
+> = {
   pendingKey: "form7206",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f7206--2025.pdf",

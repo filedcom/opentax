@@ -1,10 +1,18 @@
+import { sumSourceMoney } from "../nodes/intermediate/forms/form4972/source-rounding.ts";
+import {
+  allocatedSourceCents,
+  grossedSourceCents,
+  isSourceMoney,
+  sameSourceMoney,
+  sourceCents,
+} from "../nodes/intermediate/forms/form4972/source-rounding.ts";
 import { inputSchema as f1099rSchema } from "../nodes/inputs/f1099r/index.ts";
 import {
   form4972,
   inputSchema as form4972Schema,
 } from "../nodes/intermediate/forms/form4972/index.ts";
 
-/** One participant's full-share distributions from one plan. */
+/** One participant's complete same-recipient distributions from one plan. */
 export function reconcileForm4972Multiple1099R(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>> | undefined,
@@ -20,18 +28,37 @@ export function reconcileForm4972Multiple1099R(
     )
     : [];
   const refs = plan.source_document_references;
-  const nua = elected.reduce((sum, item) => sum + (item.box6_nua ?? 0), 0);
-  const gain = elected.reduce(
-    (sum, item) => sum + (item.box3_capital_gain ?? 0),
-    0,
+  const share = form.recipient_share_pct ?? 100;
+  const partialBeneficiary = share < 100;
+  const annuityCopies = elected.filter((item) => (item.box8_other ?? 0) > 0);
+  const annuityShare = annuityCopies[0]?.box8_pct_total;
+  const nua = sumSourceMoney(elected.map((item) => (item.box6_nua ?? 0)));
+  const gain = sumSourceMoney(
+    elected.map((item) => (item.box3_capital_gain ?? 0)),
   );
-  const taxable = elected.reduce(
-    (sum, item) => sum + (item.box2a_taxable_amount ?? 0),
-    0,
+  const taxable = sumSourceMoney(
+    elected.map((item) => (item.box2a_taxable_amount ?? 0)),
   );
+  const fullBeneficiary = !partialBeneficiary &&
+    form.beneficiary_distribution === true &&
+    form.participant_collection_review?.role === "beneficiary";
+  const death = form.death_benefit_allocation;
+  const estate = form.partial_estate_tax_source;
+  const hasDeath = (form.death_benefit_exclusion ?? 0) > 0;
+  const hasEstate = (form.federal_estate_tax ?? 0) > 0;
+  const electedRecipient =
+    death?.recipients.filter((row) =>
+      row.recipient_ssn === owner?.ssn.replaceAll("-", "")
+    ) ?? [];
   if (
-    !owner || owner.ssn.replaceAll("-", "") !== plan.participant_ssn ||
-    owner.name.trim() !== plan.participant_name ||
+    !owner ||
+    ((partialBeneficiary || fullBeneficiary)
+      ? owner.ssn.replaceAll("-", "") === plan.participant_ssn ||
+        form.beneficiary_distribution !== true ||
+        form.participant_five_year_member !== false
+      : owner.ssn.replaceAll("-", "") !== plan.participant_ssn ||
+        owner.name.trim() !== plan.participant_name ||
+        form.beneficiary_distribution !== false) ||
     (form.recipient !== "T" && form.recipient !== "S") ||
     form.elect_10yr_averaging !== true ||
     (form.elect_capital_gain === true &&
@@ -47,14 +74,37 @@ export function reconcileForm4972Multiple1099R(
       item.form4972_plan?.full_balance_statement_reference !==
         plan.full_balance_statement_reference ||
       item.form4972_plan?.all_qualified_distributions_included !== true ||
-      item.box9a_pct_total !== 100 ||
+      item.box9a_pct_total !== share ||
+      (partialBeneficiary &&
+        (item.box7_distribution_code !== "A" ||
+          item.recipient_ssn !== owner.ssn.replaceAll("-", "") ||
+          !sameSourceMoney(
+            item.box1_gross_distribution,
+            (item.box2a_taxable_amount ?? 0) + (item.box6_nua ?? 0),
+          ) ||
+          [
+            item.box2a_taxable_amount ?? 0,
+            item.box3_capital_gain ?? 0,
+            item.box6_nua ?? 0,
+            item.box8_other ?? 0,
+          ]
+            .some((amount) => !isSourceMoney(amount)) ||
+          ((item.box8_other ?? 0) > 0 &&
+            (!annuityShare || item.box8_pct_total !== annuityShare)) ||
+          ((item.box8_other ?? 0) === 0 &&
+            item.box8_pct_total !== undefined))) ||
       typeof item.box2a_taxable_amount !== "number" ||
       item.box2a_taxable_amount <= 0 ||
-      (nua > 0 &&
-        (!Number.isSafeInteger(item.box2a_taxable_amount ?? 0) ||
-          !Number.isSafeInteger(item.box3_capital_gain ?? 0) ||
-          !Number.isSafeInteger(item.box6_nua ?? 0))) ||
-      (item.box8_other ?? 0) !== 0 || item.box8_pct_total !== undefined
+      (item.box3_capital_gain ?? 0) > item.box2a_taxable_amount ||
+      (!partialBeneficiary &&
+        [
+          item.box2a_taxable_amount ?? 0,
+          item.box3_capital_gain ?? 0,
+          item.box6_nua ?? 0,
+          item.box8_other ?? 0,
+        ].some((amount) => !isSourceMoney(amount))) ||
+      (!partialBeneficiary && item.box8_pct_total !== undefined &&
+        item.box8_pct_total !== 100)
     ) ||
     elected.some((item) =>
       item.payer_ein !== elected[0]?.payer_ein ||
@@ -64,11 +114,37 @@ export function reconcileForm4972Multiple1099R(
     taxable !== form.lump_sum_amount ||
     gain !== (form.capital_gain_amount ?? 0) ||
     nua !== (form.box6_nua ?? 0) ||
+    sumSourceMoney(elected.map((item) => (item.box8_other ?? 0))) !==
+      (form.annuity_actuarial_value ?? 0) ||
+    (partialBeneficiary && (form.annuity_share_pct ?? null) !==
+        (annuityShare ?? null)) ||
     (nua > 0 &&
-      (refs.length !== 2 || form.elect_include_nua !== true ||
-        form.elect_capital_gain !== true || gain <= 0 ||
-        !Number.isSafeInteger(nua * gain / taxable))) ||
+      (form.elect_include_nua !== true ||
+        [nua, gain, taxable].some((amount) => !isSourceMoney(amount)))) ||
     (nua === 0 && form.elect_include_nua === true) ||
+    ((hasDeath || hasEstate) && !partialBeneficiary && !fullBeneficiary) ||
+    (hasDeath && !fullBeneficiary &&
+      (!death ||
+        death.participant_ssn !== plan.participant_ssn ||
+        death.elected_recipient_ssn !== owner?.ssn.replaceAll("-", "") ||
+        electedRecipient.length !== 1 ||
+        electedRecipient[0].share_pct !== share ||
+        electedRecipient[0].excluded_amount !==
+          form.death_benefit_recipient_allocated_amount ||
+        !form.death_benefit_exclusion_source_reference ||
+        refs.includes(form.death_benefit_exclusion_source_reference))) ||
+    (hasEstate && !fullBeneficiary &&
+      (!estate ||
+        sourceCents(estate.full_distribution_taxable_amount) !==
+          grossedSourceCents(taxable + nua, share) ||
+        estate.full_distribution_federal_estate_tax !==
+          form.federal_estate_tax ||
+        sourceCents(estate.recipient_allocated_federal_estate_tax) !==
+          allocatedSourceCents(form.federal_estate_tax!, share) ||
+        [
+          estate.administrator_statement_reference,
+          estate.estate_tax_return_reference,
+        ].some((reference) => !reference || refs.includes(reference)))) ||
     source.success &&
       source.data.f1099rs.some((item) =>
         item.exclude_4972 !== true &&

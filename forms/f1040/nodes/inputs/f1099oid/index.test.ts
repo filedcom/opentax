@@ -137,6 +137,52 @@ Deno.test("1099-OID distinguishes obligations and rejects unidentified repeated 
   );
 });
 
+Deno.test("1099-OID mixed payer TIN copies retain account and unidentified-copy guards", () => {
+  const identified = {
+    payer_name: "Bond Fund",
+    payer_tin: "12-3456789",
+    recipient_tin: "111223333",
+    account_number: "BROKER-1",
+    box7_description: "Bond A",
+    box1_oid: 200,
+  };
+  const missingTin = { ...identified, payer_tin: undefined };
+  for (
+    const rows of [
+      [identified, { ...missingTin, box1_oid: 250 }],
+      [missingTin, { ...identified, box1_oid: 250 }],
+    ]
+  ) {
+    assertThrows(
+      () => compute(rows),
+      Error,
+      "repeats the same payer, recipient, account, and obligation",
+    );
+  }
+  for (
+    const rows of [
+      [{ ...identified, account_number: undefined }, missingTin],
+      [identified, { ...missingTin, account_number: undefined }],
+    ]
+  ) {
+    assertThrows(
+      () => compute(rows),
+      Error,
+      "multiple positive payer copies without account or issued source reference",
+    );
+  }
+  assertEquals(
+    compute([identified, { ...missingTin, box7_description: "Bond B" }])
+      .outputs.filter((row) => row.nodeType === "schedule_b").length,
+    2,
+  );
+  assertEquals(
+    compute([identified, { ...missingTin, recipient_tin: "222334444" }])
+      .outputs.filter((row) => row.nodeType === "schedule_b").length,
+    2,
+  );
+});
+
 Deno.test("f1099oid: affirmed investment-property OID reaches Form 4952 once", () => {
   const item = {
     payer_name: "Bond Fund",

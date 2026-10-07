@@ -755,7 +755,9 @@ function prepareForm3800Base(fields: PendingForm3800) {
   const passiveActivity = classifyForm3800PassiveCredits(
     parsed.passive_source_allocations ?? [],
   );
-  const lines = calculateForm3800Nonpassive(tax, passiveActivity);
+  const lines = calculateForm3800Nonpassive(tax, passiveActivity, {
+    roundPercentageLinesToWholeDollars: true,
+  });
   if (!sameMoney(fields.allowed_credit, lines.line38)) {
     throw new Error(
       "Form 3800 allowed credit does not reconcile to finalized Part II",
@@ -852,9 +854,30 @@ export function prepareForm3800DocumentParts(
       parsed.f8941_direct_employer_credit?.credit_amount !==
         form8941.lines.line16 ||
       parsed.f8941_direct_employer_credit?.schedule_c_business_reference !==
-        form8941.source.schedule_c_business_reference ||
+        ("schedule_c_business_reference" in form8941.source
+          ? form8941.source.schedule_c_business_reference
+          : undefined) ||
+      parsed.f8941_direct_employer_credit?.schedule_f_farm_id !==
+        ("schedule_f_farm_id" in form8941.source
+          ? form8941.source.schedule_f_farm_id
+          : undefined) ||
       parsed.f8941_direct_employer_credit?.shop_plan_reference !==
-        form8941.source.shop_plan_reference
+        form8941.source.shop_plan_reference ||
+      JSON.stringify(
+          parsed.f8941_direct_employer_credit?.shop_plan_references,
+        ) !== JSON.stringify(form8941.planReferences) ||
+      JSON.stringify(
+          parsed.f8941_direct_employer_credit?.group_business_references,
+        ) !== JSON.stringify(form8941.groupBusinessReferences) ||
+      JSON.stringify(
+          parsed.f8941_direct_employer_credit
+            ?.independent_spouse_business_references,
+        ) !==
+        JSON.stringify(form8941.independentSpouseBusinessReferences) ||
+      JSON.stringify(
+          parsed.f8941_direct_employer_credit?.independent_spouse_credits,
+        ) !==
+        JSON.stringify(form8941.independentSpouseCredits)
     )
   ) {
     throw new Error("Form 3800 line 4h differs from filed Form 8941 source");
@@ -1144,9 +1167,6 @@ export function prepareForm3800DocumentParts(
     "nonpassive:8864",
     parsed.form8864_applied_credit,
   );
-  if (form8864 && parsed.form8864_applied_credit === undefined) {
-    throw new Error("Form 8864 needs explicit Form 3800 tax-use allocation");
-  }
   const form8882Applied = applied("nonpassive:8882");
   const form3468PartVApplied = sourceApplied(
     form3468PartVCredit > 0,
@@ -1202,7 +1222,10 @@ export function prepareForm3800DocumentParts(
     throw new Error("Form 3800 Form 8908 document count differs from source");
   }
   const form8941Ids = context.documentIdsByPendingKey.f8941 ?? [];
-  if (form8941Ids.length !== (form8941 ? 1 : 0)) {
+  if (
+    form8941Ids.length !==
+      (form8941 ? (form8941.kind === "independent_spouses" ? 2 : 1) : 0)
+  ) {
     throw new Error("Form 3800 Form 8941 document count differs from source");
   }
   const form8994Ids = context.documentIdsByPendingKey.f8994 ?? [];
@@ -1354,6 +1377,14 @@ export function prepareForm3800DocumentParts(
           credit: form8941.lines.line16,
           documentId: form8941Ids[0],
           appliedCredit: form8941Applied,
+          ...(form8941.kind === "independent_spouses"
+            ? {
+              sources: form8941.memberLines.map((line, index) => ({
+                credit: line.line16,
+                documentId: form8941Ids[index],
+              })),
+            }
+            : {}),
         }
         : undefined,
       form8994: form8994

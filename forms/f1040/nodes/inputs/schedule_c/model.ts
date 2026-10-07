@@ -1,3 +1,14 @@
+import {
+  calculateCharitableNaturalResource,
+  charitableNaturalResourceSourceSchema,
+} from "../f8283/natural-resource-source.ts";
+import {
+  calculateCharitableDepreciation,
+  charitableDepreciationSourceSchema,
+} from "../f8283/depreciation-source.ts";
+import { mfsSstbFilingReviewSchema } from "./mfs-sstb-review.ts";
+import { inputSchema as patronReviewSchema } from "../qbi_patron/schema.ts";
+import { itemSchema as patrItemSchema } from "../f1099patr/schema.ts";
 import { z } from "zod";
 import {
   type AtRiskNet,
@@ -5,6 +16,8 @@ import {
   simplifiedAtRiskSchema,
 } from "../../intermediate/forms/form6198/simplified.ts";
 import { TS } from "../../types.ts";
+import { zeroLimitInventorySchema } from "../../intermediate/forms/form8995a/zero-limit-inventory.ts";
+import { positiveLimitInventorySchema } from "../../intermediate/forms/form8995a/positive-limit-inventory.ts";
 
 const MEALS_STANDARD_PCT = 0.50; // Standard business meals
 const MEALS_DOT_PCT = 0.80; // DOT hours-of-service workers
@@ -30,6 +43,11 @@ export const itemSchema = z.object({
     catch_sales_record_reference: z.string().trim().min(1),
     harvested_fish_entered_commerce_verified: z.literal(true),
     scientific_research_vessel: z.literal(false),
+    retained_catch_ledger: z.object({
+      document_id: z.string().trim().min(1),
+      sha256: z.string().regex(/^[0-9a-f]{64}$/),
+      bytes_base64: z.string().trim().min(1),
+    }).strict().optional(),
   }).strict().optional(),
   // The bounded Form 8829 route checks taxpayer ownership separately.
   proprietor_recipient: z.nativeEnum(TS).optional(),
@@ -74,9 +92,108 @@ export const itemSchema = z.object({
   qbi_specified_service: z.boolean().optional(),
   qbi_w2_wages: z.number().nonnegative().optional(),
   qbi_unadjusted_basis: z.number().nonnegative().optional(),
+  qbi_zero_limit_inventory: zeroLimitInventorySchema.optional(),
+  qbi_positive_limit_inventory: positiveLimitInventorySchema.optional(),
+  // Reviewed employer W-2 copies for the single-business WOTC filing route.
+  // Joint filings also identify the primary business owner explicitly.
+  // qbi_w2_wages is the allocable amount AFTER the section 280C reduction.
+  qbi_wotc_filing_review: z.object({
+    issued_nec_source_references: z.array(z.string().trim().min(1)).min(1)
+      .optional(),
+    owner_ssn: z.string().regex(/^\d{9}$/).optional(),
+    employee_w2_records: z.array(
+      z.object({
+        employee_reference: z.string().trim().min(1),
+        employee_ssn: z.string().regex(/^\d{9}$/).optional(),
+        employer_ein: z.string().regex(/^\d{9}$/).optional(),
+        box3_social_security_wages: z.number().nonnegative().optional(),
+        swa_certification_reference: z.string().trim().min(1).optional(),
+        payroll_record_references: z.array(z.string().trim().min(1)).min(1)
+          .optional(),
+        source_document_reference: z.string().trim().min(1),
+        box1_wages: z.number().positive(),
+        box5_wages: z.number().positive(),
+        ssa_filing_record_reference: z.string().trim().min(1),
+        filed_within_60_days_of_due_date_confirmed: z.literal(true),
+      }).strict(),
+    ).min(1),
+    all_business_payroll_included_confirmed: z.literal(true),
+    no_other_business_or_aggregation_confirmed: z.literal(true).optional(),
+    reviewed_other_business_references: z.array(z.string().trim().min(1)).min(1)
+      .optional(),
+    no_aggregation_confirmed: z.literal(true).optional(),
+    no_ptp_or_loss_carryforward_confirmed: z.literal(true),
+    qualified_dividends_zero_confirmed: z.literal(true),
+    no_qualified_property_confirmed: z.literal(true),
+    review_reference: z.string().trim().min(1),
+    reviewed_by: z.string().trim().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  }).strict().optional(),
+  // Reviewed payroll and classification for one owner-operated SSTB.
+  qbi_sstb_filing_review: z.object({
+    mfs_filing_review: mfsSstbFilingReviewSchema.optional(),
+    owner_ssn: z.string().regex(/^\d{9}$/),
+    classification_source_reference: z.string().trim().min(1),
+    business_activity_description: z.string().trim().min(1),
+    accounting_sstb_confirmed: z.literal(true),
+    employee_w2_records: z.array(
+      z.object({
+        employee_ssn: z.string().regex(/^\d{9}$/),
+        employer_ein: z.string().regex(/^\d{9}$/),
+        source_document_reference: z.string().trim().min(1),
+        box1_wages: z.number().int().positive(),
+        box5_wages: z.number().int().positive(),
+        ssa_filing_record_reference: z.string().trim().min(1),
+        filed_within_60_days_of_due_date_confirmed: z.literal(true),
+      }).strict(),
+    ),
+    no_business_employees_review: z.object({
+      payroll_and_expense_ledger_reference: z.string().trim().min(1),
+      sole_proprietor_only_workforce_confirmed: z.literal(true),
+      no_employee_w2_or_business_payroll_confirmed: z.literal(true),
+    }).strict().optional(),
+    all_business_payroll_included_confirmed: z.literal(true),
+    no_other_business_or_aggregation_confirmed: z.literal(true),
+    no_ptp_or_loss_carryforward_confirmed: z.literal(true),
+    qualified_dividends_zero_confirmed: z.literal(true),
+    no_qualified_property_confirmed: z.literal(true),
+    no_adjustments_beyond_filed_half_se_tax_confirmed: z.literal(true),
+    review_reference: z.string().trim().min(1),
+    reviewed_by: z.string().trim().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((date) => {
+      const parsed = new Date(`${date}T00:00:00Z`);
+      return Number.isFinite(parsed.valueOf()) &&
+        parsed.toISOString().slice(0, 10) === date && date >= "2025-12-31";
+    }, "Expected a real post-year-end review date"),
+  }).strict().superRefine((review, ctx) => {
+    if (
+      (review.employee_w2_records.length === 0) !==
+        (review.no_business_employees_review !== undefined)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Zero payroll needs its reviewed owner-only workforce ledger; employee payroll cannot also claim no employees",
+      });
+    }
+  }).optional(),
   // Required for the bounded Form 8995-A Schedule C path: the Schedule C net
   // amount has no separately attributable section 199A adjustments.
   qbi_no_other_adjustments_confirmed: z.boolean().optional(),
+  // Reviewed allocation of the combined Schedule SE deduction across businesses.
+  qbi_se_tax_allocation_review: z.object({
+    deduction_amount: z.number().finite().nonnegative(),
+    allocation_method: z.literal(
+      "positive_profit_proportion_with_cent_residual",
+    ),
+    reasonable_for_business_facts_confirmed: z.literal(true),
+    consistently_applied_and_books_agree_confirmed: z.literal(true),
+    all_businesses_included_confirmed: z.literal(true),
+    no_aggregation_confirmed: z.literal(true),
+    workpaper_reference: z.string().min(1),
+    reviewed_by: z.string().min(1),
+    reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  }).strict().optional(),
 
   // Part I: Income
   line_1_gross_receipts: z.number().nonnegative(),
@@ -104,6 +221,10 @@ export const itemSchema = z.object({
     ).min(1),
   }).strict().optional(),
   line_13_depreciation: z.number().nonnegative().optional(),
+  donated_natural_resource_property_source:
+    charitableNaturalResourceSourceSchema.optional(),
+  donated_depreciable_property_source: charitableDepreciationSourceSchema
+    .optional(),
   line_14_employee_benefits: z.number().nonnegative().optional(),
   line_15_insurance: z.number().nonnegative().optional(),
   line_16a_interest_mortgage: z.number().nonnegative().optional(),
@@ -189,6 +310,8 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   schedule_cs: z.array(itemSchema),
+  patron_filing_review: patronReviewSchema.optional(),
+  patron_distribution_sources: z.array(patrItemSchema).optional(),
   section481a_adjustments: z.array(
     z.object({
       business_reference: z.string().trim().min(1),
@@ -206,6 +329,18 @@ export const inputSchema = z.object({
     schedule_c_line29_tentative_profit: z.number().int().finite(),
     line36: z.number().int().positive(),
   }).strict().optional(),
+  form8994_wage_reductions: z.array(
+    z.object({
+      business_reference: z.string().trim().min(1),
+      credit_amount: z.number().int().finite().positive(),
+    }).strict(),
+  ).optional(),
+  form8941_premium_reductions: z.array(
+    z.object({
+      business_reference: z.string().trim().min(1),
+      credit_amount: z.number().int().finite().positive(),
+    }).strict(),
+  ).optional(),
   wotc_wage_reductions: z.array(z.object({
     business_reference: z.string().trim().min(1),
     credit_amount: z.number().nonnegative(),
@@ -316,6 +451,26 @@ export const inputSchema = z.object({
 
 export type ScheduleCItem = z.infer<typeof itemSchema>;
 
+/** Keep conditional Schedule C answers consistent across calculation, MeF, and PDF. */
+export function assertScheduleCConditionalAnswers(item: ScheduleCItem): void {
+  if (
+    item.line_j_filed_1099s !== undefined &&
+    item.line_i_made_1099_payments !== true
+  ) {
+    throw new Error(
+      "Schedule C line J applies only when line I is yes",
+    );
+  }
+  if (
+    item.line_47b_written_evidence !== undefined &&
+    item.line_47a_evidence !== true
+  ) {
+    throw new Error(
+      "Schedule C line 47b applies only when line 47a is yes",
+    );
+  }
+}
+
 /** Apply Form 3115's business-bound current-year adjustment before all tax calculations and projections. */
 export function projectSection481aScheduleCItems(
   input: z.infer<typeof inputSchema>,
@@ -393,10 +548,99 @@ export function projectSection481aScheduleCItems(
 export function projectScheduleCItems(
   input: z.infer<typeof inputSchema>,
 ): ScheduleCItem[] {
-  return projectForm8829ScheduleCItems({
-    ...input,
-    schedule_cs: projectSection481aScheduleCItems(input),
+  const rawItems = projectSection481aScheduleCItems(input).map((item) =>
+    item.donated_natural_resource_property_source
+      ? itemSchema.parse({
+        ...item,
+        line_12_depletion: charitableNaturalResourceDepletion(item),
+        amt_depletion_worksheet: charitableNaturalResourceAmt(item),
+        amt_mining_cost_workpaper: charitableNaturalResourceMiningWorkpaper(
+          item,
+        ),
+        part_v_other_expenses: naturalResourceCurrentCosts(item) > 0
+          ? [{
+            description: item.donated_natural_resource_property_source?.kind ===
+                "producing_mining_617"
+              ? "Mining development costs section616"
+              : "Intangible drilling costs section263c",
+            amount: naturalResourceCurrentCosts(item),
+          }]
+          : item.part_v_other_expenses,
+      })
+      : item.donated_depreciable_property_source
+      ? itemSchema.parse({
+        ...item,
+        line_13_depreciation: charitableDepreciationExpense(item),
+      })
+      : item
+  );
+  const wageReductions = input.form8994_wage_reductions ?? [];
+  const wageSeen = new Set<string>();
+  for (const reduction of wageReductions) {
+    if (
+      wageSeen.has(reduction.business_reference) ||
+      rawItems.filter((item) =>
+          item.business_reference === reduction.business_reference
+        ).length !== 1
+    ) {
+      throw new Error(
+        "Form8994 wage reduction needs one distinct ScheduleC business",
+      );
+    }
+    wageSeen.add(reduction.business_reference);
+  }
+  const items = rawItems.map((item) => {
+    const reduction = wageReductions.find((row) =>
+      row.business_reference === item.business_reference
+    );
+    if (!reduction) return item;
+    if (
+      (item.line_26_other_employment_credits ?? 0) !== 0 ||
+      reduction.credit_amount > (item.line_26_wages ?? 0)
+    ) {
+      throw new Error(
+        "Form8994 full wage reduction needs unreduced gross payroll without duplicate employment credits",
+      );
+    }
+    return itemSchema.parse({
+      ...item,
+      line_26_other_employment_credits: reduction.credit_amount,
+    });
   });
+  const reductions = input.form8941_premium_reductions ?? [];
+  const seen = new Set<string>();
+  for (const reduction of reductions) {
+    if (
+      seen.has(reduction.business_reference) ||
+      items.filter((item) =>
+          item.business_reference === reduction.business_reference
+        ).length !== 1
+    ) {
+      throw new Error(
+        "Form8941 premium reduction needs one distinct ScheduleC business",
+      );
+    }
+    seen.add(reduction.business_reference);
+  }
+  const reducedItems = items.map((item) => {
+    const reduction = reductions.find((entry) =>
+      entry.business_reference === item.business_reference
+    );
+    if (!reduction) return item;
+    if (reduction.credit_amount > (item.line_14_employee_benefits ?? 0)) {
+      throw new Error(
+        "Form8941 premium credit exceeds gross employee benefit expense",
+      );
+    }
+    // IRC280C(h): credit determined under45R(a), before section38 tax use.
+    return {
+      ...item,
+      line_14_employee_benefits: (item.line_14_employee_benefits ?? 0) -
+        reduction.credit_amount,
+    };
+  });
+  // The full premium reduction increases tentative profit before the home-office limit.
+  return projectForm8829ScheduleCItems({ ...input, schedule_cs: reducedItems });
 }
 
 export function projectForm8829ScheduleCItems(
@@ -576,21 +820,211 @@ export function wotcReductionsByBusiness(
   return reductions;
 }
 
+export function charitableDepreciationExpense(item: ScheduleCItem): number {
+  const raw = item.donated_depreciable_property_source;
+  if (!raw) return item.line_13_depreciation ?? 0;
+  const calculated = calculateCharitableDepreciation(raw);
+  const records = raw.current_year_business_records;
+  if (
+    calculated.current_year_depreciation > 0 &&
+    (!records || item.line_1_gross_receipts !== records.gross_receipts ||
+      (item.line_10_commissions_fees ?? 0) !== records.fees_paid ||
+      Object.entries(item).some(([key, value]) =>
+        /^line_\d/.test(key) && typeof value === "number" && value !== 0 &&
+        ![
+          "line_1_gross_receipts",
+          "line_10_commissions_fees",
+          "line_13_depreciation",
+        ].includes(key)
+      ) ||
+      (item.part_v_other_expenses?.length ?? 0) > 0)
+  ) {
+    throw new Error(
+      "Donated-asset ScheduleC receipts/paid fees differ from current business records",
+    );
+  }
+  if (
+    item.business_reference !== raw.business_reference ||
+    (item.proprietor_recipient ?? "T") !== raw.proprietor_recipient ||
+    (item.line_13_depreciation !== undefined &&
+      item.line_13_depreciation !== calculated.current_year_depreciation)
+  ) {
+    throw new Error(
+      "ScheduleC donated-asset owner/business or depreciation conflicts with annual source ledger",
+    );
+  }
+  return calculated.current_year_depreciation;
+}
+
+export function charitableNaturalResourceDepletion(
+  item: ScheduleCItem,
+): number {
+  const raw = item.donated_natural_resource_property_source;
+  if (!raw) return item.line_12_depletion ?? 0;
+  const calc = calculateCharitableNaturalResource(raw);
+  const current = raw.annual_records[raw.annual_records.length - 1];
+  if (
+    (raw.kind !== "natural_resource_1254" &&
+      raw.kind !== "legacy_oil_gas_geothermal_1254" &&
+      raw.kind !== "producing_mining_617") ||
+    item.business_reference !== raw.business_reference ||
+    (item.proprietor_recipient ?? "T") !== raw.proprietor_recipient ||
+    item.line_1_gross_receipts !== current.gross_property_income ||
+    (item.line_12_depletion !== undefined &&
+      item.line_12_depletion !== calc.current_year.depletion) ||
+    current.other_deductible_property_expenses !== 0 ||
+    Object.entries(item).some(([key, value]) =>
+      /^line_\d/.test(key) && typeof value === "number" && value !== 0 &&
+      !["line_1_gross_receipts", "line_12_depletion"].includes(key)
+    ) ||
+    (item.part_v_other_expenses !== undefined &&
+      JSON.stringify(item.part_v_other_expenses) !==
+        JSON.stringify(
+          calc.current_year.deduction > 0
+            ? [{
+              description: raw.kind === "producing_mining_617"
+                ? "Mining development costs section616"
+                : "Intangible drilling costs section263c",
+              amount: calc.current_year.deduction,
+            }]
+            : [],
+        ))
+  ) {
+    throw new Error(
+      "Owned natural-resource current ScheduleC receipts/depletion/owner differ from actual source account",
+    );
+  }
+  return calc.current_year.depletion;
+}
+
+/** Actual currentIDC invoices; a conservative upper bound proves no section57
+ * preference even before subtracting permissible normal capital recovery. */
+export function naturalResourceCurrentCosts(item: ScheduleCItem): number {
+  const raw = item.donated_natural_resource_property_source;
+  if (!raw) return 0;
+  const calc = calculateCharitableNaturalResource(raw),
+    current = raw.annual_records.at(-1)!;
+  if (
+    calc.current_year.deduction > 0 && raw.kind !== "producing_mining_617" &&
+    ((raw.kind !== "natural_resource_1254" &&
+      raw.kind !== "legacy_oil_gas_geothermal_1254") ||
+      raw.resource === "gold" ||
+      current.expenses.some((row) => row.nature !== "idc_263c") ||
+      calc.current_year.deduction >
+        .65 *
+          Math.max(
+            0,
+            current.gross_property_income -
+              current.other_deductible_property_expenses -
+              calc.current_year.depletion - calc.current_year.deduction,
+          ))
+  ) {
+    throw new Error(
+      "Current natural-resource costs require independently sourced mining/positiveIDC AMT refigure",
+    );
+  }
+  return calc.current_year.deduction;
+}
+
+/** Cost depletion of an owned oil/gas/geothermal interest uses the same
+ * purchase basis and units for regular tax and AMT; no percentage depletion
+ * beyond basis or mining expense AMT adjustment is present in this source route. */
+export function charitableNaturalResourceAmt(item: ScheduleCItem) {
+  const raw = item.donated_natural_resource_property_source;
+  if (
+    !raw ||
+    (raw.kind !== "natural_resource_1254" &&
+      raw.kind !== "legacy_oil_gas_geothermal_1254" &&
+      raw.kind !== "producing_mining_617") ||
+    (raw.resource === "gold" && raw.kind !== "producing_mining_617")
+  ) {
+    return item.amt_depletion_worksheet;
+  }
+  const calc = calculateCharitableNaturalResource(raw);
+  const result = {
+    source_reference: raw.annual_account_ledger_reference,
+    all_property_income_and_basis_limits_applied_verified: true as const,
+    no_at_risk_or_basis_limitation_verified: true as const,
+    properties: [{
+      property_reference: raw.property_reference,
+      regular_allowed_depletion: calc.current_year.depletion,
+      amt_allowed_depletion: raw.kind === "producing_mining_617"
+        ? calc.current_year.amt_allowed_depletion!
+        : calc.current_year.depletion,
+    }],
+  };
+  if (
+    item.amt_depletion_worksheet &&
+    JSON.stringify(item.amt_depletion_worksheet) !== JSON.stringify(result)
+  ) {
+    throw new Error(
+      "Owned cost-depletion AMT source differs from actual purchase/annual unit ledger",
+    );
+  }
+  return result;
+}
+
+/** Derive the filed mining-AMT workpaper from actual owned paid invoices. */
+export function charitableNaturalResourceMiningWorkpaper(item: ScheduleCItem) {
+  const raw = item.donated_natural_resource_property_source;
+  if (!raw || raw.kind !== "producing_mining_617") {
+    return item.amt_mining_cost_workpaper;
+  }
+  const calc = calculateCharitableNaturalResource(raw),
+    current = raw.annual_records.at(-1)!;
+  if (calc.current_year.deduction === 0) {
+    if (item.amt_mining_cost_workpaper) {
+      throw new Error(
+        "Owned mining zero current deduction conflicts with supplied workpaper",
+      );
+    }
+    return undefined;
+  }
+  if (
+    current.expenses.length !== 1 ||
+    current.expenses[0].nature !== "development_616"
+  ) {
+    throw new Error(
+      "Current producing617 AMT workpaper requires actual identified development invoice",
+    );
+  }
+  const result = {
+    property_reference: raw.property_reference,
+    reviewed_workpaper_reference: raw.annual_account_ledger_reference,
+    expense_description: "Mining development costs section616",
+    paid_or_incurred_date: current.expenses[0].paid_on,
+    mining_exploration_or_development_verified: true as const,
+    regular_ten_year_writeoff_not_elected: true as const,
+    no_unamortized_property_loss: true as const,
+  };
+  if (
+    item.amt_mining_cost_workpaper &&
+    JSON.stringify(item.amt_mining_cost_workpaper) !== JSON.stringify(result)
+  ) {
+    throw new Error(
+      "Owned producing617 mining workpaper differs from retained annual payments",
+    );
+  }
+  return result;
+}
+
 export function computeTotalExpenses(
   item: ScheduleCItem,
   wotcReduction = 0,
 ): number {
   const mealsDeductible = (item.line_24b_meals ?? 0) * mealsDeductiblePct(item);
-  const partVTotal = (item.part_v_other_expenses ?? []).reduce(
-    (sum, e) => sum + e.amount,
-    0,
-  );
+  const partVTotal = item.donated_natural_resource_property_source
+    ? naturalResourceCurrentCosts(item)
+    : (item.part_v_other_expenses ?? []).reduce(
+      (sum, e) => sum + e.amount,
+      0,
+    );
   return (item.line_8_advertising ?? 0) +
     (item.line_9_car_truck_expenses ?? 0) +
     (item.line_10_commissions_fees ?? 0) +
     (item.line_11_contract_labor ?? 0) +
-    (item.line_12_depletion ?? 0) +
-    (item.line_13_depreciation ?? 0) +
+    charitableNaturalResourceDepletion(item) +
+    charitableDepreciationExpense(item) +
     (item.line_14_employee_benefits ?? 0) +
     (item.line_15_insurance ?? 0) +
     (item.line_16a_interest_mortgage ?? 0) +

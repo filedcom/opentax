@@ -87,6 +87,8 @@ export const itemSchema = z.object({
     tip_records_reference: z.string().trim().min(1),
     included_in_box3: z.literal(true),
     no_other_allocable_deductions: z.literal(true),
+    allocable_health_plan_identifiers: z.array(z.string().trim().min(1)).max(1)
+      .optional(),
     no_other_allocable_deductions_review_reference: z.string().trim().min(1),
   }).strict().optional(),
   // When true, box3_other_income is also investment income subject to NIIT (IRC §1411).
@@ -203,6 +205,17 @@ export const itemSchema = z.object({
       path: ["box3_other_income_description"],
       message:
         "1099-MISC box 3 other income needs a reviewed payment description",
+    });
+  }
+  if (
+    (item.box3_other_income ?? 0) > 0 &&
+    item.box3_other_income_routing === "excluded"
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["box3_other_income_routing"],
+      message:
+        "1099-MISC box 3 exclusion needs reviewed payment and prior-deduction facts",
     });
   }
   if (
@@ -631,6 +644,13 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
             item.qualified_tips_box3_review.included_in_box3,
           no_other_allocable_deductions:
             item.qualified_tips_box3_review.no_other_allocable_deductions,
+          ...(item.qualified_tips_box3_review
+              .allocable_health_plan_identifiers !== undefined
+            ? {
+              allocable_health_plan_identifiers: item.qualified_tips_box3_review
+                .allocable_health_plan_identifiers,
+            }
+            : {}),
           no_other_allocable_deductions_review_reference:
             item.qualified_tips_box3_review
               .no_other_allocable_deductions_review_reference,

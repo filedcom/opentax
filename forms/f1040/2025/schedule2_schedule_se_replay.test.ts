@@ -66,9 +66,9 @@ Deno.test("Schedule 2 line 4 retains calculated Schedule SE tax in native and PD
       taxpayer_last_name: "Example",
       taxpayer_ssn: "111223333",
       digital_assets: false,
-      line23_other_taxes: 8_477.73,
+      line23_other_taxes: 8_478,
     },
-    schedule2: { line4_se_tax: 8_477.73 },
+    schedule2: { line4_se_tax: 8_478 },
   };
   const native = await buildMefBundle(pending, { filer, attachments: [] });
   assertStringIncludes(

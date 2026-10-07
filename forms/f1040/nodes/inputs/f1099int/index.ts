@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ty2025IrsCountryCodeSchema } from "../../irs_country_code.ts";
 import type {
   NodeOutput,
   NodeResult,
@@ -9,6 +10,7 @@ import {
   TaxNode,
 } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
@@ -23,7 +25,10 @@ import { form4952 } from "../../intermediate/forms/form4952/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { sellerFinancedBuyerSchema } from "../../../seller_financed_buyer.ts";
-import { pabAllocableDeductionWorkpaperSchema } from "../pab_allocable_deduction.ts";
+import {
+  pabAllocableDeductionWorkpaperSchema,
+  reconcilePabPaidExpense,
+} from "../pab_allocable_deduction.ts";
 
 export const itemSchema = z.object({
   payer_name: z.string().min(1).refine((name) => name.trim().length > 0, {
@@ -53,7 +58,7 @@ export const itemSchema = z.object({
   box6: z.number().nonnegative().optional(),
   box7: z.string().optional(),
   foreign_source_interest_usd: z.number().nonnegative().optional(),
-  foreign_tax_irs_country_code: z.string().length(2).optional(),
+  foreign_tax_irs_country_code: ty2025IrsCountryCodeSchema.optional(),
   foreign_tax_source_document_reference: z.string().trim().min(1).optional(),
   box8: z.number().nonnegative().optional(),
   box9: z.number().nonnegative().optional(),
@@ -86,11 +91,30 @@ export const inputSchema = z.object({
 type INTItem = z.infer<typeof itemSchema>;
 type INTInput = z.infer<typeof inputSchema>;
 
+function hasPositive1099INTBox(item: INTItem): boolean {
+  return [
+    item.box1,
+    item.box2,
+    item.box3,
+    item.box4,
+    item.box5,
+    item.box6,
+    item.box8,
+    item.box9,
+    item.box10,
+    item.box11,
+    item.box12,
+    item.box13,
+    item.box17,
+  ].some((amount) => (amount ?? 0) > 0);
+}
+
 export function assertDistinct1099INTCopies(items: readonly INTItem[]): void {
   const issuedAccounts = new Set<string>();
   const issuedReferences = new Set<string>();
   const seenOwners = new Set<string>();
   const unidentifiedCopies = new Set<string>();
+  const seenItems: INTItem[] = [];
   for (const item of items) {
     const payer = item.payer_tin?.replace(/\D/g, "") ||
       item.payer_name.trim().replace(/\s+/g, " ").toUpperCase();
@@ -113,21 +137,36 @@ export function assertDistinct1099INTCopies(items: readonly INTItem[]): void {
       }
       issuedAccounts.add(key);
     }
-    const positive = [
-      item.box1,
-      item.box2,
-      item.box3,
-      item.box4,
-      item.box5,
-      item.box6,
-      item.box8,
-      item.box9,
-      item.box10,
-      item.box11,
-      item.box12,
-      item.box13,
-      item.box17,
-    ].some((amount) => (amount ?? 0) > 0);
+    const positive = hasPositive1099INTBox(item);
+    const payerName = item.payer_name.trim().replace(/\s+/g, " ").toUpperCase();
+    for (const earlier of seenItems) {
+      if (
+        earlier.recipient_tin !== item.recipient_tin ||
+        earlier.payer_name.trim().replace(/\s+/g, " ").toUpperCase() !==
+          payerName ||
+        (earlier.payer_tin?.replace(/\D/g, "") &&
+          item.payer_tin?.replace(/\D/g, ""))
+      ) continue;
+      if (
+        earlier.account_number && item.account_number &&
+        earlier.account_number.trim() === item.account_number.trim()
+      ) {
+        throw new Error(
+          "1099-INT repeats the same payer and account; corrected copies need a reviewed single current row",
+        );
+      }
+      const earlierPositive = hasPositive1099INTBox(earlier);
+      if (
+        positive && earlierPositive &&
+        ((!earlier.account_number && !earlier.source_document_reference) ||
+          (!item.account_number && !item.source_document_reference))
+      ) {
+        throw new Error(
+          "1099-INT has multiple positive payer copies without account or issued source reference",
+        );
+      }
+    }
+    seenItems.push(item);
     if (!positive) continue;
     if (!item.account_number && !item.source_document_reference) {
       if (seenOwners.has(owner)) {
@@ -237,6 +276,7 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
     schedule_b,
+    form8995,
     schedule1,
     f1040,
     form6251,
@@ -266,6 +306,18 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
           "1099-INT PAB allocable deduction exceeds box 9 specified-bond interest",
         );
       }
+      if (deduction > 0 && item.investment_property_for_form4952 === true) {
+        if (!item.recipient_tin || !item.pab_bond_identifier) {
+          throw new Error(
+            "Paid PAB expense needs the bond and recipient identity",
+          );
+        }
+        reconcilePabPaidExpense(
+          item.pab_allocable_deduction_workpaper!,
+          item.pab_bond_identifier,
+          item.recipient_tin,
+        );
+      }
       return sum + gross - deduction;
     }, 0);
     const totalTaxExempt = int1099s.reduce(
@@ -273,7 +325,12 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
       0,
     );
 
-    const outputs: NodeOutput[] = int1099s.map(scheduleBOutput);
+    const outputs: NodeOutput[] = [
+      ...int1099s.map(scheduleBOutput),
+      this.outputNodes.output(form8995, {
+        investment_interest_sources: int1099s,
+      }),
+    ];
 
     for (const item of int1099s) {
       if (item.investment_property_for_form4952 !== true) continue;
@@ -292,6 +349,12 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
         outputs.push(this.outputNodes.output(form4952, {
           source_private_activity_bond_interest: item.box9!,
         }));
+        const paper = item.pab_allocable_deduction_workpaper;
+        if (paper && paper.allocable_deduction > 0) {
+          outputs.push(this.outputNodes.output(form4952, {
+            source_pab_bond_debt_interest: paper.allocable_deduction,
+          }));
+        }
       }
     }
 

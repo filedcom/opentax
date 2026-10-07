@@ -4,7 +4,14 @@ import { execute } from "../../../../../core/runtime/executor.ts";
 import { registry } from "../../registry.ts";
 import { pdfReviewFixtures } from "../review-fixtures.ts";
 import { form1116ScheduleBPdf } from "./f1116_schedule_b.ts";
-import { categorySummarySchema } from "../../../nodes/intermediate/forms/form_1116/index.ts";
+import {
+  form1116ScheduleB,
+  scheduleBFieldsSchema,
+} from "../../mef/forms/f1116_schedule_b.ts";
+import {
+  categorySummarySchema,
+  IncomeCategory,
+} from "../../../nodes/intermediate/forms/form_1116/index.ts";
 
 function requiredNumber(value: unknown): number {
   if (typeof value !== "number") throw new Error("Expected computed amount");
@@ -48,5 +55,33 @@ Deno.test("Form 1116 Schedule B PDF ties one-category credit to parent and final
     () => form1116ScheduleBPdf.projectFields?.(fields, altered),
     Error,
     "differs from Schedule 3 and Form 1040",
+  );
+
+  const duplicatedParentCredit = {
+    ...pending,
+    form_1116: {
+      ...pending.form_1116,
+      category_summaries: [
+        summary,
+        {
+          ...summary,
+          category: IncomeCategory.General,
+          allowedCredit: 1,
+        },
+      ],
+    },
+  };
+  assertThrows(
+    () => form1116ScheduleBPdf.projectFields?.(fields, duplicatedParentCredit),
+    Error,
+    "differs from Schedule 3 and Form 1040",
+  );
+  assertThrows(
+    () =>
+      form1116ScheduleB.build(scheduleBFieldsSchema.parse(fields), {
+        pending: duplicatedParentCredit,
+      }),
+    Error,
+    "differs from the parent, Schedule 3, or Form 1040",
   );
 });

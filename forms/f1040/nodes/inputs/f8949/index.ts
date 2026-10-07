@@ -72,6 +72,26 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   f8949s: z.array(itemSchema).min(1),
+}).superRefine(({ f8949s }, ctx) => {
+  const seen = new Set<string>();
+  for (const [index, sale] of f8949s.entries()) {
+    if (!sale.broker_statement_reference || !sale.source_transaction_id) {
+      continue;
+    }
+    const key = JSON.stringify([
+      sale.broker_statement_reference,
+      sale.source_transaction_id,
+    ]);
+    if (seen.has(key)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["f8949s", index],
+        message:
+          "Direct Form 8949 repeats the same identified statement transaction; corrected copies need one reviewed current row",
+      });
+    }
+    seen.add(key);
+  }
 });
 
 type F8949Item = z.infer<typeof itemSchema>;
@@ -175,11 +195,13 @@ function processItem(item: F8949Item): NodeOutput[] {
       !Number.isInteger(item.amt_cost_basis) ||
       !(
         (regularGain > 0 && amtGain > 0) ||
-        (regularGain < 0 && amtGain < 0)
+        (regularGain < 0 && amtGain < 0) ||
+        (["A", "B", "C"].includes(item.part) &&
+          regularGain < 0 && amtGain > 0)
       )
     ) {
       throw new Error(
-        "Form 8949 AMT basis difference needs an identified, unadjusted, whole-dollar Part I or Part II gain or loss under both bases; other Schedule D refigures are not yet supported",
+        "Form 8949 AMT basis difference needs identified, unadjusted, whole-dollar Part I or Part II gains or losses, or a short-term regular loss becoming an AMT gain; other Schedule D refigures are not yet supported",
       );
     }
     outputs.push(

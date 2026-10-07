@@ -2,9 +2,22 @@ import { element, elements } from "../../../mef/xml.ts";
 import {
   computeScheduleHAmounts,
   inputSchema,
+  type ScheduleHInput,
 } from "../../../nodes/intermediate/forms/schedule_h/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { FilingStatus } from "../types.ts";
+import {
+  inputSchema as schedule2InputSchema,
+  schedule2,
+} from "../../../nodes/intermediate/aggregation/schedule2/index.ts";
+
+function sourcedOtherTaxes(context: MefBuildContext): unknown {
+  return schedule2.compute(
+    { taxYear: 2025, formType: "f1040" },
+    schedule2InputSchema.parse(context.pending?.schedule2 ?? {}),
+  ).outputs.find((entry) => entry.nodeType === "f1040")
+    ?.fields.line23_other_taxes ?? 0;
+}
 
 export interface Fields {
   employer_ein?: string;
@@ -15,105 +28,8 @@ export interface Fields {
   additional_medicare_wages?: number | null;
   federal_income_tax_withheld?: number | null;
   family_withholding_only_payroll?: unknown;
-  federal_unemployment?: {
-    paid_only_one_state: true;
-    all_contributions_paid_on_time: true;
-    all_futa_wages_state_taxable: true;
-    state: string;
-    contributions_paid?: number;
-    zero_experience_rate?: true;
-    taxable_wages: number;
-    all_household_employees_included: true;
-    prior_year_quarter_threshold_met: boolean;
-    prior_year_quarter_source_reference?: string;
-    employee_wages: Array<{
-      employee_id: string;
-      payroll_source_reference: string;
-      relationship: "unrelated";
-      age_18_or_older_for_fica: boolean;
-      student_minor_fica_exclusion?: {
-        birth_date: string;
-        birth_date_source_reference: string;
-        student_enrollment_source_reference: string;
-        student_during_2025_verified: true;
-      };
-      nonstudent_minor_fica_inclusion?: {
-        birth_date: string;
-        birth_date_source_reference: string;
-        education_status_source_reference: string;
-        principal_occupation_source_reference: string;
-        not_a_student_during_2025_verified: true;
-        household_services_principal_occupation_verified: true;
-      };
-      ordinary_cash_only: true;
-      annual_cash_wages: number;
-      quarterly_cash_wages: [number, number, number, number];
-      w2?: {
-        source_reference: string;
-        box2_federal_income_tax_withheld: number;
-        box3_social_security_wages: number;
-        box5_medicare_wages: number;
-      };
-      federal_withholding_agreement?: {
-        w4_source_reference: string;
-        employee_requested_and_employer_agreed: true;
-      };
-    }>;
-  } | {
-    paid_only_one_state: boolean;
-    all_contributions_paid_on_time: boolean;
-    all_futa_wages_state_taxable: boolean;
-    taxable_futa_wages: number;
-    all_household_employees_included: true;
-    prior_year_quarter_threshold_met: boolean;
-    prior_year_quarter_source_reference?: string;
-    employee_wages: Array<{
-      employee_id: string;
-      payroll_source_reference: string;
-      relationship: "unrelated";
-      age_18_or_older_for_fica: boolean;
-      student_minor_fica_exclusion?: {
-        birth_date: string;
-        birth_date_source_reference: string;
-        student_enrollment_source_reference: string;
-        student_during_2025_verified: true;
-      };
-      nonstudent_minor_fica_inclusion?: {
-        birth_date: string;
-        birth_date_source_reference: string;
-        education_status_source_reference: string;
-        principal_occupation_source_reference: string;
-        not_a_student_during_2025_verified: true;
-        household_services_principal_occupation_verified: true;
-      };
-      ordinary_cash_only: true;
-      annual_cash_wages: number;
-      quarterly_cash_wages: [number, number, number, number];
-      w2?: {
-        source_reference: string;
-        box2_federal_income_tax_withheld: number;
-        box3_social_security_wages: number;
-        box5_medicare_wages: number;
-      };
-      federal_withholding_agreement?: {
-        w4_source_reference: string;
-        employee_requested_and_employer_agreed: true;
-      };
-    }>;
-    state_rows: Array<{
-      state: string;
-      taxable_state_wages: number;
-      experience_rate?: number;
-      rate_period_from?: string;
-      rate_period_to?: string;
-      contributions_paid_by_due_date: number;
-    }>;
-    late_contributions?: number;
-    credit_reduction_wages?: Array<{
-      state: "CA" | "VI";
-      taxable_futa_wages: number;
-    }>;
-  };
+  family_employer_ssn?: string;
+  federal_unemployment?: ScheduleHInput["federal_unemployment"];
 }
 
 type Input = Partial<Fields> & Record<string, unknown>;
@@ -164,9 +80,7 @@ function buildIRS1040ScheduleH(
     );
   }
   const amounts = computeScheduleHAmounts(source, 2025);
-  const ficaOnlyMinor = source.fica_only_payroll?.employee_wages[0]
-    ?.nonstudent_minor_fica_inclusion;
-  if (ficaOnlyMinor) {
+  if (source.fica_only_payroll) {
     const retained = inputSchema.parse(context.pending?.schedule_h ?? {});
     if (
       JSON.stringify(retained.fica_only_payroll) !==
@@ -175,7 +89,7 @@ function buildIRS1040ScheduleH(
           ?.line9_household_employment !== amounts.totalTax
     ) {
       throw new Error(
-        "Schedule H FICA-only minor source and tax must reconcile to retained payroll and Schedule 2 line 9",
+        "Schedule H FICA-only source and tax must reconcile to Schedule 2 line 9 and retained payroll",
       );
     }
   }
@@ -185,7 +99,13 @@ function buildIRS1040ScheduleH(
     const spouseW2s = (context.pending?.w2 as {
       w2s?: Array<Record<string, unknown>>;
     } | undefined)?.w2s;
-    const spouseW2 = spouseW2s?.length === 1 ? spouseW2s[0] : undefined;
+    const spouseMatches = spouseW2s?.filter((w2) =>
+      typeof w2.employee_ssn === "string" &&
+      w2.employee_ssn.replace(/\D/g, "") === family.employee.employee_ssn &&
+      typeof w2.employer_ein === "string" &&
+      w2.employer_ein.replace(/\D/g, "") === fields.employer_ein
+    ) ?? [];
+    const spouseW2 = spouseMatches.length === 1 ? spouseMatches[0] : undefined;
     const return1040 = context.pending?.f1040 as
       | Record<string, unknown>
       | undefined;
@@ -206,11 +126,19 @@ function buildIRS1040ScheduleH(
           spouseW2?.box2_fed_withheld !==
             family.employee.w2.box2_federal_income_tax_withheld ||
           spouseW2?.box3_ss_wages !== 0 ||
+          spouseW2?.box4_ss_withheld !== 0 ||
           spouseW2?.box5_medicare_wages !== 0 ||
-          return1040?.line1a_wages !== family.employee.w2.box1_wages ||
-          return1040?.line25a_w2_withheld !==
-            family.employee.w2.box2_federal_income_tax_withheld ||
-          return1040?.line23_other_taxes !== amounts.totalTax)) ||
+          spouseW2?.box6_medicare_withheld !== 0 ||
+          return1040?.line23_other_taxes !== sourcedOtherTaxes(context) ||
+          return1040?.line1a_wages !== spouseW2s?.reduce(
+              (sum, w2) =>
+                sum + Number(w2.box1_wages ?? 0),
+              0,
+            ) ||
+          return1040?.line25a_w2_withheld !== spouseW2s?.reduce(
+              (sum, w2) => sum + Number(w2.box2_fed_withheld ?? 0),
+              0,
+            ))) ||
       JSON.stringify(retained.family_withholding_only_payroll) !==
         JSON.stringify(family) ||
       (context.pending?.schedule2 as Record<string, unknown> | undefined)
@@ -221,8 +149,100 @@ function buildIRS1040ScheduleH(
       );
     }
   }
+  const payroll = source.federal_unemployment ?? source.fica_only_payroll;
+  const familyWorkers = payroll?.employee_wages.filter(
+    (employee) => employee.relationship !== "unrelated",
+  ) ?? [];
+  if (familyWorkers.length) {
+    const retained = inputSchema.parse(context.pending?.schedule_h ?? {});
+    const retainedPayroll = retained.federal_unemployment ??
+      retained.fica_only_payroll;
+    const w2s = (context.pending?.w2 as {
+      w2s?: Array<Record<string, unknown>>;
+    } | undefined)?.w2s ?? [];
+    const digits = (value: unknown) =>
+      typeof value === "string" ? value.replace(/\D/g, "") : undefined;
+    if (
+      digits(filer.primarySSN) !== source.family_employer_ssn ||
+      retained.family_employer_ssn !== source.family_employer_ssn ||
+      (context.pending?.f1040 as Record<string, unknown> | undefined)
+          ?.line23_other_taxes !== sourcedOtherTaxes(context) ||
+      JSON.stringify(retainedPayroll) !== JSON.stringify(payroll) ||
+      (context.pending?.schedule2 as Record<string, unknown> | undefined)
+          ?.line9_household_employment !== amounts.totalTax
+    ) {
+      throw new Error(
+        "Schedule H mixed family payroll must match filer, retained sources and Schedule 2",
+      );
+    }
+    for (const employee of familyWorkers) {
+      if (
+        employee.relationship === "parent" &&
+        employee.parent_fica_review.classification === "quarterly_circumstances"
+      ) {
+        const quarter4 = employee.parent_fica_review.quarterly_circumstances
+          .find((q) => q.quarter === 4)!;
+        const status = quarter4.employer_circumstances;
+        const return1040 = context.pending?.f1040 as
+          | Record<string, unknown>
+          | undefined;
+        if (
+          (status.kind === "spouse_incapable" ||
+            status.kind === "married_capable_spouse") &&
+          (digits(filer.spouse?.ssn ?? return1040?.spouse_ssn) !==
+              status.spouse_ssn ||
+            status.spouse_ssn === source.family_employer_ssn ||
+            status.spouse_ssn === employee.employee_ssn)
+        ) {
+          throw new Error(
+            "Schedule H parent year-end spouse circumstances must join the return spouse identity",
+          );
+        }
+        if (
+          (status.kind === "never_married" ||
+            status.kind === "divorced_not_remarried") &&
+          filer.filingStatus === FilingStatus.MarriedFilingJointly
+        ) {
+          throw new Error(
+            "Schedule H parent year-end marital source conflicts with joint filing status",
+          );
+        }
+        if (
+          status.kind === "widowed_not_remarried" &&
+          filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+          (return1040?.spouse_deceased !== true ||
+            return1040?.spouse_death_date !== status.spouse_death_date ||
+            status.spouse_death_date < "2025-01-01")
+        ) {
+          throw new Error(
+            "Schedule H parent year-of-death joint filing needs matching spouse death facts",
+          );
+        }
+      }
+      if (employee.relationship !== "spouse") continue;
+      const matches = w2s.filter((w2) =>
+        digits(w2.employee_ssn) === employee.employee_ssn &&
+        digits(w2.employer_ein) === fields.employer_ein
+      );
+      const w2 = matches.length === 1 ? matches[0] : undefined;
+      if (
+        filer.filingStatus !== FilingStatus.MarriedFilingJointly ||
+        digits(filer.spouse?.ssn) !== employee.employee_ssn ||
+        !employee.w2 || !w2 ||
+        w2.box1_wages !== employee.annual_cash_wages ||
+        w2.box2_fed_withheld !== employee.w2.box2_federal_income_tax_withheld ||
+        w2.box3_ss_wages !== 0 || w2.box4_ss_withheld !== 0 ||
+        w2.box5_medicare_wages !== 0 || w2.box6_medicare_withheld !== 0
+      ) {
+        throw new Error(
+          "Schedule H mixed spouse payroll needs its unique owned household W-2 on the joint return",
+        );
+      }
+    }
+  }
   if (
     source.federal_unemployment?.employee_wages.some((employee) =>
+      employee.relationship === "unrelated" &&
       employee.nonstudent_minor_fica_inclusion !== undefined
     ) &&
     (context.pending?.schedule2 as Record<string, unknown> | undefined)
@@ -293,7 +313,10 @@ function buildIRS1040ScheduleH(
               row.rate_period_to === undefined
                 ? ""
                 : element("UnemplStateExprncRateToDt", row.rate_period_to),
-              amount("UnemploymentStateExperienceRt", row.experience_rate),
+              row.experience_rate === undefined ? "" : element(
+                "UnemploymentStateExperienceRt",
+                String(row.experience_rate),
+              ),
               amount("UnemploymentTaxCrAt54RateAmt", row.creditAt54),
               amount("UnemploymentTaxCrAtStateRtAmt", row.creditAtStateRate),
               amount(
@@ -317,7 +340,7 @@ function buildIRS1040ScheduleH(
           element("TentativeFUTACreditAmt", amounts.sectionB!.tentativeCredit),
           element(
             "TotalCashWagesSubjFUTATaxAmt",
-            unemployment.taxable_futa_wages,
+            amounts.sectionB!.filedFutaWages,
           ),
           element("GrossFUTATaxCreditAmt", amounts.sectionB!.grossTax),
           element(

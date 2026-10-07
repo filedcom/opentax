@@ -140,6 +140,8 @@ export const form5471Pdf: PdfFormDescriptor = {
     ]),
     scheduleF("f_cash_begin", "Assets", "1", 1),
     scheduleF("f_cash_end", "Assets", "1", 2),
+    scheduleF("f_investments_begin", "Assets", "8", 17),
+    scheduleF("f_investments_end", "Assets", "8", 18),
     scheduleF("f_gross_assets_begin", "Assets", "9a", 19),
     scheduleF("f_gross_assets_end", "Assets", "9a", 20),
     scheduleF("f_accum_depreciation_begin", "Assets", "9b", 21),
@@ -223,10 +225,11 @@ export const form5471Pdf: PdfFormDescriptor = {
       c.depreciation_functional;
     const preTaxIncome = totalIncome - totalDeductions;
     const netIncome = preTaxIncome - c.current_income_tax_expense_functional;
-    const assetsBegin = f.cash_begin_usd +
+    const assetsBegin = (f.other_investments_begin_usd ?? 0) +
+      f.cash_begin_usd +
       f.depreciable_assets_gross_begin_usd -
       f.accumulated_depreciation_begin_usd;
-    const assetsEnd = f.cash_end_usd +
+    const assetsEnd = (f.other_investments_end_usd ?? 0) + f.cash_end_usd +
       f.depreciable_assets_gross_end_usd -
       f.accumulated_depreciation_end_usd;
     const a = id.foreign_address;
@@ -289,6 +292,8 @@ export const form5471Pdf: PdfFormDescriptor = {
       c_net_income: netIncome,
       f_cash_begin: f.cash_begin_usd,
       f_cash_end: f.cash_end_usd,
+      f_investments_begin: f.other_investments_begin_usd,
+      f_investments_end: f.other_investments_end_usd,
       f_gross_assets_begin: f.depreciable_assets_gross_begin_usd,
       f_gross_assets_end: f.depreciable_assets_gross_end_usd,
       f_accum_depreciation_begin: f.accumulated_depreciation_begin_usd,

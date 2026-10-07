@@ -1,3 +1,4 @@
+import { assertForm6251CharitableSource } from "../../form6251_charitable_source.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import { assertForm6251Line8 } from "../../form6251_line8.ts";
 import { assertForm3921IsoSource } from "../../../nodes/inputs/f3921/index.ts";
@@ -35,6 +36,8 @@ export interface Fields {
   line2o_circulation_costs?: number | null;
   line2p_long_term_contracts?: number | null;
   line2q_mining_costs?: number | null;
+  line3_charitable_contribution_adjustment?: number | null;
+  line3_related_adjustments_total?: number | null;
   line3_form8864_income_exclusion?: number | null;
   line3_houseboat_interest_addback?: number | null;
   other_adjustments?: number | null;
@@ -108,8 +111,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line2o_circulation_costs", "CirculationCostAmt"],
   ["line2p_long_term_contracts", "LongTermContractAmt"],
   ["line2q_mining_costs", "MiningCostsAmt"],
-  ["line3_form8864_income_exclusion", "RelatedAdjustmentAmt"],
-  ["line3_houseboat_interest_addback", "RelatedAdjustmentAmt"],
+  ["line3_related_adjustments_total", "RelatedAdjustmentAmt"],
   ["amti", "AlternativeMinTaxableIncomeAmt"],
   ["exemption", "AlternativeMinimumTaxExemptAmt"],
   ["taxable_excess", "AdjAlternativeMinTaxableIncAmt"],
@@ -165,6 +167,10 @@ function buildIRS6251(fields: Input, context?: MefBuildContext): string {
       "Form 6251 mixed other_adjustments needs line-specific AMT modeling before filing",
     );
   }
+  assertForm6251CharitableSource(
+    fields as Record<string, unknown>,
+    context?.pending,
+  );
   assertForm6251Line8(fields);
   assertForm6251Form8949Source(fields, context?.pending);
   assertForm6251Form4952Line2c(
@@ -217,8 +223,20 @@ function buildIRS6251(fields: Input, context?: MefBuildContext): string {
   ) {
     return "";
   }
+  const related = [
+    fields.line3_form8864_income_exclusion,
+    fields.line3_houseboat_interest_addback,
+    fields.line3_charitable_contribution_adjustment,
+  ];
+  const projected = {
+    ...fields,
+    line3_related_adjustments_total:
+      related.some((value) => typeof value === "number")
+        ? related.reduce<number>((sum, value) => sum + Number(value ?? 0), 0)
+        : undefined,
+  };
   const children = FIELD_MAP.map(([key, tag]) => {
-    const value = fields[key];
+    const value = projected[key];
     if (typeof value !== "number") return "";
     if (key === "nol_adjustment") return element(tag, -value);
     return element(tag, value);

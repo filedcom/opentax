@@ -21,6 +21,7 @@ import { ALL_PDF_FORMS } from "./index.ts";
 
 const VALID_KINDS = new Set(["text", "checkbox", "checkboxWhen", "radio"]);
 const ARCHIVED_REVISIONS: Readonly<Record<string, number>> = {
+  f4852: 2020,
   f1040lep: 2024,
   f7203: 2022,
   f1116sb: 2022,

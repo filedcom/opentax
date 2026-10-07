@@ -73,6 +73,7 @@ export function scheduleEK1Part2Rows(
     ? []
     : sCorpSchema.parse(pending.k1_s_corp).k1_s_corps;
   const rows: ScheduleEK1Part2Row[] = [];
+  const ownerKeys: string[] = [];
   for (const item of partnerships) {
     const box1 = item.box1_ordinary_business ?? 0;
     const box2 = item.box2_rental_re ?? 0;
@@ -97,6 +98,9 @@ export function scheduleEK1Part2Rows(
     const result = [box1, box2, box3].some((amount) => amount > 0)
       ? classified(box1, box2, box3, item.eic_passive_activity_review)
       : { passiveIncome: 0, nonpassiveIncome: 0 };
+    ownerKeys.push(
+      `P:${item.partnership_ein}:${item.eic_passive_activity_review?.recipient_tin}`,
+    );
     rows.push({
       name: item.partnership_name,
       code: "P",
@@ -127,6 +131,9 @@ export function scheduleEK1Part2Rows(
       box3,
       item.eic_passive_activity_review,
     );
+    ownerKeys.push(
+      `S:${item.corporation_ein}:${item.eic_passive_activity_review?.recipient_tin}`,
+    );
     rows.push({
       name: item.corporation_name,
       code: "S",
@@ -134,9 +141,9 @@ export function scheduleEK1Part2Rows(
       ...result,
     });
   }
-  const keys = rows.map((row) => `${row.code}:${row.ein}`);
+  const keys = ownerKeys;
   if (new Set(keys).size !== keys.length) {
-    throw new Error("Schedule E Part II K-1 issuer rows must be unique");
+    throw new Error("Schedule E Part II K-1 owner/issuer rows must be unique");
   }
   return rows;
 }

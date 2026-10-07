@@ -1,4 +1,20 @@
+import { currentK1Qbi, currentK1QbiSourceSchema } from "../k1_qbi_source.ts";
+import {
+  currentSCorpRpeAggregation,
+  rpeAggregationSourceSchema,
+} from "../k1_rpe_aggregation_source.ts";
+import { form8582 } from "../../intermediate/forms/form8582/index.ts";
+import {
+  k1PassiveIncomeSourceSchema,
+  passiveK1Activities,
+} from "../k1_passive_source.ts";
+import {
+  ownedDebtFamily,
+  ownedDebtFamilyQbiLines,
+} from "../../intermediate/forms/form7203/owned-family.ts";
 import { z } from "zod";
+import { ownedSCorpLossLines } from "../../intermediate/forms/form8995/owned-s-corp-loss.ts";
+import { ty2025IrsCountryCodeSchema } from "../../irs_country_code.ts";
 import {
   type Box10CodeJSource,
   box10CodeJSourceSchema,
@@ -29,10 +45,12 @@ import {
 import { form7203 } from "../../intermediate/forms/form7203/index.ts";
 import { reviewedStockLossLedgerSchema } from "../../intermediate/forms/form7203/stock-ledger.ts";
 import {
+  actualCurrentDebtRepayments,
   reconcileCashCapitalAndNewNote,
   reconcileNewFormalNotes,
   reviewedForm7203DebtEvidenceSchema,
   sumPrincipalRepayments,
+  totalCurrentDebtAdvances,
 } from "../../intermediate/forms/form7203/debt-note.ts";
 import { form4797 } from "../../intermediate/forms/form4797/index.ts";
 import { rate_28_gain_worksheet } from "../../intermediate/worksheets/rate_28_gain_worksheet/index.ts";
@@ -91,6 +109,9 @@ export const itemSchema = z.object({
   // Box 3 — Other net rental income/loss → Schedule E
   box3_other_rental: z.number().optional(),
   eic_passive_activity_review: k1PassiveEicReviewSchema.optional(),
+  passive_income_source: k1PassiveIncomeSourceSchema.optional(),
+  qualified_business_income_source: currentK1QbiSourceSchema.optional(),
+  rpe_aggregation_source: rpeAggregationSourceSchema.optional(),
 
   // Box 4 — Interest income → Schedule B
   box4_interest: z.number().nonnegative().optional(),
@@ -171,7 +192,7 @@ export const itemSchema = z.object({
   box14_foreign_deductions: z.number().nonnegative().optional(),
   box14_foreign_deductions_explanation: z.string().trim().min(1).optional(),
   // Use the country, tax type, and payment details from Schedule K-3 Part III.
-  box14_foreign_tax_irs_country_code: z.string().length(2).optional(),
+  box14_foreign_tax_irs_country_code: ty2025IrsCountryCodeSchema.optional(),
   box14_foreign_tax_paid_or_accrued_date: z.string().regex(
     /^\d{4}-\d{2}-\d{2}$/,
   ).optional(),
@@ -213,6 +234,20 @@ export const itemSchema = z.object({
   // At-risk suspended losses from pre-2018 years (K1S > "Pre-2018 At-Risk" tab)
   pre2018_at_risk_suspended: z.number().nonnegative().optional(),
 }).superRefine((item, ctx) => {
+  if (
+    item.form7203_stock_loss_ledger?.no_other_schedule_e_activity === false &&
+    !(item.form7203_debt_evidence?.kind !==
+        "prior_reduced_formal_note_repayment" &&
+      item.form7203_debt_evidence?.owned_current_records
+        ?.complete_current_shareholder_source_inventory)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Additional shareholder corporations need complete owned source inventory",
+    });
+  }
+
   if (item.eic_passive_activity_review) {
     for (
       const key of ["corporation_ein", "source_document_reference"] as const
@@ -371,6 +406,11 @@ type K1SCorpItems = K1SCorpItem[];
 
 // Aggregate Schedule E income (Box 1 + 2 + 3 + 6) → schedule1 line5_schedule_e
 function schedule1Output(items: K1SCorpItems): NodeOutput[] {
+  const activities = passiveK1Activities(items, "k1_s_corp");
+  const passiveIncome = activities.reduce(
+    (sum, row) => sum + row.current_net,
+    0,
+  );
   const total = items.reduce(
     (sum, item) =>
       sum +
@@ -386,7 +426,18 @@ function schedule1Output(items: K1SCorpItems): NodeOutput[] {
     output(agi_aggregator, {
       line5_schedule_e: total,
       eic_passive_k1_income: reviewedK1PassiveIncome(items),
+      ...(passiveIncome > 0
+        ? { pal_current_income: passiveIncome, pal_rental_income: 0 }
+        : {}),
     }),
+    ...(activities.length
+      ? [output(form8582, {
+        current_income: passiveIncome,
+        rental_current_income: 0,
+        has_other_passive: true,
+        activities,
+      })]
+      : []),
   ];
 }
 
@@ -467,6 +518,63 @@ function resolveUbia(item: K1SCorpItem): number {
 }
 
 function form8995Output(items: K1SCorpItems): NodeOutput[] {
+  const rpe = items.filter((item) => item.rpe_aggregation_source);
+  if (rpe.length) {
+    if (rpe.length !== 1 || items.length !== 1) {
+      throw Error(
+        "RPE aggregation needs its complete single-issuer current K1 inventory; other issuer combinations need their source route",
+      );
+    }
+    const group = currentSCorpRpeAggregation(rpe[0])!;
+    return [output(form8995, {
+      qbi: group.qbi,
+      w2_wages: group.wages,
+      unadjusted_basis: group.ubia,
+      rpe_aggregation_source: group.source,
+    })];
+  }
+  const owned = items.filter((item) =>
+    item.form7203_debt_evidence?.kind !==
+      "prior_reduced_formal_note_repayment" &&
+    item.form7203_debt_evidence?.owned_current_records !== undefined
+  );
+  if (owned.length > 0) {
+    if (owned.length >= 2 && owned.length === items.length) {
+      const lines = ownedDebtFamilyQbiLines(owned, 0);
+      return [
+        output(form8995, {
+          qbi: lines.line2,
+          owned_s_corp_loss_sources: owned,
+        }),
+      ];
+    }
+    if (owned.length !== 1 || items.length !== 1) {
+      throw Error(
+        "Owned7203/QBI loss needs its independently sourced single corporation",
+      );
+    }
+    const ownedNote = owned[0].form7203_debt_evidence;
+    if (
+      !ownedNote || ownedNote.kind === "prior_reduced_formal_note_repayment"
+    ) throw Error("Owned current note needed");
+    if (
+      ownedNote.owned_current_records!
+        .co_owned_corporate_inventory ||
+      (ownedNote.owned_current_records!
+          .complete_current_shareholder_source_inventory?.length ?? 1) > 1
+    ) {
+      throw Error(
+        "Complete co-owned/multi-corporation source family cannot omit its required return K1s",
+      );
+    }
+    const lines = ownedSCorpLossLines(owned[0], 0);
+    return [
+      output(form8995, {
+        qbi: lines.line2,
+        owned_s_corp_loss_source: owned[0],
+      }),
+    ];
+  }
   const nonSstb = items.filter((item) => item.sstb_indicator !== true);
   const sstb = items.filter((item) => item.sstb_indicator === true);
   const totalQbi = nonSstb.reduce(
@@ -482,12 +590,27 @@ function form8995Output(items: K1SCorpItems): NodeOutput[] {
   const totalSstbW2 = sstb.reduce((sum, item) => sum + resolveW2Wages(item), 0);
   const totalSstbUbia = sstb.reduce((sum, item) => sum + resolveUbia(item), 0);
 
+  const incomeSources = items.flatMap((item) =>
+    item.passive_income_source ? [item.passive_income_source] : []
+  );
   if (
     totalQbi <= 0 && totalW2 <= 0 && totalUbia <= 0 &&
     totalSstbQbi <= 0 && totalSstbW2 <= 0 && totalSstbUbia <= 0
-  ) return [];
+  ) {
+    return incomeSources.length
+      ? [output(form8995, { current_passive_k1_income_sources: incomeSources })]
+      : [];
+  }
 
   const fields: Partial<z.infer<typeof form8995["inputSchema"]>> = {};
+  const sources = items.flatMap((item) => {
+    const source = currentK1Qbi(item);
+    return source ? [source] : [];
+  });
+  if (sources.length) fields.current_k1_qbi_sources = sources;
+  if (incomeSources.length) {
+    fields.current_passive_k1_income_sources = incomeSources;
+  }
   if (totalQbi > 0) fields.qbi = totalQbi;
   if (totalW2 > 0) fields.w2_wages = totalW2;
   if (totalUbia > 0) fields.unadjusted_basis = totalUbia;
@@ -648,9 +771,7 @@ function buildForm7203Fields(
       : {}),
     ...(item.form7203_debt_evidence
       ? {
-        new_loans: item.form7203_debt_evidence.cash_advance_amount +
-          (item.form7203_debt_evidence.second_formal_note
-            ?.cash_advance_amount ?? 0),
+        new_loans: totalCurrentDebtAdvances(item.form7203_debt_evidence),
         reviewed_debt_evidence: item.form7203_debt_evidence,
       }
       : {}),
@@ -659,6 +780,17 @@ function buildForm7203Fields(
 }
 
 function form7203Outputs(items: K1SCorpItems): NodeOutput[] {
+  if (
+    items.length >= 2 &&
+    items.every((item) =>
+      item.form7203_debt_evidence?.kind !==
+        "prior_reduced_formal_note_repayment" &&
+      item.form7203_debt_evidence?.owned_current_records !== undefined
+    )
+  ) {
+    ownedDebtFamily(items);
+    return [output(form7203, { owned_debt_loss_sources: items })];
+  }
   return items
     .filter(hasBasisData)
     .map((item) => output(form7203, buildForm7203Fields(item)));
@@ -806,6 +938,7 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
     form4952,
     f3800,
     form8582cr,
+    form8582,
     disabledAccessLimit,
   ]);
 
@@ -835,8 +968,7 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
           ledger.beginning_basis_workpaper_reference !==
             note.beginning_stock_basis_workpaper_reference ||
           (item.box16_code_e_loan_repayment ?? 0) !==
-            (sumPrincipalRepayments(note.principal_repayments) +
-              (note.second_formal_note?.principal_repayment?.amount ?? 0))
+            actualCurrentDebtRepayments(note)
         ) {
           throw new Error(
             "Form 7203 formal note and reviewed stock ledger must reconcile",
@@ -887,6 +1019,12 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
     }
     if (
       k1_s_corps.length !== 1 &&
+      !(k1_s_corps.length >= 2 &&
+        k1_s_corps.every((item) =>
+          item.form7203_debt_evidence?.kind !==
+            "prior_reduced_formal_note_repayment" &&
+          item.form7203_debt_evidence?.owned_current_records !== undefined
+        )) &&
       k1_s_corps.some((item) => (item.box1_ordinary_business ?? 0) < 0)
     ) {
       throw new Error(

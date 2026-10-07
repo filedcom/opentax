@@ -1,3 +1,4 @@
+import { assertOwnedScheduleSE } from "../../schedule-se-owner-source.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { scheduleSELines } from "../../../nodes/intermediate/forms/schedule_se/calculation.ts";
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
@@ -43,8 +44,18 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   { kind: "text", domainKey: "wages_8919", pdfField: `${page1}f1_16[0]` },
   { kind: "text", domainKey: "line8d", pdfField: `${page1}f1_17[0]` },
-  { kind: "text", domainKey: "line9", pdfField: `${page1}f1_18[0]` },
-  { kind: "text", domainKey: "line10", pdfField: `${page1}f1_19[0]` },
+  {
+    kind: "text",
+    domainKey: "line9",
+    pdfField: `${page1}f1_18[0]`,
+    printZero: true,
+  },
+  {
+    kind: "text",
+    domainKey: "line10",
+    pdfField: `${page1}f1_19[0]`,
+    printZero: true,
+  },
   { kind: "text", domainKey: "line11", pdfField: `${page1}f1_20[0]` },
   { kind: "text", domainKey: "line12", pdfField: `${page1}f1_21[0]` },
   { kind: "text", domainKey: "line13", pdfField: `${page1}f1_22[0]` },
@@ -57,6 +68,10 @@ export const scheduleSePdf: PdfFormDescriptor = {
   fields,
   projectFields(fields, allPending) {
     if (Object.keys(fields).length === 0) return fields;
+    if (fields.owner_identity) {
+      assertOwnedScheduleSE(allPending);
+      return fields;
+    }
     const lines = scheduleSELines(fields, CONFIG_BY_YEAR[2025].ssWageBase);
     const spouseOwned = scheduleSeSpouseProprietor(allPending, fields);
     const general = allPending?.general;
@@ -92,6 +107,28 @@ export const scheduleSePdf: PdfFormDescriptor = {
         : {}),
       ...lines,
     };
+  },
+  instances(fields, filer, allPending) {
+    const owned = allPending
+      ? assertOwnedScheduleSE(allPending, filer)
+      : undefined;
+    if (!owned) return [fields];
+    return owned.instances.map((row) => {
+      const general = allPending!.general;
+      const prefix = row.recipient === "S" ? "spouse" : "taxpayer";
+      return {
+        ...row,
+        owner_ssn: row.owner_ssn,
+        owner_name: [
+          general[`${prefix}_first_name`],
+          general[`${prefix}_middle_initial`],
+          general[`${prefix}_last_name`],
+        ].filter(Boolean).join(" "),
+        ...(row.farm_optional_method_elected
+          ? { net_profit_schedule_f: undefined }
+          : {}),
+      };
+    });
   },
   // Schedule SE is filed only when self-employment tax was actually computed
   // (Schedule 2 line 4); W-2 social security wages alone do not require it.
