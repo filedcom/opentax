@@ -1,11 +1,11 @@
 import { assertEquals } from "@std/assert";
-import { buildMefBundle, buildMefXml } from "./mef/builder.ts";
+import { buildMefBundle } from "./mef/builder.ts";
 import { f1040_2025 } from "./index.ts";
 import { buildPending } from "./mef/pending.ts";
 import { pdfReviewFixtures } from "./pdf/review-fixtures.ts";
 
-// These source/attachment cases are intentionally guarded before standalone
-// XML export. Keep exclusions explicit so a newly guarded fixture cannot
+// These source/attachment cases are intentionally guarded before packet
+// preparation. Keep exclusions explicit so a newly guarded fixture cannot
 // silently shrink the replay audit.
 const guardedFixtureIds = new Set([
   "single-8862-ctc-reinstatement",
@@ -18,7 +18,6 @@ const guardedFixtureIds = new Set([
   "single-twenty-four-new-markets-investments",
   "single-geothermal-and-new-markets-credits",
   "single-partnership-code-k-and-w2g",
-  "single-form8824-section1231-exchange",
   "single-form461-schedule-c-excess-business-loss",
 ]);
 const calculatedKeys = [
@@ -53,17 +52,15 @@ Deno.test("calculated Form 1040 and Schedule 1-3 amounts cannot change native XM
       continue;
     }
     const pending = buildPending(result.pending);
-    // Reviewed attachment and substitute-source claims must use their retained
-    // bytes, just like the held source review generator. Keep every numerical
-    // tamper probe active.
+    // Use the real packet path for retained bytes and automatically generated
+    // disclosures, including QBI aggregation and the Form 8824 gain statement.
+    // Keep every numerical tamper probe active.
     const fixtureXml = async (data: typeof pending) =>
-      fixture.attachments?.length || fixture.retainedSourceDocuments?.length
-        ? (await buildMefBundle(data, {
-          filer: fixture.filer,
-          attachments: fixture.attachments ?? [],
-          retainedSourceDocuments: fixture.retainedSourceDocuments,
-        })).xml
-        : buildMefXml(data, fixture.filer);
+      (await buildMefBundle(data, {
+        filer: fixture.filer,
+        attachments: fixture.attachments ?? [],
+        retainedSourceDocuments: fixture.retainedSourceDocuments,
+      })).xml;
     let baseline: string;
     try {
       baseline = stableXml(await fixtureXml(pending));

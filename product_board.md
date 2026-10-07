@@ -1,22 +1,12 @@
 # TY2025 Form 1040 product board
 
-## Checkpoint — October 7, 2026
+## Compacted learnings — October 7, 2026
 
-**Released:** [OpenTax v2.0.10](https://github.com/filedcom/opentax/releases/tag/v2.0.10), the latest regular iteration, includes the three routes merged in [PR63](https://github.com/filedcom/opentax/pull/63). All five platform builds and binary smoke tests passed; published checksums and the downloaded Mac ARM64 smoke were verified.
-
-**Open work:** **52 active TODOs** below and **one separate future item**. The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) now records **1,555 bounded slices**. These completions do not close the broader form requirements or filing-ready gates.
-
-### Newly completed bounded routes
-
-| Route | Source and validation record |
-|---|---|
-| Positive-spouse premium-credit income | [Form 8962 joint-income proof](docs/mef/ty2025-form8962-joint-income-source-scope.md) |
-| Issuer QBI aggregation | [RPE aggregation proof](docs/mef/ty2025-rpe-aggregation-source-checkpoint.md) |
-| MFJ spouse royalties and investment interest | [Form 4952 spouse-royalty proof](docs/mef/ty2025-form4952-mfjspouse-royalty-source-proof.md) |
-
-**Validation still open:** Latest integrated full regression, broader source/coverage and PDF review, IRS business rules, ATS credentials and accepted acknowledgments. The combined route checks passed 7/0; that does not close these gates.
-
-**Handoff:** The [October 7 status archive](docs/mef/ty2025-product-board-status-2026-10-07.md) records release, merge, focused checks, retained evidence and branch cleanup. The [checkpoint handoff](docs/mef/ty2025-checkpoint-handoff-2026-10-07.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md) preserve earlier qualifications. The completed remote branches are removed; no private-route integration remains pending from this checkpoint. Board cleanup leaves every existing TODO unchanged; implementation can resume when requested. Discoveries belong only in `future_todo`, outside the active queue.
+- **Released checkpoint:** [v2.0.10](https://github.com/filedcom/opentax/releases/tag/v2.0.10) includes positive-spouse Form 8962 income, issuer RPE QBI aggregation, and MFJ spouse royalties from PR63. Five platform builds/smokes, published checksums, and downloaded Mac ARM64 smoke passed.
+- **Retained progress:** 1,555 bounded slices in the [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md); 52 existing active TODOs remain. Bounded route checks do not close broad form requirements.
+- **Evidence:** [October 7 archive](docs/mef/ty2025-product-board-status-2026-10-07.md), [handoff](docs/mef/ty2025-checkpoint-handoff-2026-10-07.md), and [validation record](docs/mef/ty2025-form1040-validation-batch.md), and [current execution](docs/mef/ty2025-readiness-execution-2026-10-07.md) retain route proofs, commands, hashes, and qualifications. Combined route checks passed 7/0; earlier V32 regression covers an older immutable snapshot.
+- **Current validation:** 372 fixture preflights completed: 361 prepared, 11 guarded. Integrated regression exposed a replay-audit path failure for bundled QBI disclosure; the corrected audit passed 1/0 across all 361 retained positive fixtures. [Current execution](docs/mef/ty2025-readiness-execution-2026-10-07.md) retains the failure and repair evidence. Selected PDF/XSD preparation is running. Broader coverage, page review, business rules, ATS credentials and acceptance remain open.
+- **Execution boundary:** finish existing TODOs for MeF testing. Main checklist scope is frozen; update completion only when its full requirement is proved. Record discoveries solely in `future_todo` and never execute that section. Compact learnings before implementation; preserve detailed evidence in linked records.
 
 ## Scope and completion rules
 
@@ -97,3 +87,7 @@ Newly discovered work belongs here for future planning. It is outside the
 current execution queue.
 
 - [ ] Review newly identified Form 8621 Part II elections D–H, qualifying-insurance status, and atypical indirect-owner/first-chain workflows against their specific deemed-sale/dividend, E&P, basis, source and attachment requirements. Discovered in the October6 parent scope audit; future planning only, not part of the current execution queue.
+
+- [ ] Plan durable storage capacity for retained test and PDF evidence; the local data volume had about 754 MiB free during the October 7 readiness run. Future planning only; do not remove retained evidence as part of the current queue.
+
+- [ ] Reconcile the synthetic `single-form461-schedule-c-excess-business-loss` PDF-review fixture with the current sourced Form 8995 net-loss carryforward guard. October 7 native preflight rejected its calculation before XML/PDF preparation; preserve the guard and review the fixture in future planning only.
