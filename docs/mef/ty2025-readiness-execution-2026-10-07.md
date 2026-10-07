@@ -3114,3 +3114,17 @@ exactly five Form8582 code/test paths changed since the completed12,258/0 run.
 Session12057, Deno task PID99655; log/status under
 `.state/research/board-execution-2026-10-07/full-test-after-form8582-integration.*`.
 Running is not a pass; no main checkoff, future work or aggregate increase.
+
+## Trust K-1 code B current boundary reconciliation
+
+The coverage queue's assertion that intake cannot identify codeB was stale.
+Current public input retains a positive cent-precision amount; its read-only
+issued-copy review binds hash/readability/owner but leaves printed contents
+unverified. The graph does not deposit line25c and both exports remain guarded.
+Corrected the queue to match code and the entity-issued root review. The
+completed12,258/0 log contains the codeB retention/rejection and review cases.
+Private audit SHA256 `6b864302831a7555bc20d63e97b483a0af3028d8648f302508c22579048d3869`,
+`.state/research/board-execution-2026-10-07/trust-k1-code-b-current-boundary-audit-20261007.json`.
+This does not create a positive route, authenticate an issued copy or close
+the broader owner/attachment requirement. All2,592 live-regression runtime
+hashes remain unchanged; main52/future35 rows and aggregates unchanged.

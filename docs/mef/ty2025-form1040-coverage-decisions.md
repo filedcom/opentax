@@ -208,9 +208,13 @@ supports proposing `IRS1065ScheduleD` and `IRS8825` as other-filer documents
 when the individual only receives a K-1. This needs explicit product approval,
 not a blanket entity-root exclusion. It also finds that `IRS1041ScheduleK1` is
 normally beneficiary source evidence but becomes a required Form 1040 attachment
-for box 13 code B backup withholding. The current trust K-1 intake cannot
-identify that code or supply the issued-copy attachment, so that exception
-remains an in-scope build gap, not an exclusion.
+for box 13 code B backup withholding. The current trust K-1 intake retains a positive, cent-precision code B amount
+and an optional issued-copy review. The read-only byte/hash preflight checks
+PDF readability and current-return ownership, but reports printed contents as
+unverified. The graph does not deposit that amount on line 25c, and both final
+exports reject it; a native K-1 and verified issued-copy packet route remain
+an in-scope build gap, not an exclusion. See the [current entity-issued root
+review](ty2025-entity-issued-root-disposition.md).
 
 Do **not** infer approval for those decisions from this document. It does not
 propose excluding the known individual attachment candidates such as Schedule J,
