@@ -4124,3 +4124,57 @@ Private `ats-status-recheck-20261008-2319.json` retains the observation.
 Board estimate remains0tests/0% acceptance by the original October8 morning
 deadline, with post-reopening pass probability unestimated. Five local XSD
 validations are not five IRS ATS passes. Overall goal remains incomplete.
+
+
+## October 8 — durable Form 8582 candidate archive; acceptance gate remains open
+
+Isolated commit `33ab01d97` adds `cli/store/form8582-ledger.ts` and its tests
+on top of the current-loss filing joins. The archive runs the stored public
+return through the graph and registered source-reconciling Form 8582 builder
+before building the loss-character ledger. It retains the complete stored
+metadata/inputs, native worksheet XML, exact-byte hashes and ledger in a new
+UUID directory for each snapshot. Files are created with mode 0600, directories
+with 0700; each file is synced before atomic directory publication. Return
+inputs remain unchanged. Reads check the retained byte hashes and recompute
+against the current return, its identity and declared reference. Source edits
+invalidate the current read without deleting historical evidence.
+
+The record status is strictly `acceptance-unverified`. A declared accepted-return
+reference is an assertion, not trusted IRS evidence. Existing A2A inbound
+archival explicitly retains opaque bytes without interpreting IRS status;
+its integrity checks cannot authenticate acceptance. This component does not
+promote a candidate, enable next-year import, or complete the durable accepted
+ledger/2026 engine requirement. It is not exposed as an accepted-filing CLI
+command. No main TODO is checked off.
+
+Normal typed focused command: `deno test --allow-read --allow-write
+cli/store/form8582-ledger.test.ts cli/store/store.test.ts
+forms/f1040/2025/current-loss-ledger.test.ts
+forms/f1040/nodes/intermediate/forms/form8582/ledger.test.ts`.
+Final v4 result: **39 passed / 0 failed**, exit 0,
+2026-10-07T23:24:31.103372Z–23:24:33.518122Z.
+Private `form8582-durable-candidate-20261008-v4/run.json` binds the two new
+runtime files. Log SHA-256:
+`995ecff2b428586d65ec71ee166090a3f18fa68bd0939625adc43b85042b5878`.
+Checks include all four current-loss allocations, source/XML byte corruption,
+a coherent loss-character forgery, false accepted status, changed reference,
+source edits that preserve PAL totals, foreign return identity, simultaneous
+independent snapshots, private modes, unsupported year, missing sale-source
+reference and traversal IDs. No additional IRS XSD/PDF packet or acceptance
+is claimed by these storage checks.
+
+Preserved failures: v1 wrapper failed before any tests (incorrect file-handle
+chmod call); v2 type check failed on two test calls using four arguments rather
+than the store's three-argument update API; v3 ran **38 passed / 1 failed** on
+an incorrectly named XML element in the test assertion. The production writer
+was unchanged across v2–v4; typed tests were corrected and rerun. Archives are
+retained separately, never overwritten.
+
+At 2026-10-07T23:24:46Z all 2,624 runtime hashes held by the live root full
+regression still matched. Session 41991 was re-polled and confirmed live;
+no terminal result is inferred. The new isolated commit is not integrated or
+covered by that running regression. Main requirement text matches the frozen
+`0c6ae76a` baseline: 52 unchecked main items, 38 unchecked future items, and
+no future work picked up. Compacted top learnings retain five bullets; the
+October 8 deadline estimate remains 0 ATS tests / 0% acceptance in that
+window, with post-reopening probability unknown.
