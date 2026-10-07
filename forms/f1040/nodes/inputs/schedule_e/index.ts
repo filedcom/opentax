@@ -190,6 +190,7 @@ export const itemSchema = z.object({
     payer_name: z.string().min(1),
     payer_tin: z.string().regex(/^\d{9}$/),
     recipient_tin: z.string().regex(/^\d{9}$/),
+    source_document_reference: z.string().trim().min(1).optional(),
     box2_gross_royalties: z.number().positive(),
   }).strict().optional(),
 

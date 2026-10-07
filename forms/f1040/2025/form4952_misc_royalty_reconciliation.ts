@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { FilerIdentity } from "../mef/header.ts";
+import { FilingStatus, type FilerIdentity } from "../mef/header.ts";
 import { inputSchema as miscSchema } from "../nodes/inputs/f1099m/index.ts";
 import { inputSchema as interestSchema } from "../nodes/inputs/f1099int/index.ts";
 import { inputSchema as scheduleESchema } from "../nodes/inputs/schedule_e/index.ts";
@@ -97,7 +97,12 @@ export function reconcileForm4952MiscRoyaltyPath(
           (item.foreign_source_interest_usd ?? 0) === 0 &&
           !item.box7?.trim() &&
           item.foreign_tax_irs_country_code === undefined &&
-          !!item.recipient_tin && item.recipient_tin === source?.recipient_tin
+          !!item.recipient_tin &&
+          (filer === undefined ||
+            item.recipient_tin === filer.primarySSN.replaceAll("-", "") ||
+            (filer.filingStatus === FilingStatus.MarriedFilingJointly &&
+              item.recipient_tin ===
+                filer.spouse?.ssn.replaceAll("-", "")))
         ) ||
         (interestItems.length > 1 &&
           (!interestItems.every((item) =>
@@ -125,13 +130,6 @@ export function reconcileForm4952MiscRoyaltyPath(
     );
   }
   verifyMiscRoyaltySource(row, pending.f1099m, filer);
-  if (
-    filer !== undefined &&
-    (row.tsj !== "T" ||
-      source.recipient_tin !== filer.primarySSN.replaceAll("-", ""))
-  ) {
-    throw new Error("Form 4952 royalty recipient must be the primary filer");
-  }
   if (
     !sourceAmountsMatch(form.data.source_1099_royalties, [royalty]) ||
     form.data

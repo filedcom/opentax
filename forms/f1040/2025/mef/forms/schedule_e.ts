@@ -28,7 +28,7 @@ import {
   inputSchema as form4835InputSchema,
 } from "../../../nodes/inputs/f4835/index.ts";
 import type { z } from "zod";
-import type { FilerIdentity } from "../../../mef/header.ts";
+import { FilingStatus, type FilerIdentity } from "../../../mef/header.ts";
 import { inputSchema as partnershipK1InputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as miscInputSchema } from "../../../nodes/inputs/f1099m/index.ts";
 import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
@@ -129,6 +129,7 @@ const permittedMiscRoyaltyFields = new Set([
   "payer_name",
   "payer_tin",
   "recipient_tin",
+  "source_document_reference",
   "account_number",
   "multi_form_code",
   "box2_royalties",
@@ -151,14 +152,19 @@ export function verifyMiscRoyaltySource(
     misc.payer_name !== source.payer_name ||
     misc.payer_tin !== source.payer_tin ||
     misc.recipient_tin !== source.recipient_tin ||
+    misc.source_document_reference !== source.source_document_reference ||
     misc.box2_royalties !== source.box2_gross_royalties ||
     misc.box2_nonpassive_portfolio_investment_for_form4952_verified !== true ||
     misc.box2_royalties_routing === "schedule_c" ||
     Object.keys(misc).some((key) => !permittedMiscRoyaltyFields.has(key)) ||
     item.k1_royalty_source !== undefined ||
-    item.tsj !== "T" ||
+    (item.tsj !== "T" && item.tsj !== "S") ||
     (filer !== undefined &&
-      source.recipient_tin !== filer.primarySSN.replaceAll("-", "")) ||
+      (item.tsj === "T"
+        ? source.recipient_tin !== filer.primarySSN.replaceAll("-", "")
+        : filer.filingStatus !== FilingStatus.MarriedFilingJointly ||
+          !filer.spouse?.ssn ||
+          source.recipient_tin !== filer.spouse.ssn.replaceAll("-", ""))) ||
     item.property_type !== 6 || item.activity_type !== "D" ||
     item.rent_income !== 0 ||
     item.royalties_income !== source.box2_gross_royalties ||
