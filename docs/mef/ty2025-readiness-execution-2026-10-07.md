@@ -1099,7 +1099,9 @@ All twelve actual pages from four existing mortgage fixtures were inspected
 against source/pending/native XML. Each has primary Alex Example111223333,
 wages/AGI80,000, withholding12,000 and readable1040(two)/ScheduleA(one).
 
-- `mfs-two-loan-mortgage-limit`: MFS/spouse-itemizes correctly marked;
+- `mfs-two-loan-mortgage-limit`: MFS correctly marked; the earlier claim
+  that spouse-itemizes was marked is corrected by the later individual-page
+  inspection below (actual line12b blank despite source/native indication);
   375,000 limit / 900,000 supplied average balances gives .417 three-decimal
   ratio, deductions8,340+6,672=15,012, taxable64,988,tax9,209/refund2,791.
 - `single-1098-construction-refinance-points`: 2,000 reported points /180
@@ -1988,3 +1990,14 @@ Conditional arithmetic agrees with pending/native/printed Form1040 amounts. Purc
 Independently read [2025 Publication1040](https://www.irs.gov/publications/p1040) table rows59,600–59,650Single,64,950–65,000MFS and61,900–61,950Single give tax8,032/9,209/8,538. Withheld12,000 gives refunds3,968/2,791/3,462. Actual identity, filing-status, spouse details, digital-assets No and amounts are readable. All three ScheduleA PDFs put the deduction on8a/8e/10/17, leaving8b/8c blank; native emits8a but omits those subtotals/total, the known future-only limitation.
 
 The MFS actual Form1040 page2 leaves line12b spouse-itemizes blank although source/pending set `mfs_spouse_itemizing:true` and native emits `MustItemizeInd` X. The [2025 instructions](https://www.irs.gov/instructions/i1040gi) require that checkbox. This new discovery is recorded only in `future_todo` and remains unimplemented. Private `mortgage-points-three-packet-independent-observation.json` retains conditional arithmetic, native values, qualifications and26 artifact/page-image hashes; its helper initially used incorrect source field names, then passed after correcting those private names. No clean approval flags, checker or aggregate addition are claimed. Main52 requirements remain frozen; all24 future items are unworked; aggregate stays75 bounded passes/267 packets/2,706 pages. The full regression was confirmed live at elapsed18:56, progressing through calculated-return replay cases; no full pass or restart is claimed.
+
+
+### Mixed business and personal Form1099-K: all14 pages observed, not approved
+
+`single-k-mixed-business-personal` was absent from the267 retained passing-batch fixture IDs and had not been individually named in this execution record. Its full source metadata/filer, selected pending calculations and every native return-data leaf were read. All14 actual pages were rendered and inspected individually:1040two, Schedule1two, Schedule2two, ScheduleCtwo, ScheduleDtwo, SEtwo, Form8949PartIIone and Form8995one. Original source/XML/PDF hashes match the preparation manifest, and the private fourteen-page independent observation retains17 artifact/image hashes.
+
+The supplied2,800 Form1099-K gross reconciles to2,000 existing ScheduleC receipts plus800 personal camera proceeds. Business-reference/PSE/recipient and allocation references join; no second count of the business receipts occurs. Camera basis300 and January15,2024–June15,2025 holding period give one500 long-term gain, correctly on Form8949PartII boxF and ScheduleD10/15/16/Form1040line7a. The [IRS Form1099-K guidance](https://www.irs.gov/businesses/what-to-do-with-form-1099-k) supports separate business and personal-gain destinations. Synthetic settlement, acquisition and sale references do not authenticate issued records or actual basis.
+
+Independent arithmetic:2,000profit×92.35percent=1,847earnings; separately rounded SS229/Medicare54 give SE283/half142. Total income2,500 less142 gives AGI2,358. QBI1,858/component372 is limited tozero by taxable income beforeQBIzero (standard15,750), consistent with [Form8995 instructions](https://www.irs.gov/instructions/i8995). No regular tax, credit or payment leaves amount owed283. Printed source-to-ScheduleC/SE/1/2/1040 and QBI amounts agree with that conditional computation. EIC is zero because pending `filer_has_valid_ssns` isfalse; the calculation explicitly returnszero without affirmative eligibility. This source supplies no valid-SSN eligibility review. It does not prove actual EIC ineligibility, and no credit is inferred or added.
+
+Actual ScheduleD pages9/10 print line10 proceeds800/basis300/gain500, totals15/16=500, QOFNo/17Yes/20Yes. Native ScheduleD contains only the line10 transaction group and omits the printed totals/answers. This extends the existing future-only nativeScheduleD note; nothing there is implemented. All other observed identity/status/checkbox/amount/page-order facts are legible and consistent with the supplied scope, including blank unused ScheduleC/SE sections. No clean approval flags, checker or aggregate addition are claimed. Main52 requirements remain frozen; all24 future items unworked; aggregate stays75 bounded passes/267 packets/2,706 pages. The prior incorrect MFS spouse-itemizes-mark sentence in this record was also corrected to reference the later actual blank-checkbox observation.
