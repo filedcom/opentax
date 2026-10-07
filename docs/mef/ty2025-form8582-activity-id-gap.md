@@ -680,3 +680,41 @@ Private audit:
 `.state/research/board-execution-2026-10-07/form8582-ledger-current-boundary-review-20261007.json`,
 SHA256 `06591a4c941128ad994db31fdf5a74ef738c1e91e811e77d4de00775c6d050d8`.
 This review changes no runtime, aggregate readiness count or main-board checkoff.
+
+## October 7: isolated PDF overflow implementation
+
+The existing board's Parts IV–IX overflow requirement is implemented on isolated
+branch `codex/form8582-overflow-20261007`, commit `84c4388c5`, in
+`/tmp/opentax-form8582-overflow-20261007`. It is **not yet integrated** into the
+main readiness checkout; that checkout's ongoing regression stays unchanged.
+The [2025 IRS instructions](https://www.irs.gov/instructions/i8582) permit copies
+of applicable pages or an attached schedule in the same format for Parts IV–IX.
+
+The first five IV–VIII rows and first IX activity's first three reporting lines
+remain on the IRS form. Supplemental schedules retain excess rows and extra IX
+activities, with the original column meanings, activity identity, filer name/TIN,
+whole-worksheet totals, row ranges and page counts. Canonical totals still cover
+all native rows. Before append, the hook recomputes the source-validated native
+worksheet and rejects changed projected totals, rows, extra keys or missing
+source/identity. Native source and unsupported-pattern guards are preserved.
+
+The normal typed Form8582 PDF/native/node suite passes **128/0**, including
+22-activity active and other-passive multi-page overflow, a second Part IX
+activity, five-row boundary, and altered projection/missing source cases.
+Two synthetic source/worksheet attachments use the actual IRS template: active
+15 pages/88 activity-name occurrences and other-passive12 pages/66 occurrences.
+Every one of the27 pages was visually reviewed; all names survive text extraction
+and both standalone IRS8582 XML documents pass the cached v5.4 XSD. These are
+worksheet-level fixtures, **not full public-return graph proof**, authenticated
+issuer/prior-filing sources, business-rule approval or IRS acceptance. Public
+graph/packet integration, further boundary review, and a fresh integrated full
+regression remain required; the broad Form8582 requirement is unchecked.
+
+Private evidence:
+`.state/research/board-execution-2026-10-07/form8582-overflow-isolated-20261007/`.
+Independent audit SHA256 `c1bb96dd5c49f999c159f7209e4d775f36f8112f49e9b4b2a30205155f2028da`;
+final focused log SHA256 `9aa42dccecab13d71c610285867664a163a9636afb6625341376294f5cdfdda6`.
+Active PDF SHA256 `a24408c5eb40611735d8b83457a53530991fe502ad7e4af3f46328befcbd53fa`;
+other-passive PDF SHA256 `842bedff89972a733ec9863845bd8a06832b8e3e2fa033ea1664e779b9fcc52c`.
+All2,591 main-checkout runtime hashes match its ongoing regression manifest.
+No aggregate increase, main-board checkoff or future-row implementation.

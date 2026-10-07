@@ -3008,3 +3008,15 @@ authenticated acceptance lookup or2026 engine importer is established.
 passing helper evidence from the still-open existing persistence/import scope.
 Private audit SHA256: `06591a4c941128ad994db31fdf5a74ef738c1e91e811e77d4de00775c6d050d8`.
 No runtime or future-row work; main52 requirements and aggregates unchanged.
+
+## Existing Form8582 overflow requirement — isolated implementation
+
+Commit `84c4388c5` on `codex/form8582-overflow-20261007` implements source-bound
+PartsIV–IX continuation schedules without changing the main runtime under test.
+Typed Form8582 suite128/0; actual IRS-template attachments15+12pages all visually
+reviewed; all22 activity names per applicable worksheet retained and standalone
+XSD checks pass. [The activity-ID gap](ty2025-form8582-activity-id-gap.md) records
+private evidence hashes and remaining integration/full-public-graph prerequisites.
+The isolated checkout remains at `/tmp/opentax-form8582-overflow-20261007`; its
+code is not yet integrated. Main runtime2,591hashes unchanged; same regression
+live. Main52 requirements, aggregates and future34 rows remain unchanged.
