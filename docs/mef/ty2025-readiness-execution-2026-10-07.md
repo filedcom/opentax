@@ -274,3 +274,15 @@ and manifest digests were rechecked before hardlink assembly.
 records the live wrapper and dependency. The unchanged verifier starts only
 after the 15-case checker exits zero and runtime digests still match. Neither
 the queued batch nor any live checker is counted as a completed pass.
+
+The **15-case / 68-page** checker completed at
+`2026-10-07T03:04:14.447275Z` with exit **0** and exact selected-scope
+completion output. Manifest SHA-256 is
+`58f615204a020c5f5dadd66263e0d6055a723375422119d928db3befeb66b4af`;
+log SHA-256 is
+`a30119cb614c02446dc7a56da87949ccc82073cd8d1781d9cae99bd7c3ef7a44`.
+No tracked runtime files changed. Nonoverlap with the original 23-case batch
+was rechecked: verified scope now totals **38 distinct packets / 269 pages**.
+The 9-case verifier started after this terminal pass; the 48-case verifier and
+full regression/PDF preparation remain live. This closes neither the all-case
+packet requirement nor broader coverage, business-rule or ATS gates.
