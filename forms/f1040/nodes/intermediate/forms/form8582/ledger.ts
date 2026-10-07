@@ -138,24 +138,25 @@ export function buildForm8582Ledger(
     );
   const hasCurrentSale = input.has_current_4797_transaction === true ||
     (input.current_4797_sale_gains?.length ?? 0) > 0;
-  // Only the existing operating-PAL retained-sale route is admitted here.
+  // Only the existing reviewed operating-PAL sale routes are admitted here.
   // The source validator and node below still review the activity, sale,
   // prior filed row, and active-rental allowance before a snapshot is built.
-  const retainedOperatingSale = hasCurrentSale &&
+  const reviewedOperatingSale = hasCurrentSale &&
     sourceActivities.length === 1 &&
     sourceActivities[0].reporting_form === "schedule_e" &&
     sourceActivities[0].prior_unallowed_operating > 0 &&
     !hasPrior4797 &&
     input.current_4797_sale_gains?.length === 1 &&
-    input.current_4797_sale_gains[0].entire_activity_interest_disposed ===
-      false;
+    typeof input.current_4797_sale_gains[0]
+        .entire_activity_interest_disposed ===
+      "boolean";
   if (
     (!hasPrior4797 && !activeRentalActivities && !otherPassiveActivities &&
-      !retainedOperatingSale) ||
-    (hasCurrentSale && !retainedOperatingSale)
+      !reviewedOperatingSale) ||
+    (hasCurrentSale && !reviewedOperatingSale)
   ) {
     throw new Error(
-      "Form 8582 operating ledger needs identified other-passive activities or sourced active rentals without a current sale, or a reviewed retained operating sale",
+      "Form 8582 operating ledger needs identified other-passive activities or sourced active rentals without a current sale, or a reviewed operating sale",
     );
   }
   assertPriorYear8582Evidence(input);
@@ -177,12 +178,12 @@ export function buildForm8582Ledger(
           priorUnallowed: activity.prior_unallowed_operating,
           specialEligible: activity.activity_type === "A",
           priorSpecialEligible:
-            (activeRentalActivities || retainedOperatingSale) &&
+            (activeRentalActivities || reviewedOperatingSale) &&
             activity.prior_active_participation === true,
         };
       }),
       passiveLossLimit(
-        retainedOperatingSale ? passiveActivity(input) : {
+        reviewedOperatingSale ? passiveActivity(input) : {
           currentIncome: input.current_income ?? 0,
           currentLoss: input.current_loss ?? 0,
           priorUnallowed: input.prior_unallowed ?? 0,

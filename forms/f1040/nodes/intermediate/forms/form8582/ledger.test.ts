@@ -34,6 +34,92 @@ const retainedSaleSource = {
   }],
 };
 
+Deno.test("Form 8582 entire-sale overall-gain ledger retains fully released prior operating balances", () => {
+  for (const active of [false, true]) {
+    const source = {
+      ...retainedSaleSource,
+      activities: [{
+        ...retainedSaleSource.activities[0],
+        activity_type: active ? "A" : "B",
+        ...(active ? { prior_active_participation: true } : {}),
+      }],
+      has_other_passive: !active,
+      ...(active
+        ? {
+          has_active_rental: true,
+          active_participation: true,
+          rental_current_loss: 2_000,
+          rental_prior_eligible_loss: 3_000,
+        }
+        : {}),
+      current_4797_sale_gains: [{
+        ...retainedSaleSource.current_4797_sale_gains[0],
+        gain: 6_000,
+        entire_activity_interest_disposed: true,
+      }],
+    };
+    const accepted = "Accepted entire-sale return";
+    const ledger = buildForm8582Ledger(source, accepted);
+    assertEquals(ledger.ending_unallowed_loss, 0);
+    assertEquals(ledger.activities[0].lines, [{
+      reporting_form: "schedule_e",
+      opening_unallowed_loss: 3_000,
+      current_year_loss: 2_000,
+      current_same_part_income: 0,
+      allowed_loss: 5_000,
+      ending_unallowed_loss: 0,
+    }]);
+    assertEquals(
+      ledger.activities[0].previous_filed_form_8582_reference,
+      "2024 filed Form 8582 Part VII",
+    );
+    assertEquals(
+      readForm8582Ledger(JSON.parse(JSON.stringify(ledger)), source, accepted),
+      ledger,
+    );
+    for (const gain of [4_000, 5_000]) {
+      assertThrows(
+        () =>
+          buildForm8582Ledger({
+            ...source,
+            current_4797_sale_gains: [{
+              ...source.current_4797_sale_gains[0],
+              gain,
+            }],
+          }, accepted),
+        Error,
+        "disposition review",
+      );
+    }
+    assertThrows(
+      () =>
+        buildForm8582Ledger({
+          ...source,
+          current_4797_sale_gains: [{
+            ...source.current_4797_sale_gains[0],
+            part: "I",
+          }],
+        }, accepted),
+      Error,
+      "disposition review",
+    );
+    if (active) {
+      assertThrows(
+        () =>
+          buildForm8582Ledger({
+            ...source,
+            activities: [{
+              ...source.activities[0],
+              prior_active_participation: false,
+            }],
+          }, accepted),
+        Error,
+        "disposition review",
+      );
+    }
+  }
+});
+
 Deno.test("Form 8582 retained-sale ledger keeps operating loss separate from either sale character", () => {
   for (const part of ["I", "II"] as const) {
     const source = {
