@@ -439,3 +439,16 @@ affected pages. This new discovery is recorded only in `future_todo` and
 left unimplemented. `form2441-cap-four-page-observation.json` retains all
 observations/digests. The case/form is absent from all verified/current selected
 checkpoints; source/input/runtime files remain unchanged.
+
+The **32-case / 167-page** verifier completed at
+`2026-10-07T03:36:54.154296Z` with exit **0**, exact selected-scope
+completion output and no changed runtime files. Manifest SHA-256 is
+`ded5512c324eb102f64dca4dd89b5794efacc16a12d7850d10cc954845768f1c`;
+log SHA-256 is
+`81425bd59f5f2868daa8b5067347094d15a3d3d74a6956c077995f236b7c3a7c`.
+Mutual nonoverlap across all six terminal checkpoints was rechecked:
+**161 distinct packets / 1,635 pages** are verified. Form 2441 and Form 7217
+observations are absent from these selected scopes.
+`verified161-aggregate.json` records the audit. Fresh Form 8606 review remains
+outside these scopes; all-case, broad source/coverage, business-rule and ATS
+requirements remain open and future discoveries stay unimplemented.
