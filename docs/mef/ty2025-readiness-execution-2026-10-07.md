@@ -3650,3 +3650,86 @@ these derivative pages were not newly visually reviewed and add no positive
 packet/page count. No loss PDF or loss XSD packet was produced. Root runtime
 stays untouched during its full regression; main requirements remain52 and
 future rows38, with no newly discovered scope added this turn.
+
+
+## October 8 continuation — current passive ordinary-loss native and PDF review
+
+Progress under the existing EIC Worksheet 1, Form 8582, Form 4797 and
+return-wide source reconciliation TODOs. Isolated branch
+`codex/eic-investment-reconciliation-20261008`: native review `f1630b17e`,
+PDF review `8f51418d1`, final reporting-label/source-case correction
+`71bb71bbc`. Root runtime was not integrated while its full regression ran.
+
+The native review binds actual owned current property/farm sources, original
+reporting-form columns, disposed activity IDs, gross income/loss, allowed and
+suspended ordinary losses, Schedule 1, AGI, modified AGI, source QBI and the EIC
+investment-income floor. Unexpected PAL/4797 components and changed owner,
+closing, allocation, deduction, AGI/QBI/EIC fields reject. A shared ratio helper
+preserves the existing native rounding. The QBI reconciliation accepts the
+staged current-loss inventory only when it exactly matches the owned sources.
+
+The [2025 IRS Form 8582 instructions](https://www.irs.gov/instructions/i8582)
+confirm separate current income/loss columns for different reporting forms,
+Part VII allocation by overall loss, and Parts VIII/IX original-form reporting.
+The cached IMF 2025v5.4 IRS8582 schema limits Part VII/VIII reporting names to
+15 characters; Part IX allows30. Final mixed Part VII label `SchE22/4797II`
+identifies both forms, while Part IX retains their fuller individual labels.
+
+Native/source batch: terminal38/0, 2026-10-07T22:34:31.878139Z–22:35:07.667741Z,
+log SHA256 `bbb0deee29cc3ce0a4361b657b01308f314acb889b276995fce656894d94297a`,
+private `current-property-loss-native-review-20261008-v2/`. Its earlier v1
+also passed38/0; both histories remain. Eight existing positive source-regression
+PDF packets/99 pages were regenerated; no additional filing support count.
+
+PDF/native regression final19/0 (8s; 9.95s invocation),
+2026-10-07T22:39:38.409219Z–22:39:48.361495Z,
+private `current-property-loss-review-final-20261008-v3/`, log SHA256
+`7748c0a9c2f9938c49a25b74c43d3cd34bb23c79a7c188cca7d24b006316e3f3`.
+Run JSON binds changed code/test hashes and every retained XML/PDF/JSON/text hash.
+Command: `deno test --allow-read --allow-write --allow-run=xmllint,pdftotext
+--allow-net=www.irs.gov forms/f1040/2025/pdf/forms/f8582.test.ts
+forms/f1040/2025/pdf/forms/f8582-current-loss-review.test.ts
+forms/f1040/2025/mef/forms/f8582-current-loss-review.test.ts --
+--write-review-artifacts <private-directory>`; Poppler supplied by
+`/tmp/opentax-poppler-env/bin`.
+
+Four standalone IRS8582 documents passed XSD: mixed allowed2000/suspended2000;
+all suspended9000; recharacterized land excluded with farm suspended5000;
+operating income1000 plus ordinary sale loss3000 and farm loss5000, allowing1000
+of ordinary loss and suspending7000 overall. Three review PDFs/nine pages were
+filled from the same native projection. All nine were visually inspected at
+110dpi. After the label correction, seven rendered images were byte-identical
+to those inspected earlier; both changed page2 images were inspected again.
+`render-comparison.json` retains that binding. Mixed Part IX prints allowed
+Schedule E500 and Form4797II1500; fully suspended rows print zero deductions;
+recharacterized land does not appear in the passive worksheet. No clipped or
+missing activity row or amount was found in these nine pages.
+
+The initial PDF focus0/1 expected a hyphenated SSN although the actual IRS field
+prints digits; corrected only that test assertion, then1/0. Initial broad
+PDF/native regression19/0. Final-artifact v1 was18/1 because my new multiple-form
+Part VII label exceeded the actual schema limit; failed log retained SHA256
+`805c21622b1e28564c42e05a49f319a1568e9bb85e147750582efb6a554528aa`.
+Corrected the new label, v2 passed19/0; checked Part VIII's same limit and added
+the operating-income/ordinary-loss case, final v3 passed19/0. Distinct native
+JSON filenames keep combined artifact writing from colliding with PDF JSONs.
+
+These are unregistered review helpers with `filingReady:false` and
+`issuerVerified:false`. Full loss filing descriptors/PDF packet exports remain
+unconditionally guarded. This is not a full Return1040 loss XSD result,
+issuer authentication, durable accepted-filing carryover ledger, next-year
+import proof, matching business-rule proof or ATS acceptance. No bounded-pass,
+positive filing-packet or coverage count is increased. The broader existing
+TODOs remain open. Future35–38 and every other future row remain unworked.
+
+Root full-regression session12057 was confirmed live via its handle and
+PIDs99648/99655/99656 at about1h50m; no terminal result claimed. All2592 launch
+runtime hashes still matched. Main board52/future38 unchecked; main section
+exactly matches the frozen baseline. The research symlink was removed from
+this isolated worktree; local PDF cache remains untracked and untouched.
+
+IRS operational status rechecked October7 about22:38UTC: ATS unavailable
+through October13 09:00 Eastern; reopening notice describes TY2026 testing.
+TY2025 testing/version availability remains part of the existing ATS/source
+verification scope. Original October8 morning acceptance estimate stays0tests/0%;
+post-reopening pass probability remains unestimated.
