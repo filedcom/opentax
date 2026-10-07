@@ -344,3 +344,16 @@ with the same 7,000 amount and exact native explanation. Identity, zero-tax
 totals, ordering and legibility passed.
 `ira-plan-rollover-three-page-review.json` retains notes/digests; this is
 outside verified checkpoints and does not authenticate plan/account records.
+
+The latest strict comparison covered 234 generated packets: 43 exact
+PDF/XML/complete-source prior review matches and 79 exact PDF/XML/source-facts
+matches with saved pending differences. Existing verified checkpoints are
+excluded from a new **34-case / 170-page** batch: 30 prior reviews (158 pages)
+and four fresh reviews (12 pages: mixed Schedule 1-A, dependent spouse, MFS
+lived apart and IRA qualified-plan rollover). One prior candidate has been
+replaced with its newer fresh page observations. Prior physical artifact/source
+and manifest digests were rechecked; current artifacts/cache are hardlinked.
+`expanded-reviewed-assembly.json` binds review origins and
+`expanded-reviewed-check.status`/`.log` retain the unchanged read-only
+verifier run. All four earlier batches are excluded, runtime still matches
+full-regression launch, and no terminal pass is claimed for this batch yet.
