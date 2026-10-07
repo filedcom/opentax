@@ -3825,3 +3825,72 @@ runtime hashes match; main board52/future38 unchecked and frozen main section
 matches baseline. Original October8 morning ATS acceptance estimate remains0;
 post-reopening probability remains unestimated pending existing version,
 source, business-rule, credential and acceptance verification.
+
+
+## October 8 continuation — operating PDFs and terminal integrated regression
+
+Existing current-loss work continued on the isolated EIC branch, commit
+`12200f626`. `buildCurrentLossOperatingReviewPdfs` projects the owned source
+review allocation into Schedule E and Form4835. It prints original property
+rent/tax/net, only the allowed line22 loss, farm line34c deduction or positive
+line32 income, Schedule E farm lines40/42 and the line41 total matching
+Schedule1. Recharacterized land prints NPA5000. The existing Form4835 per-item
+PDF projector is exported without changing its calculation. Schedule E copies
+are split at the actual three-property column boundary; that new review
+pagination code is not claimed verified beyond the four one-property cases.
+
+Focused final5/0 (1s; 3.72s invocation),
+2026-10-07T22:52:18.489082Z–22:52:22.213153Z. Private directory
+`current-loss-operating-pdf-review-20261008-v2/`, log SHA256
+`372a6c7a7785ad79b93e27c82f79c0eae8449f1a04e38eefb1dccc8f451a98b3`.
+Run JSON binds three changed/new files and all review input/pending/projection,
+PDF and text hashes. Command: `PATH=/tmp/opentax-poppler-env/bin:$PATH deno test
+--allow-read --allow-write --allow-run=pdftotext
+forms/f1040/2025/pdf/forms/current-loss-operating-review.test.ts
+forms/f1040/2025/pdf/forms/f4835.test.ts --
+--write-review-artifacts <private-directory>`.
+
+Eight PDFs/12 pages (four two-page Schedule E and four one-page Form4835)
+rendered at110dpi and all viewed. Mixed Schedule E line22/25=500, line26=-500,
+farm40=2000 and summary41=1500. Fully suspended property deduction is blank/zero
+and farm34c explicitly0. Recharacterized land line26/41=5000 with NPA5000;
+operating-income/ordinary-loss case line26/41=1000. Original farm expenses7000
+remain printed; current farm income9000 gives line32=2000; loss cases do not
+print an unauthorized deduction. No missing/clipped amount found in these12
+pages. Review-only current-loss evidence now totals15 standalone XMLs and24
+viewed pages; these are not full filing packets or increased filing coverage.
+
+Initial v1 focus0/1 caught my new wrapper retaining two Form4835 instruction
+pages; fixed by retaining the descriptor's actual page0. Failed log SHA256
+`79f8d7c6704312ebe3c0e7bda0919104606a45219c69bc33b1b2317f64fbdd92`.
+The guard assertion was also limited to negative farm cases: an independently
+valid positive farm component already passes its existing descriptor, while
+the full current-loss filing packet remains guarded by other required forms.
+Final5/0 includes four existing Form4835 PDF tests. Public filing guards,
+source authenticity, durable carryover/next-year import, full Return1040 loss
+packet, matching BR and IRS acceptance remain open. Future35–38 and all future
+rows remain unworked. Isolated research symlink removed, cache untracked.
+
+Root integrated full-regression session12057 is terminal exit0, not pending:
+12,266passed/0failed (121m8s),
+2026-10-07T20:50:05.560967Z–22:51:30.123461Z,
+tested commit `df26ee299cc2c432bbfe969fcd97e309928b666c`,
+command `PATH=/tmp/opentax-poppler-env/bin:$PATH
+DENO_V8_FLAGS=--max-old-space-size=8192 deno task test`.
+Log `full-test-after-form8582-integration.log` SHA256
+`a2620b19ee53f0907657cdefc82aed6f10f6b044696b0392a5d42cb9f27acca2`;
+terminal status `full-test-after-form8582-integration.status` confirms no runtime
+changes. All2592 launch hashes independently rechecked; manifest SHA256
+`c2e8ac915e4e9dabb04edbe9dda68f7a723e69cd2f9ef7347728ee9fd55f2048`.
+Deno2.9.4/V815.0.245.2-rusty/TypeScript6.0.3, Poppler26.09.0,
+libxml2.9.13. The13 log mentions of “ignored” were inspected: all are passed test
+names describing behavior, not skipped test results. No ignored result is
+reported by the terminal summary. This supersedes the previously pending run;
+it does not cover the later isolated K-1/current-loss commits before integration.
+
+Main scope still52 unchecked/future38, frozen section unchanged. Local full
+regression is not proof of full52-requirement completion or IRS acceptance.
+Original October8 morning acceptance estimate remains0tests/0%; post-reopening
+probability remains unestimated. With the root runtime freeze now lifted,
+previously verified isolated current-loss/K-1 changes can be integrated and
+checked together before another normal full regression.
