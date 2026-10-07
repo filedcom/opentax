@@ -4,7 +4,7 @@
 
 The initial prerelease tag `v2.0.8-checkpoint.1` remains historical; its publication run was cancelled when the user explicitly requested regular version `v2.0.9`.
 
-User requested a checkpoint, a new OpenTax version, board cleanup, and continuation in a new session. `v2.0.9` is the regular iteration of the integrated branch `codex/ty2025-board-progress-20261004`, through 1,552 completed ledger slices. The broad filing-ready objective is unfinished. Release completed: https://github.com/filedcom/opentax/releases/tag/v2.0.9, regular/latest, tag commit `aa88071812f6f45e014509c1c3f27ae189860472`. Workflow37552329479 succeeded with allfive matching-platform builds andsmokes. Allfive downloaded assets match SHA256SUMS; downloaded macOSARM64 binary independently passed version2.0.9/calculation/validation/finalizedMeF/two-pagefilledPDF smoke. Final evidence under `.state/research/release-v2.0.9-oct7/manifest.json`; these smoke results do not prove the unfinished fullcoverage/IRS gates.
+User requested a checkpoint, a new OpenTax version and continuation in a new session; the latest instruction leaves the board TODOs unchanged. `v2.0.9` is the regular iteration of the integrated branch `codex/ty2025-board-progress-20261004`, through 1,552 completed ledger slices. The broad filing-ready objective is unfinished. Release completed: https://github.com/filedcom/opentax/releases/tag/v2.0.9, regular/latest, tag commit `aa88071812f6f45e014509c1c3f27ae189860472`. Workflow37552329479 succeeded with allfive matching-platform builds andsmokes. Allfive downloaded assets match SHA256SUMS; downloaded macOSARM64 binary independently passed version2.0.9/calculation/validation/finalizedMeF/two-pagefilledPDF smoke. Final evidence under `.state/research/release-v2.0.9-oct7/manifest.json`; these smoke results do not prove the unfinished fullcoverage/IRS gates.
 
 Read all of `product_board.md` and compact current learnings before resuming implementation. The main checklist from `## Scope and completion rules` onward is frozen against `85b489a72`; 52 broad TODOs remain open. Discoveries go only into `future_todo`, which is outside the execution queue. Do not equate bounded ledger completions with closing broad parents. Detailed history is preserved in the October 6 status archive, validation batch and completed ledger.
 
@@ -18,31 +18,29 @@ Read all of `product_board.md` and compact current learnings before resuming imp
 
 Refer to the board's source-proof links for commands, digests, failure qualifications and physical archive locations. Evidence under `.state/research` and external `/tmp` locations must be retained; `.pdf-cache` is untracked cache, not pending source implementation.
 
-## Pending private routes — excluded from release
+## Three follow-up routes — integrated after the v2.0.9 tag
 
-| Route | Branch / private commit | Worktree | Resume |
-|---|---|---|---|
-| Positive-spouse8962 | `codex/form8962-spouse-income-oct7` / `32ca1d2c740a3e7b8db22f97fd9b3dd00f0085cf` | `/tmp/opentax-form8962-spouse-income-oct7` | Poll original53247; finalgate/source replay/math/PDF review then integrate |
-| Issuer RPE aggregation | `codex/qbi-rpe-aggregation-oct7` / `5df5c716e152e5de4761d94bd696425dd3a5695d` | `/tmp/opentax-qbi-rpe-aggregation-oct7` | Poll original90244; finalordinary parity/hold transfer then integrate |
-| MFJ spouse royalties | `codex/form4952-royalty-joint-oct7` / `f6257fc7e` | `/tmp/opentax-form4952-royalty-joint-oct7` | Poll original55260; fullcompatibility/root review/main qualification then integrate |
+The user subsequently authorized completing and merging these three routes, then explicitly instructed that the board TODOs remain as they are. Their implementation is now integrated into PR63; the published v2.0.9 tag remains unchanged and excludes these later commits.
 
-### Positive-spouse8962
+| Route | Implementation / final proof | Retained qualification |
+|---|---|---|
+| Positive-spouse8962 | `32ca1d2c740a3e7b8db22f97fd9b3dd00f0085cf` / `0856e07233306a778840fb5de9bb7ef65cec0664` | Ordinary checked six-module 67/0; four exact source replays/fresh full XSD; 29 pages reviewed |
+| Issuer RPE aggregation | `5df5c716e152e5de4761d94bd696425dd3a5695d`, standalone test context repair `9e5051e5eff3ed52e5247122af3ec1cc74b05e96` / `7fac286a0ba26928fdb431223eb3fa0700557058` | Ordinary checked six-module 103/0; four exact source replays/fresh full XSD; 45 return pages and eight attachment instances reviewed |
+| MFJ spouse royalties | `f6257fc7e3505c75705fbaa39989a0f01ba08866` / `e51ea7953fac6801c9c72434b691c4c1e17b36d0` | 31 distinct checked tests passed across preserved runs; two initial missing-Poppler failures qualified; exact source replay/full XSD and seven pages reviewed |
 
-Current six-file hold: `/tmp/opentax-form8962-spouse-income-evidence-oct7/codeheld-v5.json`. Log: same directory `normal-v5.log`; owned session53247. V4 ordinary67/0(15m33s) is qualified: missing retained W2employer_name rejected native export but directPDF accepted238478bytes. Root literal reproduction `/tmp/opentax-joint-deletion-root-oct7.json/.ts`, source unchanged; missingW2amount/EIN already rejected both paths. Initial no-config import failure is retained.
+Route proof documents retain previous failures and interrupted-run qualifications:
 
-V5 compares complete received source copies excluding only separately bound rawtax_year. It binds withholding, payer/address/account/classification fields; deletion controls exercise native/directPDF. Fresh mixed withholding150 yieldspayments8094/refund6046; R+B withholding200 yieldspayments8060/refund5957. Existing oracle must be updated for non-W2withholding, not copied as final proof. Source archive `/var/folders/xc/5qnxcpk90019c_ms1nf2hw8r0000gn/T/opentax-8962-joint-income-final-f611c9d1ad8a7af1` was partial atcheckpoint. Final literal replay/full29page review/source-code preservation remain required. Physical qualified checkpoint155files (manifest SHA `a0c5a93911c25a5d47ccc8aa0aa0bf00938819079114234311d54ce5cde64492`): `/tmp/opentax-form8962-spouse-income-checkpoint-oct7/manifest.json`.
+- `docs/mef/ty2025-form8962-joint-income-source-scope.md`
+- `docs/mef/ty2025-rpe-aggregation-source-checkpoint.md`
+- `docs/mef/ty2025-form4952-mfjspouse-royalty-source-proof.md`
 
-### Issuer RPE aggregation
+Root independent source/Decimal/native/PDF reviews are physically retained:
 
-The running V5 log has marked the standalone ScheduleE legal-name test failed; preserve terminal results and diagnose before claiming a checked pass.
+- `.state/research/spouse-root-final-review-oct7/manifest.json`: 68 files, SHA256 `0330416cd71fbf0513dd8a3903ba593edee62a895e7f02332d1aebcbb3742e20`.
+- `.state/research/rpe-root-final-review-v4-oct7/manifest.json`: 136 files, SHA256 `46bc115ce7be7141c18188c5fc1a380d2059a85cb23ef657ae57bb5680b866bf`.
+- `.state/research/royalty-root-final-review-oct7/manifest.json`: 20 files, SHA256 `a309e5c8cd9d499280b46f10d4d4cee7a89347588d26ac9880e24ca550d68e99`.
 
-Current21-filehold `/tmp/opentax-qbi-rpe-codeheld-v5-oct7.json`; log `/tmp/opentax-qbi-rpe-v5-normal6-oct7.log`; owned90244. V4 finalcheckedfailed only two assertion overloads; V5 changes one test hash, remaining20files/production/sources unchanged. V3 repair runtime26/1 failed standalone missingfilerTIN test; all failures preserved.
-
-Literalfour savedreplay terminal0, all45pages andoriginals exact; issuer statements support shared documentary references and distinct formation/acquisition dates. Root ownDecimal/source/pending/native/member/event/binaryjoins passed; personally inspected45return+8standaloneattachmentinstances through16contacts. Root136file seal `/tmp/opentax-rpe-root-final-review-v4-oct7/manifest.json` SHA `46bc115ce7be7141c18188c5fc1a380d2059a85cb23ef657ae57bb5680b866bf`, main physical copy `.state/research/rpe-root-final-review-v4-oct7`. Finalapproval transfer needs finalcheckedpass/ordinaryPDFparity/helddelta, not rerendering identical files. PrivateV5checkpoint29files SHA `b94704dad44e9d7feeca4b884b5c91f1a73481472a3f93ac6e2a1b1a9415f55a` at `/tmp/opentax-qbi-rpe-v5-checkpoint-oct7/manifest.json`. Native-only business-name formatting preserves legal source/print spelling and rejects unsupported characters/length; no issuer authentication inferred.
-
-### MFJ spouse royalties
-
-Three production files plus new source test bind royalty T/S to final primary/spouse identity and allow separately owned joint interest sources. Source before-rejection terminal0: `/tmp/opentax-form4952-mfjspouse-finalsource-before-v2-oct7/report.json`. Actualafter literal `/tmp/opentax-form4952-mfjspouse-literal-packet-v2-oct7/report.json` terminal0 native/PDF/fullXSD/sevenpages, tax3846/refund7154. New focused checked2/0 withseven native/directPDFnegative cases. Six-module compatibility55260 was pending. Temporary private `.state` schema symlink must be removed/reapplysparsecheckout after live tests; do not stage apparent `.state` deletions or change main evidence. K1box20codeB remains guarded pending issuer/allowed-deduction source proof.
+All five platform builds and compiled binary smokes passed on combined implementation commit `97cb24dc6c0dbfcf6bd279519e689e6e891d0983`, workflow https://github.com/filedcom/opentax/actions/runs/37554615221. Later final-proof/handoff commits contain documentation only. This manual run was a dry run and did not republish v2.0.9. The combined ordinary checked main three-module gate finished 7 passed / 0 failed (4m55s); its eight spouse/RPE source packets match the independently reviewed source/graph/PDF/attachments bytewise and native XML except generated ReturnTs. Main log/status/CI/parity are physically retained in `.state/research/three-route-main-final-oct7/manifest.json`. PR: https://github.com/filedcom/opentax/pull/63.
 
 ## Full regression / ATS
 
@@ -50,6 +48,6 @@ V32 started2026-10-06T21:47:13Z at immutable `4ea6902e474d4f7ce82127d4ba4653f9c7
 
 ATS credentials/certificate/enrollment/endpoint/WSDL/trust/businessrules remain unverified; scenario1door andscenario8QCD conflicts unresolved. No IRSacceptedacknowledgments. Local XSD/hash/review does not authenticate sources or establish accepted priorfilings/IRSacceptance.
 
-## Resume prompt
+## Next session boundary
 
-Continue existing TY2025 Form1040 TODOs toward MeF readiness. Read and compact product_board.md first; preserve frozen52/mainchecklist and do not execute future_todo. Read this handoff, inspect actual Git/worktrees/liveprocesses and retained evidence. Finish private spouse8962/RPE/royalty qualification, independently review and integrate, run main compatibility and preserve source/XML/PDF/hash evidence. Complete broader existing filing routes, latest full regression and required ATS/IRS acceptance without narrowing the goal. The user has authorized four parallel agents.
+The board TODOs are unchanged. Do not resume or finish the broader board without a new user request. This turn's scope is the three routes, their checks, PR63 merge, and cleanup of their completed remote branches. Full-regression and ATS notes above are retained background; no complete filing-ready or IRS-acceptance claim is made.
