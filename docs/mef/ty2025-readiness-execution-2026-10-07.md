@@ -1091,3 +1091,59 @@ log/test hashes and exact messages are in
 `form8962-two-dependent-failure-diagnostic.json`. A private two-assertion patch
 is prepared at `pending-form8962-assertion-correction.patch`, unapplied while
 the original full run remains live. Neither diagnostic establishes a full pass.
+
+
+### Additional mortgage packet observations, unapproved for native parity
+
+All twelve actual pages from four existing mortgage fixtures were inspected
+against source/pending/native XML. Each has primary Alex Example111223333,
+wages/AGI80,000, withholding12,000 and readable1040(two)/ScheduleA(one).
+
+- `mfs-two-loan-mortgage-limit`: MFS/spouse-itemizes correctly marked;
+  375,000 limit / 900,000 supplied average balances gives .417 three-decimal
+  ratio, deductions8,340+6,672=15,012, taxable64,988,tax9,209/refund2,791.
+- `single-1098-construction-refinance-points`: 2,000 reported points /180
+  payments ×6 paidmonths gives67 current points plus18,000 interest;
+  deduction18,067,taxable61,933,tax8,538/refund3,462.
+- `single-unreported-refinance-points`: 3,000 points less1,000 service charges,
+  amortized over180payments ×6 gives67 on8c plus18,000 on8a;
+  same18,067 deduction/tax8,538/refund3,462.
+- `single-2023-refinance-points-ledger`: 2,000 eligible points /180payments
+  ×12 current payments gives133 on8c; supplied2023/2024 ledgers67/133
+  reconcile arithmetically. Deduction18,133,taxable61,867,tax8,527/refund3,473.
+
+The [2025 Publication936](https://www.irs.gov/publications/p936) debt-limit,
+ratio and point-amortization rules support these selected calculations.
+The actual PDFs print ScheduleA totals8e/10/17, while nativeA omits them;
+this extends the already-recorded future-only mortgage parity observation.
+Each `*-parity-observation.json` retains hashes and qualifications; none is
+approved or added to a passing checker scope. No implementation was made.
+Issuer/closing/payment/workpaper authenticity and accepted prior-year ledger
+proof remain outside these synthetic observations. The MFS source asserts
+noncommunity/separate-funds facts; current TX address is not proof of them.
+Main board remains byte-identical with52openrequirements;12futureitemsunworked.
+
+### Form 4972 partial-beneficiary packet verification
+
+`partial-4972-beneficiary-2-copies` and `partial-4972-beneficiary-3-copies`
+passed the unchanged selected checker at 2026-10-07T04:58:35.461825Z:
+two disjoint packets and all six actual pages. Each combines the same
+participant's source distributions into one Form 4972. Source/pending/native
+XML and all PDF pages agree on owner, participant, eligibility answers,
+NUA annotations, annuity and partial-beneficiary shares.
+
+Independent arithmetic using the [2025 Form 4972 instructions and tax table](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
+reconstructs every populated line 6–30. Two sources give capital tax 880,
+cash ordinary amount 35,200, annuity 6,000, ten-year tax 1,910 and total 2,790.
+Three sources give capital tax 1,360, cash ordinary amount 54,400, annuity
+12,000, ten-year tax 3,760 and total 5,120. Form 1040 correctly excludes these
+distributions from ordinary pension income and carries each Form 4972 tax
+once through line 16 and total/owed. Synthetic facts do not authenticate
+birth/death, full-balance distribution, issuer records or prior elections.
+The broad Form 4972 requirement remains open.
+
+Manifest SHA256 `ce36ad9fa19d61e5c3597f4e683045eaab02d5956105e7cdae536e1c95f8cbd2`;
+terminal log SHA256 `b91aba5b10e94b60c8c912ace391e05941369a5010f32762bc48acb5686fe179`.
+`verified213-aggregate.json` verifies 25 disjoint terminal passing batches /
+213 packets / 1,921 actual pages. Runtime files and original generation flags
+remain unchanged. No production change or broad checklist closure.
