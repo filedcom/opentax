@@ -81,3 +81,16 @@ authorized package. The IRS release table also shows later TY2025 versions, so
 v5.4's applicability to a future ATS/production submission must be checked at
 the time of filing. Matching a schema digest or passing local XSD validation
 does not establish IRS business-rule or ATS acceptance.
+
+
+## October 7, 2026 connected Drive recheck
+
+The authorized Drive connector returned the complete outer archive in inline
+file mode. Private retained bytes: 24,118,850; outer/series/schema digests
+match the table above, and ZIP CRC verification passed. All 746 nested
+TY2025 v5.4 XSDs match the retained extracted tree with no extra, missing
+or changed XSDs. This independently rechecks current Drive bytes against
+the retained hashes; it does not provide an IRS-published digest/attestation.
+The nested TY2025 schema package contains no business-rule workbook/package.
+See the [current execution record](ty2025-readiness-execution-2026-10-07.md)
+and private `imf-downloaded-package-audit.json` for exact scope.

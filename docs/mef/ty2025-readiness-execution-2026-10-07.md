@@ -530,3 +530,33 @@ The authorized Drive folder could not be opened through computer use:
 the browser tool reported `No browser is available`. This does not resolve
 the existing connector HTTP 403 package-download gate; no credentials or
 external state were changed.
+
+
+The 28-packet / 186-page checkpoint completed **exit 0** at
+`2026-10-07T03:51:38.936798Z`, log SHA-256
+`388cc2a09cd9d342aa429796d0972c947de436939044c35badc824bf8943e94c`,
+manifest `3f9d179ee3feddeb96b4a6095b430942e578e78cb61b14bc4bd718c6dcfc23c6`.
+The fresh 2-packet / 6-page checkpoint completed **exit 0** at
+`2026-10-07T03:51:09.149295Z`, log SHA-256
+`b91aba5b10e94b60c8c912ace391e05941369a5010f32762bc48acb5686fe179`,
+manifest `a009f4ea79cc99703da98bf368def43954dd17f85f0ce9a13369943179a45f09`.
+Both wrappers confirmed no runtime changes. All eight terminal scopes were
+rechecked for mutual nonoverlap and exclusion of future-observation forms:
+**191 distinct packets / 1,827 pages** verified.
+`verified191-aggregate.json` retains the aggregate. The full regression
+continues; broad parents remain open.
+
+The earlier Drive-download limitation was resolved by the connector's
+authorized **inline base64 mode**, without using a signed download URL or
+bypassing HTTP 403. The complete 24,118,850-byte archive was saved privately
+as `IMF_Series_2025v5.4-from-drive.zip` and passed ZIP CRC verification.
+Outer SHA-256 `8408dbd9f7ae0040bc588b8daa3b7bb24280c8ca5b2396d9fcfb8c4db64963f4`,
+nested series `92fda5b7d6e5933fcf412fdd9348b93eb1d1719fb080f6cc95cc5e6886922797`,
+nested schema `cb135657f0b47dfd7434918d074566c6c1d5f47d23cc1e5be4b9cefb64f37e8f`
+match the retained provenance record. **All 746 TY2025 v5.4 XSD files**
+match the retained local schema tree; no extra/missing/changed XSDs.
+The schema ZIP contains XSDs and diff HTML, **no matching business-rule
+workbook/package**. `imf-downloaded-package-audit.json` retains the audit.
+This resolves package byte acquisition and local-tree comparison only;
+matching business rules, enrolled credentials, current A2A service/trust
+compatibility and IRS acceptance remain unresolved.
