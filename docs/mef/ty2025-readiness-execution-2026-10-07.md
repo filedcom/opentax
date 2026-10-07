@@ -3128,3 +3128,17 @@ Private audit SHA256 `6b864302831a7555bc20d63e97b483a0af3028d8648f302508c2257904
 This does not create a positive route, authenticate an issued copy or close
 the broader owner/attachment requirement. All2,592 live-regression runtime
 hashes remain unchanged; main52/future35 rows and aggregates unchanged.
+
+## Trust K-1 issued-copy contract inspection
+
+Prepared isolated checkout `/tmp/opentax-trust-k1-copy-20261007` on
+`codex/trust-k1-copy-20261007` at `31eac0e9c`; no runtime edits yet. Inspected
+the official two-page TY2025 K-1 and74 AcroForm fields, plus cached native
+IRS1041ScheduleK1 sequence requiring beneficiary detail. Canonical PDF SHA256
+`d8d7b6eacabdf145474aee8385fcfeafe68bd2f69baaef52d9a8227ebcd45fc3`;
+private inventory SHA256 `efb1aaaa3fe9a4df0672b7c16c188639c3a98805c75800ee74d9f03b471d188c`, under
+`.state/research/board-execution-2026-10-07/trust-k1-copy-contract-isolated-20261007/`.
+Both blank canonical pages were viewed for source/field layout; they do not
+count as filled-output review or authenticate fiduciary issuance. Positive
+codeB native/PDF/line25c route remains guarded. All2,592 main runtime hashes
+unchanged;52 main requirements,35 future rows and aggregates unchanged.
