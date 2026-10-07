@@ -4312,3 +4312,64 @@ production and the 5/0 packet test were unchanged. No failed assertion was
 counted as successful evidence. The temporary isolated research symlink was
 removed; caches and root private evidence were preserved. Root full regression
 session 41991 remains the existing held run and predates this isolated test.
+
+
+## October 8 — stage combined current-loss filing and ledger integration
+
+A separate worktree `/tmp/opentax-mef-current-loss-integration-20261008`, branch
+`codex/mef-current-loss-integration-20261008`, was created from root `330af3f0f`.
+Six tested isolated commits were cherry-picked without conflicts:
+
+| Isolated commit | Staged commit | Change |
+| --- | --- | --- |
+| `798ff260b` | `58b40353a` | Current-loss Form 1040/Schedule 1 PDF review |
+| `dd50e389b` | `a4441bc17` | Current operating/ordinary character ledger |
+| `f73ff2d68` | `ac7f15951` | Complete current-loss filing projections |
+| `33ab01d97` | `e60b0dd57` | Acceptance-unverified candidate archive |
+| `b82c1bbc4` | `5b13d5ff7` | Existing first-year sale ledger sources |
+| `c2e5dafec` | `8c49c01f4` | Complete first-year source packet test |
+
+All 20 changed/new runtime files match the isolated branch byte-for-byte.
+The staged manifest holds 2,631 paths: 13 existing paths changed and seven new
+paths; every other held root runtime path matches. This is a staging worktree,
+not root integration. Root's 2,624-path live regression remains undisturbed.
+
+Normal typed combined suite: **308 passed / 0 failed**, exit 0, 30 modules,
+2026-10-07T23:36:53.506299Z–23:39:20.464754Z (1m55s tests).
+Private `combined-current-loss-ledger-integration-20261008-v1/run.json` binds
+staged `8c49c01f401a8a64d3d4d8d21de719f5efd57f6c`, exact command and test hashes.
+Log SHA-256:
+`2316bbff97c10830c7eb87e6c612ce6eee7d6768abe1e27c54a2df4ad3508315`.
+`preflight.json` records the byte equality; `runtime-at-combination.json`
+SHA-256 `32b1ffc65477edb9599a9b358c125e1f98aee24a32a51531fd88446530a270a3`
+records the complete held union. The suite includes existing trust K-1 issued
+copy, native-copy review, static/source/prepared-copy and withholding checks,
+combined EIC, current-loss allocations/source/graph, original native forms,
+PDF reviews, ledger and storage, first-year sales and CLI store checks.
+
+All eight generated full packets again validate locally against TY2025 v5.4.
+Independent replay `packet-replay-comparison.json` verifies all 87 page images
+at 110dpi exactly match their earlier reviewed archives and all eight native
+returns match except ReturnTs. No newly viewed pages or new aggregate filing
+approvals are counted. Five current-loss packets retain their earlier scoped
+review; the three first-year packets still lack the future-40 PDF FPA/EDPA
+identification. K-1 backup-withholding statement and other future boundaries
+remain unworked, and the passing copy checks are not a positive complete
+backup-withholding filing claim.
+
+The machine has 16GiB RAM. Full regressions will run serially: root session
+41991 is still live; `run-full-regression.py` is prepared in the staged private
+evidence directory, but has not been launched. Its guard requires the existing
+root full run to finish successfully with unchanged hashes before it starts
+normal typed `deno task test` on the held staged revision. The focused pass
+and prepared runner are not a full-regression result. Root integration and the
+whole readiness goal remain incomplete.
+
+Further connected Drive metadata searches for TY2025 business rules and ZIP
+names produced no matching rule-package candidate among the returned results.
+`drive-rule-search-summary.json` retains the bounded query observations, not
+unrelated file contents. This is not global Drive absence proof and does not
+replace the known matching-BR gate. No messages or access/sharing changes were
+made. Main requirement text remains frozen with 52 unchecked items; all 40
+future items remain unworked. ATS estimate remains 0 acceptance tests by the
+original October 8 morning deadline and unestimated after reopening.
