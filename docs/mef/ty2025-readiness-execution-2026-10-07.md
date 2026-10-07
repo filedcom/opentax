@@ -3403,3 +3403,13 @@ statements and issuer evidence remain under the existing K1 task. No main
 checkoff or future-task implementation; main52/future35 unchanged. Root
 regression runtime unchanged; session12057 remains live with no terminal
 totals. MeF estimate still reflects the ATS outage, not local test counts.
+
+
+### Newly discovered K1 withholding statement — future-only, October 7
+
+Cached TY2025 native schema `BackupWhSchedulesK1Statement` is included by
+ReturnData1040 and permitted in Form1040 reference-document names, but no
+registered builder was found. Schema SHA256 `2df5649fd400c2285e62e746f84e6b1a3ede6b93e5d843944bdda342e1edbd8e`.
+Added future_todo row36; no implementation, registration, projection or
+filing claim. Required use, ownership, source-copy/reference and rounding
+semantics need future review with matching BR. Main52 requirements unchanged.
