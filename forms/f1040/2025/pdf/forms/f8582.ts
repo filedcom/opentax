@@ -5,6 +5,7 @@ import {
 } from "./f8582_continuation.ts";
 import { form8582 as nativeForm8582 } from "../../mef/forms/f8582.ts";
 import { inputSchema } from "../../../nodes/intermediate/forms/form8582/index.ts";
+import { reviewCurrentPropertyLoss8582 } from "../../mef/forms/f8582-current-loss-review.ts";
 
 // The actual 2025 AcroForm has five rows each in Parts IV–VIII and a single
 // three-line Part IX block. Project the native, source-reconciled worksheet;
@@ -457,6 +458,13 @@ function projectWorksheet(xml: string): Record<string, unknown> {
   }
   if (continuation.length) projected.pdf_continuation = continuation;
   return projected;
+}
+
+/** Review-only projection; the registered descriptor keeps its filing guard. */
+export function projectCurrentPropertyLoss8582Review(
+  allPending: Readonly<Record<string, any>>,
+): Record<string, unknown> {
+  return projectWorksheet(reviewCurrentPropertyLoss8582(allPending).xml);
 }
 
 export const form8582Pdf: PdfFormDescriptor = {
