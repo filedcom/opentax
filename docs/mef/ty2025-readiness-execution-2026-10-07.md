@@ -245,3 +245,12 @@ are excluded; original evidence is unchanged and artifacts/cache use hardlinks.
 `additional-reviewed-check.status` and `.log` retain the current calculation,
 PDF/XML, page-origin/template and full XSD replay outcome. No terminal pass
 is claimed yet. Tracked runtime matches the corrected full-regression launch.
+
+All four pages of `single-final-trust-k1-short-term-capital-loss` were
+freshly reviewed. The final trust K-1 code C loss 700 appears as negative 700
+on Schedule D lines 5/7/16/21 and Form 1040 line 7a once; wages 30,000,
+AGI 29,300, standard deduction 15,750, taxable income 13,550, tax 1,391,
+withholding 3,000 and refund 1,609 agree with source, pending and XML.
+Identity, elections, page order and legibility passed.
+`final-trust-short-loss-four-page-review.json` retains observations/digests;
+this review is outside the three existing checker batches.
