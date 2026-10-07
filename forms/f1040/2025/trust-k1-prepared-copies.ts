@@ -1,4 +1,5 @@
 import type { FilerIdentity } from "../mef/header.ts";
+import { PDFCheckBox, PDFDict, PDFDocument, PDFName } from "pdf-lib";
 import { assertOtherFormsWithholding } from "./f8288-withholding-reconciliation.ts";
 import { normalizeAllPending } from "./pending.ts";
 import { preparedSourceSha256 } from "./prepared-source.ts";
@@ -73,6 +74,72 @@ export class PreparedTrustK1Copies {
       throw Error("Prepared trust K-1 source copy reference is unavailable");
     }
     return Uint8Array.from(bytes);
+  }
+
+  /** Fixed source-copy review pages, with no editable field-name collisions.
+   * This projects only verified normal appearances from private byte copies;
+   * the original retained PDF bytes remain unchanged. Not a filing packet. */
+  async buildReviewPdf(pending: Record<string, unknown>, filer: FilerIdentity) {
+    await this.assertCurrent(pending, filer);
+    const output = await PDFDocument.create();
+    const origins: Readonly<
+      {
+        pageNumber: number;
+        copyNumber: number;
+        pdfReference: string;
+        pdfSha256: string;
+        beneficiarySsn: string;
+        estateTrustEin: string;
+      }
+    >[] = [];
+    for (const [index, copy] of this.copies.entries()) {
+      const source = await PDFDocument.load(
+        this.getCopyBytes(copy.pdfReference),
+        { updateMetadata: false },
+      );
+      const form = source.getForm();
+      for (const field of form.getFields()) {
+        if (field instanceof PDFCheckBox && !field.isChecked()) {
+          const normal = field.acroField.getWidgets()[0].AP()?.lookup(
+            PDFName.of("N"),
+          );
+          // The verified official blank state has only an /On glyph. Its
+          // outline is already static page content; no /Off mark is printed.
+          if (normal instanceof PDFDict && !normal.has(PDFName.of("Off"))) {
+            const annotations = source.getPage(0).node.Annots()!;
+            const widget = field.acroField.getWidgets()[0];
+            const position = annotations.asArray().findIndex((ref) =>
+              source.context.lookup(ref) === widget.dict
+            );
+            if (position < 0) {
+              throw Error(
+                "Prepared trust K-1 blank widget is missing from its verified page",
+              );
+            }
+            annotations.remove(position);
+            form.acroForm.removeField(field.acroField);
+          }
+        }
+      }
+      form.flatten({ updateFieldAppearances: false });
+      const pages = await output.copyPages(source, source.getPageIndices());
+      for (const page of pages) {
+        output.addPage(page);
+        origins.push(Object.freeze({
+          pageNumber: output.getPageCount(),
+          copyNumber: index + 1,
+          pdfReference: copy.pdfReference,
+          pdfSha256: copy.pdfSha256,
+          beneficiarySsn: copy.beneficiarySsn,
+          estateTrustEin: copy.estateTrustEin,
+        }));
+      }
+    }
+    return {
+      pdfBytes: await output.save({ updateFieldAppearances: false }),
+      pageOrigins: Object.freeze(origins),
+      filingReady: false as const,
+    };
   }
 
   /** Reject changes to source, owner or return totals after preparation. */
