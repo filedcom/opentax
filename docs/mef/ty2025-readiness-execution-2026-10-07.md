@@ -3046,3 +3046,14 @@ recorded in future row35, unworked; PDF identity parity stays qualified.
 [The activity-ID gap](ty2025-form8582-activity-id-gap.md) retains the evidence
 and audit SHA256 `3052cef71bc180f0d90475475fd703fc1ff37f29298fd80ce104bbbffe7edb7e`.
 Main52 requirements and aggregates unchanged;2,591 runtime hashes unchanged.
+
+## Form8582 retained-sale ledger extension
+
+Isolated commit `820c98563` carries the existing reviewed retained-property-sale
+operating-PAL calculation into its ledger contract. PartI/II gains enter the
+loss limit without changing operating reporting character; four synthetic
+calculator/snapshot/opening-contract observations reconcile. Wider typed
+PDF/native/node suite132/0. [The activity-ID gap](ty2025-form8582-activity-id-gap.md)
+records evidence hashes and remaining production persistence, acceptance and
+engine-import gates. Source authentication and filing guards remain unchanged.
+Main2,591runtime hashes unchanged;52 requirements and35 future rows unchanged.

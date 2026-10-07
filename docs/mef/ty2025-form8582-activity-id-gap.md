@@ -788,3 +788,35 @@ XML SHA256 `9e97e7f86a983715a36bf9be3720911f2861b46d05dc612467d05e1c1a3ed185`.
 All2,591 root runtime hashes remain unchanged. No code edits, aggregate approval
 increase or main-board checkoff. Synthetic source authentication, broader
 Form8582 ledger/import and other branches, BR and ATS remain unproved.
+
+## October 7: isolated retained-property-sale operating ledger extension
+
+Isolated commit `820c98563` extends the existing ledger contract to the
+calculator's already-reviewed retained-property-sale operating-PAL route. A
+single sourced ScheduleE activity, prior operating loss, and explicitly retained
+activity interest are required. The existing prior-source validator and node
+still validate sale/activity identity, prior filed row and active participation.
+Whole-activity disposition and prior Form4797-character sale routes remain gated.
+
+Both PartI and PartII gains enter passive income before the operating loss and
+allowance are allocated; the ledger retains only the operating reporting
+character. For a typeB activity, opening3,000 + current2,000 - allowed4,000
+leaves1,000. For typeA, opening8,000 + current5,000 - allowed8,000 leaves5,000
+at MAGI140,000; at MAGI200,000 only the3,000 sale offset is allowed and10,000
+remains. Four synthetic PartI/II/active/other snapshots reconcile calculator
+carryforwards, JSON roundtrip and 2026 opening contract. Changed gains, source
+identity, prior row, participation and retention assertions reject.
+
+Typed PDF/native/node suite: **132 passed /0 failed**. Private evidence:
+`.state/research/board-execution-2026-10-07/form8582-retained-sale-ledger-isolated-20261007/`.
+Focused log SHA256 `8495b5a0b8aa637f2ccb8c605bdad8203f78ff989a91fe411b748b4f5f2492a5`;
+observation SHA256 `3109ca7f8231dbb3bea5195908144aba24b0297586fcfe38fc321e2294b68a71`;
+verification SHA256 `e27bbc743c0b51495eb6087e3e8ca12ad6192ca7d8385e23fed1bab4413010ac`.
+The evidence generator initially lacked umask permission and succeeded with the
+required `--allow-sys=umask`; no calculation or test failure was bypassed.
+
+This improves the existing character/ledger requirement but does not establish
+a production durable store, authenticated acceptance, 2026 engine import, full
+public filing route, matching BR or ATS acceptance. It remains isolated pending
+the main full-regression result and integration validation. All2,591 root runtime
+hashes remain unchanged; main requirements, aggregates and35 future rows unchanged.
