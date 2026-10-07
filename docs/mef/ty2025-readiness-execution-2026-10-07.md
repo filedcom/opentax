@@ -952,3 +952,67 @@ Runtime hashes unchanged. `verified205-aggregate.json` confirms20disjoint
 passingbatches/205packets/1,885actualpages; broadcoverage/source/ATSgatesremainopen.
 Latest full-regression snapshot has839passingmarkers/0failuremarkers and
 its live process remains running; this is not a terminal full-suite pass.
+
+
+### Custodial and separated-spouse EIC selected review
+
+All six actual pages across `single-w2-custodial-eic-release` and
+`mfs-w2-separated-spouse-eic` were inspected against synthetic source,
+pending and nativeXML. AdaExample111223334,birth2017,daughter,12USmonths
+appears on ScheduleEIC and is omitted from1040dependent/CTC claims after
+reviewed release to the noncustodial parent. The MFS packet identifies
+spouseOtherTaxpayer222334444 and checks the separated-spouse box/native
+`SepdSpsFilingSepRetMeetsRqrInd`X based on reviewed July–Decemberapart facts.
+Any-year spouse cohabitationtrue does not contradict last-six-monthsapart.
+The [2025 IRS Publication596](https://www.irs.gov/publications/p596)
+permits an eligible custodial parent's EIC despite the dependency release
+and the reviewed separated-spouse route. Both have wages/AGI15,000,
+standard15,750,tax0,withholding1,500,EIC4,328,refund5,828. NoCTC/ACTC.
+Birthpost2006 skips EIC4a/b; blank unusedcolumns/pageorder/clipping checked.
+This selected synthetic review does not authenticate signedForm8332,
+custody/residence records or IRSaccount transcripts.
+
+The unchanged independent checker exited0 at2026-10-07T04:38:15.903197Z;
+source replay/actualPDF/nativeXML/canonicalfields/templates/fullXSD passed.
+Manifest SHA256 `ff56cb85c463700512492f78cb60c157131d6b0c0c4dce24aebae8b688228f78`;
+terminal log SHA256 `b91aba5b10e94b60c8c912ace391e05941369a5010f32762bc48acb5686fe179`.
+Runtime hashes unchanged. `verified207-aggregate.json` confirms21disjoint
+passingbatches/207packets/1,891actualpages. Broadexistingrequirementsremainopen.
+
+### Subsequent-year IRA rollover review in progress
+
+All three actual `single-ira-2026-rollover` pages were inspected against
+source/pending/nativeXML: 8,000 traditionalIRA distribution December15,2025,
+rolled into another traditionalIRA January15,2026 (31days), taxable0,
+1040line4c(1)checked and pension/QCD marksblank. Source account/owner,
+noninherited/nonRMD/no-prior-rollover assertions agree; they are synthetic,
+not authenticated custodian proof. Standard15,750/tax0/no payments agree.
+The required explanation follows1040p1/p2 and identifies owner/dates/amount;
+native `IRADistributionStatement2` is referenced by the rollover indicator.
+The [2025 IRS rollover instructions](https://www.irs.gov/instructions/i1040gi)
+require this subsequent-year explanation. Selected checker exited0 at2026-10-07T04:40:07.462056Z: source replay,
+actualPDF/nativeXML/canonicalfields/templates and fullXSD passed.
+Manifest SHA256 `14fbddca97324a52682ab902554d9f2f4f392cc812f5c818edb5674c2d5a8a1b`;
+terminal log SHA256 `c8b0a9d9202680b8fe39cf6a764dca4524d953c44756d390c661efcd8c96f7d6`.
+Runtime hashes unchanged; `verified208-aggregate.json` confirms22disjoint
+passingbatches/208packets/1,894actualpages. No production change; broadgatesopen.
+
+
+### Unapproved Form 8919 identity placement
+
+All seven actual `single-form8919-nec-wages-and-additional-medicare` pages
+were inspected: Form1040(two),Schedule2(two),Forms8919/8959/8960.
+NEC210,000 fromEmployerInc/EIN123456789 matches8919reasonG/wages210,000;
+W2fromOtherEmployer150,000 joins1040line1a, with8919wages on1g, total360,000.
+[2025 Form8919](https://www.irs.gov/pub/irs-pdf/f8919.pdf) cap176,100 minus
+W2socialsecurity150,000 gives26,100;6.2%=1,618rounded plusMedicare3,045
+is4,663. AdditionalMedicare(360,000−200,000)*0.9%=1,440; Schedule2total6,103,
+1040tax90,035+6,103=96,138,withheld20,000,owed76,138. NIIT0/noNII agrees.
+ReasonG has reviewedSS8April1deliveryreference; IRSdeterminationdatecolumn
+correctlyblank. This is not authenticated SS8 delivery or worker-status proof.
+
+Actual8919 taxpayername and SSN are crossed by the identityrow bottom border.
+The overlap was confirmed with retained `form8919-nec-review/owner-detail.png`
+at200dpi. `form8919-owner-overlap-observation.json` retains packet hashes and
+qualifications. The page remains unapproved for legibility, outside passing
+selected scopes. The new finding is only in `future_todo`, with no implementation.
