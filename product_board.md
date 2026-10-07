@@ -5,7 +5,7 @@
 - **Released checkpoint:** [v2.0.10](https://github.com/filedcom/opentax/releases/tag/v2.0.10): PR63’s Form 8962/QBI/spouse-royalty fixes; builds, checksums and Mac download smoke passed.
 - **Retained progress:** [Ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md): 1,555 bounded slices; 52 TODOs still need full proof.
 - **Evidence:** [Archive](docs/mef/ty2025-product-board-status-2026-10-07.md), [handoff](docs/mef/ty2025-checkpoint-handoff-2026-10-07.md), [validation](docs/mef/ty2025-form1040-validation-batch.md), [execution](docs/mef/ty2025-readiness-execution-2026-10-07.md). Combined route checks: 7/0; V32 is older.
-- **Current validation:** 361/372 prepared (4,714 pages), 11 guarded; 75 bounded passes / 267 packets / 2,706 pages. 16 observed Form 3800 packets unapproved; prior parity qualified. Authenticity, coverage, BR and IRS acceptance open. Drive/local: 746 XSDs agree. Full regression: 12,213 passed / 42 failed; eight test repairs verified by 189/0 focused cases. Exact full rerun live on 23cbeee5d; detailed failures and hashes in current execution.
+- **Current validation:** 361/372 prepared (4,714 pages), 11 guarded; 75 bounded passes / 267 packets / 2,706 pages. 16 Form 3800 observations unapproved; prior parity qualified. Authenticity, coverage, BR and IRS acceptance open. Drive/local: 746 XSDs agree. Full regression: 12,213 passed / 42 failed; eight test repairs verified by 189/0 focused cases. Exact full rerun live on 23cbeee5d; detailed failures and hashes in current execution.
 - **Execution boundary:** existing MeF TODOs only; main scope frozen except proved checkoffs. New work goes to `future_todo`, unworked. Compact learnings first; link detailed evidence.
 
 ## Scope and completion rules
@@ -85,6 +85,8 @@
 
 Newly discovered work belongs here for future planning. It is outside the
 current execution queue.
+
+- [ ] Reconcile post-at-risk Schedule C line 31 in `single-two-at-risk-business-losses`: actual pages 7/9 and native XML retain raw losses −2,000/−3,000, while Forms 6198 allow only −500/−900. The [2025 Schedule C instructions](https://www.irs.gov/instructions/i1040sc) require line 31 after the limits; filed Schedule C totals −2,000 differ from Schedule 1/SE +1,600 by 3,600. Review the fixture expectation and offsetting-profit copy’s unnecessary line 32a mark too. Conditional tax 226 reconciles downstream, but full-return parity is unapproved. Future planning only; do not implement in the current queue.
 
 - [ ] Review missing Form 3468 facility coordinates and signed Increased Credit Amount Statement in `single-trust-clean-electricity-investment-credit`: October 7 actual page 4 marks Part I line 7a Yes and page 5 applies 30% to 10,000 basis, but coordinates are absent and the 16-page/native bundle includes no statement attachment. The [2025 IRS instructions](https://www.irs.gov/instructions/i3468) require coordinates and the signed statement for this increased-rate claim. The source supplies only synthetic review assertions and a repeated-a issuer digest; conditional credit 3,000/refund 7,933 do not authenticate qualification. Future planning only; do not implement in the current queue.
 
