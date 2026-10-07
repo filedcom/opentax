@@ -3318,3 +3318,19 @@ audit `trust-k1-withholding-graph-focused-v3-audit-20261007.json` SHA256
 Main52/future35 rows remain frozen, all2,592 main regression runtime paths
 unchanged. Remaining K1 work: prepared native/copy packet integration and
 statement/issuer/static-page/checkbox evidence under the existing task.
+
+
+### Trust K-1 immutable extraction snapshot — October 7, 2026
+
+Isolated commit `3e960e279` snapshots parsed source and PDF bytes before
+asynchronous verification; field extraction uses those exact retained bytes.
+A mutation test starts extraction, then zeroes the caller buffer and changes
+caller source/review EIN. Extracted original digest, EIN and codeB amount remain
+unchanged. Same seven-file normal typed focused suite: **112 passed /0 failed**
+(16s). Log `trust-k1-immutable-snapshot-focused-20261007.log` SHA256
+`7839fe65c28e28500e18df4ef034024f2028ece1fbb5105d20ffa9abb655d1e3`;
+audit SHA256 `88244a568ac76a446df7d5a51e58a5adea441d304866e70f395cab2e589f12d7`.
+The fix is confined to the current isolated helper; no root runtime changes,
+new board requirements, export opening, issuer/checkbox/whole-page approval,
+or parent checkoff. Main52/future35 rows unchanged. Full integrated regression
+on `df26ee299` remains running; no terminal result. No PR opened.
