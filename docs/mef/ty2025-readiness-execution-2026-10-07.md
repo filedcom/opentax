@@ -1147,3 +1147,80 @@ terminal log SHA256 `b91aba5b10e94b60c8c912ace391e05941369a5010f32762bc48acb5686
 `verified213-aggregate.json` verifies 25 disjoint terminal passing batches /
 213 packets / 1,921 actual pages. Runtime files and original generation flags
 remain unchanged. No production change or broad checklist closure.
+
+### Late IRA rollover packet verification
+
+The unchanged checker passed all four existing late-rollover packets and
+twelve actual pages at 2026-10-07T05:04:22.706534Z. Each Form 1040 prints
+the source gross on line 4a, zero taxable on 4b, and only the IRA rollover
+mark on 4c(1). The readable third-page statement matches its referenced
+native IRADistributionStatement and owner. With no other income or payments,
+deduction 15,750 leaves zero taxable income, tax and refund.
+
+Independent date review against [2025 Publication 590-A](https://www.irs.gov/publications/p590a)
+and [Revenue Procedure 2020-46](https://www.irs.gov/irb/2020-45_IRB#REV-PROC-2020-46):
+
+- `single-ira-late-automatic-waiver`: gross 9,000; June 1 distribution,
+  June 20 institution receipt/instructions, institution-error-only assertion,
+  September 15 contribution within one year.
+- `single-ira-late-self-certification`: gross 6,000; illness resolved
+  August 20, certification signed September 1/delivered September 2,
+  contribution September 10 is within the 30-day safe harbor.
+  Self-certification does not establish an IRS-issued waiver.
+- `single-ira-late-irs-ruling`: gross 7,000; supplied synthetic ruling
+  issued August 1 with October 1 deadline; September 10 deposit precedes it.
+- `single-ira-late-frozen-deposit`: gross 8,000; June 1 distribution,
+  June 20–August 20 insolvency freeze excludes 61 days, extending July 31
+  to September 30, beyond the ten-day release minimum; contribution on deadline.
+
+Noninherited, non-RMD, current-owner traditional IRA and no prior rollover
+assertions were checked. Authentic issuer/custodian, certification, ruling and
+insolvency records remain unproved; no broad rollover closure or acceptance.
+
+Manifest SHA256 `7b531504f70fe6736b5b9f8b1d2c82c15799adad01b7f72b65a17e9be67ed907`;
+terminal log SHA256 `421cebb52ce0170975e3606e57b9a67f99115ba7323a6b121b534194fdf5075b`.
+
+### MFS legal-separation child-credit packet verification
+
+`mfs-w2-legal-separation-eic-child` passed the unchanged selected checker
+at 2026-10-07T05:05:38.072805Z: one packet and all five actual pages.
+Form 1040 dependent Ada's identity, 2017 birth, daughter relationship and
+twelve US months match Schedule EIC and Schedule 8812. MFS spouse identity
+and the special separated-spouse mark agree with native XML; DependentDetail
+precedes that mark. The [2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi)
+contain this selected EIC exception and the 15,000–15,050 one-child table
+amount 4,328. This synthetic packet does not establish the referenced decree's
+authenticity or state/jurisdiction legal applicability.
+
+Wages/AGI 15,000 less deduction 15,750 gives zero taxable income/tax.
+Schedule 8812 initial credit 2,200 has zero nonrefundable tax limit;
+15% × (15,000 − 2,500) = 1,875, capped at 1,700 ACTC.
+The [2025 Schedule 8812 instructions](https://www.irs.gov/instructions/i1040s8)
+confirm the selected cap. Refundable credits 6,028 plus withholding 1,500
+give refund 7,528. All populated amounts, checkbox flow and page order agree.
+
+Manifest SHA256 `c72890a2c302b0e739c3aa429176de06633fef74331edc673874d67f1fed8211`;
+terminal log SHA256 `b42d1d2f80d996571c15991b0a2b76f84a5f43df6092c1e725ac55399229249c`.
+`verified218-aggregate.json` verifies 27 disjoint terminal passing batches /
+218 packets / 1,938 actual pages. Runtime files and original generation flags
+remain unchanged. Broad source, coverage, business-rule and ATS gates remain open.
+
+### Personal-item 1099-K observations, unapproved for native parity
+
+All twelve actual pages in `single-k-personal-gain-loss` and
+`single-k-personal-selling-fees` were compared with source/pending/native XML.
+The first has short-term ticket gain 800 − 250 = 550 and long-term chair loss
+700 − 1,000 offset by code L adjustment +300. The second reduces both gross
+proceeds by documented synthetic 50 selling fees: short gain 750 − 250 = 500,
+long loss 650 − 1,000 offset by code L +350. The [2025 Form 8949 instructions](https://www.irs.gov/instructions/i8949)
+support net proceeds and the nondeductible-loss adjustment. Box C/F, dates,
+amounts, owner, Form 1040 gain/AGI and zero tax reconcile.
+
+Both actual Schedule D PDFs print short-term line 7 and combined line 16
+gain, QOF No, line 17 No and line 22 No. Native Schedule D contains only
+line 3/10 transaction groups, omitting these totals/answers. This extends
+the existing future-only Schedule D parity observation; no implementation
+and neither packet enters a passing scope. The two `*-parity-observation.json`
+records preserve hashes and qualifications. Issuer/purchase/settlement/fee
+authenticity remains unproved. Main board still matches the frozen baseline
+with 52 open requirements and twelve unworked future items.
