@@ -1,3 +1,4 @@
+import { currentPropertyLossAllocation } from "../../../nodes/inputs/schedule_e/current-property-loss-allocation.ts";
 import { isDeepStrictEqual } from "node:util";
 import { inputSchema as scheduleSchema } from "../../../nodes/inputs/schedule_e/index.ts";
 import {
@@ -57,7 +58,9 @@ export function assertCurrentPropertyQbi(
   const pal = palSchema.parse(pending?.form8582 ?? {}),
     expected = [
       ...sources.filter((s) =>
-        currentPropertyPassiveAmounts(s).passiveOperating !== 0
+        currentPropertyPassiveAmounts(s).passiveOperating !== 0 ||
+        (pal.current_loss_forms !== undefined &&
+          currentPropertyPassiveAmounts(s).passiveGain < 0)
       ).map((s) => {
         const a = currentPropertyAmounts(s);
         return {
@@ -65,7 +68,9 @@ export function assertCurrentPropertyQbi(
           net: currentPropertyPassiveAmounts(s).passiveOperating,
         };
       }),
-      ...farms.map((s) => ({
+      ...farms.filter((s) =>
+        pal.current_loss_forms === undefined || currentFarmRentalNet(s) !== 0
+      ).map((s) => ({
         id: s.activity_id,
         net: currentFarmRentalNet(s),
       })),
@@ -79,18 +84,31 @@ export function assertCurrentPropertyQbi(
         a.prior_unallowed_4797_part1 === 0 && a.prior_unallowed_4797_part2 === 0
       )
     ) ||
-    (pal.current_4797_sale_gains?.length ?? 0) !==
-      sources.filter((s) => currentPropertyPassiveAmounts(s).passiveGain > 0)
-        .length ||
-    sources.filter((s) => currentPropertyPassiveAmounts(s).passiveGain > 0)
-      .some((s) =>
-        !pal.current_4797_sale_gains?.some((r) =>
-          r.activity_id === s.activity_id &&
-          r.activity_name === s.activity_name && r.part === "II" &&
-          r.gain === currentPropertyPassiveAmounts(s).passiveGain &&
-          r.entire_activity_interest_disposed === false
-        )
-      )
+    (pal.current_loss_forms !== undefined
+      ? !isDeepStrictEqual(
+        pal.current_loss_forms,
+        currentPropertyLossAllocation(sources, farms).origins.filter((r) =>
+          r.passive
+        ).map((r) => ({
+          activity_id: r.activity_id,
+          special_allowance_eligible: false,
+          forms: r.forms,
+        })),
+      ) || (pal.current_4797_sale_gains?.length ?? 0) !== 0
+      : ((pal.current_4797_sale_gains?.length ?? 0) !==
+          sources.filter((s) =>
+            currentPropertyPassiveAmounts(s).passiveGain > 0
+          )
+            .length ||
+        sources.filter((s) => currentPropertyPassiveAmounts(s).passiveGain > 0)
+          .some((s) =>
+            !pal.current_4797_sale_gains?.some((r) =>
+              r.activity_id === s.activity_id &&
+              r.activity_name === s.activity_name && r.part === "II" &&
+              r.gain === currentPropertyPassiveAmounts(s).passiveGain &&
+              r.entire_activity_interest_disposed === false
+            )
+          )))
   ) {
     throw new Error(
       "Current property QBI requires complete actual current passive activity/sale pool",
