@@ -3082,3 +3082,24 @@ The next full-regression driver is prepared with syntax checked, not run; it
 requires the current regression's successful terminal result, clean integrated
 code matching the isolated hashes, and fresh output paths before launching.
 No integration, main-board checkoff, future implementation or aggregate increase.
+
+## Form8997 full regression complete; Form8582 integrated
+
+Normal typed `deno task test` with Poppler on PATH and V8 heap8GiB completed
+on `0eb1cd6da`: **12,258 passed /0 failed**, exit0, October7
+18:49:15.229443Z–20:49:04.121405Z (119m46s test summary). All2,591 runtime
+hashes match the launch manifest. No ignored total is printed in the summary;
+no ignored-test lines found. Tools observed at completion: Deno2.9.4,
+V815.0.245.2-rusty, TypeScript6.0.3, Poppler26.09.0, libxml2.9.13.
+Log SHA256 `924707b651b7a5f913c0b744e214e5bdb8c501e674ccad63b76bbb304023a695`;
+terminal audit SHA256 `ed3ebd116d32327922293fdcf7541032a14a5f5bb400324b3a06905290fdf951`,
+under `.state/research/board-execution-2026-10-07/`.
+
+After terminal evidence verification, the four isolated Form8582 commits were
+cherry-picked cleanly as `cc17659f8`, `630113a3f`, `6380f7a00`, `2a22ebb44`.
+All five resulting code/test hashes match the isolated133/0 tested revision.
+This integrates worksheet continuation and existing operating-sale ledger
+contracts; a fresh integrated full regression remains required. Main52 scope
+requirements,35 future rows and aggregate approvals remain unchanged. Existing
+acceptance/source/PDF identity qualifications remain; local full green is not
+IRS acceptance or closure of the broad phase.

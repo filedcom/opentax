@@ -842,3 +842,13 @@ store, authenticated source/acceptance, public filing route, 2026 engine import,
 BR or ATS proof. The code remains isolated pending integration and full tests.
 All2,591 root runtime hashes unchanged;52 main requirements,35 future rows and
 aggregate approvals unchanged.
+
+## October7 integration into the main readiness branch
+
+After Form8997's full regression completed12,258/0 with unchanged runtime,
+isolated commits through `25fefcab7` were integrated as `cc17659f8`, `630113a3f`,
+`6380f7a00`, `2a22ebb44`. All five integrated code/test hashes match the
+isolated133/0 revision. Prior sections' “isolated/unintegrated” statements
+describe their historical checkpoints; fresh integrated full testing remains
+required. Source/acceptance, durable production store, engine import, wider
+branches and future-only joint-header qualification remain unchanged.
