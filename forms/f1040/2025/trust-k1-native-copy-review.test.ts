@@ -218,6 +218,37 @@ Deno.test("trust K-1 native review rejects reuse of one PDF as two claimed sourc
   );
 });
 
+Deno.test("trust K-1 native review retains owner suffix, care-of and second address line", async () => {
+  const { source, documents } = await fixture(changedFields({
+    "f1_11[0]":
+      "Test Taxpayer Jr\n% Jane Taxpayer\n1 Test Way\nApt 1\nAustin TX 78701",
+  }));
+  const [copy] = await reviewTrustK1NativeCopies(
+    source,
+    { ...filer, suffix: "Jr" },
+    documents,
+    [{
+      ...recipient,
+      person_name: "Test Taxpayer Jr",
+      in_care_of_name: "% Jane Taxpayer",
+      address: { ...recipient.address, line2: "Apt 1" },
+    }],
+  );
+  assertStringIncludes(
+    copy.nativeXml,
+    "<BeneficiaryPersonNm>Test Taxpayer Jr</BeneficiaryPersonNm>",
+  );
+  assertStringIncludes(
+    copy.nativeXml,
+    "<InCareOfNm>% Jane Taxpayer</InCareOfNm>",
+  );
+  assertStringIncludes(
+    copy.nativeXml,
+    "<AddressLine2Txt>Apt 1</AddressLine2Txt>",
+  );
+  await validateNative(copy.nativeXml);
+});
+
 for (
   const [label, values, flags] of [
     ["unknown code", { "f1_52[0]": "U" }, []],

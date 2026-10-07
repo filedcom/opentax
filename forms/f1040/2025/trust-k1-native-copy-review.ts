@@ -141,7 +141,9 @@ function project(
   const checked = (key: string) => values[key] === true;
   const owner = copy.beneficiarySsn === filer.primarySSN ? filer : filer.spouse;
   const ownerName = owner &&
-    [owner.firstName, owner.middleInitial, owner.lastName].filter(Boolean).join(
+    [owner.firstName, owner.middleInitial, owner.lastName, owner.suffix].filter(
+      Boolean,
+    ).join(
       " ",
     );
   if (
