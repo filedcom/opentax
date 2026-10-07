@@ -1274,3 +1274,38 @@ planning; no implementation or IRS rejection claim. The packet remains outside
 passing scopes. `clean-vehicle-skip-observation.json` retains artifact hashes,
 all-page review and qualifications. Main board is frozen with 52 open
 requirements; thirteen future items remain unworked.
+
+### QEF section 1294 Election B packet verification
+
+`single-source-qef-1294-election` passed the unchanged selected checker
+at 2026-10-07T05:16:32.933743Z: one packet and all seven actual pages.
+Form 8621 identifies Alex Example, QEF Source Fund/QEF001 in Dublin,
+Ordinary 100 shares acquired January 1, value 20,000, section 1293 income
+2,000 and new QEF Election A plus tax-deferral Election B. Other elections
+are unchecked; the future-only D–H work remains untouched.
+
+Part III ordinary income 2,000, no capital income/distributions/transfers
+and no section 951 inclusion agree with source/pending/native. Schedule 1
+line 8z prints SEE STATEMENT and 2,000; the readable other-income statement
+uses the same owner, QEF description and native reference. Wages 75,000 plus
+QEF 2,000 gives AGI 77,000 and taxable 61,250 after deduction 15,750.
+The [2025 Form 1040 tax table](https://www.irs.gov/instructions/i1040gi)
+gives tax 8,395; omitting undistributed QEF earnings gives taxable 59,250
+and tax 7,955. Their difference, 440, matches Form 8621 line 9c and native
+DeferredTaxAmt. The [2025 Form 8621 instructions](https://www.irs.gov/instructions/i8621)
+require subtracting that amount on Form 1040 line 24 and a bracket annotation.
+Both `[440]` and resulting tax 7,955 are visible at 200 dpi, with withholding
+11,000 and refund 3,045. No credits or other taxes affect the comparison.
+
+The three retained synthetic issuer/annual/activity records hash-match their
+source declarations (40/46/49 bytes). Their brief text does not establish
+complete external issuer, annual-information, shareholder or broker authenticity.
+All actual PDF pages, identities, amounts, checkbox semantics, required statement,
+ordering and native joins were reviewed; this does not close the broad Form 8621
+source/eligibility, later-year section 1294 ledger, business-rule or ATS gates.
+
+Manifest SHA256 `d6a8ced977aad6eb64226434e0b7ac75d0af4f5400d8d44f51f406fc54206050`;
+terminal log SHA256 `20377222e40eb9017c7293b94a1efdb5df33b02a35df7a57f3d01634d6333a3e`.
+`verified220-aggregate.json` verifies 29 disjoint terminal passing batches /
+220 packets / 1,952 actual pages. Runtime and original generation flags unchanged.
+Main scope remains frozen: 52 requirements open; thirteen future items unworked.
