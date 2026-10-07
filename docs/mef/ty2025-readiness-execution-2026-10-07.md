@@ -378,3 +378,15 @@ Schedule 3 and Form 1040 once; tax 1,487, payments 8,600 and refund 7,113
 match source/pending/XML. Identity, method marks, blank allocation sections,
 order and legibility passed. `four-policy-gaps-five-page-review.json` retains
 notes/digests; it is outside current checkpoints and sources are synthetic.
+
+All four pages of `single-form7217-nonliquidating-basis-decrease` were
+inspected. Partnership/date/owner, basis 600, outside basis 450, cash 50, gain
+zero, allocated basis 400 and three property rows 100/150/150 agree with
+source/pending/XML; Form 1040 tax/refund are 7,955/3,045. The [IRS
+instructions](https://www.irs.gov/instructions/i7217) confirm Rev. December
+2024 applies to 2025. The packet is **not approved**: PDF line 8 marks No
+although zero-gain line 7 directs skipping to line 9, and XML omits the gain-tax
+indicator. Page 3 checkbox completion remains false. This presentation
+question is recorded solely in the board’s `future_todo` execution queue and
+is not being implemented. `form7217-basis-four-page-observation.json` retains
+notes/digests; this packet is excluded from passing checkpoints.

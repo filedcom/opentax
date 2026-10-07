@@ -91,3 +91,5 @@ current execution queue.
 - [ ] Plan durable storage capacity for retained test and PDF evidence; the local data volume had about 754 MiB free during the October 7 readiness run. Future planning only; do not remove retained evidence as part of the current queue.
 
 - [ ] Reconcile the synthetic `single-form461-schedule-c-excess-business-loss` PDF-review fixture with the current sourced Form 8995 net-loss carryforward guard. October 7 native preflight rejected its calculation before XML/PDF preparation; preserve the guard and review the fixture in future planning only.
+
+- [ ] Review the zero-gain Form 7217 line 8 PDF checkbox branch: the October 7 `single-form7217-nonliquidating-basis-decrease` packet marks No despite line 7 directing a skip to line 9, while native XML omits the U.S.-tax-on-gain indicator. Reconcile the presentation with the [IRS form instructions](https://www.irs.gov/instructions/i7217); future planning only, not part of the current execution queue.
