@@ -674,3 +674,79 @@ No runtime files changed. Twelve disjoint terminal passing scopes cover
 **195 packets / 1,849 pages**; `verified195-aggregate.json` retains the audit.
 All five future items remain unchanged/unworked; the Form4952 preview
 misread did not create a false future item. Main52 requirements remain open.
+
+
+Fresh four-page `single-form8396-certified-loan-interest-credit` review
+checked Form1040(two), Schedule3 and Form8396 against the supplied MCC
+facts, retained synthetic1098CopyB, pending and native XML. Interest7,500
+allocated by100,000/125,000 gives6,000;20% credit1,200 agrees the
+[2025 IRS form/instructions](https://www.irs.gov/pub/irs-pdf/f8396.pdf).
+Taxlimit5,075 equals1040line18 lesszeroothercredits; credit joins
+Schedule3line6g/7/8 and1040line20 once. Standard15,750/taxable44,250,
+taxaftercredit3,875/withholding5,000/refund1,125 agree. No carryforward
+or PartII entries required. Retained1098CopyB calendar25/lender/loanBref/
+maskedborrower3333/box1interest7,500 and digest
+`a06535c641026e99e1d0c3406157e081e275c0cea06db1bd41f1672edd69b0fb`
+were checked. Synthetic bytes do not authenticate lender/MCC issuance.
+`form8396-certified-four-page-review.json` retains hashes/notes.
+
+The unchanged mortgage-credit verifier completed **exit0** at
+`2026-10-07T04:11:19.499057Z`, manifestSHA256
+`5329095da2c05e2e1e674c6de528f6c60ebae82ca8fbed3a6a416846806a8c05`,
+logSHA256 `8ea2448cfc67512a67435c4f70ff002cfb19824e20fe7bfccce4ebac68da347d`.
+No runtime files changed. Thirteen disjoint terminal scopes cover
+**196 packets / 1,853 pages**; `verified196-aggregate.json` retains the audit.
+
+Source review of `single-divorced-agreed-joint-estimated-payment` found
+the retained signed-agreement PDF is a **477-byte blank one-page PDF**,
+digest `6798281331ad47ac7a8cbc8de0419a134a8ac61c13c677058bac4a096a47bdd7`,
+despite structured signed-by-both verification. Actual1040pages andnative
+print the entered300 share/formerSSN222334444/refund300 consistently,
+but the retained bytes establish no allocation or signatures.
+`joint-estimated-blank-agreement-observation.json` is explicitly unapproved,
+and this packet remains outside all passing scopes. The discovery was
+added only to `future_todo` and remains unworked; no production change.
+Main52 checklist requirements remain byte-identical to baseline.
+
+
+Fresh four-page `joint-senior-schedule1a` review checked both taxpayers'
+DOB1955/1958, supplied timely validSSNs and separate zero-exclusion
+source references. W2primarywages160,000/withholding20,000 giveAGI/MAGI160,000.
+[2025 Schedule1A](https://www.irs.gov/pub/irs-prior/f1040s1a--2025.pdf)
+MFJthreshold150,000 and6% reduction600 give5,400 pereligibleperson,
+10,800 total/native/1040line13b once. Both1040ageboxes checked;
+standard34,700 plus10,800 deductions give114,500 taxable,15,018 tax
+and4,982 refund. All four actual pages, marks, names, order and legibility
+were inspected. Synthetic records do not authenticate issuer/residency proof.
+`joint-senior-four-page-review.json` retains current artifact/render hashes.
+Unchanged verifier terminalexit0 at`2026-10-07T04:13:59.801686Z`,
+manifestSHA256 `550e711a6f2130640fdad919758b21dd6b1b097085b85fbe9e7f04dd087799f3`,
+logSHA256 `6c982700be225686801ab736858e3d59c3cdee5b76a41b55f1e0c9246216e709`;
+no runtime changes. Fourteen disjoint scopes cover**197 packets/1,857pages**,
+retained in `verified197-aggregate.json`.
+
+Fresh four-page `single-k-reported-error` review checked structured1099K
+payer/recipient/gross1,000 and reviewed800personalgift+200sharedmeal
+reimbursement records/no goods or services/correctionrequest. All1,000
+appears in Schedule1's top error entry and nativeForm1099KRptErrorOrLossAmt;
+no income or24zadjustment. AGI0/standard15,750/tax0/payment0/refund0 agree.
+[2025 IRS instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+use this top entry for such payments. Actual1040(two)/Schedule1(two)
+pages, marks/names/order/legibility checked. Structuredsyntheticreferences
+do not authenticate payment/correction records or ATS acceptance.
+`reported-k-error-four-page-review.json` retains hashes/notes.
+Disjoint1-packet/4-page `reported-k-error-reviewed-batch` is under
+unchanged read-only verification; no terminal pass claimed yet.
+
+
+The reported1099Kerror verifier completed **exit0** at
+`2026-10-07T04:15:15.309418Z`, manifestSHA256
+`5af45e619b99f287a3bb6d4d1f49aa839c159111887aca71d120df09fdcb256d`,
+logSHA256 `6c982700be225686801ab736858e3d59c3cdee5b76a41b55f1e0c9246216e709`.
+No runtime files changed. Fifteen mutually disjoint terminal scopes cover
+**198 packets / 1,861 pages**, audited in `verified198-aggregate.json`.
+All three unapproved Form2441/Form7217/blank-agreement observations
+remain outside passing scopes. The main52 requirements remain frozen;
+six future items remain unworked. Latest full-regression observation697
+passing markers/zero failures with livePID53927 is progress only,
+not a terminal full-suite pass.
