@@ -820,3 +820,25 @@ a production durable store, authenticated acceptance, 2026 engine import, full
 public filing route, matching BR or ATS acceptance. It remains isolated pending
 the main full-regression result and integration validation. All2,591 root runtime
 hashes remain unchanged; main requirements, aggregates and35 future rows unchanged.
+
+## October 7: isolated entire-disposition released-loss ledger
+
+Isolated commit `25fefcab7` also retains the calculator's existing reviewed
+PartII entire-disposition/overall-gain operating-loss route. Both active and
+other passive activities retain opening3,000, current2,000, allowed5,000 and
+ending0, including the prior filed-document reference. Two private synthetic
+JSON roundtrips agree with the calculator's absence of suspended carryforwards.
+The validator still rejects gain equal to/below the5,000 losses, unsupported
+PartI entire-sale character and missing prior active participation. No acceptance
+or native/PDF filing guard changes.
+
+Typed PDF/native/node suite **133/0**. Private evidence:
+`.state/research/board-execution-2026-10-07/form8582-entire-sale-ledger-isolated-20261007/`.
+Focused log SHA256 `712c9d792b84a7013d9d590cf8482216c407ef62c374fd9a78dae1219c0d5325`;
+observation SHA256 `dcd977bd3c3ac2da01495cfed447dbeb4d3c1b5db1fdb5089c58e695002d1572`;
+verification SHA256 `3ce072efb36f01a48c529b875b6ebad682abdf280002dbed9928904333ef37e2`.
+This is helper-level retained-source/amount proof, not a production durable
+store, authenticated source/acceptance, public filing route, 2026 engine import,
+BR or ATS proof. The code remains isolated pending integration and full tests.
+All2,591 root runtime hashes unchanged;52 main requirements,35 future rows and
+aggregate approvals unchanged.

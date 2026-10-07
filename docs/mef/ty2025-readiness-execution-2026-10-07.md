@@ -3057,3 +3057,14 @@ PDF/native/node suite132/0. [The activity-ID gap](ty2025-form8582-activity-id-ga
 records evidence hashes and remaining production persistence, acceptance and
 engine-import gates. Source authentication and filing guards remain unchanged.
 Main2,591runtime hashes unchanged;52 requirements and35 future rows unchanged.
+
+## Form8582 entire-disposition released-loss ledger
+
+Isolated commit `25fefcab7` retains fully released operating losses for the
+existing reviewed PartII entire-sale overall-gain route. Both active/other
+synthetic snapshots preserve prior3,000/current2,000/allowed5,000/ending0 and
+filed-document reference; existing disposition and source validation remain.
+Typed PDF/native/node suite133/0. [The activity-ID gap](ty2025-form8582-activity-id-gap.md)
+records evidence hashes and qualifications. Production storage, accepted-source
+authentication and engine import remain open; main runtime2,591paths unchanged.
+No main checkoff, future-row work or aggregate increase.
