@@ -4178,3 +4178,60 @@ covered by that running regression. Main requirement text matches the frozen
 no future work picked up. Compacted top learnings retain five bullets; the
 October 8 deadline estimate remains 0 ATS tests / 0% acceptance in that
 window, with post-reopening probability unknown.
+
+
+## October 8 — existing first-year sale sources now retain a Form 8582 ledger
+
+The isolated ledger constructor previously rejected a first-year current sale
+because its reviewed-sale branch required positive prior operating PAL. The
+registered native source checks already support an other-passive first-year
+retained Part II sale, an active first-year retained Part II sale above the
+special-allowance phaseout, and an other-passive first-year entire disposition
+with overall gain. The constructor now retains those existing sources without
+adding a new native/PDF filing route. It requires a sole named Schedule E
+activity, a matching acquired-in-2025 ungrouped activity source, zero prior
+losses with no filed-year source, one same-activity Part II gain, and explicit
+retained/entire disposition status with the existing strict gain/loss boundary.
+The source-bound store still runs the registered native projector first.
+
+For a current operating loss of 5,000 and retained ordinary gain of 2,000,
+both tested rental categories preserve 2,000 allowed and 3,000 suspended in
+Schedule E character, Part VIII, with Schedule 1 net zero and AGI 160,000.
+The synthetic 2026 opening contract retains the same activity ID, operating
+character and 3,000 balance; it does not establish accepted-return import.
+For the other-passive entire gain of 8,000, the ledger retains the 5,000
+allowed operating loss with zero ending PAL, while Schedule 1 carries gain
+8,000/loss 5,000 and Form 1040 AGI 163,000. No empty-opening engine import or
+accepted-return promotion is claimed. Current/prior Form 4797 loss characters
+remain their separate ledger branches.
+
+Normal typed six-module v2 suite: **29 passed / 0 failed**, exit 0,
+2026-10-07T23:27:54.085073Z–23:27:57.563978Z.
+Private `form8582-first-year-durable-ledger-20261008-v2/run.json` binds the
+changed ledger and storage test; log SHA-256:
+`7c575644a65e24e5fb6b875f5317e4fd18fdc9e905925696a5c866c303b72b28`.
+The exact command and original-file hashes are retained there. Tests cover
+persisted/re-read source snapshots and native worksheet bytes, concrete
+Schedule 1/Form 1040 joins, retained opening rows, absent/acquired-before-2025
+or mismatched activity source, wrong sale part, missing disposition status,
+exact-zero boundary, and acquisition-date mismatch against the sale. Existing
+current-loss storage/ledger and sale checks also passed. No new full-return
+XSD/PDF review or IRS ATS count is added.
+
+Preserved v1 result: **28 passed / 1 failed**, log SHA-256
+`e4491b48bfab6a5ae98ac1498fa80fe7d7c7f331910fe9fc6955994811fe9728`.
+That probe exposed the active first-year entire-gain graph boundary: Form 4797
+requires type B in its entire-passive-source validation and rejects the type-A
+source before filing preparation. This conflicts with the route described in
+the older entire-gain gap note. It is newly recorded as future item 39 and left
+unworked; no Form 4797 guard was changed. The ledger's first-year active branch
+also stays retained-only. The positive suite consequently covers the three
+existing graph/native routes, not a purported fourth route.
+
+The [2025 IRS Form 8582 instructions](https://www.irs.gov/instructions/i8582),
+rechecked this turn, retain normal reporting character and distinguish an
+entire disposition with overall gain from one with overall loss. This ledger
+change does not authenticate source references, solve prior-year acceptance,
+complete wider dispositions or close the main Form 8582 TODO. Root runtime
+remains held while full regression session 41991 runs. The main board remains
+52 unchecked requirements; only `future_todo` gains the new unworked discovery.
