@@ -234,3 +234,14 @@ are present; wages/AGI 75,000, standard deduction 31,500, taxable income
 pending and XML. Identity, elections, order and legibility passed.
 `presidential-both-two-page-review.json` retains observations and digests;
 this is outside the verified 23-case checkpoint.
+
+A further nonoverlapping **15-case / 68-page** selected checkpoint is now
+under the unchanged read-only verifier: 13 exact prior PDF/XML and complete
+source matches (47 pages), plus the fresh patron-health and spouse household
+withholding reviews (21 pages). Physical prior artifact/manifest digests and
+completed page checklists were checked before assembly. Both earlier batches
+are excluded; original evidence is unchanged and artifacts/cache use hardlinks.
+`additional-reviewed-assembly.json` records origins;
+`additional-reviewed-check.status` and `.log` retain the current calculation,
+PDF/XML, page-origin/template and full XSD replay outcome. No terminal pass
+is claimed yet. Tracked runtime matches the corrected full-regression launch.
