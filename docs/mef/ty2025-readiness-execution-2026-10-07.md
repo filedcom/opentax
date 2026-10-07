@@ -175,3 +175,15 @@ identities, applicable canonical revisions, marks, ordering and legibility were
 checked on every page, including the wrapped Schedule D business name.
 `patron-c-health-sixteen-page-review.json` binds this review to all artifact and
 render digests; it is outside the unchanged 23-case checker scope.
+
+The read-only selected checkpoint finished **exit 0: 23 cases / 201 pages**
+at `2026-10-07T02:41:03Z`. All saved artifacts match the current source/graph,
+XML and regenerated PDF; each completed page checklist matches its replayed
+form/copy origin, and canonical template hashes plus full v5.4 XSD pass.
+`reviewed-checkpoint-check-corrected.status` retains the exact command, checker
+and manifest digests, tool-evidence reference and log digest
+`83dd085121c46eaa97726ccdb4fe9859565e4e4210d418b36ee8c04316be0e82`.
+The corrected runtime manifest remains unchanged. This verifies the selected
+checkpoint only; the newer spouse-loss and patron-health reviews are outside
+its scope, and remaining fixtures/all-case review, coverage, business rules and
+ATS requirements remain open.
