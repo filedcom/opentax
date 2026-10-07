@@ -357,3 +357,15 @@ and manifest digests were rechecked; current artifacts/cache are hardlinked.
 `expanded-reviewed-check.status`/`.log` retain the unchanged read-only
 verifier run. All four earlier batches are excluded, runtime still matches
 full-regression launch, and no terminal pass is claimed for this batch yet.
+
+All five pages of `single-four-sequential-no-aptc-policies-full-year`
+were freshly reviewed. Four sequential primary-owned policies cover twelve
+months without overlap: premiums 900 each month, corrected quarterly SLCSP
+600/700/800/900, contribution 50 and APTC zero produce monthly PTC
+550/650/750/850 and total/net credit 8,400. Household/MAGI/FPL/rate and
+monthly-method marks agree with source, pending and XML. Schedule 3 lines
+9/15 and Form 1040 line 31 include 8,400 once; tax 1,487, payments 11,400
+and refund 9,913 reconcile. Identity, blank allocation/marriage sections,
+attachment order and legibility passed.
+`four-policy-no-aptc-five-page-review.json` retains observations/digests;
+this is outside current verifier batches and sources remain synthetic.
