@@ -1,5 +1,27 @@
 # TY2025 Form 8582 entire disposition with overall gain
 
+## Current checkpoint — October 8, 2026
+
+The sections below retain implementation-time descriptions. Helper support
+and authored native/PDF cases do not by themselves establish a public filing
+route. In particular, the first-year actively participated entire-overall-gain
+probe (current operating loss 5,000, Part II gain 8,000) is rejected by the
+Form 4797 graph validator, which requires a type-B source activity for that
+entire-passive-sale branch. This is future item 39, unworked; no guard was
+changed and no source/XSD/PDF filing proof is claimed for that type-A case.
+
+Isolated `b82c1bbc4` instead extends storage for three already admitted source
+routes: first-year other-passive and active retained Part II sales, and a
+first-year other-passive entire sale with overall gain. The normal typed
+ledger/native/source suite passed 29/0. The tested entire-gain ledger retains
+5,000 allowed operating loss and zero ending PAL; retained-sale ledgers keep
+3,000 suspended operating loss and source-reconciled synthetic opening rows.
+These are unverified candidates, not accepted filings or a production 2026
+import. Prior-accepted-return proof, wider disposition characters, matching
+business rules and ATS remain open. See the [activity ledger checkpoint](ty2025-form8582-activity-id-gap.md#current-evidence-checkpoint--october-8-2026)
+and [execution journal](ty2025-readiness-execution-2026-10-07.md).
+
+
 ## First-year active rental entire disposition with overall loss (2026-10-01, unrun)
 
 The [2025 Form 8582 instructions](https://www.irs.gov/instructions/i8582) say a

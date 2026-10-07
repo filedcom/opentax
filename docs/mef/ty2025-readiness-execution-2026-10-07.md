@@ -4235,3 +4235,28 @@ change does not authenticate source references, solve prior-year acceptance,
 complete wider dispositions or close the main Form 8582 TODO. Root runtime
 remains held while full regression session 41991 runs. The main board remains
 52 unchecked requirements; only `future_todo` gains the new unworked discovery.
+
+
+## October 8 — reconcile Form 8582 status against retained evidence
+
+Read-only audit `form8582-evidence-index-20261008-v1/reconciliation.json`
+verified the five retained complete packet XML/PDF/source-pending byte hashes,
+all 57 image hashes and all 52 matching reviewed-image hashes. The five new
+unique images retain their earlier visual-review record; they were not counted
+again. The 126/0 filing changed-file hashes match committed `f73ff2d68`; the
+39/0 candidate storage hashes match `33ab01d97`; the 29/0 first-year-ledger
+hashes match `b82c1bbc4`. All focused log hashes and terminal exit results
+match their immutable run records. This is evidence reconciliation, not a fresh
+test, PDF render, authentication or ATS result.
+
+Updated the registered-form audit's Form 8582 row and compact status sections
+in the activity-ID/entire-gain gap notes. Older prose saying no filed-year
+importer, durable store or executed validation no longer governs the named
+bounded revisions: entered 2024 transcription and an isolated unverified
+candidate archive exist, while an authenticated accepted-ledger importer does
+not. The tables keep root integrated runtime, isolated filing changes and
+historical test versions distinct. They also identify the unworked future 35
+joint PDF header and future 39 active first-year entire-gain graph boundaries.
+No approval aggregate, main board requirement, registry count or future item
+was promoted. The running root full regression predates the new isolated
+filing/storage commits and cannot certify them.
