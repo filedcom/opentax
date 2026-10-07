@@ -640,3 +640,27 @@ present**, so there is no discrepancy or new future item.
 render, detail and sourceCopyB hashes. The disjoint **1-packet/4-page**
 `investment-interest-reviewed-batch` is undergoing unchanged read-only
 verification; no terminal pass claimed yet.
+
+
+The investment-interest verifier completed **exit 0** at
+`2026-10-07T04:04:00.155808Z`, manifest SHA-256
+`6324ffee6e367ffbe1752158e829f657f7f069a6a43f58a88d14eb447f131fc7`,
+log SHA-256 `8ea2448cfc67512a67435c4f70ff002cfb19824e20fe7bfccce4ebac68da347d`.
+No runtime files changed. Eleven mutually disjoint terminal scopes cover
+**194 packets / 1,842 pages**; `verified194-aggregate.json` retains the audit.
+
+Fresh seven-page `single-form4136-farm-fuel-credit` review checked actual
+Form1040(two), Schedule3 and Form4136(four) pages against all supplied
+synthetic business/use/quantity/cost/confirmation facts, pending and native
+XML. ExampleFarm/111000/ExampleTractor, qualifying-businessYes/activitycount1
+and primary111223333 match. Entered1a off-highwaygas1,000gallons at.183
+gives183 (cost3,000);3b farmundyeddiesel1,000at.243 gives243 (cost4,000).
+[2025 official rates/form](https://www.irs.gov/pub/irs-prior/f4136--2025.pdf)
+agree. Total426 appears Form4136line17/Schedule3lines12/15 and
+Form1040line31/refund once. No income is entered; taxableincome/taxzero.
+Business, dye-exception and unusedclaim/registration marks, split-dollar
+cents fields, all continuations and legibility were checked.
+`form4136-farm-fuel-seven-page-review.json` retains hashes/notes. The
+disjoint1-packet/7-page `fuel-credit-reviewed-batch` is under unchanged
+read-only verification. This synthetic fixture does not authenticate seller
+receipts or establish complete business income/expense reporting.
