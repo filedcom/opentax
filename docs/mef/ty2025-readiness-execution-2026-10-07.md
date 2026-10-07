@@ -286,3 +286,14 @@ was rechecked: verified scope now totals **38 distinct packets / 269 pages**.
 The 9-case verifier started after this terminal pass; the 48-case verifier and
 full regression/PDF preparation remain live. This closes neither the all-case
 packet requirement nor broader coverage, business-rule or ATS gates.
+
+All five pages of `joint-mixed-schedule1a` were freshly reviewed. Two
+employer tip rows total 5,000; qualified overtime 4,000, one VIN’s qualified
+interest 4,000 and senior deductions 5,400 per spouse total 23,800. The senior
+phaseout, joint thresholds, identity and both age marks match source, pending
+and XML. Form 1040 standard deduction 34,700, total deductions 58,500,
+taxable income 101,500, tax 12,158, withholding 20,000 and refund 7,842 agree.
+The tips worksheet is complete and legible; every page’s order and clipping
+were checked. `mixed-schedule1a-five-page-review.json` retains digests/notes;
+this is outside the existing checker batches and does not authenticate the
+synthetic payroll/vehicle/loan records.
