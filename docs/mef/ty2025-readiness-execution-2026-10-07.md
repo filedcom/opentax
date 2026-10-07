@@ -309,3 +309,15 @@ checkpoints was rechecked: **47 distinct packets / 315 pages** are verified.
 The 48-case replay, full regression and PDF preparation remain live; the fresh
 mixed Schedule 1-A review is outside these completed checkpoints. Broad board
 requirements and MeF/ATS readiness are still incomplete.
+
+Two more two-page Form 1040 packets were freshly reviewed.
+`mfj-spouse-dependent-refund-only` correctly marks spouse dependency, uses
+spouse W-2 wages 800 and the 1,350 dependent standard deduction, and claims
+only the withholding refund 100 with zero tax/no EIC.
+`mfs-w2-lived-apart-all-year-social-security-box` correctly marks MFS and
+line 6d, leaves lump-sum line 6c blank, and reconciles wages/AGI 10,000,
+standard deduction 15,750 and withholding refund 1,000. Source, pending/XML,
+identity, checkboxes, order and legibility were checked on all four pages.
+`spouse-dependent-refund-two-page-review.json` and
+`mfs-lived-apart-two-page-review.json` retain notes/digests. Both reviews are
+outside existing checker batches; dependency/residency sources are synthetic.
