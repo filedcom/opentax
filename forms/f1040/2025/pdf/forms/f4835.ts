@@ -100,7 +100,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   { ...text("line34c_allowed_loss", 58), printZero: true },
 ];
 
-function activityFields(
+export function form4835ActivityFields(
   item: F4835Item,
   allowedLoss: number,
 ): Record<string, unknown> {
@@ -183,7 +183,7 @@ export const form4835Pdf: PdfFormDescriptor = {
     }
     return {
       activities: items.map((item, index) =>
-        activityFields(item, allowed[index])
+        form4835ActivityFields(item, allowed[index])
       ),
     };
   },
