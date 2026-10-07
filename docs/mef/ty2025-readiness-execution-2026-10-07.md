@@ -492,3 +492,16 @@ were checked. `form8880-w2-deferral-four-page-review.json` retains current
 source/XML/PDF/render hashes and notes. This fresh review is outside
 the running/verified batches and does not prove authentic source, full
 historical distribution diligence or ATS acceptance.
+
+
+Selected PDF/XSD generation reached terminal exit **0**. Final integrity
+audit completed at `2026-10-07T03:47:34.549174Z`: **361 packets / 4,714 pages**,
+zero generation rejections, all **1,083 source/XML/PDF artifact hashes**
+and **100 canonical template hashes** verified, no changed runtime files.
+Manifest SHA-256 `34c868e3b9d14129c5580e138e52df4131e889b433323106bd039a99c692412d`;
+log SHA-256 `b908c1793ea52ce0db9dd8d482782a55f4f19ac3881cc2cb79b457e5b5b5874f`.
+`prepared-pdf-final-integrity.json` retains the complete audit and the
+11 guard exclusions, matching all 372 preflight IDs. No exclusion approval
+is inferred. Original generation page checklists remain false on all
+4,714 pages. Preparation/XSD and completed selected reviews are separate
+evidence; full visual/source/coverage, business-rule and ATS gates remain open.
