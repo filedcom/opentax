@@ -106,7 +106,7 @@ const codedFields = [
   ],
 ] as const;
 
-function parseAmount(value: string): number {
+export function parseTrustK1PrintedAmount(value: string): number {
   let input = value.trim();
   const parentheses = input.startsWith("(") && input.endsWith(")");
   if (parentheses) input = input.slice(1, -1);
@@ -203,7 +203,7 @@ function project(
       }
       return elements(tag, [
         element(codeTag, code),
-        element(amountTag, parseAmount(amount)),
+        element(amountTag, parseTrustK1PrintedAmount(amount)),
       ]);
     });
   };
@@ -234,7 +234,7 @@ function project(
     element("ForeignBeneficiaryInd", checked("c1_4[1]") ? "X" : undefined),
     ...scalarFields.map(([n, tag, nonnegative]) => {
       if (!field(n)) return "";
-      const amount = parseAmount(field(n));
+      const amount = parseTrustK1PrintedAmount(field(n));
       if (nonnegative && amount < 0) {
         throw Error(`Trust K-1 ${tag} requires a nonnegative native amount`);
       }
@@ -243,7 +243,7 @@ function project(
     ...group(codedFields[0]),
     element(
       "EstateTaxDeductionAmt",
-      field(29) ? parseAmount(field(29)) : undefined,
+      field(29) ? parseTrustK1PrintedAmount(field(29)) : undefined,
     ),
     ...codedFields.slice(1).flatMap(group),
   ]);
