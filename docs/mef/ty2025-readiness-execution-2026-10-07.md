@@ -3932,3 +3932,53 @@ result remains12,266/0 on earlier `df26ee299`; it does not cover this integratio
 No IRS acceptance, matching BR, source authenticity, durable next-year import,
 or broader52-TODO completion is implied. Estimate unchanged:0 acceptance by
 original October8 morning deadline; post-reopening probability unestimated.
+
+
+### Current-loss Schedule 1/Form 1040 PDF joins — isolated October 8 review
+
+Continuing the existing Form8582/original-form/Form1040 and EIC reconciliation
+TODOs, isolated commit `798ff260beb263622466a39d6b9ef3e41b68fed2`
+adds an unregistered source-bound return review. It first validates the
+original-form loss review, then existing return-wide arithmetic/Schedule joins
+and replays finalized EIC. Altered source references, original deductions,
+AGI, EIC and refund amounts reject, including a changed EIC with self-consistent
+payment/refund totals. It fills the existing Form1040 field map with review
+amounts and the existing Schedule1 instance. These raw review fields are not
+a substitute prepared filing projection; registered descriptors are unchanged.
+
+Normal typed focused test: **2 passed/0 failed**, exit0,
+2026-10-07T23:01:31.919438Z–23:01:35.804969Z,
+base `12200f62624a8a2d67f15475b1d23a75c028de8a` plus two source files bound in
+private `current-loss-return-pdf-review-20261008-v4/run.json`.
+Command: `PATH=/tmp/opentax-poppler-env/bin:$PATH deno test --allow-read
+--allow-write --allow-run=pdftotext --allow-net=www.irs.gov
+forms/f1040/2025/pdf/forms/current-loss-return-review.test.ts --
+--write-review-artifacts <private-directory>`.
+Log SHA256 `8e10374f59f35c65e6083e932493ceb0e6ab4f8394efae22005b1c2025f4e1cd`.
+
+Nine PDFs/18 pages (five Form1040 and four Schedule1) rendered at110dpi and all
+viewed. Mixed allowed case Schedule1 lines4/5=-1500/+1500; operating-income
+case -1000/+1000. Both net0 into Form1040 line8 with AGI5000. Recharacterized
+land has -3000/+5000, additional income2000 and AGI7000. Fully suspended case
+omits an empty Schedule1 and keeps AGI5000. All $11,950 cases show EIC384 and
+refund384; $11,951 shows no EIC or refund. No clipped/missing amount found in
+these18 pages. Hashes and exact viewed pages retained in `render-manifest.json`
+and `visual-review.json`. Cumulative loss review:15 standalone XMLs/42 viewed
+pages, not full filing packets or increased filing-pass/coverage counts.
+
+Retained failed attempts are harness corrections, not hidden passes:
+v1 1/1 expected a contiguous Form1040 SSN although its template prints separate
+boxes (log SHA256 `b1780574b1c4b907b3c2eb74b52ea446b7b2bb94054fbfaf05274a88df1f242c`);
+v2 1/1 assumed the individual Form1040 projector rejects zero EIC
+(`861f92b2bf923dd173409b027c794672e94bac3e608bb9fad624d02aff78ac37`);
+v3 1/1 incorrectly required a blank Schedule1 page in the fully suspended case
+(`966c4c3f61b24d23347709a1c9a3564d2a6cf8a6b2f5c34b9f4f589d24f45eba`).
+Final assertions distinguish the positive-EIC projector guard from the required
+Form8582 guard, which rejects every case. No production filing guard was lifted.
+
+This isolated commit is not integrated while root session41991 is running.
+All2624 root launch runtime hashes independently rechecked unchanged; full run
+still pending. Main52/future38 remain frozen, future35–38 unworked. Source
+issuer/history authenticity, durable next-year import, full loss packet,
+matching BR, IRS acceptance and overall TODO completion remain open. Original
+morning acceptance estimate remains0; post-reopening probability unknown.
