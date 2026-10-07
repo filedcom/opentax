@@ -3221,3 +3221,51 @@ line25c and prepared issued-copy packet integration remain required under the
 existing main task. Positive exports remain guarded; no main checkoff or
 future work. Root live regression's2,592 runtime hashes and frozen52/future35
 rows were reverified unchanged.
+
+## Trust K-1 copy/public-source reconciliation — isolated
+
+Committed `7f89d364abe747337263f96fae05523462061ec0` on the isolated trust-K1
+branch. Reconciliation compares all12 direct scalar fields and every currently
+modeled public code against the exact byte-verified/native-reviewed copy.
+Printed unmodeled box9/11/12/13/14 rows reject, rather than being dropped;
+missing or changed amounts, issuer-name mismatch and an absent claimed
+final-year mark reject. Existing activity, termination, ZZ-credit and
+foreign-tax workpaper statement requirements remain explicit and unverified.
+The [IRS beneficiary instructions](https://www.irs.gov/instructions/i1041sk1)
+require consistent reporting of the issued items and their statements; this
+helper does not authorize a codeB credit or authenticate the fiduciary.
+
+Normal typed focused command:
+`deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov
+forms/f1040/2025/trust-k1-source-copy-reconciliation.test.ts
+forms/f1040/2025/trust-k1-native-copy-review.test.ts
+forms/f1040/2025/trust-k1-issued-copy-fields.test.ts
+forms/f1040/2025/trust-k1-issued-copy-review.test.ts
+forms/f1040/2025/trust_k1_backup_withholding.test.ts`: **51 passed /0 failed**.
+One prior49/1 run used numeric MeF filing status in a public-input fixture;
+corrected it to `FilingStatus.Single` and reran. All logs retained. After the
+final passing run only an error message was clarified: trust-name match and
+fiduciary-header presence are checked, not fiduciary-header authenticity.
+
+Retained public graph audit: diagnostics empty; interest234.56, ordinary
+and qualified dividends100/50, ScheduleD ST/LT30/80, ScheduleE additional
+income200, AGI644.56, taxable income0. Source codeB125.25 remains retained;
+other withholding/payments0 and both exports reject it. Standalone K1 XML
+validates; both source-copy pages were viewed and match identity, amounts and
+instruction-page retention. This is **not** a full Return1040 XML/PDF packet
+or an accepted credit. New artifacts under
+`trust-k1-source-public-graph-20261007/`, PDF SHA256
+`d34621958c93d342566e2f5b762226437322560ad5d138e208da51793bcec5ec`,
+XML SHA256 `375e1cc7bfec5040f36db2866affccbdb0ea32a0f2c68cf8c8da6af905855677`.
+Final log SHA256
+`94cf0ad36bd145c73aee39ea6162a5046d13b35dcd776a45570b57bbf4dec065`;
+audit `trust-k1-source-copy-focused-v3-audit-20261007.json` SHA256
+`69e1928a5613295d93979cabefb7c4681f921f7879c6b2e0fefc6214b81d62f9`.
+
+All trust-K1 work remains isolated/unintegrated and `filingReady:false`.
+Statements, issuer/static-page/checkbox authenticity, actual codeB graph
+credit and prepared native/issued-copy packet integration remain required.
+No aggregate approval/main checkoff; frozen52 main/future35 rows and all2,592
+live-regression runtime hashes reverified unchanged. Four retained standalone
+source-copy/XML artifact pairs now have eight viewed pages; none is approved
+as a full filing packet.

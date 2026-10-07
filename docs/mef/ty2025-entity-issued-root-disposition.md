@@ -84,3 +84,14 @@ integration remain required. Both final exports remain guarded. See the
 [execution record](ty2025-readiness-execution-2026-10-07.md) for immutable
 commit, artifact and test digests. The broader ownership/attachment task stays
 open; no blanket entity-root exclusion is approved.
+
+
+The subsequent isolated copy/source reconciliation compares all directly
+modeled amounts and current codes, rejects printed unmodeled rows, and keeps
+required statement references outstanding. Focused51/0; a retained public
+ordinary-income graph case reconciles AGI644.56 while codeB125.25 remains
+uncredited and both exports stay closed. Its standalone K1 XML and two viewed
+source pages add source evidence, not filing approval. Four standalone
+artifact pairs/eight viewed source pages are retained in total. Full graph
+credit and prepared native/issued-copy packet integration remain open; see
+the execution record for the exact revision and evidence digests.
