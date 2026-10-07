@@ -226,3 +226,11 @@ flow through Schedule 2 lines 9/21 into Form 1040 total tax 250, offset by
 withholding 250. All pages are legible and correctly ordered.
 `schedule-h-spouse-withholding-five-page-review.json` retains observations and
 digests. This fresh review is outside the verified 23-case checkpoint.
+
+Both Form 1040 pages of `joint-presidential-campaign-both` were freshly
+reviewed: both campaign designations are checked and native IRS1040 indicators
+are present; wages/AGI 75,000, standard deduction 31,500, taxable income
+43,500, tax 4,746, withholding 11,000 and refund 6,254 agree with source,
+pending and XML. Identity, elections, order and legibility passed.
+`presidential-both-two-page-review.json` retains observations and digests;
+this is outside the verified 23-case checkpoint.
