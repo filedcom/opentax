@@ -1,3 +1,8 @@
+import { f1040_2025 } from "../../index.ts";
+import { buildMefXml } from "../../mef/builder.ts";
+import { buildPending } from "../../mef/pending.ts";
+import { buildPdfBytes, type PdfPageOrigin } from "../builder.ts";
+import { extractFilerIdentity } from "../../../mef/filer.ts";
 import {
   assertEquals,
   assertRejects,
@@ -881,5 +886,132 @@ Deno.test("Form 8582 Part IX retains a second native activity block on its own s
     assertStringIncludes(text, "Rows 1-3");
   } finally {
     await Deno.remove(path);
+  }
+});
+
+Deno.test("Form 8582 public return graph retains 22 active and other-passive rentals in the full packet", async () => {
+  const general = {
+    "filing_status": "single",
+    "taxpayer_first_name": "Alex",
+    "taxpayer_last_name": "Example",
+    "taxpayer_ssn": "111-22-3333",
+    "taxpayer_dob": "1985-06-15",
+    "child_eic_filer_review": {
+      "not_qualifying_child_of_another_taxpayer_verified": true,
+      "relationship_age_residence_record_reference":
+        "Synthetic 2025 filer family and residence review",
+    },
+    "prior_eic_disallowance_review": {
+      "status": "none",
+      "irs_account_record_reference": "Synthetic IRS account transcript review",
+      "no_nonclerical_disallowance_since_1996_verified": true,
+    },
+    "eic_tax_residency_review": {
+      "status": "all_year_resident",
+      "taxpayer_status_record_reference":
+        "Synthetic 2025 resident status review",
+      "spouse_status_record_reference": "Synthetic 2025 spouse status review",
+    },
+    "address_line1": "1 Example Way",
+    "address_city": "Austin",
+    "address_state": "TX",
+    "address_zip": "78701",
+    "digital_assets": false,
+  };
+  const w2 = [
+    {
+      "box1_wages": 140000,
+      "box2_fed_withheld": 20000,
+      "employee_ssn": "111-22-3333",
+      "box3_ss_wages": 140000,
+      "box4_ss_withheld": 8680,
+      "box5_medicare_wages": 140000,
+      "box6_medicare_withheld": 2030,
+      "employer_ein": "12-3456789",
+      "employer_name": "Example Employer",
+      "employer_address_line1": "10 Employer Road",
+      "employer_address_city": "Austin",
+      "employer_address_state": "TX",
+      "employer_address_zip": "78701",
+      "box12_entries": [],
+    },
+  ];
+  for (const active of [false, true]) {
+    const result = f1040_2025.executeReturn({
+      general,
+      w2,
+      schedule_e: Array.from({ length: 22 }, (_, i) => ({
+        tsj: "T",
+        activity_id: `rental-${i + 1}`,
+        property_description: `Property ${i + 1}`,
+        street_address: `${100 + i} Rental Road`,
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+        property_type: 1,
+        activity_type: active ? "A" : "B",
+        fair_rental_days: 365,
+        personal_use_days: 0,
+        rent_income: 0,
+        form_1099_payments_made: false,
+        expense_utilities: 1000,
+      })),
+    });
+    assertEquals(result.diagnostics, []);
+    assertEquals(result.pending.f1040.line11_agi, active ? 135_000 : 140_000);
+    assertEquals(
+      result.pending.f1040.line37_amount_owed,
+      active ? 1_467 : 2_667,
+    );
+    const filer = extractFilerIdentity(result.pending.f1040);
+    const xml = buildMefXml(buildPending(result.pending), filer);
+    assertEquals(
+      [...xml.matchAll(/<PropertyRealEstAndRoyaltyGroup>/g)].length,
+      22,
+    );
+    assertStringIncludes(
+      xml,
+      active
+        ? "<TotalSuppIncomeOrLossAmt>-5000</TotalSuppIncomeOrLossAmt>"
+        : "<TotalSuppIncomeOrLossAmt>0</TotalSuppIncomeOrLossAmt>",
+    );
+    const origins: PdfPageOrigin[] = [];
+    const pdf = await buildPdfBytes(
+      result.pending,
+      filer,
+      ".pdf-cache",
+      undefined,
+      origins,
+    );
+    assertEquals(origins.length, active ? 27 : 22);
+    assertEquals(origins.filter((o) => o.formKey === "schedule_e").length, 8);
+    const path = await Deno.makeTempFile({ suffix: ".pdf" });
+    try {
+      await Deno.writeFile(path, pdf);
+      const output = await new Deno.Command("pdftotext", {
+        args: ["-raw", path, "-"],
+      }).output();
+      assertEquals(output.code, 0);
+      const text = new TextDecoder().decode(output.stdout);
+      for (let i = 1; i <= 22; i++) {
+        assertEquals(
+          [...text.matchAll(new RegExp(`Property ${i}(?![0-9])`, "g"))].length,
+          active ? 4 : 3,
+        );
+      }
+      assertStringIncludes(text, active ? "21467" : "22667");
+      assertStringIncludes(text, active ? "1467" : "2667");
+    } finally {
+      await Deno.remove(path);
+    }
+    const changed = structuredClone(result.pending);
+    (changed.schedule_e.schedule_es as Record<string, unknown>[])[3]
+      .expense_utilities = 999;
+    assertThrows(() => buildMefXml(buildPending(changed), filer), Error);
+    await assertRejects(
+      () => buildPdfBytes(changed, filer, ".pdf-cache"),
+      Error,
+      "Schedule E passive loss does not match Form 8582 activity",
+    );
   }
 });
