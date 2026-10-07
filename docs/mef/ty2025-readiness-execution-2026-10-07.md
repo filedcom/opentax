@@ -3035,3 +3035,14 @@ An apparent ScheduleE blank was a visual misreading, corrected against image and
 text evidence before any future-row addition. No new discrepancy retained.
 Code remains isolated; main regression live and2,591runtime hashes unchanged.
 Main52 requirements, future34 rows and aggregate approvals unchanged.
+
+## Form8582 joint-owner packet review
+
+Completed a27-page isolated public-graph joint-owner audit:11 properties per
+owner, both W-2 recipient names/SSNs, ScheduleE amounts and Form1040 totals
+reconcile; full XSD passes. Eleven new image views plus16 exact reviewed-image
+matches cover the packet. New primary-only Form8582 header observation is
+recorded in future row35, unworked; PDF identity parity stays qualified.
+[The activity-ID gap](ty2025-form8582-activity-id-gap.md) retains the evidence
+and audit SHA256 `3052cef71bc180f0d90475475fd703fc1ff37f29298fd80ce104bbbffe7edb7e`.
+Main52 requirements and aggregates unchanged;2,591 runtime hashes unchanged.

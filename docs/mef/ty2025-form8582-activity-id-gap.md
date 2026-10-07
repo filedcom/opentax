@@ -759,3 +759,32 @@ The isolated implementation remains unintegrated, and the main2,591 runtime
 hashes still match its live regression. Source authenticity, other branches,
 durable accepted-year persistence/import, BR, ATS and an integrated full
 regression remain open. Aggregate approvals and main-board checkboxes unchanged.
+
+## October 7: isolated joint-owner overflow packet audit
+
+The same isolated commit `86cd9dc35` was audited through a 27-page joint return
+with eleven taxpayer rentals and eleven spouse rentals. Each rental has current
+loss 1,000; both owners have wages 70,000 and withholding 10,000. Source and
+pending activity IDs/ownership match, all22 native property addresses and
+utilities/expense/loss amounts reconcile, and both native W-2 copies retain
+the correct recipient SSN and name. Household allowed loss5,000 and suspended
+loss17,000 produce AGI135,000, deduction31,500, taxable103,500, tax12,598 and
+refund7,402. Full cached v5.4 Return1040 XSD validation passes.
+
+All27 pages are reviewed:11 new images and16 exact image-hash matches to the
+previously reviewed active packet. Form1040/Schedule1/eight ScheduleE copies
+show both spouses. Canonical Form8582 page13 and continuation pages16–27 show
+only Alex Example; canonical pages14–15 have no name header. This discovered
+identity discrepancy is recorded only in `future_todo`, unworked. It qualifies
+complete PDF identity parity; reconciled amounts do not close that requirement.
+An initial audit assertion incorrectly expected a name on canonical pages14–15;
+it was corrected to the actual template layout before retaining the audit.
+
+Private evidence:
+`.state/research/board-execution-2026-10-07/form8582-overflow-joint-owners-v1-20261007/`.
+Independent audit SHA256 `3052cef71bc180f0d90475475fd703fc1ff37f29298fd80ce104bbbffe7edb7e`;
+PDF SHA256 `b5c9c50fba955c97db4a052e3a291510028df702f5da834af2b31384422542fb`;
+XML SHA256 `9e97e7f86a983715a36bf9be3720911f2861b46d05dc612467d05e1c1a3ed185`.
+All2,591 root runtime hashes remain unchanged. No code edits, aggregate approval
+increase or main-board checkoff. Synthetic source authentication, broader
+Form8582 ledger/import and other branches, BR and ATS remain unproved.
