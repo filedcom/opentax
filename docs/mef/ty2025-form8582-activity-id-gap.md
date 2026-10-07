@@ -718,3 +718,44 @@ Active PDF SHA256 `a24408c5eb40611735d8b83457a53530991fe502ad7e4af3f46328befcbd5
 other-passive PDF SHA256 `842bedff89972a733ec9863845bd8a06832b8e3e2fa033ea1664e779b9fcc52c`.
 All2,591 main-checkout runtime hashes match its ongoing regression manifest.
 No aggregate increase, main-board checkoff or future-row implementation.
+
+## October 7: isolated full-public-graph overflow proof
+
+Commit `86cd9dc35` extends the isolated branch with a regression through
+`f1040_2025.executeReturn`, native return assembly and the complete PDF builder.
+Both 22-property synthetic fixtures execute without diagnostics and pass full
+TY2025 v5.4 `Return1040.xsd` validation. The active-rental source permits5,000
+and suspends17,000: ScheduleE/Schedule1/1040additional income is−5,000, AGI135,000,
+taxable income119,250, tax21,467 and owed1,467. The other-passive source suspends
+all22,000: ScheduleE net0, AGI140,000, taxable124,250, tax22,667 and owed2,667.
+Both sources have wages140,000, withholding20,000 and deduction15,750.
+
+The actual packets have **27 active /22 other-passive pages**. Eight ScheduleE
+copies retain all22 property addresses, utilities/total expenses1,000 and net
+loss−1,000 each; native allowed losses sum5,000 or0. All **154 Form8582 worksheet
+row sequences**, including names, reporting destinations, amounts and ratios,
+match flattened PDF text. All49 pages were reviewed:22 new views plus27 exact
+image-hash matches to the previously reviewed isolated attachments. An initial
+apparent omission on ScheduleE copy2 was a visual misreading; reinspection and
+independent line17/20/21 checks on every copy confirmed the fields are present.
+No new discrepancy or future row was retained.
+
+Changing one property's utility expense to999 while retaining its old worksheet
+causes both native and PDF export to reject “Schedule E passive loss does not
+match Form 8582 activity” in both fixtures. The expanded typed PDF/native/node
+suite passes **129/0**. Initial fixture type errors were corrected before this
+passing run; no runtime failure was bypassed.
+
+Private evidence:
+`.state/research/board-execution-2026-10-07/form8582-overflow-public-graph-v1-20261007/`.
+Independent audit SHA256 `2b6d605734b6d173c8156fc606243e7566c855a2ae7732c675a57096e8f5c3f2`;
+focused log SHA256 `5dd70dc1c5c3808343edc4b9c63e74c0c38fd6c4d350ab982db58030407ebb95`.
+Active PDF SHA256 `9ec0d9c09ae9d9040817c982b52010b845bbe8e6941db3046819d910a304e6c8`;
+other PDF SHA256 `765e03bd18d676ee04265245000c283c45802e50fb891af7c755de4aeb6f44d5`.
+
+This closes the earlier missing public-graph proof for these two isolated
+current-loss overflow fixtures; it does not close the whole Form8582 parent.
+The isolated implementation remains unintegrated, and the main2,591 runtime
+hashes still match its live regression. Source authenticity, other branches,
+durable accepted-year persistence/import, BR, ATS and an integrated full
+regression remain open. Aggregate approvals and main-board checkboxes unchanged.

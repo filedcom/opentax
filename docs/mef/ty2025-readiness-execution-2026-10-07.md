@@ -3020,3 +3020,18 @@ private evidence hashes and remaining integration/full-public-graph prerequisite
 The isolated checkout remains at `/tmp/opentax-form8582-overflow-20261007`; its
 code is not yet integrated. Main runtime2,591hashes unchanged; same regression
 live. Main52 requirements, aggregates and future34 rows remain unchanged.
+
+## Form8582 isolated public-return packet verification
+
+Isolated commit `86cd9dc35`: typed suite129/0; two public-graph22-rental fixtures
+produce full XSD-valid returns and49 PDF pages (22new views/27exact reviewed-image
+matches). Independent source/native/PDF audit verifies154 Form8582 row sequences,
+all22 ScheduleE property addresses/line17/20/21 values per fixture, allocated
+losses5,000/0, and Form1040 taxes21,467/22,667 and owed1,467/2,667. Changed utility
+source999 rejects at both exports. [The activity-ID gap](ty2025-form8582-activity-id-gap.md)
+records hashes and qualifications; private audit SHA256
+`2b6d605734b6d173c8156fc606243e7566c855a2ae7732c675a57096e8f5c3f2`.
+An apparent ScheduleE blank was a visual misreading, corrected against image and
+text evidence before any future-row addition. No new discrepancy retained.
+Code remains isolated; main regression live and2,591runtime hashes unchanged.
+Main52 requirements, future34 rows and aggregate approvals unchanged.
