@@ -1,8 +1,10 @@
 # TY2025 Form 9465 filing-route decision
 
-Static source/schema/PDF-field audit, updated 2026-10-01; no tests, XSD
-validation, filled-PDF render, IRS business-rule run, or ATS acceptance is
-claimed.
+Static source/schema/PDF-field audit, updated 2026-10-07. Nine dedicated
+source/native/PDF tests passed within the completed full typed regression;
+full-return XSD, filled-PDF visual review, IRS business-rule and ATS acceptance
+remain unproved. Historical “unrun” statements below are superseded only for
+those executed tests.
 
 ## Filing alternatives and native applicability
 
@@ -150,3 +152,34 @@ the attached and standalone routes, while
 [Publication 4164 §8.14.3](https://www.irs.gov/pub/irs-pdf/p4164.pdf) specifies
 the standalone electronic jurat. Neither resolves the attached non-direct-debit
 authorization question identified above.
+
+## October 7 current IRS guidance and terminal test evidence
+
+The current [IRM 5.19.1.6.4.13(6), dated December 5, 2025](https://www.irs.gov/irm/part5/irm_05-019-001r)
+recognizes electronically signed Form 9465 requests accompanying electronic
+returns and identifies the IRS printout by its TRPRT marker. This passage sits
+within **direct-debit installment agreement** procedures. It establishes that
+an attached electronic-signature workflow exists; it does not specify our
+non-direct-debit software's consent presentation, signature binding or PDF
+representation. Treating this as authority to use a bare reviewer assertion
+would be an inference the source does not establish. The existing attached
+non-direct-debit authorization question remains open, now with this additional
+primary source for the operator's clarification.
+
+The terminal normal typed full regression contains **9 dedicated passes**:
+4 staged native tests, 2 PDF projection tests and 3 public-source tests. Separate
+shared tests also retain both-export rejection. Native tests cover return/owner/
+source tampering and deliberately confirm the current authorization guard;
+PDF tests are field projections, not generated complete filing packets. These
+results supersede the historical claim that all those cases are unrun; they do
+not authorize registration or positive filing.
+
+Private `form9465-current-boundary-20261007.json` under the October 7 execution
+research root retains every dedicated terminal test name and the full-run
+metadata. Current code `5cccc456f` independently matches all 2,590 runtime
+hashes from the green full-run launch manifest. Full test commit
+`ecdccee1e5959be5dd11df8d7c7138187b47a7e9`, terminal exit 0 at 17:29:15 UTC,
+12,255 passed / 0 failed; log SHA-256
+`b3f7dc4a482426a133e75cf16dd69031a015d5dbf367b609e7520217a3e70219`.
+No redundant test rerun, runtime/guard change, fake signature, future task,
+main checkoff, packet-count increase or IRS acceptance is claimed.
