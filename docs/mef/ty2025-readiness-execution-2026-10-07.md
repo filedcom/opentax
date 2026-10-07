@@ -3103,3 +3103,14 @@ contracts; a fresh integrated full regression remains required. Main52 scope
 requirements,35 future rows and aggregate approvals remain unchanged. Existing
 acceptance/source/PDF identity qualifications remain; local full green is not
 IRS acceptance or closure of the broad phase.
+
+## Integrated Form8582 full-regression launch
+
+Fresh normal typed `deno task test` started October7 20:50:05.560967Z on
+`df26ee299cc2c432bbfe969fcd97e309928b666c`, with Poppler PATH/V8 heap8GiB and
+tool versions retained at launch. Manifest2,592 paths SHA256
+`c2e8ac915e4e9dabb04edbe9dda68f7a723e69cd2f9ef7347728ee9fd55f2048`;
+exactly five Form8582 code/test paths changed since the completed12,258/0 run.
+Session12057, Deno task PID99655; log/status under
+`.state/research/board-execution-2026-10-07/full-test-after-form8582-integration.*`.
+Running is not a pass; no main checkoff, future work or aggregate increase.
