@@ -3142,3 +3142,32 @@ Both blank canonical pages were viewed for source/field layout; they do not
 count as filled-output review or authenticate fiduciary issuance. Positive
 codeB native/PDF/line25c route remains guarded. All2,592 main runtime hashes
 unchanged;52 main requirements,35 future rows and aggregates unchanged.
+
+## Trust K-1 canonical copy extraction — isolated prerequisite
+
+Committed `e0abc16a06d4cea560a3039e1d558b75ab249bf1` in
+`/tmp/opentax-trust-k1-copy-20261007`. The extractor retains all 74 canonical
+fields from both official pages, verifies static printable text appearances,
+and compares EIN, beneficiary SSN and exactly one box13 codeB amount against
+the retained byte-bound source. Other income/code fields and checkbox values
+are preserved. It does not authenticate fiduciary issuance, whole-page text
+or overlays, checkbox appearances or attached statements; printed-content and
+issuer verification remain false. Neither export is enabled and no line25c
+credit is deposited. Native/source projection and prepared-packet integration
+remain required under the existing main trust-K1 requirement.
+
+Normal typed focused command: `deno test --allow-read --allow-write
+--allow-net=www.irs.gov forms/f1040/2025/trust-k1-issued-copy-fields.test.ts
+forms/f1040/2025/trust-k1-issued-copy-review.test.ts
+forms/f1040/2025/trust_k1_backup_withholding.test.ts`: **15 passed /0 failed**.
+Cases include full field preservation and continued export guards, rehashed
+identity/amount changes, duplicate/missing codeB, malformed amount, missing
+field/page, hidden text and stale appearance. A prior14/1 run failed while
+constructing an over-length synthetic EIN; shortened the adversarial value
+to the official field limit and reran the same command. Both logs retained.
+Final log SHA256 `a40d01f7cb766ffa40f1c735aa1f5d729c9e6ef01c7476d353b86c2fdd82ca8d`;
+audit SHA256 `ee5498750e1774db679324fbb603c41ac2d5067f1fb446907c3e8ac206fe7663`,
+private `trust-k1-copy-fields-focused-v2-audit-20261007.json` under the existing
+board execution evidence directory. All2,592 live full-regression runtime
+hashes unchanged; frozen main52/future35 rows verified. No aggregate approval
+or main checkoff; no future work implemented.
