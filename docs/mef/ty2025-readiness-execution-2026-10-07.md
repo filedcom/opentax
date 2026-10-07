@@ -560,3 +560,27 @@ workbook/package**. `imf-downloaded-package-audit.json` retains the audit.
 This resolves package byte acquisition and local-tree comparison only;
 matching business rules, enrolled credentials, current A2A service/trust
 compatibility and IRS acceptance remain unresolved.
+
+
+Fresh `joint-two-hsa-owners` review inspected all six rendered pages
+against complete supplied monthly coverage/age/owner/contribution/W-2 facts,
+current pending and native XML. Alex (111223333) has self-only coverage,
+4,000 contributions/deduction and a 4,300 limit; Sam (444556666, age 55)
+has self-only coverage, 5,000 contributions/deduction and a 5,300 limit.
+[IRS line 3 rule 6](https://www.irs.gov/instructions/i8889) includes the
+1,000 catch-up in line 3 for full-year self-only coverage; line 7 is therefore
+blank. Two separate Form 8889 copies follow Schedule 1 in primary/spouse
+order, with no swapped names/SSNs/amounts. Combined deduction 9,000
+reaches Schedule 1 lines 13/26 and Form 1040 line 10 once. Wages 90,000,
+AGI 81,000, standard 31,500, taxable 49,500, tax 5,466 and refund 6,534
+reconcile with native XML. Identity, marks, order and legibility were checked.
+`joint-two-hsa-owner-six-page-review.json` retains artifact/render hashes and
+notes. `hsa-owner-reviewed-batch` is a new disjoint **1-packet / 6-page**
+checkpoint under unchanged read-only verification. Synthetic source facts
+do not establish authentic contribution/eligibility records or ATS acceptance.
+
+The [September 2026 IRS QuickAlerts](https://www.irs.gov/pub/irs-efile/quickalerts-september-2026.pdf)
+were rechecked: the reopening ATS service requires **R10.A** WSDLs. The
+available Drive **R10.9/PY2026** package is therefore historical comparison
+material, not proof of the required current service package. This is evidence
+for the existing current-WSDL gate, not a new task or future-scope implementation.
