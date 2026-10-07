@@ -95,3 +95,13 @@ source pages add source evidence, not filing approval. Four standalone
 artifact pairs/eight viewed source pages are retained in total. Full graph
 credit and prepared native/issued-copy packet integration remain open; see
 the execution record for the exact revision and evidence digests.
+
+
+The isolated follow-on calculation now routes entered codeB amounts into
+line25c/payments/refund and replays all other-form withholding sources.
+Focused111/0. The exact retained K1 source produces125.25 withholding/payments
+and125 rounded refund; an individual Form1040 preview and standalone IRS1040
+XSD were reviewed. Both full exporters remain guarded. This is unintegrated
+calculation/preview evidence, not a prepared K1 filing packet or issuer proof;
+the main runtime's earlier boundary remains unchanged during its live full
+regression. See the execution record for commit and evidence digests.

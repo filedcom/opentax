@@ -3269,3 +3269,52 @@ No aggregate approval/main checkoff; frozen52 main/future35 rows and all2,592
 live-regression runtime hashes reverified unchanged. Four retained standalone
 source-copy/XML artifact pairs now have eight viewed pages; none is approved
 as a full filing packet.
+
+## Trust K-1 codeB calculation and combined withholding replay — isolated
+
+Committed `5e73927e8b47710dbf532a74f69e22b1379df83e` in the isolated trust-K1
+branch. Entered positive codeB amounts now accumulate once through the actual
+K1 node into Form1040 line25c, total withholding, payments and refund. Summing
+integer cents avoids per-copy rounding/drift and rejects unsafe combined
+amounts. The native/PDF Form1040 withholding replay includes K1 alongside
+8288-A, W2G, 8805 and 8959. Full exporters remain closed for positive codeB;
+this calculation does not establish issuance or attachment eligibility.
+Root runtime remains unchanged while its integrated Form8582 regression runs.
+
+Normal typed focused command:
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno test --allow-read --allow-write
+--allow-run=xmllint,pdftotext,pdftoppm --allow-net=www.irs.gov
+forms/f1040/nodes/inputs/k1_trust/index.test.ts
+forms/f1040/2025/f8288-withholding-reconciliation.test.ts
+forms/f1040/2025/trust-k1-source-copy-reconciliation.test.ts
+forms/f1040/2025/trust-k1-native-copy-review.test.ts
+forms/f1040/2025/trust-k1-issued-copy-fields.test.ts
+forms/f1040/2025/trust-k1-issued-copy-review.test.ts
+forms/f1040/2025/trust_k1_backup_withholding.test.ts`: **111 passed /0 failed**.
+Cases include cent drift, unsafe sum, two-owner/W2G aggregate346, all-five-source
+replay75,700.75, changed/omitted/excess source totals and continued attachment
+rejection on a fully calculated graph. V1 type checking caught a wrong public
+MFJ enum name; fixed it without disabling checks. V2 had109/2 because skeleton
+exports missing line25c now reject earlier. Updated assertions and used the
+real calculated graph to prove the attachment guard still holds. All logs
+retained; no rejection bypass.
+
+Retained graph audit reused the exact previously viewed K1 source bytes SHA256
+`d34621958c93d342566e2f5b762226437322560ad5d138e208da51793bcec5ec`.
+Source/ordinary income and AGI644.56 remain unchanged; line25c/25d/33 are125.25
+and rounded refund125. Both complete-export entry points reject codeB. The
+separate individual Form1040 preview XML passed standalone IRS1040 XSD; both
+preview pages were viewed: Test/111223333, single/no-digital-assets, filed
+AGI645/standard deduction15,750/taxable0 and lines25c/25d/33/34/35a125 match.
+This is a two-page single-form preview, **not** a full Return1040, full PDF
+packet or approved claim; no aggregate approval/increase.
+
+Artifacts under `trust-k1-withholding-public-graph-20261007/`; previewPDF SHA256
+`926a2bccb5ceffd773a6dc2f83b458b3d3029a38be20126e97494df0f2b1ab2a`,
+previewXML SHA256 `ce2e073e8b4daf9a7f295791618e8696e21320ad32e8b1b3ca1ce691bc9e1b49`.
+Final log SHA256 `252a739b7d23e34edb41d0ca970a4998e3dab295f40371478f6bedd6b26b588a`;
+audit `trust-k1-withholding-graph-focused-v3-audit-20261007.json` SHA256
+`c46001cf7425401707122e32ac06252ecaf972057f5d967cfb4c3b3bf9410efd`.
+Main52/future35 rows remain frozen, all2,592 main regression runtime paths
+unchanged. Remaining K1 work: prepared native/copy packet integration and
+statement/issuer/static-page/checkbox evidence under the existing task.
