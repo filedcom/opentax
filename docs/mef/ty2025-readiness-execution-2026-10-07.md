@@ -187,3 +187,10 @@ The corrected runtime manifest remains unchanged. This verifies the selected
 checkpoint only; the newer spouse-loss and patron-health reviews are outside
 its scope, and remaining fixtures/all-case review, coverage, business rules and
 ATS requirements remain open.
+
+All four pages of `single-child-unearned-income` were freshly reviewed. Child
+identity/dependent mark, Domestic Bank interest 5,000 included once, standard
+deduction 1,350, taxable income 3,650, parent identity/MFJ mark and Form 8615
+line 18 tax 412 agree with source/pending/XML and Form 1040. Every page is
+legible and correctly ordered. `child-unearned-four-page-review.json` retains
+observations/digests; it is outside the 23-case checker scope.
