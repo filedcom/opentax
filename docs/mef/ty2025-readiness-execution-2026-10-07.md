@@ -2834,3 +2834,42 @@ change or redundant suite rerun; no descriptor registration, positive full
 packet/pass aggregate increase or main checkoff. Main52/future32; current
 passing aggregate75/267/2,706 unchanged. Form8997 activation prerequisites and
 IRS/source gates remain open.
+
+## October 7: staged continuation sheets for all four parts
+
+The existing five-row PDF limit is now replaced by labeled continuation pages
+for each part, with columns (a)-(f), taxpayer name/TIN, row ranges, page numbers,
+page subtotals and whole-part continuation totals. The official form's line 1
+now receives only the overflow short/long amounts; line 2 retains the complete
+part totals. The first five rows remain on the canonical IRS form. The
+supplemental hook re-reconciles the executor pending data and rejects a changed
+projection or missing filer identity rather than trusting separate caller rows.
+The staged descriptor remains unregistered, with all full-filing guards intact.
+
+A new actual public-graph replay repeats the explicitly synthetic current-event
+source 17 times with distinct lot/event/transaction IDs: Parts I/II/III each
+contain 17 rows and Part IV contains 34. An independent source/XML/PDF comparison
+retains all **85 rows: 20 printed plus 65 continuation**, on **12 flattened
+pages**. Every rendered page was visually reviewed. Line-1 continuation totals
+(short/long) are I 0/600,000; II 240,000/0; III 0/120,000; IV 300,000/560,000.
+Standalone IRS8997 XSD validation exits 0. The graph's existing f8997 diagnostic
+and both full-export rejections remain: native annual-QOF attachment guard and
+PDF Schedule D direct-sale/8949 conflict. This does not resolve the future
+fixture row or prove authentic prior filing, issuer source, business-rule
+compatibility, final tax treatment, or an accepted return.
+
+The normal typed focused command
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno test --allow-read --allow-write --allow-run=pdftotext forms/f1040/2025/mef/forms/f8997.staged.test.ts forms/f1040/nodes/inputs/f8997`
+passes **24/0**, including multi-page retention in all parts, exact five-row
+holding boundary, changed totals/rows/checkboxes, missing source joins, and
+missing identity. Initial tool-PATH and fixture type errors were corrected
+before this passing run. A fresh full regression is required for this change;
+the prior 12,255/0 run predates it.
+
+Private evidence:
+`.state/research/board-execution-2026-10-07/form8997-continuation-artifact-20261007/`
+contains source/actual pending/filer/projected values, XML, filled PDF, 12
+rendered images, template cache and independent observation. PDF SHA256
+`1505b8c5cfe17d091c13d85affd4ef700bd686b66137dd74c58e87f250673a58`; XML SHA256 `fd832f503c3a8c5c28cf0ce9f3549e5111356ddc54f666625ad86faabdc3fb37`; audit SHA256 `c80d0492e88c1d1dcea36279f0cd533674247c2dbafc7ece5f84c0190814e27c`.
+Continuation-sheet staging is implemented and reviewed; the broad Form 8997
+board requirement remains unchecked until its activation prerequisites are met.

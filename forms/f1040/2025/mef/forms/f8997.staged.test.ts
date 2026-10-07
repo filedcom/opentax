@@ -1,4 +1,11 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { PDFDocument } from "pdf-lib";
+import type { FilerIdentity } from "../../../mef/header.ts";
+import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import type { ExecuteResult } from "../../../../../core/runtime/executor.ts";
 import {
   type Form8997Input,
@@ -174,7 +181,7 @@ Deno.test("staged Form 8997 PDF uses the same Part I-IV ledger and only form pag
   assertEquals(instance?.part4_long_total, 40_000);
   assertEquals(instance?.foreign_no, true);
   assertEquals(instance?.no_1099b, true);
-  assertEquals(stagedForm8997Pdf.fields.length, 133);
+  assertEquals(stagedForm8997Pdf.fields.length, 141);
 });
 
 Deno.test("staged Form 8997 PDF rejects unsupported exception events", () => {
@@ -261,4 +268,190 @@ Deno.test("staged Form 8997 rejects an unlinked executor code Y row", () => {
     Error,
     "unlinked QOF code Z or Y row",
   );
+});
+
+// Synthetic source joins exercise continuation output; they do not authenticate
+// prior filing or issuer evidence and do not activate the staged descriptor.
+function repeatedPending(copies: number): ExecuteResult["pending"] {
+  const ledger = structuredClone(source);
+  ledger.investment_lots = [];
+  if (ledger.prior_year.kind !== "continuing") {
+    throw new Error("Expected continuing ledger");
+  }
+  ledger.prior_year.closing_lots = [];
+  const transactions: typeof filedRows = [];
+  const ids = [
+    "old-lot",
+    "new-lot",
+    "old-lot-sale",
+    "broker-sale-1",
+    "stock-sale-1",
+    "8949-Y-1",
+    "8949-Z-1",
+  ];
+  for (let copy = 0; copy < copies; copy++) {
+    const renamed = (value: unknown) =>
+      JSON.parse(
+        JSON.stringify(value),
+        (_key, item) =>
+          typeof item === "string" && ids.includes(item)
+            ? `${item}-copy-${copy + 1}`
+            : item,
+      );
+    const lots = renamed(
+      source.investment_lots,
+    ) as Form8997Input["investment_lots"];
+    lots[0].description = `Old QOF copy ${copy + 1}`;
+    lots[0].events[0].description = `Sale QOF copy ${copy + 1}`;
+    lots[1].description = `New QOF copy ${copy + 1}`;
+    ledger.investment_lots.push(...lots);
+    if (source.prior_year.kind !== "continuing") {
+      throw new Error("Expected continuing source");
+    }
+    ledger.prior_year.closing_lots.push(
+      ...renamed(source.prior_year.closing_lots),
+    );
+    transactions.push(...renamed(filedRows));
+  }
+  return {
+    f8997: ledger,
+    form8949: { transaction: transactions },
+    schedule_d: { transaction: structuredClone(transactions) },
+  };
+}
+
+const continuationFiler = {
+  nameLine1: "ALEX EXAMPLE",
+  primarySSN: "111223333",
+} as FilerIdentity;
+
+Deno.test("staged Form 8997 retains every overflow row across all four parts and multiple pages", async () => {
+  const many = repeatedPending(17);
+  const projected =
+    stagedForm8997Pdf.instances!({}, continuationFiler, many)[0];
+  assertEquals(projected.part1_long_continuation, 12 * 50_000);
+  assertEquals(projected.part2_short_continuation, 12 * 20_000);
+  assertEquals(projected.part3_long_continuation, 12 * 10_000);
+  assertEquals(projected.part4_short_continuation, 15 * 20_000);
+  assertEquals(projected.part4_long_continuation, 14 * 40_000);
+  assertEquals(projected.part4_short_total, 17 * 20_000);
+  assertEquals(projected.part4_long_total, 17 * 40_000);
+  assertEquals(projected.part1_row6_ein, undefined);
+  const document = await PDFDocument.create();
+  await stagedForm8997Pdf.appendSupplementalPages!(
+    document,
+    projected,
+    continuationFiler,
+    many,
+  );
+  assertEquals(document.getPageCount(), 10);
+  const temp = await Deno.makeTempDir({ prefix: "form8997-continuation-" });
+  try {
+    const path = `${temp}/continuation.pdf`;
+    await Deno.writeFile(path, await document.save());
+    const result = await new Deno.Command("pdftotext", {
+      args: ["-layout", path, "-"],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0);
+    const text = new TextDecoder().decode(result.stdout);
+    assertEquals(
+      (text.match(/Taxpayer identification number: 111223333/g) ?? []).length,
+      10,
+    );
+    for (let copy = 6; copy <= 17; copy++) {
+      assertEquals(
+        (text.match(new RegExp(`Old QOF copy ${copy}\\b`, "g")) ?? []).length,
+        2,
+      );
+      assertEquals(
+        (text.match(new RegExp(`New QOF copy ${copy}\\b`, "g")) ?? []).length,
+        2,
+      );
+      assertEquals(
+        (text.match(new RegExp(`Sale QOF copy ${copy}\\b`, "g")) ?? []).length,
+        1,
+      );
+    }
+    // Part IV's five printed rows are old/new/old/new/old; new copy 3
+    // and both rows for copies 4-5 must also survive on its continuation.
+    assertStringIncludes(text, "New QOF copy 3");
+    assertStringIncludes(text, "Old QOF copy 4");
+    assertStringIncludes(text, "New QOF copy 5");
+    assertStringIncludes(text, "continuation page 4 of 4");
+    assertStringIncludes(text, "short-term 300,000 / long-term 560,000");
+  } finally {
+    await Deno.remove(temp, { recursive: true });
+  }
+});
+
+Deno.test("staged Form 8997 requires matching source projection and identity for overflow", async () => {
+  const many = repeatedPending(6);
+  const projected =
+    stagedForm8997Pdf.instances!({}, continuationFiler, many)[0];
+  for (
+    const changed of [
+      { ...projected, part1_long_continuation: 0 },
+      { ...projected, part1_row1_description: "Changed investment" },
+      { ...projected, no_1099b: false },
+      { ...projected, extra_row: "Unlinked" },
+    ]
+  ) {
+    await assertRejects(
+      async () =>
+        stagedForm8997Pdf.appendSupplementalPages!(
+          await PDFDocument.create(),
+          changed,
+          continuationFiler,
+          many,
+        ),
+      Error,
+      "does not match",
+    );
+  }
+  await assertRejects(
+    async () =>
+      stagedForm8997Pdf.appendSupplementalPages!(
+        await PDFDocument.create(),
+        projected,
+        undefined,
+        many,
+      ),
+    Error,
+    "needs filer identity",
+  );
+  const missing = structuredClone(many);
+  (missing.schedule_d.transaction as typeof filedRows).pop();
+  assertThrows(() =>
+    stagedForm8997Pdf.instances!({}, continuationFiler, missing)
+  );
+});
+
+Deno.test("staged Form 8997 five-row boundary adds no continuation and zero line-1 totals", async () => {
+  const five = repeatedPending(5);
+  const holding = five.f8997 as unknown as Form8997Input;
+  holding.investment_lots = holding.investment_lots.filter((lot) =>
+    lot.opening_deferred_gain.long_term > 0
+  );
+  for (const lot of holding.investment_lots) {
+    lot.events = [];
+    lot.closing_deferred_gain = { ...lot.opening_deferred_gain };
+  }
+  holding.no_form1099b_for_disposition = false;
+  five.form8949.transaction = [];
+  five.schedule_d.transaction = [];
+  const projected = stagedForm8997Pdf.instances!({}, undefined, five)[0];
+  for (const part of [1, 2, 3, 4]) {
+    assertEquals(projected[`part${part}_short_continuation`], 0);
+    assertEquals(projected[`part${part}_long_continuation`], 0);
+  }
+  const document = await PDFDocument.create();
+  await stagedForm8997Pdf.appendSupplementalPages!(
+    document,
+    projected,
+    undefined,
+    five,
+  );
+  assertEquals(document.getPageCount(), 0);
 });
