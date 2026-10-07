@@ -334,3 +334,13 @@ digests still match launch. Mutual nonoverlap across the four completed
 checkpoints was rechecked: **95 distinct packets / 1,298 pages** are verified.
 `verified95-aggregate.json` records this audit. Remaining all-case evidence,
 full regression, broad source/coverage, business rules and ATS gates are open.
+
+All three pages of `single-ira-qualified-plan-rollover` were freshly
+reviewed. Form 1040 IRA gross 7,000/taxable zero and line 4c(1) rollover mark
+agree with source and XML; pension rollover/QCD marks are blank. The native
+reference points to `IRADistributionStatement2`; the final PDF statement names
+Example 401(k), receipt December 1 and completed rollover December 15, 2025,
+with the same 7,000 amount and exact native explanation. Identity, zero-tax
+totals, ordering and legibility passed.
+`ira-plan-rollover-three-page-review.json` retains notes/digests; this is
+outside verified checkpoints and does not authenticate plan/account records.
