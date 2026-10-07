@@ -194,3 +194,26 @@ deduction 1,350, taxable income 3,650, parent identity/MFJ mark and Form 8615
 line 18 tax 412 agree with source/pending/XML and Form 1040. Every page is
 legible and correctly ordered. `child-unearned-four-page-review.json` retains
 observations/digests; it is outside the 23-case checker scope.
+
+## Further completed-page review transfer
+
+A read-only comparison found 51 packets with exact prior reviewed PDF/XML
+bytes and identical complete source facts (inputs, filer, attachment bytes,
+retained source bytes and review dimensions), with differences only in saved
+internal pending calculation data. Prior physical artifact and manifest digests
+and every completed page checklist were verified. These are review candidates,
+not completed current replay results. `pending-source-review-candidates.json`
+records every differing internal path. Three of the candidates are the fresh
+optional-method packets already in the verified 23-case checkpoint.
+
+A separate, nonoverlapping **48-case / 983-page** selected batch is now being
+checked with the unchanged repository read-only verifier. It must replay current
+source calculations and match the current pending record, native XML, actual
+PDF bytes, page origins/copy counts, canonical template evidence and full v5.4
+XSD before these prior page reviews can count as current verified evidence.
+The first local assembly correctly stopped on the three-case overlap assertion
+before writing a manifest; its attempted checker log is retained as a rejected
+diagnostic. The corrected batch excludes those three cases. Original packets,
+prior manifests and the verified 23-case checkpoint remain intact. Current
+terminal state/digests are recorded in `pending-source-reviewed-check.status`;
+no terminal pass is claimed yet.
