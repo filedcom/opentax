@@ -105,3 +105,11 @@ XSD were reviewed. Both full exporters remain guarded. This is unintegrated
 calculation/preview evidence, not a prepared K1 filing packet or issuer proof;
 the main runtime's earlier boundary remains unchanged during its live full
 regression. See the execution record for commit and evidence digests.
+
+
+The isolated checkbox verifier now verifies all six official positions/states
+and original glyph/regenerated path normal appearances. Focused126/0; all
+four unchanged retained source copies passed. This completes a printed-field
+prerequisite; static page/overlay and issuer evidence, required statements
+and prepared filing packet integration remain open. Full exporters are still
+guarded; see the execution record for `f51fcdf8a` and immutable evidence.

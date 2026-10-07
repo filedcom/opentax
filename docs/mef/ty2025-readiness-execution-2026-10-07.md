@@ -3334,3 +3334,37 @@ The fix is confined to the current isolated helper; no root runtime changes,
 new board requirements, export opening, issuer/checkbox/whole-page approval,
 or parent checkoff. Main52/future35 rows unchanged. Full integrated regression
 on `df26ee299` remains running; no terminal result. No PR opened.
+
+
+### Trust K-1 printable checkbox evidence — October 7, 2026
+
+Isolated commit `f51fcdf8a` verifies all six canonical widget positions/on
+states from the pinned official TY2025 template, field-value/appearance-state
+agreement, print/visibility flags, first-page ownership, crop/rotation and
+identity appearance matrices. Original IRS glyphs require exact decoded
+streams and standard ZapfDingbats font/resources; missing Off appearances are
+accepted only in that original representation. Regenerated on/off paths
+match a separate canonical black-style comparison; submitted settings cannot
+define expected appearance. No input bytes are repaired. Identity and amount
+text checks remain in force; issuer and static-page/overlay proof remain open.
+
+Final same seven-file typed suite: **126 passed /0 failed** (22s), including
+all original unchecked and regenerated checked states, checked/unchecked
+appearance swaps, state conflict, hidden/nonprinting/moved/optional-content
+widgets, translated matrix, substituted glyph font, missing appearance and
+nonblack generated mark. Initial single-file run was18/6: comparison had
+treated equivalent RGB/gray black differently, two adversarial fixtures
+assumed appearances not present, and missing-normal diagnostic was earlier
+than expected. Fixed comparisons/fixtures/validation order; V2 suite123/0.
+Added full-six-state positive and nonblack negative coverage for final126/0.
+Final log SHA256 `f7fa510c6ddb2e0afb00b330da1681ba1b3d180041838c4434f04cd5a9c9475e`;
+audit SHA256 `7bf49136dae22bc0ef8effbd82c041ce1700d3992d4d800e7e5ff292163badc3`.
+
+All four previously viewed, unchanged retained source PDFs (eight pages)
+passed the new checkbox verifier; no new packet/page approval. Retained-copy
+results SHA256 `d0ba9123e1e4ca236c1584aad6b77580a95d6872c9b5976b78f56682f96b9ccb`.
+`checkboxAppearancesVerified:true` accompanies `issuerVerified:false` and
+`printedContentsVerified:false`. Both complete exporters stay guarded. Main52/
+future35 requirements unchanged; root runtime unchanged during live full
+regression. Full Return1040/prepared-copy integration, statements, static-page
+review and issuer evidence remain under the existing K1 requirement.
