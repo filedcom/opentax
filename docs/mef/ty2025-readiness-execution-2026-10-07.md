@@ -3599,3 +3599,54 @@ native/PDF projection and review must follow before claiming support. No
 positive packet/page/XSD/ATS count changed and no main requirement closed.
 Future rows35–38 remain unworked. Root2592 runtime files remain unchanged
 while the live integrated regression runs.
+
+### October8 current ordinary sale-loss graph join
+
+Isolated `codex/eic-investment-reconciliation-20261008` commit `7e895312d`
+connects the staged current-form allocation to ScheduleE/Form4797/Form8582,
+AGI, EIC and the numeric character workpaper. A negative short-held sale
+requires an explicit reference to the matching owned current-property source;
+manual negative sales, mismatched references and detached basis facts reject.
+The current-only property/farm collector carries gross losses and allows only
+the source-derived amount on each reporting form. Form4797 holds its suspended
+loss back, while AGI deducts the remaining allowed operating loss exactly once.
+Carry keys use the existing PartVIII/IX reporting-character convention.
+
+Four source-backed graph cases are retained: ordinary loss3000 plus rental
+loss1000 and farm income2000 give allowed500/1500, AGI5000, EIC384, investment
+11950 and suspended2000. Raising only exempt interest to11951 removes EIC.
+Without farm income, combined property/farm losses9000 stay suspended and
+AGI remains5000. Rent8000 less tax3000 with sale loss3000 produces recharacterized
+land net2000; unrelated farm loss5000 stays suspended and AGI is7000.
+
+Native/PDF exports of staged losses remain explicitly rejected, including
+direct4797 and8582 projectors and full native return assembly. No filing route
+was opened. The existing full parent still requires native/PDF projection,
+source/owner/inventory replay, packet review, durable history and matching
+business rules/acceptance. [IRS4797 instructions](https://www.irs.gov/instructions/i4797)
+require determining the allowed passive loss before reporting it; [8582
+instructions](https://www.irs.gov/instructions/i8582) require losses to remain
+on their appropriate reporting forms, with the PAL literal. The next projection
+must use the allowed loss rather than claiming the suspended portion.
+
+The first new graph focus was1/1 because its expected character-key assertion
+exposed a new staging key mismatch; corrected to the existing convention.
+Subsequent graph focus2/0. Broader v1 was69/6: shared allocation/schema/index
+imports created a temporal initialization cycle in six modules. Extracted an
+independent schema module and reran the identical eight-module command.
+Final v2 terminal224/0 in31s (49.72s invocation),
+2026-10-07T22:22:33.719606Z–22:23:23.441780Z. Includes existing source-backed
+positive property exports and conflicts, ScheduleE/4797/8582 unit checks, EIC
+guards and the new source/graph cases. Both failed histories are acknowledged;
+v1 full log remains immutable.
+
+Private v2 directory
+`.state/research/board-execution-2026-10-07/current-property-loss-graph-20261008-v2/`;
+focused log SHA256 `be2335e4676e40bdb914fd0f403c4f5fab62bcc2c8cfa9b4310bfb7ed2ed0d4d`.
+Run JSON binds all nine changed source/test hashes and four whole input/pending
+graph JSON hashes. Artifact inventory hashes30 files. Eight existing positive
+regression PDF packets/99 pages were regenerated with their full XSD checks;
+these derivative pages were not newly visually reviewed and add no positive
+packet/page count. No loss PDF or loss XSD packet was produced. Root runtime
+stays untouched during its full regression; main requirements remain52 and
+future rows38, with no newly discovered scope added this turn.
