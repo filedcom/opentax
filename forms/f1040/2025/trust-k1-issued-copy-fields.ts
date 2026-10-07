@@ -4,6 +4,7 @@ import { inputSchema } from "../nodes/inputs/k1_trust/index.ts";
 import { assertPrintableSourceTextFields } from "../source-printable-fields.ts";
 import { trustK1CanonicalFields } from "./trust-k1-canonical-fields.ts";
 import { assertTrustK1PrintableCheckboxes } from "./trust-k1-printable-checkboxes.ts";
+import { assertTrustK1StaticPages } from "./trust-k1-static-pages.ts";
 import {
   inspectTrustK1IssuedCopies,
   type ReviewedTrustK1Copy,
@@ -13,6 +14,7 @@ export interface ExtractedTrustK1Copy extends ReviewedTrustK1Copy {
   readonly canonicalFields: Readonly<Record<string, string | boolean>>;
   readonly textFieldAppearancesVerified: true;
   readonly checkboxAppearancesVerified: true;
+  readonly staticPageLayoutVerified: true;
   readonly issuerVerified: false;
 }
 
@@ -33,8 +35,8 @@ function amount(text: string): number {
 }
 
 /** Capture every canonical field and compare source identity/code B to exact PDF bytes.
- * This does not authenticate fiduciary issuance, static page text or overlays,
- * and therefore does not enable filing exports. */
+ * This verifies canonical template content, resources, layout and appearances,
+ * but does not authenticate fiduciary issuance or enable filing exports. */
 export async function extractTrustK1IssuedCopyFields(
   rawSource: unknown,
   filer: FilerIdentity,
@@ -80,6 +82,7 @@ export async function extractTrustK1IssuedCopyFields(
       "Trust K-1 issued copy",
     );
     await assertTrustK1PrintableCheckboxes(bytes);
+    await assertTrustK1StaticPages(bytes);
     const values = Object.fromEntries(trustK1CanonicalFields.map((field) => [
       field.key,
       field.kind === "text"
@@ -120,6 +123,7 @@ export async function extractTrustK1IssuedCopyFields(
       canonicalFields: Object.freeze(values),
       textFieldAppearancesVerified: true as const,
       checkboxAppearancesVerified: true as const,
+      staticPageLayoutVerified: true as const,
       issuerVerified: false as const,
     };
   }));
