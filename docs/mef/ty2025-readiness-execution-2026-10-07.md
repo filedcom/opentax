@@ -26,11 +26,11 @@ planner and replay script are retained privately under
 
 ## Current integrated regression
 
-The normal `deno task test` command is running against the current integrated
-runtime, with the existing Poppler environment on PATH and
+The corrected normal `deno task test` command is running from commit
+`fc9b4a081` against the current integrated runtime, with the existing Poppler environment on PATH and
 `DENO_V8_FLAGS=--max-old-space-size=8192`. Launch commit, UTC timestamp, exact
 command and hashes of every tracked TypeScript/config file are in
-`full-test.status` and `runtime-at-launch.json`. The wrapper records terminal
+`full-test-corrected.status` and `runtime-corrected-at-launch.json`. The wrapper records terminal
 exit, timestamp, log digest, summaries and any changed runtime files after exit.
 No terminal totals or full pass are claimed yet. The older V32 process was
 verified live; its immutable source predates the released follow-up routes.
@@ -116,4 +116,25 @@ finite numeric Form 1040/Schedules 1–3 tamper probe. Eleven guarded fixture
 IDs remain explicit; no extra fixture was silently omitted. Before/after source
 hashes, reproduction and exact qualification are in
 `replay-audit-correction.json`. The original full run's manifest will show this
-single test-file change. The same full command must be rerun after repairs.
+single test-file change. The failed diagnostic was deliberately stopped after the focused repair passed;
+its wrapper recorded exit 143 and exactly the changed replay-test file. The
+verified process/children and reason remain in `full-test-supersession.json`.
+The same full command was restarted at the committed repair; no corrected full
+terminal result is claimed yet.
+
+## Additional filled-output review
+
+All nine pages of `optional-combined-below-minimum` were freshly rendered and
+inspected against its complete saved source/pending and XML: MFJ identities,
+primary-owned Schedule C loss −1,800, Schedule F profit 300, total additional
+income −1,500, zero SE adjustment, QBI loss carryforward 1,500, standard
+deduction 31,500, taxable income 143,100, tax 21,310 and refund 8,690 agree.
+Checkboxes, continuation order and legibility were checked on every page.
+`optional-below-nine-page-review.json` binds the page observations to the
+source/XML/PDF and fresh render digests. This completes only that packet review.
+
+All thirteen pages of `optional-net-boundary` were then rendered and inspected.
+Primary-owned farm optional earnings 7,240, primary wage-cap isolation from
+spouse wages, SE tax 1,249/half-SE 625, allocated QBI 7,267 + 947, deduction
+1,643 and refund 5,665 agree across source/pending/XML/PDF. All page/checklist
+observations and digests are in `optional-boundary-thirteen-page-review.json`.
