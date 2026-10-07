@@ -1224,3 +1224,53 @@ and neither packet enters a passing scope. The two `*-parity-observation.json`
 records preserve hashes and qualifications. Issuer/purchase/settlement/fee
 authenticity remains unproved. Main board still matches the frozen baseline
 with 52 open requirements and twelve unworked future items.
+
+### Form 2555 full-year physical-presence packet verification
+
+`single-form2555-full-year-physical-presence` passed the unchanged selected
+checker at 2026-10-07T05:11:05.232718Z: one packet and all seven actual pages.
+Alex Example's Form 2555 identifies Maple Systems Ltd, both Toronto addresses,
+US citizenship, December 1, 2024 tax-home establishment and January 1–December 31,
+2025 physical presence with no travel. The [2025 Form 2555 instructions](https://www.irs.gov/instructions/i2555)
+support the selected 365-day physical-presence and 130,000 annual limit.
+Min(130,000 × 365/365, 100,000 wages) gives exclusion 100,000.
+
+Native FECRecord matches employer, employee SSN and compensation.
+Form 1040 line 1h prints FEC and 100,000; its referenced WagesNotShownSchedule
+contains the same literal and amount. Form 2555 lines 19/24/26/27 and
+42/43/45 print 100,000, with no housing deduction/exclusion. Schedule 1
+8d uses the negative-income parentheses; lines 9/10 and Form 1040 line 8
+are −100,000, leaving AGI zero. Native Schedule 1 references the same IRS2555.
+Deduction 15,750 leaves taxable income/tax zero; no payments, credit or refund.
+
+All populated amounts, identity, checkbox skips, form copies, native references,
+page order and legibility were reviewed. These structured synthetic assertions
+do not authenticate citizenship, tax home, travel or employer/pay records.
+Housing, wider eligibility, source-authenticity, business-rule and IRS
+acceptance gates remain open; no broad Form 2555 closure.
+
+Manifest SHA256 `f563b8363e4da54af8e1c026638de8d93744f2fa6994c485327997a3b911fd6a`;
+terminal log SHA256 `20377222e40eb9017c7293b94a1efdb5df33b02a35df7a57f3d01634d6333a3e`.
+`verified219-aggregate.json` verifies 28 disjoint terminal passing batches /
+219 packets / 1,945 actual pages. Runtime and original generation flags unchanged.
+
+### New clean vehicle packet observation, unapproved checkbox flow
+
+All seven actual pages in `single-new-clean-vehicle-personal-credit` were
+compared with source/pending/native XML. Wages/AGI 50,000, deduction 15,750
+and taxable 34,250 give tax 3,875. Form 8936 limits tentative credit 7,500
+to tax 3,875; Schedule 3 line 6f/7/8 and Form 1040 line 20 agree, leaving
+zero total tax and refund of withholding 7,000. Current/prior MAGI 50,000/48,000,
+Single status, vehicle identity and September 30 acquisition/service assertions
+match the populated documents. The [2025 Form 8936 instructions](https://www.irs.gov/instructions/i8936)
+confirm the selected acquisition-date and single MAGI limits. Synthetic VIN,
+seller-report and eligibility facts do not authenticate actual vehicle eligibility,
+ECO report, purchase agreement/payment or prior filed return.
+
+Actual Schedule A line 5 Yes directs a skip to Part II, but questions 6/7
+also print No. Native IRS8936ScheduleA contains only NewCleanVehicleGrp.
+This is an unapproved checkbox-flow observation, recorded solely for future
+planning; no implementation or IRS rejection claim. The packet remains outside
+passing scopes. `clean-vehicle-skip-observation.json` retains artifact hashes,
+all-page review and qualifications. Main board is frozen with 52 open
+requirements; thirteen future items remain unworked.
