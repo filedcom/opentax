@@ -1,4 +1,11 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
+import { PDFDocument } from "pdf-lib";
+import { type FilerIdentity, FilingStatus } from "../../../mef/header.ts";
 import { form8582Pdf } from "./f8582.ts";
 import { form8582 as nativeForm8582 } from "../../mef/forms/f8582.ts";
 import { scheduleEPdf } from "./schedule_e.ts";
@@ -639,33 +646,240 @@ Deno.test("Form 8582 PDF preserves the native source and MFS guards", () => {
   );
 });
 
-Deno.test("Form 8582 PDF rejects activity rows beyond the printed table", () => {
-  const activities = Array.from({ length: 6 }, (_, index) => ({
+function overflowSource(count: number, active = false) {
+  const activities = Array.from({ length: count }, (_, index) => ({
     ...rental,
     activity_id: `property-${index + 1}`,
     name: `Property ${index + 1}`,
-    activity_type: "B" as const,
+    activity_type: active ? "A" as const : "B" as const,
     current_net: -1_000,
   }));
   const schedule_es = activities.map((activity) => ({
     ...rentalPending.schedule_e.schedule_es[0],
     activity_id: activity.activity_id,
     property_description: activity.name,
-    activity_type: "B",
+    activity_type: activity.activity_type,
     expense_utilities: 1_000,
   }));
-  assertThrows(
-    () =>
-      form8582Pdf.projectFields!({
-        activities,
-        current_loss: 6_000,
-        has_other_passive: true,
-      }, { schedule_e: { schedule_es } }),
+  const source = active
+    ? {
+      ...rentalFields,
+      activities,
+      current_loss: count * 1_000,
+      rental_current_loss: count * 1_000,
+      filing_status: "single" as const,
+      modified_agi: 140_000,
+    }
+    : { activities, current_loss: count * 1_000, has_other_passive: true };
+  const pending = {
+    general: { filing_status: "single" },
+    schedule_e: { schedule_es },
+    form8582: source,
+  };
+  return { source, pending };
+}
+
+const continuationFiler: FilerIdentity = {
+  primarySSN: "111223333",
+  nameLine1: "ALEX EXAMPLE",
+  nameControl: "EXAM",
+  fullName: "Alex Example",
+  filingStatus: FilingStatus.Single,
+  address: {
+    line1: "1 Example Way",
+    city: "Austin",
+    state: "TX",
+    zip: "78701",
+  },
+};
+
+Deno.test("Form 8582 continuation preserves every native overflow row in multiple pages", async () => {
+  for (const active of [false, true]) {
+    const { source, pending } = overflowSource(22, active);
+    const projected = form8582Pdf.projectFields!(source, pending);
+    assertEquals(
+      projected[active ? "part4_total_loss" : "part5_total_loss"],
+      "22000",
+    );
+    assertEquals(
+      projected[active ? "part4_6_name" : "part5_6_name"],
+      undefined,
+    );
+    const document = await PDFDocument.create();
+    await form8582Pdf.appendSupplementalPages!(
+      document,
+      projected,
+      continuationFiler,
+      pending,
+    );
+    // 17 overflow rows occupy three pages per emitted worksheet part.
+    assertEquals(document.getPageCount(), active ? 12 : 9);
+    const path = await Deno.makeTempFile({ suffix: ".pdf" });
+    try {
+      await Deno.writeFile(path, await document.save());
+      const output = await new Deno.Command("pdftotext", {
+        args: ["-raw", path, "-"],
+      }).output();
+      assertEquals(output.code, 0);
+      const text = new TextDecoder().decode(output.stdout);
+      for (let index = 6; index <= 22; index++) {
+        assertEquals(
+          [...text.matchAll(new RegExp(`Property ${index}(?![0-9])`, "g"))]
+            .length,
+          active ? 4 : 3,
+        );
+      }
+      assertStringIncludes(text, "111223333");
+      assertStringIncludes(text, "Rows 22-22; continuation page 3 of 3");
+      assertStringIncludes(text, "22000");
+    } finally {
+      await Deno.remove(path);
+    }
+  }
+});
+
+Deno.test("Form 8582 continuation rejects tampered worksheet, totals and identity", async () => {
+  const { source, pending } = overflowSource(6);
+  const projected = form8582Pdf.projectFields!(source, pending);
+  for (
+    const changed of [{ ...projected, part5_total_loss: "5999" }, {
+      ...projected,
+      pdf_continuation: [],
+    }, { ...projected, extra: true }]
+  ) {
+    await assertRejects(
+      async () =>
+        form8582Pdf.appendSupplementalPages!(
+          await PDFDocument.create(),
+          changed,
+          continuationFiler,
+          pending,
+        ),
+      Error,
+      "differs from finalized worksheet",
+    );
+  }
+  await assertRejects(
+    async () =>
+      form8582Pdf.appendSupplementalPages!(
+        await PDFDocument.create(),
+        projected,
+        undefined,
+        pending,
+      ),
     Error,
-    "Part 5 exceeds five printed rows",
+    "needs filer identity",
   );
+  await assertRejects(
+    async () =>
+      form8582Pdf.appendSupplementalPages!(
+        await PDFDocument.create(),
+        projected,
+        continuationFiler,
+        {},
+      ),
+    Error,
+    "needs finalized worksheet source",
+  );
+});
+
+Deno.test("Form 8582 five-row boundary adds no continuation pages", async () => {
+  const { source, pending } = overflowSource(5);
+  const projected = form8582Pdf.projectFields!(source, pending);
+  assertEquals(projected.pdf_continuation, undefined);
+  const document = await PDFDocument.create();
+  await form8582Pdf.appendSupplementalPages!(
+    document,
+    projected,
+    undefined,
+    pending,
+  );
+  assertEquals(document.getPageCount(), 0);
 });
 
 Deno.test("Form 8582 PDF does not print an empty form", () => {
   assertEquals(form8582Pdf.projectFields!({ modified_agi: 80_000 }, {}), {});
+});
+
+Deno.test("Form 8582 Part IX retains a second native activity block on its own schedule", async () => {
+  const activities = [1, 2].map((i) => ({
+    activity_id: `passive-ix-${i}`,
+    name: `Passive rental ${i}`,
+    activity_type: "B" as const,
+    property_type: 1,
+    reporting_form: "schedule_e" as const,
+    current_net: 4_000,
+    prior_unallowed_operating: 2_000,
+    prior_unallowed_4797_part1: 6_000,
+    prior_unallowed_4797_part2: 2_000,
+    prior_year_8582_source: {
+      tax_year: 2024 as const,
+      activity_id: `passive-ix-${i}`,
+      filed_part_vii_column_c: 10_000,
+      source_document_reference: `Synthetic prior IX ${i}`,
+      filed_part_ix_rows: [
+        { reporting_form: "schedule_e" as const, filed_unallowed_loss: 2_000 },
+        {
+          reporting_form: "form4797_part1" as const,
+          filed_unallowed_loss: 6_000,
+        },
+        {
+          reporting_form: "form4797_part2" as const,
+          filed_unallowed_loss: 2_000,
+        },
+      ],
+    },
+  }));
+  const source = {
+    activities,
+    current_income: 8_000,
+    prior_unallowed: 20_000,
+    has_other_passive: true,
+  };
+  const pending = {
+    form8582: source,
+    schedule_e: {
+      schedule_es: activities.map((a) => ({
+        tsj: "T",
+        activity_id: a.activity_id,
+        property_description: a.name,
+        property_type: 1,
+        activity_type: "B",
+        fair_rental_days: 365,
+        personal_use_days: 0,
+        rent_income: 4_000,
+        form_1099_payments_made: false,
+        prior_unallowed_passive_operating: 2_000,
+        prior_unallowed_passive_4797_part1: 6_000,
+        prior_unallowed_passive_4797_part2: 2_000,
+        prior_year_8582_source: a.prior_year_8582_source,
+      })),
+    },
+  };
+  const projected = form8582Pdf.projectFields!(source, pending);
+  assertEquals(projected.part9_name, "Passive rental 1");
+  const document = await PDFDocument.create();
+  await form8582Pdf.appendSupplementalPages!(
+    document,
+    projected,
+    continuationFiler,
+    pending,
+  );
+  assertEquals(document.getPageCount(), 1);
+  const path = await Deno.makeTempFile({ suffix: ".pdf" });
+  try {
+    await Deno.writeFile(path, await document.save());
+    const output = await new Deno.Command("pdftotext", {
+      args: ["-raw", path, "-"],
+    }).output();
+    assertEquals(output.code, 0);
+    const text = new TextDecoder().decode(output.stdout);
+    assertStringIncludes(text, "Passive rental 2");
+    assertStringIncludes(text, "Sch E, line 22");
+    assertStringIncludes(text, "Form 4797, Part I");
+    assertStringIncludes(text, "Form 4797, Part II");
+    assertStringIncludes(text, "Rows 1-3");
+  } finally {
+    await Deno.remove(path);
+  }
 });

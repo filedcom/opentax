@@ -1,4 +1,8 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import {
+  appendForm8582Continuation,
+  type Form8582Continuation,
+} from "./f8582_continuation.ts";
 import { form8582 as nativeForm8582 } from "../../mef/forms/f8582.ts";
 import { inputSchema } from "../../../nodes/intermediate/forms/form8582/index.ts";
 
@@ -282,17 +286,77 @@ function sumRows(rows: readonly string[], tag: string): number {
 
 function projectWorksheet(xml: string): Record<string, unknown> {
   const projected: Record<string, unknown> = {};
+  const continuation: Form8582Continuation[] = [];
   copy(projected, xml, lineTags);
   for (const table of tables) {
     const parent = content(xml, table.parentTag);
     if (parent === undefined) continue;
     const rows = groups(parent, table.rowTag);
     if (rows.length > 5) {
-      throw new Error(
-        `Form 8582 PDF Part ${table.part} exceeds five printed rows`,
+      const headings = table.part === "4" || table.part === "5"
+        ? [
+          "Name of activity",
+          "(a) Net income",
+          "(b) Net loss",
+          "(c) Prior unallowed loss",
+          "(d) Overall gain",
+          "(e) Overall loss",
+        ]
+        : table.part === "6"
+        ? [
+          "Name of activity",
+          "Form/schedule and line",
+          "(a) Loss",
+          "(b) Ratio",
+          "(c) Special allowance",
+          "(d) Loss less allowance",
+        ]
+        : table.part === "7"
+        ? [
+          "Name of activity",
+          "Form/schedule and line",
+          "(a) Loss",
+          "(b) Ratio",
+          "(c) Unallowed loss",
+        ]
+        : [
+          "Name of activity",
+          "Form/schedule and line",
+          "(a) Loss",
+          "(b) Unallowed loss",
+          "(c) Allowed loss",
+        ];
+      const allRows = rows.map((row) =>
+        table.tags.map(([, tag]) => value(row, tag) ?? "")
       );
+      // Ratios are preserved per row; the whole-table ratio total is 1.00.
+      const wholeTotals = table.tags.map(([column, tag]) =>
+        column === "name" || column === "form"
+          ? ""
+          : column === "ratio"
+          ? "1.00"
+          : String(sumRows(rows, tag))
+      );
+      continuation.push({
+        part: ({
+          "4": "IV",
+          "5": "V",
+          "6": "VI",
+          "7": "VII",
+          "VIII": "VIII",
+        } as Record<string, string>)[table.part],
+        firstRow: 6,
+        headings,
+        widths: table.part === "4" || table.part === "5"
+          ? [220, 100, 100, 100, 100, 100]
+          : table.part === "6"
+          ? [180, 160, 95, 65, 95, 125]
+          : [230, 180, 103, 103, 104],
+        rows: allRows.slice(5),
+        totals: wholeTotals,
+      });
     }
-    rows.forEach((row, index) =>
+    rows.slice(0, 5).forEach((row, index) =>
       copy(projected, row, table.tags, `part${table.part}_${index + 1}_`)
     );
     if (table.part === "4" || table.part === "5") {
@@ -329,16 +393,52 @@ function projectWorksheet(xml: string): Record<string, unknown> {
     }
   }
   const part9 = groups(xml, "ParentWrkshtLossActivityGrp");
-  if (part9.length > 1) {
-    throw new Error("Form 8582 PDF Part IX exceeds one printed activity block");
-  }
-  if (part9.length === 1) {
+  const part9Tags: readonly Pair[] = [
+    ["form", "ReportingFormOrScheduleNm"],
+    ["loss", "NetLossAmt"],
+    ["income", "NetIncomeAmt"],
+    ["net", "NetIncomeLossAmt"],
+    ["ratio", "LossesPct"],
+    ["unallowed", "PriorYearUnallowedLossesAmt"],
+    ["allowed", "F8582WrkshtLossesAmt"],
+  ];
+  part9.forEach((activity, activityIndex) => {
+    const rows = groups(activity, "WrkshtLossActivityGrp");
+    const overflow = rows.slice(activityIndex === 0 ? 3 : 0);
+    if (overflow.length) {
+      continuation.push({
+        part: "IX",
+        activity: value(activity, "MultipleLossActivityNm"),
+        firstRow: activityIndex === 0 ? 4 : 1,
+        headings: [
+          "Form/schedule and line",
+          "(a) 1a Loss plus prior",
+          "(a) 1b Income",
+          "(b) 1c Net loss",
+          "(c) Ratio",
+          "(d) Unallowed loss",
+          "(e) Allowed loss",
+        ],
+        widths: [220, 83, 83, 83, 83, 83, 85],
+        rows: overflow.map((row) =>
+          part9Tags.map(([, tag]) => value(row, tag) ?? "")
+        ),
+        totals: [
+          "",
+          "",
+          "",
+          value(activity, "TotalNetIncomeLossAmt") ?? "",
+          "1.00",
+          value(activity, "TotalUnallowedAmt") ?? "",
+          value(activity, "TotalAllowedAmt") ?? "",
+        ],
+      });
+    }
+  });
+  if (part9.length > 0) {
     copy(projected, part9[0], [["part9_name", "MultipleLossActivityNm"]]);
     const rows = groups(part9[0], "WrkshtLossActivityGrp");
-    if (rows.length > 3) {
-      throw new Error("Form 8582 PDF Part IX exceeds three printed form lines");
-    }
-    rows.forEach((row, index) =>
+    rows.slice(0, 3).forEach((row, index) =>
       copy(projected, row, [
         ["form", "ReportingFormOrScheduleNm"],
         ["loss", "NetLossAmt"],
@@ -355,6 +455,7 @@ function projectWorksheet(xml: string): Record<string, unknown> {
       ["part9_total_allowed", "TotalAllowedAmt"],
     ]);
   }
+  if (continuation.length) projected.pdf_continuation = continuation;
   return projected;
 }
 
@@ -391,6 +492,33 @@ export const form8582Pdf: PdfFormDescriptor = {
             row.reporting_form === "k1_4797_line10"
           )),
     };
+  },
+  async appendSupplementalPages(document, projected, filer, allPending) {
+    if (!allPending?.form8582) {
+      throw new Error(
+        "Form 8582 continuation needs finalized worksheet source",
+      );
+    }
+    const expected = form8582Pdf.projectFields!(
+      allPending.form8582,
+      allPending,
+    );
+    const keys = Object.keys(expected).sort();
+    if (
+      Object.keys(projected).length !== keys.length ||
+      keys.some((key) =>
+        JSON.stringify(projected[key]) !== JSON.stringify(expected[key])
+      )
+    ) {
+      throw new Error(
+        "Form 8582 continuation projection differs from finalized worksheet",
+      );
+    }
+    await appendForm8582Continuation(
+      document,
+      (expected.pdf_continuation ?? []) as Form8582Continuation[],
+      filer,
+    );
   },
   fields,
   filerFields: [
