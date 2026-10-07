@@ -1082,3 +1082,12 @@ command, terminal totals, log/test hashes and exact expected/actual messages.
 This is the existing full-regression task's failing assertion. No runtime
 file has been changed during the live full run; the assertion correction and
 required full rerun remain pending. No full pass is claimed.
+
+The full run subsequently reports the second failure,
+`Form 8962 two-dependent family rejects changed source, identity, policy, and final return`.
+Its focused normal typechecked diagnostic exited 1 (zero passed, one failed,
+three filtered out) with the same stale filing-threshold substring; command,
+log/test hashes and exact messages are in
+`form8962-two-dependent-failure-diagnostic.json`. A private two-assertion patch
+is prepared at `pending-form8962-assertion-correction.patch`, unapplied while
+the original full run remains live. Neither diagnostic establishes a full pass.
