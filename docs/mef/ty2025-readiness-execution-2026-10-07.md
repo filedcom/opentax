@@ -477,3 +477,18 @@ retain origins and exact hashes. The unchanged read-only checker is running;
 no pass is claimed until its terminal result. Original generation flags and
 all runtime/source files remain unchanged; all five future items remain
 unworked. Broad requirements remain open.
+
+
+Fresh Form 8880 W-2 deferral review covers four actual pages: Form 1040
+(two), Schedule 3 and Form 8880. Supplied primary W-2 code D is 2,000;
+AGI 20,000 and born-1980/nonstudent/not-dependent facts yield rate 0.5
+and tentative credit 1,000. No distributions are entered. The
+[2025 official form/instructions](https://www.irs.gov/pub/irs-prior/f8880--2025.pdf)
+credit-limit worksheet gives Form 1040 line 18 (428) less specified prior
+credits (zero) = 428. Form 8880 line 12, Schedule 3 lines 4/8 and
+Form 1040 line 20 agree at 428; tax becomes zero and withholding/refund
+are 500. Identity, taxpayer column, all marks, page order and legibility
+were checked. `form8880-w2-deferral-four-page-review.json` retains current
+source/XML/PDF/render hashes and notes. This fresh review is outside
+the running/verified batches and does not prove authentic source, full
+historical distribution diligence or ATS acceptance.
