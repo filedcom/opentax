@@ -492,7 +492,11 @@ Deno.test("Schedule E actual issued RPE K1 keeps legal source identity while nat
   );
   const item = source.k1_s_corp[0], original = structuredClone(item);
   const xml = scheduleE.build({ schedule_es: [] }, {
-    pending: { general: source.general, k1_s_corp: { k1_s_corps: [item] } },
+    pending: {
+      general: source.general,
+      k1_s_corp: { k1_s_corps: [item] },
+      schedule1: { line5_schedule_e: item.box1_ordinary_business },
+    },
   });
   assertStringIncludes(
     xml,
