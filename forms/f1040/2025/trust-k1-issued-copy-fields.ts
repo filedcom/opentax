@@ -38,17 +38,22 @@ export async function extractTrustK1IssuedCopyFields(
   filer: FilerIdentity,
   documents: ReadonlyArray<{ reference: string; bytes: Uint8Array }>,
 ): Promise<readonly ExtractedTrustK1Copy[]> {
+  const source = inputSchema.parse(rawSource);
+  const retainedDocuments = documents.map((doc) => ({
+    reference: doc.reference,
+    bytes: Uint8Array.from(doc.bytes),
+  }));
   const inspected = await inspectTrustK1IssuedCopies(
-    rawSource,
+    source,
     filer,
-    documents,
+    retainedDocuments,
   );
-  const rows = inputSchema.parse(rawSource).k1_trusts.filter((row) =>
+  const rows = source.k1_trusts.filter((row) =>
     row.box13_code_b_backup_withholding !== undefined
   );
   return await Promise.all(rows.map(async (row, index) => {
     const review = inspected[index];
-    const bytes = documents.find((doc) =>
+    const bytes = retainedDocuments.find((doc) =>
       doc.reference === review.pdfReference
     )!.bytes;
     const pdf = await PDFDocument.load(bytes);

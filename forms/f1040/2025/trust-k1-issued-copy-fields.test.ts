@@ -29,6 +29,22 @@ Deno.test("trust K-1 extraction retains every canonical field without enabling f
   );
 });
 
+Deno.test("trust K-1 extraction uses the exact verified byte snapshot despite caller buffer mutation", async () => {
+  const { source, documents } = await fixture();
+  const expectedHash =
+    source.k1_trusts[0].box13_code_b_issued_copy_review.pdf_sha256;
+  const extraction = extractTrustK1IssuedCopyFields(source, filer, documents);
+  documents[0].bytes.fill(0);
+  source.k1_trusts[0].estate_trust_ein = "987654321";
+  source.k1_trusts[0].box13_code_b_issued_copy_review.estate_trust_ein =
+    "987654321";
+  const [copy] = await extraction;
+  assertEquals(copy.pdfSha256, expectedHash);
+  assertEquals(copy.estateTrustEin, "123456789");
+  assertEquals(copy.canonicalFields["f1_6[0]"], "12-3456789");
+  assertEquals(copy.backupWithholding, 125.25);
+});
+
 for (
   const [key, value] of [
     ["f1_6[0]", "98-7654321"],
