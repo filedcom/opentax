@@ -619,3 +619,24 @@ No runtime files changed. Ten disjoint terminal scopes now cover
 remains live; latest observation585 passing markers/zero failures is progress
 only, not a terminal full-regression pass. Main52 requirements and all five
 future items remain unchanged.
+
+
+Fresh `single-form4952-interest-and-dividends` review inspected four actual
+return pages and the retained synthetic Form1098CopyB. W2wages75,000,
+interest500, dividends400/qualified100 give AGI75,900.
+[Form4952](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf) lines1/3=900,
+4a=900,4b=100,4c/4h/6=800,7=100carryforward,8=800deduction;
+no qualified-dividend election. Sourced mortgage interest18,000 plus800
+produce ScheduleA/1040itemized18,800, taxable57,100, tax7,475,
+withholding11,000 and refund3,525. Names/SSNs, marks, order and legibility
+agree. Embedded1098CopyB bytes/digest
+`f473b9517546345cf02b557bc511bf12474754df963801f59e675c6bca683de1`
+were verified; visible calendar25, HomeLender, maskedborrower3333 and
+box1=18,000 match the supplied fixture facts. This is not authenticated
+mortgage/issuer qualification. An initial scaled-preview misread of line3
+was resolved by a higher-resolution crop and text extraction: **900 is
+present**, so there is no discrepancy or new future item.
+`form4952-income-four-page-review.json` retains current source/XML/PDF,
+render, detail and sourceCopyB hashes. The disjoint **1-packet/4-page**
+`investment-interest-reviewed-batch` is undergoing unchanged read-only
+verification; no terminal pass claimed yet.
