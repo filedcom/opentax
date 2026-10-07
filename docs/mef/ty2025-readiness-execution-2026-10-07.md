@@ -3368,3 +3368,38 @@ results SHA256 `d0ba9123e1e4ca236c1584aad6b77580a95d6872c9b5976b78f56682f96b9ccb
 future35 requirements unchanged; root runtime unchanged during live full
 regression. Full Return1040/prepared-copy integration, statements, static-page
 review and issuer evidence remain under the existing K1 requirement.
+
+
+### Trust K-1 canonical static pages and layout — October 7, 2026
+
+Isolated commit `125a8e136` adds canonical static-page verification to the
+existing extraction helper. Fingerprint derived only after verifying the
+official template SHA256 `d8d7b6eacabdf145474aee8385fcfeafe68bd2f69baaef52d9a8227ebcd45fc3`:
+`404eb351de23e2218af04adfc7b3f183f1b27828fd772eecaff2ffd3764addca`.
+It resolves PDF object references, hashes decoded stream data/resources
+(compression/object numbering excluded), both pages' media/crop/rotation,
+all74 widget positions, original name-tree scripts and viewer preferences.
+Widget annotations must exactly match canonical fields on page1 with none
+on page2; duplicate/extra annotations, added actions, optional content and
+unknown page controls are rejected. Mutable field values remain excluded
+from the static fingerprint and covered by separate text/checkbox checks.
+
+Normal typed eight-file suite: **140 passed /0 failed** (27s). Cases include
+a white overlay despite matching field appearances/rehashed metadata,
+altered instructions, removed static content, substituted page font, extra/
+duplicate annotations, moved amount field, transparency group, replacement
+script, widget action, optional content and print range omitting instructions.
+All four unchanged, previously viewed retained PDFs (eight source pages)
+passed. No new full packet/page approval; issuer authenticity remains unproved.
+
+Log SHA256 `ce2e8c82ee5030766d1f487e37c6ff86544c18984a3f2e619c7a6653e917263b`;
+test audit SHA256 `0cf7badee70d9b97239379e80cfca3fcaf801440c4a906bacddf70b0967f62d8`;
+retained-copy results SHA256 `626b55739c1d5cc35155ff5b276f68dd65f64db97daa0de5e83f31f50466e9c7`;
+postcommit audit SHA256 `95e53fb629eb8a36462cd1608a7285887a17d6df249062048fbc1802ce18604f`.
+`staticPageLayoutVerified:true` now accompanies appearance checks;
+`printedContentsVerified:false`/`issuerVerified:false`/`filingReady:false`
+remain. Both full exporters guarded. Prepared native/copy packet integration,
+statements and issuer evidence remain under the existing K1 task. No main
+checkoff or future-task implementation; main52/future35 unchanged. Root
+regression runtime unchanged; session12057 remains live with no terminal
+totals. MeF estimate still reflects the ATS outage, not local test counts.

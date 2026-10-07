@@ -113,3 +113,11 @@ four unchanged retained source copies passed. This completes a printed-field
 prerequisite; static page/overlay and issuer evidence, required statements
 and prepared filing packet integration remain open. Full exporters are still
 guarded; see the execution record for `f51fcdf8a` and immutable evidence.
+
+
+The isolated source helper now also verifies the two canonical static pages,
+resource trees and all74 field positions, rejecting overlays, added/duplicate
+annotations, altered page resources/scripts and print controls. Focused140/0;
+all four unchanged retained copies passed. Issuer authentication and required
+statements/prepared filing packet integration remain unproved; exports remain
+guarded. See `125a8e136` and evidence in the execution record.
