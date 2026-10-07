@@ -402,3 +402,17 @@ Mutual nonoverlap across all five terminal checkpoints was rechecked:
 case is absent from these checkpoints. `verified129-aggregate.json` retains
 this audit; all-case review, full regression, coverage/source, business rules
 and ATS remain incomplete.
+
+The updated prior-review comparison covered 275 generated packets: 71 exact
+PDF/XML/complete-source matches and 84 exact PDF/XML/source-facts matches
+with internal pending differences. A new **32-case / 167-page** checkpoint
+excludes all five verified batches and Form 7217 observations; it contains
+30 prior reviewed packets (157 pages) and the two fresh four-policy reviews
+(10 pages). Fresh notes replace prior observations for those two matching
+packets. Prior physical artifacts/source/manifest digests were rechecked;
+current artifacts/cache are hardlinked without modifying existing evidence.
+`continued-reviewed-assembly.json` records origins and
+`continued-reviewed-check.status`/`.log` retain the current unchanged
+read-only verifier run. No terminal pass is claimed yet. Form 7217 is excluded
+from this bounded review transfer only; this is not a filing-scope disposition
+or permission to implement the future item. Runtime still matches launch.
