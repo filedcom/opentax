@@ -2,7 +2,9 @@
 
 ## Release boundary
 
-User requested a checkpoint, a new OpenTax version, board cleanup, and continuation in a new session. `v2.0.8-checkpoint.1` is the development prerelease of the integrated branch `codex/ty2025-board-progress-20261004`, through 1,552 completed ledger slices. The broad filing-ready objective is unfinished. The release workflow must build and smoke all five native binaries and publish SHA256SUMS before release success is claimed.
+The initial prerelease tag `v2.0.8-checkpoint.1` remains historical; its publication run was cancelled when the user explicitly requested regular version `v2.0.9`.
+
+User requested a checkpoint, a new OpenTax version, board cleanup, and continuation in a new session. `v2.0.9` is the regular iteration of the integrated branch `codex/ty2025-board-progress-20261004`, through 1,552 completed ledger slices. The broad filing-ready objective is unfinished. The release workflow must build and smoke all five native binaries and publish SHA256SUMS before release success is claimed.
 
 Read all of `product_board.md` and compact current learnings before resuming implementation. The main checklist from `## Scope and completion rules` onward is frozen against `85b489a72`; 52 broad TODOs remain open. Discoveries go only into `future_todo`, which is outside the execution queue. Do not equate bounded ledger completions with closing broad parents. Detailed history is preserved in the October 6 status archive, validation batch and completed ledger.
 

@@ -2,7 +2,7 @@
 
 ## Checkpoint — October 7, 2026
 
-**Release:** `v2.0.8-checkpoint.1` is the requested development prerelease of the integrated work. Publication and asset verification are recorded in the [checkpoint handoff](docs/mef/ty2025-checkpoint-handoff-2026-10-07.md). Full filing readiness and IRS acceptance remain incomplete.
+**Release:** `v2.0.9` is the requested next regular iteration of the integrated work. Publication and asset verification are recorded in the [checkpoint handoff](docs/mef/ty2025-checkpoint-handoff-2026-10-07.md). Full filing readiness and IRS acceptance remain incomplete.
 
 **Progress:** The [completed ledger](docs/mef/ty2025-product-board-completed-2026-10-01.md) records **1,552 bounded slices**. The frozen checklist retains **52 open TODOs**. Detailed learnings, commands, evidence and qualifications remain in the [status archive](docs/mef/ty2025-product-board-status-2026-10-06.md) and [validation record](docs/mef/ty2025-form1040-validation-batch.md).
 
