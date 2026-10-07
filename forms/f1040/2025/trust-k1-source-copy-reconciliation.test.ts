@@ -94,7 +94,11 @@ Deno.test("trust K-1 copy reconciliation joins ordinary public source through th
   assertEquals(pending.schedule_d.line_5_k1_st, 30);
   assertEquals(pending.schedule_d.line_12_k1_lt, 80);
   assertEquals(pending.f1040.line8_additional_income, 200);
-  assertEquals(pending.f1040.line25c_other_withheld ?? 0, 0);
+  assertEquals(pending.f1040.line25c_other_withheld, 125.25);
+  assertEquals(pending.f1040.line25c_total, 125.25);
+  assertEquals(pending.f1040.line25d_total_withholding, 125.25);
+  assertEquals(pending.f1040.line33_total_payments, 125.25);
+  assertEquals(pending.f1040.line34_overpayment, 125);
   assertThrows(
     () => f1040_2025.buildMefXml(pending, filer),
     Error,

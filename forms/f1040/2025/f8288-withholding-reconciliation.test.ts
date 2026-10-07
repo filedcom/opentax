@@ -257,3 +257,80 @@ Deno.test("other-form withholding guard sums 8288-A, W-2G, 8805, and 8959", () =
     "less than combined sourced other-form withholding",
   );
 });
+
+Deno.test("other-form withholding replay includes every trust codeB copy alongside 8288-A, W-2G, 8805 and 8959", () => {
+  const combined = {
+    ...pending,
+    w2g: {
+      w2gs: [{
+        payer_name: "Casino",
+        payer_ein: "123456789",
+        source_document_reference: "casino-copy",
+        box1_winnings: 1000,
+        box4_federal_withheld: 250,
+      }],
+    },
+    f8805: {
+      f8805s: [{
+        partnership_name: "Partnership",
+        section_1446_tax_withheld: 100,
+        total_tax_withheld: 120,
+      }],
+    },
+    form8959: { line24_total_withheld: 50 },
+    k1_trust: {
+      k1_trusts: [
+        {
+          estate_trust_name: "Trust A",
+          box13_code_b_backup_withholding: 100.25,
+        },
+        {
+          estate_trust_name: "Trust B",
+          box13_code_b_backup_withholding: 200.5,
+        },
+      ],
+    },
+  };
+  const total = 75_700.75;
+  assertOtherFormsWithholding({ line25c_total: total }, combined, true);
+  assertThrows(
+    () =>
+      assertOtherFormsWithholding({ line25c_total: 75_400 }, combined, true),
+    Error,
+    "less than combined sourced other-form withholding",
+  );
+  assertThrows(
+    () =>
+      assertOtherFormsWithholding({ line25c_total: total + 1 }, combined, true),
+    Error,
+    "differs from retained other-form withholding",
+  );
+  const fields = { line25c_total: total };
+  assertStringIncludes(
+    irs1040.build(fields, { pending: combined }),
+    "<TaxWithheldOtherAmt>75701</TaxWithheldOtherAmt>",
+  );
+  assertEquals(
+    irs1040Pdf.projectFields?.(fields, combined)?.line25c_total,
+    total,
+  );
+  const changed = {
+    ...combined,
+    k1_trust: {
+      k1_trusts: [...combined.k1_trust.k1_trusts, {
+        estate_trust_name: "Trust C",
+        box13_code_b_backup_withholding: 1,
+      }],
+    },
+  };
+  assertThrows(
+    () => irs1040.build(fields, { pending: changed }),
+    Error,
+    "less than combined sourced other-form withholding",
+  );
+  assertThrows(
+    () => irs1040Pdf.projectFields?.(fields, changed),
+    Error,
+    "less than combined sourced other-form withholding",
+  );
+});

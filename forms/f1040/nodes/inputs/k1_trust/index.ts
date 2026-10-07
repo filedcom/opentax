@@ -67,7 +67,8 @@ export const itemSchema = z.object({
   box14_code_m_form3468_part_v_statement: trustPartVStatementSchema.optional(),
   box13_code_m_orphan_drug_credit: z.never().optional(),
   // Box 13 code B requires an issued K-1 copy attached to the beneficiary's
-  // return. Retain the amount so unsupported export cannot silently drop it.
+  // return. Calculate the entered credit and retain its source; export still
+  // requires the complete verified native/issued-copy attachment route.
   box13_code_b_backup_withholding: z.number().finite().positive().refine(
     (amount) =>
       Number.isSafeInteger(Math.round(amount * 100)) &&
@@ -475,6 +476,22 @@ export const inputSchema = z.object({
 type K1TrustItem = z.infer<typeof itemSchema>;
 type K1TrustItems = K1TrustItem[];
 
+export function totalTrustBackupWithholding(
+  items: readonly { box13_code_b_backup_withholding?: number }[],
+): number {
+  const cents = items.reduce(
+    (sum, item) =>
+      sum + Math.round((item.box13_code_b_backup_withholding ?? 0) * 100),
+    0,
+  );
+  if (!Number.isSafeInteger(cents)) {
+    throw Error(
+      "Combined trust K-1 backup withholding exceeds exact cent precision",
+    );
+  }
+  return cents / 100;
+}
+
 // ─── Output helpers ───────────────────────────────────────────────────────────
 
 // Per-payer schedule_b entries for interest (Box 1)
@@ -724,6 +741,12 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
       ...scheduleBInterestOutputs(k1_trusts),
       ...scheduleBDividendOutputs(k1_trusts),
       ...f1040QualDivOutput(k1_trusts),
+      ...(() => {
+        const amount = totalTrustBackupWithholding(k1_trusts);
+        return amount > 0
+          ? [output(f1040, { line25c_other_withheld: amount })]
+          : [];
+      })(),
       ...scheduleDOutput(k1_trusts),
       ...scheduleEOutputs(k1_trusts),
       ...(() => {

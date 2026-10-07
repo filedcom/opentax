@@ -4,6 +4,7 @@ import { FilingStatus } from "../nodes/types.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
 import { inspectTrustK1IssuedCopies } from "./trust-k1-issued-copy-review.ts";
 import { buildMefXml } from "./mef/builder.ts";
+import { buildPending } from "./mef/pending.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
 import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { execute } from "../../../core/runtime/executor.ts";
@@ -15,6 +16,7 @@ const general = {
   taxpayer_last_name: "Taxpayer",
   taxpayer_ssn: "111-22-3333",
   taxpayer_dob: "1985-06-15",
+  digital_assets: false,
   address_line1: "1 Test Way",
   address_city: "Austin",
   address_state: "TX",
@@ -72,13 +74,15 @@ Deno.test("trust K-1 code B review binds exact PDF bytes but leaves printed cont
   assertEquals(reviewed[0].backupWithholding, 125);
   assertEquals(reviewed[0].beneficiarySsn, "111223333");
   assertEquals(reviewed[0].printedContentsVerified, false);
+  const pending = buildPending(result.pending);
+  assertEquals(pending.f1040?.line25c_total, 125);
   assertThrows(
-    () => buildMefXml({ k1_trust: source }, filer),
+    () => buildMefXml(pending, filer),
     Error,
     "trust K-1 backup withholding needs",
   );
   await assertRejects(
-    () => buildPdfBytes({ k1_trust: source }, filer),
+    () => buildPdfBytes(pending, filer),
     Error,
     "trust K-1 backup withholding needs",
   );

@@ -19,6 +19,36 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+Deno.test("trust K-1 codeB combines cents once in other-form withholding without changing income", () => {
+  const result = compute([
+    minimalItem({ box13_code_b_backup_withholding: 0.1 }),
+    minimalItem({
+      estate_trust_name: "Second Trust",
+      box13_code_b_backup_withholding: 0.2,
+    }),
+  ]);
+  assertEquals(findOutput(result, "f1040")?.fields, {
+    line25c_other_withheld: 0.3,
+  });
+  assertEquals(result.outputs.length, 1);
+  assertEquals(compute([minimalItem()]).outputs, []);
+});
+
+Deno.test("trust K-1 codeB rejects a combined amount beyond safe cent precision", () => {
+  assertThrows(
+    () =>
+      compute([
+        minimalItem({ box13_code_b_backup_withholding: 50_000_000_000_000 }),
+        minimalItem({
+          estate_trust_name: "Second Trust",
+          box13_code_b_backup_withholding: 50_000_000_000_000,
+        }),
+      ]),
+    Error,
+    "Combined trust K-1 backup withholding exceeds exact cent precision",
+  );
+});
+
 Deno.test("trust K-1 box 11 code A sums distinct final K-1 deductions for Schedule 1 and AGI", () => {
   const source = {
     box11_code_a_statement_reference: "Final-year deduction statement",

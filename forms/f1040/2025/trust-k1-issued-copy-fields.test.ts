@@ -20,12 +20,12 @@ Deno.test("trust K-1 extraction retains every canonical field without enabling f
   assertThrows(
     () => buildMefXml({ k1_trust: source }, filer),
     Error,
-    "trust K-1 backup withholding needs",
+    "line 25c is less than combined sourced other-form withholding",
   );
   await assertRejects(
     () => buildPdfBytes({ k1_trust: source }, filer),
     Error,
-    "trust K-1 backup withholding needs",
+    "line 25c is less than combined sourced other-form withholding",
   );
 });
 

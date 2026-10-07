@@ -5,6 +5,10 @@ import {
   totalCreditAmount,
 } from "../nodes/inputs/f8805/index.ts";
 import { printFieldsSchema as form8959PrintSchema } from "../nodes/intermediate/forms/form8959/index.ts";
+import {
+  inputSchema as trustK1InputSchema,
+  totalTrustBackupWithholding,
+} from "../nodes/inputs/k1_trust/index.ts";
 
 /** Replay modeled other-form withholding into Form 1040 line 25c. */
 export function assertOtherFormsWithholding(
@@ -27,6 +31,11 @@ export function assertOtherFormsWithholding(
   const partnershipWithheld = pending?.f8805 === undefined
     ? 0
     : totalCreditAmount(f8805InputSchema.parse(pending.f8805).f8805s);
+  const trustWithheld = pending?.k1_trust === undefined
+    ? 0
+    : totalTrustBackupWithholding(
+      trustK1InputSchema.parse(pending.k1_trust).k1_trusts,
+    );
   const form8959 = pending?.form8959;
   if (
     form8959 !== undefined &&
@@ -43,7 +52,7 @@ export function assertOtherFormsWithholding(
       line24,
     );
   const total = propertyWithheld + gamblingWithheld + partnershipWithheld +
-    medicareWithheld;
+    medicareWithheld + trustWithheld;
   if (total === 0 && !requireExact) return;
   const filed = fields.line25c_total;
   if (
@@ -52,7 +61,8 @@ export function assertOtherFormsWithholding(
       filed + 0.01 < total)
   ) {
     throw new Error(
-      partnershipWithheld + medicareWithheld > 0 || propertyWithheld === 0
+      partnershipWithheld + medicareWithheld + trustWithheld > 0 ||
+        propertyWithheld === 0
         ? "Form 1040 line 25c is less than combined sourced other-form withholding"
         : gamblingWithheld > 0
         ? "Form 1040 line 25c is less than combined sourced Form 8288-A and W-2G withholding"
