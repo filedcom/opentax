@@ -4115,3 +4115,12 @@ unworked. Retained aggregate75/267/2706 and prepared/coverage counts are not
 increased pending integration and corresponding audit reconciliation. Broader
 loss/owner/source branches, source authentication, accepted production ledger,
 2026 engine import, matching BR and ATS remain open. No main TODO checkoff.
+
+
+IRS ATS status rechecked2026-10-07 at23:19UTC: [official status](https://www.irs.gov/e-file-providers/modernized-e-file-operational-status)
+still says unavailable through October13 at09:00Eastern, with TY2026 testing
+announced for09:01. TY2025 availability is not confirmed by that notice.
+Private `ats-status-recheck-20261008-2319.json` retains the observation.
+Board estimate remains0tests/0% acceptance by the original October8 morning
+deadline, with post-reopening pass probability unestimated. Five local XSD
+validations are not five IRS ATS passes. Overall goal remains incomplete.
