@@ -155,3 +155,12 @@ no terminal pass is claimed yet. Review origin/manifest digests are in
 Form 1040 from its seed-only URL lookup and stopped before writing a manifest;
 its checker correctly rejected the missing manifest. The corrected assembly
 uses the complete current registry URL inventory; both diagnostic logs remain.
+
+The fifteen pages of `optional-spouse-cap-loss` were also freshly reviewed.
+The spouse Schedule F loss remains −300 while optional SE earnings are 600;
+primary/spouse SE 8,478 + 17 and half-SE 4,239 + 9 yield QBI 55,761 − 309,
+QBI deduction 11,090 and amount owed 9,895. Source/pending/XML, identities,
+marks and all rendered pages agree; the farm-loss sign was also verified in
+extracted page text. `optional-spouse-loss-fifteen-page-review.json` retains
+the reviewed observations and digests. This packet is outside the unchanged
+23-case checker scope and does not yet contribute to its terminal result.
