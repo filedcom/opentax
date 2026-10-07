@@ -369,3 +369,12 @@ and refund 9,913 reconcile. Identity, blank allocation/marriage sections,
 attachment order and legibility passed.
 `four-policy-no-aptc-five-page-review.json` retains observations/digests;
 this is outside current verifier batches and sources remain synthetic.
+
+All five pages of `single-four-sequential-no-aptc-policies-four-gaps`
+were freshly reviewed. March/June/September/December rows are wholly blank
+and their native monthly groups omitted; the eight covered months retain
+correct premium/SLCSP/contribution/PTC/APTC values. Credit 5,600 joins
+Schedule 3 and Form 1040 once; tax 1,487, payments 8,600 and refund 7,113
+match source/pending/XML. Identity, method marks, blank allocation sections,
+order and legibility passed. `four-policy-gaps-five-page-review.json` retains
+notes/digests; it is outside current checkpoints and sources are synthetic.
