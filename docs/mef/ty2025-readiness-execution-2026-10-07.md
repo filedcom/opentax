@@ -3171,3 +3171,53 @@ private `trust-k1-copy-fields-focused-v2-audit-20261007.json` under the existing
 board execution evidence directory. All2,592 live full-regression runtime
 hashes unchanged; frozen main52/future35 rows verified. No aggregate approval
 or main checkoff; no future work implemented.
+
+## Trust K-1 complete native source projection — isolated review
+
+Isolated branch `codex/trust-k1-copy-20261007` now contains
+`fb15bb76574f1963e3eff0ac87e5c450cae47b88` (complete native copy review) and
+`af77d2cd08e22c157f3ca28deb4235b5c98c3c20` (owner suffix/care-of/line2).
+The read-only projection covers every scalar income box1–8, box10 and all22
+printed code/amount rows in boxes9/11/12/13/14, plus final/amended/1041-T and
+beneficiary indicators. A structured recipient transcription must match the
+printed beneficiary block and current taxpayer/spouse name/SSN; source address
+is retained independently of current return address. Amounts preserve signed
+cent values in the source copy and use the existing whole-dollar native
+rounding. Code-only, amount-only, statement-only, malformed, negative
+nonnegative-type, invalid-date and conflicting-indicator rows reject.
+
+Final normal typed focused command:
+`deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov
+forms/f1040/2025/trust-k1-native-copy-review.test.ts
+forms/f1040/2025/trust-k1-issued-copy-fields.test.ts
+forms/f1040/2025/trust-k1-issued-copy-review.test.ts
+forms/f1040/2025/trust_k1_backup_withholding.test.ts`: **29 passed /0 failed**.
+Four positive native shapes validate against the cached standalone K1 XSD:
+all amount rows, foreign-address, spouse-owned, suffix/care-of/second-line.
+The retained artifact set separately contains three synthetic source PDFs
+and corresponding standalone XML files; all three XSD commands exited0 and
+all six rendered pages were viewed. Printed amounts/code rows, negative
+amount, date, owner identities, foreign wrap, indicators and instruction pages
+match the retained source projection. Starred statements are absent and
+explicitly unapproved; this is not full-return or issuer evidence. No packet
+approval or aggregate increase.
+
+Final focused log SHA256
+`90021e5fc96dc1395bc53ea3c9aa58995f7866b493c2bf6e0844b05d85d42a2a`;
+private audit `trust-k1-native-copy-focused-v4-audit-20261007.json` SHA256
+`59213b9568a541ab87a39a46ff145bae694324b2de3bb85d2d7577e6c4b844f5`.
+Artifact audit `trust-k1-native-copy-focused-v3-audit-20261007.json` SHA256
+`53cec46f4b1d0dc9475dc61c9357d68883f6ea3da0a8ce377be1b74612dea09d`.
+Artifacts under `trust-k1-native-copy-artifacts-20261007/`; native XSD SHA256
+`2173f39e29df9eac28b19ff4ceb83550e137db3a5afb95838b3ad92ef5075621`.
+A prior27/1 test result expected a new duplicate-copy error, but the existing
+shared byte verifier already rejected it; corrected the assertion without
+bypassing that check. All earlier logs retained.
+
+This prerequisite remains unregistered/unintegrated, `filingReady:false`.
+Issuer, static-page/overlay and checkbox appearance authenticity are not
+proved. Full source/calculation reconciliation, supplementary statements,
+line25c and prepared issued-copy packet integration remain required under the
+existing main task. Positive exports remain guarded; no main checkoff or
+future work. Root live regression's2,592 runtime hashes and frozen52/future35
+rows were reverified unchanged.

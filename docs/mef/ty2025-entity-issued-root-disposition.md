@@ -67,3 +67,20 @@ issued copy's printed facts. Both exports remain closed for positive code B
 until the native document and the issued-copy PDF/print packet are present and
 the amount matches. Ordinary trust K-1 income remains source-only;
 attaching every trust K-1 would contradict the beneficiary instructions.
+
+
+## October 7 isolated source-copy/native prerequisite
+
+The isolated `codex/trust-k1-copy-20261007` branch now retains all74 canonical
+fields and a read-only native projection of every scalar/coded amount,
+indicator and structured beneficiary detail, checked against the actual
+printed text fields and current owner. Focused29/0; four positive standalone
+XSD shapes; three retained source-copy/XML artifact pairs and six viewed
+pages. These are source projections, not a registered positive filing route.
+The helper explicitly retains `filingReady:false`, `issuerVerified:false`
+and `printedContentsVerified:false`; source/calculation joins, supplemental
+statements, static-page/checkbox authenticity, line25c and prepared-copy packet
+integration remain required. Both final exports remain guarded. See the
+[execution record](ty2025-readiness-execution-2026-10-07.md) for immutable
+commit, artifact and test digests. The broader ownership/attachment task stays
+open; no blanket entity-root exclusion is approved.
