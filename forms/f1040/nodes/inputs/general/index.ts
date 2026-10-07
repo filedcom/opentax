@@ -1,3 +1,4 @@
+import { ptcJointIncomeReviewSchema } from "../../../2025/form8962-joint-income.ts";
 import {
   assertForm8962SpouseIncomeReview,
   ptcSpouseIncomeReviewSchema,
@@ -381,6 +382,7 @@ export const inputSchema = z.object({
   address_state: z.string().optional(),
   // Affirmative reviewed zero-income spouse inventory for joint family PTC.
   ptc_spouse_income_review: ptcSpouseIncomeReviewSchema.optional(),
+  ptc_joint_income_review: ptcJointIncomeReviewSchema.optional(),
   // Distinct 2025 residence states for the Form 8962 poverty table.
   ptc_residence_states_2025: z.array(z.string().regex(/^[A-Z]{2}$/)).min(1)
     .optional(),

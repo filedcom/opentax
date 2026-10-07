@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { assertForm8962JointIncomeReview } from "./form8962-joint-income.ts";
 
 const reference = z.string().trim().min(1);
 const ssn = z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/);
@@ -182,6 +183,10 @@ export function assertForm8962SpouseIncomeReview(
   requireReview = false,
 ): void {
   const general = object(generalValue);
+  if (general.ptc_joint_income_review !== undefined) {
+    assertForm8962JointIncomeReview(general, pendingValue);
+    return;
+  }
   if (general.ptc_spouse_income_review === undefined && !requireReview) return;
   const parsed = ptcSpouseIncomeReviewSchema.safeParse(
     general.ptc_spouse_income_review,
