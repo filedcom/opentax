@@ -4,6 +4,7 @@ import {
   stageForm172HistoricalAmtCapSource,
   stageForm172HistoricalAmtDeductionAllocationSource,
   stageForm172HistoricalAmtModifiedIncomeSource,
+  stageForm172HistoricalAmtVintageModifiedIncomeSource,
 } from "./form172_amt_historical_cap_source.ts";
 function origin() {
   const item = (id: string, amount: number, business: boolean) => ({
@@ -541,4 +542,145 @@ Deno.test("Historical modified AMTI source owns bound owners and bytes before fi
   assertEquals(r.modifiedAmtiBeforeEarlierAtnold, 3100);
   assertEquals(r.taxpayerSsn, "111223333");
   assertEquals(r.review_package_manifest[0].sha256, digest);
+});
+
+async function vintageSource() {
+  const f = await modifiedSource();
+  const { modified_review, ...cap } = f.workpaper;
+  const workpaper = {
+    ...cap,
+    vintage_reviews: {
+      reference: "vintage-package-review",
+      application_tax_year: 2014,
+      taxpayer_ssn: "111223333",
+      vintages: [2008, 2009].map((year, index) => ({
+        origin_year: year,
+        loss_reference: cap.losses[index].reference,
+        refigured_deductions_include_earlier_nol_effects: true,
+        earlier_nol_deductions: index === 0 ? [] : [{
+          origin_year: 2008,
+          loss_reference: cap.losses[0].reference,
+          amount: 90,
+        }],
+        modified_review: {
+          ...modified_review,
+          reference: `vintage-${year}-review`,
+          components: modified_review.components.map((c) => ({
+            ...c,
+            refigured_reference: `vintage-${year}-${c.line}`,
+          })),
+          section199: {
+            ...modified_review.section199,
+            refigured_reference: `vintage-${year}-dpad`,
+          },
+        },
+      })),
+    },
+  };
+  const bytes = new TextEncoder().encode(JSON.stringify(workpaper));
+  const binding = {
+    ...f.binding,
+    workpaper: { reference: cap.reference, sha256: await sha(bytes) },
+  };
+  return {
+    workpaper,
+    binding,
+    documents: [{ reference: cap.reference, bytes }],
+  };
+}
+Deno.test("Historical AMT vintage source binds complete origins and each independent refigure context", async () => {
+  const f = await vintageSource();
+  const r = await stageForm172HistoricalAmtVintageModifiedIncomeSource(
+    f.binding,
+    f.documents,
+  );
+  assertEquals(
+    r.chronologicalVintageModifiedIncome.map((
+      v,
+    ) => [
+      v.originYear,
+      v.actualAllocatedDeduction,
+      v.earlierActualDeduction,
+      v.modifiedAmtiAfterEarlierAtnold,
+    ]),
+    [[2008, 90, 0, 3100], [2009, 10, 90, 3010]],
+  );
+  assertEquals(r.review_package_manifest, [f.binding.workpaper]);
+  assertEquals(r.reviewPackageBytesVerified, true);
+  assertEquals(r.acceptedCarryImportVerified, false);
+  assertEquals(r.chronologicalAbsorptionReconciled, false);
+  assertEquals(r.packetAdmissionVerified, false);
+  assertEquals(r.filingReady, false);
+});
+Deno.test("Historical AMT vintage source rejects altered bytes and rehashed context inconsistencies", async () => {
+  const f = await vintageSource();
+  f.documents[0].bytes[0] ^= 1;
+  await assertRejects(() =>
+    stageForm172HistoricalAmtVintageModifiedIncomeSource(f.binding, f.documents)
+  );
+  for (
+    const mutate of [
+      (v: Awaited<ReturnType<typeof vintageSource>>["workpaper"]) => {
+        v.vintage_reviews.vintages.pop();
+      },
+      (v: Awaited<ReturnType<typeof vintageSource>>["workpaper"]) => {
+        v.vintage_reviews.vintages[1].earlier_nol_deductions[0].amount = 89;
+      },
+      (v: Awaited<ReturnType<typeof vintageSource>>["workpaper"]) => {
+        v.vintage_reviews.vintages[1].modified_review.components[0]
+          .original_amount++;
+      },
+      (v: Awaited<ReturnType<typeof vintageSource>>["workpaper"]) => {
+        v.vintage_reviews.taxpayer_ssn = "999887777";
+      },
+      (v: Awaited<ReturnType<typeof vintageSource>>["workpaper"]) => {
+        v.losses[1].reviewed_opening_amt_nol = 90000;
+      },
+    ]
+  ) {
+    const g = await vintageSource();
+    mutate(g.workpaper);
+    g.documents[0].bytes = new TextEncoder().encode(
+      JSON.stringify(g.workpaper),
+    );
+    g.binding.workpaper.sha256 = await sha(g.documents[0].bytes);
+    await assertRejects(() =>
+      stageForm172HistoricalAmtVintageModifiedIncomeSource(
+        g.binding,
+        g.documents,
+      )
+    );
+  }
+  const h = await vintageSource();
+  await assertRejects(() =>
+    stageForm172HistoricalAmtVintageModifiedIncomeSource(h.binding, [])
+  );
+  await assertRejects(() =>
+    stageForm172HistoricalAmtVintageModifiedIncomeSource(h.binding, [
+      ...h.documents,
+      ...h.documents,
+    ])
+  );
+});
+Deno.test("Historical AMT vintage source owns caller binding and package bytes before first await", async () => {
+  const f = await vintageSource();
+  const digest = f.binding.workpaper.sha256;
+  const promise = stageForm172HistoricalAmtVintageModifiedIncomeSource(
+    f.binding,
+    f.documents,
+  );
+  f.binding.workpaper.sha256 = "0".repeat(64);
+  f.binding.application_tax_year = 2015;
+  f.binding.taxpayer_ssn = "999887777";
+  f.documents[0].bytes.fill(0);
+  f.documents.length = 0;
+  const r = await promise;
+  assertEquals(r.review_package_manifest[0].sha256, digest);
+  assertEquals(r.taxpayerSsn, "111223333");
+  assertEquals(
+    r.chronologicalVintageModifiedIncome.map((v) =>
+      v.modifiedAmtiAfterEarlierAtnold
+    ),
+    [3100, 3010],
+  );
 });

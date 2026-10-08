@@ -8,6 +8,7 @@ import {
   calculateForm172HistoricalAmtDeductionAllocation,
 } from "./form172_amt_historical_cap.ts";
 import { calculateForm172HistoricalAmtModifiedIncome } from "./form172_amt_modified_income.ts";
+import { calculateForm172HistoricalAmtVintageModifiedIncome } from "./form172_amt_vintage_modified_income.ts";
 
 const schema = z.object({
   workpaper: z.object({
@@ -112,5 +113,24 @@ export function stageForm172HistoricalAmtModifiedIncomeSource(
       modified_review: z.unknown(),
     }).passthrough().parse(raw);
     return calculateForm172HistoricalAmtModifiedIncome(cap, modified_review);
+  });
+}
+
+/** One retained package binds all origins, annual deduction operands and every
+ * vintage's refigure context. Authenticity, absorption and accepted carry are
+ * separate gates; byte verification does not open the filing route.
+ */
+export function stageForm172HistoricalAmtVintageModifiedIncomeSource(
+  rawBinding: unknown,
+  rawDocuments: readonly SourceDocumentBytes[],
+) {
+  return stageHistoricalAmtSource(rawBinding, rawDocuments, (raw) => {
+    const { vintage_reviews, ...cap } = z.object({
+      vintage_reviews: z.unknown(),
+    }).passthrough().parse(raw);
+    return calculateForm172HistoricalAmtVintageModifiedIncome(
+      cap,
+      vintage_reviews,
+    );
   });
 }
