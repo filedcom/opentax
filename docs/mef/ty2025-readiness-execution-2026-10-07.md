@@ -4651,3 +4651,59 @@ announced reopening is for TY2026, without confirmed TY2025 availability.
 Private `ats-status-20261008T030906Z-v1/observation.json` retains the observation.
 Board estimate remains zero accepted tests by the original morning deadline
 and not estimable after reopening. Local packets do not add IRS acceptance.
+
+
+### October 8 — Form 2210 dated-payment and installment prerequisite
+
+Compacted the board validation learning before the next form work. Advanced
+the existing Form 2210 dated-payment, installment-carry and penalty-workpaper
+requirements in isolated `codex/form2210-dated-payments-20261008`, then
+integrated candidate `95bf4bb92538ca1d6bc3fd66cb90e0a74bb040df` as root
+`f370f4043`. The two new files contain an unregistered pure calculator and
+meaningful arithmetic/source-conflict tests. Public inputs and native/PDF
+registries remain unchanged; no positive filing guard is opened.
+
+Authority: [2025 Form 2210](https://www.irs.gov/pub/irs-prior/f2210--2025.pdf)
+and [instructions](https://www.irs.gov/instructions/i2210), Part III carry,
+Table 1 payment timing, Example 3 FIFO allocation and the four 7% rate periods.
+The helper retains reviewed payment identities, account taxpayer, actual
+dates, exact cents, source references and review dates. It produces regular
+lines 10–18 and exact principal/day/rate segments through April 15, 2026.
+Withholding uses equal due-date credits. June 16 grace applies only to June's
+installment; April principal retains the actual late payment day. The result
+explicitly remains filing-unready, payment-authenticity-unverified and annual
+required-payment-unreconciled. No filed line 19 is generated.
+
+Final ordinary typed six-module command:
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/form2210_payments.test.ts forms/f1040/2025/form2210_box_e.test.ts forms/f1040/2025/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/f2210/calculation.test.ts forms/f1040/nodes/inputs/f2210/index.test.ts forms/f1040/2025/attachment-coverage.test.ts`.
+Actual session 13708 terminal exit 0; **52 passed / 0 failed / 0 ignored**,
+393ms test duration, 03:19:53.293656–03:19:58.705874 UTC. This includes eight
+new cases and the existing prior-source/native/PDF projection and attachment
+guard cases. The new independent daily-balance oracle checks 100 deterministic
+inventories and source-order reversal. Tool versions remain Deno 2.9.4,
+V8 15.0.245.2-rusty and TypeScript 6.0.3.
+
+Private `form2210-dated-payments-20261008-v2/` retains preflight, runner,
+`run.json`, log, `review.json` and `integration.json`. Log SHA-256:
+`ba54c1b110759eefbd8c5ab48302d2cd4b5a73f9214263b947f3edfc3395caf4`.
+Review SHA-256:
+`80c1e4520f58f32e2aa4dc63a964f8e055ee7dc0d91767f4560b6582a6c128aa`.
+All 2,631 baseline runtime paths remained exact in root and candidate; the two
+new root paths match the tested candidate exactly. The prior full 12,388/0
+covers the unchanged baseline, not these additions; a newer complete phase
+full result is not claimed. No new packet, PDF page review, XSD or IRS
+business-rule/acceptance evidence is added.
+
+Private v1 preserves the initial source snapshot and **6/1** failure log:
+returning payment rows in caller order made the entire-result order-invariance
+assertion fail. Canonical chronological ordering fixes it. Review also corrected
+June 16 grace so it cannot backdate April debt; a dedicated test checks 62 days
+for that April payment. These are fixes in this existing task implementation,
+not work on any deferred future item.
+
+Required annual tax/prior safe harbor and withholding still need finalized
+return/source reconciliation. Actual-date withholding, AI, prior overpayment
+credits, early filing relief, waivers/disasters and wider owner/status branches
+remain part of the existing form scope, with native/PDF/BR/ATS gates open.
+Main 52 unchecked rows remain frozen and all 43 future rows remain unworked.
+The pass estimate stays at its 03:09 UTC IRS observation; no acceptance added.

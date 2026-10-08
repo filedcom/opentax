@@ -1,5 +1,37 @@
 # TY2025 Form 2210 mandatory filing paths
 
+## October 8 dated-payment calculation checkpoint
+
+Integrated `f370f4043` (candidate `95bf4bb92`) adds an **unregistered
+calculation prerequisite**, `form2210_payments.ts`. It retains reviewed dated
+estimated-tax and return-balance payment identities, owners, amounts in cents
+and source references; derives regular Part III lines 10–18; applies payments
+to the oldest installment first; and records exact principal/day/rate segments
+through April 15, 2026. Default withholding is split over due dates. June 16
+payments are timely for the June installment while earlier April debt accrues
+through the actual payment date. Payment chronology is independent of source
+array order. Summed exact rational penalty cents are rounded once for this
+staged result; no filed line 19 or final-return penalty is emitted.
+
+Six normal typed modules passed **52/0**, including eight new checks, the
+existing page-1/prior-byte chain and public attachment guards. The tests cover
+the IRS Example 3 carry/payment split, official rate-period day totals,
+prepayments, cent-valued settlement, conflicting sources and an independent
+daily-balance oracle over 100 deterministic payment inventories. Private
+`form2210-dated-payments-20261008-v2/` retains command, timestamps, logs, source
+hashes, review and root integration proof. The earlier 12,388/0 full regression
+covers the unchanged 2,631-path baseline; these two later helper/test paths
+have focused evidence only and await the newer phase full batch.
+
+Required annual payment and withholding are still reviewed workpaper inputs,
+not executor-owned finalized-return joins. Payment records are not bank/IRS
+byte authentication. Actual-date withholding, Schedule AI, prior-overpayment
+credits, early-filing relief, waiver/disaster sources and wider tax/status
+patterns need the existing source and canonical-result work. No public node,
+native registry or PDF registry invokes this helper; all existing Form 2210
+export guards remain active. This does not close the main form requirement.
+
+
 ## Current boundary
 
 The IRS generally computes an underpayment penalty without a filed Form 2210. A standalone asserted penalty can still flow to Form 1040 line 38. However, a selected Part II filing reason requires Form 2210, and the public input does not yet contain enough verified source facts to calculate and reconcile a filed form. Both MeF and PDF exports therefore reject `f2210` when any of these flags is true: `waiver_requested` (box A or B not distinguished), `partial_waiver_requested` (B), `annualized_method` (C), `actual_withholding_dates_method` (D), or `joint_filing_status_change` (E), or when `box_e_source` is present. The calculation node emits no line 38 amount for those branches, even if an asserted `underpayment_penalty` is supplied.
