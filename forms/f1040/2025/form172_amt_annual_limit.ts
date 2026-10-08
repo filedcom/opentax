@@ -430,3 +430,39 @@ export function calculateForm172AmtModernOrdinaryCap(raw: unknown) {
     filingReady: false as const,
   };
 }
+
+/** Allocate the independently recomputed ordinary deduction ceiling in origin
+ * chronology. Opening minus deduction is not an absorbed carry balance. */
+export function calculateForm172AmtModernOrdinaryDeductionAllocation(
+  raw: unknown,
+) {
+  const cap = calculateForm172AmtModernOrdinaryCap(raw);
+  let remainingCap = cap.ordinaryDeductionCap;
+  const allocations = [...cap.losses].sort((a, b) =>
+    a.originYear - b.originYear
+  )
+    .map((loss) => {
+      const earlierActualDeduction = cap.ordinaryDeductionCap - remainingCap;
+      const actualDeduction = Math.min(loss.openingAmtNol, remainingCap);
+      remainingCap -= actualDeduction;
+      return {
+        ...loss,
+        earlierActualDeduction,
+        actualDeduction,
+        openingNotDeducted: loss.openingAmtNol - actualDeduction,
+      };
+    });
+  if (remainingCap !== 0) {
+    throw new Error("Ordinary AMT allocation did not reconcile to cap");
+  }
+  return {
+    ...cap,
+    allocations,
+    totalActualDeduction: allocations.reduce(
+      (n, l) => n + l.actualDeduction,
+      0,
+    ),
+    modernOrdinaryDeductionAllocationWorkpaperArithmeticReconciled:
+      true as const,
+  };
+}

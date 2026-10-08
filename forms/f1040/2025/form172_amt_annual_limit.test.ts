@@ -2,6 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateForm172AmtAnnualLimit,
   calculateForm172AmtModernOrdinaryCap,
+  calculateForm172AmtModernOrdinaryDeductionAllocation,
   form172AmtLegacyTentativeLines,
   form172AmtTentativeLines,
 } from "./form172_amt_annual_limit.ts";
@@ -606,4 +607,91 @@ Deno.test("Form172 modern cap negative bases and whole-dollar percentages", () =
   assertEquals(r.post2017EightyPercentLimit, 8001);
   assertEquals(r.ordinary90PercentLimit, 9001);
   assertEquals(r.ordinaryDeductionCap, 8001);
+});
+Deno.test("Form172 modern deduction allocation sorts mixed vintages and preserves exhausted rows", () => {
+  const v = modernOrdinaryCap();
+  v.losses = [
+    modernOlderLoss(2020, 40000),
+    modernOlderLoss(2017, 50000),
+    modernOlderLoss(2016, 0),
+    modernOlderLoss(2019, 60000),
+  ];
+  const r = calculateForm172AmtModernOrdinaryDeductionAllocation(v);
+  assertEquals(
+    r.allocations.map(
+      (l) => [
+        l.originYear,
+        l.actualDeduction,
+        l.earlierActualDeduction,
+        l.openingNotDeducted,
+      ],
+    ),
+    [[2016, 0, 0, 0], [2017, 50000, 0, 0], [2019, 40000, 50000, 20000], [
+      2020,
+      0,
+      90000,
+      40000,
+    ]],
+  );
+  assertEquals(r.totalActualDeduction, 90000);
+  assertEquals(r.ordinaryDeductionCap, r.totalActualDeduction);
+  assertEquals(r.amtCarryAbsorptionReconciled, false);
+  assertEquals(r.earlierVintageOrderingReconciled, false);
+  assertEquals(r.openingCarryAvailabilityVerified, false);
+  assertEquals(r.filingReady, false);
+  assertEquals(
+    calculateForm172AmtModernOrdinaryDeductionAllocation({
+      ...v,
+      losses: [...v.losses].reverse(),
+    }).allocations,
+    r.allocations,
+  );
+});
+Deno.test("Form172 modern allocation respects shared 80% after2020 and suspended cap before2021", () => {
+  const v = modernOrdinaryCap();
+  v.annual_review.components[0].amount = 40000; //AMTI90k
+  v.losses = [modernOlderLoss(2020, 50000), modernOlderLoss(2019, 30000)];
+  const r = calculateForm172AmtModernOrdinaryDeductionAllocation(v);
+  assertEquals(r.allocations.map((l) => l.actualDeduction), [30000, 42000]);
+  assertEquals(r.totalActualDeduction, 72000);
+  v.annual_review.tax_year = 2020;
+  v.deductions_review.tax_year = 2020;
+  v.losses = [modernOlderLoss(2019, 50000), modernOlderLoss(2018, 30000)];
+  const suspended = calculateForm172AmtModernOrdinaryDeductionAllocation(v);
+  assertEquals(suspended.allocations.map((l) => l.actualDeduction), [
+    30000,
+    50000,
+  ]);
+  assertEquals(suspended.totalActualDeduction, 80000);
+});
+Deno.test("Form172 modern allocation handles TY2025 zero income and oldest balance exceeding cap", () => {
+  const v = modernOrdinaryCap();
+  const a = annual2025();
+  const raw = {
+    ...v,
+    annual_review: a,
+    deductions_review: { ...v.deductions_review, tax_year: 2025 },
+    losses: [modernOlderLoss(2019, 80000), modernOlderLoss(2005, 80000)],
+  };
+  const r = calculateForm172AmtModernOrdinaryDeductionAllocation(raw);
+  assertEquals(
+    r.allocations.map(
+      (l) => [l.originYear, l.actualDeduction, l.openingNotDeducted],
+    ),
+    [[2005, 45000, 35000], [2019, 0, 80000]],
+  );
+  a.reviewed_form1040.line11b_agi = 0;
+  a.components[0].amount = -17750;
+  const zero = calculateForm172AmtModernOrdinaryDeductionAllocation(raw);
+  assertEquals(zero.totalActualDeduction, 0);
+  assertEquals(zero.allocations.map((l) => l.openingNotDeducted), [
+    80000,
+    80000,
+  ]);
+  assertThrows(() =>
+    calculateForm172AmtModernOrdinaryDeductionAllocation({
+      ...raw,
+      allocations: r.allocations,
+    })
+  );
 });
