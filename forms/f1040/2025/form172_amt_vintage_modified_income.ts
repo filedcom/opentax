@@ -161,7 +161,7 @@ export function calculateForm172HistoricalAmtVintageModifiedIncome(
   };
 }
 
-const modernSchema = schema.extend({
+export const form172ModernAmtVintageReviewSchema = schema.extend({
   application_tax_year: z.number().int().min(2018).max(2025),
   vintages: z.array(
     schema.shape.vintages.element.extend({
@@ -188,7 +188,7 @@ export function calculateForm172ModernAmtVintageModifiedIncome(
   );
   const capReview = form172AmtModernOrdinaryCapSchema.parse(rawCap);
   const annual = capReview.annual_review;
-  const v = modernSchema.parse(rawReviews);
+  const v = form172ModernAmtVintageReviewSchema.parse(rawReviews);
   if (
     v.application_tax_year !== annual.tax_year ||
     v.taxpayer_ssn !== annual.taxpayer_ssn ||

@@ -1,3 +1,5 @@
+import { stageForm172ModernAmtModelHistorySource } from "./form172_amt_modern_model_history_source.ts";
+import { calculateForm172ModernAmtModelHistory } from "./form172_amt_modern_model_history.ts";
 import {
   stageForm172ModernAmtCapSource,
   stageForm172ModernAmtDeductionAllocationSource,
@@ -1447,4 +1449,303 @@ Deno.test("Modern AMT ordinary coordination model binds retained bytes without a
       p.documents,
     )
   );
+});
+
+function modernHistoryYear(
+  year: number,
+  losses: ReturnType<typeof modernOlderLoss>[],
+  negative = false,
+) {
+  const cap: any = modernOrdinaryCap();
+  cap.losses = structuredClone(losses);
+  if (year === 2025) cap.annual_review = annual2025();
+  cap.annual_review.tax_year = year;
+  cap.reference = `history-cap-${year}`;
+  cap.annual_review.reference = `history-annual-${year}`;
+  cap.annual_review.form6251_reference = `history-form6251-${year}`;
+  cap.annual_review.components.forEach((c: any) => {
+    c.reference = `history-annual-${year}-${c.line}`;
+    if (c.line === "2h") c.amount = 700;
+  });
+  if (negative) {
+    cap.annual_review.components.find((c: any) => c.line === "1").amount =
+      -130700;
+  }
+  cap.deductions_review.tax_year = year;
+  cap.deductions_review.reference = `history-deductions-${year}`;
+  const allocation = calculateForm172AmtModernOrdinaryDeductionAllocation(cap);
+  const reviews: any = {
+    reference: `history-vintages-${year}`,
+    application_tax_year: year,
+    taxpayer_ssn: "111223333",
+    vintages: allocation.allocations.map((loss, i) => {
+      const m: any = modernModified(cap);
+      m.tax_year = year;
+      m.reference = `history-context-${year}-${loss.originYear}`;
+      m.components = cap.annual_review.components.map((c: any) => ({
+        line: c.line,
+        original_reference: c.reference,
+        original_amount: c.amount,
+        refigured_reference:
+          `history-context-${year}-${loss.originYear}-${c.line}`,
+        refigured_amount: negative
+          ? c.amount
+          : c.line === "1"
+          ? 50000
+          : c.line === "1b"
+          ? 42250
+          : c.amount,
+      }));
+      m.deductions.refigured_reference =
+        `history-refig-deductions-${year}-${loss.originYear}`;
+      if (year === 2025) {
+        m.refigured_form1040 = {
+          ...cap.annual_review.reviewed_form1040,
+          reference: `history-refig1040-${year}-${loss.originYear}`,
+          line11b_agi: 60000,
+        };
+      }
+      return {
+        origin_year: loss.originYear,
+        loss_reference: loss.reference,
+        refigured_deductions_include_earlier_nol_effects: true,
+        earlier_nol_deductions: allocation.allocations.slice(0, i).map((l) => ({
+          origin_year: l.originYear,
+          loss_reference: l.reference,
+          amount: l.actualDeduction,
+        })),
+        modified_review: m,
+      };
+    }),
+  };
+  return {
+    application_year: year,
+    cap_workpaper: cap,
+    vintage_reviews: reviews,
+  };
+}
+function modernModelHistory() {
+  const initial = modernOlderLoss(2017, 50000);
+  return {
+    reference: "modern-history",
+    start_year: 2018,
+    end_year: 2025,
+    taxpayer_ssn: "111223333",
+    entry_reviews: [{
+      reference: "history-entry-2017",
+      origin_year: 2017,
+      loss_reference: initial.reference,
+      application_year: 2018,
+      reviewed_opening: 50000,
+    }],
+    annual_applications: Array.from(
+      { length: 8 },
+      (_, i) =>
+        modernHistoryYear(2018 + i, [
+          { ...initial, opening_amt_nol: i === 0 ? 50000 : 0 },
+        ]),
+    ),
+  };
+}
+Deno.test("Modern AMT model history retains all eight2018–2025 years including exhausted vintages", () => {
+  const h = modernModelHistory();
+  const r = calculateForm172ModernAmtModelHistory(h);
+  assertEquals(r.modelAnnualApplications.length, 8);
+  assertEquals(r.modelAnnualApplications.map((a) => a.totalModelAbsorbed), [
+    50000,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+  ]);
+  assertEquals(r.modelEndingBalances, [{ originYear: 2017, amount: 0 }]);
+  assertEquals(r.modelSpanContinuityArithmeticReconciled, true);
+  assertEquals(r.legalSection172Section56CoordinationVerified, false);
+  assertEquals(r.completeCarryHistoryVerified, false);
+  assertEquals(r.survivingAcceptedCarryVerified, false);
+  assertEquals(r.filingReady, false);
+});
+Deno.test("Modern AMT model history rejects missing reordered stale zero origin and owner histories", () => {
+  for (
+    const mutate of [
+      (h: ReturnType<typeof modernModelHistory>) => {
+        h.annual_applications.splice(2, 1);
+      },
+      (h: ReturnType<typeof modernModelHistory>) => {
+        h.annual_applications.reverse();
+      },
+      (h: ReturnType<typeof modernModelHistory>) => {
+        h.annual_applications[1].cap_workpaper.losses[0].opening_amt_nol = 1;
+      },
+      (h: ReturnType<typeof modernModelHistory>) => {
+        h.annual_applications[1].cap_workpaper.losses[0].amt_origin.reference =
+          "changed-origin";
+      },
+      (h: ReturnType<typeof modernModelHistory>) => {
+        h.taxpayer_ssn = "999887777";
+      },
+      (h: ReturnType<typeof modernModelHistory>) => {
+        h.entry_reviews.push({ ...h.entry_reviews[0] });
+      },
+      (h: ReturnType<typeof modernModelHistory>) => {
+        h.annual_applications[1].cap_workpaper.reference =
+          h.annual_applications[0].cap_workpaper.reference;
+      },
+      (h: ReturnType<typeof modernModelHistory>) => {
+        h.entry_reviews[0].application_year = 2019;
+      },
+    ]
+  ) {
+    const h = modernModelHistory();
+    mutate(h);
+    assertThrows(() => calculateForm172ModernAmtModelHistory(h));
+  }
+});
+Deno.test("Modern AMT model history new loss joins the preceding annual AMTI and QBI250 operands", () => {
+  const prior = modernOlderLoss(2017, 50000);
+  const added = modernOlderLoss(2023, 80000);
+  const first = modernHistoryYear(2023, [prior], true);
+  const second = modernHistoryYear(2024, [prior, added]);
+  const h = {
+    reference: "entering-history",
+    start_year: 2023,
+    end_year: 2024,
+    taxpayer_ssn: "111223333",
+    entry_reviews: [
+      {
+        reference: "entry-2017",
+        origin_year: 2017,
+        loss_reference: prior.reference,
+        application_year: 2023,
+        reviewed_opening: 50000,
+      },
+      {
+        reference: "entry-2023",
+        origin_year: 2023,
+        loss_reference: added.reference,
+        application_year: 2024,
+        reviewed_opening: 80000,
+      },
+    ],
+    annual_applications: [first, second],
+  };
+  const r = calculateForm172ModernAmtModelHistory(h);
+  assertEquals(r.modelAnnualApplications[0].totalModelAbsorbed, 0);
+  assertEquals(
+    r.modelAnnualApplications[1].chronologicalModelApplications.length,
+    2,
+  );
+  first.cap_workpaper.deductions_review
+    .section199a_deduction_in_tentative_amti = 1;
+  first.vintage_reviews.vintages[0].modified_review.deductions
+    .original_section199a = 1;
+  assertThrows(
+    () => calculateForm172ModernAmtModelHistory(h),
+    Error,
+    "preceding annual",
+  );
+});
+
+async function modernHistoryRetained(
+  raw = modernModelHistory(),
+  text = JSON.stringify(raw),
+) {
+  const bytes = new TextEncoder().encode(text);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  const sha256 = Array.from(new Uint8Array(digest)).map((b) =>
+    b.toString(16).padStart(2, "0")
+  ).join("");
+  return {
+    binding: {
+      history: { reference: raw.reference, sha256 },
+      start_tax_year: raw.start_year,
+      end_tax_year: raw.end_year,
+      taxpayer_ssn: raw.taxpayer_ssn,
+    },
+    documents: [{ reference: raw.reference, bytes }],
+  };
+}
+Deno.test("Modern AMT model history retained package recomputes every year without authenticating carry", async () => {
+  const p = await modernHistoryRetained();
+  const r = await stageForm172ModernAmtModelHistorySource(
+    p.binding,
+    p.documents,
+  );
+  assertEquals(r.modelAnnualApplications.length, 8);
+  assertEquals(r.modelEndingBalances, [{ originYear: 2017, amount: 0 }]);
+  assertEquals(r.reviewPackageBytesVerified, true);
+  assertEquals(r.legalSection172Section56CoordinationVerified, false);
+  assertEquals(r.sourceAuthenticityVerified, false);
+  assertEquals(r.acceptedCarryImportVerified, false);
+  assertEquals(r.packetAdmissionVerified, false);
+  assertEquals(r.filingReady, false);
+  p.documents[0].bytes[0] ^= 1;
+  await assertRejects(() =>
+    stageForm172ModernAmtModelHistorySource(p.binding, p.documents)
+  );
+  const raw = modernModelHistory();
+  raw.annual_applications[1].cap_workpaper.losses[0].opening_amt_nol = 1;
+  const changed = await modernHistoryRetained(raw);
+  await assertRejects(() =>
+    stageForm172ModernAmtModelHistorySource(changed.binding, changed.documents)
+  );
+});
+Deno.test("Modern AMT model history rejects source inventory binding and noncanonical JSON substitutions", async () => {
+  const p = await modernHistoryRetained();
+  for (
+    const documents of [[], [p.documents[0], p.documents[0]], [...p.documents, {
+      ...p.documents[0],
+      reference: "extra",
+    }]]
+  ) {
+    await assertRejects(() =>
+      stageForm172ModernAmtModelHistorySource(p.binding, documents)
+    );
+  }
+  for (
+    const binding of [{ ...p.binding, end_tax_year: 2024 }, {
+      ...p.binding,
+      taxpayer_ssn: "999887777",
+    }]
+  ) {
+    await assertRejects(() =>
+      stageForm172ModernAmtModelHistorySource(binding, p.documents)
+    );
+  }
+  const raw = modernModelHistory();
+  for (
+    const text of [
+      JSON.stringify(raw) + " ",
+      "\uFEFF" + JSON.stringify(raw),
+      JSON.stringify(raw).replace(
+        '"start_year":2018',
+        '"start_year":2018,"start_year":2018',
+      ),
+    ]
+  ) {
+    const invalid = await modernHistoryRetained(raw, text);
+    await assertRejects(() =>
+      stageForm172ModernAmtModelHistorySource(
+        invalid.binding,
+        invalid.documents,
+      )
+    );
+  }
+});
+Deno.test("Modern AMT model history owns binding and all caller bytes before digest await", async () => {
+  const p = await modernHistoryRetained();
+  const pending = stageForm172ModernAmtModelHistorySource(
+    p.binding,
+    p.documents,
+  );
+  p.binding.history.reference = "changed";
+  p.binding.taxpayer_ssn = "999887777";
+  p.documents[0].bytes.fill(0);
+  p.documents.splice(0);
+  const r = await pending;
+  assertEquals(r.modelAnnualApplications.length, 8);
+  assertEquals(r.modelEndingBalances, [{ originYear: 2017, amount: 0 }]);
 });
