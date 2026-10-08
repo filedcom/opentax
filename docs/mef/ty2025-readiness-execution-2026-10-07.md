@@ -4977,3 +4977,23 @@ Page last updated September 28. Private
 Board estimate remains zero accepted tests/0% acceptance by the original
 October 8 morning deadline; after reopening not yet estimable. No accepted
 IRS acknowledgment or verified transmission credential is added.
+
+
+### October 8, 04:07 UTC — Form 8801 requirement reconciliation
+
+Compacted the learning index before reviewing the existing named-form task.
+The retained 12,388/0 combined full log contains all 26 Form 8801 module tests
+passing; its log SHA and terminal status SHA were independently rechecked.
+Corrected the gap note's stale unrun-test description and reconciled official
+Part I, credit/carryforward and final-return dependencies against the guarded
+preview. The full named-form requirement stays open; no official calculation,
+accepted source, registered attachment or filing packet is newly proved.
+See [Form 8801](ty2025-form8801-prior-source-gap.md). Private
+`form8801-requirement-review-20261008-v1/audit.json` retains those checks.
+
+The actual current full session 22926 was polled and remained running. Its
+2,637 startup runtime paths still match exactly; no terminal result is claimed.
+Main board 52 unchecked rows remain byte-identical to the frozen baseline.
+Future item 47 records stale Form 8801 research guidance (line 6e versus actual
+line 6b and preview qualifications); all 47 future tasks remain deferred and
+unworked. No runtime or source research file was changed.
