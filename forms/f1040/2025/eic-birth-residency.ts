@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { reviewedEicDatedResidence } from "./eic-dated-residency.ts";
+import {
+  residencePeriodSchema,
+  reviewedEicDatedResidence,
+  reviewedResidencePeriodTotals,
+} from "./eic-dated-residency.ts";
 
 const fullLifeBirthReviewSchema = z.object({
   birth_record_reference: z.string().trim().min(1),
@@ -16,9 +20,16 @@ const partialLifeBirthReviewSchema = z.object({
   alive_on_2025_12_31_verified: z.literal(true),
 }).strict();
 
+const multiplePeriodBirthReviewSchema = z.object({
+  birth_record_reference: z.string().trim().min(1),
+  us_home_residence_periods: z.array(residencePeriodSchema).min(1),
+  alive_on_2025_12_31_verified: z.literal(true),
+}).strict();
+
 export const eicBirthResidencyReviewSchema = z.union([
   fullLifeBirthReviewSchema,
   partialLifeBirthReviewSchema,
+  multiplePeriodBirthReviewSchema,
 ]);
 
 export interface EicBirthResidencyFacts {
@@ -52,6 +63,22 @@ export function reviewedEicBirthResidence(
     throw new Error("EIC birth residency review needs a valid birth date");
   }
   const calendarMonths = 13 - month;
+  if ("us_home_residence_periods" in review) {
+    const { days, months } = reviewedResidencePeriodTotals(
+      review.us_home_residence_periods,
+      child.dob,
+    );
+    const lifeDays = (Date.UTC(2025, 11, 31) - date.getTime()) / 86_400_000 + 1;
+    if (
+      days * 2 <= lifeDays || child.months_in_home !== months.size ||
+      child.months_lived_with_you_in_us !== months.size
+    ) {
+      throw new Error(
+        "EIC birth residence periods need more than half of 2025 life and matching actual months",
+      );
+    }
+    return true;
+  }
   if ("us_home_residence_start_date" in review) {
     const parseResidenceDate = (value: string): Date => {
       const parsed = new Date(`${value}T00:00:00.000Z`);

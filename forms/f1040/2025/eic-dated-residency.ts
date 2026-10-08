@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const residencePeriodSchema = z.object({
+export const residencePeriodSchema = z.object({
   start_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
   end_date: z.string().regex(/^2025-\d{2}-\d{2}$/),
   record_reference: z.string().trim().min(1),
@@ -35,6 +35,26 @@ export function reviewedEicDatedResidence(child: DatedResidencyFacts): boolean {
       "EIC dated residence needs the matching child born before 2025",
     );
   }
+  const { days, months } = reviewedResidencePeriodTotals(
+    review.residence_periods,
+  );
+  if (
+    days * 2 <= 365 || child.months_lived_with_you_in_us !== months.size ||
+    child.months_in_home < months.size
+  ) {
+    throw new Error(
+      "EIC dated residence needs more than half-year U.S. days and matching actual months",
+    );
+  }
+  return true;
+}
+
+/** Exact, nonoverlapping actual U.S. home periods within 2025. */
+export function reviewedResidencePeriodTotals(
+  input: unknown,
+  earliestDate = "2025-01-01",
+) {
+  const residence_periods = residencePeriodSchema.array().min(1).parse(input);
   const date = (value: string): number => {
     const parsed = new Date(`${value}T00:00:00.000Z`);
     if (
@@ -45,10 +65,14 @@ export function reviewedEicDatedResidence(child: DatedResidencyFacts): boolean {
     }
     return parsed.getTime();
   };
-  const periods = review.residence_periods.map((period) => ({
+  const periods = residence_periods.map((period) => ({
     start: date(period.start_date),
     end: date(period.end_date),
   })).sort((a, b) => a.start - b.start);
+  const earliest = date(earliestDate);
+  if (periods.some((period) => period.start < earliest)) {
+    throw new Error("EIC residence period starts before the child was alive");
+  }
   let days = 0;
   let previousEnd = -Infinity;
   const months = new Set<number>();
@@ -64,13 +88,5 @@ export function reviewedEicDatedResidence(child: DatedResidencyFacts): boolean {
     }
     previousEnd = period.end;
   }
-  if (
-    days * 2 <= 365 || child.months_lived_with_you_in_us !== months.size ||
-    child.months_in_home < months.size
-  ) {
-    throw new Error(
-      "EIC dated residence needs more than half-year U.S. days and matching actual months",
-    );
-  }
-  return true;
+  return { days, months };
 }
