@@ -1,4 +1,4 @@
-import type { Form8990Workpaper } from "../../forms/f1040/2025/domains/business/form8990/form8990_projection.ts";
+import type { Form8990Workpaper } from "../../forms/f1040/2025/domains/deductions/business/form8990/form8990_projection.ts";
 
 export type MetaJson = {
   readonly returnId: string;

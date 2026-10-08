@@ -40,7 +40,7 @@ from the cover's attachment list.
 
 ## Current graph and source-contract gaps
 
-- The shared [W-2G node](../../../forms/f1040/nodes/inputs/w2g/index.ts)
+- The shared [W-2G node](../../../forms/f1040/nodes/inputs/income/gambling/w2g/index.ts)
   labels box 2 as wager type, box 3 as identical winnings, and box 7 as
   noncash winnings. The January 2026 W-2G labels these **date won**, **type of
   wager**, and **winnings from identical wagers**. Its box 1 plus box 7 sum is
@@ -52,7 +52,7 @@ from the cover's attachment list.
   lacks `line8b_gambling`. Add it to its schema and line 9 sum, with distinct
   PDF and MeF field mapping. The sink explicitly rejects the stale
   `line8b_savings_bond_exclusion` key; do not reuse that key for gambling.
-- The shared [partnership K-1 node](../../../forms/f1040/nodes/inputs/k1_partnership/index.ts)
+- The shared [partnership K-1 node](../../../forms/f1040/nodes/inputs/income/rental-passthrough/k1_partnership/index.ts)
   routes amounts directly to Schedule 1. It neither fills Schedule E Part II
   nor proves allowed losses. Build a per-activity K-1/limitation result feeding
   Schedule E columns (i)/(k), then aggregate Schedule E line 41 once. Keep

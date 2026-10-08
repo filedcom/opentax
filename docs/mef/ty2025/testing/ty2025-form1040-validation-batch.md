@@ -96,7 +96,7 @@ for tested routes; it does not close complete route coverage, human filled-PDF
 review, IRS business rules, ATS acceptance, or the filing-ready release.
 
 At `8149198a` on 2026-10-03, the attachment-aware fixture command
-`deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov forms/f1040/2025/pdf/reviews/composed/review-fixtures.xsd.test.ts`
+`deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov forms/f1040/2025/pdf/reviews/general/composed-returns/review-fixtures.xsd.test.ts`
 passed **178/178** in 11m9s. Deno was 2.9.4 (V8 15.0.245.2-rusty,
 TypeScript 6.0.3), and `xmllint` used libxml 2.9.13. The checked-in harness
 validated the 169 positive source returns against the cached TY2025 v5.4 XSD
@@ -304,7 +304,7 @@ The same 101/101 and 199/199 selections passed again after enforcing the
 account number on a checked 1099-DIV FATCA copy.
 
 At the current implementation checkpoint on 2026-10-03, the focused
-`deno test -A forms/f1040/2025/pdf/reviews/composed/builder.test.ts` passed **32/32** and
+`deno test -A forms/f1040/2025/pdf/reviews/general/composed-returns/builder.test.ts` passed **32/32** and
 `deno test -A forms/f1040/2025/mef/tests/builder.test.ts` passed **148/148**. Their
 positive routing and serialization fixtures now retain matching W-2,
 unemployment, dividend, and Schedule B source and owner facts. The production
@@ -627,7 +627,7 @@ The fixed-source `deno task test` run on `9175f7c1` completed at 2026-09-29
 For each supported positive filing route in the completed coverage inventory,
 retain its full-return source fixture, computed 1040/supporting lines, emitted
 XML, and the local XSD result. Existing `*.xsd.test.ts` and
-`forms/f1040/e2e/execution/xsd_validation.test.ts` are structural cases, but a passing
+`forms/f1040/e2e/workflows/xsd_validation.test.ts` are structural cases, but a passing
 slice does not establish every listed route. A separately generated full Form
 1040 XML can be checked with:
 
@@ -1492,8 +1492,8 @@ The focused Form 1099-R, Form 1040 PDF and 27-case XML checks pass 115/115 and
 The first eleven cases were rendered into page contact sheets for the first visual
 pass. The new Form 8615 and Form 8960 pages were rendered and checked at higher resolution.
 The three later Form 8962 and Form 6198 cases were rendered and checked on
-their relevant pages; see the [policy-month](../domains/health/form8962/ty2025-form8962-policy-month-gap.md)
-and [Form 6198](../domains/losses/form6198/ty2025-form6198-pdf-gap.md) notes for packet hashes and
+their relevant pages; see the [policy-month](../domains/credits/health/form8962/ty2025-form8962-policy-month-gap.md)
+and [Form 6198](../domains/income/business/form6198/ty2025-form6198-pdf-gap.md) notes for packet hashes and
 the checked amounts.
 Schedule 1 and Schedule 2 blank filer headers were found and fixed;
 the latest Schedule 1 page was rerendered and checked at higher resolution.
@@ -4070,7 +4070,7 @@ all-page review, IRS business rules, and ATS acceptance remain open.
 An additional repeated-instance archive check reuses this source fixture. It
 asserts two distinct native Schedule C document IDs, two two-page PDF origins,
 and byte-identical return XML inside the local submission ZIP. On 2026-10-04,
-`deno test -A forms/f1040/2025/pdf/reviews/composed/joint-mixed-source-return.test.ts` passed
+`deno test -A forms/f1040/2025/pdf/reviews/general/composed-returns/joint-mixed-source-return.test.ts` passed
 **3/3** after correcting the test Submission ID to the processing date's
 Julian day. This is local source-to-package evidence for one two-business
 shape, not the remaining repeated-owner or IRS acceptance gate.
@@ -4203,8 +4203,8 @@ excludes the recapture-only Parts II and III on pages 4–5; the guard rejects
 nonzero recapture amounts. Annual Form 8854 keeps shared Part I page 1 and
 Part III pages 4–5, excluding initial-statement Sections B/C on pages 2–3.
 Neither edit changes source, native MeF, or the positive-export gates described
-in the [Form 4255](../domains/credits/form4255/ty2025-form4255-pdf-gap.md) and
-[Form 8854](../domains/international/form8854/ty2025-form8854-pdf-gap.md) gap notes.
+in the [Form 4255](../domains/taxes/credit-recapture/form4255/ty2025-form4255-pdf-gap.md) and
+[Form 8854](../domains/general/foreign/form8854/ty2025-form8854-pdf-gap.md) gap notes.
 
 The two focused test files passed **6/6** tests. `deno check`, `deno lint`, and
 `git diff --check` passed on their four descriptor/test files. Direct staged
@@ -4346,9 +4346,9 @@ projection cases and three Schedule 3 line 6j cases. Its selected graph fixture
 passed the local TY2025 v5.4 XSD and now checks the native parent/Schedule A
 amounts against both registered PDF projections, including rejection when the
 finalized Schedule 3 credit changes. The focused graph/XSD command was
-`deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov --filter='single-personal-home-charger-credit' forms/f1040/2025/pdf/reviews/composed/review-fixtures.xsd.test.ts`
+`deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov --filter='single-personal-home-charger-credit' forms/f1040/2025/pdf/reviews/general/composed-returns/review-fixtures.xsd.test.ts`
 (1 passed, 0 failed, 186 filtered out); the direct command
-`deno test forms/f1040/2025/pdf/forms/credits/f8911.test.ts forms/f1040/2025/pdf/forms/credits/schedule3_line6d.test.ts`
+`deno test forms/f1040/2025/pdf/forms/credits/business/f8911.test.ts forms/f1040/2025/pdf/forms/credits/individual/schedule3_line6d.test.ts`
 passed 7/7. Filled-page visual review, other Form 8911 shapes, the full batch,
 and ATS acceptance remain open.
 
@@ -4425,7 +4425,7 @@ IRS business-rule/ATS acceptance are still unverified.
 
 ## Focused MFS two-loan mortgage-limit route (2026-10-05)
 
-`deno test -A forms/f1040/nodes/inputs/f1098/index.test.ts` passed 59/59.
+`deno test -A forms/f1040/nodes/inputs/deductions/mortgage/f1098/index.test.ts` passed 59/59.
 `deno test -A --filter 'MFS two-loan interest uses' forms/f1040/2025/mef/tests/xsd-validation.test.ts`
 passed 1/1 against the local TY2025 v5.4 XSD and built a three-page filled
 PDF. `deno check` passed for both changed tests. The $900,000 average debt,
@@ -4499,13 +4499,13 @@ country codes, and Form 1116 printable country names passed **178/178** focused
 tests in `/tmp/opentax-integration-oct5-focused.log`. The corrected
 three-country Form 1116 packet was rendered and reviewed on all eight pages;
 its hashes, source/native/PDF reconciliation, and local XSD result are recorded
-in the [Form 1116 gap note](../domains/international/form1116/ty2025-form1116-main-pdf-gap.md). The complete
+in the [Form 1116 gap note](../domains/credits/foreign/form1116/ty2025-form1116-main-pdf-gap.md). The complete
 repository-wide run on this later code has not yet been performed.
 
 The following isolated Form 8283, Form 6251/Form 59E, and Form 8962 source
 guards passed **25/25** combined focused tests after cherry-pick into one
 integration worktree at `96f9267d`. The command was
-`deno test -A forms/f1040/2025/pdf/reviews/deductions/form8283-unrelated-use-equipment.test.ts forms/f1040/2025/domains/taxes/form6251/form6251_circulation_source.test.ts forms/f1040/nodes/inputs/f59e/index.test.ts forms/f1040/2025/domains/health/form8962/form8962_two_dependent_magi.test.ts`.
+`deno test -A forms/f1040/2025/pdf/reviews/deductions/charitable/form8283-unrelated-use-equipment.test.ts forms/f1040/2025/domains/taxes/amt/form6251/form6251_circulation_source.test.ts forms/f1040/nodes/inputs/deductions/business/f59e/index.test.ts forms/f1040/2025/domains/credits/health/form8962/form8962_two_dependent_magi.test.ts`.
 The full repository command is running separately at the preceding PR head
 `9d700e2d`; these later guards require a new current-head full rerun.
 
@@ -4596,9 +4596,9 @@ Later changes are committed in `/tmp/opentax-root-integration-oct6`, through
 code snapshot `2347f6ce0`. They have not changed the running main-checkout
 code. With real Poppler on PATH, these exact focused commands passed:
 
-- `deno test -A forms/f1040/2025/domains/retirement/form4972/form4972_two_spouse_nua_capital.test.ts forms/f1040/2025/pdf/reviews/investments/form4952-misc-royalty-interest-traced-debt-route.test.ts forms/f1040/2025/pdf/reviews/investments/form4952-misc-royalty-traced-debt-route.test.ts`: 4 passed, 0 failed.
-- `deno test -A forms/f1040/2025/domains/business/form8995a/form8995a_schedule_c_positive.test.ts forms/f1040/2025/pdf/reviews/identity/form1040-required-zero-lines.test.ts forms/f1040/2025/pdf/forms/identity/f1040.test.ts`: 34 passed, 0 failed.
-- `deno test -A forms/f1040/2025/domains/retirement/form4972/form4972_partial_nua_death_estate.test.ts forms/f1040/2025/domains/credits/form8839/form8839_public.test.ts scripts/research/ty2025-pdf-review-source.test.ts`: 6 passed, 0 failed.
+- `deno test -A forms/f1040/2025/domains/taxes/retirement/form4972/form4972_two_spouse_nua_capital.test.ts forms/f1040/2025/pdf/reviews/deductions/investments/form4952-misc-royalty-interest-traced-debt-route.test.ts forms/f1040/2025/pdf/reviews/deductions/investments/form4952-misc-royalty-traced-debt-route.test.ts`: 4 passed, 0 failed.
+- `deno test -A forms/f1040/2025/domains/deductions/business/form8995a/form8995a_schedule_c_positive.test.ts forms/f1040/2025/pdf/reviews/general/return-assembly/form1040-required-zero-lines.test.ts forms/f1040/2025/pdf/forms/general/return-assembly/f1040.test.ts`: 34 passed, 0 failed.
+- `deno test -A forms/f1040/2025/domains/taxes/retirement/form4972/form4972_partial_nua_death_estate.test.ts forms/f1040/2025/domains/credits/individual/form8839/form8839_public.test.ts scripts/research/ty2025-pdf-review-source.test.ts`: 6 passed, 0 failed.
 
 The Form 8995-A cents tests include negative half-dollar rounding and a valid
 $1 difference between individually rounded business rows and the rounded raw
@@ -4701,11 +4701,11 @@ The preserved older full snapshot `17462812a8dc47c30e50cbd0e0d8c1f2d701a222` fin
 
 ## Form 8863 claimant ownership main integration — October 6
 
-At `f644a8cc0`, the restricted real-Poppler owner, missing-1098-T, mixed-school and calculated-return replay suites passed **24 tests, zero failed**, in 51 seconds. Log: `/tmp/opentax-education-owner-integration.log`. Command: `deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/2025/pdf/reviews/credits/form8863-claimant-owner.test.ts forms/f1040/2025/pdf/reviews/credits/form8863-missing-1098t.test.ts forms/f1040/2025/pdf/reviews/credits/form8863-mixed-schools.test.ts forms/f1040/2025/domains/execution/calculated_return_replay.test.ts`. The five complete XSD/PDF packets and all-page review are detailed in the [claimant ownership evidence](../domains/credits/form8863/ty2025-form8863-dependent-claimant-review.md). This does not prove the complete current-head regression or IRS acceptance.
+At `f644a8cc0`, the restricted real-Poppler owner, missing-1098-T, mixed-school and calculated-return replay suites passed **24 tests, zero failed**, in 51 seconds. Log: `/tmp/opentax-education-owner-integration.log`. Command: `deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/2025/pdf/reviews/credits/individual/form8863-claimant-owner.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863-missing-1098t.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863-mixed-schools.test.ts forms/f1040/2025/return-processing/calculated_return_replay.test.ts`. The five complete XSD/PDF packets and all-page review are detailed in the [claimant ownership evidence](../domains/credits/individual/form8863/ty2025-form8863-dependent-claimant-review.md). This does not prove the complete current-head regression or IRS acceptance.
 
 ## Public accounting SSTB main integration — October 6
 
-At `1af9977fb`, typed restricted real-Poppler tests for public accounting SSTB, sourced aggregation, distinct capital contributions and calculated-return replay passed **8 tests, zero failed**, in29seconds (`/tmp/opentax-sstb-main-integration.log`). The isolated SSTB node/native/PDF suite passed49/49 and existing QBI regressions59/59. Complete selected replay and all15 rendered pages pass; retained manifest `.state/research/ty2025-filled-pdf-review/2026-10-06-qbi-sstb/review-manifest.json` SHA-256 `eacd450cbafc7358525fd3dced19080fe4fe02b2e6ed69cf03a7c580a9febc4e`. Details and boundaries are in the [advanced-QBI gap](../domains/qbi/form8995/ty2025-form8995a-gap.md). This does not prove current-head full regression or IRS acceptance.
+At `1af9977fb`, typed restricted real-Poppler tests for public accounting SSTB, sourced aggregation, distinct capital contributions and calculated-return replay passed **8 tests, zero failed**, in29seconds (`/tmp/opentax-sstb-main-integration.log`). The isolated SSTB node/native/PDF suite passed49/49 and existing QBI regressions59/59. Complete selected replay and all15 rendered pages pass; retained manifest `.state/research/ty2025-filled-pdf-review/2026-10-06-qbi-sstb/review-manifest.json` SHA-256 `eacd450cbafc7358525fd3dced19080fe4fe02b2e6ed69cf03a7c580a9febc4e`. Details and boundaries are in the [advanced-QBI gap](../domains/deductions/business/form8995/ty2025-form8995a-gap.md). This does not prove current-head full regression or IRS acceptance.
 
 ## Owner-only SSTB main integration — October 6
 
@@ -4754,7 +4754,7 @@ At `b056c59ae`, typed restricted real-Poppler service-scholarship, material-capi
 Code snapshot `6d53aa586` integrates family SHOP `f0ac40e72` as `0c5ae18df` and ordinary noncommunity MFS `da157ea5d`. The exact typed main command was:
 
 ```sh
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/e2e/credits/form8941/form8941_family_2025.test.ts forms/f1040/e2e/credits/form8941/form8941_owned_2025.test.ts forms/f1040/e2e/credits/form8941/form8941_partyear_2025.test.ts forms/f1040/nodes/inputs/f8941/index.test.ts forms/f1040/2025/domains/business/form8995a/form8995a_sstb_schedule_c.test.ts
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/e2e/credits/health/form8941/form8941_family_2025.test.ts forms/f1040/e2e/credits/health/form8941/form8941_owned_2025.test.ts forms/f1040/e2e/credits/health/form8941/form8941_partyear_2025.test.ts forms/f1040/nodes/inputs/credits/health/f8941/index.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_sstb_schedule_c.test.ts
 ```
 
 Terminal result: **36 passed, 0 failed**, no ignored tests, in1m24s; checked at00:19 UTC. Log `/tmp/opentax-family-noncommunity-main-integration.log`, SHA256 `46e673ba5b950c5ece7729941631839cf20343dfe7c6234eb1d5bb9477fda3a4`. This checks five new family full-XSD/PDF packets, six earlier employee-only packets, eleven Form8941 source units and eight SSTB source/native/PDF tests. It preserves the full determined premium-credit deduction reduction independently of tax use and verifies domicile/property records independently of mailing address. It is a focused integration result, not the full regression or IRS acceptance.
@@ -4763,11 +4763,11 @@ Isolated family proof retains34 passing tests,30 actual dual-export mutations,9 
 
 ## Reviewed Form8994 public main integration (2026-10-06T00:30:25+00:00)
 
-Code `6559e695b` incorporates isolated `a9671d69d`. Typed restricted real-Poppler command: `deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/2025/domains/credits/form8994/form8994_public_source.test.ts forms/f1040/e2e/credits/form8941/form8941_family_2025.test.ts forms/f1040/2025/domains/business/form8995/form8995_wotc_coexistence.test.ts forms/f1040/2025/domains/business/form8995a/form8995a_sstb_schedule_c.test.ts`, using the recorded Poppler/Deno PATH. Terminal **20 passed,0 failed**, no ignored,1m22s. Log `/tmp/opentax-form8994-main-integration.log` SHA256 `c4c736632ad4fb1f0fc612aed635c66d430b38092f24c3dd950adaad1f83d123`. Actual public Form8994 full/partial/zero and cent-valued credit packets preserve full determined1250 wage reduction before SE/QBI while current use1250/693/0 is independently allocated; source/byte/owner/totals rejects execute. Family SHOP, WOTC and SSTB compatibility pass. Isolated19 focused/232 related and held3 local-XSD packets/67 reviewed tax pages plus6 source pages are retained under ignored `.state/research/ty2025-filled-pdf-review/2026-10-06-form8994-direct/` with rendered neighbors. Public source/QBI/packet discovery corrections are described in the Form8994 gap. Full regression, wider employers/credits, external issuer authenticity and IRS acceptance remain open.
+Code `6559e695b` incorporates isolated `a9671d69d`. Typed restricted real-Poppler command: `deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/2025/domains/credits/business/form8994/form8994_public_source.test.ts forms/f1040/e2e/credits/health/form8941/form8941_family_2025.test.ts forms/f1040/2025/domains/deductions/business/form8995/form8995_wotc_coexistence.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_sstb_schedule_c.test.ts`, using the recorded Poppler/Deno PATH. Terminal **20 passed,0 failed**, no ignored,1m22s. Log `/tmp/opentax-form8994-main-integration.log` SHA256 `c4c736632ad4fb1f0fc612aed635c66d430b38092f24c3dd950adaad1f83d123`. Actual public Form8994 full/partial/zero and cent-valued credit packets preserve full determined1250 wage reduction before SE/QBI while current use1250/693/0 is independently allocated; source/byte/owner/totals rejects execute. Family SHOP, WOTC and SSTB compatibility pass. Isolated19 focused/232 related and held3 local-XSD packets/67 reviewed tax pages plus6 source pages are retained under ignored `.state/research/ty2025-filled-pdf-review/2026-10-06-form8994-direct/` with rendered neighbors. Public source/QBI/packet discovery corrections are described in the Form8994 gap. Full regression, wider employers/credits, external issuer authenticity and IRS acceptance remain open.
 
 ## Paired parent/child scholarship main integration (2026-10-06T00:32:44+00:00)
 
-Code `5dfe1aa9a` integrates isolated `917b0d87c`. Exact typed restricted command with recorded real-Poppler PATH: `deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/2025/pdf/reviews/credits/form8863-parent-child-scholarship.test.ts forms/f1040/2025/pdf/reviews/credits/form8863-service-scholarship.test.ts forms/f1040/2025/pdf/reviews/credits/form8863-material-capital.test.ts forms/f1040/2025/domains/credits/form8994/form8994_public_source.test.ts`. Terminal **24 passed,0 failed**, no ignored,1m26s. Log `/tmp/opentax-parent-child-main-integration.log` SHA256 `6a56b10719e51c128a3913506dd1afb2b6e45abaaf95705954de0f890e872b71`. Three actual parent/child pairs (serviceW2, service8r, student-bank-paid tuition) retain issued school/payment/award/support records, child-owned income13000 and derived dependent deduction13450, no duplicate credit, parentAGI75000 excluding child income, education1000/1500 and ODC500. Six complete local-XSD/PDF packets/33 pages were visually reviewed in isolated proof. Combined prior source regression421/0 and final focused5/0 are sequenced precisely in the paired review note; this main gate verifies final edits and prior service/material/8994 compatibility. Original ignored evidence copied to `.state/research/2026-10-06-form8863-parent-child/`. Positive child tax/Form8615, wider dependency/source branches and external authenticity/IRS acceptance remain open.
+Code `5dfe1aa9a` integrates isolated `917b0d87c`. Exact typed restricted command with recorded real-Poppler PATH: `deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/2025/pdf/reviews/credits/individual/form8863-parent-child-scholarship.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863-service-scholarship.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863-material-capital.test.ts forms/f1040/2025/domains/credits/business/form8994/form8994_public_source.test.ts`. Terminal **24 passed,0 failed**, no ignored,1m26s. Log `/tmp/opentax-parent-child-main-integration.log` SHA256 `6a56b10719e51c128a3913506dd1afb2b6e45abaaf95705954de0f890e872b71`. Three actual parent/child pairs (serviceW2, service8r, student-bank-paid tuition) retain issued school/payment/award/support records, child-owned income13000 and derived dependent deduction13450, no duplicate credit, parentAGI75000 excluding child income, education1000/1500 and ODC500. Six complete local-XSD/PDF packets/33 pages were visually reviewed in isolated proof. Combined prior source regression421/0 and final focused5/0 are sequenced precisely in the paired review note; this main gate verifies final edits and prior service/material/8994 compatibility. Original ignored evidence copied to `.state/research/2026-10-06-form8863-parent-child/`. Positive child tax/Form8615, wider dependency/source branches and external authenticity/IRS acceptance remain open.
 
 
 ## SHOP composite/list main integration — 2026-10-06
@@ -4777,7 +4777,7 @@ Code `35afc890a`, real Poppler and typed Deno focused command covering arrangeme
 
 ## Owner-specific ScheduleSE and ordinary joint QBI — 2026-10-06
 
-Isolated62747389e integrated at0cc6c8389. Final main typed integration **28 passed,0 failed**,1m40s; owner public/source/cents, pure calculations, public8994, joint patron, SSTB and held scope checks. Command: `deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/2025/domains/business/schedule-se/schedule-se-owner-public.test.ts forms/f1040/nodes/intermediate/forms/schedule_se/owner-calculation.test.ts forms/f1040/2025/domains/credits/form8994/form8994_public_source.test.ts forms/f1040/2025/domains/business/form8995a/form8995a_patron_joint.test.ts forms/f1040/2025/domains/business/form8995a/form8995a_sstb_schedule_c.test.ts scripts/research/ty2025-pdf-review-scope.test.ts`. Real Poppler PATH used.
+Isolated62747389e integrated at0cc6c8389. Final main typed integration **28 passed,0 failed**,1m40s; owner public/source/cents, pure calculations, public8994, joint patron, SSTB and held scope checks. Command: `deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/2025/domains/taxes/self-employment/schedule-se/schedule-se-owner-public.test.ts forms/f1040/nodes/intermediate/forms/taxes/self-employment/schedule_se/owner-calculation.test.ts forms/f1040/2025/domains/credits/business/form8994/form8994_public_source.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_patron_joint.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_sstb_schedule_c.test.ts scripts/research/ty2025-pdf-review-scope.test.ts`. Real Poppler PATH used.
 
 Log `/tmp/opentax-owned-se-main-integration.log`, SHA256 `96f2e20ec540ac0f06b66b4cdfe320279517f8575cd33d0d3c981b120a2f7cbd`.
 
@@ -4785,17 +4785,17 @@ Log `/tmp/opentax-owned-se-final-proof.log`, SHA256 `a8bd2efd829f842bf2c84cb3a5a
 
 Log `/tmp/opentax-owned-se-c-repair.log`, SHA256 `17deaff3cf1058d3db4fe3627760af0fdfc0734e714c22e0a273abd1c92d4af7`.
 
-Isolated final13/13,104/104 repaired ScheduleC checks and earlier79/79; broader337/339 initially exposed two missing MFJ proprietor/activity source facts, now repaired. Four complete localXSD/PDF packets contain52 pages, all inspected in13 contact sheets; final hashes match retained manifest. Eight complete-return QBI/source mutations and four owner-instance/source/identity mutations reject both native and PDF. Two cent boundary sources pass final prepared native export. Main held metadata includes8959/8960 as actually emitted. Planner222 fixtures,116 descriptors,113keys,93 covered/20 uncovered. [Owner gap](../domains/property-business/ty2025-schedule-se-owner-gap.md) records limits. Full regressionea23 lacks this code; IRS acceptance/authentication remain open.
+Isolated final13/13,104/104 repaired ScheduleC checks and earlier79/79; broader337/339 initially exposed two missing MFJ proprietor/activity source facts, now repaired. Four complete localXSD/PDF packets contain52 pages, all inspected in13 contact sheets; final hashes match retained manifest. Eight complete-return QBI/source mutations and four owner-instance/source/identity mutations reject both native and PDF. Two cent boundary sources pass final prepared native export. Main held metadata includes8959/8960 as actually emitted. Planner222 fixtures,116 descriptors,113keys,93 covered/20 uncovered. [Owner gap](../domains/taxes/self-employment/ty2025-schedule-se-owner-gap.md) records limits. Full regressionea23 lacks this code; IRS acceptance/authentication remain open.
 
 
 ## Reviewed Form8978 main integration — 2026-10-06
 
-Codea842e9599, actual typed focused command covering public8978/PDF8978/owner-SE/public8994/held scope: **17 passed,0 failed**,46s with real Poppler. Log `/tmp/opentax-form8978-main-integration.log`, SHA256 `18c3670e0d7c2ee467c1678915017358ec288cddedc054787ec2c8e2fe4e1dae`. Isolated28/28 and53/53; held3 complete localXSD/replayed returns,19 tax pages and27 exact attachment pages inspected. Reviewed prior-year computations and supplied synthetic PDF bytes are bound, not authenticated. Full batch and business-rule/acceptance gates remain open; [exact limits](../domains/credits/form8978/ty2025-form8978-pdf-gap.md).
+Codea842e9599, actual typed focused command covering public8978/PDF8978/owner-SE/public8994/held scope: **17 passed,0 failed**,46s with real Poppler. Log `/tmp/opentax-form8978-main-integration.log`, SHA256 `18c3670e0d7c2ee467c1678915017358ec288cddedc054787ec2c8e2fe4e1dae`. Isolated28/28 and53/53; held3 complete localXSD/replayed returns,19 tax pages and27 exact attachment pages inspected. Reviewed prior-year computations and supplied synthetic PDF bytes are bound, not authenticated. Full batch and business-rule/acceptance gates remain open; [exact limits](../domains/taxes/passthrough/form8978/ty2025-form8978-pdf-gap.md).
 
 
 ## Positive child-tax/Form8615 main integration — 2026-10-06
 
-Code72bd53a19, typed real-Poppler focused command covering paired positive child tax, earlier paired education, public8978 and owner-SE: **19 passed,0 failed**,1m6s. Log `/tmp/opentax-positive-child-tax-main-integration.log`, SHA256 `4b42fd0d80e8c403ff0f1bb7b793b99b64e930daa1ec911a8f8fced4c741907e`. Final isolated454/454 across24 selected existing/new files plus6/6 source/artifact checks. Six full Return1040v5.4 XMLs and36 filled PDF pages inspected; child AGI22000/SD15750/TI6250 yields8615 tax1375 using actual selected parent TI59250/pre-credit7955. Parent income/AOC/ODC remain separate. Source/header/support/parent-choice/duplicate-credit and standalone slice conflicts reject. [Exact limits](../domains/credits/form8863/ty2025-form8863-parent-child-kiddie-tax-review.md) retain wider sibling/parent/special-tax/authentication scope. Full batchea23 predates this code.
+Code72bd53a19, typed real-Poppler focused command covering paired positive child tax, earlier paired education, public8978 and owner-SE: **19 passed,0 failed**,1m6s. Log `/tmp/opentax-positive-child-tax-main-integration.log`, SHA256 `4b42fd0d80e8c403ff0f1bb7b793b99b64e930daa1ec911a8f8fced4c741907e`. Final isolated454/454 across24 selected existing/new files plus6/6 source/artifact checks. Six full Return1040v5.4 XMLs and36 filled PDF pages inspected; child AGI22000/SD15750/TI6250 yields8615 tax1375 using actual selected parent TI59250/pre-credit7955. Parent income/AOC/ODC remain separate. Source/header/support/parent-choice/duplicate-credit and standalone slice conflicts reject. [Exact limits](../domains/credits/individual/form8863/ty2025-form8863-parent-child-kiddie-tax-review.md) retain wider sibling/parent/special-tax/authentication scope. Full batchea23 predates this code.
 
 
 ## Terminal full batch at ea23fbb91 — 2026-10-06
@@ -4820,7 +4820,7 @@ Main commit `1a490fc55`: **42 passed, 0 failed (55s)** across joint WOTC, owner-
 Code snapshot `51fd0f34c`, recorded at `04dba771b`: **35 passed, 0 failed (2m39s)** with type checking and real Poppler. Command:
 
 ```sh
-PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin deno test -A forms/f1040/2025/domains/business/schedule-se/schedule-se-owned-farm-public.test.ts forms/f1040/2025/domains/business/form8995a/form8995a_joint_wotc.test.ts forms/f1040/e2e/credits/form8941/form8941_multiple_plans_2025.test.ts forms/f1040/e2e/credits/form8941/form8941_arrangements_2025.test.ts forms/f1040/2025/domains/business/schedule-se/schedule-se-owner-public.test.ts scripts/research/ty2025-pdf-review-scope.test.ts
+PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin deno test -A forms/f1040/2025/domains/taxes/self-employment/schedule-se/schedule-se-owned-farm-public.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_joint_wotc.test.ts forms/f1040/e2e/credits/health/form8941/form8941_multiple_plans_2025.test.ts forms/f1040/e2e/credits/health/form8941/form8941_arrangements_2025.test.ts forms/f1040/2025/domains/taxes/self-employment/schedule-se/schedule-se-owner-public.test.ts scripts/research/ty2025-pdf-review-scope.test.ts
 ```
 
 Log `/tmp/opentax-cf-shop-wotc-main-integration.log`, SHA256 `e94a33f62a0ebc13ccb2a9b00f5a80ea61e93e69265d035435371ef9e444ecc4`. Source/XML/PDF packets, manifests and complete page images are retained in main ignored evidence under `.state/research/2026-10-06-owned-farm-se` and `.state/research/2026-10-06-form8941-multiplan`. Their final visual claims cover86 and143 pages respectively; broad parent and IRS gates remain open.
@@ -4884,7 +4884,7 @@ Main1f42620dd:19 typed checks passed,0 failed (1m46s), with real Poppler; actual
 Main `173d3739b`:48 typed checks passed,0 failed (2m22s), with real Poppler. Exact command:
 
 ```sh
-deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/2025/domains/business/schedule-se/schedule-se-owned-farm-optional.test.ts forms/f1040/2025/pdf/reviews/credits/form8863-remarried-mfj-parent.test.ts forms/f1040/e2e/credits/form8941/form8941_workers_2025.test.ts forms/f1040/2025/domains/business/form8995a/form8995a_controlled_wotc.test.ts forms/f1040/2025/domains/business/form8995a/form8995a_joint_owner_wotc.test.ts forms/f1040/2025/mef/forms/taxes/schedule_se.test.ts scripts/research/ty2025-pdf-review-scope.test.ts
+deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/2025/domains/taxes/self-employment/schedule-se/schedule-se-owned-farm-optional.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863-remarried-mfj-parent.test.ts forms/f1040/e2e/credits/health/form8941/form8941_workers_2025.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_controlled_wotc.test.ts forms/f1040/2025/domains/deductions/business/form8995a/form8995a_joint_owner_wotc.test.ts forms/f1040/2025/mef/forms/taxes/self-employment/schedule_se.test.ts scripts/research/ty2025-pdf-review-scope.test.ts
 ```
 
 Log `/tmp/opentax-farm-family-shop-controlled-main.log`, SHA256 `e4d991f371a8237bbe3e53a149fb1c6efb1155c9310fb48bba1162e984c81267`. Optional-farm nine full-XSD/replayed packets/all123 reviewed pages, remarried MFJ six full-XSD packets/all36 reviewed pages and seasonal SHOP three full-XSD packets/all69 reviewed pages are retained in ignored main research. Actual planner253 fixtures/116 descriptors/113 keys/95 covered/18 uncovered. This combined check includes controlled and independent joint-owner WOTC compatibility. The still-running full `bc6cafec6` batch predates these production/source repairs; latest-head full regression, broader parent completion and IRS acceptance remain unproven.
@@ -4895,7 +4895,7 @@ Log `/tmp/opentax-farm-family-shop-controlled-main.log`, SHA256 `e4d991f371a8237
 Main `2850dc05e`:24 typed checks passed,0 failed (1m28s), with real Poppler. Exact command:
 
 ```sh
-deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/2025/pdf/reviews/credits/form8863-remarried-mfs-parent.test.ts forms/f1040/2025/pdf/reviews/credits/form8863-remarried-mfj-parent.test.ts forms/f1040/2025/pdf/reviews/credits/form8863-sibling-parent-selection.test.ts forms/f1040/2025/pdf/reviews/credits/form8863-parent-child-kiddie-tax.test.ts
+deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/2025/pdf/reviews/credits/individual/form8863-remarried-mfs-parent.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863-remarried-mfj-parent.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863-sibling-parent-selection.test.ts forms/f1040/2025/pdf/reviews/credits/individual/form8863-parent-child-kiddie-tax.test.ts
 ```
 
 Log `/tmp/opentax-remarried-mfs-main-integration.log`, SHA256 `8d33cfe09d8d824bac34ee69743cd506503b62d1db6073890983059ebf65fbb0`. Eight complete local-XSD packets/all33 visually reviewed pages and24 matching source/XML/PDF hashes retained in ignored `.state/research/2026-10-06-remarried-mfs-parent`. Selected480/0 and final6/0 isolated checks are recorded in the route proof. Actual separate property-tax/standard-deduction returns and both parent identities are checked; prior MFJ/sibling/kiddie-tax compatibility passes. Stable fullbc6cafec6 still runs and predates this source work; two failures are now observed in CLI spouse SEHI and an older8995-A negative expectation, with final full totals and causes pending. No latest-head full pass or IRS acceptance is claimed.
@@ -4906,7 +4906,7 @@ Log `/tmp/opentax-remarried-mfs-main-integration.log`, SHA256 `8d33cfe09d8d824ba
 Main `6b3e9cbd1`:20 typed checks passed,0 failed (1m22s), with real Poppler. Exact command:
 
 ```sh
-deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/e2e/credits/form8941/form8941_common_control_2025.test.ts forms/f1040/e2e/credits/form8941/form8941_workers_2025.test.ts forms/f1040/e2e/credits/form8941/form8941_multiple_plans_2025.test.ts forms/f1040/2025/domains/business/form8995/form8995_multiple_schedule_c.test.ts scripts/research/ty2025-pdf-review-scope.test.ts
+deno test --allow-read --allow-write --allow-run=xmllint,deno,pdftotext,pdftoppm --allow-net=www.irs.gov forms/f1040/e2e/credits/health/form8941/form8941_common_control_2025.test.ts forms/f1040/e2e/credits/health/form8941/form8941_workers_2025.test.ts forms/f1040/e2e/credits/health/form8941/form8941_multiple_plans_2025.test.ts forms/f1040/2025/domains/deductions/business/form8995/form8995_multiple_schedule_c.test.ts scripts/research/ty2025-pdf-review-scope.test.ts
 ```
 
 Log `/tmp/opentax-aggregate-shop-main-integration.log`, SHA256 `78feebe323d2be6514b60dc8dc90d53b0d8e5ab76a02ec2bd06ca44afd30d9e5`. One complete local-XSD packet/all25 visually reviewed pages plus actual source/math/limits proof retained in ignored `.state/research/2026-10-06-form8941-common-control/PROOF.md`. Group source/person/coverage and allocation mutations reject; seasonal, multiple-QHP and multiple-ScheduleC compatibility passes. Stable fullbc6cafec6 remains running, predates these changes and has two observed failures; no latest-head full pass or IRS acceptance is claimed.
@@ -4959,37 +4959,37 @@ Main source integration83b74af8f: Form8611 gate97/0 (10s), held replay2 cases/12
 Independent spouse health plans current mainfa0e3272e:57/0(31s), exact owned-source/zeroMedicare/native8995/Pub974 gate. Six complete packets/all101 reviewed pages and18 hashes retained under `.state/research/2026-10-06-independent-spouse-health-plans-reviewed`. Log `/tmp/opentax-independent-health-main.log` SHA256 `942422b5c8c7914ab414879b5ff571d8060dc9f7717874b863af43b089cd3aed`. IRS acceptance and broader parent scope remain unproven.
 
 
-FarmSHOP8c9a77447 currentmain gate16/0(1m29s); log `/tmp/opentax-farm-shop-current-main.log` SHA256 `fee152e078cb70db6e5f04de3c6606140198ca012282ca558960f5dd4057fad2`. Four complete packets/all92 reviewed pages, fullXSD and byte-identical mainPDFs; [source proof](../domains/health/form8941/ty2025-form8941-owned-farm-shop-review.md). Broader source branches/IRS businessrules/ATS remain open.
+FarmSHOP8c9a77447 currentmain gate16/0(1m29s); log `/tmp/opentax-farm-shop-current-main.log` SHA256 `fee152e078cb70db6e5f04de3c6606140198ca012282ca558960f5dd4057fad2`. Four complete packets/all92 reviewed pages, fullXSD and byte-identical mainPDFs; [source proof](../domains/credits/health/form8941/ty2025-form8941-owned-farm-shop-review.md). Broader source branches/IRS businessrules/ATS remain open.
 
 
 ## 2026-10-06 complete-source Form4972 NUA integration
 
-Main747ec258c:14-file source/preservation gate233/0(31s), five complete2025v5.4XSDreturns and80native/PDFtamper rejections. Held checker5cases/all27reviewedpages; all main PDFs byte-identical to reviewed isolated/held outputs. Actual planner298fixtures/116descriptors/113keys/96covered/17uncovered. Evidence and digests: [review](../domains/retirement/form4972/ty2025-form4972-multiple-nua-source-review.md). Earlier isolatedpreservation231/1 was a supersededfive-copyrejection assertion; correctedpreservation232/0. Mainlog `/tmp/opentax-form4972-multiple-nua-current-main.log`; heldlog `/tmp/opentax-form4972-multiple-nua-main-held-check.log`. No full-suitepass or IRSacceptance inferred.
+Main747ec258c:14-file source/preservation gate233/0(31s), five complete2025v5.4XSDreturns and80native/PDFtamper rejections. Held checker5cases/all27reviewedpages; all main PDFs byte-identical to reviewed isolated/held outputs. Actual planner298fixtures/116descriptors/113keys/96covered/17uncovered. Evidence and digests: [review](../domains/taxes/retirement/form4972/ty2025-form4972-multiple-nua-source-review.md). Earlier isolatedpreservation231/1 was a supersededfive-copyrejection assertion; correctedpreservation232/0. Mainlog `/tmp/opentax-form4972-multiple-nua-current-main.log`; heldlog `/tmp/opentax-form4972-multiple-nua-main-held-check.log`. No full-suitepass or IRSacceptance inferred.
 
 
 ## October6 mixed C/F SHOP current-main verification
 
-Main52/0(56s), two full-XSD packets/all52 pages reviewed; actual senior deduction1,455 reduces Form8995 line11 to131,552/deduction26,310. Full evidence and hashes: [mixed SHOP review](../domains/health/form8941/ty2025-form8941-mixed-cf-shop-review.md). Broader parent remains open.
+Main52/0(56s), two full-XSD packets/all52 pages reviewed; actual senior deduction1,455 reduces Form8995 line11 to131,552/deduction26,310. Full evidence and hashes: [mixed SHOP review](../domains/credits/health/form8941/ty2025-form8941-mixed-cf-shop-review.md). Broader parent remains open.
 
 
 ## October6 three-member mixed SHOP
 
-Main15/0(1m27s);3full-XSD packets/all80reviewedpages; allmainPDFs match reviewed outputs. [Evidence and boundaries](../domains/health/form8941/ty2025-form8941-mixed-three-shop-review.md).
+Main15/0(1m27s);3full-XSD packets/all80reviewedpages; allmainPDFs match reviewed outputs. [Evidence and boundaries](../domains/credits/health/form8941/ty2025-form8941-mixed-three-shop-review.md).
 
 
 ## October6 mixed-owner WOTC and deducted tips
 
-Combined currentmain62/0(3m2s);priorWOTC12/0(1m13s). RefreshedWOTCheld4/all122pages and ninecurrenttipsPDFs/all147reviewedpages preserve reviewedPDFbytes. [WOTC source review](../domains/qbi/form8995/ty2025-form8995a-gap.md), [tip source review](../domains/qbi/ty2025-qualified-business-tips-qbi-source-review.md). Actualcatalog302 includesfournewWOTCfixtures.
+Combined currentmain62/0(3m2s);priorWOTC12/0(1m13s). RefreshedWOTCheld4/all122pages and ninecurrenttipsPDFs/all147reviewedpages preserve reviewedPDFbytes. [WOTC source review](../domains/deductions/business/form8995/ty2025-form8995a-gap.md), [tip source review](../domains/deductions/business/ty2025-qualified-business-tips-qbi-source-review.md). Actualcatalog302 includesfournewWOTCfixtures.
 
 
 ## October6 complete-source Form4972 annuity combinations
 
-Main247/0(1m13s);mainheld7/all38pages,oldNUAheld5/all27pages;allreviewed source/XML/PDFbytes retained. Actualcatalog309. [Full proof](../domains/retirement/form4972/ty2025-form4972-multiple-annuity-source-review.md).
+Main247/0(1m13s);mainheld7/all38pages,oldNUAheld5/all27pages;allreviewed source/XML/PDFbytes retained. Actualcatalog309. [Full proof](../domains/taxes/retirement/form4972/ty2025-form4972-multiple-annuity-source-review.md).
 
 
 ## October6 independent C/F health plans
 
-Main22/0(2m13s); fresh held7/all212reviewedpages; all seven main PDFs match reviewed outputs. Actual catalog316. [Source review and boundaries](../domains/health/form7206/ty2025-form7206-independent-spouse-plans-review.md).
+Main22/0(2m13s); fresh held7/all212reviewedpages; all seven main PDFs match reviewed outputs. Actual catalog316. [Source review and boundaries](../domains/adjustments/health/form7206/ty2025-form7206-independent-spouse-plans-review.md).
 
 ## Integrated source verification checkpoint (2026-10-06)
 
@@ -5045,15 +5045,15 @@ Preservation log SHA256: `d4cfcc6c5c8e8b6f9f52faba17583ef3705a36199bd4b7fa0cdea2
 
 ## Separate paired beneficiary current-main gate
 
-Main df66b8386: deno test --allow-all forms/f1040/2025/domains/retirement/form4972/form4972_paired_beneficiary_source.test.ts terminal4/0(57s). Prior36file preservation2dd06b857 terminal298/0(3m7s), exit0.17publicreturns/fulllocalv5.4XSD/68reviewedpageinstances/64issuedcopies; source/PDF exactoriginal, XMLexceptReturnTs.16finalnative/PDFconflicts reject. Logs and comparison in paired source proof. Full regression181575242 remainslive44964/44970 at61m53s; latestfullpassing suite/IRSack stillrequired.
+Main df66b8386: deno test --allow-all forms/f1040/2025/domains/taxes/retirement/form4972/form4972_paired_beneficiary_source.test.ts terminal4/0(57s). Prior36file preservation2dd06b857 terminal298/0(3m7s), exit0.17publicreturns/fulllocalv5.4XSD/68reviewedpageinstances/64issuedcopies; source/PDF exactoriginal, XMLexceptReturnTs.16finalnative/PDFconflicts reject. Logs and comparison in paired source proof. Full regression181575242 remainslive44964/44970 at61m53s; latestfullpassing suite/IRSack stillrequired.
 
 ## Shared-participant beneficiary source integration — October6
 
-Main4f99acaa0 commands: `PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno test --allow-all --filter "shared participant" forms/f1040/2025/domains/retirement/form4972/form4972_shared_participant_source.test.ts` passed4/0(17s), four earlier imported paired tests filtered; single-copy file filtered to the beneficiary annuity ten-year-only case passed1/0(3s), five filtered. Logs /tmp/opentax-form4972-shared-main-focused.log and /tmp/opentax-form4972-single-part3-main-focused.log. These filters do not claim a full suite. Same37-file isolated preservation08ba52b14 passed303/0(4m12s), exit0, /tmp/opentax-form4972-shared-participant-preservation-v2.log. Main production exactly matches the tested isolated source. Six complete prepared returns validate localv5.4XSD and produce23 visually reviewed PDF pages/26 native issued copies. All main source/pending/PDF bytes equal reviewed snapshots; XML onlyReturnTs; comparison /tmp/opentax-form4972-shared-single-main-comparison.json. The outside-beneficiary inventory record is not transmitted. Parent/full latest regression/IRS business rules/ATS gates remain open.
+Main4f99acaa0 commands: `PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno test --allow-all --filter "shared participant" forms/f1040/2025/domains/taxes/retirement/form4972/form4972_shared_participant_source.test.ts` passed4/0(17s), four earlier imported paired tests filtered; single-copy file filtered to the beneficiary annuity ten-year-only case passed1/0(3s), five filtered. Logs /tmp/opentax-form4972-shared-main-focused.log and /tmp/opentax-form4972-single-part3-main-focused.log. These filters do not claim a full suite. Same37-file isolated preservation08ba52b14 passed303/0(4m12s), exit0, /tmp/opentax-form4972-shared-participant-preservation-v2.log. Main production exactly matches the tested isolated source. Six complete prepared returns validate localv5.4XSD and produce23 visually reviewed PDF pages/26 native issued copies. All main source/pending/PDF bytes equal reviewed snapshots; XML onlyReturnTs; comparison /tmp/opentax-form4972-shared-single-main-comparison.json. The outside-beneficiary inventory record is not transmitted. Parent/full latest regression/IRS business rules/ATS gates remain open.
 
 ## Form8621 registered parent current-main proof
 
-Maina2ae96eba seven focused files (`f8621` node, nativeXSD/fx, parentPDF/source/excess, current1294 source, Schedule1 source replay) pass36/0(23s), /tmp/opentax-form8621-current-main-focused.log. Same Schedule2 native/PDF and Form8978 source command passes56/0(11s), /tmp/opentax-form8621-current-main-preservation.log. Five actual prepared fullXSD packets retain38 reviewed pages; all five main PDFs byte-equal final-v6 hashes in [source proof](../../../../forms/f1040/2025/domains/international/form8621/form8621_parent_source_proof.md). Actual registries now151native/117PDF; planner365fixtures/114keys96covered18uncovered including form8621 not yet catalogued. No fulllatest/sourceauth/IRS acceptance claim.
+Maina2ae96eba seven focused files (`f8621` node, nativeXSD/fx, parentPDF/source/excess, current1294 source, Schedule1 source replay) pass36/0(23s), /tmp/opentax-form8621-current-main-focused.log. Same Schedule2 native/PDF and Form8978 source command passes56/0(11s), /tmp/opentax-form8621-current-main-preservation.log. Five actual prepared fullXSD packets retain38 reviewed pages; all five main PDFs byte-equal final-v6 hashes in [source proof](../../../../forms/f1040/2025/domains/income/foreign/form8621/form8621_parent_source_proof.md). Actual registries now151native/117PDF; planner365fixtures/114keys96covered18uncovered including form8621 not yet catalogued. No fulllatest/sourceauth/IRS acceptance claim.
 
 
 ## Full V4 terminal and age-derived QBI expectation repair
@@ -5408,7 +5408,7 @@ The full ordinary `deno task test` started **2026-10-06T17:04:59Z** in immutable
 
 ## Schedule H reviewed unpaid account balances
 
-Main118c279a7 ordinary14module task terminal74/0 (6m35s), session11127; actualsaved46returns/272pages terminalsession56640,43freshexact+3historicallyqualified, fullXSD/sourceunchanged/productionbyteheld. Logs/scripts/report under `/tmp/opentax-scheduleh-unpaid-main-{standard,final46}-oct6`. Five new distinct unpaid source packets have34rootreviewedpages, zeroWidgets/Acrofields, mainPDF/nativeexceptTs exact. Unpaidbalances are explicitly dated retained facts, never inferred from missingreceipts or counted as latepayments. Original rejected before inputs remainunchanged; firsttwo positives add only accountreview. Fourrootpreservation manifests contain223entries reverified aftergates. Candidate prior41/238 exact; oldtestversion isolated73/0 and finalfocus3/0 qualified separately. See [unpaidsourceproof](../domains/property-business/ty2025-schedule-h-unpaid-state-source.md). Wider52parents/fullcurrentbatch/IRSacceptance remainopen.
+Main118c279a7 ordinary14module task terminal74/0 (6m35s), session11127; actualsaved46returns/272pages terminalsession56640,43freshexact+3historicallyqualified, fullXSD/sourceunchanged/productionbyteheld. Logs/scripts/report under `/tmp/opentax-scheduleh-unpaid-main-{standard,final46}-oct6`. Five new distinct unpaid source packets have34rootreviewedpages, zeroWidgets/Acrofields, mainPDF/nativeexceptTs exact. Unpaidbalances are explicitly dated retained facts, never inferred from missingreceipts or counted as latepayments. Original rejected before inputs remainunchanged; firsttwo positives add only accountreview. Fourrootpreservation manifests contain223entries reverified aftergates. Candidate prior41/238 exact; oldtestversion isolated73/0 and finalfocus3/0 qualified separately. See [unpaidsourceproof](../domains/taxes/household-employment/ty2025-schedule-h-unpaid-state-source.md). Wider52parents/fullcurrentbatch/IRSacceptance remainopen.
 
 
 ## Immutable full regression V26
@@ -5428,7 +5428,7 @@ Ordinary `deno task test` started **2026-10-06T21:47:13Z** at immutable **4ea690
 
 ### Investment-interest main seal — October6
 
-Mainac5fd2bde/f6cb044a1:normal28modules100/0(24m44s), isolated1/0; actual4/102freshXSD saved-source replay, combined16ordinaryPDFs262reviewedpages exact; all49heldhashes verified and361integration/mainfiles physically retained. Shared ordinaryoutputcollision and twoincorrect verifierpath assumptions remain qualified; nooriginalsource orproduction rewrite. Ledger1548; all52mainparents remainopen. Proof: [investment interest](../domains/investments/form4952/ty2025-form4952-schedulej-child-source-proof.md).
+Mainac5fd2bde/f6cb044a1:normal28modules100/0(24m44s), isolated1/0; actual4/102freshXSD saved-source replay, combined16ordinaryPDFs262reviewedpages exact; all49heldhashes verified and361integration/mainfiles physically retained. Shared ordinaryoutputcollision and twoincorrect verifierpath assumptions remain qualified; nooriginalsource orproduction rewrite. Ledger1548; all52mainparents remainopen. Proof: [investment interest](../domains/deductions/investments/form4952/ty2025-form4952-schedulej-child-source-proof.md).
 
 
 ## Main terminal verification — October7

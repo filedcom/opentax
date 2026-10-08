@@ -1,7 +1,7 @@
 import { assert, assertEquals } from "@std/assert";
 import { createReturnCommand, getReturnCommand } from "./return.ts";
 import { appendInput, deleteInput, loadInputs } from "../store/store.ts";
-import { f2441 } from "../../forms/f1040/nodes/inputs/f2441/index.ts";
+import { f2441 } from "../../forms/f1040/nodes/inputs/credits/individual/f2441/index.ts";
 import { FilingStatus } from "../../forms/f1040/nodes/types.ts";
 
 Deno.test("f2441 AGI context without source items is inactive, not malformed", () => {

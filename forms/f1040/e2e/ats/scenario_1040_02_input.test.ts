@@ -1,9 +1,9 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
-import { w2 } from "../../nodes/inputs/w2/index.ts";
-import { scheduleC as scheduleCNode } from "../../nodes/inputs/schedule_c/index.ts";
-import { scheduleC as scheduleCMef } from "../../2025/mef/forms/business/schedule_c.ts";
-import { scheduleCPdf } from "../../2025/pdf/forms/business/schedule_c.ts";
+import { w2 } from "../../nodes/inputs/income/wages/w2/index.ts";
+import { scheduleC as scheduleCNode } from "../../nodes/inputs/income/business/schedule_c/index.ts";
+import { scheduleC as scheduleCMef } from "../../2025/mef/forms/income/business/schedule_c.ts";
+import { scheduleCPdf } from "../../2025/pdf/forms/income/business/schedule_c.ts";
 import { fillFormPdf } from "../../2025/pdf/builder.ts";
 import { testFiler } from "../../2025/mef/execution/test-filer.ts";
 import {

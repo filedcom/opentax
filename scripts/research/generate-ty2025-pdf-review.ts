@@ -10,7 +10,7 @@ import { buildMefBundle } from "../../forms/f1040/2025/mef/builder.ts";
 import { buildPending } from "../../forms/f1040/2025/mef/execution/pending.ts";
 import { pdfReviewFixtures } from "../../forms/f1040/2025/pdf/review-fixtures.ts";
 import { ALL_PDF_FORMS } from "../../forms/f1040/2025/pdf/forms/index.ts";
-import { sha256Hex } from "../../forms/f1040/2025/domains/execution/prepared-source.ts";
+import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared-source.ts";
 import {
   REVIEW_RETURN_TIMESTAMP,
   reviewFiler,

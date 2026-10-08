@@ -25,7 +25,7 @@ invent a numeric credit on the return.
 
 ## Current implementation boundary
 
-The shared [`schedule_r` node](../../../forms/f1040/nodes/inputs/schedule_r/index.ts)
+The shared [`schedule_r` node](../../../forms/f1040/nodes/inputs/credits/elderly-disabled/schedule_r/index.ts)
 accepts manual AGI and benefit totals, computes 15% and sends only a number to
 the TY2025 Schedule 3 line 6d key. It has no Part I box selection, MFS
 lived-apart proof, disability certification, line-by-line result, liability

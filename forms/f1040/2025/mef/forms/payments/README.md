@@ -1,10 +1,12 @@
 # Payments
 
-Source contracts, fixtures and adjacent tests for this tax concern. Public form identifiers and registration remain in the parent entrypoint.
+Withholding, estimated and extension payments, and refund or payment instructions.
 
-Source and fixture entrypoints:
+| Area | Contents |
+| --- | --- |
+| [installments](installments) | 2 files |
+| [investments](investments) | 2 files |
+| [refund](refund) | 2 files |
+| [settlement](settlement/README.md) | 1 files |
 
-- [f2210_box_e.ts](./f2210_box_e.ts)
-- [f2210f_box_b.ts](./f2210f_box_b.ts)
-- [f8888.ts](./f8888.ts)
-- [f9465_attached.ts](./f9465_attached.ts)
+Canonical [Form 2439](investments/f2439.ts) also supplies capital-gain [Income](../income/README.md); its payment-credit source family is classified as Payments.

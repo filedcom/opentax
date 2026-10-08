@@ -1,4 +1,4 @@
-import { normalizePendingDict } from "../../domains/execution/pending.ts";
+import { normalizePendingDict } from "../../return-processing/pending.ts";
 import type { F8949Transaction, MefFormsPending } from "../types.ts";
 
 function extractForm8949Transactions(

@@ -30,7 +30,7 @@ recipient's current-return facts. The optional 4547/9000 rows are **tax-neutral
 elections/preferences**, not absent tax calculations. For every separate-
 workflow choice, the product still needs a way to surface an entered or known
 current-return trigger and preserve the appropriate source-to-1040 join. The
-[coverage decision queue](../domains/filing/form1040/ty2025-form1040-coverage-decisions.md#workflow-boundaries-and-still-open-implementation)
+[coverage decision queue](../domains/general/return-assembly/form1040/ty2025-form1040-coverage-decisions.md#workflow-boundaries-and-still-open-implementation)
 records the working boundary. Per-root intake, handoff, current-return effects,
 and attachment conditions remain to be implemented and verified; no blanket
 root exclusion follows from this matrix.

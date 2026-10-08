@@ -4,7 +4,7 @@ from pathlib import Path
 import json, sys
 w=lambda x:int(D(x).quantize(D("1"),rounding=ROUND_HALF_UP))
 root=Path(sys.argv[1] if len(sys.argv)>1 else ".state/research/4972-preferential-amt-source")
-special=json.loads(Path("forms/f1040/2025/domains/retirement/form4972/form4972_full_share_cents.expected.json").read_text())
+special=json.loads(Path("forms/f1040/2025/domains/taxes/retirement/form4972/form4972_full_share_cents.expected.json").read_text())
 out={}
 for f in sorted(root.glob("*.json")):
  data=json.loads(f.read_text())
@@ -35,5 +35,5 @@ for f in sorted(root.glob("*.json")):
  total_special=sum(row["line30"] for key,row in special.items() if key.startswith(id+"-"))
  niit=float((min(ordinary+gain,max(D(0),D(agi)-(250000 if joint else 200000)))*D(".038")).quantize(D(".01"),rounding=ROUND_HALF_UP))
  out[id]={"form4972_tax":total_special,"agi":agi,"standard":standard,"senior":senior,"taxable":taxable,"iso_adjustment":w(iso),"amti":amti,"exemption":exemption,"taxable_excess":excess,"regular_tax":regular,"amt":amt,"niit":niit,"line16":regular+total_special,"total_tax":tmt+total_special+niit,"amount_owed":w(tmt+total_special+niit-35000),"part3":{"line12":excess,"line13":w(pref),"line15":w(pref),"line16":w(pref),"line17":amt_ordinary,"line18":amt_ordinary_tax,"line19":zero,"line20":ordinary_taxable,"line21":0,"line22":w(pref),"line23":0,"line24":w(pref),"line25":floor,"line26":0,"line27":ordinary_taxable,"line28":ordinary_taxable,"line29":floor-ordinary_taxable,"line30":w(pref),"line31":w(pref*D(".15")),"line32":w(pref),"line33":0,"line34":0,"line38":tmt,"line39":w(D(excess)*D(".28")-D(4782)),"line40":tmt}}
-Path("forms/f1040/2025/domains/retirement/form4972/form4972_preferential_amt.expected.json").write_text(json.dumps(out,indent=2)+"\n")
+Path("forms/f1040/2025/domains/taxes/retirement/form4972/form4972_preferential_amt.expected.json").write_text(json.dumps(out,indent=2)+"\n")
 print({k:(v["regular_tax"],v["amt"],v["total_tax"]) for k,v in out.items()})

@@ -39,7 +39,7 @@ latter. The 2026 draft no longer prints reason codes B, D, E or F.
 
 ## Current code boundary
 
-- The shared [Form 4137 node](../../../forms/f1040/nodes/intermediate/forms/form4137/index.ts)
+- The shared [Form 4137 node](../../../forms/f1040/nodes/intermediate/forms/taxes/employment/form4137/index.ts)
   is in the 2026 registry, sends tips to 1040 line 1c and tax to Schedule 2
   line 16a, and exposes tip sources to Schedule 1-A. The [2026 PDF
   builder](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2026/pdf/f4137.ts) renders separate recipient
@@ -47,7 +47,7 @@ latter. The 2026 draft no longer prints reason codes B, D, E or F.
   month evidence, government-employee exception and Form 8959 handoff
   against the embedded instructions. Its [draft field
   inventory](../inventories/pdf-fields/pdf-fields-f4137.csv) includes all widgets.
-- The shared [Form 8919 node](../../../forms/f1040/nodes/intermediate/forms/form8919/index.ts)
+- The shared [Form 8919 node](../../../forms/f1040/nodes/intermediate/forms/taxes/employment/form8919/index.ts)
   is **not** registered in the 2026 registry. It accepts a single aggregate
   `wages` amount and reason code A–H, has no per-firm evidence, and still
   outputs the TY2025 Schedule 2 line 6 key. Its reason-code definitions do

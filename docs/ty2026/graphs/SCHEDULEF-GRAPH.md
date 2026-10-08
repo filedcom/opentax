@@ -12,7 +12,7 @@ reconcile with the current MeF package before filing acceptance.
 
 | Form location | Source rule and required facts | Current implementation consequence |
 | --- | --- | --- |
-| Header A–G | Principal activity and six-digit code, cash/accrual method, EIN, material participation, and two 2026 Form 1099 answers. The draft instructions note a $2,000 information-return threshold for certain payments from January 1. | The [shared input](../../../forms/f1040/nodes/intermediate/forms/schedule_f/index.ts) has most facts; `line_c_farm_name` is not a printed 2026 header C field. Build the 2026 print contract from form positions rather than old names. |
+| Header A–G | Principal activity and six-digit code, cash/accrual method, EIN, material participation, and two 2026 Form 1099 answers. The draft instructions note a $2,000 information-return threshold for certain payments from January 1. | The [shared input](../../../forms/f1040/nodes/intermediate/forms/income/business/schedule_f/index.ts) has most facts; `line_c_farm_name` is not a printed 2026 header C field. Build the 2026 print contract from form positions rather than old names. |
 | Part I lines 1a–9 | Cash-method income, taxable portions of cooperative and program payments, CCC loan election/forfeiture, crop-insurance deferral, and gross income. Accrual filers take line 9 from Part III line 50. | Existing cash/accrual branches and election detail are a starting calculation. Reconcile 1099-PATR/G/MISC/NEC source documents by `farm_id`; retain the election statement and origin year for line 6d. Do not add a source receipt a second time to the farm line. |
 | Line 10 | Car and truck expense uses 72.5 cents per business mile for January–June and 76 cents for July–December, plus eligible parking/tolls. The printed form requires Form 4562 with this line. | Route the shared 2026 period mileage result to its farm ID, reconcile to actual expense election, and attach Form 4562 as instructed. |
 | Lines 21a–21c | 21a bank mortgage interest; **new 21b business-use vehicle-loan interest**; 21c other interest. Split mixed personal/business vehicle interest, and apply Form 8990 before these lines when required. Personal-use interest may reach Schedule 1-A only if it is not deducted here. | The shared field `line21b_interest_other` and TY2025 MeF `MortgageInterestPaidOtherAmt` belong to the old shape. TY2026 needs separate vehicle and other-interest facts. Never reinterpret the existing 21b value as vehicle interest. Add debt-use, vehicle allocation, and Schedule 1-A reconciliation evidence. |
@@ -41,11 +41,11 @@ auto expense, asset/debt records, MeF attachments, and carryforwards.
    income to Schedule J and EITC worksheets. Reconcile 1040 line 8 and tax
    with the graph results. Farmland disposition/§1062 is a separate Form
    4797/1062 route and must not be treated as line 2 crop sales.
-4. Replace the two-field [TY2025 PDF descriptor](../../../forms/f1040/2025/pdf/forms/business/schedule_f.ts)
+4. Replace the two-field [TY2025 PDF descriptor](../../../forms/f1040/2025/pdf/forms/income/business/schedule_f.ts)
    with a pinned 2026 two-page map: header, all cash/accrual income and
    expense fields, line 21b/21c, line 34/36, and statement references.
    Render and visually inspect cash and accrual cases, with multiple farms.
-5. Diff the [TY2025 MeF serializer](../../../forms/f1040/2025/mef/forms/business/schedule_f.ts)
+5. Diff the [TY2025 MeF serializer](../../../forms/f1040/2025/mef/forms/income/business/schedule_f.ts)
    against the authorized current TY2026 `IRS1040ScheduleF` XSD/rules. In
    particular, locate the new vehicle-interest element, preserve other
    interest separately, and validate CCC/crop-insurance statement links and

@@ -1,15 +1,13 @@
 # Deductions
 
-Source contracts, fixtures and adjacent tests for this tax concern. Public form identifiers and registration remain in the parent entrypoint.
+Standard, itemized, additional, and qualified business income deductions.
 
-| Family | Contents |
+| Area | Contents |
 | --- | --- |
-| [f1098](./f1098/) | 5 files |
-| [f1098e](./f1098e/) | 2 files |
-| [form2106](./form2106/) | 3 files |
-| [form4952](./form4952/) | 22 files |
-| [schedule-a](./schedule-a/) | 4 files |
+| [additional](additional) | 1 files |
+| [business](business) | 46 files |
+| [investments](investments) | 22 files |
+| [itemized](itemized/README.md) | 5 files |
+| [mortgage](mortgage) | 5 files |
 
-Source and fixture entrypoints:
-
-- [schedule1a-senior-source.ts](./schedule1a-senior-source.ts)
+Canonical [Form 4562](../../mef/forms/deductions/business/f4562.ts) depreciation and [Forms 8995](../../mef/forms/deductions/business/f8995/f8995.ts)/[8995-A](../../mef/forms/deductions/business/f8995a/f8995a.ts) QBI are deduction families; related business sources are under [Income](../income/README.md).

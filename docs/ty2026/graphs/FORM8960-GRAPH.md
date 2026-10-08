@@ -28,7 +28,7 @@ the exact 2026 filing instruction before retaining or changing that gate.
 
 ## Current code boundary
 
-- The shared [calculator](../../../forms/f1040/nodes/intermediate/forms/form8960/index.ts)
+- The shared [calculator](../../../forms/f1040/nodes/intermediate/forms/taxes/investments/form8960/index.ts)
   is registered in the 2026 graph and already sends positive NIIT to
   Schedule 2 line 6. Its status thresholds and 3.8% calculation are useful
   baselines. `agi_aggregator` currently passes AGI straight to the `magi`
@@ -44,7 +44,7 @@ the exact 2026 filing instruction before retaining or changing that gate.
   but omit the election boxes and printed lines 5c, 6 and 9c. The PDF
   attachment gate requires line 17 > 0. The complete [draft field
   inventory](../inventories/pdf-fields/pdf-fields-f8960.csv) is the map for closing this gap.
-- The TY2025 [MeF serializer](../../../forms/f1040/2025/mef/forms/taxes/f8960.ts)
+- The TY2025 [MeF serializer](../../../forms/f1040/2025/mef/forms/taxes/investments/f8960.ts)
   emits only a subset of inputs. It omits intermediate/final line values
   and 5c/6/9c/elections; the TY2025 rule set already contains arithmetic
   assertions for those computed fields. There is no TY2026 MeF module, so

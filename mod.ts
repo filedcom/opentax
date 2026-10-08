@@ -13,5 +13,5 @@ export {
   buildForm8582Ledger,
   form8582LedgerSchema,
   readForm8582Ledger,
-} from "./forms/f1040/nodes/intermediate/forms/form8582/ledger.ts";
-export type { Form8582Ledger } from "./forms/f1040/nodes/intermediate/forms/form8582/ledger.ts";
+} from "./forms/f1040/nodes/intermediate/forms/income/business/form8582/ledger.ts";
+export type { Form8582Ledger } from "./forms/f1040/nodes/intermediate/forms/income/business/form8582/ledger.ts";

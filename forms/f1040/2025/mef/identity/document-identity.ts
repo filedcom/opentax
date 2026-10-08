@@ -1,4 +1,4 @@
-import { validateForm5471ScheduleReferences } from "../forms/international/f5471/f5471-linkage.ts";
+import { validateForm5471ScheduleReferences } from "../forms/general/foreign/f5471/f5471-linkage.ts";
 
 export interface MefDocumentFragment {
   readonly pendingKey: string;

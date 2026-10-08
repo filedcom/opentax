@@ -1,714 +1,714 @@
-import { ownedSepSourceSchema } from "../nodes/inputs/sep_retirement/owned-source.ts";
-import { claimantReviewSchema } from "../nodes/inputs/f8863/claimant-review.ts";
+import { ownedSepSourceSchema } from "../nodes/inputs/adjustments/retirement/sep_retirement/owned-source.ts";
+import { claimantReviewSchema } from "../nodes/inputs/credits/individual/f8863/claimant-review.ts";
 import {
   inputSchema as qbiPatronInputSchema,
   qbiPatron,
-} from "../nodes/inputs/qbi_patron/index.ts";
+} from "../nodes/inputs/deductions/business/qbi_patron/index.ts";
 import {
   education_income,
   itemSchema as educationIncomeItemSchema,
-} from "../nodes/inputs/education_income/index.ts";
+} from "../nodes/inputs/income/other/education_income/index.ts";
 import type { InputNodeEntry } from "../../../core/types/form-definition.ts";
 import { z } from "zod";
 import {
   form8853,
   inputSchema as form8853InputSchema,
-} from "../nodes/intermediate/forms/form8853/index.ts";
-import { form6251 } from "../nodes/intermediate/forms/form6251/index.ts";
-import { priorIsoSaleReviewSchema } from "./domains/taxes/form6251/form6251_prior_iso_sale.ts";
-import { form4797 } from "../nodes/intermediate/forms/form4797/index.ts";
-import { investment1245DispositionSchema } from "../nodes/intermediate/forms/form4797/investment_1245.ts";
+} from "../nodes/intermediate/forms/adjustments/health/form8853/index.ts";
+import { form6251 } from "../nodes/intermediate/forms/taxes/amt/form6251/index.ts";
+import { priorIsoSaleReviewSchema } from "./domains/taxes/amt/form6251/form6251_prior_iso_sale.ts";
+import { form4797 } from "../nodes/intermediate/forms/income/business/form4797/index.ts";
+import { investment1245DispositionSchema } from "../nodes/intermediate/forms/income/business/form4797/investment_1245.ts";
 import {
   form4562,
   publicInputSchema as form4562InputSchema,
-} from "../nodes/intermediate/forms/form4562/index.ts";
+} from "../nodes/intermediate/forms/deductions/business/form4562/index.ts";
 import {
   form1116_prior_carryover,
   inputSchema as form1116PriorCarryoverInputSchema,
-} from "../nodes/inputs/form1116_prior_carryover/index.ts";
+} from "../nodes/inputs/credits/foreign/form1116_prior_carryover/index.ts";
 import {
   form8582_prior_year_record,
   inputSchema as form8582PriorYearRecordInputSchema,
-} from "../nodes/inputs/form8582_prior_year_record/index.ts";
+} from "../nodes/inputs/income/business/form8582_prior_year_record/index.ts";
 import {
   form1116_carryover_review,
   inputSchema as form1116CarryoverReviewInputSchema,
-} from "../nodes/inputs/form1116_carryover_review/index.ts";
+} from "../nodes/inputs/credits/foreign/form1116_carryover_review/index.ts";
 import {
   form1116_review,
   inputSchema as form1116ReviewInputSchema,
-} from "../nodes/inputs/form1116_review/index.ts";
+} from "../nodes/inputs/credits/foreign/form1116_review/index.ts";
 import {
   form1116_schedule_c_source,
   inputSchema as form1116ScheduleCSourceInputSchema,
-} from "../nodes/inputs/form1116_schedule_c_source/index.ts";
+} from "../nodes/inputs/credits/foreign/form1116_schedule_c_source/index.ts";
 import {
   ext,
   inputSchema as extInputSchema,
-} from "../nodes/inputs/ext/index.ts";
+} from "../nodes/inputs/payments/estimated/ext/index.ts";
 import {
   f1098,
   itemSchema as f1098ItemSchema,
   mortgageLimitReviewSchema,
   purchasePointsCrossLoanReviewSchema,
-} from "../nodes/inputs/f1098/index.ts";
-import { cashoutRefinanceReviewSchema } from "../nodes/inputs/f1098/cashout_refinance.ts";
+} from "../nodes/inputs/deductions/mortgage/f1098/index.ts";
+import { cashoutRefinanceReviewSchema } from "../nodes/inputs/deductions/mortgage/f1098/cashout_refinance.ts";
 import {
   inputSchema as mortgageRefinancePointsInputSchema,
   mortgage_refinance_points,
-} from "../nodes/inputs/mortgage_refinance_points/index.ts";
+} from "../nodes/inputs/deductions/mortgage/mortgage_refinance_points/index.ts";
 import {
   f1098e,
   itemSchema as f1098eItemSchema,
   unreportedInterestRecordSchema,
-} from "../nodes/inputs/f1098e/index.ts";
+} from "../nodes/inputs/adjustments/education/f1098e/index.ts";
 import {
   f1099b,
   itemSchema as f1099bItemSchema,
-} from "../nodes/inputs/f1099b/index.ts";
+} from "../nodes/inputs/income/investments/f1099b/index.ts";
 import {
   f1099c,
   itemSchema as f1099cItemSchema,
-} from "../nodes/inputs/f1099c/index.ts";
+} from "../nodes/inputs/income/other/f1099c/index.ts";
 import {
   f1099div,
   itemSchema as f1099divItemSchema,
-} from "../nodes/inputs/f1099div/index.ts";
+} from "../nodes/inputs/income/investments/f1099div/index.ts";
 import {
   f1099g,
   itemSchema as f1099gItemSchema,
-} from "../nodes/inputs/f1099g/index.ts";
+} from "../nodes/inputs/income/other/f1099g/index.ts";
 import {
   f1099int,
   itemSchema as f1099intItemSchema,
-} from "../nodes/inputs/f1099int/index.ts";
+} from "../nodes/inputs/income/investments/f1099int/index.ts";
 import {
   f1099k,
   itemSchema as f1099kItemSchema,
-} from "../nodes/inputs/f1099k/index.ts";
+} from "../nodes/inputs/income/business/f1099k/index.ts";
 import {
   f1099oid,
   itemSchema as f1099oidItemSchema,
-} from "../nodes/inputs/f1099oid/index.ts";
+} from "../nodes/inputs/income/investments/f1099oid/index.ts";
 import {
   f1099m,
   itemSchema as f1099mItemSchema,
-} from "../nodes/inputs/f1099m/index.ts";
+} from "../nodes/inputs/income/business/f1099m/index.ts";
 import {
   f1099nec,
   itemSchema as f1099necItemSchema,
-} from "../nodes/inputs/f1099nec/index.ts";
+} from "../nodes/inputs/income/business/f1099nec/index.ts";
 import {
   f1099r,
   itemSchema as f1099rItemSchema,
-} from "../nodes/inputs/f1099r/index.ts";
+} from "../nodes/inputs/income/retirement/f1099r/index.ts";
 import {
   itemSchema as rrb1099rItemSchema,
   rrb1099r,
-} from "../nodes/inputs/rrb1099r/index.ts";
+} from "../nodes/inputs/income/retirement/rrb1099r/index.ts";
 import {
   f1095a,
   itemSchema as f1095aItemSchema,
-} from "../nodes/inputs/f1095a/index.ts";
+} from "../nodes/inputs/credits/health/f1095a/index.ts";
 import {
   f4835,
   itemSchema as f4835ItemSchema,
-} from "../nodes/inputs/f4835/index.ts";
+} from "../nodes/inputs/income/business/f4835/index.ts";
 import {
   f2441,
   itemSchema as f2441ItemSchema,
-} from "../nodes/inputs/f2441/index.ts";
+} from "../nodes/inputs/credits/individual/f2441/index.ts";
 import {
   f8812,
   itemSchema as f8812ItemSchema,
-} from "../nodes/inputs/f8812/index.ts";
+} from "../nodes/inputs/credits/child/f8812/index.ts";
 import {
   creditLimitWorksheetSchema as f8863CreditLimitWorksheetSchema,
   f8863,
   itemSchema as f8863ItemSchema,
-} from "../nodes/inputs/f8863/index.ts";
+} from "../nodes/inputs/credits/individual/f8863/index.ts";
 import {
   f8949,
   itemSchema as f8949ItemSchema,
-} from "../nodes/inputs/f8949/index.ts";
+} from "../nodes/inputs/income/investments/f8949/index.ts";
 import {
   general,
   inputSchema as generalInputSchema,
-} from "../nodes/inputs/general/index.ts";
+} from "../nodes/inputs/general/filing/general/index.ts";
 import {
   itemSchema as k1TrustItemSchema,
   k1_trust,
-} from "../nodes/inputs/k1_trust/index.ts";
+} from "../nodes/inputs/income/rental-passthrough/k1_trust/index.ts";
 import {
   itemSchema as k1SCorpItemSchema,
   k1SCorpNode,
-} from "../nodes/inputs/k1_s_corp/index.ts";
+} from "../nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts";
 import {
   itemSchema as k1PartnershipItemSchema,
   k1Partnership,
-} from "../nodes/inputs/k1_partnership/index.ts";
+} from "../nodes/inputs/income/rental-passthrough/k1_partnership/index.ts";
 import {
   inputSchema as scheduleAInputSchema,
   scheduleA,
-} from "../nodes/inputs/schedule_a/index.ts";
+} from "../nodes/inputs/deductions/itemized/schedule_a/index.ts";
 import {
   itemSchema as scheduleCItemSchema,
   scheduleC,
-} from "../nodes/inputs/schedule_c/index.ts";
+} from "../nodes/inputs/income/business/schedule_c/index.ts";
 import {
   itemSchema as scheduleEItemSchema,
   scheduleE,
-} from "../nodes/inputs/schedule_e/index.ts";
+} from "../nodes/inputs/income/rental-passthrough/schedule_e/index.ts";
 import {
   itemSchema as personalPropertyRentalItemSchema,
   personal_property_rental,
-} from "../nodes/inputs/personal_property_rental/index.ts";
+} from "../nodes/inputs/income/other/personal_property_rental/index.ts";
 import {
   itemSchema as ssaItemSchema,
   ssa1099,
-} from "../nodes/inputs/ssa1099/index.ts";
-import { w2, w2ItemSchema } from "../nodes/inputs/w2/index.ts";
-import { ct2, itemSchema as ct2ItemSchema } from "../nodes/inputs/ct2/index.ts";
-import { itemSchema as w2gItemSchema, w2g } from "../nodes/inputs/w2g/index.ts";
+} from "../nodes/inputs/income/retirement/ssa1099/index.ts";
+import { w2, w2ItemSchema } from "../nodes/inputs/income/wages/w2/index.ts";
+import { ct2, itemSchema as ct2ItemSchema } from "../nodes/inputs/taxes/employment/ct2/index.ts";
+import { itemSchema as w2gItemSchema, w2g } from "../nodes/inputs/income/gambling/w2g/index.ts";
 import {
   f1099patr,
   itemSchema as f1099patrItemSchema,
-} from "../nodes/inputs/f1099patr/index.ts";
+} from "../nodes/inputs/income/business/f1099patr/index.ts";
 import {
   f8283,
   inputSchema as f8283InputSchema,
-} from "../nodes/inputs/f8283/index.ts";
+} from "../nodes/inputs/deductions/charitable/f8283/index.ts";
 import {
   f9465,
   inputSchema as f9465InputSchema,
-} from "../nodes/inputs/f9465/index.ts";
+} from "../nodes/inputs/payments/installments/f9465/index.ts";
 import {
   f8888,
   inputSchema as f8888InputSchema,
-} from "../nodes/inputs/f8888/index.ts";
+} from "../nodes/inputs/payments/refund/f8888/index.ts";
 import {
   inputSchema as scheduleRInputSchema,
   schedule_r,
-} from "../nodes/inputs/schedule_r/index.ts";
+} from "../nodes/inputs/credits/elderly-disabled/schedule_r/index.ts";
 import {
   inputSchema as scheduleLepInputSchema,
   schedule_lep,
-} from "../nodes/inputs/schedule_lep/index.ts";
+} from "../nodes/inputs/general/filing/schedule_lep/index.ts";
 import {
   f9000,
   inputSchema as f9000InputSchema,
-} from "../nodes/inputs/f9000/index.ts";
+} from "../nodes/inputs/general/filing/f9000/index.ts";
 import {
   f4547,
   inputSchema as f4547InputSchema,
-} from "../nodes/inputs/f4547/index.ts";
+} from "../nodes/inputs/general/disclosures/f4547/index.ts";
 import {
   inputSchema as paymentRequestInputSchema,
   payment_request,
-} from "../nodes/inputs/payment_request/index.ts";
+} from "../nodes/inputs/payments/settlement/payment_request/index.ts";
 import {
   amendment_request,
   inputSchema as amendmentRequestInputSchema,
-} from "../nodes/inputs/amendment_request/index.ts";
+} from "../nodes/inputs/general/filing/amendment_request/index.ts";
 import {
   benefit_1042s,
   inputSchema as benefit1042sInputSchema,
-} from "../nodes/inputs/benefit_1042s/index.ts";
+} from "../nodes/inputs/income/retirement/benefit_1042s/index.ts";
 import {
   f2210,
   inputSchema as f2210InputSchema,
-} from "../nodes/inputs/f2210/index.ts";
+} from "../nodes/inputs/taxes/underpayment/f2210/index.ts";
 import {
   f2210f,
   inputSchema as f2210fInputSchema,
-} from "../nodes/inputs/f2210f/index.ts";
+} from "../nodes/inputs/taxes/underpayment/f2210f/index.ts";
 import {
   f3903,
   itemSchema as f3903ItemSchema,
-} from "../nodes/inputs/f3903/index.ts";
+} from "../nodes/inputs/adjustments/moving/f3903/index.ts";
 import {
   f5695,
   inputSchema as f5695InputSchema,
-} from "../nodes/inputs/f5695/index.ts";
+} from "../nodes/inputs/credits/individual/f5695/index.ts";
 import {
   f8936,
   inputSchema as f8936InputSchema,
-} from "../nodes/inputs/f8936/index.ts";
+} from "../nodes/inputs/credits/individual/f8936/index.ts";
 import {
   f8862,
   inputSchema as f8862InputSchema,
-} from "../nodes/inputs/f8862/index.ts";
+} from "../nodes/inputs/credits/individual/f8862/index.ts";
 import {
   f8958,
   inputSchema as f8958InputSchema,
-} from "../nodes/inputs/f8958/index.ts";
+} from "../nodes/inputs/general/filing/f8958/index.ts";
 import {
   f8994,
   inputSchema as f8994InputSchema,
-} from "../nodes/inputs/f8994/index.ts";
+} from "../nodes/inputs/credits/business/f8994/index.ts";
 import {
   f8814,
   itemSchema as f8814ItemSchema,
-} from "../nodes/inputs/f8814/index.ts";
+} from "../nodes/inputs/income/investments/f8814/index.ts";
 import {
   inputSchema as scheduleBPartIIIInputSchema,
   schedule_b_part_iii,
-} from "../nodes/inputs/schedule_b_part_iii/index.ts";
+} from "../nodes/inputs/general/foreign/schedule_b_part_iii/index.ts";
 import {
   f8379,
   inputSchema as f8379InputSchema,
-} from "../nodes/inputs/f8379/index.ts";
+} from "../nodes/inputs/payments/refundable/f8379/index.ts";
 import {
   f8938,
   inputSchema as f8938InputSchema,
-} from "../nodes/inputs/f8938/index.ts";
+} from "../nodes/inputs/general/foreign/f8938/index.ts";
 import {
   f5884,
   inputSchema as f5884InputSchema,
-} from "../nodes/inputs/f5884/index.ts";
+} from "../nodes/inputs/credits/business/f5884/index.ts";
 import {
   f6478,
   inputSchema as f6478InputSchema,
-} from "../nodes/inputs/f6478/index.ts";
+} from "../nodes/inputs/credits/business/f6478/index.ts";
 import {
   f6765,
   inputSchema as f6765InputSchema,
-} from "../nodes/inputs/f6765/index.ts";
+} from "../nodes/inputs/credits/business/f6765/index.ts";
 import {
   f7207,
   inputSchema as f7207InputSchema,
-} from "../nodes/inputs/f7207/index.ts";
+} from "../nodes/inputs/credits/business/f7207/index.ts";
 import {
   f8881,
   inputSchema as f8881InputSchema,
-} from "../nodes/inputs/f8881/index.ts";
+} from "../nodes/inputs/credits/business/f8881/index.ts";
 import {
   f8882,
   inputSchema as f8882InputSchema,
-} from "../nodes/inputs/f8882/index.ts";
+} from "../nodes/inputs/credits/business/f8882/index.ts";
 import {
   f8908,
   itemSchema as f8908ItemSchema,
-} from "../nodes/inputs/f8908/index.ts";
+} from "../nodes/inputs/credits/business/f8908/index.ts";
 import {
   f8941,
   inputSchema as f8941InputSchema,
-} from "../nodes/inputs/f8941/index.ts";
+} from "../nodes/inputs/credits/health/f8941/index.ts";
 import {
   f8834,
   itemSchema as f8834ItemSchema,
-} from "../nodes/inputs/f8834/index.ts";
+} from "../nodes/inputs/credits/individual/f8834/index.ts";
 import {
   f8874,
   inputSchema as f8874InputSchema,
-} from "../nodes/inputs/f8874/index.ts";
+} from "../nodes/inputs/credits/business/f8874/index.ts";
 import {
   f8874_recapture,
   inputSchema as f8874RecaptureInputSchema,
-} from "../nodes/inputs/f8874/recapture_node.ts";
+} from "../nodes/inputs/credits/business/f8874/recapture_node.ts";
 import {
   f453a_interest,
   inputSchema as f453aInterestInputSchema,
-} from "../nodes/inputs/f453a_interest/index.ts";
+} from "../nodes/inputs/taxes/interest/f453a_interest/index.ts";
 import {
   f8911,
   inputSchema as f8911InputSchema,
-} from "../nodes/inputs/f8911/index.ts";
+} from "../nodes/inputs/credits/business/f8911/index.ts";
 import {
   f7217,
   inputSchema as f7217InputSchema,
-} from "../nodes/inputs/f7217/index.ts";
+} from "../nodes/inputs/income/business/f7217/index.ts";
 import {
   f8826,
   inputSchema as f8826InputSchema,
-} from "../nodes/inputs/f8826/index.ts";
+} from "../nodes/inputs/credits/business/f8826/index.ts";
 import {
   f4136,
   inputSchema as f4136InputSchema,
-} from "../nodes/inputs/f4136/index.ts";
+} from "../nodes/inputs/credits/business/f4136/index.ts";
 import {
   f3468,
   inputSchema as f3468InputSchema,
-} from "../nodes/inputs/f3468/index.ts";
+} from "../nodes/inputs/credits/business/f3468/index.ts";
 import {
   f4255,
   inputSchema as f4255InputSchema,
-} from "../nodes/inputs/f4255/index.ts";
+} from "../nodes/inputs/taxes/credit-recapture/f4255/index.ts";
 import {
   f8801,
   inputSchema as f8801InputSchema,
-} from "../nodes/inputs/f8801/index.ts";
+} from "../nodes/inputs/credits/amt/f8801/index.ts";
 import {
   f8332,
   inputSchema as f8332InputSchema,
-} from "../nodes/inputs/f8332/index.ts";
+} from "../nodes/inputs/general/filing/f8332/index.ts";
 import {
   f8822,
   inputSchema as f8822InputSchema,
-} from "../nodes/inputs/f8822/index.ts";
+} from "../nodes/inputs/general/filing/f8822/index.ts";
 import {
   f1310,
   inputSchema as f1310InputSchema,
-} from "../nodes/inputs/f1310/index.ts";
+} from "../nodes/inputs/general/filing/f1310/index.ts";
 import {
   f2439,
   itemSchema as f2439ItemSchema,
-} from "../nodes/inputs/f2439/index.ts";
+} from "../nodes/inputs/payments/investments/f2439/index.ts";
 import {
   f3921,
   itemSchema as f3921ItemSchema,
-} from "../nodes/inputs/f3921/index.ts";
+} from "../nodes/inputs/income/investments/f3921/index.ts";
 import {
   f8997,
   inputSchema as f8997InputSchema,
-} from "../nodes/inputs/f8997/index.ts";
+} from "../nodes/inputs/general/investments/f8997/index.ts";
 import {
   inputSchema as scheduleJInputSchema,
   schedule_j,
-} from "../nodes/inputs/schedule_j/index.ts";
+} from "../nodes/inputs/taxes/income-averaging/schedule_j/index.ts";
 import {
   f8609,
   itemSchema as f8609ItemSchema,
-} from "../nodes/inputs/f8609/index.ts";
+} from "../nodes/inputs/credits/business/f8609/index.ts";
 import {
   f4852,
   itemSchema as f4852ItemSchema,
   reviewedSourceSchema as f4852ReviewedSourceSchema,
-} from "../nodes/inputs/f4852/index.ts";
+} from "../nodes/inputs/income/wages/f4852/index.ts";
 import {
   itemSchema as sepRetirementItemSchema,
   sep_retirement,
-} from "../nodes/inputs/sep_retirement/index.ts";
+} from "../nodes/inputs/adjustments/retirement/sep_retirement/index.ts";
 import {
   inputSchema as nolCarryforwardInputSchema,
   nol_carryforward,
-} from "../nodes/inputs/nol_carryforward/index.ts";
+} from "../nodes/inputs/income/business/nol_carryforward/index.ts";
 import {
   clergy,
   itemSchema as clergyItemSchema,
-} from "../nodes/inputs/clergy/index.ts";
+} from "../nodes/inputs/income/wages/clergy/index.ts";
 import {
   f8915f,
   itemSchema as f8915fItemSchema,
-} from "../nodes/inputs/f8915f/index.ts";
+} from "../nodes/inputs/income/retirement/f8915f/index.ts";
 import {
   f8915d,
   itemSchema as f8915dItemSchema,
-} from "../nodes/inputs/f8915d/index.ts";
+} from "../nodes/inputs/income/retirement/f8915d/index.ts";
 import {
   f3800,
   itemSchema as f3800ItemSchema,
-} from "../nodes/inputs/f3800/index.ts";
+} from "../nodes/inputs/credits/business/f3800/index.ts";
 import {
   f2106,
   itemSchema as f2106ItemSchema,
-} from "../nodes/inputs/f2106/index.ts";
+} from "../nodes/inputs/adjustments/employment/f2106/index.ts";
 import {
   f5405,
   itemSchema as f5405ItemSchema,
-} from "../nodes/inputs/f5405/index.ts";
+} from "../nodes/inputs/taxes/other/f5405/index.ts";
 import {
   household_wages,
   itemSchema as householdWagesItemSchema,
-} from "../nodes/inputs/household_wages/index.ts";
+} from "../nodes/inputs/income/wages/household_wages/index.ts";
 import {
   itemSchema as ltcPremiumItemSchema,
   ltc_premium,
-} from "../nodes/inputs/ltc_premium/index.ts";
+} from "../nodes/inputs/adjustments/health/ltc_premium/index.ts";
 import {
   inputSchema as salesTaxInputSchema,
   sales_tax_deduction,
-} from "../nodes/inputs/sales_tax_deduction/index.ts";
+} from "../nodes/inputs/deductions/itemized/sales_tax_deduction/index.ts";
 import {
   auto_expense,
   itemSchema as autoExpenseItemSchema,
-} from "../nodes/inputs/auto_expense/index.ts";
+} from "../nodes/inputs/income/business/auto_expense/index.ts";
 import {
   inputSchema as scheduleFInputSchema,
   schedule_f,
-} from "../nodes/intermediate/forms/schedule_f/index.ts";
+} from "../nodes/intermediate/forms/income/business/schedule_f/index.ts";
 import {
   form4137,
   inputSchema as form4137InputSchema,
-} from "../nodes/intermediate/forms/form4137/index.ts";
+} from "../nodes/intermediate/forms/taxes/employment/form4137/index.ts";
 import {
   form8919,
   inputSchema as form8919InputSchema,
-} from "../nodes/intermediate/forms/form8919/index.ts";
+} from "../nodes/intermediate/forms/taxes/employment/form8919/index.ts";
 import {
   inputSchema as form8582crInputSchema,
-} from "../nodes/intermediate/forms/form8582cr/index.ts";
-import { disabledAccessLimit } from "../nodes/intermediate/forms/disabled_access_limit/index.ts";
+} from "../nodes/intermediate/forms/credits/business/form8582cr/index.ts";
+import { disabledAccessLimit } from "../nodes/intermediate/forms/credits/business/disabled_access_limit/index.ts";
 import {
   f8917,
   itemSchema as f8917ItemSchema,
-} from "../nodes/inputs/f8917/index.ts";
+} from "../nodes/inputs/adjustments/education/f8917/index.ts";
 import {
   f8867,
   itemSchema as f8867ItemSchema,
-} from "../nodes/inputs/f8867/index.ts";
+} from "../nodes/inputs/general/filing/f8867/index.ts";
 import {
   f8859,
   itemSchema as f8859ItemSchema,
-} from "../nodes/inputs/f8859/index.ts";
+} from "../nodes/inputs/credits/individual/f8859/index.ts";
 import {
   f8820,
   inputSchema as f8820InputSchema,
-} from "../nodes/inputs/f8820/index.ts";
+} from "../nodes/inputs/credits/business/f8820/index.ts";
 import {
   f8082,
   itemSchema as f8082ItemSchema,
-} from "../nodes/inputs/f8082/index.ts";
+} from "../nodes/inputs/general/disclosures/f8082/index.ts";
 import {
   f8873,
   itemSchema as f8873ItemSchema,
-} from "../nodes/inputs/f8873/index.ts";
+} from "../nodes/inputs/income/foreign/f8873/index.ts";
 import {
   f8288,
   itemSchema as f8288ItemSchema,
-} from "../nodes/inputs/f8288/index.ts";
+} from "../nodes/inputs/payments/withholding/f8288/index.ts";
 import {
   f8621,
   itemSchema as f8621ItemSchema,
-} from "../nodes/inputs/f8621/index.ts";
+} from "../nodes/inputs/income/foreign/f8621/index.ts";
 import {
   f8896,
   itemSchema as f8896ItemSchema,
-} from "../nodes/inputs/f8896/index.ts";
+} from "../nodes/inputs/credits/business/f8896/index.ts";
 import {
   f8912,
   itemSchema as f8912ItemSchema,
-} from "../nodes/inputs/f8912/index.ts";
+} from "../nodes/inputs/credits/individual/f8912/index.ts";
 import {
   f8978,
   inputSchema as f8978InputSchema,
-} from "../nodes/inputs/f8978/index.ts";
+} from "../nodes/inputs/taxes/passthrough/f8978/index.ts";
 import {
   f8615,
   inputSchema as f8615InputSchema,
-} from "../nodes/inputs/f8615/index.ts";
+} from "../nodes/inputs/taxes/investments/f8615/index.ts";
 import {
   f8611,
   itemSchema as f8611ItemSchema,
-} from "../nodes/inputs/f8611/index.ts";
+} from "../nodes/inputs/taxes/credit-recapture/f8611/index.ts";
 import {
   f8828,
   itemSchema as f8828ItemSchema,
-} from "../nodes/inputs/f8828/index.ts";
+} from "../nodes/inputs/taxes/credit-recapture/f8828/index.ts";
 import {
   f8835,
   itemSchema as f8835ItemSchema,
-} from "../nodes/inputs/f8835/index.ts";
+} from "../nodes/inputs/credits/business/f8835/index.ts";
 import {
   f8844,
   inputSchema as f8844InputSchema,
-} from "../nodes/inputs/f8844/index.ts";
+} from "../nodes/inputs/credits/business/f8844/index.ts";
 import {
   f8864,
   inputSchema as f8864InputSchema,
-} from "../nodes/inputs/f8864/index.ts";
+} from "../nodes/inputs/credits/business/f8864/index.ts";
 import {
   f8833,
   itemSchema as f8833ItemSchema,
-} from "../nodes/inputs/f8833/index.ts";
+} from "../nodes/inputs/general/foreign/f8833/index.ts";
 import {
   f8840,
   inputSchema as f8840InputSchema,
-} from "../nodes/inputs/f8840/index.ts";
+} from "../nodes/inputs/general/filing/f8840/index.ts";
 import {
   f8843,
   itemSchema as f8843ItemSchema,
-} from "../nodes/inputs/f8843/index.ts";
+} from "../nodes/inputs/general/filing/f8843/index.ts";
 import {
   f8854,
   inputSchema as f8854InputSchema,
-} from "../nodes/inputs/f8854/index.ts";
-import { f8854Annual } from "../nodes/inputs/f8854/annual_node.ts";
-import { annualInputSchema } from "../nodes/inputs/f8854/annual.ts";
+} from "../nodes/inputs/general/foreign/f8854/index.ts";
+import { f8854Annual } from "../nodes/inputs/general/foreign/f8854/annual_node.ts";
+import { annualInputSchema } from "../nodes/inputs/general/foreign/f8854/annual.ts";
 import {
   f5471,
   itemSchema as f5471ItemSchema,
-} from "../nodes/inputs/f5471/index.ts";
+} from "../nodes/inputs/general/foreign/f5471/index.ts";
 import {
   f8805,
   itemSchema as f8805ItemSchema,
-} from "../nodes/inputs/f8805/index.ts";
-import { fec, itemSchema as fecItemSchema } from "../nodes/inputs/fec/index.ts";
+} from "../nodes/inputs/payments/withholding/f8805/index.ts";
+import { fec, itemSchema as fecItemSchema } from "../nodes/inputs/income/foreign/fec/index.ts";
 import {
   inputSchema as qsehraInputSchema,
   qsehra,
-} from "../nodes/inputs/qsehra/index.ts";
+} from "../nodes/inputs/credits/health/qsehra/index.ts";
 import {
   f965,
   inputSchema as f965InputSchema,
-} from "../nodes/inputs/f965/index.ts";
+} from "../nodes/inputs/taxes/foreign/f965/index.ts";
 import {
   itemSchema as pppForgivenessItemSchema,
   ppp_forgiveness,
-} from "../nodes/inputs/ppp_forgiveness/index.ts";
+} from "../nodes/inputs/income/other/ppp_forgiveness/index.ts";
 import {
   depletion,
   itemSchema as depletionItemSchema,
-} from "../nodes/inputs/depletion/index.ts";
+} from "../nodes/inputs/income/business/depletion/index.ts";
 import {
   itemSchema as lumpSumSSItemSchema,
   lump_sum_ss,
-} from "../nodes/inputs/lump_sum_ss/index.ts";
+} from "../nodes/inputs/income/retirement/lump_sum_ss/index.ts";
 import {
   inputSchema as scheduleDInputSchema,
   schedule_d,
-} from "../nodes/intermediate/aggregation/schedule_d/index.ts";
+} from "../nodes/intermediate/aggregation/income/investments/schedule_d/index.ts";
 import {
   f56,
   inputSchema as f56InputSchema,
-} from "../nodes/inputs/f56/index.ts";
+} from "../nodes/inputs/general/filing/f56/index.ts";
 import {
   f970,
   itemSchema as f970ItemSchema,
-} from "../nodes/inputs/f970/index.ts";
+} from "../nodes/inputs/income/business/f970/index.ts";
 import {
   f3115,
   itemSchema as f3115ItemSchema,
-} from "../nodes/inputs/f3115/index.ts";
+} from "../nodes/inputs/income/business/f3115/index.ts";
 import {
   f4970,
   itemSchema as f4970ItemSchema,
-} from "../nodes/inputs/f4970/index.ts";
+} from "../nodes/inputs/taxes/other/f4970/index.ts";
 import {
   f8697,
   itemSchema as f8697ItemSchema,
-} from "../nodes/inputs/f8697/index.ts";
+} from "../nodes/inputs/taxes/interest/f8697/index.ts";
 import {
   f8858,
   inputSchema as f8858InputSchema,
-} from "../nodes/inputs/f8858/index.ts";
+} from "../nodes/inputs/general/foreign/f8858/index.ts";
 import {
   f8866,
   itemSchema as f8866ItemSchema,
-} from "../nodes/inputs/f8866/index.ts";
+} from "../nodes/inputs/taxes/interest/f8866/index.ts";
 import {
   inputSchema as qbiAggregationInputSchema,
   qbiAggregation,
-} from "../nodes/inputs/qbi_aggregation/index.ts";
+} from "../nodes/inputs/deductions/business/qbi_aggregation/index.ts";
 import {
   f843,
   inputSchema as f843InputSchema,
-} from "../nodes/inputs/f843/index.ts";
+} from "../nodes/inputs/payments/disputes/f843/index.ts";
 import {
   f2120,
   inputSchema as f2120InputSchema,
-} from "../nodes/inputs/f2120/index.ts";
+} from "../nodes/inputs/general/filing/f2120/index.ts";
 import {
   f8275,
   inputSchema as f8275InputSchema,
-} from "../nodes/inputs/f8275/index.ts";
+} from "../nodes/inputs/general/disclosures/f8275/index.ts";
 import {
   f8857,
   inputSchema as f8857InputSchema,
-} from "../nodes/inputs/f8857/index.ts";
+} from "../nodes/inputs/payments/disputes/f8857/index.ts";
 
 import {
   f8965,
   inputSchema as f8965InputSchema,
-} from "../nodes/inputs/f8965/index.ts";
+} from "../nodes/inputs/taxes/other/f8965/index.ts";
 import {
   f59e,
   itemSchema as f59eItemSchema,
-} from "../nodes/inputs/f59e/index.ts";
+} from "../nodes/inputs/deductions/business/f59e/index.ts";
 import {
   f1040es,
   inputSchema as f1040esInputSchema,
-} from "../nodes/inputs/f1040es/index.ts";
+} from "../nodes/inputs/payments/estimated/f1040es/index.ts";
 import {
   educator_expenses,
   inputSchema as educatorExpensesInputSchema,
-} from "../nodes/inputs/educator_expenses/index.ts";
+} from "../nodes/inputs/adjustments/education/educator_expenses/index.ts";
 import {
   form8889,
   inputSchema as form8889InputSchema,
-} from "../nodes/intermediate/forms/form8889/index.ts";
+} from "../nodes/intermediate/forms/adjustments/health/form8889/index.ts";
 import {
   inputSchema as iraDeductionWorksheetInputSchema,
   ira_deduction_worksheet,
-} from "../nodes/intermediate/worksheets/ira_deduction_worksheet/index.ts";
+} from "../nodes/intermediate/worksheets/adjustments/retirement/ira_deduction_worksheet/index.ts";
 import {
   inputSchema as preparerInputSchema,
   preparer,
-} from "../nodes/inputs/preparer/index.ts";
+} from "../nodes/inputs/general/filing/preparer/index.ts";
 import {
   inputSchema as sehiInputSchema,
   self_employed_health_insurance,
-} from "../nodes/inputs/self_employed_health_insurance/index.ts";
+} from "../nodes/inputs/adjustments/health/self_employed_health_insurance/index.ts";
 import {
   inputSchema as scheduleHInputSchema,
   schedule_h,
-} from "../nodes/intermediate/forms/schedule_h/index.ts";
+} from "../nodes/intermediate/forms/taxes/household-employment/schedule_h/index.ts";
 import {
   alimony_received,
   itemSchema as alimonyReceivedItemSchema,
-} from "../nodes/inputs/alimony_received/index.ts";
+} from "../nodes/inputs/income/other/alimony_received/index.ts";
 import {
   claimInputSchema as schedule1AClaimInputSchema,
   schedule1a,
-} from "../nodes/intermediate/forms/schedule1a/index.ts";
+} from "../nodes/intermediate/forms/deductions/additional/schedule1a/index.ts";
 import {
   form4684,
   inputSchema as form4684InputSchema,
-} from "../nodes/intermediate/forms/form4684/index.ts";
+} from "../nodes/intermediate/forms/deductions/casualty/form4684/index.ts";
 import {
   form6252,
   itemSchema as form6252ItemSchema,
-} from "../nodes/intermediate/forms/form6252/index.ts";
+} from "../nodes/intermediate/forms/income/investments/form6252/index.ts";
 import {
   form8824,
   inputSchema as form8824InputSchema,
-} from "../nodes/intermediate/forms/form8824/index.ts";
+} from "../nodes/intermediate/forms/income/business/form8824/index.ts";
 import {
   form6781,
   inputSchema as form6781InputSchema,
-} from "../nodes/intermediate/forms/form6781/index.ts";
+} from "../nodes/intermediate/forms/income/investments/form6781/index.ts";
 import {
   form5329,
   inputSchema as form5329InputSchema,
-} from "../nodes/intermediate/forms/form5329/index.ts";
+} from "../nodes/intermediate/forms/taxes/retirement/form5329/index.ts";
 import {
   form4952,
   inputSchema as form4952InputSchema,
-} from "../nodes/intermediate/forms/form4952/index.ts";
+} from "../nodes/intermediate/forms/deductions/investments/form4952/index.ts";
 import {
   form4972Elections,
   publicElectionCollectionSchema as form4972PublicElectionSchema,
-} from "../nodes/intermediate/forms/form4972/elections.ts";
+} from "../nodes/intermediate/forms/taxes/retirement/form4972/elections.ts";
 import {
   form8815,
   inputSchema as form8815InputSchema,
-} from "../nodes/intermediate/forms/form8815/index.ts";
+} from "../nodes/intermediate/forms/income/investments/form8815/index.ts";
 import {
   form7206,
   inputSchema as form7206InputSchema,
-} from "../nodes/intermediate/forms/form7206/index.ts";
+} from "../nodes/intermediate/forms/adjustments/health/form7206/index.ts";
 import {
   form_8829,
   inputSchema as form8829InputSchema,
-} from "../nodes/intermediate/forms/form_8829/index.ts";
+} from "../nodes/intermediate/forms/deductions/business/form_8829/index.ts";
 import {
   form8990,
   publicInputSchema as form8990InputSchema,
-} from "../nodes/intermediate/forms/form8990/index.ts";
-import { form8839 } from "../nodes/intermediate/forms/form8839/index.ts";
-import { publicForm8839SourceSchema } from "../nodes/intermediate/forms/form8839/public_source.ts";
+} from "../nodes/intermediate/forms/deductions/business/form8990/index.ts";
+import { form8839 } from "../nodes/intermediate/forms/credits/individual/form8839/index.ts";
+import { publicForm8839SourceSchema } from "../nodes/intermediate/forms/credits/individual/form8839/public_source.ts";
 import {
   form8396,
   inputSchema as form8396InputSchema,
-} from "../nodes/intermediate/forms/form8396/index.ts";
+} from "../nodes/intermediate/forms/credits/individual/form8396/index.ts";
 import {
   filingInputSchema as form2441InputSchema,
   form2441,
-} from "../nodes/intermediate/forms/form2441/index.ts";
+} from "../nodes/intermediate/forms/credits/individual/form2441/index.ts";
 import {
   filingInputSchema as form2555InputSchema,
   form2555,
-} from "../nodes/intermediate/forms/form2555/index.ts";
+} from "../nodes/intermediate/forms/income/foreign/form2555/index.ts";
 
 export const inputNodes: readonly InputNodeEntry[] = [
   // Array inputs: each item represents a single source record or form instance

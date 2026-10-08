@@ -36,7 +36,7 @@ selected 2026 schema requires; do not collapse them into one aggregate line.
 | Return handoff | Send only the allowed **positive deduction magnitude** to the 2026 Schedule 1 node's `line8a_nol_deduction`; it prints a negative line 8a and reduces the Schedule 1 line 9/1040 line 8 income. Reconcile the same NOL deduction with Form 8990 ATI, Form 6251 alternative-tax NOL and Form 8960 NIIT only under their own rules; none should silently reuse Schedule 1's value. |
 | Farming exception | The December 2024 instructions describe a possible two-year farming-loss carryback and waiver election. Keep the farm amount, origin year, due-date/election evidence and amended-year returns separate. Part II's two prior-year columns and refigured itemized amounts are not a generic 2026 carryforward worksheet. Confirm the actual 2026 filing and MeF path before emitting a carryback attachment on the current-year return. |
 
-The shared [TY2025 `nol_carryforward` node](../../../forms/f1040/nodes/inputs/nol_carryforward/index.ts)
+The shared [TY2025 `nol_carryforward` node](../../../forms/f1040/nodes/inputs/income/business/nol_carryforward/index.ts)
 accepts a caller-supplied `current_year_taxable_income`, groups all NOLs
 into only pre-2018/post-2017 totals, emits no per-origin-year balance and
 produces no Form 172 document or PDF. Its `standard_deduction` output also

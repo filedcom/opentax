@@ -40,7 +40,7 @@ net refundable credits without rewriting Form 8839 line 13.
 
 ## Current code boundary
 
-- The shared [calculator](../../../forms/f1040/nodes/intermediate/forms/form8839/index.ts)
+- The shared [calculator](../../../forms/f1040/nodes/intermediate/forms/credits/individual/form8839/index.ts)
   contains the draft 2026 limits and a per-child credit array, plus 1040
   line 30 and Schedule 3 line 6c outputs. It is **not registered** in the
   2026 registry. Its child schema lacks identity, payment/finalization dates,
@@ -53,9 +53,9 @@ net refundable credits without rewriting Form 8839 line 13.
   calculating its 2026 credit-order inputs. Its outputs contain no complete
   printable Form 8839 record, even though it tracks nonrefundable balances
   by origin year.
-- The TY2025 [PDF descriptor](../../../forms/f1040/2025/pdf/forms/credits/f8839.ts)
+- The TY2025 [PDF descriptor](../../../forms/f1040/2025/pdf/forms/credits/individual/f8839.ts)
   maps only three aggregate fields, and the [MeF
-  serializer](../../../forms/f1040/2025/mef/forms/credits/f8839.ts) emits only the
+  serializer](../../../forms/f1040/2025/mef/forms/credits/individual/f8839.ts) emits only the
   corresponding XML amounts. Neither describes the 2026 per-child credit,
   refundable split, Part III or carryforward. There is no 2026 Form 8839
   PDF/MeF route.

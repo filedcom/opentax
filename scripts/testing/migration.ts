@@ -1,5 +1,9 @@
 import { z } from "zod";
 import {
+  assertMigrationDocuments,
+  documentationPatchSchema,
+} from "./migration-documents.ts";
+import {
   assertPrerequisiteGuardPatch,
   prerequisiteGuardSchema,
 } from "./migration-guards.ts";
@@ -54,6 +58,7 @@ export const migrationProofSchema = z.object({
   })).default([]),
   originalManifest: z.record(z.string().regex(/^[a-f0-9]{64}$/)).optional(),
   prerequisiteGuards: z.array(prerequisiteGuardSchema).default([]),
+  documentationPatches: z.array(documentationPatchSchema).default([]),
 });
 export type MigrationProof = z.infer<typeof migrationProofSchema>;
 
@@ -75,6 +80,8 @@ const reviewedToolingPaths = new Set([
   "scripts/testing/full-lock.test.ts",
   "scripts/testing/migration.ts",
   "scripts/testing/migration.test.ts",
+  "scripts/testing/migration-documents.ts",
+  "scripts/testing/migration-documents.test.ts",
 ]);
 
 /** Reviewed functional tooling changes have an explicit exact-byte boundary. */
@@ -83,6 +90,11 @@ export async function assertMigrationActualSources(
   actualSources: ReadonlyMap<string, string>,
 ): Promise<number> {
   const proof = migrationProofSchema.parse(proofValue);
+  const documents = await assertMigrationDocuments(
+    proof.documentationPatches,
+    proof,
+    actualSources,
+  );
   assertUnique(
     proof.intentionalChanges.map((change) => change.path),
     "intentional changes",
@@ -181,6 +193,13 @@ export async function assertMigrationActualSources(
       throw new Error(`Migrated source missing: ${file.new}`);
     }
     const change = intentional.get(file.new);
+    const document = documents.get(file.new);
+    if (document) {
+      if (actual !== document.afterSource) {
+        throw new Error(`Actual documentation differs: ${file.new}`);
+      }
+      continue;
+    }
     if (!change) {
       if (actual !== (guards.get(file.new)?.afterSource ?? file.afterSource)) {
         throw new Error(
@@ -217,6 +236,7 @@ export async function assertMigrationDiskSources(
   const paths = [
     ...new Set([
       ...proof.files.map((file) => file.new),
+      ...proof.documentationPatches.map((patch) => patch.path),
       ...Object.keys(proof.originalManifest ?? {}).map((path) =>
         mapping.get(path) ?? path
       ),

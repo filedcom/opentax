@@ -1,20 +1,14 @@
-# MeF business rule groups
+# Tax return sections
 
-Files are grouped by the tax concern or tool purpose. Tests and fixtures stay beside the source contract they verify.
+Read tax files in the same seven return sections across source nodes, calculations, projections, tests, and evidence. Runtime and transport helpers retain their role boundaries.
 
-| Group | Contents |
+| Area | Contents |
 | --- | --- |
-| [business](./business/) | 10 files |
-| [credits](./credits/) | 27 files |
-| [deductions](./deductions/) | 3 files |
-| [execution](./execution/) | 19 files |
-| [health](./health/) | 4 files |
-| [identity](./identity/) | 8 files |
-| [income](./income/) | 6 files |
-| [international](./international/) | 30 files |
-| [investments](./investments/) | 11 files |
-| [payments](./payments/) | 5 files |
-| [retirement](./retirement/) | 6 files |
-| [taxes](./taxes/) | 10 files |
-
-The stable `index.ts` registers the same rule groups and ordering. Regenerate via `scripts/maintenance/parse-rules.ts`; its path table assigns each registered group to its folder.
+| [General](general/README.md) | Filing identity, information reporting, and complete-return assembly. |
+| [Income](income/README.md) | Income sources, exclusions, and net-income reconciliation. |
+| [Adjustments](adjustments/README.md) | Adjustments to income before adjusted gross income. |
+| [Deductions](deductions/README.md) | Standard, itemized, additional, and qualified business income deductions. |
+| [Credits](credits/README.md) | Individual and business credits and their limitations. |
+| [index.ts](index.ts) | 1 files |
+| [Taxes](taxes/README.md) | Income tax, additional taxes, recapture, interest, and penalties. |
+| [Payments](payments/README.md) | Withholding, estimated and extension payments, and refund or payment instructions. |

@@ -33,7 +33,7 @@ represent every spouse/insured/payee case.
   precomputed amount with no source proof; line 4 compensation can default
   to infinity, allowing a deduction without the printed cap.
 - Its `archer_msa_distributions` is a Section A Part II amount; the [shared
-  Form 8889 node](../../../forms/f1040/nodes/intermediate/forms/form8889/index.ts)
+  Form 8889 node](../../../forms/f1040/nodes/intermediate/forms/adjustments/health/form8889/index.ts)
   erroneously names that field as the HSA line 4 limit reduction. The 2026
   route must send actual Form 8853 lines **1 and 2** contributions.
 - It sends Schedule 1 income/deduction using shared old targets. Its tax

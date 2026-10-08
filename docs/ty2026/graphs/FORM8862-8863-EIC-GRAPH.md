@@ -52,7 +52,7 @@ statements and expense/aid ledgers.
 | Boxes 8/9 half-time and graduate | Use for AOTC half-time and first-four-years inquiries, with actual enrollment/transcript evidence when the form is missing or incomplete. Graduate status is not a stand-alone LLC approval or AOTC disallowance without the applicable student history. |
 | Box 10 insurer reimbursements; institution EIN/identity | Reduce or recover the expense in the correct payment year; preserve the institution EIN needed for AOTC/Part III, including the documented no-form exception. Determine from current MeF whether the 1098-T source itself is filed or only Form 8863 detail is filed. |
 
-The shared [`f8863` input](../../../forms/f1040/nodes/inputs/f8863/index.ts)
+The shared [`f8863` input](../../../forms/f1040/nodes/inputs/credits/individual/f8863/index.ts)
 asks for 1098-T receipt booleans and accepts a caller-supplied adjusted
 expense, but has no source boxes, academic-period or prior-year correction
 record. Its `prior_year_1098t_received` name is broader than Form 8863's
@@ -64,13 +64,13 @@ scholarship allocation, box 4 recapture, box 6 prior-year grant reduction,
 
 ## Current code gap and build sequence
 
-1. The shared [EIC node](../../../forms/f1040/nodes/intermediate/forms/eitc/index.ts)
+1. The shared [EIC node](../../../forms/f1040/nodes/intermediate/forms/credits/earned-income/eitc/index.ts)
    has 2026 indexed constants but emits `line27_eitc` to the **TY2025** 1040
    node. It is absent from the 2026 registry, and its continuous formula must
    be reconciled to the 2026 EIC table. Build a TY2026 route with explicit
    child details and eligibility diagnostics; do not infer valid SSNs or
    residency from names alone. Add Schedule EIC PDF/MeF attachment.
-2. The shared [Form 8862 input](../../../forms/f1040/nodes/inputs/f8862/index.ts)
+2. The shared [Form 8862 input](../../../forms/f1040/nodes/inputs/credits/individual/f8862/index.ts)
    only forwards `form8862_filed` to TY2025 EIC/8812/8863 nodes and is absent
    from the 2026 registry. Add prior-disallowance decision facts, derive the
    required selected credits, and route complete Part II–IV records to a
@@ -78,7 +78,7 @@ scholarship allocation, box 4 recapture, box 6 prior-year grant reduction,
    Map the pinned 109-widget continuous-use PDF and current 2026 MeF
    attachment/rules, including extra-child/student statements. TY2025 has a
    MeF serializer but no Form 8862 PDF descriptor to carry forward.
-3. The shared [Form 8863 node](../../../forms/f1040/nodes/inputs/f8863/index.ts)
+3. The shared [Form 8863 node](../../../forms/f1040/nodes/inputs/credits/individual/f8863/index.ts)
    still sends results to TY2025 `f1040` and `schedule3` nodes and permits
    absent AOTC qualification answers. Add a 2026 filing input with required
    institution EIN, 1098-T exception evidence, qualifying expenses after aid,

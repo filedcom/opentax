@@ -47,7 +47,7 @@ debt/use, reported-points and 2026 MIP rules plus qualified student-loan
 source and MAGI checks for this intake row.
 
 1. The business credit group contains direct `schedule3` outputs, including
-   [`f8994`](../../../forms/f1040/nodes/inputs/f8994/index.ts). The 2026 route
+   [`f8994`](../../../forms/f1040/nodes/inputs/credits/business/f8994/index.ts). The 2026 route
    must build a Form 3800 source record and its filed evidence before the
    Schedule 3 total. The same audit applies to every named credit node.
 2. [`form8978_reporting_year`](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/nodes/intermediate/worksheets/form8978_reporting_year/index.ts)

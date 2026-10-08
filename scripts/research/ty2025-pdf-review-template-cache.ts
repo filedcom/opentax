@@ -1,5 +1,5 @@
 import { join } from "@std/path";
-import { sha256Hex } from "../../forms/f1040/2025/domains/execution/prepared-source.ts";
+import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared-source.ts";
 
 export interface ReviewTemplateCacheEntry {
   readonly fileName: string;

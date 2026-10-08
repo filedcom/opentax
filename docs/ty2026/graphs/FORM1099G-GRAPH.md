@@ -25,7 +25,7 @@ is source evidence, not automatically a Form 1040 attachment.
 
 ## Current implementation boundary
 
-The shared [`f1099g` node](../../../forms/f1040/nodes/inputs/f1099g/index.ts)
+The shared [`f1099g` node](../../../forms/f1040/nodes/inputs/income/other/f1099g/index.ts)
 is registered in the TY2026 graph for unemployment, a supplied
 tax-benefit-adjusted refund, RTAA, taxable grants and box 4 withholding.
 The [Schedule 1 plan](./SCHEDULE1-GRAPH.md) records its successful focused

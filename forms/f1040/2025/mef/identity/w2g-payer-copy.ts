@@ -1,7 +1,7 @@
 import { PDFDocument } from "pdf-lib";
 import { assertPrintableSourceTextFields } from "../../../source-printable-fields.ts";
-import { inputSchema } from "../../../nodes/inputs/w2g/index.ts";
-import { w2gPdf } from "../../pdf/forms/income/w2g.ts";
+import { inputSchema } from "../../../nodes/inputs/income/gambling/w2g/index.ts";
+import { w2gPdf } from "../../pdf/forms/income/other/w2g.ts";
 import type { FilerIdentity } from "../../../mef/header.ts";
 import type { MefPdfAttachment } from "../form-descriptor.ts";
 import type { MefFormsPending } from "../types.ts";

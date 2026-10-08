@@ -8,13 +8,13 @@ import {
   preparedSourceBytes,
   preparedSourceSha256,
   sha256Hex,
-} from "../../domains/execution/prepared-source.ts";
+} from "../../return-processing/prepared-source.ts";
 import {
   assertPreparedAttachmentManifest,
   assertPreparedAttachmentMetadata,
   assertPreparedDocumentInventory,
 } from "../attachments/prepared-attachment-manifest.ts";
-import { assertF1040FinalHeader } from "../../domains/identity/filer-source-reconciliation.ts";
+import { assertF1040FinalHeader } from "../../domains/general/return-assembly/filer-source-reconciliation.ts";
 import {
   assertFilingResidencyReview,
   type FilingResidencyReview,

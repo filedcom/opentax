@@ -49,7 +49,7 @@ must determine the exact Schedule A/1040 route.
 
 ## Current code boundary
 
-The shared [`rrb1099r` node](../../../forms/f1040/nodes/inputs/rrb1099r/index.ts)
+The shared [`rrb1099r` node](../../../forms/f1040/nodes/inputs/income/retirement/rrb1099r/index.ts)
 mixes boxes from **both** statements in one item. Its `box3_sseb_gross`,
 `box4_sseb_repaid` and `box5_sseb_net` belong to RRB-1099, while its
 `box8_tier2_gross`, `box9_tier2_taxable` and `box10_tier2_withheld` are

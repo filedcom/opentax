@@ -42,6 +42,7 @@ function proof(): MigrationProof {
     additions: [],
     intentionalChanges: [],
     prerequisiteGuards: [],
+    documentationPatches: [],
   };
 }
 
@@ -378,7 +379,7 @@ Deno.test("reviewed prerequisite patch rejects hidden assertion or numeric chang
   );
   const guard = {
     file:
-      "forms/f1040/2025/domains/business/business-schedule1-reconciliation.test.ts",
+      "forms/f1040/2025/domains/income/business/business-schedule1-reconciliation.test.ts",
     beforeSha256: "0".repeat(64),
     afterSha256: "0".repeat(64),
     beforeSource,
@@ -423,7 +424,8 @@ Deno.test("reviewed prerequisite patch rejects hidden assertion or numeric chang
 Deno.test("reviewed conditional and leaf guards preserve assertions exactly", () => {
   const cases = [
     {
-      file: "forms/f1040/2025/mef/forms/income/foreign_employer_wages.test.ts",
+      file:
+        "forms/f1040/2025/mef/forms/income/foreign/foreign_employer_wages.test.ts",
       line: 111,
       old: "  if (hasXsd) {\n",
       new:
@@ -490,7 +492,7 @@ Deno.test("guard approval remains bound to original unchanged test source", asyn
       (byte) => byte.toString(16).padStart(2, "0"),
     ).join("");
   const file =
-    "forms/f1040/2025/domains/business/business-schedule1-reconciliation.test.ts";
+    "forms/f1040/2025/domains/income/business/business-schedule1-reconciliation.test.ts";
   const beforeSource = "\n".repeat(29) + "    return;\nconst expected = 100;\n";
   const old = "    return;\n";
   const replacement =

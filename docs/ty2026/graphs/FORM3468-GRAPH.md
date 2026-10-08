@@ -44,7 +44,7 @@ limitation, passive-credit and carryforward calculations.
 
 ## Current code boundary
 
-The shared [`f3468` input](../../../forms/f1040/nodes/inputs/f3468/index.ts)
+The shared [`f3468` input](../../../forms/f1040/nodes/inputs/credits/business/f3468/index.ts)
 has one flat basis number per selected technology, hard-coded TY2025 rates,
 no facility or registration identity, no construction/service-date gates,
 no DOE/bonus/PFE/bond/transfer/elective-payment ledger, and no printed

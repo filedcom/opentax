@@ -58,7 +58,7 @@ rendered first page and their coordinates. Every field begins with
 
 ## Current code boundary
 
-The shared [`f4852` node](../../../forms/f1040/nodes/inputs/f4852/index.ts)
+The shared [`f4852` node](../../../forms/f1040/nodes/inputs/income/wages/f4852/index.ts)
 is registered for TY2025 but has no PDF descriptor or MeF serializer. It
 routes user-entered values to 1040, Form 8959, Form 5329 and Schedule 3,
 without source evidence, form printing, or replacement-of-original

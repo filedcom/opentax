@@ -44,7 +44,7 @@ instructions and current MeF rules before finalizing the election.
 
 ## Current implementation boundary
 
-The shared [`schedule_j` node](../../../forms/f1040/nodes/inputs/schedule_j/index.ts)
+The shared [`schedule_j` node](../../../forms/f1040/nodes/inputs/taxes/income-averaging/schedule_j/index.ts)
 accepts `schedule_j_tax` as a caller-supplied answer and writes it to the
 TY2025 Form 1040 line 16 key. It identifies its base years as 2022–2024,
 not 2023–2025, and accepts only three undifferentiated prior taxable-income

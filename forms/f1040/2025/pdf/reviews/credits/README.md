@@ -1,14 +1,11 @@
 # Credits
 
-Source contracts, fixtures and adjacent tests for this tax concern. Public form identifiers and registration remain in the parent entrypoint.
+Individual and business credits and their limitations.
 
-Source and fixture entrypoints:
+| Area | Contents |
+| --- | --- |
+| [business](business) | 4 files |
+| [health](health) | 9 files |
+| [individual](individual/README.md) | 27 files |
 
-- [form8863-claimant-source.fixture.ts](./form8863-claimant-source.fixture.ts)
-- [form8863-owner-review.fixture.ts](./form8863-owner-review.fixture.ts)
-- [form8863-parent-child-kiddie-tax.fixture.ts](./form8863-parent-child-kiddie-tax.fixture.ts)
-- [form8863-parent-child-scholarship.fixture.ts](./form8863-parent-child-scholarship.fixture.ts)
-- [form8863-parent-preferential.fixture.ts](./form8863-parent-preferential.fixture.ts)
-- [form8863-remarried-mfj-parent.fixture.ts](./form8863-remarried-mfj-parent.fixture.ts)
-- [form8863-remarried-mfs-parent.fixture.ts](./form8863-remarried-mfs-parent.fixture.ts)
-- [form8863-sibling-parent-selection.fixture.ts](./form8863-sibling-parent-selection.fixture.ts)
+Canonical [Form 8962](../../../mef/forms/credits/health/f8962/f8962.ts) also reconciles advance-credit repayment under [Taxes](../taxes/README.md); its whole-form family is classified as Credits.

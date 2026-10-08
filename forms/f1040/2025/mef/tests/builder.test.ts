@@ -11,42 +11,42 @@ import { registry } from "../../registry.ts";
 import { pdfReviewFixtures } from "../../pdf/review-fixtures.ts";
 import { buildMefBundle, buildMefXml as rawBuildMefXml } from "../builder.ts";
 import { assertPreparedAttachmentManifest } from "../attachments/prepared-attachment-manifest.ts";
-import { sha256Hex } from "../../domains/execution/prepared-source.ts";
+import { sha256Hex } from "../../return-processing/prepared-source.ts";
 import { buildPdfBytes } from "../../pdf/builder.ts";
-import { schedule_b as scheduleBNode } from "../../../nodes/intermediate/aggregation/schedule_b/index.ts";
+import { schedule_b as scheduleBNode } from "../../../nodes/intermediate/aggregation/income/investments/schedule_b/index.ts";
 import { FilingStatus } from "../types.ts";
 import type { FilerIdentity } from "../types.ts";
-import { additionalQmidLines } from "../forms/credits/f5695_qmid_attachment.ts";
+import { additionalQmidLines } from "../forms/credits/individual/f5695_qmid_attachment.ts";
 import { FilingStatus as NodeFilingStatus, TS } from "../../../nodes/types.ts";
-import { calculateOwnerForms } from "../../../nodes/intermediate/forms/form5329/index.ts";
+import { calculateOwnerForms } from "../../../nodes/intermediate/forms/taxes/retirement/form5329/index.ts";
 import {
   form4972 as form4972Node,
   inputSchema as form4972InputSchema,
-} from "../../../nodes/intermediate/forms/form4972/index.ts";
-import { DistributionCode } from "../../../nodes/inputs/f1099r/index.ts";
-import { Box12Code } from "../../../nodes/inputs/w2/index.ts";
+} from "../../../nodes/intermediate/forms/taxes/retirement/form4972/index.ts";
+import { DistributionCode } from "../../../nodes/inputs/income/retirement/f1099r/index.ts";
+import { Box12Code } from "../../../nodes/inputs/income/wages/w2/index.ts";
 import { SS_WAGE_BASE_2025 } from "../../../nodes/config/2025.ts";
 import {
   calculateForm4137,
   inputSchema as form4137InputSchema,
-} from "../../../nodes/intermediate/forms/form4137/index.ts";
+} from "../../../nodes/intermediate/forms/taxes/employment/form4137/index.ts";
 import {
   calculateForm8919,
   inputSchema as form8919InputSchema,
-} from "../../../nodes/intermediate/forms/form8919/index.ts";
-import { scheduleSELines } from "../../../nodes/intermediate/forms/schedule_se/calculation.ts";
-import { Form8949Part } from "../../../nodes/intermediate/forms/form8949/index.ts";
+} from "../../../nodes/intermediate/forms/taxes/employment/form8919/index.ts";
+import { scheduleSELines } from "../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/calculation.ts";
+import { Form8949Part } from "../../../nodes/intermediate/forms/income/investments/form8949/index.ts";
 import {
   schedule2Part1Total,
   schedule2Part2Total,
-} from "../../../nodes/intermediate/aggregation/schedule2/index.ts";
-import { buildIsoAmtBasisLedger } from "../../../nodes/inputs/f3921/index.ts";
-import { DependentRelationship } from "../../../nodes/inputs/general/index.ts";
+} from "../../../nodes/intermediate/aggregation/taxes/other/schedule2/index.ts";
+import { buildIsoAmtBasisLedger } from "../../../nodes/inputs/income/investments/f3921/index.ts";
+import { DependentRelationship } from "../../../nodes/inputs/general/filing/general/index.ts";
 import {
   ForeignTaxCreditMethod,
   ForeignTaxKind,
   IncomeCategory,
-} from "../../../nodes/intermediate/forms/form_1116/index.ts";
+} from "../../../nodes/intermediate/forms/credits/foreign/form_1116/index.ts";
 
 const sampleForm1116 = {
   foreign_tax_paid: 800,

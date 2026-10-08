@@ -110,7 +110,7 @@ numeric tamper probe. Its formerly synchronous-only Form 8824 skip is removed;
 the generated gain statement is prepared through the same real packet path.
 The explicit guarded set becomes 11 and the positive audit scope becomes 361.
 Production tax/source guards are unchanged. The corrected normal checked
-`deno task test forms/f1040/2025/domains/execution/calculated_return_replay.test.ts` passed
+`deno task test forms/f1040/2025/return-processing/calculated_return_replay.test.ts` passed
 **1 test / 0 failed (7m27s)**, covering all 361 positive fixtures and every
 finite numeric Form 1040/Schedules 1–3 tamper probe. Eleven guarded fixture
 IDs remain explicit; no extra fixture was silently omitted. Before/after source
@@ -2733,7 +2733,7 @@ Requested the secure locations of authorized enrollment/service/business-rule ev
 
 Read compacted learnings first. The current Form7203 debt contract and latest gap-note appendices already cover multiple written notes, open accounts and overflow; remaining prior-history/restoration/gain authentication is not bypassed. Current ScheduleJ source code and later proof notes already cover independently sourced nonfarm wages and multiple owned fishing/farm cases; older narrow historical descriptions do not establish a new missing implementation. An exploratory calculation-node path was nonexistent and corrected through actual file inventory. Combined historical ScheduleJ/9465 reads were truncated; conclusions use separately read current code, latest appendices and safely bounded source sections. No claim of fully reading the truncated historical output.
 
-The existing Form9465 authorization research found current IRS IRM5.19.1.6.4.13(6)'s recognition of attached electronically signed requests. Its DDIA context does not specify the staged non-direct-debit request's software consent/signature representation. The precise primary-source limit is recorded in the existing [9465 boundary](../domains/payments/form9465/ty2025-form9465-filing-boundary.md), with nine dedicated terminal full-regression passes extracted and all2,590 current runtime hashes verified privately in `form9465-current-boundary-20261007.json`. This replaces stale “all unrun” framing but leaves both export guards and descriptor nonregistration intact. Main52/future31 unworked/unchanged, existing passing aggregate75/267/2,706 unchanged; top MeF estimate remains unchanged.
+The existing Form9465 authorization research found current IRS IRM5.19.1.6.4.13(6)'s recognition of attached electronically signed requests. Its DDIA context does not specify the staged non-direct-debit request's software consent/signature representation. The precise primary-source limit is recorded in the existing [9465 boundary](../domains/payments/installments/form9465/ty2025-form9465-filing-boundary.md), with nine dedicated terminal full-regression passes extracted and all2,590 current runtime hashes verified privately in `form9465-current-boundary-20261007.json`. This replaces stale “all unrun” framing but leaves both export guards and descriptor nonregistration intact. Main52/future31 unworked/unchanged, existing passing aggregate75/267/2,706 unchanged; top MeF estimate remains unchanged.
 
 ## October 7: complete frozen requirement inventory and checkoff limits
 
@@ -2859,7 +2859,7 @@ fixture row or prove authentic prior filing, issuer source, business-rule
 compatibility, final tax treatment, or an accepted return.
 
 The normal typed focused command
-`PATH=/tmp/opentax-poppler-env/bin:$PATH deno test --allow-read --allow-write --allow-run=pdftotext forms/f1040/2025/mef/forms/investments/f8997.staged.test.ts forms/f1040/nodes/inputs/f8997`
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno test --allow-read --allow-write --allow-run=pdftotext forms/f1040/2025/mef/forms/general/investments/f8997.staged.test.ts forms/f1040/nodes/inputs/f8997`
 passes **24/0**, including multi-page retention in all parts, exact five-row
 holding boundary, changed totals/rows/checkboxes, missing source joins, and
 missing identity. Initial tool-PATH and fixture type errors were corrected
@@ -2991,7 +2991,7 @@ comparison retains all 60 maximum-length occurrences; 101 characters are rejecte
 All ten continuation pages were visually reviewed without observed clipping or
 overlap; the two main-page image hashes match the prior reviewed packet. The
 85-row/12-page packet passes standalone IRS8997 XSD. Evidence and SHA256 hashes
-are recorded in [the Form 8997 gap](../domains/investments/form8997/ty2025-form8997-gap.md). All 2,591 runtime
+are recorded in [the Form 8997 gap](../domains/general/investments/form8997/ty2025-form8997-gap.md). All 2,591 runtime
 hashes still match the full-regression launch manifest; the same test run remains
 live, with no terminal result. Both full-export guards remain. No aggregate
 increase, main-board checkoff, future-row implementation or PR creation.
@@ -3004,7 +3004,7 @@ Inspected the current snapshot builder, reader and next-year opening reconciler,
 and recorded the tracked non-test TypeScript caller inventory. These helpers
 validate entered references and source balances; no production durable store,
 authenticated acceptance lookup or2026 engine importer is established.
-[The activity-ID gap](../domains/losses/form8582/ty2025-form8582-activity-id-gap.md) now distinguishes this
+[The activity-ID gap](../domains/income/business/form8582/ty2025-form8582-activity-id-gap.md) now distinguishes this
 passing helper evidence from the still-open existing persistence/import scope.
 Private audit SHA256: `06591a4c941128ad994db31fdf5a74ef738c1e91e811e77d4de00775c6d050d8`.
 No runtime or future-row work; main52 requirements and aggregates unchanged.
@@ -3015,7 +3015,7 @@ Commit `84c4388c5` on `codex/form8582-overflow-20261007` implements source-bound
 PartsIV–IX continuation schedules without changing the main runtime under test.
 Typed Form8582 suite128/0; actual IRS-template attachments15+12pages all visually
 reviewed; all22 activity names per applicable worksheet retained and standalone
-XSD checks pass. [The activity-ID gap](../domains/losses/form8582/ty2025-form8582-activity-id-gap.md) records
+XSD checks pass. [The activity-ID gap](../domains/income/business/form8582/ty2025-form8582-activity-id-gap.md) records
 private evidence hashes and remaining integration/full-public-graph prerequisites.
 The isolated checkout remains at `/tmp/opentax-form8582-overflow-20261007`; its
 code is not yet integrated. Main runtime2,591hashes unchanged; same regression
@@ -3028,7 +3028,7 @@ produce full XSD-valid returns and49 PDF pages (22new views/27exact reviewed-ima
 matches). Independent source/native/PDF audit verifies154 Form8582 row sequences,
 all22 ScheduleE property addresses/line17/20/21 values per fixture, allocated
 losses5,000/0, and Form1040 taxes21,467/22,667 and owed1,467/2,667. Changed utility
-source999 rejects at both exports. [The activity-ID gap](../domains/losses/form8582/ty2025-form8582-activity-id-gap.md)
+source999 rejects at both exports. [The activity-ID gap](../domains/income/business/form8582/ty2025-form8582-activity-id-gap.md)
 records hashes and qualifications; private audit SHA256
 `2b6d605734b6d173c8156fc606243e7566c855a2ae7732c675a57096e8f5c3f2`.
 An apparent ScheduleE blank was a visual misreading, corrected against image and
@@ -3043,7 +3043,7 @@ owner, both W-2 recipient names/SSNs, ScheduleE amounts and Form1040 totals
 reconcile; full XSD passes. Eleven new image views plus16 exact reviewed-image
 matches cover the packet. New primary-only Form8582 header observation is
 recorded in future row35, unworked; PDF identity parity stays qualified.
-[The activity-ID gap](../domains/losses/form8582/ty2025-form8582-activity-id-gap.md) retains the evidence
+[The activity-ID gap](../domains/income/business/form8582/ty2025-form8582-activity-id-gap.md) retains the evidence
 and audit SHA256 `3052cef71bc180f0d90475475fd703fc1ff37f29298fd80ce104bbbffe7edb7e`.
 Main52 requirements and aggregates unchanged;2,591 runtime hashes unchanged.
 
@@ -3053,7 +3053,7 @@ Isolated commit `820c98563` carries the existing reviewed retained-property-sale
 operating-PAL calculation into its ledger contract. PartI/II gains enter the
 loss limit without changing operating reporting character; four synthetic
 calculator/snapshot/opening-contract observations reconcile. Wider typed
-PDF/native/node suite132/0. [The activity-ID gap](../domains/losses/form8582/ty2025-form8582-activity-id-gap.md)
+PDF/native/node suite132/0. [The activity-ID gap](../domains/income/business/form8582/ty2025-form8582-activity-id-gap.md)
 records evidence hashes and remaining production persistence, acceptance and
 engine-import gates. Source authentication and filing guards remain unchanged.
 Main2,591runtime hashes unchanged;52 requirements and35 future rows unchanged.
@@ -3064,7 +3064,7 @@ Isolated commit `25fefcab7` retains fully released operating losses for the
 existing reviewed PartII entire-sale overall-gain route. Both active/other
 synthetic snapshots preserve prior3,000/current2,000/allowed5,000/ending0 and
 filed-document reference; existing disposition and source validation remain.
-Typed PDF/native/node suite133/0. [The activity-ID gap](../domains/losses/form8582/ty2025-form8582-activity-id-gap.md)
+Typed PDF/native/node suite133/0. [The activity-ID gap](../domains/income/business/form8582/ty2025-form8582-activity-id-gap.md)
 records evidence hashes and qualifications. Production storage, accepted-source
 authentication and engine import remain open; main runtime2,591paths unchanged.
 No main checkoff, future-row work or aggregate increase.
@@ -3157,9 +3157,9 @@ credit is deposited. Native/source projection and prepared-packet integration
 remain required under the existing main trust-K1 requirement.
 
 Normal typed focused command: `deno test --allow-read --allow-write
---allow-net=www.irs.gov forms/f1040/2025/domains/business/trust-k1/trust-k1-issued-copy-fields.test.ts
-forms/f1040/2025/domains/business/trust-k1/trust-k1-issued-copy-review.test.ts
-forms/f1040/2025/domains/business/trust-k1/trust_k1_backup_withholding.test.ts`: **15 passed /0 failed**.
+--allow-net=www.irs.gov forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-review.test.ts
+forms/f1040/2025/domains/payments/withholding/trust-k1/trust_k1_backup_withholding.test.ts`: **15 passed /0 failed**.
 Cases include full field preservation and continued export guards, rehashed
 identity/amount changes, duplicate/missing codeB, malformed amount, missing
 field/page, hidden text and stale appearance. A prior14/1 run failed while
@@ -3188,10 +3188,10 @@ nonnegative-type, invalid-date and conflicting-indicator rows reject.
 
 Final normal typed focused command:
 `deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov
-forms/f1040/2025/domains/business/trust-k1/trust-k1-native-copy-review.test.ts
-forms/f1040/2025/domains/business/trust-k1/trust-k1-issued-copy-fields.test.ts
-forms/f1040/2025/domains/business/trust-k1/trust-k1-issued-copy-review.test.ts
-forms/f1040/2025/domains/business/trust-k1/trust_k1_backup_withholding.test.ts`: **29 passed /0 failed**.
+forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-review.test.ts
+forms/f1040/2025/domains/payments/withholding/trust-k1/trust_k1_backup_withholding.test.ts`: **29 passed /0 failed**.
 Four positive native shapes validate against the cached standalone K1 XSD:
 all amount rows, foreign-address, spouse-owned, suffix/care-of/second-line.
 The retained artifact set separately contains three synthetic source PDFs
@@ -3237,11 +3237,11 @@ helper does not authorize a codeB credit or authenticate the fiduciary.
 
 Normal typed focused command:
 `deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov
-forms/f1040/2025/domains/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts
-forms/f1040/2025/domains/business/trust-k1/trust-k1-native-copy-review.test.ts
-forms/f1040/2025/domains/business/trust-k1/trust-k1-issued-copy-fields.test.ts
-forms/f1040/2025/domains/business/trust-k1/trust-k1-issued-copy-review.test.ts
-forms/f1040/2025/domains/business/trust-k1/trust_k1_backup_withholding.test.ts`: **51 passed /0 failed**.
+forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-review.test.ts
+forms/f1040/2025/domains/payments/withholding/trust-k1/trust_k1_backup_withholding.test.ts`: **51 passed /0 failed**.
 One prior49/1 run used numeric MeF filing status in a public-input fixture;
 corrected it to `FilingStatus.Single` and reran. All logs retained. After the
 final passing run only an error message was clarified: trust-name match and
@@ -3284,13 +3284,13 @@ Root runtime remains unchanged while its integrated Form8582 regression runs.
 Normal typed focused command:
 `PATH=/tmp/opentax-poppler-env/bin:$PATH deno test --allow-read --allow-write
 --allow-run=xmllint,pdftotext,pdftoppm --allow-net=www.irs.gov
-forms/f1040/nodes/inputs/k1_trust/index.test.ts
-forms/f1040/2025/domains/payments/f8288/f8288-withholding-reconciliation.test.ts
-forms/f1040/2025/domains/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts
-forms/f1040/2025/domains/business/trust-k1/trust-k1-native-copy-review.test.ts
-forms/f1040/2025/domains/business/trust-k1/trust-k1-issued-copy-fields.test.ts
-forms/f1040/2025/domains/business/trust-k1/trust-k1-issued-copy-review.test.ts
-forms/f1040/2025/domains/business/trust-k1/trust_k1_backup_withholding.test.ts`: **111 passed /0 failed**.
+forms/f1040/nodes/inputs/income/rental-passthrough/k1_trust/index.test.ts
+forms/f1040/2025/domains/payments/withholding/f8288/f8288-withholding-reconciliation.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust-k1-source-copy-reconciliation.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust-k1-native-copy-review.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-fields.test.ts
+forms/f1040/2025/domains/income/business/trust-k1/trust-k1-issued-copy-review.test.ts
+forms/f1040/2025/domains/payments/withholding/trust-k1/trust_k1_backup_withholding.test.ts`: **111 passed /0 failed**.
 Cases include cent drift, unsafe sum, two-owner/W2G aggregate346, all-five-source
 replay75,700.75, changed/omitted/excess source totals and continued attachment
 rejection on a fully calculated graph. V1 type checking caught a wrong public
@@ -3534,7 +3534,7 @@ explicit expense-free boundary. New discoveries are future rows37–38,
 unworked. Do not classify this evidence as positive filing support.
 
 Typed focused command: `deno test --allow-read --allow-write
---allow-net=www.irs.gov forms/f1040/2025/domains/credits/earned-income/eic_combined_investment.test.ts --
+--allow-net=www.irs.gov forms/f1040/2025/domains/credits/earned-income/earned-income/eic_combined_investment.test.ts --
 --write-review-artifacts <private-evidence-directory>`; terminal2/0 in1s
 (whole invocation5.61s),2026-10-07T22:09:52.378844Z–22:09:57.992218Z.
 The initial focused attempt was1/1 because the fixture omitted the portfolio
@@ -3687,9 +3687,9 @@ private `current-property-loss-review-final-20261008-v3/`, log SHA256
 `7748c0a9c2f9938c49a25b74c43d3cd34bb23c79a7c188cca7d24b006316e3f3`.
 Run JSON binds changed code/test hashes and every retained XML/PDF/JSON/text hash.
 Command: `deno test --allow-read --allow-write --allow-run=xmllint,pdftotext
---allow-net=www.irs.gov forms/f1040/2025/pdf/forms/execution/f8582.test.ts
-forms/f1040/2025/pdf/forms/execution/f8582-current-loss-review.test.ts
-forms/f1040/2025/mef/forms/execution/f8582/f8582-current-loss-review.test.ts --
+--allow-net=www.irs.gov forms/f1040/2025/pdf/forms/income/business/f8582.test.ts
+forms/f1040/2025/pdf/forms/income/business/f8582-current-loss-review.test.ts
+forms/f1040/2025/mef/forms/income/business/f8582/f8582-current-loss-review.test.ts --
 --write-review-artifacts <private-directory>`; Poppler supplied by
 `/tmp/opentax-poppler-env/bin`.
 
@@ -3777,11 +3777,11 @@ Run JSON binds all four modified/new code/test files, source/pending review
 JSONs and11 standalone XSD-validated documents: four IRS1040ScheduleE, four
 IRS4835 and three IRS4797; the fully suspended ordinary loss has no IRS4797.
 Command: `deno test --allow-read --allow-write --allow-run=xmllint
---allow-net=www.irs.gov forms/f1040/2025/mef/forms/execution/current-loss-original-form-review.test.ts
-forms/f1040/2025/mef/forms/business/schedule_e.test.ts
-forms/f1040/2025/mef/forms/business/f4835.test.ts
-forms/f1040/2025/mef/forms/business/f4797.test.ts
-forms/f1040/2025/domains/credits/earned-income/eic_passive_property_source.test.ts --
+--allow-net=www.irs.gov forms/f1040/2025/mef/support/current-loss-original-form-review.test.ts
+forms/f1040/2025/mef/forms/income/rental-passthrough/schedule_e.test.ts
+forms/f1040/2025/mef/forms/income/business/f4835.test.ts
+forms/f1040/2025/mef/forms/income/business/f4797.test.ts
+forms/f1040/2025/domains/credits/earned-income/earned-income/eic_passive_property_source.test.ts --
 --write-review-artifacts <private-directory>`.
 Existing positive property/native/source cases passed; eight existing positive
 PDF packets/99 pages were regenerated, with no additional filing-support count.
@@ -3798,7 +3798,7 @@ bound in the accompanying JSON; the printed property description follows the
 native20-character limit. No blank deductible page is generated for fully
 suspended loss. Command: `PATH=/tmp/opentax-poppler-env/bin:$PATH deno test
 --allow-read --allow-write --allow-run=pdftotext
-forms/f1040/2025/pdf/forms/execution/current-loss-4797-review.test.ts --
+forms/f1040/2025/pdf/support/current-loss-4797-review.test.ts --
 --write-review-artifacts <private-directory>`.
 
 PDF v1 failed type checking: my empty-result fields had an inconsistent inferred
@@ -3846,8 +3846,8 @@ Focused final5/0 (1s; 3.72s invocation),
 Run JSON binds three changed/new files and all review input/pending/projection,
 PDF and text hashes. Command: `PATH=/tmp/opentax-poppler-env/bin:$PATH deno test
 --allow-read --allow-write --allow-run=pdftotext
-forms/f1040/2025/pdf/forms/execution/current-loss-operating-review.test.ts
-forms/f1040/2025/pdf/forms/business/f4835.test.ts --
+forms/f1040/2025/pdf/support/current-loss-operating-review.test.ts
+forms/f1040/2025/pdf/forms/income/business/f4835.test.ts --
 --write-review-artifacts <private-directory>`.
 
 Eight PDFs/12 pages (four two-page Schedule E and four one-page Form4835)
@@ -3952,7 +3952,7 @@ base `12200f62624a8a2d67f15475b1d23a75c028de8a` plus two source files bound in
 private `current-loss-return-pdf-review-20261008-v4/run.json`.
 Command: `PATH=/tmp/opentax-poppler-env/bin:$PATH deno test --allow-read
 --allow-write --allow-run=pdftotext --allow-net=www.irs.gov
-forms/f1040/2025/pdf/forms/execution/current-loss-return-review.test.ts --
+forms/f1040/2025/pdf/support/current-loss-return-review.test.ts --
 --write-review-artifacts <private-directory>`.
 Log SHA256 `8e10374f59f35c65e6083e932493ceb0e6ab4f8394efae22005b1c2025f4e1cd`.
 
@@ -4011,10 +4011,10 @@ Normal typed focus **89 passed/0 failed**, exit0,
 2026-10-07T23:06:28.660798Z–23:06:30.910700Z, base
 `798ff260beb263622466a39d6b9ef3e41b68fed2` plus two bound files.
 Command: `deno test --allow-read --allow-write
-forms/f1040/2025/domains/business/current-loss-ledger.test.ts
-forms/f1040/nodes/intermediate/forms/form8582/ledger.test.ts
-forms/f1040/nodes/intermediate/forms/form8582/current-form-allocation.test.ts
-forms/f1040/nodes/intermediate/forms/form8582/index.test.ts --
+forms/f1040/2025/domains/income/business/current-loss-ledger.test.ts
+forms/f1040/nodes/intermediate/forms/income/business/form8582/ledger.test.ts
+forms/f1040/nodes/intermediate/forms/income/business/form8582/current-form-allocation.test.ts
+forms/f1040/nodes/intermediate/forms/income/business/form8582/index.test.ts --
 --write-review-artifacts <private-directory>`.
 Private `current-loss-ledger-20261008-v3/` retains run/verification manifests
 and four source/pending/ledger/opening JSONs. Log SHA256
@@ -4149,8 +4149,8 @@ command. No main TODO is checked off.
 
 Normal typed focused command: `deno test --allow-read --allow-write
 cli/store/form8582-ledger.test.ts cli/store/store.test.ts
-forms/f1040/2025/domains/business/current-loss-ledger.test.ts
-forms/f1040/nodes/intermediate/forms/form8582/ledger.test.ts`.
+forms/f1040/2025/domains/income/business/current-loss-ledger.test.ts
+forms/f1040/nodes/intermediate/forms/income/business/form8582/ledger.test.ts`.
 Final v4 result: **39 passed / 0 failed**, exit 0,
 2026-10-07T23:24:31.103372Z–23:24:33.518122Z.
 Private `form8582-durable-candidate-20261008-v4/run.json` binds the two new
@@ -4675,7 +4675,7 @@ explicitly remains filing-unready, payment-authenticity-unverified and annual
 required-payment-unreconciled. No filed line 19 is generated.
 
 Final ordinary typed six-module command:
-`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/domains/payments/form2210/form2210_payments.test.ts forms/f1040/2025/domains/payments/form2210/form2210_box_e.test.ts forms/f1040/2025/domains/payments/form2210/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/f2210/calculation.test.ts forms/f1040/nodes/inputs/f2210/index.test.ts forms/f1040/2025/domains/execution/attachment-coverage.test.ts`.
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_payments.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/calculation.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/index.test.ts forms/f1040/2025/return-processing/attachment-coverage.test.ts`.
 Actual session 13708 terminal exit 0; **52 passed / 0 failed / 0 ignored**,
 393ms test duration, 03:19:53.293656–03:19:58.705874 UTC. This includes eight
 new cases and the existing prior-source/native/PDF projection and attachment
@@ -4730,7 +4730,7 @@ The calculated penalty stays an optional worksheet; no Form 1040 line 38 is
 inserted and both public attachment guards remain active.
 
 Normal typed seven-module command:
-`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/domains/payments/form2210/form2210_box_e_payment_return.test.ts forms/f1040/2025/domains/payments/form2210/form2210_payments.test.ts forms/f1040/2025/domains/payments/form2210/form2210_box_e.test.ts forms/f1040/2025/domains/payments/form2210/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/f2210/calculation.test.ts forms/f1040/nodes/inputs/f2210/index.test.ts forms/f1040/2025/domains/execution/attachment-coverage.test.ts`.
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_payment_return.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_payments.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/calculation.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/index.test.ts forms/f1040/2025/return-processing/attachment-coverage.test.ts`.
 Actual session 27758 terminal exit 0: **56 passed / 0 failed / 0 ignored**,
 950ms test duration, 03:27:14.939054–03:27:45.497137 UTC. Four new tests
 include fourteen source/identity/tax/prior-byte/override conflicts plus source
@@ -4772,7 +4772,7 @@ actual method, emits no partial XML/PDF and inserts no line 38; the regular
 E-only API keeps its default-method contract. Both export guards remain.
 
 Normal typed command:
-`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/domains/payments/form2210/form2210_box_e_payment_return.test.ts forms/f1040/2025/domains/payments/form2210/form2210_payments.test.ts forms/f1040/2025/domains/payments/form2210/form2210_box_e.test.ts forms/f1040/2025/domains/payments/form2210/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/f2210/calculation.test.ts forms/f1040/nodes/inputs/f2210/index.test.ts forms/f1040/2025/domains/execution/attachment-coverage.test.ts`.
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_payment_return.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_payments.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/calculation.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/index.test.ts forms/f1040/2025/return-processing/attachment-coverage.test.ts`.
 Actual session 33931 terminal exit 0: **62 passed / 0 failed / 0 ignored**,
 953ms test duration, 03:36:41.906588–03:37:12.370731 UTC.
 Deno 2.9.4/V8 15.0.245.2-rusty/TypeScript 6.0.3; root lock unchanged.
@@ -4817,7 +4817,7 @@ penalty is rounded directly to whole dollars for line 19; a constructed
 while the separate cent worksheet is $101.50. No double rounding is used.
 
 Normal typed seven-module command:
-`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/domains/payments/form2210/form2210_box_e_payment_return.test.ts forms/f1040/2025/domains/payments/form2210/form2210_payments.test.ts forms/f1040/2025/domains/payments/form2210/form2210_box_e.test.ts forms/f1040/2025/domains/payments/form2210/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/f2210/calculation.test.ts forms/f1040/nodes/inputs/f2210/index.test.ts forms/f1040/2025/domains/execution/attachment-coverage.test.ts`.
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_payment_return.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_payments.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/calculation.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/index.test.ts forms/f1040/2025/return-processing/attachment-coverage.test.ts`.
 Actual session 89643 terminal exit 0: **65 passed / 0 failed / 0 ignored**,
 1s Deno test duration; 03:44:28.505322–03:44:59.500174 UTC.
 Deno 2.9.4/V8 15.0.245.2-rusty/TypeScript 6.0.3; root lock unchanged.
@@ -4869,7 +4869,7 @@ preflight/log/status; no pass is claimed. Synthesizing blank appearances before
 AI removal fixed the newly added helper. Existing future date handler unchanged.
 
 Final normal typed seven-module command:
-`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/domains/payments/form2210/form2210_box_e_payment_return.test.ts forms/f1040/2025/domains/payments/form2210/form2210_payments.test.ts forms/f1040/2025/domains/payments/form2210/form2210_box_e.test.ts forms/f1040/2025/domains/payments/form2210/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/f2210/calculation.test.ts forms/f1040/nodes/inputs/f2210/index.test.ts forms/f1040/2025/domains/execution/attachment-coverage.test.ts`.
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_payment_return.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_payments.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e.test.ts forms/f1040/2025/domains/taxes/underpayment/form2210/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/calculation.test.ts forms/f1040/nodes/inputs/taxes/underpayment/f2210/index.test.ts forms/f1040/2025/return-processing/attachment-coverage.test.ts`.
 Actual session 61326 terminal exit 0: **67 passed / 0 failed / 0 ignored**,
 1s test duration, 03:50:21.488865–03:50:24.096072 UTC.
 Deno 2.9.4/V8 15.0.245.2-rusty/TypeScript 6.0.3; root lock unchanged.
@@ -4988,7 +4988,7 @@ Corrected the gap note's stale unrun-test description and reconciled official
 Part I, credit/carryforward and final-return dependencies against the guarded
 preview. The full named-form requirement stays open; no official calculation,
 accepted source, registered attachment or filing packet is newly proved.
-See [Form 8801](../domains/payments/form8801/ty2025-form8801-prior-source-gap.md). Private
+See [Form 8801](../domains/credits/amt/form8801/ty2025-form8801-prior-source-gap.md). Private
 `form8801-requirement-review-20261008-v1/audit.json` retains those checks.
 
 The actual current full session 22926 was polled and remained running. Its
@@ -5018,7 +5018,7 @@ is unchanged. Entered MTCNOL/MTFTCE, AMT capital-basis/foreign modifications,
 source authentication, accepted prior records, public execution/ownership,
 full numeric range, native/PDF, ledger/import and IRS rules remain open.
 All four authenticity/return/filing qualification flags are false. See the
-[Form 8801 evidence](../domains/payments/form8801/ty2025-form8801-prior-source-gap.md).
+[Form 8801 evidence](../domains/credits/amt/form8801/ty2025-form8801-prior-source-gap.md).
 
 Actual root full session 22926 remained live when polled. All 2,637 runtime
 paths still match its startup manifest; no terminal full result is claimed.
@@ -5036,7 +5036,7 @@ and a capacity-only public Form 8801 request on the isolated branch. The
 normal public graph computes current Form 6251 line 9; staged current tax and
 mapped Schedule 3 credits reconcile to public Form 1040 amounts. No calculated
 credit is inserted into that return. Primary identity and async-copy/tamper
-boundaries are covered. See [Form 8801](../domains/payments/form8801/ty2025-form8801-prior-source-gap.md).
+boundaries are covered. See [Form 8801](../domains/credits/amt/form8801/ty2025-form8801-prior-source-gap.md).
 
 Final four-module typed run **60 passed/0 failed/0 ignored** (660 ms summary),
 actual session 94775 closed with observed exit zero. Startup/terminal/source
@@ -5079,7 +5079,7 @@ zero credit, carry, refund transition, preceding foreign credit, guarded
 vehicle-only attachment and later bond-credit capacity. In the latter case,
 MTC 5,182 reduces allowed bond credit 20,000→17,485 and leaves bond unused
 credit 2,515. Source and snapshots are derived internally; export guards
-remain active. See [Form 8801](../domains/payments/form8801/ty2025-form8801-prior-source-gap.md).
+remain active. See [Form 8801](../domains/credits/amt/form8801/ty2025-form8801-prior-source-gap.md).
 
 Final standard typed 15-module run **171/0, zero ignored**, 1m18s test summary;
 actual session 24885 closed with observed exit zero. Private
@@ -6255,28 +6255,28 @@ Reuses verified09:33:05 IRS instruction snapshot from `passive-partnership-retai
 
 ### October 8 — Form172 historical absorption-base authority audit
 
-[Applicable-year audit](../domains/losses/form172/ty2025-form172-amt-absorption-base-audit.md) resolves the historical Form6251 field mapping: visually inspected2014 page1 has AMTI28/exemption29/taxable excess30, line6 itemized-deduction limitation and line7 tax refund. Visually inspected2014 instructions page3 independently support complete tentative lines1–27, zero ATNOLD/refigured depletion, section199 addback and annual90% limit. Applicable2014 sections55/56/172 are retained with URL/time/hash. Current IRM line6 cannot be used as a historical absorption operand. Deduction allocation remains distinct from modified-income absorption; no next-year carry is inferred.
+[Applicable-year audit](../domains/income/business/form172/ty2025-form172-amt-absorption-base-audit.md) resolves the historical Form6251 field mapping: visually inspected2014 page1 has AMTI28/exemption29/taxable excess30, line6 itemized-deduction limitation and line7 tax refund. Visually inspected2014 instructions page3 independently support complete tentative lines1–27, zero ATNOLD/refigured depletion, section199 addback and annual90% limit. Applicable2014 sections55/56/172 are retained with URL/time/hash. Current IRM line6 cannot be used as a historical absorption operand. Deduction allocation remains distinct from modified-income absorption; no next-year carry is inferred.
 
 This evidence changes the next implementation step to a complete AMT modified-income operand reconstruction before chronological carry consumption. No candidate/root runtime changed, no tests rerun and no new distinct TODO; existing Form172 scope already requires this work. Main52 and future51 remain unchanged. Full regression48127 is independently polled live; no second full run or integration. Candidate388/0 remains its prior bounded result. Source authenticity, valid elections, accepted carry, business rules and IRS acceptance remain unproved.
 
 
 ### October 8, 09:54 UTC — historical AMT modified-income reconstruction
 
-[Form172 audit](../domains/losses/form172/ty2025-form172-amt-absorption-base-audit.md) now records isolated candidate `fa118ecd66f3fefdf4e0dac0aab398381835e9f1`: paired complete annual operands, AMT-basis capital inventory/netting/annual deduction, section1202 remaining exclusion and original/refigured section199 reconstruct modified AMTI before earlier ATNOLD. The50,000 wages/3,000 capital deduction/20,000 medical case distinguishes original cap28,530 from modified base35,000. No absorbed loss or surviving carry is inferred. Byte-bound source staging rejects stale rehashed operands and protects caller-owned data before the first await. Source eligibility/authenticity and accepted carry remain false.
+[Form172 audit](../domains/income/business/form172/ty2025-form172-amt-absorption-base-audit.md) now records isolated candidate `fa118ecd66f3fefdf4e0dac0aab398381835e9f1`: paired complete annual operands, AMT-basis capital inventory/netting/annual deduction, section1202 remaining exclusion and original/refigured section199 reconstruct modified AMTI before earlier ATNOLD. The50,000 wages/3,000 capital deduction/20,000 medical case distinguishes original cap28,530 from modified base35,000. No absorbed loss or surviving carry is inferred. Byte-bound source staging rejects stale rehashed operands and protects caller-owned data before the first await. Source eligibility/authenticity and accepted carry remain false.
 
 Focused final run across35 files actually exits0 at09:53:15,396 passed/0 failed; log SHA256 `77373c887b9210b3647deba53feb59924e3741c01dd5c92c4f168942d95d183b`. Private `form172-historical-modified-income-20261008-v1/` retains initial393/0; v2 retains396/0 final run, preflight, status, log and independent09:53:54 audit. All2,703 candidate and2,696 frozen root runtime paths/hashes match. Root full48127 remains independently polled live; no integration or second full run. Main52 and future51 stay exact; no future work or broad checkoff. The next original Form172 requirement is chronological modified-income consumption with section56 limitations, followed by complete source-backed carry history. MeF estimate remains at board top, with no IRS acceptance claim.
 
 
 ### October 8, 09:59 UTC — per-vintage historical AMT refigure contexts
 
-[Form172 audit](../domains/losses/form172/ty2025-form172-amt-absorption-base-audit.md) records new primary IRS201226021 evidence and candidate `2bbab247facd72cb3be6664595f2554885f9f2a3`. Each origin now requires its own modified-income workpaper and complete earlier-deduction context, independently joined to annual chronological deduction allocation. Distinct refigure references prevent conflicting reuse. Positive changing-base/negative-capacity cases and missing/duplicate/stale/owner conflicts pass. Reviewed eligibility remains unproved; no absorbed loss or surviving carry is calculated.
+[Form172 audit](../domains/income/business/form172/ty2025-form172-amt-absorption-base-audit.md) records new primary IRS201226021 evidence and candidate `2bbab247facd72cb3be6664595f2554885f9f2a3`. Each origin now requires its own modified-income workpaper and complete earlier-deduction context, independently joined to annual chronological deduction allocation. Distinct refigure references prevent conflicting reuse. Positive changing-base/negative-capacity cases and missing/duplicate/stale/owner conflicts pass. Reviewed eligibility remains unproved; no absorbed loss or surviving carry is calculated.
 
 Actual focused exit0 at09:58:30UTC:398 passed/0 failed across35 files, log SHA256 `ddb2eb01a12c0fa844db1713cd88389c69d58015c0e97708211a80c3e05807c4`. Independent09:59:06 audit verifies all2,704 candidate and2,696 root runtime paths/hashes unchanged. Private `form172-historical-absorption-20261008-v1/` retains source/visual page/preflight/log/status/audit. Main52/future51 remain exact and future unworked. Full48127 authoritatively live; no integration or second full run, no broad checkoff, no acceptance claim. Top MeF estimate retained.
 
 
 ### October 8, 10:02 UTC — complete historical AMT vintage-package source binding
 
-[Form172 audit](../domains/losses/form172/ty2025-form172-amt-absorption-base-audit.md) records isolated candidate `584a7458e5251f4bef1af9b405765dc5cff35b8a`: the entire cap/origin/annual/per-vintage package now uses canonical retained-byte staging. Positive arithmetic, changed bytes, rehashed stale/missing/owner/opening contexts and caller mutations are checked. Byte identity is verified; authenticity, valid elections/deductions, accepted carry, absorption and packet admission remain unproved.
+[Form172 audit](../domains/income/business/form172/ty2025-form172-amt-absorption-base-audit.md) records isolated candidate `584a7458e5251f4bef1af9b405765dc5cff35b8a`: the entire cap/origin/annual/per-vintage package now uses canonical retained-byte staging. Positive arithmetic, changed bytes, rehashed stale/missing/owner/opening contexts and caller mutations are checked. Byte identity is verified; authenticity, valid elections/deductions, accepted carry, absorption and packet admission remain unproved.
 
 Actual focused exit0 at10:01:00UTC:401 passed/0 failed across35 files. Log SHA256 `1c4585967c676b3ca1aa71437dd0a63dcaf173b09a8a82182128c5e63ad44e6a`. Private `form172-vintage-modified-income-source-20261008-v1/` retains preflight/log/status/audit. Independent10:01:48 complete path/hash audit confirms all2,704 candidate and2,696 root runtime paths unchanged. Main52/future51 exact; no future implementation or broad checkoff. Root full48127 remains authoritatively live; no integration/second full run.
 
@@ -6285,14 +6285,14 @@ Fresh [IRS operational status](https://www.irs.gov/e-file-providers/modernized-e
 
 ### October 8, 10:06 UTC — historical AMT absorption workpaper
 
-[Form172 audit](../domains/losses/form172/ty2025-form172-amt-absorption-base-audit.md) records candidate `a180870b93448dda700a2daf95b226df64f0381c`: per-vintage modified-income capacity now produces reviewed absorbed/remaining amounts for historical ordinary/WHBAA losses, with canonical retained-byte staging. IRS90/10 example, early WHBAA100 and50 cases, shared ordinary40/50 capacity, medical/capital actual deduction28,530 versus absorbed31,500, negative later capacity and stale earlier-deduction/source conflicts pass. No complete or accepted carry balance is claimed; authentic sources, valid refigures/elections, all intervening years, post-TCJA coordination and filing readiness remain open.
+[Form172 audit](../domains/income/business/form172/ty2025-form172-amt-absorption-base-audit.md) records candidate `a180870b93448dda700a2daf95b226df64f0381c`: per-vintage modified-income capacity now produces reviewed absorbed/remaining amounts for historical ordinary/WHBAA losses, with canonical retained-byte staging. IRS90/10 example, early WHBAA100 and50 cases, shared ordinary40/50 capacity, medical/capital actual deduction28,530 versus absorbed31,500, negative later capacity and stale earlier-deduction/source conflicts pass. No complete or accepted carry balance is claimed; authentic sources, valid refigures/elections, all intervening years, post-TCJA coordination and filing readiness remain open.
 
 Actual focused exit0 at10:04:51UTC:408 passed/0 failed across35 files; log SHA256 `71377bb7684b2c6435f33a0123baf3b92a4680f115c19526ab886fae1d3f8cf2`. Private `form172-historical-absorption-calculation-20261008-v1/` retains preflight/status/log/audit. Independent10:05:35 complete path/hash audit matches2,705 candidate and2,696 root runtime paths. Full48127 remains independently live; no integration/second full run. Main52/future51 exact/unworked, no new distinct TODO or broad checkoff. Top MeF estimate remains current at10:01 observation.
 
 
 ### October 8, 10:13 UTC — annual AMT history, full terminal result and integration
 
-[Form172 audit](../domains/losses/form172/ty2025-form172-amt-absorption-base-audit.md) records candidate `a83226010dee5a63b77e7628c32e748126c59e47`: complete declared historical-span years, entry reviews, unchanged origin/election identity, exact opening-to-remainder joins and independently matched new loss-year AMTI/section199. Positive2014–2016 and new2014-origin cases and missing/year/opening/origin/election/owner/entry conflicts pass. Entry authenticity/carryback disposition and applications outside2013–2017 remain unproved; complete-span byte binding remains next. Candidate focused actual exit0 at10:10:17UTC:412/0, log `cd8f3f15dec5b3688de3b254032a2c3d740dc2442b0255e54739810df1d7b7d7`.
+[Form172 audit](../domains/income/business/form172/ty2025-form172-amt-absorption-base-audit.md) records candidate `a83226010dee5a63b77e7628c32e748126c59e47`: complete declared historical-span years, entry reviews, unchanged origin/election identity, exact opening-to-remainder joins and independently matched new loss-year AMTI/section199. Positive2014–2016 and new2014-origin cases and missing/year/opening/origin/election/owner/entry conflicts pass. Entry authenticity/carryback disposition and applications outside2013–2017 remain unproved; complete-span byte binding remains next. Candidate focused actual exit0 at10:10:17UTC:412/0, log `cd8f3f15dec5b3688de3b254032a2c3d740dc2442b0255e54739810df1d7b7d7`.
 
 Root full48127 actually ends0 at10:09:52UTC:12,668/0, log `2e386dd255efacc778f961c33cfcd31650adcbd93b8c21fd5df755aedec94713`. Independent terminal path-set/hash audit verifies all2,696 frozen paths. After that terminal verification, all13 later candidate commits integrate cleanly through root `2698ceb02f580099b123e855d485cee1ab701ffe`; integrated2,706 runtime paths/hashes exactly match tested candidate. Root focused actual exit0 at10:12:11UTC:412/0, log `a2031d72281040ed09e617fe74245c34e69c3a5f91ff05a2fb0576da6cc673a6`. Private candidate/root focused directories retain preflight/log/status. Main52 and future51 unchanged/unworked.
 
@@ -6301,49 +6301,49 @@ New serial root `deno task test` starts10:12:40UTC (session12505/PID23198),2,706
 
 ### October 8, 10:17 UTC — complete multi-year historical AMT source package
 
-[Form172 audit](../domains/losses/form172/ty2025-form172-amt-absorption-base-audit.md) records isolated candidate `1c96e01c4c1b61a34d966bf195de66338e7c5690`: all origins/entries/annual/vintage workpapers in the declared history span now bind to canonical retained bytes and exact start/end years/owners. Rehashed continuity conflicts, wrong span/owners/document set, duplicate keys/invalid encodings and caller mutation reject. Authentic entry carry, carryback disposition, applications outside2013–2017, source/election eligibility, accepted history and packet admission remain unproved.
+[Form172 audit](../domains/income/business/form172/ty2025-form172-amt-absorption-base-audit.md) records isolated candidate `1c96e01c4c1b61a34d966bf195de66338e7c5690`: all origins/entries/annual/vintage workpapers in the declared history span now bind to canonical retained bytes and exact start/end years/owners. Rehashed continuity conflicts, wrong span/owners/document set, duplicate keys/invalid encodings and caller mutation reject. Authentic entry carry, carryback disposition, applications outside2013–2017, source/election eligibility, accepted history and packet admission remain unproved.
 
 Actual focused exit0 at10:15:30UTC:417/0 across35 files; log SHA256 `7457b1d494872b820a1e6089445e3dcfda974727f7d3cf45086e3ea7fdbb8bf9`. Private `form172-historical-amt-history-source-20261008-v1/` retains preflight/log/status/audit. Independent10:16:22 complete path/hash audit verifies2,707 candidate and2,706 frozen root runtime paths. Root full12505 independently polled live; this candidate commit remains isolated, no integration/second full run. Main52/future51 exact/unworked; no new distinct TODO or broad checkoff. MeF estimate preserved at board top.
 
 
 ### October 8, 10:23 UTC — verified2010–2012 annual layouts and eight-year history
 
-[Form172 audit](../domains/losses/form172/ty2025-form172-amt-absorption-base-audit.md) records visual source review of2008–2012 Form6251 page1 and2010 instructions page3.2010 uses the current historical operand layout with ScheduleL subtraction6;2011–2012 reserve6.2008/2009 need distinct mappings and stay guarded. Candidate `57bdf521c506fc2c4dc15ccf9f8e7987010dd4cb` now covers reviewed2010–2017 annual/modified-income/vintage/history/source arithmetic with eight complete declared years, including zero/exhausted vintages. Eligibility, all other application years, authentic carryback/election/source records and IRS acceptance remain open.
+[Form172 audit](../domains/income/business/form172/ty2025-form172-amt-absorption-base-audit.md) records visual source review of2008–2012 Form6251 page1 and2010 instructions page3.2010 uses the current historical operand layout with ScheduleL subtraction6;2011–2012 reserve6.2008/2009 need distinct mappings and stay guarded. Candidate `57bdf521c506fc2c4dc15ccf9f8e7987010dd4cb` now covers reviewed2010–2017 annual/modified-income/vintage/history/source arithmetic with eight complete declared years, including zero/exhausted vintages. Eligibility, all other application years, authentic carryback/election/source records and IRS acceptance remain open.
 
 Actual focused exit0 at10:21:15UTC:420/0 across35 files; log SHA256 `5329e5d4d4ed676761c3df8ff2a75ac816402422e8232ef33d443afa88e8e4a3`. Private source/replay/audit directories retain all evidence. Independent10:22:08 complete path/hash audit verifies2,707 candidate and2,706 root runtime paths unchanged. Root full12505 remains authoritatively live; no integration or additional full run. Main52/future51 exact/unworked; no new distinct TODO or broad checkoff. Top estimate retained.
 
 
 ### October 8, 10:30 UTC —2008/2009 physical AMT layouts and ten-year history
 
-[Form172 audit](../domains/losses/form172/ty2025-form172-amt-absorption-base-audit.md) records candidate `bcdbf2fc20c239bd51860a5b2f87519c1d02d46b`: year-specific physical mappings preserve regular NOL/refund/installment/section1202 operands and exclude ATNOLD28 in2008 or12 in2009. Retained source history covers all ten declared2008–2017 years, including explicit zero/exhausted vintages. New99-cap and2009 section1202/180-absorption versus96-deduction cases pass. Older/later application years, authentic carry/elections/categories, accepted source/filing history and readiness remain open.
+[Form172 audit](../domains/income/business/form172/ty2025-form172-amt-absorption-base-audit.md) records candidate `bcdbf2fc20c239bd51860a5b2f87519c1d02d46b`: year-specific physical mappings preserve regular NOL/refund/installment/section1202 operands and exclude ATNOLD28 in2008 or12 in2009. Retained source history covers all ten declared2008–2017 years, including explicit zero/exhausted vintages. New99-cap and2009 section1202/180-absorption versus96-deduction cases pass. Older/later application years, authentic carry/elections/categories, accepted source/filing history and readiness remain open.
 
 Actual focused exit0 at10:28:32UTC:423/0 across35 files; log SHA256 `4d9f9bda43d851c5f974feec4431faad1956d5398a24ef074f8a1735b36c86da`. Instruction pages visually reviewed with original bytes/provenance retained; earlier form snapshots reused with verified hashes/times. Independent10:29:31 complete path/hash audit matches2,707 candidate and2,706 root runtime paths. Root full12505 authoritatively live; no integration or second full run. Main52/future51 unchanged/unworked; no new distinct TODO or broad checkoff. Top MeF estimate preserved.
 
 
 ### October 8, 10:37 UTC — 2005–2007 physical AMT layouts
 
-[Form172 audit](../domains/losses/form172/ty2025-form172-amt-absorption-base-audit.md) records candidate `09ae3d1d10b1e1ffdfaddaff4b65488eab151010`: physical1–26 operands exclude ATNOLD27 and AMTI28, regular NOL10/section1202 preference12, printed subtractions6/7/24, and signed investment-interest8. Source-bound2005–2007 reviewed history preserves balance continuity without establishing carryback/election eligibility. Application-year bindings now cover2005–2017;2003/2004 and complete accepted carry remain open. Relevant year-specific form and instruction pages visually inspected; originals and provenance retained privately.
+[Form172 audit](../domains/income/business/form172/ty2025-form172-amt-absorption-base-audit.md) records candidate `09ae3d1d10b1e1ffdfaddaff4b65488eab151010`: physical1–26 operands exclude ATNOLD27 and AMTI28, regular NOL10/section1202 preference12, printed subtractions6/7/24, and signed investment-interest8. Source-bound2005–2007 reviewed history preserves balance continuity without establishing carryback/election eligibility. Application-year bindings now cover2005–2017;2003/2004 and complete accepted carry remain open. Relevant year-specific form and instruction pages visually inspected; originals and provenance retained privately.
 
 Actual focused exit0 at10:36:43.948899UTC:426/0 across35 files; log SHA256 `e3045a6abf53e2ee646df62d2ab85db0725611049c91b7f9ceea79c0e324ae48`. Independent10:37:13 audit verifies exact2,707 candidate and2,706 root runtime path/hash sets. Root full12505 still live; no integration or second full batch. Main52/future51 remain exact/unworked, no new distinct TODO or broad checkoff. Board learnings compacted first and updated; top estimate refreshed against the unchanged IRS ATS outage at10:37UTC, original deadline0acceptedtests/0% and later probability not estimable.
 
 
 ### October 8, 10:41 UTC — 2003–2004 pre-section199 AMT applications
 
-[Form172 audit](../domains/losses/form172/ty2025-form172-amt-absorption-base-audit.md) records candidate `77d47b6fb`: original/refigured2003/2004 section199 reviews must be explicitly zero, historical physical tentative1–26 remain separate from ATNOLD27/AMTI28, and application/source bindings now cover2003–2017. Canonical2003–2005 reviewed history and section1202 preference-restoration arithmetic pass; source/date eligibility, legal carryback/election disposition, pre2005 origins and accepted complete carry remain open.
+[Form172 audit](../domains/income/business/form172/ty2025-form172-amt-absorption-base-audit.md) records candidate `77d47b6fb`: original/refigured2003/2004 section199 reviews must be explicitly zero, historical physical tentative1–26 remain separate from ATNOLD27/AMTI28, and application/source bindings now cover2003–2017. Canonical2003–2005 reviewed history and section1202 preference-restoration arithmetic pass; source/date eligibility, legal carryback/election disposition, pre2005 origins and accepted complete carry remain open.
 
 Actual focused exit0 at10:40:32.083924UTC:429/0 across35 files; log SHA256 `c73120793469b69629dd04643167cf845bc18e41798a8c0fb1d20832d22966a2`. Relevant year-specific instructions page6 visually reviewed; IRS primary effective-date evidence retained after a failed House redirect probe, which is preserved and excluded as evidence. Independent10:40:57 exact path/hash audit verifies2,707 candidate and2,706 root runtime files unchanged. Root full12505 authoritatively live; no integration/second full run. Main52/future51 exact/unworked, no new distinct TODO or broad checkoff. Board learnings compacted first and updated; latest10:37ATS estimate remains original-deadline0acceptances/0%, later probability unverified.
 
 
 ### October 8, 10:45 UTC — reviewed WHBAA regular carryback periods and fifth-year limit
 
-[Form172 gap](../domains/losses/form172/ty2025-form172-nol-gap.md) records candidate `3400a760d`: complete reviewed calendar2008/2009 elected3/4/5-year carryback sequences, derived fifth-year scope, and distinct50% deduction versus50% modified-income absorption. IRS Notice2010-58 A12/A13 reproduced, including25,000 deduction versus30,000 absorption and70,000 next opening. Canonical source replay derives subsequent openings. Election authenticity/eligibility, ARRA/mixed/fiscal/farming exceptions, AMT’s separate fifth-year restriction and accepted filing evidence remain open.
+[Form172 gap](../domains/income/business/form172/ty2025-form172-nol-gap.md) records candidate `3400a760d`: complete reviewed calendar2008/2009 elected3/4/5-year carryback sequences, derived fifth-year scope, and distinct50% deduction versus50% modified-income absorption. IRS Notice2010-58 A12/A13 reproduced, including25,000 deduction versus30,000 absorption and70,000 next opening. Canonical source replay derives subsequent openings. Election authenticity/eligibility, ARRA/mixed/fiscal/farming exceptions, AMT’s separate fifth-year restriction and accepted filing evidence remain open.
 
 Actual focused exit0 at10:44:31.696517UTC:434/0 across35 files; log SHA256 `8289e74d12bc9f22900255f898c1c387845163c309f3d228e36d9c38285c9bef`. Independent10:45:03 complete path/hash audit verifies2,707 candidate and2,706 root runtime files unchanged. Root full12505 remains live; no candidate integration or second full run. Main52/future51 exact/unworked, no new distinct TODO or broad checkoff. Compacted learnings updated; top estimate remains original-deadline0acceptances/0%, later probability unverified against latest10:37IRS status.
 
 
 ### October 8, 10:49 UTC — WHBAA fifth-year AMT deduction and absorption
 
-[Form172 AMT audit](../domains/losses/form172/ty2025-form172-amt-absorption-base-audit.md) records candidate `7566c19b4`: explicit3/4/5-year reviewed periods, origin−5 WHBAA50% restriction, annual chronological deduction allocation and separate vintage modified-AMTI absorption, with period identity preserved through retained history. Original100/modified120 produces deduction50/absorption60 and next opening40; mixed ordinary/WHBAA actual-deduction versus absorption/shared-capacity cases pass. ARRA/mixed-election exceptions, complete/authentic accepted carry and filing admission remain open.
+[Form172 AMT audit](../domains/income/business/form172/ty2025-form172-amt-absorption-base-audit.md) records candidate `7566c19b4`: explicit3/4/5-year reviewed periods, origin−5 WHBAA50% restriction, annual chronological deduction allocation and separate vintage modified-AMTI absorption, with period identity preserved through retained history. Original100/modified120 produces deduction50/absorption60 and next opening40; mixed ordinary/WHBAA actual-deduction versus absorption/shared-capacity cases pass. ARRA/mixed-election exceptions, complete/authentic accepted carry and filing admission remain open.
 
 Actual focused exit0 at10:48:10.693934UTC:438/0 across35 files; log SHA256 `36c55531f054cc357235f4dbd58347c2c9e8de2e68b5236c8b166c8ab56ebf39`. Independent10:48:44 exact runtime path/hash audit verifies2,707 candidate and2,706 frozen root files. Root full12505 authoritatively live; no integration/second full run. Main52/future51 exact/unworked, no new distinct TODO or broad checkoff. Compacted learnings updated; top estimate remains original-deadline0acceptances/0%, later probability unverified with latest10:37IRS outage evidence.
 
@@ -6474,25 +6474,25 @@ Current code inspection confirms the opt-in `state_payroll_review` independently
 
 ## October8,11:42UTC — modern ordinary AMT coordination model
 
-Candidate `4a97b93dd` adds an explicitly unverified model and byte staging; normal35-file focused batch467/0, actual0 at11:41:39.733857UTC, logSHA `621702b18313717633c6586c8f03fa9b5715847bb808c8440bd5af465db97d28`. [Detailed statutory qualification, operands and failures](../domains/losses/form172/ty2025-form172-amt-absorption-base-audit.md#october-8-2026--explicit-modern-ordinary-coordination-model). Exact2707candidate/2706root manifests and retained sources verified11:42:03; root equals livefullpreflight. Main52/future54 unchanged. Firstattempt testproperty typeerror retained; fixedbeforepassingv2. Model math does not establish legal coordination, authenticated carry, complete history or filing admission. Rootfull12505 remains live; no candidate integration, broad checkoff or future implementation. Previousgoalturnprogress: currentScheduleH111/0 and corrected staleaudit. Currentturnprogress: review-onlymoderncoordination model and validation.
+Candidate `4a97b93dd` adds an explicitly unverified model and byte staging; normal35-file focused batch467/0, actual0 at11:41:39.733857UTC, logSHA `621702b18313717633c6586c8f03fa9b5715847bb808c8440bd5af465db97d28`. [Detailed statutory qualification, operands and failures](../domains/income/business/form172/ty2025-form172-amt-absorption-base-audit.md#october-8-2026--explicit-modern-ordinary-coordination-model). Exact2707candidate/2706root manifests and retained sources verified11:42:03; root equals livefullpreflight. Main52/future54 unchanged. Firstattempt testproperty typeerror retained; fixedbeforepassingv2. Model math does not establish legal coordination, authenticated carry, complete history or filing admission. Rootfull12505 remains live; no candidate integration, broad checkoff or future implementation. Previousgoalturnprogress: currentScheduleH111/0 and corrected staleaudit. Currentturnprogress: review-onlymoderncoordination model and validation.
 
 ## October8,11:48UTC — modern AMT model history
 
-Candidate `0a61062cf`: consecutive2018–25 model continuity plus retained-byte source staging; normal35-file focused473/0, actual0 at11:47:32.314553UTC, logSHA `18f302655e67433eb6daae9c285bea36b32f0072857bf0911192a24f6f0d1aea`. Intermediatev1470/0 before sourcecases. [Detailed continuity and verification limits](../domains/losses/form172/ty2025-form172-amt-absorption-base-audit.md#october-8-2026--consecutive-modern-model-history-and-retained-bytes). Exact2709candidate/2706root manifests independently verified11:47:57; root equals livefullpreflight. Main52/future54 unchanged; candidate unintegrated, no future implementation. Legal coordination, complete/authenticated/accepted carry and filing admission remain unproved. Previousgoalturnprogress: modernordinarymodel467/0; currentturnprogress: consecutive model history and retained bytes473/0.
+Candidate `0a61062cf`: consecutive2018–25 model continuity plus retained-byte source staging; normal35-file focused473/0, actual0 at11:47:32.314553UTC, logSHA `18f302655e67433eb6daae9c285bea36b32f0072857bf0911192a24f6f0d1aea`. Intermediatev1470/0 before sourcecases. [Detailed continuity and verification limits](../domains/income/business/form172/ty2025-form172-amt-absorption-base-audit.md#october-8-2026--consecutive-modern-model-history-and-retained-bytes). Exact2709candidate/2706root manifests independently verified11:47:57; root equals livefullpreflight. Main52/future54 unchanged; candidate unintegrated, no future implementation. Legal coordination, complete/authenticated/accepted carry and filing admission remain unproved. Previousgoalturnprogress: modernordinarymodel467/0; currentturnprogress: consecutive model history and retained bytes473/0.
 
 ATSstatus refreshed11:48:15.470305UTC, retainedHTML/provenance in samev2private directory, SHA `0f554b09631d33c77824fb597b9fe77fef06b6926f943aeb5ec405f4c05e6251`: [IRS](https://www.irs.gov/e-file-providers/modernized-e-file-operational-status) still NotOperational throughOctober13 09:00Eastern, TY2026testing reopens09:01; TY2025availability unconfirmed. NoIRSacks or verifiedcredentials retained. Originaldeadline0accepted/0%chance; later probabilityunestimable.
 
 ## October8,11:52UTC — two-employer Form4137/Schedule1-A packet
 
-[Complete eight-page retained review](../domains/deductions/ty2025-schedule1a-gap.md#october-8--current-two-employer-form4137-packet-review): allsource/filer and native leaves/attributes, selectedpending and eightdirect page observations. Tips2500→1040line1c, qualifiedtipsgreater6500+3000=9500→Schedule1-A/1040line13b, tiptax191→Schedule2/1040line23, conditionalrefund774. Exactnative/sourcegraph/localfullXSD replay actual0 at11:50:59.330345UTC, logSHA `134e012a18890a3fd88c418a4e2349c349922026f3f22eb2d7d4a3efb48e550e`; pendingexactexceptknowninactive8960. Currenttwofilefocused5/0/24filtered actual0 at11:52:21.177227UTC, SHA `f93888131f8f950023cfd39fbf7c557da3be8eac7a260e172fb94b27dcebc3f7`. Independent11:52:42 rehashes2706root/source artifacts, runtimeequalslivefull. Main52/future54 unchanged, nofutureaddition/work, noPDFrefresh oraggregatecountincrease. Noobservedpacketdiscrepancy; sourceauthenticity/businessrules/IRSacceptance remainunproved. Rootfull12505stilllive. Previousgoalturnprogressmodernmodelhistory473/0;currentturnprogresspreviouslyawaiting twoemployerpacketreview andcurrentguardvalidation.
+[Complete eight-page retained review](../domains/deductions/additional/ty2025-schedule1a-gap.md#october-8--current-two-employer-form4137-packet-review): allsource/filer and native leaves/attributes, selectedpending and eightdirect page observations. Tips2500→1040line1c, qualifiedtipsgreater6500+3000=9500→Schedule1-A/1040line13b, tiptax191→Schedule2/1040line23, conditionalrefund774. Exactnative/sourcegraph/localfullXSD replay actual0 at11:50:59.330345UTC, logSHA `134e012a18890a3fd88c418a4e2349c349922026f3f22eb2d7d4a3efb48e550e`; pendingexactexceptknowninactive8960. Currenttwofilefocused5/0/24filtered actual0 at11:52:21.177227UTC, SHA `f93888131f8f950023cfd39fbf7c557da3be8eac7a260e172fb94b27dcebc3f7`. Independent11:52:42 rehashes2706root/source artifacts, runtimeequalslivefull. Main52/future54 unchanged, nofutureaddition/work, noPDFrefresh oraggregatecountincrease. Noobservedpacketdiscrepancy; sourceauthenticity/businessrules/IRSacceptance remainunproved. Rootfull12505stilllive. Previousgoalturnprogressmodernmodelhistory473/0;currentturnprogresspreviouslyawaiting twoemployerpacketreview andcurrentguardvalidation.
 
 ## October8,11:56UTC — aggregate overtime packet and deferred rounding boundary
 
-[Four-page aggregate overtime retained review](../domains/deductions/ty2025-schedule1a-gap.md#october8--aggregate-payroll-overtime-retained-packet): allsavedsource/filer/native and selectedpending, fourdirectpage observations;12,000aggregate→4,000overtimededuction, taxable60,250, recordedtax8,175, owed175. Currentexactnative/localfullXSD replay actual0 at11:55:31.930602UTC, logSHA `4d33e2a86ff165bf0374a9d67aa3e54b60fbf47dcb1d428ca801bfc1b89fc58d`, pendingonlyknowninactive8960qualification. Existingtwofilefocused2/0/124filtered actual0 at11:56:29.878823UTC, SHA `2f65978471a99e231aa52a8c9d20e9ab3696b8713bb9f814fc6f95e8b6ae5cba`. Independent11:56:36 verifies2706root/sourcehashes and equalitytolivefullpreflight. New exactdivision/rounding boundary goes onlytofuture55, unworked; main52/priorfuture54preserved. NoPDFrefresh oraggregatecoverageincrease. Sourceauthenticity/businessrules/IRSacceptance remainunproved. Rootfull12505stilllive. Prior/currentturns progress: twoemployer4137packet, thenaggregateovertimepacket andnewdeferredfinding.
+[Four-page aggregate overtime retained review](../domains/deductions/additional/ty2025-schedule1a-gap.md#october8--aggregate-payroll-overtime-retained-packet): allsavedsource/filer/native and selectedpending, fourdirectpage observations;12,000aggregate→4,000overtimededuction, taxable60,250, recordedtax8,175, owed175. Currentexactnative/localfullXSD replay actual0 at11:55:31.930602UTC, logSHA `4d33e2a86ff165bf0374a9d67aa3e54b60fbf47dcb1d428ca801bfc1b89fc58d`, pendingonlyknowninactive8960qualification. Existingtwofilefocused2/0/124filtered actual0 at11:56:29.878823UTC, SHA `2f65978471a99e231aa52a8c9d20e9ab3696b8713bb9f814fc6f95e8b6ae5cba`. Independent11:56:36 verifies2706root/sourcehashes and equalitytolivefullpreflight. New exactdivision/rounding boundary goes onlytofuture55, unworked; main52/priorfuture54preserved. NoPDFrefresh oraggregatecoverageincrease. Sourceauthenticity/businessrules/IRSacceptance remainunproved. Rootfull12505stilllive. Prior/currentturns progress: twoemployer4137packet, thenaggregateovertimepacket andnewdeferredfinding.
 
 ## October8,12:00UTC — double-time overtime packet
 
-[Four-page retained double-time review](../domains/deductions/ty2025-schedule1a-gap.md#october8--double-time-excess-pay-retained-packet): allsource/filer/native and selectedpending, fourdirectpage observations;10,000excess→5,000deduction, taxable59,250, recordedtax7,955, refund45. Currentexactnative/localfullXSD replay actual0 at11:59:59.969798UTC, SHA `6156af56b73d4101646c53beedae46c947bead991d5e953459af03278da2a0df`; pendingonlyknowninactive8960qualification. Currenttwofilefocused2/0/124filtered actual0 at12:00:18.661312UTC, SHA `214f86e9b60beffcafc8206aed7681a2c7ccda4914ef52310f5cc9bc81119688`. Independent12:00:44 verifies2706root/sourcehashes andlivefullpreflight. Main52/future55 unchanged, existingroundingfutureunworked, noPDFrefresh oraggregatecountincrease. Syntheticpayroll/issuer/FLSA/SSA assertions unauthenticated; businessrules/IRSacceptance unproved. Rootfull12505live. Prior/currentturnsprogress: aggregatepayrollpacket then distinctdouble-timepacket/currentguardvalidation.
+[Four-page retained double-time review](../domains/deductions/additional/ty2025-schedule1a-gap.md#october8--double-time-excess-pay-retained-packet): allsource/filer/native and selectedpending, fourdirectpage observations;10,000excess→5,000deduction, taxable59,250, recordedtax7,955, refund45. Currentexactnative/localfullXSD replay actual0 at11:59:59.969798UTC, SHA `6156af56b73d4101646c53beedae46c947bead991d5e953459af03278da2a0df`; pendingonlyknowninactive8960qualification. Currenttwofilefocused2/0/124filtered actual0 at12:00:18.661312UTC, SHA `214f86e9b60beffcafc8206aed7681a2c7ccda4914ef52310f5cc9bc81119688`. Independent12:00:44 verifies2706root/sourcehashes andlivefullpreflight. Main52/future55 unchanged, existingroundingfutureunworked, noPDFrefresh oraggregatecountincrease. Syntheticpayroll/issuer/FLSA/SSA assertions unauthenticated; businessrules/IRSacceptance unproved. Rootfull12505live. Prior/currentturnsprogress: aggregatepayrollpacket then distinctdouble-timepacket/currentguardvalidation.
 
 
 ### October 8, 2026 — Form172 candidate integration review
@@ -6504,7 +6504,7 @@ The candidate branch carries an older documentation snapshot. Integration must a
 
 ### October 8, 2026 — current Form172 requirements and retained ordinary-tax rows
 
-[Form172 current audit](../domains/losses/form172/ty2025-form172-nol-gap.md#current-requirement-audit--october-8-2026) now reconciles all5 original loss/carry/deduction/AMT/attachment requirements against current source. It replaces stale opening claims: current-origin standalone PartI XML/PDF and Schedule1 line8a mappings exist, but no Form172 descriptor is admitted to either filing exporter. Private `form172-original-requirements-audit-20261008-v1/review.json`, observed12:10:14UTC, retains exact2706root/2709candidate runtime manifests; root equals livefullpreflight. All5 requirements remain partial/incomplete at filing scope, so no original parent is checked off.
+[Form172 current audit](../domains/income/business/form172/ty2025-form172-nol-gap.md#current-requirement-audit--october-8-2026) now reconciles all5 original loss/carry/deduction/AMT/attachment requirements against current source. It replaces stale opening claims: current-origin standalone PartI XML/PDF and Schedule1 line8a mappings exist, but no Form172 descriptor is admitted to either filing exporter. Private `form172-original-requirements-audit-20261008-v1/review.json`, observed12:10:14UTC, retains exact2706root/2709candidate runtime manifests; root equals livefullpreflight. All5 requirements remain partial/incomplete at filing scope, so no original parent is checked off.
 
 Private `overtime-tax-table-source-review-20261008-v1/` retains the [2025 IRS Form1040 instructions](https://www.irs.gov/pub/irs-pdf/i1040gi.pdf), observed12:11:13UTC, SHA256 `482e9c487c608f1bbeaceef35bc3c0933e8b35443cfff447e4279d590468364a`. Physical pages71 and75 were rendered and directly viewed. Their single-filer tax rows independently confirm27250–27300→3035 (two-employer Form4137/tips),59250–59300→7955 (double-time overtime),60250–60300→8175 (aggregate-payroll overtime). This supersedes those retained packet reviews' earlier ordinary-tax-row uncertainty.
 
@@ -6528,14 +6528,14 @@ Integrated work retains explicit false legal-coordination/authenticity/accepted-
 
 ### October 8 — Form172 PartII source question retained, future scope preserved
 
-Board learnings compacted first. [Retained PartII observation](../domains/losses/form172/ty2025-form172-nol-gap.md#october-8--retained-partii-presentation-question-deferred) records current primary form/instruction/schema review and an explicitly qualified draft cross-reference. Presentation/authority reconciliation is unresolved; new distinct question appended only as futureitem56, unworked. No PartII implementation or positive filing admission follows.
+Board learnings compacted first. [Retained PartII observation](../domains/income/business/form172/ty2025-form172-nol-gap.md#october-8--retained-partii-presentation-question-deferred) records current primary form/instruction/schema review and an explicitly qualified draft cross-reference. Presentation/authority reconciliation is unresolved; new distinct question appended only as futureitem56, unworked. No PartII implementation or positive filing admission follows.
 
 Private `form172-partii-printed-statutory-reconciliation-20261008-v1/independent-observation.json` at12:24:38.988747UTC proves exact2709 rootruntime/livefullpreflight, main52 unchanged, previousfuture55prefix preserved and one deferred addition. Blank IRS source pages are source evidence, not filled-return review; no aggregate/test increase. Prior goal turn progressed integration/focused validation/serialfull launch; this turn yields retained primary evidence changing safe attachment readiness, while preserving the user's future-work boundary. Full52874 was authoritatively polled live after this audit; current code stays frozen. Board estimate retains12:13ATS outage evidence, original-deadline0acceptances/0%, later probability unverified.
 
 
 ### October8 — Form8606 registered-audit reconciliation
 
-Board learnings compacted first. [Current registered-document audit](../domains/filing/form1040/ty2025-form1040-form-audit.md) now reflects actual registry counts and completed/live gates, with historical paragraphs qualified. The Form8606 row is reconciled to actual retained-owner native/PDF source checks and [48/0 retained terminal results across12 named modules](../domains/retirement/form8606/ty2025-form8606-gap.md#october8-registered-audit-reconciliation); all31 matching runtime hashes remain tested/exact. Actual registry import at12:29:40UTC confirms152/148 native and118/115 PDF. No new test execution, filled-page approval, missing-proof recovery, positive route opening or broad checkoff. Wider source/prior-acceptance/IRS requirements remain open. Evidence `form8606-registered-audit-reconciliation-20261008-v1/` retains raw registry output, exact command/exit/digest and selected actual test results/runtime hashes. Previous turn produced a primary source presentation question and deferred it; this turn progresses the existing main audit-reconciliation requirement.
+Board learnings compacted first. [Current registered-document audit](../domains/general/return-assembly/form1040/ty2025-form1040-form-audit.md) now reflects actual registry counts and completed/live gates, with historical paragraphs qualified. The Form8606 row is reconciled to actual retained-owner native/PDF source checks and [48/0 retained terminal results across12 named modules](../domains/income/retirement/form8606/ty2025-form8606-gap.md#october8-registered-audit-reconciliation); all31 matching runtime hashes remain tested/exact. Actual registry import at12:29:40UTC confirms152/148 native and118/115 PDF. No new test execution, filled-page approval, missing-proof recovery, positive route opening or broad checkoff. Wider source/prior-acceptance/IRS requirements remain open. Evidence `form8606-registered-audit-reconciliation-20261008-v1/` retains raw registry output, exact command/exit/digest and selected actual test results/runtime hashes. Previous turn produced a primary source presentation question and deferred it; this turn progresses the existing main audit-reconciliation requirement.
 
 
 ### October8 — bundled named-form registered audit reconciled
@@ -6547,42 +6547,42 @@ Seven stale registered rows and their gap introductions now reflect current sour
 
 ### October8 — isolated passive S-corporation loss source foundation
 
-Board learnings compacted first. [Source-stage implementation](../domains/credits/eic/ty2025-eic-passive-s-corp-loss-source.md) advances the existing Worksheet1/7203/8582 requirement in candidate `codex/eic-passive-owned-loss-20261008`, commit `2bec1603a`, without changing frozen root runtime. Current unprotected cash stock, issued ordinary/QBI loss and complete owner/spouse participation records reconcile before basis-limited losses become available to PAL. Actual typed focused exit0 at12:51:15UTC:33/0, logSHA `ce1085a1055b6da1874ba1e2b5e045b20726b35c2cccce31eaea0c8a1435b29f`. Preliminary31-case results superseded, not additive. Component not imported by filing executor/native/PDF and explicitly denies filing admission/authentication. Original source-to7203-to8582-toScheduleE/QBI-to1040/EIC/native/PDF joins remain required; broader parent stays open. No packet generation, future implementation, aggregate count addition or main checkoff. Root full52874 remains live/frozen. Private `eic-passive-s-corp-loss-source-20261008-v1/` retains command/log/status/new-source manifest.
+Board learnings compacted first. [Source-stage implementation](../domains/credits/earned-income/eic/ty2025-eic-passive-s-corp-loss-source.md) advances the existing Worksheet1/7203/8582 requirement in candidate `codex/eic-passive-owned-loss-20261008`, commit `2bec1603a`, without changing frozen root runtime. Current unprotected cash stock, issued ordinary/QBI loss and complete owner/spouse participation records reconcile before basis-limited losses become available to PAL. Actual typed focused exit0 at12:51:15UTC:33/0, logSHA `ce1085a1055b6da1874ba1e2b5e045b20726b35c2cccce31eaea0c8a1435b29f`. Preliminary31-case results superseded, not additive. Component not imported by filing executor/native/PDF and explicitly denies filing admission/authentication. Original source-to7203-to8582-toScheduleE/QBI-to1040/EIC/native/PDF joins remain required; broader parent stays open. No packet generation, future implementation, aggregate count addition or main checkoff. Root full52874 remains live/frozen. Private `eic-passive-s-corp-loss-source-20261008-v1/` retains command/log/status/new-source manifest.
 
 
 ### October8 — passive S-corporation basis-to-PAL calculation adapter
 
-Board learnings compacted first. [Existing Worksheet1/7203/8582 work](../domains/credits/eic/ty2025-eic-passive-s-corp-loss-source.md#october-8--basis-to-form-8582-activity-calculation) progresses in isolated candidate commit `85bf90c4d`: source-replayed basis/at-risk loss creates a durable current K1 activity for the unchanged Form8582 engine. Seven allocation cases preserve distinct basis/PAL carryovers, including no passive income and excess income; three hostile cases reject changed bank records, basis-suspended loss injection and activity-ID reuse. Normal typed focused run ended12:55:29UTC, actual exit0,108/0 (33 source/10 PAL/65 existing8582), logSHA `f36c5c3259cb364bbba062dcef6b06c18dc7c2fb2bce83c1abf90d9e68dc20da`. Prior results not additive. Private `eic-passive-s-corp-loss-pal-20261008-v1/` retains command/log/status/four-file source manifest and preparation failure before any write/test. This is a directly exercised calculation adapter, not public/native/PDF filing admission. All original remaining joins stay required; main52/future56 frozen/unworked, no new packet/aggregate/checkoff. Root full52874 remains live and runtime unchanged. Previous goal turn advanced the source foundation; this turn advances its actual PAL calculation.
+Board learnings compacted first. [Existing Worksheet1/7203/8582 work](../domains/credits/earned-income/eic/ty2025-eic-passive-s-corp-loss-source.md#october-8--basis-to-form-8582-activity-calculation) progresses in isolated candidate commit `85bf90c4d`: source-replayed basis/at-risk loss creates a durable current K1 activity for the unchanged Form8582 engine. Seven allocation cases preserve distinct basis/PAL carryovers, including no passive income and excess income; three hostile cases reject changed bank records, basis-suspended loss injection and activity-ID reuse. Normal typed focused run ended12:55:29UTC, actual exit0,108/0 (33 source/10 PAL/65 existing8582), logSHA `f36c5c3259cb364bbba062dcef6b06c18dc7c2fb2bce83c1abf90d9e68dc20da`. Prior results not additive. Private `eic-passive-s-corp-loss-pal-20261008-v1/` retains command/log/status/four-file source manifest and preparation failure before any write/test. This is a directly exercised calculation adapter, not public/native/PDF filing admission. All original remaining joins stay required; main52/future56 frozen/unworked, no new packet/aggregate/checkoff. Root full52874 remains live and runtime unchanged. Previous goal turn advanced the source foundation; this turn advances its actual PAL calculation.
 
 
 ### October8 — standalone passive Form7203 native/print projection
 
-Board learnings compacted first. [Original passive-loss basis/native/print work](../domains/credits/eic/ty2025-eic-passive-s-corp-loss-source.md#october-8--standalone-source-replayed-form-7203-projections) progresses in isolated candidate `a808a176e`: source-replayed current cash stock/basis-limited loss projects standalone XML and existing PDF-domain fields; source shareholder name and single/MFJ owner/spouse joins reconcile. Normal typed gate ended13:01:02UTC,actual exit0,120/0 (65 existing8582/33 source/10 PAL/12 projection);five standalone7203 XMLs passed retained full fragment XSD. LogSHA `beebdddd528268e97141bfdfc6ef3cb8ddf9ae0b85ad7ced5bc78b4932a92ec1`. Private `eic-passive-s-corp-loss-7203-20261008-v2/` preserves all five XMLs, schema/source digests and actual gate. First run `...-v1/` exit1,115/5 retained: missing private schema directory in candidate `.state`; existing directories preserved/research link added, no source changes, same command passed. No filled PDF, visual review or complete-return XML/BR acceptance claimed. Projection unregistered; executor/native/PDF filing owners unchanged and broader joins remain required. Main52/future56 frozen; root2709 full52874 remains live unchanged; no new future implementation, packet/aggregate increase or checkoff. Previous turn advanced PAL math; this turn advances source ownership and standalone7203 projection/XSD.
+Board learnings compacted first. [Original passive-loss basis/native/print work](../domains/credits/earned-income/eic/ty2025-eic-passive-s-corp-loss-source.md#october-8--standalone-source-replayed-form-7203-projections) progresses in isolated candidate `a808a176e`: source-replayed current cash stock/basis-limited loss projects standalone XML and existing PDF-domain fields; source shareholder name and single/MFJ owner/spouse joins reconcile. Normal typed gate ended13:01:02UTC,actual exit0,120/0 (65 existing8582/33 source/10 PAL/12 projection);five standalone7203 XMLs passed retained full fragment XSD. LogSHA `beebdddd528268e97141bfdfc6ef3cb8ddf9ae0b85ad7ced5bc78b4932a92ec1`. Private `eic-passive-s-corp-loss-7203-20261008-v2/` preserves all five XMLs, schema/source digests and actual gate. First run `...-v1/` exit1,115/5 retained: missing private schema directory in candidate `.state`; existing directories preserved/research link added, no source changes, same command passed. No filled PDF, visual review or complete-return XML/BR acceptance claimed. Projection unregistered; executor/native/PDF filing owners unchanged and broader joins remain required. Main52/future56 frozen; root2709 full52874 remains live unchanged; no new future implementation, packet/aggregate increase or checkoff. Previous turn advanced PAL math; this turn advances source ownership and standalone7203 projection/XSD.
 
 
 ### October8 — passive loss actual calculation graph through QBI/AGI/EIC
 
-Board learnings compacted first. [Existing Worksheet1/7203/8582/QBI work](../domains/credits/eic/ty2025-eic-passive-s-corp-loss-source.md#october-8--calculation-graph-through-qbi-agi-and-eic) advances in candidate `b4a58cfd7`: public intake/source ownership -> basis suspension -> actualPAL -> qualified allowed/suspended losses -> AGI/EIC. Fourteen changed candidate runtime paths (nine new/five changed existing), root2709 untouched. Normal typed eight-module gate ended13:14:46UTC,actualexit0,286/0;16 graph cases include at/above11950, mixed interest/dividend sources, MFJ primary/spouse and required-copy deletion export rejections. LogSHA `5a9499c5c9432380afaf53dd7c15133d8358cdc271e7ed4488a95e1d84c99994`. Private `eic-passive-s-corp-loss-graph-20261008-v3/` preserves runtime/terminal/XML/source evidence; earlier282/284 gates superseded/not additive. Preliminary tool11/1 and atomic patch-context failure retained; early K1-field validation corrected. Explicit shared native/PDF export guard stays closed; no PDF generation, whole-return XSD/BR, source authentication, parent checkoff or aggregate addition. Original wider scope remains required. IRSATS13:14 snapshot stillnotoperational throughOct13/TY2026 reopening; topestimate0originaldeadline/laterunknown. Main52/future56 frozen/unworked; full52874 remainslive.
+Board learnings compacted first. [Existing Worksheet1/7203/8582/QBI work](../domains/credits/earned-income/eic/ty2025-eic-passive-s-corp-loss-source.md#october-8--calculation-graph-through-qbi-agi-and-eic) advances in candidate `b4a58cfd7`: public intake/source ownership -> basis suspension -> actualPAL -> qualified allowed/suspended losses -> AGI/EIC. Fourteen changed candidate runtime paths (nine new/five changed existing), root2709 untouched. Normal typed eight-module gate ended13:14:46UTC,actualexit0,286/0;16 graph cases include at/above11950, mixed interest/dividend sources, MFJ primary/spouse and required-copy deletion export rejections. LogSHA `5a9499c5c9432380afaf53dd7c15133d8358cdc271e7ed4488a95e1d84c99994`. Private `eic-passive-s-corp-loss-graph-20261008-v3/` preserves runtime/terminal/XML/source evidence; earlier282/284 gates superseded/not additive. Preliminary tool11/1 and atomic patch-context failure retained; early K1-field validation corrected. Explicit shared native/PDF export guard stays closed; no PDF generation, whole-return XSD/BR, source authentication, parent checkoff or aggregate addition. Original wider scope remains required. IRSATS13:14 snapshot stillnotoperational throughOct13/TY2026 reopening; topestimate0originaldeadline/laterunknown. Main52/future56 frozen/unworked; full52874 remainslive.
 
 
 ### October8 — passive source native8582 and ScheduleE component reconciliation
 
-Board learnings compacted first. [Existing passive-loss task](../domains/credits/eic/ty2025-eic-passive-s-corp-loss-source.md#october-8--source-replayed-native-8582-and-schedule-e-component-copies) advances in isolated candidate `7346fb5bf`: exact basis/QBI/K1 source replay, finalized PAL/AGI/Schedule1 and native8582/native+printScheduleE allowed-loss copies. Normal typed gate ended13:29:43UTC,actualexit0,354/0,logSHA `0b07596fa592c5a6e286da9c0af89577587eda71b81a11473c8644ed9e608cb1`. Actual standalone8582/ScheduleE fragments passed retained XSD; all eight pages of four standalone flattened ScheduleE outputs directly reviewed. Not interactive, wholeReturn1040, finalized7203/8995 packet parity, BR, source authentication or IRS acceptance. Private `eic-passive-s-corp-loss-copies-20261008-v2/` retains seven XML copies/PDFs/field projections/actual manifest and status. v1 actual353/1 missing cache, preliminary11/2 zero/schema issues and pre-write extraction failure preserved. Candidate root differences20paths/11new; independent13:31 audit root2709exact,main52/future56unchanged. Whole-exportguardclosed, no rootruntimeintegration, maincheckoff/aggregate addition or futureimplementation. Full52874 remainslive; no PR created.
+Board learnings compacted first. [Existing passive-loss task](../domains/credits/earned-income/eic/ty2025-eic-passive-s-corp-loss-source.md#october-8--source-replayed-native-8582-and-schedule-e-component-copies) advances in isolated candidate `7346fb5bf`: exact basis/QBI/K1 source replay, finalized PAL/AGI/Schedule1 and native8582/native+printScheduleE allowed-loss copies. Normal typed gate ended13:29:43UTC,actualexit0,354/0,logSHA `0b07596fa592c5a6e286da9c0af89577587eda71b81a11473c8644ed9e608cb1`. Actual standalone8582/ScheduleE fragments passed retained XSD; all eight pages of four standalone flattened ScheduleE outputs directly reviewed. Not interactive, wholeReturn1040, finalized7203/8995 packet parity, BR, source authentication or IRS acceptance. Private `eic-passive-s-corp-loss-copies-20261008-v2/` retains seven XML copies/PDFs/field projections/actual manifest and status. v1 actual353/1 missing cache, preliminary11/2 zero/schema issues and pre-write extraction failure preserved. Candidate root differences20paths/11new; independent13:31 audit root2709exact,main52/future56unchanged. Whole-exportguardclosed, no rootruntimeintegration, maincheckoff/aggregate addition or futureimplementation. Full52874 remainslive; no PR created.
 
 
 ### October8 — registered passive basis and QBI component source joins
 
-Board learnings compacted first. [Existing passive-loss task](../domains/credits/eic/ty2025-eic-passive-s-corp-loss-source.md#october-8--registered-form-7203-and-form-8995-component-source-joins) advances in isolated `af72ca087`: registered native/print7203 and8995 exact retained-source replay plus1040 QBI/taxable-income reconciliation. Normal typed gate actualexit0,377/0 ended13:37:23UTC,logSHA `a06e8a2c3c5f258ccc5d6b3aafdd1cc463f6ea3717a8b96f9c119edd1b2bcd20`; four registered component XMLs pass retained XSD, nine total exact fragments retained. Eight standalone flattened PDFs/all twelve pages directly reviewed; basis loss/carry remains distinct from current PAL-allowed qualified loss/carry. Private `eic-passive-s-corp-registered-basis-qbi-20261008-v2/` retains evidence; v1 pre-execution type failure preserved/corrected without --no-check. IRS13:37 official bytes unchanged; originaldeadline0accepted/laterprobabilityunknown. Independent13:39 audit root2709exact/candidate2720/25differences,main52/future56frozen. Whole-returnguardclosed, negativeK1 EIC-sourceguardstillunextended, full/native/PDF/BR/authentication/wider scope remains. No rootruntimeintegration, aggregate/checkoff addition or futureimplementation. Full52874 remainslive; previous goal turn made verified component progress, this turn advances registered basis/QBI source joins.
+Board learnings compacted first. [Existing passive-loss task](../domains/credits/earned-income/eic/ty2025-eic-passive-s-corp-loss-source.md#october-8--registered-form-7203-and-form-8995-component-source-joins) advances in isolated `af72ca087`: registered native/print7203 and8995 exact retained-source replay plus1040 QBI/taxable-income reconciliation. Normal typed gate actualexit0,377/0 ended13:37:23UTC,logSHA `a06e8a2c3c5f258ccc5d6b3aafdd1cc463f6ea3717a8b96f9c119edd1b2bcd20`; four registered component XMLs pass retained XSD, nine total exact fragments retained. Eight standalone flattened PDFs/all twelve pages directly reviewed; basis loss/carry remains distinct from current PAL-allowed qualified loss/carry. Private `eic-passive-s-corp-registered-basis-qbi-20261008-v2/` retains evidence; v1 pre-execution type failure preserved/corrected without --no-check. IRS13:37 official bytes unchanged; originaldeadline0accepted/laterprobabilityunknown. Independent13:39 audit root2709exact/candidate2720/25differences,main52/future56frozen. Whole-returnguardclosed, negativeK1 EIC-sourceguardstillunextended, full/native/PDF/BR/authentication/wider scope remains. No rootruntimeintegration, aggregate/checkoff addition or futureimplementation. Full52874 remainslive; previous goal turn made verified component progress, this turn advances registered basis/QBI source joins.
 
 
 ### October8 — passive loss EIC source and actual1040 descriptor joins
 
-Board learnings compacted first. [Existing Worksheet1 passive-loss task](../domains/credits/eic/ty2025-eic-passive-s-corp-loss-source.md#october-8--eic-source-validator-and-actual-form-1040-component-calls) advances in isolated `91e259875`: strict source replay precedes negativeK1 classification normalization and actual8582 validation even with zero passive income. Normal typed gate ended13:45:44UTC,actualexit0,415/0,logSHA `40372715bec2a1fedb4620ecfb89aa23e9d38fd5e2b254178611dbd3c4e83245`. Thirty-two new cases include at/above11950, fully/partly suspended/allowed basis losses, remaining stock basis, MFJ both owners, combined bank/dividend sources and ten hostile copies. Successful cases invoke actualnative1040 andPDF1040projection; forced positive EIC above the limit rejects. Private `eic-passive-s-corp-filing-source-20261008-v4/` retains tested source/status/nine XML copies. v3 same415/0 superseded after adding actual1040 calls; preliminary18/8 wrong caller field, v1 pre-execution fixture scope error and v2 413/2 incomplete dividend fixture retained/corrected without --no-check. Whole-exportguardclosed, no new PDF/fullReturn1040/BR/authentication/acceptance claim. Independent13:46 root2709exact/candidate2721/27differences,main52/future56frozen, no rootruntimeintegration/aggregate/maincheckoff/futureimplementation. Full52874 remainslive and advancing through PDF cases. Prior turn advanced registered basis/QBI copies; this turn advances EIC source/1040 component joins.
+Board learnings compacted first. [Existing Worksheet1 passive-loss task](../domains/credits/earned-income/eic/ty2025-eic-passive-s-corp-loss-source.md#october-8--eic-source-validator-and-actual-form-1040-component-calls) advances in isolated `91e259875`: strict source replay precedes negativeK1 classification normalization and actual8582 validation even with zero passive income. Normal typed gate ended13:45:44UTC,actualexit0,415/0,logSHA `40372715bec2a1fedb4620ecfb89aa23e9d38fd5e2b254178611dbd3c4e83245`. Thirty-two new cases include at/above11950, fully/partly suspended/allowed basis losses, remaining stock basis, MFJ both owners, combined bank/dividend sources and ten hostile copies. Successful cases invoke actualnative1040 andPDF1040projection; forced positive EIC above the limit rejects. Private `eic-passive-s-corp-filing-source-20261008-v4/` retains tested source/status/nine XML copies. v3 same415/0 superseded after adding actual1040 calls; preliminary18/8 wrong caller field, v1 pre-execution fixture scope error and v2 413/2 incomplete dividend fixture retained/corrected without --no-check. Whole-exportguardclosed, no new PDF/fullReturn1040/BR/authentication/acceptance claim. Independent13:46 root2709exact/candidate2721/27differences,main52/future56frozen, no rootruntimeintegration/aggregate/maincheckoff/futureimplementation. Full52874 remainslive and advancing through PDF cases. Prior turn advanced registered basis/QBI copies; this turn advances EIC source/1040 component joins.
 
 
 ## October 8, 14:05 UTC — PR65 and complete passive-loss candidate
 
-Draft [PR65](https://github.com/filedcom/opentax/pull/65) was created, attached and its saved description verified before resuming work. The [passive-source record](../domains/credits/eic/ty2025-eic-passive-s-corp-loss-source.md) now retains the417/0 joint component gate/all28 component pages and the444/0 complete-native gate, including20 whole Return1040 XSD checks and retained failure gates. Six prepared-bundle-bound whole PDF packets/all60 pages were directly reviewed; correct owner, page selection, EIC/refund and distinct carryovers reconcile, and altered copies reject. Exact14:05 audit confirms root2709 unchanged, candidate2722 (13new/19changed), main52/future56 frozen. Candidate d53dfc21f remains isolated while full session52874 runs; integration/serial full, authenticated source/BR/transmission and IRS acceptance remain open. No broad checkoff, future implementation or aggregate addition.
+Draft [PR65](https://github.com/filedcom/opentax/pull/65) was created, attached and its saved description verified before resuming work. The [passive-source record](../domains/credits/earned-income/eic/ty2025-eic-passive-s-corp-loss-source.md) now retains the417/0 joint component gate/all28 component pages and the444/0 complete-native gate, including20 whole Return1040 XSD checks and retained failure gates. Six prepared-bundle-bound whole PDF packets/all60 pages were directly reviewed; correct owner, page selection, EIC/refund and distinct carryovers reconcile, and altered copies reject. Exact14:05 audit confirms root2709 unchanged, candidate2722 (13new/19changed), main52/future56 frozen. Candidate d53dfc21f remains isolated while full session52874 runs; integration/serial full, authenticated source/BR/transmission and IRS acceptance remain open. No broad checkoff, future implementation or aggregate addition.
 
 
 ## October 8 — isolated PR65 integration
@@ -6592,12 +6592,12 @@ The nine validated passive-loss commits were integrated into draft PR65 through 
 
 ## October 8, 14:15 UTC — combined-source complete export evidence
 
-The [passive-source record](../domains/credits/eic/ty2025-eic-passive-s-corp-loss-source.md) adds sixteen complete source/threshold returns with two passive partnership activities, taxable/exempt interest and dividends, including different-spouse sources. Exacttypedgate460/0 at14:14:33UTC supersedes444. Two original-bundle PDFs/all22pages reconcile zero above-limit singleEIC and649 at-limit jointrefund, properownedbasis/sharedforms anddistinctcarryovers; twenty alteredsource native/PDFcallsreject. BothpacketXMLs passwholeReturn1040XSD. Root2,709paths remainfrozen/full52874live; PRcandidate2,722matchesfocusedmanifest. Main52 unchanged; future57 adds onlystaleboundarycomments, unworked. Broader originalpassive/4797/history/authentication/BR/IRSacceptance scope remainsopen, with noaggregateaddition ormaincheckoff.
+The [passive-source record](../domains/credits/earned-income/eic/ty2025-eic-passive-s-corp-loss-source.md) adds sixteen complete source/threshold returns with two passive partnership activities, taxable/exempt interest and dividends, including different-spouse sources. Exacttypedgate460/0 at14:14:33UTC supersedes444. Two original-bundle PDFs/all22pages reconcile zero above-limit singleEIC and649 at-limit jointrefund, properownedbasis/sharedforms anddistinctcarryovers; twenty alteredsource native/PDFcallsreject. BothpacketXMLs passwholeReturn1040XSD. Root2,709paths remainfrozen/full52874live; PRcandidate2,722matchesfocusedmanifest. Main52 unchanged; future57 adds onlystaleboundarycomments, unworked. Broader originalpassive/4797/history/authentication/BR/IRSacceptance scope remainsopen, with noaggregateaddition ormaincheckoff.
 
 
 ## October 8, 14:26 UTC — terminal root gate and durable passive ledger
 
-Root full52874 is actualterminal12,783/0 at14:20:46UTC; exact2709manifest andlogSHAe38412be9d87bb402dd54f6a02c01dc6fdf2a22dae14bdccd9b1c78929f3d4b1 independentlyverified. Root fast-forwardedtoPR65 b28f3c42f onlyafter terminalverification; all localdocumentedits areprivatelyhashpreservedandstashed. The [passive-source record](../domains/credits/eic/ty2025-eic-passive-s-corp-loss-source.md) adds durablecurrentK1 operatingloss archivesandopeningreconciliationmath, 488/0 focusedgateat14:25:28UTC, exact2723paths. Five originalCLIarchivecandidates retainbasis/PALseparation; alteredsource/provenance/rowsreject andallremainacceptance-unverified. No trustedprioracceptance/current2026intake/newPDFclaim. Main52/future57 unchanged; ledgerintegration/nextserialfull pending.
+Root full52874 is actualterminal12,783/0 at14:20:46UTC; exact2709manifest andlogSHAe38412be9d87bb402dd54f6a02c01dc6fdf2a22dae14bdccd9b1c78929f3d4b1 independentlyverified. Root fast-forwardedtoPR65 b28f3c42f onlyafter terminalverification; all localdocumentedits areprivatelyhashpreservedandstashed. The [passive-source record](../domains/credits/earned-income/eic/ty2025-eic-passive-s-corp-loss-source.md) adds durablecurrentK1 operatingloss archivesandopeningreconciliationmath, 488/0 focusedgateat14:25:28UTC, exact2723paths. Five originalCLIarchivecandidates retainbasis/PALseparation; alteredsource/provenance/rowsreject andallremainacceptance-unverified. No trustedprioracceptance/current2026intake/newPDFclaim. Main52/future57 unchanged; ledgerintegration/nextserialfull pending.
 
 
 ## October 8 — integrated passive-loss/ledger serial full launch
@@ -6617,25 +6617,25 @@ Independent14:35:32UTC `passive-source-audit-reconciliation-20261008-v1/review.j
 
 An isolated candidate now replays actual reviewed U.S. home intervals for ordinary children born before2025, preserving six actual calendar months while printing7 for183 or more inclusive days as2025 ScheduleEIC directs. Exact child/source review survives general selection and EIC finalization and is replayed by both final exporters. Normal typed six-module gate ended14:42:31UTC actual0,103/0, SHA `58f88f6b8b849d7e0873d03216d041e95c1fff398b27229b10fe9291e9e37fb1`; four complete native returns pass local XSD and source/copy/date/day/identity contradictions reject. First100/3 failure remains preserved and was corrected with complete existing8812 source workpapers and conditional optional projection.
 
-Four original-prepared-bundle PDF packets finished14:42:52UTC actual0, with all12 pages directly reviewed; ScheduleEIC line6 prints7, source remains6,1040AGI15,000/EIC4,328/refund5,828 reconcile and retained-dependent/custodial-release destinations differ correctly. Changed source reference against each originalbundle rejects. Zero widgets/canonical fields in the existing flattened filler, no interactive claim. [Residency proof](../domains/credits/eic/ty2025-schedule-eic-residency-gap.md) and private `eic-dated-residency-20261008-v2/`/`eic-dated-residency-print-20261008-v1/` retain exact source/runtime/command/terminal/native/artifact/review evidence. Candidate2,725 paths (two new/four changed) remains isolated while unchanged root2,723 full32582 runs. No broad checkoff, aggregate addition or future implementation; birth/death/kidnapping/special facts, authentication, BR and acceptance remain open.
+Four original-prepared-bundle PDF packets finished14:42:52UTC actual0, with all12 pages directly reviewed; ScheduleEIC line6 prints7, source remains6,1040AGI15,000/EIC4,328/refund5,828 reconcile and retained-dependent/custodial-release destinations differ correctly. Changed source reference against each originalbundle rejects. Zero widgets/canonical fields in the existing flattened filler, no interactive claim. [Residency proof](../domains/credits/earned-income/eic/ty2025-schedule-eic-residency-gap.md) and private `eic-dated-residency-20261008-v2/`/`eic-dated-residency-print-20261008-v1/` retain exact source/runtime/command/terminal/native/artifact/review evidence. Candidate2,725 paths (two new/four changed) remains isolated while unchanged root2,723 full32582 runs. No broad checkoff, aggregate addition or future implementation; birth/death/kidnapping/special facts, authentication, BR and acceptance remain open.
 
 ## October 8 — existing birth-year multiple-period residency requirement
 
 The isolated EIC candidate now replays separate actual U.S. home periods against a2025-born child's lifetime, rejects double-counted/prebirth days and conflicting months, and projects12 for the qualified birth case through existing native/PDF source joins. Typed seven-module gate finished14:50:16UTC actual0,107/0, SHA `765423672a5a0765b484d5f8324de0c8abc0cf456371c40f6f2ab2a5dbb6cca5`, superseding103 without addition. Seven full native returns pass local XSD, including four repeated ordinary-child cases andthree new birth cases;16/31days qualifies,15/31rejects, as do changed source/child reviews.
 
-Three prepared-bundle-bound full PDF packets finished14:50:53UTC actual0, allnine pages directly reviewed: youngest actualmonths1/1/2 print12, otherchildren12/8,1040AGI15,000/EIC6,761/refund8,261 reconcile. Originalbundle reference changes reject; zero widgets/canonical fields in existing flattened output. Private `eic-birth-periods-20261008-v1/` and `eic-birth-periods-print-20261008-v1/` retain commands/runtime/status/native/source/artifacts/completed review. Independent14:52:31 audit confirms candidate2,726 exact focused paths, root2,723 unchanged live-full snapshot, seven exact native pairs and three packet XSDs. [Residency proof](../domains/credits/eic/ty2025-schedule-eic-residency-gap.md) retains scope and rule sources. Main52/future57 frozen; no full candidate regression, root integration, broad checkoff, aggregate addition or accepted/authenticated-history claim. Special death/kidnapping/adoption/owner/source/BR/IRS requirements remain open.
+Three prepared-bundle-bound full PDF packets finished14:50:53UTC actual0, allnine pages directly reviewed: youngest actualmonths1/1/2 print12, otherchildren12/8,1040AGI15,000/EIC6,761/refund8,261 reconcile. Originalbundle reference changes reject; zero widgets/canonical fields in existing flattened output. Private `eic-birth-periods-20261008-v1/` and `eic-birth-periods-print-20261008-v1/` retain commands/runtime/status/native/source/artifacts/completed review. Independent14:52:31 audit confirms candidate2,726 exact focused paths, root2,723 unchanged live-full snapshot, seven exact native pairs and three packet XSDs. [Residency proof](../domains/credits/earned-income/eic/ty2025-schedule-eic-residency-gap.md) retains scope and rule sources. Main52/future57 frozen; no full candidate regression, root integration, broad checkoff, aggregate addition or accepted/authenticated-history claim. Special death/kidnapping/adoption/owner/source/BR/IRS requirements remain open.
 
 ## October 8 — existing deceased-child residency requirement
 
 The isolated EIC candidate now replays identified birth/death/home structured facts over the child's exact2025 lifetime with a validSSN, rejecting residence outside life, repeated days, inconsistent months/reviews and missingSSN. General/dependent/EIC/native/PDF retain the same source review and print12 without changing actualmonth counts. Normal typed eight-module gate ended14:59:36UTC actual0,112/0, SHA `5b79d1f501207c89a4beeca54b1ed9810a8722ab44d5da6f46296dab4b3c68e7`, superseding107 without addition;eleven full native XSDcases includefour new deaths. Lifetime half-day boundaries, same-year birth/death, separated periods andone-day life are covered, with native/PDF changed/deleted-review rejection.
 
-Four prepared-bundle-bound full PDFpackets finished15:00:03UTC actual0, all12 pages directly reviewed; EICmonths12/8/12 and1040AGI15,000/EIC6,761/refund8,261 reconcile. Originalbundle death-reference changes reject. Zero widgets/canonicalfields in existing flattened output. [Residency proof](../domains/credits/eic/ty2025-schedule-eic-residency-gap.md) and private `eic-death-residency-20261008-v1/`/`eic-death-residency-print-20261008-v1/` retain exact candidate2,728/rootfrozen2,723 manifests, command/status/native/artifacts/completedreview. Main52 unchanged. Distinct born-and-died missingSSN “Died”/external-document handling is newfuture58, unworked; rootintegration/full, sourceauthenticity, wider special/filer/owner/BR/IRSscope remain open. No aggregate addition or broadcheckoff.
+Four prepared-bundle-bound full PDFpackets finished15:00:03UTC actual0, all12 pages directly reviewed; EICmonths12/8/12 and1040AGI15,000/EIC6,761/refund8,261 reconcile. Originalbundle death-reference changes reject. Zero widgets/canonicalfields in existing flattened output. [Residency proof](../domains/credits/earned-income/eic/ty2025-schedule-eic-residency-gap.md) and private `eic-death-residency-20261008-v1/`/`eic-death-residency-print-20261008-v1/` retain exact candidate2,728/rootfrozen2,723 manifests, command/status/native/artifacts/completedreview. Main52 unchanged. Distinct born-and-died missingSSN “Died”/external-document handling is newfuture58, unworked; rootintegration/full, sourceauthenticity, wider special/filer/owner/BR/IRSscope remain open. No aggregate addition or broadcheckoff.
 
 ## October 8 — existing joint child/source ownership requirement
 
 Nine complete joint returns now combine ordinary dated/birth-period/death residence with primary-only/spouse-only/splitW2 wages. Two new fixture/test paths leave all2,728 preceding runtimepaths unchanged. Normal typed nine-module gate finished15:12:07UTC actual0,121/0, SHA `f62dc40f78cfdc3d6d862120dcd2e4202ee1b2646fa52497bde52cb212da1c70`, superseding112 withoutaddition;twenty logged fullnative returns passlocalXSD. Alien W2 recipients andchildSSNs reusedfromspouse rejectboth exporters ineachcase. Failedv1 actual112/9 preserves the erroneous new-test normalizedW2 array index; correction usesactualw2s without productguard change.
 
-Three prepared-bundle-bound jointPDFpackets finished15:11:46UTC actual0, allnine pages directlyreviewed. Bothfiler names/primarySSN, childroster/months, deduction31,500/zeroTax/EIC6,761/refund8,261 reconcile;originalbundle review-reference changes reject. Only selected ordinary/primary, birth/spouse anddeath/split packets havefresh filledappearance proof, notallnine matrixcases. Existing flattenedfiller zero widgets/canonicalfields; nointeractiveclaim. [Residency proof](../domains/credits/eic/ty2025-schedule-eic-residency-gap.md) andprivate `eic-joint-residency-20261008-v2/`/`eic-joint-residency-print-20261008-v1/` retainevidence. Independent15:13:48 audit confirms candidate2,730 exactfocused paths, root2,723 unchangedlivefull,twentyXMLpairs andthreepacketXSDs. Main52/future58 frozen; future58unworked. Rootintegration/full andbroaderincome/credits/filers/specialfacts/sourceauthenticity/BR/IRSscope remainopen; noaggregateaddition orbroadcheckoff.
+Three prepared-bundle-bound jointPDFpackets finished15:11:46UTC actual0, allnine pages directlyreviewed. Bothfiler names/primarySSN, childroster/months, deduction31,500/zeroTax/EIC6,761/refund8,261 reconcile;originalbundle review-reference changes reject. Only selected ordinary/primary, birth/spouse anddeath/split packets havefresh filledappearance proof, notallnine matrixcases. Existing flattenedfiller zero widgets/canonicalfields; nointeractiveclaim. [Residency proof](../domains/credits/earned-income/eic/ty2025-schedule-eic-residency-gap.md) andprivate `eic-joint-residency-20261008-v2/`/`eic-joint-residency-print-20261008-v1/` retainevidence. Independent15:13:48 audit confirms candidate2,730 exactfocused paths, root2,723 unchangedlivefull,twentyXMLpairs andthreepacketXSDs. Main52/future58 frozen; future58unworked. Rootintegration/full andbroaderincome/credits/filers/specialfacts/sourceauthenticity/BR/IRSscope remainopen; noaggregateaddition orbroadcheckoff.
 
 ## October 8 — named HOH child joins reviewed residence
 
@@ -6710,3 +6710,13 @@ After publishing `cf107ac7e69d3212072dfdf62d2f6c6e2e0594c8` to the same PR65 and
 The earlier 862/0 eight-module retry includes three passing participant-collection paper tests; the later 482/0 stable prerequisite gate includes all six partial-beneficiary NUA/death/estate/annuity tests, including full Return1040 XSD, cent-valued annuity and ten-year-only checks. More than two participant documents remain paper-only: ordinary native/PDF preparation still rejects them. The broad Form 4972 task remains unchecked.
 
 Read-only comparison retains all 16 held NUA digests, three template hashes and schema SHA256 `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`. Five held inputs/pending and PDFs match their current source counterparts, with historical review records covering 27 pages; this comparison does not replay the current graph or repeat visual/XSD verification. Five documented historical main XML hashes are not reproduced: current XML differs by ReturnTs and a final newline, and the named temporary 233/0 and held-check logs are absent. The artifacts and historical hashes are preserved; recovery is future-only item 60. Issuer/estate authentication, wider eligibility/elections, Schedule J/AMT, visual coverage, business rules and ATS remain open. Exact bounded audit-row/gap-note proposals remain private pending documentation reconciliation; neither target document was changed during the frozen full run. The integrated full remains running with actual terminal pending.
+
+### Industry-category organization — current PR65 candidate, October 8
+
+The candidate now uses General, Income, Adjustments, Deductions, Credits, Taxes and Payments consistently within tax-facing node roles, source domains, native/PDF projections, focused reviews, E2E contracts, rules and research. The composed migration covers **3,335 original-to-final moves**, including **3,085 taxonomy-stage moves and 891 node files**; the candidate index contains **4,398 tracked files**. Runtime/tooling retains its own role boundaries. Whole mixed forms have one canonical primary home with actual secondary-section links; source-focused tests follow the effect they verify.
+
+The latest independent actual migration CLI exited 0 with **3,335 moves, 3,448 exact source replays and 13,973 resource resolutions**. Its proof preserves all **2,732 original TypeScript hashes**, the finite **38 test files/41 prerequisite edits**, **135 reviewed navigation/architecture documents**, and all **266 historical benchmark input/expected bytes**. The complete healthy graph covers **2,749 TypeScript modules/2,898 graph entries**. This is source/path preservation, not an all-module typecheck or tax acceptance claim.
+
+The typed selected unit gate actually ended at **18:35:15.936 UTC** with child/final exit 0: **137 passed, zero failed and zero ignored across 14 modules**; its 3,191 runtime paths remained unchanged. Independent JUnit accounting agrees with 137 cases. Log SHA256 `c188677100a23ca053f01119f7e03a960f5dde906e09a4729052236b3c518935`; private evidence includes `industry-taxonomy-unit-v2-independent-acceptance.json` and `industry-taxonomy-final-v7-independent-cli-terminal.log` under `repository-organization-20261008-v1/`.
+
+The sole older-layout root full 91357 remains running on `cf107ac7e`, launched 17:18:37 UTC; no terminal pass is inferred. **The final-taxonomy serial full has not run, and IRS acceptance remains pending.** The 52 main TODOs remain unchecked. A newly observed pre-existing CLI node-list spacing defect is recorded only as unworked future TODO 61: a 29-character label exceeds the 28-character column and joins its next label. Root/candidate behavior matches; no CLI implementation or registry value changed. All prior 60 future TODO bodies remain preserved.

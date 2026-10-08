@@ -42,7 +42,7 @@ export interface MefFormDescriptor<
   ): Promise<ReadonlyArray<MefPdfAttachment>>;
 }
 import type { FilerIdentity } from "../../mef/header.ts";
-import type { Form3800DocumentParts } from "./forms/credits/f3800/f3800_document.ts";
+import type { Form3800DocumentParts } from "./forms/credits/business/f3800/f3800_document.ts";
 
 export interface MefBuildContext {
   /** The initial document-discovery pass runs before stable document IDs exist. */

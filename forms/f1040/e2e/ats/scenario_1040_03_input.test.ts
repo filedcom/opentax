@@ -1,11 +1,11 @@
 import { assert, assertEquals, assertStringIncludes } from "@std/assert";
-import { DistributionCode } from "../../nodes/inputs/f1099r/index.ts";
-import { schedule_f } from "../../nodes/intermediate/forms/schedule_f/index.ts";
-import { schedule_se } from "../../nodes/intermediate/forms/schedule_se/index.ts";
-import { scheduleF } from "../../2025/mef/forms/business/schedule_f.ts";
-import { scheduleSE as scheduleSeMef } from "../../2025/mef/forms/taxes/schedule_se.ts";
-import { scheduleFPdf } from "../../2025/pdf/forms/business/schedule_f.ts";
-import { scheduleSePdf } from "../../2025/pdf/forms/taxes/schedule_se.ts";
+import { DistributionCode } from "../../nodes/inputs/income/retirement/f1099r/index.ts";
+import { schedule_f } from "../../nodes/intermediate/forms/income/business/schedule_f/index.ts";
+import { schedule_se } from "../../nodes/intermediate/forms/taxes/self-employment/schedule_se/index.ts";
+import { scheduleF } from "../../2025/mef/forms/income/business/schedule_f.ts";
+import { scheduleSE as scheduleSeMef } from "../../2025/mef/forms/taxes/self-employment/schedule_se.ts";
+import { scheduleFPdf } from "../../2025/pdf/forms/income/business/schedule_f.ts";
+import { scheduleSePdf } from "../../2025/pdf/forms/taxes/self-employment/schedule_se.ts";
 import { testFiler } from "../../2025/mef/execution/test-filer.ts";
 import { SCENARIO_1040_03_FACTS } from "./ty2025_cases.ts";
 import { fillFormPdf } from "../../2025/pdf/builder.ts";

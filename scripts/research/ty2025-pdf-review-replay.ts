@@ -1,4 +1,4 @@
-import { sha256Hex } from "../../forms/f1040/2025/domains/execution/prepared-source.ts";
+import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared-source.ts";
 
 /** A manifest digest alone cannot prove the PDF still matches the source. */
 export async function assertReviewPdfReplay(

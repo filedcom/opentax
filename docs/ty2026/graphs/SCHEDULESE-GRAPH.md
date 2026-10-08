@@ -20,8 +20,8 @@ active-participation answer is Yes. See [Form 4835](./FORM4835-GRAPH.md).
 
 | Source fact | Printed destination / decision | Current graph gap |
 | --- | --- | --- |
-| Schedule F line 34 and farm K-1 box 14 code A | Regular method line 1a; use for the farm-optional eligibility net-profit test even when line 1a is skipped. | [Schedule F](../../../forms/f1040/nodes/intermediate/forms/schedule_f/index.ts) emits to Schedule SE only for net profit at least $400, suppressing optional-method cases with a smaller profit or loss. Partnership and owner aggregation need verification. |
-| CRP receipts when the filer received Social Security retirement/disability benefits | Regular line 1b is a negative amount; the would-be line 1b reduces net farm profit for the optional eligibility test. | The [shared Schedule SE node](../../../forms/f1040/nodes/intermediate/forms/schedule_se/index.ts) has no CRP input. |
+| Schedule F line 34 and farm K-1 box 14 code A | Regular method line 1a; use for the farm-optional eligibility net-profit test even when line 1a is skipped. | [Schedule F](../../../forms/f1040/nodes/intermediate/forms/income/business/schedule_f/index.ts) emits to Schedule SE only for net profit at least $400, suppressing optional-method cases with a smaller profit or loss. Partnership and owner aggregation need verification. |
+| CRP receipts when the filer received Social Security retirement/disability benefits | Regular line 1b is a negative amount; the would-be line 1b reduces net farm profit for the optional eligibility test. | The [shared Schedule SE node](../../../forms/f1040/nodes/intermediate/forms/taxes/self-employment/schedule_se/index.ts) has no CRP input. |
 | Schedule F line 9 and farm K-1 box 14 code B | Gross farm income for Part II line 15 and its eligibility test. | No gross-farm field reaches Schedule SE; line 34 profit is not a substitute. |
 | Schedule C line 31, nonfarm K-1 box 14 code A, and other includible SE income | Regular line 2, except when the nonfarm optional method is elected. | Shared node has Schedule C profit only; classify K-1 and special-income cases by owner. |
 | Schedule C line 7 and nonfarm K-1 box 14 code C | Gross nonfarm income for optional line 17 and its eligibility test. | No gross-nonfarm field or election-history input. |
@@ -77,13 +77,13 @@ Schedule F income. Schedule F line 34 remains the income-tax profit.
    spouse's separate Schedule SE before combining Schedule 2/1 amounts.
 4. Create a 2026 PDF filler using the map below, render both printed pages,
    and check the line 1a/1b blank state when farm optional is elected. The
-   [TY2025 filler](../../../forms/f1040/2025/pdf/forms/taxes/schedule_se.ts) uses
+   [TY2025 filler](../../../forms/f1040/2025/pdf/forms/taxes/self-employment/schedule_se.ts) uses
    `f1_1` for Schedule C profit, but 2026 `f1_1` is the **person's name**;
    copying that map would put money into the name field.
 5. Diff `IRS1040ScheduleSE.xsd` and rules in the **current authorized** 2026
    MeF package. The local May v1 XSD already names `OptionalMethodAmt` for
    4b and `SETaxFarmOptionalMethodAmt` for 15, but these are only research
-   leads, not final element/order evidence. The [TY2025 serializer](../../../forms/f1040/2025/mef/forms/taxes/schedule_se.ts)
+   leads, not final element/order evidence. The [TY2025 serializer](../../../forms/f1040/2025/mef/forms/taxes/self-employment/schedule_se.ts)
    emits only five input amounts and has no optional or computed lines.
    Validate complete owner-separated XML returns against the selected XSD and
    active rules, then compare emitted PDF, XML, and calculation fields.

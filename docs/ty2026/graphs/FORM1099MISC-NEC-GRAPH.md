@@ -33,7 +33,7 @@ form alone does not establish eligibility.
 
 ## Current implementation boundary
 
-The shared [`f1099nec` node](../../../forms/f1040/nodes/inputs/f1099nec/index.ts)
+The shared [`f1099nec` node](../../../forms/f1040/nodes/inputs/income/business/f1099nec/index.ts)
 uses an old `box1_nec` field, has no 1b/1c/1d inputs, and creates a new
 Schedule C business for each form using payer name, code `999999`, cash
 method and material participation. That can double count an existing
@@ -42,7 +42,7 @@ the old Schedule 2 line 17k key, while the 2026 draft prints golden
 parachute tax on **13k**. Its Form 8919 alternative needs the reason-code
 and wage-base work in the [8919 plan](./FORM4137-8919-GRAPH.md).
 
-The shared [`f1099m` node](../../../forms/f1040/nodes/inputs/f1099m/index.ts)
+The shared [`f1099m` node](../../../forms/f1040/nodes/inputs/income/business/f1099m/index.ts)
 has neither 13a/13b/14 nor the 2026 Schedule 1-A source route. It
 aggregates rents, royalties and business amounts without preserving a
 property/activity owner in all outputs. Its TY2025 `box15_nqdc` output

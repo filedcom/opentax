@@ -8,7 +8,7 @@ import { registry } from "../../registry.ts";
 import { buildMefXml } from "../builder.ts";
 import { buildPending } from "../execution/pending.ts";
 import type { MefFormsPending } from "../types.ts";
-import { scheduleBPdf } from "../../pdf/forms/investments/schedule_b/schedule_b.ts";
+import { scheduleBPdf } from "../../pdf/forms/income/investments/schedule_b/schedule_b.ts";
 
 const general = {
   filing_status: FilingStatus.Single,

@@ -1,14 +1,15 @@
 # Income
 
-Source contracts, fixtures and adjacent tests for this tax concern. Public form identifiers and registration remain in the parent entrypoint.
+Income sources, exclusions, and net-income reconciliation.
 
-| Family | Contents |
+| Area | Contents |
 | --- | --- |
-| [schedule1](./schedule1/) | 11 files |
+| [business](business/README.md) | 31 files |
+| [foreign](foreign) | 10 files |
+| [investments](investments/README.md) | 30 files |
+| [other](other/README.md) | 7 files |
+| [rental-passthrough](rental-passthrough) | 6 files |
+| [retirement](retirement/README.md) | 7 files |
+| [wages](wages) | 2 files |
 
-Source and fixture entrypoints:
-
-- [f4137.ts](./f4137.ts)
-- [f4852_retained.ts](./f4852_retained.ts)
-- [f8919.ts](./f8919.ts)
-- [w2g.ts](./w2g.ts)
+Canonical [Form 8621](../../../mef/forms/income/foreign/f8621.ts) also carries section 1291 tax and interest; follow [Taxes](../taxes/README.md) for related effects.

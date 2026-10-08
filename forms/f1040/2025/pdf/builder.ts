@@ -1,29 +1,29 @@
-import { assertOwned7203RequiredCopies } from "../domains/business/form7203/form7203-owned-return.ts";
-import { assertHsaExcessRequiredCopy } from "../domains/health/form8889/form8889_postyear_single_reconciliation.ts";
-import { assertSingleFarmQbiReturn } from "../domains/business/form8995a/form8995a_single_farm_reconciliation.ts";
-import { assertScheduleJSourceReturn } from "../domains/business/schedule-j/schedule_j_source_return.ts";
-import { executeComposedSourceReturn } from "../domains/execution/composed_source_return.ts";
-import { reconcileForm8606RothInventories } from "../domains/retirement/form8606/form8606_roth_inventory_reconciliation.ts";
-import { reconcileForm8606RothActivity } from "../domains/retirement/form8606/form8606_roth_activity_reconciliation.ts";
-import { assertForm4852RetainedEvidence } from "../domains/income/form4852/form4852_retained_evidence.ts";
-import { assertReviewedForm8283PdfFields } from "../mef/forms/deductions/f8283/f8283_signed_fields.ts";
+import { assertOwned7203RequiredCopies } from "../domains/income/business/form7203/form7203-owned-return.ts";
+import { assertHsaExcessRequiredCopy } from "../domains/adjustments/health/form8889/form8889_postyear_single_reconciliation.ts";
+import { assertSingleFarmQbiReturn } from "../domains/deductions/business/form8995a/form8995a_single_farm_reconciliation.ts";
+import { assertScheduleJSourceReturn } from "../domains/taxes/income-averaging/schedule-j/schedule_j_source_return.ts";
+import { executeComposedSourceReturn } from "../return-processing/composed_source_return.ts";
+import { reconcileForm8606RothInventories } from "../domains/income/retirement/form8606/form8606_roth_inventory_reconciliation.ts";
+import { reconcileForm8606RothActivity } from "../domains/income/retirement/form8606/form8606_roth_activity_reconciliation.ts";
+import { assertForm4852RetainedEvidence } from "../domains/income/wages/form4852/form4852_retained_evidence.ts";
+import { assertReviewedForm8283PdfFields } from "../mef/forms/deductions/charitable/f8283/f8283_signed_fields.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
-import { assertForm8978SourceBytes } from "../domains/credits/form8978/form8978_source.ts";
+import { assertForm8978SourceBytes } from "../domains/taxes/passthrough/form8978/form8978_source.ts";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { join } from "@std/path";
-import { normalizeAllPending } from "../domains/execution/pending.ts";
+import { normalizeAllPending } from "../return-processing/pending.ts";
 import { ALL_PDF_FORMS } from "./forms/index.ts";
-import { form4972PaperPdf } from "./forms/retirement/f4972.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "./reviews/execution/form-descriptor.ts";
+import { form4972PaperPdf } from "./forms/taxes/retirement/f4972.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "./review-support/form-descriptor.ts";
 import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
-import { assertAttachmentCoverage } from "../domains/execution/attachment-coverage.ts";
+import { assertAttachmentCoverage } from "../return-processing/attachment-coverage.ts";
 import {
   assertPreparedBundleProjection,
   type MefBundle,
 } from "../mef/builder.ts";
 import { assertPreparedAttachmentManifest } from "../mef/attachments/prepared-attachment-manifest.ts";
 import { assertW2GPayerCopyContents } from "../mef/identity/w2g-payer-copy.ts";
-import { preparedSourceSha256, sha256Hex } from "../domains/execution/prepared-source.ts";
+import { preparedSourceSha256, sha256Hex } from "../return-processing/prepared-source.ts";
 import {
   assertDigitalAssetDispositionAnswer,
   assertEitcChildSources,
@@ -43,94 +43,94 @@ import {
   assertScheduleCReceiptSourceIdentity,
   assertScheduleCStatutoryW2Sources,
   assertScheduleFFarmSourceIdentity,
-} from "../domains/identity/filer-source-reconciliation.ts";
-import { assertScheduleDSalesMatchPrepared } from "../mef/forms/investments/schedule_d.ts";
-import { assertPreparedVehicleAcknowledgments } from "../mef/forms/deductions/f8283/f8283_vehicle_sale_evidence.ts";
-import { inputSchema as form8283SourceSchema } from "../../nodes/inputs/f8283/index.ts";
-import { assertBox11CodeJSources } from "../../nodes/inputs/k1_partnership/box11_code_j.ts";
-import { assertSchedule1Form8621Source } from "../domains/international/schedule1-form8621-source.ts";
-import { assertBox11CodeESources } from "../../nodes/inputs/k1_partnership/box11_code_e.ts";
-import { assertBox11CodeKSources } from "../../nodes/inputs/k1_partnership/box11_code_k.ts";
-import { assertBox11CodeSSources } from "../../nodes/inputs/k1_partnership/box11_code_s.ts";
-import { assertScheduleDK1Source } from "../domains/investments/schedule-d/schedule-d-k1-source.ts";
-import { assertScheduleD1040Join } from "../domains/investments/schedule-d/schedule-d-1040-join.ts";
-import { assertForm8858FilingSource } from "../../nodes/inputs/f8858/index.ts";
-import { assertBox11Line10Sources } from "../../nodes/inputs/k1_partnership/box11_line10.ts";
-import { assertForm8915FSourceLinks } from "../../nodes/inputs/f8915f/index.ts";
-import { assertExtensionPaymentSource } from "../domains/payments/extension-payment-reconciliation.ts";
-import { assert1099RRecipientOwner } from "../domains/income/f1099r/f1099r-recipient-owner.ts";
-import { assertNecWithholdingRecipient } from "../domains/income/f1099n/f1099nec-withholding-owner.ts";
-import { assert1099BRecipientOwner } from "../domains/income/f1099b/f1099b-recipient-owner.ts";
+} from "../domains/general/return-assembly/filer-source-reconciliation.ts";
+import { assertScheduleDSalesMatchPrepared } from "../mef/forms/income/investments/schedule_d.ts";
+import { assertPreparedVehicleAcknowledgments } from "../mef/forms/deductions/charitable/f8283/f8283_vehicle_sale_evidence.ts";
+import { inputSchema as form8283SourceSchema } from "../../nodes/inputs/deductions/charitable/f8283/index.ts";
+import { assertBox11CodeJSources } from "../../nodes/inputs/income/rental-passthrough/k1_partnership/box11_code_j.ts";
+import { assertSchedule1Form8621Source } from "../domains/income/foreign/schedule1-form8621-source.ts";
+import { assertBox11CodeESources } from "../../nodes/inputs/income/rental-passthrough/k1_partnership/box11_code_e.ts";
+import { assertBox11CodeKSources } from "../../nodes/inputs/income/rental-passthrough/k1_partnership/box11_code_k.ts";
+import { assertBox11CodeSSources } from "../../nodes/inputs/income/rental-passthrough/k1_partnership/box11_code_s.ts";
+import { assertScheduleDK1Source } from "../domains/income/investments/schedule-d/schedule-d-k1-source.ts";
+import { assertScheduleD1040Join } from "../domains/income/investments/schedule-d/schedule-d-1040-join.ts";
+import { assertForm8858FilingSource } from "../../nodes/inputs/general/foreign/f8858/index.ts";
+import { assertBox11Line10Sources } from "../../nodes/inputs/income/rental-passthrough/k1_partnership/box11_line10.ts";
+import { assertForm8915FSourceLinks } from "../../nodes/inputs/income/retirement/f8915f/index.ts";
+import { assertExtensionPaymentSource } from "../domains/payments/settlement/extension-payment-reconciliation.ts";
+import { assert1099RRecipientOwner } from "../domains/income/retirement/f1099r/f1099r-recipient-owner.ts";
+import { assertNecWithholdingRecipient } from "../domains/payments/withholding/f1099n/f1099nec-withholding-owner.ts";
+import { assert1099BRecipientOwner } from "../domains/income/other/f1099b/f1099b-recipient-owner.ts";
 import {
   assertCapitalSaleSourceRows,
   assertNoRepeatedBrokerSaleSources,
-} from "../domains/investments/broker-sale-source-reconciliation.ts";
+} from "../domains/income/investments/broker-sale-source-reconciliation.ts";
 import {
   assertPatrIssuedCopies,
   assertPatrWithholdingRecipient,
-} from "../domains/income/f1099p/f1099patr-withholding-owner.ts";
+} from "../domains/payments/withholding/f1099p/f1099patr-withholding-owner.ts";
 import {
   assertForm4852FilingRoute,
   assertLine1aWageSource,
   assertLine1iCombatPayElectionSource,
   assertW2WithholdingSource,
-} from "../domains/income/w2-withholding-reconciliation.ts";
-import { assertLine1hSupportedSource } from "../domains/income/line1h-source.ts";
-import { assertLine1bHouseholdWageSource } from "../domains/income/line1b-household-wages.ts";
-import { assertBusinessSchedule1Amounts } from "../domains/business/business-schedule1-reconciliation.ts";
+} from "../domains/payments/withholding/w2-withholding-reconciliation.ts";
+import { assertLine1hSupportedSource } from "../domains/income/other/line1h-source.ts";
+import { assertLine1bHouseholdWageSource } from "../domains/income/other/line1b-household-wages.ts";
+import { assertBusinessSchedule1Amounts } from "../domains/income/business/business-schedule1-reconciliation.ts";
 import {
   assertLine1cForm4137Income,
   assertSchedule2Form4137Tax,
-} from "../domains/taxes/schedule2-form4137-reconciliation.ts";
+} from "../domains/taxes/employment/schedule2-form4137-reconciliation.ts";
 import {
   assertLine1gForm8919Wages,
   assertSchedule2Form8919Tax,
-} from "../domains/taxes/schedule2-form8919-reconciliation.ts";
-import { assertSchedule2ScheduleHTax } from "../domains/taxes/schedule2-schedule-h-reconciliation.ts";
-import { assertSchedule2Form8960Tax } from "../domains/taxes/schedule2-form8960-reconciliation.ts";
-import { assertSchedule2ScheduleSETax } from "../domains/business/schedule2-schedule-se-reconciliation.ts";
-import { assertSchedule2Form8828Tax } from "../domains/taxes/schedule2-form8828-reconciliation.ts";
-import { assertSchedule2Form8936Repayment } from "../domains/credits/schedule2-form8936-reconciliation.ts";
-import { assertSchedule3Form8859Credit } from "../domains/credits/schedule3-form8859-reconciliation.ts";
-import { assertSchedule3Form8834Credit } from "../domains/credits/schedule3-form8834-reconciliation.ts";
-import { assertSchedule3Form8912Credit } from "../domains/credits/schedule3-form8912-reconciliation.ts";
-import { assertSchedule3Form8396Credit } from "../domains/credits/schedule3-form8396-reconciliation.ts";
+} from "../domains/taxes/employment/schedule2-form8919-reconciliation.ts";
+import { assertSchedule2ScheduleHTax } from "../domains/taxes/household-employment/schedule2-schedule-h-reconciliation.ts";
+import { assertSchedule2Form8960Tax } from "../domains/taxes/investments/schedule2-form8960-reconciliation.ts";
+import { assertSchedule2ScheduleSETax } from "../domains/taxes/self-employment/schedule2-schedule-se-reconciliation.ts";
+import { assertSchedule2Form8828Tax } from "../domains/taxes/credit-recapture/schedule2-form8828-reconciliation.ts";
+import { assertSchedule2Form8936Repayment } from "../domains/credits/individual/schedule2-form8936-reconciliation.ts";
+import { assertSchedule3Form8859Credit } from "../domains/credits/individual/schedule3-form8859-reconciliation.ts";
+import { assertSchedule3Form8834Credit } from "../domains/credits/individual/schedule3-form8834-reconciliation.ts";
+import { assertSchedule3Form8912Credit } from "../domains/credits/individual/schedule3-form8912-reconciliation.ts";
+import { assertSchedule3Form8396Credit } from "../domains/credits/individual/schedule3-form8396-reconciliation.ts";
 import {
   assertSchedule2Line17HSources,
   assertSchedule2W2Line13Sources,
   assertSchedule2W2Line17KSource,
-} from "../domains/taxes/schedule2-w2-source-reconciliation.ts";
-import { assert1099WithholdingSource } from "../domains/income/f1099/f1099-withholding-reconciliation.ts";
-import { assert1099GUnemploymentSource } from "../domains/income/f1099g/f1099g-unemployment-reconciliation.ts";
-import { assert1098EInterestSource } from "../domains/deductions/f1098e/f1098e-source-reconciliation.ts";
-import { assertF8288WithholdingOwner } from "../domains/payments/f8288/f8288-withholding-owner.ts";
-import { assertOtherFormsWithholding } from "../domains/payments/f8288/f8288-withholding-reconciliation.ts";
+} from "../domains/taxes/other/schedule2-w2-source-reconciliation.ts";
+import { assert1099WithholdingSource } from "../domains/payments/withholding/f1099/f1099-withholding-reconciliation.ts";
+import { assert1099GUnemploymentSource } from "../domains/income/other/f1099g/f1099g-unemployment-reconciliation.ts";
+import { assert1098EInterestSource } from "../domains/adjustments/education/f1098e/f1098e-source-reconciliation.ts";
+import { assertF8288WithholdingOwner } from "../domains/payments/withholding/f8288/f8288-withholding-owner.ts";
+import { assertOtherFormsWithholding } from "../domains/payments/withholding/f8288/f8288-withholding-reconciliation.ts";
 import {
   assertFinalBalanceProjection,
   assertQualifiedDividendSubset,
-} from "../domains/execution/return-wide-arithmetic.ts";
-import { assertDividendIncomeSources } from "../domains/income/f1099d/f1099div-income-reconciliation.ts";
+} from "../return-processing/return-wide-arithmetic.ts";
+import { assertDividendIncomeSources } from "../domains/income/other/f1099d/f1099div-income-reconciliation.ts";
 import {
   assertScheduleBInterestJoin,
   assertScheduleBPreparedProjection,
-} from "../domains/investments/schedule-b/schedule-b-interest-reconciliation.ts";
-import { assertTaxExemptInterestSource } from "../domains/investments/tax-exempt-interest-reconciliation.ts";
+} from "../domains/income/investments/schedule-b/schedule-b-interest-reconciliation.ts";
+import { assertTaxExemptInterestSource } from "../domains/income/investments/tax-exempt-interest-reconciliation.ts";
 import {
   assertBenefitStatementOwner,
   assertSocialSecurityBenefitSource,
-} from "../domains/retirement/ssa-benefits-reconciliation.ts";
-import { assertRrb1099rPensionSource } from "../domains/retirement/rrb1099r-pension-reconciliation.ts";
-import { assertIra1099rIncomeSource } from "../domains/retirement/ira1099r-income-reconciliation.ts";
-import { assertPositiveW2GRecipient } from "../mef/forms/income/w2g.ts";
-import { assertForm1098IssuerCopies } from "../../nodes/inputs/f1098/issuer_copy.ts";
+} from "../domains/income/retirement/ssa-benefits-reconciliation.ts";
+import { assertRrb1099rPensionSource } from "../domains/income/retirement/rrb1099r-pension-reconciliation.ts";
+import { assertIra1099rIncomeSource } from "../domains/income/retirement/ira1099r-income-reconciliation.ts";
+import { assertPositiveW2GRecipient } from "../mef/forms/income/other/w2g.ts";
+import { assertForm1098IssuerCopies } from "../../nodes/inputs/deductions/mortgage/f1098/issuer_copy.ts";
 import {
   hasForm8994Claim,
   reconcileForm8994EvidenceBytes,
-} from "../../nodes/inputs/f8994/evidence_bytes.ts";
+} from "../../nodes/inputs/credits/business/f8994/evidence_bytes.ts";
 import {
   assertPublicForm8839Attachments,
   hasForm8839Claim,
-} from "../../nodes/intermediate/forms/form8839/public_source.ts";
+} from "../../nodes/intermediate/forms/credits/individual/form8839/public_source.ts";
 
 /** Diagnostic origin of a page in a prepared filled-PDF review packet. */
 export interface PdfPageOrigin {

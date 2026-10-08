@@ -1,17 +1,12 @@
-# PDF source review fixtures
+# Tax return sections
 
-Files are grouped by the tax concern or tool purpose. Tests and fixtures stay beside the source contract they verify.
+Read tax files in the same seven return sections across source nodes, calculations, projections, tests, and evidence. Runtime and transport helpers retain their role boundaries.
 
-| Group | Contents |
+| Area | Contents |
 | --- | --- |
-| [business](./business/) | 6 files |
-| [composed](./composed/) | 75 files |
-| [credits](./credits/) | 29 files |
-| [deductions](./deductions/) | 22 files |
-| [execution](./execution/) | 1 files |
-| [health](./health/) | 16 files |
-| [identity](./identity/) | 1 files |
-| [income](./income/) | 1 files |
-| [investments](./investments/) | 10 files |
-| [retirement](./retirement/) | 1 files |
-| [taxes](./taxes/) | 6 files |
+| [General](general/README.md) | Filing identity, information reporting, and complete-return assembly. |
+| [Income](income/README.md) | Income sources, exclusions, and net-income reconciliation. |
+| [Adjustments](adjustments/README.md) | Adjustments to income before adjusted gross income. |
+| [Deductions](deductions/README.md) | Standard, itemized, additional, and qualified business income deductions. |
+| [Credits](credits/README.md) | Individual and business credits and their limitations. |
+| [Taxes](taxes/README.md) | Income tax, additional taxes, recapture, interest, and penalties. |

@@ -48,7 +48,7 @@ instructs line **15** to add lines **4 through 11 and line 14**, omitting line
 the total. The 2021 Form 965-A instructions still refer to Schedule 2 **line
 9 for TY2020**; that stale destination is not the TY2026 authority.
 
-The shared [`f965` node](../../../forms/f1040/nodes/inputs/f965/index.ts)
+The shared [`f965` node](../../../forms/f1040/nodes/inputs/taxes/foreign/f965/index.ts)
 accepts a manually supplied `current_year_installment` per row, sums it,
 and sends it to the TY2025 Schedule 2 `line9_965_net_tax_liability` key.
 Its “TY2025 final year” comment only considers one original inclusion year

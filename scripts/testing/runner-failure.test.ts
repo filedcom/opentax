@@ -9,12 +9,12 @@ Deno.test("runner retains terminal failure when a tracked runtime file is missin
   await Deno.mkdir(tooling, { recursive: true });
   for (
     const name of [
-      "run.ts",
-      "contracts.ts",
-      "repository.ts",
-      "permissions.ts",
-      "full-lock.ts",
-      "skip-policy.json",
+      "./run.ts",
+      "./contracts.ts",
+      "./repository.ts",
+      "./permissions.ts",
+      "./full-lock.ts",
+      "./skip-policy.json",
     ]
   ) {
     await Deno.copyFile(join(source, name), join(tooling, name));
@@ -43,7 +43,7 @@ Deno.test("runner retains terminal failure when a tracked runtime file is missin
       "--allow-read",
       "--allow-write",
       "--allow-run=git,deno",
-      join(tooling, "run.ts"),
+      join(tooling, "./run.ts"),
       "preflight",
     ],
     cwd: root,

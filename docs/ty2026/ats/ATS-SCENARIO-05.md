@@ -27,7 +27,7 @@ reject the split if the refund is less than $1,000.
 
 ## Current route and acceptance order
 
-1. The shared [Form 8888 input](../../../forms/f1040/nodes/inputs/f8888/index.ts)
+1. The shared [Form 8888 input](../../../forms/f1040/nodes/inputs/payments/refund/f8888/index.ts)
    is metadata-only: it emits no result, is absent from the 2026 registry,
    does not reconcile account amounts to the computed refund, and still has
    savings-bond inputs absent from the pinned 2026 form. Model only current
@@ -47,7 +47,7 @@ reject the split if the refund is less than $1,000.
    against the final published form before field mapping is declared stable.
 4. Build the 2026 Form 8888 MeF serializer and validation from the current
    authorized TY2026 schema and rules. The TY2025 rule set has refund-sum,
-   1040 matching, and account uniqueness checks, but the [TY2025 F8888 rules](../../../forms/f1040/validation/rules/payments/f8888.ts)
+   1040 matching, and account uniqueness checks, but the [TY2025 F8888 rules](../../../forms/f1040/validation/rules/payments/refund/f8888.ts)
    reference old XML shapes such as `RefundByCheckAmt`. Diff rather than
    copying them. Verify `Form8888Ind`, attachment presence, absence of 1040
    single-account fields, row count, amount sum, and account uniqueness.

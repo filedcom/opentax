@@ -22,7 +22,7 @@ decide whether any source copy or explanation is a filed attachment.
 | Box 5 mortgage insurance premiums | The [2026 Publication 505](../corpus/authorities/p505--2026.pdf) states the qualified home-acquisition MIP deduction returns from 2026. The 2026 Schedule A draft has **line 8d**. Check contract issue date, qualified home/debt, premium allocation and any income limitation in final Schedule A instructions before calculating the allowed amount. Keep rental MIP with Schedule E, not personal 8d. |
 | Box 4 overpaid-interest refund | A same-year correction adjusts the corresponding interest paid, bounded at zero. A prior-year refund requires a tax-benefit recovery calculation using the actual year and deduction claimed; the gross refund is not automatically Schedule 1 line 8z income. Preserve recovered year and whether the earlier interest was personal, business or rental. |
 
-The shared [`f1098` node](../../../forms/f1040/nodes/inputs/f1098/index.ts)
+The shared [`f1098` node](../../../forms/f1040/nodes/inputs/deductions/mortgage/f1098/index.ts)
 is **absent from the focused TY2026 registry**. Its default Schedule A route
 passes all box 1 interest with no debt/use calculation, sends all box 6
 points to `line_8c_points_no_1098`, ignores box 5 under a TY2025 comment,
@@ -42,7 +42,7 @@ instructions before implementing the full worksheet and MIP phaseout.
 | Box 2 old-loan checkbox | For loans before September 1, 2004, obtain the amount of capitalized interest/qualifying origination charges actually paid but omitted from box 1. The checkbox itself is not a dollar deduction. For later loans the lender includes those qualifying interest charges in box 1; do not add them again. |
 | Allowed amount | Sum qualified interest across loans, cap at **$2,500 per return**, then apply 2026 filing status and MAGI phaseout. MFS is ineligible. The 2026 indexed config currently uses $85,000–$100,000 for single/HOH/QSS and $175,000–$205,000 for MFJ; verify these against final 2026 Schedule 1 instructions and the pinned inflation guidance before release. MAGI must exclude this deduction and apply foreign-income/housing and territory addbacks; do not calculate from a provisional AGI that drops taxable Social Security. Send the adjusted result to **2026 Schedule 1 line 21**, 1040 line 10 and AGI. |
 
-The shared [`f1098e` input](../../../forms/f1040/nodes/inputs/f1098e/index.ts)
+The shared [`f1098e` input](../../../forms/f1040/nodes/inputs/adjustments/education/f1098e/index.ts)
 is registered for TY2026. It caps reported box 1 at $2,500 and sends the
 legacy semantic key to the shared AGI node. The dedicated 2026 Schedule 1
 node accepts the AGI-adjusted result on line 21, and a focused graph/PDF

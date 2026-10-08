@@ -70,7 +70,7 @@ Existing 18-file source/legacy preservation: 159 passed, 0 failed (1m26s),
 `/tmp/opentax-form8283-parent-terminal-compat-v3.log`; exact file list
 `/tmp/opentax-form8283-parent-compat-files.json`.
 Use `PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH` and run
-`deno test -A forms/f1040/2025/pdf/reviews/deductions/form8283-gift-inventory.test.ts` with
+`deno test -A forms/f1040/2025/pdf/reviews/deductions/charitable/form8283-gift-inventory.test.ts` with
 `FORM8283_EVIDENCE_DIR` set to a new directory to preserve previous bytes.
 Every positive has complete local IRS 2025v5.4 Return1040 XSD validation.
 

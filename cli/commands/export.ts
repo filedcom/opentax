@@ -12,10 +12,10 @@ import { ALL_RULES } from "../../forms/f1040/validation/rules/index.ts";
 import type { DiagnosticEntry } from "../../core/validation/types.ts";
 import type { ExecutorDiagnosticEntry } from "../../core/runtime/executor.ts";
 import { loadForm8839Attachments } from "./form8839-attachments.ts";
-import { normalizeAllPending } from "../../forms/f1040/2025/domains/execution/pending.ts";
+import { normalizeAllPending } from "../../forms/f1040/2025/return-processing/pending.ts";
 import { buildForm4972PaperPdfBytes } from "../../forms/f1040/2025/pdf/builder.ts";
-import { reconcileForm4972Collection } from "../../forms/f1040/2025/domains/retirement/form4972/form4972_collection_reconciliation.ts";
-import { sha256Hex } from "../../forms/f1040/2025/domains/execution/prepared-source.ts";
+import { reconcileForm4972Collection } from "../../forms/f1040/2025/domains/taxes/retirement/form4972/form4972_collection_reconciliation.ts";
+import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared-source.ts";
 
 function getCatalogEntry(formType: string, year: number) {
   const key = `${formType}:${year}`;

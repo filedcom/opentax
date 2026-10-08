@@ -1,23 +1,19 @@
 # Taxes
 
-Source contracts, fixtures and adjacent tests for this tax concern. Public form identifiers and registration remain in the parent entrypoint.
+Income tax, additional taxes, recapture, interest, and penalties.
 
-| Family | Contents |
+| Area | Contents |
 | --- | --- |
-| [form6251](./form6251/) | 32 files |
-| [form8801](./form8801/) | 21 files |
-| [form8814](./form8814/) | 3 files |
-| [form8815](./form8815/) | 2 files |
-| [form8959](./form8959/) | 1 files |
-| [form982](./form982/) | 1 files |
+| [amt](amt) | 32 files |
+| [credit-recapture](credit-recapture) | 4 files |
+| [employment](employment) | 7 files |
+| [household-employment](household-employment) | 8 files |
+| [income-averaging](income-averaging) | 17 files |
+| [investments](investments) | 2 files |
+| [other](other/README.md) | 7 files |
+| [passthrough](passthrough) | 2 files |
+| [retirement](retirement) | 50 files |
+| [self-employment](self-employment) | 7 files |
+| [underpayment](underpayment) | 15 files |
 
-Source and fixture entrypoints:
-
-- [schedule2-form4137-reconciliation.ts](./schedule2-form4137-reconciliation.ts)
-- [schedule2-form8828-reconciliation.ts](./schedule2-form8828-reconciliation.ts)
-- [schedule2-form8919-reconciliation.ts](./schedule2-form8919-reconciliation.ts)
-- [schedule2-form8960-reconciliation.ts](./schedule2-form8960-reconciliation.ts)
-- [schedule2-line23-reconciliation.ts](./schedule2-line23-reconciliation.ts)
-- [schedule2-schedule-h-reconciliation.ts](./schedule2-schedule-h-reconciliation.ts)
-- [schedule2-w2-source-reconciliation.ts](./schedule2-w2-source-reconciliation.ts)
-- [section453a-reconciliation.ts](./section453a-reconciliation.ts)
+Canonical [Form 4972](../../mef/forms/taxes/retirement/f4972.ts) retirement tax and [Forms 4255](../../mef/forms/taxes/credit-recapture/f4255.ts)/[8611](../../mef/forms/taxes/credit-recapture/f8611.ts) credit recapture are tax families; related distributions and original credits are under [Income](../income/README.md) and [Credits](../credits/README.md).

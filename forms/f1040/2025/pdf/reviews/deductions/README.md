@@ -1,15 +1,14 @@
 # Deductions
 
-Source contracts, fixtures and adjacent tests for this tax concern. Public form identifiers and registration remain in the parent entrypoint.
+Standard, itemized, additional, and qualified business income deductions.
 
-Source and fixture entrypoints:
+| Area | Contents |
+| --- | --- |
+| [additional](additional) | 5 files |
+| [business](business) | 2 files |
+| [charitable](charitable) | 22 files |
+| [investments](investments) | 8 files |
+| [itemized](itemized/README.md) | 1 files |
+| [mortgage](mortgage) | 1 files |
 
-- [form8283-contribution-year-disposition.fixture.ts](./form8283-contribution-year-disposition.fixture.ts)
-- [form8283-depreciation-reduction.fixture.ts](./form8283-depreciation-reduction.fixture.ts)
-- [form8283-gift-inventory.fixture.ts](./form8283-gift-inventory.fixture.ts)
-- [form8283-natural-resource.fixture.ts](./form8283-natural-resource.fixture.ts)
-- [form8283-producing-mining-amt-charity.fixture.ts](./form8283-producing-mining-amt-charity.fixture.ts)
-- [form8283-section-a-reduction-inventory.fixture.ts](./form8283-section-a-reduction-inventory.fixture.ts)
-- [form8283-source-documents.fixture.ts](./form8283-source-documents.fixture.ts)
-- [form8283-special-section-b.fixture.ts](./form8283-special-section-b.fixture.ts)
-- [form8283-unreduced-book-group.fixture.ts](./form8283-unreduced-book-group.fixture.ts)
+Canonical [Form 4562](../../../mef/forms/deductions/business/f4562.ts) depreciation and [Forms 8995](../../../mef/forms/deductions/business/f8995/f8995.ts)/[8995-A](../../../mef/forms/deductions/business/f8995a/f8995a.ts) QBI are deduction families; related business sources are under [Income](../income/README.md).

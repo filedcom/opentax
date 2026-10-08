@@ -43,7 +43,7 @@ uses Form 1099-K boxes **1c** and **1d** in its qualified-tip table.
 
 ## Current implementation boundary
 
-The shared [`f1099k` node](../../../forms/f1040/nodes/inputs/f1099k/index.ts)
+The shared [`f1099k` node](../../../forms/f1040/nodes/inputs/income/business/f1099k/index.ts)
 has a **$5,000 TY2025** gross cutoff and routes box 1a only above that
 cutoff. This incorrectly uses an issuer-reporting threshold as an income
 gate, regardless of the threshold's year. Its manual `for_routing` chooses

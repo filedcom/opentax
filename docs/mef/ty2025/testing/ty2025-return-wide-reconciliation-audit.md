@@ -58,7 +58,7 @@ place the bounded negative Form 8978 adjustment on Schedule 2 line 17z. Fixtures
 cover a positive reduced total and tampering with the Schedule 2 source,
 adjusted worksheet, or Form 1040 amount. This proves the retained arithmetic; it
 does not authenticate the partner audit source for Form 8978. The bounded
-section 453A [obligation workpaper](../domains/payments/ty2025-section453a-interest-workpaper.md)
+section 453A [obligation workpaper](../domains/taxes/interest/ty2025-section453a-interest-workpaper.md)
 now sources and prints Schedule 2 line 15. Section 453(l)(3) line 14 rejects
 unsupported amounts; its source route and external sale/evidence joins remain
 open.

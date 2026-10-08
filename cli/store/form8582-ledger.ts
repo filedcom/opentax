@@ -1,12 +1,12 @@
 import { join } from "@std/path";
 import { z } from "zod";
 import { f1040_2025 } from "../../forms/f1040/2025/index.ts";
-import { normalizeAllPending } from "../../forms/f1040/2025/domains/execution/pending.ts";
-import { form8582 as native8582 } from "../../forms/f1040/2025/mef/forms/execution/f8582/f8582.ts";
+import { normalizeAllPending } from "../../forms/f1040/2025/return-processing/pending.ts";
+import { form8582 as native8582 } from "../../forms/f1040/2025/mef/forms/income/business/f8582/f8582.ts";
 import {
   buildForm8582Ledger,
   form8582LedgerSchema,
-} from "../../forms/f1040/nodes/intermediate/forms/form8582/ledger.ts";
+} from "../../forms/f1040/nodes/intermediate/forms/income/business/form8582/ledger.ts";
 import { singletonPublicInputKeys } from "./public-input-keys.ts";
 import { buildEngineInputs, loadReturn } from "./store.ts";
 

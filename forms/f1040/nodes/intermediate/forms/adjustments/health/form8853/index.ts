@@ -1,0 +1,549 @@
+import {
+  archerContributionLedgerSchema,
+  calculateArcherContributions,
+  codeREntrySchema,
+} from "./archer_contributions.ts";
+import { form5329 } from "../../../taxes/retirement/form5329/index.ts";
+import { TS } from "../../../../../types.ts";
+import { z } from "zod";
+import {
+  calculateMedicareJointLedgers,
+  calculateMedicareLedger,
+  medicareDistributionLedgerSchema,
+  medicareJointLedgersSchema,
+} from "./medicare_distributions.ts";
+import {
+  archerDistributionLedgerSchema,
+  calculateArcherLedger,
+} from "./archer_distributions.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../../../../core/types/tax-node.ts";
+import {
+  type AtLeastOne,
+  output,
+  TaxNode,
+} from "../../../../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
+import { agi_aggregator } from "../../../../aggregation/general/return-assembly/agi_aggregator/index.ts";
+import { schedule1 } from "../../../../../outputs/general/return-assembly/schedule1/index.ts";
+import { schedule2 } from "../../../../aggregation/taxes/other/schedule2/index.ts";
+import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
+import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+// IRC §220(f)(4) — additional tax on non-qualified Archer MSA distributions
+const ARCHER_MSA_PENALTY_RATE = 0.20;
+// IRC §138(c)(2) — additional tax on non-qualified Medicare Advantage MSA distributions
+const MEDICARE_ADVANTAGE_PENALTY_RATE = 0.50;
+
+// ─── Schema ───────────────────────────────────────────────────────────────────
+
+export enum MsaOwner {
+  Taxpayer = "taxpayer",
+  Spouse = "spouse",
+}
+
+export const archerDistributionFilingDetailsSchema = z.object({
+  owner: z.nativeEnum(MsaOwner),
+  // Box 3 code 1 establishes the normal distribution route for taxable use.
+  normal_distribution_code_1_confirmed: z.literal(true).optional(),
+  single_archer_msa_distribution_confirmed: z.literal(true),
+  gross_amount_confirmed_from_1099sa: z.literal(true),
+  qualified_expenses_unreimbursed_confirmed: z.literal(true),
+  no_other_form8853_activity_confirmed: z.literal(true),
+});
+
+export const inputSchema = z.object({
+  archer_contribution_ledger: archerContributionLedgerSchema.optional(),
+  w2_code_r_entries: z.array(codeREntrySchema).optional(),
+  archer_distribution_ledger: archerDistributionLedgerSchema.optional(),
+  medicare_distribution_ledger: medicareDistributionLedgerSchema.optional(),
+  medicare_joint_distribution_ledgers: medicareJointLedgersSchema.optional(),
+  // ── Section A Part I: Archer MSA Contributions and Deductions ───────────
+  // Line 1: Employer contributions (from W-2 Box 12 code R, routed by w2 node)
+  // IRC §220(b); Form 8853 Part I line 1
+  employer_archer_msa: z.number().finite().nonnegative().optional(),
+  // Line 2: Taxpayer contributions to Archer MSA in 2025
+  // IRC §220(a); Form 8853 Part I line 2
+  taxpayer_archer_msa_contributions: z.number().finite().nonnegative()
+    .optional(),
+  // Line 3: Limitation from Line 3 chart (65%/75% of HDHP deductible × eligible months/12)
+  // Self-only: 65% × deductible ($2,850–$4,300); Family: 75% × deductible ($5,700–$8,550)
+  // IRC §220(b)(2); Form 8853 Part I line 3 (pre-computed by screen/UI)
+  line3_limitation_amount: z.number().finite().nonnegative().optional(),
+  // Line 4: Compensation from employer maintaining the HDHP
+  // IRC §220(b)(1)(B); Form 8853 Part I line 4
+  compensation: z.number().finite().nonnegative().optional(),
+
+  // ── Section A Part II: Archer MSA Distributions ──────────────────────────
+  // Line 6a: Total distributions from all Archer MSAs (1099-SA box 1)
+  // IRC §220(f); Form 8853 Part II line 6a
+  archer_msa_distributions: z.number().nonnegative().optional(),
+  // Line 6b: Distributions rolled over + withdrawn excess contributions
+  // IRC §220(f)(5); Form 8853 Part II line 6b
+  archer_msa_rollover: z.number().nonnegative().optional(),
+  // Line 7: Unreimbursed qualified medical expenses
+  // IRC §220(f)(1); Form 8853 Part II line 7
+  archer_msa_qualified_expenses: z.number().nonnegative().optional(),
+  // Line 9a: Exception to additional 20% tax (death, disability, or age 65+)
+  // IRC §220(f)(4)(B); Form 8853 Part II line 9a
+  archer_msa_exception: z.boolean().optional(),
+
+  // ── Section B: Medicare Advantage MSA Distributions ─────────────────────
+  // Line 10: Total distributions from Medicare Advantage MSAs (1099-SA box 1)
+  // IRC §138(c); Form 8853 Section B line 10
+  medicare_advantage_distributions: z.number().nonnegative().optional(),
+  // Line 11: Qualified medical expenses for Medicare Advantage MSA
+  // IRC §138(c)(1); Form 8853 Section B line 11
+  medicare_advantage_qualified_expenses: z.number().nonnegative().optional(),
+  // Line 13a: Exception to additional 50% tax (death or disability only — NOT age 65)
+  // IRC §138(c)(2); Form 8853 Section B line 13a
+  medicare_advantage_exception: z.boolean().optional(),
+
+  // ── Section C: Long-Term Care Insurance Contracts ────────────────────────
+  // Line 17: Gross LTC payments received on per diem or periodic basis (1099-LTC box 1)
+  // IRC §7702B; Form 8853 Section C line 17
+  ltc_gross_payments: z.number().nonnegative().optional(),
+  // Line 18: Amount on line 17 that is from qualified LTC insurance contracts
+  // IRC §7702B(b); Form 8853 Section C line 18
+  ltc_qualified_contract_amount: z.number().nonnegative().optional(),
+  // Line 19: Accelerated death benefits received on per diem basis (chronically ill only)
+  // IRC §101(g)(3); Form 8853 Section C line 19
+  ltc_accelerated_death_benefits: z.number().nonnegative().optional(),
+  // Line 21: Number of days in the LTC period (for per diem limit calculation)
+  // IRC §7702B(d)(2); Form 8853 Section C line 21
+  ltc_period_days: z.number().nonnegative().optional(),
+  // Line 22: Costs incurred for qualified LTC services during the LTC period
+  // IRC §7702B(c); Form 8853 Section C line 22
+  ltc_actual_costs: z.number().nonnegative().optional(),
+  // Line 24: Reimbursements for qualified LTC services received
+  // IRC §7702B; Form 8853 Section C line 24
+  ltc_reimbursements: z.number().nonnegative().optional(),
+
+  // Source attestations and owner for the bounded fully qualified Archer MSA route.
+  archer_distribution_filing_details: archerDistributionFilingDetailsSchema
+    .optional(),
+});
+
+export type Form8853Input = z.infer<typeof inputSchema>;
+
+// ─── Section A Part I: Archer MSA Deduction ──────────────────────────────────
+
+// Line 5: Archer MSA deduction = min(line2, line3, line4)
+// If employer made any contributions, taxpayer cannot deduct (Part I instructions)
+// IRC §220(b); Form 8853 Part I line 5 → Schedule 1 Part II line 23
+function archerMsaDeduction(input: Form8853Input): number {
+  if (input.archer_contribution_ledger) {
+    return calculateArcherContributions(
+      input.archer_contribution_ledger,
+      input.w2_code_r_entries,
+    ).line5;
+  }
+  const employerContrib = input.employer_archer_msa ?? 0;
+  if (employerContrib > 0) return 0;
+
+  const taxpayerContrib = input.taxpayer_archer_msa_contributions ?? 0;
+  if (taxpayerContrib <= 0) return 0;
+
+  const limitation = input.line3_limitation_amount ?? 0;
+  if (input.compensation === undefined) {
+    throw new Error(
+      "Positive Archer deduction requires actual compensation, not unlimited compensation",
+    );
+  }
+  const compensation = input.compensation;
+
+  return Math.min(taxpayerContrib, limitation, compensation);
+}
+
+// ─── Section A Part II: Archer MSA Distributions ─────────────────────────────
+
+// Line 6c: Net distributions after rollovers
+function archerMsaNetDistributions(input: Form8853Input): number {
+  const gross = input.archer_msa_distributions ?? 0;
+  const rollover = input.archer_msa_rollover ?? 0;
+  return Math.max(0, gross - rollover);
+}
+
+// Line 8: Taxable Archer MSA distributions = max(0, line6c - line7)
+// IRC §220(f)(1); Form 8853 Part II line 8 → Schedule 1 line 8e
+function archerMsaTaxableDist(input: Form8853Input): number {
+  if (input.archer_distribution_ledger) {
+    return calculateArcherLedger(input.archer_distribution_ledger).line8;
+  }
+  const net = archerMsaNetDistributions(input);
+  if (net <= 0) return 0;
+  const qualified = input.archer_msa_qualified_expenses ?? 0;
+  return Math.max(0, net - qualified);
+}
+
+// Line 9b: 20% additional tax on taxable Archer MSA distributions
+// IRC §220(f)(4); Form 8853 Part II line 9b → Schedule 2 line 17e
+function archerMsaPenaltyTax(input: Form8853Input): number {
+  if (input.archer_distribution_ledger) {
+    return calculateArcherLedger(input.archer_distribution_ledger).line9b;
+  }
+  if (input.archer_msa_exception === true) {
+    throw new Error(
+      "Form 8853 Archer additional-tax exception needs sourced distribution-level ledger",
+    );
+  }
+  const taxable = archerMsaTaxableDist(input);
+  return taxable * ARCHER_MSA_PENALTY_RATE;
+}
+
+export function calculateArcherMsaDistribution(input: Form8853Input) {
+  if (input.archer_distribution_ledger) {
+    return calculateArcherLedger(input.archer_distribution_ledger);
+  }
+  const line6a = input.archer_msa_distributions ?? 0;
+  const line6b = input.archer_msa_rollover ?? 0;
+  const line6c = archerMsaNetDistributions(input);
+  const line7 = input.archer_msa_qualified_expenses ?? 0;
+  const line8 = archerMsaTaxableDist(input);
+  const line9b = archerMsaPenaltyTax(input);
+  return {
+    line6a,
+    line6b,
+    line6c,
+    line7,
+    line8,
+    line9a: false,
+    line9b,
+    exceptedTaxable: 0,
+    deathTransfer: false,
+  };
+}
+
+// ─── Section B: Medicare Advantage MSA Distributions ─────────────────────────
+
+// Line 12: Taxable Medicare Advantage MSA distributions = max(0, line10 - line11)
+// IRC §138(c)(2); Form 8853 Section B line 12 → Schedule 1 line 8e
+function medicareAdvantaxableDist(input: Form8853Input): number {
+  if (input.medicare_joint_distribution_ledgers) {
+    return calculateMedicareJointLedgers(
+      input.medicare_joint_distribution_ledgers,
+    ).line12;
+  }
+  if (input.medicare_distribution_ledger) {
+    return calculateMedicareLedger(input.medicare_distribution_ledger).line12;
+  }
+  const gross = input.medicare_advantage_distributions ?? 0;
+  if (gross <= 0) return 0;
+  const qualified = input.medicare_advantage_qualified_expenses ?? 0;
+  return Math.max(0, gross - qualified);
+}
+
+// Line 13b: 50% additional tax on taxable Medicare Advantage MSA distributions
+// IRC §138(c)(2); Form 8853 Section B line 13b → Schedule 2 line 17f
+function medicareAdvantagePenaltyTax(input: Form8853Input): number {
+  if (input.medicare_joint_distribution_ledgers) {
+    return calculateMedicareJointLedgers(
+      input.medicare_joint_distribution_ledgers,
+    ).line13b;
+  }
+  if (input.medicare_distribution_ledger) {
+    return calculateMedicareLedger(input.medicare_distribution_ledger).line13b;
+  }
+  if (input.medicare_advantage_exception === true) {
+    throw new Error(
+      "Form8853 Medicare exception needs sourced distribution-level ledger",
+    );
+  }
+  const taxable = medicareAdvantaxableDist(input);
+  return taxable * MEDICARE_ADVANTAGE_PENALTY_RATE;
+}
+
+// ─── Section C: Long-Term Care Insurance Contracts ───────────────────────────
+
+// Line 20: Total per diem LTC and accelerated death benefit payments
+function ltcTotalPerDiemPayments(input: Form8853Input): number {
+  return (input.ltc_qualified_contract_amount ?? 0) +
+    (input.ltc_accelerated_death_benefits ?? 0);
+}
+
+// Line 21: Per diem limit = daily limit × number of days in LTC period
+// Rev. Proc. 2024-40 §2.62; Form 8853 Section C line 21
+function ltcPerDiemLimit(input: Form8853Input, ltcDailyLimit: number): number {
+  const days = input.ltc_period_days ?? 0;
+  return ltcDailyLimit * days;
+}
+
+// Line 23: Exclusion amount = max(line21_per_diem_limit, line22_actual_costs)
+function ltcExclusionAmount(
+  input: Form8853Input,
+  ltcDailyLimit: number,
+): number {
+  const perDiemLimit = ltcPerDiemLimit(input, ltcDailyLimit);
+  const actualCosts = input.ltc_actual_costs ?? 0;
+  return Math.max(perDiemLimit, actualCosts);
+}
+
+// Line 25: Per diem limitation = max(0, line23 - line24_reimbursements)
+function ltcPerDiemLimitation(
+  input: Form8853Input,
+  ltcDailyLimit: number,
+): number {
+  const exclusion = ltcExclusionAmount(input, ltcDailyLimit);
+  const reimbursements = input.ltc_reimbursements ?? 0;
+  return Math.max(0, exclusion - reimbursements);
+}
+
+// Line 26: Taxable LTC payments = max(0, line20 - line25)
+// IRC §7702B(d); Form 8853 Section C line 26 → Schedule 1 line 8e
+function ltcTaxablePayments(
+  input: Form8853Input,
+  ltcDailyLimit: number,
+): number {
+  const total = ltcTotalPerDiemPayments(input);
+  if (total <= 0) return 0;
+  const limitation = ltcPerDiemLimitation(input, ltcDailyLimit);
+  return Math.max(0, total - limitation);
+}
+
+// ─── Output Builders ─────────────────────────────────────────────────────────
+
+// Schedule 1 output: line 8e (taxable MSA/LTC income) and line 23 (Archer MSA deduction)
+function schedule1Output(
+  input: Form8853Input,
+  ltcDailyLimit: number,
+): NodeOutput[] {
+  const deduction = archerMsaDeduction(input);
+  const taxableArcher = archerMsaTaxableDist(input);
+  const taxableMedicareAdv = medicareAdvantaxableDist(input);
+  const taxableLtc = ltcTaxablePayments(input, ltcDailyLimit);
+  const totalTaxableIncome = taxableArcher + taxableMedicareAdv + taxableLtc;
+  const employerExcess = input.archer_contribution_ledger
+    ? calculateArcherContributions(
+      input.archer_contribution_ledger,
+      input.w2_code_r_entries,
+    ).employerExcessIncome
+    : 0;
+
+  if (deduction <= 0 && totalTaxableIncome <= 0 && employerExcess <= 0) {
+    return [];
+  }
+
+  const s1Input: Partial<z.infer<typeof schedule1["inputSchema"]>> = {};
+  if (totalTaxableIncome > 0) {
+    s1Input.line8e_archer_msa_dist = totalTaxableIncome;
+  }
+  if (deduction > 0) s1Input.line23_archer_msa_deduction = deduction;
+  if (employerExcess > 0) {
+    s1Input.line8z_archer_excess_employer = employerExcess;
+  }
+
+  const agiInput: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> = {};
+  if (totalTaxableIncome > 0) {
+    agiInput.line8e_archer_msa_dist = totalTaxableIncome;
+  }
+  if (deduction > 0) agiInput.line23_archer_msa_deduction = deduction;
+  if (employerExcess > 0) {
+    agiInput.line8z_archer_excess_employer = employerExcess;
+  }
+  const results: NodeOutput[] = [
+    output(
+      schedule1,
+      s1Input as AtLeastOne<z.infer<typeof schedule1["inputSchema"]>>,
+    ),
+  ];
+  if (Object.keys(agiInput).length > 0) {
+    results.push(
+      output(
+        agi_aggregator,
+        agiInput as AtLeastOne<z.infer<typeof agi_aggregator["inputSchema"]>>,
+      ),
+    );
+  }
+  return results;
+}
+
+// Schedule 2 output: line 17e (20% Archer MSA tax) and line 17f (50% Medicare Advantage MSA tax)
+function schedule2Output(input: Form8853Input): NodeOutput[] {
+  const archerTax = archerMsaPenaltyTax(input);
+  const medicareTax = medicareAdvantagePenaltyTax(input);
+
+  if (archerTax <= 0 && medicareTax <= 0) return [];
+
+  const s2Input: Partial<z.infer<typeof schedule2["inputSchema"]>> = {};
+  if (archerTax > 0) s2Input.line17e_archer_msa_tax = archerTax;
+  if (medicareTax > 0) s2Input.line17f_medicare_advantage_msa_tax = medicareTax;
+
+  return [
+    output(
+      schedule2,
+      s2Input as AtLeastOne<z.infer<typeof schedule2["inputSchema"]>>,
+    ),
+  ];
+}
+
+function hasForm8853Activity(input: Form8853Input): boolean {
+  return Object.values(input).some((value) =>
+    (typeof value === "number" && value > 0) ||
+    value === true ||
+    (typeof value === "object" && value !== null)
+  );
+}
+
+// ─── Node class ───────────────────────────────────────────────────────────────
+
+class Form8853Node extends TaxNode<typeof inputSchema> {
+  readonly nodeType = "form8853";
+  readonly inputSchema = inputSchema;
+  readonly outputNodes = new OutputNodes([
+    schedule1,
+    agi_aggregator,
+    schedule2,
+    form5329,
+  ]);
+
+  compute(ctx: NodeContext, rawInput: Form8853Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+    const input = normalizeArcherContributionSource(
+      normalizeMedicareSource(
+        normalizeArcherSource(inputSchema.parse(rawInput), ctx.taxYear),
+        ctx.taxYear,
+      ),
+      ctx.taxYear,
+    );
+    return {
+      outputs: [
+        ...schedule1Output(input, cfg.ltcPerDiemDailyLimit),
+        ...schedule2Output(input),
+        ...archerContributionExcessOutput(input),
+        ...(hasForm8853Activity(input)
+          ? [{ nodeType: this.nodeType, fields: input }]
+          : []),
+      ],
+    };
+  }
+}
+
+export function normalizeArcherSource(
+  input: Form8853Input,
+  taxYear = 2025,
+): Form8853Input {
+  if (!input.archer_distribution_ledger) return input;
+  const lines = calculateArcherLedger(
+    input.archer_distribution_ledger,
+    taxYear,
+  );
+  const expected = {
+    archer_msa_distributions: lines.rawGross,
+    archer_msa_rollover: 0,
+    archer_msa_qualified_expenses: lines.rawQualified,
+    archer_msa_exception: lines.line9a,
+  };
+  for (const [key, value] of Object.entries(expected)) {
+    const supplied = input[key as keyof Form8853Input];
+    if (supplied !== undefined && supplied !== value) {
+      throw new Error(`Form 8853 source ledger conflicts with ${key}`);
+    }
+  }
+  return { ...input, ...expected };
+}
+
+export function normalizeMedicareSource(
+  input: Form8853Input,
+  taxYear = 2025,
+): Form8853Input {
+  if (
+    input.medicare_distribution_ledger &&
+    input.medicare_joint_distribution_ledgers
+  ) {
+    throw new Error(
+      "Form8853 cannot combine sole and joint Medicare source ledgers",
+    );
+  }
+  if (
+    !input.medicare_distribution_ledger &&
+    !input.medicare_joint_distribution_ledgers
+  ) return input;
+  const lines = input.medicare_joint_distribution_ledgers
+    ? calculateMedicareJointLedgers(
+      input.medicare_joint_distribution_ledgers,
+      taxYear,
+    )
+    : calculateMedicareLedger(input.medicare_distribution_ledger!, taxYear);
+  const expected = {
+    medicare_advantage_distributions: lines.rawGross,
+    medicare_advantage_qualified_expenses: lines.rawQualified,
+    medicare_advantage_exception: lines.line13a,
+  };
+  for (const [key, value] of Object.entries(expected)) {
+    if (
+      input[key as keyof Form8853Input] !== undefined &&
+      input[key as keyof Form8853Input] !== value
+    ) {
+      throw new Error(`Form8853 Medicare ledger conflicts with ${key}`);
+    }
+  }
+  return { ...input, ...expected };
+}
+
+// ─── Singleton export ─────────────────────────────────────────────────────────
+
+export const form8853 = new Form8853Node();
+
+export function normalizeArcherContributionSource(
+  input: Form8853Input,
+  taxYear = 2025,
+): Form8853Input {
+  if (!input.archer_contribution_ledger) return input;
+  if (taxYear !== 2025) {
+    throw new Error("Sourced Archer contribution worksheet requires TY2025");
+  }
+  const ledger = input.archer_contribution_ledger;
+  const lines = calculateArcherContributions(ledger, input.w2_code_r_entries);
+  if (
+    input.archer_distribution_ledger || input.medicare_distribution_ledger ||
+    input.medicare_joint_distribution_ledgers ||
+    input.archer_distribution_filing_details ||
+    Object.entries(input).some(([key, value]) =>
+      /^(archer_msa_|medicare_advantage_|ltc_)/.test(key) &&
+      (typeof value === "number" ? value > 0 : value === true)
+    )
+  ) {
+    throw new Error(
+      "Archer contribution source conflicts with reviewed absence of other Form8853 activity",
+    );
+  }
+  const derived = {
+    employer_archer_msa: lines.rawEmployer,
+    taxpayer_archer_msa_contributions: lines.rawPersonal,
+    line3_limitation_amount: lines.line3,
+    compensation: lines.line4,
+  };
+  for (const [key, value] of Object.entries(derived)) {
+    if (
+      input[key as keyof Form8853Input] !== undefined &&
+      input[key as keyof Form8853Input] !== value
+    ) throw new Error(`Archer contribution source conflicts with ${key}`);
+  }
+  return { ...input, ...derived };
+}
+function archerContributionExcessOutput(input: Form8853Input): NodeOutput[] {
+  const ledger = input.archer_contribution_ledger;
+  if (!ledger) return [];
+  const lines = calculateArcherContributions(ledger, input.w2_code_r_entries);
+  if (!lines.currentExcess) return [];
+  return [output(form5329, {
+    owner_entries: [{
+      owner: ledger.owner === "taxpayer" ? TS.T : TS.S,
+      archer_part_vi: {
+        line34_prior_excess: 0,
+        line35_unused_contribution_room: Math.max(
+          0,
+          lines.cap - lines.line1 - lines.line2,
+        ),
+        line36_taxable_distributions: 0,
+        line39_current_year_excess: lines.currentExcess,
+        december_31_value: lines.december31Value,
+      },
+    }],
+  })];
+}

@@ -10,7 +10,7 @@ import {
   buildPdfBytes,
   type PdfPageOrigin,
 } from "../../forms/f1040/2025/pdf/builder.ts";
-import { sha256Hex } from "../../forms/f1040/2025/domains/execution/prepared-source.ts";
+import { sha256Hex } from "../../forms/f1040/2025/return-processing/prepared-source.ts";
 import {
   assertReviewSourceFileContents,
   REVIEW_RETURN_TIMESTAMP,

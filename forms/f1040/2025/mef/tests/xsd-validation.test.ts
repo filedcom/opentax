@@ -1,4 +1,4 @@
-import { w2gPayerCopyFixture } from "../../domains/income/w2g_payer_copy.fixture.ts";
+import { w2gPayerCopyFixture } from "../../domains/income/other/w2g_payer_copy.fixture.ts";
 /**
  * XSD Validation Tests — validates generated MeF XML against the IRS
  * 2025v5.4 Return1040.xsd schema using xmllint as a subprocess.
@@ -15,47 +15,47 @@ import {
   assertThrows,
 } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
-import { withSyntheticForm1098Copy } from "../../pdf/reviews/composed/review-1098-copy.fixture.ts";
+import { withSyntheticForm1098Copy } from "../../pdf/reviews/deductions/mortgage/review-1098-copy.fixture.ts";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
 import { execute } from "../../../../../core/runtime/executor.ts";
 import { registry } from "../../registry.ts";
 import { buildMefBundle, buildMefXml } from "../builder.ts";
 import { buildPdfBytes } from "../../pdf/builder.ts";
 import { f1040_2025 } from "../../index.ts";
-import { normalizeAllPending } from "../../domains/execution/pending.ts";
+import { normalizeAllPending } from "../../return-processing/pending.ts";
 import { buildPending } from "../execution/pending.ts";
-import { w2gPdf } from "../../pdf/forms/income/w2g.ts";
+import { w2gPdf } from "../../pdf/forms/income/other/w2g.ts";
 import type { MefFormsPending } from "../types.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
-import { EnergyType } from "../../../nodes/inputs/f8835/index.ts";
-import { fuelClaimSchema } from "../../../nodes/inputs/f4136/index.ts";
+import { EnergyType } from "../../../nodes/inputs/credits/business/f8835/index.ts";
+import { fuelClaimSchema } from "../../../nodes/inputs/credits/business/f4136/index.ts";
 import {
   PassiveCreditCategory,
   PassiveCreditReportingRoute,
   PassiveCreditSourceOrigin,
-} from "../../../nodes/intermediate/forms/form8582cr/index.ts";
-import { TargetGroup } from "../../../nodes/inputs/f5884/index.ts";
-import { calculateForm8874Recapture } from "../../../nodes/inputs/f8874/recapture_node.ts";
-import { irs1040Pdf } from "../../pdf/forms/identity/f1040.ts";
-import { schedule3Pdf } from "../../pdf/forms/credits/schedule3.ts";
-import { scheduleDPdf } from "../../pdf/forms/investments/schedule_d.ts";
-import { scheduleEPdf } from "../../pdf/forms/business/schedule_e.ts";
-import { withReviewedForm8874RecaptureEvidence } from "../../../nodes/inputs/f8874/recapture_fixture.ts";
+} from "../../../nodes/intermediate/forms/credits/business/form8582cr/index.ts";
+import { TargetGroup } from "../../../nodes/inputs/credits/business/f5884/index.ts";
+import { calculateForm8874Recapture } from "../../../nodes/inputs/credits/business/f8874/recapture_node.ts";
+import { irs1040Pdf } from "../../pdf/forms/general/return-assembly/f1040.ts";
+import { schedule3Pdf } from "../../pdf/forms/general/return-assembly/schedule3.ts";
+import { scheduleDPdf } from "../../pdf/forms/income/investments/schedule_d.ts";
+import { scheduleEPdf } from "../../pdf/forms/income/rental-passthrough/schedule_e.ts";
+import { withReviewedForm8874RecaptureEvidence } from "../../../nodes/inputs/credits/business/f8874/recapture_fixture.ts";
 import {
   calculateForm8396,
   CertifiedInterestDocumentKind,
   form8396SourceSchema,
   QualifiedHomeState,
-} from "../../../nodes/intermediate/forms/form8396/calculation.ts";
-import { BondType } from "../../../nodes/inputs/f8912/index.ts";
+} from "../../../nodes/intermediate/forms/credits/individual/form8396/calculation.ts";
+import { BondType } from "../../../nodes/inputs/credits/individual/f8912/index.ts";
 import { SS_WAGE_BASE_2025 } from "../../../nodes/config/2025.ts";
 import { extractFilerIdentity } from "../../../mef/filer.ts";
-import { agreedJointPayment } from "../../../nodes/inputs/f1040es/agreed-payment.fixture.ts";
-import { purchasePointsCrossLoanFixture } from "../../../nodes/inputs/f1098/purchase_points_cross_loan.fixture.ts";
-import { twoObligation453aFixture } from "../../../nodes/inputs/f453a_interest/fixture.ts";
-import { priorIsoSaleFixture } from "../../domains/taxes/form6251/form6251_prior_iso_sale.fixture.ts";
-import { form6251Form4952Fixture } from "../../domains/taxes/form6251/form6251_4952.fixture.ts";
-import { Form7217PropertyTreatment } from "../../../nodes/inputs/f7217/index.ts";
+import { agreedJointPayment } from "../../../nodes/inputs/payments/estimated/f1040es/agreed-payment.fixture.ts";
+import { purchasePointsCrossLoanFixture } from "../../../nodes/inputs/deductions/mortgage/f1098/purchase_points_cross_loan.fixture.ts";
+import { twoObligation453aFixture } from "../../../nodes/inputs/taxes/interest/f453a_interest/fixture.ts";
+import { priorIsoSaleFixture } from "../../domains/taxes/amt/form6251/form6251_prior_iso_sale.fixture.ts";
+import { form6251Form4952Fixture } from "../../domains/taxes/amt/form6251/form6251_4952.fixture.ts";
+import { Form7217PropertyTreatment } from "../../../nodes/inputs/income/business/f7217/index.ts";
 import {
   SCENARIO_1040_01_FACTS,
   SCENARIO_1040_02_FACTS,

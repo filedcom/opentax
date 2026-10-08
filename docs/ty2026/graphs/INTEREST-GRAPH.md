@@ -57,7 +57,7 @@ and 1099-OID for the same instrument without doubling stated interest.
 | Box 9 REMIC investment expenses | The current IRS instructions say the amount is **not deductible**; retain it for source disclosure and do not feed Schedule A or Form 4952 as an expense. |
 | Box 11 tax-exempt OID; boxes 12–14 state data | Route tax-exempt OID to 1040 line 2a and the Social Security taxability worksheet. Only the **specified private-activity-bond portion** is an AMT preference for Form 6251 line 2g, after bond-type and adjustment evidence; box 11 alone does not establish it. State withholding is box **14**, while 12 is state name and 13 state payer ID. Preserve separate states and FATCA flag. |
 
-The shared [`f1099oid` node](../../../forms/f1040/nodes/inputs/f1099oid/index.ts)
+The shared [`f1099oid` node](../../../forms/f1040/nodes/inputs/income/investments/f1099oid/index.ts)
 is **not registered** in the focused TY2026 graph. It accepts only
 nonnegative box 8, always subtracts box 6 from box 1, subtracts box 10
 from box 8, routes **all** box 11 tax-exempt OID to Form 6251, does not

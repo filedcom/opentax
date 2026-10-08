@@ -4,7 +4,7 @@ import { PDFDocument } from "pdf-lib";
 import { type FilerIdentity, FilingStatus } from "../types.ts";
 import type { MefFormsPending } from "../types.ts";
 import { buildMefBundle, type MefBundle } from "../builder.ts";
-import { preparedSourceSha256, sha256Hex } from "../../domains/execution/prepared-source.ts";
+import { preparedSourceSha256, sha256Hex } from "../../return-processing/prepared-source.ts";
 import type { MefPdfAttachment } from "../form-descriptor.ts";
 import { f1040_2025 } from "../../index.ts";
 import { pdfReviewFixtures } from "../../pdf/review-fixtures.ts";

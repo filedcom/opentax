@@ -28,7 +28,7 @@ instruction ledger; recheck them before filing acceptance.
    carries owner, activity ID, payer and source ID, tax year, and amount. Route
    a box-13 statutory W-2's box 1 to that activity's line 1, box 2 to 1040
    line 25a, and box 3/5 to wage-base calculations. Ordinary W-2 box 1 goes
-   to 1040 line 1a. The [shared W-2 node](../../../forms/f1040/nodes/inputs/w2/index.ts)
+   to 1040 line 1a. The [shared W-2 node](../../../forms/f1040/nodes/inputs/income/wages/w2/index.ts)
    already excludes statutory wages from line 1a, but its Schedule C output
    is not consumed by the shared Schedule C node; this is a source-loss bug
    if reused as-is for TY2026.

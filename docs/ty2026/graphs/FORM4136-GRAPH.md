@@ -24,7 +24,7 @@ business activity when there is more than one.
 
 ## Existing implementation and year boundary
 
-The shared [`f4136` input node](../../../forms/f1040/nodes/inputs/f4136/index.ts)
+The shared [`f4136` input node](../../../forms/f1040/nodes/inputs/credits/business/f4136/index.ts)
 models business and home-kerosene claims, rates, records, multiple activities,
 and the Schedule 3 line 12 output. The 2025 [main PDF descriptor](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2025/pdf/forms/f4136.ts),
 [Schedule A PDF descriptor](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2025/pdf/forms/f4136_schedule_a.ts),

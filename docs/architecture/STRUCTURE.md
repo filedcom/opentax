@@ -27,9 +27,9 @@ Public entrypoints are `mod.ts`, `catalog.ts`, `cli/main.ts`, and `forms/f1040/2
 │   │       └── reviews/           # Retained review fixtures and contracts
 │   ├── nodes/
 │   │   ├── config/                # Tax-year routing
-│   │   ├── inputs/<form>/         # Validated source nodes
+│   │   ├── inputs/<section>/<group>/<form>/         # Validated source nodes
 │   │   ├── intermediate/          # Aggregations, computed forms and worksheets
-│   │   └── outputs/<form>/        # Final line assembly
+│   │   └── outputs/<section>/<group>/<form>/        # Final line assembly
 │   ├── mef/                       # Shared headers and transport contracts
 │   ├── validation/rules/          # Domain groups; stable index and rule IDs
 │   └── e2e/                       # Return contracts by domain; ATS scenarios together
@@ -47,14 +47,14 @@ Public entrypoints are `mod.ts`, `catalog.ts`, `cli/main.ts`, and `forms/f1040/2
 │   ├── release/                   # Compiled binary checks
 │   └── site/                      # Static site statistics
 ├── benchmark/
-│   ├── run_benchmark.ts           # Independent expected-output comparison
+│   ├── run_benchmark.ts           # Archived expected-output comparison
 │   ├── run_case.ts / run_all.ts   # Individual and bulk case execution
 │   └── cases/<form>/<year>/<case>/ # Paired input, expected and retained output files
 ├── .state/                        # Existing state and retained private evidence
 └── .pdf-cache/                    # Existing downloaded form cache
 ```
 
-Year, native and PDF domain groups use identity, income, investments, business, retirement, deductions, credits, health, taxes, international, payments and execution. Larger families have a second folder named for the form. Tests and fixtures remain beside the contracts they verify. Existing node, engine, CLI and benchmark case folders already provide semantic boundaries.
+Tax-facing boundaries use General, Income, Adjustments, Deductions, Credits, Taxes, and Payments. Business, retirement, investments, foreign and health are subgroups inside the relevant return section. Node inputs, intermediate forms/worksheets/aggregations and outputs retain their roles, with the same physical tax-section subfolders inside each role. Tests, fixtures and family research travel with their contracts. Runtime and tooling remain under separate role boundaries.
 
 ## Benchmark case formats
 

@@ -1,16 +1,20 @@
 # Taxes
 
-Source contracts, fixtures and adjacent tests for this tax concern. Public form identifiers and registration remain in the parent entrypoint.
+Income tax, additional taxes, recapture, interest, and penalties.
 
-Source and fixture entrypoints:
+| Area | Contents |
+| --- | --- |
+| [credit-recapture](credit-recapture) | 2 files |
+| [employment](employment) | 3 files |
+| [foreign](foreign) | 1 files |
+| [household-employment](household-employment) | 1 files |
+| [income-averaging](income-averaging) | 1 files |
+| [interest](interest) | 2 files |
+| [investments](investments) | 2 files |
+| [other](other/README.md) | 2 files |
+| [passthrough](passthrough) | 1 files |
+| [retirement](retirement) | 2 files |
+| [self-employment](self-employment) | 1 files |
+| [underpayment](underpayment) | 2 files |
 
-- [f461.ts](./f461.ts)
-- [f4684.ts](./f4684.ts)
-- [f8828.ts](./f8828.ts)
-- [f8959.ts](./f8959.ts)
-- [f8960.ts](./f8960.ts)
-- [f8978.ts](./f8978.ts)
-- [f982.ts](./f982.ts)
-- [s2.ts](./s2.ts)
-- [sh.ts](./sh.ts)
-- [sse.ts](./sse.ts)
+Canonical [Form 4972](../../../2025/mef/forms/taxes/retirement/f4972.ts) retirement tax and [Forms 4255](../../../2025/mef/forms/taxes/credit-recapture/f4255.ts)/[8611](../../../2025/mef/forms/taxes/credit-recapture/f8611.ts) credit recapture are tax families; related distributions and original credits are under [Income](../income/README.md) and [Credits](../credits/README.md).

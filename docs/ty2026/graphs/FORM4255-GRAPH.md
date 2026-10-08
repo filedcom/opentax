@@ -38,7 +38,7 @@ Recheck the form and current MeF release before a TY2026 filing route.
 
 ## Current code boundary
 
-The shared [`f4255` node](../../../forms/f1040/nodes/inputs/f4255/index.ts)
+The shared [`f4255` node](../../../forms/f1040/nodes/inputs/taxes/credit-recapture/f4255/index.ts)
 accepts original credit, an arbitrary `year_of_recapture` and even a manual
 override, multiplies by a five-year percentage, and sends everything to
 TY2025 Schedule 2 line 17a. In the pinned 2026 Schedule 2, line 17a is

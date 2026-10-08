@@ -3,13 +3,13 @@ import {
   computeTotalExpenses as cExpenses,
   mealsDeductiblePct,
   type ScheduleCItem,
-} from "./inputs/schedule_c/model.ts";
+} from "./inputs/income/business/schedule_c/model.ts";
 import {
   computeGrossIncome as fGross,
   computeTotalExpenses as fExpenses,
   conservationDeduction,
   type ScheduleFItem,
-} from "./intermediate/forms/schedule_f/model.ts";
+} from "./intermediate/forms/income/business/schedule_f/model.ts";
 import { roundWholeDollars } from "../whole-dollars.ts";
 
 function filedLeaves<T extends object>(source: T): T {

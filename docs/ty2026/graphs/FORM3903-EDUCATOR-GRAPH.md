@@ -26,7 +26,7 @@ reimbursements on line 4. Allocate each expense and allowance once, then
 reconcile the printed form against the final instructions so no reimbursement
 is subtracted twice.
 
-The shared [`f3903` node](../../../forms/f1040/nodes/inputs/f3903/index.ts) is
+The shared [`f3903` node](../../../forms/f1040/nodes/inputs/adjustments/moving/f3903/index.ts) is
 TY2025-only. It filters to an `active_duty_military` boolean, accepts an
 unverified `total_expenses`, clamps negative net reimbursement to zero, and
 aggregates Schedule 1/AGI. It cannot represent intelligence-community
@@ -66,7 +66,7 @@ line 17k; include that line in the [deduction choice and overall itemized
 limit](./DEDUCTION-GRAPH.md). Reconcile both filed lines and ensure one receipt
 is never used twice, including Form 8863 education-credit expenses.
 
-The shared [`educator_expenses` node](../../../forms/f1040/nodes/inputs/educator_expenses/index.ts)
+The shared [`educator_expenses` node](../../../forms/f1040/nodes/inputs/adjustments/education/educator_expenses/index.ts)
 assumes eligibility when hours are missing, merges all categories into one
 amount, caps only Schedule 1, and has no Schedule A output. It is absent
 from the focused TY2026 registry. Add explicit eligibility and expense

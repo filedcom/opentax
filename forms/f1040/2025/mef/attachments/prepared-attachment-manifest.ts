@@ -1,5 +1,5 @@
 import { element } from "../../../mef/xml.ts";
-import { sha256Hex } from "../../domains/execution/prepared-source.ts";
+import { sha256Hex } from "../../return-processing/prepared-source.ts";
 import type { MefBundle } from "../builder.ts";
 import {
   documentId,

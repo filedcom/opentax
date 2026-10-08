@@ -1,68 +1,13 @@
 # Credits
 
-Source contracts, fixtures and adjacent tests for this tax concern. Public form identifiers and registration remain in the parent entrypoint.
+Individual and business credits and their limitations.
 
-| Family | Contents |
+| Area | Contents |
 | --- | --- |
-| [f3800](./f3800/) | 35 files |
+| [business](business) | 93 files |
+| [earned-income](earned-income) | 2 files |
+| [foreign](foreign) | 19 files |
+| [health](health) | 24 files |
+| [individual](individual/README.md) | 36 files |
 
-Source and fixture entrypoints:
-
-- [eitc.ts](./eitc.ts)
-- [f2441.ts](./f2441.ts)
-- [f3468.ts](./f3468.ts)
-- [f3468_source.ts](./f3468_source.ts)
-- [f4136.ts](./f4136.ts)
-- [f4136_credit_card_users_statement.ts](./f4136_credit_card_users_statement.ts)
-- [f4136_diesel_government_sales_statement.ts](./f4136_diesel_government_sales_statement.ts)
-- [f4136_emulsion_blending_statement.ts](./f4136_emulsion_blending_statement.ts)
-- [f4136_kerosene_government_sales_statement.ts](./f4136_kerosene_government_sales_statement.ts)
-- [f4255.ts](./f4255.ts)
-- [f5695.ts](./f5695.ts)
-- [f5695_qmid_attachment.ts](./f5695_qmid_attachment.ts)
-- [f5884.ts](./f5884.ts)
-- [f5884_controlled_group_statement.ts](./f5884_controlled_group_statement.ts)
-- [f5884_deduction_differentiation_stmt.ts](./f5884_deduction_differentiation_stmt.ts)
-- [f8396.ts](./f8396.ts)
-- [f8396_reissue_join.ts](./f8396_reissue_join.ts)
-- [f8611.ts](./f8611.ts)
-- [f8611_issuer_source.ts](./f8611_issuer_source.ts)
-- [f8820.ts](./f8820.ts)
-- [f8820_controlled_group_statement.ts](./f8820_controlled_group_statement.ts)
-- [f8820_credit_evidence.ts](./f8820_credit_evidence.ts)
-- [f8826_cap_ledger.ts](./f8826_cap_ledger.ts)
-- [f8826_credit_evidence.ts](./f8826_credit_evidence.ts)
-- [f8826_draft.ts](./f8826_draft.ts)
-- [f8826_source.ts](./f8826_source.ts)
-- [f8834.ts](./f8834.ts)
-- [f8835.ts](./f8835.ts)
-- [f8839.ts](./f8839.ts)
-- [f8844.ts](./f8844.ts)
-- [f8844_source.ts](./f8844_source.ts)
-- [f8859.ts](./f8859.ts)
-- [f8862.ts](./f8862.ts)
-- [f8863.ts](./f8863.ts)
-- [f8864.ts](./f8864.ts)
-- [f8874.ts](./f8874.ts)
-- [f8874_credit_evidence.ts](./f8874_credit_evidence.ts)
-- [f8880.ts](./f8880.ts)
-- [f8881.ts](./f8881.ts)
-- [f8882.fixture.ts](./f8882.fixture.ts)
-- [f8882.ts](./f8882.ts)
-- [f8882_source.ts](./f8882_source.ts)
-- [f8908.ts](./f8908.ts)
-- [f8908_form7220_pdf.ts](./f8908_form7220_pdf.ts)
-- [f8908_no_alterations_pdf.ts](./f8908_no_alterations_pdf.ts)
-- [f8908_pwa.ts](./f8908_pwa.ts)
-- [f8908_source_reconciliation.ts](./f8908_source_reconciliation.ts)
-- [f8911.ts](./f8911.ts)
-- [f8911_schedule_a.ts](./f8911_schedule_a.ts)
-- [f8912.ts](./f8912.ts)
-- [f8936.ts](./f8936.ts)
-- [f8936_schedule_a.ts](./f8936_schedule_a.ts)
-- [f8941.ts](./f8941.ts)
-- [f8941_source.ts](./f8941_source.ts)
-- [f8994.ts](./f8994.ts)
-- [schedule3.ts](./schedule3.ts)
-- [schedule_8812.ts](./schedule_8812.ts)
-- [schedule_r.ts](./schedule_r.ts)
+Canonical [Form 8962](health/f8962/f8962.ts) also reconciles advance-credit repayment under [Taxes](../taxes/README.md); its whole-form family is classified as Credits.

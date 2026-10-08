@@ -1,20 +1,20 @@
 # Taxes
 
-Source contracts, fixtures and adjacent tests for this tax concern. Public form identifiers and registration remain in the parent entrypoint.
+Income tax, additional taxes, recapture, interest, and penalties.
 
-Source and fixture entrypoints:
+| Area | Contents |
+| --- | --- |
+| [amt](amt) | 2 files |
+| [credit-recapture](credit-recapture) | 8 files |
+| [employment](employment) | 6 files |
+| [foreign](foreign) | 4 files |
+| [household-employment](household-employment) | 6 files |
+| [income-averaging](income-averaging) | 2 files |
+| [investments](investments) | 4 files |
+| [other](other/README.md) | 4 files |
+| [passthrough](passthrough) | 4 files |
+| [retirement](retirement) | 8 files |
+| [self-employment](self-employment) | 2 files |
+| [underpayment](underpayment) | 3 files |
 
-- [f461.ts](./f461.ts)
-- [f4684.ts](./f4684.ts)
-- [f6251.ts](./f6251.ts)
-- [f8828.ts](./f8828.ts)
-- [f8828_source_reconciliation.ts](./f8828_source_reconciliation.ts)
-- [f8959.ts](./f8959.ts)
-- [f8960.ts](./f8960.ts)
-- [f8978.ts](./f8978.ts)
-- [f8978_schedule_a.ts](./f8978_schedule_a.ts)
-- [f8978_statement.ts](./f8978_statement.ts)
-- [f982.ts](./f982.ts)
-- [schedule2.ts](./schedule2.ts)
-- [schedule_h.ts](./schedule_h.ts)
-- [schedule_se.ts](./schedule_se.ts)
+Canonical [Form 4972](retirement/f4972.ts) retirement tax and [Forms 4255](credit-recapture/f4255.ts)/[8611](credit-recapture/f8611.ts) credit recapture are tax families; related distributions and original credits are under [Income](../income/README.md) and [Credits](../credits/README.md).

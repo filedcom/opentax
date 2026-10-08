@@ -6,9 +6,9 @@ import {
   PDFNumber,
   type PDFRawStream,
 } from "pdf-lib";
-import { w2gPayerCopyFixture } from "../../domains/income/w2g_payer_copy.fixture.ts";
+import { w2gPayerCopyFixture } from "../../domains/income/other/w2g_payer_copy.fixture.ts";
 import { type FilerIdentity, FilingStatus } from "../../../mef/header.ts";
-import { w2gPdf } from "../../pdf/forms/income/w2g.ts";
+import { w2gPdf } from "../../pdf/forms/income/other/w2g.ts";
 import { assertW2GPayerCopyContents } from "./w2g-payer-copy.ts";
 import type { MefFormsPending } from "../types.ts";
 

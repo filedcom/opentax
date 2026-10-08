@@ -42,7 +42,7 @@ page cannot be mistaken for the complete activity list.
    address, ownership share, payer/source matches, personal/rental days,
    income, each printed expense, asset/debt references, and prior-year loss
    balances. Collect K-1 and Form 4835 activities under their own IDs. The
-   [current shared input](../../../forms/f1040/nodes/inputs/schedule_e/index.ts)
+   [current shared input](../../../forms/f1040/nodes/inputs/income/rental-passthrough/schedule_e/index.ts)
    has useful fields but no TY2026 vehicle-interest slot and no Part II–IV
    activity rows.
 2. Calculate auto expense and depreciation by property. Complete Form 8990

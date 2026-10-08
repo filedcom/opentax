@@ -29,7 +29,7 @@ MeF release before filing.
   with a $1,000 per-item cap, then Form 8911 lines 5–10 tax/AMT limit and
   **2026 Schedule 3 line 6j**. Apply Form 3800 and personal credit ordering
   only once in the return-wide credit resolver.
-- The shared [`f8911` node](../../../forms/f1040/nodes/inputs/f8911/index.ts)
+- The shared [`f8911` node](../../../forms/f1040/nodes/inputs/credits/business/f8911/index.ts)
   accepts one property and blocks any business use. TY2025
   [`IRS8911`](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2025/mef/forms/f8911.ts) and
   [`IRS8911ScheduleA`](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2025/mef/forms/f8911_schedule_a.ts)
@@ -65,7 +65,7 @@ timing separate from ordinary current-year income.
   allocation against final 2026 return instructions. Keep penalties and
   interest distinct from line 14. Never substitute a marginal-rate estimate
   for affected-year recomputation.
-- The shared [`f8978` node](../../../forms/f1040/nodes/inputs/f8978/index.ts)
+- The shared [`f8978` node](../../../forms/f1040/nodes/inputs/taxes/passthrough/f8978/index.ts)
   already retains year columns and routes positive/negative totals through
   different nodes. The TY2025 [`IRS8978`](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2025/mef/forms/f8978.ts),
   [`IRS8978ScheduleA`](https://github.com/filedcom/opentax/blob/b7c07b616564167a91bc588dba05caab2a28e054/forms/f1040/2025/mef/forms/f8978_schedule_a.ts)

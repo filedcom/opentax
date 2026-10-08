@@ -36,9 +36,9 @@ The user subsequently authorized completing and merging these three routes, then
 
 Route proof documents retain previous failures and interrupted-run qualifications:
 
-- `docs/mef/ty2025/domains/health/form8962/ty2025-form8962-joint-income-source-scope.md`
-- `docs/mef/ty2025/domains/qbi/ty2025-rpe-aggregation-source-checkpoint.md`
-- `docs/mef/ty2025/domains/investments/form4952/ty2025-form4952-mfjspouse-royalty-source-proof.md`
+- `docs/mef/ty2025/domains/credits/health/form8962/ty2025-form8962-joint-income-source-scope.md`
+- `docs/mef/ty2025/domains/deductions/business/ty2025-rpe-aggregation-source-checkpoint.md`
+- `docs/mef/ty2025/domains/deductions/investments/form4952/ty2025-form4952-mfjspouse-royalty-source-proof.md`
 
 Root independent source/Decimal/native/PDF reviews are physically retained:
 

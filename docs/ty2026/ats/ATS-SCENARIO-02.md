@@ -57,7 +57,7 @@ derived expectations, and application output distinct.
 1. Extend the W-2/2026 source route to honor box 13 statutory-employee status:
    attach the W-2 to the correct Schedule C activity, direct box 1 there once,
    preserve box 2 withholding, and exclude that activity's net from Schedule
-   SE. The shared [Schedule C node](../../../forms/f1040/nodes/inputs/schedule_c/index.ts)
+   SE. The shared [Schedule C node](../../../forms/f1040/nodes/inputs/income/business/schedule_c/index.ts)
    has a `statutory_employee` flag but requires explicit gross receipts and
    still names line 16b as other interest; audit its output edges and add the
    2026 line 16b/16c split before registration.

@@ -13,7 +13,7 @@ v5.4 `Return1040.xsd`. The final batch's twelve prior cases (61 pages) are
 pixel-identical at 65 dpi to the previously reviewed batch. The new
 high-wage case adds six pages.
 `deno test --allow-read --allow-write --allow-run=xmllint,deno
-forms/f1040/2025/pdf/reviews/composed/review-fixtures.xsd.test.ts` passed 13/13 with the local
+forms/f1040/2025/pdf/reviews/general/composed-returns/review-fixtures.xsd.test.ts` passed 13/13 with the local
 schema bundle. This verifies executor diagnostics are empty and native XML is
 structurally valid for each retained source fixture.
 

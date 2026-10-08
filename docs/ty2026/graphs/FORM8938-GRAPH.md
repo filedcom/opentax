@@ -64,7 +64,7 @@ filing rules and destination.
 
 ## Current code boundary and build order
 
-The shared [`f8938` node](../../../forms/f1040/nodes/inputs/f8938/index.ts)
+The shared [`f8938` node](../../../forms/f1040/nodes/inputs/general/foreign/f8938/index.ts)
 is in the TY2025 registry but only validates a permissive object and returns
 no outputs. Every asset field, both aggregate values and filing status are
 optional; it does not calculate a threshold, build form lines, reconcile
