@@ -4537,3 +4537,17 @@ Updated only the compacted validation learning and current Form 8582 evidence
 status. Main 52 unchecked rows remain frozen; all 42 future rows remain
 unworked. Integration introduces no new tests run, viewed pages, aggregate
 filing approvals or IRS acknowledgments. No PR has been opened.
+
+
+### October 8 — ATS estimate refreshed at 01:42 UTC
+
+Reopened the [IRS operational-status page](https://www.irs.gov/e-file-providers/modernized-e-file-operational-status).
+It still reports ATS unavailable through October 13 at 09:00 Eastern and
+announces TY2026 testing from 09:01; TY2025 availability after reopening is
+not established. The page update date remains September 28. Refreshed only
+the board observation timestamp: zero expected accepted tests by the original
+October 8 morning deadline and no estimated probability after reopening.
+Private observation: `ats-status-20261008T014203Z-v1/observation.json`.
+Session 76705 was re-polled and remains live; its full result is pending.
+Main 52 unchecked rows and all 42 unworked future rows remain unchanged.
+No tests, page views, source authentication or IRS acknowledgments are added.
