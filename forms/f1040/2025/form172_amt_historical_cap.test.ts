@@ -1298,7 +1298,7 @@ function earlyLayoutFixture(year: number) {
     amount: line === "1" ? 100 : 0,
   }));
   f.losses.forEach((loss, index) => {
-    const originYear = 2005 + index;
+    const originYear = (year < 2008 ? 2008 : 2005) + index;
     const { old, alternative } = historicalSources(originYear);
     alternative.reference = `amt-origin-${originYear}`;
     alternative.amt_inventory.reference = `amt-items-${originYear}`;
@@ -1312,10 +1312,12 @@ function earlyLayoutFixture(year: number) {
   const v = vintageReview(f);
   v.application_tax_year = year;
   v.vintages.forEach((row, index) => {
-    row.origin_year = 2005 + index;
+    row.origin_year = (year < 2008 ? 2008 : 2005) + index;
     row.modified_review.tax_year = year;
   });
-  v.vintages[1].earlier_nol_deductions[0].origin_year = 2005;
+  v.vintages[1].earlier_nol_deductions[0].origin_year = year < 2008
+    ? 2008
+    : 2005;
   return { f, v };
 }
 Deno.test("Historical AMT2008 and2009 use their physical ATNOLD refund and regularNOL lines", () => {
@@ -1445,4 +1447,132 @@ Deno.test("Historical AMT retained history traverses all ten2008–2017 years ac
   }]);
   assertEquals(r.completeCarryHistoryVerified, false);
   assertEquals(r.filingReady, false);
+});
+
+Deno.test("Historical AMT2005–2007 exclude ATNOLD27 and AMTI28 and keep investment interest signed", () => {
+  for (const year of [2005, 2006, 2007]) {
+    const { f, v } = earlyLayoutFixture(year);
+    for (
+      const [line, amount] of [["10", 20], ["7", -10], ["8", 5], [
+        "24",
+        -5,
+      ]] as const
+    ) {
+      f.annual_review.components.find((c) => c.line === line)!.amount = amount;
+    }
+    v.vintages.forEach((row) =>
+      row.modified_review.components.forEach((c) => {
+        const amount = f.annual_review.components.find((a) =>
+          a.line === c.line
+        )!.amount;
+        c.original_amount = amount;
+        c.refigured_amount = amount;
+      })
+    );
+    v.vintages[1].earlier_nol_deductions[0].amount = 99;
+    const r = calculateForm172HistoricalAmtAbsorption(f, v);
+    assertEquals(r.originalDeductionCap, 99);
+    assertEquals(r.chronologicalReviewedApplications.map((a) => a.absorbed), [
+      99,
+      0,
+    ]);
+    for (const line of ["27", "28"] as const) {
+      const bad = structuredClone(f);
+      bad.annual_review.components.push({
+        line,
+        reference: `excluded-${line}`,
+        amount: -50,
+      });
+      assertThrows(() => calculateForm172HistoricalAmtCap(bad));
+    }
+    const badSign = structuredClone(f);
+    badSign.annual_review.components.find((c) => c.line === "24")!.amount = 5;
+    assertThrows(() => calculateForm172HistoricalAmtCap(badSign));
+  }
+});
+
+Deno.test("Historical AMT2007 restores section1202 on line12 and refigures section199 separately", () => {
+  const { f, v } = earlyLayoutFixture(2007);
+  f.annual_review.components.find((c) => c.line === "12")!.amount = 7;
+  f.annual_review.section199_deduction.amount = 20;
+  v.vintages.forEach((row) => {
+    const c = row.modified_review.components.find((c) => c.line === "12")!;
+    c.original_amount = 7;
+    c.refigured_amount = 7;
+    row.modified_review.section199.original_amount = 20;
+    row.modified_review.section199.refigured_amount = 30;
+    row.modified_review.section1202_items = [{
+      item_id: "early-qsbs",
+      reference: "early-qsbs-source",
+      owner_ssn: "111223333",
+      excluded_gain: 100,
+      amt_preference: 7,
+    }];
+  });
+  v.vintages[1].earlier_nol_deductions[0].amount = 114;
+  const r = calculateForm172HistoricalAmtAbsorption(f, v);
+  assertEquals(r.originalDeductionCap, 114);
+  assertEquals(r.chronologicalReviewedApplications[0].modifiedBase, 230);
+  assertEquals(r.chronologicalReviewedApplications[0].absorbed, 200);
+  assertEquals(r.chronologicalReviewedApplications[1].absorbed, 7);
+  assertEquals(r.filingReady, false);
+});
+
+Deno.test("Historical AMT2005–2007 canonical history binds reviewed carryback openings without eligibility claims", async () => {
+  const openings = [[200, 100], [110, 100], [20, 100]];
+  const annual_applications = openings.map((opening, index) => {
+    const year = 2005 + index;
+    const { f, v } = earlyLayoutFixture(year);
+    f.losses.forEach((loss, i) => loss.reviewed_opening_amt_nol = opening[i]);
+    v.reference = `early-vintage-context-${year}`;
+    v.vintages[1].earlier_nol_deductions[0].amount = Math.min(opening[0], 90);
+    v.vintages.forEach((context, i) => {
+      context.modified_review.reference = `${year}-early-modified-${i}`;
+      context.modified_review.components.forEach((c) =>
+        c.refigured_reference = `${year}-${i}-early-modified-${c.line}`
+      );
+      context.modified_review.section199.refigured_reference =
+        `${year}-${i}-early-modified-dpad`;
+    });
+    return { application_year: year, cap_workpaper: f, vintage_reviews: v };
+  });
+  const history = {
+    reference: "early-carryback-history",
+    start_year: 2005,
+    end_year: 2007,
+    taxpayer_ssn: "111223333",
+    entry_reviews: [200, 100].map((amount, i) => ({
+      reference: `early-entry-${i}`,
+      origin_year: 2008 + i,
+      loss_reference: `loss-review-${2008 + i}`,
+      application_year: 2005,
+      reviewed_opening: amount,
+    })),
+    annual_applications,
+  };
+  const bytes = new TextEncoder().encode(JSON.stringify(history));
+  const r = await stageForm172HistoricalAmtHistorySource({
+    history: {
+      reference: history.reference,
+      sha256: await historyDigest(bytes),
+    },
+    start_tax_year: 2005,
+    end_tax_year: 2007,
+    taxpayer_ssn: "111223333",
+  }, [{ reference: history.reference, bytes }]);
+  assertEquals(
+    r.reviewedAnnualApplications.map((a) =>
+      a.chronologicalReviewedApplications.map((loss) => loss.absorbed)
+    ),
+    [[90, 0], [90, 0], [20, 70]],
+  );
+  assertEquals(r.reviewedEndingBalances, [{ originYear: 2008, amount: 0 }, {
+    originYear: 2009,
+    amount: 30,
+  }]);
+  assertEquals(r.completeCarryHistoryVerified, false);
+  assertEquals(r.filingReady, false);
+  const unsupported = earlyLayoutFixture(2005).f;
+  unsupported.annual_review.tax_year = 2004;
+  assertThrows(() => calculateForm172HistoricalAmtCap(unsupported));
 });

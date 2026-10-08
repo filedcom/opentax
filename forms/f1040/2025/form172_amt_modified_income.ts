@@ -12,7 +12,7 @@ const signed = z.number().int().min(-1_000_000_000).max(1_000_000_000);
 const reviewSchema = z.object({
   reference: ref,
   annual_reference: ref,
-  tax_year: z.number().int().min(2008).max(2017),
+  tax_year: z.number().int().min(2005).max(2017),
   taxpayer_ssn: z.string().regex(/^\d{9}$/),
   spouse_ssn: z.string().regex(/^\d{9}$/).optional(),
   filing_status: z.enum([

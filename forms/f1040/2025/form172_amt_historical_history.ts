@@ -4,7 +4,7 @@ import { calculateForm172HistoricalAmtAbsorption } from "./form172_amt_historica
 import { form172AmtAnnualReviewSchema } from "./form172_amt_annual_limit.ts";
 
 const ref = z.string().trim().min(1);
-const year = z.number().int().min(2008).max(2017);
+const year = z.number().int().min(2005).max(2017);
 const originYear = z.number().int().min(2005).max(2016);
 const schema = z.object({
   reference: ref,
@@ -27,14 +27,14 @@ const schema = z.object({
       cap_workpaper: z.unknown(),
       vintage_reviews: z.unknown(),
     }).strict(),
-  ).min(1).max(10),
+  ).min(1).max(13),
 }).strict();
 
 /** Consecutive historical annual applications, including explicit zero years.
  * Entry balances are reviewed declarations, NOT proved loss-year carryback
  * dispositions. Subsequent openings must exactly equal computed remainders;
  * origin inventories/election identity cannot silently change between years.
- * This span does not establish years outside2008–2017 or accepted carry.
+ * This span does not establish years outside2005–2017 or accepted carry.
  */
 export function calculateForm172HistoricalAmtHistory(raw: unknown) {
   const v = schema.parse(raw);

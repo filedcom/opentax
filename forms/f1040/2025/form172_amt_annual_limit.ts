@@ -56,7 +56,8 @@ export const form172AmtLegacyTentativeLines = [
   "26",
   "27",
 ] as const;
-/** Physical historical line vocabulary.2008 excludes ATNOLD28;2009 excludes
+/** Physical historical line vocabulary.2005–07 exclude ATNOLD27 and AMTI28;
+ * 2008 excludes ATNOLD28;2009 excludes
  * ATNOLD12. Later layouts exclude11 instead. Never align them by array index. */
 export const form172AmtHistoricalPhysicalLines = [
   "1",
@@ -90,6 +91,16 @@ export const form172AmtHistoricalPhysicalLines = [
 ] as const;
 
 export function form172HistoricalAmtLayout(year: number) {
+  if (year >= 2005 && year <= 2007) {
+    return {
+      tentativeLines: form172AmtHistoricalPhysicalLines.filter((line) =>
+        line !== "27" && line !== "28"
+      ),
+      regularNolLine: "10" as const,
+      subtractionLines: ["6", "7", "24"] as const,
+      section1202Line: "12" as const,
+    };
+  }
   if (year === 2008) {
     return {
       tentativeLines: form172AmtHistoricalPhysicalLines.filter((line) =>
@@ -131,7 +142,7 @@ const signedDollars = z.number().int().min(-1_000_000_000).max(1_000_000_000);
 const positiveDollars = z.number().int().min(0).max(1_000_000_000);
 export const form172AmtAnnualReviewSchema = z.object({
   reference: ref,
-  tax_year: z.number().int().min(2008).max(2025),
+  tax_year: z.number().int().min(2005).max(2025),
   taxpayer_ssn: z.string().regex(/^\d{9}$/),
   spouse_ssn: z.string().regex(/^\d{9}$/).optional(),
   form6251_reference: ref,

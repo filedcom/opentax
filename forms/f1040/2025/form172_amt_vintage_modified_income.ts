@@ -6,7 +6,7 @@ import { calculateForm172HistoricalAmtModifiedIncome } from "./form172_amt_modif
 const ref = z.string().trim().min(1);
 const schema = z.object({
   reference: ref,
-  application_tax_year: z.number().int().min(2008).max(2017),
+  application_tax_year: z.number().int().min(2005).max(2017),
   taxpayer_ssn: z.string().regex(/^\d{9}$/),
   spouse_ssn: z.string().regex(/^\d{9}$/).optional(),
   vintages: z.array(
