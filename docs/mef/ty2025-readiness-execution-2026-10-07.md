@@ -5545,3 +5545,17 @@ active; local workpaper arithmetic and byte consistency do not prove source
 authenticity, prior acceptance, accepted carry import, business rules or ATS
 acceptance. No main checkoff or aggregate coverage increase follows. The
 main board and entire 47-item future section remain unchanged.
+
+### October 8 — root Form 2210 full regression closed
+
+The original root `deno task test` run finished at 05:58:32 UTC with actual
+tool exit zero: **12,411 passed, 0 failed, zero ignored** (121m41s). All
+2,637 runtime paths match its startup manifest. Launch head was
+`75627ad3b2be0c8dcfc38d86fd4d7e2b6ac2e2c2`; subsequent root changes were
+documentation only. Private `root-form2210-full-regression-20261008-v1/`
+retains command/environment preflight, log, terminal status and independent
+terminal review. Log SHA:
+`d3a903aa7dad3581f177d77a08a92256e272a11d8be147fcb3a4b8be44c87e34`.
+This validates the root runtime including staged Form 2210 work; it does not
+prove the whole phase's outstanding filing routes or IRS acceptance.
+Form 8801 integration will require its own subsequent serial full run.
