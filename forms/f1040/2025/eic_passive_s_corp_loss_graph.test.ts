@@ -1,26 +1,11 @@
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { f1040_2025 } from "./index.ts";
-import { passiveK1Inputs, passiveK1Item } from "./eic_passive_k1.fixture.ts";
-import { passiveSCorpLossRecords } from "./eic_passive_s_corp_loss.fixture.ts";
+import { passiveK1Item } from "./eic_passive_k1.fixture.ts";
+import { passiveSCorpLossReturnInputs as inputs } from "./eic_passive_s_corp_loss.fixture.ts";
 import { buildMefBundle } from "./mef/builder.ts";
 import { buildPending } from "./mef/pending.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
 import { extractFilerIdentity } from "../mef/filer.ts";
-
-function inputs(cash: number, income: number, investment = 11950) {
-  const i = passiveK1Inputs();
-  delete i.f4835;
-  delete i.k1_partnership;
-  const { source, k1 } = passiveSCorpLossRecords(cash);
-  i.k1_s_corp = [{ ...k1, first_year_passive_loss_source: source }];
-  if (income > 0) {
-    i.k1_partnership = [
-      passiveK1Item("partnership", "box2", income, "111223333", "987654321"),
-    ];
-  }
-  i.f1099int[0].box8 = investment - Math.max(0, income - Math.min(cash, 4000));
-  return i;
-}
 
 for (
   const c of [

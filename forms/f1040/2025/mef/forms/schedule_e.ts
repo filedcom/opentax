@@ -762,7 +762,12 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
       (sum, row) => sum + row.nonpassiveIncome,
       0,
     );
-    const k1TotalIncome = k1PassiveIncome + k1NonpassiveIncome;
+    const k1TotalLoss = k1Rows.reduce(
+      (sum, row) => sum + (row.passiveLoss ?? 0),
+      0,
+    );
+    const k1GrossIncome = k1PassiveIncome + k1NonpassiveIncome;
+    const k1TotalIncome = k1GrossIncome - k1TotalLoss;
     if (trustRows.length > 0) {
       const pendingSchedule1 = context?.pending?.schedule1;
       const pendingLine5 = pendingSchedule1 &&
@@ -810,7 +815,8 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
           ?.line5_schedule_e;
       const line5 = Array.isArray(pendingLine5)
         ? pendingLine5.reduce((sum: number, amount: number) => sum + amount, 0)
-        : pendingLine5;
+        : pendingLine5 ??
+          (k1Rows.some((row) => row.basisRequired) ? 0 : undefined);
       if (
         line5 !==
           propertyNet + trustTotalIncome + (allowedFarmNet ?? 0) + k1TotalIncome
@@ -881,6 +887,10 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
           ),
           element("PartnershipSCorpCd", row.code),
           element("PartnershipOrSCorpEIN", row.ein),
+          row.basisRequired ? element("BasisComputationRequiredInd", "X") : "",
+          (row.passiveLoss ?? 0) > 0
+            ? element("PassiveLossAllowedAmt", row.passiveLoss)
+            : "",
           row.passiveIncome > 0
             ? element("BusinessPassiveIncomeAmt", row.passiveIncome)
             : "",
@@ -895,9 +905,11 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
       k1NonpassiveIncome > 0
         ? element("BusTotalNonpassiveIncomeAmt", k1NonpassiveIncome)
         : "",
+      k1TotalLoss > 0 ? element("TotalPassiveLossAllowedAmt", k1TotalLoss) : "",
       k1Rows.length > 0
-        ? element("TotalPrtshpSCorpIncomeAmt", k1TotalIncome)
+        ? element("TotalPrtshpSCorpIncomeAmt", k1GrossIncome)
         : "",
+      k1TotalLoss > 0 ? element("TotalPrtshpSCorpLossAmt", k1TotalLoss) : "",
       k1Rows.length > 0
         ? element("NetPrtshpSCorpIncomeOrLossAmt", k1TotalIncome)
         : "",

@@ -163,13 +163,26 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
       `${page2}.Table_Line28g-k[0].Row${row}[0].f2_${16 + index * 5}[0]`,
     ),
     text(
+      `k1_${index}_passive_loss`,
+      `${page2}.Table_Line28g-k[0].Row${row}[0].f2_${15 + index * 5}[0]`,
+    ),
+    {
+      kind: "checkbox" as const,
+      domainKey: `k1_${index}_basis_required`,
+      pdfField: `${page2}.Table_Line28a-f[0].Row${row}[0].c2_${
+        3 + index * 3
+      }[0]`,
+    },
+    text(
       `k1_${index}_nonpassive_income`,
       `${page2}.Table_Line28g-k[0].Row${row}[0].f2_${19 + index * 5}[0]`,
     ),
   ]),
   text("k1_total_passive_income", `${page2}.f2_36[0]`),
   text("k1_total_nonpassive_income", `${page2}.f2_39[0]`),
+  text("k1_total_passive_loss", `${page2}.f2_40[0]`),
   text("k1_line30", `${page2}.f2_45[0]`),
+  text("k1_line31", `${page2}.f2_46[0]`),
   text("k1_line32", `${page2}.f2_47[0]`),
   ...["A", "B"].flatMap((row, index) => [
     text(
@@ -275,7 +288,11 @@ export const scheduleEPdf: PdfFormDescriptor = {
         (sum, row) => sum + row.nonpassiveIncome,
         0,
       );
-      k1Total = passive + nonpassive;
+      const passiveLoss = k1Rows.reduce(
+        (sum, row) => sum + (row.passiveLoss ?? 0),
+        0,
+      );
+      k1Total = passive + nonpassive - passiveLoss;
       const trustPassive = trustRows.reduce(
         (sum, row) => sum + (row.passive_income ?? 0),
         0,
@@ -289,6 +306,8 @@ export const scheduleEPdf: PdfFormDescriptor = {
           [`k1_${index}_name`, row.name],
           [`k1_${index}_code`, row.code],
           [`k1_${index}_ein`, row.ein],
+          [`k1_${index}_basis_required`, row.basisRequired],
+          [`k1_${index}_passive_loss`, row.passiveLoss || undefined],
           [`k1_${index}_passive_income`, row.passiveIncome || undefined],
           [`k1_${index}_nonpassive_income`, row.nonpassiveIncome || undefined],
         ])),
@@ -300,7 +319,9 @@ export const scheduleEPdf: PdfFormDescriptor = {
         ])),
         k1_total_passive_income: passive || undefined,
         k1_total_nonpassive_income: nonpassive || undefined,
-        k1_line30: k1Total,
+        k1_total_passive_loss: passiveLoss || undefined,
+        k1_line30: passive + nonpassive,
+        k1_line31: passiveLoss || undefined,
         k1_line32: k1Total,
         trust_total_passive_income: trustPassive || undefined,
         trust_total_other_income: trustOther || undefined,
@@ -495,7 +516,8 @@ export const scheduleEPdf: PdfFormDescriptor = {
     const schedule1Line5 = allPending.schedule1?.line5_schedule_e;
     const filedLine5 = Array.isArray(schedule1Line5)
       ? schedule1Line5.reduce((sum, value) => sum + value, 0)
-      : schedule1Line5;
+      : schedule1Line5 ??
+        (k1Rows.some((row) => row.basisRequired) ? 0 : undefined);
     if (filedLine5 !== propertyTotal + k1Total + trustTotal + farmNet) {
       throw new Error(
         "Schedule E PDF line 26 must match finalized Schedule 1 line 5",

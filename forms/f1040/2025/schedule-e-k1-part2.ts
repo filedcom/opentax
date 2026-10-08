@@ -1,3 +1,4 @@
+import { projectPassiveSCorpLossCopies } from "./passive-s-corp-loss-copies.ts";
 import { inputSchema as partnershipSchema } from "../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as sCorpSchema } from "../nodes/inputs/k1_s_corp/index.ts";
 import type { K1PassiveEicReview } from "../nodes/inputs/k1_passive_eic.ts";
@@ -8,6 +9,8 @@ export interface ScheduleEK1Part2Row {
   readonly ein: string;
   readonly passiveIncome: number;
   readonly nonpassiveIncome: number;
+  readonly passiveLoss?: number;
+  readonly basisRequired?: boolean;
 }
 
 function classified(
@@ -73,6 +76,9 @@ export function scheduleEK1Part2Rows(
     ? []
     : sCorpSchema.parse(pending.k1_s_corp).k1_s_corps;
   const rows: ScheduleEK1Part2Row[] = [];
+  const passiveLoss = pending
+    ? projectPassiveSCorpLossCopies(pending)
+    : undefined;
   const ownerKeys: string[] = [];
   for (const item of partnerships) {
     const box1 = item.box1_ordinary_business ?? 0;
@@ -110,6 +116,23 @@ export function scheduleEK1Part2Rows(
     });
   }
   for (const item of sCorps) {
+    if (item.first_year_passive_loss_source) {
+      if (!passiveLoss) {
+        throw Error("Passive Schedule E loss needs finalized source copies");
+      }
+      assertRecipient(item.eic_passive_activity_review);
+      ownerKeys.push(`S:${item.corporation_ein}:${item.recipient_tin}`);
+      rows.push({
+        name: item.corporation_name,
+        code: "S",
+        ein: item.corporation_ein!,
+        passiveIncome: 0,
+        nonpassiveIncome: 0,
+        passiveLoss: passiveLoss.allowed,
+        basisRequired: true,
+      });
+      continue;
+    }
     const box1 = item.box1_ordinary_business ?? 0;
     const box2 = item.box2_rental_re ?? 0;
     const box3 = item.box3_other_rental ?? 0;

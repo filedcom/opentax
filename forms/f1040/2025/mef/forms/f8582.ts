@@ -1,3 +1,4 @@
+import { projectPassiveSCorpLossCopies } from "../../passive-s-corp-loss-copies.ts";
 import { currentLossFilingProjection } from "../../current-loss-filing-projection.ts";
 import { worksheetRatios } from "./f8582-ratios.ts";
 import {
@@ -84,6 +85,9 @@ function partVIIIRowKey(
 
 function linkedK1Activities(context: MefBuildContext) {
   const pending = context.pending;
+  const passiveLoss = pending
+    ? projectPassiveSCorpLossCopies(pending)
+    : undefined;
   const partnerships = pending?.k1_partnership === undefined
     ? []
     : partnershipSchema.parse(pending.k1_partnership).k1_partnerships;
@@ -116,6 +120,7 @@ function linkedK1Activities(context: MefBuildContext) {
     ...currentPassiveLine10Activities(ordinaryRows),
     ...passiveK1Activities(partnerships, "k1_partnership", true),
     ...passiveK1Activities(corporations, "k1_s_corp", true),
+    ...(passiveLoss ? [passiveLoss.lossActivity] : []),
   ];
 }
 
@@ -236,7 +241,10 @@ function assertK1PoolReturn(
     ) +
     corporations.reduce(
       (total, row) =>
-        total + (row.box1_ordinary_business ?? 0) + (row.box2_rental_re ?? 0) +
+        total + (row.first_year_passive_loss_source
+          ? 0
+          : row.box1_ordinary_business ?? 0) +
+        (row.box2_rental_re ?? 0) +
         (row.box3_other_rental ?? 0) + (row.box6_royalties ?? 0),
       0,
     ) +

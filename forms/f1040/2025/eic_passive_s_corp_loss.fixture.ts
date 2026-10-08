@@ -1,3 +1,4 @@
+import { passiveK1Inputs, passiveK1Item } from "./eic_passive_k1.fixture.ts";
 import type { PassiveSCorpLossK1Facts } from "../nodes/inputs/k1_s_corp_passive_loss_source.ts";
 
 // Constructed record contract, not an authenticated corporate return or K-1.
@@ -124,4 +125,23 @@ export function passiveSCorpLossRecords(cashAmount = 6000) {
     },
   };
   return { source, k1 };
+}
+
+export function passiveSCorpLossReturnInputs(
+  cash: number,
+  income: number,
+  investment = 11950,
+) {
+  const i = passiveK1Inputs();
+  delete i.f4835;
+  delete i.k1_partnership;
+  const { source, k1 } = passiveSCorpLossRecords(cash);
+  i.k1_s_corp = [{ ...k1, first_year_passive_loss_source: source }];
+  if (income > 0) {
+    i.k1_partnership = [
+      passiveK1Item("partnership", "box2", income, "111223333", "987654321"),
+    ];
+  }
+  i.f1099int[0].box8 = investment - Math.max(0, income - Math.min(cash, 4000));
+  return i;
 }
