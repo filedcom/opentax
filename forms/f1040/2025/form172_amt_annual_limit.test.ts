@@ -1,3 +1,4 @@
+import { calculateForm172ModernAmtSection172Capacity } from "./form172_amt_historical_absorption.ts";
 import { calculateForm172ModernAmtVintageModifiedIncome } from "./form172_amt_vintage_modified_income.ts";
 import { calculateForm172ModernAmtModifiedIncome } from "./form172_amt_modified_income.ts";
 import { assertEquals, assertThrows } from "@std/assert";
@@ -1094,4 +1095,86 @@ Deno.test("Modern AMT TY2025 vintage contexts bind separate1040 refigures and ea
   assertThrows(() =>
     calculateForm172ModernAmtVintageModifiedIncome(cap, reviews)
   );
+});
+Deno.test("Modern AMT section172 capacity subtracts annual excess reduction from each context", () => {
+  const { cap, reviews } = modernVintage();
+  const r = calculateForm172ModernAmtSection172Capacity(cap, reviews);
+  assertEquals(r.annualPost2017IncomeExcess, 50700);
+  assertEquals(r.annualAbsorptionReduction, 10140);
+  assertEquals(
+    r.chronologicalReviewedCapacities.map(
+      (l) => [l.originYear, l.section172Capacity],
+    ),
+    [[2016, 102860], [2017, 103860], [2019, 54860], [2020, 15300]],
+  );
+  assertEquals(r.section56AbsorptionLimitReconciled, false);
+  assertEquals(r.chronologicalAbsorptionReconciled, false);
+  assertEquals(r.survivingCarryVerified, false);
+  assertEquals(r.filingReady, false);
+  assertEquals("absorbed" in r.chronologicalReviewedCapacities[0], false);
+  assertEquals(
+    "reviewedRemaining" in r.chronologicalReviewedCapacities[0],
+    false,
+  );
+});
+Deno.test("Modern AMT section172 reduction uses original QBI250 annual base rather than modified income", () => {
+  const { cap, reviews } = modernVintage();
+  cap.deductions_review.section199a_deduction_in_tentative_amti = 10000;
+  cap.deductions_review.section250_deduction_in_tentative_amti = 5000;
+  for (const v of reviews.vintages) {
+    v.modified_review.deductions.original_section199a = 10000;
+    v.modified_review.deductions.original_section250 = 5000;
+  }
+  const alloc = calculateForm172AmtModernOrdinaryDeductionAllocation(cap);
+  for (const v of reviews.vintages) {
+    for (const d of v.earlier_nol_deductions) {
+      d.amount = alloc.allocations.find((l) =>
+        l.originYear === d.origin_year
+      )!.actualDeduction;
+    }
+  }
+  const r = calculateForm172ModernAmtSection172Capacity(cap, reviews);
+  assertEquals(r.annualSection172IncomeBase, 115700);
+  assertEquals(r.annualAbsorptionReduction, 13140);
+  assertEquals(r.chronologicalReviewedCapacities[0].section172Capacity, 99860);
+  assertEquals(
+    r.chronologicalReviewedCapacities.at(-1)!.section172Capacity,
+    12230,
+  );
+});
+Deno.test("Modern AMT section172 capacity suspends reduction before2021 and floors signed negatives", () => {
+  const cap = modernOrdinaryCap();
+  cap.annual_review.tax_year = 2020;
+  cap.deductions_review.tax_year = 2020;
+  cap.annual_review.components.find((l) => l.line === "2h")!.amount = 700;
+  const m = modernModified(cap);
+  const reviews = {
+    reference: "capacity-2020",
+    application_tax_year: 2020,
+    taxpayer_ssn: "111223333",
+    vintages: [{
+      origin_year: 2019,
+      loss_reference: cap.losses[0].reference,
+      refigured_deductions_include_earlier_nol_effects: true,
+      earlier_nol_deductions: [],
+      modified_review: m,
+    }],
+  };
+  assertEquals(
+    calculateForm172ModernAmtSection172Capacity(cap, reviews)
+      .annualAbsorptionReduction,
+    0,
+  );
+  cap.annual_review.tax_year = 2021;
+  cap.deductions_review.tax_year = 2021;
+  m.tax_year = 2021;
+  reviews.application_tax_year = 2021;
+  m.components.find((l) => l.line === "1")!.refigured_amount = -100000;
+  const r = calculateForm172ModernAmtSection172Capacity(cap, reviews);
+  assertEquals(r.annualAbsorptionReduction, 20140);
+  assertEquals(
+    r.chronologicalReviewedCapacities[0].signedSection172Capacity,
+    -57140,
+  );
+  assertEquals(r.chronologicalReviewedCapacities[0].section172Capacity, 0);
 });

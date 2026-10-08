@@ -1,3 +1,5 @@
+import { calculateForm172AmtModernOrdinaryCap } from "./form172_amt_annual_limit.ts";
+import { calculateForm172ModernAmtVintageModifiedIncome } from "./form172_amt_vintage_modified_income.ts";
 import { calculateForm172HistoricalAmtCap } from "./form172_amt_historical_cap.ts";
 import { calculateForm172HistoricalAmtVintageModifiedIncome } from "./form172_amt_vintage_modified_income.ts";
 
@@ -101,6 +103,64 @@ export function calculateForm172HistoricalAmtAbsorption(
     whbaaElectionEligibilityVerified: false as const,
     completeCarryHistoryVerified: false as const,
     survivingAcceptedCarryVerified: false as const,
+    sourceAuthenticityVerified: false as const,
+    priorAcceptanceVerified: false as const,
+    filingReady: false as const,
+  };
+}
+
+/** Section172(b)(2)(C) step only: the 20% reduction uses the annual statutory
+ * income excess, separately from each vintage's modified-income context.
+ * Section56(d) absorption coordination is NOT applied, so these capacities
+ * cannot establish absorbed losses or surviving carry balances. */
+export function calculateForm172ModernAmtSection172Capacity(
+  rawCap: unknown,
+  rawVintageReviews: unknown,
+) {
+  const cap = calculateForm172AmtModernOrdinaryCap(rawCap);
+  const contexts = calculateForm172ModernAmtVintageModifiedIncome(
+    rawCap,
+    rawVintageReviews,
+  );
+  const annualAbsorptionReduction = cap.applicationYear > 2020
+    ? Number((BigInt(cap.post2017IncomeExcess) * 20n + 50n) / 100n)
+    : 0;
+  const applications = contexts.chronologicalVintageModifiedIncome.map(
+    (row) => ({
+      originYear: row.originYear,
+      lossReference: row.lossReference,
+      modifiedReviewReference: row.modifiedReviewReference,
+      reviewedOpening: row.reviewedOpening,
+      actualAllocatedDeduction: row.actualAllocatedDeduction,
+      earlierActualDeduction: row.earlierActualDeduction,
+      signedModifiedAmtiBeforeEarlierAtnold:
+        row.signedModifiedAmtiBeforeEarlierAtnold,
+      signedModifiedAmtiAfterEarlierAtnold:
+        row.signedModifiedAmtiAfterEarlierAtnold,
+      annualAbsorptionReduction,
+      signedSection172Capacity: row.signedModifiedAmtiAfterEarlierAtnold -
+        annualAbsorptionReduction,
+      section172Capacity: Math.max(
+        0,
+        row.signedModifiedAmtiAfterEarlierAtnold - annualAbsorptionReduction,
+      ),
+    }),
+  );
+  return {
+    applicationYear: cap.applicationYear,
+    originalDeductionCap: cap.ordinaryDeductionCap,
+    annualSection172IncomeBase: cap.section172IncomeBase,
+    annualPre2018Opening: cap.pre2018Opening,
+    annualPost2017IncomeExcess: cap.post2017IncomeExcess,
+    annualAbsorptionReduction,
+    chronologicalReviewedCapacities: applications,
+    section172CapacityWorkpaperArithmeticReconciled: true as const,
+    section56AbsorptionLimitReconciled: false as const,
+    chronologicalAbsorptionReconciled: false as const,
+    survivingCarryVerified: false as const,
+    openingAmtCarryAvailabilityVerified: false as const,
+    refiguredOperandEligibilityVerified: false as const,
+    completeCarryHistoryVerified: false as const,
     sourceAuthenticityVerified: false as const,
     priorAcceptanceVerified: false as const,
     filingReady: false as const,
