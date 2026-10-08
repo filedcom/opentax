@@ -6598,3 +6598,8 @@ The [passive-source record](ty2025-eic-passive-s-corp-loss-source.md) adds sixte
 ## October 8, 14:26 UTC — terminal root gate and durable passive ledger
 
 Root full52874 is actualterminal12,783/0 at14:20:46UTC; exact2709manifest andlogSHAe38412be9d87bb402dd54f6a02c01dc6fdf2a22dae14bdccd9b1c78929f3d4b1 independentlyverified. Root fast-forwardedtoPR65 b28f3c42f onlyafter terminalverification; all localdocumentedits areprivatelyhashpreservedandstashed. The [passive-source record](ty2025-eic-passive-s-corp-loss-source.md) adds durablecurrentK1 operatingloss archivesandopeningreconciliationmath, 488/0 focusedgateat14:25:28UTC, exact2723paths. Five originalCLIarchivecandidates retainbasis/PALseparation; alteredsource/provenance/rowsreject andallremainacceptance-unverified. No trustedprioracceptance/current2026intake/newPDFclaim. Main52/future57 unchanged; ledgerintegration/nextserialfull pending.
+
+
+## October 8 — integrated passive-loss/ledger serial full launch
+
+Root fast-forwardedto387ab51c6 after488/0 actualfocusedgate. Its exact2,723-path runtime matches the focusedcandidate; main52/future57 remainunchanged. Rootboardterminalupdate remains in a namedstash, withallpreviousstashes/privateevidence preserved. The nextserial deno task test willrun thisimmutablemanifest in `root-passive-s-corp-loss-ledger-full-regression-20261008-v1/`, following the actual12,783/0 previousfull. No passingresultisclaimed beforeterminalstatus/logverification.
