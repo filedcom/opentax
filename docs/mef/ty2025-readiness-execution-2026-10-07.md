@@ -5416,3 +5416,22 @@ status-change allocations, the other source/calculation requirements,
 public packet integration, matching business rules and ATS acceptance remain
 open. No main checkoff or aggregate coverage increase follows. All future
 items stay unchanged and unworked.
+
+### October 8 — verified full-regression wait and NOL source requirement
+
+The existing root full regression was polled through its actual session
+`22926`, including a 45-second wait, and remained live with no terminal result.
+The current runtime independently matches all 2,637 startup paths; isolated
+Form 8801 candidate `a64b887c8` matches its last tested 2,654-path manifest.
+The private full-run observation records the actual live handle, timestamp,
+manifest comparison and next action. No second full batch or restart occurred.
+
+The [Form 8801 line 3 instructions](https://www.irs.gov/instructions/i8801)
+require MTCNOL carryovers/carrybacks **to 2024** and a separate exclusion-only
+section 172(d) refigure. [Regular Form 172](https://www.irs.gov/pub/irs-pdf/f172.pdf)
+and [its instructions](https://www.irs.gov/instructions/i172) do not themselves
+prove that separate minimum-tax workpaper, its carry history or eligibility.
+No current-origin loss is substituted for the required prior-year deduction,
+and no new NOL implementation, source proof or test result is claimed by this
+review. The existing NOL and whole-form requirements remain open. Main52 and
+the complete future47 section remain unchanged; estimate remains current.
