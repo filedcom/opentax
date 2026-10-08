@@ -101,6 +101,7 @@ export const form8995Pdf: PdfFormDescriptor = {
       fields.multi_business_filing_rows === undefined &&
       fields.joint_owner_filing_rows === undefined &&
       fields.current_k1_qbi_sources === undefined &&
+      fields.current_passive_s_corp_loss === undefined &&
       fields.current_passive_property_sources === undefined &&
       fields.owned_s_corp_loss_source === undefined &&
       fields.owned_s_corp_loss_sources === undefined &&
@@ -128,7 +129,8 @@ export const form8995Pdf: PdfFormDescriptor = {
               typeof row === "object" && row !== null &&
               "qualified_box11_line10_income" in row
             ))),
-      ...(fields.owned_s_corp_loss_source !== undefined ||
+      ...(fields.current_passive_s_corp_loss !== undefined ||
+          fields.owned_s_corp_loss_source !== undefined ||
           fields.owned_s_corp_loss_sources !== undefined
         ? { owned_loss_header: true }
         : {}),

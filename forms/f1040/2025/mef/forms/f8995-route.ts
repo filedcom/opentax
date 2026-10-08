@@ -1,3 +1,4 @@
+import { projectPassiveSCorpLossCopies } from "../../passive-s-corp-loss-copies.ts";
 import { assertCurrentPropertyQbi } from "./f8995-current-property.ts";
 import { assertCurrentK1Qbi } from "./f8995-current-k1.ts";
 import { assertOwnedSCorpLoss8995 } from "./f8995-owned-s-corp-loss.ts";
@@ -1382,6 +1383,31 @@ export function assertPositive8995(
   fields: Record<string, unknown>,
   pending: Readonly<Record<string, unknown>> | undefined,
 ): Filed8995 {
+  if (fields.current_passive_s_corp_loss !== undefined) {
+    if (!pending || !isDeepStrictEqual(fields, pending.form8995)) {
+      throw Error(
+        "Passive Form8995 descriptor needs its exact actual qualified-loss copy",
+      );
+    }
+    const copies = projectPassiveSCorpLossCopies(pending);
+    if (!copies) {
+      throw Error("Passive Form8995 descriptor lacks original K1/basis source");
+    }
+    const q = copies.qbiLines;
+    return {
+      businesses: [{
+        businessName: copies.bundle.source.corporation_name,
+        tin: { kind: "ein", value: copies.bundle.source.corporation_ein },
+        qbi: q.line1_qbi,
+      }],
+      lines: Object.fromEntries(
+        Array.from(
+          { length: 16 },
+          (_, i) => [i + 2, q[`line${i + 2}` as keyof typeof q]],
+        ),
+      ) as Filed8995["lines"],
+    };
+  }
   if (fields.current_passive_property_sources !== undefined) {
     return assertCurrentPropertyQbi(fields, pending);
   }

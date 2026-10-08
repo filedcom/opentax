@@ -9,7 +9,7 @@ import {
 
 const name = (value: string) => value.trim().replace(/\s+/g, " ").toUpperCase();
 
-/** Unregistered source-driven Form 7203 projection. Part III reports the basis
+/** Source-driven Form 7203 projection. Part III reports the basis
  * limitation, not the final passive deduction. Return-wide joins are separate. */
 export function projectFirstYearPassiveSCorp7203(
   rawSource: unknown,
@@ -85,7 +85,7 @@ export function projectFirstYearPassiveSCorp7203(
   return { source, stages, pdfFields };
 }
 
-/** Standalone IRS7203 fragment only; this is not registered for return export. */
+/** IRS7203 fragment; the whole-return export guard remains separate. */
 export function buildFirstYearPassiveSCorp7203(
   rawSource: unknown,
   k1: PassiveSCorpLossK1Facts,

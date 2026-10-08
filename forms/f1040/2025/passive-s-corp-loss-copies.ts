@@ -1,3 +1,4 @@
+import type { FilerIdentity } from "../mef/header.ts";
 import { isDeepStrictEqual } from "node:util";
 import { inputSchema as sCorpSchema } from "../nodes/inputs/k1_s_corp/index.ts";
 import { inputSchema as partnershipSchema } from "../nodes/inputs/k1_partnership/index.ts";
@@ -152,6 +153,14 @@ export function projectPassiveSCorpLossCopies(
     Number(f1040!.line11_agi) - Number(f1040!.line12c_deduction_total) -
       Number(f1040!.line13b_additional_deductions ?? 0),
   );
+  if (
+    f1040!.line13_qbi_deduction !== 0 ||
+    f1040!.line15_taxable_income !== taxable
+  ) {
+    throw Error(
+      "Passive S-corp finalized QBI deduction/taxable income differs from allowed-loss sources",
+    );
+  }
   const { qualifiedPassiveSuspended: _suspended, ...lines } =
     passiveSCorpLossQbiLines(bundle, incomeSources, taxable);
   if (
@@ -173,5 +182,30 @@ export function projectPassiveSCorpLossCopies(
     allowed,
     income,
     qbiLines: lines,
+  };
+}
+
+/** Required basis copy is replayed before either registered descriptor projects. */
+export function projectPassiveSCorp7203Copy(
+  raw: Record<string, unknown>,
+  pending: Readonly<Record<string, unknown>> | undefined,
+  filer: FilerIdentity | undefined,
+) {
+  if (!pending || !isDeepStrictEqual(raw, pending.form7203)) {
+    throw Error(
+      "Passive Form7203 descriptor needs its exact actual basis source copy",
+    );
+  }
+  const copies = projectPassiveSCorpLossCopies(pending);
+  if (!copies) {
+    throw Error("Passive Form7203 descriptor lacks its original K1 source");
+  }
+  return {
+    ...projectFirstYearPassiveSCorp7203(
+      copies.bundle.source,
+      copies.bundle.k1,
+      filer,
+    ),
+    k1: copies.bundle.k1,
   };
 }

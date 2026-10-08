@@ -1,3 +1,4 @@
+import { projectPassiveSCorp7203Copy } from "../../passive-s-corp-loss-copies.ts";
 import { PDFName, StandardFonts } from "pdf-lib";
 import { projectOverflowDebtInventory } from "../../form7203_debt_inventory.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
@@ -165,6 +166,9 @@ export const form7203StockLossPdf: PdfFormDescriptor = {
   fields,
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
+    if (raw.current_passive_s_corp_loss !== undefined) {
+      return [projectPassiveSCorp7203Copy(raw, allPending, filer).pdfFields];
+    }
     if (
       Array.isArray(raw.owned_debt_loss_sources) &&
       raw.owned_debt_loss_copy_index === undefined

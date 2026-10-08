@@ -1,3 +1,7 @@
+import { form7203StockLoss } from "./mef/forms/f7203_stock_loss.ts";
+import { form7203StockLossPdf } from "./pdf/forms/f7203_stock_loss.ts";
+import { form8995 } from "./mef/forms/f8995.ts";
+import { form8995Pdf } from "./pdf/forms/f8995.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import { XMLParser } from "fast-xml-parser";
 import { f1040_2025 } from "./index.ts";
@@ -23,6 +27,35 @@ for (
     assertEquals(r.diagnostics, []);
     const p = r.pending, projection = projectPassiveSCorpLossCopies(p)!;
     assertEquals(projection.allowed, c.allowed);
+    const filer = extractFilerIdentity(p.f1040)!;
+    const b = new XMLParser().parse(
+      form7203StockLoss.build(p.form7203, { pending: p, filer }),
+    ).IRS7203;
+    assertEquals(
+      b.ShrAllwblLossFromStockBasisGrp.OrdinaryBusinessLossAmt,
+      Math.min(c.cash, 4000),
+    );
+    assertEquals(
+      b.ShrCarryoverAmountsGrp?.OrdinaryBusinessLossAmt ?? 0,
+      Math.max(0, 4000 - c.cash),
+    );
+    const basisPrint =
+      form7203StockLossPdf.instances!(p.form7203, filer, p)![0];
+    assertEquals(basisPrint.line35_allowed_stock, Math.min(c.cash, 4000));
+    assertEquals(basisPrint.line35_carryover ?? 0, Math.max(0, 4000 - c.cash));
+    const q =
+      new XMLParser().parse(form8995.build(p.form8995, { pending: p, filer }))
+        .IRS8995;
+    assertEquals(
+      q.QualifiedBusinessIncomeDedGrp.QlfyBusinessIncomeOrLossAmt,
+      -c.allowed || 0,
+    );
+    assertEquals(q.TotQlfyBusLossCarryforwardAmt, c.allowed);
+    const qPrint = form8995Pdf.projectFields!(p.form8995, p);
+    assertEquals(qPrint.line1_qbi, -c.allowed || 0);
+    assertEquals(qPrint.line16, c.allowed);
+    assertEquals(qPrint.owned_loss_header, true);
+
     form8582.build(p.form8582, { pending: p });
     const xml = new XMLParser().parse(scheduleE.build({}, { pending: p }))
       .IRS1040ScheduleE;
@@ -72,6 +105,8 @@ for (
     ["Schedule1 allowance", (p: any) => p.schedule1.line5_schedule_e++],
     ["AGI total", (p: any) => p.f1040.line11_agi++],
     ["QBI loss", (p: any) => p.form8995.line2--],
+    ["1040 QBI deduction", (p: any) => p.f1040.line13_qbi_deduction++],
+    ["1040 taxable income", (p: any) => p.f1040.line15_taxable_income++],
   ] as const
 ) {
   Deno.test(`Passive native/print source copies reject mutated ${label}`, () => {
@@ -81,17 +116,34 @@ for (
     assertThrows(() => form8582.build(p.form8582, { pending: p }));
     assertThrows(() => scheduleE.build({}, { pending: p }));
     assertThrows(() => scheduleEPdf.projectFields!({}, p));
+    const filer = extractFilerIdentity(p.f1040)!;
+    assertThrows(() =>
+      form7203StockLoss.build(p.form7203, { pending: p, filer })
+    );
+    assertThrows(() => form7203StockLossPdf.instances!(p.form7203, filer, p));
+    assertThrows(() => form8995.build(p.form8995, { pending: p, filer }));
+    assertThrows(() => form8995Pdf.projectFields!(p.form8995, p));
   });
 }
 
 const base =
   "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/";
-Deno.test("XSD: standalone passive source Form8582 and ScheduleE allowed-loss documents", async () => {
+Deno.test("XSD: registered passive source Form7203, Form8995, Form8582 and ScheduleE components", async () => {
   const p =
     f1040_2025.executeReturn(passiveSCorpLossReturnInputs(4000, 3000)).pending;
   const filer = extractFilerIdentity(p.f1040)!;
   for (
     const [tag, xml, relative] of [
+      [
+        "IRS7203",
+        form7203StockLoss.build(p.form7203, { pending: p, filer }),
+        "Shared/IRS7203/IRS7203.xsd",
+      ],
+      [
+        "IRS8995",
+        form8995.build(p.form8995, { pending: p, filer }),
+        "Shared/IRS8995/IRS8995.xsd",
+      ],
       [
         "IRS8582",
         form8582.build(p.form8582, { pending: p, filer }),
@@ -125,4 +177,21 @@ Deno.test("XSD: standalone passive source Form8582 and ScheduleE allowed-loss do
     assertEquals(v.code, 0, new TextDecoder().decode(v.stderr));
     console.log(`Retained standalone XML: ${path}`);
   }
+});
+
+Deno.test("Passive registered basis and QBI descriptors reject divergent raw copies and wrong filer", () => {
+  const p =
+    f1040_2025.executeReturn(passiveSCorpLossReturnInputs(1000, 3000)).pending;
+  const filer = extractFilerIdentity(p.f1040)!;
+  const basis = { ...p.form7203, ordinary_loss: 4000 };
+  assertThrows(() => form7203StockLoss.build(basis, { pending: p, filer }));
+  assertThrows(() => form7203StockLossPdf.instances!(basis, filer, p));
+  const qbi = { ...p.form8995, qbi_deduction: 0, line16: 4000 };
+  assertThrows(() => form8995.build(qbi, { pending: p, filer }));
+  assertThrows(() => form8995Pdf.projectFields!(qbi, p));
+  const wrong = { ...filer, primarySSN: "999887777" };
+  assertThrows(() =>
+    form7203StockLoss.build(p.form7203, { pending: p, filer: wrong })
+  );
+  assertThrows(() => form7203StockLossPdf.instances!(p.form7203, wrong, p));
 });

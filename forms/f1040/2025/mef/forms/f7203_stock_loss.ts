@@ -1,3 +1,5 @@
+import { projectPassiveSCorp7203Copy } from "../../passive-s-corp-loss-copies.ts";
+import { buildFirstYearPassiveSCorp7203 } from "../../form7203-passive-loss-projection.ts";
 import { projectOverflowDebtInventory } from "../../form7203_debt_inventory.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
@@ -210,6 +212,18 @@ export const form7203StockLoss: MefFormDescriptor<
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f7203.pdf",
   build(fields, context) {
     if (Object.keys(fields).length === 0) return "";
+    if (fields.current_passive_s_corp_loss !== undefined) {
+      const p = projectPassiveSCorp7203Copy(
+        fields,
+        context?.pending,
+        context?.filer,
+      );
+      return buildFirstYearPassiveSCorp7203(
+        p.source,
+        p.k1,
+        context?.filer,
+      );
+    }
     if (Array.isArray(fields.owned_debt_loss_sources)) {
       return buildReviewedStockLoss7203({
         owned_debt_loss_sources: fields.owned_debt_loss_sources,
