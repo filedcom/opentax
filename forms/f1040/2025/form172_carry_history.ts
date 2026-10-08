@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { calculateReviewedLossYear } from "../nodes/inputs/nol_carryforward/reviewed_loss_year.ts";
+import { calculateReviewedNolOrigin } from "./form172_nol_origin.ts";
 import { calculateForm172CarryAbsorption } from "./form172_carry_absorption.ts";
 
 const ref = z.string().trim().min(1);
@@ -19,6 +19,7 @@ const policy = z.discriminatedUnion("kind", [
     reference: ref,
     whole_loss_carryback_eligibility_reviewed: z.literal(true),
     farming_loss_only: z.literal(true).optional(),
+    legacy_general_two_year_rule_reviewed: z.literal(true).optional(),
     section965_years_absent_reviewed: z.literal(true),
   }).strict(),
 ]);
@@ -38,7 +39,7 @@ export function calculateForm172CarryHistory(
   rawOrigin: unknown,
   rawHistory: unknown,
 ) {
-  const origin = calculateReviewedLossYear(rawOrigin);
+  const origin = calculateReviewedNolOrigin(rawOrigin);
   const history = historySchema.parse(rawHistory);
   if (origin.taxYear >= history.opening_tax_year) {
     throw new Error("Carry history origin must precede the opening year");
@@ -47,7 +48,7 @@ export function calculateForm172CarryHistory(
     history.carry_policy.kind === "reviewed_no_carryback" &&
     origin.taxYear <= 2020
   ) {
-    throw new Error("2018–2020 origins need a reviewed carryback or waiver");
+    throw new Error("Pre-2021 origins need a reviewed carryback or waiver");
   }
   if (
     history.carry_policy.kind === "reviewed_full_loss_carryback" &&
@@ -57,9 +58,18 @@ export function calculateForm172CarryHistory(
       "Post-2020 full carryback needs a whole farming loss review",
     );
   }
+  if (
+    origin.taxYear < 2018 &&
+    history.carry_policy.kind === "reviewed_full_loss_carryback" &&
+    !history.carry_policy.legacy_general_two_year_rule_reviewed
+  ) {
+    throw new Error(
+      "Legacy full carryback needs reviewed general two-year eligibility",
+    );
+  }
   const expectedYears: number[] = [];
   if (history.carry_policy.kind === "reviewed_full_loss_carryback") {
-    const period = origin.taxYear <= 2020 ? 5 : 2;
+    const period = origin.taxYear >= 2018 && origin.taxYear <= 2020 ? 5 : 2;
     for (let y = origin.taxYear - period; y < origin.taxYear; y++) {
       expectedYears.push(y);
     }
@@ -119,6 +129,9 @@ export function calculateForm172CarryHistory(
     originYear: origin.taxYear,
     openingTaxYear: history.opening_tax_year,
     originLoss: origin.regularNol,
+    expiresAfterTaxYear: origin.taxYear < 2018
+      ? origin.taxYear + 20
+      : undefined,
     expectedYears,
     annualResults,
     computedAbsorptionRecords: prior,

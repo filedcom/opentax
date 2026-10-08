@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { calculateReviewedLossYear } from "../nodes/inputs/nol_carryforward/reviewed_loss_year.ts";
+import { calculateReviewedNolOrigin } from "./form172_nol_origin.ts";
 
 const ref = z.string().trim().min(1);
 const ssn = z.string().regex(/^\d{9}$/);
 const amount = z.number().int().nonnegative().max(1_000_000_000);
 const signed = z.number().int().min(-1_000_000_000).max(1_000_000_000);
-const year = z.number().int().min(2013).max(2025);
+const year = z.number().int().min(2003).max(2025);
 const reviewedAmount = z.object({ reference: ref, amount }).strict();
 
 /** Annual return is refigured before the current or later NOL vintage. Items
@@ -30,6 +30,7 @@ export const form172CarryAbsorptionSchema = z.object({
   standard_or_itemized_deduction: amount,
   qbi_deduction: amount,
   section250_deduction: amount,
+  section199_deduction: reviewedAmount.optional(),
   personal_exemptions: amount,
   reported_taxable_income: amount,
   return_nol_deduction: reviewedAmount,
@@ -84,6 +85,16 @@ export const form172CarryAbsorptionSchema = z.object({
     c.addIssue({
       code: "custom",
       message: "Absorption and return references must differ",
+    });
+  }
+  if (
+    (v.tax_year < 2018 && !v.section199_deduction) ||
+    (v.tax_year >= 2018 || v.tax_year < 2005) &&
+      (v.section199_deduction?.amount ?? 0) !== 0
+  ) {
+    c.addIssue({
+      code: "custom",
+      message: "Historical absorption needs year-consistent section199 review",
     });
   }
   const joint = v.filing_status === "married_filing_jointly";
@@ -145,7 +156,7 @@ export function calculateForm172CarryAbsorption(
   rawOrigin: unknown,
   rawAnnualReview: unknown,
 ) {
-  const origin = calculateReviewedLossYear(rawOrigin);
+  const origin = calculateReviewedNolOrigin(rawOrigin);
   const v = form172CarryAbsorptionSchema.parse(rawAnnualReview);
   if (
     v.tax_year === origin.taxYear || v.taxpayer_ssn !== origin.taxpayerSsn ||
@@ -204,11 +215,13 @@ export function calculateForm172CarryAbsorption(
       "Earlier NOL inventory differs from the reviewed return deduction",
     );
   }
-  const pre2018Available = sum(
+  const earlierPre2018Available = sum(
     v.earlier_nols.filter((r) => r.origin_year < 2018).map((r) =>
       r.carry_available
     ),
   );
+  const pre2018Available = earlierPre2018Available +
+    (origin.taxYear < 2018 ? openingLoss : 0);
   const earlierPost2017Deduction = sum(
     v.earlier_nols.filter((r) => r.origin_year >= 2018).map((r) =>
       r.deduction_on_return
@@ -234,10 +247,12 @@ export function calculateForm172CarryAbsorption(
       "Earlier post-2017 deduction exceeds annual aggregate limitation",
     );
   }
-  const deductionCapacity = positive(
-    post2017Limit -
-      (v.tax_year >= 2021 ? earlierPost2017Deduction : earlierDeduction),
-  );
+  const deductionCapacity = origin.taxYear < 2018
+    ? positive(taxableWithoutNolQbi250 - earlierDeduction)
+    : positive(
+      post2017Limit -
+        (v.tax_year >= 2021 ? earlierPost2017Deduction : earlierDeduction),
+    );
   const currentDeduction = Math.min(openingLoss, deductionCapacity);
   const agiAdjustment = sum(
     v.agi_refigures.map((r) =>
@@ -246,7 +261,12 @@ export function calculateForm172CarryAbsorption(
   );
   const capitalAdjustment = v.capital_loss_deduction.amount +
     v.section1202_exclusion.amount;
-  const modifiedAgi = sum([v.agi, capitalAdjustment, agiAdjustment]);
+  const modifiedAgi = sum([
+    v.agi,
+    capitalAdjustment,
+    agiAdjustment,
+    v.section199_deduction?.amount ?? 0,
+  ]);
   const refiguredDeduction = v.refigured_itemized_deduction?.amount ??
     v.standard_or_itemized_deduction;
   const modifiedTaxableIncome = positive(

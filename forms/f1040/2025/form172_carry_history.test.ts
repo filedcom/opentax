@@ -71,6 +71,9 @@ function annual(year: number, base = 0) {
     standard_or_itemized_deduction: standards[year],
     qbi_deduction: 0,
     section250_deduction: 0,
+    section199_deduction: year < 2018
+      ? { reference: `dpad-${year}`, amount: 0 }
+      : undefined,
     personal_exemptions: exemption,
     reported_taxable_income: base,
     return_nol_deduction: { reference: `nol-${year}`, amount: 0 },

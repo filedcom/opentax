@@ -3,7 +3,7 @@ import {
   type SourceDocumentBytes,
   VerifiedSourceDocuments,
 } from "../../../core/runtime/source-documents.ts";
-import { reviewedLossYearSchema } from "../nodes/inputs/nol_carryforward/reviewed_loss_year.ts";
+import { parseReviewedNolOrigin } from "./form172_nol_origin.ts";
 import { calculateForm172CarryHistory } from "./form172_carry_history.ts";
 
 const claim = z.object({
@@ -13,7 +13,7 @@ const claim = z.object({
 const bindingSchema = z.object({
   origin: claim,
   history: claim,
-  origin_tax_year: z.number().int().min(2018).max(2024),
+  origin_tax_year: z.number().int().min(2005).max(2024),
   opening_tax_year: z.literal(2025),
   taxpayer_ssn: z.string().regex(/^\d{9}$/),
   spouse_ssn: z.string().regex(/^\d{9}$/).optional(),
@@ -49,7 +49,7 @@ export async function stageForm172CarryHistorySource(
     [binding.origin, binding.history],
     documents,
   );
-  const origin = reviewedLossYearSchema.parse(
+  const origin = parseReviewedNolOrigin(
     parseCanonical(verified.getBytes(binding.origin.reference)!),
   );
   const rawHistory = parseCanonical(

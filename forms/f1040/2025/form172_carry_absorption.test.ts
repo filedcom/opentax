@@ -50,6 +50,9 @@ function annual() {
     standard_or_itemized_deduction: 14600,
     qbi_deduction: 10000,
     section250_deduction: 0,
+    section199_deduction: undefined as
+      | { reference: string; amount: number }
+      | undefined,
     personal_exemptions: 0,
     reported_taxable_income: 90000,
     return_nol_deduction: { reference: "return-NOL-review", amount: 0 },
@@ -160,6 +163,7 @@ Deno.test("Form 172 absorption applies 20 percent to statutory excess rather tha
 Deno.test("Form 172 pre-2021 carryback capacity subtracts every earlier NOL without an 80 percent reduction", () => {
   const v = annual();
   v.tax_year = 2017;
+  v.section199_deduction = { reference: "dpad-2017", amount: 0 };
   v.qbi_deduction = 0;
   v.personal_exemptions = 4000;
   v.earlier_nols.push({
