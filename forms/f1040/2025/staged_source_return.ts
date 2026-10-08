@@ -7,12 +7,15 @@ import { executeScheduleJSourceReturn } from "./schedule_j_source_return.ts";
 export function executePreQefSourceReturn(
   inputs: Record<string, unknown>,
   counterfactual = false,
+  executeGraph?: (inputs: Record<string, unknown>) => ExecuteResult,
 ): ExecuteResult {
+  const scheduleJGraph = (source: Record<string, unknown>) =>
+    executeScheduleJSourceReturn(source, executeGraph);
   if (inputs.form8839 !== undefined) {
     return executeForm8839TwoPass(
       inputs,
       counterfactual,
-      executeScheduleJSourceReturn,
+      scheduleJGraph,
     );
   }
   const elected = Array.isArray(inputs.f8621) &&
@@ -27,8 +30,8 @@ export function executePreQefSourceReturn(
     return executeForm8863TwoPass(
       inputs,
       counterfactual,
-      executeScheduleJSourceReturn,
+      scheduleJGraph,
     );
   }
-  return executeScheduleJSourceReturn(inputs);
+  return scheduleJGraph(inputs);
 }

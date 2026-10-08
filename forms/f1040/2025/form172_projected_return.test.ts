@@ -2,6 +2,9 @@ import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { stageForm172ProjectedReturn } from "./form172_projected_return.ts";
 import { passiveK1Inputs } from "./eic_passive_k1.fixture.ts";
 import { assertAttachmentCoverage } from "./attachment-coverage.ts";
+import educationSource from "./pdf/review-8863-scholarship-source.json" with {
+  type: "json",
+};
 function origin() {
   const item = (id: string, amount: number, business: boolean) => ({
     item_id: id,
@@ -356,4 +359,179 @@ Deno.test("Form172 current source rejects an internally consistent wrong senior 
       "Schedule1-A",
     );
   }
+});
+Deno.test("Form172 NOL projection reruns education MAGI and credit limitation through actual sources", async () => {
+  const f = await fixture();
+  const inputs = structuredClone(educationSource.inputs);
+  const review = {
+    ...f.currentReview,
+    annual_review: {
+      ...f.currentReview.annual_review,
+      agi: 81000,
+      reported_taxable_income: 65250,
+    },
+  };
+  const bytes = new TextEncoder().encode(JSON.stringify(review));
+  f.documents[2] = { reference: review.reference, bytes };
+  f.binding.current_review.sha256 = await sha(bytes);
+  const r = await stageForm172ProjectedReturn(inputs, f.binding, f.documents);
+  assertEquals(r.current_form1040_before_nol.line11_agi, 81000);
+  assertEquals(r.deduction, 44000);
+  assertEquals(r.projected_form1040.line11_agi, 37000);
+  assertEquals(r.projected_form1040.line15_taxable_income, 21250);
+  assertEquals(
+    (r.projected_pending.f8863.f8863s as Record<string, unknown>[])[0]
+      .filer_magi,
+    37000,
+  );
+  assertEquals(r.projected_pending.schedule3.line3_education_credit, 1500);
+  assertEquals(r.projected_form1040.line29_refundable_aoc, 1000);
+  assertEquals(
+    r.projected_pending.f8863.credit_limit_worksheet,
+    {
+      ...educationSource.inputs.f8863_credit_limit_worksheet
+        .credit_limit_worksheet,
+      form1040_line18_tax: r.projected_form1040.line18_total_tax_before_credits,
+    },
+  );
+  assertEquals(inputs.f8863[0].filer_magi, 81000);
+  assertEquals(r.filingReady, false);
+  assertThrows(
+    () => assertAttachmentCoverage(r.projected_pending, "mef"),
+    Error,
+    "Form 172",
+  );
+});
+
+// Synthetic review assertions only; no authentic adoption documents claimed.
+const syntheticAdoptionSource = {
+  filing_status: "single" as const,
+  adoption_benefits: 0,
+  children: [{
+    first_name: "Ada",
+    last_name: "Example",
+    birth_year: 2020,
+    ssn: "111223334",
+    final_decree: {
+      source_document_id: "decree-1",
+      finalization_date: "2025-07-15",
+      issuing_jurisdiction: "TX",
+      child_origin: "US" as const,
+    },
+    expenses: [{
+      source_document_id: "invoice-1",
+      paid_date: "2025-03-12",
+      category: "attorney_fee" as const,
+      payee: "Adoption Counsel",
+      amount: 11_000,
+      reimbursed_amount: 0,
+    }],
+  }],
+  reviewed_source: {
+    reviewed_by: "Synthetic Adoption Reviewer",
+    reviewed_on: "2026-04-01",
+    adoption_case_reference: "case-TX-2025-1",
+    decree: {
+      source_document_id: "decree-1",
+      document_sha256: "a".repeat(64),
+      child_first_name: "Ada",
+      child_last_name: "Example",
+      child_ssn: "111223334",
+      finalization_date: "2025-07-15",
+      issuing_jurisdiction: "TX",
+      child_origin: "US" as const,
+      taxpayer_named_as_adoptive_parent_confirmed: true as const,
+    },
+    birth_record: {
+      source_document_id: "birth-1",
+      document_sha256: "a".repeat(64),
+      child_first_name: "Ada",
+      child_last_name: "Example",
+      date_of_birth: "2020-02-01",
+    },
+    reviewed_facts: {
+      child_us_citizen_or_resident_when_effort_began_confirmed: true as const,
+      child_under_18_on_2025_12_31_confirmed: true as const,
+      child_not_taxpayers_spouses_child_confirmed: true as const,
+      no_other_nonspouse_taxpayer_claim_confirmed: true as const,
+      no_prior_form8839_claim_for_child_confirmed: true as const,
+      no_employer_adoption_benefits_confirmed: true as const,
+      all_reimbursements_disclosed_confirmed: true as const,
+      no_other_federal_credit_or_deduction_for_expenses_confirmed:
+        true as const,
+      no_surrogacy_or_illegal_expenses_confirmed: true as const,
+    },
+    expenses: [{
+      source_document_id: "invoice-1",
+      receipt_sha256: "a".repeat(64),
+      payment_proof_document_id: "payment-1",
+      payment_proof_sha256: "a".repeat(64),
+      paid_date: "2025-03-12",
+      category: "attorney_fee" as const,
+      payee: "Adoption Counsel",
+      amount: 11_000,
+      directly_related_to_legal_adoption_confirmed: true as const,
+    }],
+  },
+  magi_review: {
+    reviewed_by: "Synthetic Return Reviewer",
+    reviewed_on: "2026-04-01",
+    section933: {
+      no_puerto_rico_excluded_income_confirmed: true as const,
+      return_wide_review_reference: "territory-review",
+    },
+    form2555: {
+      no_form2555_filing_or_exclusion_confirmed: true as const,
+      return_wide_review_reference: "foreign-income-review",
+    },
+    form4563: {
+      no_form4563_filing_or_exclusion_confirmed: true as const,
+      return_wide_review_reference: "territory-return-review",
+    },
+  },
+  documents: ["decree-1", "birth-1", "invoice-1", "payment-1"].map((id) => ({
+    source_document_id: id,
+    file_name: `${id}.pdf`,
+    description: `Synthetic unverified ${id}`,
+    sha256: "a".repeat(64),
+  })),
+};
+Deno.test("Form172 NOL projection preserves source-dependent adoption finalizer and refund", async () => {
+  const f = await fixture();
+  const template = passiveK1Inputs();
+  const inputs = {
+    general: template.general,
+    w2: [{ ...template.w2[0], box1_wages: 120000 }],
+    form8839: syntheticAdoptionSource,
+  };
+  const review = {
+    ...f.currentReview,
+    annual_review: {
+      ...f.currentReview.annual_review,
+      agi: 120000,
+      reported_taxable_income: 104250,
+    },
+  };
+  const bytes = new TextEncoder().encode(JSON.stringify(review));
+  f.documents[2] = { reference: review.reference, bytes };
+  f.binding.current_review.sha256 = await sha(bytes);
+  const r = await stageForm172ProjectedReturn(inputs, f.binding, f.documents);
+  assertEquals(r.deduction, 44000);
+  assertEquals(r.projected_form1040.line11_agi, 76000);
+  assertEquals(r.projected_form1040.line15_taxable_income, 60250);
+  assertEquals(r.projected_form1040.line20_nonrefundable_credits, 6000);
+  assertEquals(r.projected_form1040.line30_refundable_adoption, 5000);
+  assertEquals(
+    (r.projected_pending.form8839_route.pre_adoption_sink_input as Record<
+      string,
+      unknown
+    >).line11_agi,
+    76000,
+  );
+  assertEquals(
+    r.projected_execution.replayInputs?.f1040.line30_refundable_adoption,
+    5000,
+  );
+  assertEquals(r.sourceAuthenticityVerified, false);
+  assertEquals(r.filingReady, false);
 });

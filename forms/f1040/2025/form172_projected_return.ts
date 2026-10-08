@@ -4,6 +4,7 @@ import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { TaxNode } from "../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../core/types/output-nodes.ts";
 import { registry } from "./registry.ts";
+import { executePreQefSourceReturn } from "./staged_source_return.ts";
 import { agi_aggregator } from "../nodes/intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../nodes/outputs/schedule1/index.ts";
 import { normalizeAllPending } from "./pending.ts";
@@ -26,7 +27,6 @@ export async function stageForm172ProjectedReturn(
   // These routes need their source-dependent staging composed with the NOL
   // replay rather than silently falling back to the ordinary graph.
   if (
-    inputs.form8839 !== undefined || inputs.f8863 !== undefined ||
     inputs.form8990 !== undefined || inputs.schedule_j !== undefined ||
     (Array.isArray(inputs.f8621) &&
       inputs.f8621.some((v) =>
@@ -66,12 +66,15 @@ export async function stageForm172ProjectedReturn(
     }
   }
   const projectedRegistry = { ...registry, start: new RetainedNolStart() };
-  const execution = execute(
-    buildExecutionPlan(projectedRegistry),
-    projectedRegistry,
-    inputs,
-    { taxYear: 2025, formType: "f1040" },
-  );
+  const executeNolGraph = (source: Record<string, unknown>) =>
+    execute(
+      buildExecutionPlan(projectedRegistry),
+      projectedRegistry,
+      source,
+      { taxYear: 2025, formType: "f1040" },
+    );
+  // Recompute return-derived adoption/education operands on every NOL pass.
+  const execution = executePreQefSourceReturn(inputs, true, executeNolGraph);
   if (execution.diagnostics.length > 0) {
     throw new Error("NOL projection needs successful graph rerun");
   }

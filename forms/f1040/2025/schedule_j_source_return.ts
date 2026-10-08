@@ -335,8 +335,9 @@ function jointFishingFarmOwners(
 /** Innermost graph stage, reusable in credit and QEF counterfactual passes. */
 export function executeScheduleJSourceReturn(
   inputs: Record<string, unknown>,
+  executeGraph: (inputs: Record<string, unknown>) => ExecuteResult = raw,
 ): ExecuteResult {
-  if (inputs.schedule_j === undefined) return raw(inputs);
+  if (inputs.schedule_j === undefined) return executeGraph(inputs);
   // Private worksheet operands cannot be supplied by a public caller.
   const source = publicInputSchema.parse(inputs.schedule_j);
   const preferential = Object.values(source.tax_treatment).some((facts) =>
@@ -365,10 +366,10 @@ export function executeScheduleJSourceReturn(
     Array.isArray(cs) && cs.length === 1 &&
     record(cs[0]).schedule_j_fishing_evidence !== undefined &&
     fs !== undefined;
-  if (!preferential && !jointFishing) return raw(inputs);
+  if (!preferential && !jointFishing) return executeGraph(inputs);
   const noElection = structuredClone(inputs);
   delete noElection.schedule_j;
-  const baseline = raw(noElection);
+  const baseline = executeGraph(noElection);
   if (baseline.diagnostics.length) {
     throw new Error(
       "Schedule J needs a settled actual return without the election: " +
@@ -489,7 +490,7 @@ export function executeScheduleJSourceReturn(
         : {}),
     },
   };
-  const result = raw(finalInputs);
+  const result = executeGraph(finalInputs);
   if (result.diagnostics.length) return result;
   return {
     ...result,
