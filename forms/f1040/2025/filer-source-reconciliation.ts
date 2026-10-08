@@ -478,6 +478,8 @@ export function assertEitcChildSources(
       dep.irs_relationship_code !== row.irs_relationship_code ||
       dep.months_in_home !== row.months_in_home ||
       dep.months_lived_with_you_in_us !== row.months_lived_with_you_in_us ||
+      JSON.stringify(dep.eic_death_residency_review) !==
+        JSON.stringify(row.eic_death_residency_review) ||
       JSON.stringify(dep.eic_dated_residency_review) !==
         JSON.stringify(row.eic_dated_residency_review) ||
       JSON.stringify(dep.eic_birth_residency_review) !==

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { reviewedEicDeathResidence } from "./eic-death-residency.ts";
 import {
   residencePeriodSchema,
   reviewedEicDatedResidence,
@@ -35,6 +36,7 @@ export const eicBirthResidencyReviewSchema = z.union([
 export interface EicBirthResidencyFacts {
   readonly ssn?: string;
   readonly eic_dated_residency_review?: unknown;
+  readonly eic_death_residency_review?: unknown;
   readonly dob: string;
   readonly months_in_home: number;
   readonly months_lived_with_you_in_us?: number;
@@ -131,6 +133,7 @@ export function scheduleEicLine6Months(child: EicBirthResidencyFacts): number {
     child.eic_dated_residency_review !== undefined &&
     child.eic_birth_residency_review !== undefined
   ) throw new Error("Schedule EIC needs one consistent residency review");
+  if (reviewedEicDeathResidence(child)) return 12;
   if (reviewedEicBirthResidence(child)) return 12;
   if (reviewedEicDatedResidence(child)) {
     return Math.max(7, child.months_lived_with_you_in_us!);

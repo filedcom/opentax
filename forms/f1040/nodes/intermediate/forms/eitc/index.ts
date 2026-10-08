@@ -14,6 +14,8 @@ import { eicBirthResidencyReviewSchema } from "../../../../2025/eic-birth-reside
 
 import { eicDatedResidencyReviewSchema } from "../../../../2025/eic-dated-residency.ts";
 
+import { eicDeathResidencyReviewSchema } from "../../../../2025/eic-death-residency.ts";
+
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 export const qualifyingChildDetailSchema = z.object({
@@ -29,6 +31,7 @@ export const qualifyingChildDetailSchema = z.object({
   months_lived_with_you_in_us: z.number().int().min(0).max(12),
   eic_birth_residency_review: eicBirthResidencyReviewSchema.optional(),
   eic_dated_residency_review: eicDatedResidencyReviewSchema.optional(),
+  eic_death_residency_review: eicDeathResidencyReviewSchema.optional(),
   full_time_student: z.boolean().optional(),
   disabled: z.boolean().optional(),
   ip_pin: z.string().optional(),

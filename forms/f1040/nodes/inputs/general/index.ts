@@ -82,6 +82,11 @@ import {
   reviewedEicDatedResidence,
 } from "../../../2025/eic-dated-residency.ts";
 
+import {
+  eicDeathResidencyReviewSchema,
+  reviewedEicDeathResidence,
+} from "../../../2025/eic-death-residency.ts";
+
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
 export enum DependentRelationship {
@@ -164,6 +169,7 @@ export const dependentSchema = z.object({
   months_lived_with_you_in_us: z.number().int().min(0).max(12).optional(),
   eic_birth_residency_review: eicBirthResidencyReviewSchema.optional(),
   eic_dated_residency_review: eicDatedResidencyReviewSchema.optional(),
+  eic_death_residency_review: eicDeathResidencyReviewSchema.optional(),
   us_citizen_national_or_resident: z.boolean().optional(),
   provided_over_half_own_support: z.boolean().optional(),
   filed_joint_return_except_refund_only: z.boolean().optional(),
@@ -781,7 +787,9 @@ export function dependentLivedWithFilerOverHalfYear(
 ): boolean {
   const reviewedBirth = reviewedEicBirthResidence(dep);
   const reviewedDated = reviewedEicDatedResidence(dep);
-  return dep.months_in_home > 6 || reviewedBirth || reviewedDated;
+  const reviewedDeath = reviewedEicDeathResidence(dep);
+  return dep.months_in_home > 6 || reviewedBirth || reviewedDated ||
+    reviewedDeath;
 }
 
 function passesJointReturnTest(dep: DependentItem): boolean {
@@ -954,7 +962,8 @@ function isEitcQualifyingChild(
   if (
     qualifyingIdentity && dep.dob.startsWith("2025-") &&
     dep.months_in_home <= 6 &&
-    dep.eic_birth_residency_review === undefined
+    dep.eic_birth_residency_review === undefined &&
+    dep.eic_death_residency_review === undefined
   ) {
     throw new Error(
       "EIC 2025 birth needs reviewed residence before child eligibility can be decided",
@@ -1029,6 +1038,9 @@ export function eicChildSourceProjection(parsed: GeneralInput) {
       ...(dep.eic_dated_residency_review === undefined
         ? {}
         : { eic_dated_residency_review: dep.eic_dated_residency_review }),
+      ...(dep.eic_death_residency_review === undefined
+        ? {}
+        : { eic_death_residency_review: dep.eic_death_residency_review }),
       full_time_student: dep.full_time_student,
       disabled: dep.disabled,
       ip_pin: dep.ip_pin,
