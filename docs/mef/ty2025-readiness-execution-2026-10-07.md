@@ -5342,3 +5342,36 @@ rate allocations/elections and prior acceptance, MTCNOL, joint/status-change
 history, durable carry import, all combinations, native/PDF packet admission,
 business rules and IRS acceptance. No main checkoff or aggregate coverage
 increase follows. All 47 future items remain unchanged and unworked.
+
+### October 8 — prior joint-return spouse identity
+
+The isolated Form 8801 candidate now requires a distinct reviewed spouse SSN
+when prior status is married filing jointly. Both calculator and canonical
+review schemas use one shared identity refinement, so omitting current-return
+fields cannot remove that requirement. Prior-copy inspection matches the
+reviewed spouse to `ReturnHeader/Filer/SpouseSSN`; a missing, swapped,
+duplicate, nested or foreign-namespace value rejects. The official TY2024
+`IRS1040.xsl` retained from `py2025r1.zip` confirms the header filer field.
+`priorJointSpouseBytesReconciled` records only this matching joint-copy
+contract. It remains false on an ordinary single-filer copy and does not
+prove filing, acceptance or status-change credit allocations.
+
+The normal typed nine-module run passed **120/0, zero ignored**, including
+four new prior-joint identity/byte/public-settlement cases. The constructed
+same-pair joint return retains zero exclusion-only net tax and 6,100 current
+minimum-tax credit; public Form 1040 tax decreases by that calculated credit.
+Both export guards stay active. Private `form8801-prior-joint-20261008-v4/`
+retains source snapshots, 2,652-path manifest, log/status and review; log SHA
+`29dbf1aecd4e43809094c0a3a3b6d2f782aa49c88bcde152346436ea9779149a`.
+The primary source stylesheet/digest is retained in v2. V1's test typing
+failure, v2's missing-spouse rejection failure and v3's repeated unchanged
+failure after an unsuccessful edit are preserved. V4 restores shared schema
+validation and runs the same typed command with all cases passing.
+
+Ten Form 8801 implementation commits remain isolated. Root runtime still
+matches all 2,637 startup paths of the live full regression. Prior spouses'
+source authenticity, accepted history, joint/separate and changed-spouse
+allocations, durable import, the other source/calculation gaps, packet
+integration, matching business rules and IRS acceptance remain open. No main
+checkoff or aggregate coverage increase follows; the whole future section
+remains unchanged and unworked.
