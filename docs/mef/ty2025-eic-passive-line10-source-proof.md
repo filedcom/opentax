@@ -1,5 +1,35 @@
 # TY2025 current passive partnership ordinary gain
 
+## October 8 current code L checkpoint
+
+The integrated runtime at `c123ef369`, unchanged after the 12,388/0 full run,
+now has a supplemental independent public-source packet check for **box 11
+code L**. The [2025 partner instructions](https://www.irs.gov/instructions/i1065sk1)
+place an issued section 751(b) code-L amount on Form 4797 Part II line 10.
+These constructed issued-record contracts retain the 3,000 gain, actual farm
+receipts 2,000/repairs 7,000, and wages 5,000. Form 8582 allows farm loss
+3,000 and suspends 2,000; Schedule 1 gain/loss cancel and AGI is 5,000.
+Investment income 11,950 gives EIC 384; 11,951 gives zero. Qualified income
+3,000 and allowed qualified farm loss 3,000 give required zero Form 8995.
+
+Private `eic-passive-code-l-proof-20261008-v2/` retains the exact-root-lock
+normal typed task, **2/0**, two full cached TY2025v5.4 XSD-valid native/PDF
+packets and 24 rendered pages viewed. Same-gain code/character substitutions
+reject public execution, complete native export and direct Form 4797/1040
+PDF projection. All 2,631 tracked runtime paths remain unchanged.
+`review.json` records packet and image hashes; its SHA-256 is
+`becbd34e5113b681eb13b5d8b1b36ec235636ea7f4fc83131a403bff0c996950`.
+
+Both packets remain **PDF-qualified**: page 8 Form 4835 line 34c prints the
+allowed loss without required PAL identification. Native XML carries the PAL
+attribute. New future item 43 records this discrepancy and remains unworked.
+No aggregate filing approval is added. Underlying section 751(b) transaction
+computation, external issuer authenticity, broader owners/sources/negative or
+prior-history paths, matching business rules and IRS acceptance remain open.
+This supersedes the older “no independent full positive packet here” wording
+only for these two bounded current source-contract packets.
+
+
 ## Proven source route
 
 The pre-repair public source packet

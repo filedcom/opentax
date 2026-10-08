@@ -4590,3 +4590,64 @@ remain unworked. This adds no packet, page view, aggregate filing approval,
 authenticated accepted ledger, business-rule proof or IRS acknowledgment.
 The full-batch parent remains open because the phase's retained-route and
 scope decisions are incomplete. The readiness goal remains active.
+
+
+### October 8 — current code L source-to-packet proof and future discrepancy
+
+Advanced the existing Worksheet 1 passive-income/source/PAL/Form 4797 parent,
+using its explicitly recorded missing code-L packet proof. No production or
+tracked test source changed. The current [IRS partner instructions](https://www.irs.gov/instructions/i1065sk1)
+place box 11 code L section 751(b) issued gain on Form 4797 Part II line 10;
+this is distinct from box 20 code L. Constructed current issued-record facts
+bind code L, ordinary character, issuer, owner and passive activity. The proof
+does not compute or authenticate the issuer's underlying distribution.
+
+With unchanged wages 5,000, issued gain 3,000, farm receipts 2,000 and repairs
+7,000, the full graph allows farm loss 3,000 and suspends 2,000. Schedule 1
+line 4/5 are 3,000/−3,000, AGI 5,000 and net QBI zero. Investment income
+11,950 produces EIC/refund 384; the 11,951 case produces zero EIC/refund.
+Both complete twelve-page returns pass the cached TY2025v5.4 Return1040 XSD.
+Same-amount code and character substitutions reject public execution,
+complete native export and direct Form 4797/1040 PDF projectors.
+
+Supplemental normal typed task **2 passed / 0 failed / 0 ignored (9s)**,
+actual session 15272 terminal exit 0, root HEAD `aa739dd2d`:
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task --config .state/research/board-execution-2026-10-07/eic-passive-code-l-proof-20261008-v2/deno.json test /Users/atul/projects/opentax/.state/research/board-execution-2026-10-07/eic-passive-code-l-proof-20261008-v2/proof.test.ts`.
+The private config copies the root task permissions/imports and removes only
+private evidence-directory test discovery exclusion; dependency lock equals
+the root lock exactly. This supplemental run is outside the retained full
+suite count. All 2,631 runtime paths remain unchanged. Tools remain those
+recorded for the integrated full run; rendering uses Poppler 26.09.0 at 110 dpi,
+and PDF field/widget inspection uses pypdf 6.14.2.
+
+Private v2 retains source/pending, XML/PDF, extracted text, all 24 page images,
+four viewed contact sheets and `review.json`. Full-size review additionally
+checked the low-boundary 1040 page 2, Form 4797 page 1, Form 4835 and Form 8582
+page 2. Identity, amounts, rows and order agree; both PDFs have zero canonical
+fields/widgets. Test log SHA-256:
+`6c6db8713e2afdb7599d42f99cddefabe5c56ed458beada65f55ec34e2ec1e92`.
+Review SHA-256:
+`becbd34e5113b681eb13b5d8b1b36ec235636ea7f4fc83131a403bff0c996950`.
+
+Review found page 8 Form 4835 line 34c missing PAL identification for the
+allowed current loss, although native XML has the PAL attribute. The
+[Form 8582 reporting instructions](https://www.irs.gov/instructions/i8582)
+require that identification. Added future item 43 only, unworked; no source
+fix or aggregate filing approval follows. Unused Form 8582 Parts VI/IX black
+1.00 total-ratio text is preprinted in the canonical blank form and is not a
+new generated discrepancy. Both packets remain qualified for PDF parity.
+
+Preserved v1: its first root task invocation found no modules because the
+private directory is excluded; its subsequent private-config typed run passed
+2/0 but resolved newer std helpers. V2 repeats with the exact root lock and
+is the final scoped proof; neither earlier run is merged into full-suite totals.
+No new main TODO or checkbox change. Main 52 unchecked rows remain frozen;
+all 43 future rows remain unworked. Wider sources, issuer authentication,
+prior acceptance, matching business rules and IRS ATS remain open.
+
+Refreshed the [IRS operational status](https://www.irs.gov/e-file-providers/modernized-e-file-operational-status)
+at 03:09 UTC: ATS still unavailable through October 13 09:00 Eastern; the
+announced reopening is for TY2026, without confirmed TY2025 availability.
+Private `ats-status-20261008T030906Z-v1/observation.json` retains the observation.
+Board estimate remains zero accepted tests by the original morning deadline
+and not estimable after reopening. Local packets do not add IRS acceptance.
