@@ -1,84 +1,60 @@
 # Repository Structure
 
-> Single source of truth for folder layout. Update this file when anything moves.
+Public entrypoints are `mod.ts`, `catalog.ts`, `cli/main.ts`, and `forms/f1040/2025/index.ts`. See [repository organization](./repository-organization.md) for the responsibilities of each boundary.
 
-```
+```text
 /
-├── CLAUDE.md                   # Coding conventions — read before touching any node
-├── STRUCTURE.md                # ← you are here
-├── mod.ts                      # Public API entry point
-├── catalog.ts                  # Node registry (all registered nodes)
-├── deno.json                   # Tasks, imports, compiler options
-│
-├── cli/                        # CLI entry point + command handlers
-│   ├── main.ts
-│   ├── commands/               # return, form, node subcommands
-│   ├── store/                  # Return persistence (JSON store)
+├── CLAUDE.md                      # Coding conventions
+├── mod.ts / catalog.ts            # Public API and supported form catalog
+├── deno.json / deno.lock           # Typed tasks and locked dependencies
+├── cli/
+│   ├── commands/                  # Return, form, node and export operations
+│   ├── store/                     # Return persistence and guarded carry archives
 │   └── utils/
-│
-├── core/                       # Engine runtime — not form-specific
-│   ├── runtime/                # Node execution, graph traversal, dependency resolution
-│   ├── types/                  # Shared types (NodeOutput, TaxNode, etc.)
-│   ├── validation/             # MeF business rule runner
-│   └── test-utils/             # Helpers for node unit tests
-│
-├── forms/
-│   └── f1040/                  # Form 1040 (TY2025)
-│       ├── 2025/               # Year-specific constants (brackets, limits, phaseouts)
-│       │   └── config.ts
-│       ├── nodes/
-│       │   ├── config/         # Year router — maps year → config object
-│       │   ├── inputs/         # 130+ input nodes (one dir per form/schedule)
-│       │   │   └── <name>/
-│       │   │       ├── index.ts        # Node class + singleton export
-│       │   │       └── index.test.ts   # Unit tests
-│       │   ├── intermediate/
-│       │   │   ├── aggregation/        # AGI aggregator, total tax assembler, etc.
-│       │   │   ├── forms/              # Computed forms (8959, 8960, 4137, etc.)
-│       │   │   └── worksheets/         # QDCG, EITC, CTC, SSA taxability, etc.
-│       │   └── outputs/
-│       │       ├── f1040/              # Final 1040 line computations
-│       │       └── schedule1/          # Schedule 1 aggregation
-│       ├── mef/                # IRS MeF XML export
-│       └── validation/         # Form 1040 MeF business rules
-│
+├── core/
+│   ├── runtime/                   # Execution, graph and source-document contracts
+│   ├── types/                     # Shared node and form types
+│   ├── validation/                # Business-rule engine
+│   └── test-utils/
+├── forms/f1040/
+│   ├── 2025/
+│   │   ├── index.ts / config.ts    # Public year entrypoint and year constants
+│   │   ├── inputs.ts / registry.ts # Stable input and node registration
+│   │   ├── domains/               # Source reconciliation, fixtures and tests by tax concern
+│   │   ├── mef/forms/             # Native projections by the same tax domains
+│   │   └── pdf/
+│   │       ├── forms/             # Printed form projections by tax domain
+│   │       └── reviews/           # Retained review fixtures and contracts
+│   ├── nodes/
+│   │   ├── config/                # Tax-year routing
+│   │   ├── inputs/<section>/<group>/<form>/         # Validated source nodes
+│   │   ├── intermediate/          # Aggregations, computed forms and worksheets
+│   │   └── outputs/<section>/<group>/<form>/        # Final line assembly
+│   ├── mef/                       # Shared headers and transport contracts
+│   ├── validation/rules/          # Domain groups; stable index and rule IDs
+│   └── e2e/                       # Return contracts by domain; ATS scenarios together
 ├── docs/
-│   ├── architecture/           # Internal dev docs (not published)
-│   │   ├── STRUCTURE.md        # ← you are here
-│   │   └── product.md          # Architecture & research plan
-│   └── mintlify/               # Public docs site (Mintlify)
-│       ├── docs.json           # Nav config — update when adding/removing pages
-│       ├── architecture/       # Published architecture pages
-│       ├── cli/
-│       ├── getting-started/
-│       ├── input-nodes/
-│       └── use-with-ai/
-│
-├── scripts/                    # Dev utilities (not part of engine)
-│
-├── benchmark/               # Accuracy benchmark — see benchmark/README.md
-│   ├── README.md
-│   ├── run_benchmark.ts        # Run all cases, compare to correct.json
-│   ├── run_case.ts             # Run one case, save output.json
-│   ├── run_all.ts              # Bulk regenerate output.json
-│   └── cases/
-│       └── {form}/             # e.g. f1040, f1120
-│           └── {year}/         # e.g. 2025
-│               └── NN-description/
-│                   ├── input.json      # Engine inputs: forms array the CLI accepts
-│                   ├── correct.json    # IRS-authoritative correct values + source citation
-│                   └── output.json     # Last engine output (not committed)
-│
-└── .state/                     # Runtime state — gitignored except where noted
-    ├── bench/                  # Benchmark harness state (tracked)
-    │   ├── state.json          # Active task: pass/fail counts, root causes, phase
-    │   ├── progress.md         # Append-only run log
-    │   └── irs-cases-raw.json  # Scratch file written by /tax-cases sourcer agent
-    ├── field-dumps/            # IRS PDF field extracts (tracked)
-    ├── pdf-cache/              # Downloaded IRS PDFs (not committed)
-    ├── research/               # Research scratch files (not committed)
-    └── returns/                # CLI tax returns (not committed)
+│   ├── architecture/              # Internal design and repository navigation
+│   ├── mef/ty2025/                # Readiness, inventory and source evidence by topic
+│   ├── ty2026/                    # Source research by topic
+│   ├── ats/ / releases/           # ATS correspondence drafts and release documents
+│   └── index.html / build/        # Existing static documentation site
+├── scripts/
+│   ├── testing/                   # Typed validation harness and negative contracts
+│   ├── research/                  # PDF review generation and source checks
+│   ├── verification/              # Inventory verification
+│   ├── maintenance/               # Rule generation and independent source oracles
+│   ├── release/                   # Compiled binary checks
+│   └── site/                      # Static site statistics
+├── benchmark/
+│   ├── run_benchmark.ts           # Archived expected-output comparison
+│   ├── run_case.ts / run_all.ts   # Individual and bulk case execution
+│   └── cases/<form>/<year>/<case>/ # Paired input, expected and retained output files
+├── .state/                        # Existing state and retained private evidence
+└── .pdf-cache/                    # Existing downloaded form cache
 ```
+
+Tax-facing boundaries use General, Income, Adjustments, Deductions, Credits, Taxes, and Payments. Business, retirement, investments, foreign and health are subgroups inside the relevant return section. Node inputs, intermediate forms/worksheets/aggregations and outputs retain their roles, with the same physical tax-section subfolders inside each role. Tests, fixtures and family research travel with their contracts. Runtime and tooling remain under separate role boundaries.
 
 ## Benchmark case formats
 

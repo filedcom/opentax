@@ -7,7 +7,7 @@ on:
       - "docs/**"
       - "forms/**"
       - "catalog.ts"
-      - "scripts/site-stats.ts"
+      - "scripts/site/site-stats.ts"
   workflow_dispatch:
 
 permissions:
@@ -34,7 +34,7 @@ jobs:
           deno-version: v2.x
 
       - name: Update node and input counts on the site
-        run: deno run --allow-read --allow-write scripts/site-stats.ts
+        run: deno run --allow-read --allow-write scripts/site/site-stats.ts
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

@@ -1,14 +1,14 @@
 import { assertEquals, assertMatch } from "@std/assert";
 import { fieldsOf } from "../../../../core/test-utils/output.ts";
-import { w2 } from "../../nodes/inputs/w2/index.ts";
-import { DistributionCode, f1099r } from "../../nodes/inputs/f1099r/index.ts";
-import { scheduleC } from "../../nodes/inputs/schedule_c/index.ts";
+import { w2 } from "../../nodes/inputs/income/wages/w2/index.ts";
+import { DistributionCode, f1099r } from "../../nodes/inputs/income/retirement/f1099r/index.ts";
+import { scheduleC } from "../../nodes/inputs/income/business/schedule_c/index.ts";
 import { STANDARD_DEDUCTION_BASE_2025 } from "../../nodes/config/2025.ts";
-import { schedule_d } from "../../nodes/intermediate/aggregation/schedule_d/index.ts";
-import { schedule_se } from "../../nodes/intermediate/forms/schedule_se/index.ts";
-import { f1040 } from "../../nodes/outputs/f1040/index.ts";
-import { schedule1 } from "../../nodes/outputs/schedule1/index.ts";
-import { schedule2 } from "../../nodes/intermediate/aggregation/schedule2/index.ts";
+import { schedule_d } from "../../nodes/intermediate/aggregation/income/investments/schedule_d/index.ts";
+import { schedule_se } from "../../nodes/intermediate/forms/taxes/self-employment/schedule_se/index.ts";
+import { f1040 } from "../../nodes/outputs/general/return-assembly/f1040/index.ts";
+import { schedule1 } from "../../nodes/outputs/general/return-assembly/schedule1/index.ts";
+import { schedule2 } from "../../nodes/intermediate/aggregation/taxes/other/schedule2/index.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import {
   SCENARIO_1040_01_FACTS,

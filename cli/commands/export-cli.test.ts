@@ -168,7 +168,7 @@ Deno.test("CLI exports a signed W-2 return as MeF XML and a filled PDF without f
         new TextDecoder().decode(validated.stderr),
       );
     } catch (error) {
-      if (!(error instanceof Deno.errors.NotFound)) throw error;
+      throw error;
     }
     const pdfPath = `${cwd}/return.pdf`;
     const pdf = await run(

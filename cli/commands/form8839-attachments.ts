@@ -1,6 +1,6 @@
 import { join } from "@std/path";
 import type { MefPdfAttachment } from "../../forms/f1040/2025/mef/form-descriptor.ts";
-import { parsePublicForm8839Source } from "../../forms/f1040/nodes/intermediate/forms/form8839/public_source.ts";
+import { parsePublicForm8839Source } from "../../forms/f1040/nodes/intermediate/forms/credits/individual/form8839/public_source.ts";
 
 /** Load the existing Form 8839 manifest from this return's attachment folder. */
 export async function loadForm8839Attachments(

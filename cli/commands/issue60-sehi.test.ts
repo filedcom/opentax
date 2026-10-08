@@ -1,5 +1,5 @@
 import { assertEquals } from "@std/assert";
-import { schedule_se } from "../../forms/f1040/nodes/intermediate/forms/schedule_se/index.ts";
+import { schedule_se } from "../../forms/f1040/nodes/intermediate/forms/taxes/self-employment/schedule_se/index.ts";
 import { formAddCommand } from "./form.ts";
 import { createReturnCommand, getReturnCommand } from "./return.ts";
 

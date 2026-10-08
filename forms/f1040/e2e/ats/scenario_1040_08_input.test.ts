@@ -4,8 +4,8 @@ import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { registry } from "../../2025/registry.ts";
 import { SCENARIO_1040_08_FACTS } from "./ty2025_cases.ts";
 import { scenario104008Input } from "./scenario_1040_08_input.ts";
-import { scheduleD } from "../../2025/mef/forms/schedule_d.ts";
-import { irs1040Pdf } from "../../2025/pdf/forms/f1040.ts";
+import { scheduleD } from "../../2025/mef/forms/income/investments/schedule_d.ts";
+import { irs1040Pdf } from "../../2025/pdf/forms/general/return-assembly/f1040.ts";
 
 const plan = buildExecutionPlan(registry);
 

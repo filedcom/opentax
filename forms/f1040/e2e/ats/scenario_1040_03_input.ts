@@ -1,4 +1,4 @@
-import { DistributionCode } from "../../nodes/inputs/f1099r/index.ts";
+import { DistributionCode } from "../../nodes/inputs/income/retirement/f1099r/index.ts";
 import { SCENARIO_1040_03_FACTS } from "./ty2025_cases.ts";
 
 /**

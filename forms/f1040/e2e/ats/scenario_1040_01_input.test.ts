@@ -1,9 +1,9 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { w2 } from "../../nodes/inputs/w2/index.ts";
+import { w2 } from "../../nodes/inputs/income/wages/w2/index.ts";
 import {
   computeScheduleHAmounts,
   schedule_h,
-} from "../../nodes/intermediate/forms/schedule_h/index.ts";
+} from "../../nodes/intermediate/forms/taxes/household-employment/schedule_h/index.ts";
 import {
   scenario104001Input,
   SCENARIO_1040_01_RECONCILIATION,

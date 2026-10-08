@@ -1,0 +1,291 @@
+/**
+ * E2E — IRC §469 passive activity loss limit on rental real estate.
+ *
+ * Form 8582 instructions, Part II: the special allowance is $25,000, reduced by
+ * 50% of the amount by which modified adjusted gross income exceeds $100,000,
+ * and no special allowance is available once modified AGI reaches $150,000.
+ * A loss the allowance does not reach is not deductible this year — it is
+ * carried forward, not both deducted and suspended.
+ *
+ * All amounts here are invented round numbers.
+ */
+
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
+import { execute, type ExecuteResult } from "../../../../../core/runtime/executor.ts";
+import { registry } from "../../../2025/registry.ts";
+import { FilingStatus } from "../../../nodes/types.ts";
+import { form8582 as form8582Mef } from "../../../2025/mef/forms/income/business/f8582/f8582.ts";
+import { form8582Pdf } from "../../../2025/pdf/forms/income/business/f8582.ts";
+import { scheduleEPdf } from "../../../2025/pdf/forms/income/rental-passthrough/schedule_e.ts";
+import { form4797Pdf } from "../../../2025/pdf/forms/income/business/f4797.ts";
+
+const ctx = { taxYear: 2025, formType: "f1040" };
+const plan = buildExecutionPlan(registry);
+
+function runReturn(inputs: Record<string, unknown>): ExecuteResult {
+  return execute(plan, registry, inputs, ctx);
+}
+
+/** AGI as agi_aggregator computed it (scalar; f1040's own copy is an array). */
+function agi(result: ExecuteResult): unknown {
+  return result.pending["standard_deduction"]?.["agi"];
+}
+
+function suspendedPal(result: ExecuteResult): number {
+  return result.carryforwards["suspended_pal_8582"] ?? 0;
+}
+
+function singleGeneral() {
+  return {
+    filing_status: FilingStatus.Single,
+    taxpayer_first_name: "Test",
+    taxpayer_last_name: "Taxpayer",
+    taxpayer_dob: "1985-06-15",
+  };
+}
+
+function mfjGeneral() {
+  return {
+    filing_status: FilingStatus.MFJ,
+    taxpayer_first_name: "Test",
+    taxpayer_last_name: "Taxpayer",
+    taxpayer_dob: "1985-06-15",
+    spouse_first_name: "Spouse",
+    spouse_last_name: "Taxpayer",
+    spouse_dob: "1987-03-10",
+  };
+}
+
+function w2Item(wages: number) {
+  return {
+    box1_wages: wages,
+    box2_fed_withheld: 0,
+    box3_ss_wages: wages,
+    box4_ss_withheld: wages * 0.062,
+    box5_medicare_wages: wages,
+    box6_medicare_withheld: wages * 0.0145,
+    employer_ein: "12-3456789",
+    employer_name: "ACME Corp",
+    box12_entries: [],
+  };
+}
+
+/** Active rental real estate (activity type A) with rent income and repairs. */
+function rental(rentIncome: number, repairs: number) {
+  return {
+    tsj: "T",
+    activity_id: "rental-one",
+    property_description: "Rental One",
+    property_type: 1,
+    activity_type: "A",
+    fair_rental_days: 365,
+    personal_use_days: 0,
+    rent_income: rentIncome,
+    form_1099_payments_made: false,
+    expense_repairs: repairs,
+  };
+}
+
+Deno.test("first-year passive rental entire gain reaches Form 8582 Part V and Form 1040", () => {
+  const sale = {
+    activity_id: "active-first-year-sale",
+    activity_name: "First-year passive rental",
+    part: "II",
+    property_description: "Short-held rental property",
+    acquired_on: "2025-02-01",
+    sold_on: "2025-08-01",
+    gross_sales_price: 30_000,
+    cost_or_other_basis: 20_000,
+    depreciation_allowed: 0,
+    entire_activity_interest_disposed: true,
+    buyer_unrelated: true,
+    fully_taxable: true,
+    installment_method: false,
+    disposition_document_reference: "2025 sale closing statement",
+  };
+  const firstYear = {
+    activity_id: sale.activity_id,
+    activity_name: sale.activity_name,
+    activity_acquired_on: sale.acquired_on,
+    acquisition_document_reference: "2025 purchase closing statement",
+    not_grouped_with_prior_activity: true,
+  };
+  const property = {
+    ...rental(0, 2_000),
+    activity_type: "B",
+    activity_id: sale.activity_id,
+    property_description: sale.activity_name,
+    fair_rental_days: 180,
+    street_address: "12 Main Street",
+    city: "Austin",
+    state: "TX",
+    zip: "78701",
+    disposed_of: true,
+    first_year_activity_source: firstYear,
+    passive_property_sales: [sale],
+  };
+  const result = runReturn({
+    general: singleGeneral(),
+    schedule_e: [property],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule1?.line4_other_gains, 10_000);
+  assertEquals(result.pending.schedule1?.line5_schedule_e, -2_000);
+  assertEquals(result.pending.f1040?.line8_additional_income, 8_000);
+  assertEquals(suspendedPal(result), 0);
+  const fields = result.pending.form8582 as Record<string, unknown>;
+  assertStringIncludes(
+    form8582Mef.build(fields, { pending: result.pending }),
+    "<OtherActivityIncomeAmt>10000</OtherActivityIncomeAmt>",
+  );
+  assertEquals(
+    form8582Pdf.projectFields!(fields, result.pending).part5_1_gain,
+    "8000",
+  );
+  assertEquals(
+    scheduleEPdf.projectFields!(result.pending.schedule_e!, result.pending)
+      .property_0_line22,
+    2_000,
+  );
+  assertEquals(
+    form4797Pdf.projectFields!(result.pending.form4797!, result.pending)
+      .ordinary_gain,
+    10_000,
+  );
+  const changed = {
+    ...result.pending,
+    schedule_e: {
+      schedule_es: [{
+        ...property,
+        first_year_activity_source: {
+          ...firstYear,
+          acquisition_document_reference: "different purchase document",
+        },
+      }],
+    },
+  };
+  assertThrows(
+    () => form8582Mef.build(fields, { pending: changed }),
+    Error,
+    "do not match their Schedule E",
+  );
+  assertThrows(
+    () => form8582Pdf.projectFields!(fields, changed),
+    Error,
+    "do not match their Schedule E",
+  );
+});
+
+// ── MAGI $200,000: no special allowance at all ──────────────────────────────
+//
+// MFJ, $200,000 interest, rental rent $10,000 less repairs $30,000 = $20,000 loss.
+// Modified AGI is $200,000, which is above the $150,000 cutoff, so the whole
+// $20,000 is suspended and AGI stays at $200,000.
+
+Deno.test("§469: MAGI $200,000 — entire $20,000 rental loss suspended, AGI unchanged", () => {
+  const result = runReturn({
+    general: mfjGeneral(),
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
+    f1099int: [{ payer_name: "Bank", box1: 200_000 }],
+    schedule_e: [rental(10_000, 30_000)],
+  });
+
+  assertEquals(agi(result), 200_000, "no part of the loss is deductible");
+  assertEquals(suspendedPal(result), 20_000, "whole loss carries forward");
+  assertEquals(
+    result.pending["schedule1"]?.["line10_total_additional_income"],
+    0,
+    "Schedule 1 shows no net rental loss",
+  );
+});
+
+// ── MAGI $90,000: full $25,000 allowance ───────────────────────────────────
+//
+// Single, $90,000 wages, rental rent $10,000 less repairs $50,000 = $40,000 loss.
+// Modified AGI $90,000 is below $100,000, so $25,000 is allowed and $15,000 is
+// suspended. AGI = 90,000 − 25,000.
+
+Deno.test("§469: MAGI $90,000 — $25,000 allowed, $15,000 suspended", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    w2: [w2Item(90_000)],
+    schedule_e: [rental(10_000, 50_000)],
+  });
+
+  assertEquals(agi(result), 65_000, "allowance caps the deduction at $25,000");
+  assertEquals(suspendedPal(result), 15_000, "remainder carries forward");
+});
+
+// ── MAGI $120,000: allowance phased out by 50% of the excess ────────────────
+//
+// Single, $120,000 wages, rental rent $10,000 less repairs $40,000 = $30,000 loss.
+// Allowance = 25,000 − 0.50 × (120,000 − 100,000) = $15,000.
+
+Deno.test("§469: MAGI $120,000 — allowance phased down to $15,000", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    w2: [w2Item(120_000)],
+    schedule_e: [rental(10_000, 40_000)],
+  });
+
+  assertEquals(
+    agi(result),
+    105_000,
+    "half the MAGI excess reduces the allowance",
+  );
+  assertEquals(suspendedPal(result), 15_000, "disallowed half carries forward");
+});
+
+// ── Loss smaller than the allowance is deductible in full ──────────────────
+
+Deno.test("§469: MAGI $80,000 — $10,000 loss fully deductible, nothing suspended", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    w2: [w2Item(80_000)],
+    schedule_e: [rental(10_000, 20_000)],
+  });
+
+  assertEquals(agi(result), 70_000, "loss under the allowance is deductible");
+  assertEquals(suspendedPal(result), 0, "nothing carries forward");
+});
+
+// ── Rental with net income is untouched by §469 ────────────────────────────
+
+Deno.test("§469: rental net income is not limited", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    w2: [w2Item(80_000)],
+    schedule_e: [rental(20_000, 5_000)],
+  });
+
+  assertEquals(agi(result), 95_000, "rental income is added in full");
+  assertEquals(suspendedPal(result), 0, "no suspended loss");
+});
+
+Deno.test("§469: passive income releases part of a rental loss above the allowance cutoff", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    schedule_b_part_iii: {
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
+    f1099int: [{ payer_name: "Bank", box1: 200_000 }],
+    schedule_e: [
+      rental(20_000, 5_000),
+      {
+        ...rental(10_000, 30_000),
+        activity_id: "rental-two",
+        property_description: "Rental Two",
+      },
+    ],
+  });
+
+  // $15,000 of passive income offsets $20,000 of passive loss. MAGI is above
+  // $150,000, so the remaining $5,000 is suspended.
+  assertEquals(agi(result), 200_000);
+  assertEquals(suspendedPal(result), 5_000);
+});

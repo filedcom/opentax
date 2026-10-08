@@ -1,0 +1,231 @@
+import { z } from "zod";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
+import { agi_aggregator } from "../../../../aggregation/general/return-assembly/agi_aggregator/index.ts";
+import { schedule1 } from "../../../../../outputs/general/return-assembly/schedule1/index.ts";
+import { schedule_se } from "../../../taxes/self-employment/schedule_se/index.ts";
+import { income_tax_calculation } from "../../../../worksheets/taxes/calculation/income_tax_calculation/index.ts";
+import { f1040 } from "../../../../../outputs/general/return-assembly/f1040/index.ts";
+import { eitc } from "../../../credits/earned-income/eitc/index.ts";
+import { schedule1a } from "../../../deductions/additional/schedule1a/index.ts";
+import {
+  calculatePhysicalPresence2555,
+  physicalPresenceFilingSchema,
+} from "./calculation.ts";
+import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
+import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
+
+// ─── Constants — TY2025 ───────────────────────────────────────────────────────
+
+// IRC §911(d)(1)(B) — physical presence test: 330 full days
+const PHYSICAL_PRESENCE_DAYS = 330;
+
+// Calendar days in a standard tax year — denominator for proration
+const DAYS_IN_YEAR = 365;
+
+// ─── Schema ───────────────────────────────────────────────────────────────────
+
+export const inputSchema = z.object({
+  filing_details: physicalPresenceFilingSchema.optional(),
+  // Foreign wages / salary earned abroad (Form 2555, Part VII line 27)
+  foreign_wages: z.number().nonnegative().optional(),
+
+  // Self-employment income earned abroad (Form 2555, Part VII line 28)
+  // IRC §911(b)(1)(B) — excluded from income tax but still subject to SE tax
+  foreign_self_employment_income: z.number().nonnegative().optional(),
+
+  // Days present in a foreign country during the relevant 12-month period.
+  // Physical presence test requires ≥ 330 full days (IRC §911(d)(1)(B)).
+  days_in_foreign_country: z.number().int().nonnegative().optional(),
+
+  // Bona fide residence test: taxpayer was a bona fide resident of a foreign
+  // country for the full tax year (IRC §911(d)(1)(A)).
+  bona_fide_resident: z.boolean().optional(),
+
+  // Number of qualifying days in the tax year (IRC §911(b)(2)(A) proration).
+  // Used to prorate the FEIE limit when the taxpayer qualifies for only part
+  // of the year (e.g., moved abroad mid-year).
+  //   - Bona fide residents: omit or set to 365 (full year).
+  //   - Physical presence test: typically equals days_in_foreign_country
+  //     (but can be provided separately when the qualifying period spans
+  //     a different 12-month window than the tax year).
+  // Defaults to 365 when not provided.
+  qualifying_days: z.number().int().min(1).max(365).optional(),
+
+  // Retained only to reject the retired aggregate housing API explicitly.
+  foreign_housing_expenses: z.number().nonnegative().optional(),
+  employer_housing_exclusion: z.number().nonnegative().optional(),
+});
+
+export const filingInputSchema = z.object({
+  filing_details: physicalPresenceFilingSchema,
+}).strict();
+
+type Form2555Input = z.infer<typeof inputSchema>;
+
+// ─── Pure helpers ─────────────────────────────────────────────────────────────
+
+function qualifies(input: Form2555Input): boolean {
+  const physicalPresence =
+    (input.days_in_foreign_country ?? 0) >= PHYSICAL_PRESENCE_DAYS;
+  const bfr = input.bona_fide_resident === true;
+  return physicalPresence || bfr;
+}
+
+function totalForeignEarnedIncome(input: Form2555Input): number {
+  return (input.foreign_wages ?? 0) +
+    (input.foreign_self_employment_income ?? 0);
+}
+
+// Prorate FEIE limit per IRC §911(b)(2)(A): limit × (qualifying_days / 365).
+// Bona fide residents default to 365 qualifying days (full year).
+// Prorate FEIE limit and round to nearest dollar (IRS rounding rule).
+function proratedFeieLimit(input: Form2555Input, feieLimit: number): number {
+  const days = input.qualifying_days ?? DAYS_IN_YEAR;
+  return Math.round(feieLimit * (days / DAYS_IN_YEAR));
+}
+
+// FEIE: lesser of foreign earned income or prorated annual limit.
+function earnedIncomeExclusion(income: number, limit: number): number {
+  return Math.min(income, limit);
+}
+
+// ─── Node class ───────────────────────────────────────────────────────────────
+
+class Form2555Node extends TaxNode<typeof inputSchema> {
+  readonly nodeType = "form2555";
+  readonly inputSchema = inputSchema;
+  readonly outputNodes = new OutputNodes([
+    f1040,
+    schedule1,
+    agi_aggregator,
+    schedule_se,
+    income_tax_calculation,
+    eitc,
+    schedule1a,
+  ]);
+
+  compute(ctx: NodeContext, rawInput: Form2555Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+    const input = inputSchema.parse(rawInput);
+    if (
+      input.foreign_housing_expenses !== undefined ||
+      input.employer_housing_exclusion !== undefined
+    ) {
+      throw new Error(
+        "Form 2555 aggregate housing inputs are unsupported; provide structured employee housing filing facts",
+      );
+    }
+
+    if (input.filing_details) {
+      if (
+        input.foreign_wages !== undefined ||
+        input.foreign_self_employment_income !== undefined ||
+        input.days_in_foreign_country !== undefined ||
+        input.bona_fide_resident !== undefined ||
+        input.qualifying_days !== undefined
+      ) {
+        throw new Error(
+          "Form 2555 filing details cannot be mixed with aggregate inputs",
+        );
+      }
+      const lines = calculatePhysicalPresence2555(
+        input.filing_details,
+        ctx.taxYear,
+      );
+      return {
+        outputs: [
+          output(eitc, { form2555_filed: true }),
+          ...(lines.line45 > 0
+            ? [output(schedule1a, {
+              form2555_line45_exclusion: lines.line45,
+              form2555_line50_housing_deduction: lines.line50,
+            })]
+            : []),
+          output(f1040, {
+            line1h_other_earned: lines.line19,
+            form8839_form2555_line45: lines.line45,
+            form8839_form2555_line50: lines.line50,
+          }),
+          output(agi_aggregator, {
+            line1h_other_earned: lines.line19,
+            line8d_foreign_earned_income_exclusion: lines.line45,
+          }),
+          output(schedule1, {
+            line8d_foreign_earned_income_exclusion: lines.line45,
+          }),
+          output(income_tax_calculation, {
+            foreign_earned_income_exclusion: lines.line45,
+            ...(input.filing_details
+                .amt_line2b_disallowed_deductions_and_exclusions !== undefined
+              ? {
+                foreign_exclusion_disallowed_deductions: input.filing_details
+                  .amt_line2b_disallowed_deductions_and_exclusions,
+              }
+              : {}),
+          }),
+        ],
+      };
+    }
+
+    const income = totalForeignEarnedIncome(input);
+    if (income === 0) {
+      return { outputs: [] };
+    }
+
+    if (!qualifies(input)) {
+      return { outputs: [] };
+    }
+
+    const outputs: NodeOutput[] = [];
+    outputs.push(output(eitc, { form2555_filed: true }));
+
+    // FEIE — prorated by qualifying days per IRC §911(b)(2)(A)
+    const feieLimit = proratedFeieLimit(input, cfg.feieLimit);
+    const exclusion = earnedIncomeExclusion(income, feieLimit);
+    if (exclusion > 0) {
+      outputs.push(output(f1040, {
+        form8839_form2555_line45: exclusion,
+      }));
+      outputs.push(
+        output(schedule1, {
+          line8d_foreign_earned_income_exclusion: exclusion,
+        }),
+      );
+      outputs.push(
+        output(agi_aggregator, {
+          line8d_foreign_earned_income_exclusion: exclusion,
+        }),
+      );
+    }
+
+    // SE tax preservation — IRC §1401 applies to foreign SE income regardless of FEIE.
+    // Excluded foreign SE income must still trigger Schedule SE (row 17 fix).
+    const seIncome = input.foreign_self_employment_income ?? 0;
+    if (seIncome > 0) {
+      outputs.push(output(schedule_se, { net_profit_schedule_c: seIncome }));
+    }
+
+    // §911(f) stacking rule — excluded income is taxed at the "bottom" of the brackets,
+    // pushing non-excluded income into higher brackets.
+    // Emit total exclusion to income_tax_calculation so it can apply the floor.
+    // IRC §911(f); Form 2555 Instructions "Tax on Income Not Excluded".
+    const totalExclusion = exclusion;
+    if (totalExclusion > 0) {
+      outputs.push(output(income_tax_calculation, {
+        foreign_earned_income_exclusion: totalExclusion,
+      }));
+    }
+
+    return { outputs };
+  }
+}
+
+// ─── Singleton export ─────────────────────────────────────────────────────────
+
+export const form2555 = new Form2555Node();

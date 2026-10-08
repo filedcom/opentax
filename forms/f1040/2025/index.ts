@@ -1,22 +1,24 @@
+import { assertPassiveSCorpLossCalculationInputs } from "./domains/income/business/passive-s-corp-loss-calculation.ts";
 import type { FormDefinition } from "../../../core/types/form-definition.ts";
 import type { ExecuteResult } from "../../../core/runtime/executor.ts";
 import type { FilerIdentity } from "../mef/header.ts";
-import { publicInputSchema as form8990PublicInputSchema } from "../nodes/intermediate/forms/form8990/index.ts";
-import { runBoundedForm8990TwoPass } from "../nodes/intermediate/forms/form8990/run-two-pass.ts";
-import { projectForm8990ForExport } from "./form8990_projection.ts";
+import { publicInputSchema as form8990PublicInputSchema } from "../nodes/intermediate/forms/deductions/business/form8990/index.ts";
+import { runBoundedForm8990TwoPass } from "../nodes/intermediate/forms/deductions/business/form8990/run-two-pass.ts";
+import { projectForm8990ForExport } from "./domains/deductions/business/form8990/form8990_projection.ts";
 import type { MefFormsPending } from "./mef/types.ts";
 import { F1040_2025_CONFIG } from "./config.ts";
 import { inputNodes } from "./inputs.ts";
 import { registry } from "./registry.ts";
 import { buildMefBundle, buildMefXml } from "./mef/builder.ts";
-import { buildPending } from "./mef/pending.ts";
+import { buildPending } from "./mef/execution/pending.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
-import { assertF1040FinalHeader } from "./filer-source-reconciliation.ts";
-import { assertNoRepeatedBrokerSaleSources } from "./broker-sale-source-reconciliation.ts";
-import { applyForm8621QefRefigure } from "./form8621_1294_refigure.ts";
-import { executePreQefSourceReturn } from "./staged_source_return.ts";
+import { assertF1040FinalHeader } from "./domains/general/return-assembly/filer-source-reconciliation.ts";
+import { assertNoRepeatedBrokerSaleSources } from "./domains/income/investments/broker-sale-source-reconciliation.ts";
+import { applyForm8621QefRefigure } from "./domains/income/foreign/form8621/form8621_1294_refigure.ts";
+import { executePreQefSourceReturn } from "./return-processing/staged_source_return.ts";
 
 function executeReturn(inputs: Record<string, unknown>): ExecuteResult {
+  assertPassiveSCorpLossCalculationInputs(inputs);
   const elected = Array.isArray(inputs.f8621) &&
     inputs.f8621.some((item) =>
       item !== null && typeof item === "object" &&

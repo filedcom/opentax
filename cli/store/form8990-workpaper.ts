@@ -4,7 +4,7 @@ import { f1040_2025 } from "../../forms/f1040/2025/index.ts";
 import {
   form8990WorkpaperSchema,
   reconcileForm8990Projection,
-} from "../../forms/f1040/2025/form8990_projection.ts";
+} from "../../forms/f1040/2025/domains/deductions/business/form8990/form8990_projection.ts";
 import {
   buildEngineInputs,
   loadForm8990CalculatedWorkpaper,

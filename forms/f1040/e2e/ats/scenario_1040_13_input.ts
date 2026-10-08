@@ -1,5 +1,5 @@
 import { FilingStatus } from "../../nodes/types.ts";
-import { FuelType } from "../../nodes/inputs/f8911/index.ts";
+import { FuelType } from "../../nodes/inputs/credits/business/f8911/index.ts";
 import { SCENARIO_1040_13_FACTS } from "./ty2025_cases.ts";
 
 /**

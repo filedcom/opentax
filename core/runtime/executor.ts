@@ -19,6 +19,9 @@ export type ExecuteResult = {
   readonly pending: Readonly<Record<string, Record<string, unknown>>>;
   readonly diagnostics: readonly ExecutorDiagnosticEntry[];
   readonly carryforwards: Readonly<Record<string, number>>;
+  readonly replayInputs?: Readonly<
+    Record<string, Readonly<Record<string, unknown>>>
+  >;
 };
 
 export type DocumentBoundExecuteResult = ExecuteResult & {
@@ -122,6 +125,7 @@ export function execute(
 
   const diagnostics: ExecutorDiagnosticEntry[] = [];
   const carryforwards: Record<string, number> = {};
+  const replayInputs: Record<string, Record<string, unknown>> = {};
 
   for (const step of plan) {
     const node = registry[step.nodeType];
@@ -148,6 +152,9 @@ export function execute(
 
     try {
       const result = node.compute(ctx, parsed.data);
+      if (result.replayInput !== undefined) {
+        replayInputs[step.id] = structuredClone(result.replayInput);
+      }
       for (const output of result.outputs) {
         mergePending(
           pending,
@@ -191,5 +198,10 @@ export function execute(
     }
   }
 
-  return { pending, diagnostics, carryforwards };
+  return {
+    pending,
+    diagnostics,
+    carryforwards,
+    ...(Object.keys(replayInputs).length > 0 ? { replayInputs } : {}),
+  };
 }
