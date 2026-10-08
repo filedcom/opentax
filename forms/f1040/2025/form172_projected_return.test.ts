@@ -730,3 +730,56 @@ Deno.test("Form172 AMT composition owns both bindings all source bytes and publi
   assertEquals(r.independent_amt_review.tentativeAmtiBeforeAtnold, 50000);
   assertEquals(r.currentAmtTentativeGraphReconciled, true);
 });
+
+Deno.test("Form172 post-NOL senior phaseout reruns before the retained finalizer", async () => {
+  const f = await seniorFixture(1500);
+  f.inputs.w2 = [{ ...passiveK1Inputs().w2[0], box1_wages: 150000 }];
+  const review = JSON.parse(new TextDecoder().decode(f.documents[2].bytes));
+  review.annual_review.agi = 150000;
+  review.annual_review.reported_taxable_income = 130750;
+  const bytes = new TextEncoder().encode(JSON.stringify(review));
+  f.documents[2].bytes = bytes;
+  f.binding.current_review.sha256 = await sha(bytes);
+  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents);
+  assertEquals(
+    r.current_form1040_before_nol.schedule1a_line37_senior_deduction,
+    1500,
+  );
+  assertEquals(r.deduction, 44000);
+  assertEquals(r.projected_form1040.line11_agi, 106000);
+  assertEquals(r.projected_form1040.schedule1a_line37_senior_deduction, 4140);
+  assertEquals(r.projected_form1040.line15_taxable_income, 84110);
+  assertEquals(r.projected_pending.form6251?.amti, 150000);
+  assertEquals(r.projected_return_replay_input.line11_agi, 106000);
+  assertEquals(r.projectedFinalizerReconciled, true);
+  assertEquals(r.currentAgiDependentRefiguresVerified, false);
+  assertEquals(r.filingReady, false);
+});
+Deno.test("Form172 full graph refigures source student-loan interest before finalized AGI", async () => {
+  const f = await fixture();
+  f.inputs.w2 = [{ ...passiveK1Inputs().w2[0], box1_wages: 95000 }];
+  f.inputs.f1098e = [{
+    box1_student_loan_interest: 2500,
+    lender_name: "Synthetic Lender",
+    lender_tin: "123456789",
+    borrower_tin: "111223333",
+    source_document_reference: "synthetic student loan statement",
+  }];
+  f.currentReview.annual_review.agi = 94167;
+  f.currentReview.annual_review.reported_taxable_income = 78417;
+  const bytes = new TextEncoder().encode(JSON.stringify(f.currentReview));
+  f.documents[2].bytes = bytes;
+  f.binding.current_review.sha256 = await sha(bytes);
+  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents);
+  assertEquals(
+    r.public_pending_before_nol.schedule1?.line21_student_loan_interest,
+    833,
+  );
+  assertEquals(r.deduction, 44000);
+  assertEquals(r.projected_schedule1.line21_student_loan_interest, 2500);
+  assertEquals(r.projected_form1040.line11_agi, 48500);
+  assertEquals(r.projected_form1040.line15_taxable_income, 32750);
+  assertEquals(r.projected_return_replay_input.line11_agi, 48500);
+  assertEquals(r.projectedFinalizerReconciled, true);
+  assertEquals(r.filingReady, false);
+});

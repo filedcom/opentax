@@ -8,6 +8,7 @@ import { executePreQefSourceReturn } from "./staged_source_return.ts";
 import { agi_aggregator } from "../nodes/intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../nodes/outputs/schedule1/index.ts";
 import { form6251 } from "../nodes/intermediate/forms/form6251/index.ts";
+import { f1040 } from "../nodes/outputs/f1040/index.ts";
 import { normalizeAllPending } from "./pending.ts";
 import { stageForm172ReviewedReturnCalculation } from "./form172_reviewed_return.ts";
 
@@ -97,7 +98,25 @@ export async function stageForm172ProjectedReturn(
     (pending.form6251?.line2e_regular_nol !== deduction ||
       Number(pending.form6251?.nol_adjustment ?? 0) !== 0)
   ) {
-    throw new Error("NOL projection needs the regular AMT addback before ATNOLD");
+    throw new Error(
+      "NOL projection needs the regular AMT addback before ATNOLD",
+    );
+  }
+  const finalizer = execution.replayInputs?.f1040;
+  if (!finalizer) {
+    throw new Error("NOL projection needs the actual retained finalizer");
+  }
+  const replayInput = f1040.inputSchema.parse(finalizer);
+  const replay = f1040.compute(
+    { taxYear: 2025, formType: "f1040" },
+    replayInput,
+  )
+    .outputs.find((o) => o.nodeType === "f1040")?.fields;
+  if (!replay) throw new Error("NOL projected finalizer replay is missing");
+  for (const key of Object.keys(replay).filter((k) => /^line\d/.test(k))) {
+    if (JSON.stringify(replay[key]) !== JSON.stringify(pending.f1040[key])) {
+      throw new Error(`NOL projected finalizer differs from calculated ${key}`);
+    }
   }
   // Keep both exports guarded even for an exhausted zero-valued loss history.
   pending.nol_carryforward = {
@@ -112,6 +131,8 @@ export async function stageForm172ProjectedReturn(
     projected_form1040: pending.f1040,
     projected_schedule1: pending.schedule1,
     projected_execution: execution,
+    projected_return_replay_input: replayInput,
+    projectedFinalizerReconciled: true as const,
     baseGraphNolProjectionReconciled: true as const,
     amtRegularNolAddbackReconciled: true as const,
     currentAgiDependentRefiguresVerified: false as const,
