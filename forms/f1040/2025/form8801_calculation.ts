@@ -1,5 +1,9 @@
 import { z } from "zod";
 import {
+  calculateForm8801Mtcnol,
+  form8801MtcnolSchema,
+} from "./form8801_mtcnol.ts";
+import {
   calculateForm8801Mtftce,
   form8801MtftceSchema,
 } from "./form8801_mtftce.ts";
@@ -136,7 +140,17 @@ export const form8801CalculationSchema = z.object({
       amount: signed,
     }).strict(),
   ),
-  minimum_tax_credit_nol_workpaper: workpaper,
+  minimum_tax_credit_nol_workpaper: workpaper.extend({
+    method: z.literal("reviewed_vintage_history").optional(),
+    vintage_history: form8801MtcnolSchema.optional(),
+  }).strict().superRefine((v, c) => {
+    if ((v.method !== undefined) !== (v.vintage_history !== undefined)) {
+      c.addIssue({
+        code: "custom",
+        message: "MTCNOL vintage method requires its history workpaper",
+      });
+    }
+  }),
   minimum_tax_foreign_credit_exclusion_workpaper: workpaper.extend({
     method: z.enum(["without_form1116_election", "refigured_exclusion_items"])
       .optional(),
@@ -218,7 +232,14 @@ export function calculateForm8801(input: Form8801CalculationInput) {
   lines[1] = p.line1 + p.line2e;
   lines[2] = p.line2a + p.line2b + p.line2c + p.line2d + p.line2g + p.line2h +
     v.additional_exclusion_items.reduce((sum, row) => sum + row.amount, 0);
-  lines[3] = v.minimum_tax_credit_nol_workpaper.amount;
+  const nol = v.minimum_tax_credit_nol_workpaper;
+  const mtcnolHistory = nol.vintage_history
+    ? calculateForm8801Mtcnol(nol.vintage_history, v)
+    : undefined;
+  if (mtcnolHistory && nol.amount !== mtcnolHistory.form8801_line3) {
+    throw new Error("MTCNOL entered total differs from vintage calculation");
+  }
+  lines[3] = mtcnolHistory?.form8801_line3 ?? nol.amount;
   let amti = positive(lines[1] + lines[2] - lines[3]);
   if (mfs && amti > 875_950) {
     amti += amti >= 1_142_550 ? 66_650 : rate(amti - 875_950, 25);
@@ -355,6 +376,8 @@ export function calculateForm8801(input: Form8801CalculationInput) {
   return {
     lines,
     foreignWorksheet,
+    mtcnolHistory,
+    mtcnolWorkpaperArithmeticReconciled: mtcnolHistory !== undefined,
     mtftceRefiguring,
     mtftceWorkpaperArithmeticReconciled: mtftceRefiguring !== undefined,
     fileRequired,
