@@ -4844,3 +4844,61 @@ rows while the existing payment/date handler remains unchanged; future 44
 is deferred. No line 38 is inserted and filingReady remains false. Full PDF,
 final-return penalty reconciliation, broader methods and trusted source/IRS
 proof remain open. Main 52 rows stay frozen; all 44 future rows stay unworked.
+
+
+### October 8 — Interactive Form 2210 regular review PDF
+
+Compacted learnings before continuing the existing Form 2210 requirement.
+Root `267adee80` adds `stageForm2210RegularPdfDocument`; the public inputs,
+payment facts, prior XML bytes and template are copied before asynchronous
+hash/source verification. It calls the native source chain and derives joint
+names from the snapshotted public execution. Native/PDF line 19 share exact
+rational whole-dollar rounding. Pages 1–2 remain interactive; AI fields/page
+are removed. Yes/D/E are selected, shaded cells stay blank, and line 17/18
+alternatives follow the printed form. No final Form 1040 line 38 is inserted.
+
+Retained canonical [TY2025 form](https://www.irs.gov/pub/irs-prior/f2210--2025.pdf)
+downloaded 03:47:17.571834 UTC, SHA-256
+`6899ce672648b280bf00ab47200f1b0fbf40368cfbf137df507b945b8577159a`.
+Checked canonical widget/field topology and viewed both canonical pages before
+mapping. The PDF operation marker ran successfully once via Deno's node:process
+shim immediately before the first PDF-authoring gate (two retained outputs).
+The v1 typed gate failed **65/2** because blank IRS widgets lack normal
+appearance streams needed by pdf-lib removeField. Retained v1 failed sources,
+preflight/log/status; no pass is claimed. Synthesizing blank appearances before
+AI removal fixed the newly added helper. Existing future date handler unchanged.
+
+Final normal typed seven-module command:
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/form2210_box_e_payment_return.test.ts forms/f1040/2025/form2210_payments.test.ts forms/f1040/2025/form2210_box_e.test.ts forms/f1040/2025/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/f2210/calculation.test.ts forms/f1040/nodes/inputs/f2210/index.test.ts forms/f1040/2025/attachment-coverage.test.ts`.
+Actual session 61326 terminal exit 0: **67 passed / 0 failed / 0 ignored**,
+1s test duration, 03:50:21.488865–03:50:24.096072 UTC.
+Deno 2.9.4/V8 15.0.245.2-rusty/TypeScript 6.0.3; root lock unchanged.
+Two new checks cover reopened interactive fields, joint identity, native/PDF
+penalty, shaded/skipped blanks, changed-template rejection and mutation of
+caller inputs/ledger/prior/template during awaits. Existing guards stay closed.
+
+Private `form2210-regular-pdf-20261008-v2/` retains final preflight, runner,
+log/status, copied constructed-fixture script, two PDFs/XMLs/line records,
+field/widget audit, rendered pages, visual review and root integration.
+Log SHA-256:
+`a819ff43fa3f96f58f94377f10f5b04d00f608cc30da37d32a44c174f606c67e`.
+Review SHA-256:
+`c5d2e8ce2947239e7e7a38346e3ea8f4aa607b0a9ac7c61dd25a010be8e56f44`.
+Each PDF verifies 42 populated values and 55 widgets (including unused blanks),
+field/widget value agreement and relationship, nonempty normal appearances,
+and no AI terminal fields. Four pages rendered with Poppler 26.09.0 at 110 dpi
+and individually viewed. Both joint names/TIN, Part I 10,146 tax/2,000 withholding/
+5,000 annual requirement, Yes/D/E, 1,250 installments, carry/underpayment and
+line 19 $102/$101 are readable and reconcile to the retained source/lines.
+Two corresponding standalone XML documents passed xmllint/libxml 2.9.13.
+The focused schema test repeats the regular case; it is not a third distinct
+XSD document. These previews are not full return XSD/PDF packets and do not
+increase registered/aggregate filing coverage. Interactive fields are preserved.
+
+All 2,637 runtime paths match after commit (one new helper, one updated test,
+2,635 other paths unchanged). The older 12,388/0 full result covers only the
+2,631-path baseline; six later Form 2210 paths have focused evidence, with
+newer phase full pending. Source/payment authenticity, prior accepted filing,
+full penalty/final-return reconciliation, broader methods, BR and ATS remain
+open. FilingReady stays false and neither registry is activated. Future 44
+remains deferred; main 52 and all 44 future rows stay unchanged/unworked.

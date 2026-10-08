@@ -1,5 +1,38 @@
 # TY2025 Form 2210 mandatory filing paths
 
+## October 8 interactive regular-method PDF checkpoint
+
+Root `267adee80` adds `stageForm2210RegularPdfDocument`. It snapshots public
+inputs, ledger facts, prior bytes and canonical template before asynchronous
+checks, then derives both native XML and the review PDF through the existing
+public/source chain. The canonical TY2025 template is byte-bound to its
+retained IRS download. The PDF retains pages 1–2 and interactive fields,
+includes both joint names and primary TIN, selects Yes/D/E, leaves shaded cells
+blank, follows the line 17/18 alternatives and uses the native exact-rational
+whole-dollar line 19. Schedule AI fields/page are removed.
+
+Seven normal typed modules passed **67/0**. Two constructed review documents
+have **two standalone IRS2210 XSD passes and four viewed PDF pages**; these
+are not full return packets. Each PDF's 42 populated values, all 55 widgets,
+canonical field relationships and normal appearances were independently
+checked with pypdf 6.14.2. Both pages of both cases were rendered/viewed at
+110 dpi: readable names, source amounts, checked boxes, carry balances and
+penalties $102/$101, with no observed clipping or stale appearances. A first
+65/2 development run failed on missing blank-widget appearance streams before
+AI removal; it is retained, and the new helper now generates them first.
+
+All 2,637 runtime paths match the tested manifest. Older full 12,388/0 still
+covers only 2,631 baseline paths; newer full phase regression remains pending.
+Neither native nor PDF registry invokes these staging APIs. Public guards,
+no inserted Form 1040 line 38, `filingReady:false`, source/payment authenticity
+and prior-acceptance limitations remain. Future 44's existing balance-date
+handler stays unchanged and the new document contract excludes that branch.
+Full filing/return reconciliation, accepted source proof, wider methods,
+business rules and IRS acceptance remain open. Private proof:
+`form2210-regular-pdf-20261008-v1/` (failed development) and `v2/` (final);
+see the [execution journal](ty2025-readiness-execution-2026-10-07.md).
+
+
 ## October 8 regular-method native document checkpoint
 
 Root `24ebb65a0` adds `stageForm2210RegularNativeDocument`, an unregistered
