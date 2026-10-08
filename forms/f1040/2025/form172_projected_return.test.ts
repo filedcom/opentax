@@ -1,6 +1,6 @@
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { stageForm172ProjectedReturn } from "./form172_projected_return.ts";
-import { passiveK1Inputs } from "./eic_passive_k1.fixture.ts";
+import { passiveK1Inputs, passiveK1Item } from "./eic_passive_k1.fixture.ts";
 import { assertAttachmentCoverage } from "./attachment-coverage.ts";
 import educationSource from "./pdf/review-8863-scholarship-source.json" with {
   type: "json",
@@ -781,5 +781,33 @@ Deno.test("Form172 full graph refigures source student-loan interest before fina
   assertEquals(r.projected_form1040.line15_taxable_income, 32750);
   assertEquals(r.projected_return_replay_input.line11_agi, 48500);
   assertEquals(r.projectedFinalizerReconciled, true);
+  assertEquals(r.filingReady, false);
+});
+
+Deno.test("Form172 ordinary NOL refigures QBI taxable-income limit without reducing current business QBI", async () => {
+  const f = await fixture();
+  f.inputs.w2 = [{ ...passiveK1Inputs().w2[0], box1_wages: 20000 }];
+  const business = passiveK1Item("partnership", "box1", 30000);
+  f.inputs.k1_partnership = [business];
+  f.currentReview.annual_review.qbi_deduction = 6000;
+  f.currentReview.annual_review.reported_taxable_income = 28250;
+  const bytes = new TextEncoder().encode(JSON.stringify(f.currentReview));
+  f.documents[2].bytes = bytes;
+  f.binding.current_review.sha256 = await sha(bytes);
+  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents);
+  assertEquals(r.current_form1040_before_nol.line11_agi, 50000);
+  assertEquals(r.current_form1040_before_nol.line13_qbi_deduction, 6000);
+  assertEquals(r.deduction, 27400);
+  assertEquals(r.currentAnnualCalculation.taxableWithoutNolQbi250, 34250);
+  assertEquals(r.projected_form1040.line11_agi, 22600);
+  assertEquals(r.projected_pending.form8995?.line1_qbi, 30000);
+  assertEquals(r.projected_pending.form8995?.line11, 6850);
+  assertEquals(r.projected_pending.form8995?.line14, 1370);
+  assertEquals(r.projected_form1040.line13_qbi_deduction, 1370);
+  assertEquals(r.projected_form1040.line15_taxable_income, 5480);
+  assertEquals(r.projectedFinalizerReconciled, true);
+  assertEquals(business.box20z_qbi, 30000);
+  assertEquals(business.qualified_business_income_source.statement_qbi, 30000);
+  assertEquals(r.amtNolReconciled, false);
   assertEquals(r.filingReady, false);
 });
