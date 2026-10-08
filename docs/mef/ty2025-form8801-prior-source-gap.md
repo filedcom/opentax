@@ -611,3 +611,25 @@ active; local workpaper arithmetic and byte consistency do not prove source
 authenticity, prior acceptance, accepted carry import, business rules or ATS
 acceptance. No main checkoff or aggregate coverage increase follows. The
 main board and entire 47-item future section remain unchanged.
+
+### October 8 — Form 8801 integrated into root; serial full run started
+
+After the previous full regression's verified exit zero, all thirteen
+Form 8801 commits applied to root without conflicts. Runtime head
+`46cac16e5412ba92caf5707bd7ad128b371d2851` exactly matches the focused-tested
+integration checkout on all **2,658 runtime paths**. The next normal
+`deno task test` started at **05:58:56 UTC**, serially after the earlier run.
+Private `root-form8801-full-regression-20261008-v1/` retains the startup
+commit, runtime manifest, command, Deno/Poppler versions, environment and
+integration review. Its live session is 88611; there is no terminal result
+yet. Keep the runtime unchanged while it runs. The 250/0 focused result
+remains applicable to these exact bytes, but full-regression success is
+unproved until this new run terminates and its digest/manifest are checked.
+
+The staged calculations, retained prior-return comparison, local carry
+record, native projection and interactive PDF are now on root. Public
+Form 8801 filing export remains guarded. Authentic workpapers, accepted
+prior/source records, complete owner/history branches, accepted carry
+import, packet admission, matching business rules and IRS acceptance remain
+open. No existing main TODO is proved complete by this integration; main
+board/future scope and coverage aggregates are unchanged.
