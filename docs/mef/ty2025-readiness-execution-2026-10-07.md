@@ -4997,3 +4997,32 @@ Main board 52 unchecked rows remain byte-identical to the frozen baseline.
 Future item 47 records stale Form 8801 research guidance (line 6e versus actual
 line 6b and preview qualifications); all 47 future tasks remain deferred and
 unworked. No runtime or source research file was changed.
+
+
+### October 8, 04:12 UTC — isolated Form 8801 calculation candidate
+
+Compacted the learning index before implementation. The existing named-form
+task now has isolated candidate `3698690eb559d89acdc0dab942f391a1b445e49f` in
+`/tmp/opentax-form8801-calculation-20261008`, branch
+`codex/form8801-calculation-20261008`. Its reviewed-workpaper calculator covers
+Parts I–III line arithmetic and the foreign-income tax worksheet. Normal
+focused execution closed with exit zero, **49 passed/0 failed/0 ignored**
+(11 new, 26 preview and 12 attachment-guard cases; 191 ms test summary).
+Retained final v2 log SHA:
+`267f2608a9c3fbadf3de1ac9f84d5b12f8276546fc238df11ab4e89847919cfd`.
+Private `form8801-calculation-20261008-v2/` binds source snapshots and startup,
+terminal and review records. v1's earlier 48/0 run remains retained.
+
+The calculator is unregistered and unintegrated; current root public behavior
+is unchanged. Entered MTCNOL/MTFTCE, AMT capital-basis/foreign modifications,
+source authentication, accepted prior records, public execution/ownership,
+full numeric range, native/PDF, ledger/import and IRS rules remain open.
+All four authenticity/return/filing qualification flags are false. See the
+[Form 8801 evidence](ty2025-form8801-prior-source-gap.md).
+
+Actual root full session 22926 remained live when polled. All 2,637 runtime
+paths still match its startup manifest; no terminal full result is claimed.
+No main row was added or checked; 52 remain byte-identical to the frozen
+baseline. All 47 future items, including stale Form 8801 research item 47,
+remain unchanged and unworked. The estimate remains zero accepted ATS tests
+by the original deadline, with reopening pass probability not yet estimable.

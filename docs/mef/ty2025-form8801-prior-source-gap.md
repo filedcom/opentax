@@ -58,3 +58,39 @@ archive binds this review to the previously retained full log/status digests
 and unchanged 2,637 current runtime paths. No new tests, implementation,
 registration, approved exclusion or checkoff is claimed. The stale internal
 research context is recorded separately as future item 47 and remains unworked.
+
+
+## Isolated calculation candidate — October 8, 04:12 UTC
+
+Candidate `3698690eb559d89acdc0dab942f391a1b445e49f` on
+`codex/form8801-calculation-20261008` adds `form8801_calculation.ts` and its
+focused tests in `/tmp/opentax-form8801-calculation-20261008`. It has not been
+integrated into the root checkout while that checkout's full regression runs.
+The existing public node and both export guards are unchanged.
+
+The candidate computes the individual-filer line arithmetic of Parts I–III,
+including signed exclusion items, prior-status exemption/phaseout, the MFS
+adjustment, negative deferral tax, current credit ordering, carryforward,
+preferential tax components and foreign-income stacking. It stops after line
+21 when required and preserves blank skipped lines. Date/year, duplicate-item,
+duplicate-credit, method inconsistency and detached output inputs reject.
+
+These are reviewed calculation facts, not authenticated source records:
+MTCNOL and MTFTCE remain separately resolved entered workpapers, capital basis
+and applicable foreign-exclusion modifications remain reviewed worksheet
+inputs, and the current-return fields are not yet bound to public execution.
+The API explicitly returns `filingReady`, `priorAcceptanceVerified`,
+`workpaperAuthenticityVerified` and `finalizedReturnReconciled` as false.
+Its current whole-dollar input range is bounded at one billion per field;
+this candidate does not resolve the main-board requirement's full scope.
+
+The final normal typed run passed **49/0, zero ignored**: 11 new calculation
+cases, 26 existing preview cases, and 12 shared attachment-guard cases. The
+IRS MFS example, all five prior filing statuses, zero/negative available
+credit, zero current capacity, capital rates, and mixed foreign/capital paths
+are represented. Private `form8801-calculation-20261008-v2/` retains source
+snapshots, startup manifest, log, terminal status and review. The earlier v1
+48/0 checkpoint is preserved; v2 adds consistency validation and a stop/carry
+boundary case. No full-run, source-authentication, native/PDF, accepted ledger
+or IRS acceptance evidence is claimed. The existing source-to-return and
+filing-artifact work remains required before any main checkoff.
