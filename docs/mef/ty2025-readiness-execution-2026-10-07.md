@@ -5026,3 +5026,44 @@ No main row was added or checked; 52 remain byte-identical to the frozen
 baseline. All 47 future items, including stale Form 8801 research item 47,
 remain unchanged and unworked. The estimate remains zero accepted ATS tests
 by the original deadline, with reopening pass probability not yet estimable.
+
+
+### October 8, 04:24 UTC — isolated Form 8801 public-capacity/source join
+
+Compacted the learning before work. Candidate
+`190caa6f89ed7dbf9cf7f1ffa1ed67b798b74232` adds byte-bound canonical review JSON
+and a capacity-only public Form 8801 request on the isolated branch. The
+normal public graph computes current Form 6251 line 9; staged current tax and
+mapped Schedule 3 credits reconcile to public Form 1040 amounts. No calculated
+credit is inserted into that return. Primary identity and async-copy/tamper
+boundaries are covered. See [Form 8801](ty2025-form8801-prior-source-gap.md).
+
+Final four-module typed run **60 passed/0 failed/0 ignored** (660 ms summary),
+actual session 94775 closed with observed exit zero. Startup/terminal/source
+snapshots and review are private in `form8801-reviewed-return-20261008-v6/`.
+Retained log SHA:
+`06692d03d373a394cfa48916923e02fe213619393de4108a9eca9c4af7ce771b`.
+Earlier failed v1–v5 artifacts are preserved; v1 retains source/observation
+rather than a full log. Test expectations use reviewed IRS current-year tax
+worksheet/table amounts. The existing incomplete Form 1116 excess-source
+review rejection remains covered; it is not waived to obtain a positive test.
+
+Review-package digest integrity and current numeric capacity are proved only
+for the tested staging contract. Actual filed-return bytes/acceptance,
+workpaper authenticity, all owner/status combinations, finalized credit totals,
+accepted carry/import and native/PDF/IRS filing evidence remain open. Candidate
+flags preserve those limitations. Root runtime remains unchanged at the live
+full-run manifest's 2,637 paths; both candidate commits stay isolated pending
+integration and broader verification. Main 52 remain frozen, future 47
+unchanged and unworked; no aggregate filing/coverage count is increased.
+
+IRS ATS status rechecked **04:19:46 UTC** at the
+[official status page](https://www.irs.gov/e-file-providers/modernized-e-file-operational-status):
+still unavailable through October 13 at 09:00 Eastern; only TY2026 testing is
+announced afterward. TY2025 availability remains unconfirmed. Private
+`ats-status-20261008T041946Z-v1/observation.json` retains this observation. Board
+estimate remains zero accepted ATS tests/0% obtaining acceptance by the original
+morning deadline; reopening pass probability not yet estimable.
+
+The same actual root full session 22926 was polled again after this checkpoint
+and remained live; no terminal full-run result is claimed.

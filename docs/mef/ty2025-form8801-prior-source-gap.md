@@ -94,3 +94,44 @@ snapshots, startup manifest, log, terminal status and review. The earlier v1
 boundary case. No full-run, source-authentication, native/PDF, accepted ledger
 or IRS acceptance evidence is claimed. The existing source-to-return and
 filing-artifact work remains required before any main checkoff.
+
+
+## Isolated public-capacity join — October 8, 04:24 UTC
+
+Candidate `190caa6f89ed7dbf9cf7f1ffa1ed67b798b74232` extends the same isolated
+branch with `form8801_reviewed_return.ts` and a public
+`f8801.compute_credit_capacity` request. The request enters no preview credit
+facts; it asks the normal execution graph to retain computed current Form
+6251 line 9, including zero-AMT cases. Combining it with entered preview
+facts rejects. Neither candidate commit is integrated into root.
+
+The staging API verifies the exact SHA-bound canonical JSON review package,
+checks its primary taxpayer against public identity, copies bytes/inputs before
+awaiting digest verification, derives tax/credit capacity from public execution,
+and reconciles mapped Schedule 3 credits to Form 1040 line 20. Detached
+aggregate/current-tax inputs, wrong owner/year, duplicate keys/documents,
+missing/changed bytes, invalid UTF-8/BOM and incomplete public-source execution
+reject. Current source changes recompute capacity. Review JSON is a retained
+review record, not an accepted prior-return copy.
+
+Final typed execution passed **60/0, zero ignored**: 11 arithmetic, 11 public
+join, 26 existing preview and 12 shared export-guard cases. Private
+`form8801-reviewed-return-20261008-v6/` retains source snapshots, startup,
+full log, terminal status and review. Log SHA:
+`06692d03d373a394cfa48916923e02fe213619393de4108a9eca9c4af7ce771b`.
+The earlier failed v1 source/observation and v2–v5 full logs/status/source
+snapshots remain retained. Integration was corrected to use a public request
+rather than a rejected direct intermediate input. Current-tax expectations were
+independently checked against the [2025 Form 1040 instructions](https://www.irs.gov/pub/irs-pdf/i1040gi.pdf)
+tax table and computation worksheet, and foreign-credit fixtures now include
+their required source and Schedule B answers. Incomplete excess-foreign-tax
+review remains a negative case.
+
+Only `reviewPackageBytesVerified` and `currentTaxCapacityReconciled` become
+true. `priorReturnBytesVerified`, `priorAcceptanceVerified`,
+`workpaperAuthenticityVerified`, `finalizedReturnReconciled` and `filingReady`
+remain false. The calculated line 25 is not inserted into the public return:
+Form 1040 still contains its pre-credit totals. Actual filed 2024 source and
+acceptance, MTCNOL/MTFTCE and basis workpapers, wider owner/status changes,
+final credit ordering, carryforward/import and native/PDF/IRS filing evidence
+remain required. No complete-form/main-task checkoff follows from this stage.
