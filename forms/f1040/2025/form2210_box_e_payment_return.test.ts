@@ -5,6 +5,8 @@ import {
   assertStringIncludes,
 } from "@std/assert";
 import { stageForm2210RegularNativeDocument } from "./form2210_regular_staged_native.ts";
+import { stageForm2210RegularPdfDocument } from "./form2210_regular_staged_pdf.ts";
+import { PDFCheckBox, PDFDocument, PDFTextField } from "pdf-lib";
 import {
   stageForm2210BoxEActualWithholdingReturn,
   stageForm2210BoxEPaymentReturn,
@@ -210,6 +212,109 @@ async function actualFixture(paid_on = "2025-01-02") {
   }];
   return f;
 }
+
+const regularPdfTemplate = new URL(
+  "../../../.state/research/board-execution-2026-10-07/form2210-regular-pdf-20261008-v1/canonical.pdf",
+  import.meta.url,
+).pathname;
+let regularPdfTemplateAvailable = false;
+try {
+  Deno.statSync(regularPdfTemplate);
+  regularPdfTemplateAvailable = true;
+} catch {
+  // Canonical reviewed IRS bytes are retained privately, like the XSD bundle.
+}
+
+Deno.test({
+  name:
+    "2210 staged interactive PDF binds joint identity and native penalty, preserving blank shaded and skipped cells",
+  ignore: !regularPdfTemplateAvailable,
+}, async () => {
+  const f = await actualFixture();
+  const result = await stageForm2210RegularPdfDocument(
+    f.inputs,
+    f.ledger,
+    f.documents,
+    await Deno.readFile(regularPdfTemplate),
+  );
+  const pdf = await PDFDocument.load(result.pdf_bytes);
+  assertEquals(pdf.getPageCount(), 2);
+  const form = pdf.getForm();
+  for (const [name, expected] of Object.entries(result.pdf_field_values)) {
+    if (typeof expected === "boolean") {
+      assertEquals(form.getCheckBox(name).isChecked(), expected);
+    } else assertEquals(form.getTextField(name).getText(), expected);
+  }
+  const p1 = "topmostSubform[0].Page1[0]";
+  const p2 = "topmostSubform[0].Page2[0]";
+  assertEquals(
+    form.getTextField(`${p1}.f1_1[0]`).getText(),
+    "Alex Example and Casey Example",
+  );
+  assertEquals(form.getTextField(`${p1}.f1_2[0]`).getText(), "111223333");
+  assertEquals(form.getCheckBox(`${p1}.c1_1[0]`).isChecked(), false);
+  assertEquals(form.getCheckBox(`${p1}.c1_1[1]`).isChecked(), true);
+  for (const field of form.getFields()) {
+    assert(!field.getName().includes(".Page3[0]."));
+    if (!(field.getName() in result.pdf_field_values)) {
+      if (field instanceof PDFTextField) {
+        assertEquals(field.getText() ?? "", "");
+      } else if (field instanceof PDFCheckBox) {
+        assertEquals(field.isChecked(), false);
+      }
+    }
+  }
+  assertEquals(
+    form.getTextField(`${p2}.SectionATable[0].Line15[0].f2_21[0]`).getText(),
+    "2000",
+  );
+  assertEquals(
+    form.getTextField(`${p2}.SectionATable[0].Line17[0].f2_29[0]`).getText() ??
+      "",
+    "",
+  );
+  assertEquals(
+    form.getTextField(`${p2}.SectionATable[0].Line18[0].f2_33[0]`).getText(),
+    "750",
+  );
+  assertEquals(form.getTextField(`${p2}.f2_37[0]`).getText(), "102");
+  assertStringIncludes(
+    result.native_xml,
+    "<TotalPenaltyAmt>102</TotalPenaltyAmt>",
+  );
+  assertEquals(result.current_form1040.line38_underpayment_penalty, undefined);
+  assertEquals(result.filingReady, false);
+});
+
+Deno.test({
+  name:
+    "2210 staged PDF rejects changed template and snapshots facts and bytes before awaits",
+  ignore: !regularPdfTemplateAvailable,
+}, async () => {
+  const f = await actualFixture();
+  const template = await Deno.readFile(regularPdfTemplate);
+  const corrupted = new Uint8Array(template);
+  corrupted[0] ^= 1;
+  await assertRejects(() =>
+    stageForm2210RegularPdfDocument(f.inputs, f.ledger, f.documents, corrupted)
+  );
+  const promise = stageForm2210RegularPdfDocument(
+    f.inputs,
+    f.ledger,
+    f.documents,
+    template,
+  );
+  f.inputs.general.spouse_first_name = "Changed";
+  f.ledger.payments[0].amount_cents = 1;
+  f.documents[0].bytes[0] ^= 1;
+  template[0] ^= 1;
+  const result = await promise;
+  assertEquals(
+    result.pdf_field_values["topmostSubform[0].Page1[0].f1_1[0]"],
+    "Alex Example and Casey Example",
+  );
+  assertEquals(result.line19_penalty_dollars, 102);
+});
 
 const regularNativeSchema = new URL(
   "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Common/IRS2210/IRS2210.xsd",
