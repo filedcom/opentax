@@ -4469,3 +4469,38 @@ estimated pass probability after reopening. No acknowledgment or credential
 evidence was added. The observation is retained privately in
 `ats-status-20261008T000409Z-v1/observation.json`. Main scope and all 42 future
 rows remain unchanged and unworked; the root full regression remains live.
+
+### October 8 — root full regression terminal and staged full launch
+
+Session 41991 terminated with exit 0. The normal typed `deno task test` run on
+`690add3766b2eb377ef1cab720fa0024a4feb0f4` reports **12,377 passed, 0 failed,
+0 ignored**, with test duration 121m4s. It started October 7 at 22:57:43.812002
+UTC and ended October 8 at 00:59:12.086422 UTC. Command:
+`PATH=/tmp/opentax-poppler-env/bin:$PATH DENO_V8_FLAGS=--max-old-space-size=8192 deno task test`.
+Versions: Deno 2.9.4, V8 15.0.245.2-rusty, TypeScript 6.0.3, Poppler 26.09.0
+and libxml 2.9.13. All 2,624 held runtime paths stayed unchanged.
+
+Log: `full-test-after-k1-current-loss-integration.log`, SHA-256
+`cd57a29242e08e34f99f3ae505c06dfa41152fc89f13e41ae39b518edeaa3637`.
+Terminal status SHA-256:
+`4830a87932913dfcf060cb3f2ee4dfa4f008ed12837d28a402a68cc9befe2a6b`.
+Independent audit: `full-root-k1-current-loss-terminal-20261008-v1/audit.json`.
+It rechecks the terminal log summary and digest, confirms no ignored outcomes,
+and checks both held runtime manifests. This supersedes the earlier root full
+result for this runtime; it does not cover the newer staged filing/ledger diff.
+
+After observing terminal success and verifying staged HEAD, clean tracked
+files and all 2,631 held paths, launched the prepared staged full runner at
+00:59:35.378522 UTC on `8c49c01f401a8a64d3d4d8d21de719f5efd57f6c`.
+It uses the same normal full command. Session **76705**, Deno PID **53623**;
+private files are `combined-current-loss-ledger-integration-20261008-v1/full.log`
+and `full.status.json`. Its runtime manifest digest is
+`32b1ffc65477edb9599a9b358c125e1f98aee24a32a51531fd88446530a270a3`.
+This run is pending, not a pass. Root integration waits for its own terminal
+proof. Full regressions remain serial on the 16 GiB machine.
+
+Only the compacted validation learning changed. The 52 main unchecked rows
+remain frozen, and all 42 future rows remain unworked. No new packet, viewed
+page, filing approval or IRS acknowledgment is counted. Broader source,
+business-rule, accepted-ledger/import, scope and ATS requirements remain open,
+so neither the full-batch parent TODO nor filing readiness is checked off.
