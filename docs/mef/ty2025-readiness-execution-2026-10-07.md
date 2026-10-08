@@ -5620,3 +5620,44 @@ Log SHA: `a3cb94f400f3863da3b5b3d8317373166bcf6d3cecd0dea703357d6a0d740fec`.
 Implementation commit `7d887e6b1` remains isolated while root's existing
 full regression runs unchanged on 2,658 paths. No main checkoff or aggregate
 coverage increase follows; all 47 future items remain unchanged and unworked.
+
+### October 8 — byte-bound Form 172 current loss-year native projection
+
+The isolated candidate now verifies a digest-bound canonical review package
+and recalculates the loss-year inventory before projecting TY2025 `IRS172`
+Part I. Bindings must match the workpaper reference, 2025 calendar year and
+primary/spouse identities. The 24-line map matches the actual IRS sequence.
+Paper-skipped capital cells remain absent except line 21: its IRS element is
+required, so the mathematically zero value is emitted on that skip branch.
+Positive origin loss retains signed negative Form 172 line 24; a non-loss
+emits no attachment. Historical-year packages cannot be mislabeled as a
+current TY2025 loss-year document. This current-origin projection is not a
+historical carry attachment or Part II implementation. Those original
+requirements remain open, along with source authenticity, accepted prior
+returns, current deduction/AMT joins, filled PDF and packet admission.
+
+Normal typed five-module validation passed **40/0, zero ignored**, including
+nine native cases and the prior 31 source/guard cases. Five distinct native
+documents passed the actual IRS XSD: ordinary, single and MFS capital loss,
+section 1202/positive line 21, and joint inventory with a prior-NOL addback.
+Modified bytes, duplicate/unmatched document sets, detached amounts, wrong
+identities, noncanonical JSON and caller mutation during verification reject
+or retain the owned pre-await snapshot. No filing guard was opened.
+
+Private `form172-loss-year-native-20261008-v1/` retains the 2,662-path
+candidate manifest, source snapshots, command, exact XSD and tool version,
+exit-zero log/status/review, and **five source/binding/XML/XSD-log bundles**
+in `output/`. Each bundle replayed exactly from disk. All 746 schema paths
+match the generation manifest. Log SHA:
+`c15b46ec75b38939746c6b8bf9e18060e4266f2b5d478969f9a64995fbad2d6c`.
+Native implementation commit `62d799ce6` remains isolated after the loss-year
+commit `7d887e6b1`; root's full test continues on unchanged 2,658 paths.
+No main checkoff or coverage-aggregate increase follows; the entire 47-item
+future section remains unchanged and unworked.
+
+The [IRS operational status](https://www.irs.gov/e-file-providers/modernized-e-file-operational-status)
+was checked again at 06:10 UTC: ATS remains unavailable through October 13
+09:00 Eastern, and its reopening announcement names TY2026. TY2025 testing
+availability is still unconfirmed. With zero retained accepted scenarios,
+the original October 8 morning acceptance estimate remains zero; later
+acceptance probability remains unproved. Local XSD success does not change it.
