@@ -100,6 +100,16 @@ export async function stageForm172ReviewedReturnCalculation(
     ],
     ["QBI", annual.qbi_deduction, amount(before.line13_qbi_deduction)],
     [
+      "Schedule1-A",
+      annual.schedule1a_deduction?.amount ?? 0,
+      amount(before.line13b_additional_deductions),
+    ],
+    [
+      "Schedule1-A senior amount",
+      annual.schedule1a_deduction?.senior_amount ?? 0,
+      amount(before.schedule1a_line37_senior_deduction),
+    ],
+    [
       "taxable income",
       annual.reported_taxable_income,
       amount(before.line15_taxable_income),

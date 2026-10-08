@@ -7,6 +7,11 @@ const amount = z.number().int().nonnegative().max(1_000_000_000);
 const signed = z.number().int().min(-1_000_000_000).max(1_000_000_000);
 const year = z.number().int().min(2000).max(2025);
 const reviewedAmount = z.object({ reference: ref, amount }).strict();
+const schedule1aAmount = reviewedAmount.extend({ senior_amount: amount })
+  .strict().refine(
+    (v) => v.senior_amount <= v.amount,
+    "Senior deduction exceeds total Schedule1-A",
+  );
 
 /** Annual return is refigured before the current or later NOL vintage. Items
  * affected by modified AGI remain reviewed workpapers, not source eligibility
@@ -30,6 +35,8 @@ export const form172CarryAbsorptionSchema = z.object({
   standard_or_itemized_deduction: amount,
   qbi_deduction: amount,
   section250_deduction: amount,
+  schedule1a_deduction: schedule1aAmount.optional(),
+  refigured_schedule1a_deduction: schedule1aAmount.optional(),
   section199_deduction: reviewedAmount.optional(),
   personal_exemptions: amount,
   reported_taxable_income: amount,
@@ -95,6 +102,19 @@ export const form172CarryAbsorptionSchema = z.object({
     c.addIssue({
       code: "custom",
       message: "Historical absorption needs year-consistent section199 review",
+    });
+  }
+  if (
+    (v.schedule1a_deduction !== undefined) !==
+      (v.refigured_schedule1a_deduction !== undefined) ||
+    (v.tax_year < 2025 &&
+      ((v.schedule1a_deduction?.amount ?? 0) !== 0 ||
+        (v.refigured_schedule1a_deduction?.amount ?? 0) !== 0))
+  ) {
+    c.addIssue({
+      code: "custom",
+      message:
+        "Schedule1-A absorption needs paired year-consistent original and refigured workpapers",
     });
   }
   const joint = v.filing_status === "married_filing_jointly";
@@ -171,6 +191,7 @@ export function calculateForm172CarryAbsorption(
     -v.standard_or_itemized_deduction,
     -v.qbi_deduction,
     -v.section250_deduction,
+    -(v.schedule1a_deduction?.amount ?? 0),
     -v.personal_exemptions,
   ]);
   if (v.reported_taxable_income !== positive(trueTaxable)) {
@@ -233,6 +254,7 @@ export function calculateForm172CarryAbsorption(
       v.agi,
       earlierDeduction,
       -v.standard_or_itemized_deduction,
+      -(v.schedule1a_deduction?.amount ?? 0),
       -v.personal_exemptions,
     ]),
   );
@@ -270,7 +292,14 @@ export function calculateForm172CarryAbsorption(
   const refiguredDeduction = v.refigured_itemized_deduction?.amount ??
     v.standard_or_itemized_deduction;
   const modifiedTaxableIncome = positive(
-    sum([modifiedAgi, -refiguredDeduction]),
+    sum([
+      modifiedAgi,
+      -refiguredDeduction,
+      -(v.refigured_schedule1a_deduction?.amount ?? 0),
+      // Section172(b)(2)(A)/(d)(3) disallows section151, including the
+      // enhanced senior deduction enacted in PL119-21 section70103.
+      v.refigured_schedule1a_deduction?.senior_amount ?? 0,
+    ]),
   );
   // Section172(b)(2)(C) reduces the modified base by 20% of the statutory
   // excess. It does not simply multiply modified taxable income by 80%.
@@ -297,6 +326,10 @@ export function calculateForm172CarryAbsorption(
     agiAdjustment,
     modifiedAgi,
     refiguredDeduction,
+    schedule1aDeduction: v.schedule1a_deduction?.amount ?? 0,
+    refiguredSchedule1aDeduction: v.refigured_schedule1a_deduction?.amount ?? 0,
+    seniorDeductionAbsorptionAddback:
+      v.refigured_schedule1a_deduction?.senior_amount ?? 0,
     modifiedTaxableIncome,
     absorptionReduction,
     absorptionCapacity,

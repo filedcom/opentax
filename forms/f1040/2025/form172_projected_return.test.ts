@@ -297,3 +297,63 @@ Deno.test("Form172 projection rejects detached NOL shortcuts", async () => {
     )
   );
 });
+async function seniorFixture(amount = 6000, seniorAmount = amount) {
+  const f = await fixture();
+  f.inputs.general = {
+    ...passiveK1Inputs().general,
+    taxpayer_dob: "1950-06-15",
+  };
+  const review = {
+    ...f.currentReview,
+    annual_review: {
+      ...f.currentReview.annual_review,
+      standard_or_itemized_deduction: 17750,
+      reported_taxable_income: 50000 - 17750 - amount,
+      schedule1a_deduction: {
+        reference: "current senior Schedule1-A",
+        amount,
+        senior_amount: seniorAmount,
+      },
+      refigured_schedule1a_deduction: {
+        reference: "modified senior Schedule1-A",
+        amount,
+        senior_amount: seniorAmount,
+      },
+    },
+  };
+  const bytes = new TextEncoder().encode(JSON.stringify(review));
+  f.documents[2] = { reference: review.reference, bytes };
+  f.binding.current_review.sha256 = await sha(bytes);
+  return f;
+}
+Deno.test("Form172 retained senior Schedule1-A joins public deduction and lowers current NOL capacity", async () => {
+  const f = await seniorFixture();
+  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents);
+  assertEquals(r.current_form1040_before_nol.line12c_deduction_total, 17750);
+  assertEquals(
+    r.current_form1040_before_nol.line13b_additional_deductions,
+    6000,
+  );
+  assertEquals(r.current_form1040_before_nol.line15_taxable_income, 26250);
+  assertEquals(r.deduction, 21000);
+  assertEquals(r.currentAnnualCalculation.taxableWithoutNolQbi250, 26250);
+  assertEquals(r.carryTo2026, 17000);
+  assertEquals(r.currentAnnualCalculation.absorbed, 27000);
+  assertEquals(
+    r.currentAnnualCalculation.seniorDeductionAbsorptionAddback,
+    6000,
+  );
+  assertEquals(r.projected_form1040.line11_agi, 29000);
+  assertEquals(r.projected_form1040.line13b_additional_deductions, 6000);
+  assertEquals(r.projected_form1040.line15_taxable_income, 5250);
+  assertEquals(r.filingReady, false);
+});
+Deno.test("Form172 current source rejects an internally consistent wrong senior deduction", async () => {
+  for (const f of [await seniorFixture(5000), await seniorFixture(6000, 0)]) {
+    await assertRejects(
+      () => stageForm172ProjectedReturn(f.inputs, f.binding, f.documents),
+      Error,
+      "Schedule1-A",
+    );
+  }
+});

@@ -310,3 +310,91 @@ Deno.test("Form 172 absorption rejects inconsistent source years, owner, capacit
   changed.noncapital_deductions[0].amount++;
   assertThrows(() => calculateForm172CarryAbsorption(changed, v));
 });
+Deno.test("Form172 current absorption retains Schedule1-A deduction in statutory capacity", () => {
+  const v = {
+    ...annual(),
+    tax_year: 2025,
+    reported_taxable_income: 84000,
+    schedule1a_deduction: {
+      reference: "2025 Schedule1-A",
+      amount: 6000,
+      senior_amount: 0,
+    },
+    refigured_schedule1a_deduction: {
+      reference: "modified Schedule1-A",
+      amount: 6000,
+      senior_amount: 0,
+    },
+  };
+  const r = calculateForm172CarryAbsorption(origin(), v);
+  assertEquals(r.trueTaxableIncome, 84000);
+  assertEquals(r.taxableWithoutNolQbi250, 94000);
+  assertEquals(r.currentDeduction, 75200);
+  assertEquals(r.modifiedTaxableIncome, 94000);
+  assertEquals(r.absorbed, 75200);
+  assertEquals(r.remainingLoss, 24800);
+  const modified = calculateForm172CarryAbsorption(origin(), {
+    ...v,
+    refigured_schedule1a_deduction: {
+      reference: "modified Schedule1-A",
+      amount: 7000,
+      senior_amount: 0,
+    },
+  });
+  assertEquals(modified.currentDeduction, 75200);
+  assertEquals(modified.modifiedTaxableIncome, 93000);
+  assertEquals(modified.absorbed, 74200);
+  assertEquals(modified.filingReady, false);
+});
+Deno.test("Form172 Schedule1-A workpapers reject historical positive and incomplete refigures", () => {
+  for (
+    const patch of [
+      {
+        tax_year: 2024,
+        schedule1a_deduction: {
+          reference: "wrong year",
+          amount: 6000,
+          senior_amount: 0,
+        },
+        refigured_schedule1a_deduction: {
+          reference: "wrong year refigure",
+          amount: 6000,
+          senior_amount: 0,
+        },
+      },
+      {
+        tax_year: 2025,
+        schedule1a_deduction: {
+          reference: "missing refigure",
+          amount: 6000,
+          senior_amount: 0,
+        },
+      },
+      {
+        tax_year: 2025,
+        refigured_schedule1a_deduction: {
+          reference: "missing original",
+          amount: 6000,
+          senior_amount: 0,
+        },
+      },
+      {
+        tax_year: 2025,
+        schedule1a_deduction: {
+          reference: "bad amount",
+          amount: -1,
+          senior_amount: 0,
+        },
+        refigured_schedule1a_deduction: {
+          reference: "refigure",
+          amount: 0,
+          senior_amount: 0,
+        },
+      },
+    ]
+  ) {
+    assertThrows(() =>
+      calculateForm172CarryAbsorption(origin(), { ...annual(), ...patch })
+    );
+  }
+});
