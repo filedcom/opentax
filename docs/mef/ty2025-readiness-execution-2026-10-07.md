@@ -4942,3 +4942,38 @@ deferred. Even a full local pass will not establish source authentication,
 matching BR, whole-family coverage, IRS submission or ATS acceptance. The
 board's broad phase/full requirement remains conditional on its remaining
 scope decisions and source work.
+
+
+### October 8 — Form 2210 inventory documentation reconciled
+
+The previous goal turn made progress by retaining source limitations and
+starting the newer full regression; actual session 22926 remains live.
+Compacted learnings before the existing coverage-reconciliation task. Actual
+imports of ALL_MEF_FORMS and ALL_PDF_FORMS returned 152/148 native entries/keys,
+118/115 PDF entries/keys, and zero registered f2210 entries in either.
+Independent ReturnData1040 IRS ref parsing found 211 roots; exact-token
+occurrence in non-test immediate MeF form files found 128 with/83 without.
+This is source inventory, not emitted-document or legal-applicability proof.
+Private `form2210-inventory-reconciliation-20261008-v1/audit.json` retains
+root/source occurrences, schema hash, actual count observation and manifest
+check.
+
+Updated only the existing Form 2210 rows/checkpoint in the root census,
+applicability crosswalk, conditional-root notes, form audit and coverage queue.
+They now distinguish unregistered 67/0 native/PDF staging and its two standalone
+XSD documents/four viewed pages from complete filing support. Prior bytes are
+numerically bound; acceptance/authenticity, final payment/penalty joins and
+wider methods remain open. Future 44–46 remain deferred. No registry or
+runtime changed, no scope exclusion/approval is added, and no main checkoff
+is earned by this partial reconciliation. The full run's 2,637 runtime paths
+still exactly match its immutable startup manifest; no full result is claimed.
+Main 52 remain frozen and future 46 unchanged/unworked.
+
+Refreshed the [IRS operational status](https://www.irs.gov/e-file-providers/modernized-e-file-operational-status)
+at 04:01:19 UTC: ATS remains unavailable through October 13 at 09:00 Eastern;
+the announced 09:01 testing is TY2026, not confirmation of TY2025 availability.
+Page last updated September 28. Private
+`ats-status-20261008T040119Z-v1/observation.json` retains that observation.
+Board estimate remains zero accepted tests/0% acceptance by the original
+October 8 morning deadline; after reopening not yet estimable. No accepted
+IRS acknowledgment or verified transmission credential is added.
