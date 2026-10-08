@@ -5225,3 +5225,43 @@ registered return/PDF/native packet integration, all credit/owner/numeric
 combinations, matching business rules and ATS acceptance remain open.
 Both public attachment guards remain active; main checkboxes and future work
 remain unchanged.
+
+
+## Isolated MTFTCE election amount binding — October 8, 05:06 UTC
+
+Candidate `ad6201a53ba384b63ca62accf9a93a302d2c5fbe` extends the existing
+Form 8801 prior-copy verifier with a reviewed MTFTCE method. For the election
+to claim 2024 foreign tax credit without Form 1116, the
+[2025 Form 8801 line 12 instructions](https://www.irs.gov/instructions/i8801)
+use prior Schedule 3 line 1. The canonical review JSON must explicitly name
+`without_form1116_election`; its entered amount must equal
+`ForeignTaxCreditAmt` in the bound 2024 `IRS1040Schedule3` document.
+The exact field name is confirmed in the retained official TY2024 stylesheet.
+The verifier rejects missing/wrong Schedule 3 document bindings, changed or
+negative amounts, duplicate Schedule 3 documents and any retained IRS1116
+family document conflicting with that election. Absent Schedule 3 can match
+only a zero amount. Ordinary/general-refiguring review facts do not acquire
+this proof merely because Schedule 3 foreign credit is present.
+
+The normal typed seven-module run passed **88/0, zero ignored**, including
+four new election cases. The constructed elected prior credit of 125
+reconciles to Form 8801 line 12, changes exclusion tax to 793 and current
+minimum-tax credit to 5,307; finalized local Form 1040 line 22 is 12,560.
+Missing/detached/election-conflict branches reject. Private
+`form8801-mtftce-election-20261008-v1/` binds sources, the TY2024 Schedule 3
+stylesheet, 2,650-path startup manifest, log/status and review. Log SHA:
+`e2901452079e24f2e5e3cb93a0e5f88bbaebe00dfa4f410bcdd9e36e16300975`.
+Root's live full regression still matches all 2,637 startup runtime paths.
+All seven Form 8801 candidate commits remain isolated.
+
+`minimumTaxForeignCreditAmountReconciled` is true only for this explicitly
+reviewed and matching amount contract. It does not authenticate election
+eligibility, payer/source records, filing or acceptance. General MTFTCE
+refiguring across foreign categories, exclusion adjustments, preferential
+rates, carryovers and limitations remains required by the existing task;
+MTCNOL, additional exclusions, vehicle credit, capital/foreign workpaper
+provenance, joint/status-change history, accepted carry/import, public
+packet integration, all owner/credit/numeric cases, matching business rules
+and ATS acceptance also remain open. Both public attachment guards remain
+active. No main checkoff or aggregate coverage increase follows, and all
+future tasks remain untouched.
