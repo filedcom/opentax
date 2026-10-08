@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  assertPrerequisiteGuardPatch,
+  prerequisiteGuardSchema,
+} from "./migration-guards.ts";
 import { dirname, fromFileUrl, join, normalize, toFileUrl } from "@std/path";
 import {
   assertHealthyModuleGraph,
@@ -49,6 +53,7 @@ export const migrationProofSchema = z.object({
     reason: z.string().min(1),
   })).default([]),
   originalManifest: z.record(z.string().regex(/^[a-f0-9]{64}$/)).optional(),
+  prerequisiteGuards: z.array(prerequisiteGuardSchema).default([]),
 });
 export type MigrationProof = z.infer<typeof migrationProofSchema>;
 
@@ -91,6 +96,38 @@ export async function assertMigrationActualSources(
       mapping.get(path) ?? path
     ),
   );
+  assertUnique(
+    proof.prerequisiteGuards.map((guard) => guard.file),
+    "prerequisite guard files",
+  );
+  const guards = new Map(
+    proof.prerequisiteGuards.map((guard) => [guard.file, guard]),
+  );
+  for (const guard of proof.prerequisiteGuards) {
+    assertPrerequisiteGuardPatch(guard);
+    if (
+      await sourceHash(guard.beforeSource) !== guard.beforeSha256 ||
+      await sourceHash(guard.afterSource) !== guard.afterSha256
+    ) {
+      throw new Error(`Prerequisite guard source hash differs: ${guard.file}`);
+    }
+    const record = proof.files.find((file) => file.new === guard.file);
+    if (record && guard.beforeSource !== record.afterSource) {
+      throw new Error(
+        `Guard baseline differs from migrated source: ${guard.file}`,
+      );
+    }
+    if (!record && !originalPaths.has(guard.file)) {
+      throw new Error(
+        `Guard absent from original source baseline: ${guard.file}`,
+      );
+    }
+    if (actualSources.get(guard.file) !== guard.afterSource) {
+      throw new Error(
+        `Actual prerequisite guard source differs: ${guard.file}`,
+      );
+    }
+  }
   for (const change of proof.intentionalChanges) {
     if (!reviewedToolingPaths.has(change.path)) {
       throw new Error(
@@ -126,7 +163,12 @@ export async function assertMigrationActualSources(
         );
       }
       if (!record) {
-        const expected = intentional.get(path)?.sha256 ?? originalHash;
+        const guard = guards.get(path);
+        if (guard && guard.beforeSha256 !== originalHash) {
+          throw new Error(`Untouched guard baseline differs: ${path}`);
+        }
+        const expected = guard?.afterSha256 ?? intentional.get(path)?.sha256 ??
+          originalHash;
         if (await sourceHash(actual) !== expected) {
           throw new Error(`Untouched original source changed: ${path}`);
         }
@@ -140,7 +182,7 @@ export async function assertMigrationActualSources(
     }
     const change = intentional.get(file.new);
     if (!change) {
-      if (actual !== file.afterSource) {
+      if (actual !== (guards.get(file.new)?.afterSource ?? file.afterSource)) {
         throw new Error(
           `Actual migrated source differs from proof: ${file.new}`,
         );
@@ -474,6 +516,8 @@ if (import.meta.main) {
     JSON.stringify({
       ...assertMigrationProof(proof, graph),
       intentionallyChangedFiles,
+      prerequisiteGuardFiles:
+        migrationProofSchema.parse(proof).prerequisiteGuards.length,
       originalSourceHashesVerified:
         Object.keys(migrationProofSchema.parse(proof).originalManifest ?? {})
           .length,

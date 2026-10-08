@@ -104,7 +104,7 @@ Deno.test("two taxable grant copies retain payer rows through 1040, native state
   try {
     Deno.statSync(xsd);
   } catch {
-    return;
+    throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
   const validator = new Deno.Command("xmllint", {
     args: ["--noout", "--schema", xsd, "-"],

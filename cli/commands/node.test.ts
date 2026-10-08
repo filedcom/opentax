@@ -132,7 +132,7 @@ Deno.test("nodeInspectCommand: output node count matches node.outputNodeTypes", 
 Deno.test("nodeInspectCommand: leaf output node shows (none) for outputs", () => {
   // f1040 is an output node with no downstream outputs
   const f1040 = registry["f1040"];
-  if (f1040.outputNodeTypes.length > 0) return; // skip if it gains outputs
+  assertEquals(f1040.outputNodeTypes.length, 0);
   const out = captureLog(() =>
     nodeInspectCommand({ nodeType: "f1040", json: false })
   );

@@ -385,7 +385,7 @@ Deno.test("Form 3800 passive carryover fragments follow TY2025v5.4 IRS3800 XSD",
   try {
     await Deno.stat(xsd);
   } catch {
-    return;
+    throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
   const fragments = buildForm3800PassiveRowXml([
     own,

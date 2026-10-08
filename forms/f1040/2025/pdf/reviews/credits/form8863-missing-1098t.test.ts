@@ -241,6 +241,7 @@ for (const credit of ["aoc", "llc"] as const) {
         credit === "aoc" ? 4_000 : 7_500,
       );
       const prepared = await f1040_2025.prepareReturn(pending, base.filer);
+      assertEquals(xsdAvailable, true, "Missing verification prerequisite: complete local XSD");
       if (xsdAvailable) await validateXml(prepared.bundle.xml);
       const pdf = await prepared.renderPdf();
       const doc = await PDFDocument.load(pdf);
@@ -683,6 +684,7 @@ for (
       prepared.bundle.xml,
       `<GrantsOrScholarshipsAmt>${amount}</GrantsOrScholarshipsAmt>`,
     );
+    assertEquals(xsdAvailable, true, "Missing verification prerequisite: complete local XSD");
     if (xsdAvailable) await validateXml(prepared.bundle.xml);
     const pdf = await prepared.renderPdf();
     const doc = await PDFDocument.load(pdf);

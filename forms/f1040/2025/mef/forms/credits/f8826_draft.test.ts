@@ -364,7 +364,7 @@ Deno.test("Form 8826 draft: local TY2025 MeF source schema", async () => {
   try {
     await Deno.stat(xsd);
   } catch {
-    return;
+    throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
   for (
     const facts of [

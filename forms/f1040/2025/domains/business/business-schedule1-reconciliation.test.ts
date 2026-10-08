@@ -27,7 +27,7 @@ async function assertValidXsd(xml: string): Promise<void> {
   try {
     await Deno.stat(xsdPath);
   } catch {
-    return;
+    throw new Error(`Missing verification prerequisite: ${xsdPath}`);
   }
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {

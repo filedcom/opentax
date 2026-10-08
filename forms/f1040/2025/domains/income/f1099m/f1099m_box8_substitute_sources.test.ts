@@ -210,7 +210,7 @@ Deno.test("two 1099-MISC box 8 copies retain payer rows through 1040, native sta
   try {
     Deno.statSync(xsd);
   } catch {
-    return;
+    throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
   const validator = new Deno.Command("xmllint", {
     args: ["--noout", "--schema", xsd, "-"],
@@ -278,7 +278,7 @@ Deno.test("box 8, RTAA, and taxable grant rows combine once in a full return", a
   try {
     Deno.statSync(xsd);
   } catch {
-    return;
+    throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
   const validator = new Deno.Command("xmllint", {
     args: ["--noout", "--schema", xsd, "-"],

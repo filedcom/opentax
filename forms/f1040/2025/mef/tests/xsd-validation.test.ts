@@ -10488,5 +10488,6 @@ Deno.test("XSD: returnVersion matches 2025v5.4", async () => {
     extractFilerIdentity(general),
   );
   assertStringIncludes(xml, 'returnVersion="2025v5.4"');
+  assertEquals(xsdAvailable, true, "Missing verification prerequisite: complete local XSD");
   if (xsdAvailable) await validateXsd(xml, "TY2025 returnVersion");
 });

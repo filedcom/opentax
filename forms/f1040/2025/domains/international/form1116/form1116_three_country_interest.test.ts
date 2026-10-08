@@ -237,7 +237,9 @@ Deno.test("three-country interest retains both Form 1116 and Schedule B pages in
   try {
     await Deno.stat(XSD_PATH);
   } catch (error) {
-    if (error instanceof Deno.errors.NotFound) return;
+    if (error instanceof Deno.errors.NotFound) {
+      throw new Error(`Missing verification prerequisite: ${XSD_PATH}`);
+    }
     throw error;
   }
   const xmlPath = await Deno.makeTempFile({ suffix: ".xml" });

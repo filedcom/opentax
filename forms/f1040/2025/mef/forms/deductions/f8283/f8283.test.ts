@@ -136,7 +136,7 @@ async function assertVehicleBundleXsd(xml: string): Promise<void> {
   try {
     await Deno.stat(xsdPath);
   } catch {
-    return;
+    throw new Error(`Missing verification prerequisite: ${xsdPath}`);
   }
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {
@@ -809,7 +809,7 @@ Deno.test("Form 8283 Section B return validates against TY2025 IRS XSD", async (
   try {
     await Deno.stat(xsdPath);
   } catch {
-    return;
+    throw new Error(`Missing verification prerequisite: ${xsdPath}`);
   }
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {

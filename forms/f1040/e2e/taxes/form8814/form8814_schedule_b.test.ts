@@ -88,7 +88,7 @@ Deno.test("Form 8814 and a below-threshold 1099-DIV trigger Schedule B once", as
   try {
     await Deno.stat(xsdPath);
   } catch {
-    return;
+    throw new Error(`Missing verification prerequisite: ${xsdPath}`);
   }
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {

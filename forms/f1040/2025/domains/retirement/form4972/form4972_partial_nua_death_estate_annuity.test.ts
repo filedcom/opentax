@@ -369,6 +369,7 @@ Deno.test("beneficiary annuity preserves box 8 cents and rounds filed lines", as
   );
   assertEquals(pending.f1040?.line16_income_tax, 2_745);
   const prepared = await f1040_2025.prepareReturn(pending, filer);
+  assertEquals(xsdAvailable, true, "Missing verification prerequisite: complete local XSD");
   if (xsdAvailable) await validateXml(prepared.bundle.xml);
   const pdf = await prepared.renderPdf();
   assertEquals((await PDFDocument.load(pdf)).getPageCount(), 3);

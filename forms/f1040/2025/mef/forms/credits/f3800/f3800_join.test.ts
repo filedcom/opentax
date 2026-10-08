@@ -247,7 +247,7 @@ Deno.test("Form 3800 joins passive and nonpassive carryovers on one Part IV line
   try {
     await Deno.stat(xsd);
   } catch {
-    return;
+    throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {

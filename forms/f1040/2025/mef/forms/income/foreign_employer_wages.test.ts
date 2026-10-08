@@ -108,6 +108,7 @@ Deno.test("two FEC employer sources keep owner and document identity through nat
     if (!(error instanceof Deno.errors.NotFound)) throw error;
     hasXsd = false;
   }
+  assertEquals(hasXsd, true, "Missing verification prerequisite: complete local XSD");
   if (hasXsd) {
     const path = await Deno.makeTempFile({ suffix: ".xml" });
     try {

@@ -112,7 +112,7 @@ Deno.test("two issued RTAA copies reach Schedule 1 line 8z, Form 1040, native st
   try {
     Deno.statSync(xsd);
   } catch {
-    return;
+    throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
   const validator = new Deno.Command("xmllint", {
     args: ["--noout", "--schema", xsd, "-"],

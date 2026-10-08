@@ -106,7 +106,7 @@ Deno.test("structured Form 2555 exclusion joins Schedule 1-A senior MAGI and For
       await Deno.remove(path);
     }
   } catch (error) {
-    if (!(error instanceof Deno.errors.NotFound)) throw error;
+    throw error;
   }
   assertThrows(
     () =>

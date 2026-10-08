@@ -66,6 +66,7 @@ Deno.test("Schedule 1 line 8z Form 8814 amount replays retained child election a
   } catch {
     xsdAvailable = false;
   }
+  assertEquals(xsdAvailable, true, "Missing verification prerequisite: complete local XSD");
   if (xsdAvailable) {
     const validator = new Deno.Command("xmllint", {
       args: ["--noout", "--schema", xsd, "-"],

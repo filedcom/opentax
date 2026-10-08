@@ -1545,7 +1545,7 @@ Deno.test("Schedule 1-A emits all four deductions in schema order with one total
       await Deno.remove(xmlFile);
     }
   } catch (error) {
-    if (!(error instanceof Deno.errors.NotFound)) throw error;
+    throw error;
   }
   assertThrows(
     () =>

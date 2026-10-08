@@ -235,7 +235,7 @@ Deno.test("joint taxpayer and spouse 1099-G unemployment copies reconcile to Sch
       await Deno.remove(xmlPath);
     }
   } catch (error) {
-    if (!(error instanceof Deno.errors.NotFound)) throw error;
+    throw error;
   }
   const filled = await buildPdfBytes(
     bundle.pending,

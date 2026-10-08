@@ -555,7 +555,7 @@ Deno.test("schedule_b: source interest detail follows the IRS 2025 schema", asyn
   try {
     await Deno.stat(xsd);
   } catch {
-    return;
+    throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
   const xml = scheduleB.build({
     payer_name: ["Bank A", "Bond issuer"],

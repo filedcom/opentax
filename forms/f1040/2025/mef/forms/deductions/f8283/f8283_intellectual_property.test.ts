@@ -208,6 +208,7 @@ Deno.test("Form 8283 reports a purchased patent above $5,000 in Section A", asyn
     "<OtherThanByCashOrCheckAmt>12000</OtherThanByCashOrCheckAmt>",
   );
   assertStringIncludes(bundle.xml, ">12000</FairMarketValueAmt>");
+  await Deno.stat(xsdPath);
   if (await Deno.stat(xsdPath).then(() => true).catch(() => false)) {
     const validation = await new Deno.Command("xmllint", {
       args: ["--noout", "--schema", xsdPath, "-"],

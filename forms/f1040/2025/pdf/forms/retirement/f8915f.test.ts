@@ -76,7 +76,7 @@ Deno.test("bounded Form 8915-F projects the 2025 source into official form field
   try {
     await Deno.stat(templatePath);
   } catch {
-    return;
+    throw new Error(`Missing verification prerequisite: ${templatePath}`);
   }
   const document = await PDFDocument.load(await Deno.readFile(templatePath));
   const form = document.getForm();

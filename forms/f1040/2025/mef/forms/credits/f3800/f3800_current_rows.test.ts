@@ -302,7 +302,7 @@ Deno.test("Form 3800 mixed current-year row follows TY2025v5.4 IRS3800 XSD", asy
   try {
     await Deno.stat(xsd);
   } catch {
-    return;
+    throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
   const [row] = combineForm3800CurrentCreditAmounts(
     [{

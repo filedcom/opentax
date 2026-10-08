@@ -49,7 +49,14 @@ export const benchmarkReturnSchema = z.object({
     line35a_refund: financialLine.optional(),
     line37_amount_owed: financialLine.optional(),
   }).passthrough().refine(
-    (lines) => Object.keys(lines).length > 0,
+    (lines) => [
+      lines.line11_agi,
+      lines.line15_taxable_income,
+      lines.line24_total_tax,
+      lines.line33_total_payments,
+      lines.line35a_refund,
+      lines.line37_amount_owed,
+    ].some((value) => value !== undefined),
     "Computed f1040 lines are required",
   ),
   warnings: z.array(z.string()),

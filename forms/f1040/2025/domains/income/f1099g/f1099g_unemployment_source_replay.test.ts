@@ -153,7 +153,7 @@ Deno.test("two 1099-G unemployment copies and repayments reach native and PDF re
       await Deno.remove(xmlPath);
     }
   } catch (error) {
-    if (!(error instanceof Deno.errors.NotFound)) throw error;
+    throw error;
   }
   const pdf = await buildPdfBytes(pending, filer);
   const pdfPath = await Deno.makeTempFile({ suffix: ".pdf" });

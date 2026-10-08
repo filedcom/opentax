@@ -227,7 +227,7 @@ Deno.test("1099-NEC farm receipts replay retained payer copies in native and PDF
       await Deno.remove(xmlPath);
     }
   } catch (error) {
-    if (!(error instanceof Deno.errors.NotFound)) throw error;
+    throw error;
   }
   const pdf = await buildPdfBytes(pending, filer);
   assertEquals(pdf.subarray(0, 5), new TextEncoder().encode("%PDF-"));

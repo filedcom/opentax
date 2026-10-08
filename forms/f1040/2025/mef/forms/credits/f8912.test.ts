@@ -275,7 +275,7 @@ Deno.test("Form 8912 MeF draft validates its IRS source schema", async () => {
   try {
     await Deno.stat(xsd);
   } catch {
-    return;
+    throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
   const xml = buildForm8912Document({ f8912s: [source] }, finalized).replace(
     "<IRS8912>",

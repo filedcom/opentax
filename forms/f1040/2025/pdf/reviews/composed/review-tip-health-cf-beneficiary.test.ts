@@ -224,6 +224,7 @@ for (const row of metadata) {
           "Held replay requires the complete local XSD",
         );
       }
+      assertEquals(available, true, "Missing verification prerequisite: complete local XSD");
       if (available) {
         const checked = await new Deno.Command("xmllint", {
           args: ["--noout", "--schema", xsd, xmlPath],

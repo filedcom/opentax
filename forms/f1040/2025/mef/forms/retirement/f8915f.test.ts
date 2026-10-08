@@ -104,7 +104,7 @@ Deno.test("bounded Form 8915-F native document matches source and TY2025 XSD", a
   try {
     await Deno.stat(xsd);
   } catch {
-    return;
+    throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {

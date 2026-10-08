@@ -106,11 +106,33 @@ Deno.test("benchmark rejects successful but missing malformed or string-valued C
       { ...valid, summary: { ...valid.summary, line24_total_tax: "0" } },
       { ...valid, forms: [] },
       { ...valid, lines: {} },
+      { ...valid, lines: { unrelated_only: 123 } },
+      { ...valid, lines: { line24_total_tax: undefined, unrelated_only: 123 } },
       { ...valid, lines: { line24_total_tax: "0" } },
       { ...valid, lines: { line24_total_tax: [] } },
     ]
   ) assertThrows(() => benchmarkReturnSchema.parse(invalid));
   for (const invalid of [{}, { returnId: "" }, { returnId: 3 }]) {
     assertThrows(() => createdReturnSchema.parse(invalid));
+  }
+});
+
+Deno.test("benchmark accepts computed zero-tax output from the actual CLI return command", async () => {
+  const { createReturnCommand, getReturnCommand } = await import(
+    "../cli/commands/return.ts"
+  );
+  const directory = await Deno.makeTempDir();
+  try {
+    const created = await createReturnCommand({ year: 2025, baseDir: directory });
+    const result = await getReturnCommand({
+      returnId: created.returnId,
+      baseDir: directory,
+    });
+    const parsed = benchmarkReturnSchema.parse(result);
+    assertEquals(parsed.summary.line24_total_tax, 0);
+    assertEquals(parsed.summary.line35a_refund, undefined);
+    assertEquals(parsed.summary.line37_amount_owed, undefined);
+  } finally {
+    await Deno.remove(directory, { recursive: true });
   }
 });

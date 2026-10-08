@@ -35,7 +35,9 @@ async function assertLocalReturnXsd(xml: string): Promise<void> {
   try {
     await Deno.stat(schema);
   } catch (error) {
-    if (error instanceof Deno.errors.NotFound) return;
+    if (error instanceof Deno.errors.NotFound) {
+      throw new Error(`Missing verification prerequisite: ${schema}`);
+    }
     throw error;
   }
   const path = await Deno.makeTempFile({ suffix: ".xml" });

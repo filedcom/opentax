@@ -111,7 +111,7 @@ Deno.test("two 1099-MISC line 8z descriptions and RTAA survive native statement"
   try {
     Deno.statSync(xsd);
   } catch {
-    return;
+    throw new Error(`Missing verification prerequisite: ${xsd}`);
   }
   const validator = new Deno.Command("xmllint", {
     args: ["--noout", "--schema", xsd, "-"],

@@ -7,6 +7,7 @@ import {
   assertMigrationResourceResolution,
   type MigrationProof,
 } from "./migration.ts";
+import { assertPrerequisiteGuardPatch } from "./migration-guards.ts";
 
 function proof(): MigrationProof {
   return {
@@ -40,6 +41,7 @@ function proof(): MigrationProof {
     },
     additions: [],
     intentionalChanges: [],
+    prerequisiteGuards: [],
   };
 }
 
@@ -364,6 +366,170 @@ Deno.test("migration rejects a numeric edit in an untouched original tax module"
   } catch (error) {
     rejected = error instanceof Error &&
       error.message.includes("Untouched original source changed");
+  }
+  assertEquals(rejected, true);
+});
+
+Deno.test("reviewed prerequisite patch rejects hidden assertion or numeric changes", () => {
+  const beforeSource = "\n".repeat(29) + "    return;\nconst expected = 100;\n";
+  const afterSource = beforeSource.replace(
+    "    return;\n",
+    "    throw new Error(`Missing verification prerequisite: ${xsdPath}`);\n",
+  );
+  const guard = {
+    file:
+      "forms/f1040/2025/domains/business/business-schedule1-reconciliation.test.ts",
+    beforeSha256: "0".repeat(64),
+    afterSha256: "0".repeat(64),
+    beforeSource,
+    afterSource,
+    edits: [{
+      line: 30,
+      old: "    return;\n",
+      new:
+        "    throw new Error(`Missing verification prerequisite: ${xsdPath}`);\n",
+    }],
+  };
+  assertEquals(assertPrerequisiteGuardPatch(guard), afterSource);
+  assertThrows(
+    () =>
+      assertPrerequisiteGuardPatch({
+        ...guard,
+        afterSource: afterSource.replace("100", "200"),
+      }),
+    Error,
+    "outside prerequisite guards",
+  );
+  assertThrows(
+    () =>
+      assertPrerequisiteGuardPatch({
+        ...guard,
+        file: "forms/f1040/2025/index.ts",
+      }),
+    Error,
+    "Unreviewed prerequisite guard file",
+  );
+  assertThrows(
+    () =>
+      assertPrerequisiteGuardPatch({
+        ...guard,
+        edits: [{ ...guard.edits[0], line: 31 }],
+      }),
+    Error,
+    "Unreviewed prerequisite line",
+  );
+});
+
+Deno.test("reviewed conditional and leaf guards preserve assertions exactly", () => {
+  const cases = [
+    {
+      file: "forms/f1040/2025/mef/forms/income/foreign_employer_wages.test.ts",
+      line: 111,
+      old: "  if (hasXsd) {\n",
+      new:
+        '  assertEquals(hasXsd, true, "Missing verification prerequisite: complete local XSD");\n  if (hasXsd) {\n',
+    },
+    {
+      file: "cli/commands/node.test.ts",
+      line: 135,
+      old:
+        "  if (f1040.outputNodeTypes.length > 0) return; // skip if it gains outputs\n",
+      new: "  assertEquals(f1040.outputNodeTypes.length, 0);\n",
+    },
+    {
+      file: "cli/commands/export-cli.test.ts",
+      line: 171,
+      old: "      if (!(error instanceof Deno.errors.NotFound)) throw error;\n",
+      new: "      throw error;\n",
+    },
+  ];
+  for (const item of cases) {
+    const beforeSource = "\n".repeat(item.line - 1) + item.old +
+      "const expected = 100;\n";
+    const afterSource = beforeSource.replace(item.old, item.new);
+    const guard = {
+      file: item.file,
+      beforeSha256: "0".repeat(64),
+      afterSha256: "0".repeat(64),
+      beforeSource,
+      afterSource,
+      edits: [{ line: item.line, old: item.old, new: item.new }],
+    };
+    assertEquals(assertPrerequisiteGuardPatch(guard), afterSource);
+    assertThrows(
+      () =>
+        assertPrerequisiteGuardPatch({
+          ...guard,
+          afterSource: afterSource.replace("100", "200"),
+        }),
+      Error,
+      "outside prerequisite guards",
+    );
+    assertThrows(
+      () =>
+        assertPrerequisiteGuardPatch({
+          ...guard,
+          edits: [{
+            ...guard.edits[0],
+            new: item.new.replace("true", "false").replace(", 0)", ", 1)")
+              .replace("throw error;", "return;"),
+          }],
+        }),
+      Error,
+      "Unreviewed prerequisite line",
+    );
+  }
+});
+
+Deno.test("guard approval remains bound to original unchanged test source", async () => {
+  const hash = async (source: string) =>
+    Array.from(
+      new Uint8Array(
+        await crypto.subtle.digest("SHA-256", new TextEncoder().encode(source)),
+      ),
+      (byte) => byte.toString(16).padStart(2, "0"),
+    ).join("");
+  const file =
+    "forms/f1040/2025/domains/business/business-schedule1-reconciliation.test.ts";
+  const beforeSource = "\n".repeat(29) + "    return;\nconst expected = 100;\n";
+  const old = "    return;\n";
+  const replacement =
+    "    throw new Error(`Missing verification prerequisite: ${xsdPath}`);\n";
+  const afterSource = beforeSource.replace(old, replacement);
+  const value = proof();
+  value.originalManifest = {
+    [file]: await hash(beforeSource),
+    [value.files[0].old]: await hash(value.files[0].beforeSource),
+  };
+  value.prerequisiteGuards = [{
+    file,
+    beforeSource,
+    afterSource,
+    beforeSha256: await hash(beforeSource),
+    afterSha256: await hash(afterSource),
+    edits: [{ line: 30, old, new: replacement }],
+  }];
+  const sources = new Map([[file, afterSource], [
+    value.files[0].new,
+    value.files[0].afterSource,
+  ]]);
+  assertEquals(await assertMigrationActualSources(value, sources), 0);
+  const forgedBefore = beforeSource.replace("100", "200"),
+    forgedAfter = afterSource.replace("100", "200");
+  value.prerequisiteGuards[0] = {
+    ...value.prerequisiteGuards[0],
+    beforeSource: forgedBefore,
+    afterSource: forgedAfter,
+    beforeSha256: await hash(forgedBefore),
+    afterSha256: await hash(forgedAfter),
+  };
+  sources.set(file, forgedAfter);
+  let rejected = false;
+  try {
+    await assertMigrationActualSources(value, sources);
+  } catch (error) {
+    rejected = error instanceof Error &&
+      error.message.includes("Untouched guard baseline differs");
   }
   assertEquals(rejected, true);
 });
