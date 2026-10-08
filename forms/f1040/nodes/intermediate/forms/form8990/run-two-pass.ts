@@ -68,6 +68,12 @@ export interface BoundedForm8990TwoPassResult {
  */
 export function runBoundedForm8990TwoPass(args: {
   readonly returnInputs: Readonly<Record<string, unknown>>;
+  /** Internal source-composed executor; preserve the exact per-pass context. */
+  readonly executeGraph?: (
+    inputs: Record<string, unknown>,
+    context: Parameters<typeof execute>[3],
+  ) => ExecuteResult;
+  readonly retainedNolDeduction?: number;
   readonly receipts: readonly BusinessReceipt[];
   readonly interestExpenseRecords: readonly BusinessInterestExpenseRecord[];
   readonly priorFiledScheduleCs: readonly PriorFiledScheduleCReceipt[];
@@ -101,9 +107,13 @@ export function runBoundedForm8990TwoPass(args: {
     );
   }
   const plan = buildExecutionPlan(registry);
-  const provisionalReturn = execute(
-    plan,
-    registry,
+  const executeGraph = args.executeGraph ??
+    ((inputs, context) => execute(plan, registry, inputs, context));
+  const retainedNolDeduction = args.retainedNolDeduction ?? 0;
+  if (retainedNolDeduction !== 0 && !args.executeGraph) {
+    throw new Error("Form8990 NOL composition needs an internal executor");
+  }
+  const provisionalReturn = executeGraph(
     { ...args.returnInputs },
     provisionalScheduleCContext(provisionalSource),
   );
@@ -112,6 +122,7 @@ export function runBoundedForm8990TwoPass(args: {
     returnInputs: args.returnInputs,
     result: provisionalReturn,
     receipts: args.receipts,
+    retainedNolDeduction,
   });
   const limit = calculateBoundedForm8990Limit(provisionalAti);
   const finalizedSource = applyCalculatedInterestAllowance(
@@ -122,9 +133,7 @@ export function runBoundedForm8990TwoPass(args: {
     ...args.returnInputs,
     schedule_c: finalizedSource.source.schedule_cs,
   };
-  const finalizedReturn = execute(
-    plan,
-    registry,
+  const finalizedReturn = executeGraph(
     finalizedInputs,
     finalizedScheduleCContext(finalizedSource),
   );
@@ -133,6 +142,7 @@ export function runBoundedForm8990TwoPass(args: {
     provisionalAti,
     limit,
     result: finalizedReturn,
+    retainedNolDeduction,
   });
   const calculatedForm8990Node = projectCalculatedBoundedForm8990Node({
     limit,

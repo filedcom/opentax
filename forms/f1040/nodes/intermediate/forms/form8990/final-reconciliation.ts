@@ -45,6 +45,17 @@ function numberAt(result: ExecuteResult, node: string, key: string): number {
   return value;
 }
 
+function retainedNolAt(result: ExecuteResult, node: string): number {
+  const value = result.pending[node]?.line8a_nol_deduction;
+  if (value === undefined) return 0;
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) {
+    throw new Error(
+      "Form8990 retained NOL must be a scalar nonnegative integer",
+    );
+  }
+  return value;
+}
+
 function equal(actual: number, expected: number, label: string): void {
   if (Math.abs(actual - expected) > 0.000001) {
     throw new Error(`Form 8990 finalized ${label} is not source-reconciled`);
@@ -61,8 +72,24 @@ export function reconcileBoundedForm8990FinalReturn(args: {
   readonly provisionalAti: BoundedProvisionalATI;
   readonly limit: CalculatedBoundedForm8990Limit;
   readonly result: ExecuteResult;
+  readonly retainedNolDeduction?: number;
 }): FinalizedBoundedForm8990Return {
   const { source, provisionalAti, limit, result } = args;
+  const nol = args.retainedNolDeduction ?? 0;
+  if (
+    !Number.isSafeInteger(nol) || nol < 0 || nol > 1_000_000_000 ||
+    nol !== provisionalAti.line9NolDeduction || nol !== limit.line9
+  ) throw new Error("Form8990 finalized NOL differs from provisional source");
+  equal(
+    retainedNolAt(result, "schedule1"),
+    nol,
+    "retained NOL deduction",
+  );
+  equal(
+    retainedNolAt(result, "agi_aggregator"),
+    nol,
+    "AGI retained NOL deduction",
+  );
   if (result.diagnostics.length > 0) {
     throw new Error("Form 8990 finalized return has node diagnostics");
   }
@@ -94,7 +121,7 @@ export function reconcileBoundedForm8990FinalReturn(args: {
   );
   equal(
     numberAt(result, "schedule1", "line10_total_additional_income"),
-    profit,
+    profit - nol,
     "Schedule 1 additional income",
   );
   equal(
@@ -138,7 +165,7 @@ export function reconcileBoundedForm8990FinalReturn(args: {
   );
 
   const qbi = numberAt(result, "form8995", "qbi_deduction");
-  const agi = profit - seDeduction;
+  const agi = profit - seDeduction - nol;
   const standardDeduction = provisionalAti.line7NonbusinessDeduction;
   const taxable = agi - standardDeduction - qbi;
   if (taxable <= 0) {
@@ -148,12 +175,12 @@ export function reconcileBoundedForm8990FinalReturn(args: {
   }
   equal(
     numberAt(result, "f1040", "line8_additional_income"),
-    profit,
+    profit - nol,
     "Form 1040 additional income",
   );
   equal(
     numberAt(result, "f1040", "line9_total_income"),
-    profit,
+    profit - nol,
     "Form 1040 total income",
   );
   equal(

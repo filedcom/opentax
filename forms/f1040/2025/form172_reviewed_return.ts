@@ -1,6 +1,8 @@
 import type { SourceDocumentBytes } from "../../../core/runtime/source-documents.ts";
+import type { ExecuteResult } from "../../../core/runtime/executor.ts";
 import { f1040_2025 } from "./index.ts";
 import { normalizeAllPending } from "./pending.ts";
+import { roundWholeDollars } from "../whole-dollars.ts";
 import { f1040 } from "../nodes/outputs/f1040/index.ts";
 import { stageForm172CurrentDeductionSource } from "./form172_current_deduction_source.ts";
 
@@ -26,6 +28,8 @@ export async function stageForm172ReviewedReturnCalculation(
   rawInputs: Readonly<Record<string, unknown>>,
   rawBinding: unknown,
   rawDocuments: readonly SourceDocumentBytes[],
+  executeStartingReturn: (inputs: Record<string, unknown>) => ExecuteResult =
+    f1040_2025.executeReturn,
 ) {
   const inputs = structuredClone(rawInputs);
   const documents = rawDocuments.map((d) => ({
@@ -57,7 +61,7 @@ export async function stageForm172ReviewedReturnCalculation(
     ),
   );
   const annual = current.annual_review;
-  const execution = f1040_2025.executeReturn(inputs);
+  const execution = executeStartingReturn(inputs);
   if (execution.diagnostics.length > 0) {
     throw new Error("NOL starting return needs successful public execution");
   }
@@ -126,7 +130,9 @@ export async function stageForm172ReviewedReturnCalculation(
     ],
   ];
   for (const [name, reviewed, calculated] of comparisons) {
-    if (reviewed !== calculated) {
+    // The retained workpaper uses filed whole dollars; the finalizer replay
+    // above still compares every raw calculated line exactly.
+    if (reviewed !== roundWholeDollars(calculated)) {
       throw new Error(
         `NOL current ${name} differs from calculated public return`,
       );

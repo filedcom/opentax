@@ -4,6 +4,7 @@ import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { TaxNode } from "../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../core/types/output-nodes.ts";
 import { registry } from "./registry.ts";
+import { executeForm172Form8990Return } from "./form172_form8990_return.ts";
 import { executePreQefSourceReturn } from "./staged_source_return.ts";
 import { agi_aggregator } from "../nodes/intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../nodes/outputs/schedule1/index.ts";
@@ -25,11 +26,14 @@ export async function stageForm172ProjectedReturn(
     inputs,
     rawBinding,
     rawDocuments,
+    inputs.form8990 !== undefined
+      ? (source) => executeForm172Form8990Return(source).execution
+      : undefined,
   );
   // These routes need their source-dependent staging composed with the NOL
   // replay rather than silently falling back to the ordinary graph.
   if (
-    inputs.form8990 !== undefined || inputs.schedule_j !== undefined ||
+    inputs.schedule_j !== undefined ||
     (Array.isArray(inputs.f8621) &&
       inputs.f8621.some((v) =>
         v && typeof v === "object" && "qef_1294_election" in v
@@ -72,15 +76,25 @@ export async function stageForm172ProjectedReturn(
     }
   }
   const projectedRegistry = { ...registry, start: new RetainedNolStart() };
-  const executeNolGraph = (source: Record<string, unknown>) =>
+  const executeNolGraph = (
+    source: Record<string, unknown>,
+    context: Parameters<typeof execute>[3] = {
+      taxYear: 2025,
+      formType: "f1040",
+    },
+  ) =>
     execute(
       buildExecutionPlan(projectedRegistry),
       projectedRegistry,
       source,
-      { taxYear: 2025, formType: "f1040" },
+      context,
     );
   // Recompute return-derived adoption/education operands on every NOL pass.
-  const execution = executePreQefSourceReturn(inputs, true, executeNolGraph);
+  const interestComposition = inputs.form8990 === undefined
+    ? undefined
+    : executeForm172Form8990Return(inputs, executeNolGraph, deduction);
+  const execution = interestComposition?.execution ??
+    executePreQefSourceReturn(inputs, true, executeNolGraph);
   if (execution.diagnostics.length > 0) {
     throw new Error("NOL projection needs successful graph rerun");
   }
@@ -133,6 +147,12 @@ export async function stageForm172ProjectedReturn(
     projected_execution: execution,
     projected_return_replay_input: replayInput,
     projectedFinalizerReconciled: true as const,
+    ...(interestComposition
+      ? {
+        form8990_nol_composition: interestComposition.twoPass,
+        form8990NolOrderingReconciled: true as const,
+      }
+      : {}),
     baseGraphNolProjectionReconciled: true as const,
     amtRegularNolAddbackReconciled: true as const,
     currentAgiDependentRefiguresVerified: false as const,

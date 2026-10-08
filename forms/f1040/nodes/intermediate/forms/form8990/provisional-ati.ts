@@ -24,6 +24,7 @@ export interface BoundedProvisionalATI {
   readonly line6SignedTentativeTaxableIncome: number;
   readonly line7NonbusinessDeduction: number;
   readonly line8BusinessInterestExpense: number;
+  readonly line9NolDeduction: number;
   readonly line10QbiDeduction: number;
   readonly line11DepreciationDepletion: number;
   readonly line16TotalAdditions: number;
@@ -55,6 +56,17 @@ function numberAt(
   return value;
 }
 
+function retainedNolAt(result: ExecuteResult, node: string): number {
+  const value = result.pending[node]?.line8a_nol_deduction;
+  if (value === undefined) return 0;
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) {
+    throw new Error(
+      "Form8990 retained NOL must be a scalar nonnegative integer",
+    );
+  }
+  return value;
+}
+
 function requireEqual(actual: number, expected: number, label: string): void {
   if (Math.abs(actual - expected) > 0.000001) {
     throw new Error(`Form 8990 provisional ${label} is not source-reconciled`);
@@ -71,8 +83,23 @@ export function calculateBoundedProvisionalATI(args: {
   returnInputs: Readonly<Record<string, unknown>>;
   result: ExecuteResult;
   receipts: readonly BusinessReceipt[];
+  retainedNolDeduction?: number;
 }): BoundedProvisionalATI {
   const { provisional, returnInputs, result } = args;
+  const nol = args.retainedNolDeduction ?? 0;
+  if (!Number.isSafeInteger(nol) || nol < 0 || nol > 1_000_000_000) {
+    throw new Error("Form8990 NOL deduction needs exact nonnegative dollars");
+  }
+  requireEqual(
+    retainedNolAt(result, "schedule1"),
+    nol,
+    "retained NOL deduction",
+  );
+  requireEqual(
+    retainedNolAt(result, "agi_aggregator"),
+    nol,
+    "AGI retained NOL deduction",
+  );
   if (result.diagnostics.length > 0) {
     throw new Error(
       `Form 8990 provisional return has node diagnostics: ${
@@ -219,10 +246,10 @@ export function calculateBoundedProvisionalATI(args: {
     "Schedule 1 SE deduction",
   );
   const agi = numberAt(result.pending, "f1040", "line11_agi");
-  requireEqual(agi, profit - seDeduction, "AGI");
+  requireEqual(agi, profit - seDeduction - nol, "AGI");
   requireEqual(
     numberAt(result.pending, "f1040", "line9_total_income"),
-    profit,
+    profit - nol,
     "total income",
   );
   requireEqual(
@@ -269,7 +296,7 @@ export function calculateBoundedProvisionalATI(args: {
   const line11 = (business.line_12_depletion ?? 0) +
     (business.line_13_depreciation ?? 0);
   const line8 = provisional.interest.currentYearBusinessInterestExpense;
-  const line16 = standardDeduction + line8 + qbi + line11;
+  const line16 = standardDeduction + line8 + nol + qbi + line11;
   const line22 = Math.max(0, signedLine6 + line16 - businessInterestIncome);
   return {
     [provisionalAtiBrand]: true,
@@ -278,6 +305,7 @@ export function calculateBoundedProvisionalATI(args: {
     line6SignedTentativeTaxableIncome: signedLine6,
     line7NonbusinessDeduction: standardDeduction,
     line8BusinessInterestExpense: line8,
+    line9NolDeduction: nol,
     line10QbiDeduction: qbi,
     line11DepreciationDepletion: line11,
     line16TotalAdditions: line16,

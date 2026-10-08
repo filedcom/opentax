@@ -811,3 +811,181 @@ Deno.test("Form172 ordinary NOL refigures QBI taxable-income limit without reduc
   assertEquals(r.amtNolReconciled, false);
   assertEquals(r.filingReady, false);
 });
+
+import { calculateBoundedProvisionalATI } from "../nodes/intermediate/forms/form8990/provisional-ati.ts";
+import { reconcileBoundedForm8990FinalReturn } from "../nodes/intermediate/forms/form8990/final-reconciliation.ts";
+import { executeForm172Form8990Return } from "./form172_form8990_return.ts";
+import { f1040_2025 } from "./index.ts";
+const interestBaseInputs = {
+  general: { filing_status: "single", taxpayer_ssn: "111223333" },
+  schedule_c: [{
+    business_reference: "C-1",
+    line_a_principal_business: "Software consulting",
+    line_b_business_code: "541510",
+    line_f_accounting_method: "cash",
+    line_g_material_participation: true,
+    line_1_gross_receipts: 200_000,
+    line_12_depletion: 1_000,
+    amt_depletion_worksheet: {
+      source_reference: "2025 C-1 AMT depletion review",
+      all_property_income_and_basis_limits_applied_verified: true,
+      no_at_risk_or_basis_limitation_verified: true,
+      properties: [{
+        property_reference: "C-1-depletion-property",
+        regular_allowed_depletion: 1_000,
+        amt_allowed_depletion: 1_000,
+      }],
+    },
+    line_13_depreciation: 7_500,
+    line_16b_interest_other: 100_000,
+  }],
+};
+
+const interestSourceRecords = {
+  receipts: [{ source_reference: "sale-1", kind: "sale", amount: 200_000 }],
+  interestExpenseRecords: [{
+    interest_payment_reference: "interest-statement-1",
+    debt_proceeds_trace: {
+      source_reference: "business-loan-ledger-1",
+      debt_disbursed_on: "2024-01-15",
+      gross_proceeds: 250_000,
+      business_uses: [{
+        expenditure_document_reference: "C-1-equipment-invoice",
+        spent_on: "2024-01-20",
+        amount: 250_000,
+        business_reference: "C-1",
+      }],
+    },
+    debtor_taxpayer_ssn: "111223333",
+    lender_ein: "987654321",
+    debt_account_reference: "BUSINESS-LOAN-1",
+    business_reference: "C-1",
+    allocation: "nonexcepted_schedule_c_business",
+    interest_paid_amount: 100_000,
+    line16b_business_interest_amount: 100_000,
+  }],
+  priorFiledScheduleCs: [2022, 2023, 2024].map((taxYear) => ({
+    tax_year: taxYear,
+    business_reference: "C-1",
+    filed_schedule_c_document_reference: `filed-${taxYear}-schedule-c`,
+    filed_taxpayer_ssn: "111223333",
+    filed_tax_period_start: `${taxYear}-01-01`,
+    filed_tax_period_end: `${taxYear}-12-31`,
+    filed_line1_gross_receipts: 33_000_000,
+    filed_line2_returns_and_allowances: 1_000_000,
+    filed_line3_net_receipts: 32_000_000,
+  })),
+  priorFiledForm8990: {
+    tax_year: 2024,
+    filed_form8990_document_reference: "filed-2024-form8990",
+    filed_taxpayer_ssn: "111223333",
+    filed_line31_disallowed_business_interest: 0,
+  },
+};
+
+async function interestFixture() {
+  const f = await fixture();
+  f.inputs = { ...interestBaseInputs, form8990: interestSourceRecords };
+  const before = executeForm172Form8990Return(f.inputs);
+  const return1040 = before.execution.pending.f1040!;
+  const a = f.currentReview.annual_review;
+  a.agi = Number(return1040.line11_agi);
+  a.qbi_deduction = Math.round(Number(return1040.line13_qbi_deduction));
+  a.reported_taxable_income = Math.round(
+    Number(return1040.line15_taxable_income),
+  );
+  const bytes = new TextEncoder().encode(JSON.stringify(f.currentReview));
+  f.documents[2] = { reference: f.currentReview.reference, bytes };
+  f.binding.current_review.sha256 = await sha(bytes);
+  return { ...f, before };
+}
+Deno.test("Form172 retained NOL composes both sourced interest passes with ATI line9 restoration", async () => {
+  const f = await interestFixture();
+  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents);
+  const composed = r.form8990_nol_composition!;
+  assertEquals(r.deduction, 44000);
+  assertEquals(composed.limit.line9, 44000);
+  assertEquals(composed.limit.line22, f.before.twoPass.limit.line22);
+  assertEquals(composed.limit.line30, f.before.twoPass.limit.line30);
+  assertEquals(composed.limit.line31, f.before.twoPass.limit.line31);
+  assertEquals(
+    composed.limit.line16,
+    composed.limit.line7 + composed.limit.line8 + composed.limit.line9 +
+      composed.limit.line10 + composed.limit.line11,
+  );
+  assertEquals(
+    Number(r.projected_form1040.line11_agi),
+    Number(f.before.execution.pending.f1040!.line11_agi) - 44000,
+  );
+  assertEquals(
+    composed.finalizedReconciliation.selfEmploymentTax,
+    f.before.twoPass.finalizedReconciliation.selfEmploymentTax,
+  );
+  assertEquals(
+    Math.round(Number(r.projected_form1040.line13_qbi_deduction)),
+    Math.round((Number(r.projected_form1040.line11_agi) - 15750) * .2),
+  );
+  assertEquals(r.projectedFinalizerReconciled, true);
+  assertEquals(r.form8990NolOrderingReconciled, true);
+  for (const node of ["schedule1", "agi_aggregator"]) {
+    for (const invalid of [NaN, "44000", [44000], 44000.5, -1, 44001]) {
+      const corrupt = (result: typeof composed.provisionalReturn) => ({
+        ...result,
+        pending: {
+          ...result.pending,
+          [node]: { ...result.pending[node], line8a_nol_deduction: invalid },
+        },
+      });
+      assertThrows(() =>
+        calculateBoundedProvisionalATI({
+          provisional: composed.provisionalSource,
+          returnInputs: interestBaseInputs,
+          result: corrupt(composed.provisionalReturn),
+          receipts: interestSourceRecords.receipts as Parameters<
+            typeof calculateBoundedProvisionalATI
+          >[0]["receipts"],
+          retainedNolDeduction: 44000,
+        })
+      );
+      assertThrows(() =>
+        reconcileBoundedForm8990FinalReturn({
+          source: composed.finalizedSource,
+          provisionalAti: composed.provisionalAti,
+          limit: composed.limit,
+          result: corrupt(composed.finalizedReturn),
+          retainedNolDeduction: 44000,
+        })
+      );
+    }
+  }
+
+  assertEquals(r.filingReady, false);
+  assertEquals(r.projected_pending.nol_carryforward !== undefined, true);
+  assertEquals(
+    f1040_2025.executeReturn(f.inputs).diagnostics.some((d) =>
+      d.nodeType === "form8990" && d.message.includes("unfileable")
+    ),
+    true,
+  );
+});
+Deno.test("Form172 interest composition rejects changed current workpaper and source tracing", async () => {
+  const f = await interestFixture();
+  f.currentReview.annual_review.agi += 1;
+  f.currentReview.annual_review.reported_taxable_income += 1;
+  const bytes = new TextEncoder().encode(JSON.stringify(f.currentReview));
+  f.documents[2] = { reference: f.currentReview.reference, bytes };
+  f.binding.current_review.sha256 = await sha(bytes);
+  await assertRejects(() =>
+    stageForm172ProjectedReturn(f.inputs, f.binding, f.documents)
+  );
+  const valid = await interestFixture();
+  const bad = structuredClone(interestSourceRecords);
+  bad.interestExpenseRecords[0].debtor_taxpayer_ssn = "999887777";
+  await assertRejects(() =>
+    stageForm172ProjectedReturn(
+      { ...valid.inputs, form8990: bad },
+      valid.binding,
+      valid.documents,
+    )
+  );
+});
