@@ -15,6 +15,11 @@ const schema = z.object({
       reviewed_opening_amt_nol: dollars,
       category: z.enum(["ordinary", "whbaa"]),
       whbaa_election_reference: reference.optional(),
+      whbaa_carryback_period: z.union([
+        z.literal(3),
+        z.literal(4),
+        z.literal(5),
+      ]).optional(),
     }).strict(),
   ).min(1).max(13),
 }).strict();
@@ -65,7 +70,18 @@ export function calculateForm172HistoricalAmtCap(raw: unknown) {
         );
       }
       seenReferences.add(row.whbaa_election_reference);
-    } else if (row.whbaa_election_reference !== undefined) {
+      if (
+        annual.applicationYear < annual.originYear &&
+        (!row.whbaa_carryback_period ||
+          annual.applicationYear <
+            annual.originYear - row.whbaa_carryback_period)
+      ) {
+        throw new Error("WHBAA carryback needs its reviewed elected period");
+      }
+    } else if (
+      row.whbaa_election_reference !== undefined ||
+      row.whbaa_carryback_period !== undefined
+    ) {
       throw new Error("Ordinary AMT loss cannot carry a WHBAA election claim");
     }
     return {
@@ -73,6 +89,9 @@ export function calculateForm172HistoricalAmtCap(raw: unknown) {
       originYear: annual.originYear,
       category: row.category,
       opening: row.reviewed_opening_amt_nol,
+      whbaaFifthYear: row.category === "whbaa" &&
+        row.whbaa_carryback_period === 5 &&
+        annual.applicationYear === annual.originYear - 5,
       annual,
     };
   }).sort((a, b) => a.originYear - b.originYear);
@@ -89,6 +108,32 @@ export function calculateForm172HistoricalAmtCap(raw: unknown) {
     first.ordinary90PercentLimit,
   );
   const whbaaCapComponent = Math.min(whbaaOpening, base - ordinaryCapComponent);
+  const preFifthYearAggregateCap = ordinaryCapComponent + whbaaCapComponent;
+  let remainingCap = preFifthYearAggregateCap;
+  let ordinaryCapacity = ordinaryCapComponent;
+  let earlierAllocated = 0;
+  const chronologicalDeductionAllocations = losses.map((loss) => {
+    const fifthYearLimit = loss.whbaaFifthYear
+      ? Number((BigInt(Math.max(0, base - earlierAllocated)) + 1n) / 2n)
+      : remainingCap;
+    const allocatedDeduction = Math.min(
+      loss.opening,
+      remainingCap,
+      loss.category === "ordinary" ? ordinaryCapacity : remainingCap,
+      fifthYearLimit,
+    );
+    remainingCap -= allocatedDeduction;
+    earlierAllocated += allocatedDeduction;
+    if (loss.category === "ordinary") ordinaryCapacity -= allocatedDeduction;
+    return {
+      reference: loss.reference,
+      originYear: loss.originYear,
+      category: loss.category,
+      reviewedOpening: loss.opening,
+      whbaaFifthYear: loss.whbaaFifthYear,
+      allocatedDeduction,
+    };
+  });
   return {
     applicationYear: first.applicationYear,
     tentativeAmtiBeforeAtnold: first.tentativeAmtiBeforeAtnold,
@@ -98,7 +143,9 @@ export function calculateForm172HistoricalAmtCap(raw: unknown) {
     whbaaOpening,
     ordinaryCapComponent,
     whbaaCapComponent,
-    aggregateHistoricalCap: ordinaryCapComponent + whbaaCapComponent,
+    preFifthYearAggregateCap,
+    aggregateHistoricalCap: earlierAllocated,
+    chronologicalDeductionAllocations,
     chronologicalReviewedOrigins: losses.map(({ annual: _, ...row }) => row),
     historicalAggregateCapArithmeticReconciled: true as const,
     openingAmtCarryAvailabilityVerified: false as const,
@@ -119,32 +166,9 @@ export function calculateForm172HistoricalAmtCap(raw: unknown) {
  * absorption, surviving carry, election eligibility or a filing payload. */
 export function calculateForm172HistoricalAmtDeductionAllocation(raw: unknown) {
   const cap = calculateForm172HistoricalAmtCap(raw);
-  let remainingCap = cap.aggregateHistoricalCap;
-  let ordinaryCapacity = cap.ordinaryCapComponent;
-  const allocations = cap.chronologicalReviewedOrigins.map((loss) => {
-    const allocatedDeduction = Math.min(
-      loss.opening,
-      remainingCap,
-      loss.category === "ordinary" ? ordinaryCapacity : remainingCap,
-    );
-    remainingCap -= allocatedDeduction;
-    if (loss.category === "ordinary") ordinaryCapacity -= allocatedDeduction;
-    return {
-      reference: loss.reference,
-      originYear: loss.originYear,
-      category: loss.category,
-      reviewedOpening: loss.opening,
-      allocatedDeduction,
-    };
-  });
-  if (remainingCap !== 0) {
-    throw new Error(
-      "Historical AMT deduction allocation does not exhaust its cap",
-    );
-  }
   return {
     ...cap,
-    chronologicalDeductionAllocations: allocations,
+    chronologicalDeductionAllocations: cap.chronologicalDeductionAllocations,
     historicalDeductionAllocationArithmeticReconciled: true as const,
     // The separate cap, modified-income absorption and legal availability
     // questions retain their existing qualification flags above.

@@ -45,9 +45,13 @@ export function calculateForm172HistoricalAmtAbsorption(
       const remainingOrdinaryCapacity = positive(
         ordinaryComponent - earlierOrdinaryAbsorbed,
       );
+      const whbaaFifthYearLimit = row.whbaaFifthYear
+        ? Number((BigInt(row.modifiedAmtiAfterEarlierAtnold) + 1n) / 2n)
+        : remainingAggregateCapacity;
       const absorbed = Math.min(
         row.reviewedOpening,
         remainingAggregateCapacity,
+        whbaaFifthYearLimit,
         row.category === "ordinary"
           ? remainingOrdinaryCapacity
           : remainingAggregateCapacity,
@@ -57,6 +61,8 @@ export function calculateForm172HistoricalAmtAbsorption(
         lossReference: row.lossReference,
         modifiedReviewReference: row.modifiedReviewReference,
         category: row.category,
+        whbaaFifthYear: row.whbaaFifthYear,
+        whbaaFifthYearLimit,
         reviewedOpening: row.reviewedOpening,
         actualAllocatedDeduction: row.actualAllocatedDeduction,
         earlierActualDeduction: row.earlierActualDeduction,

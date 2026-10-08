@@ -128,6 +128,7 @@ export function calculateForm172HistoricalAmtVintageModifiedIncome(
       modifiedReviewReference: reviewReference,
       category: loss.category,
       reviewedOpening: loss.reviewedOpening,
+      whbaaFifthYear: loss.whbaaFifthYear,
       actualAllocatedDeduction: loss.allocatedDeduction,
       earlierActualDeduction: earlierDeduction,
       signedModifiedAmtiBeforeDirectEarlierAtnold: modified.signedModifiedAmti,

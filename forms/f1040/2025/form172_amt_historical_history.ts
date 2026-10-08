@@ -78,6 +78,7 @@ export function calculateForm172HistoricalAmtHistory(raw: unknown) {
           amt_origin: z.unknown(),
           category: z.string(),
           whbaa_election_reference: ref.optional(),
+          whbaa_carryback_period: z.number().optional(),
         }).passthrough(),
       ),
     }).passthrough().parse(row.cap_workpaper);
@@ -125,6 +126,7 @@ export function calculateForm172HistoricalAmtHistory(raw: unknown) {
         amt_origin: source.amt_origin,
         category: source.category,
         whbaa_election_reference: source.whbaa_election_reference,
+        whbaa_carryback_period: source.whbaa_carryback_period,
       });
       if (identities.has(loss.originYear)) {
         if (identities.get(loss.originYear) !== identity) {

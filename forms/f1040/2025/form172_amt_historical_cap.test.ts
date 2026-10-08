@@ -1703,3 +1703,154 @@ Deno.test("Historical AMT2003 and2004 restore reviewed42 and7 section1202 prefer
     assertEquals(r.filingReady, false);
   }
 });
+
+function whbaaAmtFifthFixture(year = 2004, modifiedBase = 120) {
+  const raw = earlyLayoutFixture(year);
+  const f = {
+    ...raw.f,
+    losses: [{
+      ...raw.f.losses[1],
+      category: "whbaa" as const,
+      whbaa_election_reference: "whbaa-2009-election",
+      whbaa_carryback_period: 5 as const,
+    }],
+  };
+  const v = {
+    ...raw.v,
+    vintages: [{ ...raw.v.vintages[1], earlier_nol_deductions: [] }],
+  };
+  v.vintages[0].modified_review.components.find((c) => c.line === "1")!
+    .refigured_amount = modifiedBase;
+  return { f, v };
+}
+Deno.test("Historical AMT WHBAA fifth-year deduction and absorption use separate original and modified AMTI", () => {
+  const { f, v } = whbaaAmtFifthFixture();
+  const cap = calculateForm172HistoricalAmtCap(f);
+  assertEquals(cap.preFifthYearAggregateCap, 100);
+  assertEquals(cap.aggregateHistoricalCap, 50);
+  const r = calculateForm172HistoricalAmtAbsorption(f, v);
+  assertEquals(r.originalDeductionCap, 50);
+  assertEquals(r.chronologicalReviewedApplications[0].modifiedBase, 120);
+  assertEquals(r.chronologicalReviewedApplications[0].absorbed, 60);
+  assertEquals(r.chronologicalReviewedApplications[0].reviewedRemaining, 40);
+  assertEquals(r.filingReady, false);
+  const later = whbaaAmtFifthFixture(2005);
+  assertEquals(
+    calculateForm172HistoricalAmtCap(later.f).aggregateHistoricalCap,
+    100,
+  );
+  assertEquals(
+    calculateForm172HistoricalAmtAbsorption(later.f, later.v)
+      .chronologicalReviewedApplications[0].absorbed,
+    100,
+  );
+});
+Deno.test("Historical AMT WHBAA fifth-year fifty limit follows earlier actual deduction and shared absorption", () => {
+  const raw = earlyLayoutFixture(2004);
+  const f = {
+    ...raw.f,
+    losses: raw.f.losses.map((loss, i) =>
+      i === 1
+        ? {
+          ...loss,
+          category: "whbaa" as const,
+          whbaa_election_reference: "whbaa-2009",
+          whbaa_carryback_period: 5 as const,
+        }
+        : loss
+    ),
+  };
+  let r = calculateForm172HistoricalAmtAbsorption(f, raw.v);
+  assertEquals(r.originalDeductionCap, 95);
+  assertEquals(
+    r.chronologicalReviewedApplications.map((a) => a.actualAllocatedDeduction),
+    [90, 5],
+  );
+  assertEquals(r.chronologicalReviewedApplications.map((a) => a.absorbed), [
+    90,
+    5,
+  ]);
+  raw.v.vintages.forEach((row) =>
+    row.modified_review.components.find((c) => c.line === "1")!
+      .refigured_amount = 120
+  );
+  r = calculateForm172HistoricalAmtAbsorption(f, raw.v);
+  assertEquals(r.chronologicalReviewedApplications.map((a) => a.absorbed), [
+    108,
+    12,
+  ]);
+  assertEquals(r.chronologicalReviewedApplications[1].whbaaFifthYearLimit, 15);
+});
+Deno.test("Historical AMT WHBAA carryback rejects missing periods earlier years and ordinary election claims", () => {
+  const { f } = whbaaAmtFifthFixture();
+  const missing = structuredClone(f) as unknown as {
+    losses: { whbaa_carryback_period?: number }[];
+  };
+  delete missing.losses[0].whbaa_carryback_period;
+  assertThrows(() => calculateForm172HistoricalAmtCap(missing));
+  const wrong = {
+    ...f,
+    losses: [{ ...f.losses[0], whbaa_carryback_period: 4 }],
+  };
+  assertThrows(() => calculateForm172HistoricalAmtCap(wrong));
+  assertThrows(() =>
+    calculateForm172HistoricalAmtCap({
+      ...f,
+      losses: [{ ...f.losses[0], category: "ordinary" }],
+    })
+  );
+});
+Deno.test("Historical AMT retained fifth-year history carries modified absorption and preserves period identity", async () => {
+  const first = whbaaAmtFifthFixture();
+  const next = whbaaAmtFifthFixture(2005);
+  next.f.losses[0].reviewed_opening_amt_nol = 40;
+  next.v.reference = "2005-whbaa-vintage-review";
+  const history = {
+    reference: "whbaa-fifth-history",
+    start_year: 2004,
+    end_year: 2005,
+    taxpayer_ssn: "111223333",
+    entry_reviews: [{
+      reference: "whbaa-entry",
+      origin_year: 2009,
+      loss_reference: first.f.losses[0].reference,
+      application_year: 2004,
+      reviewed_opening: 100,
+    }],
+    annual_applications: [{
+      application_year: 2004,
+      cap_workpaper: first.f,
+      vintage_reviews: first.v,
+    }, {
+      application_year: 2005,
+      cap_workpaper: next.f,
+      vintage_reviews: next.v,
+    }],
+  };
+  const bytes = new TextEncoder().encode(JSON.stringify(history));
+  const r = await stageForm172HistoricalAmtHistorySource({
+    history: {
+      reference: history.reference,
+      sha256: await historyDigest(bytes),
+    },
+    start_tax_year: 2004,
+    end_tax_year: 2005,
+    taxpayer_ssn: "111223333",
+  }, [{ reference: history.reference, bytes }]);
+  assertEquals(
+    r.reviewedAnnualApplications.map((a) =>
+      a.chronologicalReviewedApplications[0].absorbed
+    ),
+    [60, 40],
+  );
+  assertEquals(r.reviewedEndingBalances, [{ originYear: 2009, amount: 0 }]);
+  assertEquals(r.completeCarryHistoryVerified, false);
+  assertEquals(r.filingReady, false);
+  history.annual_applications[1].cap_workpaper.losses[0]
+    .whbaa_carryback_period = 4 as 5;
+  assertThrows(
+    () => calculateForm172HistoricalAmtHistory(history),
+    Error,
+    "election changed",
+  );
+});
