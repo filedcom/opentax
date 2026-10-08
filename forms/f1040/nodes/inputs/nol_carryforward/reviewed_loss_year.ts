@@ -11,6 +11,35 @@ const filingStatus = z.enum([
   "head_of_household",
   "qualifying_surviving_spouse",
 ]);
+const text = z.string().trim().min(1);
+const pdfIdentity = z.object({
+  taxpayer_first_name: text,
+  taxpayer_middle_initial: text.max(1).optional(),
+  taxpayer_last_name: text,
+  spouse_first_name: text.optional(),
+  spouse_middle_initial: text.max(1).optional(),
+  spouse_last_name: text.optional(),
+  address: z.discriminatedUnion("type", [
+    z.object({
+      type: z.literal("us"),
+      line1: text,
+      line2: text.optional(),
+      city: text,
+      state: z.string().regex(/^[A-Z]{2}$/),
+      zip: z.string().regex(/^\d{5}(?:-\d{4})?$/),
+    }).strict(),
+    z.object({
+      type: z.literal("foreign"),
+      line1: text,
+      line2: text.optional(),
+      city: text,
+      country_name: text,
+      province: text.optional(),
+      postal_code: text.optional(),
+    }).strict(),
+  ]),
+  daytime_phone: z.string().regex(/^[0-9()+ .-]+$/).optional(),
+}).strict();
 const source = z.object({
   item_id: reference,
   reference,
@@ -27,6 +56,7 @@ export const reviewedLossYearSchema = z.object({
   spouse_ssn: ssn.optional(),
   reference,
   filing_status: filingStatus,
+  pdf_identity: pdfIdentity.optional(),
   reviewed_form1040: z.object({
     reference,
     tax_year: z.number().int().min(2018).max(2025),
@@ -87,6 +117,19 @@ export const reviewedLossYearSchema = z.object({
     c.addIssue({
       code: "custom",
       message: "Loss-year joint identity needs distinct spouses",
+    });
+  }
+  if (
+    v.pdf_identity &&
+    (joint
+      ? !v.pdf_identity.spouse_first_name || !v.pdf_identity.spouse_last_name
+      : v.pdf_identity.spouse_first_name !== undefined ||
+        v.pdf_identity.spouse_last_name !== undefined ||
+        v.pdf_identity.spouse_middle_initial !== undefined)
+  ) {
+    c.addIssue({
+      code: "custom",
+      message: "Form 172 PDF identity must match joint or individual ownership",
     });
   }
   if (v.reference === v.reviewed_form1040.reference) {
