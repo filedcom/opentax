@@ -1,5 +1,7 @@
 # TY2025 Form 8862 prior-notice copy binding
 
+> Current October8 status: 43 focused calculation/source/guard tests passed. The October1 “unrun” labels below are historical; native/PDF export remains guarded pending authentic IRS notice evidence. See the current validation section at the end.
+
 The [2025 Form 8862 instructions](https://www.irs.gov/instructions/i8862)
 require a prior credit disallowance other than a math or clerical error before
 the claimant uses this form; an active credit ban has separate consequences. The
@@ -111,3 +113,14 @@ full-return route now has positive PDF projection and altered name, filed name,
 marker, Schedule 3, and Form 1040 fixtures for the deferred bulk pass. Other
 student combinations and IRS notice issuance or contents remain outside this
 bounded replay.
+
+
+## October 8, 2026 — current Form8862 ODC/AOTC calculation and notice gate
+
+There is no emitted Form8862 packet in the361 saved prepared PDFs: the retained `single-8862-ctc-reinstatement` fixture is guarded by current native/PDF notice-authenticity rejection. Therefore a positive ODC/AOTC filled-packet review cannot be claimed or produced by bypassing that rejection. Older audit references to inspected v62 positive packets and October1 “unrun” sections describe historical stages, not current filing admission.
+
+Executed10 existing test files covering input calculation, retained prior-notice PDF bytes, native/source/credit joins, EITC notice rejection, Form8862 PDF mappings/continuations and CTC/ODC/AOTC/combined full-return calculation/rejection. The combined adult dependent fixture calculates ODC500, AOTC1,500nonrefundable/1,000refundable and joins Schedule8812,Schedule3 and1040lines19/29. Both exporters and `buildMefBundle` reject synthetic notice assertions with the executor-owned IRS issuance/content authentication gate. Altered credit amounts, dependent/student names/TINs, notices, schedules and final1040joins reject; digest-bound readable PDFs alone do not open the route. These are guard and calculation results, not a positive Form8862 XSD or filled-PDF approval.
+
+[IRS December2025 Form8862 instructions](https://www.irs.gov/instructions/i8862) reread/retained with URL/time/SHA: nonclerical prior disallowance and current eligibility trigger the applicable filing, while active bans and appeals have separate requirements. Original issuer/content authentication remains absent. No notice was invented, no gate bypassed and no external record requested again.
+
+Private `.state/research/board-execution-2026-10-07/form8862-odc-aotc-current-gate-review-20261008-v1/`: normal typechecked `deno test -A` for10 explicit existing files, actual0 at **11:28:24.454741UTC**, **43 passed/0 failed/0 ignored**, logSHA `f09605edf0f92018ce8ba288354735d160231bc1f69a616af346cc290acd7233`. Independent11:29:00 verifies exact2706 rootruntime path set/hashes and equality to the livefullpreflight, primary-source digest, main52 and future54 unchanged. Rootfull12505 remains live/frozen. No runtime edit, positive packet generation, checkbox close or future task added/worked. Previous/current goal turns classifiedprogress(mixedForm8814 retained review, then currentForm8862 calculation/guard validation and correction of stale evidence status).
