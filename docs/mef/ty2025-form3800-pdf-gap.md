@@ -778,3 +778,6 @@ directs line 8 to Form 3800 Part III line 1y and line 21 to line 1aa.
 
 
 On October8, 2026, all15 pages of the retained orphan-drug clinical-testing packet were visually reviewed, including all nine Form3800 pages. Reduced Form8820 credit1,975 reconciles through PartIII line1h, Schedule3 and Form1040. Public-source replay reproduces the filed XML exactly and local full XSD validation exits0; the original pending comparison differs only by an explicitly asserted inactive Form8960 entry. Synthetic FDA, cost and election facts remain unauthenticated. See the [qualified replay and retained page evidence](ty2025-readiness-execution-2026-10-07.md). This closes no parent scope or IRS acceptance requirement.
+
+
+The October8 employer-childcare retained packet now has all16 pages visually reviewed, including the nine-page Form3800 parent. Form8882 tentative credit11,000 matches reduced ScheduleC expenses39,000 and PartIII line1k; current allowance9,573 reaches Schedule3/Form1040. Native XML reproduces exactly and local full XSD passes, with the inactive Form8960 pending difference explicitly qualified. Unused1,427 carry history and external contract/licensing eligibility remain unproved. See the [source and page evidence](ty2025-readiness-execution-2026-10-07.md); no parent scope checkoff.
