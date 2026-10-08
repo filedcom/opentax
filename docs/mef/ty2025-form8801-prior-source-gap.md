@@ -135,3 +135,51 @@ Form 1040 still contains its pre-credit totals. Actual filed 2024 source and
 acceptance, MTCNOL/MTFTCE and basis workpapers, wider owner/status changes,
 final credit ordering, carryforward/import and native/PDF/IRS filing evidence
 remain required. No complete-form/main-task checkoff follows from this stage.
+
+
+## Isolated final-amount settlement — October 8, 04:42 UTC
+
+Candidate `1ea5bc1d73f37521dc9849c7e1f1b54c48dea925` adds
+`stageForm8801SettledReturn`. The executor now retains the actual Form 1040
+finalizer input separately from pending output; adoption and QEF refigures
+retain their updated input. Settlement first reproduces every public Form
+1040 line from that input, then recomputes the credit and dependent limits
+until amounts agree. Caller-supplied pre/post snapshots remain rejected.
+Skipped/balance lines are cleared appropriately when tax moves from amount
+owed to refund. Positive staged attachment claims remain blocked at both
+exports, including a vehicle-only line 21 with no prior AMT/carry amount.
+
+Seven new cases cover full/partial/zero credit, exact unused carry, amount
+owed-to-refund transition, preceding foreign credit, vehicle-only attachment
+requirements and a later Form 8912 limitation. In the constructed bond case,
+Form 8801 credit 5,182 changes allowed bond credit from 20,000 to 17,485 and
+unused bond credit to 2,515. Final tax is recomputed rather than adding two
+previously settled credits. This proves that tested source/calculation/local
+amount chain, not authenticity or every credit interaction.
+
+The final normal typed **15-module run passed 171/0, zero ignored** (1m18s
+summary). It includes executor tests and existing Form 1040, adoption, QEF,
+business-credit and bond-credit checks. Private
+`form8801-settled-return-20261008-v3/` binds all 2,644 candidate runtime paths,
+source snapshots, retained schema digest, startup, log, terminal status and
+review. Log SHA:
+`bbb07d7c0326cc0b2d7f1e11112094336ece80449edacd14e60e1d299bc039a1`.
+Earlier v1/v2 infrastructure failures and their sources remain retained;
+the final run uses the repository's standard test permissions and retained
+XSD directory. No test/source guard was waived. Collateral native/PDF tests
+are regression evidence; they do not establish Form 8801 native/PDF support
+or add new visually reviewed filing packets.
+
+The API returns `finalReturnAmountsReconciled: true` for its locally projected
+pending return. `finalizedReturnReconciled`, `filingReady`, prior acceptance
+and workpaper authenticity remain false. Public `executeReturn` still has no
+admitted official Form 8801 credit route; the candidate does not promote
+`projected_pending` to one. Matching native/PDF/attachments, actual accepted
+prior records, MTCNOL/MTFTCE and basis proof, all owner/status and other credit
+combinations, the full numeric range, durable carry/import, business rules
+and IRS acceptance remain required. The whole main task stays open.
+
+All three candidate commits remain isolated on
+`codex/form8801-calculation-20261008`; root's running full regression still
+uses its unchanged 2,637 paths. No aggregate coverage count or main checkoff
+is increased, and all future tasks remain unworked.

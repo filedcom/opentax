@@ -5067,3 +5067,34 @@ morning deadline; reopening pass probability not yet estimable.
 
 The same actual root full session 22926 was polled again after this checkpoint
 and remained live; no terminal full-run result is claimed.
+
+
+### October 8, 04:42 UTC — isolated Form 8801 final-amount settlement
+
+Compacted learnings before implementation. Candidate
+`1ea5bc1d73f37521dc9849c7e1f1b54c48dea925` retains executor-owned finalizer
+inputs (updated for adoption/QEF stages) and recomputes Form 8801, Schedule 3,
+Form 1040 and dependent limits. Seven new settlement cases cover full/partial/
+zero credit, carry, refund transition, preceding foreign credit, guarded
+vehicle-only attachment and later bond-credit capacity. In the latter case,
+MTC 5,182 reduces allowed bond credit 20,000→17,485 and leaves bond unused
+credit 2,515. Source and snapshots are derived internally; export guards
+remain active. See [Form 8801](ty2025-form8801-prior-source-gap.md).
+
+Final standard typed 15-module run **171/0, zero ignored**, 1m18s test summary;
+actual session 24885 closed with observed exit zero. Private
+`form8801-settled-return-20261008-v3/` retains a 2,644-path candidate manifest,
+source snapshots, schema digest, log/status and review. Log SHA:
+`bbb07d7c0326cc0b2d7f1e11112094336ece80449edacd14e60e1d299bc039a1`.
+v1/v2 infrastructure-failed runs and sources are retained. No guard was
+removed to obtain passing evidence. Existing collateral native/PDF tests are
+regressions, not new Form 8801 filing or visual evidence.
+
+Only local final amounts are reconciled; accepted prior history, workpaper
+authenticity, all credit/owner/status/numeric cases, registered native/PDF,
+accepted carry/import, matching rules and IRS acceptance remain open. Public
+filing admission and finalized-return flags remain false. All candidate
+runtime changes remain isolated; actual root full session 22926 was polled
+and remained live, and its 2,637 paths still match startup exactly. No full
+terminal result is claimed. Main 52 stay frozen and all future 47 unchanged/
+unworked. Existing aggregate packet/page/coverage counts are unchanged.
