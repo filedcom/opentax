@@ -1,3 +1,4 @@
+import { calculateForm172HistoricalAmtVintageModifiedIncome } from "./form172_amt_vintage_modified_income.ts";
 import { calculateForm172HistoricalAmtModifiedIncome } from "./form172_amt_modified_income.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
@@ -588,5 +589,112 @@ Deno.test("Historical AMT modified income rejects incomplete stale duplicate or 
     () => calculateForm172HistoricalAmtModifiedIncome(f, bad),
     Error,
     "retain regular NOL",
+  );
+});
+
+function vintageReview(f = fixture()) {
+  const earlier = f.losses.map((loss, index) => ({
+    origin_year: index === 0 ? 2008 : 2009,
+    loss_reference: loss.reference,
+    refigured_deductions_include_earlier_nol_effects: true,
+    earlier_nol_deductions: index === 0 ? [] : [{
+      origin_year: 2008,
+      loss_reference: f.losses[0].reference,
+      amount: 90,
+    }],
+    modified_review: {
+      ...modifiedReview(f),
+      reference: `modified-vintage-${index}`,
+      components: modifiedReview(f).components.map((c) => ({
+        ...c,
+        refigured_reference: `vintage-${index}-${c.line}`,
+      })),
+      section199: {
+        ...modifiedReview(f).section199,
+        refigured_reference: `vintage-${index}-dpad`,
+      },
+    },
+  }));
+  return {
+    reference: "vintage-refigures",
+    application_tax_year: 2014,
+    taxpayer_ssn: "111223333",
+    vintages: earlier,
+  };
+}
+Deno.test("Historical AMT vintage workpapers use independent refigures and earlier deductions once", () => {
+  const f = fixture();
+  const v = vintageReview(f);
+  v.vintages[1].modified_review.components[0].refigured_amount = 120;
+  const r = calculateForm172HistoricalAmtVintageModifiedIncome(f, v);
+  assertEquals(
+    r.chronologicalVintageModifiedIncome.map((
+      row,
+    ) => [row.earlierActualDeduction, row.modifiedAmtiAfterEarlierAtnold]),
+    [[0, 100], [90, 30]],
+  );
+  assertEquals(
+    r.chronologicalVintageModifiedIncome.map((row) =>
+      row.actualAllocatedDeduction
+    ),
+    [90, 10],
+  );
+  assertEquals(r.chronologicalAbsorptionReconciled, false);
+  assertEquals(r.survivingCarryVerified, false);
+  assertEquals(r.filingReady, false);
+  v.vintages[1].modified_review.components[0].refigured_amount = 50;
+  assertEquals(
+    calculateForm172HistoricalAmtVintageModifiedIncome(f, v)
+      .chronologicalVintageModifiedIncome[1].modifiedAmtiAfterEarlierAtnold,
+    0,
+  );
+});
+Deno.test("Historical AMT vintage workpapers reject lost duplicated stale and reused contexts", () => {
+  const f = fixture();
+  const good = vintageReview(f);
+  for (
+    const mutate of [
+      (v: typeof good) => {
+        v.vintages.pop();
+      },
+      (v: typeof good) => {
+        v.vintages[1].origin_year = 2008;
+      },
+      (v: typeof good) => {
+        v.vintages[0].loss_reference = "wrong-origin";
+      },
+      (v: typeof good) => {
+        v.vintages[1].earlier_nol_deductions[0].amount = 89;
+      },
+      (v: typeof good) => {
+        v.vintages[1].earlier_nol_deductions = [];
+      },
+      (v: typeof good) => {
+        v.vintages[0].earlier_nol_deductions = [{
+          origin_year: 2009,
+          loss_reference: f.losses[1].reference,
+          amount: 10,
+        }];
+      },
+      (v: typeof good) => {
+        v.vintages[1].modified_review.reference =
+          v.vintages[0].modified_review.reference;
+      },
+      (v: typeof good) => {
+        v.taxpayer_ssn = "222334444";
+      },
+    ]
+  ) {
+    const bad = structuredClone(good);
+    mutate(bad);
+    assertThrows(() =>
+      calculateForm172HistoricalAmtVintageModifiedIncome(f, bad)
+    );
+  }
+  assertThrows(() =>
+    calculateForm172HistoricalAmtVintageModifiedIncome(f, {
+      ...good,
+      absorbed_loss: 100,
+    })
   );
 });
