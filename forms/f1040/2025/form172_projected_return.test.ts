@@ -541,3 +541,192 @@ Deno.test("Form172 NOL projection preserves source-dependent adoption finalizer 
   assertEquals(r.sourceAuthenticityVerified, false);
   assertEquals(r.filingReady, false);
 });
+
+import { stageForm172AmtProjectedReturn } from "./form172_amt_projected_return.ts";
+import { form172Amt2025TentativeLines } from "./form172_amt_annual_limit.ts";
+async function amtSource(
+  f: Awaited<ReturnType<typeof fixture>>,
+  senior = false,
+) {
+  const regular = JSON.parse(new TextDecoder().decode(f.documents[0].bytes));
+  const { reviewed_form1040: _, ...inventory } = structuredClone(regular);
+  inventory.reference = "amt-inventory";
+  inventory.noncapital_deductions[0].amount -= 20000;
+  inventory.noncapital_deductions[1].amount = 0;
+  const review = {
+    reference: "independent-AMT-origin",
+    regular_origin_reference: regular.reference,
+    amt_inventory: inventory,
+    reviewed_amt: {
+      reference: "AMT-origin-return",
+      tax_year: regular.tax_year,
+      taxpayer_ssn: "111223333",
+      amti_before_atnold: -80000,
+      qbi_deduction: 0,
+      section250_deduction: 0,
+      all_amt_adjustments_and_preferences_applied: true,
+    },
+  };
+  const annual = {
+    reference: "AMT-current-review",
+    tax_year: 2025,
+    taxpayer_ssn: "111223333",
+    form6251_reference: "AMT-current-return",
+    before_all_atnold: true,
+    tentative_depletion_refigured_with_zero_atnold: true,
+    reviewed_form1040: {
+      reference: "projected-current-1040",
+      tax_year: 2025,
+      taxpayer_ssn: "111223333",
+      line11b_agi: senior ? 29000 : 22600,
+      line14_deductions: senior ? 23750 : 15750,
+      schedule1a_line37_senior_deduction: senior ? 6000 : 0,
+    },
+    components: form172Amt2025TentativeLines.map((line) => ({
+      line,
+      reference: `AMT-current-${line}`,
+      amount: line === "1b"
+        ? senior ? 11250 : 6850
+        : line === "2a"
+        ? senior ? 17750 : 15750
+        : line === "2e"
+        ? senior ? 21000 : 27400
+        : 0,
+    })),
+  };
+  const documents = [
+    f.documents[0],
+    ...[review, annual].map((v) => ({
+      reference: v.reference,
+      bytes: new TextEncoder().encode(JSON.stringify(v)),
+    })),
+  ];
+  const claims = await Promise.all(
+    documents.map(async (d) => ({
+      reference: d.reference,
+      sha256: await sha(d.bytes),
+    })),
+  );
+  const binding = {
+    regular_origin: claims[0],
+    amt_origin: claims[1],
+    annual: claims[2],
+    origin_tax_year: regular.tax_year,
+    application_tax_year: 2025,
+    taxpayer_ssn: "111223333",
+  };
+  return { documents, binding, annual };
+}
+Deno.test("Form172 retained independent AMT review matches ordinary mixed and senior tentative graph", async () => {
+  for (
+    const [f, senior] of [[await fixture(), false], [
+      await fixture(true),
+      false,
+    ], [await seniorFixture(), true]] as const
+  ) {
+    const a = await amtSource(f, senior);
+    const r = await stageForm172AmtProjectedReturn(
+      f.inputs,
+      f.binding,
+      f.documents,
+      a.binding,
+      a.documents,
+    );
+    assertEquals(r.currentAmtTentativeGraphReconciled, true);
+    assertEquals(r.independent_amt_review.originAmtNol, 80000);
+    assertEquals(r.independent_amt_review.tentativeAmtiBeforeAtnold, 50000);
+    assertEquals(r.independent_amt_review.ordinary90PercentLimit, 45000);
+    assertEquals(r.calculated_tentative_amt_components["2e"], r.deduction);
+    assertEquals(r.amtNolReconciled, false);
+    assertEquals(r.filingReady, false);
+    for (const kind of ["pdf", "mef"] as const) {
+      assertThrows(
+        () => assertAttachmentCoverage(r.projected_pending, kind),
+        Error,
+        "Form 172",
+      );
+    }
+  }
+});
+Deno.test("Form172 AMT graph rejects offsetting component substitutions despite an unchanged total", async () => {
+  const f = await fixture();
+  const a = await amtSource(f);
+  a.annual.components.find((c) => c.line === "2g")!.amount = 100;
+  a.annual.components.find((c) => c.line === "2l")!.amount = -100;
+  const bytes = new TextEncoder().encode(JSON.stringify(a.annual));
+  a.documents[2].bytes = bytes;
+  a.binding.annual.sha256 = await sha(bytes);
+  await assertRejects(
+    () =>
+      stageForm172AmtProjectedReturn(
+        f.inputs,
+        f.binding,
+        f.documents,
+        a.binding,
+        a.documents,
+      ),
+    Error,
+    "line2g differs",
+  );
+});
+Deno.test("Form172 AMT graph rejects internally consistent Form1040 operands differing from actual replay", async () => {
+  const f = await fixture();
+  const a = await amtSource(f);
+  a.annual.reviewed_form1040.line11b_agi++;
+  a.annual.reviewed_form1040.line14_deductions++;
+  const bytes = new TextEncoder().encode(JSON.stringify(a.annual));
+  a.documents[2].bytes = bytes;
+  a.binding.annual.sha256 = await sha(bytes);
+  await assertRejects(
+    () =>
+      stageForm172AmtProjectedReturn(
+        f.inputs,
+        f.binding,
+        f.documents,
+        a.binding,
+        a.documents,
+      ),
+    Error,
+    "AGI differs",
+  );
+});
+Deno.test("Form172 AMT graph requires the identical retained regular origin in both package sets", async () => {
+  const f = await fixture();
+  const a = await amtSource(f);
+  const changed = JSON.parse(new TextDecoder().decode(a.documents[0].bytes));
+  changed.limitations_review.reference = "different-valid-review";
+  const bytes = new TextEncoder().encode(JSON.stringify(changed));
+  a.documents[0] = { reference: changed.reference, bytes };
+  a.binding.regular_origin.sha256 = await sha(bytes);
+  await assertRejects(
+    () =>
+      stageForm172AmtProjectedReturn(
+        f.inputs,
+        f.binding,
+        f.documents,
+        a.binding,
+        a.documents,
+      ),
+    Error,
+    "identical loss-year source",
+  );
+});
+Deno.test("Form172 AMT composition owns both bindings all source bytes and public inputs before await", async () => {
+  const f = await fixture();
+  const a = await amtSource(f);
+  const pending = stageForm172AmtProjectedReturn(
+    f.inputs,
+    f.binding,
+    f.documents,
+    a.binding,
+    a.documents,
+  );
+  f.inputs.w2 = [];
+  f.binding.origin.sha256 = "0".repeat(64);
+  a.binding.annual.sha256 = "0".repeat(64);
+  for (const d of [...f.documents, ...a.documents]) d.bytes.fill(32);
+  const r = await pending;
+  assertEquals(r.projected_form1040.line1a_wages, 50000);
+  assertEquals(r.independent_amt_review.tentativeAmtiBeforeAtnold, 50000);
+  assertEquals(r.currentAmtTentativeGraphReconciled, true);
+});
