@@ -38,7 +38,7 @@ export function calculateForm172HistoricalAmtCap(raw: unknown) {
       v.annual_review,
     );
     if (
-      annual.applicationYear < 2013 || annual.applicationYear > 2017 ||
+      annual.applicationYear < 2010 || annual.applicationYear > 2017 ||
       annual.originYear >= 2018
     ) {
       throw new Error(

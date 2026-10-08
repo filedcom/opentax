@@ -26,7 +26,7 @@ export const form172AmtTentativeLines = [
   "2t",
   "3",
 ] as const;
-/** 2013–2017 printed lines1–27, excluding ATNOLD line11. In 2017 line2
+/** 2010–2017 printed lines1–27, excluding ATNOLD line11. In 2017 line2
  * is reserved and must be explicit zero. */
 export const form172AmtLegacyTentativeLines = [
   "1",
@@ -67,7 +67,7 @@ const signedDollars = z.number().int().min(-1_000_000_000).max(1_000_000_000);
 const positiveDollars = z.number().int().min(0).max(1_000_000_000);
 export const form172AmtAnnualReviewSchema = z.object({
   reference: ref,
-  tax_year: z.number().int().min(2013).max(2025),
+  tax_year: z.number().int().min(2010).max(2025),
   taxpayer_ssn: z.string().regex(/^\d{9}$/),
   spouse_ssn: z.string().regex(/^\d{9}$/).optional(),
   form6251_reference: ref,
@@ -181,6 +181,9 @@ export function calculateForm172AmtAnnualLimit(
     throw new Error(
       "AMT refund subtraction and regular NOL addback signs conflict",
     );
+  }
+  if ([2011, 2012].includes(v.tax_year) && lines.get("6") !== 0) {
+    throw new Error("2011–2012 Form6251 reserved line6 must be zero");
   }
   if (v.tax_year === 2017 && lines.get("2") !== 0) {
     throw new Error("2017 Form6251 reserved line2 must be zero");

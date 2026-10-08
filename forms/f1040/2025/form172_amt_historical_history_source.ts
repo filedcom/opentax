@@ -10,8 +10,8 @@ const bindingSchema = z.object({
     reference: z.string().trim().min(1),
     sha256: z.string().regex(/^[a-f0-9]{64}$/),
   }).strict(),
-  start_tax_year: z.number().int().min(2013).max(2017),
-  end_tax_year: z.number().int().min(2013).max(2017),
+  start_tax_year: z.number().int().min(2010).max(2017),
+  end_tax_year: z.number().int().min(2010).max(2017),
   taxpayer_ssn: z.string().regex(/^\d{9}$/),
   spouse_ssn: z.string().regex(/^\d{9}$/).optional(),
 }).strict().refine((v) => v.end_tax_year >= v.start_tax_year, {

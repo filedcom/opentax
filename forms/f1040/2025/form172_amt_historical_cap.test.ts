@@ -818,10 +818,10 @@ Deno.test("Historical AMT absorption floors shrinking vintage bases and rejects 
   );
 });
 
-function historyFixture() {
+function historyFixture(startYear = 2014) {
   const applications = [[200, 100], [110, 90], [20, 80]].map(
     (opening, index) => {
-      const year = 2014 + index;
+      const year = startYear + index;
       const f = fixture();
       f.reference = `cap-${year}`;
       f.annual_review.tax_year = year;
@@ -852,14 +852,14 @@ function historyFixture() {
   );
   return {
     reference: "historical-span",
-    start_year: 2014,
-    end_year: 2016,
+    start_year: startYear,
+    end_year: startYear + 2,
     taxpayer_ssn: "111223333",
     entry_reviews: [200, 100].map((opening, index) => ({
       reference: `entry-${index}`,
       origin_year: 2008 + index,
       loss_reference: applications[0].cap_workpaper.losses[index].reference,
-      application_year: 2014,
+      application_year: startYear,
       reviewed_opening: opening,
     })),
     annual_applications: applications,
@@ -1191,4 +1191,92 @@ Deno.test("Historical AMT retained history snapshots caller binding and every by
   assertEquals(r.review_package_manifest[0].sha256, digest);
   assertEquals(r.endYear, 2016);
   assertEquals(r.taxpayerSsn, "111223333");
+});
+
+Deno.test("Historical AMT history source covers2010–2012 and rejects refiguring a reserved line", async () => {
+  const history = historyFixture(2010);
+  const bytes = new TextEncoder().encode(JSON.stringify(history));
+  const binding = {
+    history: {
+      reference: history.reference,
+      sha256: await historyDigest(bytes),
+    },
+    start_tax_year: 2010,
+    end_tax_year: 2012,
+    taxpayer_ssn: "111223333",
+  };
+  const r = await stageForm172HistoricalAmtHistorySource(binding, [{
+    reference: history.reference,
+    bytes,
+  }]);
+  assertEquals(r.startYear, 2010);
+  assertEquals(r.endYear, 2012);
+  assertEquals(r.reviewedEndingBalances, [{ originYear: 2008, amount: 0 }, {
+    originYear: 2009,
+    amount: 0,
+  }]);
+  const row = history.annual_applications[1].vintage_reviews.vintages[0];
+  row.modified_review.components.find((c) => c.line === "6")!.refigured_amount =
+    -1;
+  assertThrows(
+    () => calculateForm172HistoricalAmtHistory(history),
+    Error,
+    "reserved lines",
+  );
+});
+
+Deno.test("Historical AMT history source retains all eight2010–2017 years including exhausted vintages", async () => {
+  const history = historyFixture(2010);
+  history.end_year = 2017;
+  const template = history.annual_applications[2];
+  for (let year = 2013; year <= 2017; year++) {
+    const row = structuredClone(template);
+    row.application_year = year;
+    const a = row.cap_workpaper.annual_review;
+    row.cap_workpaper.reference = `cap-${year}`;
+    a.tax_year = year;
+    a.reference = `annual-${year}`;
+    a.form6251_reference = `form6251-${year}`;
+    a.section199_deduction.reference = `${year}-dpad`;
+    a.components.forEach((c) => {
+      c.reference = `${year}-line-${c.line}`;
+    });
+    row.cap_workpaper.losses.forEach((loss) => {
+      loss.reviewed_opening_amt_nol = 0;
+    });
+    const v = row.vintage_reviews;
+    v.reference = `vintage-context-${year}`;
+    v.application_tax_year = year;
+    v.vintages[1].earlier_nol_deductions[0].amount = 0;
+    v.vintages.forEach((context, index) => {
+      const m = context.modified_review;
+      m.reference = `${year}-modified-${index}`;
+      m.tax_year = year;
+      m.annual_reference = a.reference;
+      m.section199.original_reference = a.section199_deduction.reference;
+      m.section199.refigured_reference = `${year}-${index}-modified-dpad`;
+      m.components.forEach((c) => {
+        c.original_reference = `${year}-line-${c.line}`;
+        c.refigured_reference = `${year}-${index}-modified-${c.line}`;
+      });
+    });
+    history.annual_applications.push(row);
+  }
+  const bytes = new TextEncoder().encode(JSON.stringify(history));
+  const r = await stageForm172HistoricalAmtHistorySource({
+    history: {
+      reference: history.reference,
+      sha256: await historyDigest(bytes),
+    },
+    start_tax_year: 2010,
+    end_tax_year: 2017,
+    taxpayer_ssn: "111223333",
+  }, [{ reference: history.reference, bytes }]);
+  assertEquals(r.reviewedAnnualApplications.length, 8);
+  assertEquals(
+    r.reviewedAnnualApplications.slice(3).map((a) => a.totalReviewedAbsorbed),
+    [0, 0, 0, 0, 0],
+  );
+  assertEquals(r.completeCarryHistoryVerified, false);
+  assertEquals(r.filingReady, false);
 });

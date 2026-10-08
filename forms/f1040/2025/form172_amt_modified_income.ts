@@ -11,7 +11,7 @@ const signed = z.number().int().min(-1_000_000_000).max(1_000_000_000);
 const reviewSchema = z.object({
   reference: ref,
   annual_reference: ref,
-  tax_year: z.number().int().min(2013).max(2017),
+  tax_year: z.number().int().min(2010).max(2017),
   taxpayer_ssn: z.string().regex(/^\d{9}$/),
   spouse_ssn: z.string().regex(/^\d{9}$/).optional(),
   filing_status: z.enum([
@@ -144,7 +144,9 @@ export function calculateForm172HistoricalAmtModifiedIncome(
   }
   if (
     lines.get("10")!.refigured_amount !== original.get("10")!.amount ||
-    (v.tax_year === 2017 && lines.get("2")!.refigured_amount !== 0)
+    (v.tax_year === 2017 && lines.get("2")!.refigured_amount !== 0) ||
+    ([2011, 2012].includes(v.tax_year) &&
+      lines.get("6")!.refigured_amount !== 0)
   ) {
     throw new Error(
       "AMT modified income must retain regular NOL addback and reserved lines",

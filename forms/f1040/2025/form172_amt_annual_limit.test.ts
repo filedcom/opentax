@@ -274,7 +274,7 @@ function legacyAnnual(year = 2016) {
   };
 }
 Deno.test("Form172 historical annual cap restores separately reviewed section199 after tentative AMTI", () => {
-  for (const year of [2013, 2014, 2015, 2016, 2017]) {
+  for (const year of [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017]) {
     const r = calculateForm172AmtAnnualLimit(
       origin(),
       amt(),
@@ -359,5 +359,28 @@ Deno.test("Form172 historical cap floors only after section199 restoration", () 
   assertEquals(
     calculateForm172AmtAnnualLimit(origin(), amt(), a).ordinary90PercentLimit,
     0,
+  );
+});
+
+Deno.test("Form172 early annual layouts distinguish ScheduleL2010 from reserved2011 and2012 line6", () => {
+  const a = legacyAnnual(2010);
+  a.components.find((c) => c.line === "6")!.amount = -1000;
+  assertEquals(
+    calculateForm172AmtAnnualLimit(origin(), amt(), a).ordinary90PercentLimit,
+    91800,
+  );
+  for (const year of [2011, 2012]) {
+    assertThrows(
+      () =>
+        calculateForm172AmtAnnualLimit(origin(), amt(), {
+          ...a,
+          tax_year: year,
+        }),
+      Error,
+      "reserved line6",
+    );
+  }
+  assertThrows(() =>
+    calculateForm172AmtAnnualLimit(origin(), amt(), { ...a, tax_year: 2009 })
   );
 });
