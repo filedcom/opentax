@@ -4551,3 +4551,42 @@ Private observation: `ats-status-20261008T014203Z-v1/observation.json`.
 Session 76705 was re-polled and remains live; its full result is pending.
 Main 52 unchecked rows and all 42 unworked future rows remain unchanged.
 No tests, page views, source authentication or IRS acknowledgments are added.
+
+
+### October 8 — integrated filing/ledger full regression verified
+
+The serial staged full run on `8c49c01f401a8a64d3d4d8d21de719f5efd57f6c`
+completed **12,388 passed / 0 failed / 0 ignored**, with Deno reporting
+122m41s. Runner timestamps: 00:59:35.378522–03:02:54.659550 UTC. Command:
+`PATH=/tmp/opentax-poppler-env/bin:$PATH DENO_V8_FLAGS=--max-old-space-size=8192 deno task test`.
+Tool versions observed during this run at 01:23:25 UTC: Deno 2.9.4,
+V8 15.0.245.2-rusty, TypeScript 6.0.3, Poppler 26.09.0 and libxml 2.9.13;
+private `staged-full-terminal-verifier-20261008-v1/tool-versions.json`.
+
+The final tool observation was truncated and session 76705 is now unavailable.
+Terminal proof therefore uses the retained runner's `subprocess.wait()` exit
+code 0, completed status and independently verified full-log digest/summary;
+it does not claim a freshly observed tool-handle exit. The Deno summary omits
+its zero ignored count, and no individual ignored or failed outcomes occur in
+the complete retained log. The original v1 verifier remains preserved; v2
+handles Deno's optional ignored count and records this evidence limitation.
+
+Private `combined-current-loss-ledger-integration-20261008-v1/` retains:
+
+- `full.log`: SHA-256 `f497d01e60e11f8a0f92cd13667fe9b39a2afa497c2e8a931875a631cb005b5e`.
+- `full.status.json`: SHA-256 `e51a268697f26caf8f5036b23e7caf04319028998ba19a3230d18ec5044a0331`.
+- `runtime-at-combination.json`: SHA-256 `32b1ffc65477edb9599a9b358c125e1f98aee24a32a51531fd88446530a270a3`.
+
+Private `staged-full-terminal-verifier-20261008-v2/terminal-audit.json`,
+observed 03:05:28 UTC, independently verifies all 2,631 runtime paths and
+exact bytes against both worktrees. The staged source remained unchanged;
+root runtime integration `c123ef369da17f5df852cd20efe037f70ba11a1d` is identical.
+Both worktrees have clean tracked files before this documentation update.
+This result covers the integrated runtime without another duplicate full run.
+
+Compacted the board validation learning and updated the current Form 8582
+checkpoints. The 52 main unchecked rows remain frozen; all 42 future rows
+remain unworked. This adds no packet, page view, aggregate filing approval,
+authenticated accepted ledger, business-rule proof or IRS acknowledgment.
+The full-batch parent remains open because the phase's retained-route and
+scope decisions are incomplete. The readiness goal remains active.
