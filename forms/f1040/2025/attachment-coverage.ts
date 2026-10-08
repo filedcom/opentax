@@ -1,3 +1,4 @@
+import { projectPassiveSCorpLossCopies } from "./passive-s-corp-loss-copies.ts";
 import { reviewedOpenAccountSchema } from "../nodes/intermediate/forms/form7203/debt-note.ts";
 import { issuerIdentitySchema } from "../nodes/inputs/f8611/partnership-source.ts";
 /**
@@ -593,8 +594,14 @@ export function assertAttachmentCoverage(
       `[${exportKind.toUpperCase()}] Form 8949 QOF code Z/Y rows require the annual Form 8997 attachment; export blocked`,
     );
   }
+  const passiveLossCopies =
+    (byKey.form7203 as Record<string, unknown> | undefined)
+        ?.current_passive_s_corp_loss !== undefined
+      ? projectPassiveSCorpLossCopies(byKey)
+      : undefined;
   for (const form of MISSING_ATTACHMENTS) {
     if (!form.exportKinds.includes(exportKind)) continue;
+    if (form.pendingKey === "form7203" && passiveLossCopies) continue;
     const fields = byKey[form.pendingKey];
     if (
       fields !== null && typeof fields === "object" &&

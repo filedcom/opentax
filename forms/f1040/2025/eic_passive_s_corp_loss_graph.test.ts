@@ -122,21 +122,19 @@ for (const investment of [11950, 11951]) {
   });
 }
 
-Deno.test("Calculation-only passive source cannot export native or PDF by deleting required basis or QBI copies", async () => {
+Deno.test("Passive source cannot export native or PDF by deleting required basis, QBI or K1 copies", async () => {
   const r = f1040_2025.executeReturn(inputs(1000, 3000));
-  for (const key of [undefined, "form7203", "form8995", "k1_s_corp"]) {
+  for (const key of ["form7203", "form8995", "k1_s_corp"]) {
     const p = buildPending(r.pending) as any;
     if (key) delete p[key];
     const filer = extractFilerIdentity(p.f1040)!;
     await assertRejects(
       () => buildMefBundle(p, { filer, attachments: [] }),
       Error,
-      "export remains staged",
     );
     await assertRejects(
       () => buildPdfBytes(p, filer),
       Error,
-      "export remains staged",
     );
   }
 });

@@ -1,3 +1,4 @@
+import { projectPassiveSCorp7203Copy } from "../../passive-s-corp-loss-copies.ts";
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import {
@@ -79,6 +80,10 @@ export const scheduleEStockLoss: MefFormDescriptor<
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040se--2025.pdf",
   build(fields, context) {
+    if (fields.current_passive_s_corp_loss !== undefined) {
+      projectPassiveSCorp7203Copy(fields, context?.pending, context?.filer);
+      return "";
+    }
     return buildReviewedStockLossScheduleE(fields, context);
   },
 };

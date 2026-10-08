@@ -1,3 +1,4 @@
+import { projectPassiveSCorpLossCopies } from "./passive-s-corp-loss-copies.ts";
 import { isDeepStrictEqual } from "node:util";
 
 /** Required copies are source-driven; deleting both projections cannot erase
@@ -17,9 +18,12 @@ export function assertOwned7203RequiredCopies(
     (pending.form8995 as Record<string, unknown> | undefined)
         ?.current_passive_s_corp_loss !== undefined
   ) {
-    throw Error(
-      "Passive S-corporation loss export remains staged until finalized Schedule E, EIC, native and PDF source joins are verified",
-    );
+    if (!projectPassiveSCorpLossCopies(pending)) {
+      throw Error(
+        "Passive S-corporation loss requires its original K1, basis and qualified-loss copies",
+      );
+    }
+    return;
   }
   const k = pending.k1_s_corp as
     | { k1_s_corps?: Record<string, unknown>[] }

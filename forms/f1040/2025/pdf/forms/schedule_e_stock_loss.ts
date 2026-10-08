@@ -1,3 +1,4 @@
+import { projectPassiveSCorp7203Copy } from "../../passive-s-corp-loss-copies.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import {
@@ -86,6 +87,10 @@ export const scheduleEStockLossPdf: PdfFormDescriptor = {
   ],
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
+    if (raw.current_passive_s_corp_loss !== undefined) {
+      projectPassiveSCorp7203Copy(raw, allPending, filer);
+      return [];
+    }
     const pending = allPending ?? {};
     if (Object.keys(pending.schedule_e ?? {}).length > 0) {
       throw new Error(
