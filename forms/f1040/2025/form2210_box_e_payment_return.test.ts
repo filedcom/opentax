@@ -1,4 +1,10 @@
-import { assert, assertEquals, assertRejects } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+} from "@std/assert";
+import { stageForm2210RegularNativeDocument } from "./form2210_regular_staged_native.ts";
 import {
   stageForm2210BoxEActualWithholdingReturn,
   stageForm2210BoxEPaymentReturn,
@@ -204,6 +210,137 @@ async function actualFixture(paid_on = "2025-01-02") {
   }];
   return f;
 }
+
+const regularNativeSchema = new URL(
+  "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Common/IRS2210/IRS2210.xsd",
+  import.meta.url,
+).pathname;
+let regularNativeSchemaAvailable = false;
+try {
+  Deno.statSync(regularNativeSchema);
+  regularNativeSchemaAvailable = true;
+} catch {
+  // IRS schema bundles are private and are not distributed with the repo.
+}
+
+Deno.test({
+  name:
+    "2210 regular D/E native projection maps all represented cells and validates the retained IRS schema",
+  ignore: !regularNativeSchemaAvailable,
+}, async () => {
+  const f = await actualFixture();
+  const result = await stageForm2210RegularNativeDocument(
+    f.inputs,
+    f.ledger,
+    f.documents,
+  );
+  assertEquals(result.line19_penalty_dollars, 102);
+  assertEquals(result.current_form1040.line38_underpayment_penalty, undefined);
+  assertEquals(result.filingReady, false);
+  const xml = result.native_xml;
+  for (
+    const fragment of [
+      "<ActuallyWithheldInd>X</ActuallyWithheldInd>",
+      "<JointReturnInd>X</JointReturnInd>",
+      "<RequiredAnnualPaymentAmt>5000</RequiredAnnualPaymentAmt>",
+      "<EstimatedTaxPdAndWithheldAAmt>2000</EstimatedTaxPdAndWithheldAAmt>",
+      "<UnderpaymentAAmt>0</UnderpaymentAAmt>",
+      "<OverpaymentAAmt>750</OverpaymentAAmt>",
+      "<TaxToBeAppliedBAmt>750</TaxToBeAppliedBAmt>",
+      "<UnderpaymentBAmt>500</UnderpaymentBAmt>",
+      "<TaxesDueColumnCAmt>500</TaxesDueColumnCAmt>",
+      "<AppliedUnderpaymentCAmt>500</AppliedUnderpaymentCAmt>",
+      "<UnderpaymentCAmt>1250</UnderpaymentCAmt>",
+      "<TaxesDueColumnDAmt>1750</TaxesDueColumnDAmt>",
+      "<UnderpaymentDAmt>1250</UnderpaymentDAmt>",
+      "<TotalPenaltyAmt>102</TotalPenaltyAmt>",
+    ]
+  ) assertStringIncludes(xml, fragment);
+  const directory = await Deno.makeTempDir({ prefix: "2210-native-review-" });
+  try {
+    const file = `${directory}/document.xml`;
+    await Deno.writeTextFile(
+      file,
+      xml.replace(
+        "<IRS2210>",
+        '<IRS2210 xmlns="http://www.irs.gov/efile" documentId="Staged2210">',
+      ),
+    );
+    const validation = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", regularNativeSchema, file],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(
+      validation.code,
+      0,
+      new TextDecoder().decode(validation.stderr),
+    );
+  } finally {
+    await Deno.remove(directory, { recursive: true });
+  }
+  for (const format of ["mef", "pdf"] as const) {
+    await assertRejects(async () =>
+      assertAttachmentCoverage(
+        normalizeAllPending(f1040_2025.executeReturn(f.inputs).pending),
+        format,
+      )
+    );
+  }
+});
+
+Deno.test("2210 native penalty rounds the exact rational directly without a cent-rounding bump", async () => {
+  const f = await actualFixture();
+  f.ledger.payments.push({
+    ...f.ledger.payments[0],
+    payment_id: "small-estimate",
+    kind: "estimated_tax",
+    paid_on: "2025-06-16",
+    amount_cents: 83,
+  });
+  const result = await stageForm2210RegularNativeDocument(
+    f.inputs,
+    f.ledger,
+    f.documents,
+  );
+  // Exact $101.499555... rounds to $101. Its cent worksheet rounds to
+  // $101.50; rounding that intermediate a second time would wrongly give $102.
+  assertEquals(
+    result.actual_payment_worksheet.penalty_cents_numerator,
+    "370473376",
+  );
+  assertEquals(result.actual_payment_worksheet.computed_penalty_cents, 10150);
+  assertEquals(result.line19_penalty_dollars, 101);
+  assertStringIncludes(
+    result.native_xml,
+    "<TotalPenaltyAmt>101</TotalPenaltyAmt>",
+  );
+});
+
+Deno.test("2210 native source chain rejects detached calculated lines and unsupported balance facts", async () => {
+  const original = await actualFixture();
+  const variants = [
+    (f: typeof original) => f.ledger.filed_lines = { line19: 1 },
+    (f: typeof original) =>
+      f.ledger.payments.push({
+        ...f.ledger.payments[0],
+        payment_id: "return-balance",
+        kind: "return_balance",
+        paid_on: "2026-03-01",
+        amount_cents: 10000,
+      }),
+    (f: typeof original) => f.documents[0].bytes[0] ^= 1,
+    (f: typeof original) => f.inputs.w2[0].box2_fed_withheld += 1,
+    (f: typeof original) => f.ledger.payments[0].paid_on = "2025-12-31",
+  ];
+  for (const change of variants) {
+    const f = await actualFixture();
+    change(f);
+    await assertRejects(() =>
+      stageForm2210RegularNativeDocument(f.inputs, f.ledger, f.documents)
+    );
+  }
+});
 
 Deno.test("2210 simultaneous boxes D/E bind dated withholding to the executed return and compare methods", async () => {
   const f = await actualFixture();
