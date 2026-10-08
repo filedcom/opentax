@@ -265,3 +265,12 @@ were not reverified here. The available root packet/hash proof above does not
 reconstruct that larger historical evidence set. Locating the originals is
 recorded in future_todo only; no recovery work was performed. Existing broader
 parent requirements remain unchecked, with aggregate approval counts unchanged.
+
+
+## October8 registered-audit reconciliation
+
+The registered-document row's old taxpayer-only/authored-unrun description is superseded for the current retained-owner routes. Actual native and PDF Form8606 descriptors both replay owner inventories against the finalized source graph; scalar no-activity/prior-basis routes retain narrower source contracts. Current reviewed Roth histories/payments, conversions, annual traditional contributions/distributions and SIMPLE source requirements are described in the existing evidence above. Unsupported negative PartII line18 native representation remains guarded.
+
+Private `form8606-registered-audit-reconciliation-20261008-v1/review.json` records an independent12:29:40.287357UTC audit of the actually terminal October8 full run: exit0 at12:15:13.661328UTC, **12,722/0**, logSHA `c0dfca4bfba21c9600217a24cd7cfa02f972aaf01b64f7f879a4f6fe1c32ae3f`. It extracts **48 passed/0 failed/0 ignored across12 named Form8606 modules**, checking every declared test has an actual passing result, and verifies all **31 matching runtime paths** still equal that tested snapshot. This is retained full-run evidence, not48 newly executed tests or an exhaustive count of every cross-form Form8606 case.
+
+Selected modules cover annual traditional activity, taxpayer/spouse current-contribution timing, prior-basis distributions, first-year Roth distributions, zero-opening-basis source/owner joins, SIMPLE source clock/conflicts, native fields and node arithmetic. The retained test names/results identify the scope; a passing negative or unit test is not a positive whole-form route. Actual imports independently confirm152native/148keys and118PDF/115keys, with one descriptor per Form8606 exporter. No new PDF was generated or visually reviewed; the prior available nine-page SIMPLE packet retains its scoped evidence. Missing historical proof locations remain in future_todo and were not recovered. Source authenticity, prior acceptance, broader original parent and IRS gates remain open.
