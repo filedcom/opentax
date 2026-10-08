@@ -5,8 +5,7 @@ calculation node, before reducing Schedule 1 or AGI. A zero-valued populated
 source remains blocked at both exports. The existing export guards also reject
 any direct positive Schedule 1 line 8a amount, so an input cannot bypass the
 source node and file an unsupported deduction. Direct nonzero Form 6251 line 2f
-remains rejected. Focused cases were written but not run pending the agreed full
-batch.
+remains rejected. Focused guard cases passed in the October 8 run recorded below.
 
 A narrow 2024 nonfarm Schedule C loss-year review is now authored in
 reviewed_2024_business_loss.ts. It compares one owner's filed 2024 Form 1040,
@@ -14,7 +13,7 @@ Schedule 1, Schedule C, and Form 172 Part I, with distinct reviewed document
 references. For a single filer with no other income, no adjustments or itemized
 deductions, and zero other Form 172 adjustment lines, it replays Form 172 lines
 1, 6, 9, and 24 and derives the regular NOL entering 2025. Positive and
-source/owner/arithmetic tamper fixtures are authored but unrun. This reviewed
+source/owner/arithmetic tamper fixtures passed in that focused run. This reviewed
 record is not yet accepted by nol_carryforward; that public input and both
 exports remain fail-closed. The independent ATNOL, 2025 taxable income
 limitation, Form 6251 join, Schedule 1 deduction, and native/PDF Form 172
@@ -52,3 +51,42 @@ No asserted-capacity input, copied regular-to-AMT amount, or placeholder Form
 172 should be added. Build the per-vintage source contract and a pure
 pre-NOL/finalization calculation first. Then wire native/PDF attachments and run
 the full test, XSD/business-rule, visual PDF, and ATS gates.
+
+## October 8 — general reviewed individual loss-year Part I workpaper
+
+Isolated branch `codex/form172-loss-year-20261008` now computes regular-tax
+individual 2018–2025 loss-year workpapers from reviewed allowed items. It
+reconciles the inventory to the reviewed Form 1040 AGI and standard/itemized
+deduction, then applies business/nonbusiness capital and deduction limits,
+section 1202 restoration and prior-NOL addback. The return's year, status,
+primary/spouse identities and item ownership must match. Joint inventory
+produces a joint loss amount; it does not allocate that loss for later changes
+in marital status. QBI is outside Part I's AGI-minus-deduction base. The
+[Form 172 Part I](https://www.irs.gov/pub/irs-pdf/f172.pdf) and
+[IRS instructions](https://www.irs.gov/instructions/i172) were retained with
+URL/date/digest in private `form172-loss-year-source-20261008-v1/`.
+
+An optional reviewed Form 172 copy must match every computed Part I line;
+missing calculated cells or nonzero skipped cells reject. Source classification
+and prior loss limitations remain reviewed facts. Neither typed references
+nor consistent amounts establish issuer authenticity or filing acceptance.
+This workpaper does not prove prior utilization, carryback elections, expiry,
+section 172(b)(2) absorption, excess-business-loss carry, ATNOL, current-return
+deduction or native/PDF attachment admission. All existing NOL filing guards
+remain active. Pre-2018 origins and full historic loss/carry rules remain in
+the original task's required scope.
+
+Normal typed four-module validation passed **31/0, zero ignored** at
+06:04:35 UTC, including eleven general-source tests, the existing simple
+2024 review, public NOL rejection and attachment guards. Cases reconcile
+50,000 simple loss; wages/interest/IRA/SE deductions deriving 33,000;
+MFS capital-loss limits; mixed business capital losses; section 1202 with
+and without a Schedule D loss; prior-NOL removal; and 35,000 joint loss.
+Changed return/copy amounts, year, identity, duplicate source IDs, invalid
+exclusions and unsupported inputs reject. Private
+`form172-loss-year-focused-20261008-v3/` retains source snapshots, the
+2,660-path candidate manifest, command, terminal exit-zero status and review.
+Log SHA: `a3cb94f400f3863da3b5b3d8317373166bcf6d3cecd0dea703357d6a0d740fec`.
+Implementation commit `7d887e6b1` remains isolated while root's existing
+full regression runs unchanged on 2,658 paths. No main checkoff or aggregate
+coverage increase follows; all 47 future items remain unchanged and unworked.

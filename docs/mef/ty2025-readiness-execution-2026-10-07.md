@@ -5581,3 +5581,42 @@ prior/source records, complete owner/history branches, accepted carry
 import, packet admission, matching business rules and IRS acceptance remain
 open. No existing main TODO is proved complete by this integration; main
 board/future scope and coverage aggregates are unchanged.
+
+### October 8 — general reviewed individual loss-year Part I workpaper
+
+Isolated branch `codex/form172-loss-year-20261008` now computes regular-tax
+individual 2018–2025 loss-year workpapers from reviewed allowed items. It
+reconciles the inventory to the reviewed Form 1040 AGI and standard/itemized
+deduction, then applies business/nonbusiness capital and deduction limits,
+section 1202 restoration and prior-NOL addback. The return's year, status,
+primary/spouse identities and item ownership must match. Joint inventory
+produces a joint loss amount; it does not allocate that loss for later changes
+in marital status. QBI is outside Part I's AGI-minus-deduction base. The
+[Form 172 Part I](https://www.irs.gov/pub/irs-pdf/f172.pdf) and
+[IRS instructions](https://www.irs.gov/instructions/i172) were retained with
+URL/date/digest in private `form172-loss-year-source-20261008-v1/`.
+
+An optional reviewed Form 172 copy must match every computed Part I line;
+missing calculated cells or nonzero skipped cells reject. Source classification
+and prior loss limitations remain reviewed facts. Neither typed references
+nor consistent amounts establish issuer authenticity or filing acceptance.
+This workpaper does not prove prior utilization, carryback elections, expiry,
+section 172(b)(2) absorption, excess-business-loss carry, ATNOL, current-return
+deduction or native/PDF attachment admission. All existing NOL filing guards
+remain active. Pre-2018 origins and full historic loss/carry rules remain in
+the original task's required scope.
+
+Normal typed four-module validation passed **31/0, zero ignored** at
+06:04:35 UTC, including eleven general-source tests, the existing simple
+2024 review, public NOL rejection and attachment guards. Cases reconcile
+50,000 simple loss; wages/interest/IRA/SE deductions deriving 33,000;
+MFS capital-loss limits; mixed business capital losses; section 1202 with
+and without a Schedule D loss; prior-NOL removal; and 35,000 joint loss.
+Changed return/copy amounts, year, identity, duplicate source IDs, invalid
+exclusions and unsupported inputs reject. Private
+`form172-loss-year-focused-20261008-v3/` retains source snapshots, the
+2,660-path candidate manifest, command, terminal exit-zero status and review.
+Log SHA: `a3cb94f400f3863da3b5b3d8317373166bcf6d3cecd0dea703357d6a0d740fec`.
+Implementation commit `7d887e6b1` remains isolated while root's existing
+full regression runs unchanged on 2,658 paths. No main checkoff or aggregate
+coverage increase follows; all 47 future items remain unchanged and unworked.
