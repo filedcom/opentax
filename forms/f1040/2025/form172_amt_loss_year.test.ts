@@ -270,7 +270,10 @@ Deno.test("Form172 historical AMT origin rejects missing DPAD modern deductions 
 });
 
 import { stageForm172AmtReviewSource } from "./form172_amt_review_source.ts";
-import { form172AmtTentativeLines } from "./form172_amt_annual_limit.ts";
+import {
+  form172AmtLegacyTentativeLines,
+  form172AmtTentativeLines,
+} from "./form172_amt_annual_limit.ts";
 Deno.test("Form172 retained historical regular and independent AMT origins reproduce modern annual cap", async () => {
   const { old, alternative } = historicalSources();
   const annual = {
@@ -317,6 +320,58 @@ Deno.test("Form172 retained historical regular and independent AMT origins repro
   assertEquals(r.originAmtNol, 80000);
   assertEquals(r.tentativeAmtiBeforeAtnold, 100000);
   assertEquals(r.ordinary90PercentLimit, 90000);
+  assertEquals(r.reviewPackageBytesVerified, true);
+  assertEquals(r.amtCarryAvailabilityVerified, false);
+  assertEquals(r.filingReady, false);
+});
+
+Deno.test("Form172 retained historical regular and independent AMT origins reproduce historical annual cap with separate section199", async () => {
+  const { old, alternative } = historicalSources();
+  const annual = {
+    reference: "current-amt-review",
+    tax_year: 2016,
+    taxpayer_ssn: "111223333",
+    form6251_reference: "current-6251",
+    before_all_atnold: true,
+    tentative_depletion_refigured_with_zero_atnold: true,
+    section199_deduction: { reference: "annual-dpad", amount: 3000 },
+    components: form172AmtLegacyTentativeLines.map((line) => ({
+      line,
+      reference: `current-${line}`,
+      amount: line === "1"
+        ? 50000
+        : line === "10"
+        ? 40000
+        : line === "18"
+        ? 10000
+        : 0,
+    })),
+  };
+  const docs = [old, alternative, annual].map((v) => ({
+    reference: v.reference,
+    bytes: new TextEncoder().encode(JSON.stringify(v)),
+  }));
+  const claims = await Promise.all(
+    docs.map(async (d) => ({
+      reference: d.reference,
+      sha256: Array.from(
+        new Uint8Array(await crypto.subtle.digest("SHA-256", d.bytes)),
+        (b) => b.toString(16).padStart(2, "0"),
+      ).join(""),
+    })),
+  );
+  const r = await stageForm172AmtReviewSource({
+    regular_origin: claims[0],
+    amt_origin: claims[1],
+    annual: claims[2],
+    origin_tax_year: 2017,
+    application_tax_year: 2016,
+    taxpayer_ssn: "111223333",
+  }, docs);
+  assertEquals(r.originYear, 2017);
+  assertEquals(r.originAmtNol, 80000);
+  assertEquals(r.tentativeAmtiBeforeAtnold, 100000);
+  assertEquals(r.ordinary90PercentLimit, 92700);
   assertEquals(r.reviewPackageBytesVerified, true);
   assertEquals(r.amtCarryAvailabilityVerified, false);
   assertEquals(r.filingReady, false);

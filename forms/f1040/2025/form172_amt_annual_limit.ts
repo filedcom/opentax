@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { calculateReviewedAmtLossYear } from "./form172_amt_loss_year.ts";
 
-/** Pre-2025 tentative Form6251 lines1–3, excluding line2f. Values are signed
+/** 2018–2024 tentative Form6251 lines1–3, excluding line2f. Values are signed
  * contributions: the printed parenthetical line2b is entered negatively. */
 export const form172AmtTentativeLines = [
   "1",
@@ -26,6 +26,36 @@ export const form172AmtTentativeLines = [
   "2t",
   "3",
 ] as const;
+/** 2013–2017 printed lines1–27, excluding ATNOLD line11. In 2017 line2
+ * is reserved and must be explicit zero. */
+export const form172AmtLegacyTentativeLines = [
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16",
+  "17",
+  "18",
+  "19",
+  "20",
+  "21",
+  "22",
+  "23",
+  "24",
+  "25",
+  "26",
+  "27",
+] as const;
 /** In 2025 line1a is an intermediate deduction subtotal, not another AMTI
  * contribution. Only line1b replaces the earlier line1 in the total. */
 export const form172Amt2025TentativeLines = [
@@ -43,6 +73,8 @@ const schema = z.object({
   form6251_reference: ref,
   before_all_atnold: z.literal(true),
   tentative_depletion_refigured_with_zero_atnold: z.literal(true),
+  section199_deduction: z.object({ reference: ref, amount: positiveDollars })
+    .strict().optional(),
   reviewed_form1040: z.object({
     reference: ref,
     tax_year: z.literal(2025),
@@ -54,7 +86,11 @@ const schema = z.object({
   }).strict().optional(),
   components: z.array(
     z.object({
-      line: z.enum([...form172AmtTentativeLines, "1b"]),
+      line: z.enum([
+        ...form172AmtTentativeLines,
+        "1b",
+        ...form172AmtLegacyTentativeLines,
+      ]),
       reference: ref,
       amount: z.number().int().min(-1_000_000_000).max(1_000_000_000),
     }).strict(),
@@ -85,6 +121,8 @@ export function calculateForm172AmtAnnualLimit(
   }
   const requiredLines = v.tax_year === 2025
     ? form172Amt2025TentativeLines
+    : v.tax_year < 2018
+    ? form172AmtLegacyTentativeLines
     : form172AmtTentativeLines;
   const lines = new Map(v.components.map((c) => [c.line, c.amount]));
   if (
@@ -118,10 +156,34 @@ export function calculateForm172AmtAnnualLimit(
   } else if (v.reviewed_form1040) {
     throw new Error("2025 AMT line1 review cannot establish an earlier return");
   }
-  if (lines.get("2b")! > 0 || lines.get("2e")! < 0) {
+  const historical = v.tax_year < 2018;
+  if (
+    historical ? !v.section199_deduction : v.section199_deduction !== undefined
+  ) {
+    throw new Error("AMT annual cap needs a year-consistent section199 review");
+  }
+  if (
+    v.section199_deduction && (
+      [v.reference, v.form6251_reference].includes(
+        v.section199_deduction.reference,
+      ) ||
+      v.components.some((c) =>
+        c.reference === v.section199_deduction!.reference
+      )
+    )
+  ) throw new Error("Annual section199 addback must be separately identified");
+  if (
+    historical
+      ? lines.get("6")! > 0 || lines.get("7")! > 0 || lines.get("10")! < 0 ||
+        lines.get("25")! > 0
+      : lines.get("2b")! > 0 || lines.get("2e")! < 0 || lines.get("2s")! > 0
+  ) {
     throw new Error(
       "AMT refund subtraction and regular NOL addback signs conflict",
     );
+  }
+  if (v.tax_year === 2017 && lines.get("2") !== 0) {
+    throw new Error("2017 Form6251 reserved line2 must be zero");
   }
   const tentativeAmtiBeforeAtnold = v.components.reduce(
     (n, c) => n + c.amount,
@@ -130,8 +192,13 @@ export function calculateForm172AmtAnnualLimit(
   if (!Number.isSafeInteger(tentativeAmtiBeforeAtnold)) {
     throw new Error("AMT tentative total exceeds exact dollars");
   }
+  const section199Addback = v.section199_deduction?.amount ?? 0;
+  const ordinaryLimitBase = tentativeAmtiBeforeAtnold + section199Addback;
+  if (!Number.isSafeInteger(ordinaryLimitBase)) {
+    throw new Error("AMT annual limit base exceeds exact dollars");
+  }
   const ordinary90PercentLimit = Number(
-    (BigInt(Math.max(0, tentativeAmtiBeforeAtnold)) * 90n + 50n) / 100n,
+    (BigInt(Math.max(0, ordinaryLimitBase)) * 90n + 50n) / 100n,
   );
   return {
     originYear: origin.taxYear,
@@ -139,6 +206,8 @@ export function calculateForm172AmtAnnualLimit(
     originAmtNol: origin.amtNol,
     ...(form6251Line1a === undefined ? {} : { form6251Line1a }),
     tentativeAmtiBeforeAtnold,
+    section199Addback,
+    ordinaryLimitBase,
     ordinary90PercentLimit,
     amtAnnualLimitWorkpaperArithmeticReconciled: true as const,
     section172AnnualLimitReconciled: false as const,

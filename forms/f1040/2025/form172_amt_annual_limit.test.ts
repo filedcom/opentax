@@ -1,6 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateForm172AmtAnnualLimit,
+  form172AmtLegacyTentativeLines,
   form172AmtTentativeLines,
 } from "./form172_amt_annual_limit.ts";
 function origin() {
@@ -252,4 +253,111 @@ Deno.test("Form172 2025 AMT rejects wrong current return operands identity and s
       })
     );
   }
+});
+
+function legacyAnnual(year = 2016) {
+  return {
+    ...annual(),
+    tax_year: year,
+    section199_deduction: { reference: "annual-dpad", amount: 3000 },
+    components: form172AmtLegacyTentativeLines.map((line) => ({
+      line,
+      reference: `legacy-${line}`,
+      amount: line === "1"
+        ? 50000
+        : line === "10"
+        ? 40000
+        : line === "18"
+        ? 10000
+        : 0,
+    })),
+  };
+}
+Deno.test("Form172 historical annual cap restores separately reviewed section199 after tentative AMTI", () => {
+  for (const year of [2013, 2014, 2015, 2016, 2017]) {
+    const r = calculateForm172AmtAnnualLimit(
+      origin(),
+      amt(),
+      legacyAnnual(year),
+    );
+    assertEquals(r.tentativeAmtiBeforeAtnold, 100000);
+    assertEquals(r.section199Addback, 3000);
+    assertEquals(r.ordinaryLimitBase, 103000);
+    assertEquals(r.ordinary90PercentLimit, 92700);
+    assertEquals(r.section172AnnualLimitReconciled, false);
+    assertEquals(r.filingReady, false);
+  }
+});
+Deno.test("Form172 historical annual preserves parenthetical deductions and medical year boundary", () => {
+  const a = legacyAnnual();
+  a.components.find((c) => c.line === "2")!.amount = 2000;
+  for (const line of ["6", "7", "25"]) {
+    a.components.find((c) => c.line === line)!.amount = -1000;
+  }
+  const r = calculateForm172AmtAnnualLimit(origin(), amt(), a);
+  assertEquals(r.tentativeAmtiBeforeAtnold, 99000);
+  assertEquals(r.ordinary90PercentLimit, 91800);
+  assertThrows(() =>
+    calculateForm172AmtAnnualLimit(origin(), amt(), { ...a, tax_year: 2017 })
+  );
+});
+Deno.test("Form172 historical annual cap rejects wrong layout omitted ATNOLD and reversed parentheticals", () => {
+  const a = legacyAnnual();
+  for (
+    const components of [annual().components, a.components.slice(1), [
+      ...a.components,
+      { line: "11", reference: "atnold", amount: -1000 },
+    ], [...a.components.slice(1), a.components[1]]]
+  ) {
+    assertThrows(() =>
+      calculateForm172AmtAnnualLimit(origin(), amt(), { ...a, components })
+    );
+  }
+  for (const line of ["6", "7", "25", "10"]) {
+    const b = legacyAnnual();
+    b.components.find((c) => c.line === line)!.amount = line === "10" ? -1 : 1;
+    assertThrows(() => calculateForm172AmtAnnualLimit(origin(), amt(), b));
+  }
+});
+Deno.test("Form172 annual cap rejects missing duplicate and modern section199 reviews", () => {
+  const a = legacyAnnual();
+  const { section199_deduction: _, ...missing } = a;
+  assertThrows(() => calculateForm172AmtAnnualLimit(origin(), amt(), missing));
+  for (
+    const reference of [
+      a.reference,
+      a.form6251_reference,
+      a.components[0].reference,
+    ]
+  ) {
+    assertThrows(() =>
+      calculateForm172AmtAnnualLimit(origin(), amt(), {
+        ...a,
+        section199_deduction: { reference, amount: 3000 },
+      })
+    );
+  }
+  assertThrows(() =>
+    calculateForm172AmtAnnualLimit(origin(), amt(), {
+      ...annual(),
+      section199_deduction: { reference: "modern-dpad", amount: 0 },
+    })
+  );
+  const modern = annual();
+  modern.components.find((c) => c.line === "2s")!.amount = 1;
+  assertThrows(() => calculateForm172AmtAnnualLimit(origin(), amt(), modern));
+});
+Deno.test("Form172 historical cap floors only after section199 restoration", () => {
+  const a = legacyAnnual();
+  a.components.forEach((c) => c.amount = 0);
+  a.components[0].amount = -2000;
+  assertEquals(
+    calculateForm172AmtAnnualLimit(origin(), amt(), a).ordinary90PercentLimit,
+    900,
+  );
+  a.components[0].amount = -4000;
+  assertEquals(
+    calculateForm172AmtAnnualLimit(origin(), amt(), a).ordinary90PercentLimit,
+    0,
+  );
 });
