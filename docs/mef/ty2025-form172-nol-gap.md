@@ -131,3 +131,46 @@ was checked again at 06:10 UTC: ATS remains unavailable through October 13
 availability is still unconfirmed. With zero retained accepted scenarios,
 the original October 8 morning acceptance estimate remains zero; later
 acceptance probability remains unproved. Local XSD success does not change it.
+
+### October 8 — interactive Form 172 current-origin review PDFs
+
+The isolated candidate now fills the canonical December 2024 Form 172's
+three interactive pages from the same digest-bound review package as native
+Part I. Names and US/foreign address data are optional reviewed package
+facts, required for PDF generation; joint identity requires both names and
+uses the source's distinct primary/spouse SSNs. They are not independently
+authenticated filer records. All 109 canonical fields are cleared before
+writing the reviewed header and calculated Part I values. Numeric values
+are aligned right with bounded font sizing; text that cannot fit rejects.
+Skipped paper lines 16–21 stay blank on the ordinary branch, even though
+native XSD requires a zero line 21. Both Part II pages stay blank pending
+carryback refiguring. No public return join, carry availability, AMT
+reconciliation, source acceptance or filing admission follows from this PDF.
+
+Normal typed six-module validation passed **46/0, zero ignored**, including
+six PDF cases and the previous source/native/guard cases. It covers the
+24-line read-order map, ordinary skips, joint foreign identity, every capital
+line, prior-NOL addback, wrong template/identity, missing names, clipping
+rejection, non-loss and asynchronous caller mutation. Private
+`form172-loss-year-pdf-focused-20261008-v1/` retains the 2,664-path candidate
+manifest, changed-source snapshots, command and exit-zero terminal proof;
+log SHA `c6b726ed21664c62e1f31f1a22cbafc11757e2353cbd4cc82d449669b57b784b`.
+
+Private `form172-loss-year-pdf-20261008-v1/` retains two constructed-source
+review artifacts in `output/pdf/`, canonical template and source/binding/XML
+files, generator, field-tree/widget/AP audit, disk replay, renders and visual
+review. Ordinary loss is **50,000** (25 populated fields); the joint capital
+loss with section 1202 and prior NOL is **34,000** (34 populated fields).
+Each PDF has **3 pages, 109 canonical fields, 109 matching widgets and 109
+nonempty appearance streams**; both remain interactive. All six pages were
+rendered and viewed without clipping, overlapping values or stale fields.
+Their two companion native documents passed XSD. PDF SHAs:
+`00cbb0afebb9260ca72c06e00f540875839c9521009febbcf296549e91288a9c`
+and `01cd8c2f790ca554b565f280a0fa9b0eebe506437d3d8b5b0ecd6b98c517752c`.
+
+Implementation `95cdbfd89` remains isolated after the two earlier Form 172
+commits. Root's full regression remains live and its 2,658 runtime paths
+remain unchanged. Part II, historical carries, statutory absorption,
+2025 deduction/AMT joins and accepted source/packet evidence remain open
+under the existing task. No main checkoff or aggregate increase follows;
+the entire 47-item future section remains unchanged and unworked.
