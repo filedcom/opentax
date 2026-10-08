@@ -9,11 +9,11 @@ issuer authenticity, a complete filing route or IRS acceptance.
 
 | Requirement | Current evidence and boundary |
 | --- | --- |
-| Activity IDs, prior-character transcription, allocation, worksheet overflow | Root includes the previously isolated implementation through `25fefcab7` and later current-loss graph/worksheet components. The earlier fixed-source full regression passed 12,266/0 on `df26ee299`; a newer root regression is running. Entered 2024 filed-record transcription is available, but accepted-return authentication is unproved. |
-| Current operating and ordinary loss filing joins | Isolated `f73ff2d68`: 126/0 focused checks, five complete locally XSD-valid packets and 57 page records covered by five newly viewed images and 52 exact matches to reviewed images. Schedule E, Form 4835/4797, Schedule 1/1040, Form 8582, EIC threshold and QBI are joined for the retained source cases. This revision is not integrated into root and does not cover all owners/sources. |
-| Current loss character ledger | Isolated `dd50e389b`: 89/0 ledger/native/graph checks preserve operating and ordinary loss characters and reconcile synthetic opening contracts. Later focused ledger/storage checks cover additional changes; the earlier result does not certify their whole scope. |
-| Durable storage | Isolated `33ab01d97`: 39/0 checks retain private source bytes, native Form 8582 XML, hashes and loss balances in independent synced snapshots. Status remains `acceptance-unverified`; no accepted-filing promotion or CLI import is enabled. |
-| First-year current-sale ledger | Isolated `b82c1bbc4`: 29/0 checks retain existing other-passive/active retained sales and the other-passive entire overall-gain source. Retained operating loss 3,000 remains in Part VIII character; the tested entire gain closes with zero PAL. Isolated `c2e5dafec` adds 5/0 full-packet checks: three XSD-valid ten-page packets, 19 unique page images viewed and 11 exact matches. Required FPA/EDPA PDF identification is missing (future 40, unworked), so complete instruction parity remains unproved. The active first-year entire-gain graph remains guarded (future 39, unworked). |
+| Activity IDs, prior-character transcription, allocation, worksheet overflow | Root includes the previously isolated implementation through `25fefcab7` and later current-loss graph/worksheet components. The newer fixed-source root full regression passed 12,377/0 with no ignored tests on `690add376`. Filing/ledger changes are now integrated at `c123ef369`; all 2,631 runtime paths match staged `8c49c01f4`, whose full regression remains pending. Entered 2024 filed-record transcription is available, but accepted-return authentication is unproved. |
+| Current operating and ordinary loss filing joins | Integrated `d45dce163` (original `f73ff2d68`): 126/0 focused checks, five complete locally XSD-valid packets and 57 page records covered by five newly viewed images and 52 exact matches to reviewed images. Schedule E, Form 4835/4797, Schedule 1/1040, Form 8582, EIC threshold and QBI are joined for the retained source cases. The retained evidence covers these source cases; wider owner/source coverage remains open. |
+| Current loss character ledger | Integrated `f140b32b7` (original `dd50e389b`): 89/0 ledger/native/graph checks preserve operating and ordinary loss characters and reconcile synthetic opening contracts. Later focused ledger/storage checks cover additional changes; the earlier result does not certify their whole scope. |
+| Durable storage | Integrated `57ee3ead8` (original `33ab01d97`): 39/0 checks retain private source bytes, native Form 8582 XML, hashes and loss balances in independent synced snapshots. Status remains `acceptance-unverified`; no accepted-filing promotion or CLI import is enabled. |
+| First-year current-sale ledger | Integrated `4a123c554` (original `b82c1bbc4`): 29/0 checks retain existing other-passive/active retained sales and the other-passive entire overall-gain source. Retained operating loss 3,000 remains in Part VIII character; the tested entire gain closes with zero PAL. Integrated `c123ef369` (original `c2e5dafec`) adds 5/0 full-packet checks: three XSD-valid ten-page packets, 19 unique page images viewed and 11 exact matches. Required FPA/EDPA PDF identification is missing (future 40, unworked), so complete instruction parity remains unproved. The active first-year entire-gain graph remains guarded (future 39, unworked). |
 | Next-year import | Source-reconciled synthetic opening contracts preserve activity and reporting character. Authenticated acceptance, durable accepted-ledger promotion and a production 2026 engine import remain unproved. |
 | Full completion | Main Form 8582 requirement remains unchecked. Joint name-header parity (future 35), active first-year entire-gain graph (future 39), broader source/owner/disposition combinations, authentic source/acceptance records, matching business rules and IRS ATS remain open. Future items are unworked. |
 
@@ -22,8 +22,11 @@ The October 8 private `form8582-evidence-index-20261008-v1/reconciliation.json`
 rechecks the five packet XML/PDF/pending hashes, all 57 rendered-image hashes,
 52 matching-image hashes and the filing/storage/first-year-ledger commit
 bindings. This adds no new packet, test or reviewed-page count. The aggregate
-75 bounded filing passes/267 packets/2,706 pages remains unchanged pending
-integration and corresponding reconciliation.
+75 bounded filing passes/267 packets/2,706 pages remains unchanged. The
+combined staged focus passed 308/0 with eight XSD-valid packet replays and 87
+exact reviewed-image matches, without adding new page views. Root integration
+is recorded in private `root-current-loss-ledger-integration-20261008-v1/`
+preflight and post-integration audits; the staged full gate remains pending.
 
 
 ## Active first-year retained Part II sale above phaseout (written, unrun)

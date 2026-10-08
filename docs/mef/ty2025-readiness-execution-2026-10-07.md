@@ -4504,3 +4504,36 @@ remain frozen, and all 42 future rows remain unworked. No new packet, viewed
 page, filing approval or IRS acknowledgment is counted. Broader source,
 business-rule, accepted-ledger/import, scope and ATS requirements remain open,
 so neither the full-batch parent TODO nor filing readiness is checked off.
+
+
+### October 8 — filing and ledger source integrated; full gate pending
+
+After the prior root full run terminated successfully, integrated the six
+reviewed filing/ledger commits into the local working branch. This advances
+the earlier sequencing: source integration now proceeds while the independent
+staged worktree remains frozen under its live full run. It does not promote
+the pending run to a pass or approve release readiness.
+
+| Staged commit | Root commit |
+| --- | --- |
+| `58b40353a` | `a9ab5c742` |
+| `a4441bc17` | `f140b32b7` |
+| `ac7f15951` | `d45dce163` |
+| `e60b0dd57` | `57ee3ead8` |
+| `5b13d5ff7` | `4a123c554` |
+| `8c49c01f4` | `c123ef369` |
+
+Private `root-current-loss-ledger-integration-20261008-v1/preflight.json`
+records the prior root HEAD, six commits and 20 runtime paths to integrate.
+Its `post-integration.json`, observed at 01:01:51.672963 UTC, confirms identical
+runtime path sets and exact bytes for all 2,631 paths between root
+`c123ef369da17f5df852cd20efe037f70ba11a1d` and staged
+`8c49c01f401a8a64d3d4d8d21de719f5efd57f6c`. The staged source stayed unchanged.
+Session 76705 remains live; its full result is pending. The prior 12,377/0
+root full result covers `690add376`, not this newer runtime. Retain both
+runtime snapshots until the staged terminal result can be independently checked.
+
+Updated only the compacted validation learning and current Form 8582 evidence
+status. Main 52 unchecked rows remain frozen; all 42 future rows remain
+unworked. Integration introduces no new tests run, viewed pages, aggregate
+filing approvals or IRS acknowledgments. No PR has been opened.
