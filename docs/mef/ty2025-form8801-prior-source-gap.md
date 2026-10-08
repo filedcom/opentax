@@ -501,3 +501,48 @@ status-change allocations, the other source/calculation requirements,
 public packet integration, matching business rules and ATS acceptance remain
 open. No main checkoff or aggregate coverage increase follows. All future
 items stay unchanged and unworked.
+
+### October 8 — reviewed MTCNOL vintage-history calculation
+
+Isolated candidate `947ed15df` adds per-vintage minimum-tax-credit NOL history
+arithmetic. Reviewed records name independent exclusion-only origin losses,
+owner/year, carry direction, eligibility-workpaper reference and chronological
+prior usage. The calculator derives origin loss less prior uses, then sums
+amounts carrying to 2024 for Form 8801 line 3. The reviewed aggregate must
+match that sum. It rejects duplicate origin/owner or item records, reversed
+carry direction, a 2024 origin substituted for a carry to its own year,
+nonchronological/ineligible use years, overused losses, conflicting totals
+and owners outside the reviewed 2024 filer. A reviewed prior-joint spouse
+can own a vintage; legal source/owner allocation is not authenticated.
+
+The [Form 8801 line 3 instructions](https://www.irs.gov/instructions/i8801)
+require separate exclusion-only section 172(d) losses and carryovers/carrybacks
+to 2024. These origin amounts and legal carry eligibility/expiry remain
+reviewed inputs. Neither regular NOL nor prior Form 6251 line 2e is reused as
+MTCNOL. `mtcnolWorkpaperArithmeticReconciled` denotes depletion/aggregation
+only; origin-loss calculation, eligibility, source authenticity and acceptance
+remain false/unproved. No full section 172(d) origin refigure or accepted
+history is claimed. Legacy entered workpaper previews remain unproved.
+
+The normal typed eleven-module run passed **137/0, zero ignored**, including
+ten new vintage/depletion/year/owner/aggregate/public-return cases. The
+constructed 2019 origin 50,000 less 30,000 prior use leaves 20,000; reviewed
+2025 carryback 8,000 less 2,000 prior use leaves 6,000, producing line 3 of
+26,000. Local Form 8801 line 4 is 94,000, exclusion tax is 2,158 and net
+exclusion-only AMT zero. At current public wages 30,000, credit 1,475 and
+carry 4,625 reconcile with zero remaining income tax. A reviewed carry total
+above AMTI stops the Part I tax cells rather than inventing a same-year loss.
+Private `form8801-mtcnol-history-20261008-v1/` retains source snapshots,
+2,656-path manifest, log/status and review; log SHA
+`e1ce134e6621f8deec6b8cfe7feec325a60147da845a3507bbe1acfe33d7ff9f`.
+The previously retained 3,707 local carry record was reverified from original
+on-disk source files under this implementation without changing its bytes or
+hash `513530d62f26a5ac8a7b57f4c715ee11892ff75e500f4dbe41cb904f76ff65a5`.
+
+All twelve Form 8801 implementation commits remain isolated. Root's actual
+full-regression session is still live and all 2,637 startup runtime paths
+match. Source-derived NOL origin modifications, authenticated eligibility,
+expiry/amendment and owner history, accepted carry import, other source and
+calculation branches, packet integration, matching business rules and IRS
+acceptance remain open. No main checkoff or aggregate coverage increase
+follows; all future items remain unchanged and unworked.
