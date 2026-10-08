@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  calculateForm8801Mtftce,
+  form8801MtftceSchema,
+} from "./form8801_mtftce.ts";
 
 // Calculation workpapers only. References and entered amounts do not prove
 // issuer authenticity, a filed/accepted prior return, or finalized return joins.
@@ -111,7 +115,19 @@ export const form8801CalculationSchema = z.object({
   minimum_tax_foreign_credit_exclusion_workpaper: workpaper.extend({
     method: z.enum(["without_form1116_election", "refigured_exclusion_items"])
       .optional(),
-  }).strict(),
+    refiguring: form8801MtftceSchema.optional(),
+  }).strict().superRefine((v, c) => {
+    if (
+      (v.method === "refigured_exclusion_items") !==
+        (v.refiguring !== undefined)
+    ) {
+      c.addIssue({
+        code: "custom",
+        message:
+          "Refigured MTFTCE requires its category workpaper; other methods cannot use it",
+      });
+    }
+  }),
   prior_credit_carryforward: workpaper,
   prior_unallowed_qualified_electric_vehicle_credit: workpaper,
   foreign_earned_income: z.object({
@@ -160,8 +176,8 @@ const rate = (value: number, percent: number) => {
 const positive = (v: number) => Math.max(0, v);
 
 /** TY2025 Form 8801 individual-filer line arithmetic from reviewed workpapers.
- * This is not a filing API. MTCNOL/MTFTCE and AMT capital-basis workpapers must
- * be independently resolved; supplied references do not authenticate them. */
+ * This is not a filing API. MTCNOL, MTFTCE source facts and AMT capital-basis
+ * workpapers must be independently resolved; references do not authenticate them. */
 export function calculateForm8801(input: Form8801CalculationInput) {
   const v = form8801CalculationSchema.parse(input);
   const mfs = v.prior_filing_status === "married_filing_separately";
@@ -192,6 +208,7 @@ export function calculateForm8801(input: Form8801CalculationInput) {
   }
   lines[15] = 0;
   let foreignWorksheet: Record<string, number> | undefined;
+  let mtftceRefiguring: ReturnType<typeof calculateForm8801Mtftce> | undefined;
   if ((lines[10] ?? 0) > 0) {
     const fe = v.foreign_earned_income;
     const stacking = fe
@@ -264,7 +281,20 @@ export function calculateForm8801(input: Form8801CalculationInput) {
       tax = foreignWorksheet.line6;
     }
     lines[11] = tax;
-    lines[12] = v.minimum_tax_foreign_credit_exclusion_workpaper.amount;
+    const mtftce = v.minimum_tax_foreign_credit_exclusion_workpaper;
+    if (mtftce.method === "refigured_exclusion_items") {
+      mtftceRefiguring = calculateForm8801Mtftce(mtftce.refiguring, {
+        taxpayer_ssn: v.taxpayer_ssn,
+        prior_filing_status: v.prior_filing_status,
+        lines,
+      });
+      if (mtftce.amount !== mtftceRefiguring.form8801_line12) {
+        throw new Error(
+          "MTFTCE entered total differs from category calculation",
+        );
+      }
+    }
+    lines[12] = mtftceRefiguring?.form8801_line12 ?? mtftce.amount;
     lines[13] = tax - lines[12];
     lines[14] = p.line10;
     lines[15] = positive(lines[13] - lines[14]);
@@ -299,6 +329,8 @@ export function calculateForm8801(input: Form8801CalculationInput) {
   return {
     lines,
     foreignWorksheet,
+    mtftceRefiguring,
+    mtftceWorkpaperArithmeticReconciled: mtftceRefiguring !== undefined,
     fileRequired,
     schedule3_line6b: lines[25] ?? 0,
     carryforward_to_2026: lines[26] ?? 0,

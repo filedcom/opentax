@@ -426,12 +426,11 @@ Deno.test("8801 ordinary prior copy does not promote Schedule 3 foreign credit t
       method: "refigured_exclusion_items",
     },
   };
-  const stillUnproved = await inspectForm8801PriorReturnBytes(
-    general,
-    p.binding,
-    p.documents,
+  await assertRejects(
+    () => inspectForm8801PriorReturnBytes(general, p.binding, p.documents),
+    Error,
+    "Refigured MTFTCE requires",
   );
-  assertEquals(stillUnproved.minimumTaxForeignCreditAmountReconciled, false);
 });
 
 Deno.test("8801 reviewed zero elected MTFTCE reconciles absent Schedule 3 only to zero", async () => {
