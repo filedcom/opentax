@@ -1,3 +1,4 @@
+import { projectPassiveSCorpLossCopies } from "./passive-s-corp-loss-copies.ts";
 import { assertCurrentPassivePropertyReturn } from "./current_passive_property_source.ts";
 import { assertCurrentPassiveLine10Return } from "./current_passive_line10_source.ts";
 import { form8582 as nativeForm8582 } from "./mef/forms/f8582.ts";
@@ -160,6 +161,9 @@ export function assertEicSource(
   const sCorpItems = pending?.k1_s_corp === undefined
     ? []
     : sCorpK1InputSchema.parse(pending.k1_s_corp).k1_s_corps;
+  const passiveLossCopies = pending
+    ? projectPassiveSCorpLossCopies(pending)
+    : undefined;
   assertK1EicReview(partnershipItems);
   const ownedLosses = sCorpItems.filter((item) =>
     (item.box1_ordinary_business ?? 0) < 0 &&
@@ -194,15 +198,19 @@ export function assertEicSource(
     }
   }
   // A replayed materially participated S-corporation loss affects AGI, not
-  // Worksheet 1 passive losses or earned income. All other K-1 loss guards stay.
+  // Worksheet 1 passive losses or earned income. A source-replayed passive loss
+  // instead joins the actual basis/PAL/ScheduleE/QBI pool before review below.
   assertK1EicReview(
     sCorpItems.map((item) =>
-      ownedLosses.includes(item) ? { ...item, box1_ordinary_business: 0 } : item
+      ownedLosses.includes(item) ||
+        (passiveLossCopies && item.first_year_passive_loss_source !== undefined)
+        ? { ...item, box1_ordinary_business: 0 }
+        : item
     ),
   );
   if (
-    reviewedK1PassiveIncome(partnershipItems) +
-        reviewedK1PassiveIncome(sCorpItems) > 0
+    passiveLossCopies || reviewedK1PassiveIncome(partnershipItems) +
+          reviewedK1PassiveIncome(sCorpItems) > 0
   ) {
     if (
       (agiInput.pal_current_loss ?? 0) + (agiInput.pal_prior_unallowed ?? 0) >

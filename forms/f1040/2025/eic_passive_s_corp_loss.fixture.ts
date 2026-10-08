@@ -145,3 +145,46 @@ export function passiveSCorpLossReturnInputs(
   i.f1099int[0].box8 = investment - Math.max(0, income - Math.min(cash, 4000));
   return i;
 }
+
+export function passiveSCorpJointLossReturnInputs(
+  spouseOwned: boolean,
+  investment = 11950,
+) {
+  const i = passiveSCorpLossReturnInputs(1000, 3000, investment);
+  Object.assign(i.general, {
+    filing_status: "mfj",
+    spouse_first_name: "Casey",
+    spouse_last_name: "Example",
+    spouse_ssn: "444556666",
+    spouse_dob: "1985-07-01",
+    spouse_ssn_valid_for_employment: true,
+    spouse_ssn_issued_before_due_date: true,
+    spouse_tin_issued_by_due_date: true,
+    spouse_can_be_claimed_as_dependent: false,
+  });
+  i.general.eic_tax_residency_review.spouse_status_record_reference =
+    "Spouse all-year residency record";
+  i.w2[0].box1_wages = 10000;
+  const item = i.k1_s_corp[0], source = item.first_year_passive_loss_source;
+  const owner = spouseOwned ? "444556666" : "111223333";
+  for (
+    const row of [
+      source,
+      source.stock_subscription,
+      source.participation,
+      source.issued_k1,
+    ]
+  ) row.shareholder_ssn = owner;
+  source.stock_subscription.cash_payment.payer_ssn = owner;
+  source.issued_k1.shareholder_name_as_on_k1 = spouseOwned
+    ? "Casey Example"
+    : "Alex Example";
+  source.participation.spouse = {
+    status: "married_same_spouse_all_year",
+    spouse_ssn: spouseOwned ? "111223333" : "444556666",
+    spouse_participation_record_reference:
+      "Other spouse nonparticipation records",
+  };
+  item.recipient_tin = item.eic_passive_activity_review.recipient_tin = owner;
+  return i;
+}
