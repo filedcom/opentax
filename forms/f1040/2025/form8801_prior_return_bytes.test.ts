@@ -308,6 +308,163 @@ Deno.test("8801 prior-bound staging rejects caller acceptance flags and reused r
   );
 });
 
+Deno.test("8801 reviewed no-Form-1116 election binds MTFTCE to retained Schedule 3 and recomputes current credit", async () => {
+  const facts = packageFacts();
+  const review = {
+    ...facts,
+    minimum_tax_foreign_credit_exclusion_workpaper: {
+      ...facts.minimum_tax_foreign_credit_exclusion_workpaper,
+      amount: 125,
+      method: "without_form1116_election",
+    },
+  };
+  const f = await fixture(review);
+  const copy = xml.replace(
+    "</ReturnData>",
+    '<IRS1040Schedule3 documentId="PriorSchedule3"><ForeignTaxCreditAmt>125</ForeignTaxCreditAmt></IRS1040Schedule3></ReturnData>',
+  );
+  const p = await source(copy);
+  const r = await stageForm8801PriorBoundReturn(
+    f.inputs,
+    f.binding,
+    f.documents,
+    { ...p.binding, schedule3_document_id: "PriorSchedule3" },
+    p.documents,
+  );
+  assertEquals(r.minimumTaxForeignCreditAmountReconciled, true);
+  assertEquals(r.lines[12], 125);
+  assertEquals(r.lines[15], 793);
+  assertEquals(r.lines[25], 5307);
+  assertEquals(r.final_schedule3.line6b_prior_year_min_tax_credit, 5307);
+  assertEquals(r.final_form1040.line22_tax_after_credits, 12560);
+  assertEquals([
+    r.priorAcceptanceVerified,
+    r.workpaperAuthenticityVerified,
+    r.filingReady,
+  ], [false, false, false]);
+});
+
+Deno.test("8801 elected MTFTCE rejects detached totals, missing Schedule 3 binding and retained Form 1116", async () => {
+  const facts = packageFacts();
+  const review = {
+    ...facts,
+    minimum_tax_foreign_credit_exclusion_workpaper: {
+      ...facts.minimum_tax_foreign_credit_exclusion_workpaper,
+      amount: 125,
+      method: "without_form1116_election",
+    },
+  };
+  const schedule3 =
+    '<IRS1040Schedule3 documentId="PriorSchedule3"><ForeignTaxCreditAmt>125</ForeignTaxCreditAmt></IRS1040Schedule3>';
+  for (
+    const suffix of [
+      schedule3.replace(">125<", ">124<"),
+      schedule3.replace(">125<", ">-125<"),
+      schedule3 + '<IRS1116 documentId="Prior1116"/>',
+      schedule3 + '<IRS1116ScheduleB documentId="Prior1116B"/>',
+      schedule3 + schedule3.replace("PriorSchedule3", "OtherSchedule3"),
+    ]
+  ) {
+    const p = await source(
+      xml.replace("</ReturnData>", suffix + "</ReturnData>"),
+    );
+    await assertRejects(() =>
+      inspectForm8801PriorReturnBytes(review, {
+        ...p.binding,
+        schedule3_document_id: "PriorSchedule3",
+      }, p.documents)
+    );
+  }
+  const p = await source(
+    xml.replace("</ReturnData>", schedule3 + "</ReturnData>"),
+  );
+  await assertRejects(
+    () => inspectForm8801PriorReturnBytes(review, p.binding, p.documents),
+    Error,
+    "binding differs",
+  );
+  const missing = await source();
+  await assertRejects(
+    () =>
+      inspectForm8801PriorReturnBytes(
+        review,
+        missing.binding,
+        missing.documents,
+      ),
+    Error,
+    "differs from prior Schedule 3",
+  );
+});
+
+Deno.test("8801 ordinary prior copy does not promote Schedule 3 foreign credit to general MTFTCE proof", async () => {
+  const p = await source(
+    xml.replace(
+      "</ReturnData>",
+      '<IRS1040Schedule3 documentId="PriorSchedule3"><ForeignTaxCreditAmt>125</ForeignTaxCreditAmt></IRS1040Schedule3></ReturnData>',
+    ),
+  );
+  const r = await inspectForm8801PriorReturnBytes(
+    packageFacts(),
+    p.binding,
+    p.documents,
+  );
+  assertEquals(r.minimumTaxForeignCreditAmountReconciled, false);
+  await assertRejects(
+    () =>
+      inspectForm8801PriorReturnBytes(packageFacts(), {
+        ...p.binding,
+        schedule3_document_id: "PriorSchedule3",
+      }, p.documents),
+    Error,
+    "requires the reviewed",
+  );
+  const facts = packageFacts();
+  const general = {
+    ...facts,
+    minimum_tax_foreign_credit_exclusion_workpaper: {
+      ...facts.minimum_tax_foreign_credit_exclusion_workpaper,
+      method: "refigured_exclusion_items",
+    },
+  };
+  const stillUnproved = await inspectForm8801PriorReturnBytes(
+    general,
+    p.binding,
+    p.documents,
+  );
+  assertEquals(stillUnproved.minimumTaxForeignCreditAmountReconciled, false);
+});
+
+Deno.test("8801 reviewed zero elected MTFTCE reconciles absent Schedule 3 only to zero", async () => {
+  const p = await source();
+  const facts = packageFacts();
+  const review = {
+    ...facts,
+    minimum_tax_foreign_credit_exclusion_workpaper: {
+      ...facts.minimum_tax_foreign_credit_exclusion_workpaper,
+      method: "without_form1116_election",
+    },
+  };
+  const r = await inspectForm8801PriorReturnBytes(
+    review,
+    p.binding,
+    p.documents,
+  );
+  assertEquals(r.minimumTaxForeignCreditAmountReconciled, true);
+  await assertRejects(() =>
+    inspectForm8801PriorReturnBytes(
+      {
+        ...review,
+        minimum_tax_foreign_credit_exclusion_workpaper: {
+          ...review.minimum_tax_foreign_credit_exclusion_workpaper,
+          method: "invented",
+        },
+      },
+      p.binding,
+      p.documents,
+    )
+  );
+});
+
 Deno.test("8801 prior-bound staging copies all review/prior facts before awaits", async () => {
   const f = await fixture();
   const p = await source();

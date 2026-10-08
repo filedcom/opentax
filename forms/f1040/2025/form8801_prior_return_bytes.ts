@@ -14,6 +14,7 @@ export const form8801PriorReturnBindingSchema = z.object({
   sha256: z.string().regex(/^[a-f0-9]{64}$/),
   form6251_document_id: documentId.optional(),
   form8801_document_id: documentId.optional(),
+  schedule3_document_id: documentId.optional(),
 }).strict();
 
 // 2024 mappings confirmed in the IRS py2025r1 stylesheets, not TY2025 XSD.
@@ -232,10 +233,48 @@ export async function inspectForm8801PriorReturnBytes(
   if (carry !== review.prior_credit_carryforward.amount) {
     throw new Error("Form 8801 prior Form 8801 carry differs");
   }
+  let minimumTaxForeignCreditAmountReconciled = false;
+  if (
+    review.minimum_tax_foreign_credit_exclusion_workpaper.method ===
+      "without_form1116_election"
+  ) {
+    if (Object.keys(data).some((key) => key.startsWith("IRS1116"))) {
+      throw new Error(
+        "Form 8801 no-Form-1116 election conflicts with retained Form 1116 documents",
+      );
+    }
+    const schedule3 = data.IRS1040Schedule3 === undefined
+      ? undefined
+      : row(data.IRS1040Schedule3, "IRS1040Schedule3");
+    if (
+      schedule3
+        ? text(schedule3, "@documentId") !== binding.schedule3_document_id
+        : binding.schedule3_document_id !== undefined
+    ) {
+      throw new Error("Form 8801 prior Schedule 3 document binding differs");
+    }
+    const foreignCredit = schedule3
+      ? dollars(schedule3, "ForeignTaxCreditAmt", true)
+      : 0;
+    if (
+      foreignCredit !==
+        review.minimum_tax_foreign_credit_exclusion_workpaper.amount
+    ) {
+      throw new Error(
+        "Form 8801 elected MTFTCE differs from prior Schedule 3 line 1",
+      );
+    }
+    minimumTaxForeignCreditAmountReconciled = true;
+  } else if (binding.schedule3_document_id !== undefined) {
+    throw new Error(
+      "Form 8801 prior Schedule 3 binding requires the reviewed no-Form-1116 election",
+    );
+  }
   return {
     review,
     prior_return_manifest: verified.manifest,
     priorForm6251AndCarryBytesReconciled: true as const,
+    minimumTaxForeignCreditAmountReconciled,
     priorReturnBytesVerified: true as const,
     priorAcceptanceVerified: false as const,
     workpaperAuthenticityVerified: false as const,

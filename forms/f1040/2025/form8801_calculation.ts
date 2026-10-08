@@ -108,7 +108,10 @@ export const form8801CalculationSchema = z.object({
     }).strict(),
   ),
   minimum_tax_credit_nol_workpaper: workpaper,
-  minimum_tax_foreign_credit_exclusion_workpaper: workpaper,
+  minimum_tax_foreign_credit_exclusion_workpaper: workpaper.extend({
+    method: z.enum(["without_form1116_election", "refigured_exclusion_items"])
+      .optional(),
+  }).strict(),
   prior_credit_carryforward: workpaper,
   prior_unallowed_qualified_electric_vehicle_credit: workpaper,
   foreign_earned_income: z.object({
