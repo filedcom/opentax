@@ -433,3 +433,167 @@ Deno.test("General MTFTCE canonical workpaper settles public Schedule 3 and Form
     "differs from category calculation",
   );
 });
+
+function distributionFixture() {
+  const f = form8801MtftceSchema.parse(fixture());
+  f.categories[0].part_i![0].line1a_distribution_workpaper = {
+    reference: "rate-band-review",
+    other_taxable_exclusion_income: 3000,
+    qualified_dividends: {
+      reference: "qd",
+      zero_rate: 1000,
+      fifteen_rate: 10000,
+      twenty_rate: 7000,
+      form4952_elected: 500,
+    },
+    capital_gain_distributions: {
+      reference: "1099div-box2a",
+      zero_rate: 2000,
+      fifteen_rate: 20000,
+      twenty_rate: 14000,
+      form4952_elected: 1000,
+    },
+    other_capital_gains_or_losses: false,
+  };
+  f.categories[0].part_i![0].line1a_refigured_exclusion_income = 35571;
+  f.categories[0].part_i![0].line3d_foreign_gross_income = 58500;
+  return f;
+}
+const preferentialContext = {
+  ...context,
+  lines: {
+    4: 320000,
+    11: 42564,
+    32: 104300,
+    38: 47025,
+    45: 52975,
+    48: 0,
+    51: 30000,
+    53: 42564,
+    54: 60952,
+  },
+};
+Deno.test("MTFTCE derives foreign dividend/distribution adjustments and retains 4952 election amounts", () => {
+  const r = calculateForm8801Mtftce(distributionFixture(), preferentialContext);
+  const col = r.categories[0].part_i![0];
+  // QD: 5,357 + 5,000 + 500. Distributions: 10,714 + 10,000 + 1,000.
+  // Add ordinary 3,000; omit zero-rate 1,000 + 2,000.
+  assertEquals([
+    col.line1a_calculated,
+    col.line7,
+    col.distribution_income_arithmetic_reconciled,
+  ], [35571, 35571, true]);
+  assertEquals(r.categories[0].lines[15], 35571);
+});
+Deno.test("MTFTCE distribution method retains all rate bands when adjustment trigger is absent", () => {
+  for (
+    const c of [context, {
+      ...preferentialContext,
+      lines: { ...preferentialContext.lines, 53: 60952 },
+    }, {
+      ...preferentialContext,
+      lines: { ...preferentialContext.lines, 32: 0 },
+    }]
+  ) {
+    const f = distributionFixture();
+    f.categories[0].part_i![0].line1a_refigured_exclusion_income = 58500;
+    assertEquals(calculateForm8801Mtftce(f, c).categories[0].lines[15], 58500);
+  }
+});
+Deno.test("MTFTCE qualified regular-tax exception skips foreign income and worldwide adjustments together", () => {
+  const f = distributionFixture();
+  f.regular_tax_adjustment_exception = {
+    reference: "qualified-regular-exception",
+    qualified: true,
+  };
+  f.categories[0].part_i![0].line1a_refigured_exclusion_income = 58500;
+  const r = calculateForm8801Mtftce(f, preferentialContext);
+  assertEquals([
+    r.categories[0].lines[15],
+    r.worldwide_income,
+    r.worldwide_worksheet,
+  ], [58500, 320000, undefined]);
+});
+Deno.test("MTFTCE distribution calculation rejects detached income, mixed methods and other capital gains", () => {
+  const f = distributionFixture();
+  f.categories[0].part_i![0].line1a_refigured_exclusion_income++;
+  assertThrows(
+    () => calculateForm8801Mtftce(f, preferentialContext),
+    Error,
+    "differs from distribution calculation",
+  );
+  f.categories[0].part_i!.push({
+    ...f.categories[0].part_i![0],
+    item_id: "second",
+    line1a_distribution_workpaper: undefined,
+  });
+  assertThrows(
+    () => calculateForm8801Mtftce(f, preferentialContext),
+    Error,
+    "every country",
+  );
+  const other = distributionFixture();
+  const raw = JSON.parse(JSON.stringify(other));
+  raw.categories[0].part_i[0].line1a_distribution_workpaper
+    .other_capital_gains_or_losses = true;
+  assertThrows(() => calculateForm8801Mtftce(raw, preferentialContext));
+});
+Deno.test("MTFTCE rate-band category rounding reconciles country columns without penny drift", () => {
+  const f = distributionFixture(), a = f.categories[0].part_i![0];
+  const zero = {
+    reference: "none",
+    zero_rate: 0,
+    fifteen_rate: 0,
+    twenty_rate: 0,
+    form4952_elected: 0,
+  };
+  a.line1a_distribution_workpaper = {
+    reference: "small",
+    other_taxable_exclusion_income: 0,
+    qualified_dividends: { ...zero, fifteen_rate: 1 },
+    capital_gain_distributions: zero,
+    other_capital_gains_or_losses: false,
+  };
+  a.line1a_refigured_exclusion_income = 1;
+  a.line3d_foreign_gross_income = 1;
+  f.categories[0].part_i!.push({
+    ...structuredClone(a),
+    item_id: "small-FR",
+    country: "FR",
+    line1a_refigured_exclusion_income: 0,
+  });
+  const r = calculateForm8801Mtftce(f, preferentialContext);
+  assertEquals(r.categories[0].part_i!.map((c) => c.line1a_calculated), [1, 0]);
+  assertEquals(r.categories[0].lines[15], 1); // 2 * .5357 = 1.0714 rounds once to 1.
+});
+Deno.test("MTFTCE distribution review reaches canonical public return without claiming provenance", async () => {
+  const { stageForm8801SettledReturn } = await import(
+    "./form8801_settled_return.ts"
+  );
+  const workpaper = distributionFixture();
+  workpaper.categories[0].part_i![0].line1a_refigured_exclusion_income = 58500;
+  const f = await publicFixture({
+    ...packageFacts(),
+    minimum_tax_foreign_credit_exclusion_workpaper: {
+      reference: "distribution-review",
+      amount: 2000,
+      method: "refigured_exclusion_items",
+      refiguring: workpaper,
+    },
+  });
+  const r = await stageForm8801SettledReturn(f.inputs, f.binding, f.documents);
+  assertEquals(
+    r.mtftceRefiguring!.categories[0].part_i![0].line1a_calculated,
+    58500,
+  );
+  assertEquals([
+    r.lines[12],
+    r.final_schedule3.line6b_prior_year_min_tax_credit,
+    r.final_form1040.line22_tax_after_credits,
+  ], [2000, 6100, 11767]);
+  assertEquals([
+    r.workpaperAuthenticityVerified,
+    r.priorAcceptanceVerified,
+    r.filingReady,
+  ], [false, false, false]);
+});

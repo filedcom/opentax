@@ -5,6 +5,22 @@ const signed = z.number().int().min(-1_000_000_000).max(1_000_000_000);
 const amount = signed.nonnegative();
 const reviewedAmount = z.object({ reference, amount }).strict();
 const reviewedSigned = z.object({ reference, amount: signed }).strict();
+const rateBands = z.object({
+  reference,
+  zero_rate: amount,
+  fifteen_rate: amount,
+  twenty_rate: amount,
+  // Disjoint from the rate bands: elected investment income is not adjusted.
+  form4952_elected: amount,
+}).strict();
+const distributionIncome = z.object({
+  reference,
+  other_taxable_exclusion_income: amount,
+  qualified_dividends: rateBands,
+  capital_gain_distributions: rateBands,
+  // Other capital gains/losses need Worksheets A/B or Pub. 514, not this method.
+  other_capital_gains_or_losses: z.literal(false),
+}).strict();
 const column = z.object({
   item_id: reference,
   reference,
@@ -12,6 +28,7 @@ const column = z.object({
   // Already refigured for exclusion items and applicable foreign capital
   // adjustments. These records do not independently authenticate that work.
   line1a_refigured_exclusion_income: amount,
+  line1a_distribution_workpaper: distributionIncome.optional(),
   line2_definitely_related_expenses: amount,
   line3a_deductions: amount,
   line3b_other_deductions: amount,
@@ -119,6 +136,16 @@ export const form8801MtftceSchema = z.object({
       }
       items.add(item.item_id);
     }
+    const derivedColumns = row.part_i?.filter((col) =>
+      col.line1a_distribution_workpaper !== undefined
+    ).length ?? 0;
+    if (derivedColumns > 0 && derivedColumns !== row.part_i?.length) {
+      c.addIssue({
+        code: "custom",
+        message:
+          "Distribution method needs rate bands for every country in its category",
+      });
+    }
     for (const col of row.part_i ?? []) {
       if (col.line3d_foreign_gross_income > col.line3e_worldwide_gross_income) {
         c.addIssue({
@@ -149,6 +176,26 @@ function total(values: number[]): number {
   if (!Number.isSafeInteger(result)) {
     throw new Error("MTFTCE total exceeds exact dollars");
   }
+  return result;
+}
+// Round the category's rate-band total once, then allocate whole dollars to
+// country columns by largest remainder. This preserves category adjustment
+// totals when country-level rounding would differ by a dollar.
+function allocatedBand(values: number[], factor: bigint): number[] {
+  const denominator = 10000n;
+  const products = values.map((v) => BigInt(v) * factor);
+  const result = products.map((v) => Number(v / denominator));
+  const target = roundedProduct(total(values), factor, denominator);
+  const order = products.map((v, i) => ({ i, remainder: v % denominator }))
+    .sort((a, b) =>
+      a.remainder === b.remainder
+        ? a.i - b.i
+        : a.remainder > b.remainder
+        ? -1
+        : 1
+    );
+  const remaining = target - total(result);
+  for (let n = 0; n < remaining; n++) result[order[n].i]++;
   return result;
 }
 export type Form8801MtftceContext = Readonly<{
@@ -220,7 +267,47 @@ export function calculateForm8801Mtftce(
   }
   const categories = v.categories.map((row) => {
     const lines: Partial<Record<number, number>> = {};
-    const part_i = row.part_i?.map((col) => {
+    const incomeWorkpapers = row.part_i?.map((col) =>
+      col.line1a_distribution_workpaper
+    );
+    let derivedIncome: number[] | undefined;
+    if (incomeWorkpapers?.[0]) {
+      const income = incomeWorkpapers.map((w) => w!);
+      const adjusted = preferential && !v.regular_tax_adjustment_exception;
+      derivedIncome = income.map((w) => w.other_taxable_exclusion_income);
+      for (
+        const kind of [
+          "qualified_dividends",
+          "capital_gain_distributions",
+        ] as const
+      ) {
+        const at15 = allocatedBand(
+          income.map((w) => w[kind].fifteen_rate),
+          adjusted ? 5357n : 10000n,
+        );
+        const at20 = allocatedBand(
+          income.map((w) => w[kind].twenty_rate),
+          adjusted ? 7143n : 10000n,
+        );
+        derivedIncome = derivedIncome.map((n, i) =>
+          total([
+            n,
+            at15[i],
+            at20[i],
+            income[i][kind].form4952_elected,
+            adjusted ? 0 : income[i][kind].zero_rate,
+          ])
+        );
+      }
+    }
+    const part_i = row.part_i?.map((col, i) => {
+      const line1a = derivedIncome?.[i] ??
+        col.line1a_refigured_exclusion_income;
+      if (derivedIncome && line1a !== col.line1a_refigured_exclusion_income) {
+        throw new Error(
+          "MTFTCE entered country income differs from distribution calculation",
+        );
+      }
       const ratio = fraction(
         col.line3d_foreign_gross_income,
         col.line3e_worldwide_gross_income,
@@ -239,11 +326,13 @@ export function calculateForm8801Mtftce(
       ]);
       return {
         ...col,
+        line1a_calculated: line1a,
+        distribution_income_arithmetic_reconciled: derivedIncome !== undefined,
         line3c,
         line3f_ratio: Number(ratio) / Number(scale),
         line3g,
         line6,
-        line7: col.line1a_refigured_exclusion_income - line6,
+        line7: line1a - line6,
       };
     });
     lines[9] = row.line9_regular_foreign_taxes.amount;
