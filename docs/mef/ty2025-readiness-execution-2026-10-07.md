@@ -5098,3 +5098,35 @@ runtime changes remain isolated; actual root full session 22926 was polled
 and remained live, and its 2,637 paths still match startup exactly. No full
 terminal result is claimed. Main 52 stay frozen and all future 47 unchanged/
 unworked. Existing aggregate packet/page/coverage counts are unchanged.
+
+
+## Isolated native document — October 8, 04:49 UTC
+
+Candidate `1f87c4046bcddff6cf02460a83ad74ba52f2706f` adds `stageForm8801NativeDocument` after
+byte-bound review and final credit settlement. All 53 represented TY2025
+IRS8801 fields follow the retained schema sequence. Schema-shared lines 17
+and 41 have no separate elements; skipped tax/capital cells remain absent.
+A nonpositive line 21 emits no document, respecting the schema's positive
+amount requirement. Caller-supplied calculated lines and changed review
+bytes remain rejected. This is a prerequisite projection, not a registered
+filing route.
+
+The normal typed six-module run passed **74/0, zero ignored**, including seven
+new native cases. Six standalone documents passed the retained IRS8801 XSD:
+partial credit/carry, negative deferral, signed exclusion/Part I stop,
+Schedule D including the 25% computation, zero allowed credit with positive
+carry, and qualified-dividend skipped cells. The exact schema sequence is
+also checked against every represented line. Private
+`form8801-native-20261008-v2/` retains sources, 2,646-path startup manifest,
+full log, terminal status and review; log SHA
+`65cb09d6881f2dfbdcff0901abbf8d4875c9d473a4c25460f6053310fb7f41d8`.
+The failed v1 type-check log/status and source snapshots remain retained;
+the generic schema-map assertion was corrected without bypassing typing.
+
+The candidate remains isolated; root's original full regression was confirmed
+live and its 2,637 startup runtime paths still match exactly. Both public
+attachment guards remain active. No Form 8801 PDF, complete-return XSD,
+matching business rules, accepted prior history, authentic workpapers,
+durable accepted carry/import or ATS acceptance is proved by this result.
+The broader main task remains open and aggregate coverage counts do not
+increase. All future tasks remain deferred.
