@@ -495,7 +495,8 @@ export const form8582Pdf: PdfFormDescriptor = {
     return {
       ...projectWorksheet(xml),
       pdf_current_joint_ordinary: allPending.general?.filing_status === "mfj" &&
-        (allPending.form4797?.current_property_sources !== undefined ||
+        (allPending.form7203?.current_passive_s_corp_loss !== undefined ||
+          allPending.form4797?.current_property_sources !== undefined ||
           input.activities?.some((row) =>
             row.reporting_form === "k1_4797_line10"
           )),

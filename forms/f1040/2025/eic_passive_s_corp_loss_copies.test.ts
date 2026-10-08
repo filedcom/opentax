@@ -1,3 +1,4 @@
+import { form8582Pdf } from "./pdf/forms/f8582.ts";
 import { form7203StockLoss } from "./mef/forms/f7203_stock_loss.ts";
 import { form7203StockLossPdf } from "./pdf/forms/f7203_stock_loss.ts";
 import { form8995 } from "./mef/forms/f8995.ts";
@@ -5,7 +6,10 @@ import { form8995Pdf } from "./pdf/forms/f8995.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import { XMLParser } from "fast-xml-parser";
 import { f1040_2025 } from "./index.ts";
-import { passiveSCorpLossReturnInputs } from "./eic_passive_s_corp_loss.fixture.ts";
+import {
+  passiveSCorpJointLossReturnInputs,
+  passiveSCorpLossReturnInputs,
+} from "./eic_passive_s_corp_loss.fixture.ts";
 import { projectPassiveSCorpLossCopies } from "./passive-s-corp-loss-copies.ts";
 import { form8582 } from "./mef/forms/f8582.ts";
 import { scheduleE } from "./mef/forms/schedule_e.ts";
@@ -195,3 +199,28 @@ Deno.test("Passive registered basis and QBI descriptors reject divergent raw cop
   );
   assertThrows(() => form7203StockLossPdf.instances!(p.form7203, wrong, p));
 });
+
+for (const spouseOwned of [false, true]) {
+  Deno.test(`Passive joint ${spouseOwned ? "spouse" : "primary"} print source keeps shareholder identity and shared joint headers`, () => {
+    const p =
+      f1040_2025.executeReturn(passiveSCorpJointLossReturnInputs(spouseOwned))
+        .pending;
+    const filer = extractFilerIdentity(p.f1040)!;
+    const basis = form7203StockLossPdf.instances!(p.form7203, filer, p)![0];
+    assertEquals(
+      basis.shareholder_name,
+      spouseOwned ? "Casey Example" : "Alex Example",
+    );
+    assertEquals(
+      basis.shareholder_ssn,
+      spouseOwned ? "444556666" : "111223333",
+    );
+    const pal = form8582Pdf.projectFields!(p.form8582, p);
+    assertEquals(pal.pdf_current_joint_ordinary, true);
+    assertEquals(
+      form8995Pdf.projectFields!(p.form8995, p).owned_loss_header,
+      true,
+    );
+    assertEquals(scheduleEPdf.projectFields!({}, p).k1_line32, 2000);
+  });
+}
