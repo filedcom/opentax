@@ -53,6 +53,50 @@ Deno.test("direct Form 8949 input deposits an identified transaction for MeF bef
   assertEquals(transaction.source_transaction_id, "deemed-sale-1");
 });
 
+Deno.test("direct Form 8949 retains reviewed recipient/contract identity without letting alternate references hide a repeated sale", () => {
+  const sale = {
+    part: "F",
+    description: "Reviewed property sale",
+    date_acquired: "2024-01-01",
+    date_sold: "2025-06-01",
+    proceeds: 100000,
+    cost_basis: 2100000,
+    recipient_ssn: "111223333",
+    source_transaction_id: "property-sale-1",
+    source_document_reference: "reviewed sale contract",
+  };
+  const parsed = inputSchema.parse({ f8949s: [sale] });
+  assertEquals(parsed.f8949s[0].recipient_ssn, sale.recipient_ssn);
+  assertEquals(
+    parsed.f8949s[0].source_document_reference,
+    sale.source_document_reference,
+  );
+  assertThrows(() =>
+    inputSchema.parse({ f8949s: [sale, { ...sale, proceeds: 100001 }] })
+  );
+  assertThrows(() =>
+    inputSchema.parse({
+      f8949s: [
+        { ...sale, broker_statement_reference: "one issued broker copy" },
+        {
+          ...sale,
+          source_document_reference: "different contract reference",
+          broker_statement_reference: "one issued broker copy",
+        },
+      ],
+    })
+  );
+  assertEquals(
+    inputSchema.parse({
+      f8949s: [sale, {
+        ...sale,
+        source_transaction_id: "independent-property-sale",
+      }],
+    }).f8949s.length,
+    2,
+  );
+});
+
 Deno.test("direct Form 8949 rejects a repeated identified sale on one statement", () => {
   const sale = minimalItem({
     source_transaction_id: "sale-42",

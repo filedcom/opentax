@@ -41,6 +41,10 @@ export const itemSchema = z.object({
   part: z.nativeEnum(Form8949Part),
   description: z.string(),
   source_transaction_id: z.string().trim().min(1).optional(),
+  // Reviewed direct-sale records can identify their recipient and source even
+  // when the sale has no issued broker statement. Disclosure joins require it.
+  recipient_ssn: z.string().regex(/^\d{9}$/).optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
   broker_statement_reference: z.string().trim().min(1).optional(),
   date_acquired: z.string(),
   date_sold: z.string(),
@@ -75,14 +79,19 @@ export const inputSchema = z.object({
 }).superRefine(({ f8949s }, ctx) => {
   const seen = new Set<string>();
   for (const [index, sale] of f8949s.entries()) {
-    if (!sale.broker_statement_reference || !sale.source_transaction_id) {
+    const references = [
+      ...new Set([
+        sale.source_document_reference,
+        sale.broker_statement_reference,
+      ].filter((reference) => reference !== undefined)),
+    ];
+    if (!references.length || !sale.source_transaction_id) {
       continue;
     }
-    const key = JSON.stringify([
-      sale.broker_statement_reference,
-      sale.source_transaction_id,
-    ]);
-    if (seen.has(key)) {
+    const keys = references.map((reference) =>
+      JSON.stringify([reference, sale.source_transaction_id])
+    );
+    if (keys.some((key) => seen.has(key))) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["f8949s", index],
@@ -90,7 +99,7 @@ export const inputSchema = z.object({
           "Direct Form 8949 repeats the same identified statement transaction; corrected copies need one reviewed current row",
       });
     }
-    seen.add(key);
+    for (const key of keys) seen.add(key);
   }
 });
 

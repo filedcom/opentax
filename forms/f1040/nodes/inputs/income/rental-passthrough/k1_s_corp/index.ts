@@ -87,6 +87,7 @@ export const itemSchema = z.object({
   corporation_name: z.string().min(1),
   corporation_ein: z.string().regex(/^\d{9}$/).optional(),
   source_document_reference: z.string().trim().min(1).optional(),
+  source_tax_year: z.literal(2025).optional(),
   recipient_tin: z.string().regex(/^\d{9}$/).optional(),
   // Box 13 code Z is the shareholder's orphan-drug credit.
   box13_code_z_orphan_drug_credit: z.number().int().positive().optional(),
@@ -989,6 +990,7 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
           "corporation_name",
           "recipient_tin",
           "source_document_reference",
+          "source_tax_year",
           "box1_ordinary_business",
           "eic_passive_activity_review",
           "first_year_passive_loss_source",

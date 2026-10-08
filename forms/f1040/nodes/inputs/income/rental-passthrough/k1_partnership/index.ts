@@ -1,4 +1,7 @@
-import { currentK1Qbi, currentK1QbiSourceSchema } from "../../../deductions/business/k1_qbi_source.ts";
+import {
+  currentK1Qbi,
+  currentK1QbiSourceSchema,
+} from "../../../deductions/business/k1_qbi_source.ts";
 import { form8582 } from "../../../../intermediate/forms/income/business/form8582/index.ts";
 import {
   k1PassiveIncomeSourceSchema,
@@ -87,6 +90,7 @@ export const itemSchema = z.object({
   partnership_name: z.string().min(1),
   partnership_ein: z.string().regex(/^\d{9}$/).optional(),
   source_document_reference: z.string().trim().min(1).optional(),
+  source_tax_year: z.literal(2025).optional(),
   recipient_tin: z.string().regex(/^\d{9}$/).optional(),
   // Box 15 code Z is the partner's orphan-drug credit, not a generic credit.
   box15_code_z_orphan_drug_credit: z.number().int().positive().optional(),
@@ -794,7 +798,9 @@ function form8995Output(items: K1PartnershipItems): NodeOutput[] {
   const sourceFields = sources.length
     ? {
       current_k1_qbi_sources: sources,
-      current_passive_k1_income_sources: incomeSources,
+      ...(incomeSources.length
+        ? { current_passive_k1_income_sources: incomeSources }
+        : {}),
     }
     : {};
   const totalQbi = items.reduce((sum, item) => sum + (item.box20z_qbi ?? 0), 0);

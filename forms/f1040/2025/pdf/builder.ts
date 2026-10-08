@@ -1,3 +1,4 @@
+import { assertPreparedForm8886PublicSource } from "../domains/general/filing/form8886/return-packets.ts";
 import { assertOwned7203RequiredCopies } from "../domains/income/business/form7203/form7203-owned-return.ts";
 import { assertHsaExcessRequiredCopy } from "../domains/adjustments/health/form8889/form8889_postyear_single_reconciliation.ts";
 import { assertSingleFarmQbiReturn } from "../domains/deductions/business/form8995a/form8995a_single_farm_reconciliation.ts";
@@ -14,7 +15,10 @@ import { join } from "@std/path";
 import { normalizeAllPending } from "../return-processing/pending.ts";
 import { ALL_PDF_FORMS } from "./forms/index.ts";
 import { form4972PaperPdf } from "./forms/taxes/retirement/f4972.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "./review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "./review-support/form-descriptor.ts";
 import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
 import { assertAttachmentCoverage } from "../return-processing/attachment-coverage.ts";
 import {
@@ -23,7 +27,10 @@ import {
 } from "../mef/builder.ts";
 import { assertPreparedAttachmentManifest } from "../mef/attachments/prepared-attachment-manifest.ts";
 import { assertW2GPayerCopyContents } from "../mef/identity/w2g-payer-copy.ts";
-import { preparedSourceSha256, sha256Hex } from "../return-processing/prepared-source.ts";
+import {
+  preparedSourceSha256,
+  sha256Hex,
+} from "../return-processing/prepared-source.ts";
 import {
   assertDigitalAssetDispositionAnswer,
   assertEitcChildSources,
@@ -576,10 +583,15 @@ async function buildPdfBytesInternal(
   pending: Record<string, unknown>,
   filer: FilerIdentity | undefined,
   cacheDir = ".pdf-cache",
-  preparedBundle?: MefBundle,
+  preparedBundleInput?: MefBundle,
   pageOrigins?: PdfPageOrigin[],
   paperOnly4972 = false,
 ): Promise<Uint8Array> {
+  // Preserve the authenticated disclosure identity and XML throughout awaits.
+  const preparedBundle = preparedBundleInput
+    ? { ...preparedBundleInput }
+    : undefined;
+  assertPreparedForm8886PublicSource(pending, preparedBundle?.form8886Packets);
   assertForm8858FilingSource(pending.f8858);
   assertDigitalAssetDispositionAnswer(pending);
   await assertForm1098IssuerCopies(pending);
@@ -847,7 +859,7 @@ async function buildPdfBytesInternal(
       form8949Rows ?? [],
     );
   }
-  assertAttachmentCoverage(normalized, "pdf");
+  assertAttachmentCoverage(normalized, "pdf", preparedBundle?.form8886Packets);
   const merged = await PDFDocument.create({ updateMetadata: false });
   const copyCounts = new Map<string, number>();
 
@@ -923,6 +935,41 @@ async function buildPdfBytesInternal(
           formCopy,
         });
       }
+    }
+  }
+
+  // These pages were rendered and authenticated with the disclosure source.
+  // Reuse the exact copies retained for the separate OTSA handoff.
+  for (
+    const [index, entry] of (preparedBundle?.form8886Packets?.packets ?? [])
+      .entries()
+  ) {
+    const packet = entry.packet;
+    const documents = [
+      packet.documents.formXml,
+      packet.documents.continuationXml,
+      ...packet.documents.generalContinuations.map((row) => row.xml),
+    ].filter((xml): xml is string => xml !== undefined);
+    if (documents.some((xml) => !preparedBundle!.xml.includes(xml))) {
+      throw new Error(
+        "Form 8886 printable copy is not bound to the finalized MeF return",
+      );
+    }
+    const bytes = packet.getPdf();
+    if (await sha256Hex(bytes) !== packet.metadata.pdf_sha256) {
+      throw new Error(
+        "Form 8886 printable copy differs from its prepared digest",
+      );
+    }
+    const copy = await PDFDocument.load(bytes, { updateMetadata: false });
+    const pages = await merged.copyPages(copy, copy.getPageIndices());
+    for (const page of pages) {
+      merged.addPage(page);
+      pageOrigins?.push({
+        pageNumber: merged.getPageCount(),
+        formKey: "form8886",
+        formCopy: index + 1,
+      });
     }
   }
 

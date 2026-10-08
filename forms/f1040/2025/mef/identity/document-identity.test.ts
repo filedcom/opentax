@@ -14,6 +14,38 @@ Deno.test("MeF document IDs stay unique for repeated form copies", () => {
   assertEquals(documentId("IRSW2", 11), "IRSW211");
 });
 
+Deno.test("Form 8886 expected-benefit references use the schema document name for the shortened root", () => {
+  const fragments = (name: string) => [{
+    pendingKey: "f8886",
+    tag: "IRS8886",
+    xml:
+      `<IRS8886><ExpectedTaxBenefitsExplnTxt referenceDocumentId="ContF8886ExpctTaxBnftExpln1" referenceDocumentName="${name}">Initial narrative.</ExpectedTaxBenefitsExplnTxt></IRS8886>`,
+  }, {
+    pendingKey: "f8886_expected_tax_benefits",
+    tag: "ContF8886ExpctTaxBnftExpln",
+    xml: "<ContF8886ExpctTaxBnftExpln/>",
+  }];
+  validateDocumentReferences(
+    fragments("ContinuationOfForm8886ExpectedTaxBenefitsExplanation"),
+  );
+  assertThrows(
+    () => validateDocumentReferences(fragments("ContF8886ExpctTaxBnftExpln")),
+    Error,
+    "referenceDocumentName differs",
+  );
+  assertThrows(
+    () =>
+      validateDocumentReferences(
+        fragments("ContinuationOfForm8886ExpectedTaxBenefitsExplanation").slice(
+          0,
+          1,
+        ),
+      ),
+    Error,
+    "has no document",
+  );
+});
+
 Deno.test("MeF document identity rejects distinct roots whose truncated IDs collide", () => {
   const first = `${"A".repeat(28)}1x`;
   const second = `${"A".repeat(28)}x`;

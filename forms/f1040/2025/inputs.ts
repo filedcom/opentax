@@ -1,3 +1,5 @@
+import { f8886 } from "./domains/general/filing/form8886/public-node.ts";
+import { publicSourceSchema as f8886InputSchema } from "./domains/general/filing/form8886/source.ts";
 import { ownedSepSourceSchema } from "../nodes/inputs/adjustments/retirement/sep_retirement/owned-source.ts";
 import { claimantReviewSchema } from "../nodes/inputs/credits/individual/f8863/claimant-review.ts";
 import {
@@ -168,8 +170,14 @@ import {
   ssa1099,
 } from "../nodes/inputs/income/retirement/ssa1099/index.ts";
 import { w2, w2ItemSchema } from "../nodes/inputs/income/wages/w2/index.ts";
-import { ct2, itemSchema as ct2ItemSchema } from "../nodes/inputs/taxes/employment/ct2/index.ts";
-import { itemSchema as w2gItemSchema, w2g } from "../nodes/inputs/income/gambling/w2g/index.ts";
+import {
+  ct2,
+  itemSchema as ct2ItemSchema,
+} from "../nodes/inputs/taxes/employment/ct2/index.ts";
+import {
+  itemSchema as w2gItemSchema,
+  w2g,
+} from "../nodes/inputs/income/gambling/w2g/index.ts";
 import {
   f1099patr,
   itemSchema as f1099patrItemSchema,
@@ -533,7 +541,10 @@ import {
   f8805,
   itemSchema as f8805ItemSchema,
 } from "../nodes/inputs/payments/withholding/f8805/index.ts";
-import { fec, itemSchema as fecItemSchema } from "../nodes/inputs/income/foreign/fec/index.ts";
+import {
+  fec,
+  itemSchema as fecItemSchema,
+} from "../nodes/inputs/income/foreign/fec/index.ts";
 import {
   inputSchema as qsehraInputSchema,
   qsehra,
@@ -898,6 +909,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f8888, inputSchema: f8888InputSchema, isArray: false },
   { node: schedule_r, inputSchema: scheduleRInputSchema, isArray: false },
   { node: schedule_lep, inputSchema: scheduleLepInputSchema, isArray: false },
+  { node: f8886, inputSchema: f8886InputSchema, isArray: false },
   { node: f9000, inputSchema: f9000InputSchema, isArray: false },
   { node: f4547, inputSchema: f4547InputSchema, isArray: false },
   {

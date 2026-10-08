@@ -1,3 +1,7 @@
+import {
+  form8886CoversLargeCapitalSources,
+  type PreparedForm8886ReturnPackets,
+} from "../domains/general/filing/form8886/return-packets.ts";
 import { projectPassiveSCorpLossCopies } from "../domains/income/business/passive-s-corp-loss-copies.ts";
 import { reviewedOpenAccountSchema } from "../../nodes/intermediate/forms/income/business/form7203/debt-note.ts";
 import { issuerIdentitySchema } from "../../nodes/inputs/taxes/credit-recapture/f8611/partnership-source.ts";
@@ -476,6 +480,7 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
 export function assertAttachmentCoverage(
   pending: object,
   exportKind: ExportKind,
+  preparedForm8886?: PreparedForm8886ReturnPackets,
 ): void {
   const byKey = pending as Readonly<Record<string, unknown>>;
   if (byKey.benefit_1042s !== undefined) {
@@ -543,7 +548,8 @@ export function assertAttachmentCoverage(
   // A single large disposition is a Form 8886 loss-transaction review signal.
   // Screen source basis and proceeds before netting with other sales or Form
   // 8949 adjustments. This does not determine section 165 character or a
-  // published exception; Form 8886 has no supported filing route yet.
+  // published exception. Every triggering sale needs its own authenticated
+  // reviewed-source coverage before this screen may be satisfied.
   const dispositionRows = [
     ...((byKey.f8949 as { f8949s?: unknown[] } | undefined)?.f8949s ?? []),
     ...((byKey.f1099b as { f1099bs?: unknown[] } | undefined)?.f1099bs ?? []),
@@ -558,10 +564,10 @@ export function assertAttachmentCoverage(
         typeof row.proceeds === "number" &&
         Number.isFinite(row.proceeds) &&
         row.cost_basis - row.proceeds >= 2_000_000;
-    })
+    }) && !form8886CoversLargeCapitalSources(byKey, preparedForm8886)
   ) {
     throw new Error(
-      `[${exportKind.toUpperCase()}] Form 8886 review required for a single Form 8949/1099-B disposition with at least $2 million gross loss; no disclosure route is registered; export blocked`,
+      `[${exportKind.toUpperCase()}] Form 8886 review required for a single Form 8949/1099-B disposition with at least $2 million gross loss; every triggered source needs a matching authenticated disclosure; export blocked`,
     );
   }
   const rawCasualty = byKey.form4684;

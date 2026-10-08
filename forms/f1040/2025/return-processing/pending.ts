@@ -5,6 +5,7 @@
  * to the same key. Both MEF and PDF builders expect scalar calculated lines,
  * so this module resolves most all-numeric arrays to their last element (the
  * most recently computed value). Independent Schedule E sources are additive.
+ * Form 8995 QBI contributions are additive, as in its calculation input.
  * Form 4952 source arrays retain their per-payer amounts for export review.
  */
 const additiveNumericKeys = new Set([
@@ -35,6 +36,7 @@ export function normalizePendingDict(
                 key === "line3b_ordinary_dividends" ||
                 key === "pal_current_income" ||
                 key === "pal_rental_income")) ||
+            (nodeType === "form8995" && key === "qbi") ||
             (nodeType === "form8582" &&
               (key === "current_income" || key === "rental_current_income"))
         ? value.reduce((sum, amount) => sum + amount, 0)

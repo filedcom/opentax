@@ -157,6 +157,7 @@ export const passiveSCorpLossBundleSchema = z.object({
     corporation_name: reference,
     recipient_tin: tin,
     source_document_reference: reference,
+    source_tax_year: z.literal(2025).optional(),
     box1_ordinary_business: z.number().int().negative().refine(
       Number.isSafeInteger,
     ),
@@ -175,6 +176,7 @@ export function passiveSCorpLossBundle(item: Record<string, unknown>) {
     "corporation_name",
     "recipient_tin",
     "source_document_reference",
+    "source_tax_year",
     "box1_ordinary_business",
     "eic_passive_activity_review",
     "first_year_passive_loss_source",
@@ -186,14 +188,18 @@ export function passiveSCorpLossBundle(item: Record<string, unknown>) {
   }
   const bundle = passiveSCorpLossBundleSchema.parse({
     source: item.first_year_passive_loss_source,
-    k1: Object.fromEntries([
-      "corporation_ein",
-      "corporation_name",
-      "recipient_tin",
-      "source_document_reference",
-      "box1_ordinary_business",
-      "eic_passive_activity_review",
-    ].map((key) => [key, item[key]])),
+    k1: Object.fromEntries(
+      [
+        "corporation_ein",
+        "corporation_name",
+        "recipient_tin",
+        "source_document_reference",
+        "source_tax_year",
+        "box1_ordinary_business",
+        "eic_passive_activity_review",
+      ].filter((key) => key !== "source_tax_year" || item[key] !== undefined)
+        .map((key) => [key, item[key]]),
+    ),
   });
   firstYearPassiveSCorpLossStages(bundle.source, bundle.k1);
   return bundle;

@@ -1,3 +1,8 @@
+import {
+  form8886,
+  form8886AdditionalDetails,
+  form8886ExpectedBenefits,
+} from "../../domains/general/filing/form8886/mef-descriptors.ts";
 import { iraRecharacterizationStatement } from "./income/retirement/ira_recharacterization_statement.ts";
 import { form8853MedicareStatements } from "./adjustments/health/f8853_medicare_statements.ts";
 import { eitc } from "./credits/earned-income/eitc.ts";
@@ -148,7 +153,10 @@ import { scheduleR } from "./credits/individual/schedule_r.ts";
 import { scheduleSE } from "./taxes/self-employment/schedule_se.ts";
 import { w2 } from "./income/other/w2.ts";
 import { w2g } from "./income/other/w2g.ts";
-import { fecRecord, wagesNotShownSchedule } from "./income/foreign/foreign_employer_wages.ts";
+import {
+  fecRecord,
+  wagesNotShownSchedule,
+} from "./income/foreign/foreign_employer_wages.ts";
 
 // XSD-required element sequence from ReturnData1040.xsd.
 // Any reordering here must stay in sync with the sequence in that XSD or
@@ -307,6 +315,7 @@ export const ALL_MEF_FORMS = [
   form8874,
   // Form 8880
   form8880,
+  form8886,
   // Form 8888 refund allocation precedes Form 8889 in ReturnData1040.xsd.
   form8888,
   // Form 8889
@@ -407,4 +416,6 @@ export const ALL_MEF_FORMS = [
   form8853MedicareStatements,
   // Form 8854 native roots follow Form 8820 controlled-group statements.
   form8854NativeStatements,
+  form8886ExpectedBenefits,
+  form8886AdditionalDetails,
 ] as const;

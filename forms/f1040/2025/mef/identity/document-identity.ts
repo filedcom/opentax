@@ -23,6 +23,8 @@ const IRS_REFERENCE_NAME_BY_ROOT: Readonly<Record<string, string>> = {
   ContriVehicleBoatAirplaneStmt:
     "ContributionsOfMotorVehiclesBoatsAndAirplanesStatement",
   ControlledGroupMembersStmt: "ControlledGroupMembersStatement",
+  ContF8886ExpctTaxBnftExpln:
+    "ContinuationOfForm8886ExpectedTaxBenefitsExplanation",
   DeferredPropertyTaxElectStmt: "DeferredPropertyTaxElectionStatement",
   DslWaterFuelEmulsionBlndgStmt: "DieselWaterFuelEmulsionBlendingStatement",
   EligDeferredCompItemStmt: "EligibleDeferredCompensationItemStatement",
