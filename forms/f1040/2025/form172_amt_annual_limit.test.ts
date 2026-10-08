@@ -1,7 +1,14 @@
+import {
+  stageForm172ModernAmtCapSource,
+  stageForm172ModernAmtDeductionAllocationSource,
+  stageForm172ModernAmtModifiedIncomeSource,
+  stageForm172ModernAmtSection172CapacitySource,
+  stageForm172ModernAmtVintageModifiedIncomeSource,
+} from "./form172_amt_historical_cap_source.ts";
 import { calculateForm172ModernAmtSection172Capacity } from "./form172_amt_historical_absorption.ts";
 import { calculateForm172ModernAmtVintageModifiedIncome } from "./form172_amt_vintage_modified_income.ts";
 import { calculateForm172ModernAmtModifiedIncome } from "./form172_amt_modified_income.ts";
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import {
   calculateForm172AmtAnnualLimit,
   calculateForm172AmtModernOrdinaryCap,
@@ -1177,4 +1184,170 @@ Deno.test("Modern AMT section172 capacity suspends reduction before2021 and floo
     -57140,
   );
   assertEquals(r.chronologicalReviewedCapacities[0].section172Capacity, 0);
+});
+async function modernRetained(raw: unknown) {
+  const text = JSON.stringify(raw);
+  const bytes = new TextEncoder().encode(text);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  const sha256 = Array.from(new Uint8Array(digest)).map((b) =>
+    b.toString(16).padStart(2, "0")
+  ).join("");
+  const cap = raw as ReturnType<typeof modernOrdinaryCap>;
+  return {
+    binding: {
+      workpaper: { reference: cap.reference, sha256 },
+      application_tax_year: cap.annual_review.tax_year,
+      taxpayer_ssn: cap.annual_review.taxpayer_ssn,
+    },
+    documents: [{ reference: cap.reference, bytes }],
+  };
+}
+Deno.test("Modern AMT retained bytes recompute cap allocation modified contexts and statutory capacities", async () => {
+  const c = modernOrdinaryCap();
+  const basic = await modernRetained(c);
+  const cap = await stageForm172ModernAmtCapSource(
+    basic.binding,
+    basic.documents,
+  );
+  assertEquals(cap.ordinaryDeductionCap, 80000);
+  assertEquals(cap.reviewPackageBytesVerified, true);
+  assertEquals(cap.packetAdmissionVerified, false);
+  assertEquals(cap.acceptedCarryImportVerified, false);
+  assertEquals(cap.sourceAuthenticityVerified, false);
+  assertEquals(cap.filingReady, false);
+  const allocation = await stageForm172ModernAmtDeductionAllocationSource(
+    basic.binding,
+    basic.documents,
+  );
+  assertEquals(allocation.allocations[0].actualDeduction, 80000);
+  c.annual_review.components.find((l) => l.line === "2h")!.amount = 700;
+  const paired = await modernRetained({
+    ...c,
+    modified_review: modernModified(c),
+  });
+  const modified = await stageForm172ModernAmtModifiedIncomeSource(
+    paired.binding,
+    paired.documents,
+  );
+  assertEquals(modified.signedModifiedAmtiBeforeEarlierNol, 113000);
+  const { cap: v, reviews } = modernVintage();
+  const multi = await modernRetained({ ...v, vintage_reviews: reviews });
+  const contexts = await stageForm172ModernAmtVintageModifiedIncomeSource(
+    multi.binding,
+    multi.documents,
+  );
+  assertEquals(
+    contexts.chronologicalVintageModifiedIncome.at(-1)!
+      .modifiedAmtiAfterEarlierAtnold,
+    25440,
+  );
+  const capacities = await stageForm172ModernAmtSection172CapacitySource(
+    multi.binding,
+    multi.documents,
+  );
+  assertEquals(capacities.annualAbsorptionReduction, 10140);
+  assertEquals(
+    capacities.chronologicalReviewedCapacities.at(-1)!.section172Capacity,
+    15300,
+  );
+  assertEquals(capacities.section56AbsorptionLimitReconciled, false);
+});
+Deno.test("Modern AMT retained source rejects digest identity owner year and document inventory conflicts", async () => {
+  const p = await modernRetained(modernOrdinaryCap());
+  const damaged = p.documents[0].bytes.slice();
+  damaged[20] ^= 1;
+  await assertRejects(() =>
+    stageForm172ModernAmtCapSource(p.binding, [{
+      ...p.documents[0],
+      bytes: damaged,
+    }])
+  );
+  for (
+    const patch of [
+      { taxpayer_ssn: "999887777" },
+      { spouse_ssn: "999887777" },
+      { application_tax_year: 2023 },
+      { application_tax_year: 2017 },
+    ]
+  ) {
+    await assertRejects(() =>
+      stageForm172ModernAmtCapSource({ ...p.binding, ...patch }, p.documents)
+    );
+  }
+  for (
+    const docs of [[], [...p.documents, p.documents[0]], [...p.documents, {
+      reference: "extra",
+      bytes: new Uint8Array([1]),
+    }], [{ ...p.documents[0], reference: "other" }]]
+  ) {
+    await assertRejects(() => stageForm172ModernAmtCapSource(p.binding, docs));
+  }
+});
+Deno.test("Modern AMT retained source rehash cannot hide changed original operands or earlier deductions", async () => {
+  const { cap, reviews } = modernVintage();
+  reviews.vintages[0].earlier_nol_deductions[0].amount = 1;
+  const p = await modernRetained({ ...cap, vintage_reviews: reviews });
+  await assertRejects(() =>
+    stageForm172ModernAmtSection172CapacitySource(p.binding, p.documents)
+  );
+  const c = modernOrdinaryCap();
+  c.annual_review.components.find((l) => l.line === "2h")!.amount = 700;
+  const m = modernModified(c);
+  m.components[0].original_amount++;
+  const stale = await modernRetained({ ...c, modified_review: m });
+  await assertRejects(() =>
+    stageForm172ModernAmtModifiedIncomeSource(stale.binding, stale.documents)
+  );
+  c.losses[0].opening_amt_nol = 80001;
+  const opening = await modernRetained(c);
+  await assertRejects(() =>
+    stageForm172ModernAmtDeductionAllocationSource(
+      opening.binding,
+      opening.documents,
+    )
+  );
+});
+Deno.test("Modern AMT retained source rejects noncanonical duplicate-key BOM and invalid UTF8", async () => {
+  const p = await modernRetained(modernOrdinaryCap());
+  const original = new TextDecoder().decode(p.documents[0].bytes);
+  for (
+    const bytes of [
+      new TextEncoder().encode(" " + original),
+      new TextEncoder().encode('{"reference":"wrong",' + original.slice(1)),
+      new TextEncoder().encode("\ufeff" + original),
+      new Uint8Array([0xff]),
+    ]
+  ) {
+    const digest = await crypto.subtle.digest("SHA-256", bytes);
+    const sha256 = Array.from(new Uint8Array(digest)).map((b) =>
+      b.toString(16).padStart(2, "0")
+    ).join("");
+    await assertRejects(() =>
+      stageForm172ModernAmtCapSource({
+        ...p.binding,
+        workpaper: { ...p.binding.workpaper, sha256 },
+      }, [{ ...p.documents[0], bytes }])
+    );
+  }
+});
+Deno.test("Modern AMT retained source owns caller binding and bytes before first await", async () => {
+  const { cap, reviews } = modernVintage();
+  const p = await modernRetained({ ...cap, vintage_reviews: reviews });
+  const pending = stageForm172ModernAmtSection172CapacitySource(
+    p.binding,
+    p.documents,
+  );
+  p.binding.application_tax_year = 2023;
+  p.binding.taxpayer_ssn = "999887777";
+  p.binding.workpaper.reference = "changed";
+  p.binding.workpaper.sha256 = "0".repeat(64);
+  p.documents[0].bytes.fill(0);
+  p.documents[0].reference = "changed";
+  p.documents.length = 0;
+  const r = await pending;
+  assertEquals(r.applicationYear, 2024);
+  assertEquals(r.taxpayerSsn, "111223333");
+  assertEquals(r.annualAbsorptionReduction, 10140);
+  assertEquals(r.reviewPackageBytesVerified, true);
+  assertEquals(r.packetAdmissionVerified, false);
 });

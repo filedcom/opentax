@@ -1,3 +1,10 @@
+import {
+  calculateForm172AmtModernOrdinaryCap,
+  calculateForm172AmtModernOrdinaryDeductionAllocation,
+} from "./form172_amt_annual_limit.ts";
+import { calculateForm172ModernAmtModifiedIncome } from "./form172_amt_modified_income.ts";
+import { calculateForm172ModernAmtVintageModifiedIncome } from "./form172_amt_vintage_modified_income.ts";
+import { calculateForm172ModernAmtSection172Capacity } from "./form172_amt_historical_absorption.ts";
 import { z } from "zod";
 import {
   type SourceDocumentBytes,
@@ -30,8 +37,9 @@ async function stageHistoricalAmtSource<
   rawBinding: unknown,
   rawDocuments: readonly SourceDocumentBytes[],
   calculate: (raw: unknown) => T,
+  bindingSchema: typeof schema = schema,
 ) {
-  const binding = schema.parse(rawBinding);
+  const binding = bindingSchema.parse(rawBinding);
   const documents = rawDocuments.map((d) => ({
     reference: d.reference,
     bytes: new Uint8Array(d.bytes),
@@ -148,4 +156,66 @@ export function stageForm172HistoricalAmtAbsorptionSource(
     }).passthrough().parse(raw);
     return calculateForm172HistoricalAmtAbsorption(cap, vintage_reviews);
   });
+}
+
+const modernBindingSchema = schema.extend({
+  application_tax_year: z.number().int().min(2018).max(2025),
+}).strict();
+
+/** Modern reviewed arithmetic binds retained canonical bytes, not authentic
+ * prior-return availability, section56 absorption or a filing admission. */
+export function stageForm172ModernAmtCapSource(
+  rawBinding: unknown,
+  rawDocuments: readonly SourceDocumentBytes[],
+) {
+  return stageHistoricalAmtSource(
+    rawBinding,
+    rawDocuments,
+    calculateForm172AmtModernOrdinaryCap,
+    modernBindingSchema,
+  );
+}
+export function stageForm172ModernAmtDeductionAllocationSource(
+  rawBinding: unknown,
+  rawDocuments: readonly SourceDocumentBytes[],
+) {
+  return stageHistoricalAmtSource(
+    rawBinding,
+    rawDocuments,
+    calculateForm172AmtModernOrdinaryDeductionAllocation,
+    modernBindingSchema,
+  );
+}
+export function stageForm172ModernAmtModifiedIncomeSource(
+  rawBinding: unknown,
+  rawDocuments: readonly SourceDocumentBytes[],
+) {
+  return stageHistoricalAmtSource(rawBinding, rawDocuments, (raw) => {
+    const { modified_review, ...cap } = z.object({
+      modified_review: z.unknown(),
+    }).passthrough().parse(raw);
+    return calculateForm172ModernAmtModifiedIncome(cap, modified_review);
+  }, modernBindingSchema);
+}
+export function stageForm172ModernAmtVintageModifiedIncomeSource(
+  rawBinding: unknown,
+  rawDocuments: readonly SourceDocumentBytes[],
+) {
+  return stageHistoricalAmtSource(rawBinding, rawDocuments, (raw) => {
+    const { vintage_reviews, ...cap } = z.object({
+      vintage_reviews: z.unknown(),
+    }).passthrough().parse(raw);
+    return calculateForm172ModernAmtVintageModifiedIncome(cap, vintage_reviews);
+  }, modernBindingSchema);
+}
+export function stageForm172ModernAmtSection172CapacitySource(
+  rawBinding: unknown,
+  rawDocuments: readonly SourceDocumentBytes[],
+) {
+  return stageHistoricalAmtSource(rawBinding, rawDocuments, (raw) => {
+    const { vintage_reviews, ...cap } = z.object({
+      vintage_reviews: z.unknown(),
+    }).passthrough().parse(raw);
+    return calculateForm172ModernAmtSection172Capacity(cap, vintage_reviews);
+  }, modernBindingSchema);
 }
