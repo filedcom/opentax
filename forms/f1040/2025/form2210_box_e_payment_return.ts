@@ -5,10 +5,11 @@ import { form2210BoxEInputSchema } from "./form2210_box_e.ts";
 import { stageForm2210BoxEPage1 } from "./form2210_box_e_staged_chain.ts";
 import {
   calculateForm2210Payments,
+  compareForm2210WithholdingMethods,
   form2210PaymentInputSchema,
 } from "./form2210_payments.ts";
 
-export const form2210BoxEPaymentLedgerSchema = form2210PaymentInputSchema
+const paymentLedgerSchema = form2210PaymentInputSchema
   .omit({
     tax_year: true,
     taxpayer_ssn: true,
@@ -19,6 +20,13 @@ export const form2210BoxEPaymentLedgerSchema = form2210PaymentInputSchema
     withholding_review: form2210PaymentInputSchema.shape.withholding.omit({
       amount_dollars: true,
     }),
+  });
+export const form2210BoxEPaymentLedgerSchema = paymentLedgerSchema.extend({
+  withholding_method: z.literal("equal_due_dates"),
+});
+export const form2210BoxEActualWithholdingLedgerSchema = paymentLedgerSchema
+  .extend({
+    withholding_method: z.literal("actual_dates"),
   });
 
 const enteredClaim = z.object({
@@ -33,16 +41,24 @@ const identitySchema = z.object({
 /** Public calculation → finalized lines → retained prior bytes → payment
  * worksheet. No native/PDF registry uses this staging API. Prior acceptance
  * and payment authenticity remain unverified; no line 38 is inserted. */
-export async function stageForm2210BoxEPaymentReturn(
+async function stagePaymentContext(
   rawReturnInputs: Readonly<Record<string, unknown>>,
   rawPaymentLedger: unknown,
   priorReturnDocuments: ReadonlyArray<{ reference: string; bytes: Uint8Array }>,
+  actualWithholding: boolean,
 ) {
   // Snapshot before the first await, so source bytes and facts cannot change
   // while digest verification is in progress.
   const inputs = structuredClone(rawReturnInputs);
-  const claim = enteredClaim.parse(inputs.f2210);
-  const ledger = form2210BoxEPaymentLedgerSchema.parse(rawPaymentLedger);
+  const claim = (actualWithholding
+    ? enteredClaim.extend({
+      actual_withholding_dates_method: z.literal(true),
+    })
+    : enteredClaim).parse(inputs.f2210);
+  const ledger =
+    (actualWithholding
+      ? form2210BoxEActualWithholdingLedgerSchema
+      : form2210BoxEPaymentLedgerSchema).parse(rawPaymentLedger);
   const documents = priorReturnDocuments.map((document) => ({
     reference: document.reference,
     bytes: new Uint8Array(document.bytes),
@@ -71,7 +87,7 @@ export async function stageForm2210BoxEPaymentReturn(
     pending.f1040,
   );
   const { withholding_review, ...payments } = ledger;
-  const worksheet = calculateForm2210Payments({
+  const worksheetSource = {
     ...payments,
     tax_year: 2025,
     taxpayer_ssn: identity.taxpayer_ssn,
@@ -82,12 +98,66 @@ export async function stageForm2210BoxEPaymentReturn(
       ...withholding_review,
       amount_dollars: page1.filed_lines.line6,
     },
-  });
+  };
+  return { page1, currentForm1040: pending.f1040, worksheetSource };
+}
+
+export async function stageForm2210BoxEPaymentReturn(
+  rawReturnInputs: Readonly<Record<string, unknown>>,
+  rawPaymentLedger: unknown,
+  priorReturnDocuments: ReadonlyArray<{ reference: string; bytes: Uint8Array }>,
+) {
+  const { page1, currentForm1040, worksheetSource } = await stagePaymentContext(
+    rawReturnInputs,
+    rawPaymentLedger,
+    priorReturnDocuments,
+    false,
+  );
+  const worksheet = calculateForm2210Payments(worksheetSource);
   return {
     ...page1,
-    current_form1040: pending.f1040,
+    current_form1040: currentForm1040,
     payment_worksheet: {
       ...worksheet,
+      requiredAnnualPaymentReconciled: true as const,
+      withholdingReconciled: true as const,
+    },
+    filingReady: false as const,
+    priorAcceptanceVerified: false as const,
+    paymentAuthenticityVerified: false as const,
+  };
+}
+
+/** Simultaneous boxes D/E source calculation only. No partial page-1 XML/PDF
+ * is returned as a box-D filing document; full Part III export remains open. */
+export async function stageForm2210BoxEActualWithholdingReturn(
+  rawReturnInputs: Readonly<Record<string, unknown>>,
+  rawPaymentLedger: unknown,
+  priorReturnDocuments: ReadonlyArray<{ reference: string; bytes: Uint8Array }>,
+) {
+  const { page1, currentForm1040, worksheetSource } = await stagePaymentContext(
+    rawReturnInputs,
+    rawPaymentLedger,
+    priorReturnDocuments,
+    true,
+  );
+  const comparison = compareForm2210WithholdingMethods(worksheetSource);
+  if (!comparison.box_d_reduces_penalty) {
+    throw new Error(
+      "Form 2210 box D needs actual withholding to reduce the penalty",
+    );
+  }
+  return {
+    filed_lines: page1.filed_lines,
+    current_form1040: currentForm1040,
+    reasons: { box_d: true as const, box_e: true as const },
+    actual_payment_worksheet: {
+      ...comparison.actual,
+      requiredAnnualPaymentReconciled: true as const,
+      withholdingReconciled: true as const,
+    },
+    equal_payment_worksheet: {
+      ...comparison.equal,
       requiredAnnualPaymentReconciled: true as const,
       withholdingReconciled: true as const,
     },

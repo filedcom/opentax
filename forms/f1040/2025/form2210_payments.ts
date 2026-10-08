@@ -22,7 +22,7 @@ export const form2210PaymentInputSchema = z.object({
   required_annual_payment_dollars: dollars,
   required_payment_workpaper_reference: reference,
   equal_installments: z.literal(true),
-  withholding_method: z.literal("equal_due_dates"),
+  withholding_method: z.enum(["equal_due_dates", "actual_dates"]),
   withholding: z.object({ amount_dollars: dollars, ...review }).strict(),
   early_filing_payment_exception: z.literal(false),
   disaster_relief: z.literal(false),
@@ -32,7 +32,7 @@ export const form2210PaymentInputSchema = z.object({
       payment_id: reference,
       taxpayer_ssn: z.string().regex(/^\d{9}$/),
       tax_year: z.literal(2025),
-      kind: z.enum(["estimated_tax", "return_balance"]),
+      kind: z.enum(["estimated_tax", "return_balance", "withholding"]),
       paid_on: date,
       amount_cents: cents.refine((value) => value > 0),
       ...review,
@@ -74,9 +74,9 @@ export type Form2210PenaltySegment = {
   penalty_cents_numerator: string;
 };
 
-/** Calendar-year regular installments with default equal-date withholding.
- * Actual-date withholding, AI, prior overpayment credits, January filing relief
- * and waivers need their own source reconciliation; this function cannot file. */
+/** Calendar-year regular installments, with equal or source-dated withholding.
+ * AI, prior overpayment credits, filing-date relief and waivers still need
+ * their own source reconciliation; this function cannot file. */
 export function calculateForm2210Payments(raw: unknown) {
   const input = form2210PaymentInputSchema.parse(raw);
   const ids = new Set<string>();
@@ -99,14 +99,25 @@ export function calculateForm2210Payments(raw: unknown) {
     if (payment.reviewed_on < payment.paid_on) {
       throw new Error("Form 2210 payment review predates the recorded payment");
     }
+    if (payment.kind === "withholding") {
+      if (input.withholding_method !== "actual_dates") {
+        throw new Error(
+          "Equal withholding cannot also count dated withholding rows",
+        );
+      }
+      if (payment.paid_on > "2025-12-31") {
+        throw new Error(
+          "2025 actual withholding needs a 2025 withholding date",
+        );
+      }
+    }
     if (payment.kind === "return_balance" && payment.paid_on < "2026-01-16") {
       throw new Error(
         "Early return payment needs its separate filing exception",
       );
     }
-    // June 15 is Sunday. Retain the source date, but a June 16 estimated
-    // payment is timely under the instructions' next-business-day rule.
-    const line11_period_on = payment.kind === "estimated_tax" &&
+    // Retain actual dates; June 16 credits are timely for June's due date.
+    const line11_period_on = payment.kind !== "return_balance" &&
         payment.paid_on === "2025-06-16"
       ? "2025-06-15"
       : payment.paid_on;
@@ -115,8 +126,19 @@ export function calculateForm2210Payments(raw: unknown) {
     a.paid_on.localeCompare(b.paid_on) ||
     a.payment_id.localeCompare(b.payment_id)
   );
+  if (input.withholding_method === "actual_dates") {
+    const total = payments.filter((p) => p.kind === "withholding")
+      .reduce((sum, p) => safe(sum + p.amount_cents), 0);
+    if (total !== safe(input.withholding.amount_dollars * 100)) {
+      throw new Error(
+        "Dated withholding differs from the annual withholding total",
+      );
+    }
+  }
   const installment = safe(input.required_annual_payment_dollars * 25);
-  const withholding = safe(input.withholding.amount_dollars * 25);
+  const withholding = input.withholding_method === "equal_due_dates"
+    ? safe(input.withholding.amount_dollars * 25)
+    : 0;
   const line11 = FORM2210_DUE_DATES.map(() => withholding);
   for (const payment of payments) {
     const column = FORM2210_DUE_DATES.findIndex((due) =>
@@ -152,7 +174,7 @@ export function calculateForm2210Payments(raw: unknown) {
   const segments: Form2210PenaltySegment[] = [];
   const timelyJunePayments = new Set(
     payments.filter((payment) =>
-      payment.kind === "estimated_tax" && payment.paid_on === "2025-06-16"
+      payment.kind !== "return_balance" && payment.paid_on === "2025-06-16"
     ).map((payment) => payment.payment_id),
   );
   let available = 0;
@@ -256,5 +278,32 @@ export function calculateForm2210Payments(raw: unknown) {
     penalty_cents_denominator: 36500,
     unpaid_installments_cents: outstanding.map((debt) => debt.cents),
     unapplied_payments_cents: available,
+  };
+}
+
+/** Compare the same annual withholding and estimated payments under both
+ * methods. Dated withholding keeps its source kind; it is never an estimate. */
+export function compareForm2210WithholdingMethods(raw: unknown) {
+  const source = form2210PaymentInputSchema.parse(raw);
+  if (source.withholding_method !== "actual_dates") {
+    throw new Error(
+      "Withholding comparison requires the actual dated inventory",
+    );
+  }
+  const actual = calculateForm2210Payments(source);
+  const equal = calculateForm2210Payments({
+    ...source,
+    withholding_method: "equal_due_dates",
+    payments: source.payments.filter((payment) =>
+      payment.kind !== "withholding"
+    ),
+  });
+  return {
+    actual,
+    equal,
+    box_d_reduces_penalty: BigInt(actual.penalty_cents_numerator) <
+      BigInt(equal.penalty_cents_numerator),
+    filingReady: false as const,
+    paymentAuthenticityVerified: false as const,
   };
 }

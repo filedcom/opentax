@@ -1,6 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateForm2210Payments,
+  compareForm2210WithholdingMethods,
   type Form2210PaymentInput,
 } from "./form2210_payments.ts";
 
@@ -146,7 +147,7 @@ Deno.test("2210 rejects foreign duplicate invalid-date and unsupported source me
     (i) => i.payments[0].reviewed_on = "2026-02-30",
     (i) => i.payments[0].reviewed_on = "2025-04-14",
     (i) => i.payments[0].payment_id = "equal-withholding:0",
-    (i) => i.withholding_method = "actual_dates",
+    (i) => i.withholding_method = "unknown_method",
     (i) => i.equal_installments = false,
     (i) => i.early_filing_payment_exception = true,
     (i) => i.disaster_relief = true,
@@ -157,6 +158,64 @@ Deno.test("2210 rejects foreign duplicate invalid-date and unsupported source me
   ];
   for (const change of changes) {
     const i = source([["2025-04-15", 100000]]);
+    change(i);
+    assertThrows(() => calculateForm2210Payments(i));
+  }
+});
+
+function actualWithholding(paid_on: string) {
+  const i = source();
+  i.required_annual_payment_dollars = 5000;
+  i.withholding.amount_dollars = 2000;
+  i.withholding_method = "actual_dates";
+  i.payments.push({
+    payment_id: "issued-payroll-withholding",
+    taxpayer_ssn: "111223333",
+    tax_year: 2025,
+    kind: "withholding",
+    paid_on,
+    amount_cents: 200000,
+    ...reviewed,
+  });
+  return i;
+}
+
+Deno.test("2210 early actual withholding is compared to the same equal annual credit", () => {
+  const r = compareForm2210WithholdingMethods(actualWithholding("2025-01-02"));
+  assertEquals(r.actual.computed_penalty_cents, 10155);
+  assertEquals(r.equal.computed_penalty_cents, 13966);
+  assertEquals(r.box_d_reduces_penalty, true);
+  assertEquals(r.actual.columns.map((c) => c.line11), [200000, 0, 0, 0]);
+  assertEquals(r.equal.columns.map((c) => c.line11), [
+    50000,
+    50000,
+    50000,
+    50000,
+  ]);
+  assertEquals(r.actual.payments[0].kind, "withholding");
+  assertEquals(r.equal.payments, []);
+  assertEquals(r.filingReady, false);
+});
+
+Deno.test("2210 late withholding cannot be represented as a beneficial box D election", () => {
+  const r = compareForm2210WithholdingMethods(actualWithholding("2025-12-31"));
+  assertEquals(r.box_d_reduces_penalty, false);
+  assertEquals(
+    r.actual.computed_penalty_cents > r.equal.computed_penalty_cents,
+    true,
+  );
+});
+
+Deno.test("2210 actual withholding rejects missing total foreign year and double-counted credits", () => {
+  for (
+    const change of [
+      (i: Form2210PaymentInput) => i.payments[0].amount_cents -= 1,
+      (i: Form2210PaymentInput) => i.payments[0].paid_on = "2026-01-01",
+      (i: Form2210PaymentInput) => i.withholding_method = "equal_due_dates",
+      (i: Form2210PaymentInput) => i.payments = [],
+    ]
+  ) {
+    const i = actualWithholding("2025-01-02");
     change(i);
     assertThrows(() => calculateForm2210Payments(i));
   }
@@ -216,5 +275,50 @@ Deno.test("2210 chronological allocation agrees with an independent daily princi
       calculateForm2210Payments({ ...i, payments: [...i.payments].reverse() }),
       r,
     );
+  }
+});
+
+Deno.test("2210 actual withholding dates and cent splits agree with an independent daily oracle", () => {
+  const due = ["2025-04-15", "2025-06-15", "2025-09-15", "2026-01-15"];
+  const start = Date.parse("2025-01-01T00:00:00Z") / 86400000;
+  const end = Date.parse("2026-04-15T00:00:00Z") / 86400000;
+  let seed = 2210;
+  const next = () => (seed = (seed * 1664525 + 1013904223) >>> 0);
+  for (let trial = 0; trial < 100; trial++) {
+    const i = actualWithholding("2025-01-02");
+    const first = 1 + next() % 199999;
+    const dates = [next() % 365, next() % 365].map((offset) =>
+      new Date((start + offset) * 86400000).toISOString().slice(0, 10)
+    );
+    i.payments = [first, 200000 - first].map((amount_cents, index) => ({
+      ...i.payments[0],
+      payment_id: `withheld-${index}`,
+      amount_cents,
+      paid_on: dates[index],
+    }));
+    const debts = [0, 0, 0, 0];
+    let cash = 0, principalDays = 0n;
+    for (let d = start; d <= end; d++) {
+      const today = new Date(d * 86400000).toISOString().slice(0, 10);
+      principalDays += BigInt(debts.reduce((a, b) => a + b, 0));
+      const c = due.indexOf(today);
+      if (c >= 0) debts[c] += 125000;
+      cash += i.payments.filter((p) => p.paid_on === today).reduce(
+        (t, p) => t + p.amount_cents,
+        0,
+      );
+      for (let col = 0; col < 4; col++) {
+        const applied = Math.min(cash, debts[col]);
+        if (today === "2025-06-16" && col === 1) {
+          principalDays -= BigInt(applied);
+        }
+        cash -= applied;
+        debts[col] -= applied;
+      }
+    }
+    const r = calculateForm2210Payments(i);
+    assertEquals(r.penalty_cents_numerator, (principalDays * 7n).toString());
+    assertEquals(r.unpaid_installments_cents, debts);
+    assertEquals(r.unapplied_payments_cents, cash);
   }
 });

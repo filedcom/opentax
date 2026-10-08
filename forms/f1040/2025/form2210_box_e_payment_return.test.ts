@@ -1,5 +1,8 @@
 import { assert, assertEquals, assertRejects } from "@std/assert";
-import { stageForm2210BoxEPaymentReturn } from "./form2210_box_e_payment_return.ts";
+import {
+  stageForm2210BoxEActualWithholdingReturn,
+  stageForm2210BoxEPaymentReturn,
+} from "./form2210_box_e_payment_return.ts";
 import { f1040_2025 } from "./index.ts";
 import { normalizeAllPending } from "./pending.ts";
 import { sha256Hex } from "./prepared-source.ts";
@@ -182,4 +185,72 @@ Deno.test("2210 computed late-payment worksheet never injects a claimed Form 104
   assert(r.payment_worksheet.computed_penalty_cents > 0);
   assertEquals(r.current_form1040.line38_underpayment_penalty, undefined);
   assertEquals(r.filingReady, false);
+});
+
+async function actualFixture(paid_on = "2025-01-02") {
+  const f = await fixture();
+  f.inputs.f2210.actual_withholding_dates_method = true;
+  f.ledger.withholding_method = "actual_dates";
+  f.ledger.payments = [{
+    payment_id: "actual-payroll-credit",
+    taxpayer_ssn: "111223333",
+    tax_year: 2025,
+    kind: "withholding",
+    paid_on,
+    amount_cents: 200000,
+    source_reference: "Constructed issued dated payroll withholding statement",
+    reviewer: "Payroll reviewer",
+    reviewed_on: "2026-04-16",
+  }];
+  return f;
+}
+
+Deno.test("2210 simultaneous boxes D/E bind dated withholding to the executed return and compare methods", async () => {
+  const f = await actualFixture();
+  const r = await stageForm2210BoxEActualWithholdingReturn(
+    f.inputs,
+    f.ledger,
+    f.documents,
+  );
+  assertEquals(r.actual_payment_worksheet.computed_penalty_cents, 10155);
+  assertEquals(r.equal_payment_worksheet.computed_penalty_cents, 13966);
+  assertEquals(r.actual_payment_worksheet.withholdingReconciled, true);
+  assertEquals(r.actual_payment_worksheet.payments[0].kind, "withholding");
+  assertEquals(r.reasons, { box_d: true, box_e: true });
+  assertEquals(r.current_form1040.line38_underpayment_penalty, undefined);
+  assertEquals((r as any).native_xml, undefined);
+  assertEquals((r as any).pdf_fields, undefined);
+  assertEquals(r.filingReady, false);
+  for (const format of ["mef", "pdf"] as const) {
+    await assertRejects(async () =>
+      assertAttachmentCoverage(
+        normalizeAllPending(f1040_2025.executeReturn(f.inputs).pending),
+        format,
+      )
+    );
+  }
+});
+
+Deno.test("2210 actual withholding staging rejects nonbeneficial elections and detached date/amount/method evidence", async () => {
+  const changes: Array<(f: Awaited<ReturnType<typeof actualFixture>>) => void> =
+    [
+      (f) => f.ledger.payments[0].paid_on = "2025-12-31",
+      (f) => f.ledger.payments[0].amount_cents -= 1,
+      (f) => f.ledger.payments[0].paid_on = "2026-01-01",
+      (f) => f.ledger.payments[0].taxpayer_ssn = "444556666",
+      (f) => f.inputs.f2210.actual_withholding_dates_method = false,
+      (f) => f.inputs.w2[0].box2_fed_withheld += 1,
+      (f) => f.ledger.withholding_method = "equal_due_dates",
+    ];
+  for (const change of changes) {
+    const f = await actualFixture();
+    change(f);
+    await assertRejects(() =>
+      stageForm2210BoxEActualWithholdingReturn(f.inputs, f.ledger, f.documents)
+    );
+  }
+  const f = await actualFixture();
+  await assertRejects(() =>
+    stageForm2210BoxEPaymentReturn(f.inputs, f.ledger, f.documents)
+  );
 });
