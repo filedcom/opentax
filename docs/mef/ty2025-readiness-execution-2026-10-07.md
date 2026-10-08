@@ -6603,3 +6603,6 @@ Root full52874 is actualterminal12,783/0 at14:20:46UTC; exact2709manifest andlog
 ## October 8 — integrated passive-loss/ledger serial full launch
 
 Root fast-forwardedto387ab51c6 after488/0 actualfocusedgate. Its exact2,723-path runtime matches the focusedcandidate; main52/future57 remainunchanged. Rootboardterminalupdate remains in a namedstash, withallpreviousstashes/privateevidence preserved. The nextserial deno task test willrun thisimmutablemanifest in `root-passive-s-corp-loss-ledger-full-regression-20261008-v1/`, following the actual12,783/0 previousfull. No passingresultisclaimed beforeterminalstatus/logverification.
+
+
+The integrated serial full actually started **2026-10-08T14:28:22.736459+00:00**, taskhead0c72b9748, session32582, exact2,723 runtimepaths, Poppler retainedcache and8GiBheap. Priorfull52874 isterminal andmustnotberepolled; focused8804 isterminal488/0. This fullhas no terminalresultyet.
