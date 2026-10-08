@@ -590,3 +590,24 @@ origin/carry/owner combinations, accepted import, packet integration, matching
 business rules, ATS acceptance and the other main requirements remain open.
 No main checkoff or aggregate coverage increase follows. The entire 47-item
 future section remains unchanged and unworked.
+
+### October 8 — Form 8801 integration checkout verified
+
+All thirteen isolated implementation commits applied without conflicts to
+`codex/form8801-integration-20261008`, based on root `8e574fe89`. Its
+`e287d52cb05657a4779968eb701a26a9ace957b8` runtime matches all 2,658 candidate
+paths exactly. The normal typed 22-module integration run passed **250/0,
+zero ignored**, closing at 05:50:42 UTC. It covers the complete staged
+Form 8801 suite plus shared executor/input precedence, finalized Form 1040,
+PFIC/adoption/education refiguring, Form 3800 ordering and Form 8912 replay.
+Private `form8801-integration-focused-20261008-v1/` retains the command,
+source manifest, exit-zero status, terminal review and log SHA
+`f7593c10caa1091a77ac89e5b60732636c46726a6449f015550a0eef8e61155d`.
+
+Root's full regression remains live on its original session; all 2,637
+startup runtime paths still match. Root integration and a subsequent serial
+full regression remain pending. Form 8801 native/PDF export guards remain
+active; local workpaper arithmetic and byte consistency do not prove source
+authenticity, prior acceptance, accepted carry import, business rules or ATS
+acceptance. No main checkoff or aggregate coverage increase follows. The
+main board and entire 47-item future section remain unchanged.
