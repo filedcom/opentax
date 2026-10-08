@@ -212,3 +212,6 @@ October8, 2026: the retained one-geothermal-facility packet has all16 pages visu
 
 
 October8 two-geothermal-facility review: all19 retained pages are visually inspected. Two distinct facility copies and reserved native IDs join to two PartV4e rows of600each, PartIII1,200 and Form1040 credit1,200/refund6,133. Public/native replay reproduces filed XML exactly; local full XSD passes and all native references resolve. Duplicate facility rejects in the graph, conflicting filer-owned/other-owner data rejects in the native builder. External qualification and IRS acceptance remain unproved. See the [retained source/page and negative evidence](ty2025-readiness-execution-2026-10-07.md).
+
+
+October8 mixed wind/geothermal review: all19 retained pages inspected. Wind PartII1a/AC12b and geothermal PartII1c/AC12c retain distinct facility identities; each600 joins its own native ID/PartV4e row, totaling1,200 on Form3800 and Form1040. Public/native replay reproduces XML exactly and full local XSD passes; all references resolve. Source qualification and IRS acceptance remain unproved. See the [qualified packet evidence](ty2025-readiness-execution-2026-10-07.md).
