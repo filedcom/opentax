@@ -4902,3 +4902,21 @@ newer phase full pending. Source/payment authenticity, prior accepted filing,
 full penalty/final-return reconciliation, broader methods, BR and ATS remain
 open. FilingReady stays false and neither registry is activated. Future 44
 remains deferred; main 52 and all 44 future rows stay unchanged/unworked.
+
+
+### October 8 — Form 2210 source limitations retained as future work
+
+Compacted learnings before the next review. Primary [2025 Form 2210 instructions](https://www.irs.gov/instructions/i2210), [2025 Pub.505](https://www.irs.gov/pub/irs-prior/p505--2025.pdf) and [IRM20.1.3](https://www.irs.gov/irm/part20/irm_20-001-003r) confirm the high-income rule and addition of preceding separate tax liabilities; no reviewed source explicitly resolved AGI combination/per-return threshold treatment for the staged prior-MFS/current-MFJ branch. Recorded future45 without changing the existing conservative guard or asserting a tax conclusion.
+
+Independent source/public replay, actual terminal exit0: constructed E-only
+ledger estimated payments300000cents; public line26absent, line33withholding2000,
+line24tax10146, line37amountowed8146. This is a detached estimated-payment
+inventory in the existing fixture, not an IRS rejection. The 83-cent rounding
+preview has the same category of source limitation. Annual-payment/withholding
+reconciliation flags do not prove the line26inventory. Recorded future46;
+no validator, source fixture or runtime was fixed. Private
+`form2210-source-boundary-observation-20261008-v1/` retains copied constructed
+fixture replay and observation. No PDF authoring or new packet was performed
+in this turn. Existing 67/0 and two-document/four-page proofs remain scoped to
+unregistered document projections, not complete returns. Main52 remains
+frozen; future46unchecked, all deferred. Newer full runtime regression is next.

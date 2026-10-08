@@ -1,5 +1,20 @@
 # TY2025 Form 2210 mandatory filing paths
 
+## October 8 retained source limitations
+
+Future 45 records the unresolved changed-status/high-income interpretation;
+no 110% branch was implemented. Future 46 records an independent existing
+fixture replay: its worksheet ledger has $3,000 estimates while the public
+Form 1040 has no line 26, line 33 $2,000 and line 37 $8,146 on tax $10,146.
+The 83-cent rounding preview likewise records an estimate in the worksheet
+without a matching public line 26. Existing reconciliation flags describe
+annual safe-harbor/withholding amounts only, not a final-return estimate
+inventory join. These observations qualify the retained document previews;
+no complete source-to-final-return filing support is claimed. Both issues are
+unworked future tasks, all guards remain and no runtime was changed.
+Private replay: `form2210-source-boundary-observation-20261008-v1/`.
+
+
 ## October 8 interactive regular-method PDF checkpoint
 
 Root `267adee80` adds `stageForm2210RegularPdfDocument`. It snapshots public
