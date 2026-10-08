@@ -3,7 +3,10 @@ import {
   type SourceDocumentBytes,
   VerifiedSourceDocuments,
 } from "../../../core/runtime/source-documents.ts";
-import { calculateForm172HistoricalAmtCap } from "./form172_amt_historical_cap.ts";
+import {
+  calculateForm172HistoricalAmtCap,
+  calculateForm172HistoricalAmtDeductionAllocation,
+} from "./form172_amt_historical_cap.ts";
 
 const schema = z.object({
   workpaper: z.object({
@@ -18,9 +21,12 @@ const schema = z.object({
 /** One canonical retained package owns all independently refigured origin
  * inventories, annual operands and reviewed opening/category assertions.
  * Hash identity does not authenticate elections, prior returns or carry balances. */
-export async function stageForm172HistoricalAmtCapSource(
+async function stageHistoricalAmtSource<
+  T extends ReturnType<typeof calculateForm172HistoricalAmtCap>,
+>(
   rawBinding: unknown,
   rawDocuments: readonly SourceDocumentBytes[],
+  calculate: (raw: unknown) => T,
 ) {
   const binding = schema.parse(rawBinding);
   const documents = rawDocuments.map((d) => ({
@@ -53,7 +59,7 @@ export async function stageForm172HistoricalAmtCapSource(
       "Historical AMT cap package differs from bound reference/year/owners",
     );
   }
-  const calculation = calculateForm172HistoricalAmtCap(workpaper);
+  const calculation = calculate(workpaper);
   return {
     ...calculation,
     taxpayerSsn: binding.taxpayer_ssn,
@@ -65,4 +71,28 @@ export async function stageForm172HistoricalAmtCapSource(
     packetAdmissionVerified: false as const,
     filingReady: false as const,
   };
+}
+
+export function stageForm172HistoricalAmtCapSource(
+  rawBinding: unknown,
+  rawDocuments: readonly SourceDocumentBytes[],
+) {
+  return stageHistoricalAmtSource(
+    rawBinding,
+    rawDocuments,
+    calculateForm172HistoricalAmtCap,
+  );
+}
+
+/** Byte-bound chronological deduction workpaper. Does not establish modified
+ * income absorption, authentic elections, accepted carry or packet admission. */
+export function stageForm172HistoricalAmtDeductionAllocationSource(
+  rawBinding: unknown,
+  rawDocuments: readonly SourceDocumentBytes[],
+) {
+  return stageHistoricalAmtSource(
+    rawBinding,
+    rawDocuments,
+    calculateForm172HistoricalAmtDeductionAllocation,
+  );
 }

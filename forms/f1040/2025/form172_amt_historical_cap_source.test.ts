@@ -1,6 +1,9 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { form172AmtLegacyTentativeLines } from "./form172_amt_annual_limit.ts";
-import { stageForm172HistoricalAmtCapSource } from "./form172_amt_historical_cap_source.ts";
+import {
+  stageForm172HistoricalAmtCapSource,
+  stageForm172HistoricalAmtDeductionAllocationSource,
+} from "./form172_amt_historical_cap_source.ts";
 function origin() {
   const item = (id: string, amount: number, business: boolean) => ({
     item_id: id,
@@ -297,5 +300,139 @@ Deno.test("Historical AMT source owns binding and source arrays before first dig
   assertEquals(r.aggregateHistoricalCap, 100);
   assertEquals(r.applicationYear, 2014);
   assertEquals(r.review_package_manifest[0].sha256, originalSha);
+  assertEquals(r.taxpayerSsn, "111223333");
+});
+
+Deno.test("Historical AMT byte-bound allocation recomputes chronology without promoting legal availability", async () => {
+  const f = await source();
+  const r = await stageForm172HistoricalAmtDeductionAllocationSource(
+    f.binding,
+    f.documents,
+  );
+  assertEquals(
+    r.chronologicalDeductionAllocations.map(
+      (v) => [v.originYear, v.allocatedDeduction],
+    ),
+    [[2008, 90], [2009, 10]],
+  );
+  assertEquals(r.review_package_manifest, [f.binding.workpaper]);
+  assertEquals(r.reviewPackageBytesVerified, true);
+  assertEquals(r.historicalDeductionAllocationArithmeticReconciled, true);
+  for (
+    const flag of [
+      r.chronologicalAbsorptionReconciled,
+      r.finalAtnoldReconciled,
+      r.acceptedCarryImportVerified,
+      r.electionDocumentAuthenticityVerified,
+      r.packetAdmissionVerified,
+      r.filingReady,
+    ]
+  ) assertEquals(flag, false);
+  f.workpaper.losses[0].category = "whbaa";
+  f.workpaper.losses[0].whbaa_election_reference = "election-2008";
+  f.workpaper.losses[1].category = "ordinary";
+  delete f.workpaper.losses[1].whbaa_election_reference;
+  f.workpaper.losses.reverse();
+  f.documents[0].bytes = new TextEncoder().encode(JSON.stringify(f.workpaper));
+  f.binding.workpaper.sha256 = await sha(f.documents[0].bytes);
+  const earlier = await stageForm172HistoricalAmtDeductionAllocationSource(
+    f.binding,
+    f.documents,
+  );
+  assertEquals(earlier.whbaaCapComponent, 10);
+  assertEquals(
+    earlier.chronologicalDeductionAllocations.map(
+      (v) => [v.originYear, v.allocatedDeduction],
+    ),
+    [[2008, 100], [2009, 0]],
+  );
+});
+Deno.test("Historical AMT allocation source rejects altered bytes inventory and owner year joins", async () => {
+  const f = await source();
+  const altered = new Uint8Array(f.documents[0].bytes);
+  altered[10] ^= 1;
+  for (
+    const docs of [[], [...f.documents, ...f.documents], [...f.documents, {
+      reference: "extra",
+      bytes: new Uint8Array(),
+    }], [{ ...f.documents[0], bytes: altered }]]
+  ) {
+    await assertRejects(() =>
+      stageForm172HistoricalAmtDeductionAllocationSource(f.binding, docs)
+    );
+  }
+  for (
+    const patch of [
+      { taxpayer_ssn: "999887777" },
+      { application_tax_year: 2015 },
+      { spouse_ssn: "999887777" },
+      { finalAtnold: 100 },
+    ]
+  ) {
+    await assertRejects(() =>
+      stageForm172HistoricalAmtDeductionAllocationSource({
+        ...f.binding,
+        ...patch,
+      }, f.documents)
+    );
+  }
+  const changed = {
+    ...f.workpaper,
+    chronologicalDeductionAllocations: [{
+      originYear: 2008,
+      allocatedDeduction: 100,
+    }],
+  };
+  const bytes = new TextEncoder().encode(JSON.stringify(changed));
+  const digest = await sha(bytes);
+  await assertRejects(() =>
+    stageForm172HistoricalAmtDeductionAllocationSource({
+      ...f.binding,
+      workpaper: { ...f.binding.workpaper, sha256: digest },
+    }, [{ reference: f.workpaper.reference, bytes }])
+  );
+});
+Deno.test("Historical AMT allocation source recomputes origins even after a matching replacement hash", async () => {
+  const f = await source();
+  f.workpaper.losses[0].amt_origin.reviewed_amt.amti_before_atnold = -83001;
+  let bytes = new TextEncoder().encode(JSON.stringify(f.workpaper));
+  const digestF = await sha(bytes);
+  await assertRejects(() =>
+    stageForm172HistoricalAmtDeductionAllocationSource({
+      ...f.binding,
+      workpaper: { ...f.binding.workpaper, sha256: digestF },
+    }, [{ reference: f.workpaper.reference, bytes }])
+  );
+  const g = await source();
+  delete g.workpaper.losses[1].whbaa_election_reference;
+  bytes = new TextEncoder().encode(JSON.stringify(g.workpaper));
+  const digest = await sha(bytes);
+  await assertRejects(() =>
+    stageForm172HistoricalAmtDeductionAllocationSource({
+      ...g.binding,
+      workpaper: { ...g.binding.workpaper, sha256: digest },
+    }, [{ reference: g.workpaper.reference, bytes }])
+  );
+});
+Deno.test("Historical AMT allocation owns caller binding and bytes before awaiting the digest", async () => {
+  const f = await source();
+  const originalSha = f.binding.workpaper.sha256;
+  const promise = stageForm172HistoricalAmtDeductionAllocationSource(
+    f.binding,
+    f.documents,
+  );
+  f.binding.workpaper.sha256 = "0".repeat(64);
+  f.binding.application_tax_year = 2015;
+  f.binding.taxpayer_ssn = "999887777";
+  f.documents[0].bytes.fill(0);
+  f.documents[0].reference = "other";
+  f.documents.length = 0;
+  const r = await promise;
+  assertEquals(
+    r.chronologicalDeductionAllocations.map((v) => v.allocatedDeduction),
+    [90, 10],
+  );
+  assertEquals(r.review_package_manifest[0].sha256, originalSha);
+  assertEquals(r.applicationYear, 2014);
   assertEquals(r.taxpayerSsn, "111223333");
 });
