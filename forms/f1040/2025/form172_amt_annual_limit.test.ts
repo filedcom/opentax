@@ -1,3 +1,4 @@
+import { calculateForm172ModernAmtVintageModifiedIncome } from "./form172_amt_vintage_modified_income.ts";
 import { calculateForm172ModernAmtModifiedIncome } from "./form172_amt_modified_income.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
@@ -889,4 +890,208 @@ Deno.test("Modern modified AMTI preserves MFS capital limit and signed negative 
   assertEquals(r.capitalLossAddback, 1500);
   assertEquals(r.signedModifiedAmtiBeforeEarlierNol, -38500);
   assertEquals(r.nonnegativeModifiedAmtiBeforeEarlierNol, 0);
+});
+function modernVintage() {
+  const cap = modernOrdinaryCap();
+  cap.annual_review.components.find((c) => c.line === "2h")!.amount = 700;
+  cap.losses = [
+    modernOlderLoss(2020, 40000),
+    modernOlderLoss(2017, 50000),
+    modernOlderLoss(2016, 0),
+    modernOlderLoss(2019, 60000),
+  ];
+  const allocation = calculateForm172AmtModernOrdinaryDeductionAllocation(cap);
+  const reviews = {
+    reference: "modern-vintage-header",
+    application_tax_year: 2024,
+    taxpayer_ssn: "111223333",
+    vintages: allocation.allocations.map((loss, i) => {
+      const m = modernModified(cap);
+      m.reference = `context-${loss.originYear}`;
+      m.components.forEach((c) => {
+        c.refigured_reference = `context-${loss.originYear}-${c.line}`;
+        if (c.line === "1") c.refigured_amount += i * 1000;
+      });
+      m.deductions.refigured_reference =
+        `context-${loss.originYear}-deductions`;
+      return {
+        origin_year: loss.originYear,
+        loss_reference: loss.reference,
+        refigured_deductions_include_earlier_nol_effects: true,
+        earlier_nol_deductions: allocation.allocations.slice(0, i).map((l) => ({
+          origin_year: l.originYear,
+          loss_reference: l.reference,
+          amount: l.actualDeduction,
+        })),
+        modified_review: m,
+      };
+    }).reverse(),
+  };
+  return { cap, reviews };
+}
+Deno.test("Modern AMT vintage contexts reconcile earlier actual deductions and independent refigures", () => {
+  const { cap, reviews } = modernVintage();
+  const r = calculateForm172ModernAmtVintageModifiedIncome(cap, reviews);
+  assertEquals(
+    r.chronologicalVintageModifiedIncome.map(
+      (l) => [
+        l.originYear,
+        l.earlierActualDeduction,
+        l.signedModifiedAmtiBeforeEarlierAtnold,
+        l.modifiedAmtiAfterEarlierAtnold,
+      ],
+    ),
+    [[2016, 0, 113000, 113000], [2017, 0, 114000, 114000], [
+      2019,
+      50000,
+      115000,
+      65000,
+    ], [2020, 90560, 116000, 25440]],
+  );
+  assertEquals(r.chronologicalAbsorptionReconciled, false);
+  assertEquals(r.section172Post2020AbsorptionAdjustmentReconciled, false);
+  assertEquals(r.filingReady, false);
+  assertEquals(
+    calculateForm172ModernAmtVintageModifiedIncome(cap, {
+      ...reviews,
+      vintages: [...reviews.vintages].reverse(),
+    }),
+    r,
+  );
+});
+Deno.test("Modern AMT vintage contexts reject missing zero rows stale amounts and cross-context aliases", () => {
+  const { cap, reviews } = modernVintage();
+  for (
+    const mutate of [
+      (v: typeof reviews) => {
+        v.vintages.pop();
+      },
+      (v: typeof reviews) => {
+        v.vintages[0].earlier_nol_deductions.pop();
+      },
+      (v: typeof reviews) => {
+        v.vintages[0].earlier_nol_deductions[0].amount = 1;
+      },
+      (v: typeof reviews) => {
+        v.vintages[0].earlier_nol_deductions[1].amount = 50001;
+      },
+      (v: typeof reviews) => {
+        v.vintages[0].earlier_nol_deductions[0].loss_reference = "wrong";
+      },
+      (v: typeof reviews) => {
+        v.vintages[0].modified_review.components[0].refigured_reference =
+          v.vintages[1].modified_review.components[0].refigured_reference;
+      },
+      (v: typeof reviews) => {
+        v.vintages[0].modified_review.reference =
+          v.vintages[1].modified_review.reference;
+      },
+      (v: typeof reviews) => {
+        v.vintages[0].loss_reference = "wrong";
+      },
+      (v: typeof reviews) => {
+        v.reference = cap.reference;
+      },
+      (v: typeof reviews) => {
+        v.taxpayer_ssn = "999887777";
+      },
+      (v: typeof reviews) => {
+        v.application_tax_year = 2023;
+      },
+    ]
+  ) {
+    const v = structuredClone(reviews);
+    mutate(v);
+    assertThrows(() => calculateForm172ModernAmtVintageModifiedIncome(cap, v));
+  }
+  assertThrows(() =>
+    calculateForm172ModernAmtVintageModifiedIncome(cap, {
+      ...reviews,
+      vintages: [...reviews.vintages, reviews.vintages[0]],
+    })
+  );
+  assertThrows(() =>
+    calculateForm172ModernAmtVintageModifiedIncome(cap, {
+      ...reviews,
+      vintages: reviews.vintages.map((v) => ({
+        ...v,
+        refigured_deductions_include_earlier_nol_effects: false,
+      })),
+    })
+  );
+});
+Deno.test("Modern AMT vintage contexts preserve negative result before zero floor", () => {
+  const { cap, reviews } = modernVintage();
+  reviews.vintages[0].modified_review.components.find((c) => c.line === "1")!
+    .refigured_amount = -100000;
+  const r = calculateForm172ModernAmtVintageModifiedIncome(cap, reviews);
+  const last = r.chronologicalVintageModifiedIncome.at(-1)!;
+  assertEquals(last.signedModifiedAmtiBeforeEarlierAtnold, -37000);
+  assertEquals(last.signedModifiedAmtiAfterEarlierAtnold, -127560);
+  assertEquals(last.modifiedAmtiAfterEarlierAtnold, 0);
+});
+Deno.test("Modern AMT TY2025 vintage contexts bind separate1040 refigures and earlier deductions", () => {
+  const c = modernOrdinaryCap();
+  const a = annual2025();
+  a.components.find((l) => l.line === "2h")!.amount = 700;
+  const cap = {
+    ...c,
+    annual_review: a,
+    deductions_review: { ...c.deductions_review, tax_year: 2025 },
+    losses: [modernOlderLoss(2019, 80000), modernOlderLoss(2017, 50000)],
+  };
+  const allocation = calculateForm172AmtModernOrdinaryDeductionAllocation(cap);
+  const reviews = {
+    reference: "2025-vintage-header",
+    application_tax_year: 2025,
+    taxpayer_ssn: "111223333",
+    vintages: allocation.allocations.map((loss, i) => ({
+      origin_year: loss.originYear,
+      loss_reference: loss.reference,
+      refigured_deductions_include_earlier_nol_effects: true,
+      earlier_nol_deductions: allocation.allocations.slice(0, i).map((l) => ({
+        origin_year: l.originYear,
+        loss_reference: l.reference,
+        amount: l.actualDeduction,
+      })),
+      modified_review: {
+        ...modernModified(c),
+        reference: `2025-context-${loss.originYear}`,
+        tax_year: 2025,
+        components: a.components.map((l) => ({
+          line: l.line,
+          original_reference: l.reference,
+          original_amount: l.amount,
+          refigured_reference: `2025-context-${loss.originYear}-${l.line}`,
+          refigured_amount: l.line === "1b" ? 42250 + i * 10000 : l.amount,
+        })),
+        deductions: {
+          ...modernModified(c).deductions,
+          refigured_reference: `2025-deductions-${loss.originYear}`,
+        },
+        refigured_form1040: {
+          ...a.reviewed_form1040,
+          reference: `refigured1040-${loss.originYear}`,
+          line11b_agi: 60000 + i * 10000,
+        },
+      },
+    })),
+  };
+  const r = calculateForm172ModernAmtVintageModifiedIncome(cap, reviews);
+  assertEquals(
+    r.chronologicalVintageModifiedIncome.map(
+      (l) => [
+        l.originYear,
+        l.earlierActualDeduction,
+        l.signedModifiedAmtiBeforeEarlierAtnold,
+        l.modifiedAmtiAfterEarlierAtnold,
+      ],
+    ),
+    [[2017, 0, 73000, 73000], [2019, 45630, 83000, 37370]],
+  );
+  reviews.vintages[1].modified_review.refigured_form1040.reference =
+    reviews.vintages[0].modified_review.refigured_form1040.reference;
+  assertThrows(() =>
+    calculateForm172ModernAmtVintageModifiedIncome(cap, reviews)
+  );
 });

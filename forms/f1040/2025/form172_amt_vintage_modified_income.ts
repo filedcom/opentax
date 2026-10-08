@@ -1,7 +1,15 @@
 import { z } from "zod";
-import { form172AmtAnnualReviewSchema } from "./form172_amt_annual_limit.ts";
+import {
+  calculateForm172AmtModernOrdinaryDeductionAllocation,
+  form172AmtAnnualReviewSchema,
+  form172AmtModernOrdinaryCapSchema,
+} from "./form172_amt_annual_limit.ts";
 import { calculateForm172HistoricalAmtDeductionAllocation } from "./form172_amt_historical_cap.ts";
-import { calculateForm172HistoricalAmtModifiedIncome } from "./form172_amt_modified_income.ts";
+import {
+  calculateForm172HistoricalAmtModifiedIncome,
+  calculateForm172ModernAmtModifiedIncome,
+  form172ModernAmtModifiedReviewSchema,
+} from "./form172_amt_modified_income.ts";
 
 const ref = z.string().trim().min(1);
 const schema = z.object({
@@ -144,6 +152,152 @@ export function calculateForm172HistoricalAmtVintageModifiedIncome(
     chronologicalVintageModifiedIncome: workpapers,
     vintageRefigureContextArithmeticReconciled: true as const,
     refiguredOperandEligibilityVerified: false as const,
+    section56AbsorptionLimitReconciled: false as const,
+    chronologicalAbsorptionReconciled: false as const,
+    survivingCarryVerified: false as const,
+    sourceAuthenticityVerified: false as const,
+    priorAcceptanceVerified: false as const,
+    filingReady: false as const,
+  };
+}
+
+const modernSchema = schema.extend({
+  application_tax_year: z.number().int().min(2018).max(2025),
+  vintages: z.array(
+    schema.shape.vintages.element.extend({
+      origin_year: z.number().int().min(2005).max(2024),
+      earlier_nol_deductions: z.array(
+        schema.shape.vintages.element.shape.earlier_nol_deductions.element
+          .extend({ origin_year: z.number().int().min(2005).max(2024) })
+          .strict(),
+      ),
+    }).strict(),
+  ).min(1).max(21),
+}).strict();
+
+/** Distinct reviewed section172(b)(2) context for every modern ordinary
+ * vintage. Direct earlier deductions are recomputed from annual allocation;
+ * indirect deduction effects are reviewed paired operands, not eligibility
+ * proof. This does NOT apply the post2020 adjustment or determine absorption. */
+export function calculateForm172ModernAmtVintageModifiedIncome(
+  rawCap: unknown,
+  rawReviews: unknown,
+) {
+  const allocation = calculateForm172AmtModernOrdinaryDeductionAllocation(
+    rawCap,
+  );
+  const capReview = form172AmtModernOrdinaryCapSchema.parse(rawCap);
+  const annual = capReview.annual_review;
+  const v = modernSchema.parse(rawReviews);
+  if (
+    v.application_tax_year !== annual.tax_year ||
+    v.taxpayer_ssn !== annual.taxpayer_ssn ||
+    v.spouse_ssn !== annual.spouse_ssn
+  ) {
+    throw new Error(
+      "Modern AMT vintage contexts need matching application year and owners",
+    );
+  }
+  const origins = allocation.allocations;
+  const rows = new Map(v.vintages.map((row) => [row.origin_year, row]));
+  if (
+    v.vintages.length !== origins.length || rows.size !== origins.length ||
+    origins.some((loss) => !rows.has(loss.originYear))
+  ) {
+    throw new Error(
+      "Modern AMT vintage contexts need every opening exactly once",
+    );
+  }
+  const references = new Set<string>();
+  const addRef = (reference: string) => {
+    if (references.has(reference)) {
+      throw new Error(
+        "Modern AMT vintage refigures need distinct context references",
+      );
+    }
+    references.add(reference);
+  };
+  for (
+    const reference of [
+      v.reference,
+      capReview.reference,
+      annual.reference,
+      annual.form6251_reference,
+      capReview.deductions_review.reference,
+      ...origins.map((l) => l.reference),
+    ]
+  ) addRef(reference);
+  if (annual.reviewed_form1040) addRef(annual.reviewed_form1040.reference);
+  for (const component of annual.components) addRef(component.reference);
+  const workpapers = origins.map((loss, index) => {
+    const row = rows.get(loss.originYear)!;
+    if (row.loss_reference !== loss.reference) {
+      throw new Error("Modern AMT vintage loss reference differs from opening");
+    }
+    const earlier = origins.slice(0, index);
+    const deductions = new Map(
+      row.earlier_nol_deductions.map((d) => [d.origin_year, d]),
+    );
+    if (
+      row.earlier_nol_deductions.length !== earlier.length ||
+      deductions.size !== earlier.length ||
+      earlier.some((d) => {
+        const actual = deductions.get(d.originYear);
+        return !actual || actual.loss_reference !== d.reference ||
+          actual.amount !== d.actualDeduction;
+      })
+    ) {
+      throw new Error(
+        "Modern AMT earlier deduction inventory differs from independent allocation",
+      );
+    }
+    const modified = calculateForm172ModernAmtModifiedIncome(
+      rawCap,
+      row.modified_review,
+    );
+    const review = form172ModernAmtModifiedReviewSchema.parse(
+      row.modified_review,
+    );
+    for (
+      const reference of [
+        review.reference,
+        ...review.components.map((c) => c.refigured_reference),
+        review.deductions.refigured_reference,
+        ...(review.refigured_form1040
+          ? [review.refigured_form1040.reference]
+          : []),
+      ]
+    ) {
+      addRef(reference);
+    }
+    const signedModifiedAmtiAfterEarlierAtnold =
+      modified.signedModifiedAmtiBeforeEarlierNol - loss.earlierActualDeduction;
+    if (!Number.isSafeInteger(signedModifiedAmtiAfterEarlierAtnold)) {
+      throw new Error("Modern AMT vintage arithmetic exceeds exact dollars");
+    }
+    return {
+      originYear: loss.originYear,
+      lossReference: loss.reference,
+      modifiedReviewReference: review.reference,
+      reviewedOpening: loss.openingAmtNol,
+      actualAllocatedDeduction: loss.actualDeduction,
+      earlierActualDeduction: loss.earlierActualDeduction,
+      signedModifiedAmtiBeforeEarlierAtnold:
+        modified.signedModifiedAmtiBeforeEarlierNol,
+      signedModifiedAmtiAfterEarlierAtnold,
+      modifiedAmtiAfterEarlierAtnold: Math.max(
+        0,
+        signedModifiedAmtiAfterEarlierAtnold,
+      ),
+      modified,
+    };
+  });
+  return {
+    applicationYear: allocation.applicationYear,
+    chronologicalVintageModifiedIncome: workpapers,
+    modernVintageRefigureContextWorkpaperArithmeticReconciled: true as const,
+    refiguredOperandEligibilityVerified: false as const,
+    section172Post2020AbsorptionAdjustmentReconciled: false as const,
     section56AbsorptionLimitReconciled: false as const,
     chronologicalAbsorptionReconciled: false as const,
     survivingCarryVerified: false as const,

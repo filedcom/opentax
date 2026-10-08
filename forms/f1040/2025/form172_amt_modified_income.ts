@@ -255,7 +255,7 @@ export function calculateForm172HistoricalAmtModifiedIncome(
   };
 }
 
-const modernReviewSchema = reviewSchema.omit({
+export const form172ModernAmtModifiedReviewSchema = reviewSchema.omit({
   section199: true,
   components: true,
 })
@@ -292,7 +292,7 @@ export function calculateForm172ModernAmtModifiedIncome(
   const cap = calculateForm172AmtModernOrdinaryCap(rawCap);
   const c = form172AmtModernOrdinaryCapSchema.parse(rawCap);
   const annual = c.annual_review;
-  const v = modernReviewSchema.parse(rawReview);
+  const v = form172ModernAmtModifiedReviewSchema.parse(rawReview);
   if (
     v.annual_reference !== annual.reference || v.tax_year !== annual.tax_year ||
     v.taxpayer_ssn !== annual.taxpayer_ssn ||
