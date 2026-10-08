@@ -260,3 +260,53 @@ full numeric range, durable accepted carry/import, public route/packet
 integration, matching business rules and IRS acceptance remain required.
 Both public attachment guards stay active; aggregate filing/PDF counts and
 main checkboxes do not increase. All future tasks remain unworked.
+
+
+## Isolated retained prior-return byte reconciliation — October 8, 05:01 UTC
+
+Candidate `19ee3b671374b8be63d506db88f0c5af1cae045f` adds
+`inspectForm8801PriorReturnBytes` and `stageForm8801PriorBoundReturn`.
+The latter snapshots public inputs, review/prior bindings and all bytes
+before awaits, settles the current credit, then reconciles review facts to
+one exact SHA-bound retained 2024 XML return copy. Review JSON and prior
+XML references must be distinct; caller acceptance flags reject.
+
+The inspector verifies the IRS element namespace (including prefix bindings),
+2024 year/period/1040 type, actual header primary SSN, prior filing-status
+code, selected Forms 6251/8801 document IDs and duplicate document IDs.
+Ten source Form 6251 fields and prior Form 8801 line 26 must match the
+reviewed facts exactly. Missing forms/optional amounts can reconcile only
+zero claimed source amounts; they cannot supply a positive AMT or carry.
+Duplicate fields/forms, changed source amounts, ambiguous/unsafe dollars,
+malformed XML, external entities/CDATA, changed/missing bytes and reused
+references reject.
+
+The [official IRS TY2024 package](https://www.irs.gov/pub/irs-schema/py2025r1.zip)
+was retained with CRC/digest verification. Its `mef/Stylesheets/2024/IRS6251.xsl`
+and `IRS8801.xsl` ground the mappings: 2024 line 1 is
+`AGIOrAGILessDeductionAmt`, rather than the TY2025 line 1a/1b fields;
+`TotalRefundReceivedAmt` stores a nonnegative magnitude printed as a negative
+line 2b. Signed income/interest/depletion amounts remain signed. No 2024 XSD
+or full prior-return validity/IRS acceptance is inferred from stylesheets.
+
+The normal typed seven-module run passed **84/0, zero ignored**, including ten
+new prior-copy cases and existing calculation/capacity/settlement/native/guard/
+preview checks. Private `form8801-prior-bytes-20261008-v1/` retains official
+ZIP/stylesheets, source snapshots, 2,650-path startup manifest, log/status and
+review. Log SHA:
+`26c58422ac1ac596615a88474cde0a2c48748415d1d391426d5ea066d5d205db`.
+Root's live full regression still uses its exact unchanged 2,637 startup paths;
+all six Form 8801 candidate commits remain isolated. No PDFs are newly
+created/delivered or added to aggregate counts by this step.
+
+`priorReturnBytesVerified` and `priorForm6251AndCarryBytesReconciled` become true
+for the constructed matching copy. This proves byte/line consistency, not
+that the copy was filed or accepted. `priorAcceptanceVerified`,
+`workpaperAuthenticityVerified`, `finalizedReturnReconciled` and `filingReady`
+remain false. Additional exclusion inventories, MTCNOL, MTFTCE, unallowed
+vehicle credit and capital/foreign modifications still need their source
+proof. Joint allocation and status-change history, accepted carry/import,
+registered return/PDF/native packet integration, all credit/owner/numeric
+combinations, matching business rules and ATS acceptance remain open.
+Both public attachment guards remain active; main checkboxes and future work
+remain unchanged.
