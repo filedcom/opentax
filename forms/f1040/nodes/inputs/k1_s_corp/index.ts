@@ -1,3 +1,8 @@
+import {
+  firstYearPassiveSCorpLoss8582Activity,
+  firstYearPassiveSCorpLossSourceSchema,
+  passiveSCorpLossBundle,
+} from "../k1_s_corp_passive_loss_source.ts";
 import { currentK1Qbi, currentK1QbiSourceSchema } from "../k1_qbi_source.ts";
 import {
   currentSCorpRpeAggregation,
@@ -110,6 +115,8 @@ export const itemSchema = z.object({
   box3_other_rental: z.number().optional(),
   eic_passive_activity_review: k1PassiveEicReviewSchema.optional(),
   passive_income_source: k1PassiveIncomeSourceSchema.optional(),
+  first_year_passive_loss_source: firstYearPassiveSCorpLossSourceSchema
+    .optional(),
   qualified_business_income_source: currentK1QbiSourceSchema.optional(),
   rpe_aggregation_source: rpeAggregationSourceSchema.optional(),
 
@@ -406,6 +413,25 @@ type K1SCorpItems = K1SCorpItem[];
 
 // Aggregate Schedule E income (Box 1 + 2 + 3 + 6) → schedule1 line5_schedule_e
 function schedule1Output(items: K1SCorpItems): NodeOutput[] {
+  if (items.length === 1 && items[0].first_year_passive_loss_source) {
+    const bundle = passiveSCorpLossBundle(items[0]);
+    const loss = firstYearPassiveSCorpLoss8582Activity(
+      bundle.source,
+      bundle.k1,
+    );
+    return [
+      output(agi_aggregator, {
+        pal_current_loss: loss.stages.passiveLossBefore8582,
+        pal_rental_loss: 0,
+      }),
+      output(form8582, {
+        current_loss: loss.stages.passiveLossBefore8582,
+        rental_current_loss: 0,
+        has_other_passive: true,
+        activities: [loss.activity],
+      }),
+    ];
+  }
   const activities = passiveK1Activities(items, "k1_s_corp");
   const passiveIncome = activities.reduce(
     (sum, row) => sum + row.current_net,
@@ -518,6 +544,13 @@ function resolveUbia(item: K1SCorpItem): number {
 }
 
 function form8995Output(items: K1SCorpItems): NodeOutput[] {
+  if (items.length === 1 && items[0].first_year_passive_loss_source) {
+    return [
+      output(form8995, {
+        current_passive_s_corp_loss: passiveSCorpLossBundle(items[0]),
+      }),
+    ];
+  }
   const rpe = items.filter((item) => item.rpe_aggregation_source);
   if (rpe.length) {
     if (rpe.length !== 1 || items.length !== 1) {
@@ -729,13 +762,17 @@ function hasBasisData(item: K1SCorpItem): boolean {
     item.stock_basis_beginning !== undefined ||
     item.debt_basis_beginning !== undefined ||
     item.form7203_stock_loss_ledger !== undefined ||
-    item.form7203_debt_evidence !== undefined
+    item.form7203_debt_evidence !== undefined ||
+    item.first_year_passive_loss_source !== undefined
   );
 }
 
 function buildForm7203Fields(
   item: K1SCorpItem,
 ): Parameters<typeof output<typeof form7203>>[1] {
+  if (item.first_year_passive_loss_source) {
+    return { current_passive_s_corp_loss: passiveSCorpLossBundle(item) };
+  }
   if (
     item.form7203_debt_evidence?.kind ===
       "prior_reduced_formal_note_repayment"
@@ -946,6 +983,26 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
     const { k1_s_corps } = inputSchema.parse(input);
 
     for (const item of k1_s_corps) {
+      if (item.first_year_passive_loss_source) {
+        const allowed = new Set([
+          "corporation_ein",
+          "corporation_name",
+          "recipient_tin",
+          "source_document_reference",
+          "box1_ordinary_business",
+          "eic_passive_activity_review",
+          "first_year_passive_loss_source",
+        ]);
+        if (
+          k1_s_corps.length !== 1 ||
+          Object.keys(item).some((key) => !allowed.has(key))
+        ) {
+          throw Error(
+            "Current passive S-corporation loss needs its complete single ordinary-loss source without other K1 fields",
+          );
+        }
+        passiveSCorpLossBundle(item);
+      }
       if (item.form7203_debt_evidence) {
         if (
           item.form7203_debt_evidence.kind ===
@@ -1053,6 +1110,7 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
     if (
       k1_s_corps.some((item) =>
         (item.box1_ordinary_business ?? 0) < 0 &&
+        item.first_year_passive_loss_source === undefined &&
         (!Number.isSafeInteger(item.box1_ordinary_business ?? 0) ||
           !item.corporation_ein || !item.source_document_reference ||
           !item.form7203_stock_loss_ledger ||

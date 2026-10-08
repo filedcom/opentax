@@ -5,6 +5,22 @@ import { isDeepStrictEqual } from "node:util";
 export function assertOwned7203RequiredCopies(
   pending: Readonly<Record<string, unknown>>,
 ): void {
+  const records = pending.k1_s_corp as {
+    k1_s_corps?: Record<string, unknown>[];
+  } | undefined;
+  if (
+    records?.k1_s_corps?.some((row) =>
+      row.first_year_passive_loss_source !== undefined
+    ) ||
+    (pending.form7203 as Record<string, unknown> | undefined)
+        ?.current_passive_s_corp_loss !== undefined ||
+    (pending.form8995 as Record<string, unknown> | undefined)
+        ?.current_passive_s_corp_loss !== undefined
+  ) {
+    throw Error(
+      "Passive S-corporation loss export remains staged until finalized Schedule E, EIC, native and PDF source joins are verified",
+    );
+  }
   const k = pending.k1_s_corp as
     | { k1_s_corps?: Record<string, unknown>[] }
     | undefined;

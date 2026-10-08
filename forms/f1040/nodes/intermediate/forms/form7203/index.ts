@@ -1,3 +1,7 @@
+import {
+  firstYearPassiveSCorpLossStages,
+  passiveSCorpLossBundleSchema,
+} from "../../../inputs/k1_s_corp_passive_loss_source.ts";
 import { additionalPrincipalRepayments } from "./debt-allocation.ts";
 import { ownedDebtFamily } from "./owned-family.ts";
 import { z } from "zod";
@@ -40,6 +44,7 @@ import { reviewedStockLossLedgerSchema } from "./stock-ledger.ts";
 // IRC §1366(d) — limitation on losses; IRC §1367 — adjustments to basis
 
 export const inputSchema = z.object({
+  current_passive_s_corp_loss: passiveSCorpLossBundleSchema.optional(),
   owned_debt_loss_sources: z.array(z.unknown()).min(2).max(4).optional(),
   // ── Part I: Stock Basis ───────────────────────────────────────────────────
   // Line 1 — Beginning stock basis at start of tax year
@@ -176,6 +181,26 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: Form7203Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    if (input.current_passive_s_corp_loss) {
+      if (
+        Object.keys(input).some((key) => key !== "current_passive_s_corp_loss")
+      ) {
+        throw Error("Passive Form7203 source cannot mix scalar basis inputs");
+      }
+      const { source, k1 } = input.current_passive_s_corp_loss;
+      const s = firstYearPassiveSCorpLossStages(source, k1);
+      return {
+        outputs: [], // The K1 withheld the whole raw loss; §469 posts only its allowance.
+        carryforwards: s.basisSuspendedLoss > 0
+          ? {
+            [`basis_suspended_s_corp_loss:${s.ownerTin}:${s.corporationEin}`]:
+              s.basisSuspendedLoss,
+            [`qualified_basis_suspended_s_corp_loss:${s.ownerTin}:${s.corporationEin}`]:
+              s.basisSuspendedLoss,
+          }
+          : {},
+      };
+    }
     if (input.owned_debt_loss_sources !== undefined) {
       if (
         Object.keys(input).some((k) =>

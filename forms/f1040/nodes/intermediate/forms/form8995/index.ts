@@ -1,3 +1,5 @@
+import { passiveSCorpLossBundleSchema } from "../../../inputs/k1_s_corp_passive_loss_source.ts";
+import { passiveSCorpLossQbiLines } from "./passive-s-corp-loss.ts";
 import { ownedSepSourceSchema } from "../../../inputs/sep_retirement/owned-source.ts";
 import {
   reviewedRpeAggregation,
@@ -112,6 +114,7 @@ function sumField(value: number | number[] | undefined): number {
 // ── Schemas ──────────────────────────────────────────────────────────────────
 
 export const inputSchema = z.object({
+  current_passive_s_corp_loss: passiveSCorpLossBundleSchema.optional(),
   patron_source_review: patronReviewSchema.optional(),
   independent_patron_reviews: independentReviewsSchema.optional(),
   joint_se_source: ownerSourcesSchema.optional(),
@@ -1582,6 +1585,53 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
+    if (input.current_passive_s_corp_loss) {
+      if (input.agi === undefined || input.filing_status === undefined) {
+        return { outputs: [] };
+      }
+      if (
+        sumField(input.qbi) !== 0 ||
+        sumField(input.qbi_from_schedule_c) !== 0 ||
+        sumField(input.qbi_from_schedule_f) !== 0 ||
+        sumField(input.sstb_qbi) !== 0 ||
+        sumField(input.line6_sec199a_dividends) !== 0 ||
+        qbiCapitalTotal(input) !== 0 ||
+        input.current_k1_qbi_sources !== undefined ||
+        input.current_passive_farm_qbi_sources !== undefined ||
+        input.current_passive_property_sources !== undefined ||
+        input.owned_s_corp_loss_source !== undefined ||
+        input.owned_s_corp_loss_sources !== undefined ||
+        input.rpe_aggregation_source !== undefined ||
+        (input.qbi_loss_carryforward ?? 0) !== 0 ||
+        (input.reit_loss_carryforward ?? 0) !== 0
+      ) {
+        throw Error(
+          "Passive S-corp QBI loss calculation cannot mix unreviewed qualified sources or history",
+        );
+      }
+      const { qualifiedPassiveSuspended, ...lines } = passiveSCorpLossQbiLines(
+        input.current_passive_s_corp_loss,
+        input.current_passive_k1_income_sources ?? [],
+        taxableIncomeBeforeQbi(input, cfg)!,
+      );
+      const { source } = input.current_passive_s_corp_loss;
+      return {
+        outputs: [
+          this.outputNodes.output(f1040, { line13_qbi_deduction: 0 }),
+          this.outputNodes.output(standard_deduction, { qbi_deduction: 0 }),
+          { nodeType: this.nodeType, fields: { ...lines, qbi_deduction: 0 } },
+        ],
+        carryforwards: {
+          ...(lines.line16 > 0 ? { qbi_loss_carryforward: lines.line16 } : {}),
+          ...(qualifiedPassiveSuspended > 0
+            ? {
+              [`qualified_passive_loss_199a:${source.shareholder_ssn}:${source.activity_id}`]:
+                qualifiedPassiveSuspended,
+            }
+            : {}),
+        },
+      };
+    }
     if (input.owned_sep_plans && !input.independent_patron_reviews) {
       throw new Error(
         "Owned SEP allocation needs the reviewed independent patron source route",

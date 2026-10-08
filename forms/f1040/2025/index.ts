@@ -1,3 +1,4 @@
+import { assertPassiveSCorpLossCalculationInputs } from "./passive-s-corp-loss-calculation.ts";
 import type { FormDefinition } from "../../../core/types/form-definition.ts";
 import type { ExecuteResult } from "../../../core/runtime/executor.ts";
 import type { FilerIdentity } from "../mef/header.ts";
@@ -17,6 +18,7 @@ import { applyForm8621QefRefigure } from "./form8621_1294_refigure.ts";
 import { executePreQefSourceReturn } from "./staged_source_return.ts";
 
 function executeReturn(inputs: Record<string, unknown>): ExecuteResult {
+  assertPassiveSCorpLossCalculationInputs(inputs);
   const elected = Array.isArray(inputs.f8621) &&
     inputs.f8621.some((item) =>
       item !== null && typeof item === "object" &&

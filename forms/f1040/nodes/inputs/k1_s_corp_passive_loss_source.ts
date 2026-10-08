@@ -150,6 +150,55 @@ export interface PassiveSCorpLossK1Facts {
   };
 }
 
+export const passiveSCorpLossBundleSchema = z.object({
+  source: firstYearPassiveSCorpLossSourceSchema,
+  k1: z.object({
+    corporation_ein: tin,
+    corporation_name: reference,
+    recipient_tin: tin,
+    source_document_reference: reference,
+    box1_ordinary_business: z.number().int().negative().refine(
+      Number.isSafeInteger,
+    ),
+    eic_passive_activity_review: z.object({
+      recipient_tin: tin,
+      box1: z.literal("passive"),
+      activity_statement_reference: reference,
+      participation_workpaper_reference: reference,
+    }).strict(),
+  }).strict(),
+}).strict();
+
+export function passiveSCorpLossBundle(item: Record<string, unknown>) {
+  const allowed = new Set([
+    "corporation_ein",
+    "corporation_name",
+    "recipient_tin",
+    "source_document_reference",
+    "box1_ordinary_business",
+    "eic_passive_activity_review",
+    "first_year_passive_loss_source",
+  ]);
+  if (Object.keys(item).some((key) => !allowed.has(key))) {
+    throw Error(
+      "Current passive S-corporation loss cannot mix other K1 fields",
+    );
+  }
+  const bundle = passiveSCorpLossBundleSchema.parse({
+    source: item.first_year_passive_loss_source,
+    k1: Object.fromEntries([
+      "corporation_ein",
+      "corporation_name",
+      "recipient_tin",
+      "source_document_reference",
+      "box1_ordinary_business",
+      "eic_passive_activity_review",
+    ].map((key) => [key, item[key]])),
+  });
+  firstYearPassiveSCorpLossStages(bundle.source, bundle.k1);
+  return bundle;
+}
+
 function total(values: readonly number[]): number {
   const sum = values.reduce((sum, value) => sum + value, 0);
   if (!Number.isSafeInteger(sum)) {
