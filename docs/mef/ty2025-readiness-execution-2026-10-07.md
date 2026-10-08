@@ -6583,3 +6583,8 @@ Board learnings compacted first. [Existing Worksheet1 passive-loss task](ty2025-
 ## October 8, 14:05 UTC — PR65 and complete passive-loss candidate
 
 Draft [PR65](https://github.com/filedcom/opentax/pull/65) was created, attached and its saved description verified before resuming work. The [passive-source record](ty2025-eic-passive-s-corp-loss-source.md) now retains the417/0 joint component gate/all28 component pages and the444/0 complete-native gate, including20 whole Return1040 XSD checks and retained failure gates. Six prepared-bundle-bound whole PDF packets/all60 pages were directly reviewed; correct owner, page selection, EIC/refund and distinct carryovers reconcile, and altered copies reject. Exact14:05 audit confirms root2709 unchanged, candidate2722 (13new/19changed), main52/future56 frozen. Candidate d53dfc21f remains isolated while full session52874 runs; integration/serial full, authenticated source/BR/transmission and IRS acceptance remain open. No broad checkoff, future implementation or aggregate addition.
+
+
+## October 8 — isolated PR65 integration
+
+The nine validated passive-loss commits were integrated into draft PR65 through a separate checkout based on492cde1f8. The complete2,722-path runtime manifest matches the444/0 focused gate exactly, while the root2,709-path regression snapshot remains unchanged. Root integration and the next serial full regression remain pending actual completion of session52874; no second full was launched. This publication adds reviewable source-to-native/PDF code to the already-created PR and changes no main/future scope or counts.
