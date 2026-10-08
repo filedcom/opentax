@@ -306,3 +306,127 @@ export function calculateForm172AmtAnnualLimit(
     filingReady: false as const,
   };
 }
+
+const modernOrdinaryCapSchema = z.object({
+  reference: ref,
+  annual_review: form172AmtAnnualReviewSchema,
+  deductions_review: z.object({
+    reference: ref,
+    tax_year: z.number().int().min(2018).max(2025),
+    taxpayer_ssn: z.string().regex(/^\d{9}$/),
+    spouse_ssn: z.string().regex(/^\d{9}$/).optional(),
+    section199a_deduction_in_tentative_amti: positiveDollars,
+    section250_deduction_in_tentative_amti: positiveDollars,
+  }).strict(),
+  losses: z.array(
+    z.object({
+      reference: ref,
+      regular_origin: z.unknown(),
+      amt_origin: z.unknown(),
+      opening_amt_nol: positiveDollars,
+      ordinary_section56_category_reviewed: z.literal(true),
+    }).strict(),
+  ).min(1).max(21),
+}).strict();
+
+/** Calendar-year ordinary carryforward deduction ceiling: section172(a)'s
+ * application-year/vintage limit, then section56(d)'s 90% limit. Reviewed
+ * openings are bounded by independently recomputed AMT origins; their legal
+ * availability is NOT established. Special-category losses, carrybacks,
+ * chronological allocation and section172(b)(2) absorption are separate. */
+export function calculateForm172AmtModernOrdinaryCap(raw: unknown) {
+  const v = modernOrdinaryCapSchema.parse(raw);
+  const a = v.annual_review;
+  const d = v.deductions_review;
+  if (
+    a.tax_year < 2018 || d.tax_year !== a.tax_year ||
+    d.taxpayer_ssn !== a.taxpayer_ssn || d.spouse_ssn !== a.spouse_ssn
+  ) {
+    throw new Error(
+      "Modern AMT deduction review needs matching year and owners",
+    );
+  }
+  const references = [
+    v.reference,
+    a.reference,
+    a.form6251_reference,
+    d.reference,
+    ...v.losses.map((l) => l.reference),
+  ];
+  if (new Set(references).size !== references.length) {
+    throw new Error(
+      "Modern AMT cap and opening reviews need distinct references",
+    );
+  }
+  const years = new Set<number>();
+  const losses = v.losses.map((l) => {
+    const r = calculateForm172AmtAnnualLimit(l.regular_origin, l.amt_origin, a);
+    if (
+      r.originYear >= a.tax_year ||
+      (r.originYear < 2018 && a.tax_year > r.originYear + 20) ||
+      years.has(r.originYear) || l.opening_amt_nol > r.originAmtNol
+    ) {
+      throw new Error(
+        "Modern AMT opening has duplicate, expired or inconsistent origin",
+      );
+    }
+    years.add(r.originYear);
+    return {
+      reference: l.reference,
+      originYear: r.originYear,
+      originAmtNol: r.originAmtNol,
+      openingAmtNol: l.opening_amt_nol,
+      annual: r,
+    };
+  });
+  const annual = losses[0].annual;
+  const sum = (before2018: boolean) =>
+    losses.filter((l) => (l.originYear < 2018) === before2018).reduce(
+      (n, l) => n + l.openingAmtNol,
+      0,
+    );
+  const pre2018Opening = sum(true);
+  const post2017Opening = sum(false);
+  const section172IncomeBase = Math.max(
+    0,
+    annual.tentativeAmtiBeforeAtnold +
+      d.section199a_deduction_in_tentative_amti +
+      d.section250_deduction_in_tentative_amti,
+  );
+  const post2017IncomeExcess = Math.max(
+    0,
+    section172IncomeBase - pre2018Opening,
+  );
+  const post2017EightyPercentLimit = a.tax_year > 2020
+    ? Number((BigInt(post2017IncomeExcess) * 80n + 50n) / 100n)
+    : undefined;
+  const section172DeductionCap = pre2018Opening +
+    (a.tax_year > 2020
+      ? Math.min(post2017Opening, post2017EightyPercentLimit!)
+      : post2017Opening);
+  return {
+    applicationYear: a.tax_year,
+    pre2018Opening,
+    post2017Opening,
+    section172IncomeBase,
+    post2017IncomeExcess,
+    ...(post2017EightyPercentLimit === undefined
+      ? {}
+      : { post2017EightyPercentLimit }),
+    section172DeductionCap,
+    ordinary90PercentLimit: annual.ordinary90PercentLimit,
+    ordinaryDeductionCap: Math.min(
+      section172DeductionCap,
+      annual.ordinary90PercentLimit,
+    ),
+    losses: losses.map(({ annual: _, ...l }) => l),
+    modernOrdinaryCapWorkpaperArithmeticReconciled: true as const,
+    openingCarryAvailabilityVerified: false as const,
+    earlierVintageOrderingReconciled: false as const,
+    special100PercentLossesReconciled: false as const,
+    amtCarryAbsorptionReconciled: false as const,
+    sourceAuthenticityVerified: false as const,
+    priorAcceptanceVerified: false as const,
+    filingReady: false as const,
+  };
+}

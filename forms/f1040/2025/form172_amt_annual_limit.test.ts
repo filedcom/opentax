@@ -1,6 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateForm172AmtAnnualLimit,
+  calculateForm172AmtModernOrdinaryCap,
   form172AmtLegacyTentativeLines,
   form172AmtTentativeLines,
 } from "./form172_amt_annual_limit.ts";
@@ -383,4 +384,226 @@ Deno.test("Form172 early annual layouts distinguish ScheduleL2010 from reserved2
   assertThrows(() =>
     calculateForm172AmtAnnualLimit(origin(), amt(), { ...a, tax_year: 2009 })
   );
+});
+
+function modernOrdinaryCap() {
+  return {
+    reference: "modern-cap",
+    annual_review: annual(),
+    deductions_review: {
+      reference: "modern-deductions",
+      tax_year: 2024,
+      taxpayer_ssn: "111223333",
+      section199a_deduction_in_tentative_amti: 0,
+      section250_deduction_in_tentative_amti: 0,
+    },
+    losses: [{
+      reference: "opening-2019",
+      regular_origin: origin() as unknown,
+      amt_origin: amt() as unknown,
+      opening_amt_nol: 80000,
+      ordinary_section56_category_reviewed: true,
+    }],
+  };
+}
+Deno.test("Form172 modern ordinary ceiling coordinates 80% and 90% separately", () => {
+  const v = modernOrdinaryCap();
+  v.annual_review.components[0].amount = 40000; // AMTI90k; 80%72k vs90%81k
+  const r = calculateForm172AmtModernOrdinaryCap(v);
+  assertEquals(r.section172DeductionCap, 72000);
+  assertEquals(r.ordinary90PercentLimit, 81000);
+  assertEquals(r.ordinaryDeductionCap, 72000);
+  assertEquals(r.openingCarryAvailabilityVerified, false);
+  assertEquals(r.amtCarryAbsorptionReconciled, false);
+  assertEquals(r.filingReady, false);
+  v.deductions_review.section199a_deduction_in_tentative_amti = 20000;
+  v.deductions_review.section250_deduction_in_tentative_amti = 5000;
+  const added = calculateForm172AmtModernOrdinaryCap(v);
+  assertEquals(added.section172IncomeBase, 115000);
+  assertEquals(added.section172DeductionCap, 80000);
+  assertEquals(added.ordinary90PercentLimit, 81000);
+  assertEquals(added.ordinaryDeductionCap, 80000);
+});
+function modernOlderLoss(year: number, opening: number) {
+  const r = structuredClone(origin());
+  r.tax_year = year;
+  r.reviewed_form1040.tax_year = year;
+  const a = structuredClone(amt());
+  a.amt_inventory.tax_year = year;
+  a.reviewed_amt.tax_year = year;
+  const historicalLimits = {
+    reference: "legacy-limits",
+    at_risk_and_passive_limits_applied: true,
+    itemized_phaseout_applied: true,
+  };
+  const regular = year < 2018
+    ? {
+      source_format: "reviewed_legacy_loss_year",
+      reference: r.reference,
+      tax_year: year,
+      taxpayer_ssn: r.taxpayer_ssn,
+      filing_status: r.filing_status,
+      inventory: {
+        noncapital_income: r.noncapital_income,
+        noncapital_deductions: r.noncapital_deductions,
+        capital_gains: r.capital_gains,
+        capital_losses: r.capital_losses,
+        prior_nol_deductions: [],
+      },
+      reviewed_form1040: {
+        reference: r.reviewed_form1040.reference,
+        tax_year: year,
+        taxpayer_ssn: r.taxpayer_ssn,
+        filing_status: r.filing_status,
+        agi: -100000,
+        standard_or_itemized_deduction: 12200,
+        personal_exemptions: 0,
+        reported_taxable_income: 0,
+      },
+      section199_deduction: { reference: "regular-dpad", amount: 0 },
+      limitations_review: historicalLimits,
+    }
+    : r;
+  const amtOrigin = year < 2018
+    ? {
+      ...a,
+      amt_inventory: {
+        ...a.amt_inventory,
+        limitations_review: historicalLimits,
+      },
+      reviewed_amt: {
+        ...a.reviewed_amt,
+        section199_deduction: { reference: "amt-dpad", amount: 0 },
+      },
+    }
+    : a;
+  return {
+    reference: `opening-${year}`,
+    regular_origin: regular as unknown,
+    amt_origin: amtOrigin as unknown,
+    opening_amt_nol: opening,
+    ordinary_section56_category_reviewed: true,
+  };
+}
+Deno.test("Form172 modern mixed vintages subtract pre2018 opening before 80%", () => {
+  const v = modernOrdinaryCap();
+  v.losses.push(modernOlderLoss(2017, 50000));
+  const r = calculateForm172AmtModernOrdinaryCap(v);
+  assertEquals(r.pre2018Opening, 50000);
+  assertEquals(r.post2017IncomeExcess, 50000);
+  assertEquals(r.post2017EightyPercentLimit, 40000);
+  assertEquals(r.section172DeductionCap, 90000);
+  assertEquals(r.ordinaryDeductionCap, 90000);
+  v.losses[1].opening_amt_nol = 80000;
+  v.annual_review.components[0].amount = 0; //AMTI50k, olderopening80k
+  const capped = calculateForm172AmtModernOrdinaryCap(v);
+  assertEquals(capped.post2017EightyPercentLimit, 0);
+  assertEquals(capped.section172DeductionCap, 80000);
+  assertEquals(capped.ordinaryDeductionCap, 45000);
+});
+Deno.test("Form172 modern annual cap suspends 80% in 2018–20, applies it from2021", () => {
+  for (const year of [2018, 2019, 2020, 2021, 2024]) {
+    const v = modernOrdinaryCap();
+    v.annual_review.tax_year = year;
+    v.deductions_review.tax_year = year;
+    v.losses = [modernOlderLoss(2017, 50000), modernOlderLoss(2016, 50000)];
+    const r = calculateForm172AmtModernOrdinaryCap(v);
+    assertEquals(r.section172DeductionCap, 100000);
+    assertEquals(r.ordinaryDeductionCap, 90000);
+    assertEquals(r.post2017EightyPercentLimit, year > 2020 ? 0 : undefined);
+  }
+  const v = modernOrdinaryCap();
+  v.annual_review.tax_year = 2020;
+  v.deductions_review.tax_year = 2020;
+  assertEquals(
+    calculateForm172AmtModernOrdinaryCap(v).ordinaryDeductionCap,
+    80000,
+  );
+  v.annual_review.tax_year = 2021;
+  v.deductions_review.tax_year = 2021;
+  v.annual_review.components[0].amount = 40000;
+  assertEquals(
+    calculateForm172AmtModernOrdinaryCap(v).ordinaryDeductionCap,
+    72000,
+  );
+});
+Deno.test("Form172 modern cap rejects invalid opening year owner category and authority", () => {
+  for (
+    const mutate of [
+      (v: ReturnType<typeof modernOrdinaryCap>) => {
+        v.losses[0].opening_amt_nol = 80001;
+      },
+      (v: ReturnType<typeof modernOrdinaryCap>) => {
+        v.losses.push(structuredClone(v.losses[0]));
+      },
+      (v: ReturnType<typeof modernOrdinaryCap>) => {
+        v.deductions_review.taxpayer_ssn = "999887777";
+      },
+      (v: ReturnType<typeof modernOrdinaryCap>) => {
+        v.deductions_review.tax_year = 2023;
+      },
+      (v: ReturnType<typeof modernOrdinaryCap>) => {
+        v.deductions_review.reference = v.reference;
+      },
+      (v: ReturnType<typeof modernOrdinaryCap>) => {
+        v.annual_review.tax_year = 2017;
+      },
+    ]
+  ) {
+    const v = modernOrdinaryCap();
+    mutate(v);
+    assertThrows(() => calculateForm172AmtModernOrdinaryCap(v));
+  }
+  const v = modernOrdinaryCap();
+  assertThrows(() =>
+    calculateForm172AmtModernOrdinaryCap({
+      ...v,
+      losses: [{ ...v.losses[0], ordinary_section56_category_reviewed: false }],
+    })
+  );
+  assertThrows(() =>
+    calculateForm172AmtModernOrdinaryCap({ ...v, ordinaryDeductionCap: 80000 })
+  );
+  v.losses = [modernOlderLoss(2024, 80000)];
+  assertThrows(() => calculateForm172AmtModernOrdinaryCap(v));
+});
+Deno.test("Form172 modern cap binds TY2025 operands and last pre2018 carry year", () => {
+  const v = modernOrdinaryCap();
+  const a = annual2025();
+  const r = calculateForm172AmtModernOrdinaryCap({
+    ...v,
+    annual_review: a,
+    deductions_review: { ...v.deductions_review, tax_year: 2025 },
+    losses: [modernOlderLoss(2005, 80000)],
+  });
+  assertEquals(r.section172DeductionCap, 80000);
+  assertEquals(r.ordinaryDeductionCap, 45000);
+  const later = calculateForm172AmtModernOrdinaryCap({
+    ...v,
+    annual_review: a,
+    deductions_review: { ...v.deductions_review, tax_year: 2025 },
+  });
+  assertEquals(later.section172DeductionCap, 40000);
+  assertEquals(later.ordinaryDeductionCap, 40000);
+  assertThrows(() =>
+    calculateForm172AmtModernOrdinaryCap({
+      ...v,
+      annual_review: {
+        ...a,
+        reviewed_form1040: { ...a.reviewed_form1040, line11b_agi: 50001 },
+      },
+      deductions_review: { ...v.deductions_review, tax_year: 2025 },
+    })
+  );
+});
+Deno.test("Form172 modern cap negative bases and whole-dollar percentages", () => {
+  const v = modernOrdinaryCap();
+  v.annual_review.components.forEach((c) => c.amount = 0);
+  v.annual_review.components[0].amount = -10;
+  assertEquals(calculateForm172AmtModernOrdinaryCap(v).ordinaryDeductionCap, 0);
+  v.annual_review.components[0].amount = 10001;
+  const r = calculateForm172AmtModernOrdinaryCap(v);
+  assertEquals(r.post2017EightyPercentLimit, 8001);
+  assertEquals(r.ordinary90PercentLimit, 9001);
+  assertEquals(r.ordinaryDeductionCap, 8001);
 });
