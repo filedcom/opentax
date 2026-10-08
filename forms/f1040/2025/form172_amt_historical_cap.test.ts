@@ -1,3 +1,4 @@
+import { calculateForm172HistoricalAmtAbsorption } from "./form172_amt_historical_absorption.ts";
 import { calculateForm172HistoricalAmtVintageModifiedIncome } from "./form172_amt_vintage_modified_income.ts";
 import { calculateForm172HistoricalAmtModifiedIncome } from "./form172_amt_modified_income.ts";
 import { assertEquals, assertThrows } from "@std/assert";
@@ -696,5 +697,121 @@ Deno.test("Historical AMT vintage workpapers reject lost duplicated stale and re
       ...good,
       absorbed_loss: 100,
     })
+  );
+});
+
+Deno.test("Historical AMT absorption reproduces ordinary ninety and WHBAA ten without accepted carry", () => {
+  const f = fixture();
+  const v = vintageReview(f);
+  const r = calculateForm172HistoricalAmtAbsorption(f, v);
+  assertEquals(
+    r.chronologicalReviewedApplications.map((
+      row,
+    ) => [row.absorbed, row.reviewedRemaining]),
+    [[90, 110], [10, 90]],
+  );
+  assertEquals(r.totalReviewedAbsorbed, 100);
+  assertEquals(r.totalReviewedRemaining, 200);
+  assertEquals(r.completeCarryHistoryVerified, false);
+  assertEquals(r.survivingAcceptedCarryVerified, false);
+  assertEquals(r.filingReady, false);
+});
+Deno.test("Historical AMT absorption preserves early WHBAA consumption and its later ordinary remainder", () => {
+  const f = fixture();
+  f.losses[0].category = "whbaa";
+  f.losses[0].whbaa_election_reference = "election-2008";
+  f.losses[1].category = "ordinary";
+  delete f.losses[1].whbaa_election_reference;
+  let v = vintageReview(f);
+  v.vintages[1].earlier_nol_deductions[0].amount = 100;
+  let r = calculateForm172HistoricalAmtAbsorption(f, v);
+  assertEquals(r.chronologicalReviewedApplications.map((row) => row.absorbed), [
+    100,
+    0,
+  ]);
+  assertEquals(r.chronologicalReviewedApplications[0].whbaaComponent, 10);
+  f.losses[0].reviewed_opening_amt_nol = 50;
+  v = vintageReview(f);
+  v.vintages[1].earlier_nol_deductions[0].amount = 50;
+  r = calculateForm172HistoricalAmtAbsorption(f, v);
+  assertEquals(
+    r.chronologicalReviewedApplications.map((
+      row,
+    ) => [row.absorbed, row.reviewedRemaining]),
+    [[50, 0], [50, 50]],
+  );
+});
+Deno.test("Historical AMT absorption spends a shared ordinary ninety capacity only once", () => {
+  const f = fixture();
+  f.losses[0].reviewed_opening_amt_nol = 40;
+  f.losses[1].category = "ordinary";
+  delete f.losses[1].whbaa_election_reference;
+  const v = vintageReview(f);
+  v.vintages[1].earlier_nol_deductions[0].amount = 40;
+  const r = calculateForm172HistoricalAmtAbsorption(f, v);
+  assertEquals(r.chronologicalReviewedApplications.map((row) => row.absorbed), [
+    40,
+    50,
+  ]);
+  assertEquals(r.totalReviewedAbsorbed, 90);
+  // Multiplying (100-40) by90% for the second origin would incorrectly use54.
+  assertEquals(
+    r.chronologicalReviewedApplications[1].remainingOrdinaryCapacity,
+    50,
+  );
+});
+Deno.test("Historical AMT absorption differs from actual deduction after capital and medical modifications", () => {
+  const f = fixture();
+  f.losses[0].reviewed_opening_amt_nol = 80000;
+  f.losses[1].reviewed_opening_amt_nol = 0;
+  f.annual_review.components[0].amount = 31700;
+  const v = vintageReview(f);
+  v.vintages[1].earlier_nol_deductions[0].amount = 28530;
+  for (const row of v.vintages) {
+    row.modified_review.components[0].refigured_amount = 32000;
+    row.modified_review.amt_capital_items = [{
+      item_id: "loss",
+      reference: "amt-loss-source",
+      owner_ssn: "111223333",
+      kind: "loss",
+      amount: 7000,
+    }];
+    row.modified_review.amt_capital_loss_deduction.amount = 3000;
+  }
+  const r = calculateForm172HistoricalAmtAbsorption(f, v);
+  assertEquals(r.originalDeductionCap, 28530);
+  assertEquals(
+    r.chronologicalReviewedApplications[0].actualAllocatedDeduction,
+    28530,
+  );
+  assertEquals(r.chronologicalReviewedApplications[0].modifiedBase, 35000);
+  assertEquals(r.chronologicalReviewedApplications[0].absorbed, 31500);
+  assertEquals(r.chronologicalReviewedApplications[0].reviewedRemaining, 48500);
+  assertEquals(
+    r.chronologicalReviewedApplications[1].earlierActualDeduction,
+    28530,
+  );
+  v.vintages[1].earlier_nol_deductions[0].amount = 31500;
+  assertThrows(
+    () => calculateForm172HistoricalAmtAbsorption(f, v),
+    Error,
+    "earlier deductions differ",
+  );
+});
+Deno.test("Historical AMT absorption floors shrinking vintage bases and rejects missing reviews", () => {
+  const f = fixture();
+  const v = vintageReview(f);
+  v.vintages[1].modified_review.components[0].refigured_amount = -20;
+  const r = calculateForm172HistoricalAmtAbsorption(f, v);
+  assertEquals(r.chronologicalReviewedApplications.map((row) => row.absorbed), [
+    90,
+    0,
+  ]);
+  assertEquals(r.chronologicalReviewedApplications[1].reviewedRemaining, 100);
+  v.vintages.pop();
+  assertThrows(
+    () => calculateForm172HistoricalAmtAbsorption(f, v),
+    Error,
+    "each origin exactly once",
   );
 });

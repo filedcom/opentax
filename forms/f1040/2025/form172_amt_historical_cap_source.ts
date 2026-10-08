@@ -9,6 +9,7 @@ import {
 } from "./form172_amt_historical_cap.ts";
 import { calculateForm172HistoricalAmtModifiedIncome } from "./form172_amt_modified_income.ts";
 import { calculateForm172HistoricalAmtVintageModifiedIncome } from "./form172_amt_vintage_modified_income.ts";
+import { calculateForm172HistoricalAmtAbsorption } from "./form172_amt_historical_absorption.ts";
 
 const schema = z.object({
   workpaper: z.object({
@@ -132,5 +133,19 @@ export function stageForm172HistoricalAmtVintageModifiedIncomeSource(
       cap,
       vintage_reviews,
     );
+  });
+}
+
+/** Byte-bound historical absorption arithmetic remains a reviewed workpaper,
+ * not an authenticated prior-return carry or a filing admission token. */
+export function stageForm172HistoricalAmtAbsorptionSource(
+  rawBinding: unknown,
+  rawDocuments: readonly SourceDocumentBytes[],
+) {
+  return stageHistoricalAmtSource(rawBinding, rawDocuments, (raw) => {
+    const { vintage_reviews, ...cap } = z.object({
+      vintage_reviews: z.unknown(),
+    }).passthrough().parse(raw);
+    return calculateForm172HistoricalAmtAbsorption(cap, vintage_reviews);
   });
 }

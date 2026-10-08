@@ -1,6 +1,7 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { form172AmtLegacyTentativeLines } from "./form172_amt_annual_limit.ts";
 import {
+  stageForm172HistoricalAmtAbsorptionSource,
   stageForm172HistoricalAmtCapSource,
   stageForm172HistoricalAmtDeductionAllocationSource,
   stageForm172HistoricalAmtModifiedIncomeSource,
@@ -683,4 +684,49 @@ Deno.test("Historical AMT vintage source owns caller binding and package bytes b
     ),
     [3100, 3010],
   );
+});
+
+Deno.test("Historical AMT absorption source recomputes remaining balances without accepting carry", async () => {
+  const f = await vintageSource();
+  const r = await stageForm172HistoricalAmtAbsorptionSource(
+    f.binding,
+    f.documents,
+  );
+  assertEquals(
+    r.chronologicalReviewedApplications.map((
+      v,
+    ) => [v.actualAllocatedDeduction, v.absorbed, v.reviewedRemaining]),
+    [[90, 200, 0], [10, 100, 0]],
+  );
+  assertEquals(r.totalReviewedAbsorbed, 300);
+  assertEquals(r.reviewPackageBytesVerified, true);
+  assertEquals(r.completeCarryHistoryVerified, false);
+  assertEquals(r.survivingAcceptedCarryVerified, false);
+  assertEquals(r.acceptedCarryImportVerified, false);
+  assertEquals(r.packetAdmissionVerified, false);
+  assertEquals(r.filingReady, false);
+});
+Deno.test("Historical AMT absorption source rejects substituting consumption for earlier actual deduction", async () => {
+  const f = await vintageSource();
+  f.workpaper.vintage_reviews.vintages[1].earlier_nol_deductions[0].amount =
+    200;
+  f.documents[0].bytes = new TextEncoder().encode(JSON.stringify(f.workpaper));
+  f.binding.workpaper.sha256 = await sha(f.documents[0].bytes);
+  await assertRejects(
+    () => stageForm172HistoricalAmtAbsorptionSource(f.binding, f.documents),
+    Error,
+    "earlier deductions differ",
+  );
+  const g = await vintageSource();
+  const digest = g.binding.workpaper.sha256;
+  const promise = stageForm172HistoricalAmtAbsorptionSource(
+    g.binding,
+    g.documents,
+  );
+  g.binding.workpaper.sha256 = "0".repeat(64);
+  g.documents[0].bytes.fill(0);
+  g.documents.length = 0;
+  const r = await promise;
+  assertEquals(r.review_package_manifest[0].sha256, digest);
+  assertEquals(r.totalReviewedAbsorbed, 300);
 });
