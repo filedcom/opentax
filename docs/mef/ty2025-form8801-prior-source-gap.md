@@ -460,3 +460,44 @@ allocations, durable import, the other source/calculation gaps, packet
 integration, matching business rules and IRS acceptance remain open. No main
 checkoff or aggregate coverage increase follows; the whole future section
 remains unchanged and unworked.
+
+### October 8 — reproducible unfiled Form 8801 carry record
+
+Isolated candidate `a64b887c8` adds `stageForm8801CarryRecord` and a retained-
+byte verification API. It recomputes prior-source-bound public settlement;
+the canonical record binds current public-input SHA, review and prior-return
+manifests, current/prior filer identities, calculated lines, credit used and
+ending carry. Verification requires exact retained bytes and recomputes from
+all original sources, rejecting edited records even with a coherently changed
+hash. Source and record references remain distinct; all caller facts and
+bytes are copied before the first await.
+
+Records have fixed `local_unfiled` status and false current/prior acceptance,
+filing-ready and next-year filing-import flags. They support a reproducible
+local opening preview only. The prior-year MTFTCE workpaper record identifies
+2024 as originating and 2025 as its next workpaper year; it is not mislabeled
+as the 2025 minimum-tax-credit carry opening in 2026. These year/amount
+contracts follow the [Form 8801 instructions](https://www.irs.gov/instructions/i8801).
+
+The normal typed ten-module run passed **127/0, zero ignored**, including
+seven new disk-round-trip, coherently rehashed tamper, changed public source,
+nonpositive stop, byte/reference conflict, pre-await copying and MTFTCE-year
+cases. Private `form8801-carry-record-20261008-v2/` retains sources, 2,654-path
+startup/terminal manifest, log/status, generator and actual persisted source
+and record files. Log SHA:
+`d46ebe4d79e4e11bf9cd1b347d8ed80ad9774c2f21823a47f05c3667db721d4f`.
+Its disk-reopened partial-credit sample has used credit 1,475 and carry 3,707;
+record SHA `513530d62f26a5ac8a7b57f4c715ee11892ff75e500f4dbe41cb904f76ff65a5`.
+The separate MTFTCE case records 770 opening its 2025 workpaper and current
+minimum-tax-credit carry 4,625 opening 2026. V1's 126/0 run is preserved.
+The first sample generator failed to locate a single-quoted fixture and
+wrote no output; its source is preserved. `generate-v2.ts` successfully
+retained/reopened the constructed sample and verified all original sources.
+
+All eleven Form 8801 implementation commits remain isolated. Root's full
+regression is still confirmed live and its 2,637 startup runtime paths match.
+Accepted-filing admission and import, authenticated source/acceptance bytes,
+status-change allocations, the other source/calculation requirements,
+public packet integration, matching business rules and ATS acceptance remain
+open. No main checkoff or aggregate coverage increase follows. All future
+items stay unchanged and unworked.
