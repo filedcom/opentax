@@ -120,6 +120,9 @@ export const firstYearPassiveSCorpLossSourceSchema = z.object({
   issued_k1: z.object({
     ...identity,
     tax_year: z.literal(2025),
+    shareholder_name_as_on_k1: reference.max(35).regex(
+      /^([A-Za-z0-9'-] ?)*[A-Za-z0-9'-]$/,
+    ),
     corporation_name: reference.max(30),
     document_reference: reference,
     box1_ordinary_loss: positiveMoney,

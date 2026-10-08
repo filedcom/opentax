@@ -98,6 +98,7 @@ export function passiveSCorpLossRecords(cashAmount = 6000) {
     issued_k1: {
       ...identity,
       tax_year: 2025,
+      shareholder_name_as_on_k1: "Alex Example",
       corporation_name: "Example services",
       document_reference: "Issued current K1 record",
       box1_ordinary_loss: 4000,
