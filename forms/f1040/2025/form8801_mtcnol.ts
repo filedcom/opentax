@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  calculateForm8801MtcnolOrigin,
+  form8801MtcnolOriginSchema,
+} from "./form8801_mtcnol_origin.ts";
 const reference = z.string().trim().min(1);
 const amount = z.number().int().nonnegative().max(1_000_000_000);
 const ssn = z.string().regex(/^\d{9}$/);
@@ -14,7 +18,9 @@ export const form8801MtcnolSchema = z.object({
       origin_year: z.number().int().min(1900).max(2025),
       direction: z.enum(["carryforward", "carryback"]),
       // Independent exclusion-only section172(d) refigure, not regular/AMT NOL.
-      origin_exclusion_only_nol: reviewedAmount,
+      origin_exclusion_only_nol: reviewedAmount.extend({
+        refiguring: form8801MtcnolOriginSchema.optional(),
+      }).strict(),
       eligibility_workpaper: z.object({
         reference,
         eligible_for_2024: z.literal(true),
@@ -94,6 +100,27 @@ export function calculateForm8801Mtcnol(
         "MTCNOL vintage owner is outside the reviewed 2024 filer",
       );
     }
+    const origin = row.origin_exclusion_only_nol.refiguring;
+    const origin_refiguring = origin
+      ? calculateForm8801MtcnolOrigin(origin)
+      : undefined;
+    if (
+      origin &&
+      (origin.tax_year !== row.origin_year ||
+        origin.owner_ssn !== row.owner_ssn)
+    ) {
+      throw new Error(
+        "MTCNOL origin refigure owner/year differs from its vintage",
+      );
+    }
+    if (
+      origin_refiguring &&
+      origin_refiguring.origin_nol !== row.origin_exclusion_only_nol.amount
+    ) {
+      throw new Error(
+        "MTCNOL entered origin loss differs from exclusion-only calculation",
+      );
+    }
     const prior_used = row.uses_before_2024.reduce((s, r) => s + r.amount, 0);
     if (
       !Number.isSafeInteger(prior_used) ||
@@ -105,6 +132,8 @@ export function calculateForm8801Mtcnol(
     }
     return {
       ...row,
+      origin_refiguring,
+      originLossWorkpaperArithmeticReconciled: origin_refiguring !== undefined,
       prior_used,
       available_to_2024: row.origin_exclusion_only_nol.amount - prior_used,
     };
@@ -116,6 +145,8 @@ export function calculateForm8801Mtcnol(
   return {
     vintages,
     form8801_line3,
+    originLossWorkpaperArithmeticReconciled: vintages.length > 0 &&
+      vintages.every((row) => row.originLossWorkpaperArithmeticReconciled),
     originLossCalculationVerified: false as const,
     carryEligibilityVerified: false as const,
     workpaperAuthenticityVerified: false as const,
