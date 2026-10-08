@@ -3,7 +3,7 @@ import {
   type SourceDocumentBytes,
   VerifiedSourceDocuments,
 } from "../../../core/runtime/source-documents.ts";
-import { reviewedLossYearSchema } from "../nodes/inputs/nol_carryforward/reviewed_loss_year.ts";
+import { parseReviewedNolOrigin } from "./form172_nol_origin.ts";
 import { calculateForm172AmtAnnualLimit } from "./form172_amt_annual_limit.ts";
 
 const ref = z.string().trim().min(1);
@@ -15,7 +15,7 @@ const bindingSchema = z.object({
   regular_origin: claim,
   amt_origin: claim,
   annual: claim,
-  origin_tax_year: z.number().int().min(2018).max(2025),
+  origin_tax_year: z.number().int().min(2005).max(2025),
   application_tax_year: z.number().int().min(2013).max(2025),
   taxpayer_ssn: z.string().regex(/^\d{9}$/),
   spouse_ssn: z.string().regex(/^\d{9}$/).optional(),
@@ -50,7 +50,7 @@ export async function stageForm172AmtReviewSource(
     [binding.regular_origin, binding.amt_origin, binding.annual],
     documents,
   );
-  const regular = reviewedLossYearSchema.parse(
+  const regular = parseReviewedNolOrigin(
     parsePackage(verified.getBytes(binding.regular_origin.reference)!),
   );
   const amt = parsePackage(verified.getBytes(binding.amt_origin.reference)!);

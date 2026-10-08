@@ -154,3 +154,170 @@ Deno.test("Form 172 AMT origin preserves owner duplicate and exclusion refinemen
   );
   assertThrows(() => calculateReviewedAmtLossYear(origin(), prior));
 });
+
+function historicalSources(year = 2017) {
+  const regular = origin();
+  const {
+    noncapital_income,
+    noncapital_deductions,
+    capital_gains,
+    capital_losses,
+    prior_nol_deductions,
+  } = regular;
+  noncapital_deductions[1].amount = 6350;
+  const old = {
+    source_format: "reviewed_legacy_loss_year",
+    reference: `legacy-${year}`,
+    tax_year: year,
+    taxpayer_ssn: "111223333",
+    filing_status: "single",
+    inventory: {
+      noncapital_income,
+      noncapital_deductions,
+      capital_gains,
+      capital_losses,
+      prior_nol_deductions,
+    },
+    reviewed_form1040: {
+      reference: `regular-return-${year}`,
+      tax_year: year,
+      taxpayer_ssn: "111223333",
+      filing_status: "single",
+      agi: -103000,
+      standard_or_itemized_deduction: 6350,
+      personal_exemptions: 4050,
+      reported_taxable_income: 0,
+    },
+    section199_deduction: { reference: "regular-dpad", amount: 3000 },
+    limitations_review: {
+      reference: "historical-limitations",
+      at_risk_and_passive_limits_applied: true,
+      itemized_phaseout_applied: true,
+    },
+  };
+  const modern = amt();
+  const alternative = {
+    ...modern,
+    regular_origin_reference: old.reference,
+    amt_inventory: {
+      ...modern.amt_inventory,
+      tax_year: year,
+      limitations_review: {
+        reference: "amt-historical-limitations",
+        at_risk_and_passive_limits_applied: true,
+        itemized_phaseout_applied: true,
+      },
+    },
+    reviewed_amt: {
+      ...modern.reviewed_amt,
+      tax_year: year,
+      amti_before_atnold: -83000,
+      section199_deduction: { reference: "amt-dpad", amount: 3000 },
+    },
+  };
+  return { old, alternative };
+}
+Deno.test("Form172 historical AMT origin independently restores section199 without personal exemptions", () => {
+  for (const year of [2005, 2010, 2017]) {
+    const { old, alternative } = historicalSources(year);
+    const r = calculateReviewedAmtLossYear(old, alternative);
+    assertEquals(r.taxYear, year);
+    assertEquals(r.regularNol, 100000);
+    assertEquals(r.amtNol, 80000);
+    assertEquals(r.amtSection199Modification, 3000);
+    assertEquals(r.amtSection172ModifiedBase, -80000);
+    assertEquals(r.priorAcceptanceVerified, false);
+    assertEquals(r.filingReady, false);
+  }
+});
+Deno.test("Form172 historical AMT origin rejects missing DPAD modern deductions and mixed review years", () => {
+  const { old, alternative } = historicalSources();
+  for (
+    const patch of [
+      { section199_deduction: undefined },
+      { qbi_deduction: 1 },
+      { section250_deduction: 1 },
+      { tax_year: 2018 },
+      { section199_deduction: { reference: "amt-items", amount: 3000 } },
+      { section199_deduction: { reference: "expenses", amount: 3000 } },
+    ]
+  ) {
+    assertThrows(() =>
+      calculateReviewedAmtLossYear(old, {
+        ...alternative,
+        reviewed_amt: { ...alternative.reviewed_amt, ...patch },
+      })
+    );
+  }
+  assertThrows(() =>
+    calculateReviewedAmtLossYear(old, {
+      ...alternative,
+      amt_inventory: {
+        ...alternative.amt_inventory,
+        limitations_review: amt().amt_inventory.limitations_review,
+      },
+    })
+  );
+  assertThrows(() =>
+    calculateReviewedAmtLossYear(origin(), {
+      ...amt(),
+      reviewed_amt: {
+        ...amt().reviewed_amt,
+        section199_deduction: { reference: "modern-dpad", amount: 3000 },
+      },
+    })
+  );
+});
+
+import { stageForm172AmtReviewSource } from "./form172_amt_review_source.ts";
+import { form172AmtTentativeLines } from "./form172_amt_annual_limit.ts";
+Deno.test("Form172 retained historical regular and independent AMT origins reproduce modern annual cap", async () => {
+  const { old, alternative } = historicalSources();
+  const annual = {
+    reference: "current-amt-review",
+    tax_year: 2024,
+    taxpayer_ssn: "111223333",
+    form6251_reference: "current-6251",
+    before_all_atnold: true,
+    tentative_depletion_refigured_with_zero_atnold: true,
+    components: form172AmtTentativeLines.map((line) => ({
+      line,
+      reference: `current-${line}`,
+      amount: line === "1"
+        ? 50000
+        : line === "2e"
+        ? 40000
+        : line === "2l"
+        ? 10000
+        : 0,
+    })),
+  };
+  const docs = [old, alternative, annual].map((v) => ({
+    reference: v.reference,
+    bytes: new TextEncoder().encode(JSON.stringify(v)),
+  }));
+  const claims = await Promise.all(
+    docs.map(async (d) => ({
+      reference: d.reference,
+      sha256: Array.from(
+        new Uint8Array(await crypto.subtle.digest("SHA-256", d.bytes)),
+        (b) => b.toString(16).padStart(2, "0"),
+      ).join(""),
+    })),
+  );
+  const r = await stageForm172AmtReviewSource({
+    regular_origin: claims[0],
+    amt_origin: claims[1],
+    annual: claims[2],
+    origin_tax_year: 2017,
+    application_tax_year: 2024,
+    taxpayer_ssn: "111223333",
+  }, docs);
+  assertEquals(r.originYear, 2017);
+  assertEquals(r.originAmtNol, 80000);
+  assertEquals(r.tentativeAmtiBeforeAtnold, 100000);
+  assertEquals(r.ordinary90PercentLimit, 90000);
+  assertEquals(r.reviewPackageBytesVerified, true);
+  assertEquals(r.amtCarryAvailabilityVerified, false);
+  assertEquals(r.filingReady, false);
+});
