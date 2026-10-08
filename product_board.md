@@ -4,11 +4,11 @@
 
 ## Compacted learnings — October 8, 2026
 
-- **Scope:** Finish existing MeF tasks and PR65 organization/harness work; 52 main TODOs remain unchecked, all 61 future TODOs remain unworked. [Completed ledger](./docs/mef/ty2025/readiness/ty2025-product-board-completed-2026-10-01.md): 1,555 bounded slices; [v2.0.10](https://github.com/filedcom/opentax/releases/tag/v2.0.10) retains verified build/download evidence.
-- **Filing evidence:** Prepared 361/372 (11 guards), bounded filing 75/267, PDF 99/115 (16 guards). [Execution](./docs/mef/ty2025/readiness/ty2025-readiness-execution-2026-10-07.md) retains source/packet/Form 4972 qualifications; authentication, carry/elections, business rules and ATS remain open.
-- **Local checks:** Latest typed unit 137/0/0 ignored across 14 modules; complete graph 2749 TypeScript/2898 entries, no errors. Earlier affected retry 862/0, EIC 146/0 and prerequisite 482/0 retain their bounded scope. Historical benchmark 46/133 (29 source errors/58 mismatches) remains future-only review.
-- **Current taxonomy:** [Seven-section layout](./docs/architecture/repository-organization.md) covers 3335 original→final moves (3085 taxonomy moves), 891 node files and 4398 tracked files. Exact proof retains 2732 original TypeScript hashes, 38 guard files/41 edits, 135 navigation documents and 266 unchanged benchmark input/expected files; tax behavior/evidence stay preserved.
-- **Full verification:** Root full 91357 is still running on frozen `cf107ac7e` from 17:18:37 UTC; terminal pending. Final-taxonomy full has not run and IRS acceptance remains pending. Compact learnings before work; newly discovered TODOs go only to `future_todo` and remain unworked.
+- **Scope:** Finish existing MeF tasks and PR65 cleanup/harness work; 52 main TODOs remain unchecked and all 61 future TODOs unworked. [Completed ledger](./docs/mef/ty2025/readiness/ty2025-product-board-completed-2026-10-01.md): 1,555 bounded slices; [v2.0.10](https://github.com/filedcom/opentax/releases/tag/v2.0.10) retains verified build/download evidence.
+- **Filing evidence:** Prepared 361/372 (11 guards), bounded filing 75/267, PDF 99/115 (16 guards). [Execution](./docs/mef/ty2025/readiness/ty2025-readiness-execution-2026-10-07.md) retains packet/Form 4972 qualifications; authentication, carry/elections, business rules and ATS remain open.
+- **Local checks:** Typed unit 137/0/0 ignored across 14 modules; healthy graph 2749 TypeScript/2898 entries. Retry 862/0, EIC 146/0 and prerequisite 482/0 retain bounded scopes. Historical benchmark 46/133 (29 source errors/58 mismatches) remains future-only review.
+- **Taxonomy:** [Seven-section layout](./docs/architecture/repository-organization.md): 3335 original→final moves (3085 taxonomy), 891 node files/4398 tracked files. Proof preserves 2732 original TypeScript hashes, 38 guard files/41 edits, 135 navigation documents and 266 benchmark input/expected bytes.
+- **Full verification:** Old-layout full 91357 was interrupted as superseded at 19:21:43 UTC (child 143/task 1/wrapper 1), with no JUnit/verified full result. Final-taxonomy full 70465 started 19:21:53 UTC on `666bdd1671`; 3191 runtime paths frozen, actual terminal pending. IRS acceptance remains pending; compact learnings before work and keep new TODOs only in the unworked future section.
 
 ## Scope and completion rules
 
