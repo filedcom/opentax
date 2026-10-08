@@ -6,6 +6,7 @@ import type {
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -36,6 +37,8 @@ const priorYearEvidenceSchema = z.object({
 }).strict();
 
 export const inputSchema = z.object({
+  // Request the normal current Form 6251 workpaper without entering a credit.
+  compute_credit_capacity: z.literal(true).optional(),
   // Reviewed prior Form 6251 line 11. This amount alone does not establish
   // the deferral-item credit computed on 2025 Form 8801 line 21.
   prior_year_amt_paid: z.number().nonnegative().optional(),
@@ -52,6 +55,16 @@ export const inputSchema = z.object({
   current_year_tmt: z.number().nonnegative().optional(),
   prior_year_evidence: priorYearEvidenceSchema.optional(),
 }).strict().superRefine((input, context) => {
+  if (
+    input.compute_credit_capacity === true &&
+    Object.keys(input).some((key) => key !== "compute_credit_capacity")
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Form 8801 capacity request cannot contain entered preview credit facts",
+    });
+  }
   const amt = input.prior_year_amt_paid ?? 0;
   const carryforward = input.prior_year_carryforward ?? 0;
   if (amt <= 0 && carryforward <= 0) return;
@@ -116,10 +129,18 @@ function creditAllowed(input: F8801Input): number {
 class F8801Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8801";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule3]);
+  readonly outputNodes = new OutputNodes([schedule3, form6251]);
 
   compute(_ctx: NodeContext, rawInput: F8801Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+
+    if (input.compute_credit_capacity === true) {
+      return {
+        outputs: [
+          this.outputNodes.output(form6251, { must_file_for_credit: true }),
+        ],
+      };
+    }
 
     const credit = creditAllowed(input);
     if (credit === 0) return { outputs: [] };
