@@ -1,5 +1,38 @@
 # TY2025 Form 2210 mandatory filing paths
 
+## October 8 actual-withholding comparison checkpoint
+
+Integrated `e8f745d93` (candidate `d8b9ee261`) extends the unregistered
+payment prerequisite with reviewed 2025 withholding dates. Withholding keeps
+its own source kind, must sum exactly to the annual whole-dollar total in
+cents, and receives no duplicate default quarterly credit. The comparison
+uses the same annual total and non-withholding payments for both methods and
+compares exact rational penalties. A new
+`stageForm2210BoxEActualWithholdingReturn` derives current identity, tax and
+withholding from the public executor, checks prior MFS bytes, and requires
+actual withholding to reduce the penalty before staging simultaneous D/E
+reasons. The regular E-only entrypoint still requires default withholding.
+
+Seven normal typed modules passed **62/0**, including 100 deterministic
+actual-date daily-balance inventories alongside the older 100 default-method
+inventories. The early-withholding fixture yields $101.55 versus $139.66 with
+default withholding. Late withholding, inventory/annual-total mismatch,
+wrong year, duplicate credit and detached public source facts reject.
+All four updated runtime paths match the tested candidate; the other 2,631
+paths are unchanged. Newer full phase regression remains pending.
+
+Both worksheets' reconciliation flags describe numeric binding only.
+`filingReady`, prior acceptance and payment authenticity remain false.
+The D/E stage emits neither partial page-1 XML nor PDF fields and inserts no
+line 38. Both attachment guards remain active. Full Part III/native/PDF,
+source authentication, AI, relief, broader source branches and IRS proof
+remain open. Future 44 records the return-balance filing-date gap; its
+`paid_on` handler and tests remain unchanged and unqualified for that rule.
+No future work, packet, rendered page or schema result is counted here.
+Private proof: `form2210-actual-withholding-20261008-v1/`; see the
+[execution journal](ty2025-readiness-execution-2026-10-07.md).
+
+
 ## October 8 public-return payment join checkpoint
 
 Integrated `346ee31fe` (candidate `94952473c`) adds

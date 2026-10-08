@@ -4756,3 +4756,48 @@ No new packet, page review, schema pass, filing approval or IRS acknowledgment
 is counted. Main 52 unchecked rows remain frozen, and all 43 future rows
 remain unchanged and unworked. The ATS estimate retains its dated 03:09 UTC
 observation. No PR or filing-ready release is opened.
+
+
+### October 8 — Actual withholding inventory and D/E comparison
+
+Compacted learnings before implementation of the existing Form 2210 task.
+Candidate `d8b9ee261cc0403cefe09e29b39f2d197550b781` integrated as
+root `e8f745d93`. Actual withholding source rows retain their kind and must
+sum to graph-bound annual withholding; the default comparison removes those
+rows and uses the same annual total and all other payments. Exact rational
+penalties determine whether box D reduces the penalty. The shared source
+join snapshots inputs/ledger/prior bytes and binds both worksheets to the
+public executor and prior MFS records. The D/E API requires a beneficial
+actual method, emits no partial XML/PDF and inserts no line 38; the regular
+E-only API keeps its default-method contract. Both export guards remain.
+
+Normal typed command:
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/form2210_box_e_payment_return.test.ts forms/f1040/2025/form2210_payments.test.ts forms/f1040/2025/form2210_box_e.test.ts forms/f1040/2025/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/f2210/calculation.test.ts forms/f1040/nodes/inputs/f2210/index.test.ts forms/f1040/2025/attachment-coverage.test.ts`.
+Actual session 33931 terminal exit 0: **62 passed / 0 failed / 0 ignored**,
+953ms test duration, 03:36:41.906588–03:37:12.370731 UTC.
+Deno 2.9.4/V8 15.0.245.2-rusty/TypeScript 6.0.3; root lock unchanged.
+The preliminary two-module 18/0 run is not added to this final count.
+Tests include 100 actual-date and 100 default-method deterministic daily
+inventories, beneficial early withholding ($101.55 versus $139.66), late
+withholding and source/owner/date/method/current-total conflicts.
+
+Private `form2210-actual-withholding-20261008-v1/` retains preflight,
+runner, terminal status, log, review and integration. Log SHA-256:
+`93f3b8f0e63622a729f3d42b069fff8488b77d621b1c1c01df194080a929ee86`.
+Review SHA-256:
+`53ad6d062bc1e5be1093f4bcf8cd6753413ff65a8a0d2a3d6508c523e795769d`.
+All four updated paths match the tested candidate and 2,631 other runtime
+paths remain unchanged (2,635 total). The older 12,388/0 full result covers
+those 2,631 baseline paths; later Form 2210 paths have focused evidence only.
+Newer full phase regression remains pending.
+
+Reading the [instructions](https://www.irs.gov/instructions/i2210) identified
+a separate return-balance filing-date rule not represented by `paid_on`.
+Recorded only as future 44 with private
+`form2210-balance-date-observation-20261008-v1/observation.json`;
+root documentation commit `99281add9`. The handler/tests are unchanged and
+that branch remains unqualified. No future task was implemented.
+Main 52 unchecked rows remain frozen; 44 future rows remain deferred.
+Numeric binding does not authenticate source/payment origin or prior IRS
+acceptance. Filing readiness, full native/PDF, business rules and ATS remain
+open. No new packet, rendered page, XSD pass or IRS acknowledgment is counted.
