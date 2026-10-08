@@ -1,5 +1,42 @@
 # TY2025 Form 2210 mandatory filing paths
 
+## October 8 public-return payment join checkpoint
+
+Integrated `346ee31fe` (candidate `94952473c`) adds
+`stageForm2210BoxEPaymentReturn`. The one-call staging chain executes the
+actual public return with its entered box-E source, derives MFJ identity from
+the normalized general input, checks retained 2024 MFS XML bytes/digests, and
+reconciles current Part I tax and withholding to executor-owned Form 1040.
+It derives required annual payment and withholding for the dated-payment
+worksheet. Those amounts and taxpayer identity cannot be overridden in the
+strict payment ledger. The standalone payment calculator still accepts
+workpaper operands; this new entrypoint provides their numeric source join.
+
+Seven normal typed modules passed **56/0**. Four new tests cover a complete
+source chain; fourteen detached-source/owner/current-tax/prior-byte/override
+conflicts; caller mutation during asynchronous verification; and an optional
+positive penalty worksheet that leaves Form 1040 line 38 unclaimed. Both
+mandatory native/PDF attachment guards still reject the staged public claim.
+The new helper snapshots inputs, parsed payment facts and copied byte arrays
+before its first await. All 2,633 prior runtime paths remain unchanged; the
+two integrated paths match the tested candidate exactly. A newer full phase
+regression remains pending.
+
+The worksheet's `requiredAnnualPaymentReconciled` and
+`withholdingReconciled` describe **numeric** binding only. Prior IRS origin
+and accepted filing, payment authenticity, current required-source bytes,
+wider statuses/other taxes/credits, actual-date withholding, AI and exceptions
+remain unproved. `filingReady`, `priorAcceptanceVerified` and
+`paymentAuthenticityVerified` remain false; no line 38 is inserted. The page-1
+native/PDF field projections are still unregistered, with no new full-packet,
+rendered-PDF, XSD, business-rule or ATS proof from this check. Main Form 2210
+completion stays open.
+
+Private proof: `form2210-finalized-payments-20261008-v1/`; full command,
+timestamps, source hashes and review are in the
+[execution journal](ty2025-readiness-execution-2026-10-07.md).
+
+
 ## October 8 dated-payment calculation checkpoint
 
 Integrated `f370f4043` (candidate `95bf4bb92`) adds an **unregistered

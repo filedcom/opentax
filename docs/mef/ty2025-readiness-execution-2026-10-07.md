@@ -4707,3 +4707,52 @@ credits, early filing relief, waivers/disasters and wider owner/status branches
 remain part of the existing form scope, with native/PDF/BR/ATS gates open.
 Main 52 unchecked rows remain frozen and all 43 future rows remain unworked.
 The pass estimate stays at its 03:09 UTC IRS observation; no acceptance added.
+
+
+### October 8 — Form 2210 finalized public-return/payment source join
+
+Compacted the board's validation learning before continuing this existing
+Form 2210 task. Candidate `94952473c98fc6c8a4c01647c2385d4ba2433da6`
+adds the one-call staged public-return payment chain and its tests; integrated
+as root `346ee31fe`. The helper executes the public inputs with their entered
+box-E claim, derives both current filer SSNs and MFJ status from normalized
+general input, checks retained 2024 MFS bytes/digests, and numerically joins
+Part I to executor-owned Form 1040. Its regular payment worksheet derives
+required annual payment and withholding from those reconciled lines. Ledger
+amount or identity overrides reject instead of overriding the return.
+
+Inputs, strictly parsed ledger facts and prior-document byte arrays are
+snapshotted before asynchronous verification. A Uint8Array constructor copies
+bytes even when a caller uses a buffer subclass whose slice would alias memory.
+The tests mutate original inputs, payment amounts and document bytes while
+verification is pending; the retained source snapshot determines the result.
+The calculated penalty stays an optional worksheet; no Form 1040 line 38 is
+inserted and both public attachment guards remain active.
+
+Normal typed seven-module command:
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/form2210_box_e_payment_return.test.ts forms/f1040/2025/form2210_payments.test.ts forms/f1040/2025/form2210_box_e.test.ts forms/f1040/2025/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/f2210/calculation.test.ts forms/f1040/nodes/inputs/f2210/index.test.ts forms/f1040/2025/attachment-coverage.test.ts`.
+Actual session 27758 terminal exit 0: **56 passed / 0 failed / 0 ignored**,
+950ms test duration, 03:27:14.939054–03:27:45.497137 UTC. Four new tests
+include fourteen source/identity/tax/prior-byte/override conflicts plus source
+snapshot and unclaimed-penalty checks. Deno 2.9.4/V8 15.0.245.2-rusty/
+TypeScript 6.0.3, with unchanged root dependency lock.
+
+Private `form2210-finalized-payments-20261008-v1/` retains preflight, runner,
+log/status, review and integration records. Test log SHA-256:
+`b06e20c356fed2df41cf7072478571cb282f617bba29ed9509a7720ed92fc788`.
+Review SHA-256:
+`652fa7ce937b568c2cb8fc50bc14ef0a2ebcc5ddde83b8a51a698dc24a652720`.
+All 2,633 prior root/candidate runtime paths matched before integration, and
+both new paths match the tested candidate afterwards (2,635 total). The prior
+12,388/0 full result covers the older 2,631-path checkpoint; the four later
+Form 2210 helper/test additions have focused checks only. Newer phase full
+regression is pending; this does not substitute for that board requirement.
+
+Numeric prior/current tax and withholding binding does not authenticate prior
+IRS acceptance or source/payment origin. Those flags and `filingReady` remain
+false. Wider prior/status/tax/credit patterns, actual-date withholding, AI,
+relief/waivers and full native/PDF/BR/ATS remain existing open requirements.
+No new packet, page review, schema pass, filing approval or IRS acknowledgment
+is counted. Main 52 unchecked rows remain frozen, and all 43 future rows
+remain unchanged and unworked. The ATS estimate retains its dated 03:09 UTC
+observation. No PR or filing-ready release is opened.
