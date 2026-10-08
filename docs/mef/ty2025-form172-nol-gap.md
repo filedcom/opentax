@@ -1,39 +1,53 @@
-# TY2025 Form 172 and NOL carryforward: unsupported
+# TY2025 Form 172 and NOL carryforward: filing route incomplete
 
-Status: fail-closed. A positive `nol_carryforward` input now stops at the
-calculation node, before reducing Schedule 1 or AGI. A zero-valued populated
-source remains blocked at both exports. The existing export guards also reject
-any direct positive Schedule 1 line 8a amount, so an input cannot bypass the
-source node and file an unsupported deduction. Direct nonzero Form 6251 line 2f
-remains rejected. Focused guard cases passed in the October 8 run recorded below.
+## Current requirement audit — October 8, 2026
 
-A narrow 2024 nonfarm Schedule C loss-year review is now authored in
-reviewed_2024_business_loss.ts. It compares one owner's filed 2024 Form 1040,
-Schedule 1, Schedule C, and Form 172 Part I, with distinct reviewed document
-references. For a single filer with no other income, no adjustments or itemized
-deductions, and zero other Form 172 adjustment lines, it replays Form 172 lines
-1, 6, 9, and 24 and derives the regular NOL entering 2025. Positive and
-source/owner/arithmetic tamper fixtures passed in that focused run. This reviewed
-record is not yet accepted by nol_carryforward; that public input and both
-exports remain fail-closed. The independent ATNOL, 2025 taxable income
-limitation, Form 6251 join, Schedule 1 deduction, and native/PDF Form 172
-attachments remain open.
+Status: the public filing route remains fail-closed. Positive
+`nol_carryforward` inputs stop before Schedule 1 or AGI; a populated zero
+source and direct positive Schedule 1 line 8a reject at both exports.
+Direct nonzero Form 6251 line 2f also rejects. The original Form172 requirement
+remains open; reviewed arithmetic, byte identity and standalone artifacts do
+not establish accepted carry history, legal eligibility or filing admission.
 
-The current input holds only `year`, asserted `nol_amount`, a pre-2018 versus
-post-2017 label, and asserted 2025 taxable income. It does not prove an NOL
-existed, survived prior years, or is deductible in 2025. No native `IRS172`
-document or PDF descriptor exists. Schedule 1 line 8a is not yet mapped to
-either MeF or the filled PDF.
+The integrated code now has reviewed modern and legacy loss-year calculations,
+regular carry/current-deduction workpapers, separate AMT workpapers and bounded
+pre-NOL/projected-return reconciliation. A byte-bound **current TY2025 origin**
+can produce standalone `IRS172` Part I XML and a three-page interactive review
+PDF. Both PDF Part II pages remain blank. No Form172 filing descriptor is
+registered in either exporter. Schedule 1 line 8a has both native and PDF
+field mappings, but attachment guards prevent using them as a positive NOL
+filing route. Earlier statements that no standalone document or line8a mapping
+existed are superseded by this audit.
 
-## Required evidence and arithmetic
+The public input still contains asserted loss-year amounts and asserted current
+taxable income. It does not consume these workpapers or establish their source
+eligibility. Root's **2,706 runtime paths** are frozen for the live regression;
+the isolated **2,709-path candidate** has additional historical/modern AMT work.
+Its latest focused result is **473/0**, with modern absorption and history
+explicitly labeled an unverified model. Neither branch has an admitted NOL
+packet or retained IRS acceptance. Detailed bounded implementation evidence and
+historical checkpoints below do not override this current status.
 
-| Step                             | Required source and calculation                                                                                                                                                                                                                                                                                                                                      | Missing today                                                                                                                                                                |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Establish each loss vintage      | Filed loss-year return and Form 172 Part I or applicable historical NOL worksheet; separate business/nonbusiness income and deductions, capital losses/gains, section 1202, QBI and other disallowances; filing status and taxpayer ownership                                                                                                                        | `nol_amount` is a bare assertion. The current enum does not establish the actual loss year computation or owner.                                                             |
-| Reconcile availability           | Per-vintage carryback election and application, each intervening year's filed return, modified taxable income and refigured AGI/itemized deductions, prior utilization, surviving balance, and expiry/exception rules                                                                                                                                                | The node sums vintages by broad class and does not apply them in earliest-year order or prove the balance brought into 2025.                                                 |
-| Calculate 2025 regular deduction | Source-derived taxable income before NOL, QBI and section 250 deductions, with any pre-2018 NOL applied first and the post-2017 80% limitation applied to the statutory base; reconcile each vintage's used and remaining amounts                                                                                                                                    | `current_year_taxable_income` is asserted independently of the final return. The graph needs a pre-NOL pass to avoid the Schedule 1 to AGI to taxable-income cycle.          |
-| Refigure AMT                     | For each loss year, derive an ATNOL from AMT-allowed income/deductions and section 172(d) modifications with all AMT preferences; track AMT carryovers separately. For 2025, add the regular NOL on Form 6251 line 2e, calculate AMTI before ATNOLD, apply the ordinary 90% limit or documented historic disaster exception, then subtract sourced ATNOLD on line 2f | A regular NOL cannot be reused as ATNOLD or defaulted to zero. `nol_adjustment` is only an unsupported direct amount.                                                        |
-| Attach and reconcile             | One applicable Form 172 per NOL, each with the correct year and Part I/II values, linked to Schedule 1 line 8a and the regular/AMT calculations; native MeF `IRS172` and all three PDF pages per attachment                                                                                                                                                          | Neither exporter can produce Form 172. The TY2025 XSD contains required Part I lines and optional two-year carryback groups, so a bare carryover amount cannot serialize it. |
+| Original requirement | Current evidence | Remaining proof |
+| --- | --- | --- |
+| Establish each loss vintage | Reviewed modern Part I and legacy origin helpers reconcile owner, return inventory, capital/business distinctions and adjustments; current-origin standalone native/PDF helpers recompute retained bytes. | Authentic loss-year returns, applicable source limitations/classification, complete vintage applicability and accepted source intake. |
+| Reconcile availability | Regular, mixed-farming and historical workpapers require chronological reviewed annual applications and derive carry/expiry arithmetic. Candidate adds historical AMT and consecutive modern model history. | Actual carryback eligibility and timely elections, accepted intervening returns/carry balances, applicable exceptions and marital allocations. Reviewed declarations and continuity cannot prove these. |
+| Calculate 2025 regular deduction | Current-deduction source staging recomputes origin/history/current review; reviewed/projected-return stages reconcile a calculated pre-NOL return and rerun bounded Schedule1/AGI/1040 consequences. | Complete applicable multi-vintage/public route, all source-dependent compositions and refigures, authentic carry admission and final filing reconciliation. |
+| Refigure AMT | Separate origin, annual cap, per-vintage modified-income and graph-tentative-total workpapers exist. Candidate computes explicitly unverified modern section172/section56 absorption model operands and continuity. | Proved legal modern coordination, category/election/availability/source eligibility, accepted AMT carry, complete independent current ATNOLD and admitted Form6251 line2f. |
+| Attach and reconcile | Current-origin PartI standalone XML/PDF exists; Schedule1 native/PDF line8a mappings exist. Root native/PDF descriptor arrays contain no Form172 registration, and both exports retain NOL guards. | Correct applicable Form172/historical attachment for each vintage, required PartII/carryback contents, regular/AMT/source joins, native/PDF/attachment admission, matching business rules, full visual review and IRS ATS acceptance. |
+
+Code inspected: `form172_current_deduction_source.ts`,
+`form172_current_deduction.ts`, `form172_carry_history.ts`,
+`form172_reviewed_return.ts`, `form172_projected_return.ts`,
+`form172_amt_projected_return.ts`, `form172_loss_year_native.ts`,
+`form172_loss_year_pdf.ts`, both exporter descriptor arrays and Schedule1
+mappings, `attachment-coverage.ts`, the public NOL node and Form6251 line2f
+guard. Private `form172-original-requirements-audit-20261008-v1/review.json`
+retains exact root/candidate runtime manifests and the requirement dispositions;
+root matches the live full-regression preflight. No new test pass, coverage
+increase, broad checkoff, future task or filing acceptance is claimed by this
+read-only code audit. Existing focused and full-run evidence is retained below
+and in the execution log.
 
 The IRS currently lists
 [Form 172 (rev. December 2024)](https://www.irs.gov/pub/irs-pdf/f172.pdf) and
