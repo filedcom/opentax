@@ -266,9 +266,7 @@ in its two rows, zero on lines 4a/4b, $9,500 on line 4c and Form 1040 line
 an omitted Schedule 1-A employer or changed Form 4137 amount. The filled
 Form 4137 PDF projector also rechecks all W-2 tip sources and its calculated
 unreported income and tax against Form 1040 line 1c and Schedule 2 line 5
-when the return is present. A prepared MeF/PDF bundle assertion is authored
-but awaits the bulk test gate and
-visual PDF review; no acceptance or source-byte authentication is claimed.
+when the return is present. The current two-employer packet now has an eight-page visual review, exact native replay/full local XSD and a5/0 focused employer-join/worksheet gate (October8); see the current evidence below. This does not establish source authenticity, complete Schedule1-A coverage, business-rule compliance or IRS acceptance.
 
 The `single-form4070-high-wage-qualified-tips-schedule1a` fixture has twelve
 monthly employer reports totaling $20,000, matched by recipient, employer,
@@ -382,3 +380,15 @@ contact sheet, with Schedule 1-A page 1 checked at full resolution (SHA-256
 Processor and tip-record bytes, transaction-level duplicate evidence,
 personal-payment classification, EIN recipients, multiple-business
 deduction allocation, IRS business rules, and ATS acceptance remain open.
+
+## October 8 — current two-employer Form4137 packet review
+
+All **eight pages** of retained `single-two-employer-form4137-tips-schedule1a` were rendered and directly inspected: two Form1040 pages, two Schedule1-A pages, the employer tips worksheet, two Schedule2 pages and Form4137. Full saved inputs/filer, selected pending Form1040/Schedule1-A/Schedule2/Form4137, all native leaves and document attributes were read. Employer EIN/name, owner SSN and worksheet occupation joins are consistent; the eight-page layout has no observed clipping, missing rows or inconsistent amounts.
+
+The two W-2 sources have wages30,000/20,000 and withholding2,500/1,500. Form4137 reports received/reported tips6,500/5,000 and3,000/2,000, giving2,500 unreported tips on Form1040 line1c. The per-employer greater amounts6,500 and3,000 give9,500 on the keep-for-records worksheet and Schedule1-A line4c; lines4a/4b are explicitly zero. MAGI52,500 has no phaseout; line38/Form1040 line13b are9,500. Form4137's Social Security wage/tip base is50,000 and remaining176,100 cap is126,100; unreported tips2,500 produce Social Security155 and rounded Medicare36, total191 on Schedule2 line5/7/21 and Form1040 line23. AGI52,500 less standard15,750 and tips9,500 gives taxable27,250; recorded income tax3,035 plus191 gives3,226, withheld4,000 and refund774. The exact ordinary-tax-table row was not independently re-inspected in this observation.
+
+[2025 IRS Schedule1-A instructions, line4c worksheet](https://www.irs.gov/instructions/i1040gi) were reread and privately retained with URL/time/SHA; they prescribe the per-employer greater-of calculation and keep-for-records worksheet. The native bundle has six documents (1040, Schedule1-A, Schedule2, Form4137 and two W-2s), distinct IDs and zero binary attachments. The extra PDF worksheet is a record workpaper, not a required separately transmitted document.
+
+Private `.state/research/board-execution-2026-10-07/form4137-two-employer-retained-review-20261008-v1/` retains all page renders, source hashes, observations and actual terminal logs. Current source replay: actual0 at **11:50:59.330345UTC**, logSHA `134e012a18890a3fd88c418a4e2349c349922026f3f22eb2d7d4a3efb48e550e`; graph diagnostics empty, native XML exactly reproduces the held bytes and full local TY2025v5.4 XSD passes. Whole pending matches after only the previously known inactive recorded Form8960 `{filing_status:"single",magi:52500}` is removed; no other normalization. Existing two-file focused tests: actual0 at **11:52:21.177227UTC**, **5passed/0failed/24filtered**, logSHA `f93888131f8f950023cfd39fbf7c557da3be8eac7a260e172fb94b27dcebc3f7`; they cover two employers, greater-of/no-double-counting, missing/changed qualifying employer/4137 facts at native/PDF export and the worksheet. Filtered cases are not ignored failures or claimed passes.
+
+Independent11:52:42 observation rehashes all2,706 root runtime paths and retained source/XML/PDF/page images; runtime matches the live full-regression preflight. Original main52 and future54 remain unchanged. No PDF/source was regenerated, no aggregate checker/coverage count increased, and no discrepancy or new future task was identified. Structured W-2/job/SSA/residency assertions remain synthetic and unauthenticated. Wider Schedule1-A routes, source proof, full regression phase, business rules and IRS acceptance remain open.
