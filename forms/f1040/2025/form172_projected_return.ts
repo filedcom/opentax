@@ -7,6 +7,7 @@ import { registry } from "./registry.ts";
 import { executePreQefSourceReturn } from "./staged_source_return.ts";
 import { agi_aggregator } from "../nodes/intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../nodes/outputs/schedule1/index.ts";
+import { form6251 } from "../nodes/intermediate/forms/form6251/index.ts";
 import { normalizeAllPending } from "./pending.ts";
 import { stageForm172ReviewedReturnCalculation } from "./form172_reviewed_return.ts";
 
@@ -47,6 +48,7 @@ export async function stageForm172ProjectedReturn(
       ),
       agi_aggregator,
       schedule1,
+      form6251,
     ]);
     compute(
       ctx: Parameters<typeof registry.start.compute>[0],
@@ -61,6 +63,9 @@ export async function stageForm172ProjectedReturn(
         }, {
           nodeType: schedule1.nodeType,
           fields: { line8a_nol_deduction: deduction },
+        }, {
+          nodeType: form6251.nodeType,
+          fields: { line2e_regular_nol: deduction },
         }],
       };
     }
@@ -87,6 +92,13 @@ export async function stageForm172ProjectedReturn(
   ) {
     throw new Error("NOL projection Schedule1 and calculated Form1040 differ");
   }
+  if (
+    deduction > 0 &&
+    (pending.form6251?.line2e_regular_nol !== deduction ||
+      Number(pending.form6251?.nol_adjustment ?? 0) !== 0)
+  ) {
+    throw new Error("NOL projection needs the regular AMT addback before ATNOLD");
+  }
   // Keep both exports guarded even for an exhausted zero-valued loss history.
   pending.nol_carryforward = {
     nol_carryforwards: [{
@@ -101,6 +113,7 @@ export async function stageForm172ProjectedReturn(
     projected_schedule1: pending.schedule1,
     projected_execution: execution,
     baseGraphNolProjectionReconciled: true as const,
+    amtRegularNolAddbackReconciled: true as const,
     currentAgiDependentRefiguresVerified: false as const,
     amtNolReconciled: false as const,
     packetAdmissionVerified: false as const,

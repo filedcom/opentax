@@ -74,6 +74,11 @@ export const inputSchema = z.object({
   // Line 2f is reserved for a sourced ATNOLD. Nonzero direct amounts are
   // rejected below until the regular line-2e NOL and AMT NOL are refigured.
   nol_adjustment: z.number().optional(),
+  // Internal retained-NOL graph replay: line2e reverses the regular Schedule1
+  // deduction before the separately computed ATNOLD on line2f. Public NOL
+  // intake/exports remain guarded; this is not an asserted AMT loss amount.
+  line2e_regular_nol: z.number().int().nonnegative().max(1_000_000_000)
+    .optional(),
 
   // Line 2g — Tax-exempt interest income from private activity bonds.
   // Must be included in AMTI even though excluded for regular tax.
@@ -261,6 +266,7 @@ function knownLine2cThrough3Total(input: Form6251Input): number {
     (input.line3_houseboat_interest_addback ?? 0) +
     (input.depreciation_adjustment ?? 0) +
     (input.nol_adjustment ?? 0) +
+    (input.line2e_regular_nol ?? 0) +
     privateActivityBondInterest(input) +
     (input.qsbs_adjustment ?? 0);
 }
@@ -281,6 +287,7 @@ function amtiWithoutKnownLine2cThrough3(input: Form6251Input): number {
     line3_charitable_contribution_adjustment: 0,
     depreciation_adjustment: 0,
     nol_adjustment: 0,
+    line2e_regular_nol: 0,
     private_activity_bond_interest: 0,
     line2g_pab_interest: 0,
     qsbs_adjustment: 0,
@@ -316,6 +323,7 @@ function computeAmtiBeforeMfsAddition(input: Form6251Input): number {
     (input.line3_houseboat_interest_addback ?? 0),
     input.depreciation_adjustment ?? 0,
     input.nol_adjustment ?? 0,
+    input.line2e_regular_nol ?? 0,
     privateActivityBondInterest(input),
     input.qsbs_adjustment ?? 0,
   ].reduce((sum, amount) => sum + filed(amount), 0);
@@ -1317,7 +1325,8 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       // Keep the completed refund computation for final source replay even
       // when no Form 6251 attachment is required. Native/PDF applicability
       // still uses the calculated filing triggers below.
-      (input.line2b_tax_refund ?? 0) <= 0
+      (input.line2b_tax_refund ?? 0) <= 0 &&
+      (input.line2e_regular_nol ?? 0) <= 0
     ) {
       return { outputs: [] };
     }

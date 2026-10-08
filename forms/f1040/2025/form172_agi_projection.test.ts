@@ -58,3 +58,48 @@ Deno.test("NOL internal AGI projection rejects negative fractional and duplicate
     );
   }
 });
+
+import { form6251 } from "../nodes/intermediate/forms/form6251/index.ts";
+import { FilingStatus } from "../nodes/types.ts";
+Deno.test("NOL tentative AMT adds regular deduction once without supplying an ATNOLD", () => {
+  const input = form6251.inputSchema.parse({
+    filing_status: FilingStatus.Single,
+    regular_tax_income: 190250,
+    regular_tax: 50000,
+    line2a_taxes_paid: 15750,
+    line2e_regular_nol: 44000,
+  });
+  const result = form6251.compute(ctx, input);
+  const amti = result.outputs.find((o) => o.nodeType === "form6251")!.fields;
+  assertEquals(amti.amti, 250000);
+  assertEquals(amti.taxable_excess, 161900);
+  assertEquals(amti.tentative_tax, 42094);
+  assertEquals(amti.line2e_regular_nol, 44000);
+  assertEquals(amti.nol_adjustment, undefined);
+  assertEquals(amti.line11_amt, 0);
+});
+Deno.test("NOL tentative AMT preserves before-exemption AMTI even when no tax is owed", () => {
+  const input = form6251.inputSchema.parse({
+    filing_status: FilingStatus.Single,
+    regular_tax_income: 6850,
+    regular_tax: 700,
+    line2a_taxes_paid: 15750,
+    line2e_regular_nol: 27400,
+  });
+  const result = form6251.compute(ctx, input);
+  const amti = result.outputs.find((o) => o.nodeType === "form6251")!.fields;
+  assertEquals(amti.amti, 50000);
+  assertEquals(amti.taxable_excess, 0);
+  assertEquals(amti.tentative_tax, 0);
+  assertEquals(amti.line11_amt, 0);
+  for (const line2e_regular_nol of [-1, 1.5, [1, 2], 1_000_000_001]) {
+    assertThrows(() =>
+      form6251.inputSchema.parse({ ...input, line2e_regular_nol })
+    );
+  }
+  assertThrows(
+    () => form6251.compute(ctx, { ...input, nol_adjustment: -45000 }),
+    Error,
+    "line 2f",
+  );
+});

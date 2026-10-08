@@ -260,6 +260,9 @@ Deno.test("Form172 projection sends retained deduction through Schedule1 AGI and
       true,
     );
     assertEquals(r.projected_form1040.line1a_wages, 50000);
+    assertEquals(r.projected_pending.form6251?.line2e_regular_nol, 27400);
+    assertEquals(r.projected_pending.form6251?.amti, 50000);
+    assertEquals(r.amtRegularNolAddbackReconciled, true);
     assertEquals(r.baseGraphNolProjectionReconciled, true);
     assertEquals(r.currentAgiDependentRefiguresVerified, false);
     assertEquals(r.amtNolReconciled, false);
@@ -349,6 +352,9 @@ Deno.test("Form172 retained senior Schedule1-A joins public deduction and lowers
   assertEquals(r.projected_form1040.line11_agi, 29000);
   assertEquals(r.projected_form1040.line13b_additional_deductions, 6000);
   assertEquals(r.projected_form1040.line15_taxable_income, 5250);
+  assertEquals(r.projected_pending.form6251?.line2e_regular_nol, 21000);
+  assertEquals(r.projected_pending.form6251?.regular_tax_income, 11250);
+  assertEquals(r.projected_pending.form6251?.amti, 50000);
   assertEquals(r.filingReady, false);
 });
 Deno.test("Form172 current source rejects an internally consistent wrong senior deduction", async () => {
