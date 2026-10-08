@@ -227,11 +227,30 @@ export function buildForm8582Ledger(
       input.mfs_lived_apart_all_year === true) &&
     input.modified_agi !== undefined &&
     Number.isSafeInteger(input.modified_agi);
+  // These current K-1 rows are independently replayed by the registered
+  // native projector before the durable archive calls this math adapter.
+  // Schedule E remains the original reporting form for the operating loss.
+  const currentK1Operating = (activity: typeof sourceActivities[number]) => {
+    const source = activity.first_year_activity_source;
+    return ((activity.reporting_form === "k1_s_corp" &&
+      activity.current_net < 0) ||
+      (activity.reporting_form === "k1_partnership" &&
+        activity.current_net > 0)) &&
+      activity.property_type === 8 &&
+      activity.prior_unallowed_operating === 0 &&
+      activity.prior_unallowed_4797_part1 === 0 &&
+      activity.prior_unallowed_4797_part2 === 0 &&
+      activity.prior_year_8582_source === undefined &&
+      source?.activity_id === activity.activity_id &&
+      source.activity_name === activity.name &&
+      source.activity_acquired_on.startsWith("2025-") &&
+      source.not_grouped_with_prior_activity === true;
+  };
   const otherPassiveActivities = sourceActivities.length > 0 &&
     sourceActivities.every((activity) =>
       activity.activity_type === "B" &&
       (activity.reporting_form === "schedule_e" ||
-        activity.reporting_form === "form4835")
+        activity.reporting_form === "form4835" || currentK1Operating(activity))
     );
   const hasCurrentSale = input.has_current_4797_transaction === true ||
     (input.current_4797_sale_gains?.length ?? 0) > 0;
