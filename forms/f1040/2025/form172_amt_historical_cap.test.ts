@@ -1,5 +1,8 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { calculateForm172HistoricalAmtCap } from "./form172_amt_historical_cap.ts";
+import {
+  calculateForm172HistoricalAmtCap,
+  calculateForm172HistoricalAmtDeductionAllocation,
+} from "./form172_amt_historical_cap.ts";
 import { form172AmtLegacyTentativeLines } from "./form172_amt_annual_limit.ts";
 function origin() {
   const item = (id: string, amount: number, business: boolean) => ({
@@ -273,4 +276,122 @@ Deno.test("Historical AMT cap rejects regular-origin substitution, owner mismatc
   const h = fixture();
   h.losses[1].reviewed_opening_amt_nol = .5;
   assertThrows(() => calculateForm172HistoricalAmtCap(h));
+});
+
+Deno.test("Historical AMT deduction chronology preserves the ordinary ninety and later WHBAA ten split", () => {
+  const r = calculateForm172HistoricalAmtDeductionAllocation(fixture());
+  assertEquals(
+    r.chronologicalDeductionAllocations.map((
+      v,
+    ) => [v.originYear, v.allocatedDeduction]),
+    [[2008, 90], [2009, 10]],
+  );
+  assertEquals(r.historicalDeductionAllocationArithmeticReconciled, true);
+  assertEquals(r.chronologicalAbsorptionReconciled, false);
+  assertEquals(r.openingAmtCarryAvailabilityVerified, false);
+  assertEquals(r.whbaaElectionEligibilityVerified, false);
+  assertEquals(r.finalAtnoldReconciled, false);
+  assertEquals(r.priorAcceptanceVerified, false);
+  assertEquals(r.filingReady, false);
+});
+Deno.test("An earlier WHBAA deduction is not restricted to the WHBAA cap component", () => {
+  const f = fixture();
+  f.losses[0].category = "whbaa";
+  f.losses[0].whbaa_election_reference = "election-2008";
+  f.losses[1].category = "ordinary";
+  delete f.losses[1].whbaa_election_reference;
+  f.losses.reverse();
+  const r = calculateForm172HistoricalAmtDeductionAllocation(f);
+  assertEquals(r.whbaaCapComponent, 10);
+  assertEquals(
+    r.chronologicalDeductionAllocations.map((
+      v,
+    ) => [v.originYear, v.allocatedDeduction]),
+    [[2008, 100], [2009, 0]],
+  );
+});
+Deno.test("An earlier partial WHBAA deduction leaves actual remaining capacity for a later ordinary vintage", () => {
+  const f = fixture();
+  f.losses[0].category = "whbaa";
+  f.losses[0].whbaa_election_reference = "election-2008";
+  f.losses[0].reviewed_opening_amt_nol = 50;
+  f.losses[1].category = "ordinary";
+  delete f.losses[1].whbaa_election_reference;
+  const r = calculateForm172HistoricalAmtDeductionAllocation(f);
+  assertEquals(r.ordinaryCapComponent, 90);
+  assertEquals(r.whbaaCapComponent, 10);
+  assertEquals(
+    r.chronologicalDeductionAllocations.map((v) => v.allocatedDeduction),
+    [50, 50],
+  );
+});
+Deno.test("Historical deduction chronology cannot spend the ordinary limit twice across ordinary vintages", () => {
+  const f = fixture();
+  const { old, alternative } = historicalSources(2007);
+  f.losses.push({
+    reference: "earlier-ordinary",
+    regular_origin: old,
+    amt_origin: alternative,
+    reviewed_opening_amt_nol: 40,
+    category: "ordinary",
+  });
+  const r = calculateForm172HistoricalAmtDeductionAllocation(f);
+  assertEquals(
+    r.chronologicalDeductionAllocations.map(
+      (v) => [v.originYear, v.allocatedDeduction],
+    ),
+    [[2007, 40], [2008, 50], [2009, 10]],
+  );
+});
+Deno.test("Historical deduction allocation keeps scarce, negative-base, zero-opening and DPAD cases bounded", () => {
+  const f = fixture();
+  f.losses[0].reviewed_opening_amt_nol = 20;
+  f.losses[1].reviewed_opening_amt_nol = 5;
+  assertEquals(
+    calculateForm172HistoricalAmtDeductionAllocation(f)
+      .chronologicalDeductionAllocations.map((v) => v.allocatedDeduction),
+    [20, 5],
+  );
+  f.losses[0].reviewed_opening_amt_nol = 0;
+  assertEquals(
+    calculateForm172HistoricalAmtDeductionAllocation(f)
+      .chronologicalDeductionAllocations.map((v) => v.allocatedDeduction),
+    [0, 5],
+  );
+  f.annual_review.components[0].amount = -30;
+  assertEquals(
+    calculateForm172HistoricalAmtDeductionAllocation(f)
+      .chronologicalDeductionAllocations.map((v) => v.allocatedDeduction),
+    [0, 0],
+  );
+  f.losses[0].reviewed_opening_amt_nol = 200;
+  f.losses[1].reviewed_opening_amt_nol = 100;
+  f.annual_review.components[0].amount = 100;
+  f.annual_review.section199_deduction.amount = 20;
+  assertEquals(
+    calculateForm172HistoricalAmtDeductionAllocation(f)
+      .chronologicalDeductionAllocations.map((v) => v.allocatedDeduction),
+    [108, 12],
+  );
+});
+Deno.test("Historical deduction allocation recomputes origins and rejects asserted deduction results", () => {
+  const f = fixture();
+  assertThrows(() =>
+    calculateForm172HistoricalAmtDeductionAllocation({
+      ...f,
+      chronologicalDeductionAllocations: [{
+        originYear: 2008,
+        allocatedDeduction: 100,
+      }],
+    })
+  );
+  f.losses[0].reviewed_opening_amt_nol = 80001;
+  assertThrows(() => calculateForm172HistoricalAmtDeductionAllocation(f));
+  const g = fixture();
+  g.losses[0].amt_origin.regular_origin_reference = "substituted-origin";
+  assertThrows(() => calculateForm172HistoricalAmtDeductionAllocation(g));
+  g.losses[0].amt_origin.regular_origin_reference =
+    g.losses[0].regular_origin.reference;
+  delete g.losses[1].whbaa_election_reference;
+  assertThrows(() => calculateForm172HistoricalAmtDeductionAllocation(g));
 });

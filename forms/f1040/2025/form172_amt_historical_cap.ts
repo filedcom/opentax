@@ -110,3 +110,43 @@ export function calculateForm172HistoricalAmtCap(raw: unknown) {
     filingReady: false as const,
   };
 }
+
+/** Allocate the historical annual deduction cap in origin-year order. The
+ * ordinary category cannot offset the final ten percent, but an eligible
+ * reviewed WHBAA vintage can. Category cap components are not allocations:
+ * an earlier WHBAA vintage can consume the entire aggregate cap. This is
+ * deduction-allocation arithmetic only, not section172(b)(2) modified-income
+ * absorption, surviving carry, election eligibility or a filing payload. */
+export function calculateForm172HistoricalAmtDeductionAllocation(raw: unknown) {
+  const cap = calculateForm172HistoricalAmtCap(raw);
+  let remainingCap = cap.aggregateHistoricalCap;
+  let ordinaryCapacity = cap.ordinaryCapComponent;
+  const allocations = cap.chronologicalReviewedOrigins.map((loss) => {
+    const allocatedDeduction = Math.min(
+      loss.opening,
+      remainingCap,
+      loss.category === "ordinary" ? ordinaryCapacity : remainingCap,
+    );
+    remainingCap -= allocatedDeduction;
+    if (loss.category === "ordinary") ordinaryCapacity -= allocatedDeduction;
+    return {
+      reference: loss.reference,
+      originYear: loss.originYear,
+      category: loss.category,
+      reviewedOpening: loss.opening,
+      allocatedDeduction,
+    };
+  });
+  if (remainingCap !== 0) {
+    throw new Error(
+      "Historical AMT deduction allocation does not exhaust its cap",
+    );
+  }
+  return {
+    ...cap,
+    chronologicalDeductionAllocations: allocations,
+    historicalDeductionAllocationArithmeticReconciled: true as const,
+    // The separate cap, modified-income absorption and legal availability
+    // questions retain their existing qualification flags above.
+  };
+}
