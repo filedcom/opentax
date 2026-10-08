@@ -1573,6 +1573,133 @@ Deno.test("Historical AMT2005–2007 canonical history binds reviewed carryback 
   assertEquals(r.completeCarryHistoryVerified, false);
   assertEquals(r.filingReady, false);
   const unsupported = earlyLayoutFixture(2005).f;
-  unsupported.annual_review.tax_year = 2004;
+  unsupported.annual_review.tax_year = 2002;
   assertThrows(() => calculateForm172HistoricalAmtCap(unsupported));
+});
+
+Deno.test("Historical AMT2003–2005 canonical history binds reviewed carryback openings without eligibility claims", async () => {
+  const openings = [[200, 100], [110, 100], [20, 100]];
+  const annual_applications = openings.map((opening, index) => {
+    const year = 2003 + index;
+    const { f, v } = earlyLayoutFixture(year);
+    f.losses.forEach((loss, i) => loss.reviewed_opening_amt_nol = opening[i]);
+    v.reference = `early-vintage-context-${year}`;
+    v.vintages[1].earlier_nol_deductions[0].amount = Math.min(opening[0], 90);
+    v.vintages.forEach((context, i) => {
+      context.modified_review.reference = `${year}-early-modified-${i}`;
+      context.modified_review.components.forEach((c) =>
+        c.refigured_reference = `${year}-${i}-early-modified-${c.line}`
+      );
+      context.modified_review.section199.refigured_reference =
+        `${year}-${i}-early-modified-dpad`;
+    });
+    return { application_year: year, cap_workpaper: f, vintage_reviews: v };
+  });
+  const history = {
+    reference: "pre2005-carryback-history",
+    start_year: 2003,
+    end_year: 2005,
+    taxpayer_ssn: "111223333",
+    entry_reviews: [200, 100].map((amount, i) => ({
+      reference: `early-entry-${i}`,
+      origin_year: 2008 + i,
+      loss_reference: `loss-review-${2008 + i}`,
+      application_year: 2003,
+      reviewed_opening: amount,
+    })),
+    annual_applications,
+  };
+  const bytes = new TextEncoder().encode(JSON.stringify(history));
+  const r = await stageForm172HistoricalAmtHistorySource({
+    history: {
+      reference: history.reference,
+      sha256: await historyDigest(bytes),
+    },
+    start_tax_year: 2003,
+    end_tax_year: 2005,
+    taxpayer_ssn: "111223333",
+  }, [{ reference: history.reference, bytes }]);
+  assertEquals(
+    r.reviewedAnnualApplications.map((a) =>
+      a.chronologicalReviewedApplications.map((loss) => loss.absorbed)
+    ),
+    [[90, 0], [90, 0], [20, 70]],
+  );
+  assertEquals(r.reviewedEndingBalances, [{ originYear: 2008, amount: 0 }, {
+    originYear: 2009,
+    amount: 30,
+  }]);
+  assertEquals(r.completeCarryHistoryVerified, false);
+  assertEquals(r.filingReady, false);
+  const unsupported = earlyLayoutFixture(2005).f;
+  unsupported.annual_review.tax_year = 2002;
+  assertThrows(() => calculateForm172HistoricalAmtCap(unsupported));
+});
+
+Deno.test("Historical AMT2003–2004 require explicit zero section199 original and refigured reviews", () => {
+  for (const year of [2003, 2004]) {
+    const { f, v } = earlyLayoutFixture(year);
+    const r = calculateForm172HistoricalAmtAbsorption(f, v);
+    assertEquals(r.originalDeductionCap, 90);
+    assertEquals(r.chronologicalReviewedApplications.map((a) => a.absorbed), [
+      90,
+      0,
+    ]);
+    const badAnnual = structuredClone(f);
+    badAnnual.annual_review.section199_deduction.amount = 1;
+    assertThrows(
+      () => calculateForm172HistoricalAmtCap(badAnnual),
+      Error,
+      "Pre2005",
+    );
+    const badRefigure = structuredClone(v);
+    badRefigure.vintages[0].modified_review.section199.refigured_amount = 1;
+    assertThrows(
+      () => calculateForm172HistoricalAmtAbsorption(f, badRefigure),
+      Error,
+      "Pre2005",
+    );
+    const missing = structuredClone(f) as unknown as {
+      annual_review: { section199_deduction?: unknown };
+    };
+    delete missing.annual_review.section199_deduction;
+    assertThrows(() => calculateForm172HistoricalAmtCap(missing));
+    for (const line of ["27", "28"] as const) {
+      const bad = structuredClone(f);
+      bad.annual_review.components.push({
+        line,
+        reference: `excluded-${line}`,
+        amount: -10,
+      });
+      assertThrows(() => calculateForm172HistoricalAmtCap(bad));
+    }
+  }
+});
+
+Deno.test("Historical AMT2003 and2004 restore reviewed42 and7 section1202 preferences without double counting", () => {
+  for (
+    const [year, preference, deduction] of [[2003, 42, 128], [2004, 7, 96]]
+  ) {
+    const { f, v } = earlyLayoutFixture(year);
+    f.annual_review.components.find((c) => c.line === "12")!.amount =
+      preference;
+    v.vintages.forEach((row) => {
+      const c = row.modified_review.components.find((c) => c.line === "12")!;
+      c.original_amount = preference;
+      c.refigured_amount = preference;
+      row.modified_review.section1202_items = [{
+        item_id: "historical-qsbs",
+        reference: "historical-qsbs-source",
+        owner_ssn: "111223333",
+        excluded_gain: 100,
+        amt_preference: preference,
+      }];
+    });
+    v.vintages[1].earlier_nol_deductions[0].amount = deduction;
+    const r = calculateForm172HistoricalAmtAbsorption(f, v);
+    assertEquals(r.originalDeductionCap, deduction);
+    assertEquals(r.chronologicalReviewedApplications[0].modifiedBase, 200);
+    assertEquals(r.chronologicalReviewedApplications[0].absorbed, 180);
+    assertEquals(r.filingReady, false);
+  }
 });

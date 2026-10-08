@@ -56,7 +56,7 @@ export const form172AmtLegacyTentativeLines = [
   "26",
   "27",
 ] as const;
-/** Physical historical line vocabulary.2005–07 exclude ATNOLD27 and AMTI28;
+/** Physical historical line vocabulary.2003–07 exclude ATNOLD27 and AMTI28;
  * 2008 excludes ATNOLD28;2009 excludes
  * ATNOLD12. Later layouts exclude11 instead. Never align them by array index. */
 export const form172AmtHistoricalPhysicalLines = [
@@ -91,7 +91,7 @@ export const form172AmtHistoricalPhysicalLines = [
 ] as const;
 
 export function form172HistoricalAmtLayout(year: number) {
-  if (year >= 2005 && year <= 2007) {
+  if (year >= 2003 && year <= 2007) {
     return {
       tentativeLines: form172AmtHistoricalPhysicalLines.filter((line) =>
         line !== "27" && line !== "28"
@@ -142,7 +142,7 @@ const signedDollars = z.number().int().min(-1_000_000_000).max(1_000_000_000);
 const positiveDollars = z.number().int().min(0).max(1_000_000_000);
 export const form172AmtAnnualReviewSchema = z.object({
   reference: ref,
-  tax_year: z.number().int().min(2005).max(2025),
+  tax_year: z.number().int().min(2003).max(2025),
   taxpayer_ssn: z.string().regex(/^\d{9}$/),
   spouse_ssn: z.string().regex(/^\d{9}$/).optional(),
   form6251_reference: ref,
@@ -272,6 +272,11 @@ export function calculateForm172AmtAnnualLimit(
   );
   if (!Number.isSafeInteger(tentativeAmtiBeforeAtnold)) {
     throw new Error("AMT tentative total exceeds exact dollars");
+  }
+  if (v.tax_year < 2005 && v.section199_deduction!.amount !== 0) {
+    throw new Error(
+      "Pre2005 AMT annual section199 review must be explicit zero",
+    );
   }
   const section199Addback = v.section199_deduction?.amount ?? 0;
   const ordinaryLimitBase = tentativeAmtiBeforeAtnold + section199Addback;
