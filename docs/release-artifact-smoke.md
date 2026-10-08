@@ -13,7 +13,7 @@ publishes it beside them. Reviewers can compare each downloaded file with its
 recorded digest; the manifest alone does not establish a signature or publisher
 identity.
 
-`scripts/smoke-release-binary.ts` invokes the **compiled asset**, not the Deno
+`scripts/release/smoke-release-binary.ts` invokes the **compiled asset**, not the Deno
 source CLI, from a temporary working directory. It checks the injected
 version, creates a synthetic TY2025 Single return, adds full filer and W-2
 source facts, checks computed wages and withholding, requires CLI validation to
@@ -33,7 +33,7 @@ also read or write its update-check cache in the runner's home directory at
 For a manually built native asset on a matching machine, run:
 
 ```sh
-deno run --allow-read --allow-write --allow-run --allow-net=www.irs.gov scripts/smoke-release-binary.ts ./opentax-linux-x64 1.2.3
+deno run --allow-read --allow-write --allow-run --allow-net=www.irs.gov scripts/release/smoke-release-binary.ts ./opentax-linux-x64 1.2.3
 ```
 
 Use the actual asset path and injected version. Cross-compiled assets must be
@@ -88,7 +88,7 @@ expected version `2.0.6`:
 
 ```sh
 deno run --allow-read --allow-write --allow-run --allow-net=www.irs.gov \
-  scripts/smoke-release-binary.ts ./opentax-macos-arm64 2.0.6
+  scripts/release/smoke-release-binary.ts ./opentax-macos-arm64 2.0.6
 ```
 
 Use the binary name for the actual host architecture. The smoke exercises a
@@ -96,4 +96,4 @@ synthetic Form 1040/W-2 calculation, validation, finalized MeF XML, and a
 loadable PDF with those filled Form 1040 values. It does not establish TY2025
 IRS ATS acceptance. The ATS certificate, enrollment, endpoint/WSDL/trust
 package, and authorized test transmission remain separate prerequisites in
-[the ATS plan](ats/ty2025.md).
+[the ATS plan](./ats/ty2025.md).

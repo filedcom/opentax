@@ -1,7 +1,7 @@
 import { qbiPatron } from "../nodes/inputs/qbi_patron/index.ts";
 import { education_income } from "../nodes/inputs/education_income/index.ts";
 import type { NodeRegistry } from "../../../core/types/node-registry.ts";
-import { buildStartNode, inputNodes } from "./start.ts";
+import { buildStartNode, inputNodes } from "./domains/execution/start.ts";
 
 // ── Inputs ────────────────────────────────────────────────────────────────────
 import { ext } from "../nodes/inputs/ext/index.ts";

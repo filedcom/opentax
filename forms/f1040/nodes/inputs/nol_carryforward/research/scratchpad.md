@@ -16,6 +16,6 @@ NOL deduction on line 2f. A zero AMT deduction cannot be inferred from the
 regular loss amount.
 
 No source-backed native/PDF route is registered. See
-`docs/mef/ty2025-form172-nol-gap.md` for exact remaining evidence and graph
+`docs/mef/ty2025/domains/losses/form172/ty2025-form172-nol-gap.md` for exact remaining evidence and graph
 requirements. The old local tests that treated asserted amounts as a proved
 deduction were replaced by unrun fail-closed cases.

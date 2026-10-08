@@ -5,7 +5,7 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { z } from "zod";
 import {
   form2210FBoxBInputSchema,
-} from "../../../2025/form2210f_box_b.ts";
+} from "../../../2025/domains/payments/form2210f/form2210f_box_b.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 
 export const inputSchema = z.object({ source: form2210FBoxBInputSchema }).strict();

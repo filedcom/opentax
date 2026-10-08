@@ -14,7 +14,7 @@ import { normalizeArray } from "../../../utils.ts";
 import {
   assertPriorIsoSaleCalculation,
   priorIsoSaleReviewSchema,
-} from "../../../../2025/form6251_prior_iso_sale.ts";
+} from "../../../../2025/domains/taxes/form6251/form6251_prior_iso_sale.ts";
 
 // Phase-out rate: 25% of excess above threshold (IRC §55(d); Form 6251 Line 5 Worksheet, Step 5)
 const PHASE_OUT_RATE = 0.25;

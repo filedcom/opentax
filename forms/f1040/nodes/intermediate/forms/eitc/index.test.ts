@@ -1,6 +1,6 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { eitc } from "./index.ts";
-import { eitc as scheduleEic } from "../../../../2025/mef/forms/eitc.ts";
+import { eitc as scheduleEic } from "../../../../2025/mef/forms/credits/eitc.ts";
 import { FilingStatus } from "../../../types.ts";
 
 // ─── Test Helpers ─────────────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { sha256Hex } from "../../../../2025/prepared-source.ts";
+import { sha256Hex } from "../../../../2025/domains/execution/prepared-source.ts";
 
 const amount = z.number().int().nonnegative().refine(Number.isSafeInteger);
 const reviewedDocument = z.object({

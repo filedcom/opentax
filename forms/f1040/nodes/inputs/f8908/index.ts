@@ -6,7 +6,7 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import {
   calculateForm8908Source,
   form8908HomeSourceSchema,
-} from "../../../2025/form8908_source.ts";
+} from "../../../2025/domains/credits/form8908/form8908_source.ts";
 
 // Each entry is one acquired home. The old credit override and approximate
 // Schedule 3 deposit could not represent TY2025 Form 8908 or Form 3800.

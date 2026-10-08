@@ -7,7 +7,7 @@ prior year and the taxpayer is reclaiming the credit. This node signals
 eligibility restoration to the downstream credit nodes (eitc, f8812, f8863) by
 emitting a `form8862_filed: true` flag to each claimed credit node.
 
-For TY2025, `forms/f1040/2025/mef/forms/f8862.ts` builds the actual Form 8862
+For TY2025, `forms/f1040/2025/mef/forms/credits/f8862.ts` builds the actual Form 8862
 MeF document. A routing flag alone does not establish eligibility or a complete
 form. The serializer requires the answers and person details for each claimed
 credit, and rejects ineligible or contradictory answers. The filing year on Part

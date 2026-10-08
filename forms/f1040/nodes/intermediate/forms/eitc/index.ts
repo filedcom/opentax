@@ -10,11 +10,11 @@ import { f1040 } from "../../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { lookupEic2025 } from "./table_2025.ts";
-import { eicBirthResidencyReviewSchema } from "../../../../2025/eic-birth-residency.ts";
+import { eicBirthResidencyReviewSchema } from "../../../../2025/domains/credits/earned-income/eic-birth-residency.ts";
 
-import { eicDatedResidencyReviewSchema } from "../../../../2025/eic-dated-residency.ts";
+import { eicDatedResidencyReviewSchema } from "../../../../2025/domains/credits/earned-income/eic-dated-residency.ts";
 
-import { eicDeathResidencyReviewSchema } from "../../../../2025/eic-death-residency.ts";
+import { eicDeathResidencyReviewSchema } from "../../../../2025/domains/credits/earned-income/eic-death-residency.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 

@@ -2,7 +2,7 @@ import { join } from "@std/path";
 import { catalog } from "../../catalog.ts";
 import { buildEngineInputs, createReturn, loadReturn } from "../store/store.ts";
 import { singletonPublicInputKeys } from "../store/public-input-keys.ts";
-import { normalizeAllPending } from "../../forms/f1040/2025/pending.ts";
+import { normalizeAllPending } from "../../forms/f1040/2025/domains/execution/pending.ts";
 
 function getCatalogEntry(formType: string, year: number) {
   const key = `${formType}:${year}`;

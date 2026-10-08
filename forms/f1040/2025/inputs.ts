@@ -15,7 +15,7 @@ import {
   inputSchema as form8853InputSchema,
 } from "../nodes/intermediate/forms/form8853/index.ts";
 import { form6251 } from "../nodes/intermediate/forms/form6251/index.ts";
-import { priorIsoSaleReviewSchema } from "./form6251_prior_iso_sale.ts";
+import { priorIsoSaleReviewSchema } from "./domains/taxes/form6251/form6251_prior_iso_sale.ts";
 import { form4797 } from "../nodes/intermediate/forms/form4797/index.ts";
 import { investment1245DispositionSchema } from "../nodes/intermediate/forms/form4797/investment_1245.ts";
 import {

@@ -1,6 +1,6 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
-import { form8962 as form8962Mef } from "../../../../2025/mef/forms/f8962.ts";
-import { form8962Pdf } from "../../../../2025/pdf/forms/f8962.ts";
+import { form8962 as form8962Mef } from "../../../../2025/mef/forms/health/f8962/f8962.ts";
+import { form8962Pdf } from "../../../../2025/pdf/forms/health/f8962.ts";
 import { FilingStatus } from "../../../types.ts";
 import { form8962 } from "./index.ts";
 

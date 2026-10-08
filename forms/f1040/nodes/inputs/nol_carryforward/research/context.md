@@ -22,4 +22,4 @@ The existing MeF/PDF export guards still reject a populated NOL source or a
 direct positive Schedule 1 line 8a amount. Form 6251 also rejects a direct
 nonzero line 2f amount. Native Form 172, Schedule 1 line 8a export, and the
 source-derived two-pass regular/AMT calculations are not built. See
-`docs/mef/ty2025-form172-nol-gap.md` for the exact activation requirements.
+`docs/mef/ty2025/domains/losses/form172/ty2025-form172-nol-gap.md` for the exact activation requirements.

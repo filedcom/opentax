@@ -1,6 +1,6 @@
 import { assert, assertEquals, assertThrows } from "@std/assert";
-import { form8990 as form8990Mef } from "../../../../2025/mef/forms/f8990.ts";
-import { form8990Pdf } from "../../../../2025/pdf/forms/f8990.ts";
+import { form8990 as form8990Mef } from "../../../../2025/mef/forms/business/f8990.ts";
+import { form8990Pdf } from "../../../../2025/pdf/forms/business/f8990.ts";
 import { reconcileBoundedForm8990FinalReturn } from "./final-reconciliation.ts";
 import { form8990LinesSchema } from "./index.ts";
 import { runBoundedForm8990TwoPass } from "./run-two-pass.ts";

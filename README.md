@@ -225,7 +225,7 @@ opentax version
 
 131 input nodes covering the full range of 1040 source documents: W-2s, 1099s, all major schedules, credits, capital transactions, and more.
 
-See [`catalog.ts`](catalog.ts) for the complete list of supported nodes and their schemas. Or from the CLI:
+See [`catalog.ts`](./catalog.ts) for the complete list of supported nodes and their schemas. Or from the CLI:
 
 ```bash
 opentax node list
@@ -270,7 +270,7 @@ deno task tax return create --year 2025
 
 ### TY2026 research sources
 
-The [TY2026 research corpus](docs/ty2026/README.md) contains the implementation
+The [TY2026 research corpus](./docs/ty2026/README.md) contains the implementation
 plans, source manifest, and pinned IRS PDFs. These PDFs use Git LFS so they do
 not become ordinary Git blobs. Install Git LFS before working with the corpus:
 
@@ -279,7 +279,7 @@ git lfs install
 git lfs pull
 ```
 
-When refreshing IRS sources, follow the [corpus instructions](docs/ty2026/README.md#working-with-the-pinned-pdfs).
+When refreshing IRS sources, follow the [corpus instructions](./docs/ty2026/README.md#working-with-the-pinned-pdfs).
 Verify that new or changed PDFs appear in `git lfs ls-files` before pushing.
 Adding LFS tracking after a regular PDF commit does not remove that PDF from
 Git history.

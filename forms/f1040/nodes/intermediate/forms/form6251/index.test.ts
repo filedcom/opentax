@@ -184,12 +184,12 @@ function basisDividendPending(
 
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
-import { form6251 as mef6251 } from "../../../../2025/mef/forms/f6251.ts";
+import { form6251 as mef6251 } from "../../../../2025/mef/forms/taxes/f6251.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { form2555 } from "../form2555/index.ts";
 import { income_tax_calculation } from "../../worksheets/income_tax_calculation/index.ts";
 import { form4952 } from "../form4952/index.ts";
-import { form6251Pdf } from "../../../../2025/pdf/forms/f6251.ts";
+import { form6251Pdf } from "../../../../2025/pdf/forms/taxes/f6251.ts";
 
 function compute(input: Record<string, unknown>) {
   return form6251.compute(

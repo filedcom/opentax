@@ -1,5 +1,5 @@
 import { assertRejects } from "@std/assert";
-import { sha256Hex } from "../../../2025/prepared-source.ts";
+import { sha256Hex } from "../../../2025/domains/execution/prepared-source.ts";
 import { bindForm8814PlainInterestIssuerCopies } from "./issuer_byte_binding.ts";
 
 const firstBytes = new TextEncoder().encode(

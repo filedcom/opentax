@@ -100,7 +100,7 @@ flowchart LR
 - ISO exercise: for AMT, income = FMV − exercise price (not recognized for regular tax)
 - The ordinary-income Form 2555 AMT stacking worksheet has focused cases but has not been run in the requested full-batch test. Preferential-income Form 2555 returns and the Part III capital-gain-excess refigure remain unsupported.
 - Part III source and MeF paths for other qualified-dividend and capital-gain cases have been built elsewhere, but the full batch and IRS acceptance remain unverified. Do not claim complete AMT support based on this document.
-- The bounded identified Form 8949 AMT-basis gain paths now cover separate unadjusted long-term-only and short-term-only positive-gain rows. The signed line 2k, long-term Part III refigure, short-term ordinary-rate path, MeF element, PDF widget, and remaining exclusions are documented in `docs/mef/ty2025-form6251-8949-basis-gap.md`. Their tests are written but unrun.
+- The bounded identified Form 8949 AMT-basis gain paths now cover separate unadjusted long-term-only and short-term-only positive-gain rows. The signed line 2k, long-term Part III refigure, short-term ordinary-rate path, MeF element, PDF widget, and remaining exclusions are documented in `docs/mef/ty2025/domains/payments/form6251/ty2025-form6251-8949-basis-gap.md`. Their tests are written but unrun.
 
 ---
 ## Sources

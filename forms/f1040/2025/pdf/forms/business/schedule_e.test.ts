@@ -1,0 +1,497 @@
+import { assertEquals, assertThrows } from "@std/assert";
+import { scheduleEPdf } from "./schedule_e.ts";
+import { scheduleE } from "../../../mef/forms/business/schedule_e.ts";
+import { inputSchema as scheduleEInputSchema } from "../../../../nodes/inputs/schedule_e/index.ts";
+import { fillFormPdf } from "../../builder.ts";
+import { testFiler } from "../../../mef/execution/test-filer.ts";
+
+Deno.test("Schedule E fills filer identity on the retained Part I or Part II page", async () => {
+  const filer = {
+    ...testFiler(),
+    firstNameWithInitial: "Taxpayer",
+    lastName: "Test",
+  };
+  for (const fields of [{ line26: 100 }, { trust_line37: 100 }]) {
+    const bytes = await fillFormPdf(
+      scheduleEPdf,
+      fields,
+      filer,
+      ".pdf-cache",
+    );
+    assertEquals(bytes instanceof Uint8Array, true);
+  }
+});
+
+Deno.test("trust K-1 box 5 prints Schedule E Part III and line 41", () => {
+  const source = {
+    estate_trust_name: "Family Trust",
+    estate_trust_ein: "123456789",
+    source_document_reference: "K1-2025-A",
+    box5_other_portfolio: 750,
+  };
+  const raw = scheduleEInputSchema.parse({
+    estate_trust_rows: [{
+      estate_trust_name: source.estate_trust_name,
+      estate_trust_ein: source.estate_trust_ein,
+      source_document_reference: source.source_document_reference,
+      other_income: 750,
+    }],
+  });
+  const pending = {
+    k1_trust: { k1_trusts: [source] },
+    schedule_e: raw,
+    schedule1: { line5_schedule_e: 750 },
+  };
+  const projected = scheduleEPdf.projectFields?.(raw, pending);
+  assertEquals(projected?.trust_0_name, "Family Trust");
+  assertEquals(projected?.trust_0_ein, "123456789");
+  assertEquals(projected?.trust_0_other_income, 750);
+  assertEquals(projected?.trust_line37, 750);
+  assertEquals(projected?.trust_line41, 750);
+  assertEquals(scheduleEPdf.pageIndices?.(projected ?? {}), [1]);
+});
+
+Deno.test("trust K-1 activity income prints Part III passive column", () => {
+  const source = {
+    estate_trust_name: "Family Trust",
+    estate_trust_ein: "123456789",
+    source_document_reference: "K1-2025-A",
+    box6_ordinary_business: 600,
+    box6_8_activity_statement: [{
+      box: "6",
+      activity_name: "Shop",
+      statement_reference: "A-6",
+      income: 600,
+    }],
+  };
+  const raw = scheduleEInputSchema.parse({
+    estate_trust_rows: [{
+      estate_trust_name: source.estate_trust_name,
+      estate_trust_ein: source.estate_trust_ein,
+      source_document_reference: source.source_document_reference,
+      passive_income: 600,
+    }],
+  });
+  const projected = scheduleEPdf.projectFields?.(raw, {
+    k1_trust: { k1_trusts: [source] },
+    schedule_e: raw,
+    schedule1: { line5_schedule_e: 600 },
+  });
+  assertEquals(projected?.trust_0_passive_income, 600);
+  assertEquals(projected?.trust_total_passive_income, 600);
+  assertEquals(projected?.trust_line37, 600);
+  assertEquals(scheduleEPdf.pageIndices?.(projected ?? {}), [1]);
+});
+
+Deno.test("partnership K-1 royalty and code I reconcile Schedule E MeF and PDF", () => {
+  const k1 = {
+    partnership_name: "Mineral Partnership",
+    partnership_ein: "123456789",
+    source_document_reference: "2025 partnership K-1 A",
+    box7_royalties: 700,
+    box7_royalty_reporting: {
+      tsj: "T",
+      property_description: "Mineral royalty A",
+      portfolio_nonpassive: true,
+      form_1099_payments_made: false,
+    },
+    box13_code_i_royalty_deduction: {
+      reported_amount: 100,
+      allowed_amount: 100,
+      statement_reference: "2025 code I statement A",
+      expense_kind: "depletion",
+      basis_workpaper_reference: "2025 basis worksheet A",
+      at_risk_workpaper_reference: "2025 at-risk worksheet A",
+    },
+  };
+  const row = {
+    tsj: "T",
+    property_description: "Mineral royalty A",
+    property_type: 6,
+    activity_type: "D",
+    fair_rental_days: 0,
+    personal_use_days: 0,
+    rent_income: 0,
+    royalties_income: 700,
+    form_1099_payments_made: false,
+    expense_other_lines: [{
+      description: "From Schedule K-1 (Form 1065)",
+      amount: 100,
+    }],
+    k1_royalty_source: {
+      partnership_ein: "123456789",
+      source_document_reference: "2025 partnership K-1 A",
+      box7_gross_royalties: 700,
+      box13_code_i_allowed_deduction: 100,
+      box13_code_i_statement_reference: "2025 code I statement A",
+    },
+  };
+  const raw = scheduleEInputSchema.parse({ schedule_es: [row] });
+  const pending = {
+    k1_partnership: { k1_partnerships: [k1] },
+    schedule_e: raw,
+    schedule1: { line5_schedule_e: 600 },
+  };
+  const xml = scheduleE.build(raw, { pending });
+  assertEquals(
+    xml.includes("<TotalRoyaltiesReceivedAmt>700</TotalRoyaltiesReceivedAmt>"),
+    true,
+  );
+  assertEquals(
+    xml.includes("<TotalIncomeOrLossAmt>600</TotalIncomeOrLossAmt>"),
+    true,
+  );
+  const projected = scheduleEPdf.projectFields?.(raw, pending);
+  assertEquals(projected?.property_0_address, undefined);
+  assertEquals(projected?.property_0_fair_rental_days, undefined);
+  assertEquals(projected?.property_0_personal_use_days, undefined);
+  assertEquals(projected?.property_0_line4, 700);
+  assertEquals(projected?.property_0_line19, 100);
+  assertEquals(projected?.line26, 600);
+  assertThrows(
+    () =>
+      scheduleE.build(raw, {
+        pending: {
+          ...pending,
+          k1_partnership: { k1_partnerships: [{ ...k1, box7_royalties: 701 }] },
+        },
+      }),
+    Error,
+    "matching partnership K-1",
+  );
+  assertThrows(
+    () =>
+      scheduleEPdf.projectFields?.(raw, {
+        ...pending,
+        schedule1: { line5_schedule_e: 700 },
+      }),
+    Error,
+    "Schedule 1 line 5",
+  );
+});
+
+const rental = {
+  tsj: "T",
+  activity_id: "rental-house",
+  property_description: "Rental house",
+  property_type: 1,
+  activity_type: "A",
+  fair_rental_days: 365,
+  personal_use_days: 0,
+  rent_income: 12_000,
+  form_1099_payments_made: false,
+  street_address: "12 Main Street",
+  city: "Austin",
+  state: "TX",
+  zip: "78701",
+  expense_advertising: 100,
+  expense_mortgage_interest: 2_000,
+  expense_depreciation: 1_500,
+  expense_other_lines: [{ description: "Bank fees", amount: 50 }],
+};
+
+Deno.test("Schedule E PDF prints a Form 8582 suspended rental loss without a current deduction", () => {
+  const item = {
+    ...rental,
+    activity_type: "B" as const,
+    rent_income: 5_000,
+    expense_advertising: undefined,
+    expense_mortgage_interest: undefined,
+    expense_depreciation: undefined,
+    expense_other_lines: undefined,
+    expense_repairs: 10_000,
+  };
+  const raw = { schedule_es: [item] };
+  const linked = {
+    schedule_e: raw,
+    schedule1: { line5_schedule_e: 0 },
+    form8582: {
+      filing_status: "single",
+      activities: [{
+        activity_id: item.activity_id,
+        name: item.property_description,
+        activity_type: "B",
+        property_type: item.property_type,
+        reporting_form: "schedule_e",
+        current_net: -5_000,
+        prior_unallowed_operating: 0,
+        prior_unallowed_4797_part1: 0,
+        prior_unallowed_4797_part2: 0,
+      }],
+      current_loss: 5_000,
+      has_other_passive: true,
+      modified_agi: 90_000,
+    },
+  };
+  const projected = scheduleEPdf.projectFields?.(raw, linked);
+  assertEquals(projected?.property_0_line21, -5_000);
+  assertEquals(projected?.property_0_line22, undefined);
+  assertEquals(projected?.line25, undefined);
+  assertEquals(projected?.line26, 0);
+  assertThrows(
+    () =>
+      scheduleEPdf.projectFields?.(raw, {
+        ...linked,
+        form8582: {
+          ...linked.form8582,
+          activities: [{
+            ...linked.form8582.activities[0],
+            current_net: -4_999,
+          }],
+        },
+      }),
+    Error,
+    "does not match Form 8582 activity",
+  );
+});
+
+Deno.test("Schedule E PDF maps one rental to the official 2025 Part I property A widgets", () => {
+  const raw = { schedule_es: [rental] };
+  const projected = scheduleEPdf.projectFields?.(raw, {
+    schedule_e: raw,
+    schedule1: { line5_schedule_e: 8_350 },
+  });
+  assertEquals(
+    projected?.property_0_address,
+    "12 Main Street, Austin, TX 78701",
+  );
+  assertEquals(projected?.property_0_type, 1);
+  assertEquals(projected?.payments_made, false);
+  assertEquals(projected?.property_0_personal_use_days, 0);
+  assertEquals(projected?.property_0_line3, 12_000);
+  assertEquals(projected?.property_0_line18, 1_500);
+  assertEquals(projected?.line19_description, "Bank fees");
+  assertEquals(projected?.property_0_line19, 50);
+  assertEquals(projected?.property_0_line20, 3_650);
+  assertEquals(projected?.property_0_line21, 8_350);
+  assertEquals(projected?.property_0_line22, undefined);
+  assertEquals(projected?.line23c, 2_000);
+  assertEquals(projected?.line23e, 3_650);
+  assertEquals(projected?.line24, 8_350);
+  assertEquals(projected?.line26, 8_350);
+  assertEquals(scheduleEPdf.pageIndices?.(projected ?? {}), [0]);
+  assertEquals(
+    scheduleEPdf.fields.find((field) => field.domainKey === "property_0_line22")
+      ?.pdfField,
+    "topmostSubform[0].Page1[0].Table_Expenses[0].Line22[0].f1_74[0]",
+  );
+  assertEquals(
+    scheduleEPdf.fields.find((field) => field.domainKey === "line26")?.pdfField,
+    "topmostSubform[0].Page1[0].f1_84[0]",
+  );
+});
+
+Deno.test("Schedule E PDF adds a Part I copy for property four and keeps totals on the first copy", () => {
+  const properties = Array.from({ length: 4 }, (_, index) => ({
+    ...rental,
+    activity_id: `rental-${index}`,
+    street_address: `${12 + index} Main Street`,
+  }));
+  const raw = scheduleEInputSchema.parse({ schedule_es: properties });
+  const projected = scheduleEPdf.projectFields?.(raw, {
+    schedule_e: raw,
+    schedule1: { line5_schedule_e: 33_400 },
+  }) ?? {};
+  const copies = scheduleEPdf.instances?.(projected) ?? [];
+  assertEquals(copies.length, 2);
+  assertEquals(
+    copies[0].property_0_address,
+    "12 Main Street, Austin, TX 78701",
+  );
+  assertEquals(
+    copies[0].property_2_address,
+    "14 Main Street, Austin, TX 78701",
+  );
+  assertEquals(copies[0].line23a, 48_000);
+  assertEquals(copies[0].line26, 33_400);
+  assertEquals(
+    copies[1].property_0_address,
+    "15 Main Street, Austin, TX 78701",
+  );
+  assertEquals(copies[1].property_0_line3, 12_000);
+  assertEquals(copies[1].line23a, undefined);
+  assertEquals(copies[1].line26, undefined);
+  assertEquals(copies[1].payments_made, false);
+  assertEquals(copies[1].forms_1099_filed, undefined);
+  assertEquals(scheduleEPdf.pageIndices?.(copies[0]), [0]);
+  assertEquals(scheduleEPdf.pageIndices?.(copies[1]), [0]);
+});
+
+Deno.test("Schedule E PDF repeats sourced Form 1099 answers on each property copy", () => {
+  // https://www.irs.gov/instructions/i1040se requires enough Schedule E
+  // copies for every property and limits only lines 23a-26 to the first copy.
+  const properties = Array.from({ length: 4 }, (_, index) => ({
+    ...rental,
+    activity_id: `rental-${index}`,
+    street_address: `${12 + index} Main Street`,
+    form_1099_payments_made: index === 3,
+    form_1099_filed: index === 3 ? true : undefined,
+  }));
+  const raw = scheduleEInputSchema.parse({ schedule_es: properties });
+  const pending = {
+    schedule_e: raw,
+    schedule1: { line5_schedule_e: 33_400 },
+  };
+  const projected = scheduleEPdf.projectFields?.(raw, pending) ?? {};
+  const copies = scheduleEPdf.instances?.(projected) ?? [];
+  assertEquals(copies.length, 2);
+  assertEquals(copies.map((copy) => copy.payments_made), [true, true]);
+  assertEquals(copies.map((copy) => copy.forms_1099_filed), [true, true]);
+  assertEquals(copies[0].line26, 33_400);
+  assertEquals(copies[1].line26, undefined);
+  const native = scheduleE.build(raw, { pending });
+  assertEquals(
+    native.includes(
+      "<PaymentRqrFilingForm1099Ind>true</PaymentRqrFilingForm1099Ind>",
+    ),
+    true,
+  );
+  assertEquals(
+    native.includes(
+      "<RequiredForms1099FiledInd>true</RequiredForms1099FiledInd>",
+    ),
+    true,
+  );
+});
+
+Deno.test("Schedule E PDF retains distinct line 19 and type 8 descriptions for an attachment", () => {
+  const properties = [{
+    ...rental,
+    activity_id: "first",
+    expense_other_lines: [{ description: "Tolls", amount: 20 }, {
+      description: "Bank fees",
+      amount: 30,
+    }],
+  }, {
+    ...rental,
+    activity_id: "second",
+    property_type: 8,
+    property_type_other_desc: "Mixed-use warehouse",
+    street_address: "13 Main Street",
+  }, {
+    ...rental,
+    activity_id: "third",
+    property_type: 8,
+    property_type_other_desc: "Detached storage",
+    street_address: "14 Main Street",
+  }];
+  const raw = { schedule_es: properties };
+  const projected = scheduleEPdf.projectFields?.(raw, {
+    schedule_e: raw,
+    schedule1: { line5_schedule_e: 25_050 },
+  }) ?? {};
+  assertEquals(projected.property_0_line19, 50);
+  assertEquals(projected.property_1_line19, 50);
+  assertEquals(projected.line19_description, "See attached");
+  assertEquals(projected.other_property_description, "See attached");
+  assertEquals((projected.partIStatementRows as unknown[]).length, 6);
+  assertEquals(projected.line23e, 10_950);
+  assertEquals(projected.line26, 25_050);
+});
+
+Deno.test("Schedule E PDF prints a sourced full-disposition operating loss and no Form 8582", () => {
+  const sale = {
+    activity_id: "rental-house",
+    activity_name: "Rental house",
+    part: "II",
+    property_description: "Short-held parcel",
+    acquired_on: "2025-01-01",
+    sold_on: "2025-06-01",
+    gross_sales_price: 6_000,
+    cost_or_other_basis: 5_000,
+    depreciation_allowed: 0,
+    entire_activity_interest_disposed: true,
+    buyer_unrelated: true,
+    fully_taxable: true,
+    installment_method: false,
+    disposition_document_reference: "2025 settlement statement",
+  };
+  const item = {
+    ...rental,
+    activity_type: "B",
+    rent_income: 1_000,
+    expense_advertising: undefined,
+    expense_mortgage_interest: undefined,
+    expense_depreciation: undefined,
+    expense_other_lines: undefined,
+    expense_taxes: 7_000,
+    disposed_of: true,
+    prior_unallowed_passive_operating: 3_000,
+    prior_year_8582_source: {
+      tax_year: 2024,
+      activity_id: "rental-house",
+      filed_part_vii_column_c: 3_000,
+      source_document_reference: "2024 filed Form 8582 Part VII",
+    },
+    passive_property_sales: [sale],
+  };
+  const raw = { schedule_es: [item] };
+  const allPending = {
+    schedule_e: raw,
+    form4797: { passive_property_sales: [sale] },
+    schedule1: { line5_schedule_e: -9_000 },
+  };
+  const projected = scheduleEPdf.projectFields?.(raw, allPending);
+  assertEquals(projected?.property_0_line3, 1_000);
+  assertEquals(projected?.property_0_expense_taxes, 7_000);
+  assertEquals(projected?.property_0_line20, 7_000);
+  assertEquals(projected?.property_0_line21, -6_000);
+  assertEquals(projected?.property_0_line22, 9_000);
+  assertEquals(projected?.line24, 0);
+  assertEquals(projected?.line25, 9_000);
+  assertEquals(projected?.line26, -9_000);
+  assertThrows(
+    () =>
+      scheduleEPdf.projectFields?.(raw, {
+        ...allPending,
+        form4797: {
+          passive_property_sales: [{ ...sale, gross_sales_price: 6_001 }],
+        },
+      }),
+    Error,
+    "matching Form 4797",
+  );
+});
+
+Deno.test("Schedule E PDF fails closed on unprojected paths and Schedule 1 mismatch", () => {
+  const raw = { schedule_es: [rental] };
+  const linked = {
+    schedule_e: raw,
+    schedule1: { line5_schedule_e: 8_350 },
+  };
+  assertThrows(
+    () =>
+      scheduleEPdf.projectFields?.(raw, {
+        ...linked,
+        schedule1: { line5_schedule_e: 8_351 },
+      }),
+    Error,
+    "Schedule 1 line 5",
+  );
+  assertThrows(
+    () =>
+      scheduleEPdf.projectFields?.({
+        schedule_es: [rental],
+        farm_rental_net: 100,
+        farm_rental_gross: 100,
+      }, linked),
+    Error,
+    "needs its Form 4835 source",
+  );
+  assertThrows(
+    () =>
+      scheduleEPdf.projectFields?.({
+        schedule_es: [{ ...rental, rent_income: 1_000, expense_taxes: 2_000 }],
+      }, linked),
+    Error,
+    "matching Form 8582",
+  );
+  assertThrows(
+    () =>
+      scheduleEPdf.projectFields?.({
+        schedule_es: [{ ...rental, disposed_of: true }],
+      }, linked),
+    Error,
+    "entire-interest overall-loss",
+  );
+});

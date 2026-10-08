@@ -1,6 +1,6 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
-import { sha256Hex } from "../../../2025/prepared-source.ts";
+import { sha256Hex } from "../../../2025/domains/execution/prepared-source.ts";
 import { reviewForm8997HoldingOnlySource } from "./holding_only_source.ts";
 
 async function reviewedPdf(

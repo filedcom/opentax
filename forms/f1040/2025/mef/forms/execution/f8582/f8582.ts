@@ -1,0 +1,1963 @@
+import { projectPassiveSCorpLossCopies } from "../../../../domains/business/passive-s-corp-loss-copies.ts";
+import { currentLossFilingProjection } from "../../../../domains/business/current-loss-filing-projection.ts";
+import { worksheetRatios } from "./f8582-ratios.ts";
+import {
+  currentPropertyPassiveAmounts,
+  reconcileCurrentPropertySource,
+} from "../../../../../nodes/inputs/schedule_e/current-property-source.ts";
+import { assertCurrentPropertyQbi } from "../../business/f8995/f8995-current-property.ts";
+import {
+  box11Line10SourceRows,
+  currentPassiveLine10Activities,
+} from "../../../../../nodes/inputs/k1_partnership/box11_line10.ts";
+import { assertCurrentK1Qbi } from "../../business/f8995/f8995-current-k1.ts";
+import { inputSchema as partnershipSchema } from "../../../../../nodes/inputs/k1_partnership/index.ts";
+import { inputSchema as sCorpSchema } from "../../../../../nodes/inputs/k1_s_corp/index.ts";
+import { passiveK1Activities } from "../../../../../nodes/inputs/k1_passive_source.ts";
+import {
+  agi_aggregator,
+  inputSchema as agiInputSchema,
+  remainingAllowedPassiveLoss,
+} from "../../../../../nodes/intermediate/aggregation/agi_aggregator/index.ts";
+import { element, elements } from "../../../../../mef/xml.ts";
+import {
+  allocateOtherPassivePrior4797,
+  allocatePassiveActivityLosses,
+  assertMfsLivedApartSource,
+  assertPriorYear8582Evidence,
+  inputSchema,
+  mfsLivedApartSourceSchema,
+  passiveLossLimit,
+  priorYear8582SourceSchema,
+} from "../../../../../nodes/intermediate/forms/form8582/index.ts";
+import {
+  computePropertyNet,
+  inputSchema as scheduleEInputSchema,
+  qualifiedEntireDispositionGain,
+  qualifiedFirstYearRetainedPropertySale,
+  qualifiedRetainedPropertySale,
+} from "../../../../../nodes/inputs/schedule_e/index.ts";
+import {
+  calculateForm4835AtRiskNet,
+  inputSchema as form4835InputSchema,
+} from "../../../../../nodes/inputs/f4835/index.ts";
+import {
+  passivePropertySaleSchema,
+  passiveSaleGain,
+} from "../../../../../nodes/intermediate/forms/form4797/index.ts";
+import { reconcileFiled2024Form8582Record } from "../../../../../nodes/intermediate/forms/form8582/prior_year_import.ts";
+import { inputSchema as w2InputSchema } from "../../../../../nodes/inputs/w2/index.ts";
+import { z } from "zod";
+import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+
+type Input = Record<string, unknown>;
+
+// Form 8582 separates active-participation rental activities from all other
+// passive activities, then allocates disallowed losses per activity. Never
+// infer the Part I split or the worksheets from aggregate totals alone.
+const ACTIVITY_AMOUNT_KEYS = [
+  "passive_schedule_c",
+  "passive_schedule_f",
+  "current_income",
+  "rental_current_income",
+  "current_loss",
+  "rental_current_loss",
+  "rental_prior_eligible_loss",
+  "prior_unallowed",
+] as const;
+
+function partIXRowsKey(
+  source?: z.infer<typeof priorYear8582SourceSchema>,
+): string {
+  return JSON.stringify(
+    (source?.filed_part_ix_rows ?? [])
+      .map((row) => [row.reporting_form, row.filed_unallowed_loss])
+      .sort(([left], [right]) => String(left).localeCompare(String(right))),
+  );
+}
+
+function partVIIIRowKey(
+  source?: z.infer<typeof priorYear8582SourceSchema>,
+): string {
+  const row = source?.filed_part_viii_row;
+  return row ? `${row.reporting_form}:${row.filed_unallowed_loss}` : "";
+}
+
+function linkedK1Activities(context: MefBuildContext) {
+  const pending = context.pending;
+  const passiveLoss = pending
+    ? projectPassiveSCorpLossCopies(pending)
+    : undefined;
+  const partnerships = pending?.k1_partnership === undefined
+    ? []
+    : partnershipSchema.parse(pending.k1_partnership).k1_partnerships;
+  const corporations = pending?.k1_s_corp === undefined
+    ? []
+    : sCorpSchema.parse(pending.k1_s_corp).k1_s_corps;
+  const general = pending?.general as Record<string, unknown> | undefined;
+  const digits = (value: unknown) =>
+    typeof value === "string" ? value.replace(/\D/g, "") : "";
+  const owners = [digits(general?.taxpayer_ssn)];
+  if (general?.filing_status === "mfj") owners.push(digits(general.spouse_ssn));
+  for (const item of [...partnerships, ...corporations]) {
+    if (
+      item.passive_income_source && !owners.includes(item.recipient_tin ?? "")
+    ) {
+      throw new Error("Form 8582 K-1 owner differs from actual return filer");
+    }
+  }
+  const ordinaryRows = box11Line10SourceRows(partnerships);
+  if (
+    ordinaryRows.some((row) =>
+      row.current_passive_source && !owners.includes(row.recipient_tin)
+    )
+  ) {
+    throw new Error(
+      "Form8582 ordinary K1 source owner differs from actual filer",
+    );
+  }
+  return [
+    ...currentPassiveLine10Activities(ordinaryRows),
+    ...passiveK1Activities(partnerships, "k1_partnership", true),
+    ...passiveK1Activities(corporations, "k1_s_corp", true),
+    ...(passiveLoss ? [passiveLoss.lossActivity] : []),
+  ];
+}
+
+/** Reconcile the same current pool before the AGI limit and at filing. K-1
+ * positive rows never become fictional Schedule E properties or farm income. */
+function assertK1PoolReturn(
+  input: ReturnType<typeof inputSchema.parse>,
+  context: MefBuildContext,
+) {
+  const activities = input.activities ?? [];
+  const propertySources = scheduleEInputSchema.parse(
+    context.pending?.schedule_e ?? {},
+  ).schedule_es.flatMap((item) => {
+    const source = reconcileCurrentPropertySource(item);
+    return source ? [source] : [];
+  });
+  if (!linkedK1Activities(context).length && !propertySources.length) return;
+  assertLinkedActivities(activities, context);
+  assertLinkedSales(input, context);
+  const agi = agiInputSchema.parse(context.pending?.agi_aggregator ?? {});
+  const sum = (value: number | readonly number[] | undefined) =>
+    Array.isArray(value)
+      ? value.reduce((total, row) => total + row, 0)
+      : (value ?? 0) as number;
+  const income = activities.reduce(
+    (total, row) => total + Math.max(0, row.current_net),
+    0,
+  );
+  const loss = activities.reduce(
+    (total, row) => total + Math.max(0, -row.current_net),
+    0,
+  );
+  const prior = activities.reduce(
+    (total, row) =>
+      total + row.prior_unallowed_operating + row.prior_unallowed_4797_part1 +
+      row.prior_unallowed_4797_part2,
+    0,
+  );
+  const rentalIncome = activities.filter((row) => row.activity_type === "A")
+    .reduce((total, row) => total + Math.max(0, row.current_net), 0);
+  const rentalLoss = activities.filter((row) => row.activity_type === "A")
+    .reduce(
+      (total, row) =>
+        total + Math.max(0, -row.current_net) +
+        (row.prior_active_participation === true
+          ? row.prior_unallowed_operating
+          : 0),
+      0,
+    );
+  const gains = (input.current_4797_sale_gains ?? []).reduce(
+    (total, row) => total + row.gain,
+    0,
+  );
+  if (
+    (agi.pal_current_income ?? 0) !== income ||
+    (agi.pal_current_loss ?? 0) !== loss ||
+    (agi.pal_prior_unallowed ?? 0) !== prior ||
+    (agi.pal_current_4797_gain ?? 0) !== gains ||
+    (agi.pal_rental_loss ?? 0) !== rentalLoss ||
+    (rentalLoss > 0 && (agi.pal_rental_income ?? 0) !== rentalIncome)
+  ) {
+    throw new Error(
+      "Form 8582 K-1 pool differs from independently joined AGI passive sources",
+    );
+  }
+  const sourceE = scheduleEInputSchema.parse(context.pending?.schedule_e ?? {});
+  const farms = context.pending?.f4835 === undefined
+    ? []
+    : form4835InputSchema.parse(context.pending.f4835).f4835s;
+  const partnerships = context.pending?.k1_partnership === undefined
+    ? []
+    : partnershipSchema.parse(context.pending.k1_partnership).k1_partnerships;
+  const corporations = context.pending?.k1_s_corp === undefined
+    ? []
+    : sCorpSchema.parse(context.pending.k1_s_corp).k1_s_corps;
+  if (
+    [...partnerships, ...corporations].some((row) =>
+      row.qualified_business_income_source
+    )
+  ) {
+    const qbi = context.pending?.form8995;
+    if (!qbi || typeof qbi !== "object" || Array.isArray(qbi)) {
+      throw new Error(
+        "Form 8582 ordinary K-1 income needs its actual required Form 8995",
+      );
+    }
+    assertCurrentK1Qbi(qbi as Record<string, unknown>, context.pending);
+  }
+  if (propertySources.length) {
+    const qbi = context.pending?.form8995;
+    if (!qbi || typeof qbi !== "object" || Array.isArray(qbi)) {
+      throw new Error("Current property source requires actual mandatory8995");
+    }
+    assertCurrentPropertyQbi(qbi as Record<string, unknown>, context.pending);
+  }
+  const gross = sourceE.schedule_es.reduce((total, row) => {
+    const net = computePropertyNet(row);
+    return total +
+      (row.current_property_source &&
+          currentPropertyPassiveAmounts(row.current_property_source)
+              .recharacterized > 0
+        ? net
+        : (row.activity_type === "A" || row.activity_type === "B")
+        ? Math.max(0, net)
+        : net);
+  }, 0) +
+    farms.reduce(
+      (total, row) =>
+        total + Math.max(0, calculateForm4835AtRiskNet(row).atRiskNet),
+      0,
+    ) +
+    partnerships.reduce(
+      (total, row) =>
+        total + (row.box1_ordinary_business ?? 0) + (row.box2_rental_re ?? 0) +
+        (row.box3_other_rental ?? 0) + (row.box4a_guaranteed_services ?? 0) +
+        (row.box4b_guaranteed_capital ?? 0),
+      0,
+    ) +
+    corporations.reduce(
+      (total, row) =>
+        total + (row.first_year_passive_loss_source
+          ? 0
+          : row.box1_ordinary_business ?? 0) +
+        (row.box2_rental_re ?? 0) +
+        (row.box3_other_rental ?? 0) + (row.box6_royalties ?? 0),
+      0,
+    ) +
+    (sourceE.rental_income ?? 0) + (sourceE.royalty_income ?? 0) +
+    (sourceE.estate_trust_rows ?? []).reduce(
+      (total, row) =>
+        total + (row.other_income ?? 0) + (row.passive_income ?? 0),
+      0,
+    );
+  if (sum(agi.line5_schedule_e) !== gross) {
+    throw new Error(
+      "Form 8582 K-1 gross Schedule E income differs from actual current owners/sources",
+    );
+  }
+  const finalAgi = context.pending?.agi_final as
+    | Record<string, number>
+    | undefined;
+  const finalized = finalAgi
+    ? agiInputSchema.parse({
+      ...agi,
+      pal_pending_active_4797: false,
+      pal_4797_preapplied_loss: (finalAgi.allowed_part_i ?? 0) +
+        (finalAgi.allowed_part_ii ?? 0),
+      pal_final_allowed_loss: finalAgi.allowed_total,
+    })
+    : agi;
+  const allowed = remainingAllowedPassiveLoss(finalized);
+  const schedule1 = context.pending?.schedule1 as
+    | Record<string, number>
+    | undefined;
+  if ((schedule1?.line5_schedule_e ?? 0) !== gross - allowed) {
+    throw new Error(
+      "Form 8582 K-1 allowed losses differ from finalized Schedule 1",
+    );
+  }
+  const expected =
+    agi_aggregator.compute({ taxYear: 2025, formType: "f1040" }, finalized)
+      .outputs.find((row) => row.nodeType === "f1040")!.fields;
+  const f1040 = context.pending?.f1040 as Record<string, unknown> | undefined;
+  for (
+    const key of ["line8_additional_income", "line10_adjustments", "line11_agi"]
+  ) {
+    if ((f1040?.[key] ?? 0) !== (expected[key] ?? 0)) {
+      throw new Error(
+        `Form 8582 K-1 passive allowance differs from finalized ${key}`,
+      );
+    }
+  }
+}
+
+function linkedActivities(context: MefBuildContext): Array<{
+  activity_id?: string;
+  name: string;
+  activity_type: "A" | "B";
+  property_type: number;
+  reporting_source:
+    | "schedule_e"
+    | "form4835"
+    | "k1_partnership"
+    | "k1_s_corp"
+    | "k1_4797_line10";
+  current_net: number;
+  prior_unallowed_operating: number;
+  prior_year_8582_source?: z.infer<typeof priorYear8582SourceSchema>;
+  first_year_activity_source?: {
+    activity_id: string;
+    activity_name: string;
+    activity_acquired_on: string;
+    acquisition_document_reference: string;
+    not_grouped_with_prior_activity: true;
+  };
+  prior_unallowed_4797_part1: number;
+  prior_unallowed_4797_part2: number;
+  prior_active_participation?: boolean;
+  reporting_form: string;
+}> {
+  const scheduleE = scheduleEInputSchema.parse(
+    context.pending?.schedule_e ?? {},
+  );
+  if (
+    scheduleE.schedule_es.some((item) =>
+      item.passive_property_sales?.some((sale) =>
+        sale.part === "I" && sale.entire_activity_interest_disposed === true
+      )
+    )
+  ) {
+    throw new Error(
+      "Form 8582 Part I entire gain needs executor-owned authentication of accepted prior-year activity and zero passive-loss balance",
+    );
+  }
+  if (
+    scheduleE.schedule_es.some((item) =>
+      (item.passive_property_sales?.some((sale) =>
+        sale.entire_activity_interest_disposed === false
+      ) ?? false) &&
+      (item.prior_unallowed_passive_operating ?? 0) === 0 &&
+      !qualifiedFirstYearRetainedPropertySale(item)
+    )
+  ) {
+    throw new Error(
+      "Form 8582 retained first-year sale needs matching activity acquisition, closing, and current loss sources",
+    );
+  }
+  if (
+    scheduleE.schedule_es.some((item) =>
+      ((item.prior_unallowed_passive_operating ?? 0) > 0 ||
+        (item.prior_unallowed_passive_4797_part1 ?? 0) > 0 ||
+        (item.prior_unallowed_passive_4797_part2 ?? 0) > 0) &&
+      (item.disposed_of === true ||
+        (item.passive_property_sales?.length ?? 0) > 0) &&
+      qualifiedEntireDispositionGain(item) === undefined &&
+      !qualifiedRetainedPropertySale(item)
+    )
+  ) {
+    throw new Error(
+      "Form 8582 prior PAL with current Schedule E property disposition needs section 469(g) review",
+    );
+  }
+  const properties = scheduleE.schedule_es.filter((item) =>
+    (item.activity_type === "A" || item.activity_type === "B") &&
+    ((item.current_property_source
+      ? currentPropertyPassiveAmounts(item.current_property_source)
+        .passiveOperating !== 0
+      : computePropertyNet(item) !== 0) ||
+      (item.prior_unallowed_passive_operating ?? 0) > 0 ||
+      (item.prior_unallowed_passive_4797_part1 ?? 0) > 0 ||
+      (item.prior_unallowed_passive_4797_part2 ?? 0) > 0)
+  ).map((item) => ({
+    activity_id: item.activity_id,
+    name: item.property_description,
+    activity_type: item.activity_type as "A" | "B",
+    property_type: item.property_type,
+    reporting_source: "schedule_e" as const,
+    current_net: item.current_property_source
+      ? currentPropertyPassiveAmounts(item.current_property_source)
+        .passiveOperating
+      : computePropertyNet(item),
+    prior_unallowed_operating: item.prior_unallowed_passive_operating ?? 0,
+    prior_year_8582_source: item.prior_year_8582_source,
+    first_year_activity_source: item.first_year_activity_source,
+    prior_unallowed_4797_part1: item.prior_unallowed_passive_4797_part1 ?? 0,
+    prior_unallowed_4797_part2: item.prior_unallowed_passive_4797_part2 ?? 0,
+    prior_active_participation: item.prior_passive_losses_active_when_incurred,
+    reporting_form: "Sch E, line 22",
+  }));
+  const source = context.pending?.f4835;
+  const farms = source === undefined
+    ? []
+    : form4835InputSchema.parse(source).f4835s
+      .map((item) => ({
+        item,
+        net: calculateForm4835AtRiskNet(item).atRiskNet,
+      }))
+      .filter(({ item, net }) =>
+        net !== 0 || (item.prior_unallowed_passive_operating ?? 0) > 0
+      )
+      .map(({ item, net }) => ({
+        activity_id: item.activity_id,
+        name: item.activity_name,
+        activity_type: item.actively_participated === true
+          ? "A" as const
+          : "B" as const,
+        property_type: 5,
+        reporting_source: "form4835" as const,
+        current_net: net,
+        prior_unallowed_operating: item.prior_unallowed_passive_operating ?? 0,
+        prior_year_8582_source: item.prior_year_8582_source,
+        prior_unallowed_4797_part1: 0,
+        prior_unallowed_4797_part2: 0,
+        prior_active_participation:
+          item.prior_passive_losses_active_when_incurred,
+        reporting_form: "4835, line 34c",
+      }));
+  const k1s = linkedK1Activities(context);
+  return [
+    ...properties,
+    ...farms,
+    ...k1s.map((row) => ({
+      ...row,
+      reporting_source: row.reporting_form,
+      reporting_form: row.reporting_form === "k1_4797_line10"
+        ? "4797, line 10"
+        : "Sch E, line 28",
+    })),
+  ];
+}
+
+function assertLinkedActivities(
+  activities: NonNullable<ReturnType<typeof inputSchema.parse>["activities"]>,
+  context: MefBuildContext | undefined,
+): void {
+  if (!context?.pending) {
+    throw new Error(
+      "Form 8582 active activities need linked Schedule E or Form 4835 source context",
+    );
+  }
+  const expected = linkedActivities(context);
+  const expectedIds = expected.map((item) => item.activity_id);
+  const actualIds = activities.map((item) => item.activity_id);
+  const actualById = new Map(
+    activities.map((item) => [item.activity_id, item]),
+  );
+  if (
+    expected.length !== activities.length ||
+    expectedIds.some((id) => !id) ||
+    new Set(expectedIds).size !== expected.length ||
+    new Set(actualIds).size !== activities.length ||
+    expected.some((item) => {
+      if (!item.activity_id) return true;
+      const actual = actualById.get(item.activity_id);
+      return !actual ||
+        item.name !== actual.name ||
+        item.activity_type !== actual.activity_type ||
+        item.property_type !== actual.property_type ||
+        (actual.reporting_form !== undefined &&
+          item.reporting_source !== actual.reporting_form) ||
+        item.current_net !== actual.current_net ||
+        item.prior_unallowed_operating !== actual.prior_unallowed_operating ||
+        item.prior_year_8582_source?.tax_year !==
+          actual.prior_year_8582_source?.tax_year ||
+        item.prior_year_8582_source?.activity_id !==
+          actual.prior_year_8582_source?.activity_id ||
+        item.prior_year_8582_source?.filed_part_vii_column_c !==
+          actual.prior_year_8582_source?.filed_part_vii_column_c ||
+        item.prior_year_8582_source?.source_document_reference !==
+          actual.prior_year_8582_source?.source_document_reference ||
+        item.first_year_activity_source?.activity_acquired_on !==
+          actual.first_year_activity_source?.activity_acquired_on ||
+        item.first_year_activity_source?.activity_id !==
+          actual.first_year_activity_source?.activity_id ||
+        item.first_year_activity_source?.activity_name !==
+          actual.first_year_activity_source?.activity_name ||
+        item.first_year_activity_source?.acquisition_document_reference !==
+          actual.first_year_activity_source?.acquisition_document_reference ||
+        item.first_year_activity_source?.not_grouped_with_prior_activity !==
+          actual.first_year_activity_source?.not_grouped_with_prior_activity ||
+        partIXRowsKey(item.prior_year_8582_source) !==
+          partIXRowsKey(actual.prior_year_8582_source) ||
+        partVIIIRowKey(item.prior_year_8582_source) !==
+          partVIIIRowKey(actual.prior_year_8582_source) ||
+        item.prior_unallowed_4797_part1 !== actual.prior_unallowed_4797_part1 ||
+        item.prior_unallowed_4797_part2 !== actual.prior_unallowed_4797_part2 ||
+        item.prior_active_participation !== actual.prior_active_participation;
+    })
+  ) {
+    throw new Error(
+      "Form 8582 activities do not match their Schedule E and Form 4835 sources",
+    );
+  }
+}
+
+function assertLinkedSales(
+  input: ReturnType<typeof inputSchema.parse>,
+  context: MefBuildContext | undefined,
+): void {
+  if (!context?.pending) return;
+  const form4797 = context.pending.form4797;
+  const sales = z.array(passivePropertySaleSchema).parse(
+    form4797 && typeof form4797 === "object" &&
+      "passive_property_sales" in form4797
+      ? form4797.passive_property_sales
+      : [],
+  );
+  const scheduleESales = scheduleEInputSchema.parse(
+    context.pending.schedule_e ?? {},
+  ).schedule_es.flatMap((property) => property.passive_property_sales ?? []);
+  const saleCounts = (rows: typeof sales): Map<string, number> => {
+    const counts = new Map<string, number>();
+    for (const row of rows) {
+      const key = JSON.stringify(row);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return counts;
+  };
+  const scheduleECounts = saleCounts(scheduleESales);
+  const form4797Counts = saleCounts(sales);
+  if (
+    scheduleESales.length !== sales.length ||
+    [...scheduleECounts].some(([key, count]) =>
+      form4797Counts.get(key) !== count
+    )
+  ) {
+    throw new Error(
+      "Form 8582 Schedule E and Form 4797 disposition facts do not match property-sale sources",
+    );
+  }
+  const actual = input.current_4797_sale_gains ?? [];
+  const key = (
+    activityId: string,
+    activityName: string,
+    part: "I" | "II",
+    gain: number,
+    retained: boolean | undefined,
+  ) => JSON.stringify([activityId, activityName, part, gain, retained ?? null]);
+  const remaining = new Map<string, number>();
+  const propertySources = scheduleEInputSchema.parse(
+    context.pending.schedule_e ?? {},
+  ).schedule_es.flatMap((item) =>
+    item.current_property_source ? [item.current_property_source] : []
+  );
+  let expectedCount = 0;
+  for (const sale of sales) {
+    const source = propertySources.find((s) =>
+        s.activity_id === sale.activity_id
+      ),
+      passiveGain = source
+        ? currentPropertyPassiveAmounts(source).passiveGain
+        : passiveSaleGain(sale);
+    if (passiveGain === 0) continue;
+    expectedCount++;
+    const id = key(
+      sale.activity_id,
+      sale.activity_name,
+      sale.part,
+      passiveGain,
+      sale.entire_activity_interest_disposed,
+    );
+    remaining.set(id, (remaining.get(id) ?? 0) + 1);
+  }
+  for (const sale of actual) {
+    const id = key(
+      sale.activity_id,
+      sale.activity_name,
+      sale.part,
+      sale.gain,
+      sale.entire_activity_interest_disposed,
+    );
+    const count = remaining.get(id) ?? 0;
+    if (count > 0) remaining.set(id, count - 1);
+    else remaining.set(id, -1);
+  }
+  if (
+    expectedCount !== actual.length ||
+    [...remaining.values()].some((count) => count !== 0)
+  ) {
+    throw new Error(
+      "Form 8582 current Form 4797 gains do not match property-sale sources",
+    );
+  }
+}
+
+function reportingForm(
+  context: MefBuildContext | undefined,
+  activityId: string,
+): string {
+  if (!context?.pending) {
+    throw new Error("Form 8582 reporting form needs source context");
+  }
+  const source = linkedActivities(context).find((activity) =>
+    activity.activity_id === activityId
+  );
+  if (!source) {
+    throw new Error("Form 8582 reporting form needs a linked activity ID");
+  }
+  return source.reporting_form;
+}
+
+function buildOtherPassive(
+  input: ReturnType<typeof inputSchema.parse>,
+  context: MefBuildContext | undefined,
+): string {
+  const activities = input.activities ?? [];
+  const operatingIncome = activities.reduce(
+    (sum, activity) => sum + Math.max(0, activity.current_net),
+    0,
+  );
+  const saleGains = input.current_4797_sale_gains ?? [];
+  const saleGainFor = (activityId: string) =>
+    saleGains.filter((sale) => sale.activity_id === activityId).reduce(
+      (sum, sale) => sum + sale.gain,
+      0,
+    );
+  const currentIncome = operatingIncome + saleGains.reduce(
+    (sum, sale) => sum + sale.gain,
+    0,
+  );
+  const currentLoss = activities.reduce(
+    (sum, activity) => sum + Math.max(0, -activity.current_net),
+    0,
+  );
+  const priorLoss = activities.reduce(
+    (sum, activity) =>
+      sum + activity.prior_unallowed_operating +
+      activity.prior_unallowed_4797_part1 +
+      activity.prior_unallowed_4797_part2,
+    0,
+  );
+  const hasPrior4797 = activities.some((activity) =>
+    activity.prior_unallowed_4797_part1 > 0 ||
+    activity.prior_unallowed_4797_part2 > 0
+  );
+  const totalLoss = currentLoss + priorLoss;
+  if (
+    activities.length === 0 ||
+    new Set(activities.map((activity) => activity.activity_id)).size !==
+      activities.length ||
+    activities.some((activity) =>
+      activity.activity_type !== "B" ||
+      activity.property_type === 6 ||
+      activity.name.length > 30 ||
+      !Number.isSafeInteger(activity.current_net) ||
+      !Number.isSafeInteger(activity.prior_unallowed_operating) ||
+      !Number.isSafeInteger(activity.prior_unallowed_4797_part1) ||
+      !Number.isSafeInteger(activity.prior_unallowed_4797_part2) ||
+      (activity.current_net === 0 &&
+        activity.prior_unallowed_operating === 0 &&
+        activity.prior_unallowed_4797_part1 === 0 &&
+        activity.prior_unallowed_4797_part2 === 0)
+    ) ||
+    !Number.isSafeInteger(currentIncome) ||
+    !Number.isSafeInteger(totalLoss) || totalLoss <= 0 ||
+    (input.current_income ?? 0) !== operatingIncome ||
+    (input.current_loss ?? 0) !== currentLoss ||
+    (input.prior_unallowed ?? 0) !== priorLoss ||
+    (input.rental_current_income ?? 0) !== 0 ||
+    (input.rental_current_loss ?? 0) !== 0 ||
+    (input.rental_prior_eligible_loss ?? 0) !== 0 ||
+    (input.passive_schedule_c ?? 0) !== 0 ||
+    (input.passive_schedule_f ?? 0) !== 0 ||
+    input.has_other_passive !== true ||
+    input.has_active_rental === true ||
+    input.active_participation === true
+  ) {
+    throw new Error(
+      "Form 8582 MeF requires per-activity allocation for this passive-loss pattern",
+    );
+  }
+  assertLinkedActivities(activities, context);
+  assertLinkedSales(input, context);
+  const prior4797Allocation = hasPrior4797
+    ? allocateOtherPassivePrior4797(input)
+    : undefined;
+  const limit = passiveLossLimit({
+    currentIncome,
+    currentLoss,
+    priorUnallowed: priorLoss,
+    rentalLoss: 0,
+    rentalIncome: 0,
+    activeParticipation: false,
+    filingStatus: input.filing_status,
+  });
+  // A filed Part IX source with no current passive activity income must carry
+  // each reporting character intact. Reconcile the zero-deduction result to
+  // the finalized return before printing the three-line Part IX workpaper.
+  if (
+    activities.length === 1 &&
+    activities[0].reporting_form === "schedule_e" &&
+    activities[0].current_net === 0 &&
+    activities[0].prior_year_8582_source?.filed_part_ix_rows?.length === 3 &&
+    activities[0].prior_unallowed_operating > 0 &&
+    activities[0].prior_unallowed_4797_part1 > 0 &&
+    activities[0].prior_unallowed_4797_part2 > 0 &&
+    currentIncome === 0 && currentLoss === 0 &&
+    saleGains.length === 0 && input.has_current_4797_transaction !== true
+  ) {
+    const pending = context?.pending;
+    const w2 = w2InputSchema.safeParse(pending?.w2);
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const wages = w2.success && w2.data.w2s.length === 1
+      ? w2.data.w2s[0].box1_wages
+      : undefined;
+    if (
+      wages === undefined || !f1040 ||
+      limit.allowed !== 0 || limit.suspended !== priorLoss ||
+      (schedule1?.line5_schedule_e ?? 0) !== 0 ||
+      (f1040.line8_additional_income ?? 0) !== 0 ||
+      f1040.line1z_total_wages !== wages ||
+      f1040.line9_total_income !== wages ||
+      (f1040.line10_adjustments ?? 0) !== 0 ||
+      f1040.line11_agi !== wages
+    ) {
+      throw new Error(
+        "Form 8582 Part IX zero-income carryover must reconcile its source, Schedule 1 and final Form 1040",
+      );
+    }
+  }
+  // A prior operating PAL used against the same rental's current profit must
+  // cancel that profit on Schedule E, while leaving the remainder suspended.
+  if (
+    activities.length === 1 &&
+    activities[0].reporting_form === "schedule_e" &&
+    activities[0].current_net > 0 &&
+    activities[0].prior_unallowed_operating > activities[0].current_net &&
+    activities[0].prior_unallowed_4797_part1 === 0 &&
+    activities[0].prior_unallowed_4797_part2 === 0 &&
+    saleGains.length === 0 && input.has_current_4797_transaction !== true
+  ) {
+    const pending = context?.pending;
+    const w2 = w2InputSchema.safeParse(pending?.w2);
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const wages = w2.success && w2.data.w2s.length === 1
+      ? w2.data.w2s[0].box1_wages
+      : undefined;
+    if (
+      !activities[0].prior_year_8582_source || !w2.success ||
+      wages === undefined || !f1040 || !schedule1 ||
+      limit.allowed !== activities[0].current_net ||
+      limit.suspended !==
+        activities[0].prior_unallowed_operating - activities[0].current_net ||
+      schedule1.line5_schedule_e !== 0 ||
+      (f1040.line8_additional_income ?? 0) !== 0 ||
+      f1040.line1z_total_wages !== wages ||
+      f1040.line9_total_income !== wages ||
+      (f1040.line10_adjustments ?? 0) !== 0 ||
+      f1040.line11_agi !== wages
+    ) {
+      throw new Error(
+        "Form 8582 prior rental loss and current profit must reconcile the filed-year source, Schedule E, Schedule 1 and final Form 1040",
+      );
+    }
+  }
+  // The sole first-year rental retains its activity after a short-held Part II
+  // property sale. Its ordinary gain uses only the current rental loss; the
+  // remaining loss stays suspended under the same durable activity ID.
+  if (
+    activities.length === 1 &&
+    activities[0].reporting_form === "schedule_e" &&
+    activities[0].current_net < 0 &&
+    activities[0].prior_unallowed_operating === 0 &&
+    activities[0].prior_unallowed_4797_part1 === 0 &&
+    activities[0].prior_unallowed_4797_part2 === 0 &&
+    saleGains.length === 1 && saleGains[0].part === "II" &&
+    saleGains[0].entire_activity_interest_disposed === false &&
+    saleGains[0].gain > 0 &&
+    saleGains[0].gain < -activities[0].current_net
+  ) {
+    const pending = context?.pending;
+    const scheduleE = scheduleEInputSchema.safeParse(pending?.schedule_e);
+    const property = scheduleE.success &&
+        scheduleE.data.schedule_es.length === 1
+      ? scheduleE.data.schedule_es[0]
+      : undefined;
+    const w2 = w2InputSchema.safeParse(pending?.w2);
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const gain = saleGains[0].gain;
+    const wages = w2.success && w2.data.w2s.length === 1
+      ? w2.data.w2s[0].box1_wages
+      : undefined;
+    if (
+      !property || !qualifiedFirstYearRetainedPropertySale(property) ||
+      !w2.success || wages === undefined || !schedule1 || !f1040 ||
+      pending?.f4835 !== undefined ||
+      pending?.k1_partnership !== undefined ||
+      pending?.k1_s_corp !== undefined || pending?.k1_trust !== undefined ||
+      limit.allowed !== gain ||
+      limit.suspended !== -activities[0].current_net - gain ||
+      schedule1.line4_other_gains !== gain ||
+      schedule1.line5_schedule_e !== -gain ||
+      (schedule1.line10_total_additional_income ?? 0) !== 0 ||
+      (f1040.line7_capital_gain ?? 0) !== 0 ||
+      (f1040.line8_additional_income ?? 0) !== 0 ||
+      f1040.line1z_total_wages !== wages ||
+      f1040.line9_total_income !== wages ||
+      (f1040.line10_adjustments ?? 0) !== 0 ||
+      f1040.line11_agi !== wages
+    ) {
+      throw new Error(
+        "Form 8582 retained Part II sale must reconcile its first-year rental, Schedule 1 and final Form 1040",
+      );
+    }
+  }
+  // One current Form 4835 loss offset by one unrelated Schedule E passive
+  // rental profit must reach the finalized return exactly once. This narrow
+  // no-prior, no-sale route has no special rental allowance.
+  const farmLoss = activities.find((activity) =>
+    activity.reporting_form === "form4835" && activity.current_net < 0
+  );
+  const rentalProfit = activities.find((activity) =>
+    activity.reporting_form === "schedule_e" && activity.current_net > 0
+  );
+  if (
+    activities.length === 2 && farmLoss && rentalProfit &&
+    activities.every((activity) =>
+      activity.prior_unallowed_operating === 0 &&
+      activity.prior_unallowed_4797_part1 === 0 &&
+      activity.prior_unallowed_4797_part2 === 0
+    ) && saleGains.length === 0 &&
+    input.has_current_4797_transaction !== true
+  ) {
+    const pending = context?.pending;
+    const w2 = pending?.w2 === undefined
+      ? undefined
+      : w2InputSchema.safeParse(pending.w2);
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const net = Math.max(0, rentalProfit.current_net + farmLoss.current_net);
+    const wages = w2?.success
+      ? w2.data.w2s.reduce((sum, row) => sum + row.box1_wages, 0)
+      : 0;
+    if (
+      (w2 !== undefined && !w2.success) || !f1040 || !schedule1 ||
+      limit.allowed !==
+        Math.min(-farmLoss.current_net, rentalProfit.current_net) ||
+      schedule1.line5_schedule_e !== net ||
+      (f1040.line8_additional_income ?? 0) !== net ||
+      (f1040.line1z_total_wages ?? 0) !== wages ||
+      f1040.line11_agi !== wages + net
+    ) {
+      throw new Error(
+        "Form 8582 farm-loss/rental-profit offset must reconcile Form 4835, Schedule E, Schedule 1 and final Form 1040",
+      );
+    }
+  }
+  // A current Form 4835 passive profit may release the same amount of an
+  // unrelated Schedule E rental's current loss. Keep the remainder under the
+  // rental activity ID and reconcile the net zero Schedule 1/1040 result.
+  const farmProfit = activities.find((activity) =>
+    activity.reporting_form === "form4835" && activity.current_net > 0
+  );
+  const rentalLoss = activities.find((activity) =>
+    activity.reporting_form === "schedule_e" && activity.current_net < 0
+  );
+  if (
+    activities.length === 2 && farmProfit && rentalLoss &&
+    farmProfit.current_net < -rentalLoss.current_net &&
+    activities.every((activity) =>
+      activity.activity_type === "B" &&
+      activity.prior_unallowed_operating === 0 &&
+      activity.prior_unallowed_4797_part1 === 0 &&
+      activity.prior_unallowed_4797_part2 === 0
+    ) && saleGains.length === 0 &&
+    input.has_current_4797_transaction !== true
+  ) {
+    const pending = context?.pending;
+    const farmSource = form4835InputSchema.safeParse(pending?.f4835);
+    const rentalSource = scheduleEInputSchema.safeParse(pending?.schedule_e);
+    const w2 = w2InputSchema.safeParse(pending?.w2);
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const wages = w2.success && w2.data.w2s.length === 1
+      ? w2.data.w2s[0].box1_wages
+      : undefined;
+    if (
+      !farmSource.success || farmSource.data.f4835s.length !== 1 ||
+      farmSource.data.f4835s[0].some_investment_not_at_risk !== false ||
+      !rentalSource.success || rentalSource.data.schedule_es.length !== 1 ||
+      rentalSource.data.schedule_es[0].some_investment_not_at_risk !== false ||
+      pending?.k1_partnership !== undefined ||
+      pending?.k1_s_corp !== undefined || pending?.k1_trust !== undefined ||
+      wages === undefined || !Number.isSafeInteger(wages) ||
+      !f1040 || !schedule1 ||
+      limit.allowed !== farmProfit.current_net ||
+      limit.suspended !== -rentalLoss.current_net - farmProfit.current_net ||
+      schedule1.line5_schedule_e !== 0 ||
+      (f1040.line8_additional_income ?? 0) !== 0 ||
+      f1040.line1z_total_wages !== wages ||
+      f1040.line9_total_income !== wages ||
+      (f1040.line10_adjustments ?? 0) !== 0 ||
+      f1040.line11_agi !== wages
+    ) {
+      throw new Error(
+        "Form 8582 farm-profit/rental-loss offset must reconcile both source activities, Schedule 1 and final Form 1040",
+      );
+    }
+  }
+  // The same farm profit can be shared between two unrelated Schedule E
+  // losses. Part VII allocates the suspended balance by each rental's loss.
+  const twoRentalLosses = activities.filter((activity) =>
+    activity.reporting_form === "schedule_e" && activity.current_net < 0
+  );
+  const twoRentalLossTotal = twoRentalLosses.reduce(
+    (sum, activity) => sum - activity.current_net,
+    0,
+  );
+  if (
+    activities.length === 3 && farmProfit &&
+    twoRentalLosses.length === 2 &&
+    farmProfit.current_net < twoRentalLossTotal &&
+    activities.every((activity) =>
+      activity.activity_type === "B" &&
+      activity.prior_unallowed_operating === 0 &&
+      activity.prior_unallowed_4797_part1 === 0 &&
+      activity.prior_unallowed_4797_part2 === 0
+    ) && saleGains.length === 0 &&
+    input.has_current_4797_transaction !== true
+  ) {
+    const pending = context?.pending;
+    const farmSource = form4835InputSchema.safeParse(pending?.f4835);
+    const rentalSource = scheduleEInputSchema.safeParse(pending?.schedule_e);
+    const w2 = w2InputSchema.safeParse(pending?.w2);
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const wages = w2.success && w2.data.w2s.length === 1
+      ? w2.data.w2s[0].box1_wages
+      : undefined;
+    if (
+      !farmSource.success || farmSource.data.f4835s.length !== 1 ||
+      farmSource.data.f4835s[0].some_investment_not_at_risk !== false ||
+      !rentalSource.success || rentalSource.data.schedule_es.length !== 2 ||
+      rentalSource.data.schedule_es.some((item) =>
+        item.some_investment_not_at_risk !== false
+      ) ||
+      pending?.k1_partnership !== undefined ||
+      pending?.k1_s_corp !== undefined || pending?.k1_trust !== undefined ||
+      wages === undefined || !Number.isSafeInteger(wages) ||
+      !f1040 || !schedule1 ||
+      limit.allowed !== farmProfit.current_net ||
+      limit.suspended !== twoRentalLossTotal - farmProfit.current_net ||
+      schedule1.line5_schedule_e !== 0 ||
+      (f1040.line8_additional_income ?? 0) !== 0 ||
+      f1040.line1z_total_wages !== wages ||
+      f1040.line9_total_income !== wages ||
+      (f1040.line10_adjustments ?? 0) !== 0 ||
+      f1040.line11_agi !== wages
+    ) {
+      throw new Error(
+        "Form 8582 farm-profit/two-rental allocation must reconcile both loss sources, Schedule 1 and final Form 1040",
+      );
+    }
+  }
+  // Two separate share-rent farms can use one other-passive rental's current
+  // profit. Reconcile the combined limit here; Part VII and each Form 4835
+  // retain their own activity-ID allocation below.
+  const farmLosses = activities.filter((activity) =>
+    activity.reporting_form === "form4835" && activity.current_net < 0
+  );
+  const farmSource = form4835InputSchema.safeParse(context?.pending?.f4835);
+  const rentalSource = scheduleEInputSchema.safeParse(
+    context?.pending?.schedule_e,
+  );
+  if (
+    activities.length === 3 && farmLosses.length === 2 && rentalProfit &&
+    rentalProfit.current_net < -farmLosses.reduce(
+        (sum, activity) => sum + activity.current_net,
+        0,
+      ) &&
+    farmSource.success && farmSource.data.f4835s.length === 2 &&
+    rentalSource.success && rentalSource.data.schedule_es.length === 1 &&
+    activities.every((activity) =>
+      activity.prior_unallowed_operating === 0 &&
+      activity.prior_unallowed_4797_part1 === 0 &&
+      activity.prior_unallowed_4797_part2 === 0
+    ) && saleGains.length === 0 &&
+    input.has_current_4797_transaction !== true &&
+    context?.pending?.k1_partnership === undefined &&
+    context?.pending?.k1_s_corp === undefined &&
+    context?.pending?.k1_trust === undefined
+  ) {
+    const pending = context?.pending;
+    if (!pending) {
+      throw new Error("Form 8582 two-farm passive offset needs source context");
+    }
+    const w2 = pending.w2 === undefined
+      ? undefined
+      : w2InputSchema.safeParse(pending.w2);
+    const f1040 = pending.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending.schedule1 as Record<string, unknown> | undefined;
+    const wages = w2?.success
+      ? w2.data.w2s.reduce((sum, row) => sum + row.box1_wages, 0)
+      : 0;
+    if (
+      (w2 !== undefined && !w2.success) || !f1040 || !schedule1 ||
+      limit.allowed !== rentalProfit.current_net ||
+      limit.suspended !==
+        -farmLosses.reduce((sum, activity) => sum + activity.current_net, 0) -
+          rentalProfit.current_net ||
+      schedule1.line5_schedule_e !== 0 ||
+      (f1040.line8_additional_income ?? 0) !== 0 ||
+      (f1040.line1z_total_wages ?? 0) !== wages ||
+      f1040.line11_agi !== wages
+    ) {
+      throw new Error(
+        "Form 8582 two-farm passive offset must reconcile Form 4835, Schedule E, Schedule 1 and final Form 1040",
+      );
+    }
+  }
+  // Three distinct passive rentals may share current profit across one or two
+  // loss activities. The remaining losses stay suspended by activity ID.
+  const scheduleELoss = activities.filter((activity) =>
+    activity.reporting_form === "schedule_e" && activity.current_net < 0
+  );
+  const scheduleEProfits = activities.filter((activity) =>
+    activity.reporting_form === "schedule_e" && activity.current_net > 0
+  );
+  const threeRentalSource = scheduleEInputSchema.safeParse(
+    context?.pending?.schedule_e,
+  );
+  if (
+    activities.length === 3 && scheduleELoss.length >= 1 &&
+    scheduleEProfits.length >= 1 &&
+    threeRentalSource.success &&
+    threeRentalSource.data.schedule_es.length === 3 &&
+    context?.pending?.f4835 === undefined &&
+    context?.pending?.k1_partnership === undefined &&
+    context?.pending?.k1_s_corp === undefined &&
+    context?.pending?.k1_trust === undefined &&
+    activities.every((activity) =>
+      activity.reporting_form === "schedule_e" &&
+      activity.prior_unallowed_operating === 0 &&
+      activity.prior_unallowed_4797_part1 === 0 &&
+      activity.prior_unallowed_4797_part2 === 0
+    ) &&
+    scheduleEProfits.reduce(
+        (total, activity) => total + activity.current_net,
+        0,
+      ) < scheduleELoss.reduce(
+        (total, activity) => total - activity.current_net,
+        0,
+      ) &&
+    saleGains.length === 0 &&
+    input.has_current_4797_transaction !== true
+  ) {
+    const pending = context?.pending;
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const profits = scheduleEProfits.reduce(
+      (total, activity) => total + activity.current_net,
+      0,
+    );
+    if (
+      !f1040 || !schedule1 ||
+      limit.allowed !== profits ||
+      schedule1.line5_schedule_e !== 0 ||
+      (f1040.line8_additional_income ?? 0) !==
+        (schedule1.line10_total_additional_income ?? 0) ||
+      typeof f1040.line9_total_income !== "number" ||
+      (f1040.line10_adjustments !== undefined &&
+        typeof f1040.line10_adjustments !== "number") ||
+      typeof f1040.line11_agi !== "number" ||
+      f1040.line11_agi !==
+        f1040.line9_total_income -
+          (typeof f1040.line10_adjustments === "number"
+            ? f1040.line10_adjustments
+            : 0)
+    ) {
+      throw new Error(
+        "Form 8582 three-rental passive offset must reconcile Schedule E, Schedule 1 and final Form 1040",
+      );
+    }
+  }
+  // One at-risk share-rent farm loss may use the current profit of two
+  // separately identified other-passive rentals. Their combined allowed
+  // amount must cancel on the final return while the farm retains its PAL.
+  if (
+    activities.length === 3 && farmLosses.length === 1 &&
+    scheduleEProfits.length === 2 &&
+    farmLosses[0].current_net < -scheduleEProfits.reduce(
+        (sum, activity) => sum + activity.current_net,
+        0,
+      ) &&
+    farmSource.success && farmSource.data.f4835s.length === 1 &&
+    farmSource.data.f4835s[0].some_investment_not_at_risk === false &&
+    rentalSource.success && rentalSource.data.schedule_es.length === 2 &&
+    activities.every((activity) =>
+      activity.prior_unallowed_operating === 0 &&
+      activity.prior_unallowed_4797_part1 === 0 &&
+      activity.prior_unallowed_4797_part2 === 0
+    ) && saleGains.length === 0 &&
+    input.has_current_4797_transaction !== true &&
+    context?.pending?.k1_partnership === undefined &&
+    context?.pending?.k1_s_corp === undefined &&
+    context?.pending?.k1_trust === undefined
+  ) {
+    const pending = context?.pending;
+    const w2 = w2InputSchema.safeParse(pending?.w2);
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    const schedule1 = pending?.schedule1 as Record<string, unknown> | undefined;
+    const wages = w2.success && w2.data.w2s.length === 1
+      ? w2.data.w2s[0].box1_wages
+      : undefined;
+    const profits = scheduleEProfits.reduce(
+      (sum, activity) => sum + activity.current_net,
+      0,
+    );
+    if (
+      wages === undefined || !f1040 || !schedule1 ||
+      limit.allowed !== profits ||
+      limit.suspended !== -farmLosses[0].current_net - profits ||
+      schedule1.line5_schedule_e !== 0 ||
+      (f1040.line8_additional_income ?? 0) !== 0 ||
+      f1040.line1z_total_wages !== wages ||
+      f1040.line9_total_income !== wages ||
+      (f1040.line10_adjustments ?? 0) !== 0 ||
+      f1040.line11_agi !== wages
+    ) {
+      throw new Error(
+        "Form 8582 one-farm/two-rental offset must reconcile Form 4835, Schedule E, Schedule 1 and final Form 1040",
+      );
+    }
+  }
+  const losses = activities.map((activity) =>
+    Math.max(0, -activity.current_net) + activity.prior_unallowed_operating +
+    activity.prior_unallowed_4797_part1 +
+    activity.prior_unallowed_4797_part2
+  );
+  const allocation = allocatePassiveActivityLosses(
+    activities.map((activity) => ({
+      currentNet: activity.current_net + saleGainFor(activity.activity_id),
+      currentIncome: Math.max(0, activity.current_net) +
+        saleGainFor(activity.activity_id),
+      currentLoss: Math.max(0, -activity.current_net),
+      priorUnallowed: activity.prior_unallowed_operating +
+        activity.prior_unallowed_4797_part1 +
+        activity.prior_unallowed_4797_part2,
+      specialEligible: false,
+      priorSpecialEligible: false,
+    })),
+    limit.allowed,
+  );
+  const lossRows = activities.flatMap((activity, index) =>
+    allocation.overallLosses[index] > 0 && limit.suspended > 0
+      ? [{ activity, index }]
+      : []
+  );
+  const ratios = worksheetRatios(
+    lossRows.map(({ index }) => allocation.overallLosses[index]),
+  );
+  const activityReportingForm = (index: number): string | undefined => {
+    const lines = prior4797Allocation?.byActivity[index]?.partIX ?? [];
+    if (lines.length > 1) return undefined;
+    return lines[0]?.reportingForm ??
+      reportingForm(context, activities[index].activity_id);
+  };
+  const partIXActivities = lossRows.filter(({ index }) =>
+    (prior4797Allocation?.byActivity[index]?.partIX.length ?? 0) > 1
+  );
+  const partVIIIActivities = lossRows.filter(({ index }) =>
+    (prior4797Allocation?.byActivity[index]?.partIX.length ?? 0) <= 1
+  );
+  const overallNet = currentIncome - totalLoss;
+  return elements("IRS8582", [
+    currentIncome > 0 ? element("OtherActivityIncomeAmt", currentIncome) : "",
+    currentLoss > 0 ? element("OtherActivityLossAmt", currentLoss) : "",
+    priorLoss > 0 ? element("PriorYearUnallowedOtherLossAmt", priorLoss) : "",
+    element("NetOtherActivityAmt", overallNet),
+    element("TotalPassiveActivityAmt", overallNet),
+    overallNet < 0 ? element("TotalIncomeAmt", currentIncome) : "",
+    overallNet < 0 ? element("TotalLossesAllowedAmt", limit.allowed) : "",
+    elements("ParentWrkshtPassiveGrp", [
+      ...activities.map((activity) =>
+        elements("WrkshtPassiveGrp", [
+          element("NonParticipateActivityNm", activity.name),
+          Math.max(0, activity.current_net) +
+                saleGainFor(activity.activity_id) > 0
+            ? element(
+              "CurrentYearNetIncomeAmt",
+              Math.max(0, activity.current_net) +
+                saleGainFor(activity.activity_id),
+            )
+            : "",
+          activity.current_net < 0
+            ? element("CurrentYearNetLossAmt", -activity.current_net)
+            : "",
+          activity.prior_unallowed_operating +
+                activity.prior_unallowed_4797_part1 +
+                activity.prior_unallowed_4797_part2 >
+              0
+            ? element(
+              "PriorYearUnallowedLossesAmt",
+              activity.prior_unallowed_operating +
+                activity.prior_unallowed_4797_part1 +
+                activity.prior_unallowed_4797_part2,
+            )
+            : "",
+          activity.current_net + saleGainFor(activity.activity_id) >
+              activity.prior_unallowed_operating +
+                activity.prior_unallowed_4797_part1 +
+                activity.prior_unallowed_4797_part2
+            ? element(
+              "OverallGainAmt",
+              activity.current_net + saleGainFor(activity.activity_id) -
+                activity.prior_unallowed_operating -
+                activity.prior_unallowed_4797_part1 -
+                activity.prior_unallowed_4797_part2,
+            )
+            : "",
+          activity.current_net + saleGainFor(activity.activity_id) <
+              activity.prior_unallowed_operating +
+                activity.prior_unallowed_4797_part1 +
+                activity.prior_unallowed_4797_part2
+            ? element(
+              "OverallLossAmt",
+              activity.prior_unallowed_operating +
+                activity.prior_unallowed_4797_part1 +
+                activity.prior_unallowed_4797_part2 - activity.current_net -
+                saleGainFor(activity.activity_id),
+            )
+            : "",
+        ])
+      ),
+      currentIncome > 0
+        ? element("TotalOtherCurrentYearIncomeAmt", currentIncome)
+        : "",
+      currentLoss > 0
+        ? element("TotalOtherCurrentYearLossAmt", currentLoss)
+        : "",
+      priorLoss > 0 ? element("TotalOtherPYUnallowedAmt", priorLoss) : "",
+    ]),
+    limit.suspended > 0
+      ? elements("ParentWrkshtLossGrp", [
+        ...lossRows.map(({ activity, index }, position) =>
+          elements("WrkshtLossGrp", [
+            element("UnallowedLossActivityNm", activity.name),
+            element("ReportingFormOrScheduleNm", activityReportingForm(index)),
+            element("F8582WrkshtLossesAmt", allocation.overallLosses[index]),
+            element("LossesPct", ratios[position]),
+            element("PriorYearUnallowedLossesAmt", allocation.suspended[index]),
+          ])
+        ),
+        element(
+          "TotalAllocationLossAmt",
+          allocation.overallLosses.reduce((sum, amount) => sum + amount, 0),
+        ),
+        element("TotalLossAmt", limit.suspended),
+      ])
+      : "",
+    partVIIIActivities.length > 0
+      ? elements("ParentWrkshtListActivityGrp", [
+        ...partVIIIActivities.map(({ activity, index }) =>
+          elements("WrkshtListActivityGrp", [
+            element("AllowedLossActivityNm", activity.name),
+            element("ReportingFormOrScheduleNm", activityReportingForm(index)),
+            element("F8582WrkshtLossesAmt", losses[index]),
+            element("PriorYearUnallowedLossesAmt", allocation.suspended[index]),
+            element("F8582WrkshtAllowedLossesAmt", allocation.allowed[index]),
+          ])
+        ),
+        element(
+          "TotalLossAmt",
+          partVIIIActivities.reduce((sum, row) => sum + losses[row.index], 0),
+        ),
+        element(
+          "TotalUnallowedLossAmt",
+          partVIIIActivities.reduce(
+            (sum, row) => sum + allocation.suspended[row.index],
+            0,
+          ),
+        ),
+        element(
+          "TotalAllowedLossAmt",
+          partVIIIActivities.reduce(
+            (sum, row) => sum + allocation.allowed[row.index],
+            0,
+          ),
+        ),
+      ])
+      : "",
+    ...partIXActivities.map(({ activity, index }) => {
+      const ledger = prior4797Allocation!.byActivity[index];
+      const positiveRows = ledger.partIX.filter((line) => line.netLoss > 0);
+      const positiveRatios = worksheetRatios(
+        positiveRows.map((line) => line.netLoss),
+      );
+      let ratioIndex = 0;
+      return elements("ParentWrkshtLossActivityGrp", [
+        element("MultipleLossActivityNm", activity.name),
+        ...ledger.partIX.map((line) =>
+          elements("WrkshtLossActivityGrp", [
+            element("ReportingFormOrScheduleNm", line.reportingForm),
+            element("NetLossAmt", line.lossIncludingPrior),
+            line.currentSamePartGain > 0
+              ? element("NetIncomeAmt", line.currentSamePartGain)
+              : "",
+            element("NetIncomeLossAmt", line.netLoss),
+            line.netLoss > 0
+              ? element("LossesPct", positiveRatios[ratioIndex++])
+              : "",
+            element("PriorYearUnallowedLossesAmt", line.suspended),
+            element("F8582WrkshtLossesAmt", line.allowed),
+          ])
+        ),
+        element(
+          "TotalNetIncomeLossAmt",
+          ledger.partIX.reduce((sum, line) => sum + line.netLoss, 0),
+        ),
+        element("TotalUnallowedAmt", ledger.suspended),
+        element(
+          "TotalAllowedAmt",
+          ledger.partIX.reduce((sum, line) => sum + line.allowed, 0),
+        ),
+      ]);
+    }),
+  ]);
+}
+
+export const form8582: MefFormDescriptor<"form8582", Input> = {
+  pendingKey: "form8582",
+  FIELD_MAP: [],
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8582.pdf",
+  build(fields, context) {
+    if (fields.current_loss_forms !== undefined) {
+      return currentLossFilingProjection({
+        ...context?.pending,
+        form8582: fields,
+      }).worksheet.xml;
+    }
+
+    const hasActivity =
+      (Array.isArray(fields.activities) && fields.activities.length > 0) ||
+      (Array.isArray(fields.current_4797_sale_gains) &&
+        fields.current_4797_sale_gains.length > 0) ||
+      fields.has_current_4797_transaction === true ||
+      fields.has_active_rental === true || fields.has_other_passive === true ||
+      ACTIVITY_AMOUNT_KEYS.some((key) =>
+        fields[key] !== undefined && fields[key] !== null && fields[key] !== 0
+      );
+    if (!hasActivity) return "";
+
+    const input = inputSchema.parse(fields);
+    const hasPassiveLoss = (input.current_loss ?? 0) > 0 ||
+      (input.prior_unallowed ?? 0) > 0 ||
+      (input.rental_current_loss ?? 0) > 0 ||
+      (input.rental_prior_eligible_loss ?? 0) > 0 ||
+      (input.passive_schedule_c ?? 0) > 0 ||
+      (input.passive_schedule_f ?? 0) > 0 ||
+      (input.activities ?? []).some((activity) =>
+        activity.current_net < 0 ||
+        activity.prior_unallowed_operating > 0 ||
+        activity.prior_unallowed_4797_part1 > 0 ||
+        activity.prior_unallowed_4797_part2 > 0
+      );
+    if (!hasPassiveLoss) return "";
+
+    if (!context?.pending) {
+      throw new Error(
+        "Form 8582 active filing needs linked Schedule E or Form 4835 source context",
+      );
+    }
+
+    assertPriorYear8582Evidence(input);
+    const filed2024 = scheduleEInputSchema.parse(
+      context.pending.schedule_e ?? {},
+    ).filed_2024_form8582_record;
+    if (filed2024) {
+      reconcileFiled2024Form8582Record(filed2024, input);
+    }
+    const activities = input.activities ?? [];
+    assertK1PoolReturn(input, context);
+    if (
+      activities.length > 0 &&
+      activities.every((activity) => activity.activity_type === "B")
+    ) {
+      return buildOtherPassive(input, context);
+    }
+    const saleGains = input.current_4797_sale_gains ?? [];
+    const saleGainFor = (activityId: string) =>
+      saleGains
+        .filter((sale) => sale.activity_id === activityId)
+        .reduce((sum, sale) => sum + sale.gain, 0);
+    const operatingIncome = activities.reduce(
+      (sum, activity) => sum + Math.max(0, activity.current_net),
+      0,
+    );
+    const currentIncome = operatingIncome +
+      saleGains.reduce((sum, sale) => sum + sale.gain, 0);
+    const currentLoss = activities.reduce(
+      (sum, activity) => sum + Math.max(0, -activity.current_net),
+      0,
+    );
+    const priorLoss = activities.reduce(
+      (sum, activity) =>
+        sum + activity.prior_unallowed_operating +
+        activity.prior_unallowed_4797_part1 +
+        activity.prior_unallowed_4797_part2,
+      0,
+    );
+    const loss = currentLoss + priorLoss;
+    const rentalActivities = activities.filter((activity) =>
+      activity.activity_type === "A" &&
+      (activity.current_net !== 0 ||
+        (activity.prior_unallowed_operating > 0 ||
+            activity.prior_unallowed_4797_part1 > 0 ||
+            activity.prior_unallowed_4797_part2 > 0) &&
+          activity.prior_active_participation === true)
+    );
+    const otherActivities = [
+      ...activities.filter((activity) => activity.activity_type === "B"),
+      ...activities.filter((activity) =>
+        activity.activity_type === "A" &&
+        (activity.prior_unallowed_operating > 0 ||
+          activity.prior_unallowed_4797_part1 > 0 ||
+          activity.prior_unallowed_4797_part2 > 0) &&
+        activity.prior_active_participation === false
+      ).map((activity) => ({
+        ...activity,
+        current_net: 0,
+      })),
+    ];
+    const rentalOperatingIncome = rentalActivities.reduce(
+      (sum, activity) => sum + Math.max(0, activity.current_net),
+      0,
+    );
+    const rentalIncome = rentalOperatingIncome + rentalActivities.reduce(
+      (sum, activity) => sum + saleGainFor(activity.activity_id),
+      0,
+    );
+    const rentalCurrentLoss = rentalActivities.reduce(
+      (sum, activity) => sum + Math.max(0, -activity.current_net),
+      0,
+    );
+    const rentalPriorLoss = rentalActivities.reduce(
+      (sum, activity) =>
+        sum +
+        (activity.prior_active_participation === true
+          ? activity.prior_unallowed_operating +
+            activity.prior_unallowed_4797_part1 +
+            activity.prior_unallowed_4797_part2
+          : 0),
+      0,
+    );
+    const otherIncome = currentIncome - rentalIncome;
+    const otherCurrentLoss = currentLoss - rentalCurrentLoss;
+    const otherPriorLoss = priorLoss - rentalPriorLoss;
+    const rentalNet = rentalIncome - rentalCurrentLoss - rentalPriorLoss;
+    const otherNet = otherIncome - otherCurrentLoss - otherPriorLoss;
+    const magi = input.modified_agi;
+    if (
+      activities.length === 0 ||
+      new Set(activities.map((activity) => activity.activity_id)).size !==
+        activities.length ||
+      activities.some((activity) =>
+        (activity.activity_type !== "A" && activity.activity_type !== "B") ||
+        activity.property_type === 6 ||
+        activity.name.length > 30 ||
+        !Number.isSafeInteger(activity.current_net) ||
+        (activity.current_net === 0 &&
+          activity.prior_unallowed_operating === 0) ||
+        (activity.activity_type === "A" &&
+          (activity.prior_unallowed_operating > 0 ||
+            activity.prior_unallowed_4797_part1 > 0 ||
+            activity.prior_unallowed_4797_part2 > 0) &&
+          activity.prior_active_participation === undefined) ||
+        (activity.prior_unallowed_4797_part1 > 0 ||
+            activity.prior_unallowed_4797_part2 > 0) &&
+          (activities.length !== 1 ||
+            activity.activity_type !== "A" ||
+            activity.prior_active_participation !== true ||
+            saleGains.length === 0)
+      ) ||
+      !Number.isSafeInteger(loss) || loss <= 0 ||
+      !Number.isSafeInteger(currentIncome) ||
+      (input.current_loss ?? 0) !== currentLoss ||
+      (input.rental_current_loss ?? 0) !== rentalCurrentLoss ||
+      (input.current_income ?? 0) !== operatingIncome ||
+      (input.rental_current_income ?? 0) !== rentalOperatingIncome ||
+      (input.prior_unallowed ?? 0) !== priorLoss ||
+      (input.rental_prior_eligible_loss ?? 0) !== rentalPriorLoss ||
+      (input.passive_schedule_c ?? 0) !== 0 ||
+      (input.passive_schedule_f ?? 0) !== 0 ||
+      (input.has_other_passive === true) !== (otherActivities.length > 0) ||
+      input.has_active_rental !== true ||
+      input.active_participation !== true ||
+      (input.filing_status === "mfs" &&
+        input.mfs_lived_apart_all_year !== true) ||
+      magi === undefined || !Number.isInteger(magi)
+    ) {
+      throw new Error(
+        "Form 8582 MeF requires per-activity allocation for this passive-loss pattern",
+      );
+    }
+
+    assertLinkedActivities(activities, context);
+    assertLinkedSales(input, context);
+    if (input.filing_status === "mfs") {
+      if (!context?.pending?.general) {
+        throw new Error(
+          "Form 8582 MFS allowance needs general lived-apart source",
+        );
+      }
+      const general = z.object({
+        filing_status: z.literal("mfs"),
+        mfs_spouse_lived_with_taxpayer: z.literal(false),
+        mfs_lived_apart_source: mfsLivedApartSourceSchema,
+      }).parse(context.pending.general);
+      assertMfsLivedApartSource(input.mfs_lived_apart_source);
+      if (
+        JSON.stringify(general.mfs_lived_apart_source) !==
+          JSON.stringify(input.mfs_lived_apart_source)
+      ) {
+        throw new Error(
+          "Form 8582 MFS residence source differs from the filed general input",
+        );
+      }
+    }
+    const prior4797Allocation =
+      activities.some((activity) =>
+          activity.prior_unallowed_4797_part1 > 0 ||
+          activity.prior_unallowed_4797_part2 > 0
+        )
+        ? allocateOtherPassivePrior4797(input)
+        : undefined;
+    const limit = passiveLossLimit({
+      currentIncome,
+      currentLoss,
+      priorUnallowed: priorLoss,
+      rentalLoss: rentalCurrentLoss + rentalPriorLoss,
+      rentalIncome,
+      activeParticipation: true,
+      modifiedAgi: magi,
+      filingStatus: input.filing_status,
+      mfsLivedApartAllYear: input.mfs_lived_apart_all_year,
+    });
+    // At or above the single-filer phaseout ceiling, a first-year active
+    // rental's retained Part II gain may release only an equal current loss.
+    // The remaining rental loss stays suspended under its activity ID.
+    if (
+      activities.length === 1 && activities[0].activity_type === "A" &&
+      activities[0].reporting_form === "schedule_e" &&
+      activities[0].current_net < 0 &&
+      activities[0].prior_unallowed_operating === 0 &&
+      activities[0].prior_unallowed_4797_part1 === 0 &&
+      activities[0].prior_unallowed_4797_part2 === 0 &&
+      saleGains.length === 1 && saleGains[0].part === "II" &&
+      saleGains[0].entire_activity_interest_disposed === false &&
+      saleGains[0].gain > 0 &&
+      saleGains[0].gain < -activities[0].current_net
+    ) {
+      const pending = context?.pending;
+      const scheduleE = scheduleEInputSchema.safeParse(pending?.schedule_e);
+      const property = scheduleE.success &&
+          scheduleE.data.schedule_es.length === 1
+        ? scheduleE.data.schedule_es[0]
+        : undefined;
+      const w2 = w2InputSchema.safeParse(pending?.w2);
+      const schedule1 = pending?.schedule1 as
+        | Record<string, unknown>
+        | undefined;
+      const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+      const gain = saleGains[0].gain;
+      const wages = w2.success && w2.data.w2s.length === 1
+        ? w2.data.w2s[0].box1_wages
+        : undefined;
+      if (
+        input.filing_status !== "single" || magi < 150_000 ||
+        !property || property.activity_type !== "A" ||
+        !qualifiedFirstYearRetainedPropertySale(property) ||
+        !w2.success || wages === undefined || !schedule1 || !f1040 ||
+        pending?.f4835 !== undefined ||
+        pending?.k1_partnership !== undefined ||
+        pending?.k1_s_corp !== undefined || pending?.k1_trust !== undefined ||
+        limit.allowed !== gain ||
+        limit.suspended !== -activities[0].current_net - gain ||
+        schedule1.line4_other_gains !== gain ||
+        schedule1.line5_schedule_e !== -gain ||
+        (schedule1.line10_total_additional_income ?? 0) !== 0 ||
+        (f1040.line7_capital_gain ?? 0) !== 0 ||
+        (f1040.line8_additional_income ?? 0) !== 0 ||
+        f1040.line1z_total_wages !== wages ||
+        f1040.line9_total_income !== wages ||
+        (f1040.line10_adjustments ?? 0) !== 0 ||
+        f1040.line11_agi !== wages
+      ) {
+        throw new Error(
+          "Form 8582 active retained Part II sale must reconcile its first-year rental, phaseout, Schedule 1 and final Form 1040",
+        );
+      }
+    }
+    const losses = activities.map((activity) =>
+      Math.max(0, -activity.current_net) + activity.prior_unallowed_operating +
+      activity.prior_unallowed_4797_part1 +
+      activity.prior_unallowed_4797_part2
+    );
+    const allocation = allocatePassiveActivityLosses(
+      activities.map((activity) => ({
+        currentNet: activity.current_net + saleGainFor(activity.activity_id),
+        currentIncome: Math.max(0, activity.current_net) +
+          saleGainFor(activity.activity_id),
+        currentLoss: Math.max(0, -activity.current_net),
+        priorUnallowed: activity.prior_unallowed_operating +
+          activity.prior_unallowed_4797_part1 +
+          activity.prior_unallowed_4797_part2,
+        specialEligible: activity.activity_type === "A",
+        priorSpecialEligible: activity.prior_active_participation === true,
+      })),
+      limit.allowed,
+    );
+    const {
+      allowed: allowedByActivity,
+      suspended: suspendedByActivity,
+      overallLosses,
+      specialEligibleLosses,
+      specialByActivity,
+      postSpecialLosses,
+    } = allocation;
+
+    const overallNet = currentIncome - loss;
+    const mfsApart = input.filing_status === "mfs";
+    const upper = mfsApart ? 75_000 : 150_000;
+    const maximum = mfsApart ? 12_500 : 25_000;
+    const difference = Math.max(0, upper - magi);
+    const phasedMaximum = Math.round(Math.min(maximum, difference * 0.5));
+    const specialAllowance = overallNet < 0
+      ? Math.max(0, limit.allowed - currentIncome)
+      : 0;
+    if (
+      !Number.isInteger(phasedMaximum) || !Number.isInteger(specialAllowance)
+    ) {
+      throw new Error(
+        "Form 8582 special allowance must reconcile to whole dollars",
+      );
+    }
+    if (
+      specialByActivity.reduce((sum, amount) => sum + amount, 0) !==
+        specialAllowance
+    ) {
+      throw new Error(
+        "Form 8582 special allowance does not reconcile by activity",
+      );
+    }
+    const allowanceRows = activities.flatMap((activity, index) =>
+      activity.activity_type === "A" && specialEligibleLosses[index] > 0
+        ? [{ activity, index }]
+        : []
+    );
+    const allowanceRatios = worksheetRatios(
+      allowanceRows.map(({ index }) => specialEligibleLosses[index]),
+    );
+    const suspendedRows = activities.flatMap((activity, index) =>
+      postSpecialLosses[index] > 0 && limit.suspended > 0
+        ? [{ activity, index }]
+        : []
+    );
+    const activityReportingForm = (index: number): string | undefined => {
+      const lines = prior4797Allocation?.byActivity[index]?.partIX ?? [];
+      if (lines.length > 1) return undefined;
+      return lines[0]?.reportingForm ??
+        reportingForm(context, activities[index].activity_id);
+    };
+    const partIXRows = suspendedRows.filter(({ index }) =>
+      (prior4797Allocation?.byActivity[index]?.partIX.length ?? 0) > 1
+    );
+    const partVIIIRows = suspendedRows.filter(({ index }) =>
+      (prior4797Allocation?.byActivity[index]?.partIX.length ?? 0) <= 1
+    );
+    const suspendedRatios = worksheetRatios(
+      suspendedRows.map(({ index }) => postSpecialLosses[index]),
+    );
+    return elements("IRS8582", [
+      rentalIncome > 0 ? element("RentalRealtyIncomeAmt", rentalIncome) : "",
+      rentalCurrentLoss > 0
+        ? element("RentalRealtyLossAmt", rentalCurrentLoss)
+        : "",
+      rentalPriorLoss > 0
+        ? element("PYUnallowedRentalLossAmt", rentalPriorLoss)
+        : "",
+      element("NetRentalRealtyAmt", rentalNet),
+      otherIncome > 0 ? element("OtherActivityIncomeAmt", otherIncome) : "",
+      otherCurrentLoss > 0
+        ? element("OtherActivityLossAmt", otherCurrentLoss)
+        : "",
+      otherPriorLoss > 0
+        ? element("PriorYearUnallowedOtherLossAmt", otherPriorLoss)
+        : "",
+      otherActivities.length > 0
+        ? element("NetOtherActivityAmt", otherNet)
+        : "",
+      element("TotalPassiveActivityAmt", overallNet),
+      overallNet < 0 && rentalNet < 0
+        ? element("RentalRealtyLossLimitAmt", Math.min(-rentalNet, -overallNet))
+        : "",
+      overallNet < 0 && rentalNet < 0
+        ? element("MaximumAllowedIncomeAmt", upper)
+        : "",
+      overallNet < 0 && rentalNet < 0 ? element("ModifiedAGIAmt", magi) : "",
+      overallNet < 0 && rentalNet < 0
+        ? element("ModifiedAGIDifferenceAmt", difference)
+        : "",
+      overallNet < 0 && rentalNet < 0
+        ? element("PercentNetSpecialAllowanceAmt", phasedMaximum)
+        : "",
+      overallNet < 0 && rentalNet < 0
+        ? element("AllowedRentalRealtyLossAmt", specialAllowance)
+        : "",
+      overallNet < 0 ? element("TotalIncomeAmt", currentIncome) : "",
+      overallNet < 0 ? element("TotalLossesAllowedAmt", limit.allowed) : "",
+      elements("ParentWrkshtRentalActGrp", [
+        ...rentalActivities.map((activity) =>
+          elements("WrkshtRentalActGrp", [
+            element("PassiveActivityNm", activity.name),
+            Math.max(0, activity.current_net) +
+                  saleGainFor(activity.activity_id) > 0
+              ? element(
+                "CurrentYearNetIncomeAmt",
+                Math.max(0, activity.current_net) +
+                  saleGainFor(activity.activity_id),
+              )
+              : "",
+            activity.current_net < 0
+              ? element("CurrentYearNetLossAmt", -activity.current_net)
+              : "",
+            activity.prior_unallowed_operating +
+                    activity.prior_unallowed_4797_part1 +
+                    activity.prior_unallowed_4797_part2 > 0 &&
+              activity.prior_active_participation === true
+              ? element(
+                "PriorYearRentalUnallowedAmt",
+                activity.prior_unallowed_operating +
+                  activity.prior_unallowed_4797_part1 +
+                  activity.prior_unallowed_4797_part2,
+              )
+              : "",
+            activity.current_net + saleGainFor(activity.activity_id) >
+                (activity.prior_active_participation === true
+                  ? activity.prior_unallowed_operating +
+                    activity.prior_unallowed_4797_part1 +
+                    activity.prior_unallowed_4797_part2
+                  : 0)
+              ? element(
+                "OverallGainAmt",
+                activity.current_net + saleGainFor(activity.activity_id) -
+                  (activity.prior_active_participation === true
+                    ? activity.prior_unallowed_operating +
+                      activity.prior_unallowed_4797_part1 +
+                      activity.prior_unallowed_4797_part2
+                    : 0),
+              )
+              : "",
+            activity.current_net + saleGainFor(activity.activity_id) <
+                (activity.prior_active_participation === true
+                  ? activity.prior_unallowed_operating +
+                    activity.prior_unallowed_4797_part1 +
+                    activity.prior_unallowed_4797_part2
+                  : 0)
+              ? element(
+                "OverallLossAmt",
+                (activity.prior_active_participation === true
+                  ? activity.prior_unallowed_operating +
+                    activity.prior_unallowed_4797_part1 +
+                    activity.prior_unallowed_4797_part2
+                  : 0) -
+                  activity.current_net - saleGainFor(activity.activity_id),
+              )
+              : "",
+          ])
+        ),
+        rentalIncome > 0
+          ? element("TotalCurrentYearNetIncomeAmt", rentalIncome)
+          : "",
+        rentalCurrentLoss > 0
+          ? element("TotalCurrentYearNetLossAmt", rentalCurrentLoss)
+          : "",
+        rentalPriorLoss > 0
+          ? element("TotalPriorYrRentalUnallowedAmt", rentalPriorLoss)
+          : "",
+      ]),
+      otherActivities.length > 0
+        ? elements("ParentWrkshtPassiveGrp", [
+          ...otherActivities.map((activity) =>
+            elements("WrkshtPassiveGrp", [
+              element("NonParticipateActivityNm", activity.name),
+              activity.current_net > 0
+                ? element("CurrentYearNetIncomeAmt", activity.current_net)
+                : "",
+              activity.current_net < 0
+                ? element("CurrentYearNetLossAmt", -activity.current_net)
+                : "",
+              activity.prior_unallowed_operating > 0
+                ? element(
+                  "PriorYearUnallowedLossesAmt",
+                  activity.prior_unallowed_operating,
+                )
+                : "",
+              activity.current_net > activity.prior_unallowed_operating
+                ? element(
+                  "OverallGainAmt",
+                  activity.current_net - activity.prior_unallowed_operating,
+                )
+                : "",
+              activity.current_net < activity.prior_unallowed_operating
+                ? element(
+                  "OverallLossAmt",
+                  activity.prior_unallowed_operating - activity.current_net,
+                )
+                : "",
+            ])
+          ),
+          otherIncome > 0
+            ? element("TotalOtherCurrentYearIncomeAmt", otherIncome)
+            : "",
+          otherCurrentLoss > 0
+            ? element("TotalOtherCurrentYearLossAmt", otherCurrentLoss)
+            : "",
+          otherPriorLoss > 0
+            ? element("TotalOtherPYUnallowedAmt", otherPriorLoss)
+            : "",
+        ])
+        : "",
+      specialAllowance > 0
+        ? elements("ParentWrkshtAllowanceGrp", [
+          ...allowanceRows.map(({ activity, index }, position) =>
+            elements("WrkshtAllowanceGrp", [
+              element("SpecialAllowanceActivityNm", activity.name),
+              element(
+                "ReportingFormOrScheduleNm",
+                activityReportingForm(index),
+              ),
+              element("F8582WrkshtLossesAmt", specialEligibleLosses[index]),
+              element("LossesPct", allowanceRatios[position]),
+              element("SpecialAllowanceAmt", specialByActivity[index]),
+              element(
+                "NetSpecialAllowanceAmt",
+                specialEligibleLosses[index] - specialByActivity[index],
+              ),
+            ])
+          ),
+          element(
+            "TotalLossAmt",
+            allowanceRows.reduce(
+              (sum, row) => sum + specialEligibleLosses[row.index],
+              0,
+            ),
+          ),
+          element("TotalSpecialAllowanceAmt", specialAllowance),
+          element(
+            "TotalNetSpecialAllowanceAmt",
+            allowanceRows.reduce(
+              (sum, row) =>
+                sum + specialEligibleLosses[row.index] -
+                specialByActivity[row.index],
+              0,
+            ),
+          ),
+        ])
+        : "",
+      limit.suspended > 0
+        ? elements("ParentWrkshtLossGrp", [
+          ...suspendedRows.map(({ activity, index }, position) =>
+            elements("WrkshtLossGrp", [
+              element("UnallowedLossActivityNm", activity.name),
+              element(
+                "ReportingFormOrScheduleNm",
+                activityReportingForm(index),
+              ),
+              element("F8582WrkshtLossesAmt", postSpecialLosses[index]),
+              element("LossesPct", suspendedRatios[position]),
+              element(
+                "PriorYearUnallowedLossesAmt",
+                suspendedByActivity[index],
+              ),
+            ])
+          ),
+          element(
+            "TotalAllocationLossAmt",
+            postSpecialLosses.reduce((sum, amount) => sum + amount, 0),
+          ),
+          element("TotalLossAmt", limit.suspended),
+        ])
+        : "",
+      partVIIIRows.length > 0
+        ? elements("ParentWrkshtListActivityGrp", [
+          ...partVIIIRows.map(({ activity, index }) =>
+            elements("WrkshtListActivityGrp", [
+              element("AllowedLossActivityNm", activity.name),
+              element(
+                "ReportingFormOrScheduleNm",
+                activityReportingForm(index),
+              ),
+              element("F8582WrkshtLossesAmt", losses[index]),
+              element(
+                "PriorYearUnallowedLossesAmt",
+                suspendedByActivity[index],
+              ),
+              element("F8582WrkshtAllowedLossesAmt", allowedByActivity[index]),
+            ])
+          ),
+          element(
+            "TotalLossAmt",
+            partVIIIRows.reduce((sum, row) => sum + losses[row.index], 0),
+          ),
+          element(
+            "TotalUnallowedLossAmt",
+            partVIIIRows.reduce(
+              (sum, row) => sum + suspendedByActivity[row.index],
+              0,
+            ),
+          ),
+          element(
+            "TotalAllowedLossAmt",
+            partVIIIRows.reduce(
+              (sum, row) => sum + allowedByActivity[row.index],
+              0,
+            ),
+          ),
+        ])
+        : "",
+      ...partIXRows.map(({ activity, index }) => {
+        const ledger = prior4797Allocation!.byActivity[index];
+        const positiveRows = ledger.partIX.filter((line) => line.netLoss > 0);
+        const positiveRatios = worksheetRatios(
+          positiveRows.map((line) => line.netLoss),
+        );
+        let ratioIndex = 0;
+        return elements("ParentWrkshtLossActivityGrp", [
+          element("MultipleLossActivityNm", activity.name),
+          ...ledger.partIX.map((line) =>
+            elements("WrkshtLossActivityGrp", [
+              element("ReportingFormOrScheduleNm", line.reportingForm),
+              element("NetLossAmt", line.lossIncludingPrior),
+              line.currentSamePartGain > 0
+                ? element("NetIncomeAmt", line.currentSamePartGain)
+                : "",
+              element("NetIncomeLossAmt", line.netLoss),
+              line.netLoss > 0
+                ? element("LossesPct", positiveRatios[ratioIndex++])
+                : "",
+              element("PriorYearUnallowedLossesAmt", line.suspended),
+              element("F8582WrkshtLossesAmt", line.allowed),
+            ])
+          ),
+          element(
+            "TotalNetIncomeLossAmt",
+            ledger.partIX.reduce((sum, line) => sum + line.netLoss, 0),
+          ),
+          element("TotalUnallowedAmt", ledger.suspended),
+          element(
+            "TotalAllowedAmt",
+            ledger.partIX.reduce((sum, line) => sum + line.allowed, 0),
+          ),
+        ]);
+      }),
+    ]);
+  },
+};

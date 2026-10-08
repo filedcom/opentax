@@ -1,8 +1,8 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8815, type Form8815Input, inputSchema } from "./index.ts";
 import { FilingStatus } from "../../../types.ts";
-import { form8815 as mef8815 } from "../../../../2025/mef/forms/f8815.ts";
-import { form8815Pdf } from "../../../../2025/pdf/forms/f8815.ts";
+import { form8815 as mef8815 } from "../../../../2025/mef/forms/execution/f8815.ts";
+import { form8815Pdf } from "../../../../2025/pdf/forms/execution/f8815.ts";
 import { FilingStatus as MefFilingStatus } from "../../../../mef/header.ts";
 
 const source: Form8815Input = {

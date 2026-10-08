@@ -1,8 +1,8 @@
 import { join } from "@std/path";
 import { z } from "zod";
 import { f1040_2025 } from "../../forms/f1040/2025/index.ts";
-import { normalizeAllPending } from "../../forms/f1040/2025/pending.ts";
-import { form8582 as native8582 } from "../../forms/f1040/2025/mef/forms/f8582.ts";
+import { normalizeAllPending } from "../../forms/f1040/2025/domains/execution/pending.ts";
+import { form8582 as native8582 } from "../../forms/f1040/2025/mef/forms/execution/f8582/f8582.ts";
 import {
   buildForm8582Ledger,
   form8582LedgerSchema,

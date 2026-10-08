@@ -1,6 +1,6 @@
 # TY2025 Form 2106 source and calculation
 
-The [2025 Form 2106](https://www.irs.gov/pub/irs-prior/f2106--2025.pdf) is per employee/job. The public `f2106s` array now contains strict per-job records; the old category-only shape is rejected rather than supported through a shim. Each record has employee name/SSN/occupation, employer and source reference, a typed qualification branch, one vehicle method, Part I expenses, and separate meal/nonmeal reimbursements. See the [filing gap](../../../../../../docs/mef/ty2025-form2106-gap.md) before using any amount for a return.
+The [2025 Form 2106](https://www.irs.gov/pub/irs-prior/f2106--2025.pdf) is per employee/job. The public `f2106s` array now contains strict per-job records; the old category-only shape is rejected rather than supported through a shim. Each record has employee name/SSN/occupation, employer and source reference, a typed qualification branch, one vehicle method, Part I expenses, and separate meal/nonmeal reimbursements. See the [filing gap](../../../../../../docs/mef/ty2025/domains/deductions/form2106/ty2025-form2106-gap.md) before using any amount for a return.
 
 | Source | Current treatment |
 | --- | --- |

@@ -1,13 +1,13 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
-import { buildForm8854PartI } from "../../../2025/mef/forms/f8854_part_i.ts";
+import { buildForm8854PartI } from "../../../2025/mef/forms/international/f8854/f8854_part_i.ts";
 import {
   buildForm8854BalanceSheet,
   buildForm8854BalanceSheetStatements,
-} from "../../../2025/mef/forms/f8854_balance_sheet.ts";
+} from "../../../2025/mef/forms/international/f8854/f8854_balance_sheet.ts";
 import {
   buildForm8854ChangeStatement,
   buildForm8854PartIISectionA,
-} from "../../../2025/mef/forms/f8854_part_ii_a.ts";
+} from "../../../2025/mef/forms/international/f8854/f8854_part_ii_a.ts";
 import {
   averageAnnualNetIncomeTax,
   AVG_ANNUAL_TAX_THRESHOLD_2025,
@@ -30,17 +30,17 @@ import {
 import {
   buildForm8854SectionC,
   buildForm8854SectionCStatements,
-} from "../../../2025/mef/forms/f8854_section_c.ts";
+} from "../../../2025/mef/forms/international/f8854/f8854_section_c.ts";
 import {
   buildForm8854DeferredPropertyStatement,
   buildForm8854SectionD,
-} from "../../../2025/mef/forms/f8854_section_d.ts";
+} from "../../../2025/mef/forms/international/f8854/f8854_section_d.ts";
 import { calculateSectionDDeferral } from "./section-d.ts";
 import {
   buildForm8854InitialBundle,
   buildForm8854NativeStatementContents,
   linkForm8854NativeStatementIds,
-} from "../../../2025/mef/forms/f8854_initial.ts";
+} from "../../../2025/mef/forms/international/f8854/f8854_initial.ts";
 import { reconcileForm8854Form8949Properties } from "./reconcile-capital.ts";
 
 function asset(

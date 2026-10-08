@@ -1,8 +1,8 @@
-import { ptcJointIncomeReviewSchema } from "../../../2025/form8962-joint-income.ts";
+import { ptcJointIncomeReviewSchema } from "../../../2025/domains/health/form8962/form8962-joint-income.ts";
 import {
   assertForm8962SpouseIncomeReview,
   ptcSpouseIncomeReviewSchema,
-} from "../../../2025/form8962-family-eligibility.ts";
+} from "../../../2025/domains/health/form8962/form8962-family-eligibility.ts";
 import type { FilerCreditEligibility } from "./filer-eligibility.ts";
 import {
   filerCreditEligibility,
@@ -75,17 +75,17 @@ import {
   eicBirthResidencyReviewSchema,
   reviewedEicBirthResidence,
   scheduleEicLine6Months,
-} from "../../../2025/eic-birth-residency.ts";
+} from "../../../2025/domains/credits/earned-income/eic-birth-residency.ts";
 
 import {
   eicDatedResidencyReviewSchema,
   reviewedEicDatedResidence,
-} from "../../../2025/eic-dated-residency.ts";
+} from "../../../2025/domains/credits/earned-income/eic-dated-residency.ts";
 
 import {
   eicDeathResidencyReviewSchema,
   reviewedEicDeathResidence,
-} from "../../../2025/eic-death-residency.ts";
+} from "../../../2025/domains/credits/earned-income/eic-death-residency.ts";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 

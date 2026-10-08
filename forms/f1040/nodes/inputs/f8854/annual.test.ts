@@ -3,7 +3,7 @@ import {
   buildForm8854Annual,
   buildForm8854AnnualNativeStatements,
   buildForm8854PartIII,
-} from "../../../2025/mef/forms/f8854_annual.ts";
+} from "../../../2025/mef/forms/international/f8854/f8854_annual.ts";
 import { annualInputSchema } from "./annual.ts";
 import { f8854Annual } from "./annual_node.ts";
 import { reconcileAnnualForm8854Form8949Properties } from "./reconcile-annual-capital.ts";

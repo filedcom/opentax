@@ -8,12 +8,12 @@ import {
   sharedPolicyAllocationSchema,
 } from "../../intermediate/forms/form8962/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
-import { roundForm8962Amounts } from "../../../2025/form8962-money.ts";
+import { roundForm8962Amounts } from "../../../2025/domains/health/form8962/form8962-money.ts";
 
 import {
   assertForm8962PolicyEligibility,
   coverageEligibilityReviewSchema,
-} from "../../../2025/form8962-family-eligibility.ts";
+} from "../../../2025/domains/health/form8962/form8962-family-eligibility.ts";
 
 // Form 1095-A — Health Insurance Marketplace Statement
 // IRS Form 1095-A, Parts I–III

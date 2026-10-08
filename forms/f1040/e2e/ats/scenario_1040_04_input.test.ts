@@ -3,10 +3,10 @@ import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import { registry } from "../../2025/registry.ts";
-import { w2 as nativeW2 } from "../../2025/mef/forms/w2.ts";
-import { irs1040Pdf } from "../../2025/pdf/forms/f1040.ts";
+import { w2 as nativeW2 } from "../../2025/mef/forms/income/w2.ts";
+import { irs1040Pdf } from "../../2025/pdf/forms/identity/f1040.ts";
 import { fillFormPdf } from "../../2025/pdf/builder.ts";
-import { testFiler } from "../../2025/mef/test-filer.ts";
+import { testFiler } from "../../2025/mef/execution/test-filer.ts";
 import {
   scenario104004Input,
   SCENARIO_1040_04_RECONCILIATION,

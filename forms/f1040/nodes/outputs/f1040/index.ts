@@ -11,7 +11,7 @@ import {
   type Form2210FBoxBInput,
   form2210FBoxBInputSchema,
   type Form2210FBoxBLines,
-} from "../../../2025/form2210f_box_b.ts";
+} from "../../../2025/domains/payments/form2210f/form2210f_box_b.ts";
 import {
   calculateForm3800Nonpassive,
   deriveForm3800NonpassiveInput,

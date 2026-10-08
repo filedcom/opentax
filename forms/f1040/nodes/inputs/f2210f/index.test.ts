@@ -2,10 +2,10 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f2210f } from "./index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { FilingStatus } from "../../types.ts";
-import { form2210FBoxBInputSchema } from "../../../2025/form2210f_box_b.ts";
-import { calculateForm2210FBoxB } from "../../../2025/form2210f_box_b.ts";
-import { form2210f } from "../../../2025/mef/forms/f2210f_box_b.ts";
-import { form2210fPdf } from "../../../2025/pdf/forms/f2210f.ts";
+import { form2210FBoxBInputSchema } from "../../../2025/domains/payments/form2210f/form2210f_box_b.ts";
+import { calculateForm2210FBoxB } from "../../../2025/domains/payments/form2210f/form2210f_box_b.ts";
+import { form2210f } from "../../../2025/mef/forms/payments/f2210f_box_b.ts";
+import { form2210fPdf } from "../../../2025/pdf/forms/payments/f2210f.ts";
 
 function source() {
   return form2210FBoxBInputSchema.parse({

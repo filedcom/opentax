@@ -1,12 +1,12 @@
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import { join } from "@std/path";
-import { passivePropertyInputs } from "../../forms/f1040/2025/eic_passive_property.fixture.ts";
+import { passivePropertyInputs } from "../../forms/f1040/2025/domains/credits/earned-income/eic_passive_property.fixture.ts";
 import { reconcileForm8582NextYearOpening } from "../../forms/f1040/nodes/intermediate/forms/form8582/next_year_import.ts";
 import { f1040_2025 } from "../../forms/f1040/2025/index.ts";
-import { normalizeAllPending } from "../../forms/f1040/2025/pending.ts";
+import { normalizeAllPending } from "../../forms/f1040/2025/domains/execution/pending.ts";
 import { buildForm8582Ledger } from "../../forms/f1040/nodes/intermediate/forms/form8582/ledger.ts";
 import { assertThrows } from "@std/assert";
-import { buildPending } from "../../forms/f1040/2025/mef/pending.ts";
+import { buildPending } from "../../forms/f1040/2025/mef/execution/pending.ts";
 import { buildMefBundle } from "../../forms/f1040/2025/mef/builder.ts";
 import {
   buildPdfBytes,

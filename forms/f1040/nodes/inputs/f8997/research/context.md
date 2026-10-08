@@ -32,4 +32,4 @@ PDF projections exist for review, while the duplicate `form8997` intermediate
 input rejects every investment. Do not route inclusion directly to Schedule D,
 use adjustment code Q for these QOF rows, treat every inclusion as long-term,
 or classify it as Form 2439 undistributed capital gain. See
-`docs/mef/ty2025-form8997-gap.md` for the exact remaining activation blockers.
+`docs/mef/ty2025/domains/investments/form8997/ty2025-form8997-gap.md` for the exact remaining activation blockers.

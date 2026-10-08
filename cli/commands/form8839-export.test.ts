@@ -2,7 +2,7 @@ import { assertRejects, assertStringIncludes } from "@std/assert";
 import { ensureDir } from "@std/fs";
 import { join } from "@std/path";
 import { PDFDocument, StandardFonts } from "pdf-lib";
-import { sha256Hex } from "../../forms/f1040/2025/prepared-source.ts";
+import { sha256Hex } from "../../forms/f1040/2025/domains/execution/prepared-source.ts";
 import { appendInput } from "../store/store.ts";
 import { createReturnCommand } from "./return.ts";
 import { exportMefCommand, exportPdfCommand } from "./export.ts";

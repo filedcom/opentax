@@ -1,6 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { SCENARIO_1040_12_FACTS } from "../../../e2e/ats/ty2025_cases.ts";
-import { form7217NonliquidatingDecrease } from "../../../2025/form7217_732c_decrease.fixture.ts";
+import { form7217NonliquidatingDecrease } from "../../../2025/domains/business/form7217/form7217_732c_decrease.fixture.ts";
 import {
   computeForm7217Amounts,
   f7217,

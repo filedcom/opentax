@@ -1,6 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { nol_carryforward, NolType } from "./index.ts";
-import { assertAttachmentCoverage } from "../../../2025/attachment-coverage.ts";
+import { assertAttachmentCoverage } from "../../../2025/domains/execution/attachment-coverage.ts";
 
 const context = { taxYear: 2025, formType: "f1040" } as const;
 const loss = {

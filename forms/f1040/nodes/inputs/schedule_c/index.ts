@@ -22,7 +22,7 @@ import { eitc } from "../../intermediate/forms/eitc/index.ts";
 import { f8812 } from "../f8812/index.ts";
 import { form7206 } from "../../intermediate/forms/form7206/index.ts";
 import { schedule_j_calculation } from "../../intermediate/forms/schedule_j/index.ts";
-import { scheduleJFishingScheduleCSource } from "../../../2025/schedule_j_activity_sources.ts";
+import { scheduleJFishingScheduleCSource } from "../../../2025/domains/business/schedule-j/schedule_j_activity_sources.ts";
 import { assertDistinctMiningSources, miningCostAdjustment } from "./mining.ts";
 import { longTermContractAdjustment } from "./long_term_contract.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";

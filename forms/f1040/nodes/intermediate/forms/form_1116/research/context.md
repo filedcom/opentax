@@ -227,7 +227,7 @@ amended-year package is produced. Omitting an event cannot be detected from
 today's source graph. Real filing support still needs the primary foreign
 assessment/refund/payment evidence, prior filed Form 1116/Schedule B, all
 affected returns and recalculations, and any Form 7204 contest history.
-The [Schedule C gap audit](../../../../../../../docs/mef/ty2025-form1116-schedule-c-gap.md)
+The [Schedule C gap audit](../../../../../../../docs/mef/ty2025/domains/international/form1116/ty2025-form1116-schedule-c-gap.md)
 records the missing payor, currency, filed-return, and affected-year facts and
 the exact fail-closed validation boundary.
 

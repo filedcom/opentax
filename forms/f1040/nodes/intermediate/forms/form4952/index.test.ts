@@ -1,6 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateAmtForm4952, calculateForm4952, form4952 } from "./index.ts";
-import { form4952 as mef4952 } from "../../../../2025/mef/forms/f4952.ts";
+import { form4952 as mef4952 } from "../../../../2025/mef/forms/investments/f4952/f4952.ts";
 
 function compute(input: Record<string, unknown>) {
   return form4952.compute({ taxYear: 2025, formType: "f1040" }, input);

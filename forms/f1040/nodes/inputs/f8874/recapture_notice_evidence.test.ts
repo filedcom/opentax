@@ -1,8 +1,8 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { withReviewedForm8874A } from "./issuance_fixture.ts";
 import { calculateForm8874Recapture } from "./recapture_node.ts";
-import { schedule2 } from "../../../2025/mef/forms/schedule2.ts";
-import { schedule2Pdf } from "../../../2025/pdf/forms/schedule2.ts";
+import { schedule2 } from "../../../2025/mef/forms/taxes/schedule2.ts";
+import { schedule2Pdf } from "../../../2025/pdf/forms/taxes/schedule2.ts";
 import {
   form8874BNoticeSchema,
   reconcileForm8874BReportedEvent,

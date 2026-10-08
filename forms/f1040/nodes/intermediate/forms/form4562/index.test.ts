@@ -1,5 +1,5 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { buildStartNode } from "../../../../2025/start.ts";
+import { buildStartNode } from "../../../../2025/domains/execution/start.ts";
 import { inputNodes } from "../../../../2025/inputs.ts";
 import { form4562, inputSchema } from "./index.ts";
 

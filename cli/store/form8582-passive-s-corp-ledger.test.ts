@@ -3,7 +3,7 @@ import { join } from "@std/path";
 import {
   passiveSCorpCombinedLossReturnInputs,
   passiveSCorpLossReturnInputs,
-} from "../../forms/f1040/2025/eic_passive_s_corp_loss.fixture.ts";
+} from "../../forms/f1040/2025/domains/credits/earned-income/eic_passive_s_corp_loss.fixture.ts";
 import { buildForm8582Ledger } from "../../forms/f1040/nodes/intermediate/forms/form8582/ledger.ts";
 import { f1040_2025 } from "../../forms/f1040/2025/index.ts";
 import { reconcileForm8582NextYearOpening } from "../../forms/f1040/nodes/intermediate/forms/form8582/next_year_import.ts";

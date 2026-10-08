@@ -1,7 +1,7 @@
 # Form 8864, TY2025
 
 See the
-[current source and filing gap](../../../../../../docs/mef/ty2025-form8864-gap.md),
+[current source and filing gap](../../../../../../docs/mef/ty2025/domains/credits/form8864/ty2025-form8864-gap.md),
 the [December 2025 Form 8864](https://www.irs.gov/pub/irs-pdf/f8864.pdf), and
 its [instructions](https://www.irs.gov/instructions/i8864).
 

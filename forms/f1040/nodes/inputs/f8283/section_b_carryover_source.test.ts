@@ -1,5 +1,5 @@
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
-import { sha256Hex } from "../../../2025/prepared-source.ts";
+import { sha256Hex } from "../../../2025/domains/execution/prepared-source.ts";
 import { FilingStatus } from "../../../mef/header.ts";
 import {
   inputSchema as scheduleAInputSchema,
@@ -12,8 +12,8 @@ import {
   sectionBCarryoverAttachmentDescription,
 } from "./section_b_carryover_source.ts";
 import { inputSchema as form8283InputSchema } from "./index.ts";
-import { form8283 } from "../../../2025/mef/forms/f8283.ts";
-import { form8283Pdf } from "../../../2025/pdf/forms/f8283.ts";
+import { form8283 } from "../../../2025/mef/forms/deductions/f8283/f8283.ts";
+import { form8283Pdf } from "../../../2025/pdf/forms/deductions/f8283.ts";
 
 const priorFormBytes = new TextEncoder().encode(
   "%PDF-1.7 reviewed prior Section B fixture",

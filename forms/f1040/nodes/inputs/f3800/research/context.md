@@ -17,7 +17,7 @@ Part II amount, reconciles the filed source documents and source allocations,
 and emits one `IRS3800` with Part III current-year and, for supported passive
 prior-year credits, Part IV/VI rows. See `calculation.ts`,
 `forms/f1040/nodes/outputs/f1040/index.ts`, and
-`forms/f1040/2025/mef/forms/f3800.ts`.
+`forms/f1040/2025/mef/forms/credits/f3800/f3800.ts`.
 
 The source-backed calculation now accepts reconciled nonpassive Section 39
 vintages and places ordinary carryforwards on Part I line 4 and specified

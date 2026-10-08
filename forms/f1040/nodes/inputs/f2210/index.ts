@@ -8,7 +8,7 @@ import { computeRegularMethodPenalty } from "./calculation.ts";
 import {
   calculateForm2210BoxEPage1,
   form2210BoxEInputSchema,
-} from "../../../2025/form2210_box_e.ts";
+} from "../../../2025/domains/payments/form2210/form2210_box_e.ts";
 
 export const inputSchema = z.object({
   // Required annual payment — IRS computes this; user may override

@@ -5,13 +5,13 @@ import {
   calculatePriorReducedNoteGainCandidate,
   calculatePriorReducedNoteWorkpaper,
 } from "./prior-reduced-note.ts";
-import { buildReviewedStockLoss7203 } from "../../../../2025/mef/forms/f7203_stock_loss.ts";
-import { form7203StockLossPdf } from "../../../../2025/pdf/forms/f7203_stock_loss.ts";
-import { buildReviewedStockLossScheduleE } from "../../../../2025/mef/forms/schedule_e_stock_loss.ts";
-import { scheduleEStockLossPdf } from "../../../../2025/pdf/forms/schedule_e_stock_loss.ts";
+import { buildReviewedStockLoss7203 } from "../../../../2025/mef/forms/business/f7203_stock_loss.ts";
+import { form7203StockLossPdf } from "../../../../2025/pdf/forms/business/f7203_stock_loss.ts";
+import { buildReviewedStockLossScheduleE } from "../../../../2025/mef/forms/business/schedule_e_stock_loss.ts";
+import { scheduleEStockLossPdf } from "../../../../2025/pdf/forms/business/schedule_e_stock_loss.ts";
 import { form7203 as form7203Node } from "./index.ts";
 import { FilingStatus } from "../../../../mef/header.ts";
-import { executePriorReduced7203WithSourceDocuments } from "../../../../2025/form7203_prior_reduced_execution.ts";
+import { executePriorReduced7203WithSourceDocuments } from "../../../../2025/domains/business/form7203/form7203_prior_reduced_execution.ts";
 
 export const oneNote = {
   kind: "new_2025_formal_notes",

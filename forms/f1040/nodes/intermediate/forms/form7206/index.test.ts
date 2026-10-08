@@ -15,9 +15,9 @@ import {
   type SingleScheduleCPlan,
   singleScheduleCPlanSchema,
 } from "./index.ts";
-import { form7206 as form7206Mef } from "../../../../2025/mef/forms/f7206.ts";
-import { form7206Pdf } from "../../../../2025/pdf/forms/f7206.ts";
-import { schedule1 as schedule1Mef } from "../../../../2025/mef/forms/schedule1.ts";
+import { form7206 as form7206Mef } from "../../../../2025/mef/forms/health/f7206.ts";
+import { form7206Pdf } from "../../../../2025/pdf/forms/health/f7206.ts";
+import { schedule1 as schedule1Mef } from "../../../../2025/mef/forms/income/schedule1/schedule1.ts";
 import { inputNodes } from "../../../../2025/inputs.ts";
 
 const source: SingleScheduleCPlan = {

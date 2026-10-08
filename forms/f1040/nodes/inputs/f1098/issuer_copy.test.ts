@@ -1,4 +1,4 @@
-import { canonicalForm1098CopyDocument } from "../../../2025/pdf/review-1098-copy.fixture.ts";
+import { canonicalForm1098CopyDocument } from "../../../2025/pdf/reviews/composed/review-1098-copy.fixture.ts";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { PDFDocument, PDFName } from "pdf-lib";
 import {
@@ -9,7 +9,7 @@ import { buildMefBundle } from "../../../2025/mef/builder.ts";
 import { buildPdfBytes } from "../../../2025/pdf/builder.ts";
 import type { MefFormsPending } from "../../../2025/mef/types.ts";
 import { f1040_2025 } from "../../../2025/index.ts";
-import { buildPending } from "../../../2025/mef/pending.ts";
+import { buildPending } from "../../../2025/mef/execution/pending.ts";
 import { FilingStatus } from "../../types.ts";
 import { extractFilerIdentity } from "../../../mef/filer.ts";
 import { purchasePointsCrossLoanFixture } from "./purchase_points_cross_loan.fixture.ts";

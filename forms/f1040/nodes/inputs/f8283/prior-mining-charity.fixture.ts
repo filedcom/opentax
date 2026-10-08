@@ -1,5 +1,5 @@
 import { PDFDocument, StandardFonts } from "pdf-lib";
-import { naturalResourceSource } from "../../../2025/pdf/form8283-natural-resource.fixture.ts";
+import { naturalResourceSource } from "../../../2025/pdf/reviews/deductions/form8283-natural-resource.fixture.ts";
 import { charitableNaturalResourceDocumentFields } from "./natural-resource-source.ts";
 
 export async function priorMiningCharityFixture() {

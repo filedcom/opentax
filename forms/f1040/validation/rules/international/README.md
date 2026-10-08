@@ -1,0 +1,36 @@
+# International
+
+Source contracts, fixtures and adjacent tests for this tax concern. Public form identifiers and registration remain in the parent entrypoint.
+
+Source and fixture entrypoints:
+
+- [f1116.ts](./f1116.ts)
+- [f2555.ts](./f2555.ts)
+- [f4563.ts](./f4563.ts)
+- [f5074.ts](./f5074.ts)
+- [f5471.ts](./f5471.ts)
+- [f8621.ts](./f8621.ts)
+- [f8689.ts](./f8689.ts)
+- [f8833.ts](./f8833.ts)
+- [f8838p.ts](./f8838p.ts)
+- [f8854.ts](./f8854.ts)
+- [f8858.ts](./f8858.ts)
+- [f8865.ts](./f8865.ts)
+- [f8873.ts](./f8873.ts)
+- [f8992.ts](./f8992.ts)
+- [f8993.ts](./f8993.ts)
+- [f926.ts](./f926.ts)
+- [f965a.ts](./f965a.ts)
+- [schk2k3.ts](./schk2k3.ts)
+- [schk3.ts](./schk3.ts)
+- [sg.ts](./sg.ts)
+- [sg1.ts](./sg1.ts)
+- [si1.ts](./si1.ts)
+- [sk1.ts](./sk1.ts)
+- [sk2.ts](./sk2.ts)
+- [sk3.ts](./sk3.ts)
+- [sl.ts](./sl.ts)
+- [sm.ts](./sm.ts)
+- [so.ts](./so.ts)
+- [sp.ts](./sp.ts)
+- [sq.ts](./sq.ts)

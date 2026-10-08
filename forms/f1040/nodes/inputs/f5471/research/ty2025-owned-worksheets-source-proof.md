@@ -66,13 +66,13 @@ The command is:
 ```sh
 PATH=/tmp/opentax-poppler-env/bin:/Users/atul/.deno/bin:$PATH deno test -A \
   forms/f1040/nodes/inputs/f5471/worksheet-source.test.ts \
-  forms/f1040/2025/attachment-coverage.test.ts \
+  forms/f1040/2025/domains/execution/attachment-coverage.test.ts \
   forms/f1040/nodes/inputs/f5471/index.test.ts \
-  forms/f1040/2025/mef/document-identity.test.ts \
+  forms/f1040/2025/mef/identity/document-identity.test.ts \
   forms/f1040/2025/mef/forms/f5471*test.ts \
-  forms/f1040/2025/mef/forms/f8992.test.ts \
+  forms/f1040/2025/mef/forms/international/f8992.test.ts \
   forms/f1040/2025/pdf/forms/f5471*test.ts \
-  forms/f1040/2025/pdf/forms/f8992.test.ts
+  forms/f1040/2025/pdf/forms/international/f8992.test.ts
 ```
 
 The original debt negative attaches its actual raw source through the public model, then calls each direct native E/J/P/Q and paper E/J/P/Q projection, and both native/PDF full-export guards. Other negatives include quarter cash/principal, owner/issuer/identity/reference, income/expense/payment/withholding, prior-year history, initial-election owner/address/year/method/consent scope, category inventory, source scalar tampering and Q mapping.

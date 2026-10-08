@@ -90,11 +90,11 @@ import {
   ownedCfcWorksheetPending,
 } from "./worksheet-source.fixture.ts";
 import { inputSchema } from "./index.ts";
-import { form5471ScheduleE } from "../../../2025/mef/forms/f5471_schedule_e.ts";
-import { form5471ScheduleJ } from "../../../2025/mef/forms/f5471_schedule_j.ts";
-import { form5471ScheduleP } from "../../../2025/mef/forms/f5471_schedule_p.ts";
-import { form5471ScheduleQ } from "../../../2025/mef/forms/f5471_schedule_q.ts";
-import { form8992Filer as diagnosticFiler } from "../../../2025/form8992.fixture.ts";
+import { form5471ScheduleE } from "../../../2025/mef/forms/international/f5471/f5471_schedule_e.ts";
+import { form5471ScheduleJ } from "../../../2025/mef/forms/international/f5471/f5471_schedule_j.ts";
+import { form5471ScheduleP } from "../../../2025/mef/forms/international/f5471/f5471_schedule_p.ts";
+import { form5471ScheduleQ } from "../../../2025/mef/forms/international/f5471/f5471_schedule_q.ts";
+import { form8992Filer as diagnosticFiler } from "../../../2025/domains/international/form8992/form8992.fixture.ts";
 const form8992Filer = {
   ...diagnosticFiler,
   address: {
@@ -169,7 +169,7 @@ Deno.test("Owned passive source produces GEN/PAS/TOTAL native category copies, n
 
 Deno.test("Supported owned category documents validate canonical XSD; US-source Q unit explicitly remains guarded", async () => {
   const { buildOwned5471Schedule } = await import(
-    "../../../2025/mef/forms/f5471-owned-schedules.ts"
+    "../../../2025/mef/forms/international/f5471/f5471-owned-schedules.ts"
   );
   const item = ownedCfcWorksheetItem(true, true);
   const base = new URL(
@@ -226,16 +226,16 @@ Deno.test("Supported owned category documents validate canonical XSD; US-source 
 });
 
 Deno.test("Separate unrelated-note diagnostic preserves sixteen category obligations; original shareholder-note native operands remain guarded", async () => {
-  const { form5471 } = await import("../../../2025/mef/forms/f5471.ts");
+  const { form5471 } = await import("../../../2025/mef/forms/international/f5471/f5471.ts");
   const { form5471ScheduleH } = await import(
-    "../../../2025/mef/forms/f5471_schedule_h.ts"
+    "../../../2025/mef/forms/international/f5471/f5471_schedule_h.ts"
   );
   const { form5471ScheduleM } = await import(
-    "../../../2025/mef/forms/f5471_schedule_m.ts"
+    "../../../2025/mef/forms/international/f5471/f5471_schedule_m.ts"
   );
   const { requiredScheduleReferences, form5471RequiredScheduleKeys } =
-    await import("../../../2025/mef/forms/f5471-linkage.ts");
-  const { documentId } = await import("../../../2025/mef/document-identity.ts");
+    await import("../../../2025/mef/forms/international/f5471/f5471-linkage.ts");
+  const { documentId } = await import("../../../2025/mef/identity/document-identity.ts");
   const context = {
     pending: ownedCfcWorksheetPending(true, true),
     filer: form8992Filer,
@@ -334,9 +334,9 @@ Deno.test("Owned worksheet public income reaches actual Schedule1/AGI/1040 while
     "./worksheet-source.fixture.ts"
   );
   const { f1040_2025 } = await import("../../../2025/index.ts");
-  const { normalizeAllPending } = await import("../../../2025/pending.ts");
+  const { normalizeAllPending } = await import("../../../2025/domains/execution/pending.ts");
   const { assertAttachmentCoverage } = await import(
-    "../../../2025/attachment-coverage.ts"
+    "../../../2025/domains/execution/attachment-coverage.ts"
   );
   assertThrows(
     () => ownedCfcWorksheetPublicInputs(true),
@@ -500,13 +500,13 @@ Deno.test("Original2percent debt cannot become public/native/PDF finalized opera
   );
   const { f1040_2025 } = await import("../../../2025/index.ts");
   const { owned5471PdfValues } = await import(
-    "../../../2025/pdf/forms/f5471-owned-values.ts"
+    "../../../2025/pdf/forms/international/f5471/f5471-owned-values.ts"
   );
   const { buildOwned5471Schedule } = await import(
-    "../../../2025/mef/forms/f5471-owned-schedules.ts"
+    "../../../2025/mef/forms/international/f5471/f5471-owned-schedules.ts"
   );
   const { assertAttachmentCoverage } = await import(
-    "../../../2025/attachment-coverage.ts"
+    "../../../2025/domains/execution/attachment-coverage.ts"
   );
   const publicInput = ownedCfcWorksheetPublicInputs(false);
   const raw = ownedCfcWorksheetSource(true);
@@ -560,7 +560,7 @@ Deno.test("Original2percent debt cannot become public/native/PDF finalized opera
 
 Deno.test("US passive paper unit is confined to its actual income group and remains distinct from foreign tested/sales units", async () => {
   const { owned5471PdfValues } = await import(
-    "../../../2025/pdf/forms/f5471-owned-values.ts"
+    "../../../2025/pdf/forms/international/f5471/f5471-owned-values.ts"
   );
   const values = owned5471PdfValues(
     ownedCfcWorksheetItem(true, true),

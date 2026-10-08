@@ -165,7 +165,7 @@ schedule documents in the final builder pass. Exact reference IDs, required copy
 inventory and owner/corporation identity are independently validated. Both EIN
 and reference-ID source cases pass; canonical parent XSD, native/source tests and
 public export guards execute. See
-[precise linkage proof and limits](../../../../../../docs/mef/ty2025-form5471-native-schedule-linkage.md).
+[precise linkage proof and limits](../../../../../../docs/mef/ty2025/domains/international/form5471/ty2025-form5471-native-schedule-linkage.md).
 No verified current or v3.0 business-rule package is available in this session;
 old SR rule prose is not verified authority. Required native zero-R/current rule
 acceptance, G22 version reconciliation and authenticated prior history remain

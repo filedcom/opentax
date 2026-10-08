@@ -3,7 +3,7 @@
 Prepared 2026-10-04 for the authorized ATS operator to send through the IRS
 e-Help Desk or the assigned ATS contact. This is a draft question set, not an
 IRS response, a transmitted test return, or permission to alter source facts.
-It covers contradictions already tracked in the [ATS preparation](ty2025.md)
+It covers contradictions already tracked in the [ATS preparation](./ty2025.md)
 and [product board](../../product_board.md).
 
 **Subject:** TY2025 Form 1040 MeF ATS scenario packet clarifications

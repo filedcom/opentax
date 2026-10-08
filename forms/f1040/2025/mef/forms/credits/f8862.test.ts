@@ -1,0 +1,558 @@
+import { assertEquals, assertThrows } from "@std/assert";
+import { SCENARIO_1040_05_FACTS } from "../../../../e2e/ats/ty2025_cases.ts";
+import type { F8862Input } from "../../../../nodes/inputs/f8862/index.ts";
+import { form8862 as nativeForm8862 } from "./f8862.ts";
+
+const priorEicEvidence = {
+  credit_disallowance_ban_active: false,
+  eitc_disallowed_year: 2023,
+  eitc_disallowance_notice_reference: "Synthetic 2023 IRS notice",
+};
+const noticeReviews = {
+  filing_status: "single",
+  taxpayer_ssn: "123456789",
+  prior_eic_disallowance_review: {
+    status: "requires_8862",
+    disallowed_year: 2023,
+    disallowance_notice_reference: "Synthetic 2023 IRS notice",
+  },
+  prior_ctc_disallowance_review: {
+    disallowed_year: 2023,
+    notice_reference: "Synthetic 2023 IRS CTC notice",
+    notice_copy_reference: "Retained synthetic CTC notice copy",
+    taxpayer_ssn: "123456789",
+    nonclerical_disallowance_verified: true,
+    no_active_ban_verified: true,
+  },
+  prior_aotc_disallowance_review: {
+    disallowed_year: 2023,
+    notice_reference: "Synthetic 2023 IRS AOTC notice",
+    notice_copy_reference: "Retained synthetic AOTC notice copy",
+    taxpayer_ssn: "123456789",
+    nonclerical_disallowance_verified: true,
+    no_active_ban_verified: true,
+  },
+};
+
+const source = SCENARIO_1040_05_FACTS;
+
+const scenarioInput = {
+  claim_eitc: true,
+  ...priorEicEvidence,
+  claim_ctc: true,
+  ctc_disallowed_year: 2023,
+  ctc_disallowance_notice_reference: "Synthetic 2023 IRS CTC notice",
+  claim_aotc: true,
+  aotc_disallowed_year: 2023,
+  aotc_disallowance_notice_reference: "Synthetic 2023 IRS AOTC notice",
+  eitc_income_reporting_only:
+    source.form8862.eicDisallowedForIncomeReportingOnly,
+  eitc_qualifying_child_of_other:
+    source.form8862.taxpayerQualifyingChildOfAnotherTaxpayer,
+  eitc_qualifying_children_count: 2,
+  eitc_children: [
+    {
+      first_name: source.dependents[0].firstName,
+      last_name: source.dependents[0].lastName,
+      days_in_us: source.form8862.child1DaysInUnitedStates,
+    },
+    {
+      first_name: source.dependents[1].firstName,
+      last_name: source.dependents[1].lastName,
+      days_in_us: source.form8862.child2DaysInUnitedStates,
+    },
+  ],
+  ctc_qualifying_children_count: 2,
+  // Citizenship and dependency answers are explicit fixture inputs, not
+  // independently verified source facts from Scenario 5.
+  ctc_children: [
+    {
+      first_name: source.dependents[0].firstName,
+      last_name: source.dependents[0].lastName,
+      lived_with_over_half_year: true,
+      qualifying_child: source.form8862.child1QualifiesForChildTaxCredit,
+      dependent: true,
+      us_citizen_national_or_resident: true,
+    },
+    {
+      first_name: source.dependents[1].firstName,
+      last_name: source.dependents[1].lastName,
+      lived_with_over_half_year: true,
+      qualifying_child: source.form8862.child2QualifiesForChildTaxCredit,
+      dependent: true,
+      us_citizen_national_or_resident: true,
+    },
+  ],
+  aotc_student_count: 1,
+  aotc_students: [{
+    first_name: source.taxpayer.firstName,
+    last_name: source.taxpayer.lastName,
+    eligible: source.form8862.studentEligibleForAotc,
+    credit_claimed_four_prior_years:
+      source.form8862.studentClaimedAotcForFourYears,
+  }],
+};
+
+const finalizedContext = {
+  pending: {
+    general: noticeReviews,
+    f1040: {
+      taxpayer_ssn: "123456789",
+      line27_eitc: 500,
+      line19_child_tax_credit: 2_200,
+      line29_refundable_aoc: 1_000,
+      dependent_details: source.dependents.slice(0, 2).map((child) => ({
+        first_name: child.firstName,
+        last_name: child.lastName,
+        credit_category: "ctc",
+      })),
+    },
+    eitc: {
+      credit_amount: 500,
+      qualifying_children: 2,
+      qualifying_child_details: source.dependents.slice(0, 2).map((child) => ({
+        first_name: child.firstName,
+        last_name: child.lastName,
+      })),
+    },
+    f8863: {
+      f8863s: [{
+        credit_type: "aoc",
+        student_name:
+          `${source.taxpayer.firstName} ${source.taxpayer.lastName}`,
+      }],
+    },
+  },
+};
+const form8862 = {
+  build(fields: F8862Input) {
+    return nativeForm8862.build(fields, finalizedContext);
+  },
+};
+
+Deno.test("Form 8862 native filing rejects claims absent from the finalized return", () => {
+  assertThrows(
+    () =>
+      nativeForm8862.build({
+        claim_eitc: true,
+        ...priorEicEvidence,
+        eitc_income_reporting_only: true,
+      }),
+    Error,
+    "finalized Form 1040",
+  );
+  assertThrows(
+    () =>
+      nativeForm8862.build({
+        claim_eitc: true,
+        ...priorEicEvidence,
+        eitc_income_reporting_only: true,
+      }, { pending: { f1040: { line27_eitc: 0 } } }),
+    Error,
+    "line 27",
+  );
+  assertThrows(
+    () =>
+      nativeForm8862.build({
+        claim_eitc: true,
+        ...priorEicEvidence,
+        eitc_income_reporting_only: true,
+      }, { pending: { f1040: { line27_eitc: "500" } } }),
+    Error,
+    "line 27",
+  );
+  assertThrows(
+    () =>
+      nativeForm8862.build(scenarioInput, {
+        pending: { ...finalizedContext.pending, f8863: { f8863s: [] } },
+      }),
+    Error,
+    "reconcile to Form 8863",
+  );
+  assertThrows(
+    () =>
+      nativeForm8862.build(scenarioInput, {
+        pending: {
+          ...finalizedContext.pending,
+          f1040: {
+            ...finalizedContext.pending.f1040,
+            line19_child_tax_credit: 0,
+          },
+        },
+      }),
+    Error,
+    "line 19 or 28",
+  );
+  assertThrows(
+    () =>
+      nativeForm8862.build(scenarioInput, {
+        pending: {
+          ...finalizedContext.pending,
+          f1040: {
+            ...finalizedContext.pending.f1040,
+            line29_refundable_aoc: 0,
+          },
+        },
+      }),
+    Error,
+    "reconcile to Form 8863",
+  );
+});
+
+Deno.test("Form 8862 CTC/ODC and AOTC claims require matching reviewed notice facts", () => {
+  assertThrows(
+    () =>
+      nativeForm8862.build(scenarioInput, {
+        pending: {
+          ...finalizedContext.pending,
+          general: { filing_status: "single" },
+        },
+      }),
+    Error,
+    "matching reviewed prior IRS notice",
+  );
+  assertThrows(
+    () =>
+      nativeForm8862.build(scenarioInput, {
+        pending: {
+          ...finalizedContext.pending,
+          general: {
+            ...noticeReviews,
+            prior_ctc_disallowance_review: {
+              ...noticeReviews.prior_ctc_disallowance_review,
+              disallowed_year: 2022,
+            },
+          },
+        },
+      }),
+    Error,
+    "CTC/ODC claim needs a matching reviewed prior IRS notice",
+  );
+  assertThrows(
+    () =>
+      nativeForm8862.build(scenarioInput, {
+        pending: {
+          ...finalizedContext.pending,
+          general: {
+            ...noticeReviews,
+            prior_aotc_disallowance_review: {
+              ...noticeReviews.prior_aotc_disallowance_review,
+              taxpayer_ssn: "987654321",
+            },
+          },
+        },
+      }),
+    Error,
+    "AOTC claim needs a matching reviewed prior IRS notice",
+  );
+});
+
+Deno.test("Form 8862 refuses CTC/ODC and AOTC export without authenticated IRS notice", () => {
+  assertThrows(
+    () => form8862.build(scenarioInput),
+    Error,
+    "executor-owned authentication of prior IRS notice issuance and contents",
+  );
+});
+
+Deno.test("Form 8862 CTC names must match filed dependent credit rows", () => {
+  assertThrows(
+    () =>
+      nativeForm8862.build(scenarioInput, {
+        pending: {
+          ...finalizedContext.pending,
+          f1040: {
+            ...finalizedContext.pending.f1040,
+            dependent_details: [{
+              first_name: "Wrong",
+              last_name: "Child",
+              credit_category: "ctc",
+            }],
+          },
+        },
+      }),
+    Error,
+    "must match filed Form 1040 dependent credit rows",
+  );
+});
+
+Deno.test("Form 8862 Part III must list every filed CTC and ODC dependent", () => {
+  assertThrows(
+    () =>
+      nativeForm8862.build({
+        ...scenarioInput,
+        ctc_qualifying_children_count: 1,
+        ctc_children: scenarioInput.ctc_children.slice(0, 1),
+      }, finalizedContext),
+    Error,
+    "must include every filed CTC and ODC dependent",
+  );
+});
+
+Deno.test("Form 8862 Part IV must list every filed AOTC student", () => {
+  assertThrows(
+    () =>
+      nativeForm8862.build(scenarioInput, {
+        pending: {
+          ...finalizedContext.pending,
+          f8863: {
+            f8863s: [
+              ...finalizedContext.pending.f8863.f8863s,
+              { credit_type: "aoc", student_name: "Another Student" },
+            ],
+          },
+        },
+      }),
+    Error,
+    "reconcile to Form 8863",
+  );
+});
+
+Deno.test("Form 8862 EITC child names must match finalized Schedule EIC", () => {
+  assertThrows(
+    () =>
+      nativeForm8862.build(scenarioInput, {
+        pending: {
+          ...finalizedContext.pending,
+          eitc: {
+            ...finalizedContext.pending.eitc,
+            qualifying_child_details: [{
+              first_name: "Other",
+              last_name: "Child",
+            }, finalizedContext.pending.eitc.qualifying_child_details[1]],
+          },
+        },
+      }),
+    Error,
+    "must match finalized Schedule EIC",
+  );
+});
+
+Deno.test("Form 8862 childless EITC keeps source checks before the notice authentication gate", () => {
+  assertThrows(
+    () =>
+      form8862.build({
+        claim_eitc: true,
+        ...priorEicEvidence,
+        eitc_income_reporting_only: false,
+        eitc_qualifying_child_of_other: false,
+        eitc_without_child: {
+          primary: {
+            main_home_us_days: 365,
+            age: 35,
+            claimed_as_dependent: false,
+          },
+        },
+      }),
+    Error,
+    "executor-owned authentication of prior IRS notice issuance and contents",
+  );
+});
+
+Deno.test("Form 8862 rejects childless EITC with fewer than 183 US-home days", () => {
+  const childless = {
+    claim_eitc: true,
+    ...priorEicEvidence,
+    eitc_income_reporting_only: false,
+    eitc_qualifying_child_of_other: false,
+    eitc_without_child: {
+      primary: {
+        main_home_us_days: 183,
+        age: 35,
+        claimed_as_dependent: false,
+      },
+      spouse: {
+        main_home_us_days: 183,
+        age: 35,
+        claimed_as_dependent: false,
+      },
+    },
+  };
+  assertThrows(
+    () => form8862.build(childless),
+    Error,
+    "executor-owned authentication of prior IRS notice issuance and contents",
+  );
+  assertThrows(
+    () =>
+      form8862.build({
+        ...childless,
+        eitc_without_child: {
+          ...childless.eitc_without_child,
+          primary: {
+            ...childless.eitc_without_child.primary,
+            main_home_us_days: 182,
+          },
+        },
+      }),
+    Error,
+    "at least 183 US-home days",
+  );
+  assertThrows(
+    () =>
+      form8862.build({
+        ...childless,
+        eitc_without_child: {
+          ...childless.eitc_without_child,
+          spouse: {
+            ...childless.eitc_without_child.spouse,
+            main_home_us_days: 182,
+          },
+        },
+      }),
+    Error,
+    "at least 183 US-home days",
+  );
+});
+
+Deno.test("Form 8862 income-reporting-only EITC also stops at notice authentication", () => {
+  assertThrows(
+    () =>
+      form8862.build({
+        claim_eitc: true,
+        ...priorEicEvidence,
+        eitc_income_reporting_only: true,
+      }),
+    Error,
+    "executor-owned authentication of prior IRS notice issuance and contents",
+  );
+  assertThrows(
+    () =>
+      form8862.build({
+        claim_eitc: true,
+        ...priorEicEvidence,
+        eitc_income_reporting_only: true,
+        eitc_qualifying_child_of_other: false,
+      }),
+    Error,
+    "must not include the rest of Part II",
+  );
+});
+
+Deno.test("Form 8862 rejects missing detail rather than filing an incomplete form", () => {
+  assertEquals(form8862.build({}), "");
+  assertEquals(form8862.build({ claim_eitc: false }), "");
+  assertThrows(
+    () => form8862.build({ claim_eitc: true, ...priorEicEvidence }),
+    Error,
+    "income-reporting answer",
+  );
+  assertThrows(
+    () =>
+      form8862.build({
+        claim_eitc: true,
+        ...priorEicEvidence,
+        eitc_income_reporting_only: false,
+        eitc_qualifying_child_of_other: false,
+      }),
+    Error,
+    "either qualifying-child or no-child detail",
+  );
+  assertThrows(
+    () =>
+      form8862.build({ ...scenarioInput, ctc_qualifying_children_count: 1 }),
+    Error,
+    "CTC child count does not match",
+  );
+  assertThrows(
+    () =>
+      form8862.build({
+        claim_aotc: true,
+        aotc_disallowed_year: 2023,
+        aotc_disallowance_notice_reference: "Synthetic 2023 IRS AOTC notice",
+      }),
+    Error,
+    "AOTC needs student detail",
+  );
+  assertThrows(
+    () =>
+      form8862.build({
+        claim_aotc: true,
+        aotc_disallowed_year: 2023,
+        aotc_disallowance_notice_reference: "Synthetic 2023 IRS AOTC notice",
+        aotc_students: [{
+          first_name: "Student",
+          last_name: "Test",
+          eligible: true,
+          credit_claimed_four_prior_years: true,
+        }],
+      }),
+    Error,
+    "AOTC student is not credit-eligible",
+  );
+  assertThrows(
+    () =>
+      form8862.build({
+        claim_eitc: true,
+        ...priorEicEvidence,
+        eitc_income_reporting_only: false,
+        eitc_qualifying_child_of_other: false,
+        eitc_children: [{
+          first_name: "Child",
+          last_name: "Test",
+          days_in_us: 182,
+        }],
+      }),
+    Error,
+    "at least 183 US days",
+  );
+  assertThrows(
+    () =>
+      form8862.build({
+        claim_eitc: true,
+        ...priorEicEvidence,
+        eitc_income_reporting_only: false,
+        eitc_qualifying_child_of_other: false,
+        eitc_children: [{
+          first_name: "Child",
+          last_name: "Test",
+          days_in_us: 200,
+          birth_month_day: "--07-04",
+        }],
+      }),
+    Error,
+    "requires 365 on line 7",
+  );
+  assertThrows(
+    () =>
+      form8862.build({
+        claim_eitc: true,
+        ...priorEicEvidence,
+        eitc_income_reporting_only: false,
+        eitc_qualifying_child_of_other: false,
+        eitc_without_child: {
+          primary: {
+            main_home_us_days: 365,
+            age: 35,
+            claimed_as_dependent: true,
+          },
+        },
+      }),
+    Error,
+    "cannot be another taxpayer's dependent",
+  );
+  assertThrows(
+    () =>
+      form8862.build({
+        claim_eitc: false,
+        eitc_children: [{ first_name: "Child", last_name: "Test" }],
+      }),
+    Error,
+    "EITC detail requires an EITC claim",
+  );
+  assertThrows(
+    () =>
+      form8862.build({
+        claim_eitc: true,
+        ...priorEicEvidence,
+        eitc_income_reporting_only: false,
+        eitc_qualifying_child_of_other: false,
+        eitc_children: [{
+          first_name: "Child",
+          last_name: "Test",
+          birth_month_day: "--02-31",
+        }],
+      }),
+    Error,
+  );
+});

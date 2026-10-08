@@ -1,6 +1,6 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
-import { form6251 as mef6251 } from "../../../../2025/mef/forms/f6251.ts";
-import { form6251Pdf } from "../../../../2025/pdf/forms/f6251.ts";
+import { form6251 as mef6251 } from "../../../../2025/mef/forms/taxes/f6251.ts";
+import { form6251Pdf } from "../../../../2025/pdf/forms/taxes/f6251.ts";
 import { form6251, inputSchema } from "./index.ts";
 
 const lot = {

@@ -1,21 +1,21 @@
-import { assertPassiveSCorpLossCalculationInputs } from "./passive-s-corp-loss-calculation.ts";
+import { assertPassiveSCorpLossCalculationInputs } from "./domains/business/passive-s-corp-loss-calculation.ts";
 import type { FormDefinition } from "../../../core/types/form-definition.ts";
 import type { ExecuteResult } from "../../../core/runtime/executor.ts";
 import type { FilerIdentity } from "../mef/header.ts";
 import { publicInputSchema as form8990PublicInputSchema } from "../nodes/intermediate/forms/form8990/index.ts";
 import { runBoundedForm8990TwoPass } from "../nodes/intermediate/forms/form8990/run-two-pass.ts";
-import { projectForm8990ForExport } from "./form8990_projection.ts";
+import { projectForm8990ForExport } from "./domains/business/form8990/form8990_projection.ts";
 import type { MefFormsPending } from "./mef/types.ts";
 import { F1040_2025_CONFIG } from "./config.ts";
 import { inputNodes } from "./inputs.ts";
 import { registry } from "./registry.ts";
 import { buildMefBundle, buildMefXml } from "./mef/builder.ts";
-import { buildPending } from "./mef/pending.ts";
+import { buildPending } from "./mef/execution/pending.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
-import { assertF1040FinalHeader } from "./filer-source-reconciliation.ts";
-import { assertNoRepeatedBrokerSaleSources } from "./broker-sale-source-reconciliation.ts";
-import { applyForm8621QefRefigure } from "./form8621_1294_refigure.ts";
-import { executePreQefSourceReturn } from "./staged_source_return.ts";
+import { assertF1040FinalHeader } from "./domains/identity/filer-source-reconciliation.ts";
+import { assertNoRepeatedBrokerSaleSources } from "./domains/investments/broker-sale-source-reconciliation.ts";
+import { applyForm8621QefRefigure } from "./domains/international/form8621/form8621_1294_refigure.ts";
+import { executePreQefSourceReturn } from "./domains/execution/staged_source_return.ts";
 
 function executeReturn(inputs: Record<string, unknown>): ExecuteResult {
   assertPassiveSCorpLossCalculationInputs(inputs);

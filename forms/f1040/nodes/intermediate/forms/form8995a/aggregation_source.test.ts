@@ -4,16 +4,16 @@ import { FilingStatus as HeaderFilingStatus } from "../../../../mef/header.ts";
 import {
   buildStagedAggregatedIRS8995A,
   form8995a as form8995aMef,
-} from "../../../../2025/mef/forms/f8995a.ts";
+} from "../../../../2025/mef/forms/business/f8995a/f8995a.ts";
 import {
   buildStagedIRS8995AScheduleB,
   form8995aScheduleB as scheduleBMef,
-} from "../../../../2025/mef/forms/f8995a_schedule_b.ts";
+} from "../../../../2025/mef/forms/business/f8995a/f8995a_schedule_b.ts";
 import {
   form8995aPdf,
   projectStagedAggregatedParentPdf,
-} from "../../../../2025/pdf/forms/f8995a.ts";
-import { form8995aScheduleBPdf } from "../../../../2025/pdf/forms/f8995a_schedule_b.ts";
+} from "../../../../2025/pdf/forms/business/f8995a.ts";
+import { form8995aScheduleBPdf } from "../../../../2025/pdf/forms/business/f8995a_schedule_b.ts";
 import {
   form8995a,
   inputSchema,

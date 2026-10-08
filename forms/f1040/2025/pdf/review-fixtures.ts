@@ -1,63 +1,63 @@
-import { form8582crReviewFixtures } from "../form8582cr_k1.fixture.ts";
-import { ordinaryRothSubstituteReviewFixture } from "./review-4852-ordinary-roth.fixture.ts";
-import type { Form4852RetainedDocument } from "../form4852_source.ts";
-import { form8621QefReviewFixture } from "../form8621_qef.fixture.ts";
-import { tipHealthCfBeneficiaryReviewFixtures } from "./review-tip-health-cf-beneficiary.fixture.ts";
-import { businessTipSourceInputs } from "./business-tip-source.fixture.ts";
-import { multipleAnnuityReviewFixtures } from "./review-4972-multiple-annuity.fixture.ts";
-import { multipleNuaReviewFixtures } from "./review-4972-multiple-nua.fixture.ts";
-import { twoFarmHealthFixtures } from "./review-two-farm-health.fixture.ts";
-import { mixedCfHealthFixtures } from "./review-mixed-cf-health.fixture.ts";
-import { qualifiedTipReviewFixtures } from "./review-qualified-tips.fixture.ts";
-import { form8941MixedThreeReviewFixtures } from "./review-8941-mixed-three.fixture.ts";
-import { ownedFarmShopReviewFixtures, carrierDailyBilledShopReviewFixtures, independentOwnerHealthReviewFixtures } from "./review-farm-shop-partmonth-health.fixture.ts";
-import { mixedControlledWotcFixtures } from "./review-mixed-controlled-wotc.fixture.ts";
-import { controlledFarmWotcFixtures } from "./review-controlled-farm-wotc.fixture.ts";
-import { twoFarmWotcFixtures } from "./review-two-farm-wotc.fixture.ts";
-import { issuedRecaptureReviewFixture } from "./review-8611-issued-k1.fixture.ts";
-import { farmWotcLossFixtures } from "./review-farm-wotc-loss.fixture.ts";
-import { form8826InterpreterReviewFixture } from "./review-8826-interpreter.fixture.ts";
+import { form8582crReviewFixtures } from "../domains/business/form8582c/form8582cr_k1.fixture.ts";
+import { ordinaryRothSubstituteReviewFixture } from "./reviews/composed/review-4852-ordinary-roth.fixture.ts";
+import type { Form4852RetainedDocument } from "../domains/income/form4852/form4852_source.ts";
+import { form8621QefReviewFixture } from "../domains/international/form8621/form8621_qef.fixture.ts";
+import { tipHealthCfBeneficiaryReviewFixtures } from "./reviews/composed/review-tip-health-cf-beneficiary.fixture.ts";
+import { businessTipSourceInputs } from "./reviews/composed/business-tip-source.fixture.ts";
+import { multipleAnnuityReviewFixtures } from "./reviews/composed/review-4972-multiple-annuity.fixture.ts";
+import { multipleNuaReviewFixtures } from "./reviews/composed/review-4972-multiple-nua.fixture.ts";
+import { twoFarmHealthFixtures } from "./reviews/composed/review-two-farm-health.fixture.ts";
+import { mixedCfHealthFixtures } from "./reviews/composed/review-mixed-cf-health.fixture.ts";
+import { qualifiedTipReviewFixtures } from "./reviews/composed/review-qualified-tips.fixture.ts";
+import { form8941MixedThreeReviewFixtures } from "./reviews/composed/review-8941-mixed-three.fixture.ts";
+import { ownedFarmShopReviewFixtures, carrierDailyBilledShopReviewFixtures, independentOwnerHealthReviewFixtures } from "./reviews/composed/review-farm-shop-partmonth-health.fixture.ts";
+import { mixedControlledWotcFixtures } from "./reviews/composed/review-mixed-controlled-wotc.fixture.ts";
+import { controlledFarmWotcFixtures } from "./reviews/composed/review-controlled-farm-wotc.fixture.ts";
+import { twoFarmWotcFixtures } from "./reviews/composed/review-two-farm-wotc.fixture.ts";
+import { issuedRecaptureReviewFixture } from "./reviews/composed/review-8611-issued-k1.fixture.ts";
+import { farmWotcLossFixtures } from "./reviews/composed/review-farm-wotc-loss.fixture.ts";
+import { form8826InterpreterReviewFixture } from "./reviews/composed/review-8826-interpreter.fixture.ts";
 import {
   ownedCfFiledCases,
   ownedCfFiledFixture,
-} from "./review-owned-cf-filed.fixture.ts";
-import { controlledWotcReviewFixtures } from "./review-controlled-wotc.fixture.ts";
-import { optionalFarmReviewFixtures } from "./review-schedule-se-farm-optional.fixture.ts";
-import { farmWotcReviewFixtures } from "./review-farm-wotc.fixture.ts";
-import { ownedFarmReviewFixture } from "./review-schedule-se-farm-owner.fixture.ts";
-import { form8978ReviewFixtures } from "./review-8978.fixture.ts";
-import { form8941MultiplePlanReviewFixture } from "./review-8941-multiple-plans.fixture.ts";
+} from "./reviews/composed/review-owned-cf-filed.fixture.ts";
+import { controlledWotcReviewFixtures } from "./reviews/composed/review-controlled-wotc.fixture.ts";
+import { optionalFarmReviewFixtures } from "./reviews/composed/review-schedule-se-farm-optional.fixture.ts";
+import { farmWotcReviewFixtures } from "./reviews/composed/review-farm-wotc.fixture.ts";
+import { ownedFarmReviewFixture } from "./reviews/composed/review-schedule-se-farm-owner.fixture.ts";
+import { form8978ReviewFixtures } from "./reviews/composed/review-8978.fixture.ts";
+import { form8941MultiplePlanReviewFixture } from "./reviews/composed/review-8941-multiple-plans.fixture.ts";
 import {
   bothOwnerWotcReviewFixtures,
   jointWotcReviewFixtures,
   spouseWotcReviewFixtures,
-} from "./review-joint-wotc.fixture.ts";
-import { form8941WorkerReviewFixture } from "./review-8941-workers.fixture.ts";
-import { form8941CommonControlReviewFixture } from "./review-8941-common-control.fixture.ts";
-import { form8941ThreeBusinessReviewFixture } from "./review-8941-three-business.fixture.ts";
-import { form8941IndependentSpouseReviewFixture } from "./review-8941-independent-spouses.fixture.ts";
-import { form8994OwnedReviewFixture } from "./review-8994-owned.fixture.ts";
-import { form8941ArrangementReviewFixture } from "./review-8941-arrangements.fixture.ts";
-import { ownedScheduleSeReviewFixture } from "./review-schedule-se-owner.fixture.ts";
-import { form8941FamilyReviewFixture } from "./review-8941-family.fixture.ts";
-import { form8941PartYearReviewFixture } from "./review-8941-partyear.fixture.ts";
-import { form8941OwnedReviewFixture } from "./review-8941-owned.fixture.ts";
-import { jointPatronFixture, spouseOwnedPatronFixture } from "./review-8995a-patron-joint.fixture.ts";
+} from "./reviews/composed/review-joint-wotc.fixture.ts";
+import { form8941WorkerReviewFixture } from "./reviews/composed/review-8941-workers.fixture.ts";
+import { form8941CommonControlReviewFixture } from "./reviews/composed/review-8941-common-control.fixture.ts";
+import { form8941ThreeBusinessReviewFixture } from "./reviews/composed/review-8941-three-business.fixture.ts";
+import { form8941IndependentSpouseReviewFixture } from "./reviews/composed/review-8941-independent-spouses.fixture.ts";
+import { form8994OwnedReviewFixture } from "./reviews/composed/review-8994-owned.fixture.ts";
+import { form8941ArrangementReviewFixture } from "./reviews/composed/review-8941-arrangements.fixture.ts";
+import { ownedScheduleSeReviewFixture } from "./reviews/composed/review-schedule-se-owner.fixture.ts";
+import { form8941FamilyReviewFixture } from "./reviews/composed/review-8941-family.fixture.ts";
+import { form8941PartYearReviewFixture } from "./reviews/composed/review-8941-partyear.fixture.ts";
+import { form8941OwnedReviewFixture } from "./reviews/composed/review-8941-owned.fixture.ts";
+import { jointPatronFixture, spouseOwnedPatronFixture } from "./reviews/composed/review-8995a-patron-joint.fixture.ts";
 import {
   accountingSstbFixture,
   accountingSstbNoPayrollFixture,
   jointPrimaryAccountingSstbFixture,
   mfsPrimaryAccountingSstbFixture,
   noncommunityMfsAccountingSstbFixture,
-} from "./review-8995a-sstb.fixture.ts";
-import { patronFixture } from "./review-8995a-patron.fixture.ts";
-import { twoBusinessAggregationFixture } from "./review-8995a-aggregation.fixture.ts";
-import { medicareMsaReviewFixture } from "./review-8853-medicare.fixture.ts";
-import educationScholarshipSource from "./review-8863-scholarship-source.json" with {
+} from "./reviews/composed/review-8995a-sstb.fixture.ts";
+import { patronFixture } from "./reviews/composed/review-8995a-patron.fixture.ts";
+import { twoBusinessAggregationFixture } from "./reviews/composed/review-8995a-aggregation.fixture.ts";
+import { medicareMsaReviewFixture } from "./reviews/composed/review-8853-medicare.fixture.ts";
+import educationScholarshipSource from "./reviews/composed/review-8863-scholarship-source.json" with {
   type: "json",
 };
-import { multipleScheduleCFixture } from "./review-8995-multiple.fixture.ts";
-import { twoSchoolEducationFixture } from "./review-8863-two-schools.fixture.ts";
+import { multipleScheduleCFixture } from "./reviews/composed/review-8995-multiple.fixture.ts";
+import { twoSchoolEducationFixture } from "./reviews/composed/review-8863-two-schools.fixture.ts";
 import {
   directAgriBiodieselPending,
   directAgriBiodieselSource,
@@ -77,18 +77,18 @@ import { ExclusionType } from "../../nodes/intermediate/forms/form982/index.ts";
 import { CertifiedInterestDocumentKind } from "../../nodes/intermediate/forms/form8396/calculation.ts";
 import { LanguagePreferenceCode } from "../../nodes/inputs/schedule_lep/index.ts";
 import { FilingStatus as SourceFilingStatus, TS } from "../../nodes/types.ts";
-import { form7217NonliquidatingDecrease } from "../form7217_732c_decrease.fixture.ts";
+import { form7217NonliquidatingDecrease } from "../domains/business/form7217/form7217_732c_decrease.fixture.ts";
 import { agreedJointPayment } from "../../nodes/inputs/f1040es/agreed-payment.fixture.ts";
 import {
   form8882Fixture,
   form8882ScheduleCFixture,
 } from "../../nodes/inputs/f8882/fixture.ts";
-import { withSyntheticForm1098Copy } from "./review-1098-copy.fixture.ts";
+import { withSyntheticForm1098Copy } from "./reviews/composed/review-1098-copy.fixture.ts";
 import type { MefPdfAttachment } from "../mef/form-descriptor.ts";
 import {
   adoptionReviewAttachments,
   adoptionReviewSource,
-} from "./review-8839.fixture.ts";
+} from "./reviews/composed/review-8839.fixture.ts";
 
 /** Synthetic source returns for the held TY2025 filled-PDF review. */
 export interface PdfReviewFixture {

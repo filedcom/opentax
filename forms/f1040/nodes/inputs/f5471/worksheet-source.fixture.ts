@@ -357,7 +357,7 @@ export function ownedCfcWorksheetSource(
   return source;
 }
 
-import { form8992Cfc } from "../../../2025/form8992.fixture.ts";
+import { form8992Cfc } from "../../../2025/domains/international/form8992/form8992.fixture.ts";
 import { calculateCategory5Inclusions, inputSchema } from "./index.ts";
 import { ownedWorksheetFiledOperands } from "./worksheet-source.ts";
 export function ownedCfcWorksheetItem(

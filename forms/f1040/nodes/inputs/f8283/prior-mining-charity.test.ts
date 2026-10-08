@@ -1,7 +1,7 @@
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
-import { form8283 } from "../../../2025/mef/forms/f8283.ts";
-import { form8283Pdf } from "../../../2025/pdf/forms/f8283.ts";
+import { form8283 } from "../../../2025/mef/forms/deductions/f8283/f8283.ts";
+import { form8283Pdf } from "../../../2025/pdf/forms/deductions/f8283.ts";
 import {
   bindPriorMiningCharityHistory,
   calculateReviewedMiningCarryConsumption,

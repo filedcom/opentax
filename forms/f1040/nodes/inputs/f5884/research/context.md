@@ -6,7 +6,7 @@ Form 3800 tax-liability limit. The current build pass sends a classified Form
 5884 source credit to the shared nonpassive Form 3800 limit, with native
 `IRS5884` and linked `IRS3800` XML. These paths have cases written but unrun and
 are not yet a verified Form 1040 route. See
-[the business-credit routing audit](../../../../../../docs/mef/general-business-credit-routing.md).
+[the business-credit routing audit](../../../../../../docs/mef/ty2025/domains/property-business/general-business-credit-routing.md).
 
 Sources: [IRS Form 5884](https://www.irs.gov/pub/irs-pdf/f5884.pdf),
 [IRS instructions](https://www.irs.gov/instructions/i5884), and

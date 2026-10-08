@@ -69,7 +69,7 @@ jobs:
       - name: Smoke compiled asset
         run: >
           deno run --allow-read --allow-write --allow-run --allow-net=www.irs.gov
-          scripts/smoke-release-binary.ts
+          scripts/release/smoke-release-binary.ts
           ./${{ matrix.asset }} ${{ env.OPENTAX_RELEASE_VERSION }}
 
       - name: Upload artifact

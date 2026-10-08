@@ -1,7 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { currentPropertyLossAllocation } from "./current-property-loss-allocation.ts";
-import { passivePropertyInputs } from "../../../2025/eic_passive_property.fixture.ts";
-import { qualifiedFarmRentalSource } from "../../../2025/eic_passive_k1.fixture.ts";
+import { passivePropertyInputs } from "../../../2025/domains/credits/earned-income/eic_passive_property.fixture.ts";
+import { qualifiedFarmRentalSource } from "../../../2025/domains/credits/earned-income/eic_passive_k1.fixture.ts";
 
 Deno.test("current closing, rent and tax source records retain independently allowed operating and ordinary sale losses", () => {
   const property =
