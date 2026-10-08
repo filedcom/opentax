@@ -4920,3 +4920,25 @@ fixture replay and observation. No PDF authoring or new packet was performed
 in this turn. Existing 67/0 and two-document/four-page proofs remain scoped to
 unregistered document projections, not complete returns. Main52 remains
 frozen; future46unchecked, all deferred. Newer full runtime regression is next.
+
+
+### October 8 — Newer root full regression started (result pending)
+
+After recording future45/46 unworked, froze runtime bytes for the normal typed
+full regression at root `75627ad3b2be0c8dcfc38d86fd4d7e2b6ac2e2c2`
+(runtime implementation `267adee80`). Command:
+`PATH=/tmp/opentax-poppler-env/bin:$PATH DENO_V8_FLAGS=--max-old-space-size=8192 deno task test`.
+Private `root-form2210-full-regression-20261008-v1/` retains the immutable
+2,637-path preflight manifest, runner and live log. Actual unified session
+22926 reported running, start03:56:34.894260UTC, Deno subprocess82542.
+No terminal result or full passing count is claimed yet; observe this same
+handle, do not restart after timeout/truncation. Runner will retain actual
+subprocess exit, end timestamp, log SHA and final byte-equivalence check.
+
+The previous12,388/0 full result still covers the older2,631-path baseline.
+Six later Form2210 helpers/tests/projections await this new full result;
+focused67/0 remains scoped. Main52 remains frozen and all46future tasks stay
+deferred. Even a full local pass will not establish source authentication,
+matching BR, whole-family coverage, IRS submission or ATS acceptance. The
+board's broad phase/full requirement remains conditional on its remaining
+scope decisions and source work.
