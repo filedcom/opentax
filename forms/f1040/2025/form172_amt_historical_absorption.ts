@@ -166,3 +166,74 @@ export function calculateForm172ModernAmtSection172Capacity(
     filingReady: false as const,
   };
 }
+
+/** Review-only ordinary-loss coordination model. Section172 capacity and the
+ * cumulative Section56 ordinary ceiling are separate constraints: applying
+ * ninety percent to income after earlier actual deductions would spend the
+ * ceiling incorrectly. Earlier MODEL absorption spends the cumulative ceiling.
+ * This statutory inference has no worked modern mixed-vintage IRS confirmation;
+ * it cannot establish legal carry availability or admit a filing claim. */
+export function calculateForm172ModernAmtOrdinaryAbsorptionWorkpaper(
+  rawCap: unknown,
+  rawVintageReviews: unknown,
+) {
+  const capacities = calculateForm172ModernAmtSection172Capacity(
+    rawCap,
+    rawVintageReviews,
+  );
+  let earlierModelAbsorbed = 0;
+  const applications = capacities.chronologicalReviewedCapacities.map((row) => {
+    const section56ModifiedBase = positive(
+      row.signedModifiedAmtiBeforeEarlierAtnold,
+    );
+    const section56OrdinaryCeiling = ninetyPercent(section56ModifiedBase);
+    const remainingSection56Capacity = positive(
+      section56OrdinaryCeiling - earlierModelAbsorbed,
+    );
+    const modelAbsorbed = Math.min(
+      row.reviewedOpening,
+      row.section172Capacity,
+      remainingSection56Capacity,
+    );
+    const result = {
+      ...row,
+      section56ModifiedBase,
+      section56OrdinaryCeiling,
+      earlierModelAbsorbed,
+      remainingSection56Capacity,
+      modelAbsorbed,
+      modelRemaining: row.reviewedOpening - modelAbsorbed,
+    };
+    earlierModelAbsorbed += modelAbsorbed;
+    if (!Number.isSafeInteger(earlierModelAbsorbed)) {
+      throw new Error("Modern AMT model absorption exceeds exact dollars");
+    }
+    return result;
+  });
+  const totalModelRemaining = applications.reduce(
+    (sum, row) => sum + row.modelRemaining,
+    0,
+  );
+  if (!Number.isSafeInteger(totalModelRemaining)) {
+    throw new Error("Modern AMT model remaining losses exceed exact dollars");
+  }
+  return {
+    applicationYear: capacities.applicationYear,
+    originalDeductionCap: capacities.originalDeductionCap,
+    annualSection172IncomeBase: capacities.annualSection172IncomeBase,
+    annualAbsorptionReduction: capacities.annualAbsorptionReduction,
+    chronologicalModelApplications: applications,
+    totalModelAbsorbed: earlierModelAbsorbed,
+    totalModelRemaining,
+    ordinaryCoordinationModelArithmeticReconciled: true as const,
+    legalSection172Section56CoordinationVerified: false as const,
+    specialAmtCategoriesReconciled: false as const,
+    openingAmtCarryAvailabilityVerified: false as const,
+    refiguredOperandEligibilityVerified: false as const,
+    completeCarryHistoryVerified: false as const,
+    survivingAcceptedCarryVerified: false as const,
+    sourceAuthenticityVerified: false as const,
+    priorAcceptanceVerified: false as const,
+    filingReady: false as const,
+  };
+}

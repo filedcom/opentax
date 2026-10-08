@@ -4,7 +4,10 @@ import {
 } from "./form172_amt_annual_limit.ts";
 import { calculateForm172ModernAmtModifiedIncome } from "./form172_amt_modified_income.ts";
 import { calculateForm172ModernAmtVintageModifiedIncome } from "./form172_amt_vintage_modified_income.ts";
-import { calculateForm172ModernAmtSection172Capacity } from "./form172_amt_historical_absorption.ts";
+import {
+  calculateForm172ModernAmtOrdinaryAbsorptionWorkpaper,
+  calculateForm172ModernAmtSection172Capacity,
+} from "./form172_amt_historical_absorption.ts";
 import { z } from "zod";
 import {
   type SourceDocumentBytes,
@@ -217,5 +220,21 @@ export function stageForm172ModernAmtSection172CapacitySource(
       vintage_reviews: z.unknown(),
     }).passthrough().parse(raw);
     return calculateForm172ModernAmtSection172Capacity(cap, vintage_reviews);
+  }, modernBindingSchema);
+}
+
+/** Retained bytes bind an explicitly unverified coordination model only. */
+export function stageForm172ModernAmtOrdinaryAbsorptionWorkpaperSource(
+  rawBinding: unknown,
+  rawDocuments: readonly SourceDocumentBytes[],
+) {
+  return stageHistoricalAmtSource(rawBinding, rawDocuments, (raw) => {
+    const { vintage_reviews, ...cap } = z.object({
+      vintage_reviews: z.unknown(),
+    }).passthrough().parse(raw);
+    return calculateForm172ModernAmtOrdinaryAbsorptionWorkpaper(
+      cap,
+      vintage_reviews,
+    );
   }, modernBindingSchema);
 }

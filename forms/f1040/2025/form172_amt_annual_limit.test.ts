@@ -2,10 +2,14 @@ import {
   stageForm172ModernAmtCapSource,
   stageForm172ModernAmtDeductionAllocationSource,
   stageForm172ModernAmtModifiedIncomeSource,
+  stageForm172ModernAmtOrdinaryAbsorptionWorkpaperSource,
   stageForm172ModernAmtSection172CapacitySource,
   stageForm172ModernAmtVintageModifiedIncomeSource,
 } from "./form172_amt_historical_cap_source.ts";
-import { calculateForm172ModernAmtSection172Capacity } from "./form172_amt_historical_absorption.ts";
+import {
+  calculateForm172ModernAmtOrdinaryAbsorptionWorkpaper,
+  calculateForm172ModernAmtSection172Capacity,
+} from "./form172_amt_historical_absorption.ts";
 import { calculateForm172ModernAmtVintageModifiedIncome } from "./form172_amt_vintage_modified_income.ts";
 import { calculateForm172ModernAmtModifiedIncome } from "./form172_amt_modified_income.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
@@ -1350,4 +1354,97 @@ Deno.test("Modern AMT retained source owns caller binding and bytes before first
   assertEquals(r.annualAbsorptionReduction, 10140);
   assertEquals(r.reviewPackageBytesVerified, true);
   assertEquals(r.packetAdmissionVerified, false);
+});
+
+Deno.test("Modern AMT ordinary model keeps cumulative90 capacity separate from section172 and actual deductions", () => {
+  const { cap, reviews } = modernVintage();
+  const r = calculateForm172ModernAmtOrdinaryAbsorptionWorkpaper(cap, reviews);
+  assertEquals(
+    r.chronologicalModelApplications.map((l) => [
+      l.originYear,
+      l.earlierActualDeduction,
+      l.earlierModelAbsorbed,
+      l.section172Capacity,
+      l.section56OrdinaryCeiling,
+      l.remainingSection56Capacity,
+      l.modelAbsorbed,
+      l.modelRemaining,
+    ]),
+    [
+      [2016, 0, 0, 102860, 101700, 101700, 0, 0],
+      [2017, 0, 0, 103860, 102600, 102600, 50000, 0],
+      [2019, 50000, 50000, 54860, 103500, 53500, 53500, 6500],
+      [2020, 90560, 103500, 15300, 104400, 900, 900, 39100],
+    ],
+  );
+  assertEquals(r.originalDeductionCap, 90560);
+  assertEquals(r.totalModelAbsorbed, 104400);
+  assertEquals(r.totalModelRemaining, 45600);
+  assertEquals(r.ordinaryCoordinationModelArithmeticReconciled, true);
+  assertEquals(r.legalSection172Section56CoordinationVerified, false);
+  assertEquals(r.survivingAcceptedCarryVerified, false);
+  assertEquals(r.filingReady, false);
+  assertEquals(
+    calculateForm172ModernAmtOrdinaryAbsorptionWorkpaper(cap, {
+      ...reviews,
+      vintages: [...reviews.vintages].reverse(),
+    }),
+    r,
+  );
+});
+Deno.test("Modern AMT ordinary model section172 limit binds independently and negative contexts consume zero", () => {
+  const { cap, reviews } = modernVintage();
+  const third = reviews.vintages.find((v) => v.origin_year === 2019)!;
+  third.modified_review.components.find((c) => c.line === "1")!
+    .refigured_amount -= 30000;
+  const last = reviews.vintages.find((v) => v.origin_year === 2020)!;
+  last.modified_review.components.find((c) => c.line === "1")!
+    .refigured_amount = -100000;
+  const r = calculateForm172ModernAmtOrdinaryAbsorptionWorkpaper(cap, reviews);
+  assertEquals(r.chronologicalModelApplications[2].section172Capacity, 24860);
+  assertEquals(
+    r.chronologicalModelApplications[2].remainingSection56Capacity,
+    26500,
+  );
+  assertEquals(r.chronologicalModelApplications[2].modelAbsorbed, 24860);
+  assertEquals(r.chronologicalModelApplications[3].section56ModifiedBase, 0);
+  assertEquals(r.chronologicalModelApplications[3].modelAbsorbed, 0);
+  assertEquals(r.chronologicalModelApplications[3].modelRemaining, 40000);
+  assertEquals(r.totalModelAbsorbed, 74860);
+});
+Deno.test("Modern AMT ordinary model rejects stale prior actual deductions and original operand changes", () => {
+  const { cap, reviews } = modernVintage();
+  reviews.vintages[0].earlier_nol_deductions[1].amount += 1;
+  assertThrows(() =>
+    calculateForm172ModernAmtOrdinaryAbsorptionWorkpaper(cap, reviews)
+  );
+  const fresh = modernVintage();
+  fresh.reviews.vintages[0].modified_review.components[0].original_amount += 1;
+  assertThrows(() =>
+    calculateForm172ModernAmtOrdinaryAbsorptionWorkpaper(
+      fresh.cap,
+      fresh.reviews,
+    )
+  );
+});
+Deno.test("Modern AMT ordinary coordination model binds retained bytes without admitting accepted carry", async () => {
+  const { cap, reviews } = modernVintage();
+  const packageData = { ...cap, vintage_reviews: reviews };
+  const p = await modernRetained(packageData);
+  const r = await stageForm172ModernAmtOrdinaryAbsorptionWorkpaperSource(
+    p.binding,
+    p.documents,
+  );
+  assertEquals(r.totalModelAbsorbed, 104400);
+  assertEquals(r.reviewPackageBytesVerified, true);
+  assertEquals(r.legalSection172Section56CoordinationVerified, false);
+  assertEquals(r.sourceAuthenticityVerified, false);
+  assertEquals(r.filingReady, false);
+  p.documents[0].bytes[0] ^= 1;
+  await assertRejects(() =>
+    stageForm172ModernAmtOrdinaryAbsorptionWorkpaperSource(
+      p.binding,
+      p.documents,
+    )
+  );
 });
