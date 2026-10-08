@@ -1406,6 +1406,7 @@ class F1040Node extends TaxNode<typeof inputSchema> {
       };
     return {
       outputs: [{ nodeType: this.nodeType, fields: assembled }],
+      replayInput: structuredClone(input),
       finalizations: [
         ...(retirement
           ? [{

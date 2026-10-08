@@ -52,6 +52,34 @@ const creditFields = {
   "6m": ["line6m_prev_owned_clean_vehicle_credit"],
 } as const;
 
+export function form8801CurrentReturnWorkpaper(
+  current1040: Readonly<Record<string, unknown>>,
+  current6251: Readonly<Record<string, unknown>>,
+  schedule3: Readonly<Record<string, unknown>>,
+  reference: string,
+) {
+  const credits = Object.entries(creditFields).map(([key, fields]) => ({
+    key: key as keyof typeof creditFields,
+    amount: fields.reduce((total, field) => total + sum(schedule3[field]), 0),
+  }));
+  if (
+    credits.reduce((total, row) => total + row.amount, 0) !==
+      sum(current1040.line20_nonrefundable_credits)
+  ) {
+    throw new Error(
+      "Form 8801 Schedule 3 credits differ from public Form 1040 line 20",
+    );
+  }
+  return {
+    reference,
+    form1040_line16: sum(current1040.line16_income_tax),
+    schedule2_line1z: sum(current1040.credit_limit_schedule2_line1z),
+    form1040_line19: sum(current1040.line19_child_tax_credit),
+    form6251_line9: sum(current6251.net_tmt),
+    schedule3_credits: credits,
+  };
+}
+
 /** Byte-bound reviewed workpapers → public pre-credit capacity → line arithmetic.
  * Package bytes are canonical JSON review records, not filed-return copies.
  * No credit is inserted in the public return; filing/acceptance remain false. */
@@ -113,31 +141,17 @@ export async function stageForm8801ReviewedReturnCalculation(
     throw new Error("Form 8801 requires calculated current Form 6251 line 9");
   }
   const schedule3 = pending.schedule3 ?? {};
-  const credits = Object.entries(creditFields).map(([key, fields]) => ({
-    key: key as keyof typeof creditFields,
-    amount: fields.reduce((total, field) => total + sum(schedule3[field]), 0),
-  }));
   if (sum(schedule3.line6b_prior_year_min_tax_credit) !== 0) {
     throw new Error(
       "Form 8801 pre-credit return already includes minimum-tax credit",
     );
   }
-  if (
-    credits.reduce((total, row) => total + row.amount, 0) !==
-      sum(current1040.line20_nonrefundable_credits)
-  ) {
-    throw new Error(
-      "Form 8801 Schedule 3 credits differ from public Form 1040 line 20",
-    );
-  }
-  const currentReturn = {
-    reference: binding.current_return_reference,
-    form1040_line16: sum(current1040.line16_income_tax),
-    schedule2_line1z: sum(current1040.credit_limit_schedule2_line1z),
-    form1040_line19: sum(current1040.line19_child_tax_credit),
-    form6251_line9: sum(current6251.net_tmt),
-    schedule3_credits: credits,
-  };
+  const currentReturn = form8801CurrentReturnWorkpaper(
+    current1040,
+    current6251,
+    schedule3,
+    binding.current_return_reference,
+  );
   const calculation = calculateForm8801({
     ...source,
     current_return: currentReturn,
@@ -146,6 +160,9 @@ export async function stageForm8801ReviewedReturnCalculation(
     ...calculation,
     current_return_workpaper: currentReturn,
     current_form1040_before_credit: current1040,
+    public_pending_before_credit: pending,
+    public_return_replay_input: execution.replayInputs?.f1040,
+    reviewed_calculation_source: source,
     current_form6251: current6251,
     review_package_manifest: verified.manifest,
     reviewPackageBytesVerified: true as const,

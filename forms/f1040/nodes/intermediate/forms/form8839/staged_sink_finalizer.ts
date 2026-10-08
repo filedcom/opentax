@@ -89,6 +89,7 @@ export function finalizeStagedForm8839Sink(
     preAdoption1040: pre.preAdoptionForm1040,
     credit: adoption,
     final1040,
+    finalInput,
     finalSchedule3,
   } as const;
 }

@@ -203,6 +203,10 @@ export function applyForm8621QefRefigure(
   );
   return {
     ...full,
+    replayInputs: {
+      ...full.replayInputs,
+      f1040: f1040.inputSchema.parse(sinkInput),
+    },
     pending: {
       ...full.pending,
       f1040: {

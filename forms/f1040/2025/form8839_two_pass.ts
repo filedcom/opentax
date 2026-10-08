@@ -79,6 +79,7 @@ export function executeForm8839TwoPass(
   }
   return {
     ...pre,
+    replayInputs: { ...pre.replayInputs, f1040: settled.finalInput },
     pending: {
       ...pre.pending,
       form8839: source,

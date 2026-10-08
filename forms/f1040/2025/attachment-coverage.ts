@@ -140,6 +140,7 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
     exportKinds: ["mef", "pdf"],
     reason: "Form 8801 prior minimum-tax credit requires a native attachment",
     isActive: (fields) =>
+      fields.staged_official_credit === true ||
       positive(fields.prior_year_amt_paid) ||
       positive(fields.prior_year_carryforward),
   },
