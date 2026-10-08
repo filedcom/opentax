@@ -1,8 +1,9 @@
+import { stageForm172HistoricalAmtHistorySource } from "./form172_amt_historical_history_source.ts";
 import { calculateForm172HistoricalAmtHistory } from "./form172_amt_historical_history.ts";
 import { calculateForm172HistoricalAmtAbsorption } from "./form172_amt_historical_absorption.ts";
 import { calculateForm172HistoricalAmtVintageModifiedIncome } from "./form172_amt_vintage_modified_income.ts";
 import { calculateForm172HistoricalAmtModifiedIncome } from "./form172_amt_modified_income.ts";
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import {
   calculateForm172HistoricalAmtCap,
   calculateForm172HistoricalAmtDeductionAllocation,
@@ -1034,4 +1035,160 @@ Deno.test("Historical AMT history admits a newly originating loss only with its 
     Error,
     "preceding loss-year annual return",
   );
+});
+
+async function historyDigest(bytes: Uint8Array) {
+  const digest = new Uint8Array(
+    await crypto.subtle.digest("SHA-256", new Uint8Array(bytes)),
+  );
+  return [...digest].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+async function boundHistory() {
+  const history = historyFixture();
+  const bytes = new TextEncoder().encode(JSON.stringify(history));
+  const binding = {
+    history: {
+      reference: history.reference,
+      sha256: await historyDigest(bytes),
+    },
+    start_tax_year: 2014,
+    end_tax_year: 2016,
+    taxpayer_ssn: "111223333",
+  };
+  return {
+    history,
+    binding,
+    documents: [{ reference: history.reference, bytes }],
+  };
+}
+Deno.test("Historical AMT retained history recomputes every year without admitting accepted carry", async () => {
+  const f = await boundHistory();
+  const r = await stageForm172HistoricalAmtHistorySource(
+    f.binding,
+    f.documents,
+  );
+  assertEquals(r.reviewedEndingBalances, [{ originYear: 2008, amount: 0 }, {
+    originYear: 2009,
+    amount: 0,
+  }]);
+  assertEquals(r.review_package_manifest, [f.binding.history]);
+  assertEquals(r.reviewPackageBytesVerified, true);
+  assertEquals(r.historicalSpanContinuityArithmeticReconciled, true);
+  assertEquals(r.completeCarryHistoryVerified, false);
+  assertEquals(r.acceptedCarryImportVerified, false);
+  assertEquals(r.electionDocumentAuthenticityVerified, false);
+  assertEquals(r.packetAdmissionVerified, false);
+  assertEquals(r.filingReady, false);
+});
+Deno.test("Historical AMT retained history rejects changed bytes and rehashed continuity conflicts", async () => {
+  const f = await boundHistory();
+  f.documents[0].bytes[0] ^= 1;
+  await assertRejects(() =>
+    stageForm172HistoricalAmtHistorySource(f.binding, f.documents)
+  );
+  for (
+    const mutate of [
+      (v: ReturnType<typeof historyFixture>) => {
+        v.annual_applications[1].cap_workpaper.losses[0]
+          .reviewed_opening_amt_nol = 109;
+      },
+      (v: ReturnType<typeof historyFixture>) => {
+        v.annual_applications.splice(1, 1);
+      },
+      (v: ReturnType<typeof historyFixture>) => {
+        v.annual_applications[1].cap_workpaper.losses[1]
+          .whbaa_election_reference = "changed-election";
+      },
+      (v: ReturnType<typeof historyFixture>) => {
+        v.entry_reviews[0].reviewed_opening = 199;
+      },
+    ]
+  ) {
+    const g = await boundHistory();
+    mutate(g.history);
+    g.documents[0].bytes = new TextEncoder().encode(JSON.stringify(g.history));
+    g.binding.history.sha256 = await historyDigest(g.documents[0].bytes);
+    await assertRejects(() =>
+      stageForm172HistoricalAmtHistorySource(g.binding, g.documents)
+    );
+  }
+});
+Deno.test("Historical AMT retained history rejects mismatched span owner and document inventory", async () => {
+  const f = await boundHistory();
+  for (
+    const patch of [{ end_tax_year: 2015 }, { start_tax_year: 2013 }, {
+      taxpayer_ssn: "222334444",
+    }, { spouse_ssn: "222334444" }]
+  ) {
+    await assertRejects(
+      () =>
+        stageForm172HistoricalAmtHistorySource(
+          { ...f.binding, ...patch },
+          f.documents,
+        ),
+      Error,
+      "bound reference/span/owners",
+    );
+  }
+  await assertRejects(() =>
+    stageForm172HistoricalAmtHistorySource(f.binding, [])
+  );
+  await assertRejects(() =>
+    stageForm172HistoricalAmtHistorySource(f.binding, [
+      ...f.documents,
+      ...f.documents,
+    ])
+  );
+  await assertRejects(() =>
+    stageForm172HistoricalAmtHistorySource(f.binding, [...f.documents, {
+      reference: "extra",
+      bytes: new Uint8Array([1]),
+    }])
+  );
+});
+Deno.test("Historical AMT retained history rejects noncanonical duplicate-key BOM and invalid UTF8 packages", async () => {
+  const f = await boundHistory();
+  const text = new TextDecoder().decode(f.documents[0].bytes);
+  for (
+    const bytes of [
+      new TextEncoder().encode(" " + text),
+      new TextEncoder().encode(
+        text.replace(
+          '"reference":"historical-span"',
+          '"reference":"historical-span","reference":"historical-span"',
+        ),
+      ),
+      new Uint8Array([0xef, 0xbb, 0xbf, ...f.documents[0].bytes]),
+      new Uint8Array([0xff]),
+    ]
+  ) {
+    const binding = {
+      ...f.binding,
+      history: { ...f.binding.history, sha256: await historyDigest(bytes) },
+    };
+    await assertRejects(() =>
+      stageForm172HistoricalAmtHistorySource(binding, [{
+        reference: f.history.reference,
+        bytes,
+      }])
+    );
+  }
+});
+Deno.test("Historical AMT retained history snapshots caller binding and every byte before first await", async () => {
+  const f = await boundHistory();
+  const digest = f.binding.history.sha256;
+  const promise = stageForm172HistoricalAmtHistorySource(
+    f.binding,
+    f.documents,
+  );
+  f.binding.history.sha256 = "0".repeat(64);
+  f.binding.end_tax_year = 2015;
+  f.binding.taxpayer_ssn = "999887777";
+  f.documents[0].bytes.fill(0);
+  f.documents[0].reference = "other";
+  f.documents.length = 0;
+  const r = await promise;
+  assertEquals(r.review_package_manifest[0].sha256, digest);
+  assertEquals(r.endYear, 2016);
+  assertEquals(r.taxpayerSsn, "111223333");
 });
