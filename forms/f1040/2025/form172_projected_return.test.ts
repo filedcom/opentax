@@ -1149,3 +1149,59 @@ Deno.test("Form172 modified carry income refigures SSA independently of post-NOL
     "section1202",
   );
 });
+
+Deno.test("Form172 carry-use medical deduction stays distinct from post-NOL itemized deduction", async () => {
+  const f = await fixture();
+  f.inputs.f1099b = [{
+    recipient_ssn: "111223333",
+    payer_tin: "123456789",
+    account_number: "SYNTHETIC",
+    source_document_reference: "synthetic-loss-statement",
+    transaction_id: "loss-sale",
+    part: "A",
+    description: "Synthetic stock",
+    date_acquired: "2025-01-01",
+    date_sold: "2025-07-01",
+    proceeds: 1000,
+    cost_basis: 6000,
+  }];
+  f.inputs.schedule_a = { line_1_medical: 20000, force_itemized: true };
+  const a: Record<string, any> = f.currentReview.annual_review;
+  a.agi = 47000;
+  a.deduction_method = "itemized";
+  a.standard_or_itemized_deduction = 16475;
+  a.reported_taxable_income = 30525;
+  a.capital_loss_deduction.amount = 3000;
+  a.refigured_itemized_deduction = {
+    reference: "modified medical deduction",
+    amount: 16250,
+  };
+  const update = async () => {
+    const bytes = new TextEncoder().encode(JSON.stringify(f.currentReview));
+    f.documents[2] = { reference: f.currentReview.reference, bytes };
+    f.binding.current_review.sha256 = await sha(bytes);
+  };
+  await update();
+  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents);
+  assertEquals(r.current_form1040_before_nol.line12c_deduction_total, 16475);
+  assertEquals(r.currentAnnualCalculation.modifiedAgi, 50000);
+  assertEquals(r.currentAnnualCalculation.refiguredDeduction, 16250);
+  assertEquals(r.modified_income_pending.f1040.line12c_deduction_total, 16250);
+  assertEquals(r.currentAnnualCalculation.modifiedTaxableIncome, 33750);
+  assertEquals(r.deduction, 24420);
+  assertEquals(r.currentAnnualCalculation.absorbed, 27645);
+  assertEquals(r.projected_form1040.line11_agi, 22580);
+  assertEquals(
+    Math.round(Number(r.projected_form1040.line12c_deduction_total)),
+    18307,
+  );
+  assertEquals(r.currentModifiedIncomeGraphReconciled, true);
+  assertEquals(r.filingReady, false);
+  a.refigured_itemized_deduction.amount = 16475;
+  await update();
+  await assertRejects(
+    () => stageForm172ProjectedReturn(f.inputs, f.binding, f.documents),
+    Error,
+    "deductions",
+  );
+});
