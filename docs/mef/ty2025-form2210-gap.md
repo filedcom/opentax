@@ -1,5 +1,34 @@
 # TY2025 Form 2210 mandatory filing paths
 
+## October 8 regular-method native document checkpoint
+
+Root `24ebb65a0` adds `stageForm2210RegularNativeDocument`, an unregistered
+native prerequisite for the existing simultaneous D/E source branch. It
+re-executes the public-return/payment/prior-byte chain and emits Part I,
+both reasons, every represented regular-method Part III cell, and line 19
+in TY2025 IRS2210 schema order. Its line 19 rounds the exact rational directly
+to whole dollars; $101.499555... remains $101 even though the cent worksheet
+rounds to $101.50. The default fixture projects $102 from $101.55.
+
+Seven normal typed modules passed **65/0**, with **one standalone IRS2210
+document XSD validation**. All 2,636 runtime paths match the retained test
+manifest. The newer full phase batch is pending; the previous 12,388/0
+result still covers only the older 2,631-path baseline. No complete return
+XSD packet or rendered PDF was added. The document has 39 emitted fields;
+the regular schema section has 42, including the three unused A/B/C reasons.
+
+The staging API accepts source facts, not caller-supplied computed lines.
+It rejects detached totals, prior-byte changes and nonbeneficial elections.
+Its new document contract excludes return-balance rows because future 44's
+filing-date evidence is deferred; the existing calculator/date handler stays
+unchanged. The XML fragment remains unregistered, no Form 1040 line 38 is
+inserted, and both public exporters remain guarded. PDF, full filing/return
+reconciliation, source/payment authentication, wider methods and IRS proof
+remain open. `filingReady` stays false. Private evidence:
+`form2210-regular-native-20261008-v1/`; see the
+[execution journal](ty2025-readiness-execution-2026-10-07.md).
+
+
 ## October 8 actual-withholding comparison checkpoint
 
 Integrated `e8f745d93` (candidate `d8b9ee261`) extends the unregistered

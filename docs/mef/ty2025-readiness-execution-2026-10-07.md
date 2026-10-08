@@ -4801,3 +4801,46 @@ Main 52 unchecked rows remain frozen; 44 future rows remain deferred.
 Numeric binding does not authenticate source/payment origin or prior IRS
 acceptance. Filing readiness, full native/PDF, business rules and ATS remain
 open. No new packet, rendered page, XSD pass or IRS acknowledgment is counted.
+
+
+### October 8 — Source-derived regular Form 2210 native prerequisite
+
+After compacting learnings, continued the existing Form 2210 task with
+`stageForm2210RegularNativeDocument`; root runtime commit `24ebb65a0`.
+The API recomputes the source/public-return/prior-byte chain and projects
+Part I, D/E reasons and every represented regular-method Part III cell in
+schema order. Reviewed the retained TY2025v5.4 IRS2210 schema: 42 regular
+fields, 39 emitted after omitting unused A/B/C filing reasons. Schema does
+not represent line 12, shaded A cells or D lines 16/18. The exact rational
+penalty is rounded directly to whole dollars for line 19; a constructed
+83-cent June estimated payment yields exact $101.499555... and line 19 $101,
+while the separate cent worksheet is $101.50. No double rounding is used.
+
+Normal typed seven-module command:
+`PATH=/tmp/opentax-poppler-env/bin:$PATH deno task test forms/f1040/2025/form2210_box_e_payment_return.test.ts forms/f1040/2025/form2210_payments.test.ts forms/f1040/2025/form2210_box_e.test.ts forms/f1040/2025/form2210_box_e_chain.test.ts forms/f1040/nodes/inputs/f2210/calculation.test.ts forms/f1040/nodes/inputs/f2210/index.test.ts forms/f1040/2025/attachment-coverage.test.ts`.
+Actual session 89643 terminal exit 0: **65 passed / 0 failed / 0 ignored**,
+1s Deno test duration; 03:44:28.505322–03:44:59.500174 UTC.
+Deno 2.9.4/V8 15.0.245.2-rusty/TypeScript 6.0.3; root lock unchanged.
+Three new checks cover represented native cells plus standalone xmllint
+validation, the exact-rounding boundary, and five detached source/prior-byte/
+method/balance variants. Both public attachment guards still reject.
+The preliminary one-module 8/0 check is not added to the final count.
+
+Private `form2210-regular-native-20261008-v1/` retains preflight, runner,
+log/status, schema-map review and integration. Test log SHA-256:
+`bdb05ee30337dd3c5e95a82768a84aad571573c6c02003833aa76093656d6c7f`.
+Review SHA-256:
+`dc573d932227ca9bd7363d6e38388a5f60251f2d8c927d187f7b9dc289afa371`.
+The first private schema-map selection also included AI line numbers; retained
+unchanged and superseded by v2 stopping before Schedule AI. It is not counted
+as 106 regular fields. All 2,636 tested runtime paths match after commit:
+one new native helper, one updated test, 2,634 unchanged paths. Older full
+12,388/0 covers only 2,631 baseline paths; newer full phase regression pending.
+
+This is **one standalone native-document XSD pass**, not a full return or
+filing packet pass. No PDF page, registration, IRS submission/acknowledgment
+or source authenticity is added. The new native contract excludes balance
+rows while the existing payment/date handler remains unchanged; future 44
+is deferred. No line 38 is inserted and filingReady remains false. Full PDF,
+final-return penalty reconciliation, broader methods and trusted source/IRS
+proof remain open. Main 52 rows stay frozen; all 44 future rows stay unworked.
