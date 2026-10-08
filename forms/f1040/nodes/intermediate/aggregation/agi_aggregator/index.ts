@@ -114,6 +114,8 @@ export const inputSchema = z.object({
   form8814_eic_line4: z.number().nonnegative().optional(),
 
   // ── Schedule 1 Part I — Additional income ─────────────────────────────────
+  // Internal sourced NOL projection; public carry intake remains guarded.
+  line8a_nol_deduction: z.number().int().nonnegative().optional(),
   // Line 1 — State and local income tax refunds (Form 1099-G)
   line1_state_refund: z.number().optional(),
   // Line 3 — Net profit or (loss) from business (Schedule C)
@@ -373,6 +375,7 @@ function computeSsaTaxable(
 // Sum all non-SSA income items before the IRC §469 limit is applied.
 function nonSsaIncomeBeforePal(input: AgiInput): number {
   return (
+    -(input.line8a_nol_deduction ?? 0) +
     sumField(input.line1a_wages as number | number[] | undefined) +
     sumField(input.line1b_household_wages) +
     sumField(input.line1h_other_earned) +
@@ -631,6 +634,7 @@ function nonSsaIncome(input: AgiInput): number {
 // This is what appears on Form 1040 line 8.
 function scheduleOnePartI(input: AgiInput): number {
   return (
+    -(input.line8a_nol_deduction ?? 0) +
     (input.line1_state_refund ?? 0) +
     (input.line2a_alimony_received ?? 0) +
     (input.line3_schedule_c ?? 0) +
