@@ -1,6 +1,6 @@
 # TY2025 Form 1040 product board
 
-> **MeF pass estimate — October 8, 2026:** **0 IRS ATS tests expected to pass by the original October 8 morning deadline (0% chance of obtaining acceptance in that window)**: the [IRS scheduled ATS outage](https://www.irs.gov/e-file-providers/modernized-e-file-operational-status) lasts through October 13, and no submitted/accepted scenarios or verified transmission credentials are retained. **Pass probability after reopening: not yet estimable** until source conflicts and matching business rules are resolved. Local checks are not IRS acceptance. Refresh this estimate as evidence changes.
+> **MeF pass estimate — October 8, 2026 (ATS status checked 00:04 UTC):** **0 IRS ATS tests expected to pass by the original October 8 morning deadline (0% chance of obtaining acceptance in that window)**: the [IRS scheduled ATS outage](https://www.irs.gov/e-file-providers/modernized-e-file-operational-status) lasts through October 13, and no submitted/accepted scenarios or verified transmission credentials are retained. **Pass probability after reopening: not yet estimable** until source conflicts and matching business rules are resolved. Local checks are not IRS acceptance. Refresh this estimate as evidence changes.
 
 ## Compacted learnings — October 8, 2026
 

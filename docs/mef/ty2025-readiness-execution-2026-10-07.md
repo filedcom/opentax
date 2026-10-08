@@ -4457,3 +4457,15 @@ for that comment reconciliation; no source or test was changed. This finding
 does not authenticate sources, approve all loss routes or prove IRS acceptance.
 The root full regression remains live in session 41991; staged full execution
 still waits for its terminal success. No tests or reviewed pages are recounted.
+
+### October 8 — ATS status refresh at 00:04 UTC
+
+Reopened the [IRS operational-status page](https://www.irs.gov/e-file-providers/modernized-e-file-operational-status)
+at 00:04:09 UTC. It still reports ATS unavailable through October 13 at 09:00
+Eastern and announces TY2026 testing from 09:01. It does not establish TY2025
+availability after that point. Updated only the board estimate's observation
+timestamp: zero expected accepted ATS tests by the original deadline, and no
+estimated pass probability after reopening. No acknowledgment or credential
+evidence was added. The observation is retained privately in
+`ats-status-20261008T000409Z-v1/observation.json`. Main scope and all 42 future
+rows remain unchanged and unworked; the root full regression remains live.
