@@ -1,6 +1,7 @@
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { f1040_2025 } from "./index.ts";
 import {
+  passiveSCorpCombinedLossReturnInputs,
   passiveSCorpJointLossReturnInputs,
   passiveSCorpLossReturnInputs,
 } from "./eic_passive_s_corp_loss.fixture.ts";
@@ -11,7 +12,50 @@ const xsd = new URL(
   "../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
   import.meta.url,
 ).pathname;
-const cases = [
+const cases: Array<
+  {
+    id: string;
+    inputs: () => Record<string, unknown>;
+    allowed: number;
+    basis: number;
+    combined?: { agi: number; investment: number; credit: number };
+  }
+> = [
+  ...[1000, 4000].flatMap((cash) =>
+    [500, 3000, 5000].flatMap((income) =>
+      [11950, 11951].map((investment) => ({
+        id: `combined-single-${cash}-${income}-${investment}`,
+        inputs: () =>
+          passiveSCorpCombinedLossReturnInputs(cash, income, investment),
+        allowed: Math.min(cash, 4000, income),
+        basis: Math.max(0, 4000 - cash),
+        combined: {
+          agi: 5005 + Math.max(0, income - Math.min(cash, 4000)),
+          investment,
+          credit: investment === 11950 ? 384 : 0,
+        },
+      }))
+    )
+  ),
+  ...["primary", "spouse"].flatMap((owner) =>
+    [11950, 11951].map((investment) => ({
+      id: `combined-joint-${owner}-${investment}`,
+      inputs: () =>
+        passiveSCorpCombinedLossReturnInputs(
+          1000,
+          3000,
+          investment,
+          owner as "primary" | "spouse",
+        ),
+      allowed: 1000,
+      basis: 3000,
+      combined: {
+        agi: 12005,
+        investment,
+        credit: investment === 11950 ? 649 : 0,
+      },
+    }))
+  ),
   ...[
     [1000, 0],
     [1000, 500],
@@ -42,6 +86,15 @@ for (const c of cases) {
   Deno.test(`Complete passive source native return ${c.id} retains basis/PAL/QBI copies and passes Return1040 XSD`, async () => {
     const r = f1040_2025.executeReturn(c.inputs());
     assertEquals(r.diagnostics, []);
+    if (c.combined) {
+      assertEquals(r.pending.f1040.line11_agi, c.combined.agi);
+      assertEquals(
+        r.pending.eitc.investment_income_floor,
+        c.combined.investment,
+      );
+      assertEquals(r.pending.f1040.line27_eitc ?? 0, c.combined.credit);
+    }
+
     const p = buildPending(r.pending),
       filer = extractFilerIdentity(r.pending.f1040)!;
     const b = await buildMefBundle(p, { filer, attachments: [] });

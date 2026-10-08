@@ -6588,3 +6588,8 @@ Draft [PR65](https://github.com/filedcom/opentax/pull/65) was created, attached 
 ## October 8 — isolated PR65 integration
 
 The nine validated passive-loss commits were integrated into draft PR65 through a separate checkout based on492cde1f8. The complete2,722-path runtime manifest matches the444/0 focused gate exactly, while the root2,709-path regression snapshot remains unchanged. Root integration and the next serial full regression remain pending actual completion of session52874; no second full was launched. This publication adds reviewable source-to-native/PDF code to the already-created PR and changes no main/future scope or counts.
+
+
+## October 8, 14:15 UTC — combined-source complete export evidence
+
+The [passive-source record](ty2025-eic-passive-s-corp-loss-source.md) adds sixteen complete source/threshold returns with two passive partnership activities, taxable/exempt interest and dividends, including different-spouse sources. Exacttypedgate460/0 at14:14:33UTC supersedes444. Two original-bundle PDFs/all22pages reconcile zero above-limit singleEIC and649 at-limit jointrefund, properownedbasis/sharedforms anddistinctcarryovers; twenty alteredsource native/PDFcallsreject. BothpacketXMLs passwholeReturn1040XSD. Root2,709paths remainfrozen/full52874live; PRcandidate2,722matchesfocusedmanifest. Main52 unchanged; future57 adds onlystaleboundarycomments, unworked. Broader originalpassive/4797/history/authentication/BR/IRSacceptance scope remainsopen, with noaggregateaddition ormaincheckoff.

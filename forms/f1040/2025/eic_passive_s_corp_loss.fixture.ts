@@ -188,3 +188,45 @@ export function passiveSCorpJointLossReturnInputs(
   item.recipient_tin = item.eic_passive_activity_review.recipient_tin = owner;
   return i;
 }
+
+/** Combined current source contract; references are constructed, not authenticated bytes. */
+export function passiveSCorpCombinedLossReturnInputs(
+  cash: number,
+  income: number,
+  investment = 11950,
+  jointOwner?: "primary" | "spouse",
+) {
+  const i = jointOwner
+    ? passiveSCorpJointLossReturnInputs(jointOwner === "spouse", investment)
+    : passiveSCorpLossReturnInputs(cash, income, investment);
+  i.k1_partnership = [
+    passiveK1Item(
+      "partnership",
+      "box2",
+      income * 0.4,
+      "111223333",
+      "987654321",
+    ),
+    passiveK1Item(
+      "partnership",
+      "box3",
+      income * 0.6,
+      jointOwner ? "444556666" : "111223333",
+      "876543219",
+    ),
+  ];
+  i.f1099int[0].box8 = investment - Math.max(0, income - Math.min(cash, 4000)) -
+    5;
+  i.f1099int[0].box1 = 3;
+  i.f1099div = [{
+    payerName: "Constructed dividend issuer",
+    payerTin: "876543210",
+    source_document_reference: "Constructed 2025 dividend copy",
+    account_number: "DIV-2025",
+    recipient_tin: jointOwner ? "444556666" : "111223333",
+    isNominee: false,
+    box11: false,
+    box1a: 2,
+  }];
+  return i;
+}
