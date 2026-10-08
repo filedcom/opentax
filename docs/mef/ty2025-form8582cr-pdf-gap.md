@@ -326,3 +326,6 @@ Failed sharedv1 wrongform3800key, v2 missingexpected6251, v3 actualmissing8582CR
 
 
 October8 one-partnership passive new-markets packet: all18 retained pages reviewed;500 source credit joins Form8582-CR passive limit4,412, Form3800 PartIII1i/PartI3 and Form1040 amount owed1,367. Public/native replay reproduces XML exactly and full local XSD passes; recipient and amount conflicts reject. Worksheet9/PartV review-note claims are future-only metadata corrections; issuer authenticity and wider routes remain unproved. See [qualified evidence](ty2025-readiness-execution-2026-10-07.md).
+
+
+October8 mixed partnership/S-corporation review: all18 retained pages inspected;7,500 current credit allocates4,412 allowed/3,088 unallowed across distinct entity rows. Partnership allowed2,941/unallowed2,059 and S corporation1,471/1,029 reconcile independently with Worksheet8/9 arithmetic, two native/PDF PartV EIN rows and Form1040 refund2,545. Source recipient/omission conflicts reject, exact native replay/full XSD pass. Worksheets are retained arithmetic JSON, not printed/authenticated records; accepted carry and issuer authenticity remain unproved. See [qualified evidence](ty2025-readiness-execution-2026-10-07.md).
