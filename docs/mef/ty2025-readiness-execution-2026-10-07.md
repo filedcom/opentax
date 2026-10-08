@@ -6606,3 +6606,9 @@ Root fast-forwardedto387ab51c6 after488/0 actualfocusedgate. Its exact2,723-path
 
 
 The integrated serial full actually started **2026-10-08T14:28:22.736459+00:00**, taskhead0c72b9748, session32582, exact2,723 runtimepaths, Poppler retainedcache and8GiBheap. Priorfull52874 isterminal andmustnotberepolled; focused8804 isterminal488/0. This fullhas no terminalresultyet.
+
+## October 8 — existing passive-route audit reconciled, 14:35 UTC
+
+The existing registered-form audit, coverage queue, bundled audit and native/PDF parity now describe the admitted bounded first-year passive S-corporation route, including actual7203/8582/8995/ScheduleE/1040/EIC source/copy joins and durable acceptance-unverified PAL candidates. Historical calculation-only checkpoints remain chronological, while stale current material-participation-only and live-full summaries are corrected. Childless EIC cases do not certify qualifying-child ScheduleEIC coverage.
+
+Independent14:35:32UTC `passive-source-audit-reconciliation-20261008-v1/review.json` replays actual registry imports (152/148native,118/115PDF), verifies all2,723 runtime paths exactly match488/0 focused and the live14:28:22 serial-full snapshot, and rehashes45 XML pairs and15 archive pairs. All52 main checkboxes and57 deferred tasks remain unchanged. This documentation-only pass adds no tax test/PDF review, new runtime, permanent exclusion or broad checkoff. Session32582 remains live; actual terminal result will be recorded when it exits.
