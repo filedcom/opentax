@@ -21,19 +21,20 @@ existed are superseded by this audit.
 
 The public input still contains asserted loss-year amounts and asserted current
 taxable income. It does not consume these workpapers or establish their source
-eligibility. Root's **2,706 runtime paths** are frozen for the live regression;
-the isolated **2,709-path candidate** has additional historical/modern AMT work.
-Its latest focused result is **473/0**, with modern absorption and history
-explicitly labeled an unverified model. Neither branch has an admitted NOL
+eligibility. Root now includes the reviewed historical/modern AMT work on **2,709 runtime
+paths**, frozen for the new full regression started12:18UTC. The earlier
+2,706-path full run completed **12,722/0**; the integrated normal focused
+gate completed **473/0**, with modern absorption and history explicitly
+labeled an unverified model. Neither branch has an admitted NOL
 packet or retained IRS acceptance. Detailed bounded implementation evidence and
 historical checkpoints below do not override this current status.
 
 | Original requirement | Current evidence | Remaining proof |
 | --- | --- | --- |
 | Establish each loss vintage | Reviewed modern Part I and legacy origin helpers reconcile owner, return inventory, capital/business distinctions and adjustments; current-origin standalone native/PDF helpers recompute retained bytes. | Authentic loss-year returns, applicable source limitations/classification, complete vintage applicability and accepted source intake. |
-| Reconcile availability | Regular, mixed-farming and historical workpapers require chronological reviewed annual applications and derive carry/expiry arithmetic. Candidate adds historical AMT and consecutive modern model history. | Actual carryback eligibility and timely elections, accepted intervening returns/carry balances, applicable exceptions and marital allocations. Reviewed declarations and continuity cannot prove these. |
+| Reconcile availability | Regular, mixed-farming and historical workpapers require chronological reviewed annual applications and derive carry/expiry arithmetic. Integrated helpers add historical AMT and consecutive modern model history. | Actual carryback eligibility and timely elections, accepted intervening returns/carry balances, applicable exceptions and marital allocations. Reviewed declarations and continuity cannot prove these. |
 | Calculate 2025 regular deduction | Current-deduction source staging recomputes origin/history/current review; reviewed/projected-return stages reconcile a calculated pre-NOL return and rerun bounded Schedule1/AGI/1040 consequences. | Complete applicable multi-vintage/public route, all source-dependent compositions and refigures, authentic carry admission and final filing reconciliation. |
-| Refigure AMT | Separate origin, annual cap, per-vintage modified-income and graph-tentative-total workpapers exist. Candidate computes explicitly unverified modern section172/section56 absorption model operands and continuity. | Proved legal modern coordination, category/election/availability/source eligibility, accepted AMT carry, complete independent current ATNOLD and admitted Form6251 line2f. |
+| Refigure AMT | Separate origin, annual cap, per-vintage modified-income and graph-tentative-total workpapers exist. Integrated helpers compute explicitly unverified modern section172/section56 absorption model operands and continuity. | Proved legal modern coordination, category/election/availability/source eligibility, accepted AMT carry, complete independent current ATNOLD and admitted Form6251 line2f. |
 | Attach and reconcile | Current-origin PartI standalone XML/PDF exists; Schedule1 native/PDF line8a mappings exist. Root native/PDF descriptor arrays contain no Form172 registration, and both exports retain NOL guards. | Correct applicable Form172/historical attachment for each vintage, required PartII/carryback contents, regular/AMT/source joins, native/PDF/attachment admission, matching business rules, full visual review and IRS ATS acceptance. |
 
 Code inspected: `form172_current_deduction_source.ts`,
