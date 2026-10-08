@@ -1,5 +1,10 @@
 # TY2025 Form 8815: source-to-return gap
 
+## October8 current registered-audit reconciliation
+
+The [current bundled audit](ty2025-bundled-form-audit-reconciliation-2026-10-08.md) reconciles this form's current scope with actual native/PDF imports and retained terminal evidence. The completed October8 full run records **21 passed/0 failed/0 ignored across4 named modules**; all9 matching runtime paths still equal that tested snapshot. This is selected retained full-run evidence, not a new focused run, full-route support or fresh visual approval. Earlier dated authored/unrun statements below are historical; existing broader source, artifact and IRS requirements remain open. No original checkbox or future task is completed by this correction.
+
+
 Status: a bounded TY2025 Series EE exclusion route has current-source local
 XSD and filled-PDF evidence. The old calculation and MeF tags described below
 were the starting point and have been replaced. Wider source, IRS business-rule,

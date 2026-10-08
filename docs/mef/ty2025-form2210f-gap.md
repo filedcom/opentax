@@ -1,5 +1,10 @@
 # TY2025 Form 2210-F farmer/fisher underpayment gap
 
+## October8 current registered-audit reconciliation
+
+The [current bundled audit](ty2025-bundled-form-audit-reconciliation-2026-10-08.md) reconciles this form's current scope with actual native/PDF imports and retained terminal evidence. The completed October8 full run records **17 passed/0 failed/0 ignored across4 named modules**; all10 matching runtime paths still equal that tested snapshot. This is selected retained full-run evidence, not a new focused run, full-route support or fresh visual approval. Earlier dated authored/unrun statements below are historical; existing broader source, artifact and IRS requirements remain open. No original checkbox or future task is completed by this correction.
+
+
 ## Distinct current and prior return references (2026-10-05)
 
 The box-B calculator now rejects a 2025 joint-return reference reused as

@@ -1,5 +1,10 @@
 # TY2025 Form 7217 property-distribution gap
 
+## October8 current registered-audit reconciliation
+
+The [current bundled audit](ty2025-bundled-form-audit-reconciliation-2026-10-08.md) reconciles this form's current scope with actual native/PDF imports and retained terminal evidence. The completed October8 full run records **25 passed/0 failed/0 ignored across3 named modules**; all8 matching runtime paths still equal that tested snapshot. This is selected retained full-run evidence, not a new focused run, full-route support or fresh visual approval. Earlier dated authored/unrun statements below are historical; existing broader source, artifact and IRS requirements remain open. No original checkbox or future task is completed by this correction.
+
+
 Form 7217 has registered native `IRS7217` and December 2024 PDF projections for
 one partnership and distribution date per document. The public source checks
 Part I against Part II, routes a narrow sourced section 731 cash gain through

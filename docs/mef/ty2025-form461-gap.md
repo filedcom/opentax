@@ -1,5 +1,10 @@
 # TY2025 Form 461 source-to-filing gap
 
+## October8 current registered-audit reconciliation
+
+The [current bundled audit](ty2025-bundled-form-audit-reconciliation-2026-10-08.md) reconciles this form's current scope with actual native/PDF imports and retained terminal evidence. The completed October8 full run records **22 passed/0 failed/0 ignored across4 named modules**; all8 matching runtime paths still equal that tested snapshot. This is selected retained full-run evidence, not a new focused run, full-route support or fresh visual approval. Earlier dated authored/unrun statements below are historical; existing broader source, artifact and IRS requirements remain open. No original checkbox or future task is completed by this correction.
+
+
 Status: implementation audit, 2026-09-28. No new test batch, XSD validation, PDF
 rendering, IRS business-rule check, or ATS acceptance has run for this gap.
 
