@@ -546,3 +546,47 @@ expiry/amendment and owner history, accepted carry import, other source and
 calculation branches, packet integration, matching business rules and IRS
 acceptance remain open. No main checkoff or aggregate coverage increase
 follows; all future items remain unchanged and unworked.
+
+### October 8 — exclusion-only MTCNOL origin workpaper arithmetic
+
+The isolated candidate now calculates an individual's reviewed 2018–2025
+MTCNOL origin workpaper from exclusion-only AMT income, deductions and
+business/nonbusiness capital items. It derives the net capital gain or
+limited capital-loss deduction, recalculates the nonbusiness deduction limit,
+and applies the separate section 172(d) capital modifications. The basis
+contract requires personal exemptions removed, section 1202 exclusion restored
+to full gains and NOL/QBI deductions excluded. These are reviewed basis facts,
+not issuer/return authenticity. The calculation adapts the
+[Form 172 Part I workpaper arithmetic](https://www.irs.gov/pub/irs-pdf/f172.pdf)
+to the [Form 8801 exclusion-only instructions](https://www.irs.gov/instructions/i8801);
+it does not emit an ordinary Form 172 or replace regular/AMT NOL computation.
+
+A vintage can include this origin refigure. Owner/year must match the vintage,
+and its declared origin loss must equal the calculation before prior uses
+are deducted. Per-vintage origin arithmetic is recorded separately. A mixture
+of computed and entered-review origins cannot claim all origins refigured.
+Source-basis, legal eligibility, acceptance and filing flags remain unproved.
+There is no carry-expiry, amendment, spousal-allocation or section 172(b)(2)
+absorption inference from these arithmetic results; older-origin refiguring
+and complete raw-source classifications remain required by the original task.
+
+The normal typed twelve-module run passed **146/0, zero ignored**, including
+nine new origin/nonbusiness/capital/MFS/no-loss/source-conflict/vintage/public
+cases. The constructed gross 13,000 less deductions 90,000 yields preliminary
+loss 77,000, with nonbusiness deduction adjustment 17,000 producing MTCNOL
+60,000. Separate capital cases reconcile 3,000 versus MFS 1,500 deductions
+and capital-gain/nonbusiness-deduction interactions. A computed 2019 origin
+50,000 less reviewed prior uses 30,000 derives Form 8801 line 3 of 20,000;
+line 4 is 100,000, tax 3,718, current public credit 1,475 and carry 4,625.
+Changed origin amounts/owners/years and changed underlying items reject.
+Private `form8801-mtcnol-origin-20261008-v1/` retains source snapshots,
+2,658-path manifest, exit-zero log/status and review; log SHA:
+`97ad831bc2ce8c23c0a53745ff9ac6d9c0c01790066eec264c5ae9e867cb05ae`.
+
+All thirteen Form 8801 implementation commits remain isolated. Root's full
+regression was polled through its actual live session and independently
+matches all 2,637 startup runtime paths. Full source proof, all historic
+origin/carry/owner combinations, accepted import, packet integration, matching
+business rules, ATS acceptance and the other main requirements remain open.
+No main checkoff or aggregate coverage increase follows. The entire 47-item
+future section remains unchanged and unworked.
