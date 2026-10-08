@@ -56,6 +56,70 @@ export const form172AmtLegacyTentativeLines = [
   "26",
   "27",
 ] as const;
+/** Physical historical line vocabulary.2008 excludes ATNOLD28;2009 excludes
+ * ATNOLD12. Later layouts exclude11 instead. Never align them by array index. */
+export const form172AmtHistoricalPhysicalLines = [
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16",
+  "17",
+  "18",
+  "19",
+  "20",
+  "21",
+  "22",
+  "23",
+  "24",
+  "25",
+  "26",
+  "27",
+  "28",
+] as const;
+
+export function form172HistoricalAmtLayout(year: number) {
+  if (year === 2008) {
+    return {
+      tentativeLines: form172AmtHistoricalPhysicalLines.filter((line) =>
+        line !== "28"
+      ),
+      regularNolLine: "11" as const,
+      subtractionLines: ["6", "7", "8", "25"] as const,
+      section1202Line: "13" as const,
+    };
+  }
+  if (year === 2009) {
+    return {
+      tentativeLines: form172AmtHistoricalPhysicalLines.filter((line) =>
+        line !== "12"
+      ),
+      regularNolLine: "11" as const,
+      subtractionLines: ["6", "7", "8", "26"] as const,
+      section1202Line: "14" as const,
+    };
+  }
+  if (year >= 2010 && year <= 2017) {
+    return {
+      tentativeLines: form172AmtLegacyTentativeLines,
+      regularNolLine: "10" as const,
+      subtractionLines: ["6", "7", "25"] as const,
+      section1202Line: "13" as const,
+    };
+  }
+  throw new Error("Unsupported historical Form6251 application layout");
+}
 /** In 2025 line1a is an intermediate deduction subtotal, not another AMTI
  * contribution. Only line1b replaces the earlier line1 in the total. */
 export const form172Amt2025TentativeLines = [
@@ -67,7 +131,7 @@ const signedDollars = z.number().int().min(-1_000_000_000).max(1_000_000_000);
 const positiveDollars = z.number().int().min(0).max(1_000_000_000);
 export const form172AmtAnnualReviewSchema = z.object({
   reference: ref,
-  tax_year: z.number().int().min(2010).max(2025),
+  tax_year: z.number().int().min(2008).max(2025),
   taxpayer_ssn: z.string().regex(/^\d{9}$/),
   spouse_ssn: z.string().regex(/^\d{9}$/).optional(),
   form6251_reference: ref,
@@ -90,6 +154,7 @@ export const form172AmtAnnualReviewSchema = z.object({
         ...form172AmtTentativeLines,
         "1b",
         ...form172AmtLegacyTentativeLines,
+        ...form172AmtHistoricalPhysicalLines,
       ]),
       reference: ref,
       amount: z.number().int().min(-1_000_000_000).max(1_000_000_000),
@@ -122,7 +187,7 @@ export function calculateForm172AmtAnnualLimit(
   const requiredLines = v.tax_year === 2025
     ? form172Amt2025TentativeLines
     : v.tax_year < 2018
-    ? form172AmtLegacyTentativeLines
+    ? form172HistoricalAmtLayout(v.tax_year).tentativeLines
     : form172AmtTentativeLines;
   const lines = new Map(v.components.map((c) => [c.line, c.amount]));
   if (
@@ -174,8 +239,10 @@ export function calculateForm172AmtAnnualLimit(
   ) throw new Error("Annual section199 addback must be separately identified");
   if (
     historical
-      ? lines.get("6")! > 0 || lines.get("7")! > 0 || lines.get("10")! < 0 ||
-        lines.get("25")! > 0
+      ? form172HistoricalAmtLayout(v.tax_year).subtractionLines.some((line) =>
+        lines.get(line)! > 0
+      ) ||
+        lines.get(form172HistoricalAmtLayout(v.tax_year).regularNolLine)! < 0
       : lines.get("2b")! > 0 || lines.get("2e")! < 0 || lines.get("2s")! > 0
   ) {
     throw new Error(

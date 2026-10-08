@@ -1,7 +1,8 @@
 import { z } from "zod";
 import {
   form172AmtAnnualReviewSchema,
-  form172AmtLegacyTentativeLines,
+  form172AmtHistoricalPhysicalLines,
+  form172HistoricalAmtLayout,
 } from "./form172_amt_annual_limit.ts";
 import { calculateForm172HistoricalAmtCap } from "./form172_amt_historical_cap.ts";
 
@@ -11,7 +12,7 @@ const signed = z.number().int().min(-1_000_000_000).max(1_000_000_000);
 const reviewSchema = z.object({
   reference: ref,
   annual_reference: ref,
-  tax_year: z.number().int().min(2010).max(2017),
+  tax_year: z.number().int().min(2008).max(2017),
   taxpayer_ssn: z.string().regex(/^\d{9}$/),
   spouse_ssn: z.string().regex(/^\d{9}$/).optional(),
   filing_status: z.enum([
@@ -26,7 +27,7 @@ const reviewSchema = z.object({
   // modified-income amount itself is calculated, never accepted as an input.
   components: z.array(
     z.object({
-      line: z.enum(form172AmtLegacyTentativeLines),
+      line: z.enum(form172AmtHistoricalPhysicalLines),
       original_reference: ref,
       original_amount: signed,
       refigured_reference: ref,
@@ -102,12 +103,13 @@ export function calculateForm172HistoricalAmtModifiedIncome(
       "AMT modified-income review must match annual year and owners",
     );
   }
+  const layout = form172HistoricalAmtLayout(v.tax_year);
   const original = new Map(annual.components.map((row) => [row.line, row]));
   const lines = new Map(v.components.map((row) => [row.line, row]));
   if (
-    v.components.length !== form172AmtLegacyTentativeLines.length ||
-    lines.size !== form172AmtLegacyTentativeLines.length ||
-    form172AmtLegacyTentativeLines.some((line) => !lines.has(line))
+    v.components.length !== layout.tentativeLines.length ||
+    lines.size !== layout.tentativeLines.length ||
+    layout.tentativeLines.some((line) => !lines.has(line))
   ) {
     throw new Error(
       "AMT modified income needs each tentative component exactly once",
@@ -137,13 +139,14 @@ export function calculateForm172HistoricalAmtModifiedIncome(
     addRef(row.original_reference);
     addRef(row.refigured_reference);
   }
-  for (const line of ["6", "7", "25"] as const) {
+  for (const line of layout.subtractionLines) {
     if (lines.get(line)!.refigured_amount > 0) {
       throw new Error("AMT modified-income subtraction has an invalid sign");
     }
   }
   if (
-    lines.get("10")!.refigured_amount !== original.get("10")!.amount ||
+    lines.get(layout.regularNolLine)!.refigured_amount !==
+      original.get(layout.regularNolLine)!.amount ||
     (v.tax_year === 2017 && lines.get("2")!.refigured_amount !== 0) ||
     ([2011, 2012].includes(v.tax_year) &&
       lines.get("6")!.refigured_amount !== 0)
@@ -198,8 +201,10 @@ export function calculateForm172HistoricalAmtModifiedIncome(
     v.section1202_items.map((row) => row.amt_preference),
   );
   if (
-    lines.get("13")!.original_amount !== section1202Preference ||
-    lines.get("13")!.refigured_amount !== section1202Preference
+    lines.get(layout.section1202Line)!.original_amount !==
+      section1202Preference ||
+    lines.get(layout.section1202Line)!.refigured_amount !==
+      section1202Preference
   ) {
     throw new Error(
       "AMT section1202 preference differs from annual components",
