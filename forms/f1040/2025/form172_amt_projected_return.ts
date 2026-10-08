@@ -7,12 +7,16 @@ const claim = z.object({ reference: z.string(), sha256: z.string() });
 const regularEnvelope = z.object({ origin: claim }).passthrough();
 const amtEnvelope = z.object({ regular_origin: claim, annual: claim })
   .passthrough();
-function dollars(value: unknown): number {
+function scalar(value: unknown): number {
   if (value === undefined) return 0;
   if (typeof value !== "number" || !Number.isFinite(value)) {
     throw new Error("NOL AMT replay needs scalar calculated amounts");
   }
-  return Math.sign(value) * Math.round(Math.abs(value));
+  return value;
+}
+function dollars(value: unknown): number {
+  const n = scalar(value);
+  return Math.sign(n) * Math.round(Math.abs(n));
 }
 
 /** Retained independent AMT workpaper matched to the actual regular NOL replay.
@@ -88,19 +92,19 @@ export async function stageForm172AmtProjectedReturn(
       throw new Error(`AMT review ${name} differs from the projected Form1040`);
     }
   }
-  const components: Record<string, number> = {
-    "1b": dollars(a.regular_tax_income),
-    "2a": dollars(a.line2a_taxes_paid),
-    "2b": -dollars(a.line2b_tax_refund),
-    "2c": dollars(a.line2c_investment_interest),
-    "2d": dollars(a.line2d_depletion),
-    "2e": dollars(a.line2e_regular_nol),
-    "2g": dollars(a.private_activity_bond_interest),
-    "2h": dollars(a.qsbs_adjustment),
-    "2i": dollars(a.iso_adjustment),
-    "2j": dollars(a.line2j_estates_and_trusts),
-    "2k": dollars(a.line2k_disposition),
-    "2l": dollars(a.depreciation_adjustment),
+  const rawComponents: Record<string, number> = {
+    "1b": scalar(a.regular_tax_income),
+    "2a": scalar(a.line2a_taxes_paid),
+    "2b": -scalar(a.line2b_tax_refund),
+    "2c": scalar(a.line2c_investment_interest),
+    "2d": scalar(a.line2d_depletion),
+    "2e": scalar(a.line2e_regular_nol),
+    "2g": scalar(a.private_activity_bond_interest),
+    "2h": scalar(a.qsbs_adjustment),
+    "2i": scalar(a.iso_adjustment),
+    "2j": scalar(a.line2j_estates_and_trusts),
+    "2k": scalar(a.line2k_disposition),
+    "2l": scalar(a.depreciation_adjustment),
     // These positive adjustment paths have no complete registered calculation;
     // a nonzero reviewed component cannot stand in for that missing graph join.
     "2m": 0,
@@ -108,15 +112,21 @@ export async function stageForm172AmtProjectedReturn(
     "2r": 0,
     "2s": 0,
     "2t": 0,
-    "2o": dollars(a.line2o_circulation_costs),
-    "2p": dollars(a.line2p_long_term_contracts),
-    "2q": dollars(a.line2q_mining_costs),
-    "3": dollars(
-      (Number(a.line3_charitable_contribution_adjustment ?? 0)) +
-        Number(a.line3_form8864_income_exclusion ?? 0) +
-        Number(a.line3_houseboat_interest_addback ?? 0),
+    "2o": scalar(a.line2o_circulation_costs),
+    "2p": scalar(a.line2p_long_term_contracts),
+    "2q": scalar(a.line2q_mining_costs),
+    "3": scalar(
+      scalar(a.line3_charitable_contribution_adjustment) +
+        scalar(a.line3_form8864_income_exclusion) +
+        scalar(a.line3_houseboat_interest_addback),
     ),
   };
+  const rawTotal = Object.values(rawComponents).reduce((sum, v) => sum + v, 0);
+  const components: Record<string, number> = Object.fromEntries(
+    Object.entries(rawComponents).map((
+      [line, amount],
+    ) => [line, dollars(amount)]),
+  );
   for (const c of annual.components as { line: string; amount: number }[]) {
     if (components[c.line] !== c.amount) {
       throw new Error(
@@ -125,6 +135,15 @@ export async function stageForm172AmtProjectedReturn(
     }
   }
   const total = Object.values(components).reduce((sum, v) => sum + v, 0);
+  if (
+    a.amti_before_mfs_addition === undefined ||
+    scalar(a.nol_adjustment) !== 0 ||
+    total !== scalar(a.amti_before_mfs_addition)
+  ) {
+    throw new Error(
+      "AMT filed component total differs from the actual graph before MFS addition",
+    );
+  }
   if (total !== amt.tentativeAmtiBeforeAtnold) {
     throw new Error(
       "AMT reviewed total differs from calculated tentative components",
@@ -134,6 +153,8 @@ export async function stageForm172AmtProjectedReturn(
     ...projected,
     independent_amt_review: amt,
     calculated_tentative_amt_components: components,
+    calculated_tentative_amt_unrounded: rawTotal,
+    currentAmtTentativeTotalReconciled: true as const,
     currentAmtTentativeGraphReconciled: true as const,
     amtNolReconciled: false as const,
     currentAgiDependentRefiguresVerified: false as const,

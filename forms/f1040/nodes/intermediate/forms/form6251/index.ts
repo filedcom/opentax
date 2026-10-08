@@ -1365,6 +1365,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
           ...(basisRows.length > 0 ? { line2k_disposition: line2k } : {}),
           amtftc: filedAmtftc,
           amti,
+          amti_before_mfs_addition: computeAmtiBeforeMfsAddition(input),
           exemption,
           taxable_excess: taxableExcess,
           tentative_tax: tmt,

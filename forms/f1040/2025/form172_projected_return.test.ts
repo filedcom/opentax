@@ -989,3 +989,38 @@ Deno.test("Form172 interest composition rejects changed current workpaper and so
     )
   );
 });
+
+Deno.test("Form172 sourced interest and retained AMT review reconcile raw tentative total and filed components", async () => {
+  const f = await interestFixture();
+  const a = await amtSource(f);
+  a.annual.reviewed_form1040.line11b_agi = 80011;
+  a.annual.reviewed_form1040.line14_deductions = 28602;
+  a.annual.components.forEach((c) =>
+    c.amount = c.line === "1b"
+      ? 51409
+      : c.line === "2a"
+      ? 15750
+      : c.line === "2e"
+      ? 44000
+      : 0
+  );
+  const bytes = new TextEncoder().encode(JSON.stringify(a.annual));
+  a.documents[2] = { reference: a.annual.reference, bytes };
+  a.binding.annual.sha256 = await sha(bytes);
+  const r = await stageForm172AmtProjectedReturn(
+    f.inputs,
+    f.binding,
+    f.documents,
+    a.binding,
+    a.documents,
+  );
+  assertEquals(r.form8990NolOrderingReconciled, true);
+  assertEquals(r.currentAmtTentativeTotalReconciled, true);
+  assertEquals(r.currentAmtTentativeGraphReconciled, true);
+  assertEquals(r.calculated_tentative_amt_unrounded, 111158.8);
+  assertEquals(r.projected_pending.form6251.amti_before_mfs_addition, 111159);
+  assertEquals(r.independent_amt_review.tentativeAmtiBeforeAtnold, 111159);
+  assertEquals(r.independent_amt_review.ordinary90PercentLimit, 100043);
+  assertEquals(r.amtNolReconciled, false);
+  assertEquals(r.filingReady, false);
+});

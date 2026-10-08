@@ -103,3 +103,17 @@ Deno.test("NOL tentative AMT preserves before-exemption AMTI even when no tax is
     "line 2f",
   );
 });
+
+Deno.test("NOL tentative AMT records the filed component sum before MFS line4 addition", () => {
+  const input = form6251.inputSchema.parse({
+    filing_status: FilingStatus.MFS,
+    regular_tax_income: 990250.4,
+    regular_tax: 300000,
+    line2a_taxes_paid: 15750,
+    line2e_regular_nol: 44000,
+  });
+  const result = form6251.compute(ctx, input);
+  const form = result.outputs.find((o) => o.nodeType === "form6251")!.fields;
+  assertEquals(form.amti_before_mfs_addition, 1050000);
+  assertEquals(form.amti, 1087413);
+});
