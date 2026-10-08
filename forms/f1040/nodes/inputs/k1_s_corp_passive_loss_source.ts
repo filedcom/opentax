@@ -312,3 +312,35 @@ export function firstYearPassiveSCorpLossStages(
     filingRouteAdmitted: false as const,
   };
 }
+
+/** The activity enters §469 only after the independent basis/at-risk stage.
+ * This adapter does not post a Schedule E deduction or open an export route. */
+export function firstYearPassiveSCorpLoss8582Activity(
+  raw: unknown,
+  k1: PassiveSCorpLossK1Facts,
+) {
+  const source = firstYearPassiveSCorpLossSourceSchema.parse(raw);
+  const stages = firstYearPassiveSCorpLossStages(source, k1);
+  return {
+    stages,
+    activity: {
+      activity_id: source.activity_id,
+      name: source.activity_name,
+      activity_type: "B" as const,
+      property_type: 8,
+      reporting_form: "k1_s_corp" as const,
+      current_net: -stages.passiveLossBefore8582,
+      prior_unallowed_operating: 0,
+      prior_unallowed_4797_part1: 0,
+      prior_unallowed_4797_part2: 0,
+      first_year_activity_source: {
+        activity_id: source.activity_id,
+        activity_name: source.activity_name,
+        activity_acquired_on: source.stock_subscription.issued_on,
+        acquisition_document_reference:
+          source.stock_subscription.subscription_reference,
+        not_grouped_with_prior_activity: true as const,
+      },
+    },
+  };
+}
