@@ -6698,3 +6698,15 @@ The final migration CLI actually exited 0 against the complete 2,896-module grap
 ### Stable prerequisite gate — October 8, 17:17 UTC
 
 The focused prerequisite gate actually started at 17:05:28.767318 UTC and ended at 17:17:15.227450 UTC with exit 0: 482 passed and zero failed across all 38 changed test modules. All 3,189 runtime paths and 88 existing cache files remained unchanged. This verifies the finite 41 fail-closed prerequisite edits on retained positive fixtures; the selected harness unit gate remains 130/0. Log SHA256: `844fc9feedae74acabe2adda91c7fddebc2bf06eb01e62aa4e4c6808af8af12e`, retained with the terminal record in private `cycle2-all-testguards-stable-v1/`. The new integrated serial full has not yet launched. Main52, future59, production calculations and benchmark oracles remain unchanged.
+
+
+### Integrated serial full launched — October 8, 17:18 UTC
+
+After publishing `cf107ac7e69d3212072dfdf62d2f6c6e2e0594c8` to the same PR65 and fast-forwarding the root, the sole integrated serial full actually started at 17:18:37.402119 UTC. Its 3,189-path runtime is frozen for the run. Launch evidence is retained in private `root-organized-hardened-full-regression-20261008-v1/launch.json`. The run is active; its actual exit status, executed count and failure classification remain pending. This launch does not establish readiness or a full pass, and the earlier 482/0 focused and 130/0 selected gates retain their bounded scopes. Only documentation status changes after launch.
+
+
+### Form 4972 bounded evidence reconciliation — October 8
+
+The earlier 862/0 eight-module retry includes three passing participant-collection paper tests; the later 482/0 stable prerequisite gate includes all six partial-beneficiary NUA/death/estate/annuity tests, including full Return1040 XSD, cent-valued annuity and ten-year-only checks. More than two participant documents remain paper-only: ordinary native/PDF preparation still rejects them. The broad Form 4972 task remains unchecked.
+
+Read-only comparison retains all 16 held NUA digests, three template hashes and schema SHA256 `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`. Five held inputs/pending and PDFs match their current source counterparts, with historical review records covering 27 pages; this comparison does not replay the current graph or repeat visual/XSD verification. Five documented historical main XML hashes are not reproduced: current XML differs by ReturnTs and a final newline, and the named temporary 233/0 and held-check logs are absent. The artifacts and historical hashes are preserved; recovery is future-only item 60. Issuer/estate authentication, wider eligibility/elections, Schedule J/AMT, visual coverage, business rules and ATS remain open. Exact bounded audit-row/gap-note proposals remain private pending documentation reconciliation; neither target document was changed during the frozen full run. The integrated full remains running with actual terminal pending.
