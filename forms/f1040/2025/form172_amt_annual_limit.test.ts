@@ -1,3 +1,4 @@
+import { calculateForm172ModernAmtModifiedIncome } from "./form172_amt_modified_income.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateForm172AmtAnnualLimit,
@@ -694,4 +695,198 @@ Deno.test("Form172 modern allocation handles TY2025 zero income and oldest balan
       allocations: r.allocations,
     })
   );
+});
+function modernModified(cap = modernOrdinaryCap()) {
+  return {
+    reference: "modern-modified",
+    annual_reference: cap.annual_review.reference,
+    tax_year: cap.annual_review.tax_year,
+    taxpayer_ssn: cap.annual_review.taxpayer_ssn,
+    filing_status: "single",
+    before_all_atnold: true,
+    components: cap.annual_review.components.map((c) => ({
+      line: c.line,
+      original_reference: c.reference,
+      original_amount: c.amount,
+      refigured_reference: `modified-${c.line}`,
+      refigured_amount: c.amount,
+    })),
+    deductions: {
+      original_reference: cap.deductions_review.reference,
+      original_section199a:
+        cap.deductions_review.section199a_deduction_in_tentative_amti,
+      original_section250:
+        cap.deductions_review.section250_deduction_in_tentative_amti,
+      refigured_reference: "modified-deductions",
+      refigured_section199a: 0,
+      refigured_section250: 0,
+    },
+    amt_capital_items: [{
+      item_id: "capital-loss",
+      reference: "amt-capital-loss",
+      owner_ssn: "111223333",
+      kind: "loss",
+      amount: 10000,
+    }],
+    amt_capital_loss_deduction: {
+      reference: "amt-capital-deduction",
+      amount: 3000,
+    },
+    section1202_items: [{
+      item_id: "qsbs",
+      reference: "qsbs-review",
+      owner_ssn: "111223333",
+      excluded_gain: 10000,
+      amt_preference: 700,
+    }],
+  };
+}
+Deno.test("Modern modified AMTI adds independent capital QBI250 and remaining QSBS exclusion", () => {
+  const c = modernOrdinaryCap();
+  c.annual_review.components.find((l) => l.line === "2h")!.amount = 700;
+  c.deductions_review.section199a_deduction_in_tentative_amti = 10000;
+  const v = modernModified(c);
+  v.components[0].refigured_amount = 40000;
+  v.deductions.refigured_section199a = 12000;
+  v.deductions.refigured_section250 = 5000;
+  const r = calculateForm172ModernAmtModifiedIncome(c, v);
+  assertEquals(r.refiguredTentativeAmti, 90700);
+  assertEquals(r.capitalLossAddback, 3000);
+  assertEquals(r.section1202Addback, 9300);
+  assertEquals(r.signedModifiedAmtiBeforeEarlierNol, 120000);
+  assertEquals(r.originalDeductionCap, 80000);
+  assertEquals(r.section172Post2020AbsorptionAdjustmentReconciled, false);
+  assertEquals(r.amtCarryAbsorptionReconciled, false);
+  assertEquals(r.filingReady, false);
+});
+Deno.test("Modern modified AMTI reconciles TY2025 refigured1040 operands independently", () => {
+  const c = modernOrdinaryCap();
+  const a = annual2025();
+  a.components.find((l) => l.line === "2h")!.amount = 700;
+  const raw = {
+    ...c,
+    annual_review: a,
+    deductions_review: { ...c.deductions_review, tax_year: 2025 },
+  };
+  const v = modernModified();
+  const review = {
+    ...v,
+    tax_year: 2025,
+    components: a.components.map((l) => ({
+      line: l.line,
+      original_reference: l.reference,
+      original_amount: l.amount,
+      refigured_reference: `modified-${l.line}`,
+      refigured_amount: l.line === "1b" ? 42250 : l.amount,
+    })),
+    refigured_form1040: {
+      ...a.reviewed_form1040,
+      reference: "refigured1040",
+      line11b_agi: 60000,
+    },
+  };
+  const r = calculateForm172ModernAmtModifiedIncome(raw, review);
+  assertEquals(r.refiguredTentativeAmti, 60700);
+  assertEquals(r.signedModifiedAmtiBeforeEarlierNol, 73000);
+  for (
+    const patch of [{ line11b_agi: 60001 }, { taxpayer_ssn: "999887777" }, {
+      reference: a.reviewed_form1040.reference,
+    }, { schedule1a_line37_senior_deduction: 23751 }]
+  ) {
+    assertThrows(() =>
+      calculateForm172ModernAmtModifiedIncome(raw, {
+        ...review,
+        refigured_form1040: { ...review.refigured_form1040, ...patch },
+      })
+    );
+  }
+  const { refigured_form1040: _, ...missing } = review;
+  assertThrows(() => calculateForm172ModernAmtModifiedIncome(raw, missing));
+});
+Deno.test("Modern modified AMTI rejects stale originals signs missing lines and refigured NOL", () => {
+  const c = modernOrdinaryCap();
+  c.annual_review.components.find((l) => l.line === "2h")!.amount = 700;
+  for (
+    const mutate of [
+      (v: ReturnType<typeof modernModified>) => {
+        v.components.pop();
+      },
+      (v: ReturnType<typeof modernModified>) => {
+        v.components[0].original_amount++;
+      },
+      (v: ReturnType<typeof modernModified>) => {
+        v.components[0].original_reference = "wrong";
+      },
+      (v: ReturnType<typeof modernModified>) => {
+        v.components[0].refigured_reference = v.reference;
+      },
+      (v: ReturnType<typeof modernModified>) => {
+        v.components.find((l) => l.line === "2e")!.refigured_amount++;
+      },
+      (v: ReturnType<typeof modernModified>) => {
+        v.components.find((l) => l.line === "2b")!.refigured_amount = 1;
+      },
+      (v: ReturnType<typeof modernModified>) => {
+        v.deductions.original_section199a = 1;
+      },
+      (v: ReturnType<typeof modernModified>) => {
+        v.deductions.original_reference = "wrong";
+      },
+      (v: ReturnType<typeof modernModified>) => {
+        v.amt_capital_loss_deduction.amount = 2999;
+      },
+      (v: ReturnType<typeof modernModified>) => {
+        v.amt_capital_items[0].owner_ssn = "999887777";
+      },
+      (v: ReturnType<typeof modernModified>) => {
+        v.section1202_items[0].item_id = v.amt_capital_items[0].item_id;
+      },
+      (v: ReturnType<typeof modernModified>) => {
+        v.section1202_items[0].amt_preference = 10001;
+      },
+      (v: ReturnType<typeof modernModified>) => {
+        v.components.find((l) => l.line === "2h")!.refigured_amount = 701;
+      },
+      (v: ReturnType<typeof modernModified>) => {
+        v.tax_year = 2023;
+      },
+    ]
+  ) {
+    const v = modernModified(c);
+    mutate(v);
+    assertThrows(() => calculateForm172ModernAmtModifiedIncome(c, v));
+  }
+  const v = modernModified(c);
+  assertThrows(() =>
+    calculateForm172ModernAmtModifiedIncome(c, {
+      ...v,
+      signedModifiedAmtiBeforeEarlierNol: 100000,
+    })
+  );
+  assertThrows(() =>
+    calculateForm172ModernAmtModifiedIncome(c, {
+      ...v,
+      components: [...v.components, {
+        line: "2f",
+        original_reference: "atnold",
+        original_amount: -1,
+        refigured_reference: "other",
+        refigured_amount: -1,
+      }],
+    })
+  );
+});
+Deno.test("Modern modified AMTI preserves MFS capital limit and signed negative base", () => {
+  const c = modernOrdinaryCap();
+  c.annual_review.components.find((l) => l.line === "2h")!.amount = 700;
+  const v = modernModified(c);
+  v.filing_status = "married_filing_separately";
+  v.amt_capital_loss_deduction.amount = 1500;
+  v.components.forEach((l) =>
+    l.refigured_amount = l.line === "1" ? -100000 : l.original_amount
+  );
+  const r = calculateForm172ModernAmtModifiedIncome(c, v);
+  assertEquals(r.capitalLossAddback, 1500);
+  assertEquals(r.signedModifiedAmtiBeforeEarlierNol, -38500);
+  assertEquals(r.nonnegativeModifiedAmtiBeforeEarlierNol, 0);
 });

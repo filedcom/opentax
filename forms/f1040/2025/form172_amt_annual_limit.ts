@@ -307,7 +307,7 @@ export function calculateForm172AmtAnnualLimit(
   };
 }
 
-const modernOrdinaryCapSchema = z.object({
+export const form172AmtModernOrdinaryCapSchema = z.object({
   reference: ref,
   annual_review: form172AmtAnnualReviewSchema,
   deductions_review: z.object({
@@ -335,7 +335,7 @@ const modernOrdinaryCapSchema = z.object({
  * availability is NOT established. Special-category losses, carrybacks,
  * chronological allocation and section172(b)(2) absorption are separate. */
 export function calculateForm172AmtModernOrdinaryCap(raw: unknown) {
-  const v = modernOrdinaryCapSchema.parse(raw);
+  const v = form172AmtModernOrdinaryCapSchema.parse(raw);
   const a = v.annual_review;
   const d = v.deductions_review;
   if (
