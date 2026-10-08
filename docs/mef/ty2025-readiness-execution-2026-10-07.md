@@ -5704,3 +5704,56 @@ remain unchanged. Part II, historical carries, statutory absorption,
 2025 deduction/AMT joins and accepted source/packet evidence remain open
 under the existing task. No main checkoff or aggregate increase follows;
 the entire 47-item future section remains unchanged and unworked.
+
+### October 8 — reviewed annual deduction and statutory absorption workpaper
+
+Isolated Form 172 work now distinguishes the section 172(a) deduction limit
+from section 172(b)(2) carry absorption. The
+[statutory calculation](https://www.govinfo.gov/content/pkg/USCODE-2024-title26/pdf/USCODE-2024-title26-subtitleA-chap1-subchapB-partVI-sec172.pdf)
+and [Form 172 instructions](https://www.irs.gov/instructions/i172) were retained
+with URL/date/digest in private `form172-carry-absorption-20261008-v1/`.
+The origin loss is recomputed from its inventory; reviewed prior absorption
+records cannot exceed it. The annual reviewed return's taxable income and
+earlier-NOL inventory must reconcile to its AGI, deductions and reported
+NOL deduction. Calendar-year QBI/section 250/personal-exemption boundaries,
+capital-loss limits, owner, earlier-vintage order and prior-year chronology
+are checked. Pre-2018 earlier availability reduces the post-2017 limitation
+base, and earlier post-2017 deductions consume the aggregate limit.
+
+Modified AGI and taxable income are calculated separately from the deduction
+base, using reviewed capital/section 1202 adjustments, signed before/after
+AGI items and a required itemized-deduction refigure when applicable. For
+post-2020 years, the statutory absorption reduction applies 20% to the
+section 172(a) excess, rather than treating absorption as 80% of modified
+taxable income. Earlier years omit that reduction and subtract every older
+NOL from current deduction capacity. These are arithmetic workpapers: AGI
+and itemized refigure eligibility, complete missing-year history, carryback
+elections, mixed farming splits, marital allocations, accepted source
+records, historical origin calculations, AMT and public/packet admission
+remain open. No Part II native/PDF values are filled from this work yet;
+their final instruction/statutory presentation must still be reconciled
+under the existing carry/attachment requirement.
+
+Normal typed five-module validation passed **39/0, zero ignored**, including
+eight annual absorption cases plus the existing loss-source and NOL/export
+guards. A recomputed 100,000 origin with a 100,000 no-NOL/QBI base yields
+80,000 deduction/absorption and 20,000 remaining. Earlier pre-2018 carry
+20,000 changes post-2017 capacity to 64,000. With an earlier post-2017
+deduction 40,000 and capital addback 3,000, current deduction is 40,000
+while absorption is 43,000. Reviewed AGI/itemized adjustments derive
+modified income 113,600, absorption 93,600 and remaining 6,400 while the
+deduction remains 80,000. Pre-2021 personal-exemption, negative income,
+prior utilization and source/owner/capacity rejection cases also passed.
+
+The first run retained **38/1**: its over-limit rejection input needed a
+reconciled AGI, and the annual contract lacked a direct comparison between
+earlier-vintage deductions and the deduction shown on the reviewed return.
+Both were corrected; failed source/log/status remain preserved. Successful
+`form172-carry-absorption-20261008-v2/` retains source snapshots, the
+2,666-path candidate manifest, command and terminal review; log SHA
+`267b7bdaf32af8f3b76c5c4da6b9a5528f6e26fa5521452fbeda1b70bfec800e`.
+Implementation `9b2e4df27` remains isolated. Existing native/PDF source files
+and delivered PDFs are unchanged; their prior evidence remains retained.
+Root's full regression is still live and all 2,658 runtime paths match
+startup. No main checkoff or aggregate increase follows. All 47 future
+items remain unchanged and unworked.
