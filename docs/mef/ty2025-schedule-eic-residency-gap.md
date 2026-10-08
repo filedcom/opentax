@@ -64,14 +64,22 @@ source check. These checks replay the retained source; they do not authenticate
 the original residence record or detect a coordinated rewrite of every source
 and filed projection after calculation.
 
-The route does not yet model the printed **7** when actual U.S. residence
-exceeded half the year but was under seven calendar months, a birth-year child
-with multiple separated U.S. home intervals totaling more than half their
-life, or the printed **12** for a child deceased in 2025 who met the special
-home test. Kidnapping and other special residence rules also need their own
+The dated ordinary-child route below now models the printed **7** when reviewed U.S. home days exceed half the year but the actual calendar-month count is six. A birth-year child with multiple separated U.S. home intervals totaling more than half their life, or the printed **12** for a child deceased in2025 who met the special home test, remains unmodeled. Kidnapping and other special residence rules also need their own
 reviewed facts. A record reference is not authentication of the source
 document; source-document authentication remains open. The official
 [TY2025 IRS ATS Scenario 5](https://www.irs.gov/pub/irs-efile/ty25-1040-mef-ats-scenario-5-10202025.pdf)
 shows 12 U.S. months for both qualifying children used by the corresponding
 source fixture. Other synthetic fixtures explicitly state their own U.S. month
 count.
+
+## October 8 — dated ordinary-child residence and printed seven
+
+The existing ScheduleEIC residency requirement now has an isolated source-backed implementation for reviewed2025 U.S. home intervals. The strict review binds the child's SSN and each period's actual start/end date, retained record reference and verified residence with the filer in the U.S. The intervals may be entered in either order, but overlapping or repeated days reject; exact inclusive days must exceed half of365. Distinct calendar months must equal the child's actual U.S.-month answer and cannot exceed home months. The ordinary review requires a child born before2025 and cannot coexist with a birth review. These structured assertions do not authenticate residence records.
+
+The general-source child/dependent selection replays the dated review, retains it through the calculated EIC child schema, and the final source check compares the exact review. Both registered native/PDF ScheduleEIC use the same line6 conversion. July2–December31 gives183days/six actual months and prints7; July3–December31 gives182days and rejects. Split periods preserve day/month totals without double counting. The existing [2025 ScheduleEIC](https://www.irs.gov/pub/irs-prior/f1040sei--2025.pdf) line6 directs seven for more-than-half-year residence under seven months.
+
+Normal typed six-module gate finished **14:42:31UTC, actualexit0,103/0**, SHA `58f88f6b8b849d7e0873d03216d041e95c1fff398b27229b10fe9291e9e37fb1`. Four actual complete returns pass retained TY2025v5.4 Return1040 XSD: continuous/split residence for a retained dependent and a reviewed custodial release. Altered/deleted source/child copies reject native and PDF. Day-boundary, duplicate/overlap, invalid/reversed dates, child-identity and month conflicts reject. Private `eic-dated-residency-20261008-v2/` retains command/runtime/terminal/XML evidence. The preserved firstgate ended100/3 because the new retained-dependent fixtures lacked the complete existing8812 credit-limit workpaper and an undefined projected field changed the legacy shape; complete source inputs and conditional optional projection resolved them without weakening guards.
+
+Four prepared-bundle-bound complete PDF packets finished **14:42:52UTC, actualexit0**, SHA `14d4ac4e8f7bd27ee7b64c02bcafea13b99c5ddb0a951dc350ece677391263ba`; **all12 pages directly reviewed**. Each contains two1040 pages and oneEIC page, with AdaExample/111223334/2017/DAUGHTER and printed7 legible. Actual source remains six months. AGI15,000, standarddeduction15,750, zero tax, EIC4,328, withholding1,500 andrefund5,828 reconcile. The custodial-release child is absent from1040 dependents; the retained dependent has home/U.S./CTC indicators, with no ACTC elected. Original-bundle PDF rejects a changed review reference in allfour cases. These existing filler outputs are flattened, with zero widgets/canonical fields; no interactive claim. Private `eic-dated-residency-print-20261008-v1/` preserves source/pending/filer/origins/XML/PDF/text/images/hash inventory and completed review.
+
+Candidate2,725 runtime paths differ from frozen root by two new andfour changed files. Root's2,723-path serial full remains live and unchanged; root integration and its later serial-full validation are pending. No broad main checkbox, aggregate packet count, future item, source-authentication or IRS acceptance claim changes. Remaining birth/death/kidnapping and other applicable special-source requirements above remain open.
