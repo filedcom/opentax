@@ -391,3 +391,39 @@ accepted prior history, joint/status changes, durable carry import, complete
 combinations, packet integration, matching business rules and IRS acceptance
 remain required by the existing main task. No main checkoff or aggregate
 coverage increase follows; all 47 future items stay unworked.
+
+### October 8 — foreign dividends and capital-distribution adjustments
+
+Isolated candidate `6ff9ea2a8` extends the reviewed MTFTCE calculation with
+country-level foreign qualified-dividend and capital-distribution rate bands.
+The [Form 8801 instructions](https://www.irs.gov/instructions/i8801) supply the
+preferential trigger, 0.5357/0.7143 adjustments, zero-rate omission and
+Form 4952 election exception. Actual calculated Form 8801 cells and the
+reviewed regular-tax exception select the adjustment method. The category's
+rate-band total rounds once; deterministic largest-remainder allocation
+reconciles country columns. Entered country income must match the derived
+amount. Each country in the category must supply the same derived method;
+other capital gains/losses cannot be asserted as distribution-only inputs.
+
+The normal typed nine-module run passed **116/0, zero ignored**, including
+six new source-band/exception/rounding/public-return cases and all existing
+input/attachment guards. The constructed adjusted income is 35,571 versus
+58,500 without an adjustment trigger or with a qualified exception. The
+Form 4952 elected 1,500 remains unadjusted. Two countries with one dollar
+each at the 15% rate produce one category adjustment dollar. Public-return
+settlement retains credit 6,100 and income tax 11,767. This does not prove
+issuer records or the underlying rate allocation/election qualification.
+Private `form8801-mtftce-distributions-20261008-v2/` retains source snapshots,
+2,652-path manifest, actual exit-zero log/status and review. Log SHA:
+`a395663ac7e95805557f7b9524caad257eaff283ed43781dbf17a10e77dfd0ca`.
+V1's passing run is preserved; V2 corrects the constructed gross-income
+allocation inputs and reruns the same command. All nine Form 8801 candidate
+commits remain isolated; root's running full regression matches its 2,637
+startup runtime paths.
+
+The original task still requires wider source-derived exclusions,
+capital-gain/loss Worksheets A/B and Pub. 514 adjustments, authenticated
+rate allocations/elections and prior acceptance, MTCNOL, joint/status-change
+history, durable carry import, all combinations, native/PDF packet admission,
+business rules and IRS acceptance. No main checkoff or aggregate coverage
+increase follows. All 47 future items remain unchanged and unworked.
