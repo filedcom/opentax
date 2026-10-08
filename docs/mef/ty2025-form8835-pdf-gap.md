@@ -206,3 +206,6 @@ and the PDF include the owner identity; source and final-return tamper fixtures
 are authored for the deferred bulk pass. The source references are reviewed
 entries without document-byte authentication. Other non-owner operators,
 pass-through, transfer, increased-credit, and later-year cases remain closed.
+
+
+October8, 2026: the retained one-geothermal-facility packet has all16 pages visually inspected and its public graph replay reproduces native XML exactly with full local XSD success. Form8835 credit600, Form3800 PartIII4e and Schedule3/Form1040 totals reconcile. PartV is blank in PDF/native for this one-facility case, despite a stale `reviewFocus` claim; metadata correction is future-only. External facility/production/sale eligibility remains unauthenticated. See the [qualified source and page evidence](ty2025-readiness-execution-2026-10-07.md).
