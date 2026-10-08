@@ -8,6 +8,7 @@ import { normalizeAllPending } from "./pending.ts";
 import {
   calculateForm8801,
   form8801CalculationSchema,
+  refineForm8801PriorIdentity,
 } from "./form8801_calculation.ts";
 
 const bindingSchema = z.object({
@@ -16,7 +17,7 @@ const bindingSchema = z.object({
   current_return_reference: z.string().trim().min(1),
 }).strict();
 export const form8801ReviewPackageSchema = form8801CalculationSchema.innerType()
-  .omit({ current_return: true });
+  .omit({ current_return: true }).superRefine(refineForm8801PriorIdentity);
 
 function sum(value: unknown): number {
   if (value === undefined) return 0;

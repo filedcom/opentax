@@ -180,6 +180,12 @@ export async function inspectForm8801PriorReturnBytes(
       "Form 8801 prior copy year, period, primary owner or status differs",
     );
   }
+  if (
+    review.prior_spouse_ssn !== undefined &&
+    text(filer, "SpouseSSN") !== review.prior_spouse_ssn
+  ) {
+    throw new Error("Form 8801 prior copy spouse owner differs");
+  }
   const ids = new Set<string>();
   for (const [tag, item] of Object.entries(data)) {
     if (tag.startsWith("@")) continue;
@@ -275,6 +281,8 @@ export async function inspectForm8801PriorReturnBytes(
     prior_return_manifest: verified.manifest,
     priorForm6251AndCarryBytesReconciled: true as const,
     minimumTaxForeignCreditAmountReconciled,
+    priorJointSpouseBytesReconciled:
+      review.prior_filing_status === "married_filing_jointly",
     priorReturnBytesVerified: true as const,
     priorAcceptanceVerified: false as const,
     workpaperAuthenticityVerified: false as const,

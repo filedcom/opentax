@@ -127,6 +127,7 @@ Deno.test("Form 8801 all five prior statuses use 2024 exemption and phaseout", (
   ) {
     const v = fixture();
     v.prior_filing_status = status;
+    if (status === "married_filing_jointly") v.prior_spouse_ssn = "444556666";
     v.prior_form6251.line1 = threshold + 4_000;
     v.prior_form6251.line2a = 0;
     const r = calculateForm8801(v);

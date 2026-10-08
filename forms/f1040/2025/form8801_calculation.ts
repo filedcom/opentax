@@ -73,10 +73,35 @@ const capital = z.object({
   }
 });
 
+export function refineForm8801PriorIdentity(
+  v: {
+    prior_filing_status: string;
+    taxpayer_ssn: string;
+    prior_spouse_ssn?: string;
+  },
+  c: z.RefinementCtx,
+) {
+  if (
+    v.prior_filing_status === "married_filing_jointly" && !v.prior_spouse_ssn
+  ) {
+    c.addIssue({
+      code: "custom",
+      message: "Prior joint Form 8801 review requires spouse SSN",
+    });
+  }
+  if (v.prior_spouse_ssn === v.taxpayer_ssn) {
+    c.addIssue({
+      code: "custom",
+      message: "Prior spouse and taxpayer SSNs must be distinct",
+    });
+  }
+}
+
 export const form8801CalculationSchema = z.object({
   tax_year: z.literal(2025),
   prior_tax_year: z.literal(2024),
   taxpayer_ssn: z.string().regex(/^\d{9}$/),
+  prior_spouse_ssn: z.string().regex(/^\d{9}$/).optional(),
   reviewer: ref,
   reviewed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((v) => {
     const d = new Date(`${v}T00:00:00Z`);
@@ -145,6 +170,7 @@ export const form8801CalculationSchema = z.object({
     schedule3_credits: z.array(z.object({ key: creditKey, amount }).strict()),
   }).strict(),
 }).strict().superRefine((v, c) => {
+  refineForm8801PriorIdentity(v, c);
   for (
     const [rows, key, message] of [
       [v.additional_exclusion_items, "item_id", "Duplicate exclusion item"],

@@ -178,10 +178,21 @@ Deno.test("8801 prior copy binds actual header primary identity, status and comp
       xml.replace(
         ">1</IndividualReturnFilingStatusCd>",
         `>${code}</IndividualReturnFilingStatusCd>`,
+      ).replace(
+        "</Filer>",
+        status === "married_filing_jointly"
+          ? "<SpouseSSN>444556666</SpouseSSN></Filer>"
+          : "</Filer>",
       ),
     );
     await inspectForm8801PriorReturnBytes(
-      { ...packageFacts(), prior_filing_status: status },
+      {
+        ...packageFacts(),
+        prior_filing_status: status,
+        ...(status === "married_filing_jointly"
+          ? { prior_spouse_ssn: "444556666" }
+          : {}),
+      },
       p.binding,
       p.documents,
     );
@@ -482,4 +493,127 @@ Deno.test("8801 prior-bound staging copies all review/prior facts before awaits"
   const r = await promise;
   assertEquals(r.lines[25], 5182);
   assertEquals(r.priorReturnBytesVerified, true);
+});
+
+function jointCopy(spouse = "<SpouseSSN>444556666</SpouseSSN>") {
+  return xml.replace("</Filer>", `${spouse}</Filer>`).replace(
+    ">1</IndividualReturnFilingStatusCd>",
+    ">2</IndividualReturnFilingStatusCd>",
+  );
+}
+function jointFacts() {
+  return {
+    ...packageFacts(),
+    prior_filing_status: "married_filing_jointly",
+    prior_spouse_ssn: "444556666",
+  };
+}
+Deno.test("8801 prior joint copy reconciles both distinct filer SSNs", async () => {
+  const p = await source(jointCopy());
+  const r = await inspectForm8801PriorReturnBytes(
+    jointFacts(),
+    p.binding,
+    p.documents,
+  );
+  assertEquals(r.priorJointSpouseBytesReconciled, true);
+  assertEquals([
+    r.priorReturnBytesVerified,
+    r.priorAcceptanceVerified,
+    r.filingReady,
+  ], [true, false, false]);
+  const ordinary = await source();
+  assertEquals(
+    (await inspectForm8801PriorReturnBytes(
+      packageFacts(),
+      ordinary.binding,
+      ordinary.documents,
+    )).priorJointSpouseBytesReconciled,
+    false,
+  );
+});
+Deno.test("8801 prior joint review rejects missing and same-taxpayer spouse identities", async () => {
+  const p = await source(jointCopy());
+  const missing = {
+    ...packageFacts(),
+    prior_filing_status: "married_filing_jointly",
+  };
+  await assertRejects(
+    () => inspectForm8801PriorReturnBytes(missing, p.binding, p.documents),
+    Error,
+    "requires spouse SSN",
+  );
+  await assertRejects(
+    () =>
+      inspectForm8801PriorReturnBytes(
+        { ...jointFacts(), prior_spouse_ssn: "111223333" },
+        p.binding,
+        p.documents,
+      ),
+    Error,
+    "must be distinct",
+  );
+});
+Deno.test("8801 prior joint bytes reject missing, swapped, duplicate, nested and substituted spouse SSNs", async () => {
+  for (
+    const tag of [
+      "",
+      "<SpouseSSN>555667777</SpouseSSN>",
+      "<SpouseSSN>444556666</SpouseSSN><SpouseSSN>444556666</SpouseSSN>",
+      "<SpouseSSN><Other>444556666</Other></SpouseSSN>",
+      '<SpouseSSN xmlns="urn:other">444556666</SpouseSSN>',
+    ]
+  ) {
+    const p = await source(jointCopy(tag));
+    await assertRejects(() =>
+      inspectForm8801PriorReturnBytes(jointFacts(), p.binding, p.documents)
+    );
+  }
+  const p = await source(
+    jointCopy().replace(
+      "<PrimarySSN>111223333</PrimarySSN>",
+      "<PrimarySSN>444556666</PrimarySSN>",
+    ).replace(
+      "<SpouseSSN>444556666</SpouseSSN>",
+      "<SpouseSSN>111223333</SpouseSSN>",
+    ),
+  );
+  await assertRejects(
+    () => inspectForm8801PriorReturnBytes(jointFacts(), p.binding, p.documents),
+    Error,
+    "primary owner",
+  );
+});
+Deno.test("8801 prior-bound joint review preserves both source identities through local settlement", async () => {
+  const f = await fixture(jointFacts());
+  Object.assign(f.inputs.general, {
+    filing_status: "mfj",
+    spouse_ssn: "444556666",
+    spouse_first_name: "Casey",
+    spouse_last_name: "Example",
+  });
+  const p = await source(jointCopy());
+  const r = await stageForm8801PriorBoundReturn(
+    f.inputs,
+    f.binding,
+    f.documents,
+    p.binding,
+    p.documents,
+  );
+  assertEquals([
+    r.priorJointSpouseBytesReconciled,
+    r.lines[15],
+    r.lines[21],
+    r.final_schedule3.line6b_prior_year_min_tax_credit,
+  ], [true, 0, 6100, 6100]);
+  assertEquals(
+    r.final_form1040.line22_tax_after_credits,
+    Number(r.current_form1040_before_credit.line22_tax_after_credits) - 6100,
+  );
+  for (const kind of ["mef", "pdf"] as const) {
+    assertThrows(
+      () => assertAttachmentCoverage(r.projected_pending, kind),
+      Error,
+      "Form 8801",
+    );
+  }
 });
