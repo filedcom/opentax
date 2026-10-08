@@ -350,3 +350,44 @@ packet integration, all owner/credit/numeric cases, matching business rules
 and ATS acceptance also remain open. Both public attachment guards remain
 active. No main checkoff or aggregate coverage increase follows, and all
 future tasks remain untouched.
+
+### October 8 — reviewed general MTFTCE category calculation
+
+Isolated candidate `693ba8381` derives the general Form 8801 foreign-credit
+workpaper arithmetic from category/country facts and calculated Form 8801
+lines 4/11. It computes indirect-deduction shares, category net income,
+reviewed tax reductions/carry amounts, high-tax transfers, limitations,
+category aggregation, boycott reductions and preferential worldwide-income
+adjustments. Simplified election uses reviewed prior AMT line 17 instead of
+Part I. The entered aggregate must match calculated line 35/8801 line 12.
+The contracts follow the [2025 Form 8801 instructions](https://www.irs.gov/instructions/i8801)
+and [2024 Form 1116](https://www.irs.gov/pub/irs-prior/f1116--2024.pdf).
+
+The normal typed seven-module run passed **72/0, zero ignored**; the separate
+two-module public-input/attachment-guard run passed **38/0, zero ignored**.
+Fourteen new tests include multi-country deductions, multi-category limits,
+reclassification, carry/reductions, losses, 951A/901(j), treaty uniqueness,
+simplified election, section 960 increase, boycott, preferential factors,
+MFS thresholds, changed totals and canonical public-return settlement.
+The constructed general case calculates foreign-credit limit 2,230 and
+Form 8801 line 12 of 2,000, current credit 6,100, final Form 1040 income tax
+11,767 and refund 8,233. Private `form8801-mtftce-refigure-20261008-v2/`
+retains source snapshots, 2,652-path manifests, log/status and review;
+log SHA `e8ae080bee489fae8db30440a30ae592189f13e600d7a42e0c59cfacd92a7d8a`.
+`form8801-mtftce-refigure-guards-20261008-v1/` has guard log SHA
+`2f9a31e9a7f40f9c89a3d0104707a575d7a3c04387c7122c9c018e863a6f7a1e`.
+The first typed run failed on a test-fixture literal type; its unchanged
+sources and failed terminal evidence are preserved in v1. No type checking
+was disabled. All eight Form 8801 implementation commits remain isolated.
+Root still matches all 2,637 startup runtime paths of its live full run.
+
+This proves reviewed line arithmetic for these cases. Exclusion-only gross
+income, foreign capital/loss adjustments, category/high-tax eligibility and
+carry history remain reviewed inputs requiring source derivation and
+provenance. `mtftceWorkpaperArithmeticReconciled` is separate from source
+or accepted-filing proof. Neither prior source verification nor the public
+filing guards are weakened. General source authenticity/eligibility, MTCNOL,
+accepted prior history, joint/status changes, durable carry import, complete
+combinations, packet integration, matching business rules and IRS acceptance
+remain required by the existing main task. No main checkoff or aggregate
+coverage increase follows; all 47 future items stay unworked.
