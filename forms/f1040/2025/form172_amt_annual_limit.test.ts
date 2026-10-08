@@ -159,3 +159,97 @@ Deno.test("Form 172 AMT annual cap rejects source owner year tentative-depletion
   a.components.find((c) => c.line === "2e")!.amount = -1;
   assertThrows(() => calculateForm172AmtAnnualLimit(origin(), amt(), a));
 });
+
+function annual2025() {
+  const old = annual();
+  return {
+    ...old,
+    tax_year: 2025,
+    reviewed_form1040: {
+      reference: "current-1040",
+      tax_year: 2025,
+      taxpayer_ssn: "111223333",
+      line11b_agi: 50000,
+      line14_deductions: 23750,
+      schedule1a_line37_senior_deduction: 6000,
+    },
+    components: old.components.map((c) =>
+      c.line === "1"
+        ? { ...c, line: "1b", amount: 32250 }
+        : c.line === "2a"
+        ? { ...c, amount: 17750 }
+        : { ...c, amount: 0 }
+    ),
+  };
+}
+Deno.test("Form172 2025 AMT line1b restores senior deduction and counts line1a only as a subtrahend", () => {
+  const r = calculateForm172AmtAnnualLimit(origin(), amt(), annual2025());
+  assertEquals(r.form6251Line1a, 17750);
+  assertEquals(r.tentativeAmtiBeforeAtnold, 50000);
+  assertEquals(r.ordinary90PercentLimit, 45000);
+  assertEquals(r.sourceAuthenticityVerified, false);
+  assertEquals(r.amtCarryAbsorptionReconciled, false);
+  assertEquals(r.filingReady, false);
+});
+Deno.test("Form172 2025 AMT line1b preserves negative AGI and additional non-senior deductions", () => {
+  const a = annual2025();
+  a.reviewed_form1040.line11b_agi = -5000;
+  a.reviewed_form1040.line14_deductions = 26750;
+  a.components[0].amount = -25750;
+  const r = calculateForm172AmtAnnualLimit(origin(), amt(), a);
+  assertEquals(r.form6251Line1a, 20750);
+  assertEquals(r.tentativeAmtiBeforeAtnold, -8000);
+  assertEquals(r.ordinary90PercentLimit, 0);
+});
+Deno.test("Form172 AMT annual rejects mixing legacy line1 and current line1b layouts", () => {
+  const a = annual2025();
+  for (
+    const components of [
+      a.components.map((c, i) => i === 0 ? { ...c, line: "1" } : c),
+      [{ line: "1a", reference: "deductions", amount: 17750 }, ...a.components],
+      [{ ...a.components[0], line: "1" }, ...a.components.slice(1)],
+    ]
+  ) {
+    assertThrows(() =>
+      calculateForm172AmtAnnualLimit(origin(), amt(), { ...a, components })
+    );
+  }
+  assertThrows(() =>
+    calculateForm172AmtAnnualLimit(origin(), amt(), {
+      ...annual(),
+      components: a.components,
+    })
+  );
+  assertThrows(() =>
+    calculateForm172AmtAnnualLimit(origin(), amt(), {
+      ...annual(),
+      reviewed_form1040: a.reviewed_form1040,
+    })
+  );
+  const { reviewed_form1040: _, ...missing } = a;
+  assertThrows(() => calculateForm172AmtAnnualLimit(origin(), amt(), missing));
+});
+Deno.test("Form172 2025 AMT rejects wrong current return operands identity and senior totals", () => {
+  const a = annual2025();
+  for (
+    const patch of [
+      { taxpayer_ssn: "999887777" },
+      { spouse_ssn: "999887777" },
+      { tax_year: 2024 },
+      { reference: a.reference },
+      { reference: a.form6251_reference },
+      { line11b_agi: 50001 },
+      { line14_deductions: 23749 },
+      { schedule1a_line37_senior_deduction: 0 },
+      { schedule1a_line37_senior_deduction: 23751 },
+      { schedule1a_line37_senior_deduction: -1 },
+    ]
+  ) {
+    assertThrows(() =>
+      calculateForm172AmtAnnualLimit(origin(), amt(), {
+        ...a,
+        reviewed_form1040: { ...a.reviewed_form1040, ...patch },
+      })
+    );
+  }
+});

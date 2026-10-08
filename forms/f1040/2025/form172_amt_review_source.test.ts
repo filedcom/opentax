@@ -233,3 +233,56 @@ Deno.test("Form 172 AMT retained review owns all source bytes and bindings befor
   assertEquals(r.ordinary90PercentLimit, 90000);
   assertEquals(r.taxpayerSsn, "111223333");
 });
+
+Deno.test("Form172 retained 2025 AMT package binds line1b and the current senior deduction operands", async () => {
+  const { binding, documents } = await source();
+  const a = {
+    ...annual(),
+    tax_year: 2025,
+    reviewed_form1040: {
+      reference: "current-1040",
+      tax_year: 2025,
+      taxpayer_ssn: "111223333",
+      line11b_agi: 50000,
+      line14_deductions: 23750,
+      schedule1a_line37_senior_deduction: 6000,
+    },
+    components: annual().components.map((c) =>
+      c.line === "1"
+        ? { ...c, line: "1b", amount: 32250 }
+        : c.line === "2a"
+        ? { ...c, amount: 17750 }
+        : { ...c, amount: 0 }
+    ),
+  };
+  const bytes = new TextEncoder().encode(JSON.stringify(a));
+  const currentBinding = {
+    ...binding,
+    application_tax_year: 2025,
+    annual: { ...binding.annual, sha256: await sha(bytes) },
+  };
+  const currentDocuments = [documents[0], documents[1], {
+    reference: a.reference,
+    bytes,
+  }];
+  const r = await stageForm172AmtReviewSource(currentBinding, currentDocuments);
+  assertEquals(r.form6251Line1a, 17750);
+  assertEquals(r.tentativeAmtiBeforeAtnold, 50000);
+  assertEquals(r.ordinary90PercentLimit, 45000);
+  assertEquals(r.reviewPackageBytesVerified, true);
+  assertEquals(r.issuerAuthenticityVerified, false);
+  a.reviewed_form1040.schedule1a_line37_senior_deduction = 0;
+  const changed = new TextEncoder().encode(JSON.stringify(a));
+  await assertRejects(() =>
+    stageForm172AmtReviewSource(currentBinding, [documents[0], documents[1], {
+      reference: a.reference,
+      bytes: changed,
+    }])
+  );
+  await assertRejects(async () =>
+    stageForm172AmtReviewSource({
+      ...currentBinding,
+      annual: { ...currentBinding.annual, sha256: await sha(changed) },
+    }, [documents[0], documents[1], { reference: a.reference, bytes: changed }])
+  );
+});
