@@ -63,6 +63,11 @@ export const form172CarryAbsorptionSchema = z.object({
     }).strict(),
   ),
   refigured_itemized_deduction: reviewedAmount.optional(),
+  whbaa_fifth_year_review: z.object({
+    reference: ref,
+    origin_year: z.union([z.literal(2008), z.literal(2009)]),
+    whole_loss_whbaa_scope_reviewed: z.literal(true),
+  }).strict().optional(),
   prior_absorption_records: z.array(
     z.object({
       item_id: ref,
@@ -186,6 +191,19 @@ export function calculateForm172CarryAbsorption(
       "NOL absorption needs matching origin owner and a different application year",
     );
   }
+  if (
+    v.whbaa_fifth_year_review && (
+      v.whbaa_fifth_year_review.origin_year !== origin.taxYear ||
+      v.tax_year !== origin.taxYear - 5 ||
+      [v.reference, v.return_reference].includes(
+        v.whbaa_fifth_year_review.reference,
+      )
+    )
+  ) {
+    throw new Error(
+      "WHBAA fifth-year review must match origin and application year",
+    );
+  }
   const trueTaxable = sum([
     v.agi,
     -v.standard_or_itemized_deduction,
@@ -269,12 +287,15 @@ export function calculateForm172CarryAbsorption(
       "Earlier post-2017 deduction exceeds annual aggregate limitation",
     );
   }
-  const deductionCapacity = origin.taxYear < 2018
+  const unrestrictedDeductionCapacity = origin.taxYear < 2018
     ? positive(taxableWithoutNolQbi250 - earlierDeduction)
     : positive(
       post2017Limit -
         (v.tax_year >= 2021 ? earlierPost2017Deduction : earlierDeduction),
     );
+  const deductionCapacity = v.whbaa_fifth_year_review
+    ? percent(unrestrictedDeductionCapacity, 50)
+    : unrestrictedDeductionCapacity;
   const currentDeduction = Math.min(openingLoss, deductionCapacity);
   const agiAdjustment = sum(
     v.agi_refigures.map((r) =>
@@ -306,9 +327,14 @@ export function calculateForm172CarryAbsorption(
   const absorptionReduction = v.tax_year >= 2021
     ? percent(excessAfterPre2018, 20)
     : 0;
-  const absorptionCapacity = positive(
+  const unrestrictedAbsorptionCapacity = positive(
     modifiedTaxableIncome - absorptionReduction,
   );
+  // Notice2010-58 A13: fifth-year absorption is fifty percent of the
+  // modified base, independently of the actual fifty-percent deduction.
+  const absorptionCapacity = v.whbaa_fifth_year_review
+    ? percent(unrestrictedAbsorptionCapacity, 50)
+    : unrestrictedAbsorptionCapacity;
   const absorbed = Math.min(openingLoss, absorptionCapacity);
   const remainingLoss = openingLoss - absorbed;
   return {
@@ -321,6 +347,7 @@ export function calculateForm172CarryAbsorption(
     excessAfterPre2018,
     post2017Limit,
     earlierPost2017Deduction,
+    unrestrictedDeductionCapacity,
     deductionCapacity,
     currentDeduction,
     agiAdjustment,
@@ -332,7 +359,9 @@ export function calculateForm172CarryAbsorption(
       v.refigured_schedule1a_deduction?.senior_amount ?? 0,
     modifiedTaxableIncome,
     absorptionReduction,
+    unrestrictedAbsorptionCapacity,
     absorptionCapacity,
+    whbaaFifthYearLimitationApplied: v.whbaa_fifth_year_review !== undefined,
     absorbed,
     remainingLoss,
     originLossWorkpaperArithmeticReconciled: true as const,

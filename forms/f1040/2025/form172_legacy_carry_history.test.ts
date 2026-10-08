@@ -258,3 +258,168 @@ Deno.test("Form 172 historical carry source replays exact origin and annual pack
   assertEquals(r.reviewPackageBytesVerified, true);
   assertEquals(r.filingReady, false);
 });
+
+function whbaaFixture(year = 2009, period: 3 | 4 | 5 = 5) {
+  const o = legacy();
+  o.tax_year = year;
+  o.reviewed_form1040.tax_year = year;
+  const years = [
+    ...Array.from({ length: period }, (_, i) => year - period + i),
+    ...Array.from({ length: 2024 - year }, (_, i) => year + 1 + i),
+  ];
+  const h = {
+    reference: "whbaa-history",
+    opening_tax_year: 2025,
+    carry_policy: {
+      kind: "reviewed_whbaa_carryback",
+      reference: "whbaa-election-review",
+      carryback_period: period,
+      whole_loss_whbaa_scope_reviewed: true,
+      election_timeliness_reviewed: true,
+      whbaa_eligibility_reviewed: true,
+      section965_years_absent_reviewed: true,
+    },
+    annual_reviews: years.map((y) => annual(y)),
+  };
+  return { o, h, years };
+}
+Deno.test("Form172 WHBAA reviewed histories require complete elected3 4 or5 year carrybacks", () => {
+  for (const year of [2008, 2009]) {
+    for (const period of [3, 4, 5] as const) {
+      const { o, h, years } = whbaaFixture(year, period);
+      h.annual_reviews[0] = annual(year - period, 100000);
+      const r = calculateForm172CarryHistory(o, h);
+      assertEquals(r.expectedYears, years);
+      assertEquals(
+        r.annualResults[0].currentDeduction,
+        period === 5 ? 50000 : 100000,
+      );
+      assertEquals(r.annualResults[0].absorbed, period === 5 ? 50000 : 100000);
+      assertEquals(r.openingLoss, period === 5 ? 50000 : 0);
+      assertEquals(r.completeCarryHistoryVerified, false);
+      assertEquals(r.filingReady, false);
+    }
+  }
+});
+Deno.test("Form172 WHBAA Notice2010-58 A13 separates fifth-year25000 deduction from30000 absorption", () => {
+  const { o, h } = whbaaFixture();
+  h.annual_reviews[0] = annual(2004, 50000);
+  h.annual_reviews[0].agi = 60000;
+  h.annual_reviews[0].personal_exemptions = 10000;
+  const r = calculateForm172CarryHistory(o, h);
+  assertEquals(r.annualResults[0].currentDeduction, 25000);
+  assertEquals(r.annualResults[0].modifiedTaxableIncome, 60000);
+  assertEquals(r.annualResults[0].absorbed, 30000);
+  assertEquals(r.annualResults[1].openingLoss, 70000);
+  assertEquals(r.openingLoss, 70000);
+});
+Deno.test("Form172 WHBAA Notice2010-58 A12 applies fifty percent after earlier actual deductions", () => {
+  const { o, h } = whbaaFixture(2008);
+  o.inventory.noncapital_deductions[0].amount = 510000;
+  o.reviewed_form1040.agi = -503000;
+  const a = annual(2003, 100000);
+  a.return_nol_deduction.amount = 300000;
+  const review = {
+    ...a,
+    earlier_nols: [{
+      item_id: "2002",
+      reference: "2002-reviewed-carry",
+      origin_year: 2002,
+      carry_available: 100000,
+      deduction_on_return: 100000,
+    }, {
+      item_id: "2005",
+      reference: "2005-reviewed-carry",
+      origin_year: 2005,
+      carry_available: 200000,
+      deduction_on_return: 200000,
+    }],
+  };
+  const r = calculateForm172CarryHistory(o, {
+    ...h,
+    annual_reviews: [review, ...h.annual_reviews.slice(1)],
+  });
+  assertEquals(r.originLoss, 500000);
+  assertEquals(r.annualResults[0].taxableWithoutNolQbi250, 400000);
+  assertEquals(r.annualResults[0].currentDeduction, 50000);
+  assertEquals(r.annualResults[0].absorbed, 50000);
+  assertEquals(r.openingLoss, 450000);
+});
+Deno.test("Form172 WHBAA rejects wrong origin period incomplete years and injected fifth-year scope", () => {
+  const { o, h } = whbaaFixture();
+  const wrong = structuredClone(o);
+  wrong.tax_year = 2017;
+  wrong.reviewed_form1040.tax_year = 2017;
+  assertThrows(() => calculateForm172CarryHistory(wrong, h));
+  assertThrows(() =>
+    calculateForm172CarryHistory(o, {
+      ...h,
+      carry_policy: { ...h.carry_policy, carryback_period: 2 },
+    })
+  );
+  assertThrows(() =>
+    calculateForm172CarryHistory(o, {
+      ...h,
+      annual_reviews: h.annual_reviews.slice(1),
+    })
+  );
+  const injected = {
+    ...h,
+    annual_reviews: [{
+      ...h.annual_reviews[0],
+      whbaa_fifth_year_review: {
+        reference: "injected",
+        origin_year: 2009,
+        whole_loss_whbaa_scope_reviewed: true,
+      },
+    }, ...h.annual_reviews.slice(1)],
+  };
+  assertThrows(() => calculateForm172CarryHistory(o, injected));
+  assertThrows(() =>
+    calculateForm172CarryAbsorption(o, {
+      ...annual(2005),
+      prior_absorption_records: [],
+      whbaa_fifth_year_review: {
+        reference: "wrong-year",
+        origin_year: 2009,
+        whole_loss_whbaa_scope_reviewed: true,
+      },
+    })
+  );
+});
+Deno.test("Form172 retained WHBAA history bytes recompute fifth-year absorption and next-year openings", async () => {
+  const { o, h } = whbaaFixture();
+  h.annual_reviews[0] = annual(2004, 50000);
+  h.annual_reviews[0].agi = 60000;
+  h.annual_reviews[0].personal_exemptions = 10000;
+  h.annual_reviews[1] = annual(2005, 20000);
+  const docs = [{
+    reference: o.reference,
+    bytes: new TextEncoder().encode(JSON.stringify(o)),
+  }, {
+    reference: h.reference,
+    bytes: new TextEncoder().encode(JSON.stringify(h)),
+  }];
+  const claims = await Promise.all(
+    docs.map(async (d) => ({
+      reference: d.reference,
+      sha256: Array.from(
+        new Uint8Array(await crypto.subtle.digest("SHA-256", d.bytes)),
+        (b) => b.toString(16).padStart(2, "0"),
+      ).join(""),
+    })),
+  );
+  const r = await stageForm172CarryHistorySource({
+    origin: claims[0],
+    history: claims[1],
+    origin_tax_year: 2009,
+    opening_tax_year: 2025,
+    taxpayer_ssn: "111223333",
+  }, docs);
+  assertEquals(r.annualResults[0].absorbed, 30000);
+  assertEquals(r.annualResults[1].openingLoss, 70000);
+  assertEquals(r.annualResults[1].absorbed, 20000);
+  assertEquals(r.openingLoss, 50000);
+  assertEquals(r.reviewPackageBytesVerified, true);
+  assertEquals(r.filingReady, false);
+});

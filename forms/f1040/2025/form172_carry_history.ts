@@ -5,6 +5,15 @@ import { calculateForm172CarryAbsorption } from "./form172_carry_absorption.ts";
 const ref = z.string().trim().min(1);
 const policy = z.discriminatedUnion("kind", [
   z.object({
+    kind: z.literal("reviewed_whbaa_carryback"),
+    reference: ref,
+    carryback_period: z.union([z.literal(3), z.literal(4), z.literal(5)]),
+    whole_loss_whbaa_scope_reviewed: z.literal(true),
+    election_timeliness_reviewed: z.literal(true),
+    whbaa_eligibility_reviewed: z.literal(true),
+    section965_years_absent_reviewed: z.literal(true),
+  }).strict(),
+  z.object({
     kind: z.literal("reviewed_waiver"),
     reference: ref,
     waiver_timeliness_reviewed: z.literal(true),
@@ -67,9 +76,22 @@ export function calculateForm172CarryHistory(
       "Legacy full carryback needs reviewed general two-year eligibility",
     );
   }
+  if (
+    history.carry_policy.kind === "reviewed_whbaa_carryback" &&
+    ![2008, 2009].includes(origin.taxYear)
+  ) {
+    throw new Error("Calendar-year WHBAA history needs a2008 or2009 origin");
+  }
   const expectedYears: number[] = [];
-  if (history.carry_policy.kind === "reviewed_full_loss_carryback") {
-    const period = origin.taxYear >= 2018 && origin.taxYear <= 2020 ? 5 : 2;
+  if (
+    history.carry_policy.kind === "reviewed_full_loss_carryback" ||
+    history.carry_policy.kind === "reviewed_whbaa_carryback"
+  ) {
+    const period = history.carry_policy.kind === "reviewed_whbaa_carryback"
+      ? history.carry_policy.carryback_period
+      : origin.taxYear >= 2018 && origin.taxYear <= 2020
+      ? 5
+      : 2;
     for (let y = origin.taxYear - period; y < origin.taxYear; y++) {
       expectedYears.push(y);
     }
@@ -113,9 +135,24 @@ export function calculateForm172CarryHistory(
       }
       references.add(value);
     }
+    if (Object.hasOwn(annual, "whbaa_fifth_year_review")) {
+      throw new Error("History derives WHBAA fifth-year scope from its policy");
+    }
+    const fifthYear =
+      history.carry_policy.kind === "reviewed_whbaa_carryback" &&
+      history.carry_policy.carryback_period === 5 && i === 0;
     const result = calculateForm172CarryAbsorption(rawOrigin, {
       ...annual,
       prior_absorption_records: [...prior],
+      ...(fifthYear
+        ? {
+          whbaa_fifth_year_review: {
+            reference: history.carry_policy.reference,
+            origin_year: origin.taxYear,
+            whole_loss_whbaa_scope_reviewed: true,
+          },
+        }
+        : {}),
     });
     prior.push({
       item_id: `computed-absorption-${result.applicationYear}`,
