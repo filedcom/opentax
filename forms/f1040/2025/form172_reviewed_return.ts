@@ -1,4 +1,5 @@
 import type { SourceDocumentBytes } from "../../../core/runtime/source-documents.ts";
+import { reconcileForm172ModifiedIncome } from "./form172_modified_income.ts";
 import type { ExecuteResult } from "../../../core/runtime/executor.ts";
 import { f1040_2025 } from "./index.ts";
 import { normalizeAllPending } from "./pending.ts";
@@ -150,8 +151,15 @@ export async function stageForm172ReviewedReturnCalculation(
       "NOL current section250 deduction needs a calculated public source join",
     );
   }
+  const modifiedIncome = reconcileForm172ModifiedIncome(
+    inputs,
+    annual,
+    pending,
+    staged.currentAnnualCalculation.modifiedAgi,
+  );
   return {
     ...staged,
+    ...modifiedIncome,
     current_form1040_before_nol: before,
     public_pending_before_nol: pending,
     public_return_replay_input: replayInput,

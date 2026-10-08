@@ -1024,3 +1024,128 @@ Deno.test("Form172 sourced interest and retained AMT review reconcile raw tentat
   assertEquals(r.amtNolReconciled, false);
   assertEquals(r.filingReady, false);
 });
+
+Deno.test("Form172 modified carry income replays capital-loss and student-interest AGI adjustments", async () => {
+  const f = await fixture();
+  f.inputs.w2 = [{ ...passiveK1Inputs().w2[0], box1_wages: 95000 }];
+  f.inputs.f1099b = [{
+    recipient_ssn: "111223333",
+    payer_tin: "123456789",
+    account_number: "SYNTHETIC",
+    source_document_reference: "synthetic-loss-statement",
+    transaction_id: "loss-sale",
+    part: "A",
+    description: "Synthetic stock",
+    date_acquired: "2025-01-01",
+    date_sold: "2025-07-01",
+    proceeds: 1000,
+    cost_basis: 6000,
+  }];
+  f.inputs.f1098e = [{
+    box1_student_loan_interest: 2500,
+    lender_name: "Synthetic Lender",
+    lender_tin: "123456789",
+    borrower_tin: "111223333",
+    source_document_reference: "synthetic interest statement",
+  }];
+  const a: Record<string, any> = f.currentReview.annual_review;
+  a.agi = 90667;
+  a.reported_taxable_income = 74917;
+  a.capital_loss_deduction.amount = 3000;
+  a.agi_refigures = [{
+    item_id: "student_loan_interest",
+    reference: "modified interest workpaper",
+    kind: "deduction",
+    before: 1333,
+    after: 833,
+  }];
+  const update = async () => {
+    const bytes = new TextEncoder().encode(JSON.stringify(f.currentReview));
+    f.documents[2] = { reference: f.currentReview.reference, bytes };
+    f.binding.current_review.sha256 = await sha(bytes);
+  };
+  await update();
+  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents);
+  assertEquals(r.currentModifiedIncomeGraphReconciled, true);
+  assertEquals(r.currentAnnualCalculation.modifiedAgi, 94167);
+  assertEquals(
+    r.modified_income_pending.schedule1.line21_student_loan_interest,
+    833,
+  );
+  assertEquals(
+    r.public_pending_before_nol.schedule1.line21_student_loan_interest,
+    1333,
+  );
+  assertEquals(r.projected_schedule1.line21_student_loan_interest, 2500);
+  assertEquals(r.filingReady, false);
+  a.agi_refigures = [];
+  await update();
+  await assertRejects(() =>
+    stageForm172ProjectedReturn(f.inputs, f.binding, f.documents)
+  );
+});
+
+Deno.test("Form172 modified carry income refigures SSA independently of post-NOL tax", async () => {
+  const f = await fixture();
+  f.inputs.w2 = [{ ...passiveK1Inputs().w2[0], box1_wages: 22000 }];
+  f.inputs.ssa1099 = [{
+    recipient_ssn: "111223333",
+    box3_gross_benefits: 10000,
+    box5_net_benefits: 10000,
+  }];
+  f.inputs.f1099b = [{
+    recipient_ssn: "111223333",
+    payer_tin: "123456789",
+    account_number: "SYNTHETIC",
+    source_document_reference: "synthetic-loss-statement",
+    transaction_id: "loss-sale",
+    part: "A",
+    description: "Synthetic stock",
+    date_acquired: "2025-01-01",
+    date_sold: "2025-07-01",
+    proceeds: 1000,
+    cost_basis: 6000,
+  }];
+  const a: Record<string, any> = f.currentReview.annual_review;
+  a.agi = 19000;
+  a.reported_taxable_income = 3250;
+  a.capital_loss_deduction.amount = 3000;
+  a.agi_refigures = [{
+    item_id: "taxable_social_security",
+    reference: "modified SSA workpaper",
+    kind: "income",
+    before: 0,
+    after: 1000,
+  }];
+  const update = async () => {
+    const bytes = new TextEncoder().encode(JSON.stringify(f.currentReview));
+    f.documents[2] = { reference: f.currentReview.reference, bytes };
+    f.binding.current_review.sha256 = await sha(bytes);
+  };
+  await update();
+  const r = await stageForm172ProjectedReturn(f.inputs, f.binding, f.documents);
+  assertEquals(r.currentAnnualCalculation.modifiedAgi, 23000);
+  assertEquals(r.modified_income_pending.f1040.line6b_ss_taxable, 1000);
+  assertEquals(r.current_form1040_before_nol.line6b_ss_taxable ?? 0, 0);
+  assertEquals(r.projected_form1040.line6b_ss_taxable ?? 0, 0);
+  assertEquals(r.deduction, 2600);
+  assertEquals(r.currentModifiedIncomeGraphReconciled, true);
+  assertEquals(r.filingReady, false);
+  a.agi_refigures[0].before = 100;
+  a.agi_refigures[0].after = 1100;
+  await update();
+  await assertRejects(
+    () => stageForm172ProjectedReturn(f.inputs, f.binding, f.documents),
+    Error,
+    "source component",
+  );
+  a.agi_refigures[0].before = 0;
+  a.agi_refigures[0].after = 1000;
+  a.section1202_exclusion.amount = 100;
+  await update();
+  await assertRejects(
+    () => stageForm172ProjectedReturn(f.inputs, f.binding, f.documents),
+    Error,
+    "section1202",
+  );
+});
