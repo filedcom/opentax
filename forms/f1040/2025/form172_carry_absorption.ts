@@ -5,7 +5,7 @@ const ref = z.string().trim().min(1);
 const ssn = z.string().regex(/^\d{9}$/);
 const amount = z.number().int().nonnegative().max(1_000_000_000);
 const signed = z.number().int().min(-1_000_000_000).max(1_000_000_000);
-const year = z.number().int().min(2003).max(2025);
+const year = z.number().int().min(2000).max(2025);
 const reviewedAmount = z.object({ reference: ref, amount }).strict();
 
 /** Annual return is refigured before the current or later NOL vintage. Items
@@ -292,6 +292,7 @@ export function calculateForm172CarryAbsorption(
     excessAfterPre2018,
     post2017Limit,
     earlierPost2017Deduction,
+    deductionCapacity,
     currentDeduction,
     agiAdjustment,
     modifiedAgi,
