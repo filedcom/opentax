@@ -535,7 +535,7 @@ export function hohQualifyingChildFromGeneral(
     matches.length !== 1 || !child ||
     input.hoh_paid_more_than_half_home_costs !== true ||
     !child.ssn || !/^\d{3}-?\d{2}-?\d{4}$/.test(child.ssn) ||
-    child.months_in_home <= 6 ||
+    !dependentLivedWithFilerOverHalfYear(child) ||
     !passesRelationshipTest(child) || !passesEitcAgeTest(child) ||
     !passesJointReturnTest(child) ||
     child.us_citizen_national_or_resident !== true ||
