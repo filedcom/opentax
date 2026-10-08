@@ -77,6 +77,11 @@ import {
   scheduleEicLine6Months,
 } from "../../../2025/eic-birth-residency.ts";
 
+import {
+  eicDatedResidencyReviewSchema,
+  reviewedEicDatedResidence,
+} from "../../../2025/eic-dated-residency.ts";
+
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
 export enum DependentRelationship {
@@ -158,6 +163,7 @@ export const dependentSchema = z.object({
   // Actual calendar months; Schedule EIC line 6 prints 12 for reviewed births.
   months_lived_with_you_in_us: z.number().int().min(0).max(12).optional(),
   eic_birth_residency_review: eicBirthResidencyReviewSchema.optional(),
+  eic_dated_residency_review: eicDatedResidencyReviewSchema.optional(),
   us_citizen_national_or_resident: z.boolean().optional(),
   provided_over_half_own_support: z.boolean().optional(),
   filed_joint_return_except_refund_only: z.boolean().optional(),
@@ -774,7 +780,8 @@ export function dependentLivedWithFilerOverHalfYear(
   dep: DependentItem,
 ): boolean {
   const reviewedBirth = reviewedEicBirthResidence(dep);
-  return dep.months_in_home > 6 || reviewedBirth;
+  const reviewedDated = reviewedEicDatedResidence(dep);
+  return dep.months_in_home > 6 || reviewedBirth || reviewedDated;
 }
 
 function passesJointReturnTest(dep: DependentItem): boolean {
@@ -1019,6 +1026,9 @@ export function eicChildSourceProjection(parsed: GeneralInput) {
       months_in_home: dep.months_in_home,
       months_lived_with_you_in_us: dep.months_lived_with_you_in_us,
       eic_birth_residency_review: dep.eic_birth_residency_review,
+      ...(dep.eic_dated_residency_review === undefined
+        ? {}
+        : { eic_dated_residency_review: dep.eic_dated_residency_review }),
       full_time_student: dep.full_time_student,
       disabled: dep.disabled,
       ip_pin: dep.ip_pin,

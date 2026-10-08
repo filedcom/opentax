@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { reviewedEicDatedResidence } from "./eic-dated-residency.ts";
 
 const fullLifeBirthReviewSchema = z.object({
   birth_record_reference: z.string().trim().min(1),
@@ -21,6 +22,8 @@ export const eicBirthResidencyReviewSchema = z.union([
 ]);
 
 export interface EicBirthResidencyFacts {
+  readonly ssn?: string;
+  readonly eic_dated_residency_review?: unknown;
   readonly dob: string;
   readonly months_in_home: number;
   readonly months_lived_with_you_in_us?: number;
@@ -97,7 +100,14 @@ export function reviewedEicBirthResidence(
 
 /** The published line 6 value differs from actual calendar months for births. */
 export function scheduleEicLine6Months(child: EicBirthResidencyFacts): number {
+  if (
+    child.eic_dated_residency_review !== undefined &&
+    child.eic_birth_residency_review !== undefined
+  ) throw new Error("Schedule EIC needs one consistent residency review");
   if (reviewedEicBirthResidence(child)) return 12;
+  if (reviewedEicDatedResidence(child)) {
+    return Math.max(7, child.months_lived_with_you_in_us!);
+  }
   const actual = child.months_lived_with_you_in_us;
   const birth = /^(2025)-(\d{2})-(\d{2})$/.exec(child.dob);
   if (birth) {

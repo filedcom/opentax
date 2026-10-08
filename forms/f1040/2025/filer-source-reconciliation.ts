@@ -478,6 +478,8 @@ export function assertEitcChildSources(
       dep.irs_relationship_code !== row.irs_relationship_code ||
       dep.months_in_home !== row.months_in_home ||
       dep.months_lived_with_you_in_us !== row.months_lived_with_you_in_us ||
+      JSON.stringify(dep.eic_dated_residency_review) !==
+        JSON.stringify(row.eic_dated_residency_review) ||
       JSON.stringify(dep.eic_birth_residency_review) !==
         JSON.stringify(row.eic_birth_residency_review) ||
       dep.lived_in_us_over_half_year !== true ||
@@ -1365,7 +1367,9 @@ export function assertScheduleFFarmSourceIdentity(
         payer_name: item.payer_name,
         payer_tin: tin(item.payer_tin, "1099-NEC payer"),
         recipient_tin: tin(item.recipient_ssn, "1099-NEC recipient"),
-        ...(item.source_document_reference ? {source_document_reference:item.source_document_reference} : {}),
+        ...(item.source_document_reference
+          ? { source_document_reference: item.source_document_reference }
+          : {}),
       }]
       : []
   );
