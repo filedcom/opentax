@@ -5130,3 +5130,48 @@ matching business rules, accepted prior history, authentic workpapers,
 durable accepted carry/import or ATS acceptance is proved by this result.
 The broader main task remains open and aggregate coverage counts do not
 increase. All future tasks remain deferred.
+
+
+## Isolated interactive Form 8801 PDF — October 8, 04:55 UTC
+
+Candidate `d55fd76763d26605114eb20ce2b7dabdda044623` adds
+`stageForm8801PdfDocument` after reviewed-source settlement and native
+projection. It snapshots all caller inputs and bytes before hashing,
+requires the exact [2025 IRS template](https://www.irs.gov/pub/irs-pdf/f8801.pdf)
+SHA `b82dff67ecf37406bab02f177c706295bd6084853a9ba8be5c87a35c74668a78`,
+and derives filer names/primary SSN from the projected public identity.
+Joint names require both spouses. All 55 printed lines, including native
+shared lines 17/41, use calculated amounts; skipped cells stay blank. Unused
+Part III pages and fields are removed on ordinary-rate branches; capital
+branches retain all four pages. A nonpositive line 21 emits no PDF.
+The canonical source remains unchanged, and output AcroForms stay interactive.
+
+The final normal typed seven-module run passed **82/0, zero ignored**:
+calculation, public capacity, settlement, native, PDF, shared guards and
+existing preview cases. Private `form8801-pdf-20261008-v2/` retains sources,
+2,648-path startup manifest, log, terminal status and review. Log SHA:
+`48e0aa5e7769611666d69efe16128aa52a2348073acbef9ec8670dcbbe5ed87e`.
+The earlier v1 81/0 checkpoint remains retained; v2 adds joint identity and
+missing-spouse rejection. No test guard/type check was bypassed.
+
+Private `form8801-pdf-20261008-v1/output/pdf/` retains two constructed review
+previews: partial credit (2 pages, 28 populated widgets, credit 1,475/carry
+3,707) and Schedule D (4 pages, 57 populated widgets, credit 9,573/carry
+60,963). Canonical source fields and widgets were inspected before filling.
+Reopened output canonical values, effective widget values, identity and
+calculated lines agree; every widget has a nonempty normal appearance.
+Retained native XML matches its calculation in schema order. All six final
+rendered pages were individually viewed: amounts are legible in the proper
+rows, including signed line 18 and the 25% capital computation. The PDFs
+retain native fields and are not flattened. Source JSON, native documents,
+logical/visual review and hashes are retained with the previews.
+
+Root's 2,637 startup runtime paths still match the live full regression.
+All five Form 8801 candidate commits remain isolated. This completes the
+tested local calculation/settlement/native/PDF prerequisites, not the whole
+filing route. Actual accepted prior-return records, authenticated MTCNOL,
+MTFTCE/capital-basis workpapers, all owner/status/credit combinations and the
+full numeric range, durable accepted carry/import, public route/packet
+integration, matching business rules and IRS acceptance remain required.
+Both public attachment guards stay active; aggregate filing/PDF counts and
+main checkboxes do not increase. All future tasks remain unworked.
