@@ -1,3 +1,4 @@
+import { calculateForm172HistoricalAmtHistory } from "./form172_amt_historical_history.ts";
 import { calculateForm172HistoricalAmtAbsorption } from "./form172_amt_historical_absorption.ts";
 import { calculateForm172HistoricalAmtVintageModifiedIncome } from "./form172_amt_vintage_modified_income.ts";
 import { calculateForm172HistoricalAmtModifiedIncome } from "./form172_amt_modified_income.ts";
@@ -813,5 +814,224 @@ Deno.test("Historical AMT absorption floors shrinking vintage bases and rejects 
     () => calculateForm172HistoricalAmtAbsorption(f, v),
     Error,
     "each origin exactly once",
+  );
+});
+
+function historyFixture() {
+  const applications = [[200, 100], [110, 90], [20, 80]].map(
+    (opening, index) => {
+      const year = 2014 + index;
+      const f = fixture();
+      f.reference = `cap-${year}`;
+      f.annual_review.tax_year = year;
+      f.annual_review.reference = `annual-${year}`;
+      f.annual_review.form6251_reference = `form6251-${year}`;
+      f.annual_review.components.forEach((c) => {
+        c.reference = `${year}-line-${c.line}`;
+      });
+      f.annual_review.section199_deduction.reference = `${year}-dpad`;
+      f.losses.forEach((loss, i) => {
+        loss.reviewed_opening_amt_nol = opening[i];
+      });
+      const v = vintageReview(f);
+      v.reference = `vintage-context-${year}`;
+      v.application_tax_year = year;
+      v.vintages.forEach((row, i) => {
+        row.modified_review.tax_year = year;
+        row.modified_review.reference = `${year}-modified-${i}`;
+        row.modified_review.components.forEach((c) => {
+          c.refigured_reference = `${year}-${i}-modified-${c.line}`;
+        });
+        row.modified_review.section199.refigured_reference =
+          `${year}-${i}-modified-dpad`;
+      });
+      v.vintages[1].earlier_nol_deductions[0].amount = index === 2 ? 20 : 90;
+      return { application_year: year, cap_workpaper: f, vintage_reviews: v };
+    },
+  );
+  return {
+    reference: "historical-span",
+    start_year: 2014,
+    end_year: 2016,
+    taxpayer_ssn: "111223333",
+    entry_reviews: [200, 100].map((opening, index) => ({
+      reference: `entry-${index}`,
+      origin_year: 2008 + index,
+      loss_reference: applications[0].cap_workpaper.losses[index].reference,
+      application_year: 2014,
+      reviewed_opening: opening,
+    })),
+    annual_applications: applications,
+  };
+}
+Deno.test("Historical AMT history conserves separate vintages through consecutive annual absorption", () => {
+  const f = historyFixture();
+  const r = calculateForm172HistoricalAmtHistory(f);
+  assertEquals(
+    r.reviewedAnnualApplications.map((year) =>
+      year.chronologicalReviewedApplications.map((
+        loss,
+      ) => [loss.reviewedOpening, loss.absorbed, loss.reviewedRemaining])
+    ),
+    [
+      [[200, 90, 110], [100, 10, 90]],
+      [[110, 90, 20], [90, 10, 80]],
+      [[20, 20, 0], [80, 80, 0]],
+    ],
+  );
+  assertEquals(r.reviewedEndingBalances, [{ originYear: 2008, amount: 0 }, {
+    originYear: 2009,
+    amount: 0,
+  }]);
+  assertEquals(r.historicalSpanContinuityArithmeticReconciled, true);
+  assertEquals(r.completeCarryHistoryVerified, false);
+  assertEquals(r.carrybackDispositionVerified, false);
+  assertEquals(r.filingReady, false);
+});
+Deno.test("Historical AMT history rejects missing years changed openings origins elections and owners", () => {
+  const good = historyFixture();
+  for (
+    const mutate of [
+      (v: typeof good) => {
+        v.annual_applications.splice(1, 1);
+      },
+      (v: typeof good) => {
+        v.annual_applications.reverse();
+      },
+      (v: typeof good) => {
+        v.annual_applications[1].cap_workpaper.losses[0]
+          .reviewed_opening_amt_nol = 109;
+      },
+      (v: typeof good) => {
+        v.annual_applications[1].cap_workpaper.losses[1]
+          .whbaa_election_reference = "changed-election";
+      },
+      (v: typeof good) => {
+        v.annual_applications[1].cap_workpaper.losses[0].regular_origin
+          .reference = "changed-origin";
+      },
+      (v: typeof good) => {
+        v.taxpayer_ssn = "222334444";
+      },
+      (v: typeof good) => {
+        v.entry_reviews[0].reviewed_opening = 199;
+      },
+      (v: typeof good) => {
+        v.entry_reviews.push(v.entry_reviews[0]);
+      },
+      (v: typeof good) => {
+        v.annual_applications[1].cap_workpaper.reference =
+          v.annual_applications[0].cap_workpaper.reference;
+      },
+    ]
+  ) {
+    const bad = structuredClone(good);
+    mutate(bad);
+    assertThrows(() => calculateForm172HistoricalAmtHistory(bad));
+  }
+  assertThrows(() =>
+    calculateForm172HistoricalAmtHistory({ ...good, ending_carry: 100 })
+  );
+});
+Deno.test("Historical AMT history rejects unused entry declarations and preserves single-year scope", () => {
+  const f = historyFixture();
+  f.end_year = 2014;
+  f.annual_applications = [f.annual_applications[0]];
+  assertEquals(calculateForm172HistoricalAmtHistory(f).reviewedEndingBalances, [
+    { originYear: 2008, amount: 110 },
+    { originYear: 2009, amount: 90 },
+  ]);
+  f.entry_reviews.push({
+    reference: "unused-entry",
+    origin_year: 2010,
+    loss_reference: "missing-loss",
+    application_year: 2014,
+    reviewed_opening: 0,
+  });
+  assertThrows(
+    () => calculateForm172HistoricalAmtHistory(f),
+    Error,
+    "unused entry",
+  );
+});
+
+Deno.test("Historical AMT history admits a newly originating loss only with its preceding annual loss-year join", () => {
+  const f = historyFixture();
+  const first = f.annual_applications[0];
+  first.cap_workpaper.annual_review.components[0].amount = -83000;
+  first.cap_workpaper.annual_review.section199_deduction.amount = 3000;
+  first.vintage_reviews.vintages.forEach((row) => {
+    row.modified_review.components[0].original_amount = -83000;
+    row.modified_review.components[0].refigured_amount = -83000;
+    row.modified_review.section199.original_amount = 3000;
+    row.modified_review.section199.refigured_amount = 3000;
+  });
+  first.vintage_reviews.vintages[1].earlier_nol_deductions[0].amount = 0;
+  const { old, alternative } = historicalSources(2014);
+  alternative.reference = "new-amt-origin-2014";
+  alternative.amt_inventory.reference = "new-amt-items-2014";
+  alternative.reviewed_amt.reference = "new-amt-return-2014";
+  const entry = {
+    reference: "new-loss-2014",
+    regular_origin: old,
+    amt_origin: alternative,
+    reviewed_opening_amt_nol: 80,
+    category: "ordinary" as const,
+  };
+  for (const [index, opening] of [[1, [200, 100]], [2, [110, 90]]] as const) {
+    const row = f.annual_applications[index];
+    row.cap_workpaper.losses[0].reviewed_opening_amt_nol = opening[0];
+    row.cap_workpaper.losses[1].reviewed_opening_amt_nol = opening[1];
+    row.cap_workpaper.losses.push(structuredClone(entry));
+    row.vintage_reviews.vintages[1].earlier_nol_deductions[0].amount = 90;
+    const modified = structuredClone(
+      row.vintage_reviews.vintages[0].modified_review,
+    );
+    modified.reference = `new-${row.application_year}-modified-review`;
+    modified.components.forEach((c) => {
+      c.refigured_reference = `new-${row.application_year}-${c.line}`;
+    });
+    modified.section199.refigured_reference =
+      `new-${row.application_year}-dpad`;
+    row.vintage_reviews.vintages.push({
+      origin_year: 2014,
+      loss_reference: entry.reference,
+      refigured_deductions_include_earlier_nol_effects: true,
+      earlier_nol_deductions: [
+        {
+          origin_year: 2008,
+          loss_reference: row.cap_workpaper.losses[0].reference,
+          amount: 90,
+        },
+        {
+          origin_year: 2009,
+          loss_reference: row.cap_workpaper.losses[1].reference,
+          amount: 10,
+        },
+      ],
+      modified_review: modified,
+    });
+  }
+  f.entry_reviews.push({
+    reference: "entry-new2014",
+    origin_year: 2014,
+    loss_reference: entry.reference,
+    application_year: 2015,
+    reviewed_opening: 80,
+  });
+  const r = calculateForm172HistoricalAmtHistory(f);
+  assertEquals(r.reviewedEndingBalances, [{ originYear: 2008, amount: 20 }, {
+    originYear: 2009,
+    amount: 80,
+  }, { originYear: 2014, amount: 80 }]);
+  first.cap_workpaper.annual_review.section199_deduction.amount = 3001;
+  first.vintage_reviews.vintages.forEach((row) => {
+    row.modified_review.section199.original_amount = 3001;
+    row.modified_review.section199.refigured_amount = 3001;
+  });
+  assertThrows(
+    () => calculateForm172HistoricalAmtHistory(f),
+    Error,
+    "preceding loss-year annual return",
   );
 });
