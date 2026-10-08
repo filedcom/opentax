@@ -1,3 +1,4 @@
+import { calculateForm172HistoricalAmtModifiedIncome } from "./form172_amt_modified_income.ts";
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateForm172HistoricalAmtCap,
@@ -394,4 +395,198 @@ Deno.test("Historical deduction allocation recomputes origins and rejects assert
     g.losses[0].regular_origin.reference;
   delete g.losses[1].whbaa_election_reference;
   assertThrows(() => calculateForm172HistoricalAmtDeductionAllocation(g));
+});
+
+function modifiedReview(f = fixture()) {
+  return {
+    reference: "modified-review",
+    annual_reference: f.annual_review.reference,
+    tax_year: 2014,
+    taxpayer_ssn: "111223333",
+    filing_status: "single",
+    before_all_atnold: true,
+    components: f.annual_review.components.map((row) => ({
+      line: row.line,
+      original_reference: row.reference,
+      original_amount: row.amount,
+      refigured_reference: `modified-${row.line}`,
+      refigured_amount: row.amount,
+    })),
+    section199: {
+      original_reference: f.annual_review.section199_deduction.reference,
+      original_amount: f.annual_review.section199_deduction.amount,
+      refigured_reference: "modified-dpad",
+      refigured_amount: f.annual_review.section199_deduction.amount,
+    },
+    amt_capital_items: [] as {
+      item_id: string;
+      reference: string;
+      owner_ssn: string;
+      kind: "gain" | "loss";
+      amount: number;
+    }[],
+    amt_capital_loss_deduction: { reference: "amt-schedule-d", amount: 0 },
+    section1202_items: [] as {
+      item_id: string;
+      reference: string;
+      owner_ssn: string;
+      excluded_gain: number;
+      amt_preference: number;
+    }[],
+  };
+}
+Deno.test("Historical AMT modified income separates deduction cap from capital and medical refigures", () => {
+  const f = fixture();
+  f.losses[0].reviewed_opening_amt_nol = 80000;
+  f.losses[1].reviewed_opening_amt_nol = 0;
+  f.annual_review.components[0].amount = 31700;
+  const v = modifiedReview(f);
+  // Wages50000, AMT capital deduction3000, medical20000: the original
+  // medical floor4700 gives deduction15300 and AMTI31700. Refiguring
+  // the floor at5000 changes the deduction to15000; restore capital once.
+  v.components[0].refigured_amount = 32000;
+  v.amt_capital_items = [{
+    item_id: "loss",
+    reference: "amt-loss-source",
+    owner_ssn: v.taxpayer_ssn,
+    kind: "loss",
+    amount: 7000,
+  }];
+  v.amt_capital_loss_deduction.amount = 3000;
+  const r = calculateForm172HistoricalAmtModifiedIncome(f, v);
+  assertEquals(r.originalDeductionCap, 28530);
+  assertEquals(r.refiguredTentativeAmti, 32000);
+  assertEquals(r.capitalLossAddback, 3000);
+  assertEquals(r.modifiedAmtiBeforeEarlierAtnold, 35000);
+  assertEquals(r.chronologicalAbsorptionReconciled, false);
+  assertEquals(r.survivingCarryVerified, false);
+  assertEquals(r.filingReady, false);
+});
+Deno.test("Historical AMT modified income restores only section1202 exclusion not already in AMTI", () => {
+  const f = fixture();
+  f.annual_review.components.find((row) => row.line === "13")!.amount = 7;
+  const v = modifiedReview(f);
+  v.section1202_items = [{
+    item_id: "qsbs",
+    reference: "qsbs-source",
+    owner_ssn: v.taxpayer_ssn,
+    excluded_gain: 100,
+    amt_preference: 7,
+  }];
+  const r = calculateForm172HistoricalAmtModifiedIncome(f, v);
+  assertEquals(r.originalTentativeAmti, 107);
+  assertEquals(r.section1202Addback, 93);
+  assertEquals(r.modifiedAmtiBeforeEarlierAtnold, 200);
+  assertEquals(r.refiguredOperandEligibilityVerified, false);
+  v.components.find((row) => row.line === "13")!.refigured_amount = 0;
+  assertThrows(
+    () => calculateForm172HistoricalAmtModifiedIncome(f, v),
+    Error,
+    "preference differs",
+  );
+});
+Deno.test("Historical AMT modified income uses AMT capital netting and MFS limit", () => {
+  const f = fixture();
+  const v = modifiedReview(f);
+  v.filing_status = "married_filing_separately";
+  v.amt_capital_items = [
+    {
+      item_id: "gain",
+      reference: "gain-source",
+      owner_ssn: v.taxpayer_ssn,
+      kind: "gain",
+      amount: 2000,
+    },
+    {
+      item_id: "loss",
+      reference: "loss-source",
+      owner_ssn: v.taxpayer_ssn,
+      kind: "loss",
+      amount: 7000,
+    },
+  ];
+  v.amt_capital_loss_deduction.amount = 1500;
+  assertEquals(
+    calculateForm172HistoricalAmtModifiedIncome(f, v).capitalLossAddback,
+    1500,
+  );
+  v.amt_capital_loss_deduction.amount = 3000;
+  assertThrows(
+    () => calculateForm172HistoricalAmtModifiedIncome(f, v),
+    Error,
+    "capital deduction differs",
+  );
+  v.amt_capital_loss_deduction.amount = 1500;
+  v.amt_capital_items[1].owner_ssn = "222334444";
+  assertThrows(
+    () => calculateForm172HistoricalAmtModifiedIncome(f, v),
+    Error,
+    "wrong owners",
+  );
+});
+Deno.test("Historical AMT modified income restores refigured DPAD and preserves negative signed base", () => {
+  const f = fixture();
+  f.annual_review.components[0].amount = -5000;
+  f.annual_review.section199_deduction.amount = 100;
+  const v = modifiedReview(f);
+  v.section199.refigured_amount = 200;
+  const r = calculateForm172HistoricalAmtModifiedIncome(f, v);
+  assertEquals(r.signedModifiedAmti, -4800);
+  assertEquals(r.modifiedAmtiBeforeEarlierAtnold, 0);
+  v.section199.original_amount = 101;
+  assertThrows(
+    () => calculateForm172HistoricalAmtModifiedIncome(f, v),
+    Error,
+    "section199 original",
+  );
+});
+Deno.test("Historical AMT modified income rejects incomplete stale duplicate or asserted operands", () => {
+  const f = fixture();
+  const good = modifiedReview(f);
+  for (
+    const mutate of [
+      (v: typeof good) => {
+        v.components.pop();
+      },
+      (v: typeof good) => {
+        v.components[1] = v.components[0];
+      },
+      (v: typeof good) => {
+        v.components[0].original_amount++;
+      },
+      (v: typeof good) => {
+        v.components[0].original_reference = "unmatched";
+      },
+      (v: typeof good) => {
+        v.components[0].refigured_reference =
+          v.components[1].refigured_reference;
+      },
+      (v: typeof good) => {
+        v.tax_year = 2015;
+      },
+      (v: typeof good) => {
+        v.taxpayer_ssn = "222334444";
+      },
+      (v: typeof good) => {
+        v.annual_reference = "wrong-year-return";
+      },
+    ]
+  ) {
+    const bad = structuredClone(good);
+    mutate(bad);
+    assertThrows(() => calculateForm172HistoricalAmtModifiedIncome(f, bad));
+  }
+  assertThrows(() =>
+    calculateForm172HistoricalAmtModifiedIncome(f, {
+      ...good,
+      modified_amti: 123,
+    })
+  );
+  const bad = structuredClone(good);
+  bad.components.find((row) => row.line === "10")!.refigured_amount = 1;
+  assertThrows(
+    () => calculateForm172HistoricalAmtModifiedIncome(f, bad),
+    Error,
+    "retain regular NOL",
+  );
 });

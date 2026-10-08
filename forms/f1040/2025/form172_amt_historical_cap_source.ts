@@ -7,6 +7,7 @@ import {
   calculateForm172HistoricalAmtCap,
   calculateForm172HistoricalAmtDeductionAllocation,
 } from "./form172_amt_historical_cap.ts";
+import { calculateForm172HistoricalAmtModifiedIncome } from "./form172_amt_modified_income.ts";
 
 const schema = z.object({
   workpaper: z.object({
@@ -22,7 +23,7 @@ const schema = z.object({
  * inventories, annual operands and reviewed opening/category assertions.
  * Hash identity does not authenticate elections, prior returns or carry balances. */
 async function stageHistoricalAmtSource<
-  T extends ReturnType<typeof calculateForm172HistoricalAmtCap>,
+  T extends { applicationYear: number; filingReady: false },
 >(
   rawBinding: unknown,
   rawDocuments: readonly SourceDocumentBytes[],
@@ -95,4 +96,21 @@ export function stageForm172HistoricalAmtDeductionAllocationSource(
     rawDocuments,
     calculateForm172HistoricalAmtDeductionAllocation,
   );
+}
+
+/** Retain the cap/origin package and paired modified-income operands together.
+ * Source-byte identity does not establish the refigures' legal eligibility or
+ * the loss absorbed by an intervening year. Caller arrays are owned before the
+ * shared verifier first awaits its digest computation.
+ */
+export function stageForm172HistoricalAmtModifiedIncomeSource(
+  rawBinding: unknown,
+  rawDocuments: readonly SourceDocumentBytes[],
+) {
+  return stageHistoricalAmtSource(rawBinding, rawDocuments, (raw) => {
+    const { modified_review, ...cap } = z.object({
+      modified_review: z.unknown(),
+    }).passthrough().parse(raw);
+    return calculateForm172HistoricalAmtModifiedIncome(cap, modified_review);
+  });
 }

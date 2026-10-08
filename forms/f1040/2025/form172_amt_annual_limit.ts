@@ -65,7 +65,7 @@ export const form172Amt2025TentativeLines = [
 const ref = z.string().trim().min(1);
 const signedDollars = z.number().int().min(-1_000_000_000).max(1_000_000_000);
 const positiveDollars = z.number().int().min(0).max(1_000_000_000);
-const schema = z.object({
+export const form172AmtAnnualReviewSchema = z.object({
   reference: ref,
   tax_year: z.number().int().min(2013).max(2025),
   taxpayer_ssn: z.string().regex(/^\d{9}$/),
@@ -107,7 +107,7 @@ export function calculateForm172AmtAnnualLimit(
   rawAnnual: unknown,
 ) {
   const origin = calculateReviewedAmtLossYear(rawRegularOrigin, rawAmtOrigin);
-  const v = schema.parse(rawAnnual);
+  const v = form172AmtAnnualReviewSchema.parse(rawAnnual);
   if (
     v.tax_year === origin.taxYear ||
     v.taxpayer_ssn !== origin.taxpayerSsn || v.spouse_ssn !== origin.spouseSsn

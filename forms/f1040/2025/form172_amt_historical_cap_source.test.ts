@@ -3,6 +3,7 @@ import { form172AmtLegacyTentativeLines } from "./form172_amt_annual_limit.ts";
 import {
   stageForm172HistoricalAmtCapSource,
   stageForm172HistoricalAmtDeductionAllocationSource,
+  stageForm172HistoricalAmtModifiedIncomeSource,
 } from "./form172_amt_historical_cap_source.ts";
 function origin() {
   const item = (id: string, amount: number, business: boolean) => ({
@@ -435,4 +436,109 @@ Deno.test("Historical AMT allocation owns caller binding and bytes before awaiti
   assertEquals(r.review_package_manifest[0].sha256, originalSha);
   assertEquals(r.applicationYear, 2014);
   assertEquals(r.taxpayerSsn, "111223333");
+});
+
+async function modifiedSource() {
+  const cap = fixture();
+  const workpaper = {
+    ...cap,
+    modified_review: {
+      reference: "modified-income-review",
+      annual_reference: cap.annual_review.reference,
+      tax_year: 2014,
+      taxpayer_ssn: "111223333",
+      filing_status: "single",
+      before_all_atnold: true,
+      components: cap.annual_review.components.map((row) => ({
+        line: row.line,
+        original_reference: row.reference,
+        original_amount: row.amount,
+        refigured_reference: `refigured-${row.line}`,
+        refigured_amount: row.amount,
+      })),
+      section199: {
+        original_reference: cap.annual_review.section199_deduction.reference,
+        original_amount: 0,
+        refigured_reference: "refigured-dpad",
+        refigured_amount: 0,
+      },
+      amt_capital_items: [{
+        item_id: "loss",
+        reference: "amt-loss",
+        owner_ssn: "111223333",
+        kind: "loss",
+        amount: 4000,
+      }],
+      amt_capital_loss_deduction: { reference: "amt-schedule-d", amount: 3000 },
+      section1202_items: [],
+    },
+  };
+  const bytes = new TextEncoder().encode(JSON.stringify(workpaper));
+  const binding = {
+    workpaper: { reference: cap.reference, sha256: await sha(bytes) },
+    application_tax_year: 2014,
+    taxpayer_ssn: "111223333",
+  };
+  return {
+    workpaper,
+    binding,
+    documents: [{ reference: cap.reference, bytes }],
+  };
+}
+Deno.test("Historical modified AMTI retained bytes preserve arithmetic without admitting carry", async () => {
+  const f = await modifiedSource();
+  const r = await stageForm172HistoricalAmtModifiedIncomeSource(
+    f.binding,
+    f.documents,
+  );
+  assertEquals(r.originalDeductionCap, 100);
+  assertEquals(r.modifiedAmtiBeforeEarlierAtnold, 3100);
+  assertEquals(r.reviewPackageBytesVerified, true);
+  assertEquals(r.review_package_manifest, [f.binding.workpaper]);
+  assertEquals(r.chronologicalAbsorptionReconciled, false);
+  assertEquals(r.acceptedCarryImportVerified, false);
+  assertEquals(r.packetAdmissionVerified, false);
+  assertEquals(r.filingReady, false);
+});
+Deno.test("Historical modified AMTI source rejects changed bytes and rehash cannot hide stale operands", async () => {
+  const f = await modifiedSource();
+  f.documents[0].bytes[0] ^= 1;
+  await assertRejects(() =>
+    stageForm172HistoricalAmtModifiedIncomeSource(f.binding, f.documents)
+  );
+  const g = await modifiedSource();
+  g.workpaper.modified_review.components[0].original_amount++;
+  g.documents[0].bytes = new TextEncoder().encode(JSON.stringify(g.workpaper));
+  g.binding.workpaper.sha256 = await sha(g.documents[0].bytes);
+  await assertRejects(
+    () => stageForm172HistoricalAmtModifiedIncomeSource(g.binding, g.documents),
+    Error,
+    "original operand differs",
+  );
+  const h = await modifiedSource();
+  h.workpaper.modified_review.tax_year = 2015;
+  h.documents[0].bytes = new TextEncoder().encode(JSON.stringify(h.workpaper));
+  h.binding.workpaper.sha256 = await sha(h.documents[0].bytes);
+  await assertRejects(
+    () => stageForm172HistoricalAmtModifiedIncomeSource(h.binding, h.documents),
+    Error,
+    "match annual year",
+  );
+});
+Deno.test("Historical modified AMTI source owns bound owners and bytes before first await", async () => {
+  const f = await modifiedSource();
+  const digest = f.binding.workpaper.sha256;
+  const promise = stageForm172HistoricalAmtModifiedIncomeSource(
+    f.binding,
+    f.documents,
+  );
+  f.binding.workpaper.sha256 = "0".repeat(64);
+  f.binding.taxpayer_ssn = "999887777";
+  f.binding.application_tax_year = 2015;
+  f.documents[0].bytes.fill(0);
+  f.documents.length = 0;
+  const r = await promise;
+  assertEquals(r.modifiedAmtiBeforeEarlierAtnold, 3100);
+  assertEquals(r.taxpayerSsn, "111223333");
+  assertEquals(r.review_package_manifest[0].sha256, digest);
 });
