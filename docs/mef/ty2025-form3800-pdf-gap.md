@@ -775,3 +775,6 @@ await the bulk run. Personal-use Form 8936 remains on its separate Schedule 3
 route. The
 [official 2025 Form 8936](https://www.irs.gov/pub/irs-prior/f8936--2025.pdf)
 directs line 8 to Form 3800 Part III line 1y and line 21 to line 1aa.
+
+
+On October8, 2026, all15 pages of the retained orphan-drug clinical-testing packet were visually reviewed, including all nine Form3800 pages. Reduced Form8820 credit1,975 reconciles through PartIII line1h, Schedule3 and Form1040. Public-source replay reproduces the filed XML exactly and local full XSD validation exits0; the original pending comparison differs only by an explicitly asserted inactive Form8960 entry. Synthetic FDA, cost and election facts remain unauthenticated. See the [qualified replay and retained page evidence](ty2025-readiness-execution-2026-10-07.md). This closes no parent scope or IRS acceptance requirement.
