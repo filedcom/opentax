@@ -1,3 +1,4 @@
+import { educationCents } from "./money.ts";
 import {
   requiredServiceScholarshipAmount,
 } from "./required-service-scholarship.ts";
@@ -71,7 +72,7 @@ export function assertEducationIncomeSource(
     );
     allocated.set(
       row.reference,
-      (allocated.get(row.reference) ?? 0) + row.taxable,
+      (allocated.get(row.reference) ?? 0) + educationCents(row.taxable),
     );
     if (
       copies.length !== 1 ||
@@ -80,7 +81,7 @@ export function assertEducationIncomeSource(
       copies[0].employer_ein?.replaceAll("-", "") !==
         row.ein.replaceAll("-", "") ||
       copies[0].box1_wages !== row.box1 ||
-      allocated.get(row.reference)! > row.box1
+      allocated.get(row.reference)! > educationCents(row.box1)
     ) {
       throw new Error(
         "Taxable education payroll allocation differs from the student's retained issued W-2 copy",

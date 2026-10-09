@@ -1,3 +1,4 @@
+import { educationCents, educationMoney, sumEducationMoney } from "./money.ts";
 import { z } from "zod";
 const reference = z.string().trim().min(1);
 const ssn = z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/);
@@ -8,7 +9,10 @@ export const requiredServiceScholarshipSchema = z.object({
   tax_year: z.literal(2025),
   student_ssn: ssn,
   source_document_reference: reference,
-  taxable_amount: z.number().int().positive(),
+  taxable_amount: educationMoney.refine(
+    (amount) => amount > 0,
+    "Compensation must be positive",
+  ),
   payer_name: reference,
   payer_ein: ein,
   scholarship_terms_record_reference: reference,
@@ -25,7 +29,10 @@ export const requiredServiceScholarshipSchema = z.object({
       student_ssn: ssn,
       payer_ein: ein,
       payment_date: date,
-      amount: z.number().int().positive(),
+      amount: educationMoney.refine(
+        (amount) => amount > 0,
+        "Compensation must be positive",
+      ),
     }).strict(),
   ).min(1),
   required_service_sources: z.array(
@@ -48,7 +55,10 @@ export const requiredServiceScholarshipSchema = z.object({
     z.object({
       kind: z.literal("w2_box1"),
       w2_source_document_reference: reference,
-      w2_box1_wages: z.number().int().positive(),
+      w2_box1_wages: educationMoney.refine(
+        (amount) => amount > 0,
+        "Compensation must be positive",
+      ),
       payroll_allocation_record_reference: reference,
     }).strict(),
     z.object({
@@ -98,7 +108,7 @@ export function requiredServiceScholarshipAmount(
   for (const payment of row.payment_sources) {
     distinct(payment.source_document_reference);
     identity(payment);
-    paid += payment.amount;
+    paid += educationCents(payment.amount);
   }
   const assigned = new Set<string>();
   for (const service of row.required_service_sources) {
@@ -124,15 +134,17 @@ export function requiredServiceScholarshipAmount(
     }
   }
   if (
-    assigned.size !== payments.size || paid !== row.taxable_amount ||
+    assigned.size !== payments.size ||
+    paid !== educationCents(row.taxable_amount) ||
     !Number.isSafeInteger(paid) ||
-    (row.reporting.kind === "w2_box1" && paid > row.reporting.w2_box1_wages)
+    (row.reporting.kind === "w2_box1" &&
+      paid > educationCents(row.reporting.w2_box1_wages))
   ) {
     throw new Error(
       "Required-service scholarship compensation must reconcile complete actual disbursements and issued payroll allocation",
     );
   }
-  return paid;
+  return paid / 100;
 }
 export function assertDistinctRequiredServiceSources(
   rows: readonly RequiredServiceScholarship[],
@@ -163,7 +175,7 @@ export function requiredServiceScholarshipEarned(
 ): number {
   assertDistinctRequiredServiceSources(rows);
   const records = new Set<string>();
-  let earnedOutsideW2 = 0;
+  const earnedOutsideW2: number[] = [];
   for (const row of rows) {
     if (
       tin(row.student_ssn) !== tin(owner) ||
@@ -176,9 +188,9 @@ export function requiredServiceScholarshipEarned(
     records.add(row.source_document_reference);
     const paid = requiredServiceScholarshipAmount(row);
     // The complete W-2 inventory already includes the Box 1 component.
-    if (row.reporting.kind === "schedule1_line8r") earnedOutsideW2 += paid;
+    if (row.reporting.kind === "schedule1_line8r") earnedOutsideW2.push(paid);
   }
-  return earnedOutsideW2;
+  return sumEducationMoney(earnedOutsideW2);
 }
 export function assertRequiredServiceScholarshipCopies(
   rows: readonly RequiredServiceScholarship[],

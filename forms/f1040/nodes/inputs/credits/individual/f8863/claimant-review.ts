@@ -40,9 +40,9 @@ export const claimantReviewSchema = z.discriminatedUnion("kind", [
         source_document_reference: reference,
         employee_ssn: ssnSchema,
         employer_ein: z.string().regex(/^\d{2}-?\d{7}$/),
-        box1_wages: z.number().int().nonnegative(),
-        box3_ss_wages: z.number().int().nonnegative().optional(),
-        box7_ss_tips: z.number().int().nonnegative().optional(),
+        box1_wages: supportMoney,
+        box3_ss_wages: supportMoney.optional(),
+        box7_ss_tips: supportMoney.optional(),
       }).strict(),
     ),
     earned_income_business_sources: z.array(businessReviewSchema).min(1)

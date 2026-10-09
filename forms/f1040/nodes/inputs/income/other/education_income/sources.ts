@@ -1,3 +1,4 @@
+import { sumEducationMoney } from "./money.ts";
 import {
   assertDistinctRequiredServiceSources,
   requiredServiceScholarshipAmount,
@@ -152,16 +153,18 @@ export function educationIncomeSources(raw: unknown): EducationIncome[] {
   }
   return rows;
 }
+/** Add source cents before rounding the one filed Schedule 1 line. */
 export function scholarshipIncomeTotal(raw: unknown): number {
-  return educationIncomeSources(raw).reduce(
-    (sum, row) =>
-      sum +
-      (row.kind === "scholarship_not_on_w2"
-        ? row.taxable_amount
-        : row.kind === "scholarship_for_required_services" &&
-            row.reporting.kind === "schedule1_line8r"
-        ? requiredServiceScholarshipAmount(row)
-        : 0),
-    0,
+  return Math.round(
+    sumEducationMoney(
+      educationIncomeSources(raw).map((row) =>
+        row.kind === "scholarship_not_on_w2"
+          ? row.taxable_amount
+          : row.kind === "scholarship_for_required_services" &&
+              row.reporting.kind === "schedule1_line8r"
+          ? requiredServiceScholarshipAmount(row)
+          : 0
+      ),
+    ),
   );
 }
