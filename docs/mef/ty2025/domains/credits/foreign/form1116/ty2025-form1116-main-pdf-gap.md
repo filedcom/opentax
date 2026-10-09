@@ -44,6 +44,11 @@ historical unrun/visual-pending statements only for these seven packet shapes.
 Retained evidence: `.state/research/form1116-passive-packets-2026-10-09/`,
 including the review manifest, rendered sheets, qualification and test logs.
 
+The subsequent [carryover checkpoint](./ty2025-form1116-schedule-b-pdf.md#october-9-vintage-use-expiry-and-complete-packets)
+adds six complete packets/48 observed pages: four XSD-valid returns and two
+2015-expiry XML failures (deferred108). It verifies oldest-first use and expiry
+amounts without claiming prior-return authenticity or closing the parent task.
+
 ## Shared IRS country-code validation (2026-10-05)
 
 Retained Form 1116 and related foreign-source paths now use a shared exact
