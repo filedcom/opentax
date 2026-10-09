@@ -76,6 +76,7 @@ export const inputSchema = z.object({
   investment_expenses: z.number().nonnegative().optional(),
   investment_expenses_exclude_sourced_k1: z.literal(true).optional(),
   source_1099_interest: accumulableAmount.optional(),
+  source_8815_excluded_interest: z.number().int().nonnegative().optional(),
   source_1099_royalties: accumulableAmount.optional(),
   source_k1_royalties: accumulableAmount.optional(),
   source_1099_dividends: accumulableAmount.optional(),
@@ -144,11 +145,21 @@ interface Form4952Totals {
 }
 
 function sourceTotals(input: Form4952Input): Form4952Totals {
+  if (
+    input.source_8815_excluded_interest !== undefined &&
+    (!input.royalty_debt_trace ||
+      input.source_8815_excluded_interest > sum(input.source_1099_interest))
+  ) {
+    throw new Error(
+      "Form 4952 bond exclusion needs matched royalty debt and gross interest",
+    );
+  }
   if (input.royalty_debt_trace) {
     const permitted = new Set([
       "royalty_debt_trace",
       "source_1099_royalties",
       "source_1099_interest",
+      "source_8815_excluded_interest",
       "amt_refigure",
     ]);
     if (
@@ -214,7 +225,9 @@ function sourceTotals(input: Form4952Input): Form4952Totals {
       sum(input.source_k1_investment_interest),
     line2: input.prior_year_carryforward ?? 0,
     line4a: (input.other_investment_property_gross_income ?? 0) +
-      sum(input.source_1099_interest) + sum(input.source_1099_royalties) +
+      sum(input.source_1099_interest) -
+      (input.source_8815_excluded_interest ?? 0) +
+      sum(input.source_1099_royalties) +
       sum(input.source_k1_royalties) +
       sum(input.source_1099_dividends) +
       sum(input.source_k1_interest) + sum(input.source_k1_dividends) +

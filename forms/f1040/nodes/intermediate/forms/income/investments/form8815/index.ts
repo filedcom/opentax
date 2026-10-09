@@ -1,3 +1,8 @@
+import { form4952 } from "../../../deductions/investments/form4952/index.ts";
+import {
+  royaltyMagiDeduction,
+  royaltySpecialSchema,
+} from "./royalty_special_computation.ts";
 import {
   assertEducationContributions,
   contributionAccountSchema,
@@ -95,7 +100,18 @@ export const inputSchema = z.object({
     schedule1_adjustments: amount,
     foreign_adoption_and_puerto_rico_addbacks: amount,
     finalized_2025_income_lines_reviewed: z.literal(true),
-    no_royalty_interest_special_computation: z.literal(true),
+    no_royalty_interest_special_computation: z.boolean(),
+    royalty_debt_special_computation: royaltySpecialSchema.optional(),
+  }).superRefine((worksheet, ctx) => {
+    if (
+      worksheet.no_royalty_interest_special_computation ===
+        (worksheet.royalty_debt_special_computation !== undefined)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Form 8815 needs exactly one royalty-interest review choice",
+      });
+    }
   }),
   filing_status: filingStatusSchema,
 }).strict();
@@ -118,6 +134,16 @@ function line6Interest(input: Form8815Input): number {
 
 function line9ModifiedAgi(input: Form8815Input): number {
   const worksheet = input.line9_worksheet;
+  const special = worksheet.royalty_debt_special_computation;
+  if (
+    special && special.other_income_before_royalty_interest -
+          royaltyMagiDeduction(special, worksheet.schedule_b_line2_interest) !==
+      worksheet.other_1040_and_schedule1_income
+  ) {
+    throw new Error(
+      "Form 8815 MAGI royalty income differs from its pre-exclusion Form 4952 computation",
+    );
+  }
   const magi = worksheet.schedule_b_line2_interest +
     worksheet.other_1040_and_schedule1_income -
     worksheet.schedule1_adjustments +
@@ -201,7 +227,7 @@ export type Form8815Lines = ReturnType<typeof calculateForm8815>;
 class Form8815Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form8815";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule_b]);
+  readonly outputNodes = new OutputNodes([schedule_b, form4952]);
 
   compute(ctx: NodeContext, rawInput: Form8815Input): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -215,6 +241,9 @@ class Form8815Node extends TaxNode<typeof inputSchema> {
       outputs: [
         { nodeType: this.nodeType, fields: lines },
         output(schedule_b, { ee_bond_exclusion: lines.line14 }),
+        ...(input.line9_worksheet.royalty_debt_special_computation
+          ? [output(form4952, { source_8815_excluded_interest: lines.line14 })]
+          : []),
       ],
     };
   }

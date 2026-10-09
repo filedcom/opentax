@@ -1,5 +1,20 @@
 # TY2025 Form 4952 portfolio royalty boundary
 
+## October 9 bond exclusion and royalty-interest refiguring
+
+The existing directly traced royalty route now joins Form8815's special MAGI
+calculation. All eligible bond interest is included in the temporary MAGI
+computation; only the actual Form4952 subtracts the computed bond exclusion
+from investment income. Schedule E receives the actual allowed interest, and
+both regular/AMT carryforwards use that final deduction. The two retained debt
+traces, complete interest sources, final royalty income and return totals must
+agree before native or PDF export. Four complete XSD-valid returns/30 observed
+pages cover positive/zero/loss royalty income, full/partial exclusion and mixed
+bank interest; see the [paired checkpoint](../../../income/investments/form8815/ty2025-form8815-gap.md#october-9-royalty-interest-magi-and-actual-deduction-checkpoint).
+Deferred116 still qualifies royalty-loss PDF line22; standalone inventory117
+remains unrepaired. The combined route explicitly rejects additional unsupported
+investment-income sources and does not claim the wider parent gap is closed.
+
 ## October 9 directly traced royalty debt and Schedule E deduction
 
 A directly purchased nonbusiness portfolio royalty now has a dedicated debt
@@ -18,8 +33,8 @@ Schedule1/Form1040 income and never duplicates into Schedule A line9. Both
 native and PDF export replay the loan, source inventory, numbered Form4952
 lines, exact Schedule E property and final income join. Other expenses, manual
 investment amounts, mixed debt uses, prior carryforward imports, elections,
-AMT adjustments, non-single filers and the Form8815 special computation remain
-guarded. Whole-dollar current-year royalty and investment-income amounts are
+AMT adjustments and non-single filers remain guarded. The subsequent paired
+checkpoint above adds the Form8815 special computation. Whole-dollar current-year royalty and investment-income amounts are
 required in this route.
 
 | Constructed return | Paid interest | Portfolio interest | Gross royalty | Allowed on Schedule E | Net royalty | Carryforward | AGI | Tax | Refund |

@@ -1,3 +1,5 @@
+import { reconcileBondRoyaltyInterest } from "./form8815_royalty_return.ts";
+import { reconcileRoyaltyDebtReturn } from "../../../deductions/investments/form4952/form4952_royalty_debt_reconciliation.ts";
 import { reconcilePublicForm8839Pending } from "../../../../../nodes/intermediate/forms/credits/individual/form8839/pending_reconciliation.ts";
 import { assertContributionOwners } from "./form8815_contribution_return.ts";
 import { form8815ForeignAddback } from "./form8815_foreign_addback.ts";
@@ -93,6 +95,14 @@ export function assertForm8815FinalReturn(
     reconcilePublicForm8839Pending(pending);
   }
   const foreignAddback = form8815ForeignAddback(pending);
+  const special = source.line9_worksheet.royalty_debt_special_computation;
+  const royaltyAdjustment = special
+    ? reconcileBondRoyaltyInterest(pending).magiIncomeAdjustment
+    : 0;
+  if (special) {
+    const fields = z.record(z.unknown()).parse(pending.form4952);
+    reconcileRoyaltyDebtReturn(fields, pending);
+  }
   const grossInterest = source.line9_worksheet.schedule_b_line2_interest;
   const taxableInterest = form1040.line2b_taxable_interest ?? 0;
   const adjustments = form1040.line10_adjustments ?? 0;
@@ -106,7 +116,7 @@ export function assertForm8815FinalReturn(
     scheduleB.print_line2_total !== grossInterest ||
     scheduleB.print_line4_total !== taxableInterest ||
     grossInterest - lines.line14 !== taxableInterest ||
-    form1040.line9_total_income - taxableInterest !==
+    form1040.line9_total_income - taxableInterest + royaltyAdjustment !==
       source.line9_worksheet.other_1040_and_schedule1_income ||
     (schedule1?.line26_total_adjustments ?? 0) !== adjustments ||
     adjustments - studentLoanAdjustment !==

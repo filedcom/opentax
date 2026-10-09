@@ -1,5 +1,57 @@
 # TY2025 Form 8815: source-to-return gap
 
+## October 9 royalty-interest MAGI and actual deduction checkpoint
+
+The [2025 Form 8815 line 9 step 6 instructions](https://www.irs.gov/pub/irs-prior/f8815--2025.pdf)
+require a pre-exclusion investment-interest calculation for net royalty income,
+then a separate actual deduction after computing the bond exclusion. The source
+worksheet now retains the directly traced royalty debt and other income before
+royalty interest. It computes and reconciles the pre-exclusion deduction, sends
+the exclusion to the actual Form 4952 and binds both to final Schedule E and
+Form 1040. Only the actual Form 4952 is emitted in XML and the PDF packet.
+
+This joins the existing single-owner, directly purchased portfolio royalty to
+QTP/Coverdell payments, ordinary bank interest and redeemed savings bonds.
+Loan/source facts must match across both computations. Whole-dollar plain owned
+interest and one royalty source are required, with zero AMT adjustments; the
+actual regular and AMT carryforwards agree. Additional dividend, OID, capital
+sale, K-1, child-interest or foreign-income inventories remain guarded in this
+combined route. The standalone royalty inventory issue is separately deferred117;
+that route was not repaired here.
+
+| Constructed return | Paid royalty interest | Pre-exclusion deduction | Bond MAGI | Bond exclusion | Actual deduction | Carryforward | Final AGI | Tax | Refund |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Wages70,000, QTP, positive royalty | 500 | 500 | 74,500 | 2,000 | 500 | 0 | 72,500 | 7,405 | 12,595 |
+| Wages70,000, QTP, limited deduction | 6,000 | 5,000 | 70,000 | 2,000 | 3,000 | 3,000 | 70,000 | 6,855 | 13,145 |
+| Wages100,000, QTP, phaseout | 6,000 | 5,000 | 100,000 | 1,934 | 3,066 | 2,934 | 100,000 | 13,455 | 6,545 |
+| Wages100,000, mixed tuition/Coverdell/QTP, bank400+600 | 7,000 | 6,000 | 100,000 | 967 | 5,033 | 1,967 | 100,000 | 13,455 | 6,545 |
+
+All cases have gross royalty3,000, bond interest2,000, proceeds12,000 and
+withholding20,000. The last case uses6,000 net qualifying education expenses;
+the others use15,000 QTP payments. Coverdell contributor MAGI remains final AGI,
+not bond MAGI plus the bond exclusion. Tax-table brackets were checked separately
+from execution. The temporary MAGI deduction is not copied onto Schedule E.
+
+Four complete XMLs validate against cached TY2025 v5.4 Return1040.xsd
+(SHA256 `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`).
+All30 packet pages were observed through26 unique page images/seven contact
+sheets. Source, native and PDF values reconcile for the exclusion, actual
+interest, net royalty, final income/tax/refund and carryforward. One actual
+Form4952 is present per packet; no dummy is attached and no Schedule A interest
+is duplicated. Existing name/zero presentation68/76 and royalty-loss line22
+issue116 still qualify the packets (line22 displays66 or2,033 in the loss cases).
+No deferred presentation repair was made.
+
+Related Form4952/Form8815/ScheduleE regression:245/0. Benchmark46/133 retains
+the same87 failing IDs; it is not an ATS pass rate. Focused tests:5/0,
+including5 public contradictions,40 native and40 prepared-PDF
+mutations and7 direct inventory-guard checks. The direct checks prevent invalid
+K-1 fixtures rejected by another builder from masking the inventory guard.
+Evidence: `.state/research/form8815-royalty-magi-2026-10-09/`, including source,
+pending, XML/PDF, schema logs, rendered pages, text/native checks, tests and
+benchmark. These synthetic source references do not establish authenticity,
+accepted carryforward records, full royalty/addback coverage or IRS acceptance.
+
 ## October 9 combined bond, education-account and adoption-credit checkpoint
 
 Form 8815 no longer rejects a return merely because it includes Form 8839.
