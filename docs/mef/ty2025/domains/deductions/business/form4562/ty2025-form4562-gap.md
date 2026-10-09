@@ -461,3 +461,66 @@ establishing businesses, owner combinations, retirement, Marketplace ordering,
 source authentication and IRS acceptance remain existing broader scope.
 
 Verification: **44 typed tests passed, zero failed** across the current-year depreciation and health-calculation regression. Four complete returns passed local TY2025v5.4 XSD and have110 reviewed PDF pages (23 inspected distinct renders;87 exact reviewed-page matches), with zero AcroForm fields/widgets. Source inputs, pending results, XML/PDF bytes and hashes are retained in `.state/research/form4562-section179-health-returns/`. No IRS acceptance or broader parent completion is claimed.
+
+## Joint-return wages in the inventory income limit — October 9
+
+The current-year section179 filing route now includes ordinary issued W-2 wages
+from either spouse on a joint return. It requires distinct primary/spouse SSNs,
+reviewed election status matching Form1040, a recognized filed owner for every
+wage copy, valid employer EINs and exact wage totals on Form1040 lines1a/1z.
+Uniqueness is employer plus employee, so two spouses working for the same
+employer remain distinct sources; repeating the same employer/employee pair
+still rejects. Non-joint returns cannot use another person's wages, and
+statutory-employee and community-property allocation routes remain guarded.
+
+[26 CFR1.179-2(c)(6)(iv), (7)](https://www.ecfr.gov/current/title-26/section-1.179-2)
+includes employee compensation and combines both spouses' active income on
+joint returns. The [Form4562 line11 instructions](https://www.irs.gov/instructions/i4562)
+require the same combined limit, before section179 and half-SE. These cases keep
+all assets and the sole ScheduleC owned by the primary taxpayer; spouse-owned
+asset/business allocation is separate existing scope. The complete inventory
+review still confirms no other return assets, and the original-election/no-carry
+requirements remain unchanged.
+
+All four source-backed synthetic cases have total W-2 wages50,000, withholding
+7,000, primary business profit10,000, SE tax1,413 and half-SE707. The two-owner
+wage cases assign20,000 to the primary taxpayer and30,000 to the spouse; each
+retains its own issued-copy reference. The health case retains twelve500 monthly
+premiums under the primary business, without employer-eligible months.
+
+| Case | Active income | Filed line11 | Section179 | Total depreciation | Credit / current use | Final tax / refund |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Spouse-only wages | 62,000 | 10,000 | 2,000 | 5,910 | 480 /480 | 3,567 /3,433 |
+| Both spouses, separate employers | 80,000 | 80,000 | 20,000 | 59,104 | 4,800 /2,634 | 1,413 /5,587 |
+| Both spouses, same employer | 80,000 | 80,000 | 20,000 | 59,104 | 4,800 /2,634 | 1,413 /5,587 |
+| Spouse wages and primary health plan | 56,000 | 10,000 | 2,000 | 5,910 | 480 /480 | 3,046 /3,954 |
+
+Independent tax checks use the [2025 Tax Table, page5](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf).
+Without health: AGI59,293 less joint standard deduction31,500 and QBI1,859 gives
+taxable25,934 and MFJ tax2,634. With health6,000: AGI53,293 less31,500 and QBI659
+gives taxable21,134 and tax2,113. Add SE1,413 after applying the allowed property
+credit. The larger property's full4,800 credit reduces basis even though current
+credit use is2,634; this is separate from any accepted future carryforward.
+
+The typed grouped regression passed **46 tests, zero failures**, including prior
+single-owner, section179, bonus, method-election, source-health and PDF mappings.
+Ten tampered owner/status/wage variants and an incorrect active-income review
+reject; input source objects remain unchanged. No tax node was modified.
+
+Four complete native packets pass local TY2025v5.4 XSD. Their109 PDF pages have
+zero fields/widgets;28 distinct pages were visually inspected and81 others
+match reviewed images byte for byte. The two-employer and shared-employer
+packets are27 pages each, spouse-only27, and health28. Native W-2 employee SSNs,
+names, EINs, wages and withholding match every retained input copy independently.
+The ScheduleSE primary wage base uses only that owner's20,000 wages in the
+split cases, while the section179 limit uses both owners'50,000 total.
+
+Review remains qualified by existing future-only findings: Form3800 page13
+prints skipped line20 (and positive line21), and the native header plus
+Form3800/8911/8995 use primary-only names while Form1040/Schedules1–3 show both
+spouses. These observations are added to the existing deferred items; neither
+presentation code nor the frozen main scope changed. ScheduleC line32 boxes
+are blank in the inspected profitable copy. Artifact directory:
+`.state/research/form4562-joint-wage-returns/`; checkpoint:
+`form4562-joint-wage-batch-checkpoint.json`. No source authentication, IRS business
+rule approval, accepted carryforward or ATS acceptance is established.

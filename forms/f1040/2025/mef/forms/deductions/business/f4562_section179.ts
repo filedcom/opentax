@@ -75,6 +75,7 @@ export function reconcileInventorySection179Income(
   const f1040 = z.object({
     filing_status: z.nativeEnum(FilingStatus),
     taxpayer_ssn: z.string(),
+    spouse_ssn: z.string().optional(),
     line1a_wages: z.number().optional(),
     line1z_total_wages: z.number().optional(),
   }).passthrough().parse(pending.f1040);
@@ -137,14 +138,25 @@ export function reconcileInventorySection179Income(
     ? undefined
     : w2Schema.parse(pending.w2);
   const totalWages = wages?.w2s.reduce((sum, w) => sum + w.box1_wages, 0) ?? 0;
-  const eins =
-    wages?.w2s.map((w) => w.employer_ein?.replaceAll("-", "") ?? "") ?? [];
+  const spouse = f1040.spouse_ssn?.replaceAll("-", "");
+  const joint = f1040.filing_status === FilingStatus.MFJ;
+  const owners = joint
+    ? [review.proprietor_ssn, spouse]
+    : [review.proprietor_ssn];
+  const wageKeys =
+    wages?.w2s.map((w) =>
+      `${w.employer_ein?.replaceAll("-", "")}:${
+        w.employee_ssn?.replaceAll("-", "")
+      }`
+    ) ?? [];
   if (
     wages?.f8958_allocation !== undefined ||
-    new Set(eins).size !== eins.length ||
-    eins.some((ein) => !/^\d{9}$/.test(ein)) ||
+    (joint && (!spouse || !/^\d{9}$/.test(spouse) ||
+      spouse === review.proprietor_ssn)) ||
+    new Set(wageKeys).size !== wageKeys.length ||
     wages?.w2s.some((w) =>
-      w.employee_ssn?.replaceAll("-", "") !== review.proprietor_ssn ||
+      !/^\d{9}$/.test(w.employer_ein?.replaceAll("-", "") ?? "") ||
+      !owners.includes(w.employee_ssn?.replaceAll("-", "")) ||
       w.box13_statutory_employee ||
       !Number.isSafeInteger(w.box1_wages) || w.box1_wages <= 0
     ) ||
@@ -152,7 +164,7 @@ export function reconcileInventorySection179Income(
     totalWages !== (f1040.line1z_total_wages ?? 0)
   ) {
     throw new Error(
-      "Section 179 inventory wages need distinct ordinary taxpayer-owned W-2 sources matching Form 1040",
+      "Section 179 inventory wages need distinct ordinary employer/owner W-2 sources matching Form 1040 and its filing-status owners",
     );
   }
   const profits = scheduleC.schedule_cs.reduce(
