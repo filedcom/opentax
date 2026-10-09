@@ -1,8 +1,13 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
+import { StandardFonts } from "pdf-lib";
 import {
   assertForm7217FilingSource,
   computeForm7217Amounts,
+  type Form7217Item,
   inputSchema,
 } from "../../../../../nodes/inputs/income/business/f7217/index.ts";
 import { assertForm7217GainFiling } from "../../../../domains/income/business/form7217/form7217_gain_filing.ts";
@@ -77,10 +82,61 @@ for (let row = 1; row <= 30; row++) {
 }
 
 fields.push(
+  text("attached_partnership_basis", `${page2}.f2_121[0]`),
+  text("attached_fmv", `${page2}.f2_122[0]`),
+  text("attached_partner_basis", `${page2}.f2_123[0]`),
   text("total_partnership_basis", `${page2}.f2_124[0]`),
   text("total_fmv", `${page2}.f2_125[0]`),
   text("total_partner_basis", `${page2}.f2_126[0]`),
 );
+
+function propertyTotals(properties: Form7217Item["distributed_properties"]) {
+  return {
+    partnership_basis: properties.reduce(
+      (sum, property) => sum + property.partnership_basis_before_distribution!,
+      0,
+    ),
+    fmv: properties.reduce(
+      (sum, property) => sum + property.fair_market_value!,
+      0,
+    ),
+    partner_basis: properties.reduce(
+      (sum, property) => sum + property.partner_basis_after_section_732!,
+      0,
+    ),
+  };
+}
+
+function propertyFields(properties: Form7217Item["distributed_properties"]) {
+  return Object.fromEntries(properties.flatMap((property, index) => {
+    const prefix = `row${index + 1}_`;
+    return [
+      [`${prefix}description`, property.description],
+      [
+        `${prefix}partnership_basis`,
+        property.partnership_basis_before_distribution,
+      ],
+      [
+        `${prefix}section_732d_basis_adjustment`,
+        property.section_732d_basis_adjustment,
+      ],
+      [
+        `${prefix}section_732f_basis_adjustment`,
+        property.section_732f_basis_adjustment,
+      ],
+      [
+        `${prefix}section_734b_basis_adjustment`,
+        property.section_734b_basis_adjustment,
+      ],
+      [
+        `${prefix}section_743b_basis_adjustment`,
+        property.section_743b_basis_adjustment,
+      ],
+      [`${prefix}fmv`, property.fair_market_value],
+      [`${prefix}partner_basis`, property.partner_basis_after_section_732],
+    ];
+  }));
+}
 
 function filerIdentity(filer: FilerIdentity | undefined): {
   partner_name: string;
@@ -108,13 +164,8 @@ export const form7217Pdf = {
     assertForm7217FilingSource(input);
     if (!filer) throw new Error("Form 7217 PDF needs partner filer identity");
     const identity = filerIdentity(filer);
-    return input.form7217s.map((item) => {
+    return input.form7217s.flatMap((item) => {
       assertForm7217GainFiling(item, filer, pending);
-      if (item.distributed_properties.length > 30) {
-        throw new Error(
-          "Form 7217 PDF needs an attached Part II continuation after 30 property rows",
-        );
-      }
       const amounts = computeForm7217Amounts(item);
       const [year, month, day] = item.distribution_date.split("-");
       const instance: Record<string, unknown> = {
@@ -138,27 +189,63 @@ export const form7217Pdf = {
         total_fmv: amounts.totalDistributedPropertyFMV,
         total_partner_basis: amounts.totalPartnerBasisAfterSection732,
       };
-      item.distributed_properties.forEach((property, index) => {
-        // The shared source gate classifies each property, reconciles section
-        // 731(c) securities to line 5b, and checks Part II basis totals.
-        const row = index + 1;
-        instance[`row${row}_description`] = property.description;
-        instance[`row${row}_partnership_basis`] =
-          property.partnership_basis_before_distribution;
-        instance[`row${row}_section_732d_basis_adjustment`] =
-          property.section_732d_basis_adjustment;
-        instance[`row${row}_section_732f_basis_adjustment`] =
-          property.section_732f_basis_adjustment;
-        instance[`row${row}_section_734b_basis_adjustment`] =
-          property.section_734b_basis_adjustment;
-        instance[`row${row}_section_743b_basis_adjustment`] =
-          property.section_743b_basis_adjustment;
-        instance[`row${row}_fmv`] = property.fair_market_value;
-        instance[`row${row}_partner_basis`] =
-          property.partner_basis_after_section_732;
+      const properties = item.distributed_properties;
+      const copies = Math.ceil(properties.length / 30);
+      const attached = propertyTotals(properties.slice(30));
+      return Array.from({ length: copies }, (_, index) => {
+        const rows = properties.slice(index * 30, (index + 1) * 30);
+        const totals = propertyTotals(rows);
+        return {
+          ...(index === 0 ? instance : {
+            total_partnership_basis: totals.partnership_basis,
+            total_fmv: totals.fmv,
+            total_partner_basis: totals.partner_basis,
+          }),
+          ...(index === 0 && copies > 1
+            ? {
+              attached_partnership_basis: attached.partnership_basis,
+              attached_fmv: attached.fmv,
+              attached_partner_basis: attached.partner_basis,
+            }
+            : {}),
+          ...propertyFields(rows),
+          pdf_first_part_ii: index === 0,
+          pdf_partner_heading:
+            `${identity.partner_name} | SSN ${identity.partner_tin}`,
+          pdf_distribution_heading:
+            `${item.partnership_name} | EIN ${item.partnership_ein} | ${month}/${day}/${year} | Part II ${
+              index + 1
+            } of ${copies} | Properties ${index * 30 + 1}-${
+              index * 30 + rows.length
+            }`,
+        };
       });
-      return instance;
     });
+  },
+  pageIndices: (instance) => instance.pdf_first_part_ii === true ? [0, 1] : [1],
+  async decoratePages(document, pages, instance) {
+    const propertyPage = pages[instance.pdf_first_part_ii === true ? 1 : 0];
+    const font = await document.embedFont(StandardFonts.Helvetica);
+    for (
+      const [index, value] of [
+        instance.pdf_partner_heading,
+        instance.pdf_distribution_heading,
+      ].entries()
+    ) {
+      if (typeof value !== "string") {
+        throw new Error("Form 7217 Part II needs its distribution identity");
+      }
+      const size = Math.min(
+        7,
+        (propertyPage.getWidth() - 72) / font.widthOfTextAtSize(value, 1),
+      );
+      propertyPage.drawText(value, {
+        x: 36,
+        y: propertyPage.getHeight() - 15 - index * 10,
+        size,
+        font,
+      });
+    }
   },
   fields,
 } satisfies PdfFormDescriptor;
