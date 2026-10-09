@@ -65,3 +65,25 @@ or benefit records, nor provide a graph-generated full-return XSD/filled-PDF
 case for every status. All Schedule 3 priority combinations, business rules,
 and ATS remain open; this evidence does not establish whole-form Schedule R
 support.
+
+
+## October 9: public-return matrix and separate-filer packets
+
+A current-source audit at `cd305d338` exercises all nine Schedule R boxes through the public return graph, native descriptor, PDF descriptor and complete native builder. These are constructed source records, not IRS-provided examples or authenticated age, residence, medical or employer documents. The seven ordinary single/joint cases use $7,500/$10,000 AGI and the standard deduction; each reproduces the previously documented credit-limit block in Form 1040. Their tentative Schedule R credit is positive while available income tax is zero. The source node does not reduce its Schedule 3 deposit to that limit, and finalization rejects it. Downstream errors from incomplete finalized pending data are not separate proof of invalid source records. No completed return or PDF is counted for those seven cases.
+
+Two retained MFS fixtures model all-year Florida residents living apart throughout 2025, with a spouse who itemizes, no taxpayer itemized expenses and no community-income allocation. The age-based fixture has $7,500 bank interest; the under-65 disability fixture has $7,500 taxable disability wages, $1,000 withholding and a current-year physician-statement review. The latter has no prior-year-statement checkbox. Both fixtures retain explicit source references, not authenticated underlying bytes.
+
+The [2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi) disallow the MFS standard deduction when the spouse itemizes and disallow the enhanced senior deduction for MFS. Thus each fixture has $7,500 taxable income. The [2025 Tax Table, page 3](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf) gives $753 tax for the MFS $7,500–7,550 row. The [2025 Schedule R](https://www.irs.gov/pub/irs-prior/f1040sr--2025.pdf) gives a $3,750 base and $5,000 AGI threshold for boxes 8/9: subtracting half of $2,500 leaves $2,500, whose 15% credit is $375. These expectations are independent rule arithmetic, not engine outputs used as ground truth.
+
+| Full-return source | Schedule R box / line 11 | Schedule R line 22 / Schedule 3 line 6d | Form 1040 total tax | Settlement | PDF pages |
+|---|---|---:|---:|---|---:|
+| Age 65+, bank interest, spouse itemizes | 8 / skipped | 375 | 378 | 378 owed | 6 |
+| Under 65, reviewed disability wages, spouse itemizes | 9 / 7,500 | 375 | 378 | 622 refund | 5 |
+
+Both actual complete XML returns pass local TY2025 `2025v5.4` XSD. All 11 actual PDF pages were rendered and inspected, including Form 1040's MFS/spouse-itemizes/age marks, Schedule B's interest and foreign-account/trust answers, Schedule 3, both Schedule R pages, skipped line 11 for box 8, disability line 11 and Part II for box 9, final tax and settlement. No PDF widgets or AcroForm fields remain. The Schedule R amounts and form selection reconcile, but whole-packet presentation is qualified: both Form 1040 pages 1 print Riley Example in the joint-only spouse-name row as well as the MFS field. The 2025 name/address instructions require the MFS field instead of the joint row. This observation extends deferred identity item 68; no runtime repair was made.
+
+The final typed four-file regression passes **48/0, zero ignored**, including the two new public-return/negative-source tests and 46 existing calculation/native/PDF checks. Missing residence or physician evidence rejects both complete native and PDF-descriptor preparation. Two initial type-check failures in the new test's PDF context were corrected by parsing the existing Schedule R schema; type checking was not bypassed.
+
+The private nine-box exploration retains its authoring diagnostics: an initially dashed interest recipient TIN, an incorrect interest field name and omitted Schedule B/1-A review facts. The final matrix corrects those inputs; these diagnostics are not production defect claims. The initial positive audit packets used inherited Texas addresses. The retained production fixtures explicitly use Florida to avoid an unreviewed community-property assumption; their final packet run and regression are separate from the initial packets, with the same calculated taxes. Only the final two packets/11 pages are counted here.
+
+Evidence is retained in `.state/research/schedule-r-full-return-audit-2026-10-09/`: all nine source/pending/outcome records, exploration and final packet scripts, native XML, PDF, rendered page hashes, terminal test logs and checkpoint. Earlier synthetic dependent/interest evidence remains historical and does not establish dependency eligibility. Physician/benefit/source authenticity, other filing statuses, tax-limit ordering, business rules and IRS acceptance remain open; this batch closes no broad board task.
