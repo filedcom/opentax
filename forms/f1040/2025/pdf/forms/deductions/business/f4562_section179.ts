@@ -1,5 +1,5 @@
-import { PDFDocument, StandardFonts } from "pdf-lib";
-import { z } from "zod";
+import { type PDFDocument, StandardFonts } from "pdf-lib";
+import type { z } from "zod";
 import { section179SummarySchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/section179-inventory.ts";
 
 export function section179PdfFields(

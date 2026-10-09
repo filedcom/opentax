@@ -1,11 +1,11 @@
 import { section179PartIXml } from "./f4562_section179.ts";
-import { section179SummarySchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/section179-inventory.ts";
-import {
+import type { section179SummarySchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/section179-inventory.ts";
+import type {
   currentYearActivitySchema,
   filedCurrentYearSchema,
 } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current-year.ts";
 import { reconcileCurrentYearInventory } from "./f4562_current_year.ts";
-import {
+import type {
   bonusActivitySchema,
   filedBonus4562Schema,
   filedBonusInventorySchema,

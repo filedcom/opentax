@@ -42,7 +42,7 @@ Deno.test("Construction-exception credits reconcile rate, cap, bonus basis, SE a
     );
     assertStringIncludes(
       prepared.bundle.xml,
-      "<PWARequirementMetInd>true</PWARequirementMetInd>",
+      "<PWARequirementMetInd>false</PWARequirementMetInd>",
     );
     assertStringIncludes(
       prepared.bundle.xml,

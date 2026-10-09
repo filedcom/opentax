@@ -79,7 +79,10 @@ export function buildForm8911PropertyXml(input: F8911Property): string {
         element("BusinessInvestmentUseAmt", credit.businessCost),
         element("Section179ExpenseDeductionAmt", credit.section179Deduction),
         element("NetBusinessUsePartAmt", credit.netBusinessCost),
-        element("PWARequirementMetInd", String(credit.businessRate === 0.30)),
+        element(
+          "PWARequirementMetInd",
+          String(input.business_source?.rate_basis === "pwa"),
+        ),
         element("TotBusinessUsePartAmt", credit.businessCreditBeforeCap),
         element("SmallerTotOrMaxBusUsePartAmt", credit.businessCredit),
       ]

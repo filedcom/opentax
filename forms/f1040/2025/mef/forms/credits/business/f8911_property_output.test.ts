@@ -102,7 +102,11 @@ Deno.test("Form 8911 property output distinguishes increased rates, personal-onl
     };
     assertStringIncludes(
       buildForm8911PropertyXml(property),
-      "<PWARequirementMetInd>true</PWARequirementMetInd>",
+      `<PWARequirementMetInd>${rate_basis === "pwa"}</PWARequirementMetInd>`,
+    );
+    assertEquals(
+      projectForm8911PropertyAmounts(property).increased_rate,
+      rate_basis === "pwa",
     );
     assertEquals(projectForm8911PropertyAmounts(property).line16, 300);
   }

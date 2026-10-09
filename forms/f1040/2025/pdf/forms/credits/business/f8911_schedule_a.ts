@@ -42,7 +42,7 @@ export function projectForm8911PropertyAmounts(input: F8911Property) {
       ? {
         line11: credit.section179Deduction,
         line12: credit.netBusinessCost,
-        increased_rate: credit.businessRate === 0.30,
+        increased_rate: input.business_source?.rate_basis === "pwa",
         line14: credit.businessCreditBeforeCap,
         line16: credit.businessCredit,
       }

@@ -44,7 +44,11 @@ Deno.test("Schedule H remarriage joins split service time, wages, married owners
     assertEquals(result.pending.f1040.line15_taxable_income, 43_500, c.id);
     assertEquals(result.pending.f1040.line16_income_tax, 4_746, c.id);
     assertEquals(result.pending.f1040.line24_total_tax, 4_746 + c.tax, c.id);
-    assertEquals(result.pending.f1040.line35a_refund, 11_000 - 4_746 - c.tax, c.id);
+    assertEquals(
+      result.pending.f1040.line35a_refund,
+      11_000 - 4_746 - c.tax,
+      c.id,
+    );
     const pending = buildPending(result.pending),
       filer = extractFilerIdentity(result.pending.f1040)!;
     const bundle = await buildMefBundle(pending, { filer, attachments: [] });

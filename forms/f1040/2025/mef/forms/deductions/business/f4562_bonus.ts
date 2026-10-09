@@ -1,8 +1,8 @@
 import type { currentYearInventorySchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current-year.ts";
 import { z } from "zod";
 import {
-  bonusActivitySchema,
-  bonusInventorySchema,
+  type bonusActivitySchema,
+  type bonusInventorySchema,
   calculateBonus4562,
   calculateBonusInventory,
   filedBonus4562Schema,

@@ -50,10 +50,9 @@ export const ptcJointIncomeReviewSchema = z.object({
     }).strict(),
   ),
 }).strict();
-const obj = (v: unknown): Record<string, any> =>
-  v && typeof v === "object" && !Array.isArray(v)
-    ? v as Record<string, any>
-    : {};
+type LooseRecord = Record<string, unknown>;
+const obj = (v: unknown): LooseRecord =>
+  v && typeof v === "object" && !Array.isArray(v) ? v as LooseRecord : {};
 const normalize = (v: unknown) =>
   typeof v === "string" ? v.replaceAll("-", "") : "";
 const canonical = (v: unknown): string =>
@@ -68,7 +67,7 @@ const canonical = (v: unknown): string =>
       )
       : v ?? null,
   );
-const n = (r: Record<string, any>, key: string): number =>
+const n = (r: LooseRecord, key: string): number =>
   typeof r[key] === "number" && Number.isFinite(r[key]) ? r[key] : 0;
 const paths: Record<string, [string, string]> = {
   w2: ["w2", "w2s"],
@@ -82,7 +81,7 @@ const paths: Record<string, [string, string]> = {
 };
 function sourceAmounts(
   key: string,
-  r: Record<string, any>,
+  r: LooseRecord,
 ): Record<string, number> {
   const a = Object.fromEntries(keys.map((k) => [k, 0]));
   if (key === "ssa1099") {
@@ -175,8 +174,10 @@ function sourceAmounts(
     ];
     if (
       Object.keys(r).some((k) => !allowed.includes(k)) ||
+      typeof r.box7_distribution_code !== "string" ||
       !["1", "2", "3", "7"].includes(r.box7_distribution_code) ||
       typeof r.box2a_taxable_amount !== "number" ||
+      typeof r.box1_gross_distribution !== "number" ||
       r.box2b_not_determined === true ||
       r.box2a_taxable_amount > r.box1_gross_distribution
     ) {
@@ -386,7 +387,7 @@ export function assertForm8962JointIncomeReview(
       // schema-stripped source field is tax_year, already bound above.
       // Use saved JSON semantics for undefined properties; require the complete
       // received financial/identity/payment/classification source copy.
-      const sourceCopy = (value: Record<string, any>) => {
+      const sourceCopy = (value: LooseRecord) => {
         const copy = JSON.parse(JSON.stringify(value));
         delete copy.tax_year;
         return copy;

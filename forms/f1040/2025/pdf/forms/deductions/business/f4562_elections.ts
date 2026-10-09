@@ -1,4 +1,4 @@
-import { PDFDocument, StandardFonts } from "pdf-lib";
+import { type PDFDocument, StandardFonts } from "pdf-lib";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
 import { bonusElectionTexts } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/elections.ts";
 import { reconcileCurrentYearInventory } from "../../../../mef/forms/deductions/business/f4562_current_year.ts";
