@@ -10,11 +10,14 @@ import { assertReviewedForm8283PdfFields } from "../mef/forms/deductions/charita
 import { roundWholeDollars } from "../../whole-dollars.ts";
 import { assertForm8978SourceBytes } from "../domains/taxes/passthrough/form8978/form8978_source.ts";
 import { PDFDocument, StandardFonts } from "pdf-lib";
-import { join } from "@std/path";
+import { loadPdfTemplate } from "./support/template-cache.ts";
 import { normalizeAllPending } from "../return-processing/pending.ts";
 import { ALL_PDF_FORMS } from "./forms/index.ts";
 import { form4972PaperPdf } from "./forms/taxes/retirement/f4972.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "./review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "./review-support/form-descriptor.ts";
 import { type FilerIdentity, FilingStatus } from "../../mef/header.ts";
 import { assertAttachmentCoverage } from "../return-processing/attachment-coverage.ts";
 import {
@@ -23,7 +26,10 @@ import {
 } from "../mef/builder.ts";
 import { assertPreparedAttachmentManifest } from "../mef/attachments/prepared-attachment-manifest.ts";
 import { assertW2GPayerCopyContents } from "../mef/identity/w2g-payer-copy.ts";
-import { preparedSourceSha256, sha256Hex } from "../return-processing/prepared-source.ts";
+import {
+  preparedSourceSha256,
+  sha256Hex,
+} from "../return-processing/prepared-source.ts";
 import {
   assertDigitalAssetDispositionAnswer,
   assertEitcChildSources,
@@ -137,26 +143,6 @@ export interface PdfPageOrigin {
   readonly pageNumber: number;
   readonly formKey: string;
   readonly formCopy: number;
-}
-
-async function fetchWithCache(
-  url: string,
-  cacheDir: string,
-): Promise<Uint8Array> {
-  const slug = url.replace(/[^a-zA-Z0-9]/g, "_").replace(/_+/g, "_");
-  const cachePath = join(cacheDir, `${slug}.pdf`);
-  try {
-    return await Deno.readFile(cachePath);
-  } catch {
-    const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(`Failed to fetch IRS PDF: ${url} (${res.status})`);
-    }
-    const bytes = new Uint8Array(await res.arrayBuffer());
-    await Deno.mkdir(cacheDir, { recursive: true });
-    await Deno.writeFile(cachePath, bytes);
-    return bytes;
-  }
 }
 
 /** Resolves dot-notation paths like "address.line1" against a nested object. */
@@ -423,7 +409,11 @@ export async function fillFormPdf(
     }
   }
 
-  const pdfBytes = await fetchWithCache(descriptor.pdfUrl, cacheDir);
+  const pdfBytes = await loadPdfTemplate(
+    descriptor.pdfUrl,
+    cacheDir,
+    descriptor.pdfSha256,
+  );
   const doc = await PDFDocument.load(pdfBytes, {
     ignoreEncryption: true,
     updateMetadata: false,

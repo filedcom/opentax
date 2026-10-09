@@ -6,10 +6,14 @@ separate [Schedule A](https://www.irs.gov/pub/irs-pdf/f8911sa.pdf). The
 [instructions](https://www.irs.gov/instructions/i8911) direct Schedule A line 21
 to parent line 4, then parent line 10 to Schedule 3 line 6j.
 
-The parent PDF now uses the archived 2025 IRS URL. Schedule A's current IRS PDF
-is marked December 2025, but no 2025 archive URL is available yet. Its field
-names passed the live IRS AcroForm check on 2026-09-29; the mutable URL still
-needs a pinned source before the PDF release gate is complete.
+The parent PDF uses the archived 2025 IRS URL. The Schedule A descriptor now
+pins SHA-256 `8feda345747dfdb1c6bff573af3ef26c726235d8df91224ed9e20f85a364eb1c`
+for the 76,534-byte, one-page December 2025 revision downloaded from the IRS
+on October 9, 2026 (Stockholm). A retained blank fixture records provenance.
+The PDF loader checks both cached and downloaded bytes before filling; a
+mismatch fails without replacing the cache. Updating this pin requires review
+of the new revision and mappings. This closes the named mutable-template
+boundary, not the remaining property eligibility or full-return release gates.
 
 The PDF build pass projects one sourced, personal-use electric charger and
 exactly one matching Schedule A. It checks the property cost, dates, address,
@@ -22,7 +26,7 @@ and the final return's nonrefundable-credit total. Both PDF pages are derived
 from the same gate, so a positive parent page cannot be emitted without its
 Schedule A page.
 
-This remains a bounded, untested build pass. Multiple properties, business use,
+This remains a bounded one-property build path. Multiple properties, business use,
 other allowable-credit worksheet amounts, non-electric fuel, and fractional
 printed dollar lines stop for a separately reviewed source model. Optional
 certification/permit and owner fields are not inferred from the address. The
@@ -38,3 +42,16 @@ $3,875, and line 10 = $300; its Schedule A page was checked at lines 8/19/21 =
 $1,000/$300/$300. The amounts match the native values and PDF projections, and
 both pages render without clipping. Other property shapes and the full batch
 remain deferred.
+
+## October 9 template-pin verification
+
+The typed cache, Form 8911 projection, real-template and composed PDF-builder
+tests pass 42/42 with Poppler available (`pdftotext` is required by an existing
+shared-header case). Tests reject changed downloaded bytes before caching,
+reject changed cached bytes without replacement, preserve unpinned behavior,
+and fill the retained official template offline. The generated one-page
+Schedule A was rendered and visually reviewed: name/TIN, property address,
+dates, GEOID, eligibility/main-home checkboxes and 1,000/300 amounts are legible.
+The flattened output has zero fields/widgets and SHA-256
+`35df43fd18c8c601b890a46c9ee152568f2923b38056cdc26dddd4b02ff25425`.
+This is template/mapping evidence, not a new full-return or IRS acceptance claim.

@@ -69,6 +69,8 @@ export interface PdfFormDescriptor {
   /** Form identity for page provenance when a descriptor uses another form's source slot. */
   readonly printedFormKey?: string;
   readonly pdfUrl: string;
+  /** Exact reviewed template bytes; checked on cached and downloaded copies. */
+  readonly pdfSha256?: string;
   /** Project finalized cross-document worksheet values onto this form's fields. */
   readonly projectFields?: (
     fields: Record<string, unknown>,

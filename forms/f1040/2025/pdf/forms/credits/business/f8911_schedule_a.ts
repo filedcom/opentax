@@ -1,4 +1,7 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import { form8911PdfSource } from "./f8911_shared.ts";
 
 // Schedule A (Form 8911), Rev. December 2025, one personal-use property.
@@ -17,6 +20,8 @@ const text = (
 export const form8911ScheduleAPdf: PdfFormDescriptor = {
   pendingKey: "f8911_schedule_a",
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8911sa.pdf",
+  // IRS Rev. December 2025 template, retrieved October 9, 2026 (Stockholm).
+  pdfSha256: "8feda345747dfdb1c6bff573af3ef26c726235d8df91224ed9e20f85a364eb1c",
   fields: [
     text("filer_name", "f1_01[0]"),
     text("filer_tin", "f1_02[0]"),
