@@ -1,3 +1,7 @@
+import {
+  DependentRelationship,
+  IRSDependentRelationshipCode,
+} from "../../nodes/inputs/general/filing/general/index.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { SCENARIO_1040_05_FACTS } from "./ty2025_cases.ts";
 
@@ -56,10 +60,38 @@ export const SCENARIO_1040_05_RECONCILIATION = {
   form1040Line28OptOut: true,
   form1040Line28Actc: 0,
   missing: [
-    "Complete dependent/EIC and Schedule 8812 eligibility and credit-limit review.",
+    "Complete dependent joint-return, support and timely employment-valid SSN reviews, plus EIC and Schedule 8812 eligibility and credit-limit review.",
     "Complete Form 2441 benefit, earned-income and credit-limit review.",
     "Complete Form 8863 student/source eligibility and credit ordering.",
     "Complete Form 8862 prior-disallowance proof and unanswered claim questions.",
     "Reconcile the moving-expense claim and every required companion before asserting a complete return.",
   ],
 } as const;
+
+/** Printed household facts only; missing credit eligibility reviews stay absent. */
+export function scenario104005HouseholdInput() {
+  const input = scenario104005PartialInput();
+  return {
+    ...input,
+    general: {
+      ...input.general,
+      dependents: SCENARIO_1040_05_FACTS.dependents.map((child) => ({
+        first_name: child.firstName,
+        last_name: child.lastName,
+        name_control: child.lastName.slice(0, 4).toUpperCase(),
+        irs_relationship_code: child.relationship === "son"
+          ? IRSDependentRelationshipCode.Son
+          : IRSDependentRelationshipCode.Daughter,
+        ssn: child.ssn,
+        dob: child.dateOfBirth,
+        relationship: child.relationship === "son"
+          ? DependentRelationship.Son
+          : DependentRelationship.Daughter,
+        months_in_home: child.monthsInHome,
+        months_lived_with_you_in_us: child.monthsInHome,
+        lived_in_us_over_half_year: true,
+        qualifying_child_for_ctc: child.childTaxCredit,
+      })),
+    },
+  };
+}

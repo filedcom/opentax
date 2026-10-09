@@ -1,3 +1,4 @@
+import { dependentFilingSchema } from "../../nodes/inputs/general/filing/general/index.ts";
 import { irs1040 } from "../../2025/mef/forms/general/return-assembly/f1040.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
@@ -7,6 +8,7 @@ import { irs1040Pdf } from "../../2025/pdf/forms/general/return-assembly/f1040.t
 import { fillFormPdf } from "../../2025/pdf/builder.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
 import {
+  scenario104005HouseholdInput,
   scenario104005PartialInput,
   SCENARIO_1040_05_RECONCILIATION,
 } from "./scenario_1040_05_input.ts";
@@ -100,4 +102,45 @@ Deno.test("ATS 1040 Scenario 5 opt-out cannot coexist with a positive ACTC in na
     Error,
     "opt-out requires zero",
   );
+});
+
+Deno.test("ATS 1040 Scenario 5 household identities survive without inferred credit eligibility", () => {
+  const input = scenario104005HouseholdInput();
+  const result = f1040_2025.executeReturn(input);
+  assertEquals(result.diagnostics, []);
+  const form = result.pending.f1040;
+  assertEquals(form.dependent_count, 2);
+  assertEquals(form.qualifying_child_tax_credit_count, 0);
+  assertEquals(result.pending.eitc.credit_amount, 0);
+  assertEquals(form.line28_actc ?? 0, 0);
+  const filer = extractFilerIdentity(form)!;
+  const fields = {
+    dependent_count: input.general.dependents.length,
+    dependent_details: dependentFilingSchema.array().parse(
+      form.dependent_details,
+    ),
+    filing_status: input.general.filing_status,
+    presidential_campaign_fund_taxpayer:
+      input.general.presidential_campaign_fund_taxpayer,
+  };
+  assertThrows(
+    () => irs1040.build(fields, { filer, pending: result.pending }),
+    Error,
+    "dependent 1 needs a confirmed answer to the dependent joint-return test",
+  );
+  const projected = irs1040Pdf.projectFields!(fields, result.pending);
+  assertEquals(projected.dependent_0_first_name, "Skylar");
+  assertEquals(projected.dependent_1_first_name, "Kaylee");
+  assertEquals(projected.dependent_0_tin, "400001057");
+  assertEquals(projected.dependent_1_tin, "400001058");
+  assertEquals(projected.dependent_0_credit_category, undefined);
+  assertEquals(projected.dependent_1_credit_category, undefined);
+  for (const child of input.general.dependents) {
+    assertEquals(Object.hasOwn(child, "ssn_valid_for_employment"), false);
+    assertEquals(Object.hasOwn(child, "provided_over_half_own_support"), false);
+    assertEquals(
+      Object.hasOwn(child, "filed_joint_return_except_refund_only"),
+      false,
+    );
+  }
 });
