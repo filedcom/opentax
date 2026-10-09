@@ -8,7 +8,7 @@ import type {
 } from "../../../review-support/form-descriptor.ts";
 import { form8911PdfSource } from "./f8911_shared.ts";
 
-// Schedule A (Form 8911), Rev. December 2025, one copy per personal-use property.
+// Schedule A (Form 8911), Rev. December 2025, one copy per qualified property.
 const page = "topmostSubform[0].Page1[0]";
 const text = (
   domainKey: string,

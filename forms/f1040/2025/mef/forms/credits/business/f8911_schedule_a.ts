@@ -1,3 +1,4 @@
+import { reconcileForm8911BusinessFiling } from "./f8911_source.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
   calculateForm8911PropertyAmounts,
@@ -6,14 +7,33 @@ import {
   type F8911Property,
   personalCreditProperties,
 } from "../../../../../nodes/inputs/credits/business/f8911/index.ts";
-import type { MefFormDescriptor } from "../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../form-descriptor.ts";
 
 type Input = Partial<F8911Input> & Record<string, unknown>;
 
-function propertyDocuments(fields: Input): readonly string[] {
+function propertyDocuments(
+  fields: Input,
+  context: MefBuildContext = {},
+): readonly string[] {
   if (Object.keys(fields).length === 0) return [];
-  const amounts = computePersonalCreditAmounts(fields as F8911Input);
-  if (!amounts || amounts.allowedCredit === 0) return [];
+  const raw = fields as F8911Input;
+  const business = (raw.properties ?? [raw]).some((p) =>
+    (p.business_use_pct ?? 0) > 0
+  );
+  if (business) {
+    if (!context.pending) {
+      throw new Error(
+        "Form 8911 business credit requires the Form 3800 path and reconciled filing sources",
+      );
+    }
+    reconcileForm8911BusinessFiling(raw, context.pending);
+  } else {
+    const amounts = computePersonalCreditAmounts(raw);
+    if (!amounts || amounts.allowedCredit === 0) return [];
+  }
   return personalCreditProperties(fields as F8911Input).map(
     buildForm8911PropertyXml,
   );
@@ -86,10 +106,10 @@ export const form8911ScheduleA: MefFormDescriptor<"f8911", Input> = {
   pendingKey: "f8911",
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8911sa.pdf",
-  build(fields) {
-    return propertyDocuments(fields)[0] ?? "";
+  build(fields, context) {
+    return propertyDocuments(fields, context)[0] ?? "";
   },
-  buildAdditionalDocuments(fields) {
-    return propertyDocuments(fields).slice(1);
+  buildAdditionalDocuments(fields, context) {
+    return propertyDocuments(fields, context).slice(1);
   },
 };

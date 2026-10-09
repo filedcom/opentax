@@ -1,9 +1,13 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import { filedBonus4562Schema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/bonus.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import { filedForm4562Schema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/index.ts";
 import { form4562 as form4562Mef } from "../../../../mef/forms/deductions/business/f4562.ts";
 
 // Verified against the canonical 2025 f4562 AcroForm tree. The bounded source
-// has one Part I elected property and no Part II/III/V/VI depreciation.
+// has one Part I elected property or a reconciled Part II bonus asset.
 const p1 = "topmostSubform[0].Page1[0]";
 const p2 = "topmostSubform[0].Page2[0]";
 const text = (
@@ -30,6 +34,7 @@ const fields: readonly PdfFieldEntry[] = [
   text("line11_business_income_limitation", `${p1}.f1_19[0]`),
   text("line12_section179_expense_deduction", `${p1}.f1_20[0]`),
   text("line13_next_year_carryover", `${p1}.f1_21[0]`, true),
+  text("line14_special_depreciation_allowance", `${p1}.f1_22[0]`),
   text("line22_total_depreciation", `${p2}.f2_2[0]`),
 ];
 
@@ -38,7 +43,9 @@ export const form4562Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f4562--2025.pdf",
   projectFields(raw, allPending) {
     if (Object.keys(raw).length === 0) return {};
-    const filed = filedForm4562Schema.parse(raw);
+    const filed = "bonus_asset" in raw
+      ? filedBonus4562Schema.parse(raw)
+      : filedForm4562Schema.parse(raw);
     form4562Mef.build(filed, { pending: allPending });
     return filed;
   },

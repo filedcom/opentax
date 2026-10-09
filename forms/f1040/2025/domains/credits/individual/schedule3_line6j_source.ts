@@ -16,7 +16,7 @@ export function assertSchedule3Line6jSource(
     }
     return;
   }
-  const expected = computePersonalCreditAmounts(source as F8911Input)
+  const expected = computePersonalCreditAmounts(source as F8911Input, true)
     ?.allowedCredit ?? 0;
   if ((filedAmount ?? 0) !== expected) {
     throw new Error(

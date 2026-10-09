@@ -1,3 +1,5 @@
+import { buildForm8911CreditXml, form8911 } from "./f8911.ts";
+import { projectForm8911CreditAmounts } from "../../../../pdf/forms/credits/business/f8911.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   type F8911Property,
@@ -145,4 +147,102 @@ Deno.test("Form 8911 property rendering rejects unsupported ratio precision with
     Error,
     "Form 3800 path",
   );
+});
+
+Deno.test("Form 8911 parent keeps business credit separate from the personal tax limit", () => {
+  const input = {
+    ...mixedBusinessProperty,
+    regular_tax_before_credits: 100,
+    tentative_minimum_tax: 0,
+  };
+  const xml = buildForm8911CreditXml(input);
+  assertStringIncludes(
+    xml,
+    "<BusInvstUseRefuelingPropCrAmt>60</BusInvstUseRefuelingPropCrAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<BusinessInvstUsePartOfCrAmt>60</BusinessInvstUsePartOfCrAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PrsnlUseRefuelingPropCrAmt>750</PrsnlUseRefuelingPropCrAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalPersonalUsePartOfCrAmt>100</TotalPersonalUsePartOfCrAmt>",
+  );
+  const pdf = projectForm8911CreditAmounts(input);
+  assertEquals(pdf.line1, 60);
+  assertEquals(pdf.line3, 60);
+  assertEquals(pdf.line4, 750);
+  assertEquals(pdf.line10, 100);
+  assertThrows(() => form8911.build(input), Error, "Form 3800 path");
+});
+
+Deno.test("Form 8911 parent sums unrounded business property credits and omits personal-only tax operands", () => {
+  const property = {
+    ...mixedBusinessProperty,
+    cost: 1006.25,
+    business_use_pct: 1,
+    business_source: {
+      ...mixedBusinessProperty.business_source!,
+      section179_deduction: 0,
+    },
+  };
+  const input = {
+    properties: [
+      { ...property, property_reference: "unit-1" },
+      { ...property, property_reference: "unit-2" },
+    ],
+  };
+  const xml = buildForm8911CreditXml(input);
+  assertStringIncludes(
+    xml,
+    "<TotQlfyAltFuelVehRefuelPropCnt>2</TotQlfyAltFuelVehRefuelPropCnt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<BusinessInvstUsePartOfCrAmt>121</BusinessInvstUsePartOfCrAmt>",
+  );
+  assertEquals(xml.includes("RegularTaxBeforeCreditsAmt"), false);
+  assertEquals(projectForm8911CreditAmounts(input), {
+    property_count: 2,
+    line1: 121,
+    line3: 121,
+  });
+  assertThrows(
+    () =>
+      projectForm8911CreditAmounts({
+        properties: [input.properties[0], input.properties[0]],
+      }),
+    Error,
+    "unique",
+  );
+});
+
+Deno.test("Form 8911 parent retains business credit but stops the personal worksheet at either zero limit", () => {
+  for (const tentative_minimum_tax of [0, 100]) {
+    const input = {
+      ...mixedBusinessProperty,
+      regular_tax_before_credits: tentative_minimum_tax,
+      tentative_minimum_tax,
+    };
+    const pdf = projectForm8911CreditAmounts(input);
+    const xml = buildForm8911CreditXml(input);
+    assertEquals(pdf.line3, 60);
+    assertEquals(pdf.line10, undefined);
+    assertEquals(xml.includes("TotalPersonalUsePartOfCrAmt"), false);
+    if (tentative_minimum_tax === 0) {
+      assertEquals(pdf.line7, 0);
+      assertEquals(pdf.line8, undefined);
+      assertEquals(xml.includes("TentativeMinimumTaxAmt"), false);
+    } else {
+      assertEquals(pdf.line9, 0);
+      assertStringIncludes(
+        xml,
+        "<AdjustedRegularTaxAmt>0</AdjustedRegularTaxAmt>",
+      );
+    }
+  }
 });

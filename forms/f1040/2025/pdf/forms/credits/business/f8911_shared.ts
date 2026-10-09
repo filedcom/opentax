@@ -1,6 +1,9 @@
+import { reconcileForm8911BusinessFiling } from "../../../../mef/forms/credits/business/f8911_source.ts";
+import { assertForm3800FinalCreditJoin } from "../../../../domains/credits/business/form3800/form3800_final_credit_join.ts";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
 import {
   computePersonalCreditAmounts,
+  type F8911Input,
   type F8911Property,
   inputSchema,
   type PersonalCreditAmounts,
@@ -14,8 +17,9 @@ export interface Form8911PdfProperty {
   readonly serviceDate: string;
 }
 export interface Form8911PdfSource {
+  readonly input: F8911Input;
   readonly properties: readonly Form8911PdfProperty[];
-  readonly amounts: PersonalCreditAmounts;
+  readonly amounts: PersonalCreditAmounts | undefined;
   readonly filerName: string;
   readonly filerTin: string;
 }
@@ -38,8 +42,7 @@ function dateFor2025(value: string, label: string): string {
 
 function projectProperty(input: F8911Property): Form8911PdfProperty {
   if (
-    input.fuel_type === undefined ||
-    (input.business_use_pct ?? 0) !== 0
+    input.fuel_type === undefined
   ) {
     throw new Error(
       "Form 8911 PDF currently supports identified personal-use refueling properties with no business use",
@@ -89,15 +92,19 @@ export function form8911PdfSource(
   const raw = allPending.f8911;
   if (!raw) return undefined;
   const input = inputSchema.parse(raw);
-  const amounts = computePersonalCreditAmounts(input);
-  if (!amounts || amounts.allowedCredit <= 0) return undefined;
+  const business = (input.properties ?? [input]).some((p) =>
+    (p.business_use_pct ?? 0) > 0
+  );
+  if (business) reconcileForm8911BusinessFiling(input, allPending);
+  const amounts = computePersonalCreditAmounts(input, business);
+  if (!business && (!amounts || amounts.allowedCredit <= 0)) return undefined;
   if ((input.certain_allowable_credits ?? 0) !== 0) {
     throw new Error(
       "Form 8911 PDF needs reviewed other allowable-credit worksheet amounts",
     );
   }
   if (
-    ![
+    amounts && ![
       amounts.regularTaxBeforeCredits,
       amounts.foreignTaxCredit,
       amounts.certainAllowableCredits,
@@ -117,6 +124,19 @@ export function form8911PdfSource(
   if (!filerName || !filerTin || !/^\d{9}$/.test(filerTin)) {
     throw new Error("Form 8911 PDF needs the return name and TIN");
   }
+  if (business) {
+    const credit = allPending.f3800?.allowed_credit;
+    if (typeof credit !== "number") {
+      throw new Error("Form 8911 PDF needs finalized Form 3800 credit");
+    }
+    assertForm3800FinalCreditJoin(credit, allPending);
+    const owner = allPending.f1040?.taxpayer_ssn;
+    if (typeof owner !== "string" || owner.replaceAll("-", "") !== filerTin) {
+      throw new Error("Form 8911 PDF filer differs from source proprietor");
+    }
+    return { input, properties, amounts, filerName, filerTin };
+  }
+  if (!amounts) return undefined;
   const return1040 = allPending.f1040 ?? {};
   const schedule3 = allPending.schedule3 ?? {};
   const form6251 = allPending.form6251 ?? {};
@@ -138,6 +158,7 @@ export function form8911PdfSource(
     );
   }
   return {
+    input,
     properties,
     amounts,
     filerName,

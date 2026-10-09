@@ -7,7 +7,7 @@ The [current bundled audit](../../../../readiness/ty2025-bundled-form-audit-reco
 
 Status: bounded build-first implementation, not filing ready. Do not treat the
 registered `IRS4562` builder or PDF descriptor as a fully supported filing path.
-No test, XSD, PDF render, or IRS ATS validation has run yet.
+Earlier unrun notes below are historical; see the October 9 integrated evidence. IRS ATS validation remains outstanding.
 
 ## One taxpayer-owned W-2 included in the section 179 income limit (2026-10-01, unrun)
 
@@ -143,3 +143,11 @@ exist. The old flat XML builder is not a fallback.
 Before claiming this form, add source-to-calculation, calculation-to-MeF,
 negative missing-source, local XSD, and filled-PDF cases, then include them in
 the agreed single full batch and IRS business-rule/ATS gates.
+
+## October 9 bonus-asset and Form 8911 integration
+
+A new `form4562.bonus_asset` route complements the existing section 179 asset. It computes a 100% special allowance for one new, wholly business-use, nonlisted, reviewed MACRS asset acquired after January 19, 2025. Source dates, elections, ADS/exclusion answers, owner, sole-asset inventory and business reference are retained. The native/PDF path requires exactly one participating taxpayer-owned Schedule C with the same line 13 deduction. A Form 8911 claim additionally requires exact property/invoice/cost/date/description joins and credit basis reduction before depreciation. The full credit reduces basis even when the current-year general business credit tax limit is smaller.
+
+The linked $10,000/$100,000 property cases produce $9,400/$94,000 on native/PDF Form 4562 lines 14 and 22. Both complete returns validate against TY2025 2025v5.4 and all 40 pages have visual evidence; Form 4562 appears on pages 15–17. A separate positive prepared-return test covers the no-credit bonus asset. The grouped 361-test regression and four final integration checks cover existing section 179 routes, source conflicts, invalid dates/elections/ADS, native reference IDs and both credit limits. [Form 8911 batch evidence](../../../credits/business/form8911/ty2025-form8911-pdf-gap.md) retains scope and artifact locations.
+
+This is not general MACRS, mixed use, listed property, multiple assets, reduced bonus, earlier acquisition, section 179 plus residual basis, or independently authenticated source support. Those existing coverage decisions remain open. The future-only section 179 service-date review item is unchanged.

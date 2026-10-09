@@ -1,13 +1,13 @@
+import { reconcileBonus4562 } from "../../deductions/business/f4562_bonus.ts";
 import { z } from "zod";
 import {
-  calculateForm8911PropertyAmounts,
+  computeForm8911Amounts,
   computePersonalCreditAmounts,
   inputSchema,
   personalCreditProperties,
 } from "../../../../../nodes/inputs/credits/business/f8911/index.ts";
 import { inputSchema as scheduleCInputSchema } from "../../../../../nodes/inputs/income/business/schedule_c/model.ts";
 import { inputSchema as form3800InputSchema } from "../../../../../nodes/inputs/credits/business/f3800/index.ts";
-import { roundWholeDollars } from "../../../../../whole-dollars.ts";
 
 const returnOwnerSchema = z.object({
   taxpayer_ssn: z.string().regex(/^(?:\d{9}|\d{3}-\d{2}-\d{4})$/),
@@ -67,13 +67,7 @@ export function reconcileForm8911BusinessSources(
       );
     }
   }
-  const businessCredit = roundWholeDollars(
-    properties.reduce(
-      (sum, property) =>
-        sum + calculateForm8911PropertyAmounts(property).businessCredit,
-      0,
-    ),
-  );
+  const { businessCredit } = computeForm8911Amounts(source);
   const filedCredit = form3800InputSchema.parse(pending.f3800).f8911_credit;
   if (
     !filedCredit || filedCredit.credit_amount !== businessCredit ||
@@ -84,4 +78,36 @@ export function reconcileForm8911BusinessSources(
     );
   }
   return { source, properties, businessCredit };
+}
+
+/** Filing route for the reconciled new, fully business-use bonus-depreciation asset. */
+export function reconcileForm8911BusinessFiling(
+  raw: unknown,
+  pending: Readonly<Record<string, unknown>>,
+) {
+  const joined = reconcileForm8911BusinessSources(raw, pending);
+  if (
+    joined.properties.some((p) =>
+      p.business_use_pct !== 1 || p.business_source?.rate_basis !== "base" ||
+      p.business_source.section179_deduction !== 0
+    )
+  ) {
+    throw new Error(
+      "Form 8911 business filing requires reconciled base-rate full-business property and zero section 179; mixed/PWA sources remain guarded",
+    );
+  }
+  if (!pending.form4562) {
+    throw new Error(
+      "Form 8911 business export needs property-source reconciliation to Form 4562",
+    );
+  }
+  const depreciation = reconcileBonus4562(pending.form4562, pending);
+  if (
+    depreciation.bonus_asset.credit_basis_reduction !== joined.businessCredit
+  ) {
+    throw new Error(
+      "Form 8911 credit differs from filed depreciation basis reduction",
+    );
+  }
+  return joined;
 }

@@ -26,7 +26,7 @@ and the final return's nonrefundable-credit total. Both PDF pages are derived
 from the same gate, so a positive parent page cannot be emitted without its
 Schedule A page.
 
-This remains a bounded personal-use refueling-property path. Business use,
+The personal-use path and the October 9 linked bonus-asset business path below are bounded routes. Other business shapes,
 other allowable-credit worksheet amounts, other fuel categories, and fractional
 tax-limit worksheet operands stop for a separately reviewed source model. Optional
 certification/permit and owner fields are not inferred from the address. The
@@ -242,3 +242,15 @@ Three standalone Schedule A examples validate against the cached TY2025 2025v5.4
 Authority: [December 2025 IRS Form 8911 instructions](https://www.irs.gov/instructions/i8911), Schedule A lines 9, 11 and 13; pinned December 2025 Schedule A template. Local review artifacts: `.state/research/form8911-business-properties/`; root checkpoint: `form8911-property-output-checkpoint.json`.
 
 Focused regression: 39 tests passed, zero failed, covering property arithmetic, native/PDF projection, public Form 3800 source joins, template integrity and existing personal multi-property returns. No full-suite or IRS acceptance claim is made.
+
+## Linked business-credit and depreciation batch — October 9
+
+The public route now files one identified, fully business-use, nonpassive, base-rate property when its proprietor, business, invoice, cost, description and service date match a Form 4562 bonus asset. The asset requires original use, a reviewed MACRS recovery period of no more than 20 years, acquisition after January 19, 2025, no ADS/listed-property exclusion or bonus election, and a retained sole-asset inventory assertion. Section 179 is zero for this route. Source assertions and references are reconciled; they are not independent authentication of the invoice, census tract or classification.
+
+The credit reduces the asset basis before the 100% bonus deduction. Form 4562 lines 14/22 must match Schedule C line 13; Schedule C profit reaches Form 1040. Form 8911 parent/Schedule A feed a source-linked Form 3800 line 1s with the exact native parent ID, and the allowed credit reaches Schedule 3 line 6a and Form 1040. Form 3800 preparation requires the parent, property and depreciation documents. The PDF uses the prepared return and the canonical property/parent and Form 4562 fields. Mixed use, increased-rate/PWA, nonzero section 179 and additional assets still need their existing broader integration work; they have not been marked complete.
+
+The grouped regression passed 361 tests; four final integration checks passed after adding exact document-reference and no-credit bonus-asset coverage. Two complete public-input returns validate against the cached TY2025 2025v5.4 Return1040 schema and have 40 reviewed PDF pages (31 distinct renders and nine exact matches). The $10,000 property gives credit $600, bonus depreciation $9,400, zero Schedule C profit, tax $3,275 and refund $3,725. The $100,000 property gives credit $6,000, bonus depreciation $94,000, allowed credit $3,875, tax zero and refund $7,000; the basis reduction remains $6,000 despite the current tax limit. This does not establish an accepted carryforward record or IRS business-rule acceptance.
+
+Earlier parent-output work also retains five valid standalone parent/property XML documents and six reviewed pages, including aggregate rounding and both personal-limit stop rules. These are distinct from the two complete business returns.
+
+Authorities: [Form 8911 basis reduction](https://www.irs.gov/instructions/i8911) and [Form 4562 special depreciation allowance](https://www.irs.gov/instructions/i4562). Artifacts: `.state/research/form8911-bonus-returns/`; root checkpoint `form8911-bonus-batch-checkpoint.json`. Personal evidence remains five full returns and 38 reviewed pages. No parent board task or IRS acceptance gate is closed by these bounded routes.

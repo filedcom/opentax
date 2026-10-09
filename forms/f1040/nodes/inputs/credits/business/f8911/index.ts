@@ -253,21 +253,26 @@ export function computePersonalCreditAmounts(
   };
 }
 
+/** Aggregate capped property credits before whole-dollar parent reporting. */
+export function computeForm8911Amounts(rawInput: F8911Input) {
+  const personal = computePersonalCreditAmounts(rawInput, true);
+  const properties = personalCreditProperties(rawInput);
+  const businessCredit = roundWholeDollars(properties.reduce(
+    (sum, property) =>
+      sum + calculateForm8911PropertyAmounts(property).businessCredit,
+    0,
+  ));
+  return { personal, properties, businessCredit };
+}
+
 class F8911Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8911";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3, form6251, f3800]);
 
   compute(_ctx: NodeContext, rawInput: F8911Input): NodeResult {
-    const amounts = computePersonalCreditAmounts(rawInput, true);
-    const properties = personalCreditProperties(rawInput);
-    const businessCredit = roundWholeDollars(
-      properties.reduce(
-        (sum, property) =>
-          sum + calculateForm8911PropertyAmounts(property).businessCredit,
-        0,
-      ),
-    );
+    const { personal: amounts, properties, businessCredit } =
+      computeForm8911Amounts(rawInput);
     const outputs: NodeOutput[] = businessCredit > 0
       ? [this.outputNodes.output(f3800, {
         f8911_credit: {

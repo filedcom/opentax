@@ -73,7 +73,7 @@ import { reconcileForm8941ScheduleC } from "../../health/f8941_source.ts";
 import { reconcileForm8994DirectEmployer } from "../../../../../domains/credits/business/form8994/form8994_source.ts";
 import { reconcileForm8864DocumentSource } from "../../../../../domains/credits/business/form8864/form8864_source.ts";
 import { reconcileForm8882DirectEmployer } from "../f8882_source.ts";
-import { reconcileForm8911BusinessSources } from "../f8911_source.ts";
+import { reconcileForm8911BusinessFiling } from "../f8911_source.ts";
 import { reconciledForm8908Source } from "../f8908_source_reconciliation.ts";
 import { reconcileForm8908PwaAttachments } from "../f8908_pwa.ts";
 
@@ -725,12 +725,12 @@ function prepareForm3800Base(
   context: MefBuildContext,
 ) {
   if (fields.f8911_credit !== undefined) {
-    if (context.pending) {
-      reconcileForm8911BusinessSources(context.pending.f8911, context.pending);
+    if (!context.pending) {
+      throw new Error(
+        "Form 8911 business export needs property-source reconciliation before Form 3800 filing",
+      );
     }
-    throw new Error(
-      "Form 8911 business export needs property-source reconciliation before Form 3800 filing",
-    );
+    reconcileForm8911BusinessFiling(context.pending.f8911, context.pending);
   }
   const hasLegacyCredit = fields.f3800s?.some((entry) =>
     Object.values(entry).some((value) => typeof value === "number" && value > 0)
@@ -740,7 +740,8 @@ function prepareForm3800Base(
       "Form 3800 legacy credit cannot be exported without source-backed calculation",
     );
   }
-  const hasSourceCredit = fields.allowed_credit !== undefined ||
+  const hasSourceCredit = fields.f8911_credit !== undefined ||
+    fields.allowed_credit !== undefined ||
     fields.f8826_credit_entries?.some((entry) => entry.credit_amount > 0) ||
     (fields.f8820_credit?.credit_amount ?? 0) > 0 ||
     (fields.f8874_credit?.credit_amount ?? 0) > 0 ||
@@ -897,6 +898,12 @@ export function prepareForm3800DocumentParts(
   ) {
     throw new Error("Form 3800 line 4h differs from filed Form 8941 source");
   }
+  const form8911 = parsed.f8911_credit
+    ? reconcileForm8911BusinessFiling(
+      context.pending?.f8911,
+      context.pending ?? {},
+    )
+    : undefined;
   const form8882 = parsed.f8882_direct_employer_credit
     ? reconcileForm8882DirectEmployer(
       context.pending?.f8882,
@@ -1066,6 +1073,7 @@ export function prepareForm3800DocumentParts(
     form8994Credit: form8994?.lines.line3,
     form8864Credit: form8864?.lines.line11,
     form8882Credit: form8882?.lines.line7,
+    form8911Credit: form8911?.businessCredit,
     form8844Credit: form8844?.lines.line2,
     form3468PartVCredit,
     form5884Credit: form5884?.credit,
@@ -1183,6 +1191,7 @@ export function prepareForm3800DocumentParts(
     parsed.form8864_applied_credit,
   );
   const form8882Applied = applied("nonpassive:8882");
+  const form8911Applied = applied("nonpassive:8911");
   const form3468PartVApplied = sourceApplied(
     form3468PartVCredit > 0,
     "nonpassive:3468-part-v",
@@ -1250,6 +1259,18 @@ export function prepareForm3800DocumentParts(
   const form8864Ids = context.documentIdsByPendingKey.f8864 ?? [];
   if (form8864Ids.length !== (form8864 ? 1 : 0)) {
     throw new Error("Form 3800 Form 8864 document count differs from source");
+  }
+  const form8911Ids = context.documentIdsByTag?.IRS8911 ?? [];
+  if (
+    form8911 &&
+    (form8911Ids.length !== 1 ||
+      context.documentIdsByTag?.IRS8911ScheduleA?.length !==
+        form8911.properties.length ||
+      context.documentIdsByTag?.IRS4562?.length !== 1)
+  ) {
+    throw new Error(
+      "Form 3800 Form 8911 source needs its parent, property and depreciation documents",
+    );
   }
   const form8882Ids = context.documentIdsByPendingKey.f8882 ?? [];
   if (form8882Ids.length !== (form8882 ? 1 : 0)) {
@@ -1414,6 +1435,13 @@ export function prepareForm3800DocumentParts(
           credit: form8864.lines.line11,
           documentId: form8864Ids[0],
           appliedCredit: form8864Applied,
+        }
+        : undefined,
+      form8911: form8911
+        ? {
+          credit: form8911.businessCredit,
+          documentId: form8911Ids[0],
+          appliedCredit: form8911Applied,
         }
         : undefined,
       form8882: form8882
