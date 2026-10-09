@@ -1,3 +1,4 @@
+import { institutionAddressLines } from "./f8815_address.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import { type PDFFont, StandardFonts } from "pdf-lib";
 import type { PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
@@ -111,9 +112,7 @@ export const appendForm8815Institutions: NonNullable<
     const lines = [
       `${index + 4}. Person: ${student.person_name}`,
       `Institution: ${student.institution_name}`,
-      address.line1,
-      ...(address.line2 ? [address.line2] : []),
-      `${address.city}, ${address.state} ${address.zip}`,
+      ...institutionAddressLines(address),
     ].flatMap((line) => wrapped(line, font));
     const height = lines.length * 14 + 18;
     if (y - height < 60) {

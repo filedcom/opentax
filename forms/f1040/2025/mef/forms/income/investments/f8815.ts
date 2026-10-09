@@ -1,10 +1,14 @@
 import { element, elements } from "../../../../../mef/xml.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../form-descriptor.ts";
 import {
   calculateForm8815,
   type Form8815Input,
   type Form8815Lines,
   inputSchema,
+  type InstitutionAddress,
 } from "../../../../../nodes/intermediate/forms/income/investments/form8815/index.ts";
 import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import { FilingStatus as NodeFilingStatus } from "../../../../../nodes/types.ts";
@@ -47,6 +51,27 @@ function reconciledLines(fields: Input) {
   return { source, lines };
 }
 
+function institutionAddress(address: InstitutionAddress): string {
+  const street = [
+    element("AddressLine1Txt", address.line1),
+    element("AddressLine2Txt", address.line2),
+    element("CityNm", address.city),
+  ];
+  if ("country_code" in address) {
+    return elements("EligibleInstitutionFrgnAddress", [
+      ...street,
+      element("ProvinceOrStateNm", address.province_or_state),
+      element("CountryCd", address.country_code),
+      element("ForeignPostalCd", address.postal_code),
+    ]);
+  }
+  return elements("EligibleInstitutionUSAddress", [
+    ...street,
+    element("StateAbbreviationCd", address.state),
+    element("ZIPCd", address.zip.replace("-", "")),
+  ]);
+}
+
 function buildIRS8815(fields: Input, context?: MefBuildContext): string {
   if (Object.keys(fields).length === 0) return "";
   if (fields.line14 === undefined) {
@@ -71,13 +96,7 @@ function buildIRS8815(fields: Input, context?: MefBuildContext): string {
       elements("EligibleEducationInstnGrp", [
         element("EligiblePersonNm", student.person_name),
         element("EligibleInstitutionNm", student.institution_name),
-        elements("EligibleInstitutionUSAddress", [
-          element("AddressLine1Txt", student.institution_address.line1),
-          element("AddressLine2Txt", student.institution_address.line2),
-          element("CityNm", student.institution_address.city),
-          element("StateAbbreviationCd", student.institution_address.state),
-          element("ZIPCd", student.institution_address.zip.replace("-", "")),
-        ]),
+        institutionAddress(student.institution_address),
       ])
     ),
     ...FIELD_MAP.map(([key, tag]) => {

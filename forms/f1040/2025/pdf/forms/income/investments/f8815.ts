@@ -1,3 +1,4 @@
+import { institutionAddressLines } from "./f8815_address.ts";
 import { appendForm8815Institutions } from "./f8815_institutions.ts";
 import type {
   PdfFieldEntry,
@@ -93,11 +94,7 @@ export const form8815Pdf: PdfFormDescriptor = {
           [`student_${row}_institution`, student.institution_name],
           [
             `student_${row}_address`,
-            [
-              address.line1,
-              address.line2,
-              `${address.city}, ${address.state} ${address.zip}`,
-            ].filter(Boolean).join(", "),
+            institutionAddressLines(address).join(", "),
           ],
         ];
       }),

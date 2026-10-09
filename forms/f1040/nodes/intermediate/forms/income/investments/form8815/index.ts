@@ -9,22 +9,52 @@ import type { NodeContext } from "../../../../../../../../core/types/node-contex
 import { FilingStatus, filingStatusSchema } from "../../../../../types.ts";
 import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
 import { schedule_b } from "../../../../aggregation/income/investments/schedule_b/index.ts";
+import { isTy2025IrsCountryCode } from "../../../../../irs_country_code.ts";
 
 const amount = z.number().int().nonnegative();
+
+const usInstitutionAddressSchema = z.object({
+  line1: z.string().trim().min(1).max(35),
+  line2: z.string().trim().max(35).optional(),
+  city: z.string().trim().min(1).max(22),
+  state: z.string().regex(/^[A-Z]{2}$/),
+  zip: z.string().regex(/^\d{5}(?:-\d{4})?$/),
+}).strict();
+
+// TY2025 ForeignAddressType: IRS country codes, not ISO codes; the city,
+// province and postal code are optional and must not be invented.
+const street = z.string().trim().min(1).max(35).regex(
+  /^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/,
+);
+const foreignText = z.string().trim().min(1).regex(
+  /^([\x21-\x7E£§ÁÉÍÑÓ×ÚÜáéíñóúü] ?)*[\x21-\x7E£§ÁÉÍÑÓ×ÚÜáéíñóúü]$/,
+);
+const foreignInstitutionAddressSchema = z.object({
+  line1: street,
+  line2: street.optional(),
+  city: z.string().trim().min(1).max(50).regex(/^([A-Za-z] ?)*[A-Za-z]$/)
+    .optional(),
+  province_or_state: foreignText.max(17).optional(),
+  country_code: z.string().refine(
+    isTy2025IrsCountryCode,
+    "Form 8815 requires a TY2025 IRS country code (Germany is GM, not DE)",
+  ),
+  postal_code: foreignText.max(16).optional(),
+}).strict();
+
+export const institutionAddressSchema = z.union([
+  usInstitutionAddressSchema,
+  foreignInstitutionAddressSchema,
+]);
+export type InstitutionAddress = z.infer<typeof institutionAddressSchema>;
 
 export const eligibleStudentSchema = z.object({
   person_name: z.string().trim().min(1).max(35),
   institution_name: z.string().trim().min(1).max(75),
-  institution_address: z.object({
-    line1: z.string().trim().min(1).max(35),
-    line2: z.string().trim().max(35).optional(),
-    city: z.string().trim().min(1).max(22),
-    state: z.string().regex(/^[A-Z]{2}$/),
-    zip: z.string().regex(/^\d{5}(?:-\d{4})?$/),
-  }),
+  institution_address: institutionAddressSchema,
 });
 
-// Bounded 2025 path: domestic tuition/fees, not Coverdell or QTP deposits.
+// Bounded 2025 path: eligible tuition/fees, not Coverdell or QTP deposits.
 // The two worksheet objects preserve the source lines used for Form 8815
 // lines 6 and 9. Callers must not provide a guessed exclusion or MAGI.
 export const inputSchema = z.object({

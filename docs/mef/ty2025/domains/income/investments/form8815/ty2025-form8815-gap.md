@@ -1,5 +1,60 @@
 # TY2025 Form 8815: source-to-return gap
 
+## October 9 foreign-institution source, native and paper addresses
+
+The tuition/fees route now accepts the two address choices allowed by the
+TY2025 `IRS8815.xsd`: a U.S. address or `EligibleInstitutionFrgnAddress`.
+Both alternatives are strict, so mixed U.S./foreign fields cannot be silently
+stripped into a different address. Foreign street, city, province and postal
+fields follow the cached `ForeignAddressType` lengths and character rules;
+city, province and postal code remain optional. Country codes use the existing
+TY2025 IRS code inventory (Germany is `GM`, not ISO `DE`). The paper form and
+its continuation use one address formatter and the existing IRS country-name
+lookup, preserving country names rather than printing unfamiliar codes.
+
+The [2025 Form 8815 instructions](https://www.irs.gov/pub/irs-prior/f8815--2025.pdf)
+require institution names and addresses and continued qualification for the
+education expenses. A foreign address does not itself establish that a school
+is eligible. The existing reviewed qualification, tuition/benefit, bond,
+recipient, MAGI and final-return guards remain in force. These synthetic cases
+supply those facts; they are not independent school, beneficiary, tuition or
+issuer authentication. Coverdell/QTP contributions and special royalty/addback
+routes remain unsupported.
+
+Four constructed full returns reuse the financial inputs and independently
+checked expected taxes in the institution-list checkpoint below. Each includes
+Canada, Germany and a U.S. ZIP+4 address; longer lists add the United Kingdom,
+a second address line and a foreign address with only street and country.
+The twelve-entry layout also retains the 75-character institution name and
+crosses onto a second continuation page. The joint case alternates taxpayer
+and spouse attendance. Exclusions remain 2,000 / 833 / 2,000 / 575 for
+three / four-phaseout / twelve / joint-four; final taxes remain
+6,855 / 13,708 / 6,855 / 18,412. Withholding is 7,000 in each case.
+
+**Completed checks:** 29 grouped tests pass with normal type checking.
+Forty-eight malformed address inputs reject in the source schema, native
+preparation and fresh PDF construction, including incorrect country codes,
+U.S./foreign mixtures, missing street and invalid text/lengths. These are
+address-schema rejection checks, not authentication of an otherwise valid
+address. All four full returns pass local 2025v5.4 XSD. All 20 flattened pages
+were visually inspected through 16 distinct rendered pages/four contact
+sheets; duplicate images are covered by SHA-256. Every native address field
+matches its source, and every supplied address/institution is retained in
+extracted paper text (ignoring wrapping whitespace for the long name).
+Names, phaseout ratios, exclusion, taxable interest, final tax, refund/owed,
+continuation numbering and page boundaries were checked. Existing deferred
+68 joint official-form headers and 76 zero/skipped-line presentation remain
+qualified; the continuation itself includes both joint names. No new future
+TODO was discovered or implemented in this checkpoint.
+
+Evidence: `.state/research/form8815-foreign-packets-2026-10-09/` contains inputs,
+pending data, origins, XML/PDF, XSD logs, visual and native/text review manifests,
+runtime/command details and grouped-test output. The full-return XSD SHA-256 is
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+The benchmark remains **46/133 with the identical 87 failing case IDs** from
+the preceding checkpoint; those failures remain deferred item 96. This closes
+the address representation gap, not the Form 8815 parent or IRS acceptance.
+
 ## October 9 complete institution lists and paper continuation
 
 The domestic tuition/fees source now retains every line 1 person/institution
@@ -158,7 +213,7 @@ names and the inspected 2025 PDF field names. Missing facts or ineligible claims
 raise diagnostics rather than assuming zero proceeds or MAGI. The legacy
 ambiguous input fields are rejected, without a compatibility shim.
 
-Still unsupported: Coverdell/QTP contributions, foreign institution addresses,
+Still unsupported: Coverdell/QTP contributions,
 the special royalty-interest computation, and
 any case where the complete line 9 worksheet cannot be supplied from finalized
 return lines. These are explicit bounds, not whole-form completion. The two
