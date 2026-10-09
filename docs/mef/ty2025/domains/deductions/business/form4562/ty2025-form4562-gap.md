@@ -179,3 +179,21 @@ The credit-limited case reduces depreciable basis by the full $18,000 property c
 All four complete XML returns validate against cached TY2025 2025v5.4 Return1040 XSD. Their 151 PDF pages (27/33/33/58) are covered by visual review of 67 distinct rendered pages and 84 exact PNG hash matches to reviewed pages; all packets have zero remaining AcroForm fields/widgets. Focused regression passed 82 tests; two final tests passed after strengthening document-ID and full-basis-reduction assertions (overlapping scope, not an additive count). Artifacts: `.state/research/form8911-profitable-returns/`; checkpoint: `.state/research/board-execution-2026-10-08/form8911-profit-batch-checkpoint.json`.
 
 This verifies the bounded existing route; broader form support, external source authentication, matching IRS business rules and ATS acceptance remain open. CI at preceding head `0885b3b12` exhausted its V8 heap before producing JUnit; that investigation is deferred in `future_todo` and no green CI claim is made.
+
+## Reviewed construction-exception credit filing — October 9
+
+The 30% construction-exception route now requires an identified project/property review with either significant physical-work records or paid/incurred costs meeting the five-percent safe harbor. It checks real dates, the January 29, 2023 cutoff, continuity through service, review chronology, property membership, sufficient project cost and agreement between reviews for a shared project. A date alone does not open filing. The [Form 8911 instructions](https://www.irs.gov/instructions/i8911) establish the two methods and continuity requirement; the [Form 7220 instructions](https://www.irs.gov/instructions/i7220) explicitly exempt qualifying beginning-of-construction claims from that attachment. Actual PWA claims remain guarded.
+
+The source review joins the existing fully business-use, taxpayer-owned, zero-section179 bonus inventory. Project construction start and an asset's tax acquisition date are distinct source facts: the retained bonus qualification review must establish the asset's post-January-19-2025 acquisition and other eligibility; project construction evidence does not establish that qualification. These synthetic records prove source/amount joins, not authentication of contracts, invoices, construction or continuity. Earlier-acquired/self-constructed and residual MACRS assets still need the existing broader depreciation work.
+
+| Case | Property credit | Depreciation | Current credit use | Total tax |
+| --- | ---: | ---: | ---: | ---: |
+| Physical work, $10,000 asset | 3,000 | 7,000 | 3,000 | 3,176 |
+| Five-percent method, $100,000 asset | 30,000 | 70,000 | 4,763 | 1,413 |
+| $400,000 asset, property cap | 100,000 | 300,000 | 4,763 | 1,413 |
+| Two properties, shared project | 9,000 | 21,000 | 3,875 | 0 |
+| Separate 30%/6% properties | 4,200 | 25,800 | 3,875 | 0 |
+
+The three profitable cases also retain SE tax 1,413, half-SE deduction 707 and QBI deduction 1,859. Current-year credit limitation does not reduce the full property-credit basis adjustment. Five complete returns pass cached TY2025 2025v5.4 Return1040 XSD; their 133 pages (27/27/27/26/26) have 45 distinct visual reviews plus 88 exact rendered-page hash matches, with zero remaining PDF fields/widgets. The existing deferred Schedule A line-6 template-border issue is unchanged. The 37-test focused regression passes, including prior base-rate, inventory, profit, presentation and property calculation checks. Artifacts: `.state/research/form8911-construction-returns/`; retained checkpoint: `form8911-construction-batch-checkpoint.json`.
+
+Main parent tasks remain open for broader form variants, authenticated source records, matching IRS business rules and ATS acceptance. No future-only task was implemented.

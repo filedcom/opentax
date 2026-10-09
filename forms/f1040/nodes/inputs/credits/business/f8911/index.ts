@@ -1,3 +1,4 @@
+import { constructionReviewSchema } from "./construction-review.ts";
 import { f3800 } from "../f3800/index.ts";
 import { calculatePropertyCredit } from "./property-credit.ts";
 import { roundWholeDollars } from "../../../../../whole-dollars.ts";
@@ -29,6 +30,7 @@ export const propertySchema = z.object({
     source_document_reference: z.string().trim().min(1),
     section179_deduction: z.number().finite().nonnegative(),
     rate_basis: z.enum(["base", "construction_before_2023_01_29", "pwa"]),
+    construction_review: constructionReviewSchema.optional(),
     subject_to_passive_activity_limit: z.boolean(),
   }).strict().optional(),
   fuel_type: z.nativeEnum(FuelType).optional(),

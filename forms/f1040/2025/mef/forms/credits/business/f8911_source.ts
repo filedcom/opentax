@@ -1,3 +1,4 @@
+import { assertConstructionReview } from "../../../../../nodes/inputs/credits/business/f8911/construction-review.ts";
 import {
   reconcileBonus4562,
   reconcileBonusInventory,
@@ -91,13 +92,57 @@ export function reconcileForm8911BusinessFiling(
   const joined = reconcileForm8911BusinessSources(raw, pending);
   if (
     joined.properties.some((p) =>
-      p.business_use_pct !== 1 || p.business_source?.rate_basis !== "base" ||
+      p.business_use_pct !== 1 || !p.business_source ||
+      p.business_source.rate_basis === "pwa" ||
       p.business_source.section179_deduction !== 0
     )
   ) {
     throw new Error(
-      "Form 8911 business filing requires reconciled base-rate full-business property and zero section 179; mixed/PWA sources remain guarded",
+      "Form 8911 business filing requires reconciled full-business property and zero section 179; mixed/PWA sources remain guarded",
     );
+  }
+  const reviews = joined.properties.flatMap((property) => {
+    if (
+      property.business_source?.rate_basis !== "construction_before_2023_01_29"
+    ) {
+      if (property.business_source?.construction_review) {
+        throw new Error(
+          "Form 8911 construction review needs the construction-exception rate",
+        );
+      }
+      return [];
+    }
+    return [assertConstructionReview(
+      property.business_source.construction_review,
+      "property_reference" in property &&
+        typeof property.property_reference === "string"
+        ? property.property_reference
+        : undefined,
+      property.construction_began,
+      property.placed_in_service,
+    )];
+  });
+  for (const review of reviews) {
+    const sameProject = reviews.filter((r) =>
+      r.project_reference === review.project_reference
+    );
+    const claimedProjectCost = joined.properties.filter((p) =>
+      p.business_source?.construction_review?.project_reference ===
+        review.project_reference
+    ).reduce((sum, p) => sum + p.cost, 0);
+    if (
+      review.start.method === "five_percent_safe_harbor" &&
+      review.start.project_total_cost < claimedProjectCost
+    ) {
+      throw new Error(
+        "Form 8911 reviewed project cost is less than its claimed properties",
+      );
+    }
+    if (sameProject.some((r) => JSON.stringify(r) !== JSON.stringify(review))) {
+      throw new Error(
+        "Form 8911 properties disagree on the shared construction project review",
+      );
+    }
   }
   if (!pending.form4562) {
     throw new Error(
