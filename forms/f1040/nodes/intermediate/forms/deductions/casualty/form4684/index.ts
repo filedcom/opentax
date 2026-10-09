@@ -3,7 +3,10 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../../../core/types/tax-node.ts";
-import { output, TaxNode } from "../../../../../../../../core/types/tax-node.ts";
+import {
+  output,
+  TaxNode,
+} from "../../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
 import { scheduleA } from "../../../../../inputs/deductions/itemized/schedule_a/index.ts";
 import { schedule_d } from "../../../../aggregation/income/investments/schedule_d/index.ts";
@@ -61,6 +64,11 @@ export const inputSchema = z.object({
   business_acquired_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   business_casualty_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   business_casualty_description: z.string().trim().min(1).max(80).optional(),
+  // Retained ownership and workpaper identity for disclosure/source joins.
+  business_recipient_ssn: z.string().regex(/^\d{9}$/).optional(),
+  business_source_document_reference: z.string().trim().min(1).max(500)
+    .optional(),
+  business_source_transaction_id: z.string().trim().min(1).max(500).optional(),
 
   // Whether business property is §1231 (held > 1 year)
   // true → routes to form4797; false → routes to schedule_d as capital loss

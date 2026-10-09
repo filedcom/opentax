@@ -1,3 +1,4 @@
+import { f8886 } from "./domains/general/filing/form8886/public-node.ts";
 import { qbiPatron } from "../nodes/inputs/deductions/business/qbi_patron/index.ts";
 import { education_income } from "../nodes/inputs/income/other/education_income/index.ts";
 import type { NodeRegistry } from "../../../core/types/node-registry.ts";
@@ -280,6 +281,7 @@ export const registry: NodeRegistry = {
   f8888,
   schedule_r,
   schedule_lep,
+  f8886,
   f9000,
   f4547,
   payment_request,

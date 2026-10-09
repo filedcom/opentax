@@ -17,6 +17,10 @@ export type ParsedArgs = {
   readonly draft?: boolean | string;
   readonly format?: string;
   readonly output?: string;
+  readonly requests?: string;
+  readonly "export-dir"?: string;
+  readonly record?: string;
+  readonly evidence?: string;
   readonly json?: boolean;
   readonly help?: boolean;
 };

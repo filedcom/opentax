@@ -1,3 +1,16 @@
+import type { ExecuteResult } from "../../../../core/runtime/executor.ts";
+import type { Form8886Source } from "../domains/general/filing/form8886/source.ts";
+import {
+  assertPreparedForm8886PublicSource,
+  type PreparedForm8886ReturnPackets,
+  verifyPreparedForm8886ReturnPackets,
+} from "../domains/general/filing/form8886/return-packets.ts";
+import {
+  finalizeForm8886NativeReturnPackets,
+  Form8886PendingKey,
+} from "../domains/general/filing/form8886/native-return.ts";
+import { buildPending } from "./execution/pending.ts";
+import type { MefDocumentFragment } from "./identity/document-identity.ts";
 import { assertOwned7203RequiredCopies } from "../domains/income/business/form7203/form7203-owned-return.ts";
 import { assertHsaExcessRequiredCopy } from "../domains/adjustments/health/form8889/form8889_postyear_single_reconciliation.ts";
 import { assertSingleFarmQbiReturn } from "../domains/deductions/business/form8995a/form8995a_single_farm_reconciliation.ts";
@@ -16,13 +29,19 @@ import { PDFDocument } from "pdf-lib";
 import { isValidMefPdfFilename } from "./attachments/pdf-attachment-filename.ts";
 import { assertMefPdfEnvelope } from "./attachments/pdf-attachment-envelope.ts";
 import { ALL_MEF_FORMS } from "./forms/index.ts";
-import { documentId, validateDocumentReferences } from "./identity/document-identity.ts";
+import {
+  documentId,
+  validateDocumentReferences,
+} from "./identity/document-identity.ts";
 import { SCHEDULE_E_TYPE8_STATEMENT_FILE } from "./forms/income/rental-passthrough/schedule_e_type8_statement.ts";
 import type { MefBuildContext, MefPdfAttachment } from "./form-descriptor.ts";
 import type { FilerIdentity, MefFormsPending } from "./types.ts";
 import { assertAttachmentCoverage } from "../return-processing/attachment-coverage.ts";
 import type { Form3800DocumentParts } from "./forms/credits/business/f3800/f3800_document.ts";
-import { preparedSourceSha256, sha256Hex } from "../return-processing/prepared-source.ts";
+import {
+  preparedSourceSha256,
+  sha256Hex,
+} from "../return-processing/prepared-source.ts";
 import {
   assertDigitalAssetDispositionAnswer,
   assertEitcChildSources,
@@ -132,6 +151,7 @@ import {
 } from "../../nodes/intermediate/forms/credits/individual/form8839/public_source.ts";
 
 export interface MefBundle {
+  readonly form8886Packets?: PreparedForm8886ReturnPackets;
   readonly retainedSourceDocuments?: readonly Form4852RetainedDocument[];
   readonly xml: string;
   readonly attachments: ReadonlyArray<MefPdfAttachment>;
@@ -144,6 +164,11 @@ export interface MefBundle {
 }
 
 export interface MefBundleOptions {
+  readonly form8886?: {
+    readonly prepared: PreparedForm8886ReturnPackets;
+    readonly source: Form8886Source;
+    readonly result: ExecuteResult;
+  };
   readonly retainedSourceDocuments?: readonly Form4852RetainedDocument[];
   readonly filer?: FilerIdentity;
   readonly attachments: ReadonlyArray<MefPdfAttachment>;
@@ -213,6 +238,10 @@ function buildFragments(
     const source = pending[form.pendingKey as keyof MefFormsPending];
     const sourceKeys = form.sourcePendingKeys ?? [form.pendingKey];
     if (
+      !(context.preparedForm8886 &&
+        Object.values(Form8886PendingKey).some((key) =>
+          key === form.pendingKey
+        )) &&
       form.pendingKey !== "f1040" &&
       !sourceKeys.some((key) =>
         pending[key as keyof MefFormsPending] !== undefined
@@ -244,7 +273,12 @@ function buildReturnXml(
   attachments: ReadonlyArray<MefPdfAttachment>,
   attachmentSha256ByFileName?: Readonly<Record<string, string>>,
   form4852EvidenceVerified = false,
-): { readonly xml: string; readonly form3800Parts?: Form3800DocumentParts } {
+  preparedForm8886?: PreparedForm8886ReturnPackets,
+): {
+  readonly xml: string;
+  readonly form3800Parts?: Form3800DocumentParts;
+  readonly documents: readonly MefDocumentFragment[];
+} {
   if (year !== 2025 || returnType !== "1040") {
     throw new Error(
       "TY2025 Form 1040 export requires year 2025 and return type 1040",
@@ -258,6 +292,7 @@ function buildReturnXml(
   if (!filer) {
     throw new Error("MeF export requires a real filer identity");
   }
+  assertPreparedForm8886PublicSource(pending, preparedForm8886);
   assertForm8858FilingSource(pending.f8858);
   if (pending.f1040?.dual_status_return_2025 === true) {
     throw new Error("TY2025 dual-status return cannot use Form 1040 e-file");
@@ -356,7 +391,7 @@ function buildReturnXml(
   ) {
     throw new Error("Form 8949 needs its reconciled Schedule D");
   }
-  assertAttachmentCoverage(pending, "mef");
+  assertAttachmentCoverage(pending, "mef", preparedForm8886);
   if (
     pending.schedule_e?.schedule_es?.some((item) =>
       item.property_type === 8 &&
@@ -376,6 +411,7 @@ function buildReturnXml(
   );
   const initial = buildFragments(pending, {
     phase: "discovery",
+    preparedForm8886,
     filer,
     binaryAttachmentFileNames,
     attachmentDescriptionsByFileName,
@@ -409,6 +445,7 @@ function buildReturnXml(
   let form3800Parts: Form3800DocumentParts | undefined;
   const linked = buildFragments(pending, {
     phase: "final",
+    preparedForm8886,
     filer,
     binaryAttachmentFileNames,
     attachmentDescriptionsByFileName,
@@ -458,6 +495,7 @@ function buildReturnXml(
     xml:
       `<Return returnVersion="${schemaVersion}" xmlns="http://www.irs.gov/efile" xmlns:efile="http://www.irs.gov/efile">${returnHeader}${returnData}</Return>`,
     form3800Parts,
+    documents,
   };
 }
 
@@ -483,6 +521,7 @@ export function assertPreparedBundleProjection(
     bundle.attachments,
     bundle.attachmentSha256ByFileName,
     bundle.retainedSourceDocuments !== undefined,
+    bundle.form8886Packets,
   );
   if (projected.xml !== bundle.xml) {
     throw new Error(
@@ -527,9 +566,48 @@ export function buildMefXml(
 
 /** XML and PDF files that must later be placed in a MeF submission ZIP. */
 export async function buildMefBundle(
-  pending: MefFormsPending,
-  options: MefBundleOptions,
+  pendingInput: MefFormsPending,
+  optionsInput: MefBundleOptions,
 ): Promise<MefBundle> {
+  const pending = structuredClone(pendingInput);
+  const options = {
+    ...optionsInput,
+    filer: optionsInput.filer ? structuredClone(optionsInput.filer) : undefined,
+    attachments: optionsInput.attachments.map((row) => ({
+      ...row,
+      bytes: new Uint8Array(row.bytes),
+    })),
+    retainedSourceDocuments: optionsInput.retainedSourceDocuments?.map(
+      (row) => ({ ...row, bytes: new Uint8Array(row.bytes) }),
+    ),
+    form8886: optionsInput.form8886
+      ? {
+        prepared: optionsInput.form8886.prepared,
+        source: structuredClone(optionsInput.form8886.source),
+        result: structuredClone(optionsInput.form8886.result),
+      }
+      : undefined,
+  };
+  if (options.form8886) {
+    if (!options.filer) throw new Error("Form 8886 needs the return filer");
+    await verifyPreparedForm8886ReturnPackets(
+      options.form8886.prepared,
+      options.form8886.source,
+      options.form8886.result,
+      options.filer,
+    );
+    if (
+      await preparedSourceSha256(pending, options.filer) !==
+        await preparedSourceSha256(
+          buildPending(options.form8886.result.pending),
+          options.filer,
+        )
+    ) {
+      throw new Error(
+        "Form 8886 calculation differs from the MeF pending return",
+      );
+    }
+  }
   await assertForm1098IssuerCopies(pending);
   const retainedSourceDocuments = (options.retainedSourceDocuments ?? []).map((
     d,
@@ -599,7 +677,17 @@ export async function buildMefBundle(
     attachments,
     attachmentSha256ByFileName,
     pending.f4852 !== undefined,
+    options.form8886?.prepared,
   );
+  const form8886Packets = options.form8886 && options.filer
+    ? await finalizeForm8886NativeReturnPackets(
+      options.form8886.prepared,
+      options.form8886.source,
+      options.form8886.result,
+      options.filer,
+      prepared.documents,
+    )
+    : undefined;
   if (pending.f8283) {
     await assertPreparedVehicleAcknowledgments(
       pending.f8283,
@@ -609,7 +697,9 @@ export async function buildMefBundle(
     );
   }
   return {
-    ...prepared,
+    xml: prepared.xml,
+    form3800Parts: prepared.form3800Parts,
+    form8886Packets,
     retainedSourceDocuments,
     attachments,
     pending,

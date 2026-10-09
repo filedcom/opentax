@@ -44,7 +44,10 @@ export interface MefFormDescriptor<
 import type { FilerIdentity } from "../../mef/header.ts";
 import type { Form3800DocumentParts } from "./forms/credits/business/f3800/f3800_document.ts";
 
+import type { PreparedForm8886ReturnPackets } from "../domains/general/filing/form8886/return-packets.ts";
+
 export interface MefBuildContext {
+  readonly preparedForm8886?: PreparedForm8886ReturnPackets;
   /** The initial document-discovery pass runs before stable document IDs exist. */
   readonly phase?: "discovery" | "final";
   readonly filer?: FilerIdentity;

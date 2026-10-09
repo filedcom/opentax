@@ -59,6 +59,7 @@ export const itemSchema = z.object({
   entity_type: z.enum(["estate", "trust"]).optional(),
   estate_trust_ein: z.string().regex(/^\d{9}$/).optional(),
   source_document_reference: z.string().trim().min(1).optional(),
+  source_tax_year: z.literal(2025).optional(),
   // TY2025 box 14 code M supplies Part V information, not a credit amount.
   // Box 13 code M is the separate orphan-drug credit and stays closed here.
   box13_code_m_clean_electricity_investment_credit: z.never().optional(),

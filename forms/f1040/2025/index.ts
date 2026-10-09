@@ -1,3 +1,4 @@
+import { preparePublicForm8886Return } from "./domains/general/filing/form8886/public-return.ts";
 import { assertPassiveSCorpLossCalculationInputs } from "./domains/income/business/passive-s-corp-loss-calculation.ts";
 import type { FormDefinition } from "../../../core/types/form-definition.ts";
 import type { ExecuteResult } from "../../../core/runtime/executor.ts";
@@ -99,15 +100,31 @@ export const f1040_2025: FormDefinition = {
   registry,
   executeReturn,
   prepareReturn: async (
-    pending,
-    filer,
-    attachments = [],
-    retainedSourceDocuments = [],
+    pendingInput,
+    filerInput,
+    attachmentsInput = [],
+    retainedSourceDocumentsInput = [],
   ) => {
+    const attachments = attachmentsInput.map((row) => ({
+      ...row,
+      bytes: new Uint8Array(row.bytes),
+    }));
+    const retainedSourceDocuments = retainedSourceDocumentsInput.map((row) => ({
+      ...row,
+      bytes: new Uint8Array(row.bytes),
+    }));
+    const pending = structuredClone(pendingInput);
+    const filer = filerInput ? structuredClone(filerInput) : undefined;
     const normalized = buildPending(pending) as MefFormsPending;
     assertF1040FinalHeader(normalized.f1040 ?? {}, filer);
+    const form8886 = await preparePublicForm8886Return(
+      pending,
+      filer,
+      executeReturn,
+    );
     const bundle = await buildMefBundle(normalized, {
       filer,
+      form8886,
       attachments,
       retainedSourceDocuments,
       schemaVersion: F1040_2025_CONFIG.mefSchemaVersion,
@@ -116,7 +133,8 @@ export const f1040_2025: FormDefinition = {
     });
     return {
       bundle,
-      renderPdf: () => buildPdfBytes(normalized, filer, ".pdf-cache", bundle),
+      renderPdf: () =>
+        buildPdfBytes(bundle.pending, filer, ".pdf-cache", bundle),
     };
   },
   buildMefXml: (pending, filer) =>

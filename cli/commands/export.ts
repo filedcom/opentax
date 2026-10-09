@@ -156,7 +156,7 @@ export function emittedValidationScope(xml: string): EmittedValidationScope {
   return { rulePrefixes: prefixes, formCounts, returnVersion };
 }
 
-function validateBusinessRules(
+export function validateBusinessRules(
   pending: Readonly<Record<string, Record<string, unknown>>>,
   filer: PipelineResult["filer"],
   force: boolean | undefined,
@@ -209,7 +209,7 @@ function validateBusinessRules(
 }
 
 /** Shared: execute nodes, warn on failures, run validation gate. */
-async function runReturnPipeline(
+export async function runReturnPipeline(
   args: ExportReturnArgs,
 ): Promise<PipelineResult> {
   const returnPath = join(args.baseDir, args.returnId);

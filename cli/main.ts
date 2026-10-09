@@ -1,3 +1,7 @@
+import {
+  exportForm8886OtsaCommand,
+  recordForm8886OtsaDeliveryCommand,
+} from "./commands/form8886-otsa.ts";
 import { parseArgs } from "@std/cli";
 import type { CommandDef, ParsedArgs, TopLevelDef } from "./commands/help.ts";
 import { printHelp } from "./commands/help.ts";
@@ -112,6 +116,69 @@ const COMMANDS: readonly CommandDef[] = [
     handler: async (args) => {
       const returnId = requireArg("returnId", args.returnId);
       await run(() => getReturnCommand({ returnId, baseDir: RETURNS_DIR }));
+    },
+  },
+  {
+    cmd: "return",
+    sub: "record-otsa-delivery",
+    description:
+      "Retain reviewed delivery evidence for an unchanged OTSA export; no IRS acceptance claim",
+    usage:
+      "opentax return record-otsa-delivery --returnId <id> --requests <json-file> --export-dir <directory> --record <json-file> --evidence <file> --output <new-directory> [--force]",
+    handler: async (args) => {
+      await run(() =>
+        recordForm8886OtsaDeliveryCommand({
+          returnId: requireArg("returnId", args.returnId),
+          baseDir: RETURNS_DIR,
+          requestsPath: requireArg("requests", args.requests),
+          exportDir: requireArg("export-dir", args["export-dir"]),
+          recordPath: requireArg("record", args.record),
+          evidencePath: requireArg("evidence", args.evidence),
+          outputDir: requireArg("output", args.output),
+          force: args.force === true || args.force === "true",
+          draft: args.draft === true || args.draft === "true",
+        })
+      );
+    },
+  },
+  {
+    cmd: "return",
+    sub: "export-otsa",
+    description:
+      "Prepare separate Form 8886 OTSA copies and handoff manifest; does not send them",
+    usage:
+      "opentax return export-otsa --returnId <id> --requests <json-file> [--output <new-directory>] [--force]",
+    options: [
+      { flag: "--returnId", description: "Return identifier", required: true },
+      {
+        flag: "--requests",
+        description: "JSON handoff request for every disclosure",
+        required: true,
+      },
+      {
+        flag: "--output",
+        description:
+          "New export directory; existing directories are never overwritten",
+      },
+      {
+        flag: "--force",
+        description:
+          "Override return business-rule rejection for review; recorded in manifest",
+      },
+    ],
+    handler: async (args) => {
+      const returnId = requireArg("returnId", args.returnId);
+      const requestsPath = requireArg("requests", args.requests);
+      await run(() =>
+        exportForm8886OtsaCommand({
+          returnId,
+          baseDir: RETURNS_DIR,
+          requestsPath,
+          outputDir: args.output,
+          force: args.force === true || args.force === "true",
+          draft: args.draft === true || args.draft === "true",
+        })
+      );
     },
   },
   {
@@ -390,6 +457,10 @@ async function main(): Promise<void> {
       "entryId",
       "format",
       "output",
+      "requests",
+      "export-dir",
+      "record",
+      "evidence",
     ],
     boolean: ["json", "help", "draft"],
     alias: { h: "help" },
