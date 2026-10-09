@@ -23,6 +23,7 @@ const finalPeopleSchema = z.object({
 export function assertContributionOwners(
   input: Form8815Input,
   finalReturn: unknown,
+  foreignAddback: number,
 ): void {
   const review = input.education_contributions;
   if (!review) return;
@@ -62,7 +63,7 @@ export function assertContributionOwners(
       );
     }
   }
-  assertCoverdellMagiLimit(input, review, filer.line11_agi);
+  assertCoverdellMagiLimit(input, review, filer.line11_agi + foreignAddback);
 }
 
 function assertCoverdellMagiLimit(
@@ -70,8 +71,8 @@ function assertCoverdellMagiLimit(
   review: NonNullable<Form8815Input["education_contributions"]>,
   agi: number,
 ): void {
-  // Existing Form 8815 final-return guards prohibit foreign income addbacks,
-  // so Pub. 970 Worksheet 6-1 MAGI is the final AGI, after bond exclusion.
+  // Pub. 970 Worksheet 6-1 adds foreign exclusions to final AGI,
+  // retaining the savings-bond exclusion already deducted from that AGI.
   const start = input.filing_status === FilingStatus.MFJ ? 190000 : 95000;
   const width = input.filing_status === FilingStatus.MFJ ? 30000 : 15000;
   const fraction = Math.min(

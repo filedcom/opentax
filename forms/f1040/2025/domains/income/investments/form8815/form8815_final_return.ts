@@ -1,4 +1,5 @@
 import { assertContributionOwners } from "./form8815_contribution_return.ts";
+import { form8815ForeignAddback } from "./form8815_foreign_addback.ts";
 import { z } from "zod";
 import type {
   Form8815Input,
@@ -85,6 +86,7 @@ export function assertForm8815FinalReturn(
     (sum, row) => sum + (row.box1 ?? 0) + (row.box3 ?? 0),
     0,
   );
+  const foreignAddback = form8815ForeignAddback(pending);
   const grossInterest = source.line9_worksheet.schedule_b_line2_interest;
   const taxableInterest = form1040.line2b_taxable_interest ?? 0;
   const adjustments = form1040.line10_adjustments ?? 0;
@@ -104,8 +106,8 @@ export function assertForm8815FinalReturn(
     adjustments - studentLoanAdjustment !==
       source.line9_worksheet.schedule1_adjustments ||
     form1040.line11_agi !== form1040.line9_total_income - adjustments ||
-    source.line9_worksheet.foreign_adoption_and_puerto_rico_addbacks !== 0 ||
-    Object.keys(pending.form2555 ?? {}).length > 0 ||
+    source.line9_worksheet.foreign_adoption_and_puerto_rico_addbacks !==
+      foreignAddback ||
     Object.keys(pending.form4563 ?? {}).length > 0 ||
     Object.keys(pending.form8839 ?? {}).length > 0
   ) {
@@ -113,5 +115,5 @@ export function assertForm8815FinalReturn(
       "Form 8815 line 9 worksheet or exclusion differs from the finalized Schedule B, Schedule 1, and Form 1040",
     );
   }
-  assertContributionOwners(source, pending.f1040);
+  assertContributionOwners(source, pending.f1040, foreignAddback);
 }

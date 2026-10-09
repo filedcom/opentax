@@ -1,5 +1,55 @@
 # TY2025 Form 8815: source-to-return gap
 
+## October 9 foreign-exclusion and Coverdell MAGI checkpoint
+
+The supported physical-presence employee Form 2555 route now reconciles to
+Form 8815 instead of being categorically rejected. The addback is recomputed
+from reviewed Form 2555 filing details and must equal the supplied bond MAGI
+worksheet addback. Reported foreign wages and Schedule 1 line 8d must match that
+calculation; aggregate-only or mixed aggregate/detail inputs still reject.
+The same derived exclusion is added to final AGI for the Coverdell contributor
+limit, keeping the bond-interest exclusion deducted from Coverdell MAGI.
+
+This follows [2025 Form 8815 line 9 instructions](https://www.irs.gov/pub/irs-prior/f8815--2025.pdf)
+and [Publication 970 worksheets 6-1/6-2](https://www.irs.gov/publications/p970).
+The [Form 1040 foreign earned income tax worksheet](https://www.irs.gov/instructions/i1040gi)
+uses the Tax Table below 100,000 and Tax Computation Worksheet above it.
+Independent single-case tax is 13,708 minus 10,320 = 3,388; joint-case tax is
+18,412 minus 11,828 = 6,584. The housing case adds 9,200 housing exclusion to
+130,000 earned-income exclusion, exactly once.
+
+| Constructed return | Foreign / domestic wages | Foreign addback | Bond MAGI | Bond exclusion | Final AGI | Tax | Refund | Pages |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Single foreign wages | 100,000 / 0 | 100,000 | 102,000 | 833 | 1,167 | 0 | 0 | 9 |
+| Single mixed wages | 70,000 / 30,000 | 70,000 | 102,000 | 833 | 31,167 | 3,388 | 3,612 | 9 |
+| Joint mixed wages | 100,000 / 60,000 | 100,000 | 162,000 | 575 | 61,425 | 6,584 | 416 | 10 |
+| Joint housing exclusion | 140,000 / 20,000 | 139,200 | 162,000 | 575 | 22,225 | 0 | 7,000 | 10 |
+
+All include mixed tuition, Coverdell and QTP contributions. The single cases'
+Coverdell MAGI is 101,167 despite much lower final AGI, giving a 1,178 contributor
+limit: 1,000 passes but another 500 by the same filer rejects. The joint cases
+retain the fourth institution on a continuation. The foreign-only case has no
+W-2 or withholding; the others retain 7,000 withholding.
+
+The typed grouped source/node/rule/Form2555-XSD gate passes **53/0**, including
+four complete-return tests with 26 native and 26 fresh-PDF
+rejections for removed/mixed/altered foreign sources, filed wages/exclusion,
+wrong addbacks and excess Coverdell contributions. All four full returns pass
+2025v5.4 XSD. All 38 flattened pages were visually reviewed through 26 distinct
+page images/seven contact sheets; additional text/native assertions reconcile
+foreign wages, exclusions, signed Schedule 1 totals, bond MAGI, tax and refunds.
+Existing joint-name 68 and zero/skipped-line 76 presentation qualifications
+remain. These are synthetic reviewed facts, not authenticated employer or
+custodial evidence, and no IRS acceptance is claimed.
+
+Evidence: `.state/research/form8815-foreign-magi-2026-10-09/` retains source,
+pending, expected values, XML/PDF, XSD logs, page hashes and text/native review.
+The XSD digest remains `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+The benchmark remains 46/133 with the same 87 failing IDs (deferred96).
+Positive housing deductions, Form 4563, employer adoption benefits, Puerto Rico
+income, royalty/investment-interest special computations and broader authenticity
+remain open; their existing guards are preserved. No future item was implemented.
+
 ## October 9 Coverdell and QTP contribution source-to-return checkpoint
 
 Reviewed actual-2025 cash contributions to Coverdell education savings accounts
@@ -27,8 +77,8 @@ all accounts and outside contributions to the beneficiary's 2,000 ceiling.
 Birth dates match the filed person; payments at age 18 or older require a
 special-needs review reference. The contributor limit follows [Publication 970
 worksheets 6-1 and 6-2](https://www.irs.gov/pub/irs-prior/p970--2025.pdf), using
-final AGI after the bond exclusion because the existing Form 8815 route rejects
-foreign addbacks. In the single mixed case, final AGI 101,167 gives a 1,178 limit:
+final AGI after the bond exclusion in these domestic cases. The later foreign
+checkpoint above adds back the reconciled Form 2555 exclusion when applicable. In the single mixed case, final AGI 101,167 gives a 1,178 limit:
 1,000 contributed by the filer passes, while a further 500 by that filer rejects.
 This differs from the Form 8815 MAGI 102,000 used for the bond-interest phaseout.
 
