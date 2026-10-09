@@ -1,3 +1,4 @@
+import { f3800 } from "../f3800/index.ts";
 import { calculatePropertyCredit } from "./property-credit.ts";
 import { roundWholeDollars } from "../../../../../whole-dollars.ts";
 import { z } from "zod";
@@ -22,6 +23,14 @@ export enum FuelType {
 export const propertySchema = z.object({
   cost: z.number().nonnegative(),
   business_use_pct: z.number().min(0).max(1).optional(),
+  business_source: z.object({
+    proprietor_ssn: z.string().regex(/^\d{9}$/),
+    schedule_c_business_reference: z.string().trim().min(1),
+    source_document_reference: z.string().trim().min(1),
+    section179_deduction: z.number().finite().nonnegative(),
+    rate_basis: z.enum(["base", "construction_before_2023_01_29", "pwa"]),
+    subject_to_passive_activity_limit: z.boolean(),
+  }).strict().optional(),
   fuel_type: z.nativeEnum(FuelType).optional(),
   non_electric_fuel_review: z.object({
     specification_reference: z.string().trim().min(1),
@@ -118,6 +127,40 @@ function assertNonElectricFuelSource(property: F8911Property): void {
   }
 }
 
+function propertyAmounts(property: F8911Property) {
+  const source = property.business_source;
+  if ((property.business_use_pct ?? 0) > 0 && !source) {
+    throw new Error(
+      "Form 8911 business credit requires the Form 3800 path and property-level wage data",
+    );
+  }
+  if (
+    source?.rate_basis === "construction_before_2023_01_29" &&
+    (!property.construction_began ||
+      property.construction_began >= "2023-01-29")
+  ) {
+    throw new Error(
+      "Form 8911 construction-based increased rate needs construction before January 29, 2023",
+    );
+  }
+  if (
+    source?.rate_basis === "base" && property.construction_began &&
+    property.construction_began < "2023-01-29"
+  ) {
+    throw new Error(
+      "Form 8911 pre-January-29-2023 construction needs the increased-rate basis",
+    );
+  }
+  return calculatePropertyCredit({
+    cost: property.cost,
+    business_use_pct: property.business_use_pct,
+    section179_deduction: source?.section179_deduction,
+    business_credit_rate: source && source.rate_basis !== "base"
+      ? "increased"
+      : "base",
+  });
+}
+
 export interface PersonalCreditAmounts {
   readonly tentativeCredit: number;
   readonly regularTaxBeforeCredits: number;
@@ -132,13 +175,14 @@ export interface PersonalCreditAmounts {
 
 export function computePersonalCreditAmounts(
   rawInput: F8911Input,
+  calculationOnlyBusinessSource = false,
 ): PersonalCreditAmounts | undefined {
   const input = inputSchema.parse(rawInput);
   const properties = personalCreditProperties(input);
   if (properties.length === 0) return undefined;
   for (const input of properties) {
     assertNonElectricFuelSource(input);
-    if ((input.business_use_pct ?? 0) > 0) {
+    if ((input.business_use_pct ?? 0) > 0 && !calculationOnlyBusinessSource) {
       throw new Error(
         "Form 8911 business credit requires the Form 3800 path and property-level wage data",
       );
@@ -156,12 +200,20 @@ export function computePersonalCreditAmounts(
         "Form 8911 needs a verified eligible census tract and 11-digit GEOID",
       );
     }
-    if (input.main_home_property !== true) {
+    propertyAmounts(input);
+    if (
+      (input.business_use_pct ?? 0) < 1 && input.main_home_property !== true
+    ) {
       throw new Error(
         "Form 8911 personal credit requires property at the taxpayer's main home",
       );
     }
   }
+  if (
+    properties.every((property) =>
+      propertyAmounts(property).personalCredit === 0
+    )
+  ) return undefined;
   if (
     input.regular_tax_before_credits === undefined ||
     input.tentative_minimum_tax === undefined
@@ -173,7 +225,7 @@ export function computePersonalCreditAmounts(
   // Retain cents across property amounts, then round the total entered on
   // Form 8911 line 4 (Form 1040 instructions: Rounding Off to Whole Dollars).
   const tentativeCredit = roundWholeDollars(properties.reduce(
-    (sum, property) => sum + calculatePropertyCredit(property).personalCredit,
+    (sum, property) => sum + propertyAmounts(property).personalCredit,
     0,
   ));
   const foreignTaxCredit = input.foreign_tax_credit ?? 0;
@@ -203,11 +255,27 @@ export function computePersonalCreditAmounts(
 class F8911Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8911";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule3, form6251]);
+  readonly outputNodes = new OutputNodes([schedule3, form6251, f3800]);
 
   compute(_ctx: NodeContext, rawInput: F8911Input): NodeResult {
-    const amounts = computePersonalCreditAmounts(rawInput);
-    const outputs: NodeOutput[] = [];
+    const amounts = computePersonalCreditAmounts(rawInput, true);
+    const properties = personalCreditProperties(rawInput);
+    const businessCredit = roundWholeDollars(
+      properties.reduce(
+        (sum, property) => sum + propertyAmounts(property).businessCredit,
+        0,
+      ),
+    );
+    const outputs: NodeOutput[] = businessCredit > 0
+      ? [this.outputNodes.output(f3800, {
+        f8911_credit: {
+          credit_amount: businessCredit,
+          subject_to_passive_activity_limit: properties.some((property) =>
+            property.business_source?.subject_to_passive_activity_limit === true
+          ),
+        },
+      })]
+      : [];
     if (amounts) {
       if (amounts.allowedCredit > 0) {
         outputs.push(this.outputNodes.output(schedule3, {

@@ -45,7 +45,10 @@ import {
 } from "../../../../../../nodes/inputs/credits/individual/f8936/index.ts";
 import { FilingStatus } from "../../../../../../nodes/types.ts";
 import { FilingStatus as MefFilingStatus } from "../../../../../../mef/header.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../../form-descriptor.ts";
 import {
   buildIRS3800Document,
   type Form3800DocumentParts,
@@ -717,6 +720,11 @@ function form8835FacilityAllocations(
 }
 
 function prepareForm3800Base(fields: PendingForm3800) {
+  if (fields.f8911_credit !== undefined) {
+    throw new Error(
+      "Form 8911 business export needs property-source reconciliation before Form 3800 filing",
+    );
+  }
   const hasLegacyCredit = fields.f3800s?.some((entry) =>
     Object.values(entry).some((value) => typeof value === "number" && value > 0)
   );

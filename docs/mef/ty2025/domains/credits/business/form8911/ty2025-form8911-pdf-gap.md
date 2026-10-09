@@ -194,3 +194,35 @@ The selected Form 3800 calculation/native/PDF and Form 8911 property modules
 pass 308 tests with zero failures. The first run had 307 passes and one
 missing-network-permission failure while fetching an IRS template; the final
 run allowed only `www.irs.gov` and completed. No test was ignored.
+
+## Public business-credit calculation — October 9
+
+Public Form 8911 property inputs now retain a structured `business_source`
+with proprietor SSN, Schedule C business reference, source-document reference,
+section 179 deduction, stated rate basis and passive-activity answer. The node
+routes the calculated business credit to Form 3800's standard-credit tax-limit
+path instead of the legacy unbounded credit input. The public Form 3800 field
+continues to use its existing legacy array shape; originating-form source
+credits enter through the graph.
+
+For the existing 50,000-wage calculation fixture, a 10,000 all-business property
+at 6% yields 600 allowed credit, tax 3,275 and refund 3,725. A 100,000 property
+yields 6,000 gross credit, limited to 3,875, tax zero and refund 7,000. These
+are credit-calculation fixtures, not complete business returns. The stated
+business identity, section 179 deduction and increased-rate basis still need
+the existing source reconciliation and required companion documents before
+filing. Source references alone are not authentication or PWA evidence.
+
+The calculation separates personal and business portions and retains the
+increased-rate basis. Construction-based increased credit rejects dates on or
+after January 29, 2023. Passive credit without Form 8582-CR allocation stops.
+Native Form 3800 explicitly rejects this staged business source before filing,
+and PDF output requires the prepared MeF parts. Form 8911's native/PDF
+business guard also remains. No new positive business XML/PDF or complete
+business return is claimed.
+
+Final regression for this stage: 331 selected Form 3800 and Form 8911
+calculation/native/PDF tests passed with zero failures. The mixed-use case
+keeps 1,000 personal credit separate from 180 business credit (tax 2,695);
+both stated increased-rate cases compute 2,700 after 1,000 section 179
+(tax 1,175). No new PDF artifact or XSD result is counted for this stage.
