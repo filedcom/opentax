@@ -566,3 +566,36 @@ failed log and original comparison remain retained; this is future item93,
 not repaired or counted as a successful packet. The positive partial case
 above is separately labeled and uses4000 withholding. Private evidence:
 `.state/research/form8839-carryforward-2026-10-09/`.
+
+## October 9 saved-return CLI carryforward verification
+
+Three CLI cases now store the same strict source and reviewed attachment files,
+copy the saved return into a fresh directory, remove the original directory,
+and reopen through the CLI pipeline. Fully used, unused6000 and partial2125
+balances reproduce, as does the refundable5000 credit. The current carryforward
+record is regenerated from stored sources; it remains `computed_unfiled`, not
+an accepted-filing record. Updating the partial case's stored W-2 to100000 wages
+and15000 withholding uses all6000 of nonrefundable credit and removes the old
+carryforward from both the pending record and CLI summary. Altering the decree
+file then rejects both XML and PDF export in all three cases.
+
+**Eight typed CLI/public tests pass**. The two retained carryforward XML packets
+pass cached TY2025v5.4 XSD. All seven rendered output pages are byte-identical to
+the previously visually reviewed programmatic pages; this proves the CLI
+reproduction without adding duplicate pages to the reviewed-page total.
+
+These CLI exports use the existing `force` test option for local business-rule
+failures, not for source/attachment or arithmetic guards. An independent
+unforced replay rejects both retained cases: unused has F1040-066-09,
+F8839-009-01 and IND-433; partial also has S3-F1040-013-01. The payment rule's
+sum omits refundable adoption credit; the reverse registry has no ChildSSN or
+old AdoptionCreditAmt mapping, while current NonrefundableAdoptionCreditAmt
+maps to Schedule3 and RefundableAdoptionCreditAmt maps to1040. IND-433 is a
+real missing synthetic-fixture signature PIN, not evidence of a calculation
+bug. Reconcile rule version/mappings before claiming an ordinary unforced
+export. This is deferred item94, without a production-rule change.
+
+Private saved returns, packet XML/PDF, render comparisons, rejection reports
+and test log: `.state/research/form8839-cli-carry-2026-10-09/`. Prior-year
+accepted-carry import, source authenticity, broader credit ordering and IRS
+acceptance remain open; no parent task is closed.
