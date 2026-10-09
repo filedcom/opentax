@@ -1,5 +1,7 @@
 # TY2025 Form8962 larger and joint monthly family source proof
 
+> October 9 current-route clarification: the zero-spouse-income limitation below describes this original family batch. The later [owned joint-income route](./ty2025-form8962-joint-income-source-scope.md) admits reviewed W-2, INT/OID/DIV, unemployment, bounded IRA/pension and ordinary capital sources for both owners. Current code still rejects unjoined entered categories by name and compares the complete raw/retained source copy and final return totals. The linked later evidence retains its own verification qualifications; it is not unrestricted joint-income or source-authenticated filing support.
+
 Production candidate `3140e52818ef63b65d0a462cfdc33f7904b8f71d` in the isolated family checkout. The portable prior test is private cherry-pick `fa05f9d2c` of `574d72c1b`; no main or board edit. Ten runtime/test hashes are frozen in `/tmp/opentax-form8962-family-source-held-v6-oct7.json`.
 
 ## Complete implemented route
