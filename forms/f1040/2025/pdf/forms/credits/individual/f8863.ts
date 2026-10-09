@@ -1,4 +1,7 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import {
   calculateAocStudentLines,
   calculateForm8863Lines,
@@ -9,6 +12,7 @@ import { form8863 as nativeForm8863 } from "../../../../mef/forms/credits/indivi
 
 // Rev. Sept. 2025 AcroForm: page 1 carries return totals, page 2 carries
 // exactly one student's Part III. Extra students require copies of page 2.
+// Additional schools use copies completed only through line 22.
 const p1 = "topmostSubform[0].Page1[0]";
 const p2 = "topmostSubform[0].Page2[0]";
 const text = (domainKey: string, pdfField: string, printZero = false) => ({
@@ -129,7 +133,7 @@ function institutionFields(item: F8863Item): Record<string, unknown> {
   const institutions = item.filing_details?.institutions;
   if (!institutions || institutions.length < 1 || institutions.length > 2) {
     throw new Error(
-      "Form 8863 PDF supports one or two sourced institutions per student",
+      "Form 8863 PDF needs one or two sourced institutions per page",
     );
   }
   const projected: Record<string, unknown> = {};
@@ -196,7 +200,7 @@ export const form8863Pdf: PdfFormDescriptor = {
       ...lines.aocStudents.map((item) => ({ item, credit: "aoc" as const })),
       ...lines.llcStudents.map((item) => ({ item, credit: "llc" as const })),
     ];
-    return students.map(({ item, credit }, index) => {
+    return students.flatMap(({ item, credit }, index) => {
       if (!item.filing_details || !item.student_ssn) {
         throw new Error(
           "Form 8863 PDF needs structured student details and SSN",
@@ -217,8 +221,7 @@ export const form8863Pdf: PdfFormDescriptor = {
         : undefined;
       const ratio6 = lines.line6.toFixed(3).split(".");
       const ratio17 = lines.line17.toFixed(3).split(".");
-      return {
-        pdf_first_student: index === 0,
+      const identity = {
         pdf_return_ssn_a: taxpayerA,
         pdf_return_ssn_b: taxpayerB,
         pdf_return_ssn_c: taxpayerC,
@@ -227,7 +230,23 @@ export const form8863Pdf: PdfFormDescriptor = {
         pdf_student_ssn_a: studentA,
         pdf_student_ssn_b: studentB,
         pdf_student_ssn_c: studentC,
-        ...institutionFields(item),
+      };
+      const schools = item.filing_details.institutions;
+      const schoolPages = Array.from(
+        { length: Math.ceil(schools.length / 2) },
+        (_, page) =>
+          institutionFields({
+            ...item,
+            filing_details: {
+              ...item.filing_details!,
+              institutions: schools.slice(page * 2, page * 2 + 2),
+            },
+          }),
+      );
+      const firstPage = {
+        ...identity,
+        ...schoolPages[0],
+        pdf_first_student: index === 0,
         pdf_gate_23: answer(item.aoc_claimed_4_prior_years),
         pdf_gate_24: answer(item.enrolled_half_time),
         pdf_gate_25: answer(item.completed_4_years_postsec),
@@ -278,6 +297,14 @@ export const form8863Pdf: PdfFormDescriptor = {
           }
           : {}),
       };
+      return [
+        firstPage,
+        ...schoolPages.slice(1).map((schoolFields) => ({
+          ...identity,
+          ...schoolFields,
+          pdf_first_student: false,
+        })),
+      ];
     });
   },
 };

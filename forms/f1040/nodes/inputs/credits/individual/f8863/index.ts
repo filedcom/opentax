@@ -231,7 +231,7 @@ export const itemSchema = z.object({
     institution_ein: z.string().regex(/^\d{2}-?\d{7}$/).optional(),
     institution_name: z.string().trim().min(1).optional(),
     workpaper: educationExpenseWorkpaperSchema,
-  })).length(2).optional(),
+  })).min(2).optional(),
 });
 
 // 2025 Form 8863 Credit Limit Worksheet, lines 4 and 5. These amounts must
@@ -301,7 +301,7 @@ export function form8863InstitutionWorkpapers(item: F8863Item) {
 }
 
 // Each U.S. institution needs its received Form 1098-T or the documented
-// statutory nonreceipt exception. Two schools retain separate workpapers.
+// statutory nonreceipt exception. Multiple schools retain separate workpapers.
 export function validateForm8863FilingSource(
   item: F8863Item,
   credit: "aoc" | "llc",
@@ -310,9 +310,9 @@ export function validateForm8863FilingSource(
   const workpaper = item.education_expense_workpaper;
   const perInstitution = item.institution_expense_workpapers;
   if (perInstitution !== undefined) {
-    if (institutions?.length !== 2 || workpaper !== undefined) {
+    if (!institutions || institutions.length < 2 || workpaper !== undefined) {
       throw new Error(
-        "Form 8863 two-school sources need two institutions and separate workpapers without an aggregate workpaper",
+        "Form 8863 multi-school sources need at least two institutions and separate workpapers without an aggregate workpaper",
       );
     }
     const joined = form8863InstitutionWorkpapers(item);
@@ -331,7 +331,7 @@ export function validateForm8863FilingSource(
       )
     ) {
       throw new Error(
-        "Form 8863 mixed two-school sources need separate issued copies, payment inventories and assistance inventories",
+        "Form 8863 mixed multi-school sources need separate issued copies, payment inventories and assistance inventories",
       );
     }
     assertDistinctEducationSourceReferences([item]);
@@ -364,7 +364,7 @@ export function validateForm8863FilingSource(
       claimed === undefined || Math.abs(claimed - combinedExpenses) > 0.000001
     ) {
       throw new Error(
-        "Form 8863 combined adjusted expenses must equal both school workpapers",
+        "Form 8863 combined adjusted expenses must equal all school workpapers",
       );
     }
     return;
