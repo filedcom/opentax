@@ -1,6 +1,6 @@
 # TY2025 Form 4852 substitute-source filing gap
 
-## Current isolated source route (October 6)
+## Current source route
 
 The known-domestic-payer route now uses the actual retained completed official
 Form4852 PDF, typed payroll/custodian records and replacement workpaper bytes.
@@ -42,6 +42,50 @@ The dated sections below record the preceding guarded/preparatory stages; their
 blanket-export/unregistered statements describe those stages, not this current
 known-source route. Final terminal logs, retained-artifact replay and
 page-review evidence are appended below after verification.
+
+## October 9 current return and PDF source boundaries
+
+At runtime582c0cbc2, the existing known-source suite passes34 tests across
+four modules; five related W2/1099R/withholding modules pass241. The ten
+complete returns pass the full local TY2025v5.4 XSD and retain71 packet pages.
+All63 distinct rendered pages were inspected through16 contact sheets; duplicate
+page hashes cover the remaining eight. The final PDFs are byte-identical to the
+pre-test-change replay. This is a fresh current-runtime observation, not recovery
+or revalidation of missing October6 archives.
+
+The filing test now exercises the PDF source parser for all eight altered,
+rehashed completed-form, workpaper, treatment-record and incorrect-original
+variants across the W2 and retirement replacement cases. Each PDF call must
+raise the same error as retained-source parsing, before generic prepared-bundle
+hash checks. Native preparation rejects the same variants. No production code
+or expected tax amount changed. An intermediate test-only type error was corrected
+by specifying Error in the rejection assertions; final typed checks pass.
+
+These packets are not clean filing approval. The codeG60,000 direct rollover in
+`retirement-net-basis-early-rollover` leaves Form1040 line5c box1 blank; the
+pending flag and native rollover element are absent too. This contradicts the
+[2025 Form1040 rollover instructions](https://www.irs.gov/instructions/i1040gi)
+and is deferred106 in the board, without repair. The joint wage/SE case repeats
+the existing skipped ScheduleSE8d/9/10 presentation qualification on page13.
+Other source/tax totals and substitute owner/copy/amount projections agree.
+Current recharacterization statements precede their retained substitute copies;
+no historical70-page or universal packet-order claim is carried forward.
+
+Evidence: `.state/research/form4852-current-2026-10-09/` retains baseline/final
+packets, source and retained-byte manifests, final logs, XSD results, rendered
+page map, visual-review record, qualifications and checkpoint. The generated
+packets are flattened and have no canonical fields or widgets; retained source
+PDF fields are parsed by the filing tests. Synthetic source binding does not
+establish issuer authentication, taxpayer completion or prior IRS acceptance.
+
+Later October6 sections supersede earlier blanket Roth blocks: regular Roth
+basis, owned current inventories, conversion FIFO and prior consumption, whole
+current recharacterizations, annual traditional contributions/withdrawals and
+current conversions, and employer-specific SIMPLE participation clocks have
+separate retained evidence. They were not all rerun in this checkpoint. Broader
+transferred/inherited interests, returned contributions, historical exceptions,
+transferred SIMPLE account origins, external authenticity and IRS business-rule/
+ATS acceptance remain unresolved; the existing parent task stays open.
 
 ## Historical audit and preparatory evidence
 

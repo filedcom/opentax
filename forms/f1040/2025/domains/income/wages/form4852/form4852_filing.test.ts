@@ -972,12 +972,29 @@ Deno.test("Form4852 actual public completed-PDF sources reconcile multiple owner
             ? { ...d, bytes }
             : d
         );
-        await assertRejects(() =>
-          assertForm4852RetainedEvidence(changed, row.filer, changedDocuments)
+        const retainedError = await assertRejects(
+          () =>
+            assertForm4852RetainedEvidence(
+              changed,
+              row.filer,
+              changedDocuments,
+            ),
+          Error,
         );
         await assertRejects(() =>
           f1040_2025.prepareReturn(changed, row.filer, [], changedDocuments)
         );
+        // Require parsed-source rejection at the PDF boundary, before the
+        // prepared graph/hash checks could hide a missing source validator.
+        const pdfError = await assertRejects(
+          () =>
+            buildPdfBytes(changed, row.filer, ".pdf-cache", {
+              ...prepared.bundle,
+              retainedSourceDocuments: changedDocuments,
+            }),
+          Error,
+        );
+        assertEquals(pdfError.message, retainedError.message);
       }
     }
     const changedBytes = retained.documents.map((d, i) =>
