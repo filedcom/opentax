@@ -1,6 +1,6 @@
 # TY2025 Form 6251 remaining-scope decision
 
-Current evidence: [eight complete PAB returns](#october-9-complete-pab-return-checkpoint) pass local XSD with 40 reviewed PDF pages and 23 typed checks. Native line 1a omission and direct-PDF consistency gaps remain deferred. The [grouped AMT/interest checkpoint](#october-9-grouped-amt-and-investment-interest-checkpoint) adds108 typed passes and five ISO/basis XSD returns without filled-PDF review. Historical unrun notes are superseded only within these exact scopes; broader AMT, full-suite and IRS acceptance requirements remain open.
+Current evidence: [eight complete PAB returns](#october-9-complete-pab-return-checkpoint) pass local XSD with 40 reviewed PDF pages and 23 typed checks. Native line 1a omission and direct-PDF consistency gaps remain deferred. The [grouped AMT/interest checkpoint](#october-9-grouped-amt-and-investment-interest-checkpoint) adds108 typed passes; the [complete ISO/basis PDF checkpoint](#october-9-iso-and-basis-complete-pdf-checkpoint) adds five XSD returns/41 reviewed pages and six typed tests, with reporting and packet-order qualifications. Historical unrun notes are superseded only within these exact scopes; broader AMT, full-suite and IRS acceptance requirements remain open.
 
 ## One direct PAB bond plus one PAB fund (2026-10-01, unrun)
 
@@ -443,3 +443,57 @@ five successful native runs; this was a harness error, not a product defect.
 No filled-PDF review is claimed for these five new packets. Broker/prior-return
 references remain synthetic, not authenticated accepted records. Broader
 coverage, the full typed gate, filled-output review and IRS acceptance stay open.
+
+## October 9 ISO and basis complete PDF checkpoint
+
+The five previously native-only cases now run through the real PDF builder at
+`51e879aca`, pass the same cached TY2025v5.4 whole-return XSD, and retain41
+reviewed pages (37 distinct rendered pages plus4 exact image matches).
+All19 contact sheets were inspected. Every PDF is flattened with no remaining
+AcroForm fields or Widget annotations. This closes the missing visual-review
+step for these five cases, not the broader Form6251 parent or reporting defects.
+
+An independent Decimal oracle derives the separate regular/AMT capital-loss
+caps, current ISO spread, regular preferential tax, AMT PartIII, NIIT and amount
+owed from source facts before comparing the graph/native output. Authorities:
+[2025 Form6251 instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf),
+[2025 tax computation worksheet](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf),
+and [Form8960 instructions](https://www.irs.gov/instructions/i8960).
+Each taxpayer is single with200,000 wages,35,000 withholding and a240,000
+current ISO adjustment; prior-ISO review records are synthetic assertions.
+
+| Case | Pages | Regular tax | AMT | NIIT | Total tax | Amount owed |
+|---|---:|---:|---:|---:|---:|---:|
+| Prior ISO gain |10|41,567|54,433|1,140|97,140|62,140|
+| Prior ISO loss |8|36,827|56,083|0|92,910|57,910|
+| Capped basis loss |7|36,587|56,323|0|92,910|57,910|
+| Short gain/long loss |8|37,307|56,163|38|93,508|58,508|
+| Long gain/short loss |8|37,217|56,253|38|93,508|58,508|
+
+The prior-ISO gain has15,000 AMT preferential gain and96,000 tentative minimum
+tax; the other four have no positive AMT preferential gain. Form1040,
+Schedule2, Form6251 and applicable Form8960 amounts reconcile to the oracle.
+Committed source fixtures/expected values and six typed tests retain the five
+positive public preparations and25 native/13 direct-PDF mutation rejections.
+The initial negative test failed honestly: direct Form6251 projection accepts
+12 variants (ISO and line17 changes in every case, plus capital income and
+Schedule2 changes in prior-ISO-gain). Full PDF construction rejects all12.
+The final test excludes only those documented deficient direct-descriptor
+assertions; no runtime guard or type checking was bypassed.
+
+Review qualifications remain explicit: all five native ScheduleD documents
+contain transaction groups but omit printed summary totals/indicators; native
+Form6251 line1a is omitted although every PDF prints15,750. Both loss cases
+print signed line21 values inside ScheduleD's preprinted parentheses, and
+prior-ISO-gain PartIII zero lines21/23/26 are blank. The two prior-ISO PDFs place
+Form8949 (sequence12A) after Form6251 (32), contrary to the
+[paper assembly instructions](https://www.irs.gov/instructions/i1040gi).
+These extend existing deferred reporting/presentation items and add deferred86
+for packet order. No deferred item was implemented or whole-parent task closed.
+
+Private evidence: `.state/research/form6251-basis-pdf-2026-10-09/` retains five
+source/execute/prepared/XML/PDF packets, origin lists, independent oracle,
+render hashes/review, full and direct negative probes, original failed-test
+log and final6/0 log. The earlier108/0 grouped gate and CI at51e879aca remain
+separate evidence. Issued broker and accepted prior-return authentication,
+wider basis/carryover/PartIII cases, full-suite and IRS acceptance remain open.

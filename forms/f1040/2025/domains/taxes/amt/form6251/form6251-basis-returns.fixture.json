@@ -1,0 +1,350 @@
+{
+  "prior-iso-gain": {
+    "general": {
+      "digital_assets": false,
+      "filing_status": "single",
+      "taxpayer_first_name": "Test",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_dob": "1985-06-15",
+      "address_line1": "1 Test Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701"
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Option Corporation",
+        "employer_address_line1": "100 Option Way",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "111-22-3333",
+        "box1_wages": 200000,
+        "box2_fed_withheld": 35000
+      }
+    ],
+    "f3921": [
+      {
+        "source_document_reference": "2025 issued Form 3921 retained lot B",
+        "corporation_name": "Option Corporation",
+        "corporation_ein": "12-3456789",
+        "employee_tin": "111-22-3333",
+        "box1_date_option_granted": "2022-06-01",
+        "box2_date_option_exercised": "2025-06-02",
+        "box3_exercise_price_per_share": 10,
+        "box4_fmv_per_share": 250,
+        "box5_shares_transferred": 1000,
+        "rights_transferable_and_not_subject_to_substantial_risk_on_exercise": true,
+        "shares_disposed_during_exercise_year": 0,
+        "amount_paid_for_option": 0
+      }
+    ],
+    "f8949": [
+      {
+        "part": "E",
+        "description": "1,000 Option Corporation ISO shares",
+        "source_transaction_id": "broker-lot-A",
+        "broker_statement_reference": "2025 broker Form 1099-B lot A",
+        "date_acquired": "2024-06-01",
+        "date_sold": "2025-07-02",
+        "proceeds": 40000,
+        "cost_basis": 10000,
+        "amt_cost_basis": 25000
+      }
+    ],
+    "form6251_prior_iso_sale": {
+      "prior_iso_sale_review": {
+        "prior_2024_form3921_reference": "2024 issued Form 3921 lot A",
+        "prior_2024_return_reference": "2024 filed Form 1040 copy",
+        "prior_2024_form6251_reference": "2024 filed Form 6251 copy",
+        "prior_2024_filer_tin": "111-22-3333",
+        "prior_2024_form6251_line2i": 15000,
+        "corporation_name": "Option Corporation",
+        "corporation_ein": "12-3456789",
+        "option_grant_date": "2022-06-01",
+        "exercise_date": "2024-06-01",
+        "exercise_price_per_share": 10,
+        "exercise_fmv_per_share": 25,
+        "shares_exercised_and_sold": 1000,
+        "broker_2025_1099b_reference": "2025 broker Form 1099-B lot A",
+        "form8949_source_transaction_id": "broker-lot-A",
+        "sale_date": "2025-07-02",
+        "proceeds": 40000,
+        "no_other_2024_iso_adjustments_verified": true,
+        "no_partial_lot_sale_or_prior_disposition_verified": true,
+        "no_2025_compensation_or_disqualifying_disposition_verified": true
+      }
+    }
+  },
+  "prior-iso-loss": {
+    "general": {
+      "digital_assets": false,
+      "filing_status": "single",
+      "taxpayer_first_name": "Test",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_dob": "1985-06-15",
+      "address_line1": "1 Test Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701"
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Option Corporation",
+        "employer_address_line1": "100 Option Way",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "111-22-3333",
+        "box1_wages": 200000,
+        "box2_fed_withheld": 35000
+      }
+    ],
+    "f3921": [
+      {
+        "source_document_reference": "2025 issued Form 3921 retained lot B",
+        "corporation_name": "Option Corporation",
+        "corporation_ein": "12-3456789",
+        "employee_tin": "111-22-3333",
+        "box1_date_option_granted": "2022-06-01",
+        "box2_date_option_exercised": "2025-06-02",
+        "box3_exercise_price_per_share": 10,
+        "box4_fmv_per_share": 250,
+        "box5_shares_transferred": 1000,
+        "rights_transferable_and_not_subject_to_substantial_risk_on_exercise": true,
+        "shares_disposed_during_exercise_year": 0,
+        "amount_paid_for_option": 0
+      }
+    ],
+    "f8949": [
+      {
+        "part": "E",
+        "description": "1,000 Option Corporation ISO shares",
+        "source_transaction_id": "broker-lot-A",
+        "broker_statement_reference": "2025 broker Form 1099-B lot A",
+        "date_acquired": "2024-06-01",
+        "date_sold": "2025-07-02",
+        "proceeds": 9000,
+        "cost_basis": 10000,
+        "amt_cost_basis": 25000
+      }
+    ],
+    "form6251_prior_iso_sale": {
+      "prior_iso_sale_review": {
+        "prior_2024_form3921_reference": "2024 issued Form 3921 lot A",
+        "prior_2024_return_reference": "2024 filed Form 1040 copy",
+        "prior_2024_form6251_reference": "2024 filed Form 6251 copy",
+        "prior_2024_filer_tin": "111-22-3333",
+        "prior_2024_form6251_line2i": 15000,
+        "corporation_name": "Option Corporation",
+        "corporation_ein": "12-3456789",
+        "option_grant_date": "2022-06-01",
+        "exercise_date": "2024-06-01",
+        "exercise_price_per_share": 10,
+        "exercise_fmv_per_share": 25,
+        "shares_exercised_and_sold": 1000,
+        "broker_2025_1099b_reference": "2025 broker Form 1099-B lot A",
+        "form8949_source_transaction_id": "broker-lot-A",
+        "sale_date": "2025-07-02",
+        "proceeds": 9000,
+        "no_other_2024_iso_adjustments_verified": true,
+        "no_partial_lot_sale_or_prior_disposition_verified": true,
+        "no_2025_compensation_or_disqualifying_disposition_verified": true
+      }
+    }
+  },
+  "capped-basis-loss": {
+    "general": {
+      "digital_assets": false,
+      "filing_status": "single",
+      "taxpayer_first_name": "Test",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_dob": "1985-06-15",
+      "address_line1": "1 Test Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701"
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Option Corporation",
+        "employer_address_line1": "100 Option Way",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "111-22-3333",
+        "box1_wages": 200000,
+        "box2_fed_withheld": 35000
+      }
+    ],
+    "f3921": [
+      {
+        "source_document_reference": "2025 issued Form 3921 retained lot B",
+        "corporation_name": "Option Corporation",
+        "corporation_ein": "12-3456789",
+        "employee_tin": "111-22-3333",
+        "box1_date_option_granted": "2022-06-01",
+        "box2_date_option_exercised": "2025-06-02",
+        "box3_exercise_price_per_share": 10,
+        "box4_fmv_per_share": 250,
+        "box5_shares_transferred": 1000,
+        "rights_transferable_and_not_subject_to_substantial_risk_on_exercise": true,
+        "shares_disposed_during_exercise_year": 0,
+        "amount_paid_for_option": 0
+      }
+    ],
+    "f8949": [
+      {
+        "part": "A",
+        "description": "Capital asset with different AMT basis",
+        "source_transaction_id": "broker-capped-loss",
+        "broker_statement_reference": "2025 issued broker loss lot",
+        "date_acquired": "2025-01-10",
+        "date_sold": "2025-06-20",
+        "proceeds": 1000,
+        "cost_basis": 3000,
+        "amt_cost_basis": 6000
+      }
+    ]
+  },
+  "short-gain-long-loss": {
+    "general": {
+      "digital_assets": false,
+      "filing_status": "single",
+      "taxpayer_first_name": "Test",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_dob": "1985-06-15",
+      "address_line1": "1 Test Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701"
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Option Corporation",
+        "employer_address_line1": "100 Option Way",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "111-22-3333",
+        "box1_wages": 200000,
+        "box2_fed_withheld": 35000
+      }
+    ],
+    "f3921": [
+      {
+        "source_document_reference": "2025 issued Form 3921 retained lot B",
+        "corporation_name": "Option Corporation",
+        "corporation_ein": "12-3456789",
+        "employee_tin": "111-22-3333",
+        "box1_date_option_granted": "2022-06-01",
+        "box2_date_option_exercised": "2025-06-02",
+        "box3_exercise_price_per_share": 10,
+        "box4_fmv_per_share": 250,
+        "box5_shares_transferred": 1000,
+        "rights_transferable_and_not_subject_to_substantial_risk_on_exercise": true,
+        "shares_disposed_during_exercise_year": 0,
+        "amount_paid_for_option": 0
+      }
+    ],
+    "f8949": [
+      {
+        "part": "A",
+        "description": "Short-term capital gain with AMT basis",
+        "source_transaction_id": "broker-short-gain-to-amt-loss",
+        "broker_statement_reference": "2025 issued short-term gain lot",
+        "date_acquired": "2025-01-10",
+        "date_sold": "2025-06-20",
+        "proceeds": 3000,
+        "cost_basis": 1000,
+        "amt_cost_basis": 2000
+      },
+      {
+        "part": "D",
+        "description": "Long-term capital loss with AMT basis",
+        "source_transaction_id": "broker-long-loss-to-amt-loss",
+        "broker_statement_reference": "2025 issued long-term loss lot",
+        "date_acquired": "2023-01-10",
+        "date_sold": "2025-06-20",
+        "proceeds": 1000,
+        "cost_basis": 2000,
+        "amt_cost_basis": 3000
+      }
+    ]
+  },
+  "long-gain-short-loss": {
+    "general": {
+      "digital_assets": false,
+      "filing_status": "single",
+      "taxpayer_first_name": "Test",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_dob": "1985-06-15",
+      "address_line1": "1 Test Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701"
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Option Corporation",
+        "employer_address_line1": "100 Option Way",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "111-22-3333",
+        "box1_wages": 200000,
+        "box2_fed_withheld": 35000
+      }
+    ],
+    "f3921": [
+      {
+        "source_document_reference": "2025 issued Form 3921 retained lot B",
+        "corporation_name": "Option Corporation",
+        "corporation_ein": "12-3456789",
+        "employee_tin": "111-22-3333",
+        "box1_date_option_granted": "2022-06-01",
+        "box2_date_option_exercised": "2025-06-02",
+        "box3_exercise_price_per_share": 10,
+        "box4_fmv_per_share": 250,
+        "box5_shares_transferred": 1000,
+        "rights_transferable_and_not_subject_to_substantial_risk_on_exercise": true,
+        "shares_disposed_during_exercise_year": 0,
+        "amount_paid_for_option": 0
+      }
+    ],
+    "f8949": [
+      {
+        "part": "A",
+        "description": "Short-term capital loss with AMT basis",
+        "source_transaction_id": "broker-short-loss-to-amt-loss",
+        "broker_statement_reference": "2025 issued short-term loss lot",
+        "date_acquired": "2025-01-10",
+        "date_sold": "2025-06-20",
+        "proceeds": 1000,
+        "cost_basis": 2000,
+        "amt_cost_basis": 3000
+      },
+      {
+        "part": "D",
+        "description": "Long-term capital gain with AMT basis",
+        "source_transaction_id": "broker-long-gain-to-amt-loss",
+        "broker_statement_reference": "2025 issued long-term gain lot",
+        "date_acquired": "2023-01-10",
+        "date_sold": "2025-06-20",
+        "proceeds": 3000,
+        "cost_basis": 1000,
+        "amt_cost_basis": 2000
+      }
+    ]
+  }
+}
