@@ -64,7 +64,7 @@ export const SCENARIO_1040_05_RECONCILIATION = {
     "Complete Form 2441 benefit, earned-income and credit-limit review.",
     "Complete Form 8863 student/source eligibility and credit ordering.",
     "Complete Form 8862 prior-disallowance proof and unanswered claim questions.",
-    "Reconcile the moving-expense claim and every required companion before asserting a complete return.",
+    "Reconcile the $1,475 cover amount with the marked storage-fees-only exception, prior foreign move and reimbursement evidence; do not infer a current Form 3903 move.",
   ],
 } as const;
 

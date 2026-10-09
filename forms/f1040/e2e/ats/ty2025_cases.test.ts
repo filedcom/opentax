@@ -495,6 +495,8 @@ Deno.test("1040 Scenario 5 preserves dependent, care, education, and opt-out inp
     1_820,
   );
   assertEquals(facts.schedule1.movingExpenses, 1_475);
+  assertEquals(facts.schedule1.line14StorageFeesOnly, true);
+  assertEquals(facts.schedule1.printedLine14Amount, null);
   assertEquals(facts.form8863.adjustedQualifiedEducationExpenses, 980);
   assertEquals(
     facts.form8863.institutionAddress,
@@ -546,7 +548,7 @@ Deno.test("1040 Scenario 5 Form 2441 preserves provider/person rows and pre-cred
   );
 
   // These are Part II worksheet targets if no dependent-care benefits apply.
-  // The packet does not mark the benefits Yes/No answer or fill lines 3-11.
+  // The Yes/No text is a routing diagram; actual lines 3-12 are blank.
   const paidExpenses = facts.dependents.reduce(
     (sum, child) => sum + child.careExpenses,
     0,
@@ -568,7 +570,7 @@ Deno.test("1040 Scenario 5 Form 2441 preserves provider/person rows and pre-cred
     ],
     [1_820, 31_232, 31_232, 1_820],
   );
-  assertEquals(facts.form2441.dependentCareBenefitsAnswer, null);
+  assertEquals(facts.form2441.printedLine12BenefitsAmount, null);
   assertEquals(facts.form2441.printedTaxLiabilityLimit, null);
   assertEquals(facts.form2441.printedCredit, null);
 });

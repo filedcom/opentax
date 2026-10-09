@@ -952,8 +952,9 @@ export const SCENARIO_1040_05_FACTS = {
     box6MedicareWithholding: 453,
   },
   form2441: {
-    // The dependent-care-benefits Yes/No answer and credit lines are blank.
-    dependentCareBenefitsAnswer: null,
+    // Page 8 has a benefits flowchart, not an answer checkbox.
+    // Page 9 leaves the actual Part III line 12 amount blank.
+    printedLine12BenefitsAmount: null,
     printedTaxLiabilityLimit: null,
     printedCredit: null,
     providers: [
@@ -975,7 +976,9 @@ export const SCENARIO_1040_05_FACTS = {
   },
   schedule1: {
     movingExpenses: 1_475,
-    line14ArmedForcesCheck: true,
+    // This mark means storage fees only; it is not an active-duty answer.
+    line14StorageFeesOnly: true,
+    printedLine14Amount: null,
   },
   form8862: {
     taxYearOnLine1: null,
