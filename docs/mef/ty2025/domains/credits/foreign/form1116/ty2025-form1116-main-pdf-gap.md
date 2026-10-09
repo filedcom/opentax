@@ -1,5 +1,51 @@
 # TY2025 Form 1116 main PDF category boundary
 
+## October 9 K-3 public boundary and native-only checkpoint
+
+The partnership and S-corporation paths were replayed through public inputs
+with six synthetic source cases. **No complete PDF packet passed.** All six
+complete inputs reject at `start`: `form1116_review.single_source_pdf_review`
+accepts only the ordinary review requiring `no_foreign_tax_reduction_confirmed`,
+while the K-3 projector needs `only_identified_k3_line12_reduction_confirmed`.
+The intermediate schema supports that union but the public review does not.
+This newly discovered mismatch is deferred109; no runtime repair was made.
+
+A separate calculation/native probe omits only that unsupported PDF review,
+retaining the original K-1/K-3 income, gross tax and reduction. It must not be
+counted as a positive public-to-PDF route. Its six original XML returns pass
+cached TY2025 v5.4 XSD; PDF construction rejects specifically for the absent
+affirmative source inventory. No review was inserted into calculated pending
+data to manufacture a printable packet.
+
+Both entity types retain interest/AGI 50,000, standard deduction 15,750,
+taxable income 34,250 and regular tax 3,875, independently checked against the
+[2025 IRS Tax Table](https://www.irs.gov/publications/p1040). The
+[Form 1116 instructions](https://www.irs.gov/instructions/i1116),
+[partner K-3 instructions](https://www.irs.gov/instructions/i1065sk3) and
+[shareholder K-3 instructions](https://www.irs.gov/instructions/i1120sk3)
+place gross tax in Part II and the separately apportioned reduction on line12.
+
+| Each entity type | Gross tax | Reduction | Credit | Current carry | Final tax/owed |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Remaining tax | 2,000 | 400 | 1,600 | 0 | 2,275 |
+| Current excess | 9,000 | 1,000 | 3,875 | 4,125 | 0 |
+| Full reduction | 2,000 | 2,000 | 0 | 0 | 3,875 |
+
+The typed grouped gate passes **355 tests with zero failures**.
+The native-only cases reject 54 mutations to missing sources, income, entity
+EIN, document reference, gross tax, reduction and final credit joins. However,
+all six additional recipient-TIN mutations **accept native export** after
+changing the K-1 owner from the taxpayer to `999887777`. These accepted altered
+graphs/XML are retained separately and are not counted as validated original
+returns. This ownership gap is deferred110. Missing-review PDF rejection does
+not demonstrate a recipient check. Issued-document authenticity, broader K-3
+combinations, printable coverage and IRS acceptance remain open.
+
+Evidence: `.state/research/form1116-k3-packets-2026-10-09/`, including original
+rejections, calculation-only inputs, native XML, XSD hashes, mutation failures
+and `owner-mismatch/`. Earlier descriptor-only staged descriptions below do
+not establish public filing support. No production change was made.
+
 ## October 9 general compensation statement checkpoint
 
 The existing general-category parent now appends its source-reconciled line 1b
