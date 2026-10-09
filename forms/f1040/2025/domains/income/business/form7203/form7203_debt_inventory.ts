@@ -1,3 +1,4 @@
+import { notePrincipalRepaid } from "../../../../../nodes/intermediate/forms/income/business/form7203/repayment-inventory.ts";
 import { allocateDebtInventory } from "../../../../../nodes/intermediate/forms/income/business/form7203/debt-allocation.ts";
 import type { ReviewedNewFormalNotes } from "../../../../../nodes/intermediate/forms/income/business/form7203/debt-note.ts";
 
@@ -23,7 +24,7 @@ export function projectOverflowDebtInventory(
     ...[note.second_formal_note!, ...note.additional_formal_notes].map((n) => ({
       id: n.formal_note_id,
       advance: n.cash_advance_amount,
-      repayment: n.principal_repayment?.amount ?? 0,
+      repayment: notePrincipalRepaid(n),
       open: false,
     })),
   ];

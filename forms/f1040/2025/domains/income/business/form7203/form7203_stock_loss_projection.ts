@@ -1,3 +1,4 @@
+import { notePrincipalRepaid } from "../../../../../nodes/intermediate/forms/income/business/form7203/repayment-inventory.ts";
 import {
   allocateDebtInventory,
   allocateThreeDebtReductions,
@@ -174,7 +175,7 @@ function projectSingleReviewedStockLoss7203(
     : 0;
   const secondDebtBasis = (note?.second_formal_note?.cash_advance_amount ??
     note?.open_account_net_advance_amount ?? 0) -
-    (note?.second_formal_note?.principal_repayment?.amount ?? 0);
+    notePrincipalRepaid(note?.second_formal_note);
   const thirdDebtBasis = note?.kind === "owned_2025_formal_and_open_account" &&
       note.second_formal_note
     ? note.open_account_net_advance_amount
@@ -184,7 +185,7 @@ function projectSingleReviewedStockLoss7203(
       firstDebtBasis,
       secondDebtBasis,
       ...note.additional_formal_notes.map((n) =>
-        n.cash_advance_amount - (n.principal_repayment?.amount ?? 0)
+        n.cash_advance_amount - notePrincipalRepaid(n)
       ),
       thirdDebtBasis,
     ]

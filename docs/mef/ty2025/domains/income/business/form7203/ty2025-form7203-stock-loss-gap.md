@@ -1,5 +1,78 @@
 # TY2025 Form 7203 bounded ordinary-loss routes (focused check)
 
+## October 10 complete current-note repayment inventories
+
+Current written shareholder notes now retain complete ordered principal-repayment
+lists instead of limiting the first note to two payments and later notes to one.
+The existing single-payment field remains compatible; supplying both fields is
+rejected. The new lists bind each payment to its own note, execution date,
+corporate principal ledger and shareholder bank record. Owned records replay all
+principal entries, payer/payee identities, cash movements and K-1 box16 codeE;
+mixed formal/open-account sources also reconcile the complete corporate bank.
+Every calculation, loss projection, carryforward and native/PDF debt column uses
+the complete repayment sum. Prior reduced-basis debt remains guarded.
+
+This follows the [Form7203 instructions](https://www.irs.gov/instructions/i7203):
+separate formal-note columns, line19 principal repayments for the relevant note,
+pro-rata line30 loss reductions and extra PartII copies when there are more than
+three debts, with totals on the first copy only. The retained source records are
+synthetic reviewed contracts, not authenticated issuer documents.
+
+The eight full returns retain 90 separately dated payments across30 written
+notes and9 owner/corporation pairs. Each note has three payments; cases cover one
+or two formal notes, four/seven mixed debt columns, full repayment, limited loss,
+a spouse-owned business and independently owned primary/spouse corporations.
+Python Fraction/Decimal calculations independently reconcile source repayments,
+principal ledgers, K-1 totals, proportional whole-dollar allocations, per-note
+ending basis, PDF columns, QBI loss carryforward and final income tax/refund.
+
+| Retained case | Allowed loss | Taxable income | Tax | Refund | Pages |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| four_fractional | 4,000 | 30,250 | 3,395 | 4,605 | 10 |
+| four_limited | 3,600 | 30,650 | 3,443 | 4,557 | 10 |
+| four_fully_repaid | 1,500 | 32,750 | 3,695 | 4,305 | 10 |
+| seven_fractional | 4,000 | 30,250 | 3,395 | 4,605 | 12 |
+| spouse_four_net | 4,000 | 14,500 | 1,453 | 6,547 | 10 |
+| independent_owners | 7,600 | 10,900 | 1,093 | 6,907 | 16 |
+| one-formal | 2,100 | 32,150 | 3,623 | 4,377 | 8 |
+| two-formal | 2,900 | 31,350 | 3,527 | 4,473 | 8 |
+
+The typed grouped regression clears all218 selected tests: the initial run
+passed206 with12 failures solely because `pdftotext` was absent from PATH;
+rerunning both affected files with bundled Poppler passes8/0 each, including all12
+previously failed cases. The final focused run also passes8/0 under restricted
+read/write/IRS-network permissions, with optional evidence-directory access
+handled when environment permission is unavailable. Six mixed cases exercise36 altered public sources
+(rejection in execution or preparation), plus48 native and48 fresh-PDF rejection
+checks; the two formal cases add one final-AGI native/PDF rejection each, taking
+those totals to50/50. Mutations remove, duplicate or reorder repayment inventories,
+change amounts/note IDs, remove a corporate-bank transaction and alter final
+Schedule1/AGI amounts. The initial new-list note-ID failure was fixed before the
+final focused run; initial failure logs remain retained.
+
+All8 complete XMLs validate against local TY2025v5.4 Return1040 XSD SHA-256
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+All84 PDF pages were observed through67 distinct rendered page hashes on17
+sheets; flattened packets have no field tree/widgets. Shareholder identities,
+continuations, debt-column ordering and first-copy totals reconcile. Blank zero
+ending balances/bases repeat the existing deferred76 presentation question.
+The benchmark remains46/133 with exactly the same87 failing case IDs as
+`8ecc44bde`; it is not a filing-readiness or IRS acceptance result.
+
+A separate legacy singular-field probe changes the second repayment’s note ID
+to the first note while retaining the second note’s actual source references.
+Public execution and native preparation still accept it. This pre-existing mixed
+route gap is recorded only as `future_todo`123 and was not repaired; no legacy
+PDF acceptance claim is made. Source authenticity, prior reduced-basis gain and
+restoration, wider shareholder basis activity and IRS acceptance remain open.
+The parent main-board task stays unchecked.
+
+Private evidence: `.state/research/form7203-repayment-inventories-2026-10-09/`
+retains source/pending/carry JSON, eight native/PDF returns, focused and grouped
+logs, XSD reports, page origins/hashes, independent calculation/column review,
+benchmark comparison and the separate legacy probe. The folder keeps its October9
+start date; review completed after midnight October10 Stockholm.
+
 ## One cash capital contribution and one new formal note (2026-10-01, unrun)
 
 A single S-corporation K-1 box-1 loss can now use both one 2025 cash capital

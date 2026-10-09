@@ -1,3 +1,4 @@
+import { notePrincipalRepaid } from "./repayment-inventory.ts";
 /** Whole-dollar filing projection retains the exact statutory pro-rata fractions.
  * The total loss remains the independently limited PartIII total, never a sum
  * that increases it through per-column rounding. */
@@ -171,11 +172,12 @@ export function additionalPrincipalRepayments(
   note: {
     additional_formal_notes?: readonly {
       principal_repayment?: { amount: number };
+      principal_repayments?: readonly { amount: number }[];
     }[];
   } | undefined,
 ) {
   return (note?.additional_formal_notes ?? []).reduce(
-    (n, r) => n + (r.principal_repayment?.amount ?? 0),
+    (n, r) => n + notePrincipalRepaid(r),
     0,
   );
 }
