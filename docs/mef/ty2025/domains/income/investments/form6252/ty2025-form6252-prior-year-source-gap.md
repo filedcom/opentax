@@ -1,5 +1,17 @@
 # TY2025 Form 6252 later-year source reconciliation
 
+The [October10 complete-return checkpoint](./ty2025-form6252-filled-review.md#october-10-principal-interest-and-later-year-complete-return-checkpoint)
+adds a six-page final-payment return and a four-page interest-only return for a
+reviewed2024 sale with30,000 earlier payments, including20,000 mortgage deemed
+payment. Both retain Form6252, reconcile separately reported interest and final
+tax, and pass full local XSD. Neither repeats the mortgage payment in2025.
+They are part of six returns/38 reviewed pages and357 passing tests. This is
+bounded synthetic evidence: the transcribed2024 form is not authenticated filing
+proof, principal and interest have no shared receipt reconciliation (deferred128),
+and zero-payment public holding-period validation differs from export (129).
+Property code127, short-term Schedule D presentation130 and prior native
+Schedule D completeness15 remain deferred. These findings do not close this gap.
+
 The [2025 Form 6252 instructions](https://www.irs.gov/pub/irs-prior/f6252--2025.pdf) require Form 6252 in the sale year and each later payment year. Part II line 19 retains the gross profit percentage determined in the sale year. Line 23 includes all earlier money, fair market value, and deemed payments; interest or original issue discount belongs on a separate return line.
 
 The bounded 2024-sale/2025-payment path now requires a reviewed 2024 Form 6252 line record, alongside the 2025 sale facts. The record identifies the property and dates and gives filed lines 16, 18, 19, 20, 22, 23, and 26. Calculation and native/PDF export reject mismatched identity, gross profit, contract, five-decimal ratio, deemed year-of-sale payment, prior-payment total, or prior recognized gain. A 2024 sale with no prior form record, and sales before 2024 without a longer filed history, reject. The 2025 final-payment fixture carries $20,000 of 2024 payments, $80,000 of 2025 payments, a 0.60000 ratio, and $48,000 to Schedule D and Form 1040; tampered ratio and prior-payment fixtures reject.
