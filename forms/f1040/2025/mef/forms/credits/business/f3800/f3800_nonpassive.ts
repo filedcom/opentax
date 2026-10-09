@@ -26,6 +26,7 @@ function nontransferableCurrentRow(
     | "1k"
     | "1l"
     | "1p"
+    | "1s"
     | "1v"
     | "1y"
     | "1aa"
@@ -157,6 +158,11 @@ export type Form3800NonpassiveXmlInput = {
     readonly documentId: string;
     readonly appliedCredit: number;
   };
+  readonly form8911?: {
+    readonly credit: number;
+    readonly documentId: string;
+    readonly appliedCredit: number;
+  };
   readonly form3468PartV?: {
     readonly credit: number;
     readonly appliedCredit: number;
@@ -273,7 +279,7 @@ export function buildForm3800NonpassiveParts(
     !input.disabledAccess && !input.form8820 && !input.form8874 &&
     !input.form8844 && !input.form8881 && !input.form8908 &&
     !input.form8941 && !input.form8994 && !input.form8864 &&
-    !input.form8882 &&
+    !input.form8882 && !input.form8911 &&
     !input.form3468PartV && !input.form5884 &&
     !input.form8936 &&
     !input.form8936Commercial &&
@@ -300,6 +306,16 @@ export function buildForm3800NonpassiveParts(
       input.form8882.appliedCredit > form8882Credit
     )
   ) throw new Error("Form 3800 has an invalid Form 8882 line 1k allocation");
+  const form8911Credit = input.form8911?.credit ?? 0;
+  if (
+    input.form8911 && (
+      !input.form8911.documentId || !Number.isInteger(form8911Credit) ||
+      form8911Credit <= 0 ||
+      !Number.isInteger(input.form8911.appliedCredit) ||
+      input.form8911.appliedCredit < 0 ||
+      input.form8911.appliedCredit > form8911Credit
+    )
+  ) throw new Error("Form 3800 has an invalid Form 8911 line 1s allocation");
   if (
     input.form8908 && (
       !input.form8908.documentId || !Number.isInteger(form8908Credit) ||
@@ -589,7 +605,7 @@ export function buildForm3800NonpassiveParts(
   if (
     credits.standardCredit +
           form8881Parts.reduce((sum, part) => sum + part.credit, 0) +
-          form8908Credit + form8864Credit + form8882Credit +
+          form8908Credit + form8864Credit + form8882Credit + form8911Credit +
           form8826Credit + form8820Credit +
           form8874Credit + form3468PartVCredit + form8936Credit +
           form8936CommercialCredit !==
@@ -733,6 +749,7 @@ export function buildForm3800NonpassiveParts(
     form8826Applied + (input.form8908?.appliedCredit ?? 0) +
       (input.form8864?.appliedCredit ?? 0) +
       (input.form8882?.appliedCredit ?? 0) +
+      (input.form8911?.appliedCredit ?? 0) +
       form8881Parts.reduce((sum, part) => sum + part.appliedCredit, 0) +
       (input.form8820?.appliedCredit ?? 0) +
       (input.form8874?.appliedCredit ?? 0) +
@@ -873,6 +890,14 @@ export function buildForm3800NonpassiveParts(
       credit: form8882Credit,
       appliedCredit: input.form8882.appliedCredit,
       sourceDocumentId: input.form8882.documentId,
+    }]
+    : [];
+  const form8911PartVGroups: Form3800NonpassiveDetailRow[] = input.form8911
+    ? [{
+      line: "1s",
+      credit: form8911Credit,
+      appliedCredit: input.form8911.appliedCredit,
+      sourceDocumentId: input.form8911.documentId,
     }]
     : [];
   const form3468PartVGroups: Form3800NonpassiveDetailRow[] =
@@ -1076,6 +1101,19 @@ export function buildForm3800NonpassiveParts(
         [],
       )]
       : []),
+    ...(input.form8911
+      ? [nontransferableCurrentRow(
+        "1s",
+        form8911Credit,
+        input.form8911.appliedCredit,
+        {
+          sourceCount: 1,
+          referenceDocumentId: input.form8911.documentId,
+          referenceDocumentName: "IRS8911",
+        },
+        [],
+      )]
+      : []),
     ...(input.form8908
       ? [
         nontransferableCurrentRow(
@@ -1263,6 +1301,14 @@ export function buildForm3800NonpassiveParts(
         appliedCredit: input.form8882.appliedCredit,
       }]
       : []),
+    ...(input.form8911
+      ? [{
+        line: "1s" as const,
+        grossCredit: form8911Credit,
+        transferOutCredit: 0,
+        appliedCredit: input.form8911.appliedCredit,
+      }]
+      : []),
     ...(input.form8908
       ? [{
         line: "1p" as const,
@@ -1379,6 +1425,7 @@ export function buildForm3800NonpassiveParts(
       ...form8994PartVGroups,
       ...form8864PartVGroups,
       ...form8882PartVGroups,
+      ...form8911PartVGroups,
     ],
     carryoverDetails: [],
     passiveCurrentDetails: [],

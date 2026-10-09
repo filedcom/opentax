@@ -171,3 +171,26 @@ personal return again validates against TY2025 v5.4. A raw XML hash comparison
 with the earlier generation did not match; byte equivalence is not asserted.
 No new PDF was authored for this calculation refactor; the five earlier full
 returns and 38 reviewed pages remain their separately recorded evidence.
+
+## Form 3800 line 1s preparation — October 9
+
+The internal nonpassive Form 3800 preparation now accepts a Form 8911 source
+row, retains its native document reference, includes it in standard-credit tax
+capacity, and prepares line 1s for native and PDF output. A 10,000 fully
+business-use property at 6% produces 600; with 400 tax capacity the prepared
+row applies 400. The retained detail records 200 unused credit. A single-source
+row does not require emitting Part V; this is not an authenticated future-year
+carryforward ledger. Missing documents, excess use, mismatched tax use and
+mismatched source totals are rejected.
+
+A standalone IRS3800 document with valid synthetic IDs passes the cached
+TY2025 v5.4 IRS3800 XSD. This does not prove a complete Form 1040 return or
+reference resolution against an emitted IRS8911 child. Exact PDF field
+projections agree on line 1s gross 600, applied 400 and line 38 of 400; no new
+filled PDF is claimed. Public business-use inputs remain guarded while the
+existing Form 8911/Form 3800 source and return integration is unfinished.
+
+The selected Form 3800 calculation/native/PDF and Form 8911 property modules
+pass 308 tests with zero failures. The first run had 307 passes and one
+missing-network-permission failure while fetching an IRS template; the final
+run allowed only `www.irs.gov` and completed. No test was ignored.
