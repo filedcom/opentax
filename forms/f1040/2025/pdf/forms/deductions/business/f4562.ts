@@ -1,3 +1,4 @@
+import { filedCurrentYearSchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current-year.ts";
 import {
   filedBonus4562Schema,
   filedBonusInventorySchema,
@@ -19,7 +20,21 @@ const text = (
   printZero = false,
 ): PdfFieldEntry => ({ kind: "text", domainKey, pdfField, printZero });
 
+const gdsFields = [3, 5, 7, 10, 15, 20].flatMap((period, index) =>
+  ["basis", "recovery_period", "convention", "method", "deduction"].map((
+    key,
+    column,
+  ) =>
+    text(
+      `gds_${period}_${key}`,
+      `${p1}.SectionBTable[0].Line19${"abcdef"[index]}[0].f1_${
+        27 + index * 6 + column
+      }[0]`,
+    )
+  )
+);
 const fields: readonly PdfFieldEntry[] = [
+  ...gdsFields,
   text("filer_name", `${p1}.f1_1[0]`),
   text("activity_description", `${p1}.f1_2[0]`),
   text("filer_ssn", `${p1}.f1_3[0]`),
@@ -46,7 +61,9 @@ export const form4562Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f4562--2025.pdf",
   projectFields(raw, allPending) {
     if (Object.keys(raw).length === 0) return {};
-    const filed = "bonus_inventory" in raw
+    const filed = "current_year_inventory" in raw
+      ? filedCurrentYearSchema.parse(raw)
+      : "bonus_inventory" in raw
       ? filedBonusInventorySchema.parse(raw)
       : "bonus_asset" in raw
       ? filedBonus4562Schema.parse(raw)
@@ -78,7 +95,28 @@ export const form4562Pdf: PdfFormDescriptor = {
         );
       }
     }
-    const copies = "bonus_inventory" in projected
+    const currentYear = "current_year_inventory" in projected
+      ? filedCurrentYearSchema.parse(projected)
+      : undefined;
+    if (
+      currentYear?.current_year_activities.some((a) => a.proprietor_ssn !== ssn)
+    ) {
+      throw new Error(
+        "Form 4562 current-year PDF filer must match the asset proprietor",
+      );
+    }
+    const copies = currentYear
+      ? currentYear.current_year_activities.map((activity) => ({
+        ...activity,
+        ...Object.fromEntries(
+          activity.gds_rows.flatMap((row) =>
+            Object.entries(row).map((
+              [key, value],
+            ) => [`gds_${row.recovery_period}_${key}`, value])
+          ),
+        ),
+      }))
+      : "bonus_inventory" in projected
       ? filedBonusInventorySchema.parse(projected).bonus_activities
       : [projected];
     if (

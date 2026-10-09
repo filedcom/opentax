@@ -300,3 +300,15 @@ The source review joins the existing fully business-use, taxpayer-owned, zero-se
 The three profitable cases also retain SE tax 1,413, half-SE deduction 707 and QBI deduction 1,859. Current-year credit limitation does not reduce the full property-credit basis adjustment. Five complete returns pass cached TY2025 2025v5.4 Return1040 XSD; their 133 pages (27/27/27/26/26) have 45 distinct visual reviews plus 88 exact rendered-page hash matches, with zero remaining PDF fields/widgets. The existing deferred Schedule A line-6 template-border issue is unchanged. The 37-test focused regression passes, including prior base-rate, inventory, profit, presentation and property calculation checks. Artifacts: `.state/research/form8911-construction-returns/`; retained checkpoint: `form8911-construction-batch-checkpoint.json`.
 
 Main parent tasks remain open for broader form variants, authenticated source records, matching IRS business rules and ATS acceptance. No future-only task was implemented.
+
+## Residual MACRS integration — October 9
+
+Business properties now reconcile to a complete current-year Form 4562 inventory
+with 40% or 100% bonus and remaining-basis MACRS. The full credit reduces basis
+before both depreciation steps, independently of the Form 3800 tax limitation.
+The [depreciation evidence](../../../deductions/business/form4562/ty2025-form4562-gap.md#current-year-residual-macrs-inventory--october-9)
+records six complete XML/PDF returns, half-year/mid-quarter conventions, six
+recovery classes, mixed bonus rates, construction-exception credits and profitable
+Schedule C/SE/QBI totals. Property and invoice joins remain exact; this does not
+open mixed use, actual PWA, section 179 combinations or unauthenticated source
+claims.

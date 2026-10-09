@@ -1,4 +1,8 @@
 import {
+  calculateCurrentYearInventory,
+  currentYearInventorySchema,
+} from "./current-year.ts";
+import {
   bonusAssetSchema,
   bonusInventorySchema,
   calculateBonus4562,
@@ -36,6 +40,7 @@ export const singleAssetSchema = z.object({
 }).strict();
 
 export const publicInputSchema = z.union([
+  z.object({ current_year_inventory: currentYearInventorySchema }).strict(),
   z.object({ asset: singleAssetSchema }).strict(),
   z.object({ bonus_asset: bonusAssetSchema }).strict(),
   z.object({ bonus_inventory: bonusInventorySchema }).strict(),
@@ -44,6 +49,7 @@ export const publicInputSchema = z.union([
 // These upstream aggregate deposits are still recognized solely so the node
 // can reject them with a specific error. They are never a filing route.
 export const inputSchema = z.object({
+  current_year_inventory: currentYearInventorySchema.optional(),
   asset: singleAssetSchema.optional(),
   bonus_asset: bonusAssetSchema.optional(),
   bonus_inventory: bonusInventorySchema.optional(),
@@ -95,6 +101,7 @@ export const filedForm4562Schema = z.object({
 function hasLegacyAggregate(input: Form4562Input): boolean {
   return Object.entries(input).some(([key, value]) =>
     key !== "asset" && key !== "bonus_asset" && key !== "bonus_inventory" &&
+    key !== "current_year_inventory" &&
     value !== undefined
   );
 }
@@ -116,6 +123,22 @@ class Form4562Node extends TaxNode<typeof inputSchema> {
       throw new Error(
         "Form 4562 aggregate-only inputs cannot establish native asset rows or a valid Schedule C deduction",
       );
+    }
+    if (input.current_year_inventory) {
+      if (
+        input.asset || input.bonus_asset || input.bonus_inventory ||
+        ctx.taxYear !== 2025
+      ) {
+        throw new Error(
+          "Current-year depreciation needs one TY2025 inventory route",
+        );
+      }
+      return {
+        outputs: [{
+          nodeType: this.nodeType,
+          fields: calculateCurrentYearInventory(input.current_year_inventory),
+        }],
+      };
     }
     if (input.bonus_inventory) {
       if (input.asset || input.bonus_asset || ctx.taxYear !== 2025) {

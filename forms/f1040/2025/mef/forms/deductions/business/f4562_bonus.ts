@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  bonusActivitySchema,
   bonusInventorySchema,
   calculateBonus4562,
   calculateBonusInventory,
@@ -13,11 +14,13 @@ import {
   personalCreditProperties,
 } from "../../../../../nodes/inputs/credits/business/f8911/index.ts";
 
-function reconcileInventorySources(
+export function reconcileInventorySources(
   inventory: z.infer<typeof bonusInventorySchema>,
   pending: Readonly<Record<string, unknown>>,
+  activities: readonly z.infer<typeof bonusActivitySchema>[] =
+    calculateBonusInventory(inventory).bonus_activities,
 ) {
-  const expected = calculateBonusInventory(inventory);
+  const expected = { bonus_activities: activities };
   const owner = z.object({ taxpayer_ssn: z.string() }).parse(pending.f1040);
   const businesses = scheduleCSchema.parse(pending.schedule_c).schedule_cs;
   for (const activity of expected.bonus_activities) {
@@ -144,7 +147,12 @@ export function reconcileBonusInventory(
 ) {
   const filed = filedBonusInventorySchema.parse(raw);
   const retained = filedBonusInventorySchema.parse(pending.form4562);
-  const expected = reconcileInventorySources(retained.bonus_inventory, pending);
+  const expected = calculateBonusInventory(retained.bonus_inventory);
+  reconcileInventorySources(
+    retained.bonus_inventory,
+    pending,
+    expected.bonus_activities,
+  );
   if (JSON.stringify(filed) !== JSON.stringify(expected)) {
     throw new Error(
       "Form 4562 bonus activity totals differ from the retained inventory",

@@ -197,3 +197,59 @@ The source review joins the existing fully business-use, taxpayer-owned, zero-se
 The three profitable cases also retain SE tax 1,413, half-SE deduction 707 and QBI deduction 1,859. Current-year credit limitation does not reduce the full property-credit basis adjustment. Five complete returns pass cached TY2025 2025v5.4 Return1040 XSD; their 133 pages (27/27/27/26/26) have 45 distinct visual reviews plus 88 exact rendered-page hash matches, with zero remaining PDF fields/widgets. The existing deferred Schedule A line-6 template-border issue is unchanged. The 37-test focused regression passes, including prior base-rate, inventory, profit, presentation and property calculation checks. Artifacts: `.state/research/form8911-construction-returns/`; retained checkpoint: `form8911-construction-batch-checkpoint.json`.
 
 Main parent tasks remain open for broader form variants, authenticated source records, matching IRS business rules and ATS acceptance. No future-only task was implemented.
+
+## Current-year residual MACRS inventory — October 9
+
+`current_year_inventory` now joins reviewed 40% and 100% bonus assets in one
+complete TY2025 calendar-year register. The acquisition review explicitly covers
+binding contracts, excludes self-construction, long-production property and
+certain aircraft, and retains the original-use, nonlisted, full-business-use,
+GDS/bonus-eligibility and no-election facts. This supplements the existing
+section 179 and post-January-19 bonus routes; it does not establish later-year,
+ADS, listed-property, mixed-use, disposition or section 179/residual combinations.
+
+The calculation reduces basis by the full linked Form 8911 credit, applies the
+return-wide **strictly greater than 40%** last-quarter test before bonus, and
+then applies the acquisition-date bonus rate. Remaining basis uses 200% declining
+balance for 3/5/7/10-year property or 150% for 15/20-year property. Half-year and
+all four mid-quarter fractions use exact rates, with rounding at each filed
+aggregate line. This is the computation without percentage tables permitted by
+[Publication 946](https://www.irs.gov/publications/p946), not the rounded table
+method. Asset classifications remain reviewed source assertions, not independent
+classification or invoice authentication.
+
+The source inventory and calculated activity rows are retained together; filing
+recomputes them and rejects altered basis, period, method, convention, deduction,
+owner, activity or invoice joins. One native/PDF Form 4562 is emitted per business.
+Lines 19a–f show class basis, recovery period, convention, method and deduction;
+line 14 plus those deductions reconciles line 22 and Schedule C line 13. These
+columns and the before-bonus convention test follow the
+[2025 Form 4562 instructions](https://www.irs.gov/instructions/i4562).
+
+| Complete return | Bonus | Regular MACRS | Total depreciation | Business credit | Final tax |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Five-year asset, half-year | 3,760 | 1,128 | 4,888 | 600 | 5,576 |
+| Five-year asset, fourth-quarter | 3,760 | 282 | 4,042 | 600 | 5,576 |
+| Reviewed construction-exception credit, half-year | 2,800 | 840 | 3,640 | 3,000 | 3,176 |
+| Two profitable businesses, mixed 40%/100% bonus | 22,560 | 1,410 | 23,970 | 1,800 | 9,799 |
+| Six recovery classes, one linked charger | 23,760 | 5,110 | 28,870 | 600 | 5,576 |
+| Three five-year assets in quarters 1/2/4 | 22,560 | 5,640 | 28,200 | 3,600 | 2,576 |
+
+The single-business cases retain net profit 10,000, SE tax 1,413, half-SE 707 and
+QBI deduction 1,859. The two-business case retains profits 10,000/20,000, reviewed
+half-SE allocations 706.33/1,412.67, SE tax 4,238 and QBI deduction 5,576. Missing
+allocation evidence remains rejected. Tests also cover the January 19/20 cutoff,
+exact convention threshold, all six classes in all quarters, line-level rounding,
+invalid eligibility/dates and source/output tampering.
+
+Six complete returns validate against cached TY2025 2025v5.4 Return1040 XSD.
+All 170 PDF pages are reviewed: 26 distinct visual inspections and 144 exact
+rendered-page matches to reviewed pages, with zero PDF fields/widgets. The
+34-test regression passes with type checking at an 8 GB local V8 heap limit; it
+includes prior section 179, bonus, inventory, construction and profitable routes.
+The Form 4562 descriptor uses `satisfies` to retain its exact callable members
+without introducing an unused attachment-builder signature into the registry.
+Artifacts and render review are retained in
+`.state/research/form4562-current-year-returns/`. No matching IRS business-rule
+acceptance or authenticated external asset records are established; the broader
+Form 4562 parent task remains open.

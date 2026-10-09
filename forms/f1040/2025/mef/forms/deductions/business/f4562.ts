@@ -1,4 +1,9 @@
 import {
+  currentYearActivitySchema,
+  filedCurrentYearSchema,
+} from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current-year.ts";
+import { reconcileCurrentYearInventory } from "./f4562_current_year.ts";
+import {
   bonusActivitySchema,
   filedBonus4562Schema,
   filedBonusInventorySchema,
@@ -23,6 +28,7 @@ import type {
 type Fields = z.infer<typeof filedForm4562Schema>;
 type Input =
   | Fields
+  | z.infer<typeof filedCurrentYearSchema>
   | z.infer<typeof filedBonus4562Schema>
   | z.infer<typeof filedBonusInventorySchema>
   | readonly [];
@@ -328,9 +334,44 @@ function buildBonusActivity(
   ]);
 }
 
+function buildCurrentYearActivity(
+  fields: z.infer<typeof currentYearActivitySchema>,
+): string {
+  return elements("IRS4562", [
+    element("BusinessOrActivityTxt", fields.activity_description),
+    element(
+      "SpecialAllowanceAmt",
+      fields.line14_special_depreciation_allowance,
+    ),
+    ...(fields.gds_rows.length
+      ? [
+        elements(
+          "GeneralDepreciationSystem",
+          fields.gds_rows.map((row) =>
+            elements(`GDS${row.recovery_period}YearProperty`, [
+              element("BasisForDepreciationAmt", row.basis),
+              element("RecoveryPrd", row.recovery_period),
+              element("DepreciationConventionCd", row.convention),
+              element("DepreciationMethodCd", row.method),
+              element("DepreciationDeductionAmt", row.deduction),
+            ])
+          ),
+        ),
+      ]
+      : []),
+    element("TotalDepreciationAmt", fields.line22_total_depreciation),
+  ]);
+}
+
 function buildIRS4562(rawFields: Input, context?: MefBuildContext): string {
   // The MeF builder passes [] when this optional form has no pending slot.
   if (Array.isArray(rawFields) && rawFields.length === 0) return "";
+  if ("current_year_inventory" in rawFields) {
+    return buildCurrentYearActivity(
+      reconcileCurrentYearInventory(rawFields, context?.pending ?? {})
+        .current_year_activities[0],
+    );
+  }
   if ("bonus_inventory" in rawFields) {
     return buildBonusActivity(
       reconcileBonusInventory(rawFields, context?.pending ?? {})
@@ -356,11 +397,16 @@ function buildIRS4562(rawFields: Input, context?: MefBuildContext): string {
   ]);
 }
 
-export const form4562: MefFormDescriptor<"form4562", Input> = {
+export const form4562 = {
   pendingKey: "form4562",
+  sourcePendingKeys: ["form4562"],
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f4562.pdf",
   buildAdditionalDocuments(fields, context) {
+    if ("current_year_inventory" in fields) {
+      return reconcileCurrentYearInventory(fields, context?.pending ?? {})
+        .current_year_activities.slice(1).map(buildCurrentYearActivity);
+    }
     if (!("bonus_inventory" in fields)) return [];
     return reconcileBonusInventory(fields, context?.pending ?? {})
       .bonus_activities.slice(1).map(buildBonusActivity);
@@ -368,4 +414,4 @@ export const form4562: MefFormDescriptor<"form4562", Input> = {
   build(fields, context) {
     return buildIRS4562(fields, context);
   },
-};
+} satisfies MefFormDescriptor<"form4562", Input>;

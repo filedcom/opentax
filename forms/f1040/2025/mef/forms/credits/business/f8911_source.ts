@@ -1,3 +1,4 @@
+import { reconcileCurrentYearInventory } from "../../deductions/business/f4562_current_year.ts";
 import { assertConstructionReview } from "../../../../../nodes/inputs/credits/business/f8911/construction-review.ts";
 import {
   reconcileBonus4562,
@@ -153,7 +154,15 @@ export function reconcileForm8911BusinessFiling(
   const inventory = "bonus_inventory" in rawDepreciation
     ? reconcileBonusInventory(rawDepreciation, pending)
     : undefined;
-  const reductions = inventory
+  const currentYear = "current_year_inventory" in rawDepreciation
+    ? reconcileCurrentYearInventory(rawDepreciation, pending)
+    : undefined;
+  const reductions = currentYear
+    ? currentYear.current_year_inventory.assets.reduce(
+      (sum, a) => sum + a.credit_basis_reduction,
+      0,
+    )
+    : inventory
     ? inventory.bonus_inventory.assets.reduce(
       (sum, a) => sum + a.credit_basis_reduction,
       0,
@@ -167,6 +176,7 @@ export function reconcileForm8911BusinessFiling(
   }
   return {
     ...joined,
-    depreciationDocumentCount: inventory?.bonus_activities.length ?? 1,
+    depreciationDocumentCount: currentYear?.current_year_activities.length ??
+      inventory?.bonus_activities.length ?? 1,
   };
 }
