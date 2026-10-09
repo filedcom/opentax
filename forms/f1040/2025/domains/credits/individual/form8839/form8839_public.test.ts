@@ -1,3 +1,4 @@
+import { Box12Code } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
 import {
   assertEquals,
   assertRejects,
@@ -29,6 +30,7 @@ async function reviewedSource(
   wages = 100_000,
   withheld = 15_000,
   expense = 11_000,
+  retirementDeferrals = 0,
 ) {
   const ids = ["decree-1", "birth-1", "invoice-1", "payment-1"];
   const attachments = await Promise.all(ids.map(async (id) => {
@@ -146,7 +148,15 @@ async function reviewedSource(
     })),
   };
   const result = f1040_2025.executeReturn({
-    general,
+    general: {
+      ...general,
+      ...(retirementDeferrals > 0
+        ? {
+          taxpayer_form8880_student_five_months: false,
+          taxpayer_form8880_claimed_as_dependent: false,
+        }
+        : {}),
+    },
     w2: [{
       employee_ssn: "111-22-3333",
       employer_ein: "12-3456789",
@@ -157,10 +167,17 @@ async function reviewedSource(
       employer_address_zip: "78701",
       box1_wages: wages,
       box2_fed_withheld: withheld,
-      box3_ss_wages: wages,
-      box4_ss_withheld: Math.round(wages * 0.062),
-      box5_medicare_wages: wages,
-      box6_medicare_withheld: Math.round(wages * 0.0145),
+      box3_ss_wages: wages + retirementDeferrals,
+      box4_ss_withheld: Math.round((wages + retirementDeferrals) * 0.062),
+      box5_medicare_wages: wages + retirementDeferrals,
+      box6_medicare_withheld: Math.round(
+        (wages + retirementDeferrals) * 0.0145,
+      ),
+      ...(retirementDeferrals > 0
+        ? {
+          box12_entries: [{ code: Box12Code.D, amount: retirementDeferrals }],
+        }
+        : {}),
     }],
     form8839: source,
   });
@@ -335,3 +352,69 @@ Deno.test("Form 8839 fully refundable current credit does not invent a carryforw
   const bundle = await buildMefBundle(pending, { filer, attachments });
   await buildPdfBytes(pending, filer, ".pdf-cache", bundle);
 });
+
+for (
+  const [wages, withheld, tax, retirement, adoption, carry] of [
+    [20_000, 500, 428, 428, 0, 6_000],
+    [25_000, 1_000, 928, 400, 528, 5_472],
+    [30_000, 2_000, 1_475, 200, 1_275, 4_725],
+    [40_000, 3_000, 2_675, 0, 2_675, 3_325],
+  ] as const
+) {
+  Deno.test(`Form 8839 saver-credit boundary at wages ${wages}`, async () => {
+    if (retirement > 0) {
+      // Deferred product-board item 95: retain the observed public-route block.
+      // A rejection is not successful credit ordering or an export pass.
+      await assertRejects(
+        () => reviewedSource(wages, withheld, 11_000, 2_000),
+        Error,
+        "Form 8839 pre-adoption Schedule 3 lines do not reconcile to Form 1040 line 20",
+      );
+      return;
+    }
+    const { result, pending, filer, attachments } = await reviewedSource(
+      wages,
+      withheld,
+      11_000,
+      2_000,
+    );
+    assertEquals(result.diagnostics, []);
+    assertEquals(pending.f1040?.line18_total_tax_before_credits, tax);
+    assertEquals(
+      pending.schedule3?.line4_retirement_savings_credit ?? 0,
+      retirement,
+    );
+    assertEquals(pending.schedule3?.line6c_adoption_credit, adoption);
+    assertEquals(pending.schedule3?.line8_total, tax);
+    assertEquals(pending.f1040?.line30_refundable_adoption, 5_000);
+    assertEquals(pending.f1040?.line35a_refund, withheld + 5_000);
+    assertEquals(result.carryforwards.adoption_credit_2025, carry);
+    const bundle = await buildMefBundle(pending, { filer, attachments });
+    await buildPdfBytes(pending, filer, ".pdf-cache", bundle);
+    for (
+      const altered of [
+        {
+          ...pending,
+          schedule3: {
+            ...pending.schedule3,
+            line4_retirement_savings_credit: retirement + 1,
+          },
+        },
+        {
+          ...pending,
+          form8839_carryforward: {
+            ...result.pending.form8839_carryforward,
+            carryforward_amount: carry + 1,
+          },
+        },
+      ]
+    ) {
+      await assertRejects(() =>
+        buildMefBundle(altered, { filer, attachments })
+      );
+      await assertRejects(() =>
+        buildPdfBytes(altered, filer, ".pdf-cache", bundle)
+      );
+    }
+  });
+}

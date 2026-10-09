@@ -599,3 +599,12 @@ Private saved returns, packet XML/PDF, render comparisons, rejection reports
 and test log: `.state/research/form8839-cli-carry-2026-10-09/`. Prior-year
 accepted-carry import, source authenticity, broader credit ordering and IRS
 acceptance remain open; no parent task is closed.
+
+
+## October 9 saver-credit ordering boundary
+
+Four public-source probes add2000 of W-2 code-D deferrals, with explicit nonstudent and nondependent answers. At wages20000,25000 and30000 the return rejects before export: `Form 8839 pre-adoption Schedule 3 lines do not reconcile to Form 1040 line 20`. The initial run retains15 passes and3 failures. These are newly observed reconciliation failures, tracked as deferred95 rather than repaired or counted as successful ordering.
+
+At wages40000, above the single-filer saver-credit income cutoff, the return retains tax2675, zero saver credit, nonrefundable adoption2675, refundable adoption5000 and carry3325. Native and complete-PDF construction pass; changing either the Schedule3 saver-credit amount or carry amount rejects at both export boundaries. No new retained PDF visual review, XSD validation or IRS acceptance is claimed for this probe. The underlying attachment PDFs are synthetic identifiers, not authenticated decree or expense records.
+
+The revised regression records the three exact public-route rejections explicitly. Credit ordering remains open; passing rejection assertions are boundary coverage, not completed tax-return coverage. Private logs: `.state/research/form8839-saver-ordering-2026-10-09/`.
