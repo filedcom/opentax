@@ -1,5 +1,11 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { f8911, type F8911Input, FuelType } from "./index.ts";
+import {
+  computePersonalCreditAmounts,
+  f8911,
+  type F8911Input,
+  FuelType,
+  propertySchema,
+} from "./index.ts";
 
 const scenario13: F8911Input = {
   cost: 1_000,
@@ -117,4 +123,30 @@ Deno.test("Form 8911 validates credit inputs", () => {
       true,
     );
   }
+});
+
+Deno.test("Form 8911 rounds the aggregate credit once across cent-valued properties", () => {
+  for (
+    const [cost, expected] of [[1001.49, 300], [1001.67, 301], [3333.32, 1000]]
+  ) {
+    assertEquals(
+      computePersonalCreditAmounts({
+        ...scenario13,
+        cost,
+        regular_tax_before_credits: 5000,
+      })?.tentativeCredit,
+      expected,
+    );
+  }
+  const item = propertySchema.parse({ ...scenario13, cost: 1001.67 });
+  const source = {
+    properties: [{ ...item, property_reference: "unit-1" }, {
+      ...item,
+      property_reference: "unit-2",
+    }],
+    regular_tax_before_credits: 5000,
+    tentative_minimum_tax: 0,
+  };
+  // 300.501 + 300.501 rounds to 601; rounding each first would yield 602.
+  assertEquals(computePersonalCreditAmounts(source)?.tentativeCredit, 601);
 });

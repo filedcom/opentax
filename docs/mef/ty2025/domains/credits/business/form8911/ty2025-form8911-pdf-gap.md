@@ -28,7 +28,7 @@ Schedule A page.
 
 This remains a bounded personal-use electric-charger path. Business use,
 other allowable-credit worksheet amounts, non-electric fuel, and fractional
-printed dollar lines stop for a separately reviewed source model. Optional
+tax-limit worksheet operands stop for a separately reviewed source model. Optional
 certification/permit and owner fields are not inferred from the address. The
 source model does not independently authenticate the census tract or establish
 original use of the property. The selected positive graph fixture now asserts
@@ -89,3 +89,28 @@ copies, parent count 4, credit 3,875, zero total tax and refund 7,000. Its
 flattened PDF has zero fields/widgets and SHA-256 `00bdc3c583559ac7aa4fb09d6719655c61641d8d60d27714edd9fd842cfed515`.
 The final focused and adjacent regression (including the base ATS fixture
 directory and PDF builder) passes 109/109 with zero failures.
+
+## Property-cost cents — October 9
+
+Property costs retain cents through the 30% calculation and per-property cap.
+The combined tentative credit is rounded once when entered on Form 8911 line 4,
+before applying the return-wide tax limit and routing it to Schedule 3. This
+implements the [Form 1040 whole-dollar instructions](https://www.irs.gov/instructions/i1040gi)
+to retain cents while adding amounts and round the total. Individual Schedule A
+fields use the shared whole-dollar output formatter. No source costs are mutated.
+
+For two properties costing 1,001.49 each, 300.447 + 300.447 produces a filed
+601 combined credit, while each printed/native property credit is 300. The
+one-dollar difference is retained explicitly as the consequence of rounding the
+aggregate rather than summing already-rounded displays. A second boundary case
+checks two 300.501 amounts producing 601, not 602. The current implementation
+still requires whole-dollar tax-limit worksheet inputs and rejects unreconciled
+return totals. IRS business-rule tolerance/acceptance has not been verified.
+
+The first cents case has a complete TY2025 v5.4 XSD-valid return and seven
+reviewed PDF pages: credit 601, total tax 3,274, refund 3,726. The flattened PDF
+has zero fields/widgets and SHA-256
+`2a87fdb5addee86e7b9bcb7090198e82ae15e499386cb7e347e3e81ea7e717a3`.
+
+Final regression after the cents change: 111 passed, zero failed across the
+selected Form 8911, PDF builder/cache, and base ATS fixture modules.

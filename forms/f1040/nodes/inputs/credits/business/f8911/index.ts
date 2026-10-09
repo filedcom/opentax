@@ -1,3 +1,4 @@
+import { roundWholeDollars } from "../../../../../whole-dollars.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -137,10 +138,12 @@ export function computePersonalCreditAmounts(
       "Form 8911 needs regular tax and tentative minimum tax to limit the personal credit",
     );
   }
-  const tentativeCredit = properties.reduce(
+  // Retain cents across property amounts, then round the total entered on
+  // Form 8911 line 4 (Form 1040 instructions: Rounding Off to Whole Dollars).
+  const tentativeCredit = roundWholeDollars(properties.reduce(
     (sum, property) => sum + Math.min(property.cost * 0.30, 1_000),
     0,
-  );
+  ));
   const foreignTaxCredit = input.foreign_tax_credit ?? 0;
   const certainAllowableCredits = input.certain_allowable_credits ?? 0;
   const totalOtherCredits = foreignTaxCredit + certainAllowableCredits;

@@ -122,7 +122,7 @@ Deno.test("Form 8911 PDF rejects an old-law source amount or mismatched filed cr
   );
 });
 
-Deno.test("Form 8911 PDF stops for business use, wider credits, and fractional page amounts", () => {
+Deno.test("Form 8911 PDF stops for business use, wider credits, and retains source cents for credit rounding", () => {
   assertThrows(
     () => parent(pending({ ...source(), business_use_pct: 0.1 })),
     Error,
@@ -133,11 +133,7 @@ Deno.test("Form 8911 PDF stops for business use, wider credits, and fractional p
     Error,
     "other allowable-credit worksheet amounts",
   );
-  assertThrows(
-    () => parent(pending({ ...source(), cost: 1_001 })),
-    Error,
-    "whole-dollar source and credit lines",
-  );
+  assertEquals(parent(pending({ ...source(), cost: 1_001 }))?.line4, 300);
 });
 
 Deno.test("Form 8911 PDF emits neither page when no positive native credit exists", () => {

@@ -47,12 +47,6 @@ function projectProperty(input: F8911Property): Form8911PdfProperty {
     );
   }
   if (
-    !Number.isInteger(input.cost) ||
-    !Number.isInteger(input.cost * 0.3)
-  ) {
-    throw new Error("Form 8911 PDF needs whole-dollar source and credit lines");
-  }
-  if (
     !input.construction_began || !input.placed_in_service ||
     !input.property_us_address
   ) {
@@ -103,8 +97,20 @@ export function form8911PdfSource(
       "Form 8911 PDF needs reviewed other allowable-credit worksheet amounts",
     );
   }
-  if (!Object.values(amounts).every(Number.isInteger)) {
-    throw new Error("Form 8911 PDF needs whole-dollar source and credit lines");
+  if (
+    ![
+      amounts.regularTaxBeforeCredits,
+      amounts.foreignTaxCredit,
+      amounts.certainAllowableCredits,
+      amounts.totalOtherCredits,
+      amounts.netRegularTax,
+      amounts.tentativeMinimumTax,
+      amounts.adjustedRegularTax,
+    ].every(Number.isInteger)
+  ) {
+    throw new Error(
+      "Form 8911 PDF needs whole-dollar tax-limit worksheet lines",
+    );
   }
   const properties = personalCreditProperties(input).map(projectProperty);
   const filerName = filer?.nameLine1?.trim();

@@ -195,3 +195,46 @@ Deno.test("Form 8911 combined property credit is limited once by the public retu
   ]);
   assertEquals(copies.map((copy) => copy.line21), [1000, 1000, 1000, 1000]);
 });
+
+Deno.test("Form 8911 retains property cost cents until native and PDF filing amounts", async () => {
+  const source = {
+    ...multipleChargerSource,
+    properties: multipleChargerSource.properties.map((item) => ({
+      ...item,
+      cost: 1001.49,
+    })),
+  };
+  const result = f1040_2025.executeReturn({ ...fixture.inputs, f8911: source });
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending;
+  assertEquals(pending.schedule3.line6j_alt_fuel_vehicle_refueling, 601);
+  assertEquals(pending.f1040.line20_nonrefundable_credits, 601);
+  assertEquals(pending.f1040.line24_total_tax, 3274);
+  const bundle = await buildMefBundle(pending, {
+    filer: fixture.filer,
+    attachments: [],
+  });
+  assertStringIncludes(
+    bundle.xml,
+    "<PrsnlUseRefuelingPropCrAmt>601</PrsnlUseRefuelingPropCrAmt>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<TotalPersonalUsePartOfCrAmt>601</TotalPersonalUsePartOfCrAmt>",
+  );
+  assertEquals(
+    (bundle.xml.match(
+      /<TotalPersonalUsePartOfCrAmt>300<\/TotalPersonalUsePartOfCrAmt>/g,
+    ) ?? []).length,
+    2,
+  );
+  const [parent] = form8911Pdf.instances!({}, fixture.filer, pending);
+  const copies = form8911ScheduleAPdf.instances!({}, fixture.filer, pending);
+  // Preserve cents while adding; the shared renderer rounds the entered lines.
+  assertEquals([parent.line4, parent.line10], [601, 601]);
+  assertEquals(copies.map((copy) => [copy.line8, copy.line19, copy.line21]), [[
+    1001.49,
+    300.447,
+    300.447,
+  ], [1001.49, 300.447, 300.447]]);
+});
