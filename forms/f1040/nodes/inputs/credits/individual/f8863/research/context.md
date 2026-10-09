@@ -23,14 +23,23 @@ contains return totals, and one copy of page 2 is printed for each claimed
 student. It reuses the native MeF source validation and recalculates student and
 return lines before projecting PDF fields. It also requires final Form 1040
 MAGI, tax-before-credits, and refundable AOC, plus Schedule 3 education and
-Credit Limit Worksheet priority-credit amounts to agree. This bounded PDF route
-supports one or two U.S. institutions per student with two-line printed
-addresses. It rejects foreign addresses, more than two institutions, and a
-positive `prior_year_1098t_received` source because that field does not prove
-the narrower printed question of whether the 2024 Form 1098-T had box 7 checked.
-Multi-institution continuation beyond two, that box 7 distinction, foreign
-address layout, special MAGI addbacks, and final visual PDF checks remain open.
-Focused cases are written but unrun.
+Credit Limit Worksheet priority-credit amounts to agree. This PDF route
+supports separately sourced U.S. and foreign institutions with up to three
+printed address lines. Foreign postal lines preserve all structured address
+components in the supplied local order and append the full IRS country name.
+More than two schools produce additional page-2 copies completed only through
+line 22; student credit calculations appear once, on that student's first copy.
+Each institution needs a distinct matched expense workpaper, and the combined
+expenses must reconcile before the per-student AOC or per-return LLC cap.
+Prior-year receipt now needs an owned 2024 Form 1098-T source, including its
+explicit box-7 answer. Both native line22(3) and the PDF derive the answer from
+that source, rather than treating receipt alone as a checked box. Current costs
+require dated 2025 payment-account records and a separate assistance inventory;
+2024 box1 amounts never enter the current credit. Foreign schools also require
+current issued/exception evidence and dated payment/assistance inventories. Special
+MAGI addbacks and broader source authenticity remain open. Retained packet
+evidence is recorded in the
+[PDF review](../../../../../../../../docs/mef/ty2025/domains/credits/individual/form8863/ty2025-form8863-pdf-gap.md).
 
 **Form 8863 feeds two downstream destinations:**
 

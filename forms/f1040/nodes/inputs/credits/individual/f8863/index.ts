@@ -30,7 +30,23 @@ const foreignInstitutionAddressSchema = z.object({
   province_or_state: z.string().min(1).optional(),
   country_code: z.string().length(2),
   postal_code: z.string().min(1).optional(),
+  // Local postal order is source data; PDF checks these lines against all
+  // structured components and appends the full IRS country name.
+  postal_address_lines: z.array(z.string().trim().min(1).max(42)).min(1).max(2)
+    .optional(),
 });
+
+// Line 22(3) asks about a received prior-year form with box 7 checked,
+// not receipt alone. Keep the owned prior-year copy separate from 2025 costs.
+const priorYear1098tSourceSchema = z.object({
+  tax_year: z.literal(2024),
+  student_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+  institution_name: z.string().trim().min(1),
+  institution_ein: z.string().regex(/^\d{2}-?\d{7}$/),
+  document_id: z.string().trim().min(1),
+  box1_payments: z.number().finite().nonnegative(),
+  box7_early_2025: z.boolean(),
+}).strict();
 
 const institutionFilingSchema = z.object({
   name: z.string().min(1),
@@ -38,6 +54,7 @@ const institutionFilingSchema = z.object({
   foreign_address: foreignInstitutionAddressSchema.optional(),
   current_year_1098t_received: z.boolean(),
   prior_year_1098t_received: z.boolean(),
+  prior_year_1098t_source: priorYear1098tSourceSchema.optional(),
   ein: z.string().regex(/^\d{2}-?\d{7}$/).optional(),
 }).refine(
   (value) =>
@@ -231,7 +248,7 @@ export const itemSchema = z.object({
     institution_ein: z.string().regex(/^\d{2}-?\d{7}$/).optional(),
     institution_name: z.string().trim().min(1).optional(),
     workpaper: educationExpenseWorkpaperSchema,
-  })).length(2).optional(),
+  })).min(2).optional(),
 });
 
 // 2025 Form 8863 Credit Limit Worksheet, lines 4 and 5. These amounts must
@@ -301,7 +318,7 @@ export function form8863InstitutionWorkpapers(item: F8863Item) {
 }
 
 // Each U.S. institution needs its received Form 1098-T or the documented
-// statutory nonreceipt exception. Two schools retain separate workpapers.
+// statutory nonreceipt exception. Multiple schools retain separate workpapers.
 export function validateForm8863FilingSource(
   item: F8863Item,
   credit: "aoc" | "llc",
@@ -310,9 +327,9 @@ export function validateForm8863FilingSource(
   const workpaper = item.education_expense_workpaper;
   const perInstitution = item.institution_expense_workpapers;
   if (perInstitution !== undefined) {
-    if (institutions?.length !== 2 || workpaper !== undefined) {
+    if (!institutions || institutions.length < 2 || workpaper !== undefined) {
       throw new Error(
-        "Form 8863 two-school sources need two institutions and separate workpapers without an aggregate workpaper",
+        "Form 8863 multi-school sources need at least two institutions and separate workpapers without an aggregate workpaper",
       );
     }
     const joined = form8863InstitutionWorkpapers(item);
@@ -331,7 +348,7 @@ export function validateForm8863FilingSource(
       )
     ) {
       throw new Error(
-        "Form 8863 mixed two-school sources need separate issued copies, payment inventories and assistance inventories",
+        "Form 8863 mixed multi-school sources need separate issued copies, payment inventories and assistance inventories",
       );
     }
     assertDistinctEducationSourceReferences([item]);
@@ -364,17 +381,17 @@ export function validateForm8863FilingSource(
       claimed === undefined || Math.abs(claimed - combinedExpenses) > 0.000001
     ) {
       throw new Error(
-        "Form 8863 combined adjusted expenses must equal both school workpapers",
+        "Form 8863 combined adjusted expenses must equal all school workpapers",
       );
     }
     return;
   }
   if (
-    institutions?.length !== 1 || !institutions[0].us_address ||
+    institutions?.length !== 1 ||
     !workpaper
   ) {
     throw new Error(
-      "Form 8863 filing needs one U.S. institution and an education expense workpaper",
+      "Form 8863 filing needs one institution and an education expense workpaper",
     );
   }
   const institution = institutions[0];
@@ -385,6 +402,34 @@ export function validateForm8863FilingSource(
     source.student_ssn.replaceAll("-", "") ===
       item.student_ssn?.replaceAll("-", "") &&
     source.institution_name === institution.name;
+  const prior = institution.prior_year_1098t_source;
+  if (
+    institution.prior_year_1098t_received !== (prior !== undefined) ||
+    (prior && (!sourceMatchesSchool(prior) ||
+      prior.institution_ein.replaceAll("-", "") !==
+        institution.ein?.replaceAll("-", "")))
+  ) {
+    throw new Error(
+      "Form 8863 prior-year receipt needs its owned 2024 Form 1098-T and explicit box 7 answer",
+    );
+  }
+  if (
+    (prior || institution.foreign_address) &&
+    (workpaper.payment_sources === undefined ||
+      workpaper.assistance_sources === undefined ||
+      (institution.current_year_1098t_received &&
+        !workpaper.issued_form1098t_source) ||
+      workpaper.payment_sources.some((payment) =>
+        payment.payment_date === undefined ||
+        payment.payment_date < "2025-01-01" ||
+        payment.payment_date > "2025-12-31" ||
+        !payment.payment_account_record_reference
+      ))
+  ) {
+    throw new Error(
+      "Form 8863 prior-year or foreign-school history needs current issued or exception evidence, assistance inventory and dated 2025 payment account records",
+    );
+  }
   const issued = workpaper.issued_form1098t_source;
   if (
     issued &&
@@ -683,6 +728,16 @@ function assertDistinctEducationSourceReferences(items: F8863Items): void {
   const paymentIds = new Set<string>();
   const assistanceIds = new Set<string>();
   for (const item of items) {
+    for (const institution of item.filing_details?.institutions ?? []) {
+      const priorId = institution.prior_year_1098t_source?.document_id;
+      if (!priorId) continue;
+      if (documentIds.has(priorId)) {
+        throw new Error(
+          "Form 8863 prior/current schools cannot reuse a Form 1098-T document reference",
+        );
+      }
+      documentIds.add(priorId);
+    }
     const workpapers = item.institution_expense_workpapers?.map((source) =>
       source.workpaper
     ) ??

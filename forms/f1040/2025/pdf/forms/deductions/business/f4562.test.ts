@@ -63,6 +63,8 @@ Deno.test("Form 4562 PDF maps the bounded Section 179 lines to canonical 2025 fi
   ]);
   assertEquals(field("line2_total_cost"), [
     "topmostSubform[0].Page1[0].f1_5[0]",
+  ]);
+  assertEquals(field("section179_first_property_cost"), [
     "topmostSubform[0].Page1[0].Table_Ln6[0].BodyRow1[0].f1_10[0]",
   ]);
   assertEquals(field("line12_section179_expense_deduction"), [

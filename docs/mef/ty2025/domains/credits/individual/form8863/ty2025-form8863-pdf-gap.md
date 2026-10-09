@@ -1,5 +1,190 @@
 # TY2025 Form 8863 positive PDF boundary
 
+## October 9 foreign-school address checkpoint
+
+Foreign institutions now use the same owned expense validation and native/PDF
+return path as domestic schools. The prior shared U.S.-only guard is replaced
+with a foreign-school source requirement: an issued current1098-T or the
+existing documented nonreceipt exception, separate payment/assistance records,
+and dated2025 payment-account evidence. Native XML retains the structured
+foreign address; foreign attendance does not itself waive1098-T or AOC EIN
+requirements.
+
+The [2025 line22 instructions](https://www.irs.gov/instructions/i8863) require
+local postal conventions and an unabbreviated country name. Accordingly,
+`foreign_address.postal_address_lines` supplies one or two locally formatted
+lines. PDF export compares their complete token inventory against line1,
+line2, city, province/state and postal code, so formatting cannot silently drop,
+add or duplicate address components. It appends the full TY2025 IRS country
+name on its own line. Missing formatting, mismatched lines, embedded newlines,
+invalid country codes and field overflow reject. U.S. second-address lines
+also print on their own line within the same three-line field.
+
+The eight full-return cases combine Canadian, British, French and German
+schools, postal-before-city and postal-after-city layouts, a street-unit line,
+U.S. building lines, three-school continuations, prior-year checked/unchecked
+box7 answers, missing current1098-T evidence, and two-student AOC/LLC caps.
+Expected credit and final-tax amounts match the prior-source checkpoint below:
+changing a school's location adds no tuition or credit.
+
+Final validation:85 core/native/descriptor tests and eight new complete-return
+tests pass. The initial selected education group also passed109/109 before
+the shared foreign-source guard was extended; the85 final checks replay its
+core subset after that change. All eight returns pass local TY2025 v5.4 XSD;
+96 financial/source mutations reject in native and PDF, and56 additional
+address mutations reject fresh PDF export (152 total PDF rejections).
+
+All52 flattened pages were rendered and reviewed:16 new education pages on
+eight contact sheets, plus19 unique page hashes identical to the already
+reviewed prior-source checkpoint. Full country labels fit without clipping;
+student names, EINs, source answers, continuations and credit amounts agree.
+The repeated zero-display qualifications remain deferred76. The final benchmark
+stays46/133, with every one of133 case rows identical to the prior checkpoint.
+
+Private evidence: `.state/research/form8863-foreign-school-2026-10-09/` retains
+sources, expected/finalized records, XML, full PDFs, all52 renders, review/hash
+reports, test logs, and the benchmark comparison. The committed regression is
+`form8863-foreign-school-source.test.ts`; run with `deno test -A` and
+`-- --write-review-artifacts` to retain the eight packets. These synthetic
+amounts are already U.S. dollars; the checkpoint does not verify currency
+conversion, source authenticity, wider eligibility, or IRS acceptance.
+
+## October 9 prior-year school source checkpoint
+
+The prior-year Form1098-T receipt flag no longer substitutes for the line22(3)
+question about receipt **with box7 checked**. A received form now requires a
+structured owned 2024 source with student SSN, school name/EIN, document
+reference and explicit box7 answer. Both native `PriorYear1098TReceivedInd`
+and PDF line22(3) use that answer. The XSD ties this indicator to22a(3)/22b(3);
+the [official form](https://www.irs.gov/pub/irs-prior/f8863--2025.pdf) supplies
+the full question. The earlier blanket PDF rejection below is historical for
+this reviewed source route.
+
+The [2025 instructions](https://www.irs.gov/instructions/i8863) permit only
+amounts paid or treated as paid in2025 for the2025 credit, excluding payments
+made in2024 or2026. Accordingly, this prior-history route requires the current
+issued form or supported nonreceipt exception, an assistance inventory, and
+current tuition-payment records with2025 dates and account references. The
+prior-year box1 amount stays outside current expenses. Duplicate prior/current
+document references and mismatched student/school ownership reject.
+
+Eight source scenarios cover checked and unchecked prior boxes for both AOC
+and LLC; three-school continuations with mixed prior answers and a missing
+current-year form; and adult-parent two-student AOC/LLC and LLC-only returns.
+Each prior source records12,500 paid in2024 as an explicit non-current control.
+Each single-school current source has4,500 paid less500 aid; three-school
+students each have9,000 current tuition less1,500 aid. Missing current forms
+retain the documented request/cooperation exception from the school review.
+
+| Cases | Current adjusted expenses | Nonrefundable education | Refundable AOC | Final tax | Refund |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| AOC checked / unchecked | 4,000 | 928 | 1,000 | 0 | 4,000 |
+| LLC checked / unchecked | 4,000 | 800 | 0 | 128 | 2,872 |
+| AOC three schools | 7,500 | 928 | 1,000 | 0 | 4,000 |
+| LLC three schools | 7,500 | 928 | 0 | 0 | 3,000 |
+| Parent mixed students | 7,500 + 7,500 | 3,000 | 1,000 | 3,955 | 8,045 |
+| Parent two LLC students | 7,500 + 7,500 | 2,000 | 0 | 4,955 | 6,045 |
+
+Amounts retain the reviewed25,000/75,000 wage tax-table fixtures and parent
+ODC1,000. Identical checked/unchecked outcomes confirm that the reporting
+answer does not add another year's tuition to the credit. The mixed parent
+return has AOC nonrefundable1,500 plus LLC1,500; the two-LLC return caps total
+15,000 tuition at10,000 before its20% credit.
+
+Validation: all eight focused typed tests pass, including96 native and96
+fresh full-PDF negative checks. Eight complete returns pass local TY2025 v5.4
+XSD. All52 flattened pages were reviewed through31 unique page hashes on16
+contact sheets; identities, school answers, credit limits and final tax agree.
+The existing deferred76 zero-display issue repeats on four zero-tax1040s and
+both parent Schedule8812s. No new PDF defect was found. The grouped run passed
+182/183; its sole failure expected the obsolete prior-box7 error wording and
+is resolved by updating that assertion and rerunning the four-test PDF file.
+Together with the focused cases this verifies191 distinct education tests.
+The benchmark remains46 passes/87 failures, with all133 rows unchanged.
+
+A separate read-only probe found that the older no-prior-history route accepts
+a contradictory2024 payment date despite a2025 tax-year label. This is newly
+recorded as deferred101, not implemented. Foreign schools, wider eligibility,
+source authentication and IRS acceptance remain open.
+
+Private evidence: `.state/research/form8863-prior-school-2026-10-09/` retains
+source/pending/expected records, native XML, full PDFs, renders, page hashes,
+verification report, focused/grouped/replay logs and benchmark comparison.
+Run the `form8863-prior-school-source.test.ts` review with `deno test -A` and
+`-- --write-review-artifacts`; the retained verifier checks XSD and full packets.
+
+## October 9 school-continuation source checkpoint
+
+The existing more-than-two-school gap now has a complete source/native/PDF
+route. Each U.S. school joins to its own expense workpaper; missing, duplicate,
+detached or mismatched sources still reject. The combined student expense is
+capped once for AOC, while LLC retains its single return-wide expense cap.
+The native schema permits unbounded `EducationalInstitutionGroup` occurrences
+within each of at most 25 students; school count does not create extra students.
+
+The [2025 instructions, line 22](https://www.irs.gov/instructions/i8863)
+require additional page-2 copies completed only through line 22. The PDF now
+prints each student's name/SSN and two schools per copy, with lines 23–31 only
+on the student's first copy. Parts I/II and taxpayer identity appear once on
+page 1. Three-, four- and five-school cases exercise odd and even continuation
+counts; two-student packets keep each student's continuations together.
+
+The review uses synthetic owned issued 1098-T, tuition-payment and tax-free-aid
+records: each school has 3,000 paid tuition less 500 tax-free assistance. In each
+three-school student case, school 3 instead has a documented required-but-not-
+received exception, with request, cooperation, enrollment and payment records.
+Its continuation prints the current-year receipt answer No without inventing an
+issued form. These reviewed structured records do not authenticate an issuer.
+
+| Case | School counts | Adjusted expenses | Nonrefundable education | Refundable AOC | Final tax | Refund |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| AOC three / four / five | 3 / 4 / 5 | 7,500 / 10,000 / 12,500 | 928 | 1,000 | 0 | 4,000 |
+| LLC three / four / five | 3 / 4 / 5 | 7,500 / 10,000 / 12,500 | 928 | 0 | 0 | 3,000 |
+| Mixed AOC/LLC students | 3 + 5 | 7,500 + 12,500 | 3,500 | 1,000 | 3,455 | 8,545 |
+| Two LLC students | 3 + 5 | 7,500 + 12,500 | 2,000 | 0 | 4,955 | 6,045 |
+
+The single-student returns retain wages/AGI25,000 and tax before credits928;
+the parent returns retain wages/AGI75,000, tax7,955 and ODC1,000. These ordinary
+tax amounts are the previously reviewed TY2025 single tax-table rows, not
+values inferred from the continuation implementation. The mixed return applies
+AOC nonrefundable1,500 plus LLC2,000; the two-LLC return applies one2,000 cap
+to20,000 total adjusted tuition. School continuations add no credit.
+
+The focused typed test passes all eight cases, validates all eight complete
+returns against local TY2025 `2025v5.4`, and rejects 68 altered sources in both
+native and fresh full-PDF builds. Mutations remove or duplicate a school
+workpaper, detach a school, change combined expenses, change the issued
+student/box1, change payment or aid totals, or remove the missing-form exception.
+The complete PDF checks rebuild from each changed graph, without reusing a
+previously validated bundle.
+
+All 60 output pages were rendered and reviewed using 31 distinct page hashes
+across16 contact sheets. Continuations contain the correct student and school
+identities and no answers or amounts below line22; no school or credit is
+duplicated. Reopened static packets have zero widgets and no AcroForm field
+tree. The six own-student packets retain the existing deferred76 blank
+Form1040 line24 at zero tax; both parent packets retain deferred76 blank
+Schedule8812 line10 at zero. These qualifications remain future work.
+
+The complete selected education regression group passes175/175 in addition to
+the eight new cases (183 total), using Deno2.9.4/TypeScript6.0.3 on October9.
+The legacy benchmark is46/133 (87 failures), and all133 case-result rows match
+the prior baseline exactly. Those failures remain deferred96, not evidence of
+IRS acceptance. Wider education routes, foreign addresses, prior-year box7
+semantics, source authenticity and IRS business rules remain open.
+
+Evidence: `.state/research/form8863-school-continuations-2026-10-09/`
+contains each source, finalized pending graph, expected amounts, page origins,
+projected instances, XML, PDF and rendered pages, plus validation/test/benchmark
+logs and hash manifests. Source tests live in
+`forms/f1040/2025/pdf/reviews/credits/individual/form8863-school-continuations.test.ts`.
+The canonical two-page template digest is
+`a251a1cfbd613d5dd81646b276b1cc3562d7efb8bed969491eada7c8eb0d8e00`;
+the Return1040 XSD digest is
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+The retained complete-return evidence uses the configured private schema and
+local PDF cache; the existing clean-checkout portability qualification applies.
+
 ## Positive-tax dependent scholarship checkpoint
 
 [Paired education claim and kiddie tax source review](./ty2025-form8863-parent-child-kiddie-tax-review.md)

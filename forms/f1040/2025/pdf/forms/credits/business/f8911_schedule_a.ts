@@ -1,11 +1,14 @@
-import { calculatePropertyCredit } from "../../../../../nodes/inputs/credits/business/f8911/property-credit.ts";
+import {
+  calculateForm8911PropertyAmounts,
+  type F8911Property,
+} from "../../../../../nodes/inputs/credits/business/f8911/index.ts";
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
 } from "../../../review-support/form-descriptor.ts";
 import { form8911PdfSource } from "./f8911_shared.ts";
 
-// Schedule A (Form 8911), Rev. December 2025, one copy per personal-use property.
+// Schedule A (Form 8911), Rev. December 2025, one copy per qualified property.
 const page = "topmostSubform[0].Page1[0]";
 const text = (
   domainKey: string,
@@ -17,6 +20,47 @@ const text = (
   pdfField: `${page}.${pdfField}`,
   printZero,
 });
+
+/** Project amounts only; the descriptor applies the return-wide filing/source checks. */
+export function projectForm8911PropertyAmounts(input: F8911Property) {
+  const credit = calculateForm8911PropertyAmounts(input);
+  if (
+    Number(credit.businessUseFraction.toFixed(5)) !== credit.businessUseFraction
+  ) {
+    throw new Error(
+      "Form 8911 business percentage exceeds MeF five-decimal ratio precision",
+    );
+  }
+  return {
+    line8: credit.cost,
+    // Strings preserve fractional percentage digits through the PDF money formatter.
+    line9: credit.businessUseFraction > 0
+      ? String(Number((credit.businessUseFraction * 100).toFixed(3)))
+      : 0,
+    line10: credit.businessCost,
+    ...(credit.businessUseFraction > 0
+      ? {
+        line11: credit.section179Deduction,
+        line12: credit.netBusinessCost,
+        increased_rate: input.business_source?.rate_basis === "pwa",
+        line14: credit.businessCreditBeforeCap,
+        line16: credit.businessCredit,
+      }
+      : {}),
+    ...(credit.businessUseFraction < 1
+      ? {
+        main_home_property: input.main_home_property,
+        ...(input.main_home_property
+          ? {
+            line18: credit.personalCost,
+            line19: credit.personalCreditBeforeCap,
+            line21: credit.personalCredit,
+          }
+          : {}),
+      }
+      : {}),
+  };
+}
 
 export const form8911ScheduleAPdf: PdfFormDescriptor = {
   pendingKey: "f8911_schedule_a",
@@ -41,11 +85,33 @@ export const form8911ScheduleAPdf: PdfFormDescriptor = {
     text("line8", "f1_18[0]"),
     text("line9", "f1_19[0]", true),
     text("line10", "f1_20[0]", true),
+    text("line11", "f1_21[0]", true),
+    text("line12", "f1_22[0]", true),
+    {
+      kind: "checkboxWhen",
+      domainKey: "increased_rate",
+      pdfField: `${page}.Line13_ReadOrder[0].c1_2[0]`,
+      whenValue: "true",
+    },
+    {
+      kind: "checkboxWhen",
+      domainKey: "increased_rate",
+      pdfField: `${page}.Line13_ReadOrder[0].c1_2[1]`,
+      whenValue: "false",
+    },
+    text("line14", "f1_23[0]", true),
+    text("line16", "f1_25[0]", true),
     {
       kind: "checkboxWhen",
       domainKey: "main_home_property",
       pdfField: `${page}.Line17_ReadOrder[0].c1_3[0]`,
       whenValue: "true",
+    },
+    {
+      kind: "checkboxWhen",
+      domainKey: "main_home_property",
+      pdfField: `${page}.Line17_ReadOrder[0].c1_3[1]`,
+      whenValue: "false",
     },
     text("line18", "f1_26[0]"),
     text("line19", "f1_27[0]"),
@@ -59,7 +125,6 @@ export const form8911ScheduleAPdf: PdfFormDescriptor = {
     return source.properties.map((
       { input, propertyAddress, constructionDate, serviceDate },
     ) => {
-      const credit = calculatePropertyCredit(input);
       return ({
         filer_name: filerName,
         filer_tin: filerTin,
@@ -70,13 +135,7 @@ export const form8911ScheduleAPdf: PdfFormDescriptor = {
         eligible_census_tract: true,
         census_geoid: input.census_tract_geoid,
         certification_permit_number: input.certification_permit_number,
-        line8: input.cost,
-        line9: 0,
-        line10: 0,
-        main_home_property: true,
-        line18: credit.personalCost,
-        line19: credit.personalCreditBeforeCap,
-        line21: credit.personalCredit,
+        ...projectForm8911PropertyAmounts(input),
       });
     });
   },

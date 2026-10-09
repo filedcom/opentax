@@ -1,5 +1,7 @@
 # TY2025 Form 8962 policy-month MeF boundary
 
+> Current verification: see the October9 policy-route checkpoint below; older staged/unrun notes are historical and remain scoped by the exact replay.
+
 ## One two-person policy with excess APTC below 400% FPL (2026-10-05)
 
 The monthly filing boundary now accepts one unchanged, same-state policy
@@ -37,7 +39,7 @@ that one same-state coverage-family SLCSP may apply across policies. The
 record identifiers remain reviewed assertions, not authenticated Marketplace
 bytes.
 
-## One-person, one-month same-state policy transition (staged, unrun)
+## One-person, one-month same-state policy transition (verified October 9)
 
 The [2025 Form 8962 monthly instructions](https://www.irs.gov/instructions/i8962)
 say to add columns A and C from multiple Forms 1095-A affecting a month and
@@ -49,14 +51,14 @@ policies must name the filer's SSN, report monthly positive premiums/APTC,
 agree on the transition-month SLCSP, and have no shared allocation or SLCSP
 correction. The native and PDF routes reconcile the $900/$600/$350 June
 premium/SLCSP/APTC row, all other months, $1,446 excess repayment, Schedule 2
-line 1a, and Form 1040 line 17. The full-return positive and two-overlap-month,
-SLCSP, APTC, and return-tamper fixtures are authored but unrun. A longer overlap,
+line 1a, and Form 1040 line 17. The full-return and negative fixtures passed the prior115-test policy batch;
+the October9 overlap checkpoint below adds retained XSD and visual evidence. A longer overlap,
 different covered people, corrected SLCSP, interstate transition, and external
 Marketplace-statement authentication remain outside this route. Publication
 [974](https://www.irs.gov/publications/p974) still governs special coverage
 and eligibility cases, which this narrow route does not infer.
 
-## Corrected SLCSP in the one-month transition (staged, unrun)
+## Corrected SLCSP in the one-month transition (verified October 9)
 
 The same one-person transition now admits a corrected overlap-month column B
 only when **both** identified policies carry distinct dated Marketplace-error
@@ -67,7 +69,8 @@ benchmark once while adding both $900 in premiums and $350 in APTC; native
 MeF and PDF independently check the source against Form 8962 monthly rows,
 Schedule 2 line 1a, and Form 1040 line 17. The positive fixture expects
 $854 PTC and $1,396 excess APTC; mismatched correction, reused evidence, and
-return-tamper fixtures are authored but unrun. More than one overlap month,
+return-tamper fixtures passed the prior115-test policy batch. The October9
+overlap checkpoint below adds retained XSD and visual evidence. More than one overlap month,
 one-sided corrections, mixed coverage families, allocation, move, and external
 authentication of the Marketplace records remain closed. This follows the
 [2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962) for
@@ -649,7 +652,7 @@ values are `52ace6d59ea348495a71c3b55134b3400382b22758481e0d836206ebf71fecd2`
 (exception). These focused artifacts do not establish other MFS scenarios or
 the release PDF gate.
 
-## Alaska/Hawaii taxpayer policy with a contiguous-state dependent policy (2026-10-01, unrun)
+## Alaska/Hawaii taxpayer policy with a contiguous-state dependent policy (October 9 evidence below)
 
 The bounded two-person monthly family-policy route now accepts one full-year
 taxpayer policy in Alaska or Hawaii and a simultaneous policy in a contiguous
@@ -669,4 +672,243 @@ SLCSP, and final-return tamper fixtures are authored but unrun. The path still
 rejects a second Alaska/Hawaii policy, a shared policy, taxpayer moves,
 unsupported dependent-income sources, and Marketplace corrections. Source-byte
 authentication, XSD/business-rule checks, filled-PDF review, and ATS remain
+open.
+
+
+## October 9: reviewed joint-family monthly advances and repayment limits
+
+A joint return with one same-state policy covering the complete tax family now
+reconciles monthly advances against owned income, required-dependent MAGI,
+reviewed person-month coverage eligibility and the retained Form1095-A copy.
+Each covered month must have positive APTC and an identified premium payment
+covering the balance by April15,2026, reviewed after payment and month end.
+Changed retained statements, missing or contradictory reviews, altered cap,
+repayment or final-return joins fail before native and PDF output. The PDF
+descriptor also enforces this guard at400% FPL and above.
+
+The nine synthetic cases use family4 poverty income31,200 and dependent MAGI32,400.
+The joint repayment limits follow Table5 in the
+[2025 Form8962 instructions](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf).
+Positive regular tax uses the MFJ bands in the
+[2025 Tax Table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf).
+
+| Case | Household MAGI | FPL% | PTC | Advances | Cap | Repayment | Refund / owed |
+|---|---:|---:|---:|---:|---:|---:|---|
+| below-200 | 59,280 | 190 | 8,052 | 10,800 | 750 | 750 | 2,250 / 0 |
+| at-200 | 62,400 | 200 | 7,752 | 10,800 | 1,950 | 1,950 | 1,050 / 0 |
+| at-300 | 93,600 | 300 | 3,384 | 10,800 | 3,250 | 3,250 | 0 / 3,340 |
+| at-399 | 124,488 | 399 | 0 | 10,800 | 3,250 | 3,250 | 0 / 7,042 |
+| at-400 | 124,800 | 400 | 0 | 10,800 | none | 10,800 | 0 / 14,634 |
+| net-credit | 62,400 | 200 | 7,752 | 1,200 | n/a | 0 | 9,552 / 0 |
+| equal-credit | 62,400 | 200 | 7,752 | 7,752 | n/a | 0 | 3,000 / 0 |
+| partial-year | 62,400 | 200 | 5,964 | 8,100 | 1,950 | 1,950 | 1,050 / 0 |
+| joint-benefits | 82,400 | 264 | 5,244 | 10,800 | 1,950 | 1,950 | 999 / 0 |
+
+The partial-year policy begins April1; January–March rows are absent from XML
+and blank in PDF. Equal credit prints zero on Form8962 line26. The benefits
+case includes net SSA20,000, taxable4,000, AGI34,000 and taxpayer MAGI50,000.
+Withholding is3,000, or3,200 with benefits. These calculations reconcile the
+reported advance amounts; they do not authenticate the original Marketplace award.
+
+The final normal typed run passes106 tests across five related files. Eleven new
+tests cover nine complete positive returns, eleven conflicts at both200% and400%
+through native/PDF gates, and six public eligibility/payment conflicts. All nine
+full returns pass the configured TY2025 v5.4 XSD. All51 rendered pages were
+observed:28 distinct pages and23 exact matches to observed pages. Flattened
+packets contain no live fields/widgets. Existing deferred68 primary-only joint
+names and deferred76 blank zero Form1040 line24 remain qualifications; no
+presentation repair or broad parent closure is claimed.
+
+Private evidence: `.state/research/form8962-joint-aptc-2026-10-09/` retains source,
+expected and prepared data, XML/PDF, renders, logs and hashes. Initial new-test
+type errors and a synthetic fractional-cent W2 withholding amount were corrected
+before the final passing run. Prior sections marked staged/unrun retain their
+historical status; this batch does not replay those cases.
+
+This bounded route excludes shared/multiple/corrected policies, mixed months
+with and without advances, annual computation, foreign exclusions, QSEHRA and
+Publication974 special calculations. Source authenticity, broader combinations,
+business rules and IRS acceptance remain open. The full typed suite still has
+the separately recorded deferred78 blocker.
+
+
+## October 9: policy-route verification checkpoint
+
+At runtime head `ebf79bba8`, the normal typed command below passed **115 tests,
+zero failures** across the existing native Form8962 and health PDF review folders.
+This replaces the historical unrun status for the cases actually selected by this
+command, including policy switches, overlapping transitions, corrected SLCSP,
+shared allocation and interstate component guards. It does not establish full
+public-return, XSD or visual proof for every component test.
+
+```sh
+DENO_V8_FLAGS=--max-old-space-size=8192 deno test -A   forms/f1040/2025/mef/forms/credits/health/f8962/   forms/f1040/2025/pdf/reviews/credits/health/
+```
+
+Nine existing source fixtures were separately replayed through `executeReturn`,
+`prepareReturn`, complete native XML and the actual PDF builder, using the filer
+extracted from finalized Form1040. All nine pass the configured TY2025 v5.4 XSD.
+An independent Python Decimal replay derives each policy month from the retained
+input, applies supplied corrections/payment protection/allocation percentages,
+and compares PTC, advances, final tax, refund/owed and every native monthly amount.
+It passes all nine. No calculation or export runtime was changed in this batch.
+
+| Fixture suffix (all start `single-`) | PTC | APTC | Repayment | Net credit | Tax | Refund / owed | Pages |
+|---|---:|---:|---:|---:|---:|---|---:|
+| alternating-three-no-aptc-policies-200-fpl | 7,800 | 0 | 0 | 7,800 | 1,487 | 9,313 / 0 | 5 |
+| four-sequential-no-aptc-policies-four-gaps | 5,600 | 0 | 0 | 5,600 | 1,487 | 7,113 / 0 | 5 |
+| twelve-sequential-no-aptc-policies-full-year | 7,800 | 0 | 0 | 7,800 | 1,487 | 9,313 / 0 | 5 |
+| two-sequential-no-aptc-policies-protected-partial | 7,051 | 0 | 0 | 7,051 | 1,487 | 8,564 / 0 | 5 |
+| alternating-policies-all-covered-slcsp-corrections | 1,304 | 2,400 | 1,096 | 0 | 9,117 | 0 / 1,117 | 6 |
+| alternating-policies-both-slcsp-corrected | 1,354 | 2,400 | 1,046 | 0 | 9,067 | 0 / 1,067 | 6 |
+| five-sequential-corrected-slcsp-policies | 1,054 | 2,400 | 1,346 | 0 | 9,367 | 0 / 1,367 | 6 |
+| situation4-nonenrolled-other-taxpayer | 4,800 | 1,920 | 0 | 2,880 | 1,487 | 4,393 / 0 | 5 |
+| situation4-two-agreed-percentages | 7,200 | 4,800 | 0 | 2,400 | 1,487 | 3,913 / 0 | 5 |
+
+All **48 filled pages** were rendered and observed:31 distinct pages and17 exact
+matching pages. The four gap months have blank monthly rows; protected January
+payment400.51 prints401. Corrected benchmarks and shared percentages reconcile.
+PartIV properly prints only the last15 policy-number characters and uses separate
+rows for January–June20% and July–December80%. Fields and widgets are absent in
+these final flattened builder outputs; no clipping or amount discrepancy was
+observed in this batch.
+
+The [2025 Form8962 instructions](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf)
+support monthly corrected amounts, protected premium payments, Situation4
+allocations and last15-character policy numbers. The independent regular-tax
+check uses Single taxable-income bands14,350–14,400 and59,550–59,600 in the
+[2025 Tax Table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf):1,487 and8,021.
+
+Private evidence: `.state/research/form8962-policy-replay-2026-10-09/` retains
+commands, source/prepared data, XML/PDF, monthly oracle, renders and hashes.
+Marketplace, insurer and allocation references/repeated digests are synthetic
+review assertions; the run does not authenticate records or signatures. Broader
+combinations, complete business rules and IRS acceptance remain open. No deferred
+work was implemented, no parent task closed, and the full-suite deferred78
+blocker remains separate. Scoped CI on the runtime head passed run37887768222.
+
+
+The subsequent [complete interstate checkpoint](./ty2025-form8962-interstate-move-gap.md#october-9-complete-interstate-return-checkpoint) adds ten public-entry XSD-valid returns/60 observed pages and25 focused passes. It covers reported2–12-state moves, Hawaii, corrected unreported arrival, a gap month and region-specific repayment limits. This resolves the prior checkpoint's lack of full interstate packet evidence for these ten cases only; broader coverage and authentication remain open.
+
+## October 9: complete overlap and shared-policy returns
+
+Six public `executeReturn`/`prepareReturn` returns pass the cached TY2025 v5.4
+Return1040 XSD. Their 35 filled pages were rendered and observed (29 distinct
+images, six exact matches). Seven typed regression tests pass, including
+24 changed-policy, covered-person, calculated-credit or final-return variants
+rejected by both native and PDF validation. No runtime behavior changed.
+
+| Case | PTC | APTC | Net credit | Repayment | Final tax | Refund / owed |
+|---|---:|---:|---:|---:|---:|---:|
+| June transition | 804 | 2,250 | 0 | 1,446 | 9,467 | 2,533 refund |
+| Corrected June transition | 854 | 2,250 | 0 | 1,396 | 9,417 | 2,583 refund |
+| Situation 4, no agreement | 3,000 | 1,200 | 1,800 | 0 | 1,487 | 3,313 refund |
+| Two sequential shared policies, credit | 6,000 | 1,200 | 4,800 | 0 | 1,475 | 11,325 refund |
+| Two sequential shared policies, repayment | 828 | 4,800 | 0 | 3,972 | 11,927 | 3,927 owed |
+| Three policies, two required-filing dependents | 4,080 | 3,600 | 480 | 0 | 9,055 | 575 owed |
+
+The independent Python Decimal replay starts with source wages, dependent
+interest and twelve policy months. It applies the common same-state SLCSP
+once, corrections or allocations, contribution and credit limits, then joins
+literal IRS Tax Table amounts and child credit to final tax. The rules follow
+the [2025 Form 8962 instructions](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf),
+[Tax Table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf) and
+[Schedule 8812 instructions](https://www.irs.gov/pub/irs-pdf/i1040s8.pdf).
+The family credit case has $100,000 wages and $28,500 dependent MAGI,
+but only wages enter the parent's Form1040 AGI; its two children produce
+$4,400 CTC. Shared Part IV rows show the correct other taxpayer, periods and
+50% allocations. The no-agreement long policy ID uses its last15 characters.
+
+The seventh attempted case, family income at200% FPL with excess APTC,
+does not prepare: Schedule8812 receives automatic tax738 instead of finalized
+Form1040 line18 tax1,713 (738 plus975 repayment). The independently prepared
+worksheet therefore fails the tax-limit guard. This newly found defect is
+`future_todo`79 and remains untouched; the passing family credit example does
+not prove the repayment/CTC combination. Initial family fixtures were also
+completed with missing dependent joint-return/support/identity facts and
+Schedule8812 worksheet answers before this ordering defect was isolated.
+
+The retained sources are synthetic reviewed assertions, including repeated
+placeholder hashes, not authenticated Marketplace or prior-filed records.
+Local XSD success does not prove IRS business rules or acceptance. The frozen
+Form8962 parent remains open. Evidence: `.state/research/form8962-overlap-replay-2026-10-09/`
+contains sources, public outputs, XML, PDFs, independent oracle, rendered
+review, typed tests and the blocked-case probe. The preceding branch head
+`ecb03ab69` passed scoped CI run37888882173; the full typed gate remains
+separately blocked by deferred78.
+
+## October 9: dependent-family return checkpoint
+
+Four additional public returns pass `executeReturn`/`prepareReturn`, cached
+TY2025 v5.4 Return1040 XSD and an independent source/Decimal replay. Five typed
+regression tests pass, including24 altered coverage, APTC, dependent interest,
+filed dependent AGI, household size or final-credit variants rejected by both
+native and PDF checks. No runtime change was made.
+
+| Case | Parent wages | Dependent MAGI | PTC / APTC | Net PTC | CTC / ACTC / EIC | Final tax | Refund / owed |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Shared, other taxpayer enrolled | 20,000 | 13,000 | 6,000 / 1,200 | 4,800 | 428 / 1,700 / 4,328 | 0 | 18,828 refund |
+| Shared, other taxpayer's child enrolled | 20,000 | 13,000 | 6,000 / 1,200 | 4,800 | 428 / 1,700 / 4,328 | 0 | 18,828 refund |
+| One three-person policy, January–June | 23,140 | 28,500 | 3,000 / 600 | 2,400 | 738 / 3,096 / 7,152 | 0 | 20,648 refund |
+| Alaska parent / Texas dependent policies | 136,700 | 13,300 | 10,644 / 2,400 | 8,244 | 2,200 / 0 / 0 | 19,675 | 3,431 owed |
+
+The source replay adds dependent interest only to PTC household income, applies
+agreed50% allocations or distinct-state benchmarks, and retains six blank
+uncovered months for the partial-year policy. It uses the
+[Form8962 tables and monthly rules](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf),
+[IRS Tax/EIC tables and computation worksheet](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf),
+and [Schedule8812 limits](https://www.irs.gov/pub/irs-pdf/i1040s8.pdf).
+At taxable income120,950, the single tax worksheet gives21,875 before2,200CTC.
+Shared-family credits use1,700ACTC; the two-child partial-year case is limited
+to15% of earned income above2,500, producing3,096ACTC.
+
+All31 filled pages were observed:22 distinct images and9 exact matches.
+Dependent identity, residence/credit boxes, ScheduleEIC children, PTC months,
+PartIV identity/percentages and final totals agree. The three zero-tax returns
+repeat deferred76: Form1040 line24 remains blank despite calculated/native0.
+The shared variants' eight-page PDFs are identical, while their retained
+other-family source records differ. This is expected for the same allocation.
+
+Four related complete-return attempts confirm the existing deferred79 blocker:
+
+| Repayment variant | PTC / APTC | Repayment | Correct line18 / automatic8812 tax |
+|---|---:|---:|---:|
+| Two overlapping policies, one dependent | 1,608 / 1,800 | 192 | 11,447 / 11,255 |
+| Three policies, January–June | 1,740 / 1,800 | 60 | 13,515 / 13,455 |
+| Three unchanged policies, annual line11 | 3,477 / 3,600 | 123 | 13,578 / 13,455 |
+| Shared policy with other family's child | 0 / 1,200 | 1,200 | 9,155 / 7,955 |
+
+Each supplied worksheet uses the correct line18, and each graph rejects the
+mismatch because automatic Schedule8812 tax excludes PTC repayment. These
+cases have no prepared XML or filled PDF; component successes do not close
+these complete-return gaps. They were recorded under existing `future_todo`79,
+not repaired or treated as successful filing routes.
+
+Evidence: `.state/research/form8962-family-replay-2026-10-09/` retains all eight
+source inputs/execution results, four completed packets, independent oracle,
+render review, typed tests and hashes. The preceding `ac7f41e64` head passed
+scoped CI run37889866720. Source records remain synthetic assertions and
+placeholder hashes; external authenticity and IRS acceptance remain unproved.
+The full test gate is still separately blocked by deferred78.
+
+## October 9 dependent filing-threshold packets
+
+The [dependent threshold checkpoint](./ty2025-form8962-dependent-magi-gap.md#october-9-dependent-filing-threshold-return-checkpoint)
+adds nine complete no-APTC returns with required/excluded dependent wages,
+interest and ordinary dividends, other-dependent credits and EIC. All nine
+pass local XSD; 72 pages were observed (26 distinct, 46 exact matches), ten
+new tests pass with 54 native/PDF rejection variants, and 33 related source
+tests pass. Household MAGI and monthly PTC reconcile independently through
+final refunds. Deferred zero-value presentation, broader combinations,
+source authenticity and IRS acceptance remain open.
+
+## October 9 annual dependent-source packets
+
+The [annual dependent-income checkpoint](./ty2025-form8962-dependent-magi-gap.md#october-9-annual-dependent-income-return-checkpoint)
+adds eight complete annual-line11 returns and56 observed pages for multiple
+W-2/1099 sources, mixed dependent income and blind filing thresholds. All eight
+pass XSD and independent source/final-tax replay. Native rejects all56 changed
+variants; PDF rejects40 but accepts16 annual-policy-total changes. The latter
+is newly deferred item80, left unimplemented; annual PDF guard parity remains
+incomplete. Source authenticity, other combinations and IRS acceptance remain
 open.

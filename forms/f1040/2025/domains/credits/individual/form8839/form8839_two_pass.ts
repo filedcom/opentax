@@ -1,4 +1,9 @@
-import { execute, type ExecuteResult } from "../../../../../../../core/runtime/executor.ts";
+import { currentYearForm8839Carryforward } from "../../../../../nodes/intermediate/forms/credits/individual/form8839/current_year_carryforward.ts";
+import { extractFilerIdentity } from "../../../../../mef/filer.ts";
+import {
+  execute,
+  type ExecuteResult,
+} from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
 import { parsePublicForm8839Source } from "../../../../../nodes/intermediate/forms/credits/individual/form8839/public_source.ts";
 import { finalizeStagedForm8839Sink } from "../../../../../nodes/intermediate/forms/credits/individual/form8839/staged_sink_finalizer.ts";
@@ -68,21 +73,37 @@ export function executeForm8839TwoPass(
     f1040.inputSchema.parse(preSink),
     publicSource.magi_review,
   );
-  if (
-    !counterfactual &&
-    (settled.credit.line18 <= 0 ||
-      settled.credit.line14 !== settled.credit.line18)
-  ) {
+  if (!counterfactual && settled.credit.line13 <= 0) {
     throw new Error(
-      "Form 8839 direct route needs a positive fully used nonrefundable credit; carryforward filing is not supported",
+      "Form 8839 direct route needs a positive current-year credit",
     );
   }
+  const unused = settled.credit.line14 - settled.credit.line18;
+  if (!counterfactual && unused > 0 && inputs.f8621 !== undefined) {
+    throw new Error(
+      "Form 8839 with Form 8621 carryforward filing is not supported",
+    );
+  }
+  const carryforward = !counterfactual && unused > 0
+    ? currentYearForm8839Carryforward(
+      source,
+      settled.credit,
+      extractFilerIdentity(preSink)?.primarySSN ?? "",
+    )
+    : undefined;
   return {
     ...pre,
+    carryforwards: {
+      ...pre.carryforwards,
+      ...(carryforward
+        ? { adoption_credit_2025: carryforward.carryforward_amount }
+        : {}),
+    },
     replayInputs: { ...pre.replayInputs, f1040: settled.finalInput },
     pending: {
       ...pre.pending,
       form8839: source,
+      ...(carryforward ? { form8839_carryforward: carryforward } : {}),
       form8839_route: {
         public_source: publicSource,
         pre_adoption_sink_input: preSink,

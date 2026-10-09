@@ -1,5 +1,9 @@
 # TY2025 Form 8962 dependent modified AGI: bounded filing path
 
+The [October 9 threshold checkpoint](#october-9-dependent-filing-threshold-return-checkpoint)
+supersedes the historical “unrun” status below for the five named source-test
+files and nine complete no-APTC return fixtures only. Other scope stays open.
+
 ## Distinct claimed-dependent SSNs before MAGI aggregation (2026-10-05)
 
 The shared Worksheet 1-2 dependent-income calculation now rejects two claimed
@@ -380,3 +384,151 @@ $8,184 PTC to Schedule 3, Form 1040, native MeF, and PDF. At-threshold,
 recipient, exempt-interest, and duplicate-document tamper cases are authored
 but unrun. Multiple forms, wage combinations with both sources, other Form
 1099-DIV boxes, source-byte authenticity, and IRS acceptance remain open.
+
+## October 9 complete interest-dependent family returns
+
+The [dependent-family checkpoint](./ty2025-form8962-policy-month-gap.md#october-9-dependent-family-return-checkpoint)
+adds four complete public/XSD returns with one or two interest-only required
+filers: shared-family credit, three-person partial coverage and Alaska/Texas
+family policies. The31 observed pages reconcile dependent MAGI13,000/28,500/
+13,300 to PTC without adding it to the parent's1040 AGI. Five typed tests pass,
+including changed dependent interest or filed AGI rejected by both native and
+PDF checks. Repayment/CTC combinations retain the separate deferred79 block;
+this evidence does not establish all dependent-income combinations or source
+authenticity. Three zero-tax packets repeat deferred76's blank1040 line24.
+
+## October 9 dependent filing-threshold return checkpoint
+
+Nine synthetic public returns now reach complete native XML and filled PDF,
+joining dependent income to PTC while keeping it out of the parent's AGI.
+The older component fixtures were extended with explicit timely employment-valid
+SSNs, dependent support/residence facts, filer EIC reviews and the complete
+Schedule 8812 credit-limit answers. The dependents are ages 17 and 18, so these
+fixtures claim the credit for other dependents (ODC), not the under-17 credit.
+No runtime guard or calculation changed.
+
+The independent Python Decimal replay reads source W-2/1099 records and filing
+reviews without importing engine code. [Publication 501 Table 2](https://www.irs.gov/pub/irs-prior/p501--2025.pdf)
+provides the single, under-65, nonblind dependent's three income tests: unearned
+income above $1,350, earned income above $15,750, or gross income above the
+larger of $1,350 and earned income (capped at $15,300) plus $450.
+[Form 8962 Worksheet 1-2 and Tables 1-1/2](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf)
+provide the dependent MAGI and PTC calculation. [Schedule 8812](https://www.irs.gov/pub/irs-pdf/i1040s8.pdf)
+provides the $500-per-eligible-dependent credit, and literal cells from the
+[2025 Tax and EIC Tables](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf) provide
+regular tax and EIC. This validates conditional structured facts; it does not
+authenticate issuer records or a dependent's filed return.
+
+| Dependent sources | Parent wages | Included dependent MAGI | PTC | ODC | EIC | Final tax | Refund |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Required wages 16,000 and required interest 2,000 | 33,640 | 18,000 | 7,968 | 1,000 | 4,988 | 907 | 15,049 |
+| Excluded wages 15,750 and interest 1,350 plus exempt 100 | 51,640 | 0 | 7,968 | 1,000 | 1,197 | 3,067 | 9,098 |
+| Required wages 16,000 and excluded interest 1,350 plus exempt 100 | 35,640 | 16,000 | 7,968 | 1,000 | 4,567 | 1,147 | 14,388 |
+| Excluded wages 15,750 | 40,880 | 0 | 8,184 | 500 | 1,528 | 2,277 | 10,435 |
+| Excluded interest 1,350 plus exempt 100 | 40,880 | 0 | 8,184 | 500 | 1,528 | 2,277 | 10,435 |
+| Required wages 16,000 | 24,880 | 16,000 | 8,184 | 500 | 4,084 | 413 | 14,855 |
+| Required ordinary dividends 16,000 | 24,880 | 16,000 | 8,184 | 500 | 4,084 | 413 | 14,855 |
+| Required wages 15,000 plus dividends 1,000 | 24,880 | 16,000 | 8,184 | 500 | 4,084 | 413 | 14,855 |
+| Required interest 4,800, exempt 200 and dividends 11,000 | 24,880 | 16,000 | 8,184 | 500 | 4,084 | 413 | 14,855 |
+
+Each return has withholding 3,000, no APTC, no ACTC and no amount owed.
+Household income is twice the two-/three-person poverty line (40,880/51,640).
+The annual contribution is 818/1,033, rounded monthly to 68/86. Every month has
+paid premium 900, a reviewed replacement for the reported zero SLCSP, and a
+700 benchmark in January–June or 800 in July–December. The monthly credits
+are 632/732 for two people and 614/714 for three. The independent replay also
+checks all 108 emitted monthly groups, native ODC marks and final-tax fields.
+
+Validation retained in `.state/research/form8962-dependent-thresholds-2026-10-09/`:
+
+- Nine complete returns pass local `2025v5.4` XSD, SHA-256
+  `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+- All 72 pages were covered by visual inspection of 26 distinct rendered pages
+  and 46 exact PNG matches; flattened outputs have no fields or widgets.
+  Each packet contains Form 1040, Schedules 3/8812/EIC and Form 8962.
+- The new typed `form8962-dependent-thresholds.test.ts` passes 10/0, including
+  54 changed source/review/SLCSP/payment/MAGI/final-credit variants rejected by
+  both native and PDF checks. Raising excluded wages to 15,751 or interest to
+  1,351 cannot retain the excluded-income result.
+- The five existing domain files `form8962_no_aptc_three_person_monthly`,
+  `form8962_not_required_wage_dependent`, `form8962_no_aptc_monthly_dependent`,
+  `form8962_dependent_wages` and `form8962_dependent_mixed` pass 33/0 under
+  normal typed `deno test -A` with an 8GB heap.
+
+Schedule 8812 line 10 still prints blank where its instructions specify zero;
+Form 8962 zero dependent-MAGI fields are blank as well. These observations
+remain qualified under deferred item 76, with no deferred repair. Other
+income/policy combinations, source authentication, the deferred full-gate
+blocker and IRS business-rule/ATS acceptance remain open. This closes the
+retained packet checks, not the broad board task.
+
+## October 9 annual dependent-income return checkpoint
+
+Eight synthetic complete returns verify annual line 11 with multiple dependent
+employers, mixed wages/interest, two separately filed dependents, and three
+W-2s plus two interest and two ordinary-dividend statements. The last group
+also covers a blind dependent and a blind dependent required to file solely
+under the gross-income test. Parent wages are 70,000 (100,000 for the
+three-person family), withholding is 3,000, and the age-17/18 dependents
+receive ODC of 500 each. There is no ACTC or EIC. This batch changes no runtime
+calculation or filing guard.
+
+An independent Decimal replay checks each source recipient/document identity,
+each filed income line, the dependent filing tests and included tax-exempt
+interest. [Publication 501 Table 2](https://www.irs.gov/pub/irs-prior/p501--2025.pdf)
+gives a blind single dependent under 65 thresholds of 3,350 unearned and
+17,750 earned income, or gross income over the larger of 3,350 and earned
+income (up to 15,300) plus 2,450. The gross-only case has earned13,000,
+unearned3,000 and gross16,000: only the third test is met. Exempt interest200
+then increases included MAGI to16,200.
+
+Under [Form 8962 lines 10–11 and Table 2](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf),
+these unchanged full-year policy amounts use annual calculation. All household
+incomes exceed400% FPL; the contribution is8.5% rounded once to whole dollars.
+Annual premium is12,000, SLCSP10,800 (12,000 for two dependents), and APTC600.
+The annual contribution, rather than twelve rounded monthly contributions,
+determines the allowed credit. Literal single-filer cells in the
+[2025 Tax Table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf) give regular tax
+6,855/13,455. The oracle checks native annual fields, absence of monthly groups,
+ODC marks, Schedule3 and final amount owed without importing engine code.
+
+| Dependent source case | Dependent MAGI | Annual contribution | PTC | Net credit | Final tax | Owed |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| One W-2 | 16,000 | 7,310 | 3,490 | 2,890 | 6,355 | 465 |
+| Two W-2 employers | 16,000 | 7,310 | 3,490 | 2,890 | 6,355 | 465 |
+| W-2 plus interest | 15,100 | 7,234 | 3,566 | 2,966 | 6,355 | 389 |
+| Two W-2s plus interest | 16,100 | 7,319 | 3,481 | 2,881 | 6,355 | 474 |
+| Mixed-income child plus interest-only child | 17,300 | 9,971 | 2,029 | 1,429 | 12,455 | 8,026 |
+| Three W-2s, two INTs and two DIVs | 16,200 | 7,327 | 3,473 | 2,873 | 6,355 | 482 |
+| Same source counts, blind dependent | 16,200 | 7,327 | 3,473 | 2,873 | 6,355 | 482 |
+| Same source counts, blind gross-only filing test | 16,200 | 7,327 | 3,473 | 2,873 | 6,355 | 482 |
+
+All eight complete XML files pass the local `2025v5.4` schema (SHA-256
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`).
+All56 filled pages were covered by inspection of21 distinct rendered pages
+and35 exact PNG matches; flattened outputs contain no fields or widgets.
+Each packet has Form1040, Schedules3/8812 and Form8962. Line11, the annual
+selection, empty monthly rows, family identities, credit and amount-owed
+fields match the independent replay. Schedule8812 line10 still prints blank
+at zero, repeating deferred76.
+
+**Negative-validation qualification:** the initial test expected56 variants
+to reject in both native and PDF checks, but exposed16 PDF acceptances.
+Changing annual premium by1 or January APTC by1 while retaining the original
+annual totals rejects natively but passes the annual PDF descriptor. The
+all-variant diagnostic retains all56 outcomes. This is deferred item80; no
+runtime repair or PDF-parity claim is made. The retained regression asserts
+all56 native rejections and the40 confirmed PDF rejections for dependent
+source/identity, MAGI and final-total drift. The16 missing PDF rejections are
+explicitly outside its passing scope, not counted as successes.
+
+Evidence: `.state/research/form8962-annual-dependent-2026-10-09/` retains raw
+inputs, public execution/preparation, XML/PDF, the independent oracle, every
+negative result, the original failed assertion, typed-test logs and render
+review. The new annual public-return regression passes9/0 under normal typed
+`deno test -A` with an8GB heap. The existing two-dependent and multiple-source
+domain files pass7/0;
+related wage/mixed domain checks passed in the preceding threshold batch.
+Source authentication, repayment/CTC deferred79, PDF guard deferred80, the
+full-suite deferred78 blocker and IRS business-rule/ATS acceptance remain
+open. These packet checks do not close the broad Form8962 board task.

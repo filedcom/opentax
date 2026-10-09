@@ -1,3 +1,6 @@
+export { ableContributionReviewSchema } from "./able_contribution_review.ts";
+export { employeeContributionReviewSchema } from "./employee_contribution_review.ts";
+export { nonjointDistributionReviewSchema } from "./nonjoint_distribution_review.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
 import type { NodeResult } from "../../../../../../../../core/types/tax-node.ts";
@@ -7,6 +10,7 @@ import {
   type Form8880Input,
   inputSchema,
   ownedDeferrals,
+  ownedLine1Contributions,
 } from "./calculation.ts";
 
 export {
@@ -16,6 +20,7 @@ export {
   inputSchema,
   jointDistributionReviewSchema,
   ownedDeferrals,
+  ownedLine1Contributions,
 } from "./calculation.ts";
 
 class Form8880Node extends TaxNode<typeof inputSchema> {
@@ -26,9 +31,12 @@ class Form8880Node extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: Form8880Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     const owned = ownedDeferrals(input);
-    const contributions = (input.ira_contributions_taxpayer ?? 0) +
-      (input.ira_contributions_spouse ?? 0) + owned.taxpayer + owned.spouse;
-    if (contributions === 0) return { outputs: [] };
+    const line1 = ownedLine1Contributions(input);
+    const contributions = line1.taxpayer + line1.spouse + owned.taxpayer +
+      owned.spouse;
+    if (contributions === 0 && !input.able_contribution_review) {
+      return { outputs: [] };
+    }
     return {
       outputs: [this.outputNodes.output(schedule3, { form8880_source: input })],
     };

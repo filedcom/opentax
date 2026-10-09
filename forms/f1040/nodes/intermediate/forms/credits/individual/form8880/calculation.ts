@@ -1,3 +1,18 @@
+import {
+  ableContributionReviewSchema,
+  ownedAbleContributions,
+  ownedAbleDistributions,
+} from "./able_contribution_review.ts";
+import {
+  employeeContributionReviewSchema,
+  ownedEmployeeContributions,
+} from "./employee_contribution_review.ts";
+import {
+  nonjointDistributionReviewSchema,
+  nonjointDistributionTotal,
+  reviewedSaver1099RCopySchema,
+  SaverDistributionTreatment,
+} from "./nonjoint_distribution_review.ts";
 import { z } from "zod";
 import { FilingStatus, TS } from "../../../../../types.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
@@ -9,11 +24,20 @@ export const jointDistributionReviewSchema = z.object({
   filing_due_date: z.enum(["2026-04-15", "2026-10-15"]),
   extension_confirmation_ref: z.string().trim().min(1).optional(),
   reviewed_distribution_sources_ref: z.string().trim().min(1),
+  current_year_source_inventory_review: z.object({
+    reviewed_by: z.string().trim().min(1),
+    reviewed_on: z.string().date(),
+    complete_1099r_inventory_confirmed: z.literal(true),
+  }).strict().optional(),
   entries: z.array(
     z.object({
       recipient: z.nativeEnum(TS),
       received_date: z.string().date(),
-      qualifying_amount: z.number().positive(),
+      qualifying_amount: z.number().finite().nonnegative(),
+      gross_amount: z.number().finite().positive().optional(),
+      treatment: z.nativeEnum(SaverDistributionTreatment).optional(),
+      current_year_1099r: reviewedSaver1099RCopySchema.optional(),
+      current_year_1099qa: z.literal(true).optional(),
       source_document_ref: z.string().trim().min(1),
       filed_jointly_in_distribution_year: z.boolean().optional(),
       distribution_year_return_ref: z.string().trim().min(1).optional(),
@@ -36,6 +60,30 @@ export const jointDistributionReviewSchema = z.object({
   }
   for (const [index, entry] of review.entries.entries()) {
     const year = entry.received_date.slice(0, 4);
+    const currentCopy = entry.current_year_1099r !== undefined ||
+      entry.current_year_1099qa !== undefined ||
+      entry.gross_amount !== undefined || entry.treatment !== undefined;
+    if (
+      (currentCopy &&
+        (!review.current_year_source_inventory_review || year !== "2025")) ||
+      (year === "2025" && review.current_year_source_inventory_review && (
+        (!!entry.current_year_1099r === !!entry.current_year_1099qa) ||
+        entry.gross_amount === undefined ||
+        entry.treatment === undefined ||
+        entry.qualifying_amount !==
+          (entry.treatment === SaverDistributionTreatment.Included
+            ? entry.gross_amount
+            : 0)
+      )) ||
+      (entry.qualifying_amount === 0 && !currentCopy)
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["entries", index],
+        message:
+          "Form 8880 reviewed joint current-year inventory needs complete classified copies",
+      });
+    }
     const inWindow = entry.received_date >= "2023-01-01" &&
       entry.received_date < review.filing_due_date;
     const prior = year === "2023" || year === "2024";
@@ -117,12 +165,15 @@ export const inputSchema = z.object({
   // Reject the old combined W-2 amount. Its owner cannot be inferred on MFJ.
   elective_deferrals: z.never().optional(),
   w2_deferral_entries: z.array(w2DeferralEntrySchema).optional(),
+  employee_contribution_review: employeeContributionReviewSchema.optional(),
+  able_contribution_review: ableContributionReviewSchema.optional(),
   elective_deferrals_taxpayer: z.number().nonnegative().optional(),
   elective_deferrals_spouse: z.number().nonnegative().optional(),
   // Disqualifying distributions received in the test period
   distributions_taxpayer: z.number().nonnegative().optional(),
   distributions_spouse: z.number().nonnegative().optional(),
   joint_distribution_review: jointDistributionReviewSchema.optional(),
+  nonjoint_distribution_review: nonjointDistributionReviewSchema.optional(),
   joint_2025_distribution_review: z.never().optional(),
   joint_prior_year_distribution_review: z.never().optional(),
   // AGI and filing status for credit rate determination
@@ -195,10 +246,33 @@ function distributionColumns(input: Form8880Input): {
         "Form 8880 spouse distributions need a joint-return source",
       );
     }
+    const nonjoint = input.nonjoint_distribution_review;
+    if (nonjoint) {
+      if (
+        input.distributions_taxpayer !== undefined ||
+        input.distributions_spouse !== undefined ||
+        normalizeSsn(nonjoint.taxpayer_ssn) !== normalizeSsn(input.taxpayer_ssn)
+      ) {
+        throw new Error(
+          "Form 8880 nonjoint distribution ledger conflicts with scalar or owner facts",
+        );
+      }
+      return {
+        taxpayer: input.able_contribution_review
+          ? Math.round(nonjointDistributionTotal(nonjoint))
+          : nonjointDistributionTotal(nonjoint),
+        spouse: 0,
+      };
+    }
     return {
       taxpayer: input.distributions_taxpayer ?? 0,
       spouse: 0,
     };
+  }
+  if (input.nonjoint_distribution_review) {
+    throw new Error(
+      "Form 8880 nonjoint distribution ledger cannot be used on a joint return",
+    );
   }
   if (
     input.distributions_taxpayer !== undefined ||
@@ -230,7 +304,7 @@ function distributionColumns(input: Form8880Input): {
     }
     jointStatusByYear.set(year, joint === true);
   }
-  return review.entries.reduce(
+  const totals = review.entries.reduce(
     (columns, entry) => {
       const year = entry.received_date.slice(0, 4);
       const joint = year === "2025" ||
@@ -246,6 +320,12 @@ function distributionColumns(input: Form8880Input): {
     },
     { taxpayer: 0, spouse: 0 },
   );
+  return input.able_contribution_review
+    ? {
+      taxpayer: Math.round(totals.taxpayer),
+      spouse: Math.round(totals.spouse),
+    }
+    : totals;
 }
 
 function normalizeSsn(ssn: string | undefined): string | undefined {
@@ -276,7 +356,7 @@ export function assertEligibleContributor(
   }
 }
 
-export function ownedDeferrals(input: Form8880Input): {
+function ownedW2Deferrals(input: Form8880Input): {
   taxpayer: number;
   spouse: number;
 } {
@@ -332,6 +412,75 @@ export function ownedDeferrals(input: Form8880Input): {
   };
 }
 
+/** Form8880 line2 combines elective deferrals and distinct voluntary payments. */
+export function ownedDeferrals(
+  input: Form8880Input,
+): { taxpayer: number; spouse: number } {
+  if (
+    input.employee_contribution_review &&
+    (input.filing_status === FilingStatus.MFJ
+      ? !input.joint_distribution_review?.current_year_source_inventory_review
+      : !input.nonjoint_distribution_review)
+  ) {
+    throw new Error(
+      "Form 8880 voluntary contributions need a complete reviewed distribution inventory",
+    );
+  }
+  const w2 = ownedW2Deferrals(input);
+  const employee = ownedEmployeeContributions(
+    input.employee_contribution_review,
+    input.taxpayer_ssn,
+    input.spouse_ssn,
+    input.filing_status,
+  );
+  if (
+    (input.employee_contribution_review || input.able_contribution_review) &&
+    (input.elective_deferrals_taxpayer !== undefined ||
+      input.elective_deferrals_spouse !== undefined)
+  ) {
+    throw new Error(
+      "Form 8880 reviewed contributions cannot mix with unsourced deferral totals",
+    );
+  }
+  return {
+    taxpayer:
+      input.employee_contribution_review || input.able_contribution_review
+        ? Math.round(w2.taxpayer + employee.taxpayer)
+        : w2.taxpayer,
+    spouse: input.employee_contribution_review || input.able_contribution_review
+      ? Math.round(w2.spouse + employee.spouse)
+      : w2.spouse,
+  };
+}
+
+/** Line1 combines IRA contributions and the designated beneficiary's ABLE payments. */
+export function ownedLine1Contributions(
+  input: Form8880Input,
+): { taxpayer: number; spouse: number } {
+  if (
+    input.able_contribution_review &&
+    (input.filing_status === FilingStatus.MFJ
+      ? !input.joint_distribution_review?.current_year_source_inventory_review
+      : !input.nonjoint_distribution_review)
+  ) {
+    throw new Error(
+      "Form 8880 ABLE contributions need a complete reviewed distribution inventory",
+    );
+  }
+  assertAbleDistributionLedger(input);
+  const able = ownedAbleContributions(
+    input.able_contribution_review,
+    input.taxpayer_ssn,
+    input.spouse_ssn,
+    input.filing_status,
+  );
+  const taxpayer = (input.ira_contributions_taxpayer ?? 0) + able.taxpayer;
+  const spouse = (input.ira_contributions_spouse ?? 0) + able.spouse;
+  return input.able_contribution_review
+    ? { taxpayer: Math.round(taxpayer), spouse: Math.round(spouse) }
+    : { taxpayer, spouse };
+}
+
 export type Form8880Calculation =
   | { readonly credit: 0; readonly calculatedZero: true }
   | {
@@ -352,26 +501,25 @@ export function calculateForm8880(
     throw new Error("Form 8880 needs a finite sourced tax-liability limit");
   }
   const deferrals = ownedDeferrals(parsed);
+  const line1 = ownedLine1Contributions(parsed);
   const distributions = distributionColumns(parsed);
   if (
     parsed.filing_status !== undefined &&
     parsed.filing_status !== FilingStatus.MFJ &&
-    ((parsed.ira_contributions_spouse ?? 0) > 0 || deferrals.spouse > 0)
+    (line1.spouse > 0 || deferrals.spouse > 0)
   ) {
     throw new Error("Form 8880 spouse contributions require a joint return");
   }
 
   // Part I — per-person eligible contributions
-  const tContributions = (parsed.ira_contributions_taxpayer ?? 0) +
-    deferrals.taxpayer;
+  const tContributions = line1.taxpayer + deferrals.taxpayer;
   const tEligible = eligibleContribution(
     tContributions,
     distributions.taxpayer,
     cfg.saversCreditContributionCap,
   );
 
-  const sContributions = (parsed.ira_contributions_spouse ?? 0) +
-    deferrals.spouse;
+  const sContributions = line1.spouse + deferrals.spouse;
   const sEligible = eligibleContribution(
     sContributions,
     distributions.spouse,
@@ -406,7 +554,12 @@ export function calculateForm8880(
     return { credit: 0, calculatedZero: true };
   }
 
-  const rawCredit = totalEligible * rate; // Line 8
+  // The reviewed contribution routes file whole dollars: add cents first, then
+  // round the line total and calculated credit, retaining exact source amounts.
+  const rawCredit =
+    parsed.employee_contribution_review || parsed.able_contribution_review
+      ? Math.round(totalEligible * rate)
+      : totalEligible * rate;
 
   // Line 11/12 — limit by sourced tax liability.
   const credit = Math.min(rawCredit, capacity);
@@ -444,7 +597,7 @@ export function calculateForm8880(
   // letting MeF distinguish a completed calculation from a missing one.
   // Line 9 is a decimal rate and must print as a string.
   const printFields: Record<string, number | string> = {
-    print_line1a_ira: parsed.ira_contributions_taxpayer ?? 0,
+    print_line1a_ira: line1.taxpayer,
     print_line2a_deferrals: deferrals.taxpayer,
     print_line3a_total: tContributions,
     print_line4a_distributions: distributions.taxpayer,
@@ -461,10 +614,10 @@ export function calculateForm8880(
   };
   printFields.print_line11_tax_liability = capacity;
   if (
-    sEligible > 0 || (parsed.ira_contributions_spouse ?? 0) > 0 ||
+    sEligible > 0 || line1.spouse > 0 ||
     deferrals.spouse > 0 || distributions.spouse > 0
   ) {
-    printFields.print_line1b_ira = parsed.ira_contributions_spouse ?? 0;
+    printFields.print_line1b_ira = line1.spouse;
     printFields.print_line2b_deferrals = deferrals.spouse;
     printFields.print_line3b_total = sContributions;
     printFields.print_line4b_distributions = distributions.spouse;
@@ -475,4 +628,48 @@ export function calculateForm8880(
     printFields.print_line6b_eligible = sEligible;
   }
   return { credit, calculatedZero: false, printFields };
+}
+
+/** Bind each annual QA ledger entry to the owned account and its dated payments. */
+export function assertAbleDistributionLedger(input: Form8880Input): void {
+  const sources = ownedAbleDistributions(
+    input.able_contribution_review,
+    input.taxpayer_ssn,
+    input.spouse_ssn,
+    input.filing_status,
+  );
+  const entries = input.filing_status === FilingStatus.MFJ
+    ? (input.joint_distribution_review?.entries ?? []).filter((e) =>
+      e.current_year_1099qa
+    ).map((e) => ({
+      ...e,
+      recipient_ssn: e.recipient === TS.T
+        ? input.taxpayer_ssn
+        : input.spouse_ssn,
+    }))
+    : (input.nonjoint_distribution_review?.entries ?? []).filter((e) =>
+      e.current_year_1099qa
+    );
+  if (entries.length !== sources.length) {
+    throw new Error(
+      "ABLE distribution ledger differs from the complete Form 1099-QA inventory",
+    );
+  }
+  for (const source of sources) {
+    const matches = entries.filter((e) =>
+      e.source_document_ref === source.source.form1099qa.source_document_ref
+    );
+    const entry = matches[0];
+    if (
+      matches.length !== 1 || !entry ||
+      entry.recipient_ssn?.replaceAll("-", "") !== source.ownerSsn ||
+      entry.gross_amount !== source.grossDistribution ||
+      entry.received_date !== source.lastDistributionDate ||
+      entry.treatment !== SaverDistributionTreatment.Included
+    ) {
+      throw new Error(
+        "ABLE saver distribution needs its owned annual gross source and last payment date",
+      );
+    }
+  }
 }

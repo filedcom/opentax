@@ -1,3 +1,4 @@
+import { partII_tax } from "../../../../../nodes/intermediate/forms/taxes/retirement/form5329/index.ts";
 import { reconcileArcherPartVI } from "../../../../domains/adjustments/health/form8853/form8853_contributions_reconciliation.ts";
 import {
   calculateOwnerForms,
@@ -5,7 +6,10 @@ import {
   reconcileHsaOwnerForms,
 } from "../../../../../nodes/intermediate/forms/taxes/retirement/form5329/index.ts";
 import { TS } from "../../../../../nodes/types.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 
 // Verified against the canonical 2025 Form 5329 AcroForm. Page 1 fields
 // f1_3–f1_8 are the stand-alone filing address, not Part I amounts.
@@ -216,7 +220,7 @@ export const form5329Pdf: PdfFormDescriptor = {
         ...(education > 0
           ? {
             print_education_line7: education - educationException,
-            print_education_line8: (education - educationException) * 0.1,
+            print_education_line8: partII_tax(form),
           }
           : {}),
       };

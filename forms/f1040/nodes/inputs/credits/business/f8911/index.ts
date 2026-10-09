@@ -1,3 +1,4 @@
+import { constructionReviewSchema } from "./construction-review.ts";
 import { f3800 } from "../f3800/index.ts";
 import { calculatePropertyCredit } from "./property-credit.ts";
 import { roundWholeDollars } from "../../../../../whole-dollars.ts";
@@ -29,6 +30,7 @@ export const propertySchema = z.object({
     source_document_reference: z.string().trim().min(1),
     section179_deduction: z.number().finite().nonnegative(),
     rate_basis: z.enum(["base", "construction_before_2023_01_29", "pwa"]),
+    construction_review: constructionReviewSchema.optional(),
     subject_to_passive_activity_limit: z.boolean(),
   }).strict().optional(),
   fuel_type: z.nativeEnum(FuelType).optional(),
@@ -127,7 +129,7 @@ function assertNonElectricFuelSource(property: F8911Property): void {
   }
 }
 
-function propertyAmounts(property: F8911Property) {
+export function calculateForm8911PropertyAmounts(property: F8911Property) {
   const source = property.business_source;
   if ((property.business_use_pct ?? 0) > 0 && !source) {
     throw new Error(
@@ -200,7 +202,7 @@ export function computePersonalCreditAmounts(
         "Form 8911 needs a verified eligible census tract and 11-digit GEOID",
       );
     }
-    propertyAmounts(input);
+    calculateForm8911PropertyAmounts(input);
     if (
       (input.business_use_pct ?? 0) < 1 && input.main_home_property !== true
     ) {
@@ -211,7 +213,7 @@ export function computePersonalCreditAmounts(
   }
   if (
     properties.every((property) =>
-      propertyAmounts(property).personalCredit === 0
+      calculateForm8911PropertyAmounts(property).personalCredit === 0
     )
   ) return undefined;
   if (
@@ -225,7 +227,8 @@ export function computePersonalCreditAmounts(
   // Retain cents across property amounts, then round the total entered on
   // Form 8911 line 4 (Form 1040 instructions: Rounding Off to Whole Dollars).
   const tentativeCredit = roundWholeDollars(properties.reduce(
-    (sum, property) => sum + propertyAmounts(property).personalCredit,
+    (sum, property) =>
+      sum + calculateForm8911PropertyAmounts(property).personalCredit,
     0,
   ));
   const foreignTaxCredit = input.foreign_tax_credit ?? 0;
@@ -252,20 +255,26 @@ export function computePersonalCreditAmounts(
   };
 }
 
+/** Aggregate capped property credits before whole-dollar parent reporting. */
+export function computeForm8911Amounts(rawInput: F8911Input) {
+  const personal = computePersonalCreditAmounts(rawInput, true);
+  const properties = personalCreditProperties(rawInput);
+  const businessCredit = roundWholeDollars(properties.reduce(
+    (sum, property) =>
+      sum + calculateForm8911PropertyAmounts(property).businessCredit,
+    0,
+  ));
+  return { personal, properties, businessCredit };
+}
+
 class F8911Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8911";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3, form6251, f3800]);
 
   compute(_ctx: NodeContext, rawInput: F8911Input): NodeResult {
-    const amounts = computePersonalCreditAmounts(rawInput, true);
-    const properties = personalCreditProperties(rawInput);
-    const businessCredit = roundWholeDollars(
-      properties.reduce(
-        (sum, property) => sum + propertyAmounts(property).businessCredit,
-        0,
-      ),
-    );
+    const { personal: amounts, properties, businessCredit } =
+      computeForm8911Amounts(rawInput);
     const outputs: NodeOutput[] = businessCredit > 0
       ? [this.outputNodes.output(f3800, {
         f8911_credit: {

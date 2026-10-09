@@ -1,8 +1,6 @@
 # TY2025 Form 6251 remaining-scope decision
 
-Status: coverage disposition only. This document does not turn an unsupported
-AMT situation into a supported return. The agreed full test batch, IRS XSD
-validation, filled-PDF review, and ATS acceptances have not run.
+Current evidence now includes complete [PAB](#october-9-complete-pab-return-checkpoint), [ISO/basis](#october-9-iso-and-basis-complete-pdf-checkpoint), [single phaseout](#october-9-single-filer-phaseout-checkpoint), [married phaseout/add-on](#october-9-married-phaseout-and-add-on-checkpoint), [multiple-mine](#october-9-multiple-mine-complete-return-checkpoint), and [circulation schedules](./ty2025-form6251-circulation-cost-gap.md#october-9-computed-three-year-circulation-schedule) packets. The [Form4952 checkpoint](../../../deductions/investments/form4952/ty2025-form4952-gap.md#october-9-amt-complete-return-checkpoint) retains one unresolved bond-debt tax comparison. Latest grouped AMT/circulation regression132/0 and packet tests prove their stated scopes only. Native/PDF reporting, derived-field validation, source authenticity, broader AMT, full-suite and IRS gates remain open; historical unrun notes are superseded only within each checkpoint's exact scope.
 
 ## One direct PAB bond plus one PAB fund (2026-10-01, unrun)
 
@@ -372,3 +370,195 @@ pass. Prior capital-loss carryovers, gains offsetting these mixed-term losses,
 other Schedule D activity, and broker-copy authentication remain outside this
 route. The [2025 Form 6251 line 2k instructions](https://www.irs.gov/instructions/i6251)
 direct separate application of the AMT capital-loss limit.
+
+
+## October 9 complete PAB return checkpoint
+
+Eight public-entry packets now verify the related direct-interest, fund-dividend, original-issue-discount and per-copy expense routes. Each has one single filer, wages $75,000, federal withholding $11,000, standard deduction $15,750, regular taxable income $59,250 and regular tax $7,955. No runtime implementation changed. These are synthetic reviewed issuer, bond-eligibility and expense facts, not authenticated issuer records.
+
+| Source combination | Tax-exempt interest | AMT PAB preference | Tentative minimum / total tax | AMT | Amount owed |
+|---|---:|---:|---:|---:|---:|
+| One bond fund | 300,000 | 300,000 | 75,550 | 67,595 | 64,550 |
+| Two direct-interest issuers | 200,000 | 200,000 | 48,594 | 40,639 | 37,594 |
+| Two bonds from one issuer, $20,000 expenses | 200,000 | 180,000 | 43,394 | 35,439 | 32,394 |
+| Direct interest plus bond fund | 300,000 | 300,000 | 75,550 | 67,595 | 64,550 |
+| Direct interest less $10,000 expenses, plus fund | 300,000 | 290,000 | 72,750 | 64,795 | 61,750 |
+| Distinct interest and OID issuers | 200,000 | 200,000 | 48,594 | 40,639 | 37,594 |
+| Same-bond interest and OID, $15,000 expenses | 200,000 | 185,000 | 44,694 | 36,739 | 33,694 |
+| One OID issuer | 200,000 | 200,000 | 48,594 | 40,639 | 37,594 |
+
+The independent source/Decimal replay sums the retained information-return amounts before comparing engine output. The mixed OID copy reports $110,000 less $10,000 bond premium; its net $100,000 is distinct from the direct-interest copy. Same-issuer copies preserve separate references and matching bond identity; the two-bond case instead preserves distinct bond identifiers. Allocable expenses reduce only the corresponding AMT preference, leaving Form 1040 tax-exempt interest intact. The [IRS information-return instructions](https://www.irs.gov/instructions/i1099int) distinguish stated interest, tax-exempt OID and fund dividends.
+
+Under the [2025 Form 6251 instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf), AMTI here is wages plus the net PAB preference, with the standard deduction added back. Each case retains the full $88,100 single exemption because AMTI is below $626,350. Taxable excess is charged at 26% through $239,100 and 28% above that threshold; AMT is the tentative minimum tax less regular tax. The [2025 tax table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf) supplies $7,955 regular tax for the single $59,250–$59,300 row. The independent replay checks preference, exemption, tentative tax, AMT, final tax and balance due against pending and native XML.
+
+All eight outputs pass the canonical local TY2025v5.4 Return1040 XSD. Their five-page packets contain two Form 1040 pages, two Schedule 2 pages and one Form 6251 page. All 40 pages are accounted for: 18 distinct pages visually inspected across nine contact sheets and 22 exact rendered-image matches. Review covers identity, filing-status mark, tax-exempt income, Form 6251 lines 1a/1b/2a/2g and Parts I/II, Schedule 2 AMT, final tax and balance due. No clipping was observed; no AcroForm field tree or widgets remain.
+
+Typed verification passes **9/0 new complete-return checks** and **14/0 existing tests** across seven source/route modules. Sixty-four altered-source/return variants reject native assembly. Direct Form 6251 PDF projection rejects 40 variants but accepts the 24 changed Form 1040 line17, line24 or recipient-TIN variants; the complete PDF builder rejects all of those same 24 altered graphs before rendering. The initial failed rejection test and the detailed direct/full-PDF probes are retained; the final regression does not assert the deficient direct behavior as desirable.
+
+Two newly deferred findings qualify this evidence:
+
+- **84 — Native line 1a:** every packet prints $15,750 but omits `TotDedLessEnhncSrDedAmt` from IRS6251 XML. The schema labels it line 1a and permits omission, so XSD validity alone does not establish complete reporting. Line 1b and final tax reconcile.
+- **85 — Direct PDF consistency:** the 24 accepted direct-projector mutations above differ from both native and complete-PDF rejection. This is not a demonstrated complete-packet bypass.
+
+Evidence is retained at `.state/research/form6251-pab-2026-10-09/`: source extraction, public inputs/executions, XML/PDF/prepared packets, independent oracle, native omission report, typed logs, direct/full-PDF probes and rendered-page digests. Committed PAB fixtures, expected amounts and tests preserve portable checks. Wider issuer/expense combinations, general investment-interest limitations, preferential income, source authenticity and IRS acceptance remain open; no main-board parent is closed and no deferred repair was implemented.
+
+## October 9 grouped AMT and investment-interest checkpoint
+
+At tested head `61fe2f6b6`, the complete Form6251 domain plus its native and
+PDF test modules passed **93/93**; the Form4952 domain and five AMT end-to-end
+modules passed **15/15**, with no ignored tests. This executes the authored
+ISO, same/mixed-term capped-loss, crossover, source-replay, investment-interest,
+contract, depletion, trust, refund and other adjustment checks selected by
+those directories. It does not close every filing combination in this note.
+The first AMT run was92/1 because `pdftotext` was absent from PATH; rerunning
+the identical selection with installed Poppler passed93/0. No test or runtime
+implementation was changed. Deno2.9.4/TypeScript6.0.3; 8GB V8 heap.
+
+Five source fixtures also passed the public `executeReturn`/`prepareReturn`
+route and whole-return TY2025v5.4 XSD validation. The synthetic general facts
+explicitly answer no to digital assets; the original component fixtures omitted
+that answer and correctly blocked preparation. An independent source arithmetic
+check applies the separate3,000 capital-loss limits and current ISO spread,
+then compares Form1040 capital income, Form6251 line2k/AMTI and native amounts:
+
+| Case | Regular capital amount | AMT capital amount | Line2k | AMTI |
+|---|---:|---:|---:|---:|
+| Prior ISO gain |30,000|15,000|−15,000|455,000|
+| Prior ISO loss |−1,000|−3,000|−2,000|437,000|
+| Capped basis loss |−2,000|−3,000|−1,000|437,000|
+| Short gain/long loss |1,000|−1,000|−2,000|439,000|
+| Long gain/short loss |1,000|−1,000|−2,000|439,000|
+
+Each source has200,000 wages and240,000 current ISO adjustment. The
+[2025 Form6251 instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf)
+remain the authority for separate AMT basis and loss calculations. This oracle
+checks the listed capital/AMTI amounts, not every tax, preferential-rate or
+carryforward line. All five repeat deferred84's missing native line1a.
+
+Private evidence: `.state/research/form6251-basis-2026-10-09/` retains commands,
+module hashes, both final test logs, initial environment/fixture failures,
+inputs, execution/prepared JSON, XML, XSD results and source oracle.
+A private generator's incorrect document-list lookup was corrected before the
+five successful native runs; this was a harness error, not a product defect.
+No filled-PDF review is claimed for these five new packets. Broker/prior-return
+references remain synthetic, not authenticated accepted records. Broader
+coverage, the full typed gate, filled-output review and IRS acceptance stay open.
+
+## October 9 ISO and basis complete PDF checkpoint
+
+The five previously native-only cases now run through the real PDF builder at
+`51e879aca`, pass the same cached TY2025v5.4 whole-return XSD, and retain41
+reviewed pages (37 distinct rendered pages plus4 exact image matches).
+All19 contact sheets were inspected. Every PDF is flattened with no remaining
+AcroForm fields or Widget annotations. This closes the missing visual-review
+step for these five cases, not the broader Form6251 parent or reporting defects.
+
+An independent Decimal oracle derives the separate regular/AMT capital-loss
+caps, current ISO spread, regular preferential tax, AMT PartIII, NIIT and amount
+owed from source facts before comparing the graph/native output. Authorities:
+[2025 Form6251 instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf),
+[2025 tax computation worksheet](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf),
+and [Form8960 instructions](https://www.irs.gov/instructions/i8960).
+Each taxpayer is single with200,000 wages,35,000 withholding and a240,000
+current ISO adjustment; prior-ISO review records are synthetic assertions.
+
+| Case | Pages | Regular tax | AMT | NIIT | Total tax | Amount owed |
+|---|---:|---:|---:|---:|---:|---:|
+| Prior ISO gain |10|41,567|54,433|1,140|97,140|62,140|
+| Prior ISO loss |8|36,827|56,083|0|92,910|57,910|
+| Capped basis loss |7|36,587|56,323|0|92,910|57,910|
+| Short gain/long loss |8|37,307|56,163|38|93,508|58,508|
+| Long gain/short loss |8|37,217|56,253|38|93,508|58,508|
+
+The prior-ISO gain has15,000 AMT preferential gain and96,000 tentative minimum
+tax; the other four have no positive AMT preferential gain. Form1040,
+Schedule2, Form6251 and applicable Form8960 amounts reconcile to the oracle.
+Committed source fixtures/expected values and six typed tests retain the five
+positive public preparations and25 native/13 direct-PDF mutation rejections.
+The initial negative test failed honestly: direct Form6251 projection accepts
+12 variants (ISO and line17 changes in every case, plus capital income and
+Schedule2 changes in prior-ISO-gain). Full PDF construction rejects all12.
+The final test excludes only those documented deficient direct-descriptor
+assertions; no runtime guard or type checking was bypassed.
+
+Review qualifications remain explicit: all five native ScheduleD documents
+contain transaction groups but omit printed summary totals/indicators; native
+Form6251 line1a is omitted although every PDF prints15,750. Both loss cases
+print signed line21 values inside ScheduleD's preprinted parentheses, and
+prior-ISO-gain PartIII zero lines21/23/26 are blank. The two prior-ISO PDFs place
+Form8949 (sequence12A) after Form6251 (32), contrary to the
+[paper assembly instructions](https://www.irs.gov/instructions/i1040gi).
+These extend existing deferred reporting/presentation items and add deferred86
+for packet order. No deferred item was implemented or whole-parent task closed.
+
+Private evidence: `.state/research/form6251-basis-pdf-2026-10-09/` retains five
+source/execute/prepared/XML/PDF packets, origin lists, independent oracle,
+render hashes/review, full and direct negative probes, original failed-test
+log and final6/0 log. The earlier108/0 grouped gate and CI at51e879aca remain
+separate evidence. Issued broker and accepted prior-return authentication,
+wider basis/carryover/PartIII cases, full-suite and IRS acceptance remain open.
+
+Concurrent checkpoint: external commit0f40fcc32 supplies the previously missing
+Form4562 test context. The ISO/basis checkpoint was rebased onto that change
+as c0d9aeaed, preserving its runtime code; CI37898405992 passes. A fresh full
+`deno task test` selects all1,323 modules with no exclusions and remains active
+in `.state/research/testing/full-2cddc8d537c63efc/`; no full pass is claimed.
+
+## October 9 single-filer phaseout checkpoint
+
+Four public complete-return packets exercise the existing single-filer exemption threshold, partial phaseout, zero-exemption boundary and income above it. Source Forms3921 retain1,000 shares and10 strike; FMV436.35,610.35,788.75 and810 produces ISO adjustments426,350,600,350,778,750 and800,000. Wages200,000, taxable interest18,000 and the independently traced investment deduction18,000 retain regular taxable income200,000/tax41,063. These are synthetic reviewed records, not authenticated issuer documents.
+
+The independent Decimal oracle applies the [2025 Form6251 exemption worksheet and tax rates](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf) directly to source amounts. All four pending results, selected native AMTI/exemption/AMT fields and final tax/owed amounts match:
+
+| AMTI | Exemption | AMT | Total tax | Owed after35,000 withholding |
+| --- | --- | --- | --- | --- |
+| 626,350 | 88,100 | 104,865 | 145,928 | 110,928 |
+| 800,350 | 44,600 | 165,765 | 206,828 | 171,828 |
+| 978,750 | 0 | 228,205 | 269,268 | 234,268 |
+| 1,000,000 | 0 | 234,155 | 275,218 | 240,218 |
+
+All four complete XMLs pass the local TY2025v5.4 XSD. All36 flattened PDF pages were inspected via18 distinct pages/18 exact matches across nine contact sheets, including owner, source amounts, exemption, AMT, Schedule2 and Form1040. Native line1a omission and attachment-sequence ordering repeat deferred84/86. For zero exemption, PDFline5 is blank and line6 equals AMTI; the worksheet note directs zero-exemption filers to line6, so this review does not invent a new defect from that blank.
+
+The16 mutation probes produce eight native/eight full-PDF rejections for altered ISO adjustment or Form1040 line17, and eight acceptances at each boundary for changed calculated AMTI or exemption. Eight retained altered XMLs confirm those changed fields are transmitted with unchanged downstream tax. This newly discovered full-export validation gap is deferred89; positive calculation matches do not imply mutation safety. No runtime source or committed test files were changed while the full batch ran.
+
+Private evidence `.state/research/form6251-phaseout-packets-2026-10-09/` retains inputs, execution/preparation, full XML/PDF, altered XML, source oracle, rejection reports, renders, review manifest and SHA256SUMS. Schema SHA256 remains `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`. This checkpoint advances the existing ISO/exemption/return-join task; it does not close other filing statuses, preferences, source authenticity, business rules or IRS acceptance.
+
+## October 9 married phaseout and add-on checkpoint
+
+Six complete source-backed ISO returns extend the phaseout check to married filing separately and jointly. Each retains100,000 primary wages,20,000 withholding, matching W2 Medicare/Social Security facts and an issued-Form3921-shaped record with1,000 unsold shares, strike10 and differing exercise FMV. General inputs identify Alex and Sam; MFS explicitly says the spouse does not itemize. The spouse has no entered income in these synthetic joint examples.
+
+Independent Decimal arithmetic follows the [2025 AMT instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf) for the MFS additional amount and exemption worksheet. Regular taxable income84,250 MFS and68,500 MFJ uses the exact [2025 IRS tax-table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf) amounts13,455 and7,746, respectively, rather than continuous rate-schedule arithmetic below100,000.
+
+| Status | AMTI before MFS addition | Addition | Filed AMTI | Exemption | Total tax | Owed |
+| --- | --- | --- | --- | --- | --- | --- |
+| MFS | 900,350 | 0 | 900,350 | 0 | 249,707 | 229,707 |
+| MFS | 920,350 | 5,000 | 925,350 | 0 | 256,707 | 236,707 |
+| MFS | 1,174,350 | 68,500 | 1,242,850 | 0 | 345,607 | 325,607 |
+| MFJ | 1,252,700 | 0 | 1,252,700 | 137,000 | 307,614 | 287,614 |
+| MFJ | 1,500,700 | 0 | 1,500,700 | 75,000 | 394,414 | 374,414 |
+| MFJ | 1,800,700 | 0 | 1,800,700 | 0 | 499,414 | 479,414 |
+
+All six public packets pass full cached TY2025v5.4 XSD; independent source ISO spreads, standard-deduction addbacks, exemptions, selected native AMTI/exemption/AMT fields, Form1040 tax and owed amounts match. Thirty flattened pages were reviewed via21 distinct renders and9 exact matches across11 contact sheets. Three changes per case—ISO adjustment, Schedule2 AMT and Form1040 additional tax—produce18 native and18 full-PDF rejections. The prior calculated-AMTI/exemption acceptance finding remains deferred89; these different mutation probes do not repair or supersede it.
+
+Existing qualifications recur: all six native6251 documents omit line1a although PDFs print15,750/31,500; MFS1040 page1 repeats the spouse name in the joint-only row; MFJ6251 page5 shows only the primary name despite both names on1040/Schedule2. These observations extend existing deferred entries, with no new queue item or repair. Packet order1040/Schedule2/Form6251 is consistent in this set. Wider filing statuses/preferences, authenticated source records, business-rule validation and IRS acceptance remain open; the parent board task is not closed.
+
+Private evidence `.state/research/form6251-married-phaseout-2026-10-09/` retains sources, execution/preparation, XML/PDF, source oracle, mutation reports, renders, review manifest and SHA256SUMS. Schema digest remains `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`. No runtime or committed test input changed during the live full batch.
+
+## October 9 multiple-mine complete-return checkpoint
+
+Two source-backed public returns retain either two or four separately identified ScheduleC mining activities. Named PartV exploration expenses equal each activity's gross receipts, so regular net business income is zero. Distinct business, property and reviewed-workpaper references bind each expense to its AMT adjustment. The two activities incur100,000/50,000; the four-activity variant adds30,000/20,000. All are current-year, nonpassive, unlimited activities with no elected regular ten-year write-off or unamortized property loss.
+
+The independent Decimal oracle follows the [2025 Form6251 line2q instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf): current regular deduction less one-tenth AMT amortization. Wages300,000, deduction15,750 and regular tax69,035 remain the same in both cases. Additional Medicare Tax is900 from300,000 Medicare wages above the single200,000 threshold; withholding is60,000. The source-to-final-tax results match:
+
+| Mines | Regular expense | AMT deduction | Line2q | AMTI | AMT | Total tax | Owed |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 2 | 150,000 | 15,000 | 135,000 | 435,000 | 23,315 | 93,250 | 33,250 |
+| 4 | 200,000 | 20,000 | 180,000 | 480,000 | 35,915 | 105,850 | 45,850 |
+
+Both complete returns pass cached TY2025v5.4 XSD. Native ScheduleC copy counts, owner, business names, gross receipts, expense totals and zero profit reconcile to each source; selected native6251 adjustment/AMTI/AMT fields reconcile independently. The11/15-page packets were fully reviewed through18 distinct rendered pages and8 exact matches across nine contacts. All six mining expense descriptions/amounts appear on their correct PartV copies, with corresponding page1 expenses. Packet sequence is1040, Schedule2, ScheduleC copies, Form6251, Form8959 and Form8960. The initial private XML check used an incorrect element name; after inspecting the canonical output, it checks `TotalGrossReceiptsAmt` and the other actual fields. This was a harness correction, not a product change.
+
+Six mutations per case alter an expense, duplicate a property/workpaper, or change Schedule1 business income, Form6251 line2q or Form1040 additional tax. All12 reject native assembly and the complete PDF builder. Production and committed tests remain unchanged during the live full batch.
+
+Known reporting qualifications remain: native6251 line1a is absent while the PDF prints15,750; ScheduleC native zero tentative/net profit prints blank on lines29/31. These extend deferred84/76, without undertaking a deferred repair or claiming an IRS rejection. Synthetic workpaper references do not authenticate expense, ownership or prior-year records. Other mining years, dispositions, elections, passive/at-risk limits, business rules and IRS acceptance remain open; no broad parent task is closed.
+
+Private evidence `.state/research/form6251-mining-packets-2026-10-09/` retains sources, execution/preparation, XML/PDF, independent oracle, mutation reports, renders, visual manifest and SHA256SUMS. Schema digest is `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.

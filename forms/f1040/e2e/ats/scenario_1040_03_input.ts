@@ -1,13 +1,14 @@
+import { FilingStatus } from "../../nodes/types.ts";
 import { DistributionCode } from "../../nodes/inputs/income/retirement/f1099r/index.ts";
 import { SCENARIO_1040_03_FACTS } from "./ty2025_cases.ts";
 
 /**
  * TY2025 ATS Scenario 3 is a source-fact packet, not a completed return.
  * https://www.irs.gov/pub/irs-efile/ty25-1040-mef-ats-scenario-3-10202025.pdf
- * PDF pp. 1-4: cover, blank 1040, 1099-R; pp. 9-10: Schedule D;
+ * PDF pp. 1-4: cover, uncomputed 1040, 1099-R; pp. 9-10: Schedule D;
  * pp. 11-12: Schedule E; pp. 13-14: Schedule F; pp. 15-16: Schedule SE;
- * p. 17: Form 4835. The PDF leaves Form 1040 filing status and result lines
- * blank, so this fragment must not be transmitted as an ATS return.
+ * p. 17: Form 4835. The PDF marks Single and digital-assets Yes, but leaves result
+ * lines blank. This fragment must not be transmitted as a complete ATS return.
  */
 export const SCENARIO_1040_03_SOURCE = {
   scheduleD: {
@@ -38,8 +39,8 @@ export const SCENARIO_1040_03_SOURCE = {
     line26Seeds: 2_970,
   },
   form4835: {
-    // The active-participation answer is blank, not a printed No.
-    activelyParticipated: null,
+    // Page 17 visibly marks Yes; text extraction omits the checkbox.
+    activelyParticipated: true,
     line1ProductionIncome: 17_035,
     line2aCooperativeDistributionsGross: 0,
     line3aAgriculturalProgramPaymentsGross: 0,
@@ -61,6 +62,9 @@ export function scenario104003Input(): Record<string, unknown> {
   const source = SCENARIO_1040_03_SOURCE;
   return {
     general: {
+      // Visually verified on official packet page 2; marks are absent from text extraction.
+      filing_status: FilingStatus.Single,
+      digital_assets: true,
       taxpayer_first_name: facts.taxpayer.firstName,
       taxpayer_last_name: facts.taxpayer.lastName,
       taxpayer_ssn: facts.taxpayer.ssn,
@@ -69,7 +73,6 @@ export function scenario104003Input(): Record<string, unknown> {
       address_city: facts.taxpayer.address.city,
       address_state: facts.taxpayer.address.state,
       address_zip: facts.taxpayer.address.zip,
-      // No filing status or digital-asset answer is marked on the 1040.
     },
     f1099r: [{
       payer_name: facts.form1099R.payerName,
@@ -105,9 +108,35 @@ export function scenario104003Input(): Record<string, unknown> {
         line26_seeds: source.scheduleF.line26Seeds,
       }],
     },
-    // Schedule D's 1a/8a totals are printed, but no source 1099-B/1099-DA
-    // transaction details are supplied. Form 4835's activity name is absent.
-    // They stay in the source/reconciliation record, not fabricated inputs.
+    f4835: [{
+      // Internal source labels identify the single issued page, not an asserted farm name.
+      activity_id: "irs-ty2025-ats-1040-03-form4835-page-17",
+      activity_name: "ATS 1040-03 Form 4835 page 17",
+      actively_participated: source.form4835.activelyParticipated,
+      livestock_crop_income: source.form4835.line1ProductionIncome,
+      cooperative_distributions_gross:
+        source.form4835.line2aCooperativeDistributionsGross,
+      agricultural_program_payments_gross:
+        source.form4835.line3aAgriculturalProgramPaymentsGross,
+      ccc_loans_reported_election: source.form4835.line4aCccLoansElection,
+      ccc_loans_forfeited_gross: source.form4835.line4bCccLoansForfeitedGross,
+      crop_insurance_disaster_received:
+        source.form4835.line5aCropInsuranceReceived,
+      other_income: source.form4835.line6OtherIncome,
+      expense_chemicals: source.form4835.line9Chemicals,
+      expense_feed: source.form4835.line14Feed,
+      expense_gasoline: source.form4835.line17Gasoline,
+      expense_repairs_maintenance: source.form4835.line23Repairs,
+      expense_supplies: source.form4835.line26Supplies,
+    }],
+    // Official page 9 supplies aggregate basis-reported/no-adjustment lines.
+    // Use the existing aggregate input; do not invent broker identities or sale dates.
+    schedule_d: {
+      line_1a_proceeds: source.scheduleD.shortTermLine1aProceeds,
+      line_1a_cost: source.scheduleD.shortTermLine1aBasis,
+      line_8a_proceeds: source.scheduleD.longTermLine8aProceeds,
+      line_8a_cost: source.scheduleD.longTermLine8aBasis,
+    },
   };
 }
 
@@ -158,9 +187,10 @@ export const SCENARIO_1040_03_RECONCILIATION = {
     farmOptionalMethodTwoThirdsGrossDenominator: 3,
   },
   notAtsReadyBecause: [
-    "Form 1040 pp. 2-3 do not mark a filing status or digital-asset answer; all result lines are blank.",
-    "Schedule D p. 9 gives only aggregate 1a/8a proceeds and basis, not the underlying 1099-B or 1099-DA transaction records required by the source graph.",
-    "Form 4835 p. 17 gives income and expenses but no activity identifier; its active-participation checkbox is blank.",
+    "Form 1040 marks Single and digital-assets Yes; its result lines remain blank.",
+    "The cover supplies a taxable state refund of 3,110, but not the gross issued refund, payer or prior-year recovery workpaper required by the current 1099-G route.",
+    "Schedule D p. 9 aggregate 1a/8a proceeds and basis use the supported aggregate route; no individual broker transaction or issuer identity is asserted.",
+    "Form 4835 p. 17 marks active participation Yes. Its internal source label does not establish external activity history or QBI eligibility.",
     "The cover says the taxpayer is a specified agricultural-cooperative patron, but no patronage or cooperative-sale allocation facts are supplied for any QBI cooperative reduction.",
     "The taxpayer elects Schedule SE's farm optional method; its calculation and MeF/PDF mapping are coded, but end-to-end validation and any farm K-1 or CRP facts remain pending.",
     "Schedule SE pp. 15-16 and Schedule 1 pp. 5-6 leave all calculated lines blank; the farm optional-method election supplies no printed SE-tax target.",

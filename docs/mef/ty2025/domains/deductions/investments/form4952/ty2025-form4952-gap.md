@@ -790,3 +790,22 @@ foreign allocation and IRS parent gates remain open.
 ## Main exact Form4952 paid-source cents
 
 Production738554c2a main focused6/0(17s), `/tmp/opentax-form4952-source-cents-current-main-oct6.log`; isolated final44/0 sevenmodules verifies same production. Actual main retainedsource replay regenerates7-page fullXSD/PDF/pending/origins exactly, XMLonlyReturnTs, `/tmp/opentax-form4952-source-cents-held-main-oct6.log`; output `/tmp/opentax-form4952-source-cents-held-main-oct6`. Allseven pages reviewed from v4 and confirmed PDF/pending byte-identical finalv5. OriginalolderOctober6 integerarchive untouched; graph additions to laterregeneration are recorded and no oldarchivebyteequality claim. Main6/0 andheld were terminal before sealing, ledger1466; frozen52/future unchanged. FullV5 firstexit1/logoverwritten byKeepAlive, run2 live91417/91420; nextwrapper-start guard archives and removes service. Latest-source fullpass remains required.
+
+## October 9 AMT complete-return checkpoint
+
+Four synthetic source-backed public returns combine a traced taxable-securities loan, separately identified paid-interest records, current ISO exercise and regular/AMT investment-interest limits. All four pass the cached TY2025v5.4 full-return XSD. Their 36 flattened pages were inspected through 25 distinct renders and 11 exact matches; all13 contact sheets were reviewed. Required Form1040, Schedule2/A/B, Forms4952/6251/8960 amounts and owner copies were checked, with the qualifications below retained.
+
+| Case | Regular deduction / carry | AMT carry | Actual AMTI | Actual total tax / owed | Independent comparison |
+| --- | --- | --- | --- | --- | --- |
+| single-pab | 18,000 / 2,000 | 0 | 443,000 | 94,590 / 59,590 | matches |
+| two-pab-debt | 18,000 / 2,000 | 0 | 445,000 | 95,150 / 60,150 | review required |
+| amt-income-limited | 17,000 / 3,000 | 2,000 | 440,000 | 93,750 / 58,750 | matches |
+| taxable-only | 18,000 / 2,000 | 2,000 | 440,000 | 93,750 / 58,750 | matches |
+
+Independent Decimal arithmetic starts from source interest, paid expenses, wages and ISO shares/strike/FMV. Three final-tax results match; the debt comparison deducting its1,000 expense once produces AMTI446,000 and tax95,430, a280 difference from the fourth output. The [2025 AMT instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf) require reconciliation of debt treatment across lines2c/2g and the AMT interest limit before accepting that comparison. This remains a question in future_todo87, not a passing fourth tax oracle or an implemented repair. All regular/AMT carry values match the source comparison; selected native deduction, carry, AMTI and AMT fields match pending values.
+
+Six mutations per case alter deduction, traced payment, owner, taxable interest, AMT interest adjustment or Form1040 additional tax. All24 reject both native assembly and the complete PDF builder. These are retained execution probes, not newly committed typed tests. Production and test inputs remain unchanged during the already-running full batch.
+
+Every packet repeats native Form6251 line1a omission (deferred84) and out-of-sequence PDF Forms4952/6251 (deferred86). The debt case also has a tax-exempt-only payer with native zero/blank PDF amount on ScheduleB (deferred88). No qualification was repaired from the deferred queue. Sources remain synthetic reviewed references, not authenticated issuer/loan bytes; wider debt, elections, accepted carryover history, business rules and IRS acceptance remain open. This scoped checkpoint does not close either parent board task.
+
+Private evidence: `.state/research/form4952-amt-packets-2026-10-09/` retains source inputs, public execution/preparation, XML, flattened PDFs, render/qualification reports, independent arithmetic and mutation results, plus SHA256SUMS. XSD digest: `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.

@@ -1,5 +1,7 @@
 # TY2025 paired Form 8889 boundary
 
+> Current October9 evidence: [seven complete joint packets](#october-9-paired-hsa-complete-return-checkpoint),65 observed pages and21 typed passes; native line47, code2 line2 reporting and two direct PDF tax checks remain qualified. Historical scope and unrun labels below are superseded only where that checkpoint explicitly verifies them.
+
 ## Current Form 5329 Part VII filled-packet review (2026-10-04)
 
 The existing paired other-coverage excess source is now a retained filled-PDF
@@ -622,3 +624,35 @@ filled-form page-copy check and a line-43-only selection. The selected packet
 review is recorded separately in the [validation batch](../../../../testing/ty2025-form1040-validation-batch.md).
 This page selection does not authenticate prior HSA records or complete the
 owner-specific funding and distribution paths described above.
+
+## October 9 paired-HSA complete-return checkpoint
+
+Seven constructed joint returns now retain current public-entry, native, XSD and filled-PDF evidence for the related monthly eligibility, personal-excess, rollover and dated-distribution routes below. This supersedes the historical “unrun” labels only for these exact cases and the six selected source modules. It does not establish every paired-owner route, employer-code2 coexistence, prior-return authenticity or IRS acceptance. No runtime implementation changed in this checkpoint.
+
+Each return has one primary-owned W2 with wages90,000 and federal withholding12,000, two identified HSA owners and no dependents. Source records preserve monthly coverage, referenced Medicare/other-plan notices, allocation agreements, 1099-SA recipients/codes, medical receipts, rollover dates and dated exception evidence as applicable. They are synthetic reviewed facts, not authenticated notices, trustee records or medical determinations. The age65 cases also retain explicit Schedule1-A zero-exclusion reviews and timely valid SSN facts for both owners. Initial attempts without that review correctly stopped; those inputs and errors remain in the private checkpoint.
+
+| Case | Combined HSA deduction | Additional income | Additional tax | Regular tax | Total tax | Refund |
+|---|---:|---:|---:|---:|---:|---:|
+| Family coverage lost by primary in July, excess retained | 8,000 | 0 | 60 | 5,586 | 5,646 | 6,354 |
+| Primary Medicare from July, excess retained | 5,150 | 0 | 51 | 5,928 | 5,979 | 6,021 |
+| Primary code2 return plus spouse medical distribution | 6,300 | 400 | 60 | 5,838 | 5,898 | 6,102 |
+| Primary rollover plus taxable remainder | 4,000 | 400 | 80 | 6,114 | 6,194 | 5,806 |
+| Primary distributions before/after disability | 4,000 | 700 | 60 | 6,150 | 6,210 | 5,790 |
+| Primary Medicare and age65 timing | 5,500 | 700 | 40 | 5,058 | 5,098 | 6,902 |
+| Spouse Medicare and age65 timing | 5,500 | 700 | 40 | 5,058 | 5,098 | 6,902 |
+
+The independent Decimal/source replay does not derive expected values from the return output. [2025 Form8889 instructions](https://www.irs.gov/pub/irs-prior/i8889--2025.pdf) support monthly eligibility, separate owner deductions and distribution exclusions/exceptions. The six shared family months allocate2,000/2,275; the continuing spouse receives another4,275 for July–December. Six self-only eligible months allow2,150, or2,650 with the prorated catchup. The code2 return removes900 principal and reports100 earnings; the spouse's500 distribution less200 medical expense leaves300 taxable. A600 rollover leaves400 taxable; disability exempts400 of700 taxable, while the age65 cases exempt500 of700.
+
+[2025 Form5329 instructions](https://www.irs.gov/pub/irs-prior/i5329--2025.pdf) give retained current excess1,000/850 and six-percent tax60/51 because the HSA year-end balances exceed those excesses. [2025 Form1040 instructions](https://www.irs.gov/instructions/i1040gi) and the [MFJ tax tables](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf) give the final tax amounts above. The two age65 cases take standard deduction33,100 plus Schedule1-A senior deduction6,000 at AGI85,200; the other five take31,500. No EIC, dependent credit or ScheduleR credit is claimed.
+
+All seven packets pass the canonical local TY2025v5.4 Return1040 XSD. Actual PDF review covers **65 pages:49 distinct pages viewed across25 contact sheets and16 exact rendered-image matches**. Both Forms8889 preserve owner identity, coverage and exception marks; the age65 owner swap also swaps Form1040 age marks and Schedule1-A line36a/36b. Schedule1 line8z has the100 earnings description statement in the code2 case. Forms5329 print the correct primary owner and line47/48/49 amounts. No clipping was observed; all outputs have no remaining field tree/widgets.
+
+Typed tests complete **8/0 new public-return checks** and **13/0 existing checks** across the six related modules. The new positive checks reconcile each owner's deduction/distribution/penalty, Schedules1/2, senior deductions, final refund and owner PDF instances; the excess cases also check printed Form5329 lines47/49. Source/return mutations give **42 native rejections and40 direct Form8889 PDF-descriptor rejections**. Two direct PDF tax mutations accept and are explicitly excluded from rejection claims, without asserting their acceptance as desirable behavior. The initial test-harness schema errors and the substantive failed rejection test are retained separately; no typing bypass was used.
+
+Three qualifications remain open:
+
+- Existing deferred Form5329 line47 XML omission repeats for current excess1,000 and850, despite correct PDF line47, native line48/49 and final tax. XSD validity does not establish complete native/PDF parity.
+- New deferred82 asks whether Form8889 line2 should retain5,200 after900 principal is timely returned in the code2 case; native/PDF both retain5,200. Final deduction4,300, earnings100 and tax reconcile, but the line2 reporting treatment remains unapproved.
+- New deferred83 records that changing final Form1040 line23 from80 to81 (rollover) or60 to61 (disability) passes the Form8889 PDF descriptor while native assembly rejects inconsistent line24. This is descriptor-boundary evidence, not a claim that a complete altered PDF renders.
+
+Evidence: `.state/research/form8889-paired-replay-2026-10-09/` retains source extraction, seven final inputs/executions/XML/PDF/prepared records, initial missing-review attempts, independent oracle and expected data, typed logs, negative probe/report, native qualification report, page images and digests. Committed `form8889-paired-returns.fixture.json`, expected JSON and test preserve portable checks. The52 main TODOs remain open and deferred repairs were not implemented. The engineering estimate remains about60% of individual ATS checks, with no measured IRS acceptance claim.

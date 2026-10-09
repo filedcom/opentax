@@ -1,0 +1,689 @@
+{
+  "age55-mixed-prior-coverage": {
+    "general": {
+      "filing_status": "mfj",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Example",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1965-06-15",
+      "spouse_first_name": "Sam",
+      "spouse_last_name": "Example",
+      "spouse_ssn": "444-55-6666",
+      "spouse_ssn_valid_for_employment": true,
+      "spouse_ssn_issued_before_due_date": true,
+      "spouse_tin_issued_by_due_date": true,
+      "spouse_dob": "1982-03-10",
+      "address_line1": "1 Example Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false
+    },
+    "w2": [
+      {
+        "box1_wages": 90000,
+        "box2_fed_withheld": 12000,
+        "employee_ssn": "111223333",
+        "box3_ss_wages": 90000,
+        "box4_ss_withheld": 5580,
+        "box5_medicare_wages": 90000,
+        "box6_medicare_withheld": 1305,
+        "employer_ein": "12-3456789",
+        "employer_name": "Example Employer",
+        "employer_address_line1": "10 Employer Road",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "box12_entries": []
+      }
+    ],
+    "form8889": {
+      "beneficiary_identity": {
+        "owner": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      "eligible_hdhp_coverage_by_month": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "age_55_or_older": true,
+      "married_at_year_end": true,
+      "spouse_has_separate_hsa": false,
+      "testing_period_failure": {
+        "last_month_rule_evidence": {
+          "contribution_year": 2024,
+          "eligible_hdhp_coverage_by_month": [
+            "family",
+            "family",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "self_only"
+          ],
+          "age_55_or_older": true,
+          "married_at_year_end": true,
+          "spouse_has_separate_hsa": false,
+          "last_month_rule_elected": true,
+          "filed_form8889_line2": 4317,
+          "filed_form8889_line3": 4150,
+          "filed_form8889_line4_archer": 0,
+          "filed_form8889_line5": 4150,
+          "filed_form8889_line6": 4150,
+          "filed_form8889_line7": 167,
+          "filed_form8889_line8": 4317,
+          "filed_form8889_line9": 0,
+          "filed_form8889_line10": 0,
+          "filed_form8889_line13": 4317
+        },
+        "qualified_funding_distribution_amount": 0,
+        "not_death_or_disability": true,
+        "prior_year_source": "Reviewed filed 2024 Form 8889 and monthly HDHP facts"
+      }
+    }
+  },
+  "both-owner-prior-excess": {
+    "general": {
+      "filing_status": "mfj",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Example",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1985-06-15",
+      "spouse_first_name": "Sam",
+      "spouse_last_name": "Example",
+      "spouse_ssn": "444-55-6666",
+      "spouse_ssn_valid_for_employment": true,
+      "spouse_ssn_issued_before_due_date": true,
+      "spouse_tin_issued_by_due_date": true,
+      "spouse_dob": "1982-03-10",
+      "address_line1": "1 Example Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false
+    },
+    "w2": [
+      {
+        "box1_wages": 90000,
+        "box2_fed_withheld": 12000,
+        "employee_ssn": "111223333",
+        "box3_ss_wages": 90000,
+        "box4_ss_withheld": 5580,
+        "box5_medicare_wages": 90000,
+        "box6_medicare_withheld": 1305,
+        "employer_ein": "12-3456789",
+        "employer_name": "Example Employer",
+        "employer_address_line1": "10 Employer Road",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "box12_entries": []
+      }
+    ],
+    "form8889": {
+      "beneficiary_identity": {
+        "owner": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      "eligible_hdhp_coverage_by_month": [
+        "self_only",
+        "self_only",
+        "self_only",
+        "self_only",
+        "self_only",
+        "self_only",
+        "self_only",
+        "self_only",
+        "self_only",
+        "self_only",
+        "self_only",
+        "self_only"
+      ],
+      "taxpayer_hsa_contributions": 2000,
+      "hsa_december_31_value": 10000,
+      "prior_year_hsa_excess": {
+        "tax_year": 2024,
+        "filed_form5329_reference": "Alex filed 2024 Form 5329 page 3",
+        "filed_return_reviewed": true,
+        "owner_ssn": "111223333",
+        "form5329_line48": 3000,
+        "form5329_line49": 180
+      },
+      "age_55_or_older": false,
+      "last_month_rule_elected": false,
+      "married_at_year_end": true,
+      "spouse_has_separate_hsa": true,
+      "spouse_hsa": {
+        "beneficiary_identity": {
+          "owner": "S",
+          "name": "Sam Example",
+          "ssn": "444556666"
+        },
+        "eligible_hdhp_coverage_by_month": [
+          "self_only",
+          "self_only",
+          "self_only",
+          "self_only",
+          "self_only",
+          "self_only",
+          "self_only",
+          "self_only",
+          "self_only",
+          "self_only",
+          "self_only",
+          "self_only"
+        ],
+        "taxpayer_hsa_contributions": 1000,
+        "hsa_december_31_value": 8000,
+        "prior_year_hsa_excess": {
+          "tax_year": 2024,
+          "filed_form5329_reference": "Sam filed 2024 Form 5329 page 3",
+          "filed_return_reviewed": true,
+          "owner_ssn": "444556666",
+          "form5329_line48": 4000,
+          "form5329_line49": 240
+        },
+        "age_55_or_older": false,
+        "last_month_rule_elected": false,
+        "married_at_year_end": true,
+        "spouse_has_separate_hsa": true
+      }
+    }
+  },
+  "december-ira-funding": {
+    "general": {
+      "filing_status": "single",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Example",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1985-06-15",
+      "spouse_ssn_valid_for_employment": true,
+      "spouse_ssn_issued_before_due_date": true,
+      "spouse_tin_issued_by_due_date": true,
+      "address_line1": "1 Example Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false
+    },
+    "w2": [
+      {
+        "box1_wages": 90000,
+        "box2_fed_withheld": 12000,
+        "employee_ssn": "111223333",
+        "box3_ss_wages": 90000,
+        "box4_ss_withheld": 5580,
+        "box5_medicare_wages": 90000,
+        "box6_medicare_withheld": 1305,
+        "employer_ein": "12-3456789",
+        "employer_name": "Example Employer",
+        "employer_address_line1": "10 Employer Road",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "box12_entries": []
+      }
+    ],
+    "form8889": {
+      "beneficiary_identity": {
+        "owner": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      "eligible_hdhp_coverage_by_month": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "age_55_or_older": false,
+      "last_month_rule_elected": false,
+      "married_at_year_end": false,
+      "testing_period_failure": {
+        "last_month_rule_evidence": {
+          "contribution_year": 2024,
+          "eligible_hdhp_coverage_by_month": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "self_only"
+          ],
+          "age_55_or_older": false,
+          "married_at_year_end": false,
+          "last_month_rule_elected": true,
+          "filed_form8889_line2": 0,
+          "filed_form8889_line3": 4150,
+          "filed_form8889_line4_archer": 0,
+          "filed_form8889_line5": 4150,
+          "filed_form8889_line6": 4150,
+          "filed_form8889_line7": 0,
+          "filed_form8889_line8": 4150,
+          "filed_form8889_line9": 0,
+          "filed_form8889_line10": 1000,
+          "filed_form8889_line13": 0
+        },
+        "qualified_funding_distribution_amount": 1000,
+        "not_death_or_disability": true,
+        "prior_year_source": "Reviewed filed 2024 Form 8889",
+        "qualified_funding_transfer_evidence": {
+          "transfer_year": 2024,
+          "transfers": [
+            {
+              "amount": 1000,
+              "transfer_month": 12,
+              "source_reference": "December 2024 IRA trustee transfer"
+            }
+          ],
+          "filed_prior_year_form8889_line10": 1000,
+          "prior_year_eligible_hdhp_coverage_by_month": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "self_only"
+          ],
+          "prior_year_eligibility_source_reference": "Reviewed 2024 HDHP month record"
+        }
+      }
+    }
+  },
+  "paired-last-month-recapture": {
+    "general": {
+      "filing_status": "mfj",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Example",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1985-06-15",
+      "spouse_first_name": "Sam",
+      "spouse_last_name": "Example",
+      "spouse_ssn": "444-55-6666",
+      "spouse_ssn_valid_for_employment": true,
+      "spouse_ssn_issued_before_due_date": true,
+      "spouse_tin_issued_by_due_date": true,
+      "spouse_dob": "1982-03-10",
+      "address_line1": "1 Example Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false
+    },
+    "w2": [
+      {
+        "box1_wages": 90000,
+        "box2_fed_withheld": 12000,
+        "employee_ssn": "111223333",
+        "box3_ss_wages": 90000,
+        "box4_ss_withheld": 5580,
+        "box5_medicare_wages": 90000,
+        "box6_medicare_withheld": 1305,
+        "employer_ein": "12-3456789",
+        "employer_name": "Example Employer",
+        "employer_address_line1": "10 Employer Road",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "box12_entries": []
+      }
+    ],
+    "form8889": {
+      "beneficiary_identity": {
+        "owner": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      "allocated_family_limit": 3919,
+      "family_allocation_source_reference": "2025 family allocation",
+      "eligible_hdhp_coverage_by_month": [
+        null,
+        "family",
+        "family",
+        "family",
+        "family",
+        "family",
+        "family",
+        "family",
+        "family",
+        "family",
+        "family",
+        "family"
+      ],
+      "taxpayer_hsa_contributions": 2000,
+      "age_55_or_older": false,
+      "last_month_rule_elected": false,
+      "married_at_year_end": true,
+      "spouse_has_separate_hsa": true,
+      "testing_period_failure": {
+        "last_month_rule_evidence": {
+          "contribution_year": 2024,
+          "eligible_hdhp_coverage_by_month": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "family"
+          ],
+          "age_55_or_older": false,
+          "married_at_year_end": true,
+          "spouse_has_separate_hsa": true,
+          "last_month_rule_elected": true,
+          "filed_form8889_line2": 4006,
+          "filed_form8889_line3": 8300,
+          "filed_form8889_line4_archer": 0,
+          "filed_form8889_line5": 8300,
+          "filed_form8889_line6": 4150,
+          "filed_form8889_line7": 0,
+          "filed_form8889_line8": 4150,
+          "filed_form8889_line9": 0,
+          "filed_form8889_line10": 0,
+          "filed_form8889_line13": 4006
+        },
+        "qualified_funding_distribution_amount": 0,
+        "not_death_or_disability": true,
+        "prior_year_source": "2024 taxpayer Form 8889"
+      },
+      "spouse_hsa": {
+        "beneficiary_identity": {
+          "owner": "S",
+          "name": "Sam Example",
+          "ssn": "444556666"
+        },
+        "allocated_family_limit": 3919,
+        "family_allocation_source_reference": "2025 family allocation",
+        "eligible_hdhp_coverage_by_month": [
+          null,
+          "family",
+          "family",
+          "family",
+          "family",
+          "family",
+          "family",
+          "family",
+          "family",
+          "family",
+          "family",
+          "family"
+        ],
+        "taxpayer_hsa_contributions": 1000,
+        "age_55_or_older": false,
+        "last_month_rule_elected": false,
+        "married_at_year_end": true,
+        "spouse_has_separate_hsa": true,
+        "testing_period_failure": {
+          "last_month_rule_evidence": {
+            "contribution_year": 2024,
+            "eligible_hdhp_coverage_by_month": [
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              "family"
+            ],
+            "age_55_or_older": false,
+            "married_at_year_end": true,
+            "spouse_has_separate_hsa": true,
+            "last_month_rule_elected": true,
+            "filed_form8889_line2": 4006,
+            "filed_form8889_line3": 8300,
+            "filed_form8889_line4_archer": 0,
+            "filed_form8889_line5": 8300,
+            "filed_form8889_line6": 4150,
+            "filed_form8889_line7": 0,
+            "filed_form8889_line8": 4150,
+            "filed_form8889_line9": 0,
+            "filed_form8889_line10": 0,
+            "filed_form8889_line13": 4006
+          },
+          "qualified_funding_distribution_amount": 0,
+          "not_death_or_disability": true,
+          "prior_year_source": "2024 spouse Form 8889"
+        }
+      },
+      "prior_year_paired_family_allocation": {
+        "contribution_year": 2024,
+        "equal_allocation_agreed": true,
+        "allocation_source_reference": "2024 signed equal family allocation",
+        "primary_filed_form8889_source_reference": "2024 taxpayer Form 8889",
+        "spouse_filed_form8889_source_reference": "2024 spouse Form 8889"
+      }
+    }
+  },
+  "primary-prior-excess": {
+    "general": {
+      "filing_status": "mfj",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Example",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1985-06-15",
+      "spouse_first_name": "Sam",
+      "spouse_last_name": "Example",
+      "spouse_ssn": "444-55-6666",
+      "spouse_ssn_valid_for_employment": true,
+      "spouse_ssn_issued_before_due_date": true,
+      "spouse_tin_issued_by_due_date": true,
+      "spouse_dob": "1982-03-10",
+      "address_line1": "1 Example Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false
+    },
+    "w2": [
+      {
+        "box1_wages": 90000,
+        "box2_fed_withheld": 12000,
+        "employee_ssn": "111223333",
+        "box3_ss_wages": 90000,
+        "box4_ss_withheld": 5580,
+        "box5_medicare_wages": 90000,
+        "box6_medicare_withheld": 1305,
+        "employer_ein": "12-3456789",
+        "employer_name": "Example Employer",
+        "employer_address_line1": "10 Employer Road",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "box12_entries": []
+      }
+    ],
+    "form8889": {
+      "beneficiary_identity": {
+        "owner": "T",
+        "name": "Alex Example",
+        "ssn": "111223333"
+      },
+      "eligible_hdhp_coverage_by_month": [
+        "self_only",
+        "self_only",
+        "self_only",
+        "self_only",
+        "self_only",
+        "self_only",
+        "self_only",
+        "self_only",
+        "self_only",
+        "self_only",
+        "self_only",
+        "self_only"
+      ],
+      "taxpayer_hsa_contributions": 2000,
+      "hsa_december_31_value": 10000,
+      "prior_year_hsa_excess": {
+        "tax_year": 2024,
+        "filed_form5329_reference": "Alex filed 2024 Form 5329 page 3",
+        "filed_return_reviewed": true,
+        "owner_ssn": "111223333",
+        "form5329_line48": 3000,
+        "form5329_line49": 180
+      },
+      "age_55_or_older": false,
+      "last_month_rule_elected": false,
+      "married_at_year_end": true,
+      "spouse_has_separate_hsa": true,
+      "spouse_hsa": {
+        "beneficiary_identity": {
+          "owner": "S",
+          "name": "Sam Example",
+          "ssn": "444556666"
+        },
+        "eligible_hdhp_coverage_by_month": [
+          "self_only",
+          "self_only",
+          "self_only",
+          "self_only",
+          "self_only",
+          "self_only",
+          "self_only",
+          "self_only",
+          "self_only",
+          "self_only",
+          "self_only",
+          "self_only"
+        ],
+        "taxpayer_hsa_contributions": 1000,
+        "age_55_or_older": false,
+        "last_month_rule_elected": false,
+        "married_at_year_end": true,
+        "spouse_has_separate_hsa": true
+      }
+    }
+  }
+}

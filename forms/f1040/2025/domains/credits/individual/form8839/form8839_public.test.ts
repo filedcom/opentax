@@ -1,3 +1,4 @@
+import { Box12Code } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
 import {
   assertEquals,
   assertRejects,
@@ -25,7 +26,12 @@ const general = {
   digital_assets: false,
 };
 
-async function reviewedSource() {
+async function reviewedSource(
+  wages = 100_000,
+  withheld = 15_000,
+  expense = 11_000,
+  retirementDeferrals = 0,
+) {
   const ids = ["decree-1", "birth-1", "invoice-1", "payment-1"];
   const attachments = await Promise.all(ids.map(async (id) => {
     const pdf = await PDFDocument.create();
@@ -68,7 +74,7 @@ async function reviewedSource() {
         paid_date: "2025-03-12",
         category: "attorney_fee" as const,
         payee: "Adoption Counsel",
-        amount: 11_000,
+        amount: expense,
         reimbursed_amount: 0,
       }],
     }],
@@ -114,7 +120,7 @@ async function reviewedSource() {
         paid_date: "2025-03-12",
         category: "attorney_fee" as const,
         payee: "Adoption Counsel",
-        amount: 11_000,
+        amount: expense,
         directly_related_to_legal_adoption_confirmed: true as const,
       }],
     },
@@ -142,7 +148,15 @@ async function reviewedSource() {
     })),
   };
   const result = f1040_2025.executeReturn({
-    general,
+    general: {
+      ...general,
+      ...(retirementDeferrals > 0
+        ? {
+          taxpayer_form8880_student_five_months: false,
+          taxpayer_form8880_claimed_as_dependent: false,
+        }
+        : {}),
+    },
     w2: [{
       employee_ssn: "111-22-3333",
       employer_ein: "12-3456789",
@@ -151,12 +165,19 @@ async function reviewedSource() {
       employer_address_city: "Austin",
       employer_address_state: "TX",
       employer_address_zip: "78701",
-      box1_wages: 100_000,
-      box2_fed_withheld: 15_000,
-      box3_ss_wages: 100_000,
-      box4_ss_withheld: 6_200,
-      box5_medicare_wages: 100_000,
-      box6_medicare_withheld: 1_450,
+      box1_wages: wages,
+      box2_fed_withheld: withheld,
+      box3_ss_wages: wages + retirementDeferrals,
+      box4_ss_withheld: Math.round((wages + retirementDeferrals) * 0.062),
+      box5_medicare_wages: wages + retirementDeferrals,
+      box6_medicare_withheld: Math.round(
+        (wages + retirementDeferrals) * 0.0145,
+      ),
+      ...(retirementDeferrals > 0
+        ? {
+          box12_entries: [{ code: Box12Code.D, amount: retirementDeferrals }],
+        }
+        : {}),
     }],
     form8839: source,
   });
@@ -248,3 +269,152 @@ Deno.test("Form 8839 direct route rejects changed evidence, orphan credit, and s
     "reviewed executor route",
   );
 });
+
+Deno.test("Form 8839 unused current credit retains a source-owned five-year balance through both exporters", async () => {
+  const { result, pending, filer, attachments } = await reviewedSource(
+    10_000,
+    0,
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.carryforwards.adoption_credit_2025, 6_000);
+  assertEquals(pending.f1040?.line30_refundable_adoption, 5_000);
+  assertEquals(pending.schedule3?.line6c_adoption_credit, 0);
+  const ledger = result.pending.form8839_carryforward;
+  assertEquals(ledger, {
+    version: 1,
+    status: "computed_unfiled",
+    origin_tax_year: 2025,
+    first_carry_year: 2026,
+    last_carry_year: 2030,
+    taxpayer_ssn: "111223333",
+    child_ssn: "111223334",
+    decree_document_id: "decree-1",
+    expense_document_ids: ["invoice-1"],
+    nonrefundable_credit: 6_000,
+    used_in_origin_year: 0,
+    carryforward_amount: 6_000,
+  });
+  const bundle = await buildMefBundle(pending, { filer, attachments });
+  assertStringIncludes(
+    bundle.xml,
+    "<RefundableAdoptionCreditAmt>5000</RefundableAdoptionCreditAmt>",
+  );
+  await buildPdfBytes(pending, filer, ".pdf-cache", bundle);
+  for (
+    const changed of [
+      undefined,
+      { ...ledger, carryforward_amount: 5_999 },
+      { ...ledger, taxpayer_ssn: "999999999" },
+      { ...ledger, child_ssn: "999999999" },
+      { ...ledger, last_carry_year: 2031 },
+      { ...ledger, expense_document_ids: ["invented"] },
+      { ...ledger, status: "accepted" },
+    ]
+  ) {
+    const altered = { ...pending, form8839_carryforward: changed };
+    await assertRejects(() => buildMefBundle(altered, { filer, attachments }));
+    await assertRejects(() =>
+      buildPdfBytes(altered, filer, ".pdf-cache", bundle)
+    );
+  }
+});
+
+Deno.test("Form 8839 partially used current credit survives retained JSON without consuming the carryforward", async () => {
+  const { result, pending, filer, attachments } = await reviewedSource(
+    50_000,
+    4_000,
+  );
+  // Single 2025 tax-table row $34,250-$34,299: $3,875.
+  assertEquals(pending.f1040?.line18_total_tax_before_credits, 3_875);
+  assertEquals(pending.schedule3?.line6c_adoption_credit, 3_875);
+  assertEquals(pending.f1040?.line30_refundable_adoption, 5_000);
+  assertEquals(result.carryforwards.adoption_credit_2025, 2_125);
+  assertEquals(result.pending.form8839_carryforward.used_in_origin_year, 3_875);
+  const retained = buildPending(JSON.parse(JSON.stringify(result.pending)));
+  const bundle = await buildMefBundle(retained, { filer, attachments });
+  assertStringIncludes(
+    bundle.xml,
+    "<NonrefundableAdoptionCreditAmt>3875</NonrefundableAdoptionCreditAmt>",
+  );
+  await buildPdfBytes(retained, filer, ".pdf-cache", bundle);
+});
+
+Deno.test("Form 8839 fully refundable current credit does not invent a carryforward", async () => {
+  const { result, pending, filer, attachments } = await reviewedSource(
+    10_000,
+    0,
+    4_000,
+  );
+  assertEquals(pending.f1040?.line30_refundable_adoption, 4_000);
+  assertEquals(pending.schedule3?.line6c_adoption_credit, 0);
+  assertEquals(result.pending.form8839_carryforward, undefined);
+  assertEquals(result.carryforwards.adoption_credit_2025, undefined);
+  const bundle = await buildMefBundle(pending, { filer, attachments });
+  await buildPdfBytes(pending, filer, ".pdf-cache", bundle);
+});
+
+for (
+  const [wages, withheld, tax, retirement, adoption, carry] of [
+    [20_000, 500, 428, 428, 0, 6_000],
+    [25_000, 1_000, 928, 400, 528, 5_472],
+    [30_000, 2_000, 1_475, 200, 1_275, 4_725],
+    [40_000, 3_000, 2_675, 0, 2_675, 3_325],
+  ] as const
+) {
+  Deno.test(`Form 8839 saver-credit boundary at wages ${wages}`, async () => {
+    if (retirement > 0) {
+      // Deferred product-board item 95: retain the observed public-route block.
+      // A rejection is not successful credit ordering or an export pass.
+      await assertRejects(
+        () => reviewedSource(wages, withheld, 11_000, 2_000),
+        Error,
+        "Form 8839 pre-adoption Schedule 3 lines do not reconcile to Form 1040 line 20",
+      );
+      return;
+    }
+    const { result, pending, filer, attachments } = await reviewedSource(
+      wages,
+      withheld,
+      11_000,
+      2_000,
+    );
+    assertEquals(result.diagnostics, []);
+    assertEquals(pending.f1040?.line18_total_tax_before_credits, tax);
+    assertEquals(
+      pending.schedule3?.line4_retirement_savings_credit ?? 0,
+      retirement,
+    );
+    assertEquals(pending.schedule3?.line6c_adoption_credit, adoption);
+    assertEquals(pending.schedule3?.line8_total, tax);
+    assertEquals(pending.f1040?.line30_refundable_adoption, 5_000);
+    assertEquals(pending.f1040?.line35a_refund, withheld + 5_000);
+    assertEquals(result.carryforwards.adoption_credit_2025, carry);
+    const bundle = await buildMefBundle(pending, { filer, attachments });
+    await buildPdfBytes(pending, filer, ".pdf-cache", bundle);
+    for (
+      const altered of [
+        {
+          ...pending,
+          schedule3: {
+            ...pending.schedule3,
+            line4_retirement_savings_credit: retirement + 1,
+          },
+        },
+        {
+          ...pending,
+          form8839_carryforward: {
+            ...result.pending.form8839_carryforward,
+            carryforward_amount: carry + 1,
+          },
+        },
+      ]
+    ) {
+      await assertRejects(() =>
+        buildMefBundle(altered, { filer, attachments })
+      );
+      await assertRejects(() =>
+        buildPdfBytes(altered, filer, ".pdf-cache", bundle)
+      );
+    }
+  });
+}

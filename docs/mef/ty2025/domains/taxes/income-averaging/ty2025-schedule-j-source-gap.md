@@ -1,6 +1,20 @@
 # TY2025 Schedule J elected-income source boundary
 
-## October6 preferential-source integration checkpoint
+## Current route index — October 9, 2026
+
+Current branch `e8891d64b` contains later source-replay work beyond the historical build-first notes below. Live `schedule_j_source_return.ts` verifies retained catch-ledger bytes, business/owner identity, actual Schedule C/F profit and SE/QBI joins; native and PDF exporters replay that source. Distinct joint C/F owners require both owner-specific Schedule SE copies and matched QBI rows. The earlier blanket statements that fishing is isolated, every other income is rejected, or preferential income is unavailable are historical, not the current boundary.
+
+| Retained route | Detailed source and verification record |
+|---|---|
+| Farm election, current/prior preferential worksheets, no-election AMT tax, sourced nonfarm W-2 and bounded staged-credit compositions | [Preferential and nonfarm-wage proof](./ty2025-schedule-j-preferential-source-proof.md) |
+| One commercial fishing business, or fishing plus one/two farms, with retained catch-sales/supplies ledger | [Fishing source proof](./ty2025-schedule-j-fishing-source-proof.md) |
+| Same-owner mixed C/F QBI phase-in and actual half-SE allocation | [Phase-in proof](./ty2025-schedule-j-fishing-phasein-proof.md) |
+| One separately owned fishing business and farm on MFJ, with reversed-owner controls | [Joint source proof](./ty2025-schedule-j-joint-fishing-farm-proof.md) |
+| Joint advanced QBI phase-in, full phaseout and retained farm payroll/property limits | [Advanced](./ty2025-schedule-j-joint-advanced-qbi-proof.md), [zero-limit](./ty2025-schedule-j-joint-zero-qbi-proof.md) and [positive-limit](./ty2025-schedule-j-joint-positive-qbi-proof.md) proofs |
+
+These linked records preserve their original scoped tests, packet/XSD and render qualifications; the October 9 documentation reconciliation does not turn them into fresh packet replays. The October 9 whole-branch `deno task test` attempt stopped at an unrelated Form 4562 test-call type error before runtime tests; it does not refresh these historical results. None of this establishes authenticated prior IRS filing, broader qualifying-income attribution or IRS acceptance. Crew/shareholder wages, share-rent/pass-through and disposition attribution, losses/NOL, broader payroll/property and other source/credit combinations retain their existing parent requirements. The [source inventory](../../../inventory/ty2025-schedule-j-source-inventory.md) distinguishes implemented joins from those remaining boundaries.
+
+## Historical October 6 preferential-source integration checkpoint
 
 Current main integrates independently sourced current/prior ScheduleJ tax
 worksheets, actual farm SE/QBI allocation and the no-election6251 tax refigure.

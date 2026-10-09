@@ -1,3 +1,4 @@
+import { partII_tax } from "../../../../../nodes/intermediate/forms/taxes/retirement/form5329/index.ts";
 import { isDeepStrictEqual } from "node:util";
 import { reconcileForm8606RothInventories } from "../../../../domains/income/retirement/form8606/form8606_roth_inventory_reconciliation.ts";
 import { roundWholeDollars } from "../../../../../whole-dollars.ts";
@@ -10,7 +11,10 @@ import {
   reconcileHsaOwnerForms,
 } from "../../../../../nodes/intermediate/forms/taxes/retirement/form5329/index.ts";
 import { TS } from "../../../../../nodes/types.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../form-descriptor.ts";
 
 type Input = Partial<typeof inputSchema._output> & {
   owner_forms?: unknown;
@@ -148,7 +152,7 @@ function buildIRS5329One(
   const earlyTax = input.roth_owner_inventory_review
     ? roundWholeDollars(rawEarlyTax)
     : rawEarlyTax;
-  const educationTax = (education - educationException) * 0.1;
+  const educationTax = partII_tax(input);
   return elements("IRS5329", [
     element("PersonNm", personName),
     element("SSN", personSSN.replace(/\D/g, "")),

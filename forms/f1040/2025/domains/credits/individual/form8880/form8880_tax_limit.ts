@@ -1,7 +1,17 @@
+import { assertAbleSelfEmploymentReturn } from "./able_self_employment_sources.ts";
+import { assertAbleDistributionReturn } from "./able_distribution_return.ts";
+import { assertAbleEmploymentW2Sources } from "./form8880_able_sources.ts";
+import { assertEmployeeContributionW2Sources } from "./form8880_employee_sources.ts";
+import {
+  assertJointSaverDistributionCopies,
+  assertNonjointSaverDistributionCopies,
+} from "./form8880_distribution_sources.ts";
+import { inputSchema as r1099InputSchema } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
 import type { Fields as F1040Fields } from "../../../../mef/forms/general/return-assembly/f1040.ts";
 import type { Fields as Schedule3Fields } from "../../../../mef/forms/general/return-assembly/schedule3.ts";
 import type { Fields as Schedule1Fields } from "../../../../mef/forms/general/return-assembly/schedule1/schedule1.ts";
 import {
+  assertAbleDistributionLedger,
   calculateForm8880,
   inputSchema as form8880InputSchema,
 } from "../../../../../nodes/intermediate/forms/credits/individual/form8880/calculation.ts";
@@ -77,8 +87,52 @@ function assertForm8880GeneralEligibility(
 ): void {
   // Standalone Form 8880 inputs can supply reviewed eligibility facts. When
   // the return retains their general-source origin, replay each claimed owner.
+  if (
+    (source.employee_contribution_review || source.able_contribution_review) &&
+    pending.general === undefined
+  ) {
+    throw new Error(
+      "Form 8880 reviewed contribution needs its retained general source",
+    );
+  }
   if (pending.general === undefined) return;
   const general = generalInputSchema.parse(pending.general);
+  if (
+    JSON.stringify(source.able_contribution_review) !==
+      JSON.stringify(general.form8880_able_contribution_review)
+  ) {
+    throw new Error(
+      "Form 8880 ABLE review differs from retained general source",
+    );
+  }
+  if (
+    JSON.stringify(source.employee_contribution_review) !==
+      JSON.stringify(general.form8880_employee_contribution_review)
+  ) {
+    throw new Error(
+      "Form 8880 voluntary contribution review differs from retained general source",
+    );
+  }
+
+  if (
+    JSON.stringify(source.nonjoint_distribution_review) !==
+      JSON.stringify(general.form8880_nonjoint_distribution_review)
+  ) {
+    throw new Error(
+      "Form 8880 nonjoint distribution ledger differs from retained general source",
+    );
+  }
+  if (
+    (source.joint_distribution_review?.current_year_source_inventory_review ||
+      general.form8880_joint_distribution_review
+        ?.current_year_source_inventory_review) &&
+    JSON.stringify(source.joint_distribution_review) !==
+      JSON.stringify(general.form8880_joint_distribution_review)
+  ) {
+    throw new Error(
+      "Form 8880 reviewed joint ledger differs from retained general source",
+    );
+  }
   const sameOwner = (left: string | undefined, right: string | undefined) =>
     left === undefined && right === undefined ||
     left !== undefined && right !== undefined &&
@@ -87,6 +141,16 @@ function assertForm8880GeneralEligibility(
   if (source.filing_status !== general.filing_status) {
     throw new Error(
       "Form 8880 retained general eligibility differs from claimed owner facts",
+    );
+  }
+  if (
+    (source.joint_distribution_review?.current_year_source_inventory_review ||
+      source.employee_contribution_review || source.able_contribution_review) &&
+    (!sameOwner(source.taxpayer_ssn, general.taxpayer_ssn) ||
+      !sameOwner(source.spouse_ssn, general.spouse_ssn))
+  ) {
+    throw new Error(
+      "Form 8880 joint inventory owners differ from retained general source",
     );
   }
   const claimed = [
@@ -207,6 +271,40 @@ export function assertForm8880FiledCalculation(
   pending: Readonly<Record<string, unknown>>,
 ): void {
   const source = form8880InputSchema.parse(fields);
+  if (source.nonjoint_distribution_review) {
+    assertNonjointSaverDistributionCopies(
+      source.nonjoint_distribution_review,
+      pending.f1099r === undefined
+        ? []
+        : r1099InputSchema.parse(pending.f1099r).f1099rs,
+    );
+  }
+  if (source.joint_distribution_review?.current_year_source_inventory_review) {
+    assertJointSaverDistributionCopies(
+      source.joint_distribution_review,
+      pending.f1099r === undefined
+        ? []
+        : r1099InputSchema.parse(pending.f1099r).f1099rs,
+      source.taxpayer_ssn,
+      source.spouse_ssn,
+    );
+  }
+  if (source.able_contribution_review) {
+    assertAbleEmploymentW2Sources(
+      source.able_contribution_review,
+      pending.w2 === undefined ? [] : w2InputSchema.parse(pending.w2).w2s,
+      source.employee_contribution_review,
+    );
+  }
+  if (source.employee_contribution_review) {
+    assertEmployeeContributionW2Sources(
+      source.employee_contribution_review,
+      pending.w2 === undefined ? [] : w2InputSchema.parse(pending.w2).w2s,
+      source.taxpayer_ssn,
+      source.spouse_ssn,
+      source.filing_status,
+    );
+  }
   assertForm8880W2DeferralSources(source, pending);
   assertForm8880GeneralEligibility(
     source,
@@ -264,6 +362,11 @@ export function assertForm8880FiledCalculation(
     capacity,
   );
   if (calculated.calculatedZero) {
+    if (
+      "calculated_zero_credit" in fields &&
+      fields.calculated_zero_credit === true &&
+      !Object.keys(fields).some((key) => key.startsWith("print_"))
+    ) return;
     throw new Error(
       "Form 8880 positive filing has no positive source calculation",
     );
@@ -284,4 +387,67 @@ export function assertForm8880FiledCalculation(
   ) {
     throw new Error("Form 8880 filed lines differ from its source calculation");
   }
+}
+
+/** Reviewed distribution inventories must also replay when no Form 8880 is filed. */
+export function assertReviewedForm8880Outcome(
+  fields: object,
+  pending: Readonly<Record<string, unknown>>,
+): void {
+  const source = form8880InputSchema.parse(fields);
+  const general = pending.general === undefined
+    ? undefined
+    : generalInputSchema.parse(pending.general);
+  if (
+    source.able_contribution_review ||
+    general?.form8880_able_contribution_review ||
+    source.employee_contribution_review ||
+    general?.form8880_employee_contribution_review ||
+    source.nonjoint_distribution_review ||
+    general?.form8880_nonjoint_distribution_review ||
+    source.joint_distribution_review?.current_year_source_inventory_review ||
+    general?.form8880_joint_distribution_review
+      ?.current_year_source_inventory_review
+  ) {
+    assertForm8880FiledCalculation(fields, pending);
+  }
+}
+
+/** Validate reviewed contribution routes before selecting positive documents. */
+export function assertEmployeeContributionReturn(
+  pending: Readonly<Record<string, unknown>>,
+): void {
+  assertAbleDistributionReturn(pending);
+  assertAbleSelfEmploymentReturn(pending);
+  const fields = pending.form8880 ?? {};
+  assertAbleDistributionLedger(
+    form8880InputSchema.pick({
+      able_contribution_review: true,
+      nonjoint_distribution_review: true,
+      joint_distribution_review: true,
+      taxpayer_ssn: true,
+      spouse_ssn: true,
+      filing_status: true,
+    }).parse(fields),
+  );
+  const source = form8880InputSchema.pick({
+    employee_contribution_review: true,
+    able_contribution_review: true,
+  }).parse(fields);
+  const general = generalInputSchema.pick({
+    form8880_employee_contribution_review: true,
+    form8880_able_contribution_review: true,
+  }).parse(pending.general ?? {});
+  if (
+    !source.able_contribution_review &&
+    !general.form8880_able_contribution_review &&
+    !source.employee_contribution_review &&
+    !general.form8880_employee_contribution_review
+  ) return;
+  if (typeof fields !== "object" || fields === null) {
+    throw new Error(
+      "Form 8880 reviewed contribution needs its computed outcome",
+    );
+  }
+  assertForm8880FiledCalculation(fields, pending);
 }

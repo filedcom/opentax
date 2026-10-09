@@ -1,5 +1,75 @@
 # TY2025 Form 8863 required-service scholarship source review
 
+
+## October 9 service-grant and business combination checkpoint
+
+Six public-input returns combine a claimant-owned material-capital business,
+ordinary W-2 wages and an 8,000 award for performed teaching required by its
+terms. Two routes report the award in a separate W-2; four report it on Schedule
+1 line 8r. The grant retains two disbursements, matched performance/hours and
+terms, payer/recipient identity, reporting review and the school's box5 ledger.
+These are synthetic source records, not authenticated external issuance.
+
+The [2025 Form 8863 instructions](https://www.irs.gov/instructions/i8863)
+include required performed-service awards in earned income and separately limit
+material-capital business earnings to reasonable compensation capped at 30% of
+profit after half-SE-tax deduction. The cases distinguish these definitions:
+30,000 business profit less 2,119 half-SE deduction gives 27,881; the business
+support contribution is 8,364.30 at the cap, or 6,000 under the documented lower
+allowance. The separate 8,000 teaching award is included once in earned income.
+It is not reduced by the business capital limit or added to Schedule C receipts.
+
+| Case | Earned income for support | Ordinary support | AGI | Refundable / nonrefundable AOC | CTC / ACTC | Total tax | Refund |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Schedule1 award, cap, exact half | 26,364.30 | 52,728.60 | 45,881 | 1,000 / 1,500 | 0 / 0 | 5,449 | 551 |
+| Schedule1 award, cap, below half | 26,364.30 | 52,728.62 | 45,881 | 0 / 2,500 | 0 / 0 | 4,449 | 551 |
+| W-2 award, allowance, exact half | 24,000 | 48,000 | 45,881 | 1,000 / 1,500 | 0 / 0 | 5,449 | 551 |
+| W-2 award, allowance, below half | 24,000 | 48,000.02 | 45,881 | 0 / 2,500 | 0 / 0 | 4,449 | 551 |
+| Schedule1 award, MAGI phaseout | 65,483.30 | 130,966.60 | 85,000 | 500 / 750 | 0 / 0 | 12,411 | 8,089 |
+| Schedule1 award, qualifying child | 26,364.30 | 52,728.60 | 45,881 | 1,000 / 1,500 | 1,211 / 989 | 4,238 | 2,751 |
+
+Ordinary wages are 10,000, or 49,119 in the phaseout case. Withholding is 5,000,
+or 20,000 for phaseout; the additional award W-2 has zero withholding. Native
+and public checks distinguish wages18,000/business income30,000 from
+wages10,000/business-plus-award38,000 without changing total income48,000.
+The existing school tuition4,500 less tax-free aid500 yields4,000 qualified
+expenses; taxable service compensation8,000 remains in the school assistance
+inventory and income, without reducing qualified tuition. The child case keeps
+the full business earnings for ACTC distinct from the AOTC material-capital cap;
+ACTC earned income37,881 excludes the Schedule1 award under the
+[Schedule8812 Earned Income Worksheet](https://www.irs.gov/instructions/i1040s8).
+An initial fixture incorrectly supplied45,881; native/PDF accepted it. Deferred103
+retains that original discrepancy. The corrected fixture yields line205,307
+instead of6,507, with unchanged ACTC989 and final tax/refund.
+
+Independent single-filer tax-table expectations are2,711 at taxable24,555 and
+8,923 at taxable63,674; QBI deduction5,576 and SE tax4,238 apply throughout.
+The [2025 Form 1040 tax table](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+was retained in the earlier wage/material-capital checkpoint. No calculation or
+export guard was changed for this regression evidence.
+
+Focused initial run: six passes; corrected child fixture: one final typed pass
+(five unchanged cases filtered). Existing service-scholarship and wage/business
+regression:14 passes, zero failures. Each case rejects12 changed native and12 fresh-PDF
+exports: absent service inventory, wrong grant owner, altered payment amount,
+changed/absent wage review, wrong support beneficiary, missing actual education
+income or payroll, absent business, changed SE wage input, half-tax deduction
+or refundable AOC. Totals are72 native and72 PDF rejections. Source, expected,
+pending, complete XML/PDF and review evidence is retained privately under
+`.state/research/form8863-service-business-2026-10-09/`.
+
+Final evidence: six complete returns validate against TY2025 2025v5.4
+Return1040.xsd (SHA256
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`).
+All86 pages have retained rendered review: two new distinct pages visually
+observed,28 distinct hashes matching previously reviewed packets. The corrected
+child page9 exactly matches the prior wage/business child page. Fields/widgets
+are absent from the flattened packets. The child packet repeats deferred76's
+blank Schedule8812 line10 zero and deferred86's order before ScheduleC/SE.
+Deferred103's original incorrect packet is separate and excluded from these
+six corrected returns. Broader source authentication, business rules and IRS
+acceptance remain open. Earlier benchmark/full-suite counts are not rerun here.
+
 ## Existing gap and official rule
 
 The prior claimant source route counted issued W-2 wages, but did not retain
@@ -161,7 +231,7 @@ payments remains open. These are retained synthetic source records; consistency
 checks do not prove actual issuance or performance outside the return. Parent
 claiming a dependent student's service-grant tuition while retaining the child's
 separate income return is not newly proven. Special exempt programs, future
-service compensation, multiple-school grant allocations, business/service-grant
-mixtures, compensation cents across all joins, and other credits' earned-income
+service compensation, multiple-school grant allocations, wider business/service-grant
+mixtures beyond the October9 checkpoint, compensation cents across all joins, and other credits' earned-income
 definitions have no new positive packet proof here. No broader education or
 claimant ownership completion claim is made.

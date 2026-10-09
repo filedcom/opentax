@@ -1,10 +1,19 @@
 # TY2025 Form 1040 coverage disposition queue
 
+## October 9 live registry reconciliation
+
+Actual registry imports at `a2bd423b7` contain **157 native descriptors / 153 distinct pending keys** and **118 PDF descriptors / 115 distinct pending keys**. The five native additions since the 152-entry snapshot are Form 8886, its two continuation descriptors, and the two Form 4562 election statements. The wage/supporting sequence beginning with W-2 contains 39 descriptors; the Form 8886 parent is in the numbered-form sequence. These are registration counts, not supported tax situations.
+
+The 211-row IRS-root census still has 128 exact source-literal matches and 83 without one; every table flag matches a fresh non-test source scan. The added statements use non-IRS roots, and IRS8886 already had a literal match. Form 8886's actual builder is now registered from its filing-domain module, so the older literal-only warning is superseded. Form 2210 and Form 1116 Schedule C remain staged; no new exclusion or filing-readiness claim follows.
+
+Form 8886 prints through prepared disclosure packets, and Form 4562 appends its election statements through the existing parent PDF descriptor. Neither needs a new PDF registry entry. The form audit records the source triggers and packet boundaries. Local replay evidence is retained in `.state/research/registry-reconciliation-2026-10-09/audit.json`.
+
+
 ## October 8 passive-source reconciliation — 14:35 UTC
 
 The first-year passive S-corporation route is now admitted through the existing registered7203/8582/8995/ScheduleE/1040 native and PDF builders, with exact source/copy replay and distinct basis, PAL and qualified-loss carryovers. The superseding typed gate passed488/0 on2,723 runtime paths;36 complete returns pass local TY2025v5.4 XSD, eight full PDF packets were directly reviewed, and five CLI archives retain source-bound PAL candidates. Every archive remains `acceptance-unverified`; no trusted prior history, 2026 public import or broader mixed-QBI route is proved. [Chronological source evidence](../../../credits/earned-income/eic/ty2025-eic-passive-s-corp-loss-source.md) records the precise first-year contract and failed runs.
 
-The preceding2,709-path full ended14:20:46UTC, actual0,12,783/0. The integrated2,723-path serial full started14:28:22UTC and remains live. Registry counts stay152native/148keys and118PDF/115keys: no descriptor was added by this route. No broad checklist completion or permanent exclusion follows; authenticated sources, wider applicable combinations, matching IRS rules and ATS remain open.
+The preceding2,709-path full ended14:20:46UTC, actual0,12,783/0. The integrated2,723-path serial full started14:28:22UTC and was live at that historical observation; see the product board for the later terminal full gate. Registry counts stay152native/148keys and118PDF/115keys: no descriptor was added by this route. No broad checklist completion or permanent exclusion follows; authenticated sources, wider applicable combinations, matching IRS rules and ATS remain open.
 
 ## October 8 Form 2210 staging reconciliation
 
@@ -56,7 +65,7 @@ schema census, intersects them with unique `IRS[A-Za-z0-9]+` matches from
 non-test MeF form source files, and subtracts the intersection from 211. It does
 not count a staged source as registered.
 
-Current static reconciliation (2026-10-06): `ALL_MEF_FORMS` has **152**
+Historical static reconciliation (2026-10-06): `ALL_MEF_FORMS` has **152**
 entries and `ALL_PDF_FORMS` has **118**, with 148/115 distinct pending keys.
 The 211-root census has **128** exact MeF source literals and **83** roots
 without one. **117** literal roots occur directly in registered descriptor
@@ -81,8 +90,8 @@ builder is registered or a root token moves between files.
 The earlier registered-document matrix omitted Form 2106 and the six newly
 registered Forms 8844, 8864, 8881, 8882, 8941 and 8994; those seven rows
 accounted for the earlier 145-entry registry. Three later Schedule A supporting
-statements brought that checkpoint's audit to 148/148 entries. The current
-audit now lists 152 registered descriptors, including the later supporting statements. The root census had ten stale `No` flags:
+statements brought that checkpoint's audit to 148/148 entries. That checkpoint
+audit listed 152 registered descriptors, including the later supporting statements. The root census had ten stale `No` flags:
 `IRS2210`, `IRS8828`, `IRS8844`, `IRS8864`, `IRS8881`, `IRS8882`,
 `IRS8908`, `IRS8938`, `IRS8941`, `IRS8994`. Updating a literal flag does not
 approve or activate an unregistered form. The conditional-schedule audit

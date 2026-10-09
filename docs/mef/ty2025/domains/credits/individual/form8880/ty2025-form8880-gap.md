@@ -179,3 +179,603 @@ and [2025 Publication 590-A](https://www.irs.gov/publications/p590a) describe
 the testing window and the joint-return exception. The unified review above
 implements those line-4 rules for its reviewed-source entries. The new finalized
 tax-capacity feed still needs the agreed full-batch verification.
+
+
+## October 9 nonjoint distribution ledger and complete returns
+
+The public general source now accepts `form8880_nonjoint_distribution_review`.
+It records the taxpayer, reviewer, normal or extended filing deadline, extension
+reference, complete distribution inventory and dated recipient-owned entries.
+Each entry carries a positive gross amount, distinct source reference and a
+reviewed line-4 treatment with its classification workpaper. The ten treatments
+cover inclusion and the nine exception categories in the
+[2025 Form 8880 instructions](https://www.irs.gov/pub/irs-prior/f8880--2025.pdf).
+The calculation sums included distributions; exclusions remain visible in the
+inventory. This is reviewed structured evidence, not authenticated payer bytes.
+
+The ledger rejects duplicate sources, another recipient, invalid/out-of-window
+dates, unconfirmed extensions, simultaneous scalar distributions and joint-return
+use. Single, MFS, HOH and QSS calculations are exercised. Retained general and
+Form8880 ledger copies must agree at export; the zero-credit native path also
+replays the source and final return before omitting the form. Existing scalar
+sources remain compatible and are not upgraded to sourced-record proof.
+
+Three synthetic complete returns retain wages25000, W-2 deferrals2000,
+withholding1000 and pre-credit tax928:
+
+| Case | Included distributions | Credit | Final tax | Refund | Pages |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Prior distribution plus excluded5000 rollover | 200 | 360 | 568 | 432 | 4 |
+| Distribution before extended filing deadline | 500 | 300 | 628 | 372 | 4 |
+| Contributions fully offset | 2000 | 0 | 928 | 72 | 2 |
+
+All three XMLs pass cached TY2025v5.4 Return1040.xsd (SHA256
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`).
+All ten generated pages were visually reviewed: owner, single/digital-assets
+marks, wage/AGI/deduction/tax/payment/refund, Schedule3 and Form8880 amounts,
+attachment order and omission in the zero-credit case reconcile. Existing
+zero-presentation qualifications remain; no signature or IRS acceptance is
+claimed. The dates are prior-year or prefiling2026 facts, so these fixtures do
+not prove current-year distribution-income joins.
+
+The focused typed batch passes189 tests. Each return rejects changes to either
+retained ledger copy at native and complete-PDF boundaries (six rejections per
+export). Private artifacts, source/pending snapshots, schema results and page
+renders: `.state/research/form8880-nonjoint-2026-10-09/`. Broader contribution
+sources, issuer authentication, current-year income-source joins, local business
+rules and IRS acceptance remain open; the Form8880 parent is not closed.
+
+
+## October 9 current-year Form1099-R source joins
+
+Current-year entries in the reviewed nonjoint ledger now require an identified
+Form1099-R copy. The public return entry point and native/PDF source replay
+compare the complete positive distribution inventory: issued-copy reference,
+recipient, payer EIN, account, gross amount, explicit taxable amount, both
+codes and IRA indicator. Duplicate, missing and changed copies reject. The
+review includes a plan-classification reference; codeD must agree with the new
+nonqualifying-plan treatment. The existing distribution-code enum was moved to
+a shared file and re-exported without changing its members.
+
+This extends the [Form8880 line4 source rules](https://www.irs.gov/pub/irs-prior/f8880--2025.pdf)
+to the same current-year copies that produce retirement income. CodeD identifies
+nonqualified annuity/life-insurance distributions in the
+[2025 Form1099-R instructions](https://www.irs.gov/pub/irs-prior/i1099r--2025.pdf).
+The constructed code7/D annuity remains taxable income while its reviewed
+nonqualifying-plan classification excludes it from the saver reduction.
+
+Six single-filer age61 returns retain AGI25000, standard deduction15750,
+taxable income9250, pre-credit tax928 and withholding1000:
+
+| Case | Current gross/taxable distribution | Prior included | Saver credit | Final tax/refund | Pages |
+| --- | --- | ---: | ---: | --- | ---: |
+| Pension | 500/500 | 0 | 300 | 628/372 | 4 |
+| IRA | 500/500 | 0 | 300 | 628/372 | 4 |
+| Pension plus IRA | 300/300 plus400/400 | 200 | 220 | 708/292 | 4 |
+| Partly taxable pension | 500/400 | 0 | 300 | 628/372 | 4 |
+| Fully offset credit | 2000/2000 | 0 | 0 | 928/72 | 2 |
+| Nonqualified annuity, code7/D | 500/500 | 0 | 400 | 528/472 | 4 |
+
+The partly taxable case uses gross500 for the credit reduction and taxable400
+for income, with wages24600; it does not reduce the saver ledger by only400.
+The mixed case retains both copies and distinct Form1040 IRA/pension joins.
+All six complete XMLs pass cached TY2025v5.4 Return1040.xsd, digest
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+The grouped typed tests pass231/0, followed by one additional classification
+boundary pass. Sixty changed public sources reject; each native/full-PDF export
+rejects72 changes, including retained-ledger and missing/duplicate/changed-copy
+variants. Tests also reject missing current-year metadata, misplaced prior-year
+metadata and codeD classified as an included distribution.
+
+All22 generated pages were reviewed for owner, filing status/digital-assets
+marks, income placement, credit and tax/payment/refund totals, attachment order
+and zero-credit form omission. Five packets nevertheless print fully taxable
+gross amounts on line4a or5a. The
+[Form1040 instructions](https://www.irs.gov/instructions/i1040gi) call for blanks
+in those fully taxable cases; the partly taxable packet correctly needs5a500
+and5b400. This new presentation issue is deferred97, with no fix or complete
+paper approval claimed. Calculations and selected source joins still reconcile.
+
+Evidence: `.state/research/form8880-current-2026-10-09/`, including six source/
+pending/XML/PDF sets,22 page renders, schema report, qualification review and
+failure/final logs. Source references are synthetic reviewed facts, not issuer
+or signature authentication. Current-year non-1099-R distribution sources,
+broader classification proof, joint histories, local business-rule acceptance
+and IRS acceptance remain open. The existing parent task is not closed.
+
+
+## October 9 joint distribution inventory checkpoint
+
+The reviewed joint mode now binds both spouses' complete positive current-year
+Form1099-R inventories to the distribution ledger. It requires reviewer/date,
+owner identity, payer/account/source reference, gross and explicit taxable
+amounts, both distribution codes, IRA mark and plan classification. Excluded
+current distributions remain in that inventory with zero qualifying amount.
+Missing, duplicate, misowned or changed source copies reject at public entry and
+again at native/full-PDF export, including a calculated zero credit. Retained
+general facts bind both owner identities and the complete ledger. The older
+joint ledger remains compatible without being represented as this stronger proof.
+
+Seven MFJ returns retain AGI50000, standard deduction31500, taxable income18500,
+[IRS table tax1853](https://www.irs.gov/publications/p1040) before credits and
+withholding/payments3000. Both owners are61, with W-2 deferrals2000/1500.
+[Form8880 instructions](https://www.irs.gov/pub/irs-prior/f8880--2025.pdf)
+distinguish distributions received during a joint filing year from distributions
+received when the couple did not file jointly; the retained2026 filing plan is
+review evidence, not proof of an eventual2026 filing.
+
+| Case | Line4 taxpayer/spouse | Credit | Final tax | Refund |
+| --- | --- | ---: | ---: | ---: |
+| Both current distributions | 300/300 | 580 | 1273 | 1727 |
+| Prior spouse distribution, separate filing | 300/700 | 500 | 1353 | 1647 |
+| Prior spouse distribution, joint filing | 700/700 | 420 | 1433 | 1567 |
+| Prior separate plus prefiling separate | 800/700 | 400 | 1453 | 1547 |
+| Prior separate plus prefiling joint | 800/1200 | 300 | 1553 | 1447 |
+| Additional excluded spouse code7/D annuity | 300/300 | 580 | 1273 | 1727 |
+| Distributions fully offset both contributions | 2500/2500 | 0 | 1853 | 1147 |
+
+The grouped typed gate passes240/0. These seven cases reject35 public-source
+changes and63 native plus63 full-PDF changes, including ledger and retained
+owner mutations. All seven XMLs pass cached TY2025v5.4 Return1040.xsd, digest
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+All26 pages were reviewed: six four-page1040/Schedule3/Form8880 packets and one
+two-page zero-credit1040. Amounts, columns, identity on1040, MFJ/digital-assets
+marks, refund totals and zero-credit omission reconcile. All seven repeat
+fully taxable gross presentation deferred97; six Form8880 page4 headers omit
+the spouse name, extending the existing joint-name qualification. No deferred
+repair or whole-form closure is claimed.
+
+The first fixture rounded each W-2 Medicare withholding amount to whole dollars,
+creating a one-dollar Form8959 payment in six cases. Initial refund assertions
+incorrectly ignored that payment. Correcting the new fixture to cents removes
+it; final refunds above reconcile. Original failure and diagnostic logs remain,
+but the suspected refund defect was disproved and no new future TODO was kept.
+
+Evidence: `.state/research/form8880-joint-2026-10-09/`, seven source/pending/XML/
+PDF sets,26 renders, qualification/schema reports and original/final test logs.
+Issuer authentication, current-year sources without1099-R copies, wider
+eligibility/classification and prior-source proof, business rules and IRS
+acceptance remain open. The main Form8880/source-provenance parents stay open.
+
+## October 9 IRA deduction and nondeductible basis checkpoint
+
+Four source-entry cases connect traditional IRA contributions, W-2 deferrals,
+Form8880, the IRA deduction worksheet and (for two MFS cases) Form8606 basis.
+All use reviewed empty distribution inventories and age61/nonstudent/not-dependent
+facts. Single-filer wages27000 with IRA2000, or wages26000 with IRA1000 and
+W-2 deferral1000, produce deductions2000/1000 and AGI25000. Employer-plan-covered
+MFS filers living with their spouse have wages25000 and nondeductible IRA2000,
+or IRA1000 plus W-2 deferral1000; their retained basis is2000/1000 and AGI25000.
+
+These expected deduction boundaries follow
+[2025 Publication590-A](https://www.irs.gov/publications/p590a): these single
+filers are below the79000 phaseout, while the covered MFS filers exceed10000.
+The [2025 tax table](https://www.irs.gov/publications/p1040) gives928 on taxable
+income9250. The [Form8880 table](https://www.irs.gov/pub/irs-prior/f8880--2025.pdf)
+gives a20% credit on2000 eligible contributions at25000AGI for both statuses.
+All four calculations therefore show credit400, final tax528 and refund1472
+on2000 payments. The saver credit is available alongside a deductible IRA
+contribution; the mixed cases distinguish lines1 and2 without double-counting.
+
+Two single-filer cases produce complete XML/PDF packets. Their retained
+Form5498 and prior zero-basis records are synthetic reviewed facts. Export does
+not actually bind those records for the fully deductible branch: removing the
+worksheet or changing its contribution, custodian-record owner or box1 amount
+is accepted in eight native and eight complete-PDF builds. Each PDF mutation
+uses a newly built bundle from the altered pending graph, so this is not
+confused with the separate rejection of a stale prepared-bundle hash. Explicit
+observational assertions retain this gap as deferred98; they do not count as
+successful source validation.
+
+Both MFS cases derive the expected nondeductible Form8606 basis but fail native
+and full-PDF assembly with the scalar builder's joint-return/spouse-ambiguity
+error. The guard also treats a present MFS spouse header as joint. These are
+retained blocked cases, not two additional supported returns; deferred99
+preserves the source, pending values, exact error and original failed log.
+No spouse facts were removed to get a packet. No runtime fix is undertaken for
+either newly discovered issue.
+
+Evidence: `.state/research/form8880-ira-2026-10-09/`, original and final test logs,
+source/pending records for four cases, two native/PDF packets, source-mutation
+reports and two blocked-case reports. The first test log contains a corrected
+fixture-only misspelling of the empty distribution-review fields. Neither the
+Form8880 nor Form8606 parent task is closed by these checks.
+
+The final related gate passes70/0, including the explicit two MFS rejection
+cases and the eight source-mutation acceptance observations. Both single-filer
+XMLs pass cached TY2025v5.4 Return1040.xsd, digest
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+All12 pages were reviewed: each packet has Form1040 pages1–2, Schedule1 pages3–4,
+Schedule3 page5 and Form8880 page6. Printed identity, status/digital-assets marks,
+IRA deductions, line1/2 contribution split, tax and refund reconcile. The
+source-validation qualification remains material despite those correct outputs.
+
+## October 9 voluntary employee contribution checkpoint
+
+The public general source now accepts `form8880_employee_contribution_review`
+for voluntary after-tax employee payments to a reviewed qualified employer plan.
+This is Form8880 line2, distinct from IRA/ABLE line1 and W-2 elective deferrals.
+The [2025 Form8880 instructions](https://www.irs.gov/pub/irs-prior/f8880--2025.pdf)
+include voluntary employee contributions and exclude section414(h)(2) employer
+pickup amounts. The contract requires a2025 annual payroll statement and plan
+statement with matching employee/participant SSN, sponsoring employer EIN and
+paid amount; distinct references/account identity; plan qualification; and
+explicit non-IRA/ABLE, no-returned-payment, nonemployer, nonpickup and
+not-already-in-Box12 classifications. A matching owned W-2 identifies the
+employer relationship; it does not independently substantiate the after-tax
+amount, which must reconcile between the two reviewed records.
+
+Public entry rejects missing/ambiguous/misowned W-2 joins and missing reviewed
+distribution inventory. Calculations allocate contributions by actual SSN,
+reject nonjoint spouse claims and unsourced deferral totals, and combine the
+reviewed payments with sourced elective deferrals. Both native and full-PDF
+builders replay the retained general review, W-2 relationship, owner facts and
+computed outcome before document selection. This validation therefore still
+runs when distributions eliminate the credit and no Form8880 is printed, or
+when the computed Form8880 slice is removed. A PDF without a prepared native
+bundle receives the same new-source checks.
+
+Exact cents remain in payroll and plan records. For this reviewed route, cents
+are added across line2 sources before rounding its owner total, and the credit
+is rounded to whole dollars. This follows the
+[Form1040 rounding instructions](https://www.irs.gov/instructions/i1040gi),
+which require summing amounts before rounding a line total; historical scalar
+routes are not upgraded to this reviewed-source claim.
+
+All single cases have AGI25000, taxable9250, pre-credit tax928 and payments2000.
+Joint cases have AGI50000, taxable18500, pre-credit tax1853 and payments3000.
+Both owners are61; the reviewed student/dependent answers are false.
+
+| Case | Actual voluntary/elective payments | Filed line2 taxpayer/spouse | Prior distributions | Credit | Final tax/refund |
+| --- | --- | --- | ---: | ---: | --- |
+| Single voluntary | 1500.50/0 | 1501/0 | 0 | 300 | 628/1372 |
+| Single mixed | 1000.49/1000.49 | 2001/0 | 0 | 400 | 528/1472 |
+| Single prior distribution | 1500/0 | 1500/0 | 500 | 200 | 728/1272 |
+| Single fully offset | 1500/0 | 1500/0, no filed form | 1500 | 0 | 928/1072 |
+| Joint both owners | taxpayer1000, spouse1500 | 1000/1500 | 0 | 500 | 1353/1647 |
+| Joint spouse only | spouse1500 | 0/1500 | 0 | 300 | 1553/1447 |
+
+The focused grouped gate passes239/0; the native/PDF builder gate passes187/0
+with Poppler on PATH. An initial builder run failed only because `pdftotext`
+was absent from PATH; the original log is retained. Six new public fixtures
+reject30 invalid source/inventory inputs and54 changes at each native/full-PDF
+boundary. Schema tests reject duplicate or unreconciled records and forbidden
+classifications. Development logs retain the zero-credit PDF omission and
+fractional-credit failures corrected in this new path; those were implementation
+failures of the new route, not repairs to deferred items98–99.
+
+All six XMLs pass cached TY2025v5.4 Return1040.xsd, digest
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+All22 pages were reviewed: five four-page1040/Schedule3/Form8880 packets and one
+two-page zero-credit1040. Filing marks, source income, rounded owner columns,
+credit, tax and refunds reconcile. Both joint Form8880 page4 name headers omit
+Sam, and the spouse-only packet omits some zero amounts in the primary column;
+these extend existing joint-name/zero-presentation qualifications, not new fixes.
+
+Evidence: `.state/research/form8880-employee-2026-10-09/`, six source/pending/XML/
+PDF sets,22 renders, schema and qualification reports, original/final tests.
+The records are reviewed structured facts, not authenticated issuer bytes.
+Wider IRA/ABLE sources, source authentication, other eligibility/credit-order
+combinations, business-rule validation and IRS acceptance remain open. The
+Form8880 and source-provenance parent tasks are not closed.
+
+## October 9 complete-export eligibility audit
+
+The retained voluntary-contribution cases now test six positive contributor
+columns across five returns: three single columns, both columns on the joint
+return, and the spouse-only column. Each column has six changes: birth date
+after the eligible cutoff or missing, student answer true or missing, and
+dependent-claim answer true or missing. Each change is applied to the general
+source, computed Form8880 source, and both together. All108 altered graphs
+reject independently in native assembly and in the full PDF builder, rebuilt
+without an old prepared bundle. This adds to the earlier54 source rejections
+per export; the zero-credit case is deliberately outside this positive-claim
+eligibility matrix.
+
+The six-return/source module passes7 tests, and the calculator module passes74,
+including the January1,2008 eligible birth-date boundary. The governing
+[2025 Form8880 caution and instructions](https://www.irs.gov/pub/irs-prior/f8880--2025.pdf)
+exclude a contributor born after that date, claimed as a dependent, or meeting
+the five-calendar-month student definition. The test changes the reviewed
+answers; it does not authenticate school, age or dependency records.
+
+No runtime change or newly discovered deferred defect was needed. Prior XSD
+and22-page review evidence for the unchanged six source fixtures is retained
+separately; this audit does not add new PDF reviews or claim IRS acceptance.
+Evidence: `.state/research/form8880-eligibility-2026-10-09/`. Broader IRA/ABLE,
+eligibility-source authenticity, credit ordering and the parent task stay open.
+
+## October 9 W-2 plan complete-return checkpoint
+
+Eleven complete returns now cover every retained saver W-2 code D/E/F/H/S/AA/BB/EE
+and reviewed governmental G, including an employer-only G source and joint H/AA
+ownership. This is complete-return evidence for existing routes, not new runtime
+support or closure of the broader Form8880 task.
+
+The [2025 W-2 instructions](https://www.irs.gov/pub/irs-prior/iw2w3--2025.pdf)
+include codeH in box1 wages and provide for the employee deduction. Its single
+fixture therefore has wages27000, Schedule1 line24f deduction2000 and AGI25000;
+the joint H/AA fixture has wages52000, deduction2000 and AGI50000. Both native
+`Sect501c18DContriDedAmt` and the filled Schedule1 page2 show2000. CodeG's
+reviewed1500 employee/500 employer split contributes only1500 to Form8880;
+the separate employer-only2000 case has no Form8880 or saver credit. The
+[2025 Form8880](https://www.irs.gov/pub/irs-prior/f8880--2025.pdf) lists eligible
+plan contributions, owner limits and the applicable credit bands.
+
+| Cases | AGI | Saver credit | Final tax | Payments | Refund | Pages each |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Single D/E/F/S/AA/BB/EE | 25000 | 400 | 528 | 2000 | 1472 | 4 |
+| Single H | 25000 | 400 | 528 | 2000 | 1472 | 6 |
+| Single G employee split | 25000 | 300 | 628 | 2000 | 1372 | 4 |
+| Single G employer only | 25000 | 0 | 928 | 2000 | 1072 | 2 |
+| Joint H/AA | 50000 | 800 | 1053 | 3000 | 1947 | 6 |
+
+The typed return module passes11/11. Each of the ten positive-credit returns
+rejects four retained W-2 changes (removal, duplicate copy, changed owner and
+changed box12 amount) through both native assembly and a newly built full PDF:
+40 rejections at each boundary. All11 original XMLs validate against the retained
+TY2025v5.4 schema; all46 pages have been visually reviewed for amounts, identity,
+filing/digital marks and order. Native saver amounts and the H deduction are
+also compared directly with the source expectations. Private evidence is
+`.state/research/form8880-plans-2026-10-09/`, including source/pending records,
+XML/PDFs, page renders, schema logs, review report and hashes.
+
+Joint Form8880 page6 still prints only Alex Plans despite both contributor
+columns; the existing deferred joint-name issue applies. No newly discovered
+repair was implemented. Source authenticity, wider IRA/ABLE contributions,
+credit-order combinations, business rules and IRS acceptance remain open.
+
+## October 9 ordinary-limit ABLE source checkpoint
+
+Public `general.form8880_able_contribution_review` now carries owned Form5498-QA
+facts, program/eligibility review references, contribution classifications and
+dated beneficiary payment records. Each beneficiary has one reviewed account
+and all source references are distinct. The strict review reconciles box1 to
+beneficiary cash plus other contributors' cash plus QTP rollovers/transfers;
+box2 ABLE-to-ABLE rollovers remain separate. Only the designated beneficiary's
+payments enter Form8880 line1. The line is shared by calculation, native and
+PDF checks; ABLE amounts do not create an IRA deduction or Form8606 basis.
+
+The [2025 Form5498-QA instructions](https://www.irs.gov/pub/irs-prior/i1099qa--2025.pdf)
+distinguish box1 contributions/QTP transfers from box2 ABLE transfers.
+[Publication907](https://www.irs.gov/pub/irs-prior/p907--2025.pdf) establishes
+the ordinary19000 annual limit and describes the additional employed-beneficiary
+limit. This implementation enforces the ordinary limit and requires reviewed
+current eligibility, the program's cumulative limit, no returned/excess funds,
+no prior excess and no current-year ABLE distributions. Higher-limit,
+multiple-account and distribution/excess-tax routes remain guarded; they still
+belong to the broader unfinished source/credit task. Medical/program authenticity
+is not established by these structured review facts.
+
+A complete nonjoint or owned-joint lookback ledger is required before public
+execution, and preserved source/owner facts are replayed during native and full
+PDF construction even when no credit form prints. Prior qualifying distributions
+reduce the contribution; deposits by others produce a reviewed zero-credit
+outcome. For this route, source cents remain retained while each combined
+Form8880 contribution line and the credit round to whole dollars. Legacy IRA
+source-validation defect98 and MFS defect99 remain unchanged.
+
+| Case | Beneficiary ABLE T/S | W-2 deferral | Prior offset | Credit | Tax | Refund |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Single own cents | 1500.50/0 | 0 | 0 | 300 | 628 | 1372 |
+| Single mixed deposits | 1000.49/0 | 1000.49 | 0 | 400 | 528 | 1472 |
+| Single other-only deposits | 0/0 | 0 | 0 | 0 | 928 | 1072 |
+| Single prior distribution | 1500/0 | 0 | 500 | 200 | 728 | 1272 |
+| Single full offset | 1500/0 | 0 | 1500 | 0 | 928 | 1072 |
+| Joint both beneficiaries | 1000/1500 | 0 | 0 | 500 | 1353 | 1647 |
+| Joint spouse only | 0/1500 | 0 | 0 | 300 | 1553 | 1447 |
+
+Single AGI/tax-before-credit/payments are25000/928/2000; joint amounts are
+50000/1853/3000. The mixed-deposit account also contains5000 other cash,3000
+QTP transfers and2000 ABLE rollovers, none counted as beneficiary payments.
+The other-only account has2000 third-party cash. All seven XMLs validate against
+retained TY2025v5.4; direct native line1/credit comparisons pass and all24 filled
+pages were reviewed. The two zero-credit packets contain only Form1040.
+
+The grouped source/calculation/native/PDF/W-2 run passes258/0 before final
+cent-valued mixed-source and schema-valid review-edit checks; the final ABLE
+and employee modules pass15/0, and native/composed-PDF builders pass187/0.
+Twenty-eight public inconsistencies reject;91 altered graphs reject at each
+export boundary, rebuilding the full PDF without a stale prepared bundle.
+Eight schema-negative classifications also reject. Initial PDF failures caught
+the missing IRA/ABLE line1 parity check during implementation; the log remains
+retained alongside the passing evidence.
+
+Private evidence: `.state/research/form8880-able-2026-10-09/` contains all source,
+pending, XML/PDF, page-origin/renders, schema/verification logs and hashes.
+Both joint Form8880 page4s repeat the existing missing-spouse-name issue, and
+the spouse-only primary-column zero presentation remains qualified. Wider
+source/eligibility/credit combinations, authenticity, business rules and IRS
+acceptance remain open.
+
+## October 9 employed-beneficiary ABLE limit checkpoint
+
+The existing ABLE source review now accepts an employed-beneficiary review with
+owned current-service W-2 wages, employer plan-review references and a complete
+2025 residence calendar. It applies the smaller of reviewed wage compensation
+and the poverty guideline for the state where the beneficiary resided longest.
+Other contributors and QTP transfers remain within the ordinary19000 limit;
+only beneficiary payments may use the additional allowance. Public execution,
+native assembly and rebuilt full PDFs reconcile the complete owned W-2 inventory,
+including zero-credit outcomes. Missing, duplicated, changed-owner or changed-wage
+copies and disqualifying plan contributions reject.
+
+The [2025 Form1099-QA instructions, page1](https://www.irs.gov/pub/irs-prior/i1099qa--2025.pdf)
+explicitly give additional limits15060 continental,18810 Alaska and17310 Hawaii.
+Those amounts agree with the preceding-year rule in
+[26CFR1.529A-2(g)(2)(ii)–(iii)](https://www.ecfr.gov/current/title-26/section-1.529A-2)
+and the [2024 HHS guidelines](https://www.govinfo.gov/content/pkg/FR-2024-01-17/pdf/2024-00796.pdf).
+This resolves the implementation's limit-year choice. Publication907's 2025
+figures conflict with those authorities; they were not used as the limit oracle.
+The downloaded eCFR HTML is an access page and is identified as such in the
+private source manifest; the regulation was read through the web tool.
+
+The plan exclusion covers defined-contribution401(a)/403(a),403(b) and457(b)
+contributions, including employer-only amounts. W-2 codesD/E/G/AA/BB/EE supply
+conflicting evidence; IRA-based codesF/S and codeH alone do not. A retirement-plan
+checkbox alone also does not establish a disqualifying contribution. Four
+source-helper acceptance checks cover those distinctions, with eight rejection
+checks for excluded plans, deferred compensation and statutory wages. These
+helper checks are not additional complete-return packets. A simultaneous
+voluntary employee-plan review for this beneficiary stays guarded because its
+existing schema does not distinguish the applicable plan classes.
+
+| Complete return | Beneficiary payment T/S | Saver credit | Tax | EIC | Refund |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Continental limit | 15060/0 | 400 | 528 | 0 | 1472 |
+| Alaska limit | 18810/0 | 400 | 528 | 0 | 1472 |
+| Hawaii limit | 17310/0 | 400 | 528 | 0 | 1472 |
+| Wage-limited cents | 12000.49/0 | 0 | 0 | 542 | 2542 |
+| Joint both | 18810/18810 | 800 | 1053 | 0 | 1947 |
+| Joint spouse only | 0/17310 | 400 | 1453 | 0 | 1547 |
+| Alaska-to-Texas move | 15060/0 | 400 | 528 | 0 | 1472 |
+| Two employers | 15060/0 | 400 | 528 | 0 | 1472 |
+
+Every account also has19000 of other contributors' cash, excluded from the
+credit. Wages are25000 per owner except the12000.49 wage-limited case; the
+multiple-employer sources are10000 plus15000. The moving beneficiary spends
+January–April in Alaska and May–December in Texas. Current mailing addresses
+are distinct from the reviewed 2025 residence facts. Single withholding is2000;
+joint withholding is3000. The low-wage case retains the required EIC family,
+SSN, residency and prior-disallowance review facts; its542 credit comes from the
+[2025 Publication596 table](https://www.irs.gov/publications/p596), single/no-child
+12000–12050 row. Its original fixture omitted those facts and the expected EIC;
+failed logs are retained rather than changing its age or suppressing the credit.
+
+Eight XMLs pass the retained TY2025v5.4 schema, and all30 filled pages have been
+reviewed. Sixty-four public inconsistencies and104 mutations at each of the
+native/full-PDF boundaries reject. Thirteen additional schema classifications
+reject incomplete or contradictory wage, plan and residence evidence. The
+ordinary-limit and employed modules pass18/0; the final grouped run passes169/0
+and the configured native/composed-PDF builder run passes187/0. The first builder run's
+single failure was missing `pdftotext` on PATH; the configured replay retains
+its result separately.
+
+Private evidence: `.state/research/form8880-able-employment-2026-10-09/` retains
+sources, calculated graphs, XML/PDFs, all page renders, review reports and hashes.
+Both joint Form8880 headers still omit the spouse, and zero-valued printed cells
+remain qualified under existing deferred items. No deferred repair was made.
+Self-employment compensation, ABLE distributions/rollovers, excess taxes, source
+authentication and IRS acceptance remain outside this completed wage-source
+checkpoint and inside the broader open task; no parent checkbox is closed.
+
+## October 9 owned ABLE distribution checkpoint
+
+Owned current-year Form1099-QA records now reconcile annual gross distributions,
+earnings, basis, dated payments and qualified expenses to the beneficiary's
+reviewed account. Gross distributions reduce the saver contribution base even
+when tax-free; taxable earnings reach Schedule1 line8q, AGI, owner Form5329
+PartII, Schedule2 and final Form1040. Annual gross amounts round once for the
+saver ledger, including the500.50→501 boundary. Source inventory checks run
+before native/PDF selection, including zero-credit and tax-free cases.
+
+The calculation follows the annual earnings ratio in
+[26CFR1.529A-3](https://www.ecfr.gov/current/title-26/section-1.529A-3)
+and the2400 gross/400 earnings/1600 qualified expense example in
+[Publication907](https://www.irs.gov/publications/p907): taxable earnings133.33
+file as133, with additional tax13. The
+[2025 Schedule1](https://www.irs.gov/pub/irs-prior/f1040s1--2025.pdf)
+places ABLE earnings on8q. Gross-distribution offsets follow
+[Form8880](https://www.irs.gov/pub/irs-prior/f8880--2025.pdf).
+The next-year case retains a specific election for an expense paid March1,2026,
+within the first60 days, with no allocation to another tax year.
+
+| Return | Taxable earnings | Saver credit | Final tax | Refund |
+| --- | ---: | ---: | ---: | ---: |
+| Qualified | 0 | 300 | 628 | 1372 |
+| Qualified cents | 0 | 300 | 628 | 1372 |
+| Publication example | 133 | 400 | 551 | 1449 |
+| Nonqualified | 400 | 400 | 608 | 1392 |
+| Basis only | 0 | 300 | 628 | 1372 |
+| Credit fully offset | 133 | 0 | 951 | 1049 |
+| Next-year expense election | 133 | 400 | 551 | 1449 |
+| Joint, primary taxable | 133 | 800 | 1076 | 1924 |
+| Joint, spouse taxable | 133 | 800 | 1076 | 1924 |
+| Joint, both taxable | 533 | 800 | 1156 | 1844 |
+| Additional tax rounds to zero | 4 | 300 | 628 | 1372 |
+| Saver rate boundary | 400 | 200 | 848 | 1152 |
+
+Single wages are25000, except25400 in the rate-boundary case; joint wages50000.
+Payments are2000/3000 respectively. The rate-boundary AGI25800 changes the saver
+rate to10%. Joint gross distributions appear in both saver columns. Two taxable
+owners retain separate Form5329 copies, with primary133/13 and spouse400/40.
+The4 taxable/0 additional-tax case retains Form5329 despite no Schedule2 tax.
+
+Twelve complete XML returns validate against retained TY2025v5.4 XSD. All90
+filled pages were reviewed through45 unique rendered page images. Final typed
+grouped checks pass194/0; configured native/composed-PDF builders pass187/0.
+Forty-eight public inconsistencies,94 native and94 full-PDF mutations reject;
+eight additional source-schema variants reject. This includes missing ledgers,
+changed owner/earnings/expenses, removed Form5329 and high-income NIIT scope.
+Failed intermediate logs remain explicitly separate from final passing proof:
+initial8z mapping, missing return-wide8q join, literal fixture type and the
+inactive Form8960 guard were corrected before this checkpoint.
+
+Private evidence lives in `.state/research/form8880-able-distributions-2026-10-09/`:
+source/pending/origin records, XML/PDFs, page renders, logs, verification report,
+reviewed-image hashes and SHA256SUMS. Source references are synthetic and do not
+authenticate issuer records. Joint Form8880 headers still omit the spouse, and
+zero additional-tax Form5329 line8 prints blank versus native0; existing deferred
+presentation qualifications remain unchanged.
+
+The bounded route covers living beneficiaries with no transfers, rollovers,
+returned excess, additional accounts or beneficiary changes. Above-threshold
+NIIT treatment lacks a resolved primary-source classification, so native/full-PDF
+exports reject; future item100 records that question without implementing it.
+Self-employment compensation, broader distributions and exceptions, source
+authentication and IRS acceptance remain open. No parent checkbox is closed.
+
+## October 9 self-employed ABLE compensation checkpoint
+
+The employed-beneficiary review now reconciles ordinary Schedule C/F compensation
+for each account owner, including spouse-only and two-owner returns. Each reviewed
+business must match the complete owned source inventory, reference and raw net
+profit; deductible SE tax is independently replayed from filed profits and owned
+W-2 Social Security wages. Personal services must be a material income factor.
+Compensation preserves cents and subtracts deductible SE tax before applying the
+prior-year poverty limit; a business loss does not reduce wage compensation.
+
+The compensation definition follows [26 CFR 1.529A-2(g)(2)](https://www.govinfo.gov/content/pkg/CFR-2024-title26-vol9/pdf/CFR-2024-title26-vol9-part1-subjectgroup-id144.pdf)
+and the self-employment compensation discussion in [Publication 590-A](https://www.irs.gov/publications/p590a).
+This bounded route excludes other SE sources, foreign exclusions, retirement-plan
+deductions, optional methods and unreviewed additional SE wage sources. Existing
+ordinary-business and employer-plan eligibility guards continue to apply. The
+2025 additional contribution limit uses 2024 poverty amounts, as previously
+recorded in the employed-beneficiary checkpoint.
+
+| Return | AGI | Saver credit | Final tax | Refund |
+| --- | ---: | ---: | ---: | ---: |
+| Single Schedule C, profit40000 | 37174 | 200 | 7269 | 2731 |
+| Single Schedule F, profit40000 | 37174 | 200 | 7269 | 2731 |
+| Wages15000 plus Schedule C10000 | 24293 | 400 | 1696 | 8304 |
+| Schedule C12000.49 | 11152 | 0 | 1695 | 8912 |
+| Joint primary wages25000/spouse C25000 | 48233 | 400 | 4471 | 5529 |
+| Joint C40000/C10000 | 46467 | 1198 | 7065 | 2935 |
+| Joint primary wages25000/spouse C30000/F−5000 | 48233 | 400 | 4471 | 5529 |
+
+Each case retains10000 estimated payments. The cents case has deductible SE tax848,
+ABLE additional compensation11152.49 and EIC607. Tax amounts were checked against
+[2025 Form1040 tax tables](https://www.irs.gov/publications/p1040): single
+17100–17150/1817 and6800–6850/683; MFJ13350–13400/1338 and11950–12000/1198.
+The EIC comparison uses [2025 Publication596](https://www.irs.gov/pub/irs-prior/p596--2025.pdf),
+11150–11200 single/no-child row607. Joint SE copies retain the correct proprietor
+SSN; the two-owner case has tax5652/1413 and deductible halves2826/707.
+
+Seven complete XML returns pass retained TY2025v5.4 XSD. All95 PDF pages were
+reviewed using65 unique rendered page hashes. Grouped saver checks pass94/0 and
+native/composed-PDF builder checks187/0; after the final foreign-source guard key
+correction, the focused source replay passes8/0. It rejects28 public,77 native and
+77 full-PDF inconsistencies plus five schema variants, including changed owner,
+profit, reference or SE deduction, missing source/forms, foreign exclusion,
+additional SE wages and retirement deductions. The loss/wage compensation check
+is a model assertion, not an eighth complete-return packet.
+
+Private evidence: `.state/research/form8880-able-self-employment-2026-10-09/`
+contains source/pending/origin records, XML/PDFs, all renders, final and explicitly
+failed intermediate logs, verification report, reviewed-image hashes and
+SHA256SUMS. Source references remain synthetic, not authenticated issuer records.
+Positive C/F loss-only at-risk marks, joint Form8880/8995 names and blank zero cells
+repeat existing deferred qualifications; the negative farm correctly marks its
+loss question. No new deferred repair is implemented. Broader self-employment
+compensation, distributions, authenticity and IRS acceptance remain unresolved;
+no parent checkbox is closed.

@@ -1,8 +1,6 @@
 # TY2025 Schedule J elected-income source inventory
 
-Status: source work in progress. A Schedule F-only ordinary-rate election is
-wired but unrun; the activity calculations for fishing and share-rent remain
-isolated. No MeF/XSD, filled-PDF, IRS-rule, or ATS acceptance is claimed.
+Status: current code reviewed at `e8891d64b`, October 9. Live source replay includes retained fishing/farm, joint-owner SE/QBI and sourced nonfarm income combinations. The [current route index](../domains/taxes/income-averaging/ty2025-schedule-j-integration-gap.md) links the later scoped XSD/PDF evidence. Its historical results are not a fresh replay; the full current-branch attempt stopped at a Form 4562 test-call type error before runtime tests. Broader attribution, source authenticity, IRS rules and acceptance remain open.
 
 The [2025 Schedule J instructions](https://www.irs.gov/instructions/i1040sj)
 require taxable income attributable to *all* farming and fishing businesses:
@@ -17,22 +15,16 @@ without assuming it applies to a 2025 return.
 
 | IRS-listed source | Current source evidence and calculation | Boundary still needed |
 | --- | --- | --- |
-| Schedule F | The graph now receives computed Schedule F net, Schedule SE deduction, AGI, QBI and taxable income for a farm-only return. The isolated `schedule_j_farm_source.ts` guard remains a research helper. | Mixed farming/fishing sources, farm loss allocations, and other attributable deductions. |
-| Schedule C fishing | `schedule_j_activity_sources.ts` recomputes the activity's at-risk net from a 2025 Schedule C item. It requires fishing code 114110, a business reference, catch sales record reference, and facts establishing harvested fish entering commerce. The [2025 Schedule C instructions](https://www.irs.gov/instructions/i1040sc) label 114110 Fishing. | Reconcile all Schedule C items and upstream wage-credit, home-office, and other routed adjustments to the final Schedule 1 line 3. Determine the attributable Schedule SE deduction and any further loss limit. |
+| Schedule F | Live source replay joins computed cash Schedule F profit, owner SE, QBI and final taxable income, including bounded C/F and two-farm fishing combinations. The older standalone farm helper is not the complete filing boundary. | Farm loss allocations, broader activities and other attributable deductions. |
+| Schedule C fishing | Live source replay verifies one commercial catch-sales/supplies ledger against retained SHA-256 bytes, owner/business, filed Schedule C and computed profit; it joins actual SE/QBI and final tax for bounded fishing-only and mixed C/F routes. | Additional Schedule C items, fishing payroll/property limits, upstream credits/home-office, other expenses and further loss limits need their own source reconciliation. |
 | Form 4835 share-rent farm | `schedule_j_activity_sources.ts` recomputes nonnegative Form 4835 at-risk net, with a written production-share lease reference and timing facts. The Schedule J farming definition requires share-of-production rent and an agreement before significant tenant activity. | Reconcile Schedule E and Form 8582 across every passive activity. Current or prior passive losses are rejected by this activity component. A positive activity can still be offset elsewhere. |
-| Form 1040 line 1a wages | No Schedule J attribution calculation. | Identify S-corporation farming/fishing shareholder wages or qualifying share-of-catch fishing-crew compensation from source documents. Ordinary wages do not qualify merely by assertion. |
-| Schedule 1 line 15 | The farm-only guard allows an exclusively attributable Schedule SE deduction. | Allocate the deduction among fishing, farming, and unrelated self-employment when mixed. |
+| Form 1040 line 1a wages | A separately sourced nonfarm employer/W-2 route participates in current tax and SE reconciliation while excluding those wages from elected business income. Qualifying wage attribution is not established. | Identify S-corporation farming/fishing shareholder wages or qualifying share-of-catch fishing-crew compensation from source documents. Ordinary wages do not qualify merely by assertion. |
+| Schedule 1 line 15 | Actual same-owner mixed C/F allocations and distinct joint-owner Schedule SE deductions reconcile to the election and QBI source rows. | Broader unrelated self-employment and additional-owner/activity allocations remain open. |
 | Form 1040 line 15 CCF reduction | No attributable fishing reduction calculation. | Reconcile agreement-vessel earnings and excluded earnings described in the instructions. |
 | Schedules D and Form 8949 | No Schedule J property-level attribution. | Identify business property, remove land/rights dispositions, trace net capital gain and unrecaptured section 1250 gain into lines 2b/2c and the required tax worksheets. |
 | Schedule E Part II | No pass-through farming/fishing attribution. | Trace partnership or S-corporation activities, basis/at-risk/passive limits, and separately stated items. |
 | Form 4797 | No Schedule J disposition attribution. | Establish regular substantial business use, cessation timing, applicable ordinary/capital character, and exclude land or rights. |
 | Form 8903 | No 2025 attributable deduction calculation. | Establish applicability and allocation if present. |
-| Other attributable deductions or loss limits | No general source ledger. | Include QBI and other business-attributable deductions where applicable, excess business loss treatment, and return-wide reconciliation. |
+| Other attributable deductions or loss limits | Retained simplified and advanced QBI rows join actual C/F profit, half-SE, owner identity and bounded farm payroll/UBIA; qualifying current/prior tax worksheets and a separate no-election AMT refigure are retained. | Other attributable deductions, loss/NOL allocation and broader combinations remain open. |
 
-The new activity functions return recomputed **components**, not elected farm
-income or a filing limit. Their evidence references identify records to review;
-the functions do not authenticate those records. Neither function combines all
-qualifying sources, allocates business deductions, or reconciles the final
-return. The separately wired Schedule F-only route caps line 2a at computed
-farm income after SE and QBI deductions and final taxable income. A broader
-source ledger is still required before opening other routes.
+The standalone activity helpers return components, not general filing eligibility. Share-rent remains at that component boundary. The later live fishing replay is distinct: retained bytes bind the entered operator ledger, but do not authenticate buyer/supplier issuance or prior IRS acceptance. Current native/PDF source replay and the form-specific proof records determine the supported combinations; registration, historical build notes and a positive aggregate alone do not close the broader source-ledger task.

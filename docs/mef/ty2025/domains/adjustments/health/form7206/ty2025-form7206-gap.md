@@ -241,3 +241,15 @@ are documented in `ty2025-form7206-independent-spouse-plans-review.md`.
 The source inventory repair preserves negative C profit previously omitted by
 a legacy SE tax input; it does not fabricate SE or health amounts. Broader
 owner-plan source coverage and external authentication/ATS remain open.
+
+### Section 179 inventory and health ordering — October 9
+
+The related Form4562 route now reconciles the established primary-owner plan,
+monthly exclusions and allowed health deduction before its active-income limit,
+preserving SE earnings and the resulting QBI reduction. Full and income-limited
+premiums, six employer-excluded months and a larger credit-limited asset have
+independent final-tax checks; see [section179 evidence](../../../deductions/business/form4562/ty2025-form4562-gap.md).
+The fully employer-excluded primary-owner Form8995 rejection remains future-only;
+no zero-health filing support or parent-task closure is claimed.
+
+Verification: **44 typed tests passed, zero failed** across the current-year depreciation and health-calculation regression. Four complete returns passed local TY2025v5.4 XSD and have110 reviewed PDF pages (23 inspected distinct renders;87 exact reviewed-page matches), with zero AcroForm fields/widgets. Source inputs, pending results, XML/PDF bytes and hashes are retained in `.state/research/form4562-section179-health-returns/`. No IRS acceptance or broader parent completion is claimed.

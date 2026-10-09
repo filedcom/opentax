@@ -1,0 +1,46 @@
+{
+  "general": {
+    "filing_status": "single",
+    "taxpayer_first_name": "Alex",
+    "taxpayer_last_name": "Example",
+    "taxpayer_ssn": "111-22-3333",
+    "taxpayer_dob": "1985-06-15",
+    "child_eic_filer_review": {
+      "not_qualifying_child_of_another_taxpayer_verified": true,
+      "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+    },
+    "prior_eic_disallowance_review": {
+      "status": "none",
+      "irs_account_record_reference": "Synthetic IRS account transcript review",
+      "no_nonclerical_disallowance_since_1996_verified": true
+    },
+    "eic_tax_residency_review": {
+      "status": "all_year_resident",
+      "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+      "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+    },
+    "address_line1": "1 Example Way",
+    "address_city": "Austin",
+    "address_state": "TX",
+    "address_zip": "78701",
+    "digital_assets": false
+  },
+  "w2": [
+    {
+      "box1_wages": 75300,
+      "box2_fed_withheld": 8000,
+      "employee_ssn": "111-22-3333",
+      "box3_ss_wages": 75300,
+      "box4_ss_withheld": 4668.6,
+      "box5_medicare_wages": 75300,
+      "box6_medicare_withheld": 1091.85,
+      "employer_ein": "12-3456789",
+      "employer_name": "Example Employer",
+      "employer_address_line1": "10 Employer Road",
+      "employer_address_city": "Austin",
+      "employer_address_state": "TX",
+      "employer_address_zip": "78701",
+      "box12_entries": []
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 # TY2025 Form 8962 interstate-move poverty table
 
+> **October9 verification:** Ten public-entry interstate returns now pass full XSD with60 observed pages;25 focused tests pass. See the complete-return checkpoint below. Historical staged/unrun statements are superseded for these named cases, with authentication, broader combinations and IRS acceptance still open.
+
 The
 [2025 Form 8962 instructions, line 4](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf)
 say that a taxpayer who lived in Alaska and/or Hawaii during a 2025 move uses
@@ -107,3 +109,55 @@ corrected SLCSP. The residence and determination metadata identify the intended
 calculation but their underlying record bytes remain subject to external review.
 The full test batch, XSD validation, filled-page review, IRS business rules, and
 ATS acknowledgments remain pending.
+
+
+## October 9: complete interstate return checkpoint
+
+Ten synthetic source cases now run through public `executeReturn`, finalized
+Form1040 identity, `prepareReturn`, complete native XML and the PDF builder.
+Reported routes cover2,3,4,5 and12 distinct residence states; the two-state routes
+also cover Hawaii without Alaska, an unreported move with all arrival SLCSP
+corrections, an uncovered June, and below400% repayment limits in both regions.
+Every return ends in Texas; Form8962 uses the highest applicable residence table.
+
+The [2025 Form8962 instructions](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf)
+provide the18,810 Alaska and17,310 Hawaii single-person poverty amounts, Worksheet2
+401 indicator, Table2 contributions and Table5 Single repayment limits. The
+[2025 Tax Table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf) supplies regular tax
+8,021 for taxable59,550 and2,195 for taxable20,250. Withholding is8,000 for75,300
+wages and3,000 for36,000 wages.
+
+| Case | Wages | Poverty amount | Monthly contribution | PTC | APTC | Cap | Repay | Tax | Refund / owed |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| Reported2/3/4/5/12 states (five returns) | 75,300 | 18,810 | 533 | 804 | 2,400 | none | 1,596 | 9,617 | 0 / 1,617 |
+| Hawaii–Texas | 75,300 | 17,310 | 533 | 804 | 2,400 | none | 1,596 | 9,617 | 0 / 1,617 |
+| Unreported Alaska–Texas, corrected arrival | 75,300 | 18,810 | 533 | 1,104 | 2,400 | none | 1,296 | 9,317 | 0 / 1,317 |
+| Alaska–Texas, June uncovered | 75,300 | 18,810 | 533 | 737 | 2,200 | none | 1,463 | 9,484 | 0 / 1,484 |
+| Alaska–Texas,191% FPL | 36,000 | 18,810 | 49 | 6,612 | 9,600 | 375 | 375 | 2,570 | 430 / 0 |
+| Hawaii–Texas,207% FPL | 36,000 | 17,310 | 68 | 6,384 | 9,600 | 975 | 975 | 3,170 | 0 / 170 |
+
+The corrected route preserves the reported600 SLCSP while using650 for each
+July–December calculation. Uncovered June is absent from native monthly groups
+and all its PDF columns are blank. Reported moves do not use annual line11.
+All ten native returns pass the configured TY2025 v5.4 XSD. All60 PDF pages were
+rendered and observed:20 distinct pages plus40 exact matching pages, with no live
+fields/widgets in the final flattened packets. Amounts, identities, poverty-region
+boxes and page order reconcile; no new visual discrepancy was found.
+
+The new ordinary typed regression has ten positive full-return cases and one
+negative test covering25 edited variants through both native and PDF gates.
+It rejects missing arrival reviews/corrections, wrong covered person, changed
+APTC, poverty amount, repayment and final tax joins. Together with five existing
+interstate/gap modules, the focused run passes25 tests, zero failures.
+An independent Python Decimal source replay also passes all ten monthly/native
+and final-return comparisons. Its initial Worksheet2 checker was corrected to
+use income above four times poverty before truncation, as the instructions
+require; the committed expectations and engine already used401 correctly.
+
+Private evidence: `.state/research/form8962-interstate-2026-10-09/` retains
+source, prepared values, expected amounts, XML/PDF, render hashes, oracle and logs.
+The fixture's residence/policy/payroll records are synthetic; repeated correction
+digests do not authenticate Marketplace records. No runtime calculation, export
+logic or deferred item changed. Mixed families, return moves, more complex
+coverage and authentication remain outside this proof; the Form8962 parent and
+full-suite deferred78 blocker remain open.

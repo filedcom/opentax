@@ -1,10 +1,19 @@
 # TY2025 Form 1040 native/PDF registry parity audit
 
+## October 9 live registry reconciliation
+
+Actual registry imports at `a2bd423b7` contain **157 native descriptors / 153 distinct pending keys** and **118 PDF descriptors / 115 distinct pending keys**. The five native additions since the 152-entry snapshot are Form 8886, its two continuation descriptors, and the two Form 4562 election statements. The wage/supporting sequence beginning with W-2 contains 39 descriptors; the Form 8886 parent is in the numbered-form sequence. These are registration counts, not supported tax situations.
+
+The 211-row IRS-root census still has 128 exact source-literal matches and 83 without one; every table flag matches a fresh non-test source scan. The added statements use non-IRS roots, and IRS8886 already had a literal match. Form 8886's actual builder is now registered from its filing-domain module, so the older literal-only warning is superseded. Form 2210 and Form 1116 Schedule C remain staged; no new exclusion or filing-readiness claim follows.
+
+Form 8886 prints through prepared disclosure packets, and Form 4562 appends its election statements through the existing parent PDF descriptor. Neither needs a new PDF registry entry. The form audit records the source triggers and packet boundaries. Local replay evidence is retained in `.state/research/registry-reconciliation-2026-10-09/audit.json`.
+
+
 Static comparison replayed 2026-10-05 of the descriptors actually registered in
 `forms/f1040/2025/mef/forms/index.ts` and `forms/f1040/2025/pdf/forms/index.ts`,
 checked against `forms/f1040/2025/return-processing/attachment-coverage.ts`. This is a
 printable-return coverage audit, not an IRS rule, passed test, or new product
-exclusion. The indexes currently hold **152 native descriptors and 118 PDF
+exclusion. That snapshot held **152 native descriptors and 118 PDF
 descriptors**. The newly registered Form 9000 has focused local XML/XSD and filled-page
 evidence; that does not establish the remaining route, business-rule, or ATS
 coverage.
@@ -315,3 +324,20 @@ Private evidence: `uncovered16-current-boundaries-20261007.ts/.json` and `uncove
 Actual registry imports remain152native descriptors/148keys and118PDF descriptors/115keys. The admitted first-year passive S-corporation loss uses existing7203/8582/8995/sharedScheduleE/1040 native and PDF descriptors; the older nonpassive stock-loss ScheduleE validates the source and yields rather than adding a second copy. The superseding488/0 focused gate includes36 whole-return local-XSD cases, and eight full packets have retained direct all-page review. These existing flattened outputs establish no interactive field claim or IRS acceptance. Five durable PAL archive candidates remain acceptance-unverified and distinct from stock-basis and qualified-loss carries.
 
 Private `passive-source-audit-reconciliation-20261008-v1/review.json` verifies current2,723 runtime paths exactly match the focused gate and live serial full started14:28:22UTC, plus45 XML pairs,15 archive pairs and unchanged main/future scope. No fresh test, packet review or aggregate inventory addition occurs in this documentation reconciliation. [Chronological source evidence](../domains/credits/earned-income/eic/ty2025-eic-passive-s-corp-loss-source.md) records exact contracts, ownership, required-copy and hostile-source checks; broader source/history/BR/IRS gates remain open.
+
+## October 9 bonus-election registry delta
+
+Live imports now contain **157 native descriptors and 118 PDF descriptors**.
+The two new native keys, `form4562_election_out` and
+`form4562_reduced_bonus_election`, derive from `form4562` rather than independent
+public inputs. They emit `SpclDeprecAllwncElectOutStmt` and
+`GeneralDependencyMedium`, respectively. Their printable equivalents are appended
+once by the existing Form 4562 PDF descriptor after the first activity copy, so
+they do not require two additional parent PDF registrations. The previous
+152/118 snapshot at the top is historical, not this live count.
+
+Five complete election returns pass local XSD and have 153 reviewed PDF pages;
+each native election paragraph occurs exactly once in its printable packet.
+The [Form 4562 evidence](../domains/deductions/business/form4562/ty2025-form4562-gap.md#reviewed-bonus-elections-and-required-statements--october-9)
+records source review, class-wide/rate-wide enforcement and remaining boundaries.
+No IRS acceptance or full registry parity closure is inferred from this delta.

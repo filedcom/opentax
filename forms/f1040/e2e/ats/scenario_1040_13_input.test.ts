@@ -1,4 +1,9 @@
-import { assertEquals, assertNotEquals, assertThrows } from "@std/assert";
+import {
+  assertEquals,
+  assertNotEquals,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { f1040_2025 } from "../../2025/index.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
 import { form8911Pdf } from "../../2025/pdf/forms/credits/business/f8911.ts";
@@ -7,6 +12,7 @@ import { STANDARD_DEDUCTION_BASE_2025 } from "../../nodes/config/2025.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { SCENARIO_1040_13_FACTS } from "./ty2025_cases.ts";
 import {
+  scenario104013CurrentLawInput,
   scenario104013Input,
   SCENARIO_1040_13_RECONCILIATION,
 } from "./scenario_1040_13_input.ts";
@@ -125,4 +131,62 @@ Deno.test("ATS 1040 Scenario 13 PDF parent and property reject the printed tax l
       "source tax limit or credit disagrees with finalized Form 1040",
     );
   }
+});
+
+Deno.test("ATS Scenario 13 current-law reconstruction joins all six native documents without replacing printed answers", async () => {
+  const input = scenario104013CurrentLawInput();
+  const before = JSON.stringify(input);
+  const result = f1040_2025.executeReturn(input);
+  assertEquals(result.diagnostics, []);
+  const f = result.pending.f1040;
+  assertEquals([
+    f.line1a_wages,
+    f.line11_agi,
+    f.line12a_standard_deduction,
+    f.line15_taxable_income,
+    f.line16_income_tax,
+    f.line20_nonrefundable_credits,
+    f.line24_total_tax,
+    f.line25a_w2_withheld,
+    f.line35a_refund,
+  ], [31620, 31620, 31500, 120, 11, 11, 0, 609, 609]);
+  assertEquals(result.pending.form6251.amti, 31620);
+  assertEquals(result.pending.form6251.exemption, 137000);
+  assertEquals(result.pending.form6251.net_tmt, 0);
+  assertEquals(result.pending.schedule3.line6j_alt_fuel_vehicle_refueling, 11);
+  const filer = extractFilerIdentity(f)!;
+  const prepared = await f1040_2025.prepareReturn(result.pending, filer);
+  assertEquals(
+    [...prepared.bundle.xml.matchAll(/<([A-Za-z0-9]+)\b[^>]*\bdocumentId="/g)]
+      .map((m) => m[1]),
+    [
+      "IRS1040",
+      "IRS1040Schedule3",
+      "IRS6251",
+      "IRS8911",
+      "IRS8911ScheduleA",
+      "IRSW2",
+    ],
+  );
+  for (
+    const fragment of [
+      "<TaxAmt>11</TaxAmt>",
+      "<TotalPersonalUsePartOfCrAmt>11</TotalPersonalUsePartOfCrAmt>",
+      "<TentativeAlternativeMinTaxAmt>0</TentativeAlternativeMinTaxAmt>",
+      "<RefundAmt>609</RefundAmt>",
+    ]
+  ) assertStringIncludes(prepared.bundle.xml, fragment);
+  const parent = form8911Pdf.instances!({}, filer, result.pending);
+  assertEquals([
+    parent[0].line4,
+    parent[0].line5,
+    parent[0].line8,
+    parent[0].line10,
+  ], [300, 11, 0, 11]);
+  assertEquals(
+    form8911ScheduleAPdf.instances!({}, filer, result.pending).length,
+    1,
+  );
+  assertEquals(SCENARIO_1040_13_RECONCILIATION.printed.regularTax, 162);
+  assertEquals(JSON.stringify(input), before);
 });

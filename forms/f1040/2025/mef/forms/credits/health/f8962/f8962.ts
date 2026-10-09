@@ -17,7 +17,10 @@ import { reconcileDependentMagi } from "../../../../../domains/credits/health/fo
 import { assertForm8962FamilyEligibility } from "../../../../../domains/credits/health/form8962/form8962-family-eligibility.ts";
 import { roundForm8962Amounts } from "../../../../../domains/credits/health/form8962/form8962-money.ts";
 import { assertForm8962Pub974Return } from "../../../../../domains/credits/health/form8962/form8962_pub974_return.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../../form-descriptor.ts";
 
 interface MonthlyRow {
   month_code: string;
@@ -1081,10 +1084,17 @@ function reconcileNoAptcPolicyMonths(
     );
   }
   const povertyLine = reconcilePovertyTable(fields, context);
-  const taxpayerIncome = form1040.data.line11_agi + sourcedTaxExemptInterest(
-    pending,
-    form1040.data.line2a_tax_exempt ?? 0,
-  );
+  // Family eligibility above reconciles the complete joint source inventory,
+  // including combined taxable benefits. Worksheet 1-1 adds its nontaxable part.
+  const nontaxableBenefits = (form1040.data.line6a_ss_gross ?? 0) -
+    (form1040.data.line6b_ss_taxable ?? 0);
+  const reviewedJointBenefits = joint &&
+    general.data.ptc_joint_income_review !== undefined;
+  const taxpayerIncome = form1040.data.line11_agi +
+    (reviewedJointBenefits ? nontaxableBenefits : 0) + sourcedTaxExemptInterest(
+      pending,
+      form1040.data.line2a_tax_exempt ?? 0,
+    );
   const income = taxpayerIncome + dependentMagi;
   if (
     hasVerifiedDependents &&
@@ -1103,8 +1113,8 @@ function reconcileNoAptcPolicyMonths(
     hasVerifiedDependents || joint,
   );
   if (
-    (form1040.data.line6a_ss_gross ?? 0) !==
-      (form1040.data.line6b_ss_taxable ?? 0) ||
+    nontaxableBenefits < 0 ||
+    (!reviewedJointBenefits && nontaxableBenefits !== 0) ||
     fields.taxpayer_modified_agi !== taxpayerIncome ||
     fields.household_income !== income ||
     fields.federal_poverty_line !== povertyLine ||
@@ -1842,6 +1852,181 @@ function reconcileTwoNoAptcAnnualPolicies(
   ) {
     throw new Error(
       "Form 8962 two-policy annual credit differs from sources or finalized return",
+    );
+  }
+}
+
+function reconcileJointAptcPolicyMonths(
+  fields: Input,
+  context?: MefBuildContext,
+): void {
+  const pending = context?.pending;
+  const source = form1095aSchema.safeParse(pending?.f1095a);
+  const general = generalSchema.safeParse(pending?.general);
+  const form1040 = returnSchema.safeParse(pending?.f1040);
+  if (
+    !context?.filer || !source.success || !general.success || !form1040.success
+  ) {
+    throw new Error(
+      "Form 8962 joint advances need retained sources and finalized return identity",
+    );
+  }
+  assertForm8962FamilyEligibility(
+    pending,
+    context.filer.primarySSN,
+    context.filer.spouse?.ssn,
+  );
+  const policies = current1095AStatements(source.data.f1095as);
+  const policy = policies[0], rows = fields.monthly_ptc_rows;
+  if (
+    context.filer.filingStatus !== FilingStatus.MarriedFilingJointly ||
+    general.data.filing_status !== SourceFilingStatus.MFJ ||
+    !context.filer.spouse || !general.data.ptc_joint_income_review ||
+    general.data.taxpayer_can_be_claimed_as_dependent !== false ||
+    general.data.spouse_can_be_claimed_as_dependent !== false ||
+    context.filer.address.foreignCountry || policies.length !== 1 ||
+    !policy?.policy_number ||
+    policy.coverage_state !== context.filer.address.state ||
+    (general.data.ptc_residence_states_2025?.length ?? 1) > 1 ||
+    general.data.ptc_residence_months_2025?.some((state) =>
+      state !== policy.coverage_state
+    ) ||
+    !policy.monthly_premiums || !policy.monthly_slcsps ||
+    !policy.monthly_aptcs ||
+    !policy.aptc_monthly_evidence || policy.no_aptc_monthly_evidence ||
+    policy.slcsp_corrections || policy.slcsp_review_periods ||
+    policy.shared_policy_periods ||
+    policy.alternative_marriage_owner ||
+    source.data.alternative_marriage_month !== undefined ||
+    fields.qsehra_ind === true || fields.mfs_exception_ind === true ||
+    (fields.shared_policy_allocations?.length ?? 0) > 0 ||
+    fields.alternative_marriage_primary || fields.alternative_marriage_spouse ||
+    fields.pub974_reconciliation !== undefined ||
+    fields.annual_ptc_allowed !== undefined ||
+    !Array.isArray(rows) || rows.length !== 12 ||
+    pending?.form2555 !== undefined
+  ) {
+    throw new Error(
+      "Form 8962 joint advances need one reviewed same-state family policy and owned income inventory",
+    );
+  }
+  reconcileOnePolicyDependentIdentity(
+    policies,
+    fields.household_size,
+    pending?.general,
+    context.filer.primarySSN,
+  );
+  const dependentMagi = reconcileDependentMagi(
+    fields.household_size,
+    fields.dependents_modified_agi,
+    pending?.general,
+  );
+  const nontaxableBenefits = (form1040.data.line6a_ss_gross ?? 0) -
+    (form1040.data.line6b_ss_taxable ?? 0);
+  const taxpayerIncome = form1040.data.line11_agi + nontaxableBenefits +
+    sourcedTaxExemptInterest(pending, form1040.data.line2a_tax_exempt ?? 0);
+  const income = taxpayerIncome + dependentMagi;
+  const poverty = reconcilePovertyTable(fields, context);
+  const amounts = simplePolicyIncomeAmounts(
+    income,
+    poverty,
+    fields.household_size,
+    1,
+    false,
+    true,
+  );
+  const annualContribution = Math.round(income * amounts.figure);
+  const monthlyContribution = Math.round(annualContribution / 12);
+  if (
+    nontaxableBenefits < 0 || fields.taxpayer_modified_agi !== taxpayerIncome ||
+    fields.household_income !== income ||
+    fields.dependents_modified_agi !== dependentMagi ||
+    fields.federal_poverty_line !== poverty ||
+    fields.federal_poverty_pct !== amounts.povertyPct ||
+    fields.applicable_figure !== amounts.figure ||
+    fields.annual_applicable_contribution !== annualContribution ||
+    fields.monthly_applicable_contribution !== monthlyContribution
+  ) {
+    throw new Error(
+      "Form 8962 joint advances differ from sourced household MAGI or contribution",
+    );
+  }
+  for (
+    const [monthly, annual] of [
+      ["monthly_premiums", "annual_premium"],
+      ["monthly_slcsps", "annual_slcsp"],
+      ["monthly_aptcs", "annual_aptc"],
+    ] as const
+  ) {
+    const reported = policy[annual];
+    if (
+      reported !== undefined &&
+      Math.abs(reported - policy[monthly]!.reduce((a, b) => a + b, 0)) > 0.01
+    ) {
+      throw new Error(
+        "Form 8962 joint statement annual amount differs from monthly source",
+      );
+    }
+  }
+  let credit = 0, advance = 0;
+  for (const [index, row] of rows.entries()) {
+    const premium = Math.round(policy.monthly_premiums[index]);
+    const slcsp = Math.round(policy.monthly_slcsps[index]);
+    const aptc = Math.round(policy.monthly_aptcs[index]);
+    const covered = policy.monthly_premiums[index] > 0;
+    const maxAssistance = covered
+      ? Math.max(0, slcsp - monthlyContribution)
+      : 0;
+    const allowed = Math.min(premium, maxAssistance);
+    if (
+      row.month_code !== MONTH_CODES[index] || row.premium !== premium ||
+      row.slcsp !== slcsp || row.aptc !== aptc ||
+      (row.contribution ?? 0) !== monthlyContribution ||
+      (row.max_assistance ?? 0) !== maxAssistance ||
+      (row.allowed_credit ?? 0) !== allowed ||
+      (covered ? slcsp <= 0 || aptc <= 0 : slcsp !== 0 || aptc !== 0)
+    ) {
+      throw new Error(
+        `Form 8962 joint advance-credit month ${
+          index + 1
+        } differs from the received policy`,
+      );
+    }
+    credit += allowed;
+    advance += aptc;
+  }
+  const excess = Math.max(0, advance - credit),
+    net = Math.max(0, credit - advance);
+  // Table 5 uses the other-filing-status column for a joint return.
+  const cap = amounts.repaymentCap === undefined
+    ? undefined
+    : amounts.repaymentCap * 2;
+  const repayment = Math.min(excess, cap ?? excess);
+  if (
+    fields.total_premium_tax_credit !== credit ||
+    fields.total_advance_ptc !== advance ||
+    (fields.net_premium_tax_credit ?? 0) !== net ||
+    (fields.excess_advance_payment ?? 0) !== excess ||
+    (fields.excess_advance_premium ?? 0) !== repayment ||
+    fields.repayment_limitation !== (excess > 0 ? cap : undefined)
+  ) {
+    throw new Error(
+      "Form 8962 joint advance-credit totals or Table 5 limit disagree",
+    );
+  }
+  const schedule2 = schedule2Schema.safeParse(pending?.schedule2);
+  const schedule3 = schedule3Schema.safeParse(pending?.schedule3);
+  if (
+    (schedule2.success
+        ? schedule2.data.line1a_excess_advance_premium ?? 0
+        : 0) !== repayment ||
+    (form1040.data.line17_additional_taxes ?? 0) !== repayment ||
+    (schedule3.success ? schedule3.data.line9_premium_tax_credit ?? 0 : 0) !==
+      net ||
+    (form1040.data.line31_additional_payments ?? 0) !== net
+  ) {
+    throw new Error(
+      "Form 8962 joint advances differ from finalized Schedule 2/3 and Form 1040",
     );
   }
 }
@@ -3413,6 +3598,10 @@ function buildIRS8962(fields: Input, context?: MefBuildContext): string {
         } else {
           reconcileNoAptcPolicyMonths(fields, context);
         }
+      } else if (
+        context?.filer?.filingStatus === FilingStatus.MarriedFilingJointly
+      ) {
+        reconcileJointAptcPolicyMonths(fields, context);
       } else {
         reconcileSimplePolicyMonths(fields, context);
       }

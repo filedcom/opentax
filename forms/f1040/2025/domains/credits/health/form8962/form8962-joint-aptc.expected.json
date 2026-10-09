@@ -1,0 +1,11 @@
+{
+  "below-200": {"household":59280,"pct":190,"monthly":79,"ptc":8052,"advance":10800,"cap":750,"repay":750,"net":0,"tax":750,"refund":2250,"owed":0},
+  "at-200": {"household":62400,"pct":200,"monthly":104,"ptc":7752,"advance":10800,"cap":1950,"repay":1950,"net":0,"tax":1950,"refund":1050,"owed":0},
+  "at-300": {"household":93600,"pct":300,"monthly":468,"ptc":3384,"advance":10800,"cap":3250,"repay":3250,"net":0,"tax":6340,"refund":0,"owed":3340},
+  "at-399": {"household":124488,"pct":399,"monthly":880,"ptc":0,"advance":10800,"cap":3250,"repay":3250,"net":0,"tax":10042,"refund":0,"owed":7042},
+  "at-400": {"household":124800,"pct":400,"monthly":884,"ptc":0,"advance":10800,"cap":null,"repay":10800,"net":0,"tax":17634,"refund":0,"owed":14634},
+  "net-credit": {"household":62400,"pct":200,"monthly":104,"ptc":7752,"advance":1200,"cap":null,"repay":0,"net":6552,"tax":0,"refund":9552,"owed":0},
+  "equal-credit": {"household":62400,"pct":200,"monthly":104,"ptc":7752,"advance":7752,"cap":null,"repay":0,"net":0,"tax":0,"refund":3000,"owed":0},
+  "partial-year": {"household":62400,"pct":200,"monthly":104,"ptc":5964,"advance":8100,"cap":1950,"repay":1950,"net":0,"tax":1950,"refund":1050,"owed":0},
+  "joint-benefits": {"household":82400,"pct":264,"monthly":313,"ptc":5244,"advance":10800,"cap":1950,"repay":1950,"net":0,"tax":2201,"refund":999,"owed":0}
+}

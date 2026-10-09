@@ -620,3 +620,33 @@ business loss cannot disappear without Form 8995 line 16 and a sourced
 carryforward route. A prior loss fully absorbed by current positive QBI can
 still leave a zero-deduction no-claim return when the income limit is zero.
 This guard does not implement line 16 filing or prove prior-year loss history.
+
+## Profitable business integration evidence — October 9
+
+Four additional complete public-input returns exercise one, two and six profitable taxpayer-owned Schedule C activities, including a credit-limited case. Reviewed synthetic allocation assertions assign the deductible half of SE tax across businesses before QBI; they do not authenticate external books or invoices. Independent expected amounts use the [2025 tax table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf), [Schedule SE guidance](https://www.irs.gov/publications/p334) and [Form 8995 instructions](https://www.irs.gov/instructions/i8995).
+
+| Case | SE tax | Half-SE deduction | QBI deduction | Income tax | Allowed credit | Total tax |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| One business | 1,413 | 707 | 1,859 | 4,763 | 600 | 5,576 |
+| Two businesses | 4,238 | 2,119 | 5,576 | 7,361 | 1,800 | 9,799 |
+| Credit limited | 4,238 | 2,119 | 5,576 | 7,361 | 7,361 | 4,238 |
+| Six businesses | 8,478 | 4,239 | 11,153 | 12,267 | 3,600 | 17,145 |
+
+The credit-limited case reduces depreciable basis by the full $18,000 property credit even though only $7,361 offsets current income tax; SE tax remains payable. Six businesses retain distinct depreciation/property documents and a readable sixth-business Form 8995 continuation. Changed SE, QBI, allowed-credit or final-tax amounts and missing allocation review reject during preparation.
+
+All four complete XML returns validate against cached TY2025 2025v5.4 Return1040 XSD. Their 151 PDF pages (27/33/33/58) are covered by visual review of 67 distinct rendered pages and 84 exact PNG hash matches to reviewed pages; all packets have zero remaining AcroForm fields/widgets. Focused regression passed 82 tests; two final tests passed after strengthening document-ID and full-basis-reduction assertions (overlapping scope, not an additive count). Artifacts: `.state/research/form8911-profitable-returns/`; checkpoint: `.state/research/board-execution-2026-10-08/form8911-profit-batch-checkpoint.json`.
+
+This verifies the bounded existing route; broader form support, external source authentication, matching IRS business rules and ATS acceptance remain open. CI at preceding head `0885b3b12` exhausted its V8 heap before producing JUnit; that investigation is deferred in `future_todo` and no green CI claim is made.
+
+### Section 179 inventory and health ordering — October 9
+
+The related Form4562 inventory route now reconciles the established primary-owner
+single-Schedule-C plan, monthly exclusions and allowed health deduction before
+its active-income limit, preserving SE earnings and the resulting QBI reduction.
+Full and income-limited premiums, six employer-excluded months and a larger
+credit-limited asset have independent final-tax checks. See the
+[section179 combination evidence](../form4562/ty2025-form4562-gap.md).
+The fully employer-excluded primary-owner Form8995 rejection is retained only
+in `future_todo`; no zero-health filing support or parent-task closure is claimed.
+
+Verification: **44 typed tests passed, zero failed** across the current-year depreciation and health-calculation regression. Four complete returns passed local TY2025v5.4 XSD and have110 reviewed PDF pages (23 inspected distinct renders;87 exact reviewed-page matches), with zero AcroForm fields/widgets. Source inputs, pending results, XML/PDF bytes and hashes are retained in `.state/research/form4562-section179-health-returns/`. No IRS acceptance or broader parent completion is claimed.

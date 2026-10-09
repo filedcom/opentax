@@ -1,6 +1,9 @@
 import { assertArcherEmployerExcessIncomeSource } from "../../../../../domains/adjustments/health/form8853/form8853_contributions_reconciliation.ts";
 import { assertEducationIncomeSource } from "../../../../../../nodes/inputs/income/other/education_income/index.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../../review-support/form-descriptor.ts";
 import { FilingStatus } from "../../../../../../mef/header.ts";
 import { assertForm1098Box4Sources } from "../../../../../../nodes/inputs/deductions/mortgage/f1098/index.ts";
 import {
@@ -171,6 +174,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line8p_excess_business_loss",
     pdfField: "topmostSubform[0].Page1[0].f1_28[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line8q_able_taxable_earnings",
+    pdfField: "topmostSubform[0].Page1[0].f1_29[0]",
   },
   {
     kind: "text",

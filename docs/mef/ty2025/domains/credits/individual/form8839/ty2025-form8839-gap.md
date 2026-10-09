@@ -516,3 +516,95 @@ page image are under
 `.state/research/ty2025-filled-pdf-review/2026-10-05-form8839-page/`.
 Wider adoption routes,
 source authenticity, full-batch validation, and ATS remain open.
+
+## October 9 current-year unused-credit carryforward
+
+The reviewed one-child domestic route now retains unused 2025 nonrefundable
+credit instead of rejecting every return whose tax limit is below line14.
+The existing calculation remains authoritative: refundable line13 stays5000
+in the two synthetic fixtures, allowed line18 reaches Schedule3/1040, and
+line14 less line18 becomes the carryforward. The [2025 instructions](https://www.irs.gov/instructions/i8839)
+permit unused nonrefundable credit for the following five years; the record
+therefore names2026–2030, taxpayer/child SSNs, decree/expense references,
+eligible credit, credit used and balance.
+
+The strict version1 record is explicitly `computed_unfiled`, lives in the
+pending return and survives JSON persistence. The normal result also reports
+`adoption_credit_2025`. Native/PDF projection recomputes the record from the
+same reviewed source and final tax; missing, changed amount, owner, child,
+expiry, expense reference and falsely accepted status reject. Existing PDF
+byte binding remains required. This is not an accepted-filing ledger or a
+2026 import route, and cannot substantiate a later claim on its own.
+
+| Synthetic return | Wages / withholding | Refundable | Used nonrefundable | Carryforward | Refund | Reviewed pages |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Unused credit | 10000 / 0 | 5000 | 0 | 6000 | 5000 | 3 |
+| Partial credit | 50000 / 4000 | 5000 | 3875 | 2125 | 9000 | 4 |
+
+For the partial case, taxable income34250 selects3875 from the single-filer
+[2025 Tax Table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf), independently
+fixing the allowed credit and2125 balance. Both complete XML returns validate
+against cached TY2025v5.4 Return1040 XSD. All seven filled pages were visually
+reviewed, with zero AcroForm fields/widgets; Form8839 child, marks, expense,
+refund/nonrefund and Schedule3 joins agree. Form1040 zero tax line24 remains
+blank (existing deferred76); this is qualified presentation evidence.
+The source attachments are synthetic byte-bound fixtures, not authenticated
+real decrees or payment records.
+
+Grouped regression: **46 typed tests passed**, including the existing QEF
+refigure path. A subsequent focused boundary test passes for4000 expenses:
+credit is fully refundable and no carryforward is created. Seven altered/missing ledger variants reject in native and
+full-PDF export. Form8621 combinations with a current carryforward remain
+guarded; zero-credit phaseout, prior carry imports, employer exclusions,
+foreign-income cases, acceptance and source authenticity remain outside this
+completed current-year slice. The broad Form8839 parent is not closed.
+
+The original partial-use case with zero withholding exposed a separate stale
+balance: post-credit tax0/payments5000/refund5000 coexist with pre-credit
+amount owed3875. Native arithmetic correctly rejects line37. Its input/result,
+failed log and original comparison remain retained; this is future item93,
+not repaired or counted as a successful packet. The positive partial case
+above is separately labeled and uses4000 withholding. Private evidence:
+`.state/research/form8839-carryforward-2026-10-09/`.
+
+## October 9 saved-return CLI carryforward verification
+
+Three CLI cases now store the same strict source and reviewed attachment files,
+copy the saved return into a fresh directory, remove the original directory,
+and reopen through the CLI pipeline. Fully used, unused6000 and partial2125
+balances reproduce, as does the refundable5000 credit. The current carryforward
+record is regenerated from stored sources; it remains `computed_unfiled`, not
+an accepted-filing record. Updating the partial case's stored W-2 to100000 wages
+and15000 withholding uses all6000 of nonrefundable credit and removes the old
+carryforward from both the pending record and CLI summary. Altering the decree
+file then rejects both XML and PDF export in all three cases.
+
+**Eight typed CLI/public tests pass**. The two retained carryforward XML packets
+pass cached TY2025v5.4 XSD. All seven rendered output pages are byte-identical to
+the previously visually reviewed programmatic pages; this proves the CLI
+reproduction without adding duplicate pages to the reviewed-page total.
+
+These CLI exports use the existing `force` test option for local business-rule
+failures, not for source/attachment or arithmetic guards. An independent
+unforced replay rejects both retained cases: unused has F1040-066-09,
+F8839-009-01 and IND-433; partial also has S3-F1040-013-01. The payment rule's
+sum omits refundable adoption credit; the reverse registry has no ChildSSN or
+old AdoptionCreditAmt mapping, while current NonrefundableAdoptionCreditAmt
+maps to Schedule3 and RefundableAdoptionCreditAmt maps to1040. IND-433 is a
+real missing synthetic-fixture signature PIN, not evidence of a calculation
+bug. Reconcile rule version/mappings before claiming an ordinary unforced
+export. This is deferred item94, without a production-rule change.
+
+Private saved returns, packet XML/PDF, render comparisons, rejection reports
+and test log: `.state/research/form8839-cli-carry-2026-10-09/`. Prior-year
+accepted-carry import, source authenticity, broader credit ordering and IRS
+acceptance remain open; no parent task is closed.
+
+
+## October 9 saver-credit ordering boundary
+
+Four public-source probes add2000 of W-2 code-D deferrals, with explicit nonstudent and nondependent answers. At wages20000,25000 and30000 the return rejects before export: `Form 8839 pre-adoption Schedule 3 lines do not reconcile to Form 1040 line 20`. The initial run retains15 passes and3 failures. These are newly observed reconciliation failures, tracked as deferred95 rather than repaired or counted as successful ordering.
+
+At wages40000, above the single-filer saver-credit income cutoff, the return retains tax2675, zero saver credit, nonrefundable adoption2675, refundable adoption5000 and carry3325. Native and complete-PDF construction pass; changing either the Schedule3 saver-credit amount or carry amount rejects at both export boundaries. No new retained PDF visual review, XSD validation or IRS acceptance is claimed for this probe. The underlying attachment PDFs are synthetic identifiers, not authenticated decree or expense records.
+
+The revised regression records the three exact public-route rejections explicitly. Credit ordering remains open; passing rejection assertions are boundary coverage, not completed tax-return coverage. Private logs: `.state/research/form8839-saver-ordering-2026-10-09/`.

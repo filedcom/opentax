@@ -1,0 +1,1658 @@
+{
+  "one-w2": {
+    "general": {
+      "filing_status": "single",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "123-45-6789",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1985-06-15",
+      "taxpayer_can_be_claimed_as_dependent": false,
+      "address_line1": "1 Main St",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false,
+      "dependents": [
+        {
+          "first_name": "Casey",
+          "last_name": "Taxpayer",
+          "name_control": "TAXP",
+          "ssn": "987654321",
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "dob": "2007-06-15",
+          "relationship": "daughter",
+          "irs_relationship_code": "DAUGHTER",
+          "months_in_home": 12,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12,
+          "us_citizen_national_or_resident": true,
+          "provided_over_half_own_support": false,
+          "filed_joint_return_except_refund_only": false,
+          "ptc_tax_return": {
+            "filing": "required",
+            "filed_form1040": {
+              "source_document_id": "casey-filed-2025-form1040",
+              "taxpayer_ssn": "987654321",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": false,
+              "line1z_wages": 16000,
+              "line2a_tax_exempt_interest": 0,
+              "line2b_taxable_interest": 0,
+              "line3b_dividends": 0,
+              "line4b_ira": 0,
+              "line5b_pensions": 0,
+              "line6b_social_security": 0,
+              "line7a_capital_gain": 0,
+              "line8_additional_income": 0,
+              "line10_adjustments": 0,
+              "line11b_agi": 16000
+            },
+            "interest_forms1099": [],
+            "wage_forms_w2": [
+              {
+                "source_document_id": "casey-issued-2025-w2",
+                "employer_name": "Summer Employer",
+                "employer_ein": "112233445",
+                "employee_ssn": "987654321",
+                "box1_wages": 16000
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Parent Employer",
+        "employer_address_line1": "10 Work St",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "123-45-6789",
+        "box1_wages": 70000,
+        "box2_fed_withheld": 3000,
+        "box3_ss_wages": 70000,
+        "box4_ss_withheld": 4340,
+        "box5_medicare_wages": 70000,
+        "box6_medicare_withheld": 1015
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-ANNUAL-FAMILY-2025",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789",
+          "987654321"
+        ],
+        "monthly_premiums": [
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000
+        ],
+        "monthly_slcsps": [
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900
+        ],
+        "monthly_aptcs": [
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50
+        ],
+        "annual_premium": 12000,
+        "annual_slcsp": 10800,
+        "annual_aptc": 600
+      }
+    ],
+    "f8812": [
+      {
+        "filing_status": "single",
+        "agi": 70000,
+        "income_tax_liability": 6855,
+        "do_not_claim_actc": false,
+        "qualifying_children_count": 0,
+        "other_dependents_count": 1,
+        "line18a_earned_income": 70000,
+        "credit_limit_worksheet": {
+          "schedule3_line1": 0,
+          "schedule3_line2": 0,
+          "schedule3_line3": 0,
+          "schedule3_line4": 0,
+          "schedule3_line5b": 0,
+          "schedule3_line6d": 0,
+          "schedule3_line6f": 0,
+          "schedule3_line6l": 0,
+          "schedule3_line6m": 0,
+          "worksheet_b_applies": false
+        }
+      }
+    ]
+  },
+  "two-w2": {
+    "general": {
+      "filing_status": "single",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "123-45-6789",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1985-06-15",
+      "taxpayer_can_be_claimed_as_dependent": false,
+      "address_line1": "1 Main St",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false,
+      "dependents": [
+        {
+          "first_name": "Casey",
+          "last_name": "Taxpayer",
+          "name_control": "TAXP",
+          "ssn": "987654321",
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "dob": "2007-06-15",
+          "relationship": "daughter",
+          "irs_relationship_code": "DAUGHTER",
+          "months_in_home": 12,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12,
+          "us_citizen_national_or_resident": true,
+          "provided_over_half_own_support": false,
+          "filed_joint_return_except_refund_only": false,
+          "ptc_tax_return": {
+            "filing": "required",
+            "filed_form1040": {
+              "source_document_id": "casey-filed-2025-form1040",
+              "taxpayer_ssn": "987654321",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": false,
+              "line1z_wages": 16000,
+              "line2a_tax_exempt_interest": 0,
+              "line2b_taxable_interest": 0,
+              "line3b_dividends": 0,
+              "line4b_ira": 0,
+              "line5b_pensions": 0,
+              "line6b_social_security": 0,
+              "line7a_capital_gain": 0,
+              "line8_additional_income": 0,
+              "line10_adjustments": 0,
+              "line11b_agi": 16000
+            },
+            "interest_forms1099": [],
+            "wage_forms_w2": [
+              {
+                "source_document_id": "casey-issued-2025-w2-summer",
+                "employer_name": "Summer Employer",
+                "employer_ein": "112233445",
+                "employee_ssn": "987654321",
+                "box1_wages": 9000
+              },
+              {
+                "source_document_id": "casey-issued-2025-w2-autumn",
+                "employer_name": "Autumn Employer",
+                "employer_ein": "556677889",
+                "employee_ssn": "987654321",
+                "box1_wages": 7000
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Parent Employer",
+        "employer_address_line1": "10 Work St",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "123-45-6789",
+        "box1_wages": 70000,
+        "box2_fed_withheld": 3000,
+        "box3_ss_wages": 70000,
+        "box4_ss_withheld": 4340,
+        "box5_medicare_wages": 70000,
+        "box6_medicare_withheld": 1015
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-ANNUAL-FAMILY-2025",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789",
+          "987654321"
+        ],
+        "monthly_premiums": [
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000
+        ],
+        "monthly_slcsps": [
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900
+        ],
+        "monthly_aptcs": [
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50
+        ],
+        "annual_premium": 12000,
+        "annual_slcsp": 10800,
+        "annual_aptc": 600
+      }
+    ],
+    "f8812": [
+      {
+        "filing_status": "single",
+        "agi": 70000,
+        "income_tax_liability": 6855,
+        "do_not_claim_actc": false,
+        "qualifying_children_count": 0,
+        "other_dependents_count": 1,
+        "line18a_earned_income": 70000,
+        "credit_limit_worksheet": {
+          "schedule3_line1": 0,
+          "schedule3_line2": 0,
+          "schedule3_line3": 0,
+          "schedule3_line4": 0,
+          "schedule3_line5b": 0,
+          "schedule3_line6d": 0,
+          "schedule3_line6f": 0,
+          "schedule3_line6l": 0,
+          "schedule3_line6m": 0,
+          "worksheet_b_applies": false
+        }
+      }
+    ]
+  },
+  "w2-interest": {
+    "general": {
+      "filing_status": "single",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "123-45-6789",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1985-06-15",
+      "taxpayer_can_be_claimed_as_dependent": false,
+      "address_line1": "1 Main St",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false,
+      "dependents": [
+        {
+          "first_name": "Casey",
+          "last_name": "Taxpayer",
+          "name_control": "TAXP",
+          "ssn": "987654321",
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "dob": "2007-06-15",
+          "relationship": "daughter",
+          "irs_relationship_code": "DAUGHTER",
+          "months_in_home": 12,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12,
+          "us_citizen_national_or_resident": true,
+          "provided_over_half_own_support": false,
+          "filed_joint_return_except_refund_only": false,
+          "ptc_tax_return": {
+            "filing": "required",
+            "filed_form1040": {
+              "source_document_id": "casey-filed-2025-form1040",
+              "taxpayer_ssn": "987654321",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": false,
+              "line1z_wages": 14000,
+              "line2a_tax_exempt_interest": 100,
+              "line2b_taxable_interest": 1000,
+              "line3b_dividends": 0,
+              "line4b_ira": 0,
+              "line5b_pensions": 0,
+              "line6b_social_security": 0,
+              "line7a_capital_gain": 0,
+              "line8_additional_income": 0,
+              "line10_adjustments": 0,
+              "line11b_agi": 15000
+            },
+            "interest_forms1099": [
+              {
+                "source_document_id": "casey-issued-2025-1099-int",
+                "recipient_ssn": "987654321",
+                "box1_taxable_interest": 1000,
+                "box8_tax_exempt_interest": 100
+              }
+            ],
+            "wage_forms_w2": [
+              {
+                "source_document_id": "casey-issued-2025-w2",
+                "employer_name": "Summer Employer",
+                "employer_ein": "112233445",
+                "employee_ssn": "987654321",
+                "box1_wages": 14000
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Parent Employer",
+        "employer_address_line1": "10 Work St",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "123-45-6789",
+        "box1_wages": 70000,
+        "box2_fed_withheld": 3000,
+        "box3_ss_wages": 70000,
+        "box4_ss_withheld": 4340,
+        "box5_medicare_wages": 70000,
+        "box6_medicare_withheld": 1015
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-ANNUAL-FAMILY-2025",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789",
+          "987654321"
+        ],
+        "monthly_premiums": [
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000
+        ],
+        "monthly_slcsps": [
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900
+        ],
+        "monthly_aptcs": [
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50
+        ],
+        "annual_premium": 12000,
+        "annual_slcsp": 10800,
+        "annual_aptc": 600
+      }
+    ],
+    "f8812": [
+      {
+        "filing_status": "single",
+        "agi": 70000,
+        "income_tax_liability": 6855,
+        "do_not_claim_actc": false,
+        "qualifying_children_count": 0,
+        "other_dependents_count": 1,
+        "line18a_earned_income": 70000,
+        "credit_limit_worksheet": {
+          "schedule3_line1": 0,
+          "schedule3_line2": 0,
+          "schedule3_line3": 0,
+          "schedule3_line4": 0,
+          "schedule3_line5b": 0,
+          "schedule3_line6d": 0,
+          "schedule3_line6f": 0,
+          "schedule3_line6l": 0,
+          "schedule3_line6m": 0,
+          "worksheet_b_applies": false
+        }
+      }
+    ]
+  },
+  "two-w2-interest": {
+    "general": {
+      "filing_status": "single",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "123-45-6789",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1985-06-15",
+      "taxpayer_can_be_claimed_as_dependent": false,
+      "address_line1": "1 Main St",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false,
+      "dependents": [
+        {
+          "first_name": "Casey",
+          "last_name": "Taxpayer",
+          "name_control": "TAXP",
+          "ssn": "987654321",
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "dob": "2007-06-15",
+          "relationship": "daughter",
+          "irs_relationship_code": "DAUGHTER",
+          "months_in_home": 12,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12,
+          "us_citizen_national_or_resident": true,
+          "provided_over_half_own_support": false,
+          "filed_joint_return_except_refund_only": false,
+          "ptc_tax_return": {
+            "filing": "required",
+            "filed_form1040": {
+              "source_document_id": "casey-filed-2025-form1040",
+              "taxpayer_ssn": "987654321",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": false,
+              "line1z_wages": 15000,
+              "line2a_tax_exempt_interest": 100,
+              "line2b_taxable_interest": 1000,
+              "line3b_dividends": 0,
+              "line4b_ira": 0,
+              "line5b_pensions": 0,
+              "line6b_social_security": 0,
+              "line7a_capital_gain": 0,
+              "line8_additional_income": 0,
+              "line10_adjustments": 0,
+              "line11b_agi": 16000
+            },
+            "interest_forms1099": [
+              {
+                "source_document_id": "casey-issued-2025-1099-int",
+                "recipient_ssn": "987654321",
+                "box1_taxable_interest": 1000,
+                "box8_tax_exempt_interest": 100
+              }
+            ],
+            "wage_forms_w2": [
+              {
+                "source_document_id": "casey-issued-2025-w2-summer",
+                "employer_name": "Summer Employer",
+                "employer_ein": "112233445",
+                "employee_ssn": "987654321",
+                "box1_wages": 8000
+              },
+              {
+                "source_document_id": "casey-issued-2025-w2-autumn",
+                "employer_name": "Autumn Employer",
+                "employer_ein": "556677889",
+                "employee_ssn": "987654321",
+                "box1_wages": 7000
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Parent Employer",
+        "employer_address_line1": "10 Work St",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "123-45-6789",
+        "box1_wages": 70000,
+        "box2_fed_withheld": 3000,
+        "box3_ss_wages": 70000,
+        "box4_ss_withheld": 4340,
+        "box5_medicare_wages": 70000,
+        "box6_medicare_withheld": 1015
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-ANNUAL-FAMILY-2025",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789",
+          "987654321"
+        ],
+        "monthly_premiums": [
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000
+        ],
+        "monthly_slcsps": [
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900
+        ],
+        "monthly_aptcs": [
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50
+        ],
+        "annual_premium": 12000,
+        "annual_slcsp": 10800,
+        "annual_aptc": 600
+      }
+    ],
+    "f8812": [
+      {
+        "filing_status": "single",
+        "agi": 70000,
+        "income_tax_liability": 6855,
+        "do_not_claim_actc": false,
+        "qualifying_children_count": 0,
+        "other_dependents_count": 1,
+        "line18a_earned_income": 70000,
+        "credit_limit_worksheet": {
+          "schedule3_line1": 0,
+          "schedule3_line2": 0,
+          "schedule3_line3": 0,
+          "schedule3_line4": 0,
+          "schedule3_line5b": 0,
+          "schedule3_line6d": 0,
+          "schedule3_line6f": 0,
+          "schedule3_line6l": 0,
+          "schedule3_line6m": 0,
+          "worksheet_b_applies": false
+        }
+      }
+    ]
+  },
+  "two-dependents": {
+    "general": {
+      "filing_status": "single",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "123-45-6789",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1985-06-15",
+      "taxpayer_can_be_claimed_as_dependent": false,
+      "address_line1": "1 Main St",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false,
+      "dependents": [
+        {
+          "first_name": "Casey",
+          "last_name": "Taxpayer",
+          "name_control": "TAXP",
+          "ssn": "987654321",
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "dob": "2007-06-15",
+          "relationship": "daughter",
+          "irs_relationship_code": "DAUGHTER",
+          "months_in_home": 12,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12,
+          "us_citizen_national_or_resident": true,
+          "provided_over_half_own_support": false,
+          "filed_joint_return_except_refund_only": false,
+          "ptc_tax_return": {
+            "filing": "required",
+            "filed_form1040": {
+              "source_document_id": "casey-filed-1040",
+              "taxpayer_ssn": "987654321",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": false,
+              "line1z_wages": 14000,
+              "line2a_tax_exempt_interest": 100,
+              "line2b_taxable_interest": 1000,
+              "line3b_dividends": 0,
+              "line4b_ira": 0,
+              "line5b_pensions": 0,
+              "line6b_social_security": 0,
+              "line7a_capital_gain": 0,
+              "line8_additional_income": 0,
+              "line10_adjustments": 0,
+              "line11b_agi": 15000
+            },
+            "interest_forms1099": [
+              {
+                "source_document_id": "casey-1099-int",
+                "recipient_ssn": "987654321",
+                "box1_taxable_interest": 1000,
+                "box8_tax_exempt_interest": 100
+              }
+            ],
+            "wage_forms_w2": [
+              {
+                "source_document_id": "casey-w2",
+                "employer_name": "Summer Employer",
+                "employer_ein": "112233445",
+                "employee_ssn": "987654321",
+                "box1_wages": 14000
+              }
+            ]
+          }
+        },
+        {
+          "first_name": "Jordan",
+          "last_name": "Taxpayer",
+          "name_control": "TAXP",
+          "ssn": "111223333",
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "dob": "2008-04-15",
+          "relationship": "son",
+          "irs_relationship_code": "SON",
+          "months_in_home": 12,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12,
+          "us_citizen_national_or_resident": true,
+          "provided_over_half_own_support": false,
+          "filed_joint_return_except_refund_only": false,
+          "ptc_tax_return": {
+            "filing": "required",
+            "filed_form1040": {
+              "source_document_id": "jordan-filed-1040",
+              "taxpayer_ssn": "111223333",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": false,
+              "line1z_wages": 0,
+              "line2a_tax_exempt_interest": 200,
+              "line2b_taxable_interest": 2000,
+              "line3b_dividends": 0,
+              "line4b_ira": 0,
+              "line5b_pensions": 0,
+              "line6b_social_security": 0,
+              "line7a_capital_gain": 0,
+              "line8_additional_income": 0,
+              "line10_adjustments": 0,
+              "line11b_agi": 2000
+            },
+            "interest_forms1099": [
+              {
+                "source_document_id": "jordan-1099-int",
+                "recipient_ssn": "111223333",
+                "box1_taxable_interest": 2000,
+                "box8_tax_exempt_interest": 200
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Parent Employer",
+        "employer_address_line1": "10 Work St",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "123-45-6789",
+        "box1_wages": 100000,
+        "box2_fed_withheld": 3000,
+        "box3_ss_wages": 100000,
+        "box4_ss_withheld": 6200,
+        "box5_medicare_wages": 100000,
+        "box6_medicare_withheld": 1450
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-ANNUAL-FAMILY-2025",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789",
+          "987654321",
+          "111223333"
+        ],
+        "monthly_premiums": [
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000
+        ],
+        "monthly_slcsps": [
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000
+        ],
+        "monthly_aptcs": [
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50
+        ],
+        "annual_premium": 12000,
+        "annual_slcsp": 12000,
+        "annual_aptc": 600
+      }
+    ],
+    "f8812": [
+      {
+        "filing_status": "single",
+        "agi": 100000,
+        "income_tax_liability": 13455,
+        "do_not_claim_actc": false,
+        "qualifying_children_count": 0,
+        "other_dependents_count": 2,
+        "line18a_earned_income": 100000,
+        "credit_limit_worksheet": {
+          "schedule3_line1": 0,
+          "schedule3_line2": 0,
+          "schedule3_line3": 0,
+          "schedule3_line4": 0,
+          "schedule3_line5b": 0,
+          "schedule3_line6d": 0,
+          "schedule3_line6f": 0,
+          "schedule3_line6l": 0,
+          "schedule3_line6m": 0,
+          "worksheet_b_applies": false
+        }
+      }
+    ]
+  },
+  "multiple-sources": {
+    "general": {
+      "filing_status": "single",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "123-45-6789",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1985-06-15",
+      "taxpayer_can_be_claimed_as_dependent": false,
+      "address_line1": "1 Main St",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false,
+      "dependents": [
+        {
+          "first_name": "Casey",
+          "last_name": "Taxpayer",
+          "name_control": "TAXP",
+          "ssn": "987654321",
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "dob": "2007-06-15",
+          "relationship": "daughter",
+          "irs_relationship_code": "DAUGHTER",
+          "months_in_home": 12,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12,
+          "us_citizen_national_or_resident": true,
+          "provided_over_half_own_support": false,
+          "filed_joint_return_except_refund_only": false,
+          "ptc_tax_return": {
+            "filing": "required",
+            "filed_form1040": {
+              "source_document_id": "casey-filed-2025-form1040",
+              "taxpayer_ssn": "987654321",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": false,
+              "line1z_wages": 14000,
+              "line2a_tax_exempt_interest": 200,
+              "line2b_taxable_interest": 1000,
+              "line3b_dividends": 1000,
+              "line4b_ira": 0,
+              "line5b_pensions": 0,
+              "line6b_social_security": 0,
+              "line7a_capital_gain": 0,
+              "line8_additional_income": 0,
+              "line10_adjustments": 0,
+              "line11b_agi": 16000
+            },
+            "interest_forms1099": [
+              {
+                "source_document_id": "casey-int-first",
+                "recipient_ssn": "987654321",
+                "box1_taxable_interest": 500,
+                "box8_tax_exempt_interest": 100
+              },
+              {
+                "source_document_id": "casey-int-second",
+                "recipient_ssn": "987654321",
+                "box1_taxable_interest": 500,
+                "box8_tax_exempt_interest": 100
+              }
+            ],
+            "dividend_forms1099": [
+              {
+                "source_document_id": "casey-div-first",
+                "payer_ein": "445566778",
+                "recipient_ssn": "987654321",
+                "box1a_ordinary_dividends": 600,
+                "box1b_qualified_dividends": 0,
+                "box2a_capital_gain_distributions": 0,
+                "box12_exempt_interest_dividends": 0
+              },
+              {
+                "source_document_id": "casey-div-second",
+                "payer_ein": "556677889",
+                "recipient_ssn": "987654321",
+                "box1a_ordinary_dividends": 400,
+                "box1b_qualified_dividends": 0,
+                "box2a_capital_gain_distributions": 0,
+                "box12_exempt_interest_dividends": 0
+              }
+            ],
+            "wage_forms_w2": [
+              {
+                "source_document_id": "casey-w2-school",
+                "employer_name": "School Office",
+                "employer_ein": "112233445",
+                "employee_ssn": "987654321",
+                "box1_wages": 6000
+              },
+              {
+                "source_document_id": "casey-w2-library",
+                "employer_name": "Local Library",
+                "employer_ein": "223344556",
+                "employee_ssn": "987654321",
+                "box1_wages": 5000
+              },
+              {
+                "source_document_id": "casey-w2-store",
+                "employer_name": "General Store",
+                "employer_ein": "334455667",
+                "employee_ssn": "987654321",
+                "box1_wages": 3000
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Parent Employer",
+        "employer_address_line1": "10 Work St",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "123-45-6789",
+        "box1_wages": 70000,
+        "box2_fed_withheld": 3000,
+        "box3_ss_wages": 70000,
+        "box4_ss_withheld": 4340,
+        "box5_medicare_wages": 70000,
+        "box6_medicare_withheld": 1015
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-ANNUAL-FAMILY-2025",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789",
+          "987654321"
+        ],
+        "monthly_premiums": [
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000
+        ],
+        "monthly_slcsps": [
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900
+        ],
+        "monthly_aptcs": [
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50
+        ],
+        "annual_premium": 12000,
+        "annual_slcsp": 10800,
+        "annual_aptc": 600
+      }
+    ],
+    "f8812": [
+      {
+        "filing_status": "single",
+        "agi": 70000,
+        "income_tax_liability": 6855,
+        "do_not_claim_actc": false,
+        "qualifying_children_count": 0,
+        "other_dependents_count": 1,
+        "line18a_earned_income": 70000,
+        "credit_limit_worksheet": {
+          "schedule3_line1": 0,
+          "schedule3_line2": 0,
+          "schedule3_line3": 0,
+          "schedule3_line4": 0,
+          "schedule3_line5b": 0,
+          "schedule3_line6d": 0,
+          "schedule3_line6f": 0,
+          "schedule3_line6l": 0,
+          "schedule3_line6m": 0,
+          "worksheet_b_applies": false
+        }
+      }
+    ]
+  },
+  "blind-multiple-sources": {
+    "general": {
+      "filing_status": "single",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "123-45-6789",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1985-06-15",
+      "taxpayer_can_be_claimed_as_dependent": false,
+      "address_line1": "1 Main St",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false,
+      "dependents": [
+        {
+          "first_name": "Casey",
+          "last_name": "Taxpayer",
+          "name_control": "TAXP",
+          "ssn": "987654321",
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "dob": "2007-06-15",
+          "relationship": "daughter",
+          "irs_relationship_code": "DAUGHTER",
+          "months_in_home": 12,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12,
+          "us_citizen_national_or_resident": true,
+          "provided_over_half_own_support": false,
+          "filed_joint_return_except_refund_only": false,
+          "ptc_tax_return": {
+            "filing": "required",
+            "filed_form1040": {
+              "source_document_id": "casey-filed-2025-form1040",
+              "taxpayer_ssn": "987654321",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": true,
+              "line1z_wages": 12000,
+              "line2a_tax_exempt_interest": 200,
+              "line2b_taxable_interest": 2000,
+              "line3b_dividends": 2000,
+              "line4b_ira": 0,
+              "line5b_pensions": 0,
+              "line6b_social_security": 0,
+              "line7a_capital_gain": 0,
+              "line8_additional_income": 0,
+              "line10_adjustments": 0,
+              "line11b_agi": 16000
+            },
+            "interest_forms1099": [
+              {
+                "source_document_id": "casey-int-first",
+                "recipient_ssn": "987654321",
+                "box1_taxable_interest": 1000,
+                "box8_tax_exempt_interest": 100
+              },
+              {
+                "source_document_id": "casey-int-second",
+                "recipient_ssn": "987654321",
+                "box1_taxable_interest": 1000,
+                "box8_tax_exempt_interest": 100
+              }
+            ],
+            "dividend_forms1099": [
+              {
+                "source_document_id": "casey-div-first",
+                "payer_ein": "445566778",
+                "recipient_ssn": "987654321",
+                "box1a_ordinary_dividends": 1200,
+                "box1b_qualified_dividends": 0,
+                "box2a_capital_gain_distributions": 0,
+                "box12_exempt_interest_dividends": 0
+              },
+              {
+                "source_document_id": "casey-div-second",
+                "payer_ein": "556677889",
+                "recipient_ssn": "987654321",
+                "box1a_ordinary_dividends": 800,
+                "box1b_qualified_dividends": 0,
+                "box2a_capital_gain_distributions": 0,
+                "box12_exempt_interest_dividends": 0
+              }
+            ],
+            "wage_forms_w2": [
+              {
+                "source_document_id": "casey-w2-school",
+                "employer_name": "School Office",
+                "employer_ein": "112233445",
+                "employee_ssn": "987654321",
+                "box1_wages": 4000
+              },
+              {
+                "source_document_id": "casey-w2-library",
+                "employer_name": "Local Library",
+                "employer_ein": "223344556",
+                "employee_ssn": "987654321",
+                "box1_wages": 5000
+              },
+              {
+                "source_document_id": "casey-w2-store",
+                "employer_name": "General Store",
+                "employer_ein": "334455667",
+                "employee_ssn": "987654321",
+                "box1_wages": 3000
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Parent Employer",
+        "employer_address_line1": "10 Work St",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "123-45-6789",
+        "box1_wages": 70000,
+        "box2_fed_withheld": 3000,
+        "box3_ss_wages": 70000,
+        "box4_ss_withheld": 4340,
+        "box5_medicare_wages": 70000,
+        "box6_medicare_withheld": 1015
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-ANNUAL-FAMILY-2025",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789",
+          "987654321"
+        ],
+        "monthly_premiums": [
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000
+        ],
+        "monthly_slcsps": [
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900
+        ],
+        "monthly_aptcs": [
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50
+        ],
+        "annual_premium": 12000,
+        "annual_slcsp": 10800,
+        "annual_aptc": 600
+      }
+    ],
+    "f8812": [
+      {
+        "filing_status": "single",
+        "agi": 70000,
+        "income_tax_liability": 6855,
+        "do_not_claim_actc": false,
+        "qualifying_children_count": 0,
+        "other_dependents_count": 1,
+        "line18a_earned_income": 70000,
+        "credit_limit_worksheet": {
+          "schedule3_line1": 0,
+          "schedule3_line2": 0,
+          "schedule3_line3": 0,
+          "schedule3_line4": 0,
+          "schedule3_line5b": 0,
+          "schedule3_line6d": 0,
+          "schedule3_line6f": 0,
+          "schedule3_line6l": 0,
+          "schedule3_line6m": 0,
+          "worksheet_b_applies": false
+        }
+      }
+    ]
+  },
+  "blind-gross-threshold": {
+    "general": {
+      "filing_status": "single",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "123-45-6789",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1985-06-15",
+      "taxpayer_can_be_claimed_as_dependent": false,
+      "address_line1": "1 Main St",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false,
+      "dependents": [
+        {
+          "first_name": "Casey",
+          "last_name": "Taxpayer",
+          "name_control": "TAXP",
+          "ssn": "987654321",
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "dob": "2007-06-15",
+          "relationship": "daughter",
+          "irs_relationship_code": "DAUGHTER",
+          "months_in_home": 12,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12,
+          "us_citizen_national_or_resident": true,
+          "provided_over_half_own_support": false,
+          "filed_joint_return_except_refund_only": false,
+          "ptc_tax_return": {
+            "filing": "required",
+            "filed_form1040": {
+              "source_document_id": "casey-filed-2025-form1040",
+              "taxpayer_ssn": "987654321",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": true,
+              "line1z_wages": 13000,
+              "line2a_tax_exempt_interest": 200,
+              "line2b_taxable_interest": 1500,
+              "line3b_dividends": 1500,
+              "line4b_ira": 0,
+              "line5b_pensions": 0,
+              "line6b_social_security": 0,
+              "line7a_capital_gain": 0,
+              "line8_additional_income": 0,
+              "line10_adjustments": 0,
+              "line11b_agi": 16000
+            },
+            "interest_forms1099": [
+              {
+                "source_document_id": "casey-int-first",
+                "recipient_ssn": "987654321",
+                "box1_taxable_interest": 750,
+                "box8_tax_exempt_interest": 100
+              },
+              {
+                "source_document_id": "casey-int-second",
+                "recipient_ssn": "987654321",
+                "box1_taxable_interest": 750,
+                "box8_tax_exempt_interest": 100
+              }
+            ],
+            "dividend_forms1099": [
+              {
+                "source_document_id": "casey-div-first",
+                "payer_ein": "445566778",
+                "recipient_ssn": "987654321",
+                "box1a_ordinary_dividends": 900,
+                "box1b_qualified_dividends": 0,
+                "box2a_capital_gain_distributions": 0,
+                "box12_exempt_interest_dividends": 0
+              },
+              {
+                "source_document_id": "casey-div-second",
+                "payer_ein": "556677889",
+                "recipient_ssn": "987654321",
+                "box1a_ordinary_dividends": 600,
+                "box1b_qualified_dividends": 0,
+                "box2a_capital_gain_distributions": 0,
+                "box12_exempt_interest_dividends": 0
+              }
+            ],
+            "wage_forms_w2": [
+              {
+                "source_document_id": "casey-w2-school",
+                "employer_name": "School Office",
+                "employer_ein": "112233445",
+                "employee_ssn": "987654321",
+                "box1_wages": 5000
+              },
+              {
+                "source_document_id": "casey-w2-library",
+                "employer_name": "Local Library",
+                "employer_ein": "223344556",
+                "employee_ssn": "987654321",
+                "box1_wages": 5000
+              },
+              {
+                "source_document_id": "casey-w2-store",
+                "employer_name": "General Store",
+                "employer_ein": "334455667",
+                "employee_ssn": "987654321",
+                "box1_wages": 3000
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Parent Employer",
+        "employer_address_line1": "10 Work St",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "123-45-6789",
+        "box1_wages": 70000,
+        "box2_fed_withheld": 3000,
+        "box3_ss_wages": 70000,
+        "box4_ss_withheld": 4340,
+        "box5_medicare_wages": 70000,
+        "box6_medicare_withheld": 1015
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-ANNUAL-FAMILY-2025",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789",
+          "987654321"
+        ],
+        "monthly_premiums": [
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000
+        ],
+        "monthly_slcsps": [
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900
+        ],
+        "monthly_aptcs": [
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50,
+          50
+        ],
+        "annual_premium": 12000,
+        "annual_slcsp": 10800,
+        "annual_aptc": 600
+      }
+    ],
+    "f8812": [
+      {
+        "filing_status": "single",
+        "agi": 70000,
+        "income_tax_liability": 6855,
+        "do_not_claim_actc": false,
+        "qualifying_children_count": 0,
+        "other_dependents_count": 1,
+        "line18a_earned_income": 70000,
+        "credit_limit_worksheet": {
+          "schedule3_line1": 0,
+          "schedule3_line2": 0,
+          "schedule3_line3": 0,
+          "schedule3_line4": 0,
+          "schedule3_line5b": 0,
+          "schedule3_line6d": 0,
+          "schedule3_line6f": 0,
+          "schedule3_line6l": 0,
+          "schedule3_line6m": 0,
+          "worksheet_b_applies": false
+        }
+      }
+    ]
+  }
+}

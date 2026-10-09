@@ -3,7 +3,10 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../../../core/types/tax-node.ts";
-import { output, TaxNode } from "../../../../../../../../core/types/tax-node.ts";
+import {
+  output,
+  TaxNode,
+} from "../../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../../../../aggregation/taxes/other/schedule2/index.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
@@ -146,6 +149,16 @@ const fourWeekCarePeriodSchema = z.object({
   to: calendarDate,
   medical_source_reference: sourceReference,
 }).strict();
+const parentRemarriageBaseSchema = z.object({
+  prior_status: z.enum(["divorced", "widowed"]),
+  prior_marriage_end_date: calendarDate,
+  prior_marriage_end_source_reference: sourceReference,
+  no_remarriage_before_event_source_reference: sourceReference,
+  remarriage_date: calendarDate,
+  marriage_source_reference: sourceReference,
+  spouse_ssn: z.string().regex(/^\d{9}$/),
+  spouse_residence_source_reference: sourceReference,
+});
 const parentQuarterSchema = z.object({
   quarter: z.number().int().min(1).max(4),
   home_residence_source_reference: sourceReference,
@@ -189,6 +202,19 @@ const parentQuarterSchema = z.object({
       spouse_residence_source_reference: sourceReference,
       incapable_care_period: fourWeekCarePeriodSchema,
     }).strict(),
+    parentRemarriageBaseSchema.extend({
+      kind: z.literal("remarried_capable_spouse"),
+      spouse_care_capacity_source_reference: sourceReference,
+      living_with_capable_spouse_from_marriage_through_quarter_verified: z
+        .literal(true),
+    }).strict(),
+    parentRemarriageBaseSchema.extend({
+      kind: z.literal("remarried_spouse_incapable"),
+      living_with_spouse_from_marriage_through_quarter_verified: z.literal(
+        true,
+      ),
+      incapable_care_period: fourWeekCarePeriodSchema,
+    }).strict(),
     z.object({
       kind: z.literal("never_married"),
       status_source_reference: sourceReference,
@@ -228,22 +254,28 @@ const parentFicaReviewSchema = z.union([
     quarterly_circumstances: z.array(parentQuarterSchema).length(4),
     complete_service_payment_ledger_source_reference: sourceReference,
     no_ordinary_frequency_review: noOrdinaryFrequencySchema.optional(),
-    wage_payments: z.array(z.object({
-      payment_reference: sourceReference,
-      service_allocation_reference: sourceReference,
-      paid_date: calendarDate,
-      service_from: calendarDate,
-      service_to: calendarDate,
-      service_hours: z.number().finite().positive(),
-      cash_wages: z.number().positive(),
-      ordinary_pay_period: z.object({
-        kind: z.enum(["within_31_days", "over_31_days", "no_ordinary_period"]),
-        period_from: calendarDate,
-        period_to: calendarDate,
-        period_source_reference: sourceReference,
-        service_time_source_reference: sourceReference,
+    wage_payments: z.array(
+      z.object({
+        payment_reference: sourceReference,
+        service_allocation_reference: sourceReference,
+        paid_date: calendarDate,
+        service_from: calendarDate,
+        service_to: calendarDate,
+        service_hours: z.number().finite().positive(),
+        cash_wages: z.number().positive(),
+        ordinary_pay_period: z.object({
+          kind: z.enum([
+            "within_31_days",
+            "over_31_days",
+            "no_ordinary_period",
+          ]),
+          period_from: calendarDate,
+          period_to: calendarDate,
+          period_source_reference: sourceReference,
+          service_time_source_reference: sourceReference,
+        }).strict(),
       }).strict(),
-    }).strict()).min(1),
+    ).min(1),
   }).strict(),
 ]);
 const parentPayrollEmployeeSchema = familyPayrollBaseSchema.extend({
@@ -321,8 +353,10 @@ function coveredBirthdayService(period: BirthdayPeriod, birthday: string) {
       "Schedule H birthday wages need a sourced ordinary pay period containing the actual services",
     );
   }
-  if (review.kind === "over_31_days" ||
-    review.kind === "no_ordinary_period") {
+  if (
+    review.kind === "over_31_days" ||
+    review.kind === "no_ordinary_period"
+  ) {
     if (
       review.excluded_service_hours !== undefined ||
       review.covered_service_hours !== undefined ||
@@ -392,7 +426,8 @@ function validateNoOrdinaryPayPractice(
     a.period_from.localeCompare(b.period_from)
   );
   const lengths = unique.map((period) =>
-    (Date.parse(period.period_to) - Date.parse(period.period_from)) / 86_400_000 +
+    (Date.parse(period.period_to) - Date.parse(period.period_from)) /
+      86_400_000 +
     1
   );
   if (
@@ -438,8 +473,10 @@ function childPost21Wages(employee: ChildPayrollEmployee) {
     review.service_payment_ledger_source_reference,
     ...(review.no_ordinary_frequency_review
       ? [
-        review.no_ordinary_frequency_review.employer_pay_practice_source_reference,
-        review.no_ordinary_frequency_review.complete_payment_period_ledger_source_reference,
+        review.no_ordinary_frequency_review
+          .employer_pay_practice_source_reference,
+        review.no_ordinary_frequency_review
+          .complete_payment_period_ledger_source_reference,
       ]
       : []),
     ...review.wage_payments.map((p) => p.payment_reference),
@@ -542,7 +579,10 @@ function childPost21Wages(employee: ChildPayrollEmployee) {
 
 function parentDatedCashWages(
   employee: ParentPayrollEmployee,
-  review: Extract<z.infer<typeof parentFicaReviewSchema>, { classification: "dated_service_periods" }>,
+  review: Extract<
+    z.infer<typeof parentFicaReviewSchema>,
+    { classification: "dated_service_periods" }
+  >,
   quarters: z.infer<typeof parentQuarterSchema>[],
 ): number {
   const quarter = (date: string) => Math.ceil(Number(date.slice(5, 7)) / 3) - 1;
@@ -550,23 +590,37 @@ function parentDatedCashWages(
     a.service_from.localeCompare(b.service_from)
   );
   const uniquePayments = new Set(payments.map((p) => p.payment_reference));
-  if (uniquePayments.size !== payments.length ||
-    uniquePayments.has(review.complete_service_payment_ledger_source_reference)) {
-    throw new Error("Schedule H parent dated service needs distinct payment and ledger sources");
+  if (
+    uniquePayments.size !== payments.length ||
+    uniquePayments.has(review.complete_service_payment_ledger_source_reference)
+  ) {
+    throw new Error(
+      "Schedule H parent dated service needs distinct payment and ledger sources",
+    );
   }
   const evidenceRefs = [
     ...uniquePayments,
     ...new Set(payments.map((p) => p.service_allocation_reference)),
-    ...new Set(payments.map((p) => p.ordinary_pay_period.period_source_reference)),
-    ...new Set(payments.map((p) => p.ordinary_pay_period.service_time_source_reference)),
+    ...new Set(
+      payments.map((p) => p.ordinary_pay_period.period_source_reference),
+    ),
+    ...new Set(
+      payments.map((p) => p.ordinary_pay_period.service_time_source_reference),
+    ),
     review.complete_service_payment_ledger_source_reference,
-    ...(review.no_ordinary_frequency_review ? [
-      review.no_ordinary_frequency_review.employer_pay_practice_source_reference,
-      review.no_ordinary_frequency_review.complete_payment_period_ledger_source_reference,
-    ] : []),
+    ...(review.no_ordinary_frequency_review
+      ? [
+        review.no_ordinary_frequency_review
+          .employer_pay_practice_source_reference,
+        review.no_ordinary_frequency_review
+          .complete_payment_period_ledger_source_reference,
+      ]
+      : []),
   ];
   if (new Set(evidenceRefs).size !== evidenceRefs.length) {
-    throw new Error("Schedule H parent dated service, cash and pay-practice sources must be distinct");
+    throw new Error(
+      "Schedule H parent dated service, cash and pay-practice sources must be distinct",
+    );
   }
   validateNoOrdinaryPayPractice(payments, review.no_ordinary_frequency_review);
   const periods = new Map<string, {
@@ -580,92 +634,174 @@ function parentDatedCashWages(
     coveredCents: number;
   }>();
   const allocations = new Map<string, {
-    from: string; to: string; hours: number; periodRef: string;
+    from: string;
+    to: string;
+    hours: number;
+    periodRef: string;
   }>();
   const paidQuarters = [0, 0, 0, 0];
   let total = 0;
   for (const [index, payment] of payments.entries()) {
     const p = payment.ordinary_pay_period;
-    const days = (Date.parse(p.period_to) - Date.parse(p.period_from)) / 86400000 + 1;
-    if (payment.paid_date < "2025-01-01" || payment.paid_date > "2025-12-31" ||
-      payment.service_from < "2025-01-01" || payment.service_to > "2025-12-31" ||
-      payment.service_from > payment.service_to || payment.paid_date < payment.service_to ||
+    const days =
+      (Date.parse(p.period_to) - Date.parse(p.period_from)) / 86400000 + 1;
+    if (
+      payment.paid_date < "2025-01-01" || payment.paid_date > "2025-12-31" ||
+      payment.service_from < "2025-01-01" ||
+      payment.service_to > "2025-12-31" ||
+      payment.service_from > payment.service_to ||
+      payment.paid_date < payment.service_to ||
       quarter(payment.service_from) !== quarter(payment.service_to) ||
-      p.period_from > payment.service_from || p.period_to < payment.service_to ||
+      p.period_from > payment.service_from ||
+      p.period_to < payment.service_to ||
       days < 1 || p.kind === "within_31_days" && days > 31 ||
       p.kind === "over_31_days" && days <= 31 ||
       p.period_source_reference === p.service_time_source_reference ||
-      p.period_source_reference === review.complete_service_payment_ledger_source_reference ||
-      p.service_time_source_reference === review.complete_service_payment_ledger_source_reference) {
-      throw new Error("Schedule H parent dated cash needs distinct actual service, payment and pay-period records");
+      p.period_source_reference ===
+        review.complete_service_payment_ledger_source_reference ||
+      p.service_time_source_reference ===
+        review.complete_service_payment_ledger_source_reference
+    ) {
+      throw new Error(
+        "Schedule H parent dated cash needs distinct actual service, payment and pay-period records",
+      );
     }
-    const serviceDays = (Date.parse(payment.service_to) - Date.parse(payment.service_from)) / 86_400_000 + 1;
+    const serviceDays =
+      (Date.parse(payment.service_to) - Date.parse(payment.service_from)) /
+        86_400_000 + 1;
     if (payment.service_hours > serviceDays * 24) {
-      throw new Error("Schedule H parent service hours exceed the retained service dates");
+      throw new Error(
+        "Schedule H parent service hours exceed the retained service dates",
+      );
     }
-    const row = quarters.find((q) => q.quarter === quarter(payment.service_from) + 1)!;
+    const row = quarters.find((q) =>
+      q.quarter === quarter(payment.service_from) + 1
+    )!;
     const child = row.child, status = row.employer_circumstances;
     const eligibleAt = (date: string) => {
       const eighteenth = child.kind === "child"
-        ? `${Number(child.birth_date.slice(0, 4)) + 18}${child.birth_date.slice(4)}`
+        ? `${Number(child.birth_date.slice(0, 4)) + 18}${
+          child.birth_date.slice(4)
+        }`
         : "";
       const childQualifies = child.kind === "child" &&
         (date < eighteenth || child.adult_care_period !== undefined);
       const employerQualifies = status.kind === "spouse_incapable" ||
-        status.kind === "divorced_not_remarried" && date >= status.divorce_date ||
-        status.kind === "widowed_not_remarried" && date >= status.spouse_death_date;
+        status.kind === "remarried_spouse_incapable" ||
+        status.kind === "divorced_not_remarried" &&
+          date >= status.divorce_date ||
+        status.kind === "widowed_not_remarried" &&
+          date >= status.spouse_death_date ||
+        status.kind === "remarried_capable_spouse" &&
+          date < status.remarriage_date;
       return childQualifies && employerQualifies;
     };
-    if (status.kind === "divorced_not_remarried" &&
-      status.divorce_date > ["2025-03-31", "2025-06-30", "2025-09-30", "2025-12-31"][row.quarter - 1] ||
+    if (
+      status.kind === "divorced_not_remarried" &&
+        status.divorce_date >
+          [
+            "2025-03-31",
+            "2025-06-30",
+            "2025-09-30",
+            "2025-12-31",
+          ][row.quarter - 1] ||
       status.kind === "widowed_not_remarried" &&
-      status.spouse_death_date > ["2025-03-31", "2025-06-30", "2025-09-30", "2025-12-31"][row.quarter - 1]) {
-      throw new Error("Schedule H parent marital event must occur by its sourced service quarter");
+        status.spouse_death_date >
+          [
+            "2025-03-31",
+            "2025-06-30",
+            "2025-09-30",
+            "2025-12-31",
+          ][row.quarter - 1]
+    ) {
+      throw new Error(
+        "Schedule H parent marital event must occur by its sourced service quarter",
+      );
     }
     const childBirthday = child.kind === "child" && !child.adult_care_period
-      ? `${Number(child.birth_date.slice(0, 4)) + 18}${child.birth_date.slice(4)}`
+      ? `${Number(child.birth_date.slice(0, 4)) + 18}${
+        child.birth_date.slice(4)
+      }`
       : undefined;
     const maritalEvent = status.kind === "divorced_not_remarried"
       ? status.divorce_date
-      : status.kind === "widowed_not_remarried" ? status.spouse_death_date : undefined;
-    if ([childBirthday, maritalEvent].some((date) =>
-      date !== undefined && payment.service_from < date && payment.service_to >= date
-    )) {
-      throw new Error("Schedule H parent service row crossing a status event needs separate dated wage and hour allocations");
+      : status.kind === "widowed_not_remarried"
+      ? status.spouse_death_date
+      : status.kind === "remarried_capable_spouse" ||
+          status.kind === "remarried_spouse_incapable"
+      ? status.remarriage_date
+      : undefined;
+    if (
+      [childBirthday, maritalEvent].some((date) =>
+        date !== undefined && payment.service_from < date &&
+        payment.service_to >= date
+      )
+    ) {
+      throw new Error(
+        "Schedule H parent service row crossing a status event needs separate dated wage and hour allocations",
+      );
     }
     const existing = periods.get(p.period_source_reference);
-    if (existing && (existing.from !== p.period_from || existing.to !== p.period_to ||
-      existing.kind !== p.kind || existing.timeRef !== p.service_time_source_reference)) {
-      throw new Error("Schedule H one parent pay period must retain one period and service-time identity");
+    if (
+      existing &&
+      (existing.from !== p.period_from || existing.to !== p.period_to ||
+        existing.kind !== p.kind ||
+        existing.timeRef !== p.service_time_source_reference)
+    ) {
+      throw new Error(
+        "Schedule H one parent pay period must retain one period and service-time identity",
+      );
     }
-    if (!existing && [...periods.values()].some((other) =>
-      other.from <= p.period_to && other.to >= p.period_from)) {
+    if (
+      !existing &&
+      [...periods.values()].some((other) =>
+        other.from <= p.period_to && other.to >= p.period_from
+      )
+    ) {
       throw new Error("Schedule H parent ordinary pay periods cannot overlap");
     }
     const state = existing ?? {
-      from: p.period_from, to: p.period_to, kind: p.kind,
-      timeRef: p.service_time_source_reference, coveredHours: 0,
-      excludedHours: 0, cashCents: 0, coveredCents: 0,
+      from: p.period_from,
+      to: p.period_to,
+      kind: p.kind,
+      timeRef: p.service_time_source_reference,
+      coveredHours: 0,
+      excludedHours: 0,
+      cashCents: 0,
+      coveredCents: 0,
     };
     const cents = cashCents(payment.cash_wages);
     const allocation = allocations.get(payment.service_allocation_reference);
-    if (allocation && (allocation.from !== payment.service_from ||
-      allocation.to !== payment.service_to || allocation.hours !== payment.service_hours ||
-      allocation.periodRef !== p.period_source_reference)) {
-      throw new Error("Schedule H parent cash installments must retain the same dated service allocation");
+    if (
+      allocation && (allocation.from !== payment.service_from ||
+        allocation.to !== payment.service_to ||
+        allocation.hours !== payment.service_hours ||
+        allocation.periodRef !== p.period_source_reference)
+    ) {
+      throw new Error(
+        "Schedule H parent cash installments must retain the same dated service allocation",
+      );
     }
-    if (!allocation && index > 0 &&
+    if (
+      !allocation && index > 0 &&
       [...allocations.values()].some((other) =>
-        other.from <= payment.service_to && other.to >= payment.service_from)) {
-      throw new Error("Schedule H parent distinct service allocations cannot overlap");
+        other.from <= payment.service_to && other.to >= payment.service_from
+      )
+    ) {
+      throw new Error(
+        "Schedule H parent distinct service allocations cannot overlap",
+      );
     }
     if (!allocation) {
       allocations.set(payment.service_allocation_reference, {
-        from: payment.service_from, to: payment.service_to,
-        hours: payment.service_hours, periodRef: p.period_source_reference,
+        from: payment.service_from,
+        to: payment.service_to,
+        hours: payment.service_hours,
+        periodRef: p.period_source_reference,
       });
-      if (eligibleAt(payment.service_from)) state.coveredHours += payment.service_hours;
-      else state.excludedHours += payment.service_hours;
+      if (eligibleAt(payment.service_from)) {
+        state.coveredHours += payment.service_hours;
+      } else state.excludedHours += payment.service_hours;
     }
     if (eligibleAt(payment.service_from)) state.coveredCents += cents;
     state.cashCents += cents;
@@ -673,17 +809,106 @@ function parentDatedCashWages(
     total += cents;
     paidQuarters[quarter(payment.paid_date)] += cents;
   }
-  if (total !== cashCents(employee.annual_cash_wages) ||
-    paidQuarters.some((amount, index) => amount !== cashCents(employee.quarterly_cash_wages[index]))) {
-    throw new Error("Schedule H parent dated cash must reconcile every payment quarter and annual wage");
+  if (
+    total !== cashCents(employee.annual_cash_wages) ||
+    paidQuarters.some((amount, index) =>
+      amount !== cashCents(employee.quarterly_cash_wages[index])
+    )
+  ) {
+    throw new Error(
+      "Schedule H parent dated cash must reconcile every payment quarter and annual wage",
+    );
   }
   let coveredCents = 0;
   for (const state of periods.values()) {
     if (state.kind === "within_31_days") {
-      if (state.coveredHours >= state.excludedHours) coveredCents += state.cashCents;
+      if (state.coveredHours >= state.excludedHours) {
+        coveredCents += state.cashCents;
+      }
     } else coveredCents += state.coveredCents;
   }
-  return coveredCents >= TY2025_FICA_CASH_WAGE_THRESHOLD * 100 ? coveredCents / 100 : 0;
+  return coveredCents >= TY2025_FICA_CASH_WAGE_THRESHOLD * 100
+    ? coveredCents / 100
+    : 0;
+}
+
+// A remarriage source covers one dated event and the complete surrounding
+// year; it cannot substitute a whole-quarter no-remarriage assertion.
+function validateParentRemarriage(
+  review: Exclude<
+    z.infer<typeof parentFicaReviewSchema>,
+    { classification: "excluded" }
+  >,
+  employeeSsn: string,
+  employerSsn: string,
+): void {
+  const events = review.quarterly_circumstances.filter((row) =>
+    row.employer_circumstances.kind === "remarried_capable_spouse" ||
+    row.employer_circumstances.kind === "remarried_spouse_incapable"
+  );
+  if (!events.length) return;
+  const event = events[0];
+  const status = event.employer_circumstances;
+  if (
+    status.kind !== "remarried_capable_spouse" &&
+    status.kind !== "remarried_spouse_incapable"
+  ) return;
+  const eventQuarter = Math.ceil(
+    Number(status.remarriage_date.slice(5, 7)) / 3,
+  );
+  const references = [
+    status.prior_marriage_end_source_reference,
+    status.no_remarriage_before_event_source_reference,
+    status.marriage_source_reference,
+    status.spouse_residence_source_reference,
+    status.kind === "remarried_capable_spouse"
+      ? status.spouse_care_capacity_source_reference
+      : status.incapable_care_period.medical_source_reference,
+  ];
+  if (
+    review.classification !== "dated_service_periods" || events.length !== 1 ||
+    status.remarriage_date < "2025-01-01" ||
+    status.remarriage_date > "2025-12-31" ||
+    eventQuarter !== event.quarter ||
+    status.prior_marriage_end_date >= "2025-01-01" ||
+    status.spouse_ssn === employeeSsn || status.spouse_ssn === employerSsn ||
+    new Set(references).size !== references.length
+  ) {
+    throw new Error(
+      "Schedule H parent remarriage needs one dated event, distinct records and a prior-year marriage ending",
+    );
+  }
+  for (const row of review.quarterly_circumstances) {
+    const other = row.employer_circumstances;
+    if (row.quarter < event.quarter) {
+      const priorMatches = status.prior_status === "divorced"
+        ? other.kind === "divorced_not_remarried" &&
+          other.divorce_date === status.prior_marriage_end_date &&
+          other.divorce_source_reference ===
+            status.prior_marriage_end_source_reference
+        : other.kind === "widowed_not_remarried" &&
+          other.spouse_death_date === status.prior_marriage_end_date &&
+          other.death_source_reference ===
+            status.prior_marriage_end_source_reference;
+      if (!priorMatches) {
+        throw new Error(
+          "Schedule H parent pre-remarriage quarters must match the prior marital record",
+        );
+      }
+    }
+    if (
+      row.quarter > event.quarter &&
+      ((other.kind !== "married_capable_spouse" &&
+        other.kind !== "spouse_incapable") ||
+        other.spouse_ssn !== status.spouse_ssn ||
+        other.spouse_relationship_source_reference !==
+          status.marriage_source_reference)
+    ) {
+      throw new Error(
+        "Schedule H parent post-remarriage quarters must retain the same spouse, care circumstances and marriage record",
+      );
+    }
+  }
 }
 
 function parentTaxableCashWages(
@@ -735,29 +960,54 @@ function parentTaxableCashWages(
       if (row.child.adult_care_period) {
         care(row.child.adult_care_period, row.quarter);
       } else if (review.classification === "quarterly_circumstances") {
-        const eighteenth = `${Number(row.child.birth_date.slice(0, 4)) + 18}${row.child.birth_date.slice(4)}`;
-        if (eighteenth >= b.from && eighteenth <= b.to &&
+        const eighteenth = `${Number(row.child.birth_date.slice(0, 4)) + 18}${
+          row.child.birth_date.slice(4)
+        }`;
+        if (
+          eighteenth >= b.from && eighteenth <= b.to &&
           review.wage_payments.some((payment) =>
             payment.service_from <= b.to && payment.service_to >= b.from
-          )) {
-          throw new Error("Schedule H parent age-18 service quarter needs retained ordinary pay-period evidence");
+          )
+        ) {
+          throw new Error(
+            "Schedule H parent age-18 service quarter needs retained ordinary pay-period evidence",
+          );
         }
       }
     }
-    if (review.classification === "quarterly_circumstances" && (
-      status.kind === "divorced_not_remarried" &&
-        status.divorce_date > b.from ||
-      status.kind === "widowed_not_remarried" &&
-        status.spouse_death_date > b.from
-    )) {
+    if (
+      review.classification === "quarterly_circumstances" && (
+        status.kind === "divorced_not_remarried" &&
+          status.divorce_date > b.from ||
+        status.kind === "widowed_not_remarried" &&
+          status.spouse_death_date > b.from
+      )
+    ) {
       throw new Error(
         "Schedule H parent marital event must precede its complete source quarter",
       );
     }
-    if (status.kind === "spouse_incapable") {
+    if (
+      status.kind === "spouse_incapable" ||
+      status.kind === "remarried_spouse_incapable"
+    ) {
       care(status.incapable_care_period, row.quarter);
+      if (status.kind === "remarried_spouse_incapable") {
+        const marriedCareFrom =
+          status.incapable_care_period.from < status.remarriage_date
+            ? status.remarriage_date
+            : status.incapable_care_period.from;
+        const marriedCareDays = (Date.parse(status.incapable_care_period.to) -
+              Date.parse(marriedCareFrom)) / 86400000 + 1;
+        if (marriedCareDays < 28) {
+          throw new Error(
+            "Schedule H remarried spouse care period must establish four weeks after marriage within its quarter",
+          );
+        }
+      }
     }
   }
+  validateParentRemarriage(review, employee.employee_ssn, employerSsn);
   if (review.classification === "dated_service_periods") {
     return parentDatedCashWages(employee, review, quarters);
   }
@@ -839,10 +1089,12 @@ const payrollEmployeeSchema = z.union([
 
 const statePayrollReviewSchema = z.object({
   all_household_cash_payments_included: z.literal(true),
-  child_no_ordinary_frequency_reviews: z.array(z.object({
-    employee_id: sourceReference,
-    ...noOrdinaryFrequencySchema.shape,
-  }).strict()).optional(),
+  child_no_ordinary_frequency_reviews: z.array(
+    z.object({
+      employee_id: sourceReference,
+      ...noOrdinaryFrequencySchema.shape,
+    }).strict(),
+  ).optional(),
   rate_notices: z.array(
     z.object({
       state: z.string().regex(/^[A-Z]{2}$/),
@@ -1367,10 +1619,10 @@ function validateStatePayrollReview(input: SectionBSource) {
   }
   if (
     new Set(
-      (review.child_no_ordinary_frequency_reviews ?? []).map((item) =>
-        item.employee_id
-      ),
-    ).size !== (review.child_no_ordinary_frequency_reviews ?? []).length ||
+        (review.child_no_ordinary_frequency_reviews ?? []).map((item) =>
+          item.employee_id
+        ),
+      ).size !== (review.child_no_ordinary_frequency_reviews ?? []).length ||
     (review.child_no_ordinary_frequency_reviews ?? []).some((item) =>
       !input.employee_wages.some((employee) =>
         employee.employee_id === item.employee_id
@@ -1410,9 +1662,9 @@ function validateStatePayrollReview(input: SectionBSource) {
       }
     }
     const periods = childStateServicePeriods.get(employee.employee_id);
-    const noOrdinary = review.child_no_ordinary_frequency_reviews?.find((item) =>
-      item.employee_id === employee.employee_id
-    );
+    const noOrdinary = review.child_no_ordinary_frequency_reviews?.find((
+      item,
+    ) => item.employee_id === employee.employee_id);
     if (
       employee.relationship === "child" &&
       employee.birth_date >= "2007-01-01" &&

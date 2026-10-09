@@ -1,3 +1,7 @@
+import {
+  computeCredit as scheduleRTentativeCredit,
+  inputSchema as scheduleRSourceSchema,
+} from "../../../../inputs/credits/elderly-disabled/schedule_r/calculation.ts";
 import { z } from "zod";
 import {
   type NodeResult,
@@ -180,6 +184,7 @@ const inputSchema = z.object({
   // Line 20 — Nonrefundable credits from Schedule 3 Part I
   line20_nonrefundable_credits: z.number().nonnegative().optional(),
   form8880_source: form8880SourceSchema.optional(),
+  schedule_r_source: scheduleRSourceSchema.optional(),
   // Tentative Form 8936 amounts are finalized here after line 18 is known.
   form8936_tentative_new_credit: z.number().nonnegative().optional(),
   form8936_tentative_used_credit: z.number().nonnegative().optional(),
@@ -961,6 +966,7 @@ function assembleReturn(
   result.line32_refundable_credits_total = computed_line32;
   if (
     input.form8880_source !== undefined ||
+    input.schedule_r_source !== undefined ||
     cleanVehicles !== undefined || homebuyer !== undefined ||
     mortgage !== undefined ||
     electric !== undefined ||
@@ -1163,6 +1169,58 @@ function verifyForm1116Limitation(
   }
 }
 
+/** Settle Schedule R before credits whose limits depend on its allowed amount. */
+function withScheduleRCredit(input: F1040Input): F1040Input {
+  const source = input.schedule_r_source;
+  if (source === undefined) return input;
+  const lines = input.credit_limit_schedule3_lines;
+  const agi = input.line11_agi ??
+    totalIncome(input) - (input.line10_adjustments ?? 0);
+  if (
+    lines === undefined || input.line16_income_tax === undefined ||
+    source.filing_status !== input.filing_status || source.agi !== agi
+  ) {
+    throw new Error(
+      "Schedule R source needs matching finalized AGI, filing status, income tax and priority credits",
+    );
+  }
+  const tentative = scheduleRTentativeCredit(source);
+  if (
+    lines.line6dElderlyDisabled !== tentative ||
+    lines.line7 < tentative ||
+    (input.line20_nonrefundable_credits ?? 0) < tentative
+  ) {
+    throw new Error(
+      "Schedule R tentative source credit must reconcile to Schedule 3 before limitation",
+    );
+  }
+  const limit = Math.max(
+    0,
+    totalTaxBeforeCredits(input) - lines.line1 - lines.line2 -
+      (lines.line6lForm8978 ?? 0),
+  );
+  const credit = Math.min(tentative, limit);
+  const reduction = tentative - credit;
+  return {
+    ...input,
+    line20_nonrefundable_credits: (input.line20_nonrefundable_credits ?? 0) -
+      reduction,
+    credit_limit_schedule3_lines: {
+      ...lines,
+      line6dElderlyDisabled: credit,
+      line7: lines.line7 - reduction,
+    },
+    ...(input.form8936_priority_personal_credits === undefined ? {} : {
+      form8936_priority_personal_credits:
+        input.form8936_priority_personal_credits - reduction,
+    }),
+    ...(input.form8936_schedule3_line7_tentative === undefined ? {} : {
+      form8936_schedule3_line7_tentative:
+        input.form8936_schedule3_line7_tentative - reduction,
+    }),
+  };
+}
+
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class F1040Node extends TaxNode<typeof inputSchema> {
@@ -1171,7 +1229,8 @@ class F1040Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([]);
 
   compute(ctx: NodeContext, rawInput: F1040Input): NodeResult {
-    const input = inputSchema.parse(rawInput);
+    const replaySource = inputSchema.parse(rawInput);
+    const input = withScheduleRCredit(replaySource);
     if (
       input.presidential_campaign_fund_spouse === true &&
       input.filing_status !== FilingStatus.MFJ
@@ -1336,15 +1395,24 @@ class F1040Node extends TaxNode<typeof inputSchema> {
     const form2210f = effectiveInput.f2210f_box_b_source === undefined
       ? undefined
       : calculateForm2210FBoxB(effectiveInput.f2210f_box_b_source);
+    const scheduleRLine7 = input.schedule_r_source === undefined
+      ? undefined
+      : schedule3?.line7;
     const schedule3Finalization = cleanVehicles === undefined &&
         mortgage === undefined &&
         homebuyer === undefined &&
         electric === undefined && retirementCredit === 0 &&
+        input.schedule_r_source === undefined &&
         businessCredit === undefined && bondCredit === undefined
       ? undefined
       : {
         nodeType: "schedule3",
         fields: {
+          ...(input.schedule_r_source === undefined ? {} : {
+            line6d_elderly_disabled_credit: elderlyCredit > 0
+              ? elderlyCredit
+              : undefined,
+          }),
           ...(retirementCredit > 0
             ? { line4_retirement_savings_credit: retirementCredit }
             : {}),
@@ -1380,12 +1448,12 @@ class F1040Node extends TaxNode<typeof inputSchema> {
                 homebuyer?.schedule3Line7 ??
                 mortgage?.schedule3Line7 ??
                 electric?.schedule3Line7 ??
-                cleanVehicles?.schedule3Line7 ?? 0) > 0
+                cleanVehicles?.schedule3Line7 ?? scheduleRLine7 ?? 0) > 0
               ? bondCredit?.schedule3Line7 ?? businessCredit?.schedule3Line7 ??
                 homebuyer?.schedule3Line7 ??
                 mortgage?.schedule3Line7 ??
                 electric?.schedule3Line7 ??
-                cleanVehicles?.schedule3Line7
+                cleanVehicles?.schedule3Line7 ?? scheduleRLine7
               : undefined,
           line8_total:
             (bondCredit?.schedule3Credits ?? businessCredit?.schedule3Credits ??
@@ -1406,7 +1474,7 @@ class F1040Node extends TaxNode<typeof inputSchema> {
       };
     return {
       outputs: [{ nodeType: this.nodeType, fields: assembled }],
-      replayInput: structuredClone(input),
+      replayInput: structuredClone(replaySource),
       finalizations: [
         ...(retirement
           ? [{

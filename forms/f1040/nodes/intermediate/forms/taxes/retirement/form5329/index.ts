@@ -1,4 +1,8 @@
 import {
+  ableDistributionAmounts,
+  ableDistributionReviewSchema,
+} from "../../../credits/individual/form8880/able_distribution_review.ts";
+import {
   reviewedRothOwnerInventory,
   rothOwnerInventorySchema,
 } from "../../../income/retirement/form8606/roth-inventory.ts";
@@ -8,7 +12,10 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../../../core/types/tax-node.ts";
-import { output, TaxNode } from "../../../../../../../../core/types/tax-node.ts";
+import {
+  output,
+  TaxNode,
+} from "../../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../../../../aggregation/taxes/other/schedule2/index.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
@@ -80,6 +87,7 @@ export const ownerEntrySchema = z.object({
 
   // ── Part II: ESA/QTP/ABLE Distributions (line 5–8) ──────────────────────
   // Line 5: Taxable distributions from Coverdell ESA, QTP, or ABLE account
+  able_distribution_review: ableDistributionReviewSchema.optional(),
   esa_able_distribution: z.number().nonnegative().optional(),
   // Line 6: Exception amount for ESA/ABLE distributions
   esa_able_exception: z.number().nonnegative().optional(),
@@ -236,8 +244,20 @@ function partI_simpleTax(input: Form5329Input): number {
 
 // Part II, Line 8: 10% additional tax on taxable ESA/QTP/ABLE distributions
 // IRC §530(d)(4), §529(c)(7); Form 5329 line 8 → Schedule 2 line 8
-function partII_tax(input: Form5329Input): number {
+export function partII_tax(input: Form5329Input): number {
   const dist = input.esa_able_distribution ?? 0;
+  if (input.able_distribution_review) {
+    const amounts = ableDistributionAmounts(input.able_distribution_review);
+    if (
+      dist !== amounts.taxableWholeDollars ||
+      (input.esa_able_exception ?? 0) !== 0
+    ) {
+      throw new Error(
+        "Form 5329 ABLE taxable earnings or exception differs from the retained source",
+      );
+    }
+    return amounts.additionalTax;
+  }
   if (dist <= 0) return 0;
   const exception = input.esa_able_exception ?? 0;
   const netSubjectToTax = Math.max(0, dist - exception);

@@ -71,7 +71,7 @@ const context = {
 };
 
 Deno.test("Form 4562 is absent when no source was filed", () => {
-  assertEquals(form4562.build([]), "");
+  assertEquals(form4562.build([], {}), "");
 });
 
 Deno.test("Form 4562 emits native TY2025 section 179 tags and one asset row", () => {
