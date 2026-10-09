@@ -1,3 +1,9 @@
+import { assertNonjointSaverDistributionCopies } from "./form8880_distribution_sources.ts";
+import { z } from "zod";
+import {
+  DistributionCode,
+  itemSchema,
+} from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
 import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import {
   nonjointDistributionReviewSchema,
@@ -109,7 +115,52 @@ const general = {
   address_zip: "78701",
   digital_assets: false,
 };
-const cases = [
+function retirementCopy(
+  reference: string,
+  amount: number,
+  ira = false,
+  taxable = amount,
+): z.infer<typeof itemSchema> {
+  return {
+    payer_name: "Example Retirement Plan",
+    payer_ein: "98-7654321",
+    payer_address_line1: "3 Main St",
+    payer_address_city: "Austin",
+    payer_address_state: "TX",
+    payer_address_zip: "78701",
+    recipient_ssn: general.taxpayer_ssn,
+    account_number: reference,
+    source_document_reference: reference,
+    box1_gross_distribution: amount,
+    box2a_taxable_amount: taxable,
+    box5_employee_contributions: amount - taxable,
+    box7_distribution_code: DistributionCode.Code7,
+    box7_ira_simple_indicator: ira,
+  };
+}
+function currentEntry(copy: z.infer<typeof itemSchema>) {
+  return {
+    ...entry,
+    received_date: "2025-06-15",
+    gross_amount: copy.box1_gross_distribution,
+    source_document_ref: copy.source_document_reference!,
+    current_year_1099r: {
+      payer_ein: copy.payer_ein,
+      account_number: copy.account_number!,
+      taxable_amount: copy.box2a_taxable_amount!,
+      distribution_code: copy.box7_distribution_code,
+      second_distribution_code: copy.box7_code2,
+      ira_simple_indicator: copy.box7_ira_simple_indicator ?? false,
+      plan_classification_review_ref: `${copy.account_number}-plan-review`,
+    },
+  };
+}
+const cases: {
+  name: string;
+  ledger: z.infer<typeof nonjointDistributionReviewSchema>;
+  credit: number;
+  copies?: z.infer<typeof itemSchema>[];
+}[] = [
   {
     name: "prior-and-rollover",
     ledger: {
@@ -145,11 +196,66 @@ const cases = [
     credit: 0,
   },
 ];
+for (
+  const [name, copies, credit, prior] of [
+    ["current-year-pension", [retirementCopy("pension-2025", 500)], 300, false],
+    ["current-year-ira", [retirementCopy("ira-2025", 500, true)], 300, false],
+    [
+      "current-year-mixed",
+      [
+        retirementCopy("pension-2025", 300),
+        retirementCopy("ira-2025", 400, true),
+      ],
+      220,
+      true,
+    ],
+    [
+      "current-year-partly-taxable",
+      [retirementCopy("pension-2025", 500, false, 400)],
+      300,
+      false,
+    ],
+    ["current-year-offset", [retirementCopy("pension-2025", 2000)], 0, false],
+  ] as const
+) {
+  cases.push({
+    name,
+    copies: [...copies],
+    credit,
+    ledger: {
+      ...review,
+      entries: [...copies.map(currentEntry), ...(prior ? [entry] : [])],
+    },
+  });
+}
+const nonqualifying = {
+  ...retirementCopy("nonqualified-annuity", 500),
+  box7_code2: DistributionCode.CodeD,
+};
+cases.push({
+  name: "current-year-nonqualifying-plan",
+  copies: [nonqualifying],
+  credit: 400,
+  ledger: {
+    ...review,
+    entries: [{
+      ...currentEntry(nonqualifying),
+      treatment: Treatment.NonqualifyingPlan,
+    }],
+  },
+});
 for (const item of cases) {
   Deno.test(`public nonjoint distribution ledger ${item.name} reconciles complete exports`, async () => {
+    const pensionIncome = (item.copies ?? []).reduce(
+      (sum, copy) => sum + (copy.box2a_taxable_amount ?? 0),
+      0,
+    );
+    const wages = 25_000 - pensionIncome;
     const inputs = {
+      ...(item.copies ? { f1099r: item.copies } : {}),
       general: {
         ...general,
+        ...(item.copies ? { taxpayer_dob: "1964-06-15" } : {}),
         form8880_nonjoint_distribution_review: item.ledger,
       },
       w2: [{
@@ -160,12 +266,12 @@ for (const item of cases) {
         employer_address_city: "Austin",
         employer_address_state: "TX",
         employer_address_zip: "78701",
-        box1_wages: 25_000,
+        box1_wages: wages,
         box2_fed_withheld: 1_000,
-        box3_ss_wages: 27_000,
-        box4_ss_withheld: 1_674,
-        box5_medicare_wages: 27_000,
-        box6_medicare_withheld: 392,
+        box3_ss_wages: wages + 2_000,
+        box4_ss_withheld: Math.round((wages + 2_000) * 0.062),
+        box5_medicare_wages: wages + 2_000,
+        box6_medicare_withheld: Math.round((wages + 2_000) * 0.0145),
         box12_entries: [{ code: Box12Code.D, amount: 2_000 }],
       }],
     };
@@ -176,7 +282,7 @@ for (const item of cases) {
     assertEquals(pending.f1040?.line20_nonrefundable_credits ?? 0, item.credit);
     assertEquals(pending.f1040?.line24_total_tax, 928 - item.credit);
     assertEquals(pending.f1040?.line35a_refund, 72 + item.credit);
-    const filer = extractFilerIdentity(general);
+    const filer = extractFilerIdentity(inputs.general);
     const bundle = await buildMefBundle(pending, { filer, attachments: [] });
     assertEquals(bundle.xml.includes("<IRS8880"), item.credit > 0);
     const origins: { pageNumber: number; formKey: string; formCopy: number }[] =
@@ -200,7 +306,7 @@ for (const item of cases) {
         {
           ...pending,
           general: {
-            ...general,
+            ...inputs.general,
             form8880_nonjoint_distribution_review: {
               ...item.ledger,
               entries: [],
@@ -216,7 +322,72 @@ for (const item of cases) {
         buildPdfBytes(altered, filer, ".pdf-cache", bundle)
       );
     }
-    const dir = Deno.env.get("FORM8880_NONJOINT_EVIDENCE");
+    if (item.copies) {
+      assertEquals(pending.f1040?.line11_agi, 25_000);
+      assertEquals(
+        pending.f1040?.line4b_ira_taxable ?? 0,
+        item.copies.filter((copy) => copy.box7_ira_simple_indicator).reduce(
+          (sum, copy) => sum + copy.box2a_taxable_amount!,
+          0,
+        ),
+      );
+      assertEquals(
+        pending.f1040?.line5b_pension_taxable ?? 0,
+        item.copies.filter((copy) => !copy.box7_ira_simple_indicator).reduce(
+          (sum, copy) => sum + copy.box2a_taxable_amount!,
+          0,
+        ),
+      );
+      const first = item.copies[0];
+      const variants = [
+        [],
+        [...item.copies, first],
+        [{ ...first, recipient_ssn: "999887777" }, ...item.copies.slice(1)],
+        [{ ...first, payer_ein: "99-9999999" }, ...item.copies.slice(1)],
+        [
+          { ...first, account_number: "other-account" },
+          ...item.copies.slice(1),
+        ],
+        [{
+          ...first,
+          box1_gross_distribution: first.box1_gross_distribution + 1,
+        }, ...item.copies.slice(1)],
+        [
+          { ...first, box2a_taxable_amount: first.box2a_taxable_amount! + 1 },
+          ...item.copies.slice(1),
+        ],
+        [
+          { ...first, box7_distribution_code: DistributionCode.Code2 },
+          ...item.copies.slice(1),
+        ],
+        [{
+          ...first,
+          box7_ira_simple_indicator: !first.box7_ira_simple_indicator,
+        }, ...item.copies.slice(1)],
+        [
+          { ...first, source_document_reference: "different-copy" },
+          ...item.copies.slice(1),
+        ],
+      ];
+      for (const copies of variants) {
+        assertThrows(() =>
+          f1040_2025.executeReturn({ ...inputs, f1099r: copies })
+        );
+        const altered = {
+          ...pending,
+          f1099r: { ...pending.f1099r, f1099rs: copies },
+        };
+        await assertRejects(() =>
+          buildMefBundle(altered, { filer, attachments: [] })
+        );
+        await assertRejects(() =>
+          buildPdfBytes(altered, filer, ".pdf-cache", bundle)
+        );
+      }
+    }
+    const dir = item.copies
+      ? Deno.env.get("FORM8880_CURRENT_EVIDENCE")
+      : undefined;
     if (dir) {
       const output = `${dir}/${item.name}`;
       await Deno.mkdir(output, { recursive: true });
@@ -237,3 +408,33 @@ for (const item of cases) {
     }
   });
 }
+
+Deno.test("current-year reviewed copies reject missing metadata and contradictory code D treatment", () => {
+  assertThrows(() =>
+    nonjointDistributionReviewSchema.parse({
+      ...review,
+      entries: [{ ...entry, received_date: "2025-06-15" }],
+    })
+  );
+  assertThrows(() =>
+    nonjointDistributionReviewSchema.parse({
+      ...review,
+      entries: [{
+        ...currentEntry(nonqualifying),
+        received_date: "2024-06-15",
+      }],
+    })
+  );
+  assertThrows(
+    () =>
+      assertNonjointSaverDistributionCopies({
+        ...review,
+        entries: [{
+          ...currentEntry(nonqualifying),
+          treatment: Treatment.Included,
+        }],
+      }, [nonqualifying]),
+    Error,
+    "code D source",
+  );
+});

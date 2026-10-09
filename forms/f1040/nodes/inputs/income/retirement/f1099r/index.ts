@@ -1,3 +1,5 @@
+import { DistributionCode } from "./distribution-code.ts";
+export { DistributionCode } from "./distribution-code.ts";
 import { sumSourceMoney } from "../../../../intermediate/forms/taxes/retirement/form4972/source-rounding.ts";
 import {
   participantInventorySchema,
@@ -176,40 +178,6 @@ function effectiveTaxableAmount(
     ? Math.round(taxable / 3)
     : taxable;
   return currentYear - (item.form8915f_repayment_amount ?? 0);
-}
-
-// Distribution code enum covering all valid 1099-R Box 7 codes for TY2025
-export enum DistributionCode {
-  Code1 = "1",
-  Code2 = "2",
-  Code3 = "3",
-  Code4 = "4",
-  Code5 = "5",
-  Code6 = "6",
-  Code7 = "7",
-  Code8 = "8",
-  CodeA = "A",
-  CodeB = "B",
-  CodeC = "C",
-  CodeD = "D",
-  CodeE = "E",
-  CodeF = "F",
-  CodeG = "G",
-  CodeH = "H",
-  CodeJ = "J",
-  CodeK = "K",
-  CodeL = "L",
-  CodeM = "M",
-  CodeN = "N",
-  CodeP = "P",
-  CodeQ = "Q",
-  CodeR = "R",
-  CodeS = "S",
-  CodeT = "T",
-  CodeU = "U",
-  CodeV = "V",
-  CodeW = "W",
-  CodeY = "Y",
 }
 
 export enum RolloverCode {

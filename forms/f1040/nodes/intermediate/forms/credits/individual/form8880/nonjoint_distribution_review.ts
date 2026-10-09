@@ -1,7 +1,9 @@
+import { DistributionCode } from "../../../../../inputs/income/retirement/f1099r/distribution-code.ts";
 import { z } from "zod";
 
 export enum SaverDistributionTreatment {
   Included = "included",
+  NonqualifyingPlan = "not_a_form8880_retirement_plan",
   RolloverOrTransfer = "nontaxable_rollover_or_transfer",
   InPlanRothRollover = "in_plan_roth_rollover",
   RothConversion = "eligible_plan_to_roth_ira",
@@ -33,6 +35,15 @@ export const nonjointDistributionReviewSchema = z.object({
       source_document_ref: reference,
       classification_review_ref: reference,
       treatment: z.nativeEnum(SaverDistributionTreatment),
+      current_year_1099r: z.object({
+        payer_ein: z.string().regex(/^(?:\d{9}|\d{2}-\d{7})$/),
+        account_number: reference,
+        taxable_amount: z.number().finite().nonnegative(),
+        distribution_code: z.nativeEnum(DistributionCode),
+        second_distribution_code: z.nativeEnum(DistributionCode).optional(),
+        ira_simple_indicator: z.boolean(),
+        plan_classification_review_ref: reference,
+      }).strict().optional(),
     }).strict(),
   ),
 }).strict().superRefine((review, context) => {
@@ -53,6 +64,17 @@ export const nonjointDistributionReviewSchema = z.object({
     });
   }
   for (const [index, entry] of review.entries.entries()) {
+    if (
+      (entry.received_date.startsWith("2025-")) !==
+        (entry.current_year_1099r !== undefined)
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["entries", index, "current_year_1099r"],
+        message:
+          "Form 8880 current-year ledger supports reviewed Form 1099-R sources only",
+      });
+    }
     if (
       entry.recipient_ssn.replaceAll("-", "") !==
         review.taxpayer_ssn.replaceAll("-", "") ||

@@ -224,3 +224,61 @@ export). Private artifacts, source/pending snapshots, schema results and page
 renders: `.state/research/form8880-nonjoint-2026-10-09/`. Broader contribution
 sources, issuer authentication, current-year income-source joins, local business
 rules and IRS acceptance remain open; the Form8880 parent is not closed.
+
+
+## October 9 current-year Form1099-R source joins
+
+Current-year entries in the reviewed nonjoint ledger now require an identified
+Form1099-R copy. The public return entry point and native/PDF source replay
+compare the complete positive distribution inventory: issued-copy reference,
+recipient, payer EIN, account, gross amount, explicit taxable amount, both
+codes and IRA indicator. Duplicate, missing and changed copies reject. The
+review includes a plan-classification reference; codeD must agree with the new
+nonqualifying-plan treatment. The existing distribution-code enum was moved to
+a shared file and re-exported without changing its members.
+
+This extends the [Form8880 line4 source rules](https://www.irs.gov/pub/irs-prior/f8880--2025.pdf)
+to the same current-year copies that produce retirement income. CodeD identifies
+nonqualified annuity/life-insurance distributions in the
+[2025 Form1099-R instructions](https://www.irs.gov/pub/irs-prior/i1099r--2025.pdf).
+The constructed code7/D annuity remains taxable income while its reviewed
+nonqualifying-plan classification excludes it from the saver reduction.
+
+Six single-filer age61 returns retain AGI25000, standard deduction15750,
+taxable income9250, pre-credit tax928 and withholding1000:
+
+| Case | Current gross/taxable distribution | Prior included | Saver credit | Final tax/refund | Pages |
+| --- | --- | ---: | ---: | --- | ---: |
+| Pension | 500/500 | 0 | 300 | 628/372 | 4 |
+| IRA | 500/500 | 0 | 300 | 628/372 | 4 |
+| Pension plus IRA | 300/300 plus400/400 | 200 | 220 | 708/292 | 4 |
+| Partly taxable pension | 500/400 | 0 | 300 | 628/372 | 4 |
+| Fully offset credit | 2000/2000 | 0 | 0 | 928/72 | 2 |
+| Nonqualified annuity, code7/D | 500/500 | 0 | 400 | 528/472 | 4 |
+
+The partly taxable case uses gross500 for the credit reduction and taxable400
+for income, with wages24600; it does not reduce the saver ledger by only400.
+The mixed case retains both copies and distinct Form1040 IRA/pension joins.
+All six complete XMLs pass cached TY2025v5.4 Return1040.xsd, digest
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+The grouped typed tests pass231/0, followed by one additional classification
+boundary pass. Sixty changed public sources reject; each native/full-PDF export
+rejects72 changes, including retained-ledger and missing/duplicate/changed-copy
+variants. Tests also reject missing current-year metadata, misplaced prior-year
+metadata and codeD classified as an included distribution.
+
+All22 generated pages were reviewed for owner, filing status/digital-assets
+marks, income placement, credit and tax/payment/refund totals, attachment order
+and zero-credit form omission. Five packets nevertheless print fully taxable
+gross amounts on line4a or5a. The
+[Form1040 instructions](https://www.irs.gov/instructions/i1040gi) call for blanks
+in those fully taxable cases; the partly taxable packet correctly needs5a500
+and5b400. This new presentation issue is deferred97, with no fix or complete
+paper approval claimed. Calculations and selected source joins still reconcile.
+
+Evidence: `.state/research/form8880-current-2026-10-09/`, including six source/
+pending/XML/PDF sets,22 page renders, schema report, qualification review and
+failure/final logs. Source references are synthetic reviewed facts, not issuer
+or signature authentication. Current-year non-1099-R distribution sources,
+broader classification proof, joint histories, local business-rule acceptance
+and IRS acceptance remain open. The existing parent task is not closed.

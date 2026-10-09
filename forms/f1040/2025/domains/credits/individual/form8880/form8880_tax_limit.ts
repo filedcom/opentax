@@ -1,3 +1,5 @@
+import { assertNonjointSaverDistributionCopies } from "./form8880_distribution_sources.ts";
+import { inputSchema as r1099InputSchema } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
 import type { Fields as F1040Fields } from "../../../../mef/forms/general/return-assembly/f1040.ts";
 import type { Fields as Schedule3Fields } from "../../../../mef/forms/general/return-assembly/schedule3.ts";
 import type { Fields as Schedule1Fields } from "../../../../mef/forms/general/return-assembly/schedule1/schedule1.ts";
@@ -215,6 +217,14 @@ export function assertForm8880FiledCalculation(
   pending: Readonly<Record<string, unknown>>,
 ): void {
   const source = form8880InputSchema.parse(fields);
+  if (source.nonjoint_distribution_review) {
+    assertNonjointSaverDistributionCopies(
+      source.nonjoint_distribution_review,
+      pending.f1099r === undefined
+        ? []
+        : r1099InputSchema.parse(pending.f1099r).f1099rs,
+    );
+  }
   assertForm8880W2DeferralSources(source, pending);
   assertForm8880GeneralEligibility(
     source,
