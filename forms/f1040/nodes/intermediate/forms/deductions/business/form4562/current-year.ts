@@ -1,4 +1,11 @@
 import {
+  assertMethodElections,
+  currentYearMethod,
+  DepreciationMethod,
+  methodElectionReviewSchema,
+} from "./method-elections.ts";
+export { DepreciationMethod } from "./method-elections.ts";
+import {
   assertBonusElections,
   bonusElectionReviewSchema,
 } from "./elections.ts";
@@ -9,10 +16,6 @@ import { roundWholeDollars } from "../../../../../../whole-dollars.ts";
 export enum DepreciationConvention {
   HalfYear = "HY",
   MidQuarter = "MQ",
-}
-export enum DepreciationMethod {
-  DoubleDeclining = "200 DB",
-  Declining150 = "150 DB",
 }
 const assetSchema = bonusAssetCoreSchema.extend({
   bonus_elected_out: z.boolean(),
@@ -26,7 +29,7 @@ const assetSchema = bonusAssetCoreSchema.extend({
   not_self_constructed: z.literal(true),
   not_long_production_period_property: z.literal(true),
   not_certain_aircraft: z.literal(true),
-  no_depreciation_method_election: z.literal(true),
+  no_depreciation_method_election: z.boolean(),
   no_disposition_or_other_basis_adjustment: z.literal(true),
 });
 export const currentYearInventorySchema = z.object({
@@ -35,6 +38,7 @@ export const currentYearInventorySchema = z.object({
   return_asset_inventory_source_ref: z.string().trim().min(1),
   full_calendar_tax_year: z.literal(true),
   bonus_election: bonusElectionReviewSchema.optional(),
+  method_election: methodElectionReviewSchema.optional(),
 }).strict().superRefine((inventory, ctx) => {
   for (
     const key of ["asset_reference", "form8911_property_reference"] as const
@@ -88,11 +92,12 @@ function adjustedBasis(asset: z.infer<typeof assetSchema>) {
   return asset.cost - asset.credit_basis_reduction;
 }
 
-// Pub. 946 permits computing declining-balance depreciation without the rounded
-// percentage tables. Keep the rate exact and round each filed aggregate line.
+// Pub. 946 permits computing MACRS without the rounded percentage tables.
+// Keep the rate exact and round each filed aggregate line.
 export function calculateCurrentYearInventory(raw: unknown) {
   const inventory = currentYearInventorySchema.parse(raw);
   assertBonusElections(inventory.assets, inventory.bonus_election);
+  assertMethodElections(inventory.assets, inventory.method_election);
   const items = inventory.assets.map((asset) => ({
     asset,
     basis: adjustedBasis(asset),
@@ -116,7 +121,12 @@ export function calculateCurrentYearInventory(raw: unknown) {
       Number(asset.placed_in_service_date.slice(5, 7)) / 3,
     );
     const fraction = convention === "HY" ? 0.5 : (9 - 2 * quarter) / 8;
-    const multiplier = period < 15 ? 2 : 1.5;
+    const method = currentYearMethod(period, inventory.method_election);
+    const multiplier = method === DepreciationMethod.StraightLine
+      ? 1
+      : method === DepreciationMethod.DoubleDeclining
+      ? 2
+      : 1.5;
     return {
       asset,
       bonus,
@@ -135,15 +145,21 @@ export function calculateCurrentYearInventory(raw: unknown) {
         r.asset.activity_description !== first.activity_description
       )
     ) throw new Error("Current-year activity owners and names must agree");
+    // Form 4562 column (f) makes the method election, so retain the row even
+    // when bonus has exhausted an activity's basis in an elected class.
     const gds = [3, 5, 7, 10, 15, 20].flatMap((period) => {
       const group = rows.filter((r) =>
-        r.asset.macrs_recovery_period_years === period && r.residual > 0
+        r.asset.macrs_recovery_period_years === period &&
+        (r.residual > 0 ||
+          inventory.method_election?.classes.some((c) =>
+            c.recovery_period === period
+          ))
       );
       return group.length
         ? [gdsRowSchema.parse({
           recovery_period: period,
           convention,
-          method: period < 15 ? "200 DB" : "150 DB",
+          method: currentYearMethod(period, inventory.method_election),
           basis: roundWholeDollars(
             group.reduce((sum, r) => sum + r.residual, 0),
           ),

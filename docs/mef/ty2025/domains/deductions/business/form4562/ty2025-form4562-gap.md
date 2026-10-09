@@ -303,3 +303,51 @@ appears exactly once in the corresponding PDF. No fields/widgets remain. Evidenc
 `form4562-election-batch-checkpoint.json` in the retained execution directory.
 These results establish local statement parity, not IRS business-rule approval,
 authenticated source records or accepted elections.
+
+
+## Reviewed GDS method elections — October 9
+
+The complete current-year inventory now accepts a reviewed class-wide election
+of 150% declining balance for 3/5/7/10-year property or straight line over GDS
+periods for any of the six supported classes. The review retains taxpayer
+identity, class/method choices, consent, timely-original-return confirmation,
+review date and source references. Every asset in an elected class must agree,
+including assets in another business or with no remaining basis after bonus.
+Duplicate/absent classes, wrong owners, invalid dates and unreviewed or partial
+choices reject. These reviewed synthetic facts do not authenticate consent or
+a timely return.
+
+[Publication 946](https://www.irs.gov/publications/p946) makes these method
+elections through Form 4562 Part III column (f), applies them to the whole
+placed-in-service class, and requires a timely election. The
+[Form 4562 instructions](https://www.irs.gov/instructions/i4562) distinguish
+150 DB and S/L over GDS periods from the separate ADS election. The calculation
+uses exact first-year method rates and HY/MQ fractions on basis remaining after
+credit and bonus. Existing native/PDF rows carry the chosen method and reconciled
+amounts; even a zero-residual business copy retains its elected method row.
+No new statement descriptor is needed for these original-return elections.
+
+| Complete return | Method | Bonus | Total depreciation | Credit | Final tax |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Five-year half-year | 150 DB | 3,760 | 4,606 | 600 | 5,576 |
+| Five-year bonus opt-out | S/L | 0 | 940 | 600 | 5,576 |
+| Five-year reduced bonus, fourth quarter | 150 DB | 3,760 | 3,972 | 600 | 5,576 |
+| Two businesses, mixed acquisition dates | S/L | 3,760 / 18,800 | 4,465 / 18,800 | 1,800 | 9,799 |
+| Six classes, bonus opt-outs/reduced election | 150 DB for 3/5/7/10; S/L for 15/20 | 7,760 | 13,210 | 600 | 5,576 |
+
+The single-business cases retain profit 10,000 and QBI deduction 1,859; the
+two-business case retains profits 10,000/20,000 and QBI deduction 5,576.
+Focused checks cover all six straight-line classes under HY and all MQ quarters,
+complete return amounts, class-wide source consistency and altered filed
+methods/deductions. Broader section 179 combinations, ADS, later-year changes,
+listed/mixed-use property, source authenticity, business rules and IRS acceptance
+remain open. Existing main parent tasks and deferred discoveries are unchanged.
+
+The grouped regression passed **41 tests, zero failures**, including existing
+section 179/W-2, bonus, inventory, construction-exception, profitable-business
+and Form 3800 joins. Five complete returns validate against cached TY2025
+2025v5.4 Return1040 XSD. All 145 PDF pages are reviewed: 15 distinct renders
+inspected and 130 exact hash matches to reviewed pages, with zero fields/widgets.
+Artifacts: `.state/research/form4562-method-returns/`; checkpoint:
+`form4562-method-batch-checkpoint.json`. These local checks do not establish IRS
+business-rule or ATS acceptance.
