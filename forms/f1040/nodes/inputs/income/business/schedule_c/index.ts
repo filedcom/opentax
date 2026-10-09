@@ -24,7 +24,10 @@ import { form7206 } from "../../../../intermediate/forms/adjustments/health/form
 import { schedule_j_calculation } from "../../../../intermediate/forms/taxes/income-averaging/schedule_j/index.ts";
 import { scheduleJFishingScheduleCSource } from "../../../../../2025/domains/taxes/income-averaging/schedule-j/schedule_j_activity_sources.ts";
 import { assertDistinctMiningSources, miningCostAdjustment } from "./mining.ts";
-import { longTermContractAdjustment } from "./long_term_contract.ts";
+import {
+  assertDistinctLongTermContractSources,
+  longTermContractAdjustment,
+} from "./long_term_contract.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../../config/index.ts";
 import {
@@ -171,6 +174,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     // Validate schema — throws on invalid data (negative amounts, bad enums)
     inputSchema.parse(input);
     assertDistinctMiningSources(input.schedule_cs);
+    assertDistinctLongTermContractSources(input.schedule_cs);
     const statutoryTotals = new Map<string, number>();
     for (const source of input.statutory_w2_sources ?? []) {
       statutoryTotals.set(
