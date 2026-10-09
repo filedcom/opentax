@@ -522,3 +522,24 @@ All four complete XMLs pass the local TY2025v5.4 XSD. All36 flattened PDF pages 
 The16 mutation probes produce eight native/eight full-PDF rejections for altered ISO adjustment or Form1040 line17, and eight acceptances at each boundary for changed calculated AMTI or exemption. Eight retained altered XMLs confirm those changed fields are transmitted with unchanged downstream tax. This newly discovered full-export validation gap is deferred89; positive calculation matches do not imply mutation safety. No runtime source or committed test files were changed while the full batch ran.
 
 Private evidence `.state/research/form6251-phaseout-packets-2026-10-09/` retains inputs, execution/preparation, full XML/PDF, altered XML, source oracle, rejection reports, renders, review manifest and SHA256SUMS. Schema SHA256 remains `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`. This checkpoint advances the existing ISO/exemption/return-join task; it does not close other filing statuses, preferences, source authenticity, business rules or IRS acceptance.
+
+## October 9 married phaseout and add-on checkpoint
+
+Six complete source-backed ISO returns extend the phaseout check to married filing separately and jointly. Each retains100,000 primary wages,20,000 withholding, matching W2 Medicare/Social Security facts and an issued-Form3921-shaped record with1,000 unsold shares, strike10 and differing exercise FMV. General inputs identify Alex and Sam; MFS explicitly says the spouse does not itemize. The spouse has no entered income in these synthetic joint examples.
+
+Independent Decimal arithmetic follows the [2025 AMT instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf) for the MFS additional amount and exemption worksheet. Regular taxable income84,250 MFS and68,500 MFJ uses the exact [2025 IRS tax-table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf) amounts13,455 and7,746, respectively, rather than continuous rate-schedule arithmetic below100,000.
+
+| Status | AMTI before MFS addition | Addition | Filed AMTI | Exemption | Total tax | Owed |
+| --- | --- | --- | --- | --- | --- | --- |
+| MFS | 900,350 | 0 | 900,350 | 0 | 249,707 | 229,707 |
+| MFS | 920,350 | 5,000 | 925,350 | 0 | 256,707 | 236,707 |
+| MFS | 1,174,350 | 68,500 | 1,242,850 | 0 | 345,607 | 325,607 |
+| MFJ | 1,252,700 | 0 | 1,252,700 | 137,000 | 307,614 | 287,614 |
+| MFJ | 1,500,700 | 0 | 1,500,700 | 75,000 | 394,414 | 374,414 |
+| MFJ | 1,800,700 | 0 | 1,800,700 | 0 | 499,414 | 479,414 |
+
+All six public packets pass full cached TY2025v5.4 XSD; independent source ISO spreads, standard-deduction addbacks, exemptions, selected native AMTI/exemption/AMT fields, Form1040 tax and owed amounts match. Thirty flattened pages were reviewed via21 distinct renders and9 exact matches across11 contact sheets. Three changes per case—ISO adjustment, Schedule2 AMT and Form1040 additional tax—produce18 native and18 full-PDF rejections. The prior calculated-AMTI/exemption acceptance finding remains deferred89; these different mutation probes do not repair or supersede it.
+
+Existing qualifications recur: all six native6251 documents omit line1a although PDFs print15,750/31,500; MFS1040 page1 repeats the spouse name in the joint-only row; MFJ6251 page5 shows only the primary name despite both names on1040/Schedule2. These observations extend existing deferred entries, with no new queue item or repair. Packet order1040/Schedule2/Form6251 is consistent in this set. Wider filing statuses/preferences, authenticated source records, business-rule validation and IRS acceptance remain open; the parent board task is not closed.
+
+Private evidence `.state/research/form6251-married-phaseout-2026-10-09/` retains sources, execution/preparation, XML/PDF, source oracle, mutation reports, renders, review manifest and SHA256SUMS. Schema digest remains `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`. No runtime or committed test input changed during the live full batch.
