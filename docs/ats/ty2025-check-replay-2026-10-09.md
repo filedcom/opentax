@@ -204,3 +204,14 @@ visually inspected. Private PDFs, four renders, replay JSON and regression log:
 | 3 | `29fb04a95cb926bf9157c9e8f5b4c35c806ec83dfa995412866da3394a8715ce` |
 
 Verification after these corrections: **62 typed ATS tests passed, zero failed**.
+
+### Scenario3 farm-rental follow-up
+
+The public source fixture now also includes page17 Form4835's active-
+participation Yes and printed income/expense amounts. The omitted rental
+reaches ScheduleE/Schedule1 and Form1040; gross17035 less5974 yields11061,
+without changing optional-method SE827. The ATS directory now passes63 tests.
+The fixed54 replay observations remain41/12/1; this new rental integration is
+asserted separately rather than inflating that denominator. See the
+[farm-rental checkpoint](./ty2025.md#october-9-scenario3-farm-rental-source-route)
+for native/PDF scope and the deferred ScheduleE 1099-answer omission.

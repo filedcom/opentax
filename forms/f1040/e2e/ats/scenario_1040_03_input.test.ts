@@ -1,3 +1,9 @@
+import { f1040_2025 } from "../../2025/index.ts";
+import { extractFilerIdentity } from "../../mef/filer.ts";
+import { form4835 } from "../../2025/mef/forms/income/business/f4835.ts";
+import { form4835Pdf } from "../../2025/pdf/forms/income/business/f4835.ts";
+import { scheduleE } from "../../2025/mef/forms/income/rental-passthrough/schedule_e.ts";
+import { scheduleEPdf } from "../../2025/pdf/forms/income/rental-passthrough/schedule_e.ts";
 import { assert, assertEquals, assertStringIncludes } from "@std/assert";
 import { DistributionCode } from "../../nodes/inputs/income/retirement/f1099r/index.ts";
 import { schedule_f } from "../../nodes/intermediate/forms/income/business/schedule_f/index.ts";
@@ -16,7 +22,7 @@ import {
   SCENARIO_1040_03_SOURCE,
 } from "./scenario_1040_03_input.ts";
 
-Deno.test("ATS 1040 Scenario 3 maps only printed 1099-R and Schedule F source facts", () => {
+Deno.test("ATS 1040 Scenario 3 maps printed pension, farm and farm-rental source facts", () => {
   const input = scenario104003Input();
   const general = input.general as Record<string, unknown>;
   const form1099R = (input.f1099r as Record<string, unknown>[])[0];
@@ -42,7 +48,12 @@ Deno.test("ATS 1040 Scenario 3 maps only printed 1099-R and Schedule F source fa
   assertEquals(farm.line26_seeds, 2_970);
 
   // Printed aggregate amounts are not fabricated into transaction records.
-  assertEquals(Object.keys(input).sort(), ["f1099r", "general", "schedule_f"]);
+  assertEquals(Object.keys(input).sort(), [
+    "f1099r",
+    "f4835",
+    "general",
+    "schedule_f",
+  ]);
 });
 
 Deno.test("ATS 1040 Scenario 3 reconciles filled source lines, not blank printed totals", () => {
@@ -83,7 +94,7 @@ Deno.test("ATS 1040 Scenario 3 reconciles filled source lines, not blank printed
 Deno.test("ATS 1040 Scenario 3 retains issued Form 4835 entries without filling blank totals", () => {
   const rental = SCENARIO_1040_03_SOURCE.form4835;
   assertEquals(rental, {
-    activelyParticipated: null,
+    activelyParticipated: true,
     line1ProductionIncome: 17_035,
     line2aCooperativeDistributionsGross: 0,
     line3aAgriculturalProgramPaymentsGross: 0,
@@ -251,9 +262,55 @@ Deno.test("ATS 1040 Scenario 3 preserves optional-method eligibility and missing
       recon.sourceDerived.farmOptionalMethodTwoThirdsGrossDenominator,
     8_111 * 2 / 3,
   );
-  assertEquals(SCENARIO_1040_03_SOURCE.form4835.activelyParticipated, null);
+  assertEquals(SCENARIO_1040_03_SOURCE.form4835.activelyParticipated, true);
   assertStringIncludes(
     recon.notAtsReadyBecause.join(" "),
     "No completed 1040 tax",
   );
+});
+
+Deno.test("ATS 1040 Scenario 3 marked active farm rental reaches Schedule E and 1040 without adding SE earnings", () => {
+  const result = f1040_2025.executeReturn(scenario104003Input());
+  assertEquals(result.diagnostics, []);
+  const p = result.pending;
+  const filer = extractFilerIdentity(p.f1040)!;
+  const context = { filer, pending: p };
+  assertEquals(p.schedule_e?.farm_rental_gross, 17_035);
+  assertEquals(p.schedule_e?.farm_rental_net, 11_061);
+  assertEquals(p.schedule1?.line5_schedule_e, 11_061);
+  assertEquals(p.schedule1?.line6_schedule_f, 3_251);
+  // This remains a partial return: the cover's state refund and Schedule D are absent.
+  assertEquals(p.f1040?.line8_additional_income, 14_312);
+  assertEquals(p.f1040?.line9_total_income, 57_412);
+  assertEquals(p.schedule2?.line4_se_tax, 827);
+  assertEquals(p.schedule1?.line15_se_deduction, 414);
+  const [xml] = form4835.build(p.f4835, context);
+  assertStringIncludes(
+    xml,
+    "<ActivelyParticipatedInd>true</ActivelyParticipatedInd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<GrossFarmRentalIncomeAmt>17035</GrossFarmRentalIncomeAmt>",
+  );
+  assertStringIncludes(xml, "<TotalExpensesAmt>5974</TotalExpensesAmt>");
+  assertStringIncludes(
+    xml,
+    "<NetFarmRentalIncomeOrLossAmt>11061</NetFarmRentalIncomeOrLossAmt>",
+  );
+  const e = scheduleE.build(p.schedule_e, context);
+  assertStringIncludes(
+    e,
+    "<NetFarmRentalIncomeOrLossAmt>11061</NetFarmRentalIncomeOrLossAmt>",
+  );
+  const fields = form4835Pdf.projectFields!(p.f4835, p);
+  const [rental] = form4835Pdf.instances!(fields, filer);
+  assertEquals(rental.participation, "yes");
+  assertEquals(rental.line7_gross, 17_035);
+  assertEquals(rental.line31_expenses, 5_974);
+  assertEquals(rental.line32_income, 11_061);
+  const eFields = scheduleEPdf.projectFields!(p.schedule_e, p);
+  const [eCopy] = scheduleEPdf.instances!(eFields, filer);
+  assertEquals(eCopy.farm_line40, 11_061);
+  assertEquals(eCopy.farm_line42, 17_035);
 });
