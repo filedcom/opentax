@@ -1,3 +1,4 @@
+import { calculatePropertyCredit } from "../../../../../nodes/inputs/credits/business/f8911/property-credit.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
   computePersonalCreditAmounts,
@@ -14,6 +15,7 @@ function propertyDocuments(fields: Input): readonly string[] {
   if (!amounts || amounts.allowedCredit === 0) return [];
   return personalCreditProperties(fields as F8911Input).map((input) => {
     const address = input.property_us_address!;
+    const credit = calculatePropertyCredit(input);
     return elements("IRS8911ScheduleA", [
       element("FacilityDesc", input.property_description),
       elements("FacilityUSAddress", [
@@ -30,11 +32,11 @@ function propertyDocuments(fields: Input): readonly string[] {
       element("CertificationOrPermitNum", input.certification_permit_number),
       element("TotQlfyPropertyCostCreditAmt", input.cost),
       element("PropertyUsedMainHomeInd", "true"),
-      element("TotQlfyPropLessBusInvstUseAmt", input.cost),
-      element("AdjustedPersonalUsePartAmt", input.cost * 0.30),
+      element("TotQlfyPropLessBusInvstUseAmt", credit.personalCost),
+      element("AdjustedPersonalUsePartAmt", credit.personalCreditBeforeCap),
       element(
         "TotalPersonalUsePartOfCrAmt",
-        Math.min(input.cost * 0.30, 1_000),
+        credit.personalCredit,
       ),
     ]);
   });

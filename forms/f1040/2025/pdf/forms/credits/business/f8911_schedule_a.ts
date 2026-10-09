@@ -1,3 +1,4 @@
+import { calculatePropertyCredit } from "../../../../../nodes/inputs/credits/business/f8911/property-credit.ts";
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
@@ -57,23 +58,26 @@ export const form8911ScheduleAPdf: PdfFormDescriptor = {
     const { filerName, filerTin } = source;
     return source.properties.map((
       { input, propertyAddress, constructionDate, serviceDate },
-    ) => ({
-      filer_name: filerName,
-      filer_tin: filerTin,
-      property_description: input.property_description,
-      property_address: propertyAddress,
-      construction_date: constructionDate,
-      service_date: serviceDate,
-      eligible_census_tract: true,
-      census_geoid: input.census_tract_geoid,
-      certification_permit_number: input.certification_permit_number,
-      line8: input.cost,
-      line9: 0,
-      line10: 0,
-      main_home_property: true,
-      line18: input.cost,
-      line19: input.cost * 0.3,
-      line21: Math.min(input.cost * 0.3, 1_000),
-    }));
+    ) => {
+      const credit = calculatePropertyCredit(input);
+      return ({
+        filer_name: filerName,
+        filer_tin: filerTin,
+        property_description: input.property_description,
+        property_address: propertyAddress,
+        construction_date: constructionDate,
+        service_date: serviceDate,
+        eligible_census_tract: true,
+        census_geoid: input.census_tract_geoid,
+        certification_permit_number: input.certification_permit_number,
+        line8: input.cost,
+        line9: 0,
+        line10: 0,
+        main_home_property: true,
+        line18: credit.personalCost,
+        line19: credit.personalCreditBeforeCap,
+        line21: credit.personalCredit,
+      });
+    });
   },
 };

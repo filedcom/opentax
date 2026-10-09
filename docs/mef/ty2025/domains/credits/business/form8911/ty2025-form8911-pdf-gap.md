@@ -151,3 +151,23 @@ identity and cap. The flattened PDF has no fields/widgets and SHA-256
 `dcc96507fdb56846b7691110342908939bd5f6da5d29cada1eeefa31aa99d1bf`.
 The selected regression passes 115 tests with zero failures. No IRS business-rule
 or acceptance result is claimed.
+
+## Shared property calculation — October 9
+
+Calculation, native Schedule A and PDF Schedule A now use one property-credit
+calculator for the retained personal route. It preserves property cents and
+separate per-property caps. Its arithmetic cases also cover business-use cost,
+section 179 reducing only that business portion, base 6% and increased 30%
+rates, the 100,000 business cap and 1,000 personal cap. An excessive section
+179 deduction is rejected; source inputs are not mutated.
+
+The increased-rate selector is internal arithmetic input, not proof of PWA
+compliance or an admitted filing election. The public business-use route still
+rejects until the existing Form 3800 source reconciliation, tax-limit, document
+and PDF work is complete. No business return or Form 7220 support is claimed.
+
+Selected regression: 118 passed, zero failed. A fresh complete non-electric
+personal return again validates against TY2025 v5.4. A raw XML hash comparison
+with the earlier generation did not match; byte equivalence is not asserted.
+No new PDF was authored for this calculation refactor; the five earlier full
+returns and 38 reviewed pages remain their separately recorded evidence.

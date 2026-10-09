@@ -1,3 +1,4 @@
+import { calculatePropertyCredit } from "./property-credit.ts";
 import { roundWholeDollars } from "../../../../../whole-dollars.ts";
 import { z } from "zod";
 import type {
@@ -172,7 +173,7 @@ export function computePersonalCreditAmounts(
   // Retain cents across property amounts, then round the total entered on
   // Form 8911 line 4 (Form 1040 instructions: Rounding Off to Whole Dollars).
   const tentativeCredit = roundWholeDollars(properties.reduce(
-    (sum, property) => sum + Math.min(property.cost * 0.30, 1_000),
+    (sum, property) => sum + calculatePropertyCredit(property).personalCredit,
     0,
   ));
   const foreignTaxCredit = input.foreign_tax_credit ?? 0;
