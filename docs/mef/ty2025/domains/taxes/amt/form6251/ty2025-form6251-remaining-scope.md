@@ -1,6 +1,6 @@
 # TY2025 Form 6251 remaining-scope decision
 
-Current evidence: [eight complete PAB returns](#october-9-complete-pab-return-checkpoint) pass local XSD with 40 reviewed PDF pages and 23 typed checks. Native line 1a omission and direct-PDF consistency gaps remain deferred. The [grouped AMT/interest checkpoint](#october-9-grouped-amt-and-investment-interest-checkpoint) adds108 typed passes; the [complete ISO/basis PDF checkpoint](#october-9-iso-and-basis-complete-pdf-checkpoint) adds five XSD returns/41 reviewed pages and six typed tests, with reporting and packet-order qualifications. Historical unrun notes are superseded only within these exact scopes; broader AMT, full-suite and IRS acceptance requirements remain open.
+Current evidence now includes complete [PAB](#october-9-complete-pab-return-checkpoint), [ISO/basis](#october-9-iso-and-basis-complete-pdf-checkpoint), [single phaseout](#october-9-single-filer-phaseout-checkpoint), [married phaseout/add-on](#october-9-married-phaseout-and-add-on-checkpoint), and [multiple-mine](#october-9-multiple-mine-complete-return-checkpoint) packets. The [Form4952 checkpoint](../../../deductions/investments/form4952/ty2025-form4952-gap.md#october-9-amt-complete-return-checkpoint) retains one unresolved bond-debt tax comparison. Grouped regression108/0 and packet tests prove their stated scopes only. Native/PDF reporting, derived-field validation, source authenticity, broader AMT, full-suite and IRS gates remain open; historical unrun notes are superseded only within each checkpoint's exact scope.
 
 ## One direct PAB bond plus one PAB fund (2026-10-01, unrun)
 
@@ -543,3 +543,22 @@ All six public packets pass full cached TY2025v5.4 XSD; independent source ISO s
 Existing qualifications recur: all six native6251 documents omit line1a although PDFs print15,750/31,500; MFS1040 page1 repeats the spouse name in the joint-only row; MFJ6251 page5 shows only the primary name despite both names on1040/Schedule2. These observations extend existing deferred entries, with no new queue item or repair. Packet order1040/Schedule2/Form6251 is consistent in this set. Wider filing statuses/preferences, authenticated source records, business-rule validation and IRS acceptance remain open; the parent board task is not closed.
 
 Private evidence `.state/research/form6251-married-phaseout-2026-10-09/` retains sources, execution/preparation, XML/PDF, source oracle, mutation reports, renders, review manifest and SHA256SUMS. Schema digest remains `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`. No runtime or committed test input changed during the live full batch.
+
+## October 9 multiple-mine complete-return checkpoint
+
+Two source-backed public returns retain either two or four separately identified ScheduleC mining activities. Named PartV exploration expenses equal each activity's gross receipts, so regular net business income is zero. Distinct business, property and reviewed-workpaper references bind each expense to its AMT adjustment. The two activities incur100,000/50,000; the four-activity variant adds30,000/20,000. All are current-year, nonpassive, unlimited activities with no elected regular ten-year write-off or unamortized property loss.
+
+The independent Decimal oracle follows the [2025 Form6251 line2q instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf): current regular deduction less one-tenth AMT amortization. Wages300,000, deduction15,750 and regular tax69,035 remain the same in both cases. Additional Medicare Tax is900 from300,000 Medicare wages above the single200,000 threshold; withholding is60,000. The source-to-final-tax results match:
+
+| Mines | Regular expense | AMT deduction | Line2q | AMTI | AMT | Total tax | Owed |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 2 | 150,000 | 15,000 | 135,000 | 435,000 | 23,315 | 93,250 | 33,250 |
+| 4 | 200,000 | 20,000 | 180,000 | 480,000 | 35,915 | 105,850 | 45,850 |
+
+Both complete returns pass cached TY2025v5.4 XSD. Native ScheduleC copy counts, owner, business names, gross receipts, expense totals and zero profit reconcile to each source; selected native6251 adjustment/AMTI/AMT fields reconcile independently. The11/15-page packets were fully reviewed through18 distinct rendered pages and8 exact matches across nine contacts. All six mining expense descriptions/amounts appear on their correct PartV copies, with corresponding page1 expenses. Packet sequence is1040, Schedule2, ScheduleC copies, Form6251, Form8959 and Form8960. The initial private XML check used an incorrect element name; after inspecting the canonical output, it checks `TotalGrossReceiptsAmt` and the other actual fields. This was a harness correction, not a product change.
+
+Six mutations per case alter an expense, duplicate a property/workpaper, or change Schedule1 business income, Form6251 line2q or Form1040 additional tax. All12 reject native assembly and the complete PDF builder. Production and committed tests remain unchanged during the live full batch.
+
+Known reporting qualifications remain: native6251 line1a is absent while the PDF prints15,750; ScheduleC native zero tentative/net profit prints blank on lines29/31. These extend deferred84/76, without undertaking a deferred repair or claiming an IRS rejection. Synthetic workpaper references do not authenticate expense, ownership or prior-year records. Other mining years, dispositions, elections, passive/at-risk limits, business rules and IRS acceptance remain open; no broad parent task is closed.
+
+Private evidence `.state/research/form6251-mining-packets-2026-10-09/` retains sources, execution/preparation, XML/PDF, independent oracle, mutation reports, renders, visual manifest and SHA256SUMS. Schema digest is `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
