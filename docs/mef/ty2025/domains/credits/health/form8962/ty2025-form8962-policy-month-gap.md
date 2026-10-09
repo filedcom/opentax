@@ -890,3 +890,14 @@ render review, typed tests and hashes. The preceding `ac7f41e64` head passed
 scoped CI run37889866720. Source records remain synthetic assertions and
 placeholder hashes; external authenticity and IRS acceptance remain unproved.
 The full test gate is still separately blocked by deferred78.
+
+## October 9 dependent filing-threshold packets
+
+The [dependent threshold checkpoint](./ty2025-form8962-dependent-magi-gap.md#october-9-dependent-filing-threshold-return-checkpoint)
+adds nine complete no-APTC returns with required/excluded dependent wages,
+interest and ordinary dividends, other-dependent credits and EIC. All nine
+pass local XSD; 72 pages were observed (26 distinct, 46 exact matches), ten
+new tests pass with 54 native/PDF rejection variants, and 33 related source
+tests pass. Household MAGI and monthly PTC reconcile independently through
+final refunds. Deferred zero-value presentation, broader combinations,
+source authenticity and IRS acceptance remain open.

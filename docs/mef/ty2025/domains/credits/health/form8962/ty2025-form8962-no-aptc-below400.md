@@ -376,3 +376,14 @@ The first-month grace period in
 [45 CFR 156.270(d)](https://www.govinfo.gov/content/pkg/CFR-2025-title45-vol2/pdf/CFR-2025-title45-vol2-part156.pdf)
 applies to enrollees receiving APTC, so it belongs to the separate
 advance-payment Form 8962 route.
+
+## October 9 dependent filing-threshold packets
+
+The [dependent threshold checkpoint](./ty2025-form8962-dependent-magi-gap.md#october-9-dependent-filing-threshold-return-checkpoint)
+adds nine complete no-APTC returns with required/excluded dependent wages,
+interest and ordinary dividends, other-dependent credits and EIC. All nine
+pass local XSD; 72 pages were observed (26 distinct, 46 exact matches), ten
+new tests pass with 54 native/PDF rejection variants, and 33 related source
+tests pass. Household MAGI and monthly PTC reconcile independently through
+final refunds. Deferred zero-value presentation, broader combinations,
+source authenticity and IRS acceptance remain open.

@@ -1,0 +1,4038 @@
+{
+  "two-required": {
+    "general": {
+      "filing_status": "single",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "123-45-6789",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1985-06-15",
+      "taxpayer_can_be_claimed_as_dependent": false,
+      "address_line1": "1 Main St",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false,
+      "dependents": [
+        {
+          "first_name": "Casey",
+          "last_name": "Taxpayer",
+          "name_control": "TAXP",
+          "ssn": "987654321",
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "dob": "2007-06-15",
+          "relationship": "daughter",
+          "irs_relationship_code": "DAUGHTER",
+          "months_in_home": 12,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12,
+          "us_citizen_national_or_resident": true,
+          "provided_over_half_own_support": false,
+          "filed_joint_return_except_refund_only": false,
+          "ptc_tax_return": {
+            "filing": "required",
+            "filed_form1040": {
+              "source_document_id": "casey-filed-2025-form1040",
+              "taxpayer_ssn": "987654321",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": false,
+              "line1z_wages": 16000,
+              "line2a_tax_exempt_interest": 0,
+              "line2b_taxable_interest": 0,
+              "line3b_dividends": 0,
+              "line4b_ira": 0,
+              "line5b_pensions": 0,
+              "line6b_social_security": 0,
+              "line7a_capital_gain": 0,
+              "line8_additional_income": 0,
+              "line10_adjustments": 0,
+              "line11b_agi": 16000
+            },
+            "interest_forms1099": [],
+            "wage_forms_w2": [
+              {
+                "source_document_id": "casey-issued-2025-w2",
+                "employer_name": "Summer Employer",
+                "employer_ein": "112233445",
+                "employee_ssn": "987654321",
+                "box1_wages": 16000
+              }
+            ]
+          }
+        },
+        {
+          "first_name": "Jordan",
+          "last_name": "Taxpayer",
+          "name_control": "TAXP",
+          "ssn": "111223333",
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "dob": "2008-04-15",
+          "relationship": "son",
+          "irs_relationship_code": "SON",
+          "months_in_home": 12,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12,
+          "us_citizen_national_or_resident": true,
+          "provided_over_half_own_support": false,
+          "filed_joint_return_except_refund_only": false,
+          "ptc_tax_return": {
+            "filing": "required",
+            "filed_form1040": {
+              "source_document_id": "jordan-filed-2025-form1040",
+              "taxpayer_ssn": "111223333",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": false,
+              "line1z_wages": 0,
+              "line2a_tax_exempt_interest": 0,
+              "line2b_taxable_interest": 2000,
+              "line3b_dividends": 0,
+              "line4b_ira": 0,
+              "line5b_pensions": 0,
+              "line6b_social_security": 0,
+              "line7a_capital_gain": 0,
+              "line8_additional_income": 0,
+              "line10_adjustments": 0,
+              "line11b_agi": 2000
+            },
+            "interest_forms1099": [
+              {
+                "source_document_id": "jordan-issued-2025-1099int",
+                "recipient_ssn": "111223333",
+                "box1_taxable_interest": 2000,
+                "box8_tax_exempt_interest": 0
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Parent Employer",
+        "employer_address_line1": "10 Work St",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "123-45-6789",
+        "box1_wages": 33640,
+        "box2_fed_withheld": 3000,
+        "box3_ss_wages": 33640,
+        "box4_ss_withheld": 2085.68,
+        "box5_medicare_wages": 33640,
+        "box6_medicare_withheld": 487.78
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-THREE-FAMILY-NO-APTC-2025",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789",
+          "987654321",
+          "111223333"
+        ],
+        "monthly_premiums": [
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900
+        ],
+        "monthly_slcsps": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_aptcs": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "annual_premium": 10800,
+        "annual_slcsp": 0,
+        "annual_aptc": 0,
+        "slcsp_corrections": [
+          {
+            "month": 1,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 2,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 3,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 4,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 5,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 6,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 7,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 8,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 9,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 10,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 11,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 12,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          }
+        ],
+        "no_aptc_monthly_evidence": [
+          {
+            "month": 1,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-1",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0101010101010101010101010101010101010101010101010101010101010101",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-1",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 2,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-2",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0202020202020202020202020202020202020202020202020202020202020202",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-2",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 3,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-3",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0303030303030303030303030303030303030303030303030303030303030303",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-3",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 4,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-4",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0404040404040404040404040404040404040404040404040404040404040404",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-4",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 5,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-5",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0505050505050505050505050505050505050505050505050505050505050505",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-5",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 6,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-6",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0606060606060606060606060606060606060606060606060606060606060606",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-6",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 7,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-7",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0707070707070707070707070707070707070707070707070707070707070707",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-7",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 8,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-8",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0808080808080808080808080808080808080808080808080808080808080808",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-8",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 9,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-9",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0909090909090909090909090909090909090909090909090909090909090909",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-9",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 10,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-10",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-10",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 11,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-11",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-11",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 12,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-12",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-12",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          }
+        ]
+      }
+    ],
+    "f8812": [
+      {
+        "filing_status": "single",
+        "agi": 33640,
+        "income_tax_liability": 1907,
+        "do_not_claim_actc": false,
+        "qualifying_children_count": 0,
+        "other_dependents_count": 2,
+        "line18a_earned_income": 33640,
+        "credit_limit_worksheet": {
+          "schedule3_line1": 0,
+          "schedule3_line2": 0,
+          "schedule3_line3": 0,
+          "schedule3_line4": 0,
+          "schedule3_line5b": 0,
+          "schedule3_line6d": 0,
+          "schedule3_line6f": 0,
+          "schedule3_line6l": 0,
+          "schedule3_line6m": 0,
+          "worksheet_b_applies": false
+        }
+      }
+    ]
+  },
+  "two-excluded": {
+    "general": {
+      "filing_status": "single",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "123-45-6789",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1985-06-15",
+      "taxpayer_can_be_claimed_as_dependent": false,
+      "address_line1": "1 Main St",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false,
+      "dependents": [
+        {
+          "first_name": "Casey",
+          "last_name": "Taxpayer",
+          "name_control": "TAXP",
+          "ssn": "987654321",
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "dob": "2007-06-15",
+          "relationship": "daughter",
+          "irs_relationship_code": "DAUGHTER",
+          "months_in_home": 12,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12,
+          "us_citizen_national_or_resident": true,
+          "provided_over_half_own_support": false,
+          "filed_joint_return_except_refund_only": false,
+          "ptc_tax_return": {
+            "filing": "not_required",
+            "wage_form_w2": {
+              "source_document_id": "casey-below-threshold-2025-w2",
+              "employer_name": "Summer Employer",
+              "employer_ein": "112233445",
+              "employee_ssn": "987654321",
+              "box1_wages": 15750
+            },
+            "filing_requirement_review": {
+              "source_document_id": "casey-2025-filing-review",
+              "dependent_ssn": "987654321",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": false,
+              "wage_source_document_id": "casey-below-threshold-2025-w2",
+              "other_income_reviewed_absent": true,
+              "other_filing_triggers_reviewed_absent": true,
+              "return_filed": false,
+              "reviewed_on": "2026-03-01",
+              "reviewer_name": "Tax reviewer"
+            }
+          }
+        },
+        {
+          "first_name": "Jordan",
+          "last_name": "Taxpayer",
+          "name_control": "TAXP",
+          "ssn": "111223333",
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "dob": "2008-04-15",
+          "relationship": "son",
+          "irs_relationship_code": "SON",
+          "months_in_home": 12,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12,
+          "us_citizen_national_or_resident": true,
+          "provided_over_half_own_support": false,
+          "filed_joint_return_except_refund_only": false,
+          "ptc_tax_return": {
+            "filing": "not_required",
+            "interest_form1099": {
+              "source_document_id": "jordan-below-threshold-2025-1099int",
+              "recipient_ssn": "111223333",
+              "box1_taxable_interest": 1350,
+              "box8_tax_exempt_interest": 100
+            },
+            "filing_requirement_review": {
+              "source_document_id": "jordan-2025-filing-review",
+              "dependent_ssn": "111223333",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": false,
+              "interest_source_document_id": "jordan-below-threshold-2025-1099int",
+              "other_income_reviewed_absent": true,
+              "other_filing_triggers_reviewed_absent": true,
+              "return_filed": false,
+              "reviewed_on": "2026-03-01",
+              "reviewer_name": "Tax reviewer"
+            }
+          }
+        }
+      ]
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Parent Employer",
+        "employer_address_line1": "10 Work St",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "123-45-6789",
+        "box1_wages": 51640,
+        "box2_fed_withheld": 3000,
+        "box3_ss_wages": 51640,
+        "box4_ss_withheld": 3201.68,
+        "box5_medicare_wages": 51640,
+        "box6_medicare_withheld": 748.78
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-THREE-FAMILY-NO-APTC-2025",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789",
+          "987654321",
+          "111223333"
+        ],
+        "monthly_premiums": [
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900
+        ],
+        "monthly_slcsps": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_aptcs": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "annual_premium": 10800,
+        "annual_slcsp": 0,
+        "annual_aptc": 0,
+        "slcsp_corrections": [
+          {
+            "month": 1,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 2,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 3,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 4,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 5,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 6,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 7,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 8,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 9,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 10,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 11,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 12,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          }
+        ],
+        "no_aptc_monthly_evidence": [
+          {
+            "month": 1,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-1",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0101010101010101010101010101010101010101010101010101010101010101",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-1",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 2,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-2",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0202020202020202020202020202020202020202020202020202020202020202",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-2",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 3,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-3",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0303030303030303030303030303030303030303030303030303030303030303",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-3",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 4,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-4",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0404040404040404040404040404040404040404040404040404040404040404",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-4",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 5,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-5",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0505050505050505050505050505050505050505050505050505050505050505",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-5",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 6,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-6",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0606060606060606060606060606060606060606060606060606060606060606",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-6",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 7,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-7",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0707070707070707070707070707070707070707070707070707070707070707",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-7",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 8,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-8",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0808080808080808080808080808080808080808080808080808080808080808",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-8",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 9,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-9",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0909090909090909090909090909090909090909090909090909090909090909",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-9",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 10,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-10",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-10",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 11,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-11",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-11",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 12,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-12",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-12",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          }
+        ]
+      }
+    ],
+    "f8812": [
+      {
+        "filing_status": "single",
+        "agi": 51640,
+        "income_tax_liability": 4067,
+        "do_not_claim_actc": false,
+        "qualifying_children_count": 0,
+        "other_dependents_count": 2,
+        "line18a_earned_income": 51640,
+        "credit_limit_worksheet": {
+          "schedule3_line1": 0,
+          "schedule3_line2": 0,
+          "schedule3_line3": 0,
+          "schedule3_line4": 0,
+          "schedule3_line5b": 0,
+          "schedule3_line6d": 0,
+          "schedule3_line6f": 0,
+          "schedule3_line6l": 0,
+          "schedule3_line6m": 0,
+          "worksheet_b_applies": false
+        }
+      }
+    ]
+  },
+  "required-and-excluded": {
+    "general": {
+      "filing_status": "single",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "123-45-6789",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1985-06-15",
+      "taxpayer_can_be_claimed_as_dependent": false,
+      "address_line1": "1 Main St",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false,
+      "dependents": [
+        {
+          "first_name": "Casey",
+          "last_name": "Taxpayer",
+          "name_control": "TAXP",
+          "ssn": "987654321",
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "dob": "2007-06-15",
+          "relationship": "daughter",
+          "irs_relationship_code": "DAUGHTER",
+          "months_in_home": 12,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12,
+          "us_citizen_national_or_resident": true,
+          "provided_over_half_own_support": false,
+          "filed_joint_return_except_refund_only": false,
+          "ptc_tax_return": {
+            "filing": "required",
+            "filed_form1040": {
+              "source_document_id": "casey-filed-2025-form1040",
+              "taxpayer_ssn": "987654321",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": false,
+              "line1z_wages": 16000,
+              "line2a_tax_exempt_interest": 0,
+              "line2b_taxable_interest": 0,
+              "line3b_dividends": 0,
+              "line4b_ira": 0,
+              "line5b_pensions": 0,
+              "line6b_social_security": 0,
+              "line7a_capital_gain": 0,
+              "line8_additional_income": 0,
+              "line10_adjustments": 0,
+              "line11b_agi": 16000
+            },
+            "interest_forms1099": [],
+            "wage_forms_w2": [
+              {
+                "source_document_id": "casey-issued-2025-w2",
+                "employer_name": "Summer Employer",
+                "employer_ein": "112233445",
+                "employee_ssn": "987654321",
+                "box1_wages": 16000
+              }
+            ]
+          }
+        },
+        {
+          "first_name": "Jordan",
+          "last_name": "Taxpayer",
+          "name_control": "TAXP",
+          "ssn": "111223333",
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "dob": "2008-04-15",
+          "relationship": "son",
+          "irs_relationship_code": "SON",
+          "months_in_home": 12,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12,
+          "us_citizen_national_or_resident": true,
+          "provided_over_half_own_support": false,
+          "filed_joint_return_except_refund_only": false,
+          "ptc_tax_return": {
+            "filing": "not_required",
+            "interest_form1099": {
+              "source_document_id": "jordan-below-threshold-2025-1099int",
+              "recipient_ssn": "111223333",
+              "box1_taxable_interest": 1350,
+              "box8_tax_exempt_interest": 100
+            },
+            "filing_requirement_review": {
+              "source_document_id": "jordan-2025-filing-review",
+              "dependent_ssn": "111223333",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": false,
+              "interest_source_document_id": "jordan-below-threshold-2025-1099int",
+              "other_income_reviewed_absent": true,
+              "other_filing_triggers_reviewed_absent": true,
+              "return_filed": false,
+              "reviewed_on": "2026-03-01",
+              "reviewer_name": "Tax reviewer"
+            }
+          }
+        }
+      ]
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Parent Employer",
+        "employer_address_line1": "10 Work St",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "123-45-6789",
+        "box1_wages": 35640,
+        "box2_fed_withheld": 3000,
+        "box3_ss_wages": 35640,
+        "box4_ss_withheld": 2209.68,
+        "box5_medicare_wages": 35640,
+        "box6_medicare_withheld": 516.78
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-THREE-FAMILY-NO-APTC-2025",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789",
+          "987654321",
+          "111223333"
+        ],
+        "monthly_premiums": [
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900
+        ],
+        "monthly_slcsps": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_aptcs": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "annual_premium": 10800,
+        "annual_slcsp": 0,
+        "annual_aptc": 0,
+        "slcsp_corrections": [
+          {
+            "month": 1,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 2,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 3,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 4,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 5,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 6,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 7,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 8,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 9,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 10,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 11,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 12,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          }
+        ],
+        "no_aptc_monthly_evidence": [
+          {
+            "month": 1,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-1",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0101010101010101010101010101010101010101010101010101010101010101",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-1",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 2,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-2",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0202020202020202020202020202020202020202020202020202020202020202",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-2",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 3,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-3",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0303030303030303030303030303030303030303030303030303030303030303",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-3",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 4,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-4",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0404040404040404040404040404040404040404040404040404040404040404",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-4",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 5,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-5",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0505050505050505050505050505050505050505050505050505050505050505",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-5",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 6,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-6",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0606060606060606060606060606060606060606060606060606060606060606",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-6",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 7,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-7",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0707070707070707070707070707070707070707070707070707070707070707",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-7",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 8,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-8",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0808080808080808080808080808080808080808080808080808080808080808",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-8",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 9,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-9",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0909090909090909090909090909090909090909090909090909090909090909",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-9",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 10,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-10",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-10",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 11,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-11",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-11",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 12,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-12",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-12",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          }
+        ]
+      }
+    ],
+    "f8812": [
+      {
+        "filing_status": "single",
+        "agi": 35640,
+        "income_tax_liability": 2147,
+        "do_not_claim_actc": false,
+        "qualifying_children_count": 0,
+        "other_dependents_count": 2,
+        "line18a_earned_income": 35640,
+        "credit_limit_worksheet": {
+          "schedule3_line1": 0,
+          "schedule3_line2": 0,
+          "schedule3_line3": 0,
+          "schedule3_line4": 0,
+          "schedule3_line5b": 0,
+          "schedule3_line6d": 0,
+          "schedule3_line6f": 0,
+          "schedule3_line6l": 0,
+          "schedule3_line6m": 0,
+          "worksheet_b_applies": false
+        }
+      }
+    ]
+  },
+  "excluded-wages": {
+    "general": {
+      "filing_status": "single",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "123-45-6789",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1985-06-15",
+      "taxpayer_can_be_claimed_as_dependent": false,
+      "address_line1": "1 Main St",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false,
+      "dependents": [
+        {
+          "first_name": "Casey",
+          "last_name": "Taxpayer",
+          "name_control": "TAXP",
+          "ssn": "987654321",
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "dob": "2007-06-15",
+          "relationship": "daughter",
+          "irs_relationship_code": "DAUGHTER",
+          "months_in_home": 12,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12,
+          "us_citizen_national_or_resident": true,
+          "provided_over_half_own_support": false,
+          "filed_joint_return_except_refund_only": false,
+          "ptc_tax_return": {
+            "filing": "not_required",
+            "wage_form_w2": {
+              "source_document_id": "casey-issued-2025-w2",
+              "employer_name": "Summer Employer",
+              "employer_ein": "112233445",
+              "employee_ssn": "987654321",
+              "box1_wages": 15750
+            },
+            "filing_requirement_review": {
+              "source_document_id": "casey-2025-filing-review",
+              "dependent_ssn": "987654321",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": false,
+              "wage_source_document_id": "casey-issued-2025-w2",
+              "other_income_reviewed_absent": true,
+              "other_filing_triggers_reviewed_absent": true,
+              "return_filed": false,
+              "reviewed_on": "2026-03-01",
+              "reviewer_name": "Tax reviewer"
+            }
+          }
+        }
+      ]
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Parent Employer",
+        "employer_address_line1": "10 Work St",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "123-45-6789",
+        "box1_wages": 40880,
+        "box2_fed_withheld": 3000,
+        "box3_ss_wages": 40880,
+        "box4_ss_withheld": 2534.56,
+        "box5_medicare_wages": 40880,
+        "box6_medicare_withheld": 592.76
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-FAMILY-NO-APTC-2025",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789",
+          "987654321"
+        ],
+        "monthly_premiums": [
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900
+        ],
+        "monthly_slcsps": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_aptcs": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "annual_premium": 10800,
+        "annual_slcsp": 0,
+        "annual_aptc": 0,
+        "slcsp_corrections": [
+          {
+            "month": 1,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 2,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 3,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 4,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 5,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 6,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 7,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 8,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 9,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 10,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 11,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 12,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          }
+        ],
+        "no_aptc_monthly_evidence": [
+          {
+            "month": 1,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-1",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0101010101010101010101010101010101010101010101010101010101010101",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-1",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 2,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-2",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0202020202020202020202020202020202020202020202020202020202020202",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-2",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 3,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-3",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0303030303030303030303030303030303030303030303030303030303030303",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-3",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 4,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-4",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0404040404040404040404040404040404040404040404040404040404040404",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-4",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 5,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-5",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0505050505050505050505050505050505050505050505050505050505050505",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-5",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 6,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-6",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0606060606060606060606060606060606060606060606060606060606060606",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-6",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 7,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-7",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0707070707070707070707070707070707070707070707070707070707070707",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-7",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 8,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-8",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0808080808080808080808080808080808080808080808080808080808080808",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-8",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 9,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-9",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0909090909090909090909090909090909090909090909090909090909090909",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-9",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 10,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-10",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-10",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 11,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-11",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-11",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 12,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-12",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-12",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          }
+        ]
+      }
+    ],
+    "f8812": [
+      {
+        "filing_status": "single",
+        "agi": 40880,
+        "income_tax_liability": 2777,
+        "do_not_claim_actc": false,
+        "qualifying_children_count": 0,
+        "other_dependents_count": 1,
+        "line18a_earned_income": 40880,
+        "credit_limit_worksheet": {
+          "schedule3_line1": 0,
+          "schedule3_line2": 0,
+          "schedule3_line3": 0,
+          "schedule3_line4": 0,
+          "schedule3_line5b": 0,
+          "schedule3_line6d": 0,
+          "schedule3_line6f": 0,
+          "schedule3_line6l": 0,
+          "schedule3_line6m": 0,
+          "worksheet_b_applies": false
+        }
+      }
+    ]
+  },
+  "excluded-interest": {
+    "general": {
+      "filing_status": "single",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "123-45-6789",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1985-06-15",
+      "taxpayer_can_be_claimed_as_dependent": false,
+      "address_line1": "1 Main St",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false,
+      "dependents": [
+        {
+          "first_name": "Casey",
+          "last_name": "Taxpayer",
+          "name_control": "TAXP",
+          "ssn": "987654321",
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "dob": "2007-06-15",
+          "relationship": "daughter",
+          "irs_relationship_code": "DAUGHTER",
+          "months_in_home": 12,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12,
+          "us_citizen_national_or_resident": true,
+          "provided_over_half_own_support": false,
+          "filed_joint_return_except_refund_only": false,
+          "ptc_tax_return": {
+            "filing": "not_required",
+            "interest_form1099": {
+              "source_document_id": "casey-issued-2025-1099-int",
+              "recipient_ssn": "987654321",
+              "box1_taxable_interest": 1350,
+              "box8_tax_exempt_interest": 100
+            },
+            "filing_requirement_review": {
+              "source_document_id": "casey-2025-interest-filing-review",
+              "dependent_ssn": "987654321",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": false,
+              "interest_source_document_id": "casey-issued-2025-1099-int",
+              "other_income_reviewed_absent": true,
+              "other_filing_triggers_reviewed_absent": true,
+              "return_filed": false,
+              "reviewed_on": "2026-03-01",
+              "reviewer_name": "Tax reviewer"
+            }
+          }
+        }
+      ]
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Parent Employer",
+        "employer_address_line1": "10 Work St",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "123-45-6789",
+        "box1_wages": 40880,
+        "box2_fed_withheld": 3000,
+        "box3_ss_wages": 40880,
+        "box4_ss_withheld": 2534.56,
+        "box5_medicare_wages": 40880,
+        "box6_medicare_withheld": 592.76
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-FAMILY-NO-APTC-2025",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789",
+          "987654321"
+        ],
+        "monthly_premiums": [
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900
+        ],
+        "monthly_slcsps": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_aptcs": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "annual_premium": 10800,
+        "annual_slcsp": 0,
+        "annual_aptc": 0,
+        "slcsp_corrections": [
+          {
+            "month": 1,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 2,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 3,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 4,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 5,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 6,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 7,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 8,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 9,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 10,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 11,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 12,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          }
+        ],
+        "no_aptc_monthly_evidence": [
+          {
+            "month": 1,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-1",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0101010101010101010101010101010101010101010101010101010101010101",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-1",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 2,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-2",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0202020202020202020202020202020202020202020202020202020202020202",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-2",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 3,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-3",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0303030303030303030303030303030303030303030303030303030303030303",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-3",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 4,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-4",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0404040404040404040404040404040404040404040404040404040404040404",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-4",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 5,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-5",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0505050505050505050505050505050505050505050505050505050505050505",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-5",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 6,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-6",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0606060606060606060606060606060606060606060606060606060606060606",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-6",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 7,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-7",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0707070707070707070707070707070707070707070707070707070707070707",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-7",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 8,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-8",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0808080808080808080808080808080808080808080808080808080808080808",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-8",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 9,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-9",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0909090909090909090909090909090909090909090909090909090909090909",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-9",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 10,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-10",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-10",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 11,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-11",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-11",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 12,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-12",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-12",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          }
+        ]
+      }
+    ],
+    "f8812": [
+      {
+        "filing_status": "single",
+        "agi": 40880,
+        "income_tax_liability": 2777,
+        "do_not_claim_actc": false,
+        "qualifying_children_count": 0,
+        "other_dependents_count": 1,
+        "line18a_earned_income": 40880,
+        "credit_limit_worksheet": {
+          "schedule3_line1": 0,
+          "schedule3_line2": 0,
+          "schedule3_line3": 0,
+          "schedule3_line4": 0,
+          "schedule3_line5b": 0,
+          "schedule3_line6d": 0,
+          "schedule3_line6f": 0,
+          "schedule3_line6l": 0,
+          "schedule3_line6m": 0,
+          "worksheet_b_applies": false
+        }
+      }
+    ]
+  },
+  "required-wages": {
+    "general": {
+      "filing_status": "single",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "123-45-6789",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1985-06-15",
+      "taxpayer_can_be_claimed_as_dependent": false,
+      "address_line1": "1 Main St",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false,
+      "dependents": [
+        {
+          "first_name": "Casey",
+          "last_name": "Taxpayer",
+          "name_control": "TAXP",
+          "ssn": "987654321",
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "dob": "2007-06-15",
+          "relationship": "daughter",
+          "irs_relationship_code": "DAUGHTER",
+          "months_in_home": 12,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12,
+          "us_citizen_national_or_resident": true,
+          "provided_over_half_own_support": false,
+          "filed_joint_return_except_refund_only": false,
+          "ptc_tax_return": {
+            "filing": "required",
+            "filed_form1040": {
+              "source_document_id": "casey-filed-2025-form1040",
+              "taxpayer_ssn": "987654321",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": false,
+              "line1z_wages": 16000,
+              "line2a_tax_exempt_interest": 0,
+              "line2b_taxable_interest": 0,
+              "line3b_dividends": 0,
+              "line4b_ira": 0,
+              "line5b_pensions": 0,
+              "line6b_social_security": 0,
+              "line7a_capital_gain": 0,
+              "line8_additional_income": 0,
+              "line10_adjustments": 0,
+              "line11b_agi": 16000
+            },
+            "interest_forms1099": [],
+            "wage_forms_w2": [
+              {
+                "source_document_id": "casey-issued-2025-w2",
+                "employer_name": "Summer Employer",
+                "employer_ein": "112233445",
+                "employee_ssn": "987654321",
+                "box1_wages": 16000
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Parent Employer",
+        "employer_address_line1": "10 Work St",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "123-45-6789",
+        "box1_wages": 24880,
+        "box2_fed_withheld": 3000,
+        "box3_ss_wages": 24880,
+        "box4_ss_withheld": 1542.56,
+        "box5_medicare_wages": 24880,
+        "box6_medicare_withheld": 360.76
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-FAMILY-NO-APTC-2025",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789",
+          "987654321"
+        ],
+        "monthly_premiums": [
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900
+        ],
+        "monthly_slcsps": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_aptcs": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "annual_premium": 10800,
+        "annual_slcsp": 0,
+        "annual_aptc": 0,
+        "slcsp_corrections": [
+          {
+            "month": 1,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 2,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 3,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 4,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 5,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 6,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 7,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 8,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 9,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 10,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 11,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 12,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          }
+        ],
+        "no_aptc_monthly_evidence": [
+          {
+            "month": 1,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-1",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0101010101010101010101010101010101010101010101010101010101010101",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-1",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 2,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-2",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0202020202020202020202020202020202020202020202020202020202020202",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-2",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 3,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-3",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0303030303030303030303030303030303030303030303030303030303030303",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-3",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 4,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-4",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0404040404040404040404040404040404040404040404040404040404040404",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-4",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 5,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-5",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0505050505050505050505050505050505050505050505050505050505050505",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-5",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 6,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-6",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0606060606060606060606060606060606060606060606060606060606060606",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-6",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 7,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-7",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0707070707070707070707070707070707070707070707070707070707070707",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-7",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 8,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-8",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0808080808080808080808080808080808080808080808080808080808080808",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-8",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 9,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-9",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0909090909090909090909090909090909090909090909090909090909090909",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-9",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 10,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-10",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-10",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 11,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-11",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-11",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 12,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-12",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-12",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          }
+        ]
+      }
+    ],
+    "f8812": [
+      {
+        "filing_status": "single",
+        "agi": 24880,
+        "income_tax_liability": 913,
+        "do_not_claim_actc": false,
+        "qualifying_children_count": 0,
+        "other_dependents_count": 1,
+        "line18a_earned_income": 24880,
+        "credit_limit_worksheet": {
+          "schedule3_line1": 0,
+          "schedule3_line2": 0,
+          "schedule3_line3": 0,
+          "schedule3_line4": 0,
+          "schedule3_line5b": 0,
+          "schedule3_line6d": 0,
+          "schedule3_line6f": 0,
+          "schedule3_line6l": 0,
+          "schedule3_line6m": 0,
+          "worksheet_b_applies": false
+        }
+      }
+    ]
+  },
+  "required-dividends": {
+    "general": {
+      "filing_status": "single",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "123-45-6789",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1985-06-15",
+      "taxpayer_can_be_claimed_as_dependent": false,
+      "address_line1": "1 Main St",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false,
+      "dependents": [
+        {
+          "first_name": "Casey",
+          "last_name": "Taxpayer",
+          "name_control": "TAXP",
+          "ssn": "987654321",
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "dob": "2007-06-15",
+          "relationship": "daughter",
+          "irs_relationship_code": "DAUGHTER",
+          "months_in_home": 12,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12,
+          "us_citizen_national_or_resident": true,
+          "provided_over_half_own_support": false,
+          "filed_joint_return_except_refund_only": false,
+          "ptc_tax_return": {
+            "filing": "required",
+            "filed_form1040": {
+              "source_document_id": "casey-filed-2025-form1040",
+              "taxpayer_ssn": "987654321",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": false,
+              "line1z_wages": 0,
+              "line2a_tax_exempt_interest": 0,
+              "line2b_taxable_interest": 0,
+              "line3b_dividends": 16000,
+              "line4b_ira": 0,
+              "line5b_pensions": 0,
+              "line6b_social_security": 0,
+              "line7a_capital_gain": 0,
+              "line8_additional_income": 0,
+              "line10_adjustments": 0,
+              "line11b_agi": 16000
+            },
+            "interest_forms1099": [],
+            "dividend_form1099": {
+              "source_document_id": "casey-issued-2025-1099-div",
+              "payer_ein": "998877665",
+              "recipient_ssn": "987654321",
+              "box1a_ordinary_dividends": 16000,
+              "box1b_qualified_dividends": 0,
+              "box2a_capital_gain_distributions": 0,
+              "box12_exempt_interest_dividends": 0
+            }
+          }
+        }
+      ]
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Parent Employer",
+        "employer_address_line1": "10 Work St",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "123-45-6789",
+        "box1_wages": 24880,
+        "box2_fed_withheld": 3000,
+        "box3_ss_wages": 24880,
+        "box4_ss_withheld": 1542.56,
+        "box5_medicare_wages": 24880,
+        "box6_medicare_withheld": 360.76
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-FAMILY-NO-APTC-2025",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789",
+          "987654321"
+        ],
+        "monthly_premiums": [
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900
+        ],
+        "monthly_slcsps": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_aptcs": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "annual_premium": 10800,
+        "annual_slcsp": 0,
+        "annual_aptc": 0,
+        "slcsp_corrections": [
+          {
+            "month": 1,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 2,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 3,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 4,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 5,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 6,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 7,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 8,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 9,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 10,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 11,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 12,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          }
+        ],
+        "no_aptc_monthly_evidence": [
+          {
+            "month": 1,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-1",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0101010101010101010101010101010101010101010101010101010101010101",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-1",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 2,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-2",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0202020202020202020202020202020202020202020202020202020202020202",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-2",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 3,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-3",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0303030303030303030303030303030303030303030303030303030303030303",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-3",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 4,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-4",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0404040404040404040404040404040404040404040404040404040404040404",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-4",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 5,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-5",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0505050505050505050505050505050505050505050505050505050505050505",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-5",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 6,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-6",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0606060606060606060606060606060606060606060606060606060606060606",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-6",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 7,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-7",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0707070707070707070707070707070707070707070707070707070707070707",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-7",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 8,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-8",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0808080808080808080808080808080808080808080808080808080808080808",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-8",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 9,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-9",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0909090909090909090909090909090909090909090909090909090909090909",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-9",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 10,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-10",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-10",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 11,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-11",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-11",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 12,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-12",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-12",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          }
+        ]
+      }
+    ],
+    "f8812": [
+      {
+        "filing_status": "single",
+        "agi": 24880,
+        "income_tax_liability": 913,
+        "do_not_claim_actc": false,
+        "qualifying_children_count": 0,
+        "other_dependents_count": 1,
+        "line18a_earned_income": 24880,
+        "credit_limit_worksheet": {
+          "schedule3_line1": 0,
+          "schedule3_line2": 0,
+          "schedule3_line3": 0,
+          "schedule3_line4": 0,
+          "schedule3_line5b": 0,
+          "schedule3_line6d": 0,
+          "schedule3_line6f": 0,
+          "schedule3_line6l": 0,
+          "schedule3_line6m": 0,
+          "worksheet_b_applies": false
+        }
+      }
+    ]
+  },
+  "required-wages-dividends": {
+    "general": {
+      "filing_status": "single",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "123-45-6789",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1985-06-15",
+      "taxpayer_can_be_claimed_as_dependent": false,
+      "address_line1": "1 Main St",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false,
+      "dependents": [
+        {
+          "first_name": "Casey",
+          "last_name": "Taxpayer",
+          "name_control": "TAXP",
+          "ssn": "987654321",
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "dob": "2007-06-15",
+          "relationship": "daughter",
+          "irs_relationship_code": "DAUGHTER",
+          "months_in_home": 12,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12,
+          "us_citizen_national_or_resident": true,
+          "provided_over_half_own_support": false,
+          "filed_joint_return_except_refund_only": false,
+          "ptc_tax_return": {
+            "filing": "required",
+            "filed_form1040": {
+              "source_document_id": "casey-filed-2025-form1040",
+              "taxpayer_ssn": "987654321",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": false,
+              "line1z_wages": 15000,
+              "line2a_tax_exempt_interest": 0,
+              "line2b_taxable_interest": 0,
+              "line3b_dividends": 1000,
+              "line4b_ira": 0,
+              "line5b_pensions": 0,
+              "line6b_social_security": 0,
+              "line7a_capital_gain": 0,
+              "line8_additional_income": 0,
+              "line10_adjustments": 0,
+              "line11b_agi": 16000
+            },
+            "interest_forms1099": [],
+            "dividend_form1099": {
+              "source_document_id": "casey-issued-2025-1099-div",
+              "payer_ein": "998877665",
+              "recipient_ssn": "987654321",
+              "box1a_ordinary_dividends": 1000,
+              "box1b_qualified_dividends": 0,
+              "box2a_capital_gain_distributions": 0,
+              "box12_exempt_interest_dividends": 0
+            },
+            "wage_forms_w2": [
+              {
+                "source_document_id": "casey-issued-2025-w2",
+                "employer_name": "Summer Employer",
+                "employer_ein": "112233445",
+                "employee_ssn": "987654321",
+                "box1_wages": 15000
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Parent Employer",
+        "employer_address_line1": "10 Work St",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "123-45-6789",
+        "box1_wages": 24880,
+        "box2_fed_withheld": 3000,
+        "box3_ss_wages": 24880,
+        "box4_ss_withheld": 1542.56,
+        "box5_medicare_wages": 24880,
+        "box6_medicare_withheld": 360.76
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-FAMILY-NO-APTC-2025",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789",
+          "987654321"
+        ],
+        "monthly_premiums": [
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900
+        ],
+        "monthly_slcsps": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_aptcs": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "annual_premium": 10800,
+        "annual_slcsp": 0,
+        "annual_aptc": 0,
+        "slcsp_corrections": [
+          {
+            "month": 1,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 2,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 3,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 4,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 5,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 6,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 7,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 8,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 9,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 10,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 11,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 12,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          }
+        ],
+        "no_aptc_monthly_evidence": [
+          {
+            "month": 1,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-1",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0101010101010101010101010101010101010101010101010101010101010101",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-1",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 2,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-2",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0202020202020202020202020202020202020202020202020202020202020202",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-2",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 3,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-3",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0303030303030303030303030303030303030303030303030303030303030303",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-3",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 4,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-4",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0404040404040404040404040404040404040404040404040404040404040404",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-4",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 5,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-5",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0505050505050505050505050505050505050505050505050505050505050505",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-5",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 6,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-6",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0606060606060606060606060606060606060606060606060606060606060606",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-6",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 7,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-7",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0707070707070707070707070707070707070707070707070707070707070707",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-7",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 8,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-8",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0808080808080808080808080808080808080808080808080808080808080808",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-8",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 9,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-9",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0909090909090909090909090909090909090909090909090909090909090909",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-9",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 10,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-10",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-10",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 11,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-11",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-11",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 12,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-12",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-12",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          }
+        ]
+      }
+    ],
+    "f8812": [
+      {
+        "filing_status": "single",
+        "agi": 24880,
+        "income_tax_liability": 913,
+        "do_not_claim_actc": false,
+        "qualifying_children_count": 0,
+        "other_dependents_count": 1,
+        "line18a_earned_income": 24880,
+        "credit_limit_worksheet": {
+          "schedule3_line1": 0,
+          "schedule3_line2": 0,
+          "schedule3_line3": 0,
+          "schedule3_line4": 0,
+          "schedule3_line5b": 0,
+          "schedule3_line6d": 0,
+          "schedule3_line6f": 0,
+          "schedule3_line6l": 0,
+          "schedule3_line6m": 0,
+          "worksheet_b_applies": false
+        }
+      }
+    ]
+  },
+  "required-interest-dividends": {
+    "general": {
+      "filing_status": "single",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Taxpayer",
+      "taxpayer_ssn": "123-45-6789",
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true,
+      "taxpayer_dob": "1985-06-15",
+      "taxpayer_can_be_claimed_as_dependent": false,
+      "address_line1": "1 Main St",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false,
+      "dependents": [
+        {
+          "first_name": "Casey",
+          "last_name": "Taxpayer",
+          "name_control": "TAXP",
+          "ssn": "987654321",
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "dob": "2007-06-15",
+          "relationship": "daughter",
+          "irs_relationship_code": "DAUGHTER",
+          "months_in_home": 12,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12,
+          "us_citizen_national_or_resident": true,
+          "provided_over_half_own_support": false,
+          "filed_joint_return_except_refund_only": false,
+          "ptc_tax_return": {
+            "filing": "required",
+            "filed_form1040": {
+              "source_document_id": "casey-filed-2025-form1040",
+              "taxpayer_ssn": "987654321",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": false,
+              "line1z_wages": 0,
+              "line2a_tax_exempt_interest": 200,
+              "line2b_taxable_interest": 4800,
+              "line3b_dividends": 11000,
+              "line4b_ira": 0,
+              "line5b_pensions": 0,
+              "line6b_social_security": 0,
+              "line7a_capital_gain": 0,
+              "line8_additional_income": 0,
+              "line10_adjustments": 0,
+              "line11b_agi": 15800
+            },
+            "interest_forms1099": [
+              {
+                "source_document_id": "casey-issued-2025-1099-int",
+                "recipient_ssn": "987654321",
+                "box1_taxable_interest": 4800,
+                "box8_tax_exempt_interest": 200
+              }
+            ],
+            "dividend_form1099": {
+              "source_document_id": "casey-issued-2025-1099-div",
+              "payer_ein": "998877665",
+              "recipient_ssn": "987654321",
+              "box1a_ordinary_dividends": 11000,
+              "box1b_qualified_dividends": 0,
+              "box2a_capital_gain_distributions": 0,
+              "box12_exempt_interest_dividends": 0
+            }
+          }
+        }
+      ]
+    },
+    "w2": [
+      {
+        "employer_ein": "12-3456789",
+        "employer_name": "Parent Employer",
+        "employer_address_line1": "10 Work St",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "employee_ssn": "123-45-6789",
+        "box1_wages": 24880,
+        "box2_fed_withheld": 3000,
+        "box3_ss_wages": 24880,
+        "box4_ss_withheld": 1542.56,
+        "box5_medicare_wages": 24880,
+        "box6_medicare_withheld": 360.76
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-FAMILY-NO-APTC-2025",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789",
+          "987654321"
+        ],
+        "monthly_premiums": [
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900,
+          900
+        ],
+        "monthly_slcsps": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_aptcs": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "annual_premium": 10800,
+        "annual_slcsp": 0,
+        "annual_aptc": 0,
+        "slcsp_corrections": [
+          {
+            "month": 1,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 2,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 3,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 4,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 5,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 6,
+            "basis": "no_aptc",
+            "corrected_slcsp": 700,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 7,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 8,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 9,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 10,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 11,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          },
+          {
+            "month": 12,
+            "basis": "no_aptc",
+            "corrected_slcsp": 800,
+            "determination_source": "marketplace_tool"
+          }
+        ],
+        "no_aptc_monthly_evidence": [
+          {
+            "month": 1,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-1",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0101010101010101010101010101010101010101010101010101010101010101",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-1",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 2,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-2",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0202020202020202020202020202020202020202020202020202020202020202",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-2",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 3,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-3",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0303030303030303030303030303030303030303030303030303030303030303",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-3",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 4,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-4",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0404040404040404040404040404040404040404040404040404040404040404",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-4",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 5,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-5",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0505050505050505050505050505050505050505050505050505050505050505",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-5",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 6,
+            "marketplace_slcsp": 700,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-6",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0606060606060606060606060606060606060606060606060606060606060606",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-6",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 7,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-7",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0707070707070707070707070707070707070707070707070707070707070707",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-7",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 8,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-8",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0808080808080808080808080808080808080808080808080808080808080808",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-8",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 9,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-9",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0909090909090909090909090909090909090909090909090909090909090909",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-9",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 10,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-10",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-10",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 11,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-11",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-11",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          },
+          {
+            "month": 12,
+            "marketplace_slcsp": 800,
+            "marketplace_method": "marketplace_tool",
+            "marketplace_reference": "TX-FAMILY-SLCSP-12",
+            "marketplace_determined_on": "2026-02-01",
+            "marketplace_record_sha256": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+            "premium_payment": {
+              "status": "paid_in_full",
+              "amount": 900,
+              "paid_on": "2026-03-01",
+              "reference": "TX-FAMILY-PAID-12",
+              "record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          }
+        ]
+      }
+    ],
+    "f8812": [
+      {
+        "filing_status": "single",
+        "agi": 24880,
+        "income_tax_liability": 913,
+        "do_not_claim_actc": false,
+        "qualifying_children_count": 0,
+        "other_dependents_count": 1,
+        "line18a_earned_income": 24880,
+        "credit_limit_worksheet": {
+          "schedule3_line1": 0,
+          "schedule3_line2": 0,
+          "schedule3_line3": 0,
+          "schedule3_line4": 0,
+          "schedule3_line5b": 0,
+          "schedule3_line6d": 0,
+          "schedule3_line6f": 0,
+          "schedule3_line6l": 0,
+          "schedule3_line6m": 0,
+          "worksheet_b_applies": false
+        }
+      }
+    ]
+  }
+}
