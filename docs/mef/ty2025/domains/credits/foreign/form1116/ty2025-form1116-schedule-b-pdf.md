@@ -1,5 +1,17 @@
 # TY2025 Form 1116 Schedule B PDF boundary
 
+## October 9 current-excess complete-return verification
+
+The [passive-country checkpoint](./ty2025-form1116-main-pdf-gap.md#october-9-passive-country-and-current-excess-packet-checkpoint)
+retains seven XSD-valid complete returns and 56 visually reviewed pages,
+including all fourteen foreign-credit Schedule B pages. Current-year lines 6
+and 8 and total line 8 carry 1,125, 5,125, 5,925 or 925 as applicable; parent
+credit and Form 1040 final tax reconcile. Removing the carry schedule rejects
+both native preparation and fresh PDF construction. This advances the current
+excess packet proof only: authenticated prior vintages, carrybacks,
+redeterminations and IRS acceptance remain open. Parent residence and zero-tax
+presentation qualifications remain deferred107/76.
+
 The
 [IRS Schedule B (Form 1116), Rev. December 2022](https://www.irs.gov/pub/irs-pdf/f1116sb.pdf)
 remains the published form linked from the

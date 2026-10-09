@@ -1,3 +1,4 @@
+import { verifyPassive1116Packet } from "./form1116_packet_proof.fixture.ts";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { f1040_2025 } from "../../../../index.ts";
@@ -396,5 +397,19 @@ Deno.test("three-country passive interest rejects changed payer, country, review
   assertThrows(
     () => form1116Pdf.projectFields!(missingReview, result.pending),
     Error,
+  );
+});
+
+Deno.test("three_country_interest complete prepared packet reconciles current excess and rejects fresh export conflicts", async () => {
+  await verifyPassive1116Packet(
+    filedReturn().pending,
+    "three_country_interest",
+    {
+      "interest": 60000,
+      "dividends": 0,
+      "tax": 5075,
+      "carry": 5925,
+      "countries": ["CA", "FR", "GM"],
+    },
   );
 });

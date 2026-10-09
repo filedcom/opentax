@@ -1,3 +1,4 @@
+import { verifyPassive1116Packet } from "./form1116_packet_proof.fixture.ts";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { form1116 } from "../../../../mef/forms/credits/foreign/f1116/f1116.ts";
@@ -429,4 +430,14 @@ Deno.test("two-country passive interest uses a filed 2024 vintage through both F
       ),
     Error,
   );
+});
+
+Deno.test("two_country_interest complete prepared packet reconciles current excess and rejects fresh export conflicts", async () => {
+  await verifyPassive1116Packet(filedReturn().pending, "two_country_interest", {
+    "interest": 50000,
+    "dividends": 0,
+    "tax": 3875,
+    "carry": 5125,
+    "countries": ["CA", "FR"],
+  });
 });

@@ -1,3 +1,4 @@
+import { verifyPassive1116Packet } from "./form1116_packet_proof.fixture.ts";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { form1116 } from "../../../../mef/forms/credits/foreign/f1116/f1116.ts";
@@ -55,6 +56,7 @@ function filedReturn() {
   const result = f1040_2025.executeReturn({
     general: {
       filing_status: FilingStatus.Single,
+      digital_assets: false,
       taxpayer_first_name: "Alex",
       taxpayer_last_name: "Example",
       taxpayer_ssn: "111-22-3333",
@@ -170,4 +172,18 @@ Deno.test("multiple foreign payer source, country, review and return tampering r
     );
     assertThrows(() => form1116Pdf.projectFields!(parent, pending), Error);
   }
+});
+
+Deno.test("multi_foreign_interest complete prepared packet reconciles current excess and rejects fresh export conflicts", async () => {
+  await verifyPassive1116Packet(
+    filedReturn().pending,
+    "multi_foreign_interest",
+    {
+      "interest": 50000,
+      "dividends": 0,
+      "tax": 3875,
+      "carry": 5125,
+      "countries": ["CA"],
+    },
+  );
 });

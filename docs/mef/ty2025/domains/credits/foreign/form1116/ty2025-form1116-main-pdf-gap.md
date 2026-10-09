@@ -1,5 +1,49 @@
 # TY2025 Form 1116 main PDF category boundary
 
+## October 9 passive country and current-excess packet checkpoint
+
+Seven existing synthetic source cases now have complete prepared-return tests,
+retained native XML and eight-page PDFs. All seven XML returns pass the cached
+TY2025 v5.4 XSD. All 56 pages were visually reviewed through 32 unique page
+hashes: Form 1040, Schedule 3, income Schedule B, two parent Form 1116 pages,
+and two foreign-credit Schedule B pages in each packet.
+
+| Case | Interest | Ordinary dividends | Credit / regular tax | Current excess |
+| --- | ---: | ---: | ---: | ---: |
+| Two-country dividends | 0 | 50,000 | 3,875 | 1,125 |
+| Two Canadian dividend payers | 0 | 50,000 | 3,875 | 1,125 |
+| Two-country mixed | 20,000 | 30,000 | 3,875 | 1,125 |
+| Two-country interest | 50,000 | 0 | 3,875 | 5,125 |
+| Multiple Canadian interest payers | 50,000 | 0 | 3,875 | 5,125 |
+| Three-country interest | 60,000 | 0 | 5,075 | 5,925 |
+| Three-country mixed | 30,000 | 30,000 | 5,075 | 925 |
+
+Expected regular tax comes independently from the [2025 IRS Tax Table](https://www.irs.gov/publications/p1040):
+single taxable income 34,250–34,300 gives 3,875; 44,250–44,300 gives 5,075.
+All income here is ordinary foreign passive income, standard deduction is
+15,750, the credit absorbs regular tax, and final tax is zero. Canada/France
+and Canada/France/Germany columns, proportional deductions, interest/dividend
+tax rows, parent credit and current-excess carry totals reconcile.
+
+The packet tests also reject altered income, final credit, Schedule 3 credit,
+missing carry schedules and changed source amounts, countries, references and
+recipient identities at native preparation and fresh PDF construction without
+an old prepared bundle. The final typed grouped gate passes 195 tests with no
+failures, including 64 native and 64 fresh-PDF rejection assertions.
+
+These are reviewed structured synthetic records, not authenticated issuer
+copies or accepted prior returns. The carryback review has a zero prior balance;
+this checkpoint verifies current excess, not imported historical vintages.
+Form 1040 line 24 remains blank at zero (deferred76); parent Form 1116 line h
+also remains blank, with residence intake/projection review deferred107.
+Do not infer residence from a mailing address. The main task stays open for
+broader categories, K-3 combinations, carry histories, redeterminations, source
+authenticity, business rules and IRS acceptance. This checkpoint supersedes
+historical unrun/visual-pending statements only for these seven packet shapes.
+
+Retained evidence: `.state/research/form1116-passive-packets-2026-10-09/`,
+including the review manifest, rendered sheets, qualification and test logs.
+
 ## Shared IRS country-code validation (2026-10-05)
 
 Retained Form 1116 and related foreign-source paths now use a shared exact
