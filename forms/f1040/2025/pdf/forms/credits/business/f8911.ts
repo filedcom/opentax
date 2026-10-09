@@ -1,4 +1,7 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import { form8911PdfSource } from "./f8911_shared.ts";
 
 // Form 8911 (Rev. December 2025) original IRS AcroForm fields.
@@ -34,7 +37,7 @@ export const form8911Pdf: PdfFormDescriptor = {
     return [{
       filer_name: filerName,
       filer_tin: filerTin,
-      property_count: 1,
+      property_count: source.properties.length,
       line4: amounts.tentativeCredit,
       line5: amounts.regularTaxBeforeCredits,
       line6a: amounts.foreignTaxCredit,

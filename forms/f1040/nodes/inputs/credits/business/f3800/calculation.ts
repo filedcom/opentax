@@ -62,6 +62,7 @@ export type Form3800NonpassiveCreditSources = {
   readonly form8994Credit?: number;
   readonly form8864Credit?: number;
   readonly form8882Credit?: number;
+  readonly form8911Credit?: number;
   readonly form8844Credit?: number;
   readonly form3468PartVCredit?: number;
   readonly form5884Credit?: number;
@@ -109,6 +110,11 @@ export function form3800NonpassiveCreditUseRows(
       sourceKey: "nonpassive:8882",
       form3800CreditLine: "1k" as const,
       amount: sources.form8882Credit ?? 0,
+    },
+    {
+      sourceKey: "nonpassive:8911",
+      form3800CreditLine: "1s" as const,
+      amount: sources.form8911Credit ?? 0,
     },
     {
       sourceKey: "nonpassive:8844",

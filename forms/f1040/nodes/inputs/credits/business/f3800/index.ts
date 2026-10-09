@@ -163,8 +163,9 @@ const f8941DirectEmployerCreditSchema = z.object({
   shop_plan_references: z.array(z.string().trim().min(1)).min(2).max(12).refine(
     (refs) => new Set(refs).size === refs.length,
   ).optional(),
-}).strict().refine((credit) => Boolean(credit.schedule_c_business_reference) !==
-  Boolean(credit.schedule_f_farm_id), {
+}).strict().refine((credit) =>
+  Boolean(credit.schedule_c_business_reference) !==
+    Boolean(credit.schedule_f_farm_id), {
   message: "Form 8941 direct employer needs exactly one C or F deduction owner",
 });
 
@@ -250,6 +251,11 @@ const f8936NewVehicleCreditSchema = z.object({
   subject_to_passive_activity_limit: z.boolean(),
 });
 
+const f8911CreditSchema = z.object({
+  credit_amount: z.number().int().nonnegative(),
+  subject_to_passive_activity_limit: z.boolean(),
+});
+
 const appliedSourceCreditSchema = z.number().finite().nonnegative().refine(
   (amount) =>
     Number.isSafeInteger(Math.round(amount * 100)) &&
@@ -275,6 +281,7 @@ export const inputSchema = z.object({
   f8994_direct_employer_credit: f8994DirectEmployerCreditSchema.optional(),
   f8864_direct_producer_credit: f8864DirectProducerCreditSchema.optional(),
   f8882_direct_employer_credit: f8882DirectEmployerCreditSchema.optional(),
+  f8911_credit: f8911CreditSchema.optional(),
   f8820_credit: f8820CreditSchema.optional(),
   f8874_credit: f8874CreditSchema.optional(),
   f8874_k1_credit_entries: z.array(f8874K1CreditSchema).min(1).optional(),
@@ -318,6 +325,7 @@ export const inputSchema = z.object({
     input.f8994_direct_employer_credit !== undefined ||
     input.f8864_direct_producer_credit !== undefined ||
     input.f8882_direct_employer_credit !== undefined ||
+    input.f8911_credit !== undefined ||
     input.f8820_credit !== undefined ||
     input.f8874_credit !== undefined ||
     input.f8874_k1_credit_entries !== undefined ||
@@ -415,6 +423,7 @@ function schedule3Output(
   f8994Credit: z.infer<typeof f8994DirectEmployerCreditSchema> | undefined,
   f8864Credit: z.infer<typeof f8864DirectProducerCreditSchema> | undefined,
   f8882Credit: z.infer<typeof f8882DirectEmployerCreditSchema> | undefined,
+  f8911Credit: z.infer<typeof f8911CreditSchema> | undefined,
   f8820Credit: z.infer<typeof f8820CreditSchema> | undefined,
   f8874Credit: z.infer<typeof f8874CreditSchema> | undefined,
   f8874K1Credits: readonly z.infer<typeof f8874K1CreditSchema>[],
@@ -433,6 +442,14 @@ function schedule3Output(
     | NonNullable<z.infer<typeof inputSchema>["carryforward_vintages"]>
     | undefined,
 ): NodeOutput[] {
+  if (
+    f8911Credit?.subject_to_passive_activity_limit &&
+    f8911Credit.credit_amount > 0
+  ) {
+    throw new Error(
+      "Form 8911 passive credit requires Form 8582-CR source allocation",
+    );
+  }
   const f8835Credit = f8835Entries.length > 0
     ? classifyForm8835Credits(f8835Entries)
     : undefined;
@@ -560,6 +577,7 @@ function schedule3Output(
     (f8994Credit?.credit_amount ?? 0) > 0 ||
     (f8864Credit?.credit_amount ?? 0) > 0 ||
     (f8882Credit?.credit_amount ?? 0) > 0 ||
+    (f8911Credit?.credit_amount ?? 0) > 0 ||
     (f8820Credit?.credit_amount ?? 0) > 0 ||
     (f8874Credit?.credit_amount ?? 0) > 0 ||
     newMarketsK1Credit > 0 ||
@@ -583,6 +601,7 @@ function schedule3Output(
             (f8908Credit?.credit_amount ?? 0) +
             (f8864Credit?.credit_amount ?? 0) +
             (f8882Credit?.credit_amount ?? 0) +
+            (f8911Credit?.credit_amount ?? 0) +
             newMarketsK1Credit +
             orphanDrugK1Credit +
             partVTrustCredit +
@@ -633,6 +652,7 @@ class F3800Node extends TaxNode<typeof inputSchema> {
         parsed.f8994_direct_employer_credit,
         parsed.f8864_direct_producer_credit,
         parsed.f8882_direct_employer_credit,
+        parsed.f8911_credit,
         parsed.f8820_credit,
         parsed.f8874_credit,
         parsed.f8874_k1_credit_entries ?? [],

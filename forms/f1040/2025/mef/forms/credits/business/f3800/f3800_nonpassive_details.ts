@@ -11,6 +11,7 @@ export type Form3800NonpassiveDetailRow = {
     | "1k"
     | "1l"
     | "1p"
+    | "1s"
     | "1v"
     | "1y"
     | "1aa"
@@ -38,6 +39,7 @@ const detailTag: Record<Form3800NonpassiveDetailRow["line"], string> = {
   "1k": "Frm8882CYAggrgtAmtGrp",
   "1l": "Frm8864CYAggrgtAmtGrp",
   "1p": "Frm8908CYAggrgtAmtGrp",
+  "1s": "Frm8911PartICYAggrgtAmtGrp",
   "1v": "Frm3468PartVCYAggrgtAmtGrp",
   "1y": "Frm8936PartIICYAggrgtAmtGrp",
   "1aa": "Frm8936PartVCYAggrgtAmtGrp",
@@ -60,6 +62,7 @@ const sourceDocumentName: Record<Form3800NonpassiveDetailRow["line"], string> =
     "1k": "IRS8882",
     "1l": "IRS8864",
     "1p": "IRS8908",
+    "1s": "IRS8911",
     "1v": "IRS3468 BinaryAttachment",
     "1y": "IRS8936",
     "1aa": "IRS8936",

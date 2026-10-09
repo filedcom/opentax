@@ -2,6 +2,7 @@ import { element, elements } from "../../../../../mef/xml.ts";
 import {
   computePersonalCreditAmounts,
   type F8911Input,
+  personalCreditProperties,
 } from "../../../../../nodes/inputs/credits/business/f8911/index.ts";
 import type { MefFormDescriptor } from "../../../form-descriptor.ts";
 
@@ -16,6 +17,10 @@ export const form8911: MefFormDescriptor<"f8911", Input> = {
     const amounts = computePersonalCreditAmounts(fields as F8911Input);
     if (!amounts || amounts.allowedCredit === 0) return "";
     return elements("IRS8911", [
+      element(
+        "TotQlfyAltFuelVehRefuelPropCnt",
+        personalCreditProperties(fields as F8911Input).length,
+      ),
       element("PrsnlUseRefuelingPropCrAmt", amounts.tentativeCredit),
       element("RegularTaxBeforeCreditsAmt", amounts.regularTaxBeforeCredits),
       element("ForeignTaxCreditAmt", amounts.foreignTaxCredit),
