@@ -1,5 +1,9 @@
 import { rgb, StandardFonts } from "pdf-lib";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import { FilingStatus } from "../../../../../mef/header.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import {
   current1095AStatements,
   inputSchema as form1095aSchema,
@@ -461,6 +465,9 @@ export const form8962Pdf: PdfFormDescriptor = {
       ? []
       : current1095AStatements(form1095aSchema.parse(source).f1095as);
     if (
+      ((filer?.filingStatus === FilingStatus.MarriedFilingJointly ||
+        (general.success && general.data.filing_status === "mfj")) &&
+        Array.isArray(projected.monthly_ptc_rows)) ||
       projected.fpl_region === "alaska" ||
       projected.fpl_region === "hawaii" ||
       (Array.isArray(projected.shared_policy_allocations) &&

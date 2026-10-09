@@ -670,3 +670,60 @@ rejects a second Alaska/Hawaii policy, a shared policy, taxpayer moves,
 unsupported dependent-income sources, and Marketplace corrections. Source-byte
 authentication, XSD/business-rule checks, filled-PDF review, and ATS remain
 open.
+
+
+## October 9: reviewed joint-family monthly advances and repayment limits
+
+A joint return with one same-state policy covering the complete tax family now
+reconciles monthly advances against owned income, required-dependent MAGI,
+reviewed person-month coverage eligibility and the retained Form1095-A copy.
+Each covered month must have positive APTC and an identified premium payment
+covering the balance by April15,2026, reviewed after payment and month end.
+Changed retained statements, missing or contradictory reviews, altered cap,
+repayment or final-return joins fail before native and PDF output. The PDF
+descriptor also enforces this guard at400% FPL and above.
+
+The nine synthetic cases use family4 poverty income31,200 and dependent MAGI32,400.
+The joint repayment limits follow Table5 in the
+[2025 Form8962 instructions](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf).
+Positive regular tax uses the MFJ bands in the
+[2025 Tax Table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf).
+
+| Case | Household MAGI | FPL% | PTC | Advances | Cap | Repayment | Refund / owed |
+|---|---:|---:|---:|---:|---:|---:|---|
+| below-200 | 59,280 | 190 | 8,052 | 10,800 | 750 | 750 | 2,250 / 0 |
+| at-200 | 62,400 | 200 | 7,752 | 10,800 | 1,950 | 1,950 | 1,050 / 0 |
+| at-300 | 93,600 | 300 | 3,384 | 10,800 | 3,250 | 3,250 | 0 / 3,340 |
+| at-399 | 124,488 | 399 | 0 | 10,800 | 3,250 | 3,250 | 0 / 7,042 |
+| at-400 | 124,800 | 400 | 0 | 10,800 | none | 10,800 | 0 / 14,634 |
+| net-credit | 62,400 | 200 | 7,752 | 1,200 | n/a | 0 | 9,552 / 0 |
+| equal-credit | 62,400 | 200 | 7,752 | 7,752 | n/a | 0 | 3,000 / 0 |
+| partial-year | 62,400 | 200 | 5,964 | 8,100 | 1,950 | 1,950 | 1,050 / 0 |
+| joint-benefits | 82,400 | 264 | 5,244 | 10,800 | 1,950 | 1,950 | 999 / 0 |
+
+The partial-year policy begins April1; January–March rows are absent from XML
+and blank in PDF. Equal credit prints zero on Form8962 line26. The benefits
+case includes net SSA20,000, taxable4,000, AGI34,000 and taxpayer MAGI50,000.
+Withholding is3,000, or3,200 with benefits. These calculations reconcile the
+reported advance amounts; they do not authenticate the original Marketplace award.
+
+The final normal typed run passes106 tests across five related files. Eleven new
+tests cover nine complete positive returns, eleven conflicts at both200% and400%
+through native/PDF gates, and six public eligibility/payment conflicts. All nine
+full returns pass the configured TY2025 v5.4 XSD. All51 rendered pages were
+observed:28 distinct pages and23 exact matches to observed pages. Flattened
+packets contain no live fields/widgets. Existing deferred68 primary-only joint
+names and deferred76 blank zero Form1040 line24 remain qualifications; no
+presentation repair or broad parent closure is claimed.
+
+Private evidence: `.state/research/form8962-joint-aptc-2026-10-09/` retains source,
+expected and prepared data, XML/PDF, renders, logs and hashes. Initial new-test
+type errors and a synthetic fractional-cent W2 withholding amount were corrected
+before the final passing run. Prior sections marked staged/unrun retain their
+historical status; this batch does not replay those cases.
+
+This bounded route excludes shared/multiple/corrected policies, mixed months
+with and without advances, annual computation, foreign exclusions, QSEHRA and
+Publication974 special calculations. Source authenticity, broader combinations,
+business rules and IRS acceptance remain open. The full typed suite still has
+the separately recorded deferred78 blocker.

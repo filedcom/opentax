@@ -11,6 +11,7 @@ import type { NodeContext } from "../../../../../../../core/types/node-context.t
 import { roundForm8962Amounts } from "../../../../../2025/domains/credits/health/form8962/form8962-money.ts";
 
 import {
+  aptcMonthlyEvidenceSchema,
   assertForm8962PolicyEligibility,
   coverageEligibilityReviewSchema,
 } from "../../../../../2025/domains/credits/health/form8962/form8962-family-eligibility.ts";
@@ -197,6 +198,7 @@ export const itemSchema = z.object({
   // Separate source records for a no-APTC positive PTC claim. The Marketplace
   // determination and premium-payment record must each be reviewed outside
   // this calculation; their facts are reconciled at filing projection.
+  aptc_monthly_evidence: z.array(aptcMonthlyEvidenceSchema).min(1).optional(),
   no_aptc_monthly_evidence: z.array(
     z.object({
       month: z.number().int().min(1).max(12),

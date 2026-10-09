@@ -299,3 +299,6 @@ sources, prepared data, XML/PDF, rendered pages, command logs and hashes.
 Full-suite verification remains blocked by deferred78 before runtime tests;
 source authenticity, broader joint-income categories, policy variants and IRS
 acceptance remain open.
+
+
+The October9 [joint monthly-advance batch](./ty2025-form8962-policy-month-gap.md#october-9-reviewed-joint-family-monthly-advances-and-repayment-limits) additionally joins this owned-income inventory to one reviewed family policy, all joint repayment-limit brackets, net/equal credit and partial-year coverage. Nine XSD-valid returns add51 observed pages; the latest related typed run is106/0. Combined with the five benefits packets above, this is14 returns/76 observed pages, with existing name/zero-field qualifications and the broader parent still open.
