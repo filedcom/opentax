@@ -336,3 +336,56 @@ PDF sets,26 renders, qualification/schema reports and original/final test logs.
 Issuer authentication, current-year sources without1099-R copies, wider
 eligibility/classification and prior-source proof, business rules and IRS
 acceptance remain open. The main Form8880/source-provenance parents stay open.
+
+## October 9 IRA deduction and nondeductible basis checkpoint
+
+Four source-entry cases connect traditional IRA contributions, W-2 deferrals,
+Form8880, the IRA deduction worksheet and (for two MFS cases) Form8606 basis.
+All use reviewed empty distribution inventories and age61/nonstudent/not-dependent
+facts. Single-filer wages27000 with IRA2000, or wages26000 with IRA1000 and
+W-2 deferral1000, produce deductions2000/1000 and AGI25000. Employer-plan-covered
+MFS filers living with their spouse have wages25000 and nondeductible IRA2000,
+or IRA1000 plus W-2 deferral1000; their retained basis is2000/1000 and AGI25000.
+
+These expected deduction boundaries follow
+[2025 Publication590-A](https://www.irs.gov/publications/p590a): these single
+filers are below the79000 phaseout, while the covered MFS filers exceed10000.
+The [2025 tax table](https://www.irs.gov/publications/p1040) gives928 on taxable
+income9250. The [Form8880 table](https://www.irs.gov/pub/irs-prior/f8880--2025.pdf)
+gives a20% credit on2000 eligible contributions at25000AGI for both statuses.
+All four calculations therefore show credit400, final tax528 and refund1472
+on2000 payments. The saver credit is available alongside a deductible IRA
+contribution; the mixed cases distinguish lines1 and2 without double-counting.
+
+Two single-filer cases produce complete XML/PDF packets. Their retained
+Form5498 and prior zero-basis records are synthetic reviewed facts. Export does
+not actually bind those records for the fully deductible branch: removing the
+worksheet or changing its contribution, custodian-record owner or box1 amount
+is accepted in eight native and eight complete-PDF builds. Each PDF mutation
+uses a newly built bundle from the altered pending graph, so this is not
+confused with the separate rejection of a stale prepared-bundle hash. Explicit
+observational assertions retain this gap as deferred98; they do not count as
+successful source validation.
+
+Both MFS cases derive the expected nondeductible Form8606 basis but fail native
+and full-PDF assembly with the scalar builder's joint-return/spouse-ambiguity
+error. The guard also treats a present MFS spouse header as joint. These are
+retained blocked cases, not two additional supported returns; deferred99
+preserves the source, pending values, exact error and original failed log.
+No spouse facts were removed to get a packet. No runtime fix is undertaken for
+either newly discovered issue.
+
+Evidence: `.state/research/form8880-ira-2026-10-09/`, original and final test logs,
+source/pending records for four cases, two native/PDF packets, source-mutation
+reports and two blocked-case reports. The first test log contains a corrected
+fixture-only misspelling of the empty distribution-review fields. Neither the
+Form8880 nor Form8606 parent task is closed by these checks.
+
+The final related gate passes70/0, including the explicit two MFS rejection
+cases and the eight source-mutation acceptance observations. Both single-filer
+XMLs pass cached TY2025v5.4 Return1040.xsd, digest
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+All12 pages were reviewed: each packet has Form1040 pages1–2, Schedule1 pages3–4,
+Schedule3 page5 and Form8880 page6. Printed identity, status/digital-assets marks,
+IRA deductions, line1/2 contribution split, tax and refund reconcile. The
+source-validation qualification remains material despite those correct outputs.
