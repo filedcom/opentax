@@ -587,3 +587,74 @@ Both joint Form8880 page4s repeat the existing missing-spouse-name issue, and
 the spouse-only primary-column zero presentation remains qualified. Wider
 source/eligibility/credit combinations, authenticity, business rules and IRS
 acceptance remain open.
+
+## October 9 employed-beneficiary ABLE limit checkpoint
+
+The existing ABLE source review now accepts an employed-beneficiary review with
+owned current-service W-2 wages, employer plan-review references and a complete
+2025 residence calendar. It applies the smaller of reviewed wage compensation
+and the poverty guideline for the state where the beneficiary resided longest.
+Other contributors and QTP transfers remain within the ordinary19000 limit;
+only beneficiary payments may use the additional allowance. Public execution,
+native assembly and rebuilt full PDFs reconcile the complete owned W-2 inventory,
+including zero-credit outcomes. Missing, duplicated, changed-owner or changed-wage
+copies and disqualifying plan contributions reject.
+
+The [2025 Form1099-QA instructions, page1](https://www.irs.gov/pub/irs-prior/i1099qa--2025.pdf)
+explicitly give additional limits15060 continental,18810 Alaska and17310 Hawaii.
+Those amounts agree with the preceding-year rule in
+[26CFR1.529A-2(g)(2)(ii)–(iii)](https://www.ecfr.gov/current/title-26/section-1.529A-2)
+and the [2024 HHS guidelines](https://www.govinfo.gov/content/pkg/FR-2024-01-17/pdf/2024-00796.pdf).
+This resolves the implementation's limit-year choice. Publication907's 2025
+figures conflict with those authorities; they were not used as the limit oracle.
+The downloaded eCFR HTML is an access page and is identified as such in the
+private source manifest; the regulation was read through the web tool.
+
+The plan exclusion covers defined-contribution401(a)/403(a),403(b) and457(b)
+contributions, including employer-only amounts. W-2 codesD/E/G/AA/BB/EE supply
+conflicting evidence; IRA-based codesF/S and codeH alone do not. A retirement-plan
+checkbox alone also does not establish a disqualifying contribution. Four
+source-helper acceptance checks cover those distinctions, with eight rejection
+checks for excluded plans, deferred compensation and statutory wages. These
+helper checks are not additional complete-return packets. A simultaneous
+voluntary employee-plan review for this beneficiary stays guarded because its
+existing schema does not distinguish the applicable plan classes.
+
+| Complete return | Beneficiary payment T/S | Saver credit | Tax | EIC | Refund |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Continental limit | 15060/0 | 400 | 528 | 0 | 1472 |
+| Alaska limit | 18810/0 | 400 | 528 | 0 | 1472 |
+| Hawaii limit | 17310/0 | 400 | 528 | 0 | 1472 |
+| Wage-limited cents | 12000.49/0 | 0 | 0 | 542 | 2542 |
+| Joint both | 18810/18810 | 800 | 1053 | 0 | 1947 |
+| Joint spouse only | 0/17310 | 400 | 1453 | 0 | 1547 |
+| Alaska-to-Texas move | 15060/0 | 400 | 528 | 0 | 1472 |
+| Two employers | 15060/0 | 400 | 528 | 0 | 1472 |
+
+Every account also has19000 of other contributors' cash, excluded from the
+credit. Wages are25000 per owner except the12000.49 wage-limited case; the
+multiple-employer sources are10000 plus15000. The moving beneficiary spends
+January–April in Alaska and May–December in Texas. Current mailing addresses
+are distinct from the reviewed 2025 residence facts. Single withholding is2000;
+joint withholding is3000. The low-wage case retains the required EIC family,
+SSN, residency and prior-disallowance review facts; its542 credit comes from the
+[2025 Publication596 table](https://www.irs.gov/publications/p596), single/no-child
+12000–12050 row. Its original fixture omitted those facts and the expected EIC;
+failed logs are retained rather than changing its age or suppressing the credit.
+
+Eight XMLs pass the retained TY2025v5.4 schema, and all30 filled pages have been
+reviewed. Sixty-four public inconsistencies and104 mutations at each of the
+native/full-PDF boundaries reject. Thirteen additional schema classifications
+reject incomplete or contradictory wage, plan and residence evidence. The
+ordinary-limit and employed modules pass18/0; the final grouped run passes169/0
+and the configured native/composed-PDF builder run passes187/0. The first builder run's
+single failure was missing `pdftotext` on PATH; the configured replay retains
+its result separately.
+
+Private evidence: `.state/research/form8880-able-employment-2026-10-09/` retains
+sources, calculated graphs, XML/PDFs, all page renders, review reports and hashes.
+Both joint Form8880 headers still omit the spouse, and zero-valued printed cells
+remain qualified under existing deferred items. No deferred repair was made.
+Self-employment compensation, ABLE distributions/rollovers, excess taxes, source
+authentication and IRS acceptance remain outside this completed wage-source
+checkpoint and inside the broader open task; no parent checkbox is closed.

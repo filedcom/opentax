@@ -1,3 +1,7 @@
+import {
+  ableEmploymentLimit,
+  ableEmploymentReviewSchema,
+} from "./able_employment_review.ts";
 import { z } from "zod";
 import { FilingStatus } from "../../../../../types.ts";
 
@@ -10,7 +14,7 @@ const reference = z.string().trim().min(1);
 const tin = z.string().regex(/^\d{9}$/);
 const money = z.number().finite().nonnegative().multipleOf(0.01);
 
-/** Ordinary-limit ABLE contributions; issuer facts and beneficiary payments. */
+/** ABLE contributions; issuer facts, beneficiary payments and reviewed wage limits. */
 export const ableContributionReviewSchema = z.object({
   tax_year: z.literal(2025),
   reviewed_by: reference,
@@ -23,10 +27,11 @@ export const ableContributionReviewSchema = z.object({
         beneficiary_ssn: tin,
         program_ein: tin,
         account_number: reference,
-        box1_contributions: money.max(19000),
+        box1_contributions: money,
         box2_able_rollovers: money,
         box6_eligibility_basis: z.nativeEnum(AbleEligibilityBasis),
       }).strict(),
+      employed_beneficiary_review: ableEmploymentReviewSchema.optional(),
       program_review_ref: reference,
       eligible_individual_in_2025_confirmed: z.literal(true),
       no_current_year_able_distributions_confirmed: z.literal(true),
@@ -56,13 +61,31 @@ export const ableContributionReviewSchema = z.object({
       (sum, p) => sum + Math.round(p.amount * 100),
       0,
     );
+    const employment = account.employed_beneficiary_review;
+    const extraCents = employment
+      ? Math.round(ableEmploymentLimit(employment) * 100)
+      : 0;
     const allRefs = [
       source.source_document_ref,
       account.program_review_ref,
       account.contribution_detail_ref,
       ...payments.map((p) => p.source_document_ref),
+      ...(employment
+        ? [
+          employment.eligibility_review_ref,
+          ...employment.wages.flatMap((
+            w,
+          ) => [w.source_document_ref, w.employer_plan_review_ref]),
+          ...employment.residence_periods.map((p) => p.source_document_ref),
+        ]
+        : []),
     ];
     const invalid = beneficiaries.has(source.beneficiary_ssn) ||
+      Math.round(source.box1_contributions * 100) > 1900000 + extraCents ||
+      Math.round(source.box1_contributions * 100) - ownCents > 1900000 ||
+      employment?.wages.some((w) =>
+        w.employee_ssn !== source.beneficiary_ssn
+      ) ||
       payments.some((p) => p.contributor_ssn !== source.beneficiary_ssn) ||
       ownCents + Math.round(account.other_contributors_cash * 100) +
             Math.round(account.qtp_rollovers_or_transfers * 100) !==

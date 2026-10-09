@@ -1,3 +1,4 @@
+import { assertAbleEmploymentW2Sources } from "./form8880_able_sources.ts";
 import { assertEmployeeContributionW2Sources } from "./form8880_employee_sources.ts";
 import {
   assertJointSaverDistributionCopies,
@@ -285,6 +286,13 @@ export function assertForm8880FiledCalculation(
       source.spouse_ssn,
     );
   }
+  if (source.able_contribution_review) {
+    assertAbleEmploymentW2Sources(
+      source.able_contribution_review,
+      pending.w2 === undefined ? [] : w2InputSchema.parse(pending.w2).w2s,
+      source.employee_contribution_review,
+    );
+  }
   if (source.employee_contribution_review) {
     assertEmployeeContributionW2Sources(
       source.employee_contribution_review,
@@ -422,7 +430,9 @@ export function assertEmployeeContributionReturn(
     !general.form8880_employee_contribution_review
   ) return;
   if (typeof fields !== "object" || fields === null) {
-    throw new Error("Form 8880 reviewed contribution needs its computed outcome");
+    throw new Error(
+      "Form 8880 reviewed contribution needs its computed outcome",
+    );
   }
   assertForm8880FiledCalculation(fields, pending);
 }
