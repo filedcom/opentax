@@ -113,3 +113,26 @@ All eleven complete return XML files pass local TY2025 `2025v5.4` XSD. Their 40 
 After the finalizer fallback was scoped, a fresh final-code replay retained every one of the eleven PDF byte sequences and native XML files apart from `ReturnTs`, with XSD revalidation. The previous two MFS packets likewise retain exact PDF bytes and native XML except timestamps; new retained source metadata means this is not a whole-pending equality claim. No deferred runtime item was implemented.
 
 Evidence: `.state/research/schedule-r-credit-limit-2026-10-09/`, including original-input replay, eleven input/pending/prepared/native/PDF packets, rendered hashes/contact review, prior-packet preservation, final-code replay, exact regression command, terminal logs and checkpoint. Source authentication, positive single/joint/HOH/QSS variants, broader benefit/credit combinations, the final release batch, business rules and IRS acceptance remain open.
+
+
+## October 9: positive single disability and benefit reductions
+
+Five additional constructed public-source returns extend the full-return review to single disability with EIC and MFS benefit reductions. This batch changes fixtures and evidence only. It retains the existing reviewed-source contract; it does not authenticate medical, payroll, SSA, pension or VA document bytes.
+
+| Source case | Income tax before credits | Schedule R credit | EIC | Final tax | Refund / owed |
+|---|---:|---:|---:|---:|---|
+| Single disability wages 16,000; current-year physician review | 26 | 26 | 236 | 0 | Refund 1,236 |
+| Single disability wages 17,000; prior-year signed-line-B review | 126 | 38 | 159 | 88 | Refund 1,071 |
+| MFS interest 7,500 plus nontaxable SSA 1,000 | 753 | 225 | 0 | 528 | Owed 528 |
+| Same MFS with eligible nontaxable pension 300 and VA pension 200 | 753 | 150 | 0 | 603 | Owed 603 |
+| MFS interest 7,500 plus nontaxable SSA 2,500 | 753 | 0 | 0 | 753 | Owed 753 |
+
+The single cases use the 15,750 standard deduction, leaving taxable income 250 and 1,250. The [2025 tax table, printed page 2](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf) uses **25-dollar bands** here and gives 26 and 126; initial draft expectations wrongly assumed 50-dollar bands and were corrected from that table. The EIC table on printed page 18 gives 236 and 159 for the reviewed childless filers. The source includes employment-valid/timely SSNs, U.S. home, dependency and family review facts; the initial probe had inherited incomplete MFS-era EIC facts and is retained as an authoring diagnostic. The final fixture and packets use the complete synthetic reviews.
+
+[Schedule R](https://www.irs.gov/pub/irs-prior/f1040sr--2025.pdf) lines 10–22 independently yield tentative credits 113 and 38 for the single cases; the first is capped at income tax 26. Both show box 2, while only the prior-year physician case marks Part II. The MFS sources retain apart-all-year Florida residence and an itemizing spouse. Their low provisional income leaves all SSA benefits nontaxable. Reducing the 3,750 base by SSA and the 1,250 AGI reduction gives 225 or zero; an additional 500 of qualifying line 13b benefits reduces the first credit to 150. Pension/VA qualification is a synthetic explicit review assertion, not a verified issuer record.
+
+All five complete native bundles pass local TY2025 2025v5.4 XSD. All **25 PDF pages** are observed: 19 distinct pages were newly inspected and six match previously reviewed renders exactly. The review covers box 2/8, the prior-year physician mark, benefit lines 13a/b/c, tax limitation, Schedule 3, Form 1040 SSA/all-year-apart and spouse-itemizes marks, EIC and settlement. Four packets include Schedule R; the exhausted-benefit case omits it. There are no remaining PDF widgets or AcroForm fields. Existing deferred item 68 repeats the MFS spouse-name duplication, and item 76 repeats the blank zero Form 1040 line 24; clean whole-packet parity remains unapproved.
+
+Six new tests check the five completed returns and reject missing SSA/pension/VA source reviews or a benefit amount conflicting with finalized SSA through both full native preparation and PDF projection. The eight-file typed regression passes **116/0, zero ignored**, including the existing Schedule R native/PDF/calculation, SSA source and EIC checks. The cumulative three October 9 batches now contain **18 XSD-valid source returns and 76 observed pages**, with ten positive Schedule R packets and eight zero-credit packets. Wider status, benefit and priority combinations, source authenticity, the final release gate and IRS business-rule/acceptance evidence remain open.
+
+Private evidence: `.state/research/schedule-r-benefit-returns-2026-10-09/`, including initial and corrected sources, probes, exact regression command/log/exit, five pending/native/PDF packets, rendered page hashes and review checkpoint. No broad board task is closed.
