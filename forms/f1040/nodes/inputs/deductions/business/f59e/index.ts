@@ -33,6 +33,11 @@ export const itemSchema = z.object({
   regular_three_year_writeoff_elected: z.boolean().optional(),
   circulation_reviewed_workpaper_reference: z.string().trim().min(1).optional(),
   circulation_no_unamortized_property_loss: z.literal(true).optional(),
+  circulation_schedule_c_expense: z.object({
+    business_reference: z.string().trim().min(1),
+    expense_description: z.string().trim().min(1),
+    owner_tin: z.string().regex(/^\d{9}$/),
+  }).strict().optional(),
 });
 
 export const inputSchema = z.object({
@@ -92,7 +97,8 @@ class F59eNode extends TaxNode<typeof inputSchema> {
     const parsed = inputSchema.parse(input);
     const line2o = circulationAdjustment(parsed.f59es);
     const unsupportedBalance = parsed.f59es.reduce(
-      (sum, item) => sum +
+      (sum, item) =>
+        sum +
         (item.expenditure_type === ExpenditureType.Circulation
           ? 0
           : item.remaining_unamortized),
