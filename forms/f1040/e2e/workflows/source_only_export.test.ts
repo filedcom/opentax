@@ -306,24 +306,15 @@ Deno.test("age-65 Schedule R cannot create a credit on a zero-tax Form 1040", ()
       nontaxable_ssa: 0,
     },
   }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  assertEquals(pending.f1040?.line18_total_tax_before_credits, 0);
+  assertEquals(pending.f1040?.line20_nonrefundable_credits, 0);
+  assertEquals(pending.f1040?.line24_total_tax, 0);
+  assertEquals(pending.schedule3?.line6d_elderly_disabled_credit, undefined);
   assertEquals(
-    result.diagnostics.some((diagnostic) =>
-      diagnostic.nodeType === "f1040" &&
-      diagnostic.message.includes("Schedule R line 22 exceeds")
-    ),
-    true,
-  );
-  assertEquals(
-    Object.hasOwn(
-      buildPending(result.pending).f1040 ?? {},
-      "line21_credits_total",
-    ),
+    buildMefXml(pending, filer).includes("<IRS1040ScheduleR"),
     false,
-  );
-  assertThrows(
-    () => buildMefXml(buildPending(result.pending), filer),
-    Error,
-    "Schedule R credit and tax limit",
   );
 });
 

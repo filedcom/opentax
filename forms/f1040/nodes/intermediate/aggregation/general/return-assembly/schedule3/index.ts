@@ -1,3 +1,4 @@
+import { inputSchema as scheduleRSourceSchema } from "../../../../../inputs/credits/elderly-disabled/schedule_r/calculation.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -30,6 +31,7 @@ function sumAccumulable(value: number | number[] | undefined): number {
 // All fields are optional — any subset may be present on a given return.
 export const inputSchema = z.object({
   form8880_source: form8880SourceSchema.optional(),
+  schedule_r_source: scheduleRSourceSchema.optional(),
   // Source-backed Form 3800 will finalize line 6a after the return tax and
   // all credits ahead of it are known. This signal does not deposit gross credit.
   form3800_source_credit_pending: z.boolean().optional(),
@@ -217,6 +219,9 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
     const f1040Input: Partial<z.infer<typeof f1040["inputSchema"]>> = {};
     if (input.form8880_source !== undefined) {
       f1040Input.form8880_source = input.form8880_source;
+    }
+    if (input.schedule_r_source !== undefined) {
+      f1040Input.schedule_r_source = input.schedule_r_source;
     }
     if (credits > 0) f1040Input.line20_nonrefundable_credits = credits;
     if (payments > 0) f1040Input.line31_additional_payments = payments;
