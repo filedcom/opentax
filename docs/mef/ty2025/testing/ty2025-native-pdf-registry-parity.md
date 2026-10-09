@@ -152,9 +152,13 @@ mixed wind/geothermal return have local XSD and filled-PDF evidence. Transfer,
 passive, carryover, and other mixed credit-source routes remain coverage gates.
 See `ty2025-form3800-pdf-gap.md`.
 Form 8911 and Schedule A were on the initial parity list. They now have
-registered, bounded PDF descriptors for one personal-use charger. Their fields
-and cross-return checks ran in the passing full regression, and broader business or
-multi-property situations remain unsupported. See `ty2025-form8911-pdf-gap.md`.
+registered PDF descriptors. Draft #68 extends the bounded personal-use route to
+multiple identified chargers, per-property permits, aggregate credit rounding
+and a pinned Schedule A template. Its 113 selected tests, four complete
+XSD-valid returns and 30 visually reviewed pages establish local evidence for
+those cases. Business use, wider credit-limit combinations, source authentication
+and IRS acceptance remain open. These draft-branch results do not establish a
+passing full release gate. See `ty2025-form8911-pdf-gap.md`.
 Form 8835 now has a bounded three-page PDF per fully used wind or geothermal
 facility; one- and two-facility packets have local rendered evidence. Transfer,
 bonus, passive, other energy sources, and broader multi-facility combinations
