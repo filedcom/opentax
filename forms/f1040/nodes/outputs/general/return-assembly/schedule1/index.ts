@@ -75,6 +75,7 @@ const inputSchema = z.object({
   // An unlabeled scalar cannot supply the required line 8z type statement.
   line8z_other_income: z.never().optional(),
   line8z_form8814: z.number().nonnegative().optional(),
+  line8q_able_taxable_earnings: z.number().int().nonnegative().optional(),
   line8z_hsa_excess_earnings: z.number().nonnegative().optional(),
   line8z_hsa_excess_employer: z.number().nonnegative().optional(),
   line8z_archer_excess_employer: z.number().nonnegative().optional(),
@@ -208,6 +209,7 @@ function otherIncome(input: Schedule1Input): number {
     (input.line8z_nqdc ?? 0) +
     (input.line8z_golden_parachute ?? 0) +
     (input.line8z_form8814 ?? 0) +
+    (input.line8q_able_taxable_earnings ?? 0) +
     (input.line8z_hsa_excess_earnings ?? 0) +
     (input.line8z_hsa_excess_employer ?? 0) +
     (input.line8z_archer_excess_employer ?? 0) +
@@ -369,6 +371,7 @@ function assembleSchedule1(input: Schedule1Input): Record<string, unknown> {
     "line8z_golden_parachute",
     "line8z_other_income",
     "line8z_form8814",
+    "line8q_able_taxable_earnings",
     "line8z_hsa_excess_earnings",
     "line8z_hsa_excess_employer",
     "line8z_archer_excess_employer",

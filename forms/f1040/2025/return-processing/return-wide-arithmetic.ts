@@ -416,6 +416,7 @@ export function assertReturnScheduleJoins(
           "line8n_section951a_inclusion",
           "line8o_section951aa_inclusion",
           "line8p_excess_business_loss",
+          "line8q_able_taxable_earnings",
           "line8r_taxable_scholarships",
         ) - line("line8d_foreign_earned_income_exclusion") +
         schedule1ActivityNotForProfitTotal(schedule1) +

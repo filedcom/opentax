@@ -1,4 +1,9 @@
 import {
+  ableDistributionAmounts,
+  ableDistributionReferences,
+  ableDistributionReviewSchema,
+} from "./able_distribution_review.ts";
+import {
   ableEmploymentLimit,
   ableEmploymentReviewSchema,
 } from "./able_employment_review.ts";
@@ -34,7 +39,8 @@ export const ableContributionReviewSchema = z.object({
       employed_beneficiary_review: ableEmploymentReviewSchema.optional(),
       program_review_ref: reference,
       eligible_individual_in_2025_confirmed: z.literal(true),
-      no_current_year_able_distributions_confirmed: z.literal(true),
+      no_current_year_able_distributions_confirmed: z.literal(true).optional(),
+      current_year_distributions: ableDistributionReviewSchema.optional(),
       no_returned_or_excess_contributions_confirmed: z.literal(true),
       no_prior_year_excess_contributions_confirmed: z.literal(true),
       within_program_cumulative_limit_confirmed: z.literal(true),
@@ -70,6 +76,9 @@ export const ableContributionReviewSchema = z.object({
       account.program_review_ref,
       account.contribution_detail_ref,
       ...payments.map((p) => p.source_document_ref),
+      ...(account.current_year_distributions
+        ? ableDistributionReferences(account.current_year_distributions)
+        : []),
       ...(employment
         ? [
           employment.eligibility_review_ref,
@@ -80,7 +89,15 @@ export const ableContributionReviewSchema = z.object({
         ]
         : []),
     ];
-    const invalid = beneficiaries.has(source.beneficiary_ssn) ||
+    const distribution = account.current_year_distributions?.form1099qa;
+    const invalid =
+      (account.no_current_year_able_distributions_confirmed !== undefined) ===
+        (account.current_year_distributions !== undefined) ||
+      (distribution !== undefined &&
+        (distribution.recipient_ssn !== source.beneficiary_ssn ||
+          distribution.program_ein !== source.program_ein ||
+          distribution.account_number !== source.account_number)) ||
+      beneficiaries.has(source.beneficiary_ssn) ||
       Math.round(source.box1_contributions * 100) > 1900000 + extraCents ||
       Math.round(source.box1_contributions * 100) - ownCents > 1900000 ||
       employment?.wages.some((w) =>
@@ -138,4 +155,22 @@ export function ownedAbleContributions(
       spouse: totals.spouse + (owner === spouse ? amount : 0),
     };
   }, { taxpayer: 0, spouse: 0 });
+}
+
+export function ownedAbleDistributions(
+  review: z.infer<typeof ableContributionReviewSchema> | undefined,
+  taxpayerSsn: string | undefined,
+  spouseSsn: string | undefined,
+  status: FilingStatus | undefined,
+) {
+  ownedAbleContributions(review, taxpayerSsn, spouseSsn, status);
+  return (review?.accounts ?? []).flatMap((account) => {
+    const distribution = account.current_year_distributions;
+    if (!distribution) return [];
+    return [{
+      ownerSsn: account.form5498qa.beneficiary_ssn,
+      source: distribution,
+      ...ableDistributionAmounts(distribution),
+    }];
+  });
 }

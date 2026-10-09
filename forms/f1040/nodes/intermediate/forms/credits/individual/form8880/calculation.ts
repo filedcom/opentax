@@ -1,6 +1,7 @@
 import {
   ableContributionReviewSchema,
   ownedAbleContributions,
+  ownedAbleDistributions,
 } from "./able_contribution_review.ts";
 import {
   employeeContributionReviewSchema,
@@ -36,6 +37,7 @@ export const jointDistributionReviewSchema = z.object({
       gross_amount: z.number().finite().positive().optional(),
       treatment: z.nativeEnum(SaverDistributionTreatment).optional(),
       current_year_1099r: reviewedSaver1099RCopySchema.optional(),
+      current_year_1099qa: z.literal(true).optional(),
       source_document_ref: z.string().trim().min(1),
       filed_jointly_in_distribution_year: z.boolean().optional(),
       distribution_year_return_ref: z.string().trim().min(1).optional(),
@@ -59,12 +61,14 @@ export const jointDistributionReviewSchema = z.object({
   for (const [index, entry] of review.entries.entries()) {
     const year = entry.received_date.slice(0, 4);
     const currentCopy = entry.current_year_1099r !== undefined ||
+      entry.current_year_1099qa !== undefined ||
       entry.gross_amount !== undefined || entry.treatment !== undefined;
     if (
       (currentCopy &&
         (!review.current_year_source_inventory_review || year !== "2025")) ||
       (year === "2025" && review.current_year_source_inventory_review && (
-        !entry.current_year_1099r || entry.gross_amount === undefined ||
+        (!!entry.current_year_1099r === !!entry.current_year_1099qa) ||
+        entry.gross_amount === undefined ||
         entry.treatment === undefined ||
         entry.qualifying_amount !==
           (entry.treatment === SaverDistributionTreatment.Included
@@ -253,7 +257,12 @@ function distributionColumns(input: Form8880Input): {
           "Form 8880 nonjoint distribution ledger conflicts with scalar or owner facts",
         );
       }
-      return { taxpayer: nonjointDistributionTotal(nonjoint), spouse: 0 };
+      return {
+        taxpayer: input.able_contribution_review
+          ? Math.round(nonjointDistributionTotal(nonjoint))
+          : nonjointDistributionTotal(nonjoint),
+        spouse: 0,
+      };
     }
     return {
       taxpayer: input.distributions_taxpayer ?? 0,
@@ -295,7 +304,7 @@ function distributionColumns(input: Form8880Input): {
     }
     jointStatusByYear.set(year, joint === true);
   }
-  return review.entries.reduce(
+  const totals = review.entries.reduce(
     (columns, entry) => {
       const year = entry.received_date.slice(0, 4);
       const joint = year === "2025" ||
@@ -311,6 +320,12 @@ function distributionColumns(input: Form8880Input): {
     },
     { taxpayer: 0, spouse: 0 },
   );
+  return input.able_contribution_review
+    ? {
+      taxpayer: Math.round(totals.taxpayer),
+      spouse: Math.round(totals.spouse),
+    }
+    : totals;
 }
 
 function normalizeSsn(ssn: string | undefined): string | undefined {
@@ -452,6 +467,7 @@ export function ownedLine1Contributions(
       "Form 8880 ABLE contributions need a complete reviewed distribution inventory",
     );
   }
+  assertAbleDistributionLedger(input);
   const able = ownedAbleContributions(
     input.able_contribution_review,
     input.taxpayer_ssn,
@@ -612,4 +628,48 @@ export function calculateForm8880(
     printFields.print_line6b_eligible = sEligible;
   }
   return { credit, calculatedZero: false, printFields };
+}
+
+/** Bind each annual QA ledger entry to the owned account and its dated payments. */
+export function assertAbleDistributionLedger(input: Form8880Input): void {
+  const sources = ownedAbleDistributions(
+    input.able_contribution_review,
+    input.taxpayer_ssn,
+    input.spouse_ssn,
+    input.filing_status,
+  );
+  const entries = input.filing_status === FilingStatus.MFJ
+    ? (input.joint_distribution_review?.entries ?? []).filter((e) =>
+      e.current_year_1099qa
+    ).map((e) => ({
+      ...e,
+      recipient_ssn: e.recipient === TS.T
+        ? input.taxpayer_ssn
+        : input.spouse_ssn,
+    }))
+    : (input.nonjoint_distribution_review?.entries ?? []).filter((e) =>
+      e.current_year_1099qa
+    );
+  if (entries.length !== sources.length) {
+    throw new Error(
+      "ABLE distribution ledger differs from the complete Form 1099-QA inventory",
+    );
+  }
+  for (const source of sources) {
+    const matches = entries.filter((e) =>
+      e.source_document_ref === source.source.form1099qa.source_document_ref
+    );
+    const entry = matches[0];
+    if (
+      matches.length !== 1 || !entry ||
+      entry.recipient_ssn?.replaceAll("-", "") !== source.ownerSsn ||
+      entry.gross_amount !== source.grossDistribution ||
+      entry.received_date !== source.lastDistributionDate ||
+      entry.treatment !== SaverDistributionTreatment.Included
+    ) {
+      throw new Error(
+        "ABLE saver distribution needs its owned annual gross source and last payment date",
+      );
+    }
+  }
 }

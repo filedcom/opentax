@@ -8,7 +8,10 @@ import {
   assertForm1099gTaxableGrantTotal,
 } from "../../../../../../nodes/inputs/income/other/f1099g/index.ts";
 import { assertSCorpK1CodeJSources } from "../../../../../../nodes/inputs/income/rental-passthrough/k1_s_corp/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../../form-descriptor.ts";
 import { schedule1OtherIncomeRows } from "../../../income/other/schedule1/schedule1_other_income_rows.ts";
 import { schedule1ActivityNotForProfitTotal } from "../../../income/other/schedule1/schedule1_nonbusiness_sources.ts";
 import { inputSchema as trustK1InputSchema } from "../../../../../../nodes/inputs/income/rental-passthrough/k1_trust/index.ts";
@@ -48,6 +51,7 @@ export interface Fields {
   line8z_f1098_interest_recovery?: number | null;
   line8z_k1_s_corp_tax_benefit_recovery?: number | null;
   line8z_form8814?: number | null;
+  line8q_able_taxable_earnings?: number | null;
   line8z_hsa_excess_earnings?: number | null;
   line8z_hsa_excess_employer?: number | null;
   line8z_archer_excess_employer?: number | null;
@@ -98,6 +102,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line8n_section951a_inclusion", "Section951aInclusionAmt"],
   ["line8o_section951aa_inclusion", "Section951AaInclusionAmt"],
   ["line8p_excess_business_loss", "ExcessBusinessLossAmt"],
+  ["line8q_able_taxable_earnings", "TaxableABLEDistributionsAmt"],
   ["line8r_taxable_scholarships", "GrantsOrScholarshipsAmt"],
   ["line8z_other", "OtherIncomeTotalAmt"],
   ["line9_total_other_income", "TotalOtherIncomeAmt"],

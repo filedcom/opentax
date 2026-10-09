@@ -1,3 +1,4 @@
+import { assertAbleDistributionReturn } from "./able_distribution_return.ts";
 import { assertAbleEmploymentW2Sources } from "./form8880_able_sources.ts";
 import { assertEmployeeContributionW2Sources } from "./form8880_employee_sources.ts";
 import {
@@ -9,6 +10,7 @@ import type { Fields as F1040Fields } from "../../../../mef/forms/general/return
 import type { Fields as Schedule3Fields } from "../../../../mef/forms/general/return-assembly/schedule3.ts";
 import type { Fields as Schedule1Fields } from "../../../../mef/forms/general/return-assembly/schedule1/schedule1.ts";
 import {
+  assertAbleDistributionLedger,
   calculateForm8880,
   inputSchema as form8880InputSchema,
 } from "../../../../../nodes/intermediate/forms/credits/individual/form8880/calculation.ts";
@@ -414,7 +416,18 @@ export function assertReviewedForm8880Outcome(
 export function assertEmployeeContributionReturn(
   pending: Readonly<Record<string, unknown>>,
 ): void {
+  assertAbleDistributionReturn(pending);
   const fields = pending.form8880 ?? {};
+  assertAbleDistributionLedger(
+    form8880InputSchema.pick({
+      able_contribution_review: true,
+      nonjoint_distribution_review: true,
+      joint_distribution_review: true,
+      taxpayer_ssn: true,
+      spouse_ssn: true,
+      filing_status: true,
+    }).parse(fields),
+  );
   const source = form8880InputSchema.pick({
     employee_contribution_review: true,
     able_contribution_review: true,

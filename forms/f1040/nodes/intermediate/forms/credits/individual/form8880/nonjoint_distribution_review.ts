@@ -46,6 +46,7 @@ export const nonjointDistributionReviewSchema = z.object({
       classification_review_ref: reference,
       treatment: z.nativeEnum(SaverDistributionTreatment),
       current_year_1099r: reviewedSaver1099RCopySchema.optional(),
+      current_year_1099qa: z.literal(true).optional(),
     }).strict(),
   ),
 }).strict().superRefine((review, context) => {
@@ -68,13 +69,16 @@ export const nonjointDistributionReviewSchema = z.object({
   for (const [index, entry] of review.entries.entries()) {
     if (
       (entry.received_date.startsWith("2025-")) !==
-        (entry.current_year_1099r !== undefined)
+        (entry.current_year_1099r !== undefined ||
+          entry.current_year_1099qa !== undefined) ||
+      (entry.current_year_1099r !== undefined &&
+        entry.current_year_1099qa !== undefined)
     ) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["entries", index, "current_year_1099r"],
         message:
-          "Form 8880 current-year ledger supports reviewed Form 1099-R sources only",
+          "Form 8880 current-year ledger needs exactly one reviewed Form 1099-R or 1099-QA source",
       });
     }
     if (

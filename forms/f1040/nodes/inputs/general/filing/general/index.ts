@@ -1,4 +1,9 @@
-import { ableContributionReviewSchema } from "../../../../intermediate/forms/credits/individual/form8880/able_contribution_review.ts";
+import { schedule1 } from "../../../../outputs/general/return-assembly/schedule1/index.ts";
+import { form5329 } from "../../../../intermediate/forms/taxes/retirement/form5329/index.ts";
+import {
+  ableContributionReviewSchema,
+  ownedAbleDistributions,
+} from "../../../../intermediate/forms/credits/individual/form8880/able_contribution_review.ts";
 import { ptcJointIncomeReviewSchema } from "../../../../../2025/domains/credits/health/form8962/form8962-joint-income.ts";
 import {
   assertForm8962SpouseIncomeReview,
@@ -47,8 +52,8 @@ import { priorCreditDisallowanceReviewSchema } from "../../../credits/individual
 import { agi_aggregator } from "../../../../intermediate/aggregation/general/return-assembly/agi_aggregator/index.ts";
 import { form8959 } from "../../../../intermediate/forms/taxes/employment/form8959/index.ts";
 import {
-  form8880,
   employeeContributionReviewSchema,
+  form8880,
   jointDistributionReviewSchema,
   nonjointDistributionReviewSchema,
 } from "../../../../intermediate/forms/credits/individual/form8880/index.ts";
@@ -71,7 +76,7 @@ import {
 } from "../../../../intermediate/forms/income/business/form461/index.ts";
 import { form8995 } from "../../../../intermediate/forms/deductions/business/form8995/index.ts";
 import { scheduleA } from "../../../deductions/itemized/schedule_a/index.ts";
-import { FilingStatus } from "../../../../types.ts";
+import { FilingStatus, TS } from "../../../../types.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { schedule1a } from "../../../../intermediate/forms/deductions/additional/schedule1a/index.ts";
 import {
@@ -1284,6 +1289,8 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     form461,
     scheduleA,
     schedule1a,
+    schedule1,
+    form5329,
   ]);
 
   compute(ctx: NodeContext, input: GeneralInput): NodeResult {
@@ -1465,7 +1472,39 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     const filer = filerCreditEligibility(parsed);
     const counts = dependentCounts(deps, filer);
 
+    const ableDistributions = ownedAbleDistributions(
+      parsed.form8880_able_contribution_review,
+      parsed.taxpayer_ssn,
+      parsed.spouse_ssn,
+      parsed.filing_status,
+    );
+    const ableTaxable = ableDistributions.reduce(
+      (sum, d) => sum + d.taxableWholeDollars,
+      0,
+    );
     const outputs: NodeOutput[] = [
+      ...(ableDistributions.length
+        ? [
+          this.outputNodes.output(schedule1, {
+            line8q_able_taxable_earnings: ableTaxable,
+          }),
+        ]
+        : []),
+      ...(ableTaxable > 0
+        ? [
+          this.outputNodes.output(form5329, {
+            owner_entries: ableDistributions.filter((d) =>
+              d.taxableWholeDollars > 0
+            ).map((d) => ({
+              owner: d.ownerSsn === parsed.taxpayer_ssn?.replaceAll("-", "")
+                ? TS.T
+                : TS.S,
+              esa_able_distribution: d.taxableWholeDollars,
+              able_distribution_review: d.source,
+            })),
+          }),
+        ]
+        : []),
       this.outputNodes.output(
         f1040,
         f1040Input as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>,
@@ -1501,6 +1540,9 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       // Pass filing_status to agi_aggregator for SSA taxability worksheet thresholds
       this.outputNodes.output(agi_aggregator, {
         filing_status: parsed.filing_status,
+        ...(ableDistributions.length
+          ? { line8q_able_taxable_earnings: ableTaxable }
+          : {}),
         ...(mfsLivedApartAllYear && { mfs_lived_apart_all_year: true }),
         ...(parsed.mfs_spouse_lived_with_taxpayer !== undefined && {
           mfs_lived_with_spouse: parsed.mfs_spouse_lived_with_taxpayer,

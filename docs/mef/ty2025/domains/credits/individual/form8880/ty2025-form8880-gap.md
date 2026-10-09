@@ -658,3 +658,69 @@ remain qualified under existing deferred items. No deferred repair was made.
 Self-employment compensation, ABLE distributions/rollovers, excess taxes, source
 authentication and IRS acceptance remain outside this completed wage-source
 checkpoint and inside the broader open task; no parent checkbox is closed.
+
+## October 9 owned ABLE distribution checkpoint
+
+Owned current-year Form1099-QA records now reconcile annual gross distributions,
+earnings, basis, dated payments and qualified expenses to the beneficiary's
+reviewed account. Gross distributions reduce the saver contribution base even
+when tax-free; taxable earnings reach Schedule1 line8q, AGI, owner Form5329
+PartII, Schedule2 and final Form1040. Annual gross amounts round once for the
+saver ledger, including the500.50→501 boundary. Source inventory checks run
+before native/PDF selection, including zero-credit and tax-free cases.
+
+The calculation follows the annual earnings ratio in
+[26CFR1.529A-3](https://www.ecfr.gov/current/title-26/section-1.529A-3)
+and the2400 gross/400 earnings/1600 qualified expense example in
+[Publication907](https://www.irs.gov/publications/p907): taxable earnings133.33
+file as133, with additional tax13. The
+[2025 Schedule1](https://www.irs.gov/pub/irs-prior/f1040s1--2025.pdf)
+places ABLE earnings on8q. Gross-distribution offsets follow
+[Form8880](https://www.irs.gov/pub/irs-prior/f8880--2025.pdf).
+The next-year case retains a specific election for an expense paid March1,2026,
+within the first60 days, with no allocation to another tax year.
+
+| Return | Taxable earnings | Saver credit | Final tax | Refund |
+| --- | ---: | ---: | ---: | ---: |
+| Qualified | 0 | 300 | 628 | 1372 |
+| Qualified cents | 0 | 300 | 628 | 1372 |
+| Publication example | 133 | 400 | 551 | 1449 |
+| Nonqualified | 400 | 400 | 608 | 1392 |
+| Basis only | 0 | 300 | 628 | 1372 |
+| Credit fully offset | 133 | 0 | 951 | 1049 |
+| Next-year expense election | 133 | 400 | 551 | 1449 |
+| Joint, primary taxable | 133 | 800 | 1076 | 1924 |
+| Joint, spouse taxable | 133 | 800 | 1076 | 1924 |
+| Joint, both taxable | 533 | 800 | 1156 | 1844 |
+| Additional tax rounds to zero | 4 | 300 | 628 | 1372 |
+| Saver rate boundary | 400 | 200 | 848 | 1152 |
+
+Single wages are25000, except25400 in the rate-boundary case; joint wages50000.
+Payments are2000/3000 respectively. The rate-boundary AGI25800 changes the saver
+rate to10%. Joint gross distributions appear in both saver columns. Two taxable
+owners retain separate Form5329 copies, with primary133/13 and spouse400/40.
+The4 taxable/0 additional-tax case retains Form5329 despite no Schedule2 tax.
+
+Twelve complete XML returns validate against retained TY2025v5.4 XSD. All90
+filled pages were reviewed through45 unique rendered page images. Final typed
+grouped checks pass194/0; configured native/composed-PDF builders pass187/0.
+Forty-eight public inconsistencies,94 native and94 full-PDF mutations reject;
+eight additional source-schema variants reject. This includes missing ledgers,
+changed owner/earnings/expenses, removed Form5329 and high-income NIIT scope.
+Failed intermediate logs remain explicitly separate from final passing proof:
+initial8z mapping, missing return-wide8q join, literal fixture type and the
+inactive Form8960 guard were corrected before this checkpoint.
+
+Private evidence lives in `.state/research/form8880-able-distributions-2026-10-09/`:
+source/pending/origin records, XML/PDFs, page renders, logs, verification report,
+reviewed-image hashes and SHA256SUMS. Source references are synthetic and do not
+authenticate issuer records. Joint Form8880 headers still omit the spouse, and
+zero additional-tax Form5329 line8 prints blank versus native0; existing deferred
+presentation qualifications remain unchanged.
+
+The bounded route covers living beneficiaries with no transfers, rollovers,
+returned excess, additional accounts or beneficiary changes. Above-threshold
+NIIT treatment lacks a resolved primary-source classification, so native/full-PDF
+exports reject; future item100 records that question without implementing it.
+Self-employment compensation, broader distributions and exceptions, source
+authentication and IRS acceptance remain open. No parent checkbox is closed.

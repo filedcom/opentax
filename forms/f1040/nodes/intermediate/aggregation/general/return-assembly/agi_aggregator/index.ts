@@ -211,6 +211,7 @@ export const inputSchema = z.object({
   k1_partnership_box11_code_k_sources: z.array(box11CodeKSourceSchema)
     .optional(),
   line8z_form8814: z.number().nonnegative().optional(),
+  line8q_able_taxable_earnings: z.number().int().nonnegative().optional(),
   line8z_hsa_excess_earnings: z.number().nonnegative().optional(),
   line8z_hsa_excess_employer: z.number().nonnegative().optional(),
   line8z_archer_excess_employer: z.number().nonnegative().optional(),
@@ -429,6 +430,7 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
       0,
     ) +
     (input.line8z_form8814 ?? 0) +
+    (input.line8q_able_taxable_earnings ?? 0) +
     (input.line8z_hsa_excess_earnings ?? 0) +
     (input.line8z_hsa_excess_employer ?? 0) +
     (input.line8z_archer_excess_employer ?? 0) +
@@ -674,6 +676,7 @@ function scheduleOnePartI(input: AgiInput): number {
       0,
     ) +
     (input.line8z_form8814 ?? 0) +
+    (input.line8q_able_taxable_earnings ?? 0) +
     (input.line8z_hsa_excess_earnings ?? 0) +
     (input.line8z_hsa_excess_employer ?? 0) +
     (input.line8z_archer_excess_employer ?? 0) +

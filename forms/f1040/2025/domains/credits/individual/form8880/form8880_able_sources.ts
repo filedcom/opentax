@@ -76,12 +76,13 @@ export function assertPublicAbleContributionSources(
     spouse_ssn: true,
     filing_status: true,
   }).partial().parse(rawGeneral ?? {});
-  if (!general.form8880_able_contribution_review) return;
-  assertAbleEmploymentW2Sources(
-    general.form8880_able_contribution_review,
-    z.array(w2ItemSchema).parse(rawW2 ?? []),
-    general.form8880_employee_contribution_review,
-  );
+  if (general.form8880_able_contribution_review) {
+    assertAbleEmploymentW2Sources(
+      general.form8880_able_contribution_review,
+      z.array(w2ItemSchema).parse(rawW2 ?? []),
+      general.form8880_employee_contribution_review,
+    );
+  }
   ownedLine1Contributions({
     able_contribution_review: general.form8880_able_contribution_review,
     nonjoint_distribution_review: general.form8880_nonjoint_distribution_review,
