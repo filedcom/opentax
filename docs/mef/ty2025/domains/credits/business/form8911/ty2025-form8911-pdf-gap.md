@@ -114,3 +114,18 @@ has zero fields/widgets and SHA-256
 
 Final regression after the cents change: 111 passed, zero failed across the
 selected Form 8911, PDF builder/cache, and base ATS fixture modules.
+
+## Property permits — October 9
+
+Optional supplied certification/permit numbers now follow each property through
+public intake, native `CertificationOrPermitNum`, and Schedule A PDF line 7.
+The schema rejects empty values and values longer than the IRS XSD's
+25-character limit; an absent permit remains absent. This records the supplied
+identifier without claiming issuer authentication.
+
+A two-property synthetic return retains distinct permits, including a
+25-character identifier. The complete TY2025 v5.4 XML validates; all seven PDF
+pages were reviewed, with credit 1,300, tax 2,575 and refund 4,425 unchanged.
+The flattened PDF has no fields/widgets and SHA-256
+`d69d38c6bbc8ee0966c1daedea7f8a8b437ac7bfe70fa9191efdcaa8ac2af48e`.
+Final focused and adjacent regression: 113 passed, zero failed.

@@ -238,3 +238,59 @@ Deno.test("Form 8911 retains property cost cents until native and PDF filing amo
     300.447,
   ], [1001.49, 300.447, 300.447]]);
 });
+
+Deno.test("Form 8911 retains each supplied permit on its own native and PDF property copy", async () => {
+  const permits = ["TX-EV-2025-00000000000001", "TX-EV-2025-002"];
+  const source = {
+    ...multipleChargerSource,
+    properties: multipleChargerSource.properties.map((item, index) => ({
+      ...item,
+      certification_permit_number: permits[index],
+    })),
+  };
+  const result = f1040_2025.executeReturn({ ...fixture.inputs, f8911: source });
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending;
+  const bundle = await buildMefBundle(pending, {
+    filer: fixture.filer,
+    attachments: [],
+  });
+  const copies = [
+    ...bundle.xml.matchAll(/<IRS8911ScheduleA\b[\s\S]*?<\/IRS8911ScheduleA>/g),
+  ].map((match) => match[0]);
+  assertEquals(copies.length, 2);
+  for (const [index, xml] of copies.entries()) {
+    assertStringIncludes(
+      xml,
+      `<CertificationOrPermitNum>${permits[index]}</CertificationOrPermitNum>`,
+    );
+    assertEquals(xml.includes(permits[1 - index]), false);
+  }
+  const pages = form8911ScheduleAPdf.instances!({}, fixture.filer, pending);
+  assertEquals(pages.map((page) => page.certification_permit_number), permits);
+  assertEquals(pending.f1040.line20_nonrefundable_credits, 1300);
+  assertEquals(pending.f1040.line24_total_tax, 2575);
+});
+
+Deno.test("Form 8911 optional permit validates the IRS 25-character limit without inventing one", () => {
+  assertEquals(
+    inputSchema.parse(original).certification_permit_number,
+    undefined,
+  );
+  assertEquals(
+    inputSchema.parse({
+      ...original,
+      certification_permit_number: "P".repeat(25),
+    }).certification_permit_number,
+    "P".repeat(25),
+  );
+  assertThrows(() =>
+    inputSchema.parse({
+      ...original,
+      certification_permit_number: "P".repeat(26),
+    })
+  );
+  assertThrows(() =>
+    inputSchema.parse({ ...original, certification_permit_number: "   " })
+  );
+});

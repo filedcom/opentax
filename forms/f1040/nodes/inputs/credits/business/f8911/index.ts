@@ -35,6 +35,7 @@ export const propertySchema = z.object({
   eligible_census_tract: z.boolean().optional(),
   census_tract_geoid: z.string().regex(/^\d{11}$/).optional(),
   main_home_property: z.boolean().optional(),
+  certification_permit_number: z.string().trim().min(1).max(25).optional(),
 });
 
 export const inputSchema = propertySchema.partial().extend({

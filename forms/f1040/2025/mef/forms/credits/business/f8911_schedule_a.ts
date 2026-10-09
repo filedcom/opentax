@@ -27,6 +27,7 @@ function propertyDocuments(fields: Input): readonly string[] {
       element("FacilityPlacedInServiceDt", input.placed_in_service),
       element("PlacedInSrvcEligCensusTractInd", "true"),
       element("CensusTractId2015GEOIDNum", input.census_tract_geoid),
+      element("CertificationOrPermitNum", input.certification_permit_number),
       element("TotQlfyPropertyCostCreditAmt", input.cost),
       element("PropertyUsedMainHomeInd", "true"),
       element("TotQlfyPropLessBusInvstUseAmt", input.cost),
