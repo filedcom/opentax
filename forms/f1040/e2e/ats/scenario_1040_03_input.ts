@@ -1,13 +1,14 @@
+import { FilingStatus } from "../../nodes/types.ts";
 import { DistributionCode } from "../../nodes/inputs/income/retirement/f1099r/index.ts";
 import { SCENARIO_1040_03_FACTS } from "./ty2025_cases.ts";
 
 /**
  * TY2025 ATS Scenario 3 is a source-fact packet, not a completed return.
  * https://www.irs.gov/pub/irs-efile/ty25-1040-mef-ats-scenario-3-10202025.pdf
- * PDF pp. 1-4: cover, blank 1040, 1099-R; pp. 9-10: Schedule D;
+ * PDF pp. 1-4: cover, uncomputed 1040, 1099-R; pp. 9-10: Schedule D;
  * pp. 11-12: Schedule E; pp. 13-14: Schedule F; pp. 15-16: Schedule SE;
- * p. 17: Form 4835. The PDF leaves Form 1040 filing status and result lines
- * blank, so this fragment must not be transmitted as an ATS return.
+ * p. 17: Form 4835. The PDF marks Single and digital-assets Yes, but leaves result
+ * lines blank. This fragment must not be transmitted as a complete ATS return.
  */
 export const SCENARIO_1040_03_SOURCE = {
   scheduleD: {
@@ -61,6 +62,9 @@ export function scenario104003Input(): Record<string, unknown> {
   const source = SCENARIO_1040_03_SOURCE;
   return {
     general: {
+      // Visually verified on official packet page 2; marks are absent from text extraction.
+      filing_status: FilingStatus.Single,
+      digital_assets: true,
       taxpayer_first_name: facts.taxpayer.firstName,
       taxpayer_last_name: facts.taxpayer.lastName,
       taxpayer_ssn: facts.taxpayer.ssn,
@@ -69,7 +73,6 @@ export function scenario104003Input(): Record<string, unknown> {
       address_city: facts.taxpayer.address.city,
       address_state: facts.taxpayer.address.state,
       address_zip: facts.taxpayer.address.zip,
-      // No filing status or digital-asset answer is marked on the 1040.
     },
     f1099r: [{
       payer_name: facts.form1099R.payerName,
@@ -158,7 +161,7 @@ export const SCENARIO_1040_03_RECONCILIATION = {
     farmOptionalMethodTwoThirdsGrossDenominator: 3,
   },
   notAtsReadyBecause: [
-    "Form 1040 pp. 2-3 do not mark a filing status or digital-asset answer; all result lines are blank.",
+    "Form 1040 marks Single and digital-assets Yes; its result lines remain blank.",
     "Schedule D p. 9 gives only aggregate 1a/8a proceeds and basis, not the underlying 1099-B or 1099-DA transaction records required by the source graph.",
     "Form 4835 p. 17 gives income and expenses but no activity identifier; its active-participation checkbox is blank.",
     "The cover says the taxpayer is a specified agricultural-cooperative patron, but no patronage or cooperative-sale allocation facts are supplied for any QBI cooperative reduction.",

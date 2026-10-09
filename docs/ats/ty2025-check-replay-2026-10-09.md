@@ -2,15 +2,15 @@
 
 The eight retained partial Form 1040 fixtures were replayed through the public return entry point, followed by native preparation only when the graph had no error diagnostics. Scenario13 now uses a separately labeled current-law reconstruction with independently sourced tax limits; its original incomplete-input fixture and all printed targets remain unchanged. This expands the existing ATS matrix with reproducible per-field observations; it does not complete an ATS scenario.
 
-**Selected observations: 32 match / 12 differ / 10 not produced, out of 54 (59% matching).** These are calculation checks chosen from retained printed amounts, source arithmetic and provisional interpretations. They are not an enumerated IRS business-rule set or a representative sample; matching values do not prove native/PDF output or accepted transmission.
+**Selected observations: 41 match / 12 differ / 1 not produced, out of 54 (76% matching).** These are calculation checks chosen from retained printed amounts, source arithmetic and provisional interpretations. They are not an enumerated IRS business-rule set or a representative sample; matching values do not prove native/PDF output or accepted transmission.
 
-**Updated engineering estimate: about 60% of individual ATS checks, uncertainty range45–75%.** This replaces75% after the public-entry and preparation replay exposed how much earlier evidence was component-only. The estimate is judgment across the broader required checks, not32/54 re-labeled as an IRS pass rate. Later deductions/credits are heavily represented here; most identity, attachment and IRS-rule checks are not.
+**Updated engineering estimate: about 60% of individual ATS checks, uncertainty range45–75%.** This replaces75% after the public-entry and preparation replay exposed how much earlier evidence was component-only. The estimate is judgment across the broader required checks, not41/54 re-labeled as an IRS pass rate. Later deductions/credits are heavily represented here; most identity, attachment and IRS-rule checks are not.
 
 | Scenario | Match | Different | Not produced | Public/native preparation | Required source copies |
 | --- | ---: | ---: | ---: | --- | ---: |
 | 1040-01 | 3 | 0 | 0 | native-blocked | 7 |
-| 1040-02 | 0 | 0 | 3 | graph-blocked | 7 |
-| 1040-03 | 0 | 0 | 6 | graph-blocked | 9 |
+| 1040-02 | 3 | 0 | 0 | native-blocked | 7 |
+| 1040-03 | 6 | 0 | 0 | native-blocked | 9 |
 | 1040-04 | 2 | 0 | 0 | partial-prepared | 7 |
 | 1040-05 | 4 | 0 | 0 | partial-prepared | 9 |
 | 1040-08 | 11 | 0 | 0 | native-blocked | 3 |
@@ -19,7 +19,7 @@ The eight retained partial Form 1040 fixtures were replayed through the public r
 
 The source inventory contains56 form copies across these packets. Scenarios4 and5 prepare only `IRS1040` and `IRSW2`: two-document partial packets cannot satisfy their seven- and nine-document source inventories. Scenarios2/3 stop on graph errors. Scenarios1/8/12 stop on native source reconciliation. Scenario13 prepares all six source-form roots; its separate packet passes local XSD and has six observed PDF pages, with presentation qualifications. No IRS acknowledgment is claimed.
 
-Existing blockers remain: missing filing status in2/3; payroll evidence in1; incomplete credits and statements in4/5; QCD/payer/recipient facts in8; health/QBI, deduction and partnership-basis conflicts in12; printed deduction/tax conflicts and packet presentation qualifications in13. The newly observed Scenario8 native recipient-SSN guard is recorded in `future_todo` and left unmodified.
+Existing blockers remain: QBI/cooperative reconciliation in2 and issued-recipient identity in3; payroll evidence in1; incomplete credits and statements in4/5; QCD/payer/recipient facts in8; health/QBI, deduction and partnership-basis conflicts in12; printed deduction/tax conflicts and packet presentation qualifications in13. The newly observed Scenario8 native recipient-SSN guard is recorded in `future_todo` and left unmodified.
 
 ## Reproduce
 
@@ -61,32 +61,28 @@ Preparation: **native-blocked** — Error: Schedule H FICA-only export needs emp
 
 [IRS source packet](https://www.irs.gov/pub/irs-efile/1040-mef-ats-scenario-2-12012025.pdf). Required source copies: 1040, W-2, W-2, Schedule 1, Schedule A, Schedule C, 8283.
 
-Preparation: **graph-blocked** — Resolve graph diagnostics before preparation
-
-Graph diagnostics: start: missing filing status; standard_deduction: missing filing status; form8960: missing filing status.
+Preparation: **native-blocked** — Error: Form 8995 positive filing needs one identified Schedule C business and exact Schedule 1/1040 source reconciliation
 
 | Pending field | Target | Actual | Result | Basis / source location |
 | --- | ---: | ---: | --- | --- |
-| `f1040.line1a_wages` | 8513 | not produced | not-produced | source-arithmetic: Issued W-2 box 1, excluding statutory employee receipts |
-| `f1040.line25a_w2_withheld` | 1164 | not produced | not-produced | source-arithmetic: Sum of issued W-2 box 2 amounts |
-| `schedule1.line3_schedule_c` | 26979 | not produced | not-produced | source-arithmetic: Schedule C: statutory receipts29,513 less expenses2,534 |
+| `f1040.line1a_wages` | 8513 | 8513 | match | source-arithmetic: Issued W-2 box 1, excluding statutory employee receipts |
+| `f1040.line25a_w2_withheld` | 1164 | 1164 | match | source-arithmetic: Sum of issued W-2 box 2 amounts |
+| `schedule1.line3_schedule_c` | 26979 | 26979 | match | source-arithmetic: Schedule C: statutory receipts29,513 less expenses2,534 |
 
 ### 1040-03
 
 [IRS source packet](https://www.irs.gov/pub/irs-efile/ty25-1040-mef-ats-scenario-3-10202025.pdf). Required source copies: 1040, 1099-R, Schedule 1, Schedule 2, Schedule D, Schedule E, Schedule F, Schedule SE, 4835.
 
-Preparation: **graph-blocked** — Resolve graph diagnostics before preparation
-
-Graph diagnostics: start: missing filing status; standard_deduction: missing filing status; form8960: missing filing status.
+Preparation: **native-blocked** — Error: 1099-R 1 positive issued copy needs recipient SSN
 
 | Pending field | Target | Actual | Result | Basis / source location |
 | --- | ---: | ---: | --- | --- |
-| `f1040.line5a_pension_gross` | 53778 | not produced | not-produced | printed-source: 1099-R p.4 box1 |
-| `f1040.line5b_pension_taxable` | 43100 | not produced | not-produced | printed-source: 1099-R p.4 box2a |
-| `f1040.line25b_withheld_1099` | 3405 | not produced | not-produced | printed-source: 1099-R p.4 box4 |
-| `schedule1.line6_schedule_f` | 3251 | not produced | not-produced | source-arithmetic: Schedule F pp.13–14:8,111 less4,860 |
-| `schedule2.line4_se_tax` | 827 | not produced | not-produced | source-arithmetic: Farm optional election: rounded2/3 ×8,111 earnings; filed SE component tax |
-| `schedule1.line15_se_deduction` | 414 | not produced | not-produced | source-arithmetic: Half of filed827 SE tax, rounded |
+| `f1040.line5a_pension_gross` | 53778 | 53778 | match | printed-source: 1099-R p.4 box1 |
+| `f1040.line5b_pension_taxable` | 43100 | 43100 | match | printed-source: 1099-R p.4 box2a |
+| `f1040.line25b_withheld_1099` | 3405 | 3405 | match | printed-source: 1099-R p.4 box4 |
+| `schedule1.line6_schedule_f` | 3251 | 3251 | match | source-arithmetic: Schedule F pp.13–14:8,111 less4,860 |
+| `schedule2.line4_se_tax` | 827 | 827 | match | source-arithmetic: Farm optional election: rounded2/3 ×8,111 earnings; filed SE component tax |
+| `schedule1.line15_se_deduction` | 414 | 414 | match | source-arithmetic: Half of filed827 SE tax, rounded |
 
 ### 1040-04
 
@@ -180,3 +176,31 @@ Prepared native roots: IRS1040, IRS1040Schedule3, IRS6251, IRS8911, IRS8911Sched
 | `f1040.line34_overpayment` | 609 | 609 | match | printed-source: Form 1040 pp. 2–3 |
 | `f1040.line35a_refund` | 609 | 609 | match | printed-source: Form 1040 pp. 2–3 |
 | `schedule3.line6j_alt_fuel_vehicle_refueling` | 162 | 11 | different | printed-source: Schedule3 line6j; printed stale tax limit remains unresolved |
+
+## October 9 visual source correction for scenarios 2 and 3
+
+Fresh official packet renders show page2 marks that text extraction missed:
+Scenario2 selects MFJ and digital-assets No; Scenario3 selects Single and
+digital-assets Yes. The earlier assertions that these fields were blank were
+wrong. Both input fixtures now carry the printed selections, with regression
+assertions. No printed numerical target or production tax calculation changed.
+
+The unchanged54-observation replay now produces nine additional matching
+amounts (41 matches,12 differences,1 missing); both graph diagnostic lists are
+empty. Native preparation remains blocked: Scenario2 requires the identified
+ScheduleC/QBI reconciliation, while Scenario3 reaches the recipient-SSN guard.
+The latter is added to the existing deferred recipient-identity item, with no
+implementation. Wider source completeness and all required documents remain
+open. The broad technical estimate stays60% (45–75% range), because these nine
+selected arithmetic matches do not prove full native/PDF or IRS-rule coverage.
+
+The covers and page2 of both official packets were rendered at1500px and
+visually inspected. Private PDFs, four renders, replay JSON and regression log:
+`.state/research/ats-source-recheck-2026-10-09/`. Source SHA-256:
+
+| Scenario | SHA-256 |
+| --- | --- |
+| 2 | `1d94fce66edb816fe780e532a88d998617eb20d9edc3cf9a36355fa0c5236689` |
+| 3 | `29fb04a95cb926bf9157c9e8f5b4c35c806ec83dfa995412866da3394a8715ce` |
+
+Verification after these corrections: **62 typed ATS tests passed, zero failed**.

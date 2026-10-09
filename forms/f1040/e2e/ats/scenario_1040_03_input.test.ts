@@ -27,8 +27,8 @@ Deno.test("ATS 1040 Scenario 3 maps only printed 1099-R and Schedule F source fa
   const farm = scheduleF.schedule_fs[0];
 
   assertEquals(general.taxpayer_ssn, "400001035");
-  assertEquals(general.filing_status, undefined);
-  assertEquals(general.digital_assets, undefined);
+  assertEquals(general.filing_status, "single");
+  assertEquals(general.digital_assets, true);
   assertEquals(form1099R.box1_gross_distribution, 53_778);
   assertEquals(form1099R.box2a_taxable_amount, 43_100);
   assertEquals(form1099R.box4_federal_withheld, 3_405);

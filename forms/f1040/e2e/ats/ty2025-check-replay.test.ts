@@ -54,17 +54,16 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
     report.scenarios.find((s) => s.id === "1040-01")!.preparation.result,
     PreparationResult.NativeBlocked,
   );
-  const scenario2 = report.scenarios.find((s) => s.id === "1040-02")!;
-  assertEquals(
-    scenario2.diagnostics.some((d) =>
-      String(d.message).includes("filing_status")
-    ),
-    true,
-  );
-  assertEquals(
-    scenario2.checks.every((c) => c.result === CheckResult.NotProduced),
-    true,
-  );
+  for (const id of ["1040-02", "1040-03"]) {
+    const scenario = report.scenarios.find((s) => s.id === id)!;
+    assertEquals(scenario.diagnostics, []);
+    assertEquals(
+      scenario.checks.every((c) => c.result === CheckResult.Match),
+      true,
+    );
+    assertEquals(scenario.preparation.result, PreparationResult.NativeBlocked);
+  }
+  assertEquals(report.counts, { match: 41, different: 12, "not-produced": 1 });
   const deduction = report.scenarios.find((s) => s.id === "1040-12")!.checks
     .find((c) => c.path === "f1040.line12a_standard_deduction")!;
   assertEquals([deduction.expected, deduction.actual, deduction.result], [

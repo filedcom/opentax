@@ -98,8 +98,8 @@ Deno.test("ATS 1040 Scenario 2 retains missing return and attachment evidence", 
   const input = scenario104002Input();
   const general = input.general as Record<string, unknown>;
   assertEquals(Object.keys(input).sort(), ["general", "schedule_c", "w2"]);
-  assertEquals(general.filing_status, undefined);
-  assertEquals(general.digital_assets, undefined);
+  assertEquals(general.filing_status, "mfj");
+  assertEquals(general.digital_assets, false);
   assertEquals(input.f8283, undefined);
   assertEquals(input.estimated_tax_payments, undefined);
   assertEquals(SCENARIO_1040_02_RECONCILIATION.missing.length, 4);

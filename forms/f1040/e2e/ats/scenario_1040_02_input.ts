@@ -1,3 +1,4 @@
+import { FilingStatus } from "../../nodes/types.ts";
 import { SCENARIO_1040_02_FACTS } from "./ty2025_cases.ts";
 
 /**
@@ -13,6 +14,9 @@ export function scenario104002Input(): Record<string, unknown> {
   const facts = SCENARIO_1040_02_FACTS;
   return {
     general: {
+      // Visually verified on official packet page 2; marks are absent from text extraction.
+      filing_status: FilingStatus.MFJ,
+      digital_assets: false,
       taxpayer_first_name: facts.taxpayer.firstName,
       taxpayer_last_name: facts.taxpayer.lastName,
       taxpayer_ssn: facts.taxpayer.ssn,
@@ -26,7 +30,6 @@ export function scenario104002Input(): Record<string, unknown> {
       address_state: facts.taxpayer.address.state,
       address_zip: facts.taxpayer.address.zip,
       // The binary nonresident-spouse statement is assumed, not retained.
-      // Do not infer filing status or digital-asset answers from the packet.
     },
     w2: facts.w2.map((form, index) => ({
       source_document_reference: `irs-ty2025-ats-1040-02-w2-page-${index + 4}`,
@@ -90,6 +93,6 @@ export const SCENARIO_1040_02_RECONCILIATION = {
     "Form 8283 property AGI-limit classification is not established by the printed packet.",
     "The assumed Nonresident Spouse Choice Statement has no retained binary bytes.",
     "The $300 credit applied from 2024 lacks accepted-return and transfer evidence.",
-    "The printed 1040 leaves filing status, digital assets, and result lines blank.",
+    "The printed 1040 marks MFJ and digital-assets No, but leaves result lines blank.",
   ],
 } as const;
