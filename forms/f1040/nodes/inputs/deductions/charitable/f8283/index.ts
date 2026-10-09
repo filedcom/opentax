@@ -1,3 +1,4 @@
+import { intellectualPropertyReductionSchema } from "./intellectual-property-source.ts";
 import {
   calculateCharitableNaturalResource,
   charitableNaturalResourceSourceSchema,
@@ -331,21 +332,8 @@ const sectionAItemSchema = z.object({
     hypothetical_fmv_sale_gain_entirely_long_term_verified: z.literal(true),
     no_other_reduction_reason_verified: z.literal(true),
   }).strict().optional(),
-  intellectual_property_capital_gain_reduction: z.object({
-    property_kind: z.literal("purchased_patent"),
-    patent_number: z.string().trim().min(1),
-    patent_registration_record_reference: z.string().trim().min(1),
-    purchase_record_reference: z.string().trim().min(1),
-    unamortized_basis_schedule_reference: z.string().trim().min(1),
-    unamortized_adjusted_basis: z.number().positive(),
-    donee_2025_net_income_statement_reference: z.string().trim().min(1),
-    donor_owned_full_patent_rights_verified: z.literal(true),
-    all_patent_rights_transferred_to_donee_verified: z.literal(true),
-    adjusted_basis_excludes_prior_amortization_verified: z.literal(true),
-    donee_2025_net_income_zero_verified: z.literal(true),
-    hypothetical_fmv_sale_gain_entirely_long_term_verified: z.literal(true),
-    no_other_reduction_reason_verified: z.literal(true),
-  }).strict().optional(),
+  intellectual_property_capital_gain_reduction:
+    intellectualPropertyReductionSchema.optional(),
   // Taxpayer-supplied general property category (for example "books"). The
   // same category must be used for similar gifts to every donee this year.
   similar_item_group: z.string().trim().min(1).optional(),
@@ -1075,7 +1063,7 @@ const sectionAItemSchema = z.object({
           code: "custom",
           path: ["intellectual_property_capital_gain_reduction"],
           message:
-            "Form 8283 patent reduction needs one purchased long-term Section A patent, unamortized basis below FMV, zero donee-year income, and a 50% limit donee",
+            "Form 8283 intellectual-property reduction needs purchased long-term Section A property, unamortized basis below FMV, zero donee-year income, and a 50% limit donee",
         });
       }
     }

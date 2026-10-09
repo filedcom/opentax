@@ -1,3 +1,4 @@
+import { intellectualPropertyIdentity } from "../../../../../../nodes/inputs/deductions/charitable/f8283/intellectual-property-source.ts";
 import { calculateCharitableNaturalResource } from "../../../../../../nodes/inputs/deductions/charitable/f8283/natural-resource-source.ts";
 import { calculateCharitableDepreciation } from "../../../../../../nodes/inputs/deductions/charitable/f8283/depreciation-source.ts";
 import { assertReviewedForm8283Return } from "./f8283_return.ts";
@@ -13,7 +14,10 @@ import {
   SectionBPropertyType,
   similarItemGroupTotals,
 } from "../../../../../../nodes/inputs/deductions/charitable/f8283/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../../form-descriptor.ts";
 import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,
@@ -260,8 +264,7 @@ export function assertIntellectualPropertyReductionSource(
     item.donor_acquisition_description?.trim().toLowerCase() !== "purchase" ||
     item.cost_or_adjusted_basis === undefined ||
     (!item.fmv_method && !item.fmv_method_description?.trim()) ||
-    !review.patent_number.trim() ||
-    !review.patent_registration_record_reference.trim() ||
+    !intellectualPropertyIdentity(review).identifier.trim() ||
     !review.purchase_record_reference.trim() ||
     !review.unamortized_basis_schedule_reference.trim() ||
     !review.donee_2025_net_income_statement_reference.trim() ||
@@ -269,7 +272,7 @@ export function assertIntellectualPropertyReductionSource(
       Math.round(item.cost_or_adjusted_basis * 100)
   ) {
     throw new Error(
-      "Form 8283 patent reduction needs matching patent ownership, purchase, unamortized basis, donee-income, and valuation records",
+      "Form 8283 intellectual-property reduction needs matching ownership, purchase, unamortized basis, donee-income, and valuation records",
     );
   }
 }
@@ -432,7 +435,19 @@ export function fmvReductionExplanation(
     } is removed.`
     : item.intellectual_property_capital_gain_reduction !== undefined &&
         item.cost_or_adjusted_basis !== undefined
-    ? `Purchased patent ${item.intellectual_property_capital_gain_reduction.patent_number} is limited under section 170(e)(1)(B)(iii) to unamortized adjusted basis. Registration ${item.intellectual_property_capital_gain_reduction.patent_registration_record_reference}, purchase ${item.intellectual_property_capital_gain_reduction.purchase_record_reference}, and basis schedule ${item.intellectual_property_capital_gain_reduction.unamortized_basis_schedule_reference} support basis ${
+    ? `${
+      intellectualPropertyIdentity(
+        item.intellectual_property_capital_gain_reduction,
+      ).label
+    } ${
+      intellectualPropertyIdentity(
+        item.intellectual_property_capital_gain_reduction,
+      ).identifier
+    } is limited under section 170(e)(1)(B)(iii) to unamortized adjusted basis. ${
+      intellectualPropertyIdentity(
+        item.intellectual_property_capital_gain_reduction,
+      ).records
+    }, purchase ${item.intellectual_property_capital_gain_reduction.purchase_record_reference}, and basis schedule ${item.intellectual_property_capital_gain_reduction.unamortized_basis_schedule_reference} support basis ${
       usd(item.cost_or_adjusted_basis)
     }. Donee statement ${item.intellectual_property_capital_gain_reduction.donee_2025_net_income_statement_reference} reports zero 2025 net income, so no income-based additional deduction is included. FMV appreciation ${
       usd(fmv - item.cost_or_adjusted_basis)
