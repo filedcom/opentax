@@ -127,7 +127,7 @@ function assertNonElectricFuelSource(property: F8911Property): void {
   }
 }
 
-function propertyAmounts(property: F8911Property) {
+export function calculateForm8911PropertyAmounts(property: F8911Property) {
   const source = property.business_source;
   if ((property.business_use_pct ?? 0) > 0 && !source) {
     throw new Error(
@@ -200,7 +200,7 @@ export function computePersonalCreditAmounts(
         "Form 8911 needs a verified eligible census tract and 11-digit GEOID",
       );
     }
-    propertyAmounts(input);
+    calculateForm8911PropertyAmounts(input);
     if (
       (input.business_use_pct ?? 0) < 1 && input.main_home_property !== true
     ) {
@@ -211,7 +211,7 @@ export function computePersonalCreditAmounts(
   }
   if (
     properties.every((property) =>
-      propertyAmounts(property).personalCredit === 0
+      calculateForm8911PropertyAmounts(property).personalCredit === 0
     )
   ) return undefined;
   if (
@@ -225,7 +225,8 @@ export function computePersonalCreditAmounts(
   // Retain cents across property amounts, then round the total entered on
   // Form 8911 line 4 (Form 1040 instructions: Rounding Off to Whole Dollars).
   const tentativeCredit = roundWholeDollars(properties.reduce(
-    (sum, property) => sum + propertyAmounts(property).personalCredit,
+    (sum, property) =>
+      sum + calculateForm8911PropertyAmounts(property).personalCredit,
     0,
   ));
   const foreignTaxCredit = input.foreign_tax_credit ?? 0;
@@ -262,7 +263,8 @@ class F8911Node extends TaxNode<typeof inputSchema> {
     const properties = personalCreditProperties(rawInput);
     const businessCredit = roundWholeDollars(
       properties.reduce(
-        (sum, property) => sum + propertyAmounts(property).businessCredit,
+        (sum, property) =>
+          sum + calculateForm8911PropertyAmounts(property).businessCredit,
         0,
       ),
     );

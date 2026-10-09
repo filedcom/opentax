@@ -226,3 +226,7 @@ calculation/native/PDF tests passed with zero failures. The mixed-use case
 keeps 1,000 personal credit separate from 180 business credit (tax 2,695);
 both stated increased-rate cases compute 2,700 after 1,000 section 179
 (tax 1,175). No new PDF artifact or XSD result is counted for this stage.
+
+### Business source ownership joins — October 9
+
+The consolidated MeF readiness branch checks business property sources against the prepared Form 8911, taxpayer SSN, exactly one explicitly taxpayer-owned participating Schedule C, and Form 3800 line 1s credit. It rejects changed ownership, ambiguous business references, passive/statutory/disposed activities and inconsistent credit amounts. These joins do not authenticate invoices, PWA evidence or section 179 deductions; business native/PDF filing remains guarded pending the rest of the existing integration work.

@@ -1,3 +1,4 @@
+import { reconcileForm8911BusinessSources } from "../../../../mef/forms/credits/business/f8911_source.ts";
 import { inputSchema as form8911InputSchema } from "../../../../../nodes/inputs/credits/business/f8911/index.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
@@ -140,5 +141,98 @@ Deno.test("Form 8911 public increased-rate calculation preserves its stated basi
   assertStringIncludes(
     JSON.stringify(invalid.diagnostics),
     "construction before January 29, 2023",
+  );
+});
+
+Deno.test("Form 8911 business source joins reject owner, activity, reference and credit conflicts", () => {
+  const { pending } = f1040_2025.executeReturn(creditInput(600));
+  const business = {
+    line_a_principal_business: "Equipment services",
+    line_b_business_code: "811310",
+    line_1_gross_receipts: 0,
+    line_f_accounting_method: "cash",
+    line_g_material_participation: true,
+    proprietor_recipient: "T",
+    business_reference: "synthetic-business-1",
+  };
+  const joined = {
+    ...pending,
+    f8911: pending.f8911,
+    f1040: pending.f1040,
+    f3800: pending.f3800,
+    schedule_c: { schedule_cs: [business] },
+  };
+  const before = JSON.stringify(joined);
+  assertEquals(
+    reconcileForm8911BusinessSources(joined.f8911, joined).businessCredit,
+    600,
+  );
+  assertEquals(JSON.stringify(joined), before);
+  for (
+    const changes of [
+      { proprietor_recipient: "S" },
+      { line_g_material_participation: false },
+      { business_reference: "another-business" },
+      { statutory_employee: true },
+      { disposed_of_business: true },
+    ]
+  ) {
+    assertThrows(
+      () =>
+        reconcileForm8911BusinessSources(joined.f8911, {
+          ...joined,
+          schedule_c: { schedule_cs: [{ ...business, ...changes }] },
+        }),
+      Error,
+      "participating taxpayer-owned",
+    );
+  }
+  assertThrows(
+    () =>
+      reconcileForm8911BusinessSources(joined.f8911, {
+        ...joined,
+        schedule_c: { schedule_cs: [business, business] },
+      }),
+    Error,
+    "participating taxpayer-owned",
+  );
+  assertThrows(
+    () =>
+      reconcileForm8911BusinessSources(joined.f8911, {
+        ...joined,
+        f1040: { ...joined.f1040, taxpayer_ssn: "999887777" },
+      }),
+    Error,
+    "proprietor differs",
+  );
+  assertThrows(
+    () =>
+      reconcileForm8911BusinessSources(joined.f8911, {
+        ...joined,
+        f3800: {
+          ...joined.f3800,
+          f8911_credit: {
+            credit_amount: 601,
+            subject_to_passive_activity_limit: false,
+          },
+        },
+      }),
+    Error,
+    "Form 3800 line 1s",
+  );
+  assertThrows(
+    () =>
+      reconcileForm8911BusinessSources(
+        { ...joined.f8911, cost: 20000 },
+        joined,
+      ),
+    Error,
+    "prepared return",
+  );
+  assertThrows(
+    () =>
+      form3800.build(joined.f3800, { pending: joined, filer: fixture.filer }),
+    Error,
+    "property-source reconciliation",
   );
 });

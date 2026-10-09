@@ -73,6 +73,7 @@ import { reconcileForm8941ScheduleC } from "../../health/f8941_source.ts";
 import { reconcileForm8994DirectEmployer } from "../../../../../domains/credits/business/form8994/form8994_source.ts";
 import { reconcileForm8864DocumentSource } from "../../../../../domains/credits/business/form8864/form8864_source.ts";
 import { reconcileForm8882DirectEmployer } from "../f8882_source.ts";
+import { reconcileForm8911BusinessSources } from "../f8911_source.ts";
 import { reconciledForm8908Source } from "../f8908_source_reconciliation.ts";
 import { reconcileForm8908PwaAttachments } from "../f8908_pwa.ts";
 
@@ -719,8 +720,14 @@ function form8835FacilityAllocations(
   return result;
 }
 
-function prepareForm3800Base(fields: PendingForm3800) {
+function prepareForm3800Base(
+  fields: PendingForm3800,
+  context: MefBuildContext,
+) {
   if (fields.f8911_credit !== undefined) {
+    if (context.pending) {
+      reconcileForm8911BusinessSources(context.pending.f8911, context.pending);
+    }
     throw new Error(
       "Form 8911 business export needs property-source reconciliation before Form 3800 filing",
     );
@@ -785,7 +792,7 @@ export function prepareForm3800DocumentParts(
   fields: PendingForm3800,
   context: MefBuildContext,
 ): Form3800DocumentParts | undefined {
-  const base = prepareForm3800Base(fields);
+  const base = prepareForm3800Base(fields, context);
   if (!base) return undefined;
   if (!context.documentIdsByPendingKey) {
     throw new Error("Form 3800 preparation needs reserved document IDs");
@@ -1518,7 +1525,7 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f3800.pdf",
   build(fields, context = {}) {
     if (!context.documentIdsByPendingKey) {
-      const base = prepareForm3800Base(fields);
+      const base = prepareForm3800Base(fields, context);
       // The bundle's first pass reserves document IDs; the second builds links.
       return base
         ? "<IRS3800><CAMTAndBEATInd>false</CAMTAndBEATInd></IRS3800>"
