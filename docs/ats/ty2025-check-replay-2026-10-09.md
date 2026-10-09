@@ -17,9 +17,9 @@ The eight retained partial Form 1040 fixtures were replayed through the public r
 | 1040-12 | 6 | 7 | 1 | native-blocked | 8 |
 | 1040-13 | 6 | 5 | 0 | partial-prepared, six native documents | 6 |
 
-The source inventory contains56 form copies across these packets. Scenarios4 and5 prepare only `IRS1040` and `IRSW2`: two-document partial packets cannot satisfy their seven- and nine-document source inventories. Scenarios2/3 stop on graph errors. Scenarios1/8/12 stop on native source reconciliation. Scenario13 prepares all six source-form roots; its separate packet passes local XSD and has six observed PDF pages, with presentation qualifications. No IRS acknowledgment is claimed.
+The source inventory contains56 form copies across these packets. Scenarios4 and5 prepare only `IRS1040` and `IRSW2`: two-document partial packets cannot satisfy their seven- and nine-document source inventories. Scenarios1/2/3/8/12 stop on native source reconciliation. Scenario13 prepares all six source-form roots; its separate packet passes local XSD and has six observed PDF pages, with presentation qualifications. No IRS acknowledgment is claimed.
 
-Existing blockers remain: QBI/cooperative reconciliation in2 and issued-recipient identity in3; payroll evidence in1; incomplete credits and statements in4/5; QCD/payer/recipient facts in8; health/QBI, deduction and partnership-basis conflicts in12; printed deduction/tax conflicts and packet presentation qualifications in13. The newly observed Scenario8 native recipient-SSN guard is recorded in `future_todo` and left unmodified.
+Existing blockers remain: missing1098 evidence and QBI/cooperative reconciliation in2 and issued-recipient identity in3; payroll evidence in1; incomplete credits and statements in4/5; QCD/payer/recipient facts in8; health/QBI, deduction and partnership-basis conflicts in12; printed deduction/tax conflicts and packet presentation qualifications in13. The newly observed Scenario8 native recipient-SSN guard is recorded in `future_todo` and left unmodified.
 
 ## Reproduce
 
@@ -61,7 +61,7 @@ Preparation: **native-blocked** — Error: Schedule H FICA-only export needs emp
 
 [IRS source packet](https://www.irs.gov/pub/irs-efile/1040-mef-ats-scenario-2-12012025.pdf). Required source copies: 1040, W-2, W-2, Schedule 1, Schedule A, Schedule C, 8283.
 
-Preparation: **native-blocked** — Error: Form 8995 positive filing needs one identified Schedule C business and exact Schedule 1/1040 source reconciliation
+Preparation: **native-blocked** — Error: Schedule A line 8a needs retained Form 1098 source
 
 | Pending field | Target | Actual | Result | Basis / source location |
 | --- | ---: | ---: | --- | --- |
@@ -224,3 +224,13 @@ line1a/8a proceeds/basis amounts:1988 short gain plus9725 long gain yields
 with the existing blank-zero qualification; full-return preparation still
 blocks on issued-recipient identity. ATS64/0; fixed54 observations stay41/12/1.
 See the [capital-gain checkpoint](./ty2025.md#october-9-scenario3-aggregate-capital-gain-source-route).
+
+### Scenario2 itemizing-election follow-up
+
+The public fixture now retains page8’s checked line18 election, real-estate
+tax8972, mortgage interest11000 and points251. Both ScheduleA exporters and
+full native preparation require the missing retained Form1098 source. The
+underlying cooperative-QBI block remains unresolved. A separate927 statutory-
+W-2 withholding omission is recorded as future item91 without changing tax logic.
+**65 typed ATS tests pass**; replay remains41/12/1 across the same54 observations.
+See the [source checkpoint](./ty2025.md#october-9-scenario2-itemizing-election-and-guarded-mortgage-source).

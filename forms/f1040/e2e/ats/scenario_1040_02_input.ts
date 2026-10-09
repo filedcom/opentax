@@ -55,6 +55,15 @@ export function scenario104002Input(): Record<string, unknown> {
       box13_statutory_employee: form.statutoryEmployee,
       box17_state_withheld: form.stateIncomeTaxWithheld,
     })),
+    schedule_a: {
+      // Page 8 marks line 18. This is a partial Schedule A until gifts reconcile.
+      force_itemized: true,
+      // Keep W-2 tax inputs separate; its statutory-withholding omission is deferred.
+      line_5b_real_estate_tax: facts.scheduleA.realEstateTax,
+      line_8a_mortgage_interest_1098:
+        facts.scheduleA.mortgageInterestReportedOn1098,
+      line_8c_points_no_1098: facts.scheduleA.pointsNotReportedOn1098,
+    },
     schedule_c: [{
       business_reference: "ats-1040-02-statutory-business",
       proprietor_recipient: "T",
@@ -94,5 +103,6 @@ export const SCENARIO_1040_02_RECONCILIATION = {
     "The assumed Nonresident Spouse Choice Statement has no retained binary bytes.",
     "The $300 credit applied from 2024 lacks accepted-return and transfer evidence.",
     "The printed 1040 marks MFJ and digital-assets No, but leaves result lines blank.",
+    "Schedule A marks the line 18 itemizing election; its line 8a mortgage amount has no retained Form 1098 source in this packet.",
   ],
 } as const;
