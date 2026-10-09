@@ -412,3 +412,52 @@ combinations remain existing open work. No parent main TODO is closed and no
 deferred task is implemented.
 
 Verification: the grouped typed regression passed **57 tests, zero failures**. All six complete returns passed the pinned TY2025 XSD; their 159 PDF pages contain no AcroForm widgets. All 51 distinct renders were visually reviewed, with 108 other pages matching previously reviewed renders byte for byte. Evidence and hashes are retained in `.state/research/form4562-section179-inventory-returns/` and the section 179 batch checkpoint. This bounded evidence does not establish IRS acceptance or close the broader depreciation task.
+
+## Section 179, health insurance and QBI ordering — October 9
+
+The inventory route now reconciles an established taxpayer-owned single-Schedule-C
+health plan with section 179, rather than rejecting every calculated Form 7206.
+Monthly policy/payment and employer-eligibility records determine eligible
+premiums; the existing health calculator limits the deduction to business profit
+after deductible half-SE. The proprietor, establishing business, profit, half-SE,
+retirement exclusion, each filed Form 7206 line and Schedule 1 line 17 must agree.
+A positive health amount without that source route still rejects.
+
+[26 CFR 1.179-2(c)(1), (5)](https://www.ecfr.gov/current/title-26/section-1.179-2)
+defines the active-business income limit and ordering for deductions whose
+limits interact. The implemented combination deducts the reconciled business
+health amount when computing section 179 active income, while adding back
+section 179 and the half-SE deduction. The selected section 179 allocation is
+fully allowed before and after health, so the hypothetical first step and final
+allocation coincide. This does not implement disallowed-179 allocation or
+carryover selection. [Form 7206 instructions](https://www.irs.gov/instructions/i7206)
+exclude employer-eligible months and preserve SE earnings; attributable health
+also reduces QBI under the [IRS QBI guidance](https://www.irs.gov/newsroom/qualified-business-income-deduction).
+
+All cases retain wages 50,000, net Schedule C profit 10,000, SE tax 1,413 and
+half-SE 707. In the first three, property cost is 10,000, section 179 is 2,000,
+credit is 480 and total depreciation is 5,910. The larger case uses cost100,000,
+section17920,000, credit4,800 and depreciation59,104. Its actual current credit
+is limited to income tax3,875; full credit4,800 still reduces asset basis.
+
+| Case | Eligible premiums | Health deduction | Section179 active income | Filed line11 | QBI deduction | Total tax |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Twelve monthly payments of500 | 6,000 | 6,000 | 56,000 | 10,000 | 659 | 5,120 |
+| Twelve monthly payments of1,000 | 12,000 | 9,293 | 52,707 | 10,000 | 0 | 4,808 |
+| Six employer-eligible months of1,000 | 6,000 | 6,000 | 56,000 | 10,000 | 659 | 5,120 |
+| Larger asset, income-limited health | 12,000 | 9,293 | 70,707 | 70,707 | 0 | 1,413 |
+
+Independent tax checks: full health gives AGI53,293, standard deduction15,750,
+QBI659 and taxable income36,884; the single Tax Table gives income tax4,187.
+Income-limited health gives AGI50,000, no QBI deduction and taxable income34,250;
+the Tax Table gives3,875. Add SE1,413 and subtract the allowed property credit.
+No expected value is taken from the return engine as its own reference.
+
+The fully employer-excluded primary-owner probe computes zero health but stops
+at the separate existing Form8995 single-business source guard. Its source and
+failure are retained as the new deferred board item; no Form8995 implementation
+was changed and that packet is not counted as a positive filing result. Multiple
+establishing businesses, owner combinations, retirement, Marketplace ordering,
+source authentication and IRS acceptance remain existing broader scope.
+
+Verification: **44 typed tests passed, zero failed** across the current-year depreciation and health-calculation regression. Four complete returns passed local TY2025v5.4 XSD and have110 reviewed PDF pages (23 inspected distinct renders;87 exact reviewed-page matches), with zero AcroForm fields/widgets. Source inputs, pending results, XML/PDF bytes and hashes are retained in `.state/research/form4562-section179-health-returns/`. No IRS acceptance or broader parent completion is claimed.

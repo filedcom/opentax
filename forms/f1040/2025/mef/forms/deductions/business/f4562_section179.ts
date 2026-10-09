@@ -9,6 +9,62 @@ import { inputSchema as w2Schema } from "../../../../../nodes/inputs/income/wage
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { roundWholeDollars } from "../../../../../whole-dollars.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
+import {
+  calculateSingleScheduleCForm7206,
+  form7206LinesSchema,
+  singleScheduleCPlanSchema,
+} from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/single-source.ts";
+import { TS } from "../../../../../nodes/types.ts";
+
+function section179HealthDeduction(
+  pending: Readonly<Record<string, unknown>>,
+  businesses: z.infer<typeof scheduleCSchema>,
+  proprietor: string,
+) {
+  const schedule1 = z.object({
+    line15_se_deduction: z.number().optional(),
+    line16_sep_simple: z.number().optional(),
+    line17_se_health_insurance: z.number().optional(),
+  }).parse(pending.schedule1);
+  const health = z.object({ line13: z.number().optional() }).parse(
+    pending.form7206 ?? {},
+  );
+  if (health.line13 === undefined) {
+    if ((schedule1.line17_se_health_insurance ?? 0) !== 0) {
+      throw new Error(
+        "Section 179 health deduction needs its reconciled Form 7206 source",
+      );
+    }
+    return 0;
+  }
+  const source = z.object({
+    single_schedule_c_plan: singleScheduleCPlanSchema,
+    marketplace_ptc_premium_overlap: z.literal(false),
+  }).parse(pending.form7206).single_schedule_c_plan;
+  const filed = form7206LinesSchema.parse(pending.form7206);
+  const expected = calculateSingleScheduleCForm7206(source);
+  const business = businesses.schedule_cs[0];
+  if (
+    businesses.schedule_cs.length !== 1 || source.recipient !== TS.T ||
+    source.taxpayer_identity.ssn.replaceAll("-", "") !== proprietor ||
+    source.business_reference !== business.business_reference ||
+    source.schedule_c_line31_net_profit !== computeNetProfit(business) ||
+    source.schedule1_line15_se_tax_deduction !==
+      (schedule1.line15_se_deduction ?? 0) ||
+    source.schedule1_line16_retirement_deduction !== 0 ||
+    (schedule1.line16_sep_simple ?? 0) !== 0 ||
+    Object.keys(expected).some((key) =>
+      filed[key as keyof typeof filed] !==
+        expected[key as keyof typeof expected]
+    ) ||
+    expected.line14 !== (schedule1.line17_se_health_insurance ?? 0)
+  ) {
+    throw new Error(
+      "Section 179 health deduction differs from the owned business, source plan or filed lines",
+    );
+  }
+  return expected.line14;
+}
 
 export function reconcileInventorySection179Income(
   filed: z.infer<typeof filedCurrentYearSchema>,
@@ -72,14 +128,11 @@ export function reconcileInventorySection179Income(
       "Section 179 inventory active-income limit needs matching ownership/status and fully sourced active Schedule C activities",
     );
   }
-  const health = pending.form7206 === undefined
-    ? undefined
-    : z.record(z.unknown()).parse(pending.form7206);
-  if (health?.line13 !== undefined) {
-    throw new Error(
-      "Section 179 inventory needs separate self-employed health deduction reconciliation",
-    );
-  }
+  const health = section179HealthDeduction(
+    pending,
+    scheduleC,
+    review.proprietor_ssn,
+  );
   const wages = pending.w2 === undefined
     ? undefined
     : w2Schema.parse(pending.w2);
@@ -110,11 +163,14 @@ export function reconcileInventorySection179Income(
     filed.section179_summary!.line12_section179_expense_deduction;
   if (
     roundWholeDollars(profits) !== (schedule1.line3_schedule_c ?? 0) ||
-    Math.max(0, roundWholeDollars(profits + deduction + totalWages)) !==
+    Math.max(
+        0,
+        roundWholeDollars(profits + deduction + totalWages - health),
+      ) !==
       review.taxpayer_active_business_income
   ) {
     throw new Error(
-      "Section 179 active income must reconcile after other depreciation but before section 179 and half-SE deduction",
+      "Section 179 active income must reconcile after other depreciation and health insurance but before section 179 and half-SE deduction",
     );
   }
 }

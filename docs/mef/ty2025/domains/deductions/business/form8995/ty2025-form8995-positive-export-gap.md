@@ -637,3 +637,16 @@ The credit-limited case reduces depreciable basis by the full $18,000 property c
 All four complete XML returns validate against cached TY2025 2025v5.4 Return1040 XSD. Their 151 PDF pages (27/33/33/58) are covered by visual review of 67 distinct rendered pages and 84 exact PNG hash matches to reviewed pages; all packets have zero remaining AcroForm fields/widgets. Focused regression passed 82 tests; two final tests passed after strengthening document-ID and full-basis-reduction assertions (overlapping scope, not an additive count). Artifacts: `.state/research/form8911-profitable-returns/`; checkpoint: `.state/research/board-execution-2026-10-08/form8911-profit-batch-checkpoint.json`.
 
 This verifies the bounded existing route; broader form support, external source authentication, matching IRS business rules and ATS acceptance remain open. CI at preceding head `0885b3b12` exhausted its V8 heap before producing JUnit; that investigation is deferred in `future_todo` and no green CI claim is made.
+
+### Section 179 inventory and health ordering — October 9
+
+The related Form4562 inventory route now reconciles the established primary-owner
+single-Schedule-C plan, monthly exclusions and allowed health deduction before
+its active-income limit, preserving SE earnings and the resulting QBI reduction.
+Full and income-limited premiums, six employer-excluded months and a larger
+credit-limited asset have independent final-tax checks. See the
+[section179 combination evidence](../form4562/ty2025-form4562-gap.md).
+The fully employer-excluded primary-owner Form8995 rejection is retained only
+in `future_todo`; no zero-health filing support or parent-task closure is claimed.
+
+Verification: **44 typed tests passed, zero failed** across the current-year depreciation and health-calculation regression. Four complete returns passed local TY2025v5.4 XSD and have110 reviewed PDF pages (23 inspected distinct renders;87 exact reviewed-page matches), with zero AcroForm fields/widgets. Source inputs, pending results, XML/PDF bytes and hashes are retained in `.state/research/form4562-section179-health-returns/`. No IRS acceptance or broader parent completion is claimed.
