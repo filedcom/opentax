@@ -144,3 +144,42 @@ issuer bytes or authenticated accepted returns. Property-loss limitations,
 short tax years, other activity destinations, election attachments and broader
 Form6251 coverage remain unfinished. The original full suite is still running
 in its unchanged runtime worktree; the grouped pass is not a full-suite pass.
+
+
+## October 9 mixed-pool and spouse-owner returns
+
+Four new complete-return tests pass, extending the preceding132-test group
+without changing production calculations. The fixtures combine current and
+prior-year cost pools for a single filer and independent primary/spouse owners.
+Two fixtures have opposite adjustments that net to zero; each cost and prior-year
+schedule still undergoes source validation. Native ScheduleC copies are checked
+individually for business description, proprietor name/TIN, expense amount and
+zero net profit. Prior-year pools with no current regular deduction do not add
+empty current-year business copies.
+
+| Return | Pools / current businesses | Line2o | Regular tax | AMT | Total tax | Owed |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Single, two vintages | 2 / 1 | 10,000 | 37,067 | 59,483 | 96,550 | 61,550 |
+| Single, offsetting pools | 2 / 1 | 0 | 37,067 | 56,683 | 93,750 | 58,750 |
+| Joint, spouse current costs | 2 / 1 | 10,000 | 26,898 | 55,960 | 82,858 | 47,858 |
+| Joint, four offsetting pools | 4 / 2 | 0 | 26,898 | 53,160 | 80,058 | 45,058 |
+
+All use wages200,000, ISO240,000 and withholding35,000. Independent arithmetic
+uses the [2025 tax computation worksheet](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf):
+joint taxable income168,500 ×22% −10,172 =26,898; single taxable income184,250
+×24% −7,153 =37,067. The initial joint expectation used the wrong subtraction
+amount and was20 too high; the corrected expectation follows the IRS worksheet,
+not an engine change. Source-based AMT arithmetic independently matches all four.
+
+All four complete XML packets pass XSD. All30 PDF pages were reviewed through
+25 distinct images and five exact matches, with13 contact sheets inspected.
+All32 mutations reject in both native and full-PDF export: duplicated cost
+references across pools, owner, missing pool, entered deduction, business expense,
+final identity, line2o and final AMT. Sixteen of those native rejections are also
+retained in the committed tests.
+
+Existing qualifications repeat: ScheduleC blank zero lines76, native6251 line1a
+omission84, and joint6251's primary-only name header. No newly discovered task
+or deferred repair is added. Prior-return, invoice and election authenticity,
+property losses, other destinations and IRS acceptance remain unresolved.
+Private evidence: `.state/research/form6251-circulation-pools-2026-10-09/`.
