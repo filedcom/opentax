@@ -58,3 +58,42 @@ export function circulationInputs(
     }],
   };
 }
+
+export function circulationScheduleInputs(year: number, elected = false) {
+  const regular = elected
+    ? (year >= 2023 ? 10000 : 0)
+    : year === 2025
+    ? 30000
+    : 0;
+  const base = circulationInputs(regular, year >= 2023 ? 10000 : 0, elected);
+  return {
+    ...base,
+    f59e: [{
+      ...base.f59e[0],
+      regular_tax_deduction: undefined,
+      amt_deduction: undefined,
+      amortization_period_start: `${year}-01-01`,
+      remaining_unamortized: 30000 - Math.min(2025 - year, 3) * 10000,
+      circulation_cost_schedule: {
+        owner_tin: "123456789",
+        calendar_year_taxpayer_confirmed: true,
+        section173_eligible_costs_confirmed: true,
+        no_section173_capitalization_election_confirmed: true,
+        costs_paid_or_incurred_year: year,
+        cost_records: [{ source_reference: `costs-${year}-A`, amount: 18000 }, {
+          source_reference: `costs-${year}-B`,
+          amount: 12000,
+        }],
+        prior_years: Array.from(
+          { length: Math.min(2025 - year, 3) },
+          (_, i) => ({
+            tax_year: year + i,
+            regular_deduction: elected ? 10000 : i === 0 ? 30000 : 0,
+            amt_deduction: 10000,
+            reviewed_return_reference: `reviewed-${year + i}-return`,
+          }),
+        ),
+      },
+    }],
+  };
+}

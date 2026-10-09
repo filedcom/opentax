@@ -1,4 +1,8 @@
 import {
+  assertDistinctCirculationCosts,
+  resolveCirculationDeductions,
+} from "../../../../../nodes/inputs/deductions/business/f59e/circulation.ts";
+import {
   ExpenditureType,
   inputSchema as form59eSourceSchema,
 } from "../../../../../nodes/inputs/deductions/business/f59e/index.ts";
@@ -101,7 +105,30 @@ export function assertForm6251CirculationSource(
   const items = parsed.success ? parsed.data.f59es : [];
   const circulation = items.filter((item) =>
     item.expenditure_type === ExpenditureType.Circulation
+  ).map((item) => ({ ...item, ...resolveCirculationDeductions(item, 2025) }));
+  assertDistinctCirculationCosts(
+    circulation.map((item) => item.circulation_cost_schedule),
   );
+  for (const item of circulation) {
+    if (!item.circulation_cost_schedule) continue;
+    const general = generalSchema.parse(pending?.general);
+    const finalIdentity = generalSchema.parse(pending?.f1040);
+    const owner = item.circulation_cost_schedule.owner_tin;
+    const primary = general.taxpayer_ssn?.replaceAll("-", "") === owner &&
+      finalIdentity.taxpayer_ssn?.replaceAll("-", "") === owner;
+    const spouse = general.filing_status === "mfj" &&
+      finalIdentity.filing_status === "mfj" &&
+      general.spouse_ssn?.replaceAll("-", "") === owner &&
+      finalIdentity.spouse_ssn?.replaceAll("-", "") === owner;
+    if (
+      (!primary && !spouse) || (item.circulation_schedule_c_expense &&
+        item.circulation_schedule_c_expense.owner_tin !== owner)
+    ) {
+      throw new Error(
+        "Circulation amortization owner must match the finalized filer and business expense",
+      );
+    }
+  }
   const difference = circulation.reduce(
     (sum, item) =>
       sum + (item.regular_tax_deduction ?? 0) - (item.amt_deduction ?? 0),

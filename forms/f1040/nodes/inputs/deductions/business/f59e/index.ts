@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  assertDistinctCirculationCosts,
+  circulationScheduleSchema,
+  resolveCirculationDeductions,
+} from "./circulation.ts";
 import type { NodeResult } from "../../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
@@ -26,13 +31,14 @@ export const itemSchema = z.object({
   amortization_period_start: z.string(),
   // Original election amount
   original_amount: z.number().nonnegative(),
-  // Remaining unamortized balance carried over from prior year
+  // Unrecovered AMT balance before the current deduction, including new costs
   remaining_unamortized: z.number().nonnegative(),
   regular_tax_deduction: z.number().nonnegative().optional(),
   amt_deduction: z.number().nonnegative().optional(),
   regular_three_year_writeoff_elected: z.boolean().optional(),
   circulation_reviewed_workpaper_reference: z.string().trim().min(1).optional(),
   circulation_no_unamortized_property_loss: z.literal(true).optional(),
+  circulation_cost_schedule: circulationScheduleSchema.optional(),
   circulation_schedule_c_expense: z.object({
     business_reference: z.string().trim().min(1),
     expense_description: z.string().trim().min(1),
@@ -47,10 +53,19 @@ export const inputSchema = z.object({
 type F59eItem = z.infer<typeof itemSchema>;
 type F59eItems = F59eItem[];
 
-function circulationAdjustment(items: F59eItems): number {
+function circulationAdjustment(items: F59eItems, taxYear: number): number {
+  assertDistinctCirculationCosts(
+    items.filter((item) =>
+      item.expenditure_type === ExpenditureType.Circulation
+    ).map((item) => item.circulation_cost_schedule),
+  );
   const references = new Set<string>();
-  return items.reduce((sum, item) => {
-    if (item.expenditure_type !== ExpenditureType.Circulation) return sum;
+  return items.reduce((sum, source) => {
+    if (source.expenditure_type !== ExpenditureType.Circulation) return sum;
+    const item = {
+      ...source,
+      ...resolveCirculationDeductions(source, taxYear),
+    };
     if (
       item.regular_tax_deduction === undefined ||
       item.amt_deduction === undefined ||
@@ -93,9 +108,9 @@ class F59eNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([form6251]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
-    const line2o = circulationAdjustment(parsed.f59es);
+    const line2o = circulationAdjustment(parsed.f59es, ctx.taxYear);
     const unsupportedBalance = parsed.f59es.reduce(
       (sum, item) =>
         sum +
