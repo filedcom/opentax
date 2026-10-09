@@ -232,3 +232,13 @@ both stated increased-rate cases compute 2,700 after 1,000 section 179
 The consolidated MeF readiness branch checks business property sources against the prepared Form 8911, taxpayer SSN, exactly one explicitly taxpayer-owned participating Schedule C, and Form 3800 line 1s credit. It rejects changed ownership, ambiguous business references, passive/statutory/disposed activities and inconsistent credit amounts. These joins do not authenticate invoices, PWA evidence or section 179 deductions; business native/PDF filing remains guarded pending the rest of the existing integration work.
 
 Validation on the combined main baseline: 332 selected Form 3800/Form 8911 calculation, native and PDF checks passed, zero failed. The new source-join cases cover mismatched/duplicate business references, owner and activity conflicts, changed prepared sources and credit totals, with input immutability checked. No new full-return or filled-PDF claim is made for business filing.
+
+### Schedule A business property presentation — October 9
+
+The property serializers now map business-use ratios, section 179, net business cost, the line 13 rate answer and capped business credit into native Schedule A and canonical PDF fields. Mixed-use examples retain the personal basis before section 179; 100% business use stops before Part III. PDF percentages retain fractional digits, and both outputs reject ratios beyond the IRS schema's five-decimal precision. Existing filing descriptors continue to guard business export while the parent, asset/basis, PWA and source integration is completed.
+
+Three standalone Schedule A examples validate against the cached TY2025 2025v5.4 schema and have three visually reviewed filled pages: 37.5% business use of $4,000 with $500 section 179 gives business credit $60 and personal credit $750; the $4,000,000 business-only example caps $239,970 at $100,000 and leaves Part III blank; construction beginning January 28, 2023 marks line 13 Yes and raises the mixed-use business credit to $300. These are property-presentation examples, not complete business filing routes. The personal full-return evidence remains five returns and 38 pages.
+
+Authority: [December 2025 IRS Form 8911 instructions](https://www.irs.gov/instructions/i8911), Schedule A lines 9, 11 and 13; pinned December 2025 Schedule A template. Local review artifacts: `.state/research/form8911-business-properties/`; root checkpoint: `form8911-property-output-checkpoint.json`.
+
+Focused regression: 39 tests passed, zero failed, covering property arithmetic, native/PDF projection, public Form 3800 source joins, template integrity and existing personal multi-property returns. No full-suite or IRS acceptance claim is made.
