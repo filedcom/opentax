@@ -901,3 +901,14 @@ new tests pass with 54 native/PDF rejection variants, and 33 related source
 tests pass. Household MAGI and monthly PTC reconcile independently through
 final refunds. Deferred zero-value presentation, broader combinations,
 source authenticity and IRS acceptance remain open.
+
+## October 9 annual dependent-source packets
+
+The [annual dependent-income checkpoint](./ty2025-form8962-dependent-magi-gap.md#october-9-annual-dependent-income-return-checkpoint)
+adds eight complete annual-line11 returns and56 observed pages for multiple
+W-2/1099 sources, mixed dependent income and blind filing thresholds. All eight
+pass XSD and independent source/final-tax replay. Native rejects all56 changed
+variants; PDF rejects40 but accepts16 annual-policy-total changes. The latter
+is newly deferred item80, left unimplemented; annual PDF guard parity remains
+incomplete. Source authenticity, other combinations and IRS acceptance remain
+open.
