@@ -785,3 +785,6 @@ review assertions; the run does not authenticate records or signatures. Broader
 combinations, complete business rules and IRS acceptance remain open. No deferred
 work was implemented, no parent task closed, and the full-suite deferred78
 blocker remains separate. Scoped CI on the runtime head passed run37887768222.
+
+
+The subsequent [complete interstate checkpoint](./ty2025-form8962-interstate-move-gap.md#october-9-complete-interstate-return-checkpoint) adds ten public-entry XSD-valid returns/60 observed pages and25 focused passes. It covers reported2–12-state moves, Hawaii, corrected unreported arrival, a gap month and region-specific repayment limits. This resolves the prior checkpoint's lack of full interstate packet evidence for these ten cases only; broader coverage and authentication remain open.
