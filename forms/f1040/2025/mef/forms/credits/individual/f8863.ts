@@ -332,7 +332,7 @@ function institutionXml(
     ),
     boolElement(
       "PriorYear1098TReceivedInd",
-      institution.prior_year_1098t_received,
+      institution.prior_year_1098t_source?.box7_early_2025 ?? false,
     ),
     element("EIN", institution.ein?.replaceAll("-", "")),
   ]);

@@ -227,7 +227,7 @@ Deno.test("Form 8863 PDF closes ambiguous institution and unreconciled return pa
         final,
       ),
     Error,
-    "unambiguous prior-year box 7 answer",
+    "owned 2024 Form 1098-T and explicit box 7 answer",
   );
   assertThrows(
     () =>

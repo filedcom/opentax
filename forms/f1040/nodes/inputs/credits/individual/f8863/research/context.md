@@ -29,10 +29,13 @@ More than two schools produce additional page-2 copies completed only through
 line 22; student credit calculations appear once, on that student's first copy.
 Each institution needs a distinct matched expense workpaper, and the combined
 expenses must reconcile before the per-student AOC or per-return LLC cap.
-Foreign addresses and a positive `prior_year_1098t_received` source remain
-guarded because the latter does not prove the narrower printed question of
-whether the 2024 Form 1098-T had box 7 checked. Special MAGI addbacks and broader
-source authenticity remain open. Retained packet evidence is recorded in the
+Prior-year receipt now needs an owned 2024 Form 1098-T source, including its
+explicit box-7 answer. Both native line22(3) and the PDF derive the answer from
+that source, rather than treating receipt alone as a checked box. Current costs
+require dated 2025 payment-account records and a separate assistance inventory;
+2024 box1 amounts never enter the current credit. Foreign addresses, special
+MAGI addbacks and broader source authenticity remain open. Retained packet
+evidence is recorded in the
 [PDF review](../../../../../../../../docs/mef/ty2025/domains/credits/individual/form8863/ty2025-form8863-pdf-gap.md).
 
 **Form 8863 feeds two downstream destinations:**

@@ -1,5 +1,69 @@
 # TY2025 Form 8863 positive PDF boundary
 
+## October 9 prior-year school source checkpoint
+
+The prior-year Form1098-T receipt flag no longer substitutes for the line22(3)
+question about receipt **with box7 checked**. A received form now requires a
+structured owned 2024 source with student SSN, school name/EIN, document
+reference and explicit box7 answer. Both native `PriorYear1098TReceivedInd`
+and PDF line22(3) use that answer. The XSD ties this indicator to22a(3)/22b(3);
+the [official form](https://www.irs.gov/pub/irs-prior/f8863--2025.pdf) supplies
+the full question. The earlier blanket PDF rejection below is historical for
+this reviewed source route.
+
+The [2025 instructions](https://www.irs.gov/instructions/i8863) permit only
+amounts paid or treated as paid in2025 for the2025 credit, excluding payments
+made in2024 or2026. Accordingly, this prior-history route requires the current
+issued form or supported nonreceipt exception, an assistance inventory, and
+current tuition-payment records with2025 dates and account references. The
+prior-year box1 amount stays outside current expenses. Duplicate prior/current
+document references and mismatched student/school ownership reject.
+
+Eight source scenarios cover checked and unchecked prior boxes for both AOC
+and LLC; three-school continuations with mixed prior answers and a missing
+current-year form; and adult-parent two-student AOC/LLC and LLC-only returns.
+Each prior source records12,500 paid in2024 as an explicit non-current control.
+Each single-school current source has4,500 paid less500 aid; three-school
+students each have9,000 current tuition less1,500 aid. Missing current forms
+retain the documented request/cooperation exception from the school review.
+
+| Cases | Current adjusted expenses | Nonrefundable education | Refundable AOC | Final tax | Refund |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| AOC checked / unchecked | 4,000 | 928 | 1,000 | 0 | 4,000 |
+| LLC checked / unchecked | 4,000 | 800 | 0 | 128 | 2,872 |
+| AOC three schools | 7,500 | 928 | 1,000 | 0 | 4,000 |
+| LLC three schools | 7,500 | 928 | 0 | 0 | 3,000 |
+| Parent mixed students | 7,500 + 7,500 | 3,000 | 1,000 | 3,955 | 8,045 |
+| Parent two LLC students | 7,500 + 7,500 | 2,000 | 0 | 4,955 | 6,045 |
+
+Amounts retain the reviewed25,000/75,000 wage tax-table fixtures and parent
+ODC1,000. Identical checked/unchecked outcomes confirm that the reporting
+answer does not add another year's tuition to the credit. The mixed parent
+return has AOC nonrefundable1,500 plus LLC1,500; the two-LLC return caps total
+15,000 tuition at10,000 before its20% credit.
+
+Validation: all eight focused typed tests pass, including96 native and96
+fresh full-PDF negative checks. Eight complete returns pass local TY2025 v5.4
+XSD. All52 flattened pages were reviewed through31 unique page hashes on16
+contact sheets; identities, school answers, credit limits and final tax agree.
+The existing deferred76 zero-display issue repeats on four zero-tax1040s and
+both parent Schedule8812s. No new PDF defect was found. The grouped run passed
+182/183; its sole failure expected the obsolete prior-box7 error wording and
+is resolved by updating that assertion and rerunning the four-test PDF file.
+Together with the focused cases this verifies191 distinct education tests.
+The benchmark remains46 passes/87 failures, with all133 rows unchanged.
+
+A separate read-only probe found that the older no-prior-history route accepts
+a contradictory2024 payment date despite a2025 tax-year label. This is newly
+recorded as deferred101, not implemented. Foreign schools, wider eligibility,
+source authentication and IRS acceptance remain open.
+
+Private evidence: `.state/research/form8863-prior-school-2026-10-09/` retains
+source/pending/expected records, native XML, full PDFs, renders, page hashes,
+verification report, focused/grouped/replay logs and benchmark comparison.
+Run the `form8863-prior-school-source.test.ts` review with `deno test -A` and
+`-- --write-review-artifacts`; the retained verifier checks XSD and full packets.
+
 ## October 9 school-continuation source checkpoint
 
 The existing more-than-two-school gap now has a complete source/native/PDF

@@ -141,11 +141,10 @@ function institutionFields(item: F8863Item): Record<string, unknown> {
     const us = institution.us_address;
     if (
       !us || us.line2 !== undefined ||
-      institution.prior_year_1098t_received ||
       institution.name.length > 42 || us.line1.length > 42
     ) {
       throw new Error(
-        "Form 8863 PDF needs a two-line U.S. institution address and unambiguous prior-year box 7 answer",
+        "Form 8863 PDF needs a two-line U.S. institution address",
       );
     }
     const secondLine = `${us.city}, ${us.state} ${us.zip}`;
@@ -163,7 +162,9 @@ function institutionFields(item: F8863Item): Record<string, unknown> {
     projected[`${prefix}_current_1098t`] = answer(
       institution.current_year_1098t_received,
     );
-    projected[`${prefix}_prior_box7`] = "no";
+    projected[`${prefix}_prior_box7`] = answer(
+      institution.prior_year_1098t_source?.box7_early_2025 ?? false,
+    );
     if (institution.ein) {
       const digits = institution.ein.replaceAll("-", "");
       for (let digit = 0; digit < 9; digit++) {

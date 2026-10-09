@@ -32,12 +32,25 @@ const foreignInstitutionAddressSchema = z.object({
   postal_code: z.string().min(1).optional(),
 });
 
+// Line 22(3) asks about a received prior-year form with box 7 checked,
+// not receipt alone. Keep the owned prior-year copy separate from 2025 costs.
+const priorYear1098tSourceSchema = z.object({
+  tax_year: z.literal(2024),
+  student_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+  institution_name: z.string().trim().min(1),
+  institution_ein: z.string().regex(/^\d{2}-?\d{7}$/),
+  document_id: z.string().trim().min(1),
+  box1_payments: z.number().finite().nonnegative(),
+  box7_early_2025: z.boolean(),
+}).strict();
+
 const institutionFilingSchema = z.object({
   name: z.string().min(1),
   us_address: usInstitutionAddressSchema.optional(),
   foreign_address: foreignInstitutionAddressSchema.optional(),
   current_year_1098t_received: z.boolean(),
   prior_year_1098t_received: z.boolean(),
+  prior_year_1098t_source: priorYear1098tSourceSchema.optional(),
   ein: z.string().regex(/^\d{2}-?\d{7}$/).optional(),
 }).refine(
   (value) =>
@@ -385,6 +398,33 @@ export function validateForm8863FilingSource(
     source.student_ssn.replaceAll("-", "") ===
       item.student_ssn?.replaceAll("-", "") &&
     source.institution_name === institution.name;
+  const prior = institution.prior_year_1098t_source;
+  if (
+    institution.prior_year_1098t_received !== (prior !== undefined) ||
+    (prior && (!sourceMatchesSchool(prior) ||
+      prior.institution_ein.replaceAll("-", "") !==
+        institution.ein?.replaceAll("-", "")))
+  ) {
+    throw new Error(
+      "Form 8863 prior-year receipt needs its owned 2024 Form 1098-T and explicit box 7 answer",
+    );
+  }
+  if (
+    prior && (workpaper.payment_sources === undefined ||
+      workpaper.assistance_sources === undefined ||
+      (institution.current_year_1098t_received &&
+        !workpaper.issued_form1098t_source) ||
+      workpaper.payment_sources.some((payment) =>
+        payment.payment_date === undefined ||
+        payment.payment_date < "2025-01-01" ||
+        payment.payment_date > "2025-12-31" ||
+        !payment.payment_account_record_reference
+      ))
+  ) {
+    throw new Error(
+      "Form 8863 prior-year school history needs current issued or exception evidence, assistance inventory and dated 2025 payment account records",
+    );
+  }
   const issued = workpaper.issued_form1098t_source;
   if (
     issued &&
@@ -683,6 +723,16 @@ function assertDistinctEducationSourceReferences(items: F8863Items): void {
   const paymentIds = new Set<string>();
   const assistanceIds = new Set<string>();
   for (const item of items) {
+    for (const institution of item.filing_details?.institutions ?? []) {
+      const priorId = institution.prior_year_1098t_source?.document_id;
+      if (!priorId) continue;
+      if (documentIds.has(priorId)) {
+        throw new Error(
+          "Form 8863 prior/current schools cannot reuse a Form 1098-T document reference",
+        );
+      }
+      documentIds.add(priorId);
+    }
     const workpapers = item.institution_expense_workpapers?.map((source) =>
       source.workpaper
     ) ??
