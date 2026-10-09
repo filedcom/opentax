@@ -1,4 +1,7 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import { reconcileForm4952DividendPath } from "../../../../domains/deductions/investments/form4952/form4952_dividend_reconciliation.ts";
 import { reconcileForm4952InterestPath } from "../../../../domains/deductions/investments/form4952/form4952_interest_reconciliation.ts";
 import { reconcileForm4952CombinedPath } from "../../../../domains/deductions/investments/form4952/form4952_combined_reconciliation.ts";
@@ -147,7 +150,8 @@ export const form4952Pdf: PdfFormDescriptor = {
     } else if (fields.source_1099_interest !== undefined) {
       reconcileForm4952InterestPath(fields, allPending);
     } else if (
-      fields.source_k1_interest !== undefined &&
+      (fields.source_k1_interest !== undefined ||
+        fields.source_k1_dividends !== undefined) &&
       fields.source_k1_investment_interest !== undefined
     ) {
       reconcileForm4952PartnershipPath(fields, allPending);

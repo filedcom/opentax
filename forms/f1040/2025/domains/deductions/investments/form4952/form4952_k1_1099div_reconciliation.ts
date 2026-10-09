@@ -1,3 +1,4 @@
+import { k1PortfolioSources } from "./form4952_k1_portfolio_sources.ts";
 import { z } from "zod";
 import { inputSchema as interestSchema } from "../../../../../nodes/inputs/income/investments/f1099int/index.ts";
 import { plainInvestmentBox1Or3 } from "./form4952_interest_reconciliation.ts";
@@ -41,14 +42,6 @@ const numberedLines = [
   "line7",
   "line8",
 ] as const;
-const permittedPartnershipFields = new Set([
-  "partnership_name",
-  "partnership_ein",
-  "source_document_reference",
-  "recipient_tin",
-  "box13_code_h_investment_interest",
-]);
-
 /** K-1 code H investment interest limited by domestic investment dividends. */
 export function reconcileForm4952K1InterestAgainst1099DivPath(
   fields: Record<string, unknown>,
@@ -74,10 +67,8 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
   const oidPayers = oid.success ? oid.data.f1099oids : [];
   const interestPayers = interest.success ? interest.data.f1099ints : [];
   const hasInterest = form.data.source_1099_interest !== undefined;
-  const k1Expense = k1s.reduce(
-    (sum, item) => sum + (item.box13_code_h_investment_interest ?? 0),
-    0,
-  );
+  const portfolio = k1PortfolioSources(k1s, form.data);
+  const k1Expense = portfolio.expense;
   const ordinaryDividends = payers.reduce(
     (sum, item) => sum + item.box1a,
     0,
@@ -97,15 +88,7 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
   const claimedInterestIncome = hasInterest ? interestIncome : 0;
   if (
     k1s.length === 0 || payers.length === 0 ||
-    new Set(k1s.map((item) => item.partnership_ein)).size !== k1s.length ||
-    new Set(k1s.map((item) => item.source_document_reference)).size !==
-      k1s.length ||
-    k1s.some((item) =>
-      !item.partnership_ein || !item.source_document_reference ||
-      !item.recipient_tin ||
-      (item.box13_code_h_investment_interest ?? 0) <= 0 ||
-      Object.keys(item).some((key) => !permittedPartnershipFields.has(key))
-    ) ||
+    !portfolio.valid ||
     payers.some((item) =>
       (item.box7 ?? 0) > 0 ||
       (item.box8?.trim().length ?? 0) > 0 ||
@@ -133,10 +116,6 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
       )
     )) ||
     !sourceAmountsMatch(
-      form.data.source_k1_investment_interest,
-      k1s.map((item) => item.box13_code_h_investment_interest ?? 0),
-    ) ||
-    !sourceAmountsMatch(
       form.data.source_1099_dividends,
       payers.map((item) => item.box1a),
     ) ||
@@ -161,9 +140,6 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
     (form.data.source_1099_capital_gain_distributions ?? 0) !== 0 ||
     (form.data.source_1099_royalties ?? 0) !== 0 ||
     (form.data.source_private_activity_bond_interest ?? 0) !== 0 ||
-    (form.data.source_k1_interest ?? 0) !== 0 ||
-    (form.data.source_k1_dividends ?? 0) !== 0 ||
-    (form.data.source_k1_qualified_dividends ?? 0) !== 0 ||
     (form.data.source_k1_allowed_investment_expenses ?? 0) !== 0 ||
     (form.data.form8814_line9_qualified_dividends ?? 0) !== 0 ||
     (form.data.form8814_line10_capital_gain ?? 0) !== 0 ||
@@ -178,8 +154,11 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
   const lines = calculateForm4952(form.data);
   if (
     lines.line1 !== k1Expense ||
-    lines.line4a !== ordinaryDividends + claimedInterestIncome ||
-    lines.line4b !== qualifiedDividends || lines.line8 <= 0 ||
+    lines.line4a !==
+      ordinaryDividends + claimedInterestIncome + portfolio.interest +
+        portfolio.dividends ||
+    lines.line4b !== qualifiedDividends + portfolio.qualified ||
+    lines.line8 <= 0 ||
     lines.line2 !== 0 || lines.line4d !== 0 || lines.line5 !== 0 ||
     numberedLines.some((line) => fields[line] !== lines[line])
   ) {
@@ -189,10 +168,13 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
   }
   if (
     scheduleA.data.line_9_investment_interest !== lines.line8 ||
-    (hasInterest &&
-      (form1040.data.line2b_taxable_interest ?? 0) !== interestIncome) ||
-    (form1040.data.line3a_qualified_dividends ?? 0) !== qualifiedDividends ||
-    form1040.data.line3b_ordinary_dividends !== ordinaryDividends ||
+    (hasInterest || portfolio.interest > 0) &&
+      (form1040.data.line2b_taxable_interest ?? 0) !==
+        interestIncome + portfolio.interest ||
+    (form1040.data.line3a_qualified_dividends ?? 0) !==
+      qualifiedDividends + portfolio.qualified ||
+    form1040.data.line3b_ordinary_dividends !==
+      ordinaryDividends + portfolio.dividends ||
     form1040.data.line12e_itemized_deductions < lines.line8
   ) {
     throw new Error(

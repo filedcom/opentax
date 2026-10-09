@@ -1,5 +1,51 @@
 # TY2025 Form 4952 portfolio royalty boundary
 
+## October 9 partnership income and expense combinations
+
+Shared source reconciliation now admits separate income-only and expense-only
+K-1 copies, including box5 interest and box6a/6b dividends, across partnership-only
+and mixed 1099 investment portfolios. Native and PDF selection also admits a
+partnership dividend portfolio without partnership interest. Each component,
+source reference and owner must reconcile before Schedule A and Form1040 export.
+Qualified dividends remain excluded from the investment-interest limit without
+a line4g election, while retaining their preferential treatment in final tax.
+
+The [2025 partner instructions](https://www.irs.gov/pub/irs-prior/i1065sk1--2025.pdf)
+and [Form4952 instructions](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+provide the box5/6a/6b/codeH destinations. These constructed cases use separate
+identified copies, explicit investment classifications, no codeB expense or
+line4g election, and synthetic retained mortgage evidence of40,000.
+
+| Portfolio | Gross / qualified investment income | Code H expense | Deduction / carry | AGI | Itemized | Tax / refund |
+|---|---:|---:|---:|---:|---:|---:|
+| K-1 interest only | 2,000 / 0 | 3,000 | 2,000 / 1,000 | 162,000 | 42,000 | 21,647 / 8,353 |
+| K-1 dividends only | 3,000 / 1,000 | 3,000 | 2,000 / 1,000 | 163,000 | 42,000 | 21,797 / 8,203 |
+| Mixed K-1 income copies | 4,000 / 1,000 | 3,500 | 3,000 / 500 | 164,000 | 43,000 | 21,797 / 8,203 |
+| K-1 plus bank/Treasury/OID | 5,000 / 1,000 | 4,500 | 4,000 / 500 | 165,000 | 44,000 | 21,797 / 8,203 |
+| K-1 plus all 1099 payers | 6,200 / 1,400 | 5,500 | 4,800 / 700 | 166,200 | 44,800 | 21,857 / 8,143 |
+| Joint K-1 plus all 1099 payers | 6,200 / 1,400 | 5,500 | 4,800 / 700 | 206,200 | 44,800 | 25,238 / 4,762 |
+
+Independent source arithmetic, XML amounts and PDF text reconcile gross income,
+qualified dividends, deduction/carry, itemization, tax and refund. Six complete
+returns pass cached TY2025v5.4 XSD validation. All30 packet pages were observed
+through28 unique renders/seven contact sheets. Six mortgage-source pages share
+the same pixel digest as the previously observed synthetic source page.
+Existing joint-name68 and skipped-zero76 qualifications remain.
+
+Focused tests pass6/0, including18 public,48 native and48 prepared-PDF rejections
+for changed source amounts, owners, classifications, duplicate references and
+final return amounts. Related Form4952 regression passes119/0. Calculation nodes
+are unchanged; the preceding joint-royalty benchmark46/133 is retained rather
+than claimed as a fresh run. No new future item was found; unflagged-dividend
+inventory118 stays deferred. Broader K-1 sources, codeB, elections, carryover
+imports, authenticity and IRS acceptance remain open, so the parent is not closed.
+
+Private evidence: `.state/research/form4952-k1-income-2026-10-09/` retains
+source/pending records, XML/PDF, synthetic copies, manifests, independent
+arithmetic and execution logs. XSD digest:
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+
+
 ## October 9 partnership expenses with mixed investment payers
 
 The code-H/dividend reconciliation now combines ordinary bank and Treasury
