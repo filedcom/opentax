@@ -1,5 +1,18 @@
 # TY2025 Form 1116 main PDF category boundary
 
+## October 9 general compensation statement checkpoint
+
+The existing general-category parent now appends its source-reconciled line 1b
+allocation statement. Seven complete employer packets pass XSD and retain
+seven-page returns plus separate one-page paid-tax conversion attachments;
+all 56 pages and a three-page overflow statement were visually reviewed.
+The grouped gate passes 232 tests with 70 native/70 fresh-PDF rejections.
+The statement repeats taxpayer identity on continuation pages and uses the
+existing parent descriptor, leaving passive parent pagination unchanged.
+See the [employer checkpoint](./ty2025-form1116-alternative-compensation-gap.md#october-9-employer-packets-and-printed-allocation-statement)
+for exact amounts and scope. Residence107, source authenticity and broader
+filing/IRS coverage remain open.
+
 ## October 9 passive country and current-excess packet checkpoint
 
 Seven existing synthetic source cases now have complete prepared-return tests,

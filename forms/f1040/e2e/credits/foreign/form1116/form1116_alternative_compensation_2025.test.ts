@@ -1,3 +1,4 @@
+import { verifyEmployerPacket } from "./form1116_employer_packet.fixture.ts";
 import {
   assertEquals,
   assertRejects,
@@ -136,6 +137,7 @@ Deno.test("one foreign employer alternative allocation reaches full return, MeF 
     },
   );
   assertEquals(result.diagnostics, []);
+  await verifyEmployerPacket(result.pending, 1);
   assertEquals(result.pending.f1040?.line1h_other_earned, 300_000);
   assertEquals(result.pending.f1040?.line12a_standard_deduction, 15_750);
   assertEquals(result.pending.f1040?.line15_taxable_income, 284_250);
@@ -298,6 +300,7 @@ Deno.test("two owner-matched foreign employers establish worldwide compensation 
     },
   );
   assertEquals(result.diagnostics, []);
+  await verifyEmployerPacket(result.pending, 2);
   assertEquals(result.pending.f1040?.line1h_other_earned, 300_000);
   assertEquals(result.pending.schedule3?.line1_foreign_tax_credit, 2_000);
   const projected = form1116Pdf.projectFields?.(
@@ -383,6 +386,7 @@ Deno.test("three owner-matched foreign-employer wage records support one alterna
     },
   );
   assertEquals(result.diagnostics, []);
+  await verifyEmployerPacket(result.pending, 3);
   assertEquals(result.pending.f1040?.line1h_other_earned, 300_000);
   assertEquals(result.pending.f1040?.line1z_total_wages, 300_000);
   assertEquals(result.pending.schedule3?.line1_foreign_tax_credit, 2_000);
@@ -496,6 +500,7 @@ for (
       { taxYear: 2025, formType: "f1040" },
     );
     assertEquals(result.diagnostics, []);
+    await verifyEmployerPacket(result.pending, additionalWages.length + 1);
     assertEquals(result.pending.f1040?.line1h_other_earned, 300_000);
     assertEquals(result.pending.f1040?.line1z_total_wages, 300_000);
     assertEquals(result.pending.schedule3?.line1_foreign_tax_credit, 2_000);

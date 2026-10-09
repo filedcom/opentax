@@ -1,5 +1,8 @@
 import { isDeepStrictEqual } from "node:util";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../../review-support/form-descriptor.ts";
 import {
   alternativeCompensationWorldwideTotal,
   inputSchema as fecInputSchema,
@@ -10,6 +13,7 @@ import {
 } from "../../../../../../nodes/intermediate/forms/credits/foreign/form_1116/index.ts";
 import { projectSingleSourceForm1116Pdf } from "./f1116_single_source.ts";
 import { projectGeneralWageForm1116Pdf } from "./f1116_general_wage.ts";
+import { appendAlternativeCompensationStatement } from "./f1116_alternative_compensation_statement.ts";
 import { IncomeCategory } from "../../../../../../nodes/intermediate/forms/credits/foreign/form_1116/index.ts";
 
 // Canonical 2025 two-page AcroForm tree, checked against page widgets.
@@ -301,4 +305,5 @@ export const form1116Pdf: PdfFormDescriptor = {
     }];
   },
   fields,
+  appendSupplementalPages: appendAlternativeCompensationStatement,
 };
