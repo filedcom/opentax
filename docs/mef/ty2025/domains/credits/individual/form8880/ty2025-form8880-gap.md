@@ -484,3 +484,43 @@ and22-page review evidence for the unchanged six source fixtures is retained
 separately; this audit does not add new PDF reviews or claim IRS acceptance.
 Evidence: `.state/research/form8880-eligibility-2026-10-09/`. Broader IRA/ABLE,
 eligibility-source authenticity, credit ordering and the parent task stay open.
+
+## October 9 W-2 plan complete-return checkpoint
+
+Eleven complete returns now cover every retained saver W-2 code D/E/F/H/S/AA/BB/EE
+and reviewed governmental G, including an employer-only G source and joint H/AA
+ownership. This is complete-return evidence for existing routes, not new runtime
+support or closure of the broader Form8880 task.
+
+The [2025 W-2 instructions](https://www.irs.gov/pub/irs-prior/iw2w3--2025.pdf)
+include codeH in box1 wages and provide for the employee deduction. Its single
+fixture therefore has wages27000, Schedule1 line24f deduction2000 and AGI25000;
+the joint H/AA fixture has wages52000, deduction2000 and AGI50000. Both native
+`Sect501c18DContriDedAmt` and the filled Schedule1 page2 show2000. CodeG's
+reviewed1500 employee/500 employer split contributes only1500 to Form8880;
+the separate employer-only2000 case has no Form8880 or saver credit. The
+[2025 Form8880](https://www.irs.gov/pub/irs-prior/f8880--2025.pdf) lists eligible
+plan contributions, owner limits and the applicable credit bands.
+
+| Cases | AGI | Saver credit | Final tax | Payments | Refund | Pages each |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Single D/E/F/S/AA/BB/EE | 25000 | 400 | 528 | 2000 | 1472 | 4 |
+| Single H | 25000 | 400 | 528 | 2000 | 1472 | 6 |
+| Single G employee split | 25000 | 300 | 628 | 2000 | 1372 | 4 |
+| Single G employer only | 25000 | 0 | 928 | 2000 | 1072 | 2 |
+| Joint H/AA | 50000 | 800 | 1053 | 3000 | 1947 | 6 |
+
+The typed return module passes11/11. Each of the ten positive-credit returns
+rejects four retained W-2 changes (removal, duplicate copy, changed owner and
+changed box12 amount) through both native assembly and a newly built full PDF:
+40 rejections at each boundary. All11 original XMLs validate against the retained
+TY2025v5.4 schema; all46 pages have been visually reviewed for amounts, identity,
+filing/digital marks and order. Native saver amounts and the H deduction are
+also compared directly with the source expectations. Private evidence is
+`.state/research/form8880-plans-2026-10-09/`, including source/pending records,
+XML/PDFs, page renders, schema logs, review report and hashes.
+
+Joint Form8880 page6 still prints only Alex Plans despite both contributor
+columns; the existing deferred joint-name issue applies. No newly discovered
+repair was implemented. Source authenticity, wider IRA/ABLE contributions,
+credit-order combinations, business rules and IRS acceptance remain open.
