@@ -29,12 +29,26 @@ income, the family-size poverty line, Table 2 contribution, monthly A/B/C and
 credit amounts, totals, Schedule 2/3, and finalized Form 1040. The monthly
 route now also accepts 100%-399%-FPL income for a sourced single filer who
 cannot be claimed as a dependent, with the single-filing-status Table 5 cap;
-a 200%-FPL case is authored for the deferred batch. The annual
+the 200%-FPL component case passes, while the complete repayment case is
+blocked as recorded below. The annual
 route checks the same household and policy identities, line 11 amounts, and
 finalized Schedule 2/3 and Form 1040. PDF instance creation invokes the MeF
-reconciliation. Focused source, native, PDF, identity, benchmark, evidence,
-and final-return cases are written but unrun.
+reconciliation. Focused component cases passed the October 9 policy
+regression. The complete monthly credit return now also passes the public entry, XSD and seven-page
+visual review; the separate capped-repayment public return is blocked as
+described below.
 
 This source-to-output check does not authenticate Marketplace statements or
-establish IRS business-rule acceptance. The full calculation, XSD, PDF render,
-and ATS gates remain pending.
+establish IRS business-rule acceptance. The annual and wider combination
+full-return gates and ATS acceptance remain open.
+
+## October 9 complete-return evidence and limit
+
+The [overlap checkpoint](./ty2025-form8962-policy-month-gap.md#october-9-complete-overlap-and-shared-policy-returns)
+retains the monthly three-policy return with $100,000 wages, $28,500 dependent
+MAGI, $4,080 PTC, $3,600 APTC and $480 net credit. Two eligible children generate
+$4,400 CTC; final tax is $9,055 and amount owed $575. All seven pages were
+observed, and source/coverage/calculation/final-return drift is rejected.
+The attempted 200%-FPL counterpart computes $975 repayment, but its complete
+return stops on the newly deferred79 Schedule 8812 tax-limit ordering mismatch.
+The component cap test does not establish a successful complete repayment return.

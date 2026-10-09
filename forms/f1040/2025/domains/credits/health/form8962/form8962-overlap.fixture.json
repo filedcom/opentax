@@ -1,0 +1,1159 @@
+{
+  "transition": {
+    "general": {
+      "filing_status": "single",
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Example",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_dob": "1985-06-15",
+      "address_line1": "1 Main St",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "taxpayer_can_be_claimed_as_dependent": false,
+      "digital_assets": false
+    },
+    "w2": [
+      {
+        "employee_ssn": "111-22-3333",
+        "box1_wages": 75300,
+        "box2_fed_withheld": 12000,
+        "box3_ss_wages": 75300,
+        "box4_ss_withheld": 4668.6,
+        "box5_medicare_wages": 75300,
+        "box6_medicare_withheld": 1091.85,
+        "employer_ein": "12-3456789",
+        "employer_name": "Example Employer",
+        "employer_address_line1": "2 Payroll Road",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78702",
+        "box12_entries": []
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-FIRST",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "111223333"
+        ],
+        "monthly_premiums": [
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_slcsps": [
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_aptcs": [
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "annual_premium": 3000,
+        "annual_slcsp": 3600,
+        "annual_aptc": 1200
+      },
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-SECOND",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "111223333"
+        ],
+        "monthly_premiums": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          400,
+          400,
+          400,
+          400,
+          400,
+          400,
+          400
+        ],
+        "monthly_slcsps": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600
+        ],
+        "monthly_aptcs": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          150,
+          150,
+          150,
+          150,
+          150,
+          150,
+          150
+        ],
+        "annual_premium": 2800,
+        "annual_slcsp": 4200,
+        "annual_aptc": 1050
+      }
+    ]
+  },
+  "corrected-transition": {
+    "general": {
+      "filing_status": "single",
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Example",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_dob": "1985-06-15",
+      "address_line1": "1 Main St",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "taxpayer_can_be_claimed_as_dependent": false,
+      "digital_assets": false
+    },
+    "w2": [
+      {
+        "employee_ssn": "111-22-3333",
+        "box1_wages": 75300,
+        "box2_fed_withheld": 12000,
+        "box3_ss_wages": 75300,
+        "box4_ss_withheld": 4668.6,
+        "box5_medicare_wages": 75300,
+        "box6_medicare_withheld": 1091.85,
+        "employer_ein": "12-3456789",
+        "employer_name": "Example Employer",
+        "employer_address_line1": "2 Payroll Road",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78702",
+        "box12_entries": []
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-FIRST",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "111223333"
+        ],
+        "monthly_premiums": [
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_slcsps": [
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_aptcs": [
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "annual_premium": 3000,
+        "annual_slcsp": 3600,
+        "annual_aptc": 1200,
+        "slcsp_corrections": [
+          {
+            "month": 6,
+            "basis": "marketplace_error",
+            "corrected_slcsp": 650,
+            "determination_source": "marketplace_contact",
+            "determination_reference": "marketplace-first-june",
+            "determination_record_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "determined_on": "2026-01-15"
+          }
+        ]
+      },
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-SECOND",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "111223333"
+        ],
+        "monthly_premiums": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          400,
+          400,
+          400,
+          400,
+          400,
+          400,
+          400
+        ],
+        "monthly_slcsps": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600
+        ],
+        "monthly_aptcs": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          150,
+          150,
+          150,
+          150,
+          150,
+          150,
+          150
+        ],
+        "annual_premium": 2800,
+        "annual_slcsp": 4200,
+        "annual_aptc": 1050,
+        "slcsp_corrections": [
+          {
+            "month": 6,
+            "basis": "marketplace_error",
+            "corrected_slcsp": 650,
+            "determination_source": "marketplace_contact",
+            "determination_reference": "marketplace-second-june",
+            "determination_record_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "determined_on": "2026-01-15"
+          }
+        ]
+      }
+    ]
+  },
+  "no-agreement": {
+    "general": {
+      "filing_status": "single",
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Example",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_dob": "1985-06-15",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "address_line1": "1 Example Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false,
+      "taxpayer_can_be_claimed_as_dependent": false
+    },
+    "w2": [
+      {
+        "box1_wages": 30120,
+        "box2_fed_withheld": 3000,
+        "employee_ssn": "111-22-3333",
+        "box3_ss_wages": 30120,
+        "box4_ss_withheld": 1867.44,
+        "box5_medicare_wages": 30120,
+        "box6_medicare_withheld": 436.74,
+        "employer_ein": "12-3456789",
+        "employer_name": "Example Employer",
+        "employer_address_line1": "10 Employer Road",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "box12_entries": []
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "TX-JOE-JANE-SHARED",
+        "recipient_ssn": "111223333",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "111223333",
+          "333445555"
+        ],
+        "monthly_premiums": [
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500
+        ],
+        "monthly_slcsps": [
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600,
+          600
+        ],
+        "monthly_aptcs": [
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200
+        ],
+        "annual_premium": 6000,
+        "annual_slcsp": 7200,
+        "annual_aptc": 2400,
+        "shared_policy_periods": [
+          {
+            "basis": "other_no_agreement",
+            "situations_1_to_3_reviewed_and_inapplicable": true,
+            "other_taxpayer_ssn": "222334444",
+            "start_month": 1,
+            "end_month": 12,
+            "allocated_enrollees_in_tax_family": 1,
+            "total_enrollees": 2,
+            "nonagreement_review": {
+              "tax_year": 2025,
+              "policy_number": "TX-JOE-JANE-SHARED",
+              "filer_ssn": "111223333",
+              "other_taxpayer_ssn": "222334444",
+              "other_taxpayer_claimed_covered_ssn": "333445555",
+              "marketplace_enrollment_reference": "2025 TX Marketplace Joe/Jane enrollment",
+              "tax_family_review_reference": "2025 Alice/Jane family-claim review",
+              "tax_family_review_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "no_agreement_review_reference": "2025 Joe/Alice no-agreement review",
+              "no_agreement_review_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "filer_enrolled_count": 1,
+              "policy_enrolled_count": 2
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "sequential-credit": {
+    "general": {
+      "filing_status": "single",
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Example",
+      "taxpayer_ssn": "123456789",
+      "taxpayer_dob": "1985-06-15",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "address_line1": "1 Example Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false,
+      "taxpayer_can_be_claimed_as_dependent": false
+    },
+    "w2": [
+      {
+        "box1_wages": 30000,
+        "box2_fed_withheld": 8000,
+        "employee_ssn": "123456789",
+        "box3_ss_wages": 30000,
+        "box4_ss_withheld": 1860,
+        "box5_medicare_wages": 30000,
+        "box6_medicare_withheld": 435,
+        "employer_ein": "12-3456789",
+        "employer_name": "Example Employer",
+        "employer_address_line1": "10 Employer Road",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "box12_entries": []
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "SHARED-JUN-2025",
+        "recipient_ssn": "123456789",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789",
+          "222334444"
+        ],
+        "monthly_premiums": [
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_slcsps": [
+          1200,
+          1200,
+          1200,
+          1200,
+          1200,
+          1200,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_aptcs": [
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "shared_policy_periods": [
+          {
+            "basis": "other_agreed",
+            "situations_1_to_3_reviewed_and_inapplicable": true,
+            "other_taxpayer_ssn": "222334444",
+            "start_month": 1,
+            "end_month": 6,
+            "allocation_pct": 0.5,
+            "agreement_review": {
+              "tax_year": 2025,
+              "policy_number": "SHARED-JUN-2025",
+              "filer_ssn": "123456789",
+              "other_taxpayer_ssn": "222334444",
+              "start_month": 1,
+              "end_month": 6,
+              "filer_allocation_pct": 0.5,
+              "both_taxpayers_agreed": true,
+              "agreement_reference": "jan-jun-allocation-agreement",
+              "agreement_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          }
+        ]
+      },
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "SHARED-DEC-2025",
+        "recipient_ssn": "123456789",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789",
+          "222334444"
+        ],
+        "monthly_premiums": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000
+        ],
+        "monthly_slcsps": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1200,
+          1200,
+          1200,
+          1200,
+          1200,
+          1200
+        ],
+        "monthly_aptcs": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200
+        ],
+        "shared_policy_periods": [
+          {
+            "basis": "other_agreed",
+            "situations_1_to_3_reviewed_and_inapplicable": true,
+            "other_taxpayer_ssn": "222334444",
+            "start_month": 7,
+            "end_month": 12,
+            "allocation_pct": 0.5,
+            "agreement_review": {
+              "tax_year": 2025,
+              "policy_number": "SHARED-DEC-2025",
+              "filer_ssn": "123456789",
+              "other_taxpayer_ssn": "222334444",
+              "start_month": 7,
+              "end_month": 12,
+              "filer_allocation_pct": 0.5,
+              "both_taxpayers_agreed": true,
+              "agreement_reference": "jul-dec-allocation-agreement",
+              "agreement_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "sequential-repay": {
+    "general": {
+      "filing_status": "single",
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Example",
+      "taxpayer_ssn": "123456789",
+      "taxpayer_dob": "1985-06-15",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "address_line1": "1 Example Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false,
+      "taxpayer_can_be_claimed_as_dependent": false
+    },
+    "w2": [
+      {
+        "box1_wages": 75000,
+        "box2_fed_withheld": 8000,
+        "employee_ssn": "123456789",
+        "box3_ss_wages": 75000,
+        "box4_ss_withheld": 4650,
+        "box5_medicare_wages": 75000,
+        "box6_medicare_withheld": 1087.5,
+        "employer_ein": "12-3456789",
+        "employer_name": "Example Employer",
+        "employer_address_line1": "10 Employer Road",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "box12_entries": []
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "SHARED-JUN-2025",
+        "recipient_ssn": "123456789",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789",
+          "222334444"
+        ],
+        "monthly_premiums": [
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_slcsps": [
+          1200,
+          1200,
+          1200,
+          1200,
+          1200,
+          1200,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_aptcs": [
+          800,
+          800,
+          800,
+          800,
+          800,
+          800,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "shared_policy_periods": [
+          {
+            "basis": "other_agreed",
+            "situations_1_to_3_reviewed_and_inapplicable": true,
+            "other_taxpayer_ssn": "222334444",
+            "start_month": 1,
+            "end_month": 6,
+            "allocation_pct": 0.5,
+            "agreement_review": {
+              "tax_year": 2025,
+              "policy_number": "SHARED-JUN-2025",
+              "filer_ssn": "123456789",
+              "other_taxpayer_ssn": "222334444",
+              "start_month": 1,
+              "end_month": 6,
+              "filer_allocation_pct": 0.5,
+              "both_taxpayers_agreed": true,
+              "agreement_reference": "jan-jun-allocation-agreement",
+              "agreement_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          }
+        ]
+      },
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "SHARED-DEC-2025",
+        "recipient_ssn": "123456789",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789",
+          "222334444"
+        ],
+        "monthly_premiums": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000
+        ],
+        "monthly_slcsps": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1200,
+          1200,
+          1200,
+          1200,
+          1200,
+          1200
+        ],
+        "monthly_aptcs": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          800,
+          800,
+          800,
+          800,
+          800,
+          800
+        ],
+        "shared_policy_periods": [
+          {
+            "basis": "other_agreed",
+            "situations_1_to_3_reviewed_and_inapplicable": true,
+            "other_taxpayer_ssn": "222334444",
+            "start_month": 7,
+            "end_month": 12,
+            "allocation_pct": 0.5,
+            "agreement_review": {
+              "tax_year": 2025,
+              "policy_number": "SHARED-DEC-2025",
+              "filer_ssn": "123456789",
+              "other_taxpayer_ssn": "222334444",
+              "start_month": 7,
+              "end_month": 12,
+              "filer_allocation_pct": 0.5,
+              "both_taxpayers_agreed": true,
+              "agreement_reference": "jul-dec-allocation-agreement",
+              "agreement_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "three-family-credit": {
+    "general": {
+      "filing_status": "single",
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Example",
+      "taxpayer_ssn": "123456789",
+      "taxpayer_dob": "1985-06-15",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "address_line1": "1 Example Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false,
+      "dependents": [
+        {
+          "first_name": "Casey",
+          "last_name": "Test",
+          "ssn": "987654321",
+          "dob": "2010-06-15",
+          "relationship": "daughter",
+          "months_in_home": 12,
+          "ptc_tax_return": {
+            "filing": "required",
+            "filed_form1040": {
+              "source_document_id": "Casey-2025-1040",
+              "taxpayer_ssn": "987654321",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": false,
+              "line1z_wages": 0,
+              "line2a_tax_exempt_interest": 500,
+              "line2b_taxable_interest": 12800,
+              "line3b_dividends": 0,
+              "line4b_ira": 0,
+              "line5b_pensions": 0,
+              "line6b_social_security": 0,
+              "line7a_capital_gain": 0,
+              "line8_additional_income": 0,
+              "line10_adjustments": 0,
+              "line11b_agi": 12800
+            },
+            "interest_forms1099": [
+              {
+                "source_document_id": "Casey-2025-1099-int",
+                "recipient_ssn": "987654321",
+                "box1_taxable_interest": 12800,
+                "box8_tax_exempt_interest": 500
+              }
+            ]
+          },
+          "name_control": "TEST",
+          "irs_relationship_code": "DAUGHTER",
+          "filed_joint_return_except_refund_only": false,
+          "provided_over_half_own_support": false,
+          "us_citizen_national_or_resident": true,
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12
+        },
+        {
+          "first_name": "Robin",
+          "last_name": "Test",
+          "ssn": "987654322",
+          "dob": "2010-06-15",
+          "relationship": "daughter",
+          "months_in_home": 12,
+          "ptc_tax_return": {
+            "filing": "required",
+            "filed_form1040": {
+              "source_document_id": "Robin-2025-1040",
+              "taxpayer_ssn": "987654322",
+              "tax_year": 2025,
+              "filing_status": "single",
+              "blind": false,
+              "line1z_wages": 0,
+              "line2a_tax_exempt_interest": 200,
+              "line2b_taxable_interest": 15000,
+              "line3b_dividends": 0,
+              "line4b_ira": 0,
+              "line5b_pensions": 0,
+              "line6b_social_security": 0,
+              "line7a_capital_gain": 0,
+              "line8_additional_income": 0,
+              "line10_adjustments": 0,
+              "line11b_agi": 15000
+            },
+            "interest_forms1099": [
+              {
+                "source_document_id": "Robin-2025-1099-int",
+                "recipient_ssn": "987654322",
+                "box1_taxable_interest": 15000,
+                "box8_tax_exempt_interest": 200
+              }
+            ]
+          },
+          "name_control": "TEST",
+          "irs_relationship_code": "DAUGHTER",
+          "filed_joint_return_except_refund_only": false,
+          "provided_over_half_own_support": false,
+          "us_citizen_national_or_resident": true,
+          "ssn_valid_for_employment": true,
+          "ssn_issued_before_due_date": true,
+          "tin_issued_by_due_date": true,
+          "lived_in_us_over_half_year": true,
+          "months_lived_with_you_in_us": 12
+        }
+      ],
+      "taxpayer_can_be_claimed_as_dependent": false,
+      "taxpayer_ssn_valid_for_employment": true,
+      "taxpayer_ssn_issued_before_due_date": true,
+      "taxpayer_tin_issued_by_due_date": true
+    },
+    "w2": [
+      {
+        "box1_wages": 100000,
+        "box2_fed_withheld": 8000,
+        "employee_ssn": "123456789",
+        "box3_ss_wages": 100000,
+        "box4_ss_withheld": 6200,
+        "box5_medicare_wages": 100000,
+        "box6_medicare_withheld": 1450,
+        "employer_ein": "12-3456789",
+        "employer_name": "Example Employer",
+        "employer_address_line1": "10 Employer Road",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "box12_entries": []
+      }
+    ],
+    "f8812": [
+      {
+        "filing_status": "single",
+        "agi": 100000,
+        "income_tax_liability": 13455,
+        "do_not_claim_actc": false,
+        "qualifying_children_count": 2,
+        "other_dependents_count": 0,
+        "line18a_earned_income": 100000,
+        "credit_limit_worksheet": {
+          "schedule3_line1": 0,
+          "schedule3_line2": 0,
+          "schedule3_line3": 0,
+          "schedule3_line4": 0,
+          "schedule3_line5b": 0,
+          "schedule3_line6d": 0,
+          "schedule3_line6f": 0,
+          "schedule3_line6l": 0,
+          "schedule3_line6m": 0,
+          "worksheet_b_applies": false
+        }
+      }
+    ],
+    "f1095a": [
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "FAMILY-1",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "123456789"
+        ],
+        "monthly_premiums": [
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500
+        ],
+        "monthly_slcsps": [
+          1200,
+          1200,
+          1200,
+          1200,
+          1200,
+          1200,
+          1300,
+          1300,
+          1300,
+          1300,
+          1300,
+          1300
+        ],
+        "monthly_aptcs": [
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100
+        ],
+        "annual_premium": 6000,
+        "annual_slcsp": 15000,
+        "annual_aptc": 1200
+      },
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "FAMILY-2",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "987654321"
+        ],
+        "monthly_premiums": [
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500
+        ],
+        "monthly_slcsps": [
+          1200,
+          1200,
+          1200,
+          1200,
+          1200,
+          1200,
+          1300,
+          1300,
+          1300,
+          1300,
+          1300,
+          1300
+        ],
+        "monthly_aptcs": [
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100
+        ],
+        "annual_premium": 6000,
+        "annual_slcsp": 15000,
+        "annual_aptc": 1200
+      },
+      {
+        "issuer_name": "Texas Marketplace",
+        "policy_number": "FAMILY-3",
+        "coverage_state": "TX",
+        "covered_individual_ssns": [
+          "987654322"
+        ],
+        "monthly_premiums": [
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500,
+          500
+        ],
+        "monthly_slcsps": [
+          1200,
+          1200,
+          1200,
+          1200,
+          1200,
+          1200,
+          1300,
+          1300,
+          1300,
+          1300,
+          1300,
+          1300
+        ],
+        "monthly_aptcs": [
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100
+        ],
+        "annual_premium": 6000,
+        "annual_slcsp": 15000,
+        "annual_aptc": 1200
+      }
+    ]
+  }
+}

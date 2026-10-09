@@ -39,7 +39,7 @@ that one same-state coverage-family SLCSP may apply across policies. The
 record identifiers remain reviewed assertions, not authenticated Marketplace
 bytes.
 
-## One-person, one-month same-state policy transition (staged, unrun)
+## One-person, one-month same-state policy transition (verified October 9)
 
 The [2025 Form 8962 monthly instructions](https://www.irs.gov/instructions/i8962)
 say to add columns A and C from multiple Forms 1095-A affecting a month and
@@ -51,14 +51,14 @@ policies must name the filer's SSN, report monthly positive premiums/APTC,
 agree on the transition-month SLCSP, and have no shared allocation or SLCSP
 correction. The native and PDF routes reconcile the $900/$600/$350 June
 premium/SLCSP/APTC row, all other months, $1,446 excess repayment, Schedule 2
-line 1a, and Form 1040 line 17. The full-return positive and two-overlap-month,
-SLCSP, APTC, and return-tamper fixtures are authored but unrun. A longer overlap,
+line 1a, and Form 1040 line 17. The full-return and negative fixtures passed the prior115-test policy batch;
+the October9 overlap checkpoint below adds retained XSD and visual evidence. A longer overlap,
 different covered people, corrected SLCSP, interstate transition, and external
 Marketplace-statement authentication remain outside this route. Publication
 [974](https://www.irs.gov/publications/p974) still governs special coverage
 and eligibility cases, which this narrow route does not infer.
 
-## Corrected SLCSP in the one-month transition (staged, unrun)
+## Corrected SLCSP in the one-month transition (verified October 9)
 
 The same one-person transition now admits a corrected overlap-month column B
 only when **both** identified policies carry distinct dated Marketplace-error
@@ -69,7 +69,8 @@ benchmark once while adding both $900 in premiums and $350 in APTC; native
 MeF and PDF independently check the source against Form 8962 monthly rows,
 Schedule 2 line 1a, and Form 1040 line 17. The positive fixture expects
 $854 PTC and $1,396 excess APTC; mismatched correction, reused evidence, and
-return-tamper fixtures are authored but unrun. More than one overlap month,
+return-tamper fixtures passed the prior115-test policy batch. The October9
+overlap checkpoint below adds retained XSD and visual evidence. More than one overlap month,
 one-sided corrections, mixed coverage families, allocation, move, and external
 authentication of the Marketplace records remain closed. This follows the
 [2025 Form 8962 instructions](https://www.irs.gov/instructions/i8962) for
@@ -788,3 +789,50 @@ blocker remains separate. Scoped CI on the runtime head passed run37887768222.
 
 
 The subsequent [complete interstate checkpoint](./ty2025-form8962-interstate-move-gap.md#october-9-complete-interstate-return-checkpoint) adds ten public-entry XSD-valid returns/60 observed pages and25 focused passes. It covers reported2–12-state moves, Hawaii, corrected unreported arrival, a gap month and region-specific repayment limits. This resolves the prior checkpoint's lack of full interstate packet evidence for these ten cases only; broader coverage and authentication remain open.
+
+## October 9: complete overlap and shared-policy returns
+
+Six public `executeReturn`/`prepareReturn` returns pass the cached TY2025 v5.4
+Return1040 XSD. Their 35 filled pages were rendered and observed (29 distinct
+images, six exact matches). Seven typed regression tests pass, including
+24 changed-policy, covered-person, calculated-credit or final-return variants
+rejected by both native and PDF validation. No runtime behavior changed.
+
+| Case | PTC | APTC | Net credit | Repayment | Final tax | Refund / owed |
+|---|---:|---:|---:|---:|---:|---:|
+| June transition | 804 | 2,250 | 0 | 1,446 | 9,467 | 2,533 refund |
+| Corrected June transition | 854 | 2,250 | 0 | 1,396 | 9,417 | 2,583 refund |
+| Situation 4, no agreement | 3,000 | 1,200 | 1,800 | 0 | 1,487 | 3,313 refund |
+| Two sequential shared policies, credit | 6,000 | 1,200 | 4,800 | 0 | 1,475 | 11,325 refund |
+| Two sequential shared policies, repayment | 828 | 4,800 | 0 | 3,972 | 11,927 | 3,927 owed |
+| Three policies, two required-filing dependents | 4,080 | 3,600 | 480 | 0 | 9,055 | 575 owed |
+
+The independent Python Decimal replay starts with source wages, dependent
+interest and twelve policy months. It applies the common same-state SLCSP
+once, corrections or allocations, contribution and credit limits, then joins
+literal IRS Tax Table amounts and child credit to final tax. The rules follow
+the [2025 Form 8962 instructions](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf),
+[Tax Table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf) and
+[Schedule 8812 instructions](https://www.irs.gov/pub/irs-pdf/i1040s8.pdf).
+The family credit case has $100,000 wages and $28,500 dependent MAGI,
+but only wages enter the parent's Form1040 AGI; its two children produce
+$4,400 CTC. Shared Part IV rows show the correct other taxpayer, periods and
+50% allocations. The no-agreement long policy ID uses its last15 characters.
+
+The seventh attempted case, family income at200% FPL with excess APTC,
+does not prepare: Schedule8812 receives automatic tax738 instead of finalized
+Form1040 line18 tax1,713 (738 plus975 repayment). The independently prepared
+worksheet therefore fails the tax-limit guard. This newly found defect is
+`future_todo`79 and remains untouched; the passing family credit example does
+not prove the repayment/CTC combination. Initial family fixtures were also
+completed with missing dependent joint-return/support/identity facts and
+Schedule8812 worksheet answers before this ordering defect was isolated.
+
+The retained sources are synthetic reviewed assertions, including repeated
+placeholder hashes, not authenticated Marketplace or prior-filed records.
+Local XSD success does not prove IRS business rules or acceptance. The frozen
+Form8962 parent remains open. Evidence: `.state/research/form8962-overlap-replay-2026-10-09/`
+contains sources, public outputs, XML, PDFs, independent oracle, rendered
+review, typed tests and the blocked-case probe. The preceding branch head
+`ecb03ab69` passed scoped CI run37888882173; the full typed gate remains
+separately blocked by deferred78.
