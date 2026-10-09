@@ -1,5 +1,85 @@
 # TY2025 Form 8815: source-to-return gap
 
+## October 9 Coverdell and QTP contribution source-to-return checkpoint
+
+Reviewed actual-2025 cash contributions to Coverdell education savings accounts
+and qualified tuition programs now join the existing Form 8815 route. Account
+records identify kind, beneficiary TIN, retained account reference and
+qualification-record reference. Dated payment records identify the contributor,
+receipt, transaction, amount and line 1 account. Distinct transaction/account
+references, complete account-payment matching and the sum of contributions plus
+separately listed tuition reconcile to line 2. The former tuition-only facts
+remain a separate strict choice; they cannot accompany contribution accounts.
+Returns still require the bond, benefit, MAGI and finalized Schedule B/1040
+reconciliations.
+
+The [2025 Form 8815 instructions](https://www.irs.gov/pub/irs-prior/f8815--2025.pdf)
+include both contribution types in qualified expenses and require their account
+labels on line 1. Native institution names now carry the precise local-v5.4
+attributes `qualifiedTuitionProgramCd="QSTP"` or
+`coverdellEducationalSavAcctCd="COVERDELL ESA"`; the paper form and continuation
+print `QTP` or `Coverdell ESA` beside the institution name. Account qualification
+is not inferred from an institution name or mailing address.
+
+Beneficiary TIN/name must match the taxpayer, joint spouse or an actually filed
+dependent; payment TIN must match a filer. Coverdell annual inventories reconcile
+all accounts and outside contributions to the beneficiary's 2,000 ceiling.
+Birth dates match the filed person; payments at age 18 or older require a
+special-needs review reference. The contributor limit follows [Publication 970
+worksheets 6-1 and 6-2](https://www.irs.gov/pub/irs-prior/p970--2025.pdf), using
+final AGI after the bond exclusion because the existing Form 8815 route rejects
+foreign addbacks. In the single mixed case, final AGI 101,167 gives a 1,178 limit:
+1,000 contributed by the filer passes, while a further 500 by that filer rejects.
+This differs from the Form 8815 MAGI 102,000 used for the bond-interest phaseout.
+
+| Constructed return | Coverdell / QTP / tuition | Benefits | Exclusion | AGI | Total tax | Refund / owed | Pages |
+|---|---:|---:|---:|---:|---:|---|---:|
+| Self QTP | 0 / 15,000 / 0 | 0 | 2,000 | 70,000 | 6,855 | 145 refund | 4 |
+| Dependent Coverdell | 2,000 / 0 / 0 | 0 | 334 | 71,666 | 6,718 | 282 refund | 6 |
+| Joint spouse/self QTP | 0 / 4,000 / 4,000 | 2,000 | 575 | 161,425 | 18,412 | 11,412 owed | 4 |
+| Single mixed | 1,000 / 5,000 / 2,000 | 2,000 | 833 | 101,167 | 13,708 | 6,708 owed | 4 |
+| Joint mixed continuation | 2,000 / 2,000 / 4,000 | 2,000 | 575 | 161,425 | 18,412 | 11,412 owed | 5 |
+| Twelve QTP accounts | 0 / 15,000 / 0 | 0 | 2,000 | 70,000 | 6,855 | 145 refund | 6 |
+
+All retain 12,000 bond proceeds, 2,000 current interest and 7,000 withholding.
+The 17-year-old dependent receives a 2,000 Coverdell contribution; the rounded
+expense ratio .167 gives 334 excluded interest. The 55,900–55,950 single tax-table
+band gives 7,218 before the 500 other-dependent credit, and Schedule 8812/1040
+reconcile 6,718 tax. Adult Coverdell cases explicitly supply synthetic special-
+needs references; that status is not inferred from age or another disability
+checkbox. The joint case splits 2,000 across two Coverdell accounts. The twelve-
+account QTP case exercises two continuation pages.
+
+The final typed source/node/rule/end-to-end group passes **35/0**. **79 native
+and 79 fresh-PDF mutations reject**, covering missing/conflicting facts, payment
+amounts/duplicates, account matching, invalid dates, payer/beneficiary identity,
+qualification references, birth dates, annual totals and the final-AGI limit.
+The initial dependent fixture incorrectly parsed a Schedule 8812 item using its
+container schema, dropping the filing status; correcting that fixture import
+resolved the failure without changing Schedule 8812 production code. The initial
+failure and focused diagnosis remain retained.
+
+All six full returns pass 2025v5.4 XSD; all 29 flattened PDF pages were visually
+reviewed through 23 distinct page images/six contact sheets. Every account name,
+label and address survives paper output, and native attributes/addresses match
+source rows. Final PDF hashes still match the reviewed artifacts. Existing
+presentation 68 joint canonical headers, 76 zero/skipped lines and 86 the dependent
+packet's Schedule 8812-before-Schedule B order remain qualified. No presentation
+fix outside the current contribution work is included.
+
+Evidence: `.state/research/form8815-contribution-packets-2026-10-09/` retains
+source/pending/filer/origin JSON, XML/PDF, XSD logs, reviewed-page/native-text
+manifests, test output, initial fixture failure and runtime/command details.
+The full-return XSD SHA-256 remains
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+The benchmark remains 46/133 with the identical 87 failing case IDs (deferred 96).
+These are constructed reviewed facts, not authenticated custodial statements,
+school/beneficiary records or IRS acceptance. Prior-excess, rollover/transfer
+and returned-contribution assertions remain guarded; special royalty/addback
+and broader authenticity routes remain open. Newly discovered late-designated
+Coverdell payment timing is future 114 only and was not implemented. This does
+not close the Form 8815 parent or the filing-ready goal.
+
 ## October 9 foreign-institution source, native and paper addresses
 
 The tuition/fees route now accepts the two address choices allowed by the
@@ -213,8 +293,7 @@ names and the inspected 2025 PDF field names. Missing facts or ineligible claims
 raise diagnostics rather than assuming zero proceeds or MAGI. The legacy
 ambiguous input fields are rejected, without a compatibility shim.
 
-Still unsupported: Coverdell/QTP contributions,
-the special royalty-interest computation, and
+Still unsupported: the special royalty-interest computation and
 any case where the complete line 9 worksheet cannot be supplied from finalized
 return lines. These are explicit bounds, not whole-form completion. The two
 generated MAGI business-rule implications have been corrected to the official

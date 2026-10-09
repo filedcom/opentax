@@ -1,3 +1,4 @@
+import { assertContributionOwners } from "./form8815_contribution_return.ts";
 import { z } from "zod";
 import type {
   Form8815Input,
@@ -112,4 +113,5 @@ export function assertForm8815FinalReturn(
       "Form 8815 line 9 worksheet or exclusion differs from the finalized Schedule B, Schedule 1, and Form 1040",
     );
   }
+  assertContributionOwners(source, pending.f1040);
 }

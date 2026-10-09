@@ -1,3 +1,4 @@
+import { EducationAccountKind } from "../../../../../nodes/intermediate/forms/income/investments/form8815/education_contributions.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import type {
   MefBuildContext,
@@ -95,7 +96,16 @@ function buildIRS8815(fields: Input, context?: MefBuildContext): string {
     ...source.eligible_students.map((student) =>
       elements("EligibleEducationInstnGrp", [
         element("EligiblePersonNm", student.person_name),
-        element("EligibleInstitutionNm", student.institution_name),
+        element(
+          "EligibleInstitutionNm",
+          student.institution_name,
+          student.contribution_account?.kind === EducationAccountKind.Qtp
+            ? { qualifiedTuitionProgramCd: "QSTP" }
+            : student.contribution_account?.kind ===
+                EducationAccountKind.Coverdell
+            ? { coverdellEducationalSavAcctCd: "COVERDELL ESA" }
+            : undefined,
+        ),
         institutionAddress(student.institution_address),
       ])
     ),

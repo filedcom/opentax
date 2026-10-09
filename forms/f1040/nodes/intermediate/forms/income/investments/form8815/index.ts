@@ -1,3 +1,9 @@
+import {
+  assertEducationContributions,
+  contributionAccountSchema,
+  contributionReviewSchema,
+  educationFactsSchema,
+} from "./education_contributions.ts";
 import { z } from "zod";
 import type { NodeResult } from "../../../../../../../../core/types/tax-node.ts";
 import {
@@ -52,9 +58,10 @@ export const eligibleStudentSchema = z.object({
   person_name: z.string().trim().min(1).max(35),
   institution_name: z.string().trim().min(1).max(75),
   institution_address: institutionAddressSchema,
+  contribution_account: contributionAccountSchema.optional(),
 });
 
-// Bounded 2025 path: eligible tuition/fees, not Coverdell or QTP deposits.
+// TY2025 tuition/fees and reviewed Coverdell/QTP cash contributions.
 // The two worksheet objects preserve the source lines used for Form 8815
 // lines 6 and 9. Callers must not provide a guessed exclusion or MAGI.
 export const inputSchema = z.object({
@@ -66,16 +73,8 @@ export const inputSchema = z.object({
     owner_age_at_issue_at_least_24: z.literal(true),
     redemption_records_retained: z.literal(true),
   }),
-  education_facts: z.object({
-    all_students_are_taxpayer_spouse_or_claimed_dependents: z.literal(true),
-    all_institutions_eligible: z.literal(true),
-    expenses_are_eligible_2025_tuition_or_fees: z.literal(true),
-    expenses_not_used_for_education_credit_or_tax_free_distribution: z.literal(
-      true,
-    ),
-    no_coverdell_or_qtp_contributions_in_claim: z.literal(true),
-    nontaxable_benefits_paid_directly_by_institution_excluded: z.literal(true),
-  }),
+  education_facts: educationFactsSchema,
+  education_contributions: contributionReviewSchema.optional(),
   line2_qualified_education_expenses: amount,
   line3_nontaxable_education_benefits: amount,
   bond_proceeds: amount.positive(),
@@ -150,6 +149,7 @@ export function calculateForm8815(
   input: Form8815Input,
   cfg: NonNullable<(typeof CONFIG_BY_YEAR)[number]>,
 ) {
+  assertEducationContributions(input);
   if (input.filing_status === FilingStatus.MFS) {
     throw new Error(
       "Form 8815 exclusion is not available to married filing separately",
