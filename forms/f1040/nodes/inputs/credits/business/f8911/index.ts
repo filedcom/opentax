@@ -22,6 +22,12 @@ export const propertySchema = z.object({
   cost: z.number().nonnegative(),
   business_use_pct: z.number().min(0).max(1).optional(),
   fuel_type: z.nativeEnum(FuelType).optional(),
+  non_electric_fuel_review: z.object({
+    specification_reference: z.string().trim().min(1),
+    // Combined volume share of the fuels listed in the 85% IRS category.
+    qualifying_fuel_volume_fraction: z.number().min(0).max(1),
+    storage_or_dispensing_at_vehicle_tank: z.boolean(),
+  }).optional(),
   property_description: z.string().optional(),
   property_us_address: z.object({
     line1: z.string(),
@@ -88,6 +94,29 @@ export function personalCreditProperties(
 
 export type F8911Input = z.infer<typeof inputSchema>;
 
+function assertNonElectricFuelSource(property: F8911Property): void {
+  if (
+    property.fuel_type === undefined ||
+    property.fuel_type === FuelType.ElectricCharging
+  ) {
+    if (property.non_electric_fuel_review !== undefined) {
+      throw new Error(
+        "Form 8911 non-electric fuel review needs a non-electric fuel type",
+      );
+    }
+    return;
+  }
+  const review = property.non_electric_fuel_review;
+  if (
+    !review || review.qualifying_fuel_volume_fraction < 0.85 ||
+    review.storage_or_dispensing_at_vehicle_tank !== true
+  ) {
+    throw new Error(
+      "Form 8911 non-electric property needs a referenced fuel specification with at least 85% qualifying fuel and storage or dispensing at the vehicle tank",
+    );
+  }
+}
+
 export interface PersonalCreditAmounts {
   readonly tentativeCredit: number;
   readonly regularTaxBeforeCredits: number;
@@ -107,6 +136,7 @@ export function computePersonalCreditAmounts(
   const properties = personalCreditProperties(input);
   if (properties.length === 0) return undefined;
   for (const input of properties) {
+    assertNonElectricFuelSource(input);
     if ((input.business_use_pct ?? 0) > 0) {
       throw new Error(
         "Form 8911 business credit requires the Form 3800 path and property-level wage data",

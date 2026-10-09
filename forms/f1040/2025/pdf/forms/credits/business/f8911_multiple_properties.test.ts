@@ -4,6 +4,7 @@ import { pdfReviewFixtures } from "../../../review-fixtures.ts";
 import { buildMefBundle } from "../../../../mef/builder.ts";
 import {
   computePersonalCreditAmounts,
+  FuelType,
   inputSchema,
 } from "../../../../../nodes/inputs/credits/business/f8911/index.ts";
 import { form8911Pdf } from "./f8911.ts";
@@ -293,4 +294,104 @@ Deno.test("Form 8911 optional permit validates the IRS 25-character limit withou
   assertThrows(() =>
     inputSchema.parse({ ...original, certification_permit_number: "   " })
   );
+});
+
+Deno.test("Form 8911 routes reviewed personal hydrogen natural gas and propane property copies", async () => {
+  const source = {
+    ...multipleChargerSource,
+    properties: [FuelType.Hydrogen, FuelType.NaturalGas, FuelType.Propane].map((
+      fuel,
+      index,
+    ) => ({
+      ...property,
+      cost: [3000, 5000, 1000][index],
+      property_reference: `fuel-property-${index + 1}`,
+      property_description: `${fuel} vehicle refueling equipment`,
+      fuel_type: fuel,
+      non_electric_fuel_review: {
+        specification_reference: `synthetic-fuel-spec-${index + 1}`,
+        qualifying_fuel_volume_fraction: index === 0 ? 0.85 : 1,
+        storage_or_dispensing_at_vehicle_tank: true,
+      },
+    })),
+  };
+  const result = f1040_2025.executeReturn({ ...fixture.inputs, f8911: source });
+  assertEquals(result.diagnostics, []);
+  const pending = result.pending;
+  assertEquals(pending.schedule3.line6j_alt_fuel_vehicle_refueling, 2200);
+  assertEquals(pending.f1040.line20_nonrefundable_credits, 2200);
+  assertEquals(pending.f1040.line24_total_tax, 1675);
+  const bundle = await buildMefBundle(pending, {
+    filer: fixture.filer,
+    attachments: [],
+  });
+  assertStringIncludes(
+    bundle.xml,
+    "<TotQlfyAltFuelVehRefuelPropCnt>3</TotQlfyAltFuelVehRefuelPropCnt>",
+  );
+  const nativeCopies = [
+    ...bundle.xml.matchAll(/<IRS8911ScheduleA\b[\s\S]*?<\/IRS8911ScheduleA>/g),
+  ].map((match) => match[0]);
+  const expectedCredits = [900, 1000, 300];
+  assertEquals(nativeCopies.length, 3);
+  for (const [index, xml] of nativeCopies.entries()) {
+    assertStringIncludes(
+      xml,
+      `<FacilityDesc>${
+        source.properties[index].property_description
+      }</FacilityDesc>`,
+    );
+    assertStringIncludes(
+      xml,
+      `<TotalPersonalUsePartOfCrAmt>${
+        expectedCredits[index]
+      }</TotalPersonalUsePartOfCrAmt>`,
+    );
+  }
+  const copies = form8911ScheduleAPdf.instances!({}, fixture.filer, pending);
+  assertEquals(copies.map((copy) => copy.line21), expectedCredits);
+  const [parent] = form8911Pdf.instances!({}, fixture.filer, pending);
+  assertEquals([parent.property_count, parent.line4, parent.line10], [
+    3,
+    2200,
+    2200,
+  ]);
+});
+
+Deno.test("Form 8911 rejects unreviewed non-electric fuel composition and off-site dispensing", () => {
+  for (
+    const fuel_type of [
+      FuelType.Hydrogen,
+      FuelType.NaturalGas,
+      FuelType.Propane,
+    ]
+  ) {
+    for (
+      const review of [undefined, {
+        specification_reference: "synthetic-spec",
+        qualifying_fuel_volume_fraction: 0.8499,
+        storage_or_dispensing_at_vehicle_tank: true,
+      }, {
+        specification_reference: "synthetic-spec",
+        qualifying_fuel_volume_fraction: 1,
+        storage_or_dispensing_at_vehicle_tank: false,
+      }]
+    ) {
+      const source = {
+        ...original,
+        fuel_type,
+        non_electric_fuel_review: review,
+      };
+      assertThrows(
+        () => computePersonalCreditAmounts(source),
+        Error,
+        "at least 85%",
+      );
+      assertThrows(
+        () => form8911Pdf.instances!({}, fixture.filer, { f8911: source }),
+        Error,
+        "at least 85%",
+      );
+    }
+  }
 });

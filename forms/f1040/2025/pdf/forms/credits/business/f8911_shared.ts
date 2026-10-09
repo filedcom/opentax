@@ -2,7 +2,6 @@ import type { FilerIdentity } from "../../../../../mef/header.ts";
 import {
   computePersonalCreditAmounts,
   type F8911Property,
-  FuelType,
   inputSchema,
   type PersonalCreditAmounts,
   personalCreditProperties,
@@ -39,11 +38,11 @@ function dateFor2025(value: string, label: string): string {
 
 function projectProperty(input: F8911Property): Form8911PdfProperty {
   if (
-    input.fuel_type !== FuelType.ElectricCharging ||
+    input.fuel_type === undefined ||
     (input.business_use_pct ?? 0) !== 0
   ) {
     throw new Error(
-      "Form 8911 PDF currently supports personal-use electric chargers with no business use",
+      "Form 8911 PDF currently supports identified personal-use refueling properties with no business use",
     );
   }
   if (

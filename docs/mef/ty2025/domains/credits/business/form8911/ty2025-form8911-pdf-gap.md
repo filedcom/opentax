@@ -15,7 +15,7 @@ mismatch fails without replacing the cache. Updating this pin requires review
 of the new revision and mappings. This closes the named mutable-template
 boundary, not the remaining property eligibility or full-return release gates.
 
-The PDF build pass projects sourced personal-use electric chargers and
+The PDF build pass projects sourced personal-use electric and reviewed non-electric refueling properties and
 one matching Schedule A per positive-cost property. It checks the property cost, dates, address,
 eligible census tract and 11-digit GEOID, and main-home answer already required
 by the native credit calculation. It computes the 30% property amount and $1,000
@@ -26,8 +26,8 @@ and the final return's nonrefundable-credit total. Both PDF pages are derived
 from the same gate, so a positive parent page cannot be emitted without its
 Schedule A page.
 
-This remains a bounded personal-use electric-charger path. Business use,
-other allowable-credit worksheet amounts, non-electric fuel, and fractional
+This remains a bounded personal-use refueling-property path. Business use,
+other allowable-credit worksheet amounts, other fuel categories, and fractional
 tax-limit worksheet operands stop for a separately reviewed source model. Optional
 certification/permit and owner fields are not inferred from the address. The
 source model does not independently authenticate the census tract or establish
@@ -129,3 +129,25 @@ pages were reviewed, with credit 1,300, tax 2,575 and refund 4,425 unchanged.
 The flattened PDF has no fields/widgets and SHA-256
 `d69d38c6bbc8ee0966c1daedea7f8a8b437ac7bfe70fa9191efdcaa8ac2af48e`.
 Final focused and adjacent regression: 113 passed, zero failed.
+
+## Non-electric personal-use properties — October 9
+
+The retained hydrogen, natural-gas and propane input categories now require
+`non_electric_fuel_review`: a nonempty specification reference, the combined
+qualifying-fuel volume fraction, and an affirmative answer that storage or
+dispensing occurs at the vehicle tank. The fraction must be at least 0.85,
+following the [December 2025 instructions](https://www.irs.gov/instructions/i8911).
+The calculation and both exporters share this validation. A missing review,
+84.99% fraction or off-site dispensing is rejected. This is a structured source
+review, not independent authentication of the referenced specification; the
+remaining original-use, census-tract and issuer-proof boundaries still apply.
+Other fuel categories and business-use branches are not established by this case.
+
+The three-property synthetic return uses costs 3,000 / 5,000 / 1,000 and
+credits 900 / 1,000 / 300. Form 8911, Schedule 3 and Form 1040 carry 2,200;
+total tax is 1,675 and refund 5,325. The complete XML validates against cached
+TY2025 v5.4. All eight PDF pages were reviewed, including each property
+identity and cap. The flattened PDF has no fields/widgets and SHA-256
+`dcc96507fdb56846b7691110342908939bd5f6da5d29cada1eeefa31aa99d1bf`.
+The selected regression passes 115 tests with zero failures. No IRS business-rule
+or acceptance result is claimed.

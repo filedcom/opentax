@@ -153,9 +153,9 @@ passive, carryover, and other mixed credit-source routes remain coverage gates.
 See `ty2025-form3800-pdf-gap.md`.
 Form 8911 and Schedule A were on the initial parity list. They now have
 registered PDF descriptors. Draft #68 extends the bounded personal-use route to
-multiple identified chargers, per-property permits, aggregate credit rounding
-and a pinned Schedule A template. Its 113 selected tests, four complete
-XSD-valid returns and 30 visually reviewed pages establish local evidence for
+multiple identified electric and reviewed hydrogen/natural-gas/propane properties, per-property permits, aggregate credit rounding
+and a pinned Schedule A template. Its 115 selected tests, five complete
+XSD-valid returns and 38 visually reviewed pages establish local evidence for
 those cases. Business use, wider credit-limit combinations, source authentication
 and IRS acceptance remain open. These draft-branch results do not establish a
 passing full release gate. See `ty2025-form8911-pdf-gap.md`.
