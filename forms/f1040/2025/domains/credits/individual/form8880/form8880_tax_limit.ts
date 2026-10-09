@@ -79,6 +79,14 @@ function assertForm8880GeneralEligibility(
   // the return retains their general-source origin, replay each claimed owner.
   if (pending.general === undefined) return;
   const general = generalInputSchema.parse(pending.general);
+  if (
+    JSON.stringify(source.nonjoint_distribution_review) !==
+      JSON.stringify(general.form8880_nonjoint_distribution_review)
+  ) {
+    throw new Error(
+      "Form 8880 nonjoint distribution ledger differs from retained general source",
+    );
+  }
   const sameOwner = (left: string | undefined, right: string | undefined) =>
     left === undefined && right === undefined ||
     left !== undefined && right !== undefined &&
@@ -264,6 +272,11 @@ export function assertForm8880FiledCalculation(
     capacity,
   );
   if (calculated.calculatedZero) {
+    if (
+      "calculated_zero_credit" in fields &&
+      fields.calculated_zero_credit === true &&
+      !Object.keys(fields).some((key) => key.startsWith("print_"))
+    ) return;
     throw new Error(
       "Form 8880 positive filing has no positive source calculation",
     );
@@ -283,5 +296,22 @@ export function assertForm8880FiledCalculation(
     )
   ) {
     throw new Error("Form 8880 filed lines differ from its source calculation");
+  }
+}
+
+/** The new nonjoint inventory must also replay when no Form 8880 is filed. */
+export function assertNonjointForm8880Outcome(
+  fields: object,
+  pending: Readonly<Record<string, unknown>>,
+): void {
+  const source = form8880InputSchema.parse(fields);
+  const general = pending.general === undefined
+    ? undefined
+    : generalInputSchema.parse(pending.general);
+  if (
+    source.nonjoint_distribution_review ||
+    general?.form8880_nonjoint_distribution_review
+  ) {
+    assertForm8880FiledCalculation(fields, pending);
   }
 }

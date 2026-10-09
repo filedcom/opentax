@@ -179,3 +179,48 @@ and [2025 Publication 590-A](https://www.irs.gov/publications/p590a) describe
 the testing window and the joint-return exception. The unified review above
 implements those line-4 rules for its reviewed-source entries. The new finalized
 tax-capacity feed still needs the agreed full-batch verification.
+
+
+## October 9 nonjoint distribution ledger and complete returns
+
+The public general source now accepts `form8880_nonjoint_distribution_review`.
+It records the taxpayer, reviewer, normal or extended filing deadline, extension
+reference, complete distribution inventory and dated recipient-owned entries.
+Each entry carries a positive gross amount, distinct source reference and a
+reviewed line-4 treatment with its classification workpaper. The ten treatments
+cover inclusion and the nine exception categories in the
+[2025 Form 8880 instructions](https://www.irs.gov/pub/irs-prior/f8880--2025.pdf).
+The calculation sums included distributions; exclusions remain visible in the
+inventory. This is reviewed structured evidence, not authenticated payer bytes.
+
+The ledger rejects duplicate sources, another recipient, invalid/out-of-window
+dates, unconfirmed extensions, simultaneous scalar distributions and joint-return
+use. Single, MFS, HOH and QSS calculations are exercised. Retained general and
+Form8880 ledger copies must agree at export; the zero-credit native path also
+replays the source and final return before omitting the form. Existing scalar
+sources remain compatible and are not upgraded to sourced-record proof.
+
+Three synthetic complete returns retain wages25000, W-2 deferrals2000,
+withholding1000 and pre-credit tax928:
+
+| Case | Included distributions | Credit | Final tax | Refund | Pages |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Prior distribution plus excluded5000 rollover | 200 | 360 | 568 | 432 | 4 |
+| Distribution before extended filing deadline | 500 | 300 | 628 | 372 | 4 |
+| Contributions fully offset | 2000 | 0 | 928 | 72 | 2 |
+
+All three XMLs pass cached TY2025v5.4 Return1040.xsd (SHA256
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`).
+All ten generated pages were visually reviewed: owner, single/digital-assets
+marks, wage/AGI/deduction/tax/payment/refund, Schedule3 and Form8880 amounts,
+attachment order and omission in the zero-credit case reconcile. Existing
+zero-presentation qualifications remain; no signature or IRS acceptance is
+claimed. The dates are prior-year or prefiling2026 facts, so these fixtures do
+not prove current-year distribution-income joins.
+
+The focused typed batch passes189 tests. Each return rejects changes to either
+retained ledger copy at native and complete-PDF boundaries (six rejections per
+export). Private artifacts, source/pending snapshots, schema results and page
+renders: `.state/research/form8880-nonjoint-2026-10-09/`. Broader contribution
+sources, issuer authentication, current-year income-source joins, local business
+rules and IRS acceptance remain open; the Form8880 parent is not closed.

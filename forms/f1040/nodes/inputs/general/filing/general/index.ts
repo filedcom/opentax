@@ -48,6 +48,7 @@ import { form8959 } from "../../../../intermediate/forms/taxes/employment/form89
 import {
   form8880,
   jointDistributionReviewSchema,
+  nonjointDistributionReviewSchema,
 } from "../../../../intermediate/forms/credits/individual/form8880/index.ts";
 import { form8919 } from "../../../../intermediate/forms/taxes/employment/form8919/index.ts";
 import { form4137 } from "../../../../intermediate/forms/taxes/employment/form4137/index.ts";
@@ -375,6 +376,8 @@ export const inputSchema = z.object({
   spouse_form8880_student_five_months: z.boolean().optional(),
   spouse_form8880_claimed_as_dependent: z.boolean().optional(),
   form8880_joint_distribution_review: jointDistributionReviewSchema.optional(),
+  form8880_nonjoint_distribution_review: nonjointDistributionReviewSchema
+    .optional(),
   form8880_joint_2025_distribution_review: z.never().optional(),
   form8880_joint_prior_year_distribution_review: z.never().optional(),
   spouse_blind: z.boolean().optional(),
@@ -1525,6 +1528,10 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
         ...(parsed.spouse_form8880_claimed_as_dependent !== undefined && {
           spouse_claimed_as_dependent:
             parsed.spouse_form8880_claimed_as_dependent,
+        }),
+        ...(parsed.form8880_nonjoint_distribution_review && {
+          nonjoint_distribution_review:
+            parsed.form8880_nonjoint_distribution_review,
         }),
         ...(parsed.form8880_joint_distribution_review && {
           joint_distribution_review: parsed.form8880_joint_distribution_review,

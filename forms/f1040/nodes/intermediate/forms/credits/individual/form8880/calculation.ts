@@ -1,3 +1,7 @@
+import {
+  nonjointDistributionReviewSchema,
+  nonjointDistributionTotal,
+} from "./nonjoint_distribution_review.ts";
 import { z } from "zod";
 import { FilingStatus, TS } from "../../../../../types.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
@@ -123,6 +127,7 @@ export const inputSchema = z.object({
   distributions_taxpayer: z.number().nonnegative().optional(),
   distributions_spouse: z.number().nonnegative().optional(),
   joint_distribution_review: jointDistributionReviewSchema.optional(),
+  nonjoint_distribution_review: nonjointDistributionReviewSchema.optional(),
   joint_2025_distribution_review: z.never().optional(),
   joint_prior_year_distribution_review: z.never().optional(),
   // AGI and filing status for credit rate determination
@@ -195,10 +200,28 @@ function distributionColumns(input: Form8880Input): {
         "Form 8880 spouse distributions need a joint-return source",
       );
     }
+    const nonjoint = input.nonjoint_distribution_review;
+    if (nonjoint) {
+      if (
+        input.distributions_taxpayer !== undefined ||
+        input.distributions_spouse !== undefined ||
+        normalizeSsn(nonjoint.taxpayer_ssn) !== normalizeSsn(input.taxpayer_ssn)
+      ) {
+        throw new Error(
+          "Form 8880 nonjoint distribution ledger conflicts with scalar or owner facts",
+        );
+      }
+      return { taxpayer: nonjointDistributionTotal(nonjoint), spouse: 0 };
+    }
     return {
       taxpayer: input.distributions_taxpayer ?? 0,
       spouse: 0,
     };
+  }
+  if (input.nonjoint_distribution_review) {
+    throw new Error(
+      "Form 8880 nonjoint distribution ledger cannot be used on a joint return",
+    );
   }
   if (
     input.distributions_taxpayer !== undefined ||
