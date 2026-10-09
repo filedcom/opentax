@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { itemSchema as benefitSchema } from "../../../../../nodes/inputs/income/retirement/ssa1099/index.ts";
 
 const reference = z.string().trim().min(1);
 const tin = z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/);
@@ -77,12 +78,24 @@ const paths: Record<string, [string, string]> = {
   f1099g: ["f1099g", "f1099gs"],
   f1099r: ["f1099r", "f1099rs"],
   f1099b: ["f1099b", "f1099bs"],
+  ssa1099: ["ssa1099", "ssas"],
 };
 function sourceAmounts(
   key: string,
   r: Record<string, any>,
 ): Record<string, number> {
   const a = Object.fromEntries(keys.map((k) => [k, 0]));
+  if (key === "ssa1099") {
+    const benefit = benefitSchema.parse(r);
+    const net = benefit.box5_net_benefits ??
+      (benefit.box3_gross_benefits - (benefit.box4_repaid ?? 0));
+    if (net < 0) {
+      throw new Error(
+        "Form 8962 joint benefit source needs reconciled nonnegative net benefits",
+      );
+    }
+    a.social_security_total = net;
+  }
   if (key === "w2") a.wages = n(r, "box1_wages");
   if (key === "f1099int") {
     a.taxable_interest = n(r, "box1") + n(r, "box3") + n(r, "box10") -
@@ -300,9 +313,11 @@ export function assertForm8962JointIncomeReview(
         ? row.payer_ein
         : row.payer_tin;
       if (
-        (key !== "f1099b" &&
-          (typeof payerName !== "string" || !payerName.trim())) ||
-        !/^\d{9}$/.test(normalize(payerTin))
+        key !== "ssa1099" && (
+          (key !== "f1099b" &&
+            (typeof payerName !== "string" || !payerName.trim())) ||
+          !/^\d{9}$/.test(normalize(payerTin))
+        )
       ) {
         throw new Error(
           "Form 8962 joint income needs identified employer or payer source",
@@ -396,9 +411,11 @@ export function assertForm8962JointIncomeReview(
     if (
       canonical(owner.income_source_references.slice().sort()) !==
         canonical(references[id].slice().sort()) ||
-      keys.some((k) =>
+      keys.filter((k) => k !== "social_security_taxable").some((k) =>
         Math.abs(owner.income_amounts[k] - totals[id][k]) > 0.000001
-      )
+      ) || owner.income_amounts.social_security_taxable < 0 ||
+      owner.income_amounts.social_security_taxable >
+        totals[id].social_security_total
     ) {
       throw new Error(
         "Form 8962 joint income amounts or complete source references disagree",
@@ -415,7 +432,6 @@ export function assertForm8962JointIncomeReview(
     taxable_ira_distributions: "line4b_ira_taxable",
     taxable_pensions: "line5b_pension_taxable",
     social_security_total: "line6a_ss_gross",
-    social_security_taxable: "line6b_ss_taxable",
     additional_income: "line8_additional_income",
     adjustments: "line10_adjustments",
   };
@@ -434,12 +450,41 @@ export function assertForm8962JointIncomeReview(
       "Form 8962 joint income source capital gain disagrees with Form 1040",
     );
   }
-  const agi = Math.round(sum("wages")) + Math.round(sum("taxable_interest")) +
+  const nonBenefitAgi = Math.round(sum("wages")) +
+    Math.round(sum("taxable_interest")) +
     Math.round(sum("ordinary_dividends")) +
     Math.round(sum("taxable_ira_distributions")) +
     Math.round(sum("taxable_pensions")) +
     Math.max(-3000, Math.round(sum("capital_gain"))) +
     Math.round(sum("additional_income")) - Math.round(sum("adjustments"));
+  // Pub. 915 Worksheet 1 pools both spouses' benefits on a joint return.
+  // Owner gross/net benefits remain source-bound; the reviewed taxable shares
+  // must total the joint worksheet, not two independently applied thresholds.
+  const benefits = sum("social_security_total");
+  const provisional = nonBenefitAgi + sum("tax_exempt_interest") + benefits / 2;
+  const taxableBenefits = Math.round(
+    provisional <= 32_000
+      ? 0
+      : provisional <= 44_000
+      ? Math.min(benefits / 2, (provisional - 32_000) / 2)
+      : Math.min(
+        benefits * 0.85,
+        (provisional - 44_000) * 0.85 + Math.min(6_000, benefits / 2),
+      ),
+  );
+  const reviewedTaxableBenefits = review.owners.reduce(
+    (v, owner) => v + owner.income_amounts.social_security_taxable,
+    0,
+  );
+  if (
+    Math.round(reviewedTaxableBenefits) !== taxableBenefits ||
+    taxableBenefits !== n(f, "line6b_ss_taxable")
+  ) {
+    throw new Error(
+      "Form 8962 joint taxable benefits differ from the combined source worksheet",
+    );
+  }
+  const agi = nonBenefitAgi + taxableBenefits;
   if (agi !== n(f, "line11_agi")) {
     throw new Error(
       "Form 8962 joint income complete inventory disagrees with joint AGI",

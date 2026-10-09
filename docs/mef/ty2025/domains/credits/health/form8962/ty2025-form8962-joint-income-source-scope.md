@@ -13,6 +13,7 @@ The existing Form8962 parent remains open. Reviewed source copies and ordinary r
 | 1099G | Net unemployment only | Other recovery/grant/agriculture/RTAA branches rejected by name |
 | 1099R | Payer-reported determined taxable amount; codes1/2/3/7; explicit T/S owner; IRA/pension | Basis/rollover/Roth/QCD/PSO/simplified/4972/disaster special branches require another source reconciliation |
 | 1099B | Ordinary owned current-year transaction proceeds minus basis, aggregate capital-loss limit | Adjusted/market-discount/wash-sale/special transactions guarded |
+| SSA1099 / RRB1099 SSEB | Owned nonnegative net benefits, received copy, withholding and combined joint taxability; nontaxable benefits in one-policy no-APTC MAGI | Prior-year lump-sum elections, negative-net repayments and other policy combinations remain outside this proof |
 | general/f1095a | Exact joint owner inventory and complete policy/month/person MEC determinations | No eligibility inferred from premium payment, no omitted entered category |
 
 ## Exhaustive public input dispositions
@@ -54,7 +55,7 @@ This metadata-only enumeration contains all188 public registry entries at base0d
 | `form8582_prior_year_record` | `form8582_prior_year_record` | existing-parent entered source reconciliation guard; no silent omission |
 | `personal_property_rental` | `personal_property_rental` | existing-parent entered source reconciliation guard; no silent omission |
 | `rrb1099r` | `rrb1099r` | existing-parent entered source reconciliation guard; no silent omission |
-| `ssa1099` | `ssa1099` | existing-parent entered source reconciliation guard; no silent omission |
+| `ssa1099` | `ssa1099` | owned ordinary benefit join; see October 9 full-return proof below |
 | `f1095a` | `f1095a` | owned joined route, special branches separately guarded |
 | `k1_trust` | `k1_trust` | existing-parent entered source reconciliation guard; no silent omission |
 | `k1_s_corp` | `k1_s_corp` | existing-parent entered source reconciliation guard; no silent omission |
@@ -210,7 +211,7 @@ This metadata-only enumeration contains all188 public registry entries at base0d
 | `schedule_h` | `schedule_h` | existing-parent entered source reconciliation guard; no silent omission |
 | `alimony_received` | `alimony_received` | existing-parent entered source reconciliation guard; no silent omission |
 
-SSA/RRB benefit allocation and nontaxable MAGI, RRB pension basis; NEC/MISC/K/C/business/rental/farm/K1 owners; household/foreign/alimony/gambling/education income; manual8949 basis; foreign exclusion; NOL/adjustment/SEP/health deductions remain named source join gaps. Neither an inventory-complete boolean nor absence of entered records proves that unreported income is absent.
+Wider SSA/RRB benefit variants and policy combinations, RRB pension basis; NEC/MISC/K/C/business/rental/farm/K1 owners; household/foreign/alimony/gambling/education income; manual8949 basis; foreign exclusion; NOL/adjustment/SEP/health deductions remain named source join gaps. Neither an inventory-complete boolean nor absence of entered records proves that unreported income is absent.
 
 All retained V4 files and source packets remain qualified for the independently proven direct-PDF retained employer-name deletion defect. V4 W2 amount and EIN deletions were rejected; no acceptance claim is made for those. The V5 complete-copy repair is applied and frozen, but its checked gate is still pending at this checkpoint; it has no final source/code seal. Government not_eligible determinations mean complete reviewed eligibility and continuous-eligibility history, not merely non-enrollment. The helper does not compute government eligibility; external determinations are unverified.
 
@@ -245,3 +246,56 @@ All **29 final PDF pages** were freshly decoded and personally reviewed: low5, h
 Final physical preservation: `/tmp/opentax-form8962-spouse-income-final-v6-oct7`; its manifest binds literal packets, code, successful and qualified logs, source-only oracle/workpapers, exact replay, all29 decoded pages, contacts and personal review. The broader Form8962 parent remains open. No product-board or future-TODO changes, issuer/agency authentication, or IRS acceptance are claimed or required for this bounded private branch qualification.
 
 Root independently recomputed all four literal source/Decimal/native joins and personally reviewed all29 pages. Root physical seal: `.state/research/spouse-root-final-review-oct7/manifest.json`,68 files, SHA256 `0330416cd71fbf0513dd8a3903ba593edee62a895e7f02332d1aebcbb3742e20`. The auxiliary replay helper checker is optional, outside the successful ordinary checked six-module gate, and is not a branch integration gate.
+
+
+## October 9: joint SSA/RRB benefits through the complete return
+
+Previously, the joint inventory rejected entered SSA/RRB benefits and the native
+no-APTC path required gross benefits to equal taxable benefits. The inventory now
+binds each recipient, reference, tax year, complete received copy and nonnegative
+net benefits. It validates the reviewed taxable total against the combined joint
+worksheet and finalized Form1040; it does not apply separate spouse thresholds.
+The no-APTC household calculation includes the validated nontaxable difference.
+Unreviewed and other policy routes retain their existing guards.
+
+[2025 Publication 915](https://www.irs.gov/pub/irs-prior/p915--2025.pdf),
+Worksheet1, supplies the joint 32,000/44,000 thresholds and 85% ceiling.
+[Form8962 Worksheet1-1 and Tables1-1/2](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf)
+add nontaxable benefits and exempt interest to AGI; family4 poverty income is
+31,200. These fixtures retain dependent MAGI32,400, monthly premiums900,
+SLCSP700 for January–June/800 for July–December, no advances and affirmative
+person-month outside-MEC reviews. Both adults are under65, with ordinary early
+retirement benefits and no claimed Medicare/disability eligibility; synthetic
+review facts do not authenticate SSA, RRB or Marketplace records. Owner taxable
+shares are a reviewed allocation summing to the joint worksheet, not independent
+owner tax computations.
+
+| Case | Wages / exempt interest | Taxable benefits | Joint AGI | Household MAGI | PTC | Tax | Refund |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| zero | 20,000 / 0 | 0 | 20,000 | 72,400 | 6,624 | 0 | 9,824 |
+| half | 30,000 / 0 | 4,000 | 34,000 | 82,400 | 5,244 | 251 | 8,193 |
+| upper-band | 40,000 / 0 | 11,100 | 51,100 | 92,400 | 3,600 | 1,963 | 4,837 |
+| capped, spouse RRB | 50,000 / 0 | 17,000 | 67,000 | 102,400 | 2,136 | 3,786 | 1,550 |
+| exempt-crossing | 20,000 / 4,000 | 1,000 | 21,000 | 76,400 | 6,132 | 0 | 9,332 |
+
+Each owner has net benefits10,000 after repayment500 and withholding100; total
+withholding is3,200 including both W2s. PTC monthly contributions are198,313,450,
+572 and239 respectively. Positive tax uses the MFJ bands2,500–2,525,
+19,600–19,650 and35,500–35,550 in the
+[2025 Tax Table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf).
+
+Normal typed checks:47/0 across four focused files, plus the existing source
+regression1/0 covering four prior full returns and its conflicts. New seven tests
+cover five complete benefit cases, five native/PDF descriptor conflicts and eight
+source-review conflicts. Five new complete returns pass the configured IRS XSD;
+all25 pages were observed (21 distinct plus four exact matching second pages).
+Existing deferred68 primary-only joint names and deferred76 blank zero-tax
+presentation remain qualifications. No PDF mapping, deferred item or broad parent
+was closed. Initial test harness type/field/descriptor-call mistakes were corrected
+before this terminal result; no runtime failure is hidden by disabling type checks.
+
+Private evidence: `.state/research/form8962-joint-benefits-2026-10-09/`, including
+sources, prepared data, XML/PDF, rendered pages, command logs and hashes.
+Full-suite verification remains blocked by deferred78 before runtime tests;
+source authenticity, broader joint-income categories, policy variants and IRS
+acceptance remain open.

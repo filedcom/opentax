@@ -17,7 +17,10 @@ import { reconcileDependentMagi } from "../../../../../domains/credits/health/fo
 import { assertForm8962FamilyEligibility } from "../../../../../domains/credits/health/form8962/form8962-family-eligibility.ts";
 import { roundForm8962Amounts } from "../../../../../domains/credits/health/form8962/form8962-money.ts";
 import { assertForm8962Pub974Return } from "../../../../../domains/credits/health/form8962/form8962_pub974_return.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../../form-descriptor.ts";
 
 interface MonthlyRow {
   month_code: string;
@@ -1081,10 +1084,17 @@ function reconcileNoAptcPolicyMonths(
     );
   }
   const povertyLine = reconcilePovertyTable(fields, context);
-  const taxpayerIncome = form1040.data.line11_agi + sourcedTaxExemptInterest(
-    pending,
-    form1040.data.line2a_tax_exempt ?? 0,
-  );
+  // Family eligibility above reconciles the complete joint source inventory,
+  // including combined taxable benefits. Worksheet 1-1 adds its nontaxable part.
+  const nontaxableBenefits = (form1040.data.line6a_ss_gross ?? 0) -
+    (form1040.data.line6b_ss_taxable ?? 0);
+  const reviewedJointBenefits = joint &&
+    general.data.ptc_joint_income_review !== undefined;
+  const taxpayerIncome = form1040.data.line11_agi +
+    (reviewedJointBenefits ? nontaxableBenefits : 0) + sourcedTaxExemptInterest(
+      pending,
+      form1040.data.line2a_tax_exempt ?? 0,
+    );
   const income = taxpayerIncome + dependentMagi;
   if (
     hasVerifiedDependents &&
@@ -1103,8 +1113,8 @@ function reconcileNoAptcPolicyMonths(
     hasVerifiedDependents || joint,
   );
   if (
-    (form1040.data.line6a_ss_gross ?? 0) !==
-      (form1040.data.line6b_ss_taxable ?? 0) ||
+    nontaxableBenefits < 0 ||
+    (!reviewedJointBenefits && nontaxableBenefits !== 0) ||
     fields.taxpayer_modified_agi !== taxpayerIncome ||
     fields.household_income !== income ||
     fields.federal_poverty_line !== povertyLine ||
