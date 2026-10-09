@@ -1,10 +1,10 @@
 # TY2025 ATS public-entry check replay — October 9, 2026
 
-The eight retained partial Form 1040 fixtures were replayed through the public return entry point, followed by native preparation only when the graph had no error diagnostics. No source answers were supplied to bypass a guard. This expands the existing ATS matrix with reproducible per-field observations; it does not complete an ATS scenario.
+The eight retained partial Form 1040 fixtures were replayed through the public return entry point, followed by native preparation only when the graph had no error diagnostics. Scenario13 now uses a separately labeled current-law reconstruction with independently sourced tax limits; its original incomplete-input fixture and all printed targets remain unchanged. This expands the existing ATS matrix with reproducible per-field observations; it does not complete an ATS scenario.
 
-**Selected observations: 29 match / 13 differ / 12 not produced, out of 54 (54% matching).** These are calculation checks chosen from retained printed amounts, source arithmetic and provisional interpretations. They are not an enumerated IRS business-rule set or a representative sample; matching values do not prove native/PDF output or accepted transmission.
+**Selected observations: 32 match / 12 differ / 10 not produced, out of 54 (59% matching).** These are calculation checks chosen from retained printed amounts, source arithmetic and provisional interpretations. They are not an enumerated IRS business-rule set or a representative sample; matching values do not prove native/PDF output or accepted transmission.
 
-**Updated engineering estimate: about 60% of individual ATS checks, uncertainty range45–75%.** This replaces75% after the public-entry and preparation replay exposed how much earlier evidence was component-only. The estimate is judgment across the broader required checks, not29/54 re-labeled as an IRS pass rate. Later deductions/credits are heavily represented here; most identity, attachment and IRS-rule checks are not.
+**Updated engineering estimate: about 60% of individual ATS checks, uncertainty range45–75%.** This replaces75% after the public-entry and preparation replay exposed how much earlier evidence was component-only. The estimate is judgment across the broader required checks, not32/54 re-labeled as an IRS pass rate. Later deductions/credits are heavily represented here; most identity, attachment and IRS-rule checks are not.
 
 | Scenario | Match | Different | Not produced | Public/native preparation | Required source copies |
 | --- | ---: | ---: | ---: | --- | ---: |
@@ -15,11 +15,11 @@ The eight retained partial Form 1040 fixtures were replayed through the public r
 | 1040-05 | 4 | 0 | 0 | partial-prepared | 9 |
 | 1040-08 | 11 | 0 | 0 | native-blocked | 3 |
 | 1040-12 | 6 | 7 | 1 | native-blocked | 8 |
-| 1040-13 | 3 | 6 | 2 | graph-blocked | 6 |
+| 1040-13 | 6 | 5 | 0 | partial-prepared, six native documents | 6 |
 
-The source inventory contains56 form copies across these packets. Scenarios4 and5 prepare only `IRS1040` and `IRSW2`: two-document partial packets cannot satisfy their seven- and nine-document source inventories. Scenarios2/3/13 stop on graph errors. Scenarios1/8/12 stop on native source reconciliation. No XSD, new PDF or IRS acknowledgment is claimed by this replay.
+The source inventory contains56 form copies across these packets. Scenarios4 and5 prepare only `IRS1040` and `IRSW2`: two-document partial packets cannot satisfy their seven- and nine-document source inventories. Scenarios2/3 stop on graph errors. Scenarios1/8/12 stop on native source reconciliation. Scenario13 prepares all six source-form roots; its separate packet passes local XSD and has six observed PDF pages, with presentation qualifications. No IRS acknowledgment is claimed.
 
-Existing blockers remain: missing filing status in2/3; payroll evidence in1; incomplete credits and statements in4/5; QCD/payer/recipient facts in8; health/QBI, deduction and partnership-basis conflicts in12; stale deduction/tax limits and missing credit inputs in13. The newly observed Scenario8 native recipient-SSN guard is recorded in `future_todo` and left unmodified.
+Existing blockers remain: missing filing status in2/3; payroll evidence in1; incomplete credits and statements in4/5; QCD/payer/recipient facts in8; health/QBI, deduction and partnership-basis conflicts in12; printed deduction/tax conflicts and packet presentation qualifications in13. The newly observed Scenario8 native recipient-SSN guard is recorded in `future_todo` and left unmodified.
 
 ## Reproduce
 
@@ -31,7 +31,17 @@ The replay reports differences instead of changing the retained targets. Missing
 
 ## Verification
 
-The ATS directory regression passed61 tests with zero failures. After native-preparation reporting was added, the final two report checks passed with zero failures; those two are not added again to61. They verify absent-versus-zero handling, all eight scenario identities, retained deduction/credit conflicts, blocked graphs, and partial document reporting. No tax runtime or existing source fixture changed. Exact commands, runtime version, source/artifact digests and the earlier/full versus final/focused scope are retained in `.state/research/board-execution-2026-10-08/ats-public-check-replay-checkpoint.json`.
+The updated complete ATS directory regression passed **62 typed tests, zero failures**. It retains the original missing-limit and stale-printed-limit rejection cases, and adds a current-law six-document return with independent numerical expectations. No tax runtime changed. The earlier61-test run and focused2-test follow-up remain historical evidence in `ats-public-check-replay-checkpoint.json`; the new run, packet hashes and qualifications are retained in `ats-scenario13-current-law-checkpoint.json` under the same private execution directory.
+
+### Scenario13 current-law reconstruction
+
+The [2025 Form1040 instructions](https://www.irs.gov/instructions/i1040gi) give the joint standard deduction31,500. With issued wages31,620 and no other amounts on this packet, taxable income is120. The [2025 Tax Table, page2](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf) gives11 for the100–124 MFJ row. The issued Form6251 has no other AMT adjustments:120 plus the31,500 deduction addback gives31,620 AMTI, below its137,000 exemption, so tentative minimum tax is0. The [Form8911 instructions, line8](https://www.irs.gov/instructions/i8911) require the AMT form even without AMT owed. The charger gives300 tentative credit, limited to11; final tax is0 and withholding/refund609.
+
+`scenario104013CurrentLawInput` supplies those independent11/0 limits. The actual graph recomputes and the PDF projectors reconcile them against Form1040, Schedule3 and Form6251. It does not use engine output as its own target or replace the issued162 expectation. The printed30,000 deduction and162 tax/credit remain unresolved IRS-answer conflicts; even the printed1,620 taxable amount falls in a Tax Table row of161, not162. This is a current-law reconstruction, not approval to alter an ATS answer key.
+
+Native roots are IRS1040, IRS1040Schedule3, IRS6251, IRS8911, IRS8911ScheduleA and IRSW2. The six-page generated PDF contains1040 pp1–2, Schedule3, required6251 p1,8911 and its ScheduleA; unused6251 PartIII is omitted and the issued W-2 remains a retained source/native copy. All pages were visually observed; zero AcroForm fields/widgets remain. No signature, production transmitter credential, business-rule validation or accepted acknowledgment is supplied.
+
+The rendered packet is **not approved for complete presentation parity**: zero1040 line24 and8911 line8 are blank;8911/ScheduleA and the native header have primary-only names while1040/Schedule3 identify both spouses. These findings are retained only in `future_todo` (zero presentation and the existing identity review item); no deferred code was changed. Amount, property date/address/GEOID and credit joins reconcile. Artifacts: `.state/research/ats13-current-law-2026-10-09/`.
 
 ## Per-check observations
 
@@ -153,9 +163,9 @@ Preparation: **native-blocked** — Error: Form 8995 positive filing needs one i
 
 [IRS source packet](https://www.irs.gov/pub/irs-efile/1040-mef-ats-scenario-13.pdf). Required source copies: 1040, Schedule 3, 6251, 8911, 8911 Schedule A, W-2.
 
-Preparation: **graph-blocked** — Resolve graph diagnostics before preparation
+Preparation: **partial-prepared** — Current-law reconstruction with six native documents; printed-answer, presentation and acceptance qualifications above remain.
 
-Graph diagnostics: f8911: compute() threw for node "f8911": Form 8911 needs regular tax and tentative minimum tax to limit the personal credit.
+Prepared native roots: IRS1040, IRS1040Schedule3, IRS6251, IRS8911, IRS8911ScheduleA, IRSW2.
 
 | Pending field | Target | Actual | Result | Basis / source location |
 | --- | ---: | ---: | --- | --- |
@@ -164,10 +174,9 @@ Graph diagnostics: f8911: compute() threw for node "f8911": Form 8911 needs regu
 | `f1040.line12a_standard_deduction` | 30000 | 31500 | different | printed-source: Form 1040 pp. 2–3 |
 | `f1040.line15_taxable_income` | 1620 | 120 | different | printed-source: Form 1040 pp. 2–3 |
 | `f1040.line16_income_tax` | 162 | 11 | different | printed-source: Form 1040 pp. 2–3 |
-| `f1040.line20_nonrefundable_credits` | 162 | not produced | not-produced | printed-source: Form 1040 pp. 2–3 |
-| `f1040.line24_total_tax` | 0 | 11 | different | printed-source: Form 1040 pp. 2–3 |
+| `f1040.line20_nonrefundable_credits` | 162 | 11 | different | printed-source: Form 1040 pp. 2–3 |
+| `f1040.line24_total_tax` | 0 | 0 | match | printed-source: Form 1040 pp. 2–3 |
 | `f1040.line25a_w2_withheld` | 609 | 609 | match | printed-source: Form 1040 pp. 2–3 |
-| `f1040.line34_overpayment` | 609 | 598 | different | printed-source: Form 1040 pp. 2–3 |
-| `f1040.line35a_refund` | 609 | 598 | different | printed-source: Form 1040 pp. 2–3 |
-| `schedule3.line6j_alt_fuel_vehicle_refueling` | 162 | not produced | not-produced | printed-source: Schedule3 line6j; printed stale tax limit remains unresolved |
-
+| `f1040.line34_overpayment` | 609 | 609 | match | printed-source: Form 1040 pp. 2–3 |
+| `f1040.line35a_refund` | 609 | 609 | match | printed-source: Form 1040 pp. 2–3 |
+| `schedule3.line6j_alt_fuel_vehicle_refueling` | 162 | 11 | different | printed-source: Schedule3 line6j; printed stale tax limit remains unresolved |

@@ -13,7 +13,7 @@ import { SCENARIO_1040_13_FACTS } from "./ty2025_cases.ts";
  * Current TY2025 law/config uses $31,500. Do not replace either source value
  * with an invented current-law tax or silently claim the $162 credit.
  */
-export function scenario104013Input(): Record<string, unknown> {
+export function scenario104013Input() {
   const facts = SCENARIO_1040_13_FACTS;
   return {
     general: {
@@ -97,3 +97,24 @@ export const SCENARIO_1040_13_RECONCILIATION = {
       SCENARIO_1040_13_FACTS.w2.box1Wages - 31_500,
   },
 } as const;
+
+/**
+ * Current-law reconstruction, distinct from the issued packet's printed answers.
+ * IRS 2025 Tax Table p.2: MFJ taxable income100–124 gives tax11.
+ * Form6251:120 +31,500 =31,620 AMTI, below the137,000 exemption; TMT0.
+ * Form8911: min(1,000 ×30%,11 -0) =11; withholding609 is fully refunded.
+ * No source fact or printed ATS expected amount is replaced by this variant.
+ */
+export function scenario104013CurrentLawInput() {
+  const source = scenario104013Input();
+  return {
+    ...source,
+    f8911: {
+      ...source.f8911,
+      regular_tax_before_credits: 11,
+      foreign_tax_credit: 0,
+      certain_allowable_credits: 0,
+      tentative_minimum_tax: 0,
+    },
+  };
+}

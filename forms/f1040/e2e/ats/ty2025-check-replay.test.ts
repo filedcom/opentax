@@ -77,8 +77,8 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
   ) => c.path === "schedule3.line6j_alt_fuel_vehicle_refueling")!;
   assertEquals([credit.expected, credit.actual, credit.result], [
     162,
-    null,
-    CheckResult.NotProduced,
+    11,
+    CheckResult.Different,
   ]);
   assertEquals(
     report.scenarios.find((s) => s.id === "1040-01")!.checks.map((c) =>

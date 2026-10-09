@@ -8,7 +8,7 @@ import { scenario104004Input } from "./scenario_1040_04_input.ts";
 import { scenario104005PartialInput } from "./scenario_1040_05_input.ts";
 import { scenario104008Input } from "./scenario_1040_08_input.ts";
 import { scenario104012PartialInput } from "./scenario_1040_12_input.ts";
-import { scenario104013Input } from "./scenario_1040_13_input.ts";
+import { scenario104013CurrentLawInput } from "./scenario_1040_13_input.ts";
 import { TY2025_ATS_CASES } from "./ty2025_cases.ts";
 
 export enum TargetBasis {
@@ -270,7 +270,7 @@ const inputs = {
   "1040-05": scenario104005PartialInput,
   "1040-08": scenario104008Input,
   "1040-12": scenario104012PartialInput,
-  "1040-13": scenario104013Input,
+  "1040-13": scenario104013CurrentLawInput,
 } as const;
 
 export function compareAtsTarget(
@@ -344,6 +344,9 @@ export async function replayAtsChecks() {
       return {
         id: scenario.id,
         sourceUrl: source.sourceUrl,
+        interpretation: scenario.id === "1040-13"
+          ? "Current-law reconstruction; printed ATS targets preserved"
+          : "Partial source fixture",
         requiredSourceDocuments: source.forms,
         diagnostics: execution.diagnostics,
         preparation: await replayPreparation(execution),
