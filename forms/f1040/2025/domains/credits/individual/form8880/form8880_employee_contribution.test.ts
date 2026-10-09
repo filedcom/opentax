@@ -259,6 +259,63 @@ for (const item of cases) {
       );
       await assertRejects(() => buildPdfBytes(altered, filer, ".pdf-cache"));
     }
+    // Rebuild from the altered graph: an old prepared bundle would only prove
+    // its hash guard, not retained eligibility reconciliation.
+    if (item.credit > 0) {
+      for (const owner of ["taxpayer", "spouse"] as const) {
+        if (
+          (owner === "taxpayer"
+            ? item.primary + item.elective
+            : item.spouse) === 0
+        ) continue;
+        for (
+          const [generalField, computedField, value] of [
+            [`${owner}_dob`, `${owner}_dob`, "2008-01-02"],
+            [`${owner}_dob`, `${owner}_dob`, undefined],
+            [
+              `${owner}_form8880_student_five_months`,
+              `${owner}_student_five_months`,
+              true,
+            ],
+            [
+              `${owner}_form8880_student_five_months`,
+              `${owner}_student_five_months`,
+              undefined,
+            ],
+            [
+              `${owner}_form8880_claimed_as_dependent`,
+              `${owner}_claimed_as_dependent`,
+              true,
+            ],
+            [
+              `${owner}_form8880_claimed_as_dependent`,
+              `${owner}_claimed_as_dependent`,
+              undefined,
+            ],
+          ] as const
+        ) {
+          for (const location of ["general", "computed", "both"] as const) {
+            const altered = {
+              ...pending,
+              general: location === "computed" ? pending.general : {
+                ...general,
+                [generalField]: value,
+              },
+              form8880: location === "general" ? pending.form8880 : {
+                ...pending.form8880,
+                [computedField]: value,
+              },
+            };
+            await assertRejects(() =>
+              buildMefBundle(altered, { filer, attachments: [] })
+            );
+            await assertRejects(() =>
+              buildPdfBytes(altered, filer, ".pdf-cache")
+            );
+          }
+        }
+      }
+    }
     const dir = Deno.env.get("FORM8880_EMPLOYEE_EVIDENCE");
     if (dir) {
       const output = `${dir}/${item.name}`;

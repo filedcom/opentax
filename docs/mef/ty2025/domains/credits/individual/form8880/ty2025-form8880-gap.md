@@ -458,3 +458,29 @@ The records are reviewed structured facts, not authenticated issuer bytes.
 Wider IRA/ABLE sources, source authentication, other eligibility/credit-order
 combinations, business-rule validation and IRS acceptance remain open. The
 Form8880 and source-provenance parent tasks are not closed.
+
+## October 9 complete-export eligibility audit
+
+The retained voluntary-contribution cases now test six positive contributor
+columns across five returns: three single columns, both columns on the joint
+return, and the spouse-only column. Each column has six changes: birth date
+after the eligible cutoff or missing, student answer true or missing, and
+dependent-claim answer true or missing. Each change is applied to the general
+source, computed Form8880 source, and both together. All108 altered graphs
+reject independently in native assembly and in the full PDF builder, rebuilt
+without an old prepared bundle. This adds to the earlier54 source rejections
+per export; the zero-credit case is deliberately outside this positive-claim
+eligibility matrix.
+
+The six-return/source module passes7 tests, and the calculator module passes74,
+including the January1,2008 eligible birth-date boundary. The governing
+[2025 Form8880 caution and instructions](https://www.irs.gov/pub/irs-prior/f8880--2025.pdf)
+exclude a contributor born after that date, claimed as a dependent, or meeting
+the five-calendar-month student definition. The test changes the reviewed
+answers; it does not authenticate school, age or dependency records.
+
+No runtime change or newly discovered deferred defect was needed. Prior XSD
+and22-page review evidence for the unchanged six source fixtures is retained
+separately; this audit does not add new PDF reviews or claim IRS acceptance.
+Evidence: `.state/research/form8880-eligibility-2026-10-09/`. Broader IRA/ABLE,
+eligibility-source authenticity, credit ordering and the parent task stay open.
