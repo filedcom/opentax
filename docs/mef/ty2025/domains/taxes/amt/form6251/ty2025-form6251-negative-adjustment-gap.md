@@ -1,5 +1,83 @@
 # TY2025 Form 6251 negative-adjustment filing rule
 
+## October 10 signed trust and depletion complete-return checkpoint
+
+Eleven public-entry returns now exercise signed trust K-1 box 12 code A and
+property-level Schedule C depletion, including multiple sources and both
+spouses. Eight reconcile through calculation, Form 1040, native preparation and
+the filled packet. A ninth emits incorrect tax despite passing XSD, and two
+independently have zero AMT due but cannot export. No production code changed in
+this checkpoint. Historical “unrun” notes below are superseded only for the
+scopes exercised here; this does not close the broader Form 6251 task.
+
+All eight reconciled cases have $200,000 wages, zero net Schedule C income and
+$35,000 withholding. Depletion is the sum of each reviewed property's regular
+deduction less its AMT deduction. Trust amounts sum the signed code A copies.
+The source workpapers supply already reviewed allowed depletion; these checks
+do not independently calculate property income, basis or section 613 limits.
+
+| Case | Trust adjustment | Depletion adjustment | Regular tax | AMT | Total tax | Pages |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Two signed trust copies | 190,000 | 0 | 37,067 | 42,683 | 79,750 | 5 |
+| Five signed trust copies | 240,000 | 0 | 37,067 | 56,683 | 93,750 | 5 |
+| Spouse trust copies, joint | 190,000 | 0 | 26,898 | 39,160 | 66,058 | 5 |
+| Both beneficiaries, joint | 240,000 | 0 | 26,898 | 53,160 | 80,058 | 5 |
+| Mixed property deductions | 0 | 150,000 | 37,067 | 31,483 | 68,550 | 7 |
+| Both proprietors, joint | 0 | 150,000 | 26,898 | 28,482 | 55,380 | 9 |
+| Negative trust, positive depletion | -20,000 | 150,000 | 37,067 | 25,883 | 62,950 | 7 |
+| Negative depletion, positive trust | 200,000 | -30,000 | 37,067 | 37,083 | 74,150 | 7 |
+
+The two nonfiling cases each have a negative $30,000 adjustment. Independent
+arithmetic gives AMTI $170,000, tentative tax $21,294 and regular tax $37,067;
+removing the negative adjustment gives tentative tax $29,094, still below
+regular tax. Under the [2025 filing instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf),
+neither needs Form 6251 on these facts. Public execution returns no diagnostics
+but retains no completed AMT result, and both native preparation and fresh PDF
+building reject the trust/depletion source guard. This is deferred124: the
+entered sources remain in the evidence, and neither case counts as a complete
+return.
+
+The qualified-dividend case adds $10,000 ordinary/qualified trust dividends to
+the $200,000 wages and $190,000 trust adjustment. Form 1040 lines 3a/3b retain
+the dividends, but the regular-tax worksheet loses their qualified character,
+Form 6251 omits Part III and Form 8960 reports no investment income. Native and
+PDF accept regular tax $39,467, AMT $43,083 and total tax $82,550. Independent
+ordinary/preferential arithmetic instead gives regular tax $38,567, tentative
+tax $81,250, AMT $42,683 and NIIT $380, for total tax $81,630. The
+[K-1 box 2a/2b instructions](https://www.irs.gov/pub/irs-prior/i1041sk1--2025.pdf)
+and [Form 8960 line 2 instructions](https://www.irs.gov/pub/irs-prior/i8960--2025.pdf)
+identify these destinations. This is deferred125; a structural XSD pass does
+not validate the incorrect tax. The test retains the correct expected amounts
+separately from assertions documenting the observed defect.
+
+The focused typed run passes 11/0, including three explicit defect assertions;
+the broader trust, Schedule C and Form 6251 group passes 419/0. Across the eight
+reconciled cases, 20 public-source mutations and 76 native/76 fresh-PDF
+mutations reject missing reviews, altered amounts, wrong owners, duplicates,
+removed sources and changed final tax. The two original nonfiling export
+blocks are separate from those mutation counts. The prior benchmark remains
+46/133 at runtime `d09348af9`; it was not rerun because production code is
+unchanged.
+
+All nine emitted XMLs pass cached TY2025v5.4 Return1040 XSD. All 57 flattened
+packet pages were visually reviewed through 38 unique page hashes on ten
+sheets: 50 pages belong to the eight reconciled cases and seven to the known
+incorrect dividend case. Seventeen trust copies and seven property rows retain
+their source/owner joins; five Schedule C copies identify the correct
+proprietor. Existing qualifications remain: three joint Form 6251 headers name
+only the primary filer (deferred68), zero Schedule C lines 29/31 print blank
+(deferred76), and all nine native Form 6251 documents omit line 1a although the
+PDFs print it (deferred84). Signed negative lines 2d/2j print with a minus sign.
+No deferred repair was made.
+
+Evidence is retained under
+`.state/research/form6251-signed-sources-2026-10-10/`: source/pending snapshots,
+the two export errors, nine XML/PDF packets, independent arithmetic/native
+checks, focused/grouped logs, rendered pages and hash manifests. XSD digest:
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+Synthetic source references do not authenticate issuer records, and no IRS
+business-rule acceptance or acknowledgment is claimed.
+
 ## Circulation-cost source boundary on line 2o (written, unrun)
 
 The
