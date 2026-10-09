@@ -5,6 +5,7 @@ import {
 } from "../../../../../nodes/inputs/adjustments/employment/f2106/index.ts";
 import type { Form2106Lines } from "../../../../../nodes/inputs/adjustments/employment/f2106/index.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
+import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { inputSchema as form2106InputSchema } from "../../../../../nodes/inputs/adjustments/employment/f2106/index.ts";
 import type { PdfFieldEntry } from "../../../../pdf/review-support/form-descriptor.ts";
@@ -50,12 +51,12 @@ const pendingRecordSchema = z.record(z.string(), z.unknown());
 const normalizedName = (name: string) =>
   name.trim().toUpperCase().replace(/\s+/g, " ");
 
-/** The one-job filing route with no vehicle, meal, travel, or reimbursement. */
+/** Fee-basis jobs without vehicle, meal, travel, or reimbursement claims. */
 export function isSupportedForm2106Route(raw: unknown): boolean {
   const parsed = form2106InputSchema.safeParse(raw);
-  if (!parsed.success || parsed.data.f2106s.length !== 1) return false;
-  const item = parsed.data.f2106s[0];
-  return item.job.owner === "taxpayer" &&
+  // TY2025 ReturnData1040.xsd permits at most four IRS2106 documents.
+  if (!parsed.success || parsed.data.f2106s.length > 4) return false;
+  return parsed.data.f2106s.every((item) =>
     item.qualification.kind === EmployeeType.FEE_BASIS_OFFICIAL &&
     item.vehicle.method === "NONE" &&
     item.expenses.line2_parking_tolls_local_transportation === 0 &&
@@ -63,7 +64,8 @@ export function isSupportedForm2106Route(raw: unknown): boolean {
     item.expenses.line4_other_business_expenses > 0 &&
     item.expenses.line5_meals === 0 &&
     item.reimbursements.line7_column_a_nonmeals === 0 &&
-    item.reimbursements.line7_column_b_meals === 0;
+    item.reimbursements.line7_column_b_meals === 0
+  );
 }
 
 /**
@@ -157,31 +159,83 @@ export function reconcileStagedForm2106Return(
   return { jobs, schedule1Total, scheduleATotal } as const;
 }
 
+function assertFeeBasisJobSources(
+  jobs: ReturnType<typeof reconcileStagedForm2106Return>["jobs"],
+  w2: z.infer<typeof w2InputSchema>,
+  filer: FilerIdentity,
+): void {
+  const allowedOwners = new Set([
+    filer.primarySSN,
+    ...(filer.filingStatus === FilingStatus.MarriedFilingJointly && filer.spouse
+      ? [filer.spouse.ssn]
+      : []),
+  ]);
+  if (
+    jobs.some(({ source }) =>
+      source.job.owner === "spouse" &&
+      filer.filingStatus !== FilingStatus.MarriedFilingJointly
+    ) ||
+    w2.w2s.some((item) =>
+      !allowedOwners.has(
+        item.employee_ssn?.replaceAll("-", "") ?? "",
+      )
+    )
+  ) {
+    throw new Error(
+      "Form 2106 jobs and wages need the taxpayer or a joint-filing spouse",
+    );
+  }
+  const jobKeys = jobs.map(({ source }) =>
+    `${source.job.employee_ssn.replaceAll("-", "")}:${
+      source.job.employer_ein.replaceAll("-", "")
+    }`
+  );
+  const expenseKeys = jobs.map(({ source }) =>
+    source.expenses.expense_records_reference
+  );
+  if (
+    new Set(jobKeys).size !== jobKeys.length ||
+    new Set(expenseKeys).size !== expenseKeys.length
+  ) {
+    throw new Error(
+      "Form 2106 needs distinct owner/employer jobs and separately allocated expense records",
+    );
+  }
+  for (const { source: { job } } of jobs) {
+    const employer = w2.w2s.filter((item) =>
+      item.employee_ssn?.replaceAll("-", "") ===
+        job.employee_ssn.replaceAll("-", "") &&
+      item.employer_ein?.replaceAll("-", "") ===
+        job.employer_ein.replaceAll("-", "")
+    );
+    if (
+      employer.length !== 1 || employer[0].box1_wages <= 0 ||
+      normalizedName(employer[0].employer_name ?? "") !==
+        normalizedName(job.employer_name)
+    ) {
+      throw new Error(
+        "Form 2106 each fee-basis job must match one employer W-2 for its owner",
+      );
+    }
+  }
+}
+
 /** Native/PDF filing guard for the supported fee-basis route. */
 export function reconcileFileableForm2106Return(
   allPending: Readonly<Record<string, unknown>>,
 ) {
   if (!isSupportedForm2106Route(allPending.f2106)) {
     throw new Error(
-      "Form 2106 filing needs one sourced taxpayer fee-basis line-4 expense job",
+      "Form 2106 filing needs sourced fee-basis line-4 expense jobs",
     );
   }
   const result = reconcileStagedForm2106Return(allPending);
   const form1040 = pendingRecordSchema.parse(allPending.f1040);
   const w2 = w2InputSchema.parse(allPending.w2);
-  const job = result.jobs[0]!.source.job;
-  const employer = w2.w2s.filter((item) =>
-    item.employee_ssn?.replaceAll("-", "") ===
-      job.employee_ssn.replaceAll("-", "") &&
-    item.employer_ein?.replaceAll("-", "") ===
-      job.employer_ein.replaceAll("-", "") &&
-    normalizedName(item.employer_name ?? "") ===
-      normalizedName(job.employer_name)
-  );
+  const filer = extractFilerIdentity(form1040)!;
+  assertFeeBasisJobSources(result.jobs, w2, filer);
   const wages = w2.w2s.reduce((sum, item) => sum + item.box1_wages, 0);
   if (
-    w2.w2s.length !== 1 || employer.length !== 1 ||
-    employer[0].box1_wages <= 0 ||
     form1040.line1a_wages !== wages ||
     form1040.line1z_total_wages !== wages ||
     (form1040.line8_additional_income ?? 0) !== 0 ||
@@ -190,7 +244,7 @@ export function reconcileFileableForm2106Return(
     form1040.line11_agi !== wages - form1040.line10_adjustments
   ) {
     throw new Error(
-      "Form 2106 fee-basis job must match one employer W-2 and final Form 1040 wages and AGI",
+      "Form 2106 fee-basis jobs must match final Form 1040 wages and AGI",
     );
   }
   return result;

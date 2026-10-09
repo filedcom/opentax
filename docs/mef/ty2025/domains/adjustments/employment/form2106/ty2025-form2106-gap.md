@@ -1,127 +1,92 @@
 # TY2025 Form 2106: employee business expenses
 
-## Current selected-packet evidence (2026-10-04)
+## October 9 multiple owned fee-basis jobs
 
-The bounded fee-basis county-official route now has a six-page visual,
-source, native-XML, and PDF replay review. Form 2106 prints $1,200 on lines
-4/6/8/9/10, Schedule 1 lines 12/26 and Form 1040 line 10 print $1,200, and
-Form 1040 AGI is $48,800 from $50,000 wages. The retained selected manifest
-passed artifact hashes, page origins, and local TY2025v5.4 XSD; details and
-digest are in the [validation batch](../../../../testing/ty2025-form1040-validation-batch.md).
-The remaining source and branch boundaries below are still open.
+Native and PDF filing now accepts one to four separately sourced fee-basis
+state or local official jobs, including a spouse on a joint return. Each job
+has positive line 4 expenses and no vehicle, transportation, travel, meals or
+reimbursements. The cached TY2025v5.4 ReturnData1040 schema permits at most four
+IRS2106 documents; a fifth job remains rejected.
 
-## One fee-basis official's unreimbursed line-4 expense (written, unrun)
+Each employee SSN/employer EIN pair must be distinct and match exactly one
+positive W-2 with the same normalized employer name. Expense-record references
+must be distinct, preventing the same unallocated ledger from being claimed
+by multiple jobs. Two spouses may work for the same employer when each has a
+separately owned W-2 and expense record. Additional ordinary W-2s are allowed,
+but every wage owner must be the taxpayer or a joint-filing spouse.
 
-A bounded native and PDF filing route now accepts one taxpayer job as a
-fee-basis state or local official with positive documented Form 2106 line-4
-business expense, no vehicle, travel, transportation, meals, or reimbursement.
-The employee name/SSN and employer name/EIN must match exactly one positive
-W-2. The calculated Form 2106 line 10 must equal Schedule 1 line 12 and its
-AGI contribution; Schedule 1 line 26 must equal Form 1040 line 10, and the
-one-W-2 wages and resulting AGI must match Form 1040 lines 1a, 1z, 9, and 11.
-Native MeF now emits one `IRS2106` document and the PDF descriptor fills the
-official two-page form from the same calculated lines. The attachment guard
-continues to reject all other Form 2106 shapes. A full-return positive case and
-job, W-2, Schedule 1, and Form 1040 tamper cases are authored but unrun.
+The existing staged reconciliation checks job names/SSNs, each calculated
+line 10, aggregate Schedule 1 line 12 and its AGI contribution, Schedule 1
+line 26 and Form 1040 line 10. This remains a wages-only return boundary:
+Form 1040 lines 1a/1z/9 equal all W-2 wages, line 8 is zero and AGI equals
+wages less adjustments. Native output emits one IRS2106 per job, with unique
+IDs referenced by Schedule 1; the PDF emits one official two-page copy per job.
 
-The appointment, fee schedule, expense ledger, and reimbursement ledger are
-entered source references; their document bytes and the W-2's authenticity are
-not independently verified. The route excludes spouse/multiple jobs,
-reservists, performing artists, impairment expenses, mileage/actual vehicle,
-meals, and excess reimbursements. Local XSD/business-rule validation, filled
-PDF review, and IRS ATS remain pending the coordinated batch. The [2025 Form
-2106 instructions](https://www.irs.gov/instructions/i2106) direct fee-basis
-official expenses from Form 2106 line 10 to Schedule 1 line 12.
+The [2025 Form 2106 instructions](https://www.irs.gov/pub/irs-prior/i2106--2025.pdf)
+direct fee-basis official line 10 expenses to Schedule 1 line 12 whether or
+not the filer itemizes. The public input retains appointment, fee schedule,
+expense and reimbursement references. These are reviewed structured facts in
+synthetic fixtures, not authenticated issuer document bytes.
 
-## Current boundary
+### Retained complete-return evidence
 
-The public `f2106s` source is now one strict record per job with employee/owner
-identity, employer, a typed qualification branch, Part I expense lines,
-separately allocated column A/B reimbursements, and a Part II vehicle method.
-The canonical line calculator supports fee-basis officials and line-4-only
-impairment expenses. It computes standard-mileage vehicle expense where a
-complete Part II source is present. Fee-basis deductions go to Schedule 1 line
-12/AGI and impairment deductions only to Schedule A line 16. Reservist and
-performing-artist calculations reject until their cross-trip/owner-wide rules
-are implemented. The one-job fee-basis route above can now export; other
-nonempty `f2106s` remain blocked by `attachment-coverage.ts`.
+All five fixtures have wages of 150,000 and federal withholding of 30,000.
 
-The [2025 Form 2106 instructions](https://www.irs.gov/instructions/i2106) direct
-impairment-related work expenses to Schedule A line 16, and the
-[2025 Schedule A instructions](https://www.irs.gov/instructions/i1040sca) list
-them there. The
-[2025 Form 2106](https://www.irs.gov/pub/irs-prior/f2106--2025.pdf) requires a
-separate form for the job with employee name, occupation, SSN, Part I
-expense/reimbursement columns, and potentially Part II vehicle details.
+| Case | Jobs | Deduction | AGI | Taxable income | Tax | Refund | Pages |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Single, two employers | 2 | 3,000 | 147,000 | 131,250 | 24,347 | 5,653 | 8 |
+| Joint, spouse expenses and ordinary taxpayer wages | 1 | 1,200 | 148,800 | 117,300 | 15,634 | 14,366 | 6 |
+| Joint, both owners | 2 | 3,000 | 147,000 | 115,500 | 15,238 | 14,762 | 8 |
+| Joint, same employer with separate owned W-2s | 2 | 3,000 | 147,000 | 115,500 | 15,238 | 14,762 | 8 |
+| Joint, two jobs per owner | 4 | 8,400 | 141,600 | 110,100 | 14,050 | 15,950 | 12 |
 
-## Remaining native MeF and PDF boundaries
+The focused source/calculation/staging/export/attachment/Schedule 1 group
+passes **77 tests**, including six new tests. Complete native and fresh PDF
+builders reject **53 mutations each** covering owner/employer mismatches,
+duplicate jobs/W-2s, shared expense references, stale amounts and nonjoint
+spouse filing status. The pre-change five return tests failed at the old
+one-job guard. The four-document capacity test separately rejects a fifth job.
 
-`form2106_staged.ts` projects one strict job through the
-same calculated lines into TY2025 `IRS2106` XML and the official two-page PDF
-AcroForm. Its proposed per-job contribution records the owner, employment
-reference, line 10 amount, and exclusive destination: fee-basis official to
-Schedule 1 line 12 (then Form 1040 line 10 via Schedule 1 line 26), or
-impairment expenses to Schedule A line 16 (then Form 1040 line 12e only when
-itemizing). The projected line 1a reimbursement contribution is exactly zero;
-any excess column A reimbursement rejects before either staged export. The
-native vehicle-use ratio is a 0–1 fraction; the PDF prints the percentage. These
-remain proposed joins for the other branches. The bounded fee-basis route now
-registers native and PDF descriptors and checks finalized return amounts.
-Projection tests are written but unrun.
+All five complete returns validate against cached TY2025v5.4 Return1040.xsd
+(SHA-256 `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`).
+Independent checks reconcile every job and W-2, Schedule 1 reference IDs and
+final tax/refund. All **42 PDF pages** were reviewed using 20 unique rendered
+page hashes with exact matches accounting for repeated pages. Names, SSNs,
+filing/digital-asset marks, amounts, per-job copies and blank vehicle sections
+were inspected. Packets have no remaining AcroForm fields or widget annotations.
+The joint native return header retains the existing primary-only name-line
+qualification; individual Form 2106 owner names and joint printed Form 1040
+and Schedule 1 names reconcile. This is already deferred identity work.
 
-The direct Schedule 1 line 12 path now survives node finalization and maps to
-the TY2025 MeF `BusExpnsReservistsAndOthersAmt` element (with Form 2106 document
-IDs when available) and the canonical PDF page-2 `f2_01` widget. A staged
-reconciliation reads `f2106`, Schedule 1, Schedule A, AGI-aggregator,
-standard-deduction, and Form 1040 values from the executor pending graph. It
-matches each job's name and SSN to taxpayer or spouse; requires fee-basis line
-10 sums to equal Schedule 1 line 12 and the AGI contribution; and requires
-Schedule 1 line 26 to equal Form 1040 line 10. For impairment jobs it requires
-their sum to equal Schedule A line 16, the finalized itemized total to equal
-Form 1040 line 12e, and no standard deduction selection. This intentionally
-rejects another Schedule A line 16 contributor until per-source provenance is
-retained, instead of attributing an unknown share to Form 2106. Reconciliation
-tests are written but unrun, and the Form 2106 export guard remains active
-outside the fee-basis route.
+Private evidence: `.state/research/form2106-multiple-jobs-2026-10-09/`, including
+source/pending/expected records, XML/PDF, page origins, renders, test log,
+verification report, visual review and hash manifest. Initial three-job
+artifacts are separately retained and excluded from these final counts.
+Local schema success is not IRS business-rule validation or ATS acceptance.
 
-- Each job, expense, eligibility, and reimbursement record currently has a
-  caller-supplied source reference, not verified document bytes. The executor
-  cannot yet authenticate W-2 and expense-log document bytes. The fee-basis
-  route joins employee SSN and employer EIN/name to one W-2 but cannot establish
-  that a caller-supplied source fact is genuine. A
-  valid-looking source object is not evidence of the tax facts.
-- Reservist deductions still reject because the source lacks trip-level travel,
-  federal per-diem caps, and allocation of Form 2106 line 10 to qualifying
-  reserve service. The actual-vehicle branch captures Part II
-  operating/rental/depreciation claims but rejects because section D basis,
-  limits, election history, and business-use computation are not yet sourced.
-- Performing-artist employers, wages, gross arts income, AGI before deduction,
-  and marital facts are typed, but the greater-than-10%-of-gross-income test
-  applies to owner-wide performing-arts activity, not one job. The node rejects
-  this branch until all jobs, actual W-2s, and finalized Form 1040 AGI/filing
-  status are reconciled.
-- Part I now computes both reimbursement columns before the 50% meal limit. It
-  calculates excess column A reimbursement but refuses tax routing until that
-  amount is reconciled to Form 1040 line 1a and the W-2 treatment. Special
-  meal-percentage branches remain excluded.
-- Schedule A line 16 can include other unrelated deductions and the itemization
-  decision is separate from an above-the-line adjustment. The executor does not
-  yet preserve per-job contribution provenance through the finalized Schedule
-  1/Schedule A totals. The staged join can check strict aggregate equality but
-  cannot prove each job's contribution to those totals or bind the result to an
-  emitted native `IRS2106` document and filled PDF.
+## Earlier selected-packet evidence
 
-## Next implementation slice
+The October 4 one-job county-official case retained six reviewed pages:
+line 4/6/8/9/10 expenses of 1,200, Schedule 1 lines 12/26 and Form 1040 line 10
+of 1,200, and AGI of 48,800 from wages of 50,000. Its selected manifest passed
+hashes, page origins and local XSD; see the
+[validation batch](../../../../testing/ty2025-form1040-validation-batch.md).
+The October 9 group supersedes the earlier written-but-unrun test notes.
 
-Bind source references to reviewed W-2/employment, expense, reimbursement, and
-mileage document bytes; reconcile performing-artist AGI against the finalized
-Form 1040. Preserve per-job contribution identities
-through Schedule 1 and Schedule A; implement trip-level reservist and
-actual-vehicle branches or keep rejecting them. Extend the registered native
-`IRS2106` and official PDF route only as each branch gains exact line 10 and
-any excess line 1a reconciliation. Validate XSD/business rules and filled PDF
-in the agreed single batch before treating this as filing acceptance.
+## Remaining boundaries
 
-The old loose category-only input shape was intentionally replaced, not accepted
-through a compatibility shim. Focused source, calculation, and routing tests
-were written but not run during the build-first phase.
+- Source references do not authenticate W-2, appointment, qualification,
+  expense or reimbursement documents. Multiple jobs for one owner/employer
+  need an allocation contract before relaxing the distinct-pair boundary.
+- Reservists require trip-level travel, federal per-diem caps and qualifying
+  service allocation; performing artists require owner-wide employer, gross
+  arts income, greater-than-10% expense, AGI and marital reconciliation.
+- The calculator supports line-4 impairment expenses and sourced standard
+  mileage, but their filing routes remain guarded. Impairment expenses belong
+  on Schedule A line 16, with itemization and other contributors reconciled.
+- Actual vehicles require sourced basis, limits, election history and
+  depreciation. Transportation, travel, meals and reimbursement export remain
+  blocked; excess reimbursements need exact W-2/Form 1040 line 1a treatment.
+- Broader income combinations, final coordinated batch, business rules,
+  source authenticity and IRS ATS remain open. The parent board task is not
+  closed by these bounded fee-basis checks.

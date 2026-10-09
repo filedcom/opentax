@@ -358,7 +358,7 @@ evidence still govern positive export.
 
 | Document | Source/calculation boundary | Native | PDF | Cases | Remaining disposition |
 | --- | --- | --- | --- | --- | --- |
-| 2106 | One sourced employee fee-basis job; P | `f2106.ts` R | Y | W | Bounded expense/deduction route only. Other employee occupations and expenses, issued-source bytes, final batch, business rules, and ATS remain open; see [gap](../../../adjustments/employment/form2106/ty2025-form2106-gap.md). |
+| 2106 | One–four owned fee-basis jobs; P | `f2106.ts` R | Y | W | Five XSD-valid returns/42 reviewed pages; 77 tests and 53 native/53 PDF mutation rejections. Bounded expense/deduction route only. Other employee occupations and expenses, issued-source bytes, final batch, business rules, and ATS remain open; see [gap](../../../adjustments/employment/form2106/ty2025-form2106-gap.md). |
 | 8844 | One direct Schedule C employer credit; P | `f8844.ts` R | Y | W | Form 3800 Part III line 3 and final-credit joins are staged. Other employer and pass-through branches, source authentication, final batch, and ATS remain open; see [gap](../../../credits/business/form8844/ty2025-form8844-gap.md). |
 | 8864 | One small agri-biodiesel producer route; P | `f8864.ts` R | Y | W | Form 3800 line 1l and AMT joins are bounded; expired or transferred credits and wider producers reject. Final XSD/PDF/business-rule/ATS evidence remains open; see [gap](../../../credits/business/form8864/ty2025-form8864-gap.md). |
 | 8881 | One direct Schedule C employer route; P | `f8881.ts` R | Y | W | Bounded startup/auto-enrollment credit joins Form 3800. Other plans, employer structures, source authentication, and final validation remain open; see [gap](../../../credits/business/form8881/ty2025-form8881-gap.md). |

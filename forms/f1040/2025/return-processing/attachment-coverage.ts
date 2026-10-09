@@ -89,7 +89,7 @@ const MISSING_ATTACHMENTS: readonly MissingAttachment[] = [
   {
     pendingKey: "f2106",
     exportKinds: ["mef", "pdf"],
-    reason: "Form 2106 needs the sourced one-job fee-basis filing route",
+    reason: "Form 2106 needs sourced fee-basis line-4 expense jobs",
     isActive: (fields) =>
       nonempty(fields.f2106s) && !isSupportedForm2106Route(fields),
   },
