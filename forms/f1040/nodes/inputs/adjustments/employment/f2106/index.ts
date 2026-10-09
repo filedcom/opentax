@@ -59,16 +59,13 @@ const impairmentQualificationSchema = z.object({
 
 const performingArtistEmployerSchema = z.object({
   employer_ein: z.string().regex(/^\d{2}-?\d{7}$/),
-  wages: amount.min(200),
+  wages: amount.positive(),
   w2_reference: sourceReference,
 }).strict();
 
 const performingArtistQualificationSchema = z.object({
   kind: z.literal(EmployeeType.PERFORMING_ARTIST),
-  employers: z.tuple([
-    performingArtistEmployerSchema,
-    performingArtistEmployerSchema,
-  ]),
+  employers: z.array(performingArtistEmployerSchema).min(2),
   performing_arts_gross_income: amount,
   adjusted_gross_income_before_artist_deduction: amount,
   filing_status: z.enum([
@@ -177,12 +174,21 @@ export const itemSchema = z.object({
   if (item.qualification.kind === EmployeeType.PERFORMING_ARTIST) {
     const qualification = item.qualification;
     if (
-      qualification.employers[0].employer_ein ===
-        qualification.employers[1].employer_ein ||
+      new Set(
+          qualification.employers.map((employer) =>
+            employer.employer_ein.replaceAll("-", "")
+          ),
+        ).size !== qualification.employers.length ||
+      qualification.employers.filter((employer) => employer.wages >= 200)
+          .length < 2 ||
       qualification.performing_arts_gross_income <
-        qualification.employers[0].wages + qualification.employers[1].wages ||
+        qualification.employers.reduce(
+          (sum, employer) => sum + employer.wages,
+          0,
+        ) ||
       !qualification.employers.some((employer) =>
-        employer.employer_ein === item.job.employer_ein
+        employer.employer_ein.replaceAll("-", "") ===
+          item.job.employer_ein.replaceAll("-", "")
       ) ||
       ((qualification.filing_status === "married_filing_jointly" ||
         qualification.filing_status === "married_filing_separately") &&
@@ -336,9 +342,17 @@ function assertQualifiedCategory(item: F2106Item): void {
       "Form 2106 reservist deduction needs trip-level per-diem and eligible-travel allocation",
     );
   }
-  if (qualification.kind === EmployeeType.PERFORMING_ARTIST) {
+  if (
+    qualification.kind === EmployeeType.PERFORMING_ARTIST &&
+    (qualification.adjusted_gross_income_before_artist_deduction > 16000 ||
+      (qualification.married_at_year_end &&
+        qualification.filing_status !== "married_filing_jointly" &&
+        !qualification.lived_apart_from_spouse_all_year) ||
+      (qualification.filing_status === "single" &&
+        qualification.married_at_year_end))
+  ) {
     throw new Error(
-      "Form 2106 performing-artist deduction needs owner-wide employer, gross-income, expense, AGI, and marital reconciliation",
+      "Form 2106 performing-artist AGI or marital qualification failed",
     );
   }
 }
@@ -380,7 +394,49 @@ export function calculateForm2106Lines(raw: unknown): Form2106Lines {
   });
 }
 
+/** Qualification is owner-wide, even when each job has its own Form 2106. */
+export function assertPerformingArtistQualifications(
+  items: F2106Input["f2106s"],
+): void {
+  for (const owner of ["taxpayer", "spouse"] as const) {
+    const artists = items.flatMap((item) =>
+      item.job.owner === owner &&
+        item.qualification.kind === EmployeeType.PERFORMING_ARTIST
+        ? [{ item, qualification: item.qualification }]
+        : []
+    );
+    if (artists.length === 0) continue;
+    const qualifications = artists.map(({ qualification }) =>
+      JSON.stringify({
+        ...qualification,
+        employers: qualification.employers.toSorted((a, b) =>
+          a.employer_ein.replaceAll("-", "").localeCompare(
+            b.employer_ein.replaceAll("-", ""),
+          )
+        ),
+      })
+    );
+    if (new Set(qualifications).size !== 1) {
+      throw new Error(
+        "Form 2106 owner-wide performing-artist qualification records disagree",
+      );
+    }
+    const deduction = artists.reduce(
+      (sum, { item }) => sum + calculateForm2106Lines(item).line10_deduction,
+      0,
+    );
+    if (
+      deduction * 10 <= artists[0].qualification.performing_arts_gross_income
+    ) {
+      throw new Error(
+        "Form 2106 performing-artist expenses must exceed 10% of owner-wide arts income",
+      );
+    }
+  }
+}
+
 function routedOutputs(items: F2106Input["f2106s"]): NodeOutput[] {
+  assertPerformingArtistQualifications(items);
   const calculated = items.map((item) => ({
     item,
     lines: calculateForm2106Lines(item),

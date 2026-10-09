@@ -1,4 +1,5 @@
 import {
+  assertPerformingArtistQualifications,
   calculateForm2106Lines,
   EmployeeType,
   itemSchema,
@@ -52,7 +53,7 @@ const pendingRecordSchema = z.record(z.string(), z.unknown());
 const normalizedName = (name: string) =>
   name.trim().toUpperCase().replace(/\s+/g, " ");
 
-/** Fee-basis and impairment jobs with sourced expenses and no excess reimbursements. */
+/** Qualified employee jobs with sourced expenses and no excess reimbursements. */
 export function isSupportedForm2106Route(raw: unknown): boolean {
   const parsed = form2106InputSchema.safeParse(raw);
   // TY2025 ReturnData1040.xsd permits at most four IRS2106 documents.
@@ -60,7 +61,8 @@ export function isSupportedForm2106Route(raw: unknown): boolean {
   return parsed.data.f2106s.every((item) => {
     if (
       (item.qualification.kind !== EmployeeType.FEE_BASIS_OFFICIAL &&
-        item.qualification.kind !== EmployeeType.DISABLED_IMPAIRMENT) ||
+        item.qualification.kind !== EmployeeType.DISABLED_IMPAIRMENT &&
+        item.qualification.kind !== EmployeeType.PERFORMING_ARTIST) ||
       item.vehicle.method === VehicleMethod.ACTUAL_EXPENSE
     ) return false;
     const lines = calculateForm2106Lines(item);
@@ -83,6 +85,7 @@ export function reconcileStagedForm2106Return(
   if (!filer || typeof form1040.filing_status !== "string") {
     throw new Error("Form 2106 needs finalized Form 1040 filer identity");
   }
+  assertPerformingArtistQualifications(input.f2106s);
   const jobs = input.f2106s.map(prepareForm2106);
   for (const { source } of jobs) {
     const person = source.job.owner === "taxpayer"
@@ -228,13 +231,68 @@ function assertEmployeeJobSources(
   }
 }
 
+function assertArtistReturnSources(
+  jobs: ReturnType<typeof reconcileStagedForm2106Return>["jobs"],
+  w2: z.infer<typeof w2InputSchema>,
+  filer: FilerIdentity,
+  filedAgi: unknown,
+): void {
+  const artists = jobs.flatMap((job) =>
+    job.source.qualification.kind === EmployeeType.PERFORMING_ARTIST
+      ? [{ ...job, qualification: job.source.qualification }]
+      : []
+  );
+  if (artists.length === 0) return;
+  const deduction = artists.reduce(
+    (sum, job) => sum + job.lines.line10_deduction,
+    0,
+  );
+  const filingStatusNames = {
+    [FilingStatus.Single]: "single",
+    [FilingStatus.MarriedFilingJointly]: "married_filing_jointly",
+    [FilingStatus.MarriedFilingSeparately]: "married_filing_separately",
+    [FilingStatus.HeadOfHousehold]: "head_of_household",
+    [FilingStatus.QualifyingSurvivingSpouse]: "qualifying_surviving_spouse",
+  } as const;
+  for (const { source, qualification } of artists) {
+    if (
+      typeof filedAgi !== "number" ||
+      qualification.adjusted_gross_income_before_artist_deduction !==
+        filedAgi + deduction ||
+      qualification.filing_status !== filingStatusNames[filer.filingStatus] ||
+      qualification.performing_arts_gross_income !==
+        qualification.employers.reduce(
+          (sum, employer) => sum + employer.wages,
+          0,
+        )
+    ) {
+      throw new Error(
+        "Form 2106 performing-artist qualification differs from filed AGI, filing status or sourced arts wages",
+      );
+    }
+    for (const employer of qualification.employers) {
+      const matches = w2.w2s.filter((wage) =>
+        wage.employee_ssn?.replaceAll("-", "") ===
+          source.job.employee_ssn.replaceAll("-", "") &&
+        wage.employer_ein?.replaceAll("-", "") ===
+          employer.employer_ein.replaceAll("-", "")
+      );
+      if (matches.length !== 1 || matches[0].box1_wages !== employer.wages) {
+        throw new Error(
+          "Form 2106 performing-artist employers need exact owned W-2 wages",
+        );
+      }
+    }
+  }
+}
+
 /** Native/PDF filing guard for the supported employee routes. */
 export function reconcileFileableForm2106Return(
   allPending: Readonly<Record<string, unknown>>,
 ) {
   if (!isSupportedForm2106Route(allPending.f2106)) {
     throw new Error(
-      "Form 2106 filing needs sourced fee-basis or impairment expenses without excess reimbursements",
+      "Form 2106 filing needs sourced qualified employee expenses without excess reimbursements",
     );
   }
   const result = reconcileStagedForm2106Return(allPending);
@@ -242,6 +300,7 @@ export function reconcileFileableForm2106Return(
   const w2 = w2InputSchema.parse(allPending.w2);
   const filer = extractFilerIdentity(form1040)!;
   assertEmployeeJobSources(result.jobs, w2, filer);
+  assertArtistReturnSources(result.jobs, w2, filer, form1040.line11_agi);
   const wages = w2.w2s.reduce((sum, item) => sum + item.box1_wages, 0);
   const schedule1 = pendingRecordSchema.parse(allPending.schedule1 ?? {});
   const agi = pendingRecordSchema.parse(allPending.agi_aggregator ?? {});

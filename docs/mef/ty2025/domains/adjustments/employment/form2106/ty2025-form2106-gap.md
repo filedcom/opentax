@@ -1,5 +1,64 @@
 # TY2025 Form 2106: employee business expenses
 
+## October 9 performing-artist qualification and filing
+
+Performing-artist expenses now reconcile across every job for each owner,
+then through Schedule 1 line 12, Form 1040, native documents and the PDF.
+The [2025 instructions](https://www.irs.gov/pub/irs-prior/i2106--2025.pdf)
+require at least two employers paying at least 200 each, allowable arts
+expenses exceeding 10% of arts gross income, and pre-deduction AGI no greater
+than 16,000. Joint filers apply the employer/expense tests separately and the
+AGI ceiling together; married nonjoint filers must have lived apart all year.
+
+Qualification records must agree across an owner's jobs. Export joins each
+listed employer's wages to exactly one W-2 for that employee, checks the
+final filing status, and adds both owners' artist deductions back to filed
+AGI for the ceiling check. This verified wage-only route requires reported
+arts gross income to equal the listed arts wages; other arts income is not
+silently accepted. A third employer may pay less than 200 when two others
+qualify. The existing four-document maximum, distinct job/expense records,
+source references, nonexcess reimbursement and vehicle boundaries remain.
+
+| Case | Wages | Artist deduction | AGI | Tax | Refund | Pages |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Single, two arts employers | 12,000 | 1,300 | 10,700 | 0 | 1,200 | 8 |
+| Single, exactly at AGI ceiling | 16,000 | 1,601 | 14,399 | 0 | 1,600 | 8 |
+| Single, third employer pays 100 | 12,000 | 1,201 | 10,799 | 0 | 1,200 | 10 |
+| Joint, one artist and ordinary spouse wages | 16,000 | 1,400 | 14,600 | 0 | 1,600 | 8 |
+| Joint, two artists with two employers each | 16,000 | 1,604 | 14,396 | 0 | 1,600 | 12 |
+| Separate, spouses lived apart all year | 12,000 | 1,300 | 10,700 | 0 | 1,200 | 8 |
+
+The six complete-return cases pass. **66 native and 66 fresh-PDF mutations
+reject**, including consistent-but-wrong qualification records, wrong W-2
+wages/owner, AGI and Schedule 1 amounts. The related source, attachment,
+Schedule 1, Schedule A and estate-tax group passes **121 tests**. Node checks
+cover the strict 10% expense boundary, 199/200 employer wages, AGI above
+16,000, conflicting owner records and married nonjoint eligibility. Initial
+new tests had type/fixture errors, repaired before this passing run; these
+are not claimed as pre-change runtime failures.
+
+All six full returns validate against cached TY2025v5.4 XSD. Independent
+checks cover owned wages, per-job expenses, qualification totals, Schedule 1
+references and final income/tax/refund. All **54 PDF pages** were reviewed
+through 26 unique page hashes. Employee identities, occupation, deductions
+and filing marks are legible. Existing MFS spouse-row, primary-only joint
+native-name and partly blank zero-cell qualifications remain deferred.
+Generated static packets retain no AcroForm fields or widgets.
+
+The before/after benchmark remains **46 passing / 87 failing of 133**;
+all 133 printed result rows and complete failure/error/warning summaries are
+unchanged. The old tax harness state says done/133 passing, but the actual
+run remains the existing deferred benchmark finding 96.
+
+Private evidence: `.state/research/form2106-artists-2026-10-09/`, with complete
+source/pending/expected records, XML/PDF, page origins/renders, independent
+verification, visual map, benchmark comparison, logs and hashes. These are
+synthetic structured sources, not authenticated employer-issued evidence.
+Broader arts income/expense combinations, reservists, actual vehicles,
+source authenticity, full business-rule validation and IRS acceptance remain
+open; the parent task is not closed by this checkpoint.
+
+
 ## October 9 impairment expenses and Schedule A
 
 Sourced line-4 impairment-related workplace expenses can now file through
@@ -72,8 +131,8 @@ each job must retain a positive deduction. Line 7 amounts are already allocated
 nonmeal/meal payments excluded from W-2 box 1; this route does not calculate a
 single combined payment allocation. W-2 owner/employer joins, four-document
 capacity and final wages/AGI reconciliation remain enforced. Actual vehicle
-cost/depreciation, excess reimbursements, reservists and performing artists
-remain guarded. The later impairment route is described above. No calculation-node or PDF mapping was changed.
+cost/depreciation, excess reimbursements and reservists remain guarded. The
+later impairment and artist routes are described above. No calculation-node or PDF mapping was changed.
 
 The [2025 instructions](https://www.irs.gov/pub/irs-prior/i2106--2025.pdf)
 specify the 70-cent mileage rate, commuting exclusion, two reimbursement
@@ -199,8 +258,8 @@ The October 9 group supersedes the earlier written-but-unrun test notes.
   expense or reimbursement documents. Multiple jobs for one owner/employer
   need an allocation contract before relaxing the distinct-pair boundary.
 - Reservists require trip-level travel, federal per-diem caps and qualifying
-  service allocation; performing artists require owner-wide employer, gross
-  arts income, greater-than-10% expense, AGI and marital reconciliation.
+  service allocation. Performing artists now have the owned wage route above;
+  broader arts income and expense combinations remain unverified.
 - Line-4 impairment expenses now have the itemized filing route above;
   nonitemizing claims and other line-16 contributors remain guarded. Standard
   mileage has the fee-basis route above.

@@ -293,7 +293,7 @@ Deno.test("Form 2106 impairment source refuses unrelated travel and meals", () =
   );
 });
 
-Deno.test("Form 2106 performing-artist source remains fail-closed until owner-wide qualification", () => {
+Deno.test("Form 2106 performing-artist source checks owner-wide qualification", () => {
   const item = feeJob();
   const artist: Item = {
     ...item,
@@ -313,13 +313,81 @@ Deno.test("Form 2106 performing-artist source remains fail-closed until owner-wi
   if (artist.qualification.kind !== EmployeeType.PERFORMING_ARTIST) {
     throw new Error("Expected performing-artist test source");
   }
+  const qualification = artist.qualification;
   assertEquals(itemSchema.safeParse(artist).success, true);
-  assertThrows(() => calculateForm2106Lines(artist), Error, "owner-wide");
+  assertEquals(calculateForm2106Lines(artist).line10_deduction, 1200);
+  assertEquals(
+    fieldsOf(compute([artist]).outputs, schedule1)?.line12_business_expenses,
+    1200,
+  );
+  assertThrows(
+    () =>
+      compute([{
+        ...artist,
+        expenses: { ...artist.expenses, line4_other_business_expenses: 500 },
+      }]),
+    Error,
+    "10%",
+  );
+  assertThrows(
+    () =>
+      compute([{
+        ...artist,
+        qualification: {
+          ...qualification,
+          adjusted_gross_income_before_artist_deduction: 16001,
+        },
+      }]),
+    Error,
+    "AGI",
+  );
+  assertThrows(
+    () =>
+      compute([{
+        ...artist,
+        qualification: {
+          ...qualification,
+          filing_status: "married_filing_separately",
+          married_at_year_end: true,
+          lived_apart_from_spouse_all_year: false,
+        },
+      }]),
+    Error,
+    "marital",
+  );
+  for (const wages of [199, 200]) {
+    assertEquals(
+      itemSchema.safeParse({
+        ...artist,
+        qualification: {
+          ...qualification,
+          employers: qualification.employers.map((e, i) =>
+            i ? { ...e, wages } : e
+          ),
+        },
+      }).success,
+      wages === 200,
+    );
+  }
+  assertThrows(
+    () =>
+      compute([artist, {
+        ...artist,
+        job: {
+          ...artist.job,
+          employer_ein: "98-7654321",
+          employment_record_reference: "2025 second arts employer",
+        },
+        qualification: { ...qualification, performing_arts_gross_income: 5001 },
+      }]),
+    Error,
+    "records disagree",
+  );
   assertEquals(
     itemSchema.safeParse({
       ...artist,
       qualification: {
-        ...artist.qualification,
+        ...qualification,
         employers: [
           artist.qualification.employers[0],
           artist.qualification.employers[0],
