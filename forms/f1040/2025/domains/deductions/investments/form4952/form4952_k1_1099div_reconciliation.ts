@@ -1,3 +1,4 @@
+import { reconcileK1QualifiedDividendElection } from "./form4952_k1_election.ts";
 import { k1PortfolioSources } from "./form4952_k1_portfolio_sources.ts";
 import { z } from "zod";
 import { inputSchema as interestSchema } from "../../../../../nodes/inputs/income/investments/f1099int/index.ts";
@@ -134,7 +135,6 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
     (form.data.other_investment_property_qualified_dividends ?? 0) !== 0 ||
     (form.data.other_investment_property_net_disposition_gain ?? 0) !== 0 ||
     (form.data.other_investment_property_net_capital_gain ?? 0) !== 0 ||
-    (form.data.investment_income_election ?? 0) !== 0 ||
     (form.data.elected_capital_gain_portion ?? 0) !== 0 ||
     (form.data.investment_expenses ?? 0) !== 0 ||
     (form.data.source_1099_capital_gain_distributions ?? 0) !== 0 ||
@@ -148,7 +148,7 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
     Object.values(form.data.amt_refigure).some((amount) => amount !== 0)
   ) {
     throw new Error(
-      "Form 4952 mixed path supports only identified code H K-1 expenses, domestic 1099-DIV box 1a/1b, and optional plain 1099-INT box 1/3 or 1099-OID box 1 income without elections",
+      "Form 4952 mixed path supports only identified code H K-1 expenses, domestic 1099-DIV box 1a/1b, and optional plain 1099-INT box 1/3 or 1099-OID box 1 income with reconciled qualified-dividend elections",
     );
   }
   const lines = calculateForm4952(form.data);
@@ -181,5 +181,10 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
       "Form 4952 mixed deduction or dividends differ from finalized Schedule A and Form 1040",
     );
   }
+  reconcileK1QualifiedDividendElection(
+    form.data.investment_income_election ?? 0,
+    qualifiedDividends + portfolio.qualified,
+    pending,
+  );
   reconcileForm4952Itemization(pending, lines.line8);
 }

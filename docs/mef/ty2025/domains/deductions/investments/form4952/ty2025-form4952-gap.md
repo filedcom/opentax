@@ -1,5 +1,57 @@
 # TY2025 Form 4952 portfolio royalty boundary
 
+## October 9 K-1 qualified-dividend elections and final tax
+
+The K-1 source routes now reconcile an explicitly entered qualified-dividend
+election through Form4952 line4g, the regular and AMT tax inputs, and finalized
+Form1040 line16. They preserve the full source qualified dividend on line3a.
+The shared export check rejects inconsistent regular/AMT elections, changed
+qualified dividends or taxable income, and a final tax inconsistent with the
+preferential-rate calculation. Existing restrictions on gains, foreign income,
+prior carry imports and codeB remain; no election is inferred or auto-selected.
+
+The [2025 Form4952 instructions](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+allow part or all of qualified dividends to enter investment income, require
+the Schedule D Tax Worksheet for Form1040 tax, and preserve line3a's full amount.
+The elected portion loses its preferential rate; revocation requires IRS
+consent. The cases use separate owner-identified K-1 income and expense copies,
+optionally bank/Treasury/OID income, and synthetic mortgage evidence of40,000.
+
+| Return | Gross / qualified income | Election | Deduction / carry | AGI | Itemized | Tax / refund |
+|---|---:|---:|---:|---:|---:|---:|
+| Single dividend partial | 3,000 / 1,000 | 500 | 2,500 / 500 | 163,000 | 42,500 | 21,722 / 8,278 |
+| Single dividend full | 3,000 / 1,000 | 1,000 | 3,000 / 0 | 163,000 | 43,000 | 21,647 / 8,353 |
+| Single mixed K-1 partial | 4,000 / 1,000 | 500 | 3,500 / 0 | 164,000 | 43,500 | 21,722 / 8,278 |
+| Single K-1 and bank full | 5,000 / 1,000 | 1,000 | 5,000 / 500 | 165,000 | 45,000 | 21,647 / 8,353 |
+| Joint dividend full | 3,000 / 1,000 | 1,000 | 3,000 / 0 | 203,000 | 43,000 | 25,028 / 4,972 |
+| Joint K-1 and bank partial | 5,000 / 1,000 | 500 | 4,500 / 1,000 | 205,000 | 44,500 | 25,103 / 4,897 |
+
+Six complete XML returns pass cached TY2025v5.4 XSD validation. All30 flattened
+packet pages were observed through25 unique renders/seven contact sheets.
+Source arithmetic independently matches election-adjusted investment income,
+deduction/carry, ordinary versus preferential taxable income, tax and refunds.
+XML/PDF also retain line4g and the unreduced line3a. Six synthetic mortgage-source
+pages share the previously observed pixel digest; these are not authenticated
+lender records. Existing name68/skipped-zero76 qualifications remain.
+
+Two additional single/joint cases combine qualified dividends1,000 from K-1s
+and400 from1099-DIVs. Form1040 line3a and final tax reconcile, but retained
+`income_tax_calculation.qualified_dividends` contains only1,000. Native and fresh
+PDF export reject that source mismatch. This is new deferred119, recorded with
+both public results; no aggregation fix or permissive export bypass was made.
+The mixed qualified-source route remains unproved, so the parent stays open.
+
+Related Form4952 regression passes127/0. Focused tests pass8/0: six complete returns and two explicit native/PDF boundary
+rejections. Positive-case mutations add24 public,78 native and78 prepared-PDF
+rejections; the two boundary cases add two native/two fresh-PDF rejections.
+Calculation nodes are unchanged; benchmark46/133 from the preceding joint-royalty
+checkpoint remains historical evidence, not a fresh run. Full business-rule and
+IRS-acceptance gates remain open. Private evidence:
+`.state/research/form4952-k1-election-2026-10-09/`, including original failure
+logs, boundary sources, XML/PDF, independent calculations and render manifests.
+XSD digest: `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+
+
 ## October 9 partnership income and expense combinations
 
 Shared source reconciliation now admits separate income-only and expense-only

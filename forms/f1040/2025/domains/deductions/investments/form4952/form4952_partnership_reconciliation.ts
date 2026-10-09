@@ -1,3 +1,4 @@
+import { reconcileK1QualifiedDividendElection } from "./form4952_k1_election.ts";
 import { k1PortfolioSources } from "./form4952_k1_portfolio_sources.ts";
 import { z } from "zod";
 import { inputSchema as partnershipSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_partnership/index.ts";
@@ -68,7 +69,6 @@ export function reconcileForm4952PartnershipPath(
     (form.data.other_investment_property_qualified_dividends ?? 0) !== 0 ||
     (form.data.other_investment_property_net_disposition_gain ?? 0) !== 0 ||
     (form.data.other_investment_property_net_capital_gain ?? 0) !== 0 ||
-    (form.data.investment_income_election ?? 0) !== 0 ||
     (form.data.elected_capital_gain_portion ?? 0) !== 0 ||
     (form.data.investment_expenses ?? 0) !== 0 ||
     (form.data.source_1099_interest ?? 0) !== 0 ||
@@ -84,7 +84,7 @@ export function reconcileForm4952PartnershipPath(
     Object.values(form.data.amt_refigure).some((amount) => amount !== 0)
   ) {
     throw new Error(
-      "Form 4952 partnership path supports only sourced box 5 and box 13 code H K-1s without other income, expenses, or elections",
+      "Form 4952 partnership path supports only sourced box 5 and box 13 code H K-1s with reconciled qualified-dividend elections",
     );
   }
   const lines = calculateForm4952(form.data);
@@ -111,5 +111,10 @@ export function reconcileForm4952PartnershipPath(
       "Form 4952 partnership deduction or interest differs from finalized Schedule A and Form 1040",
     );
   }
+  reconcileK1QualifiedDividendElection(
+    form.data.investment_income_election ?? 0,
+    portfolio.qualified,
+    pending,
+  );
   reconcileForm4952Itemization(pending, lines.line8);
 }
