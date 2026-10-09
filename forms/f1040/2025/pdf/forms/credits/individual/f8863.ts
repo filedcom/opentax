@@ -8,6 +8,7 @@ import {
   type F8863Item,
   inputSchema,
 } from "../../../../../nodes/inputs/credits/individual/f8863/index.ts";
+import { ty2025IrsCountryName } from "../../../support/irs_country_name.ts";
 import { form8863 as nativeForm8863 } from "../../../../mef/forms/credits/individual/f8863.ts";
 
 // Rev. Sept. 2025 AcroForm: page 1 carries return totals, page 2 carries
@@ -129,6 +130,63 @@ function ssnParts(value: string): readonly [string, string, string] {
   return [digits.slice(0, 3), digits.slice(3, 5), digits.slice(5)];
 }
 
+type Institution = NonNullable<
+  F8863Item["filing_details"]
+>["institutions"][number];
+
+function addressTokens(lines: readonly string[]): string {
+  return lines.join(" ").toUpperCase().split(/[\s,]+/).filter(Boolean).sort()
+    .join(" ");
+}
+
+function institutionAddress(institution: Institution): string {
+  const us = institution.us_address;
+  if (us) {
+    const lines = [
+      us.line1,
+      ...(us.line2 ? [us.line2] : []),
+      `${us.city}, ${us.state} ${us.zip}`,
+    ];
+    if (lines.some((line) => line.length > 42 || /[\r\n]/.test(line))) {
+      throw new Error(
+        "Form 8863 PDF institution address exceeds the printed field",
+      );
+    }
+    return lines.join("\n");
+  }
+  const foreign = institution.foreign_address;
+  const lines = foreign?.postal_address_lines;
+  if (!foreign || !lines) {
+    throw new Error(
+      "Form 8863 PDF foreign institution needs source-formatted postal address lines",
+    );
+  }
+  const components = [
+    foreign.line1,
+    foreign.line2,
+    foreign.city,
+    foreign.province_or_state,
+    foreign.postal_code,
+  ].filter(
+    (value): value is string => value !== undefined,
+  );
+  if (
+    addressTokens(lines) !== addressTokens(components) ||
+    lines.some((line) => /[\r\n]/.test(line))
+  ) {
+    throw new Error(
+      "Form 8863 PDF foreign postal lines must preserve every structured address component",
+    );
+  }
+  const country = ty2025IrsCountryName(foreign.country_code);
+  if (country.length > 64) {
+    throw new Error(
+      "Form 8863 PDF full country name exceeds the printed field",
+    );
+  }
+  return [...lines, country].join("\n");
+}
+
 function institutionFields(item: F8863Item): Record<string, unknown> {
   const institutions = item.filing_details?.institutions;
   if (!institutions || institutions.length < 1 || institutions.length > 2) {
@@ -138,19 +196,9 @@ function institutionFields(item: F8863Item): Record<string, unknown> {
   }
   const projected: Record<string, unknown> = {};
   for (const [index, institution] of institutions.entries()) {
-    const us = institution.us_address;
-    if (
-      !us || us.line2 !== undefined ||
-      institution.name.length > 42 || us.line1.length > 42
-    ) {
+    if (institution.name.length > 42) {
       throw new Error(
-        "Form 8863 PDF needs a two-line U.S. institution address",
-      );
-    }
-    const secondLine = `${us.city}, ${us.state} ${us.zip}`;
-    if (secondLine.length > 42) {
-      throw new Error(
-        "Form 8863 PDF institution city, state, and ZIP exceed the printed address field",
+        "Form 8863 PDF institution name exceeds the printed field",
       );
     }
     if (item.credit_type === "aoc" && !institution.ein) {
@@ -158,7 +206,7 @@ function institutionFields(item: F8863Item): Record<string, unknown> {
     }
     const prefix = `pdf_institution_${index}`;
     projected[`${prefix}_name`] = institution.name;
-    projected[`${prefix}_address`] = `${us.line1}\n${secondLine}`;
+    projected[`${prefix}_address`] = institutionAddress(institution);
     projected[`${prefix}_current_1098t`] = answer(
       institution.current_year_1098t_received,
     );

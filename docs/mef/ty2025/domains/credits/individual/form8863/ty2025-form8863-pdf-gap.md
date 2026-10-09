@@ -1,5 +1,54 @@
 # TY2025 Form 8863 positive PDF boundary
 
+## October 9 foreign-school address checkpoint
+
+Foreign institutions now use the same owned expense validation and native/PDF
+return path as domestic schools. The prior shared U.S.-only guard is replaced
+with a foreign-school source requirement: an issued current1098-T or the
+existing documented nonreceipt exception, separate payment/assistance records,
+and dated2025 payment-account evidence. Native XML retains the structured
+foreign address; foreign attendance does not itself waive1098-T or AOC EIN
+requirements.
+
+The [2025 line22 instructions](https://www.irs.gov/instructions/i8863) require
+local postal conventions and an unabbreviated country name. Accordingly,
+`foreign_address.postal_address_lines` supplies one or two locally formatted
+lines. PDF export compares their complete token inventory against line1,
+line2, city, province/state and postal code, so formatting cannot silently drop,
+add or duplicate address components. It appends the full TY2025 IRS country
+name on its own line. Missing formatting, mismatched lines, embedded newlines,
+invalid country codes and field overflow reject. U.S. second-address lines
+also print on their own line within the same three-line field.
+
+The eight full-return cases combine Canadian, British, French and German
+schools, postal-before-city and postal-after-city layouts, a street-unit line,
+U.S. building lines, three-school continuations, prior-year checked/unchecked
+box7 answers, missing current1098-T evidence, and two-student AOC/LLC caps.
+Expected credit and final-tax amounts match the prior-source checkpoint below:
+changing a school's location adds no tuition or credit.
+
+Final validation:85 core/native/descriptor tests and eight new complete-return
+tests pass. The initial selected education group also passed109/109 before
+the shared foreign-source guard was extended; the85 final checks replay its
+core subset after that change. All eight returns pass local TY2025 v5.4 XSD;
+96 financial/source mutations reject in native and PDF, and56 additional
+address mutations reject fresh PDF export (152 total PDF rejections).
+
+All52 flattened pages were rendered and reviewed:16 new education pages on
+eight contact sheets, plus19 unique page hashes identical to the already
+reviewed prior-source checkpoint. Full country labels fit without clipping;
+student names, EINs, source answers, continuations and credit amounts agree.
+The repeated zero-display qualifications remain deferred76. The final benchmark
+stays46/133, with every one of133 case rows identical to the prior checkpoint.
+
+Private evidence: `.state/research/form8863-foreign-school-2026-10-09/` retains
+sources, expected/finalized records, XML, full PDFs, all52 renders, review/hash
+reports, test logs, and the benchmark comparison. The committed regression is
+`form8863-foreign-school-source.test.ts`; run with `deno test -A` and
+`-- --write-review-artifacts` to retain the eight packets. These synthetic
+amounts are already U.S. dollars; the checkpoint does not verify currency
+conversion, source authenticity, wider eligibility, or IRS acceptance.
+
 ## October 9 prior-year school source checkpoint
 
 The prior-year Form1098-T receipt flag no longer substitutes for the line22(3)

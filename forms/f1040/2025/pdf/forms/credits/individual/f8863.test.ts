@@ -254,6 +254,6 @@ Deno.test("Form 8863 PDF closes ambiguous institution and unreconciled return pa
         final,
       ),
     Error,
-    "needs one U.S. institution and an education expense workpaper",
+    "prior-year or foreign-school history needs current issued or exception evidence",
   );
 });

@@ -30,6 +30,10 @@ const foreignInstitutionAddressSchema = z.object({
   province_or_state: z.string().min(1).optional(),
   country_code: z.string().length(2),
   postal_code: z.string().min(1).optional(),
+  // Local postal order is source data; PDF checks these lines against all
+  // structured components and appends the full IRS country name.
+  postal_address_lines: z.array(z.string().trim().min(1).max(42)).min(1).max(2)
+    .optional(),
 });
 
 // Line 22(3) asks about a received prior-year form with box 7 checked,
@@ -383,11 +387,11 @@ export function validateForm8863FilingSource(
     return;
   }
   if (
-    institutions?.length !== 1 || !institutions[0].us_address ||
+    institutions?.length !== 1 ||
     !workpaper
   ) {
     throw new Error(
-      "Form 8863 filing needs one U.S. institution and an education expense workpaper",
+      "Form 8863 filing needs one institution and an education expense workpaper",
     );
   }
   const institution = institutions[0];
@@ -410,7 +414,8 @@ export function validateForm8863FilingSource(
     );
   }
   if (
-    prior && (workpaper.payment_sources === undefined ||
+    (prior || institution.foreign_address) &&
+    (workpaper.payment_sources === undefined ||
       workpaper.assistance_sources === undefined ||
       (institution.current_year_1098t_received &&
         !workpaper.issued_form1098t_source) ||
@@ -422,7 +427,7 @@ export function validateForm8863FilingSource(
       ))
   ) {
     throw new Error(
-      "Form 8863 prior-year school history needs current issued or exception evidence, assistance inventory and dated 2025 payment account records",
+      "Form 8863 prior-year or foreign-school history needs current issued or exception evidence, assistance inventory and dated 2025 payment account records",
     );
   }
   const issued = workpaper.issued_form1098t_source;
