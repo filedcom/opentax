@@ -1,4 +1,8 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import { appendForm8815Institutions } from "./f8815_institutions.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import {
   calculateForm8815,
   inputSchema,
@@ -65,6 +69,7 @@ export const form8815Pdf: PdfFormDescriptor = {
     text("primarySSN", `${page}f1_2[0]`),
   ],
   pageIndices: () => [0],
+  appendSupplementalPages: appendForm8815Institutions,
   projectFields(fields) {
     if (Object.keys(fields).length === 0) return {};
     if (fields.line14 === undefined) {
@@ -80,7 +85,7 @@ export const form8815Pdf: PdfFormDescriptor = {
       }
     }
     const students = Object.fromEntries(
-      source.eligible_students.flatMap((student, index) => {
+      source.eligible_students.slice(0, 3).flatMap((student, index) => {
         const row = index + 1;
         const address = student.institution_address;
         return [

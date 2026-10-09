@@ -1,6 +1,9 @@
 import { z } from "zod";
 import type { NodeResult } from "../../../../../../../../core/types/tax-node.ts";
-import { output, TaxNode } from "../../../../../../../../core/types/tax-node.ts";
+import {
+  output,
+  TaxNode,
+} from "../../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 import { FilingStatus, filingStatusSchema } from "../../../../../types.ts";
@@ -25,7 +28,7 @@ export const eligibleStudentSchema = z.object({
 // The two worksheet objects preserve the source lines used for Form 8815
 // lines 6 and 9. Callers must not provide a guessed exclusion or MAGI.
 export const inputSchema = z.object({
-  eligible_students: z.array(eligibleStudentSchema).min(1).max(3),
+  eligible_students: z.array(eligibleStudentSchema).min(1),
   qualified_bond_facts: z.object({
     series_ee_or_i: z.literal(true),
     issued_after_1989: z.literal(true),

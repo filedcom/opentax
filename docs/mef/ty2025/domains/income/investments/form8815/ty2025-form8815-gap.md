@@ -1,5 +1,67 @@
 # TY2025 Form 8815: source-to-return gap
 
+## October 9 complete institution lists and paper continuation
+
+The domestic tuition/fees source now retains every line 1 person/institution
+entry. The [2025 Form 8815](https://www.irs.gov/pub/irs-prior/f8815--2025.pdf)
+requires all institutions attended by a listed person and permits an attached
+statement when the form has insufficient space. The local IRS8815 v5.4 schema
+allows unbounded `EligibleEducationInstnGrp` rows. The former three-entry input
+limit is removed; the existing native builder emits all entries in order, the
+first three print on the official form, and later entries print on numbered
+continuation pages after it. A long institution name wraps without losing text,
+and each person/institution/address group remains together. The new statement
+requires filer identity and replays the existing final-return MAGI/exclusion
+checks; a joint statement also includes the spouse name.
+
+Four constructed public returns cover three entries with no continuation,
+four with a single-filer phaseout, twelve with two continuation pages, and four
+alternating taxpayer/spouse entries with the joint phaseout. Repeated person
+names identify attendance at distinct institutions, not additional dependents.
+The twelve-entry case is a synthetic layout stress case, including one 75-letter
+institution name, second address lines and ZIP+4. No actual school qualification
+or tuition authentication is inferred from these synthetic entries.
+
+| Case | Gross tuition / benefits | MAGI | Exclusion | AGI | Taxable income | Total tax | Refund / owed | Packet pages |
+|---|---:|---:|---:|---:|---:|---:|---|---:|
+| Three entries | 15,000 / 0 | 72,000 | 2,000 | 70,000 | 54,250 | 6,855 | 145 refund | 4 |
+| Four, single phaseout | 8,000 / 2,000 | 102,000 | 833 | 101,167 | 85,417 | 13,708 | 6,708 owed | 5 |
+| Twelve entries | 15,000 / 0 | 72,000 | 2,000 | 70,000 | 54,250 | 6,855 | 145 refund | 6 |
+| Four, joint phaseout | 8,000 / 2,000 | 162,000 | 575 | 161,425 | 129,925 | 18,412 | 11,412 owed | 5 |
+
+All cases retain 12,000 proceeds, 2,000 current bond interest and 7,000
+withholding. Partial exclusions use net tuition 6,000 / proceeds 12,000 = .500,
+tentative interest 1,000, and phaseout fractions .167 single or .425 joint.
+Single tax uses the published 54,250–54,300 and 85,400–85,450 tax-table bands.
+Joint tax uses [the IRS 2025 rate schedule](https://www.irs.gov/irb/2024-45_IRB):
+11,157 + 22% × (129,925 − 96,950), rounded to 18,412. The initial joint test
+mistyped the threshold as 96,750; its failure was an expected-value error,
+corrected against the IRS source before the passing run.
+
+The grouped source/node/rule/end-to-end gate passes **25/0** with normal type
+checking. The final continuation-header replay passes **4/0**. Sixteen altered
+amount/MAGI/empty-inventory/invalid-last-institution cases reject at both native
+and fresh-PDF preparation, and three continuation calls reject missing filer
+identity. These checks do not establish issuer or beneficiary authentication.
+All four full returns pass local 2025v5.4 XSD; all 20 flattened PDF pages were
+reviewed, including four continuation pages. Seventeen distinct rendered pages
+cover duplicates by image SHA-256; each institution name and street address is
+also present in extracted PDF text. The joint official Form 8815 and Schedule B
+still show only the primary name (existing deferred item 68); the new joint
+continuation identifies both filers. Existing zero/skipped-line presentation
+qualifications remain deferred. No broader presentation fix is claimed.
+
+Evidence is retained under
+`.state/research/form8815-institution-packets-2026-10-09/`: source/pending/origin
+JSON, native XML, PDF, XSD logs, visual/native-text manifests and test logs.
+The full-return XSD SHA-256 is
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+The benchmark remains 46/133, with exactly the same 87 failing case IDs as the
+preceding fishing-expense commit. Stale node research documentation is newly
+recorded as future item 113 and was not changed. Coverdell/QTP, foreign schools,
+special royalties/addbacks, source authentication and IRS acceptance remain
+open; completing this continuation does not close the Form 8815 parent.
+
 ## October8 current registered-audit reconciliation
 
 The [current bundled audit](../../../../readiness/ty2025-bundled-form-audit-reconciliation-2026-10-08.md) reconciles this form's current scope with actual native/PDF imports and retained terminal evidence. The completed October8 full run records **21 passed/0 failed/0 ignored across4 named modules**; all9 matching runtime paths still equal that tested snapshot. This is selected retained full-run evidence, not a new focused run, full-route support or fresh visual approval. Earlier dated authored/unrun statements below are historical; existing broader source, artifact and IRS requirements remain open. No original checkbox or future task is completed by this correction.
@@ -88,7 +150,7 @@ computed values in native XSD order. Its PDF descriptor also needs the same
 line-level mapping and a filled visual check.
 
 The bounded path now requires reviewed Series EE/I ownership, issue-year, age,
-and redemption-record facts; one to three domestic tuition/fees beneficiaries;
+and redemption-record facts; domestic tuition/fees person/institution entries;
 distinct gross expenses and nontaxable benefits; bond principal and previously
 reported interest for line 6; and the completed line 9 worksheet components. It
 computes lines 2-14, emits line 14 to Schedule B, and uses the v5.4 native MeF
@@ -97,7 +159,7 @@ raise diagnostics rather than assuming zero proceeds or MAGI. The legacy
 ambiguous input fields are rejected, without a compatibility shim.
 
 Still unsupported: Coverdell/QTP contributions, foreign institution addresses,
-more than three line 1 entries, the special royalty-interest computation, and
+the special royalty-interest computation, and
 any case where the complete line 9 worksheet cannot be supplied from finalized
 return lines. These are explicit bounds, not whole-form completion. The two
 generated MAGI business-rule implications have been corrected to the official
