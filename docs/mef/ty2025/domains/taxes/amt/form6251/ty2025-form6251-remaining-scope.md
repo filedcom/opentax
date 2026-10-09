@@ -497,3 +497,9 @@ render hashes/review, full and direct negative probes, original failed-test
 log and final6/0 log. The earlier108/0 grouped gate and CI at51e879aca remain
 separate evidence. Issued broker and accepted prior-return authentication,
 wider basis/carryover/PartIII cases, full-suite and IRS acceptance remain open.
+
+Concurrent checkpoint: external commit0f40fcc32 supplies the previously missing
+Form4562 test context. The ISO/basis checkpoint was rebased onto that change
+as c0d9aeaed, preserving its runtime code; CI37898405992 passes. A fresh full
+`deno task test` selects all1,323 modules with no exclusions and remains active
+in `.state/research/testing/full-2cddc8d537c63efc/`; no full pass is claimed.
