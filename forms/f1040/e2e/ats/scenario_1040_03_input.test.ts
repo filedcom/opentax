@@ -1,3 +1,5 @@
+import { scheduleD } from "../../2025/mef/forms/income/investments/schedule_d.ts";
+import { scheduleDPdf } from "../../2025/pdf/forms/income/investments/schedule_d.ts";
 import { f1040_2025 } from "../../2025/index.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
 import { form4835 } from "../../2025/mef/forms/income/business/f4835.ts";
@@ -52,6 +54,7 @@ Deno.test("ATS 1040 Scenario 3 maps printed pension, farm and farm-rental source
     "f1099r",
     "f4835",
     "general",
+    "schedule_d",
     "schedule_f",
   ]);
 });
@@ -279,9 +282,9 @@ Deno.test("ATS 1040 Scenario 3 marked active farm rental reaches Schedule E and 
   assertEquals(p.schedule_e?.farm_rental_net, 11_061);
   assertEquals(p.schedule1?.line5_schedule_e, 11_061);
   assertEquals(p.schedule1?.line6_schedule_f, 3_251);
-  // This remains a partial return: the cover's state refund and Schedule D are absent.
+  // This remains a partial return: the cover's taxable state refund is absent.
   assertEquals(p.f1040?.line8_additional_income, 14_312);
-  assertEquals(p.f1040?.line9_total_income, 57_412);
+  assertEquals(p.f1040?.line9_total_income, 69_125);
   assertEquals(p.schedule2?.line4_se_tax, 827);
   assertEquals(p.schedule1?.line15_se_deduction, 414);
   const [xml] = form4835.build(p.f4835, context);
@@ -313,4 +316,34 @@ Deno.test("ATS 1040 Scenario 3 marked active farm rental reaches Schedule E and 
   const [eCopy] = scheduleEPdf.instances!(eFields, filer);
   assertEquals(eCopy.farm_line40, 11_061);
   assertEquals(eCopy.farm_line42, 17_035);
+});
+
+Deno.test("ATS 1040 Scenario 3 aggregate basis-reported gains reach native, PDF and Form1040 without fabricated sales", () => {
+  const input = scenario104003Input();
+  assertEquals(input.f1099b, undefined);
+  assertEquals(input.f8949, undefined);
+  const result = f1040_2025.executeReturn(input);
+  assertEquals(result.diagnostics, []);
+  const p = result.pending;
+  assertEquals(p.f1040?.line7_capital_gain, 11_713);
+  assertEquals(p.f1040?.line9_total_income, 69_125);
+  assertEquals(p.schedule_d?.print_line7_st_total, 1_988);
+  assertEquals(p.schedule_d?.print_line15_lt_total, 9_725);
+  const filer = extractFilerIdentity(p.f1040)!;
+  const xml = scheduleD.build(p.schedule_d, { filer, pending: p });
+  assertStringIncludes(
+    xml,
+    "<TotalSTCGL1099BssRptNoAdjGrp><TotalProceedsSalesPriceAmt>14222</TotalProceedsSalesPriceAmt><TotalCostOrOtherBasisAmt>12234</TotalCostOrOtherBasisAmt><TotalGainOrLossAmt>1988</TotalGainOrLossAmt></TotalSTCGL1099BssRptNoAdjGrp>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalLTCGL1099BssRptNoAdjGrp><TotalProceedsSalesPriceAmt>14211</TotalProceedsSalesPriceAmt><TotalCostOrOtherBasisAmt>4486</TotalCostOrOtherBasisAmt><TotalGainOrLossAmt>9725</TotalGainOrLossAmt></TotalLTCGL1099BssRptNoAdjGrp>",
+  );
+  const fields = scheduleDPdf.projectFields!(p.schedule_d, p);
+  assertEquals(fields.print_line1a_gain, 1_988);
+  assertEquals(fields.print_line8a_gain, 9_725);
+  assertEquals(fields.print_line16_combined, 11_713);
+  assertEquals(p.schedule_d?.print_qof_disposition, false);
+  assertEquals(p.schedule_d?.print_line17_both_gains, true);
+  assertEquals(p.schedule_d?.print_line20_qdcgt, true);
 });

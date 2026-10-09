@@ -129,8 +129,14 @@ export function scenario104003Input(): Record<string, unknown> {
       expense_repairs_maintenance: source.form4835.line23Repairs,
       expense_supplies: source.form4835.line26Supplies,
     }],
-    // Schedule D's 1a/8a totals are printed, but no source 1099-B/1099-DA
-    // transaction details are supplied. They remain in the reconciliation record.
+    // Official page 9 supplies aggregate basis-reported/no-adjustment lines.
+    // Use the existing aggregate input; do not invent broker identities or sale dates.
+    schedule_d: {
+      line_1a_proceeds: source.scheduleD.shortTermLine1aProceeds,
+      line_1a_cost: source.scheduleD.shortTermLine1aBasis,
+      line_8a_proceeds: source.scheduleD.longTermLine8aProceeds,
+      line_8a_cost: source.scheduleD.longTermLine8aBasis,
+    },
   };
 }
 
@@ -182,7 +188,8 @@ export const SCENARIO_1040_03_RECONCILIATION = {
   },
   notAtsReadyBecause: [
     "Form 1040 marks Single and digital-assets Yes; its result lines remain blank.",
-    "Schedule D p. 9 gives only aggregate 1a/8a proceeds and basis, not the underlying 1099-B or 1099-DA transaction records required by the source graph.",
+    "The cover supplies a taxable state refund of 3,110, but not the gross issued refund, payer or prior-year recovery workpaper required by the current 1099-G route.",
+    "Schedule D p. 9 aggregate 1a/8a proceeds and basis use the supported aggregate route; no individual broker transaction or issuer identity is asserted.",
     "Form 4835 p. 17 marks active participation Yes. Its internal source label does not establish external activity history or QBI eligibility.",
     "The cover says the taxpayer is a specified agricultural-cooperative patron, but no patronage or cooperative-sale allocation facts are supplied for any QBI cooperative reduction.",
     "The taxpayer elects Schedule SE's farm optional method; its calculation and MeF/PDF mapping are coded, but end-to-end validation and any farm K-1 or CRP facts remain pending.",

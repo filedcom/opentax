@@ -215,3 +215,12 @@ The fixed54 replay observations remain41/12/1; this new rental integration is
 asserted separately rather than inflating that denominator. See the
 [farm-rental checkpoint](./ty2025.md#october-9-scenario3-farm-rental-source-route)
 for native/PDF scope and the deferred ScheduleE 1099-answer omission.
+
+### Scenario3 aggregate capital-gain follow-up
+
+The existing public ScheduleD aggregate route now receives the four printed
+line1a/8a proceeds/basis amounts:1988 short gain plus9725 long gain yields
+11713 on Form1040. Standalone ScheduleD XSD and two-page PDF checks pass
+with the existing blank-zero qualification; full-return preparation still
+blocks on issued-recipient identity. ATS64/0; fixed54 observations stay41/12/1.
+See the [capital-gain checkpoint](./ty2025.md#october-9-scenario3-aggregate-capital-gain-source-route).
