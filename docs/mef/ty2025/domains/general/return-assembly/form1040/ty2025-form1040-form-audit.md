@@ -1,6 +1,15 @@
 # TY2025 Form 1040 registered-document audit
 
-October 8 actual imports confirm **152 native descriptors/148 keys** and **118 PDF descriptors/115 keys**. The completed 2,709-path full regression ended14:20:46UTC, actual exit0, **12,783/0**. The integrated 2,723-path passive-source runtime passed **488/0 focused**; its serial full regression started14:28:22UTC and remains live. These gates establish bounded tested behavior, not complete form scope or IRS acceptance. [Current passive-source evidence](../../../credits/earned-income/eic/ty2025-eic-passive-s-corp-loss-source.md) and [bundled audit](../../../../readiness/ty2025-bundled-form-audit-reconciliation-2026-10-08.md) retain the distinct source, native, PDF and archive proofs.
+## October 9 live registry reconciliation
+
+Actual registry imports at `a2bd423b7` contain **157 native descriptors / 153 distinct pending keys** and **118 PDF descriptors / 115 distinct pending keys**. The five native additions since the 152-entry snapshot are Form 8886, its two continuation descriptors, and the two Form 4562 election statements. The wage/supporting sequence beginning with W-2 contains 39 descriptors; the Form 8886 parent is in the numbered-form sequence. These are registration counts, not supported tax situations.
+
+The 211-row IRS-root census still has 128 exact source-literal matches and 83 without one; every table flag matches a fresh non-test source scan. The added statements use non-IRS roots, and IRS8886 already had a literal match. Form 8886's actual builder is now registered from its filing-domain module, so the older literal-only warning is superseded. Form 2210 and Form 1116 Schedule C remain staged; no new exclusion or filing-readiness claim follows.
+
+Form 8886 prints through prepared disclosure packets, and Form 4562 appends its election statements through the existing parent PDF descriptor. Neither needs a new PDF registry entry. The form audit records the source triggers and packet boundaries. Local replay evidence is retained in `.state/research/registry-reconciliation-2026-10-09/audit.json`.
+
+
+Historical October 8 actual imports confirmed **152 native descriptors/148 keys** and **118 PDF descriptors/115 keys**. The completed 2,709-path full regression ended14:20:46UTC, actual exit0, **12,783/0**. The integrated 2,723-path passive-source runtime passed **488/0 focused**; its serial full regression started14:28:22UTC and was live at that historical observation; see the product board for the later terminal full gate. These gates establish bounded tested behavior, not complete form scope or IRS acceptance. [Current passive-source evidence](../../../credits/earned-income/eic/ty2025-eic-passive-s-corp-loss-source.md) and [bundled audit](../../../../readiness/ty2025-bundled-form-audit-reconciliation-2026-10-08.md) retain the distinct source, native, PDF and archive proofs.
 
 The first-year passive-loss reconciliation also covers the actual Form1040 EIC source validator: basis/PAL allowance determines net passive investment income, wages remain unchanged, and combined taxable/exempt interest, dividends and two owner-linked partnership sources exercise11,950/11,951. These are childless single/joint cases; they do not establish qualifying-child ScheduleEIC coverage. The older separate nonpassive stock-loss ScheduleE descriptor validates this new source and yields to the shared passive ScheduleE copy, avoiding duplicate forms. Private `passive-source-audit-reconciliation-20261008-v1/review.json` verifies exact focused/live-full runtime,45 XML pairs,15 archive pairs and unchanged inventories; no fresh test or PDF review is claimed.
 
@@ -25,7 +34,7 @@ are recorded above. None proves each row's entire positive source route, filled 
 or ATS acceptance.
 A written case is not a passing case.
 
-The current MeF registry has **152 descriptors**. The earlier 150/150 static
+The October 8 MeF registry had **152 descriptors**. The earlier 150/150 static
 inventory checkpoint is followed by the later descriptor evidence and IRA
 recharacterization supporting row. The linked
 [main inventory](../../../../inventory/coverage-inventory.md),
@@ -354,6 +363,9 @@ evidence still govern positive export.
 | 8864 | One small agri-biodiesel producer route; P | `f8864.ts` R | Y | W | Form 3800 line 1l and AMT joins are bounded; expired or transferred credits and wider producers reject. Final XSD/PDF/business-rule/ATS evidence remains open; see [gap](../../../credits/business/form8864/ty2025-form8864-gap.md). |
 | 8881 | One direct Schedule C employer route; P | `f8881.ts` R | Y | W | Bounded startup/auto-enrollment credit joins Form 3800. Other plans, employer structures, source authentication, and final validation remain open; see [gap](../../../credits/business/form8881/ty2025-form8881-gap.md). |
 | 8882 | One direct Schedule C employer route; P | `f8882.ts` R | Y | W | Bounded employer childcare credit joins Form 3800 line 1k. Other costs, employers, source authentication, and final validation remain open; see [gap](../../../credits/business/form8882/ty2025-form8882-source-gap.md). |
+| 8886 | Authenticated prepared reportable-transaction disclosure packets; P | `mef-descriptors.ts` R | Y, prepared packet | Executed | Registered parent `IRS8886` requires retained prepared disclosure packets and final whole-return IDs; no independent aggregate fallback. Merged #66 retains 608 local passes and 137 CI core/harness passes. Separate initial-year OTSA handoff is not an IRS receipt or accepted filing. |
+| 8886 expected benefits | Prepared parent disclosure requiring benefit continuation; P | `mef-descriptors.ts` R | Y, prepared packet | Executed | `ContF8886ExpctTaxBnftExpln` occupies its own schema-order slot and receives whole-return document IDs; parent and continuation remain source-bound. No separate public form input. |
+| 8886 additional details | Prepared parent disclosure with general continuations; P | `mef-descriptors.ts` R | Y, prepared packet | Executed | `GeneralDependencySmall` continuations retain parent relationships and final assigned IDs; they print with the disclosure packet, outside the fixed PDF descriptor registry. Broader source and IRS acceptance gates remain open. |
 | 8941 | One owned Schedule C SHOP employer; P | `f8941.ts` R | Y | W | Public first-year2025 source→determined premium reduction→SE/QBI/1040 and separate full/partial/zero tax-use allocation have full localXSD/PDF proof; all67pages reviewed and reusable held fixture registered. Sourced whole-month part-year coverage also has annual payroll/dated monthly payment joins, three fullXSD packets and all67 additional pages reviewed. One composite/uniform-percentage Albany family or mixed-tier plan also has owned spouse/child membership, five fullXSD packets and all113 additional pages reviewed. Monthly source rules also cover composite tier-specific percentages/dollar exceptions and list percentages/computed employee contributions/family floors, with all-eligible insurer reference quotes and raw cents. Independent and reference multiple-QHP methods retain monthly eligibility rosters, wholly unenrolled payroll workers, plan switches and owned entitlements. Albany/one-proprietor/sole-credit bounds; broader arrangements, authenticity and acceptance remain open. See [gap](../../../credits/health/form8941/ty2025-form8941-gap.md). |
 | 8994 | One direct Schedule C paid-family-leave employer; P | `f8994.ts` R | Y | W | Positive export requires reviewed evidence bound to prepared bundle attachment bytes; wider sources and stand-alone export remain guarded. Final validation and ATS remain open; see [gap](../../../credits/business/form8994/ty2025-form8994-gap.md). |
 
@@ -650,7 +662,7 @@ see the [dependent-MAGI gap](../../../credits/health/form8962/ty2025-form8962-de
 
 ## Both-holder Medicare supporting registration (2026-10-06)
 
-The current registry replay is 150 native / 116 PDF descriptors. Added
+That historical registry replay had 150 native / 116 PDF descriptors. Added
 `f8853_medicare_statements.ts` shares the parent `form8853` source slot and emits
 `PrimaryTaxpayerMedicareMSAStmt` and `SpouseTaxpayerMedicareMSAStmt` in schema
 order. Their amounts reconcile each owner and sum to the controlling `IRS8853`;

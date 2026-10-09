@@ -1,6 +1,6 @@
 # TY2025 Form 1040 schema document-root census
 
-Root list from 2026-09-28; source-literal status updated 2026-10-06. Source: locally cached TY2025 v5.4 `ReturnData1040.xsd`
+Root list from 2026-09-28; source-literal status revalidated 2026-10-09. Source: locally cached TY2025 v5.4 `ReturnData1040.xsd`
 top-level `IRS...` references under ignored `.state/research/docs/`. These
 schema files are not tracked in Git; reproducible official artifact provenance
 remains a release gate. The [v5.4 archive record](../testing/ty2025-v54-schema-provenance.md)
@@ -35,8 +35,12 @@ root builders: the six above plus `IRS1116ScheduleC`, whose token is also
 quoted in the registered Form 1116 file. These classifications are source
 inventory, not supported-form counts.
 
-The current descriptor inventory is **152 native** and **118 PDF** entries;
-the native set includes **35 wage/supporting descriptors**. These are not
+Native/PDF distinct pending-key counts are 153/115. The five additions since
+the 152-entry snapshot are Form 8886 and two continuations, plus two Form 4562
+election statements. Their packet paths are recorded in the form audit.
+
+The current descriptor inventory is **157 native** and **118 PDF** entries;
+the native set includes **39 wage/supporting descriptors**. These are not
 211-root coverage counts. The [root applicability crosswalk](./ty2025-unregistered-root-applicability.md#registry-to-root-reconciliation)
 records owner classes and unresolved product decisions, while the
 [supporting-descriptor audit](../domains/general/return-assembly/form1040/ty2025-form1040-form-audit.md#supporting-descriptor-case-and-packet-disposition)
@@ -200,7 +204,7 @@ the linked evidence, not an inference from this flag.
 | `IRS8881`             | Yes             | Bounded direct-employer native/PDF descriptor is registered; wider plans, source authenticity, and final validation remain open. |
 | `IRS8882`             | Yes             | Bounded direct-employer native/PDF descriptor is registered; wider costs/employers, source authenticity, and final validation remain open. |
 | `IRS8883`             | Yes            | Quoted only as a permitted Form5471 reference name in the linkage helper; no new native builder or verified filing route. Applicability/source/calculation/output/IRS disposition remains open. |
-| `IRS8886`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
+| `IRS8886`             | Yes            | Registered prepared disclosure route with authenticated packets, expected-benefit and additional-detail continuations; separate initial-year OTSA handoff remains distinct from return attachment and IRS receipt. See the form audit. |
 | `IRS8888`             | Yes            | Bounded two- or three-account allocation is registered and reconciles to Form 1040 line 35a. Focused local XSD cases and a synthetic full-return XSD/filled-PDF packet pass; the Form 1040 line 35a attachment mark prints. Bank/source verification, final release batch, other business rules, and ATS remain open.                                                                                                                                        |
 | `IRS8889`             | Yes            | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |
 | `IRS8896`             | No             | Open: classify product applicability and required source, calculation, XML, attachment, PDF, test, business-rule, and ATS evidence.                                                                                                                                                                                                                      |

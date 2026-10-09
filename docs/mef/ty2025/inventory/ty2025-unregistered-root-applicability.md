@@ -36,9 +36,9 @@ copies. This is one supporting descriptor, not two extra taxpayer forms. The
 
 ### Registry-to-root reconciliation
 
-The current native registry has **152 descriptor entries**, including 35
+The current native registry has **157 descriptor entries**, including 39
 entries in its wage/supporting sequence segment. The PDF registry has **118
-entries**. The distinct native/PDF pending-key counts are 148/115. These are
+entries**. The distinct native/PDF pending-key counts are 153/115. These are
 descriptor counts, not distinct schema-root counts or accepted filing scenarios.
 The 211-root census has 128 `Yes` and 83 `No`: 117 literal roots occur directly
 in registered descriptor files, six in staged-only files and five only as
@@ -409,7 +409,8 @@ entrypoints. Direct synchronous XML and standalone PDF without those bytes
 remain closed; exclusion, wider credit ordering, issuer authenticity, and
 artifact validation remain open. It is not an unregistered descriptor or
 whole-form support.
-Similarly, a literal mention of `IRS8886` in a different descriptor does not
-create a registered Form 8886 document. Registration must be checked against
-`ALL_MEF_FORMS`, and all applicability classifications above remain subject to
-the full source-to-filed-return inventory.
+The former literal-only Form 8886 warning is superseded: the live registry now
+contains its parent and two continuation descriptors from the filing-domain
+module. They require authenticated prepared disclosure packets and print via
+the prepared-return path. Registration does not prove every reportable
+transaction or separate OTSA delivery; see the registered-form audit.

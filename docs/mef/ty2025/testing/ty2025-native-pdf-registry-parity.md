@@ -1,5 +1,14 @@
 # TY2025 Form 1040 native/PDF registry parity audit
 
+## October 9 live registry reconciliation
+
+Actual registry imports at `a2bd423b7` contain **157 native descriptors / 153 distinct pending keys** and **118 PDF descriptors / 115 distinct pending keys**. The five native additions since the 152-entry snapshot are Form 8886, its two continuation descriptors, and the two Form 4562 election statements. The wage/supporting sequence beginning with W-2 contains 39 descriptors; the Form 8886 parent is in the numbered-form sequence. These are registration counts, not supported tax situations.
+
+The 211-row IRS-root census still has 128 exact source-literal matches and 83 without one; every table flag matches a fresh non-test source scan. The added statements use non-IRS roots, and IRS8886 already had a literal match. Form 8886's actual builder is now registered from its filing-domain module, so the older literal-only warning is superseded. Form 2210 and Form 1116 Schedule C remain staged; no new exclusion or filing-readiness claim follows.
+
+Form 8886 prints through prepared disclosure packets, and Form 4562 appends its election statements through the existing parent PDF descriptor. Neither needs a new PDF registry entry. The form audit records the source triggers and packet boundaries. Local replay evidence is retained in `.state/research/registry-reconciliation-2026-10-09/audit.json`.
+
+
 Static comparison replayed 2026-10-05 of the descriptors actually registered in
 `forms/f1040/2025/mef/forms/index.ts` and `forms/f1040/2025/pdf/forms/index.ts`,
 checked against `forms/f1040/2025/return-processing/attachment-coverage.ts`. This is a

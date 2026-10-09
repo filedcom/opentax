@@ -1,5 +1,7 @@
 # TY2025 conditional schedules: 8995-A A-D and 1116 C
 
+October 9 registry reconciliation: the five newly counted descriptors are Form 8886 and its two continuations, plus two Form 4562 election statements. They do not change the conditional Form 8995-A Schedules A–D or staged Form 1116 Schedule C dispositions below. Native/PDF inventories are now 157/118 entries (153/115 distinct keys); registration does not resolve the remaining source and filing triggers.
+
 Static source and schema audit, reconciled 2026-10-02. This records **conditional filing
 triggers**, not blanket implementation or exclusion. The locally cached TY2025 v5.4
 `ReturnData1040.xsd` permits one each of `IRS8995AScheduleA`, `B`, `C`, and `D`,
