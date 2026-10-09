@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ltcLedgerSchema } from "../../../../intermediate/forms/adjustments/health/form8853/ltc.ts";
 import {
   type NodeResult,
   TaxNode,
@@ -23,6 +24,7 @@ import { box10CodeJSourceSchema } from "../../../../inputs/income/rental-passthr
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 const inputSchema = z.object({
+  ltc_source_ledger: ltcLedgerSchema.optional(),
   // Entry space above Part I: Form 1099-K amounts reported in error or
   // personal items sold at a loss. It does not enter income or AGI totals.
   form1099k_reported_error_or_loss: z.number().int().nonnegative().optional(),
@@ -447,6 +449,7 @@ function assembleSchedule1(input: Schedule1Input): Record<string, unknown> {
           input.k1_partnership_box11_code_k_sources,
       }
       : {}),
+    ...(input.ltc_source_ledger ? { ltc_source_ledger: input.ltc_source_ledger } : {}),
   };
 }
 

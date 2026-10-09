@@ -1,4 +1,5 @@
 import { assertEmployeeContributionReturn } from "../domains/credits/individual/form8880/form8880_tax_limit.ts";
+import { assertRequiredLtcSource } from "../mef/forms/adjustments/health/f8853_ltc.ts";
 import { assertPreparedForm8886PublicSource } from "../domains/general/filing/form8886/return-packets.ts";
 import { assertOwned7203RequiredCopies } from "../domains/income/business/form7203/form7203-owned-return.ts";
 import { assertHsaExcessRequiredCopy } from "../domains/adjustments/health/form8889/form8889_postyear_single_reconciliation.ts";
@@ -627,6 +628,7 @@ async function buildPdfBytesInternal(
   assertBusinessSchedule1Amounts(normalized);
   assertOwned7203RequiredCopies(normalized);
   assertHsaExcessRequiredCopy(normalized);
+  assertRequiredLtcSource({ pending: normalized, filer });
   assertLine1iCombatPayElectionSource(normalized);
   assertSchedule2W2Line13Sources(normalized);
   assertSchedule2W2Line17KSource(normalized);

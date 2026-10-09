@@ -1,4 +1,5 @@
 import { assertEmployeeContributionReturn } from "../domains/credits/individual/form8880/form8880_tax_limit.ts";
+import { assertRequiredLtcSource } from "./forms/adjustments/health/f8853_ltc.ts";
 import type { ExecuteResult } from "../../../../core/runtime/executor.ts";
 import type { Form8886Source } from "../domains/general/filing/form8886/source.ts";
 import {
@@ -332,6 +333,7 @@ function buildReturnXml(
   assertBusinessSchedule1Amounts(pending);
   assertOwned7203RequiredCopies(pending);
   assertHsaExcessRequiredCopy(pending);
+  assertRequiredLtcSource({ pending, filer });
   assertLine1iCombatPayElectionSource(pending);
   assertSchedule2W2Line13Sources(pending);
   assertSchedule2W2Line17KSource(pending);

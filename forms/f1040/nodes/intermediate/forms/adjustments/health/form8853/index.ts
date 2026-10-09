@@ -3,6 +3,7 @@ import {
   calculateArcherContributions,
   codeREntrySchema,
 } from "./archer_contributions.ts";
+import { calculateLtcLedger, ltcLedgerSchema } from "./ltc.ts";
 import { form5329 } from "../../../taxes/retirement/form5329/index.ts";
 import { TS } from "../../../../../types.ts";
 import { z } from "zod";
@@ -57,6 +58,7 @@ export const archerDistributionFilingDetailsSchema = z.object({
 });
 
 export const inputSchema = z.object({
+  ltc_ledger: ltcLedgerSchema.optional(),
   archer_contribution_ledger: archerContributionLedgerSchema.optional(),
   w2_code_r_entries: z.array(codeREntrySchema).optional(),
   archer_distribution_ledger: archerDistributionLedgerSchema.optional(),
@@ -298,6 +300,7 @@ function ltcTaxablePayments(
   input: Form8853Input,
   ltcDailyLimit: number,
 ): number {
+  if (input.ltc_ledger) return calculateLtcLedger(input.ltc_ledger).taxable;
   const total = ltcTotalPerDiemPayments(input);
   if (total <= 0) return 0;
   const limitation = ltcPerDiemLimitation(input, ltcDailyLimit);
@@ -323,11 +326,15 @@ function schedule1Output(
     ).employerExcessIncome
     : 0;
 
-  if (deduction <= 0 && totalTaxableIncome <= 0 && employerExcess <= 0) {
+  if (
+    deduction <= 0 && totalTaxableIncome <= 0 && employerExcess <= 0 &&
+    !input.ltc_ledger
+  ) {
     return [];
   }
 
   const s1Input: Partial<z.infer<typeof schedule1["inputSchema"]>> = {};
+  if (input.ltc_ledger) s1Input.ltc_source_ledger = input.ltc_ledger;
   if (totalTaxableIncome > 0) {
     s1Input.line8e_archer_msa_dist = totalTaxableIncome;
   }
@@ -403,6 +410,7 @@ class Form8853Node extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, rawInput: Form8853Input): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+    assertLtcOnlySource(inputSchema.parse(rawInput), ctx.taxYear);
     const input = normalizeArcherContributionSource(
       normalizeMedicareSource(
         normalizeArcherSource(inputSchema.parse(rawInput), ctx.taxYear),
@@ -488,6 +496,20 @@ export function normalizeMedicareSource(
 // ─── Singleton export ─────────────────────────────────────────────────────────
 
 export const form8853 = new Form8853Node();
+
+export function assertLtcOnlySource(input: Form8853Input, taxYear = 2025): void {
+  if (!input.ltc_ledger) return;
+  if (taxYear !== 2025) throw new Error("LTC source ledger requires tax year 2025");
+  if (
+    Object.entries(input).some(([key, value]) =>
+      key !== "ltc_ledger" && value !== undefined && value !== false && value !== 0
+    )
+  ) {
+    throw new Error(
+      "LTC source ledger cannot yet combine MSA activity or legacy LTC aggregates",
+    );
+  }
+}
 
 export function normalizeArcherContributionSource(
   input: Form8853Input,

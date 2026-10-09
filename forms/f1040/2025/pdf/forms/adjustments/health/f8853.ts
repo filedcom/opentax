@@ -1,4 +1,5 @@
 import { calculateArcherContributions } from "../../../../../nodes/intermediate/forms/adjustments/health/form8853/archer_contributions.ts";
+import { appendLtcStatement, ltcPdfFields, ltcPdfInstances } from "./f8853_ltc.ts";
 import { StandardFonts } from "pdf-lib";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
 import {
@@ -37,6 +38,7 @@ import {
 // ltc_reimbursements                   → line 24 (reimbursements)
 // Raw ltc_period_days cannot go on line 21: that line is $420 times days.
 const fields: ReadonlyArray<PdfFieldEntry> = [
+  ...ltcPdfFields,
   {
     kind: "text",
     domainKey: "msa_reporting_name",
@@ -172,23 +174,26 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 export const form8853Pdf: PdfFormDescriptor = {
   pendingKey: "form8853",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8853--2025.pdf",
-  pageIndices: () => [0],
+  pageIndices: (fields) => fields.ltc_print === true ? [1] : [0],
   filerFields: [
     {
       kind: "text",
       domainKey: "nameLine1",
       pdfField: "topmostSubform[0].Page1[0].f1_1[0]",
-      includeWhen: (fields) => fields.msa_reporting_name === undefined,
+      includeWhen: (fields) =>
+        fields.ltc_print !== true && fields.msa_reporting_name === undefined,
     },
     {
       kind: "text",
       domainKey: "primarySSN",
       pdfField: "topmostSubform[0].Page1[0].f1_2[0]",
-      includeWhen: (fields) => fields.msa_reporting_ssn === undefined,
+      includeWhen: (fields) =>
+        fields.ltc_print !== true && fields.msa_reporting_ssn === undefined,
     },
   ],
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
+    if (raw.ltc_ledger) return ltcPdfInstances(raw, filer, allPending);
     const source = normalizeArcherContributionSource(normalizeMedicareSource(
       normalizeArcherSource(inputSchema.parse(raw)),
     ));
@@ -305,6 +310,7 @@ export const form8853Pdf: PdfFormDescriptor = {
     }];
   },
   fields,
+  appendSupplementalPages: appendLtcStatement,
   async decoratePages(document, pages, fields) {
     if (fields.medicare_statement === true) {
       const font = await document.embedFont(StandardFonts.Helvetica);

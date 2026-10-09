@@ -2,6 +2,7 @@ import {
   reconcileArcherContributions,
   reconcileArcherPartVI,
 } from "../../../../domains/adjustments/health/form8853/form8853_contributions_reconciliation.ts";
+import { buildLtcDocument } from "./f8853_ltc.ts";
 import { schedule1 as nativeSchedule1 } from "../../general/return-assembly/schedule1/schedule1.ts";
 import { schedule2 as nativeSchedule2 } from "../../taxes/other/schedule2.ts";
 import { z } from "zod";
@@ -325,6 +326,7 @@ function buildIRS8853(rawFields: Input, context?: MefBuildContext): string {
   if (Object.keys(rawFields).length === 0) {
     throw new Error("Form 8853 MeF cannot file an empty pending record");
   }
+  if ("ltc_ledger" in rawFields && rawFields.ltc_ledger) return buildLtcDocument(rawFields, context);
   const fields = normalizeArcherContributionSource(normalizeMedicareSource(
     normalizeArcherSource(inputSchema.parse(rawFields)),
   ));

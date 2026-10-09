@@ -1,5 +1,16 @@
 # TY2025 Form 1040 native/PDF registry parity audit
 
+## October 10 LTC statement registration
+
+Live imports contain 158 native descriptors / 153 distinct pending keys and
+118 PDF descriptors / 115 distinct pending keys. The new Form 8853 supporting
+descriptor emits `MultiplePayeesStatement` in schema order, linked from Section C
+line 15. Its aggregate computation and recipient allocation print through the
+existing parent PDF descriptor, with continuation pages when needed. The prior
+registry snapshots below remain historical. See the [LTC source and packet
+checkpoint](../domains/adjustments/health/form8853/ty2025-form8853-gap.md#october-10-sourced-ltc-section-c-and-multiple-payee-statement)
+for validation and remaining scope.
+
 ## October 9 Form 1116 statement parity
 
 The native alternative-compensation statement now has a paper counterpart

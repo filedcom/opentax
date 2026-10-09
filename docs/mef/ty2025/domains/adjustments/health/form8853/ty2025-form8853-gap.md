@@ -103,7 +103,7 @@ business-rule, or ATS claim is made.
 Joint/spouse aggregation, surviving-spouse inherited account handling,
 multiple inherited/owned account statements, predeath normal distributions
 combined with estate FMV transfer, rollovers/excess withdrawals and contributions
-remain gaps. The sourced sole-holder Medicare distribution route below is now covered; LTC remains a separate gap. The ledger requires
+remain gaps. The sourced sole-holder Medicare distribution route below is now covered; the October 10 checkpoint below separately covers one sourced LTC Section C. The ledger requires
 reviewed absence of those other activities for its retained filing route.
 
 ## Raw cents review and reporting identity (2026-10-06)
@@ -288,30 +288,28 @@ the native `ArcherMSAAndMedcrAdvntgMSAGrp` with required `MSAHolderSSN` and
 calculated lines 6a, 6b, 6c, 7, and 8 in XSD order. It rejects spouse/joint
 ambiguity and Schedule 1/2 conflicts. It does not emit flat legacy tags.
 
-This does not establish general Form 8853 support. The remaining paths below
-are still blocked. The bounded partial-use route above has full local return XSD and PDF evidence.
-The broader code awaits the current full batch; general complete return XSD,
-business-rule, and ATS evidence remain open.
+This does not establish general Form 8853 support. The bounded partial-use route
+above has full local return XSD and PDF evidence. Later Medicare, contribution
+and LTC checkpoints below narrow the original gaps; wider combinations,
+business-rule and ATS evidence remain open.
 
-- Archer paths beyond the sourced taxpayer ledger and death transfer, Medicare paths beyond the sourced sole-holder ledger below, LTC, and
+- Archer paths beyond the sourced taxpayer ledger and death transfer, Medicare paths beyond the sourced holder ledgers, and
   contribution paths beyond the sourced small-employer single-holder route below still lack a
   complete node print record and source model. The v5.4 XSD nests Section
   A/B in `ArcherMSAAndMedcrAdvntgMSAGrp` with required `MSAHolderSSN`, and
   Section C in `SectCLTCInsuranceCntrctGrp` with required policyholder/insured
-  identity and line 15/16 answers. Section C remains unsupported; for example,
+  identity and line 15/16 answers. The October 10 LTC ledger below supplies those fields;
   raw `ltc_period_days` is not the XSD's computed
-  `LTCDaysMultiplyByPerDiemAmt`. Focused native XML cases are written but unrun.
+  `LTCDaysMultiplyByPerDiemAmt`. Native cases now pass full local XSD as recorded below.
 - The Archer exception ledger above resolves per-distribution age/disability
   tax for its sourced taxpayer route and the single nonspouse death transfer.
   The Medicare ledger below resolves its distribution-level exceptions and
   prior-year balance/HDHP deductible worksheet. A bare Medicare exception
   boolean now requires that ledger. General Medicare support remains open.
-- The Section C source model lacks policyholder and insured identities,
-  terminally ill status, line 15 other-payee answer, LTC period method, and
-  separate periods. IRS instructions require separate Section C calculations for
-  multiple LTC periods and a multiple-payee statement when line 15 is Yes. A
-  single undifferentiated days/expenses/reimbursements tuple cannot safely
-  represent those paths.
+- The October 10 Section C ledger supplies identities, illness evidence,
+  other-payee answers, a reviewed period method and a multiple-payee statement.
+  Additional Section C copies and multiple periods remain guarded; the older
+  undifferentiated days/expenses/reimbursements tuple is insufficient for filing.
 - The sourced employee Archer contribution route below now calculates the monthly
   HDHP worksheet and actual current-service compensation. Missing compensation
   no longer defaults to infinity for a positive legacy deduction. Self-employed
@@ -441,3 +439,81 @@ following-year deposit9, dependent7, partial other coverage9, monthly family9,
 compensation cap9, employer3, employer excess10, employer+personal7, excess
 already in wages7, Medicare cutoff9, spouse personal5. No visual fixes or
 regression reruns were required. Source/test limitations above remain unchanged.
+
+
+## October 10 sourced LTC Section C and multiple-payee statement
+
+The public `form8853.ltc_ledger` now retains each insured, current-return
+policyholder, payer/contract and complete annual Form 1099-LTC amounts, reviewed
+qualification, a single complete benefit period, illness certifications and care
+plan, qualified costs, reimbursements and other payees. Source cents remain
+available; amounts for a filed line are summed before rounding. The calculation
+uses actual inclusive dates and the 2025 $420 daily limit, or higher qualified
+costs, less applicable reimbursements. The reviewed pre-August 1996 unmodified
+contract exception excludes the corresponding reimbursement from line 24.
+These rules follow the [2025 Form 8853 instructions, Section C](https://www.irs.gov/pub/irs-prior/i8853--2025.pdf).
+
+Other-payee calculations first allocate the exclusion to the insured and an
+identified joint-filing spouse, then allocate the remainder proportionally to
+other policyholders. A limited insured/spouse priority amount needs reviewed
+shares that reconcile to the combined exclusion. Each current-return recipient
+must appear in the owner inventory; a spouse owner requires a joint return.
+Terminal-only accelerated benefits skip lines 17–25 and retain zero on line 26,
+including when other policyholders received qualified LTC payments. Chronic and
+terminal redesignation within a period is rejected until split-period support.
+
+Native export emits one identified `SectCLTCInsuranceCntrctGrp`, correct Boolean
+answers, calculated lines and the Schedule 1/Form 1040 income joins. A required
+`MultiplePayeesStatement` is registered in schema order and linked at line 15;
+it carries aggregate lines 18–26. Each policyholder form leaves lines 21–24 blank
+and reports its own limitation and taxable income. The PDF prints the actual
+Section C page and adds aggregate and recipient allocation rows, repeating the
+reporting/insured identities and period on continuation pages. Individual
+whole-dollar allocations can differ in sum from aggregate amounts; the printed
+statement identifies this rounding distinction. Both exporters require the
+unchanged source retained by Schedule 1 even when income is zero.
+
+Fifteen synthetic complete returns pass the local v5.4 `Return1040.xsd`. An
+independent Python Decimal/date review recomputes periods, limits, allocation,
+AGI, taxable income and final tax using the [2025 Form 1040 Tax Computation
+Worksheet](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf). They cover the IRS
+annual zero-income example, daily contract and equal-rate periods, actual-cost
+limits, chronic accelerated benefits, terminal-only benefits with/without other
+payees, taxpayer/spouse owners, insured and joint-spouse priority, multiple
+contracts with cents, old-contract reimbursements and 26-recipient overflow.
+The terminal cases correctly retain their required zero-tax Section C.
+
+All **75 packet pages** were rendered and visually reviewed through **59 unique
+pixel hashes**; 16 exact duplicates map to those reviewed images. Section C
+identities, every applicable line, skipped lines and both checkbox positions
+were also extracted and compared. Four packets contain multiple-payee
+statements, totaling eight statement pages; the overflow case includes five
+pages with all 26 recipients and intact recipient groups. Reopened static
+packets contain no widgets or AcroForm field tree. The spouse-owner Section C
+correctly uses the spouse name and SSN, while the joint Schedule 1 names both
+filers. These are local synthetic filing packets, not authenticated sources or
+IRS acceptance evidence.
+
+The typed regression selected **338 tests**: 337 passed initially and one older
+Archer contribution test failed because its private evidence directory was
+missing. Creating that directory and replaying the failed test produced one
+pass without a production fix. The final overflow replay also passes after a
+singular-day label correction. The batch includes 18 complete-return/source
+boundary tests and five LTC allocation/source unit tests. Twelve altered public
+inventories reject; 120 changed-source or income cases reject at each export
+boundary, plus one multiple-insured case rejects in each exporter (**121 native,
+121 fresh-PDF rejections**). The existing benchmark remains **46/133**, with the
+same 87 failing/error case IDs as the prior-history checkpoint.
+
+The filing route intentionally supports one current-return Section C and one
+reviewed period. Calculating multiple insureds does not authorize extra native
+copies: TY2025 v5.4 permits one `IRS8853` and one Section C group, while its
+multiple-payee statement has no additional insured identity. The required
+attachment representation is deferred item 131; exports retain the guard.
+Mixed MSA/LTC activity, nonqualified contracts, multiple or changing periods,
+business-relationship exclusions, additional filing copies, source authenticity,
+business rules and IRS acceptance remain open. No parent board task is closed.
+
+Private source/pending/XML/PDF, XSD logs, independent arithmetic, rendered-page
+hashes and regression evidence are retained in
+`.state/research/form8853-ltc-2026-10-10/`; generated evidence is not committed.
