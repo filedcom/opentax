@@ -146,3 +146,61 @@ not authenticate outside receipts, ownership, hours, comparable wages or the
 material-capital factual judgment. Broader dependency, release, double-claim and
 source-authentication parent work remains open. No child's income is added to a
 parent return and no education completion claim is made beyond these packets.
+
+## October 9 wage and material-capital complete-return checkpoint
+
+Six additional public returns cover the previously unverified W-2/material-capital
+mixture. The taxpayer has10000 wages (49119 in the phaseout case),30000 Schedule C
+profit, and8000 nonservice taxable scholarship income. Issued wage records,
+photography receipts, equipment rent, supplies, service hours and comparable pay
+remain separately identified. Ordinary SE tax is4238 and its filed deduction2119.
+The business support-income ceiling is8364.30; a lower reviewed service allowance
+limits it to6000 in two cases. Wages are added after that limit. Full net business
+income continues to determine AGI, QBI and ACTC earned income.
+
+The [2025 Form8863 instructions, page7](https://www.irs.gov/pub/irs-prior/i8863--2025.pdf)
+use a strict less-than-half support restriction, exclude full-time-student
+scholarships from support, and limit material-capital business compensation to
+the reasonable allowance or30% of net profit after deductible SE tax. Each
+below-half case adds two cents to ordinary support; no whole-dollar rounding
+changes that comparison. The [2025 tax tables](https://www.irs.gov/publications/p1040)
+independently supply single-filer tax2711 for taxable24555 and8923 for63674.
+Expected tax amounts are fixed from those rows, not copied from a preview run.
+
+| Case | Ordinary support | AGI | Refundable AOC | Nonrefundable AOC | CTC / ACTC | Total tax | Refund |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Cap, exact half | 36728.60 | 45881 | 1000 | 1500 | 0 / 0 | 5449 | 551 |
+| Cap, below half | 36728.62 | 45881 | 0 | 2500 | 0 / 0 | 4449 | 551 |
+| Allowance, exact half | 32000.00 | 45881 | 1000 | 1500 | 0 / 0 | 5449 | 551 |
+| Allowance, below half | 32000.02 | 45881 | 0 | 2500 | 0 / 0 | 4449 | 551 |
+| MAGI phaseout, exact half | 114966.60 | 85000 | 500 | 750 | 0 / 0 | 12411 | 8089 |
+| Qualifying child, exact half | 36728.60 | 45881 | 1000 | 1500 | 1211 / 989 | 4238 | 2751 |
+
+Withholding is5000, or20000 in the phaseout case. QBI deduction is5576 throughout.
+Education credit precedes CTC, leaving1211 ordinary tax for CTC; the remaining989
+is ACTC. The equal refunds in the restricted/unrestricted pairs are expected:
+there is enough ordinary tax to use the full nonrefundable2500 when the1000
+refundable component is unavailable. The phaseout halves the2500 credit at
+MAGI85000.
+
+The focused typed run passes6/0 and rejects48 inconsistent pending graphs at
+each complete native and PDF boundary: changed or missing wage review, wrong
+support owner, missing W-2/C, changed SE wages or deduction, and stale refundable
+AOC. The initial5/1 run rejected a fixture W-2 box4 value containing fractional
+cents; the issued withholding values were corrected to cents before the final
+run. No runtime or tax expectation was changed.
+
+Private source/pending/expected/origin records, complete XML/PDFs, rendered pages
+and logs are in `.state/research/form8863-wage-capital-2026-10-09/`. Structural,
+rendered-review and grouped-regression results are recorded in the final
+verification report. These synthetic source records prove internal joins, not
+external authenticity or IRS acceptance. Multiple-business half-SE allocation,
+farm/K-1 sources and the other existing education limits remain open.
+
+Final verification: all six XML returns pass the retained TY2025v5.4 XSD; all86
+pages were reviewed through27 unique page hashes. Grouped education regression
+passes102/0. Student, school, W-2 and SE ownership and the under-24 native flag
+reconcile. Child Schedule8812 pages8–9 precede C/SE despite attachment sequence,
+and line10 prints blank instead of zero; existing deferred86/76 remain qualified.
+The earlier verifier used the wrong child-credit XML field name; the corrected
+check asserts `CTCODCAmt=1211`. No runtime changed and no IRS acceptance is claimed.
