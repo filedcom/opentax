@@ -157,7 +157,7 @@ export function verifyMiscRoyaltySource(
     const expected = reconcileRoyaltyDebtReturn(
       z.record(z.unknown()).parse(form),
       pending,
-      filer?.primarySSN,
+      filer,
     );
     if (
       JSON.stringify(itemSchema.parse(item)) !==

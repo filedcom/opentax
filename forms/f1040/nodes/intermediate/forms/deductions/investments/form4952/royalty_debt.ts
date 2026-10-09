@@ -6,6 +6,7 @@ const dollars = z.number().int().nonnegative();
 export const royaltyDebtTraceSchema = form4952DirectDebtTraceSchema.omit({
   direct_taxable_securities_purchase: true,
 }).extend({
+  owner_tsj: z.enum([TSJ.T, TSJ.S]).optional(),
   direct_royalty_property_purchase: z.number().positive(),
   lender_2025_interest_total: dollars.positive(),
   property_description: z.string().trim().min(1).max(100),
@@ -48,7 +49,7 @@ export function royaltyDebtProperty(
   deduction: number,
 ) {
   return {
-    tsj: TSJ.T,
+    tsj: trace.owner_tsj ?? TSJ.T,
     property_description: trace.property_description,
     property_type: 6 as const,
     activity_type: "D" as const,

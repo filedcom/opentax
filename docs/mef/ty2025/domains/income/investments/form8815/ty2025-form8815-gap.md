@@ -1,5 +1,19 @@
 # TY2025 Form 8815: source-to-return gap
 
+## October 9 joint-owner royalty and bond limits
+
+Four additional joint bond returns join taxpayer/spouse royalty ownership,
+both spouses’ bank interest, the other spouse’s bond and spouse QTP payments.
+Full and partial exclusions and primary-owned foreign income reconcile through
+actual royalty deductions, carryforwards and final tax. These four returns
+pass XSD and retain35 observed pages; two standalone joint royalty cases add
+12 pages, for six returns/47 pages in the shared proof. See the
+[joint-source checkpoint](../../../deductions/investments/form4952/ty2025-form4952-gap.md#october-9-joint-royalty-ownership-and-spouse-investment-sources).
+The complete group rejects changed filed identities and extra unsupported
+investment sources; existing deferred presentation and single-route inventory
+issues remain qualified. Form8815 evidence now totals34 XSD-valid returns/249
+observed pages, without claiming authenticity, IRS acceptance or parent closure.
+
 ## October 9 foreign exclusions with royalty-interest refiguring
 
 The reviewed Form2555 physical-presence employee route now coexists with the

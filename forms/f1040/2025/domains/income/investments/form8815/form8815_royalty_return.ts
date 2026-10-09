@@ -11,6 +11,30 @@ import {
 } from "../../../../../nodes/intermediate/forms/deductions/investments/form4952/index.ts";
 import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 
+/** Do not infer an empty inventory from opt-in 1099 investment flags. */
+export function assertRoyaltyInvestmentInventory(
+  pending: Readonly<Record<string, unknown>>,
+): void {
+  if (
+    [
+      "f1099div",
+      "f1099oid",
+      "f1099b",
+      "f8949",
+      "f8814",
+      "form8814",
+      "k1_partnership",
+      "k1_s_corp",
+      "k1_trust",
+      "form1116",
+    ].some((key) => pending[key] !== undefined)
+  ) {
+    throw new Error(
+      "Traced royalty needs a complete supported investment-income inventory",
+    );
+  }
+}
+
 /** Shared by both filed forms; never calls either descriptor recursively. */
 export function reconcileBondRoyaltyInterest(
   pending: Readonly<Record<string, unknown>>,
@@ -27,26 +51,12 @@ export function reconcileBondRoyaltyInterest(
     Object.keys(bondSchema.shape).map((key) => [key, retained[key]]),
   ));
   const special = bond.line9_worksheet.royalty_debt_special_computation;
-  // This combined route has only the traced royalty and plain owned interest.
-  // Do not infer an empty investment-income inventory from opt-in 1099 flags.
-  if (
-    !special || !interest.royalty_debt_trace || [
-      "f1099div",
-      "f1099oid",
-      "f1099b",
-      "f8949",
-      "f8814",
-      "form8814",
-      "k1_partnership",
-      "k1_s_corp",
-      "k1_trust",
-      "form1116",
-    ].some((key) => pending[key] !== undefined)
-  ) {
+  if (!special || !interest.royalty_debt_trace) {
     throw new Error(
-      "Form 8815 royalty computation needs a complete supported investment-income inventory",
+      "Form 8815 needs its traced royalty-interest special computation",
     );
   }
+  assertRoyaltyInvestmentInventory(pending);
   // The employee source requires line50 = 0; its addback also equals the
   // line45 exclusion subtracted on Schedule1 line8d.
   const foreignExclusion = form8815ForeignAddback(pending);

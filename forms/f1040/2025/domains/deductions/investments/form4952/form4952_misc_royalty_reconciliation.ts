@@ -67,7 +67,7 @@ export function reconcileForm4952MiscRoyaltyPath(
     fields.royalty_debt_trace !== undefined ||
     (retained.success && retained.data.royalty_debt_trace !== undefined)
   ) {
-    reconcileRoyaltyDebtReturn(fields, pending, filer?.primarySSN);
+    reconcileRoyaltyDebtReturn(fields, pending, filer);
     return;
   }
   const misc = miscSchema.safeParse(pending.f1099m);

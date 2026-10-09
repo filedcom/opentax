@@ -1,4 +1,13 @@
-import { reconcileBondRoyaltyInterest } from "../../../income/investments/form8815/form8815_royalty_return.ts";
+import { FilingStatus, TSJ } from "../../../../../nodes/types.ts";
+import {
+  type FilerIdentity,
+  FilingStatus as MefFilingStatus,
+} from "../../../../../mef/header.ts";
+import type { RoyaltyDebtTrace } from "../../../../../nodes/intermediate/forms/deductions/investments/form4952/royalty_debt.ts";
+import {
+  assertRoyaltyInvestmentInventory,
+  reconcileBondRoyaltyInterest,
+} from "../../../income/investments/form8815/form8815_royalty_return.ts";
 import { z } from "zod";
 import {
   calculateForm4952,
@@ -13,7 +22,8 @@ import { sourceAmountsMatch } from "./form4952_combined_reconciliation.ts";
 
 const sinkSchema = z.object({
   taxpayer_ssn: z.string(),
-  filing_status: z.literal("single"),
+  spouse_ssn: z.string().optional(),
+  filing_status: z.enum([FilingStatus.Single, FilingStatus.MFJ]),
   line2b_taxable_interest: z.number().optional(),
   line8_additional_income: z.number().optional(),
 });
@@ -23,11 +33,38 @@ const schedule1Schema = z.object({
   line10_total_additional_income: z.number(),
 });
 
+function royaltyOwners(
+  trace: RoyaltyDebtTrace,
+  sink: z.infer<typeof sinkSchema>,
+  filer?: FilerIdentity,
+): ReadonlySet<string> {
+  const primary = sink.taxpayer_ssn.replaceAll("-", "");
+  const spouse = sink.spouse_ssn?.replaceAll("-", "");
+  const joint = sink.filing_status === FilingStatus.MFJ;
+  const spouseOwned = trace.owner_tsj === TSJ.S;
+  if (
+    (joint && (!spouse || spouse === primary)) ||
+    (spouseOwned && !joint) ||
+    trace.owner_tin !== (spouseOwned ? spouse : primary) ||
+    (filer && (filer.primarySSN.replaceAll("-", "") !== primary ||
+      filer.filingStatus !==
+        (joint
+          ? MefFilingStatus.MarriedFilingJointly
+          : MefFilingStatus.Single) ||
+      (joint && filer.spouse?.ssn.replaceAll("-", "") !== spouse)))
+  ) {
+    throw new Error(
+      "Form 4952 royalty debt owner differs from the filed taxpayer/spouse identities",
+    );
+  }
+  return new Set(joint && spouse ? [primary, spouse] : [primary]);
+}
+
 /** A directly purchased portfolio royalty, with all allowed interest on Schedule E. */
 export function reconcileRoyaltyDebtReturn(
   fields: Readonly<Record<string, unknown>>,
   pending: Readonly<Record<string, unknown>>,
-  finalFilerTin?: string,
+  filer?: FilerIdentity,
 ) {
   const source = formSchema.parse(pending.form4952);
   const printed = formSchema.parse(fields);
@@ -39,6 +76,10 @@ export function reconcileRoyaltyDebtReturn(
     throw new Error(
       "Form 4952 royalty debt needs its unchanged retained source",
     );
+  }
+  const owners = royaltyOwners(trace, sink, filer);
+  if (sink.filing_status === FilingStatus.MFJ) {
+    assertRoyaltyInvestmentInventory(pending);
   }
   const misc = miscSchema.parse(pending.f1099m).f1099ms;
   const royalty = trace.royalty_source;
@@ -52,9 +93,6 @@ export function reconcileRoyaltyDebtReturn(
     "box2_nonpassive_portfolio_investment_for_form4952_verified",
   ]);
   if (
-    trace.owner_tin !== sink.taxpayer_ssn.replaceAll("-", "") ||
-    (finalFilerTin !== undefined &&
-      trace.owner_tin !== finalFilerTin.replaceAll("-", "")) ||
     misc.length !== 1 || misc[0].payer_name !== royalty.payer_name ||
     misc[0].payer_tin !== royalty.payer_tin ||
     misc[0].recipient_tin !== royalty.recipient_tin ||
@@ -76,7 +114,7 @@ export function reconcileRoyaltyDebtReturn(
   if (
     interest.some((row, i) =>
       !plainInvestmentBox1Or3(row) ||
-      row.recipient_tin !== trace.owner_tin || !row.source_document_reference ||
+      !owners.has(row.recipient_tin ?? "") || !row.source_document_reference ||
       !Number.isInteger(amounts[i]) || (row.box6 ?? 0) !== 0 ||
       (row.foreign_source_interest_usd ?? 0) !== 0 || !!row.box7 ||
       row.foreign_tax_irs_country_code !== undefined

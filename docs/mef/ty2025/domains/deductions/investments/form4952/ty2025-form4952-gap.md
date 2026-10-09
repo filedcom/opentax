@@ -1,5 +1,52 @@
 # TY2025 Form 4952 portfolio royalty boundary
 
+## October 9 joint royalty ownership and spouse investment sources
+
+A traced royalty purchase can now belong to either spouse on a joint return.
+The declared taxpayer/spouse role, debt owner, Form1099-MISC recipient,
+Schedule E property and final filed identities must agree. Reviewed plain
+interest from both spouses contributes to the joint investment-income limit.
+The joint route rejects unaccounted-for dividend, gain, K-1 and other investment
+sources; deferred117's existing single-filer inventory defect is not repaired.
+
+Six constructed complete returns cover either royalty owner, interest split
+400/600 between spouses, a bond owned by the other spouse, spouse QTP payments,
+full/partial bond exclusions and primary-owned foreign employee income.
+The [Form8815 worksheet](https://www.irs.gov/pub/irs-prior/f8815--2025.pdf)
+uses the joint149,250 threshold/30,000 phaseout width and the temporary
+pre-exclusion royalty deduction; only the actual deduction is filed under
+[Form4952 line8](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf).
+
+| Case | Paid interest | Bond MAGI / exclusion | Actual deduction / carry | AGI | Tax | Refund |
+|---|---:|---:|---:|---:|---:|---:|
+| Primary royalty, no bond | 500 | — | 500 / 0 | 143,500 | 14,468 | 5,532 |
+| Spouse royalty, no bond | 6,000 | — | 4,000 / 2,000 | 140,000 | 13,698 | 6,302 |
+| Primary royalty, full exclusion | 7,000 | 140,000 / 2,000 | 4,000 / 3,000 | 140,000 | 13,698 | 6,302 |
+| Spouse royalty, phaseout | 7,000 | 160,000 / 1,284 | 4,716 / 2,284 | 160,000 | 18,098 | 1,902 |
+| Primary positive royalty | 500 | 165,500 / 916 | 500 / 0 | 164,584 | 19,106 | 894 |
+| Spouse royalty, primary foreign wages | 7,000 | 160,000 / 1,284 | 4,716 / 2,284 | 60,000 | 6,270 | 13,730 |
+
+Independent arithmetic reconciles these amounts, including foreign tax stacking
+18,098 minus11,828 =6,270. Each packet contains one actual Form4952 and no
+Schedule A interest duplication; regular and AMT carry amounts agree.
+Six complete returns pass cached TY2025v5.4 XSD validation. All47 flattened
+packet pages were observed through32 distinct renders/eight contact sheets.
+PDF text, native amounts and source ownership agree within existing name68,
+zero76 and royalty-loss line22 issue116 qualifications. No deferred repair
+or source-authentication/IRS-acceptance claim is made.
+
+Related Form4952/Form8815/Form2555/Schedule E regression:277/0.
+Focused tests:6/0, including18 public,60 native and60 prepared-PDF rejections,
+plus12 direct final-identity rejections. Fresh benchmark:46/133, exactly the
+same87 failing case IDs as the prior checkpoint (deferred96). Private evidence:
+`.state/research/form4952-joint-royalty-2026-10-09/`, with source/pending,
+XML/PDF, manifests, independent arithmetic, render reviews and execution logs.
+The XSD digest remains
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+Mixed-use debt, other filing statuses, elections, prior carryover authentication,
+other investment-source combinations and the wider parent task remain open.
+
+
 ## October 9 foreign employee income with bond/royalty limits
 
 The paired Form8815 route now reconciles reviewed Form2555 employee and housing
@@ -45,7 +92,7 @@ Schedule1/Form1040 income and never duplicates into Schedule A line9. Both
 native and PDF export replay the loan, source inventory, numbered Form4952
 lines, exact Schedule E property and final income join. Other expenses, manual
 investment amounts, mixed debt uses, prior carryforward imports, elections,
-AMT adjustments and non-single filers remain guarded. The subsequent paired
+AMT adjustments and non-single filers were guarded at this checkpoint; the joint-owner checkpoint above now adds MFJ. The subsequent paired
 checkpoint above adds the Form8815 special computation. Whole-dollar current-year royalty and investment-income amounts are
 required in this route.
 
