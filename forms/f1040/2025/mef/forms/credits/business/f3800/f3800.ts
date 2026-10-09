@@ -1266,7 +1266,8 @@ export function prepareForm3800DocumentParts(
     (form8911Ids.length !== 1 ||
       context.documentIdsByTag?.IRS8911ScheduleA?.length !==
         form8911.properties.length ||
-      context.documentIdsByTag?.IRS4562?.length !== 1)
+      context.documentIdsByTag?.IRS4562?.length !==
+        form8911.depreciationDocumentCount)
   ) {
     throw new Error(
       "Form 3800 Form 8911 source needs its parent, property and depreciation documents",

@@ -1,4 +1,7 @@
-import { reconcileBonus4562 } from "../../deductions/business/f4562_bonus.ts";
+import {
+  reconcileBonus4562,
+  reconcileBonusInventory,
+} from "../../deductions/business/f4562_bonus.ts";
 import { z } from "zod";
 import {
   computeForm8911Amounts,
@@ -101,13 +104,24 @@ export function reconcileForm8911BusinessFiling(
       "Form 8911 business export needs property-source reconciliation to Form 4562",
     );
   }
-  const depreciation = reconcileBonus4562(pending.form4562, pending);
-  if (
-    depreciation.bonus_asset.credit_basis_reduction !== joined.businessCredit
-  ) {
+  const rawDepreciation = z.record(z.unknown()).parse(pending.form4562);
+  const inventory = "bonus_inventory" in rawDepreciation
+    ? reconcileBonusInventory(rawDepreciation, pending)
+    : undefined;
+  const reductions = inventory
+    ? inventory.bonus_inventory.assets.reduce(
+      (sum, a) => sum + a.credit_basis_reduction,
+      0,
+    )
+    : reconcileBonus4562(rawDepreciation, pending).bonus_asset
+      .credit_basis_reduction;
+  if (reductions !== joined.businessCredit) {
     throw new Error(
       "Form 8911 credit differs from filed depreciation basis reduction",
     );
   }
-  return joined;
+  return {
+    ...joined,
+    depreciationDocumentCount: inventory?.bonus_activities.length ?? 1,
+  };
 }

@@ -1,5 +1,9 @@
-import { filedBonus4562Schema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/bonus.ts";
-import { reconcileBonus4562 } from "./f4562_bonus.ts";
+import {
+  bonusActivitySchema,
+  filedBonus4562Schema,
+  filedBonusInventorySchema,
+} from "../../../../../nodes/intermediate/forms/deductions/business/form4562/bonus.ts";
+import { reconcileBonus4562, reconcileBonusInventory } from "./f4562_bonus.ts";
 import { z } from "zod";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
@@ -17,7 +21,11 @@ import type {
 } from "../../../form-descriptor.ts";
 
 type Fields = z.infer<typeof filedForm4562Schema>;
-type Input = Fields | z.infer<typeof filedBonus4562Schema> | readonly [];
+type Input =
+  | Fields
+  | z.infer<typeof filedBonus4562Schema>
+  | z.infer<typeof filedBonusInventorySchema>
+  | readonly [];
 
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["activity_description", "BusinessOrActivityTxt"],
@@ -302,19 +310,36 @@ function validateLines(fields: Fields, context?: MefBuildContext): void {
   }
 }
 
+function buildBonusActivity(
+  fields: Pick<
+    z.infer<typeof bonusActivitySchema>,
+    | "activity_description"
+    | "line14_special_depreciation_allowance"
+    | "line22_total_depreciation"
+  >,
+): string {
+  return elements("IRS4562", [
+    element("BusinessOrActivityTxt", fields.activity_description),
+    element(
+      "SpecialAllowanceAmt",
+      fields.line14_special_depreciation_allowance,
+    ),
+    element("TotalDepreciationAmt", fields.line22_total_depreciation),
+  ]);
+}
+
 function buildIRS4562(rawFields: Input, context?: MefBuildContext): string {
   // The MeF builder passes [] when this optional form has no pending slot.
   if (Array.isArray(rawFields) && rawFields.length === 0) return "";
+  if ("bonus_inventory" in rawFields) {
+    return buildBonusActivity(
+      reconcileBonusInventory(rawFields, context?.pending ?? {})
+        .bonus_activities[0],
+    );
+  }
   if ("bonus_asset" in rawFields) {
     const fields = reconcileBonus4562(rawFields, context?.pending ?? {});
-    return elements("IRS4562", [
-      element("BusinessOrActivityTxt", fields.activity_description),
-      element(
-        "SpecialAllowanceAmt",
-        fields.line14_special_depreciation_allowance,
-      ),
-      element("TotalDepreciationAmt", fields.line22_total_depreciation),
-    ]);
+    return buildBonusActivity(fields);
   }
   const fields = filedForm4562Schema.parse(rawFields);
   validateLines(fields, context);
@@ -335,6 +360,11 @@ export const form4562: MefFormDescriptor<"form4562", Input> = {
   pendingKey: "form4562",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f4562.pdf",
+  buildAdditionalDocuments(fields, context) {
+    if (!("bonus_inventory" in fields)) return [];
+    return reconcileBonusInventory(fields, context?.pending ?? {})
+      .bonus_activities.slice(1).map(buildBonusActivity);
+  },
   build(fields, context) {
     return buildIRS4562(fields, context);
   },

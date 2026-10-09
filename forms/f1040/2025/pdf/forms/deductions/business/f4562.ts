@@ -1,4 +1,7 @@
-import { filedBonus4562Schema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/bonus.ts";
+import {
+  filedBonus4562Schema,
+  filedBonusInventorySchema,
+} from "../../../../../nodes/intermediate/forms/deductions/business/form4562/bonus.ts";
 import type {
   PdfFieldEntry,
   PdfFormDescriptor,
@@ -43,7 +46,9 @@ export const form4562Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f4562--2025.pdf",
   projectFields(raw, allPending) {
     if (Object.keys(raw).length === 0) return {};
-    const filed = "bonus_asset" in raw
+    const filed = "bonus_inventory" in raw
+      ? filedBonusInventorySchema.parse(raw)
+      : "bonus_asset" in raw
       ? filedBonus4562Schema.parse(raw)
       : filedForm4562Schema.parse(raw);
     form4562Mef.build(filed, { pending: allPending });
@@ -73,7 +78,27 @@ export const form4562Pdf: PdfFormDescriptor = {
         );
       }
     }
-    return [{ ...projected, filer_name: name, filer_ssn: ssn }];
+    const copies = "bonus_inventory" in projected
+      ? filedBonusInventorySchema.parse(projected).bonus_activities
+      : [projected];
+    if (
+      ("bonus_asset" in projected &&
+        filedBonus4562Schema.parse(projected).bonus_asset.proprietor_ssn !==
+          ssn) ||
+      ("bonus_inventory" in projected &&
+        filedBonusInventorySchema.parse(projected).bonus_activities.some((a) =>
+          a.proprietor_ssn !== ssn
+        ))
+    ) {
+      throw new Error(
+        "Form 4562 bonus PDF filer must match the asset proprietor",
+      );
+    }
+    return copies.map((copy) => ({
+      ...copy,
+      filer_name: name,
+      filer_ssn: ssn,
+    }));
   },
   fields,
 };

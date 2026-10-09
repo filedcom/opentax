@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-// One new, nonlisted, wholly business-use MACRS asset acquired after Jan. 19.
-export const bonusAssetSchema = z.object({
+// New, nonlisted, wholly business-use MACRS property acquired after Jan. 19.
+export const bonusAssetCoreSchema = z.object({
   business_reference: z.string().trim().min(1),
   activity_description: z.string().trim().min(1).max(40),
   asset_description: z.string().trim().min(1).max(100),
@@ -27,11 +27,49 @@ export const bonusAssetSchema = z.object({
   bonus_elected_out: z.literal(false),
   reduced_bonus_election: z.literal(false),
   section179_deduction: z.literal(0),
-  no_other_depreciation_assets_on_return: z.literal(true),
-  return_asset_inventory_source_ref: z.string().trim().min(1),
   form8911_property_reference: z.string().trim().min(1).optional(),
   credit_basis_reduction: z.number().int().nonnegative(),
 }).strict();
+
+export const bonusAssetSchema = bonusAssetCoreSchema.extend({
+  no_other_depreciation_assets_on_return: z.literal(true),
+  return_asset_inventory_source_ref: z.string().trim().min(1),
+});
+
+export const bonusInventorySchema = z.object({
+  assets: z.array(bonusAssetCoreSchema.extend({
+    asset_reference: z.string().trim().min(1),
+  })).min(1),
+  no_other_depreciation_assets_on_return: z.literal(true),
+  return_asset_inventory_source_ref: z.string().trim().min(1),
+}).strict().superRefine((inventory, ctx) => {
+  for (
+    const key of ["asset_reference", "form8911_property_reference"] as const
+  ) {
+    const refs = inventory.assets.map((a) => a[key]).filter((r) =>
+      r !== undefined
+    );
+    if (new Set(refs).size !== refs.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Duplicate bonus inventory ${key}`,
+      });
+    }
+  }
+});
+
+export const bonusActivitySchema = z.object({
+  business_reference: z.string(),
+  activity_description: z.string(),
+  proprietor_ssn: z.string(),
+  line14_special_depreciation_allowance: z.number().int().nonnegative(),
+  line22_total_depreciation: z.number().int().nonnegative(),
+});
+
+export const filedBonusInventorySchema = z.object({
+  bonus_inventory: bonusInventorySchema,
+  bonus_activities: z.array(bonusActivitySchema).min(1),
+});
 
 export const filedBonus4562Schema = z.object({
   bonus_asset: bonusAssetSchema,
@@ -40,8 +78,7 @@ export const filedBonus4562Schema = z.object({
   line22_total_depreciation: z.number().int().nonnegative(),
 });
 
-export function calculateBonus4562(raw: unknown) {
-  const asset = bonusAssetSchema.parse(raw);
+function depreciationAmount(asset: z.infer<typeof bonusAssetCoreSchema>) {
   for (const value of [asset.acquired_date, asset.placed_in_service_date]) {
     const date = new Date(`${value}T00:00:00Z`);
     if (
@@ -68,11 +105,47 @@ export function calculateBonus4562(raw: unknown) {
       "Form 4562 bonus basis reduction needs a linked credit and positive remaining basis",
     );
   }
-  const depreciation = asset.cost - asset.credit_basis_reduction;
+  return asset.cost - asset.credit_basis_reduction;
+}
+
+export function calculateBonus4562(raw: unknown) {
+  const asset = bonusAssetSchema.parse(raw);
+  const depreciation = depreciationAmount(asset);
   return filedBonus4562Schema.parse({
     bonus_asset: asset,
     activity_description: asset.activity_description,
     line14_special_depreciation_allowance: depreciation,
     line22_total_depreciation: depreciation,
+  });
+}
+
+export function calculateBonusInventory(raw: unknown) {
+  const inventory = bonusInventorySchema.parse(raw);
+  const refs = [...new Set(inventory.assets.map((a) => a.business_reference))];
+  const activities = refs.map((ref) => {
+    const assets = inventory.assets.filter((a) => a.business_reference === ref);
+    const first = assets[0];
+    if (
+      assets.some((a) =>
+        a.activity_description !== first.activity_description ||
+        a.proprietor_ssn !== first.proprietor_ssn
+      )
+    ) {
+      throw new Error(
+        "Form 4562 inventory activity names and proprietors must agree",
+      );
+    }
+    const amount = assets.reduce((sum, a) => sum + depreciationAmount(a), 0);
+    return {
+      business_reference: ref,
+      activity_description: first.activity_description,
+      proprietor_ssn: first.proprietor_ssn,
+      line14_special_depreciation_allowance: amount,
+      line22_total_depreciation: amount,
+    };
+  });
+  return filedBonusInventorySchema.parse({
+    bonus_inventory: inventory,
+    bonus_activities: activities,
   });
 }
