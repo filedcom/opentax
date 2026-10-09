@@ -516,3 +516,53 @@ page image are under
 `.state/research/ty2025-filled-pdf-review/2026-10-05-form8839-page/`.
 Wider adoption routes,
 source authenticity, full-batch validation, and ATS remain open.
+
+## October 9 current-year unused-credit carryforward
+
+The reviewed one-child domestic route now retains unused 2025 nonrefundable
+credit instead of rejecting every return whose tax limit is below line14.
+The existing calculation remains authoritative: refundable line13 stays5000
+in the two synthetic fixtures, allowed line18 reaches Schedule3/1040, and
+line14 less line18 becomes the carryforward. The [2025 instructions](https://www.irs.gov/instructions/i8839)
+permit unused nonrefundable credit for the following five years; the record
+therefore names2026–2030, taxpayer/child SSNs, decree/expense references,
+eligible credit, credit used and balance.
+
+The strict version1 record is explicitly `computed_unfiled`, lives in the
+pending return and survives JSON persistence. The normal result also reports
+`adoption_credit_2025`. Native/PDF projection recomputes the record from the
+same reviewed source and final tax; missing, changed amount, owner, child,
+expiry, expense reference and falsely accepted status reject. Existing PDF
+byte binding remains required. This is not an accepted-filing ledger or a
+2026 import route, and cannot substantiate a later claim on its own.
+
+| Synthetic return | Wages / withholding | Refundable | Used nonrefundable | Carryforward | Refund | Reviewed pages |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Unused credit | 10000 / 0 | 5000 | 0 | 6000 | 5000 | 3 |
+| Partial credit | 50000 / 4000 | 5000 | 3875 | 2125 | 9000 | 4 |
+
+For the partial case, taxable income34250 selects3875 from the single-filer
+[2025 Tax Table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf), independently
+fixing the allowed credit and2125 balance. Both complete XML returns validate
+against cached TY2025v5.4 Return1040 XSD. All seven filled pages were visually
+reviewed, with zero AcroForm fields/widgets; Form8839 child, marks, expense,
+refund/nonrefund and Schedule3 joins agree. Form1040 zero tax line24 remains
+blank (existing deferred76); this is qualified presentation evidence.
+The source attachments are synthetic byte-bound fixtures, not authenticated
+real decrees or payment records.
+
+Grouped regression: **46 typed tests passed**, including the existing QEF
+refigure path. A subsequent focused boundary test passes for4000 expenses:
+credit is fully refundable and no carryforward is created. Seven altered/missing ledger variants reject in native and
+full-PDF export. Form8621 combinations with a current carryforward remain
+guarded; zero-credit phaseout, prior carry imports, employer exclusions,
+foreign-income cases, acceptance and source authenticity remain outside this
+completed current-year slice. The broad Form8839 parent is not closed.
+
+The original partial-use case with zero withholding exposed a separate stale
+balance: post-credit tax0/payments5000/refund5000 coexist with pre-credit
+amount owed3875. Native arithmetic correctly rejects line37. Its input/result,
+failed log and original comparison remain retained; this is future item93,
+not repaired or counted as a successful packet. The positive partial case
+above is separately labeled and uses4000 withholding. Private evidence:
+`.state/research/form8839-carryforward-2026-10-09/`.

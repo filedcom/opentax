@@ -1,6 +1,13 @@
+import {
+  currentYearForm8839Carryforward,
+  form8839CurrentCarryforwardSchema,
+} from "./current_year_carryforward.ts";
 import { z } from "zod";
 import { element, elements } from "../../../../../../mef/xml.ts";
-import { type FilerIdentity, FilingStatus } from "../../../../../../mef/header.ts";
+import {
+  type FilerIdentity,
+  FilingStatus,
+} from "../../../../../../mef/header.ts";
 import { type Form8839Input, inputSchema } from "./index.ts";
 import { reconcilePreAdoptionForm8839Credit } from "./pre_adoption_reconciliation.ts";
 
@@ -9,6 +16,7 @@ const wholeDollar = z.number().refine(
 );
 const finalPendingSchema = z.object({
   form8839: inputSchema,
+  form8839_carryforward: form8839CurrentCarryforwardSchema.optional(),
   f1040: z.object({
     line11_agi: z.number().finite(),
     line18_total_tax_before_credits: wholeDollar,
@@ -78,8 +86,8 @@ function canonicalValue(value: unknown): string {
 }
 
 /**
- * Unregistered document projection. A matching plain pending object is not
- * proof that the executor produced it; both registered exporters still reject.
+ * Shared document projection for the reviewed prepared route. Matching pending
+ * data is not proof of source authenticity; the prepared bundle binds bytes.
  */
 export function projectStagedForm8839Documents(
   rawSource: Form8839Input,
@@ -114,9 +122,8 @@ export function projectStagedForm8839Documents(
     !filer.nameLine1?.trim() || !/^\d{9}$/.test(filer.primarySSN) ||
     canonicalValue(pending.form8839) !== canonicalValue(source) ||
     credit.magi < 0 || credit.magi >= 299_190 ||
-    credit.line18 <= 0 ||
+    credit.line13 <= 0 ||
     perChild.line3 !== 0 ||
-    credit.line14 !== credit.line18 ||
     final1040.line11_agi !== pre1040.line11_agi ||
     final1040.line18_total_tax_before_credits !==
       pre1040.line18_total_tax_before_credits ||
@@ -131,6 +138,19 @@ export function projectStagedForm8839Documents(
   ) {
     throw new Error(
       "Form 8839 staged filing requires exactly reconciled child, pre-adoption and final 1040/Schedule 3 values",
+    );
+  }
+  const expectedCarryforward = currentYearForm8839Carryforward(
+    source,
+    credit,
+    filer.primarySSN,
+  );
+  if (
+    canonicalValue(pending.form8839_carryforward) !==
+      canonicalValue(expectedCarryforward)
+  ) {
+    throw new Error(
+      "Form 8839 carryforward differs from its source and final credit",
     );
   }
   const amounts = [
