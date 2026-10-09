@@ -1,4 +1,9 @@
 import {
+  EmployeeType,
+  inputSchema as employeeExpenseSchema,
+} from "../../../../../nodes/inputs/adjustments/employment/f2106/index.ts";
+import { reconcileFileableForm2106Return } from "../../../adjustments/employment/form2106/form2106_staged.ts";
+import {
   form4972,
   inputSchema as form4972Schema,
 } from "../../../../../nodes/intermediate/forms/taxes/retirement/form4972/index.ts";
@@ -74,4 +79,39 @@ export function scheduleALine16EstateTax(
     );
   }
   return estateTax;
+}
+
+/** Source-checked line 16 rows, shared by native statements and printed labels. */
+export function scheduleALine16Rows(
+  pending: Readonly<Record<string, unknown>> | undefined,
+  filedLine16: unknown,
+) {
+  const employeeExpenses = pending?.f2106 === undefined
+    ? undefined
+    : employeeExpenseSchema.parse(pending.f2106);
+  if (
+    employeeExpenses?.f2106s.some((item) =>
+      item.qualification.kind === EmployeeType.DISABLED_IMPAIRMENT
+    )
+  ) {
+    const result = reconcileFileableForm2106Return(pending!);
+    if (filedLine16 !== result.scheduleATotal) {
+      throw new Error(
+        "Schedule A line 16 differs from owned impairment expenses",
+      );
+    }
+    return [{
+      description: "IMPAIRMENT-RELATED WORK EXPENSES",
+      printedDescription: "Impairment-related work expenses",
+      amount: result.scheduleATotal,
+    }];
+  }
+  const estateTax = scheduleALine16EstateTax(pending, filedLine16);
+  return estateTax > 0
+    ? [{
+      description: "FEDERAL ESTATE TAX",
+      printedDescription: "Federal estate tax",
+      amount: estateTax,
+    }]
+    : [];
 }

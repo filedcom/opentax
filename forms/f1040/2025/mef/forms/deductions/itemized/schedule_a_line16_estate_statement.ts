@@ -1,6 +1,6 @@
 import { element, elements } from "../../../../../mef/xml.ts";
 import type { MefFormDescriptor } from "../../../form-descriptor.ts";
-import { scheduleALine16EstateTax } from "../../../../domains/deductions/itemized/schedule-a/schedule_a_line16_estate_source.ts";
+import { scheduleALine16Rows } from "../../../../domains/deductions/itemized/schedule-a/schedule_a_line16_estate_source.ts";
 
 export const scheduleALine16EstateStatement: MefFormDescriptor<
   "schedule_a_line16_estate_statement",
@@ -21,16 +21,18 @@ export const scheduleALine16EstateStatement: MefFormDescriptor<
       (returnFields as Record<string, unknown>).line12e_itemized_deductions ===
         undefined
     ) return "";
-    const amount = scheduleALine16EstateTax(
+    const rows = scheduleALine16Rows(
       pending,
       (source as Record<string, unknown>).line_16_other_deductions,
     );
-    if (amount === 0) return "";
+    if (rows.length === 0) return "";
     return elements("OtherMiscDeductionsStmt", [
-      elements("MiscellaneousDeductionDetail", [
-        element("MiscellaneousDeductionTypeDesc", "FEDERAL ESTATE TAX"),
-        element("MiscellaneousDeductionAmt", amount),
-      ]),
+      ...rows.map((row) =>
+        elements("MiscellaneousDeductionDetail", [
+          element("MiscellaneousDeductionTypeDesc", row.description),
+          element("MiscellaneousDeductionAmt", row.amount),
+        ])
+      ),
     ]);
   },
 };

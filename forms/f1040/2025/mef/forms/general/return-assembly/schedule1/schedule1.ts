@@ -1,3 +1,7 @@
+import {
+  EmployeeType,
+  inputSchema as employeeExpenseSchema,
+} from "../../../../../../nodes/inputs/adjustments/employment/f2106/index.ts";
 import { assertArcherEmployerExcessIncomeSource } from "../../../../../domains/adjustments/health/form8853/form8853_contributions_reconciliation.ts";
 import { assertEducationIncomeSource } from "../../../../../../nodes/inputs/income/other/education_income/index.ts";
 import { element, elements } from "../../../../../../mef/xml.ts";
@@ -204,7 +208,22 @@ function buildIRS1040Schedule1(
       );
     }
     if (key === "line12_business_expenses") {
-      const formIds = context?.documentIdsByPendingKey?.f2106 ?? [];
+      const allFormIds = context?.documentIdsByPendingKey?.f2106 ?? [];
+      const employeeExpenses = context?.pending?.f2106 === undefined
+        ? undefined
+        : employeeExpenseSchema.parse(context.pending.f2106);
+      if (
+        employeeExpenses && context?.documentIdsByPendingKey &&
+        allFormIds.length !== employeeExpenses.f2106s.length
+      ) {
+        throw new Error(
+          "Schedule 1 line 12 needs each sourced Form 2106 document ID",
+        );
+      }
+      const formIds = allFormIds.filter((_, index) =>
+        employeeExpenses?.f2106s[index]?.qualification.kind !==
+          EmployeeType.DISABLED_IMPAIRMENT
+      );
       if (context?.documentIdsByPendingKey && formIds.length === 0) {
         throw new Error("Schedule 1 line 12 needs attached Forms 2106");
       }

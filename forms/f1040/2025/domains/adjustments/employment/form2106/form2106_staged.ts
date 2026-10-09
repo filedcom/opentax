@@ -13,8 +13,8 @@ import type { PdfFieldEntry } from "../../../../pdf/review-support/form-descript
 import { z } from "zod";
 import { inputSchema as w2InputSchema } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
 
-// Shared canonical projection. Registered exporters currently admit only the
-// narrow fee-basis route guarded by reconcileFileableForm2106Return.
+// Shared canonical projection. Registered exporters admit only the sourced
+// employee routes guarded by reconcileFileableForm2106Return.
 export function prepareForm2106(raw: unknown) {
   const source = itemSchema.parse(raw);
   const lines = calculateForm2106Lines(source);
@@ -52,14 +52,15 @@ const pendingRecordSchema = z.record(z.string(), z.unknown());
 const normalizedName = (name: string) =>
   name.trim().toUpperCase().replace(/\s+/g, " ");
 
-/** Fee-basis jobs with sourced expenses and no excess reimbursements. */
+/** Fee-basis and impairment jobs with sourced expenses and no excess reimbursements. */
 export function isSupportedForm2106Route(raw: unknown): boolean {
   const parsed = form2106InputSchema.safeParse(raw);
   // TY2025 ReturnData1040.xsd permits at most four IRS2106 documents.
   if (!parsed.success || parsed.data.f2106s.length > 4) return false;
   return parsed.data.f2106s.every((item) => {
     if (
-      item.qualification.kind !== EmployeeType.FEE_BASIS_OFFICIAL ||
+      (item.qualification.kind !== EmployeeType.FEE_BASIS_OFFICIAL &&
+        item.qualification.kind !== EmployeeType.DISABLED_IMPAIRMENT) ||
       item.vehicle.method === VehicleMethod.ACTUAL_EXPENSE
     ) return false;
     const lines = calculateForm2106Lines(item);
@@ -160,7 +161,7 @@ export function reconcileStagedForm2106Return(
   return { jobs, schedule1Total, scheduleATotal } as const;
 }
 
-function assertFeeBasisJobSources(
+function assertEmployeeJobSources(
   jobs: ReturnType<typeof reconcileStagedForm2106Return>["jobs"],
   w2: z.infer<typeof w2InputSchema>,
   filer: FilerIdentity,
@@ -221,37 +222,42 @@ function assertFeeBasisJobSources(
         normalizedName(job.employer_name)
     ) {
       throw new Error(
-        "Form 2106 each fee-basis job must match one employer W-2 for its owner",
+        "Form 2106 each employee job must match one employer W-2 for its owner",
       );
     }
   }
 }
 
-/** Native/PDF filing guard for the supported fee-basis route. */
+/** Native/PDF filing guard for the supported employee routes. */
 export function reconcileFileableForm2106Return(
   allPending: Readonly<Record<string, unknown>>,
 ) {
   if (!isSupportedForm2106Route(allPending.f2106)) {
     throw new Error(
-      "Form 2106 filing needs sourced fee-basis expenses without excess reimbursements",
+      "Form 2106 filing needs sourced fee-basis or impairment expenses without excess reimbursements",
     );
   }
   const result = reconcileStagedForm2106Return(allPending);
   const form1040 = pendingRecordSchema.parse(allPending.f1040);
   const w2 = w2InputSchema.parse(allPending.w2);
   const filer = extractFilerIdentity(form1040)!;
-  assertFeeBasisJobSources(result.jobs, w2, filer);
+  assertEmployeeJobSources(result.jobs, w2, filer);
   const wages = w2.w2s.reduce((sum, item) => sum + item.box1_wages, 0);
+  const schedule1 = pendingRecordSchema.parse(allPending.schedule1 ?? {});
+  const agi = pendingRecordSchema.parse(allPending.agi_aggregator ?? {});
+  const adjustments = form1040.line10_adjustments ?? 0;
   if (
+    (schedule1.line12_business_expenses ?? 0) !== result.schedule1Total ||
+    (agi.line12_business_expenses ?? 0) !== result.schedule1Total ||
     form1040.line1a_wages !== wages ||
     form1040.line1z_total_wages !== wages ||
     (form1040.line8_additional_income ?? 0) !== 0 ||
     form1040.line9_total_income !== wages ||
-    typeof form1040.line10_adjustments !== "number" ||
-    form1040.line11_agi !== wages - form1040.line10_adjustments
+    typeof adjustments !== "number" ||
+    form1040.line11_agi !== wages - adjustments
   ) {
     throw new Error(
-      "Form 2106 fee-basis jobs must match final Form 1040 wages and AGI",
+      "Form 2106 employee jobs must match final Form 1040 wages and AGI",
     );
   }
   return result;

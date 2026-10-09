@@ -1,5 +1,8 @@
 import { assertRetirementStateLocalTaxSource } from "../../../../domains/income/retirement/retirement_state_local_tax_source.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import { FilingStatus } from "../../../../../mef/header.ts";
 import {
   assertForm1098Box1Sources,
@@ -27,7 +30,7 @@ import {
   scheduleAOtherTaxRows,
 } from "../../../../domains/deductions/itemized/schedule-a/schedule_a_other_tax_source.ts";
 import { sellerFinancedLine8b } from "../../../../domains/deductions/itemized/schedule-a/schedule_a_line8b_source.ts";
-import { scheduleALine16EstateTax } from "../../../../domains/deductions/itemized/schedule-a/schedule_a_line16_estate_source.ts";
+import { scheduleALine16Rows } from "../../../../domains/deductions/itemized/schedule-a/schedule_a_line16_estate_source.ts";
 
 // IRS Schedule A (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040sa--2025.pdf
@@ -374,7 +377,7 @@ export const scheduleAPdf: PdfFormDescriptor = {
     );
     const otherTaxRows = scheduleAOtherTaxRows(input);
     const line8bSeller = sellerFinancedLine8b(input);
-    const line16EstateTax = scheduleALine16EstateTax(
+    const line16Rows = scheduleALine16Rows(
       all,
       input.line_16_other_deductions,
     );
@@ -405,8 +408,9 @@ export const scheduleAPdf: PdfFormDescriptor = {
       ),
       line_10_interest: interest,
       line_14_charity: charity,
-      print_line_16_description: line16EstateTax > 0
-        ? `Federal estate tax: ${line16EstateTax}`
+      print_line_16_description: line16Rows.length > 0
+        ? line16Rows.map((row) => `${row.printedDescription}: ${row.amount}`)
+          .join("; ")
         : undefined,
       line_17_itemized: standard.itemized_deductions,
       print_line_18_itemize_election: itemizeBelowStandard,

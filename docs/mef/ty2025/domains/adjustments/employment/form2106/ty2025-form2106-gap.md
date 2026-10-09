@@ -1,8 +1,65 @@
 # TY2025 Form 2106: employee business expenses
 
+## October 9 impairment expenses and Schedule A
+
+Sourced line-4 impairment-related workplace expenses can now file through
+Form 2106 and Schedule A line 16. Each job must match its owner and W-2,
+retain a positive deduction after nonexcess column-A reimbursements, and
+reconcile exactly to the finalized itemized deduction. The existing input
+requires disability, workplace-enabling costs and a supporting source reference;
+travel, vehicles and meals are excluded from this impairment branch.
+
+Schedule A now uses shared source-checked rows for its printed line-16
+description and linked native `OtherMiscDeductionsStmt`. The existing estate-tax
+source validation remains intact; its descriptor/pending key is retained for
+compatibility while the statement can now describe either supported source.
+Mixed line-16 contributors still reject rather than attributing an unknown
+share to Form 2106. Fee-basis and impairment jobs may coexist, but Schedule 1
+line 12 references only the fee-basis documents. Impairment deductions never
+reduce AGI or appear as above-the-line employee expenses.
+
+The [2025 Form 2106 instructions](https://www.irs.gov/pub/irs-prior/i2106--2025.pdf)
+direct impairment work expenses to Schedule A line 16; the
+[Schedule A instructions](https://www.irs.gov/pub/irs-prior/i1040sca--2025.pdf)
+require the expense type and amount and permit an election to itemize below
+the standard deduction. All fixtures use wages of 150,000 and withholding
+of 30,000, with independent tax worksheet expectations:
+
+| Case | Schedule A line 16 | Schedule 1 line 12 | Taxable income | Tax | Refund | Pages |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Single, workplace care | 20,000 | 0 | 130,000 | 24,047 | 5,953 | 5 |
+| Single, 22,000 expense less 2,000 reimbursement | 20,000 | 0 | 130,000 | 24,047 | 5,953 | 5 |
+| Joint, spouse's workplace care | 36,000 | 0 | 114,000 | 14,908 | 15,092 | 5 |
+| Joint, 18,000 per owner | 36,000 | 0 | 114,000 | 14,908 | 15,092 | 7 |
+| Joint, taxpayer fee job and spouse impairment | 36,000 | 1,200 | 112,800 | 14,644 | 15,356 | 9 |
+| Single, explicit below-standard election | 1,200 | 0 | 148,800 | 28,559 | 1,441 | 5 |
+
+The related source/staging/export/attachment/Schedule 1/Schedule A/estate-tax
+group passes **115 tests**. Six new returns failed at the old fee-basis-only
+guard before implementation and now pass. **54 native and 54 fresh-PDF
+mutations reject**: wrong itemized/adjustment/AGI amounts, standard-deduction
+substitution, wrong owner, changed expense and duplicate job/W-2 records.
+
+All six complete returns validate against cached TY2025v5.4 XSD, with the
+schema digest recorded in the earlier checkpoint below. Independent checks
+verify per-owner expenses/reimbursements, Schedule A statement links, fee-only
+Schedule 1 references, itemization election and final tax/refund. All **36 PDF
+pages** were observed using 20 unique page hashes. The new line-16 description
+fits without clipping, both joint names print on Schedule A, each Form 2106
+identifies its own employee, and the below-standard election is visibly marked.
+No AcroForm fields or widgets remain. Existing joint native name and zero-cell
+presentation qualifications remain; no deferred repair was made.
+
+Private evidence: `.state/research/form2106-impairment-2026-10-09/`, containing
+source/pending/expected records, XML/PDF, page origins and renders, independent
+verification, visual-review map, logs and hashes. These are synthetic structured
+source records, not authenticated medical, attendant or employer-issued bytes.
+Nonitemizing impairment claims, other line-16 contributors, source authenticity,
+broader Form 2106 categories and IRS acceptance remain open.
+
 ## October 9 travel, mileage and reimbursement checkpoint
 
-The fee-basis filing route now also accepts sourced Part I transportation,
+The preceding fee-basis extension also accepts sourced Part I transportation,
 overnight travel and ordinary 50%-limited meals, plus one standard-mileage
 vehicle per job. Owned vehicles require the first-business-year method history;
 leased vehicles require standard mileage throughout the lease. The existing
@@ -15,8 +72,8 @@ each job must retain a positive deduction. Line 7 amounts are already allocated
 nonmeal/meal payments excluded from W-2 box 1; this route does not calculate a
 single combined payment allocation. W-2 owner/employer joins, four-document
 capacity and final wages/AGI reconciliation remain enforced. Actual vehicle
-cost/depreciation, excess reimbursements and other employee categories remain
-guarded. No calculation-node or PDF mapping was changed.
+cost/depreciation, excess reimbursements, reservists and performing artists
+remain guarded. The later impairment route is described above. No calculation-node or PDF mapping was changed.
 
 The [2025 instructions](https://www.irs.gov/pub/irs-prior/i2106--2025.pdf)
 specify the 70-cent mileage rate, commuting exclusion, two reimbursement
@@ -144,13 +201,13 @@ The October 9 group supersedes the earlier written-but-unrun test notes.
 - Reservists require trip-level travel, federal per-diem caps and qualifying
   service allocation; performing artists require owner-wide employer, gross
   arts income, greater-than-10% expense, AGI and marital reconciliation.
-- The calculator supports line-4 impairment expenses, but that filing route
-  remains guarded. Standard mileage now has the fee-basis route above. Impairment expenses belong
-  on Schedule A line 16, with itemization and other contributors reconciled.
+- Line-4 impairment expenses now have the itemized filing route above;
+  nonitemizing claims and other line-16 contributors remain guarded. Standard
+  mileage has the fee-basis route above.
 - Actual vehicles require sourced basis, limits, election history and
   depreciation. Special meal limits, combined-payment allocation and excess
   reimbursements remain outside the verified route; excess reimbursements need
   exact W-2/Form 1040 line 1a treatment.
 - Broader income combinations, final coordinated batch, business rules,
   source authenticity and IRS ATS remain open. The parent board task is not
-  closed by these bounded fee-basis checks.
+  closed by these bounded employee-expense checks.
