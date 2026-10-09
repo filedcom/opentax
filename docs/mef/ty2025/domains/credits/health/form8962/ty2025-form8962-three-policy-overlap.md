@@ -52,3 +52,10 @@ observed, and source/coverage/calculation/final-return drift is rejected.
 The attempted 200%-FPL counterpart computes $975 repayment, but its complete
 return stops on the newly deferred79 Schedule 8812 tax-limit ordering mismatch.
 The component cap test does not establish a successful complete repayment return.
+
+The later [family checkpoint](./ty2025-form8962-policy-month-gap.md#october-9-dependent-family-return-checkpoint)
+also attempted the unchanged annual-line11 and three-policy partial-year
+repayment returns. Their correct Form1040 line18 amounts13,578 and13,515
+conflict with the same automatic Schedule8812 tax13,455, confirming deferred79.
+Neither produces a complete filing packet; their component/native tests remain
+narrower evidence.

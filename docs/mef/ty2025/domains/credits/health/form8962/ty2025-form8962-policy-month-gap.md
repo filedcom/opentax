@@ -652,7 +652,7 @@ values are `52ace6d59ea348495a71c3b55134b3400382b22758481e0d836206ebf71fecd2`
 (exception). These focused artifacts do not establish other MFS scenarios or
 the release PDF gate.
 
-## Alaska/Hawaii taxpayer policy with a contiguous-state dependent policy (2026-10-01, unrun)
+## Alaska/Hawaii taxpayer policy with a contiguous-state dependent policy (October 9 evidence below)
 
 The bounded two-person monthly family-policy route now accepts one full-year
 taxpayer policy in Alaska or Hawaii and a simultaneous policy in a contiguous
@@ -836,3 +836,57 @@ contains sources, public outputs, XML, PDFs, independent oracle, rendered
 review, typed tests and the blocked-case probe. The preceding branch head
 `ecb03ab69` passed scoped CI run37888882173; the full typed gate remains
 separately blocked by deferred78.
+
+## October 9: dependent-family return checkpoint
+
+Four additional public returns pass `executeReturn`/`prepareReturn`, cached
+TY2025 v5.4 Return1040 XSD and an independent source/Decimal replay. Five typed
+regression tests pass, including24 altered coverage, APTC, dependent interest,
+filed dependent AGI, household size or final-credit variants rejected by both
+native and PDF checks. No runtime change was made.
+
+| Case | Parent wages | Dependent MAGI | PTC / APTC | Net PTC | CTC / ACTC / EIC | Final tax | Refund / owed |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Shared, other taxpayer enrolled | 20,000 | 13,000 | 6,000 / 1,200 | 4,800 | 428 / 1,700 / 4,328 | 0 | 18,828 refund |
+| Shared, other taxpayer's child enrolled | 20,000 | 13,000 | 6,000 / 1,200 | 4,800 | 428 / 1,700 / 4,328 | 0 | 18,828 refund |
+| One three-person policy, January–June | 23,140 | 28,500 | 3,000 / 600 | 2,400 | 738 / 3,096 / 7,152 | 0 | 20,648 refund |
+| Alaska parent / Texas dependent policies | 136,700 | 13,300 | 10,644 / 2,400 | 8,244 | 2,200 / 0 / 0 | 19,675 | 3,431 owed |
+
+The source replay adds dependent interest only to PTC household income, applies
+agreed50% allocations or distinct-state benchmarks, and retains six blank
+uncovered months for the partial-year policy. It uses the
+[Form8962 tables and monthly rules](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf),
+[IRS Tax/EIC tables and computation worksheet](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf),
+and [Schedule8812 limits](https://www.irs.gov/pub/irs-pdf/i1040s8.pdf).
+At taxable income120,950, the single tax worksheet gives21,875 before2,200CTC.
+Shared-family credits use1,700ACTC; the two-child partial-year case is limited
+to15% of earned income above2,500, producing3,096ACTC.
+
+All31 filled pages were observed:22 distinct images and9 exact matches.
+Dependent identity, residence/credit boxes, ScheduleEIC children, PTC months,
+PartIV identity/percentages and final totals agree. The three zero-tax returns
+repeat deferred76: Form1040 line24 remains blank despite calculated/native0.
+The shared variants' eight-page PDFs are identical, while their retained
+other-family source records differ. This is expected for the same allocation.
+
+Four related complete-return attempts confirm the existing deferred79 blocker:
+
+| Repayment variant | PTC / APTC | Repayment | Correct line18 / automatic8812 tax |
+|---|---:|---:|---:|
+| Two overlapping policies, one dependent | 1,608 / 1,800 | 192 | 11,447 / 11,255 |
+| Three policies, January–June | 1,740 / 1,800 | 60 | 13,515 / 13,455 |
+| Three unchanged policies, annual line11 | 3,477 / 3,600 | 123 | 13,578 / 13,455 |
+| Shared policy with other family's child | 0 / 1,200 | 1,200 | 9,155 / 7,955 |
+
+Each supplied worksheet uses the correct line18, and each graph rejects the
+mismatch because automatic Schedule8812 tax excludes PTC repayment. These
+cases have no prepared XML or filled PDF; component successes do not close
+these complete-return gaps. They were recorded under existing `future_todo`79,
+not repaired or treated as successful filing routes.
+
+Evidence: `.state/research/form8962-family-replay-2026-10-09/` retains all eight
+source inputs/execution results, four completed packets, independent oracle,
+render review, typed tests and hashes. The preceding `ac7f41e64` head passed
+scoped CI run37889866720. Source records remain synthetic assertions and
+placeholder hashes; external authenticity and IRS acceptance remain unproved.
+The full test gate is still separately blocked by deferred78.

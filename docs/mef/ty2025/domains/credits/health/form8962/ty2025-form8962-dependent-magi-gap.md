@@ -380,3 +380,15 @@ $8,184 PTC to Schedule 3, Form 1040, native MeF, and PDF. At-threshold,
 recipient, exempt-interest, and duplicate-document tamper cases are authored
 but unrun. Multiple forms, wage combinations with both sources, other Form
 1099-DIV boxes, source-byte authenticity, and IRS acceptance remain open.
+
+## October 9 complete interest-dependent family returns
+
+The [dependent-family checkpoint](./ty2025-form8962-policy-month-gap.md#october-9-dependent-family-return-checkpoint)
+adds four complete public/XSD returns with one or two interest-only required
+filers: shared-family credit, three-person partial coverage and Alaska/Texas
+family policies. The31 observed pages reconcile dependent MAGI13,000/28,500/
+13,300 to PTC without adding it to the parent's1040 AGI. Five typed tests pass,
+including changed dependent interest or filed AGI rejected by both native and
+PDF checks. Repayment/CTC combinations retain the separate deferred79 block;
+this evidence does not establish all dependent-income combinations or source
+authenticity. Three zero-tax packets repeat deferred76's blank1040 line24.
