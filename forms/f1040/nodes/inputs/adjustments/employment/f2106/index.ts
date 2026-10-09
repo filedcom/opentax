@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  ReserveComponent,
+  reservistTravelTotals,
+  reservistTripsSchema,
+} from "./reservist.ts";
 import type {
   NodeOutput,
   NodeResult,
@@ -81,7 +86,10 @@ const performingArtistQualificationSchema = z.object({
 
 const reservistQualificationSchema = z.object({
   kind: z.literal(EmployeeType.RESERVIST),
+  reserve_component: z.nativeEnum(ReserveComponent),
   reserve_component_reference: sourceReference,
+  tax_home_reference: sourceReference,
+  trips: reservistTripsSchema,
   travel_more_than_100_miles_from_home: z.literal(true),
   federal_per_diem_limit_workpaper_reference: sourceReference,
 }).strict();
@@ -247,6 +255,20 @@ export const inputSchema = z.object({ f2106s: z.array(itemSchema).min(1) })
       });
     }
     for (const owner of ["taxpayer", "spouse"] as const) {
+      const travelDates = input.f2106s.flatMap((item) =>
+        item.job.owner === owner &&
+          item.qualification.kind === EmployeeType.RESERVIST
+          ? item.qualification.trips.flatMap((trip) =>
+            trip.days.map((day) => day.date)
+          )
+          : []
+      );
+      if (new Set(travelDates).size !== travelDates.length) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Form 2106 ${owner} reserve travel overlaps across jobs`,
+        });
+      }
       const ssns = new Set(
         input.f2106s.filter((item) => item.job.owner === owner).map((item) =>
           item.job.employee_ssn
@@ -338,9 +360,25 @@ function standardMileageLines(
 function assertQualifiedCategory(item: F2106Item): void {
   const qualification = item.qualification;
   if (qualification.kind === EmployeeType.RESERVIST) {
-    throw new Error(
-      "Form 2106 reservist deduction needs trip-level per-diem and eligible-travel allocation",
-    );
+    const totals = reservistTravelTotals(qualification.trips);
+    const businessMiles = item.vehicle.method === VehicleMethod.STANDARD_MILEAGE
+      ? item.vehicle.business_miles
+      : 0;
+    if (
+      item.vehicle.method === VehicleMethod.ACTUAL_EXPENSE ||
+      businessMiles !== totals.business_miles ||
+      item.expenses.line2_parking_tolls_local_transportation !==
+        totals.transportation ||
+      item.expenses.line3_overnight_travel_excluding_meals !== totals.lodging ||
+      item.expenses.line4_other_business_expenses !== 0 ||
+      item.expenses.line5_meals !== totals.meals ||
+      item.reimbursements.line7_column_a_nonmeals !== 0 ||
+      item.reimbursements.line7_column_b_meals !== 0
+    ) {
+      throw new Error(
+        "Form 2106 reservist trip totals need exact unreimbursed mileage, lodging, meals and fees",
+      );
+    }
   }
   if (
     qualification.kind === EmployeeType.PERFORMING_ARTIST &&
@@ -435,6 +473,15 @@ export function assertPerformingArtistQualifications(
   }
 }
 
+export function form2106Contribution(
+  item: F2106Item,
+  lines: Form2106Lines,
+): number {
+  return item.qualification.kind === EmployeeType.RESERVIST
+    ? reservistTravelTotals(item.qualification.trips).schedule1_deduction
+    : lines.line10_deduction;
+}
+
 function routedOutputs(items: F2106Input["f2106s"]): NodeOutput[] {
   assertPerformingArtistQualifications(items);
   const calculated = items.map((item) => ({
@@ -454,7 +501,10 @@ function routedOutputs(items: F2106Input["f2106s"]): NodeOutput[] {
     .filter(({ item }) =>
       item.qualification.kind !== EmployeeType.DISABLED_IMPAIRMENT
     )
-    .reduce((sum, { lines }) => sum + lines.line10_deduction, 0);
+    .reduce(
+      (sum, { item, lines }) => sum + form2106Contribution(item, lines),
+      0,
+    );
   const scheduleATotal = calculated
     .filter(({ item }) =>
       item.qualification.kind === EmployeeType.DISABLED_IMPAIRMENT

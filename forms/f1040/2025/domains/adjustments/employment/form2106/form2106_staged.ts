@@ -2,6 +2,7 @@ import {
   assertPerformingArtistQualifications,
   calculateForm2106Lines,
   EmployeeType,
+  form2106Contribution,
   itemSchema,
   VehicleMethod,
 } from "../../../../../nodes/inputs/adjustments/employment/f2106/index.ts";
@@ -43,7 +44,7 @@ export function prepareForm2106(raw: unknown) {
       employment_record_reference: source.job.employment_record_reference,
       owner: source.job.owner,
       route,
-      amount: lines.line10_deduction,
+      amount: form2106Contribution(source, lines),
       form1040_line1a_excess_reimbursement: 0,
     },
   } as const;
@@ -62,11 +63,12 @@ export function isSupportedForm2106Route(raw: unknown): boolean {
     if (
       (item.qualification.kind !== EmployeeType.FEE_BASIS_OFFICIAL &&
         item.qualification.kind !== EmployeeType.DISABLED_IMPAIRMENT &&
-        item.qualification.kind !== EmployeeType.PERFORMING_ARTIST) ||
+        item.qualification.kind !== EmployeeType.PERFORMING_ARTIST &&
+        item.qualification.kind !== EmployeeType.RESERVIST) ||
       item.vehicle.method === VehicleMethod.ACTUAL_EXPENSE
     ) return false;
     const lines = calculateForm2106Lines(item);
-    return lines.line10_deduction > 0 &&
+    return form2106Contribution(item, lines) > 0 &&
       lines.line7_column_a <= lines.line6_column_a &&
       lines.line7_column_b <= lines.line6_column_b;
   });

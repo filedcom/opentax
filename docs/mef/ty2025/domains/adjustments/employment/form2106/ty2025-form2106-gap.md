@@ -1,5 +1,76 @@
 # TY2025 Form 2106: employee business expenses
 
+## October 9 reservist trips and federal limits
+
+Reservist source records now include the reserve component and membership,
+tax-home and orders references, dated overnight trips, distance from tax home,
+actual lodging/meals, parking/ferry/tolls, business miles and reviewed daily
+CONUS rate facts. Trips require consecutive TY2025 dates, no lodging after
+return, the correct fiscal rate year, distinct receipt/trip records and no
+travel-date overlap across jobs for one owner. The input still requires the
+existing W-2, vehicle-method and job/expense records.
+
+The [Form 2106 instructions](https://www.irs.gov/pub/irs-prior/i2106--2025.pdf)
+and [Publication 3](https://www.irs.gov/publications/p3) distinguish total
+Form 2106 expenses from the qualifying portion sent to Schedule 1. The new
+shared contribution calculation keeps full expenses on Form 2106 and limits
+Schedule 1 to trips more than 100 miles away, capped lodging and meals,
+70-cent mileage and the entered parking/ferry/tolls. First/last travel days
+use 75% of the daily meal limit, followed by the normal 50% meal deduction;
+see the [GSA meal breakdown](https://www.gsa.gov/travel/plan-a-trip/per-diem-rates/mie-breakdowns).
+
+Fixtures use the standard CONUS lodging/M&IE rates of 110/68 in
+[FY2025](https://www.gsa.gov/system/files/FY25PerDiemBulletin.pdf) and
+[FY2026](https://public-inspection.federalregister.gov/2025-15771.pdf), plus
+[Austin's April 2025 rates](https://www.gsa.gov/travel/plan-book/per-diem-rates/per-diem-rates-results?fiscal_year=2025&state=TX)
+of 173/80. Each ordinary trip has 440 business miles, 20 fees, two lodging
+nights and three meal days. The mixed-distance case adds a separate trip
+exactly 100 miles from home, with 120 business miles and the same other costs.
+Every return has wages of 150,000 and withholding of 30,000.
+
+| Case | Form 2106 line 10 | Schedule 1 deduction | AGI | Tax | Refund | Pages |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Single, actual costs below cap | 568 | 568 | 149,432 | 24,931 | 5,069 | 6 |
+| Single, daily costs above cap | 838 | 633 | 149,367 | 24,915 | 5,085 | 6 |
+| Single, qualifying and 100-mile trips | 1,452 | 633 | 149,367 | 24,915 | 5,085 | 6 |
+| Joint, spouse's October travel | 838 | 633 | 149,367 | 15,759 | 14,241 | 6 |
+| Joint, separate trips for both owners | 838 each | 1,266 | 148,734 | 15,619 | 14,381 | 8 |
+| Single, reviewed Austin rate | 838 | 774 | 149,226 | 24,881 | 5,119 | 6 |
+
+All six complete-return tests pass. **60 native and 60 fresh-PDF mutations
+reject** changed trip expenses/miles, invalid dates/rate years, ineligible
+distance, missing trips, reimbursements, changed wages and stale filed totals.
+The related group passes **134 tests**, including source boundaries for
+100 versus 100.01 miles, overlapping jobs, first/last-day dates, locality
+review and the September/October fiscal transition. The benchmark remains
+**46 passing / 87 failing of 133**, with every printed result row and the
+complete failure/error/warning summary unchanged (existing deferred96).
+
+All six complete XML returns fail cached TY2025v5.4 XSD at the existing
+vehicle-ratio serializer: 4.4% becomes `0.044000000000000004` and 5.6%
+becomes `0.055999999999999994`, exceeding the five-fraction-digit limit.
+The serializer is unchanged from the base commit. This new finding is
+`future_todo`105; it was not repaired and source mileage was not altered to
+get a passing case. These returns are not filing-ready or counted as XSD-valid.
+Independent verification
+checks source expenses, full Form 2106 totals, capped Schedule 1 contributions,
+owned W-2s, document references and final tax/refund. All **38 PDF pages**
+were visually reviewed; source trip/vehicle amounts and each employee identity
+match, and capped deductions remain distinct from the full printed Form 2106
+amount. Existing partly blank zero cells and joint native-name qualifications
+remain deferred. No AcroForm fields or widgets remain in the static packets.
+
+Private evidence: `.state/research/form2106-reservist-2026-10-09/`, including
+source/pending/expected records, XML/PDF, origins/renders, independent checks,
+visual map, benchmark comparison, commands, logs and hashes. Rate facts are
+reviewed structured inputs, not an authenticated rate-file import; membership,
+orders, receipts and W-2 references likewise do not authenticate issued bytes.
+Reimbursements, lodging taxes, separately claimed incidentals, furnished-meal
+adjustments, foreign/non-CONUS travel, airfare/other transportation, actual
+vehicles, crossing tax years and broader income combinations remain outside
+this verified route. No IRS acceptance or parent-task completion is claimed.
+
+
 ## October 9 performing-artist qualification and filing
 
 Performing-artist expenses now reconcile across every job for each owner,
@@ -54,7 +125,7 @@ Private evidence: `.state/research/form2106-artists-2026-10-09/`, with complete
 source/pending/expected records, XML/PDF, page origins/renders, independent
 verification, visual map, benchmark comparison, logs and hashes. These are
 synthetic structured sources, not authenticated employer-issued evidence.
-Broader arts income/expense combinations, reservists, actual vehicles,
+Broader arts income/expense combinations, other reservist travel, actual vehicles,
 source authenticity, full business-rule validation and IRS acceptance remain
 open; the parent task is not closed by this checkpoint.
 
@@ -131,8 +202,8 @@ each job must retain a positive deduction. Line 7 amounts are already allocated
 nonmeal/meal payments excluded from W-2 box 1; this route does not calculate a
 single combined payment allocation. W-2 owner/employer joins, four-document
 capacity and final wages/AGI reconciliation remain enforced. Actual vehicle
-cost/depreciation, excess reimbursements and reservists remain guarded. The
-later impairment and artist routes are described above. No calculation-node or PDF mapping was changed.
+cost/depreciation and excess reimbursements remain guarded. The later
+impairment, artist and reservist routes are described above. No calculation-node or PDF mapping was changed.
 
 The [2025 instructions](https://www.irs.gov/pub/irs-prior/i2106--2025.pdf)
 specify the 70-cent mileage rate, commuting exclusion, two reimbursement
@@ -257,8 +328,9 @@ The October 9 group supersedes the earlier written-but-unrun test notes.
 - Source references do not authenticate W-2, appointment, qualification,
   expense or reimbursement documents. Multiple jobs for one owner/employer
   need an allocation contract before relaxing the distinct-pair boundary.
-- Reservists require trip-level travel, federal per-diem caps and qualifying
-  service allocation. Performing artists now have the owned wage route above;
+- Reservists now have the unreimbursed overnight trip route above; wider
+  travel and reimbursement allocations remain unverified. Performing artists
+  have the owned wage route above;
   broader arts income and expense combinations remain unverified.
 - Line-4 impairment expenses now have the itemized filing route above;
   nonitemizing claims and other line-16 contributors remain guarded. Standard

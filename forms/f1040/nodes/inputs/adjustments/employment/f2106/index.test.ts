@@ -230,7 +230,7 @@ Deno.test("Form 2106 standard-mileage source calculates line 22 and rejects inco
   );
 });
 
-Deno.test("Form 2106 actual vehicle and reservist branches fail closed", () => {
+Deno.test("Form 2106 actual vehicle and unreviewed reservist branches fail closed", () => {
   assertThrows(
     () =>
       calculateForm2106Lines({
@@ -269,7 +269,6 @@ Deno.test("Form 2106 actual vehicle and reservist branches fail closed", () => {
         },
       }),
     Error,
-    "reservist",
   );
 });
 
