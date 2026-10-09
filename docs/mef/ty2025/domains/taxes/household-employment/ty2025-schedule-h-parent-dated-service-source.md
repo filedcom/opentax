@@ -146,3 +146,22 @@ Integrated22b3a845b/6c85ed12e holds productionSHA47212fab388ee4d4d04e81c57b2f7f4
 Mainactual18returns/91pages replay terminal0 withwholegraph/prepared/carry/origins/PDFexact, nativeonlyReturnTs, fresh2025v5.4XSD andoriginalsourcehashesunchanged. Report `/tmp/opentax-scheduleh-parent-period-main18-held-oct6/report.json`. Old65recordsreplay terminal0:63positive/386pages(60freshcurrentexact,3historicallyqualified) plus2expectedmissingordinaryperiodrejections; everypositive freshfullXSD andexact reviewedsource rates, alloriginalJSON/PDF/XML unchanged andheldproductioncheckedbefore/after. Thisrunhas no native ratecorrection; nativecomparison onlyReturnTs. Report `/tmp/opentax-scheduleh-parent-period-main-source65-oct6/report.json`;131physicalterminalfiles preserved. Eightolderparentcases overlapthe63oldpositiveinventory; combineduniquepositives are73returns/436pages, including10new/50reviewedpages.
 
 Finalcandidate/source98, rootreview41, qualifiedv757, sharedmain56, old65terminal131 andtypedterminal3physicalfilepairs rehashed beforeledger1541. This records onlythe source-reconciled datedparentservice route; widerScheduleH/sourceauthentication/deceased-jointauthorization/fullbatch/businessrules/IRSacceptance remainopen.
+
+## October 9: year-end identity and status controls
+
+A six-case current-source audit at `99ffacc4a` qualifies the earlier positive dated-service evidence. [2025 Publication 926, page 6](https://www.irs.gov/pub/irs-prior/p926--2025.pdf) makes the parent-care exception depend on the employer’s child and marital circumstances; those source facts must also agree with the return. The current native guard performs the year-end spouse/status join only for `quarterly_circumstances`. The PDF descriptor delegates to the same native guard.
+
+| Source review and case | Schedule H / 1040 line 23 | Native and PDF descriptor | Full native bundle / local XSD |
+| --- | ---: | --- | --- |
+| Quarterly, matching spouse | 1,493 | Admit | Pass / pass |
+| Quarterly, wrong Q4 spouse | 1,493 | Reject | Reject / not run |
+| Quarterly, divorced Q4 with MFJ | 1,493 | Reject | Reject / not run |
+| Dated, matching spouse | 1,493 | Admit | Pass / pass |
+| Dated, wrong Q4 spouse | 1,493 | **Incorrectly admit** | Pass / pass |
+| Dated, divorced Q4 with MFJ | 1,302 | **Incorrectly admit** | Pass / pass |
+
+All six public graphs have no diagnostics and leave their inputs unchanged. The mismatched-spouse probe changes only the Q4 payroll review’s spouse SSN to999887777 while the return retains400001070. The divorced probes pair a source asserting no remarriage through Q4 with a joint return. The dated divorced fixture includes the already retained child-birthday allocation, explaining its different tax; this audit does not claim the two review modes have identical economic facts.
+
+This is a newly discovered defect, recorded only in the board’s deferred section. No runtime fix, new positive filing route, parent closure or IRS acceptance is claimed. No filled PDF was generated or visually reviewed; the PDF evidence is descriptor validation only. The six inputs, pending graphs, filer identities, outcomes, four XML files, command log, reproducible source-extracted probe and SHA-256 checkpoint are retained in `.state/research/scheduleh-parent-identity-audit-2026-10-09/`. The full native XML passes local2025v5.4 structure even for the two invalid source joins, illustrating why structural validation cannot replace ownership checks.
+
+The still-open remarriage-during-quarter extension needs an explicit dated marital event, pre/post-event continuity, capable/incapable new-spouse facts where applicable, split service/hour allocations for a period crossing the event, and the ordinary-period classification. This audit adds no such route and does not use a false whole-quarter continuity assertion to admit it.
