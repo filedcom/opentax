@@ -503,3 +503,22 @@ Form4562 test context. The ISO/basis checkpoint was rebased onto that change
 as c0d9aeaed, preserving its runtime code; CI37898405992 passes. A fresh full
 `deno task test` selects all1,323 modules with no exclusions and remains active
 in `.state/research/testing/full-2cddc8d537c63efc/`; no full pass is claimed.
+
+## October 9 single-filer phaseout checkpoint
+
+Four public complete-return packets exercise the existing single-filer exemption threshold, partial phaseout, zero-exemption boundary and income above it. Source Forms3921 retain1,000 shares and10 strike; FMV436.35,610.35,788.75 and810 produces ISO adjustments426,350,600,350,778,750 and800,000. Wages200,000, taxable interest18,000 and the independently traced investment deduction18,000 retain regular taxable income200,000/tax41,063. These are synthetic reviewed records, not authenticated issuer documents.
+
+The independent Decimal oracle applies the [2025 Form6251 exemption worksheet and tax rates](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf) directly to source amounts. All four pending results, selected native AMTI/exemption/AMT fields and final tax/owed amounts match:
+
+| AMTI | Exemption | AMT | Total tax | Owed after35,000 withholding |
+| --- | --- | --- | --- | --- |
+| 626,350 | 88,100 | 104,865 | 145,928 | 110,928 |
+| 800,350 | 44,600 | 165,765 | 206,828 | 171,828 |
+| 978,750 | 0 | 228,205 | 269,268 | 234,268 |
+| 1,000,000 | 0 | 234,155 | 275,218 | 240,218 |
+
+All four complete XMLs pass the local TY2025v5.4 XSD. All36 flattened PDF pages were inspected via18 distinct pages/18 exact matches across nine contact sheets, including owner, source amounts, exemption, AMT, Schedule2 and Form1040. Native line1a omission and attachment-sequence ordering repeat deferred84/86. For zero exemption, PDFline5 is blank and line6 equals AMTI; the worksheet note directs zero-exemption filers to line6, so this review does not invent a new defect from that blank.
+
+The16 mutation probes produce eight native/eight full-PDF rejections for altered ISO adjustment or Form1040 line17, and eight acceptances at each boundary for changed calculated AMTI or exemption. Eight retained altered XMLs confirm those changed fields are transmitted with unchanged downstream tax. This newly discovered full-export validation gap is deferred89; positive calculation matches do not imply mutation safety. No runtime source or committed test files were changed while the full batch ran.
+
+Private evidence `.state/research/form6251-phaseout-packets-2026-10-09/` retains inputs, execution/preparation, full XML/PDF, altered XML, source oracle, rejection reports, renders, review manifest and SHA256SUMS. Schema SHA256 remains `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`. This checkpoint advances the existing ISO/exemption/return-join task; it does not close other filing statuses, preferences, source authenticity, business rules or IRS acceptance.
