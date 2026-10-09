@@ -1,4 +1,5 @@
 import { currentLossFilingProjection } from "../../../../domains/income/business/current-loss-filing-projection.ts";
+import { assertSection1231HistoryFilingEvidence } from "../../../../../nodes/intermediate/forms/income/business/form4797/prior_history.ts";
 import { currentPropertyPassiveAmounts } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/current-property-source.ts";
 import { assertCurrentPassivePropertyReturn } from "../../../../domains/income/business/current_passive_property_source.ts";
 import { assertCurrentPassiveLine10Return } from "../../../../domains/income/business/current_passive_line10_source.ts";
@@ -30,7 +31,10 @@ import {
   qualifiedEntireDispositionLoss,
 } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/index.ts";
 import { z } from "zod";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../form-descriptor.ts";
 import {
   assertFullyRecapturedInvestment1245Return,
   assertInvestment1245FilingLinks,
@@ -625,6 +629,7 @@ export const form4797: MefFormDescriptor<"form4797", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f4797.pdf",
   build(fields, context) {
+    assertSection1231HistoryFilingEvidence(fields.section_1231_prior_history);
     if (fields.current_loss_forms !== undefined) {
       return currentLossFilingProjection({
         ...context?.pending,

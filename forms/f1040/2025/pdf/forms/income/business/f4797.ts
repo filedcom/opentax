@@ -1,7 +1,11 @@
 import { currentLossFilingProjection } from "../../../../domains/income/business/current-loss-filing-projection.ts";
+import { assertSection1231HistoryFilingEvidence } from "../../../../../nodes/intermediate/forms/income/business/form4797/prior_history.ts";
 import { assertCurrentPassivePropertyReturn } from "../../../../domains/income/business/current_passive_property_source.ts";
 import { assertCurrentPassiveLine10Return } from "../../../../domains/income/business/current_passive_line10_source.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import {
   allocateOtherPassivePrior4797,
   inputSchema as form8582InputSchema,
@@ -259,6 +263,7 @@ export const form4797Pdf: PdfFormDescriptor = {
     },
   ],
   projectFields(fields, allPending) {
+    assertSection1231HistoryFilingEvidence(fields.section_1231_prior_history);
     if (fields.current_loss_forms !== undefined) {
       const projection = currentLossFilingProjection({
         ...allPending,

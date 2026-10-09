@@ -20,6 +20,7 @@ import { form6251 } from "../nodes/intermediate/forms/taxes/amt/form6251/index.t
 import { priorIsoSaleReviewSchema } from "./domains/taxes/amt/form6251/form6251_prior_iso_sale.ts";
 import { form4797 } from "../nodes/intermediate/forms/income/business/form4797/index.ts";
 import { investment1245DispositionSchema } from "../nodes/intermediate/forms/income/business/form4797/investment_1245.ts";
+import { priorHistoryPublicSchema } from "../nodes/intermediate/forms/income/business/form4797/prior_history.ts";
 import {
   form4562,
   publicInputSchema as form4562InputSchema,
@@ -864,6 +865,12 @@ export const inputNodes: readonly InputNodeEntry[] = [
       investment_1245_dispositions: z.array(investment1245DispositionSchema)
         .min(1).max(4),
     }).strict(),
+    isArray: false,
+  },
+  {
+    node: form4797,
+    inputKey: "form4797_prior_history",
+    inputSchema: priorHistoryPublicSchema,
     isArray: false,
   },
   {
