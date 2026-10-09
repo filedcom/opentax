@@ -120,23 +120,56 @@ function nonfarmWages(
   inputs: Record<string, unknown>,
   source: z.infer<typeof publicInputSchema>,
 ): number {
+  if (source.nonfarm_wage_source && source.nonfarm_wage_sources) {
+    throw new Error(
+      "Schedule J nonfarm wage records need one source inventory",
+    );
+  }
+  const proofs = source.nonfarm_wage_sources ??
+    (source.nonfarm_wage_source ? [source.nonfarm_wage_source] : []);
   const w2s = inputs.w2;
   if (w2s === undefined || (Array.isArray(w2s) && w2s.length === 0)) {
-    if (source.nonfarm_wage_source) {
+    if (proofs.length) {
       throw new Error("Schedule J nonfarm wage record has no issued W-2");
     }
     return 0;
   }
-  if (
-    !Array.isArray(w2s) || w2s.length !== 1 ||
-    !source.nonfarm_wage_source
-  ) {
+  if (!Array.isArray(w2s) || w2s.length !== proofs.length) {
     throw new Error(
       "Schedule J needs each nonfarm wage attributed to one issued W-2 and employer record",
     );
   }
-  const wage = record(w2s[0]);
-  const proof = source.nonfarm_wage_source;
+  const wages = w2s.map(record);
+  const ids = wages.map((wage) =>
+    wage.schedule_j_nonfarm_wage_source_document_id
+  );
+  const refs = wages.map((wage) => wage.source_document_reference);
+  if (
+    new Set(proofs.map((proof) => proof.document_id)).size !== proofs.length ||
+    new Set(ids).size !== wages.length || new Set(refs).size !== wages.length
+  ) {
+    throw new Error(
+      "Schedule J nonfarm wage sources must identify distinct W-2 copies",
+    );
+  }
+  return wages.reduce((sum, wage) => {
+    const proof = proofs.find((item) =>
+      item.document_id === wage.schedule_j_nonfarm_wage_source_document_id
+    );
+    if (!proof) {
+      throw new Error(
+        "Schedule J W-2 has no matching retained employer record",
+      );
+    }
+    return sum + nonfarmWageAmount(inputs, wage, proof);
+  }, 0);
+}
+
+function nonfarmWageAmount(
+  inputs: Record<string, unknown>,
+  wage: Record<string, unknown>,
+  proof: NonNullable<z.infer<typeof publicInputSchema>["nonfarm_wage_source"]>,
+): number {
   const encoded = proof.bytes_base64;
   const bytes = Uint8Array.from(atob(encoded), (c) => c.charCodeAt(0));
   if (

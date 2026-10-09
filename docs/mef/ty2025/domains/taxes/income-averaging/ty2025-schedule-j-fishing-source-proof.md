@@ -1,5 +1,56 @@
 # TY2025 Schedule J fishing and mixed farm source checkpoint
 
+## October 9 multiple nonfarm jobs and joint owner allocation
+
+The existing mixed farm/fishing source route now accepts a complete collection
+of nonfarm W-2 employer records. `nonfarm_wage_sources` matches each W-2 by its
+retained document ID; IDs and issued-copy references must be distinct, and
+missing, duplicate, extra or inconsistent records reject. The existing singular
+field remains supported, but both inventories cannot be supplied together.
+Each record keeps the prior byte/digest, corporate/nonagricultural employer,
+owner, business-EIN and W-2 amount checks. Array order does not establish the
+join: all six positive fixtures intentionally reverse employer-record order.
+
+Six joint returns cover two jobs for either spouse and one job each, under both
+fishing/farm owner arrangements. Jobs pay 40,000 and 60,000, with 20,000 combined
+withholding; fishing/farm profit remains 120,000/200,000. Nonfarm wages stay
+outside the 15,000 election and reduce only the recipient's remaining Social
+Security wage base, following the [2025 Schedule J](https://www.irs.gov/pub/irs-prior/i1040sj--2025.pdf)
+and [Schedule SE instructions](https://www.irs.gov/pub/irs-prior/i1040sse--2025.pdf).
+
+| Fishing / farm owner wages | SE tax / half-SE | AGI | QBI | Taxable income | Regular tax without J / Schedule J tax | Total tax / owed |
+|---|---:|---:|---:|---:|---:|---:|
+| 100,000 / 0, either owner arrangement | 39,842 / 19,921 | 400,079 | 60,016 | 306,963 | 59,365 / 57,265 | 98,417 / 78,417 |
+| 0 / 100,000, either owner arrangement | 31,748 / 15,874 | 404,126 | 60,825 | 310,201 | 60,142 / 58,042 | 91,100 / 71,100 |
+| 40,000 / 60,000 | 36,708 / 18,354 | 401,646 | 60,329 | 308,217 | 59,666 / 57,566 | 95,584 / 75,584 |
+| 60,000 / 40,000 | 39,188 / 19,594 | 400,406 | 60,081 | 307,225 | 59,428 / 57,328 | 97,826 / 77,826 |
+
+Independent Decimal arithmetic and native/PDF-text comparisons agree for all
+six returns, including both native W-2 copies and both Schedule SE owners.
+Additional Medicare Tax is 1,310 and AMT is zero. The typed focused run passes
+6/0; the grouped domain, input, calculation, native, PDF and e2e gate passes
+111/0. The cases reject 54 public-source and 24 native/24 fresh-PDF mutations.
+The benchmark remains 46/133, with the exact same 87 failing IDs as the retained
+`f9627ea8b` run; these existing failures remain deferred96.
+
+All **six complete XML returns pass local TY2025v5.4 XSD validation**, and all
+**114 PDF pages** are covered by render review. There are 59 unique rendered
+images: 37 exactly match the preceding inspected checkpoint, and all 22 new
+images were inspected on six changed-page sheets. Per-owner SE/QBI amounts,
+Schedule J, tax and amount owed agree. Existing primary-only joint headers68,
+skipped-zero presentation76 and attachment-order86 still qualify the packets.
+No new deferred work was identified or implemented; earlier AMT boundary120
+remains unchanged.
+
+Private evidence is in `.state/research/schedule-j-multiple-jobs-2026-10-09/`:
+six source/pending JSONs, XML/PDF pairs, focused/group and benchmark logs,
+independent arithmetic/text/native review, render hashes and exact prior-image
+comparison. The XSD digest remains
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+Employer/catch records and prior-year references remain synthetic; broader
+attribution, authenticity, business rules and IRS acceptance remain open.
+
+
 ## October 9 owned nonfarm wages and fishing
 
 The retained nonfarm employer record now accepts either filed spouse and checks

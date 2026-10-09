@@ -2,6 +2,8 @@
 
 ## Current route index — October 9, 2026
 
+The [multiple-job checkpoint](./ty2025-schedule-j-fishing-source-proof.md#october-9-multiple-nonfarm-jobs-and-joint-owner-allocation) extends owned nonfarm wages to complete W-2/employer-record collections, with six XSD-valid joint returns and 114 reviewed pages.
+
 The [owned-wage checkpoint](./ty2025-schedule-j-fishing-source-proof.md#october-9-owned-nonfarm-wages-and-fishing) adds four XSD-valid joint returns/76 reviewed pages and 105 passing tests; two single cases retain deferred AMT-rounding boundary120.
 
 The [paid-expense checkpoint](./ty2025-schedule-j-fishing-source-proof.md#october-9-paid-fishing-expenses-and-complete-packets) now reconciles retained fishing insurance, repairs and utilities through six full returns, native XML and 118 reviewed PDF pages. Historical replay qualifications below remain attached to their own runs.

@@ -10,6 +10,12 @@ import { income_tax_calculation } from "../../../../intermediate/worksheets/taxe
 import { ordinaryYearFactsSchema } from "../../../../intermediate/forms/taxes/income-averaging/schedule_j/calculation.ts";
 import { scheduleJTaxSourceSchema } from "../../../../intermediate/forms/taxes/income-averaging/schedule_j/tax-source.ts";
 
+const nonfarmWageSourceSchema = z.object({
+  document_id: z.string().trim().min(1),
+  sha256: z.string().regex(/^[0-9a-f]{64}$/),
+  bytes_base64: z.string().trim().min(1),
+}).strict();
+
 // This is an election and filed-base-year source, never an asserted tax.
 export const publicInputSchema = z.object({
   elected_farm_income: z.number().int().positive(),
@@ -21,11 +27,8 @@ export const publicInputSchema = z.object({
     year2023: ordinaryYearFactsSchema,
     year2024: ordinaryYearFactsSchema,
   }).strict(),
-  nonfarm_wage_source: z.object({
-    document_id: z.string().trim().min(1),
-    sha256: z.string().regex(/^[0-9a-f]{64}$/),
-    bytes_base64: z.string().trim().min(1),
-  }).strict().optional(),
+  nonfarm_wage_source: nonfarmWageSourceSchema.optional(),
+  nonfarm_wage_sources: z.array(nonfarmWageSourceSchema).min(1).optional(),
 }).strict();
 
 // Derived only by the source-return prepass; public entry rejects this field.
