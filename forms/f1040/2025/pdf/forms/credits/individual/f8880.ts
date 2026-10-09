@@ -1,4 +1,7 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import {
   assertForm8880EligibleTotals,
   assertForm8880FiledCalculation,
@@ -8,6 +11,7 @@ import {
   assertEligibleContributor,
   inputSchema as calculatorInputSchema,
   ownedDeferrals,
+  ownedLine1Contributions,
 } from "../../../../../nodes/intermediate/forms/credits/individual/form8880/index.ts";
 
 // IRS Form 8880 (2025) AcroForm field names.
@@ -142,14 +146,15 @@ export const form8880Pdf: PdfFormDescriptor = {
     );
     const source = calculatorInputSchema.partial().parse(raw);
     const owned = ownedDeferrals(source);
+    const line1 = ownedLine1Contributions(source);
     if (
-      raw.print_line1a_ira !== (source.ira_contributions_taxpayer ?? 0) ||
+      raw.print_line1a_ira !== line1.taxpayer ||
       (raw.print_line1b_ira ?? 0) !==
-        (source.ira_contributions_spouse ?? 0) ||
+        line1.spouse ||
       raw.print_line2a_deferrals !== owned.taxpayer ||
       (raw.print_line2b_deferrals ?? 0) !== owned.spouse ||
-      (source.ira_contributions_taxpayer ?? 0) +
-            (source.ira_contributions_spouse ?? 0) + owned.taxpayer +
+      line1.taxpayer +
+            line1.spouse + owned.taxpayer +
             owned.spouse <= 0
     ) {
       throw new Error(

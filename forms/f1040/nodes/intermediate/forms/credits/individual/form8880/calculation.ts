@@ -1,4 +1,8 @@
 import {
+  ableContributionReviewSchema,
+  ownedAbleContributions,
+} from "./able_contribution_review.ts";
+import {
   employeeContributionReviewSchema,
   ownedEmployeeContributions,
 } from "./employee_contribution_review.ts";
@@ -158,6 +162,7 @@ export const inputSchema = z.object({
   elective_deferrals: z.never().optional(),
   w2_deferral_entries: z.array(w2DeferralEntrySchema).optional(),
   employee_contribution_review: employeeContributionReviewSchema.optional(),
+  able_contribution_review: ableContributionReviewSchema.optional(),
   elective_deferrals_taxpayer: z.number().nonnegative().optional(),
   elective_deferrals_spouse: z.number().nonnegative().optional(),
   // Disqualifying distributions received in the test period
@@ -414,22 +419,50 @@ export function ownedDeferrals(
     input.filing_status,
   );
   if (
-    input.employee_contribution_review &&
+    (input.employee_contribution_review || input.able_contribution_review) &&
     (input.elective_deferrals_taxpayer !== undefined ||
       input.elective_deferrals_spouse !== undefined)
   ) {
     throw new Error(
-      "Form 8880 voluntary contributions cannot mix with unsourced deferral totals",
+      "Form 8880 reviewed contributions cannot mix with unsourced deferral totals",
     );
   }
   return {
-    taxpayer: input.employee_contribution_review
-      ? Math.round(w2.taxpayer + employee.taxpayer)
-      : w2.taxpayer,
-    spouse: input.employee_contribution_review
+    taxpayer:
+      input.employee_contribution_review || input.able_contribution_review
+        ? Math.round(w2.taxpayer + employee.taxpayer)
+        : w2.taxpayer,
+    spouse: input.employee_contribution_review || input.able_contribution_review
       ? Math.round(w2.spouse + employee.spouse)
       : w2.spouse,
   };
+}
+
+/** Line1 combines IRA contributions and the designated beneficiary's ABLE payments. */
+export function ownedLine1Contributions(
+  input: Form8880Input,
+): { taxpayer: number; spouse: number } {
+  if (
+    input.able_contribution_review &&
+    (input.filing_status === FilingStatus.MFJ
+      ? !input.joint_distribution_review?.current_year_source_inventory_review
+      : !input.nonjoint_distribution_review)
+  ) {
+    throw new Error(
+      "Form 8880 ABLE contributions need a complete reviewed distribution inventory",
+    );
+  }
+  const able = ownedAbleContributions(
+    input.able_contribution_review,
+    input.taxpayer_ssn,
+    input.spouse_ssn,
+    input.filing_status,
+  );
+  const taxpayer = (input.ira_contributions_taxpayer ?? 0) + able.taxpayer;
+  const spouse = (input.ira_contributions_spouse ?? 0) + able.spouse;
+  return input.able_contribution_review
+    ? { taxpayer: Math.round(taxpayer), spouse: Math.round(spouse) }
+    : { taxpayer, spouse };
 }
 
 export type Form8880Calculation =
@@ -452,26 +485,25 @@ export function calculateForm8880(
     throw new Error("Form 8880 needs a finite sourced tax-liability limit");
   }
   const deferrals = ownedDeferrals(parsed);
+  const line1 = ownedLine1Contributions(parsed);
   const distributions = distributionColumns(parsed);
   if (
     parsed.filing_status !== undefined &&
     parsed.filing_status !== FilingStatus.MFJ &&
-    ((parsed.ira_contributions_spouse ?? 0) > 0 || deferrals.spouse > 0)
+    (line1.spouse > 0 || deferrals.spouse > 0)
   ) {
     throw new Error("Form 8880 spouse contributions require a joint return");
   }
 
   // Part I — per-person eligible contributions
-  const tContributions = (parsed.ira_contributions_taxpayer ?? 0) +
-    deferrals.taxpayer;
+  const tContributions = line1.taxpayer + deferrals.taxpayer;
   const tEligible = eligibleContribution(
     tContributions,
     distributions.taxpayer,
     cfg.saversCreditContributionCap,
   );
 
-  const sContributions = (parsed.ira_contributions_spouse ?? 0) +
-    deferrals.spouse;
+  const sContributions = line1.spouse + deferrals.spouse;
   const sEligible = eligibleContribution(
     sContributions,
     distributions.spouse,
@@ -506,11 +538,12 @@ export function calculateForm8880(
     return { credit: 0, calculatedZero: true };
   }
 
-  // The reviewed voluntary route files whole dollars: add cents first, then
+  // The reviewed contribution routes file whole dollars: add cents first, then
   // round the line total and calculated credit, retaining exact source amounts.
-  const rawCredit = parsed.employee_contribution_review
-    ? Math.round(totalEligible * rate)
-    : totalEligible * rate;
+  const rawCredit =
+    parsed.employee_contribution_review || parsed.able_contribution_review
+      ? Math.round(totalEligible * rate)
+      : totalEligible * rate;
 
   // Line 11/12 — limit by sourced tax liability.
   const credit = Math.min(rawCredit, capacity);
@@ -548,7 +581,7 @@ export function calculateForm8880(
   // letting MeF distinguish a completed calculation from a missing one.
   // Line 9 is a decimal rate and must print as a string.
   const printFields: Record<string, number | string> = {
-    print_line1a_ira: parsed.ira_contributions_taxpayer ?? 0,
+    print_line1a_ira: line1.taxpayer,
     print_line2a_deferrals: deferrals.taxpayer,
     print_line3a_total: tContributions,
     print_line4a_distributions: distributions.taxpayer,
@@ -565,10 +598,10 @@ export function calculateForm8880(
   };
   printFields.print_line11_tax_liability = capacity;
   if (
-    sEligible > 0 || (parsed.ira_contributions_spouse ?? 0) > 0 ||
+    sEligible > 0 || line1.spouse > 0 ||
     deferrals.spouse > 0 || distributions.spouse > 0
   ) {
-    printFields.print_line1b_ira = parsed.ira_contributions_spouse ?? 0;
+    printFields.print_line1b_ira = line1.spouse;
     printFields.print_line2b_deferrals = deferrals.spouse;
     printFields.print_line3b_total = sContributions;
     printFields.print_line4b_distributions = distributions.spouse;

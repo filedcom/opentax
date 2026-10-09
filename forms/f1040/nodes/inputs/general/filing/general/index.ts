@@ -1,3 +1,4 @@
+import { ableContributionReviewSchema } from "../../../../intermediate/forms/credits/individual/form8880/able_contribution_review.ts";
 import { ptcJointIncomeReviewSchema } from "../../../../../2025/domains/credits/health/form8962/form8962-joint-income.ts";
 import {
   assertForm8962SpouseIncomeReview,
@@ -376,6 +377,7 @@ export const inputSchema = z.object({
   spouse_dob: z.string().optional(),
   spouse_form8880_student_five_months: z.boolean().optional(),
   spouse_form8880_claimed_as_dependent: z.boolean().optional(),
+  form8880_able_contribution_review: ableContributionReviewSchema.optional(),
   form8880_employee_contribution_review: employeeContributionReviewSchema
     .optional(),
   form8880_joint_distribution_review: jointDistributionReviewSchema.optional(),
@@ -1531,6 +1533,9 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
         ...(parsed.spouse_form8880_claimed_as_dependent !== undefined && {
           spouse_claimed_as_dependent:
             parsed.spouse_form8880_claimed_as_dependent,
+        }),
+        ...(parsed.form8880_able_contribution_review && {
+          able_contribution_review: parsed.form8880_able_contribution_review,
         }),
         ...(parsed.form8880_employee_contribution_review && {
           employee_contribution_review:

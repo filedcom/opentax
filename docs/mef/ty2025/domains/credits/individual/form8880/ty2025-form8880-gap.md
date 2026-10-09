@@ -524,3 +524,66 @@ Joint Form8880 page6 still prints only Alex Plans despite both contributor
 columns; the existing deferred joint-name issue applies. No newly discovered
 repair was implemented. Source authenticity, wider IRA/ABLE contributions,
 credit-order combinations, business rules and IRS acceptance remain open.
+
+## October 9 ordinary-limit ABLE source checkpoint
+
+Public `general.form8880_able_contribution_review` now carries owned Form5498-QA
+facts, program/eligibility review references, contribution classifications and
+dated beneficiary payment records. Each beneficiary has one reviewed account
+and all source references are distinct. The strict review reconciles box1 to
+beneficiary cash plus other contributors' cash plus QTP rollovers/transfers;
+box2 ABLE-to-ABLE rollovers remain separate. Only the designated beneficiary's
+payments enter Form8880 line1. The line is shared by calculation, native and
+PDF checks; ABLE amounts do not create an IRA deduction or Form8606 basis.
+
+The [2025 Form5498-QA instructions](https://www.irs.gov/pub/irs-prior/i1099qa--2025.pdf)
+distinguish box1 contributions/QTP transfers from box2 ABLE transfers.
+[Publication907](https://www.irs.gov/pub/irs-prior/p907--2025.pdf) establishes
+the ordinary19000 annual limit and describes the additional employed-beneficiary
+limit. This implementation enforces the ordinary limit and requires reviewed
+current eligibility, the program's cumulative limit, no returned/excess funds,
+no prior excess and no current-year ABLE distributions. Higher-limit,
+multiple-account and distribution/excess-tax routes remain guarded; they still
+belong to the broader unfinished source/credit task. Medical/program authenticity
+is not established by these structured review facts.
+
+A complete nonjoint or owned-joint lookback ledger is required before public
+execution, and preserved source/owner facts are replayed during native and full
+PDF construction even when no credit form prints. Prior qualifying distributions
+reduce the contribution; deposits by others produce a reviewed zero-credit
+outcome. For this route, source cents remain retained while each combined
+Form8880 contribution line and the credit round to whole dollars. Legacy IRA
+source-validation defect98 and MFS defect99 remain unchanged.
+
+| Case | Beneficiary ABLE T/S | W-2 deferral | Prior offset | Credit | Tax | Refund |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Single own cents | 1500.50/0 | 0 | 0 | 300 | 628 | 1372 |
+| Single mixed deposits | 1000.49/0 | 1000.49 | 0 | 400 | 528 | 1472 |
+| Single other-only deposits | 0/0 | 0 | 0 | 0 | 928 | 1072 |
+| Single prior distribution | 1500/0 | 0 | 500 | 200 | 728 | 1272 |
+| Single full offset | 1500/0 | 0 | 1500 | 0 | 928 | 1072 |
+| Joint both beneficiaries | 1000/1500 | 0 | 0 | 500 | 1353 | 1647 |
+| Joint spouse only | 0/1500 | 0 | 0 | 300 | 1553 | 1447 |
+
+Single AGI/tax-before-credit/payments are25000/928/2000; joint amounts are
+50000/1853/3000. The mixed-deposit account also contains5000 other cash,3000
+QTP transfers and2000 ABLE rollovers, none counted as beneficiary payments.
+The other-only account has2000 third-party cash. All seven XMLs validate against
+retained TY2025v5.4; direct native line1/credit comparisons pass and all24 filled
+pages were reviewed. The two zero-credit packets contain only Form1040.
+
+The grouped source/calculation/native/PDF/W-2 run passes258/0 before final
+cent-valued mixed-source and schema-valid review-edit checks; the final ABLE
+and employee modules pass15/0, and native/composed-PDF builders pass187/0.
+Twenty-eight public inconsistencies reject;91 altered graphs reject at each
+export boundary, rebuilding the full PDF without a stale prepared bundle.
+Eight schema-negative classifications also reject. Initial PDF failures caught
+the missing IRA/ABLE line1 parity check during implementation; the log remains
+retained alongside the passing evidence.
+
+Private evidence: `.state/research/form8880-able-2026-10-09/` contains all source,
+pending, XML/PDF, page-origin/renders, schema/verification logs and hashes.
+Both joint Form8880 page4s repeat the existing missing-spouse-name issue, and
+the spouse-only primary-column zero presentation remains qualified. Wider
+source/eligibility/credit combinations, authenticity, business rules and IRS
+acceptance remain open.

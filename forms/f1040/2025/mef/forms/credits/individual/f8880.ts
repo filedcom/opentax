@@ -8,6 +8,7 @@ import {
   eligibleW2DeferralAmount,
   inputSchema as calculatorInputSchema,
   ownedDeferrals,
+  ownedLine1Contributions,
 } from "../../../../../nodes/intermediate/forms/credits/individual/form8880/index.ts";
 import {
   assertForm8880EligibleTotals,
@@ -103,7 +104,7 @@ function buildIRS8880(fields: Input, context?: MefBuildContext): string {
   if (unknown) throw new Error(`Form 8880 has unsupported field ${unknown}`);
   const hasPrintLine = Object.keys(fields).some((key) => printKeys.has(key));
   const source = calculatorInputSchema.partial().parse(fields);
-  const hasContribution = [
+  const hasContribution = source.able_contribution_review !== undefined || [
     source.ira_contributions_taxpayer,
     source.ira_contributions_spouse,
     source.elective_deferrals_taxpayer,
@@ -173,10 +174,11 @@ function buildIRS8880(fields: Input, context?: MefBuildContext): string {
     throw new Error("Form 8880 positive claim needs contribution source facts");
   }
   const owned = ownedDeferrals(source);
+  const line1 = ownedLine1Contributions(source);
   if (
-    fields.print_line1a_ira !== (source.ira_contributions_taxpayer ?? 0) ||
+    fields.print_line1a_ira !== line1.taxpayer ||
     (fields.print_line1b_ira ?? 0) !==
-      (source.ira_contributions_spouse ?? 0) ||
+      line1.spouse ||
     fields.print_line2a_deferrals !== owned.taxpayer ||
     (fields.print_line2b_deferrals ?? 0) !== owned.spouse
   ) {

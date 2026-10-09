@@ -1,3 +1,4 @@
+import { assertPublicAbleContributionSources } from "./domains/credits/individual/form8880/form8880_able_sources.ts";
 import { assertPublicEmployeeContributionSources } from "./domains/credits/individual/form8880/form8880_employee_sources.ts";
 import { assertPublicSaverDistributionSources } from "./domains/credits/individual/form8880/form8880_distribution_sources.ts";
 import { preparePublicForm8886Return } from "./domains/general/filing/form8886/public-return.ts";
@@ -23,6 +24,7 @@ import { executePreQefSourceReturn } from "./return-processing/staged_source_ret
 function executeReturn(inputs: Record<string, unknown>): ExecuteResult {
   assertPublicSaverDistributionSources(inputs.general, inputs.f1099r);
   assertPublicEmployeeContributionSources(inputs.general, inputs.w2);
+  assertPublicAbleContributionSources(inputs.general);
   assertPassiveSCorpLossCalculationInputs(inputs);
   const elected = Array.isArray(inputs.f8621) &&
     inputs.f8621.some((item) =>
