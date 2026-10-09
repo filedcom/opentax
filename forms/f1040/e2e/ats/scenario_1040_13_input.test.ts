@@ -1,7 +1,8 @@
-import { assertEquals } from "@std/assert";
-import { execute } from "../../../../core/runtime/executor.ts";
-import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
-import { registry } from "../../2025/registry.ts";
+import { assertEquals, assertNotEquals, assertThrows } from "@std/assert";
+import { f1040_2025 } from "../../2025/index.ts";
+import { extractFilerIdentity } from "../../mef/filer.ts";
+import { form8911Pdf } from "../../2025/pdf/forms/credits/business/f8911.ts";
+import { form8911ScheduleAPdf } from "../../2025/pdf/forms/credits/business/f8911_schedule_a.ts";
 import { STANDARD_DEDUCTION_BASE_2025 } from "../../nodes/config/2025.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { SCENARIO_1040_13_FACTS } from "./ty2025_cases.ts";
@@ -9,8 +10,6 @@ import {
   scenario104013Input,
   SCENARIO_1040_13_RECONCILIATION,
 } from "./scenario_1040_13_input.ts";
-
-const plan = buildExecutionPlan(registry);
 
 Deno.test("ATS 1040 Scenario 13 maps every printed source form into one input", () => {
   const input = scenario104013Input();
@@ -80,10 +79,7 @@ Deno.test("ATS 1040 Scenario 13 preserves the printed return and identifies its 
 });
 
 Deno.test("ATS 1040 Scenario 13 routes W-2 facts but stops before a current-law Form 8911 credit", () => {
-  const result = execute(plan, registry, scenario104013Input(), {
-    taxYear: 2025,
-    formType: "f1040",
-  });
+  const result = f1040_2025.executeReturn(scenario104013Input());
   const form = result.pending.f1040;
   assertEquals(form?.line1a_wages, 31_620);
   assertEquals(form?.line25a_w2_withheld, 609);
@@ -106,4 +102,27 @@ Deno.test("ATS 1040 Scenario 13 routes W-2 facts but stops before a current-law 
       SCENARIO_1040_13_RECONCILIATION.printed.taxableIncome,
     false,
   );
+});
+
+Deno.test("ATS 1040 Scenario 13 PDF parent and property reject the printed tax limit on the public current-year return", () => {
+  const input = scenario104013Input();
+  const result = f1040_2025.executeReturn(input);
+  const filer = extractFilerIdentity(result.pending.f1040)!;
+  const printed = SCENARIO_1040_13_RECONCILIATION.printed;
+  assertEquals(typeof result.pending.f1040.line16_income_tax, "number");
+  assertNotEquals(result.pending.f1040.line16_income_tax, printed.regularTax);
+  const staleSource = {
+    ...(input.f8911 as Record<string, unknown>),
+    regular_tax_before_credits: printed.regularTax,
+    tentative_minimum_tax:
+      SCENARIO_1040_13_FACTS.form8911.printedTentativeMinimumTax,
+  };
+  const stalePending = { ...result.pending, f8911: staleSource };
+  for (const descriptor of [form8911Pdf, form8911ScheduleAPdf]) {
+    assertThrows(
+      () => descriptor.instances!({}, filer, stalePending),
+      Error,
+      "source tax limit or credit disagrees with finalized Form 1040",
+    );
+  }
 });
