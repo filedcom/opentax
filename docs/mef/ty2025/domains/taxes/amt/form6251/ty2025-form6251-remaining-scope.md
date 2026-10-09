@@ -1,6 +1,6 @@
 # TY2025 Form 6251 remaining-scope decision
 
-Current evidence: [eight complete PAB returns](#october-9-complete-pab-return-checkpoint) pass local XSD with 40 reviewed PDF pages and 23 typed checks. Native line 1a omission and direct-PDF consistency gaps remain deferred. Historical unrun notes below are superseded only for those exact PAB cases; broader AMT, full-suite and IRS acceptance requirements remain open.
+Current evidence: [eight complete PAB returns](#october-9-complete-pab-return-checkpoint) pass local XSD with 40 reviewed PDF pages and 23 typed checks. Native line 1a omission and direct-PDF consistency gaps remain deferred. The [grouped AMT/interest checkpoint](#october-9-grouped-amt-and-investment-interest-checkpoint) adds108 typed passes and five ISO/basis XSD returns without filled-PDF review. Historical unrun notes are superseded only within these exact scopes; broader AMT, full-suite and IRS acceptance requirements remain open.
 
 ## One direct PAB bond plus one PAB fund (2026-10-01, unrun)
 
@@ -401,3 +401,45 @@ Two newly deferred findings qualify this evidence:
 - **85 — Direct PDF consistency:** the 24 accepted direct-projector mutations above differ from both native and complete-PDF rejection. This is not a demonstrated complete-packet bypass.
 
 Evidence is retained at `.state/research/form6251-pab-2026-10-09/`: source extraction, public inputs/executions, XML/PDF/prepared packets, independent oracle, native omission report, typed logs, direct/full-PDF probes and rendered-page digests. Committed PAB fixtures, expected amounts and tests preserve portable checks. Wider issuer/expense combinations, general investment-interest limitations, preferential income, source authenticity and IRS acceptance remain open; no main-board parent is closed and no deferred repair was implemented.
+
+## October 9 grouped AMT and investment-interest checkpoint
+
+At tested head `61fe2f6b6`, the complete Form6251 domain plus its native and
+PDF test modules passed **93/93**; the Form4952 domain and five AMT end-to-end
+modules passed **15/15**, with no ignored tests. This executes the authored
+ISO, same/mixed-term capped-loss, crossover, source-replay, investment-interest,
+contract, depletion, trust, refund and other adjustment checks selected by
+those directories. It does not close every filing combination in this note.
+The first AMT run was92/1 because `pdftotext` was absent from PATH; rerunning
+the identical selection with installed Poppler passed93/0. No test or runtime
+implementation was changed. Deno2.9.4/TypeScript6.0.3; 8GB V8 heap.
+
+Five source fixtures also passed the public `executeReturn`/`prepareReturn`
+route and whole-return TY2025v5.4 XSD validation. The synthetic general facts
+explicitly answer no to digital assets; the original component fixtures omitted
+that answer and correctly blocked preparation. An independent source arithmetic
+check applies the separate3,000 capital-loss limits and current ISO spread,
+then compares Form1040 capital income, Form6251 line2k/AMTI and native amounts:
+
+| Case | Regular capital amount | AMT capital amount | Line2k | AMTI |
+|---|---:|---:|---:|---:|
+| Prior ISO gain |30,000|15,000|−15,000|455,000|
+| Prior ISO loss |−1,000|−3,000|−2,000|437,000|
+| Capped basis loss |−2,000|−3,000|−1,000|437,000|
+| Short gain/long loss |1,000|−1,000|−2,000|439,000|
+| Long gain/short loss |1,000|−1,000|−2,000|439,000|
+
+Each source has200,000 wages and240,000 current ISO adjustment. The
+[2025 Form6251 instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf)
+remain the authority for separate AMT basis and loss calculations. This oracle
+checks the listed capital/AMTI amounts, not every tax, preferential-rate or
+carryforward line. All five repeat deferred84's missing native line1a.
+
+Private evidence: `.state/research/form6251-basis-2026-10-09/` retains commands,
+module hashes, both final test logs, initial environment/fixture failures,
+inputs, execution/prepared JSON, XML, XSD results and source oracle.
+A private generator's incorrect document-list lookup was corrected before the
+five successful native runs; this was a harness error, not a product defect.
+No filled-PDF review is claimed for these five new packets. Broker/prior-return
+references remain synthetic, not authenticated accepted records. Broader
+coverage, the full typed gate, filled-output review and IRS acceptance stay open.
