@@ -24,7 +24,12 @@ import { executePreQefSourceReturn } from "./return-processing/staged_source_ret
 function executeReturn(inputs: Record<string, unknown>): ExecuteResult {
   assertPublicSaverDistributionSources(inputs.general, inputs.f1099r);
   assertPublicEmployeeContributionSources(inputs.general, inputs.w2);
-  assertPublicAbleContributionSources(inputs.general, inputs.w2);
+  assertPublicAbleContributionSources(
+    inputs.general,
+    inputs.w2,
+    inputs.schedule_c,
+    inputs.schedule_f,
+  );
   assertPassiveSCorpLossCalculationInputs(inputs);
   const elected = Array.isArray(inputs.f8621) &&
     inputs.f8621.some((item) =>

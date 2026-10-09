@@ -1,3 +1,4 @@
+import { assertAbleSelfEmploymentSources } from "./able_self_employment_sources.ts";
 import { z } from "zod";
 import { ableContributionReviewSchema } from "../../../../../nodes/intermediate/forms/credits/individual/form8880/able_contribution_review.ts";
 import { employeeContributionReviewSchema } from "../../../../../nodes/intermediate/forms/credits/individual/form8880/employee_contribution_review.ts";
@@ -66,6 +67,8 @@ export function assertAbleEmploymentW2Sources(
 export function assertPublicAbleContributionSources(
   rawGeneral: unknown,
   rawW2: unknown,
+  rawBusinesses?: unknown,
+  rawFarms?: unknown,
 ): void {
   const general = generalSchema.pick({
     form8880_able_contribution_review: true,
@@ -77,6 +80,13 @@ export function assertPublicAbleContributionSources(
     filing_status: true,
   }).partial().parse(rawGeneral ?? {});
   if (general.form8880_able_contribution_review) {
+    assertAbleSelfEmploymentSources(
+      general.form8880_able_contribution_review,
+      rawGeneral,
+      rawW2,
+      rawBusinesses,
+      rawFarms,
+    );
     assertAbleEmploymentW2Sources(
       general.form8880_able_contribution_review,
       z.array(w2ItemSchema).parse(rawW2 ?? []),

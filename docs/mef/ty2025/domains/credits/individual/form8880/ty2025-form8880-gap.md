@@ -724,3 +724,58 @@ NIIT treatment lacks a resolved primary-source classification, so native/full-PD
 exports reject; future item100 records that question without implementing it.
 Self-employment compensation, broader distributions and exceptions, source
 authentication and IRS acceptance remain open. No parent checkbox is closed.
+
+## October 9 self-employed ABLE compensation checkpoint
+
+The employed-beneficiary review now reconciles ordinary Schedule C/F compensation
+for each account owner, including spouse-only and two-owner returns. Each reviewed
+business must match the complete owned source inventory, reference and raw net
+profit; deductible SE tax is independently replayed from filed profits and owned
+W-2 Social Security wages. Personal services must be a material income factor.
+Compensation preserves cents and subtracts deductible SE tax before applying the
+prior-year poverty limit; a business loss does not reduce wage compensation.
+
+The compensation definition follows [26 CFR 1.529A-2(g)(2)](https://www.govinfo.gov/content/pkg/CFR-2024-title26-vol9/pdf/CFR-2024-title26-vol9-part1-subjectgroup-id144.pdf)
+and the self-employment compensation discussion in [Publication 590-A](https://www.irs.gov/publications/p590a).
+This bounded route excludes other SE sources, foreign exclusions, retirement-plan
+deductions, optional methods and unreviewed additional SE wage sources. Existing
+ordinary-business and employer-plan eligibility guards continue to apply. The
+2025 additional contribution limit uses 2024 poverty amounts, as previously
+recorded in the employed-beneficiary checkpoint.
+
+| Return | AGI | Saver credit | Final tax | Refund |
+| --- | ---: | ---: | ---: | ---: |
+| Single Schedule C, profit40000 | 37174 | 200 | 7269 | 2731 |
+| Single Schedule F, profit40000 | 37174 | 200 | 7269 | 2731 |
+| Wages15000 plus Schedule C10000 | 24293 | 400 | 1696 | 8304 |
+| Schedule C12000.49 | 11152 | 0 | 1695 | 8912 |
+| Joint primary wages25000/spouse C25000 | 48233 | 400 | 4471 | 5529 |
+| Joint C40000/C10000 | 46467 | 1198 | 7065 | 2935 |
+| Joint primary wages25000/spouse C30000/F−5000 | 48233 | 400 | 4471 | 5529 |
+
+Each case retains10000 estimated payments. The cents case has deductible SE tax848,
+ABLE additional compensation11152.49 and EIC607. Tax amounts were checked against
+[2025 Form1040 tax tables](https://www.irs.gov/publications/p1040): single
+17100–17150/1817 and6800–6850/683; MFJ13350–13400/1338 and11950–12000/1198.
+The EIC comparison uses [2025 Publication596](https://www.irs.gov/pub/irs-prior/p596--2025.pdf),
+11150–11200 single/no-child row607. Joint SE copies retain the correct proprietor
+SSN; the two-owner case has tax5652/1413 and deductible halves2826/707.
+
+Seven complete XML returns pass retained TY2025v5.4 XSD. All95 PDF pages were
+reviewed using65 unique rendered page hashes. Grouped saver checks pass94/0 and
+native/composed-PDF builder checks187/0; after the final foreign-source guard key
+correction, the focused source replay passes8/0. It rejects28 public,77 native and
+77 full-PDF inconsistencies plus five schema variants, including changed owner,
+profit, reference or SE deduction, missing source/forms, foreign exclusion,
+additional SE wages and retirement deductions. The loss/wage compensation check
+is a model assertion, not an eighth complete-return packet.
+
+Private evidence: `.state/research/form8880-able-self-employment-2026-10-09/`
+contains source/pending/origin records, XML/PDFs, all renders, final and explicitly
+failed intermediate logs, verification report, reviewed-image hashes and
+SHA256SUMS. Source references remain synthetic, not authenticated issuer records.
+Positive C/F loss-only at-risk marks, joint Form8880/8995 names and blank zero cells
+repeat existing deferred qualifications; the negative farm correctly marks its
+loss question. No new deferred repair is implemented. Broader self-employment
+compensation, distributions, authenticity and IRS acceptance remain unresolved;
+no parent checkbox is closed.

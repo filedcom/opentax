@@ -1,3 +1,4 @@
+import { assertAbleSelfEmploymentReturn } from "./able_self_employment_sources.ts";
 import { assertAbleDistributionReturn } from "./able_distribution_return.ts";
 import { assertAbleEmploymentW2Sources } from "./form8880_able_sources.ts";
 import { assertEmployeeContributionW2Sources } from "./form8880_employee_sources.ts";
@@ -417,6 +418,7 @@ export function assertEmployeeContributionReturn(
   pending: Readonly<Record<string, unknown>>,
 ): void {
   assertAbleDistributionReturn(pending);
+  assertAbleSelfEmploymentReturn(pending);
   const fields = pending.form8880 ?? {};
   assertAbleDistributionLedger(
     form8880InputSchema.pick({

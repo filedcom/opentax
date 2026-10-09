@@ -82,6 +82,14 @@ export const ableContributionReviewSchema = z.object({
       ...(employment
         ? [
           employment.eligibility_review_ref,
+          ...(employment.self_employment
+            ? [
+              employment.self_employment.compensation_review_ref,
+              ...employment.self_employment.businesses.flatMap(
+                (b) => [b.business_reference, b.income_record_ref],
+              ),
+            ]
+            : []),
           ...employment.wages.flatMap((
             w,
           ) => [w.source_document_ref, w.employer_plan_review_ref]),
@@ -102,6 +110,9 @@ export const ableContributionReviewSchema = z.object({
       Math.round(source.box1_contributions * 100) - ownCents > 1900000 ||
       employment?.wages.some((w) =>
         w.employee_ssn !== source.beneficiary_ssn
+      ) ||
+      employment?.self_employment?.businesses.some((b) =>
+        b.owner_ssn !== source.beneficiary_ssn
       ) ||
       payments.some((p) => p.contributor_ssn !== source.beneficiary_ssn) ||
       ownCents + Math.round(account.other_contributors_cash * 100) +
