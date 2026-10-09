@@ -2,12 +2,14 @@
 
 ## Current route index — October 9, 2026
 
+The [paid-expense checkpoint](./ty2025-schedule-j-fishing-source-proof.md#october-9-paid-fishing-expenses-and-complete-packets) now reconciles retained fishing insurance, repairs and utilities through six full returns, native XML and 118 reviewed PDF pages. Historical replay qualifications below remain attached to their own runs.
+
 Current branch `e8891d64b` contains later source-replay work beyond the historical build-first notes below. Live `schedule_j_source_return.ts` verifies retained catch-ledger bytes, business/owner identity, actual Schedule C/F profit and SE/QBI joins; native and PDF exporters replay that source. Distinct joint C/F owners require both owner-specific Schedule SE copies and matched QBI rows. The earlier blanket statements that fishing is isolated, every other income is rejected, or preferential income is unavailable are historical, not the current boundary.
 
 | Retained route | Detailed source and verification record |
 |---|---|
 | Farm election, current/prior preferential worksheets, no-election AMT tax, sourced nonfarm W-2 and bounded staged-credit compositions | [Preferential and nonfarm-wage proof](./ty2025-schedule-j-preferential-source-proof.md) |
-| One commercial fishing business, or fishing plus one/two farms, with retained catch-sales/supplies ledger | [Fishing source proof](./ty2025-schedule-j-fishing-source-proof.md) |
+| One commercial fishing business, or fishing plus one/two farms, with retained catch-sales/supplies and qualified paid-expense ledger | [Fishing source proof](./ty2025-schedule-j-fishing-source-proof.md) |
 | Same-owner mixed C/F QBI phase-in and actual half-SE allocation | [Phase-in proof](./ty2025-schedule-j-fishing-phasein-proof.md) |
 | One separately owned fishing business and farm on MFJ, with reversed-owner controls | [Joint source proof](./ty2025-schedule-j-joint-fishing-farm-proof.md) |
 | Joint advanced QBI phase-in, full phaseout and retained farm payroll/property limits | [Advanced](./ty2025-schedule-j-joint-advanced-qbi-proof.md), [zero-limit](./ty2025-schedule-j-joint-zero-qbi-proof.md) and [positive-limit](./ty2025-schedule-j-joint-positive-qbi-proof.md) proofs |

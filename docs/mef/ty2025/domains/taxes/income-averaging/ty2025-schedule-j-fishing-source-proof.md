@@ -1,5 +1,76 @@
 # TY2025 Schedule J fishing and mixed farm source checkpoint
 
+## October 9 paid fishing expenses and complete packets
+
+The retained cash fishing ledger now supports Schedule C business insurance
+(line 15), incidental repairs (line 21), and business utilities (line 25), in
+addition to supplies. Each paid row identifies its supplier, receipt, amount,
+valid 2025 payment date and business/service-year qualification. Insurance is
+limited to property/liability coverage; capital improvements, owner labor,
+personal/home-office utilities and residential telephone expenses remain outside
+this route. These limits follow the [Schedule C instructions](https://www.irs.gov/instructions/i1040sc).
+The retained SHA-256 bytes must reconcile each category to Schedule C, with
+unique paid-receipt references across supplies and the new categories. This
+extends the existing source inventory; it does not implement deferred work.
+
+Six synthetic returns cover fishing alone, fishing with one or two farms,
+higher repairs reducing profit, and separately owned joint fishing/farming in
+both owner directions. Five cases retain 5,000 supplies, 3,000 insurance,
+7,000 repairs and 5,000 utilities (20,000 total). The lower-profit case has
+47,000 repairs (60,000 total), reducing fishing profit from 120,000 to 80,000.
+The other three single cases retain 320,000 combined business profit; the two
+joint cases split 120,000 fishing and 200,000 farm profit across spouses.
+
+| Return group | Half-SE | AGI | QBI deduction | Taxable income | Schedule J tax | Total tax / amount owed | Pages |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Fishing only / one farm / two farms | 15,203 | 339,797 | 0 | 322,047 | 72,757 | 158,912 | 18 / 20 / 22 |
+| Higher repairs / lower profit | 14,668 | 300,332 | 0 | 282,582 | 59,332 | 146,846 | 20 |
+| Joint taxpayer / spouse fishing owner | 22,074 | 297,926 | 52,965 | 211,861 | 34,637 | 79,195 | 19 / 19 |
+
+Single returns retain 35,000 dividends (30,000 qualified), the 240,000 ISO
+adjustment and 830 Form 4972 tax from the prior reviewed fixtures. AMT uses
+AGI plus ISO less the 88,100 exemption, the 26%/28% ordinary rates at 239,100,
+and 15% on qualified dividends: tentative tax 128,993 or 117,943, less the
+separate no-election regular tax 76,264 or 62,451, gives AMT 52,729 or 55,492.
+SE tax is 30,406 or 29,335; additional Medicare tax is 860 or 527 and NIIT
+is 1,330. Joint returns retain separately rounded SE components totaling
+44,148 (fishing 16,956; farm 27,192), additional Medicare 410, and no AMT or
+NIIT. These sums reconcile to Form 1040 lines 24 and 37; payments are zero.
+
+The new focused gate passes 7/0, including 37 public-source rejections and
+24 native/24 fresh-PDF rejections. Thirteen public mutations rehash the ledger
+with missing/mismatched expense rows, unsupported qualifications, impossible or
+wrong-year dates, duplicate receipts or a wrong owner; 24 further mutations
+change filed categories or introduce an unsupported office deduction. Native
+and PDF rejection counts cover those 24 filed-input mutations only.
+The grouped Schedule J domain, native, PDF and end-to-end regression passes
+62/0, with normal type checking. The focused final-tax replay passes 7/0.
+The fixture and checks are in
+`forms/f1040/2025/domains/taxes/income-averaging/schedule-j/schedule_j_fishing_expenses.test.ts`;
+set `OPENTAX_SCHEDULE_J_EXPENSE_PROOF_DIR` to retain its six packets.
+
+All six full returns pass the local IRS 2025v5.4 XSD. Native Schedule C
+categories/profit/owner, Schedule SE copy counts, and Form 1040 tax/owed values
+were also checked independently of XSD. The 118 flattened PDF pages contain no
+editable fields/widgets; 58 distinct page images were inspected on 15 contact
+sheets, with SHA-256 equality covering repeated pages. The new expense lines,
+profit, owner-specific C/F/SE copies, QBI, Schedule J, AMT and final amounts
+reconcile. Existing joint-name presentation (68), skipped/zero presentation
+(76), Form 6251 native line 1a (84) and attachment-order (86) qualifications
+remain deferred; schema success does not resolve them.
+
+Evidence: `.state/research/schedule-j-expense-packets-2026-10-09/` retains
+source/pending/origin JSON, XML, PDFs, XSD logs, image hashes and the visual/native
+review manifests. XSD SHA-256:
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+The benchmark remains 46/133 passing (87 existing failures, deferred item 96).
+Supplier/buyer issuance and prior IRS returns remain synthetic evidence;
+crew/shareholder compensation, payroll/property, other expenses and attribution,
+loss/NOL and broader credit combinations remain existing parent scope. This is
+not IRS business-rule acceptance or general filing readiness.
+
+## Historical October 6 catch-sales and supplies checkpoint
+
 The [2025 Schedule J instructions](https://www.irs.gov/instructions/i1040sj)
 require line 2a to combine all income, gains, losses, and deductions
 attributable to the taxpayer's farming and fishing businesses. The existing

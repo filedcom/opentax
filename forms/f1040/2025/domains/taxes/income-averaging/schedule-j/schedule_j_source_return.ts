@@ -1,8 +1,15 @@
+import {
+  fishingExpenseTotals,
+  fishingLedgerSchema,
+} from "./schedule_j_fishing_ledger.ts";
 import { isDeepStrictEqual } from "node:util";
 import { createHash } from "node:crypto";
 import { reconcileForm4952ScheduleJChildDividend } from "../../../deductions/investments/form4952/form4952_schedulej_child_reconciliation.ts";
 import { z } from "zod";
-import { execute, type ExecuteResult } from "../../../../../../../core/runtime/executor.ts";
+import {
+  execute,
+  type ExecuteResult,
+} from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
 import { publicInputSchema } from "../../../../../nodes/inputs/taxes/income-averaging/schedule_j/index.ts";
 import { scheduleJTaxSourceSchema } from "../../../../../nodes/intermediate/forms/taxes/income-averaging/schedule_j/tax-source.ts";
@@ -31,33 +38,6 @@ const nonfarmEmployerRecordSchema = z.object({
   employment_start: z.string().regex(/^2025-\d{2}-\d{2}$/),
   employment_end: z.string().regex(/^2025-\d{2}-\d{2}$/),
   services: z.string().trim().min(1),
-}).strict();
-
-const fishingLedgerSchema = z.object({
-  tax_year: z.literal(2025),
-  taxpayer_ssn: z.string().regex(/^\d{9}$/),
-  business_reference: z.string().trim().min(1),
-  catch_sales_record_reference: z.string().trim().min(1),
-  vessel_name: z.string().trim().min(1),
-  commercial_harvest: z.literal(true),
-  scientific_research_vessel: z.literal(false),
-  sales: z.array(
-    z.object({
-      sold_on: z.string().regex(/^2025-\d{2}-\d{2}$/),
-      buyer: z.string().trim().min(1),
-      buyer_invoice_reference: z.string().trim().min(1),
-      catch_description: z.string().trim().min(1),
-      amount: z.number().int().positive(),
-    }).strict(),
-  ).min(1),
-  supplies: z.array(
-    z.object({
-      paid_on: z.string().regex(/^2025-\d{2}-\d{2}$/),
-      supplier: z.string().trim().min(1),
-      paid_receipt_reference: z.string().trim().min(1),
-      amount: z.number().int().positive(),
-    }).strict(),
-  ),
 }).strict();
 
 export function retainedFishingProfit(inputs: Record<string, unknown>): number {
@@ -99,8 +79,11 @@ export function retainedFishingProfit(inputs: Record<string, unknown>): number {
   }
   const sales = ledger.sales.reduce((sum, item) => sum + item.amount, 0);
   const supplies = ledger.supplies.reduce((sum, item) => sum + item.amount, 0);
+  const expenses = fishingExpenseTotals(ledger);
   const saleRefs = ledger.sales.map((row) => row.buyer_invoice_reference);
-  const paidRefs = ledger.supplies.map((row) => row.paid_receipt_reference);
+  const paidRefs = [...ledger.supplies, ...(ledger.expenses ?? [])].map(
+    (row) => row.paid_receipt_reference,
+  );
   if (
     proof.document_id !== evidence.catch_sales_record_reference ||
     ledger.taxpayer_ssn !== owner ||
@@ -113,11 +96,15 @@ export function retainedFishingProfit(inputs: Record<string, unknown>): number {
     business.line_g_material_participation !== true ||
     sales !== business.line_1_gross_receipts ||
     supplies !== (business.line_22_supplies ?? 0) ||
+    Object.entries(expenses).some(([key, value]) =>
+      value !== (business[key] ?? 0)
+    ) ||
     new Set(saleRefs).size !== saleRefs.length ||
     new Set(paidRefs).size !== paidRefs.length ||
     Object.entries(business).some(([key, value]) =>
       /^line_\d/.test(key) &&
       key !== "line_1_gross_receipts" && key !== "line_22_supplies" &&
+      !Object.hasOwn(expenses, key) &&
       typeof value === "number" && value !== 0
     )
   ) {
@@ -125,7 +112,8 @@ export function retainedFishingProfit(inputs: Record<string, unknown>): number {
       "Schedule J fishing ledger, owner, and filed Schedule C do not reconcile",
     );
   }
-  return sales - supplies;
+  return sales - supplies -
+    Object.values(expenses).reduce((sum, value) => sum + value, 0);
 }
 
 function nonfarmWages(
