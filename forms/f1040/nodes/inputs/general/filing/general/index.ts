@@ -47,6 +47,7 @@ import { agi_aggregator } from "../../../../intermediate/aggregation/general/ret
 import { form8959 } from "../../../../intermediate/forms/taxes/employment/form8959/index.ts";
 import {
   form8880,
+  employeeContributionReviewSchema,
   jointDistributionReviewSchema,
   nonjointDistributionReviewSchema,
 } from "../../../../intermediate/forms/credits/individual/form8880/index.ts";
@@ -375,6 +376,8 @@ export const inputSchema = z.object({
   spouse_dob: z.string().optional(),
   spouse_form8880_student_five_months: z.boolean().optional(),
   spouse_form8880_claimed_as_dependent: z.boolean().optional(),
+  form8880_employee_contribution_review: employeeContributionReviewSchema
+    .optional(),
   form8880_joint_distribution_review: jointDistributionReviewSchema.optional(),
   form8880_nonjoint_distribution_review: nonjointDistributionReviewSchema
     .optional(),
@@ -1528,6 +1531,10 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
         ...(parsed.spouse_form8880_claimed_as_dependent !== undefined && {
           spouse_claimed_as_dependent:
             parsed.spouse_form8880_claimed_as_dependent,
+        }),
+        ...(parsed.form8880_employee_contribution_review && {
+          employee_contribution_review:
+            parsed.form8880_employee_contribution_review,
         }),
         ...(parsed.form8880_nonjoint_distribution_review && {
           nonjoint_distribution_review:

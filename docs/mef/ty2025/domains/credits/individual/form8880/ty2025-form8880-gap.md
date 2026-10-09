@@ -389,3 +389,72 @@ All12 pages were reviewed: each packet has Form1040 pages1–2, Schedule1 pages3
 Schedule3 page5 and Form8880 page6. Printed identity, status/digital-assets marks,
 IRA deductions, line1/2 contribution split, tax and refund reconcile. The
 source-validation qualification remains material despite those correct outputs.
+
+## October 9 voluntary employee contribution checkpoint
+
+The public general source now accepts `form8880_employee_contribution_review`
+for voluntary after-tax employee payments to a reviewed qualified employer plan.
+This is Form8880 line2, distinct from IRA/ABLE line1 and W-2 elective deferrals.
+The [2025 Form8880 instructions](https://www.irs.gov/pub/irs-prior/f8880--2025.pdf)
+include voluntary employee contributions and exclude section414(h)(2) employer
+pickup amounts. The contract requires a2025 annual payroll statement and plan
+statement with matching employee/participant SSN, sponsoring employer EIN and
+paid amount; distinct references/account identity; plan qualification; and
+explicit non-IRA/ABLE, no-returned-payment, nonemployer, nonpickup and
+not-already-in-Box12 classifications. A matching owned W-2 identifies the
+employer relationship; it does not independently substantiate the after-tax
+amount, which must reconcile between the two reviewed records.
+
+Public entry rejects missing/ambiguous/misowned W-2 joins and missing reviewed
+distribution inventory. Calculations allocate contributions by actual SSN,
+reject nonjoint spouse claims and unsourced deferral totals, and combine the
+reviewed payments with sourced elective deferrals. Both native and full-PDF
+builders replay the retained general review, W-2 relationship, owner facts and
+computed outcome before document selection. This validation therefore still
+runs when distributions eliminate the credit and no Form8880 is printed, or
+when the computed Form8880 slice is removed. A PDF without a prepared native
+bundle receives the same new-source checks.
+
+Exact cents remain in payroll and plan records. For this reviewed route, cents
+are added across line2 sources before rounding its owner total, and the credit
+is rounded to whole dollars. This follows the
+[Form1040 rounding instructions](https://www.irs.gov/instructions/i1040gi),
+which require summing amounts before rounding a line total; historical scalar
+routes are not upgraded to this reviewed-source claim.
+
+All single cases have AGI25000, taxable9250, pre-credit tax928 and payments2000.
+Joint cases have AGI50000, taxable18500, pre-credit tax1853 and payments3000.
+Both owners are61; the reviewed student/dependent answers are false.
+
+| Case | Actual voluntary/elective payments | Filed line2 taxpayer/spouse | Prior distributions | Credit | Final tax/refund |
+| --- | --- | --- | ---: | ---: | --- |
+| Single voluntary | 1500.50/0 | 1501/0 | 0 | 300 | 628/1372 |
+| Single mixed | 1000.49/1000.49 | 2001/0 | 0 | 400 | 528/1472 |
+| Single prior distribution | 1500/0 | 1500/0 | 500 | 200 | 728/1272 |
+| Single fully offset | 1500/0 | 1500/0, no filed form | 1500 | 0 | 928/1072 |
+| Joint both owners | taxpayer1000, spouse1500 | 1000/1500 | 0 | 500 | 1353/1647 |
+| Joint spouse only | spouse1500 | 0/1500 | 0 | 300 | 1553/1447 |
+
+The focused grouped gate passes239/0; the native/PDF builder gate passes187/0
+with Poppler on PATH. An initial builder run failed only because `pdftotext`
+was absent from PATH; the original log is retained. Six new public fixtures
+reject30 invalid source/inventory inputs and54 changes at each native/full-PDF
+boundary. Schema tests reject duplicate or unreconciled records and forbidden
+classifications. Development logs retain the zero-credit PDF omission and
+fractional-credit failures corrected in this new path; those were implementation
+failures of the new route, not repairs to deferred items98–99.
+
+All six XMLs pass cached TY2025v5.4 Return1040.xsd, digest
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+All22 pages were reviewed: five four-page1040/Schedule3/Form8880 packets and one
+two-page zero-credit1040. Filing marks, source income, rounded owner columns,
+credit, tax and refunds reconcile. Both joint Form8880 page4 name headers omit
+Sam, and the spouse-only packet omits some zero amounts in the primary column;
+these extend existing joint-name/zero-presentation qualifications, not new fixes.
+
+Evidence: `.state/research/form8880-employee-2026-10-09/`, six source/pending/XML/
+PDF sets,22 renders, schema and qualification reports, original/final tests.
+The records are reviewed structured facts, not authenticated issuer bytes.
+Wider IRA/ABLE sources, source authentication, other eligibility/credit-order
+combinations, business-rule validation and IRS acceptance remain open. The
+Form8880 and source-provenance parent tasks are not closed.

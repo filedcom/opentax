@@ -109,6 +109,9 @@ function buildIRS8880(fields: Input, context?: MefBuildContext): string {
     source.elective_deferrals_taxpayer,
     source.elective_deferrals_spouse,
     ...(source.w2_deferral_entries ?? []).map(eligibleW2DeferralAmount),
+    ...(source.employee_contribution_review?.entries ?? []).map((entry) =>
+      entry.payroll.employee_after_tax_paid
+    ),
   ].some((amount) => (amount ?? 0) > 0);
   if (fields.calculated_zero_credit !== undefined) {
     if (

@@ -1,3 +1,4 @@
+import { assertEmployeeContributionW2Sources } from "./form8880_employee_sources.ts";
 import {
   assertJointSaverDistributionCopies,
   assertNonjointSaverDistributionCopies,
@@ -82,8 +83,22 @@ function assertForm8880GeneralEligibility(
 ): void {
   // Standalone Form 8880 inputs can supply reviewed eligibility facts. When
   // the return retains their general-source origin, replay each claimed owner.
+  if (source.employee_contribution_review && pending.general === undefined) {
+    throw new Error(
+      "Form 8880 voluntary contribution review needs its retained general source",
+    );
+  }
   if (pending.general === undefined) return;
   const general = generalInputSchema.parse(pending.general);
+  if (
+    JSON.stringify(source.employee_contribution_review) !==
+      JSON.stringify(general.form8880_employee_contribution_review)
+  ) {
+    throw new Error(
+      "Form 8880 voluntary contribution review differs from retained general source",
+    );
+  }
+
   if (
     JSON.stringify(source.nonjoint_distribution_review) !==
       JSON.stringify(general.form8880_nonjoint_distribution_review)
@@ -114,7 +129,8 @@ function assertForm8880GeneralEligibility(
     );
   }
   if (
-    source.joint_distribution_review?.current_year_source_inventory_review &&
+    (source.joint_distribution_review?.current_year_source_inventory_review ||
+      source.employee_contribution_review) &&
     (!sameOwner(source.taxpayer_ssn, general.taxpayer_ssn) ||
       !sameOwner(source.spouse_ssn, general.spouse_ssn))
   ) {
@@ -258,6 +274,15 @@ export function assertForm8880FiledCalculation(
       source.spouse_ssn,
     );
   }
+  if (source.employee_contribution_review) {
+    assertEmployeeContributionW2Sources(
+      source.employee_contribution_review,
+      pending.w2 === undefined ? [] : w2InputSchema.parse(pending.w2).w2s,
+      source.taxpayer_ssn,
+      source.spouse_ssn,
+      source.filing_status,
+    );
+  }
   assertForm8880W2DeferralSources(source, pending);
   assertForm8880GeneralEligibility(
     source,
@@ -352,6 +377,8 @@ export function assertReviewedForm8880Outcome(
     ? undefined
     : generalInputSchema.parse(pending.general);
   if (
+    source.employee_contribution_review ||
+    general?.form8880_employee_contribution_review ||
     source.nonjoint_distribution_review ||
     general?.form8880_nonjoint_distribution_review ||
     source.joint_distribution_review?.current_year_source_inventory_review ||
@@ -360,4 +387,25 @@ export function assertReviewedForm8880Outcome(
   ) {
     assertForm8880FiledCalculation(fields, pending);
   }
+}
+
+/** Validate the new voluntary-payment route before selecting positive documents. */
+export function assertEmployeeContributionReturn(
+  pending: Readonly<Record<string, unknown>>,
+): void {
+  const fields = pending.form8880 ?? {};
+  const source = form8880InputSchema.pick({
+    employee_contribution_review: true,
+  }).parse(fields);
+  const general = generalInputSchema.pick({
+    form8880_employee_contribution_review: true,
+  }).parse(pending.general ?? {});
+  if (
+    !source.employee_contribution_review &&
+    !general.form8880_employee_contribution_review
+  ) return;
+  if (typeof fields !== "object" || fields === null) {
+    throw new Error("Form 8880 voluntary source needs its computed outcome");
+  }
+  assertForm8880FiledCalculation(fields, pending);
 }

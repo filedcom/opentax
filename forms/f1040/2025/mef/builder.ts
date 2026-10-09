@@ -1,3 +1,4 @@
+import { assertEmployeeContributionReturn } from "../domains/credits/individual/form8880/form8880_tax_limit.ts";
 import type { ExecuteResult } from "../../../../core/runtime/executor.ts";
 import type { Form8886Source } from "../domains/general/filing/form8886/source.ts";
 import {
@@ -279,6 +280,7 @@ function buildReturnXml(
   readonly form3800Parts?: Form3800DocumentParts;
   readonly documents: readonly MefDocumentFragment[];
 } {
+  assertEmployeeContributionReturn(pending);
   if (year !== 2025 || returnType !== "1040") {
     throw new Error(
       "TY2025 Form 1040 export requires year 2025 and return type 1040",

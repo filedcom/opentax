@@ -1,3 +1,4 @@
+import { assertEmployeeContributionReturn } from "../domains/credits/individual/form8880/form8880_tax_limit.ts";
 import { assertPreparedForm8886PublicSource } from "../domains/general/filing/form8886/return-packets.ts";
 import { assertOwned7203RequiredCopies } from "../domains/income/business/form7203/form7203-owned-return.ts";
 import { assertHsaExcessRequiredCopy } from "../domains/adjustments/health/form8889/form8889_postyear_single_reconciliation.ts";
@@ -580,6 +581,7 @@ async function buildPdfBytesInternal(
   assertDigitalAssetDispositionAnswer(pending);
   await assertForm1098IssuerCopies(pending);
   const normalized = normalizeAllPending(pending);
+  assertEmployeeContributionReturn(normalized);
   assertScheduleJSourceReturn(pending, executeComposedSourceReturn);
   assertSingleFarmQbiReturn(normalized);
   if (normalized.f1040) {

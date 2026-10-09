@@ -1,4 +1,8 @@
 import {
+  employeeContributionReviewSchema,
+  ownedEmployeeContributions,
+} from "./employee_contribution_review.ts";
+import {
   nonjointDistributionReviewSchema,
   nonjointDistributionTotal,
   reviewedSaver1099RCopySchema,
@@ -153,6 +157,7 @@ export const inputSchema = z.object({
   // Reject the old combined W-2 amount. Its owner cannot be inferred on MFJ.
   elective_deferrals: z.never().optional(),
   w2_deferral_entries: z.array(w2DeferralEntrySchema).optional(),
+  employee_contribution_review: employeeContributionReviewSchema.optional(),
   elective_deferrals_taxpayer: z.number().nonnegative().optional(),
   elective_deferrals_spouse: z.number().nonnegative().optional(),
   // Disqualifying distributions received in the test period
@@ -331,7 +336,7 @@ export function assertEligibleContributor(
   }
 }
 
-export function ownedDeferrals(input: Form8880Input): {
+function ownedW2Deferrals(input: Form8880Input): {
   taxpayer: number;
   spouse: number;
 } {
@@ -384,6 +389,46 @@ export function ownedDeferrals(input: Form8880Input): {
   return {
     taxpayer: taxpayer + (input.elective_deferrals_taxpayer ?? 0),
     spouse: spouse + (input.elective_deferrals_spouse ?? 0),
+  };
+}
+
+/** Form8880 line2 combines elective deferrals and distinct voluntary payments. */
+export function ownedDeferrals(
+  input: Form8880Input,
+): { taxpayer: number; spouse: number } {
+  if (
+    input.employee_contribution_review &&
+    (input.filing_status === FilingStatus.MFJ
+      ? !input.joint_distribution_review?.current_year_source_inventory_review
+      : !input.nonjoint_distribution_review)
+  ) {
+    throw new Error(
+      "Form 8880 voluntary contributions need a complete reviewed distribution inventory",
+    );
+  }
+  const w2 = ownedW2Deferrals(input);
+  const employee = ownedEmployeeContributions(
+    input.employee_contribution_review,
+    input.taxpayer_ssn,
+    input.spouse_ssn,
+    input.filing_status,
+  );
+  if (
+    input.employee_contribution_review &&
+    (input.elective_deferrals_taxpayer !== undefined ||
+      input.elective_deferrals_spouse !== undefined)
+  ) {
+    throw new Error(
+      "Form 8880 voluntary contributions cannot mix with unsourced deferral totals",
+    );
+  }
+  return {
+    taxpayer: input.employee_contribution_review
+      ? Math.round(w2.taxpayer + employee.taxpayer)
+      : w2.taxpayer,
+    spouse: input.employee_contribution_review
+      ? Math.round(w2.spouse + employee.spouse)
+      : w2.spouse,
   };
 }
 
@@ -461,7 +506,11 @@ export function calculateForm8880(
     return { credit: 0, calculatedZero: true };
   }
 
-  const rawCredit = totalEligible * rate; // Line 8
+  // The reviewed voluntary route files whole dollars: add cents first, then
+  // round the line total and calculated credit, retaining exact source amounts.
+  const rawCredit = parsed.employee_contribution_review
+    ? Math.round(totalEligible * rate)
+    : totalEligible * rate;
 
   // Line 11/12 — limit by sourced tax liability.
   const credit = Math.min(rawCredit, capacity);
