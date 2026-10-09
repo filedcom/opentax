@@ -1,5 +1,60 @@
 # TY2025 Form 1098 box 6 points
 
+
+## October 9 owned-interest and recovery checkpoint
+
+The current mortgage source-byte gate extends beyond positive box 6: ordinary
+claimed box 1 interest, taxable box 4 recovery, unreported refinance points and
+reviewed cross-loan inventories require retained Copy B bytes at final native
+bundle and fresh PDF export. The historical “unrun” notes below are superseded
+for the computational cases included in this checkpoint; they do not imply new
+visual review of every older packet.
+
+Four new complete public-input returns pair current-year partial interest with
+prior-year interest recoveries, for single and joint owners using either
+itemized or standard deductions. Each lender reports box 4 of 2,000; the reviewed
+taxable portions are 1,200 for the primary and 800 for the spouse. The return
+retains those recovery amounts even when Schedule A is omitted. Box 5 premiums
+of 600 per lender do not increase the deduction, and box 6 is blank throughout.
+
+| Return | Deduction | AGI | Taxable income | Tax | Refund | Pages |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Single, itemized | 18,000 | 151,200 | 133,200 | 24,815 | 5,185 | 6 |
+| Single, standard | 15,750 | 151,200 | 135,450 | 25,355 | 4,645 | 5 |
+| Joint, itemized | 36,000 | 152,000 | 116,000 | 15,348 | 14,652 | 6 |
+| Joint, standard | 31,500 | 152,000 | 120,500 | 16,338 | 13,662 | 5 |
+
+All four retain wages of 150,000 and withholding of 30,000. Independent final-tax
+expectations use the [2025 tax-computation worksheet, page 14](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf):
+24% less 7,153 for these single incomes, and 22% less 10,172 for these joint
+incomes. [2025 Publication 525, page 24](https://www.irs.gov/pub/irs-prior/p525--2025.pdf)
+keeps a prior-year mortgage refund separate from current interest; its tax-benefit
+review remains a structured workpaper assertion here.
+[2025 Publication 936](https://www.irs.gov/pub/irs-prior/p936--2025.pdf) provides
+the itemization and interest-limit rules and excludes mortgage-insurance premiums.
+
+The new four-case suite passes with **30 native-bundle and 30 fresh-PDF
+rejections**: missing copy, stale digest, independently rehashed wrong refund,
+independently rehashed unrelated owner, and missing recovery review for each
+retained lender. The related mortgage and Schedule A group passes **174/174**,
+including earlier-vintage points ledgers, mixed-improvement/early-payoff points,
+cash-out tracing and wider Table 1 combinations. No mortgage runtime changed.
+
+All four complete returns pass the cached IRS TY2025 v5.4 Return1040 XSD
+(SHA-256 `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`).
+All **22 return pages and six retained source pages** were rendered and observed;
+return packets have no remaining fields/widgets, and all nine modeled source
+fields match their values, printable appearances and retained digest. Evidence,
+commands, source/pending/expected facts, XML, PDFs, renders and review records are
+under `.state/research/form1098-owned-recoveries-2026-10-09/`.
+
+The joint income statements and native header repeat the existing deferred
+primary-only-name qualification. These constructed copies do not authenticate
+the issuer, the complete source page, prior filed returns, acquisition-debt
+facts or tax-benefit workpapers. Scanned/flattened copies, broader source
+provenance, remaining mortgage combinations, business rules and IRS acceptance
+remain open; this checkpoint does not close the board's parent source task.
+
 ## MFS two-loan acquisition-debt limit (bounded 2026-10-05)
 
 The [2025 Publication 936 Table 1](https://www.irs.gov/publications/p936)
@@ -25,7 +80,7 @@ the same amount. This structured review does not authenticate payment records,
 issuer Copy B provenance, or property-law facts; community-property,
 mixed-year, points, and other MFS mortgage combinations remain open.
 
-## Issuer Copy B byte/content gate (implemented, unrun)
+## Issuer Copy B byte/content gate (current grouped verification above)
 
 A strict 2025 Form 1098 Copy B verifier now accepts one identified source item,
 an exact attachment filename and SHA-256 review, and the attachment bytes. It
@@ -165,8 +220,8 @@ Manifest SHA-256 is
 the XML and PDF SHA-256 values are `0201100810cc7408b36d1f4c8344a4897cbd587c48b7a58f10357c7a3f69404c`
 and `3c5bc677bd8b199f80d2856a3bf83f3e4b6fbad0d0ba5601ec3926a9fb74a608`.
 This is source-fixture, XSD, and text-projection evidence, not visual
-signoff or proof of the lender/payment records. The 2024- and 2023-origin
-ledgers and mixed-improvement extension below remain unrun. Issuer/source-byte
+signoff or proof of the lender/payment records. The October 9 grouped run now passes the 2024- and 2023-origin
+ledger and mixed-improvement computational tests below. Issuer/source-byte
 authentication, full mortgage-limit interaction, business rules, and ATS
 remain open.
 
@@ -183,7 +238,7 @@ twelve current-payments fixture expects $67 on the 2024 ledger and $133 on
 remain excluded until their opening balance can be reconciled. The filed
 return/workpaper bytes and mortgage-limit allocation across loans beyond the
 bounded two-loan route remain open;
-the fixture is unrun pending the combined batch.
+the computational fixture passes in the October 9 combined group.
 
 The same unreported-points path now accepts a 2023-origin ordinary refinance
 when the source has separate reviewed filed 2023 and 2024 return/workpaper
@@ -196,7 +251,7 @@ payments produce $133, and twelve 2025 payments produce $133 on Schedule A
 line 8c. The linked 2025 Form 1098 box 1 interest remains on line 8a; the
 2025 itemized total reaches Form 1040 line 12e. Native MeF and PDF use the
 same source-replay gate. Focused positive/tamper and full-return XSD/PDF
-fixtures are authored but unrun. [Publication 936](https://www.irs.gov/publications/p936)
+fixtures are authored; the October 9 group passes the positive/tamper computational cases, while this checkpoint does not claim new full-return visual review of that older vintage. [Publication 936](https://www.irs.gov/publications/p936)
 requires ratable deduction of ordinary refinance points, and the [Schedule A
 instructions](https://www.irs.gov/instructions/i1040sca) place unreported
 points on line 8c. Historical return and lender/payment bytes remain
@@ -214,7 +269,7 @@ the remaining interest-like points over the payment months and loan term.
 The Pub. 936 example of a $100,000 refinance with $75,000 to repay old debt,
 $25,000 for improvement, $2,000 of interest-like points, and six 2025 payments
 on a 180-month loan yields $500 immediately plus $50 ratably, or $550 on
-Schedule A line 8c. A focused fixture is written but unrun. The source still
+Schedule A line 8c. The focused computational fixture passes in the October 9 group. The source still
 requires the reviewed acquisition-debt-limit condition; whole-return
 mortgage-limit allocation beyond the bounded two-loan route and underlying
 expense bytes remain open.
@@ -229,8 +284,7 @@ deducted in the payoff year on line 8c, while service-fee points stay excluded.
 The same-lender refinance exception is rejected by the strict source schema;
 it needs a separate new-loan amortization record. A synthetic three-payment
 July–September payoff case is written to expect $2,000 of line 8c points from
-$3,000 charged less $1,000 of service fees. The fixture remains unrun until
-the combined batch. This route does not prove the payoff statement's bytes,
+$3,000 charged less $1,000 of service fees. The computational fixture passes in the October 9 combined batch. This route does not prove the payoff statement's bytes,
 historical amortization, or multiple-debt limit allocation.
 
 ## Original bounded two-loan mortgage limit
