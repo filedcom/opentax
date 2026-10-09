@@ -1,0 +1,289 @@
+{
+  "other-coverage-excess": {
+    "deductions": [
+      2000,
+      6000
+    ],
+    "taxable_distributions": [
+      0,
+      0
+    ],
+    "excluded_distributions": [
+      0,
+      0
+    ],
+    "medical_expenses": [
+      0,
+      0
+    ],
+    "penalties": [
+      0,
+      0
+    ],
+    "current_excess": [
+      1000,
+      0
+    ],
+    "excess_tax": [
+      60,
+      0
+    ],
+    "earnings": 0,
+    "hsa_deduction": 8000,
+    "additional_income": 0,
+    "agi": 82000,
+    "standard_deduction": 31500,
+    "senior_deduction": 0,
+    "taxable_income": 50500,
+    "regular_tax": 5586,
+    "additional_tax": 60,
+    "total_tax": 5646,
+    "refund": 6354
+  },
+  "medicare-current-excess": {
+    "deductions": [
+      2150,
+      3000
+    ],
+    "taxable_distributions": [
+      0,
+      0
+    ],
+    "excluded_distributions": [
+      0,
+      0
+    ],
+    "medical_expenses": [
+      0,
+      0
+    ],
+    "penalties": [
+      0,
+      0
+    ],
+    "current_excess": [
+      850,
+      0
+    ],
+    "excess_tax": [
+      51,
+      0
+    ],
+    "earnings": 0,
+    "hsa_deduction": 5150,
+    "additional_income": 0,
+    "agi": 84850,
+    "standard_deduction": 31500,
+    "senior_deduction": 0,
+    "taxable_income": 53350,
+    "regular_tax": 5928,
+    "additional_tax": 51,
+    "total_tax": 5979,
+    "refund": 6021
+  },
+  "code2-and-medical": {
+    "deductions": [
+      4300,
+      2000
+    ],
+    "taxable_distributions": [
+      0,
+      300
+    ],
+    "excluded_distributions": [
+      1000,
+      0
+    ],
+    "medical_expenses": [
+      0,
+      200
+    ],
+    "penalties": [
+      0,
+      60
+    ],
+    "current_excess": [
+      0,
+      0
+    ],
+    "excess_tax": [
+      0,
+      0
+    ],
+    "earnings": 100,
+    "hsa_deduction": 6300,
+    "additional_income": 400,
+    "agi": 84100,
+    "standard_deduction": 31500,
+    "senior_deduction": 0,
+    "taxable_income": 52600,
+    "regular_tax": 5838,
+    "additional_tax": 60,
+    "total_tax": 5898,
+    "refund": 6102
+  },
+  "rollover-and-taxable": {
+    "deductions": [
+      2000,
+      2000
+    ],
+    "taxable_distributions": [
+      400,
+      0
+    ],
+    "excluded_distributions": [
+      600,
+      0
+    ],
+    "medical_expenses": [
+      0,
+      0
+    ],
+    "penalties": [
+      80,
+      0
+    ],
+    "current_excess": [
+      0,
+      0
+    ],
+    "excess_tax": [
+      0,
+      0
+    ],
+    "earnings": 0,
+    "hsa_deduction": 4000,
+    "additional_income": 400,
+    "agi": 86400,
+    "standard_deduction": 31500,
+    "senior_deduction": 0,
+    "taxable_income": 54900,
+    "regular_tax": 6114,
+    "additional_tax": 80,
+    "total_tax": 6194,
+    "refund": 5806
+  },
+  "disability-dated-distributions": {
+    "deductions": [
+      2000,
+      2000
+    ],
+    "taxable_distributions": [
+      700,
+      0
+    ],
+    "excluded_distributions": [
+      0,
+      0
+    ],
+    "medical_expenses": [
+      300,
+      0
+    ],
+    "penalties": [
+      60,
+      0
+    ],
+    "current_excess": [
+      0,
+      0
+    ],
+    "excess_tax": [
+      0,
+      0
+    ],
+    "earnings": 0,
+    "hsa_deduction": 4000,
+    "additional_income": 700,
+    "agi": 86700,
+    "standard_deduction": 31500,
+    "senior_deduction": 0,
+    "taxable_income": 55200,
+    "regular_tax": 6150,
+    "additional_tax": 60,
+    "total_tax": 6210,
+    "refund": 5790
+  },
+  "primary-medicare-age65": {
+    "deductions": [
+      2500,
+      3000
+    ],
+    "taxable_distributions": [
+      700,
+      0
+    ],
+    "excluded_distributions": [
+      0,
+      0
+    ],
+    "medical_expenses": [
+      300,
+      0
+    ],
+    "penalties": [
+      40,
+      0
+    ],
+    "current_excess": [
+      0,
+      0
+    ],
+    "excess_tax": [
+      0,
+      0
+    ],
+    "earnings": 0,
+    "hsa_deduction": 5500,
+    "additional_income": 700,
+    "agi": 85200,
+    "standard_deduction": 33100,
+    "senior_deduction": 6000,
+    "taxable_income": 46100,
+    "regular_tax": 5058,
+    "additional_tax": 40,
+    "total_tax": 5098,
+    "refund": 6902
+  },
+  "spouse-medicare-age65": {
+    "deductions": [
+      3000,
+      2500
+    ],
+    "taxable_distributions": [
+      0,
+      700
+    ],
+    "excluded_distributions": [
+      0,
+      0
+    ],
+    "medical_expenses": [
+      0,
+      300
+    ],
+    "penalties": [
+      0,
+      40
+    ],
+    "current_excess": [
+      0,
+      0
+    ],
+    "excess_tax": [
+      0,
+      0
+    ],
+    "earnings": 0,
+    "hsa_deduction": 5500,
+    "additional_income": 700,
+    "agi": 85200,
+    "standard_deduction": 33100,
+    "senior_deduction": 6000,
+    "taxable_income": 46100,
+    "regular_tax": 5058,
+    "additional_tax": 40,
+    "total_tax": 5098,
+    "refund": 6902
+  }
+}
