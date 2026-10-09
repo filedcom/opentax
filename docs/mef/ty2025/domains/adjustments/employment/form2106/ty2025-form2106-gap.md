@@ -1,8 +1,71 @@
 # TY2025 Form 2106: employee business expenses
 
+## October 9 travel, mileage and reimbursement checkpoint
+
+The fee-basis filing route now also accepts sourced Part I transportation,
+overnight travel and ordinary 50%-limited meals, plus one standard-mileage
+vehicle per job. Owned vehicles require the first-business-year method history;
+leased vehicles require standard mileage throughout the lease. The existing
+schema requires mileage evidence, commuting/business/total distances, personal
+availability answers and no personal/business conversion during the year.
+Separately allocated mileage-record references must be distinct across jobs.
+
+Both reimbursement columns must be at most their corresponding expenses, and
+each job must retain a positive deduction. Line 7 amounts are already allocated
+nonmeal/meal payments excluded from W-2 box 1; this route does not calculate a
+single combined payment allocation. W-2 owner/employer joins, four-document
+capacity and final wages/AGI reconciliation remain enforced. Actual vehicle
+cost/depreciation, excess reimbursements and other employee categories remain
+guarded. No calculation-node or PDF mapping was changed.
+
+The [2025 instructions](https://www.irs.gov/pub/irs-prior/i2106--2025.pdf)
+specify the 70-cent mileage rate, commuting exclusion, two reimbursement
+columns and ordinary meal limit. The complete synthetic fixtures exercise:
+
+| Case | Deduction | Taxable income | Tax | Refund | Pages |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Single, travel without a vehicle | 1,600 | 132,650 | 24,683 | 5,317 | 6 |
+| Single, owned vehicle | 4,400 | 129,850 | 24,011 | 5,989 | 6 |
+| Joint, spouse's leased vehicle | 5,100 | 113,400 | 14,776 | 15,224 | 6 |
+| Joint, owned and leased vehicles in separate jobs | 9,500 | 109,000 | 13,808 | 16,192 | 8 |
+| Single, meals only | 400 | 133,850 | 24,971 | 5,029 | 6 |
+| Joint, nonmeal expenses fully reimbursed | 200 | 118,300 | 15,854 | 14,146 | 6 |
+
+Each return has wages of 150,000 and withholding of 30,000. The mixed-expense
+jobs use transportation 300, overnight travel 1,600, other expenses 200, meals
+600, and separately paid nonmeal/meal reimbursements of 700/200. Owned mileage
+is 4,000 of 10,000 total miles; leased mileage is 5,000 of 15,000. Each has
+2,000 commuting miles. The meal-only case uses 1,000 meals less 200 reimbursed;
+the fully reimbursed nonmeal case uses 2,100 in column A, leaving only the
+200 allowed meal deduction.
+
+The focused group passes **83 tests**, including all earlier job tests and six
+new complete returns. All six failed at the old export guard before the
+extension. **40 native and 40 fresh-PDF mutations reject**, covering changed
+travel/mileage/meals, excess reimbursements in either column, wrong owners,
+stale Schedule 1 amounts and shared mileage evidence.
+
+All six returns pass cached TY2025v5.4 XSD with the same schema digest recorded
+below. Independent verification checks every Part I amount, vehicle date,
+mileage count, native fraction, checkbox answer, Schedule 1 reference and
+final tax/refund. All **38 pages** were visually reviewed through 28 unique
+page hashes: the leased percentage prints 33.33% and emits 0.3333 natively;
+owned business use prints 40%. Vehicle answers and unused actual-cost sections
+match source facts. Flattened packets retain no AcroForm fields or widgets.
+Existing deferred qualifications remain: blank calculated-zero cells on
+meal-only/fully-reimbursed Form 2106 and primary-only joint native header names.
+These are not claimed as complete presentation parity or IRS acceptance.
+
+Private evidence is retained in `.state/research/form2106-travel-2026-10-09/`.
+Source, pending, expected totals, native/PDF output, origins, verification,
+page-review map, visual review, test logs and hash manifest are included.
+Expense/mileage/method-history references remain caller-supplied structured
+records, not authenticated receipts or employer-issued bytes. Their substantive
+qualification and provenance remain part of the open parent scope.
+
 ## October 9 multiple owned fee-basis jobs
 
-Native and PDF filing now accepts one to four separately sourced fee-basis
+The earlier line-4 checkpoint accepts one to four separately sourced fee-basis
 state or local official jobs, including a spouse on a joint return. Each job
 has positive line 4 expenses and no vehicle, transportation, travel, meals or
 reimbursements. The cached TY2025v5.4 ReturnData1040 schema permits at most four
@@ -81,12 +144,13 @@ The October 9 group supersedes the earlier written-but-unrun test notes.
 - Reservists require trip-level travel, federal per-diem caps and qualifying
   service allocation; performing artists require owner-wide employer, gross
   arts income, greater-than-10% expense, AGI and marital reconciliation.
-- The calculator supports line-4 impairment expenses and sourced standard
-  mileage, but their filing routes remain guarded. Impairment expenses belong
+- The calculator supports line-4 impairment expenses, but that filing route
+  remains guarded. Standard mileage now has the fee-basis route above. Impairment expenses belong
   on Schedule A line 16, with itemization and other contributors reconciled.
 - Actual vehicles require sourced basis, limits, election history and
-  depreciation. Transportation, travel, meals and reimbursement export remain
-  blocked; excess reimbursements need exact W-2/Form 1040 line 1a treatment.
+  depreciation. Special meal limits, combined-payment allocation and excess
+  reimbursements remain outside the verified route; excess reimbursements need
+  exact W-2/Form 1040 line 1a treatment.
 - Broader income combinations, final coordinated batch, business rules,
   source authenticity and IRS ATS remain open. The parent board task is not
   closed by these bounded fee-basis checks.

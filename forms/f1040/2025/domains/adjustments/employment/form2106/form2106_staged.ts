@@ -2,6 +2,7 @@ import {
   calculateForm2106Lines,
   EmployeeType,
   itemSchema,
+  VehicleMethod,
 } from "../../../../../nodes/inputs/adjustments/employment/f2106/index.ts";
 import type { Form2106Lines } from "../../../../../nodes/inputs/adjustments/employment/f2106/index.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
@@ -51,21 +52,21 @@ const pendingRecordSchema = z.record(z.string(), z.unknown());
 const normalizedName = (name: string) =>
   name.trim().toUpperCase().replace(/\s+/g, " ");
 
-/** Fee-basis jobs without vehicle, meal, travel, or reimbursement claims. */
+/** Fee-basis jobs with sourced expenses and no excess reimbursements. */
 export function isSupportedForm2106Route(raw: unknown): boolean {
   const parsed = form2106InputSchema.safeParse(raw);
   // TY2025 ReturnData1040.xsd permits at most four IRS2106 documents.
   if (!parsed.success || parsed.data.f2106s.length > 4) return false;
-  return parsed.data.f2106s.every((item) =>
-    item.qualification.kind === EmployeeType.FEE_BASIS_OFFICIAL &&
-    item.vehicle.method === "NONE" &&
-    item.expenses.line2_parking_tolls_local_transportation === 0 &&
-    item.expenses.line3_overnight_travel_excluding_meals === 0 &&
-    item.expenses.line4_other_business_expenses > 0 &&
-    item.expenses.line5_meals === 0 &&
-    item.reimbursements.line7_column_a_nonmeals === 0 &&
-    item.reimbursements.line7_column_b_meals === 0
-  );
+  return parsed.data.f2106s.every((item) => {
+    if (
+      item.qualification.kind !== EmployeeType.FEE_BASIS_OFFICIAL ||
+      item.vehicle.method === VehicleMethod.ACTUAL_EXPENSE
+    ) return false;
+    const lines = calculateForm2106Lines(item);
+    return lines.line10_deduction > 0 &&
+      lines.line7_column_a <= lines.line6_column_a &&
+      lines.line7_column_b <= lines.line6_column_b;
+  });
 }
 
 /**
@@ -193,12 +194,18 @@ function assertFeeBasisJobSources(
   const expenseKeys = jobs.map(({ source }) =>
     source.expenses.expense_records_reference
   );
+  const mileageKeys = jobs.flatMap(({ source }) =>
+    source.vehicle.method === VehicleMethod.STANDARD_MILEAGE
+      ? [source.vehicle.written_mileage_evidence_reference]
+      : []
+  );
   if (
+    new Set(mileageKeys).size !== mileageKeys.length ||
     new Set(jobKeys).size !== jobKeys.length ||
     new Set(expenseKeys).size !== expenseKeys.length
   ) {
     throw new Error(
-      "Form 2106 needs distinct owner/employer jobs and separately allocated expense records",
+      "Form 2106 needs distinct owner/employer jobs and separately allocated expense and mileage records",
     );
   }
   for (const { source: { job } } of jobs) {
@@ -226,7 +233,7 @@ export function reconcileFileableForm2106Return(
 ) {
   if (!isSupportedForm2106Route(allPending.f2106)) {
     throw new Error(
-      "Form 2106 filing needs sourced fee-basis line-4 expense jobs",
+      "Form 2106 filing needs sourced fee-basis expenses without excess reimbursements",
     );
   }
   const result = reconcileStagedForm2106Return(allPending);
