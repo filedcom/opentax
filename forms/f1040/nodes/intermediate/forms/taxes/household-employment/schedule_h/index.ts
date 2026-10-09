@@ -146,6 +146,16 @@ const fourWeekCarePeriodSchema = z.object({
   to: calendarDate,
   medical_source_reference: sourceReference,
 }).strict();
+const parentRemarriageBaseSchema = z.object({
+  prior_status: z.enum(["divorced", "widowed"]),
+  prior_marriage_end_date: calendarDate,
+  prior_marriage_end_source_reference: sourceReference,
+  no_remarriage_before_event_source_reference: sourceReference,
+  remarriage_date: calendarDate,
+  marriage_source_reference: sourceReference,
+  spouse_ssn: z.string().regex(/^\d{9}$/),
+  spouse_residence_source_reference: sourceReference,
+});
 const parentQuarterSchema = z.object({
   quarter: z.number().int().min(1).max(4),
   home_residence_source_reference: sourceReference,
@@ -189,18 +199,15 @@ const parentQuarterSchema = z.object({
       spouse_residence_source_reference: sourceReference,
       incapable_care_period: fourWeekCarePeriodSchema,
     }).strict(),
-    z.object({
+    parentRemarriageBaseSchema.extend({
       kind: z.literal("remarried_capable_spouse"),
-      prior_status: z.enum(["divorced", "widowed"]),
-      prior_marriage_end_date: calendarDate,
-      prior_marriage_end_source_reference: sourceReference,
-      no_remarriage_before_event_source_reference: sourceReference,
-      remarriage_date: calendarDate,
-      marriage_source_reference: sourceReference,
-      spouse_ssn: z.string().regex(/^\d{9}$/),
-      spouse_residence_source_reference: sourceReference,
       spouse_care_capacity_source_reference: sourceReference,
       living_with_capable_spouse_from_marriage_through_quarter_verified: z.literal(true),
+    }).strict(),
+    parentRemarriageBaseSchema.extend({
+      kind: z.literal("remarried_spouse_incapable"),
+      living_with_spouse_from_marriage_through_quarter_verified: z.literal(true),
+      incapable_care_period: fourWeekCarePeriodSchema,
     }).strict(),
     z.object({
       kind: z.literal("never_married"),
@@ -625,6 +632,7 @@ function parentDatedCashWages(
       const childQualifies = child.kind === "child" &&
         (date < eighteenth || child.adult_care_period !== undefined);
       const employerQualifies = status.kind === "spouse_incapable" ||
+        status.kind === "remarried_spouse_incapable" ||
         status.kind === "divorced_not_remarried" && date >= status.divorce_date ||
         status.kind === "widowed_not_remarried" && date >= status.spouse_death_date ||
         status.kind === "remarried_capable_spouse" && date < status.remarriage_date;
@@ -642,7 +650,8 @@ function parentDatedCashWages(
     const maritalEvent = status.kind === "divorced_not_remarried"
       ? status.divorce_date
       : status.kind === "widowed_not_remarried" ? status.spouse_death_date
-      : status.kind === "remarried_capable_spouse" ? status.remarriage_date : undefined;
+      : status.kind === "remarried_capable_spouse" || status.kind === "remarried_spouse_incapable"
+      ? status.remarriage_date : undefined;
     if ([childBirthday, maritalEvent].some((date) =>
       date !== undefined && payment.service_from < date && payment.service_to >= date
     )) {
@@ -709,19 +718,23 @@ function validateParentRemarriage(
   employerSsn: string,
 ): void {
   const events = review.quarterly_circumstances.filter((row) =>
-    row.employer_circumstances.kind === "remarried_capable_spouse"
+    row.employer_circumstances.kind === "remarried_capable_spouse" ||
+    row.employer_circumstances.kind === "remarried_spouse_incapable"
   );
   if (!events.length) return;
   const event = events[0];
   const status = event.employer_circumstances;
-  if (status.kind !== "remarried_capable_spouse") return;
+  if (status.kind !== "remarried_capable_spouse" &&
+    status.kind !== "remarried_spouse_incapable") return;
   const eventQuarter = Math.ceil(Number(status.remarriage_date.slice(5, 7)) / 3);
   const references = [
     status.prior_marriage_end_source_reference,
     status.no_remarriage_before_event_source_reference,
     status.marriage_source_reference,
     status.spouse_residence_source_reference,
-    status.spouse_care_capacity_source_reference,
+    status.kind === "remarried_capable_spouse"
+      ? status.spouse_care_capacity_source_reference
+      : status.incapable_care_period.medical_source_reference,
   ];
   if (review.classification !== "dated_service_periods" || events.length !== 1 ||
     status.remarriage_date < "2025-01-01" || status.remarriage_date > "2025-12-31" ||
@@ -745,9 +758,10 @@ function validateParentRemarriage(
       }
     }
     if (row.quarter > event.quarter &&
-      (other.kind !== "married_capable_spouse" || other.spouse_ssn !== status.spouse_ssn ||
+      ((other.kind !== "married_capable_spouse" && other.kind !== "spouse_incapable") ||
+        other.spouse_ssn !== status.spouse_ssn ||
         other.spouse_relationship_source_reference !== status.marriage_source_reference)) {
-      throw new Error("Schedule H parent post-remarriage quarters must retain the same capable spouse and marriage record");
+      throw new Error("Schedule H parent post-remarriage quarters must retain the same spouse, care circumstances and marriage record");
     }
   }
 }
@@ -820,8 +834,17 @@ function parentTaxableCashWages(
         "Schedule H parent marital event must precede its complete source quarter",
       );
     }
-    if (status.kind === "spouse_incapable") {
+    if (status.kind === "spouse_incapable" || status.kind === "remarried_spouse_incapable") {
       care(status.incapable_care_period, row.quarter);
+      if (status.kind === "remarried_spouse_incapable") {
+        const marriedCareFrom = status.incapable_care_period.from < status.remarriage_date
+          ? status.remarriage_date : status.incapable_care_period.from;
+        const marriedCareDays = (Date.parse(status.incapable_care_period.to) -
+          Date.parse(marriedCareFrom)) / 86400000 + 1;
+        if (marriedCareDays < 28) {
+          throw new Error("Schedule H remarried spouse care period must establish four weeks after marriage within its quarter");
+        }
+      }
     }
   }
   validateParentRemarriage(review, employee.employee_ssn, employerSsn);

@@ -191,3 +191,30 @@ Focused typed tests passed 2/0. Five fresh full returns pass local 2025v5.4 XSD 
 Evidence is retained at `.state/research/scheduleh-parent-remarriage-2026-10-09/`: public inputs, pending/prepared data, XML/PDF, XSD outcomes, page hashes/contact reviews, baseline rejection probe, unchanged deferred-control comparison and execution logs. The broader Schedule H parent and all frozen main-board tasks remain open.
 
 Final typed 17-file household-wage/Schedule H regression passed **113/0, zero ignored (4m6s)**. The first run retained112 passes and one environment failure because `pdftotext` was not on PATH; the same batch passed with the installed `/tmp/opentax-poppler-env/bin` tools on its command path. Both terminal logs and exact arguments are retained. The prior harness state remains133/0 and `tax-fix` reports no pending benchmark root causes; that historical state is not a fresh benchmark run.
+
+## October 9: new-spouse incapacity and changing care quarters
+
+The remarriage source now accepts a new spouse who cannot care for the child for at least four continuous weeks within the relevant service quarter, and separately reviewed changes in later quarters. A common marital-record schema preserves the prior ending, marriage date, spouse and residence fields for both capable and incapable spouse records. The new medical record adds the actual care period and its reference. Later quarters may alternate between capable and incapable care circumstances, but must retain the same spouse and marriage record.
+
+[2025 Publication 926, page 6](https://www.irs.gov/pub/irs-prior/p926--2025.pdf) supplies the four-week condition. For a newly married spouse, the retained medical period must contain at least 28 days on or after the marriage date within that quarter. A condition beginning before marriage can qualify if the post-marriage overlap still meets that threshold; its earlier days do not substitute for married days. Each later quarter independently requires its own valid four-week period. Once the quarter's condition is met, the existing service/pay-period rules and per-worker annual wage threshold determine FICA wages; parent wages remain excluded from FUTA.
+
+Six constructed-source returns keep the original worker inventory and cash economics: parent wages 8,000, unrelated adult FICA wages 2,800, agreed withholding 300, and the same 75,000 MFJ return wages. The ordinary-period sources use the earlier minority-hours control (40 hours before remarriage/60 after), except the explicitly irregular-period case.
+
+| Retained medical/care facts | Parent FICA wages | Schedule H /1040 line23 | Total tax | Refund |
+|---|---:|---:|---:|---:|
+| New spouse incapable May 15–June 11 (28 days); later quarters capable |4,000|1,340|6,086|4,914|
+| Same Q2 facts; Q3 also has July 1–28 incapacity; Q4 capable |6,000|1,646|6,392|4,608|
+| Spouse capable at remarriage, then Q3 incapacity |4,000|1,340|6,086|4,914|
+| Qualifying incapacity in Q2, Q3 and Q4 |8,000|1,952|6,698|4,302|
+| Q2 incapacity with the retained irregular pay-period records |4,000|1,340|6,086|4,914|
+| Medical period May 1–June 11, retaining 28 post-marriage days |4,000|1,340|6,086|4,914|
+
+The later-incapacity case also tests the annual FICA threshold: Q1's 2,000 and Q3's 2,000 qualifying parent wages aggregate to 4,000; the initially sub-threshold Q1 wages are not discarded. Combined FICA wages 6,800/8,800/10,800 produce filed Social Security tax 843/1,091/1,339 and Medicare tax 197/255/313. Adding 300 withholding gives the three household taxes above. The independently sourced regular income tax remains 4,746 ([2025 Tax Table, page 7](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf)); 11,000 federal withholding reconciles the final refunds.
+
+Negative source checks reject 27 days, periods crossing quarter boundaries, fewer than 28 married days despite a longer medical period, an empty medical reference, a marriage record reused as medical proof, insufficient care in a later quarter, changed spouse identity and inconsistent filed wages. Public graph, calculation, native and PDF-descriptor paths reject these conflicts. The complete native builder and PDF descriptor also reject a wrong year-end spouse or unmarried filer identity. These are reviewed synthetic records, not authenticated physician, employer, marriage, residence or payroll records.
+
+The final typed 18-file household-wage/Schedule H batch passed **115/0, zero ignored (4m10s)**. All six new returns pass local 2025v5.4 XSD. Their 30 PDF pages are fully observed:8 newly distinct pages inspected visually and 22 exact rendered matches to already reviewed pages. Source/final-tax/native checks, all blank/skipped questions, sole employer name, both Schedule 2 pages, refund and zero widgets/AcroForm fields were reviewed. The native joint header repeats deferred item 68; clean full-packet parity is not claimed.
+
+All six exact saved new inputs reject under pre-change `b04fa1aff`: five at its schema and the later-incapacity source at its post-remarriage continuity guard. The previous five remarriage inputs retain identical serialized pending/prepared values, native XML apart from `ReturnTs`, and PDF bytes. The first preservation probe compared in-memory `undefined` properties with JSON-omitted properties and failed; the retained corrected probe compares JSON-representable values explicitly. Six earlier deferred identity-control outcomes are also unchanged, so item 77 remains unimplemented.
+
+Evidence: `.state/research/scheduleh-parent-remarriage-care-2026-10-09/`, including inputs, XML/PDF, rendering/hash review, baseline rejections, preservation probes, exact regression command and terminal log. The two remarriage batches now retain 11 distinct-source returns/55 observed pages; this does not close the wider Schedule H, source-authentication, business-rule or IRS acceptance requirements.
