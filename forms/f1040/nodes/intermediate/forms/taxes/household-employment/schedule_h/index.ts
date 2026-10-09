@@ -190,6 +190,19 @@ const parentQuarterSchema = z.object({
       incapable_care_period: fourWeekCarePeriodSchema,
     }).strict(),
     z.object({
+      kind: z.literal("remarried_capable_spouse"),
+      prior_status: z.enum(["divorced", "widowed"]),
+      prior_marriage_end_date: calendarDate,
+      prior_marriage_end_source_reference: sourceReference,
+      no_remarriage_before_event_source_reference: sourceReference,
+      remarriage_date: calendarDate,
+      marriage_source_reference: sourceReference,
+      spouse_ssn: z.string().regex(/^\d{9}$/),
+      spouse_residence_source_reference: sourceReference,
+      spouse_care_capacity_source_reference: sourceReference,
+      living_with_capable_spouse_from_marriage_through_quarter_verified: z.literal(true),
+    }).strict(),
+    z.object({
       kind: z.literal("never_married"),
       status_source_reference: sourceReference,
       never_married_throughout_quarter_verified: z.literal(true),
@@ -613,7 +626,8 @@ function parentDatedCashWages(
         (date < eighteenth || child.adult_care_period !== undefined);
       const employerQualifies = status.kind === "spouse_incapable" ||
         status.kind === "divorced_not_remarried" && date >= status.divorce_date ||
-        status.kind === "widowed_not_remarried" && date >= status.spouse_death_date;
+        status.kind === "widowed_not_remarried" && date >= status.spouse_death_date ||
+        status.kind === "remarried_capable_spouse" && date < status.remarriage_date;
       return childQualifies && employerQualifies;
     };
     if (status.kind === "divorced_not_remarried" &&
@@ -627,7 +641,8 @@ function parentDatedCashWages(
       : undefined;
     const maritalEvent = status.kind === "divorced_not_remarried"
       ? status.divorce_date
-      : status.kind === "widowed_not_remarried" ? status.spouse_death_date : undefined;
+      : status.kind === "widowed_not_remarried" ? status.spouse_death_date
+      : status.kind === "remarried_capable_spouse" ? status.remarriage_date : undefined;
     if ([childBirthday, maritalEvent].some((date) =>
       date !== undefined && payment.service_from < date && payment.service_to >= date
     )) {
@@ -684,6 +699,57 @@ function parentDatedCashWages(
     } else coveredCents += state.coveredCents;
   }
   return coveredCents >= TY2025_FICA_CASH_WAGE_THRESHOLD * 100 ? coveredCents / 100 : 0;
+}
+
+// A remarriage source covers one dated event and the complete surrounding
+// year; it cannot substitute a whole-quarter no-remarriage assertion.
+function validateParentRemarriage(
+  review: Exclude<z.infer<typeof parentFicaReviewSchema>, { classification: "excluded" }>,
+  employeeSsn: string,
+  employerSsn: string,
+): void {
+  const events = review.quarterly_circumstances.filter((row) =>
+    row.employer_circumstances.kind === "remarried_capable_spouse"
+  );
+  if (!events.length) return;
+  const event = events[0];
+  const status = event.employer_circumstances;
+  if (status.kind !== "remarried_capable_spouse") return;
+  const eventQuarter = Math.ceil(Number(status.remarriage_date.slice(5, 7)) / 3);
+  const references = [
+    status.prior_marriage_end_source_reference,
+    status.no_remarriage_before_event_source_reference,
+    status.marriage_source_reference,
+    status.spouse_residence_source_reference,
+    status.spouse_care_capacity_source_reference,
+  ];
+  if (review.classification !== "dated_service_periods" || events.length !== 1 ||
+    status.remarriage_date < "2025-01-01" || status.remarriage_date > "2025-12-31" ||
+    eventQuarter !== event.quarter || status.prior_marriage_end_date >= "2025-01-01" ||
+    status.spouse_ssn === employeeSsn || status.spouse_ssn === employerSsn ||
+    new Set(references).size !== references.length) {
+    throw new Error("Schedule H parent remarriage needs one dated event, distinct records and a prior-year marriage ending");
+  }
+  for (const row of review.quarterly_circumstances) {
+    const other = row.employer_circumstances;
+    if (row.quarter < event.quarter) {
+      const priorMatches = status.prior_status === "divorced"
+        ? other.kind === "divorced_not_remarried" &&
+          other.divorce_date === status.prior_marriage_end_date &&
+          other.divorce_source_reference === status.prior_marriage_end_source_reference
+        : other.kind === "widowed_not_remarried" &&
+          other.spouse_death_date === status.prior_marriage_end_date &&
+          other.death_source_reference === status.prior_marriage_end_source_reference;
+      if (!priorMatches) {
+        throw new Error("Schedule H parent pre-remarriage quarters must match the prior marital record");
+      }
+    }
+    if (row.quarter > event.quarter &&
+      (other.kind !== "married_capable_spouse" || other.spouse_ssn !== status.spouse_ssn ||
+        other.spouse_relationship_source_reference !== status.marriage_source_reference)) {
+      throw new Error("Schedule H parent post-remarriage quarters must retain the same capable spouse and marriage record");
+    }
+  }
 }
 
 function parentTaxableCashWages(
@@ -758,6 +824,7 @@ function parentTaxableCashWages(
       care(status.incapable_care_period, row.quarter);
     }
   }
+  validateParentRemarriage(review, employee.employee_ssn, employerSsn);
   if (review.classification === "dated_service_periods") {
     return parentDatedCashWages(employee, review, quarters);
   }

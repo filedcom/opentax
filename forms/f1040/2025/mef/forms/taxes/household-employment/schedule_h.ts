@@ -176,6 +176,18 @@ function buildIRS1040ScheduleH(
       );
     }
     for (const employee of familyWorkers) {
+      if (employee.relationship === "parent" &&
+        employee.parent_fica_review.classification === "dated_service_periods") {
+        const event = employee.parent_fica_review.quarterly_circumstances.find((row) =>
+          row.employer_circumstances.kind === "remarried_capable_spouse"
+        )?.employer_circumstances;
+        if (event?.kind === "remarried_capable_spouse" &&
+          (![FilingStatus.MarriedFilingJointly, FilingStatus.MarriedFilingSeparately].includes(filer.filingStatus) ||
+            digits(filer.spouse?.ssn ?? (context.pending?.f1040 as
+              Record<string, unknown> | undefined)?.spouse_ssn) !== event.spouse_ssn)) {
+          throw new Error("Schedule H parent remarriage must join the year-end married return and new spouse identity");
+        }
+      }
       if (
         employee.relationship === "parent" &&
         employee.parent_fica_review.classification === "quarterly_circumstances"
