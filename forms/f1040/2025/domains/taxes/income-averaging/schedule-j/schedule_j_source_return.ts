@@ -21,7 +21,7 @@ import {
 import { registry } from "../../../../registry.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 
-const nonfarmEmployerRecordSchema = z.object({
+export const nonfarmEmployerRecordSchema = z.object({
   tax_year: z.literal(2025),
   issued_by: z.string().trim().min(1),
   issued_on: z.string().regex(/^202[5-6]-\d{2}-\d{2}$/),
@@ -151,23 +151,40 @@ function nonfarmWages(
     JSON.parse(new TextDecoder().decode(bytes)),
   );
   const general = record(inputs.general);
-  const farm = record(
-    record(inputs.schedule_f).schedule_fs instanceof Array
-      ? (record(inputs.schedule_f).schedule_fs as unknown[])[0]
-      : undefined,
-  );
+  const farms = inputs.schedule_f === undefined
+    ? []
+    : record(inputs.schedule_f).schedule_fs;
+  const businesses = [
+    ...(Array.isArray(farms) ? farms : []),
+    ...(Array.isArray(inputs.schedule_c) ? inputs.schedule_c : []),
+  ];
   const digits = (v: unknown) => String(v ?? "").replaceAll("-", "");
+  const primary = digits(general.taxpayer_ssn);
+  const spouse = digits(general.spouse_ssn);
+  const owners = general.filing_status === "mfj"
+    ? [primary, spouse]
+    : [primary];
+  if (
+    owners.some((ssn) => !/^\d{9}$/.test(ssn)) ||
+    new Set(owners).size !== owners.length
+  ) {
+    throw new Error(
+      "Schedule J nonfarm wages need distinct filed owner identities",
+    );
+  }
   const amount = Number(wage.box1_wages);
   if (
     !Number.isSafeInteger(amount) || amount <= 0 ||
     employer.naics_code.startsWith("11") ||
     employer.employment_start > employer.employment_end ||
     employer.issued_on < employer.employment_end ||
-    employer.employer_ein === digits(farm.line_d_ein) ||
+    businesses.some((business) =>
+      employer.employer_ein === digits(record(business).line_d_ein)
+    ) ||
     employer.issued_by !== employer.employer_name ||
     employer.employer_ein !== digits(wage.employer_ein) ||
     employer.employer_name !== wage.employer_name ||
-    employer.employee_ssn !== digits(general.taxpayer_ssn) ||
+    !owners.includes(employer.employee_ssn) ||
     employer.employee_ssn !== digits(wage.employee_ssn) ||
     employer.w2_source_document_reference !== wage.source_document_reference ||
     proof.document_id !== wage.schedule_j_nonfarm_wage_source_document_id ||

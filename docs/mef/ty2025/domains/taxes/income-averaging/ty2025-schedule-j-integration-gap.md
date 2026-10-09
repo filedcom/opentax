@@ -2,6 +2,8 @@
 
 ## Current route index — October 9, 2026
 
+The [owned-wage checkpoint](./ty2025-schedule-j-fishing-source-proof.md#october-9-owned-nonfarm-wages-and-fishing) adds four XSD-valid joint returns/76 reviewed pages and 105 passing tests; two single cases retain deferred AMT-rounding boundary120.
+
 The [paid-expense checkpoint](./ty2025-schedule-j-fishing-source-proof.md#october-9-paid-fishing-expenses-and-complete-packets) now reconciles retained fishing insurance, repairs and utilities through six full returns, native XML and 118 reviewed PDF pages. Historical replay qualifications below remain attached to their own runs.
 
 Current branch `e8891d64b` contains later source-replay work beyond the historical build-first notes below. Live `schedule_j_source_return.ts` verifies retained catch-ledger bytes, business/owner identity, actual Schedule C/F profit and SE/QBI joins; native and PDF exporters replay that source. Distinct joint C/F owners require both owner-specific Schedule SE copies and matched QBI rows. The earlier blanket statements that fishing is isolated, every other income is rejected, or preferential income is unavailable are historical, not the current boundary.

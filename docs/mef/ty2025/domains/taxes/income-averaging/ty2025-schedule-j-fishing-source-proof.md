@@ -1,5 +1,58 @@
 # TY2025 Schedule J fishing and mixed farm source checkpoint
 
+## October 9 owned nonfarm wages and fishing
+
+The retained nonfarm employer record now accepts either filed spouse and checks
+its EIN against every retained Schedule C/F business, including fishing-only
+returns. The source remains limited to one matching W-2 with retained employer
+bytes and SHA-256, nonagricultural corporate employment and distinct filed owner
+identities. Nonfarm wages stay outside elected farm/fishing income. The
+[2025 Schedule J instructions](https://www.irs.gov/pub/irs-prior/i1040sj--2025.pdf)
+and [2025 Schedule SE instructions](https://www.irs.gov/pub/irs-prior/i1040sse--2025.pdf)
+provide the qualifying-income and owner wage-base rules used here.
+
+Four complete joint returns retain 120,000 fishing profit, 200,000 farm profit,
+100,000 nonfarm wages and 20,000 withholding. Both business-owner arrangements
+are tested with each spouse receiving the wages. Independent decimal arithmetic
+recomputes each owner's 92.35% SE base, remaining 176,100 Social Security wage
+base, Medicare tax, half-SE deduction, QBI, Schedule J and final tax.
+
+| Wage recipient | Total SE / half-SE | AGI | QBI deduction | Taxable income | No-election regular tax / Schedule J tax | Total tax / owed |
+|---|---:|---:|---:|---:|---:|---:|
+| Fishing owner, either spouse | 39,842 / 19,921 | 400,079 | 60,016 | 306,963 | 59,365 / 57,265 | 98,417 / 78,417 |
+| Farm owner, either spouse | 31,748 / 15,874 | 404,126 | 60,825 | 310,201 | 60,142 / 58,042 | 91,100 / 71,100 |
+
+The election remains 15,000, Additional Medicare Tax is 1,310 and AMT is zero
+in all four complete returns. Each retains 19 PDF pages: **four XSD-valid XML
+returns and 76 reviewed pages**, represented by 37 unique rendered images on
+10 inspected contact sheets. Independent XML/PDF-text comparisons agree with
+source arithmetic, and native W-2 names/SSNs and both Schedule SE owners agree.
+Existing joint-name (68), skipped-zero (76) and attachment-order (86)
+qualifications remain; this is not a claim of flawless packet presentation.
+
+Two original single-filer cases (fishing alone and fishing with two farms)
+retain their pension and ISO facts and remain blocked in native and fresh PDF
+export. AMTI 685,997 gives normalized Form 6251 exemption 73,188 and taxable
+excess 612,809, but Form 4972's reconciliation expects 73,189/612,808. This
+newly observed rounding conflict is **future_todo 120**, deferred without a fix;
+the source facts were not reduced or removed to evade it.
+
+The final typed focused run passes **6/0**, including both explicit boundary
+rejections; the combined Schedule J domain, input, calculation, native, PDF and
+e2e gate passes **105/0**. Four positive cases reject 12 public-source mutations
+and 16 native/16 fresh-PDF mutations; the blocked originals add two native/two
+fresh-PDF rejections. No benchmark rerun was needed for this source guard;
+the latest historical run remains 46/133 at `f9627ea8b`.
+
+Private evidence is retained under
+`.state/research/schedule-j-fishing-wages-2026-10-09/`: all six source/pending
+JSONs, four XML/PDF pairs, focused/group logs, render manifest, independent
+text/native arithmetic, environment and visual-review records. The XSD hash is
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+Synthetic employer/catch bytes establish reproducibility, not source authenticity
+or prior IRS acceptance. Broader qualifying-income attribution remains open.
+
+
 ## October 9 paid fishing expenses and complete packets
 
 The retained cash fishing ledger now supports Schedule C business insurance
