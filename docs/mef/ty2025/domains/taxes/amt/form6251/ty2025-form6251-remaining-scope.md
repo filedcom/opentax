@@ -1,8 +1,6 @@
 # TY2025 Form 6251 remaining-scope decision
 
-Status: coverage disposition only. This document does not turn an unsupported
-AMT situation into a supported return. The agreed full test batch, IRS XSD
-validation, filled-PDF review, and ATS acceptances have not run.
+Current evidence: [eight complete PAB returns](#october-9-complete-pab-return-checkpoint) pass local XSD with 40 reviewed PDF pages and 23 typed checks. Native line 1a omission and direct-PDF consistency gaps remain deferred. Historical unrun notes below are superseded only for those exact PAB cases; broader AMT, full-suite and IRS acceptance requirements remain open.
 
 ## One direct PAB bond plus one PAB fund (2026-10-01, unrun)
 
@@ -372,3 +370,34 @@ pass. Prior capital-loss carryovers, gains offsetting these mixed-term losses,
 other Schedule D activity, and broker-copy authentication remain outside this
 route. The [2025 Form 6251 line 2k instructions](https://www.irs.gov/instructions/i6251)
 direct separate application of the AMT capital-loss limit.
+
+
+## October 9 complete PAB return checkpoint
+
+Eight public-entry packets now verify the related direct-interest, fund-dividend, original-issue-discount and per-copy expense routes. Each has one single filer, wages $75,000, federal withholding $11,000, standard deduction $15,750, regular taxable income $59,250 and regular tax $7,955. No runtime implementation changed. These are synthetic reviewed issuer, bond-eligibility and expense facts, not authenticated issuer records.
+
+| Source combination | Tax-exempt interest | AMT PAB preference | Tentative minimum / total tax | AMT | Amount owed |
+|---|---:|---:|---:|---:|---:|
+| One bond fund | 300,000 | 300,000 | 75,550 | 67,595 | 64,550 |
+| Two direct-interest issuers | 200,000 | 200,000 | 48,594 | 40,639 | 37,594 |
+| Two bonds from one issuer, $20,000 expenses | 200,000 | 180,000 | 43,394 | 35,439 | 32,394 |
+| Direct interest plus bond fund | 300,000 | 300,000 | 75,550 | 67,595 | 64,550 |
+| Direct interest less $10,000 expenses, plus fund | 300,000 | 290,000 | 72,750 | 64,795 | 61,750 |
+| Distinct interest and OID issuers | 200,000 | 200,000 | 48,594 | 40,639 | 37,594 |
+| Same-bond interest and OID, $15,000 expenses | 200,000 | 185,000 | 44,694 | 36,739 | 33,694 |
+| One OID issuer | 200,000 | 200,000 | 48,594 | 40,639 | 37,594 |
+
+The independent source/Decimal replay sums the retained information-return amounts before comparing engine output. The mixed OID copy reports $110,000 less $10,000 bond premium; its net $100,000 is distinct from the direct-interest copy. Same-issuer copies preserve separate references and matching bond identity; the two-bond case instead preserves distinct bond identifiers. Allocable expenses reduce only the corresponding AMT preference, leaving Form 1040 tax-exempt interest intact. The [IRS information-return instructions](https://www.irs.gov/instructions/i1099int) distinguish stated interest, tax-exempt OID and fund dividends.
+
+Under the [2025 Form 6251 instructions](https://www.irs.gov/pub/irs-prior/i6251--2025.pdf), AMTI here is wages plus the net PAB preference, with the standard deduction added back. Each case retains the full $88,100 single exemption because AMTI is below $626,350. Taxable excess is charged at 26% through $239,100 and 28% above that threshold; AMT is the tentative minimum tax less regular tax. The [2025 tax table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf) supplies $7,955 regular tax for the single $59,250–$59,300 row. The independent replay checks preference, exemption, tentative tax, AMT, final tax and balance due against pending and native XML.
+
+All eight outputs pass the canonical local TY2025v5.4 Return1040 XSD. Their five-page packets contain two Form 1040 pages, two Schedule 2 pages and one Form 6251 page. All 40 pages are accounted for: 18 distinct pages visually inspected across nine contact sheets and 22 exact rendered-image matches. Review covers identity, filing-status mark, tax-exempt income, Form 6251 lines 1a/1b/2a/2g and Parts I/II, Schedule 2 AMT, final tax and balance due. No clipping was observed; no AcroForm field tree or widgets remain.
+
+Typed verification passes **9/0 new complete-return checks** and **14/0 existing tests** across seven source/route modules. Sixty-four altered-source/return variants reject native assembly. Direct Form 6251 PDF projection rejects 40 variants but accepts the 24 changed Form 1040 line17, line24 or recipient-TIN variants; the complete PDF builder rejects all of those same 24 altered graphs before rendering. The initial failed rejection test and the detailed direct/full-PDF probes are retained; the final regression does not assert the deficient direct behavior as desirable.
+
+Two newly deferred findings qualify this evidence:
+
+- **84 — Native line 1a:** every packet prints $15,750 but omits `TotDedLessEnhncSrDedAmt` from IRS6251 XML. The schema labels it line 1a and permits omission, so XSD validity alone does not establish complete reporting. Line 1b and final tax reconcile.
+- **85 — Direct PDF consistency:** the 24 accepted direct-projector mutations above differ from both native and complete-PDF rejection. This is not a demonstrated complete-packet bypass.
+
+Evidence is retained at `.state/research/form6251-pab-2026-10-09/`: source extraction, public inputs/executions, XML/PDF/prepared packets, independent oracle, native omission report, typed logs, direct/full-PDF probes and rendered-page digests. Committed PAB fixtures, expected amounts and tests preserve portable checks. Wider issuer/expense combinations, general investment-interest limitations, preferential income, source authenticity and IRS acceptance remain open; no main-board parent is closed and no deferred repair was implemented.

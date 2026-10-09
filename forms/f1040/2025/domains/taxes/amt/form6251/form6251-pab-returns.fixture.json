@@ -1,0 +1,671 @@
+{
+  "fund-dividend": {
+    "general": {
+      "filing_status": "single",
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Example",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_dob": "1985-06-15",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "address_line1": "1 Example Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false
+    },
+    "w2": [
+      {
+        "box1_wages": 75000,
+        "box2_fed_withheld": 11000,
+        "employee_ssn": "111-22-3333",
+        "box3_ss_wages": 75000,
+        "box4_ss_withheld": 4650,
+        "box5_medicare_wages": 75000,
+        "box6_medicare_withheld": 1087.5,
+        "employer_ein": "12-3456789",
+        "employer_name": "Example Employer",
+        "employer_address_line1": "10 Employer Road",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "box12_entries": []
+      }
+    ],
+    "f1099div": [
+      {
+        "recipient_tin": "111223333",
+        "payerName": "Tax Exempt Bond Fund",
+        "payerTin": "123456789",
+        "source_document_reference": "2025 issued bond-fund 1099-DIV",
+        "isNominee": false,
+        "box11": false,
+        "box1a": 0,
+        "box12": 300000,
+        "box13": 300000,
+        "pab_dividend_review": {
+          "specified_bond_dividend_confirmed": true,
+          "box13_net_of_fund_expenses_confirmed": true,
+          "no_allocable_taxpayer_deduction_confirmed": true,
+          "not_claimed_elsewhere_on_return_confirmed": true,
+          "bond_eligibility_review_reference": "2025 fund bond eligibility review",
+          "taxpayer_expense_review_reference": "2025 taxpayer expense review",
+          "reviewed_on": "2026-02-01"
+        }
+      }
+    ]
+  },
+  "interest-and-fund": {
+    "general": {
+      "filing_status": "single",
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Example",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_dob": "1985-06-15",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "address_line1": "1 Example Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false
+    },
+    "w2": [
+      {
+        "box1_wages": 75000,
+        "box2_fed_withheld": 11000,
+        "employee_ssn": "111-22-3333",
+        "box3_ss_wages": 75000,
+        "box4_ss_withheld": 4650,
+        "box5_medicare_wages": 75000,
+        "box6_medicare_withheld": 1087.5,
+        "employer_ein": "12-3456789",
+        "employer_name": "Example Employer",
+        "employer_address_line1": "10 Employer Road",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "box12_entries": []
+      }
+    ],
+    "f1099int": [
+      {
+        "recipient_tin": "111223333",
+        "payer_name": "Direct Private Bond Issuer",
+        "payer_tin": "111111111",
+        "source_document_reference": "2025-direct-PAB-1099-INT",
+        "pab_review_reference": "direct-bond-eligibility-review",
+        "pab_eligible_bonds_reviewed": true,
+        "box8": 150000,
+        "box9": 150000,
+        "pab_allocable_deduction_workpaper": {
+          "tax_year": 2025,
+          "reviewed_workpaper_reference": "direct-bond-expense-review",
+          "expense_record_reference": "direct-bond-expense-record",
+          "allocable_deduction": 0,
+          "direct_allocation_to_reported_bond": true,
+          "deductible_if_interest_taxable": true,
+          "not_claimed_elsewhere_on_return": true
+        }
+      }
+    ],
+    "f1099div": [
+      {
+        "recipient_tin": "111223333",
+        "payerName": "Private Bond Fund",
+        "payerTin": "222222222",
+        "source_document_reference": "2025-fund-PAB-1099-DIV",
+        "isNominee": false,
+        "box11": false,
+        "box1a": 0,
+        "box12": 150000,
+        "box13": 150000,
+        "pab_dividend_review": {
+          "specified_bond_dividend_confirmed": true,
+          "box13_net_of_fund_expenses_confirmed": true,
+          "no_allocable_taxpayer_deduction_confirmed": true,
+          "not_claimed_elsewhere_on_return_confirmed": true,
+          "bond_eligibility_review_reference": "fund-bond-eligibility-review",
+          "taxpayer_expense_review_reference": "fund-expense-review",
+          "reviewed_on": "2026-02-01"
+        }
+      }
+    ]
+  },
+  "interest-and-oid": {
+    "general": {
+      "filing_status": "single",
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Example",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_dob": "1985-06-15",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "address_line1": "1 Example Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false
+    },
+    "w2": [
+      {
+        "box1_wages": 75000,
+        "box2_fed_withheld": 11000,
+        "employee_ssn": "111-22-3333",
+        "box3_ss_wages": 75000,
+        "box4_ss_withheld": 4650,
+        "box5_medicare_wages": 75000,
+        "box6_medicare_withheld": 1087.5,
+        "employer_ein": "12-3456789",
+        "employer_name": "Example Employer",
+        "employer_address_line1": "10 Employer Road",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "box12_entries": []
+      }
+    ],
+    "f1099int": [
+      {
+        "recipient_tin": "111223333",
+        "payer_name": "Private Bond Stated Interest Issuer",
+        "payer_tin": "111111111",
+        "source_document_reference": "2025-INT-MIXED-PAB",
+        "box8": 100000,
+        "box9": 100000,
+        "pab_eligible_bonds_reviewed": true,
+        "pab_allocable_deduction_workpaper": {
+          "tax_year": 2025,
+          "reviewed_workpaper_reference": "2025-INT-EXPENSE-REVIEW",
+          "expense_record_reference": "2025-INT-EXPENSE-RECORD",
+          "allocable_deduction": 0,
+          "direct_allocation_to_reported_bond": true,
+          "deductible_if_interest_taxable": true,
+          "not_claimed_elsewhere_on_return": true
+        },
+        "pab_review_reference": "2025-INT-BOND-EXPENSE-REVIEW"
+      }
+    ],
+    "f1099oid": [
+      {
+        "recipient_tin": "111223333",
+        "payer_name": "Private Bond OID Issuer",
+        "payer_tin": "222222222",
+        "source_document_reference": "2025-OID-MIXED-PAB",
+        "box11_tax_exempt_oid": 110000,
+        "box10_bond_premium": 10000,
+        "box10_applies_to": "tax_exempt_oid",
+        "box11_pab_oid": 100000,
+        "pab_eligible_bonds_reviewed": true,
+        "pab_allocable_deduction_workpaper": {
+          "tax_year": 2025,
+          "reviewed_workpaper_reference": "2025-OID-EXPENSE-REVIEW",
+          "expense_record_reference": "2025-OID-EXPENSE-RECORD",
+          "allocable_deduction": 0,
+          "direct_allocation_to_reported_bond": true,
+          "deductible_if_interest_taxable": true,
+          "not_claimed_elsewhere_on_return": true
+        },
+        "pab_review_reference": "2025-OID-BOND-EXPENSE-REVIEW"
+      }
+    ]
+  },
+  "interest-expense-and-fund": {
+    "general": {
+      "filing_status": "single",
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Example",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_dob": "1985-06-15",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "address_line1": "1 Example Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false
+    },
+    "w2": [
+      {
+        "box1_wages": 75000,
+        "box2_fed_withheld": 11000,
+        "employee_ssn": "111-22-3333",
+        "box3_ss_wages": 75000,
+        "box4_ss_withheld": 4650,
+        "box5_medicare_wages": 75000,
+        "box6_medicare_withheld": 1087.5,
+        "employer_ein": "12-3456789",
+        "employer_name": "Example Employer",
+        "employer_address_line1": "10 Employer Road",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "box12_entries": []
+      }
+    ],
+    "f1099int": [
+      {
+        "recipient_tin": "111223333",
+        "payer_name": "Direct Private Bond Issuer",
+        "payer_tin": "111111111",
+        "source_document_reference": "2025-direct-PAB-1099-INT",
+        "pab_review_reference": "direct-bond-eligibility-review",
+        "pab_eligible_bonds_reviewed": true,
+        "box8": 150000,
+        "box9": 150000,
+        "pab_allocable_deduction_workpaper": {
+          "tax_year": 2025,
+          "reviewed_workpaper_reference": "direct-bond-expense-review",
+          "expense_record_reference": "direct-bond-expense-record",
+          "allocable_deduction": 10000,
+          "direct_allocation_to_reported_bond": true,
+          "deductible_if_interest_taxable": true,
+          "not_claimed_elsewhere_on_return": true
+        }
+      }
+    ],
+    "f1099div": [
+      {
+        "recipient_tin": "111223333",
+        "payerName": "Private Bond Fund",
+        "payerTin": "222222222",
+        "source_document_reference": "2025-fund-PAB-1099-DIV",
+        "isNominee": false,
+        "box11": false,
+        "box1a": 0,
+        "box12": 150000,
+        "box13": 150000,
+        "pab_dividend_review": {
+          "specified_bond_dividend_confirmed": true,
+          "box13_net_of_fund_expenses_confirmed": true,
+          "no_allocable_taxpayer_deduction_confirmed": true,
+          "not_claimed_elsewhere_on_return_confirmed": true,
+          "bond_eligibility_review_reference": "fund-bond-eligibility-review",
+          "taxpayer_expense_review_reference": "fund-expense-review",
+          "reviewed_on": "2026-02-01"
+        }
+      }
+    ]
+  },
+  "oid-only": {
+    "general": {
+      "filing_status": "single",
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Example",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_dob": "1985-06-15",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "address_line1": "1 Example Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false
+    },
+    "w2": [
+      {
+        "box1_wages": 75000,
+        "box2_fed_withheld": 11000,
+        "employee_ssn": "111-22-3333",
+        "box3_ss_wages": 75000,
+        "box4_ss_withheld": 4650,
+        "box5_medicare_wages": 75000,
+        "box6_medicare_withheld": 1087.5,
+        "employer_ein": "12-3456789",
+        "employer_name": "Example Employer",
+        "employer_address_line1": "10 Employer Road",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "box12_entries": []
+      }
+    ],
+    "f1099oid": [
+      {
+        "recipient_tin": "111223333",
+        "payer_name": "Specified Private Bond Issuer",
+        "payer_tin": "111111111",
+        "source_document_reference": "2025-OID-PAB-ISSUED",
+        "box11_tax_exempt_oid": 200000,
+        "box11_pab_oid": 200000,
+        "pab_eligible_bonds_reviewed": true,
+        "pab_allocable_deduction_workpaper": {
+          "tax_year": 2025,
+          "reviewed_workpaper_reference": "2025-OID-EXPENSE-REVIEW",
+          "expense_record_reference": "2025-OID-EXPENSE-RECORD",
+          "allocable_deduction": 0,
+          "direct_allocation_to_reported_bond": true,
+          "deductible_if_interest_taxable": true,
+          "not_claimed_elsewhere_on_return": true
+        },
+        "pab_review_reference": "2025-OID-PAB-REVIEW"
+      }
+    ]
+  },
+  "same-issuer-interest-oid-expense": {
+    "general": {
+      "filing_status": "single",
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Example",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_dob": "1985-06-15",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "address_line1": "1 Example Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false
+    },
+    "w2": [
+      {
+        "box1_wages": 75000,
+        "box2_fed_withheld": 11000,
+        "employee_ssn": "111-22-3333",
+        "box3_ss_wages": 75000,
+        "box4_ss_withheld": 4650,
+        "box5_medicare_wages": 75000,
+        "box6_medicare_withheld": 1087.5,
+        "employer_ein": "12-3456789",
+        "employer_name": "Example Employer",
+        "employer_address_line1": "10 Employer Road",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "box12_entries": []
+      }
+    ],
+    "f1099int": [
+      {
+        "recipient_tin": "111223333",
+        "payer_name": "Private Bond Combined Issuer",
+        "payer_tin": "333333333",
+        "source_document_reference": "2025-INT-MIXED-PAB",
+        "box8": 100000,
+        "box9": 100000,
+        "pab_eligible_bonds_reviewed": true,
+        "pab_allocable_deduction_workpaper": {
+          "tax_year": 2025,
+          "reviewed_workpaper_reference": "2025-INT-EXPENSE-REVIEW",
+          "expense_record_reference": "2025-INT-EXPENSE-RECORD",
+          "allocable_deduction": 10000,
+          "direct_allocation_to_reported_bond": true,
+          "deductible_if_interest_taxable": true,
+          "not_claimed_elsewhere_on_return": true
+        },
+        "pab_review_reference": "2025-INT-BOND-EXPENSE-REVIEW",
+        "pab_bond_identifier": "2025-PAB-BOND-LOT-7"
+      }
+    ],
+    "f1099oid": [
+      {
+        "recipient_tin": "111223333",
+        "payer_name": "Private Bond Combined Issuer",
+        "payer_tin": "333333333",
+        "source_document_reference": "2025-OID-MIXED-PAB",
+        "box11_tax_exempt_oid": 110000,
+        "box10_bond_premium": 10000,
+        "box10_applies_to": "tax_exempt_oid",
+        "box11_pab_oid": 100000,
+        "pab_eligible_bonds_reviewed": true,
+        "pab_allocable_deduction_workpaper": {
+          "tax_year": 2025,
+          "reviewed_workpaper_reference": "2025-OID-EXPENSE-REVIEW",
+          "expense_record_reference": "2025-OID-EXPENSE-RECORD",
+          "allocable_deduction": 5000,
+          "direct_allocation_to_reported_bond": true,
+          "deductible_if_interest_taxable": true,
+          "not_claimed_elsewhere_on_return": true
+        },
+        "pab_review_reference": "2025-OID-BOND-EXPENSE-REVIEW",
+        "pab_bond_identifier": "2025-PAB-BOND-LOT-7"
+      }
+    ]
+  },
+  "same-issuer-two-bonds": {
+    "general": {
+      "filing_status": "single",
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Example",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_dob": "1985-06-15",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "address_line1": "1 Example Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false
+    },
+    "w2": [
+      {
+        "box1_wages": 75000,
+        "box2_fed_withheld": 11000,
+        "employee_ssn": "111-22-3333",
+        "box3_ss_wages": 75000,
+        "box4_ss_withheld": 4650,
+        "box5_medicare_wages": 75000,
+        "box6_medicare_withheld": 1087.5,
+        "employer_ein": "12-3456789",
+        "employer_name": "Example Employer",
+        "employer_address_line1": "10 Employer Road",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "box12_entries": []
+      }
+    ],
+    "f1099int": [
+      {
+        "recipient_tin": "111223333",
+        "payer_name": "Texas Private Bond Trust",
+        "payer_tin": "111111111",
+        "source_document_reference": "2025-PAB-INT-COPY-1",
+        "pab_bond_identifier": "PAB-BOND-1",
+        "box8": 100000,
+        "box9": 100000,
+        "pab_eligible_bonds_reviewed": true,
+        "pab_review_reference": "PAB-ELIGIBILITY-1",
+        "pab_allocable_deduction_workpaper": {
+          "tax_year": 2025,
+          "reviewed_workpaper_reference": "PAB-EXPENSE-REVIEW-1",
+          "expense_record_reference": "PAB-EXPENSE-RECORD-1",
+          "allocable_deduction": 10000,
+          "direct_allocation_to_reported_bond": true,
+          "deductible_if_interest_taxable": true,
+          "not_claimed_elsewhere_on_return": true
+        }
+      },
+      {
+        "recipient_tin": "111223333",
+        "payer_name": "Texas Private Bond Trust",
+        "payer_tin": "111111111",
+        "source_document_reference": "2025-PAB-INT-COPY-2",
+        "pab_bond_identifier": "PAB-BOND-2",
+        "box8": 100000,
+        "box9": 100000,
+        "pab_eligible_bonds_reviewed": true,
+        "pab_review_reference": "PAB-ELIGIBILITY-2",
+        "pab_allocable_deduction_workpaper": {
+          "tax_year": 2025,
+          "reviewed_workpaper_reference": "PAB-EXPENSE-REVIEW-2",
+          "expense_record_reference": "PAB-EXPENSE-RECORD-2",
+          "allocable_deduction": 10000,
+          "direct_allocation_to_reported_bond": true,
+          "deductible_if_interest_taxable": true,
+          "not_claimed_elsewhere_on_return": true
+        }
+      }
+    ]
+  },
+  "two-interest-issuers": {
+    "general": {
+      "filing_status": "single",
+      "taxpayer_first_name": "Alex",
+      "taxpayer_last_name": "Example",
+      "taxpayer_ssn": "111-22-3333",
+      "taxpayer_dob": "1985-06-15",
+      "child_eic_filer_review": {
+        "not_qualifying_child_of_another_taxpayer_verified": true,
+        "relationship_age_residence_record_reference": "Synthetic 2025 filer family and residence review"
+      },
+      "prior_eic_disallowance_review": {
+        "status": "none",
+        "irs_account_record_reference": "Synthetic IRS account transcript review",
+        "no_nonclerical_disallowance_since_1996_verified": true
+      },
+      "eic_tax_residency_review": {
+        "status": "all_year_resident",
+        "taxpayer_status_record_reference": "Synthetic 2025 resident status review",
+        "spouse_status_record_reference": "Synthetic 2025 spouse status review"
+      },
+      "address_line1": "1 Example Way",
+      "address_city": "Austin",
+      "address_state": "TX",
+      "address_zip": "78701",
+      "digital_assets": false
+    },
+    "w2": [
+      {
+        "box1_wages": 75000,
+        "box2_fed_withheld": 11000,
+        "employee_ssn": "111-22-3333",
+        "box3_ss_wages": 75000,
+        "box4_ss_withheld": 4650,
+        "box5_medicare_wages": 75000,
+        "box6_medicare_withheld": 1087.5,
+        "employer_ein": "12-3456789",
+        "employer_name": "Example Employer",
+        "employer_address_line1": "10 Employer Road",
+        "employer_address_city": "Austin",
+        "employer_address_state": "TX",
+        "employer_address_zip": "78701",
+        "box12_entries": []
+      }
+    ],
+    "f1099int": [
+      {
+        "recipient_tin": "111223333",
+        "payer_name": "Private Bond Issuer One",
+        "payer_tin": "111111111",
+        "source_document_reference": "2025-INT-PAB-ONE",
+        "box8": 100000,
+        "box9": 100000,
+        "pab_eligible_bonds_reviewed": true,
+        "pab_allocable_deduction_workpaper": {
+          "tax_year": 2025,
+          "reviewed_workpaper_reference": "PAB-EXPENSE-REVIEW-ONE",
+          "expense_record_reference": "PAB-EXPENSE-RECORD-ONE",
+          "allocable_deduction": 0,
+          "direct_allocation_to_reported_bond": true,
+          "deductible_if_interest_taxable": true,
+          "not_claimed_elsewhere_on_return": true
+        },
+        "pab_review_reference": "PAB-ELIGIBILITY-ONE"
+      },
+      {
+        "recipient_tin": "111223333",
+        "payer_name": "Private Bond Issuer Two",
+        "payer_tin": "222222222",
+        "source_document_reference": "2025-INT-PAB-TWO",
+        "box8": 100000,
+        "box9": 100000,
+        "pab_eligible_bonds_reviewed": true,
+        "pab_allocable_deduction_workpaper": {
+          "tax_year": 2025,
+          "reviewed_workpaper_reference": "PAB-EXPENSE-REVIEW-TWO",
+          "expense_record_reference": "PAB-EXPENSE-RECORD-TWO",
+          "allocable_deduction": 0,
+          "direct_allocation_to_reported_bond": true,
+          "deductible_if_interest_taxable": true,
+          "not_claimed_elsewhere_on_return": true
+        },
+        "pab_review_reference": "PAB-ELIGIBILITY-TWO"
+      }
+    ]
+  }
+}
