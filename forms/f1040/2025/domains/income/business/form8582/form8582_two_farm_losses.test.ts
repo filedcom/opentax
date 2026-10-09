@@ -1,3 +1,7 @@
+import {
+  farmRentalW2,
+  verifyFarmRentalPacket,
+} from "./form8582_farm_rental_packet.fixture.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { FilingStatus } from "../../../../../nodes/types.ts";
@@ -10,6 +14,7 @@ import { buildForm8582Ledger } from "../../../../../nodes/intermediate/forms/inc
 
 const general = {
   filing_status: FilingStatus.Single,
+  digital_assets: false,
   taxpayer_first_name: "Alex",
   taxpayer_last_name: "Farmer",
   taxpayer_ssn: "111-22-3333",
@@ -41,6 +46,10 @@ const rental = {
   activity_id: "other-rental-2025",
   property_description: "Other rental",
   property_type: 1,
+  street_address: "101 Rental Lane",
+  city: "Austin",
+  state: "TX",
+  zip: "78701",
   activity_type: "B",
   fair_rental_days: 365,
   personal_use_days: 0,
@@ -52,7 +61,7 @@ const rental = {
 function filedReturn() {
   const result = f1040_2025.executeReturn({
     general,
-    w2: [{ box1_wages: 50_000, box2_fed_withheld: 8_000 }],
+    w2: [farmRentalW2],
     f4835: farms,
     schedule_e: [rental],
   });
@@ -60,7 +69,7 @@ function filedReturn() {
   return result;
 }
 
-Deno.test("two Form 4835 losses share one rental profit and retain distinct Form 8582 carryovers", () => {
+Deno.test("two Form 4835 losses share one rental profit and retain distinct Form 8582 carryovers", async () => {
   const result = filedReturn();
   assertEquals(result.pending.form8582.current_income, 2_000);
   assertEquals(result.pending.form8582.current_loss, 4_000);
@@ -120,6 +129,18 @@ Deno.test("two Form 4835 losses share one rental profit and retain distinct Form
     "south-share-rent-2025",
   ]);
   assertEquals(ledger.ending_unallowed_loss, 2_000);
+  await verifyFarmRentalPacket(result, "two-farm-losses-rental-profit", [
+    {
+      activityId: "north-share-rent-2025",
+      reportingForm: "form4835",
+      amount: 1500,
+    },
+    {
+      activityId: "south-share-rent-2025",
+      reportingForm: "form4835",
+      amount: 500,
+    },
+  ]);
 });
 
 Deno.test("two-farm Form 8582 route rejects changed activity and return totals", () => {
