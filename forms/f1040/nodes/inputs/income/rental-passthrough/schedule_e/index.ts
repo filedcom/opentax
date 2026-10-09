@@ -198,6 +198,8 @@ export const itemSchema = z.object({
     box2_gross_royalties: z.number().positive(),
   }).strict().optional(),
 
+  form4952_royalty_debt_loan_id: z.string().trim().min(1).optional(),
+
   // --- Expense lines ---
   expense_advertising: z.number().nonnegative().optional(),
   expense_auto_travel: z.number().nonnegative().optional(),
@@ -544,7 +546,10 @@ function validateItem(item: EItem): void {
       item.rent_income !== 0 || item.fair_rental_days !== 0 ||
       item.personal_use_days !== 0 ||
       (item.ownership_percent ?? 100) !== 100 ||
-      computeExpenses(item) !== 0
+      computeExpenses(item) !==
+        (item.form4952_royalty_debt_loan_id
+          ? item.expense_other_interest ?? 0
+          : 0)
     )
   ) {
     throw new Error(

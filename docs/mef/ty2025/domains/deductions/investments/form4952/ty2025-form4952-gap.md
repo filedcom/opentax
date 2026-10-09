@@ -1,5 +1,61 @@
 # TY2025 Form 4952 portfolio royalty boundary
 
+## October 9 directly traced royalty debt and Schedule E deduction
+
+A directly purchased nonbusiness portfolio royalty now has a dedicated debt
+source. It records the loan, owner, direct purchase, asset, dated interest
+payments and lender total, with affirmative personal liability, no loss
+protection and review of other current royalty deductions. One issued-form
+reference joins the source to its Form1099-MISC box2 record. Plain owned
+Form1099-INT sources are compared individually, including multiple payers.
+These synthetic references establish internal reconciliation, not authenticity.
+
+The [2025 Form4952 line8 instructions](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+send royalty-attributable deductible interest to Schedule E. The executor now
+creates that one sourced royalty property after computing the investment-income
+limit. Its allowed interest appears only on Schedule E line13, reduces
+Schedule1/Form1040 income and never duplicates into Schedule A line9. Both
+native and PDF export replay the loan, source inventory, numbered Form4952
+lines, exact Schedule E property and final income join. Other expenses, manual
+investment amounts, mixed debt uses, prior carryforward imports, elections,
+AMT adjustments, non-single filers and the Form8815 special computation remain
+guarded. Whole-dollar current-year royalty and investment-income amounts are
+required in this route.
+
+| Constructed return | Paid interest | Portfolio interest | Gross royalty | Allowed on Schedule E | Net royalty | Carryforward | AGI | Tax | Refund |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Positive royalty | 500 | 1,000 | 3,000 | 500 | 2,500 | 0 | 78,500 | 8,725 | 2,275 |
+| Royalty loss | 3,500 | 1,000 | 3,000 | 3,500 | -500 | 0 | 75,500 | 8,065 | 2,935 |
+| Two interest payers, limited debt | 5,000 | 400 + 600 | 3,000 | 4,000 | -1,000 | 1,000 | 75,000 | 7,955 | 3,045 |
+| Royalty only, limited debt | 5,000 | 0 | 3,000 | 3,000 | 0 | 2,000 | 75,000 | 7,955 | 3,045 |
+
+All use wages75,000, withholding11,000 and standard deduction15,750. The tax
+expectations use the applicable single-filer Tax Table rows; none infer tax
+from the implementation under test. This closes the prior categorical
+royalty-debt routing gap within these stated sources, not the broader Form4952
+parent task or the separate bond MAGI calculation. The latter still needs the
+[Form8815 line9](https://www.irs.gov/pub/irs-prior/f8815--2025.pdf) pre-exclusion
+interest calculation and a separately reconciled final deduction.
+
+Verification:205 grouped tests pass across Form4952 source, computation,
+Schedule E, native/PDF and earlier traced-debt routes. The final focused gate
+passes5/0, with12 contradictory public sources,44 native-preparation mutations,
+44 prepared-PDF mutations and four direct printed-property mutations rejected.
+Four complete XMLs pass TY2025v5.4 XSD; all22 packet pages (19 unique rendered
+pages) were observed, and native/PDF deductions, AGI, tax, refund and regular
+and AMT carryforward values reconcile. The benchmark remains46/133 with the
+same87 failing IDs. Evidence: `.state/research/form4952-royalty-debt-2026-10-09/`.
+
+PDF parity is qualified: the existing Schedule E projector prints royalty
+losses500/1,000 on rental-only line22 in the two loss cases. The
+[2025 instructions for line22](https://www.irs.gov/pub/irs-prior/i1040se--2025.pdf)
+exclude royalty properties; native output correctly omits the rental-loss
+field. This new finding is deferred116 and its projector remains unchanged.
+Existing name68/zero76, synthetic source authenticity, next-year carryover
+acceptance and broader filing/IRS scope remain open. The initial zero-net
+failure was in the new validator's required Form1040 line8; it now recognizes
+an omitted zero without changing the return calculation.
+
 ## Traced taxable-securities loan alongside a portfolio royalty (staged, unrun)
 
 The one-owner direct-use borrowing workpaper now also reconciles the existing

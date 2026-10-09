@@ -1,5 +1,6 @@
+import { reconcileRoyaltyDebtReturn } from "./form4952_royalty_debt_reconciliation.ts";
 import { z } from "zod";
-import { FilingStatus, type FilerIdentity } from "../../../../../mef/header.ts";
+import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { inputSchema as miscSchema } from "../../../../../nodes/inputs/income/business/f1099m/index.ts";
 import { inputSchema as interestSchema } from "../../../../../nodes/inputs/income/investments/f1099int/index.ts";
 import { inputSchema as scheduleESchema } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/index.ts";
@@ -61,6 +62,14 @@ export function reconcileForm4952MiscRoyaltyPath(
   pending: Readonly<Record<string, unknown>>,
   filer?: FilerIdentity,
 ): void {
+  const retained = form4952Schema.safeParse(pending.form4952);
+  if (
+    fields.royalty_debt_trace !== undefined ||
+    (retained.success && retained.data.royalty_debt_trace !== undefined)
+  ) {
+    reconcileRoyaltyDebtReturn(fields, pending, filer?.primarySSN);
+    return;
+  }
   const misc = miscSchema.safeParse(pending.f1099m);
   const scheduleE = scheduleESchema.safeParse(pending.schedule_e);
   const schedule1 = schedule1Schema.safeParse(pending.schedule1);
