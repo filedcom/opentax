@@ -2,20 +2,17 @@ import { element, elements } from "../../../../../mef/xml.ts";
 import {
   computePersonalCreditAmounts,
   type F8911Input,
+  personalCreditProperties,
 } from "../../../../../nodes/inputs/credits/business/f8911/index.ts";
 import type { MefFormDescriptor } from "../../../form-descriptor.ts";
 
 type Input = Partial<F8911Input> & Record<string, unknown>;
 
-export const form8911ScheduleA: MefFormDescriptor<"f8911", Input> = {
-  pendingKey: "f8911",
-  FIELD_MAP: [],
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8911sa.pdf",
-  build(fields) {
-    if (Object.keys(fields).length === 0) return "";
-    const input = fields as F8911Input;
-    const amounts = computePersonalCreditAmounts(input);
-    if (!amounts || amounts.allowedCredit === 0) return "";
+function propertyDocuments(fields: Input): readonly string[] {
+  if (Object.keys(fields).length === 0) return [];
+  const amounts = computePersonalCreditAmounts(fields as F8911Input);
+  if (!amounts || amounts.allowedCredit === 0) return [];
+  return personalCreditProperties(fields as F8911Input).map((input) => {
     const address = input.property_us_address!;
     return elements("IRS8911ScheduleA", [
       element("FacilityDesc", input.property_description),
@@ -34,7 +31,22 @@ export const form8911ScheduleA: MefFormDescriptor<"f8911", Input> = {
       element("PropertyUsedMainHomeInd", "true"),
       element("TotQlfyPropLessBusInvstUseAmt", input.cost),
       element("AdjustedPersonalUsePartAmt", input.cost * 0.30),
-      element("TotalPersonalUsePartOfCrAmt", amounts.tentativeCredit),
+      element(
+        "TotalPersonalUsePartOfCrAmt",
+        Math.min(input.cost * 0.30, 1_000),
+      ),
     ]);
+  });
+}
+
+export const form8911ScheduleA: MefFormDescriptor<"f8911", Input> = {
+  pendingKey: "f8911",
+  FIELD_MAP: [],
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8911sa.pdf",
+  build(fields) {
+    return propertyDocuments(fields)[0] ?? "";
+  },
+  buildAdditionalDocuments(fields) {
+    return propertyDocuments(fields).slice(1);
   },
 };

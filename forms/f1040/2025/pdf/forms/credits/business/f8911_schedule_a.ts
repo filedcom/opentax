@@ -4,7 +4,7 @@ import type {
 } from "../../../review-support/form-descriptor.ts";
 import { form8911PdfSource } from "./f8911_shared.ts";
 
-// Schedule A (Form 8911), Rev. December 2025, one personal-use property.
+// Schedule A (Form 8911), Rev. December 2025, one copy per personal-use property.
 const page = "topmostSubform[0].Page1[0]";
 const text = (
   domainKey: string,
@@ -53,14 +53,16 @@ export const form8911ScheduleAPdf: PdfFormDescriptor = {
     if (!allPending?.f8911) return [];
     const source = form8911PdfSource(allPending, filer);
     if (!source) return [];
-    const { input, amounts, filerName, filerTin, propertyAddress } = source;
-    return [{
+    const { filerName, filerTin } = source;
+    return source.properties.map((
+      { input, propertyAddress, constructionDate, serviceDate },
+    ) => ({
       filer_name: filerName,
       filer_tin: filerTin,
       property_description: input.property_description,
       property_address: propertyAddress,
-      construction_date: source.constructionDate,
-      service_date: source.serviceDate,
+      construction_date: constructionDate,
+      service_date: serviceDate,
       eligible_census_tract: true,
       census_geoid: input.census_tract_geoid,
       line8: input.cost,
@@ -69,7 +71,7 @@ export const form8911ScheduleAPdf: PdfFormDescriptor = {
       main_home_property: true,
       line18: input.cost,
       line19: input.cost * 0.3,
-      line21: amounts.tentativeCredit,
-    }];
+      line21: Math.min(input.cost * 0.3, 1_000),
+    }));
   },
 };

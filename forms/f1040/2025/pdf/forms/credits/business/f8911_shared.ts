@@ -1,20 +1,24 @@
 import type { FilerIdentity } from "../../../../../mef/header.ts";
 import {
   computePersonalCreditAmounts,
-  type F8911Input,
+  type F8911Property,
   FuelType,
   inputSchema,
   type PersonalCreditAmounts,
+  personalCreditProperties,
 } from "../../../../../nodes/inputs/credits/business/f8911/index.ts";
 
-export interface Form8911PdfSource {
-  readonly input: F8911Input;
-  readonly amounts: PersonalCreditAmounts;
-  readonly filerName: string;
-  readonly filerTin: string;
+export interface Form8911PdfProperty {
+  readonly input: F8911Property;
   readonly propertyAddress: string;
   readonly constructionDate: string;
   readonly serviceDate: string;
+}
+export interface Form8911PdfSource {
+  readonly properties: readonly Form8911PdfProperty[];
+  readonly amounts: PersonalCreditAmounts;
+  readonly filerName: string;
+  readonly filerTin: string;
 }
 
 function dateFor2025(value: string, label: string): string {
@@ -33,28 +37,18 @@ function dateFor2025(value: string, label: string): string {
   return `${month}/${day}/${year}`;
 }
 
-export function form8911PdfSource(
-  allPending: Record<string, Record<string, unknown>>,
-  filer: FilerIdentity | undefined,
-): Form8911PdfSource | undefined {
-  const raw = allPending.f8911;
-  if (!raw) return undefined;
-  const input = inputSchema.parse(raw);
-  const amounts = computePersonalCreditAmounts(input);
-  if (!amounts || amounts.allowedCredit <= 0) return undefined;
+function projectProperty(input: F8911Property): Form8911PdfProperty {
   if (
     input.fuel_type !== FuelType.ElectricCharging ||
-    (input.business_use_pct ?? 0) !== 0 ||
-    (input.certain_allowable_credits ?? 0) !== 0
+    (input.business_use_pct ?? 0) !== 0
   ) {
     throw new Error(
-      "Form 8911 PDF currently supports one personal-use electric charger with no business use or other allowable-credit worksheet amounts",
+      "Form 8911 PDF currently supports personal-use electric chargers with no business use",
     );
   }
   if (
     !Number.isInteger(input.cost) ||
-    !Number.isInteger(input.cost * 0.3) ||
-    !Object.values(amounts).every(Number.isInteger)
+    !Number.isInteger(input.cost * 0.3)
   ) {
     throw new Error("Form 8911 PDF needs whole-dollar source and credit lines");
   }
@@ -92,6 +86,27 @@ export function form8911PdfSource(
       "Form 8911 Schedule A PDF address exceeds its printed line",
     );
   }
+  return { input, propertyAddress, constructionDate, serviceDate };
+}
+
+export function form8911PdfSource(
+  allPending: Record<string, Record<string, unknown>>,
+  filer: FilerIdentity | undefined,
+): Form8911PdfSource | undefined {
+  const raw = allPending.f8911;
+  if (!raw) return undefined;
+  const input = inputSchema.parse(raw);
+  const amounts = computePersonalCreditAmounts(input);
+  if (!amounts || amounts.allowedCredit <= 0) return undefined;
+  if ((input.certain_allowable_credits ?? 0) !== 0) {
+    throw new Error(
+      "Form 8911 PDF needs reviewed other allowable-credit worksheet amounts",
+    );
+  }
+  if (!Object.values(amounts).every(Number.isInteger)) {
+    throw new Error("Form 8911 PDF needs whole-dollar source and credit lines");
+  }
+  const properties = personalCreditProperties(input).map(projectProperty);
   const filerName = filer?.nameLine1?.trim();
   const filerTin = filer?.primarySSN?.replaceAll("-", "");
   if (!filerName || !filerTin || !/^\d{9}$/.test(filerTin)) {
@@ -118,12 +133,9 @@ export function form8911PdfSource(
     );
   }
   return {
-    input,
+    properties,
     amounts,
     filerName,
     filerTin,
-    propertyAddress,
-    constructionDate,
-    serviceDate,
   };
 }

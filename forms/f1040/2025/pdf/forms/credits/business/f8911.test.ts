@@ -131,7 +131,7 @@ Deno.test("Form 8911 PDF stops for business use, wider credits, and fractional p
   assertThrows(
     () => parent(pending({ ...source(), certain_allowable_credits: 10 })),
     Error,
-    "one personal-use electric charger",
+    "other allowable-credit worksheet amounts",
   );
   assertThrows(
     () => parent(pending({ ...source(), cost: 1_001 })),

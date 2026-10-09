@@ -9,9 +9,7 @@ import type { NodeContext } from "../../../../../../../core/types/node-context.t
 import { schedule3 } from "../../../../intermediate/aggregation/general/return-assembly/schedule3/index.ts";
 import { form6251 } from "../../../../intermediate/forms/taxes/amt/form6251/index.ts";
 
-// Form 8911 (2025) takes a separate Schedule A for each property. The current
-// MeF v3.0 package has no Schedule A (Form 8911) XML element, so this node
-// computes the personal credit while the full ATS attachment remains pending.
+// Form 8911 (2025) caps each personal property before the return-wide tax limit.
 export enum FuelType {
   ElectricCharging = "electric_charging",
   Hydrogen = "hydrogen",
@@ -19,7 +17,7 @@ export enum FuelType {
   Propane = "propane",
 }
 
-export const inputSchema = z.object({
+export const propertySchema = z.object({
   cost: z.number().nonnegative(),
   business_use_pct: z.number().min(0).max(1).optional(),
   fuel_type: z.nativeEnum(FuelType).optional(),
@@ -36,11 +34,55 @@ export const inputSchema = z.object({
   eligible_census_tract: z.boolean().optional(),
   census_tract_geoid: z.string().regex(/^\d{11}$/).optional(),
   main_home_property: z.boolean().optional(),
+});
+
+export const inputSchema = propertySchema.partial().extend({
+  properties: z.array(propertySchema.extend({
+    property_reference: z.string().trim().min(1),
+  })).min(1).optional(),
   regular_tax_before_credits: z.number().nonnegative().optional(),
   foreign_tax_credit: z.number().nonnegative().optional(),
   certain_allowable_credits: z.number().nonnegative().optional(),
   tentative_minimum_tax: z.number().nonnegative().optional(),
+}).superRefine((input, ctx) => {
+  if (input.properties) {
+    for (const key of Object.keys(propertySchema.shape)) {
+      if (Object.hasOwn(input, key)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Form 8911 cannot mix properties with single-property fields",
+        });
+        break;
+      }
+    }
+    const refs = input.properties.map((property) =>
+      property.property_reference
+    );
+    if (new Set(refs).size !== refs.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Form 8911 property references must be unique",
+      });
+    }
+  } else if (input.cost === undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Form 8911 needs a cost or identified properties",
+    });
+  }
 });
+
+export type F8911Property = z.infer<typeof propertySchema>;
+
+export function personalCreditProperties(
+  rawInput: F8911Input,
+): readonly F8911Property[] {
+  const input = inputSchema.parse(rawInput);
+  return (input.properties ?? [propertySchema.parse(input)]).filter((
+    property,
+  ) => property.cost > 0);
+}
 
 export type F8911Input = z.infer<typeof inputSchema>;
 
@@ -60,29 +102,32 @@ export function computePersonalCreditAmounts(
   rawInput: F8911Input,
 ): PersonalCreditAmounts | undefined {
   const input = inputSchema.parse(rawInput);
-  if (input.cost === 0) return undefined;
-  if ((input.business_use_pct ?? 0) > 0) {
-    throw new Error(
-      "Form 8911 business credit requires the Form 3800 path and property-level wage data",
-    );
-  }
-  if (
-    !input.property_description || !input.property_us_address ||
-    !input.construction_began || !input.placed_in_service
-  ) {
-    throw new Error(
-      "Form 8911 needs the property description, structured address, and dates",
-    );
-  }
-  if (input.eligible_census_tract !== true || !input.census_tract_geoid) {
-    throw new Error(
-      "Form 8911 needs a verified eligible census tract and 11-digit GEOID",
-    );
-  }
-  if (input.main_home_property !== true) {
-    throw new Error(
-      "Form 8911 personal credit requires property at the taxpayer's main home",
-    );
+  const properties = personalCreditProperties(input);
+  if (properties.length === 0) return undefined;
+  for (const input of properties) {
+    if ((input.business_use_pct ?? 0) > 0) {
+      throw new Error(
+        "Form 8911 business credit requires the Form 3800 path and property-level wage data",
+      );
+    }
+    if (
+      !input.property_description || !input.property_us_address ||
+      !input.construction_began || !input.placed_in_service
+    ) {
+      throw new Error(
+        "Form 8911 needs the property description, structured address, and dates",
+      );
+    }
+    if (input.eligible_census_tract !== true || !input.census_tract_geoid) {
+      throw new Error(
+        "Form 8911 needs a verified eligible census tract and 11-digit GEOID",
+      );
+    }
+    if (input.main_home_property !== true) {
+      throw new Error(
+        "Form 8911 personal credit requires property at the taxpayer's main home",
+      );
+    }
   }
   if (
     input.regular_tax_before_credits === undefined ||
@@ -92,7 +137,10 @@ export function computePersonalCreditAmounts(
       "Form 8911 needs regular tax and tentative minimum tax to limit the personal credit",
     );
   }
-  const tentativeCredit = Math.min(input.cost * 0.30, 1_000);
+  const tentativeCredit = properties.reduce(
+    (sum, property) => sum + Math.min(property.cost * 0.30, 1_000),
+    0,
+  );
   const foreignTaxCredit = input.foreign_tax_credit ?? 0;
   const certainAllowableCredits = input.certain_allowable_credits ?? 0;
   const totalOtherCredits = foreignTaxCredit + certainAllowableCredits;

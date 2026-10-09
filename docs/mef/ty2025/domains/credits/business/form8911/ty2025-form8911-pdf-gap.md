@@ -15,8 +15,8 @@ mismatch fails without replacing the cache. Updating this pin requires review
 of the new revision and mappings. This closes the named mutable-template
 boundary, not the remaining property eligibility or full-return release gates.
 
-The PDF build pass projects one sourced, personal-use electric charger and
-exactly one matching Schedule A. It checks the property cost, dates, address,
+The PDF build pass projects sourced personal-use electric chargers and
+one matching Schedule A per positive-cost property. It checks the property cost, dates, address,
 eligible census tract and 11-digit GEOID, and main-home answer already required
 by the native credit calculation. It computes the 30% property amount and $1,000
 cap without using the old IRS ATS example's printed $162 tax limit. The
@@ -26,7 +26,7 @@ and the final return's nonrefundable-credit total. Both PDF pages are derived
 from the same gate, so a positive parent page cannot be emitted without its
 Schedule A page.
 
-This remains a bounded one-property build path. Multiple properties, business use,
+This remains a bounded personal-use electric-charger path. Business use,
 other allowable-credit worksheet amounts, non-electric fuel, and fractional
 printed dollar lines stop for a separately reviewed source model. Optional
 certification/permit and owner fields are not inferred from the address. The
@@ -55,3 +55,37 @@ dates, GEOID, eligibility/main-home checkboxes and 1,000/300 amounts are legible
 The flattened output has zero fields/widgets and SHA-256
 `35df43fd18c8c601b890a46c9ee152568f2923b38056cdc26dddd4b02ff25425`.
 This is template/mapping evidence, not a new full-return or IRS acceptance claim.
+
+## Multiple personal properties — October 9
+
+The public `f8911` input accepts either its original single-property fields or
+`properties`, an array of property records with unique, nonempty
+`property_reference` values. Each record retains its own cost, description,
+address, dates, fuel type, census-tract answer/GEOID and main-home answer.
+Regular tax, tentative minimum tax and other credit-limit operands remain at
+the return level. Mixed single/array inputs and duplicate references fail.
+References distinguish reviewed property records; they do not independently
+authenticate invoices, original use or tract eligibility.
+
+Following the [December 2025 instructions](https://www.irs.gov/instructions/i8911),
+the calculation caps each property's 30% amount at 1,000, sums those amounts,
+then applies the return-wide tax limit once. The native parent now emits Item A's
+property count. Native Schedule A documents receive separate IDs, and the PDF
+builder emits the same number of property copies. Parent/Schedule 3/Form 1040
+credit reconciliation remains mandatory.
+
+The public 50,000-wage fixture with 5,000 and 1,000 property costs yields
+1,000 + 300 = 1,300 credit, total tax 2,575 and refund 4,425. Its complete native
+return validates against cached TY2025 v5.4, and all seven PDF pages were
+reviewed. The PDF has zero remaining fields/widgets and SHA-256
+`94b8f474cf486952df4d6aacae2bcebf742ca435135196d78f00ceff40eaa9db`.
+A four-property case separately exercises the aggregate tax limit: 4,000
+tentative credit is limited to 3,875, producing zero total tax. Verification
+records distinguish this local synthetic source from an accepted IRS return.
+
+The tax-limited case also validates as a complete TY2025 v5.4 XML return.
+All nine PDF pages were reviewed, including four separately identified charger
+copies, parent count 4, credit 3,875, zero total tax and refund 7,000. Its
+flattened PDF has zero fields/widgets and SHA-256 `00bdc3c583559ac7aa4fb09d6719655c61641d8d60d27714edd9fd842cfed515`.
+The final focused and adjacent regression (including the base ATS fixture
+directory and PDF builder) passes 109/109 with zero failures.
