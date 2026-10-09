@@ -1,5 +1,7 @@
 # TY2025 Form 8962 interstate-move poverty table
 
+> **October9 verification:** Interstate component guards passed in the115-test run; this batch does not add full interstate XSD or visually reviewed return packets. See the [policy-route checkpoint](./ty2025-form8962-policy-month-gap.md#october-9-policy-route-verification-checkpoint). Historical staged/unrun statements below are superseded only for the selected tests and named packets; authentication and IRS acceptance remain open.
+
 The
 [2025 Form 8962 instructions, line 4](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf)
 say that a taxpayer who lived in Alaska and/or Hawaii during a 2025 move uses

@@ -1,5 +1,7 @@
 # TY2025 Form 8962 policy-month MeF boundary
 
+> Current verification: see the October9 policy-route checkpoint below; older staged/unrun notes are historical and remain scoped by the exact replay.
+
 ## One two-person policy with excess APTC below 400% FPL (2026-10-05)
 
 The monthly filing boundary now accepts one unchanged, same-state policy
@@ -727,3 +729,59 @@ with and without advances, annual computation, foreign exclusions, QSEHRA and
 Publication974 special calculations. Source authenticity, broader combinations,
 business rules and IRS acceptance remain open. The full typed suite still has
 the separately recorded deferred78 blocker.
+
+
+## October 9: policy-route verification checkpoint
+
+At runtime head `ebf79bba8`, the normal typed command below passed **115 tests,
+zero failures** across the existing native Form8962 and health PDF review folders.
+This replaces the historical unrun status for the cases actually selected by this
+command, including policy switches, overlapping transitions, corrected SLCSP,
+shared allocation and interstate component guards. It does not establish full
+public-return, XSD or visual proof for every component test.
+
+```sh
+DENO_V8_FLAGS=--max-old-space-size=8192 deno test -A   forms/f1040/2025/mef/forms/credits/health/f8962/   forms/f1040/2025/pdf/reviews/credits/health/
+```
+
+Nine existing source fixtures were separately replayed through `executeReturn`,
+`prepareReturn`, complete native XML and the actual PDF builder, using the filer
+extracted from finalized Form1040. All nine pass the configured TY2025 v5.4 XSD.
+An independent Python Decimal replay derives each policy month from the retained
+input, applies supplied corrections/payment protection/allocation percentages,
+and compares PTC, advances, final tax, refund/owed and every native monthly amount.
+It passes all nine. No calculation or export runtime was changed in this batch.
+
+| Fixture suffix (all start `single-`) | PTC | APTC | Repayment | Net credit | Tax | Refund / owed | Pages |
+|---|---:|---:|---:|---:|---:|---|---:|
+| alternating-three-no-aptc-policies-200-fpl | 7,800 | 0 | 0 | 7,800 | 1,487 | 9,313 / 0 | 5 |
+| four-sequential-no-aptc-policies-four-gaps | 5,600 | 0 | 0 | 5,600 | 1,487 | 7,113 / 0 | 5 |
+| twelve-sequential-no-aptc-policies-full-year | 7,800 | 0 | 0 | 7,800 | 1,487 | 9,313 / 0 | 5 |
+| two-sequential-no-aptc-policies-protected-partial | 7,051 | 0 | 0 | 7,051 | 1,487 | 8,564 / 0 | 5 |
+| alternating-policies-all-covered-slcsp-corrections | 1,304 | 2,400 | 1,096 | 0 | 9,117 | 0 / 1,117 | 6 |
+| alternating-policies-both-slcsp-corrected | 1,354 | 2,400 | 1,046 | 0 | 9,067 | 0 / 1,067 | 6 |
+| five-sequential-corrected-slcsp-policies | 1,054 | 2,400 | 1,346 | 0 | 9,367 | 0 / 1,367 | 6 |
+| situation4-nonenrolled-other-taxpayer | 4,800 | 1,920 | 0 | 2,880 | 1,487 | 4,393 / 0 | 5 |
+| situation4-two-agreed-percentages | 7,200 | 4,800 | 0 | 2,400 | 1,487 | 3,913 / 0 | 5 |
+
+All **48 filled pages** were rendered and observed:31 distinct pages and17 exact
+matching pages. The four gap months have blank monthly rows; protected January
+payment400.51 prints401. Corrected benchmarks and shared percentages reconcile.
+PartIV properly prints only the last15 policy-number characters and uses separate
+rows for January–June20% and July–December80%. Fields and widgets are absent in
+these final flattened builder outputs; no clipping or amount discrepancy was
+observed in this batch.
+
+The [2025 Form8962 instructions](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf)
+support monthly corrected amounts, protected premium payments, Situation4
+allocations and last15-character policy numbers. The independent regular-tax
+check uses Single taxable-income bands14,350–14,400 and59,550–59,600 in the
+[2025 Tax Table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf):1,487 and8,021.
+
+Private evidence: `.state/research/form8962-policy-replay-2026-10-09/` retains
+commands, source/prepared data, XML/PDF, monthly oracle, renders and hashes.
+Marketplace, insurer and allocation references/repeated digests are synthetic
+review assertions; the run does not authenticate records or signatures. Broader
+combinations, complete business rules and IRS acceptance remain open. No deferred
+work was implemented, no parent task closed, and the full-suite deferred78
+blocker remains separate. Scoped CI on the runtime head passed run37887768222.

@@ -1,5 +1,7 @@
 # TY2025 Form 8962: alternating same-state policies
 
+> **October9 verification:** The115-test run includes these native guards; nine complete return packets include alternating/corrected and no-APTC sequential routes. See the [policy-route checkpoint](./ty2025-form8962-policy-month-gap.md#october-9-policy-route-verification-checkpoint). Historical staged/unrun statements below are superseded only for the selected tests and named packets; authentication and IRS acceptance remain open.
+
 The
 [2025 Form 8962 instructions](https://www.irs.gov/pub/irs-prior/i8962--2025.pdf)
 use Form 1095-A columns A, B, and C for each covered month on lines 12-23. They

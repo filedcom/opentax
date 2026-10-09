@@ -1,5 +1,7 @@
 # TY2025 Form 8962: no-APTC claim at 100%-399% FPL
 
+> **October9 verification:** Four retained public-return cases cover alternating, twelve-policy, uncovered-month and protected-partial-payment paths, within nine XSD-valid packets/48 observed pages. See the [policy-route checkpoint](./ty2025-form8962-policy-month-gap.md#october-9-policy-route-verification-checkpoint). Historical staged/unrun statements below are superseded only for the selected tests and named packets; authentication and IRS acceptance remain open.
+
 ## One three-person monthly family policy (staged, unrun)
 
 One fully paid, nonshared Marketplace policy may now cover a single filer and
