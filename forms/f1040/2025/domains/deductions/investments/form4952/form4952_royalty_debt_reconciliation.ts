@@ -86,7 +86,8 @@ export function reconcileRoyaltyDebtReturn(
     (amounts.length > 0
       ? !sourceAmountsMatch(source.source_1099_interest, amounts)
       : source.source_1099_interest !== undefined) ||
-    ["f1099oid", "form2555", "k1_1065", "k1_1120s", "k1_1041"].some(
+    (pending.form2555 !== undefined && pending.form8815 === undefined) ||
+    ["f1099oid", "k1_1065", "k1_1120s", "k1_1041"].some(
       (key) => pending[key] !== undefined,
     )
   ) {
@@ -94,7 +95,7 @@ export function reconcileRoyaltyDebtReturn(
       "Form 4952 royalty debt requires complete plain owned interest and no unsupported combined source",
     );
   }
-  const { exclusion } = reconcileBondRoyaltyInterest(pending);
+  const { exclusion, foreignExclusion } = reconcileBondRoyaltyInterest(pending);
   const lines = calculateForm4952(source);
   const property = royaltyDebtProperty(trace, lines.line8);
   const row = scheduleE.schedule_es[0];
@@ -111,9 +112,10 @@ export function reconcileRoyaltyDebtReturn(
     Object.entries(lines).some(([key, value]) => fields[key] !== value) ||
     !row || JSON.stringify(scheduleE) !== JSON.stringify(expected) ||
     schedule1.line5_schedule_e !== netRoyalty ||
-    (schedule1.line9_total_other_income ?? 0) !== 0 ||
-    schedule1.line10_total_additional_income !== netRoyalty ||
-    (sink.line8_additional_income ?? 0) !== netRoyalty ||
+    (schedule1.line9_total_other_income ?? 0) !== -foreignExclusion ||
+    schedule1.line10_total_additional_income !==
+      netRoyalty - foreignExclusion ||
+    (sink.line8_additional_income ?? 0) !== netRoyalty - foreignExclusion ||
     (sink.line2b_taxable_interest ?? 0) !== interestTotal - exclusion ||
     (scheduleA?.line_9_investment_interest ?? 0) !== 0
   ) {

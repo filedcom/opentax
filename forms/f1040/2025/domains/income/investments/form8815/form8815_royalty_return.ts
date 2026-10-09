@@ -1,3 +1,4 @@
+import { form8815ForeignAddback } from "./form8815_foreign_addback.ts";
 import { z } from "zod";
 import {
   calculateForm8815,
@@ -19,7 +20,7 @@ export function reconcileBondRoyaltyInterest(
     if (interest.source_8815_excluded_interest !== undefined) {
       throw new Error("Form 4952 bond exclusion has no retained Form 8815");
     }
-    return { exclusion: 0, magiIncomeAdjustment: 0 };
+    return { exclusion: 0, magiIncomeAdjustment: 0, foreignExclusion: 0 };
   }
   const retained = z.record(z.unknown()).parse(pending.form8815);
   const bond = bondSchema.parse(Object.fromEntries(
@@ -39,12 +40,22 @@ export function reconcileBondRoyaltyInterest(
       "k1_partnership",
       "k1_s_corp",
       "k1_trust",
-      "form2555",
       "form1116",
     ].some((key) => pending[key] !== undefined)
   ) {
     throw new Error(
       "Form 8815 royalty computation needs a complete supported investment-income inventory",
+    );
+  }
+  // The employee source requires line50 = 0; its addback also equals the
+  // line45 exclusion subtracted on Schedule1 line8d.
+  const foreignExclusion = form8815ForeignAddback(pending);
+  if (
+    bond.line9_worksheet.foreign_adoption_and_puerto_rico_addbacks !==
+      foreignExclusion
+  ) {
+    throw new Error(
+      "Form 8815 royalty MAGI needs the sourced foreign exclusion addback",
     );
   }
   const lines = calculateForm8815(bond, CONFIG_BY_YEAR[2025]);
@@ -69,5 +80,9 @@ export function reconcileBondRoyaltyInterest(
       "Form 8815 royalty source, MAGI computation or actual Form 4952 differs from the final return",
     );
   }
-  return { exclusion: lines.line14, magiIncomeAdjustment: actual - dummy };
+  return {
+    exclusion: lines.line14,
+    magiIncomeAdjustment: actual - dummy,
+    foreignExclusion,
+  };
 }

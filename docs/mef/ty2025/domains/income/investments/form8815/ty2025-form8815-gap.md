@@ -1,5 +1,54 @@
 # TY2025 Form 8815: source-to-return gap
 
+## October 9 foreign exclusions with royalty-interest refiguring
+
+The reviewed Form2555 physical-presence employee route now coexists with the
+paired royalty/bond computation. The reconciliation derives the foreign
+exclusion from its retained source, checks foreign wages on Form1040 line1h
+and the exclusion on Schedule1 line8d, includes that negative amount in
+Schedule1 lines9/10 and restores it for bond MAGI. The actual royalty deduction
+still uses investment income after the bond exclusion. Employee housing is
+included in Form2555 line45; this route's line50 housing deduction remains zero.
+
+The [Form8815 instructions](https://www.irs.gov/pub/irs-prior/f8815--2025.pdf)
+require both the foreign addback and the separate pre-exclusion royalty-interest
+computation. The [Form1040 Foreign Earned Income Tax Worksheet](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+then applies to positive taxable income: the constructed positive-royalty case
+has Tax Table14,148 minus10,320 =3,828; the limited-royalty case has13,455 minus
+10,320 =3,135. The two remaining cases have zero taxable income and zero tax.
+
+| Constructed return | Domestic / foreign wages | Foreign exclusion | Bond MAGI | Bond exclusion | Actual royalty interest | Carryforward | Final AGI | Tax | Refund |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Positive royalty | 30,000 / 70,000 | 70,000 | 104,500 | 1,334 | 500 | 0 | 33,166 | 3,828 | 16,172 |
+| Limited royalty | 30,000 / 70,000 | 70,000 | 100,000 | 1,934 | 3,066 | 2,934 | 30,000 | 3,135 | 16,865 |
+| Coverdell, bank400+600, zero AGI | 0 / 100,000 | 100,000 | 100,000 | 967 | 5,033 | 1,967 | 0 | 0 | 0 |
+| Housing exclusion, royalty loss | 10,000 / 100,000 | 100,000 | 110,000 | 600 | 4,400 | 1,600 | 10,000 | 0 | 20,000 |
+
+Gross royalty3,000 and bond interest2,000/proceeds12,000 are common to all
+cases. Paid interest is500/6,000/7,000/6,000; the MAGI-only deductions are
+500/5,000/6,000/5,000. The housing case uses30,000 rent minus20,800 base
+housing amount =9,200 housing exclusion plus90,800 earned-income exclusion.
+Coverdell contribution MAGI uses final AGI plus foreign exclusions, preserving
+the bond exclusion; it remains100,000 in the zero-AGI case.
+
+Four new complete returns pass cached TY2025 v5.4 XSD validation (same schema
+hash as the preceding checkpoint). All44 packet pages were observed through
+37 unique images/10 contact sheets, and source/native/text checks reconcile
+the listed totals. Each packet files one actual Form4952, with no dummy form
+or duplicate Schedule A interest. Existing name68, zero76 and Schedule E
+royalty-loss line22 issue116 still qualify the PDFs; no deferred repair was
+made. Related Form4952/Form8815/Form2555/ScheduleE regression:271/0.
+Focused tests4/0 include12 public and31 native/31 prepared-PDF rejection
+checks for missing/changed foreign sources, legacy aggregate income, addbacks,
+Schedule1/final wages and substitution of the dummy interest deduction.
+
+Evidence: `.state/research/form8815-royalty-foreign-2026-10-09/` holds the four
+source/pending/native/PDF sets, schema results, page images, visual/text review
+and test logs. Production changes are in export reconciliation, with calculation
+nodes unchanged; the last benchmark remains the preceding46/133 snapshot.
+Wider foreign and royalty sources, nonzero AMT adjustments, elections, accepted
+carryover histories, source authenticity and IRS acceptance remain open.
+
 ## October 9 royalty-interest MAGI and actual deduction checkpoint
 
 The [2025 Form 8815 line 9 step 6 instructions](https://www.irs.gov/pub/irs-prior/f8815--2025.pdf)
@@ -15,8 +64,8 @@ QTP/Coverdell payments, ordinary bank interest and redeemed savings bonds.
 Loan/source facts must match across both computations. Whole-dollar plain owned
 interest and one royalty source are required, with zero AMT adjustments; the
 actual regular and AMT carryforwards agree. Additional dividend, OID, capital
-sale, K-1, child-interest or foreign-income inventories remain guarded in this
-combined route. The standalone royalty inventory issue is separately deferred117;
+sale, K-1 and child-interest inventories remain guarded in this combined route.
+The subsequent checkpoint above adds source-checked Form2555 employee income. The standalone royalty inventory issue is separately deferred117;
 that route was not repaired here.
 
 | Constructed return | Paid royalty interest | Pre-exclusion deduction | Bond MAGI | Bond exclusion | Actual deduction | Carryforward | Final AGI | Tax | Refund |

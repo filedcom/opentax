@@ -1,5 +1,17 @@
 # TY2025 Form 4952 portfolio royalty boundary
 
+## October 9 foreign employee income with bond/royalty limits
+
+The paired Form8815 route now reconciles reviewed Form2555 employee and housing
+exclusions alongside Schedule E royalty deductions. Foreign exclusions reduce
+Schedule1 income and are restored for bond MAGI; the actual Form4952 continues
+to use post-bond-exclusion investment income. Four additional XSD-valid returns
+and44 observed pages verify positive/zero final income, foreign tax stacking,
+housing and regular/AMT carryforwards. Twelve public and31 native/31 PDF
+contradictions reject. See the [combined checkpoint](../../../income/investments/form8815/ty2025-form8815-gap.md#october-9-foreign-exclusions-with-royalty-interest-refiguring).
+Standalone royalty/foreign combinations without the paired bond worksheet
+remain guarded; deferred inventory117 and presentation116 are untouched.
+
 ## October 9 bond exclusion and royalty-interest refiguring
 
 The existing directly traced royalty route now joins Form8815's special MAGI
