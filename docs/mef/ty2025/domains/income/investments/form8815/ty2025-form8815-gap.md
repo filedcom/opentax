@@ -1,5 +1,56 @@
 # TY2025 Form 8815: source-to-return gap
 
+## October 9 combined bond, education-account and adoption-credit checkpoint
+
+Form 8815 no longer rejects a return merely because it includes Form 8839.
+Instead it replays the existing reviewed adoption source, pre-credit sink,
+Schedule 3 and final Form 1040 reconciliation. That credit-only route rejects
+employer adoption benefits, so no employer-benefit exclusion is assumed or
+added to bond MAGI. Its attachment-byte and foreign-source checks remain in
+force. Form 8815 still verifies the complete interest inventory, its independent
+MAGI worksheet and any Form 2555 addback before printing or native export.
+
+The [2025 Form 8815 instructions](https://www.irs.gov/pub/irs-prior/f8815--2025.pdf)
+add back excluded employer adoption benefits, not an adoption tax credit.
+[Form 8839 line 7](https://www.irs.gov/instructions/i8839) uses final AGI plus
+foreign/territory exclusions; it does not restore excluded savings-bond interest.
+The mixed cases therefore retain bond MAGI102,000 but adoption/Coverdell
+MAGI101,167. The refundable5,000 adoption credit is never treated as income.
+
+| Constructed return | Bond exclusion | Final AGI | Adoption MAGI | Before-credit tax | Nonrefundable used | Unused adoption credit | Refund | Status |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| Domestic wages70,000, self QTP | 2,000 | 70,000 | 70,000 | 6,855 | 6,000 | 0 | 11,145 | Packet generated |
+| Domestic wages100,000, withholding7,000 | 833 | 101,167 | 101,167 | 13,708 | 6,000 | 0 | 4,292 | Native export rejects deferred93 |
+| Domestic wages100,000, withholding15,000 | 833 | 101,167 | 101,167 | 13,708 | 6,000 | 0 | 12,292 | Packet generated |
+| Foreign70,000/domestic30,000 | 833 | 31,167 | 101,167 | 3,388 | 3,388 | 2,612 | 12,000 | Packet generated |
+| Foreign100,000/no domestic wages | 833 | 1,167 | 101,167 | 0 | 0 | 6,000 | 5,000 | Packet generated |
+
+The last four cases include Coverdell/QTP payments plus tuition and education
+benefits; the first uses QTP payments only. All adoption claims use the separate
+reviewed11,000 expense and retained decree/birth/invoice/payment records. The
+original7,000-withholding phaseout case remains an explicit rejected boundary:
+its calculated refund4,292 coexists with stale pre-credit amount owed6,708,
+and native arithmetic rejects it. The separately funded15,000-withholding case
+is additional evidence, not a replacement or repair for deferred93.
+
+The grouped Form8815/Form8839/Form2555 gate passes107/0, including the original
+blocked balance case. Six altered source/route/credit/addback variants per
+positive case reject24 times at native preparation and24 times at PDF building
+with a valid prepared bundle. Four complete XMLs validate against TY2025v5.4;
+all33 packet pages (26 unique rendered pages) and four separate synthetic source
+pages were observed. Native/PDF amounts, carryforwards, attachment references
+and source SHA-256 values reconcile. The benchmark remains46/133 with exactly
+the same87 failing case IDs. Existing name68, zero-field76, order86/95,
+balance93, rules94 and source-authenticity qualifications remain; this is not
+IRS acceptance or clean presentation approval.
+
+Private evidence: `.state/research/form8815-adoption-packets-2026-10-09/`
+contains the four source/pending/PDF/XML sets, the original blocked result,
+initial failed log,107-test log, benchmark comparison, schema logs, rendered
+page manifest, text/native checks and four source copies. Packet lengths are
+6/6/11/10 pages (funded domestic/QTP/partial credit/unused credit); these four
+returns are counted once across the Form8815 and Form8839 checkpoints.
+
 ## October 9 foreign-exclusion and Coverdell MAGI checkpoint
 
 The supported physical-presence employee Form 2555 route now reconciles to

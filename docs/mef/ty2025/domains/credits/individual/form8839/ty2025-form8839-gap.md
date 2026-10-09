@@ -1,5 +1,16 @@
 # TY2025 Form 8839 coverage gap
 
+## October 9 savings-bond and education-account coexistence
+
+The [combined Form8815 checkpoint](../../../income/investments/form8815/ty2025-form8815-gap.md#october-9-combined-bond-education-account-and-adoption-credit-checkpoint)
+replays the reviewed credit-only adoption route with domestic/foreign wages,
+QTP/Coverdell contributions and excluded bond interest. Four complete returns
+pass XSD;33 packet pages and four shared synthetic source pages were observed.
+Gate107/0 and24 native/24 prepared-PDF mutation rejections retain the original
+amount-owed-to-refund failure93 as a fifth rejected case. These are the same
+four packets counted under Form8815, not four additional adoption packets.
+Employer-benefit exclusion and the wider parent task remain open.
+
 ## October 9 Form 2555 MAGI, phaseout and carryforward checkpoint
 
 The reviewed single-filer domestic-adoption route now accepts the existing
