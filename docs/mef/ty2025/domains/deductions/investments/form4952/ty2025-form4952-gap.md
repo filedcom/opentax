@@ -1,5 +1,61 @@
 # TY2025 Form 4952 portfolio royalty boundary
 
+## October 9 partnership expenses with mixed investment payers
+
+The code-H/dividend reconciliation now combines ordinary bank and Treasury
+interest with taxable OID and ordinary/qualified dividends. Each retained
+interest amount is matched separately, and qualified dividends stay on line4b,
+not in the deductible-interest limit. Two or more identified partnership code-H
+expenses can share that limit. Native and PDF preparation check that the mixed
+1099 recipients belong to the filed taxpayer/joint spouse and that all K-1 and
+1099 copy references are present and distinct. The same shared reconciliation
+checks Schedule A line9 and Form1040 interest, dividends and itemization.
+
+The [2025 Form4952 instructions](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+include partnership investment interest on line1, gross investment income on
+line4a and qualified dividends on line4b. The constructed cases use no line4g
+election, codeB expense, foreign source/tax, debt allocation or prior import.
+Every case combines two K-1 expenses, bank and Treasury interest, one taxable
+OID and two dividend sources. Joint cases distribute these sources between
+spouses. Each mortgage Copy B is synthetic, byte-bound source evidence for
+40,000 of reviewed interest, not an authenticated lender record.
+
+| Return | Gross / qualified investment income | Code H expense | Deduction / carry | AGI | Itemized | Tax / refund |
+|---|---:|---:|---:|---:|---:|---:|
+| Single limited | 2,200 / 400 | 2,000 | 1,800 / 200 | 162,200 | 41,800 | 21,707 / 8,293 |
+| Single fully allowed | 2,200 / 400 | 700 | 700 / 0 | 162,200 | 40,700 | 21,971 / 8,029 |
+| Joint spouse sources | 2,200 / 400 | 2,000 | 1,800 / 200 | 202,200 | 41,800 | 25,088 / 4,912 |
+| Single all dividends qualified | 2,200 / 1,200 | 2,000 | 1,000 / 1,000 | 162,200 | 41,000 | 21,827 / 8,173 |
+| Single larger portfolio | 3,500 / 500 | 4,000 | 3,000 / 1,000 | 163,500 | 43,000 | 21,722 / 8,278 |
+| Joint larger portfolio | 3,500 / 500 | 4,000 | 3,000 / 1,000 | 203,500 | 43,000 | 25,103 / 4,897 |
+
+Independent arithmetic uses the source income, actual deduction and 2025
+ordinary/qualified-dividend rates. Regular and AMT carries agree. Six complete
+returns pass the cached TY2025v5.4 XSD; all26 packet pages were observed through
+22 unique renders/six contact sheets. Six mortgage-source pages share one
+observed pixel-identical render with canonical amount40,000. Existing joint
+name68 and skipped-zero76 qualifications remain; no deferred presentation fix
+was made. Related Form4952 source/node/native/PDF regression:113/0.
+Focused6/0 includes18 public,60 native and60 prepared-PDF rejections
+for changed amounts, owners, source flags, foreign interest and duplicate copies.
+
+A separate public probe clearing both dividend investment flags routes through
+the existing K-1/interest branch, omitting net dividends800 from the deduction
+limit while accepting native preparation. It produces deduction1,000/tax21,899
+versus1,800/21,707 for the same investment sources. This is new deferred118;
+the older dispatcher/inventory path is not repaired and the broader Form4952
+parent stays open. Positive evidence applies to the explicitly affirmed sources.
+The source-authentication, broader K-1, election, carryover and IRS-acceptance
+gates also remain open. Calculation nodes are unchanged; the latest benchmark
+is the preceding commit's46/133, not a fresh run for this reconciliation edit.
+
+Private evidence: `.state/research/form4952-k1-portfolio-2026-10-09/` retains
+source/pending, native XML, flattened packets, synthetic mortgage copies,
+independent arithmetic, render manifests, mutation tests and the boundary probe.
+The XSD digest remains
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+
+
 ## October 9 joint royalty ownership and spouse investment sources
 
 A traced royalty purchase can now belong to either spouse on a joint return.
