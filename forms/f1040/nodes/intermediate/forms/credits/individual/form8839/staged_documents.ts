@@ -100,13 +100,14 @@ export function projectStagedForm8839Documents(
   filer: FilerIdentity,
 ) {
   const source = inputSchema.parse(rawSource);
+  const pending = finalPendingSchema.parse(rawFinalPending);
   const reconciled = reconcilePreAdoptionForm8839Credit(
     source,
     rawChildReview,
     rawPreAdoptionSinkInput,
     rawMagiReview,
+    pending.form2555,
   );
-  const pending = finalPendingSchema.parse(rawFinalPending);
   const child = source.children?.[0];
   const perChild = reconciled.credit.perChild[0];
   const credit = reconciled.credit;

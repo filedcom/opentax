@@ -33,12 +33,12 @@ export function executeForm8839TwoPass(
   const pre = executeGraph(firstInputs);
   if (
     pre.diagnostics.length > 0 ||
-    ["form2555", "f2555", "form4563", "f4563"].some((key) =>
+    ["f2555", "form4563", "f4563"].some((key) =>
       inputs[key] !== undefined || pre.pending[key] !== undefined
     )
   ) {
     throw new Error(
-      "Form 8839 needs a fully settled pre-adoption return without foreign-income exclusions",
+      "Form 8839 needs a fully settled pre-adoption return without unsupported territory or alternate foreign-income inputs",
     );
   }
   const graphSink = normalizePendingDict(pre.pending.f1040, "f1040");
@@ -72,6 +72,7 @@ export function executeForm8839TwoPass(
     publicSource.reviewed_source,
     f1040.inputSchema.parse(preSink),
     publicSource.magi_review,
+    normalizePendingDict(pre.pending.form2555, "form2555"),
   );
   if (!counterfactual && settled.credit.line13 <= 0) {
     throw new Error(

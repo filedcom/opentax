@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { MefPdfAttachment } from "../../../../../../2025/mef/form-descriptor.ts";
 import { type Form8839Input, inputSchema } from "./index.ts";
-import { form8839MagiNonapplicabilitySchema } from "./pre_adoption_reconciliation.ts";
+import { form8839MagiReviewSchema } from "./pre_adoption_reconciliation.ts";
 import {
   assertReviewedDomestic8839Source,
   reviewedDomestic8839SourceSchema,
@@ -18,7 +18,7 @@ const documentSchema = z.object({
 /** The only public source shape for the bounded domestic adoption claim. */
 export const publicForm8839SourceSchema = inputSchema.extend({
   reviewed_source: reviewedDomestic8839SourceSchema,
-  magi_review: form8839MagiNonapplicabilitySchema,
+  magi_review: form8839MagiReviewSchema,
   documents: z.array(documentSchema).min(4),
 }).strict();
 
