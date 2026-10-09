@@ -1,3 +1,5 @@
+import { section179PartIXml } from "./f4562_section179.ts";
+import { section179SummarySchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/section179-inventory.ts";
 import {
   currentYearActivitySchema,
   filedCurrentYearSchema,
@@ -336,9 +338,16 @@ function buildBonusActivity(
 
 function buildCurrentYearActivity(
   fields: z.infer<typeof currentYearActivitySchema>,
+  section179?: z.infer<typeof section179SummarySchema>,
 ): string {
   return elements("IRS4562", [
     element("BusinessOrActivityTxt", fields.activity_description),
+    ...(section179 ? section179PartIXml(section179, false) : [
+      element(
+        "Section179ExpenseDeductionAmt",
+        fields.line12_section179_expense_deduction,
+      ),
+    ]),
     element(
       "SpecialAllowanceAmt",
       fields.line14_special_depreciation_allowance,
@@ -367,9 +376,19 @@ function buildIRS4562(rawFields: Input, context?: MefBuildContext): string {
   // The MeF builder passes [] when this optional form has no pending slot.
   if (Array.isArray(rawFields) && rawFields.length === 0) return "";
   if ("current_year_inventory" in rawFields) {
+    const filed = reconcileCurrentYearInventory(
+      rawFields,
+      context?.pending ?? {},
+    );
+    if (filed.section179_summary && filed.current_year_activities.length > 1) {
+      return elements("IRS4562", [
+        element("BusinessOrActivityTxt", "SUMMARY"),
+        ...section179PartIXml(filed.section179_summary, true),
+      ]);
+    }
     return buildCurrentYearActivity(
-      reconcileCurrentYearInventory(rawFields, context?.pending ?? {})
-        .current_year_activities[0],
+      filed.current_year_activities[0],
+      filed.section179_summary,
     );
   }
   if ("bonus_inventory" in rawFields) {
@@ -404,8 +423,15 @@ export const form4562 = {
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f4562.pdf",
   buildAdditionalDocuments(fields, context) {
     if ("current_year_inventory" in fields) {
-      return reconcileCurrentYearInventory(fields, context?.pending ?? {})
-        .current_year_activities.slice(1).map(buildCurrentYearActivity);
+      const filed = reconcileCurrentYearInventory(
+        fields,
+        context?.pending ?? {},
+      );
+      return filed.current_year_activities.slice(
+        filed.section179_summary && filed.current_year_activities.length > 1
+          ? 0
+          : 1,
+      ).map((a) => buildCurrentYearActivity(a));
     }
     if (!("bonus_inventory" in fields)) return [];
     return reconcileBonusInventory(fields, context?.pending ?? {})

@@ -1,3 +1,4 @@
+import { reconcileInventorySection179Income } from "./f4562_section179.ts";
 import {
   calculateCurrentYearInventory,
   filedCurrentYearSchema,
@@ -18,6 +19,7 @@ export function reconcileCurrentYearInventory(
     pending,
     expected.current_year_activities,
   );
+  reconcileInventorySection179Income(expected, pending);
   if (JSON.stringify(filed) !== JSON.stringify(expected)) {
     throw new Error(
       "Form 4562 current-year rows differ from retained source inventory",

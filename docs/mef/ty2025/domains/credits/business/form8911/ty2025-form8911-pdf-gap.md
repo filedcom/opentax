@@ -312,3 +312,7 @@ recovery classes, mixed bonus rates, construction-exception credits and profitab
 Schedule C/SE/QBI totals. Property and invoice joins remain exact; this does not
 open mixed use, actual PWA, section 179 combinations or unauthenticated source
 claims.
+
+### Reviewed section 179 inventory combinations
+
+The current-year inventory route now reconciles each property’s reviewed, fully allowed section 179 allocation before calculating the refueling credit and remaining depreciation basis. Schedule A line 11 matches Form 4562 allocations, including the separate multi-business summary. Six complete returns pass XSD with 159 reviewed pages and 57 grouped tests; see the [section 179 evidence](../../../deductions/business/form4562/ty2025-form4562-gap.md). Prior/disallowed carry allocations and broader source/IRS gates remain open.

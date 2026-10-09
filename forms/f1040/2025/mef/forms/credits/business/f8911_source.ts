@@ -94,12 +94,11 @@ export function reconcileForm8911BusinessFiling(
   if (
     joined.properties.some((p) =>
       p.business_use_pct !== 1 || !p.business_source ||
-      p.business_source.rate_basis === "pwa" ||
-      p.business_source.section179_deduction !== 0
+      p.business_source.rate_basis === "pwa"
     )
   ) {
     throw new Error(
-      "Form 8911 business filing requires reconciled full-business property and zero section 179; mixed/PWA sources remain guarded",
+      "Form 8911 business filing requires reconciled full-business property; mixed/PWA sources remain guarded",
     );
   }
   const reviews = joined.properties.flatMap((property) => {
@@ -176,7 +175,12 @@ export function reconcileForm8911BusinessFiling(
   }
   return {
     ...joined,
-    depreciationDocumentCount: currentYear?.current_year_activities.length ??
-      inventory?.bonus_activities.length ?? 1,
+    depreciationDocumentCount: currentYear
+      ? currentYear.current_year_activities.length +
+        (currentYear.section179_summary &&
+            currentYear.current_year_activities.length > 1
+          ? 1
+          : 0)
+      : inventory?.bonus_activities.length ?? 1,
   };
 }

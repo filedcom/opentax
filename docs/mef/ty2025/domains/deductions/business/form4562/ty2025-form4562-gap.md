@@ -351,3 +351,64 @@ inspected and 130 exact hash matches to reviewed pages, with zero fields/widgets
 Artifacts: `.state/research/form4562-method-returns/`; checkpoint:
 `form4562-method-batch-checkpoint.json`. These local checks do not establish IRS
 business-rule or ATS acceptance.
+
+
+## Section 179 inventory, residual depreciation and property credits — October 9
+
+The current-year inventory now retains property-by-property section 179
+eligibility reviews, an authorized original-return election, selected fully
+allowable deductions and taxpayer-level active-income evidence. It sums **all
+eligible property cost**, including unelected assets, for the dollar-limit
+phaseout. Noneligible inventory items remain in the MACRS convention test but
+not the section 179 eligible-cost total. The existing single fully elected asset
+route remains available; neither route substitutes aggregate amounts for source
+property rows.
+
+The [Form 4562 instructions](https://www.irs.gov/instructions/i4562) require
+section 179 before bonus, apply dollar and income limits to the taxpayer, and
+use one Part I summary with allocations to separate business forms. The
+[Form 8911 instructions](https://www.irs.gov/instructions/i8911) reduce property
+cost by the section 179 deduction before computing its credit. The inventory
+therefore reconciles the selected deduction to each linked credit property,
+subtracts both deduction and full property credit from MACRS basis, applies the
+return-wide HY/MQ test before bonus, and then computes bonus and regular GDS.
+Schedule C line 13 includes all three deductions exactly once.
+
+Active-income filing reconciliation uses finalized participating taxpayer-owned
+Schedule C profits plus the section 179 addback and sourced ordinary taxpayer
+W-2 wages. Other depreciation remains deducted; half-SE does not reduce this
+limit. Owner/status, employer identity, Schedule 1, wage, property-credit,
+filed-line and allocation conflicts reject. Other business/income adjustments
+remain explicitly guarded. These synthetic reviews do not authenticate external
+invoices, eligibility, authorization or prior-return records.
+
+A sole activity carries Part I on its ordinary Form 4562. Multiple activities
+receive a separate `SUMMARY` Form 4562 with the native summary attribute and
+only their allocated line 12 on each business copy. The two printed line-6
+rows use each elected property's cost, independently of total eligible cost;
+additional properties receive a paginated continuation. Form 3800 reconciles
+the extra native summary document count. No new descriptor or registry key is
+added.
+
+| Complete return | Section 179 | Bonus | Total depreciation | Business credit | Final tax |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Partial election with 40% bonus | 2,000 | 3,008 | 5,910 | 480 | 5,696 |
+| Partial election with 100% bonus | 2,000 | 7,520 | 9,520 | 480 | 5,696 |
+| Two businesses with summary | 2,000 / 5,000 | 3,008 / 14,100 | 6,136 / 19,100 | 1,380 | 10,219 |
+| Three elections among six classes | 6,000 | 21,408 | 31,835 | 480 | 5,696 |
+| Reviewed construction-exception credit | 2,000 | 2,240 | 4,912 | 2,400 | 3,776 |
+| Fully expensed ordinary asset, no credit | 10,000 | 0 | 10,000 | 0 | 6,176 |
+
+The return cases retain profit 10,000 (or 10,000/20,000 for two businesses),
+SE tax 1,413 (or 4,238), and QBI deduction 1,859 (or 5,576). Separate calculation
+checks cover the $4,050,000 eligible-cost phaseout to a $2,450,000 limit and a
+section-179-adjusted fourth-quarter ratio at and just above 40%.
+
+This inventory route requires deductions fully allowable under both limits,
+zero prior carryover, no pass-through amounts or special property dollar limits,
+and no MFS allocation. Disallowed inventory carryover allocation, later-year
+imports, ADS, listed/mixed-use property, spouse businesses and broader income
+combinations remain existing open work. No parent main TODO is closed and no
+deferred task is implemented.
+
+Verification: the grouped typed regression passed **57 tests, zero failures**. All six complete returns passed the pinned TY2025 XSD; their 159 PDF pages contain no AcroForm widgets. All 51 distinct renders were visually reviewed, with 108 other pages matching previously reviewed renders byte for byte. Evidence and hashes are retained in `.state/research/form4562-section179-inventory-returns/` and the section 179 batch checkpoint. This bounded evidence does not establish IRS acceptance or close the broader depreciation task.

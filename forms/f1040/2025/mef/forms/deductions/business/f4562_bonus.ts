@@ -102,7 +102,8 @@ export function reconcileInventorySources(
         asset.business_reference ||
       property.business_source.source_document_reference !==
         asset.source_document_ref ||
-      property.business_source.section179_deduction !== 0
+      property.business_source.section179_deduction !==
+        asset.section179_deduction
     ) {
       throw new Error(
         "Form 4562 bonus asset differs from its Form 8911 property",

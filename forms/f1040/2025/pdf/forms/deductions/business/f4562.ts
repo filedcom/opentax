@@ -1,3 +1,7 @@
+import {
+  appendSection179Properties,
+  section179PdfFields,
+} from "./f4562_section179.ts";
 import { appendBonusElectionStatements } from "./f4562_elections.ts";
 import { filedCurrentYearSchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current-year.ts";
 import {
@@ -45,7 +49,18 @@ const fields: readonly PdfFieldEntry[] = [
   text("line4_reduction", `${p1}.f1_7[0]`, true),
   text("line5_dollar_limitation", `${p1}.f1_8[0]`),
   text("asset_description", `${p1}.Table_Ln6[0].BodyRow1[0].f1_9[0]`),
-  text("line2_total_cost", `${p1}.Table_Ln6[0].BodyRow1[0].f1_10[0]`),
+  {
+    kind: "text",
+    domainKey: "section179_first_property_cost",
+    fallbackDomainKey: "line2_total_cost",
+    pdfField: `${p1}.Table_Ln6[0].BodyRow1[0].f1_10[0]`,
+  },
+  text(
+    "section179_second_description",
+    `${p1}.Table_Ln6[0].BodyRow2[0].f1_12[0]`,
+  ),
+  text("section179_second_cost", `${p1}.Table_Ln6[0].BodyRow2[0].f1_13[0]`),
+  text("section179_second_elected", `${p1}.Table_Ln6[0].BodyRow2[0].f1_14[0]`),
   text("line6_elected_cost", `${p1}.Table_Ln6[0].BodyRow1[0].f1_11[0]`),
   text("line8_total_elected_cost", `${p1}.f1_16[0]`),
   text("line9_tentative_deduction", `${p1}.f1_17[0]`),
@@ -106,8 +121,12 @@ export const form4562Pdf: PdfFormDescriptor = {
         "Form 4562 current-year PDF filer must match the asset proprietor",
       );
     }
+    const summary = currentYear?.section179_summary;
+    const separateSummary = !!summary &&
+      currentYear!.current_year_activities.length > 1;
     const copies = currentYear
       ? currentYear.current_year_activities.map((activity) => ({
+        ...(!separateSummary && summary ? section179PdfFields(summary) : {}),
         ...activity,
         ...Object.fromEntries(
           activity.gds_rows.flatMap((row) =>
@@ -133,7 +152,13 @@ export const form4562Pdf: PdfFormDescriptor = {
         "Form 4562 bonus PDF filer must match the asset proprietor",
       );
     }
-    return copies.map((copy, index) => ({
+    const allCopies = separateSummary
+      ? [
+        { ...section179PdfFields(summary!), activity_description: "SUMMARY" },
+        ...copies,
+      ]
+      : copies;
+    return allCopies.map((copy, index) => ({
       include_bonus_election_statements:
         !!currentYear?.current_year_inventory.bonus_election && index === 0,
       ...copy,
@@ -142,6 +167,17 @@ export const form4562Pdf: PdfFormDescriptor = {
     }));
   },
   async appendSupplementalPages(document, fields, filer, allPending) {
+    if (
+      Array.isArray(fields.section179_overflow) &&
+      fields.section179_overflow.length
+    ) {
+      await appendSection179Properties(
+        document,
+        fields.section179_overflow,
+        String(fields.filer_name),
+        String(fields.filer_ssn),
+      );
+    }
     if (fields.include_bonus_election_statements === true) {
       await appendBonusElectionStatements(document, allPending ?? {}, filer);
     }

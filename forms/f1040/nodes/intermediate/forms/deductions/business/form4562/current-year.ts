@@ -1,4 +1,10 @@
 import {
+  calculateInventorySection179,
+  section179ElectionSchema,
+  section179EligibilitySchema,
+  section179SummarySchema,
+} from "./section179-inventory.ts";
+import {
   assertMethodElections,
   currentYearMethod,
   DepreciationMethod,
@@ -18,6 +24,8 @@ export enum DepreciationConvention {
   MidQuarter = "MQ",
 }
 const assetSchema = bonusAssetCoreSchema.extend({
+  section179_deduction: z.number().int().nonnegative(),
+  section179_eligibility: section179EligibilitySchema.optional(),
   bonus_elected_out: z.boolean(),
   reduced_bonus_election: z.boolean(),
   asset_reference: z.string().trim().min(1),
@@ -39,6 +47,7 @@ export const currentYearInventorySchema = z.object({
   full_calendar_tax_year: z.literal(true),
   bonus_election: bonusElectionReviewSchema.optional(),
   method_election: methodElectionReviewSchema.optional(),
+  section179_election: section179ElectionSchema.optional(),
 }).strict().superRefine((inventory, ctx) => {
   for (
     const key of ["asset_reference", "form8911_property_reference"] as const
@@ -63,10 +72,13 @@ export const gdsRowSchema = z.object({
 });
 export const currentYearActivitySchema = bonusActivitySchema.extend({
   gds_rows: z.array(gdsRowSchema),
+  line12_section179_expense_deduction: z.number().int().nonnegative()
+    .optional(),
 });
 export const filedCurrentYearSchema = z.object({
   current_year_inventory: currentYearInventorySchema,
   current_year_activities: z.array(currentYearActivitySchema).min(1),
+  section179_summary: section179SummarySchema.optional(),
   convention: z.nativeEnum(DepreciationConvention),
 });
 
@@ -83,13 +95,14 @@ function adjustedBasis(asset: z.infer<typeof assetSchema>) {
     asset.acquired_date <= "2017-09-27" ||
     asset.acquired_date > asset.placed_in_service_date ||
     asset.credit_basis_reduction >= asset.cost ||
+    asset.credit_basis_reduction + asset.section179_deduction > asset.cost ||
     (asset.credit_basis_reduction > 0 && !asset.form8911_property_reference)
   ) {
     throw new Error(
       "Current-year depreciation needs qualifying acquisition, service and linked credit basis",
     );
   }
-  return asset.cost - asset.credit_basis_reduction;
+  return asset.cost - asset.credit_basis_reduction - asset.section179_deduction;
 }
 
 // Pub. 946 permits computing MACRS without the rounded percentage tables.
@@ -98,6 +111,10 @@ export function calculateCurrentYearInventory(raw: unknown) {
   const inventory = currentYearInventorySchema.parse(raw);
   assertBonusElections(inventory.assets, inventory.bonus_election);
   assertMethodElections(inventory.assets, inventory.method_election);
+  const section179 = calculateInventorySection179(
+    inventory.assets,
+    inventory.section179_election,
+  );
   const items = inventory.assets.map((asset) => ({
     asset,
     basis: adjustedBasis(asset),
@@ -176,13 +193,24 @@ export function calculateCurrentYearInventory(raw: unknown) {
       proprietor_ssn: first.proprietor_ssn,
       line14_special_depreciation_allowance: bonus,
       gds_rows: gds,
-      line22_total_depreciation: bonus +
+      ...(section179
+        ? {
+          line12_section179_expense_deduction: rows.reduce(
+            (sum, r) => sum + r.asset.section179_deduction,
+            0,
+          ),
+        }
+        : {}),
+      line22_total_depreciation: rows.reduce((sum, r) =>
+        sum + r.asset.section179_deduction, 0) +
+        bonus +
         gds.reduce((sum, r) => sum + r.deduction, 0),
     };
   });
   return filedCurrentYearSchema.parse({
     current_year_inventory: inventory,
     current_year_activities: activities,
+    ...(section179 ? { section179_summary: section179 } : {}),
     convention,
   });
 }
