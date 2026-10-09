@@ -1,52 +1,76 @@
 # TY2025 Form 8582 MFS lived-apart boundary
 
-Sources: [2025 Form 8582](https://www.irs.gov/pub/irs-prior/f8582--2025.pdf) and
-[2025 instructions](https://www.irs.gov/pub/irs-prior/i8582--2025.pdf), Part II
-lines 5 and 8.
+## October 9 complete-return phaseout checkpoint
 
-The existing general input records whether an MFS taxpayer lived with their
-spouse at any time during 2025. That fact now reaches Form 8582. A taxpayer who
-affirmatively lived apart all year may use the $12,500 active-rental special
-allowance, with the $50,000 to $75,000 MAGI phaseout. The MeF form prints
-$75,000 on Part II line 5 and reconciles the lived-apart assertion to the
-general input. Missing or positive lived-with facts still provide no special
-allowance. Focused source, phaseout, and XML cases are written but have not been
-run.
+Seven synthetic married-separate returns now exercise the existing public
+residence-source route through final Form 1040, native XML and complete PDFs.
+This supersedes earlier “written, unrun” claims for the listed boundaries;
+it does not establish source authenticity, a working durable ledger, or IRS
+acceptance. No production calculation or filing code changed.
 
-The storage-ready single active-rental ledger now also accepts MFS only when
-`mfs_lived_apart_all_year` is explicitly true. It passes that fact to the
-existing Part II calculation and records the resulting allowed and suspended
-Schedule E operating loss. For a $40,000 rental loss, whole-dollar MAGI of
-$50,000, $60,000, and $75,000 produces $12,500, $7,500, and $0 allowed,
-respectively. Missing or false lived-apart facts still reject ledger creation;
-the stored ledger read recomputes against the original source. Focused ledger
-cases are written but unrun. This covers one identified Schedule E active
-rental with no prior PAL or sale.
+Each return retains Alex and Sam's names/SSNs, twelve monthly residence
+records with distinct New York addresses and separate references, and an
+explicit no-shared-residence assertion for every month. Alex owns the one
+active rental, whose current loss is 20,000; no prior loss or sale is claimed.
+A recipient-matched W-2 supplies the listed wages and 10,000 withholding.
+The spouse is explicitly not itemizing, and the standard deduction is15,750.
 
-The sourced, lived-apart MFS rental path now also handles odd-dollar modified
-AGI in the phaseout. The 50% calculation may end in 50 cents; the shared loss
-limit and native Part II line 8 round that final amount to a whole dollar under
-the [2025 Form 1040 rounding instructions](https://www.irs.gov/instructions/i1040gi).
-For $20,000 of current rental loss and $60,003 MAGI, Part II lines 5–9 are
-$75,000, $60,003, $14,997, $7,499, and $7,499, leaving $12,501 suspended.
-The Form 8582 PDF descriptor projects those same native lines and Parts VI–VIII
-allocations. Focused source/calculation, MeF, and PDF projection cases are
-written but unrun.
+| Wages / MAGI | Allowed loss | Suspended loss | AGI | Taxable income | Tax | Refund | Pages |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 50,000 | 12,500 | 7,500 | 37,500 | 21,750 | 2,375 | 7,625 | 8 |
+| 50,001 | 12,500 | 7,500 | 37,501 | 21,751 | 2,375 | 7,625 | 8 |
+| 60,000 | 7,500 | 12,500 | 52,500 | 36,750 | 4,175 | 5,825 | 8 |
+| 60,003 | 7,499 | 12,501 | 52,504 | 36,754 | 4,175 | 5,825 | 8 |
+| 74,999 | 1 | 19,999 | 74,998 | 59,248 | 7,944 | 2,056 | 8 |
+| 75,000 | 0 | 20,000 | 75,000 | 59,250 | 7,955 | 2,045 | 6 |
+| 80,000 | 0 | 20,000 | 80,000 | 64,250 | 9,055 | 945 | 6 |
 
-The positive Part II MFS branch now requires twelve ordered monthly residence
-records with separate taxpayer and spouse addresses, a reference for each
-residence, and confirmation that no residence was shared on any day of the
-month. General intake passes that record to Form 8582; the calculation rejects
-missing months or matching addresses, and native/PDF projection requires the
-same record in the filed general source. A $20,000 active-rental loss at $60,000
-MAGI has an authored full-return fixture for the $7,500 allowance, Schedule 1,
-Form 1040, native XML, and PDF projection. A changed residence and an omitted
-month have authored rejection fixtures. These fixtures are unrun. The
-[2025 instructions](https://www.irs.gov/instructions/i8582) require spouses
-filing separately to have lived apart at all times during the year for this
-special allowance. References and monthly assertions are not authenticated
-residence-document bytes.
+Expected allowances follow the [2025 Form 8582
+instructions](https://www.irs.gov/instructions/i8582): lived-apart MFS maximum
+12,500, with the 50,000–75,000 MAGI phaseout. Final half-dollar allowances
+round once under the [Form 1040 rounding
+instructions](https://www.irs.gov/instructions/i1040gi). Expected tax is
+independently transcribed from MFS columns in the [2025 Tax
+Table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf), PDF pages5/6/9; it is not
+copied from engine results. Schedule E allowed loss, Schedule 1 line5, AGI,
+tax and refund reconcile in all seven cases. Zero-allowance cases omit the
+zero Schedule1 packet.
 
-This does not complete GAP-8582. Per-activity source allocation, prior passive
-loss character, dispositions, complex Part IX rows, filled PDF inspection, local
-XSD, and IRS ATS acceptance remain their separate gates.
+The focused run passes7/0. The grouped Form8582 input/domain/native/PDF,
+general-input and storage regression passes283/0. Each packet rejects nine
+mutations at both native preparation and fresh PDF construction, totaling
+63/63 rejections: missing residence source, lived-with contradiction, omitted
+month, matching residence addresses, changed rental amount or activity ID,
+spouse recipient on taxpayer wages, Schedule1 total, and final AGI.
+The older source/phaseout/ledger unit cases also pass in this grouped run.
+
+All seven original XMLs pass local TY2025 IMF2025v5.4 Return1040.xsd
+(SHA-256 `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`).
+All52 PDF pages are covered by37 unique images viewed on ten contact sheets
+and15 exact image matches. Reopened PDFs have no editable fields or widgets.
+PartII limits, PartsIV/VI/VII/VIII activity allocation, ScheduleE deductions,
+Form1040 amounts and address/identity values were compared to retained source
+and pending records. The filled outputs retain these qualifications:
+
+- **New deferred111:** all seven actual graphs omit `has_other_passive`, while
+  the active-rental ledger requires explicit false. `buildForm8582Ledger`
+  rejects each original graph before serialization or next-year import.
+  Passing direct ledger unit cases explicitly supply false and do not prove
+  graph integration. The tests retain the rejection without adding the flag.
+- **Existing deferred68:** all seven Form1040 page1 copies print Sam's name
+  both in the joint-only spouse row and in the MFS name field. Names and SSNs
+  remain present; complete name-format parity is not claimed.
+- **New deferred112:** the75,000 and80,000 packets print zero on Form8582
+  lines7/8 although the line6 instruction skips them. Corresponding native
+  elements also contain zero; business-rule requirements are unverified.
+
+Private evidence is retained in
+`.state/research/form8582-mfs-packets-2026-10-09/`: public inputs, expectations,
+original pending/filer records, ledger error, native XML/PDF, XSD logs,
+source/artifact hashes, rendered pages, review manifest and terminal logs.
+The initial seven ledger failures are retained separately from the passing
+boundary audit. All references are synthetic; none establish authentic
+residence-document bytes, an accepted prior return or a production2026
+import. Deferred issues remain unworked. Other activity combinations, prior
+loss character, dispositions, overflow, business rules and IRS acceptance
+remain open, so the main Form8582 parent stays unchecked.
