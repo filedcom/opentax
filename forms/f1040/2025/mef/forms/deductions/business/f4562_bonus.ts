@@ -1,3 +1,4 @@
+import type { currentYearInventorySchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current-year.ts";
 import { z } from "zod";
 import {
   bonusActivitySchema,
@@ -15,7 +16,9 @@ import {
 } from "../../../../../nodes/inputs/credits/business/f8911/index.ts";
 
 export function reconcileInventorySources(
-  inventory: z.infer<typeof bonusInventorySchema>,
+  inventory:
+    | z.infer<typeof bonusInventorySchema>
+    | z.infer<typeof currentYearInventorySchema>,
   pending: Readonly<Record<string, unknown>>,
   activities: readonly z.infer<typeof bonusActivitySchema>[] =
     calculateBonusInventory(inventory).bonus_activities,

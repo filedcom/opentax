@@ -1,3 +1,7 @@
+import {
+  assertBonusElections,
+  bonusElectionReviewSchema,
+} from "./elections.ts";
 import { z } from "zod";
 import { bonusActivitySchema, bonusAssetCoreSchema } from "./bonus.ts";
 import { roundWholeDollars } from "../../../../../../whole-dollars.ts";
@@ -11,6 +15,8 @@ export enum DepreciationMethod {
   Declining150 = "150 DB",
 }
 const assetSchema = bonusAssetCoreSchema.extend({
+  bonus_elected_out: z.boolean(),
+  reduced_bonus_election: z.boolean(),
   asset_reference: z.string().trim().min(1),
   acquired_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   acquisition_review_reference: z.string().trim().min(1),
@@ -28,6 +34,7 @@ export const currentYearInventorySchema = z.object({
   no_other_depreciation_assets_on_return: z.literal(true),
   return_asset_inventory_source_ref: z.string().trim().min(1),
   full_calendar_tax_year: z.literal(true),
+  bonus_election: bonusElectionReviewSchema.optional(),
 }).strict().superRefine((inventory, ctx) => {
   for (
     const key of ["asset_reference", "form8911_property_reference"] as const
@@ -85,6 +92,7 @@ function adjustedBasis(asset: z.infer<typeof assetSchema>) {
 // percentage tables. Keep the rate exact and round each filed aggregate line.
 export function calculateCurrentYearInventory(raw: unknown) {
   const inventory = currentYearInventorySchema.parse(raw);
+  assertBonusElections(inventory.assets, inventory.bonus_election);
   const items = inventory.assets.map((asset) => ({
     asset,
     basis: adjustedBasis(asset),
@@ -97,7 +105,11 @@ export function calculateCurrentYearInventory(raw: unknown) {
     ? DepreciationConvention.MidQuarter
     : DepreciationConvention.HalfYear;
   const calculated = items.map(({ asset, basis }) => {
-    const bonus = asset.acquired_date > "2025-01-19" ? basis : basis * 0.4;
+    const bonus = asset.bonus_elected_out
+      ? 0
+      : asset.acquired_date > "2025-01-19" && !asset.reduced_bonus_election
+      ? basis
+      : basis * 0.4;
     const residual = basis - bonus;
     const period = asset.macrs_recovery_period_years;
     const quarter = Math.ceil(

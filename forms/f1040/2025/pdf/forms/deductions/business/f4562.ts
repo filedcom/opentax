@@ -1,3 +1,4 @@
+import { appendBonusElectionStatements } from "./f4562_elections.ts";
 import { filedCurrentYearSchema } from "../../../../../nodes/intermediate/forms/deductions/business/form4562/current-year.ts";
 import {
   filedBonus4562Schema,
@@ -132,11 +133,18 @@ export const form4562Pdf: PdfFormDescriptor = {
         "Form 4562 bonus PDF filer must match the asset proprietor",
       );
     }
-    return copies.map((copy) => ({
+    return copies.map((copy, index) => ({
+      include_bonus_election_statements:
+        !!currentYear?.current_year_inventory.bonus_election && index === 0,
       ...copy,
       filer_name: name,
       filer_ssn: ssn,
     }));
+  },
+  async appendSupplementalPages(document, fields, filer, allPending) {
+    if (fields.include_bonus_election_statements === true) {
+      await appendBonusElectionStatements(document, allPending ?? {}, filer);
+    }
   },
   fields,
 };

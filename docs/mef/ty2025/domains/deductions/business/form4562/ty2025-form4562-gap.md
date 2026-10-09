@@ -253,3 +253,53 @@ Artifacts and render review are retained in
 `.state/research/form4562-current-year-returns/`. No matching IRS business-rule
 acceptance or authenticated external asset records are established; the broader
 Form 4562 parent task remains open.
+
+## Reviewed bonus elections and required statements — October 9
+
+The current-year inventory accepts a reviewed election source identifying the
+owner, elected-out recovery classes, the 40% transitional choice, taxpayer
+authorization, timely-original-return confirmation and review references. Every
+asset must agree with that source. An opt-out covers the entire class across all
+activities; reduced bonus covers eligible post-January-19 property outside opted-
+out classes. Duplicated/absent classes, mixed choices within a class, partially
+applied reduced rates, missing reviews and changed owners reject. These are
+reviewed facts, not independently authenticated consent or extension records;
+amended/late elections, revocations and other eligibility branches remain open.
+
+The [Form 4562 instructions](https://www.irs.gov/instructions/i4562) require a
+class-specific opt-out statement on the timely return. [Notice 2026-11 section
+4.03](https://www.irs.gov/pub/irs-drop/n-26-11.pdf) applies the transitional election
+procedures to 2025's 40% rate and January acquisition boundary. [26 CFR
+1.168(k)-2(f)](https://www.ecfr.gov/current/title-26/section-1.168(k)-2) supplies the
+underlying election, timing and owner rules. This route retains the existing
+full-calendar-year, nonlisted, GDS, original-use, no-section-179 eligibility
+boundaries. Qualifying elected-out property does not acquire an AMT depreciation
+adjustment solely because of the election; other AMT-source work remains separate.
+
+Two source-derived native descriptors now emit the opt-out under
+`SpclDeprecAllwncElectOutStmt` and the reduced-bonus explanation under
+`GeneralDependencyMedium`. The latter includes the taxpayer SSN, Form 4562 line
+reference, statutory reference and complete election paragraph. Each statement
+prints once after the first Form 4562 copy; all activity copies retain their own
+bonus, class rows and Schedule C joins. There is no extra statement for a default
+rate. Both representations use the reviewed choice and reconcile the complete
+asset inventory before output.
+
+| Complete return | Bonus by activity | Total depreciation by activity | Final tax | Pages |
+| --- | --- | --- | ---: | ---: |
+| Five-year class opt-out, half-year | 0 | 1,880 | 5,576 | 28 |
+| Reduced 40% bonus, fourth-quarter | 3,760 | 4,042 | 5,576 | 28 |
+| Five-year class opt-out across two businesses | 0 / 0 | 2,350 / 940 | 9,799 | 34 |
+| Reduced 40% across two businesses | 3,760 / 7,520 | 5,170 / 8,084 | 9,799 | 34 |
+| Six classes: four opt-outs and two reduced-rate classes | 7,760 | 15,125 | 5,576 | 29 |
+
+The 37-test grouped regression passes with type checking at the 8 GB local heap
+limit, covering both new choices and prior section 179, bonus, construction,
+credit, residual-MACRS and profitable-return routes. Five complete returns pass
+cached TY2025 v5.4 XSD. All 153 pages are verified through 18 distinct visual
+reviews and 135 exact matches to reviewed pages; each native election paragraph
+appears exactly once in the corresponding PDF. No fields/widgets remain. Evidence:
+`.state/research/form4562-election-returns/` and
+`form4562-election-batch-checkpoint.json` in the retained execution directory.
+These results establish local statement parity, not IRS business-rule approval,
+authenticated source records or accepted elections.

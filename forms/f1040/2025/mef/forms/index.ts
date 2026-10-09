@@ -1,4 +1,8 @@
 import {
+  form4562ElectionOutStatement,
+  form4562ReducedBonusStatement,
+} from "./deductions/business/f4562_elections.ts";
+import {
   form8886,
   form8886AdditionalDetails,
   form8886ExpectedBenefits,
@@ -386,6 +390,7 @@ export const ALL_MEF_FORMS = [
   form1116DirectExpenseStatement,
   form1116OtherDeductionsStatement,
   // Native Form 3800 carryforward computations follow Form 1116 statements.
+  form4562ElectionOutStatement,
   form3800CarryforwardStatement,
   form4136EmulsionBlendingStatement,
   form4136CreditCardUsersStatement,
@@ -418,4 +423,5 @@ export const ALL_MEF_FORMS = [
   form8854NativeStatements,
   form8886ExpectedBenefits,
   form8886AdditionalDetails,
+  form4562ReducedBonusStatement,
 ] as const;
