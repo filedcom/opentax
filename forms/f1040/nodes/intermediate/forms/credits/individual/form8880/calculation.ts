@@ -1,6 +1,8 @@
 import {
   nonjointDistributionReviewSchema,
   nonjointDistributionTotal,
+  reviewedSaver1099RCopySchema,
+  SaverDistributionTreatment,
 } from "./nonjoint_distribution_review.ts";
 import { z } from "zod";
 import { FilingStatus, TS } from "../../../../../types.ts";
@@ -13,11 +15,19 @@ export const jointDistributionReviewSchema = z.object({
   filing_due_date: z.enum(["2026-04-15", "2026-10-15"]),
   extension_confirmation_ref: z.string().trim().min(1).optional(),
   reviewed_distribution_sources_ref: z.string().trim().min(1),
+  current_year_source_inventory_review: z.object({
+    reviewed_by: z.string().trim().min(1),
+    reviewed_on: z.string().date(),
+    complete_1099r_inventory_confirmed: z.literal(true),
+  }).strict().optional(),
   entries: z.array(
     z.object({
       recipient: z.nativeEnum(TS),
       received_date: z.string().date(),
-      qualifying_amount: z.number().positive(),
+      qualifying_amount: z.number().finite().nonnegative(),
+      gross_amount: z.number().finite().positive().optional(),
+      treatment: z.nativeEnum(SaverDistributionTreatment).optional(),
+      current_year_1099r: reviewedSaver1099RCopySchema.optional(),
       source_document_ref: z.string().trim().min(1),
       filed_jointly_in_distribution_year: z.boolean().optional(),
       distribution_year_return_ref: z.string().trim().min(1).optional(),
@@ -40,6 +50,28 @@ export const jointDistributionReviewSchema = z.object({
   }
   for (const [index, entry] of review.entries.entries()) {
     const year = entry.received_date.slice(0, 4);
+    const currentCopy = entry.current_year_1099r !== undefined ||
+      entry.gross_amount !== undefined || entry.treatment !== undefined;
+    if (
+      (currentCopy &&
+        (!review.current_year_source_inventory_review || year !== "2025")) ||
+      (year === "2025" && review.current_year_source_inventory_review && (
+        !entry.current_year_1099r || entry.gross_amount === undefined ||
+        entry.treatment === undefined ||
+        entry.qualifying_amount !==
+          (entry.treatment === SaverDistributionTreatment.Included
+            ? entry.gross_amount
+            : 0)
+      )) ||
+      (entry.qualifying_amount === 0 && !currentCopy)
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["entries", index],
+        message:
+          "Form 8880 reviewed joint current-year inventory needs complete classified copies",
+      });
+    }
     const inWindow = entry.received_date >= "2023-01-01" &&
       entry.received_date < review.filing_due_date;
     const prior = year === "2023" || year === "2024";

@@ -1,4 +1,7 @@
-import { assertNonjointSaverDistributionCopies } from "./form8880_distribution_sources.ts";
+import {
+  assertJointSaverDistributionCopies,
+  assertNonjointSaverDistributionCopies,
+} from "./form8880_distribution_sources.ts";
 import { inputSchema as r1099InputSchema } from "../../../../../nodes/inputs/income/retirement/f1099r/index.ts";
 import type { Fields as F1040Fields } from "../../../../mef/forms/general/return-assembly/f1040.ts";
 import type { Fields as Schedule3Fields } from "../../../../mef/forms/general/return-assembly/schedule3.ts";
@@ -89,6 +92,17 @@ function assertForm8880GeneralEligibility(
       "Form 8880 nonjoint distribution ledger differs from retained general source",
     );
   }
+  if (
+    (source.joint_distribution_review?.current_year_source_inventory_review ||
+      general.form8880_joint_distribution_review
+        ?.current_year_source_inventory_review) &&
+    JSON.stringify(source.joint_distribution_review) !==
+      JSON.stringify(general.form8880_joint_distribution_review)
+  ) {
+    throw new Error(
+      "Form 8880 reviewed joint ledger differs from retained general source",
+    );
+  }
   const sameOwner = (left: string | undefined, right: string | undefined) =>
     left === undefined && right === undefined ||
     left !== undefined && right !== undefined &&
@@ -97,6 +111,15 @@ function assertForm8880GeneralEligibility(
   if (source.filing_status !== general.filing_status) {
     throw new Error(
       "Form 8880 retained general eligibility differs from claimed owner facts",
+    );
+  }
+  if (
+    source.joint_distribution_review?.current_year_source_inventory_review &&
+    (!sameOwner(source.taxpayer_ssn, general.taxpayer_ssn) ||
+      !sameOwner(source.spouse_ssn, general.spouse_ssn))
+  ) {
+    throw new Error(
+      "Form 8880 joint inventory owners differ from retained general source",
     );
   }
   const claimed = [
@@ -225,6 +248,16 @@ export function assertForm8880FiledCalculation(
         : r1099InputSchema.parse(pending.f1099r).f1099rs,
     );
   }
+  if (source.joint_distribution_review?.current_year_source_inventory_review) {
+    assertJointSaverDistributionCopies(
+      source.joint_distribution_review,
+      pending.f1099r === undefined
+        ? []
+        : r1099InputSchema.parse(pending.f1099r).f1099rs,
+      source.taxpayer_ssn,
+      source.spouse_ssn,
+    );
+  }
   assertForm8880W2DeferralSources(source, pending);
   assertForm8880GeneralEligibility(
     source,
@@ -309,8 +342,8 @@ export function assertForm8880FiledCalculation(
   }
 }
 
-/** The new nonjoint inventory must also replay when no Form 8880 is filed. */
-export function assertNonjointForm8880Outcome(
+/** Reviewed distribution inventories must also replay when no Form 8880 is filed. */
+export function assertReviewedForm8880Outcome(
   fields: object,
   pending: Readonly<Record<string, unknown>>,
 ): void {
@@ -320,7 +353,10 @@ export function assertNonjointForm8880Outcome(
     : generalInputSchema.parse(pending.general);
   if (
     source.nonjoint_distribution_review ||
-    general?.form8880_nonjoint_distribution_review
+    general?.form8880_nonjoint_distribution_review ||
+    source.joint_distribution_review?.current_year_source_inventory_review ||
+    general?.form8880_joint_distribution_review
+      ?.current_year_source_inventory_review
   ) {
     assertForm8880FiledCalculation(fields, pending);
   }

@@ -282,3 +282,57 @@ failure/final logs. Source references are synthetic reviewed facts, not issuer
 or signature authentication. Current-year non-1099-R distribution sources,
 broader classification proof, joint histories, local business-rule acceptance
 and IRS acceptance remain open. The existing parent task is not closed.
+
+
+## October 9 joint distribution inventory checkpoint
+
+The reviewed joint mode now binds both spouses' complete positive current-year
+Form1099-R inventories to the distribution ledger. It requires reviewer/date,
+owner identity, payer/account/source reference, gross and explicit taxable
+amounts, both distribution codes, IRA mark and plan classification. Excluded
+current distributions remain in that inventory with zero qualifying amount.
+Missing, duplicate, misowned or changed source copies reject at public entry and
+again at native/full-PDF export, including a calculated zero credit. Retained
+general facts bind both owner identities and the complete ledger. The older
+joint ledger remains compatible without being represented as this stronger proof.
+
+Seven MFJ returns retain AGI50000, standard deduction31500, taxable income18500,
+[IRS table tax1853](https://www.irs.gov/publications/p1040) before credits and
+withholding/payments3000. Both owners are61, with W-2 deferrals2000/1500.
+[Form8880 instructions](https://www.irs.gov/pub/irs-prior/f8880--2025.pdf)
+distinguish distributions received during a joint filing year from distributions
+received when the couple did not file jointly; the retained2026 filing plan is
+review evidence, not proof of an eventual2026 filing.
+
+| Case | Line4 taxpayer/spouse | Credit | Final tax | Refund |
+| --- | --- | ---: | ---: | ---: |
+| Both current distributions | 300/300 | 580 | 1273 | 1727 |
+| Prior spouse distribution, separate filing | 300/700 | 500 | 1353 | 1647 |
+| Prior spouse distribution, joint filing | 700/700 | 420 | 1433 | 1567 |
+| Prior separate plus prefiling separate | 800/700 | 400 | 1453 | 1547 |
+| Prior separate plus prefiling joint | 800/1200 | 300 | 1553 | 1447 |
+| Additional excluded spouse code7/D annuity | 300/300 | 580 | 1273 | 1727 |
+| Distributions fully offset both contributions | 2500/2500 | 0 | 1853 | 1147 |
+
+The grouped typed gate passes240/0. These seven cases reject35 public-source
+changes and63 native plus63 full-PDF changes, including ledger and retained
+owner mutations. All seven XMLs pass cached TY2025v5.4 Return1040.xsd, digest
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+All26 pages were reviewed: six four-page1040/Schedule3/Form8880 packets and one
+two-page zero-credit1040. Amounts, columns, identity on1040, MFJ/digital-assets
+marks, refund totals and zero-credit omission reconcile. All seven repeat
+fully taxable gross presentation deferred97; six Form8880 page4 headers omit
+the spouse name, extending the existing joint-name qualification. No deferred
+repair or whole-form closure is claimed.
+
+The first fixture rounded each W-2 Medicare withholding amount to whole dollars,
+creating a one-dollar Form8959 payment in six cases. Initial refund assertions
+incorrectly ignored that payment. Correcting the new fixture to cents removes
+it; final refunds above reconcile. Original failure and diagnostic logs remain,
+but the suspected refund defect was disproved and no new future TODO was kept.
+
+Evidence: `.state/research/form8880-joint-2026-10-09/`, seven source/pending/XML/
+PDF sets,26 renders, qualification/schema reports and original/final test logs.
+Issuer authentication, current-year sources without1099-R copies, wider
+eligibility/classification and prior-source proof, business rules and IRS
+acceptance remain open. The main Form8880/source-provenance parents stay open.

@@ -13,7 +13,7 @@ import {
   assertForm8880EligibleTotals,
   assertForm8880FiledCalculation,
   assertForm8880TaxLimit,
-  assertNonjointForm8880Outcome,
+  assertReviewedForm8880Outcome,
 } from "../../../../domains/credits/individual/form8880/form8880_tax_limit.ts";
 
 // The calculator self-emits these line values for both PDF and MeF. The
@@ -119,7 +119,7 @@ function buildIRS8880(fields: Input, context?: MefBuildContext): string {
         "Form 8880 zero-credit outcome conflicts with native lines",
       );
     }
-    assertNonjointForm8880Outcome(fields, context?.pending ?? {});
+    assertReviewedForm8880Outcome(fields, context?.pending ?? {});
     return "";
   }
   if (!hasPrintLine) {

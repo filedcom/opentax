@@ -18,6 +18,16 @@ export enum SaverDistributionTreatment {
 const reference = z.string().trim().min(1);
 const ssn = z.string().regex(/^(?:\d{9}|\d{3}-\d{2}-\d{4})$/);
 
+export const reviewedSaver1099RCopySchema = z.object({
+  payer_ein: z.string().regex(/^(?:\d{9}|\d{2}-\d{7})$/),
+  account_number: reference,
+  taxable_amount: z.number().finite().nonnegative(),
+  distribution_code: z.nativeEnum(DistributionCode),
+  second_distribution_code: z.nativeEnum(DistributionCode).optional(),
+  ira_simple_indicator: z.boolean(),
+  plan_classification_review_ref: reference,
+}).strict();
+
 /** Reviewed line-4 classification, not authentication of payer records. */
 export const nonjointDistributionReviewSchema = z.object({
   taxpayer_ssn: ssn,
@@ -35,15 +45,7 @@ export const nonjointDistributionReviewSchema = z.object({
       source_document_ref: reference,
       classification_review_ref: reference,
       treatment: z.nativeEnum(SaverDistributionTreatment),
-      current_year_1099r: z.object({
-        payer_ein: z.string().regex(/^(?:\d{9}|\d{2}-\d{7})$/),
-        account_number: reference,
-        taxable_amount: z.number().finite().nonnegative(),
-        distribution_code: z.nativeEnum(DistributionCode),
-        second_distribution_code: z.nativeEnum(DistributionCode).optional(),
-        ira_simple_indicator: z.boolean(),
-        plan_classification_review_ref: reference,
-      }).strict().optional(),
+      current_year_1099r: reviewedSaver1099RCopySchema.optional(),
     }).strict(),
   ),
 }).strict().superRefine((review, context) => {
