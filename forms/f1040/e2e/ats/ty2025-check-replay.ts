@@ -190,6 +190,12 @@ export const ATS_REPLAY_TARGETS = z.array(scenarioSchema).parse([
     targets: [
       ...wage(31232, 1754),
       target(
+        "f1040.line28_actc",
+        0,
+        TargetBasis.Derived,
+        "Scenario5 explicit ACTC opt-out; no refundable additional child credit",
+      ),
+      target(
         "f1040.taxpayer_blind",
         true,
         TargetBasis.Printed,
@@ -316,6 +322,66 @@ export const ATS_REPLAY_TARGETS = z.array(scenarioSchema).parse([
       printed1040("line25a_w2_withheld", 609),
       printed1040("line34_overpayment", 609),
       printed1040("line35a_refund", 609),
+      target(
+        "form6251.regular_tax_income",
+        1620,
+        TargetBasis.Printed,
+        "Form6251 p.5 line1b; issued Scenario13 answer retained",
+      ),
+      target(
+        "form6251.line2a_taxes_paid",
+        30000,
+        TargetBasis.Printed,
+        "Form6251 p.5 line2a; issued Scenario13 answer retained",
+      ),
+      target(
+        "form6251.amti",
+        31620,
+        TargetBasis.Printed,
+        "Form6251 p.5 line4; issued Scenario13 answer retained",
+      ),
+      target(
+        "form6251.exemption",
+        137000,
+        TargetBasis.Printed,
+        "Form6251 p.5 line5; issued Scenario13 answer retained",
+      ),
+      target(
+        "form6251.taxable_excess",
+        0,
+        TargetBasis.Printed,
+        "Form6251 p.5 line6; issued Scenario13 answer retained",
+      ),
+      target(
+        "form6251.tentative_tax",
+        0,
+        TargetBasis.Printed,
+        "Form6251 p.5 line7; issued Scenario13 answer retained",
+      ),
+      target(
+        "form6251.amtftc",
+        0,
+        TargetBasis.Printed,
+        "Form6251 p.5 line8; issued Scenario13 answer retained",
+      ),
+      target(
+        "form6251.net_tmt",
+        0,
+        TargetBasis.Printed,
+        "Form6251 p.5 line9; issued Scenario13 answer retained",
+      ),
+      target(
+        "form6251.regular_tax",
+        162,
+        TargetBasis.Printed,
+        "Form6251 p.5 line10; issued Scenario13 answer retained",
+      ),
+      target(
+        "form6251.line11_amt",
+        0,
+        TargetBasis.Printed,
+        "Form6251 p.5 line11; issued Scenario13 answer retained",
+      ),
       target(
         "schedule3.line6j_alt_fuel_vehicle_refueling",
         162,
