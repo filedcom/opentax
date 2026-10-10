@@ -277,3 +277,18 @@ Broader facility routes, period splits, ledgers, authenticity and IRS acceptance
 remain open; no broad parent task is closed.
 
 Related regression gate:390 passed/0 failed (6m59s).
+
+
+## October 10 feedstock and nonowner lessee return checkpoint
+
+Seven additional Form8835/Form3800 complete synthetic returns pass TY2025v5.4
+XSD and retain133 reviewed packet pages for cellulosic/livestock biomass,
+nonowner lessees, landfill, trash and mixed reviewed allocations. This is a
+validation-only change; production behavior is unchanged. Focused7/0 and
+193 native/193 fresh-PDF/35 prepared mutations reject. Existing deferred
+26/76/84/134/135, wider facility/period claims, authenticated sources, carry
+ledgers and IRS acceptance remain open. No main parent task is closed.
+Evidence: `.state/research/form8835-feedstock-2026-10-10/`; see the
+[Form3800 checkpoint](../form3800/ty2025-form3800-pdf-gap.md#october-10-feedstock-and-nonowner-lessee-return-checkpoint).
+
+Related source/native/PDF/XSD and mixed-return regression:65 passed/0 failed (6m22s).

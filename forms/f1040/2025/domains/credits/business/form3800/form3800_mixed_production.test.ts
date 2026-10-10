@@ -14,6 +14,11 @@ import { projectForm3800PartVFields } from "../../../../pdf/forms/credits/busine
 
 import { fixture } from "./form3800_k1_inventory.fixture.ts";
 
+import {
+  type Feedstock,
+  feedstockFields,
+} from "./form3800_feedstock.fixture.ts";
+
 interface Case {
   id: string;
   count: number;
@@ -26,6 +31,8 @@ interface Case {
   dates?: readonly (readonly [string, string])[];
   periodEnd?: string;
   closed?: boolean;
+  feedstock?: Feedstock;
+  lessee?: boolean;
 }
 function productionAmount(
   facility: {
@@ -36,7 +43,12 @@ function productionAmount(
   },
 ) {
   const old = facility.facility_placed_in_service_date < "2022-01-01";
-  const gross = Math.round(facility.kwh_sold * (old ? .03 : .006));
+  const half = ["BIOMASS_OPEN", "LANDFILL", "TRASH"].includes(
+    facility.energy_type,
+  );
+  const gross = Math.round(
+    facility.kwh_sold * (old ? .03 : .006) * (half ? .5 : 1),
+  );
   const year = Number(facility.facility_construction_start_date.slice(0, 4));
   const reduction = old && facility.energy_type === "WIND"
     ? (year === 2017
@@ -61,6 +73,74 @@ function productionLine(
   return facility.production_period_end_date < anniversary ? "4e" : "1f";
 }
 const cases: Case[] = [
+  {
+    id: "feedstock-cellulosic-owned",
+    count: 2,
+    credit: 1000,
+    mixed: false,
+    facilities: 1,
+    feedstock: "cellulosic",
+  },
+  {
+    id: "feedstock-livestock-owned",
+    count: 2,
+    credit: 1000,
+    mixed: false,
+    facilities: 1,
+    feedstock: "livestock",
+  },
+  {
+    id: "feedstock-cellulosic-lessee",
+    count: 16,
+    credit: 1000,
+    mixed: true,
+    facilities: 1,
+    kwh: 6000000,
+    feedstock: "cellulosic",
+    lessee: true,
+  },
+  {
+    id: "feedstock-livestock-lessee",
+    count: 14,
+    credit: 1000,
+    mixed: true,
+    facilities: 2,
+    kwh: 6000000,
+    feedstock: "livestock",
+    lessee: true,
+    review: true,
+  },
+  {
+    id: "feedstock-landfill",
+    count: 30,
+    credit: 500,
+    mixed: true,
+    facilities: 1,
+    kwh: 6000000,
+    feedstock: "landfill",
+  },
+  {
+    id: "feedstock-trash",
+    count: 15,
+    credit: 1000,
+    mixed: true,
+    facilities: 2,
+    kwh: 6000000,
+    feedstock: "trash",
+    review: true,
+  },
+  {
+    id: "feedstock-mixed-reviewed",
+    count: 30,
+    credit: 500,
+    mixed: true,
+    facilities: 4,
+    kwh: 6000000,
+    feedstock: "mixed",
+    lessee: true,
+    review: true,
+    lastFirst: true,
+  },
   {
     id: "later-closed-biomass",
     count: 2,
@@ -333,6 +413,12 @@ function reviewedFixture(test: typeof cases[number]) {
       domestic_content_bonus: false,
       energy_community_bonus: false,
       is_fiscal_year: false,
+      ...feedstockFields(
+        test.feedstock,
+        index,
+        (test.kwh ?? 100000) + index * 10000,
+        test.lessee,
+      ),
     })),
     form3800_current_orphan_allocation: {
       tax_year: 2025 as const,
@@ -740,6 +826,69 @@ for (const test of cases) {
             );
         },
       );
+    }
+    if (test.feedstock) {
+      const sourceKeys = [
+        "open_loop_cellulosic_source",
+        "open_loop_livestock_source",
+        "landfill_gas_source",
+        "trash_combustion_source",
+      ];
+      const changeSource =
+        (change: (source: Record<string, unknown>) => void) =>
+        (p: typeof pending) => {
+          const facilities = p.f8835.f8835s as Array<Record<string, unknown>>;
+          const key = sourceKeys.find((key) =>
+            facilities[0][key] !== undefined
+          )!;
+          change(facilities[0][key] as Record<string, unknown>);
+        };
+      mutations.push(
+        changeSource((s) => {
+          s.metered_kwh_produced = 1;
+        }),
+        changeSource((s) => {
+          s.invoiced_kwh_sold = 1;
+        }),
+        changeSource((s) => {
+          s.meter_period_end_date = "2025-11-30";
+        }),
+        changeSource((s) => {
+          s.unrelated_sale_invoice_date = "2026-01-01";
+        }),
+        changeSource((s) => {
+          s.unrelated_sale_invoice_reference =
+            s.production_meter_record_reference;
+        }),
+        changeSource((s) => {
+          s.unrelated_buyer_verified = false;
+        }),
+        changeSource((s) => {
+          s.facility_description = "Changed facility";
+        }),
+        (p) => {
+          const fs = p.f8835.f8835s as Array<Record<string, unknown>>;
+          for (const key of sourceKeys) Reflect.deleteProperty(fs[0], key);
+        },
+      );
+      if (test.lessee) {
+        mutations.push(
+          (p) => {
+            const f = (p.f8835.f8835s as Array<Record<string, unknown>>)[0];
+            (f.facility_owner_business as Record<string, unknown>).ein =
+              "999999999";
+          },
+          (p) => {
+            const f = (p.f8835.f8835s as Array<Record<string, unknown>>)[0];
+            Reflect.deleteProperty(f, "open_loop_nonowner_lessee_source");
+          },
+          (p) => {
+            const f = (p.f8835.f8835s as Array<Record<string, unknown>>)[0];
+            (f.open_loop_nonowner_lessee_source as Record<string, unknown>)
+              .owner_not_producer_or_claimant_for_2025_verified = false;
+          },
+        );
+      }
     }
     if (test.dates) {
       mutations.push(

@@ -1164,3 +1164,38 @@ histories, prepared component parts, 37 XML documents, XSD log, PDF, 17 rendered
 pages/five reviewed contact sheets, independent verifier and results, fixture
 correction logs, focused/regression logs and a hash manifest. Instructions:
 [2025 Form 3800 Part VI](https://www.irs.gov/instructions/i3800).
+
+
+## October 10 feedstock and nonowner lessee return checkpoint
+
+Validation-only extension of the existing Form8835/Form3800 route: seven
+complete synthetic returns cover owned cellulosic/livestock open-loop biomass,
+nonowner biomass lessees, landfill gas, trash combustion and a reviewed mixed
+four-facility allocation. Production calculations and filing behavior are unchanged.
+The [IRS instructions](https://www.irs.gov/instructions/i8835) supply the
+feedstock, construction and nonowner context; source references are synthetic.
+
+All seven returns pass the cached TY2025v5.4 complete-return XSD. Independent
+Decimal arithmetic reconciles the $0.003/kWh rate, generated credits, ordinary
+and combined limits, source use, final tax and refund. The mixed case generates
+$72,180 and uses $16,077 of production credit plus $8,973 of orphan credit,
+leaving $17 tax; reversed review order preserves physical source identities.
+Five lessee facility copies retain the matched owner name/EIN and lease facts.
+
+The packets contain 109 K-1 sources, 12 facility copies, 117 PartV rows and six
+continuations across 133 pages. All 64 unique raster pages were visually
+reviewed in 16 sheets; the other 69 pages are exact pixel duplicates. Native
+references, owner identities, source rows, facility amounts and PDF flattening
+reconcile. Mutations reject 193 native, 193 fresh-PDF and 35 prepared variants,
+including meter/sale mismatches, dates, duplicate references, missing sources,
+changed facility identity and inconsistent lessee ownership. Focused tests:7/0.
+
+Private evidence: `.state/research/form8835-feedstock-2026-10-10/` contains
+fixtures, full XML/PDF packets, XSD logs, independent verifier, raster hashes
+and visual review. Cumulative business-credit full-return evidence is42 returns/
+727 pages; the separate PartVI component evidence remains37 roots/17 pages.
+Existing deferred26/76/84/134/135 remain untouched. No new deferred item was
+found. Wider periods/facility claims, carry ledgers, authenticated source bytes,
+IRS business rules and acceptance remain open; no broad parent is closed.
+
+Related source/native/PDF/XSD and mixed-return regression:65 passed/0 failed (6m22s).
