@@ -74,6 +74,8 @@ const f8835CreditEntrySchema = z.object({
   registration_number: z.string().min(1).optional(),
   subject_to_passive_activity_limit: z.boolean(),
   transfer_election_statement_file_name: z.string().min(1).optional(),
+  transfer_election_statement_file_names: z.array(z.string().min(1)).min(1)
+    .optional(),
 });
 
 export const f8826CreditEntrySchema = z.object({

@@ -315,8 +315,8 @@ export function assertForm8835EnergyCommunitySource(
     ) ||
     item.existing_facility_expansion ||
     item.subject_to_passive_activity_limit ||
-    (item.transfer_election_amount ?? 0) !== 0 ||
-    item.registration_number !== undefined ||
+    ((item.transfer_election_amount ?? 0) !== 0 && !item.transfer_source) ||
+    (item.registration_number !== undefined && !item.transfer_source) ||
     item.facility_owner_person || item.facility_owner_business ||
     (source.method === "annual_nameplate_capacity" && (
       source.qualification_date < "2025-01-01" ||

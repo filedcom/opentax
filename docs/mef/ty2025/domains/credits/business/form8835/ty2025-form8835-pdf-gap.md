@@ -822,3 +822,52 @@ Business evidence now totals105 XSD-valid complete returns/1,969 observed pages;
 PartVI remains separately37 roots/17 pages. Broader source combinations,
 PWA cures/exceptions, authenticated records/carryovers and IRS acceptance remain
 open. Main TODO bodies and all broad parent statuses remain unchanged.
+
+## October 10 reviewed credit transfers and election statements
+
+Reviewed Form8835 transfers now join the owned facility and registration to each
+buyer, cash ledger, signed-statement review and original timely return. Whole
+and partial transfers reduce Form3800 credits before tax limits; multiple buyers
+retain distinct statement references/counts. Facility allocations reconcile gross,
+transferred, retained and applied credits. Native/PDF preparation verifies both
+parties' statement content and exact attachment bytes; original interactive PDFs
+remain unchanged in local archives, with static copies in the review packet.
+These checks do not authenticate signatures or the reviewed source records.
+
+Seven complete returns cover partial/full sales, two buyers, construction and
+PWA increases, bond reductions, bonuses and two facilities. Production gross /
+transferred / applied credits are respectively594/200/394,2550/2550/0,
+3000/1000/2000,5220/3000/2220,3060/1500/1560,2610/2000/610 and
+63307/35000/23049. Each also uses2001 orphan credit; final taxes are22672,
+23066,21066,20846,21506,22456 and17. Independent Decimal calculations,
+native fields and printed nonzero Form3800 transfer cells reconcile.
+
+The grouped typed gate passed218 tests with zero failures (1m49s); all seven
+complete returns pass TY2025v5.4 XSD. Negative checks reject161 native and161
+freshly hashed PDF source mutations,14 native/14 PDF statement-content mutations
+with recomputed hashes, and24 missing attachments. Both archive layers preserve
+24 originals, including ten transfer statements, and reject48 missing/altered
+variants. All2389 canonical source fields match linked widgets and appearances.
+All175 packet pages were rendered and observed:97 unique pages on25 inspected
+contact sheets, plus78 exact pixel duplicates.
+
+These are qualified observations: existing26/68/76/84/136 remain, including
+blank zero net/use on the full transfer and solar AC on Other. New deferred138
+records clipped Form3800 PartIII registration text: CAABC25ABCD0 spans
+x141.236–204.364 outside its x144–201.6 cell, visibly clipping both edges in
+all seven packets. Full registration remains in native XML, Form8835 and the
+statements. No deferred runtime repair was made. Prior cross-review137 remains
+open; the positive construction/capital inventories agree without repairing it.
+
+Evidence: `.state/research/form8835-transfers-2026-10-10/` retains source,
+pending/native/PDF, original attachments, both archives, XSD logs, typed log,
+Decimal verifier, page/pixel hashes, visual record and registration crop.
+Package identifiers and unsigned sources are synthetic; nothing was transmitted.
+Business totals are112 XSD-valid complete returns/2144 observed pages; PartVI
+remains separately37 roots/17 pages. Broader routes, authentic sources and
+signatures, carryovers and IRS business-rule/acceptance evidence remain open.
+This checkpoint does not close a broad main TODO.
+
+Sources checked: [Form8835 instructions](https://www.irs.gov/instructions/i8835),
+[Form3800 instructions](https://www.irs.gov/instructions/i3800), and
+[final section6418 regulations](https://www.irs.gov/irb/2024-25_IRB).

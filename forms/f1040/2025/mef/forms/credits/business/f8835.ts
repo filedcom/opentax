@@ -1,4 +1,8 @@
 import {
+  assertForm8835TransferSource,
+  form8835TransferDescription,
+} from "../../../../../nodes/inputs/credits/business/f8835/transfer-source.ts";
+import {
   assertForm8835PwaSource,
   form8835PwaDescription,
 } from "../../../../../nodes/inputs/credits/business/f8835/pwa-source.ts";
@@ -214,6 +218,29 @@ function facilityXml(item: F8835Item, context: MefBuildContext): string {
     }
   }
   const lines = calculateForm8835(item);
+  assertForm8835TransferSource(item, lines.line15, true);
+  if (item.transfer_source) {
+    if (
+      item.transfer_source.transferor.name !== context.filer?.fullName ||
+      item.transfer_source.transferor.tin !== context.filer?.primarySSN
+    ) throw new Error("Form 8835 transferor differs from native filer");
+    for (const t of item.transfer_source.transfers) {
+      requireAttachment(t.statement_file_name, context, "transfer election");
+      if (
+        context.attachmentSha256ByFileName?.[t.statement_file_name] !==
+          t.statement_sha256 ||
+        context.attachmentDescriptionsByFileName?.[t.statement_file_name] !==
+          form8835TransferDescription(
+            item.facility_description!,
+            t.transferee.tin,
+          )
+      ) {
+        throw new Error(
+          "Form 8835 transfer statement differs from retained bytes",
+        );
+      }
+    }
+  }
   const [quantityTag, amountTag] = productionTags[item.energy_type];
   const domesticStatementId = item.domestic_content_statement_file_name
     ? context.documentIdsByAttachmentFileName

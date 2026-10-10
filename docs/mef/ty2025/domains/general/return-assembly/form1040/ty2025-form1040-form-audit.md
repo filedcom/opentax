@@ -795,3 +795,19 @@ See the Form8835 solar-bond checkpoint and private
 synthetic positive cost inventories were aligned without repairing deferred137.
 Broader routes, authentic records/carryovers and IRS acceptance remain open.
 No broad parent task is closed.
+
+## October 10 reviewed production-credit transfers
+
+Seven XSD-valid complete returns/175 observed pages join owned Form8835 credit
+transfers, registration, cash ledgers and ten distinct buyer statements through
+Form3800 and final tax. Whole/partial sales, multiple buyers and solar/geothermal
+allocations include bond reductions, bonuses and PWA/Form7220. Grouped gate218/0;
+source rejections161 native/161 fresh-PDF, content rejections14/14, missing
+attachments24; both archives retain24 originals and reject48 variants.
+Business totals112 returns/2144 pages; PartVI37 roots/17 pages remain separate.
+See the Form8835 transfer checkpoint and private
+`.state/research/form8835-transfers-2026-10-10/`. All25 contact sheets were
+inspected (97 unique pages,78 pixel duplicates). Qualifications26/68/76/84/136
+remain; new deferred138 records clipped Form3800 registration edges. Source
+and signature authenticity, wider coverage and IRS acceptance remain open.
+No broad main task is closed.

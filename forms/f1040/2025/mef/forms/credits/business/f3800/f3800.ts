@@ -486,6 +486,12 @@ function sourceForm8835(
       subject_to_passive_activity_limit: item.subject_to_passive_activity_limit,
       transfer_election_statement_file_name:
         item.transfer_election_statement_file_name,
+      ...(item.transfer_source
+        ? {
+          transfer_election_statement_file_names: item.transfer_source.transfers
+            .map((t) => t.statement_file_name),
+        }
+        : {}),
     };
   });
   const actual = fields.f8835_credit_entries;
@@ -504,7 +510,9 @@ function sourceForm8835(
         entry.subject_to_passive_activity_limit !==
           sourceEntry.subject_to_passive_activity_limit ||
         entry.transfer_election_statement_file_name !==
-          sourceEntry.transfer_election_statement_file_name;
+          sourceEntry.transfer_election_statement_file_name ||
+        JSON.stringify(entry.transfer_election_statement_file_names) !==
+          JSON.stringify(sourceEntry.transfer_election_statement_file_names);
     })
   ) {
     throw new Error(

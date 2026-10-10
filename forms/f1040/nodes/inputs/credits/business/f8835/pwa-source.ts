@@ -444,8 +444,8 @@ export function assertForm8835PwaSource(item: F8835Item, filing = false) {
     item.facility_owned_by_filer !== true ||
     item.is_fiscal_year ||
     item.subject_to_passive_activity_limit ||
-    (item.transfer_election_amount ?? 0) !== 0 ||
-    item.registration_number ||
+    ((item.transfer_election_amount ?? 0) !== 0 && !item.transfer_source) ||
+    (item.registration_number && !item.transfer_source) ||
     item.existing_facility_expansion ||
     !["WIND", "GEOTHERMAL", "SOLAR"].includes(item.energy_type) ||
     item.facility_construction_start_date < "2023-01-29" ||

@@ -1517,7 +1517,9 @@ export const form3800Pdf: PdfFormDescriptor = {
         );
       const productionCredit = (line: "1f" | "4e") =>
         productionFor(line).reduce(
-          (sum, source) => sum + source.lines.line15,
+          (sum, source) =>
+            sum + source.lines.line15 -
+            (source.item.transfer_election_amount ?? 0),
           0,
         );
       const productionApplied = (line: "1f" | "4e") =>

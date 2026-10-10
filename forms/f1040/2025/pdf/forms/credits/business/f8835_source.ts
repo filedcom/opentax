@@ -1,3 +1,4 @@
+import { assertForm8835TransferSource } from "../../../../../nodes/inputs/credits/business/f8835/transfer-source.ts";
 import { assertForm8835PwaSource } from "../../../../../nodes/inputs/credits/business/f8835/pwa-source.ts";
 import { assertForm8835EnergyCommunitySource } from "../../../../../nodes/inputs/credits/business/f8835/energy-community-source.ts";
 import { assertForm8835DomesticSource } from "../../../../../nodes/inputs/credits/business/f8835/domestic-source.ts";
@@ -77,6 +78,7 @@ export function form8835PdfSources(
     assertForm8835SmallFacilitySource(item, true);
     assertForm8835EarlyConstructionSource(item, true);
     const lines = calculateForm8835(item);
+    assertForm8835TransferSource(item, lines.line15, true);
     const nonownerLessee = item.energy_type === EnergyType.BiomassOpen &&
       (item.open_loop_cellulosic_source !== undefined ||
         item.open_loop_livestock_source !== undefined) &&
@@ -106,7 +108,6 @@ export function form8835PdfSources(
       ].includes(
         item.increased_credit_reason,
       ) ||
-      (item.transfer_election_amount ?? 0) !== 0 ||
       item.subject_to_passive_activity_limit ||
       (item.facility_owned_by_filer !== true && !nonownerLessee) ||
       (item.facility_owned_by_filer === true &&
@@ -121,10 +122,10 @@ export function form8835PdfSources(
         (item.solar_dc_nameplate_kw ?? 0) <= 0) ||
       !item.facility_description ||
       item.facility_description.length > 70 ||
-      item.registration_number !== undefined
+      (item.registration_number !== undefined && !item.transfer_source)
     ) {
       throw new Error(
-        "Form 8835 PDF currently supports filer-owned nonpassive wind, geothermal, sourced biomass, solar, landfill gas, or trash-combustion facilities with in-period production and reviewed bond financing and reviewed small-facility, early-construction or direct-compliance PWA increases, with reviewed actual-cost domestic content and annual energy-community locations, without other increases, transfer, or fiscal-year branches",
+        "Form 8835 PDF currently supports filer-owned nonpassive wind, geothermal, sourced biomass, solar, landfill gas, or trash-combustion facilities with in-period production and reviewed bond financing and reviewed small-facility, early-construction or direct-compliance PWA increases, with reviewed actual-cost domestic content and annual energy-community locations, with reviewed credit transfers but without other increases or fiscal-year branches",
       );
     }
     if (
@@ -144,7 +145,11 @@ export function form8835PdfSources(
   });
   const form3800 = form3800InputSchema.parse(allPending.f3800);
   const entries = form3800.f8835_credit_entries ?? [];
-  const totalCredit = rows.reduce((sum, row) => sum + row.lines.line15, 0);
+  const totalCredit = rows.reduce(
+    (sum, row) =>
+      sum + row.lines.line15 - (row.item.transfer_election_amount ?? 0),
+    0,
+  );
   const return1040 = f1040.inputSchema.parse(allPending.f1040);
   const credits = return1040.form3800_source_credits;
   const finalized3800 = allPending.f3800 ?? {};
@@ -153,7 +158,16 @@ export function form8835PdfSources(
     rows.map((row, index) => ({ ...row, index }))
       .filter((row) => row.lines.form3800Line === line);
   const generated = (line: "1f" | "4e") =>
-    byLine(line).reduce((sum, row) => sum + row.lines.line15, 0);
+    byLine(line).reduce(
+      (sum, row) =>
+        sum + row.lines.line15 - (row.item.transfer_election_amount ?? 0),
+      0,
+    );
+  const transferred = (line: "1f" | "4e") =>
+    byLine(line).reduce(
+      (sum, row) => sum + (row.item.transfer_election_amount ?? 0),
+      0,
+    );
   const appliedByLine = { "1f": 0, "4e": generated("4e") };
   if (generated("1f") > 0) {
     // Later-year production precedes orphan-drug credits within the ordinary
@@ -224,7 +238,7 @@ export function form8835PdfSources(
         "Form 8835 PDF partially used facilities need a reviewed allocation",
       );
     }
-    return row.lines.line15;
+    return row.lines.line15 - (row.item.transfer_election_amount ?? 0);
   });
   const filedDocumentIds = prepared.form8835DocumentIds;
   const groupsValid = (["1f", "4e"] as const).every((line) => {
@@ -239,15 +253,23 @@ export function form8835PdfSources(
     const [summary] = summaries, [amount] = amounts;
     return summaries.length === 1 && amounts.length === 1 &&
       summary.metadata.sourceCount === facilities.length &&
-      amount.nonpassiveCredit === generated(line) &&
-      amount.transferOutCredit === 0 &&
+      summary.metadata.transferRegistrationNumber ===
+        facilities.find((row) => (row.item.transfer_election_amount ?? 0) > 0)
+          ?.item.registration_number &&
+      amount.nonpassiveCredit === generated(line) + transferred(line) &&
+      amount.transferOutCredit === transferred(line) &&
       amount.appliedCredit === appliedByLine[line] &&
       details.length === facilities.length &&
       facilities.every((row, index) => {
         const detail = details[index];
         return detail.credit === row.lines.line15 &&
+          detail.transferRegistrationNumber ===
+            ((row.item.transfer_election_amount ?? 0) > 0
+              ? row.item.registration_number
+              : undefined) &&
           detail.appliedCredit === facilityUse[row.index] &&
-          (detail.transferOutCredit ?? 0) === 0 &&
+          (detail.transferOutCredit ?? 0) ===
+            (row.item.transfer_election_amount ?? 0) &&
           detail.sourceDocumentId === filedDocumentIds?.[row.index];
       }) && summary.metadata.referenceDocumentId === details.map((detail) =>
           detail.sourceDocumentId
@@ -258,7 +280,8 @@ export function form8835PdfSources(
     entries.some((entry, index) =>
       entry.form3800_line !== rows[index].lines.form3800Line ||
       entry.credit_amount !== rows[index].lines.line15 ||
-      entry.transfer_out_amount !== 0 ||
+      entry.transfer_out_amount !==
+        (rows[index].item.transfer_election_amount ?? 0) ||
       entry.subject_to_passive_activity_limit !== false
     ) ||
     !credits || credits.specifiedCredit < generated("4e") ||
@@ -268,7 +291,10 @@ export function form8835PdfSources(
     !groupsValid || filedDocumentIds?.length !== rows.length ||
     new Set(filedDocumentIds).size !== rows.length ||
     facilityUse.some((used, index) =>
-      !Number.isFinite(used) || used < 0 || used > rows[index].lines.line15
+      !Number.isFinite(used) || used < 0 ||
+      used >
+        rows[index].lines.line15 -
+          (rows[index].item.transfer_election_amount ?? 0)
     ) ||
     prepared.lines.line17 < appliedByLine["1f"] ||
     prepared.lines.line37 < appliedByLine["4e"] ||

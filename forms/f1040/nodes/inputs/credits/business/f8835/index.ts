@@ -1,3 +1,7 @@
+import {
+  assertForm8835TransferSource,
+  transferSourceSchema,
+} from "./transfer-source.ts";
 import { assertForm8835PwaSource, pwaSourceSchema } from "./pwa-source.ts";
 import {
   assertForm8835EnergyCommunitySource,
@@ -216,6 +220,7 @@ export const itemSchema = z.object({
   aggregate_capital_additions: z.number().positive().optional(),
   is_fiscal_year: z.boolean(),
   phaseout_adjustment: z.number().nonnegative().optional(),
+  transfer_source: transferSourceSchema.optional(),
   transfer_election_amount: z.number().nonnegative().optional(),
   transfer_election_statement_file_name: z.string().min(1).optional(),
   registration_number: z.string().regex(
@@ -429,8 +434,8 @@ export function calculateForm8835(item: F8835Item): F8835Lines {
       item.existing_facility_expansion === true ||
       item.subject_to_passive_activity_limit ||
       item.is_fiscal_year ||
-      (item.transfer_election_amount ?? 0) !== 0 ||
-      item.registration_number !== undefined ||
+      ((item.transfer_election_amount ?? 0) !== 0 && !item.transfer_source) ||
+      (item.registration_number !== undefined && !item.transfer_source) ||
       !source ||
       parsedDate(source.unrelated_sale_invoice_date) <
         parsedDate(item.production_period_start_date) ||
@@ -472,8 +477,9 @@ export function calculateForm8835(item: F8835Item): F8835Lines {
       item.increased_credit_reason !== "none" ||
       item.domestic_content_bonus || item.energy_community_bonus ||
       (item.tax_exempt_bond_proceeds ?? 0) !== 0 ||
-      (item.transfer_election_amount ?? 0) !== 0 ||
-      item.registration_number !== undefined || !source ||
+      ((item.transfer_election_amount ?? 0) !== 0 && !item.transfer_source) ||
+      (item.registration_number !== undefined && !item.transfer_source) ||
+      !source ||
       source.facility_description !== item.facility_description ||
       source.construction_began_on !== item.facility_construction_start_date ||
       source.meter_period_start_date !== item.production_period_start_date ||
@@ -516,8 +522,9 @@ export function calculateForm8835(item: F8835Item): F8835Lines {
       item.increased_credit_reason !== "none" ||
       item.domestic_content_bonus || item.energy_community_bonus ||
       (item.tax_exempt_bond_proceeds ?? 0) !== 0 ||
-      (item.transfer_election_amount ?? 0) !== 0 ||
-      item.registration_number !== undefined || !source ||
+      ((item.transfer_election_amount ?? 0) !== 0 && !item.transfer_source) ||
+      (item.registration_number !== undefined && !item.transfer_source) ||
+      !source ||
       source.facility_description !== item.facility_description ||
       source.facility_address_line1 !== item.facility_us_address?.line1 ||
       source.facility_latitude !== item.facility_latitude ||
@@ -618,8 +625,8 @@ export function calculateForm8835(item: F8835Item): F8835Lines {
       item.is_fiscal_year || item.increased_credit_reason !== "none" ||
       item.domestic_content_bonus || item.energy_community_bonus ||
       (item.tax_exempt_bond_proceeds ?? 0) !== 0 ||
-      (item.transfer_election_amount ?? 0) !== 0 ||
-      item.registration_number !== undefined ||
+      ((item.transfer_election_amount ?? 0) !== 0 && !item.transfer_source) ||
+      (item.registration_number !== undefined && !item.transfer_source) ||
       !source ||
       source.facility_description !== item.facility_description ||
       source.construction_began_on !== item.facility_construction_start_date ||
@@ -677,8 +684,8 @@ export function calculateForm8835(item: F8835Item): F8835Lines {
       item.is_fiscal_year || item.increased_credit_reason !== "none" ||
       item.domestic_content_bonus || item.energy_community_bonus ||
       (item.tax_exempt_bond_proceeds ?? 0) !== 0 ||
-      (item.transfer_election_amount ?? 0) !== 0 ||
-      item.registration_number !== undefined ||
+      ((item.transfer_election_amount ?? 0) !== 0 && !item.transfer_source) ||
+      (item.registration_number !== undefined && !item.transfer_source) ||
       source.facility_description !== item.facility_description ||
       source.construction_began_on !== item.facility_construction_start_date ||
       source.nameplate_capacity_kw !== item.ac_nameplate_kw ||
@@ -763,6 +770,7 @@ export function calculateForm8835(item: F8835Item): F8835Lines {
   const line10 = item.domestic_content_bonus ? Math.round(line9 * 0.10) : 0;
   const line11 = item.energy_community_bonus ? Math.round(line9 * 0.10) : 0;
   const line12 = line9 + line10 + line11;
+  assertForm8835TransferSource(item, line12);
   const transfer = item.transfer_election_amount ?? 0;
   if (transfer > line12) {
     throw new Error("Form 8835 transfer amount exceeds the credit");
@@ -812,6 +820,12 @@ class F8835Node extends TaxNode<typeof inputSchema> {
           item.subject_to_passive_activity_limit,
         transfer_election_statement_file_name:
           item.transfer_election_statement_file_name,
+        ...(item.transfer_source
+          ? {
+            transfer_election_statement_file_names: item.transfer_source
+              .transfers.map((t) => t.statement_file_name),
+          }
+          : {}),
       };
     });
     return { outputs: [output(f3800, { f8835_credit_entries: entries })] };

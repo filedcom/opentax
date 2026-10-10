@@ -42,6 +42,7 @@ export const form8835Pdf: PdfFormDescriptor = {
   fields: [
     text("filer_name", `${page1}.f1_1[0]`),
     text("filer_tin", `${page1}.f1_2[0]`),
+    text("registration_number", `${page1}.f1_3[0]`),
     text("facility_type", `${page1}.f1_4[0]`),
     text("facility_description", `${page1}.f1_5[0]`),
     text("owner_name", `${page1}.f1_6[0]`),
@@ -177,6 +178,7 @@ export const form8835Pdf: PdfFormDescriptor = {
         const long = parts(item.facility_longitude!, 3);
         return {
           filer_name: filerName,
+          registration_number: item.registration_number,
           filer_tin: filerTin,
           facility_type: wind
             ? "Wind"

@@ -28,7 +28,7 @@ export function form8835PwaFields(item: F8835Item) {
   Object.assign(fields, {
     [`${prefix}f1_1[0]`]: s.taxpayer_name,
     [`${prefix}f1_2[0]`]: s.taxpayer_tin,
-    [`${prefix}f1_3[0]`]: "",
+    [`${prefix}f1_3[0]`]: item.registration_number ?? "",
     [`${prefix}f1_4[0]`]: s.facility_description,
     [`${prefix}f1_5[0]`]: "",
     [`${prefix}f1_6[0]`]: `${item.facility_us_address!.line1}${

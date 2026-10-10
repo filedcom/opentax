@@ -123,8 +123,9 @@ export function assertForm8835DomesticSource(item: F8835Item, filing = false) {
     ) ||
     item.existing_facility_expansion ||
     item.subject_to_passive_activity_limit ||
-    (item.transfer_election_amount ?? 0) !== 0 ||
-    item.registration_number !== undefined || item.facility_owner_person ||
+    ((item.transfer_election_amount ?? 0) !== 0 && !item.transfer_source) ||
+    (item.registration_number !== undefined && !item.transfer_source) ||
+    item.facility_owner_person ||
     item.facility_owner_business ||
     serviceYear < 2023 || serviceYear > 2025 ||
     item.facility_construction_start_date >= "2025-01-01" ||

@@ -1,3 +1,4 @@
+import { assertForm8835TransferStatements } from "../mef/forms/credits/business/f8835_transfer_statement.ts";
 import { assertForm8835DomesticStatements } from "../mef/forms/credits/business/f8835_domestic_statement.ts";
 import { assertForm8835IncreaseStatements } from "../mef/forms/credits/business/f8835_increase_statement.ts";
 import { assertEmployeeContributionReturn } from "../domains/credits/individual/form8880/form8880_tax_limit.ts";
@@ -698,6 +699,7 @@ async function buildPdfBytesInternal(
     throw new Error("PDF source differs from the prepared MeF return");
   }
   if (!preparedBundle) {
+    await assertForm8835TransferStatements(normalized.f8835, filer, []);
     await assertForm8835DomesticStatements(normalized.f8835, filer, []);
     await assertForm8835IncreaseStatements(normalized.f8835, filer, []);
   }
@@ -711,6 +713,11 @@ async function buildPdfBytesInternal(
       );
     }
     await assertPreparedAttachmentManifest(preparedBundle);
+    await assertForm8835TransferStatements(
+      normalized.f8835,
+      filer,
+      preparedBundle.attachments,
+    );
     await assertForm8835DomesticStatements(
       normalized.f8835,
       filer,
@@ -950,6 +957,7 @@ async function buildPdfBytesInternal(
       pwa_form7220_file_name?: string;
       domestic_content_bonus: boolean;
       domestic_content_statement_file_name?: string;
+      transfer_source?: { transfers: Array<{ statement_file_name: string }> };
     }>;
     for (const [index, item] of rows.entries()) {
       const statements: Array<[string, string | undefined]> = [];
@@ -976,6 +984,12 @@ async function buildPdfBytesInternal(
         statements.push([
           "f8835_domestic_content_statement",
           item.domestic_content_statement_file_name,
+        ]);
+      }
+      for (const transfer of item.transfer_source?.transfers ?? []) {
+        statements.push([
+          "f8835_transfer_statement",
+          transfer.statement_file_name,
         ]);
       }
       for (const [formKey, fileName] of statements) {

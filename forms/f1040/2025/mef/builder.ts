@@ -1,3 +1,4 @@
+import { assertForm8835TransferStatements } from "./forms/credits/business/f8835_transfer_statement.ts";
 import { assertForm8835DomesticStatements } from "./forms/credits/business/f8835_domestic_statement.ts";
 import { assertForm8835IncreaseStatements } from "./forms/credits/business/f8835_increase_statement.ts";
 import { assertEmployeeContributionReturn } from "../domains/credits/individual/form8880/form8880_tax_limit.ts";
@@ -668,6 +669,11 @@ export async function buildMefBundle(
     const { source } = reconciledForm8908Source(pending.f8908, pending.f3800);
     await assertForm8908PwaSubmittedPdfs(source, attachments);
   }
+  await assertForm8835TransferStatements(
+    pending.f8835,
+    options.filer,
+    attachments,
+  );
   await assertForm8835DomesticStatements(
     pending.f8835,
     options.filer,

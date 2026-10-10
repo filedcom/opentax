@@ -34,6 +34,7 @@ export const currentProductionAllocationSchema = z.object({
       production_period_end_date: date,
       form3800_line: z.enum(["1f", "4e"]),
       credit_amount: money,
+      transfer_out_amount: money.optional(),
       applied_credit: money.refine(
         Number.isInteger,
         "Reviewed facility tax use requires whole filing dollars",
@@ -111,8 +112,8 @@ export function reconcileCurrentProductionAllocation(
     const record = byKey.get(key(source));
     if (
       !record || source.subject_to_passive_activity_limit ||
-      source.transfer_out_amount !== 0 ||
-      record.applied_credit > record.credit_amount ||
+      (record.transfer_out_amount ?? 0) !== source.transfer_out_amount ||
+      record.applied_credit > record.credit_amount - source.transfer_out_amount ||
       record.credit_amount !== source.credit_amount ||
       record.facility_description !== source.facility_description ||
       record.energy_type !== source.energy_type ||
