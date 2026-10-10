@@ -44,7 +44,7 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
   }
   assertEquals(report.denominator, 74);
   const ledger = buildAtsCheckLedger(report);
-  assertEquals(ledger.count, 131);
+  assertEquals(ledger.count, 185);
   assertEquals(ledger.byKind, {
     calculation: {
       count: 74,
@@ -55,6 +55,15 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
       counts: { missing: 12, "not-evaluated": 34, present: 10 },
     },
     "binary-attachment": { count: 1, counts: { missing: 1 } },
+    "native-value": {
+      count: 54,
+      counts: {
+        different: 6,
+        match: 16,
+        "missing-field": 2,
+        "not-evaluated": 30,
+      },
+    },
   });
   assertEquals(ledger.calculationAnchor.matching, 46);
   assertEquals(ledger.calculationAnchor.evaluated, 63);
@@ -70,6 +79,30 @@ Deno.test("ATS public-entry matrix retains missing prerequisites and printed con
     ["not-evaluated", "not-evaluated"],
   );
 
+  const native13 = report.scenarios.find((s) => s.id === "1040-13")!
+    .preparation.nativeValueCoverage;
+  assertEquals(
+    native13.rows.filter((r) => r.result === "different").map((
+      r,
+    ) => [r.path, r.expected, r.actual]),
+    [
+      ["f1040.line15_taxable_income", 1620, 120],
+      ["f1040.line16_income_tax", 162, 11],
+      ["f1040.line20_nonrefundable_credits", 162, 11],
+      ["form6251.regular_tax_income", 1620, 120],
+      ["form6251.line2a_taxes_paid", 30000, 31500],
+      ["form6251.regular_tax", 162, 11],
+    ],
+  );
+  assertEquals(
+    native13.rows.filter((r) => r.result === "missing-field")
+      .map((r) => r.path),
+    ["form6251.amtftc"],
+  );
+  assertEquals(native13.unmappedTargetPaths, [
+    "f1040.line12a_standard_deduction",
+    "schedule3.line6j_alt_fuel_vehicle_refueling",
+  ]);
   const transfer = report.scenarios.find((s) => s.id === "1040-04")!;
   assertEquals(transfer.preparation.attachments, []);
   assertEquals(transfer.attachmentCoverage.knownRequiredCount, 1);

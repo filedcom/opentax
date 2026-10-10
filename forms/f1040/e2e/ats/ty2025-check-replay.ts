@@ -1,3 +1,4 @@
+import { compareAtsNativeValues } from "./ty2025-native-value-coverage.ts";
 import { compareAtsAttachments } from "./ty2025-attachment-coverage.ts";
 import { assertPreparedAttachmentManifest } from "../../2025/mef/attachments/prepared-attachment-manifest.ts";
 import { compareAtsDocuments } from "./ty2025-document-coverage.ts";
@@ -430,10 +431,12 @@ export enum PreparationResult {
 }
 async function replayPreparation(
   execution: ReturnType<typeof f1040_2025.executeReturn>,
+  targets: z.infer<typeof targetSchema>[],
 ) {
   if (execution.diagnostics.some((d) => d.severity === "error")) {
     return {
       result: PreparationResult.GraphBlocked,
+      nativeValueCoverage: compareAtsNativeValues(null, targets),
       documentRoots: [],
       attachments: null,
       reason: "Resolve graph diagnostics before preparation",
@@ -447,6 +450,7 @@ async function replayPreparation(
     await assertPreparedAttachmentManifest(prepared.bundle);
     return {
       result: PreparationResult.PartialPrepared,
+      nativeValueCoverage: compareAtsNativeValues(prepared.bundle.xml, targets),
       attachments: prepared.bundle.attachments.map((attachment) => ({
         description: attachment.description,
         fileName: attachment.fileName,
@@ -464,6 +468,7 @@ async function replayPreparation(
   } catch (error) {
     return {
       result: PreparationResult.NativeBlocked,
+      nativeValueCoverage: compareAtsNativeValues(null, targets),
       documentRoots: [],
       attachments: null,
       reason: String(error),
@@ -479,7 +484,7 @@ export async function replayAtsChecks() {
         throw new Error(`Missing ATS source/input ${scenario.id}`);
       }
       const execution = f1040_2025.executeReturn(factory());
-      const preparation = await replayPreparation(execution);
+      const preparation = await replayPreparation(execution, scenario.targets);
       return {
         id: scenario.id,
         sourceUrl: source.sourceUrl,

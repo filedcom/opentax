@@ -1,5 +1,10 @@
 # ATS Scenario 3 and 4 check expansion — October 10, 2026
 
+The later [emitted-value checkpoint](./ty2025-native-values-2026-10-10.md)
+adds54 separate native XML observations, bringing the ledger to185; all131
+observations below are preserved. Calculation counts and the estimate are
+unchanged. The current ATS test batch passes77 tests.
+
 ## Current expansion: Scenario 5 opt-out and Scenario 13 AMT
 
 The projection remains **about 75% of individual ATS checks**, with a
