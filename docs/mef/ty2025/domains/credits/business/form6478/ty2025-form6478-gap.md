@@ -1,8 +1,8 @@
 # TY2025 Form 6478 source and filing boundary
 
 Status: the invalid production-gallons route is blocked in the Form 6478 input
-node. Negative cases are written but unrun. No MeF, PDF, XSD, IRS business-rule
-or ATS validation is claimed.
+node. The October10 component and public checks below pass. No positive
+Form6478 MeF, PDF, XSD, IRS business-rule or ATS validation is claimed.
 
 The
 [IRS TY2025 update](https://www.irs.gov/forms-pubs/completing-form-6478-for-tax-years-beginning-after-2024)
@@ -49,3 +49,21 @@ entities. Build positive and negative source-level cases, including an
 ineligible calendar-year allocation, duplicate documents, passive credit,
 multiple sources, and tax limitation, before claiming this path supported. Keep
 it open; do not treat Form 6478 as an approved whole-root exclusion.
+
+## October 10 public intake and fuel-credit checkpoint
+
+Five Form6478 component tests and three public tests pass. Empty object and
+empty fuel arrays preserve every baseline1040 field. All five legacy fuel
+types, each tested at zero and1,000 gallons, produce an explicit ineligibility
+diagnostic without a nonrefundable credit. An unmodeled line3 allocation also
+produces a strict-schema diagnostic through public execution; the public API
+returns diagnostics rather than throwing for these cases. Callers must honor
+those diagnostics. This is input rejection evidence, not a positive allocation
+route or an assertion about exporting diagnostic-bearing returns.
+
+The related Form8864 component and complete-return replay bring the grouped
+fuel-credit result to21 passing tests, zero failures/ignored. Evidence:
+`.state/research/fuel-credit-routes-2026-10-10/` (`components.log`,
+`public6478.log`, `producer.log`). No production change or new deferred issue.
+The fiscal-year pass-through source and Form3800 line4c route above remain
+unimplemented; the broad named-form task stays open.
