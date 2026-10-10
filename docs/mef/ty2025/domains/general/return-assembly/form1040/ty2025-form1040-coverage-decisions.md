@@ -1,5 +1,17 @@
 # TY2025 Form 1040 coverage disposition queue
 
+## October10 Form7206 route reconciliation
+
+The [current Form7206 route audit](../../../adjustments/health/form7206/ty2025-form7206-route-audit.md)
+replaces the old sole-C-only description with distinct single-C, independent
+C/C,C/F,F/F, patron SEP and retirement-only boundaries. Both registries already
+include7206; no descriptor or root count changes. Marketplace worksheet and
+constructed-return tests remain component evidence, not complete public-entry
+filing proof. Loss-owner context retains sources without fabricating a7206 copy;
+positive-profit independent businesses retain their copies even when the health
+deduction is zero. Current code and fresh regression scope are linked in the
+audit. No user-approved exclusion or broad parent completion is inferred.
+
 ## October 9 live registry reconciliation
 
 Actual registry imports at `a2bd423b7` contain **157 native descriptors / 153 distinct pending keys** and **118 PDF descriptors / 115 distinct pending keys**. The five native additions since the 152-entry snapshot are Form 8886, its two continuation descriptors, and the two Form 4562 election statements. The wage/supporting sequence beginning with W-2 contains 39 descriptors; the Form 8886 parent is in the numbered-form sequence. These are registration counts, not supported tax situations.

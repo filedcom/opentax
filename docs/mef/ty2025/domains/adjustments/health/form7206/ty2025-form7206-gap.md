@@ -24,7 +24,7 @@ reject across all independent-owner plans. Five complete XSD-valid returns and85
 qualified reviewed pages reconcile120 monthly records, owner SE, excluded months,
 income limits, QBI and final tax;14 public/90 native/90 fresh-PDF and20 archive
 mutations reject. The fresh typed gate passes65 tests across nine related modules.
-Broader single-plan, owner/business, LTC/PTC, authentication and
+Broader owner/business, LTC/PTC, authentication and
 IRS acceptance work remains open; no original parent or deferred task is closed.
 
 ## October8 current registered-audit reconciliation
@@ -32,7 +32,7 @@ IRS acceptance work remains open; no original parent or deferred task is closed.
 The [current bundled audit](../../../../readiness/ty2025-bundled-form-audit-reconciliation-2026-10-08.md) reconciles this form's current scope with actual native/PDF imports and retained terminal evidence. The completed October8 full run records **50 passed/0 failed/0 ignored across9 named modules**; the21 matching runtime paths equaled that snapshot at that checkpoint. The October10 source change above has separate fresh verification. This is selected retained full-run evidence, not a new focused run, full-route support or fresh visual approval. Earlier dated authored/unrun statements below are historical; existing broader source, artifact and IRS requirements remain open. No original checkbox or future task is completed by this correction.
 
 
-## Current evidence checkpoint (2026-10-06)
+## Historical evidence checkpoint (2026-10-06)
 
 The early one-ScheduleC status below is historical. The later
 [independent-plan source review](./ty2025-form7206-independent-spouse-plans-review.md)
@@ -77,87 +77,46 @@ smaller of eligible premiums and line 13. An S corporation's more-than-2%
 shareholder wages use line 11. The 2025 native `IRS7206` XSD requires
 `NameLine1Txt` and `SSN` before any optional line elements.
 
-## Current coded boundary
+## Current coded boundary — October 10
 
-- `nodes/intermediate/forms/form7206/index.ts` calculates and emits the one-plan
-  Schedule C lines 1-10 and 12-14 only after the establishing business's
-  reference, taxpayer owner, and computed line 31 match the Schedule C node;
-  Schedule SE's computed line 13 matches Schedule 1 line 15; and the actual
-  retirement source and plan both show zero line 16. The prior aggregate
-  `eligible_health_premiums` and eligibility flag were replaced with twelve
-  ordered premium-month records. Each has policy/payment references, a one
-  taxpayer-or-spouse covered-person fact, an employer-plan eligibility review
-  reference, Marketplace/LTC classification, and any public-safety-officer
-  exclusion. The helper excludes employer-eligible months and the sourced
-  public-safety-officer amount; a positive exclusion needs its own source
-  reference and the plan total cannot exceed $3,000. It rejects Marketplace,
-  LTC, missing/duplicate months, and an exclusion larger than the paid premium.
-  This is traceable source calculation, not independent authentication of those
-  records. The premium source remains a document-reference claim, not a parsed
-  insurer or payment record. Literal no-Form-2555 and sole-business claims are
-  checked again against the assembled return at MeF/PDF projection.
-- The old flat `se_net_profit` and `health_insurance_premiums` inputs are
-  rejected. The separate `self_employed_health_insurance` CLI entry now accepts
-  the node's single object with `items` and the required
-  `marketplace_ptc_premium_overlap` answer. It rejects positive premium-only
-  claims at entry with a Form 7206 direction, and rejects an affirmative
-  Marketplace-overlap answer with the Publication 974 limitation. Its zero
-  premium answer may be retained for review but produces no deduction. There is
-  no premium-only bypass.
-- `2025/mef/forms/f7206.ts` emits the checked-in TY2025 v5.4 native sequence
-  with the identified proprietor name and SSN, recalculates every printed line, and checks the
-  one Schedule C, Schedule SE, Schedule 1 lines 3/15/16/17, and Form 1040 line
-  10. It rejects Form 2555 and Marketplace/PTC overlap. Schedule 1 MeF now
-  includes native lines 16 and 17, which were previously omitted.
-- The PDF descriptor maps the sourced recipient and line 6 as `100%`, checks the
-  core Schedule C/Schedule 1 reconciliation and overlap exclusions, then
-  projects the official fields. The one-plan full-return PDF was inspected on
-  Form 1040, Schedule 1, Schedule C, Schedule SE, Form 7206, and Form 8995
-  pages. Schedule SE's previously blank computed lines 3-13 now print from the
-  same calculation as Schedule 1 line 15 and Schedule 2 line 4; native XML
-  carries the corresponding tax and deduction elements.
-- The existing Publication 974 single-business calculator remains a separate
-  Marketplace-overlap route. It does not emit a Form 7206 document; its
-  worksheet and return reconciliation still needs end-to-end review.
+Both native and PDF registries include Form7206. The route is broader than the
+original sole-proprietor slice, but each admitted family has distinct limits.
+The [current route audit](./ty2025-form7206-route-audit.md) maps public inputs,
+source reconciliation, output documents and the actual verification scope.
+Its fresh gate passes60 tests across eight modules, including27 existing
+full-XSD/PDF fixture replays; no new visual review or broader support is claimed.
 
-### Joint-return spouse-only policy slice
+| Retained family | Current boundary |
+| --- | --- |
+| Single Schedule C plan | Taxpayer or spouse owns one positive business; zero retirement deduction; twelve ordered taxpayer/spouse coverage months; non-Marketplace and non-LTC. Shared policy/payment records are mandatory at native/PDF export. |
+| Independent owner plans | Exactly two C/F businesses, one per spouse, with one established plan per business. Owner SE, health and attributable QBI reconcile separately. C/C requires two positive businesses; C/F and F/F may retain a loss owner with zero health capacity. |
+| Independent patron SEP | Reviewed owned SEP census, contributions, employer relationships and patron sources support attributable retirement deductions alongside health, or a retirement-only context. This does not open legacy retirement inputs or every independent business combination. |
+| Marketplace | The separate Publication974 single-business route reconciles worksheet and Form8962 outputs; component tests do not prove complete public-entry filing support. It does not emit a Form7206 document for Marketplace premiums. |
+| Premium-only input | Positive premiums reject with a direction to use identified Form7206 sources; a zero premium answer produces no deduction. |
 
-The one-Schedule-C route now also accepts a non-Marketplace policy covering only
-the taxpayer's spouse for all twelve months. The plan identifies the spouse and
-every monthly premium record identifies that covered person. MeF and PDF
-projection require a joint return and match the spouse's name and SSN to both
-general source facts and the finalized Form 1040; MeF additionally matches the
-return header spouse. The deduction still belongs to the taxpayer-owned
-establishing business and uses the same Schedule C, Schedule SE, Schedule 1,
-QBI, and Form 1040 reconciliation. A positive full-return fixture and
-identity/month-coverage tamper cases are authored but unrun pending the agreed
-bulk test. The same identified policy can now switch between taxpayer and spouse
-coverage months on a joint return; any spouse-covered month needs the spouse
-identity check at MeF and PDF projection. A full-return positive fixture and
-spouse identity, missing identity, and premium tamper cases are authored but
-unrun pending the bulk test. Separate spouse business ownership, dependents, and
-multiple policies remain outside this slice. The policy and payment references
-are source claims, not authenticated records.
+The single-plan helper can calculate legacy reference-only facts, but export
+requires both issuer policy and twelve matching payment records. Supplied
+partial or conflicting records also reject during calculation. The records are
+reviewed structured facts, not authenticated insurer or bank bytes.
+Employer-eligible months are excluded; claimed public-safety-officer exclusions
+need a source reference and remain bounded by the existing monthly/annual
+checks. Those references alone do not establish authenticity or a complete
+pension-source join.
 
-### Spouse-owned Schedule C Medicare Part B slice
+The [single-plan checkpoint](./ty2025-form7206-single-policy-review.md) verifies
+taxpayer/spouse owners and changing covered-person months through complete
+returns. The spouse Medicare, single-route and calculator gate passed21 tests,
+with seven additional policy-source tests and45 related checks verified.
+The earlier "authored but unrun" descriptions of these slices are superseded.
+The primary-owner fully employer-excluded QBI route remains deferred, as does
+the one-dollar filed-AGI rounding mismatch in the original cents case.
 
-The [2025 Form 7206 instructions](https://www.irs.gov/instructions/i7206)
-permit voluntarily paid Medicare premiums similar to qualifying private health
-insurance in the deduction. One joint-return spouse-owned Schedule C and one
-non-Marketplace plan can now identify the spouse as both business proprietor and
-Form 7206 recipient. The same spouse SSN is required in the plan, general source,
-final Form 1040, MeF filer, and no-EIN Form 8995 business row; the Schedule C
-reference and owner must match the plan. Form 7206 limits the deduction to that
-business's net profit after its reconciled half-SE-tax deduction. Schedule SE's
-native SSN and PDF header now use the sole spouse proprietor for this bounded
-case. The $2,220 Part B example and owner/identity/premium/QBI tamper fixtures
-are authored for the deferred bulk gate. Insurer and payment references remain
-reviewed source claims, without authenticated bytes. Multiple businesses,
-multiple plans, Marketplace/PTC overlap, LTC, nonzero retirement allocation,
-and any joint self-employment income requiring separate spouse Schedule SE
-calculations remain outside this route.
+Dependent/child coverage, LTC person-age limits, several establishing businesses
+per owner, shareholder wages, optional methods, Form2555 interactions, wider
+Marketplace ordering, authenticated sources and IRS acceptance remain open.
+These are implementation boundaries, not user-approved scope exclusions.
 
-### Publication 974 mixed-month boundary
+### Historical Publication 974 mixed-month implementation
 
 The iterative route now accepts one identified Marketplace policy with
 partial-year _specified_ premiums even if Form 1095-A coverage continues in
@@ -180,23 +139,23 @@ Schedule C reference, net profit, all-positive- business total, Schedule 1 line
 15 self-employment tax deduction, and line 16 retirement deduction must now
 match the one taxpayer-owned Schedule C, computed Schedule SE, and retirement
 source deposited in the return graph. Absent or changed business records reject
-before the iterative PTC calculation. Positive and tampered graph-source
-fixtures are authored but unrun. This is a source prerequisite for the existing
+before the iterative PTC calculation. The current route audit distinguishes calculator/component checks from
+complete public-entry evidence. This is a source prerequisite for the existing
 Publication 974 worksheet route; it does not emit a Form 7206 native/PDF
-document for Marketplace premiums. The records are source references, not
-authenticated insurer/payment records; the full batch, native XSD, and
-filled-PDF visual review remain unrun.
+document for Marketplace premiums. These Marketplace records remain source references, not authenticated
+insurer/payment records; this component scope does not establish a complete
+public-entry packet or IRS acceptance.
 
 The month-level premium and employer-coverage records are referenced but not
-authenticated against actual documents. The bounded route rejects a positive
-Schedule 1 line 16 because SEP/SIMPLE/qualified plan inputs have no business
-owner; it also rejects a second Schedule C, Schedule F, Form 2555,
+authenticated against actual documents. The scalar non-Marketplace route rejects a positive
+Schedule 1 line16; the separately admitted owned patron SEP family is described
+above and is not evidence for legacy SEP/SIMPLE/qualified-plan inputs. The scalar route also rejects a second Schedule C, Schedule F, Form 2555,
 Marketplace/PTC overlap, Schedule E/4835/4797, and LTC. The current return-wide
 exclusion check is only as complete as the listed source fields and must be
 challenged in the full batch. It does not establish broader plan or
 covered-person support beyond the single taxpayer or spouse policy.
 
-## Required build boundary
+## Original required build boundary (remaining scope tracked above)
 
 1. Authenticate each insurance plan, establishing business, covered persons,
    eligible months, actual premiums, and excluded employer-subsidized or
