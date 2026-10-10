@@ -273,7 +273,8 @@ export function projectOneBusiness8995A(
       );
     }
     const first = (lines.positive ?? lines.negative)!;
-    const second = lines.businesses.find((business) => business !== first);
+    const rest = lines.businesses.filter((business) => business !== first);
+    const [second, third] = rest;
     return {
       business_name: first.business_name,
       business_ein: first.ein,
@@ -283,10 +284,19 @@ export function projectOneBusiness8995A(
           business_ein_b: second.ein,
         }
         : {}),
+      ...(third
+        ? {
+          business_name_c: third.business_name,
+          business_ein_c: third.ein,
+        }
+        : {}),
       ...lines.parent,
       ...Object.fromEntries(
         [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
-          .map((line) => [`line${line}_b`, 0]),
+          .flatMap((line) => [
+            [`line${line}_b`, 0],
+            ...(third ? [[`line${line}_c`, 0]] : []),
+          ]),
       ),
       line27: lines.parent.line16,
       // This validated Schedule C route excludes REIT/PTP income and losses.

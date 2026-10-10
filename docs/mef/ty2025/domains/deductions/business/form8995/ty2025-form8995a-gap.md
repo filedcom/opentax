@@ -1,5 +1,50 @@
 # TY2025 Form 8995-A coverage gap
 
+## October 10 three-business loss-offset complete-return checkpoint
+
+The ordinary single-filer loss-netting route now retains three identified
+Schedule C businesses: one profitable business and two current-loss businesses.
+The parent PDF preserves all three names/EINs, and its Schedule C prints all
+three source rows, the combined loss reduction and adjusted QBI. Four new
+third-row PDF mappings pass independent pdf-lib and pypdf field checks.
+
+| Public source case | Profit | Losses | Filed adjusted QBI | Deduction | Total tax / owed |
+| --- | ---: | --- | ---: | ---: | --- |
+| Income-limited | 2,200 | 1,200 / 800 | 200 | 40 | 69,991 / 9,991 |
+| Wage-limited | 2,300 | 1,200 / 800 | 300 | 50 | 70,022 / 10,022 |
+| Source cents | 2,301.25 | 1,200.49 / 800.51 | 300 | 50 | 70,022 / 10,022 |
+
+All three public returns have consistent300,000 wages,60,000 withholding,
+100 business wages and900 Additional Medicare tax. Losses are fully used;
+no QBI loss carryforward remains. The cents case retains raw net300.25 and
+AGI300,300.25; filed profit2,301 less losses1,200/801 yields300, and filed
+AGI is300,300. The initial test incorrectly expected whole-dollar amounts in
+raw pending fields; only that expectation was corrected, with sources intact.
+
+All three complete returns pass the TY2025 v5.4 Return1040 schema. The actual
+flattened PDFs contain17 pages each, no remaining fields/widgets, and preserve
+all three business identities and final tax amounts. Visual review covers
+**51 pages through29 distinct rendered images**, with hash equality proving
+repeated pages. Parent loss-business columns and some Schedule C zero fields
+remain blank (existing deferred76); this is a qualified presentation review.
+
+The nine-module related batch passes **58 tests, zero failures or ignored**.
+The final focused replay passes3/0 and rejects12 native plus12 fresh-PDF
+mutations to deduction, income, companion values and third-business identity.
+Seven descriptor tests pass (822 filtered out), including real-template field
+names, types and widgets. Private evidence is retained in
+`.state/research/form8995a-three-businesses-2026-10-10/`, including the original
+raw-rounding assertion, final logs, inputs, XML/PDF, source projections,
+two-reader field checks, render inventory and `visual-review.json`.
+
+The original three all-loss cases below remain unchanged and reject all six
+full exports on deferred8. These new positive-offset cases do not replace them.
+Multiple positive businesses, four-or-more rows/continuations, broader owners,
+prior history, source authenticity and IRS acceptance remain open; the existing
+single-filer, activity, adjustment, wage/property and source guards remain.
+This checkpoint advances the existing QBI task without closing its broad parent.
+
+
 ## October 10 two-current-loss computation checkpoint
 
 The existing single-filer Schedule C loss route now retains **two identified
