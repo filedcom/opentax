@@ -779,3 +779,19 @@ Existing26/76/84/134/135, broader routes, authenticated records, carry ledgers
 and IRS acceptance remain open. No main parent is closed.
 
 Related source/allocation/native/PDF/XSD and mixed-return regression:76 passed/0 failed (8m1s); final source-boundary tests:2/0.
+
+
+## October 10 solar bond-financing combinations
+
+Seven additional XSD-valid complete returns/145 observed pages join reviewed
+solar bond reductions to construction/PWA increases, bonuses and Form3800
+through final tax, including a mixed solar/geothermal pair. Related typed gate:
+51/0; source rejections158 native/158 fresh-PDF, plus14 missing attachments.
+Local archives retain14 original attachments/reject28 corrupt or missing variants.
+Business totals105 returns/1,969 pages; PartVI37 roots/17 pages remain separate.
+See the Form8835 solar-bond checkpoint and private
+`.state/research/form8835-solar-bonds-2026-10-10/` evidence. Existing presentation
+26/68/76/84/136 and newly recorded cross-review137 qualify these results;
+synthetic positive cost inventories were aligned without repairing deferred137.
+Broader routes, authentic records/carryovers and IRS acceptance remain open.
+No broad parent task is closed.

@@ -7234,3 +7234,25 @@ Business evidence totals91 complete XSD-valid returns/1,679 observed pages, with
 Seven complete XSD-valid returns/145 observed pages join reviewed solar production, capacity/construction/PWA sources, domestic/community bonuses,14 statements/attachments, Form3800 allocation and final tax. The final grouped gate passes95 tests;123 native/123 fresh-PDF source mutations,14 missing attachments and28 corrupted/missing archive variants reject. Independent Decimal credit/tax and2,099 canonical/widget fields reconcile;70 unique pages were viewed on18 contact sheets and75 pages matched exact rendered pixels.
 
 New future item136 records solar AC capacity printed on Other line12c instead of solar line12a; all eight copies repeat it. Existing26/68/76/84 qualifications also remain. Evidence: `.state/research/form8835-solar-increases-2026-10-10/` and the Form8835 solar checkpoint. Business totals are98 returns/1,824 pages;37 PartVI roots/17 pages remain separate. The52 main TODO bodies are unchanged;136 future items remain deferred. The estimate remains about60% (45–75%), engineering judgment, not IRS acceptance. The frozen eed449e70 full regression remains live with no terminal result and predates this work.
+
+
+## October 10 solar bond-financing combinations
+
+Seven additional XSD-valid complete returns/145 observed pages join reviewed
+solar bond reductions to construction/PWA increases, bonuses and Form3800
+through final tax, including a mixed solar/geothermal pair. Related typed gate:
+51/0; source rejections158 native/158 fresh-PDF, plus14 missing attachments.
+Local archives retain14 original attachments/reject28 corrupt or missing variants.
+Business totals105 returns/1,969 pages; PartVI37 roots/17 pages remain separate.
+See the Form8835 solar-bond checkpoint and private
+`.state/research/form8835-solar-bonds-2026-10-10/` evidence. Existing presentation
+26/68/76/84/136 and newly recorded cross-review137 qualify these results;
+synthetic positive cost inventories were aligned without repairing deferred137.
+Broader routes, authentic records/carryovers and IRS acceptance remain open.
+No broad parent task is closed.
+
+Continued on the single draftPR70 from latest origin/main8f5055950; prior
+headb3d1ea313 CI succeeded. The frozen eed449e70 full gate remains live at this
+checkpoint (PID94680/94693, roughly2h14m), with no terminal totals. It predates
+this change. Board remains52 open main TODOs and137 deferred future items;
+technical individual-check estimate remains about60% (rough45–75%).

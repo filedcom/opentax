@@ -780,3 +780,45 @@ totals98 complete XSD-valid returns/1,824 observed pages; PartVI remains separat
 and fiscal-year routes, broader source combinations, PWA cures/exceptions,
 authenticated carryovers and IRS acceptance remain open. The broad parents remain
 unchecked, and main TODO bodies are unchanged.
+
+
+## October 10 solar bond reductions with increases and bonuses
+
+Owned solar facilities now use the existing reviewed cumulative bond-financing
+route alongside small-facility, early-construction and direct-PWA increases,
+domestic content and energy-community bonuses. The solar-only blanket bond
+rejection is removed; common source, identity, date, cumulative amount and
+attachment checks remain. Other ownership, passive, fiscal-year and transfer
+routes remain guarded. The [Form8835 instructions](https://www.irs.gov/instructions/i8835)
+apply cumulative financing/capital ratios and the15% cap before increases and
+bonuses.
+
+Seven complete returns cover below-cap, capped, rounded-zero and half-percent
+ratios, cent-valued proceeds, current-year PWA repairs and a mixed solar/geothermal
+pair. Credits are594,5,220,2,610,3,060,2,550,3,000 and63,307; the pair uses23,049
+and leaves tax17. Every return also uses2,001 orphan credit. Independent Decimal
+source/credit/tax calculations, printed bond and bonus cells, and native fields
+agree. All seven pass the full TY2025v5.4 XSD;51 related typed tests pass with
+zero failures (1m56s). Source mutations reject158 native and158 freshly hashed
+prepared-PDF variants;14 missing attachments reject. Both local archive layers
+preserve all14 original attachments and reject28 missing/altered variants.
+All2,099 canonical source fields match linked widgets and populated appearances.
+
+All145 packet pages were rendered:80 unique pages were inspected on20 contact
+sheets, with65 exact pixel duplicates. Existing qualifications remain:26 skipped
+Form3800 SectionB values,68 some EXAMPLE ALEX headers,76 blank zero phaseout,
+84 omitted native Form6251 line1a, and136 the solar AC capacity on Other line12c
+in all seven solar copies. These are qualified observations, not clean filing
+approval. New deferred137 preserves an accepted initial fixture with1,000,000
+construction costs but100,000 cumulative capital; the final synthetic positive
+uses the same1,000,000 cost inventory in both reviews and125,000 bond proceeds.
+Correcting that fixture does not repair the missing cross-review validation.
+
+Evidence is `.state/research/form8835-solar-bonds-2026-10-10/`, including original
+conflict records, final source/pending/XML/PDF, original interactive attachments,
+archives, XSD logs, Decimal verifier, page/pixel hashes and typed log. Nothing
+was transmitted; package identifiers and unsigned examples are synthetic.
+Business evidence now totals105 XSD-valid complete returns/1,969 observed pages;
+PartVI remains separately37 roots/17 pages. Broader source combinations,
+PWA cures/exceptions, authenticated records/carryovers and IRS acceptance remain
+open. Main TODO bodies and all broad parent statuses remain unchanged.
