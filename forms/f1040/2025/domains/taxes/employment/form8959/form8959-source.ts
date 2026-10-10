@@ -1,3 +1,7 @@
+import {
+  inputSchema as scheduleSESchema,
+  schedule_se,
+} from "../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/index.ts";
 import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
 import {
   calculateForm4137,
@@ -35,10 +39,13 @@ function box14Amount(item: W2Item, description: string): number | undefined {
   return matches[0]?.amount;
 }
 
-function employmentDeposits(
+function replayedDeposits(
   pending?: Readonly<Record<string, unknown>>,
-): Pick<Partial<Source>, "unreported_tips" | "wages_8919"> {
-  const deposits: Pick<Partial<Source>, "unreported_tips" | "wages_8919"> = {};
+): Pick<Partial<Source>, "unreported_tips" | "wages_8919" | "se_income"> {
+  const deposits: Pick<
+    Partial<Source>,
+    "unreported_tips" | "wages_8919" | "se_income"
+  > = {};
   // Recalculate the owner copies: taxable tip income can differ from Medicare
   // tips, and Form 8919's Social Security cap is not its Medicare wage amount.
   if (pending?.form4137 !== undefined) {
@@ -53,6 +60,18 @@ function employmentDeposits(
       CONFIG_BY_YEAR[2025].ssWageBase,
     ).reduce((sum, form) => sum + form.line6, 0);
   }
+  if (pending?.schedule_se !== undefined) {
+    const result = schedule_se.compute(
+      { taxYear: 2025, formType: "f1040" },
+      scheduleSESchema.parse(pending.schedule_se),
+    );
+    const medicare = result.outputs.find((entry) =>
+      entry.nodeType === "form8959"
+    );
+    // Preserve the producer's existing precision; replay must not silently
+    // change the separate filed-line rounding policy.
+    deposits.se_income = (medicare?.fields.se_income ?? 0) as number;
+  }
   return deposits;
 }
 
@@ -65,8 +84,8 @@ function assertOriginalDeposits(
       throw new Error(`Form 8959 ${key} differs from original source records`);
     }
   };
-  for (const [key, amount] of Object.entries(employmentDeposits(pending))) {
-    checkDeposit(key as "unreported_tips" | "wages_8919", amount);
+  for (const [key, amount] of Object.entries(replayedDeposits(pending))) {
+    checkDeposit(key as "unreported_tips" | "wages_8919" | "se_income", amount);
   }
   const w2 = pending?.["w2"];
   if (w2 !== undefined) {
@@ -198,7 +217,7 @@ export function assertForm8959Absent(
   if (Object.keys(raw).length === 0) {
     // A prepared return may omit an inactive Form 8959 entirely. Retained
     // employment forms still need their combined filing trigger checked.
-    const deposits = employmentDeposits(pending);
+    const deposits = replayedDeposits(pending);
     assertOriginalDeposits(deposits, pending);
     if (!Object.values(deposits).some((amount) => amount > 0)) return;
     const f1040 = pending?.f1040 as Record<string, unknown> | undefined;

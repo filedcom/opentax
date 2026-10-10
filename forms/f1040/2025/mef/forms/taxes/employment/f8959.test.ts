@@ -684,3 +684,128 @@ Deno.test("Form8959 replays both owners' Form8919 wages without the Social Secur
     "filing_status",
   );
 });
+
+Deno.test("Form8959 replays Schedule SE scalar, farm-optional and both-owner deposits", () => {
+  const cases = [
+    {
+      status: NodeStatus.Single,
+      schedule_se: {
+        net_profit_schedule_c: 300000,
+        net_profit_schedule_f: -10000,
+      },
+      earnings: 267815,
+      tax: 610,
+    },
+    {
+      status: NodeStatus.Single,
+      schedule_se: {
+        net_profit_schedule_c: 300000,
+        net_profit_schedule_f: -1000,
+        gross_farm_income: 3000,
+        farm_optional_method_elected: true,
+      },
+      earnings: 279050,
+      tax: 711,
+    },
+    {
+      status: NodeStatus.MFJ,
+      schedule_se: {
+        owner_identity: { primary_ssn: "123456789", spouse_ssn: "987654321" },
+        owner_business_sources: [
+          {
+            recipient: "T",
+            kind: "schedule_c",
+            source_reference: "primary-profit",
+            net_profit: 300000,
+          },
+          {
+            recipient: "T",
+            kind: "schedule_c",
+            source_reference: "primary-loss",
+            net_profit: -50000,
+          },
+          {
+            recipient: "S",
+            kind: "schedule_f",
+            source_reference: "spouse-farm",
+            net_profit: 100000,
+          },
+        ],
+      },
+      earnings: 323225,
+      tax: 659,
+    },
+  ];
+  for (const c of cases) {
+    const correct = fixture(c.status, { se_income: c.earnings });
+    const pending = { ...correct.context.pending, schedule_se: c.schedule_se };
+    form8959.build(correct.fields, { ...correct.context, pending });
+    assertEquals(
+      form8959Pdf.projectFields!(correct.fields, pending).line18_total_tax,
+      c.tax,
+    );
+    // Both a coordinated whole-dollar substitution and a hidden fractional
+    // change must fail against the retained Schedule SE calculation.
+    for (const amount of [c.earnings + 1000, c.earnings + 0.01]) {
+      const changed = fixture(c.status, { se_income: amount });
+      assertThrows(
+        () => form8959.build(changed.fields, { ...changed.context, pending }),
+        Error,
+        "se_income differs from original source records",
+      );
+      assertThrows(
+        () => form8959Pdf.projectFields!(changed.fields, pending),
+        Error,
+        "se_income differs from original source records",
+      );
+    }
+    assertThrows(
+      () =>
+        assertForm8959Absent({}, {
+          schedule_se: c.schedule_se,
+          f1040: { filing_status: c.status },
+        }),
+      Error,
+      "filing trigger exists without print lines",
+    );
+  }
+  const combinedSources = {
+    f1040: { filing_status: NodeStatus.MFJ },
+    schedule_se: { net_profit_schedule_c: 200000 },
+    form8919: {
+      taxpayer_ssn: "123456789",
+      forms: [{
+        recipient: "taxpayer",
+        employers: [{
+          name: "Employer",
+          tin_type: "ein",
+          tin: "123456789",
+          reason_code: "G",
+          ss8_filed_date: "2025-04-01",
+          ss8_filing_reference: "Synthetic SS8 review",
+          form1099_received: false,
+          wages: 100000,
+        }],
+      }],
+    },
+  };
+  assertForm8959Absent({}, {
+    f1040: combinedSources.f1040,
+    schedule_se: combinedSources.schedule_se,
+  });
+  assertForm8959Absent({}, {
+    f1040: combinedSources.f1040,
+    form8919: combinedSources.form8919,
+  });
+  assertThrows(
+    () => assertForm8959Absent({}, combinedSources),
+    Error,
+    "filing trigger exists without print lines",
+  );
+  for (const net of [-1000, 100, 60000]) {
+    assertForm8959Absent({}, {
+      schedule_se: { net_profit_schedule_c: net },
+      f1040: { filing_status: NodeStatus.Single },
+    });
+  }
+});
