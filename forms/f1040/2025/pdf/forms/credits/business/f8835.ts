@@ -1,9 +1,12 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import { EnergyType } from "../../../../../nodes/inputs/credits/business/f8835/index.ts";
 import { form8835PdfSources } from "./f8835_source.ts";
 
 // Original TY2025 IRS Form 8835 AcroForm. The source-gated wind and geothermal
-// paths use lines 1a through 1f; the printed rate cells are read-only in the PDF.
+// paths use the applicable energy row; pre-2022 rates follow the printed footnote.
 const page1 = "topmostSubform[0].Page1[0]";
 const page2 = "topmostSubform[0].Page2[0]";
 const page3 = "topmostSubform[0].Page3[0]";
@@ -122,6 +125,13 @@ export const form8835Pdf: PdfFormDescriptor = {
     text("line2", `${page2}.f2_31[0]`),
     text("line4", `${page2}.f2_35[0]`),
     text("line6", `${page2}.f2_40[0]`),
+    text("line7a", `${page2}.f2_41[0]`),
+    text("line7b", `${page2}.f2_42[0]`),
+    text("line7c", `${page2}.f2_43[0]`),
+    text("line7d", `${page2}.f2_44[0]`),
+    text("line7e", `${page2}.f2_45[0]`),
+    text("line7f", `${page2}.f2_46[0]`),
+    text("line7g", `${page2}.f2_47[0]`),
     text("line8", `${page2}.f2_48[0]`),
     text("line9", `${page2}.f2_49[0]`),
     text("line10", `${page2}.f2_50[0]`, true),
@@ -141,6 +151,14 @@ export const form8835Pdf: PdfFormDescriptor = {
       (source) => {
         const { item, lines, filerName, filerTin } = source;
         const wind = item.energy_type === EnergyType.Wind;
+        const oldFacility = item.facility_placed_in_service_date < "2022-01-01";
+        const constructionYear = Number(
+          item.facility_construction_start_date.slice(0, 4),
+        );
+        const wind20 = wind && oldFacility && constructionYear === 2017;
+        const wind40 = wind && oldFacility &&
+          [2018, 2020, 2021].includes(constructionYear);
+        const wind60 = wind && oldFacility && constructionYear === 2019;
         const closedLoopBiomass = item.energy_type === EnergyType.BiomassClosed;
         const openLoopBiomass = item.energy_type === EnergyType.BiomassOpen;
         const solar = item.energy_type === EnergyType.Solar;
@@ -179,7 +197,7 @@ export const form8835Pdf: PdfFormDescriptor = {
           long_fraction: long.fraction,
           construction_date: usDate(item.facility_construction_start_date),
           service_date: usDate(item.facility_placed_in_service_date),
-          no_increased_credit: true,
+          no_increased_credit: !oldFacility,
           no_domestic_bonus: true,
           no_energy_community_bonus: true,
           dc_not_applicable: !solar,
@@ -210,6 +228,13 @@ export const form8835Pdf: PdfFormDescriptor = {
           line2: lines.line2,
           line4: lines.line4,
           line6: lines.line6,
+          line7a: wind20 ? lines.line6 : undefined,
+          line7b: wind20 ? lines.line7g : undefined,
+          line7c: wind40 ? lines.line6 : undefined,
+          line7d: wind40 ? lines.line7g : undefined,
+          line7e: wind60 ? lines.line6 : undefined,
+          line7f: wind60 ? lines.line7g : undefined,
+          line7g: oldFacility && wind ? lines.line7g : undefined,
           line8: lines.line8,
           line9: lines.line9,
           line10: lines.line10,

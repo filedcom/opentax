@@ -6944,3 +6944,64 @@ future134 only, with accepted probe retained, no repair. Existing presentation,
 wider sources, ledgers, authenticity, business rules and IRS acceptance remain
 open. Evidence:`.state/research/form3800-facility-allocation-2026-10-10/`.
 Estimate60% (45–75%); continue draft PR70, no parent closure.
+
+## October 10 later production years and mixed credit classes
+
+The child PDF and mixed K-1 parent packet now reconcile later-year production
+on line1f separately from first-four-year production on line4e. Source amounts
+are replayed through the existing credit-type ordering before checking each
+reviewed facility allocation, prepared detail and reserved child-document ID.
+One facility in each class remains unambiguous without a multiple-facility
+review. Multiple partially used facilities within a class need the retained
+review. Form8835 prints the applicable older wind construction-reduction pair
+on lines7a/b,7c/d or7e/f and total7g; PartI question8 stays blank for pre-2022
+facilities. Numeric calculations and native serializers are unchanged.
+
+The [2025 Form8835 line15](https://www.irs.gov/pub/irs-prior/f8835--2025.pdf)
+separates production during the first four years from later production.
+[Form8835 instructions](https://www.irs.gov/instructions/i8835) supply the
+pre-2022 3.0-cent rate for wind, geothermal and closed-loop biomass, the ten-year
+period, and question8 applicability. [Form3800 credit ordering](https://www.irs.gov/instructions/i3800)
+places renewable production before orphan-drug credits within the ordinary
+credit class. The original paper rate labels retain their explicit pre-2022
+footnote; the older credit arithmetic uses0.030/kWh before wind reductions.
+
+Detailed per-case amounts are in the Form3800 checkpoint.
+
+All eight complete XMLs pass local TY2025v5.4 XSD validation. Independent Python
+Decimal arithmetic reconciles wages150,000, deduction15,750, regular tax25,067,
+tentative minimum tax16,094, ordinary credit limit8,973 and the combined credit
+ceiling25,050, then source-class ordering, credit used/unused and final tax.
+The mixed reviewed case assigns ordinary facility use0/8,973 and specified
+facility use0/16,077 in source order; all30 K-1 credits remain unused.
+The first-four-period case places its facility in service July1,2021 and ends
+production June30,2025; it correctly remains line4e at the older rate.
+
+The focused typed run passes8/0. It rejects146 native and146 fresh-PDF source
+mutations, including expired ten-year periods, wrong credit classes, production
+crossing the fourth anniversary, missing/mutated inventories and changed final
+tax joins;40 prepared-part mutations reject. The complete related regression gate passes390/0 in6m59s. No fresh numeric benchmark is claimed because
+calculation and native-export code did not change.
+
+All143 flattened PDF pages reopened without field trees or widgets and were
+rendered. All21 contact sheets were visually inspected:83 unique page hashes
+plus60 exact duplicates cover the entire batch. Seventy K-1 sources and12
+facilities reconcile across74 PartV rows and three continuation pages. The
+existing skipped SectionB lines (deferred26), zero presentation (76) and native
+AMT line1a omission (84) remain qualifications. New deferred135 records the
+biomass expansion answer omission on page14; it is not repaired. The prepared
+EIN probe confirms deferred134 still exists, without altering it.
+
+Evidence: `.state/research/form3800-later-production-2026-10-10/`, including
+source/pending/expected records, native XML, PDFs, XSD logs, the independent
+verifier, page hashes, contact sheets and visual-review record. Initial type
+checking found a malformed expression, corrected before runtime; the next
+run passed6/7 because a fourth synthetic latitude had floating-point noise.
+The fixture now constructs six-decimal coordinates from integer microdegrees;
+no production coordinate validator was changed.
+
+This closes this bounded later-year/mixed-class PDF gap only. Other energy
+families, split production across the fourth anniversary, PWA/bonus/transfer,
+passive combinations, carryover inventories/ledgers, source authenticity,
+deferred presentation and IRS acceptance remain open. The broad Form3800 and
+Form8835 parent TODOs remain unchecked.

@@ -723,3 +723,16 @@ continuations. All six pass XSD;122 pages were reviewed. Rejections144 native/
 See the [Form 3800 checkpoint](../../../credits/business/form3800/ty2025-form3800-pdf-gap.md#october-10-reviewed-multiple-facility-allocation-checkpoint).
 Source authenticity, other mixtures, ledgers, existing presentation issues and
 IRS acceptance stay open; no parent is closed.
+
+## October 10 later production years and mixed credit classes
+
+The [linked Form3800/Form8835 checkpoint](../../../credits/business/form3800/ty2025-form3800-pdf-gap.md#october-10-later-production-years-and-mixed-credit-classes)
+adds8 XSD-valid complete returns/143 visually reviewed pages. Later production
+and first-four-year credits now preserve separate tax limits, source ordering,
+reviewed facility use, document links and final Form1040 tax. Focused8/0 and
+146 native/146 fresh-PDF/40 prepared rejections pass. Numeric/native code is
+unchanged. New biomass question6 omission135 and prior presentation26/76/84 and
+prepared EIN134 qualify this evidence; authenticity, wider routes and IRS
+acceptance remain unproved. Main parent tasks remain open.
+
+Related regression gate:390 passed/0 failed (6m59s).

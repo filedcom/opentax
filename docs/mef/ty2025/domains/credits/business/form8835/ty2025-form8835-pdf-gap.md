@@ -261,3 +261,19 @@ Whole-dollar allocations, generated credit and unused balances reconcile.
 Prepared-only extra EIN acceptance is deferred134; existing skipped-line,
 zero/name presentation and wider credit/owner/source branches, carry ledgers,
 authentication, business rules and IRS acceptance remain open.
+
+## October 10 later production years and mixed credit classes
+
+The [Form3800 checkpoint](../form3800/ty2025-form3800-pdf-gap.md#october-10-later-production-years-and-mixed-credit-classes)
+retains eight XSD-valid complete returns/143 reviewed packet pages for older
+wind, geothermal and closed-loop biomass, first-four-year boundary production,
+and mixed1f/4e classes. PDF replay now preserves source-class credit ordering,
+reviewed facility use and child IDs; older wind reductions print in their
+applicable line7 pairs and question8 is unmarked for pre-2022 facilities.
+Focused8/0; mutations146 native/146 fresh-PDF/40 prepared reject. Calculations
+and native output are unchanged. The original rate footnote applies; new
+biomass expansion-answer omission135 and prior26/76/84/134 remain deferred.
+Broader facility routes, period splits, ledgers, authenticity and IRS acceptance
+remain open; no broad parent task is closed.
+
+Related regression gate:390 passed/0 failed (6m59s).

@@ -14,7 +14,132 @@ import { projectForm3800PartVFields } from "../../../../pdf/forms/credits/busine
 
 import { fixture } from "./form3800_k1_inventory.fixture.ts";
 
-const cases = [
+interface Case {
+  id: string;
+  count: number;
+  credit: number;
+  mixed: boolean;
+  facilities: number;
+  kwh?: number;
+  review?: boolean;
+  lastFirst?: boolean;
+  dates?: readonly (readonly [string, string])[];
+  periodEnd?: string;
+  closed?: boolean;
+}
+function productionAmount(
+  facility: {
+    kwh_sold: number;
+    energy_type: string;
+    facility_placed_in_service_date: string;
+    facility_construction_start_date: string;
+  },
+) {
+  const old = facility.facility_placed_in_service_date < "2022-01-01";
+  const gross = Math.round(facility.kwh_sold * (old ? .03 : .006));
+  const year = Number(facility.facility_construction_start_date.slice(0, 4));
+  const reduction = old && facility.energy_type === "WIND"
+    ? (year === 2017
+      ? .2
+      : year === 2019
+      ? .6
+      : [2018, 2020, 2021].includes(year)
+      ? .4
+      : 0)
+    : 0;
+  return gross - Math.round(gross * reduction);
+}
+function productionLine(
+  facility: {
+    facility_placed_in_service_date: string;
+    production_period_end_date: string;
+  },
+): "1f" | "4e" {
+  const anniversary =
+    String(Number(facility.facility_placed_in_service_date.slice(0, 4)) + 4) +
+    facility.facility_placed_in_service_date.slice(4);
+  return facility.production_period_end_date < anniversary ? "4e" : "1f";
+}
+const cases: Case[] = [
+  {
+    id: "later-closed-biomass",
+    count: 2,
+    credit: 1000,
+    mixed: false,
+    facilities: 1,
+    kwh: 100000,
+    closed: true,
+    dates: [["2016-06-01", "2017-01-01"]],
+  },
+  {
+    id: "later-geothermal-full",
+    count: 2,
+    credit: 1000,
+    mixed: false,
+    facilities: 1,
+    kwh: 100000,
+    dates: [["2015-12-01", "2016-01-01"]],
+  },
+  {
+    id: "later-wind-20",
+    count: 2,
+    credit: 1000,
+    mixed: true,
+    facilities: 1,
+    kwh: 100000,
+    dates: [["2017-06-01", "2018-01-01"]],
+  },
+  {
+    id: "later-wind-40-limited",
+    count: 2,
+    credit: 10000,
+    mixed: true,
+    facilities: 1,
+    kwh: 1000000,
+    dates: [["2018-06-01", "2020-01-01"]],
+  },
+  {
+    id: "later-wind-60-limited",
+    count: 16,
+    credit: 1000,
+    mixed: true,
+    facilities: 1,
+    kwh: 1000000,
+    dates: [["2019-06-01", "2021-01-01"]],
+  },
+  {
+    id: "later-mixed-single-per-class",
+    count: 14,
+    credit: 1000,
+    mixed: true,
+    facilities: 2,
+    kwh: 100000,
+    dates: [["2017-06-01", "2020-01-01"], ["2023-06-01", "2024-01-01"]],
+  },
+  {
+    id: "later-mixed-reviewed",
+    count: 30,
+    credit: 500,
+    mixed: true,
+    facilities: 4,
+    kwh: 3000000,
+    review: true,
+    lastFirst: true,
+    dates: [["2016-06-01", "2020-01-01"], ["2017-06-01", "2020-01-01"], [
+      "2023-06-01",
+      "2024-01-01",
+    ], ["2023-06-01", "2024-01-01"]],
+  },
+  {
+    id: "later-first-four-period",
+    count: 2,
+    credit: 1000,
+    mixed: false,
+    facilities: 1,
+    kwh: 100000,
+    dates: [["2020-06-01", "2021-07-01"]],
+    periodEnd: "2025-06-30",
+  },
   {
     id: "review-two-full",
     count: 2,
@@ -129,7 +254,27 @@ function reviewedFixture(test: typeof cases[number]) {
       credit_amount: k.box13_code_z_orphan_drug_credit,
     })),
   ].sort((a, b) => a.source_ein.localeCompare(b.source_ein));
-  let remaining = 8973;
+  const expectedOrdinaryProduction = Array.from(
+    { length: test.facilities },
+    (_, index) => {
+      const service = test.dates?.[index]?.[1] ?? "2024-01-01";
+      const construction = test.dates?.[index]?.[0] ?? "2023-06-01";
+      const facility = {
+        energy_type: test.closed
+          ? "BIOMASS_CLOSED"
+          : (test.review ? index % 2 === 1 : (index === 1 || test.kwh)) &&
+              test.mixed
+          ? "WIND"
+          : "GEOTHERMAL",
+        kwh_sold: (test.kwh ?? 100000) + index * 10000,
+        facility_placed_in_service_date: service,
+        facility_construction_start_date: construction,
+        production_period_end_date: test.periodEnd ?? "2025-12-31",
+      };
+      return productionLine(facility) === "1f" ? productionAmount(facility) : 0;
+    },
+  ).reduce((a, b) => a + b, 0);
+  let remaining = Math.max(0, 8973 - expectedOrdinaryProduction);
   const allocated = sources.map((source) => {
     const applied_credit = Math.min(remaining, source.credit_amount);
     remaining -= applied_credit;
@@ -139,11 +284,31 @@ function reviewedFixture(test: typeof cases[number]) {
   const combined = {
     ...input,
     f8835: Array.from({ length: test.facilities }, (_, index) => ({
-      energy_type:
-        (test.review ? index % 2 === 1 : (index === 1 || test.kwh)) &&
-          test.mixed
-          ? "WIND"
-          : "GEOTHERMAL",
+      energy_type: test.closed
+        ? "BIOMASS_CLOSED"
+        : (test.review ? index % 2 === 1 : (index === 1 || test.kwh)) &&
+            test.mixed
+        ? "WIND"
+        : "GEOTHERMAL",
+      ...(test.closed
+        ? {
+          closed_loop_biomass_source: {
+            facility_description: `Synthetic production facility ${index + 1}`,
+            planting_record_reference: `Synthetic planting record ${index + 1}`,
+            planted_exclusively_for_facility_verified: true,
+            original_facility_not_cofired_verified: true,
+            production_meter_record_reference: `Synthetic meter ${index + 1}`,
+            metered_kwh_produced: (test.kwh ?? 100000) + index * 10000,
+            unrelated_sale_invoice_reference: `Synthetic utility invoice ${
+              index + 1
+            }`,
+            invoiced_kwh_sold: (test.kwh ?? 100000) + index * 10000,
+            unrelated_buyer_verified: true,
+            no_investment_credit_election_verified: true,
+            no_section1603_grant_verified: true,
+          },
+        }
+        : {}),
       subject_to_passive_activity_limit: false,
       kwh_produced: (test.kwh ?? 100000) + index * 10000,
       kwh_sold: (test.kwh ?? 100000) + index * 10000,
@@ -154,15 +319,16 @@ function reviewedFixture(test: typeof cases[number]) {
         state: "DE",
         zip: "19801",
       },
-      facility_latitude: 39.123456 + index / 10,
+      facility_latitude: (39123456 + index * 100000) / 1000000,
       facility_longitude: -75.123456,
       facility_owned_by_filer: true,
       ac_nameplate_kw: 1500,
       maximum_net_output_mw: 1.5,
-      facility_placed_in_service_date: "2024-01-01",
-      facility_construction_start_date: "2023-06-01",
+      facility_placed_in_service_date: test.dates?.[index]?.[1] ?? "2024-01-01",
+      facility_construction_start_date: test.dates?.[index]?.[0] ??
+        "2023-06-01",
       production_period_start_date: "2025-01-01",
-      production_period_end_date: "2025-12-31",
+      production_period_end_date: test.periodEnd ?? "2025-12-31",
       increased_credit_reason: "none",
       domestic_content_bonus: false,
       energy_community_bonus: false,
@@ -177,14 +343,6 @@ function reviewedFixture(test: typeof cases[number]) {
       sources: allocated.reverse(),
     },
   };
-  const productionTotal = combined.f8835.reduce(
-    (sum, facility) => sum + Math.round(facility.kwh_sold * 0.006),
-    0,
-  );
-  let productionRemaining = Math.min(
-    productionTotal,
-    25050 - allocated.reduce((sum, source) => sum + source.applied_credit, 0),
-  );
   const facilityReview = combined.f8835.map((facility) => ({
     facility_description: facility.facility_description,
     facility_us_address: facility.facility_us_address,
@@ -194,29 +352,35 @@ function reviewedFixture(test: typeof cases[number]) {
     facility_placed_in_service_date: facility.facility_placed_in_service_date,
     production_period_start_date: facility.production_period_start_date,
     production_period_end_date: facility.production_period_end_date,
-    form3800_line: "4e" as const,
-    credit_amount: Math.round(facility.kwh_sold * 0.006),
+    form3800_line: productionLine(facility),
+    credit_amount: productionAmount(facility),
     applied_credit: 0,
   })).reverse();
-  facilityReview.forEach((facility, index) => {
-    const share = test.lastFirst
-      ? productionRemaining
-      : Math.floor(productionRemaining / (facilityReview.length - index));
-    facility.applied_credit = Math.min(facility.credit_amount, share);
-    productionRemaining -= facility.applied_credit;
-  });
-  // For a full-use review, every facility consumes its own generated credit.
-  if (productionRemaining > 0) {
-    for (const facility of facilityReview) {
+  const ordinaryUsed = Math.min(8973, expectedOrdinaryProduction);
+  for (const line of ["1f", "4e"] as const) {
+    const group = facilityReview.filter((f) => f.form3800_line === line);
+    let remaining = Math.min(
+      group.reduce((s, f) => s + f.credit_amount, 0),
+      line === "1f" ? 8973 : 25050 - ordinaryUsed -
+        allocated.reduce((s, f) => s + f.applied_credit, 0),
+    );
+    group.forEach((facility, index) => {
+      const share = test.lastFirst
+        ? remaining
+        : Math.floor(remaining / (group.length - index));
+      facility.applied_credit = Math.min(facility.credit_amount, share);
+      remaining -= facility.applied_credit;
+    });
+    for (const facility of group) {
       const extra = Math.min(
-        productionRemaining,
+        remaining,
         facility.credit_amount - facility.applied_credit,
       );
       facility.applied_credit += extra;
-      productionRemaining -= extra;
+      remaining -= extra;
     }
+    assertEquals(remaining, 0);
   }
-  assertEquals(productionRemaining, 0);
   return {
     ...combined,
     ...(test.review
@@ -249,14 +413,33 @@ for (const test of cases) {
     const total = test.count * test.credit + test.count * (test.count - 1) / 2;
     // Single filer: 150,000 wages less 15,750 deduction; AMT exemption 88,100.
     const regular = 25067, tmt = 16094;
-    const orphanAllowed = Math.min(total, regular - tmt);
-    const productionCredit = input.f8835.reduce(
-      (sum, facility) => sum + Math.round(facility.kwh_sold * 0.006),
-      0,
+    const productionByLine = (line: "1f" | "4e") =>
+      input.f8835.filter((f) => productionLine(f) === line).reduce(
+        (s, f) => s + productionAmount(f),
+        0,
+      );
+    const ordinaryProductionAllowed = Math.min(
+      productionByLine("1f"),
+      regular - tmt,
     );
-    const productionAllowed = Math.min(productionCredit, 25050 - orphanAllowed);
+    const orphanAllowed = Math.min(
+      total,
+      regular - tmt - ordinaryProductionAllowed,
+    );
+    const productionCredit = productionByLine("1f") + productionByLine("4e");
+    const specifiedProductionAllowed = Math.min(
+      productionByLine("4e"),
+      25050 - ordinaryProductionAllowed - orphanAllowed,
+    );
+    const productionAllowed = ordinaryProductionAllowed +
+      specifiedProductionAllowed;
     const allowed = orphanAllowed + productionAllowed;
-    const partVCount = test.count + (test.facilities > 1 ? test.facilities : 0);
+    const counts = {
+      "1f": input.f8835.filter((f) => productionLine(f) === "1f").length,
+      "4e": input.f8835.filter((f) => productionLine(f) === "4e").length,
+    };
+    const partVCount = test.count +
+      Object.values(counts).reduce((s, n) => s + (n > 1 ? n : 0), 0);
     assertEquals(pending.f1040.line16_income_tax, regular);
     assertEquals(pending.schedule3.line6a_total, allowed);
     assertEquals(pending.f1040.line20_nonrefundable_credits, allowed);
@@ -267,9 +450,9 @@ for (const test of cases) {
     const parts = prepared.bundle.form3800Parts;
     assertExists(parts);
     assertEquals(parts.currentDetails.length, test.count + test.facilities);
-    assertEquals(parts.lines.line17, orphanAllowed);
-    assertEquals(parts.lines.line30, productionCredit);
-    assertEquals(parts.lines.line37, productionAllowed);
+    assertEquals(parts.lines.line17, orphanAllowed + ordinaryProductionAllowed);
+    assertEquals(parts.lines.line30 ?? 0, productionByLine("4e"));
+    assertEquals(parts.lines.line37 ?? 0, specifiedProductionAllowed);
     assertEquals(
       parts.currentDetails.reduce((s, r) => s + r.credit, 0),
       total + productionCredit,
@@ -302,7 +485,9 @@ for (const test of cases) {
       printed.map((r) => [r.ein, r.credit, r.used, r.unused]).sort((a, b) =>
         JSON.stringify(a).localeCompare(JSON.stringify(b))
       ),
-      parts.currentDetails.filter((r) => r.line === "1h" || test.facilities > 1)
+      parts.currentDetails.filter((r) =>
+        r.line === "1h" || counts[r.line as "1f" | "4e"] > 1
+      )
         .map(
           (r) => [
             r.passThroughEin,
@@ -369,7 +554,7 @@ for (const test of cases) {
     const wrongProductionLink = {
       ...parts,
       currentDetails: parts.currentDetails.map((row) =>
-        row.line === "4e"
+        (row.line === "4e" || row.line === "1f")
           ? { ...row, sourceDocumentId: "ChangedProductionDocument" }
           : row
       ),
@@ -388,12 +573,12 @@ for (const test of cases) {
     const wrongProductionUse = {
       ...parts,
       currentDetails: parts.currentDetails.map((row) =>
-        row.line === "4e"
+        (row.line === "4e" || row.line === "1f")
           ? { ...row, appliedCredit: row.appliedCredit - 1 }
           : row
       ),
       currentAmounts: parts.currentAmounts.map((row) =>
-        row.line === "4e"
+        (row.line === "4e" || row.line === "1f")
           ? { ...row, appliedCredit: row.appliedCredit - test.facilities }
           : row
       ),
@@ -556,6 +741,28 @@ for (const test of cases) {
         },
       );
     }
+    if (test.dates) {
+      mutations.push(
+        (p) => {
+          const f = (p.f8835.f8835s as Array<Record<string, unknown>>)[0];
+          f.facility_construction_start_date = "2014-01-01";
+          f.facility_placed_in_service_date = "2015-01-01";
+        },
+        (p) => {
+          const entries = p.f3800.f8835_credit_entries as Array<
+            Record<string, unknown>
+          >;
+          entries[0].form3800_line = entries[0].form3800_line === "1f"
+            ? "4e"
+            : "1f";
+        },
+        (p) => {
+          const f = (p.f8835.f8835s as Array<Record<string, unknown>>)[0];
+          f.facility_placed_in_service_date = "2021-07-01";
+          f.production_period_end_date = "2025-12-31";
+        },
+      );
+    }
     for (const mutation of mutations) {
       const p = structuredClone(pending);
       mutation(p);
@@ -580,6 +787,8 @@ for (const test of cases) {
               total,
               productionCredit,
               productionAllowed,
+              ordinaryProductionAllowed,
+              specifiedProductionAllowed,
               orphanAllowed,
               regular,
               tmt,
