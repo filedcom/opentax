@@ -80,20 +80,6 @@ export function executeForm8839TwoPass(
     );
   }
   const unused = settled.credit.line14 - settled.credit.line18;
-  // Election B replays this actual ledger with the complete source return;
-  // its hypothetical run below never creates a carryforward.
-  const qefRefigure = Array.isArray(inputs.f8621) &&
-    inputs.f8621.some((item) =>
-      item !== null && typeof item === "object" &&
-      "qef_1294_election" in item && item.qef_1294_election !== undefined
-    );
-  if (
-    !counterfactual && unused > 0 && inputs.f8621 !== undefined && !qefRefigure
-  ) {
-    throw new Error(
-      "Form 8839 with Form 8621 carryforward filing is not supported",
-    );
-  }
   const carryforward = !counterfactual && unused > 0
     ? currentYearForm8839Carryforward(
       source,
