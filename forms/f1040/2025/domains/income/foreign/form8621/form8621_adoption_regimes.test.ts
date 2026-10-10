@@ -29,7 +29,7 @@ function holdings(): Record<string, unknown>[] {
     shares_owned: 100,
     fmv_at_year_end: 20000,
   };
-  return [ordinary, {
+  const retained = [ordinary, {
     ...common,
     company_name: "Market Fund",
     company_ein_or_ref: "MTMADOPT",
@@ -79,11 +79,50 @@ function holdings(): Record<string, unknown>[] {
       year_charges: [],
     }],
   }];
+  const prior = structuredClone(retained[2]);
+  Object.assign(prior, {
+    company_name: "Prior Holding Fund",
+    company_ein_or_ref: "PRIORADOPT",
+    excess_events: [{
+      kind: ExcessEventKind.Disposition,
+      amount_usd: 7310,
+      holding_period_start: "2024-01-01",
+      event_date: "2025-12-31",
+      first_pfic_tax_year: 2024,
+      year_charges: [],
+    }],
+  });
+  Object.assign(prior.parent_source, {
+    shares_acquired_during_2025: false,
+    acquisition_date: undefined,
+    issuer_record: copy(
+      "prior-issuer",
+      "Synthetic 2024 holding; 2025 gain 7310",
+    ),
+  });
+  const loss = structuredClone(retained[1]);
+  Object.assign(loss, { mtm_adjusted_basis_at_year_end: 23000 });
+  Object.assign(loss.parent_source, {
+    mtm_adjusted_basis_record: {
+      ...copy(
+        "loss-basis",
+        "Synthetic adjusted basis 23000; no prior inclusions",
+      ),
+      adjusted_basis_usd: 23000,
+      unreversed_inclusions_usd: 0,
+    },
+  });
+  return [...retained, prior, loss];
 }
 for (
-  const [id, indexes] of [["qef", [0]], ["mtm", [1]], ["current-disposition", [
-    2,
-  ]], ["mixed", [0, 1, 2]]] as const
+  const [id, indexes, income, tax, finalTax] of [
+    ["qef", [0], 2000, 4115, 0],
+    ["mtm", [1], 2000, 4115, 0],
+    ["current-disposition", [2], 2000, 4115, 0],
+    ["mixed", [0, 1, 2], 6000, 4595, 0],
+    ["prior-disposition", [3], 3650, 5667, 98],
+    ["mtm-unavailable-loss", [4], 0, 3875, 0],
+  ] as const
 ) {
   Deno.test(`adoption carryforward composes retained PFIC regimes: ${id}`, async () => {
     const input = structuredClone(base.inputs) as Record<string, unknown>;
@@ -99,15 +138,21 @@ for (
     const result = f1040_2025.executeReturn(input);
     assertEquals(result.diagnostics, []);
     const pending = buildPending(result.pending);
-    const tax = id === "mixed" ? 4595 : 4115;
-    assertEquals(pending.f1040?.line11_agi, 50000 + indexes.length * 2000);
+    assertEquals(pending.f1040?.line11_agi, 50000 + income);
     assertEquals(pending.f1040?.line18_total_tax_before_credits, tax);
     assertEquals(pending.schedule3?.line6c_adoption_credit, tax);
     assertEquals(result.carryforwards.adoption_credit_2025, 6000 - tax);
     assertEquals(result.pending.form8839_carryforward.used_in_origin_year, tax);
-    assertEquals(pending.f1040?.line24_total_tax, 0);
-    assertEquals(pending.f1040?.line35a_refund, 20000);
+    assertEquals(pending.f1040?.line24_total_tax, finalTax);
+    assertEquals(pending.f1040?.line35a_refund, 20000 - finalTax);
     assertEquals(result.pending.form8621_1294_refigure, undefined);
+    if (id === "prior-disposition") {
+      // 366/731 days in 2024 => 3,660 at 37%; 365/731 => 3,650 in 2025.
+      // Single tax-table row 37,900-37,949 => 4,313 plus prior tax 1,354.
+      // Daily interest 4/15/2025-4/15/2026 => 97.62396, filed as 98.
+      assertEquals(pending.schedule2?.line17p_form8621_interest, 98);
+      assertEquals(pending.f1040?.line23_other_taxes, 98);
+    }
     const packet = await f1040_2025.prepareReturn(
       pending,
       base.filer,

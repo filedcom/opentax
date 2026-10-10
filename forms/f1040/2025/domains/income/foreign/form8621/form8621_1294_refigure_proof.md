@@ -483,3 +483,47 @@ pending graphs, native XML, actual PDFs, XSD logs, rendered pages and hashes.
 Prior-year section1291 charges, further combinations, accepted carry imports,
 source authenticity and IRS acceptance remain outside this checkpoint; the
 previous pending-JSON Election B defect150 remains deferred and untouched.
+
+
+## October 10 prior-period charges and unavailable MTM loss
+
+Two more public-return cases extend the adoption/PFIC composition evidence.
+No production code changes in this checkpoint. The six regime cases plus
+underlying PFIC node/event tests pass35/0; the focused pair passes2/0.
+
+The prior-disposition case allocates7,310 of gain over731 holding days:
+366 days/3,660 to2024 and365 days/3,650 to2025. At37%, prior-year tax is1,354
+after rounding. The [Form8621 instructions](https://www.irs.gov/instructions/i8621)
+place this tax on Form1040 line16 and interest on Schedule2 line17p.
+The single-filer taxable-income row37,900–37,949 in the
+[2025 Tax Table](https://www.irs.gov/pub/irs-pdf/i1040tt.pdf) supplies4,313 regular
+tax, giving line16/18 of5,667. Following the
+[Form8839 credit-limit worksheet](https://www.irs.gov/instructions/i8839),
+nonrefundable adoption credit uses5,667 and leaves333 unused. Daily interest
+on1,354.20 from April15,2025 through April14,2026 is97.62396 (filed98), using
+[IRS underpayment rates](https://www.irs.gov/payments/quarterly-interest-rates)
+of7% through March2026 and6% in April. That98 remains final tax; refundable
+adoption5,000 plus withholding15,000 gives refund19,902.
+
+The new-year MTM loss case has value20,000, adjusted basis23,000 and zero
+unreversed inclusions. The3,000 economic loss permits no current deduction;
+AGI stays50,000, tax/adoption use3,875, unused credit2,125 and refund20,000.
+Both cases retain native carry/source rejection and prepared-PDF consistency
+checks (eight additional rejection assertions across the pair).
+
+Both full native returns pass local TY2025v5.4 XSD, with12 and6 generated tax
+packet pages respectively; all18 pages were rendered and reviewed. No AcroForm
+fields or widgets remain. The disposition packet's Form1040 page2 omits line16
+box3 and the1291TAX description, although native OtherTaxAmtInd isX and
+OtherTaxAmtGrp contains1291TAX/1,354. The instructions require the printed mark
+and description. This newly observed presentation discrepancy is deferred151;
+no mapping repair is included. The loss packet repeats blank zero line24
+(deferred76). Amounts, adoption identities, PFIC fields, allocation statement,
+Schedule2 interest and refunds otherwise reconcile in this observation.
+
+Private evidence: `.state/research/form8621-charges-2026-10-10/`, including
+independent expectations, typed test logs, original inputs/pending, native XML,
+PDFs, full-XSD results and visual hashes. The first filter command selected zero
+tests; the corrected focused command and combined35-test run are the actual
+evidence. These synthetic sources do not establish external authenticity,
+accepted carry imports or IRS acceptance; parent tasks remain open.
