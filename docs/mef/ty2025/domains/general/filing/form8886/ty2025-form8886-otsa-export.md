@@ -1,8 +1,11 @@
 # TY2025 Form 8886 OTSA export
 
-The isolated Form 8886 candidate supports preparing separate OTSA copies from
+The integrated Form 8886 workflow supports preparing separate OTSA copies from
 an ordinary stored return with a reviewed `f8886` input. This command prepares
 files; it does not fax, mail, record delivery, or claim IRS acceptance.
+The separate delivery-record command is described below. The October 10
+[current integration replay](./ty2025-form8886-reportable-transaction-gap.md#current-integrated-status--october-10-2026)
+passes all three OTSA command tests.
 
 ```sh
 opentax return export-otsa --returnId <id> --requests ./otsa-requests.json --output ./otsa-export
