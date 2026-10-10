@@ -136,8 +136,19 @@ export const itemSchema = z.object({
 });
 
 export const inputSchema = z.object({
-  f8915fs: z.array(itemSchema).max(1).optional(),
-}).strict();
+  f8915fs: z.array(itemSchema).optional(),
+}).strict().superRefine((input, context) => {
+  try {
+    distributionOwnerGroups(input.f8915fs ?? []);
+  } catch (error) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: error instanceof Error
+        ? error.message
+        : "Invalid Form 8915-F inventory",
+    });
+  }
+});
 
 export type Form8915FItem = z.infer<typeof itemSchema>;
 
@@ -299,8 +310,8 @@ export function assertForm8915FSourceLinks(
   if (linked.length === 0) return;
   const form = inputSchema.safeParse(pending.f8915f);
   if (
-    linked.length !== 1 || !form.success ||
-    form.data.f8915fs?.length !== 1
+    !form.success ||
+    form.data.f8915fs?.length !== linked.length
   ) {
     throw new Error(
       "Form 1099-R Form 8915-F treatment needs one matching Form 8915-F",
@@ -319,13 +330,241 @@ class F8915FNode extends TaxNode<typeof inputSchema> {
   ): NodeResult {
     const input = inputSchema.parse(rawInput);
     if ((input.f8915fs?.length ?? 0) > 0) {
-      currentYearDistributionLines(input.f8915fs![0], {
-        planGross: 0,
-        iraGross: 0,
-      });
+      for (const group of distributionOwnerGroups(input.f8915fs!)) {
+        currentYearDistributionGroupLines(group, { planGross: 0, iraGross: 0 });
+      }
     }
     return { outputs: [] };
   }
 }
 
 export const f8915f = new F8915FNode();
+
+/** One annual election and $22,000 limit per owner; every issued source stays distinct. */
+export function distributionOwnerGroups(items: readonly Form8915FItem[]) {
+  const references = items.map((i) => i.source_1099r_document_reference);
+  const accounts = items.map((i) =>
+    `${i.owner}:${i.source_1099r_payer_ein}:${i.source_1099r_account_number}`
+  );
+  const repayments = items.flatMap((i) =>
+    i.repayment.kind === "timely"
+      ? [i.repayment.repayment_record_reference]
+      : []
+  );
+  if (
+    new Set(references).size !== references.length ||
+    new Set(accounts).size !== accounts.length ||
+    new Set(repayments).size !== repayments.length
+  ) {
+    throw new Error(
+      "Form 8915-F inventory repeats an issued account, source or repayment",
+    );
+  }
+  const filings = items.flatMap((i) =>
+    i.repayment.kind === "timely"
+      ? [
+        JSON.stringify([
+          i.repayment.return_filing_date,
+          i.repayment.filing_deadline,
+        ]),
+      ]
+      : []
+  );
+  if (new Set(filings).size > 1) {
+    throw new Error(
+      "Form 8915-F repayments disagree on the return filing/deadline",
+    );
+  }
+  return (["T", "S"] as const).flatMap((owner) => {
+    const group = items.filter((i) => i.owner === owner);
+    if (!group.length) return [];
+    const first = group[0];
+    const key = (i: Form8915FItem) =>
+      JSON.stringify([
+        i.recipient_ssn,
+        i.fema_number,
+        i.disaster_begin_date,
+        i.disaster_declaration_date,
+        i.full_inclusion_elected,
+      ]);
+    if (
+      group.some((i) => key(i) !== key(first)) ||
+      group.reduce((n, i) => n + i.gross_distribution, 0) > 22_000
+    ) {
+      throw new Error(
+        "Form 8915-F owner needs one consistent disaster/election and a combined amount within $22,000",
+      );
+    }
+    return [group];
+  });
+}
+
+export function currentYearDistributionGroupLines(
+  items: readonly Form8915FItem[],
+  other: { planGross: number; iraGross: number },
+) {
+  const first = items[0];
+  if (!first || distributionOwnerGroups(items).length !== 1) {
+    throw new Error("Form 8915-F calculation needs one owner group");
+  }
+  const plan = items.filter((i) => i.retirement_source_kind === "plan");
+  const ira = items.filter((i) =>
+    i.retirement_source_kind === "traditional_ira"
+  );
+  const gross = (rows: readonly Form8915FItem[]) =>
+    rows.reduce((n, i) => n + i.gross_distribution, 0);
+  const repaid = (rows: readonly Form8915FItem[]) =>
+    rows.reduce(
+      (n, i) => n + (i.repayment.kind === "timely" ? i.repayment.amount : 0),
+      0,
+    );
+  const planAmount = gross(plan), iraAmount = gross(ira);
+  const planIncome = first.full_inclusion_elected
+    ? planAmount
+    : Math.round(planAmount / 3);
+  const iraIncome = first.full_inclusion_elected
+    ? iraAmount
+    : Math.round(iraAmount / 3);
+  if (repaid(plan) > planIncome || repaid(ira) > iraIncome) {
+    throw new Error(
+      "Form 8915-F grouped repayments need later-year/carryback allocation",
+    );
+  }
+  return {
+    line1e_available: 22_000,
+    line2a_plan_distributions: planAmount + other.planGross,
+    line2b_qualified_plan_distributions: planAmount,
+    line3a_ira_distributions: iraAmount + other.iraGross,
+    line3b_qualified_ira_distributions: iraAmount,
+    line5a_nonqualified_distributions: other.planGross + other.iraGross,
+    line5b_qualified_distributions: planAmount + iraAmount,
+    line6_total_qualified: planAmount + iraAmount,
+    line8_plan_qualified: planAmount,
+    line9_cost: 0,
+    line10_taxable: planAmount,
+    line11_current_income: planIncome,
+    line13_total_income: planIncome,
+    line14_plan_repayment: repaid(plan),
+    line15_form1040_line5b: planIncome - repaid(plan),
+    line20_ira_qualified: iraAmount,
+    line21_ira_taxable: iraAmount,
+    line22_current_ira_income: iraIncome,
+    line24_total_ira_income: iraIncome,
+    line25_ira_repayment: repaid(ira),
+    line26_form1040_line4b: iraIncome - repaid(ira),
+  };
+}
+
+/** Validate the complete current return, not a projection with the other owner's sources removed. */
+export function verifyGroupedDistributionSources(
+  raw: readonly Form8915FItem[],
+  pending1099R: unknown,
+  filer: FilerIdentity | undefined,
+) {
+  const items = inputSchema.parse({ f8915fs: raw }).f8915fs!;
+  const source = f1099rInputSchema.parse(pending1099R);
+  const refs = source.f1099rs.map((r) => r.source_document_reference);
+  const accounts = source.f1099rs.map((r) =>
+    r.account_number
+      ? `${r.ts ?? "T"}:${r.payer_ein.replace(/\D/g, "")}:${r.account_number}`
+      : undefined
+  );
+  if (accounts.some((a) => !a) || new Set(accounts).size !== accounts.length) {
+    throw new Error(
+      "Form 8915-F inventory requires distinct issued retirement accounts",
+    );
+  }
+  if (refs.some((r) => !r) || new Set(refs).size !== refs.length) {
+    throw new Error(
+      "Form 8915-F needs unique issued Form 1099-R references for every source",
+    );
+  }
+  const expected = (owner: "T" | "S") =>
+    owner === "T"
+      ? filer?.primarySSN
+      : filer?.filingStatus === 2
+      ? filer.spouse?.ssn
+      : undefined;
+  for (const r of source.f1099rs) {
+    if (
+      !r.recipient_ssn ||
+      r.recipient_ssn.replace(/\D/g, "") !==
+        expected(r.ts ?? "T")?.replace(/\D/g, "")
+    ) {
+      throw new Error(
+        "Form 8915-F source recipient conflicts with the current return owner",
+      );
+    }
+  }
+  for (const item of items) {
+    const match = source.f1099rs.filter((r) =>
+      r.source_document_reference === item.source_1099r_document_reference
+    );
+    // Reuse the single-source qualification checks after selecting the complete issued record.
+    verifyCurrentYearDistributionSource(
+      { ...item, other_distribution_nonqualified_review_reference: undefined },
+      { f1099rs: match },
+      filer,
+    );
+    if (item.recipient_ssn !== expected(item.owner)?.replace(/\D/g, "")) {
+      throw new Error(
+        "Form 8915-F owner requires the matching current joint return",
+      );
+    }
+  }
+  const qualifiedRefs = new Set(
+    items.map((i) => i.source_1099r_document_reference),
+  );
+  const ordinary = source.f1099rs.filter((r) =>
+    !qualifiedRefs.has(r.source_document_reference!)
+  );
+  if (ordinary.some((r) => r.form8915f_treatment !== undefined)) {
+    throw new Error(
+      "Form 8915-F inventory omits a linked qualified distribution",
+    );
+  }
+  const groups = distributionOwnerGroups(items).map((group) => {
+    const ownOther = ordinary.filter((r) => (r.ts ?? "T") === group[0].owner);
+    if (
+      group.some((i) =>
+        (ownOther.length > 0) !==
+          (i.other_distribution_nonqualified_review_reference !== undefined)
+      )
+    ) {
+      throw new Error(
+        "Form 8915-F ordinary inventory needs every qualified source's nonqualified review",
+      );
+    }
+    for (const r of ownOther) {
+      const q = source.f1099rs.find((r) =>
+        r.source_document_reference === group[0].source_1099r_document_reference
+      )!;
+      verifyCurrentYearDistributionSource(group[0], { f1099rs: [q, r] }, filer);
+    }
+    const other = {
+      planGross: ownOther.filter((r) => !r.box7_ira_simple_indicator).reduce(
+        (n, r) => n + r.box1_gross_distribution,
+        0,
+      ),
+      iraGross: ownOther.filter((r) => r.box7_ira_simple_indicator).reduce(
+        (n, r) => n + r.box1_gross_distribution,
+        0,
+      ),
+    };
+    return {
+      items: group,
+      first: group[0],
+      other,
+      lines: currentYearDistributionGroupLines(group, other),
+    };
+  });
+  // An unclaimed owner's ordinary distributions still need an explicit reviewed route.
+  if (
+    ordinary.some((r) => !groups.some((g) => g.first.owner === (r.ts ?? "T")))
+  ) {
+    throw new Error(
+      "Form 8915-F other-owner retirement income needs its reviewed allocation route",
+    );
+  }
+  return groups;
+}

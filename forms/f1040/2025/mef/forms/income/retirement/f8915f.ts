@@ -1,3 +1,7 @@
+import {
+  groupedDistributionAttachments,
+  groupedDistributionXml,
+} from "./f8915f_groups.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
   currentYearDistributionLines,
@@ -5,7 +9,10 @@ import {
   inputSchema,
   verifyCurrentYearDistributionSource,
 } from "../../../../../nodes/inputs/income/retirement/f8915f/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../form-descriptor.ts";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
 import type { z } from "zod";
 import {
@@ -186,12 +193,21 @@ export const form8915F: MefFormDescriptor<
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8915f.pdf",
   build(fields, context) {
     const items = inputSchema.parse(fields).f8915fs ?? [];
+    if (items.length > 1) return groupedDistributionXml(fields, context)[0];
     return items.length === 0
       ? ""
       : buildCurrentYearDistributionForm8915F(items[0], context);
   },
+  buildAdditionalDocuments(fields, context) {
+    return (inputSchema.parse(fields).f8915fs?.length ?? 0) > 1
+      ? groupedDistributionXml(fields, context).slice(1)
+      : [];
+  },
   async buildBinaryAttachments(fields, context) {
     const items = inputSchema.parse(fields).f8915fs ?? [];
+    if (items.length > 1) {
+      return groupedDistributionAttachments(fields, context);
+    }
     return items.length === 0 || items[0].repayment.kind === "none"
       ? []
       : [await buildForm8915FRepaymentWorksheet(items[0], context?.filer)];

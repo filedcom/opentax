@@ -6727,3 +6727,21 @@ The sole older-layout root full 91357 remains running on `cf107ac7e`, launched 1
 The preceding old-layout root full (session 91357 on `cf107ac7e69d3212072dfdf62d2f6c6e2e0594c8`) was deliberately interrupted as superseded at **19:21:43 UTC**. Its actual child exit was **143**, task and wrapper exits were **1**, and no JUnit or hardened terminal result was retained. All 3,189 runtime paths and 88 cache files remained unchanged. This is interrupted, unverified evidence, not a full pass or a classified tax failure. The retained `root-organized-hardened-full-regression-20261008-v1/terminal.json` and private `pre-industry-full-interruption-v1.json` preserve the actual status and reason.
 
 The fresh final-taxonomy serial full actually launched at **19:21:53.301439 UTC** on exact commit `666bdd1671be65aab39d3538289b053bb6ed7157`, with wrapper PID 4350 (session 70465) and **3,191 frozen runtime paths**. Launch evidence is `root-industry-taxonomy-full-regression-20261008-v1/launch.json`. It is running; actual task/child/terminal results, JUnit counts and full-scope verification remain pending. This current status supersedes earlier prose describing the old run as active and the final-taxonomy full as not yet launched. Bounded 137/0 unit and migration checks remain evidence for their actual scope. The 52 main TODOs and all 61 future TODO bodies remain frozen; IRS acceptance remains pending.
+
+
+## October 10: owned Form 8915-F distributions and repayment statements
+
+Board learnings compacted before production edits. Continued the existing
+retirement/1040/native/PDF/attachment group on base PR70. The [checkpoint](../domains/income/retirement/form8915/ty2025-form8915f-gap.md#october-10-owned-distributions-and-repayment-packets)
+retains fifteen full-XSD returns, 114 issued sources, 18 owner forms and 118
+reviewed pages. Typed selected gate385/0; public20 and native/fresh-PDF105/105
+reject altered inventories, with additional missing attachment/ID guards.
+Independent calculations reconcile category rounding, repayment amounts and
+final tax/balances. Benchmark46/133 has the same87 failures. Ordinary-source
+paper line7 remains deferred; newly reproduced existing same-day repayment
+acceptance is recorded only in future132. Main52 unchanged; estimate remains
+about60% of individual ATS checks (45–75% uncertainty), without an acceptance
+claim. No future work or broad parent checkoff. This turn advances source
+inventories, ownership, filing statements and validation.
+
+Final repayment-layout typed replay: six passed, zero failed; the changed full-return XML was revalidated and the four changed worksheet pages were inspected again.

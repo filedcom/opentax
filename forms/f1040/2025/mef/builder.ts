@@ -629,7 +629,7 @@ export async function buildMefBundle(
       "buildBinaryAttachments" in form && form.buildBinaryAttachments
         ? form.buildBinaryAttachments(
           (pending[form.pendingKey as keyof MefFormsPending] ?? {}) as never,
-          { filer: options.filer },
+          { filer: options.filer, pending },
         )
         : Promise.resolve([] as ReadonlyArray<MefPdfAttachment>)
     ),

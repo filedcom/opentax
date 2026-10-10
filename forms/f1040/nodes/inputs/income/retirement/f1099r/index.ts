@@ -1393,10 +1393,8 @@ function iraF1040Fields(
     (!item.roth_activity_review ||
       reviewedRothActivity(item.roth_activity_review).qualified)
   );
-  const taxable = nonBasisItems.reduce(
-    (sum, item) =>
-      sum + effectiveTaxableAmount(item, qcdAnnualLimit, psoExclusionLimit),
-    0,
+  const taxable = effectiveTaxableTotal(
+    nonBasisItems, qcdAnnualLimit, psoExclusionLimit,
   );
   const has8606Items = active.some((item) =>
     routedThrough8606PartI(item) ||
@@ -1413,6 +1411,41 @@ function iraF1040Fields(
     fields.line4b_ira_taxable = taxable;
   }
   return fields;
+}
+
+// Form 8915-F divides the owner's filed account-category total, not each payer's form.
+function effectiveTaxableTotal(
+  items: R1099Items,
+  qcdAnnualLimit: number,
+  psoExclusionLimit: number,
+): number {
+  const ordinary = items.filter((i) => i.form8915f_treatment === undefined);
+  const qualified = items.filter((i) => i.form8915f_treatment !== undefined);
+  return ordinary.reduce(
+    (n, i) => n + effectiveTaxableAmount(i, qcdAnnualLimit, psoExclusionLimit),
+    0,
+  ) +
+    (["T", "S"] as const).reduce((total, owner) => {
+      const own = qualified.filter((i) => (i.ts ?? "T") === owner);
+      if (!own.length) return total;
+      if (new Set(own.map((i) => i.form8915f_treatment)).size !== 1) {
+        throw new Error(
+          "Form 8915-F owner has conflicting inclusion elections",
+        );
+      }
+      const gross = own.reduce((n, i) => n + (i.box2a_taxable_amount ?? 0), 0);
+      const income = own[0].form8915f_treatment === "three_years"
+        ? Math.round(gross / 3)
+        : gross;
+      const repayment = own.reduce(
+        (n, i) => n + (i.form8915f_repayment_amount ?? 0),
+        0,
+      );
+      if (repayment > income) {
+        throw new Error("Form 8915-F grouped repayments exceed current income");
+      }
+      return total + income - repayment;
+    }, 0);
 }
 
 // Build f1040 output for pension/annuity distributions
@@ -1432,10 +1465,8 @@ function pensionF1040Fields(
     (sum, item) => sum + item.box1_gross_distribution,
     0,
   );
-  const taxable = active.reduce(
-    (sum, item) =>
-      sum + effectiveTaxableAmount(item, qcdAnnualLimit, psoExclusionLimit),
-    0,
+  const taxable = effectiveTaxableTotal(
+    active, qcdAnnualLimit, psoExclusionLimit,
   );
   const fields: Record<string, number> = {};
   if (gross > 0) fields.line5a_pension_gross = gross;
