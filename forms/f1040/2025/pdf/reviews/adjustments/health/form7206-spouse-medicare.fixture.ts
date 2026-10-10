@@ -1,3 +1,4 @@
+import { withHealthPolicyRecords } from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/policy-records.fixture.ts";
 import { assertEquals } from "@std/assert";
 import { f1040_2025 } from "../../../../index.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
@@ -76,7 +77,7 @@ export function spouseMedicareInputs(wages = 50000, excludedMonths = 0): any {
   const own = f1040_2025.executeReturn(structuredClone(inputs));
   assertEquals(own.diagnostics, []);
   inputs.form7206 = {
-    single_schedule_c_plan: {
+    single_schedule_c_plan: withHealthPolicyRecords({
       business_reference: "BIZ",
       plan_identifier: "CASEY-MEDICARE-B-2025",
       recipient: "S",
@@ -105,7 +106,7 @@ export function spouseMedicareInputs(wages = 50000, excludedMonths = 0): any {
       no_form2555: true,
       no_schedule_se_optional_method: true,
       no_other_earned_income: true,
-    },
+    }),
     marketplace_ptc_premium_overlap: false,
   };
   return inputs;

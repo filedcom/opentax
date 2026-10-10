@@ -1,5 +1,20 @@
 # TY2025 Form 7206 source-to-filing gap
 
+## October 10 single-plan policy-source checkpoint
+
+[Single-plan source proof](./ty2025-form7206-single-policy-review.md) extends the
+shared policy/payment contract to scalar taxpayer and spouse plans. Native/PDF
+exports require reviewed policy and twelve payment records; legacy calculation
+without them remains staging-only. Six packets pass full XSD across71 reviewed
+pages, with14 public/108 native/108 fresh-PDF and24 archive rejections. Five
+reconcile filed AGI; the original cents case retains a1-dollar derived-line
+rounding mismatch (deferred104). Names68/zeros76/positive-C choices86 remain
+qualified. The new source gate7/0 and existing single-route gate21/0 pass.
+The related gate passed43/45 initially; a corrected synthetic spouse-owner
+fixture passed its four-test rerun, verifying all45 related checks (73 unique
+tests overall). No full-suite rerun was performed.
+Broader parent scope and authenticity/IRS acceptance remain open.
+
 ## October 10 independent Schedule C policy-source checkpoint
 
 [Complete policy-inventory evidence](./ty2025-form7206-policy-inventory-review.md)

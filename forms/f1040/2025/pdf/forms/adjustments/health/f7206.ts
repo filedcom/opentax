@@ -1,10 +1,14 @@
+import { reconcileHealthPolicyRecords } from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/policy-records.ts";
 import {
   assertIndependentOwnerHealth,
   assertOwnedSepContext,
   independentHealthCanonical,
 } from "../../../../domains/adjustments/health/form7206/form7206_independent_owner_source.ts";
 import { patronFiledBusinessLines } from "../../../../../nodes/inputs/deductions/business/qbi_patron/calculation.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import {
   calculateSingleScheduleCForm7206,
   form7206LinesSchema,
@@ -116,6 +120,12 @@ function projectFields(
     );
   }
   const source = singleScheduleCPlanSchema.parse(fields.single_schedule_c_plan);
+  reconcileHealthPolicyRecords(
+    source,
+    source.recipient === TS.S
+      ? source.spouse_identity!.ssn
+      : source.taxpayer_identity.ssn,
+  );
   assertForm7206SpouseCoverage(source, allPending);
   const recipient = source.recipient === TS.S
     ? source.spouse_identity!

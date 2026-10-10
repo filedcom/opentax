@@ -1,3 +1,4 @@
+import { reconcileHealthPolicyRecords } from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/policy-records.ts";
 import {
   assertIndependentOwnerHealth,
   assertOwnedSepContext,
@@ -21,7 +22,10 @@ import {
 } from "../../../../../nodes/intermediate/forms/taxes/self-employment/schedule_se/index.ts";
 import { z } from "zod";
 import { element, elements } from "../../../../../mef/xml.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../form-descriptor.ts";
 import { assertForm7206SpouseCoverage } from "../../../../domains/adjustments/health/form7206/form7206_spouse_coverage.ts";
 import { TS } from "../../../../../nodes/types.ts";
 import { assertScheduleCReceiptSourceIdentity } from "../../../../domains/general/return-assembly/filer-source-reconciliation.ts";
@@ -116,6 +120,12 @@ function buildIRS7206(
     );
   }
   const source = singleScheduleCPlanSchema.parse(fields.single_schedule_c_plan);
+  reconcileHealthPolicyRecords(
+    source,
+    source.recipient === TS.S
+      ? source.spouse_identity!.ssn
+      : source.taxpayer_identity.ssn,
+  );
   const lines = form7206LinesSchema.parse(fields);
   const expected = calculateSingleScheduleCForm7206(source);
   if (

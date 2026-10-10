@@ -1,3 +1,4 @@
+import { withHealthPolicyRecords } from "../../nodes/intermediate/forms/adjustments/health/form7206/policy-records.fixture.ts";
 import { withRentedHomeEvidence } from "../../nodes/intermediate/forms/deductions/business/form_8829/source.fixture.ts";
 import { form8582crReviewFixtures } from "../domains/credits/business/form8582c/form8582cr_k1.fixture.ts";
 import { ordinaryRothSubstituteReviewFixture } from "./reviews/general/composed-returns/review-4852-ordinary-roth.fixture.ts";
@@ -7550,7 +7551,7 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
         line_1_gross_receipts: 50_000,
       }],
       form7206: {
-        single_schedule_c_plan: {
+        single_schedule_c_plan: withHealthPolicyRecords({
           business_reference: "HEALTH-CONSULTING",
           plan_identifier: "ALEX-HEALTH-2025",
           recipient: TS.T,
@@ -7579,7 +7580,7 @@ const basePdfReviewFixtures: readonly PdfReviewFixture[] = [
           no_form2555: true,
           no_schedule_se_optional_method: true,
           no_other_earned_income: true,
-        },
+        }),
         marketplace_ptc_premium_overlap: false,
       },
     },

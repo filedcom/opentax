@@ -1,3 +1,4 @@
+import { withHealthPolicyRecords } from "../../../../../nodes/intermediate/forms/adjustments/health/form7206/policy-records.fixture.ts";
 import {
   section179Cases,
   section179InventoryInput,
@@ -81,32 +82,36 @@ export function section179HealthInput(
     },
     form7206: {
       marketplace_ptc_premium_overlap: false,
-      single_schedule_c_plan: singleScheduleCPlanSchema.parse({
-        business_reference: source.schedule_c[0].business_reference,
-        plan_identifier: `${scenario.id}-policy`,
-        recipient: TS.T,
-        taxpayer_identity: { name: "Alex Example", ssn: "111223333" },
-        premium_months: Array.from({ length: 12 }, (_, i) => ({
-          month: i + 1,
-          paid_premium: scenario.monthlyPremium,
-          policy_source_reference: `${scenario.id}-issued-policy`,
-          payment_source_reference: `${scenario.id}-payment-${i + 1}`,
-          covered_person: "taxpayer",
-          eligible_for_subsidized_employer_plan: i < scenario.excludedMonths,
-          employer_plan_review_reference: `${scenario.id}-eligibility-${i + 1}`,
-          marketplace_policy: false,
-          long_term_care_policy: false,
-          public_safety_officer_excluded_amount: 0,
-        })),
-        schedule_c_line31_net_profit: 10000,
-        schedule1_line15_se_tax_deduction: 707,
-        schedule1_line16_retirement_deduction: 0,
-        plan_established_under_business: true,
-        sole_positive_business_verified: true,
-        no_form2555: true,
-        no_schedule_se_optional_method: true,
-        no_other_earned_income: true,
-      }),
+      single_schedule_c_plan: withHealthPolicyRecords(
+        singleScheduleCPlanSchema.parse({
+          business_reference: source.schedule_c[0].business_reference,
+          plan_identifier: `${scenario.id}-policy`,
+          recipient: TS.T,
+          taxpayer_identity: { name: "Alex Example", ssn: "111223333" },
+          premium_months: Array.from({ length: 12 }, (_, i) => ({
+            month: i + 1,
+            paid_premium: scenario.monthlyPremium,
+            policy_source_reference: `${scenario.id}-issued-policy`,
+            payment_source_reference: `${scenario.id}-payment-${i + 1}`,
+            covered_person: "taxpayer",
+            eligible_for_subsidized_employer_plan: i < scenario.excludedMonths,
+            employer_plan_review_reference: `${scenario.id}-eligibility-${
+              i + 1
+            }`,
+            marketplace_policy: false,
+            long_term_care_policy: false,
+            public_safety_officer_excluded_amount: 0,
+          })),
+          schedule_c_line31_net_profit: 10000,
+          schedule1_line15_se_tax_deduction: 707,
+          schedule1_line16_retirement_deduction: 0,
+          plan_established_under_business: true,
+          sole_positive_business_verified: true,
+          no_form2555: true,
+          no_schedule_se_optional_method: true,
+          no_other_earned_income: true,
+        }),
+      ),
     },
   };
 }
