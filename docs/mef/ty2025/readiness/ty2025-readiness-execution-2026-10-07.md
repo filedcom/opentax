@@ -7278,3 +7278,17 @@ The frozen full gate eed449e70 remains live at this checkpoint (about2h31m);
 there is no terminal result. It predates these transfers and other later changes.
 The52 main TODO bodies remain unchanged;138 future items remain deferred.
 Technical ATS-check estimate stays about60%, rough45–75%, as engineering judgment.
+
+## October 10 frozen full-gate terminal result
+
+The existing eed449e70 run finished at06:01:33Z after2h31m14s, exit1:
+13669 passed,218 failed,zero ignored reported;1394 modules,zero exclusions.
+Runtime-before/after manifests are identical. Failure inventory:208 evidence
+environment-permission denials, six known moved paths (65), two rule-path
+assertions (66), and two changed rejection contracts (Form8886/Form2106).
+New deferred139/140 retain the permissions and rejection-contract findings;
+no deferred repair or restart was made. This frozen run predates later
+statement/bonus/PWA/solar/transfer changes and does not validate current HEAD.
+Evidence is mirrored in `.state/research/full-gate-result-2026-10-10/`.
+Main52 TODO bodies remain unchanged;140 future items are deferred.
+The technical ATS-check estimate remains about60%, rough45–75%.
