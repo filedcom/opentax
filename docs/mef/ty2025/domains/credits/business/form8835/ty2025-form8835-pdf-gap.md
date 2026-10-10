@@ -246,3 +246,18 @@ reviewed, including one K-1 continuation. Rejections:42 native/42 fresh-PDF/15
 prepared. Existing skipped-line/zero/name qualifications remain. Sources are
 synthetic; wider source/owner/election combinations, ledgers, authenticity,
 business rules and IRS acceptance remain open. Numeric/native code is unchanged.
+
+
+## October 10 reviewed multiple-facility allocation checkpoint
+
+The [Form 3800 checkpoint](../form3800/ty2025-form3800-pdf-gap.md#october-10-reviewed-multiple-facility-allocation-checkpoint)
+adds a complete public facility-allocation review and six mixed K-1 packets with
+full, partial and zero source use. Native/PDF rows bind the review to physical
+facility identity and finalized credit use; review order does not determine
+source order. All six returns pass XSD;122 packet pages/13 facility copies were
+reviewed. Mutations reject144 native/144 fresh-PDF/30 prepared cases.
+
+Whole-dollar allocations, generated credit and unused balances reconcile.
+Prepared-only extra EIN acceptance is deferred134; existing skipped-line,
+zero/name presentation and wider credit/owner/source branches, carry ledgers,
+authentication, business rules and IRS acceptance remain open.

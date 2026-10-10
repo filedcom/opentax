@@ -712,3 +712,14 @@ continuation. Source mutations reject42 native/42 fresh-PDF/15 prepared cases.
 See the [Form 3800 checkpoint](../../../credits/business/form3800/ty2025-form3800-pdf-gap.md#october-10-tax-limited-production-credit-packet-checkpoint).
 Multiple-facility partial allocation, broader mixtures, carry ledgers, existing
 presentation qualifications, source authentication and IRS acceptance stay open.
+
+
+## October 10 reviewed multiple-facility allocation checkpoint
+
+Six public mixed K-1/production returns bind reviewed facility allocations to
+native and PDF tax use:77 K-1 sources,13 facility copies,90 Part V rows and five
+continuations. All six pass XSD;122 pages were reviewed. Rejections144 native/
+144 fresh-PDF/30 prepared; the accepted extra-EIN prepared probe is deferred134.
+See the [Form 3800 checkpoint](../../../credits/business/form3800/ty2025-form3800-pdf-gap.md#october-10-reviewed-multiple-facility-allocation-checkpoint).
+Source authenticity, other mixtures, ledgers, existing presentation issues and
+IRS acceptance stay open; no parent is closed.

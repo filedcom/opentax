@@ -1,4 +1,8 @@
 import {
+  assertCurrentProductionAllocationSource,
+  reconcileCurrentProductionAllocation,
+} from "../../../../../../nodes/inputs/credits/business/f3800/production-allocation.ts";
+import {
   assertCurrentOrphanAllocationSource,
   reconcileCurrentOrphanAllocation,
 } from "../../../../../../nodes/inputs/credits/business/f3800/current-allocation.ts";
@@ -803,6 +807,10 @@ export function prepareForm3800DocumentParts(
     throw new Error("Form 3800 preparation needs reserved document IDs");
   }
   const { tax, parsed, passiveActivity, lines, allowedCredit } = base;
+  assertCurrentProductionAllocationSource(
+    parsed.current_production_allocation_review,
+    context.pending?.form3800_current_production_allocation,
+  );
   assertCurrentOrphanAllocationSource(
     parsed.current_orphan_allocation_review,
     context.pending?.form3800_current_orphan_allocation,
@@ -1106,6 +1114,32 @@ export function prepareForm3800DocumentParts(
   );
   const applied = (sourceKey: string): number =>
     sourceUse.get(sourceKey)?.appliedAgainstTax ?? 0;
+  const reviewedProductionTaxUse = parsed.current_production_allocation_review
+    ? reconcileCurrentProductionAllocation(
+      parsed.current_production_allocation_review,
+      f8835InputSchema.parse(context.pending?.f8835).f8835s.map((
+        item,
+        index,
+      ) => ({ ...item, ...facilities[index] })),
+      {
+        primarySSN: context.filer?.primarySSN ?? "",
+        appliedByLine: {
+          "1f": applied("nonpassive:8835:1f"),
+          "4e": applied("nonpassive:8835:4e"),
+        },
+      },
+    )
+    : undefined;
+  if (
+    reviewedProductionTaxUse &&
+    parsed.form8835_applied_credits_by_facility !== undefined &&
+    JSON.stringify(reviewedProductionTaxUse) !==
+      JSON.stringify(parsed.form8835_applied_credits_by_facility)
+  ) {
+    throw new Error(
+      "Form 3800 production allocation conflicts with facility applied amounts",
+    );
+  }
   const passiveApplied = taxUse.passiveVintages.reduce(
     (sum, row) => ({
       standard: sum.standard +
@@ -1514,7 +1548,7 @@ export function prepareForm3800DocumentParts(
         facilities,
         applied("nonpassive:8835:1f"),
         applied("nonpassive:8835:4e"),
-        parsed.form8835_applied_credits_by_facility,
+        reviewedProductionTaxUse ?? parsed.form8835_applied_credits_by_facility,
       ),
       transferStatementIdsByFileName: context.documentIdsByAttachmentFileName ??
         {},

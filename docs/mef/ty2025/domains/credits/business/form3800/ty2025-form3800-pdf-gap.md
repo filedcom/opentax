@@ -994,3 +994,61 @@ Validation:109 grouped typed tests pass (2m14s), plus final focused3/0. The
 initial group had107 passes and two missing-`pdftotext` environment failures;
 rerunning the same group with the installed Poppler directory on PATH passed.
 No numeric change or fresh benchmark claim.
+
+
+## October 10 reviewed multiple-facility allocation checkpoint
+
+A public `form3800_current_production_allocation` record now supplies reviewed
+per-facility tax use when the Form 3800 limit cuts across multiple current
+Form 8835 credits. Its complete inventory binds the tax year, primary filer,
+review reference, facility address/coordinates/service date, description,
+energy type, production period, credit line and generated credit. Applied
+amounts use whole filing dollars and must match finalized tax use separately
+for lines1f/4e; native preparation maps the review to actual source order and
+rejects conflicting legacy arrays. Raw/public/projected review copies must
+agree. This is an explicit reviewed allocation, not an automatic proportional
+allocation or proof of source authenticity.
+
+The PDF route now accepts the reviewed split for its supported nonpassive
+first-four-year facilities when they are the entire specified-credit inventory
+and no carryovers exist. Existing passive, transfer, bonus, owner and other
+source guards remain. Source calculations and total tax are unchanged.
+
+| Case | K-1s / facilities | Production generated / used / unused | Tax / refund | Pages |
+| --- | --- | --- | --- | --- |
+| two-full | 2 / 2 | 1260 / 1260 / 0 | 21806 / 8194 | 19 |
+| two-partial | 2 / 2 | 36060 / 16077 / 19983 | 17 / 29983 | 19 |
+| fourteen-full | 14 / 2 | 1260 / 1260 / 0 | 22316 / 7684 | 20 |
+| fourteen-partial | 14 / 2 | 36060 / 16077 / 19983 | 17 / 29983 | 20 |
+| fifteen-partial | 15 / 2 | 36060 / 16077 / 19983 | 17 / 29983 | 20 |
+| thirty-partial | 30 / 3 | 54180 / 16077 / 38103 | 17 / 29983 | 24 |
+
+Six complete returns pass the retained TY2025 v5.4 XSD. An independent Decimal
+verifier reconciles77 K-1 sources,13 facility copies, all90 Part V rows, five
+continuations, every production document link, applied/unused balances and final
+Form1040 totals. It compares facility records by identity rather than review
+order. The three-facility case allocates0/0/16,077 to facilities generating
+18,000/18,060/18,120. Two-facility partial cases allocate8,039/8,038. Reviews
+are deliberately reversed relative to source order.
+
+All122 packet pages were reopened without AcroForm fields/widgets, rendered,
+and reviewed through16 sheets containing61 unique pages and61 exact pixel
+duplicates. Negative cases reject144 native/144 fresh-PDF mutations and30
+prepared mutations. The focused packet run passes6/0; three dedicated review
+unit tests cover inventory, identity, credit class, filer, source-copy and
+whole-dollar boundaries. Evidence is retained under
+`.state/research/form3800-facility-allocation-2026-10-10/`, with final reviewed
+packets and independent verification in `reviewed/`.
+
+The original EIN mutation test selected a row by array position and exposed a
+separate prepared-PDF gap: a fake pass-through EIN on a production detail can
+print while source/native amounts remain unchanged. The intended K-1 mutation
+now selects its actual source identity. The accepted production-row probe is
+retained and recorded as deferred134; it was not repaired. Existing skipped
+lines18–21, blank-zero/name formatting and broader source/authentication,
+carryover ledgers, business rules and IRS acceptance remain open. No frozen
+parent task is closed, and no deferred item is implemented.
+
+Grouped validation:382 typed tests pass (5m25s); final reviewed-input unit3/0
+and focused packet6/0 also pass after the whole-filing-dollar schema refinement.
+No numeric calculation or fresh benchmark change is claimed.

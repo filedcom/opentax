@@ -1,3 +1,4 @@
+import { assertCurrentProductionAllocationSource } from "../../../../../../nodes/inputs/credits/business/f3800/production-allocation.ts";
 import {
   assertCurrentOrphanAllocationSource,
   reconcileCurrentOrphanAllocation,
@@ -148,6 +149,14 @@ export const form3800Pdf: PdfFormDescriptor = {
     }
     assertForm3800FinalCreditJoin(prepared.lines.line38, all);
     const source = f3800InputSchema.parse(pending3800);
+    assertCurrentProductionAllocationSource(
+      source.current_production_allocation_review,
+      all.form3800_current_production_allocation,
+    );
+    assertCurrentProductionAllocationSource(
+      raw.current_production_allocation_review,
+      all.form3800_current_production_allocation,
+    );
     assertCurrentOrphanAllocationSource(
       source.current_orphan_allocation_review,
       all.form3800_current_orphan_allocation,

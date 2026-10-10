@@ -1,3 +1,7 @@
+import {
+  assertCurrentProductionAllocationSource,
+  reconcileCurrentProductionAllocation,
+} from "../../../../../nodes/inputs/credits/business/f3800/production-allocation.ts";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
 import { f1040 } from "../../../../../nodes/outputs/general/return-assembly/f1040/index.ts";
 import {
@@ -124,7 +128,40 @@ export function form8835PdfSources(
       "Form 8835 PDF has invalid finalized production-credit use",
     );
   }
-  const appliedCredit = rows.length === 1 ? singleFacilityApplied : totalCredit;
+  assertCurrentProductionAllocationSource(
+    form3800.current_production_allocation_review,
+    allPending.form3800_current_production_allocation,
+  );
+  const reviewedTaxUse = form3800.current_production_allocation_review
+    ? reconcileCurrentProductionAllocation(
+      form3800.current_production_allocation_review,
+      rows.map((row, index) => ({ ...row.item, ...entries[index] })),
+      {
+        primarySSN: filer?.primarySSN ?? "",
+        appliedByLine: {
+          "1f": 0,
+          "4e": Number(finalized3800.specified_credit_allowed),
+        },
+      },
+    )
+    : undefined;
+  if (
+    reviewedTaxUse &&
+    (prepared.carryoverRows.length !== 0 ||
+      credits?.specifiedCredit !== totalCredit ||
+      (form3800.form8835_applied_credits_by_facility !== undefined &&
+        JSON.stringify(form3800.form8835_applied_credits_by_facility) !==
+          JSON.stringify(reviewedTaxUse)))
+  ) {
+    throw new Error(
+      "Form 8835 PDF reviewed allocation conflicts with another credit inventory or allocation",
+    );
+  }
+  const appliedCredit = reviewedTaxUse
+    ? reviewedTaxUse.reduce((sum, amount) => sum + amount, 0)
+    : rows.length === 1
+    ? singleFacilityApplied
+    : totalCredit;
   const currentRows = prepared.currentRows.filter((row) => row.line === "4e");
   const currentAmounts = prepared.currentAmounts.filter((row) =>
     row.line === "4e"
@@ -157,7 +194,8 @@ export function form8835PdfSources(
     sourceDetails.some((detail, index) =>
       detail.credit !== rows[index].lines.line15 ||
       detail.appliedCredit !==
-        (rows.length === 1 ? appliedCredit : rows[index].lines.line15) ||
+        (reviewedTaxUse?.[index] ??
+          (rows.length === 1 ? appliedCredit : rows[index].lines.line15)) ||
       (detail.transferOutCredit ?? 0) !== 0 ||
       detail.sourceDocumentId !== filedDocumentIds?.[index]
     ) ||

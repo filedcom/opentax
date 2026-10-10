@@ -6930,3 +6930,17 @@ Evidence:`.state/research/form3800-production-limited-2026-10-10/`. Numeric/nati
 code unchanged; estimate remains60% (45–75%). Wider sources, multi-facility partial
 allocation, ledgers, presentation qualifications and IRS acceptance remain open.
 Continue on draft PR70; no parent closed or future item implemented.
+
+
+## October 10 reviewed multiple-facility production allocation
+
+Compacted learnings before edits. Added public complete-facility tax-use review,
+native source-order reconciliation and PDF per-facility applied/unused validation.
+Six XSD-valid returns/122 reviewed pages cover77 K-1 sources/13 facilities/90 PartV
+rows/five continuations; rejections144 native/144 fresh-PDF/30 prepared. Group382/0,
+final input3/0 and packet6/0. Numeric calculations unchanged. Frozen52 main bodies
+and prior133 future bodies preserved; newly discovered prepared-PDF fake EIN is
+future134 only, with accepted probe retained, no repair. Existing presentation,
+wider sources, ledgers, authenticity, business rules and IRS acceptance remain
+open. Evidence:`.state/research/form3800-facility-allocation-2026-10-10/`.
+Estimate60% (45–75%); continue draft PR70, no parent closure.

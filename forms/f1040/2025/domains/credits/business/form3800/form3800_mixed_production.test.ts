@@ -16,6 +16,61 @@ import { fixture } from "./form3800_k1_inventory.fixture.ts";
 
 const cases = [
   {
+    id: "review-two-full",
+    count: 2,
+    credit: 1000,
+    mixed: false,
+    facilities: 2,
+    kwh: 100000,
+    review: true,
+  },
+  {
+    id: "review-two-partial",
+    count: 2,
+    credit: 10000,
+    mixed: true,
+    facilities: 2,
+    kwh: 3000000,
+    review: true,
+  },
+  {
+    id: "review-fourteen-full",
+    count: 14,
+    credit: 100,
+    mixed: true,
+    facilities: 2,
+    kwh: 100000,
+    review: true,
+  },
+  {
+    id: "review-fourteen-partial",
+    count: 14,
+    credit: 1000,
+    mixed: false,
+    facilities: 2,
+    kwh: 3000000,
+    review: true,
+  },
+  {
+    id: "review-fifteen-partial",
+    count: 15,
+    credit: 1000,
+    mixed: true,
+    facilities: 2,
+    kwh: 3000000,
+    review: true,
+  },
+  {
+    id: "review-thirty-partial",
+    count: 30,
+    credit: 500,
+    mixed: true,
+    facilities: 3,
+    kwh: 3000000,
+    review: true,
+    lastFirst: true,
+  },
+  {
     id: "production-limited-two-full",
     count: 2,
     credit: 1000,
@@ -81,12 +136,14 @@ function reviewedFixture(test: typeof cases[number]) {
     return { ...source, applied_credit };
   });
   // The review deliberately uses a different order than either node's K-1 list.
-  return {
+  const combined = {
     ...input,
     f8835: Array.from({ length: test.facilities }, (_, index) => ({
-      energy_type: (index === 1 || test.kwh) && test.mixed
-        ? "WIND"
-        : "GEOTHERMAL",
+      energy_type:
+        (test.review ? index % 2 === 1 : (index === 1 || test.kwh)) &&
+          test.mixed
+          ? "WIND"
+          : "GEOTHERMAL",
       subject_to_passive_activity_limit: false,
       kwh_produced: (test.kwh ?? 100000) + index * 10000,
       kwh_sold: (test.kwh ?? 100000) + index * 10000,
@@ -120,6 +177,60 @@ function reviewedFixture(test: typeof cases[number]) {
       sources: allocated.reverse(),
     },
   };
+  const productionTotal = combined.f8835.reduce(
+    (sum, facility) => sum + Math.round(facility.kwh_sold * 0.006),
+    0,
+  );
+  let productionRemaining = Math.min(
+    productionTotal,
+    25050 - allocated.reduce((sum, source) => sum + source.applied_credit, 0),
+  );
+  const facilityReview = combined.f8835.map((facility) => ({
+    facility_description: facility.facility_description,
+    facility_us_address: facility.facility_us_address,
+    facility_latitude: facility.facility_latitude,
+    facility_longitude: facility.facility_longitude,
+    energy_type: facility.energy_type,
+    facility_placed_in_service_date: facility.facility_placed_in_service_date,
+    production_period_start_date: facility.production_period_start_date,
+    production_period_end_date: facility.production_period_end_date,
+    form3800_line: "4e" as const,
+    credit_amount: Math.round(facility.kwh_sold * 0.006),
+    applied_credit: 0,
+  })).reverse();
+  facilityReview.forEach((facility, index) => {
+    const share = test.lastFirst
+      ? productionRemaining
+      : Math.floor(productionRemaining / (facilityReview.length - index));
+    facility.applied_credit = Math.min(facility.credit_amount, share);
+    productionRemaining -= facility.applied_credit;
+  });
+  // For a full-use review, every facility consumes its own generated credit.
+  if (productionRemaining > 0) {
+    for (const facility of facilityReview) {
+      const extra = Math.min(
+        productionRemaining,
+        facility.credit_amount - facility.applied_credit,
+      );
+      facility.applied_credit += extra;
+      productionRemaining -= extra;
+    }
+  }
+  assertEquals(productionRemaining, 0);
+  return {
+    ...combined,
+    ...(test.review
+      ? {
+        form3800_current_production_allocation: {
+          tax_year: 2025 as const,
+          return_primary_ssn: "111223333",
+          review_reference: "Synthetic complete facility tax-use review",
+          complete_current_production_inventory_confirmed: true as const,
+          facilities: facilityReview,
+        },
+      }
+      : {}),
+  };
 }
 function evidenceRoot() {
   try {
@@ -139,11 +250,10 @@ for (const test of cases) {
     // Single filer: 150,000 wages less 15,750 deduction; AMT exemption 88,100.
     const regular = 25067, tmt = 16094;
     const orphanAllowed = Math.min(total, regular - tmt);
-    const productionCredit = test.kwh
-      ? test.kwh * 0.006
-      : test.facilities === 1
-      ? 600
-      : 1260;
+    const productionCredit = input.f8835.reduce(
+      (sum, facility) => sum + Math.round(facility.kwh_sold * 0.006),
+      0,
+    );
     const productionAllowed = Math.min(productionCredit, 25050 - orphanAllowed);
     const allowed = orphanAllowed + productionAllowed;
     const partVCount = test.count + (test.facilities > 1 ? test.facilities : 0);
@@ -219,8 +329,13 @@ for (const test of cases) {
     );
     const swapped = {
       ...parts,
-      currentDetails: parts.currentDetails.map((row, index) =>
-        index === test.count - 1 ? { ...row, passThroughEin: "999999999" } : row
+      currentDetails: parts.currentDetails.map((row) =>
+        row.line === "1h" &&
+          row.passThroughEin ===
+            parts.currentDetails.filter((r) => r.line === "1h").at(-1)
+              ?.passThroughEin
+          ? { ...row, passThroughEin: "999999999" }
+          : row
       ),
     };
     assertThrows(
@@ -369,6 +484,78 @@ for (const test of cases) {
         p.schedule3.line6a_total = allowed + 1;
       },
     ];
+    if (test.review) {
+      mutations.push(
+        (p) => {
+          Reflect.deleteProperty(p, "form3800_current_production_allocation");
+        },
+        (p) => {
+          Reflect.deleteProperty(
+            p.f3800,
+            "current_production_allocation_review",
+          );
+        },
+        (p) => {
+          p.form3800_current_production_allocation.return_primary_ssn =
+            "999887777";
+        },
+        (p) => {
+          p.form3800_current_production_allocation.review_reference =
+            "Changed review";
+        },
+        (p) => {
+          const review = p.f3800.current_production_allocation_review as Record<
+            string,
+            unknown
+          >;
+          const rows = review.facilities as Array<Record<string, unknown>>;
+          rows.pop();
+          p.form3800_current_production_allocation = structuredClone(review);
+        },
+        (p) => {
+          const review = p.f3800.current_production_allocation_review as Record<
+            string,
+            unknown
+          >;
+          const rows = review.facilities as Array<Record<string, unknown>>;
+          rows[0].applied_credit = Number(rows[0].applied_credit) + 1;
+          p.form3800_current_production_allocation = structuredClone(review);
+        },
+        (p) => {
+          const review = p.f3800.current_production_allocation_review as Record<
+            string,
+            unknown
+          >;
+          const rows = review.facilities as Array<Record<string, unknown>>;
+          rows[0].facility_description = "Changed facility";
+          p.form3800_current_production_allocation = structuredClone(review);
+        },
+        (p) => {
+          const review = p.f3800.current_production_allocation_review as Record<
+            string,
+            unknown
+          >;
+          const rows = review.facilities as Array<Record<string, unknown>>;
+          rows[0].facility_latitude = 40;
+          p.form3800_current_production_allocation = structuredClone(review);
+        },
+        (p) => {
+          const review = p.f3800.current_production_allocation_review as Record<
+            string,
+            unknown
+          >;
+          const rows = review.facilities as Array<Record<string, unknown>>;
+          rows[0] = structuredClone(rows[1]);
+          p.form3800_current_production_allocation = structuredClone(review);
+        },
+        (p) => {
+          p.f3800.form8835_applied_credits_by_facility = input
+            .form3800_current_production_allocation!.facilities.map((r) =>
+              r.applied_credit + 1
+            );
+        },
+      );
+    }
     for (const mutation of mutations) {
       const p = structuredClone(pending);
       mutation(p);

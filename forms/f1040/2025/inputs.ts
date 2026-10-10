@@ -1,3 +1,5 @@
+import { currentProductionAllocationNode } from "../nodes/inputs/credits/business/f3800/production-allocation-node.ts";
+import { currentProductionAllocationSchema } from "../nodes/inputs/credits/business/f3800/production-allocation.ts";
 import { currentOrphanAllocationNode } from "../nodes/inputs/credits/business/f3800/current-allocation-node.ts";
 import { currentOrphanAllocationSchema } from "../nodes/inputs/credits/business/f3800/current-allocation.ts";
 import { f8886 } from "./domains/general/filing/form8886/public-node.ts";
@@ -980,6 +982,11 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f8915f, itemSchema: f8915fItemSchema, isArray: true },
   { node: f8915d, itemSchema: f8915dItemSchema, isArray: true },
   { node: f3800, itemSchema: f3800ItemSchema, isArray: true },
+  {
+    node: currentProductionAllocationNode,
+    inputSchema: currentProductionAllocationSchema,
+    isArray: false,
+  },
   {
     node: currentOrphanAllocationNode,
     inputSchema: currentOrphanAllocationSchema,
