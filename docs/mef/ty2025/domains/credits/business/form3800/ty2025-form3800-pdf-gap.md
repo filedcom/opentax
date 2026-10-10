@@ -892,3 +892,60 @@ sources, transfers, prior histories, PartVI overflow, or wider mixed credits.
 The parent Form3800 TODO remains open; no deferred item was implemented or added.
 Evidence: `.state/research/form3800-allocation-2026-10-10/` (inputs, pending,
 prepared parts, XML, PDFs, numeric/XSD checks, page hashes, visual review and logs).
+
+## October 10 mixed K-1 allocation and production-credit checkpoint
+
+Form3800 PDF validation now reconciles retained current orphan-drug K-1
+allocations together with fully used Form8835 production sources. It checks
+the separate PartIII1h/4e rows, every source detail, reserved production-document
+links, source totals, PartII ordinary and specified-credit limits, and the
+combined Schedule3/Form1040 credit. The existing Form8835 source validator
+continues to require its supported facility facts and full production-credit
+use. No tax-calculation formula or production eligibility rule changed.
+
+Six complete returns combine2/14/15/30 partnership or mixed partnership/
+S-corporation K-1s with one/two geothermal facilities or a wind/geothermal pair.
+The review deliberately differs from K-1 execution order. There are77 K-1
+sources and10 facility copies;85 required PartV breakdown rows span five
+continuations. A single facility remains on PartIII with its own Form8835
+reference; its line is not an aggregate requiring PartV.
+
+| Complete return | Orphan credit | Orphan used | Production credit used | Final tax | Packet pages |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Two K-1s, full use, one facility | 2,001 | 2,001 | 600 | 22,466 | 16 |
+| Two mixed K-1s, partial use, one facility | 20,001 | 8,973 | 600 | 15,494 | 16 |
+| Fourteen K-1s, full use, two facilities | 1,491 | 1,491 | 1,260 | 22,316 | 20 |
+| Fourteen K-1s, partial use, two facilities | 14,091 | 8,973 | 1,260 | 14,834 | 20 |
+| Fifteen mixed K-1s, wind/geothermal | 15,105 | 8,973 | 1,260 | 14,834 | 20 |
+| Thirty mixed K-1s, wind/geothermal | 15,435 | 8,973 | 1,260 | 14,834 | 21 |
+
+The [2025 Form8835](https://www.irs.gov/pub/irs-prior/f8835--2025.pdf)
+sets the wind/geothermal base rate at0.006 per kWh and routes this first-four-year
+production to Form3800 line4e. The [Form3800 instructions](https://www.irs.gov/instructions/i3800)
+require PartV breakdowns for aggregates from multiple facilities or pass-through
+entities. Independent Decimal calculations use these source quantities and
+reconcile25,067 regular tax,16,094 tentative minimum tax, credit limits, unused
+orphan credit, final tax and refund. All six full returns pass local2025v5.4 XSD.
+
+All113 static packet pages were reviewed via54 unique renders and59
+exact pixel matches. Reopened PDFs have no fields/widgets. Source rows retain
+both halves on each continuation; no new clipping or lost rows was observed.
+Known skipped Form3800 PartII18–21, blank-zero and name-format qualifications
+remain, so these are qualified packet observations rather than clean whole-
+return presentation approval.
+
+The initial2/4 focused result reflected a test assumption that PDF source rows
+followed native-array order. The corrected keyed comparison passed6/0; the
+final370/0 grouped gate additionally covers the wind/geothermal pairs and
+altered production links. Complete-return rejections total84 native/84 fresh-PDF
+and24 prepared mutations. Evidence retains the initial failure and correction; the independent verifier
+was also corrected to expect no single-facility item count in PartIII.
+No numerical calculation changed, so no new benchmark claim is made.
+
+Other credit mixtures, partial production-credit use, passive and transferred
+credits, prior accepted histories, PartVI overflow, external facility/K-1
+source authenticity and IRS acceptance remain open. No main TODO body or
+future item was changed or implemented; neither parent is closed. Private
+evidence is retained at`.state/research/form3800-production-2026-10-10/` with
+public inputs, pending, prepared sources, XML/PDF, arithmetic/XSD results,
+page hashes, visual observations and test logs. Work stays on draft PR70.

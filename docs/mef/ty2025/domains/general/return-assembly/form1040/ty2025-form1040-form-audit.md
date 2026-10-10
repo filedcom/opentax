@@ -686,3 +686,18 @@ Focused8/0 and related329/0 pass; mutations reject72 native/72 fresh-PDF/18 prep
 See the [bounded checkpoint](../../../credits/business/form3800/ty2025-form3800-pdf-gap.md#october-10-reviewed-current-k-1-partial-use-allocation-checkpoint).
 Existing skipped-line, zero/name, authentication, broader coverage and accepted
 carry-history limitations remain; no parent closure or IRS acceptance follows.
+
+
+## October 10 mixed K-1 and production-credit packet checkpoint
+
+Six complete returns combine77 current orphan-credit K-1 sources with10
+geothermal or wind/geothermal facility copies. Fully used production credit
+of600/1,260 coexists with full/partial ordinary K-1 tax use; source amounts,
+separate limits, native references, PartIII1h/4e,85 PartV rows/five continuations,
+and final tax/refund reconcile. All six pass full local2025v5.4 XSD. Reviewed113
+static pages comprise54 unique renders/59 pixel duplicates. Related370/0 passes;
+mutations reject84 native/84 fresh-PDF/24 prepared source or document changes.
+The [complete checkpoint](../../../credits/business/form3800/ty2025-form3800-pdf-gap.md#october-10-mixed-k-1-allocation-and-production-credit-checkpoint)
+retains arithmetic and qualified visual evidence. Partial production-credit
+use, wider source/eligibility branches, known presentation qualifications,
+authenticity and IRS acceptance remain open. No parent TODO is closed.

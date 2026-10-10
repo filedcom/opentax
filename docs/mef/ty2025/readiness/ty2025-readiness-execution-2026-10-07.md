@@ -6898,3 +6898,22 @@ broader source/accepted-history gaps remain. No new deferred item or parent
 closure; all52 main/133 future bodies are byte-preserved. The individual ATS
 check estimate remains about60%, rough45–75%. Evidence is retained under
 form3800-allocation-2026-10-10/. Continue pushing to single draft PR70.
+
+
+## October 10: Mixed Form3800 K-1 and production-credit packets
+
+Compacted learnings before edits. Extended the retained multi-K-1 PDF source
+check to reconcile fully used Form8835 production alongside reviewed current
+orphan-credit allocations. Six returns cover77 K-1 sources/10 facilities,
+85 PartV rows/five continuations and113 static packet pages (54unique/59pixel
+matches), with six full2025v5.4 XSD passes and independent Decimal source,
+ordinary/specified-limit, final-tax and refund proof. Related370/0 passes;
+rejections84 native/84 fresh-PDF/24 prepared include production document links.
+Initial focused2/4 was a row-order test assumption; corrected6/0 passed before
+adding wind/geothermal pairs and link rejections in the final group. The verifier
+also corrected its expectation for omitted single-facility item count. All
+observations retained in form3800-production-2026-10-10/. Known skipped PartII,
+blank-zero/name qualifications remain; no new discrepancy or future item.
+Tax formulas unchanged; no fresh benchmark claim. No parent closed and52 main/
+133 future bodies unchanged. Estimate remains about60%, uncertainty45–75%.
+Pushing this batch to single draft PR70.

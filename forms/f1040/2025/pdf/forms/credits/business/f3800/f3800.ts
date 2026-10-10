@@ -1488,7 +1488,7 @@ export const form3800Pdf: PdfFormDescriptor = {
         entry.source_type === "s_corporation"
       ) &&
       !source.f8820_credit && !source.f8874_credit &&
-      !source.f5884_credit && !source.f8835_credit_entries?.length &&
+      !source.f5884_credit &&
       !source.f8826_credit_entries?.length &&
       !source.f3468_trust_part_v_credit_entries?.length &&
       !source.f8936_new_vehicle_credit &&
@@ -1499,8 +1499,21 @@ export const form3800Pdf: PdfFormDescriptor = {
     ) {
       const entries = sourceOrphanDrugK1Credits(source, { pending: all });
       const rawSource = f3800InputSchema.parse(raw);
-      const [row] = prepared.currentRows;
-      const [amount] = prepared.currentAmounts;
+      const productionSources = source.f8835_credit_entries?.length || all.f8835
+        ? form8835PdfSources(all, filer, prepared)
+        : [];
+      const productionCredit = productionSources.reduce(
+        (sum, source) => sum + source.lines.line15,
+        0,
+      );
+      const orphanRows = prepared.currentRows.filter((row) =>
+        row.line === "1h"
+      );
+      const orphanAmounts = prepared.currentAmounts.filter((row) =>
+        row.line === "1h"
+      );
+      const [row] = orphanRows;
+      const [amount] = orphanAmounts;
       const details = prepared.currentDetails.filter((detail) =>
         detail.line === "1h"
       );
@@ -1534,9 +1547,17 @@ export const form3800Pdf: PdfFormDescriptor = {
         ) ||
         JSON.stringify(rawSource.f8820_k1_credit_entries) !==
           JSON.stringify(directOrphanK1) ||
-        prepared.currentRows.length !== 1 ||
-        prepared.currentAmounts.length !== 1 ||
-        prepared.currentDetails.length !== entries.length ||
+        JSON.stringify(rawSource.f8835_credit_entries) !==
+          JSON.stringify(source.f8835_credit_entries) ||
+        productionSources.length !==
+          (source.f8835_credit_entries?.length ?? 0) ||
+        orphanRows.length !== 1 || orphanAmounts.length !== 1 ||
+        prepared.currentRows.length !==
+          1 + Number(productionSources.length > 0) ||
+        prepared.currentAmounts.length !==
+          1 + Number(productionSources.length > 0) ||
+        prepared.currentDetails.length !==
+          entries.length + productionSources.length ||
         prepared.carryoverRows.length !== 0 ||
         row?.line !== "1h" || row.metadata.sourceCount !== entries.length ||
         row.entityCredits.length !== entries.length ||
@@ -1561,8 +1582,9 @@ export const form3800Pdf: PdfFormDescriptor = {
         amount.passiveBeforeLimit !== 0 || amount.passiveAfterLimit !== 0 ||
         prepared.lines.line1 !== total || prepared.lines.line6 !== total ||
         prepared.lines.line17 !== applied ||
-        (prepared.lines.line37 ?? 0) !== 0 ||
-        prepared.lines.line38 !== applied
+        (prepared.lines.line30 ?? 0) !== productionCredit ||
+        (prepared.lines.line37 ?? 0) !== productionCredit ||
+        prepared.lines.line38 !== applied + productionCredit
       ) {
         throw new Error(
           "Form 3800 PDF orphan-drug K-1 sources differ from Part V and filed K-1s",

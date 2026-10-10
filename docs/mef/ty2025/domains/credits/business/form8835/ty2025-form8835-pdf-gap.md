@@ -215,3 +215,18 @@ October8 two-geothermal-facility review: all19 retained pages are visually inspe
 
 
 October8 mixed wind/geothermal review: all19 retained pages inspected. Wind PartII1a/AC12b and geothermal PartII1c/AC12c retain distinct facility identities; each600 joins its own native ID/PartV4e row, totaling1,200 on Form3800 and Form1040. Public/native replay reproduces XML exactly and full local XSD passes; all references resolve. Source qualification and IRS acceptance remain unproved. See the [qualified packet evidence](../../../../readiness/ty2025-readiness-execution-2026-10-07.md).
+
+
+## October 10 mixed K-1 and production-credit packet checkpoint
+
+Six complete returns combine77 current orphan-credit K-1 sources with10
+geothermal or wind/geothermal facility copies. Fully used production credit
+of600/1,260 coexists with full/partial ordinary K-1 tax use; source amounts,
+separate limits, native references, PartIII1h/4e,85 PartV rows/five continuations,
+and final tax/refund reconcile. All six pass full local2025v5.4 XSD. Reviewed113
+static pages comprise54 unique renders/59 pixel duplicates. Related370/0 passes;
+mutations reject84 native/84 fresh-PDF/24 prepared source or document changes.
+The [complete checkpoint](../form3800/ty2025-form3800-pdf-gap.md#october-10-mixed-k-1-allocation-and-production-credit-checkpoint)
+retains arithmetic and qualified visual evidence. Partial production-credit
+use, wider source/eligibility branches, known presentation qualifications,
+authenticity and IRS acceptance remain open. No parent TODO is closed.
