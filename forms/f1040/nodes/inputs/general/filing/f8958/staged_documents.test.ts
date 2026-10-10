@@ -1,4 +1,9 @@
-import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
 import { FilingStatus as MefFilingStatus } from "../../../../../mef/header.ts";
 import { FilingStatus } from "../../../../types.ts";
 import {
@@ -6,6 +11,11 @@ import {
   CommunityPropertyState,
   Form8958Line,
 } from "./index.ts";
+import { inputSchema as w2InputSchema } from "../../../income/wages/w2/index.ts";
+import { f1040_2025 } from "../../../../../2025/index.ts";
+import { buildMefXml } from "../../../../../2025/mef/builder.ts";
+import { buildPending } from "../../../../../2025/mef/execution/pending.ts";
+import { buildPdfBytes } from "../../../../../2025/pdf/builder.ts";
 import { projectStagedForm8958Documents } from "./staged_documents.ts";
 
 const source = {
@@ -84,11 +94,18 @@ const start = {
   }],
 };
 const filer = {
+  firstNameWithInitial: "Alex",
   firstName: "Alex",
   lastName: "Example",
   nameLine1: "Alex Example",
   nameControl: "EXAM",
   primarySSN: "111223333",
+  spouse: {
+    firstName: "Blair",
+    lastName: "Example",
+    ssn: "222334444",
+    nameControl: "EXAM",
+  },
   address: {
     line1: "1 Main St",
     city: "Sacramento",
@@ -201,4 +218,116 @@ Deno.test("f8958 staged projection rejects non-wage rows and absent filer identi
       { ...filer, firstName: undefined },
     )
   );
+});
+
+Deno.test("f8958 staged whole-dollar allocations conserve both shares and preserve the earner", () => {
+  // These are reviewed-ledger arithmetic cases, not state-law determinations.
+  for (
+    const [gross, withheld, taxpayerWage, taxpayerWithheld] of [
+      [100001, 10001, 50001, 5001],
+      [100001, 10001, 50000, 5000],
+      [100000, 0, 50000, 0],
+    ]
+  ) {
+    const input = structuredClone(start);
+    const spouseWage = gross - taxpayerWage;
+    const spouseWithheld = withheld - taxpayerWithheld;
+    Object.assign(input.w2[0], {
+      box1_wages: gross,
+      box2_fed_withheld: withheld,
+    });
+    Object.assign(input.f8958.rows[0], {
+      total_amount: gross,
+      taxpayer_share: taxpayerWage,
+      other_person_share: spouseWage,
+    });
+    Object.assign(input.f8958.rows[1], {
+      total_amount: withheld,
+      taxpayer_share: taxpayerWithheld,
+      other_person_share: spouseWithheld,
+    });
+    Object.assign(input.f8958.reviewed_spouse_return, {
+      line1a_wages: spouseWage,
+      line1z_total_wages: spouseWage,
+      line9_total_income: spouseWage,
+      line11_agi: spouseWage,
+      line25a_w2_withheld: spouseWithheld,
+      line25d_total_withholding: spouseWithheld,
+    });
+    const result = projectStagedForm8958Documents(input, filer);
+    const pending = result.execution.pending;
+    assertEquals(pending.f1040.line11_agi, taxpayerWage);
+    assertEquals(pending.f1040.line25d_total_withholding, taxpayerWithheld);
+    assertEquals(
+      result.pdfFields.wageTaxpayer + result.pdfFields.wageSpouse,
+      gross,
+    );
+    assertEquals(
+      result.pdfFields.withholdingTaxpayer + result.pdfFields.withholdingSpouse,
+      withheld,
+    );
+    assertEquals(w2InputSchema.parse(pending.w2).w2s[0].box1_wages, gross);
+    assertEquals(pending.f8812.auto_earned_income, gross);
+  }
+});
+
+Deno.test("f8958 complete staged execution remains blocked by both public exporters", async () => {
+  const staged = projectStagedForm8958Documents(start, filer);
+  // The staged projector deliberately accepts a minimal general source;
+  // public export also needs the retained digital-assets answer.
+  const executed = f1040_2025.executeReturn({
+    ...start,
+    general: { ...start.general, digital_assets: false },
+  });
+  assertEquals(executed.diagnostics, []);
+  const pending = buildPending(executed.pending);
+  assertEquals(
+    pending.f1040?.line1a_wages,
+    staged.execution.pending.f1040.line1a_wages,
+  );
+  assertEquals(
+    pending.f1040?.line25a_w2_withheld,
+    staged.execution.pending.f1040.line25a_w2_withheld,
+  );
+  assertThrows(
+    () => buildMefXml(pending, filer),
+    Error,
+    "Form 8958 requires a native community-property allocation document",
+  );
+  await assertRejects(
+    () => buildPdfBytes(pending, filer),
+    Error,
+    "Form 8958 requires a native community-property allocation document",
+  );
+});
+
+const componentSchema =
+  ".state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Common/IRS8958/IRS8958.xsd";
+let componentSchemaAvailable = false;
+try {
+  componentSchemaAvailable = Deno.statSync(componentSchema).isFile;
+} catch { /* local IRS schema */ }
+Deno.test({
+  name:
+    "f8958 staged wage and withholding component validates against TY2025 XSD",
+  ignore: !componentSchemaAvailable,
+  fn: async () => {
+    const staged = projectStagedForm8958Documents(start, filer);
+    // Supply only the component namespace/required document ID, not a fake return.
+    const xml = staged.xml.replace(
+      "<IRS8958>",
+      '<IRS8958 xmlns="http://www.irs.gov/efile" documentId="IRS8958Staged">',
+    );
+    const child = new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", componentSchema, "-"],
+      stdin: "piped",
+      stdout: "piped",
+      stderr: "piped",
+    }).spawn();
+    const writer = child.stdin.getWriter();
+    await writer.write(new TextEncoder().encode(xml));
+    await writer.close();
+    const result = await child.output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  },
 });
