@@ -1,8 +1,8 @@
 # TY2025 Form 8959 native source-to-print contract
 
-Build status: written on 2026-09-28, **unrun**. No full test batch, XSD
-validation, filled-PDF inspection, IRS business-rule check or ATS acceptance is
-claimed here.
+Build status: the original September 28 implementation is verified by the
+October 10 checkpoint below. Broader filled-PDF, upstream-source, business-rule
+and ATS requirements remain open.
 
 The [2025 IRS Form 8959 instructions](https://www.irs.gov/instructions/i8959)
 separate Medicare wages, self-employment income, RRTA compensation and
@@ -26,7 +26,7 @@ digits. The native sequence is:
 | `AdditionalTaxGrp/TotalAMRRTTaxAmt`        | Line 18, the sum of printed lines 7, 13 and 17                                        |
 | Top-level withholding elements             | Lines 19, 21, 22, 23 and 24; line 20 reuses line 1 and has no separate native element |
 
-`nodes/intermediate/forms/form8959/index.ts` now computes and prints only
+`forms/f1040/nodes/intermediate/forms/taxes/employment/form8959/index.ts` now computes and prints only
 whole-dollar amounts. W-2, Form 4852, household and CT-2 source rows retain
 cents while their respective line sums are formed, then each printed line is
 rounded. The displayed line 18 is exactly the sum of rounded lines 7, 13 and 17
@@ -34,7 +34,7 @@ and is deposited in Schedule 2 line 11. The displayed line 24 is exactly line 22
 plus line 23 and is deposited in Form 1040 line 25c. The complete 24-line print
 schema is strict and exported for the native descriptor.
 
-`mef/forms/f8959.ts` no longer calculates a second approximate Form 8959 from
+`forms/f1040/2025/mef/forms/taxes/employment/f8959.ts` no longer calculates a second approximate Form 8959 from
 sparse summary fields. It requires that complete node record, validates its
 summary-to-line equality, threshold against the filed return header, line
 arithmetic, filing trigger and final Schedule 2/Form 1040 deposits. It then
@@ -52,7 +52,7 @@ to supply a complete print record instead of the former sparse object. The
 remaining checks are the single full test batch, TY2025 XSD, visually filled
 Form 8959, source-document reconciliation, business rules and ATS.
 
-## Upstream-source reconciliation added, still unrun
+## Upstream-source reconciliation
 
 The executor retains the Form 8959 input deposits beside its self-output print
 fields. Before either MeF or PDF exports a printed Form 8959, the shared check
@@ -80,4 +80,45 @@ calculation, and Schedule SE's multi-source line 6. Their finalized graph
 deposits are checked against the printed lines, but that does not independently
 prove those upstream calculations. These are explicit verification gaps, not
 approved exclusions. Focused rejection cases for changed deposits and changed
-Form 4852/household records are written but unrun.
+Form 4852/household records pass in the October 10 grouped gate.
+
+## October 10 public wage, spouse and threshold checkpoint
+
+The existing calculation, native-contract and end-to-end modules pass **50
+checks**. Seven new public-source cases pass typed tests and full TY2025 v5.4
+Return1040 XSD, for **57 distinct passes, zero failures, zero ignored**. These
+cases execute ordinary identified W-2 sources through the actual return graph,
+not staged Form 8959 totals. The [2025 instructions](https://www.irs.gov/instructions/i8959)
+were checked on October 10 for the threshold, single-employer filing trigger,
+combined spouse wages and additional-withholding treatment.
+
+| Case | Medicare wages | Additional tax | Additional withholding | Final total tax |
+| --- | ---: | ---: | ---: | ---: |
+| Single employer | 220,000 | 180 | 180 | 42,603 |
+| Joint two earners | 325,000 | 675 | 0 | 56,809 |
+| Joint single-employer trigger | 220,000 | 0 | 180 | 31,298 |
+| Separate filer | 200,000 | 675 | 0 | 37,742 |
+| Box 5 exceeds Box 1 (190,000) | 220,000 | 180 | 180 | 34,847 |
+| Joint spouse-only wages | 220,000 | 0 | 180 | 31,298 |
+| Joint wages, neither employer above 200,000 | 300,000 | 450 | 0 | 50,584 |
+
+Each test verifies Form 8959 lines 18/24, Schedule 2 line 11, Form 1040
+additional withholding and final tax/payment deposits, plus the PDF descriptor's
+projected values. All seven native documents remain present, including the two
+zero-tax joint cases. Altering the retained wage deposit rejects in both native
+export and PDF projection: **seven native and seven projection rejections**.
+These are synthetic source cases; no employer-issued-copy authenticity is claimed.
+
+Private source/pending/filer/projection JSON, original emitted XML, command logs
+and SHA-256 provenance are retained in
+`.state/research/form8959-route-audit-2026-10-10/`. Run the new module with
+`-- --evidence-dir=<directory>` to retain equivalent evidence; without that
+argument it writes no evidence files. The seven XSD tests explicitly skip when
+the local IRS schema is absent; none skipped in this recorded run.
+
+No actual filled PDFs or new visual pages are counted here. The PDF descriptor
+projection check does not prove printed output, identity or page placement.
+The 50-test group covers CT-2, substitute and household deposits, but those are
+not seven additional full-return XSD cases. Source payment authenticity,
+original Form 4137/8919 and multi-source Schedule SE derivation, business rules
+and IRS acceptance remain open. No production calculation changed.
