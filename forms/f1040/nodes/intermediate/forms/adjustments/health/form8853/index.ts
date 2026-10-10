@@ -1,8 +1,10 @@
+import { assertDistributionLtcReview } from "./distribution_activity.ts";
 import {
   archerContributionLedgerSchema,
   calculateArcherContributions,
   codeREntrySchema,
 } from "./archer_contributions.ts";
+import { calculateLtcLedger, ltcLedgerSchema } from "./ltc.ts";
 import { form5329 } from "../../../taxes/retirement/form5329/index.ts";
 import { TS } from "../../../../../types.ts";
 import { z } from "zod";
@@ -57,6 +59,7 @@ export const archerDistributionFilingDetailsSchema = z.object({
 });
 
 export const inputSchema = z.object({
+  ltc_ledger: ltcLedgerSchema.optional(),
   archer_contribution_ledger: archerContributionLedgerSchema.optional(),
   w2_code_r_entries: z.array(codeREntrySchema).optional(),
   archer_distribution_ledger: archerDistributionLedgerSchema.optional(),
@@ -298,6 +301,7 @@ function ltcTaxablePayments(
   input: Form8853Input,
   ltcDailyLimit: number,
 ): number {
+  if (input.ltc_ledger) return calculateLtcLedger(input.ltc_ledger).taxable;
   const total = ltcTotalPerDiemPayments(input);
   if (total <= 0) return 0;
   const limitation = ltcPerDiemLimitation(input, ltcDailyLimit);
@@ -323,11 +327,32 @@ function schedule1Output(
     ).employerExcessIncome
     : 0;
 
-  if (deduction <= 0 && totalTaxableIncome <= 0 && employerExcess <= 0) {
+  if (
+    deduction <= 0 && totalTaxableIncome <= 0 && employerExcess <= 0 &&
+    !input.ltc_ledger &&
+    !input.archer_contribution_ledger?.paired_archer_activity_review
+  ) {
     return [];
   }
 
   const s1Input: Partial<z.infer<typeof schedule1["inputSchema"]>> = {};
+  if (input.archer_contribution_ledger?.paired_archer_activity_review) {
+    s1Input.paired_archer_contribution_ledger =
+      input.archer_contribution_ledger;
+    s1Input.paired_archer_distribution_ledger =
+      input.archer_distribution_ledger;
+  }
+  if (input.ltc_ledger) {
+    s1Input.ltc_source_ledger = input.ltc_ledger;
+    s1Input.ltc_archer_distribution_ledger = input.archer_distribution_ledger;
+    s1Input.ltc_medicare_distribution_ledger =
+      input.medicare_distribution_ledger;
+    s1Input.ltc_medicare_joint_distribution_ledgers =
+      input.medicare_joint_distribution_ledgers;
+  }
+  if (input.ltc_ledger && input.archer_contribution_ledger) {
+    s1Input.ltc_archer_contribution_ledger = input.archer_contribution_ledger;
+  }
   if (totalTaxableIncome > 0) {
     s1Input.line8e_archer_msa_dist = totalTaxableIncome;
   }
@@ -403,6 +428,7 @@ class Form8853Node extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, rawInput: Form8853Input): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+    assertLtcSourceActivity(inputSchema.parse(rawInput), ctx.taxYear);
     const input = normalizeArcherContributionSource(
       normalizeMedicareSource(
         normalizeArcherSource(inputSchema.parse(rawInput), ctx.taxYear),
@@ -423,11 +449,40 @@ class Form8853Node extends TaxNode<typeof inputSchema> {
   }
 }
 
+export function assertPairedArcherActivity(input: Form8853Input): boolean {
+  const contribution = input.archer_contribution_ledger;
+  const distribution = input.archer_distribution_ledger;
+  const review = contribution?.paired_archer_activity_review;
+  if (!review && !distribution?.paired_archer_activity_review) return false;
+  if (
+    !review || !contribution || !distribution ||
+    JSON.stringify(review) !==
+      JSON.stringify(distribution.paired_archer_activity_review) ||
+    review.includes_ltc !== !!input.ltc_ledger ||
+    distribution.source.kind !== "normal" ||
+    distribution.source.holder_ssn !== contribution.holder_ssn ||
+    input.medicare_distribution_ledger ||
+    input.medicare_joint_distribution_ledgers ||
+    input.archer_distribution_filing_details
+  ) {
+    throw new Error(
+      "Paired Archer activity needs matching complete contribution/distribution reviews for one living holder",
+    );
+  }
+  return true;
+}
+
 export function normalizeArcherSource(
   input: Form8853Input,
   taxYear = 2025,
 ): Form8853Input {
   if (!input.archer_distribution_ledger) return input;
+  if (!assertPairedArcherActivity(input)) {
+    assertDistributionLtcReview(
+      input.archer_distribution_ledger,
+      !!input.ltc_ledger,
+    );
+  }
   const lines = calculateArcherLedger(
     input.archer_distribution_ledger,
     taxYear,
@@ -463,6 +518,12 @@ export function normalizeMedicareSource(
     !input.medicare_distribution_ledger &&
     !input.medicare_joint_distribution_ledgers
   ) return input;
+  for (
+    const ledger of input.medicare_joint_distribution_ledgers ??
+      [input.medicare_distribution_ledger!]
+  ) {
+    assertDistributionLtcReview(ledger, !!input.ltc_ledger);
+  }
   const lines = input.medicare_joint_distribution_ledgers
     ? calculateMedicareJointLedgers(
       input.medicare_joint_distribution_ledgers,
@@ -489,6 +550,103 @@ export function normalizeMedicareSource(
 
 export const form8853 = new Form8853Node();
 
+export function assertLtcSourceActivity(
+  input: Form8853Input,
+  taxYear = 2025,
+): void {
+  if (!input.ltc_ledger) return;
+  if (taxYear !== 2025) {
+    throw new Error("LTC source ledger requires tax year 2025");
+  }
+  const distributionLedgers = [
+    ...(input.archer_distribution_ledger
+      ? [input.archer_distribution_ledger]
+      : []),
+    ...(input.medicare_distribution_ledger
+      ? [input.medicare_distribution_ledger]
+      : []),
+    ...(input.medicare_joint_distribution_ledgers ?? []),
+  ];
+  const families = [
+    input.archer_contribution_ledger,
+    input.archer_distribution_ledger,
+    input.medicare_distribution_ledger,
+    input.medicare_joint_distribution_ledgers,
+  ].filter(Boolean);
+  const paired = assertPairedArcherActivity(input);
+  if (families.length > (paired ? 2 : 1)) {
+    throw new Error(
+      "LTC currently combines with one reviewed MSA activity family",
+    );
+  }
+  for (const ledger of distributionLedgers) {
+    if (!(paired && ledger === input.archer_distribution_ledger)) {
+      assertDistributionLtcReview(ledger, true);
+    }
+  }
+  const ltcExpenseReferences = new Set(
+    input.ltc_ledger.insureds.flatMap((insured) =>
+      [...insured.expenses, ...insured.reimbursements].map((row) =>
+        row.source_reference
+      )
+    ),
+  );
+  for (const ledger of distributionLedgers) {
+    const refs = ledger.source.kind === "normal"
+      ? ledger.source.distributions.flatMap((row) =>
+        row.qualified_expense_source_references
+      )
+      : ledger.source.expenses.map((row) => row.source_reference);
+    if (refs.some((ref) => ltcExpenseReferences.has(ref))) {
+      throw new Error(
+        "MSA medical expenses must be separate from LTC costs and reimbursements in this reviewed route",
+      );
+    }
+  }
+  const allowed = new Set([
+    "ltc_ledger",
+    ...(paired || input.archer_distribution_ledger?.ltc_activity_review
+      ? [
+        "archer_distribution_ledger",
+        "archer_msa_distributions",
+        "archer_msa_rollover",
+        "archer_msa_qualified_expenses",
+        "archer_msa_exception",
+      ]
+      : []),
+    ...(distributionLedgers.some((ledger) =>
+        "owner" in ledger && ledger.ltc_activity_review
+      )
+      ? [
+        "medicare_distribution_ledger",
+        "medicare_joint_distribution_ledgers",
+        "medicare_advantage_distributions",
+        "medicare_advantage_qualified_expenses",
+        "medicare_advantage_exception",
+      ]
+      : []),
+    ...(paired || input.archer_contribution_ledger?.ltc_activity_review
+      ? [
+        "archer_contribution_ledger",
+        "w2_code_r_entries",
+        "employer_archer_msa",
+        "taxpayer_archer_msa_contributions",
+        "line3_limitation_amount",
+        "compensation",
+      ]
+      : []),
+  ]);
+  if (
+    Object.entries(input).some(([key, value]) =>
+      !allowed.has(key) && value !== undefined && value !== false && value !== 0
+    )
+  ) {
+    throw new Error(
+      "LTC source ledger needs its reviewed MSA activity family and cannot combine legacy LTC aggregates",
+    );
+  }
+}
+
 export function normalizeArcherContributionSource(
   input: Form8853Input,
   taxYear = 2025,
@@ -498,13 +656,22 @@ export function normalizeArcherContributionSource(
     throw new Error("Sourced Archer contribution worksheet requires TY2025");
   }
   const ledger = input.archer_contribution_ledger;
+  const paired = assertPairedArcherActivity(input);
+  if (!paired && !!ledger.ltc_activity_review !== !!input.ltc_ledger) {
+    throw new Error(
+      "Archer combined LTC review requires its complete LTC ledger and cannot assert absence of other activity",
+    );
+  }
   const lines = calculateArcherContributions(ledger, input.w2_code_r_entries);
   if (
-    input.archer_distribution_ledger || input.medicare_distribution_ledger ||
+    (!paired && input.archer_distribution_ledger) ||
+    input.medicare_distribution_ledger ||
     input.medicare_joint_distribution_ledgers ||
     input.archer_distribution_filing_details ||
     Object.entries(input).some(([key, value]) =>
-      /^(archer_msa_|medicare_advantage_|ltc_)/.test(key) &&
+      (paired
+        ? /^(medicare_advantage_|ltc_)/
+        : /^(archer_msa_|medicare_advantage_|ltc_)/).test(key) &&
       (typeof value === "number" ? value > 0 : value === true)
     )
   ) {
@@ -546,4 +713,8 @@ function archerContributionExcessOutput(input: Form8853Input): NodeOutput[] {
       },
     }],
   })];
+}
+
+export function calculateMsaDistributionIncome(input: Form8853Input): number {
+  return archerMsaTaxableDist(input) + medicareAdvantaxableDist(input);
 }

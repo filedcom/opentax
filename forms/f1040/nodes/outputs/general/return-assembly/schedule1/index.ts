@@ -1,4 +1,11 @@
+import { archerDistributionLedgerSchema } from "../../../../intermediate/forms/adjustments/health/form8853/archer_distributions.ts";
+import {
+  medicareDistributionLedgerSchema,
+  medicareJointLedgersSchema,
+} from "../../../../intermediate/forms/adjustments/health/form8853/medicare_distributions.ts";
 import { z } from "zod";
+import { ltcLedgerSchema } from "../../../../intermediate/forms/adjustments/health/form8853/ltc.ts";
+import { archerContributionLedgerSchema } from "../../../../intermediate/forms/adjustments/health/form8853/archer_contributions.ts";
 import {
   type NodeResult,
   TaxNode,
@@ -23,6 +30,14 @@ import { box10CodeJSourceSchema } from "../../../../inputs/income/rental-passthr
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 const inputSchema = z.object({
+  ltc_source_ledger: ltcLedgerSchema.optional(),
+  ltc_archer_distribution_ledger: archerDistributionLedgerSchema.optional(),
+  ltc_medicare_distribution_ledger: medicareDistributionLedgerSchema.optional(),
+  ltc_medicare_joint_distribution_ledgers: medicareJointLedgersSchema
+    .optional(),
+  ltc_archer_contribution_ledger: archerContributionLedgerSchema.optional(),
+  paired_archer_contribution_ledger: archerContributionLedgerSchema.optional(),
+  paired_archer_distribution_ledger: archerDistributionLedgerSchema.optional(),
   // Entry space above Part I: Form 1099-K amounts reported in error or
   // personal items sold at a loss. It does not enter income or AGI totals.
   form1099k_reported_error_or_loss: z.number().int().nonnegative().optional(),
@@ -446,6 +461,39 @@ function assembleSchedule1(input: Schedule1Input): Record<string, unknown> {
         k1_partnership_box11_code_k_sources:
           input.k1_partnership_box11_code_k_sources,
       }
+      : {}),
+    ...(input.paired_archer_contribution_ledger
+      ? {
+        paired_archer_contribution_ledger:
+          input.paired_archer_contribution_ledger,
+      }
+      : {}),
+    ...(input.paired_archer_distribution_ledger
+      ? {
+        paired_archer_distribution_ledger:
+          input.paired_archer_distribution_ledger,
+      }
+      : {}),
+    ...(input.ltc_source_ledger
+      ? { ltc_source_ledger: input.ltc_source_ledger }
+      : {}),
+    ...(input.ltc_archer_distribution_ledger
+      ? { ltc_archer_distribution_ledger: input.ltc_archer_distribution_ledger }
+      : {}),
+    ...(input.ltc_medicare_distribution_ledger
+      ? {
+        ltc_medicare_distribution_ledger:
+          input.ltc_medicare_distribution_ledger,
+      }
+      : {}),
+    ...(input.ltc_medicare_joint_distribution_ledgers
+      ? {
+        ltc_medicare_joint_distribution_ledgers:
+          input.ltc_medicare_joint_distribution_ledgers,
+      }
+      : {}),
+    ...(input.ltc_archer_contribution_ledger
+      ? { ltc_archer_contribution_ledger: input.ltc_archer_contribution_ledger }
       : {}),
   };
 }

@@ -1,3 +1,4 @@
+import { form8853LtcStatement } from "./adjustments/health/f8853_ltc_statement.ts";
 import {
   form4562ElectionOutStatement,
   form4562ReducedBonusStatement,
@@ -418,6 +419,7 @@ export const ALL_MEF_FORMS = [
   // Form 8820 controlled-group allocation follows Form 8814 statements.
   form8820ControlledGroupStatement,
   // Form 8853 owner statements precede Form 8854 supporting roots in ReturnData.
+  form8853LtcStatement,
   form8853MedicareStatements,
   // Form 8854 native roots follow Form 8820 controlled-group statements.
   form8854NativeStatements,

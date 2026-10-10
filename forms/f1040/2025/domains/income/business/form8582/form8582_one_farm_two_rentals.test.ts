@@ -1,3 +1,7 @@
+import {
+  farmRentalW2,
+  verifyFarmRentalPacket,
+} from "./form8582_farm_rental_packet.fixture.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../../../nodes/types.ts";
 import { normalizeAllPending } from "../../../../return-processing/pending.ts";
@@ -9,6 +13,7 @@ import { form4835Pdf } from "../../../../pdf/forms/income/business/f4835.ts";
 
 const general = {
   filing_status: FilingStatus.Single,
+  digital_assets: false,
   taxpayer_first_name: "Alex",
   taxpayer_last_name: "Farmer",
   taxpayer_ssn: "111-22-3333",
@@ -33,6 +38,10 @@ const rentals = [{
   activity_id: "east-rental-2025",
   property_description: "East rental",
   property_type: 1,
+  street_address: "101 Rental Lane",
+  city: "Austin",
+  state: "TX",
+  zip: "78701",
   activity_type: "B",
   fair_rental_days: 365,
   personal_use_days: 0,
@@ -44,6 +53,10 @@ const rentals = [{
   activity_id: "west-rental-2025",
   property_description: "West rental",
   property_type: 1,
+  street_address: "102 Rental Lane",
+  city: "Austin",
+  state: "TX",
+  zip: "78701",
   activity_type: "B",
   fair_rental_days: 365,
   personal_use_days: 0,
@@ -55,7 +68,7 @@ const rentals = [{
 function filedReturn() {
   const result = f1040_2025.executeReturn({
     general,
-    w2: [{ box1_wages: 50_000, box2_fed_withheld: 8_000 }],
+    w2: [farmRentalW2],
     f4835: [farm],
     schedule_e: rentals,
   });
@@ -63,7 +76,7 @@ function filedReturn() {
   return result;
 }
 
-Deno.test("one farm loss offsets two rental profits and retains one activity PAL", () => {
+Deno.test("one farm loss offsets two rental profits and retains one activity PAL", async () => {
   const result = filedReturn();
   assertEquals(result.pending.form8582.current_income, 3_000);
   assertEquals(result.pending.form8582.current_loss, 5_000);
@@ -103,6 +116,9 @@ Deno.test("one farm loss offsets two rental profits and retains one activity PAL
       .line34c_allowed_loss,
     3_000,
   );
+  await verifyFarmRentalPacket(result, "farm-loss-two-rental-profits", [
+    { activityId: "share-rent-2025", reportingForm: "form4835", amount: 2000 },
+  ]);
 });
 
 Deno.test("one-farm/two-rental Form 8582 route rejects source and return tampering", () => {

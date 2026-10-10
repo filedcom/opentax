@@ -1,5 +1,26 @@
 # TY2025 Form 1040 native/PDF registry parity audit
 
+## October 10 LTC statement registration
+
+Live imports contain 158 native descriptors / 153 distinct pending keys and
+118 PDF descriptors / 115 distinct pending keys. The new Form 8853 supporting
+descriptor emits `MultiplePayeesStatement` in schema order, linked from Section C
+line 15. Its aggregate computation and recipient allocation print through the
+existing parent PDF descriptor, with continuation pages when needed. The prior
+registry snapshots below remain historical. See the [LTC source and packet
+checkpoint](../domains/adjustments/health/form8853/ty2025-form8853-gap.md#october-10-sourced-ltc-section-c-and-multiple-payee-statement)
+for validation and remaining scope.
+
+## October 9 Form 1116 statement parity
+
+The native alternative-compensation statement now has a paper counterpart
+appended by the existing Form 1116 PDF descriptor. No registry entry was added;
+counts remain 157 native/153 keys and 118 PDF/115 keys. Seven employer returns
+pass XSD, with 56 reviewed packet/attachment pages and three overflow pages;
+232 grouped tests pass. This resolves the documented missing statement only
+for the [bounded employer route](../domains/credits/foreign/form1116/ty2025-form1116-alternative-compensation-gap.md#october-9-employer-packets-and-printed-allocation-statement),
+not the broader conditional attachment audit.
+
 ## October 9 live registry reconciliation
 
 Actual registry imports at `a2bd423b7` contain **157 native descriptors / 153 distinct pending keys** and **118 PDF descriptors / 115 distinct pending keys**. The five native additions since the 152-entry snapshot are Form 8886, its two continuation descriptors, and the two Form 4562 election statements. The wage/supporting sequence beginning with W-2 contains 39 descriptors; the Form 8886 parent is in the numbered-form sequence. These are registration counts, not supported tax situations.

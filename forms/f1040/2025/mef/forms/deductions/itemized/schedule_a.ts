@@ -10,7 +10,10 @@ import {
   assertPurchasePointsCrossLoanSources,
 } from "../../../../../nodes/inputs/deductions/mortgage/f1098/index.ts";
 import { assertRefinancePointsSource } from "../../../../../nodes/inputs/deductions/mortgage/mortgage_refinance_points/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../form-descriptor.ts";
 import {
   assertElectedSectionAReconciled,
   assertElectedSectionBReconciled,
@@ -30,7 +33,7 @@ import { itemizeBelowStandardElection } from "../../../../domains/deductions/ite
 import { reviewedHomeMortgageNonqualifyingUse } from "../../../../../nodes/inputs/deductions/itemized/schedule_a/index.ts";
 import { scheduleAOtherTaxRows } from "../../../../domains/deductions/itemized/schedule-a/schedule_a_other_tax_source.ts";
 import { sellerFinancedLine8b } from "../../../../domains/deductions/itemized/schedule-a/schedule_a_line8b_source.ts";
-import { scheduleALine16EstateTax } from "../../../../domains/deductions/itemized/schedule-a/schedule_a_line16_estate_source.ts";
+import { scheduleALine16Rows } from "../../../../domains/deductions/itemized/schedule-a/schedule_a_line16_estate_source.ts";
 
 export interface Fields {
   force_itemized?: boolean;
@@ -323,17 +326,17 @@ function buildIRS1040ScheduleA(
   if (!hasDeduction && fields.force_itemized !== true) return "";
   const otherTaxRows = scheduleAOtherTaxRows(fields);
   const line8bSeller = sellerFinancedLine8b(fields);
-  const line16EstateTax = scheduleALine16EstateTax(
+  const line16Rows = scheduleALine16Rows(
     context?.pending,
     fields.line_16_other_deductions,
   );
   const line16StatementIds = context?.documentIdsByPendingKey
     ?.schedule_a_line16_estate_statement ?? [];
   if (
-    line16EstateTax > 0 && context?.documentIdsByPendingKey &&
+    line16Rows.length > 0 && context?.documentIdsByPendingKey &&
     line16StatementIds.length !== 1
   ) {
-    throw new Error("Schedule A line 16 needs its linked estate-tax statement");
+    throw new Error("Schedule A line 16 needs its linked deduction statement");
   }
   const line8bStatementIds = context?.documentIdsByPendingKey
     ?.schedule_a_line8b_seller_statement ?? [];

@@ -1,5 +1,74 @@
 # TY2025 Schedule 1-A bounded filing paths
 
+## October 9 — combined payroll, vehicle and senior packets
+
+Six complete public returns combine four owned employers' tips and four overtime
+reporting methods: W-2 box14, separately furnished premium, aggregate
+time-and-a-half payroll and double-time excess payroll. Each employer reports
+7,500 qualified tips and a source-derived4,000 FLSA premium. Joint returns
+alternate employers between Alex and Sam. The30,000 tips cap at25,000; overtime
+caps at12,500 for single filers and remains16,000 jointly.
+
+Three sourced vehicles each retain4,000 interest, with one same-vehicle refinance
+split1,500/2,500 between the original and replacement loan. The12,000 total caps
+at10,000. Cases at one dollar above the vehicle MAGI threshold exercise the
+required upward rounding to the next1,000 before the200 reduction. Senior
+phaseouts and the existing additional standard deduction for age65 remain
+separate. The [2025 Schedule1-A](https://www.irs.gov/pub/irs-prior/f1040s1a--2025.pdf)
+and [Form1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+provide the line rules, tax table and tax computation worksheet.
+
+| Case | Tips / overtime | Vehicle / senior | Line13b | Taxable | Tax / refund |
+|---|---:|---:|---:|---:|---:|
+| joint-150000 | 25,000 / 16,000 | 10,000 / 12,000 | 63,000 | 52,300 | 5,802 / 34,198 |
+| joint-200001 | 25,000 / 16,000 | 9,800 / 6,000 | 56,800 | 108,501 | 13,698 / 26,302 |
+| joint-210001 | 25,000 / 16,000 | 7,800 / 4,800 | 53,600 | 121,701 | 16,602 / 23,398 |
+| single-100000 | 25,000 / 12,500 | 10,000 / 4,500 | 52,000 | 30,250 | 3,395 / 36,605 |
+| single-100001 | 25,000 / 12,500 | 9,800 / 4,500 | 51,800 | 30,451 | 3,419 / 36,581 |
+| single-125000 | 25,000 / 12,500 | 5,000 / 3,000 | 45,500 | 61,750 | 8,505 / 31,495 |
+
+All six XML returns pass cached TY2025v5.4 XSD, digest
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+Each six-page packet contains Form1040, both Schedule1-A pages, a four-employer
+tip worksheet and the two remaining VINs on an overflow statement. All36 pages
+were observed through27 unique images on seven sheets. Amounts, caps, phaseouts,
+VINs, employee SSNs and continuation totals agree. Both names print on joint
+Form1040/Schedule1-A; joint worksheet/vehicle headers still name only Alex
+(existing deferred68). Native W-2 identity and wage joins match all24 sources.
+
+An independent Decimal review starts from the source wages, tips, payroll
+methods and interest, applies the filing-status limits, age deductions, IRS tax
+table below100,000 taxable income and rate worksheet above it, and reconciles
+native and actual PDF amounts through refunds. Whole-dollar filing facts and
+reviewed zero PartI exclusions are retained. No issuer, FLSA, VIN or loan
+record authenticity is claimed.
+
+The grouped Schedule1-A/W-2/foreign compatibility gate passes177/0.
+The focused gate passes8/0: six completed packets plus two retained blocked
+cases. Thirty altered pending inputs reject independently at native and fresh
+PDF export (AGI, combined deduction, tips, overtime and borrower identity);
+eighteen public-source/prepare checks reject wrong owners or duplicate VINs.
+The test now also asserts independently calculated Form1040 taxable income,
+tax and refund for each positive. Early fixture-only runs retained missing or
+misnamed employer addresses (2pass/6fail) and misplaced employer address keys
+inside a strict payroll statement (0pass/8fail); the source fixtures were
+corrected, without changing production checks.
+
+The original single175,000 and joint301,001 sources are retained. Their
+qualified vehicle interest phases down to zero while tips/overtime deductions
+remain32,500/40,800. Calculation succeeds, but both native and fresh PDF export
+reject because the vehicle projector requires a positive deduction. This is new
+`future_todo`122, not repaired here; neither blocked return is counted among the
+six XSD/PDF positives. The separate overtime-cents restriction remains deferred.
+
+Private evidence: `.state/research/schedule1a-combined-packets-2026-10-09/`
+contains source/pending graphs, XML/PDF pairs, page origins, blocked cases,
+initial/final logs, independent Decimal reconciliation and the render/XSD review.
+Production code is unchanged. The prior benchmark46/133 is not rerun or promoted
+by this packet audit. Wider exclusions, source authenticity, complete filing
+scope, current business rules and IRS acceptance remain open.
+
+
 Sources:
 [2025 Schedule 1-A](https://www.irs.gov/pub/irs-prior/f1040s1a--2025.pdf),
 [2025 Form 1040 instructions, including Schedule 1-A](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf),

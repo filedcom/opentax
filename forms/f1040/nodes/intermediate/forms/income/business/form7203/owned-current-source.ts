@@ -1,3 +1,4 @@
+import { principalRepayments } from "./repayment-inventory.ts";
 import {
   assertMixedCorporateCashSource,
   corporateBankLedgerSchema,
@@ -63,7 +64,7 @@ export const noteRecord = z.object({
       principal_amount: amount.refine((n) => n > 0),
       closing_principal: amount,
     }).strict(),
-  ).min(1).max(3),
+  ).min(1),
   repayments: z.array(
     z.object({
       date,
@@ -80,7 +81,7 @@ export const noteRecord = z.object({
       shareholder_cash_before: amount,
       shareholder_cash_after: amount,
     }).strict(),
-  ).max(2),
+  ),
 }).strict();
 
 /** Current source-contract records, not an IRS acknowledgement or externally
@@ -259,6 +260,7 @@ interface NewNote {
     note_execution_date: string;
     bank_transfer_reference: string;
     cash_advance_amount: number;
+    principal_repayments?: NewNote["principal_repayments"];
     principal_repayment?: {
       formal_note_id: string;
       date: string;
@@ -476,14 +478,12 @@ export function reconcileOwnedCurrentDebt(raw: unknown, note: NewNote) {
     ...(note.second_formal_note
       ? [{
         ...note.second_formal_note,
-        payments: note.second_formal_note.principal_repayment
-          ? [note.second_formal_note.principal_repayment]
-          : [],
+        payments: principalRepayments(note.second_formal_note),
       }]
       : []),
     ...(note.additional_formal_notes ?? []).map((n) => ({
       ...n,
-      payments: n.principal_repayment ? [n.principal_repayment] : [],
+      payments: principalRepayments(n),
     })),
   ];
   if (
@@ -573,6 +573,7 @@ export function reconcileOwnedCurrentDebt(raw: unknown, note: NewNote) {
         p.payer_ein !== s.corporation_ein ||
         p.payee_ssn !== s.shareholder_ssn || p.date !== expectedPayment.date ||
         p.date <= r.executed_on ||
+        (j > 0 && p.date <= r.repayments[j - 1].date) ||
         p.principal_amount !== expectedPayment.amount ||
         p.corporate_loan_ledger_reference !==
           expectedPayment.corporate_loan_ledger_reference ||

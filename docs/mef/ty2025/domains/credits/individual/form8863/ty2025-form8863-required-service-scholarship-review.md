@@ -1,6 +1,125 @@
 # TY2025 Form 8863 required-service scholarship source review
 
 
+## October 9 multiple-school service-award checkpoint
+
+Six public-input returns combine two, three or four issued school workpapers
+with separate required-service awards totaling8,000, ordinary wages10,000 and
+the existing material-capital business. Each school retains its own EIN,
+1098-T, tuition payment, tax-free aid, taxable grant ledger, award terms,
+performed teaching and two actual disbursements. Issued payroll copies carry
+the corresponding school's identity/address. Three/four-school cases mix W-2
+and Schedule1 reporting in one return. This verifies distinct school-owned
+awards; it does not allocate a single third-party award among institutions.
+
+Each school's3,000 tuition less500 tax-free aid supplies2,500 qualified
+expenses. Taxable performed-service pay remains in income and does not reduce
+that tuition. Under the [2025 Form8863 instructions](https://www.irs.gov/instructions/i8863),
+AOC is capped at2,500 per eligible student, while LLC is capped at2,000 per
+return. More than two schools require additional page2 copies completed only
+through line22. The LLC case has four prior AOC years, goes directly from
+line23 to31, and takes20% of10,000 expenses; no refundable AOC is claimed.
+
+| Case | Wages | Schedule1 scholarship | Qualified expenses | Refundable / nonrefundable education | Total tax | Refund |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Two schools, all payroll | 18,000 | 0 | 5,000 | 1,000 / 1,500 | 5,449 | 551 |
+| Two schools, all line8r | 10,000 | 8,000 | 5,000 | 1,000 / 1,500 | 5,449 | 551 |
+| Three schools, mixed, exact half | 15,500 | 2,500 | 7,500 | 1,000 / 1,500 | 5,449 | 551 |
+| Three schools, mixed, below half | 15,500 | 2,500 | 7,500 | 0 / 2,500 | 4,449 | 551 |
+| Four schools, mixed AOC | 14,000 | 4,000 | 10,000 | 1,000 / 1,500 | 5,449 | 551 |
+| Four schools, mixed LLC | 14,000 | 4,000 | 10,000 | 0 / 2,000 | 4,949 | 51 |
+
+Every return retains AGI45,881, QBI deduction5,576, ordinary tax2,711, SE tax
+4,238 and half-SE deduction2,119. The support test includes26,364.30 earned
+income once: ordinary wages10,000, all service awards8,000 and reasonable
+business compensation8,364.30. Exact ordinary support52,728.60 permits the
+AOC refund;52,728.62 does not. School tax-free aid is separately excluded from
+full-time-student support. These are source-based arithmetic expectations,
+not acceptance targets for an IRS ATS scenario.
+
+Final verification: six typed complete-return tests pass. Each case rejects
+six changed native and six fresh-PDF exports: wrong wage owner, crossed school
+income reference, missing income record, changed grant payer, missing school
+workpaper and stale refundable credit. Totals are36 native and36 PDF rejections.
+All six complete returns pass retained TY2025v5.4 Return1040.xsd validation
+(SHA256 `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`).
+All88 reopened flattened pages have zero fields/widgets and matching origin
+inventories. Twelve distinct page hashes were newly observed;20 exactly match
+previously reviewed packets. Final regenerated packets retain those32 hashes.
+Native school inventories, each W-2's owner/payer/address and six wage/tax boxes,
+Schedule1, SE, QBI and final1040 amounts reconcile to their retained sources.
+
+Artifacts and commands are retained privately under
+`.state/research/form8863-service-schools-2026-10-09/`. No production runtime
+changed; the prior217 existing plus9 compensation-cent tests remain evidence
+for the same runtime, rather than being reported as a fresh batch here.
+The legacy benchmark46/87 and full-gate qualifications are unchanged and were
+not rerun for this test/documentation-only change. These are synthetic source
+records, not externally authenticated issuance or IRS acceptance. Shared awards,
+exempt programs and broader eligibility still need their own evidence.
+
+## October 9 compensation-cent source reconciliation
+
+The continuing readiness branch extends required-service grant disbursements,
+issued W-2 copies and claimant support evidence to exact cents. Source amounts
+are summed in integer cents; Schedule 1 line 8r rounds only the combined amount.
+The [2025 Form 1040 rounding instructions](https://www.irs.gov/instructions/i1040gi)
+require cents to be included when adding amounts for a line, with only the total
+rounded. The [Form 8863 earned-income rule](https://www.irs.gov/instructions/i8863)
+continues to include actual required-service compensation in the support test.
+
+The same student-owned material-capital business contributes8,364.30 of earned
+support income after its30% limit; ordinary wages contribute10,000. Four award
+patterns are exercised through both W-2 and Schedule1 reporting:8,000.49,
+8,000.50, two4,000.49 grants and two4,000.03 grants. Each retains two paid
+installments and matched required performance. Two grants of4,000.49 must
+produce8,000.98 before the filed Schedule1 amount becomes8,001. The school
+ledger for two4,000.03 grants plus500 tax-free aid must reconcile exactly to
+box5=8,500.06, without binary floating-point noise causing rejection.
+
+Support remains a cent-valued source comparison. At exactly half support the
+student receives refundable/nonrefundable AOC1,000/1,500; support two cents
+higher restricts the refund and yields0/2,500. The grant reported in wages is
+counted once. School taxable service compensation remains income and does not
+reduce the4,000 qualified tuition. QBI5,576, SE tax4,238, ordinary tax2,711 and
+refund551 are unchanged across these small income differences; total tax is
+5,449 or4,449 according to the refundable-credit restriction.
+
+Visual review identified a separate derived-line rounding discrepancy in the
+W-2 .50 case. Native/PDF Form8863 has MAGI45,882 and subtraction44,119 from90,000;
+ScheduleSE has wages18,001 and remaining wage base158,100 from176,100. Both
+subtractions differ by1 from the printed inputs because raw halves round
+independently. This is deferred104 in the board, retained without a runtime
+fix. These packets cannot establish complete arithmetic parity or IRS acceptance.
+
+Focused validation: nine typed tests pass (one source-money test and eight
+complete return cases). Each return rejects four changed native and four fresh
+PDF exports: altered grant cents without matching payments, two-cent support
+changes with stale credit results, wrong Schedule1 income and wrong refundable
+AOC. That retains32 native and32 PDF negative checks. The school-ledger case
+initially failed on both reporting routes and passes after exact-cent summation.
+
+The final 24-module education regression passes217 tests with zero failures,
+after making the installed Poppler tools available on PATH. The initial run
+had197 passes and20 failures, all caused by missing `pdftotext`; no failure
+required a runtime workaround. Together with the nine focused cases,226 typed
+tests pass for this checkpoint. The repository-wide full gate was not rerun.
+
+All eight complete XML returns validate against retained TY2025 2025v5.4
+Return1040.xsd, SHA256
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+The112 reopened flattened PDF pages have no fields/widgets and retain matching
+page-origin inventories. All29 distinct rendered page hashes are reviewed:
+11 newly observed pages and18 exact pages from earlier reviewed packets. The
+final regeneration has precisely those same29 hashes, including the two added
+8,000.06 cases. Deferred104 qualifies the W-2 .50 packet as described above.
+Private evidence is retained under
+`.state/research/form8863-compensation-cents-2026-10-09/`, including the failing
+ledger replay, all source/pending/expected/native/PDF artifacts, page hashes,
+commands and benchmark comparison. The final legacy benchmark retains46 passes
+and87 failures; all133 normalized rows exactly match the earlier foreign-school
+baseline. That baseline discrepancy remains deferred96.
+
 ## October 9 service-grant and business combination checkpoint
 
 Six public-input returns combine a claimant-owned material-capital business,
@@ -222,16 +341,16 @@ missing actual issued 1098-T and changed child-credit ordering.
 ## Limits and next existing boundaries
 
 This proves own-student ordinary required-service awards with actual 2025
-performance, paid whole-dollar disbursements, both reporting routes, one issued
+performance, paid whole-dollar disbursements (extended to cents in the later checkpoint), both reporting routes, one issued
 U.S. institution and complete box 5/source/income reconciliation. The existing
 W-2, business and material-capital claimant routes remain tested.
 
 Outside authentication of payer forms, grant terms, performance/hours and
 payments remains open. These are retained synthetic source records; consistency
-checks do not prove actual issuance or performance outside the return. Parent
-claiming a dependent student's service-grant tuition while retaining the child's
-separate income return is not newly proven. Special exempt programs, future
-service compensation, multiple-school grant allocations, wider business/service-grant
-mixtures beyond the October9 checkpoint, compensation cents across all joins, and other credits' earned-income
+checks do not prove actual issuance or performance outside the return. The [paired parent/dependent checkpoint](./ty2025-form8863-parent-dependent-scholarship-review.md)
+already covers a parent's tuition claim and the child's separate service/nonservice
+scholarship income return; the current own-student cases do not expand that scope. Special exempt programs, future
+service compensation, shared third-party awards across schools, wider business/service-grant
+mixtures beyond the October9 checkpoints, deferred derived-line rounding, and other credits' earned-income
 definitions have no new positive packet proof here. No broader education or
 claimant ownership completion claim is made.

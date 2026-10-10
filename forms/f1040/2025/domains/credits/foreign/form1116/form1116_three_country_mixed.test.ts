@@ -1,3 +1,4 @@
+import { verifyPassive1116Packet } from "./form1116_packet_proof.fixture.ts";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { FilingStatus } from "../../../../../nodes/types.ts";
@@ -267,4 +268,14 @@ Deno.test("three-country mixed credit rejects changed dividend, interest, review
       Error,
     );
   }
+});
+
+Deno.test("three_country_mixed complete prepared packet reconciles current excess and rejects fresh export conflicts", async () => {
+  await verifyPassive1116Packet(filedReturn().pending, "three_country_mixed", {
+    "interest": 30000,
+    "dividends": 30000,
+    "tax": 5075,
+    "carry": 925,
+    "countries": ["CA", "FR", "GM"],
+  });
 });

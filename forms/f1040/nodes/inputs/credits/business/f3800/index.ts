@@ -1,3 +1,8 @@
+import { currentProductionAllocationSchema } from "./production-allocation.ts";
+import {
+  currentOrphanAllocationSchema,
+  reconcileCurrentOrphanAllocation,
+} from "./current-allocation.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
@@ -69,6 +74,8 @@ const f8835CreditEntrySchema = z.object({
   registration_number: z.string().min(1).optional(),
   subject_to_passive_activity_limit: z.boolean(),
   transfer_election_statement_file_name: z.string().min(1).optional(),
+  transfer_election_statement_file_names: z.array(z.string().min(1)).min(1)
+    .optional(),
 });
 
 export const f8826CreditEntrySchema = z.object({
@@ -265,6 +272,9 @@ const appliedSourceCreditSchema = z.number().finite().nonnegative().refine(
 
 export const inputSchema = z.object({
   f3800s: z.array(itemSchema).min(1).optional(),
+  current_production_allocation_review: currentProductionAllocationSchema
+    .optional(),
+  current_orphan_allocation_review: currentOrphanAllocationSchema.optional(),
   carryforward_vintages: z.array(
     z.object({
       vintage: form3800CarryoverVintageSchema,
@@ -314,6 +324,8 @@ export const inputSchema = z.object({
     .optional(),
 }).refine(
   (input) =>
+    input.current_production_allocation_review !== undefined ||
+    input.current_orphan_allocation_review !== undefined ||
     input.f3800s !== undefined || input.f8835_credit_entries !== undefined ||
     input.carryforward_vintages !== undefined ||
     input.f8826_credit_entries !== undefined ||
@@ -639,6 +651,26 @@ class F3800Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
+    if (
+      parsed.current_production_allocation_review &&
+      (parsed.f8835_credit_entries?.length ?? 0) !==
+        parsed.current_production_allocation_review.facilities.length
+    ) {
+      throw new Error(
+        "Form 3800 production allocation needs every current facility source",
+      );
+    }
+    if (parsed.current_orphan_allocation_review) {
+      if (parsed.f8820_credit) {
+        throw new Error(
+          "Form 3800 allocation review needs K-1-only orphan-drug sources",
+        );
+      }
+      reconcileCurrentOrphanAllocation(
+        parsed.current_orphan_allocation_review,
+        parsed.f8820_k1_credit_entries ?? [],
+      );
+    }
     return {
       outputs: schedule3Output(
         parsed.f3800s ?? [],

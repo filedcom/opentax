@@ -1,5 +1,43 @@
 # TY2025 Form 1116 line 1b alternative compensation source
 
+## October 9 employer packets and printed allocation statement
+
+Seven existing cases with 1, 2, 3, 4, 5, 6 and 8 same-owner foreign employers
+now pass complete return preparation. All seven XML returns validate against
+the cached TY2025 v5.4 XSD. The PDF now appends the allocation statement after
+the two parent Form 1116 pages, using the existing parent descriptor and shared
+native source reconciliation. It prints taxpayer identity, the compensation
+item, allocation basis and computation, both U.S./foreign comparisons, and
+compensation/workday references. This closes the previously documented missing
+paper statement for this bounded route; registry counts do not change.
+
+Each case has total compensation/AGI 300,000, taxable income 284,250, regular
+tax 69,035, foreign credit 2,000 and final tax/amount owed 67,035. The independent
+[2025 Tax Computation Worksheet](https://www.irs.gov/publications/p1040)
+gives 284,250 × 35% − 30,452.75 = 69,034.75, rounded to 69,035.
+Alternative foreign compensation is 140,000 versus 120,000 under the ordinary
+workday method. The one-employer item totals 300,000; the other cases use a
+200,000 item plus 100,000 from additional identified employers. Their U.S.
+comparisons are respectively 160,000/180,000 and 60,000/80,000. Paid German tax
+of EUR 1,600 at 1.25 produces the 2,000 credit and a separate conversion PDF.
+
+The typed grouped gate passes **232 tests, zero failures**. The seven packets
+reject 70 native and 70 fresh-PDF mutations covering missing sources, ownership,
+references, compensation, workdays, currency rates and final return joins.
+Missing statement identity also rejects. A long unbroken workday reference
+continues over three pages, retains its final marker and repeats identity on
+every page. All **56 packet/attachment pages plus three overflow pages** were
+visually reviewed through 12 unique page hashes; no editable fields/widgets
+remain. Evidence is retained under
+`.state/research/form1116-employer-packets-2026-10-09/`.
+
+The earlier staged/unrun descriptions below are superseded only for these
+seven shapes. Reviewed synthetic records do not authenticate employer records
+or establish that the alternative method is more accurate. Parent residence
+line h remains blank (deferred107). W-2/spouse combinations, multiple alternative
+items, broader categories, source authenticity and IRS acceptance remain open.
+The parent board tasks are not complete.
+
 ## Ordinary time-basis workday reconciliation (staged, unrun)
 
 The [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116)

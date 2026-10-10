@@ -1,5 +1,60 @@
 # TY2025 Form 8582 durable activity identity
 
+## October 9 farm and rental complete-packet checkpoint
+
+Five existing single-filer, no-prior, other-passive farm/rental cases now run
+through public preparation, native XML, complete PDF packets and a synthetic
+loss-ledger round-trip. This supersedes the older “written, unrun” statements
+for these five cases only. No production calculation or filing code changed.
+
+| Current source combination | Allowed current loss | Ending suspended loss | PDF pages |
+| --- | ---: | ---: | ---: |
+| Farm loss 5,000 / rental profit 3,000 | Farm 3,000 | Farm 2,000 | 8 |
+| Farm loss 5,000 / two rental profits 2,000 + 1,000 | Farm 3,000 | Farm 2,000 | 8 |
+| Farm losses 3,000 + 1,000 / rental profit 2,000 | Farms 1,500 + 500 | Farms 1,500 + 500 | 9 |
+| Farm profit 3,000 / rental loss 5,000 | Rental 3,000 | Rental 2,000 | 8 |
+| Farm profit 3,000 / rental losses 2,000 + 4,000 | Rentals 1,000 + 2,000 | Rentals 1,000 + 2,000 | 8 |
+
+Each case has synthetic identified wages of 50,000 and withholding of 8,000.
+Allowed passive losses offset passive profits; Schedule E net and Schedule 1
+line 5 are zero. Form 1040 AGI is 50,000, standard deduction 15,750, taxable
+income 34,250, tax 3,875 and refund 4,125. The single-filer
+[2025 Tax Table](https://www.irs.gov/publications/p1040) provides the tax;
+[Form 8582 instructions](https://www.irs.gov/instructions/i8582) provide
+Parts V, VII and VIII allocation and reporting rules.
+
+The focused gate passes 10/0 and grouped activity/domain/native/PDF/storage
+regression passes 201/0. The five packet cases reject 45 altered native
+preparations and 45 fresh PDF builds covering missing allocations, changed
+source amounts or IDs, wage recipient mismatch and final-return totals.
+Fifteen altered next-year opening contracts reject changed activity IDs,
+reporting forms or amounts. The valid contracts retain per-activity suspended
+losses through serialized ledger read-back. Their references explicitly say
+`synthetic-unfiled-contract-only`; no accepted filing or production 2026
+engine import is demonstrated.
+
+All five retained XML documents validate against local TY2025 IMF 2025v5.4
+Return1040.xsd (SHA-256
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`).
+All 41 packet pages are covered by 23 unique page images viewed on six contact
+sheets and 18 exact image matches. Reopened PDFs contain no editable fields
+or widget annotations. Names, property addresses, current income/expenses,
+allowed losses, allocation ratios and suspended losses agree with the sources.
+Zero net Schedule E income does not produce a Schedule 1 PDF.
+
+**Existing deferred issue 45 is reproduced:** the four loss-bearing Form 4835
+copies across three packets print allowed loss on line 34c without the
+required PAL label. The native farm documents retain the PAL attribute;
+complete paper instruction parity is not established. The issue stays
+unworked. Sources and prior/next-year contracts are synthetic; broader owners,
+prior imports, dispositions, overflow, source authenticity, business rules
+and IRS acceptance remain open. The parent Form 8582 task remains unchecked.
+
+Private evidence is retained under
+`.state/research/form8582-farm-rental-packets-2026-10-09/`: pending/filer and
+ledger/opening records, original XML/PDFs, XSD logs, hashes, rendered pages,
+review manifest and terminal test logs. No IRS acceptance is claimed.
+
 ## Current evidence checkpoint — October 8, 2026
 
 This section supersedes older checkpoint language such as “unrun” or

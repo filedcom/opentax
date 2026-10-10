@@ -1,5 +1,22 @@
 # TY2025 Form 8835 PDF boundary
 
+## Current boundary after the October 10 checkpoints
+
+Later checkpoints below supersede the original full-use/first-four-year limits:
+reviewed partial/zero facility tax use, older wind/geothermal production and
+mixed1f/4e classes, cellulosic/livestock lessees, and cumulative bond-financing
+reviews now have complete-return evidence. Solar retains its earlier bounded
+source route. Reviewed under-1-MW and early-construction wind/geothermal increases now include
+bound statements. Actual-cost domestic-content reviews now bind current/prior certifications
+to wind/geothermal bonuses. Annual coal/statistical/brownfield community reviews now
+join location and capacity to both exports, including combined domestic bonuses.
+Reviewed2023/2024 construction can retain community status after annual eligibility expires.
+Reviewed direct-compliance PWA payroll now binds Form7220 and increased-credit statements.
+Solar increases and domestic/community bonuses retain their solar production review and
+use these same qualification sources; the solar AC PDF row remains deferred136.
+Transfers, passive and fiscal-year branches remain guarded in the PDF. Source references do not authenticate
+external records. Historical paragraphs below retain their original context.
+
 The [2025 Form 8835](https://www.irs.gov/pub/irs-prior/f8835--2025.pdf) prints
 facility details on page 1, production and credit lines on page 2, and line 15
 on page 3. The [instructions](https://www.irs.gov/instructions/i8835) require a
@@ -215,3 +232,691 @@ October8 two-geothermal-facility review: all19 retained pages are visually inspe
 
 
 October8 mixed wind/geothermal review: all19 retained pages inspected. Wind PartII1a/AC12b and geothermal PartII1c/AC12c retain distinct facility identities; each600 joins its own native ID/PartV4e row, totaling1,200 on Form3800 and Form1040. Public/native replay reproduces XML exactly and full local XSD passes; all references resolve. Source qualification and IRS acceptance remain unproved. See the [qualified packet evidence](../../../../readiness/ty2025-readiness-execution-2026-10-07.md).
+
+
+## October 10 mixed K-1 and production-credit packet checkpoint
+
+Six complete returns combine77 current orphan-credit K-1 sources with10
+geothermal or wind/geothermal facility copies. Fully used production credit
+of600/1,260 coexists with full/partial ordinary K-1 tax use; source amounts,
+separate limits, native references, PartIII1h/4e,85 PartV rows/five continuations,
+and final tax/refund reconcile. All six pass full local2025v5.4 XSD. Reviewed113
+static pages comprise54 unique renders/59 pixel duplicates. Related370/0 passes;
+mutations reject84 native/84 fresh-PDF/24 prepared source or document changes.
+The [complete checkpoint](../form3800/ty2025-form3800-pdf-gap.md#october-10-mixed-k-1-allocation-and-production-credit-checkpoint)
+retains arithmetic and qualified visual evidence. Partial production-credit
+use, wider source/eligibility branches, known presentation qualifications,
+authenticity and IRS acceptance remain open. No parent TODO is closed.
+
+
+## October 10 tax-limited production-credit packet checkpoint
+
+The [Form 3800 checkpoint](../form3800/ty2025-form3800-pdf-gap.md#october-10-tax-limited-production-credit-packet-checkpoint)
+adds three full returns with one geothermal/wind facility and mixed K-1 credits.
+Form 8835 keeps its $30,000 generated credit while Form 3800 applies $23,049 or
+$16,077; all three returns reconcile to $17 tax/$29,983 refund. The PDFs now
+reconcile unambiguous single-facility tax use with no carryovers. Multiple
+partially used facilities still require a reviewed allocation before PDF export.
+
+All three returns pass XSD; 49 pages (28 unique, 21 pixel duplicates) were
+reviewed, including one K-1 continuation. Rejections:42 native/42 fresh-PDF/15
+prepared. Existing skipped-line/zero/name qualifications remain. Sources are
+synthetic; wider source/owner/election combinations, ledgers, authenticity,
+business rules and IRS acceptance remain open. Numeric/native code is unchanged.
+
+
+## October 10 reviewed multiple-facility allocation checkpoint
+
+The [Form 3800 checkpoint](../form3800/ty2025-form3800-pdf-gap.md#october-10-reviewed-multiple-facility-allocation-checkpoint)
+adds a complete public facility-allocation review and six mixed K-1 packets with
+full, partial and zero source use. Native/PDF rows bind the review to physical
+facility identity and finalized credit use; review order does not determine
+source order. All six returns pass XSD;122 packet pages/13 facility copies were
+reviewed. Mutations reject144 native/144 fresh-PDF/30 prepared cases.
+
+Whole-dollar allocations, generated credit and unused balances reconcile.
+Prepared-only extra EIN acceptance is deferred134; existing skipped-line,
+zero/name presentation and wider credit/owner/source branches, carry ledgers,
+authentication, business rules and IRS acceptance remain open.
+
+## October 10 later production years and mixed credit classes
+
+The [Form3800 checkpoint](../form3800/ty2025-form3800-pdf-gap.md#october-10-later-production-years-and-mixed-credit-classes)
+retains eight XSD-valid complete returns/143 reviewed packet pages for older
+wind, geothermal and closed-loop biomass, first-four-year boundary production,
+and mixed1f/4e classes. PDF replay now preserves source-class credit ordering,
+reviewed facility use and child IDs; older wind reductions print in their
+applicable line7 pairs and question8 is unmarked for pre-2022 facilities.
+Focused8/0; mutations146 native/146 fresh-PDF/40 prepared reject. Calculations
+and native output are unchanged. The original rate footnote applies; new
+biomass expansion-answer omission135 and prior26/76/84/134 remain deferred.
+Broader facility routes, period splits, ledgers, authenticity and IRS acceptance
+remain open; no broad parent task is closed.
+
+Related regression gate:390 passed/0 failed (6m59s).
+
+
+## October 10 feedstock and nonowner lessee return checkpoint
+
+Seven additional Form8835/Form3800 complete synthetic returns pass TY2025v5.4
+XSD and retain133 reviewed packet pages for cellulosic/livestock biomass,
+nonowner lessees, landfill, trash and mixed reviewed allocations. This is a
+validation-only change; production behavior is unchanged. Focused7/0 and
+193 native/193 fresh-PDF/35 prepared mutations reject. Existing deferred
+26/76/84/134/135, wider facility/period claims, authenticated sources, carry
+ledgers and IRS acceptance remain open. No main parent task is closed.
+Evidence: `.state/research/form8835-feedstock-2026-10-10/`; see the
+[Form3800 checkpoint](../form3800/ty2025-form3800-pdf-gap.md#october-10-feedstock-and-nonowner-lessee-return-checkpoint).
+
+Related source/native/PDF/XSD and mixed-return regression:65 passed/0 failed (6m22s).
+
+
+## October 10 cumulative bond financing and complete-return checkpoint
+
+The retained Form8835 bond calculation now reaches the printable packet for
+reviewed filer-owned wind/geothermal facilities. Native and fresh-PDF export
+require an entered financing/capital review; missing reviews stop filing.
+The review binds facility description, address, coordinates and construction
+start to complete current/prior-year financing and capital-addition inventories
+at December31,2025. Each dated financing use identifies its issue and section103
+status; records must have distinct references and sum exactly to the entered
+proceeds and capital totals. Inconsistent, future-dated or incomplete records
+reject. This extends the existing source-to-calculation/native/PDF main task;
+no deferred task was implemented and no credit formula changed.
+
+The [2025 instructions](https://www.irs.gov/instructions/i8835), tax-exempt-bond
+reduction and lines5a–5d, use cumulative year-end amounts and the smaller of
+the financing fraction or15%; their stated post-August16,2022 construction
+boundary is retained in this source route; construction must also precede2025
+and reviewed financing cannot exceed the capital inventory. PDF lines5a–5d now print the existing
+filed ratio, financing reduction, cap and smaller amount, including required
+zero values. The existing Form3800 review then binds reduced facility credits
+to generated/applied rows and final Form1040 tax.
+
+Six complete synthetic returns pass cached TY2025v5.4 XSD. Four single-facility
+cases cover filed ratios0.10/0.13/0.40/0.00, producing credits5,400/5,220/5,100/
+6,000 from gross6,000. Two- and four-facility cases apply16,077 of production
+credit alongside8,973 orphan credit, leaving17 tax/29,983 refund. The four
+facilities generate130,654 in total; reversed allocation-review order preserves
+the original physical-facility rows. Independent Decimal arithmetic verifies
+the inputs, intermediate bond lines, credit caps, source use and final tax.
+
+The six packets contain54 K-1 sources,10 facility copies,30 financing uses and
+30 capital additions,60 PartV rows and three continuations. All111 pages were
+reviewed through65 unique raster pages/46 exact duplicates in17 contact sheets.
+PDF text at the actual line5a–5d field rectangles independently matches the
+arithmetic; all native reference IDs resolve and packets are static/flattened.
+Focused6/0 and source2/0 pass. Mutations reject176 native/176 fresh-PDF/30
+prepared variants; source-unit cases separately reject15 inconsistent inputs
+and one missing filing review.
+
+Evidence: `.state/research/form8835-bonds-2026-10-10/`, including full sources,
+XML/PDF packets, verifier, XSD logs, pixel hashes and visual review. Cumulative
+business-credit full-return evidence is48 returns/838 pages; the carryover
+component remains separate at37 roots/17 pages. Existing26/76/84/134/135 remain
+deferred; the bond batch also records blank calendar-year Form8835 line3
+zeros under76, without changing that existing projection. Wider energy/owner/financing/election combinations, authenticated
+issuer and capital records, carry ledgers, business rules and IRS acceptance
+remain open. No main parent is closed.
+
+Related source/allocation/native/PDF/XSD and mixed-return regression:76 passed/0 failed (8m1s); final source-boundary tests:2/0.
+
+
+## October 10 reviewed small-facility increases and attached statements
+
+Reviewed filer-owned wind and geothermal facilities with maximum net AC output
+below 1 MW now reach the complete return with the fivefold credit. This route
+requires post-2021 service, construction from January 29, 2023 through 2024,
+calendar-year production, a complete generating-unit inventory, distinct capacity
+records, meter and unrelated-sale joins, and a reviewed increased-credit statement.
+Other increased-credit reasons, bonuses, transfers, passive and fiscal-year PDF
+branches remain guarded. This checkpoint does not close the parent form task.
+
+The source review joins summed AC nameplate kW to facility capacity and maximum
+output, taxpayer identity, dates, kWh, statement filename and SHA-256. The required
+structured PDF has twelve named text fields for taxpayer, facility, capacity,
+review, signer/date and declarations. Native preparation and prepared-PDF output
+verify its contents and exact bytes; a fresh PDF without the prepared attachments
+rejects. This is an explicit structured-PDF contract, not general OCR or signature
+authentication. Synthetic signer/reviewer assertions in these fixtures do not
+prove authentic signed filings. Original attachment bytes remain unchanged;
+static copies are included in the review packet with no interactive widgets.
+
+Six synthetic complete returns cover one/two/four facilities, wind/geothermal,
+999 kW, full credit use and tax-limited use. Eleven facilities have 22 generating
+unit records and eleven required statement PDFs. Independent Decimal arithmetic,
+source joins, XML values and all six complete Return1040 XSD validations pass.
+The three unrestricted cases use production credits 3,000/6,000/6,300 and report
+tax 20,066/17,066/16,766; the other three use 23,049 and report tax 17. Each also
+uses 2,001 of separately sourced partnership/S-corporation orphan-drug credits.
+
+All 122 packet pages were reviewed: 70 distinct rendered pages across eighteen
+contact sheets and 52 exact pixel duplicates. Eleven statement pages are included
+in that count. Identity, capacity, question 8a, fivefold amount, allocation,
+final tax and statement text agree. Existing deferred Form3800 skipped lines26,
+Form8835 zero line3/presentation76, name-order68 and native AMT84 qualify this
+review; it is not clean whole-packet parity approval. Development caught stale
+widget references in the derived statement copies; those references were removed
+and all 122 final pages have no widgets or AcroForm fields. Earlier failed and
+interrupted development logs are retained separately.
+
+The six cases reject 102 native preparations and 78 PDF attempts with missing or
+inconsistent sources/attachments. Seventy-two of the PDF attempts mutate pending
+source against a prepared bundle and exercise its source-consistency gate; six
+exercise missing prepared attachments. Twenty-four native attempts change one
+statement field and recompute its digest, proving content checks beyond hashing.
+Six local submission ZIPs and six outer transmission ZIPs preserve all eleven
+statement byte streams. Twelve missing/changed-attachment archives reject even
+with rebuilt ZIP CRCs. Synthetic transmitter metadata is used; zero transmissions
+were made. Request packaging does not prove authorized credentials, SOAP delivery,
+IRS business-rule success or acceptance.
+
+Private evidence is `.state/research/form8835-increase-2026-10-10/`;
+`packaged/` is the canonical matched source/XML/PDF/archive set, with independent
+`verification.json`, `archive-verification.json` and `visual-review.json`.
+The retained [TY2025 instructions](https://www.irs.gov/pub/irs-prior/i8835--2025.pdf)
+have SHA-256 `628e79647a4595baeebe980e90639a482e7929382a03e01727b07c7580282c06`.
+Return1040 XSD remains the retained TY2025v5.4 schema, SHA-256
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+Broader facilities/owners, external authenticity, accepted carry histories,
+business rules and IRS acceptance remain open.
+
+Related final regression: **82 passed, 0 failed, 0 ignored** (Deno2.9.4; command and development logs retained in private provenance). Changed-TypeScript formatting and `git diff --check` pass.
+
+
+## October 10 early-construction continuity and complete filing statements
+
+Reviewed original, independently assessed, filer-owned wind/geothermal facilities
+with post-2021 service and a qualifying construction start before January29,2023
+now have a complete native/PDF/statement route. The review must identify the
+first qualifying start under either significant physical work or the five-percent
+cost test. Other energy/owner combinations, aggregated projects, retrofits, PWA,
+bonuses, transfers, passive and fiscal-year routes remain outside this expansion.
+
+For physical work, the review identifies dated integral work and excludes
+preliminary/inventory activity; contractor work requires an earlier enforceable
+binding agreement. For the cost method, a complete final eligible-cost inventory
+reconciles to final depreciable cost in cents, and the first date at which costs
+reach five percent must equal the claimed construction start. Integer arithmetic
+preserves the boundary even when an otherwise balanced final cost increases by
+one cent. Tax accounting, eligibility and the absence of an earlier qualifying
+method still require source review; this is not external record authentication.
+[Notice2013-29](https://www.irs.gov/pub/irs-drop/n-13-29.pdf) supplies the start
+methods, cost and physical-work rules.
+
+Continuity is separately reconciled. The ordinary four-year calendar safe harbor
+uses the placed-in-service date; [Notice2021-41](https://www.irs.gov/pub/irs-drop/n-21-41.pdf)
+extends construction begun in2016–2019 to six years and2020 to five years.
+The ordinary rule is retained from
+[Notice2016-31](https://www.irs.gov/pub/irs-drop/n-16-31.pdf).
+Alternatively, reviewed continuous-construction or continuous-efforts histories
+must span the entire start-to-service period without gaps or overlapping periods,
+with distinct supporting records and an explicit review for each period. Period
+coverage does not itself determine whether the underlying activities legally
+satisfy continuity. Offshore/federal-land special safe harbors are not modeled
+by this ordinary facility route.
+
+The required declaration identifies the selected construction method and confirms
+continuity, with source dates, taxpayer/facility identity and the prescribed
+perjury text. Native preparation and prepared PDF validate the structured fields
+and digest; static packet copies retain no widgets and submitted attachment bytes
+remain unchanged. Synthetic typed signer/authority assertions are test inputs,
+not proof of genuine signed filings. [TY2025 Form8835 instructions](https://www.irs.gov/pub/irs-prior/i8835--2025.pdf)
+require this statement with question8b and do not require Form7220 for that box.
+
+Eight complete synthetic returns cover both start methods, the January28 cutoff,
+six/five-year safe harbors, two complete continuity histories and mixed two/four
+facility inventories with full and tax-limited credit use. Twelve facilities have
+six physical-work/contract pairs, eighteen cost records and sixty reviewed history
+periods across the cases. The two 3,000-credit cases report tax20,066, the two
+6,000-credit cases report17,066, and four limited cases use23,049 and report17;
+each also uses2,001 of independently sourced current orphan-drug credits.
+
+Private evidence: `.state/research/form8835-early-2026-10-10/`; the matched
+`packaged/` source/XML/PDF/archive set is canonical. Eight submission ZIPs and
+outer transmission ZIPs preserve all12 original statement streams. Sixteen
+missing/changed-attachment archives reject despite rebuilt ZIP CRCs. Source and
+statement mutations reject190 native preparations and158 PDF attempts, including
+32 native field substitutions with recomputed digests. Of the PDF attempts,150
+change source against the prepared bundle and eight omit prepared attachments.
+No transmission was attempted; synthetic package identifiers do not prove an
+authorized transmitter, live SOAP delivery, IRS business-rule success or acceptance.
+The initial copied test-helper field error was corrected before the final12-test
+focused pass; its failed log is retained. Notice PDFs and SHA-256 provenance,
+commands, runtime hashes and visual/XSD reports are retained in private evidence.
+
+
+All eight complete returns pass the retained TY2025v5.4 Return1040 XSD.
+Independent source/date/cost and Decimal tax checks reconcile. All152 packet
+pages were observed:64 distinct rendered pages on16 contact sheets and88 exact
+pixel duplicates;12 statement pages are included. Dates, question8b, capacity,
+fivefold amounts, Form3800 allocation/unused rows, final tax and declaration text
+agree. All final pages have no AcroForm fields/widgets. Known deferred skipped
+Form3800 lines26, Form8835 blank zero line3/presentation76, names68 and native
+AMT84 qualify the review; no clean whole-packet parity approval is claimed.
+
+Original statement structure also passes:144 canonical values match144 parent-linked widgets with nonempty appearances across12 PDFs; duplicate/orphan widget trees are absent in these retained sources. The static packet copies remain widget-free.
+
+Final validation:12 focused plus82 related typed tests pass, zero failures/ignored;94 distinct tests in the two runs. Changed-TypeScript formatting and `git diff --check` pass. The frozen full gate remains separate and has no terminal result.
+
+## October 10 actual-cost domestic content and certification copies
+
+The original-facility, filer-owned wind/geothermal route now joins an actual
+manufacturer-cost review to the domestic-content bonus, required certification,
+Form3800 allocation and finalized return. This completes another bounded part
+of the existing Form8835/Form3800/source/attachment tasks; no broad parent is closed.
+
+[Notice2023-38](https://www.irs.gov/pub/irs-drop/n-23-38.pdf) sections3/5 supply
+the actual-cost and certification rules. The [2025 instructions](https://www.irs.gov/pub/irs-prior/i8835--2025.pdf)
+require the certification in the service year and a copy in subsequent years.
+[Notice2025-08](https://www.irs.gov/pub/irs-drop/n-25-08.pdf) provides an elective
+cost-table alternative; this implementation uses actual costs, not that election.
+The source inventory classifies structural steel/iron and manufactured products,
+retains manufacturer/origin/cost references, and records completeness and
+classification review. Structural steel/iron requires U.S. manufacturing except
+metallurgical additives. Product direct costs include whole U.S.-made products
+once, or U.S. components of other products; foreign-product assembly labor and
+installation costs do not enter the domestic numerator. Exact integer cents
+check the40% threshold without rounding a below-threshold percentage upward.
+The notice's180/300 example and a balanced one-cent miss below40% are tested.
+
+The review joins facility identity, full address, coordinates, service date,
+construction, production meter and unrelated sales. Certification year must
+match the2023–2025 service year. A2025 certificate's original bonus matches
+current line10;2023/2024 copies retain the original amount and digest plus a
+reviewed prior-filing reference. This latter reference is not authentication of
+a filed or accepted return. Each separate certification has14 checked PDF fields,
+including project kind, original bonus, authority-reviewed signer, date and
+perjury declaration. Final filer, description, distinct filename, digest and
+field content must agree. Original submitted bytes are preserved; the packet
+appends static review copies. PWA, elective cost tables, retrofit/expanded
+property, other energy types, offshore thresholds, transfers, passive and fiscal
+years remain outside this bounded domestic-content route. Community bonuses
+were guarded at this checkpoint; the annual-location checkpoint below supersedes that boundary. Source and signature authenticity and IRS acceptance are unproved.
+
+Four complete returns cover five facilities, five two-page domestic certifications
+and four separate increased-credit statements. Two2025 certificates and three
+retained2023/2024 copies cover base-rate, under-1-MW and early-construction claims.
+The complete returns have production credits660,3,300,33,000 and66,330;
+uses660,3,300,23,049 and23,049; and final taxes22,406,19,766,17 and17.
+The two limited cases retain their unused amounts on the current-credit detail
+rows; this does not establish an authenticated next-year carryforward.
+All four also use2,001 of reviewed current orphan-drug credits.
+
+Private evidence: `.state/research/form8835-domestic-2026-10-10/`.
+The matched `packaged/` source/XML/PDF/submission and outer ZIP set is canonical.
+All four complete returns validate against TY2025v5.4 Return1040.xsd.
+Independent integer/Decimal checks reconcile cost ratios, credit, tax, refund,
+attachment references, line9a/9b and monetary field rectangles. Seventy canonical
+certification fields have70 parent-linked widgets and nonempty appearances;
+all packet pages have no remaining form fields/widgets. All81 packet pages were
+observed:46 distinct pages on12 contact sheets and35 exact pixel duplicates,
+including10 domestic-certification pages. Declarations, dates, address, bonus
+and facility identity are legible. Known deferred Form3800 skipped lines26,
+Form8835 zero phaseout76, name order68 and native AMT84 remain qualifications;
+no clean whole-packet parity claim or deferred repair is made.
+
+The negative cases reject96 native preparations (including16 rehashed PDF-field
+substitutions),80 changed-source PDF attempts and four fresh PDF attempts without
+prepared attachments. Eight altered/missing attachment archives reject despite
+rebuilt ZIP CRCs. All nine original statement streams survive both archive
+layers. No transmission was attempted; synthetic software/EFIN values establish
+no authorization. Initial fixture-capacity, first-pass XML-ID and negative-cost
+expectation errors were corrected; failed logs remain in the evidence directory.
+A legacy PDF assertion was updated to the more specific missing-review error.
+
+Validation: five focused and55 related typed tests pass,60 distinct tests total,
+with zero failures/ignored. Changed-TypeScript formatting and `git diff --check` pass.
+The unchanged frozen full gate remains separate and has no terminal result.
+
+## October 10 annual energy-community locations and complete packets
+
+The filer-owned onshore wind/geothermal route now requires annual community
+source review for both exports. All generating units join manufacturer AC
+capacity and location records at one2025 qualification date, with at least50%
+qualifying capacity; small-facility inventories must agree. Facility/filer identity,
+production and unrelated sales also reconcile. Community line11 and domestic
+line10 independently add10% of line9; PDF question10a is checked and10b blank.
+
+[Notice2023-29](https://www.irs.gov/pub/irs-drop/n-23-29.pdf) supplies the annual
+location/capacity rule. Pinned coal catalogs retain4,153/38/134/98 rows from
+2023-29 AppendixC,2023-47 Appendix3,2024-48 Appendix2 and2025-31 Appendix4.
+The statistical catalogs retain901 counties through June22,2025 and851 rows
+from June23, with825 Vintage1 and818 Vintage2 eligible entries; both criteria
+must hold in the same vintage under
+[Notice2025-31](https://www.irs.gov/pub/irs-drop/n-25-31.pdf).
+Part-year qualification supports the annual bonus without proration.
+Brownfield sources bind parcel boundaries, excluded-site review and a qualifying
+federal/state/territory/recognized-tribal assessment, PhaseII contamination report,
+or PhaseI report for a project no larger than5MW; a clean PhaseI fails under
+[Notice2023-45](https://www.irs.gov/pub/irs-drop/n-23-45.pdf).
+
+Eight returns cover nine facilities: original/adjoining and new coal tracts,
+eligibility ending June22, Vintage2-only eligibility, PhaseI at5MW, PhaseII at6MW,
+early-construction increase and two facilities claiming both bonuses. Five base
+returns each produce/use660 and tax22,406; the small coal return produces/uses
+3,300 and tax19,766; early construction produces33,000, uses23,049 and tax17;
+the combined pair produces72,360, uses23,049 and tax17. Each also uses2,001
+of current orphan-drug credit. The pair retains12,951/36,360 unused credits.
+
+Focused9 and related60 typed tests pass, none fail or are ignored. Mutations
+reject144 native and144 rehashed prepared-PDF exports. Exact-half, one-kW-below,
+publication dates/vintages, clean/late reports,5MW and government-level boundaries
+are checked. Eight complete returns pass local TY2025v5.4 XSD; independent
+Decimal tax/refund, raw IRS-list joins, checkbox/amount rectangles and76 canonical
+source fields with76 parent-linked widgets agree. Six original statements remain
+byte-exact in eight local submission/container ZIPs;16 altered/missing archives
+reject. Synthetic transmitter identities are used; nothing was sent.
+
+All139 packet pages were rendered:50 unique pages viewed on13 contact sheets,
+89 exact-pixel duplicates. Existing future26 skipped Form3800 values, future76
+blank zero Form8835 line3, future68 name order and future84 omitted native
+Form6251 line1a remain qualifications. No deferred repair was implemented.
+Evidence: `.state/research/form8835-community-2026-10-10/`, including original IRS
+notices/HTML hashes, complete catalog extraction, typed logs, packaged XML/PDF,
+source files, field/render checks, ZIPs and request checks.
+
+BOC-only community safe harbor, offshore attribution, changing unit inventories,
+other energy/owner types, PWA, transfers, passive and fiscal-year routes remain
+open. Source references are reviewed synthetic facts, not automatic geocoding or
+authenticated reports. Separate increase/domestic statements retain their own
+content/digest checks. No source/signature authenticity, IRS acceptance, complete
+business-rule certification or closure of broad parent tasks is claimed.
+
+## October 10 construction-date community qualification and complete packets
+
+Reviewed original onshore wind/geothermal projects can now retain energy-community
+qualification from a qualifying construction start in2023/2024, including locations
+that no longer qualify under2025 annual statistical lists. The shared construction
+review checks significant integral physical work and prior binding contractor
+agreements, or the first date cumulative eligible costs reach5% of final basis,
+plus safe-harbor or complete continuous-construction/efforts history. Where an
+early-construction increase is also claimed, both source histories must agree.
+All generating units retain reviewed locations from construction through production;
+final capacity, small-facility inventory, filer, facility, meter and sales reconcile.
+
+[Notice2023-45](https://www.irs.gov/pub/irs-drop/n-23-45.pdf) makes the community
+construction rule effective January1,2023; this differs from the January29
+increased-credit boundary. [Notice2023-47](https://www.irs.gov/pub/irs-drop/n-23-47.pdf)
+Appendix2 supplies843 eligible county rows, with122 additional rows in
+[Notice2024-30](https://www.irs.gov/pub/irs-drop/n-24-30.pdf) Appendix2 applying
+retroactively to January1,2023. The next list applies from June7,2024 under
+[Notice2024-48](https://www.irs.gov/pub/irs-drop/n-24-48.pdf).
+Raw IRS HTML tables and pinned catalog membership reconcile in full. AlcornMS
+and New CastleDE disappear from both later lists used in2025; FairbanksAK
+qualifies at its2024 construction date but loses annual status before July2025
+service. Brownfield evidence is dated to construction; coal claims also require
+reviewed closure timing and the qualifying tract/direct-adjacency relationship
+as of construction. These reviews do not authenticate external facts or geocode sites.
+
+Nine returns cover ten facilities: January1/28 early increases, January29 base
+rate,2024 construction with later2025 service, five-percent brownfield, historical
+coal, both continuous-history methods and two domestic/community facilities.
+The three base cases each produce/use660 and tax22,406; two continuity cases
+produce/use1,980 and tax21,086; three increased cases produce/use3,300 and
+tax19,766. The combined pair produces72,360, uses23,049 and has tax17,
+retaining unused facility credits12,951/36,360. Each return also uses2,001 of
+current orphan-drug credit. Independent Decimal arithmetic verifies final tax/refunds.
+
+Ten focused and69 related typed tests pass,79 total with no failures/ignored;228 native and228 rehashed prepared-PDF mutations reject.
+All nine complete returns pass local TY2025v5.4 XSD. Seven original statement
+files survive submission and container ZIPs byte-for-byte;18 missing/altered
+archives reject. The88 canonical source fields agree with88 parent-linked widgets
+and nonempty appearances. Synthetic software/EFIN identities imply no transmitter
+authorization; nothing was sent and unsigned synthetic statements prove no signatures.
+
+All156 packet pages were rendered:53 unique pages viewed on14 contact sheets,
+103 exact-pixel duplicates. Dates, coordinates, answers, credit amounts and
+statements are legible. Existing deferred26 skipped Form3800 values,76 blank
+zero Form8835 line3,68 name order and84 omitted native Form6251 line1a remain
+qualifications; no deferred repair or new main-board task was added.
+Evidence: `.state/research/form8835-community-boc-2026-10-10/`, including IRS
+source hashes/tables, full catalog checks, typed logs, independently verified
+XML/PDF, field/render manifests and local archives.
+
+Offshore attribution, changing project/unit inventories, other energy/owner types,
+PWA, transfers, passive/fiscal-year routes, source/signature authenticity,
+authenticated carryovers and IRS acceptance remain open. This completes the
+construction-date source path, not the broad Form8835/Form3800 parent tasks.
+
+## October 10 direct PWA payroll, Form 7220 and complete packets
+
+Reviewed direct-compliance sources now join filer-owned, nonpassive wind and
+geothermal facilities begun in2023/2024 to their increased credit, required
+Form7220, increased-credit statement, Form3800 allocation and final return.
+Employer/worker/rate/program joins reconcile dated time and payments in integer
+minutes/cents. Overtime premiums do not satisfy the wage floor; qualifying cash
+and fringe benefits can substitute for each other. Registered apprentice wage
+schedules, daily employer/worksite/classification ratios, the12.5%/15% labor-hour
+thresholds and each four-worker employer's participation are checked separately.
+Working forepersons' manual work remains wage-covered but is excluded from the
+apprenticeship denominator. This source review does not authenticate payroll,
+registration, wage determinations, time records or signatures.
+
+[Form7220 instructions](https://www.irs.gov/instructions/i7220) govern the
+per-facility attachment, current-service reporting and later-year repair reporting.
+[TD9998](https://www.irs.gov/irb/2024-34_IRB#TD-9998) and the
+[IRS PWA guidance](https://www.irs.gov/credits-deductions/frequently-asked-questions-about-the-prevailing-wage-and-apprenticeship-under-the-inflation-reduction-act)
+support the wage/apprenticeship distinctions. Exact minutes govern eligibility;
+Form7220 hours print to four decimals and dollar columns reconcile rounded rows.
+The no-repair attestation is retained in the increased-credit statement with
+filer/facility identity and the perjury declaration. Synthetic examples are
+explicitly unsigned. Corrections, penalty cures and good-faith exceptions need
+separate evidence and remain outside this direct-compliance route.
+
+Eight complete returns cover2023/2024 starts, current/prior-year service, repairs,
+cash in lieu of fringe benefits, a working foreperson,20 employers with both
+PartII/III continuations, and two wind/geothermal facilities with domestic and
+annual/construction-date community bonuses. The two construction histories must
+agree where both PWA and construction-date community reviews are supplied.
+Seven returns produce/use3,000 and tax20,066; the pair produces72,360,
+uses23,049 and has tax17. Every return also uses2,001 of orphan-drug credit.
+Independent Decimal payroll and tax checks retain the source-to-final-return join.
+
+Final consolidated validation: **88 typed tests pass, zero fail**. All eight complete returns pass the full TY2025v5.4 XSD. Independent payroll, tax and native/PDF checks agree. Source mutations reject153 native and153 freshly hashed prepared-PDF cases;48 attachment mutations reject. Both local archives preserve all20 original interactive attachments exactly, and40 missing/altered archive variants reject. All6,323 canonical source fields and6,323 widgets agree with nonempty appearances.
+
+The reviewed official Form7220 template has SHA-256
+`6d5d7bf5ccee360ab3054752e4a649f1f5ea7298ac50840d85727fa3da77e6cc`.
+Its PartIII row12 skips canonical field107; subsequent row mappings follow the
+actual field inventory. Form8835 prints the PWA qualification checkbox.
+Continuation fields retain transparent appearances, official alignment, unique
+canonical names and taxpayer headers. The independent verifier reads row values
+by widget-column position, checks canonical/widget values and appearances,
+and verifies the flattened packet separately from the retained interactive sources.
+
+All191 packet pages were rendered:60 unique pages were inspected across15 contact sheets and131 pages were exact pixel duplicates. Identities, dates, coordinates, qualification answers, amounts, statements and both continuation tables were checked. Existing deferred qualifications remain:26 Form3800 skipped SectionB values,76 blank Form8835 PartII line3 zero,68 some EXAMPLEALEX headers, and84 omitted native Form6251 line1a despite PDF15,750. These observations do not establish correction of those deferred items.
+
+Evidence: `.state/research/form8835-pwa-2026-10-10/`, including IRS sources and
+hashes, typed logs, independent verification, full XML/PDF, source fields,
+render manifests and local submission/container archives. Nothing was transmitted;
+synthetic software/EFIN identities prove no authorization. Other facilities,
+owner/transfer/passive/fiscal-year routes, PWA corrections/cures/exceptions,
+authenticated carryovers, external source/signature authenticity and IRS acceptance
+remain open. The broad Form8835/Form3800 parents remain unchecked.
+
+## October 10 solar increases and combined bonuses
+
+Filer-owned solar production now joins the existing reviewed under-1-MW,
+early-construction and direct-PWA qualification sources, actual-cost domestic
+content and annual/construction-date energy-community reviews. Solar production,
+unrelated sales, pre-2025 construction, post-2021 service and the section48
+nonclaim remain required. Capacity qualification uses AC; the small case has
+999kW AC and1399kW DC. Domestic certifications identify a solar energy facility,
+with the same identity/content/hash checks as the existing facility routes.
+
+The [2025 Form8835 instructions](https://www.irs.gov/instructions/i8835) identify
+solar eligibility and the0.6-cent base rate, the three fivefold-increase routes,
+the two10% bonuses, and required statements. Seven complete returns cover
+physical-work and5%-cost starts, small AC capacity, base domestic credit,
+small/PWA combined bonuses, current-year repairs and two tax-limited facilities.
+Solar line1d and Form3800 allocations reconcile through final tax. Credits are
+660,6,000,3,000,3,000,72,360,3,000 and3,600; the72,360 pair uses23,049,
+leaving tax17. Every case also uses2,001 orphan credit; the other taxes range
+from17,066 to22,406.
+
+All seven returns pass the full TY2025v5.4 XSD. Independent Decimal credit/tax,
+native solar capacity and printed credit checks agree. Source mutations reject
+123 native and123 freshly hashed prepared-PDF variants;14 missing attachments
+reject. Local submission/container archives retain all14 original interactive
+attachments exactly and reject28 missing/altered archive variants. All2,099
+canonical source fields agree with2,099 linked widgets and populated appearances.
+Nothing was transmitted; synthetic package identifiers and unsigned source
+examples do not establish authorization, source/signature authenticity or IRS
+acceptance. The consolidated related gate passes95 typed tests with zero failures.
+
+All145 packet pages were rendered:70 unique pages were inspected on18 contact
+sheets, with75 exact pixel duplicates. Solar AC capacity remains on Other line12c
+instead of solar line12a in all eight copies, while native XML uses the correct
+solar field: newly recorded future item136, left deferred. Existing qualifications
+also remain:26 Form3800 skipped SectionB values,68 some EXAMPLE ALEX headers,
+76 blank Form8835 zero phaseout, and84 omitted native Form6251 line1a while
+PDF prints15,750. These are qualified observations, not clean filing approval.
+
+Evidence is retained in `.state/research/form8835-solar-increases-2026-10-10/`:
+source/pending records, full XML/PDF, original attachments, independent verifier,
+local archives, XSD logs, render/page hashes and typed log. Business evidence now
+totals98 complete XSD-valid returns/1,824 observed pages; PartVI remains separately
+37 component roots/17 pages. Bond-financed solar, other owners, transfers, passive
+and fiscal-year routes, broader source combinations, PWA cures/exceptions,
+authenticated carryovers and IRS acceptance remain open. The broad parents remain
+unchecked, and main TODO bodies are unchanged.
+
+
+## October 10 solar bond reductions with increases and bonuses
+
+Owned solar facilities now use the existing reviewed cumulative bond-financing
+route alongside small-facility, early-construction and direct-PWA increases,
+domestic content and energy-community bonuses. The solar-only blanket bond
+rejection is removed; common source, identity, date, cumulative amount and
+attachment checks remain. Other ownership, passive, fiscal-year and transfer
+routes remain guarded. The [Form8835 instructions](https://www.irs.gov/instructions/i8835)
+apply cumulative financing/capital ratios and the15% cap before increases and
+bonuses.
+
+Seven complete returns cover below-cap, capped, rounded-zero and half-percent
+ratios, cent-valued proceeds, current-year PWA repairs and a mixed solar/geothermal
+pair. Credits are594,5,220,2,610,3,060,2,550,3,000 and63,307; the pair uses23,049
+and leaves tax17. Every return also uses2,001 orphan credit. Independent Decimal
+source/credit/tax calculations, printed bond and bonus cells, and native fields
+agree. All seven pass the full TY2025v5.4 XSD;51 related typed tests pass with
+zero failures (1m56s). Source mutations reject158 native and158 freshly hashed
+prepared-PDF variants;14 missing attachments reject. Both local archive layers
+preserve all14 original attachments and reject28 missing/altered variants.
+All2,099 canonical source fields match linked widgets and populated appearances.
+
+All145 packet pages were rendered:80 unique pages were inspected on20 contact
+sheets, with65 exact pixel duplicates. Existing qualifications remain:26 skipped
+Form3800 SectionB values,68 some EXAMPLE ALEX headers,76 blank zero phaseout,
+84 omitted native Form6251 line1a, and136 the solar AC capacity on Other line12c
+in all seven solar copies. These are qualified observations, not clean filing
+approval. New deferred137 preserves an accepted initial fixture with1,000,000
+construction costs but100,000 cumulative capital; the final synthetic positive
+uses the same1,000,000 cost inventory in both reviews and125,000 bond proceeds.
+Correcting that fixture does not repair the missing cross-review validation.
+
+Evidence is `.state/research/form8835-solar-bonds-2026-10-10/`, including original
+conflict records, final source/pending/XML/PDF, original interactive attachments,
+archives, XSD logs, Decimal verifier, page/pixel hashes and typed log. Nothing
+was transmitted; package identifiers and unsigned examples are synthetic.
+Business evidence now totals105 XSD-valid complete returns/1,969 observed pages;
+PartVI remains separately37 roots/17 pages. Broader source combinations,
+PWA cures/exceptions, authenticated records/carryovers and IRS acceptance remain
+open. Main TODO bodies and all broad parent statuses remain unchanged.
+
+## October 10 reviewed credit transfers and election statements
+
+Reviewed Form8835 transfers now join the owned facility and registration to each
+buyer, cash ledger, signed-statement review and original timely return. Whole
+and partial transfers reduce Form3800 credits before tax limits; multiple buyers
+retain distinct statement references/counts. Facility allocations reconcile gross,
+transferred, retained and applied credits. Native/PDF preparation verifies both
+parties' statement content and exact attachment bytes; original interactive PDFs
+remain unchanged in local archives, with static copies in the review packet.
+These checks do not authenticate signatures or the reviewed source records.
+
+Seven complete returns cover partial/full sales, two buyers, construction and
+PWA increases, bond reductions, bonuses and two facilities. Production gross /
+transferred / applied credits are respectively594/200/394,2550/2550/0,
+3000/1000/2000,5220/3000/2220,3060/1500/1560,2610/2000/610 and
+63307/35000/23049. Each also uses2001 orphan credit; final taxes are22672,
+23066,21066,20846,21506,22456 and17. Independent Decimal calculations,
+native fields and printed nonzero Form3800 transfer cells reconcile.
+
+The grouped typed gate passed218 tests with zero failures (1m49s); all seven
+complete returns pass TY2025v5.4 XSD. Negative checks reject161 native and161
+freshly hashed PDF source mutations,14 native/14 PDF statement-content mutations
+with recomputed hashes, and24 missing attachments. Both archive layers preserve
+24 originals, including ten transfer statements, and reject48 missing/altered
+variants. All2389 canonical source fields match linked widgets and appearances.
+All175 packet pages were rendered and observed:97 unique pages on25 inspected
+contact sheets, plus78 exact pixel duplicates.
+
+These are qualified observations: existing26/68/76/84/136 remain, including
+blank zero net/use on the full transfer and solar AC on Other. New deferred138
+records clipped Form3800 PartIII registration text: CAABC25ABCD0 spans
+x141.236–204.364 outside its x144–201.6 cell, visibly clipping both edges in
+all seven packets. Full registration remains in native XML, Form8835 and the
+statements. No deferred runtime repair was made. Prior cross-review137 remains
+open; the positive construction/capital inventories agree without repairing it.
+
+Evidence: `.state/research/form8835-transfers-2026-10-10/` retains source,
+pending/native/PDF, original attachments, both archives, XSD logs, typed log,
+Decimal verifier, page/pixel hashes, visual record and registration crop.
+Package identifiers and unsigned sources are synthetic; nothing was transmitted.
+Business totals are112 XSD-valid complete returns/2144 observed pages; PartVI
+remains separately37 roots/17 pages. Broader routes, authentic sources and
+signatures, carryovers and IRS business-rule/acceptance evidence remain open.
+This checkpoint does not close a broad main TODO.
+
+Sources checked: [Form8835 instructions](https://www.irs.gov/instructions/i8835),
+[Form3800 instructions](https://www.irs.gov/instructions/i3800), and
+[final section6418 regulations](https://www.irs.gov/irb/2024-25_IRB).
+
+## October 10 mixed-transfer limits and source overflow
+
+Five new complete-return tests exercise the retained reviewed-transfer route
+through ordinary and specified credit limits, older wind/geothermal facilities,
+a wholly transferred specified credit, and18 source rows spanning two PartV
+pages. The transfer fixture now shares its statement builder; production runtime
+is unchanged. Independent Decimal checks reconcile rates, wind reductions,
+source allocation, credit limits, final tax and refunds.
+
+| Case | Facility credits | Transfers | Ordinary / orphan / specified used | Final tax | Pages |
+| --- | --- | --- | --- | --- | --- |
+| old-geo | 3000 | 1000 | 2000 / 2001 / 0 | 21066 | 19 |
+| wind-limit | 24000 | 10000 | 8973 / 0 / 0 | 16094 | 19 |
+| both-classes | 90000,18000 | 20000,5000 | 8973 / 0 / 13000 | 3094 | 25 |
+| full-specified | 18000,18000 | 9000,18000 | 8973 / 0 / 0 | 16094 | 25 |
+| overflow | 3000,2640,720,780 | 1000,640,220,280 | 4000 / 1491 / 1000 | 18576 | 38 |
+
+All five public execution/preparation cases pass local full TY2025v5.4 XSD.
+Focused typed tests pass5/0; grouped typed gate51/0 (7m58s). Negative probes reject40 native
+and40 freshly hashed PDF mutations covering allocation, class, use, buyer credit,
+registration, missing statement and cash amounts. Ten original statements retain
+290 canonical source fields and290 linked widgets with matching values and
+appearances; both archive layers preserve their bytes and20 missing/altered
+archive variants reject. Package identifiers and unsigned examples are synthetic;
+these checks do not authenticate source claims or signatures.
+
+All126 pages were rendered:75 unique pages on19 inspected sheets plus51 exact
+pixel duplicates. All final packets are static with no Widget/AcroForm remnants;
+original statement PDFs remain interactive. Existing26/68/76/84 qualifications
+remain, including blank zero net/use on the full specified transfer. Deferred138
+also occurs in ordinary PartIII line1f, as well as specified line4e. New deferred141
+records minus signs inside PartV sold-credit parentheses on overflow pages11/13;
+native detail sold amounts are also negative (see `part-v-row-review.json`), so
+net credits and final tax reconcile but native/PDF sign semantics are unapproved.
+The printed Form8835 footnote refers pre-2022 rates to the instructions, so the
+correct independently calculated .03 old-facility rate is not recorded as a new
+printed-rate defect. No deferred runtime repair was made.
+
+Evidence: `.state/research/form8835-mixed-transfers-2026-10-10/` retains
+source/pending/XML/PDF, original statements, both archives, XSD logs, independent
+verifier, typed logs, file/pixel hashes and visual qualifications. The prior head
+4826ec38d passed CI38029678677. Business evidence totals117 XSD-valid complete
+returns/2270 observed pages; PartVI37 roots/17 pages remains separate. Broader
+source/election combinations, authenticated carryovers, IRS business rules and
+acceptance remain open; no broad main TODO is closed.
+
+Sources checked: [Form8835 instructions](https://www.irs.gov/instructions/i8835)
+and [Form3800 instructions](https://www.irs.gov/instructions/i3800).

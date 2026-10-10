@@ -1,5 +1,78 @@
 # TY2025 Form 8839 coverage gap
 
+## October 9 savings-bond and education-account coexistence
+
+The [combined Form8815 checkpoint](../../../income/investments/form8815/ty2025-form8815-gap.md#october-9-combined-bond-education-account-and-adoption-credit-checkpoint)
+replays the reviewed credit-only adoption route with domestic/foreign wages,
+QTP/Coverdell contributions and excluded bond interest. Four complete returns
+pass XSD;33 packet pages and four shared synthetic source pages were observed.
+Gate107/0 and24 native/24 prepared-PDF mutation rejections retain the original
+amount-owed-to-refund failure93 as a fifth rejected case. These are the same
+four packets counted under Form8815, not four additional adoption packets.
+Employer-benefit exclusion and the wider parent task remain open.
+
+## October 9 Form 2555 MAGI, phaseout and carryforward checkpoint
+
+The reviewed single-filer domestic-adoption route now accepts the existing
+physical-presence employee Form 2555 source. A return-wide review explicitly
+marks whether Form 2555 applies. An active finding requires its actual filed
+source; the former nonapplicability finding conflicts with either a source or
+calculated exclusion deposits. The credit replays the source calculation and
+matches foreign wages plus lines 45/50 to the executor's pre-adoption sink.
+Those additions flow through the public two-pass calculation, final pending
+reconciliation, native document and PDF projection. Aggregate-only foreign
+facts, missing sources and unsupported territory inputs remain rejected.
+
+[2025 Form 8839 line 7 instructions](https://www.irs.gov/instructions/i8839)
+require AGI plus Form 2555 lines 45/50. The source currently calculates employee
+housing exclusions and zero housing deduction; this does not open positive
+self-employed housing deductions. The current-year credit, refundable portion,
+nonrefundable priority and unused-credit ledger then use that modified income.
+Existing decree/birth/invoice/payment attachment-byte checks remain required.
+
+| Constructed return | Foreign / domestic wages | Foreign exclusion | Adoption MAGI | Before-credit tax | Nonrefundable used | Refundable | Carryforward |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Foreign-only, zero tax | 100,000 / 0 | 100,000 | 100,000 | 0 | 0 | 5,000 | 6,000 |
+| Mixed wages, partial use | 70,000 / 30,000 | 70,000 | 100,000 | 3,135 | 3,135 | 5,000 | 2,865 |
+| Foreign exclusion, phaseout | 130,000 / 149,190 | 130,000 | 279,190 | 37,704 | 500 | 5,000 | 0 |
+| Housing exclusion, phaseout | 140,000 / 139,190 | 139,200 | 279,190 | 35,496 | 500 | 5,000 | 0 |
+
+Each uses 11,000 of reviewed synthetic adoption expense. At MAGI 279,190 the
+phaseout fraction is .500, leaving 5,500 allowed credit despite much lower AGI.
+The housing case's 139,200 exclusion comprises 130,000 earned-income and 9,200
+housing exclusions. The [2025 Form 1040 tax computation worksheet](https://www.irs.gov/instructions/i1040gi)
+gives 61,751 tax on stacked income 263,440; subtracting 24,047 or 26,255 gives
+the two phaseout-case taxes. The mixed case uses Tax Table amounts 13,455 minus
+10,320. An initial fixture had the wrong tax-computation subtraction constants;
+its failure is retained, and expected values were corrected against the IRS
+worksheet without changing production tax calculation. An earlier test-only
+spread of an unknown retained sink was corrected with the existing sink schema.
+
+The final typed adoption-source/node/native/Form2555 group passes **63/0**.
+Eight public contradictory/missing-source inputs, 24 native mutations and 24
+PDF mutations with the valid prepared attachment bundle reject. Both carryforward
+returns pass full 2025v5.4 XSD. Both phaseout returns fail the existing
+`AdoptionCrModifAGIGrtrAmtInd` serializer, which emits `X` instead of the required
+Boolean value. This is newly deferred item115; no serializer repair is included.
+
+All35 flattened packet pages were visually reviewed through28 distinct images
+and seven contact sheets. Four synthetic source attachment pages were separately
+rendered and reviewed; their SHA-256 values match the public inventory and all
+four native attachment references. Native/PDF amounts and final balances agree:
+refunds5,000/20,000 in the carry cases; tax37,204/34,996 and owed17,204/14,996
+in the phaseout cases. The prior owed-to-refund defect93 is not exercised or fixed.
+Existing zero presentation76 and business-rule94/saver-ordering95 qualifications
+remain. The benchmark remains46/133 with the identical87 failing IDs.
+
+Evidence: `.state/research/form8839-foreign-packets-2026-10-09/` retains original
+source/pending/expected JSON, XML/PDF, source PDFs, XSD logs, review/hash manifests,
+negative-test output, initial fixture failures and benchmark output. Schema digest:
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+Employer benefit exclusions, multiple/foreign children, other filing statuses,
+positive housing deductions, territory sources, authenticated external records,
+accepted carry history and IRS acceptance remain open. Reviewed synthetic bytes
+establish internal evidence consistency, not issuer or decree authenticity.
+
 ## Staged 2025 income phaseout and credit ordering (2026-10-01, unrun)
 
 The existing one-child, reviewed domestic-expense candidate now carries a

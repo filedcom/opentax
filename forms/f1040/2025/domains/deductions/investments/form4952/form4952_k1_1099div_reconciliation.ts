@@ -1,4 +1,8 @@
+import { reconcileK1QualifiedDividendElection } from "./form4952_k1_election.ts";
+import { k1PortfolioSources } from "./form4952_k1_portfolio_sources.ts";
 import { z } from "zod";
+import { inputSchema as interestSchema } from "../../../../../nodes/inputs/income/investments/f1099int/index.ts";
+import { plainInvestmentBox1Or3 } from "./form4952_interest_reconciliation.ts";
 import { inputSchema as dividendSchema } from "../../../../../nodes/inputs/income/investments/f1099div/index.ts";
 import { inputSchema as oidSchema } from "../../../../../nodes/inputs/income/investments/f1099oid/index.ts";
 import { inputSchema as partnershipSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_partnership/index.ts";
@@ -39,14 +43,6 @@ const numberedLines = [
   "line7",
   "line8",
 ] as const;
-const permittedPartnershipFields = new Set([
-  "partnership_name",
-  "partnership_ein",
-  "source_document_reference",
-  "recipient_tin",
-  "box13_code_h_investment_interest",
-]);
-
 /** K-1 code H investment interest limited by domestic investment dividends. */
 export function reconcileForm4952K1InterestAgainst1099DivPath(
   fields: Record<string, unknown>,
@@ -55,6 +51,7 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
   const partnership = partnershipSchema.safeParse(pending.k1_partnership);
   const dividend = dividendSchema.safeParse(pending.f1099div);
   const oid = oidSchema.safeParse(pending.f1099oid);
+  const interest = interestSchema.safeParse(pending.f1099int);
   const form = form4952Schema.safeParse(fields);
   const scheduleA = scheduleASchema.safeParse(pending.schedule_a);
   const form1040 = form1040Schema.safeParse(pending.f1040);
@@ -69,11 +66,10 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
   const k1s = partnership.data.k1_partnerships;
   const payers = dividend.data.f1099divs;
   const oidPayers = oid.success ? oid.data.f1099oids : [];
-  const hasOid = form.data.source_1099_interest !== undefined;
-  const k1Expense = k1s.reduce(
-    (sum, item) => sum + (item.box13_code_h_investment_interest ?? 0),
-    0,
-  );
+  const interestPayers = interest.success ? interest.data.f1099ints : [];
+  const hasInterest = form.data.source_1099_interest !== undefined;
+  const portfolio = k1PortfolioSources(k1s, form.data);
+  const k1Expense = portfolio.expense;
   const ordinaryDividends = payers.reduce(
     (sum, item) => sum + item.box1a,
     0,
@@ -82,22 +78,18 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
     (sum, item) => sum + (item.box1b ?? 0),
     0,
   );
-  const oidIncome = oidPayers.reduce(
-    (sum, item) => sum + (item.box1_oid ?? 0),
+  const interestAmounts = [
+    ...interestPayers.map((item) => (item.box1 ?? 0) + (item.box3 ?? 0)),
+    ...oidPayers.map((item) => item.box1_oid ?? 0),
+  ];
+  const interestIncome = interestAmounts.reduce(
+    (sum, amount) => sum + amount,
     0,
   );
-  const claimedOidIncome = hasOid ? oidIncome : 0;
+  const claimedInterestIncome = hasInterest ? interestIncome : 0;
   if (
     k1s.length === 0 || payers.length === 0 ||
-    new Set(k1s.map((item) => item.partnership_ein)).size !== k1s.length ||
-    new Set(k1s.map((item) => item.source_document_reference)).size !==
-      k1s.length ||
-    k1s.some((item) =>
-      !item.partnership_ein || !item.source_document_reference ||
-      !item.recipient_tin ||
-      (item.box13_code_h_investment_interest ?? 0) <= 0 ||
-      Object.keys(item).some((key) => !permittedPartnershipFields.has(key))
-    ) ||
+    !portfolio.valid ||
     payers.some((item) =>
       (item.box7 ?? 0) > 0 ||
       (item.box8?.trim().length ?? 0) > 0 ||
@@ -107,18 +99,23 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
       (item.box1b ?? 0) > item.box1a ||
       !plainInvestmentDividend({ ...item, box1b: 0 })
     ) ||
-    (hasOid && (
-      !oid.success || pending.f1099int !== undefined ||
+    (pending.f1099int !== undefined && (
+      !interest.success || interestPayers.length === 0 || !hasInterest
+    )) ||
+    (hasInterest && (
+      (!oid.success && !interest.success) ||
+      (pending.f1099oid !== undefined && !oid.success) ||
+      !interestPayers.every((item) =>
+        plainInvestmentBox1Or3(item) && (item.box6 ?? 0) === 0 &&
+        (item.foreign_source_interest_usd ?? 0) === 0 && !item.box7 &&
+        item.foreign_tax_irs_country_code === undefined
+      ) ||
       !oidPayers.every(plainInvestmentOid) ||
       !sourceAmountsMatch(
         form.data.source_1099_interest,
-        oidPayers.map((item) => item.box1_oid ?? 0),
+        interestAmounts,
       )
     )) ||
-    !sourceAmountsMatch(
-      form.data.source_k1_investment_interest,
-      k1s.map((item) => item.box13_code_h_investment_interest ?? 0),
-    ) ||
     !sourceAmountsMatch(
       form.data.source_1099_dividends,
       payers.map((item) => item.box1a),
@@ -138,15 +135,11 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
     (form.data.other_investment_property_qualified_dividends ?? 0) !== 0 ||
     (form.data.other_investment_property_net_disposition_gain ?? 0) !== 0 ||
     (form.data.other_investment_property_net_capital_gain ?? 0) !== 0 ||
-    (form.data.investment_income_election ?? 0) !== 0 ||
     (form.data.elected_capital_gain_portion ?? 0) !== 0 ||
     (form.data.investment_expenses ?? 0) !== 0 ||
     (form.data.source_1099_capital_gain_distributions ?? 0) !== 0 ||
     (form.data.source_1099_royalties ?? 0) !== 0 ||
     (form.data.source_private_activity_bond_interest ?? 0) !== 0 ||
-    (form.data.source_k1_interest ?? 0) !== 0 ||
-    (form.data.source_k1_dividends ?? 0) !== 0 ||
-    (form.data.source_k1_qualified_dividends ?? 0) !== 0 ||
     (form.data.source_k1_allowed_investment_expenses ?? 0) !== 0 ||
     (form.data.form8814_line9_qualified_dividends ?? 0) !== 0 ||
     (form.data.form8814_line10_capital_gain ?? 0) !== 0 ||
@@ -155,14 +148,17 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
     Object.values(form.data.amt_refigure).some((amount) => amount !== 0)
   ) {
     throw new Error(
-      "Form 4952 mixed path supports only identified code H K-1 expenses, domestic 1099-DIV box 1a/1b, and optional plain 1099-OID box 1 income without elections",
+      "Form 4952 mixed path supports only identified code H K-1 expenses, domestic 1099-DIV box 1a/1b, and optional plain 1099-INT box 1/3 or 1099-OID box 1 income with reconciled qualified-dividend elections",
     );
   }
   const lines = calculateForm4952(form.data);
   if (
     lines.line1 !== k1Expense ||
-    lines.line4a !== ordinaryDividends + claimedOidIncome ||
-    lines.line4b !== qualifiedDividends || lines.line8 <= 0 ||
+    lines.line4a !==
+      ordinaryDividends + claimedInterestIncome + portfolio.interest +
+        portfolio.dividends ||
+    lines.line4b !== qualifiedDividends + portfolio.qualified ||
+    lines.line8 <= 0 ||
     lines.line2 !== 0 || lines.line4d !== 0 || lines.line5 !== 0 ||
     numberedLines.some((line) => fields[line] !== lines[line])
   ) {
@@ -172,14 +168,23 @@ export function reconcileForm4952K1InterestAgainst1099DivPath(
   }
   if (
     scheduleA.data.line_9_investment_interest !== lines.line8 ||
-    (hasOid && (form1040.data.line2b_taxable_interest ?? 0) !== oidIncome) ||
-    (form1040.data.line3a_qualified_dividends ?? 0) !== qualifiedDividends ||
-    form1040.data.line3b_ordinary_dividends !== ordinaryDividends ||
+    (hasInterest || portfolio.interest > 0) &&
+      (form1040.data.line2b_taxable_interest ?? 0) !==
+        interestIncome + portfolio.interest ||
+    (form1040.data.line3a_qualified_dividends ?? 0) !==
+      qualifiedDividends + portfolio.qualified ||
+    form1040.data.line3b_ordinary_dividends !==
+      ordinaryDividends + portfolio.dividends ||
     form1040.data.line12e_itemized_deductions < lines.line8
   ) {
     throw new Error(
       "Form 4952 mixed deduction or dividends differ from finalized Schedule A and Form 1040",
     );
   }
+  reconcileK1QualifiedDividendElection(
+    form.data.investment_income_election ?? 0,
+    qualifiedDividends + portfolio.qualified,
+    pending,
+  );
   reconcileForm4952Itemization(pending, lines.line8);
 }

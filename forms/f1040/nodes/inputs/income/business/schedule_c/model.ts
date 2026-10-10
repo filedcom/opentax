@@ -32,6 +32,22 @@ const otherExpenseSchema = z.object({
   amount: z.number().nonnegative(),
 });
 
+export const amtLongTermContractWorkpaperSchema = z.object({
+  contract_reference: z.string().trim().min(1),
+  signed_contract_reference: z.string().trim().min(1),
+  cost_records_reference: z.string().trim().min(1),
+  cost_estimate_review_reference: z.string().trim().min(1),
+  fixed_contract_price: z.number().int().finite().positive(),
+  amt_allocable_costs_incurred_2025: z.number().int().finite().positive(),
+  amt_estimated_total_allocable_costs: z.number().int().finite().positive(),
+  began_in_2025: z.literal(true),
+  uncompleted_at_2025_year_end: z.literal(true),
+  non_home_construction_contract_verified: z.literal(true),
+  regular_section_460_e_1_exception_verified: z.literal(true),
+  regular_receipts_and_costs_deferred_verified: z.literal(true),
+  amt_cost_allocation_reviewed: z.literal(true),
+}).strict();
+
 export const itemSchema = z.object({
   // Header / identification
   line_a_principal_business: z.string(),
@@ -289,23 +305,12 @@ export const itemSchema = z.object({
     regular_ten_year_writeoff_not_elected: z.literal(true),
     no_unamortized_property_loss: z.literal(true),
   }).strict().optional(),
-  // One first-year, uncompleted non-home long-term contract excepted from
+  // First-year, uncompleted non-home long-term contracts excepted from
   // percentage-of-completion for regular tax but refigured for AMT.
-  amt_long_term_contract_workpaper: z.object({
-    contract_reference: z.string().trim().min(1),
-    signed_contract_reference: z.string().trim().min(1),
-    cost_records_reference: z.string().trim().min(1),
-    cost_estimate_review_reference: z.string().trim().min(1),
-    fixed_contract_price: z.number().int().finite().positive(),
-    amt_allocable_costs_incurred_2025: z.number().int().finite().positive(),
-    amt_estimated_total_allocable_costs: z.number().int().finite().positive(),
-    began_in_2025: z.literal(true),
-    uncompleted_at_2025_year_end: z.literal(true),
-    non_home_construction_contract_verified: z.literal(true),
-    regular_section_460_e_1_exception_verified: z.literal(true),
-    regular_receipts_and_costs_deferred_verified: z.literal(true),
-    amt_cost_allocation_reviewed: z.literal(true),
-  }).strict().optional(),
+  amt_long_term_contract_workpaper: amtLongTermContractWorkpaperSchema
+    .optional(),
+  amt_long_term_contract_workpapers: z.array(amtLongTermContractWorkpaperSchema)
+    .min(1).optional(),
 });
 
 export const inputSchema = z.object({

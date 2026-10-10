@@ -1,5 +1,70 @@
 # TY2025 Form 8283 FMV-reduction statement
 
+## October 9 purchased intellectual-property source and packet checkpoint
+
+The purchased-patent contract now also accepts purchased copyrights, trademarks,
+trade names, trade secrets, know-how and qualifying software. Each new kind
+requires its legal-rights, transfer, statutory-classification, purchase, remaining
+basis and zero-donee-income records, with affirmative full-rights ownership and
+transfer. Copyrights must explicitly exclude the section1221(a)(3)/1231(b)(1)(C)
+categories; software must explicitly exclude section197(e)(3)(A)(i).
+The old patent source remains compatible. Native and printable statements name
+the actual property kind, identifier and source references.
+
+The [2025 Form8283 instructions](https://www.irs.gov/pub/irs-prior/i8283--2025.pdf)
+place these intellectual-property gifts in Section A even above5,000 and require
+removing appreciation. [Publication526](https://www.irs.gov/pub/irs-prior/p526--2025.pdf)
+limits the initial claim to the smaller of basis or FMV and separately describes
+income-based additions. These cases retain purchased, more-than-one-year,
+appreciated property, a50%-limit public donee and zero2025 donee income; they do
+not open excluded copyrights/software, creator property under this contract,
+partial rights, nonzero donee-income additions or accepted prior carryovers.
+
+Eight full public returns cover all six kinds individually and a six-kind
+inventory on single and joint returns. The joint inventory alternates the
+reviewed donor between Alex and Sam; each export binds those donors to the
+actual filer. Complete similar-item grouping is retained. Each gift has18,000
+FMV,12,000 adjusted basis and6,000 appreciation removed, producing18 native
+property rows and18 separately linked FMV statements across the batch.
+
+| Return group | Claim before AGI / current deduction | Itemized / taxable income | Tax / refund | Current noncash carryforward | Pages |
+|---|---:|---:|---:|---:|---:|
+| Six individual-kind single returns, each | 12,000 / 12,000 | 36,000 / 64,000 | 9,000 / 7,000 | 0 | 5 each |
+| Six-kind single inventory | 72,000 / 50,000 | 74,000 / 26,000 | 2,885 / 13,115 | 22,000 | 7 |
+| Six-kind joint inventory | 72,000 / 50,000 | 74,000 / 26,000 | 2,646 / 13,354 | 22,000 | 7 |
+
+All cases retain100,000 wages,16,000 withholding and24,000 ScheduleA taxes.
+Independent Decimal arithmetic uses source basis/FMV, the50% AGI limit and the
+2025 tax-table midpoints. Native property amounts, source-specific explanation
+references, ScheduleA and1040 amounts, carryforwards and actual PDF text agree.
+The22,000 current carryforward is a calculated output, not proof of an accepted
+filing or next-year import.
+
+The grouped regression passes168/0; the final typed focused run passes9/0. Forty-eight public-source mutations and
+two missing-exclusion schema controls reject; native and fresh-PDF exports each
+reject40 changed owner, basis, donee-income, deduction or final-tax cases.
+The initial focused run was7/2 because both mixed test fixtures omitted the
+required similar-item group; the fixture source was completed, and the initial
+log remains retained. The benchmark remains46/133 with the same87 failing IDs
+as`3c99816c8`; its existing failure qualification96 is unchanged.
+
+All eight complete returns validate against cached2025v5.4 XSD, digest
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+All44 pages were reviewed through24 unique rendered images on six sheets.
+Amounts, dates, property descriptions and statement text are legible. The two
+mixed packets retain a newly observed overflow-label issue: the second printed
+Form8283 uses rowsA/B for know-how/software, while its supplement calls those
+itemsE/F. Native references consistently useE/F. This is deferred121, without
+a repair; primary-only joint names remain the existing qualification68.
+
+Private evidence is under`.state/research/form8283-purchased-ip-2026-10-09/`:
+eight source/pending/carry JSONs, XML/PDF pairs, origins, initial/final focused
+logs, grouped regression, unchanged benchmark IDs, independent source/native/PDF
+arithmetic, XSD/render manifests and visual review. Reviewed references are
+synthetic, not authenticated rights, purchases, transfers or donee records.
+Broader Form8283 obligations and IRS acceptance remain open.
+
+
 ## Purchased Section A capital property to a private nonoperating foundation (2026-10-01, unrun)
 
 The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283)

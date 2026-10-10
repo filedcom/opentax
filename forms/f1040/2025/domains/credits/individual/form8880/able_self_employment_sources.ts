@@ -55,7 +55,8 @@ export function assertAbleSelfEmploymentSources(
         if (
           !filed || b.exempt_notary || b.paper_route || b.clergy_schedule_c ||
           b.qbi_wotc_filing_review ||
-          b.amt_mining_cost_workpaper || b.amt_long_term_contract_workpaper
+          b.amt_mining_cost_workpaper || b.amt_long_term_contract_workpaper ||
+          b.amt_long_term_contract_workpapers
         ) {
           throw new Error(
             "ABLE self-employment compensation needs reconciled ordinary proprietor income",

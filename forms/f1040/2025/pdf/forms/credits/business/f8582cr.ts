@@ -1,7 +1,9 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import { reconcileFiledForm8582CROrdinary } from "../../../../domains/credits/business/form8582c/form8582cr_filed_ordinary.ts";
 import { form8582cr as nativeForm8582cr } from "../../../../mef/forms/credits/business/f8582cr.ts";
-import { FORM3800_PRINTED_PART_V_ROWS } from "./f3800/f3800_capacity.ts";
 
 const page1 = "topmostSubform[0].Page1[0]";
 const page2 = "topmostSubform[0].Page2[0]";
@@ -71,7 +73,6 @@ export const form8582crPdf: PdfFormDescriptor = {
     }
     if (
       ledger.rows.length < 1 ||
-      ledger.rows.length > FORM3800_PRINTED_PART_V_ROWS ||
       tax.line6 !== lines.partI.line6 ||
       ledger.rows.some((row) => row.source.source_form !== "Form 8874")
     ) {

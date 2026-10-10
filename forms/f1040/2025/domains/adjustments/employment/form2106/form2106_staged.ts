@@ -1,18 +1,22 @@
 import {
+  assertPerformingArtistQualifications,
   calculateForm2106Lines,
   EmployeeType,
+  form2106Contribution,
   itemSchema,
+  VehicleMethod,
 } from "../../../../../nodes/inputs/adjustments/employment/f2106/index.ts";
 import type { Form2106Lines } from "../../../../../nodes/inputs/adjustments/employment/f2106/index.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
+import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { extractFilerIdentity } from "../../../../../mef/filer.ts";
 import { inputSchema as form2106InputSchema } from "../../../../../nodes/inputs/adjustments/employment/f2106/index.ts";
 import type { PdfFieldEntry } from "../../../../pdf/review-support/form-descriptor.ts";
 import { z } from "zod";
 import { inputSchema as w2InputSchema } from "../../../../../nodes/inputs/income/wages/w2/index.ts";
 
-// Shared canonical projection. Registered exporters currently admit only the
-// narrow fee-basis route guarded by reconcileFileableForm2106Return.
+// Shared canonical projection. Registered exporters admit only the sourced
+// employee routes guarded by reconcileFileableForm2106Return.
 export function prepareForm2106(raw: unknown) {
   const source = itemSchema.parse(raw);
   const lines = calculateForm2106Lines(source);
@@ -40,7 +44,7 @@ export function prepareForm2106(raw: unknown) {
       employment_record_reference: source.job.employment_record_reference,
       owner: source.job.owner,
       route,
-      amount: lines.line10_deduction,
+      amount: form2106Contribution(source, lines),
       form1040_line1a_excess_reimbursement: 0,
     },
   } as const;
@@ -50,20 +54,24 @@ const pendingRecordSchema = z.record(z.string(), z.unknown());
 const normalizedName = (name: string) =>
   name.trim().toUpperCase().replace(/\s+/g, " ");
 
-/** The one-job filing route with no vehicle, meal, travel, or reimbursement. */
+/** Qualified employee jobs with sourced expenses and no excess reimbursements. */
 export function isSupportedForm2106Route(raw: unknown): boolean {
   const parsed = form2106InputSchema.safeParse(raw);
-  if (!parsed.success || parsed.data.f2106s.length !== 1) return false;
-  const item = parsed.data.f2106s[0];
-  return item.job.owner === "taxpayer" &&
-    item.qualification.kind === EmployeeType.FEE_BASIS_OFFICIAL &&
-    item.vehicle.method === "NONE" &&
-    item.expenses.line2_parking_tolls_local_transportation === 0 &&
-    item.expenses.line3_overnight_travel_excluding_meals === 0 &&
-    item.expenses.line4_other_business_expenses > 0 &&
-    item.expenses.line5_meals === 0 &&
-    item.reimbursements.line7_column_a_nonmeals === 0 &&
-    item.reimbursements.line7_column_b_meals === 0;
+  // TY2025 ReturnData1040.xsd permits at most four IRS2106 documents.
+  if (!parsed.success || parsed.data.f2106s.length > 4) return false;
+  return parsed.data.f2106s.every((item) => {
+    if (
+      (item.qualification.kind !== EmployeeType.FEE_BASIS_OFFICIAL &&
+        item.qualification.kind !== EmployeeType.DISABLED_IMPAIRMENT &&
+        item.qualification.kind !== EmployeeType.PERFORMING_ARTIST &&
+        item.qualification.kind !== EmployeeType.RESERVIST) ||
+      item.vehicle.method === VehicleMethod.ACTUAL_EXPENSE
+    ) return false;
+    const lines = calculateForm2106Lines(item);
+    return form2106Contribution(item, lines) > 0 &&
+      lines.line7_column_a <= lines.line6_column_a &&
+      lines.line7_column_b <= lines.line6_column_b;
+  });
 }
 
 /**
@@ -79,6 +87,7 @@ export function reconcileStagedForm2106Return(
   if (!filer || typeof form1040.filing_status !== "string") {
     throw new Error("Form 2106 needs finalized Form 1040 filer identity");
   }
+  assertPerformingArtistQualifications(input.f2106s);
   const jobs = input.f2106s.map(prepareForm2106);
   for (const { source } of jobs) {
     const person = source.job.owner === "taxpayer"
@@ -157,40 +166,159 @@ export function reconcileStagedForm2106Return(
   return { jobs, schedule1Total, scheduleATotal } as const;
 }
 
-/** Native/PDF filing guard for the supported fee-basis route. */
+function assertEmployeeJobSources(
+  jobs: ReturnType<typeof reconcileStagedForm2106Return>["jobs"],
+  w2: z.infer<typeof w2InputSchema>,
+  filer: FilerIdentity,
+): void {
+  const allowedOwners = new Set([
+    filer.primarySSN,
+    ...(filer.filingStatus === FilingStatus.MarriedFilingJointly && filer.spouse
+      ? [filer.spouse.ssn]
+      : []),
+  ]);
+  if (
+    jobs.some(({ source }) =>
+      source.job.owner === "spouse" &&
+      filer.filingStatus !== FilingStatus.MarriedFilingJointly
+    ) ||
+    w2.w2s.some((item) =>
+      !allowedOwners.has(
+        item.employee_ssn?.replaceAll("-", "") ?? "",
+      )
+    )
+  ) {
+    throw new Error(
+      "Form 2106 jobs and wages need the taxpayer or a joint-filing spouse",
+    );
+  }
+  const jobKeys = jobs.map(({ source }) =>
+    `${source.job.employee_ssn.replaceAll("-", "")}:${
+      source.job.employer_ein.replaceAll("-", "")
+    }`
+  );
+  const expenseKeys = jobs.map(({ source }) =>
+    source.expenses.expense_records_reference
+  );
+  const mileageKeys = jobs.flatMap(({ source }) =>
+    source.vehicle.method === VehicleMethod.STANDARD_MILEAGE
+      ? [source.vehicle.written_mileage_evidence_reference]
+      : []
+  );
+  if (
+    new Set(mileageKeys).size !== mileageKeys.length ||
+    new Set(jobKeys).size !== jobKeys.length ||
+    new Set(expenseKeys).size !== expenseKeys.length
+  ) {
+    throw new Error(
+      "Form 2106 needs distinct owner/employer jobs and separately allocated expense and mileage records",
+    );
+  }
+  for (const { source: { job } } of jobs) {
+    const employer = w2.w2s.filter((item) =>
+      item.employee_ssn?.replaceAll("-", "") ===
+        job.employee_ssn.replaceAll("-", "") &&
+      item.employer_ein?.replaceAll("-", "") ===
+        job.employer_ein.replaceAll("-", "")
+    );
+    if (
+      employer.length !== 1 || employer[0].box1_wages <= 0 ||
+      normalizedName(employer[0].employer_name ?? "") !==
+        normalizedName(job.employer_name)
+    ) {
+      throw new Error(
+        "Form 2106 each employee job must match one employer W-2 for its owner",
+      );
+    }
+  }
+}
+
+function assertArtistReturnSources(
+  jobs: ReturnType<typeof reconcileStagedForm2106Return>["jobs"],
+  w2: z.infer<typeof w2InputSchema>,
+  filer: FilerIdentity,
+  filedAgi: unknown,
+): void {
+  const artists = jobs.flatMap((job) =>
+    job.source.qualification.kind === EmployeeType.PERFORMING_ARTIST
+      ? [{ ...job, qualification: job.source.qualification }]
+      : []
+  );
+  if (artists.length === 0) return;
+  const deduction = artists.reduce(
+    (sum, job) => sum + job.lines.line10_deduction,
+    0,
+  );
+  const filingStatusNames = {
+    [FilingStatus.Single]: "single",
+    [FilingStatus.MarriedFilingJointly]: "married_filing_jointly",
+    [FilingStatus.MarriedFilingSeparately]: "married_filing_separately",
+    [FilingStatus.HeadOfHousehold]: "head_of_household",
+    [FilingStatus.QualifyingSurvivingSpouse]: "qualifying_surviving_spouse",
+  } as const;
+  for (const { source, qualification } of artists) {
+    if (
+      typeof filedAgi !== "number" ||
+      qualification.adjusted_gross_income_before_artist_deduction !==
+        filedAgi + deduction ||
+      qualification.filing_status !== filingStatusNames[filer.filingStatus] ||
+      qualification.performing_arts_gross_income !==
+        qualification.employers.reduce(
+          (sum, employer) => sum + employer.wages,
+          0,
+        )
+    ) {
+      throw new Error(
+        "Form 2106 performing-artist qualification differs from filed AGI, filing status or sourced arts wages",
+      );
+    }
+    for (const employer of qualification.employers) {
+      const matches = w2.w2s.filter((wage) =>
+        wage.employee_ssn?.replaceAll("-", "") ===
+          source.job.employee_ssn.replaceAll("-", "") &&
+        wage.employer_ein?.replaceAll("-", "") ===
+          employer.employer_ein.replaceAll("-", "")
+      );
+      if (matches.length !== 1 || matches[0].box1_wages !== employer.wages) {
+        throw new Error(
+          "Form 2106 performing-artist employers need exact owned W-2 wages",
+        );
+      }
+    }
+  }
+}
+
+/** Native/PDF filing guard for the supported employee routes. */
 export function reconcileFileableForm2106Return(
   allPending: Readonly<Record<string, unknown>>,
 ) {
   if (!isSupportedForm2106Route(allPending.f2106)) {
     throw new Error(
-      "Form 2106 filing needs one sourced taxpayer fee-basis line-4 expense job",
+      "Form 2106 filing needs sourced qualified employee expenses without excess reimbursements",
     );
   }
   const result = reconcileStagedForm2106Return(allPending);
   const form1040 = pendingRecordSchema.parse(allPending.f1040);
   const w2 = w2InputSchema.parse(allPending.w2);
-  const job = result.jobs[0]!.source.job;
-  const employer = w2.w2s.filter((item) =>
-    item.employee_ssn?.replaceAll("-", "") ===
-      job.employee_ssn.replaceAll("-", "") &&
-    item.employer_ein?.replaceAll("-", "") ===
-      job.employer_ein.replaceAll("-", "") &&
-    normalizedName(item.employer_name ?? "") ===
-      normalizedName(job.employer_name)
-  );
+  const filer = extractFilerIdentity(form1040)!;
+  assertEmployeeJobSources(result.jobs, w2, filer);
+  assertArtistReturnSources(result.jobs, w2, filer, form1040.line11_agi);
   const wages = w2.w2s.reduce((sum, item) => sum + item.box1_wages, 0);
+  const schedule1 = pendingRecordSchema.parse(allPending.schedule1 ?? {});
+  const agi = pendingRecordSchema.parse(allPending.agi_aggregator ?? {});
+  const adjustments = form1040.line10_adjustments ?? 0;
   if (
-    w2.w2s.length !== 1 || employer.length !== 1 ||
-    employer[0].box1_wages <= 0 ||
+    (schedule1.line12_business_expenses ?? 0) !== result.schedule1Total ||
+    (agi.line12_business_expenses ?? 0) !== result.schedule1Total ||
     form1040.line1a_wages !== wages ||
     form1040.line1z_total_wages !== wages ||
     (form1040.line8_additional_income ?? 0) !== 0 ||
     form1040.line9_total_income !== wages ||
-    typeof form1040.line10_adjustments !== "number" ||
-    form1040.line11_agi !== wages - form1040.line10_adjustments
+    typeof adjustments !== "number" ||
+    form1040.line11_agi !== wages - adjustments
   ) {
     throw new Error(
-      "Form 2106 fee-basis job must match one employer W-2 and final Form 1040 wages and AGI",
+      "Form 2106 employee jobs must match final Form 1040 wages and AGI",
     );
   }
   return result;

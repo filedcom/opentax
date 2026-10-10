@@ -1,4 +1,16 @@
+import {
+  inputSchema as disasterSourceSchema,
+  verifyGroupedDistributionSources,
+} from "../nodes/inputs/income/retirement/f8915f/index.ts";
+import { inputSchema as generalSourceSchema } from "../nodes/inputs/general/filing/general/index.ts";
+import { extractFilerIdentity as extractDisasterFiler } from "../mef/filer.ts";
 import { assertPublicAbleContributionSources } from "./domains/credits/individual/form8880/form8880_able_sources.ts";
+import { assertPublicSection1231HistoryOwner } from "../nodes/intermediate/forms/income/business/form4797/prior_history.ts";
+import {
+  assertLtcOwners,
+  ltcLedgerSchema,
+} from "../nodes/intermediate/forms/adjustments/health/form8853/ltc.ts";
+import { z } from "zod";
 import { assertPublicEmployeeContributionSources } from "./domains/credits/individual/form8880/form8880_employee_sources.ts";
 import { assertPublicSaverDistributionSources } from "./domains/credits/individual/form8880/form8880_distribution_sources.ts";
 import { preparePublicForm8886Return } from "./domains/general/filing/form8886/public-return.ts";
@@ -22,6 +34,29 @@ import { applyForm8621QefRefigure } from "./domains/income/foreign/form8621/form
 import { executePreQefSourceReturn } from "./return-processing/staged_source_return.ts";
 
 function executeReturn(inputs: Record<string, unknown>): ExecuteResult {
+  const disasterInput = Array.isArray(inputs.f8915f)
+    ? { f8915fs: inputs.f8915f }
+    : inputs.f8915f;
+  if (disasterInput) {
+    const items = disasterSourceSchema.parse(disasterInput).f8915fs ?? [];
+    if (items.length > 1) {
+      verifyGroupedDistributionSources(
+        items,
+        Array.isArray(inputs.f1099r)
+          ? { f1099rs: inputs.f1099r }
+          : inputs.f1099r,
+        extractDisasterFiler(generalSourceSchema.parse(inputs.general)),
+      );
+    }
+  }
+  const ltc = z.object({ ltc_ledger: ltcLedgerSchema.optional() }).parse(
+    inputs.form8853 ?? {},
+  ).ltc_ledger;
+  if (ltc) assertLtcOwners(ltc, inputs.general);
+  assertPublicSection1231HistoryOwner(
+    inputs.general,
+    inputs.form4797_prior_history,
+  );
   assertPublicSaverDistributionSources(inputs.general, inputs.f1099r);
   assertPublicEmployeeContributionSources(inputs.general, inputs.w2);
   assertPublicAbleContributionSources(

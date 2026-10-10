@@ -1,3 +1,18 @@
+import { assertForm8835TransferSource } from "../../../../../nodes/inputs/credits/business/f8835/transfer-source.ts";
+import { assertForm8835PwaSource } from "../../../../../nodes/inputs/credits/business/f8835/pwa-source.ts";
+import { assertForm8835EnergyCommunitySource } from "../../../../../nodes/inputs/credits/business/f8835/energy-community-source.ts";
+import { assertForm8835DomesticSource } from "../../../../../nodes/inputs/credits/business/f8835/domestic-source.ts";
+import { assertForm8835EarlyConstructionSource } from "../../../../../nodes/inputs/credits/business/f8835/early-construction-source.ts";
+import { assertForm8835SmallFacilitySource } from "../../../../../nodes/inputs/credits/business/f8835/increase-source.ts";
+import { assertForm8835BondSource } from "../../../../../nodes/inputs/credits/business/f8835/bond-source.ts";
+import {
+  allocateForm3800CreditUse,
+  form3800NonpassiveCreditUseRows,
+} from "../../../../../nodes/inputs/credits/business/f3800/calculation.ts";
+import {
+  assertCurrentProductionAllocationSource,
+  reconcileCurrentProductionAllocation,
+} from "../../../../../nodes/inputs/credits/business/f3800/production-allocation.ts";
 import type { FilerIdentity } from "../../../../../mef/header.ts";
 import { f1040 } from "../../../../../nodes/outputs/general/return-assembly/f1040/index.ts";
 import {
@@ -12,6 +27,7 @@ import type { Form3800DocumentParts } from "../../../../mef/forms/credits/busine
 
 export interface Form8835PdfSource {
   readonly item: F8835Item;
+  readonly appliedCredit: number;
   readonly lines: F8835Lines;
   readonly filerName: string;
   readonly filerTin: string;
@@ -39,7 +55,30 @@ export function form8835PdfSources(
   if (!raw) return [];
   const source = inputSchema.parse(raw);
   const rows = source.f8835s.map((item) => {
+    assertForm8835EnergyCommunitySource(item, true);
+    if (
+      item.energy_community_source && (
+        item.energy_community_source.taxpayer_tin !==
+          filer?.primarySSN?.replaceAll("-", "") ||
+        item.energy_community_source.taxpayer_name !== filer?.fullName
+      )
+    ) {
+      throw new Error(
+        "Form 8835 energy-community source differs from PDF filer",
+      );
+    }
+    assertForm8835DomesticSource(item, true);
+    assertForm8835BondSource(item, true);
+    assertForm8835PwaSource(item, true);
+    if (
+      item.pwa_source &&
+      (item.pwa_source.taxpayer_tin !== filer?.primarySSN ||
+        item.pwa_source.taxpayer_name !== filer?.fullName)
+    ) throw new Error("Form 8835 PWA source differs from PDF filer");
+    assertForm8835SmallFacilitySource(item, true);
+    assertForm8835EarlyConstructionSource(item, true);
     const lines = calculateForm8835(item);
+    assertForm8835TransferSource(item, lines.line15, true);
     const nonownerLessee = item.energy_type === EnergyType.BiomassOpen &&
       (item.open_loop_cellulosic_source !== undefined ||
         item.open_loop_livestock_source !== undefined) &&
@@ -60,11 +99,15 @@ export function form8835PdfSources(
         item.energy_type !== EnergyType.BiomassOpen &&
         item.energy_type !== EnergyType.Landfill &&
         item.energy_type !== EnergyType.Trash) ||
-      item.facility_placed_in_service_date < "2022-01-01" ||
-      item.is_fiscal_year || item.increased_credit_reason !== "none" ||
-      item.domestic_content_bonus || item.energy_community_bonus ||
-      (item.tax_exempt_bond_proceeds ?? 0) !== 0 ||
-      (item.transfer_election_amount ?? 0) !== 0 ||
+      item.is_fiscal_year ||
+      ![
+        "none",
+        "under_one_mw",
+        "construction_before_2023_01_29",
+        "prevailing_wage_and_apprenticeship",
+      ].includes(
+        item.increased_credit_reason,
+      ) ||
       item.subject_to_passive_activity_limit ||
       (item.facility_owned_by_filer !== true && !nonownerLessee) ||
       (item.facility_owned_by_filer === true &&
@@ -79,11 +122,10 @@ export function form8835PdfSources(
         (item.solar_dc_nameplate_kw ?? 0) <= 0) ||
       !item.facility_description ||
       item.facility_description.length > 70 ||
-      item.registration_number !== undefined ||
-      lines.form3800Line !== "4e"
+      (item.registration_number !== undefined && !item.transfer_source)
     ) {
       throw new Error(
-        "Form 8835 PDF currently supports filer-owned nonpassive wind, geothermal, sourced biomass, solar, landfill gas, or trash-combustion facilities with first-four-year production and no increase, bonus, bond, transfer, or fiscal-year branch",
+        "Form 8835 PDF currently supports filer-owned nonpassive wind, geothermal, sourced biomass, solar, landfill gas, or trash-combustion facilities with in-period production and reviewed bond financing and reviewed small-facility, early-construction or direct-compliance PWA increases, with reviewed actual-cost domestic content and annual energy-community locations, with reviewed credit transfers but without other increases or fiscal-year branches",
       );
     }
     if (
@@ -103,50 +145,159 @@ export function form8835PdfSources(
   });
   const form3800 = form3800InputSchema.parse(allPending.f3800);
   const entries = form3800.f8835_credit_entries ?? [];
-  const totalCredit = rows.reduce((sum, row) => sum + row.lines.line15, 0);
+  const totalCredit = rows.reduce(
+    (sum, row) =>
+      sum + row.lines.line15 - (row.item.transfer_election_amount ?? 0),
+    0,
+  );
   const return1040 = f1040.inputSchema.parse(allPending.f1040);
   const credits = return1040.form3800_source_credits;
   const finalized3800 = allPending.f3800 ?? {};
   const schedule3 = allPending.schedule3 ?? {};
-  const currentRows = prepared.currentRows.filter((row) => row.line === "4e");
-  const currentAmounts = prepared.currentAmounts.filter((row) =>
-    row.line === "4e"
+  const byLine = (line: "1f" | "4e") =>
+    rows.map((row, index) => ({ ...row, index }))
+      .filter((row) => row.lines.form3800Line === line);
+  const generated = (line: "1f" | "4e") =>
+    byLine(line).reduce(
+      (sum, row) =>
+        sum + row.lines.line15 - (row.item.transfer_election_amount ?? 0),
+      0,
+    );
+  const transferred = (line: "1f" | "4e") =>
+    byLine(line).reduce(
+      (sum, row) => sum + (row.item.transfer_election_amount ?? 0),
+      0,
+    );
+  const appliedByLine = { "1f": 0, "4e": generated("4e") };
+  if (generated("1f") > 0) {
+    // Later-year production precedes orphan-drug credits within the ordinary
+    // credit limit. Replay both classes from source amounts, not Part V use.
+    const orphanCredit = (form3800.f8820_credit?.credit_amount ?? 0) +
+      (form3800.f8820_k1_credit_entries ?? []).reduce(
+        (sum, entry) => sum + entry.credit_amount,
+        0,
+      );
+    if (
+      prepared.carryoverRows.length || !credits ||
+      credits.standardCredit !== generated("1f") + orphanCredit ||
+      credits.specifiedCredit !== generated("4e") ||
+      (credits.empowermentCredit ?? 0) !== 0
+    ) {
+      throw new Error(
+        "Form 8835 PDF later-year credit needs a reconciled current production/orphan inventory",
+      );
+    }
+    const uses = allocateForm3800CreditUse(
+      form3800NonpassiveCreditUseRows({
+        form8820Credit: orphanCredit,
+        facilities: entries,
+      }),
+      prepared.lines,
+    );
+    for (const line of ["1f", "4e"] as const) {
+      appliedByLine[line] = uses.find((row) =>
+        row.sourceKey === `nonpassive:8835:${line}`
+      )?.appliedAgainstTax ?? 0;
+    }
+  } else if (
+    prepared.carryoverRows.length === 0 &&
+    credits?.specifiedCredit === totalCredit
+  ) {
+    appliedByLine["4e"] = Number(finalized3800.specified_credit_allowed);
+  }
+  assertCurrentProductionAllocationSource(
+    form3800.current_production_allocation_review,
+    allPending.form3800_current_production_allocation,
   );
-  const sourceDetails = prepared.currentDetails.filter((row) =>
-    row.line === "4e"
-  );
+  const reviewedTaxUse = form3800.current_production_allocation_review
+    ? reconcileCurrentProductionAllocation(
+      form3800.current_production_allocation_review,
+      rows.map((row, index) => ({ ...row.item, ...entries[index] })),
+      { primarySSN: filer?.primarySSN ?? "", appliedByLine },
+    )
+    : undefined;
+  if (
+    reviewedTaxUse && (prepared.carryoverRows.length !== 0 ||
+      credits?.specifiedCredit !== generated("4e") ||
+      (form3800.form8835_applied_credits_by_facility !== undefined &&
+        JSON.stringify(form3800.form8835_applied_credits_by_facility) !==
+          JSON.stringify(reviewedTaxUse)))
+  ) {
+    throw new Error(
+      "Form 8835 PDF reviewed allocation conflicts with another credit inventory or allocation",
+    );
+  }
+  const facilityUse = rows.map((row, index) => {
+    const line = row.lines.form3800Line;
+    const count = byLine(line).length;
+    if (reviewedTaxUse) return reviewedTaxUse[index];
+    if (count === 1) return appliedByLine[line];
+    if (appliedByLine[line] === 0) return 0;
+    if (appliedByLine[line] !== generated(line)) {
+      throw new Error(
+        "Form 8835 PDF partially used facilities need a reviewed allocation",
+      );
+    }
+    return row.lines.line15 - (row.item.transfer_election_amount ?? 0);
+  });
   const filedDocumentIds = prepared.form8835DocumentIds;
+  const groupsValid = (["1f", "4e"] as const).every((line) => {
+    const facilities = byLine(line);
+    const summaries = prepared.currentRows.filter((row) => row.line === line);
+    const amounts = prepared.currentAmounts.filter((row) => row.line === line);
+    const details = prepared.currentDetails.filter((row) => row.line === line);
+    if (!facilities.length) {
+      return summaries.length === 0 && amounts.length === 0 &&
+        details.length === 0;
+    }
+    const [summary] = summaries, [amount] = amounts;
+    return summaries.length === 1 && amounts.length === 1 &&
+      summary.metadata.sourceCount === facilities.length &&
+      summary.metadata.transferRegistrationNumber ===
+        facilities.find((row) => (row.item.transfer_election_amount ?? 0) > 0)
+          ?.item.registration_number &&
+      amount.nonpassiveCredit === generated(line) + transferred(line) &&
+      amount.transferOutCredit === transferred(line) &&
+      amount.appliedCredit === appliedByLine[line] &&
+      details.length === facilities.length &&
+      facilities.every((row, index) => {
+        const detail = details[index];
+        return detail.credit === row.lines.line15 &&
+          detail.transferRegistrationNumber ===
+            ((row.item.transfer_election_amount ?? 0) > 0
+              ? row.item.registration_number
+              : undefined) &&
+          detail.appliedCredit === facilityUse[row.index] &&
+          (detail.transferOutCredit ?? 0) ===
+            (row.item.transfer_election_amount ?? 0) &&
+          detail.sourceDocumentId === filedDocumentIds?.[row.index];
+      }) && summary.metadata.referenceDocumentId === details.map((detail) =>
+          detail.sourceDocumentId
+        ).join(" ");
+  });
   if (
     entries.length !== rows.length ||
     entries.some((entry, index) =>
-      entry.form3800_line !== "4e" ||
+      entry.form3800_line !== rows[index].lines.form3800Line ||
       entry.credit_amount !== rows[index].lines.line15 ||
-      entry.transfer_out_amount !== 0 ||
+      entry.transfer_out_amount !==
+        (rows[index].item.transfer_election_amount ?? 0) ||
       entry.subject_to_passive_activity_limit !== false
     ) ||
-    !credits ||
-    credits.specifiedCredit < totalCredit ||
-    credits.passiveLines.line2 !== 0 ||
-    credits.passiveLines.line23 !== 0 ||
+    !credits || credits.specifiedCredit < generated("4e") ||
+    credits.standardCredit < generated("1f") ||
+    credits.passiveLines.line2 !== 0 || credits.passiveLines.line23 !== 0 ||
     credits.passiveLines.line32 !== 0 ||
-    currentRows.length !== 1 ||
-    currentRows[0].metadata.sourceCount !== rows.length ||
-    currentAmounts.length !== 1 ||
-    currentAmounts[0].nonpassiveCredit !== totalCredit ||
-    currentAmounts[0].transferOutCredit !== 0 ||
-    currentAmounts[0].appliedCredit !== totalCredit ||
-    sourceDetails.length !== rows.length ||
-    filedDocumentIds?.length !== rows.length ||
-    sourceDetails.some((detail, index) =>
-      detail.credit !== rows[index].lines.line15 ||
-      detail.appliedCredit !== rows[index].lines.line15 ||
-      (detail.transferOutCredit ?? 0) !== 0 ||
-      detail.sourceDocumentId !== filedDocumentIds?.[index]
-    ) ||
+    !groupsValid || filedDocumentIds?.length !== rows.length ||
     new Set(filedDocumentIds).size !== rows.length ||
-    currentRows[0].metadata.referenceDocumentId !==
-      sourceDetails.map((detail) => detail.sourceDocumentId).join(" ") ||
-    prepared.lines.line37 < totalCredit ||
+    facilityUse.some((used, index) =>
+      !Number.isFinite(used) || used < 0 ||
+      used >
+        rows[index].lines.line15 -
+          (rows[index].item.transfer_election_amount ?? 0)
+    ) ||
+    prepared.lines.line17 < appliedByLine["1f"] ||
+    prepared.lines.line37 < appliedByLine["4e"] ||
     finalized3800.allowed_credit !== prepared.lines.line38 ||
     finalized3800.specified_credit_allowed !== prepared.lines.line37 ||
     schedule3.line6a_total !== prepared.lines.line38 ||
@@ -161,5 +312,10 @@ export function form8835PdfSources(
   if (!filerName || !filerTin || !/^\d{9}$/.test(filerTin)) {
     throw new Error("Form 8835 PDF needs the return name and TIN");
   }
-  return rows.map((row) => ({ ...row, filerName, filerTin }));
+  return rows.map((row, index) => ({
+    ...row,
+    appliedCredit: facilityUse[index],
+    filerName,
+    filerTin,
+  }));
 }

@@ -831,7 +831,7 @@ Deno.test("three partnership and one S corporation passive code AD credits keep 
   );
 });
 
-Deno.test("fifteen credit-only New Markets K-1 sources fill Form 3800 Part V and reject a sixteenth", async () => {
+Deno.test("fifteen credit-only New Markets K-1 sources fill Form 3800 Part V and reject an unmatched additional source", async () => {
   const result = filedMixedK1Return(Array(13).fill(500));
   const pending = normalizeForm8582CRTestPending(result.pending);
   const ledger = buildCurrentYearCarryforwardLedger(pending.form8582cr);
@@ -875,7 +875,7 @@ Deno.test("fifteen credit-only New Markets K-1 sources fill Form 3800 Part V and
         }],
       }, pending),
     Error,
-    "within Form 3800 Part V capacity",
+    "partnership code AD credits differ",
   );
 });
 

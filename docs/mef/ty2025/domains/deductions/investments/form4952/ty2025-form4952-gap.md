@@ -1,5 +1,289 @@
 # TY2025 Form 4952 portfolio royalty boundary
 
+## October 9 K-1 qualified-dividend elections and final tax
+
+The K-1 source routes now reconcile an explicitly entered qualified-dividend
+election through Form4952 line4g, the regular and AMT tax inputs, and finalized
+Form1040 line16. They preserve the full source qualified dividend on line3a.
+The shared export check rejects inconsistent regular/AMT elections, changed
+qualified dividends or taxable income, and a final tax inconsistent with the
+preferential-rate calculation. Existing restrictions on gains, foreign income,
+prior carry imports and codeB remain; no election is inferred or auto-selected.
+
+The [2025 Form4952 instructions](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+allow part or all of qualified dividends to enter investment income, require
+the Schedule D Tax Worksheet for Form1040 tax, and preserve line3a's full amount.
+The elected portion loses its preferential rate; revocation requires IRS
+consent. The cases use separate owner-identified K-1 income and expense copies,
+optionally bank/Treasury/OID income, and synthetic mortgage evidence of40,000.
+
+| Return | Gross / qualified income | Election | Deduction / carry | AGI | Itemized | Tax / refund |
+|---|---:|---:|---:|---:|---:|---:|
+| Single dividend partial | 3,000 / 1,000 | 500 | 2,500 / 500 | 163,000 | 42,500 | 21,722 / 8,278 |
+| Single dividend full | 3,000 / 1,000 | 1,000 | 3,000 / 0 | 163,000 | 43,000 | 21,647 / 8,353 |
+| Single mixed K-1 partial | 4,000 / 1,000 | 500 | 3,500 / 0 | 164,000 | 43,500 | 21,722 / 8,278 |
+| Single K-1 and bank full | 5,000 / 1,000 | 1,000 | 5,000 / 500 | 165,000 | 45,000 | 21,647 / 8,353 |
+| Joint dividend full | 3,000 / 1,000 | 1,000 | 3,000 / 0 | 203,000 | 43,000 | 25,028 / 4,972 |
+| Joint K-1 and bank partial | 5,000 / 1,000 | 500 | 4,500 / 1,000 | 205,000 | 44,500 | 25,103 / 4,897 |
+
+Six complete XML returns pass cached TY2025v5.4 XSD validation. All30 flattened
+packet pages were observed through25 unique renders/seven contact sheets.
+Source arithmetic independently matches election-adjusted investment income,
+deduction/carry, ordinary versus preferential taxable income, tax and refunds.
+XML/PDF also retain line4g and the unreduced line3a. Six synthetic mortgage-source
+pages share the previously observed pixel digest; these are not authenticated
+lender records. Existing name68/skipped-zero76 qualifications remain.
+
+Two additional single/joint cases combine qualified dividends1,000 from K-1s
+and400 from1099-DIVs. Form1040 line3a and final tax reconcile, but retained
+`income_tax_calculation.qualified_dividends` contains only1,000. Native and fresh
+PDF export reject that source mismatch. This is new deferred119, recorded with
+both public results; no aggregation fix or permissive export bypass was made.
+The mixed qualified-source route remains unproved, so the parent stays open.
+
+Related Form4952 regression passes127/0. Focused tests pass8/0: six complete returns and two explicit native/PDF boundary
+rejections. Positive-case mutations add24 public,78 native and78 prepared-PDF
+rejections; the two boundary cases add two native/two fresh-PDF rejections.
+Calculation nodes are unchanged; benchmark46/133 from the preceding joint-royalty
+checkpoint remains historical evidence, not a fresh run. Full business-rule and
+IRS-acceptance gates remain open. Private evidence:
+`.state/research/form4952-k1-election-2026-10-09/`, including original failure
+logs, boundary sources, XML/PDF, independent calculations and render manifests.
+XSD digest: `e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+
+
+## October 9 partnership income and expense combinations
+
+Shared source reconciliation now admits separate income-only and expense-only
+K-1 copies, including box5 interest and box6a/6b dividends, across partnership-only
+and mixed 1099 investment portfolios. Native and PDF selection also admits a
+partnership dividend portfolio without partnership interest. Each component,
+source reference and owner must reconcile before Schedule A and Form1040 export.
+Qualified dividends remain excluded from the investment-interest limit without
+a line4g election, while retaining their preferential treatment in final tax.
+
+The [2025 partner instructions](https://www.irs.gov/pub/irs-prior/i1065sk1--2025.pdf)
+and [Form4952 instructions](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+provide the box5/6a/6b/codeH destinations. These constructed cases use separate
+identified copies, explicit investment classifications, no codeB expense or
+line4g election, and synthetic retained mortgage evidence of40,000.
+
+| Portfolio | Gross / qualified investment income | Code H expense | Deduction / carry | AGI | Itemized | Tax / refund |
+|---|---:|---:|---:|---:|---:|---:|
+| K-1 interest only | 2,000 / 0 | 3,000 | 2,000 / 1,000 | 162,000 | 42,000 | 21,647 / 8,353 |
+| K-1 dividends only | 3,000 / 1,000 | 3,000 | 2,000 / 1,000 | 163,000 | 42,000 | 21,797 / 8,203 |
+| Mixed K-1 income copies | 4,000 / 1,000 | 3,500 | 3,000 / 500 | 164,000 | 43,000 | 21,797 / 8,203 |
+| K-1 plus bank/Treasury/OID | 5,000 / 1,000 | 4,500 | 4,000 / 500 | 165,000 | 44,000 | 21,797 / 8,203 |
+| K-1 plus all 1099 payers | 6,200 / 1,400 | 5,500 | 4,800 / 700 | 166,200 | 44,800 | 21,857 / 8,143 |
+| Joint K-1 plus all 1099 payers | 6,200 / 1,400 | 5,500 | 4,800 / 700 | 206,200 | 44,800 | 25,238 / 4,762 |
+
+Independent source arithmetic, XML amounts and PDF text reconcile gross income,
+qualified dividends, deduction/carry, itemization, tax and refund. Six complete
+returns pass cached TY2025v5.4 XSD validation. All30 packet pages were observed
+through28 unique renders/seven contact sheets. Six mortgage-source pages share
+the same pixel digest as the previously observed synthetic source page.
+Existing joint-name68 and skipped-zero76 qualifications remain.
+
+Focused tests pass6/0, including18 public,48 native and48 prepared-PDF rejections
+for changed source amounts, owners, classifications, duplicate references and
+final return amounts. Related Form4952 regression passes119/0. Calculation nodes
+are unchanged; the preceding joint-royalty benchmark46/133 is retained rather
+than claimed as a fresh run. No new future item was found; unflagged-dividend
+inventory118 stays deferred. Broader K-1 sources, codeB, elections, carryover
+imports, authenticity and IRS acceptance remain open, so the parent is not closed.
+
+Private evidence: `.state/research/form4952-k1-income-2026-10-09/` retains
+source/pending records, XML/PDF, synthetic copies, manifests, independent
+arithmetic and execution logs. XSD digest:
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+
+
+## October 9 partnership expenses with mixed investment payers
+
+The code-H/dividend reconciliation now combines ordinary bank and Treasury
+interest with taxable OID and ordinary/qualified dividends. Each retained
+interest amount is matched separately, and qualified dividends stay on line4b,
+not in the deductible-interest limit. Two or more identified partnership code-H
+expenses can share that limit. Native and PDF preparation check that the mixed
+1099 recipients belong to the filed taxpayer/joint spouse and that all K-1 and
+1099 copy references are present and distinct. The same shared reconciliation
+checks Schedule A line9 and Form1040 interest, dividends and itemization.
+
+The [2025 Form4952 instructions](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+include partnership investment interest on line1, gross investment income on
+line4a and qualified dividends on line4b. The constructed cases use no line4g
+election, codeB expense, foreign source/tax, debt allocation or prior import.
+Every case combines two K-1 expenses, bank and Treasury interest, one taxable
+OID and two dividend sources. Joint cases distribute these sources between
+spouses. Each mortgage Copy B is synthetic, byte-bound source evidence for
+40,000 of reviewed interest, not an authenticated lender record.
+
+| Return | Gross / qualified investment income | Code H expense | Deduction / carry | AGI | Itemized | Tax / refund |
+|---|---:|---:|---:|---:|---:|---:|
+| Single limited | 2,200 / 400 | 2,000 | 1,800 / 200 | 162,200 | 41,800 | 21,707 / 8,293 |
+| Single fully allowed | 2,200 / 400 | 700 | 700 / 0 | 162,200 | 40,700 | 21,971 / 8,029 |
+| Joint spouse sources | 2,200 / 400 | 2,000 | 1,800 / 200 | 202,200 | 41,800 | 25,088 / 4,912 |
+| Single all dividends qualified | 2,200 / 1,200 | 2,000 | 1,000 / 1,000 | 162,200 | 41,000 | 21,827 / 8,173 |
+| Single larger portfolio | 3,500 / 500 | 4,000 | 3,000 / 1,000 | 163,500 | 43,000 | 21,722 / 8,278 |
+| Joint larger portfolio | 3,500 / 500 | 4,000 | 3,000 / 1,000 | 203,500 | 43,000 | 25,103 / 4,897 |
+
+Independent arithmetic uses the source income, actual deduction and 2025
+ordinary/qualified-dividend rates. Regular and AMT carries agree. Six complete
+returns pass the cached TY2025v5.4 XSD; all26 packet pages were observed through
+22 unique renders/six contact sheets. Six mortgage-source pages share one
+observed pixel-identical render with canonical amount40,000. Existing joint
+name68 and skipped-zero76 qualifications remain; no deferred presentation fix
+was made. Related Form4952 source/node/native/PDF regression:113/0.
+Focused6/0 includes18 public,60 native and60 prepared-PDF rejections
+for changed amounts, owners, source flags, foreign interest and duplicate copies.
+
+A separate public probe clearing both dividend investment flags routes through
+the existing K-1/interest branch, omitting net dividends800 from the deduction
+limit while accepting native preparation. It produces deduction1,000/tax21,899
+versus1,800/21,707 for the same investment sources. This is new deferred118;
+the older dispatcher/inventory path is not repaired and the broader Form4952
+parent stays open. Positive evidence applies to the explicitly affirmed sources.
+The source-authentication, broader K-1, election, carryover and IRS-acceptance
+gates also remain open. Calculation nodes are unchanged; the latest benchmark
+is the preceding commit's46/133, not a fresh run for this reconciliation edit.
+
+Private evidence: `.state/research/form4952-k1-portfolio-2026-10-09/` retains
+source/pending, native XML, flattened packets, synthetic mortgage copies,
+independent arithmetic, render manifests, mutation tests and the boundary probe.
+The XSD digest remains
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+
+
+## October 9 joint royalty ownership and spouse investment sources
+
+A traced royalty purchase can now belong to either spouse on a joint return.
+The declared taxpayer/spouse role, debt owner, Form1099-MISC recipient,
+Schedule E property and final filed identities must agree. Reviewed plain
+interest from both spouses contributes to the joint investment-income limit.
+The joint route rejects unaccounted-for dividend, gain, K-1 and other investment
+sources; deferred117's existing single-filer inventory defect is not repaired.
+
+Six constructed complete returns cover either royalty owner, interest split
+400/600 between spouses, a bond owned by the other spouse, spouse QTP payments,
+full/partial bond exclusions and primary-owned foreign employee income.
+The [Form8815 worksheet](https://www.irs.gov/pub/irs-prior/f8815--2025.pdf)
+uses the joint149,250 threshold/30,000 phaseout width and the temporary
+pre-exclusion royalty deduction; only the actual deduction is filed under
+[Form4952 line8](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf).
+
+| Case | Paid interest | Bond MAGI / exclusion | Actual deduction / carry | AGI | Tax | Refund |
+|---|---:|---:|---:|---:|---:|---:|
+| Primary royalty, no bond | 500 | — | 500 / 0 | 143,500 | 14,468 | 5,532 |
+| Spouse royalty, no bond | 6,000 | — | 4,000 / 2,000 | 140,000 | 13,698 | 6,302 |
+| Primary royalty, full exclusion | 7,000 | 140,000 / 2,000 | 4,000 / 3,000 | 140,000 | 13,698 | 6,302 |
+| Spouse royalty, phaseout | 7,000 | 160,000 / 1,284 | 4,716 / 2,284 | 160,000 | 18,098 | 1,902 |
+| Primary positive royalty | 500 | 165,500 / 916 | 500 / 0 | 164,584 | 19,106 | 894 |
+| Spouse royalty, primary foreign wages | 7,000 | 160,000 / 1,284 | 4,716 / 2,284 | 60,000 | 6,270 | 13,730 |
+
+Independent arithmetic reconciles these amounts, including foreign tax stacking
+18,098 minus11,828 =6,270. Each packet contains one actual Form4952 and no
+Schedule A interest duplication; regular and AMT carry amounts agree.
+Six complete returns pass cached TY2025v5.4 XSD validation. All47 flattened
+packet pages were observed through32 distinct renders/eight contact sheets.
+PDF text, native amounts and source ownership agree within existing name68,
+zero76 and royalty-loss line22 issue116 qualifications. No deferred repair
+or source-authentication/IRS-acceptance claim is made.
+
+Related Form4952/Form8815/Form2555/Schedule E regression:277/0.
+Focused tests:6/0, including18 public,60 native and60 prepared-PDF rejections,
+plus12 direct final-identity rejections. Fresh benchmark:46/133, exactly the
+same87 failing case IDs as the prior checkpoint (deferred96). Private evidence:
+`.state/research/form4952-joint-royalty-2026-10-09/`, with source/pending,
+XML/PDF, manifests, independent arithmetic, render reviews and execution logs.
+The XSD digest remains
+`e52dbd0fbd862929c9bc6a46db811fa2c7ae55e915651fc2679c21cb05184c6c`.
+Mixed-use debt, other filing statuses, elections, prior carryover authentication,
+other investment-source combinations and the wider parent task remain open.
+
+
+## October 9 foreign employee income with bond/royalty limits
+
+The paired Form8815 route now reconciles reviewed Form2555 employee and housing
+exclusions alongside Schedule E royalty deductions. Foreign exclusions reduce
+Schedule1 income and are restored for bond MAGI; the actual Form4952 continues
+to use post-bond-exclusion investment income. Four additional XSD-valid returns
+and44 observed pages verify positive/zero final income, foreign tax stacking,
+housing and regular/AMT carryforwards. Twelve public and31 native/31 PDF
+contradictions reject. See the [combined checkpoint](../../../income/investments/form8815/ty2025-form8815-gap.md#october-9-foreign-exclusions-with-royalty-interest-refiguring).
+Standalone royalty/foreign combinations without the paired bond worksheet
+remain guarded; deferred inventory117 and presentation116 are untouched.
+
+## October 9 bond exclusion and royalty-interest refiguring
+
+The existing directly traced royalty route now joins Form8815's special MAGI
+calculation. All eligible bond interest is included in the temporary MAGI
+computation; only the actual Form4952 subtracts the computed bond exclusion
+from investment income. Schedule E receives the actual allowed interest, and
+both regular/AMT carryforwards use that final deduction. The two retained debt
+traces, complete interest sources, final royalty income and return totals must
+agree before native or PDF export. Four complete XSD-valid returns/30 observed
+pages cover positive/zero/loss royalty income, full/partial exclusion and mixed
+bank interest; see the [paired checkpoint](../../../income/investments/form8815/ty2025-form8815-gap.md#october-9-royalty-interest-magi-and-actual-deduction-checkpoint).
+Deferred116 still qualifies royalty-loss PDF line22; standalone inventory117
+remains unrepaired. The combined route explicitly rejects additional unsupported
+investment-income sources and does not claim the wider parent gap is closed.
+
+## October 9 directly traced royalty debt and Schedule E deduction
+
+A directly purchased nonbusiness portfolio royalty now has a dedicated debt
+source. It records the loan, owner, direct purchase, asset, dated interest
+payments and lender total, with affirmative personal liability, no loss
+protection and review of other current royalty deductions. One issued-form
+reference joins the source to its Form1099-MISC box2 record. Plain owned
+Form1099-INT sources are compared individually, including multiple payers.
+These synthetic references establish internal reconciliation, not authenticity.
+
+The [2025 Form4952 line8 instructions](https://www.irs.gov/pub/irs-prior/f4952--2025.pdf)
+send royalty-attributable deductible interest to Schedule E. The executor now
+creates that one sourced royalty property after computing the investment-income
+limit. Its allowed interest appears only on Schedule E line13, reduces
+Schedule1/Form1040 income and never duplicates into Schedule A line9. Both
+native and PDF export replay the loan, source inventory, numbered Form4952
+lines, exact Schedule E property and final income join. Other expenses, manual
+investment amounts, mixed debt uses, prior carryforward imports, elections,
+AMT adjustments and non-single filers were guarded at this checkpoint; the joint-owner checkpoint above now adds MFJ. The subsequent paired
+checkpoint above adds the Form8815 special computation. Whole-dollar current-year royalty and investment-income amounts are
+required in this route.
+
+| Constructed return | Paid interest | Portfolio interest | Gross royalty | Allowed on Schedule E | Net royalty | Carryforward | AGI | Tax | Refund |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Positive royalty | 500 | 1,000 | 3,000 | 500 | 2,500 | 0 | 78,500 | 8,725 | 2,275 |
+| Royalty loss | 3,500 | 1,000 | 3,000 | 3,500 | -500 | 0 | 75,500 | 8,065 | 2,935 |
+| Two interest payers, limited debt | 5,000 | 400 + 600 | 3,000 | 4,000 | -1,000 | 1,000 | 75,000 | 7,955 | 3,045 |
+| Royalty only, limited debt | 5,000 | 0 | 3,000 | 3,000 | 0 | 2,000 | 75,000 | 7,955 | 3,045 |
+
+All use wages75,000, withholding11,000 and standard deduction15,750. The tax
+expectations use the applicable single-filer Tax Table rows; none infer tax
+from the implementation under test. This closes the prior categorical
+royalty-debt routing gap within these stated sources, not the broader Form4952
+parent task or the separate bond MAGI calculation. The latter still needs the
+[Form8815 line9](https://www.irs.gov/pub/irs-prior/f8815--2025.pdf) pre-exclusion
+interest calculation and a separately reconciled final deduction.
+
+Verification:205 grouped tests pass across Form4952 source, computation,
+Schedule E, native/PDF and earlier traced-debt routes. The final focused gate
+passes5/0, with12 contradictory public sources,44 native-preparation mutations,
+44 prepared-PDF mutations and four direct printed-property mutations rejected.
+Four complete XMLs pass TY2025v5.4 XSD; all22 packet pages (19 unique rendered
+pages) were observed, and native/PDF deductions, AGI, tax, refund and regular
+and AMT carryforward values reconcile. The benchmark remains46/133 with the
+same87 failing IDs. Evidence: `.state/research/form4952-royalty-debt-2026-10-09/`.
+
+PDF parity is qualified: the existing Schedule E projector prints royalty
+losses500/1,000 on rental-only line22 in the two loss cases. The
+[2025 instructions for line22](https://www.irs.gov/pub/irs-prior/i1040se--2025.pdf)
+exclude royalty properties; native output correctly omits the rental-loss
+field. This new finding is deferred116 and its projector remains unchanged.
+Existing name68/zero76, synthetic source authenticity, next-year carryover
+acceptance and broader filing/IRS scope remain open. The initial zero-net
+failure was in the new validator's required Form1040 line8; it now recognizes
+an omitted zero without changing the return calculation.
+
 ## Traced taxable-securities loan alongside a portfolio royalty (staged, unrun)
 
 The one-owner direct-use borrowing workpaper now also reconciles the existing

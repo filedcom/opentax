@@ -34,9 +34,19 @@ copies. This is one supporting descriptor, not two extra taxpayer forms. The
 211-root census counts only `IRS...` roots and is unchanged. See the
 [Form 8853 evidence and limits](../domains/adjustments/health/form8853/ty2025-form8853-gap.md).
 
+### LTC multiple-payee statement (October 10, 2026)
+
+`form8853LtcStatement` now emits `MultiplePayeesStatement` for a reviewed Section C
+with other payees and a nonterminal-only claim. The form links its line 15 to the
+aggregate statement; the existing Form 8853 PDF appends the same aggregate lines
+and policyholder allocation. This adds one supporting descriptor on the existing
+`form8853` pending key. The 211-row census counts only `IRS...` roots and is
+unchanged. Additional Section C identities need a verified native representation;
+see the [LTC checkpoint](../domains/adjustments/health/form8853/ty2025-form8853-gap.md#october-10-sourced-ltc-section-c-and-multiple-payee-statement).
+
 ### Registry-to-root reconciliation
 
-The current native registry has **157 descriptor entries**, including 39
+The current native registry has **158 descriptor entries**, including 40
 entries in its wage/supporting sequence segment. The PDF registry has **118
 entries**. The distinct native/PDF pending-key counts are 153/115. These are
 descriptor counts, not distinct schema-root counts or accepted filing scenarios.

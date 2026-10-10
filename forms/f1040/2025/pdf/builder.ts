@@ -1,4 +1,8 @@
+import { assertForm8835TransferStatements } from "../mef/forms/credits/business/f8835_transfer_statement.ts";
+import { assertForm8835DomesticStatements } from "../mef/forms/credits/business/f8835_domestic_statement.ts";
+import { assertForm8835IncreaseStatements } from "../mef/forms/credits/business/f8835_increase_statement.ts";
 import { assertEmployeeContributionReturn } from "../domains/credits/individual/form8880/form8880_tax_limit.ts";
+import { assertRequiredLtcSource } from "../mef/forms/adjustments/health/f8853_ltc.ts";
 import { assertPreparedForm8886PublicSource } from "../domains/general/filing/form8886/return-packets.ts";
 import { assertOwned7203RequiredCopies } from "../domains/income/business/form7203/form7203-owned-return.ts";
 import { assertHsaExcessRequiredCopy } from "../domains/adjustments/health/form8889/form8889_postyear_single_reconciliation.ts";
@@ -11,7 +15,7 @@ import { assertForm4852RetainedEvidence } from "../domains/income/wages/form4852
 import { assertReviewedForm8283PdfFields } from "../mef/forms/deductions/charitable/f8283/f8283_signed_fields.ts";
 import { roundWholeDollars } from "../../whole-dollars.ts";
 import { assertForm8978SourceBytes } from "../domains/taxes/passthrough/form8978/form8978_source.ts";
-import { PDFDocument, StandardFonts } from "pdf-lib";
+import { PDFDocument, PDFName, StandardFonts } from "pdf-lib";
 import { loadPdfTemplate } from "./support/template-cache.ts";
 import { normalizeAllPending } from "../return-processing/pending.ts";
 import { ALL_PDF_FORMS } from "./forms/index.ts";
@@ -627,6 +631,7 @@ async function buildPdfBytesInternal(
   assertBusinessSchedule1Amounts(normalized);
   assertOwned7203RequiredCopies(normalized);
   assertHsaExcessRequiredCopy(normalized);
+  assertRequiredLtcSource({ pending: normalized, filer });
   assertLine1iCombatPayElectionSource(normalized);
   assertSchedule2W2Line13Sources(normalized);
   assertSchedule2W2Line17KSource(normalized);
@@ -693,6 +698,11 @@ async function buildPdfBytesInternal(
   ) {
     throw new Error("PDF source differs from the prepared MeF return");
   }
+  if (!preparedBundle) {
+    await assertForm8835TransferStatements(normalized.f8835, filer, []);
+    await assertForm8835DomesticStatements(normalized.f8835, filer, []);
+    await assertForm8835IncreaseStatements(normalized.f8835, filer, []);
+  }
   if (preparedBundle) {
     if (
       await preparedSourceSha256(preparedBundle.pending, filer) !==
@@ -703,6 +713,21 @@ async function buildPdfBytesInternal(
       );
     }
     await assertPreparedAttachmentManifest(preparedBundle);
+    await assertForm8835TransferStatements(
+      normalized.f8835,
+      filer,
+      preparedBundle.attachments,
+    );
+    await assertForm8835DomesticStatements(
+      normalized.f8835,
+      filer,
+      preparedBundle.attachments,
+    );
+    await assertForm8835IncreaseStatements(
+      normalized.f8835,
+      filer,
+      preparedBundle.attachments,
+    );
     await assertReviewedForm8283PdfFields(
       normalized.f8283,
       filer,
@@ -920,6 +945,74 @@ async function buildPdfBytesInternal(
           formKey,
           formCopy,
         });
+      }
+    }
+  }
+
+  // Reviewed copies are static; submitted attachment bytes are unchanged.
+  if (normalized.f8835 && preparedBundle) {
+    const rows = normalized.f8835.f8835s as Array<{
+      increased_credit_reason: string;
+      increased_credit_statement_file_name?: string;
+      pwa_form7220_file_name?: string;
+      domestic_content_bonus: boolean;
+      domestic_content_statement_file_name?: string;
+      transfer_source?: { transfers: Array<{ statement_file_name: string }> };
+    }>;
+    for (const [index, item] of rows.entries()) {
+      const statements: Array<[string, string | undefined]> = [];
+      if (
+        [
+          "under_one_mw",
+          "construction_before_2023_01_29",
+          "prevailing_wage_and_apprenticeship",
+        ].includes(
+          item.increased_credit_reason,
+        )
+      ) {
+        statements.push([
+          "f8835_increased_credit_statement",
+          item.increased_credit_statement_file_name,
+        ]);
+      }
+      if (
+        item.increased_credit_reason === "prevailing_wage_and_apprenticeship"
+      ) {
+        statements.push(["f8835_form7220", item.pwa_form7220_file_name]);
+      }
+      if (item.domestic_content_bonus) {
+        statements.push([
+          "f8835_domestic_content_statement",
+          item.domestic_content_statement_file_name,
+        ]);
+      }
+      for (const transfer of item.transfer_source?.transfers ?? []) {
+        statements.push([
+          "f8835_transfer_statement",
+          transfer.statement_file_name,
+        ]);
+      }
+      for (const [formKey, fileName] of statements) {
+        const attachment = preparedBundle.attachments.find((a) =>
+          a.fileName === fileName
+        )!;
+        const copy = await PDFDocument.load(attachment.bytes, {
+          updateMetadata: false,
+        });
+        copy.getForm().flatten({ updateFieldAppearances: false });
+        for (const page of copy.getPages()) {
+          page.node.delete(PDFName.of("Annots"));
+        }
+        for (
+          const page of await merged.copyPages(copy, copy.getPageIndices())
+        ) {
+          merged.addPage(page);
+          pageOrigins?.push({
+            pageNumber: merged.getPageCount(),
+            formKey,
+            formCopy: index + 1,
+          });
+        }
       }
     }
   }

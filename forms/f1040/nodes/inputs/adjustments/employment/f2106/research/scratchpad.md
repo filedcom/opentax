@@ -18,7 +18,7 @@ Standard mileage rate 2025: $0.70/mile (Notice 2025-05)
 
 ## Open Questions
 - [x] Q: Who qualifies? — 4 categories per IRC §67(h)
-- [x] Q: Where does it flow? Fee-basis officials, qualifying performing artists, and qualifying reservists use Schedule 1 line 12. Disabled employees' impairment-related work expenses use Schedule A line 16, not Schedule 1 or AGI. The current calculator only activates fee-basis and narrow impairment internal routes; all Form 2106 exports remain blocked.
+- [x] Q: Where does it flow? Fee-basis officials, qualifying performing artists, and qualifying reservists use Schedule 1 line 12. Disabled employees' impairment-related work expenses use Schedule A line 16, not Schedule 1 or AGI. Bounded native/PDF routes now cover sourced fee-basis jobs, owner-qualified artists, itemized impairment expenses and unreimbursed overnight reservist travel. See the filing gap for limits and evidence.
 - [x] Q: 2025 mileage rate? — $0.70/mile per Notice 2025-05
 - [x] Q: Edge cases? — Meals 50% limit, qualified performing artist AGI test, reservist >100 miles test
 - [x] Q: Multiple 2106s? — Yes, one strict item per job with distinct employment record references

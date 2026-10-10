@@ -1,8 +1,15 @@
+import {
+  fishingExpenseTotals,
+  fishingLedgerSchema,
+} from "./schedule_j_fishing_ledger.ts";
 import { isDeepStrictEqual } from "node:util";
 import { createHash } from "node:crypto";
 import { reconcileForm4952ScheduleJChildDividend } from "../../../deductions/investments/form4952/form4952_schedulej_child_reconciliation.ts";
 import { z } from "zod";
-import { execute, type ExecuteResult } from "../../../../../../../core/runtime/executor.ts";
+import {
+  execute,
+  type ExecuteResult,
+} from "../../../../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../../../../core/runtime/planner.ts";
 import { publicInputSchema } from "../../../../../nodes/inputs/taxes/income-averaging/schedule_j/index.ts";
 import { scheduleJTaxSourceSchema } from "../../../../../nodes/intermediate/forms/taxes/income-averaging/schedule_j/tax-source.ts";
@@ -14,7 +21,7 @@ import {
 import { registry } from "../../../../registry.ts";
 import { buildPending } from "../../../../mef/execution/pending.ts";
 
-const nonfarmEmployerRecordSchema = z.object({
+export const nonfarmEmployerRecordSchema = z.object({
   tax_year: z.literal(2025),
   issued_by: z.string().trim().min(1),
   issued_on: z.string().regex(/^202[5-6]-\d{2}-\d{2}$/),
@@ -31,33 +38,6 @@ const nonfarmEmployerRecordSchema = z.object({
   employment_start: z.string().regex(/^2025-\d{2}-\d{2}$/),
   employment_end: z.string().regex(/^2025-\d{2}-\d{2}$/),
   services: z.string().trim().min(1),
-}).strict();
-
-const fishingLedgerSchema = z.object({
-  tax_year: z.literal(2025),
-  taxpayer_ssn: z.string().regex(/^\d{9}$/),
-  business_reference: z.string().trim().min(1),
-  catch_sales_record_reference: z.string().trim().min(1),
-  vessel_name: z.string().trim().min(1),
-  commercial_harvest: z.literal(true),
-  scientific_research_vessel: z.literal(false),
-  sales: z.array(
-    z.object({
-      sold_on: z.string().regex(/^2025-\d{2}-\d{2}$/),
-      buyer: z.string().trim().min(1),
-      buyer_invoice_reference: z.string().trim().min(1),
-      catch_description: z.string().trim().min(1),
-      amount: z.number().int().positive(),
-    }).strict(),
-  ).min(1),
-  supplies: z.array(
-    z.object({
-      paid_on: z.string().regex(/^2025-\d{2}-\d{2}$/),
-      supplier: z.string().trim().min(1),
-      paid_receipt_reference: z.string().trim().min(1),
-      amount: z.number().int().positive(),
-    }).strict(),
-  ),
 }).strict();
 
 export function retainedFishingProfit(inputs: Record<string, unknown>): number {
@@ -99,8 +79,11 @@ export function retainedFishingProfit(inputs: Record<string, unknown>): number {
   }
   const sales = ledger.sales.reduce((sum, item) => sum + item.amount, 0);
   const supplies = ledger.supplies.reduce((sum, item) => sum + item.amount, 0);
+  const expenses = fishingExpenseTotals(ledger);
   const saleRefs = ledger.sales.map((row) => row.buyer_invoice_reference);
-  const paidRefs = ledger.supplies.map((row) => row.paid_receipt_reference);
+  const paidRefs = [...ledger.supplies, ...(ledger.expenses ?? [])].map(
+    (row) => row.paid_receipt_reference,
+  );
   if (
     proof.document_id !== evidence.catch_sales_record_reference ||
     ledger.taxpayer_ssn !== owner ||
@@ -113,11 +96,15 @@ export function retainedFishingProfit(inputs: Record<string, unknown>): number {
     business.line_g_material_participation !== true ||
     sales !== business.line_1_gross_receipts ||
     supplies !== (business.line_22_supplies ?? 0) ||
+    Object.entries(expenses).some(([key, value]) =>
+      value !== (business[key] ?? 0)
+    ) ||
     new Set(saleRefs).size !== saleRefs.length ||
     new Set(paidRefs).size !== paidRefs.length ||
     Object.entries(business).some(([key, value]) =>
       /^line_\d/.test(key) &&
       key !== "line_1_gross_receipts" && key !== "line_22_supplies" &&
+      !Object.hasOwn(expenses, key) &&
       typeof value === "number" && value !== 0
     )
   ) {
@@ -125,30 +112,64 @@ export function retainedFishingProfit(inputs: Record<string, unknown>): number {
       "Schedule J fishing ledger, owner, and filed Schedule C do not reconcile",
     );
   }
-  return sales - supplies;
+  return sales - supplies -
+    Object.values(expenses).reduce((sum, value) => sum + value, 0);
 }
 
 function nonfarmWages(
   inputs: Record<string, unknown>,
   source: z.infer<typeof publicInputSchema>,
 ): number {
+  if (source.nonfarm_wage_source && source.nonfarm_wage_sources) {
+    throw new Error(
+      "Schedule J nonfarm wage records need one source inventory",
+    );
+  }
+  const proofs = source.nonfarm_wage_sources ??
+    (source.nonfarm_wage_source ? [source.nonfarm_wage_source] : []);
   const w2s = inputs.w2;
   if (w2s === undefined || (Array.isArray(w2s) && w2s.length === 0)) {
-    if (source.nonfarm_wage_source) {
+    if (proofs.length) {
       throw new Error("Schedule J nonfarm wage record has no issued W-2");
     }
     return 0;
   }
-  if (
-    !Array.isArray(w2s) || w2s.length !== 1 ||
-    !source.nonfarm_wage_source
-  ) {
+  if (!Array.isArray(w2s) || w2s.length !== proofs.length) {
     throw new Error(
       "Schedule J needs each nonfarm wage attributed to one issued W-2 and employer record",
     );
   }
-  const wage = record(w2s[0]);
-  const proof = source.nonfarm_wage_source;
+  const wages = w2s.map(record);
+  const ids = wages.map((wage) =>
+    wage.schedule_j_nonfarm_wage_source_document_id
+  );
+  const refs = wages.map((wage) => wage.source_document_reference);
+  if (
+    new Set(proofs.map((proof) => proof.document_id)).size !== proofs.length ||
+    new Set(ids).size !== wages.length || new Set(refs).size !== wages.length
+  ) {
+    throw new Error(
+      "Schedule J nonfarm wage sources must identify distinct W-2 copies",
+    );
+  }
+  return wages.reduce((sum, wage) => {
+    const proof = proofs.find((item) =>
+      item.document_id === wage.schedule_j_nonfarm_wage_source_document_id
+    );
+    if (!proof) {
+      throw new Error(
+        "Schedule J W-2 has no matching retained employer record",
+      );
+    }
+    return sum + nonfarmWageAmount(inputs, wage, proof);
+  }, 0);
+}
+
+function nonfarmWageAmount(
+  inputs: Record<string, unknown>,
+  wage: Record<string, unknown>,
+  proof: NonNullable<z.infer<typeof publicInputSchema>["nonfarm_wage_source"]>,
+): number {
   const encoded = proof.bytes_base64;
   const bytes = Uint8Array.from(atob(encoded), (c) => c.charCodeAt(0));
   if (
@@ -163,23 +184,40 @@ function nonfarmWages(
     JSON.parse(new TextDecoder().decode(bytes)),
   );
   const general = record(inputs.general);
-  const farm = record(
-    record(inputs.schedule_f).schedule_fs instanceof Array
-      ? (record(inputs.schedule_f).schedule_fs as unknown[])[0]
-      : undefined,
-  );
+  const farms = inputs.schedule_f === undefined
+    ? []
+    : record(inputs.schedule_f).schedule_fs;
+  const businesses = [
+    ...(Array.isArray(farms) ? farms : []),
+    ...(Array.isArray(inputs.schedule_c) ? inputs.schedule_c : []),
+  ];
   const digits = (v: unknown) => String(v ?? "").replaceAll("-", "");
+  const primary = digits(general.taxpayer_ssn);
+  const spouse = digits(general.spouse_ssn);
+  const owners = general.filing_status === "mfj"
+    ? [primary, spouse]
+    : [primary];
+  if (
+    owners.some((ssn) => !/^\d{9}$/.test(ssn)) ||
+    new Set(owners).size !== owners.length
+  ) {
+    throw new Error(
+      "Schedule J nonfarm wages need distinct filed owner identities",
+    );
+  }
   const amount = Number(wage.box1_wages);
   if (
     !Number.isSafeInteger(amount) || amount <= 0 ||
     employer.naics_code.startsWith("11") ||
     employer.employment_start > employer.employment_end ||
     employer.issued_on < employer.employment_end ||
-    employer.employer_ein === digits(farm.line_d_ein) ||
+    businesses.some((business) =>
+      employer.employer_ein === digits(record(business).line_d_ein)
+    ) ||
     employer.issued_by !== employer.employer_name ||
     employer.employer_ein !== digits(wage.employer_ein) ||
     employer.employer_name !== wage.employer_name ||
-    employer.employee_ssn !== digits(general.taxpayer_ssn) ||
+    !owners.includes(employer.employee_ssn) ||
     employer.employee_ssn !== digits(wage.employee_ssn) ||
     employer.w2_source_document_reference !== wage.source_document_reference ||
     proof.document_id !== wage.schedule_j_nonfarm_wage_source_document_id ||

@@ -11,7 +11,10 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../../../core/types/tax-node.ts";
-import { output, TaxNode } from "../../../../../../../../core/types/tax-node.ts";
+import {
+  output,
+  TaxNode,
+} from "../../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../../../aggregation/general/return-assembly/agi_aggregator/index.ts";
 import { schedule_d } from "../../../../aggregation/income/investments/schedule_d/index.ts";
@@ -25,6 +28,10 @@ import {
   investment1245DispositionSchema,
 } from "./investment_1245.ts";
 import { box11Line10SourceSchema } from "../../../../../inputs/income/rental-passthrough/k1_partnership/box11_line10.ts";
+import {
+  calculateSection1231History,
+  section1231PriorHistorySchema,
+} from "./prior_history.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -170,6 +177,7 @@ export const inputSchema = z.object({
   // recaptured as ordinary income before any remaining §1231 gain is treated
   // as long-term capital gain. Always entered as a non-negative value.
   nonrecaptured_1231_loss: z.number().nonnegative().optional(),
+  section_1231_prior_history: section1231PriorHistorySchema.optional(),
 
   // Additional ordinary gain or loss whose source-line breakdown is not yet
   // supplied. The MeF builder rejects a nonzero aggregate because it cannot
@@ -460,6 +468,49 @@ function ordinaryAmount(
   return recapturedAsOrdinary(grossGain, priorLoss) + ordinaryGain;
 }
 
+function withPriorHistory(input: Form4797Input) {
+  if (!input.section_1231_prior_history) return { input, history: undefined };
+  if (
+    input.current_loss_forms || input.current_property_sources ||
+    (input.passive_property_sales?.length ?? 0) > 0 ||
+    (input.passive_activity_sources?.length ?? 0) > 0 ||
+    (input.investment_1245_dispositions?.length ?? 0) > 0
+  ) {
+    throw new Error(
+      "Form 4797 prior-loss history needs finalized section 1231 amounts after passive and property limitations",
+    );
+  }
+  const history = calculateSection1231History(
+    input.section_1231_prior_history,
+    totalSection1231(input),
+  );
+  const prior = history.current.opening_nonrecaptured_loss;
+  if (
+    history.current.ordinary_gain_loss < 0 &&
+    history.current.loss_taken_into_account !==
+      -history.current.ordinary_gain_loss
+  ) {
+    throw new Error(
+      "Form 4797 limited current loss needs its finalized tax-limitation source before public calculation",
+    );
+  }
+  if (
+    input.nonrecaptured_1231_loss !== undefined &&
+    input.nonrecaptured_1231_loss !== prior
+  ) {
+    throw new Error(
+      "Form 4797 prior-loss balance conflicts with its filed five-year history",
+    );
+  }
+  const owners = [history.owner.taxpayer_ssn, history.owner.spouse_ssn];
+  if (input.k1_1231_rows?.some((row) => !owners.includes(row.recipient_tin))) {
+    throw new Error(
+      "Form 4797 current K-1 gain owner conflicts with its prior-loss history",
+    );
+  }
+  return { input: { ...input, nonrecaptured_1231_loss: prior }, history };
+}
+
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
@@ -474,7 +525,12 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
   ]);
 
   compute(_ctx: NodeContext, rawInput: Form4797Input): NodeResult {
-    const input = inputSchema.parse(rawInput);
+    const { input, history } = withPriorHistory(inputSchema.parse(rawInput));
+    if (history && _ctx.taxYear !== 2025) {
+      throw new Error(
+        "Form 4797 reviewed prior-loss history is for tax year 2025",
+      );
+    }
     const investmentSales = input.investment_1245_dispositions ?? [];
     if (investmentSales.length > 0) {
       if (
@@ -609,7 +665,7 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
       );
     }
 
-    if (!hasSaleData(input)) {
+    if (!hasSaleData(input) && !history) {
       return { outputs: [] };
     }
 
@@ -746,6 +802,26 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
       });
     }
 
+    if (history) {
+      if (rawInput.nonrecaptured_1231_loss === undefined) {
+        outputs.push(
+          output(form4797, {
+            nonrecaptured_1231_loss: history.current.opening_nonrecaptured_loss,
+          }),
+        );
+      }
+      return {
+        outputs,
+        carryforwards: {
+          section_1231_nonrecaptured_loss_2026:
+            history.opening_2026_nonrecaptured_loss,
+          ...Object.fromEntries(history.opening_2026_losses.map((row) => [
+            `section_1231_nonrecaptured_loss_2026:${row.loss_year}`,
+            row.remaining_loss,
+          ])),
+        },
+      };
+    }
     return { outputs };
   }
 }

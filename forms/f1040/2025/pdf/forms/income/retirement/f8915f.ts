@@ -1,4 +1,8 @@
 import {
+  appendDistributionDates,
+  groupedDistributionInstances,
+} from "./f8915f_groups.ts";
+import {
   currentYearDistributionLines,
   inputSchema,
   verifyCurrentYearDistributionSource,
@@ -7,7 +11,10 @@ import {
   buildCurrentYearDistributionForm8915F,
   form8915FOwnerName,
 } from "../../../../mef/forms/income/retirement/f8915f.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 
 const page1 = "topmostSubform[0].Page1[0]";
 const page2 = "topmostSubform[0].Page2[0]";
@@ -29,6 +36,9 @@ export const form8915FPdf: PdfFormDescriptor = {
   instances(fields, filer, allPending) {
     const items = inputSchema.parse(fields).f8915fs ?? [];
     if (items.length === 0) return [];
+    if (items.length > 1) {
+      return groupedDistributionInstances(fields, filer, allPending);
+    }
     const item = items[0];
     buildCurrentYearDistributionForm8915F(item, {
       filer,
@@ -81,6 +91,7 @@ export const form8915FPdf: PdfFormDescriptor = {
       line26: lines.line26_form1040_line4b,
     }];
   },
+  appendSupplementalPages: appendDistributionDates,
   fields: [
     field("owner_name", `${page1}.f1_01[0]`),
     field("owner_ssn", `${page1}.f1_02[0]`),

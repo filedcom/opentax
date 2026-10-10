@@ -1,9 +1,12 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import { EnergyType } from "../../../../../nodes/inputs/credits/business/f8835/index.ts";
 import { form8835PdfSources } from "./f8835_source.ts";
 
 // Original TY2025 IRS Form 8835 AcroForm. The source-gated wind and geothermal
-// paths use lines 1a through 1f; the printed rate cells are read-only in the PDF.
+// paths use the applicable energy row; pre-2022 rates follow the printed footnote.
 const page1 = "topmostSubform[0].Page1[0]";
 const page2 = "topmostSubform[0].Page2[0]";
 const page3 = "topmostSubform[0].Page3[0]";
@@ -39,6 +42,7 @@ export const form8835Pdf: PdfFormDescriptor = {
   fields: [
     text("filer_name", `${page1}.f1_1[0]`),
     text("filer_tin", `${page1}.f1_2[0]`),
+    text("registration_number", `${page1}.f1_3[0]`),
     text("facility_type", `${page1}.f1_4[0]`),
     text("facility_description", `${page1}.f1_5[0]`),
     text("owner_name", `${page1}.f1_6[0]`),
@@ -53,8 +57,13 @@ export const form8835Pdf: PdfFormDescriptor = {
     text("long_fraction", `${page1}.Longitude_CombFields[0].f1_15[0]`),
     text("construction_date", `${page1}.f1_16[0]`),
     text("service_date", `${page1}.f1_17[0]`),
+    checked("under_one_mw", `${page1}.c1_3[0]`),
+    checked("early_construction", `${page1}.c1_3[1]`),
+    checked("pwa_requirements", `${page1}.c1_3[2]`),
     checked("no_increased_credit", `${page1}.c1_3[3]`),
+    checked("domestic_bonus", `${page1}.c1_4[0]`),
     checked("no_domestic_bonus", `${page1}.c1_4[1]`),
+    checked("energy_community_bonus", `${page1}.c1_5[0]`),
     checked("no_energy_community_bonus", `${page1}.c1_5[1]`),
     checked("dc_not_applicable", `${page1}.c1_6[1]`),
     checked("dc_solar", `${page1}.c1_6[0]`),
@@ -121,7 +130,18 @@ export const form8835Pdf: PdfFormDescriptor = {
     ),
     text("line2", `${page2}.f2_31[0]`),
     text("line4", `${page2}.f2_35[0]`),
+    text("line5a", `${page2}.f2_36[0]`),
+    text("line5b", `${page2}.f2_37[0]`, true),
+    text("line5c", `${page2}.f2_38[0]`, true),
+    text("line5d", `${page2}.f2_39[0]`, true),
     text("line6", `${page2}.f2_40[0]`),
+    text("line7a", `${page2}.f2_41[0]`),
+    text("line7b", `${page2}.f2_42[0]`),
+    text("line7c", `${page2}.f2_43[0]`),
+    text("line7d", `${page2}.f2_44[0]`),
+    text("line7e", `${page2}.f2_45[0]`),
+    text("line7f", `${page2}.f2_46[0]`),
+    text("line7g", `${page2}.f2_47[0]`),
     text("line8", `${page2}.f2_48[0]`),
     text("line9", `${page2}.f2_49[0]`),
     text("line10", `${page2}.f2_50[0]`, true),
@@ -141,6 +161,14 @@ export const form8835Pdf: PdfFormDescriptor = {
       (source) => {
         const { item, lines, filerName, filerTin } = source;
         const wind = item.energy_type === EnergyType.Wind;
+        const oldFacility = item.facility_placed_in_service_date < "2022-01-01";
+        const constructionYear = Number(
+          item.facility_construction_start_date.slice(0, 4),
+        );
+        const wind20 = wind && oldFacility && constructionYear === 2017;
+        const wind40 = wind && oldFacility &&
+          [2018, 2020, 2021].includes(constructionYear);
+        const wind60 = wind && oldFacility && constructionYear === 2019;
         const closedLoopBiomass = item.energy_type === EnergyType.BiomassClosed;
         const openLoopBiomass = item.energy_type === EnergyType.BiomassOpen;
         const solar = item.energy_type === EnergyType.Solar;
@@ -150,6 +178,7 @@ export const form8835Pdf: PdfFormDescriptor = {
         const long = parts(item.facility_longitude!, 3);
         return {
           filer_name: filerName,
+          registration_number: item.registration_number,
           filer_tin: filerTin,
           facility_type: wind
             ? "Wind"
@@ -179,9 +208,17 @@ export const form8835Pdf: PdfFormDescriptor = {
           long_fraction: long.fraction,
           construction_date: usDate(item.facility_construction_start_date),
           service_date: usDate(item.facility_placed_in_service_date),
-          no_increased_credit: true,
-          no_domestic_bonus: true,
-          no_energy_community_bonus: true,
+          under_one_mw: item.increased_credit_reason === "under_one_mw",
+          early_construction:
+            item.increased_credit_reason === "construction_before_2023_01_29",
+          pwa_requirements: item.increased_credit_reason ===
+            "prevailing_wage_and_apprenticeship",
+          no_increased_credit: !oldFacility &&
+            item.increased_credit_reason === "none",
+          domestic_bonus: item.domestic_content_bonus,
+          no_domestic_bonus: !item.domestic_content_bonus,
+          energy_community_bonus: item.energy_community_bonus,
+          no_energy_community_bonus: !item.energy_community_bonus,
           dc_not_applicable: !solar,
           dc_solar: solar,
           dc_solar_nameplate_kw: solar ? item.solar_dc_nameplate_kw : undefined,
@@ -209,7 +246,20 @@ export const form8835Pdf: PdfFormDescriptor = {
           line1h_credit: trash ? lines.line1 : undefined,
           line2: lines.line2,
           line4: lines.line4,
+          line5a: item.tax_exempt_bond_proceeds
+            ? lines.line5a.toFixed(2)
+            : undefined,
+          line5b: item.tax_exempt_bond_proceeds ? lines.line5b : undefined,
+          line5c: item.tax_exempt_bond_proceeds ? lines.line5c : undefined,
+          line5d: item.tax_exempt_bond_proceeds ? lines.line5d : undefined,
           line6: lines.line6,
+          line7a: wind20 ? lines.line6 : undefined,
+          line7b: wind20 ? lines.line7g : undefined,
+          line7c: wind40 ? lines.line6 : undefined,
+          line7d: wind40 ? lines.line7g : undefined,
+          line7e: wind60 ? lines.line6 : undefined,
+          line7f: wind60 ? lines.line7g : undefined,
+          line7g: oldFacility && wind ? lines.line7g : undefined,
           line8: lines.line8,
           line9: lines.line9,
           line10: lines.line10,

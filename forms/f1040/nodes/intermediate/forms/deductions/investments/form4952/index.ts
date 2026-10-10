@@ -1,9 +1,18 @@
+import {
+  royaltyDebtInterest,
+  royaltyDebtProperty,
+  royaltyDebtTraceSchema,
+} from "./royalty_debt.ts";
+import { scheduleE } from "../../../../../inputs/income/rental-passthrough/schedule_e/index.ts";
 import { z } from "zod";
 import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../../../core/types/tax-node.ts";
-import { output, TaxNode } from "../../../../../../../../core/types/tax-node.ts";
+import {
+  output,
+  TaxNode,
+} from "../../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
 import { scheduleA } from "../../../../../inputs/deductions/itemized/schedule_a/index.ts";
 import { income_tax_calculation } from "../../../../worksheets/taxes/calculation/income_tax_calculation/index.ts";
@@ -42,6 +51,7 @@ function sum(value: number | number[] | undefined): number {
 export const inputSchema = z.object({
   investment_interest_expense: z.number().nonnegative().optional(),
   direct_debt_trace: form4952DirectDebtTraceSchema.optional(),
+  royalty_debt_trace: royaltyDebtTraceSchema.optional(),
   investment_interest_expense_excludes_sourced_k1: z.literal(true).optional(),
   investment_interest_expense_excludes_royalty_attributable_interest: z.literal(
     true,
@@ -66,6 +76,7 @@ export const inputSchema = z.object({
   investment_expenses: z.number().nonnegative().optional(),
   investment_expenses_exclude_sourced_k1: z.literal(true).optional(),
   source_1099_interest: accumulableAmount.optional(),
+  source_8815_excluded_interest: z.number().int().nonnegative().optional(),
   source_1099_royalties: accumulableAmount.optional(),
   source_k1_royalties: accumulableAmount.optional(),
   source_1099_dividends: accumulableAmount.optional(),
@@ -135,6 +146,36 @@ interface Form4952Totals {
 
 function sourceTotals(input: Form4952Input): Form4952Totals {
   if (
+    input.source_8815_excluded_interest !== undefined &&
+    (!input.royalty_debt_trace ||
+      input.source_8815_excluded_interest > sum(input.source_1099_interest))
+  ) {
+    throw new Error(
+      "Form 4952 bond exclusion needs matched royalty debt and gross interest",
+    );
+  }
+  if (input.royalty_debt_trace) {
+    const permitted = new Set([
+      "royalty_debt_trace",
+      "source_1099_royalties",
+      "source_1099_interest",
+      "source_8815_excluded_interest",
+      "amt_refigure",
+    ]);
+    if (
+      Object.keys(input).some((key) => !permitted.has(key)) ||
+      !input.amt_refigure || Object.values(input.amt_refigure).some((value) =>
+        value !== 0
+      ) ||
+      sum(input.source_1099_royalties) !==
+        input.royalty_debt_trace.royalty_source.box2_gross_royalties
+    ) {
+      throw new Error(
+        "Form 4952 royalty debt needs only matched royalty, plain interest and zero AMT adjustments",
+      );
+    }
+  }
+  if (
     (sum(input.source_1099_royalties) + sum(input.source_k1_royalties)) > 0 &&
     ((input.investment_interest_expense ?? 0) +
         sum(input.source_k1_investment_interest)) > 0 &&
@@ -176,11 +217,17 @@ function sourceTotals(input: Form4952Input): Form4952Totals {
   const childDividends = input.form8814_line9_qualified_dividends ?? 0;
   const childGain = input.form8814_line10_capital_gain ?? 0;
   return {
-    line1: (input.investment_interest_expense ?? 0) +
+    line1:
+      (input.royalty_debt_trace
+        ? royaltyDebtInterest(input.royalty_debt_trace)
+        : 0) +
+      (input.investment_interest_expense ?? 0) +
       sum(input.source_k1_investment_interest),
     line2: input.prior_year_carryforward ?? 0,
     line4a: (input.other_investment_property_gross_income ?? 0) +
-      sum(input.source_1099_interest) + sum(input.source_1099_royalties) +
+      sum(input.source_1099_interest) -
+      (input.source_8815_excluded_interest ?? 0) +
+      sum(input.source_1099_royalties) +
       sum(input.source_k1_royalties) +
       sum(input.source_1099_dividends) +
       sum(input.source_k1_interest) + sum(input.source_k1_dividends) +
@@ -303,7 +350,11 @@ export function calculateAmtForm4952(input: Form4952Input): {
 class Form4952Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form4952";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([scheduleA, income_tax_calculation]);
+  readonly outputNodes = new OutputNodes([
+    scheduleA,
+    scheduleE,
+    income_tax_calculation,
+  ]);
 
   compute(_ctx: NodeContext, rawInput: Form4952Input): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -328,7 +379,14 @@ class Form4952Node extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = lines.line3 > 0
       ? [{ nodeType: this.nodeType, fields: { ...lines } }]
       : [];
-    if (lines.line8 > 0) {
+    if (input.royalty_debt_trace) {
+      outputs.push(output(scheduleE, {
+        schedule_es: [
+          royaltyDebtProperty(input.royalty_debt_trace, lines.line8),
+        ],
+      }));
+    }
+    if (lines.line8 > 0 && !input.royalty_debt_trace) {
       outputs.push(
         output(scheduleA, { line_9_investment_interest: lines.line8 }),
       );

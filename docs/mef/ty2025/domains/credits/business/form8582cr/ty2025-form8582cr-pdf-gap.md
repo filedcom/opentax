@@ -1,7 +1,7 @@
 # TY2025 Form 8582-CR PDF boundary
 
 Status: a bounded source-backed Form 8582-CR PDF descriptor is registered for
-one to fifteen current-year passive New Markets credits from distinct
+current-year passive New Markets credit inventories from distinct
 self-earned Form 8874 investments and credit-only partnership K-1 box 15
 code AD or S corporation K-1 box 13 code AD sources in any mix. One passive
 self-earned investment may also be paired with one distinct nonpassive Form
@@ -9,16 +9,19 @@ self-earned investment may also be paired with one distinct nonpassive Form
 Schedule E passive rental income activity. Other branches remain closed at PDF
 export until their source, final-return, and carryforward joins are complete.
 
-## Bounded ordinary-tax filing route (written, unrun)
+## Ordinary-tax filing route and historical implementation notes
+
+The October10 checkpoint below supersedes the historical fifteen-source capacity
+statements and unrun status for its five mixed K-1 cases. Other historical
+source/authentication qualifications remain.
 
 `form8582cr.line6_ordinary_worksheet` is a direct reviewed source record for
 the one-rental ordinary-tax calculation. The native and PDF exporters recompute
 its taxable-income-with/without-passive tax pair from the finalized Form 1040
 method, Schedule E rental ledger, Schedule 1, and filer status. The credit
-activity may be distinct from the rental income activity: each of up to fifteen
-passive Form 8874 investments must exactly match one distinct Form 8582-CR
-source's activity, source document, and current-year amount. The fifteen-source
-limit is the printed Form 3800 Part V capacity. When there is only one passive
+activity may be distinct from the rental income activity: each
+passive Form 8874 investment must exactly match one distinct Form 8582-CR
+source's activity, source document, and current-year amount. Form 3800 Part V now uses continuation pages beyond fifteen sources. When there is only one passive
 investment, one additional nonpassive investment on that Form 8874 enters
 Form 3800 line 1i outside the passive Worksheet 9.
 Alternatively, each partnership K-1 box 15 code AD or S corporation K-1 box
@@ -112,7 +115,7 @@ their line 6 source, final-return tax method, or carryforward join:
 | Native calculation branch | Printable gap |
 | --- | --- |
 | Other-category current-year credits from estate, trust, or cooperative K-1 sources; partnership or S corporation K-1s with other income, deduction, or credit boxes; or self-earned sources other than the bounded Form 8874 investments | Complete passive-income inventory, issuer evidence, and final-return line 6 join. |
-| More than fifteen current-year sources, K-1s with other income/deduction/credit boxes, nonpassive investments beside K-1 credits, mixed passive/nonpassive sources beyond the one-investment pair, or mixed Form 3800 reporting lines 3, 24, and 33 | Printable Part V capacity or per-activity Form 3800/Form 1040 tax-use proof for every source. |
+| K-1s with other income/deduction/credit boxes, nonpassive investments beside K-1 credits, mixed passive/nonpassive sources beyond the one-investment pair, or mixed Form 3800 reporting lines 3, 24, and 33 | Per-activity Form 3800/Form 1040 tax-use proof for every source. |
 | Prior-year unallowed credits in any category | Authenticated prior filed Worksheet 9 by origin year and activity, accepted-return reference, and current-year vintage allocation. |
 | Active-participation rental, rehabilitation/pre-1990 housing, or post-1989 low-income housing credits | Parts II-IV MAGI, Form 8582 line 9, and tax-on-reduced-income worksheets with native/PDF parity. |
 | Other tax methods, multiple Schedule E rentals, K-1 or farm-rental passive income, and passive dispositions | Reperform line 6 under the actual finalized Form 1040 method and complete passive net-income set. |
@@ -329,3 +332,56 @@ October8 one-partnership passive new-markets packet: all18 retained pages review
 
 
 October8 mixed partnership/S-corporation review: all18 retained pages inspected;7,500 current credit allocates4,412 allowed/3,088 unallowed across distinct entity rows. Partnership allowed2,941/unallowed2,059 and S corporation1,471/1,029 reconcile independently with Worksheet8/9 arithmetic, two native/PDF PartV EIN rows and Form1040 refund2,545. Source recipient/omission conflicts reject, exact native replay/full XSD pass. Worksheets are retained arithmetic JSON, not printed/authenticated records; accepted carry and issuer authenticity remain unproved. See [qualified evidence](../../../../readiness/ty2025-readiness-execution-2026-10-07.md).
+
+## October 10 complete passive-credit inventories and continuation pages
+
+The ordinary passive-credit route no longer treats the fifteen rows on one
+Form3800 PartV page as a filing limit. Form8582-CR and the Form3800 PDF now
+allow all reconciled current-year sources through the existing continuation
+builder. Per-source issuer/recipient, passive classification, amount, document,
+Worksheet9 allocation, final tax and detail-count checks remain. Unmatched
+additional sources still reject. This does not open other income methods,
+prior-year imports, credit categories or unauthenticated direct Form8874 filing.
+
+Five public complete-return cases use15,16,30,31 and46 mixed partnership/S
+corporation codeAD sources, with their reviewed source order reversed relative
+to the K-1 inventory. Fully allowed and tax-limited cases cross one through four
+PartV pages. Wages100000 plus rental20000 produce taxable104250 and ordinary
+tax17867; without passive income, TaxTable income84250–84299 gives13455,
+so the passive-credit limit is4412. Independent integer allocation retains
+all138 sources and their current-year unallowed amounts.
+
+| Sources | Total credit | Allowed | Passive unallowed | Final tax | Packet pages |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 15 | 1605 | 1605 | 0 | 16262 | 18 |
+| 16 | 1720 | 1720 | 0 | 16147 | 19 |
+| 30 | 15435 | 4412 | 11023 | 13455 | 19 |
+| 31 | 15965 | 4412 | 11553 | 13455 | 20 |
+| 46 | 5635 | 4412 | 1223 | 13455 | 21 |
+
+The five focused tests pass (44s); final grouped typed regression73/0 (20s).
+Forty native and40 freshly hashed PDF mutations reject, including late-source
+recipient/amount/removal, source reference, reviewed tax, rental and final credit
+drift. All five complete returns pass local TY2025v5.4 XSD. Both archive layers
+preserve the exact XML/manifest;20 missing/altered variants reject. Synthetic
+package identifiers are local only; no transmission or acknowledgment exists.
+
+All97 packet pages were rendered and observed:53 unique pages on14 inspected
+sheets plus44 exact pixel duplicates. All138 source EINs and before/after-passive
+credit amounts reconcile in native detail and12 printed PartV pages. Final
+packets have zero Widget annotations and no AcroForm. Existing26/68/76/84
+qualify the packets: skipped Form3800 SectionB values, OWNER ALEX versus
+Alex Owner names, blank required zeros and omitted native Form6251 line1a.
+No clean presentation approval or new deferred item is claimed. Business totals
+now122 XSD-valid complete returns/2367 observed pages; PartVI37 roots/17 pages
+remain separate.
+
+Evidence: `.state/research/form8582cr-overflow-2026-10-10/` retains original
+inputs, pending/native/PDF, Worksheet9 ledger, archive layers, request/manifest,
+independent arithmetic and native/printed row checks, XSD logs, typed logs,
+source/packet/pixel hashes and visual qualifications. Prior head2589a0c24 passed
+CI38030409197. This completes the current-source capacity extension, not the
+broader Form8582-CR/Form3800 main tasks or IRS business-rule acceptance.
+
+Sources checked: [Form8582-CR instructions](https://www.irs.gov/instructions/i8582cr)
+and [Form3800 instructions](https://www.irs.gov/instructions/i3800).

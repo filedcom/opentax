@@ -1,3 +1,8 @@
+import { reconcileBondRoyaltyInterest } from "./form8815_royalty_return.ts";
+import { reconcileRoyaltyDebtReturn } from "../../../deductions/investments/form4952/form4952_royalty_debt_reconciliation.ts";
+import { reconcilePublicForm8839Pending } from "../../../../../nodes/intermediate/forms/credits/individual/form8839/pending_reconciliation.ts";
+import { assertContributionOwners } from "./form8815_contribution_return.ts";
+import { form8815ForeignAddback } from "./form8815_foreign_addback.ts";
 import { z } from "zod";
 import type {
   Form8815Input,
@@ -84,6 +89,20 @@ export function assertForm8815FinalReturn(
     (sum, row) => sum + (row.box1 ?? 0) + (row.box3 ?? 0),
     0,
   );
+  // The reviewed credit-only adoption route has no employer-benefit exclusion.
+  // Replay its source and final return before allowing coexistence with bonds.
+  if (Object.keys(pending.form8839 ?? {}).length > 0) {
+    reconcilePublicForm8839Pending(pending);
+  }
+  const foreignAddback = form8815ForeignAddback(pending);
+  const special = source.line9_worksheet.royalty_debt_special_computation;
+  const royaltyAdjustment = special
+    ? reconcileBondRoyaltyInterest(pending).magiIncomeAdjustment
+    : 0;
+  if (special) {
+    const fields = z.record(z.unknown()).parse(pending.form4952);
+    reconcileRoyaltyDebtReturn(fields, pending);
+  }
   const grossInterest = source.line9_worksheet.schedule_b_line2_interest;
   const taxableInterest = form1040.line2b_taxable_interest ?? 0;
   const adjustments = form1040.line10_adjustments ?? 0;
@@ -97,19 +116,19 @@ export function assertForm8815FinalReturn(
     scheduleB.print_line2_total !== grossInterest ||
     scheduleB.print_line4_total !== taxableInterest ||
     grossInterest - lines.line14 !== taxableInterest ||
-    form1040.line9_total_income - taxableInterest !==
+    form1040.line9_total_income - taxableInterest + royaltyAdjustment !==
       source.line9_worksheet.other_1040_and_schedule1_income ||
     (schedule1?.line26_total_adjustments ?? 0) !== adjustments ||
     adjustments - studentLoanAdjustment !==
       source.line9_worksheet.schedule1_adjustments ||
     form1040.line11_agi !== form1040.line9_total_income - adjustments ||
-    source.line9_worksheet.foreign_adoption_and_puerto_rico_addbacks !== 0 ||
-    Object.keys(pending.form2555 ?? {}).length > 0 ||
-    Object.keys(pending.form4563 ?? {}).length > 0 ||
-    Object.keys(pending.form8839 ?? {}).length > 0
+    source.line9_worksheet.foreign_adoption_and_puerto_rico_addbacks !==
+      foreignAddback ||
+    Object.keys(pending.form4563 ?? {}).length > 0
   ) {
     throw new Error(
       "Form 8815 line 9 worksheet or exclusion differs from the finalized Schedule B, Schedule 1, and Form 1040",
     );
   }
+  assertContributionOwners(source, pending.f1040, foreignAddback);
 }

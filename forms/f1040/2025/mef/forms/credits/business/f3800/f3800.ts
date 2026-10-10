@@ -1,3 +1,11 @@
+import {
+  assertCurrentProductionAllocationSource,
+  reconcileCurrentProductionAllocation,
+} from "../../../../../../nodes/inputs/credits/business/f3800/production-allocation.ts";
+import {
+  assertCurrentOrphanAllocationSource,
+  reconcileCurrentOrphanAllocation,
+} from "../../../../../../nodes/inputs/credits/business/f3800/current-allocation.ts";
 import { z } from "zod";
 import { assertForm3800FinalCreditJoin } from "../../../../../domains/credits/business/form3800/form3800_final_credit_join.ts";
 import {
@@ -478,6 +486,12 @@ function sourceForm8835(
       subject_to_passive_activity_limit: item.subject_to_passive_activity_limit,
       transfer_election_statement_file_name:
         item.transfer_election_statement_file_name,
+      ...(item.transfer_source
+        ? {
+          transfer_election_statement_file_names: item.transfer_source.transfers
+            .map((t) => t.statement_file_name),
+        }
+        : {}),
     };
   });
   const actual = fields.f8835_credit_entries;
@@ -496,7 +510,9 @@ function sourceForm8835(
         entry.subject_to_passive_activity_limit !==
           sourceEntry.subject_to_passive_activity_limit ||
         entry.transfer_election_statement_file_name !==
-          sourceEntry.transfer_election_statement_file_name;
+          sourceEntry.transfer_election_statement_file_name ||
+        JSON.stringify(entry.transfer_election_statement_file_names) !==
+          JSON.stringify(sourceEntry.transfer_election_statement_file_names);
     })
   ) {
     throw new Error(
@@ -799,6 +815,14 @@ export function prepareForm3800DocumentParts(
     throw new Error("Form 3800 preparation needs reserved document IDs");
   }
   const { tax, parsed, passiveActivity, lines, allowedCredit } = base;
+  assertCurrentProductionAllocationSource(
+    parsed.current_production_allocation_review,
+    context.pending?.form3800_current_production_allocation,
+  );
+  assertCurrentOrphanAllocationSource(
+    parsed.current_orphan_allocation_review,
+    context.pending?.form3800_current_orphan_allocation,
+  );
   const carryforwardEntries = parsed.carryforward_vintages ?? [];
   const empowermentCarryforward = reconcileForm3800NonpassiveCarryforwards(
     carryforwardEntries,
@@ -1098,6 +1122,32 @@ export function prepareForm3800DocumentParts(
   );
   const applied = (sourceKey: string): number =>
     sourceUse.get(sourceKey)?.appliedAgainstTax ?? 0;
+  const reviewedProductionTaxUse = parsed.current_production_allocation_review
+    ? reconcileCurrentProductionAllocation(
+      parsed.current_production_allocation_review,
+      f8835InputSchema.parse(context.pending?.f8835).f8835s.map((
+        item,
+        index,
+      ) => ({ ...item, ...facilities[index] })),
+      {
+        primarySSN: context.filer?.primarySSN ?? "",
+        appliedByLine: {
+          "1f": applied("nonpassive:8835:1f"),
+          "4e": applied("nonpassive:8835:4e"),
+        },
+      },
+    )
+    : undefined;
+  if (
+    reviewedProductionTaxUse &&
+    parsed.form8835_applied_credits_by_facility !== undefined &&
+    JSON.stringify(reviewedProductionTaxUse) !==
+      JSON.stringify(parsed.form8835_applied_credits_by_facility)
+  ) {
+    throw new Error(
+      "Form 3800 production allocation conflicts with facility applied amounts",
+    );
+  }
   const passiveApplied = taxUse.passiveVintages.reduce(
     (sum, row) => ({
       standard: sum.standard +
@@ -1143,6 +1193,26 @@ export function prepareForm3800DocumentParts(
     "nonpassive:8820",
     parsed.form8820_applied_credit,
   );
+  const reviewedOrphanTaxUse = parsed.current_orphan_allocation_review
+    ? reconcileCurrentOrphanAllocation(
+      parsed.current_orphan_allocation_review,
+      orphanDrugK1Credits,
+      {
+        primarySSN: context.filer?.primarySSN ?? "",
+        appliedCredit: form8820Applied,
+      },
+    )
+    : undefined;
+  if (
+    reviewedOrphanTaxUse && (form8820 ||
+      (parsed.form8820_applied_credits_by_source !== undefined &&
+        JSON.stringify(parsed.form8820_applied_credits_by_source) !==
+          JSON.stringify(reviewedOrphanTaxUse)))
+  ) {
+    throw new Error(
+      "Form 3800 current K-1 allocation conflicts with another source or allocation",
+    );
+  }
   const form8874Applied = applied("nonpassive:8874");
   const form8844Applied = applied("nonpassive:8844");
   const form8881Applied = {
@@ -1354,7 +1424,7 @@ export function prepareForm3800DocumentParts(
             form8820Sources.map((source) => source.credit),
             form8820Credit,
             form8820Applied,
-            parsed.form8820_applied_credits_by_source,
+            reviewedOrphanTaxUse ?? parsed.form8820_applied_credits_by_source,
           ),
         }
         : undefined,
@@ -1486,7 +1556,7 @@ export function prepareForm3800DocumentParts(
         facilities,
         applied("nonpassive:8835:1f"),
         applied("nonpassive:8835:4e"),
-        parsed.form8835_applied_credits_by_facility,
+        reviewedProductionTaxUse ?? parsed.form8835_applied_credits_by_facility,
       ),
       transferStatementIdsByFileName: context.documentIdsByAttachmentFileName ??
         {},

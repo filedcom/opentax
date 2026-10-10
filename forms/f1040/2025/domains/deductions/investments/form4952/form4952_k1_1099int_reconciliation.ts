@@ -1,3 +1,5 @@
+import { reconcileK1QualifiedDividendElection } from "./form4952_k1_election.ts";
+import { k1PortfolioSources } from "./form4952_k1_portfolio_sources.ts";
 import { z } from "zod";
 import { inputSchema as interestSchema } from "../../../../../nodes/inputs/income/investments/f1099int/index.ts";
 import { inputSchema as oidSchema } from "../../../../../nodes/inputs/income/investments/f1099oid/index.ts";
@@ -16,6 +18,8 @@ const scheduleASchema = z.object({
 });
 const form1040Schema = z.object({
   line2b_taxable_interest: z.number().nonnegative(),
+  line3a_qualified_dividends: z.number().nonnegative().optional(),
+  line3b_ordinary_dividends: z.number().nonnegative().optional(),
   line12e_itemized_deductions: z.number().nonnegative(),
 });
 const numberedLines = [
@@ -35,14 +39,6 @@ const numberedLines = [
   "line7",
   "line8",
 ] as const;
-const permittedPartnershipFields = new Set([
-  "partnership_name",
-  "partnership_ein",
-  "source_document_reference",
-  "recipient_tin",
-  "box13_code_h_investment_interest",
-]);
-
 /** K-1 code H expense limited by unadjusted 1099-INT or 1099-OID income. */
 export function reconcileForm4952K1InterestAgainst1099Path(
   fields: Record<string, unknown>,
@@ -67,25 +63,15 @@ export function reconcileForm4952K1InterestAgainst1099Path(
   const k1s = partnership.data.k1_partnerships;
   const payers = interest.success ? interest.data.f1099ints : [];
   const oidPayers = oid.success ? oid.data.f1099oids : [];
-  const k1Expense = k1s.reduce(
-    (sum, item) => sum + (item.box13_code_h_investment_interest ?? 0),
-    0,
-  );
+  const portfolio = k1PortfolioSources(k1s, form.data);
+  const k1Expense = portfolio.expense;
   const portfolioInterest = payers.reduce(
     (sum, item) => sum + (item.box1 ?? 0) + (item.box3 ?? 0),
     0,
   ) + oidPayers.reduce((sum, item) => sum + (item.box1_oid ?? 0), 0);
   if (
     k1s.length === 0 || payers.length + oidPayers.length === 0 ||
-    new Set(k1s.map((item) => item.partnership_ein)).size !== k1s.length ||
-    new Set(k1s.map((item) => item.source_document_reference)).size !==
-      k1s.length ||
-    k1s.some((item) =>
-      !item.partnership_ein || !item.source_document_reference ||
-      !item.recipient_tin ||
-      (item.box13_code_h_investment_interest ?? 0) <= 0 ||
-      Object.keys(item).some((key) => !permittedPartnershipFields.has(key))
-    ) ||
+    !portfolio.valid ||
     payers.some((item) =>
       (item.box6 ?? 0) > 0 ||
       (item.foreign_source_interest_usd ?? 0) > 0 ||
@@ -94,10 +80,6 @@ export function reconcileForm4952K1InterestAgainst1099Path(
     ) ||
     !payers.every(plainInvestmentBox1Or3) ||
     !oidPayers.every(plainInvestmentOid) ||
-    !sourceAmountsMatch(
-      form.data.source_k1_investment_interest,
-      k1s.map((item) => item.box13_code_h_investment_interest ?? 0),
-    ) ||
     !sourceAmountsMatch(
       form.data.source_1099_interest,
       [
@@ -112,7 +94,6 @@ export function reconcileForm4952K1InterestAgainst1099Path(
     (form.data.other_investment_property_qualified_dividends ?? 0) !== 0 ||
     (form.data.other_investment_property_net_disposition_gain ?? 0) !== 0 ||
     (form.data.other_investment_property_net_capital_gain ?? 0) !== 0 ||
-    (form.data.investment_income_election ?? 0) !== 0 ||
     (form.data.elected_capital_gain_portion ?? 0) !== 0 ||
     (form.data.investment_expenses ?? 0) !== 0 ||
     (form.data.source_1099_dividends ?? 0) !== 0 ||
@@ -120,9 +101,6 @@ export function reconcileForm4952K1InterestAgainst1099Path(
     (form.data.source_1099_capital_gain_distributions ?? 0) !== 0 ||
     (form.data.source_1099_royalties ?? 0) !== 0 ||
     (form.data.source_private_activity_bond_interest ?? 0) !== 0 ||
-    (form.data.source_k1_interest ?? 0) !== 0 ||
-    (form.data.source_k1_dividends ?? 0) !== 0 ||
-    (form.data.source_k1_qualified_dividends ?? 0) !== 0 ||
     (form.data.source_k1_allowed_investment_expenses ?? 0) !== 0 ||
     (form.data.form8814_line9_qualified_dividends ?? 0) !== 0 ||
     (form.data.form8814_line10_capital_gain ?? 0) !== 0 ||
@@ -136,8 +114,11 @@ export function reconcileForm4952K1InterestAgainst1099Path(
   }
   const lines = calculateForm4952(form.data);
   if (
-    lines.line1 !== k1Expense || lines.line4a !== portfolioInterest ||
-    lines.line8 <= 0 || lines.line2 !== 0 || lines.line4b !== 0 ||
+    lines.line1 !== k1Expense ||
+    lines.line4a !==
+      portfolioInterest + portfolio.interest + portfolio.dividends ||
+    lines.line8 <= 0 || lines.line2 !== 0 ||
+    lines.line4b !== portfolio.qualified ||
     lines.line4d !== 0 || lines.line5 !== 0 ||
     numberedLines.some((line) => fields[line] !== lines[line])
   ) {
@@ -147,12 +128,22 @@ export function reconcileForm4952K1InterestAgainst1099Path(
   }
   if (
     scheduleA.data.line_9_investment_interest !== lines.line8 ||
-    form1040.data.line2b_taxable_interest !== portfolioInterest ||
+    form1040.data.line2b_taxable_interest !==
+      portfolioInterest + portfolio.interest ||
+    (portfolio.dividends > 0 &&
+      ((form1040.data.line3b_ordinary_dividends ?? 0) !== portfolio.dividends ||
+        (form1040.data.line3a_qualified_dividends ?? 0) !==
+          portfolio.qualified)) ||
     form1040.data.line12e_itemized_deductions < lines.line8
   ) {
     throw new Error(
       "Form 4952 mixed deduction or interest differs from finalized Schedule A and Form 1040",
     );
   }
+  reconcileK1QualifiedDividendElection(
+    form.data.investment_income_election ?? 0,
+    portfolio.qualified,
+    pending,
+  );
   reconcileForm4952Itemization(pending, lines.line8);
 }

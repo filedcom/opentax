@@ -1,5 +1,113 @@
 # TY2025 Form 1116 main PDF category boundary
 
+## October 9 K-3 public boundary and native-only checkpoint
+
+The partnership and S-corporation paths were replayed through public inputs
+with six synthetic source cases. **No complete PDF packet passed.** All six
+complete inputs reject at `start`: `form1116_review.single_source_pdf_review`
+accepts only the ordinary review requiring `no_foreign_tax_reduction_confirmed`,
+while the K-3 projector needs `only_identified_k3_line12_reduction_confirmed`.
+The intermediate schema supports that union but the public review does not.
+This newly discovered mismatch is deferred109; no runtime repair was made.
+
+A separate calculation/native probe omits only that unsupported PDF review,
+retaining the original K-1/K-3 income, gross tax and reduction. It must not be
+counted as a positive public-to-PDF route. Its six original XML returns pass
+cached TY2025 v5.4 XSD; PDF construction rejects specifically for the absent
+affirmative source inventory. No review was inserted into calculated pending
+data to manufacture a printable packet.
+
+Both entity types retain interest/AGI 50,000, standard deduction 15,750,
+taxable income 34,250 and regular tax 3,875, independently checked against the
+[2025 IRS Tax Table](https://www.irs.gov/publications/p1040). The
+[Form 1116 instructions](https://www.irs.gov/instructions/i1116),
+[partner K-3 instructions](https://www.irs.gov/instructions/i1065sk3) and
+[shareholder K-3 instructions](https://www.irs.gov/instructions/i1120sk3)
+place gross tax in Part II and the separately apportioned reduction on line12.
+
+| Each entity type | Gross tax | Reduction | Credit | Current carry | Final tax/owed |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Remaining tax | 2,000 | 400 | 1,600 | 0 | 2,275 |
+| Current excess | 9,000 | 1,000 | 3,875 | 4,125 | 0 |
+| Full reduction | 2,000 | 2,000 | 0 | 0 | 3,875 |
+
+The typed grouped gate passes **355 tests with zero failures**.
+The native-only cases reject 54 mutations to missing sources, income, entity
+EIN, document reference, gross tax, reduction and final credit joins. However,
+all six additional recipient-TIN mutations **accept native export** after
+changing the K-1 owner from the taxpayer to `999887777`. These accepted altered
+graphs/XML are retained separately and are not counted as validated original
+returns. This ownership gap is deferred110. Missing-review PDF rejection does
+not demonstrate a recipient check. Issued-document authenticity, broader K-3
+combinations, printable coverage and IRS acceptance remain open.
+
+Evidence: `.state/research/form1116-k3-packets-2026-10-09/`, including original
+rejections, calculation-only inputs, native XML, XSD hashes, mutation failures
+and `owner-mismatch/`. Earlier descriptor-only staged descriptions below do
+not establish public filing support. No production change was made.
+
+## October 9 general compensation statement checkpoint
+
+The existing general-category parent now appends its source-reconciled line 1b
+allocation statement. Seven complete employer packets pass XSD and retain
+seven-page returns plus separate one-page paid-tax conversion attachments;
+all 56 pages and a three-page overflow statement were visually reviewed.
+The grouped gate passes 232 tests with 70 native/70 fresh-PDF rejections.
+The statement repeats taxpayer identity on continuation pages and uses the
+existing parent descriptor, leaving passive parent pagination unchanged.
+See the [employer checkpoint](./ty2025-form1116-alternative-compensation-gap.md#october-9-employer-packets-and-printed-allocation-statement)
+for exact amounts and scope. Residence107, source authenticity and broader
+filing/IRS coverage remain open.
+
+## October 9 passive country and current-excess packet checkpoint
+
+Seven existing synthetic source cases now have complete prepared-return tests,
+retained native XML and eight-page PDFs. All seven XML returns pass the cached
+TY2025 v5.4 XSD. All 56 pages were visually reviewed through 32 unique page
+hashes: Form 1040, Schedule 3, income Schedule B, two parent Form 1116 pages,
+and two foreign-credit Schedule B pages in each packet.
+
+| Case | Interest | Ordinary dividends | Credit / regular tax | Current excess |
+| --- | ---: | ---: | ---: | ---: |
+| Two-country dividends | 0 | 50,000 | 3,875 | 1,125 |
+| Two Canadian dividend payers | 0 | 50,000 | 3,875 | 1,125 |
+| Two-country mixed | 20,000 | 30,000 | 3,875 | 1,125 |
+| Two-country interest | 50,000 | 0 | 3,875 | 5,125 |
+| Multiple Canadian interest payers | 50,000 | 0 | 3,875 | 5,125 |
+| Three-country interest | 60,000 | 0 | 5,075 | 5,925 |
+| Three-country mixed | 30,000 | 30,000 | 5,075 | 925 |
+
+Expected regular tax comes independently from the [2025 IRS Tax Table](https://www.irs.gov/publications/p1040):
+single taxable income 34,250–34,300 gives 3,875; 44,250–44,300 gives 5,075.
+All income here is ordinary foreign passive income, standard deduction is
+15,750, the credit absorbs regular tax, and final tax is zero. Canada/France
+and Canada/France/Germany columns, proportional deductions, interest/dividend
+tax rows, parent credit and current-excess carry totals reconcile.
+
+The packet tests also reject altered income, final credit, Schedule 3 credit,
+missing carry schedules and changed source amounts, countries, references and
+recipient identities at native preparation and fresh PDF construction without
+an old prepared bundle. The final typed grouped gate passes 195 tests with no
+failures, including 64 native and 64 fresh-PDF rejection assertions.
+
+These are reviewed structured synthetic records, not authenticated issuer
+copies or accepted prior returns. The carryback review has a zero prior balance;
+this checkpoint verifies current excess, not imported historical vintages.
+Form 1040 line 24 remains blank at zero (deferred76); parent Form 1116 line h
+also remains blank, with residence intake/projection review deferred107.
+Do not infer residence from a mailing address. The main task stays open for
+broader categories, K-3 combinations, carry histories, redeterminations, source
+authenticity, business rules and IRS acceptance. This checkpoint supersedes
+historical unrun/visual-pending statements only for these seven packet shapes.
+
+Retained evidence: `.state/research/form1116-passive-packets-2026-10-09/`,
+including the review manifest, rendered sheets, qualification and test logs.
+
+The subsequent [carryover checkpoint](./ty2025-form1116-schedule-b-pdf.md#october-9-vintage-use-expiry-and-complete-packets)
+adds six complete packets/48 observed pages: four XSD-valid returns and two
+2015-expiry XML failures (deferred108). It verifies oldest-first use and expiry
+amounts without claiming prior-return authenticity or closing the parent task.
+
 ## Shared IRS country-code validation (2026-10-05)
 
 Retained Form 1116 and related foreign-source paths now use a shared exact

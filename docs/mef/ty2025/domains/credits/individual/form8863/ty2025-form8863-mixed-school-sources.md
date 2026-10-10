@@ -1,5 +1,10 @@
 # TY2025 Form 8863 mixed received/missing school sources
 
+## October 9 distinct school-owned service awards
+
+The [multiple-school service-award checkpoint](./ty2025-form8863-required-service-scholarship-review.md#october-9-multiple-school-service-award-checkpoint) verifies two to four schools, separate service grants, mixed W-2/Schedule1 income and AOC/LLC caps in six complete XSD-valid returns with88 reviewed pages. All six typed tests pass, with36 native and36 fresh-PDF mutation rejections. Three/four-school continuation pages stop at line22. This extends the historical two-school evidence below without claiming shared third-party award allocations or external source authentication.
+
+
 Status: one student with two U.S. institutions, one received 2025 Form 1098-T
 and one genuinely missing form, has AOTC and LLC public-input calculation,
 complete native XML/XSD, and filled PDF packet evidence. This extends the

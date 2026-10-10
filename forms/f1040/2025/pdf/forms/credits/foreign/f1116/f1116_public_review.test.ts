@@ -1,3 +1,4 @@
+import { verifyCarryoverPacket } from "./f1116_carry_packet.fixture.ts";
 import {
   assert,
   assertEquals,
@@ -62,6 +63,10 @@ function inputs() {
       taxpayer_ssn: "111-22-3333",
       taxpayer_dob: "1985-06-15",
       digital_assets: false,
+      address_line1: "1 Main St",
+      address_city: "Austin",
+      address_state: "TX",
+      address_zip: "78701",
     },
     schedule_b_part_iii: {
       foreign_accounts_question: false,
@@ -183,6 +188,16 @@ Deno.test("Form 1116 passive 2015 carryover expires while 2025 excess reaches na
     },
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
+  await verifyCarryoverPacket(result.pending, "expiry-with-current-excess", {
+    "credit": 3875,
+    "carry": 5125,
+    "fields": {
+      "line1_2015": 100,
+      "line5_2015": -100,
+      "line8_2015": 0,
+      "line6_current": 5125,
+    },
+  });
   const parent = result.pending.form_1116;
   const scheduleB = result.pending.form1116_schedule_b;
   assert(parent);
@@ -275,7 +290,7 @@ Deno.test("Form 1116 passive 2015 carryover expires while 2025 excess reaches na
       buildMefBundle(buildPending(altered), { filer, attachments: [] })
     );
     await assertRejects(() =>
-      buildPdfBytes(buildPending(altered), filer, ".pdf-cache", bundle)
+      buildPdfBytes(buildPending(altered), filer, ".pdf-cache")
     );
   }
 });
@@ -449,7 +464,7 @@ Deno.test("Form 1116 sole 1099-INT PDF rejects other payer amounts that contradi
   }
 });
 
-Deno.test("Form 1116 single-source passive credit uses and expires a reviewed 2015 vintage", () => {
+Deno.test("Form 1116 single-source passive credit uses and expires a reviewed 2015 vintage", async () => {
   const { form1116_carryover_review: _excessReview, ...source } = inputs();
   const result = execute(buildExecutionPlan(registry), registry, {
     ...source,
@@ -480,6 +495,16 @@ Deno.test("Form 1116 single-source passive credit uses and expires a reviewed 20
     },
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
+  await verifyCarryoverPacket(result.pending, "2015-use-and-expiry", {
+    "credit": 3875,
+    "carry": 0,
+    "fields": {
+      "line1_2015": 9000,
+      "line4_2015": -3775,
+      "line5_2015": -5225,
+      "line8_2015": 0,
+    },
+  });
   const parent = result.pending.form_1116;
   const scheduleB = result.pending.form1116_schedule_b;
   assert(parent);
@@ -575,6 +600,11 @@ Deno.test("Form 1116 2016 passive carryover needs filed 2024 eighth-preceding id
     form1116_prior_carryover: { carryovers: [carryover] },
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
+  await verifyCarryoverPacket(result.pending, "2016-use", {
+    "credit": 1000,
+    "carry": 0,
+    "fields": { "line1_2016": 900, "line4_2016": -900, "line8_2016": 0 },
+  });
   const parent = result.pending.form_1116;
   const scheduleB = result.pending.form1116_schedule_b;
   assert(parent && scheduleB);
@@ -640,7 +670,7 @@ Deno.test("Form 1116 2016 passive carryover needs filed 2024 eighth-preceding id
       buildMefBundle(buildPending(tampered), { filer, attachments: [] })
     );
     await assertRejects(() =>
-      buildPdfBytes(buildPending(tampered), filer, ".pdf-cache", bundle)
+      buildPdfBytes(buildPending(tampered), filer, ".pdf-cache")
     );
   }
   const noFiled = {
@@ -651,6 +681,9 @@ Deno.test("Form 1116 2016 passive carryover needs filed 2024 eighth-preceding id
   };
   await assertRejects(() =>
     buildMefBundle(buildPending(noFiled), { filer, attachments: [] })
+  );
+  await assertRejects(() =>
+    buildPdfBytes(buildPending(noFiled), filer, ".pdf-cache")
   );
 });
 
@@ -693,6 +726,11 @@ Deno.test("Form 1116 2017 passive carryover joins filed 2024 seventh-preceding c
     form1116_prior_carryover: { carryovers: [carryover] },
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
+  await verifyCarryoverPacket(result.pending, "2017-use", {
+    "credit": 1000,
+    "carry": 0,
+    "fields": { "line1_2017": 900, "line4_2017": -900, "line8_2017": 0 },
+  });
   const parent = result.pending.form_1116;
   const scheduleB = result.pending.form1116_schedule_b;
   assert(parent && scheduleB);
@@ -759,7 +797,7 @@ Deno.test("Form 1116 2017 passive carryover joins filed 2024 seventh-preceding c
       buildMefBundle(buildPending(altered), { filer, attachments: [] })
     );
     await assertRejects(() =>
-      buildPdfBytes(buildPending(altered), filer, ".pdf-cache", bundle)
+      buildPdfBytes(buildPending(altered), filer, ".pdf-cache")
     );
   }
 });
@@ -810,6 +848,33 @@ Deno.test("Form 1116 filed 2024 line 8 binds every 2018-2024 vintage to native a
     form1116_prior_carryover: { carryovers: [filedScheduleB] },
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
+  await verifyCarryoverPacket(result.pending, "2018-through-2024-use", {
+    "credit": 800,
+    "carry": 0,
+    "fields": {
+      "line1_2018": 100,
+      "line4_2018": -100,
+      "line8_2018": 0,
+      "line1_2019": 100,
+      "line4_2019": -100,
+      "line8_2019": 0,
+      "line1_2020": 100,
+      "line4_2020": -100,
+      "line8_2020": 0,
+      "line1_2021": 100,
+      "line4_2021": -100,
+      "line8_2021": 0,
+      "line1_2022": 100,
+      "line4_2022": -100,
+      "line8_2022": 0,
+      "line1_2023": 100,
+      "line4_2023": -100,
+      "line8_2023": 0,
+      "line1_2024": 100,
+      "line4_2024": -100,
+      "line8_2024": 0,
+    },
+  });
   const parent = result.pending.form_1116;
   const scheduleB = result.pending.form1116_schedule_b;
   assert(parent && scheduleB);
@@ -892,6 +957,9 @@ Deno.test("Form 1116 filed 2024 line 8 binds every 2018-2024 vintage to native a
     await assertRejects(() =>
       buildMefBundle(buildPending(altered), { filer, attachments: [] })
     );
+    await assertRejects(() =>
+      buildPdfBytes(buildPending(altered), filer, ".pdf-cache")
+    );
     assertThrows(
       () =>
         form1116ScheduleBPdf.projectFields!(
@@ -915,6 +983,9 @@ Deno.test("Form 1116 filed 2024 line 8 binds every 2018-2024 vintage to native a
   };
   await assertRejects(() =>
     buildMefBundle(buildPending(extraYear), { filer, attachments: [] })
+  );
+  await assertRejects(() =>
+    buildPdfBytes(buildPending(extraYear), filer, ".pdf-cache")
   );
   assertThrows(
     () =>
@@ -971,6 +1042,18 @@ Deno.test("Form 1116 uses filed 2023 before 2024 carryover through return, nativ
     form1116_prior_carryover: { carryovers: [filedScheduleB] },
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
+  await verifyCarryoverPacket(result.pending, "oldest-first-partial-use", {
+    "credit": 3875,
+    "carry": 5325,
+    "fields": {
+      "line1_2023": 100,
+      "line1_2024": 9000,
+      "line4_2023": -100,
+      "line4_2024": -3675,
+      "line8_2023": 0,
+      "line8_2024": 5325,
+    },
+  });
   const parent = result.pending.form_1116;
   const scheduleB = result.pending.form1116_schedule_b;
   const schedule3 = result.pending.schedule3;
@@ -1066,7 +1149,7 @@ Deno.test("Form 1116 uses filed 2023 before 2024 carryover through return, nativ
     buildMefBundle(buildPending(changedSplit), { filer, attachments: [] })
   );
   await assertRejects(() =>
-    buildPdfBytes(buildPending(changedSplit), filer, ".pdf-cache", bundle)
+    buildPdfBytes(buildPending(changedSplit), filer, ".pdf-cache")
   );
   const changedIntake = {
     ...pending,
@@ -1125,7 +1208,7 @@ Deno.test("Form 1116 uses filed 2023 before 2024 carryover through return, nativ
       buildMefBundle(buildPending(altered), { filer, attachments: [] })
     );
     await assertRejects(() =>
-      buildPdfBytes(buildPending(altered), filer, ".pdf-cache", bundle)
+      buildPdfBytes(buildPending(altered), filer, ".pdf-cache")
     );
   }
   assertThrows(

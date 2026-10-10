@@ -1,3 +1,4 @@
+import { notePrincipalRepaid } from "./repayment-inventory.ts";
 import {
   firstYearPassiveSCorpLossStages,
   passiveSCorpLossBundleSchema,
@@ -146,7 +147,7 @@ function tentativeDebtBasis(input: Form7203Input): number {
       : undefined;
   return (input.debt_basis_beginning ?? 0) + (input.new_loans ?? 0) -
     sumPrincipalRepayments(note?.principal_repayments) -
-    (note?.second_formal_note?.principal_repayment?.amount ?? 0) -
+    notePrincipalRepaid(note?.second_formal_note) -
     additionalPrincipalRepayments(note);
 }
 
@@ -315,7 +316,7 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
         sumPrincipalRepayments(note.principal_repayments);
       const totalDebtBasis = firstDebtBasis +
         note.second_formal_note.cash_advance_amount -
-        (note.second_formal_note.principal_repayment?.amount ?? 0);
+        notePrincipalRepaid(note.second_formal_note);
       const debtLoss = Math.min(
         (input.ordinary_loss ?? 0) - stock,
         totalDebtBasis,

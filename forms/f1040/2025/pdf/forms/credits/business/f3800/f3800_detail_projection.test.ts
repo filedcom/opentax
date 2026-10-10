@@ -12,6 +12,7 @@ import { buildForm3800PassiveRowXml } from "../../../../../mef/forms/credits/bus
 import {
   projectForm3800PartVFields,
   projectForm3800PartVIFields,
+  projectForm3800PartVPages,
 } from "./f3800_detail_projection.ts";
 import { form3800PartVFields, form3800PartVIFields } from "./f3800_fields.ts";
 
@@ -221,5 +222,57 @@ Deno.test("Form 3800 Part VI rejects a missing or reordered vintage", () => {
       }),
     Error,
     "sources do not reconcile",
+  );
+});
+
+Deno.test("Form 3800 Part V validates all continuation rows before returning any pages", () => {
+  const rows = Array.from({ length: 31 }, (_, index) => ({
+    ...current.currentDetails[1],
+    credit: index + 1,
+    appliedCredit: 0,
+    passThroughEin: String(100000000 + index),
+    sourceDocumentId: undefined,
+  }));
+  const parts = {
+    ...current,
+    currentRows: [{ ...current.currentRows[0], metadata: { sourceCount: 31 } }],
+    currentDetails: rows,
+    currentAmounts: [{
+      ...current.currentAmounts[0],
+      nonpassiveCredit: 496,
+      totalCredit: 496,
+      transferOutCredit: 0,
+      appliedCredit: 0,
+    }],
+  };
+  const pages = projectForm3800PartVPages(parts);
+  assertEquals(pages.length, 3);
+  assertEquals(pages[0][form3800PartVFields(15).e], 15);
+  assertEquals(pages[1][form3800PartVFields(1).e], 16);
+  assertEquals(pages[1][form3800PartVFields(15).e], 30);
+  assertEquals(pages[2][form3800PartVFields(1).e], 31);
+  assertEquals(pages[2][form3800PartVFields(2).e], undefined);
+  assertThrows(() => projectForm3800PartVFields(parts), Error, "continuation");
+  assertThrows(
+    () =>
+      projectForm3800PartVPages({
+        ...parts,
+        currentDetails: rows.map((row, i) =>
+          i === 30 ? { ...row, credit: 32 } : row
+        ),
+      }),
+    Error,
+    "do not reconcile",
+  );
+  assertThrows(
+    () =>
+      projectForm3800PartVPages({
+        ...parts,
+        currentDetails: rows.map((row, i) =>
+          i === 30 ? { ...row, appliedCredit: 32 } : row
+        ),
+      }),
+    Error,
+    "source is invalid",
   );
 });

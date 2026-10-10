@@ -1,5 +1,7 @@
 # TY2025 Form 7217 section 731 gain boundary
 
+The [October10 complete-return checkpoint](./ty2025-form7217-gap.md#october-10-complete-part-ii-continuation-checkpoint) verifies three current native gain returns and seven complete property-allocation packets with Part II continuations. The gain cases remain native-only: both prepared and fresh PDF paths reject their Form8949 row contract (deferred126). Earlier projection-test successes below do not establish complete gain-packet support. Source/owner checks remain active, and no deferred repair was made.
+
 The [Form 7217 instructions](https://www.irs.gov/instructions/i7217) put
 recognized cash-over-outside-basis gain on Part I line 7 and keep the basis
 allocation on line 10 tied to Part II. The
@@ -53,7 +55,9 @@ an offsetting $1 row tamper, are covered by the passing 25-test Form 7217
 batch. The same published allocation now passes a graph-generated full-return
 TY2025 v5.4 XSD case; its offsetting $1 tamper rejects through the graph.
 
-The bounded calculation excludes basis decreases, section 731(c) securities
-within liquidating multi-property distributions, and distributions needing
-other section 732(c) class rules. The workpaper reference remains unauthenticated;
+The current bounded calculation also checks whole-dollar basis decreases,
+including inventory priority, as exercised by the October10 checkpoint.
+Section 731(c) securities within liquidating multi-property distributions and
+distributions needing other section 732(c) class rules remain outside that
+allocation route. The workpaper reference remains unauthenticated;
 broader full-return native XSD, filled-PDF, business-rule, and ATS checks remain open.

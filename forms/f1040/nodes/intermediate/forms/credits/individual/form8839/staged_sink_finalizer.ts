@@ -24,6 +24,7 @@ export function finalizeStagedForm8839Sink(
   childReview: unknown,
   executorSinkInput: F1040SinkInput,
   magiReview: unknown,
+  form2555Source?: unknown,
 ) {
   const input = f1040.inputSchema.parse(executorSinkInput);
   const pre = reconcilePreAdoptionForm8839Credit(
@@ -31,6 +32,7 @@ export function finalizeStagedForm8839Sink(
     childReview,
     input,
     magiReview,
+    form2555Source,
   );
   const schedule3 = input.credit_limit_schedule3_lines;
   if (!schedule3) {

@@ -1,3 +1,7 @@
+import { currentProductionAllocationNode } from "../nodes/inputs/credits/business/f3800/production-allocation-node.ts";
+import { currentProductionAllocationSchema } from "../nodes/inputs/credits/business/f3800/production-allocation.ts";
+import { currentOrphanAllocationNode } from "../nodes/inputs/credits/business/f3800/current-allocation-node.ts";
+import { currentOrphanAllocationSchema } from "../nodes/inputs/credits/business/f3800/current-allocation.ts";
 import { f8886 } from "./domains/general/filing/form8886/public-node.ts";
 import { publicSourceSchema as f8886InputSchema } from "./domains/general/filing/form8886/source.ts";
 import { ownedSepSourceSchema } from "../nodes/inputs/adjustments/retirement/sep_retirement/owned-source.ts";
@@ -20,6 +24,7 @@ import { form6251 } from "../nodes/intermediate/forms/taxes/amt/form6251/index.t
 import { priorIsoSaleReviewSchema } from "./domains/taxes/amt/form6251/form6251_prior_iso_sale.ts";
 import { form4797 } from "../nodes/intermediate/forms/income/business/form4797/index.ts";
 import { investment1245DispositionSchema } from "../nodes/intermediate/forms/income/business/form4797/investment_1245.ts";
+import { priorHistoryPublicSchema } from "../nodes/intermediate/forms/income/business/form4797/prior_history.ts";
 import {
   form4562,
   publicInputSchema as form4562InputSchema,
@@ -867,6 +872,12 @@ export const inputNodes: readonly InputNodeEntry[] = [
     isArray: false,
   },
   {
+    node: form4797,
+    inputKey: "form4797_prior_history",
+    inputSchema: priorHistoryPublicSchema,
+    isArray: false,
+  },
+  {
     node: form1116_review,
     inputSchema: form1116ReviewInputSchema,
     isArray: false,
@@ -971,6 +982,16 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f8915f, itemSchema: f8915fItemSchema, isArray: true },
   { node: f8915d, itemSchema: f8915dItemSchema, isArray: true },
   { node: f3800, itemSchema: f3800ItemSchema, isArray: true },
+  {
+    node: currentProductionAllocationNode,
+    inputSchema: currentProductionAllocationSchema,
+    isArray: false,
+  },
+  {
+    node: currentOrphanAllocationNode,
+    inputSchema: currentOrphanAllocationSchema,
+    isArray: false,
+  },
   { node: f2106, itemSchema: f2106ItemSchema, isArray: true },
   { node: f5405, itemSchema: f5405ItemSchema, isArray: true },
   {

@@ -1,3 +1,4 @@
+import { reconcileRoyaltyDebtReturn } from "../../../../domains/deductions/investments/form4952/form4952_royalty_debt_reconciliation.ts";
 import { currentLossFilingProjection } from "../../../../domains/income/business/current-loss-filing-projection.ts";
 import { mefBusinessNameLine1 } from "../../../../../mef/business-name.ts";
 import { currentPropertyPassiveAmounts } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/current-property-source.ts";
@@ -28,7 +29,7 @@ import {
   calculateForm4835Lines,
   inputSchema as form4835InputSchema,
 } from "../../../../../nodes/inputs/income/business/f4835/index.ts";
-import type { z } from "zod";
+import { z } from "zod";
 import { type FilerIdentity, FilingStatus } from "../../../../../mef/header.ts";
 import { inputSchema as partnershipK1InputSchema } from "../../../../../nodes/inputs/income/rental-passthrough/k1_partnership/index.ts";
 import { inputSchema as miscInputSchema } from "../../../../../nodes/inputs/income/business/f1099m/index.ts";
@@ -142,9 +143,31 @@ export function verifyMiscRoyaltySource(
   item: Property,
   pendingMisc: unknown,
   filer?: FilerIdentity,
+  pending?: Readonly<Record<string, unknown>>,
 ): void {
   const source = item.f1099m_royalty_source;
   if (!source) return;
+  if (item.form4952_royalty_debt_loan_id) {
+    const form = pending?.form4952;
+    if (!pending || !form || typeof form !== "object" || Array.isArray(form)) {
+      throw new Error(
+        "Schedule E royalty interest needs its finalized Form 4952",
+      );
+    }
+    const expected = reconcileRoyaltyDebtReturn(
+      z.record(z.unknown()).parse(form),
+      pending,
+      filer,
+    );
+    if (
+      JSON.stringify(itemSchema.parse(item)) !==
+        JSON.stringify(itemSchema.parse(expected))
+    ) {
+      throw new Error(
+        "Schedule E printed royalty differs from its finalized debt deduction",
+      );
+    }
+  }
   const parsed = miscInputSchema.safeParse(pendingMisc);
   const items = parsed.success ? parsed.data.f1099ms : [];
   const misc = items[0];
@@ -172,7 +195,10 @@ export function verifyMiscRoyaltySource(
     item.fair_rental_days !== 0 || item.personal_use_days !== 0 ||
     (item.ownership_percent ?? 100) !== 100 ||
     item.form_1099_payments_made !== false ||
-    computeExpenses(item) !== 0
+    computeExpenses(item) !==
+      (item.form4952_royalty_debt_loan_id
+        ? item.expense_other_interest ?? 0
+        : 0)
   ) {
     throw new Error(
       "Schedule E royalty row needs its one matching nonbusiness 1099-MISC box 2 source",
@@ -614,7 +640,12 @@ export const scheduleE: MefFormDescriptor<"schedule_e", Fields> = {
       verifyPartnershipRoyaltySource(item, context?.pending?.k1_partnership)
     );
     itemList.forEach((item) =>
-      verifyMiscRoyaltySource(item, context?.pending?.f1099m, context?.filer)
+      verifyMiscRoyaltySource(
+        item,
+        context?.pending?.f1099m,
+        context?.filer,
+        context?.pending,
+      )
     );
     validatePartIxCarryovers(itemList, context);
     const allowedPassiveLosses = validatePassiveActivityLink(itemList, context);

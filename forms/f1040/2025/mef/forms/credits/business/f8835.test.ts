@@ -188,29 +188,37 @@ Deno.test("Form 8835: one MeF document per facility with 2025 Part I/II fields",
 Deno.test("Form 8835: increased-credit and domestic-content PDFs must be bundled", () => {
   const increased = {
     ...facility,
-    increased_credit_reason: "under_one_mw" as const,
-    maximum_net_output_mw: 0.9,
+    increased_credit_reason: "prevailing_wage_and_apprenticeship" as const,
+    meets_prevailing_wage: true,
+    meets_apprenticeship: true,
+    pwa_form7220_file_name: "PWA.pdf",
     increased_credit_statement_file_name: "Increase.pdf",
   };
   assertThrows(() => form8835.build({ f8835s: [increased] }));
-  const xml = form8835.build({
-    f8835s: [{
-      ...increased,
-      domestic_content_bonus: true,
-      domestic_content_statement_file_name: "Domestic.pdf",
-    }],
-  }, {
-    binaryAttachmentFileNames: ["Increase.pdf", "Domestic.pdf"],
-    documentIdsByAttachmentFileName: { "Domestic.pdf": "BinaryAttachment2" },
-  })[0];
-  assertStringIncludes(
-    xml,
-    "<QualifiedFacilitiesIncrCrAmt>30000</QualifiedFacilitiesIncrCrAmt>",
+  assertThrows(
+    () =>
+      form8835.build({
+        f8835s: [{
+          ...increased,
+          domestic_content_bonus: true,
+          domestic_content_statement_file_name: "Domestic.pdf",
+        }],
+      }, {
+        binaryAttachmentFileNames: ["Increase.pdf", "Domestic.pdf", "PWA.pdf"],
+        documentIdsByAttachmentFileName: {
+          "Domestic.pdf": "BinaryAttachment2",
+        },
+      }),
+    Error,
+    "reviewed manufacturer costs",
   );
-  assertStringIncludes(xml, 'referenceDocumentId="BinaryAttachment2"');
-  assertStringIncludes(
-    xml,
-    "<DomesticContentBonusCreditAmt>3000</DomesticContentBonusCreditAmt>",
+  assertThrows(
+    () =>
+      form8835.build({ f8835s: [increased] }, {
+        binaryAttachmentFileNames: ["Increase.pdf", "PWA.pdf"],
+      }),
+    Error,
+    "reviewed payroll, apprenticeship and Form 7220 sources",
   );
 });
 

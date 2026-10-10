@@ -1,6 +1,14 @@
 import { calculateArcherContributions } from "../../../../../nodes/intermediate/forms/adjustments/health/form8853/archer_contributions.ts";
+import {
+  appendLtcStatement,
+  ltcPdfFields,
+  ltcPdfInstances,
+} from "./f8853_ltc.ts";
 import { StandardFonts } from "pdf-lib";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import {
   calculateArcherMsaDistribution,
   inputSchema,
@@ -37,6 +45,7 @@ import {
 // ltc_reimbursements                   → line 24 (reimbursements)
 // Raw ltc_period_days cannot go on line 21: that line is $420 times days.
 const fields: ReadonlyArray<PdfFieldEntry> = [
+  ...ltcPdfFields,
   {
     kind: "text",
     domainKey: "msa_reporting_name",
@@ -172,54 +181,82 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 export const form8853Pdf: PdfFormDescriptor = {
   pendingKey: "form8853",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8853--2025.pdf",
-  pageIndices: () => [0],
+  pageIndices: (fields) => fields.ltc_print === true ? [1] : [0],
   filerFields: [
     {
       kind: "text",
       domainKey: "nameLine1",
       pdfField: "topmostSubform[0].Page1[0].f1_1[0]",
-      includeWhen: (fields) => fields.msa_reporting_name === undefined,
+      includeWhen: (fields) =>
+        fields.ltc_print !== true && fields.msa_reporting_name === undefined,
     },
     {
       kind: "text",
       domainKey: "primarySSN",
       pdfField: "topmostSubform[0].Page1[0].f1_2[0]",
-      includeWhen: (fields) => fields.msa_reporting_ssn === undefined,
+      includeWhen: (fields) =>
+        fields.ltc_print !== true && fields.msa_reporting_ssn === undefined,
     },
   ],
   instances(raw, filer, allPending) {
     if (Object.keys(raw).length === 0) return [];
+    if (
+      raw.ltc_ledger && !raw.archer_contribution_ledger &&
+      !raw.archer_distribution_ledger && !raw.medicare_distribution_ledger &&
+      !raw.medicare_joint_distribution_ledgers
+    ) {
+      return ltcPdfInstances(raw, filer, allPending);
+    }
     const source = normalizeArcherContributionSource(normalizeMedicareSource(
       normalizeArcherSource(inputSchema.parse(raw)),
     ));
     nativeForm8853.build(source, { filer, pending: allPending ?? {} });
+    const ltcInstances = source.ltc_ledger
+      ? ltcPdfInstances(source, filer, allPending)
+      : [];
     if (source.archer_contribution_ledger) {
       const ledger = source.archer_contribution_ledger;
       const lines = calculateArcherContributions(
         ledger,
         source.w2_code_r_entries,
       );
-      return [{
-        ...source,
-        msa_reporting_ssn: ledger.holder_ssn,
-        msa_reporting_name: ledger.filing_status === "mfj"
-          ? `${filer?.fullName} & ${
-            [
-              filer?.spouse?.firstName,
-              filer?.spouse?.middleInitial,
-              filer?.spouse?.lastName,
-              filer?.spouse?.suffix,
-            ].filter(Boolean).join(" ")
-          }`
-          : filer?.fullName,
-        employer_archer_msa: lines.line1,
-        taxpayer_archer_msa_contributions: lines.line2,
-        line3_limitation_amount: lines.rawEmployer > 0
-          ? undefined
-          : lines.line3,
-        compensation: lines.rawEmployer > 0 ? undefined : lines.line4,
-        line5_archer_deduction: lines.line5,
-      }];
+      return [
+        {
+          ...source,
+          msa_reporting_ssn: ledger.holder_ssn,
+          msa_reporting_name: ledger.filing_status === "mfj"
+            ? `${filer?.fullName} & ${
+              [
+                filer?.spouse?.firstName,
+                filer?.spouse?.middleInitial,
+                filer?.spouse?.lastName,
+                filer?.spouse?.suffix,
+              ].filter(Boolean).join(" ")
+            }`
+            : filer?.fullName,
+          employer_archer_msa: lines.line1,
+          taxpayer_archer_msa_contributions: lines.line2,
+          line3_limitation_amount: lines.rawEmployer > 0
+            ? undefined
+            : lines.line3,
+          compensation: lines.rawEmployer > 0 ? undefined : lines.line4,
+          line5_archer_deduction: lines.line5,
+          ...(source.archer_distribution_ledger
+            ? (() => {
+              const dist = calculateArcherMsaDistribution(source);
+              return {
+                archer_msa_distributions: dist.line6a,
+                archer_msa_qualified_expenses: dist.line7,
+                line6c_archer_msa_net_distribution: dist.line6c,
+                line8_taxable_archer_msa_distribution: dist.line8,
+                line9b_archer_msa_additional_tax: dist.line9b,
+                line9a_archer_msa_exception: dist.line9a,
+              };
+            })()
+            : {}),
+        },
+        ...ltcInstances,
+      ];
     }
     if (source.medicare_joint_distribution_ledgers) {
       const parts = buildMedicareJointDocumentParts(source, {
@@ -257,6 +294,7 @@ export const form8853Pdf: PdfFormDescriptor = {
             ].filter(Boolean).join(" "),
           false,
         ),
+        ...ltcInstances,
         ...parts.owners.map((holder) => {
           const name = holder.ledger.owner === "taxpayer"
             ? filer!.fullName ?? filer!.nameLine1
@@ -290,7 +328,7 @@ export const form8853Pdf: PdfFormDescriptor = {
         line13a_medicare_msa_exception: lines.line13a,
         line13b_medicare_msa_additional_tax: lines.line13b,
         medicare_death_transfer: lines.deathTransfer,
-      }];
+      }, ...ltcInstances];
     }
     const lines = calculateArcherMsaDistribution(source);
     return [{
@@ -302,9 +340,10 @@ export const form8853Pdf: PdfFormDescriptor = {
       line9b_archer_msa_additional_tax: lines.line9b,
       line9a_archer_msa_exception: lines.line9a,
       death_transfer: lines.deathTransfer,
-    }];
+    }, ...ltcInstances];
   },
   fields,
+  appendSupplementalPages: appendLtcStatement,
   async decoratePages(document, pages, fields) {
     if (fields.medicare_statement === true) {
       const font = await document.embedFont(StandardFonts.Helvetica);

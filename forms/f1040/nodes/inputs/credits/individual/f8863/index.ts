@@ -1,3 +1,4 @@
+import { sumEducationMoney } from "../../../income/other/education_income/money.ts";
 import {
   claimantReviewSchema,
   reviewedEducationStudents,
@@ -487,9 +488,9 @@ export function validateForm8863FilingSource(
       assistance.some((source) => !sourceMatchesSchool(source)) ||
       new Set(assistance.map((source) => source.source_document_reference))
           .size !== assistance.length ||
-      assistance.filter((source) => source.tax_treatment === "tax_free").reduce(
-          (sum, source) => sum + source.amount,
-          0,
+      sumEducationMoney(
+          assistance.filter((source) => source.tax_treatment === "tax_free")
+            .map((source) => source.amount),
         ) !== workpaper.tax_free_assistance_applied_to_expenses
     ) {
       throw new Error(
@@ -503,14 +504,14 @@ export function validateForm8863FilingSource(
       ? exception.furnishing_basis
       : undefined;
     const taxableAmount = institution.current_year_1098t_received
-      ? taxable.reduce((sum, source) => sum + source.amount, 0)
+      ? sumEducationMoney(taxable.map((source) => source.amount))
       : basis?.kind === "formal_billing_arrangement"
       ? basis.taxable_payment_amount
       : basis?.kind === "expenses_waived_or_paid_entirely_with_scholarships"
       ? basis.taxable_scholarship_payment_amount
       : 0;
     if (
-      taxable.reduce((sum, source) => sum + source.amount, 0) !==
+      sumEducationMoney(taxable.map((source) => source.amount)) !==
         taxableAmount ||
       taxable.some((source) =>
         institution.current_year_1098t_received
@@ -539,8 +540,9 @@ export function validateForm8863FilingSource(
         (!issued || assistance.some((source) =>
           source.included_in_form1098t_box5 !== true
         ) ||
-          assistance.reduce((sum, source) =>
-              sum + source.amount, 0) !==
+          sumEducationMoney(assistance.map((source) =>
+              source.amount
+            )) !==
             workpaper.form1098t_box5_scholarships))
     ) {
       throw new Error(
@@ -689,13 +691,15 @@ export function validateForm8863FilingSource(
     );
   }
   if (
-    workpaper.tax_free_assistance_applied_to_expenses +
-        (workpaper.assistance_sources ?? []).filter((source) =>
-          source.tax_treatment === "taxable" &&
-          (source.required_service_compensation === true ||
-            source.taxable_nonservice_scholarship === true) &&
-          source.included_in_form1098t_box5 === true
-        ).reduce((sum, source) => sum + source.amount, 0) <
+    sumEducationMoney([
+      workpaper.tax_free_assistance_applied_to_expenses,
+      ...(workpaper.assistance_sources ?? []).filter((source) =>
+        source.tax_treatment === "taxable" &&
+        (source.required_service_compensation === true ||
+          source.taxable_nonservice_scholarship === true) &&
+        source.included_in_form1098t_box5 === true
+      ).map((source) => source.amount),
+    ]) <
       (workpaper.form1098t_box5_scholarships ?? 0)
   ) {
     throw new Error(

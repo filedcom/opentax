@@ -960,6 +960,7 @@ export type Form8835CreditEntry = {
   readonly registration_number?: string;
   readonly subject_to_passive_activity_limit: boolean;
   readonly transfer_election_statement_file_name?: string;
+  readonly transfer_election_statement_file_names?: readonly string[];
 };
 
 export type Form3800CreditRow = {
@@ -1007,7 +1008,18 @@ export function classifyForm8835Credits(
           "Form 3800 transferred Form 8835 credit needs registration and transfer election statement",
         );
       }
-      statementFiles.add(entry.transfer_election_statement_file_name);
+      const names = entry.transfer_election_statement_file_names ??
+        [entry.transfer_election_statement_file_name];
+      if (
+        !names.length ||
+        names[0] !== entry.transfer_election_statement_file_name ||
+        new Set(names).size !== names.length
+      ) {
+        throw new Error(
+          "Form 3800 transfer statement inventory does not reconcile",
+        );
+      }
+      for (const name of names) statementFiles.add(name);
     }
   }
   const rows: Form3800CreditRow[] = (["1f", "4e"] as const).flatMap((line) => {

@@ -693,11 +693,11 @@ Deno.test("Form 8835 PDF prints wind on line 1a and a separate geothermal copy o
   );
 });
 
-Deno.test("Form 8835 PDF stops for bonus, duplicate facilities, and zero credit", () => {
+Deno.test("Form 8835 PDF stops for unreviewed bonus, duplicate facilities, and zero credit", () => {
   assertThrows(
     () => projected(pending({ ...facility(), domestic_content_bonus: true })),
     Error,
-    "filer-owned nonpassive wind, geothermal",
+    "reviewed manufacturer costs and certification",
   );
   const multiple = pending();
   multiple.f8835.f8835s = [facility(), facility()];

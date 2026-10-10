@@ -1,3 +1,22 @@
+import {
+  assertForm8835TransferSource,
+  form8835TransferDescription,
+} from "../../../../../nodes/inputs/credits/business/f8835/transfer-source.ts";
+import {
+  assertForm8835PwaSource,
+  form8835PwaDescription,
+} from "../../../../../nodes/inputs/credits/business/f8835/pwa-source.ts";
+import { assertForm8835EnergyCommunitySource } from "../../../../../nodes/inputs/credits/business/f8835/energy-community-source.ts";
+import {
+  assertForm8835DomesticSource,
+  form8835DomesticDescription,
+} from "../../../../../nodes/inputs/credits/business/f8835/domestic-source.ts";
+import { assertForm8835EarlyConstructionSource } from "../../../../../nodes/inputs/credits/business/f8835/early-construction-source.ts";
+import {
+  assertForm8835SmallFacilitySource,
+  form8835IncreaseDescription,
+} from "../../../../../nodes/inputs/credits/business/f8835/increase-source.ts";
+import { assertForm8835BondSource } from "../../../../../nodes/inputs/credits/business/f8835/bond-source.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
   calculateForm8835,
@@ -5,7 +24,10 @@ import {
   type F8835Item,
   inputSchema,
 } from "../../../../../nodes/inputs/credits/business/f8835/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../form-descriptor.ts";
 
 type Input =
   & Partial<ReturnType<typeof inputSchema.parse>>
@@ -129,7 +151,96 @@ function facilityXml(item: F8835Item, context: MefBuildContext): string {
     );
   }
 
+  assertForm8835EnergyCommunitySource(item, true);
+  if (
+    item.energy_community_source && (
+      item.energy_community_source.taxpayer_tin !== context.filer?.primarySSN ||
+      item.energy_community_source.taxpayer_name !== context.filer?.fullName
+    )
+  ) {
+    throw new Error(
+      "Form 8835 energy-community source differs from return filer",
+    );
+  }
+  assertForm8835DomesticSource(item, true);
+  if (item.domestic_content_source) {
+    const source = item.domestic_content_source;
+    if (
+      source.taxpayer_tin !== context.filer?.primarySSN ||
+      source.taxpayer_name !== context.filer?.fullName ||
+      context.attachmentSha256ByFileName?.[source.statement_file_name] !==
+        source.statement_sha256 ||
+      context.attachmentDescriptionsByFileName?.[source.statement_file_name] !==
+        form8835DomesticDescription(item.facility_description!) ||
+      (source.certification_year === 2025 &&
+        source.first_year_bonus_credit !== calculateForm8835(item).line10)
+    ) {
+      throw new Error(
+        "Form 8835 domestic certification differs from filer, bonus or retained attachment bytes",
+      );
+    }
+  }
+  assertForm8835BondSource(item, true);
+  assertForm8835PwaSource(item, true);
+  if (
+    item.pwa_source &&
+    (context.attachmentSha256ByFileName
+          ?.[item.pwa_source.form7220_file_name] !==
+        item.pwa_source.form7220_sha256 ||
+      context.attachmentDescriptionsByFileName
+          ?.[item.pwa_source.form7220_file_name] !==
+        form8835PwaDescription(item.facility_description!))
+  ) {
+    throw new Error(
+      "Form 8835 PWA Form 7220 differs from retained source bytes",
+    );
+  }
+  assertForm8835SmallFacilitySource(item, true);
+  assertForm8835EarlyConstructionSource(item, true);
+  if (
+    item.small_facility_source || item.early_construction_source ||
+    item.pwa_source
+  ) {
+    const source =
+      (item.small_facility_source ?? item.early_construction_source ??
+        item.pwa_source)!;
+    if (
+      source.taxpayer_tin !== context.filer?.primarySSN ||
+      source.taxpayer_name !== context.filer?.fullName ||
+      context.attachmentSha256ByFileName?.[source.statement_file_name] !==
+        source.statement_sha256 ||
+      context.attachmentDescriptionsByFileName?.[source.statement_file_name] !==
+        form8835IncreaseDescription(item.facility_description!)
+    ) {
+      throw new Error(
+        "Form 8835 increased statement differs from filer or retained attachment bytes",
+      );
+    }
+  }
   const lines = calculateForm8835(item);
+  assertForm8835TransferSource(item, lines.line15, true);
+  if (item.transfer_source) {
+    if (
+      item.transfer_source.transferor.name !== context.filer?.fullName ||
+      item.transfer_source.transferor.tin !== context.filer?.primarySSN
+    ) throw new Error("Form 8835 transferor differs from native filer");
+    for (const t of item.transfer_source.transfers) {
+      requireAttachment(t.statement_file_name, context, "transfer election");
+      if (
+        context.attachmentSha256ByFileName?.[t.statement_file_name] !==
+          t.statement_sha256 ||
+        context.attachmentDescriptionsByFileName?.[t.statement_file_name] !==
+          form8835TransferDescription(
+            item.facility_description!,
+            t.transferee.tin,
+          )
+      ) {
+        throw new Error(
+          "Form 8835 transfer statement differs from retained bytes",
+        );
+      }
+    }
+  }
   const [quantityTag, amountTag] = productionTags[item.energy_type];
   const domesticStatementId = item.domestic_content_statement_file_name
     ? context.documentIdsByAttachmentFileName

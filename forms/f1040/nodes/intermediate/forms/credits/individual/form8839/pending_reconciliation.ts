@@ -40,6 +40,7 @@ export function reconcilePublicForm8839Pending(
     publicSource.reviewed_source,
     preSink,
     publicSource.magi_review,
+    pending.form2555,
   );
   const final1040 = pending.f1040 as Record<string, unknown> | undefined;
   const finalSchedule3 = pending.schedule3 as

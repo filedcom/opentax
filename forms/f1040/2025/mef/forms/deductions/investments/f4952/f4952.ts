@@ -169,7 +169,8 @@ export const form4952: MefFormDescriptor<"form4952", Input> = {
     } else if (fields.source_1099_interest !== undefined) {
       reconcileForm4952InterestPath(fields, context?.pending ?? {});
     } else if (
-      fields.source_k1_interest !== undefined &&
+      (fields.source_k1_interest !== undefined ||
+        fields.source_k1_dividends !== undefined) &&
       fields.source_k1_investment_interest !== undefined
     ) {
       reconcileForm4952PartnershipPath(fields, context?.pending ?? {});

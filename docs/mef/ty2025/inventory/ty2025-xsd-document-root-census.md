@@ -39,8 +39,8 @@ Native/PDF distinct pending-key counts are 153/115. The five additions since
 the 152-entry snapshot are Form 8886 and two continuations, plus two Form 4562
 election statements. Their packet paths are recorded in the form audit.
 
-The current descriptor inventory is **157 native** and **118 PDF** entries;
-the native set includes **39 wage/supporting descriptors**. These are not
+The current descriptor inventory is **158 native** and **118 PDF** entries;
+the native set includes **40 wage/supporting descriptors**. These are not
 211-root coverage counts. The [root applicability crosswalk](./ty2025-unregistered-root-applicability.md#registry-to-root-reconciliation)
 records owner classes and unresolved product decisions, while the
 [supporting-descriptor audit](../domains/general/return-assembly/form1040/ty2025-form1040-form-audit.md#supporting-descriptor-case-and-packet-disposition)

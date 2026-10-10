@@ -1,4 +1,8 @@
 import {
+  notePrincipalRepaid,
+  principalRepayments,
+} from "./repayment-inventory.ts";
+import {
   additionalPrincipalRepayments,
   allocateDebtInventory,
   allocateThreeDebtReductions,
@@ -38,9 +42,7 @@ export function sumPrincipalRepayments(
   return (payments ?? []).reduce((total, payment) => total + payment.amount, 0);
 }
 
-// Source contract for one or two new formal shareholder notes. Each listed
-// The first note may have two dated principal repayments; a second note retains
-// one repayment in its separately bounded source route.
+// Each current written note retains its complete dated principal repayments.
 const newFormalNotesBaseSchema = z.object({
   kind: z.enum(["new_2025_formal_notes", "owned_2025_formal_notes"]),
   open_account_net_advance_amount: z.never().optional(),
@@ -76,8 +78,25 @@ const newFormalNotesBaseSchema = z.object({
     beginning_note_debt_basis: z.literal(0),
     no_2025_repayments_confirmed: z.boolean(),
     principal_repayment: principalRepaymentSchema.optional(),
+    principal_repayments: z.array(principalRepaymentSchema).min(1).optional(),
     no_prior_reduced_debt_basis_confirmed: z.literal(true),
-  }).strict().optional(),
+  }).strict().superRefine((note, ctx) => {
+    if (!note.principal_repayments) return;
+    if (
+      note.principal_repayment ||
+      note.principal_repayments.some((payment, index, payments) =>
+        payment.formal_note_id !== note.formal_note_id ||
+        payment.date <= note.note_execution_date ||
+        (index > 0 && payment.date <= payments[index - 1].date)
+      )
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Dated principal repayments need one ordered inventory for their own written note",
+      });
+    }
+  }).optional(),
   corporation_received_funds_confirmed: z.literal(true),
   shareholder_funded_directly_confirmed: z.literal(true),
   not_a_guarantee_or_cosign_confirmed: z.literal(true),
@@ -85,7 +104,7 @@ const newFormalNotesBaseSchema = z.object({
   beginning_note_debt_basis: z.literal(0),
   no_other_shareholder_debt_confirmed: z.literal(true),
   no_2025_repayments_confirmed: z.boolean(),
-  principal_repayments: z.array(principalRepaymentSchema).min(1).max(2)
+  principal_repayments: z.array(principalRepaymentSchema).min(1)
     .optional(),
   no_prior_reduced_debt_basis_confirmed: z.literal(true),
   no_other_2025_basis_changes_confirmed: z.literal(true),
@@ -93,6 +112,16 @@ const newFormalNotesBaseSchema = z.object({
 }).strict();
 export const reviewedNewFormalNotesSchema = newFormalNotesBaseSchema
   .superRefine((note, ctx) => {
+    if (
+      note.second_formal_note?.principal_repayment &&
+      note.second_formal_note.principal_repayments
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Form7203 note must use one principal repayment inventory",
+      });
+      return;
+    }
     if (
       note.kind === "owned_2025_formal_notes" && !note.owned_current_records
     ) {
@@ -126,27 +155,23 @@ export const reviewedNewFormalNotesSchema = newFormalNotesBaseSchema
         payment.corporate_loan_ledger_reference,
         payment.shareholder_bank_deposit_reference,
       ]),
-      ...(note.second_formal_note?.principal_repayment
-        ? [
-          note.second_formal_note.principal_repayment
-            .corporate_loan_ledger_reference,
-          note.second_formal_note.principal_repayment
-            .shareholder_bank_deposit_reference,
-        ]
-        : []),
+      ...principalRepayments(note.second_formal_note).flatMap(
+        (payment) => [
+          payment.corporate_loan_ledger_reference,
+          payment.shareholder_bank_deposit_reference,
+        ],
+      ),
     ];
     if (
       note.shareholder_ssn !== note.shareholder_lender_ssn ||
       note.corporation_ein !== note.corporate_borrower_ein ||
-      (note.second_formal_note !== undefined &&
-        (note.principal_repayments?.length ?? 0) > 1) ||
       (note.second_formal_note !== undefined &&
         (note.second_formal_note.shareholder_lender_ssn !==
             note.shareholder_ssn ||
           note.second_formal_note.corporate_borrower_ein !==
             note.corporation_ein ||
           note.second_formal_note.no_2025_repayments_confirmed ===
-            (note.second_formal_note.principal_repayment !== undefined))) ||
+            (principalRepayments(note.second_formal_note).length > 0))) ||
       new Set(references).size !== references.length ||
       note.no_2025_repayments_confirmed ===
         ((note.principal_repayments?.length ?? 0) > 0) ||
@@ -158,12 +183,17 @@ export const reviewedNewFormalNotesSchema = newFormalNotesBaseSchema
       ) ||
       sumPrincipalRepayments(note.principal_repayments) >=
         note.cash_advance_amount ||
-      (note.second_formal_note?.principal_repayment !== undefined &&
-        (note.second_formal_note.principal_repayment.formal_note_id !==
-            note.second_formal_note.formal_note_id ||
-          note.second_formal_note.principal_repayment.date <=
-            note.second_formal_note.note_execution_date ||
-          note.second_formal_note.principal_repayment.amount >=
+      (note.second_formal_note !== undefined &&
+        (principalRepayments(note.second_formal_note).some((
+          payment,
+          index,
+          payments,
+        ) =>
+          payment.formal_note_id !== note.second_formal_note!.formal_note_id ||
+          payment.date <= note.second_formal_note!.note_execution_date ||
+          (index > 0 && payment.date <= payments[index - 1].date)
+        ) ||
+          notePrincipalRepaid(note.second_formal_note) >=
             note.second_formal_note.cash_advance_amount))
     ) {
       ctx.addIssue({
@@ -221,7 +251,7 @@ export const reviewedMixedCurrentDebtSchema = newFormalNotesBaseSchema.extend({
         note.additional_formal_notes.some((n) =>
           n.shareholder_lender_ssn !== note.shareholder_ssn ||
           n.corporate_borrower_ein !== note.corporation_ein ||
-          n.no_2025_repayments_confirmed === !!n.principal_repayment
+          n.no_2025_repayments_confirmed === (principalRepayments(n).length > 0)
         ))
     ) {
       throw Error(
@@ -238,7 +268,7 @@ export const reviewedMixedCurrentDebtSchema = newFormalNotesBaseSchema.extend({
           note.second_formal_note.corporate_borrower_ein !==
             note.corporation_ein ||
           note.second_formal_note.no_2025_repayments_confirmed ===
-            (note.second_formal_note.principal_repayment !== undefined)))
+            (principalRepayments(note.second_formal_note).length > 0)))
     ) {
       throw Error(
         "Mixed direct-debt instrument owner/borrower/complete repayment facts conflict",
@@ -336,11 +366,10 @@ export function reconcileNewFormalNotes(
     note.cash_advance_amount -
       sumPrincipalRepayments(note.principal_repayments) +
       (note.second_formal_note?.cash_advance_amount ?? 0) -
-      (note.second_formal_note?.principal_repayment?.amount ?? 0) +
+      notePrincipalRepaid(note.second_formal_note) +
       (note.open_account_net_advance_amount ?? 0) +
       (note.additional_formal_notes ?? []).reduce(
-        (n, r) =>
-          n + r.cash_advance_amount - (r.principal_repayment?.amount ?? 0),
+        (n, r) => n + r.cash_advance_amount - notePrincipalRepaid(r),
         0,
       ),
   );
@@ -354,7 +383,7 @@ export function reconcileNewFormalNotes(
         (note.cash_advance_amount -
           sumPrincipalRepayments(note.principal_repayments) +
           note.second_formal_note.cash_advance_amount -
-          (note.second_formal_note.principal_repayment?.amount ?? 0)),
+          notePrincipalRepaid(note.second_formal_note)),
     )
   ) {
     throw new Error(
@@ -381,7 +410,7 @@ export function actualCurrentDebtRepayments(note: ReviewedNewFormalNotes) {
         note.owned_current_records
           .complete_current_shareholder_debt_inventory.at(-1),
       ).repayments +
-      (note.second_formal_note?.principal_repayment?.amount ?? 0) +
+      notePrincipalRepaid(note.second_formal_note) +
       additionalPrincipalRepayments(note);
   }
   return note.kind === "owned_2025_open_account"
@@ -389,7 +418,7 @@ export function actualCurrentDebtRepayments(note: ReviewedNewFormalNotes) {
       note.owned_current_records.complete_current_shareholder_debt_inventory[0],
     ).repayments
     : sumPrincipalRepayments(note.principal_repayments) +
-      (note.second_formal_note?.principal_repayment?.amount ?? 0) +
+      notePrincipalRepaid(note.second_formal_note) +
       additionalPrincipalRepayments(note);
 }
 
@@ -426,7 +455,7 @@ export function currentOpenAccountCarry(
       formalCapacity,
       ...notes.slice(1).map((n) =>
         n.cash_advance_amount -
-        ("principal_repayment" in n ? n.principal_repayment?.amount ?? 0 : 0)
+        notePrincipalRepaid(n)
       ),
       r.endingPrincipal,
     ];
@@ -452,7 +481,7 @@ export function currentOpenAccountCarry(
   }
   if (mixed && note.second_formal_note) {
     const secondCapacity = note.second_formal_note.cash_advance_amount -
-      (note.second_formal_note.principal_repayment?.amount ?? 0);
+      notePrincipalRepaid(note.second_formal_note);
     const allocation = allocateThreeDebtReductions(allowedDebt, [
       formalCapacity,
       secondCapacity,

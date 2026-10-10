@@ -1,31 +1,76 @@
+import { form4952 } from "../../../deductions/investments/form4952/index.ts";
+import {
+  royaltyMagiDeduction,
+  royaltySpecialSchema,
+} from "./royalty_special_computation.ts";
+import {
+  assertEducationContributions,
+  contributionAccountSchema,
+  contributionReviewSchema,
+  educationFactsSchema,
+} from "./education_contributions.ts";
 import { z } from "zod";
 import type { NodeResult } from "../../../../../../../../core/types/tax-node.ts";
-import { output, TaxNode } from "../../../../../../../../core/types/tax-node.ts";
+import {
+  output,
+  TaxNode,
+} from "../../../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../../../core/types/node-context.ts";
 import { FilingStatus, filingStatusSchema } from "../../../../../types.ts";
 import { CONFIG_BY_YEAR } from "../../../../../config/index.ts";
 import { schedule_b } from "../../../../aggregation/income/investments/schedule_b/index.ts";
+import { isTy2025IrsCountryCode } from "../../../../../irs_country_code.ts";
 
 const amount = z.number().int().nonnegative();
+
+const usInstitutionAddressSchema = z.object({
+  line1: z.string().trim().min(1).max(35),
+  line2: z.string().trim().max(35).optional(),
+  city: z.string().trim().min(1).max(22),
+  state: z.string().regex(/^[A-Z]{2}$/),
+  zip: z.string().regex(/^\d{5}(?:-\d{4})?$/),
+}).strict();
+
+// TY2025 ForeignAddressType: IRS country codes, not ISO codes; the city,
+// province and postal code are optional and must not be invented.
+const street = z.string().trim().min(1).max(35).regex(
+  /^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/,
+);
+const foreignText = z.string().trim().min(1).regex(
+  /^([\x21-\x7E£§ÁÉÍÑÓ×ÚÜáéíñóúü] ?)*[\x21-\x7E£§ÁÉÍÑÓ×ÚÜáéíñóúü]$/,
+);
+const foreignInstitutionAddressSchema = z.object({
+  line1: street,
+  line2: street.optional(),
+  city: z.string().trim().min(1).max(50).regex(/^([A-Za-z] ?)*[A-Za-z]$/)
+    .optional(),
+  province_or_state: foreignText.max(17).optional(),
+  country_code: z.string().refine(
+    isTy2025IrsCountryCode,
+    "Form 8815 requires a TY2025 IRS country code (Germany is GM, not DE)",
+  ),
+  postal_code: foreignText.max(16).optional(),
+}).strict();
+
+export const institutionAddressSchema = z.union([
+  usInstitutionAddressSchema,
+  foreignInstitutionAddressSchema,
+]);
+export type InstitutionAddress = z.infer<typeof institutionAddressSchema>;
 
 export const eligibleStudentSchema = z.object({
   person_name: z.string().trim().min(1).max(35),
   institution_name: z.string().trim().min(1).max(75),
-  institution_address: z.object({
-    line1: z.string().trim().min(1).max(35),
-    line2: z.string().trim().max(35).optional(),
-    city: z.string().trim().min(1).max(22),
-    state: z.string().regex(/^[A-Z]{2}$/),
-    zip: z.string().regex(/^\d{5}(?:-\d{4})?$/),
-  }),
+  institution_address: institutionAddressSchema,
+  contribution_account: contributionAccountSchema.optional(),
 });
 
-// Bounded 2025 path: domestic tuition/fees, not Coverdell or QTP deposits.
+// TY2025 tuition/fees and reviewed Coverdell/QTP cash contributions.
 // The two worksheet objects preserve the source lines used for Form 8815
 // lines 6 and 9. Callers must not provide a guessed exclusion or MAGI.
 export const inputSchema = z.object({
-  eligible_students: z.array(eligibleStudentSchema).min(1).max(3),
+  eligible_students: z.array(eligibleStudentSchema).min(1),
   qualified_bond_facts: z.object({
     series_ee_or_i: z.literal(true),
     issued_after_1989: z.literal(true),
@@ -33,16 +78,8 @@ export const inputSchema = z.object({
     owner_age_at_issue_at_least_24: z.literal(true),
     redemption_records_retained: z.literal(true),
   }),
-  education_facts: z.object({
-    all_students_are_taxpayer_spouse_or_claimed_dependents: z.literal(true),
-    all_institutions_eligible: z.literal(true),
-    expenses_are_eligible_2025_tuition_or_fees: z.literal(true),
-    expenses_not_used_for_education_credit_or_tax_free_distribution: z.literal(
-      true,
-    ),
-    no_coverdell_or_qtp_contributions_in_claim: z.literal(true),
-    nontaxable_benefits_paid_directly_by_institution_excluded: z.literal(true),
-  }),
+  education_facts: educationFactsSchema,
+  education_contributions: contributionReviewSchema.optional(),
   line2_qualified_education_expenses: amount,
   line3_nontaxable_education_benefits: amount,
   bond_proceeds: amount.positive(),
@@ -63,7 +100,18 @@ export const inputSchema = z.object({
     schedule1_adjustments: amount,
     foreign_adoption_and_puerto_rico_addbacks: amount,
     finalized_2025_income_lines_reviewed: z.literal(true),
-    no_royalty_interest_special_computation: z.literal(true),
+    no_royalty_interest_special_computation: z.boolean(),
+    royalty_debt_special_computation: royaltySpecialSchema.optional(),
+  }).superRefine((worksheet, ctx) => {
+    if (
+      worksheet.no_royalty_interest_special_computation ===
+        (worksheet.royalty_debt_special_computation !== undefined)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Form 8815 needs exactly one royalty-interest review choice",
+      });
+    }
   }),
   filing_status: filingStatusSchema,
 }).strict();
@@ -86,6 +134,16 @@ function line6Interest(input: Form8815Input): number {
 
 function line9ModifiedAgi(input: Form8815Input): number {
   const worksheet = input.line9_worksheet;
+  const special = worksheet.royalty_debt_special_computation;
+  if (
+    special && special.other_income_before_royalty_interest -
+          royaltyMagiDeduction(special, worksheet.schedule_b_line2_interest) !==
+      worksheet.other_1040_and_schedule1_income
+  ) {
+    throw new Error(
+      "Form 8815 MAGI royalty income differs from its pre-exclusion Form 4952 computation",
+    );
+  }
   const magi = worksheet.schedule_b_line2_interest +
     worksheet.other_1040_and_schedule1_income -
     worksheet.schedule1_adjustments +
@@ -117,6 +175,7 @@ export function calculateForm8815(
   input: Form8815Input,
   cfg: NonNullable<(typeof CONFIG_BY_YEAR)[number]>,
 ) {
+  assertEducationContributions(input);
   if (input.filing_status === FilingStatus.MFS) {
     throw new Error(
       "Form 8815 exclusion is not available to married filing separately",
@@ -168,7 +227,7 @@ export type Form8815Lines = ReturnType<typeof calculateForm8815>;
 class Form8815Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form8815";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule_b]);
+  readonly outputNodes = new OutputNodes([schedule_b, form4952]);
 
   compute(ctx: NodeContext, rawInput: Form8815Input): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -182,6 +241,9 @@ class Form8815Node extends TaxNode<typeof inputSchema> {
       outputs: [
         { nodeType: this.nodeType, fields: lines },
         output(schedule_b, { ee_bond_exclusion: lines.line14 }),
+        ...(input.line9_worksheet.royalty_debt_special_computation
+          ? [output(form4952, { source_8815_excluded_interest: lines.line14 })]
+          : []),
       ],
     };
   }

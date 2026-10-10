@@ -1,5 +1,67 @@
 # TY2025 Form 1116 Schedule B PDF boundary
 
+## October 9 vintage use, expiry and complete packets
+
+Six existing carryover cases now pass complete return preparation and retain
+full XML/PDF artifacts. The typed Form1116 grouped gate passes 195 tests;
+these six cases include 46 native and 46 fresh-PDF rejection assertions for
+missing carry records, owner/document/vintage changes, expired or used amounts,
+changed source splits and final credit. Altered PDFs are rebuilt without an old
+prepared bundle, so a stale-bundle hash cannot substitute for source checking.
+
+All cases have 50,000 foreign ordinary interest, 15,750 standard deduction and
+regular tax 3,875 from the [2025 IRS Tax Table](https://www.irs.gov/publications/p1040).
+The [Schedule B instructions](https://www.irs.gov/instructions/i1116sb) require
+oldest-first use within the limit and expiry of unused tenth-year tax.
+
+| Case | Current tax | Prior balance | Prior used | Expired | Carry to 2026 | FTC | Final tax | XSD |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 2015 use and expiry | 100 | 9,000 | 3,775 | 5,225 | 0 | 3,875 | 0 | Fail108 |
+| 2016 use | 100 | 900 | 900 | 0 | 0 | 1,000 | 2,875 | Pass |
+| 2017 use | 100 | 900 | 900 | 0 | 0 | 1,000 | 2,875 | Pass |
+| 2018–2024, 100 each | 100 | 700 | 700 | 0 | 0 | 800 | 3,075 | Pass |
+| 2015 expiry/current excess | 9,000 | 100 | 0 | 100 | 5,125 | 3,875 | 0 | Fail108 |
+| 2023 before 2024 | 100 | 9,100 | 3,775 | 0 | 5,325 | 3,875 | 0 | Pass |
+
+All 48 pages were observed through 26 unique hashes on seven contact sheets.
+The two-page parent, two-page carry schedule, source-interest schedule,
+Schedule3 and Form1040 amounts reconcile. The oldest-first case uses all100
+from2023 and3,675 from2024, leaving5,325 in the first-preceding column.
+
+**Four XML returns pass XSD; two fail.** Both2015 cases emit
+`ForeignTxCyovFollowingTYGrp/TenthPrecedingTYAmt=0`; the cached2025v5.4
+Schedule B schema explicitly excludes column(i) from that group. The existing
+serializer maps all remaining rows into line8, including the expired one.
+This newly discovered defect is deferred108, without a runtime repair. The
+passing unit gate does not validate those two complete XML returns.
+
+Residence107 repeats on every parent. Zero1040 line24 remains blank in the
+three zero-tax returns, and zero ScheduleB total line8 is blank in the four
+fully consumed/expired cases (existing deferred76). These observations qualify
+the reviewed packets; they are not filing-ready approvals.
+
+The source records are structured synthetic prior-return claims. Neither these
+packets nor the separate PDF-byte review, which returns `export_ready:false`,
+authenticate actual prior filing/acceptance. Source authenticity, intervening
+adjustments, carrybacks, wider categories and IRS acceptance remain open. This
+checkpoint supersedes historical unrun/visual-pending statements only for the
+six stated cases.
+
+Evidence: `.state/research/form1116-carry-packets-2026-10-09/`, including source,
+XML/PDF hashes, per-return XSD results, test logs and visual qualifications.
+
+## October 9 current-excess complete-return verification
+
+The [passive-country checkpoint](./ty2025-form1116-main-pdf-gap.md#october-9-passive-country-and-current-excess-packet-checkpoint)
+retains seven XSD-valid complete returns and 56 visually reviewed pages,
+including all fourteen foreign-credit Schedule B pages. Current-year lines 6
+and 8 and total line 8 carry 1,125, 5,125, 5,925 or 925 as applicable; parent
+credit and Form 1040 final tax reconcile. Removing the carry schedule rejects
+both native preparation and fresh PDF construction. This advances the current
+excess packet proof only: authenticated prior vintages, carrybacks,
+redeterminations and IRS acceptance remain open. Parent residence and zero-tax
+presentation qualifications remain deferred107/76.
+
 The
 [IRS Schedule B (Form 1116), Rev. December 2022](https://www.irs.gov/pub/irs-pdf/f1116sb.pdf)
 remains the published form linked from the

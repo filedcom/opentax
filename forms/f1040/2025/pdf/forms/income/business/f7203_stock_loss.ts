@@ -1,7 +1,11 @@
+import { notePrincipalRepaid } from "../../../../../nodes/intermediate/forms/income/business/form7203/repayment-inventory.ts";
 import { projectPassiveSCorp7203Copy } from "../../../../domains/income/business/passive-s-corp-loss-copies.ts";
 import { PDFName, StandardFonts } from "pdf-lib";
 import { projectOverflowDebtInventory } from "../../../../domains/income/business/form7203/form7203_debt_inventory.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import { projectReviewedStockLoss7203 } from "../../../../domains/income/business/form7203/form7203_stock_loss_projection.ts";
 import { sumPrincipalRepayments } from "../../../../../nodes/intermediate/forms/income/business/form7203/debt-note.ts";
 
@@ -203,8 +207,7 @@ export const form7203StockLossPdf: PdfFormDescriptor = {
     const debtAfterRepayment = (note?.cash_advance_amount ?? 0) - repayment;
     const secondAdvance = note?.second_formal_note?.cash_advance_amount ??
       note?.open_account_net_advance_amount ?? 0;
-    const secondRepayment =
-      note?.second_formal_note?.principal_repayment?.amount ?? 0;
+    const secondRepayment = notePrincipalRepaid(note?.second_formal_note);
     const secondDebtAfterRepayment = secondAdvance - secondRepayment;
     const thirdAdvance = note?.kind === "owned_2025_formal_and_open_account" &&
         note.second_formal_note

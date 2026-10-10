@@ -6727,3 +6727,609 @@ The sole older-layout root full 91357 remains running on `cf107ac7e`, launched 1
 The preceding old-layout root full (session 91357 on `cf107ac7e69d3212072dfdf62d2f6c6e2e0594c8`) was deliberately interrupted as superseded at **19:21:43 UTC**. Its actual child exit was **143**, task and wrapper exits were **1**, and no JUnit or hardened terminal result was retained. All 3,189 runtime paths and 88 cache files remained unchanged. This is interrupted, unverified evidence, not a full pass or a classified tax failure. The retained `root-organized-hardened-full-regression-20261008-v1/terminal.json` and private `pre-industry-full-interruption-v1.json` preserve the actual status and reason.
 
 The fresh final-taxonomy serial full actually launched at **19:21:53.301439 UTC** on exact commit `666bdd1671be65aab39d3538289b053bb6ed7157`, with wrapper PID 4350 (session 70465) and **3,191 frozen runtime paths**. Launch evidence is `root-industry-taxonomy-full-regression-20261008-v1/launch.json`. It is running; actual task/child/terminal results, JUnit counts and full-scope verification remain pending. This current status supersedes earlier prose describing the old run as active and the final-taxonomy full as not yet launched. Bounded 137/0 unit and migration checks remain evidence for their actual scope. The 52 main TODOs and all 61 future TODO bodies remain frozen; IRS acceptance remains pending.
+
+
+## October 10: owned Form 8915-F distributions and repayment statements
+
+Board learnings compacted before production edits. Continued the existing
+retirement/1040/native/PDF/attachment group on base PR70. The [checkpoint](../domains/income/retirement/form8915/ty2025-form8915f-gap.md#october-10-owned-distributions-and-repayment-packets)
+retains fifteen full-XSD returns, 114 issued sources, 18 owner forms and 118
+reviewed pages. Typed selected gate385/0; public20 and native/fresh-PDF105/105
+reject altered inventories, with additional missing attachment/ID guards.
+Independent calculations reconcile category rounding, repayment amounts and
+final tax/balances. Benchmark46/133 has the same87 failures. Ordinary-source
+paper line7 remains deferred; newly reproduced existing same-day repayment
+acceptance is recorded only in future132. Main52 unchanged; estimate remains
+about60% of individual ATS checks (45–75% uncertainty), without an acceptance
+claim. No future work or broad parent checkoff. This turn advances source
+inventories, ownership, filing statements and validation.
+
+Final repayment-layout typed replay: six passed, zero failed; the changed full-return XML was revalidated and the four changed worksheet pages were inspected again.
+
+## October 10: combined Form 8853 Archer contributions and LTC packets
+
+Board learnings compacted before production edits. The existing health/source/
+1040/native/PDF group now combines one reviewed employee Archer contribution
+ledger with one sourced LTC Section C, using an exclusive coexistence review.
+The [checkpoint](../domains/adjustments/health/form8853/ty2025-form8853-gap.md#october-10-combined-archer-contributions-and-ltc-packets)
+retains nine final full-XSD returns and 64 reviewed static PDF pages (48 unique,
+16 exact duplicates). Deductions, excess employer income, Part VI excise, LTC
+allocation, AGI, tax and refunds independently reconcile. One native IRS8853
+contains both groups; the PDF prints both sections and any payee statement once.
+Related typed gate 271/0 across 18 modules; final corrected-fixture gate 10/0.
+Rejections: 10 public inventories and 108 native/108 fresh-PDF mutations.
+Benchmark 46/133 retains the same 87 failing IDs. Initial joint fixtures exposed
+an accepted insured/spouse identity collision: original evidence is preserved,
+fixture identities corrected, and the runtime gap is deferred 133 without a fix.
+All 7 changed unique pages were reviewed again; 41 final unique pages match the
+first review exactly. Main 52 unchanged; future 133 remain unworked; about 60%
+individual-check estimate (45–75% uncertainty) and no IRS acceptance claim.
+Ongoing work remains on base PR #70; broader MSA/LTC, source authenticity and
+existing zero-line presentation remain open.
+
+
+## October 10: combined Form 8853 distributions and LTC packets
+
+Board learnings compacted before production edits. The existing health/source/
+1040/native/PDF group now combines one reviewed Archer or Medicare distribution
+family with one sourced LTC Section C. Exclusive reviews retain medical-cost
+separation and complete inventories through Schedule1, Schedule2 and final tax.
+The [checkpoint](../domains/adjustments/health/form8853/ty2025-form8853-gap.md#october-10-combined-msa-distribution-and-ltc-packets)
+retains fourteen full-XSD returns and 117 reviewed static PDF pages (75 unique,
+42 exact duplicates; 69 newly inspected and six matched to prior reviewed pages).
+Independent MSA/LTC income, additional tax, AGI, final tax and refunds reconcile.
+Joint packets print the controlling page, LTC/payee pages, then owner statements.
+Typed related gate286/0 across19 modules; focused15/0; rejections56 public,
+154 native and154 fresh-PDF. First related run285/1 hit an older missing output
+directory; the restored-directory replay passed. Benchmark46/133 retains the
+same87 failing IDs. The sole-spouse Medicare page7 repeats the existing joint
+name-header gap, now annotated in future24 without fixing deferred work.
+Main52 unchanged; future133 retained; estimate about60% of individual ATS checks
+(45–75% uncertainty), with no source-authenticity or IRS-acceptance claim.
+Concurrent MSA families/shared costs, changing periods and additional LTC copies
+remain open. Ongoing changes continue on the single base PR70.
+
+
+## October 10: eight-scenario native document-copy reconciliation
+
+Compacted board learnings before changes. The existing ATS matrix now compares
+all56 source-required copies across eight scenarios to actual prepared roots,
+with30 mappings checked against the local ReturnData1040 XSD. Repeated W-2 and
+1099-R copies remain distinct requirements; unknown mappings and unrelated roots
+cannot satisfy missing forms. Five blocked preparations leave34 requirements
+unevaluated. Three emitted partial bundles contain10 of22 required copies:
+Scenario4 lacks5, Scenario5 lacks7, and Scenario13 has6/6 roots but retains its
+printed-target and presentation gaps. This is document presence only, not
+identity, contents, PDF, attachments, business-rule or acceptance proof.
+The unchanged54 calculation observations remain41 match/12 differ/1 unproduced.
+The complete ATS typed suite passes71/0 after increasing the V8 heap for the
+same suite; the initial exit133 heap exhaustion is preserved. No production tax
+runtime, source claim or expected tax was changed. Scenario1 payroll and energy
+source gaps remain unresolved. Main52 and future133 remain byte-preserved as
+TODO bodies; no new deferred item or parent checkoff. About60% individual ATS
+check estimate (45–75% uncertainty) remains. Evidence is private under
+`ats-document-coverage-2026-10-10/`; work continues on base PR70.
+
+
+## October 10: complete Archer employer payroll inventories
+
+Compacted board learnings before edits. Extended the existing employee Archer
+route to a reviewed complete inventory of distinct issued W-2s from one HDHP
+employer for one holder. Actual source/owner/employer/box1 joins, source
+uniqueness and complete inventory checks protect native and fresh-PDF export.
+Compensation, codeR and already-included employer excess round after aggregation;
+other-employer wages stay outside the compensation cap. Four synthetic public
+returns cover personal funding, employer excess, spouse mixed funding and a
+low-pay cap; deductions/excess/PartVI/1040 tax and refund reconcile independently.
+All four complete XML returns pass local2025v5.4 XSD; all31 static PDF pages
+reviewed (29unique/two exact duplicates). Focused5/0 and related291/0 across20
+modules pass; 28native/28fresh-PDF mutations reject. Benchmark46/133 retains
+exactly the same87 failing IDs. Initial focused typing and tax-expectation
+corrections are retained in the logs; production income-tax calculation did
+not change. Existing native-name68 and zero76 qualifications, wider Archer
+routes, authenticity and IRS acceptance remain open. Main52/future133 bodies
+are byte-preserved; no future item implemented or added and no parent closed.
+Individual ATS-check estimate remains about60%, uncertainty45–75%. Private
+proof is `archer-payroll-2026-10-10/`; continuation stays on draft base PR70.
+
+
+## October 10: paired Archer contributions and distributions
+
+Compacted board learnings before edits. The existing Form8853 gap now has one
+reviewed living-holder contribution/distribution route, including sole-spouse
+ownership and optional separate LTC. Both annual inventory reviews must match;
+Schedule1 retains both ledgers and native/PDF export joins owner/date of birth,
+payroll/funding, deductions, income, distribution tax and current-excess tax.
+One native Archer group and printed SectionA contain both PartsI/II; SectionC
+follows when present. Whole-form removal, missing/changed ledgers and altered
+totals reject. No inherited/multiple-holder/mixed-MSA scope is inferred.
+Eight synthetic full returns pass cached2025v5.4 XSD and independent Decimal
+source/1040 tax/refund checks. All65 static PDF pages reviewed (40unique/25exact
+duplicates); no fields/widgets remain. Focused9/0 covers59 public-source and
+88native/88fresh-PDF rejections. Initial typing, synthetic wage-base and joint
+worksheet-expectation corrections are preserved; production income-tax logic
+was unchanged. Related regression passes300/0 across21 modules after replaying
+the initial298/2 run with the corrected joint test expectation. Benchmark46/133 has exactly the same87 failing IDs. Existing
+zero76/native-name68 qualifications and distinct-insured/deferred133 limits
+remain; no new future item or deferred implementation. Main52/future133 bodies
+are byte-preserved and no parent closed. Individual ATS-check estimate stays
+about60%, uncertainty45–75%. Evidence: `archer-paired-2026-10-10/`. Work remains
+on draft base PR70.
+
+
+## October 10: Form3800 Part V continuations
+
+Compacted learnings before edits. The existing Form3800 PDF gap now supports
+additional Part V pages after the nine-page parent, validating the entire
+source inventory before pagination and preserving both row halves together.
+Six public-input complete returns cover15/16/30/31 fully used partnership and
+mixed partnership/S-corporation K-1 credits:139 source rows, seven extra pages,
+six full2025v5.4 XSD passes and85 reviewed static packet pages (39unique/46exact
+duplicates). Independent Decimal checks join credits, AMT limit, tax and refund;
+PDFs retain no fields/widgets. Focused18/0 and related305/0 pass. The initial
+303/2 group only lacked pdftotext on PATH; final replay includes it. Mutations
+reject48 native/48 fresh-PDF/18 prepared inventories. Initial fixture typing,
+unsupported public partial-use allocation experiments, and verifier ordering/
+glob errors remain in evidence. Tax calculation unchanged; no benchmark rerun.
+Existing skipped PartII18-21, blank-zero/name presentation and authentication
+qualifications remain; PartVI overflow, partial-use public intake and wider
+combinations remain open. No future item added/implemented and no parent
+closed. Main52/future133 bodies byte-preserved. Individual ATS-check estimate
+stays about60%, uncertainty45–75%. Evidence: form3800-part-v-2026-10-10/.
+Continuation remains draft PR70.
+
+
+## October 10: Form3800 reviewed current K-1 partial use
+
+Compacted the board before edits. The public source review now binds year,
+primary filer, source type/EIN/document, gross credit and explicit tax-use
+allocation to the entire current nonpassive orphan-drug K-1 inventory. Native
+and PDF projection preserve the independent review, keyed allocations and
+unused current amounts across PartV continuations. Numeric tax calculation
+is unchanged; no fresh benchmark claim. Six complete public returns cover70
+source rows/four continuations and pass local2025v5.4 XSD and independent Decimal
+source/AMT-limit/final-tax/refund checks. All82 static packet pages reviewed via
+31unique renders/51exact pixel matches; no fields/widgets remain. Focused8/0,
+including17 unit rejection cases, and related329/0 pass. Complete-return
+mutations reject72 native/72 fresh-PDF/18 prepared changes. Initial typecheck
+and missing-registry failures are retained; the new public node is registered.
+Existing skipped PartII18–21, blank-zero/name presentation, authentication and
+broader source/accepted-history gaps remain. No new deferred item or parent
+closure; all52 main/133 future bodies are byte-preserved. The individual ATS
+check estimate remains about60%, rough45–75%. Evidence is retained under
+form3800-allocation-2026-10-10/. Continue pushing to single draft PR70.
+
+
+## October 10: Mixed Form3800 K-1 and production-credit packets
+
+Compacted learnings before edits. Extended the retained multi-K-1 PDF source
+check to reconcile fully used Form8835 production alongside reviewed current
+orphan-credit allocations. Six returns cover77 K-1 sources/10 facilities,
+85 PartV rows/five continuations and113 static packet pages (54unique/59pixel
+matches), with six full2025v5.4 XSD passes and independent Decimal source,
+ordinary/specified-limit, final-tax and refund proof. Related370/0 passes;
+rejections84 native/84 fresh-PDF/24 prepared include production document links.
+Initial focused2/4 was a row-order test assumption; corrected6/0 passed before
+adding wind/geothermal pairs and link rejections in the final group. The verifier
+also corrected its expectation for omitted single-facility item count. All
+observations retained in form3800-production-2026-10-10/. Known skipped PartII,
+blank-zero/name qualifications remain; no new discrepancy or future item.
+Tax formulas unchanged; no fresh benchmark claim. No parent closed and52 main/
+133 future bodies unchanged. Estimate remains about60%, uncertainty45–75%.
+Pushing this batch to single draft PR70.
+
+
+## October 10 tax-limited production-credit packets
+
+Compacted board learnings before code edits; 52 main TODO bodies and133 deferred
+items remain unchanged. Single-facility generated credit now reconciles separately
+from tax use in the mixed K-1 PDF route. Three new full returns pass XSD;49 reviewed
+pages cover20 K-1 rows/3 facilities/one continuation. Rejections42 native/42 PDF/15
+prepared; related gate109/0 after correcting Poppler PATH, final focused3/0.
+Evidence:`.state/research/form3800-production-limited-2026-10-10/`. Numeric/native
+code unchanged; estimate remains60% (45–75%). Wider sources, multi-facility partial
+allocation, ledgers, presentation qualifications and IRS acceptance remain open.
+Continue on draft PR70; no parent closed or future item implemented.
+
+
+## October 10 reviewed multiple-facility production allocation
+
+Compacted learnings before edits. Added public complete-facility tax-use review,
+native source-order reconciliation and PDF per-facility applied/unused validation.
+Six XSD-valid returns/122 reviewed pages cover77 K-1 sources/13 facilities/90 PartV
+rows/five continuations; rejections144 native/144 fresh-PDF/30 prepared. Group382/0,
+final input3/0 and packet6/0. Numeric calculations unchanged. Frozen52 main bodies
+and prior133 future bodies preserved; newly discovered prepared-PDF fake EIN is
+future134 only, with accepted probe retained, no repair. Existing presentation,
+wider sources, ledgers, authenticity, business rules and IRS acceptance remain
+open. Evidence:`.state/research/form3800-facility-allocation-2026-10-10/`.
+Estimate60% (45–75%); continue draft PR70, no parent closure.
+
+## October 10 later production years and mixed credit classes
+
+The child PDF and mixed K-1 parent packet now reconcile later-year production
+on line1f separately from first-four-year production on line4e. Source amounts
+are replayed through the existing credit-type ordering before checking each
+reviewed facility allocation, prepared detail and reserved child-document ID.
+One facility in each class remains unambiguous without a multiple-facility
+review. Multiple partially used facilities within a class need the retained
+review. Form8835 prints the applicable older wind construction-reduction pair
+on lines7a/b,7c/d or7e/f and total7g; PartI question8 stays blank for pre-2022
+facilities. Numeric calculations and native serializers are unchanged.
+
+The [2025 Form8835 line15](https://www.irs.gov/pub/irs-prior/f8835--2025.pdf)
+separates production during the first four years from later production.
+[Form8835 instructions](https://www.irs.gov/instructions/i8835) supply the
+pre-2022 3.0-cent rate for wind, geothermal and closed-loop biomass, the ten-year
+period, and question8 applicability. [Form3800 credit ordering](https://www.irs.gov/instructions/i3800)
+places renewable production before orphan-drug credits within the ordinary
+credit class. The original paper rate labels retain their explicit pre-2022
+footnote; the older credit arithmetic uses0.030/kWh before wind reductions.
+
+Detailed per-case amounts are in the Form3800 checkpoint.
+
+All eight complete XMLs pass local TY2025v5.4 XSD validation. Independent Python
+Decimal arithmetic reconciles wages150,000, deduction15,750, regular tax25,067,
+tentative minimum tax16,094, ordinary credit limit8,973 and the combined credit
+ceiling25,050, then source-class ordering, credit used/unused and final tax.
+The mixed reviewed case assigns ordinary facility use0/8,973 and specified
+facility use0/16,077 in source order; all30 K-1 credits remain unused.
+The first-four-period case places its facility in service July1,2021 and ends
+production June30,2025; it correctly remains line4e at the older rate.
+
+The focused typed run passes8/0. It rejects146 native and146 fresh-PDF source
+mutations, including expired ten-year periods, wrong credit classes, production
+crossing the fourth anniversary, missing/mutated inventories and changed final
+tax joins;40 prepared-part mutations reject. The complete related regression gate passes390/0 in6m59s. No fresh numeric benchmark is claimed because
+calculation and native-export code did not change.
+
+All143 flattened PDF pages reopened without field trees or widgets and were
+rendered. All21 contact sheets were visually inspected:83 unique page hashes
+plus60 exact duplicates cover the entire batch. Seventy K-1 sources and12
+facilities reconcile across74 PartV rows and three continuation pages. The
+existing skipped SectionB lines (deferred26), zero presentation (76) and native
+AMT line1a omission (84) remain qualifications. New deferred135 records the
+biomass expansion answer omission on page14; it is not repaired. The prepared
+EIN probe confirms deferred134 still exists, without altering it.
+
+Evidence: `.state/research/form3800-later-production-2026-10-10/`, including
+source/pending/expected records, native XML, PDFs, XSD logs, the independent
+verifier, page hashes, contact sheets and visual-review record. Initial type
+checking found a malformed expression, corrected before runtime; the next
+run passed6/7 because a fourth synthetic latitude had floating-point noise.
+The fixture now constructs six-decimal coordinates from integer microdegrees;
+no production coordinate validator was changed.
+
+This closes this bounded later-year/mixed-class PDF gap only. Other energy
+families, split production across the fourth anniversary, PWA/bonus/transfer,
+passive combinations, carryover inventories/ledgers, source authenticity,
+deferred presentation and IRS acceptance remain open. The broad Form3800 and
+Form8835 parent TODOs remain unchecked.
+
+## October 10 Part VI carryover continuation component checkpoint
+
+Form3800 PartVI now paginates its 35-row detail table and labels continuation
+copies without duplicating carryover histories. Related regression315/0; final
+focused5/0. Five focused tests cover
+35/36/70/71 rows and a mixed 71-source case, with 24 source/detail rejections.
+One parent and36 native computations pass component XSD; all17 component PDF
+pages were rendered and reviewed. This adds no complete-return count and does
+not open the authenticated-prior-return export guard. Deferred26/76 and the
+52 main TODOs/135 deferred items remain unchanged. See the
+[checkpoint](../domains/credits/business/form3800/ty2025-form3800-pdf-gap.md).
+
+
+## October 10 feedstock and nonowner lessee return checkpoint
+
+Seven additional Form8835/Form3800 complete synthetic returns pass TY2025v5.4
+XSD and retain133 reviewed packet pages for cellulosic/livestock biomass,
+nonowner lessees, landfill, trash and mixed reviewed allocations. This is a
+validation-only change; production behavior is unchanged. Focused7/0 and
+193 native/193 fresh-PDF/35 prepared mutations reject. Existing deferred
+26/76/84/134/135, wider facility/period claims, authenticated sources, carry
+ledgers and IRS acceptance remain open. No main parent task is closed.
+Evidence: `.state/research/form8835-feedstock-2026-10-10/`; see the
+[Form3800 checkpoint](../domains/credits/business/form3800/ty2025-form3800-pdf-gap.md#october-10-feedstock-and-nonowner-lessee-return-checkpoint).
+
+Related source/native/PDF/XSD and mixed-return regression:65 passed/0 failed (6m22s).
+
+
+## October 10 cumulative bond financing and complete-return checkpoint
+
+Six additional Form8835/Form3800 complete returns pass TY2025v5.4 XSD and
+retain111 reviewed pages. The PDF now prints reviewed tax-exempt-bond
+reductions; native/PDF filing requires cumulative financing and capital records
+matched to the owned facility. Credit arithmetic is unchanged. Single-facility
+ratio/cap/zero cases and two/four-facility tax-limited allocations reconcile
+through Form1040. Focused6/0, source2/0; rejections176 native/176 fresh-PDF/30
+prepared. The detailed Form8835 checkpoint retains source and visual evidence;
+private evidence is `.state/research/form8835-bonds-2026-10-10/`.
+Existing26/76/84/134/135, broader routes, authenticated records, carry ledgers
+and IRS acceptance remain open. No main parent is closed.
+
+Related source/allocation/native/PDF/XSD and mixed-return regression:76 passed/0 failed (8m1s); final source-boundary tests:2/0.
+
+
+## October 10 ATS attachment coverage and frozen full-gate checkpoint
+
+The ATS replay now verifies prepared attachment metadata/byte digests and
+reports Scenario4's required Transfer Election Statement as missing. Other
+scenario binary inventories remain unknown, not implicitly complete. The
+73-test ATS regression passes; calculation observations stay41/12/1 over54,
+and native copy counts stay10/22 with34 unevaluated. No filing source or
+attachment was fabricated, and no complete return/page count or parent closure
+is added. Evidence: `.state/research/ats-attachments-2026-10-10/`.
+
+A separate full gate started2026-10-10T03:30:19.931Z at frozen `eed449e70`
+in `/private/tmp/opentax-full-gate-eed449e70`:1,394 modules/no exclusions,
+module-graph preflight complete, typed tests running with no terminal result.
+See [running checkpoint](../testing/ty2025-full-gate-2026-10-10.md).
+
+
+## October 10 — reviewed Form8835 small-facility statements and Form3800 tax
+
+Completed the related source/native/PDF/attachment work for reviewed under-1-MW
+wind/geothermal facilities: six complete XSD-valid returns,122 reviewed packet
+pages,11 facilities,22 generating-unit records and11 bound required statements.
+Independent tax/source/XSD/PDF checks pass. Missing or inconsistent evidence
+rejects102 native preparations and78 PDF attempts;12 rebuilt bad archives reject.
+Six submission/outer-transmission packages preserve original statement bytes;
+no package was transmitted. Synthetic typed signatures/reviews do not establish
+external authenticity. The [Form8835 checkpoint](../domains/credits/business/form8835/ty2025-form8835-pdf-gap.md#october-10-reviewed-small-facility-increases-and-attached-statements)
+retains detailed boundaries and known deferred presentation qualifications.
+
+PR70 cumulative evidence becomes328 schema-valid complete returns/3,261 reviewed
+packet pages, including the previously documented incorrect dividend-tax case125;
+ten separate schema-failing returns and nine XML-only cases remain separate.
+Business-credit evidence becomes54/960. Component carryover37roots/17pages is
+excluded. No main task body changed, no broader parent closed, and all135 future
+items stay deferred. Existing future76 receives the repeated line3 observation.
+The individual ATS estimate remains about60%, rough45–75%. The independent full
+1,394-module gate on frozen eed449e70 remains live, without a terminal result.
+
+Related final regression: **82 passed, 0 failed, 0 ignored** (Deno2.9.4; command and development logs retained in private provenance). Changed-TypeScript formatting and `git diff --check` pass.
+
+
+## October 10 — early-construction continuity, statements and final tax
+
+Completed the related Form8835 source/native/PDF/attachment work for reviewed
+filer-owned wind/geothermal facilities begun before January29,2023. Eight
+complete returns pass XSD with152 observed packet pages and12 bound statements.
+Both qualifying start methods, extended continuity safe harbors, complete
+continuous-construction/efforts histories and full/limited Form3800 use reconcile
+through final tax. Evidence covers six physical-work/contract pairs,18 cost
+records and60 history periods. Rejections:190 native,158 PDF,16 local archives;
+all12 original attachments survive submission and transmission ZIP packaging.
+No transmission or source/signature authenticity is claimed. See the [Form8835
+checkpoint](../domains/credits/business/form8835/ty2025-form8835-pdf-gap.md#october-10-early-construction-continuity-and-complete-filing-statements)
+for source methods, independent checks and existing presentation qualifications.
+
+Twelve focused plus82 related typed tests pass, zero failures/ignored. Private evidence:
+`.state/research/form8835-early-2026-10-10/`. PR70 cumulative evidence becomes
+336 schema-valid complete returns/3,413 reviewed packet pages, including the
+previously documented incorrect dividend-tax case125. Ten separate schema-failing
+returns and nine XML-only cases remain separate. Business-credit evidence is
+62/1,112; separate carryover component37roots/17pages is excluded.
+All52 main task bodies remain frozen/open and135 future items remain deferred;
+existing76 receives the repeated zero-line observation. Individual ATS estimate
+remains about60%, rough45–75%. Independent full gate eed449e70 remains live on
+unchanged tracked runtime; this checkpoint does not supply its terminal result.
+
+## October 10 Form8835 domestic-content source-to-archive checkpoint
+
+The original-facility, filer-owned wind/geothermal route now joins an actual
+manufacturer-cost review to the domestic-content bonus, required certification,
+Form3800 allocation and finalized return. This completes another bounded part
+of the existing Form8835/Form3800/source/attachment tasks; no broad parent is closed.
+
+[Notice2023-38](https://www.irs.gov/pub/irs-drop/n-23-38.pdf) sections3/5 supply
+the actual-cost and certification rules. The [2025 instructions](https://www.irs.gov/pub/irs-prior/i8835--2025.pdf)
+require the certification in the service year and a copy in subsequent years.
+[Notice2025-08](https://www.irs.gov/pub/irs-drop/n-25-08.pdf) provides an elective
+cost-table alternative; this implementation uses actual costs, not that election.
+The source inventory classifies structural steel/iron and manufactured products,
+retains manufacturer/origin/cost references, and records completeness and
+classification review. Structural steel/iron requires U.S. manufacturing except
+metallurgical additives. Product direct costs include whole U.S.-made products
+once, or U.S. components of other products; foreign-product assembly labor and
+installation costs do not enter the domestic numerator. Exact integer cents
+check the40% threshold without rounding a below-threshold percentage upward.
+The notice's180/300 example and a balanced one-cent miss below40% are tested.
+
+The review joins facility identity, full address, coordinates, service date,
+construction, production meter and unrelated sales. Certification year must
+match the2023–2025 service year. A2025 certificate's original bonus matches
+current line10;2023/2024 copies retain the original amount and digest plus a
+reviewed prior-filing reference. This latter reference is not authentication of
+a filed or accepted return. Each separate certification has14 checked PDF fields,
+including project kind, original bonus, authority-reviewed signer, date and
+perjury declaration. Final filer, description, distinct filename, digest and
+field content must agree. Original submitted bytes are preserved; the packet
+appends static review copies. PWA, elective cost tables, retrofit/expanded
+property, other energy types, offshore thresholds, transfers, passive and fiscal
+years remain outside this bounded domestic-content route. Community bonuses
+remain guarded. Source and signature authenticity and IRS acceptance are unproved.
+
+Four complete returns cover five facilities, five two-page domestic certifications
+and four separate increased-credit statements. Two2025 certificates and three
+retained2023/2024 copies cover base-rate, under-1-MW and early-construction claims.
+The complete returns have production credits660,3,300,33,000 and66,330;
+uses660,3,300,23,049 and23,049; and final taxes22,406,19,766,17 and17.
+The two limited cases retain their unused amounts on the current-credit detail
+rows; this does not establish an authenticated next-year carryforward.
+All four also use2,001 of reviewed current orphan-drug credits.
+
+Private evidence: `.state/research/form8835-domestic-2026-10-10/`.
+The matched `packaged/` source/XML/PDF/submission and outer ZIP set is canonical.
+All four complete returns validate against TY2025v5.4 Return1040.xsd.
+Independent integer/Decimal checks reconcile cost ratios, credit, tax, refund,
+attachment references, line9a/9b and monetary field rectangles. Seventy canonical
+certification fields have70 parent-linked widgets and nonempty appearances;
+all packet pages have no remaining form fields/widgets. All81 packet pages were
+observed:46 distinct pages on12 contact sheets and35 exact pixel duplicates,
+including10 domestic-certification pages. Declarations, dates, address, bonus
+and facility identity are legible. Known deferred Form3800 skipped lines26,
+Form8835 zero phaseout76, name order68 and native AMT84 remain qualifications;
+no clean whole-packet parity claim or deferred repair is made.
+
+The negative cases reject96 native preparations (including16 rehashed PDF-field
+substitutions),80 changed-source PDF attempts and four fresh PDF attempts without
+prepared attachments. Eight altered/missing attachment archives reject despite
+rebuilt ZIP CRCs. All nine original statement streams survive both archive
+layers. No transmission was attempted; synthetic software/EFIN values establish
+no authorization. Initial fixture-capacity, first-pass XML-ID and negative-cost
+expectation errors were corrected; failed logs remain in the evidence directory.
+A legacy PDF assertion was updated to the more specific missing-review error.
+
+Validation: five focused and55 related typed tests pass,60 distinct tests total,
+with zero failures/ignored. Changed-TypeScript formatting and `git diff --check` pass.
+The unchanged frozen full gate remains separate and has no terminal result.
+
+### October 10 annual energy-community source and packet checkpoint
+
+Compacted board before runtime edits;52 frozen main task bodies remain unchanged
+and135 future items stay deferred. The preceding goal turn verified the live full
+gate and PR/main state. This turn advances existing Form8835/Form3800/source/
+native/PDF/archive tasks. Annual coal/statistical/brownfield reviews now bind
+all-unit capacity and published membership at one2025 date; both bonuses
+reconcile independently. Eight XSD-valid returns/139 observed pages,50 unique
+viewed pages,76 source fields/widgets,144 native/144 PDF and16 archive rejections
+are retained. Focused9 plus related60 typed tests pass. Six statements retain
+original ZIP bytes. Existing presentation qualifications stay deferred; only an
+observation is appended to future76. No transmission or authentication is implied.
+Broad parent tasks remain open, including BOC-only community and wider owners.
+PR70 cumulative:348 schema-valid complete returns/3,633 observed packet pages,
+including prior incorrect dividend-tax case125; ten schema-failing returns and
+nine XML-only cases remain separately qualified. Evidence:
+`.state/research/form8835-community-2026-10-10/`; details in Form8835/3800 notes.
+Frozen `eed449e70` full gate remains live and predates this work; not restarted.
+
+## October 10 — construction-date community qualification
+
+Compacted board first;52 frozen main TODO bodies and135 deferred items remain.
+Shared construction/continuity evidence now binds2023/2024 community qualification,
+historical lists, facility units and combined increases/domestic bonuses through
+Form3800 and Form1040.79 typed tests pass;9 full XSD returns/156 observed pages,
+228 native/228 PDF/18 archive rejections and7 byte-preserved statements are retained
+in `.state/research/form8835-community-boc-2026-10-10/`. Independent arithmetic,
+88 canonical fields/widgets and53 unique page views agree;103 pages are exact
+visual duplicates. Existing deferred26/68/76/84 qualifications remain. No
+source/signature authenticity or IRS acceptance is claimed. Business evidence
+now totals83 returns/1,488 pages; PR70 totals357 XSD-valid returns/3,789 observed
+pages, including previously documented incorrect dividend-tax case125. Ten
+additional schema-failing returns and9 XML-only cases remain separate. Frozen
+full gate eed449e70 is still running and predates this runtime. Estimate stays
+about60% individual ATS checks (rough45–75%); broad parents remain open.
+
+## October 10 direct PWA payroll and complete packets
+
+Final consolidated validation: **88 typed tests pass, zero fail**. All eight complete returns pass the full TY2025v5.4 XSD. Independent payroll, tax and native/PDF checks agree. Source mutations reject153 native and153 freshly hashed prepared-PDF cases;48 attachment mutations reject. Both local archives preserve all20 original interactive attachments exactly, and40 missing/altered archive variants reject. All6,323 canonical source fields and6,323 widgets agree with nonempty appearances.
+
+All191 packet pages were rendered:60 unique pages were inspected across15 contact sheets and131 pages were exact pixel duplicates. Identities, dates, coordinates, qualification answers, amounts, statements and both continuation tables were checked. Existing deferred qualifications remain:26 Form3800 skipped SectionB values,76 blank Form8835 PartII line3 zero,68 some EXAMPLEALEX headers, and84 omitted native Form6251 line1a despite PDF15,750. These observations do not establish correction of those deferred items.
+
+Business evidence totals91 complete XSD-valid returns/1,679 observed pages, with37 PartVI roots/17 pages separate. Evidence is retained under `.state/research/form8835-pwa-2026-10-10/`; see the Form8835 direct-PWA checkpoint for source boundaries. The52 main TODO bodies remain unchanged and all135 future items deferred. The technical estimate remains about60% (45–75%), engineering judgment rather than IRS acceptance. The frozen earlier full regression remains pending and predates these changes.
+
+## October 10 solar production increases and combined bonuses
+
+Seven complete XSD-valid returns/145 observed pages join reviewed solar production, capacity/construction/PWA sources, domestic/community bonuses,14 statements/attachments, Form3800 allocation and final tax. The final grouped gate passes95 tests;123 native/123 fresh-PDF source mutations,14 missing attachments and28 corrupted/missing archive variants reject. Independent Decimal credit/tax and2,099 canonical/widget fields reconcile;70 unique pages were viewed on18 contact sheets and75 pages matched exact rendered pixels.
+
+New future item136 records solar AC capacity printed on Other line12c instead of solar line12a; all eight copies repeat it. Existing26/68/76/84 qualifications also remain. Evidence: `.state/research/form8835-solar-increases-2026-10-10/` and the Form8835 solar checkpoint. Business totals are98 returns/1,824 pages;37 PartVI roots/17 pages remain separate. The52 main TODO bodies are unchanged;136 future items remain deferred. The estimate remains about60% (45–75%), engineering judgment, not IRS acceptance. The frozen eed449e70 full regression remains live with no terminal result and predates this work.
+
+
+## October 10 solar bond-financing combinations
+
+Seven additional XSD-valid complete returns/145 observed pages join reviewed
+solar bond reductions to construction/PWA increases, bonuses and Form3800
+through final tax, including a mixed solar/geothermal pair. Related typed gate:
+51/0; source rejections158 native/158 fresh-PDF, plus14 missing attachments.
+Local archives retain14 original attachments/reject28 corrupt or missing variants.
+Business totals105 returns/1,969 pages; PartVI37 roots/17 pages remain separate.
+See the Form8835 solar-bond checkpoint and private
+`.state/research/form8835-solar-bonds-2026-10-10/` evidence. Existing presentation
+26/68/76/84/136 and newly recorded cross-review137 qualify these results;
+synthetic positive cost inventories were aligned without repairing deferred137.
+Broader routes, authentic records/carryovers and IRS acceptance remain open.
+No broad parent task is closed.
+
+Continued on the single draftPR70 from latest origin/main8f5055950; prior
+headb3d1ea313 CI succeeded. The frozen eed449e70 full gate remains live at this
+checkpoint (PID94680/94693, roughly2h14m), with no terminal totals. It predates
+this change. Board remains52 open main TODOs and137 deferred future items;
+technical individual-check estimate remains about60% (rough45–75%).
+
+## October 10 reviewed production-credit transfers
+
+Seven XSD-valid complete returns/175 observed pages join owned Form8835 credit
+transfers, registration, cash ledgers and ten distinct buyer statements through
+Form3800 and final tax. Whole/partial sales, multiple buyers and solar/geothermal
+allocations include bond reductions, bonuses and PWA/Form7220. Grouped gate218/0;
+source rejections161 native/161 fresh-PDF, content rejections14/14, missing
+attachments24; both archives retain24 originals and reject48 variants.
+Business totals112 returns/2144 pages; PartVI37 roots/17 pages remain separate.
+See the Form8835 transfer checkpoint and private
+`.state/research/form8835-transfers-2026-10-10/`. All25 contact sheets were
+inspected (97 unique pages,78 pixel duplicates). Qualifications26/68/76/84/136
+remain; new deferred138 records clipped Form3800 registration edges. Source
+and signature authenticity, wider coverage and IRS acceptance remain open.
+No broad main task is closed.
+
+The prior solar-bond head b9fbfc105 passed exact-head CI run38028600022.
+The frozen full gate eed449e70 remains live at this checkpoint (about2h31m);
+there is no terminal result. It predates these transfers and other later changes.
+The52 main TODO bodies remain unchanged;138 future items remain deferred.
+Technical ATS-check estimate stays about60%, rough45–75%, as engineering judgment.
+
+## October 10 frozen full-gate terminal result
+
+The existing eed449e70 run finished at06:01:33Z after2h31m14s, exit1:
+13669 passed,218 failed,zero ignored reported;1394 modules,zero exclusions.
+Runtime-before/after manifests are identical. Failure inventory:208 evidence
+environment-permission denials, six known moved paths (65), two rule-path
+assertions (66), and two changed rejection contracts (Form8886/Form2106).
+New deferred139/140 retain the permissions and rejection-contract findings;
+no deferred repair or restart was made. This frozen run predates later
+statement/bonus/PWA/solar/transfer changes and does not validate current HEAD.
+Evidence is mirrored in `.state/research/full-gate-result-2026-10-10/`.
+Main52 TODO bodies remain unchanged;140 future items are deferred.
+The technical ATS-check estimate remains about60%, rough45–75%.
+
+## October 10 mixed-transfer limits and source overflow
+
+Five XSD-valid complete returns/126 observed pages now cover ordinary and
+specified production limits, older-facility transfers, a full specified transfer,
+and18 mixed source rows on two Form3800 PartV pages. Final taxes21066,16094,
+3094,16094,18576 reconcile independently. Focused tests5/0; grouped typed gate51/0 (7m58s);
+40 native/40 fresh-PDF mutations and20 malformed archives reject. Ten original
+statements retain290 matching canonical fields/widgets. All19 contact sheets
+were inspected (75 unique pages/51 pixel duplicates). Existing26/68/76/84/138
+qualify the packets; new future141 records signed values inside the preprinted
+PartV sold-credit parentheses. No deferred repair or production runtime change.
+See the [Form8835 checkpoint](../domains/credits/business/form8835/ty2025-form8835-pdf-gap.md#october-10-mixed-transfer-limits-and-source-overflow)
+and `.state/research/form8835-mixed-transfers-2026-10-10/`.
+Business totals117 XSD-valid returns/2270 observed pages; separate PartVI37/17.
+Authentic sources/signatures, broader combinations and IRS acceptance remain open.
+
+The prior head4826ec38d passed CI38029678677. The completed frozen full gate
+remains13669/218 and predates subsequent runtime work. The52 main TODO bodies
+remain unchanged;141 future items stay deferred. Technical estimate remains
+about60% of individual ATS checks, rough45–75%, as engineering judgment.
+
+## October 10 complete passive-credit inventories and continuation pages
+
+The obsolete15-source ceiling is removed from reconciled Form8582-CR/Form3800
+filing; source/tax/ledger and unmatched-source guards remain. Five mixed K-1
+returns (15/16/30/31/46 sources) pass full XSD and retain all138 source rows on
+12 PartV pages. Focused tests5/0, final grouped gate73/0;40 native/40 fresh-PDF
+mutations and20 archive variants reject. All97 pages were observed through
+53 unique renders/44 exact duplicates; existing26/68/76/84 qualifications remain.
+No new deferred item. Business totals122 returns/2367 pages; PartVI37/17 separate.
+See the Form8582-CR continuation checkpoint and private
+`.state/research/form8582cr-overflow-2026-10-10/`. Source authenticity, broader
+passive-income/credit methods, accepted carryovers and IRS acceptance remain open.
+
+Prior head2589a0c24 passed CI38030409197. The52 frozen main TODO bodies remain
+unchanged, and141 future items stay deferred. Technical ATS-check estimate
+remains about60%, rough45–75%. Scenario4 was rechecked: its nonfiler-owned
+facility still lacks transfer-party/statement records, so no facts were invented
+or source guards bypassed. The complete source-capacity change above advances
+the existing passive-credit, source-overflow and native/PDF/archive tasks.

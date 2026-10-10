@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  calculatePhysicalPresence2555,
+  physicalPresenceFilingSchema,
+} from "../../../income/foreign/form2555/calculation.ts";
 import { f1040 } from "../../../../../outputs/general/return-assembly/f1040/index.ts";
 import { FilingStatus } from "../../../../../types.ts";
 import {
@@ -16,10 +20,9 @@ const reviewDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
     parsed.toISOString().slice(0, 10) === value;
 });
 
-// These are explicit reviewed *nonapplicability* findings for this narrow
-// no-territory/no-foreign-earned-income route. They are not substitutes for
-// Form 2555/4563 or a §933 income ledger when those routes are active.
-export const form8839MagiNonapplicabilitySchema = z.object({
+// Territory nonapplicability stays explicit. Active foreign exclusions require
+// the separately filed Form 2555 source and its calculated sink deposits.
+export const form8839MagiReviewSchema = z.object({
   reviewed_by: sourceReference,
   reviewed_on: reviewDate,
   section933: z.object({
@@ -27,7 +30,7 @@ export const form8839MagiNonapplicabilitySchema = z.object({
     return_wide_review_reference: sourceReference,
   }).strict(),
   form2555: z.object({
-    no_form2555_filing_or_exclusion_confirmed: z.literal(true),
+    no_form2555_filing_or_exclusion_confirmed: z.boolean(),
     return_wide_review_reference: sourceReference,
   }).strict(),
   form4563: z.object({
@@ -56,11 +59,13 @@ export function reconcilePreAdoptionForm8839Credit(
   rawChildReview: unknown,
   rawSinkInput: F1040SinkInput,
   rawMagiReview: unknown,
+  rawForm2555Source?: unknown,
 ) {
   assertReviewedDomestic8839Source(rawForm8839Input, rawChildReview);
   const prepared = prepareForm8839Credit(rawForm8839Input);
   const input = f1040.inputSchema.parse(rawSinkInput);
-  form8839MagiNonapplicabilitySchema.parse(rawMagiReview);
+  const review = form8839MagiReviewSchema.parse(rawMagiReview);
+  const foreign = reconciledForeignExclusion(input, review, rawForm2555Source);
   const schedule3 = input.credit_limit_schedule3_lines;
   if (
     input.filing_status !== FilingStatus.Single ||
@@ -70,14 +75,12 @@ export function reconcilePreAdoptionForm8839Credit(
     !Number.isFinite(input.line19_child_tax_credit ?? 0) ||
     input.form8859_worksheet_b_applies === true ||
     input.form8859_worksheet_b_line14 !== undefined ||
-    input.form8839_form2555_line45 !== undefined ||
-    input.form8839_form2555_line50 !== undefined ||
     (input.line1f_taxable_adoption_benefits ?? 0) !== 0 ||
     (input.line30_refundable_adoption ?? 0) !== 0 ||
     schedule3 === undefined || (schedule3.line6cAdoption ?? 0) !== 0
   ) {
     throw new Error(
-      "Form 8839 pre-adoption reconciliation needs single-filer sourced 1040, no active exclusions, and no prefilled adoption credit",
+      "Form 8839 pre-adoption reconciliation needs single-filer sourced 1040, no employer-benefit exclusion, and no prefilled adoption credit",
     );
   }
 
@@ -135,8 +138,8 @@ export function reconcilePreAdoptionForm8839Credit(
     form1040_line18_tax_before_credits: output.line18_total_tax_before_credits,
     magi_additions: {
       puerto_rico_excluded_income: 0,
-      form2555_line45: 0,
-      form2555_line50: 0,
+      form2555_line45: foreign.line45,
+      form2555_line50: foreign.line50,
       form4563_line15: 0,
     },
     child_credit_priority: {
@@ -161,4 +164,35 @@ export function reconcilePreAdoptionForm8839Credit(
     preAdoptionForm1040: output,
     credit: settleForm8839Credit(prepared, context),
   };
+}
+
+function reconciledForeignExclusion(
+  input: F1040SinkInput,
+  review: z.infer<typeof form8839MagiReviewSchema>,
+  rawSource: unknown,
+) {
+  if (review.form2555.no_form2555_filing_or_exclusion_confirmed) {
+    if (
+      rawSource !== undefined || input.form8839_form2555_line45 !== undefined ||
+      input.form8839_form2555_line50 !== undefined
+    ) {
+      throw new Error(
+        "Form 8839 foreign nonapplicability review conflicts with Form 2555",
+      );
+    }
+    return { line45: 0, line50: 0 };
+  }
+  const source = z.object({ filing_details: physicalPresenceFilingSchema })
+    .strict().parse(rawSource);
+  const lines = calculatePhysicalPresence2555(source.filing_details, 2025);
+  if (
+    input.form8839_form2555_line45 !== lines.line45 ||
+    input.form8839_form2555_line50 !== lines.line50 ||
+    input.line1h_other_earned !== lines.line19
+  ) {
+    throw new Error(
+      "Form 8839 foreign MAGI additions differ from the filed Form 2555 source",
+    );
+  }
+  return { line45: lines.line45, line50: lines.line50 };
 }

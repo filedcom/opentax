@@ -1,6 +1,9 @@
 import { StandardFonts } from "pdf-lib";
 import { currentPropertyPassiveAmounts } from "../../../../../nodes/inputs/income/rental-passthrough/schedule_e/current-property-source.ts";
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../review-support/form-descriptor.ts";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../review-support/form-descriptor.ts";
 import {
   computeExpenses,
   computePropertyNet,
@@ -426,7 +429,12 @@ export const scheduleEPdf: PdfFormDescriptor = {
     });
     // Native Schedule E checks every source row, limitation, and finalized total.
     if (items[0].f1099m_royalty_source) {
-      verifyMiscRoyaltySource(items[0], allPending.f1099m);
+      verifyMiscRoyaltySource(
+        items[0],
+        allPending.f1099m,
+        undefined,
+        allPending,
+      );
     } else if (!scheduleE.build(input, { pending: allPending })) {
       throw new Error("Schedule E PDF needs native Part I properties");
     }

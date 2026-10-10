@@ -1,4 +1,13 @@
-import type { PdfFieldEntry, PdfFormDescriptor } from "../../../../review-support/form-descriptor.ts";
+import { assertCurrentProductionAllocationSource } from "../../../../../../nodes/inputs/credits/business/f3800/production-allocation.ts";
+import {
+  assertCurrentOrphanAllocationSource,
+  reconcileCurrentOrphanAllocation,
+} from "../../../../../../nodes/inputs/credits/business/f3800/current-allocation.ts";
+import { StandardFonts } from "pdf-lib";
+import type {
+  PdfFieldEntry,
+  PdfFormDescriptor,
+} from "../../../../review-support/form-descriptor.ts";
 import { assertForm3800FinalCreditJoin } from "../../../../../domains/credits/business/form3800/form3800_final_credit_join.ts";
 import { reconcileFiledForm8582CROrdinary } from "../../../../../domains/credits/business/form8582c/form8582cr_filed_ordinary.ts";
 import {
@@ -38,7 +47,6 @@ import {
   reconcileForm3800NonpassiveCarryforwards,
 } from "../../../../../../nodes/inputs/credits/business/f3800/index.ts";
 import { appendForm3800CarryoverStatement } from "./f3800_carryover_statement.ts";
-import { FORM3800_PRINTED_PART_V_ROWS } from "./f3800_capacity.ts";
 import { form8835PdfSources } from "../f8835_source.ts";
 import {
   form3800HeaderFields,
@@ -57,8 +65,8 @@ import {
   projectForm3800PartIVFields,
 } from "./f3800_print_projection.ts";
 import {
-  projectForm3800PartVFields,
-  projectForm3800PartVIFields,
+  projectForm3800PartVIPages,
+  projectForm3800PartVPages,
 } from "./f3800_detail_projection.ts";
 
 const checkboxPaths = new Set<string>([
@@ -140,6 +148,22 @@ export const form3800Pdf: PdfFormDescriptor = {
     }
     assertForm3800FinalCreditJoin(prepared.lines.line38, all);
     const source = f3800InputSchema.parse(pending3800);
+    assertCurrentProductionAllocationSource(
+      source.current_production_allocation_review,
+      all.form3800_current_production_allocation,
+    );
+    assertCurrentProductionAllocationSource(
+      raw.current_production_allocation_review,
+      all.form3800_current_production_allocation,
+    );
+    assertCurrentOrphanAllocationSource(
+      source.current_orphan_allocation_review,
+      all.form3800_current_orphan_allocation,
+    );
+    assertCurrentOrphanAllocationSource(
+      raw.current_orphan_allocation_review,
+      all.form3800_current_orphan_allocation,
+    );
     if (source.f8864_direct_producer_credit) {
       const { lines } = reconcileForm8864DocumentSource(all.f8864, all);
       const rawSource = f3800InputSchema.parse(raw);
@@ -1024,7 +1048,6 @@ export const form3800Pdf: PdfFormDescriptor = {
         credits.rows.length !== ledger.rows.length ||
         credits.nonpassiveCredit !== 0 ||
         credits.passiveCredit !== passive.partI.line5 ||
-        ledger.rows.length > FORM3800_PRINTED_PART_V_ROWS ||
         new Set(ledger.rows.map((row) =>
             JSON.stringify([
               row.source.activity_reference,
@@ -1118,7 +1141,6 @@ export const form3800Pdf: PdfFormDescriptor = {
         JSON.stringify(rawSource.passive_source_allocations) !==
           JSON.stringify(source.passive_source_allocations) ||
         ledger.rows.length !== source.passive_source_allocations.length ||
-        ledger.rows.length > FORM3800_PRINTED_PART_V_ROWS ||
         rows.length !== 1 || amounts.length !== 1 ||
         details.length !== ledger.rows.length ||
         prepared.currentDetails.some((row) => row.line === "1i") ||
@@ -1239,7 +1261,6 @@ export const form3800Pdf: PdfFormDescriptor = {
         JSON.stringify(rawSource.passive_source_allocations) !==
           JSON.stringify(source.passive_source_allocations) ||
         ledger.rows.length !== source.passive_source_allocations.length ||
-        ledger.rows.length > FORM3800_PRINTED_PART_V_ROWS ||
         rows.length !== 1 || amounts.length !== 1 ||
         details.length !== ledger.rows.length ||
         prepared.currentDetails.some((row) => row.line === "1i") ||
@@ -1459,7 +1480,7 @@ export const form3800Pdf: PdfFormDescriptor = {
       }
     }
     if (
-      directOrphanK1?.length === 2 &&
+      (directOrphanK1?.length ?? 0) >= 2 &&
       !source.f8844_direct_employer_credit &&
       !source.f8881_credit &&
       !source.f8908_credit &&
@@ -1467,9 +1488,12 @@ export const form3800Pdf: PdfFormDescriptor = {
       !source.f8994_direct_employer_credit &&
       !source.f8864_direct_producer_credit &&
       !source.f8882_direct_employer_credit &&
-      directOrphanK1.every((entry) => entry.source_type === "partnership") &&
+      directOrphanK1?.every((entry) =>
+        entry.source_type === "partnership" ||
+        entry.source_type === "s_corporation"
+      ) &&
       !source.f8820_credit && !source.f8874_credit &&
-      !source.f5884_credit && !source.f8835_credit_entries?.length &&
+      !source.f5884_credit &&
       !source.f8826_credit_entries?.length &&
       !source.f3468_trust_part_v_credit_entries?.length &&
       !source.f8936_new_vehicle_credit &&
@@ -1480,8 +1504,36 @@ export const form3800Pdf: PdfFormDescriptor = {
     ) {
       const entries = sourceOrphanDrugK1Credits(source, { pending: all });
       const rawSource = f3800InputSchema.parse(raw);
-      const [row] = prepared.currentRows;
-      const [amount] = prepared.currentAmounts;
+      const productionSources = source.f8835_credit_entries?.length || all.f8835
+        ? form8835PdfSources(all, filer, prepared)
+        : [];
+      const productionFor = (line: "1f" | "4e") =>
+        productionSources.filter((source) =>
+          source.lines.form3800Line === line
+        );
+      const productionCredit = (line: "1f" | "4e") =>
+        productionFor(line).reduce(
+          (sum, source) =>
+            sum + source.lines.line15 -
+            (source.item.transfer_election_amount ?? 0),
+          0,
+        );
+      const productionApplied = (line: "1f" | "4e") =>
+        productionFor(line).reduce(
+          (sum, source) => sum + source.appliedCredit,
+          0,
+        );
+      const productionGroups = new Set(productionSources.map((source) =>
+        source.lines.form3800Line
+      )).size;
+      const orphanRows = prepared.currentRows.filter((row) =>
+        row.line === "1h"
+      );
+      const orphanAmounts = prepared.currentAmounts.filter((row) =>
+        row.line === "1h"
+      );
+      const [row] = orphanRows;
+      const [amount] = orphanAmounts;
       const details = prepared.currentDetails.filter((detail) =>
         detail.line === "1h"
       );
@@ -1489,22 +1541,46 @@ export const form3800Pdf: PdfFormDescriptor = {
         (sum, entry) => sum + entry.credit_amount,
         0,
       );
-      const largest = entries[0].credit_amount >= entries[1].credit_amount
-        ? entries[0]
-        : entries[1];
+      const reviewedTaxUse = source.current_orphan_allocation_review
+        ? reconcileCurrentOrphanAllocation(
+          source.current_orphan_allocation_review,
+          entries,
+          {
+            primarySSN: filer.primarySSN,
+            appliedCredit: prepared.lines.line17 - productionApplied("1f"),
+          },
+        )
+        : entries.map((entry) => entry.credit_amount);
+      const applied = reviewedTaxUse.reduce((sum, amount) => sum + amount, 0);
+      const largest = entries.reduce((left, right) =>
+        left.credit_amount >= right.credit_amount ? left : right
+      );
       if (
-        entries[0].source_ein === entries[1].source_ein ||
+        JSON.stringify(rawSource.current_orphan_allocation_review) !==
+          JSON.stringify(source.current_orphan_allocation_review) ||
+        JSON.stringify(rawSource.form8820_applied_credits_by_source) !==
+          JSON.stringify(source.form8820_applied_credits_by_source) ||
+        new Set(entries.map((entry) => entry.source_ein)).size !==
+          entries.length ||
         entries.some((entry) =>
           entry.credit_amount <= 0 || entry.subject_to_passive_activity_limit
         ) ||
         JSON.stringify(rawSource.f8820_k1_credit_entries) !==
           JSON.stringify(directOrphanK1) ||
-        prepared.currentRows.length !== 1 ||
-        prepared.currentAmounts.length !== 1 ||
-        prepared.currentDetails.length !== 2 ||
+        JSON.stringify(rawSource.f8835_credit_entries) !==
+          JSON.stringify(source.f8835_credit_entries) ||
+        productionSources.length !==
+          (source.f8835_credit_entries?.length ?? 0) ||
+        orphanRows.length !== 1 || orphanAmounts.length !== 1 ||
+        prepared.currentRows.length !==
+          1 + productionGroups ||
+        prepared.currentAmounts.length !==
+          1 + productionGroups ||
+        prepared.currentDetails.length !==
+          entries.length + productionSources.length ||
         prepared.carryoverRows.length !== 0 ||
-        row?.line !== "1h" || row.metadata.sourceCount !== 2 ||
-        row.entityCredits.length !== 2 ||
+        row?.line !== "1h" || row.metadata.sourceCount !== entries.length ||
+        row.entityCredits.length !== entries.length ||
         !(row.metadata.entity && "ein" in row.metadata.entity) ||
         row.metadata.entity.ein !== largest.source_ein ||
         row.entityCredits.some((entity, index) =>
@@ -1512,23 +1588,29 @@ export const form3800Pdf: PdfFormDescriptor = {
           entity.entity.ein !== entries[index].source_ein ||
           entity.credit !== entries[index].credit_amount
         ) ||
-        details.length !== 2 ||
+        details.length !== entries.length ||
         details.some((detail, index) =>
           detail.credit !== entries[index].credit_amount ||
-          detail.appliedCredit !== entries[index].credit_amount ||
+          detail.appliedCredit !== reviewedTaxUse[index] ||
+          detail.appliedCredit < 0 ||
+          detail.appliedCredit > entries[index].credit_amount ||
           detail.passThroughEin !== entries[index].source_ein
         ) ||
         amount?.line !== "1h" ||
         amount.nonpassiveCredit !== total || amount.totalCredit !== total ||
-        amount.appliedCredit !== total || amount.transferOutCredit !== 0 ||
+        amount.appliedCredit !== applied || amount.transferOutCredit !== 0 ||
         amount.passiveBeforeLimit !== 0 || amount.passiveAfterLimit !== 0 ||
-        prepared.lines.line1 !== total || prepared.lines.line6 !== total ||
-        prepared.lines.line17 !== total ||
-        (prepared.lines.line37 ?? 0) !== 0 ||
-        prepared.lines.line38 !== total
+        prepared.lines.line1 !== total + productionCredit("1f") ||
+        prepared.lines.line6 !== total + productionCredit("1f") ||
+        prepared.lines.line17 !==
+          applied + productionApplied("1f") ||
+        (prepared.lines.line30 ?? 0) !== productionCredit("4e") ||
+        (prepared.lines.line37 ?? 0) !== productionApplied("4e") ||
+        prepared.lines.line38 !==
+          applied + productionApplied("1f") + productionApplied("4e")
       ) {
         throw new Error(
-          "Form 3800 PDF two partnership orphan-drug sources differ from Part V and filed K-1s",
+          "Form 3800 PDF orphan-drug K-1 sources differ from Part V and filed K-1s",
         );
       }
     }
@@ -1672,22 +1754,59 @@ export const form3800Pdf: PdfFormDescriptor = {
         );
       }
     }
+    const partVPages = projectForm3800PartVPages(prepared);
+    const partVIPages = projectForm3800PartVIPages(prepared);
     const projected = {
       ...projectForm3800HeaderFields(prepared, filer),
       ...projectForm3800PartIAndIIFields(prepared, line6a),
       ...projectForm3800PartIIIFields(prepared),
       ...projectForm3800PartIVFields(prepared),
-      ...projectForm3800PartVFields(prepared),
-      ...projectForm3800PartVIFields(prepared),
+      ...partVPages[0],
+      ...partVIPages[0],
     };
     for (const key of Object.keys(projected)) {
       if (!paths.has(key)) {
         throw new Error(`Form 3800 printable field is not mapped: ${key}`);
       }
     }
-    return [projected];
+    return [
+      projected,
+      ...partVPages.slice(1).map((page, index) => ({
+        ...page,
+        partVContinuation: index + 2,
+        partVPageCount: partVPages.length,
+      })),
+      ...partVIPages.slice(1).map((page, index) => ({
+        ...page,
+        partVIContinuation: index + 2,
+        partVIPageCount: partVIPages.length,
+      })),
+    ];
   },
-  async appendSupplementalPages(document, _fields, filer, all, prepared) {
+  pageIndices(fields) {
+    if (fields.partVContinuation) return [7];
+    if (fields.partVIContinuation) return [8];
+    return [0, 1, 2, 3, 4, 5, 6, 7, 8];
+  },
+  async decoratePages(document, pages, fields, filer) {
+    if ((!fields.partVContinuation && !fields.partVIContinuation) || !filer) {
+      return;
+    }
+    const part = fields.partVContinuation ? "V" : "VI";
+    const continuation = fields.partVContinuation ?? fields.partVIContinuation;
+    const count = fields.partVPageCount ?? fields.partVIPageCount;
+    const page = pages[0];
+    const label =
+      `Form 3800 Part ${part} continuation ${continuation} of ${count} | ${filer.nameLine1} | ${filer.primarySSN}`;
+    const font = await document.embedFont(StandardFonts.Helvetica);
+    const size = Math.min(
+      7,
+      7 * (page.getWidth() - 72) / font.widthOfTextAtSize(label, 7),
+    );
+    page.drawText(label, { x: 36, y: page.getHeight() - 12, size, font });
+  },
+  async appendSupplementalPages(document, fields, filer, all, prepared) {
+    if (fields.partVContinuation || fields.partVIContinuation) return;
     const entries = all?.f3800
       ? f3800InputSchema.parse(all.f3800).carryforward_vintages ?? []
       : [];

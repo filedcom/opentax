@@ -1,4 +1,8 @@
+import { assertForm8835TransferStatements } from "./forms/credits/business/f8835_transfer_statement.ts";
+import { assertForm8835DomesticStatements } from "./forms/credits/business/f8835_domestic_statement.ts";
+import { assertForm8835IncreaseStatements } from "./forms/credits/business/f8835_increase_statement.ts";
 import { assertEmployeeContributionReturn } from "../domains/credits/individual/form8880/form8880_tax_limit.ts";
+import { assertRequiredLtcSource } from "./forms/adjustments/health/f8853_ltc.ts";
 import type { ExecuteResult } from "../../../../core/runtime/executor.ts";
 import type { Form8886Source } from "../domains/general/filing/form8886/source.ts";
 import {
@@ -332,6 +336,7 @@ function buildReturnXml(
   assertBusinessSchedule1Amounts(pending);
   assertOwned7203RequiredCopies(pending);
   assertHsaExcessRequiredCopy(pending);
+  assertRequiredLtcSource({ pending, filer });
   assertLine1iCombatPayElectionSource(pending);
   assertSchedule2W2Line13Sources(pending);
   assertSchedule2W2Line17KSource(pending);
@@ -627,7 +632,7 @@ export async function buildMefBundle(
       "buildBinaryAttachments" in form && form.buildBinaryAttachments
         ? form.buildBinaryAttachments(
           (pending[form.pendingKey as keyof MefFormsPending] ?? {}) as never,
-          { filer: options.filer },
+          { filer: options.filer, pending },
         )
         : Promise.resolve([] as ReadonlyArray<MefPdfAttachment>)
     ),
@@ -664,6 +669,21 @@ export async function buildMefBundle(
     const { source } = reconciledForm8908Source(pending.f8908, pending.f3800);
     await assertForm8908PwaSubmittedPdfs(source, attachments);
   }
+  await assertForm8835TransferStatements(
+    pending.f8835,
+    options.filer,
+    attachments,
+  );
+  await assertForm8835DomesticStatements(
+    pending.f8835,
+    options.filer,
+    attachments,
+  );
+  await assertForm8835IncreaseStatements(
+    pending.f8835,
+    options.filer,
+    attachments,
+  );
   await assertW2GPayerCopyContents(pending, options.filer, attachments);
   const attachmentSha256ByFileName = Object.fromEntries(
     await Promise.all(attachments.map(async ({ fileName, bytes }) => {

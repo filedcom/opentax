@@ -150,22 +150,29 @@ Deno.test("Form 7217 PDF does not print unreconciled or misclassified source", (
   );
 });
 
-Deno.test("Form 7217 PDF rejects a 31st property row pending continuation support", () => {
-  assertThrows(
-    () =>
-      form7217Pdf.instances?.({
-        form7217s: [{
-          ...item,
-          distributed_properties: Array.from({ length: 31 }, (_, index) => ({
-            description: `Property ${index + 1}`,
-            property_treatment: Form7217PropertyTreatment.Section732Property,
-            partnership_basis_before_distribution: index === 0 ? 6_000 : 0,
-            fair_market_value: index === 0 ? 9_000 : 0,
-            partner_basis_after_section_732: index === 0 ? 6_000 : 0,
-          })),
-        }],
-      }, filer),
-    Error,
-    "attached Part II continuation",
-  );
+Deno.test("Form 7217 PDF carries a 31st property onto a linked Part II", () => {
+  const [first, continuation] = form7217Pdf.instances({
+    form7217s: [{
+      ...item,
+      partner_adjusted_basis_before_distribution: 20000,
+      distributed_properties: Array.from({ length: 31 }, (_, index) => ({
+        description: `Property ${index + 1}`,
+        property_treatment: Form7217PropertyTreatment.Section732Property,
+        partnership_basis_before_distribution: 100,
+        fair_market_value: 200,
+        partner_basis_after_section_732: 100,
+      })),
+    }],
+  }, filer);
+  assertEquals(first.row30_description, "Property 30");
+  assertEquals(first.attached_partnership_basis, 100);
+  assertEquals(first.attached_fmv, 200);
+  assertEquals(first.attached_partner_basis, 100);
+  assertEquals(first.total_partner_basis, 3100);
+  assertEquals(continuation.row1_description, "Property 31");
+  assertEquals(continuation.total_partner_basis, 100);
+  assertEquals(continuation.attached_partner_basis, undefined);
+  assertEquals(continuation.partner_name, undefined);
+  assertEquals(form7217Pdf.pageIndices(first), [0, 1]);
+  assertEquals(form7217Pdf.pageIndices(continuation), [1]);
 });
