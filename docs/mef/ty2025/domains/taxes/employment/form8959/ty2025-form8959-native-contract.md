@@ -195,3 +195,53 @@ their seven full-XSD regressions pass within the 91-test group. Multi-source
 Schedule SE, payment authenticity, wider filing combinations and IRS
 acceptance remain open. Deferred Schedule SE rounding33 and presentation76
 were not changed; no broad board task is closed by this checkpoint.
+
+## October 10 complete joint employment-source packets
+
+Three additional public-entry cases now execute both spouses' employment
+records through Form 4137, Form 8919, Form 8959, Schedule 2, Form 1040, full
+Return1040 XSD validation and actual PDF generation. The three typed tests pass
+with no ignored cases, adding to the preceding 101 distinct passing tests.
+The new owner-document assertions verify exactly one native copy per spouse
+for each applicable employment form. Four one-cent deposit mutations reject
+in each final exporter (four native and four actual-PDF rejections).
+
+| Complete return | Tip income / Medicare tips | Reclassified wages | Tip / reclassified tax | Additional Medicare | Income tax | Final tax | Paid / owed | Pages |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Joint tips | 6,000 / 5,985 | 0 | 458 / 0 | 54 | 39,574 | 40,086 | 40,000 / 86 | 8 |
+| Joint reclassified | 0 / 0 | 230,000 | 0 / 13,013 | 720 | 57,334 | 71,067 | 40,000 / 31,067 | 8 |
+| Joint mixed | 6,000 / 5,985 | 50,000 | 458 / 3,825 | 54 | 39,574 | 43,911 | 40,000 / 3,911 | 10 |
+
+The mixed case verifies that each owner's Form 4137 Social Security tips join
+Form 8919's wage-base calculation while full Medicare amounts join Form 8959.
+The larger reclassified case reaches the primary owner's Social Security cap
+without capping the 200,000 Medicare wage amount. The $15 below-monthly-limit
+tip amount remains taxable income but is excluded from Medicare tips.
+Independent Decimal calculations using the public inputs and the
+[IRS 2025 tax-rate schedule](https://www.irs.gov/irb/2024-45_IRB) agree with
+employment taxes, ordinary tax, final tax and amounts owed. Every populated
+Form 4137/8919/8959 amount sequence and owner identity was also checked in
+extracted PDF text; flattened packets have no surviving widgets or field tree.
+
+All **26 pages** were visually reviewed (25 unique RGB pages across seven
+contact sheets, plus a full Form 8919 page). Four owner pages repeat deferred
+item17: Form 8919 names and SSNs overlap the identity-row border in joint-mixed
+pages7–8 and joint-reclassified pages5–6. Their identities and amounts reconcile,
+but this is qualified review, not clean visual approval; no deferred repair.
+The three zero-investment-income Form 8960 pages are included in the page
+count, not counted as additional filing scenarios.
+
+The Form 8959 wage/employment packet series now has **10 full-XSD returns and
+61 reviewed pages**, combining the prior seven/35 with these three/26; existing
+zero qualification76 and current owner-placement17 remain. Synthetic SS-8
+references are not authenticated filings. RRTA combinations, original
+multi-source Schedule SE, wider source coverage and IRS acceptance remain
+open; no broad board task is closed.
+
+Reproduce with
+`deno test -A forms/f1040/e2e/taxes/employment/form8959/form8959_employment_sources.test.ts`.
+The local IRS schema and `xmllint` are required; these tests do not silently
+skip. Add `-- --evidence-dir=<directory>` to retain the three source/pending
+JSON records, XML returns and generated PDFs. Private artifacts, both passing
+logs, independent verification, page inventory, visual findings and hashes are
+under `.state/research/form8959-joint-employment-2026-10-10/`.
