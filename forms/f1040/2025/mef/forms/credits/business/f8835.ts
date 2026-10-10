@@ -1,3 +1,4 @@
+import { assertForm8835BondSource } from "../../../../../nodes/inputs/credits/business/f8835/bond-source.ts";
 import { element, elements } from "../../../../../mef/xml.ts";
 import {
   calculateForm8835,
@@ -5,7 +6,10 @@ import {
   type F8835Item,
   inputSchema,
 } from "../../../../../nodes/inputs/credits/business/f8835/index.ts";
-import type { MefBuildContext, MefFormDescriptor } from "../../../form-descriptor.ts";
+import type {
+  MefBuildContext,
+  MefFormDescriptor,
+} from "../../../form-descriptor.ts";
 
 type Input =
   & Partial<ReturnType<typeof inputSchema.parse>>
@@ -129,6 +133,7 @@ function facilityXml(item: F8835Item, context: MefBuildContext): string {
     );
   }
 
+  assertForm8835BondSource(item, true);
   const lines = calculateForm8835(item);
   const [quantityTag, amountTag] = productionTags[item.energy_type];
   const domesticStatementId = item.domestic_content_statement_file_name

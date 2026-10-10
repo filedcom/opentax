@@ -124,6 +124,10 @@ export const form8835Pdf: PdfFormDescriptor = {
     ),
     text("line2", `${page2}.f2_31[0]`),
     text("line4", `${page2}.f2_35[0]`),
+    text("line5a", `${page2}.f2_36[0]`),
+    text("line5b", `${page2}.f2_37[0]`, true),
+    text("line5c", `${page2}.f2_38[0]`, true),
+    text("line5d", `${page2}.f2_39[0]`, true),
     text("line6", `${page2}.f2_40[0]`),
     text("line7a", `${page2}.f2_41[0]`),
     text("line7b", `${page2}.f2_42[0]`),
@@ -227,6 +231,12 @@ export const form8835Pdf: PdfFormDescriptor = {
           line1h_credit: trash ? lines.line1 : undefined,
           line2: lines.line2,
           line4: lines.line4,
+          line5a: item.tax_exempt_bond_proceeds
+            ? lines.line5a.toFixed(2)
+            : undefined,
+          line5b: item.tax_exempt_bond_proceeds ? lines.line5b : undefined,
+          line5c: item.tax_exempt_bond_proceeds ? lines.line5c : undefined,
+          line5d: item.tax_exempt_bond_proceeds ? lines.line5d : undefined,
           line6: lines.line6,
           line7a: wind20 ? lines.line6 : undefined,
           line7b: wind20 ? lines.line7g : undefined,

@@ -7032,3 +7032,19 @@ Evidence: `.state/research/form8835-feedstock-2026-10-10/`; see the
 [Form3800 checkpoint](../domains/credits/business/form3800/ty2025-form3800-pdf-gap.md#october-10-feedstock-and-nonowner-lessee-return-checkpoint).
 
 Related source/native/PDF/XSD and mixed-return regression:65 passed/0 failed (6m22s).
+
+
+## October 10 cumulative bond financing and complete-return checkpoint
+
+Six additional Form8835/Form3800 complete returns pass TY2025v5.4 XSD and
+retain111 reviewed pages. The PDF now prints reviewed tax-exempt-bond
+reductions; native/PDF filing requires cumulative financing and capital records
+matched to the owned facility. Credit arithmetic is unchanged. Single-facility
+ratio/cap/zero cases and two/four-facility tax-limited allocations reconcile
+through Form1040. Focused6/0, source2/0; rejections176 native/176 fresh-PDF/30
+prepared. The detailed Form8835 checkpoint retains source and visual evidence;
+private evidence is `.state/research/form8835-bonds-2026-10-10/`.
+Existing26/76/84/134/135, broader routes, authenticated records, carry ledgers
+and IRS acceptance remain open. No main parent is closed.
+
+Related source/allocation/native/PDF/XSD and mixed-return regression:76 passed/0 failed (8m1s); final source-boundary tests:2/0.

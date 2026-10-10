@@ -19,6 +19,8 @@ import {
   feedstockFields,
 } from "./form3800_feedstock.fixture.ts";
 
+import { bondFields } from "./form3800_bonds.fixture.ts";
+
 interface Case {
   id: string;
   count: number;
@@ -33,6 +35,7 @@ interface Case {
   closed?: boolean;
   feedstock?: Feedstock;
   lessee?: boolean;
+  bondProceeds?: number[];
 }
 function productionAmount(
   facility: {
@@ -40,6 +43,8 @@ function productionAmount(
     energy_type: string;
     facility_placed_in_service_date: string;
     facility_construction_start_date: string;
+    tax_exempt_bond_proceeds?: number;
+    aggregate_capital_additions?: number;
   },
 ) {
   const old = facility.facility_placed_in_service_date < "2022-01-01";
@@ -59,7 +64,16 @@ function productionAmount(
       ? .4
       : 0)
     : 0;
-  return gross - Math.round(gross * reduction);
+  const ratio = Math.round(
+    Math.min(
+      1,
+      (facility.tax_exempt_bond_proceeds ?? 0) /
+        (facility.aggregate_capital_additions ?? 1),
+    ) * 100,
+  ) / 100;
+  const afterBonds = gross -
+    Math.min(Math.round(gross * ratio), Math.round(gross * .15));
+  return afterBonds - Math.round(afterBonds * reduction);
 }
 function productionLine(
   facility: {
@@ -73,6 +87,65 @@ function productionLine(
   return facility.production_period_end_date < anniversary ? "4e" : "1f";
 }
 const cases: Case[] = [
+  {
+    id: "bond-ratio-below",
+    count: 2,
+    credit: 1000,
+    mixed: true,
+    facilities: 1,
+    kwh: 1000000,
+    bondProceeds: [10000],
+  },
+  {
+    id: "bond-ratio-half",
+    count: 2,
+    credit: 1000,
+    mixed: true,
+    facilities: 1,
+    kwh: 1000000,
+    bondProceeds: [12500],
+  },
+  {
+    id: "bond-ratio-capped",
+    count: 2,
+    credit: 1000,
+    mixed: true,
+    facilities: 1,
+    kwh: 1000000,
+    bondProceeds: [40000],
+  },
+  {
+    id: "bond-ratio-zero",
+    count: 2,
+    credit: 1000,
+    mixed: true,
+    facilities: 1,
+    kwh: 1000000,
+    bondProceeds: [400],
+  },
+  {
+    id: "bond-limited-two",
+    count: 16,
+    credit: 1000,
+    mixed: true,
+    facilities: 2,
+    kwh: 6000000,
+    bondProceeds: [20000, 40000],
+    review: true,
+    lastFirst: true,
+  },
+  {
+    id: "bond-mixed-four",
+    count: 30,
+    credit: 1000,
+    mixed: true,
+    facilities: 4,
+    kwh: 6000000,
+    bondProceeds: [10000, 12500, 20000, 400],
+    review: true,
+    lastFirst: true,
+  },
+
   {
     id: "feedstock-cellulosic-owned",
     count: 2,
@@ -413,6 +486,7 @@ function reviewedFixture(test: typeof cases[number]) {
       domestic_content_bonus: false,
       energy_community_bonus: false,
       is_fiscal_year: false,
+      ...(test.bondProceeds ? bondFields(index, test.bondProceeds[index]) : {}),
       ...feedstockFields(
         test.feedstock,
         index,
@@ -824,6 +898,61 @@ for (const test of cases) {
             .form3800_current_production_allocation!.facilities.map((r) =>
               r.applied_credit + 1
             );
+        },
+      );
+    }
+    if (test.bondProceeds) {
+      const changeBond = (change: (s: Record<string, unknown>) => void) =>
+      (
+        p: typeof pending,
+      ) => {
+        const f = (p.f8835.f8835s as Array<Record<string, unknown>>)[0];
+        change(f.tax_exempt_bond_source as Record<string, unknown>);
+      };
+      mutations.push(
+        changeBond((s) => {
+          s.facility_description = "Changed facility";
+        }),
+        changeBond((s) => {
+          s.facility_latitude = 40;
+        }),
+        changeBond((s) => {
+          s.as_of = "2024-12-31";
+        }),
+        changeBond((s) => {
+          s.construction_began_on = "2023-06-02";
+        }),
+        changeBond((s) => {
+          s.complete_current_and_prior_year_financing_confirmed = false;
+        }),
+        changeBond((s) => {
+          (s.financing as Record<string, unknown>[])[0].proceeds_used = 1;
+        }),
+        changeBond((s) => {
+          (s.capital_additions as Record<string, unknown>[]).pop();
+        }),
+        changeBond((s) => {
+          (s.financing as Record<string, unknown>[])[0].used_for_facility_on =
+            "2026-01-01";
+        }),
+        changeBond((s) => {
+          (s.financing as Record<string, unknown>[])[0].issued_on =
+            "2025-01-01";
+        }),
+        changeBond((s) => {
+          (s.financing as Record<string, unknown>[])[0].record_reference =
+            (s.capital_additions as Record<string, unknown>[])[0]
+              .record_reference;
+        }),
+        changeBond((s) => {
+          (s.financing as Record<string, unknown>[])[0]
+            .section103_interest_exempt_verified = false;
+        }),
+        (p) => {
+          Reflect.deleteProperty(
+            (p.f8835.f8835s as Array<Record<string, unknown>>)[0],
+            "tax_exempt_bond_source",
+          );
         },
       );
     }

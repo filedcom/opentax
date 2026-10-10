@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { assertForm8835BondSource, bondSourceSchema } from "./bond-source.ts";
 import type { NodeContext } from "../../../../../../../core/types/node-context.ts";
 import { OutputNodes } from "../../../../../../../core/types/output-nodes.ts";
 import type { NodeResult } from "../../../../../../../core/types/tax-node.ts";
@@ -188,6 +189,7 @@ export const itemSchema = z.object({
   meets_apprenticeship: z.boolean().optional(),
   domestic_content_bonus: z.boolean(),
   energy_community_bonus: z.boolean(),
+  tax_exempt_bond_source: bondSourceSchema.optional(),
   tax_exempt_bond_proceeds: z.number().nonnegative().optional(),
   aggregate_capital_additions: z.number().positive().optional(),
   is_fiscal_year: z.boolean(),
@@ -714,6 +716,7 @@ export function calculateForm8835(item: F8835Item): F8835Lines {
     throw new Error("Form 8835 phaseout cannot exceed the production credit");
   }
   const line4 = line1 - line3;
+  assertForm8835BondSource(item);
   const bonds = item.tax_exempt_bond_proceeds ?? 0;
   if (bonds > 0 && item.aggregate_capital_additions === undefined) {
     throw new Error(

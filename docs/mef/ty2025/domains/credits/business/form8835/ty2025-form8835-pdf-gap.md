@@ -1,5 +1,15 @@
 # TY2025 Form 8835 PDF boundary
 
+## Current boundary after the October 10 checkpoints
+
+Later checkpoints below supersede the original full-use/first-four-year limits:
+reviewed partial/zero facility tax use, older wind/geothermal production and
+mixed1f/4e classes, cellulosic/livestock lessees, and cumulative bond-financing
+reviews now have complete-return evidence. Solar retains its earlier bounded
+source route. Increased credits, bonuses, transfers, passive and fiscal-year
+branches remain guarded in the PDF. Source references do not authenticate
+external records. Historical paragraphs below retain their original context.
+
 The [2025 Form 8835](https://www.irs.gov/pub/irs-prior/f8835--2025.pdf) prints
 facility details on page 1, production and credit lines on page 2, and line 15
 on page 3. The [instructions](https://www.irs.gov/instructions/i8835) require a
@@ -292,3 +302,54 @@ Evidence: `.state/research/form8835-feedstock-2026-10-10/`; see the
 [Form3800 checkpoint](../form3800/ty2025-form3800-pdf-gap.md#october-10-feedstock-and-nonowner-lessee-return-checkpoint).
 
 Related source/native/PDF/XSD and mixed-return regression:65 passed/0 failed (6m22s).
+
+
+## October 10 cumulative bond financing and complete-return checkpoint
+
+The retained Form8835 bond calculation now reaches the printable packet for
+reviewed filer-owned wind/geothermal facilities. Native and fresh-PDF export
+require an entered financing/capital review; missing reviews stop filing.
+The review binds facility description, address, coordinates and construction
+start to complete current/prior-year financing and capital-addition inventories
+at December31,2025. Each dated financing use identifies its issue and section103
+status; records must have distinct references and sum exactly to the entered
+proceeds and capital totals. Inconsistent, future-dated or incomplete records
+reject. This extends the existing source-to-calculation/native/PDF main task;
+no deferred task was implemented and no credit formula changed.
+
+The [2025 instructions](https://www.irs.gov/instructions/i8835), tax-exempt-bond
+reduction and lines5a–5d, use cumulative year-end amounts and the smaller of
+the financing fraction or15%; their stated post-August16,2022 construction
+boundary is retained in this source route; construction must also precede2025
+and reviewed financing cannot exceed the capital inventory. PDF lines5a–5d now print the existing
+filed ratio, financing reduction, cap and smaller amount, including required
+zero values. The existing Form3800 review then binds reduced facility credits
+to generated/applied rows and final Form1040 tax.
+
+Six complete synthetic returns pass cached TY2025v5.4 XSD. Four single-facility
+cases cover filed ratios0.10/0.13/0.40/0.00, producing credits5,400/5,220/5,100/
+6,000 from gross6,000. Two- and four-facility cases apply16,077 of production
+credit alongside8,973 orphan credit, leaving17 tax/29,983 refund. The four
+facilities generate130,654 in total; reversed allocation-review order preserves
+the original physical-facility rows. Independent Decimal arithmetic verifies
+the inputs, intermediate bond lines, credit caps, source use and final tax.
+
+The six packets contain54 K-1 sources,10 facility copies,30 financing uses and
+30 capital additions,60 PartV rows and three continuations. All111 pages were
+reviewed through65 unique raster pages/46 exact duplicates in17 contact sheets.
+PDF text at the actual line5a–5d field rectangles independently matches the
+arithmetic; all native reference IDs resolve and packets are static/flattened.
+Focused6/0 and source2/0 pass. Mutations reject176 native/176 fresh-PDF/30
+prepared variants; source-unit cases separately reject15 inconsistent inputs
+and one missing filing review.
+
+Evidence: `.state/research/form8835-bonds-2026-10-10/`, including full sources,
+XML/PDF packets, verifier, XSD logs, pixel hashes and visual review. Cumulative
+business-credit full-return evidence is48 returns/838 pages; the carryover
+component remains separate at37 roots/17 pages. Existing26/76/84/134/135 remain
+deferred; the bond batch also records blank calendar-year Form8835 line3
+zeros under76, without changing that existing projection. Wider energy/owner/financing/election combinations, authenticated
+issuer and capital records, carry ledgers, business rules and IRS acceptance
+remain open. No main parent is closed.
+
+Related source/allocation/native/PDF/XSD and mixed-return regression:76 passed/0 failed (8m1s); final source-boundary tests:2/0.
