@@ -7313,3 +7313,23 @@ The prior head4826ec38d passed CI38029678677. The completed frozen full gate
 remains13669/218 and predates subsequent runtime work. The52 main TODO bodies
 remain unchanged;141 future items stay deferred. Technical estimate remains
 about60% of individual ATS checks, rough45–75%, as engineering judgment.
+
+## October 10 complete passive-credit inventories and continuation pages
+
+The obsolete15-source ceiling is removed from reconciled Form8582-CR/Form3800
+filing; source/tax/ledger and unmatched-source guards remain. Five mixed K-1
+returns (15/16/30/31/46 sources) pass full XSD and retain all138 source rows on
+12 PartV pages. Focused tests5/0, final grouped gate73/0;40 native/40 fresh-PDF
+mutations and20 archive variants reject. All97 pages were observed through
+53 unique renders/44 exact duplicates; existing26/68/76/84 qualifications remain.
+No new deferred item. Business totals122 returns/2367 pages; PartVI37/17 separate.
+See the Form8582-CR continuation checkpoint and private
+`.state/research/form8582cr-overflow-2026-10-10/`. Source authenticity, broader
+passive-income/credit methods, accepted carryovers and IRS acceptance remain open.
+
+Prior head2589a0c24 passed CI38030409197. The52 frozen main TODO bodies remain
+unchanged, and141 future items stay deferred. Technical ATS-check estimate
+remains about60%, rough45–75%. Scenario4 was rechecked: its nonfiler-owned
+facility still lacks transfer-party/statement records, so no facts were invented
+or source guards bypassed. The complete source-capacity change above advances
+the existing passive-credit, source-overflow and native/PDF/archive tasks.

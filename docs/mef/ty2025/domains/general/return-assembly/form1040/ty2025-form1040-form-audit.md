@@ -827,3 +827,16 @@ See the [Form8835 checkpoint](../../../credits/business/form8835/ty2025-form8835
 and `.state/research/form8835-mixed-transfers-2026-10-10/`.
 Business totals117 XSD-valid returns/2270 observed pages; separate PartVI37/17.
 Authentic sources/signatures, broader combinations and IRS acceptance remain open.
+
+## October 10 complete passive-credit inventories and continuation pages
+
+The obsolete15-source ceiling is removed from reconciled Form8582-CR/Form3800
+filing; source/tax/ledger and unmatched-source guards remain. Five mixed K-1
+returns (15/16/30/31/46 sources) pass full XSD and retain all138 source rows on
+12 PartV pages. Focused tests5/0, final grouped gate73/0;40 native/40 fresh-PDF
+mutations and20 archive variants reject. All97 pages were observed through
+53 unique renders/44 exact duplicates; existing26/68/76/84 qualifications remain.
+No new deferred item. Business totals122 returns/2367 pages; PartVI37/17 separate.
+See the Form8582-CR continuation checkpoint and private
+`.state/research/form8582cr-overflow-2026-10-10/`. Source authenticity, broader
+passive-income/credit methods, accepted carryovers and IRS acceptance remain open.

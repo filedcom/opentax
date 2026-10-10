@@ -47,7 +47,6 @@ import {
   reconcileForm3800NonpassiveCarryforwards,
 } from "../../../../../../nodes/inputs/credits/business/f3800/index.ts";
 import { appendForm3800CarryoverStatement } from "./f3800_carryover_statement.ts";
-import { FORM3800_PRINTED_PART_V_ROWS } from "./f3800_capacity.ts";
 import { form8835PdfSources } from "../f8835_source.ts";
 import {
   form3800HeaderFields,
@@ -1049,7 +1048,6 @@ export const form3800Pdf: PdfFormDescriptor = {
         credits.rows.length !== ledger.rows.length ||
         credits.nonpassiveCredit !== 0 ||
         credits.passiveCredit !== passive.partI.line5 ||
-        ledger.rows.length > FORM3800_PRINTED_PART_V_ROWS ||
         new Set(ledger.rows.map((row) =>
             JSON.stringify([
               row.source.activity_reference,
@@ -1143,7 +1141,6 @@ export const form3800Pdf: PdfFormDescriptor = {
         JSON.stringify(rawSource.passive_source_allocations) !==
           JSON.stringify(source.passive_source_allocations) ||
         ledger.rows.length !== source.passive_source_allocations.length ||
-        ledger.rows.length > FORM3800_PRINTED_PART_V_ROWS ||
         rows.length !== 1 || amounts.length !== 1 ||
         details.length !== ledger.rows.length ||
         prepared.currentDetails.some((row) => row.line === "1i") ||
@@ -1264,7 +1261,6 @@ export const form3800Pdf: PdfFormDescriptor = {
         JSON.stringify(rawSource.passive_source_allocations) !==
           JSON.stringify(source.passive_source_allocations) ||
         ledger.rows.length !== source.passive_source_allocations.length ||
-        ledger.rows.length > FORM3800_PRINTED_PART_V_ROWS ||
         rows.length !== 1 || amounts.length !== 1 ||
         details.length !== ledger.rows.length ||
         prepared.currentDetails.some((row) => row.line === "1i") ||
