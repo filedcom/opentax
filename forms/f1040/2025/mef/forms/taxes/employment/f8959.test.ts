@@ -8,6 +8,8 @@ import {
 } from "../../../../../nodes/intermediate/forms/taxes/employment/form8959/index.ts";
 import type { MefBuildContext } from "../../../form-descriptor.ts";
 import { form8959 } from "./f8959.ts";
+import { form8959Pdf } from "../../../../pdf/forms/taxes/employment/f8959.ts";
+import { assertForm8959Absent } from "../../../../domains/taxes/employment/form8959/form8959-source.ts";
 
 const headerStatus: Readonly<Record<NodeStatus, HeaderStatus>> = {
   [NodeStatus.Single]: HeaderStatus.Single,
@@ -467,5 +469,218 @@ Deno.test("Form 8959 rejects substitute and household source-record drift", () =
       }),
     Error,
     "original source records",
+  );
+});
+
+Deno.test("Form8959 replays both owners' Medicare tips after below-20 exclusions", () => {
+  const form4137 = {
+    taxpayer_ssn: "123456789",
+    spouse_ssn: "987654321",
+    w2_tip_sources: [
+      {
+        employee_ssn: "123456789",
+        employer_name: "Cafe",
+        employer_ein: "123456789",
+        allocated_tips: 0,
+        ss_wages_and_tips: 0,
+      },
+      {
+        employee_ssn: "987654321",
+        employer_name: "Restaurant",
+        employer_ein: "234567890",
+        allocated_tips: 0,
+        ss_wages_and_tips: 0,
+      },
+    ],
+    forms: [
+      {
+        recipient: "taxpayer",
+        ss_wages_from_w2: 0,
+        employers: [{
+          name: "Cafe",
+          ein: "123456789",
+          tips_received: 5000,
+          tips_reported: 1000,
+        }],
+        below_20_tip_months: [{
+          employer_index: 1,
+          month: 1,
+          tips_received: 15,
+          tips_reported: 0,
+        }],
+      },
+      {
+        recipient: "spouse",
+        ss_wages_from_w2: 0,
+        employers: [{
+          name: "Restaurant",
+          ein: "234567890",
+          tips_received: 3000,
+          tips_reported: 1000,
+        }],
+      },
+    ],
+  };
+  const correct = fixture(NodeStatus.MFJ, {
+    w2_medicare_wages: 250000,
+    unreported_tips: 5985,
+  });
+  const context = {
+    ...correct.context,
+    pending: { ...correct.context.pending, form4137 },
+  };
+  assertStringIncludes(
+    form8959.build(correct.fields, context),
+    "<TotalUnreportedMedicareTipsAmt>5985</TotalUnreportedMedicareTipsAmt>",
+  );
+  assertEquals(
+    form8959Pdf.projectFields!(correct.fields, { form4137 })
+      .line2_unreported_tips,
+    5985,
+  );
+  // A self-consistent recalculated Form8959 still cannot substitute full tip
+  // income, one owner's amount, or an arbitrary amount for Medicare tips.
+  for (const amount of [6000, 3985, 5986]) {
+    const changed = fixture(NodeStatus.MFJ, {
+      w2_medicare_wages: 250000,
+      unreported_tips: amount,
+    });
+    assertThrows(
+      () =>
+        form8959.build(changed.fields, {
+          ...changed.context,
+          pending: { ...changed.context.pending, form4137 },
+        }),
+      Error,
+      "unreported_tips differs from original source records",
+    );
+    assertThrows(
+      () => form8959Pdf.projectFields!(changed.fields, { form4137 }),
+      Error,
+      "unreported_tips differs from original source records",
+    );
+  }
+  assertForm8959Absent({}, {
+    form4137,
+    f1040: { filing_status: NodeStatus.Single },
+  });
+  const reclassified = (wages: number) => ({
+    taxpayer_ssn: "123456789",
+    forms: [{
+      recipient: "taxpayer",
+      employers: [{
+        name: "Employer",
+        tin_type: "ein",
+        tin: "345678901",
+        reason_code: "G",
+        ss8_filed_date: "2025-04-01",
+        ss8_filing_reference: "Synthetic SS8 review",
+        form1099_received: false,
+        wages,
+      }],
+    }],
+  });
+  assertForm8959Absent({}, {
+    form4137,
+    form8919: reclassified(240000),
+    f1040: { filing_status: NodeStatus.MFJ },
+  });
+  // Each source separately is below the joint threshold; together they cross it.
+  assertThrows(
+    () =>
+      assertForm8959Absent({}, {
+        form4137,
+        form8919: reclassified(249000),
+        f1040: { filing_status: NodeStatus.MFJ },
+      }),
+    Error,
+    "filing trigger exists without print lines",
+  );
+  assertThrows(
+    () => assertForm8959Absent({}, { form4137 }),
+    Error,
+    "filing_status",
+  );
+});
+
+Deno.test("Form8959 replays both owners' Form8919 wages without the Social Security cap", () => {
+  const firm = {
+    name: "Employer",
+    tin_type: "ein",
+    tin: "123456789",
+    reason_code: "G",
+    ss8_filed_date: "2025-04-01",
+    ss8_filing_reference: "Synthetic SS8 review",
+    form1099_received: false,
+  };
+  const form8919 = {
+    taxpayer_ssn: "123456789",
+    spouse_ssn: "987654321",
+    forms: [
+      { recipient: "taxpayer", employers: [{ ...firm, wages: 200000 }] },
+      { recipient: "spouse", employers: [{ ...firm, wages: 30000 }] },
+    ],
+  };
+  const correct = fixture(NodeStatus.MFJ, {
+    w2_medicare_wages: 100000,
+    wages_8919: 230000,
+  });
+  assertStringIncludes(
+    form8959.build(correct.fields, {
+      ...correct.context,
+      pending: { ...correct.context.pending, form8919 },
+    }),
+    "<TotalWagesWithNoWithholdingAmt>230000</TotalWagesWithNoWithholdingAmt>",
+  );
+  assertEquals(
+    form8959Pdf.projectFields!(correct.fields, { form8919 }).line3_wages_8919,
+    230000,
+  );
+  for (const amount of [206100, 200000, 230001]) {
+    const changed = fixture(NodeStatus.MFJ, {
+      w2_medicare_wages: 100000,
+      wages_8919: amount,
+    });
+    assertThrows(
+      () =>
+        form8959.build(changed.fields, {
+          ...changed.context,
+          pending: { ...changed.context.pending, form8919 },
+        }),
+      Error,
+      "wages_8919 differs from original source records",
+    );
+    assertThrows(
+      () => form8959Pdf.projectFields!(changed.fields, { form8919 }),
+      Error,
+      "wages_8919 differs from original source records",
+    );
+  }
+  assertForm8959Absent({}, {
+    form8919,
+    f1040: { filing_status: NodeStatus.MFJ },
+  });
+  assertThrows(
+    () =>
+      assertForm8959Absent({}, {
+        form8919,
+        f1040: { filing_status: NodeStatus.Single },
+      }),
+    Error,
+    "filing trigger exists without print lines",
+  );
+  assertThrows(
+    () =>
+      form8959Pdf.projectFields!({}, {
+        form8919,
+        f1040: { filing_status: NodeStatus.Single },
+      }),
+    Error,
+    "filing trigger exists without print lines",
+  );
+  assertThrows(
+    () => assertForm8959Absent({}, { form8919 }),
+    Error,
+    "filing_status",
   );
 });

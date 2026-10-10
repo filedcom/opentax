@@ -11,6 +11,7 @@ import { buildPending } from "../../../mef/execution/pending.ts";
 import { buildPdfBytes } from "../../../pdf/builder.ts";
 import { pdfReviewFixtures } from "../../../pdf/review-fixtures.ts";
 import { registry } from "../../../registry.ts";
+import { inputSchema as form8959Schema } from "../../../../nodes/intermediate/forms/taxes/employment/form8959/index.ts";
 
 const base = pdfReviewFixtures.find((item) =>
   item.id === "single-form8919-nec-wages-and-additional-medicare"
@@ -110,5 +111,30 @@ Deno.test("line 1g rejects a changed firm and issued 1099-NEC whose tax still ro
     () => buildPdfBytes(wrongAgi, base.filer),
     Error,
     "Form 1040 line 1g and AGI wages differ",
+  );
+});
+
+Deno.test("Form 8919 rejects Form 8959 deposit drift hidden by whole-dollar rounding", async () => {
+  const result = calculated();
+  assertEquals(result.diagnostics, []);
+  const pending = buildPending(result.pending);
+  const source = form8959Schema.passthrough().parse(pending.form8959);
+  const amount = source.wages_8919!;
+  assertEquals(typeof amount, "number");
+  // The retained employment form and every printed dollar stay unchanged.
+  // Only replay against the original calculation detects this deposit change.
+  const changed = {
+    ...pending,
+    form8959: { ...source, wages_8919: amount + 0.01 },
+  };
+  assertThrows(
+    () => buildMefXml(changed, base.filer),
+    Error,
+    "wages_8919 differs from original source records",
+  );
+  await assertRejects(
+    () => buildPdfBytes(changed, base.filer),
+    Error,
+    "wages_8919 differs from original source records",
   );
 });

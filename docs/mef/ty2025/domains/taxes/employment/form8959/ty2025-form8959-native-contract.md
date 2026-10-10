@@ -73,13 +73,12 @@ node finds no tax or excess withholding.
 
 Where complete original records are present, the check also compares W-2, Form
 4852 W-2-substitute, household-wage and CT-2 quarterly items to their
-corresponding graph deposits before printing. The remaining original-record
-joins are not yet independently re-derived here: Form 4137's
-source/allocated-tip calculation, Form 8919's reason-code and wage-base
-calculation, and Schedule SE's multi-source line 6. Their finalized graph
-deposits are checked against the printed lines, but that does not independently
-prove those upstream calculations. These are explicit verification gaps, not
-approved exclusions. Focused rejection cases for changed deposits and changed
+corresponding graph deposits before printing. The checkpoint below also
+replays retained Form 4137 and Form 8919 owner calculations before comparing
+their Medicare deposits. Schedule SE's multi-source line 6 is still not
+independently re-derived here: its finalized deposit is checked against the
+printed line, which does not prove the upstream calculation. This remains a
+verification gap, not an approved exclusion. Focused rejection cases for changed deposits and changed
 Form 4852/household records pass in the October 10 grouped gate.
 
 ## October 10 public wage, spouse and threshold checkpoint
@@ -155,3 +154,44 @@ seven PDFs, 35 page images, nine contact sheets, `packet-verification.json`,
 not new unique cases or additional test counts: **57 tests / seven returns**
 remain the scope. No production code changed; broader source, payment, mixed
 SE/tip/reclassification and IRS acceptance requirements remain open.
+
+## October 10 retained employment-source reconciliation
+
+Both Form 8959 exporters now recalculate retained Form 4137 and Form 8919
+owner copies before accepting their deposits. Form 4137 uses Medicare tips
+after the below-$20 monthly exclusions, rather than total taxable tip income.
+Form 8919 uses full line 6 wages, rather than the Social Security-capped amount.
+The existing calculators retain their owner, employer, reason-code and source
+validation; this is a reconciliation guard, not a new tax formula or proof of
+source authenticity.
+
+The grouped gate passes **101 distinct typed tests, zero failures and zero
+ignored**: 91 in the six Form 8959/4137/8919 calculator and return modules, plus
+10 in the four existing income and Schedule 2 replay modules. The final
+11-test native descriptor rerun and six-test income replay rerun overlap this
+count and are not additional tests. Formatting, lint and diff checks pass.
+
+The new owner cases verify both taxpayers' tips (5,985 after a $15 exclusion)
+and full reclassified wages (230,000), rejecting six coordinated substitutions
+in both native and PDF projections. Final native and actual PDF exporters also
+reject each of two one-cent deposit changes whose printed dollars remain
+unchanged. Existing positive replays still pass full Return1040 XSD and actual
+PDF generation: two executed income returns and two prepared Schedule 2
+returns. No new visual review or page count is claimed.
+
+An entirely empty Form 8959 slot with retained employment records is checked
+against the combined filing trigger and retained Form 1040 filing status.
+Below-threshold cases remain valid; 230,000 of reclassified wages may omit the
+form for a joint return but not a single return. Tips plus wages that each
+fall below the joint threshold still require the form when their sum exceeds
+250,000. A missing filing status cannot establish a valid omission. Existing
+W-2, substitute, household and railroad deposit checks remain in force.
+
+Private command logs are retained under
+`.state/research/form8959-upstream-2026-10-10/`: `tests-omission.log`,
+`public-replays-final.log`, `combined-omission.log` and `deposit-rejections.log`.
+The seven previously reviewed wage/spouse packets remain 35 qualified pages;
+their seven full-XSD regressions pass within the 91-test group. Multi-source
+Schedule SE, payment authenticity, wider filing combinations and IRS
+acceptance remain open. Deferred Schedule SE rounding33 and presentation76
+were not changed; no broad board task is closed by this checkpoint.

@@ -1,3 +1,12 @@
+import { CONFIG_BY_YEAR } from "../../../../../nodes/config/index.ts";
+import {
+  calculateForm4137,
+  inputSchema as form4137Schema,
+} from "../../../../../nodes/intermediate/forms/taxes/employment/form4137/index.ts";
+import {
+  calculateForm8919,
+  inputSchema as form8919Schema,
+} from "../../../../../nodes/intermediate/forms/taxes/employment/form8919/index.ts";
 import {
   form8959,
   type Form8959PrintFields,
@@ -26,6 +35,27 @@ function box14Amount(item: W2Item, description: string): number | undefined {
   return matches[0]?.amount;
 }
 
+function employmentDeposits(
+  pending?: Readonly<Record<string, unknown>>,
+): Pick<Partial<Source>, "unreported_tips" | "wages_8919"> {
+  const deposits: Pick<Partial<Source>, "unreported_tips" | "wages_8919"> = {};
+  // Recalculate the owner copies: taxable tip income can differ from Medicare
+  // tips, and Form 8919's Social Security cap is not its Medicare wage amount.
+  if (pending?.form4137 !== undefined) {
+    deposits.unreported_tips = calculateForm4137(
+      form4137Schema.parse(pending.form4137),
+      CONFIG_BY_YEAR[2025].ssWageBase,
+    ).reduce((sum, form) => sum + form.medicareTips, 0);
+  }
+  if (pending?.form8919 !== undefined) {
+    deposits.wages_8919 = calculateForm8919(
+      form8919Schema.parse(pending.form8919),
+      CONFIG_BY_YEAR[2025].ssWageBase,
+    ).reduce((sum, form) => sum + form.line6, 0);
+  }
+  return deposits;
+}
+
 function assertOriginalDeposits(
   source: Partial<Source>,
   pending?: Readonly<Record<string, unknown>>,
@@ -35,6 +65,9 @@ function assertOriginalDeposits(
       throw new Error(`Form 8959 ${key} differs from original source records`);
     }
   };
+  for (const [key, amount] of Object.entries(employmentDeposits(pending))) {
+    checkDeposit(key as "unreported_tips" | "wages_8919", amount);
+  }
   const w2 = pending?.["w2"];
   if (w2 !== undefined) {
     const items = w2Schema.parse(w2).w2s;
@@ -163,8 +196,13 @@ export function assertForm8959Absent(
     throw new Error("Form 8959 source-only record must be an object");
   }
   if (Object.keys(raw).length === 0) {
-    assertOriginalDeposits({}, pending);
-    return;
+    // A prepared return may omit an inactive Form 8959 entirely. Retained
+    // employment forms still need their combined filing trigger checked.
+    const deposits = employmentDeposits(pending);
+    assertOriginalDeposits(deposits, pending);
+    if (!Object.values(deposits).some((amount) => amount > 0)) return;
+    const f1040 = pending?.f1040 as Record<string, unknown> | undefined;
+    raw = { ...deposits, filing_status: f1040?.filing_status };
   }
   const source = inputSchema.parse(raw);
   assertOriginalDeposits(source, pending);
